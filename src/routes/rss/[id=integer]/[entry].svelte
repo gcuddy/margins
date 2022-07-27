@@ -2,6 +2,7 @@
 	import type { RssFeedItem } from '@prisma/client';
 
 	export let item: RssFeedItem;
+	console.log({ item });
 </script>
 
 <article>
@@ -15,6 +16,6 @@
 		</p>
 	</header>
 	<div class="prose">
-		{@html item.content || item.description}
+		{@html item.content || item.contentSnippet || item.summary}
 	</div>
 </article>

@@ -155,7 +155,6 @@ model RssFeed {
   description   String?
   lastBuildDate DateTime?
   imageUrl      String?
-  image         String?
   items         RssFeedItem[]
   tag           RssFeedTag[]
   createdAt     DateTime      @default(now())
@@ -169,6 +168,8 @@ model RssFeedItem {
   starred        Boolean           @default(false)
   podcast        Boolean           @default(false)
   played         Boolean           @default(false)
+  link           String?
+  guid           String?
   title          String?
   contentSnippet String?
   pubDate        DateTime?

@@ -1,7 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 export const GET: RequestHandler = async ({ params }) => {
-	const uuid = params.feed;
+	const id = params.id;
 	try {
 		// const items = await db.rssFeedItem.findMany({
 		// 	where: {
@@ -18,18 +18,18 @@ export const GET: RequestHandler = async ({ params }) => {
 		// });
 		const feed = await db.rssFeed.findFirst({
 			where: {
-				uuid
+				id: parseInt(id)
 			},
 			include: {
 				items: true
 			}
 		});
-		//todo: cache this
-		let items;
-		// if (feed?.feedUrl) {
-		// 	items = await getRawFeedItems(feed?.feedUrl);
-		// }
-		console.log({ items });
+		// //todo: cache this
+		// let items;
+		// // if (feed?.feedUrl) {
+		// // 	items = await getRawFeedItems(feed?.feedUrl);
+		// // }
+		// console.log({ items });
 		return {
 			body: {
 				feed

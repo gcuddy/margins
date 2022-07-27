@@ -11,6 +11,7 @@
 	let inv = '/';
 	export { inv as invalidate };
 	export let notification: TODO = undefined;
+	export let name = 'text';
 
 	let input: HTMLInputElement;
 	let pending = false;
@@ -47,12 +48,12 @@
 			<!-- TODO: little css animation like Search? -->
 			<div>
 				<input
-					bind:this={input}
-					name="text"
-					type="text"
-					bind:value={term}
 					{placeholder}
+					{name}
+					type="text"
 					class="w-full border-0 bg-inherit focus:ring-0"
+					bind:this={input}
+					bind:value={term}
 				/>
 			</div>
 		{:else}
