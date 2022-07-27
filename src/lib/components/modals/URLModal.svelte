@@ -2,19 +2,18 @@
 	import { enhance } from '$lib/actions/form';
 	import { notifications } from '$lib/stores/notifications';
 	import { modals } from '$lib/stores/modals';
-	import { onMount } from 'svelte';
-	import { browser } from '$app/env';
 	import { invalidate } from '$app/navigation';
 	import Spinner from '../Spinner.svelte';
+
 	export let term = '';
 	export let placeholder = 'Enter URL...';
-	let input: HTMLInputElement;
-	export let modalIndex: number;
-	let pending = false;
 	export let formAction = '/add';
-	// onMount(() => {
-	// 	browser && input && input.focus();
-	// });
+	let inv = '/';
+	export { inv as invalidate };
+	export let notification: TODO = undefined;
+
+	let input: HTMLInputElement;
+	let pending = false;
 </script>
 
 <div class="w-full p-2">
@@ -31,7 +30,7 @@
 				modals.close();
 				form.reset();
 				// pending = false;
-				await invalidate('/');
+				await invalidate(inv);
 				response.json().then((article) => {
 					notifications.notify({ message: `"${article.title}" added`, type: 'success' });
 				});
@@ -45,15 +44,17 @@
 		}}
 	>
 		{#if !pending}
-			<!-- svelte-ignore a11y-autofocus -->
-			<input
-				bind:this={input}
-				name="text"
-				type="text"
-				bind:value={term}
-				{placeholder}
-				class="w-full border-0 bg-inherit focus:ring-0"
-			/>
+			<!-- TODO: little css animation like Search? -->
+			<div>
+				<input
+					bind:this={input}
+					name="text"
+					type="text"
+					bind:value={term}
+					{placeholder}
+					class="w-full border-0 bg-inherit focus:ring-0"
+				/>
+			</div>
 		{:else}
 			<div class="flex items-center justify-center">
 				<Spinner />
