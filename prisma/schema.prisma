@@ -1,0 +1,287 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("HEROKU_URL")
+  shadowDatabaseUrl = env("HEROKU_SHADOW_URL")
+}
+
+model Article {
+  id             Int          @id @default(autoincrement())
+  title          String
+  content        String
+  textContent    String
+  author         String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  readProgress   Float        @default(0)
+  url            String       @unique
+  siteName       String?
+  colorHash      String?
+  date           DateTime
+  image          String
+  wordCount      Int
+  starred        Boolean      @default(false)
+  css            String?
+  description    String?
+  wiki           String?
+  classification String?
+  pdf            Boolean?
+  html           String?
+  position       Int          @default(0) //@unique - figure this out
+  trash          Boolean      @default(false)
+  location       String       @default("INBOX")
+  annotations    Annotation[]
+  Bookmark       Bookmark?
+  context        Context?
+  highlights     Highlight[]
+  Highlight2     Highlight2[]
+  ListItem       ListItem?
+  media          Media?
+  tags           Tag[]
+}
+
+model Bookmark {
+  id          Int       @id @default(autoincrement())
+  url         String    @unique
+  title       String
+  description String?
+  createdAt   DateTime  @default(now())
+  html        String
+  articleId   Int?      @unique
+  contextId   Int
+  article     Article?  @relation(fields: [articleId], references: [id])
+  context     Context   @relation(fields: [contextId], references: [id])
+  ListItem    ListItem?
+  tags        Tag[]
+}
+
+model Context {
+  id          Int        @id @default(autoincrement())
+  url         String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  articleId   Int?       @unique
+  Article     Article?   @relation(fields: [articleId], references: [id])
+  Bookmark    Bookmark[]
+}
+
+model List {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       ListItem[]
+}
+
+model ListItem {
+  id           Int         @id @default(autoincrement())
+  listId       Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  articleId    Int?        @unique
+  bookmarkId   Int?        @unique
+  highlightId  String?     @unique
+  annotationId Int?        @unique
+  type         String
+  annotation   Annotation? @relation(fields: [annotationId], references: [id])
+  article      Article?    @relation(fields: [articleId], references: [id])
+  bookmark     Bookmark?   @relation(fields: [bookmarkId], references: [id])
+  highlight    Highlight?  @relation(fields: [highlightId], references: [id])
+  list         List        @relation(fields: [listId], references: [id])
+}
+
+model Media {
+  id          Int     @id @default(autoincrement())
+  url         String
+  title       String
+  description String
+  duration    Int
+  type        String
+  articleId   Int     @unique
+  article     Article @relation(fields: [articleId], references: [id])
+}
+
+model Highlight {
+  id            String      @id @default(cuid())
+  articleId     Int
+  nonTextNodes  String?
+  text          String
+  sanitizedHtml String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  flagged       Boolean     @default(false)
+  startMetaId   Int         @unique
+  endMetaId     Int         @unique
+  article       Article     @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  endMeta       DomMeta     @relation("endMeta", fields: [endMetaId], references: [id])
+  startMeta     DomMeta     @relation("startMeta", fields: [startMetaId], references: [id])
+  annotation    Annotation?
+  ListItem      ListItem?
+}
+
+model DomMeta {
+  id             Int        @id @default(autoincrement())
+  parentTagName  String
+  parentIndex    String
+  textOffset     Int
+  endHighlight   Highlight? @relation("endMeta")
+  startHighlight Highlight? @relation("startMeta")
+}
+
+model Annotation {
+  id          Int        @id @default(autoincrement())
+  target      String
+  body        String?
+  createdAt   DateTime   @default(now())
+  pos         String?
+  updatedAt   DateTime   @updatedAt
+  flagged     Boolean    @default(false)
+  highlightId String?    @unique
+  Highlight   Highlight? @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  article     Article    @relation(fields: [target], references: [url])
+  ListItem    ListItem?
+}
+
+model RssFeed {
+  uuid        String        @id @unique
+  title       String
+  feedUrl     String        @unique
+  description String?
+  image       String?
+  link        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       RssFeedItem[]
+  tag         RssFeedTag[]
+}
+
+model RssFeedTag {
+  id    Int       @id @default(autoincrement())
+  name  String    @unique
+  feeds RssFeed[]
+}
+
+model RssFeedItem {
+  uuid        String    @id @unique
+  title       String
+  is_read     Boolean   @default(false)
+  starred     Boolean   @default(false)
+  podcast     Boolean   @default(false)
+  played      Boolean   @default(false)
+  link        String    @unique
+  description String?
+  pubDate     DateTime?
+  author      String?
+  categories  String?
+  content     String?
+  source      String?
+  sourceUrl   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  rssFeedUUID String
+  RssFeed     RssFeed   @relation(fields: [rssFeedUUID], references: [uuid])
+  tags        Tag[]
+}
+
+model Tag {
+  id            Int          @id @default(autoincrement())
+  name          String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  bookmarkId    Int?
+  rssFeedItemId String?
+  Bookmark      Bookmark?    @relation(fields: [bookmarkId], references: [id])
+  RssFeedItem   RssFeedItem? @relation(fields: [rssFeedItemId], references: [uuid])
+  articles      Article[]
+}
+
+model Css {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  domain    String   @unique
+  css       String?
+}
+
+model StringCondition {
+  id       Int     @id @default(autoincrement())
+  contains Boolean
+  value    String
+}
+
+model SmartListCondition {
+  id          Int        @id @default(autoincrement())
+  smartListId Int?
+  any         Boolean
+  title       String?
+  SmartList   SmartList? @relation(fields: [smartListId], references: [id])
+}
+
+model SmartList {
+  id         Int                  @id @default(autoincrement())
+  name       String               @unique
+  conditions SmartListCondition[]
+}
+
+model Selector {
+  id            Int            @id @default(autoincrement())
+  value         String
+  type          String
+  endSelector   RangeSelector? @relation("end")
+  startSelector RangeSelector? @relation("start")
+}
+
+model TextPositionSelector {
+  id               Int                @id @default(autoincrement())
+  start            Int
+  end              Int
+  AnnotationTarget AnnotationTarget[]
+}
+
+model TextQuoteSelector {
+  id               Int                @id @default(autoincrement())
+  exact            String
+  prefix           String
+  suffix           String
+  type             String             @default("TextQuoteSelector")
+  AnnotationTarget AnnotationTarget[]
+}
+
+model RangeSelector {
+  id               Int                @id @default(autoincrement())
+  startSelectorId  Int                @unique
+  endSelectorId    Int                @unique
+  textOffset       Int
+  endSelector      Selector           @relation("end", fields: [endSelectorId], references: [id], map: "end_selector")
+  startSelector    Selector           @relation("start", fields: [startSelectorId], references: [id], map: "start_selector")
+  AnnotationTarget AnnotationTarget[]
+}
+
+model AnnotationTarget {
+  id                     Int                  @id @default(autoincrement())
+  rangeSelectorId        Int
+  textPositionSelectorId Int
+  textQuoteSelectorId    Int
+  rangeSelector          RangeSelector        @relation(fields: [rangeSelectorId], references: [id])
+  textPosition           TextPositionSelector @relation(fields: [textPositionSelectorId], references: [id])
+  textQuote              TextQuoteSelector    @relation(fields: [textQuoteSelectorId], references: [id])
+  Highlight2             Highlight2[]
+}
+
+model Highlight2 {
+  id            Int              @id @default(autoincrement())
+  articleId     Int
+  targetId      Int
+  text          String
+  sanitizedHtml String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  flagged       Boolean          @default(false)
+  article       Article          @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  target        AnnotationTarget @relation(fields: [targetId], references: [id])
+}

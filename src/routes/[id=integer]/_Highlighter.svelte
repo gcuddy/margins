@@ -1,0 +1,319 @@
+<script lang="ts">
+	import { browser } from '$app/env';
+	import selection from '$lib/stores/selection';
+	import { onDestroy, onMount } from 'svelte';
+	import type { Annotation, Highlight } from '@prisma/client';
+	import { highlightElements, layoutMode } from '$lib/stores/misc';
+	import Tooltip from '$lib/components/Tooltip.svelte';
+	import AnnotationsContainer from './_AnnotationsContainer.svelte';
+	import type {
+		AnnotationPos,
+		NodeRef,
+		SimplifiedHighlightSource,
+		Tooltip as ITooltip
+	} from '$lib/types';
+	// import sanitize from '$lib/sanitize';
+	import { getSelectionHtml } from '$lib/utils';
+	import { finder } from '@medv/finder';
+	import HighlightToolTip from '$lib/components/HighlightToolTip.svelte';
+	import { setUpLinkDragHandlers } from './_helpers';
+	export let articleID: number;
+	export let articleUrl: string;
+	export let annotations: Annotation[] = [];
+	export let highlights: Highlight[] = [];
+
+	// TODO: add more elements beyond just images, such as videos, iframes, etc.
+	let images: HTMLImageElement[] = [];
+	$: console.log({ images });
+
+	let centerOfWrapper: number;
+
+	let wrapper: HTMLElement;
+	let highlighter: Highlighter;
+	let validSelection = false;
+	let activeHighlightID = '';
+
+	const highlight_uuids: string[] = [];
+
+	let pending_highlight: HighlightBody | undefined;
+
+	const annotationTooltip: ITooltip = {
+		visible: false,
+		top: 0
+	};
+
+	let highlightMenu = false;
+	let highlightMenuTop = 0;
+	let highlightMenuLeft = 0;
+
+	let tooltipVisible = false;
+	let tooltipTop = 0;
+	let tooltipLeft = 0;
+
+	const isValidSelection = (sel: Selection) =>
+		sel && !sel.isCollapsed && sel.rangeCount > 0 && sel.containsNode(wrapper, true);
+
+	const unsubscribeSelection = selection.subscribe((val) => {
+		if (!val) return;
+		if (!wrapper) return;
+		const { selection: sel } = val;
+		if (sel && isValidSelection(sel)) {
+			validSelection = true;
+			tooltipVisible = true;
+		} else {
+			validSelection = false;
+			tooltipVisible = false;
+		}
+		if (validSelection && val.rect) {
+			tooltipTop = val.rect.top + window.scrollY - 36;
+			tooltipLeft = val.rect.left + val.rect.width / 2 - 40;
+			annotationTooltip.top = val.rect.top + window.scrollY;
+		}
+	});
+
+	const createHighlightBody = (
+		highlight: SimplifiedHighlightSource,
+		input: Range | string,
+		nonTextNodes: NodeRef[] = []
+	) => {
+		console.log('creating highlight body');
+		const highlightBody: HighlightBody = {
+			articleID,
+			highlight,
+			// sanitizedHtml: sanitize(input),
+			nonTextNodes
+		};
+		return highlightBody;
+	};
+
+	const preventDefault = (e: Event) => e.preventDefault();
+
+	const wrapNonTextNode = (element: HTMLElement, highlightId: string) => {
+		// const wrapper = document.createElement('div');
+		// wrapper.classList.add('highlight-node');
+		// wrapper.dataset.highlightId = highlightId;
+		// element.parentNode.insertBefore(wrapper, element);
+		// wrapper.appendChild(element);
+		// return wrapper;
+		// wrapping seems to have weird behavior, so we just use the element itself
+		element.dataset.highlightId = highlightId;
+		element.classList.add('highlight-node');
+		element.addEventListener('click', preventDefault);
+	};
+	const unWrapNonTextNode = (element: HTMLElement, highlightId: string) => {
+		element.dataset.highlightId = '';
+		element.classList.remove('highlight-node');
+		element.removeEventListener('click', preventDefault);
+	};
+
+	const restoreHighlightedNonTextNode = (node: NonTextNode, highlightId: string) => {
+		let element: HTMLElement;
+		element = document.querySelector(node.selector);
+		if (!element) element = document.getElementsByTagName(node.tagName)[node.index] as HTMLElement;
+		if (!element) {
+			throw Error(`Could not find element with selector ${node.selector}`);
+		}
+		// element.dataset.highlightId = highlightId;
+		// element.classList.add('highlight-node');
+		wrapNonTextNode(element, highlightId);
+	};
+
+	// const highlightText = async () => {
+	// 	console.log('highlighting');
+	// 	const { html, nonTextNodes, range, selectors } = await processSelection(wrapper);
+	// 	console.log({ selectors });
+	// 	console.log({ html, nonTextNodes, range });
+	// 	const textQuoteSelector = selectors.find((s) => s.type === 'TextQuoteSelector');
+	// 	if (textQuoteSelector) {
+	// 		const matches = createTextQuoteSelectorMatcher(textQuoteSelector)(document.body);
+	// 		const matchList = [];
+	// 		for await (const match of matches) matchList.push(match);
+	// 		// create uuid and body
+	// 		const uuid = uuidv4();
+	// 		// or: optimistically mark, post highlight, return incremented id and then apply it
+	// 		// should apply via /highlights/xx - maybe just /annotations/ - highlights just don't have bodies
+	// 		// annotation with target that's just url is page note
+	// 		highlight_uuids.push(uuid);
+	// 		console.log({ matchList });
+	// 		for (const match of matchList)
+	// 			aHighlightText(match, 'mark', {
+	// 				class: 'margins-highlight',
+	// 				'data-uuid': uuid
+	// 			});
+	// 	}
+	// 	let highlightBody: HighlightBody;
+	// 	let id: string;
+	// 	return;
+	// 	if (html && range) {
+	// 		if (!range.toString()) {
+	// 			// we'll be here when we have a selection with no text
+	// 			// could be an image or something else
+	// 			if (!nonTextNodes.length) return;
+	// 			id = uuidv4();
+	// 			// we create our own highlight body without any text.
+	// 			// we just need to make sure to filter these out when restoring
+	// 			highlightBody = createHighlightBody(
+	// 				{
+	// 					id,
+	// 					text: ''
+	// 				},
+	// 				html,
+	// 				nonTextNodes
+	// 			);
+	// 		} else {
+	// 			// we're here if the highlight contains text too
+	// 			const newHighlight = highlighter.fromRange(range);
+	// 			id = newHighlight.id;
+	// 			highlightBody = createHighlightBody(newHighlight, html, nonTextNodes);
+	// 		}
+	// 		console.log({ highlightBody });
+	// 		if (nonTextNodes.length) {
+	// 			// wrap non-text nodes in a highlight class so we can style it, and give them a data-highlight-id
+	// 			nonTextNodes.forEach((node) => {
+	// 				if (node.$node) {
+	// 					if (node.$node instanceof HTMLElement) wrapNonTextNode(node.$node, id);
+	// 				}
+	// 			});
+	// 		}
+	// 		pending_highlight = highlightBody;
+	// 		postHighlight(articleID, highlightBody).then(() => {
+	// 			pending_highlight = undefined;
+	// 			window.getSelection()?.empty();
+	// 			activeHighlightID = '';
+	// 		});
+	// 	}
+	// 	// if (validSelection) {
+	// 	// 	const selection = window.getSelection();
+	// 	// 	const range = selection.getRangeAt(0);
+	// 	// 	const newHighlight = highlighter.fromRange(range);
+	// 	// 	const body = createHighlightBody(newHighlight, html);
+	// 	// 	await postHighlight(articleID, body);
+	// 	// 	selection.empty();
+	// 	// 	activeHighlightID = '';
+	// 	// }
+	// };
+
+	const removeNonTextNodes = (id: string) => {
+		const nodes = document.querySelectorAll<HTMLElement>(`[data-highlight-id="${id}"]`);
+		nodes.forEach((node) => unWrapNonTextNode(node, id));
+	};
+
+	const createAnnotation = () => {
+		// this is very finnicky, i don't understand why it can only properly read the html if it's called first thing, but it is what it is. I should look at it at some point, though, it's kind of a mess.
+		const html = getSelectionHtml();
+		const selection = window.getSelection();
+		tooltipVisible = false;
+		if (selection.isCollapsed) return;
+		const range = selection.getRangeAt(0);
+		const highlight = highlighter.fromRange(range);
+		pending_highlight = createHighlightBody(highlight, html);
+		activeHighlightID = highlight.id;
+		annotationTooltip.visible = true;
+		// selection.empty()
+	};
+
+	const isHighlight = (target: HTMLElement) =>
+		target.dataset && target.dataset.uuid && highlight_uuids.includes(target.dataset.uuid);
+
+	function handleClick(e: MouseEvent) {
+		const target = e.target as HTMLElement;
+		if (isHighlight(target)) {
+			console.log('you clicked a highlight!');
+			const { top, left, right, bottom, width } = target.getBoundingClientRect();
+			if (top < 50) {
+				highlightMenuTop = bottom + window.scrollY + 25;
+			} else {
+				highlightMenuTop = top + window.scrollY - 25;
+			}
+			highlightMenuLeft = left + width / 2 - 40;
+			highlightMenu = true;
+			activeHighlightID = target.dataset.uuid;
+		}
+	}
+
+	const createFloatingAnnotation = (top: number, el: HTMLElement) => {
+		console.log({ top });
+		annotationTooltip.top = top;
+		annotationTooltip.visible = true;
+
+		const floatingAnnotation: AnnotationPos = {
+			pos: top / wrapper.getBoundingClientRect().height,
+			node: {
+				tagName: el.tagName,
+				index: Array.from(wrapper.getElementsByTagName(el.tagName)).indexOf(el),
+				selector: finder(el)
+			}
+		};
+		console.log({ floatingAnnotation });
+	};
+
+	const updateHighlightElements = () => highlightElements.set(highlighter.getDoms());
+
+	onMount(async () => {
+		if (browser && wrapper) {
+			const links = Array.from(wrapper.querySelectorAll('a'));
+			setUpLinkDragHandlers(links, { url: articleUrl, id: articleID });
+		}
+	});
+	onDestroy(() => {
+		unsubscribeSelection();
+		highlighter && highlighter.dispose();
+	});
+</script>
+
+<div>
+	<wrapper
+		class="prose prose-neutral prose-amber mx-auto block break-words transition prose-a:transition prose-figure:drop-shadow-sm prose-figcaption:mx-auto  prose-figcaption:max-w-sm prose-figcaption:text-center prose-img:mx-auto  prose-img:rounded dark:prose-invert dark:prose-a:saturate-50 dark:hover:prose-a:saturate-100 md:prose-lg lg:prose-xl"
+		bind:this={wrapper}
+		on:click={handleClick}
+		style="grid-column: {$layoutMode === 'read' ? 2 : 1};"
+	>
+		<slot />
+	</wrapper>
+
+	<annotations>
+		<AnnotationsContainer
+			on:cancel={() => {
+				highlighter.remove(activeHighlightID);
+				activeHighlightID = '';
+			}}
+			{annotations}
+			{annotationTooltip}
+			{articleID}
+			{activeHighlightID}
+			bind:pending_highlight
+		/>
+	</annotations>
+</div>
+{#if tooltipVisible}
+	<Tooltip
+		visibility={validSelection ? 'visible' : 'hidden'}
+		top={tooltipTop}
+		left={tooltipLeft}
+		rect={$selection.rect}
+	>
+		<HighlightToolTip on:annotate={createAnnotation} />
+	</Tooltip>
+{/if}
+{#if highlightMenu}
+	<Tooltip
+		top={highlightMenuTop}
+		left={highlightMenuLeft}
+		visibility={highlightMenu ? 'visible' : 'hidden'}
+		on:clickOutside={() => (highlightMenu = false)}
+	>
+		<!-- <button on:click={deleteHighlight}>Delete Highlight</button>
+		<button on:click={createAnnotation}><AnnotateIcon /></button> -->
+	</Tooltip>
+{/if}
+
+<style lang="postcss">
+	:global(mark[data-uuid]) {
+		cursor: pointer;
+		@apply rounded-sm border-b-2 border-yellow-400 bg-yellow-200;
+		/* maybe broder should just be applied if there's an annotation attached */
+	}
+	:global(.dark mark[data-uuid]) {
+		@apply bg-yellow-200/20 text-amber-200;
+	}
+</style>

@@ -16,7 +16,10 @@ export default function useArticleCommands(article: ArticleWithNotesAndTagsAndCo
 			name: 'Archive Article',
 			icon: 'archive',
 			check: () => article.location !== 'ARCHIVE',
-			perform: () => archive([article.id], '/'),
+			perform: () => {
+				// TODO: optimistically update UI
+				archive([article.id], '/');
+			},
 			kbd: [
 				['ctrl', 'shift', 'a'],
 				['cmd', 'Backspace']
