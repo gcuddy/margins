@@ -21,7 +21,7 @@
 	export let feeds: RssFeed[] = [];
 </script>
 
-<div class="lg:flex">
+<div>
 	<!-- <Sidebar
 		links={all.concat(
 			feeds.map((f) => {

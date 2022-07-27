@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Button from '$lib/components/Button.svelte';
 	import Form from '$lib/components/Form.svelte';
+	import Header from '$lib/components/layout/Header.svelte';
+	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import type { FeedWithItems } from '$lib/types';
 	import type { RssFeed } from '@prisma/client';
 	import RssFeedBar from './_RSSFeedBar.svelte';
@@ -15,9 +17,19 @@
 	// RSS Fetcher needs to be a background job
 </script>
 
+<Header>
+	<DefaultHeader>
+		<div slot="start">
+			<h1>RSS</h1>
+		</div>
+		<div slot="end">
+			<Button variant="ghost">Add Feed</Button>
+		</div>
+	</DefaultHeader>
+</Header>
+<!-- 
 <section class="">
 	<div class="col-span-1">
-		<!-- <RssFeedBar {feeds} /> -->
 	</div>
 	<div class="col-span-2">
 		<h1 class="text-2xl">RSS</h1>
@@ -29,7 +41,7 @@
 			<Button type="submit">Refresh feeds</Button>
 		</Form>
 	</div>
-</section>
+</section> -->
 
 {#each feeds as feed}
 	<a href="/rss/{feed.uuid}">{feed.title}</a>
