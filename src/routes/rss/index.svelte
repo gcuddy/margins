@@ -63,7 +63,7 @@
 	<div class="col-span-3 overflow-auto">
 		<KeyboardNav changeActiveOnHover={false} bind:activeIndex>
 			<ul>
-				{#each sortedItems as item (item.id)}
+				{#each sortedItems as item, index (item.id)}
 					<li class="flex items-baseline space-x-3 p-2 {item.is_read ? 'opacity-50' : ''}">
 						<!-- TODO: get proper type for this (check endpoint) -->
 						<!-- <span class=" relative top-1 h-4 w-4 shrink-0 rounded bg-red-400">
@@ -77,6 +77,7 @@
 								console.log('active');
 								activeItem = item;
 							}}
+							{index}
 						>
 							<a
 								on:click|preventDefault={() => (activeItem = item)}
