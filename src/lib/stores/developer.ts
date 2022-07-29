@@ -4,6 +4,7 @@ import { browser } from '$app/env';
 interface Dev {
 	disableListImgs: boolean;
 	keypress: boolean;
+	activeElement: boolean;
 }
 
 let storedDev: Dev | undefined;
@@ -18,7 +19,8 @@ if (browser) {
 export const dev = writable<Dev>(
 	storedDev || {
 		disableListImgs: false,
-		keypress: false
+		keypress: false,
+		activeElement: false
 	}
 );
 

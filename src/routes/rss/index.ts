@@ -3,20 +3,18 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { z } from 'zod';
-const getFeeds = db.rssFeed.findMany({
-	orderBy: [
-		{
-			createdAt: 'desc'
-		}
-	],
-	include: {
-		items: true
-	}
-});
+import { getJsonFromRequest } from '$lib/utils';
+
+import Parser from 'rss-parser';
+import dayjs from 'dayjs';
+import { buildItem, getRefreshedFeeds, isXml, linkSelectors, resolveUrl } from './_rss-utils';
+import parse from 'node-html-parser';
 
 export const GET: RequestHandler = async ({ params, url }) => {
 	const items = url?.searchParams?.get('items') !== 'false';
 	// todo: add refresh
+	// lol this can't be the right way to do this
+	// const feeds = await getRefreshedFeeds();
 	const feeds = await db.rssFeed.findMany({
 		orderBy: [
 			{
@@ -24,7 +22,18 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			}
 		],
 		include: {
-			items
+			items: {
+				include: {
+					RssFeed: true
+					// RssFeed: {
+					// 	select: {
+					// 		id: true,
+					// 		link: true,
+					// 		imageUrl: true
+					// 	}
+					// }
+				}
+			}
 		}
 	});
 	console.log({ feeds });
@@ -37,7 +46,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	} else {
 		return {
 			body: {
-				articles: []
+				feeds: []
 			}
 		};
 	}
@@ -45,91 +54,89 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
 // POST = add feed
 
-const urlRegex = /\[(\d+)\](.*?)$/;
 const zUrl = z.string().url();
 
-export const POST: RequestHandler = async ({ request }) => {
-	const form = await request.formData();
-	const feeds = form.getAll('feed-skelected') as string[];
-	const rssFeedSchema = z.object({
-		feedUrl: z.string(),
-		uuid: z.string(),
-		description: z.string().nullish().optional(),
-		image: z.string().optional(),
-		link: z.string().optional(),
-		items: z
-			.object({
-				uuid: z.string(),
-				title: z.string(),
-				link: z.string(),
-				description: z.string().optional(),
-				pubDate: z.date().optional(),
-				author: z.string().optional(),
-				content: z.string().optional()
-			})
-			.array()
-	});
-	const fullFeeds = (form.getAll('feed') as string[]).map((f) =>
-		rssFeedSchema.parse(JSON.parse(f))
-	);
-	console.log({ fullFeeds });
-	const titles = form.getAll('feed-title') as string[];
-	console.log({ feeds, titles });
-	const data: { feedUrl: string; title: string }[] = [];
+async function parseFeed(xml: string) {
+	console.log(`attempting to parse feed from xml`, xml);
+	const parser = new Parser();
+	try {
+		const feed = await parser.parseString(xml);
+		return feed;
+	} catch (e) {
+		console.log(e);
+		throw Error('Could not parse feed');
+	}
+}
 
-	// feeds.map()
-	// feeds.forEach((f) => {
-	// 	console.log({ f });
-	// 	const _f = zUrl.parse(f);
-	// 	// get first and second group from urlRegex of _f
-	// 	const matches = _f.match(urlRegex);
-	// 	if (matches) {
-	// 		const id = parseInt(matches[1]);
-	// 		const feedUrl = matches[2];
-	// 		console.log({ id, url: feedUrl });
-	// 		const title = titles[id] as string;
-	// 		console.log({ title });
-	// 		data.push({
-	// 			feedUrl,
-	// 			title
-	// 		});
-	// 	}
-	// });
-	const transactions = await db.$transaction([
-		...fullFeeds.map((feed, i) => {
-			return db.rssFeed.create({
-				data: {
-					...feed,
-					title: titles[i],
-					items: {
-						create: feed.items
+/**
+ *
+ * @param url the url of the site to find the feed for
+ * @returns XML String of the feed
+ */
+async function findFeed(url: string) {
+	const response = await fetch(url);
+	const body = await response.text();
+	const contentType = response.headers.get('content-type');
+	if (contentType && isXml(contentType)) {
+		return body;
+	} else {
+		const root = parse(body);
+		const links = root.querySelectorAll(linkSelectors);
+		let href = '';
+		// const href = link?.attributes.href;
+		while (!href && links.length) {
+			const link = links.shift();
+			// (todo: support json)
+			if (link && !link.attributes.href.endsWith('.json')) {
+				href = link.attributes.href;
+			}
+		}
+		if (!href) {
+			throw Error('Could not find rss feed!');
+		}
+		href = resolveUrl(url, href);
+		console.log({ href });
+		return fetch(href).then((res) => res.text());
+	}
+}
+
+export const POST: RequestHandler = async ({ request }) => {
+	const json = await getJsonFromRequest(request);
+	try {
+		// This assumes we're getting a *single* url
+		const url = zUrl.parse(json.url);
+		console.log({ url });
+		// TODO: build my own parser
+		const xml = await findFeed(url);
+		const parsedFeed = await parseFeed(xml);
+		parsedFeed.items[0];
+		console.log({ parsedFeed });
+		const createdFeed = await db.rssFeed.create({
+			data: {
+				title: parsedFeed.title,
+				feedUrl: parsedFeed.feedUrl as string,
+				link: parsedFeed.link,
+				description: parsedFeed.description,
+				imageUrl: parsedFeed.image?.url,
+				items: {
+					// TODO: there's some gotcha I'm missing in here, like parsing out enclosures. But this will do for now.
+					createMany: {
+						data: parsedFeed.items.map((item) => buildItem(parsedFeed.feedUrl || '', item))
 					}
 				}
-			});
-		}),
-		getFeeds
-	]);
-	// const addedFeeds2 = await db.rssFeed.createMany({
-	// 	data: fullFeeds.map((feed, i) => {
-	// 		return { ...feed, title: titles[i] };
-	// 	})
-	// });
-	const allFeeds = [...transactions].pop();
-	// duplicating this... (should it just be a general call)
-	// const updatedFeeds = await db.rssFeed.findMany({
-	// 	orderBy: [
-	// 		{
-	// 			createdAt: 'desc'
-	// 		}
-	// 	],
-	// 	include: {
-	// 		items: true
-	// 	}
-	// });
-	return {
-		status: 200,
-		body: {
-			feeds: allFeeds
-		}
-	};
+			}
+		});
+		console.log({ createdFeed });
+		return {
+			status: 200,
+			body: {
+				feed: createdFeed
+			}
+		};
+	} catch (error) {
+		console.log(error);
+		return {
+			status: 400
+		};
+	}
 };

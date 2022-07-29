@@ -1,3 +1,7 @@
+<script lang="ts" context="module">
+	// todo: pass data into stuff
+</script>
+
 <script lang="ts">
 	import Saved from '$lib/components/Saved.svelte';
 	import type { Article, Tag } from '@prisma/client';

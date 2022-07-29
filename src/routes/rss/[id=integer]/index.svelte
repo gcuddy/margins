@@ -5,8 +5,10 @@
 	console.log({ feed });
 </script>
 
-<div>
-	{#each feed.items as item}
-		<Item {item} />
+<ul>
+	{#each feed.items as item (item.id)}
+		<li>
+			<Item {item} />
+		</li>
 	{/each}
-</div>
+</ul>

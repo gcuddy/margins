@@ -1,0 +1,86 @@
+<script lang="ts">
+	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
+	import type { RssItemWithFeed } from '$lib/types/rss';
+	import dayjs from 'dayjs';
+	import Icon from '../helpers/Icon.svelte';
+	import ProseWrapper from '../ProseWrapper.svelte';
+
+	export let item: RssItemWithFeed;
+	$: console.log({ item });
+
+	let container: HTMLElement;
+	export let scrollIntoView = true;
+	export let linkBack = false;
+	$: item.link, container && scrollIntoView && container?.scrollIntoView();
+
+	function markAsRead() {
+		item.is_read = true;
+		fetch(`/api/mark_item_as_read`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				id: item.id
+			})
+		});
+	}
+	$: item.link, !item.is_read && markAsRead();
+</script>
+
+<svelte:window
+	on:keydown={(event) => {
+		if ($disableGlobalKeyboardShortcuts) return;
+		if (event.key === ' ') {
+			console.log('space');
+			container.focus();
+		}
+	}}
+/>
+
+<!-- todo: create component that onmount marks item as read -->
+<article
+	bind:this={container}
+	class="m-3 flex flex-grow flex-col overflow-hidden rounded-2xl bg-gray-50 shadow-xl  ring-1 ring-black/5 dark:bg-gray-800 dark:shadow-2xl dark:ring-white/5"
+>
+	<!-- TODO: could this somehow hide on scroll? -->
+	<div class="flex flex-row items-center border-b border-gray-200 p-3 text-sm">
+		<slot name="header">
+			{#if linkBack}
+				<a
+					sveltekit:prefetch
+					class="flex items-center space-x-2 text-gray-500"
+					href="/rss/{item.RssFeed.id}"><Icon name="chevronLeftSolid" />{item?.RssFeed.title}</a
+				>
+			{:else}
+				<div class="text-gray-500">{item.RssFeed.title}</div>
+			{/if}
+		</slot>
+	</div>
+	<div class="overflow-auto p-4">
+		<ProseWrapper breakpoints={false} class="space-y-4">
+			<header class="not-prose mx-auto max-w-prose">
+				<a href={item.link} target="_blank"
+					><h1 class="text-3xl tracking-tight">
+						{item.title}
+					</h1>
+				</a>
+				{#if item.pubDate || item.author}
+					<p class="meta">
+						<a href={item.link} target="_blank">
+							{#if item.pubDate}
+								<time datetime={dayjs(item.pubDate).toISOString()}
+									>{dayjs(item.pubDate).format('MMM D, YYYY')}</time
+								>
+							{/if}
+							{#if item.author}
+								<span> by {item.author}</span>
+							{/if}
+						</a>
+					</p>
+				{/if}
+			</header>
+			<div>{@html item.content || item.contentSnippet || item.summary || '[No content]'}</div>
+		</ProseWrapper>
+	</div>
+</article>

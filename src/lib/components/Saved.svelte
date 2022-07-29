@@ -69,7 +69,8 @@
 		items: articles,
 		dragDisabled,
 		flipDurationMs,
-		dropTargetStyle: {}
+		dropTargetStyle: {},
+		zoneTabIndex: -1
 	}}
 	on:consider={handleConsider}
 	on:finalize={handleFinalize}
