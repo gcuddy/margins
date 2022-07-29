@@ -1852,6 +1852,11 @@ export const icons = {
 	dragHandle2: {
 		box: '15',
 		svg: `<circle cx="4.5" cy="2.5" r=".6" fill="currentColor"></circle><circle cx="4.5" cy="4.5" r=".6" fill="currentColor"></circle><circle cx="4.5" cy="6.499" r=".6" fill="currentColor"></circle><circle cx="4.5" cy="8.499" r=".6" fill="currentColor"></circle><circle cx="4.5" cy="10.498" r=".6" fill="currentColor"></circle><circle cx="4.5" cy="12.498" r=".6" fill="currentColor"></circle><circle cx="6.5" cy="2.5" r=".6" fill="currentColor"></circle><circle cx="6.5" cy="4.5" r=".6" fill="currentColor"></circle><circle cx="6.5" cy="6.499" r=".6" fill="currentColor"></circle><circle cx="6.5" cy="8.499" r=".6" fill="currentColor"></circle><circle cx="6.5" cy="10.498" r=".6" fill="currentColor"></circle><circle cx="6.5" cy="12.498" r=".6" fill="currentColor"></circle><circle cx="8.499" cy="2.5" r=".6" fill="currentColor"></circle><circle cx="8.499" cy="4.5" r=".6" fill="currentColor"></circle><circle cx="8.499" cy="6.499" r=".6" fill="currentColor"></circle><circle cx="8.499" cy="8.499" r=".6" fill="currentColor"></circle><circle cx="8.499" cy="10.498" r=".6" fill="currentColor"></circle><circle cx="8.499" cy="12.498" r=".6" fill="currentColor"></circle><circle cx="10.499" cy="2.5" r=".6" fill="currentColor"></circle><circle cx="10.499" cy="4.5" r=".6" fill="currentColor"></circle><circle cx="10.499" cy="6.499" r=".6" fill="currentColor"></circle><circle cx="10.499" cy="8.499" r=".6" fill="currentColor"></circle><circle cx="10.499" cy="10.498" r=".6" fill="currentColor"></circle><circle cx="10.499" cy="12.498" r=".6" fill="currentColor"></circle>`
+	},
+	loading: {
+		box: '24',
+		svg: `<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>`
 	}
 };
 

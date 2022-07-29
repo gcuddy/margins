@@ -149,8 +149,8 @@ model Annotation {
 
 model RssFeed {
   id            Int           @id @default(autoincrement())
+  feedUrl       String        @unique
   title         String?
-  feedUrl       String?
   link          String?
   description   String?
   lastBuildDate DateTime?
@@ -160,10 +160,14 @@ model RssFeed {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   // todo: itunes
+
+  // this should be unique per user
+  // @@unique([feedUrl])
 }
 
 model RssFeedItem {
   id             Int               @id @default(autoincrement())
+  uuid           String            @unique
   is_read        Boolean           @default(false)
   starred        Boolean           @default(false)
   podcast        Boolean           @default(false)

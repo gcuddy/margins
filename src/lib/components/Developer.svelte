@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { browser } from '$app/env';
+
 	import { useCommands } from '$lib/hooks/use-commands';
 
 	import { dev } from '$lib/stores/developer';
@@ -38,6 +40,10 @@
 		],
 		false
 	);
+	let activeElement: Element | null;
+	$: if (browser && $dev.activeElement) {
+		activeElement = document.activeElement;
+	}
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -46,5 +52,13 @@
 		class="fixed left-0 bottom-0 z-50 flex h-24 w-48 items-center justify-center bg-gray-300 font-mono text-lg font-medium ring"
 	>
 		<span>{keyPressed}</span>
+	</div>
+{/if}
+
+{#if $dev.activeElement}
+	<div
+		class="fixed left-0 bottom-0 z-50 flex h-24 w-48 items-center justify-center bg-gray-300 font-mono text-lg font-medium ring"
+	>
+		{activeElement}
 	</div>
 {/if}

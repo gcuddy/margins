@@ -50,6 +50,11 @@
 			return;
 		}
 
+		// j and K and x are used for navigateion, so we don't want to handle them here
+		if (e.key === 'j' || e.key === 'k' || e.key === 'x') {
+			return;
+		}
+
 		// first, for keystrokes, let's make sure we're not in an input field
 		const activeElement = document.activeElement;
 		if (activeElement instanceof HTMLInputElement) {

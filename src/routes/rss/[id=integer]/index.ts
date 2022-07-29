@@ -3,27 +3,19 @@ import { db } from '$lib/db';
 export const GET: RequestHandler = async ({ params }) => {
 	const id = params.id;
 	try {
-		// const items = await db.rssFeedItem.findMany({
-		// 	where: {
-		// 		rssFeedId: parseInt(id)
-		// 	},
-		// 	orderBy: [
-		// 		{
-		// 			createdAt: 'desc'
-		// 		}
-		// 	],
-		// 	include: {
-		// 		RssFeed: true
-		// 	}
-		// });
 		const feed = await db.rssFeed.findFirst({
 			where: {
 				id: parseInt(id)
 			},
 			include: {
-				items: true
+				items: {
+					orderBy: {
+						pubDate: 'desc'
+					}
+				}
 			}
 		});
+		console.log({ feed });
 		// //todo: cache this
 		// let items;
 		// // if (feed?.feedUrl) {

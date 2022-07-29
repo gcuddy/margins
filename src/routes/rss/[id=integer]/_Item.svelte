@@ -1,8 +1,8 @@
 <script lang="ts">
+	import Header from '$lib/components/layout/Header.svelte';
 	import type { RssFeedItem } from '@prisma/client';
 	import dayjs from 'dayjs';
 	export let item: RssFeedItem;
-	console.log({ item });
 </script>
 
 <article>
