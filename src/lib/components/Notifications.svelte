@@ -32,7 +32,7 @@
 						: type === 'success'
 						? 'checkCircleSolid'
 						: 'xCircleSolid'}
-					className="h-4 w-4 {type === 'success'
+					className="h-4 w-4 self-start relative top-px {type === 'success'
 						? 'fill-lime-500'
 						: type === 'error'
 						? 'fill-red-500'
