@@ -19,7 +19,7 @@ function getDefaultNotificationData(): Omit<INotification, 'message'> {
 	const id = uuidv4();
 	return {
 		id,
-		timeout: 5000,
+		timeout: 8500,
 		type: 'info',
 		onClick: () => notifications.remove(id)
 	};
