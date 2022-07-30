@@ -1,6 +1,10 @@
 import fs from 'fs';
 
-const camelCase = (str) => str.trim().replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));
+const camelCase = (str) =>
+	str
+		.trim()
+		.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
+		.replace('.', '');
 
 const args = process.argv.slice(2);
 const urlArg = args[0];
