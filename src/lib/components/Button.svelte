@@ -13,13 +13,10 @@
 	{type}
 	{disabled}
 	on:click
-	class="relative flex h-7 shrink-0 cursor-default select-none appearance-none items-center justify-center truncate rounded px-2 {size ===
-	'md'
-		? 'text-sm'
-		: size === 'sm'
-		? 'text-xs'
-		: 'text-base'} font-medium shadow-sm focus-visible:ring {variant === 'ghost'
-		? 'border border-gray-300 bg-white dark:bg-gray-750 text-gray-600 hover:border-gray-350  hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:text-gray-400 dark:hover:text-gray-300'
+	class="relative flex h-7 shrink-0 cursor-default select-none appearance-none items-center justify-center truncate rounded px-2 font-medium shadow-sm focus-visible:ring disabled:opacity-60 
+  {size === 'md' ? 'text-sm' : size === 'sm' ? 'text-xs' : 'text-base'}  
+    {variant === 'ghost'
+		? 'border border-gray-300 bg-white dark:bg-gray-750 text-gray-600 hover:border-gray-350  hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:text-gray-400  dark:hover:text-gray-300'
 		: 'bg-amber-700 text-amber-50'}
 {className}"
 >
