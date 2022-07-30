@@ -29,12 +29,20 @@
 				pending = true;
 			},
 			result: async ({ form, response }) => {
-				modals.close();
 				form.reset();
 				// pending = false;
 				await invalidate(inv);
+				modals.close();
 				response.json().then(({ article }) => {
-					notifications.notify({ message: `"${article.title}" added`, type: 'success' });
+					notifications.notify({
+						message: `<a href='/${article.id}'>${article.title}</a> <span class="text-gray-600">added to your inbox</span>`,
+						title: 'Article added',
+						link: {
+							href: `/${article.id}`,
+							text: 'View article'
+						},
+						type: 'success'
+					});
 				});
 			},
 			error: async ({ form }) => {
