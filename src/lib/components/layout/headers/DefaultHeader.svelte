@@ -8,7 +8,5 @@
 </div>
 
 <div class="flex flex-auto items-center justify-end">
-	<slot name="end">
-		<h2>Test</h2>
-	</slot>
+	<slot name="end" />
 </div>

@@ -4,16 +4,22 @@
 	import { filteredNotebookArticles, notebookArticles, notebookSearch } from '$lib/stores/notebook';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import NoteFilter from './_NotebookFilter.svelte';
+	import Header from '$lib/components/layout/Header.svelte';
+	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	export let articles: ArticleWithNotesAndTagsAndContext[];
 	notebookArticles.set(articles);
 </script>
 
-<h1>Notebook</h1>
+<Header>
+	<DefaultHeader>
+		<div slot="start">Notebook</div>
+	</DefaultHeader>
+</Header>
 
 <!-- <NotebookSearch bind:articles={filteredArticles} /> -->
 
 <!-- TODO: be able to click note and go directly to it (probably with url params like ?id=XX&type=annotation) -->
-<div class="container mx-auto">
+{#if $filteredNotebookArticles.length}
 	<div class="flex justify-between">
 		<input type="text" bind:value={$notebookSearch} />
 		<NoteFilter />
@@ -41,4 +47,18 @@
 			<ArticleNotes {article} />
 		</section>
 	{/each}
-</div>
+{:else}
+	<div class="flex h-full flex-col items-center pt-[30vh]">
+		<div class="flex max-w-lg space-x-4">
+			<div>
+				<Icon name="bookmarkAlt" className="h-6 w-6 relative top-1 stroke-2 stroke-gray-600" />
+			</div>
+			<div class="flex flex-col space-y-3">
+				<span class="text-lg font-medium">Notebook</span>
+				<span class="text-gray-600"
+					>No annotations yet! When you create annotations, they will appear here.</span
+				>
+			</div>
+		</div>
+	</div>
+{/if}
