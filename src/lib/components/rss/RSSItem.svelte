@@ -29,6 +29,9 @@
 		});
 	}
 	$: item.link, !item.is_read && markAsRead();
+
+	let pending_add_item = false;
+	let item_in_library = false;
 </script>
 
 <svelte:window
@@ -63,14 +66,42 @@
 					action="/add"
 					method="post"
 					classOverride=""
-					done={() => {
-						notifications.notify('Saved link');
+					pending={() => {
+						pending_add_item = true;
+					}}
+					error={({ response }) => {
+						pending_add_item = false;
+						notifications.notify({
+							message: 'Error saving',
+							type: 'error'
+						});
+					}}
+					done={async ({ response }) => {
+						const json = await response.json();
+						console.log({ json });
+						pending_add_item = false;
+						notifications.notify({
+							message: `Saved to your library`
+						});
+						item_in_library = true;
 					}}
 				>
 					<input type="hidden" name="text" value={item.link} />
-					<Button type="submit" variant="ghost" className="flex items-center space-x-1">
-						<Icon name="plusCircleSolid" className="h-4 w-4 fill-primary-700" />
-						<span>Save</span></Button
+					<Button
+						type="submit"
+						variant="ghost"
+						className="flex items-center space-x-1"
+						disabled={item_in_library || pending_add_item}
+					>
+						<Icon
+							name={pending_add_item
+								? 'loading'
+								: item_in_library
+								? 'checkCircleSolid'
+								: 'plusCircleSolid'}
+							className="h-4 w-4 fill-primary-700 {pending_add_item ? 'animate-spin' : ''}"
+						/>
+						<span>Save{item_in_library ? 'd' : ''}</span></Button
 					>
 				</Form>
 			</div>
