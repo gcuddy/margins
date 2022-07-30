@@ -112,20 +112,20 @@
 		<ProseWrapper breakpoints={false} class="space-y-4">
 			<header class="not-prose mx-auto max-w-prose">
 				<a href={item.link} target="_blank"
-					><h1 class="text-3xl tracking-tight">
+					><h1 class="text-3xl font-medium tracking-tight">
 						{item.title}
 					</h1>
 				</a>
 				{#if item.pubDate || item.author}
-					<p class="meta">
-						<a href={item.link} target="_blank">
+					<p class="meta text-gray-500">
+						<a href={item.link} class="flex space-x-3" target="_blank">
 							{#if item.pubDate}
 								<time datetime={dayjs(item.pubDate).toISOString()}
 									>{dayjs(item.pubDate).format('MMM D, YYYY')}</time
 								>
 							{/if}
 							{#if item.author}
-								<span> by {item.author}</span>
+								<span>{item.author}</span>
 							{/if}
 						</a>
 					</p>
