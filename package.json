@@ -11,7 +11,8 @@
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check --plugin-search-dir=. . && eslint .",
-		"format": "prettier --write --plugin-search-dir=. ."
+		"format": "prettier --write --plugin-search-dir=. .",
+		"add-extractor": "node tasks/add-extractor.js"
 	},
 	"devDependencies": {
 		"@medv/finder": "^2.1.0",
