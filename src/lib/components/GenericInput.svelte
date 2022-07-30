@@ -17,7 +17,7 @@
 	type="text"
 	class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0 
   {variant === 'filled'
-		? 'bg-gray-100 '
+		? 'bg-gray-100 dark:bg-gray-700'
 		: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
   {className}"
 	{placeholder}
