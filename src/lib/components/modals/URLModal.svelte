@@ -33,7 +33,7 @@
 				form.reset();
 				// pending = false;
 				await invalidate(inv);
-				response.json().then((article) => {
+				response.json().then(({ article }) => {
 					notifications.notify({ message: `"${article.title}" added`, type: 'success' });
 				});
 			},

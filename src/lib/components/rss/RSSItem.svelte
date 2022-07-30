@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
+	import { notifications } from '$lib/stores/notifications';
 	import type { RssItemWithFeed } from '$lib/types/rss';
 	import dayjs from 'dayjs';
+	import Button from '../Button.svelte';
+	import Form from '../Form.svelte';
 	import Icon from '../helpers/Icon.svelte';
 	import ProseWrapper from '../ProseWrapper.svelte';
 
@@ -26,6 +29,9 @@
 		});
 	}
 	$: item.link, !item.is_read && markAsRead();
+
+	let pending_add_item = false;
+	let item_in_library = false;
 </script>
 
 <svelte:window
@@ -44,7 +50,7 @@
 	class="m-3 flex flex-grow flex-col overflow-hidden rounded-2xl bg-gray-50 shadow-xl  ring-1 ring-black/5 dark:bg-gray-800 dark:shadow-2xl dark:ring-white/5"
 >
 	<!-- TODO: could this somehow hide on scroll? -->
-	<div class="flex flex-row items-center border-b border-gray-200 p-3 text-sm">
+	<div class="flex flex-row items-center justify-between border-b border-gray-200 p-3 text-sm">
 		<slot name="header">
 			{#if linkBack}
 				<a
@@ -55,6 +61,50 @@
 			{:else}
 				<div class="text-gray-500">{item.RssFeed.title}</div>
 			{/if}
+			<div class="flex items-center justify-center">
+				<Form
+					action="/add"
+					method="post"
+					classOverride=""
+					pending={() => {
+						pending_add_item = true;
+					}}
+					error={({ response }) => {
+						pending_add_item = false;
+						notifications.notify({
+							message: 'Error saving',
+							type: 'error'
+						});
+					}}
+					done={async ({ response }) => {
+						const json = await response.json();
+						console.log({ json });
+						pending_add_item = false;
+						notifications.notify({
+							message: `Saved to your library`
+						});
+						item_in_library = true;
+					}}
+				>
+					<input type="hidden" name="text" value={item.link} />
+					<Button
+						type="submit"
+						variant="ghost"
+						className="flex items-center space-x-1"
+						disabled={item_in_library || pending_add_item}
+					>
+						<Icon
+							name={pending_add_item
+								? 'loading'
+								: item_in_library
+								? 'checkCircleSolid'
+								: 'plusCircleSolid'}
+							className="h-4 w-4 fill-primary-700 {pending_add_item ? 'animate-spin' : ''}"
+						/>
+						<span>Save{item_in_library ? 'd' : ''}</span></Button
+					>
+				</Form>
+			</div>
 		</slot>
 	</div>
 	<div class="overflow-auto p-4">
