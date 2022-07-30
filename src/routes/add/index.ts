@@ -46,7 +46,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			};
 			console.log({ context });
 		}
-		const body = await db.article.upsert({
+		const newArticle = await db.article.upsert({
 			where: {
 				url
 			},
@@ -69,7 +69,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 		return {
 			status: 200,
-			body
+			body: {
+				article: newArticle
+			}
 		};
 	} catch (e) {
 		console.log(e);
