@@ -85,7 +85,7 @@
 				{/if}
 			</div>
 			<div slot="end" class="flex space-x-3">
-				<Form action="/rss/refresh.json" invalidate="/rss">
+				<Form action="/rss/refresh.json" invalidate="/rss" className="hidden md:block">
 					<Button type="submit" variant="ghost">Refresh Feeds</Button>
 				</Form>
 				<Button
