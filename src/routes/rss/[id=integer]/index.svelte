@@ -21,7 +21,7 @@
 	console.log({ feed });
 </script>
 
-<ul>
+<ul class="overflow-auto">
 	{#each feed.items as item (item.id)}
 		<li>
 			<Item {item} />
