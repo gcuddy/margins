@@ -48,7 +48,7 @@
 	});
 </script>
 
-<div class="grid grid-cols-12 overflow-auto">
+<div class="grid-cols-12 overflow-auto lg:grid">
 	<div class="col-span-3">
 		<ul>
 			<li><a href="/rss?filter=all">All</a></li>
