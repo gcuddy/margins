@@ -43,6 +43,14 @@
 			showCommandPalette.out();
 		}
 	}
+	function handleTouch(e: TouchEvent) {
+		if (e.touches.length === 2) {
+			e.preventDefault();
+			setTimeout(() => {
+				showCommandPalette.toggle();
+			}, 100);
+		}
+	}
 	// $: $term, selected.reset();
 	let currentGroup: string;
 
@@ -56,7 +64,7 @@
 	let dialogRef: HTMLElement;
 </script>
 
-<svelte:window on:keydown={commandListener} />
+<svelte:window on:keydown={commandListener} on:touchstart={handleTouch} />
 <!-- todo: use virtual list -->
 
 <Dialog bind:open={$showCommandPalette} class="fixed inset-0 z-50 overflow-y-auto p-4 pt-[15vh]">
