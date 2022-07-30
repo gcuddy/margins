@@ -42,6 +42,7 @@ function createModalStore() {
 			if (idx) {
 				stack.splice(idx, 1);
 			} else {
+				console.log(`closing top modal`);
 				stack.pop();
 			}
 			if (stack.length === 0 && browser) {
