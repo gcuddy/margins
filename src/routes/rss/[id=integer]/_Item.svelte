@@ -6,8 +6,11 @@
 </script>
 
 <article>
-	<a sveltekit:prefetch class="flex space-x-3" href="/rss/{item.rssFeedId}/{item.id}"
-		><h2>{item.title}</h2>
+	<a
+		sveltekit:prefetch
+		class="flex h-20 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-750 md:px-6"
+		href="/rss/{item.rssFeedId}/{item.id}"
+		><h2 class="font-semibold">{item.title || '{no title}'}</h2>
 		<p class="meta">
 			{#if item.pubDate}
 				<time datetime={dayjs(item.pubDate).toISOString()}

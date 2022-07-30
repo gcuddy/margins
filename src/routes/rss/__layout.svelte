@@ -44,6 +44,7 @@
 	import UrlModal from '$lib/components/modals/URLModal.svelte';
 	import Form from '$lib/components/Form.svelte';
 	import { page } from '$app/stores';
+	import Icon from '$lib/components/helpers/Icon.svelte';
 	const all = [
 		{
 			href: '/rss',
@@ -72,7 +73,16 @@
 	<Header>
 		<DefaultHeader>
 			<div slot="start">
-				<h1>RSS</h1>
+				{#if $page.url.pathname === '/rss'}
+					<div class="text-gray-500">Feeds</div>
+				{:else}
+					<div class="flex flex-col text-sm sm:flex-row sm:space-x-1">
+						<a sveltekit:prefetch class="flex items-center space-x-2 text-gray-300" href="/rss"
+							><span>Feeds</span></a
+						>
+						<span class="text-gray-500">› {$page.stuff.currentFeed?.title}</span>
+					</div>
+				{/if}
 			</div>
 			<div slot="end" class="flex space-x-3">
 				<Form action="/rss/refresh.json" invalidate="/rss">
