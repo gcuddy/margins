@@ -123,7 +123,9 @@
 							trailClass="stroke-gray-400"
 							pathClass="stroke-red-400"
 						/>
-						<a class="block h-full w-full cursor-default" href={`/${id}`}>{title}</a>
+						<a sveltekit:prefetch class="block h-full w-full cursor-default" href={`/${id}`}
+							>{title}</a
+						>
 					</li>
 				{/each}
 			</ul>
