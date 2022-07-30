@@ -2,6 +2,7 @@
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
 	import { notifications } from '$lib/stores/notifications';
 	import type { RssItemWithFeed } from '$lib/types/rss';
+	import type { Load } from '@sveltejs/kit';
 	import dayjs from 'dayjs';
 	import Button from '../Button.svelte';
 	import Form from '../Form.svelte';
@@ -16,19 +17,19 @@
 	export let linkBack = false;
 	$: item.link, container && scrollIntoView && container?.scrollIntoView();
 
-	function markAsRead() {
-		item.is_read = true;
-		fetch(`/api/mark_item_as_read`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				id: item.id
-			})
-		});
-	}
-	$: item.link, !item.is_read && markAsRead();
+	// function markAsRead() {
+	// 	item.is_read = true;
+	// 	fetch(`/api/mark_item_as_read`, {
+	// 		method: 'POST',
+	// 		headers: {
+	// 			'Content-Type': 'application/json'
+	// 		},
+	// 		body: JSON.stringify({
+	// 			id: item.id
+	// 		})
+	// 	});
+	// }
+	// $: item.link, !item.is_read && markAsRead();
 
 	let pending_add_item = false;
 	let item_in_library = false;
