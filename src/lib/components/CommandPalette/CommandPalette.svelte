@@ -62,7 +62,7 @@
 <Dialog bind:open={$showCommandPalette} class="fixed inset-0 z-50 overflow-y-auto p-4 pt-[15vh]">
 	<DialogOverlay
 		bind:el={dialogRef}
-		class="fixed inset-0 bg-gray-500/5 dark:bg-transparent"
+		class="fixed inset-0 bg-gray-500/5 dark:bg-black/10"
 		transition={fade}
 		transitionParams={{ duration: 150 }}
 		on:outrostart={() => {

@@ -28,7 +28,7 @@
 >
 	<DialogOverlay
 		bind:el={dialogRef}
-		class="fixed inset-0 bg-gray-500/10 dark:bg-transparent"
+		class="fixed inset-0 bg-gray-500/10 dark:bg-black/25"
 		transition={fade}
 		transitionParams={{ duration: 150 }}
 		on:outrostart={() => {
