@@ -96,10 +96,12 @@
 	<div class="space-y-5 pt-6 text-sm text-gray-400">
 		<div>
 			<h2 class="px-6">Recent Searches</h2>
-			<ul class="pt-2 text-gray-500">
+			<ul class="pt-2 text-gray-500 dark:text-gray-200">
 				{#each $recents.search as recent}
-					<li class="flex items-center space-x-3 px-6 py-1 hover:bg-gray-100">
-						<Icon name="searchSolid" className="h-4 w-4 fill-current" />
+					<li
+						class="flex items-center space-x-3 px-6 py-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+					>
+						<Icon name="searchSolid" className="h-4 w-4 fill-gray-400" />
 						<a class="block h-full w-full cursor-default" href={`/search?q=${recent}`}>{recent}</a>
 					</li>
 				{/each}
@@ -107,9 +109,11 @@
 		</div>
 		<div>
 			<h2 class="px-6">Recent Articles</h2>
-			<ul class="pt-2 text-gray-500">
+			<ul class="pt-2 text-gray-500 dark:text-gray-200">
 				{#each $recents.articles as { title, id, readProgress }}
-					<li class="flex items-center space-x-3 px-6 py-1 hover:bg-gray-100">
+					<li
+						class="flex items-center space-x-3 px-6 py-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+					>
 						<!-- <Icon name="searchSolid" className="h-4 w-4 fill-current" /> -->
 						<CircularProgressBar
 							value={readProgress}
