@@ -27,13 +27,14 @@ export const GET: RequestHandler = async ({ url }) => {
 	console.time('searchMatching');
 	const matches = results.map((result) => {
 		const regex = new RegExp(q, 'gi');
-		const title = result.title.replace(regex, '<mark class="highlight">$&</mark>');
+		const title = result.title.replace(regex, '<mark class="bg-primary-100">$&</mark>');
 		const contentMatches = result.textContent.search(regex);
 		let content = '';
 		if (contentMatches > 0) {
-			content = result.textContent.substring(contentMatches - 100, contentMatches + 100).trim();
+			// todo: make much more sophisticated
+			content = result.textContent.substring(contentMatches - 50, contentMatches + 50).trim();
 			// now highlight the matched content
-			content = content.replace(new RegExp(q, 'gi'), '<mark class="highlight">$&</mark>');
+			content = content.replace(new RegExp(q, 'gi'), '<mark class="bg-primary-100">$&</mark>');
 		}
 		return {
 			title,

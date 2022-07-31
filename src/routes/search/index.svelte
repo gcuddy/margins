@@ -4,6 +4,10 @@
 	import { recents } from '$lib/stores/recents';
 	import type { ArticleWithTags } from '$lib/types';
 	export let results: ArticleWithTags[];
+	export let matches: {
+		title: string;
+		content: string;
+	}[] = [];
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { useId } from '$lib/hooks/use-id';
@@ -91,7 +95,15 @@
 </Header>
 
 {#if results.length}
-	<Saved articles={results} />
+	<Saved
+		html={true}
+		quoted={true}
+		articles={results.map((r, i) => ({
+			...r,
+			title: matches[i].title,
+			description: matches[i].content || ''
+		}))}
+	/>
 {:else}
 	<div class="space-y-5 pt-6 text-sm text-gray-400">
 		<div>
