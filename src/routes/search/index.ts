@@ -13,7 +13,10 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 	const results = await db.article.findMany({
 		where: {
-			content: {
+			textContent: {
+				search: q
+			},
+			title: {
 				search: q
 			}
 		},
@@ -21,11 +24,38 @@ export const GET: RequestHandler = async ({ url }) => {
 			tags: true
 		}
 	});
-	console.log({ results });
+	console.time('searchMatching');
+	const matches = results.map((result) => {
+		const regex = new RegExp(q, 'gi');
+		const title = result.title.replace(regex, '<mark class="highlight">$&</mark>');
+		const contentMatches = result.textContent.search(regex);
+		let content = '';
+		if (contentMatches > 0) {
+			content = result.textContent.substring(contentMatches - 100, contentMatches + 100).trim();
+			// now highlight the matched content
+			content = content.replace(new RegExp(q, 'gi'), '<mark class="highlight">$&</mark>');
+		}
+		return {
+			title,
+			content
+		};
+	});
+	console.timeEnd('searchMatching');
+	// results.forEach((result) => {
+	// 	console.log(result.title);
+	// 	const regex = new RegExp('[^.]*[^.]*.', 'gi');
+	// 	// get match with surrounding sentence
+	// 	const match = result.textContent.match(regex);
+
+	// 	result.textContent.match(q)?.forEach((match) => {
+	// 		console.log(match);
+	// 	});
+	// });
 	return {
 		status: 200,
 		body: {
-			results
+			results,
+			matches
 		}
 	};
 };
