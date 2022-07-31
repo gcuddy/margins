@@ -6,7 +6,15 @@
 <script lang="ts">
 	import type { Article } from '@prisma/client';
 	import { flip } from 'svelte/animate';
+
 	export let articles: ArticleWithTags[];
+
+	/** Should we render the title and description as safe html or not? */
+	export let html = false;
+
+	/** Should we render the description as a "quote"? */
+	export let quoted = false;
+
 	import SelectActions from './SelectActions.svelte';
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME, type DndEvent } from 'svelte-dnd-action';
 	import { patch } from '../utils';
@@ -126,7 +134,9 @@
 
 					<div class="relative flex shrink flex-col justify-center  truncate text-left">
 						<span class="truncate text-base font-semibold leading-tight">
-							<a tabindex="-1" sveltekit:prefetch href="/{item.id}">{item.title}</a>
+							<a tabindex="-1" sveltekit:prefetch href="/{item.id}"
+								>{#if html}{@html item.title}{:else}{item.title}{/if}</a
+							>
 						</span>
 						<!-- url and author around 74,74,74, description around 126,126,126 -->
 						<div class="flex gap-4 text-xs text-stone-700 dark:text-gray-300 md:text-sm">
@@ -136,9 +146,10 @@
 							<span><a href={item.url}>{item.url}</a></span>
 						</div>
 						<p
-							class="hidden truncate text-xs text-stone-500 dark:text-gray-400 md:block md:text-sm"
+							class="hidden truncate text-xs text-stone-500 dark:text-gray-400 md:block md:text-sm {quoted &&
+								'before:content-[""] before:border-l-2 before:mr-4'}"
 						>
-							{item.description}
+							{#if html}{@html item.description}{:else}{item.description}{/if}
 						</p>
 					</div>
 					<!-- is this necessary? -->
