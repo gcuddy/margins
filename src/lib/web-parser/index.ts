@@ -418,8 +418,8 @@ export class Parser {
 		return {
 			content: content.innerHTML,
 			...this.metadata,
-			wordCount: content.innerText.split(' ').length
-			// textContent: content.innerText
+			wordCount: content.innerText.split(' ').length,
+			textContent: content.innerText
 		};
 	}
 
