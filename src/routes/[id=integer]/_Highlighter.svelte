@@ -17,6 +17,7 @@
 	import { finder } from '@medv/finder';
 	import HighlightToolTip from '$lib/components/HighlightToolTip.svelte';
 	import { setUpLinkDragHandlers } from './_helpers';
+	import ProseWrapper from '$lib/components/ProseWrapper.svelte';
 	export let articleID: number;
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
@@ -262,14 +263,9 @@
 </script>
 
 <div>
-	<wrapper
-		class="prose prose-neutral prose-amber mx-auto block break-words transition prose-a:transition prose-figure:drop-shadow-sm prose-figcaption:mx-auto  prose-figcaption:max-w-sm prose-figcaption:text-center prose-img:mx-auto  prose-img:rounded dark:prose-invert dark:prose-a:saturate-50 dark:hover:prose-a:saturate-100 md:prose-lg lg:prose-xl"
-		bind:this={wrapper}
-		on:click={handleClick}
-		style="grid-column: {$layoutMode === 'read' ? 2 : 1};"
-	>
+	<ProseWrapper bind:el={wrapper} on:click={handleClick}>
 		<slot />
-	</wrapper>
+	</ProseWrapper>
 
 	<annotations>
 		<AnnotationsContainer
