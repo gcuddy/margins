@@ -5,6 +5,7 @@ import { getTags } from '$lib/data/sync';
 import { useCommands } from '$lib/hooks/use-commands';
 import { modals } from '$lib/stores/modals';
 import { notifications } from '$lib/stores/notifications';
+import { syncStore } from '$lib/stores/sync';
 import type { ArticleWithNotesAndTagsAndContext } from '$lib/types';
 import { archive, patch, post } from '$lib/utils';
 
@@ -97,19 +98,34 @@ export default function useArticleCommands(article: ArticleWithNotesAndTagsAndCo
 			group: 'article',
 			name: 'Re-download Article',
 			perform: async () => {
+				const syncId = syncStore.addItem();
+				const id = notifications.notify({
+					title: 'Re-downloading article',
+					message: "This shouldn't take long",
+					timeout: 3000
+				});
 				const form = new FormData();
 				form.set('text', article.url);
 				const res = await fetch('/add', {
 					method: 'POST',
-					body: form
+					body: form,
+					headers: {
+						accept: 'application/json'
+					}
 				});
+				{
+					//done
+					syncStore.removeItem(syncId);
+					notifications.notify({
+						title: 'Successfully re-downloaded article',
+						message: 'Article has been re-downloaded. Refresh the page to see it.',
+						type: 'success'
+					});
+				}
 				const _article = await res.json();
 				console.log({ _article });
 				// todo: use zod here
-				if (_article) {
-					article = _article;
-				}
-				invalidate(`/${article.id}`);
+				await invalidate(`/${article.id}`);
 			},
 			icon: 'download'
 		},
