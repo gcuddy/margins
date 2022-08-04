@@ -4,6 +4,8 @@
 	import type { RssItemWithFeed } from '$lib/types/rss';
 	import type { Load } from '@sveltejs/kit';
 	import dayjs from 'dayjs';
+	import H1 from '../atoms/H1.svelte';
+	import Muted from '../atoms/Muted.svelte';
 	import Button from '../Button.svelte';
 	import Form from '../Form.svelte';
 	import Icon from '../helpers/Icon.svelte';
@@ -48,7 +50,7 @@
 <!-- todo: create component that onmount marks item as read -->
 <article
 	bind:this={container}
-	class="m-3 flex flex-grow flex-col overflow-hidden rounded-2xl bg-gray-50 shadow-xl  ring-1 ring-black/5 dark:bg-gray-800 dark:shadow-2xl dark:ring-white/5"
+	class="m-3 flex flex-grow flex-col overflow-hidden rounded-2xl bg-gray-50 shadow-xl  ring-1 ring-black/5 dark:bg-gray-900 dark:shadow-2xl dark:ring-white/5"
 >
 	<!-- TODO: could this somehow hide on scroll? -->
 	<div class="flex flex-row items-center justify-between border-b border-gray-200 p-3 text-sm">
@@ -109,29 +111,33 @@
 		</slot>
 	</div>
 	<div class="overflow-auto p-4">
-		<ProseWrapper breakpoints={false} class="space-y-4">
+		<ProseWrapper breakpoints={false} class="space-y-6">
 			<header class="not-prose mx-auto max-w-prose">
 				<a href={item.link} target="_blank"
-					><h1 class="text-3xl font-medium tracking-tight">
+					><H1 lg={false}>
 						{item.title}
-					</h1>
+					</H1>
 				</a>
 				{#if item.pubDate || item.author}
 					<p class="meta text-gray-500">
 						<a href={item.link} class="flex space-x-3" target="_blank">
 							{#if item.pubDate}
-								<time datetime={dayjs(item.pubDate).toISOString()}
-									>{dayjs(item.pubDate).format('MMM D, YYYY')}</time
+								<Muted>
+									<time datetime={dayjs(item.pubDate).toISOString()}
+										>{dayjs(item.pubDate).format('MMM D, YYYY')}</time
+									></Muted
 								>
 							{/if}
 							{#if item.author}
-								<span>{item.author}</span>
+								<Muted><span>{item.author}</span></Muted>
 							{/if}
 						</a>
 					</p>
 				{/if}
 			</header>
-			<div>{@html item.content || item.contentSnippet || item.summary || '[No content]'}</div>
+			<div>
+				{@html item.content || item.contentSnippet || item.summary || '[No content]'}
+			</div>
 		</ProseWrapper>
 	</div>
 </article>
