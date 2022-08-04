@@ -10,6 +10,7 @@
 	import GenericCommandPaletteContainer from '$lib/components/CommandPalette/GenericCommandPaletteContainer.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import { dev } from '$app/env';
+	import Sync from '$lib/components/Sync.svelte';
 </script>
 
 <svelte:head />
@@ -64,7 +65,7 @@
 		top: 0;
 	} */
 	:global(::selection) {
-		@apply bg-primary-500 dark:bg-primary-800;
+		@apply bg-primary-600/50 dark:bg-primary-800;
 	}
 	:global(html) {
 		@apply dark:bg-gray-800;

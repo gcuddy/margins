@@ -17,6 +17,7 @@
 	import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
 	import useArticleCommands from './_commands';
 	import { recents } from '$lib/stores/recents';
+	import H1 from '$lib/components/atoms/H1.svelte';
 	dayjs.extend(localizedFormat);
 
 	export let article: ArticleWithNotesAndTagsAndContext;
@@ -91,10 +92,44 @@
 
 <main>
 	<div bind:this={contentWrapper} class="">
-		<article class="mx-auto max-w-3xl py-8">
-			<header class="mb-3 space-y-3 border-b border-gray-500 pb-3">
-				<h1 class="text-3xl tracking-tight md:text-4xl lg:text-5xl">{article.title}</h1>
+		<article class="mx-auto max-w-3xl py-8 px-4">
+			<header class="space-y-3 pb-4">
+				<div class="text-sm lg:text-base">
+					<a class="text-gray-400" href={article.url}
+						>{article.siteName || new URL(article.url)?.hostname || article.url}</a
+					>
+				</div>
+				<H1>{article.title}</H1>
 				<!-- <TagCloud tags={article.tags} /> -->
+				{#if article.context}
+					<!-- Via: <a href="/{article.context.articleId}">{article.context.Article.title}</a> -->
+					<!-- <pre>{JSON.stringify(article.context, null, 2)}</pre> -->
+				{/if}
+				<!-- {#if article.dek}
+
+                {/if} -->
+				<!-- <p>
+					<a class="text-gray-300" href={article.url}
+						>{article.siteName || new URL(article.url)?.hostname || article.url}</a
+					>
+				</p> -->
+				<div
+					id="origin"
+					class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
+				>
+					{#if article.author}
+						<p>{article.author}</p>
+					{/if}
+					{#if article.author && article.date}
+						<!-- <p>&middot;</p> -->
+					{/if}
+					{#if article.date}
+						<p>{dayjs(article.date).format('LL')}</p>
+					{/if}
+					{#if article.wordCount}
+						<span>{article.wordCount} words</span>
+					{/if}
+				</div>
 				{#if article.tags.length}
 					<div transition:slide|local>
 						<TagInputCombobox
@@ -106,29 +141,6 @@
 						/>
 					</div>
 				{/if}
-				{#if article.context}
-					Via: <a href="/{article.context.articleId}">{article.context.Article.title}</a>
-					<!-- <pre>{JSON.stringify(article.context, null, 2)}</pre> -->
-				{/if}
-				<!-- {#if article.dek}
-
-                {/if} -->
-				<p>
-					<a class="text-gray-300" href={article.url}
-						>{article.siteName || new URL(article.url)?.hostname || article.url}</a
-					>
-				</p>
-				<div id="origin" class="flex space-x-3 dark:text-gray-300">
-					{#if article.author}
-						<p>By {article.author}</p>
-					{/if}
-					{#if article.author && article.date}
-						<!-- <p>&middot;</p> -->
-					{/if}
-					{#if article.date}
-						<p>{dayjs(article.date).format('LL')}</p>
-					{/if}
-				</div>
 			</header>
 			<Highlighter
 				articleID={article.id}

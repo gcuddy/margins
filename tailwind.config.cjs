@@ -15,7 +15,7 @@ const config = {
 	theme: {
 		colors: {
 			...colors,
-			gray: colors.neutral
+			gray: colors.stone
 		},
 		extend: {
 			fontFamily: {
