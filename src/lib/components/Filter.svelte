@@ -23,9 +23,11 @@
 <svelte:window
 	on:keydown={(e) => {
 		if (e.key === 'f' && (e.metaKey || e.ctrlKey)) {
-			e.preventDefault();
-			showing = true;
-			input?.focus();
+			if (!showing || !$filterInputActive) {
+				e.preventDefault();
+				showing = true;
+				input?.focus();
+			}
 		}
 	}}
 />
