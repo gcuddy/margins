@@ -88,7 +88,7 @@
 	on:finalize={handleFinalize}
 >
 	{#each $filteredItems as item, index (item.id)}
-		<li animate:flip={{ duration: flipDurationMs }} class="h-20 md:h-24">
+		<li class="h-20 md:h-24">
 			<!-- <SavedItem
 				{item}
 				bind:dragDisabled
