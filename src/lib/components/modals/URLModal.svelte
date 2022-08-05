@@ -29,9 +29,9 @@
 				pending = true;
 			},
 			result: async ({ form, response }) => {
-				form.reset();
-				// pending = false;
 				await invalidate(inv);
+				// form.reset();
+				// pending = false;
 				modals.close();
 				response.json().then(({ article }) => {
 					notifications.notify({
