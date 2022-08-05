@@ -12,6 +12,7 @@
 	import { page } from '$app/stores';
 	import { commandPaletteStore } from '../CommandPalette/store';
 	import { showCommandPalette } from '$lib/stores/commands';
+	import Sync from '../Sync.svelte';
 
 	interface NavItem {
 		display: string;
@@ -100,7 +101,10 @@
 	<div class="flex shrink-0 flex-col items-stretch justify-between space-y-3 px-5 py-2">
 		<div class="flex justify-between">
 			<span>User profile</span>
-			<Icon name="cogSolid" className="h-4 w-4 fill-current" />
+			<div class="flex space-x-2">
+				<Sync />
+				<Icon name="cogSolid" className="h-4 w-4 fill-current" />
+			</div>
 		</div>
 		<div class="flex space-x-2">
 			<!-- todo: make this work without js? -->
