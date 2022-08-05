@@ -66,7 +66,7 @@ export async function getArticles(): Promise<Article[]> {
 	}
 	// if it's too old (more than 1 minute old) fetch new version
 	console.log('fetching articles from server');
-	const res = await fetch(`/api/articles`);
+	const res = await fetch(`/api/articles?fields=id,title,author,readProgress`);
 	const { articles } = await res.json();
 	cachedArticlesStore.set({
 		lastUpdate: new Date(),
