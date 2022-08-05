@@ -23,7 +23,7 @@
 		<div
 			animate:flip
 			transition:fade
-			class="relative w-80 max-w-md rounded-md border border-gray-100 bg-white p-3 text-sm shadow-md ring-1 ring-black/5 dark:shadow-slate-900/50"
+			class="relative w-80 max-w-md rounded-md border border-gray-100 bg-white p-3 text-sm shadow-md ring-1 ring-black/5 dark:border-gray-700 dark:bg-gray-800"
 		>
 			<div class="flex space-x-2">
 				<Icon
