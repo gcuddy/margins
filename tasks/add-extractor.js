@@ -1,10 +1,6 @@
 import fs from 'fs';
 
-const camelCase = (str) =>
-	str
-		.trim()
-		.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
-		.replace('.', '');
+import camelCase from 'lodash.camelcase';
 
 const args = process.argv.slice(2);
 const urlArg = args[0];
@@ -17,6 +13,7 @@ if (!urlArg) {
 }
 const { hostname } = new URL(urlArg);
 const extractors_path = `./src/lib/web-parser/extractors`;
+
 const dest = `${extractors_path}/${hostname}`;
 if (fs.existsSync(dest)) {
 	console.log(`Extractor for ${hostname} already exists`);
