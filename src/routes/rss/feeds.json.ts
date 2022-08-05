@@ -2,6 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 export const GET: RequestHandler = async () => {
 	try {
+		console.time('rss-feeds');
 		const feeds = await db.rssFeed.findMany({
 			orderBy: [
 				{
@@ -9,9 +10,16 @@ export const GET: RequestHandler = async () => {
 				}
 			],
 			include: {
-				items: false
+				items: {
+					include: {
+						RssFeed: true
+					},
+					take: 10
+				}
 			}
 		});
+		console.log(`feeds.json`, { feeds });
+		console.timeEnd('rss-feeds');
 		return {
 			body: {
 				feeds

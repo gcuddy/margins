@@ -2,6 +2,7 @@
 	import dragging from '$lib/stores/dragging';
 	import { notifications } from '$lib/stores/notifications';
 	import { fade } from 'svelte/transition';
+	import Icon from '../helpers/Icon.svelte';
 	let dragOver = false;
 	let dropping = false;
 	let draggedUrl = '';
@@ -61,13 +62,16 @@
 {#if $dragging}
 	<div
 		transition:fade={{ duration: 250 }}
-		class="fixed bottom-9 left-9 z-50 rounded-full bg-yellow-300 px-4 py-9 text-black hover:bg-yellow-700 hover:ring {dragOver
+		class="fixed bottom-9 left-9 z-50 rounded-full border border-amber-600 bg-yellow-300 px-4 py-9 text-black shadow hover:bg-yellow-700 hover:ring {dragOver
 			? 'bg-yellow-700 ring'
 			: ''}"
 		on:dragover={handleDragOver}
 		on:dragleave={handleDragLeave}
 		on:drop={handleDrop}
 	>
-		<span class="text-2xl font-bold">Drop here to add to inbox</span>
+		<div class="flex items-center space-x-2 text-2xl font-semibold">
+			<Icon name="inboxIn" />
+			<span>Drop here to add to inbox</span>
+		</div>
 	</div>
 {/if}

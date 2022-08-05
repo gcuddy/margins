@@ -13,13 +13,24 @@ export const GET: RequestHandler = async ({ request, url }) => {
 				updatedAt: 'desc'
 			}
 		],
-		include: {
-			tags: true
-		},
 		where: {
 			NOT: {
 				location: 'ARCHIVE'
 			}
+		},
+		select: {
+			title: true,
+			tags: true,
+			position: true,
+			author: true,
+			date: true,
+			description: true,
+			readProgress: true,
+			wordCount: true,
+			url: true,
+			siteName: true,
+			id: true,
+			image: true
 		}
 	});
 	const tags = articles.flatMap((article) => article.tags);

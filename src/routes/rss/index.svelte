@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import { flip } from 'svelte/animate';
 	import { page } from '$app/stores';
 	import KeyboardNav from '$lib/components/helpers/KeyboardNav/KeyboardNav.svelte';
 	import KeyboardNavItem from '$lib/components/helpers/KeyboardNav/KeyboardNavItem.svelte';
@@ -32,22 +33,27 @@
 	// RSS Fetcher needs to be a background job
 	// on mount, fetch all feeds
 	// fetch('/rss/feeds.json').then((res) => res.json());
-	onMount(() => {
-		fetch('/rss/refresh.json', {
-			headers: {
-				'Content-Type': 'application/json',
-				Accept: 'application/json'
-			}
-		})
-			.then((res) => res.json())
-			.then((feeds) => {
-				console.log(`got these refreshed feeds`);
-				console.log({ feeds });
-				invalidate('/rss');
-			});
-	});
+	// onMount(() => {
+	// 	fetch('/rss/refresh.json', {
+	// 		headers: {
+	// 			'Content-Type': 'application/json',
+	// 			Accept: 'application/json'
+	// 		}
+	// 	})
+	// 		.then((res) => res.json())
+	// 		.then((feeds) => {
+	// 			console.log(`got these refreshed feeds`);
+	// 			console.log({ feeds });
+	// 			invalidate('/rss');
+	// 		});
+	// });
+
+	// testing - clean this up
+	let value = '';
+	$: value, (sortedItems = sortedItems.filter((item) => item.title?.toLowerCase().includes(value)));
 </script>
 
+<input type="text" bind:value />
 <div class="grid-cols-12 overflow-auto lg:grid">
 	<div class="col-span-3">
 		<ul>
@@ -64,31 +70,26 @@
 		<KeyboardNav changeActiveOnHover={false} bind:activeIndex>
 			<ul>
 				{#each sortedItems as item, index (item.id)}
-					<li class="flex items-baseline space-x-3 p-2 {item.is_read ? 'opacity-50' : ''}">
+					<li
+						animate:flip
+						class="flex items-baseline space-x-3 p-2 {item.is_read ? 'opacity-50' : ''}"
+					>
 						<!-- TODO: get proper type for this (check endpoint) -->
 						<!-- <span class=" relative top-1 h-4 w-4 shrink-0 rounded bg-red-400">
 					</span> -->
 						<!-- <img src="https://icon.horse/icon/?uri={item.link}" class="h-4 w-4 rounded" alt="" /> -->
 						<KeyboardNavItem
-							as="div"
-							let:active
-							class="w-full"
-							on:active={() => {
-								console.log('active');
+							as="a"
+							href="/rss/{item.rssFeedId}/{item.id}"
+							class="flex h-full w-full flex-col line-clamp-3 focus:ring"
+							on:click={(e) => {
+								e.preventDefault();
 								activeItem = item;
 							}}
 							{index}
 						>
-							<a
-								on:click|preventDefault={() => (activeItem = item)}
-								href="/rss/{item.rssFeedId}/{item.id}"
-								class="flex h-full w-full flex-col line-clamp-3 {active
-									? 'bg-gray-100 ring ring-blue-100'
-									: ''}"
-							>
-								<div class="text-xs uppercase text-gray-400">{item.RssFeed.title}</div>
-								<div>{item.title || item.contentSnippet || item.summary}</div></a
-							>
+							<div class="text-xs uppercase text-gray-400">{item.RssFeed.title}</div>
+							<div>{item.title || item.contentSnippet || item.summary}</div>
 						</KeyboardNavItem>
 					</li>
 				{/each}

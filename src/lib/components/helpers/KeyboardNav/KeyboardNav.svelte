@@ -1,72 +1,65 @@
 <script lang="ts" context="module">
-	interface NavState {
+	export interface NavState {
 		items: HTMLElement[];
-		activeIndex: number;
+		active: HTMLElement | null;
 		changeActiveOnHover: boolean;
-		active: boolean;
+		is_enabled: boolean;
+		// you can pass in an array or writable array (used with bind:group, for example) which our store will update
+		selected_items?: Writable<(string | number)[]> | (string | number)[];
 	}
-
-	function createNavStore() {
-		const state: NavState = {
-			items: [],
-			activeIndex: -1,
-			changeActiveOnHover: true,
-			active: true
-		};
-		const { subscribe, set, update } = writable(state);
-		return {
-			subscribe,
-			set,
-			update,
-			setActive: (item: HTMLElement) => {
-				update((state) => {
-					state.activeIndex = state.items.indexOf(item);
-					return state;
-				});
-			},
-			addItem: (item: HTMLElement) => {
-				update((state) => {
-					state.items.push(item);
-					return state;
-				});
-			},
-			addItemAtIndex: (item: HTMLElement, index: number) => {
-				update((state) => {
-					state.items.splice(index, 0, item);
-					return state;
-				});
-			},
-			removeItem: (item: HTMLElement) => {
-				update((state) => {
-					state.items = state.items.filter((i) => i !== item);
-					return state;
-				});
-			}
-		};
-	}
-	export const navStore = createNavStore();
 </script>
 
 <script lang="ts">
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
-
 	import { setContext } from 'svelte';
+	import { writable, type Writable } from 'svelte/store';
 
-	import { writable } from 'svelte/store';
-
+	export let opts: Partial<NavState> = {};
+	const defaultOpts: NavState = {
+		items: [],
+		changeActiveOnHover: false,
+		active: null,
+		is_enabled: true
+	};
+	const navStore = writable({ ...defaultOpts, ...opts });
 	setContext('navStore', navStore);
 
-	let el: HTMLElement | undefined;
-	export let changeActiveOnHover = true;
-	$: $navStore.changeActiveOnHover = changeActiveOnHover;
-	export let active = true;
-	$: $navStore.active = active;
+	let container: HTMLElement | undefined;
 
-	export let activeIndex = -1;
-	// $: $navStore.activeIndex = activeIndex;
+	const navigateForward = () => {
+		if (!$navStore.items.length) return;
+		if (!$navStore.active || !container?.contains($navStore.active)) {
+			// if there is no active element, set the first one as active
+			// or we'll be here if the element doesn't exist anymore
+			$navStore.items[0].focus();
+			$navStore.active = $navStore.items[0];
+			return;
+		}
+		const index = $navStore.items.indexOf($navStore.active);
+		if (index === -1) return;
+		const next = $navStore.items[index + 1];
+		if (next) {
+			next.focus();
+			$navStore.active = next;
+		}
+	};
 
-	// reset when items change (for now)
-	// $: $navStore.items.length, ($navStore.activeIndex = -1);
+	const navigateBackward = () => {
+		if (!$navStore.items.length) return;
+		if (!$navStore.active || !container?.contains($navStore.active)) {
+			// if there is no active element, set the first one as active
+			// or we'll be here if the element doesn't exist anymore
+			$navStore.items[0].focus();
+			$navStore.active = $navStore.items[0];
+			return;
+		}
+		const index = $navStore.items.indexOf($navStore.active);
+		const prev = $navStore.items[index - 1];
+		if (prev) {
+			prev.focus();
+			$navStore.active = prev;
+		}
+	};
 
 	function handleKeydown(e: KeyboardEvent) {
 		if ($disableGlobalKeyboardShortcuts) return;
@@ -74,12 +67,12 @@
 			case 'k':
 			case 'ArrowUp':
 				e.preventDefault();
-				$navStore.activeIndex = Math.max(0, $navStore.activeIndex - 1);
+				navigateBackward();
 				break;
 			case 'j':
 			case 'ArrowDown':
 				e.preventDefault();
-				$navStore.activeIndex = Math.min($navStore.items.length - 1, $navStore.activeIndex + 1);
+				navigateForward();
 				break;
 			case 'Escape':
 				e.preventDefault();
@@ -88,13 +81,16 @@
 				break;
 		}
 	}
-
 	$: console.log({ $navStore });
+	$: $navStore.items = $navStore.items.filter((item) => item);
+
+	// when item length changes, reset
+	// $: $navStore.items.length, ($navStore.active = null);
 </script>
 
-<svelte:window on:keydown={$navStore.active ? handleKeydown : undefined} />
+<svelte:window on:keydown={$navStore.is_enabled ? handleKeydown : undefined} />
 
 <!-- Wrapper Item -->
-<div bind:this={el}>
+<div bind:this={container}>
 	<slot />
 </div>

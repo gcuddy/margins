@@ -5,11 +5,12 @@ import { getRefreshedFeeds } from './_rss-utils';
 // should this be a post?
 export const GET: RequestHandler = async ({ request }) => {
 	console.log(`you hit the rss/refresh route`);
-	const updatedFeeds = await getRefreshedFeeds();
+	const updatedItems = await getRefreshedFeeds();
+	console.log({ updatedItems });
 	return {
 		status: 200,
 		body: {
-			feeds: updatedFeeds
+			items: updatedItems
 		}
 		// cache response for 1 minute
 		// headers: {

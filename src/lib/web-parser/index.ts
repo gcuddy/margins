@@ -971,7 +971,7 @@ export class Parser {
 			if (element && element.childNodes.length > maxChildren) continue;
 			console.log(`we've got a match! for ${selector}:`, element);
 			if (element && typeof selector === 'string') {
-				const text = element.innerText;
+				const text = element.textContent;
 				console.log(`and here's the text:`, text);
 				if (text) return text;
 			} else if (element && typeof selector[1] === 'function') {
