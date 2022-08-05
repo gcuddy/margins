@@ -11,6 +11,8 @@
 
 <input
 	on:keydown
+	on:focus
+	on:blur
 	bind:this={el}
 	id={id ? id : undefined}
 	name={name ? name : undefined}

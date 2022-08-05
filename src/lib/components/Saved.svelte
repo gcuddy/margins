@@ -8,6 +8,8 @@
 	import { flip } from 'svelte/animate';
 
 	export let articles: ArticleWithTags[];
+	filterTerm.set('');
+	$: articles, currentItems.setCurrentItems(articles, 'title');
 
 	/** Should we render the title and description as safe html or not? */
 	export let html = false;
@@ -31,6 +33,7 @@
 	import { dev } from '$lib/stores/developer';
 	import KeyboardNav from './helpers/KeyboardNav/KeyboardNav.svelte';
 	import KeyboardNavItem from './helpers/KeyboardNav/KeyboardNavItem.svelte';
+	import { currentItems, filteredItems, filterInputActive, filterTerm } from '$lib/stores/filter';
 	dayjs.extend(localizedFormat);
 	let focused = -1;
 	let dragDisabled = true;
@@ -61,6 +64,7 @@
 		saveArticleOrder();
 	};
 	let flipDurationMs = 200;
+	$: $filterInputActive ? (flipDurationMs = 0) : (flipDurationMs = 200);
 	let hovering = false;
 
 	$: console.log({ $selectedArticleIds });
@@ -83,7 +87,7 @@
 	on:consider={handleConsider}
 	on:finalize={handleFinalize}
 >
-	{#each articles as item, index (item.id)}
+	{#each $filteredItems as item, index (item.id)}
 		<li animate:flip={{ duration: flipDurationMs }} class="h-20 md:h-24">
 			<!-- <SavedItem
 				{item}
