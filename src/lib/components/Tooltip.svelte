@@ -19,7 +19,7 @@
 				rect.top +
 				(container instanceof HTMLElement ? container.scrollTop : container.scrollY) -
 				tooltip.offsetHeight -
-				10;
+				13;
 			if (container instanceof HTMLElement) {
 				left = rect.left + rect.width / 2 - container.offsetLeft - tooltip.offsetWidth / 2;
 			} else {
