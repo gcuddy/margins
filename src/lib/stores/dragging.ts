@@ -19,7 +19,7 @@ export default writable(false, (set) => {
 	}
 	return () => {
 		if (browser) {
-			window.addEventListener('dragover', onDrag);
+			window.removeEventListener('dragover', onDrag);
 		}
 	};
 });
