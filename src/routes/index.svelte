@@ -14,6 +14,9 @@
 	import { headerComponent } from '$lib/stores/header';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import LocationSelect from '$lib/components/layout/headers/LocationSelect.svelte';
+	import GenericInput from '$lib/components/GenericInput.svelte';
+	import { filterTerm } from '$lib/stores/filter';
+	import Filter from '$lib/components/Filter.svelte';
 	export let articles: ArticleWithNotesAndTagsAndContext[];
 	cachedArticlesStore.set({
 		articles,
@@ -91,6 +94,9 @@
 				<option>Later</option>
 				<option>Archive</option>
 			</select>
+		</div>
+		<div slot="end">
+			<Filter />
 		</div>
 	</DefaultHeader>
 </Header>
