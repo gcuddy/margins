@@ -1,16 +1,17 @@
-<script context="module" lang="ts">
+<!-- <script context="module" lang="ts">
 	import type { Load } from '@sveltejs/kit';
 	export const load: Load = async ({ fetch, url, props, stuff }) => {
 		// use fetch
-		// const response = await fetch('/feeds.json', {
-		// 	method: 'GET'
-		// });
-		// if (!response.ok) {
-		// 	return {
-		// 		status: response.status
-		// 	};
-		// }
-		// // const { feeds } = await response.json();
+		const response = await fetch('/rss/feeds.json', {
+			method: 'GET'
+		});
+		console.log({ response });
+		if (!response.ok) {
+			return {
+				status: response.status
+			};
+		}
+		const { feeds } = await response.json();
 		// const feeds = [];
 		// console.log({ feeds });
 		const filter = url.searchParams.get('filter');
@@ -19,10 +20,15 @@
 		console.log('test test toot toot');
 		return {
 			props: {
-				filter
+				filter,
+				feeds
 			},
 			stuff: {
 				filter
+			},
+			cache: {
+				maxage: 60 * 5,
+				private: true
 			}
 		};
 		// const feeds = await getFeeds();
@@ -33,8 +39,7 @@
 		// 	props: feeds
 		// };
 	};
-</script>
-
+</script> -->
 <script lang="ts">
 	import type { RssFeed } from '@prisma/client';
 	import Header from '$lib/components/layout/Header.svelte';
@@ -45,6 +50,7 @@
 	import Form from '$lib/components/Form.svelte';
 	import { page } from '$app/stores';
 	import Icon from '$lib/components/helpers/Icon.svelte';
+	import { syncStore } from '$lib/stores/sync';
 	const all = [
 		{
 			href: '/rss',
@@ -55,6 +61,9 @@
 	export let feeds: RssFeed[] = [];
 	export let filter: 'all' | 'unread' = 'all';
 	console.log({ feeds });
+
+	let pending_sync = false;
+	let sync_id: string;
 </script>
 
 <div class="flex flex-col overflow-hidden">
@@ -85,7 +94,13 @@
 				{/if}
 			</div>
 			<div slot="end" class="flex space-x-3">
-				<Form action="/rss/refresh.json" invalidate="/rss" className="hidden md:block">
+				<Form
+					action="/rss/refresh.json"
+					invalidate="/rss"
+					pending={() => (sync_id = syncStore.addItem())}
+					done={() => syncStore.removeItem(sync_id)}
+					className="hidden md:block"
+				>
 					<Button type="submit" variant="ghost">Refresh Feeds</Button>
 				</Form>
 				<Button
@@ -104,5 +119,6 @@
 			</div>
 		</DefaultHeader>
 	</Header>
+	<!-- <pre>{feeds}</pre> -->
 	<slot {feeds} />
 </div>
