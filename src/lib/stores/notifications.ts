@@ -15,13 +15,15 @@ export interface INotification {
 	onClick?: () => void;
 }
 
-function getDefaultNotificationData(): Omit<INotification, 'message'> {
-	const id = uuidv4();
+function getDefaultNotificationData(id?: string): Omit<INotification, 'message'> {
+	if (!id) {
+		id = uuidv4();
+	}
 	return {
 		id,
 		timeout: 8500,
 		type: 'info',
-		onClick: () => notifications.remove(id)
+		onClick: () => notifications.remove(id as string)
 	};
 }
 
@@ -33,15 +35,18 @@ function notificationStore() {
 		notification: {
 			message: string | SvelteComponentWithProps<T>;
 		} & Partial<INotification>
-	) =>
+	) => {
+		const id = uuidv4();
 		update((val) => {
-			const newNotification = Object.assign(getDefaultNotificationData(), notification);
+			const newNotification = Object.assign(getDefaultNotificationData(id), notification);
 			const newVal = [...val, newNotification];
 			setTimeout(() => {
 				remove(newNotification.id);
 			}, newNotification.timeout);
 			return newVal;
 		});
+		return id;
+	};
 	const remove = (id: string) => {
 		update((val) => val.filter((n) => n.id !== id));
 	};
