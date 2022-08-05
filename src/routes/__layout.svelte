@@ -11,6 +11,7 @@
 	import Header from '$lib/components/layout/Header.svelte';
 	import { dev } from '$app/env';
 	import Sync from '$lib/components/Sync.svelte';
+	import { mainEl } from '$lib/stores/main';
 </script>
 
 <svelte:head />
@@ -42,7 +43,10 @@
 			<!-- sidebar, but should only be for some layouts -->
 			<Sidebar />
 
-			<main class="relative flex grow flex-col place-items-stretch overflow-auto">
+			<main
+				bind:this={$mainEl}
+				class="relative flex grow flex-col place-items-stretch overflow-auto"
+			>
 				<!-- Header? -->
 				<slot />
 			</main>

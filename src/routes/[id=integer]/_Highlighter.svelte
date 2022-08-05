@@ -18,6 +18,7 @@
 	import HighlightToolTip from '$lib/components/HighlightToolTip.svelte';
 	import { setUpLinkDragHandlers } from './_helpers';
 	import ProseWrapper from '$lib/components/ProseWrapper.svelte';
+	import { mainEl } from '$lib/stores/main';
 	export let articleID: number;
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
@@ -66,9 +67,12 @@
 			tooltipVisible = false;
 		}
 		if (validSelection && val.rect) {
-			tooltipTop = val.rect.top + window.scrollY - 36;
+			console.log({ scrollY: window.scrollY, rect: val.rect });
+			console.log({ $mainEl });
+			tooltipTop = val.rect.top + $mainEl.scrollTop - 36;
+			console.log({ tooltipTop });
 			tooltipLeft = val.rect.left + val.rect.width / 2 - 40;
-			annotationTooltip.top = val.rect.top + window.scrollY;
+			annotationTooltip.top = val.rect.top + $mainEl.scrollTop;
 		}
 	});
 
@@ -284,11 +288,10 @@
 {#if tooltipVisible}
 	<Tooltip
 		visibility={validSelection ? 'visible' : 'hidden'}
-		top={tooltipTop}
-		left={tooltipLeft}
 		rect={$selection.rect}
+		container={$mainEl}
 	>
-		<HighlightToolTip on:annotate={createAnnotation} />
+		<HighlightToolTip labels={true} on:annotate={createAnnotation} />
 	</Tooltip>
 {/if}
 {#if highlightMenu}
