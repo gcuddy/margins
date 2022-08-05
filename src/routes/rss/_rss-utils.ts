@@ -1,4 +1,4 @@
-import type { Article, Prisma, PrismaPromise, RssFeed } from '@prisma/client';
+import type { Article, Prisma, PrismaPromise, RssFeed, RssFeedItem } from '@prisma/client';
 import Parser from 'rss-parser';
 import { db } from '$lib/db';
 import dayjs from 'dayjs';
@@ -54,11 +54,16 @@ export async function getFeeds() {
 	});
 	return feeds;
 }
+function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+	if (value === null || value === undefined) return false;
+	const testDummy: TValue = value;
+	return true;
+}
 
-export async function getRefreshedFeeds(): Promise<RssFeedWithItems[]> {
+export async function getRefreshedFeeds(): Promise<RssFeedItem[] | undefined> {
 	const feeds = await getFeeds();
 	if (!feeds.length) {
-		return feeds;
+		return;
 	}
 	const parser = new Parser();
 	console.log(`refreshing feeds`);
@@ -73,49 +78,33 @@ export async function getRefreshedFeeds(): Promise<RssFeedWithItems[]> {
 
 	// const currentArticles = new Set(articles.flatMap(article => article));
 
-	// I know this is almost definitely not the best way to do this... right?
-
-	const transactions: PrismaPromise<any>[] = [];
-	for (const feed of feeds) {
-		if (!feed.feedUrl) continue;
-		const { items } = await parser.parseURL(feed.feedUrl);
-		const itemsToAdd = items
-			.map((item) => buildItem(feed.feedUrl, item))
-			.filter((item) => !currentArticles.has(item.uuid));
-		console.log(`adding ${itemsToAdd.length} items to ${feed.title}`);
-		if (itemsToAdd.length === 0) continue;
-		// abstract this out to a function in its own file
-		// not sure what the most efficient way to do this is - keep thinking about it
-
-		transactions.push(
-			db.rssFeedItem.createMany({
-				data: itemsToAdd.map((item) => {
-					return {
-						...item,
-						rssFeedId: feed.id
-					};
-				})
-			})
-		);
-	}
-	// this is no good... have to repeat this again??
-	transactions.push(
-		db.rssFeed.findMany({
-			include: {
-				items: {
-					include: {
-						RssFeed: true
-					}
-				}
+	// Promise.all better performance?
+	const itemsToAdd = await Promise.all(
+		feeds.map(async (feed) => {
+			if (!feed.feedUrl) return;
+			try {
+				const { items } = await parser.parseURL(feed.feedUrl);
+				const itemsToAdd = items
+					.map((item) => buildItem(feed.feedUrl, item))
+					.filter((item) => !currentArticles.has(item.uuid));
+				console.log(`adding ${itemsToAdd.length} items to ${feed.title}`);
+				if (itemsToAdd.length === 0) return;
+				return itemsToAdd.map((item) => ({
+					...item,
+					rssFeedId: feed.id
+				}));
+			} catch {
+				console.log(`could not parse feed`, feed.feedUrl);
+				return;
 			}
 		})
 	);
-	const items = await db.$transaction(transactions);
-	console.log(`refreshed items`, { items });
-	const updatedFeeds = items.pop();
-	console.log({ updatedFeeds });
+	const filteredItems = itemsToAdd.flat().filter(notEmpty);
+	const newItems = await db.$transaction(
+		filteredItems.map((item) => db.rssFeedItem.create({ data: item }))
+	);
 	console.timeEnd(`[feedRefresh]`);
-	return updatedFeeds;
+	return newItems;
 }
 
 // return args for rssfeeditem
@@ -156,6 +145,9 @@ export function buildId(feedUrl: string, item: Parser.Item) {
 
 const xmlMimeTypes = ['application/rss+xml', 'application/atom+xml', 'text/xml', 'application/xml'];
 export const isXml = (type: string) => xmlMimeTypes.some((t) => type.trim().includes(t));
+
+const jsonMimeTypes = ['application/feed+json', 'application/json'];
+export const isJson = (type: string) => jsonMimeTypes.some((t) => type.trim().includes(t));
 const linkTypes = [
 	'application/rss+xml',
 	'application/atom+xml',
