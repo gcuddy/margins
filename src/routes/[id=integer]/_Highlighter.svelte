@@ -23,11 +23,12 @@
 	import type { TextQuoteSelector } from '$lib/annotator/types';
 	import { highlightText } from '$lib/annotator/highlighter';
 	import { notifications } from '$lib/stores/notifications';
-	// import { TargetSchema, TextQuoteSelectorSchema } from '../anonotations';
+	import { TargetSchema, TextQuoteSelectorSchema } from '$lib/types/schemas/Annotations';
 	export let articleID: number;
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
 	console.log({ annotations });
+
 	export let highlights: Highlight[] = [];
 
 	// TODO: add more elements beyond just images, such as videos, iframes, etc.
@@ -289,12 +290,12 @@
 		if (browser && wrapper) {
 			// load highlgihts
 			for (const annotation of annotations) {
-				// try {
-				// 	const target = TargetSchema.parse(annotation.target);
-				// 	highlightSelectorTarget(target.selector);
-				// } catch (e) {
-				// 	console.error(e);
-				// }
+				try {
+					const target = TargetSchema.parse(annotation.target);
+					highlightSelectorTarget(target.selector);
+				} catch (e) {
+					console.error(e);
+				}
 			}
 
 			const links = Array.from(wrapper.querySelectorAll('a'));
