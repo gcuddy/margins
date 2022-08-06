@@ -48,14 +48,14 @@
 		</section>
 	{/each}
 {:else}
-	<div class="flex h-full flex-col items-center pt-[30vh]">
+	<div class="grid h-full place-items-center">
 		<div class="flex max-w-lg space-x-4">
 			<div>
-				<Icon name="bookmarkAlt" className="h-6 w-6 relative top-1 stroke-2 stroke-gray-600" />
+				<Icon name="bookmarkAlt" className="h-6 w-6 relative top-px stroke-2 stroke-gray-600" />
 			</div>
 			<div class="flex flex-col space-y-3">
 				<span class="text-lg font-medium">Notebook</span>
-				<span class="text-gray-600"
+				<span class="text-gray-600 dark:text-gray-500"
 					>No annotations yet! When you create annotations, they will appear here.</span
 				>
 			</div>
