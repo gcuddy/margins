@@ -301,3 +301,7 @@ export const archive = async (ids: number[], go: string | null = '/', inv = go, 
 		});
 	}
 };
+
+function isTouchDevice() {
+	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+}
