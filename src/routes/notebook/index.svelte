@@ -49,7 +49,7 @@
 	{/each}
 {:else}
 	<div class="flex h-full flex-col items-center pt-[30vh]">
-		<div class="flex max-w-lg space-x-4">
+		<div class="flex max-w-xs space-x-4 md:max-w-lg">
 			<div>
 				<Icon name="bookmarkAlt" className="h-6 w-6 relative top-1 stroke-2 stroke-gray-600" />
 			</div>
