@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { clickOutside } from '$lib/actions/clickOutside';
+	import mq from '$lib/stores/mq';
 	import { createEventDispatcher } from 'svelte';
 
 	import { scale, fade } from 'svelte/transition';
@@ -29,10 +30,12 @@
 		}
 	}
 	const dispatch = createEventDispatcher();
+
+	$: console.log({ $mq });
 </script>
 
 <div
-	class="overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/5 dark:bg-black/90"
+	class="absolute z-10 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/5 dark:bg-black/90"
 	style="top: {top}px; left: {left}px; visibility: {visibility};"
 	bind:this={tooltip}
 	in:scale={{
@@ -49,8 +52,8 @@
 
 <style>
 	div {
-		position: absolute;
-		z-index: 9;
+		/* position: absolute;
+		z-index: 9; */
 		/* background-color: rgba(0, 0, 0, 0.5); */
 		/* padding: 10px; */
 	}
