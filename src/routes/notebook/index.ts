@@ -4,34 +4,52 @@ import type { RequestHandler } from '@sveltejs/kit';
 export const GET: RequestHandler = async ({ params }) => {
 	const { id } = params;
 	console.log('getting /notebook');
-	const articles = await db.article.findMany({
-		where: {
-			OR: [
-				{
-					annotations: {
-						some: {}
-					}
-				},
-				{
-					highlights: {
-						some: {}
-					}
-				}
-			]
-		},
+	console.time('get notebook');
+	const annotations = await db.annotation.findMany({
 		include: {
-			annotations: true,
-			highlights: true,
-			tags: true
+			article: {
+				select: {
+					author: true,
+					description: true,
+					id: true,
+					title: true,
+					url: true
+				}
+			}
 		},
 		orderBy: {
-			createdAt: 'desc'
+			updatedAt: 'desc'
 		}
 	});
-	if (articles) {
+	// const articles = await db.article.findMany({
+	// 	where: {
+	// 		OR: [
+	// 			{
+	// 				annotations: {
+	// 					some: {}
+	// 				}
+	// 			},
+	// 			{
+	// 				highlights: {
+	// 					some: {}
+	// 				}
+	// 			}
+	// 		]
+	// 	},
+	// 	include: {
+	// 		annotations: true,
+	// 		highlights: true,
+	// 		tags: true
+	// 	},
+	// 	orderBy: {
+	// 		createdAt: 'desc'
+	// 	}
+	// });
+	console.timeEnd('get notebook');
+	if (annotations) {
 		return {
 			body: {
-				articles
+				annotations
 			}
 		};
 	} else {
