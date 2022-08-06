@@ -71,7 +71,7 @@ export interface RSSFeed extends Parser.Item {
 // 			console.log('xml');
 // 			const item = await parseXMLOrJSON(body, 'xml');
 // 			return [{ ...item, feedUrl: url }];
-// 		} else if (contentType && isJson(contentType)) {
+// 		} else if (contentType && onson(contentType)) {
 // 			// console.log('JSON Found - right now only XML is supported');
 // 			const item = await parseXMLOrJSON(body, 'json');
 // 			return [{ ...item, feedUrl: url }];
