@@ -24,6 +24,7 @@
 	import { highlightText } from '$lib/annotator/highlighter';
 	import { notifications } from '$lib/stores/notifications';
 	import { TargetSchema, TextQuoteSelectorSchema } from '$lib/types/schemas/Annotations';
+	import { page } from '$app/stores';
 	export let articleID: number;
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
@@ -266,7 +267,7 @@
 		if (!userSelection || userSelection.collapsed) return;
 		return await describeTextQuote(userSelection);
 	}
-	async function highlightSelectorTarget(textQuoteSelector: TextQuoteSelector) {
+	async function highlightSelectorTarget(textQuoteSelector: TextQuoteSelector, id?: number) {
 		const matches = createTextQuoteSelectorMatcher(textQuoteSelector)(document.body);
 
 		// Modifying the DOM while searching can mess up; see issue #112.
@@ -276,7 +277,11 @@
 
 		// const uuid = uuidv4();
 		// return array of functions that will remove the highlight
-		return matchList.map((match) => highlightText(match));
+		return matchList.map((match) =>
+			highlightText(match, 'mark', {
+				id: `annotation-${id?.toString()}` || ''
+			})
+		);
 		for (const match of matchList) {
 			highlightText(match, 'mark', {
 				// 'data-uuid': uuid
@@ -292,10 +297,22 @@
 			for (const annotation of annotations) {
 				try {
 					const target = TargetSchema.parse(annotation.target);
-					highlightSelectorTarget(target.selector);
+					highlightSelectorTarget(target.selector, annotation.id);
 				} catch (e) {
 					console.error(e);
 				}
+			}
+			// TODO: eventually this will be ssr-d so we'll be able to go to annotation without js, just a #annotation-{ID} link
+			const a = $page.url.searchParams.get('a');
+			if (a && wrapper) {
+				console.log('a', a);
+				// go to the annotation
+				setTimeout(() => {
+					const el = wrapper.querySelector(`#annotation-${a}`);
+					el?.scrollIntoView({
+						block: 'center'
+					});
+				}, 0);
 			}
 
 			const links = Array.from(wrapper.querySelectorAll('a'));
@@ -391,7 +408,7 @@
 <style lang="postcss">
 	:global(mark) {
 		cursor: pointer;
-		@apply rounded-sm border-b-2 border-yellow-400 bg-yellow-200;
+		@apply scroll-mt-24 rounded-sm border-b-2 border-yellow-400 bg-yellow-200;
 		/* maybe broder should just be applied if there's an annotation attached */
 	}
 	:global(.dark mark) {

@@ -4,6 +4,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 export const GET: RequestHandler = async ({ params, url }) => {
 	const { id } = params;
 	console.log(`fetching article with id ${id}`);
+
 	const article = await db.article.findFirst({
 		where: {
 			id: parseInt(id as string)
@@ -39,7 +40,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	}
 };
 
-export const PATCH: RequestHandler = async ({ params, request, locals }) => {
+export const PATCH: RequestHandler = async ({ params, request, locals, url }) => {
 	const { id } = params;
 	console.log('patch', id);
 	console.log(request.headers.get('content-type'));

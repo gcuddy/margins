@@ -13,8 +13,8 @@ export const notebookFilter = writable<NotebookFilter>(NotebookFilter.All);
 export const filteredNotebookArticles = derived(
 	[notebookArticles, notebookSearch, notebookFilter],
 	([$notebookArticles, $notebookSearch, $notebookFilter]) => {
-		console.log('filtering', $notebookArticles, $notebookSearch, $notebookFilter);
-		console.log('filtering', $notebookSearch);
+		// console.log('filtering', $notebookArticles, $notebookSearch, $notebookFilter);
+		// console.log('filtering', $notebookSearch);
 		const accordingtoFilter = (article: ArticleWithNotesAndTagsAndContext) => {
 			switch ($notebookFilter) {
 				case NotebookFilter.All:
@@ -28,7 +28,7 @@ export const filteredNotebookArticles = derived(
 					return true;
 			}
 		};
-		console.log('hello');
+		// console.log('hello');
 		const filtered = $notebookArticles
 			.filter(
 				({ title, author, url }) =>
