@@ -18,9 +18,17 @@
 	import HighlightToolTip from '$lib/components/HighlightToolTip.svelte';
 	import { setUpLinkDragHandlers } from './_helpers';
 	import ProseWrapper from '$lib/components/ProseWrapper.svelte';
+	import { mainEl } from '$lib/stores/main';
+	import { createTextQuoteSelectorMatcher, describeTextQuote } from '$lib/annotator';
+	import type { TextQuoteSelector } from '$lib/annotator/types';
+	import { highlightText } from '$lib/annotator/highlighter';
+	import { notifications } from '$lib/stores/notifications';
+	import { TargetSchema, TextQuoteSelectorSchema } from '$lib/types/schemas/Annotations';
 	export let articleID: number;
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
+	console.log({ annotations });
+
 	export let highlights: Highlight[] = [];
 
 	// TODO: add more elements beyond just images, such as videos, iframes, etc.
@@ -66,9 +74,12 @@
 			tooltipVisible = false;
 		}
 		if (validSelection && val.rect) {
-			tooltipTop = val.rect.top + window.scrollY - 36;
+			console.log({ scrollY: window.scrollY, rect: val.rect });
+			console.log({ $mainEl });
+			tooltipTop = val.rect.top + $mainEl.scrollTop - 36;
+			console.log({ tooltipTop });
 			tooltipLeft = val.rect.left + val.rect.width / 2 - 40;
-			annotationTooltip.top = val.rect.top + window.scrollY;
+			annotationTooltip.top = val.rect.top + $mainEl.scrollTop;
 		}
 	});
 
@@ -250,8 +261,43 @@
 
 	const updateHighlightElements = () => highlightElements.set(highlighter.getDoms());
 
+	async function describeCurrentSelection() {
+		const userSelection = window.getSelection()?.getRangeAt(0);
+		if (!userSelection || userSelection.collapsed) return;
+		return await describeTextQuote(userSelection);
+	}
+	async function highlightSelectorTarget(textQuoteSelector: TextQuoteSelector) {
+		const matches = createTextQuoteSelectorMatcher(textQuoteSelector)(document.body);
+
+		// Modifying the DOM while searching can mess up; see issue #112.
+		// Therefore, we first collect all matches before highlighting them.
+		const matchList = [];
+		for await (const match of matches) matchList.push(match);
+
+		// const uuid = uuidv4();
+		// return array of functions that will remove the highlight
+		return matchList.map((match) => highlightText(match));
+		for (const match of matchList) {
+			highlightText(match, 'mark', {
+				// 'data-uuid': uuid
+			});
+		}
+		// return uuid so they can be removed if the highlight fails
+		// return uuid;
+	}
+
 	onMount(async () => {
 		if (browser && wrapper) {
+			// load highlgihts
+			for (const annotation of annotations) {
+				try {
+					const target = TargetSchema.parse(annotation.target);
+					highlightSelectorTarget(target.selector);
+				} catch (e) {
+					console.error(e);
+				}
+			}
+
 			const links = Array.from(wrapper.querySelectorAll('a'));
 			setUpLinkDragHandlers(links, { url: articleUrl, id: articleID });
 		}
@@ -284,11 +330,50 @@
 {#if tooltipVisible}
 	<Tooltip
 		visibility={validSelection ? 'visible' : 'hidden'}
-		top={tooltipTop}
-		left={tooltipLeft}
 		rect={$selection.rect}
+		container={$mainEl}
 	>
-		<HighlightToolTip on:annotate={createAnnotation} />
+		<HighlightToolTip
+			labels={true}
+			on:annotate={createAnnotation}
+			on:highlight={async () => {
+				const userSelection = window.getSelection()?.getRangeAt(0);
+				console.log({ userSelection });
+				if (!userSelection || userSelection.collapsed) return;
+				const selector = await describeTextQuote(userSelection);
+				console.log({ selector });
+				const removeHighlights = await highlightSelectorTarget(selector);
+				window.getSelection()?.removeAllRanges();
+				// todo: add pending state so that the highlight gets removed if it fails
+
+				const res = await fetch('/annotations', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						// jfc let's fix this
+						articleId: articleID,
+						target: {
+							source: articleUrl,
+							selector
+						}
+					})
+				});
+				if (res.ok) {
+					notifications.notify({
+						type: 'success',
+						message: 'Highlight created!'
+					});
+				} else {
+					notifications.notify({
+						type: 'error',
+						message: 'Highlight failed!'
+					});
+					removeHighlights.forEach((removeHighlight) => removeHighlight());
+				}
+			}}
+		/>
 	</Tooltip>
 {/if}
 {#if highlightMenu}
@@ -304,12 +389,12 @@
 {/if}
 
 <style lang="postcss">
-	:global(mark[data-uuid]) {
+	:global(mark) {
 		cursor: pointer;
 		@apply rounded-sm border-b-2 border-yellow-400 bg-yellow-200;
 		/* maybe broder should just be applied if there's an annotation attached */
 	}
-	:global(.dark mark[data-uuid]) {
+	:global(.dark mark) {
 		@apply bg-yellow-200/20 text-amber-200;
 	}
 </style>

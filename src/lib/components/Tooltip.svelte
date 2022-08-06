@@ -1,26 +1,41 @@
 <script lang="ts">
 	import { clickOutside } from '$lib/actions/clickOutside';
+	import mq from '$lib/stores/mq';
 	import { createEventDispatcher } from 'svelte';
 
 	import { scale, fade } from 'svelte/transition';
-	export let top: number;
-	export let left: number;
+	export let top: number = 0;
+	export let left: number = 0;
 	export let visibility: 'hidden' | 'visible' = 'hidden';
 
 	// alternatively, provide a DOMRect to attach to instead of top/left
 	export let rect: DOMRect | null = null;
+	// if you do that you should also provide a container:
+	export let container: HTMLElement | Window = window;
 	let tooltip: HTMLDivElement;
 	$: if (rect) {
-		console.log({ rect, scroll: window.scrollY });
+		console.log({ rect });
 		if (tooltip) {
-			top = rect.top + window.scrollY - tooltip.offsetHeight - 10;
+			top =
+				rect.top +
+				(container instanceof HTMLElement ? container.scrollTop : container.scrollY) -
+				tooltip.offsetHeight -
+				13;
+			if (container instanceof HTMLElement) {
+				left = rect.left + rect.width / 2 - container.offsetLeft - tooltip.offsetWidth / 2;
+			} else {
+				left = rect.left;
+			}
+			console.log({ top, left });
 		}
 	}
 	const dispatch = createEventDispatcher();
+
+	$: console.log({ $mq });
 </script>
 
 <div
-	class="overflow-hidden rounded-lg bg-white shadow-md dark:bg-black/90"
+	class="absolute z-10 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/5 dark:bg-black/90"
 	style="top: {top}px; left: {left}px; visibility: {visibility};"
 	bind:this={tooltip}
 	in:scale={{
@@ -37,8 +52,8 @@
 
 <style>
 	div {
-		position: absolute;
-		z-index: 9;
+		/* position: absolute;
+		z-index: 9; */
 		/* background-color: rgba(0, 0, 0, 0.5); */
 		/* padding: 10px; */
 	}

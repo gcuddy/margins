@@ -79,20 +79,19 @@ model List {
 }
 
 model ListItem {
-  id           Int         @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   listId       Int
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  articleId    Int?        @unique
-  bookmarkId   Int?        @unique
-  highlightId  String?     @unique
-  annotationId Int?        @unique
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  articleId    Int?       @unique
+  bookmarkId   Int?       @unique
+  highlightId  String?    @unique
+  annotationId Int?       @unique
   type         String
-  annotation   Annotation? @relation(fields: [annotationId], references: [id])
-  article      Article?    @relation(fields: [articleId], references: [id])
-  bookmark     Bookmark?   @relation(fields: [bookmarkId], references: [id])
-  highlight    Highlight?  @relation(fields: [highlightId], references: [id])
-  list         List        @relation(fields: [listId], references: [id])
+  article      Article?   @relation(fields: [articleId], references: [id])
+  bookmark     Bookmark?  @relation(fields: [bookmarkId], references: [id])
+  highlight    Highlight? @relation(fields: [highlightId], references: [id])
+  list         List       @relation(fields: [listId], references: [id])
 }
 
 model Media {
@@ -107,20 +106,19 @@ model Media {
 }
 
 model Highlight {
-  id            String      @id @default(cuid())
+  id            String    @id @default(cuid())
   articleId     Int
   nonTextNodes  String?
   text          String
   sanitizedHtml String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  flagged       Boolean     @default(false)
-  startMetaId   Int         @unique
-  endMetaId     Int         @unique
-  article       Article     @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  endMeta       DomMeta     @relation("endMeta", fields: [endMetaId], references: [id])
-  startMeta     DomMeta     @relation("startMeta", fields: [startMetaId], references: [id])
-  annotation    Annotation?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  flagged       Boolean   @default(false)
+  startMetaId   Int       @unique
+  endMetaId     Int       @unique
+  article       Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  endMeta       DomMeta   @relation("endMeta", fields: [endMetaId], references: [id])
+  startMeta     DomMeta   @relation("startMeta", fields: [startMetaId], references: [id])
   ListItem      ListItem?
 }
 
@@ -134,17 +132,15 @@ model DomMeta {
 }
 
 model Annotation {
-  id          Int        @id @default(autoincrement())
-  target      String
-  body        String?
-  createdAt   DateTime   @default(now())
-  pos         String?
-  updatedAt   DateTime   @updatedAt
-  flagged     Boolean    @default(false)
-  highlightId String?    @unique
-  Highlight   Highlight? @relation(fields: [highlightId], references: [id], onDelete: Cascade)
-  article     Article    @relation(fields: [target], references: [url])
-  ListItem    ListItem?
+  id        Int      @id @default(autoincrement())
+  target    Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
+  body      String? // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
+  //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  flagged   Boolean  @default(false)
+  articleId Int
+  article   Article  @relation(fields: [articleId], references: [id])
 }
 
 model RssFeed {
@@ -244,12 +240,50 @@ model SmartList {
   conditions SmartListCondition[]
 }
 
+model Target {
+  id         Int       @id @default(autoincrement())
+  source     String
+  selector   Selector? @relation(fields: [selectorId], references: [id])
+  selectorId Int       @unique
+}
+
 model Selector {
-  id            Int            @id @default(autoincrement())
-  value         String
-  type          String
-  endSelector   RangeSelector? @relation("end")
-  startSelector RangeSelector? @relation("start")
+  id   Int    @id @default(autoincrement())
+  type String // one of: TextQuoteSelector, TextPositionSelector, cssSelector, rangeselector, etc. (would use enum but they cause problems. zod/middleware will help us out)
+
+  target Target?
+
+  // TEXTQUOTESELECTOR (use zod/middleware to enforce this)
+  exact  String? //* actually required
+  prefix String?
+  suffix String?
+
+  // text position slector (all required)
+  start Int?
+  end   Int?
+
+  // css selector (if type === 'cssSelector', this is required)
+  value String?
+
+  //range selector
+  // startSelectorId Int?
+  // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
+  // endSelectorId   Int?
+  // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
+
+  // A selector can be refined by another selector
+  refinedById Int?      @unique
+  refinedBy   Selector? @relation("refinedBy", fields: [refinedById], references: [id])
+  refines     Selector? @relation("refinedBy")
+
+  //range selector
+  // startSelectorId Int?
+  // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
+  // endSelectorId   Int?
+  // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
+
+  // refinedBySelectorId Int?
+  // refinedBy Selector? @relation("refinedBy", fields: [refinedBySelectorId], references: [id])
 }
 
 model TextPositionSelector {
@@ -262,30 +296,32 @@ model TextPositionSelector {
 model TextQuoteSelector {
   id               Int                @id @default(autoincrement())
   exact            String
-  prefix           String
-  suffix           String
+  prefix           String?
+  suffix           String?
   type             String             @default("TextQuoteSelector")
   AnnotationTarget AnnotationTarget[]
 }
 
-model RangeSelector {
-  id               Int                @id @default(autoincrement())
-  startSelectorId  Int                @unique
-  endSelectorId    Int                @unique
-  textOffset       Int
-  endSelector      Selector           @relation("end", fields: [endSelectorId], references: [id], map: "end_selector")
-  startSelector    Selector           @relation("start", fields: [startSelectorId], references: [id], map: "start_selector")
-  AnnotationTarget AnnotationTarget[]
-}
+// model RangeSelector {
+//   id               Int                @id @default(autoincrement())
+//   startSelectorId  Int                @unique
+//   endSelectorId    Int                @unique
+//   textOffset       Int
+//   endSelector      Selector           @relation("end", fields: [endSelectorId], references: [id], map: "end_selector")
+//   startSelector    Selector           @relation("start", fields: [startSelectorId], references: [id], map: "start_selector")
+//   AnnotationTarget AnnotationTarget[]
+// }
 
 model AnnotationTarget {
-  id                     Int                  @id @default(autoincrement())
-  rangeSelectorId        Int
-  textPositionSelectorId Int
+  id                     Int                   @id @default(autoincrement())
+  source                 String
+  selectors              Json
+  rangeSelectorId        Int?
+  textPositionSelectorId Int?
   textQuoteSelectorId    Int
-  rangeSelector          RangeSelector        @relation(fields: [rangeSelectorId], references: [id])
-  textPosition           TextPositionSelector @relation(fields: [textPositionSelectorId], references: [id])
-  textQuote              TextQuoteSelector    @relation(fields: [textQuoteSelectorId], references: [id])
+  // rangeSelector          RangeSelector?        @relation(fields: [rangeSelectorId], references: [id])
+  textPosition           TextPositionSelector? @relation(fields: [textPositionSelectorId], references: [id])
+  textQuote              TextQuoteSelector     @relation(fields: [textQuoteSelectorId], references: [id])
   Highlight2             Highlight2[]
 }
 

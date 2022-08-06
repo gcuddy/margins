@@ -40,7 +40,7 @@
 				/>
 				<div class="space-y-1">
 					{#if title}
-						<span class="text-sm font-medium text-gray-800">{title}</span>
+						<span class="text-sm font-medium text-gray-800 dark:text-gray-200">{title}</span>
 					{/if}
 					{#if typeof message === 'string'}
 						<p>{@html message}</p>
