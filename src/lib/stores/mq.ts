@@ -24,7 +24,7 @@ function calculateMedia(mqls) {
 
 export default readable({}, (set) => {
 	if (!browser) return;
-	const mqls = {};
+	const mqls: Partial<typeof queries> = {};
 	const onChange = () => set(calculateMedia(mqls));
 
 	if (browser) {
