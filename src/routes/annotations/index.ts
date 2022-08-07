@@ -19,7 +19,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		return {
 			status: 200,
 			body: {
-				annotation: createdAnnotation
+				id: createdAnnotation.id
 			}
 		};
 	} catch (e) {
