@@ -43,7 +43,7 @@
 						<span class="text-sm font-medium text-gray-800 dark:text-gray-200">{title}</span>
 					{/if}
 					{#if typeof message === 'string'}
-						<p>{@html message}</p>
+						<div>{@html message}</div>
 					{:else}
 						<svelte:component this={message} />
 					{/if}
@@ -54,6 +54,12 @@
 					{/if}
 				</div>
 			</div>
+			<button
+				class="absolute top-1 right-1 cursor-default"
+				on:click={() => notifications.remove(id)}
+			>
+				<Icon name="xSolid" className="h-4 w-4 fill-current" />
+			</button>
 		</div>
 	{/each}
 </div>
