@@ -35,7 +35,7 @@
 				modals.close();
 				response.json().then(({ article }) => {
 					notifications.notify({
-						message: `<a href='/${article.id}'>${article.title}</a> <span class="text-gray-600">added to your inbox</span>`,
+						message: `<a href='/${article.id}'>${article.title}</a> <span class="text-gray-600 dark:text-gray-400">added to your inbox</span>`,
 						title: 'Article added',
 						link: {
 							href: `/${article.id}`,
