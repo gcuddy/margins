@@ -6,12 +6,14 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	const json = await request.json();
 
 	if (id && json) {
+		console.log({ json });
 		const article = await db.article.update({
 			where: {
 				id: parseInt(id)
 			},
 			data: { ...json }
 		});
+		console.log(`updated article ${article.id}`);
 		return {
 			status: 303,
 			headers: {
