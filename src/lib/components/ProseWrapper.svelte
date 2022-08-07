@@ -14,7 +14,7 @@
 	bind:this={el}
 	on:click
 	class="prose prose-stone mx-auto block break-words font-serif transition prose-a:transition  hover:prose-a:text-primary-700 prose-figure:drop-shadow-sm prose-figcaption:mx-auto  prose-figcaption:max-w-sm prose-figcaption:text-center prose-img:mx-auto  prose-img:rounded dark:prose-invert  {breakpoints
-		? 'md:prose-lg lg:prose-xl'
+		? 'sm:prose-lg lg:prose-xl'
 		: ''} {className}"
 	{style}
 >
