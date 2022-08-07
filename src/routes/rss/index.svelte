@@ -57,16 +57,26 @@
 <div class="grid-cols-12 overflow-auto lg:grid">
 	<div class="col-span-3">
 		<ul>
-			<li><a href="/rss?filter=all">All</a></li>
-			<li><a href="/rss?filter=unread">Unread</a></li>
+			<li
+				class="hidden h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:flex md:px-6"
+			>
+				<a href="/rss?filter=all">All</a>
+			</li>
+			<li
+				class="hidden h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:flex md:px-6"
+			>
+				<a href="/rss?filter=unread">Unread</a>
+			</li>
 			{#each feeds as feed (feed.id)}
-				<li>
+				<li
+					class="flex h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
+				>
 					<a href="/rss/{feed.id}">{feed.title}</a>
 				</li>
 			{/each}
 		</ul>
 	</div>
-	<div class="col-span-3 overflow-auto">
+	<div class="col-span-3 hidden overflow-auto md:block">
 		<KeyboardNav changeActiveOnHover={false} bind:activeIndex>
 			<ul>
 				{#each sortedItems as item, index (item.id)}
@@ -96,7 +106,7 @@
 			</ul>
 		</KeyboardNav>
 	</div>
-	<div class="col-span-6 overflow-auto">
+	<div class="col-span-6 hidden overflow-auto md:block">
 		{#if activeItem}
 			<!-- TODO: fix this type as well -->
 			<RssItem bind:item={activeItem} />
