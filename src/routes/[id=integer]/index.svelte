@@ -18,6 +18,7 @@
 	import useArticleCommands from './_commands';
 	import { recents } from '$lib/stores/recents';
 	import H1 from '$lib/components/atoms/H1.svelte';
+	import { mainEl, mainElScroll } from '$lib/stores/main';
 	dayjs.extend(localizedFormat);
 
 	export let article: ArticleWithNotesAndTagsAndContext;
@@ -31,17 +32,21 @@
 	onMount(async () => {
 		recents.addRecentArticle(article);
 		if (!browser) return;
-		const pos = article.readProgress * (document.body.scrollHeight - window.innerHeight);
+		console.log({ readProgress: article.readProgress });
+		const pos = article.readProgress * ($mainEl.scrollHeight - window.innerHeight);
+		console.log({ pos });
+		console.log(`scrolling to ${pos}`);
 		setTimeout(() => {
-			window.scrollTo(0, pos);
+			$mainEl.scrollTo(0, pos);
 		}, 0);
 		// add commands
 	});
 
-	const saveProgress = (data: number) => {
+	const saveProgress = async (data: number) => {
 		if ($navigating) return;
 		if (disableSaveScroll) return;
-		fetch(`/api/update/${article.id}`, {
+		console.log(`saving progress: ${data}`);
+		await fetch(`/api/update/${article.id}`, {
 			method: 'PATCH',
 			headers: {
 				'Content-Type': 'application/json'
@@ -58,7 +63,7 @@
 		leading: true,
 		trailing: true
 	});
-	const unsubscribeScrollY = scrollY.subscribe(({ offset }) => {
+	const unsubscribeScrollY = mainElScroll.subscribe(({ offset }) => {
 		console.log({ offset });
 		if (browser) {
 			// only save if the scroll position has changed by more than .05
@@ -150,7 +155,7 @@
 			>
 				{@html article.content}
 			</Highlighter>
-			{#if $scrollY.offset > 0.97 && article.location !== 'ARCHIVE'}
+			{#if $mainElScroll.offset > 0.97 && article.location !== 'ARCHIVE'}
 				<div class="fixed bottom-8 right-8" transition:fade>
 					<button on:click={() => archive([article.id], '/')}>Archive article</button>
 				</div>
