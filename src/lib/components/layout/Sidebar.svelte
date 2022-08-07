@@ -47,12 +47,12 @@
 
 	// TODO: un hard code this
 	// sidebar-offset -> hard coding this for now because i can't think of another way
-	// const left = tweened(-300, {
-	// 	duration: 150
-	// });
-	const left = spring(-300, {
-		damping: 0.6
+	const left = tweened(-300, {
+		duration: 150
 	});
+	// const left = spring(-300, {
+	// 	damping: 0.6
+	// });
 	let sidebarToggle = false;
 
 	const closeSidebar = () => {
@@ -92,7 +92,7 @@
 <nav
 	on:click={handleClick}
 	style="left: {$left}px;"
-	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-opacity dark:border-gray-750 dark:bg-gray-850 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none lg:dark:bg-gray-800"
+	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-opacity dark:border-gray-700 dark:bg-gray-900 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none"
 >
 	<!-- Flexbox: set width -->
 	<!-- <nav
