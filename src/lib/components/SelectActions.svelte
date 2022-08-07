@@ -5,27 +5,29 @@
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
 	import { fadeScale, gentleFly } from '$lib/transitions';
 
-	import { bulkEditArticles } from '$lib/utils';
+	import { archive, bulkEditArticles } from '$lib/utils';
 	import type { Article } from '@prisma/client';
 	import { tick } from 'svelte';
 	import { cubicOut, quintOut } from 'svelte/easing';
 	import Button from './Button.svelte';
+	import Form from './Form.svelte';
+	import Icon from './helpers/Icon.svelte';
 	export let articles: Article[] = [];
-	async function archive() {
-		articles = articles.map((article) => {
-			if ($selectedArticleIds.includes(article.id)) {
-				article.location = `ARCHIVE`;
-			}
-			return article;
-		});
-		const data = await bulkEditArticles($selectedArticleIds, {
-			location: 'ARCHIVE'
-		});
-		// TODO: possibly make into a form to avoid this invalidate / nonsense (using it causes a reload to update state)
-		invalidate('/');
-		console.log({ data });
-		$selectedArticleIds = [];
-	}
+	// async function archive() {
+	// 	articles = articles.map((article) => {
+	// 		if ($selectedArticleIds.includes(article.id)) {
+	// 			article.location = `ARCHIVE`;
+	// 		}
+	// 		return article;
+	// 	});
+	// 	const data = await bulkEditArticles($selectedArticleIds, {
+	// 		location: 'ARCHIVE'
+	// 	});
+	// 	// TODO: possibly make into a form to avoid this invalidate / nonsense (using it causes a reload to update state)
+	// 	invalidate('/');
+	// 	console.log({ data });
+	// 	$selectedArticleIds = [];
+	// }
 	const clear = () => ($selectedArticleIds = []);
 	function handleKeydown(e: KeyboardEvent) {
 		if ($disableGlobalKeyboardShortcuts) return;
@@ -53,14 +55,24 @@
 		class="pointer-events-none fixed inset-x-0 bottom-9 z-10 flex justify-center"
 	>
 		<div
-			class="pointer-events-auto flex h-11 flex-row items-center justify-center space-x-4 rounded-lg bg-gray-50 from-gray-700 to-gray-750 px-4 shadow-2xl ring ring-black/5 dark:bg-gradient-to-b"
+			class="pointer-events-auto flex h-11 flex-row items-center justify-center space-x-4 rounded-lg bg-gray-50 px-4 shadow-2xl ring ring-black/5 dark:bg-gray-700 dark:bg-gradient-to-b"
 		>
-			<span class="text-sm text-gray-400 dark:text-gray-300"
+			<span class="text-sm text-gray-400 dark:text-gray-300 lg:text-base"
 				>{$selectedArticleIds.length} selected</span
 			>
 			<div class="flex space-x-4">
-				<Button variant="ghost">Move</Button>
-				<Button variant="ghost">Tag</Button>
+				<!-- <Button variant="ghost"> Move</Button> -->
+				<Button
+					variant="ghost"
+					className="space-x-2 flex items-center lg:text-base"
+					on:click={async () => {
+						await archive($selectedArticleIds, null, '/', true);
+					}}
+					on:click={() => ($selectedArticleIds = [])}
+					><Icon name="archiveSolid" className="h-4 w-4 fill-current" />
+					<span class="font-medium">Archive</span></Button
+				>
+				<Button variant="ghost" className="lg:text-base">Tag</Button>
 			</div>
 		</div>
 	</div>
