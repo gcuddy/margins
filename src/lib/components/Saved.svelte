@@ -34,6 +34,7 @@
 	import KeyboardNav from './helpers/KeyboardNav/KeyboardNav.svelte';
 	import KeyboardNavItem from './helpers/KeyboardNav/KeyboardNavItem.svelte';
 	import { currentItems, filteredItems, filterInputActive, filterTerm } from '$lib/stores/filter';
+	import AnnotationCount from './AnnotationCount.svelte';
 	dayjs.extend(localizedFormat);
 	let focused = -1;
 	let dragDisabled = true;
@@ -103,10 +104,10 @@
 			/> -->
 
 			<div
-				class="flex h-full flex-col justify-center border-b border-gray-100 px-6 transition dark:border-gray-750  {$selectedArticleIds.includes(
+				class="flex h-full flex-col justify-center border-b border-gray-100 px-6 transition dark:border-gray-700  {$selectedArticleIds.includes(
 					item.id
 				)
-					? 'dark:bg-gray-850'
+					? 'dark:bg-gray-900'
 					: 'dark:bg-gray-800 '}"
 				on:mouseenter={() => (hovering = true)}
 				on:mouseleave={() => (hovering = false)}
@@ -158,8 +159,16 @@
 					</div>
 					<!-- is this necessary? -->
 					<Spacer />
+
+					<!-- TODO: add type -->
+					{#if item['_count'].annotations}
+						<AnnotationCount count={item['_count'].annotations} />
+					{/if}
+
 					{#if item.tags?.length}
-						<TagCloud tags={item.tags} />
+						<div class="hidden sm:flex">
+							<TagCloud tags={item.tags} />
+						</div>
 					{/if}
 
 					<div class="flex shrink-0 basis-auto items-center gap-4">
