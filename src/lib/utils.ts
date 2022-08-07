@@ -51,9 +51,9 @@ export function patch(endpoint: string, data: any, notification?: string | INoti
 
 export function bulkEditArticles(ids: number[], data: Prisma.ArticleUpdateInput) {
 	const endpoint = '/api/bulk';
-	return patch('/api/bulk', { ids, data }).then((res) => {
+	return patch('/api/bulk', { ids, data }).then((json) => {
 		invalidate(endpoint);
-		return res;
+		return json;
 	});
 }
 
@@ -286,7 +286,7 @@ export function getNthValueOfSet<T>(set: Set<T>, n: number): T | undefined {
  * @param inv the route to invalidate. defaults to go. if that's null, defaults to "/".
  */
 export const archive = async (ids: number[], go: string | null = '/', inv = go, notify = true) => {
-	await bulkEditArticles(ids, {
+	const { articles } = await bulkEditArticles(ids, {
 		location: 'ARCHIVE'
 	});
 	// disable save scroll so we don't save our scroll position anymore
@@ -296,12 +296,18 @@ export const archive = async (ids: number[], go: string | null = '/', inv = go, 
 		goto(go);
 	}
 	if (notify) {
+		const length: number = articles.length;
 		notifications.notify({
-			message: `Article${ids.length > 1 ? 's' : ''} archived`
+			title: `Article${ids.length > 1 ? 's' : ''} archived`,
+			message: `Archived article${length > 1 ? 's' : ''} ${articles
+				.slice(0, 2)
+				.map((a) => '<a href="' + a.id + '" class="font-medium">' + a.title + '</a>')
+				.join(', ')}${length > 3 ? 'and ' + (length - 3) + 'others' : ''}`
 		});
 	}
 };
 
-function isTouchDevice() {
+// note: this isn't foolproof, but it works for our simple needs
+export function isTouchDevice() {
 	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 }
