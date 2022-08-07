@@ -31,7 +31,7 @@
   {variant === 'primary'
 		? 'bg-primary-200 text-primary-900'
 		: // ghost
-		  'dark:hover:bg-gray-750 border border-gray-200  text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-700 dark:text-gray-400'}
+		  'dark:hover:bg-gray-700 border border-gray-200  text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-700 dark:text-gray-400'}
     {active ? '!bg-indigo-200 !text-indigo-900' : ''}
     "
 	href={link ? `/tags/${tag.name}` : undefined}

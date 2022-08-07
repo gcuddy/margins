@@ -159,7 +159,7 @@
 		<div
 			class="absolute {align === 'right' ? 'right-0' : 'left-0'}
         {position === 'top' ? 'bottom-full' : ''}
-        z-50 w-56 origin-top-right overflow-hidden rounded-lg border bg-gradient-to-b from-gray-700 to-gray-750 text-gray-200  shadow-lg focus:outline-none dark:border-gray-600 dark:bg-gray-800"
+        z-50 w-56 origin-top-right overflow-hidden rounded-lg border  text-gray-200  shadow-lg  focus:outline-none dark:border-gray-600 dark:bg-gray-700"
 			role="menu"
 			id="menu-{id}"
 			tabindex="0"

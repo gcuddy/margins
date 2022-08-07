@@ -35,7 +35,7 @@
 	<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
 		<!-- should these "root" classes be customizable? -->
 		<div
-			class="relative z-50 mx-auto max-w-2xl rounded-xl bg-gray-50 font-medium text-gray-900 shadow-2xl ring-1 ring-black/5 dark:bg-gray-750 dark:text-gray-100 {className}"
+			class="relative z-50 mx-auto max-w-2xl rounded-xl bg-gray-50 font-medium text-gray-900 shadow-2xl ring-1 ring-black/5 dark:bg-gray-700 dark:text-gray-100 {className}"
 		>
 			<slot />
 		</div>
