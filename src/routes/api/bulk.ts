@@ -76,7 +76,9 @@ export const PATCH: RequestHandler = async ({ request }) => {
 		);
 		return {
 			status: 200,
-			body: articles
+			body: {
+				articles
+			}
 		};
 	} catch (e) {
 		console.error(e);
