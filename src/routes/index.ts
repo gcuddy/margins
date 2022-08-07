@@ -3,6 +3,7 @@ import { db } from '$lib/db';
 import { reportZodOrPrismaError } from '$lib/api-utils';
 
 export const GET: RequestHandler = async ({ request, url }) => {
+	const take = parseInt(url.searchParams.get('limit') || '20');
 	const articles = await db.article.findMany({
 		// this works since new articles will have dupe'd position of 0, but when re-arranged all will be ok
 		orderBy: [
@@ -30,8 +31,14 @@ export const GET: RequestHandler = async ({ request, url }) => {
 			url: true,
 			siteName: true,
 			id: true,
-			image: true
-		}
+			image: true,
+			_count: {
+				select: {
+					annotations: true
+				}
+			}
+		},
+		take
 	});
 	const tags = articles.flatMap((article) => article.tags);
 	if (articles.length) {
