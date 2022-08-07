@@ -226,7 +226,7 @@
 	};
 
 	const isHighlight = (target: HTMLElement) =>
-		target.dataset && target.dataset.uuid && highlight_uuids.includes(target.dataset.uuid);
+		target.dataset && target.dataset.id && highlight_uuids.includes(target.dataset.id);
 
 	function handleClick(e: MouseEvent) {
 		const target = e.target as HTMLElement;
@@ -406,12 +406,12 @@
 {/if}
 
 <style lang="postcss">
-	:global(mark) {
+	:global(mark[id]) {
 		cursor: pointer;
-		@apply scroll-mt-24 rounded-sm border-b-2 border-yellow-400 bg-yellow-200;
+		@apply animate-saturate-pulse scroll-mt-24 rounded-sm border-b-2 border-yellow-400 bg-yellow-200 p-px dark:border-yellow-500 dark:bg-yellow-900/90 dark:text-amber-50;
 		/* maybe broder should just be applied if there's an annotation attached */
 	}
-	:global(.dark mark) {
+	:global(.dark mark[id]) {
 		@apply bg-yellow-200/20 text-amber-200;
 	}
 </style>
