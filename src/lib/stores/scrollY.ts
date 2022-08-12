@@ -15,7 +15,6 @@ export default readable(
 		let down = false;
 
 		const updateScrollY = () => {
-			console.log(`updateScrollY`);
 			set({
 				y: lastScrollY,
 				offset: lastOffset,

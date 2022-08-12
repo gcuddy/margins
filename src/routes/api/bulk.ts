@@ -8,11 +8,12 @@ import { getJsonFromRequest } from '$lib/utils';
 import type { RequestHandler } from '@sveltejs/kit';
 import { z } from 'zod';
 import dayjs from 'dayjs';
+import { PatchArticleData } from '$lib/types/schemas/Article';
 
 // TODO: add type support for data
 const patchRequest = z.object({
 	ids: z.array(z.number().or(z.string())).nonempty(),
-	data: z.any()
+	data: PatchArticleData
 	// data: ArticleModel
 });
 
@@ -34,7 +35,8 @@ export const POST: RequestHandler = async ({ request }) => {
 				title: article.title || '',
 				author: article.author || '',
 				image: article.image || '',
-				date: dayjs(article.date).isValid() ? dayjs(article.date).format() : dayjs().format()
+				date: dayjs(article.date).isValid() ? dayjs(article.date).format() : dayjs().format(),
+				textContent: article.textContent
 			});
 		}
 
@@ -67,18 +69,13 @@ export const PATCH: RequestHandler = async ({ request }) => {
 					where: {
 						id: Number(id)
 					},
-					data: parsed.data,
-					include: {
-						tags: true
-					}
+					data: parsed.data
 				});
 			})
 		);
+		// does it need to return anything?
 		return {
-			status: 200,
-			body: {
-				articles
-			}
+			status: 200
 		};
 	} catch (e) {
 		console.error(e);

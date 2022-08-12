@@ -23,7 +23,7 @@
 	tabindex="-1"
 	on:click
 	aria-checked={checked}
-	class="{className} {$focus === id ? 'bg-gray-600' : ''}"
+	class="{className} {$focus === id ? 'bg-gray-200 dark:bg-gray-600 ' : ''}"
 	on:mouseenter={() => ($focus = id)}
 >
 	<slot name="icon" />

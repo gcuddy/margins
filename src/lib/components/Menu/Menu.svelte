@@ -159,7 +159,7 @@
 		<div
 			class="absolute {align === 'right' ? 'right-0' : 'left-0'}
         {position === 'top' ? 'bottom-full' : ''}
-        z-50 w-56 origin-top-right overflow-hidden rounded-lg border  text-gray-200  shadow-lg  focus:outline-none dark:border-gray-600 dark:bg-gray-700"
+        z-50 w-56 origin-top-right overflow-hidden rounded-lg border  bg-gray-100/90 text-gray-800 shadow-lg  backdrop-blur-lg focus:outline-none  dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:shadow-2xl dark:shadow-gray-900 dark:backdrop-blur-xl"
 			role="menu"
 			id="menu-{id}"
 			tabindex="0"
@@ -183,14 +183,14 @@
 										{#if typeof menuItem.icon === 'string'}
 											<Icon
 												name={menuItem.icon}
-												className="h-4 w-4 stroke-2 text-gray-300 stroke-current"
+												className="h-4 w-4 stroke-2 stroke-gray-700 text-gray-700"
 											/>
 										{:else}
 											<svelte:component this={menuItem.icon} />
 										{/if}
 									{/if}
 								</svelte:fragment>
-								<span>{menuItem.display}</span>
+								<span class="font-normal">{menuItem.display}</span>
 							</MenuItem>
 						{/each}
 					</MenuItems>

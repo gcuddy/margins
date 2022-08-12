@@ -55,9 +55,9 @@
 			return;
 		}
 
-		// first, for keystrokes, let's make sure we're not in an input field
+		// first, for keystrokes, let's make sure we're not in an input field, or a textarea
 		const activeElement = document.activeElement;
-		if (activeElement instanceof HTMLInputElement) {
+		if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
 			return;
 		}
 

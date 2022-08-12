@@ -1,4 +1,4 @@
-import { isJson, isXml } from 'src/routes/rss/_rss-utils';
+// import { isJson, isXml } from 'src/routes/rss/_rss-utils';
 
 import { XMLParser } from 'fast-xml-parser';
 const parser = new XMLParser({
@@ -51,10 +51,10 @@ function parseAtomFeed(feed: any): Feed {
 			title
 		});
 	}
-  return {
-    title: getText(feed.title),
-    feedUrl: 
-  };
+	// return {
+	//   title: getText(feed.title),
+	//   feedUrl:
+	// };
 }
 
 function parseXml(xml: string) {

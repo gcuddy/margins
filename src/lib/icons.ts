@@ -1857,8 +1857,27 @@ export const icons = {
 		box: '24',
 		svg: `<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>`
+	},
+	column: {
+		box: '24',
+		svg: `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line>`
+	},
+	sidebar: {
+		box: '24',
+		svg: `<path d="M15 4V20M5 21H19C21.2091 21 23 19.2091 23 17V7C23 4.79086 21.2091 3 19 3H5C2.79086 3 1 4.79086 1 7V17C1 19.2091 2.79086 21 5 21Z"/>`
 	}
 };
 
 export type IconName = keyof typeof icons;
 export let name: IconName;
+
+export const makeIconSvg = (name: IconName, size: number, attributes?: Record<string, string>) => {
+	const icon = icons[name];
+	return `<svg width="${size}" height="${size}" viewBox="0 0 ${icon.box} ${icon.box}" ${
+		attributes
+			? Object.entries(attributes)
+					.map(([attr, value]) => attr + '=' + '"' + value + '"')
+					.join(' ')
+			: ''
+	}>${icon.svg}</svg>`;
+};

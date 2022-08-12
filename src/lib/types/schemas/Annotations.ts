@@ -32,15 +32,31 @@ export const TextQuoteSelectorSchema = z.object({
 
 // or other selectors, and make them all refinable by one of the selectors
 
-export const TargetSchema = z.object({
+export const BaseTargetSchema = z.object({
+	source: z.string().url()
+});
+
+// Targets
+export const TextQuoteTarget = z.object({
 	source: z.string(),
 	// should we make this possible to be an array?
 	selector: TextQuoteSelectorSchema
 });
 
-export const annotationSchema = z.object({
-	body: z.string().optional(),
+export const TargetSchema = BaseTargetSchema.or(TextQuoteTarget);
+
+export const Motivation = z.literal('describing').or(z.literal('highlighting'));
+
+export const AnnotationSchema = z.object({
+	body: z.string().optional().nullable(),
+	// optionally can provide ID - then we will upsert
+	id: z.number().optional(),
 	articleId: z.number(),
 	// Todo: abstract this out to a common schema
-	target: TargetSchema
+	target: TargetSchema,
+	motivation: Motivation.nullable().optional()
+});
+
+export const delSchema = z.object({
+	id: z.number()
 });

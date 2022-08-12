@@ -132,15 +132,16 @@ model DomMeta {
 }
 
 model Annotation {
-  id        Int      @id @default(autoincrement())
-  target    Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
-  body      String? // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
+  id         Int      @id @default(autoincrement())
+  target     Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
+  body       String? // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
   //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  flagged   Boolean  @default(false)
-  articleId Int
-  article   Article  @relation(fields: [articleId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  flagged    Boolean  @default(false)
+  motivation String?
+  articleId  Int
+  article    Article  @relation(fields: [articleId], references: [id])
 }
 
 model RssFeed {

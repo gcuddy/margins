@@ -1,5 +1,5 @@
 import { browser } from '$app/env';
-import { derived, readable, writable } from 'svelte/store';
+import { derived, readable, writable, type Readable } from 'svelte/store';
 
 export const mainEl = writable<HTMLElement>();
 
@@ -9,36 +9,46 @@ export const mainElScroll = derived(
 		if (!mainEl) {
 			set({
 				y: 0,
-				offset: 0,
-				down: false
+				offset: 0
 			});
 		}
 		let ticking = false;
 		let lastScrollTop = 0;
 		let lastOffset = 0;
+		let downIncrementer = 0;
+		let upIncrementer = 0;
 		let down = false;
 
 		const updateScrollY = () => {
-			console.log(`updateScrollY`);
-			set({
-				down,
-				offset: lastOffset,
-				y: lastScrollTop
-			});
-			ticking = false;
-		};
-
-		const onScroll = () => {
 			const scrollHeight = $mainEl.scrollHeight - window.innerHeight;
+			console.log({ downIncrementer });
 			if ($mainEl.scrollTop > lastScrollTop) {
-				down = true;
+				//  we do this to only count the scroll down *if* the user is actually scrolling down 10px or more
+				// it seems insane, but it works!!
+				upIncrementer = 0;
+				downIncrementer++;
 			} else {
+				downIncrementer = 0;
+				upIncrementer++;
+			}
+			if (downIncrementer === 10) {
+				down = true;
+			} else if (upIncrementer === 10) {
 				down = false;
 			}
 			lastScrollTop = $mainEl.scrollTop;
 			if (scrollHeight) {
 				lastOffset = lastScrollTop / scrollHeight;
 			}
+			set({
+				offset: lastOffset,
+				y: lastScrollTop,
+				down
+			});
+			ticking = false;
+		};
+
+		const onScroll = () => {
 			if (!ticking) {
 				requestAnimationFrame(updateScrollY);
 				ticking = true;
@@ -57,3 +67,15 @@ export const mainElScroll = derived(
 		down: false
 	}
 );
+
+// export const mainElDown = derived(
+// 	mainElScroll,
+// 	($mainElScroll, set) => {
+// 		let lastScrollY = 0;
+// 		const scrollY = $mainElScroll.y;
+// 		const direction = scrollY > lastScrollY ? true : false;
+// 		set(direction);
+// 		lastScrollY = scrollY > 0 ? scrollY : 0;
+// 	},
+// 	false
+// );

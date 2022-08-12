@@ -6,7 +6,6 @@
 <script lang="ts">
 	import type { Article } from '@prisma/client';
 	import { flip } from 'svelte/animate';
-
 	export let articles: ArticleWithTags[];
 	filterTerm.set('');
 	$: articles, currentItems.setCurrentItems(articles, 'title');
@@ -35,6 +34,7 @@
 	import KeyboardNavItem from './helpers/KeyboardNav/KeyboardNavItem.svelte';
 	import { currentItems, filteredItems, filterInputActive, filterTerm } from '$lib/stores/filter';
 	import AnnotationCount from './AnnotationCount.svelte';
+	import { fade } from 'svelte/transition';
 	dayjs.extend(localizedFormat);
 	let focused = -1;
 	let dragDisabled = true;
@@ -89,7 +89,7 @@
 	on:finalize={handleFinalize}
 >
 	{#each $filteredItems as item, index (item.id)}
-		<li class="h-20 md:h-24">
+		<li in:fade class="h-20  md:h-24">
 			<!-- <SavedItem
 				{item}
 				bind:dragDisabled
@@ -107,8 +107,8 @@
 				class="flex h-full flex-col justify-center border-b border-gray-100 px-6 transition dark:border-gray-700  {$selectedArticleIds.includes(
 					item.id
 				)
-					? 'dark:bg-gray-900'
-					: 'dark:bg-gray-800 '}"
+					? 'bg-gray-200 dark:bg-gray-900'
+					: 'dark:bg-gray-800 bg-transparent '}"
 				on:mouseenter={() => (hovering = true)}
 				on:mouseleave={() => (hovering = false)}
 			>
@@ -161,7 +161,7 @@
 					<Spacer />
 
 					<!-- TODO: add type -->
-					{#if item['_count'].annotations}
+					{#if item['_count']?.annotations}
 						<AnnotationCount count={item['_count'].annotations} />
 					{/if}
 
