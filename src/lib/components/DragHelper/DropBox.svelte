@@ -1,6 +1,7 @@
 <script lang="ts">
 	import dragging from '$lib/stores/dragging';
 	import { notifications } from '$lib/stores/notifications';
+	import { syncStore } from '$lib/stores/sync';
 	import { fade } from 'svelte/transition';
 	import Icon from '../helpers/Icon.svelte';
 	let dragOver = false;
@@ -23,9 +24,11 @@
 		const url = e.dataTransfer?.getData('text/uri-list');
 		console.log({ url });
 		if (url) {
+			const syncId = syncStore.addItem();
 			const contextUrl = e.dataTransfer?.getData('context-url');
 			const contextId = e.dataTransfer?.getData('context-id');
-			submitLink(url, { id: contextId, url: contextUrl });
+			console.log({ contextUrl, contextId });
+			submitLink(url, { id: contextId, url: contextUrl }).then(() => syncStore.removeItem(syncId));
 		}
 		$dragging = false;
 		dropping = false;

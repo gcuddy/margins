@@ -9,7 +9,7 @@ export default (node: HTMLElement, initialFocus?: HTMLElement): ReturnType<Actio
 		if (event.key !== Keys.Tab) return;
 		if (!document.activeElement) return;
 		event.preventDefault();
-		const result = focusIn(node, (event.shiftKey ? Focus.Previous : Focus.Next) | Focus.WrapAround);
+		// const result = focusIn(node, (event.shiftKey ? Focus.Previous : Focus.Next) | Focus.WrapAround);
 		// TODO: use previousactiveElement? maybe make a store that can be passed in?
 		// if (result === FocusResult.Success) {
 

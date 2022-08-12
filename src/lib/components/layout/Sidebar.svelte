@@ -91,8 +91,9 @@
 <!-- TODO: use transforms for this instead -->
 <nav
 	on:click={handleClick}
-	style="left: {$left}px;"
-	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-opacity dark:border-gray-700 dark:bg-gray-900 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none"
+	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {sidebarToggle
+		? 'left-0'
+		: '-left-full'}"
 >
 	<!-- Flexbox: set width -->
 	<!-- <nav
@@ -145,7 +146,7 @@
 
 <style lang="postcss">
 	nav {
-		left: var(--sidebar-offset);
-		@apply lg:left-0;
+		/* left: var(--sidebar-offset);
+		@apply lg:left-0; */
 	}
 </style>

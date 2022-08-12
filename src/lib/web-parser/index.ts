@@ -242,6 +242,7 @@ const Extractor: IExtractor = {
 		meta: [
 			'twitter:title',
 			'og:title',
+			'citation_title',
 			'dc:title',
 			'dcterm:title',
 			'title',
@@ -275,7 +276,8 @@ const Extractor: IExtractor = {
 	author: {
 		meta: [
 			'author',
-			'og:author'
+			'og:author',
+			'citation_author'
 			// TODO: below are meta tags I want to check, but not till I check the selectors. As a sort of fallback. Maybe I should add one more key...
 			// 'dc:creator',
 			// 'dcterm:creator',
@@ -412,7 +414,7 @@ export class Parser {
 		}
 		console.log(`Meta: ${JSON.stringify(this.metadata)}`);
 		if (!this.metadata.description) {
-			this.metadata.description = content.innerText.slice(0, 200);
+			// this.metadata.description = content.innerText.slice(0, 200);
 		}
 		console.timeEnd('parse');
 		return {

@@ -24,7 +24,8 @@ const config = {
 			colors: {
 				light: colors.stone[50],
 				dark: colors.stone[800],
-				primary: colors.amber
+				primary: colors.amber,
+				secondary: colors.lime
 				// 'gray-350': 'rgb(188,188,188)',
 				// 'gray-700': '#333',
 				// 'gray-850': 'rgb(30,30,30)'

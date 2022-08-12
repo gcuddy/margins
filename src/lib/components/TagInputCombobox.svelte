@@ -5,10 +5,19 @@
 	import { getNthValueOfSet } from '$lib/utils';
 	import TagComponent from './Tags/Tag.svelte';
 	import Icon from './helpers/Icon.svelte';
-	import { tick } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { getTags } from '$lib/data/sync';
 	import Form from './Form.svelte';
+	import { syncStore } from '$lib/stores/sync';
+	import { notifications } from '$lib/stores/notifications';
 	export let allTags: Tag[] = [];
+
+	onMount(() => {
+		getTags().then((tags) => {
+			allTags = tags;
+		});
+	});
+
 	export let className = '';
 	console.log({ allTags });
 	export let value = '';
@@ -38,16 +47,24 @@
 	} else {
 		filteredTags = filteredTags.filter((tag) => !tag.special);
 	}
+	// read only
+	export let tags: Tag[] = [];
 
 	// Tag Names must be unique, so we can use a simple Set<string>
 	let selectedTags: Set<string> = new Set();
 	articles
 		.flatMap((article) => article.tags)
-		.map((tag) => tag.name)
+		.map((tag) => tag?.name)
+		.filter((tag) => tag)
 		.forEach((tag) => {
 			console.log({ tag });
 			selectedTags.add(tag);
 		});
+
+	// TODO: this is a very dumb way to do this, FIX IT
+	$: tags = Array.from(selectedTags).map(
+		(tag) => (allTags.find((t) => t.name === tag) as Tag) || { name: tag }
+	);
 
 	let activeTag: string | undefined = undefined;
 	let activeTagIndex: number | undefined = undefined;
@@ -111,10 +128,30 @@
 		}, 0);
 	}
 	let form: HTMLFormElement;
-	export let invalidate = '/api/tags';
+	export let invalidate: string | undefined = '/api/tags';
+
+	let sync_id: string;
 </script>
 
-<Form action="/api/tags" method="post" bind:el={form} {invalidate}>
+<Form
+	action="/api/tags"
+	method="post"
+	bind:el={form}
+	{invalidate}
+	pending={() => {
+		sync_id = syncStore.addItem();
+	}}
+	done={() => {
+		syncStore.removeItem(sync_id);
+	}}
+	error={() => {
+		syncStore.removeItem(sync_id);
+		notifications.notify({
+			message: 'Error',
+			type: 'error'
+		});
+	}}
+>
 	{#each articles as article, index}
 		<!-- todo: useThePlatform, wnot qs, right? -->
 		<input type="hidden" name="ids[]" value={article.id} />
@@ -160,7 +197,7 @@
 				placeholder: `${selectedTags.size ? '' : 'Tags'}`
 			}}
 			options={{
-				class: `absolute z-10 mt-1 ring-1 shadow-xl ring-black/10 bg-gray-700 text-gray-100 text-sm rounded-xl p-2 ${
+				class: `absolute z-10 mt-1 ring-1 shadow-xl ring-black/10 bg-gray-700 text-gray-100 max-h-48 overflow-y-auto text-sm rounded-xl p-2 ${
 					filteredTags.length === 0 ? 'hidden' : ''
 				}`
 			}}

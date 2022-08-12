@@ -22,18 +22,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			}
 		],
 		include: {
-			items: {
-				include: {
-					RssFeed: true
-					// RssFeed: {
-					// 	select: {
-					// 		id: true,
-					// 		link: true,
-					// 		imageUrl: true
-					// 	}
-					// }
-				}
-			}
+			items: true
 		}
 	});
 	console.log({ feeds });
@@ -73,12 +62,18 @@ async function parseFeed(xml: string) {
  * @param url the url of the site to find the feed for
  * @returns XML String of the feed
  */
-async function findFeed(url: string) {
+async function findFeed(url: string): Promise<{
+	xml: string;
+	url: string;
+}> {
 	const response = await fetch(url);
 	const body = await response.text();
 	const contentType = response.headers.get('content-type');
 	if (contentType && isXml(contentType)) {
-		return body;
+		return {
+			xml: body,
+			url
+		};
 	} else {
 		const root = parse(body);
 		const links = root.querySelectorAll(linkSelectors);
@@ -96,7 +91,10 @@ async function findFeed(url: string) {
 		}
 		href = resolveUrl(url, href);
 		console.log({ href });
-		return fetch(href).then((res) => res.text());
+		return {
+			xml: await fetch(href).then((res) => res.text()),
+			url: href
+		};
 	}
 }
 
@@ -107,14 +105,14 @@ export const POST: RequestHandler = async ({ request }) => {
 		const url = zUrl.parse(json.url);
 		console.log({ url });
 		// TODO: build my own parser
-		const xml = await findFeed(url);
+		const { xml, url: feedUrl } = await findFeed(url);
 		const parsedFeed = await parseFeed(xml);
 		parsedFeed.items[0];
 		console.log({ parsedFeed });
 		const createdFeed = await db.rssFeed.create({
 			data: {
 				title: parsedFeed.title,
-				feedUrl: parsedFeed.feedUrl as string,
+				feedUrl,
 				link: parsedFeed.link,
 				description: parsedFeed.description,
 				imageUrl: parsedFeed.image?.url,

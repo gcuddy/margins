@@ -48,16 +48,35 @@ import { ownerDocument, toRange } from '../utils';
 export function highlightText(
 	target: Node | Range,
 	tagName = 'mark',
-	attributes: Record<string, string> = {}
-): () => void {
+	attributes: Record<
+		string,
+		| string
+		| {
+				string: string;
+				first: boolean;
+		  }
+	> = {},
+	annotation?: HTMLElement
+): {
+	highlightElements: HTMLElement[];
+	removeHighlights: () => void;
+} {
 	// First put all nodes in an array (splits start and end nodes if needed)
 	const nodes = textNodesInRange(toRange(target));
 
 	// Highlight each node
 	const highlightElements: HTMLElement[] = [];
+	let nodeIndex = 0;
 	for (const node of nodes) {
-		const highlightElement = wrapNodeInHighlight(node, tagName, attributes);
+		const highlightElement = wrapNodeInHighlight(node, tagName, attributes, nodeIndex);
 		highlightElements.push(highlightElement);
+		nodeIndex++;
+	}
+
+	// If it's an annotation, append a little annotation el after the last highlight element
+	if (annotation) {
+		const lastHighlightElement = highlightElements[highlightElements.length - 1];
+		lastHighlightElement.after(annotation);
 	}
 
 	// Return a function that cleans up the highlightElements.
@@ -67,7 +86,10 @@ export function highlightText(
 			removeHighlight(highlightElement);
 		}
 	}
-	return removeHighlights;
+	return {
+		removeHighlights,
+		highlightElements
+	};
 }
 
 // Return an array of the text nodes in the range. Split the start and end nodes if required.
@@ -122,12 +144,30 @@ function textNodesInRange(range: Range): Text[] {
 function wrapNodeInHighlight(
 	node: ChildNode,
 	tagName: string,
-	attributes: Record<string, string>
+	attributes: Record<
+		string,
+		| string
+		| {
+				string: string;
+				first: boolean;
+		  }
+	>,
+	index: number
 ): HTMLElement {
 	const document = node.ownerDocument as Document;
 	const highlightElement = document.createElement(tagName);
 	Object.keys(attributes).forEach((key) => {
-		highlightElement.setAttribute(key, attributes[key]);
+		const value = attributes[key];
+		if (typeof value === 'string') {
+			highlightElement.setAttribute(key, value);
+		} else {
+			const { string, first } = value;
+			if (first && index === 0) {
+				highlightElement.setAttribute(key, string);
+			} else {
+				highlightElement.setAttribute(key, string + '-' + index);
+			}
+		}
 	});
 	const tempRange = document.createRange();
 	tempRange.selectNode(node);

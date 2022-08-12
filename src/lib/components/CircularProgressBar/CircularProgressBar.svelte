@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { icons } from '$lib/icons';
+
 	import {
 		VIEWBOX_WIDTH,
 		VIEWBOX_HEIGHT,
@@ -21,6 +23,10 @@
 	export let trailClass = '';
 	export let pathClass = '';
 	export let counterClockwise = false;
+
+	// displays checkmark when finished
+	export let checkMark = true;
+
 	export let className = '';
 	export let maxValue = 100;
 	export let minValue = 0;
@@ -74,7 +80,12 @@
 
 <!-- TODO: add aria https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/progressbar_role -->
 
-<div aria-valuemin={minValue} aria-valuemax={maxValue} aria-valuenow={value}>
+<div
+	aria-valuemin={minValue}
+	aria-valuemax={maxValue}
+	aria-valuenow={value}
+	class="inline-flex items-center"
+>
 	<svg
 		class={classes.root + className}
 		{style}

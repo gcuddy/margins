@@ -1,6 +1,6 @@
 import { browser } from '$app/env';
 import type { Command } from '$lib/components/CommandPalette/types';
-import { lastKey } from '$lib/stores/keyboard';
+import { disableGlobalKeyboardShortcuts, lastKey } from '$lib/stores/keyboard';
 import { commandStore } from '$lib/stores/commands';
 import { modifiers, type Modifier } from '$lib/types/keyboard';
 import type { ShortcutKey } from '$lib/types/keyboard';
@@ -22,11 +22,9 @@ function handleModifiers(e: KeyboardEvent, key: ShortcutKey[]) {
 		}
 		return false;
 	});
-	console.log({ check });
 	if (check) {
 		// now check if the key hit is correct
 		const keyToLookFor = key.find((k) => !modifiers.includes(k as Modifier));
-		console.log({ keyToLookFor, e });
 		if (e.key.toLowerCase() === keyToLookFor?.toLowerCase()) {
 			return true;
 		}
@@ -37,10 +35,17 @@ function handleModifiers(e: KeyboardEvent, key: ShortcutKey[]) {
 // adds commands to command store, sets up their keyboard shortcuts and returns a function to remove them and reset the keyboard shortcuts
 export function useCommands(commands: Command[], top = true) {
 	let last = '';
+	let $disableGlobalKeyboardShortcuts = false;
 
 	const unsubscribeLastKey = lastKey.subscribe((val) => {
 		last = val;
 	});
+
+	const unsubscribeDisableGlobalKeyboardShortcuts = disableGlobalKeyboardShortcuts.subscribe(
+		(val) => {
+			$disableGlobalKeyboardShortcuts = val;
+		}
+	);
 
 	commands.forEach((c) => {
 		commandStore.add(c, top);
@@ -58,6 +63,10 @@ export function useCommands(commands: Command[], top = true) {
 	});
 
 	function useKeyboardShortcuts(e: KeyboardEvent) {
+		if ($disableGlobalKeyboardShortcuts) return;
+		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+			return;
+		}
 		// listen for combos
 		for (const [key, command] of shortcutMap.entries()) {
 			if (key[0] === last && e.key === key[1]) {
@@ -69,7 +78,6 @@ export function useCommands(commands: Command[], top = true) {
 			}
 			// handle modifiers
 			if (handleModifiers(e, key)) {
-				console.log('handleModifiers is true');
 				e.preventDefault();
 				e.stopPropagation();
 				command.perform();
@@ -94,6 +102,7 @@ export function useCommands(commands: Command[], top = true) {
 			return $commandStore.filter((a) => !idsToRemove.includes(a.id));
 		});
 		unsubscribeLastKey();
+		unsubscribeDisableGlobalKeyboardShortcuts();
 		if (browser) {
 			window.removeEventListener('keydown', useKeyboardShortcuts);
 		}

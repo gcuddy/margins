@@ -52,7 +52,7 @@
 					>
 				</div>
 				<ul class="space-y-2">
-					{#each annotations.filter((a) => a.article.id === article_id) as annotation (annotation.id)}
+					{#each annotations.filter((a) => a.article.id === article_id && a.motivation !== 'describing') as annotation (annotation.id)}
 						{@const target = TargetSchema.parse(annotation.target)}
 						<li class="px-4">
 							<div
@@ -61,7 +61,7 @@
 								<!-- 				ideally:				<a sveltekit:prefetch href="/{article?.id}#annotation-{annotation.id}"
  -->
 								<a sveltekit:prefetch href="/{article?.id}?a={annotation.id}"
-									>{target.selector.exact}</a
+									>{target.selector?.exact}</a
 								>
 							</div>
 						</li>

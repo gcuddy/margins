@@ -111,7 +111,7 @@
 		</slot>
 	</div>
 	<div class="overflow-auto p-4">
-		<ProseWrapper breakpoints={false} class="space-y-6">
+		<ProseWrapper breakpoints={true} font="sans" class="space-y-6">
 			<header class="not-prose mx-auto max-w-prose font-sans">
 				<a href={item.link} target="_blank"
 					><H1 lg={false}>

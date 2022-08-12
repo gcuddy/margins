@@ -5,6 +5,8 @@ import { notifications, type INotification } from '$lib/stores/notifications';
 import type { Prisma } from '@prisma/client';
 import { goto, invalidate } from '$app/navigation';
 import { z } from 'zod';
+import type { AnnotationSchema } from './types/schemas/Annotations';
+import { syncStore } from './stores/sync';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -302,7 +304,7 @@ export const archive = async (ids: number[], go: string | null = '/', inv = go, 
 			message: `Archived article${length > 1 ? 's' : ''} ${articles
 				.slice(0, 2)
 				.map((a) => '<a href="' + a.id + '" class="font-medium">' + a.title + '</a>')
-				.join(', ')}${length > 3 ? 'and ' + (length - 3) + 'others' : ''}`
+				.join(', ')}${length > 3 ? 'and ' + (length - 3) + ' others' : ''}`
 		});
 	}
 };
@@ -310,4 +312,17 @@ export const archive = async (ids: number[], go: string | null = '/', inv = go, 
 // note: this isn't foolproof, but it works for our simple needs
 export function isTouchDevice() {
 	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+}
+
+export async function postAnnotation(annotation: z.infer<typeof AnnotationSchema>) {
+	const id = syncStore.addItem();
+	const res = await fetch('/annotations', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(annotation)
+	});
+	syncStore.removeItem(id);
+	return res;
 }

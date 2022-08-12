@@ -53,7 +53,6 @@
 	$: value, (sortedItems = sortedItems.filter((item) => item.title?.toLowerCase().includes(value)));
 </script>
 
-<input type="text" bind:value />
 <div class="grid-cols-12 overflow-auto lg:grid">
 	<div class="col-span-3">
 		<ul>
@@ -75,41 +74,5 @@
 				</li>
 			{/each}
 		</ul>
-	</div>
-	<div class="col-span-3 hidden overflow-auto md:block">
-		<KeyboardNav changeActiveOnHover={false} bind:activeIndex>
-			<ul>
-				{#each sortedItems as item, index (item.id)}
-					<li
-						animate:flip
-						class="flex items-baseline space-x-3 p-2 {item.is_read ? 'opacity-50' : ''}"
-					>
-						<!-- TODO: get proper type for this (check endpoint) -->
-						<!-- <span class=" relative top-1 h-4 w-4 shrink-0 rounded bg-red-400">
-					</span> -->
-						<!-- <img src="https://icon.horse/icon/?uri={item.link}" class="h-4 w-4 rounded" alt="" /> -->
-						<KeyboardNavItem
-							as="a"
-							href="/rss/{item.rssFeedId}/{item.id}"
-							class="flex h-full w-full flex-col line-clamp-3 focus:ring"
-							on:click={(e) => {
-								e.preventDefault();
-								activeItem = item;
-							}}
-							{index}
-						>
-							<div class="text-xs uppercase text-gray-400">{item.RssFeed.title}</div>
-							<div>{item.title || item.contentSnippet || item.summary}</div>
-						</KeyboardNavItem>
-					</li>
-				{/each}
-			</ul>
-		</KeyboardNav>
-	</div>
-	<div class="col-span-6 hidden overflow-auto md:block">
-		{#if activeItem}
-			<!-- TODO: fix this type as well -->
-			<RssItem bind:item={activeItem} />
-		{/if}
 	</div>
 </div>
