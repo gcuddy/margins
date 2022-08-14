@@ -3,6 +3,7 @@
 	import type { IconName } from '$lib/icons';
 	import { modals } from '$lib/stores/modals';
 	import Button from '../Button.svelte';
+	import { createPopperActions } from 'svelte-popperjs';
 	import { tweened, spring } from 'svelte/motion';
 
 	import Icon from '../helpers/Icon.svelte';
@@ -13,6 +14,10 @@
 	import { commandPaletteStore } from '../CommandPalette/store';
 	import { showCommandPalette } from '$lib/stores/commands';
 	import Sync from '../Sync.svelte';
+	import type { FavoriteWithPayload } from '$lib/types/schemas/Favorite';
+	import { fade } from 'svelte/transition';
+
+	export let favorites: FavoriteWithPayload[] = [];
 
 	interface NavItem {
 		display: string;
@@ -29,14 +34,19 @@
 			icon: 'home'
 		},
 		{
-			display: 'Lists',
-			href: '/lists',
-			icon: 'collection'
-		},
-		{
-			display: 'RSS',
+			display: 'Subscriptions',
 			href: '/rss',
 			icon: 'rss'
+		},
+		{
+			display: 'Lists',
+			href: '/lists',
+			icon: 'viewGrid'
+		},
+		{
+			display: 'Smart Lists',
+			href: '/smart',
+			icon: 'collection'
 		},
 		{
 			display: 'Notebook',
@@ -99,7 +109,7 @@
 	<!-- <nav
 				class="user-select-none relative flex min-w-max max-w-xs flex-col border-r bg-gray-400 transition-opacity lg:w-56  lg:shrink-0 "
 			> -->
-	<div class="flex shrink-0 flex-col items-stretch justify-between space-y-3 px-5 py-2">
+	<div class="flex shrink-0 flex-col items-stretch space-y-3 px-5 py-2">
 		<div class="flex justify-between">
 			<span>User profile</span>
 			<div class="flex space-x-2">
@@ -121,6 +131,7 @@
 				<Icon name="plusCircle" className="h-4 w-4 stroke-2 stroke-current" />
 				<div class="flex grow">Add URL</div>
 			</Button>
+
 			<Button on:click={() => goto('/search')} size="sm" variant="ghost">
 				<Icon name="search" className="h-4 w-4 stroke-2 stroke-current" />
 				<span class="sr-only">Search</span>
@@ -128,11 +139,44 @@
 		</div>
 	</div>
 	<!-- navigation -->
-	<div class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
-		{#each hardcodedNav as nav}
-			<SidebarItem {...nav} />
-		{/each}
+	<div class="flex flex-col space-y-8">
+		<div class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
+			{#each hardcodedNav as nav}
+				<SidebarItem {...nav} />
+			{/each}
+		</div>
+		{#if favorites.length}
+			<div
+				transition:fade|local={{ duration: 200 }}
+				class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm"
+			>
+				<span class="px-2">Favorites</span>
+				{#each favorites as favorite}
+					{#if favorite.tag}
+						<div transition:fade>
+							<SidebarItem
+								display={favorite.tag.name}
+								href="/tags/{favorite.tag.name}"
+								icon="tag"
+							/>
+						</div>
+					{:else if favorite.rss}
+						<SidebarItem display={favorite.rss.title} href="/rss/{favorite.rss.id}" icon="rss" />
+					{:else if favorite.smartList}
+						<SidebarItem
+							display={favorite.smartList.name}
+							href="/smart/{favorite.smartList.id}"
+							icon="collection"
+						/>
+					{/if}
+				{/each}
+			</div>
+		{/if}
 	</div>
+	<!-- 
+	<div>
+		{JSON.stringify(favorites, null, 2)}
+	</div> -->
 
 	<!-- toggle button -->
 	<button

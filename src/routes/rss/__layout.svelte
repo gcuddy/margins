@@ -51,6 +51,7 @@
 	import { page } from '$app/stores';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { syncStore } from '$lib/stores/sync';
+	import FavoriteStar from '$lib/components/FavoriteStar.svelte';
 	const all = [
 		{
 			href: '/rss',
@@ -90,6 +91,13 @@
 							><span>Feeds</span></a
 						>
 						<span class="text-gray-500">› {$page.stuff.currentFeed?.title}</span>
+						<FavoriteStar
+							starred={!!$page.stuff.currentFeed?.favorite}
+							favorite_id={$page.stuff.currentFeed?.favorite?.id}
+							data={{
+								rssId: $page.stuff.currentFeed?.id
+							}}
+						/>
 					</div>
 				{/if}
 			</div>

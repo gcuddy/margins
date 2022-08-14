@@ -22,13 +22,16 @@
 	console.log({ allTags });
 	export let value = '';
 	export let articles: ArticleWithTags[];
+
+	export let allow_create_tag = true;
+
 	type TagInputTag = Pick<Tag, 'name'> & {
 		special?: boolean;
 	};
 	let filteredTags: TagInputTag[];
 	$: filteredTags = allTags
 		.filter((tag) => tag.name.toLowerCase().includes(value.toLowerCase()))
-		.filter((tag) => !selectedTags.has(tag));
+		.filter((tag) => !selectedTags.has(tag.name));
 
 	// admittedly, this is a frustrating way to do this lol
 	$: newTagAvailable =
@@ -229,7 +232,7 @@
 						: ''} rounded-md px-2 py-1 "
 				>
 					<div class="flex gap-2 ">
-						{#if value.special}
+						{#if value.special && allow_create_tag}
 							<Icon name="plusCircleSolid" className="w-5 h-5 fill-current" />
 							<span>Create tag: "{value.name}"</span>
 						{:else}

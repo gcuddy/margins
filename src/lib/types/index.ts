@@ -20,7 +20,8 @@ export type ArticleWithTags = Prisma.ArticleGetPayload<typeof articleWithTags>;
 
 const tagWithArticles = Prisma.validator<Prisma.TagArgs>()({
 	include: {
-		articles: true
+		articles: true,
+		favorite: true
 	}
 });
 export type TagWithArticle = Prisma.TagGetPayload<typeof tagWithArticles>;
@@ -44,7 +45,8 @@ export type AnnotationWithArticle = Prisma.AnnotationGetPayload<{
 
 const feedWithItems = Prisma.validator<Prisma.RssFeedArgs>()({
 	include: {
-		items: true
+		items: true,
+		favorite: true
 	}
 });
 
@@ -114,3 +116,10 @@ const listWithItems = Prisma.validator<Prisma.ListArgs>()({
 
 // 2: This type will include many users and all their cars
 export type ListWithItems = Prisma.ListGetPayload<typeof listWithItems>;
+
+const smartListWithPayload = Prisma.validator<Prisma.SmartListArgs>()({
+	include: {
+		favorite: true
+	}
+});
+export type SmartListWithPayload = Prisma.SmartListGetPayload<typeof smartListWithPayload>;

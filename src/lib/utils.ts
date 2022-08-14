@@ -2,11 +2,14 @@ import { browser } from '$app/env';
 import type { DomMeta } from './types';
 import { notifications, type INotification } from '$lib/stores/notifications';
 // import { finder } from '@medv/finder';
-import type { Prisma } from '@prisma/client';
+import type { Article, Favorite, Prisma } from '@prisma/client';
 import { goto, invalidate } from '$app/navigation';
 import { z } from 'zod';
 import type { AnnotationSchema } from './types/schemas/Annotations';
 import { syncStore } from './stores/sync';
+import type { FavoriteSchema } from './types/schemas/Favorite';
+import type { ViewOptions } from './types/schemas/View';
+import dayjs from 'dayjs';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -325,4 +328,51 @@ export async function postAnnotation(annotation: z.infer<typeof AnnotationSchema
 	});
 	syncStore.removeItem(id);
 	return res;
+}
+
+export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
+	const id = syncStore.addItem();
+	const res = await fetch('/favorites.json', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	syncStore.removeItem(id);
+	return res;
+}
+export async function deleteFavorite(data: { id: number }) {
+	const id = syncStore.addItem();
+	const res = await fetch('/favorites.json', {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	syncStore.removeItem(id);
+	return res;
+}
+
+export function sortArticles<T>(articles: (Article & T)[], opts: ViewOptions) {
+	const sortBy = opts.sort;
+	return [...articles].sort((a, b) => {
+		switch (sortBy) {
+			case 'title':
+				return a.title.localeCompare(b.title);
+			case 'date': {
+				return dayjs(a.date).isBefore(dayjs(b.date)) ? 1 : -1;
+			}
+			case 'author': {
+				return a.author.localeCompare(b.author);
+			}
+			case 'createdAt': {
+				console.log({ a, b });
+				return dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1;
+			}
+			default:
+				return 0;
+		}
+	});
 }

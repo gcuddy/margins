@@ -108,7 +108,7 @@
 					item.id
 				)
 					? 'bg-gray-200 dark:bg-gray-900'
-					: 'dark:bg-gray-800 bg-transparent '}"
+					: 'dark:bg-gray-900 bg-transparent '}"
 				on:mouseenter={() => (hovering = true)}
 				on:mouseleave={() => (hovering = false)}
 			>

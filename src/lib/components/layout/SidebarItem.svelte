@@ -25,5 +25,5 @@
 			'stroke-gray-800 dark:stroke-gray-100'} relative"
 		name={icon}
 	/>
-	<span>{display}</span></a
+	<span class="truncate">{display}</span></a
 >

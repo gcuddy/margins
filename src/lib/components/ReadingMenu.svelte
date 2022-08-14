@@ -82,7 +82,7 @@
 
 <!-- -translate-y-12 -->
 <div
-	class="sticky top-0 z-20 flex w-full  transform-gpu justify-between border-b bg-stone-50/90 py-0.5 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:bg-stone-800/90
+	class="sticky top-0 z-20 flex w-full  transform-gpu justify-between border-b bg-stone-50/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:bg-stone-800/90
   {hide ? ' opacity-0' : 'translate-y-0 opacity-100'}
     md:px-3"
 >
@@ -102,7 +102,7 @@
 			aria-label="Click to scroll to top"
 			title="Click to scroll to top"
 		>
-			<div class="col-span-1 ml-auto hidden items-center sm:flex">
+			<div class="col-span-1 ml-auto hidden shrink items-center sm:flex">
 				<CircularProgressBar
 					minValue={0}
 					maxValue={1}
@@ -113,9 +113,9 @@
 				/>
 			</div>
 			<!-- TODO: clicking this will send you back to top, but save current scroll -->
-			<span class="col-span-2 w-28 max-w-xs shrink truncate sm:w-auto md:max-w-md lg:max-w-lg"
-				>{article.title}</span
-			>
+			<div class="col-span-2  w-52 max-w-xs shrink truncate sm:w-auto md:max-w-md lg:max-w-lg">
+				<span>{article.title}</span>
+			</div>
 			{#if article.author}
 				<div class="col-span-1 hidden sm:block">
 					<Muted>{article.author}</Muted>
@@ -155,7 +155,7 @@
 			</div>
 		</Menu>
 		<button on:click={() => (reading_sidebar_active = !reading_sidebar_active)} class="z-40">
-			<Icon name="sidebar" className="h-4 w-4 stroke-2 stroke-current" />
+			<Icon name="sidebar" className="h-5 w-5 stroke-2 stroke-current relative top-px" />
 		</button>
 	</div>
 </div>

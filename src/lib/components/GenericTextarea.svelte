@@ -7,13 +7,14 @@
 	export let el: HTMLElement | undefined = undefined;
 	export let id = '';
 	export let name = '';
+	export let rows = 4;
 </script>
 
 <textarea
 	on:keydown
 	on:focus
 	on:blur
-	rows="4"
+	{rows}
 	bind:this={el}
 	id={id ? id : undefined}
 	name={name ? name : undefined}

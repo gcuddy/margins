@@ -503,6 +503,7 @@
 				window.getSelection()?.removeAllRanges();
 				// todo: add pending state so that the highlight gets removed if it fails
 
+				console.log({ selector });
 				const res = await fetch('/annotations', {
 					method: 'POST',
 					headers: {
@@ -524,6 +525,7 @@
 					});
 					// and add id to the highlight
 					const annotation = await res.json();
+					console.log({ annotation });
 					highlightInfo.forEach((h) => {
 						h.highlightElements.forEach((el) => {
 							el.setAttribute('id', `annotation-${annotation.id}`);

@@ -10,30 +10,30 @@ datasource db {
 }
 
 model Article {
-  id             Int          @id @default(autoincrement())
+  id             Int              @id @default(autoincrement())
   title          String
   content        String
   textContent    String
   author         String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  readProgress   Float        @default(0)
-  url            String       @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  readProgress   Float            @default(0)
+  url            String           @unique
   siteName       String?
   colorHash      String?
   date           DateTime
   image          String
   wordCount      Int
-  starred        Boolean      @default(false)
+  starred        Boolean          @default(false)
   css            String?
   description    String?
   wiki           String?
   classification String?
   pdf            Boolean?
   html           String?
-  position       Int          @default(0) //@unique - figure this out
-  trash          Boolean      @default(false)
-  location       String       @default("INBOX")
+  position       Int              @default(0) //@unique - figure this out
+  trash          Boolean          @default(false)
+  location       String           @default("INBOX")
   annotations    Annotation[]
   Bookmark       Bookmark?
   context        Context?
@@ -42,6 +42,8 @@ model Article {
   ListItem       ListItem?
   media          Media?
   tags           Tag[]
+  favorite       Favorite?
+  RssInteraction RssInteraction[]
 }
 
 model Bookmark {
@@ -156,10 +158,25 @@ model RssFeed {
   tag           RssFeedTag[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  favorite      Favorite?
   // todo: itunes
 
   // this should be unique per user
   // @@unique([feedUrl])
+  RssInteraction RssInteraction[]
+}
+
+model RssInteraction {
+  id        Int      @id @default(autoincrement())
+  articleId Int
+  rssFeedId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  article   Article  @relation(fields: [articleId], references: [id])
+  rssFeed   RssFeed  @relation(fields: [rssFeedId], references: [id])
+  is_read   Boolean  @default(false)
+  podcast   Boolean  @default(false)
+  played    Boolean  @default(false)
 }
 
 model RssFeedItem {
@@ -211,6 +228,7 @@ model Tag {
   rssFeedItemId String?
   Bookmark      Bookmark? @relation(fields: [bookmarkId], references: [id])
   articles      Article[]
+  favorite      Favorite?
 }
 
 model Css {
@@ -228,17 +246,18 @@ model StringCondition {
 }
 
 model SmartListCondition {
-  id          Int        @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   smartListId Int?
   any         Boolean
   title       String?
-  SmartList   SmartList? @relation(fields: [smartListId], references: [id])
 }
 
 model SmartList {
-  id         Int                  @id @default(autoincrement())
-  name       String               @unique
-  conditions SmartListCondition[]
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  filter   Json
+  // conditions SmartListCondition[]
+  favorite Favorite?
 }
 
 model Target {
@@ -337,4 +356,34 @@ model Highlight2 {
   flagged       Boolean          @default(false)
   article       Article          @relation(fields: [articleId], references: [id], onDelete: Cascade)
   target        AnnotationTarget @relation(fields: [targetId], references: [id])
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  favorites Favorite[]
+}
+
+// either Interaction or Favorite
+//  see https://cloud.prisma.io/gcuddy/prisma-data-test/production/schema
+// let's try Interaction
+model Favorite {
+  id          Int        @id @default(autoincrement())
+  position    Float      @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userId      Int?
+  user        User?      @relation(fields: [userId], references: [id])
+  // count      Int      @default(1)
+  // one of: article, tag, list, or smart list
+  articleId   Int?       @unique
+  article     Article?   @relation(fields: [articleId], references: [id])
+  tagId       Int?       @unique
+  tag         Tag?       @relation(fields: [tagId], references: [id])
+  rssId       Int?       @unique
+  rss         RssFeed?   @relation(fields: [rssId], references: [id])
+  smartListId Int?       @unique
+  smartList   SmartList? @relation(fields: [smartListId], references: [id])
 }

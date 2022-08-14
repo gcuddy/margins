@@ -12,7 +12,8 @@ export const GET: RequestHandler = async ({ params }) => {
 					orderBy: {
 						pubDate: 'desc'
 					}
-				}
+				},
+				favorite: true
 			}
 		});
 		console.log({ feed });

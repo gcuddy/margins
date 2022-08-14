@@ -43,7 +43,7 @@ export const TextQuoteTarget = z.object({
 	selector: TextQuoteSelectorSchema
 });
 
-export const TargetSchema = BaseTargetSchema.or(TextQuoteTarget);
+export const TargetSchema = TextQuoteTarget.or(BaseTargetSchema);
 
 export const Motivation = z.literal('describing').or(z.literal('highlighting'));
 

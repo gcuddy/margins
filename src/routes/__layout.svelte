@@ -1,4 +1,28 @@
-<script>
+<script lang="ts" context="module">
+	import type { Load } from '@sveltejs/kit';
+	export const load: Load = async ({ fetch }) => {
+		const res = await fetch('/favorites.json', {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+		if (!res.ok) {
+			return {
+				status: res.status
+			};
+		}
+		const { favorites } = await res.json();
+		return {
+			status: 200,
+			props: {
+				favorites
+			}
+		};
+	};
+</script>
+
+<script lang="ts">
 	import '../app.css';
 	import CommandPalette from '$lib/components/CommandPalette/CommandPalette.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
@@ -8,10 +32,12 @@
 	import Developer from '$lib/components/Developer.svelte';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import GenericCommandPaletteContainer from '$lib/components/CommandPalette/GenericCommandPaletteContainer.svelte';
-	import Header from '$lib/components/layout/Header.svelte';
 	import { dev } from '$app/env';
-	import Sync from '$lib/components/Sync.svelte';
 	import { mainEl } from '$lib/stores/main';
+	import type { FavoriteWithPayload } from '$lib/types/schemas/Favorite';
+
+	export let favorites: FavoriteWithPayload[] = [];
+	$: console.log({ favorites });
 </script>
 
 <svelte:head />
@@ -27,7 +53,7 @@
 
 <div class="min-h-screen">
 	<div
-		class="min-h-screen bg-white text-dark caret-primary-500 dark:bg-gray-800 dark:text-gray-50"
+		class="min-h-screen bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50"
 		on:drag
 	>
 		<!-- <nav>
@@ -41,7 +67,7 @@
 			class="relative grid h-screen min-h-full w-full overflow-hidden lg:grid-cols-[var(--sidebar-width)_1fr] "
 		>
 			<!-- sidebar, but should only be for some layouts -->
-			<Sidebar />
+			<Sidebar {favorites} />
 
 			<main
 				bind:this={$mainEl}

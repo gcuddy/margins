@@ -12,9 +12,7 @@
 <select
 	{name}
 	{id}
-	class="{block
-		? 'block w-full'
-		: 'inline'} rounded-lg border border-gray-300 bg-gray-50 text-gray-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-indigo-500 dark:focus:ring-indigo-500 {className}"
+	class="m-0 h-6 min-w-min appearance-none justify-start rounded border-0 bg-gray-200 py-0 pl-2 pr-12 text-xs font-medium dark:bg-gray-700 dark:text-white"
 	bind:value
 	on:change
 >
