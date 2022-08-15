@@ -4,11 +4,14 @@
 		PopoverButton,
 		PopoverPanel,
 		PopoverOverlay,
-		Transition
+		Switch,
+		SwitchLabel,
+		SwitchGroup
 	} from '@rgossiaux/svelte-headlessui';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { fade, fly } from 'svelte/transition';
 	import MiniSelect from './atoms/MiniSelect.svelte';
+	import MiniSwitch from './atoms/MiniSwitch.svelte';
 	import Select from './atoms/Select.svelte';
 	import SmallPlus from './atoms/SmallPlus.svelte';
 	import Button from './Button.svelte';
@@ -33,7 +36,16 @@
 	import Icon from './helpers/Icon.svelte';
 
 	export let viewOptions = {
-		sort: 'title'
+		sort: 'title',
+		properties: {
+			author: true,
+			site: true,
+			description: true,
+			tags: true,
+			annotationCount: true,
+			date: false,
+			wordCount: false
+		}
 	};
 </script>
 
@@ -61,12 +73,12 @@
 		<div transition:fade={{ duration: 150 }} use:popperContent class="z-10">
 			<PopoverPanel
 				static
-				class=" w-72 rounded-lg bg-gray-50 p-4 shadow-2xl ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/5"
+				class=" w-72 rounded-lg bg-gray-50 p-4  shadow-2xl ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/5"
 			>
-				<div class="flex flex-col">
+				<div class="flex flex-col space-y-3">
 					<div class="flex items-center justify-between">
 						<label for="">
-							<SmallPlus class="dark:text-gray-400" size="sm">Sorting</SmallPlus>
+							<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm">Sorting</SmallPlus>
 						</label>
 						<MiniSelect bind:value={viewOptions.sort}>
 							<option value="title">Title</option>
@@ -74,6 +86,48 @@
 							<option value="date">Publish Date</option>
 							<option value="createdAt">Added</option>
 						</MiniSelect>
+					</div>
+					<div class="flex flex-col space-y-2">
+						<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm"
+							>Display Properties</SmallPlus
+						>
+						<div class="flex flex-col space-y-2">
+							<MiniSwitch
+								class="flex justify-between text-sm text-gray-500"
+								bind:enabled={viewOptions.properties.author}
+								label="Author"
+							/>
+							<MiniSwitch
+								class="flex justify-between text-sm text-gray-500"
+								bind:enabled={viewOptions.properties.site}
+								label="Site"
+							/>
+							<MiniSwitch
+								class="flex justify-between text-sm text-gray-500"
+								bind:enabled={viewOptions.properties.description}
+								label="Description"
+							/>
+							<MiniSwitch
+								class="flex justify-between text-sm text-gray-500"
+								bind:enabled={viewOptions.properties.tags}
+								label="Tags"
+							/>
+							<MiniSwitch
+								class="flex justify-between text-sm text-gray-500"
+								bind:enabled={viewOptions.properties.annotationCount}
+								label="Annotations"
+							/>
+							<MiniSwitch
+								class="flex justify-between text-sm text-gray-500"
+								bind:enabled={viewOptions.properties.date}
+								label="Date"
+							/>
+							<MiniSwitch
+								class="flex justify-between text-sm text-gray-500"
+								bind:enabled={viewOptions.properties.wordCount}
+								label="Word Count"
+							/>
+						</div>
 					</div>
 				</div>
 			</PopoverPanel>

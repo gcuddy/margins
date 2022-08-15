@@ -41,6 +41,7 @@ export type FilterField = keyof Omit<Prisma.ArticleWhereInput, 'id' | 'AND' | 'O
 // };
 
 export type StringFilterType = keyof Prisma.StringFilter;
+export type IntFilterType = keyof Prisma.IntFilter;
 
 type _StringFilter = {
 	field: 'title' | 'author' | 'url' | 'siteName';
@@ -51,4 +52,13 @@ type _StringFilter = {
 	id: number;
 };
 
-export type SmartListCondition = _StringFilter;
+type _IntFilter = {
+	field: 'readProgress';
+	type: 'NumberFilter';
+	display?: string;
+	filter: IntFilterType;
+	value: number;
+	id: number;
+};
+
+export type SmartListCondition = _StringFilter | _IntFilter;

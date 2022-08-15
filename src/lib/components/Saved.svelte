@@ -35,6 +35,9 @@
 	import { currentItems, filteredItems, filterInputActive, filterTerm } from '$lib/stores/filter';
 	import AnnotationCount from './AnnotationCount.svelte';
 	import { fade } from 'svelte/transition';
+	import DotMenu from './DotMenu.svelte';
+	import Muted from './atoms/Muted.svelte';
+	import type { ComponentProperties } from '$lib/stores/types';
 	dayjs.extend(localizedFormat);
 	let focused = -1;
 	let dragDisabled = true;
@@ -69,28 +72,61 @@
 	let hovering = false;
 
 	$: console.log({ $selectedArticleIds });
+
+	export let actions: ComponentProperties<SelectActions>['actions'] | undefined = undefined;
+
+	const view_options = {
+		author: true,
+		site: true,
+		description: true,
+		tags: true,
+		annotationCount: true,
+		date: false,
+		wordCount: false
+	};
+
+	export let viewOptions: typeof view_options = view_options;
 </script>
 
 <!-- <svelte:window on:keydown={handleKeydown} /> -->
 
-<SelectActions bind:articles />
+<SelectActions bind:articles {actions} />
 
-<!-- filteR? -->
-<ul
-	class="mx-auto w-full space-y-0 overflow-auto"
-	use:dndzone={{
-		items: articles,
-		dragDisabled,
-		flipDurationMs,
-		dropTargetStyle: {},
-		zoneTabIndex: -1
-	}}
-	on:consider={handleConsider}
-	on:finalize={handleFinalize}
->
-	{#each $filteredItems as item, index (item.id)}
-		<li in:fade class="h-20  md:h-24">
-			<!-- <SavedItem
+<KeyboardNav items={$filteredItems}>
+	<!-- filteR? -->
+	<div
+		class="mx-auto w-full space-y-0 overflow-auto"
+		use:dndzone={{
+			items: articles,
+			dragDisabled,
+			flipDurationMs,
+			dropTargetStyle: {},
+			zoneTabIndex: -1
+		}}
+		on:consider={handleConsider}
+		on:finalize={handleFinalize}
+	>
+		{#each $filteredItems as item, index (item.id)}
+			<!-- {index} -->
+			<KeyboardNavItem
+				let:active
+				let:followTabIndex
+				{index}
+				as="a"
+				href="/{item.id}"
+				class="group block cursor-default"
+				on:select={() => {
+					if ($selectedArticleIds.includes(item.id)) {
+						$selectedArticleIds = $selectedArticleIds.filter((id) => id !== item.id);
+					} else {
+						$selectedArticleIds = [...$selectedArticleIds, item.id];
+					}
+				}}
+			>
+				<!-- <a tabindex="-1" sveltekit:prefetch href="/{item.id}"
+									>{ -->
+				<div in:fade class="h-20  md:h-24">
+					<!-- <SavedItem
 				{item}
 				bind:dragDisabled
 				on:bump={() => {
@@ -103,79 +139,139 @@
 				}}
 			/> -->
 
-			<div
-				class="flex h-full flex-col justify-center border-b border-gray-100 px-6 transition dark:border-gray-700  {$selectedArticleIds.includes(
-					item.id
-				)
-					? 'bg-gray-200 dark:bg-gray-900'
-					: 'dark:bg-gray-900 bg-transparent '}"
-				on:mouseenter={() => (hovering = true)}
-				on:mouseleave={() => (hovering = false)}
-			>
-				<div class="item relative flex flex-initial flex-row items-center gap-3 transition">
 					<div
-						class="flex-inital relative flex h-8 w-8 shrink-0 cursor-pointer flex-row items-center overflow-hidden rounded-md transition hover:ring-1"
+						class="flex h-full flex-col justify-center border-b border-gray-100 px-6 ring-inset group-focus-within:bg-gray-50 group-focus-within:ring-1 dark:border-gray-700 dark:group-focus-within:bg-gray-800  {$selectedArticleIds.includes(
+							item.id
+						)
+							? '!bg-gray-100 dark:bg-gray-900'
+							: 'dark:bg-gray-900 bg-transparent '}"
+						on:mouseenter={() => (hovering = true)}
+						on:mouseleave={() => (hovering = false)}
 					>
-						{#if $dev.disableListImgs}
+						<div class="item relative flex flex-initial flex-row items-center gap-3 transition">
 							<div
-								class="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 bg-red-100 object-cover shadow-sm hover:ring-1"
-							/>
-						{:else}
-							<img
-								class="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 object-cover shadow-sm hover:ring-1"
-								src={item.image || `https://icon.horse/icon/?uri=${item.url}`}
-								alt=""
-							/>
-						{/if}
-						<input
-							bind:group={$selectedArticleIds}
-							value={item.id}
-							type="checkbox"
-							aria-hidden={true}
-							tabindex={-1}
-							class=" absolute inset-0 h-full w-full cursor-pointer rounded-md border-0 bg-transparent text-gray-600/95 ring-0"
-						/>
-					</div>
-
-					<div class="relative flex shrink flex-col justify-center  truncate text-left">
-						<span class="truncate text-base font-semibold leading-tight">
-							<a tabindex="-1" sveltekit:prefetch href="/{item.id}"
-								>{#if html}{@html item.title}{:else}{item.title}{/if}</a
+								class="flex-inital relative flex h-8 w-8 shrink-0 cursor-pointer flex-row items-center overflow-hidden rounded-md transition hover:ring"
+								on:click|stopPropagation
 							>
-						</span>
-						<!-- url and author around 74,74,74, description around 126,126,126 -->
-						<div class="flex gap-4 text-xs text-stone-700 dark:text-gray-300 md:text-sm">
-							{#if item.author}
-								<span>{item.author}</span>
+								{#if $dev.disableListImgs}
+									<div
+										class="group h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 bg-red-100 object-cover shadow-sm hover:ring-1"
+									/>
+								{:else}
+									<img
+										class="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 object-cover shadow-sm hover:ring-1"
+										src={item.image || `https://icon.horse/icon/?uri=${item.url}`}
+										alt=""
+									/>
+								{/if}
+								<input
+									bind:group={$selectedArticleIds}
+									value={item.id}
+									type="checkbox"
+									aria-hidden={true}
+									tabindex={-1}
+									class=" absolute inset-0 z-10 h-full w-full cursor-pointer rounded-md border-0 bg-transparent text-gray-600/95 ring-0"
+								/>
+							</div>
+
+							<div class="relative flex shrink flex-col justify-center  truncate text-left">
+								<span class="truncate text-base font-semibold leading-tight">
+									{#if html}{@html item.title}{:else}{item.title}{/if}
+								</span>
+								<!-- url and author around 74,74,74, description around 126,126,126 -->
+								<div class="flex gap-4 text-xs text-stone-700 dark:text-gray-300 md:text-sm">
+									{#if item.author && viewOptions.author}
+										<span>{item.author}</span>
+									{/if}
+									{#if viewOptions.site}
+										<Muted>{item.siteName || new URL(item.url).hostname}</Muted>
+									{/if}
+									{#if item.date && viewOptions.date}
+										<Muted>{dayjs(item.date).format('ll')}</Muted>
+									{/if}
+									{#if item.wordCount && viewOptions.wordCount}
+										<Muted>{item.wordCount} words</Muted>
+									{/if}
+									<!-- <span><a href={item.url}>{item.url}</a></span> -->
+								</div>
+								{#if viewOptions.description}
+									<p
+										class="hidden truncate text-xs text-stone-500 dark:text-gray-400 md:block md:text-sm {quoted &&
+											'before:content-[""] before:border-l-2 before:mr-4'}"
+									>
+										{#if html}{@html item.description}{:else}{item.description}{/if}
+									</p>
+								{/if}
+							</div>
+							<!-- is this necessary? -->
+							<Spacer />
+
+							<!-- TODO: add type -->
+							{#if item['_count']?.annotations && viewOptions.annotationCount}
+								<AnnotationCount count={item['_count'].annotations} />
 							{/if}
-							<span><a href={item.url}>{item.url}</a></span>
-						</div>
-						<p
-							class="hidden truncate text-xs text-stone-500 dark:text-gray-400 md:block md:text-sm {quoted &&
-								'before:content-[""] before:border-l-2 before:mr-4'}"
-						>
-							{#if html}{@html item.description}{:else}{item.description}{/if}
-						</p>
-					</div>
-					<!-- is this necessary? -->
-					<Spacer />
 
-					<!-- TODO: add type -->
-					{#if item['_count']?.annotations}
-						<AnnotationCount count={item['_count'].annotations} />
-					{/if}
+							{#if item.tags?.length && viewOptions.tags}
+								<div class="hidden sm:flex">
+									<TagCloud tags={item.tags} />
+								</div>
+							{/if}
 
-					{#if item.tags?.length}
-						<div class="hidden sm:flex">
-							<TagCloud tags={item.tags} />
-						</div>
-					{/if}
-
-					<div class="flex shrink-0 basis-auto items-center gap-4">
-						<!-- turning this off for now -->
-						{#if true}
-							<div class="flex items-center">
-								<Menu
+							<div class="flex shrink-0 basis-auto items-center gap-4">
+								<!-- turning this off for now -->
+								{#if true}
+									<div class="flex items-center">
+										<DotMenu
+											actions={[followTabIndex]}
+											icons="outline"
+											items={[
+												[
+													{
+														label: 'Archive',
+														icon: 'archive'
+													},
+													{
+														label: 'Delete',
+														icon: 'trash',
+														perform: async () => {
+															if (!window.confirm(`Really delete "${item.title}"?`)) return;
+															const form = new FormData();
+															form.set('id', item.id.toString());
+															const res = await fetch('/', {
+																method: 'DELETE',
+																body: form
+															});
+															console.log({ res });
+															if (res.ok) {
+																notifications.notify({
+																	message: 'Article deleted'
+																});
+																await invalidate('/');
+															}
+														}
+													},
+													{
+														label: 'Tag',
+														icon: 'tag'
+													},
+													{
+														label: 'Bump to top',
+														icon: 'trendingUp',
+														perform: () => dispatch('bump')
+													}
+												],
+												[
+													{
+														label: 'View Original',
+														icon: 'globe',
+														perform: () => {
+															window.open(item.url, '_blank');
+														}
+													}
+												]
+											]}
+										/>
+										<!-- <Menu
 									align="right"
 									menuItems={[
 										[
@@ -227,10 +323,10 @@
 								>
 									<Icon name="options" className="h-6 w-6 stroke-1 stroke-current" />
 									<span class="sr-only">More</span>
-								</Menu>
-							</div>
-							<!-- TODO: make entire thing draggable -->
-							<div
+								</Menu> -->
+									</div>
+									<!-- TODO: make entire thing draggable -->
+									<!-- <div
 								on:mousedown={startDrag}
 								on:touchstart={startDrag}
 								on:mouseup={stopDrag}
@@ -238,29 +334,31 @@
 								class="drag-handle  flex items-center"
 							>
 								<Icon name="dragHandle2" className="w-4 h-4 stroke-current stroke-0" />
+							</div> -->
+								{:else}
+									<div
+										class="flex flex-col items-end text-xs tabular-nums text-gray-600 dark:text-gray-400 lg:text-sm"
+									>
+										<div>
+											{dayjs(item.date).format('ll')}
+										</div>
+										<div>
+											{item.wordCount} words
+										</div>
+										<div>
+											{Math.round(item.readProgress * 100)}% read
+										</div>
+									</div>
+								{/if}
 							</div>
-						{:else}
-							<div
-								class="flex flex-col items-end text-xs tabular-nums text-gray-600 dark:text-gray-400 lg:text-sm"
-							>
-								<div>
-									{dayjs(item.date).format('ll')}
-								</div>
-								<div>
-									{item.wordCount} words
-								</div>
-								<div>
-									{Math.round(item.readProgress * 100)}% read
-								</div>
-							</div>
-						{/if}
+							<slot />
+						</div>
 					</div>
-					<slot />
 				</div>
-			</div>
-		</li>
-	{/each}
-</ul>
+			</KeyboardNavItem>
+		{/each}
+	</div>
+</KeyboardNav>
 
 <style>
 	ul {

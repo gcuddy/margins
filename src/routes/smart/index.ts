@@ -1,10 +1,19 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
+import { Prisma } from '@prisma/client';
 
 export const GET: RequestHandler = async () => {
 	try {
-		const lists = await db.smartList.findMany();
+		const lists = await db.smartList.findMany({
+			include: {
+				favorite: {
+					select: {
+						id: true
+					}
+				}
+			}
+		});
 		return {
 			status: 200,
 			body: {

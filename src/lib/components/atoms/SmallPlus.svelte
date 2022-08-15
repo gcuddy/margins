@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let size: 'xs' | 'sm' | 'base' = 'base';
+	export let size: 'xs' | 'sm' | 'base' = 'sm';
 	let className = '';
 	export { className as class };
 </script>

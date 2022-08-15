@@ -7,6 +7,7 @@
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import Saved from '$lib/components/Saved.svelte';
+	import type { ComponentProperties } from '$lib/stores/types';
 	import type { ArticleWithNotesAndTagsAndContext, SmartListWithPayload } from '$lib/types';
 	import type { ViewOptions } from '$lib/types/schemas/View';
 	import { sortArticles } from '$lib/utils';
@@ -39,7 +40,13 @@
 	</DefaultHeader>
 </Header>
 {#if articles.length}
-	<Saved articles={sortedArticles || articles} />
+	<Saved
+		articles={sortedArticles || articles}
+		actions={{
+			addToList: true
+		}}
+		viewOptions={viewOptions?.properties}
+	/>
 {/if}
 <!-- TODO: make work progressively enhanced with actual forms -->
 

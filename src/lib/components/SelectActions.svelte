@@ -40,6 +40,15 @@
 	let transitionDuration = 200;
 
 	$: $page.url, ($selectedArticleIds = []);
+
+	const _actions = {
+		archive: true,
+		tag: true,
+		addToList: true
+	};
+
+	export let actions: Partial<typeof _actions> = _actions;
+	console.log({ actions });
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -62,17 +71,33 @@
 			>
 			<div class="flex space-x-4">
 				<!-- <Button variant="ghost"> Move</Button> -->
-				<Button
-					variant="ghost"
-					className="space-x-2 flex items-center lg:text-base"
-					on:click={async () => {
-						await archive($selectedArticleIds, null, '/', true);
-					}}
-					on:click={() => ($selectedArticleIds = [])}
-					><Icon name="archiveSolid" className="h-4 w-4 fill-current" />
-					<span class="font-medium">Archive</span></Button
-				>
-				<Button variant="ghost" className="lg:text-base">Tag</Button>
+				{#if actions.addToList}
+					<Button
+						variant="ghost"
+						className="space-x-1 flex items-center lg:text-base"
+						on:click={async () => {
+							await archive($selectedArticleIds, null, '/', true);
+						}}
+						on:click={() => ($selectedArticleIds = [])}
+						><Icon name="viewGridAdd" className="h-4 w-4 stroke-2 stroke-current" />
+						<span>Add to List</span></Button
+					>
+				{/if}
+				{#if actions.archive}
+					<Button
+						variant="ghost"
+						className="space-x-2 flex items-center lg:text-base"
+						on:click={async () => {
+							await archive($selectedArticleIds, null, '/', true);
+						}}
+						on:click={() => ($selectedArticleIds = [])}
+						><Icon name="archiveSolid" className="h-4 w-4 fill-current" />
+						<span>Archive</span></Button
+					>
+				{/if}
+				{#if actions.tag}
+					<Button variant="ghost" className="lg:text-base">Tag</Button>
+				{/if}
 			</div>
 		</div>
 	</div>

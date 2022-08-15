@@ -1,6 +1,8 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { z } from 'zod';
+import { ArticleListSelect } from '$lib/types';
+import { getJsonFromRequest } from '$lib/utils';
 
 export const GET: RequestHandler = async ({ url, params }) => {
 	console.time('smartlist');
@@ -20,17 +22,7 @@ export const GET: RequestHandler = async ({ url, params }) => {
 	// duplicated from /fetch.json... not sure how to do this?
 	const articles = await db.article.findMany({
 		where: z.any().parse(list.filter),
-		select: {
-			id: true,
-			title: true,
-			author: true,
-			tags: true,
-			image: true,
-			description: true,
-			date: true,
-			url: true,
-			createdAt: true
-		}
+		select: ArticleListSelect
 	});
 	console.timeEnd('smartlist');
 	return {
@@ -39,5 +31,20 @@ export const GET: RequestHandler = async ({ url, params }) => {
 			articles,
 			list
 		}
+	};
+};
+
+export const PATCH: RequestHandler = async ({ params, request }) => {
+	const json = await getJsonFromRequest(request);
+	await db.smartList.update({
+		where: {
+			id: Number(params.id)
+		},
+		data: {
+			...json
+		}
+	});
+	return {
+		status: 200
 	};
 };

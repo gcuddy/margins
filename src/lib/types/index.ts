@@ -119,7 +119,29 @@ export type ListWithItems = Prisma.ListGetPayload<typeof listWithItems>;
 
 const smartListWithPayload = Prisma.validator<Prisma.SmartListArgs>()({
 	include: {
-		favorite: true
+		favorite: {
+			select: {
+				id: true
+			}
+		}
 	}
 });
 export type SmartListWithPayload = Prisma.SmartListGetPayload<typeof smartListWithPayload>;
+
+export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
+	id: true,
+	title: true,
+	author: true,
+	tags: true,
+	image: true,
+	description: true,
+	date: true,
+	url: true,
+	createdAt: true,
+	wordCount: true,
+	_count: {
+		select: {
+			annotations: true
+		}
+	}
+});

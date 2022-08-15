@@ -253,11 +253,12 @@ model SmartListCondition {
 }
 
 model SmartList {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
-  filter   Json
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  filter      Json
+  viewOptions Json?
   // conditions SmartListCondition[]
-  favorite Favorite?
+  favorite    Favorite?
 }
 
 model Target {

@@ -1,9 +1,10 @@
 <script lang="ts" context="module">
-	export interface NavState {
-		items: HTMLElement[];
+	export interface NavState<T> {
+		els: HTMLElement[];
 		active: HTMLElement | null;
 		changeActiveOnHover: boolean;
 		is_enabled: boolean;
+		items: T[];
 		// you can pass in an array or writable array (used with bind:group, for example) which our store will update
 		selected_items?: Writable<(string | number)[]> | (string | number)[];
 	}
@@ -15,29 +16,38 @@
 	import { writable, type Writable } from 'svelte/store';
 
 	export let opts: Partial<NavState> = {};
-	const defaultOpts: NavState = {
-		items: [],
+
+	type T = $$Generic;
+	export let items: (T & {
+		id: string | number;
+	})[];
+	$: console.log({ items });
+
+	const defaultOpts: NavState<T> = {
+		items,
+		els: [],
 		changeActiveOnHover: false,
 		active: null,
 		is_enabled: true
 	};
-	const navStore = writable({ ...defaultOpts, ...opts });
+	const navStore = writable<NavState<T>>({ ...defaultOpts, ...opts });
+	$: items, ($navStore.items = items);
 	setContext('navStore', navStore);
 
 	let container: HTMLElement | undefined;
 
 	const navigateForward = () => {
-		if (!$navStore.items.length) return;
+		if (!$navStore.els.length) return;
 		if (!$navStore.active || !container?.contains($navStore.active)) {
 			// if there is no active element, set the first one as active
 			// or we'll be here if the element doesn't exist anymore
-			$navStore.items[0].focus();
-			$navStore.active = $navStore.items[0];
+			$navStore.els[0].focus();
+			$navStore.active = $navStore.els[0];
 			return;
 		}
-		const index = $navStore.items.indexOf($navStore.active);
+		const index = $navStore.els.indexOf($navStore.active);
 		if (index === -1) return;
-		const next = $navStore.items[index + 1];
+		const next = $navStore.els[index + 1];
 		if (next) {
 			next.focus();
 			$navStore.active = next;
@@ -45,16 +55,16 @@
 	};
 
 	const navigateBackward = () => {
-		if (!$navStore.items.length) return;
+		if (!$navStore.els.length) return;
 		if (!$navStore.active || !container?.contains($navStore.active)) {
 			// if there is no active element, set the first one as active
 			// or we'll be here if the element doesn't exist anymore
-			$navStore.items[0].focus();
-			$navStore.active = $navStore.items[0];
+			$navStore.els[0].focus();
+			$navStore.active = $navStore.els[0];
 			return;
 		}
-		const index = $navStore.items.indexOf($navStore.active);
-		const prev = $navStore.items[index - 1];
+		const index = $navStore.els.indexOf($navStore.active);
+		const prev = $navStore.els[index - 1];
 		if (prev) {
 			prev.focus();
 			$navStore.active = prev;
@@ -62,7 +72,17 @@
 	};
 
 	function handleKeydown(e: KeyboardEvent) {
+		console.log('keydown', e.key);
 		if ($disableGlobalKeyboardShortcuts) return;
+		// if (e.key === 'Tab' && e.shiftKey) {
+		// 	e.preventDefault();
+		// 	navigateBackward();
+		// 	return;
+		// } else if (e.key === 'Tab') {
+		// 	e.preventDefault();
+		// 	navigateForward();
+		// 	return;
+		// }
 		switch (e.key) {
 			case 'k':
 			case 'ArrowUp':
@@ -82,7 +102,7 @@
 		}
 	}
 	$: console.log({ $navStore });
-	$: $navStore.items = $navStore.items.filter((item) => item);
+	$: $navStore.els = $navStore.els.filter((item) => item);
 
 	// when item length changes, reset
 	// $: $navStore.items.length, ($navStore.active = null);

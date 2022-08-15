@@ -3,43 +3,24 @@
 	import MiniSelect from '$lib/components/atoms/MiniSelect.svelte';
 
 	import Select from '$lib/components/atoms/Select.svelte';
-	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import Form from '$lib/components/Form.svelte';
 	import GenericInput from '$lib/components/GenericInput.svelte';
-	import GenericTextarea from '$lib/components/GenericTextarea.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
-	import Header from '$lib/components/layout/Header.svelte';
-	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import Saved from '$lib/components/Saved.svelte';
 	import { useId } from '$lib/hooks/use-id';
 	import { notifications } from '$lib/stores/notifications';
 	import type { SmartListCondition } from '$lib/types/filter';
 	import type { Article, Prisma, SmartList } from '@prisma/client';
-	import { fly } from 'svelte/transition';
 
-	export let smartLists: SmartList[] = [];
+	export let list: SmartList;
 
-	import { z } from 'zod';
-	type ArticleInput = {
-		author: StringFilter;
-	};
+	// {"AND":[{"author":{"mode":"insensitive","contains":"tooze"}}]}
+	const unWrapFilter = () => {};
 
-	// const createArticleFilter = (condition: SmartListCondition) => {
-	// 	const obj: Prisma.ArticleWhereInput = {};
-	// 	console.log({ condition });
-	// 	console.log({ obj });
-	// 	return Prisma.validator<Prisma.ArticleWhereInput>()({
-	// 		[condition.field]: {
-	// 			contains: condition.value
-	// 		}
-	// 	});
-	// };
 	let json: Array<Prisma.ArticleWhereInput> = [];
 	let name = '';
-	// let json: Prisma.ArticleWhereInput = {};
 	let and: 'AND' | 'OR' | 'NOT' = 'AND';
-	// $: json[and];
 	let conditions: SmartListCondition[] = [];
 	const defaultCondition: SmartListCondition = {
 		field: 'author',
@@ -189,38 +170,3 @@
 {#if current_results.length}
 	<Saved articles={current_results} />
 {/if}
-<!-- TODO: make work progressively enhanced with actual forms -->
-
-<!-- <div class="flex max-w-md flex-col ">
-	<span>
-		If
-		<Select block={false} bind:value={and}>
-			<option value="AND">Any</option>
-			<option value="OR">All</option>
-			<option value="NOT">None</option>
-		</Select>
-		of the following conditions are met
-	</span>
-	<Button on:click={newCondition} variant="ghost">New Condition</Button>
-	{#each conditions as condition, index (condition.id)}
-		<label for="condition-{index}" class="flex items-center">
-			<Select bind:value={condition.field}>
-				<option value="author">Author</option>
-				<option value="title">Title</option>
-				<option value="url">URL</option>
-			</Select>
-		</label>
-		<Select name="{condition.field}-filter" bind:value={condition.filter}>
-			<option value="contains">Contains</option>
-			<option value="equals">Is</option>
-		</Select>
-		<GenericInput id="condition-{index}" name={condition.field} bind:value={condition.value} />
-	{/each}
-
-	<pre>
-    {JSON.stringify(json, null, 2)}
-  </pre>
-	{#if current_results.length}
-		<Saved articles={current_results} />
-	{/if}
-</div> -->
