@@ -7,16 +7,21 @@
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import Saved from '$lib/components/Saved.svelte';
+	import { notifications } from '$lib/stores/notifications';
+	import { syncStore } from '$lib/stores/sync';
 	import type { ComponentProperties } from '$lib/stores/types';
 	import type { ArticleWithNotesAndTagsAndContext, SmartListWithPayload } from '$lib/types';
-	import type { ViewOptions } from '$lib/types/schemas/View';
+	import { ViewOptionsSchema, type ViewOptions } from '$lib/types/schemas/View';
 	import { sortArticles } from '$lib/utils';
 	import type { Article } from '@prisma/client';
 
 	export let articles: ArticleWithNotesAndTagsAndContext[] = [];
 	export let list: SmartListWithPayload;
-
 	let viewOptions: ViewOptions | undefined;
+	const savedViewOptions = ViewOptionsSchema.safeParse(list.viewOptions);
+	if (savedViewOptions.success) {
+		viewOptions = savedViewOptions.data;
+	}
 	let sortedArticles: ArticleWithNotesAndTagsAndContext[] = articles;
 	$: if (viewOptions) sortedArticles = sortArticles(articles, viewOptions);
 	$: console.log({ sortedArticles });
@@ -35,7 +40,28 @@
 			/>
 		</div>
 		<div slot="end">
-			<CustomizeView bind:viewOptions />
+			<CustomizeView
+				bind:viewOptions
+				on:save={async () => {
+					const syncId = syncStore.add();
+					const res = await fetch(`/smart/${list.id}`, {
+						method: 'PATCH',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							viewOptions
+						})
+					});
+					if (res.ok) {
+						syncStore.remove(syncId);
+						notifications.notify({
+							message: 'View options saved',
+							type: 'success'
+						});
+					}
+				}}
+			/>
 		</div>
 	</DefaultHeader>
 </Header>
@@ -45,7 +71,7 @@
 		actions={{
 			addToList: true
 		}}
-		viewOptions={viewOptions?.properties}
+		{viewOptions}
 	/>
 {/if}
 <!-- TODO: make work progressively enhanced with actual forms -->

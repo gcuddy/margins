@@ -1,4 +1,5 @@
 import { db } from '$lib/db';
+import { ArticleListSelect } from '$lib/types';
 import { getJsonFromRequest } from '$lib/utils';
 import type { RequestHandler } from '@sveltejs/kit';
 
@@ -13,16 +14,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		},
 		include: {
 			articles: {
-				select: {
-					id: true,
-					title: true,
-					image: true,
-					description: true,
-					date: true,
-					url: true,
-					createdAt: true,
-					author: true
-				}
+				select: ArticleListSelect
 			},
 			favorite: true
 		}
@@ -41,8 +33,9 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
-	console.log({ params });
-	const json = getJsonFromRequest(request);
+	console.log('Patching Tag');
+	const json = await getJsonFromRequest(request);
+	console.log({ json });
 	const tag = await db.tag.update({
 		where: {
 			name: params.name
@@ -51,11 +44,8 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 			...json
 		}
 	});
-	console.log({ tag });
 	if (tag) {
-		console.log('returning tag');
 		return {
-			body: { tag },
 			status: 200
 		};
 	}

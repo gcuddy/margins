@@ -22,6 +22,7 @@
 	import articleHeader from '$lib/stores/currentArticle/articleHeader';
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	import ReadingSidebar from '$lib/components/ReadingSidebar.svelte';
+	import { hideSidebar } from '$lib/stores/sidebar';
 	dayjs.extend(localizedFormat);
 
 	export let article: ArticleWithNotesAndTagsAndContext;
@@ -33,6 +34,7 @@
 	const removeCommands = useArticleCommands(article);
 
 	onMount(async () => {
+		hideSidebar.set(true);
 		recents.addRecentArticle(article);
 		if (!browser) return;
 		console.log({ readProgress: article.readProgress });
@@ -79,6 +81,7 @@
 	onDestroy(() => {
 		unsubscribeScrollY && unsubscribeScrollY();
 		removeCommands();
+		hideSidebar.set(false);
 		// $commandStore = $commandStore.filter((c) => !articleCommands.some((a) => a.id === c.id));
 	});
 

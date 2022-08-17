@@ -3,6 +3,8 @@ import { db } from '$lib/db';
 import { z } from 'zod';
 import { ArticleListSelect } from '$lib/types';
 import { getJsonFromRequest } from '$lib/utils';
+import { SmartListModelSchema } from '$lib/types/schemas/SmartList';
+import type { Prisma } from '@prisma/client';
 
 export const GET: RequestHandler = async ({ url, params }) => {
 	console.time('smartlist');
@@ -36,12 +38,15 @@ export const GET: RequestHandler = async ({ url, params }) => {
 
 export const PATCH: RequestHandler = async ({ params, request }) => {
 	const json = await getJsonFromRequest(request);
+	const parsed = SmartListModelSchema.partial().parse(json);
 	await db.smartList.update({
 		where: {
 			id: Number(params.id)
 		},
 		data: {
-			...json
+			viewOptions: parsed.viewOptions,
+			filter: JSON.stringify(parsed.filter),
+			name: parsed.name
 		}
 	});
 	return {

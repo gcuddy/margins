@@ -9,13 +9,13 @@
 
 <SwitchGroup>
 	<div class={className}>
-		<SwitchLabel>{label}</SwitchLabel>
+		<SwitchLabel class="grow">{label}</SwitchLabel>
 		<Switch
 			checked={enabled}
 			on:change={(e) => (enabled = e.detail)}
 			class="{enabled
-				? 'bg-teal-600'
-				: 'bg-gray-400'} relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2  focus-visible:ring-opacity-75"
+				? 'bg-lime-600 active:bg-lime-700'
+				: 'bg-gray-400 active:bg-gray-500'} relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2  focus-visible:ring-opacity-75 "
 		>
 			<span class="sr-only">{sr}</span>
 			<span

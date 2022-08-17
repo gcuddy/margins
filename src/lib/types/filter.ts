@@ -42,23 +42,41 @@ export type FilterField = keyof Omit<Prisma.ArticleWhereInput, 'id' | 'AND' | 'O
 
 export type StringFilterType = keyof Prisma.StringFilter;
 export type IntFilterType = keyof Prisma.IntFilter;
+export type BoolFilterType = keyof Prisma.BoolFilter;
+export type DateTimeFilterType = keyof Prisma.DateTimeFilter;
 
+// TODO: keep this in sync with zod over in SmartList.ts
 type _StringFilter = {
-	field: 'title' | 'author' | 'url' | 'siteName';
+	field: 'title' | 'author' | 'url' | 'siteName' | 'textContent' | 'location';
 	type: 'StringFilter';
 	display?: string;
 	filter: StringFilterType;
 	value: string;
 	id: number;
 };
-
 type _IntFilter = {
-	field: 'readProgress';
+	field: 'readProgress' | 'wordCount';
 	type: 'NumberFilter';
 	display?: string;
 	filter: IntFilterType;
 	value: number;
 	id: number;
 };
+type _BoolFilter = {
+	field: 'starred';
+	type: 'BoolFilter';
+	display?: string;
+	filter: BoolFilterType;
+	value: boolean;
+	id: number;
+};
+type _DateTimeFilter = {
+	field: 'createdAt' | 'updatedAt' | 'date';
+	type: 'DateTimeFilter';
+	display?: string;
+	filter: DateTimeFilterType;
+	value: Date;
+	id: number;
+};
 
-export type SmartListCondition = _StringFilter | _IntFilter;
+export type SmartListCondition = _StringFilter | _IntFilter | _BoolFilter | _DateTimeFilter;

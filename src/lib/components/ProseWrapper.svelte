@@ -16,7 +16,7 @@
 	bind:this={el}
 	on:click
 	class:first_letter
-	class="prose prose-stone mx-auto block break-words {font === 'serif'
+	class="prose-lg prose-stone mx-auto block break-words {font === 'serif'
 		? 'font-serif'
 		: 'font-sans'} transition prose-a:transition  hover:prose-a:text-primary-700 prose-figure:drop-shadow-sm prose-figcaption:mx-auto  prose-figcaption:max-w-sm prose-figcaption:text-center prose-img:mx-auto  prose-img:rounded dark:prose-invert  {breakpoints
 		? 'sm:prose-lg lg:prose-xl'

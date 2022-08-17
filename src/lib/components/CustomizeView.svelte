@@ -1,20 +1,25 @@
 <script lang="ts">
+	import { defaultViewOptions, type ViewOptions } from '$lib/types/schemas/View';
 	import {
 		Popover,
 		PopoverButton,
 		PopoverPanel,
 		PopoverOverlay,
-		Switch,
-		SwitchLabel,
-		SwitchGroup
+		Disclosure,
+		DisclosureButton,
+		DisclosurePanel
 	} from '@rgossiaux/svelte-headlessui';
+	import isEqual from 'lodash.isequal';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { fade, fly } from 'svelte/transition';
+	import { createEventDispatcher } from 'svelte';
 	import MiniSelect from './atoms/MiniSelect.svelte';
 	import MiniSwitch from './atoms/MiniSwitch.svelte';
-	import Select from './atoms/Select.svelte';
 	import SmallPlus from './atoms/SmallPlus.svelte';
 	import Button from './Button.svelte';
+	const dispatch = createEventDispatcher<{
+		save: ViewOptions;
+	}>();
 	const [popperRef, popperContent] = createPopperActions({
 		placement: 'bottom-end',
 		strategy: 'fixed',
@@ -34,19 +39,17 @@
 	// 	strategy: 'fixed'
 	// };
 	import Icon from './helpers/Icon.svelte';
-
-	export let viewOptions = {
-		sort: 'title',
-		properties: {
-			author: true,
-			site: true,
-			description: true,
-			tags: true,
-			annotationCount: true,
-			date: false,
-			wordCount: false
-		}
+	export let viewOptions: ViewOptions = {
+		...defaultViewOptions,
+		properties: { ...defaultViewOptions.properties }
 	};
+	let ogViewOptions = { ...viewOptions, properties: { ...viewOptions.properties } };
+	let changed = false;
+	$: if (!isEqual(viewOptions, ogViewOptions)) {
+		changed = true;
+	} else {
+		changed = false;
+	}
 </script>
 
 <Popover class="relative" let:open>
@@ -70,65 +73,98 @@
   </Transition> -->
 	{#if open}
 		<!-- todo: make this fly instead -->
-		<div transition:fade={{ duration: 150 }} use:popperContent class="z-10">
+		<div transition:fade={{ duration: 150 }} use:popperContent class="z-20">
 			<PopoverPanel
 				static
 				class=" w-72 rounded-lg bg-gray-50 p-4  shadow-2xl ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/5"
 			>
-				<div class="flex flex-col space-y-3">
+				<div class="flex flex-col space-y-3 divide-y">
 					<div class="flex items-center justify-between">
-						<label for="">
+						<label class="grow" for="">
 							<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm">Sorting</SmallPlus>
 						</label>
 						<MiniSelect bind:value={viewOptions.sort}>
+							<option value="manual">Manual</option>
 							<option value="title">Title</option>
 							<option value="author">Author</option>
 							<option value="date">Publish Date</option>
 							<option value="createdAt">Added</option>
 						</MiniSelect>
 					</div>
-					<div class="flex flex-col space-y-2">
-						<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm"
-							>Display Properties</SmallPlus
-						>
-						<div class="flex flex-col space-y-2">
-							<MiniSwitch
-								class="flex justify-between text-sm text-gray-500"
-								bind:enabled={viewOptions.properties.author}
-								label="Author"
+					<Disclosure class="flex flex-col space-y-2 pt-2" let:open>
+						<DisclosureButton class="group flex w-full items-center space-x-4 rounded">
+							<SmallPlus class="text-gray-500 transition dark:text-gray-400" size="sm"
+								>Display Properties</SmallPlus
+							>
+							<Icon
+								name="chevronUpSolid"
+								className="h-4 w-4 fill-gray-500 transition"
+								direction={open ? 's' : 'n'}
 							/>
-							<MiniSwitch
-								class="flex justify-between text-sm text-gray-500"
-								bind:enabled={viewOptions.properties.site}
-								label="Site"
-							/>
-							<MiniSwitch
-								class="flex justify-between text-sm text-gray-500"
-								bind:enabled={viewOptions.properties.description}
-								label="Description"
-							/>
-							<MiniSwitch
-								class="flex justify-between text-sm text-gray-500"
-								bind:enabled={viewOptions.properties.tags}
-								label="Tags"
-							/>
-							<MiniSwitch
-								class="flex justify-between text-sm text-gray-500"
-								bind:enabled={viewOptions.properties.annotationCount}
-								label="Annotations"
-							/>
-							<MiniSwitch
-								class="flex justify-between text-sm text-gray-500"
-								bind:enabled={viewOptions.properties.date}
-								label="Date"
-							/>
-							<MiniSwitch
-								class="flex justify-between text-sm text-gray-500"
-								bind:enabled={viewOptions.properties.wordCount}
-								label="Word Count"
-							/>
+						</DisclosureButton>
+						<DisclosurePanel>
+							<div class="flex flex-col space-y-2">
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.author}
+									label="Author"
+								/>
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.site}
+									label="Site"
+								/>
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.description}
+									label="Description"
+								/>
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.tags}
+									label="Tags"
+								/>
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.annotationCount}
+									label="Annotations"
+								/>
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.date}
+									label="Date"
+								/>
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.wordCount}
+									label="Word Count"
+								/>
+								<MiniSwitch
+									class="flex justify-between text-sm text-gray-500"
+									bind:enabled={viewOptions.properties.location}
+									label="Location"
+								/>
+							</div>
+						</DisclosurePanel>
+					</Disclosure>
+					{#if changed}
+						<div class="flex justify-between">
+							<button
+								on:click={() => {
+									viewOptions = { ...ogViewOptions, properties: { ...ogViewOptions.properties } };
+								}}><SmallPlus class="text-gray-500">Reset to Default</SmallPlus></button
+							>
+							<button
+								class="text-sm font-medium text-lime-500"
+								on:click={() => {
+									ogViewOptions = { ...viewOptions, properties: { ...viewOptions.properties } };
+									dispatch('save', viewOptions);
+								}}
+							>
+								Save for view
+							</button>
 						</div>
-					</div>
+					{/if}
 				</div>
 			</PopoverPanel>
 		</div>

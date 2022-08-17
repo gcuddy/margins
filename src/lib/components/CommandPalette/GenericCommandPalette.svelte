@@ -113,13 +113,13 @@
 		}}
 		static={true}
 		expanded={true}
-		class="relative mx-auto max-w-2xl divide-y divide-gray-100 overflow-hidden rounded-xl bg-gray-50 text-gray-900 shadow-2xl ring-1 ring-black/5 dark:divide-gray-600 dark:bg-gray-700 dark:text-gray-100"
+		class="relative mx-auto max-w-2xl divide-y divide-gray-100 overflow-hidden rounded-xl bg-gray-50 text-gray-900 shadow-2xl ring-1 ring-black/5 dark:divide-gray-600 dark:bg-gray-800 dark:text-gray-100"
 	>
 		<div slot="option" let:value let:active let:selected let:index>
 			<slot {value} {active} {selected} {index}>
 				<div
 					class="text-gray-600 dark:text-gray-300 {active
-						? 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:!text-white'
+						? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:!text-white'
 						: ''} flex h-12 w-full items-center gap-3.5 px-4 py-2"
 				>
 					{#if itemIcon}

@@ -1,3 +1,14 @@
+<script lang="ts" context="module">
+	export interface NavItem {
+		display: string;
+		href: string;
+		icon: IconName;
+		// defaults to active if path = href
+		active?: (path: string) => boolean;
+		items?: NavItem[];
+	}
+</script>
+
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import type { IconName } from '$lib/icons';
@@ -16,22 +27,33 @@
 	import Sync from '../Sync.svelte';
 	import type { FavoriteWithPayload } from '$lib/types/schemas/Favorite';
 	import { fade } from 'svelte/transition';
+	import ColResizer from '../ColResizer.svelte';
+	import { hideSidebar } from '$lib/stores/sidebar';
 
 	export let favorites: FavoriteWithPayload[] = [];
-
-	interface NavItem {
-		display: string;
-		href: string;
-		icon: IconName;
-		// defaults to active if path = href
-		active?: (path: string) => boolean;
-	}
 
 	const hardcodedNav: NavItem[] = [
 		{
 			display: 'Home',
 			href: '/',
-			icon: 'home'
+			icon: 'home',
+			items: [
+				{
+					display: 'Inbox',
+					href: '/inbox',
+					icon: 'inbox'
+				},
+				{
+					display: 'Soon',
+					href: '/soon',
+					icon: 'sparkles'
+				},
+				{
+					display: 'Later',
+					href: '/later',
+					icon: 'calendar'
+				}
+			]
 		},
 		{
 			display: 'Subscriptions',
@@ -86,6 +108,15 @@
 	$: $modals.length && closeSidebar();
 	// $: $commandPaletteStore && closeSidebar();
 	// $: $showCommandPalette && closeSidebar();
+
+	export let width = 240;
+	let _width = width;
+	$: if ($hideSidebar) {
+		_width = width;
+		width = 0;
+	} else {
+		width = _width;
+	}
 </script>
 
 {#if sidebarToggle}
@@ -101,10 +132,19 @@
 <!-- TODO: use transforms for this instead -->
 <nav
 	on:click={handleClick}
-	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {sidebarToggle
-		? 'left-0'
-		: '-left-full'}"
+	style="width: {width}px;"
+	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {$hideSidebar
+		? '-translate-x-72 opacity-0'
+		: 'lg:transition-none left-0'} {sidebarToggle ? 'left-0' : '-left-full'}"
 >
+	<!-- splitter -->
+	<div class="relative">
+		<ColResizer
+			class="absolute -right-1 top-0 ml-1 hidden h-screen w-3 cursor-col-resize px-1 lg:block"
+			min={200}
+			bind:width
+		/>
+	</div>
 	<!-- Flexbox: set width -->
 	<!-- <nav
 				class="user-select-none relative flex min-w-max max-w-xs flex-col border-r bg-gray-400 transition-opacity lg:w-56  lg:shrink-0 "
@@ -173,20 +213,15 @@
 			</div>
 		{/if}
 	</div>
-	<!-- 
-	<div>
-		{JSON.stringify(favorites, null, 2)}
-	</div> -->
-
-	<!-- toggle button -->
-	<button
-		class="fixed top-0 left-0 z-20 !mt-0 flex h-14 w-12 cursor-default flex-col items-center justify-center p-0.5 pl-2 lg:hidden"
-		on:click={toggleSidebar}
-	>
-		<Icon name="menu" className="h-5 w-5 stroke-2 stroke-current" />
-		<span class="sr-only">Toggle menu</span>
-	</button>
 </nav>
+<!-- toggle button -->
+<button
+	class="fixed top-0 left-0 z-20 !mt-0 flex h-14 w-12 cursor-default flex-col items-center justify-center p-0.5 pl-2 lg:hidden"
+	on:click={toggleSidebar}
+>
+	<Icon name="menu" className="h-5 w-5 stroke-2 stroke-current" />
+	<span class="sr-only">Toggle menu</span>
+</button>
 
 <style lang="postcss">
 	nav {

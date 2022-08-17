@@ -35,9 +35,12 @@
 	import { dev } from '$app/env';
 	import { mainEl } from '$lib/stores/main';
 	import type { FavoriteWithPayload } from '$lib/types/schemas/Favorite';
+	import { hideSidebar } from '$lib/stores/sidebar';
 
 	export let favorites: FavoriteWithPayload[] = [];
 	$: console.log({ favorites });
+
+	let sidebarWidth: number;
 </script>
 
 <svelte:head />
@@ -64,10 +67,12 @@
 		<Notifications />
 		<!-- Grid version -->
 		<div
-			class="relative grid h-screen min-h-full w-full overflow-hidden lg:grid-cols-[var(--sidebar-width)_1fr] "
+			class="relative flex h-screen min-h-full w-full overflow-hidden {!$hideSidebar &&
+				'lg:grid-cols-[var(--sidebar-width)_1fr] grid'} "
+			style="--sidebar-width: {sidebarWidth}px;"
 		>
 			<!-- sidebar, but should only be for some layouts -->
-			<Sidebar {favorites} />
+			<Sidebar {favorites} bind:width={sidebarWidth} />
 
 			<main
 				bind:this={$mainEl}

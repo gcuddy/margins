@@ -38,9 +38,13 @@
 	import DotMenu from './DotMenu.svelte';
 	import Muted from './atoms/Muted.svelte';
 	import type { ComponentProperties } from '$lib/stores/types';
+	import type { ViewOptions } from '$lib/types/schemas/View';
+	import LocationPill from './LocationPill.svelte';
+	import Tag from './Tags/Tag.svelte';
+	import SavedPillWrapper from './SavedPillWrapper.svelte';
 	dayjs.extend(localizedFormat);
 	let focused = -1;
-	let dragDisabled = true;
+	let dragDisabled = false;
 
 	const handleConsider = (e: CustomEvent<DndEvent>) => {
 		//optimistic update
@@ -56,13 +60,13 @@
 				position: index
 			}))
 		);
-	const startDrag = () => (dragDisabled = false);
-	const stopDrag = () => (dragDisabled = true);
+	// const startDrag = () => (dragDisabled = false);
+	// const stopDrag = () => (dragDisabled = true);
 
 	const handleFinalize = (e: CustomEvent<DndEvent>) => {
 		//optimistic update
 		articles = e.detail.items;
-		dragDisabled = true;
+		// dragDisabled = true;
 		// now save to database
 		// TODO: debounce
 		saveArticleOrder();
@@ -72,20 +76,26 @@
 	let hovering = false;
 
 	$: console.log({ $selectedArticleIds });
+	$: console.log({ articles });
 
 	export let actions: ComponentProperties<SelectActions>['actions'] | undefined = undefined;
 
-	const view_options = {
-		author: true,
-		site: true,
-		description: true,
-		tags: true,
-		annotationCount: true,
-		date: false,
-		wordCount: false
+	const view_options: ViewOptions = {
+		sort: 'manual',
+		properties: {
+			author: true,
+			site: true,
+			description: true,
+			tags: true,
+			annotationCount: true,
+			date: false,
+			wordCount: false
+		}
 	};
 
-	export let viewOptions: typeof view_options = view_options;
+	export let viewOptions: ViewOptions = view_options;
+
+	$: dragDisabled = viewOptions.sort != 'manual';
 </script>
 
 <!-- <svelte:window on:keydown={handleKeydown} /> -->
@@ -98,8 +108,8 @@
 		class="mx-auto w-full space-y-0 overflow-auto"
 		use:dndzone={{
 			items: articles,
-			dragDisabled,
 			flipDurationMs,
+			dragDisabled,
 			dropTargetStyle: {},
 			zoneTabIndex: -1
 		}}
@@ -114,7 +124,7 @@
 				{index}
 				as="a"
 				href="/{item.id}"
-				class="group block cursor-default"
+				class="group !cursor-default"
 				on:select={() => {
 					if ($selectedArticleIds.includes(item.id)) {
 						$selectedArticleIds = $selectedArticleIds.filter((id) => id !== item.id);
@@ -140,10 +150,10 @@
 			/> -->
 
 					<div
-						class="flex h-full flex-col justify-center border-b border-gray-100 px-6 ring-inset group-focus-within:bg-gray-50 group-focus-within:ring-1 dark:border-gray-700 dark:group-focus-within:bg-gray-800  {$selectedArticleIds.includes(
+						class="dark: flex h-full flex-col justify-center border-b border-gray-100 px-6 ring-inset  group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-700 dark:group-focus-visible:bg-gray-800  {$selectedArticleIds.includes(
 							item.id
 						)
-							? '!bg-gray-100 dark:bg-gray-900'
+							? '!bg-gray-100 dark:!bg-gray-800'
 							: 'dark:bg-gray-900 bg-transparent '}"
 						on:mouseenter={() => (hovering = true)}
 						on:mouseleave={() => (hovering = false)}
@@ -170,52 +180,45 @@
 									type="checkbox"
 									aria-hidden={true}
 									tabindex={-1}
-									class=" absolute inset-0 z-10 h-full w-full cursor-pointer rounded-md border-0 bg-transparent text-gray-600/95 ring-0"
+									class=" absolute inset-0 z-10 h-full w-full cursor-pointer rounded-md border-0 bg-transparent  ring-0"
 								/>
 							</div>
 
-							<div class="relative flex shrink flex-col justify-center  truncate text-left">
-								<span class="truncate text-base font-semibold leading-tight">
+							<div class="relative flex shrink flex-col justify-center truncate  text-left">
+								<span class="cursor-pointer text-base font-semibold leading-tight line-clamp-2">
 									{#if html}{@html item.title}{:else}{item.title}{/if}
 								</span>
 								<!-- url and author around 74,74,74, description around 126,126,126 -->
 								<div class="flex gap-4 text-xs text-stone-700 dark:text-gray-300 md:text-sm">
-									{#if item.author && viewOptions.author}
+									{#if item.author && viewOptions.properties.author}
 										<span>{item.author}</span>
 									{/if}
-									{#if viewOptions.site}
+									{#if viewOptions.properties.site}
 										<Muted>{item.siteName || new URL(item.url).hostname}</Muted>
 									{/if}
-									{#if item.date && viewOptions.date}
+									{#if item.date && viewOptions.properties.date}
 										<Muted>{dayjs(item.date).format('ll')}</Muted>
 									{/if}
-									{#if item.wordCount && viewOptions.wordCount}
+									{#if item.wordCount && viewOptions.properties.wordCount}
 										<Muted>{item.wordCount} words</Muted>
 									{/if}
 									<!-- <span><a href={item.url}>{item.url}</a></span> -->
 								</div>
-								{#if viewOptions.description}
-									<p
-										class="hidden truncate text-xs text-stone-500 dark:text-gray-400 md:block md:text-sm {quoted &&
-											'before:content-[""] before:border-l-2 before:mr-4'}"
-									>
-										{#if html}{@html item.description}{:else}{item.description}{/if}
-									</p>
-								{/if}
+								<div class="flex truncate">
+									{#if viewOptions.properties.description}
+										<p
+											class="hidden truncate text-xs text-stone-500 dark:text-gray-400 md:block md:text-sm {quoted &&
+												'before:content-[""] before:border-l-2 before:mr-4'}"
+										>
+											{#if html}{@html item.description}{:else}{item.description}{/if}
+										</p>
+									{/if}
+								</div>
 							</div>
 							<!-- is this necessary? -->
 							<Spacer />
 
-							<!-- TODO: add type -->
-							{#if item['_count']?.annotations && viewOptions.annotationCount}
-								<AnnotationCount count={item['_count'].annotations} />
-							{/if}
-
-							{#if item.tags?.length && viewOptions.tags}
-								<div class="hidden sm:flex">
-									<TagCloud tags={item.tags} />
-								</div>
-							{/if}
+							<SavedPillWrapper {item} {viewOptions} />
 
 							<div class="flex shrink-0 basis-auto items-center gap-4">
 								<!-- turning this off for now -->

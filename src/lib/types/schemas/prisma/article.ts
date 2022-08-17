@@ -1,0 +1,28 @@
+import * as z from "zod"
+
+export const ArticleModel = z.object({
+  id: z.number().int(),
+  title: z.string(),
+  content: z.string(),
+  textContent: z.string(),
+  author: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  readProgress: z.number(),
+  url: z.string(),
+  siteName: z.string().nullish(),
+  colorHash: z.string().nullish(),
+  date: z.date(),
+  image: z.string(),
+  wordCount: z.number().int(),
+  starred: z.boolean(),
+  css: z.string().nullish(),
+  description: z.string().nullish(),
+  wiki: z.string().nullish(),
+  classification: z.string().nullish(),
+  pdf: z.boolean().nullish(),
+  html: z.string().nullish(),
+  position: z.number().int(),
+  trash: z.boolean(),
+  location: z.string(),
+})

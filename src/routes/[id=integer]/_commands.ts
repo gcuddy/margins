@@ -53,7 +53,7 @@ export default function useArticleCommands(article: ArticleWithNotesAndTagsAndCo
 			perform: () => {
 				fetch(`/${article.id}/__data.json`, {
 					method: 'PATCH',
-					body: JSON.stringify({ location: 'soon' })
+					body: JSON.stringify({ location: 'SOON' })
 				})
 					.then((res) => {
 						notifications.notify({

@@ -126,8 +126,14 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
+		console.log({ e });
 		if (e.key === 'x') {
 			dispatch('select');
+		}
+		if (e.key === 'Enter') {
+			// have to do this because svelte-dnd-action doesn't play nice with us
+			e.stopPropagation();
+			e.stopImmediatePropagation();
 		}
 	}
 	$: console.log({ index, el });

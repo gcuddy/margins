@@ -91,7 +91,7 @@
 		active: TValue;
 	}>();
 
-	export let idResolver: (v: T) => string = (v: any) => {
+	export let idResolver: (v: T) => string | number = (v: any) => {
 		if (typeof v === 'string') {
 			return v;
 		} else {

@@ -11,12 +11,20 @@
 	import { useId } from '$lib/hooks/use-id';
 	import { notifications } from '$lib/stores/notifications';
 	import type { SmartListCondition } from '$lib/types/filter';
+	import {
+		ArticleWhereSchema,
+		SmartListFilterSchema,
+		stringFilterKeys
+	} from '$lib/types/schemas/SmartList';
 	import type { Article, Prisma, SmartList } from '@prisma/client';
+	import { match, P } from 'ts-pattern';
+	import type { z } from 'zod';
 
 	export let list: SmartList;
+	console.log({ list });
 
-	// {"AND":[{"author":{"mode":"insensitive","contains":"tooze"}}]}
-	const unWrapFilter = () => {};
+	const parsedFilter = SmartListFilterSchema.parse(list.filter);
+	console.log({ parsedFilter });
 
 	let json: Array<Prisma.ArticleWhereInput> = [];
 	let name = '';
@@ -33,6 +41,34 @@
 	const newCondition = () => {
 		conditions = [...conditions, { ...defaultCondition, id: useId() }];
 	};
+
+	// {"AND":[{"author":{"mode":"insensitive","contains":"tooze"}}]}
+	const articleWhereKeys = ArticleWhereSchema.keyof();
+	// const unWrapFilter = (s: z.infer<typeof ArticleWhereSchema>) => {
+	//   // right now each condition is an array of *one* item, so we can do this
+	//   let key = Object.keys(s)[0] as z.infer<typeof articleWhereKeys>;
+	//   let value = s[key];
+	//   match(value)
+	//   .with()
+	// };
+
+	// only ONE of these is supported
+	if ('AND' in parsedFilter) {
+		and = 'AND';
+	} else if ('OR' in parsedFilter) {
+		and = 'OR';
+	} else if ('NOT' in parsedFilter) {
+		and = 'NOT';
+	} //TODO from Here: use parsedfilter to recreate filter to pass into conditions
+
+	let parsedConditions: SmartListCondition[] = parsedFilter[and]?.map((a) => {
+		// each object will have ONE key
+		let key = Object.keys(a)[0] as z.infer<typeof articleWhereKeys>;
+		if (stringFilterKeys.includes(key)) {
+			return {};
+		}
+		// strings
+	});
 
 	$: json = conditions.map((condition) => {
 		return {
@@ -76,15 +112,13 @@
 			const { id } = await res.json();
 			goto(`/smart/${id}`);
 			notifications.notify({
-				message: 'Smart list created',
+				message: 'Smart list saved',
 				type: 'success'
 			});
 		}
 	}
 
 	let current_results: Article[] = [];
-
-	const updateJson = () => {};
 </script>
 
 <div class="my-4 mx-5 flex rounded bg-gray-100 dark:bg-gray-800  ">

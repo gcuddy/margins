@@ -154,8 +154,12 @@
 				<span class="sr-only">Options</span>
 			</div>
 		</Menu>
-		<button on:click={() => (reading_sidebar_active = !reading_sidebar_active)} class="z-40">
-			<Icon name="sidebar" className="h-5 w-5 stroke-2 stroke-current relative top-px" />
+		<button on:click={() => (reading_sidebar_active = !reading_sidebar_active)} class="group z-40">
+			<Icon
+				name="sidebar"
+				className="h-5 w-5 stroke-2 stroke-current relative top-px group-hover:fill-primary-100 transition-all {reading_sidebar_active &&
+					'fill-primary-100'}"
+			/>
 		</button>
 	</div>
 </div>

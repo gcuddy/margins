@@ -1,13 +1,8 @@
+import { writable } from 'svelte/store';
 import { z } from 'zod';
 
-const ArticleSortBySchema = z
-	.literal('title')
-	.or(z.literal('date'))
-	.or(z.literal('author'))
-	.or(z.literal('createdAt'));
-
-export const ViewSchema = z.object({
-	sort: ArticleSortBySchema,
+export const ViewOptionsSchema = z.object({
+	sort: z.enum(['title', 'date', 'author', 'createdAt', 'manual']),
 	properties: z.object({
 		author: z.boolean(),
 		site: z.boolean(),
@@ -15,13 +10,15 @@ export const ViewSchema = z.object({
 		tags: z.boolean(),
 		annotationCount: z.boolean(),
 		date: z.boolean(),
-		wordCount: z.boolean()
+		wordCount: z.boolean(),
+		readProgress: z.boolean(),
+		location: z.boolean()
 	})
 });
 
-export type ViewOptions = z.infer<typeof ViewSchema>;
+export type ViewOptions = z.infer<typeof ViewOptionsSchema>;
 
-export const viewOptions: ViewOptions = {
+export const defaultViewOptions: ViewOptions = {
 	sort: 'title',
 	properties: {
 		author: true,
@@ -30,8 +27,22 @@ export const viewOptions: ViewOptions = {
 		tags: true,
 		annotationCount: true,
 		date: false,
-		wordCount: false
+		wordCount: false,
+		readProgress: false,
+		location: false
 	}
 };
+
+export function createCustomizeViewStore(options = defaultViewOptions) {
+	const { subscribe, set, update } = writable(options);
+	return {
+		subscribe,
+		set,
+		update,
+		reset: () => set(options),
+		softReset: () => set(options),
+		hardReset: () => set(defaultViewOptions)
+	};
+}
 
 // export type ViewOptions = typeof viewOptions;

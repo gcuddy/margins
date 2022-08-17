@@ -4,12 +4,14 @@
 	export let count: number;
 	export let href: string | undefined = undefined;
 	$: as = href ? 'a' : 'span';
+	export let el: HTMLElement | undefined = undefined;
 </script>
 
 <!-- todo: make dry -->
 {#if as === 'a'}
 	<a
-		class="flex flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 py-1 px-2"
+		bind:this={el}
+		class="flex w-10 shrink flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 py-1 px-2"
 		{href}
 		sveltekit:prefetch
 	>
@@ -18,7 +20,8 @@
 	</a>
 {:else}
 	<span
-		class="flex flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 py-0.5 px-2"
+		bind:this={el}
+		class="flex w-10 shrink flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 py-0.5 px-2"
 		{href}
 	>
 		<Icon name="pencilSolid" className="h-3 w-3 fill-amber-900" />

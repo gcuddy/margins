@@ -8,8 +8,17 @@
 	import { archive, bulkEditArticles } from '$lib/utils';
 	import type { Article } from '@prisma/client';
 	import { tick } from 'svelte';
-	import { cubicOut, quintOut } from 'svelte/easing';
+	import {
+		backIn,
+		backInOut,
+		backOut,
+		cubicOut,
+		elasticInOut,
+		elasticOut,
+		quintOut
+	} from 'svelte/easing';
 	import Button from './Button.svelte';
+	import { commandPaletteStore } from './CommandPalette/store';
 	import Form from './Form.svelte';
 	import Icon from './helpers/Icon.svelte';
 	export let articles: Article[] = [];
@@ -44,7 +53,8 @@
 	const _actions = {
 		archive: true,
 		tag: true,
-		addToList: true
+		addToList: true,
+		moveTo: true
 	};
 
 	export let actions: Partial<typeof _actions> = _actions;
@@ -57,14 +67,18 @@
 
 {#if $selectedArticleIds.length}
 	<div
-		transition:gentleFly|local={{
-			duration: 200,
-			easing: cubicOut
+		in:gentleFly|local={{
+			duration: 400,
+			easing: backOut
 		}}
-		class="pointer-events-none fixed inset-x-0 bottom-9 z-10 flex justify-center"
+		out:gentleFly|local={{
+			duration: 400,
+			easing: backIn
+		}}
+		class="pointer-events-none fixed inset-x-0 bottom-9 z-30 flex justify-center"
 	>
 		<div
-			class="pointer-events-auto flex h-11 flex-row items-center justify-center space-x-4 rounded-lg bg-gray-50 px-4 shadow-2xl ring ring-black/5 dark:bg-gray-700 dark:bg-gradient-to-b"
+			class="dark:ring-black/15 pointer-events-auto flex h-11 flex-row items-center justify-center space-x-4 rounded-lg bg-gray-50 px-4 shadow-2xl ring ring-black/5 dark:bg-gray-800 dark:bg-gradient-to-br"
 		>
 			<span class="text-sm text-gray-400 dark:text-gray-300 lg:text-base"
 				>{$selectedArticleIds.length} selected</span
@@ -95,6 +109,18 @@
 						<span>Archive</span></Button
 					>
 				{/if}
+				{#if actions.moveTo}
+					<Button
+						variant="ghost"
+						className="space-x-1 flex items-center lg:text-base"
+						on:click={() => {
+							commandPaletteStore.open({
+								values: ['Inbox'].map((title, id) => ({ title, id }))
+							});
+						}}
+						><Icon name="arrowSmRight" className="h-4 w-4 stroke-2 stroke-current" />
+						<span>Move to…</span></Button
+					>{/if}
 				{#if actions.tag}
 					<Button variant="ghost" className="lg:text-base">Tag</Button>
 				{/if}

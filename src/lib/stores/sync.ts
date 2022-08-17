@@ -20,7 +20,10 @@ function createSyncStore() {
 	return {
 		subscribe,
 		addItem,
-		removeItem
+		removeItem,
+		// convenience methods
+		add: addItem,
+		remove: removeItem
 	};
 }
 export const syncStore = createSyncStore();

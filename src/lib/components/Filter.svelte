@@ -18,6 +18,13 @@
 		$filterTerm = '';
 	});
 	let showing = false;
+
+	const focus = () => {
+		if (input && showing) {
+			input.focus();
+		}
+	};
+	$: showing, focus();
 </script>
 
 <svelte:window

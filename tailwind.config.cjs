@@ -84,6 +84,9 @@ const config = {
 			},
 			transitionDuration: {
 				quick: '0.15s'
+			},
+			gridTemplateColumns: {
+				overlap: 'repeat(auto-fit,  minmax(10px, max-content))'
 			}
 		}
 	},
@@ -91,7 +94,7 @@ const config = {
 	plugins: [
 		require('@tailwindcss/typography'),
 		require('@tailwindcss/forms'),
-		require('@tailwindcss/line-clamp'),
+		require('@tailwindcss/line-clamp')
 	]
 };
 

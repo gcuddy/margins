@@ -30,6 +30,14 @@
 	$: console.log({ tags });
 </script>
 
+<svelte:window
+	on:keydown={(e) => {
+		if (e.key === 'Escape') {
+			active = false;
+		}
+	}}
+/>
+
 <!-- mt-8 to account for reading menu -->
 <aside
 	class="fixed top-0 bottom-0 right-0 z-10 mt-8 flex h-full w-full transform-gpu flex-col space-y-5 overflow-auto border border-gray-200 bg-gray-50 p-4 shadow-2xl  transition ease-in-out dark:border-gray-700 dark:bg-gray-800 dark:shadow-stone-900 sm:w-96 {active

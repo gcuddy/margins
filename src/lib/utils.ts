@@ -10,6 +10,7 @@ import { syncStore } from './stores/sync';
 import type { FavoriteSchema } from './types/schemas/Favorite';
 import type { ViewOptions } from './types/schemas/View';
 import dayjs from 'dayjs';
+import { match } from 'ts-pattern';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -371,8 +372,21 @@ export function sortArticles<T>(articles: (Article & T)[], opts: ViewOptions) {
 				console.log({ a, b });
 				return dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1;
 			}
+			case 'manual': {
+				return b.position - a.position;
+			}
 			default:
 				return 0;
 		}
 	});
+}
+
+/**
+ * Clamp `num` to the range `[min, max]`
+ * @param {number} num
+ * @param {number} min
+ * @param {number} max
+ */
+export function clamp(num: number, min: number, max: number) {
+	return num < min ? min : num > max ? max : num;
 }
