@@ -59,12 +59,3 @@
 >
 	<slot />
 </div>
-
-<style>
-	div {
-		/* position: absolute;
-		z-index: 9; */
-		/* background-color: rgba(0, 0, 0, 0.5); */
-		/* padding: 10px; */
-	}
-</style>
