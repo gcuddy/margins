@@ -1,4 +1,4 @@
-import type { LayoutLoad } from './$types';
+import type { LayoutLoad } from '../../../.svelte-kit/types/src/routes/rss/$types';
 export const load: LayoutLoad = async ({ fetch, url }) => {
 	const response = await fetch('/rss/feeds.json', {
 		method: 'GET'
