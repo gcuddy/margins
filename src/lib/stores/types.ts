@@ -1,3 +1,4 @@
+import GenericCommandPalette from '$lib/components/CommandPalette/GenericCommandPalette.svelte';
 import type { SvelteComponentTyped } from 'svelte';
 
 export interface StoredComponent {

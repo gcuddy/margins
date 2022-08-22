@@ -9,11 +9,12 @@
 	import Saved from '$lib/components/Saved.svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { syncStore } from '$lib/stores/sync';
-	import type { TagWithArticle } from '$lib/types';
 	import { ViewOptionsSchema, type ViewOptions } from '$lib/types/schemas/View';
 	import { createFavorite, deleteFavorite, sortArticles } from '$lib/utils';
+	import type { PageData } from './$types';
 
-	export let tag: TagWithArticle;
+	export let data: PageData;
+	let { tag } = data;
 	console.log({ tag });
 
 	let starred = !!tag.favorite;

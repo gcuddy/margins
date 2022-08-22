@@ -5,6 +5,7 @@
 	type T = $$Generic;
 	type TValue = T;
 	export let values: TValue[];
+	$: console.log({ values });
 
 	interface StateDefinition<T> {
 		selected: {

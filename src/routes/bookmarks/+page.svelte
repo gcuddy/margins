@@ -1,5 +1,7 @@
 <script lang="ts">
-	export let bookmarks: Bookmark[] = [];
+	import type { PageData } from './$types';
+	export let data: PageData;
+	$: bookmarks = data.bookmarks || [];
 </script>
 
 {#each bookmarks as bookmark (bookmark.id)}

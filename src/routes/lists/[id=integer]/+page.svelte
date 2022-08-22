@@ -4,12 +4,14 @@
 	import { getArticles } from '$lib/data/sync';
 	import Saved from '$lib/components/Saved.svelte';
 	import { cachedArticlesStore } from '$lib/stores/cache';
-	import type { ListWithItems } from '$lib/types';
-	import { patch, put } from '$lib/utils';
-	import type { Article } from '@prisma/client';
+	import type { ArticleInList } from '$lib/types';
+	import { put } from '$lib/utils';
 	import { derived } from 'svelte/store';
-	export let list: ListWithItems;
-	$: articles = list.items?.flatMap((i) => i.article)?.filter((i) => i) as Article[];
+
+	import type { PageData } from './$types';
+	export let data: PageData;
+	$: list = data.list;
+	$: articles = list.items?.flatMap((i) => i.article)?.filter((i) => i) as ArticleInList[];
 	const availableArticlesToAdd = derived(cachedArticlesStore, ($articles) => {
 		const existingIds = articles?.map((a) => a.id) ?? [];
 		return $articles?.articles?.filter((a) => !existingIds.includes(a.id)) || [];
@@ -32,7 +34,12 @@
 			onSelect: async ({ detail }) => {
 				console.log({ detail });
 				// optimistic update
-				list.items = [...list.items, { article: detail }];
+				const newItem = {
+					article: detail,
+					id: Math.random().toString(36).substr(2, 9)
+				};
+				// ignore this for now till i figure out how to type this
+				list.items = [...list.items, newItem];
 				const res = await put(`/lists/${list.id}`, {
 					articleId: detail.id
 				});

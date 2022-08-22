@@ -1,38 +1,21 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
-export const GET: RequestHandler = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const id = params.id;
-	try {
-		const feed = await db.rssFeed.findFirst({
-			where: {
-				id: parseInt(id)
+	const feed = await db.rssFeed.findFirst({
+		where: {
+			id: parseInt(id)
+		},
+		include: {
+			items: {
+				orderBy: {
+					pubDate: 'desc'
+				}
 			},
-			include: {
-				items: {
-					orderBy: {
-						pubDate: 'desc'
-					}
-				},
-				favorite: true
-			}
-		});
-		console.log({ feed });
-		// //todo: cache this
-		// let items;
-		// // if (feed?.feedUrl) {
-		// // 	items = await getRawFeedItems(feed?.feedUrl);
-		// // }
-		// console.log({ items });
-		return {
-			body: {
-				feed
-			},
-			status: 200
-		};
-	} catch (e) {
-		console.error(e);
-		return {
-			status: 404
-		};
-	}
+			favorite: true
+		}
+	});
+	return {
+		feed
+	};
 };

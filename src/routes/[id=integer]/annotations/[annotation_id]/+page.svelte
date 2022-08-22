@@ -1,4 +1,5 @@
 <script lang="ts">
+	// TODO: fix this
 	import type { Error, Result } from '$lib/actions/form';
 	import AnnotationInput from '$lib/components/AnnotationInput.svelte';
 
@@ -7,7 +8,9 @@
 	import Textarea from '$lib/components/Textarea.svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import type { AnnotationWithArticle } from '$lib/types';
-	export let annotation: AnnotationWithArticle;
+	import type { PageData } from './$types';
+	export let data: PageData;
+	let { annotation } = data;
 	let { article } = annotation;
 	const done: Result = async () => {
 		notifications.notify({

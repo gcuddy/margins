@@ -1,9 +1,9 @@
 import { db } from '$lib/db';
-import type { RequestHandler } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const GET: RequestHandler = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const { id } = params;
-	console.log('getting /notebook');
 	console.time('get notebook');
 	const annotations = await db.annotation.findMany({
 		include: {
@@ -13,7 +13,8 @@ export const GET: RequestHandler = async ({ params }) => {
 					description: true,
 					id: true,
 					title: true,
-					url: true
+					url: true,
+					siteName: true
 				}
 			}
 		},
@@ -21,40 +22,12 @@ export const GET: RequestHandler = async ({ params }) => {
 			updatedAt: 'desc'
 		}
 	});
-	// const articles = await db.article.findMany({
-	// 	where: {
-	// 		OR: [
-	// 			{
-	// 				annotations: {
-	// 					some: {}
-	// 				}
-	// 			},
-	// 			{
-	// 				highlights: {
-	// 					some: {}
-	// 				}
-	// 			}
-	// 		]
-	// 	},
-	// 	include: {
-	// 		annotations: true,
-	// 		highlights: true,
-	// 		tags: true
-	// 	},
-	// 	orderBy: {
-	// 		createdAt: 'desc'
-	// 	}
-	// });
 	console.timeEnd('get notebook');
 	if (annotations) {
 		return {
-			body: {
-				annotations
-			}
+			annotations
 		};
 	} else {
-		return {
-			status: 404
-		};
+		throw error(404, 'Annotations not found');
 	}
 };

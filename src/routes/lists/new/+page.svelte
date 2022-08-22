@@ -1,31 +1,8 @@
-<script lang="ts" context="module">
-	import type { Load } from '@sveltejs/kit';
-	export const load: Load = async ({ fetch }) => {
-		const res = await fetch('/api/articles?fields=id,title', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		});
-		if (!res.ok) {
-			return {
-				status: res.status
-			};
-		}
-		const { articles } = await res.json();
-		return {
-			status: 200,
-			props: {
-				articles
-			}
-		};
-	};
-</script>
-
 <script lang="ts">
 	import Button from '$lib/components/Button.svelte';
-	import type { Article } from '@prisma/client';
-	export let articles: Article[] = [];
+	import type { PageData } from './$types';
+	export let data: PageData;
+	$: articles = data.articles;
 </script>
 
 <form class="space-y-4" action="/lists" method="POST">

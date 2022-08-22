@@ -1,45 +1,3 @@
-<!-- <script context="module" lang="ts">
-	import type { Load } from '@sveltejs/kit';
-	export const load: Load = async ({ fetch, url, props, stuff }) => {
-		// use fetch
-		const response = await fetch('/rss/feeds.json', {
-			method: 'GET'
-		});
-		console.log({ response });
-		if (!response.ok) {
-			return {
-				status: response.status
-			};
-		}
-		const { feeds } = await response.json();
-		// const feeds = [];
-		// console.log({ feeds });
-		const filter = url.searchParams.get('filter');
-		console.log({ props });
-		console.log({ stuff });
-		console.log('test test toot toot');
-		return {
-			props: {
-				filter,
-				feeds
-			},
-			stuff: {
-				filter
-			},
-			cache: {
-				maxage: 60 * 5,
-				private: true
-			}
-		};
-		// const feeds = await getFeeds();
-		// console.log({ feeds });
-		// const feeds = await fetch('/rss/feeds.json').then((res) => res.json());
-		// console.log(`load function /rss/__layout`, { feeds });
-		// return {
-		// 	props: feeds
-		// };
-	};
-</script> -->
 <script lang="ts">
 	import type { RssFeed } from '@prisma/client';
 	import Header from '$lib/components/layout/Header.svelte';
@@ -52,6 +10,8 @@
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { syncStore } from '$lib/stores/sync';
 	import FavoriteStar from '$lib/components/FavoriteStar.svelte';
+	import type { PageData } from './$types';
+	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	const all = [
 		{
 			href: '/rss',
@@ -59,8 +19,8 @@
 			id: -1
 		}
 	];
-	export let feeds: RssFeed[] = [];
-	export let filter: 'all' | 'unread' = 'all';
+	export let data: PageData;
+	let { feeds } = data;
 	console.log({ feeds });
 
 	let pending_sync = false;
@@ -68,22 +28,11 @@
 </script>
 
 <div class="flex flex-col overflow-hidden">
-	<!-- <Sidebar
-		links={all.concat(
-			feeds.map((f) => {
-				return {
-					href: `/rss/${f.id}`,
-					text: f.title,
-					id: f.id
-				};
-			})
-		)}
-	/> -->
-
 	<Header>
 		<DefaultHeader>
 			<div slot="start">
-				{#if $page.url.pathname === '/rss'}
+				<SmallPlus>Feeds</SmallPlus>
+				<!-- {#if $page.url.pathname === '/rss'}
 					<div class="text-gray-500">Feeds</div>
 				{:else}
 					<div class="flex flex-col text-sm sm:flex-row sm:space-x-1">
@@ -99,7 +48,7 @@
 							}}
 						/>
 					</div>
-				{/if}
+				{/if} -->
 			</div>
 			<div slot="end" class="flex space-x-3">
 				<Form
@@ -128,5 +77,5 @@
 		</DefaultHeader>
 	</Header>
 	<!-- <pre>{feeds}</pre> -->
-	<slot {feeds} />
+	<slot />
 </div>

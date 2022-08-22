@@ -10,15 +10,20 @@ export const LOCATION_TO_DISPLAY = {
 	ARCHIVE: 'Archive'
 } as const;
 
+export const LOCATION_LIST = LOCATIONS.map((location) => ({
+	name: LOCATION_TO_DISPLAY[location],
+	id: location
+}));
+
 export const LOCATION_TO_ICON_SOLID: Record<Location, IconName> = {
 	INBOX: 'inboxSolid',
-	SOON: 'clockSolid',
+	SOON: 'sparklesSolid',
 	LATER: 'calendarSolid',
 	ARCHIVE: 'archiveSolid'
 };
 export const LOCATION_TO_ICON_OUTLINE: Record<Location, IconName> = {
 	INBOX: 'inbox',
-	SOON: 'clock',
+	SOON: 'sparkles',
 	LATER: 'calendar',
 	ARCHIVE: 'archive'
 };

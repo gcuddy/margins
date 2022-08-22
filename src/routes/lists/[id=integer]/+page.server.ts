@@ -1,52 +1,41 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
-export const GET: RequestHandler<{ id: string }> = async ({ request, url, params }) => {
-	const { id } = params;
+import { ArticleListSelect } from '$lib/types';
+import { error } from '@sveltejs/kit';
 
+export const load: PageServerLoad = async ({ params }) => {
+	const { id } = params;
 	try {
 		const list = await db.list.findUnique({
 			where: {
-				id: parseInt(id)
+				id: Number(id)
 			},
 			include: {
 				items: {
 					include: {
-						article: true
-						// select: {
-						// 	id: true,
-						// 	title: true,
-						// 	author: true,
-						// 	readProgress: true,
-						// 	image: true,
-						// 	description: true,
-						// 	url: true
-						// }
+						article: {
+							select: ArticleListSelect
+						}
 					}
 				}
 			}
 		});
 		return {
-			status: 200,
-			body: {
-				list
-			}
+			list
 		};
 	} catch (e) {
 		console.error(e);
-		return {
-			status: 400
-		};
+		throw error(404, 'List not found');
 	}
 };
 
-export const PATCH: RequestHandler<{ id: string }> = async ({ request, url, params }) => {
+export const PATCH: Action = async ({ request, params }) => {
 	const { id } = params;
-	console.log('patching beep beep');
 	try {
 		const data = await getJsonFromRequest(request);
+		// TODO: zod schema
 		const { name, description, items } = data;
-		console.log('here we go', data);
 		const listItems = await db.listItem.createMany({
 			data: items?.map((article) => {
 				return {
@@ -69,23 +58,13 @@ export const PATCH: RequestHandler<{ id: string }> = async ({ request, url, para
 				}
 			}
 		});
-
-		return {
-			status: 200,
-			body: {
-				list
-			}
-		};
 	} catch (e) {
-		console.error(e);
-		return {
-			status: 400
-		};
+		throw error(400, 'error updating list');
 	}
 };
 
 //PUT- used for putting list item (from articleId) in list
-export const PUT: RequestHandler<{ id: string }> = async ({ request, params }) => {
+export const PUT: Action = async ({ request, params }) => {
 	const { id } = params;
 	try {
 		const data = await getJsonFromRequest(request);
@@ -98,16 +77,7 @@ export const PUT: RequestHandler<{ id: string }> = async ({ request, params }) =
 				type: 'ARTICLE'
 			}
 		});
-		return {
-			status: 200,
-			body: {
-				list
-			}
-		};
 	} catch (e) {
-		console.error(e);
-		return {
-			status: 400
-		};
+		throw error(400, 'error updating list');
 	}
 };

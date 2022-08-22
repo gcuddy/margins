@@ -36,7 +36,7 @@
 <Menu let:open>
 	<MenuButton
 		use={[popperRef, ...buttonActions]}
-		class="focus:bg-gray-20 group relative z-10 flex items-center rounded-md p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 dark:focus:bg-gray-700 {open &&
+		class="group relative z-10 flex items-center rounded-md p-1.5 hover:bg-gray-200 focus:bg-gray-200 focus:ring dark:hover:bg-gray-700 dark:focus:bg-gray-700 {open &&
 			'bg-gray-200 dark:bg-gray-700'}"><slot /></MenuButton
 	>
 	{#if open}

@@ -184,5 +184,14 @@ export const commands: Command[] = [
 			goto('/search');
 		},
 		icon: 'search'
+	},
+	{
+		id: 'new-smart-list',
+		group: 'Lists',
+		name: 'Create new smart list',
+		perform: () => {
+			goto('/smart/new');
+		},
+		icon: 'plus'
 	}
 ];

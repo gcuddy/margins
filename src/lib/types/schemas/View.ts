@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import { z } from 'zod';
 
 export const ViewOptionsSchema = z.object({
-	sort: z.enum(['title', 'date', 'author', 'createdAt', 'manual']),
+	sort: z.enum(['title', 'date', 'author', 'createdAt', 'updatedAt', 'manual']),
 	properties: z.object({
 		author: z.boolean(),
 		site: z.boolean(),

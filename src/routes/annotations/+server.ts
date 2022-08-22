@@ -1,14 +1,13 @@
+import { json } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { AnnotationSchema, delSchema } from '$lib/types/schemas/Annotations';
+import { AnnotationSchema } from '$lib/types/schemas/Annotations';
 import { getJsonFromRequest } from '$lib/utils';
-import type { Prisma } from '@prisma/client';
-import type { RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
-		const json = await getJsonFromRequest(request);
-		console.log({ json });
-		const { body, articleId, target, id, motivation } = AnnotationSchema.parse(json);
+		const data = await getJsonFromRequest(request);
+		const { body, articleId, target, id, motivation } = AnnotationSchema.parse(data);
 		const createdAnnotation = await db.annotation.upsert({
 			where: {
 				id: id === undefined ? -1 : id
@@ -24,14 +23,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				motivation
 			}
 		});
-		return {
-			status: 200,
-			body: createdAnnotation
-		};
+		return json(createdAnnotation);
 	} catch (e) {
 		console.error(e);
-		return {
-			status: 500
-		};
+		return new Response(undefined, { status: 500 });
 	}
 };

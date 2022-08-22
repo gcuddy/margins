@@ -18,23 +18,9 @@
 	import type { Article, Prisma, SmartList } from '@prisma/client';
 	import { fly } from 'svelte/transition';
 
-	export let smartLists: SmartList[] = [];
-
 	import { z } from 'zod';
-	type ArticleInput = {
-		author: StringFilter;
-	};
+	import Condition from './Condition.svelte';
 
-	// const createArticleFilter = (condition: SmartListCondition) => {
-	// 	const obj: Prisma.ArticleWhereInput = {};
-	// 	console.log({ condition });
-	// 	console.log({ obj });
-	// 	return Prisma.validator<Prisma.ArticleWhereInput>()({
-	// 		[condition.field]: {
-	// 			contains: condition.value
-	// 		}
-	// 	});
-	// };
 	let json: Array<Prisma.ArticleWhereInput> = [];
 	let name = '';
 	// let json: Prisma.ArticleWhereInput = {};
@@ -53,14 +39,14 @@
 		conditions = [...conditions, { ...defaultCondition, id: useId() }];
 	};
 
-	$: json = conditions.map((condition) => {
-		return {
-			[condition.field]: {
-				[condition.filter]: condition.value,
-				mode: 'insensitive'
-			}
-		};
-	});
+	// $: json = conditions.map((condition) => {
+	// 	return {
+	// 		[condition.field]: {
+	// 			[condition.filter]: condition.value,
+	// 			mode: 'insensitive'
+	// 		}
+	// 	};
+	// });
 
 	async function submitFilter() {
 		const res = await fetch('/filter.json', {
@@ -91,6 +77,7 @@
 				}
 			})
 		});
+		console.log({ res });
 		if (res.ok) {
 			const { id } = await res.json();
 			goto(`/smart/${id}`);
@@ -139,38 +126,11 @@
 					{/if}
 					<div class="space-y-2">
 						{#each conditions as condition, index (condition.id)}
-							<div class="flex items-center space-x-1">
-								<MiniSelect bind:value={condition.field}>
-									<option value="author">Author</option>
-									<option value="title">Title</option>
-									<option value="url">URL</option>
-									<option value="readProgress">Read Progress</option>
-									<option value="tags">Tags</option>
-								</MiniSelect>
-								<MiniSelect name="{condition.field}-filter" bind:value={condition.filter}>
-									{#if condition.type === 'StringFilter'}
-										<option value="contains">Contains</option>
-										<option value="equals">Is</option>
-									{:else if condition.type === 'NumberFilter'}
-										<option value="lt">Less than</option>
-										<option value="gt">Greater than</option>
-										<option value="equals">Equals</option>
-									{/if}
-								</MiniSelect>
-								<GenericInput
-									variant="filled"
-									class="!h-7 flex-auto grow focus:bg-gray-200 dark:focus:bg-gray-700"
-									id="condition-{index}"
-									name={condition.field}
-									bind:value={condition.value}
-								/>
-								<button
-									on:click={() => (conditions = conditions.filter((c) => c.id !== condition.id))}
-								>
-									<Icon name="xSolid" />
-									<span class="sr-only">Delete</span>
-								</button>
-							</div>
+							<Condition
+								on:delete={() => (conditions = conditions.filter((c) => c.id !== condition.id))}
+								{condition}
+								bind:json={json[index]}
+							/>
 						{/each}
 						<Button on:click={newCondition} variant="dashed" className="pl-1"
 							><Icon name="plusSmSolid" />New Condition</Button
@@ -188,6 +148,10 @@
 </div>
 {#if current_results.length}
 	<Saved articles={current_results} />
+{:else}
+	<pre>
+    {JSON.stringify(json, null, 2)}
+  </pre>
 {/if}
 <!-- TODO: make work progressively enhanced with actual forms -->
 
@@ -199,7 +163,7 @@
 			<option value="OR">All</option>
 			<option value="NOT">None</option>
 		</Select>
-		of the following conditions are met
+		of the following conditions are metk
 	</span>
 	<Button on:click={newCondition} variant="ghost">New Condition</Button>
 	{#each conditions as condition, index (condition.id)}

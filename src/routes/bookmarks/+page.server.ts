@@ -1,16 +1,15 @@
 import { db } from '$lib/db';
-import type { RequestHandler } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const GET: RequestHandler = async () => {
+export const load: PageServerLoad = async () => {
 	try {
 		const bookmarks = await db.bookmark.findMany();
 		return {
-			body: {
-				bookmarks
-			}
+			bookmarks
 		};
 	} catch (e) {
 		console.log(e);
+		throw error(404);
 	}
-	return { status: 404 };
 };

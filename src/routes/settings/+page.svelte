@@ -1,5 +1,7 @@
 <script lang="ts">
-	export let cssRules: Css[];
+	import type { PageData } from './$types';
+	export let data: PageData;
+	let { css } = data;
 </script>
 
 <h1>Css</h1>
@@ -16,6 +18,6 @@
 	<textarea placeholder="Custom CSS e.g. p{`{color: red;}`}" name="css" />
 </form>
 
-{#each cssRules as rule}
+{#each css as rule}
 	{rule.domain} - {rule.css}
 {/each}

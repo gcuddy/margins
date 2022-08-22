@@ -1,15 +1,13 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 import { z } from 'zod';
+import { error } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ request }) => {
+export const load: PageServerLoad = async () => {
 	const lists = await db.list.findMany();
 	return {
-		status: 200,
-		body: {
-			lists
-		}
+		lists
 	};
 };
 
@@ -19,7 +17,7 @@ const listSchema = z.object({
 	articles: z.array(z.string()).optional()
 });
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: Action = async ({ request }) => {
 	try {
 		const data = await getJsonFromRequest(request);
 		const { name, description, articles } = listSchema.parse(data);
@@ -30,7 +28,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			}
 		});
 		if (articles) {
-			const listItems = await db.listItem.createMany({
+			await db.listItem.createMany({
 				data: articles.map((article) => {
 					return {
 						articleId: parseInt(article),
@@ -42,19 +40,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			});
 		}
 		return {
-			status: 200,
-			body: {
-				id
-			},
-			headers: {
-				Location: '/lists'
-			}
+			location: `/lists/${id}`
 		};
 	} catch (e) {
 		console.error(e);
-		return {
-			status: 400
-		};
+		throw error(400, 'error creating list');
 	}
-	// right now we just support article ids
 };

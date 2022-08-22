@@ -1,12 +1,6 @@
-<script context="module" lang="ts">
-	export const selectedArticleIds = writable<Article['id'][]>([]);
-	export const currentSavedView = writable();
-</script>
-
 <script lang="ts">
 	import type { Article } from '@prisma/client';
-	import { flip } from 'svelte/animate';
-	export let articles: ArticleWithTags[];
+	export let articles: ArticleInList[];
 	filterTerm.set('');
 	$: articles, currentItems.setCurrentItems(articles, 'title');
 
@@ -16,6 +10,7 @@
 	/** Should we render the description as a "quote"? */
 	export let quoted = false;
 
+	import autoAnimate from '@formkit/auto-animate';
 	import SelectActions from './SelectActions.svelte';
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME, type DndEvent } from 'svelte-dnd-action';
 	import { patch } from '../utils';
@@ -25,25 +20,19 @@
 	import dayjs from 'dayjs';
 	import localizedFormat from 'dayjs/plugin/localizedFormat.js';
 	import Spacer from './helpers/Spacer.svelte';
-	import TagCloud from './TagCloud.svelte';
-	import type { ArticleWithTags } from '$lib/types';
-	import Menu from './Menu/Menu.svelte';
-	import Icon from './helpers/Icon.svelte';
+	import type { ArticleInList, ArticleWithTags } from '$lib/types';
 	import { dev } from '$lib/stores/developer';
 	import KeyboardNav from './helpers/KeyboardNav/KeyboardNav.svelte';
 	import KeyboardNavItem from './helpers/KeyboardNav/KeyboardNavItem.svelte';
 	import { currentItems, filteredItems, filterInputActive, filterTerm } from '$lib/stores/filter';
-	import AnnotationCount from './AnnotationCount.svelte';
 	import { fade } from 'svelte/transition';
 	import DotMenu from './DotMenu.svelte';
 	import Muted from './atoms/Muted.svelte';
 	import type { ComponentProperties } from '$lib/stores/types';
 	import type { ViewOptions } from '$lib/types/schemas/View';
-	import LocationPill from './LocationPill.svelte';
-	import Tag from './Tags/Tag.svelte';
 	import SavedPillWrapper from './SavedPillWrapper.svelte';
+	import { flip } from 'svelte/animate';
 	dayjs.extend(localizedFormat);
-	let focused = -1;
 	let dragDisabled = false;
 
 	const handleConsider = (e: CustomEvent<DndEvent>) => {
@@ -75,7 +64,14 @@
 	$: $filterInputActive ? (flipDurationMs = 0) : (flipDurationMs = 200);
 	let hovering = false;
 
-	$: console.log({ $selectedArticleIds });
+	let selected_articles: typeof articles = [];
+	// $: selected_articles,
+	// 	articles.forEach((article) => {
+	// 		if (selected_articles.includes(article)) {
+	// 			article = selected_articles.find((a) => a.id === article.id);
+	// 		}
+	// 	});
+	$: console.log({ selected_articles });
 	$: console.log({ articles });
 
 	export let actions: ComponentProperties<SelectActions>['actions'] | undefined = undefined;
@@ -100,10 +96,11 @@
 
 <!-- <svelte:window on:keydown={handleKeydown} /> -->
 
-<SelectActions bind:articles {actions} />
+<SelectActions {actions} bind:selected_articles on:update />
 
 <KeyboardNav items={$filteredItems}>
 	<!-- filteR? -->
+	<!-- use:autoAnimate={{ duration: 500 }} -->
 	<div
 		class="mx-auto w-full space-y-0 overflow-auto"
 		use:dndzone={{
@@ -113,11 +110,13 @@
 			dropTargetStyle: {},
 			zoneTabIndex: -1
 		}}
+		use:autoAnimate={{ duration: 500 }}
 		on:consider={handleConsider}
 		on:finalize={handleFinalize}
 	>
 		{#each $filteredItems as item, index (item.id)}
 			<!-- {index} -->
+			<!-- by doing this can't do animate:flip. hm! trying out auto-animate. let's see... -->
 			<KeyboardNavItem
 				let:active
 				let:followTabIndex
@@ -126,10 +125,10 @@
 				href="/{item.id}"
 				class="group !cursor-default"
 				on:select={() => {
-					if ($selectedArticleIds.includes(item.id)) {
-						$selectedArticleIds = $selectedArticleIds.filter((id) => id !== item.id);
+					if (selected_articles.includes(item)) {
+						selected_articles = selected_articles.filter(({ id }) => id !== item.id);
 					} else {
-						$selectedArticleIds = [...$selectedArticleIds, item.id];
+						selected_articles = [...selected_articles, item];
 					}
 				}}
 			>
@@ -150,10 +149,10 @@
 			/> -->
 
 					<div
-						class="dark: flex h-full flex-col justify-center border-b border-gray-100 px-6 ring-inset  group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-700 dark:group-focus-visible:bg-gray-800  {$selectedArticleIds.includes(
-							item.id
+						class="dark: flex h-full flex-col justify-center border-b border-gray-100 px-6 ring-inset  focus:!outline-none focus-visible:!outline-none group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-700 dark:group-focus-visible:bg-gray-800  {selected_articles.some(
+							(a) => a.id === item.id
 						)
-							? '!bg-gray-100 dark:!bg-gray-800'
+							? '!bg-gray-100 dark:!bg-blue-800/30'
 							: 'dark:bg-gray-900 bg-transparent '}"
 						on:mouseenter={() => (hovering = true)}
 						on:mouseleave={() => (hovering = false)}
@@ -175,8 +174,8 @@
 									/>
 								{/if}
 								<input
-									bind:group={$selectedArticleIds}
-									value={item.id}
+									bind:group={selected_articles}
+									value={item}
 									type="checkbox"
 									aria-hidden={true}
 									tabindex={-1}

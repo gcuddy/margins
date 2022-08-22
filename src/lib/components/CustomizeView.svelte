@@ -54,7 +54,13 @@
 
 <Popover class="relative" let:open>
 	<PopoverButton as="div" use={[popperRef]}>
-		<Button variant="ghost" className="space-x-1">
+		<Button
+			variant="ghost"
+			className="space-x-1"
+			tooltip={{
+				text: 'Show view options'
+			}}
+		>
 			<Icon name="adjustmentsSolid" className="h-4 w-4 dark:fill-gray-300" /> <span>View</span>
 			<Icon name="chevronDownSolid" className="h-4 w-4 dark:fill-gray-300" />
 		</Button></PopoverButton
@@ -89,10 +95,13 @@
 							<option value="author">Author</option>
 							<option value="date">Publish Date</option>
 							<option value="createdAt">Added</option>
+							<option value="updatedAt">Updated</option>
 						</MiniSelect>
 					</div>
 					<Disclosure class="flex flex-col space-y-2 pt-2" let:open>
-						<DisclosureButton class="group flex w-full items-center space-x-4 rounded">
+						<DisclosureButton
+							class="group flex w-full items-center space-x-4 rounded focus-visible:ring-1"
+						>
 							<SmallPlus class="text-gray-500 transition dark:text-gray-400" size="sm"
 								>Display Properties</SmallPlus
 							>
@@ -148,14 +157,15 @@
 						</DisclosurePanel>
 					</Disclosure>
 					{#if changed}
-						<div class="flex justify-between">
+						<div class="flex justify-between ">
 							<button
+								class="rounded-full p-1 text-sm focus-visible:ring-1"
 								on:click={() => {
 									viewOptions = { ...ogViewOptions, properties: { ...ogViewOptions.properties } };
 								}}><SmallPlus class="text-gray-500">Reset to Default</SmallPlus></button
 							>
 							<button
-								class="text-sm font-medium text-lime-500"
+								class="rounded-full p-1 text-sm font-medium text-sky-500 focus-visible:ring-1"
 								on:click={() => {
 									ogViewOptions = { ...viewOptions, properties: { ...viewOptions.properties } };
 									dispatch('save', viewOptions);

@@ -1,7 +1,22 @@
 <script lang="ts">
+	import { navigating } from '$app/stores';
+
 	import { syncStore } from '$lib/stores/sync';
+	import { onDestroy } from 'svelte';
 	import Icon from './helpers/Icon.svelte';
 	$: console.log({ $syncStore });
+	let navigating_id: string | undefined;
+	const unsubscribeNavigating = navigating.subscribe((nav) => {
+		if (nav) {
+			navigating_id = syncStore.add();
+		} else if (navigating_id) {
+			syncStore.remove(navigating_id);
+			navigating_id = undefined;
+		}
+	});
+	onDestroy(() => {
+		unsubscribeNavigating();
+	});
 </script>
 
 <!-- TODO: on hover, tooltip of title and progress -->

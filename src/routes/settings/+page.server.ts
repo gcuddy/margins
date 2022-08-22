@@ -1,7 +1,7 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
-export const GET: RequestHandler = async () => {
-	const cssRules = await db.css.findMany({
+export const load: PageServerLoad = async () => {
+	const css = await db.css.findMany({
 		orderBy: [
 			{
 				createdAt: 'asc'
@@ -9,9 +9,6 @@ export const GET: RequestHandler = async () => {
 		]
 	});
 	return {
-		status: 200,
-		body: {
-			cssRules
-		}
+		css
 	};
 };

@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import { reportZodOrPrismaError } from '$lib/api-utils';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
@@ -14,10 +15,7 @@ export const GET: RequestHandler = async () => {
 			}
 		}
 	});
-	return {
-		body: tags,
-		status: 303
-	};
+	return json(tags);
 };
 
 export const PATCH: RequestHandler = async ({ request, url }) => {
@@ -52,18 +50,17 @@ export const PATCH: RequestHandler = async ({ request, url }) => {
 				});
 			})
 		);
-		return {
-			status: 200,
-			body: {
-				articles: updatedArticles
-			}
-		};
+		return json({
+			articles: updatedArticles
+		});
 	} catch (e) {
-		return {
-			status: 400,
-			body: {
+		return json(
+			{
 				error: reportZodOrPrismaError(e)
+			},
+			{
+				status: 400
 			}
-		};
+		);
 	}
 };

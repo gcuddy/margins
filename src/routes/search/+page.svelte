@@ -3,11 +3,16 @@
 	import Saved from '$lib/components/Saved.svelte';
 	import { recents } from '$lib/stores/recents';
 	import type { ArticleWithTags } from '$lib/types';
-	export let results: ArticleWithTags[];
-	export let matches: {
-		title: string;
-		content: string;
-	}[] = [];
+
+	export let data: PageData;
+
+	$: ({ results, matches } = data);
+	// export let results: ArticleWithTags[];
+	// export let matches: {
+	// 	title: string;
+	// 	content: string;
+	// }[] = [];
+
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { useId } from '$lib/hooks/use-id';
@@ -15,6 +20,8 @@
 	import debounce from 'lodash.debounce';
 	import { goto } from '$app/navigation';
 	import CircularProgressBar from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
+	import type { PageData } from './$types';
+
 	export let value = '';
 	let input: HTMLElement;
 
@@ -27,6 +34,7 @@
 
 	const id = `search-${useId()}`;
 	let pending = false;
+
 	// handling our own submit here instead of using Form component because we want to do a few things differently
 	async function handleSubmit(e: SubmitEvent) {
 		if (!value) {

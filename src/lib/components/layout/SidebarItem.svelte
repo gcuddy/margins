@@ -15,7 +15,7 @@
 </script>
 
 <a
-	class="group flex h-7 items-center space-x-2 rounded px-2  font-medium text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 
+	class="group flex h-7 items-center space-x-2 rounded px-2  font-medium text-gray-700 ring-inset hover:bg-gray-200 focus-visible:ring dark:text-gray-300 dark:hover:bg-gray-700  
   {isActive && 'bg-gray-200 dark:bg-gray-700'}
   "
 	sveltekit:prefetch

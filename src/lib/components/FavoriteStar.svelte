@@ -12,15 +12,18 @@
 	let _starred = starred;
 	export let data: z.infer<typeof FavoriteSchema>;
 	export let favorite_id: number | undefined = undefined;
+	let pending = false;
 </script>
 
 <button
-	class="flex items-center"
+	class="flex items-center rounded-full ring-offset-2 focus:ring {pending && 'animate-bounce'}"
 	on:click={async () => {
 		_starred = !_starred;
 		// send to favorite store, and update
 		if (_starred) {
+			pending = true;
 			const res = await createFavorite(data);
+			pending = false;
 			const { id } = await res.json();
 			favorite_id = id;
 		} else if (!_starred) {

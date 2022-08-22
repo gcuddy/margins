@@ -9,23 +9,27 @@
 	import Saved from '$lib/components/Saved.svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { syncStore } from '$lib/stores/sync';
-	import type { ComponentProperties } from '$lib/stores/types';
-	import type { ArticleWithNotesAndTagsAndContext, SmartListWithPayload } from '$lib/types';
 	import { ViewOptionsSchema, type ViewOptions } from '$lib/types/schemas/View';
 	import { sortArticles } from '$lib/utils';
-	import type { Article } from '@prisma/client';
+	import type { PageData } from './$types';
 
-	export let articles: ArticleWithNotesAndTagsAndContext[] = [];
-	export let list: SmartListWithPayload;
+	export let data: PageData;
+	let { list, articles } = data;
 	let viewOptions: ViewOptions | undefined;
-	const savedViewOptions = ViewOptionsSchema.safeParse(list.viewOptions);
-	if (savedViewOptions.success) {
-		viewOptions = savedViewOptions.data;
+	if (list) {
+		const savedViewOptions = ViewOptionsSchema.safeParse(list.viewOptions);
+		if (savedViewOptions.success) {
+			viewOptions = savedViewOptions.data;
+		}
 	}
-	let sortedArticles: ArticleWithNotesAndTagsAndContext[] = articles;
+	let sortedArticles = [...articles];
 	$: if (viewOptions) sortedArticles = sortArticles(articles, viewOptions);
 	$: console.log({ sortedArticles });
 </script>
+
+<svelte:head>
+	<title>{list.name}</title>
+</svelte:head>
 
 <Header>
 	<DefaultHeader>

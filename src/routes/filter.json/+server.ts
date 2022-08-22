@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import { getJsonFromRequest } from '$lib/utils';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
@@ -11,10 +12,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		where: json,
 		select: ArticleListSelect
 	});
-	return {
-		status: 200,
-		body: {
-			articles
-		}
-	};
+	return json$1({
+		articles
+	});
 };

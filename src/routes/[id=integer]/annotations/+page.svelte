@@ -1,4 +1,5 @@
 <script lang="ts">
+	// TODO: reformat this page
 	import { invalidate } from '$app/navigation';
 	import { flip } from 'svelte/animate';
 	import { scale } from 'svelte/transition';
@@ -9,7 +10,12 @@
 	import type { ArticleWithAnnotations } from '$lib/types';
 	import { modals } from '$lib/stores/modals';
 	import AnnotationInput from '$lib/components/AnnotationInput.svelte';
-	export let article: ArticleWithAnnotations;
+	import type { PageData } from './$types';
+
+	export let data: PageData;
+	let { annotations } = data;
+
+	$: article = annotations[0].article;
 </script>
 
 <h1>Annotations for <a href="/{article.id}">{article.title}</a></h1>
@@ -34,11 +40,11 @@
 	></Form
 >
 
-{#if article.annotations.length}
-	{#each article.annotations as annotation (annotation.id)}
+{#if annotations.length}
+	{#each annotations as annotation (annotation.id)}
 		<div animate:flip transition:scale>
 			<div>
-				<p>{annotation.text}</p>
+				<p>{annotation.body}</p>
 				<p>{annotation.createdAt}</p>
 				<a
 					on:click={(e) => {

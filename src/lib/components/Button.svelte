@@ -1,10 +1,32 @@
 <script lang="ts">
 	import type { IconName } from '$lib/icons';
+	import { createPopperActions } from 'svelte-popperjs';
+	import { fly } from 'svelte/transition';
+	import ButtonTooltip from './ButtonTooltip.svelte';
 	import Icon from './helpers/Icon.svelte';
+
+	interface Tooltip {
+		text: string;
+		kbd?: string;
+	}
 
 	export let type: 'submit' | 'reset' | 'button' = 'button';
 	export let disabled: boolean = false;
 	export let className = '';
+	export let tooltip: Tooltip | undefined = undefined;
+
+	const [popperRef, popperContent] = createPopperActions({
+		placement: 'bottom',
+		strategy: 'fixed',
+		modifiers: [
+			{
+				name: 'offset',
+				options: {
+					offset: [0, 8]
+				}
+			}
+		]
+	});
 
 	export let variant: 'primary' | 'ghost' | 'confirm' | 'link' | 'dashed' | 'transparent' =
 		'primary';
@@ -33,8 +55,24 @@
 			variant === 'dashed' &&
 			'bg-transparent shadow-none border border-dashed dark:border-gray-500 dark:text-gray-200 dark:hover:text-gray-50'
 		} 
-    ${variant === 'transparent' && 'bg-white/20 text-gray-900'}
+    ${
+			variant === 'transparent' &&
+			'bg-white/20 hover:bg-white/30 focus:bg-white/30 text-gray-900 dark:text-gray-50'
+		}
     ${className}`;
+
+	let tooltip_visible = false;
+	let tooltip_timeout: ReturnType<typeof setTimeout> | undefined;
+	function showTooltip() {
+		// show tooltip after 300 msecond delay
+		tooltip_timeout = setTimeout(() => {
+			tooltip_visible = true;
+		}, 500);
+	}
+	function hideTooltip() {
+		clearTimeout(tooltip_timeout);
+		tooltip_visible = false;
+	}
 
 	// TODO: tooltips
 </script>
@@ -42,9 +80,54 @@
 <!-- TODO: don't repeat these damn classes! -->
 
 {#if as === 'a'}
-	<a {href} sveltekit:prefetch on:click on:mouseenter on:mouseleave class={_classname}>
+	<!-- this is a monstrosity but use actions can't be applied conditionally; should probably wrap the action myself -->
+	{#if tooltip}
+		<a
+			{href}
+			sveltekit:prefetch
+			use:popperRef
+			on:click
+			on:click={hideTooltip}
+			on:mouseenter
+			on:mouseleave
+			on:mouseenter={showTooltip}
+			on:mouseleave={hideTooltip}
+			class={_classname}
+		>
+			<slot>Button</slot>
+		</a>
+	{:else}
+		<a
+			{href}
+			sveltekit:prefetch
+			on:click
+			on:click={hideTooltip}
+			on:mouseenter
+			on:mouseleave
+			on:mouseenter={showTooltip}
+			on:mouseleave={hideTooltip}
+			class={_classname}
+		>
+			<slot>Button</slot>
+		</a>
+	{/if}
+{:else if tooltip}
+	<svelte:element
+		this={as}
+		type={as === 'button' ? type : undefined}
+		{disabled}
+		{href}
+		on:click
+		on:click={hideTooltip}
+		on:mouseenter
+		on:mouseleave
+		use:popperRef
+		on:mouseenter={showTooltip}
+		on:mouseleave={hideTooltip}
+		class={_classname}
+	>
 		<slot>Button</slot>
-	</a>
+	</svelte:element>
 {:else}
 	<svelte:element
 		this={as}
@@ -52,10 +135,22 @@
 		{disabled}
 		{href}
 		on:click
+		on:click={hideTooltip}
 		on:mouseenter
 		on:mouseleave
+		on:mouseenter={showTooltip}
+		on:mouseleave={hideTooltip}
 		class={_classname}
 	>
 		<slot>Button</slot>
 	</svelte:element>
+{/if}
+
+{#if tooltip && tooltip_visible}
+	<!-- todo: add delay -->
+	<div use:popperContent class="z-50">
+		<div transition:fly={{ y: 5, duration: 150 }}>
+			<ButtonTooltip {...tooltip} />
+		</div>
+	</div>
 {/if}

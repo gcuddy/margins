@@ -14,14 +14,12 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 			data: { ...json }
 		});
 		console.log(`updated article ${article.id}`);
-		return {
+		return new Response(undefined, {
 			status: 303,
 			headers: {
 				Location: `/${id}`
 			}
-		};
+		});
 	}
-	return {
-		status: 303
-	};
+	return new Response(undefined, { status: 303 });
 };

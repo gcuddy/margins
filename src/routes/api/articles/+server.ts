@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 
 import type { Prisma } from '@prisma/client';
@@ -44,17 +45,13 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		where
 	});
 	if (!articles) {
-		return {
-			status: 400
-		};
+		return new Response(undefined, { status: 400 });
 	}
-	return {
-		body: {
-			articles
-		},
-		status: 200,
+	return json$1({
+		articles
+	}, {
 		headers: {
 			'cache-control': 'public, max-age=60, s-maxage=60'
 		}
-	};
+	});
 };

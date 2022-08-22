@@ -141,6 +141,7 @@ export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
 	date: true,
 	url: true,
 	createdAt: true,
+	updatedAt: true,
 	wordCount: true,
 	siteName: true,
 	_count: {

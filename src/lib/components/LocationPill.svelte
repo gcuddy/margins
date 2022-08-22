@@ -15,7 +15,7 @@
 <a
 	sveltekit:prefetch
 	class="leading-sm inline-flex h-6 w-max min-w-fit max-w-fit items-center justify-center gap-1 overflow-hidden rounded-lg border border-gray-200  pr-2 pl-1.5 text-xs
-  font-medium text-gray-600 transition  hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-700 {context_menu_open &&
+  font-medium text-gray-600 transition hover:border-gray-300 hover:bg-primary-50 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-700 {context_menu_open &&
 		'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-700'}"
 	href="/{location.toLowerCase()}"
 	tabIndex="-1"
@@ -26,16 +26,16 @@
 		y = clientY;
 	}}
 >
-	{#if location === 'INBOX'}
+	{#if location.toUpperCase() === 'INBOX'}
 		<Icon name="inboxSolid" className="h-3 w-3 fill-gray-500" />
 		<span>Inbox</span>
-	{:else if location === 'SOON'}
+	{:else if location.toUpperCase() === 'SOON'}
 		<Icon name="sparklesSolid" className="h-3 w-3 fill-primary-600" />
 		<span>Soon</span>
-	{:else if location === 'LATER'}
+	{:else if location.toUpperCase() === 'LATER'}
 		<Icon name="calendarSolid" className="h-3 w-3 fill-gray-700" />
 		<span>Later</span>
-	{:else if location === 'ARCHIVE'}
+	{:else if location.toUpperCase() === 'ARCHIVE'}
 		<Icon name="archiveSolid" className="h-3 w-3 fill-gray-500" />
 		<span>Archive</span>
 	{/if}

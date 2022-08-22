@@ -34,7 +34,8 @@ export default async function (url: string, html?: string) {
 				image,
 				date,
 				wordCount,
-				pdf
+				pdf,
+				textContent: ''
 			};
 			// const blob = await response.blob();
 			// const file = new File([blob], 'file.pdf');
@@ -55,7 +56,8 @@ export default async function (url: string, html?: string) {
 			author: '',
 			image: '',
 			date: '',
-			wordCount: 0
+			wordCount: 0,
+			textContent: ''
 		};
 	}
 }

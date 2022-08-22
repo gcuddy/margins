@@ -1,9 +1,8 @@
 <script lang="ts">
-	import Icon from '$lib/components/helpers/Icon.svelte';
-	import Header from '$lib/components/layout/Header.svelte';
 	import RssItem from '$lib/components/rss/RSSItem.svelte';
-	import type { RssItemWithFeed } from '$lib/types/rss';
-	export let item: RssItemWithFeed;
+	import type { PageData } from './$types';
+	export let data: PageData;
+	let { item } = data;
 </script>
 
 <div class="flex flex-col overflow-hidden">

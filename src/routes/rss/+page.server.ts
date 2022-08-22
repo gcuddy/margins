@@ -1,20 +1,15 @@
 // should this be json.ts,and then load function in index.svelte?
-
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
+import { error } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { z } from 'zod';
 import { getJsonFromRequest } from '$lib/utils';
 
 import Parser from 'rss-parser';
-import dayjs from 'dayjs';
-import { buildItem, getRefreshedFeeds, isXml, linkSelectors, resolveUrl } from './_rss-utils';
+import { buildItem, isXml, linkSelectors, resolveUrl } from './_rss-utils';
 import parse from 'node-html-parser';
 
-export const GET: RequestHandler = async ({ params, url }) => {
-	const items = url?.searchParams?.get('items') !== 'false';
-	// todo: add refresh
-	// lol this can't be the right way to do this
-	// const feeds = await getRefreshedFeeds();
+export const load: PageServerLoad = async () => {
 	const feeds = await db.rssFeed.findMany({
 		orderBy: [
 			{
@@ -25,20 +20,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			items: true
 		}
 	});
-	console.log({ feeds });
-	if (feeds.length) {
-		return {
-			body: {
-				feeds
-			}
-		};
-	} else {
-		return {
-			body: {
-				feeds: []
-			}
-		};
-	}
+	return {
+		feeds
+	};
 };
 
 // POST = add feed
@@ -46,7 +30,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
 const zUrl = z.string().url();
 
 async function parseFeed(xml: string) {
-	console.log(`attempting to parse feed from xml`, xml);
 	const parser = new Parser();
 	try {
 		const feed = await parser.parseString(xml);
@@ -90,7 +73,6 @@ async function findFeed(url: string): Promise<{
 			throw Error('Could not find rss feed!');
 		}
 		href = resolveUrl(url, href);
-		console.log({ href });
 		return {
 			xml: await fetch(href).then((res) => res.text()),
 			url: href
@@ -98,17 +80,15 @@ async function findFeed(url: string): Promise<{
 	}
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: Action = async ({ request }) => {
 	const json = await getJsonFromRequest(request);
 	try {
 		// This assumes we're getting a *single* url
 		const url = zUrl.parse(json.url);
-		console.log({ url });
 		// TODO: build my own parser
 		const { xml, url: feedUrl } = await findFeed(url);
 		const parsedFeed = await parseFeed(xml);
 		parsedFeed.items[0];
-		console.log({ parsedFeed });
 		const createdFeed = await db.rssFeed.create({
 			data: {
 				title: parsedFeed.title,
@@ -124,17 +104,11 @@ export const POST: RequestHandler = async ({ request }) => {
 				}
 			}
 		});
-		console.log({ createdFeed });
 		return {
-			status: 200,
-			body: {
-				feed: createdFeed
-			}
+			location: `/rss/${createdFeed.id}`
 		};
 	} catch (error) {
-		console.log(error);
-		return {
-			status: 400
-		};
+		console.error(error);
+		throw error(400);
 	}
 };

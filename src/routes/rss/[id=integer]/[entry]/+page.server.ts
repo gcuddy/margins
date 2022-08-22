@@ -1,8 +1,7 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
 import { db } from '$lib/db';
-import _parse from '../../../add/_parse';
 import { getJsonFromRequest } from '$lib/utils';
-export const GET: RequestHandler = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const id = parseInt(params.entry);
 	const item = await db.rssFeedItem.findUnique({
 		where: {
@@ -12,34 +11,30 @@ export const GET: RequestHandler = async ({ params }) => {
 			RssFeed: true
 		}
 	});
-	if (!item?.content && item?.link) {
-		// fetch content
-		// TODO
-		console.log(`Full content not found for id ${id}, let me try and fetch it.`);
-		const { content } = await _parse(item?.link);
-		await db.rssFeedItem.update({
-			where: {
-				id
-			},
-			data: {
-				content
-			}
-		});
-	}
+	// if (!item?.content && item?.link) {
+	// 	// fetch content
+	// 	// TODO
+	// 	console.log(`Full content not found for id ${id}, let me try and fetch it.`);
+	// 	const { content } = await _parse(item?.link);
+	// 	await db.rssFeedItem.update({
+	// 		where: {
+	// 			id
+	// 		},
+	// 		data: {
+	// 			content
+	// 		}
+	// 	});
+	// }
 	return {
-		body: {
-			item
-		},
-		status: 200
+		item
 	};
 };
 
-export const PATCH: RequestHandler = async ({ params, request }) => {
+export const PATCH: Action = async ({ params, request }) => {
 	try {
-		const feedId = parseInt(params.id);
 		const id = parseInt(params.entry);
 		const json = await getJsonFromRequest(request);
-		const updatedItem = await db.rssFeedItem.update({
+		await db.rssFeedItem.update({
 			where: {
 				id
 			},
@@ -47,15 +42,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 				...json
 			}
 		});
-		return {
-			status: 200,
-			body: {
-				updatedItem
-			}
-		};
 	} catch (e) {
-		return {
-			status: 400
-		};
+		console.error(e);
 	}
 };

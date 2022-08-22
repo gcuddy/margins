@@ -1,8 +1,7 @@
-<script>
-	export let url = '';
-	export let title = '';
-	export let description = '';
-	export let html = '';
+<script lang="ts">
+	import type { PageData } from './$types';
+	export let data: PageData;
+	$: ({ url, title, description, html } = data);
 </script>
 
 <div>

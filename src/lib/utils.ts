@@ -1,5 +1,5 @@
 import { browser } from '$app/env';
-import type { DomMeta } from './types';
+import type { ArticleInList, DomMeta } from './types';
 import { notifications, type INotification } from '$lib/stores/notifications';
 // import { finder } from '@medv/finder';
 import type { Article, Favorite, Prisma } from '@prisma/client';
@@ -51,15 +51,15 @@ export function patch(endpoint: string, data: any, notification?: string | INoti
 		} else if (notification && typeof notification !== 'string') {
 			notifications.notify(notification);
 		}
-		return r.json();
+		return r;
 	});
 }
 
 export function bulkEditArticles(ids: number[], data: Prisma.ArticleUpdateInput) {
 	const endpoint = '/api/bulk';
-	return patch('/api/bulk', { ids, data }).then((json) => {
-		invalidate(endpoint);
-		return json;
+	return patch('/api/bulk', { ids, data }).then((res) => {
+		console.log({ res });
+		return res;
 	});
 }
 
@@ -331,8 +331,18 @@ export async function postAnnotation(annotation: z.infer<typeof AnnotationSchema
 	return res;
 }
 
-export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
+export async function createFavorite(
+	data: z.infer<typeof FavoriteSchema>,
+	options?: {
+		pending?: () => void;
+		done?: () => void;
+		error?: () => void;
+	}
+) {
 	const id = syncStore.addItem();
+	if (options.pending) {
+		options.pending();
+	}
 	const res = await fetch('/favorites.json', {
 		method: 'POST',
 		headers: {
@@ -356,7 +366,7 @@ export async function deleteFavorite(data: { id: number }) {
 	return res;
 }
 
-export function sortArticles<T>(articles: (Article & T)[], opts: ViewOptions) {
+export function sortArticles<T>(articles: ArticleInList[], opts: ViewOptions) {
 	const sortBy = opts.sort;
 	return [...articles].sort((a, b) => {
 		switch (sortBy) {
@@ -371,6 +381,9 @@ export function sortArticles<T>(articles: (Article & T)[], opts: ViewOptions) {
 			case 'createdAt': {
 				console.log({ a, b });
 				return dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1;
+			}
+			case 'updatedAt': {
+				return dayjs(a.updatedAt).isBefore(dayjs(b.updatedAt)) ? 1 : -1;
 			}
 			case 'manual': {
 				return b.position - a.position;

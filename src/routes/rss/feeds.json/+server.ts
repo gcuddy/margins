@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 export const GET: RequestHandler = async () => {
@@ -11,25 +12,16 @@ export const GET: RequestHandler = async () => {
 			],
 			include: {
 				items: {
-					include: {
-						RssFeed: true
-					},
 					take: 10
 				}
 			}
 		});
-		console.log(`feeds.json`, { feeds });
 		console.timeEnd('rss-feeds');
-		return {
-			body: {
-				feeds
-			},
-			status: 200
-		};
+		return json({
+			feeds
+		});
 	} catch (e) {
 		console.error(e);
-		return {
-			status: 404
-		};
+		return new Response(undefined, { status: 404 });
 	}
 };

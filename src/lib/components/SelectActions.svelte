@@ -1,71 +1,100 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
-	import { selectedArticleIds } from '$lib/components/Saved.svelte';
+
+	import { cachedArticlesArray } from '$lib/stores/cache';
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
-	import { fadeScale, gentleFly } from '$lib/transitions';
+	import { notifications } from '$lib/stores/notifications';
+	import { syncStore } from '$lib/stores/sync';
+	import { gentleFly } from '$lib/transitions';
+	import type { ArticleInList } from '$lib/types';
+	import { LOCATIONS, LOCATION_LIST, LOCATION_TO_ICON_OUTLINE } from '$lib/types/schemas/Locations';
 
 	import { archive, bulkEditArticles } from '$lib/utils';
-	import type { Article } from '@prisma/client';
-	import { tick } from 'svelte';
-	import {
-		backIn,
-		backInOut,
-		backOut,
-		cubicOut,
-		elasticInOut,
-		elasticOut,
-		quintOut
-	} from 'svelte/easing';
+	import { backIn, backOut } from 'svelte/easing';
+	import { fly } from 'svelte/transition';
+	import { map } from 'zod';
 	import Button from './Button.svelte';
 	import { commandPaletteStore } from './CommandPalette/store';
-	import Form from './Form.svelte';
 	import Icon from './helpers/Icon.svelte';
-	export let articles: Article[] = [];
-	// async function archive() {
-	// 	articles = articles.map((article) => {
-	// 		if ($selectedArticleIds.includes(article.id)) {
-	// 			article.location = `ARCHIVE`;
-	// 		}
-	// 		return article;
-	// 	});
-	// 	const data = await bulkEditArticles($selectedArticleIds, {
-	// 		location: 'ARCHIVE'
-	// 	});
-	// 	// TODO: possibly make into a form to avoid this invalidate / nonsense (using it causes a reload to update state)
-	// 	invalidate('/');
-	// 	console.log({ data });
-	// 	$selectedArticleIds = [];
-	// }
-	const clear = () => ($selectedArticleIds = []);
+
+	import { createEventDispatcher } from 'svelte';
+
+	const dispatch$1 = createEventDispatcher<{
+		update: {
+			articles: ArticleInList[];
+		};
+	}>();
+	const dispatch = () => dispatch$1('update', { articles: selected_articles });
+
+	const clear = () => (selected_articles = []);
+
+	const move = () => {
+		commandPaletteStore.open({
+			values: LOCATION_LIST,
+			placeholder: 'Move to…',
+			itemIcon: (val, active) => {
+				console.log({ val });
+				return {
+					component: Icon,
+					props: {
+						name: LOCATION_TO_ICON_OUTLINE[val.id],
+						className: `h-5 w-5 stroke-2 stroke-current ${
+							active && 'dark:stroke-primary-100 stroke-primary-900'
+						}`
+					}
+				};
+			},
+			onSelect: async ({ detail }) => {
+				const id = syncStore.add();
+				// optimistic update
+				selected_articles = selected_articles.map((article) => ({
+					...article,
+					location: detail.id
+				}));
+				console.log({ selected_articles });
+				dispatch();
+				await bulkEditArticles(article_ids, {
+					location: detail.id
+				});
+				notifications.notify({
+					message: `Moved ${selected_articles.length} articles to ${detail.name}`,
+					title: `Moved to ${detail.name}`,
+					type: 'success'
+				});
+				clear();
+				syncStore.remove(id);
+			}
+		});
+	};
+
 	function handleKeydown(e: KeyboardEvent) {
 		if ($disableGlobalKeyboardShortcuts) return;
+		if (!selected_articles?.length) return;
 		if (e.key === 'Escape') {
 			clear();
 		}
+		if (e.key === 'm') {
+			e.preventDefault();
+			e.stopPropagation();
+			move();
+		}
 	}
-	$: console.log($selectedArticleIds);
-
-	let transitionDuration = 200;
-
-	$: $page.url, ($selectedArticleIds = []);
-
 	const _actions = {
 		archive: true,
 		tag: true,
 		addToList: true,
 		moveTo: true
 	};
-
 	export let actions: Partial<typeof _actions> = _actions;
-	console.log({ actions });
+
+	// todo: expand this so it can take other things besides articles?
+	export let selected_articles: ArticleInList[];
+	$: article_ids = selected_articles.map(({ id }) => id);
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<!-- TODO: this transition is very janky, not sure why. maybe write my own? -->
-
-{#if $selectedArticleIds.length}
+{#if selected_articles.length}
 	<div
 		in:gentleFly|local={{
 			duration: 400,
@@ -80,8 +109,8 @@
 		<div
 			class="dark:ring-black/15 pointer-events-auto flex h-11 flex-row items-center justify-center space-x-4 rounded-lg bg-gray-50 px-4 shadow-2xl ring ring-black/5 dark:bg-gray-800 dark:bg-gradient-to-br"
 		>
-			<span class="text-sm text-gray-400 dark:text-gray-300 lg:text-base"
-				>{$selectedArticleIds.length} selected</span
+			<span class="text-sm text-gray-500 dark:text-gray-300 lg:text-base">
+				<span>{selected_articles.length}</span> selected</span
 			>
 			<div class="flex space-x-4">
 				<!-- <Button variant="ghost"> Move</Button> -->
@@ -90,9 +119,9 @@
 						variant="ghost"
 						className="space-x-1 flex items-center lg:text-base"
 						on:click={async () => {
-							await archive($selectedArticleIds, null, '/', true);
+							await archive(article_ids, null, '/', true);
+							clear();
 						}}
-						on:click={() => ($selectedArticleIds = [])}
 						><Icon name="viewGridAdd" className="h-4 w-4 stroke-2 stroke-current" />
 						<span>Add to List</span></Button
 					>
@@ -102,21 +131,20 @@
 						variant="ghost"
 						className="space-x-2 flex items-center lg:text-base"
 						on:click={async () => {
-							await archive($selectedArticleIds, null, '/', true);
+							await archive(article_ids, null, '/', true);
 						}}
-						on:click={() => ($selectedArticleIds = [])}
 						><Icon name="archiveSolid" className="h-4 w-4 fill-current" />
 						<span>Archive</span></Button
 					>
 				{/if}
 				{#if actions.moveTo}
 					<Button
-						variant="ghost"
+						variant="transparent"
 						className="space-x-1 flex items-center lg:text-base"
-						on:click={() => {
-							commandPaletteStore.open({
-								values: ['Inbox'].map((title, id) => ({ title, id }))
-							});
+						on:click={move}
+						tooltip={{
+							text: 'Move to location',
+							kbd: 'm'
 						}}
 						><Icon name="arrowSmRight" className="h-4 w-4 stroke-2 stroke-current" />
 						<span>Move to…</span></Button
@@ -128,55 +156,3 @@
 		</div>
 	</div>
 {/if}
-<!-- <MenuBar
-	className="fixed rounded-lg shadow-2xl text-white bg-gray-800 left-0 right-0 top-4 m-auto max-w-sm md:max-w-md space-x-2 p-4 flex flex-col justify-between"
->
-	<div class="mb-2 flex w-full justify-center"><span>{selected.length} selected</span></div>
-	<div class="flex justify-center space-x-2">
-		<MenuItem
-			on:click={archive}
-			className="hover:bg-purple-900/50 focus:bg-purple-900/50 p-2 flex justify-center w-full bg-purple-900/80 rounded-lg"
-			>Archive</MenuItem
-		>
-		<MenuItem
-			className="hover:bg-purple-900/50 focus:bg-purple-900/50 p-2 flex justify-center w-full bg-purple-900/80 rounded-lg"
-			>Move</MenuItem
-		>
-		<MenuItem
-			className="hover:bg-purple-900/50 focus:bg-purple-900/50 p-2 flex justify-center w-full bg-purple-900/80 rounded-lg"
-			>Schedule</MenuItem
-		>
-		<MenuItem
-			className="hover:bg-purple-900/50 focus:bg-purple-900/50 p-2 flex justify-center w-full bg-purple-900/80 rounded-lg"
-			>Tag</MenuItem
-		>
-		<Form
-			action="/"
-			method="delete"
-			pending={() => {
-				// optimistic update
-				articles = articles.filter((article) => !selected.includes(article.id));
-				selected = [];
-			}}
-			done={({ form }) => {
-				form.reset();
-			}}
-			on:submit={(e) => {
-				const yes = confirm('Are you sure you want to delete these articles?');
-				if (!yes) {
-					console.log('preventing default');
-					e.preventDefault();
-				}
-			}}
-		>
-			<input type="hidden" name="ids" value={selected.join(',')} />
-			<MenuItem
-				className="hover:bg-purple-900/50 focus:bg-purple-900/50 p-2 flex justify-center w-full bg-purple-900/80 rounded-lg"
-				>Delete</MenuItem
-			>
-		</Form>
-		<MenuItem on:click={clear} className="top-1 right-1 absolute "
-			><Icon name="x" className="h-6 w-6" /><span class="sr-only">Cancel Selection</span></MenuItem
-		>
-	</div>
-</MenuBar> -->

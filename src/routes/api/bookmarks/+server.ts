@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import type { RequestHandler } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -41,18 +42,13 @@ export const POST: RequestHandler = async ({ request }) => {
 						title: req.title || ''
 					}
 				});
-				return {
-					status: 200,
-					body: {
-						bookmark
-					}
-				};
+				return json$1({
+					bookmark
+				});
 			} catch (e) {
 				console.log(e);
 			}
 		}
 	}
-	return {
-		status: 404
-	};
+	return new Response(undefined, { status: 404 });
 };

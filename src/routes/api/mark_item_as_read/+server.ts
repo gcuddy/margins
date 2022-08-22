@@ -18,7 +18,5 @@ export const POST: RequestHandler = async ({ request }) => {
 			});
 		}
 	}
-	return {
-		status: 200
-	};
+	return new Response(undefined);
 };

@@ -1,22 +1,16 @@
 import { db } from '$lib/db';
-import type { RequestHandler } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
-export const GET: RequestHandler = async ({ params }) => {
-	if (params.id) {
-		const bookmark = await db.bookmark.findFirst({
-			where: {
-				id: parseInt(params.id)
-			}
-		});
-		if (bookmark) {
-			return {
-				body: {
-					bookmark
-				}
-			};
+export const load: PageServerLoad = async ({ params: { id } }) => {
+	const bookmark = await db.bookmark.findFirst({
+		where: {
+			id: parseInt(id)
 		}
+	});
+	if (bookmark) {
+		return {
+			bookmark
+		};
 	}
-	return {
-		status: 404
-	};
 };

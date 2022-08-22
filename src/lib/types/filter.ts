@@ -46,32 +46,43 @@ export type BoolFilterType = keyof Prisma.BoolFilter;
 export type DateTimeFilterType = keyof Prisma.DateTimeFilter;
 
 // TODO: keep this in sync with zod over in SmartList.ts
+
+const STRING_FIELDS = ['title', 'author', 'url', 'siteName', 'textContent', 'location'] as const;
+
 type _StringFilter = {
-	field: 'title' | 'author' | 'url' | 'siteName' | 'textContent' | 'location';
+	field: typeof STRING_FIELDS[number];
 	type: 'StringFilter';
 	display?: string;
 	filter: StringFilterType;
 	value: string;
 	id: number;
 };
+
+const NUMBER_FIELDS = ['readProgress', 'wordCount'];
+
 type _IntFilter = {
-	field: 'readProgress' | 'wordCount';
+	field: typeof NUMBER_FIELDS[number];
 	type: 'NumberFilter';
 	display?: string;
 	filter: IntFilterType;
 	value: number;
 	id: number;
 };
+
+const BOOL_FIELDS = ['starred'];
+
 type _BoolFilter = {
-	field: 'starred';
+	field: typeof BOOL_FIELDS[number];
 	type: 'BoolFilter';
 	display?: string;
 	filter: BoolFilterType;
 	value: boolean;
 	id: number;
 };
+
+const DATE_FIELDS = ['createdAt', 'updatedAt', 'date'];
 type _DateTimeFilter = {
-	field: 'createdAt' | 'updatedAt' | 'date';
+	field: typeof DATE_FIELDS[number];
 	type: 'DateTimeFilter';
 	display?: string;
 	filter: DateTimeFilterType;
@@ -79,4 +90,36 @@ type _DateTimeFilter = {
 	id: number;
 };
 
-export type SmartListCondition = _StringFilter | _IntFilter | _BoolFilter | _DateTimeFilter;
+const SEARCH_FIELDS = ['textContent'];
+
+type _SearchFilter = {
+	field: typeof SEARCH_FIELDS[number];
+	type: 'SearchFilter';
+	display?: string;
+	filter: 'search';
+	value: string;
+	id: number;
+};
+
+export type SmartListCondition =
+	| _StringFilter
+	| _IntFilter
+	| _BoolFilter
+	| _DateTimeFilter
+	| _SearchFilter;
+
+export const matchFieldToType = (
+	field: SmartListCondition['field']
+): SmartListCondition['type'] | undefined => {
+	if (STRING_FIELDS.includes(field as any)) {
+		return 'StringFilter';
+	} else if (NUMBER_FIELDS.includes(field as any)) {
+		return 'NumberFilter';
+	} else if (BOOL_FIELDS.includes(field as any)) {
+		return 'BoolFilter';
+	} else if (DATE_FIELDS.includes(field as any)) {
+		return 'DateTimeFilter';
+	} else if (SEARCH_FIELDS.includes(field as any)) {
+		return 'SearchFilter';
+	}
+};

@@ -7,11 +7,10 @@ function createCommandPaletteStore<TValue>() {
 
 	interface State {
 		isOpen: boolean;
-		props: ComponentProperties<GenericCommandPalette>;
+		props?: ComponentProperties<GenericCommandPalette>;
 	}
 	const { subscribe, set, update } = writable<State>({
-		isOpen: false,
-		props: {}
+		isOpen: false
 	});
 	// TODO: fix types so that when you pass in something to values in props, it works (all the other props are from that generic)
 	function open<T>(props: State['props'], open = true) {

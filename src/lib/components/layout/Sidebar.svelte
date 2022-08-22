@@ -130,6 +130,14 @@
 <!-- Grid: let layout take over without setting width -->
 
 <!-- TODO: use transforms for this instead -->
+<!-- toggle button -->
+<button
+	class="fixed top-0 left-0 z-20 !mt-0 flex h-14 w-12 cursor-default flex-col items-center justify-center p-0.5 pl-2 focus-visible:text-blue-500 lg:hidden"
+	on:click={toggleSidebar}
+>
+	<Icon name="menu" className="h-5 w-5 stroke-2 stroke-current" />
+	<span class="sr-only">Toggle menu</span>
+</button>
 <nav
 	on:click={handleClick}
 	style="width: {width}px;"
@@ -154,7 +162,9 @@
 			<span>User profile</span>
 			<div class="flex space-x-2">
 				<Sync />
-				<Icon name="cogSolid" className="h-4 w-4 fill-current" />
+				<a href="/settings" class="focus:ring">
+					<Icon name="cogSolid" className="h-4 w-4 fill-current" /></a
+				>
 			</div>
 		</div>
 		<div class="flex space-x-2">
@@ -214,14 +224,6 @@
 		{/if}
 	</div>
 </nav>
-<!-- toggle button -->
-<button
-	class="fixed top-0 left-0 z-20 !mt-0 flex h-14 w-12 cursor-default flex-col items-center justify-center p-0.5 pl-2 lg:hidden"
-	on:click={toggleSidebar}
->
-	<Icon name="menu" className="h-5 w-5 stroke-2 stroke-current" />
-	<span class="sr-only">Toggle menu</span>
-</button>
 
 <style lang="postcss">
 	nav {

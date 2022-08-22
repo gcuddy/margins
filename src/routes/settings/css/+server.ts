@@ -1,3 +1,4 @@
+import { json } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import type { RequestHandler } from '@sveltejs/kit';
 
@@ -11,10 +12,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			css
 		}
 	});
-	return {
-		status: 200,
-		body: {
-			rule
-		}
-	};
+	return json({
+		rule
+	});
 };

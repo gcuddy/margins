@@ -1,16 +1,17 @@
 <script lang="ts">
-	// import '$lib/stylesheets/reading.css';
+	import type { PageData } from './$types';
+	export let data: PageData;
+	$: article = data.article;
+	$: console.log({ data });
 	import { slide } from 'svelte/transition';
 	import { browser } from '$app/env';
 	import { fade } from 'svelte/transition';
 	import debounce from 'lodash.debounce';
 	import { onDestroy, onMount } from 'svelte';
-	import scrollY from '$lib/stores/scrollY';
 	import dayjs from 'dayjs';
 	import localizedFormat from 'dayjs/plugin/localizedFormat.js';
-	import Highlighter from './_Highlighter.svelte';
-	import type { ArticleWithNotesAndTagsAndContext } from '$lib/types';
-	import { archive, bulkEditArticles, patch, post } from '$lib/utils';
+	import Highlighter from './Highlighter.svelte';
+	import { archive } from '$lib/utils';
 	import { navigating } from '$app/stores';
 	import HighlightMenu from '$lib/components/HighlightMenu.svelte';
 	import ReadingMenu from '$lib/components/ReadingMenu.svelte';
@@ -20,31 +21,21 @@
 	import H1 from '$lib/components/atoms/H1.svelte';
 	import { mainEl, mainElScroll } from '$lib/stores/main';
 	import articleHeader from '$lib/stores/currentArticle/articleHeader';
-	import Muted from '$lib/components/atoms/Muted.svelte';
-	import ReadingSidebar from '$lib/components/ReadingSidebar.svelte';
 	import { hideSidebar } from '$lib/stores/sidebar';
 	dayjs.extend(localizedFormat);
 
-	export let article: ArticleWithNotesAndTagsAndContext;
-
-	let last_scroll_position = article.readProgress;
+	$: last_scroll_position = (article?.readProgress as number) || 0;
+	$: removeCommands = useArticleCommands(article);
 
 	let disableSaveScroll = false;
 
-	const removeCommands = useArticleCommands(article);
-
 	onMount(async () => {
-		hideSidebar.set(true);
 		recents.addRecentArticle(article);
 		if (!browser) return;
-		console.log({ readProgress: article.readProgress });
 		const pos = article.readProgress * ($mainEl.scrollHeight - window.innerHeight);
-		console.log({ pos });
-		console.log(`scrolling to ${pos}`);
 		setTimeout(() => {
 			$mainEl.scrollTo(0, pos);
 		}, 0);
-		// add commands
 	});
 
 	const saveProgress = async (data: number) => {
@@ -61,7 +52,6 @@
 					readProgress: data
 				})
 		});
-		console.log('saved progresss', data);
 	};
 	const debouncedSave = debounce(saveProgress, 500, {
 		leading: true,
@@ -77,17 +67,11 @@
 			}
 		}
 	});
-	console.log({ article });
 	onDestroy(() => {
 		unsubscribeScrollY && unsubscribeScrollY();
 		removeCommands();
 		hideSidebar.set(false);
-		// $commandStore = $commandStore.filter((c) => !articleCommands.some((a) => a.id === c.id));
 	});
-
-	let contentWrapper: HTMLElement;
-
-	$: console.log({ article });
 </script>
 
 <!-- TODO: implement layout select -->
@@ -102,7 +86,6 @@
 </svelte:head>
 
 <div
-	bind:this={contentWrapper}
 	on:dblclick|preventDefault|stopPropagation={(e) => {
 		console.log(e);
 		// todo: use x and y to create annotation, attach to nearest node

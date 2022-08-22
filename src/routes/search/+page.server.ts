@@ -1,16 +1,24 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
-export const GET: RequestHandler = async ({ url }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	const q = url.searchParams.get('q');
 	console.log({ q });
 	if (!q) {
 		return {
-			status: 200,
-			body: {
-				results: []
-			}
+			results: []
 		};
 	}
+	// db.article.findMany({
+	//   where: {
+	//     title: {
+	//       contains: "d",
+	//       mode: 'insensitive'
+	//     },
+	//     readProgress: {
+	//       gt: 1
+	//     }
+	//   }
+	// })
 	const results = await db.article.findMany({
 		where: {
 			textContent: {
@@ -48,21 +56,8 @@ export const GET: RequestHandler = async ({ url }) => {
 		};
 	});
 	console.timeEnd('searchMatching');
-	// results.forEach((result) => {
-	// 	console.log(result.title);
-	// 	const regex = new RegExp('[^.]*[^.]*.', 'gi');
-	// 	// get match with surrounding sentence
-	// 	const match = result.textContent.match(regex);
-
-	// 	result.textContent.match(q)?.forEach((match) => {
-	// 		console.log(match);
-	// 	});
-	// });
 	return {
-		status: 200,
-		body: {
-			results,
-			matches
-		}
+		results,
+		matches
 	};
 };

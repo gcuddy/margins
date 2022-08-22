@@ -2,9 +2,9 @@
 	import Button from '$lib/components/Button.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
-
-	import type { List } from '@prisma/client';
-	export let lists: List[] = [];
+	import type { PageData } from './$types';
+	export let data: PageData;
+	$: lists = data.lists;
 </script>
 
 <!-- <Button>New list</Button> -->

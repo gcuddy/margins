@@ -1,4 +1,5 @@
-import parse from '../add/_parse';
+import { json as json$1 } from '@sveltejs/kit';
+import parse from '../../add/_parse';
 // takes many ids
 // updates all of them with given data
 
@@ -44,17 +45,14 @@ export const POST: RequestHandler = async ({ request }) => {
 			data: articles,
 			skipDuplicates: true
 		});
-		return {
-			status: 200,
+		return new Response(undefined, {
 			headers: {
 				location: '/'
 			}
-		};
+		});
 	} catch (e) {
 		console.error(e);
-		return {
-			status: 400
-		};
+		return new Response(undefined, { status: 400 });
 	}
 };
 
@@ -74,16 +72,13 @@ export const PATCH: RequestHandler = async ({ request }) => {
 			})
 		);
 		// does it need to return anything?
-		return {
-			status: 200
-		};
+		return new Response(undefined);
 	} catch (e) {
 		console.error(e);
-		return {
-			status: 400,
-			body: {
-				error: reportZodOrPrismaError(e)
-			}
-		};
+		return json$1({
+			error: reportZodOrPrismaError(e)
+		}, {
+			status: 400
+		});
 	}
 };

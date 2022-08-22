@@ -1,7 +1,9 @@
 <script lang="ts">
-	import type { Article } from '@prisma/client';
-	export let article: Article;
 	import AnnotationInput from '$lib/components/AnnotationInput.svelte';
+	import type { Article } from '@prisma/client';
+	import type { PageData } from './$types';
+	export let data: PageData;
+	let { article } = data;
 </script>
 
 <div class="mx-auto w-full max-w-3xl">

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Select from '$lib/components/atoms/Select.svelte';
 	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
@@ -8,9 +7,10 @@
 	import KeyboardNavItem from '$lib/components/helpers/KeyboardNav/KeyboardNavItem.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
-	import type { SmartListWithPayload } from '$lib/types';
+	import type { PageData } from './$types';
 
-	export let lists: SmartListWithPayload[] = [];
+	export let data: PageData;
+	$: lists = data.lists;
 
 	export let active_item_id: number | undefined;
 </script>
@@ -77,7 +77,7 @@
 							[
 								{
 									label: 'Edit View',
-									href: '/smart/{list.id}/edit',
+									href: `/smart/${list.id}/edit`,
 									icon: 'collectionSolid'
 								}
 							],

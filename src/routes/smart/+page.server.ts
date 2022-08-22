@@ -1,9 +1,9 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
+import { error } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
-import { Prisma } from '@prisma/client';
 
-export const GET: RequestHandler = async () => {
+export const load: PageServerLoad = async () => {
 	try {
 		const lists = await db.smartList.findMany({
 			include: {
@@ -15,19 +15,14 @@ export const GET: RequestHandler = async () => {
 			}
 		});
 		return {
-			status: 200,
-			body: {
-				lists
-			}
+			lists
 		};
 	} catch (e) {
-		return {
-			status: 400
-		};
+		throw error(400, 'error fetching lists');
 	}
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: Action = async ({ request }) => {
 	// TODO: add schema validation
 	try {
 		const json = await getJsonFromRequest(request);
@@ -38,14 +33,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		});
 		return {
-			status: 200,
-			body: {
-				id: smartList.id
-			}
+			location: `/smart/${smartList.id}`
 		};
 	} catch (e) {
-		return {
-			status: 400
-		};
+		throw error(400, 'error creating smart list');
 	}
 };

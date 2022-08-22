@@ -11,7 +11,7 @@
 {#if as === 'a'}
 	<a
 		bind:this={el}
-		class="flex w-10 shrink flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 py-1 px-2"
+		class="flex w-10 shrink flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 bg-gradient-to-br from-amber-100 to-amber-200 py-1 px-2"
 		{href}
 		sveltekit:prefetch
 	>
@@ -21,7 +21,7 @@
 {:else}
 	<span
 		bind:this={el}
-		class="flex w-10 shrink flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 py-0.5 px-2"
+		class="flex w-10 shrink flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 bg-gradient-to-br from-amber-100 to-amber-200 py-0.5 px-2"
 		{href}
 	>
 		<Icon name="pencilSolid" className="h-3 w-3 fill-amber-900" />

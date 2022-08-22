@@ -1,7 +1,7 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 
-export const GET: RequestHandler = async ({ url, params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	const list = await db.smartList.findFirst({
 		where: {
 			id: Number(params.id)
@@ -10,15 +10,7 @@ export const GET: RequestHandler = async ({ url, params }) => {
 			favorite: true
 		}
 	});
-	if (!list) {
-		return {
-			status: 400
-		};
-	}
 	return {
-		status: 200,
-		body: {
-			list
-		}
+		list
 	};
 };

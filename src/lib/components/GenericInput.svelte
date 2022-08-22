@@ -8,6 +8,8 @@
 	export let name = '';
 	export let type: 'text' | 'number' = 'text';
 	export let value: string | number = type === 'text' ? '' : 0;
+	export let min: number | undefined = undefined;
+	export let max: number | undefined = undefined;
 </script>
 
 {#if type === 'text'}
@@ -42,6 +44,8 @@
 			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
   {className}"
 		{placeholder}
+		{min}
+		{max}
 		bind:value
 	/>
 {/if}

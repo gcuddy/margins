@@ -1,3 +1,4 @@
+import { json as json$1 } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
@@ -6,13 +7,10 @@ import { z } from 'zod';
 
 export const GET: RequestHandler = async () => {
 	const favorites = await db.favorite.findMany(_FavoriteArgs);
-	return {
-		body: { favorites },
-		status: 200
-	};
+	return json$1({ favorites });
 };
 
-export const generateNegativePositionWithTwoDecimals = (): number => {
+const generateNegativePositionWithTwoDecimals = (): number => {
 	return Math.floor(Math.random() * -2000 * 100) / 100;
 };
 
@@ -28,10 +26,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			position: generateNegativePositionWithTwoDecimals()
 		}
 	});
-	return {
-		body: { id: favorite.id },
-		status: 200
-	};
+	return json$1({ id: favorite.id });
 };
 
 export const DELETE: RequestHandler = async ({ request }) => {
@@ -48,13 +43,9 @@ export const DELETE: RequestHandler = async ({ request }) => {
 				id: toDelete.id
 			}
 		});
-		return {
-			status: 200
-		};
+		return new Response(undefined);
 	} catch (e) {
 		console.error(e);
-		return {
-			status: 400
-		};
+		return new Response(undefined, { status: 400 });
 	}
 };

@@ -1,9 +1,10 @@
 import { db } from '$lib/db';
 import { ArticleListSelect } from '$lib/types';
 import { getJsonFromRequest } from '$lib/utils';
-import type { RequestHandler } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
 
-export const GET: RequestHandler = async ({ params }) => {
+export const load: PageServerLoad = async ({ params }) => {
 	console.log({ params });
 	const tag = await db.tag.findFirst({
 		where: {
@@ -20,19 +21,10 @@ export const GET: RequestHandler = async ({ params }) => {
 		}
 	});
 	console.log({ tag });
-	if (tag) {
-		console.log('returning tag');
-		return {
-			body: { tag },
-			status: 200
-		};
-	}
-	return {
-		status: 404
-	};
+	return { tag };
 };
 
-export const PATCH: RequestHandler = async ({ params, request }) => {
+export const PATCH: Action = async ({ params, request }) => {
 	console.log('Patching Tag');
 	const json = await getJsonFromRequest(request);
 	console.log({ json });
@@ -44,12 +36,7 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 			...json
 		}
 	});
-	if (tag) {
-		return {
-			status: 200
-		};
+	if (!tag) {
+		throw error(400);
 	}
-	return {
-		status: 404
-	};
 };

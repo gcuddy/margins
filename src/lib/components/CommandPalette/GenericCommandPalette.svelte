@@ -58,10 +58,15 @@
 	/** STORE SETUP (maybe put in sep file or module) **/
 	export let term = writable('');
 	const commandStore = Array.isArray(values) ? writable<TValue[]>(values) : values;
-	console.log({ commandStore, $commandStore });
+	$: console.log({ commandStore, $commandStore, $filteredActions });
 	//TODO Use Fuse
 	// TODO: fix type problems
 	const filteredActions = derived([term, commandStore], ([$term, $items]) => {
+		if (typeof $items[0] === 'string') {
+			return $items.filter((item) =>
+				(item as unknown as string).toLowerCase().includes($term.toLowerCase())
+			);
+		}
 		$items = $items?.filter((i) => !('check' in i) || i?.check?.());
 		return $items?.filter((x) =>
 			((x?.name || x?.title) + (x?.keywords || '')).toLowerCase().includes($term.toLowerCase())
@@ -113,15 +118,18 @@
 		}}
 		static={true}
 		expanded={true}
-		class="relative mx-auto max-w-2xl divide-y divide-gray-100 overflow-hidden rounded-xl bg-gray-50 text-gray-900 shadow-2xl ring-1 ring-black/5 dark:divide-gray-600 dark:bg-gray-800 dark:text-gray-100"
+		class="relative mx-auto max-w-2xl divide-y divide-gray-100 overflow-hidden rounded-xl bg-gray-50 text-gray-900 shadow-2xl ring-1 ring-black/5 dark:divide-gray-600 dark:bg-gray-800 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:text-gray-100 dark:ring-black/25"
 	>
 		<div slot="option" let:value let:active let:selected let:index>
 			<slot {value} {active} {selected} {index}>
 				<div
-					class="text-gray-600 dark:text-gray-300 {active
-						? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:!text-white'
+					class="relative text-gray-600 dark:text-gray-300 {active
+						? 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:!text-white'
 						: ''} flex h-12 w-full items-center gap-3.5 px-4 py-2"
 				>
+					{#if active}
+						<div class="absolute left-0 h-full w-1 bg-primary-600" />
+					{/if}
 					{#if itemIcon}
 						{@const { component, props } = itemIcon(value, active, selected, index)}
 						{#if component}

@@ -1,12 +1,12 @@
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
 import { db } from '$lib/db';
 import { z } from 'zod';
 import { ArticleListSelect } from '$lib/types';
 import { getJsonFromRequest } from '$lib/utils';
 import { SmartListModelSchema } from '$lib/types/schemas/SmartList';
-import type { Prisma } from '@prisma/client';
+import { error } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ url, params }) => {
+export const load: PageServerLoad = async ({ url, params }) => {
 	console.time('smartlist');
 	const list = await db.smartList.findFirst({
 		where: {
@@ -17,9 +17,7 @@ export const GET: RequestHandler = async ({ url, params }) => {
 		}
 	});
 	if (!list) {
-		return {
-			status: 400
-		};
+		throw error(404, 'List not found');
 	}
 	// duplicated from /fetch.json... not sure how to do this?
 	const articles = await db.article.findMany({
@@ -27,16 +25,14 @@ export const GET: RequestHandler = async ({ url, params }) => {
 		select: ArticleListSelect
 	});
 	console.timeEnd('smartlist');
+	console.log({ articles, list });
 	return {
-		status: 200,
-		body: {
-			articles,
-			list
-		}
+		articles,
+		list
 	};
 };
 
-export const PATCH: RequestHandler = async ({ params, request }) => {
+export const PATCH: Action = async ({ params, request }) => {
 	const json = await getJsonFromRequest(request);
 	const parsed = SmartListModelSchema.partial().parse(json);
 	await db.smartList.update({
@@ -49,7 +45,4 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 			name: parsed.name
 		}
 	});
-	return {
-		status: 200
-	};
 };

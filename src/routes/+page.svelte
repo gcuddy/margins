@@ -1,86 +1,16 @@
-<script lang="ts" context="module">
-	// todo: pass data into stuff
-</script>
-
 <script lang="ts">
+	import type { PageData } from './$types';
+	export let data: PageData;
+	$: ({ articles } = data);
 	import Saved from '$lib/components/Saved.svelte';
-	import type { Article, Tag } from '@prisma/client';
-	import { modals } from '$lib/stores/modals';
-	import { allArticles } from '$lib/stores/articles';
-	import type { ArticleWithNotesAndTagsAndContext } from '$lib/types';
-	import type { Link } from '$lib/components/Sidebar.svelte';
 	import { cachedArticlesStore } from '$lib/stores/cache';
 	import Header from '$lib/components/layout/Header.svelte';
-	import { headerComponent } from '$lib/stores/header';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
-	import LocationSelect from '$lib/components/layout/headers/LocationSelect.svelte';
-	import GenericInput from '$lib/components/GenericInput.svelte';
-	import { filterTerm } from '$lib/stores/filter';
 	import Filter from '$lib/components/Filter.svelte';
-	export let articles: ArticleWithNotesAndTagsAndContext[];
 	cachedArticlesStore.set({
 		articles,
 		lastUpdate: new Date()
 	});
-	export let tags: Tag[] = [];
-	console.log({ tags });
-	allArticles.set(articles);
-	$: console.log({ modals: $modals });
-
-	const sidebarLinks: Link[][] = [
-		[
-			{
-				text: 'All',
-				href: '/',
-				id: 'all',
-				icon: 'home'
-			},
-			{
-				text: 'Inbox',
-				href: '/saved/inbox',
-				id: 'inbox',
-				icon: 'inbox'
-			},
-			{
-				text: 'Soon',
-				href: '/saved/soon',
-				id: 'soon',
-				icon: 'clock'
-			},
-			{
-				text: 'Later',
-				href: '/saved/later',
-				id: 'later',
-				icon: 'calendar'
-			}
-		],
-		[
-			{
-				text: 'Tags',
-				id: 'tags',
-				visible: true,
-				children: tags.map((tag) => ({
-					text: tag?.name,
-					href: `/tags/${tag?.name}`,
-					id: tag?.name
-				}))
-			}
-		]
-	];
-
-	$: console.log({ allArticles: $allArticles });
-
-	headerComponent.update((h) => ({
-		props: {},
-		header: {
-			component: DefaultHeader,
-			slots: {
-				start: {
-					component: LocationSelect
-				}
-			}
-		}
-	}));
 </script>
 
 <svelte:head><title>Margins</title></svelte:head>

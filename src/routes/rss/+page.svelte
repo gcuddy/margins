@@ -1,23 +1,16 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { flip } from 'svelte/animate';
 	import { page } from '$app/stores';
-	import KeyboardNav from '$lib/components/helpers/KeyboardNav/KeyboardNav.svelte';
-	import KeyboardNavItem from '$lib/components/helpers/KeyboardNav/KeyboardNavItem.svelte';
-
-	import RssItem from '$lib/components/rss/RSSItem.svelte';
-	import type { RssFeedWithItems, RssItemWithFeed } from '$lib/types/rss';
-	import { sortByDomNode } from '$lib/utils/focus-management';
 	import { sortItemsFromFeeds } from '$lib/utils/rss';
 	import type { RssFeedItem } from '@prisma/client';
-	import { onMount } from 'svelte';
-	import Item from './[id=integer]/_Item.svelte';
-	import { feedStore, subscribedFeedIds } from './_stores';
-	export let feeds: RssFeedWithItems[] = [];
+	import { feedStore } from './_stores';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
+	let { feeds } = data;
 	feedStore.set(feeds);
 	console.log({ feeds });
 	let sortedItems: RssFeedItem[] = [];
-	$: feeds, (sortedItems = sortItemsFromFeeds(feeds, $page.stuff.filter === 'unread'));
+	$: feeds, (sortedItems = sortItemsFromFeeds(feeds));
 	let activeItem: RssFeedItem | undefined;
 	function updateItemState(newItem: RssFeedItem) {
 		const idx = sortedItems.findIndex((item) => item.id === newItem?.id);

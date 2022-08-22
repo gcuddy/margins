@@ -1,33 +1,31 @@
 // endpoint to add urls, mainly used for bookmarklet
 
 import { db } from '$lib/db';
-import type { RequestHandler } from '@sveltejs/kit';
+import type { PageServerLoad, Action } from './$types';
 import dayjs from 'dayjs';
 import parse from './_parse';
+import { error } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const load: PageServerLoad = async ({ url }) => {
 	const _url = url.searchParams.get('url');
 	const title = url.searchParams.get('title');
 	const description = url.searchParams.get('description');
 	const html = url.searchParams.get('html');
 	return {
-		body: {
-			title,
-			description,
-			html,
-			url: _url
-		}
+		title,
+		description,
+		html,
+		url: _url
 	};
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: Action = async ({ request }) => {
 	// todo: handle image requests and such
 	const form = await request.formData();
 	const url = <string>form.get('url') || <string>form.get('text');
 	const title = <string>form.get('title');
 	const html = <string>form.get('html');
 	const contextUrl = <string | undefined>form.get('context-url');
-	console.log({ url, contextUrl });
 	try {
 		const article = await parse(url, html || undefined);
 		// console.log({ article });
@@ -67,16 +65,13 @@ export const POST: RequestHandler = async ({ request }) => {
 				context
 			}
 		});
-		return {
-			status: 200,
-			body: {
-				article: newArticle
-			}
-		};
+		if (newArticle) {
+			return {
+				location: `/article/${newArticle.id}`
+			};
+		}
 	} catch (e) {
 		console.log(e);
+		throw error(400);
 	}
-	return {
-		status: 404
-	};
 };

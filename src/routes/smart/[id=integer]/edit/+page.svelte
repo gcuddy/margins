@@ -16,12 +16,13 @@
 		SmartListFilterSchema,
 		stringFilterKeys
 	} from '$lib/types/schemas/SmartList';
+	import type { PageData } from './$types';
 	import type { Article, Prisma, SmartList } from '@prisma/client';
-	import { match, P } from 'ts-pattern';
 	import type { z } from 'zod';
 
-	export let list: SmartList;
-	console.log({ list });
+	export let data: PageData;
+	console.log({ data });
+	let { list } = data;
 
 	const parsedFilter = SmartListFilterSchema.parse(list.filter);
 	console.log({ parsedFilter });

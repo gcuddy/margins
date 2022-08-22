@@ -1,14 +1,13 @@
 import type { Location } from '$lib/types/schemas/Locations';
-import type { RequestHandler } from '@sveltejs/kit';
-import type { z } from 'zod';
+import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import { ArticleListSelect } from '$lib/types';
+import { error } from '@sveltejs/kit';
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
 	try {
 		const take = parseInt(url.searchParams.get('limit') || '20');
 		const location = params.location.toUpperCase() as Location;
-		console.log({ location });
 		const articles = await db.article.findMany({
 			orderBy: [
 				{
@@ -25,15 +24,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			select: ArticleListSelect
 		});
 		return {
-			status: 200,
-			body: {
-				articles,
-				location
-			}
+			articles,
+			location
 		};
-	} catch (error) {
-		return {
-			status: 400
-		};
+	} catch (e) {
+		error(400, 'error fetching articles');
 	}
 };

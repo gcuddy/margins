@@ -1,31 +1,18 @@
 <script lang="ts">
 	import type { AnnotationWithArticle, ArticleWithNotesAndTagsAndContext } from '$lib/types';
-	import ArticleNotes from './_ArticleNotes.svelte';
-	import { filteredNotebookArticles, notebookArticles, notebookSearch } from '$lib/stores/notebook';
 	import Icon from '$lib/components/helpers/Icon.svelte';
-	import NoteFilter from './_NotebookFilter.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import { TargetSchema } from '$lib/types/schemas/Annotations';
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	import Filter from '$lib/components/Filter.svelte';
 	import { currentItems } from '$lib/stores/filter';
-	// export let articles: ArticleWithNotesAndTagsAndContext[];
-	export let annotations: AnnotationWithArticle[];
 
-	// group annotations by article
-	// annotations.reduce((acc, annotation) => {
-	// 	const article = annotation.article;
-	// 	const articleId = article.id;
-	// 	const articleAnnotations = acc[articleId] || [];
-	// 	acc[articleId] = [...articleAnnotations, annotation];
-	// 	return acc;
-	// }, {});
-
+	import type { PageData } from './$types';
+	export let data: PageData;
+	let { annotations } = data;
 	const _articles = annotations.flatMap((a) => a.article);
 	const article_ids = new Set(annotations.flatMap((a) => a.article.id));
-	// console.log({ annotations, article_ids });
-	// notebookArticles.set(articles);
 	currentItems.setCurrentItems(_articles, 'title');
 </script>
 
@@ -48,7 +35,7 @@
 						<h2 class="font-medium">{article?.title}</h2>
 					</a>
 					<Muted>
-						{article?.author}</Muted
+						{article?.author || article.siteName || ''}</Muted
 					>
 				</div>
 				<ul class="space-y-2">
