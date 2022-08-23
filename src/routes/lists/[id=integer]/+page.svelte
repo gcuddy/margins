@@ -9,7 +9,12 @@
 	import { derived } from 'svelte/store';
 
 	import type { PageData } from './$types';
+	import Header from '$lib/components/layout/Header.svelte';
+	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
+	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
 	export let data: PageData;
+	console.log({ data });
 	$: list = data.list;
 	$: articles = list.items?.flatMap((i) => i.article)?.filter((i) => i) as ArticleInList[];
 	const availableArticlesToAdd = derived(cachedArticlesStore, ($articles) => {
@@ -22,7 +27,15 @@
   {JSON.stringify(list, null, 2)}
 </pre> -->
 
-<h1>{list.name}</h1>
+<Header>
+	<DefaultHeader>
+		<div slot="start" class="flex items-center space-x-2">
+			<Icon name="viewGrid" className="h-5 w-5 stroke-2 dark:stroke-gray-400" />
+			<SmallPlus>{list.name}</SmallPlus>
+		</div>
+	</DefaultHeader>
+</Header>
+
 <Button
 	on:click={async () => {
 		// set off getArticles to update cache

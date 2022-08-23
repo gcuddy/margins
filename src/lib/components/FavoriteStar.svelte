@@ -16,7 +16,7 @@
 </script>
 
 <button
-	class="flex items-center rounded-full ring-offset-2 focus:ring {pending && 'animate-bounce'}"
+	class="flex items-center rounded-full ring-offset-2 focus:ring"
 	on:click={async () => {
 		_starred = !_starred;
 		// send to favorite store, and update

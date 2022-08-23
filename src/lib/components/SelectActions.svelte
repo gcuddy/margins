@@ -9,7 +9,7 @@
 	import type { ArticleInList } from '$lib/types';
 	import { LOCATIONS, LOCATION_LIST, LOCATION_TO_ICON_OUTLINE } from '$lib/types/schemas/Locations';
 
-	import { archive, bulkEditArticles } from '$lib/utils';
+	import { addToList, archive, bulkEditArticles } from '$lib/utils';
 	import { backIn, backOut } from 'svelte/easing';
 	import { fly } from 'svelte/transition';
 	import { map } from 'zod';
@@ -18,15 +18,21 @@
 	import Icon from './helpers/Icon.svelte';
 
 	import { createEventDispatcher } from 'svelte';
+	import type { Annotation } from '@prisma/client';
+
+	function isAnnotation(item: ArticleInList | Annotation): item is Annotation {
+		return (item as Annotation).target !== undefined;
+	}
 
 	const dispatch$1 = createEventDispatcher<{
 		update: {
 			articles: ArticleInList[];
 		};
+		action: void;
 	}>();
-	const dispatch = () => dispatch$1('update', { articles: selected_articles });
+	const dispatch = () => dispatch$1('update', { articles: selected_items });
 
-	const clear = () => (selected_articles = []);
+	const clear = () => (selected_items = []);
 
 	const move = () => {
 		commandPaletteStore.open({
@@ -47,17 +53,17 @@
 			onSelect: async ({ detail }) => {
 				const id = syncStore.add();
 				// optimistic update
-				selected_articles = selected_articles.map((article) => ({
+				selected_items = selected_items.map((article) => ({
 					...article,
 					location: detail.id
 				}));
-				console.log({ selected_articles });
+				console.log({ selected_articles: selected_items });
 				dispatch();
-				await bulkEditArticles(article_ids, {
+				await bulkEditArticles(ids, {
 					location: detail.id
 				});
 				notifications.notify({
-					message: `Moved ${selected_articles.length} articles to ${detail.name}`,
+					message: `Moved ${selected_items.length} articles to ${detail.name}`,
 					title: `Moved to ${detail.name}`,
 					type: 'success'
 				});
@@ -66,10 +72,62 @@
 			}
 		});
 	};
+	const add_to_list = async () => {
+		//todo: use cache
+		const res = await fetch('/lists', {
+			headers: {
+				'Content-Type': 'application/json',
+				Accept: 'application/json'
+			}
+		});
+		const { lists } = await res.json();
+		commandPaletteStore.open({
+			values: lists,
+			placeholder: 'Add to list…',
+			itemIcon: (val, active) => {
+				console.log({ val });
+				return {
+					component: Icon,
+					props: {
+						name: 'viewGrid',
+						className: `h-5 w-5 stroke-2 stroke-current ${
+							active && 'dark:stroke-primary-100 stroke-primary-900'
+						}`
+					}
+				};
+			},
+			onSelect: async ({ detail }) => {
+				// optimistic update
+				console.log({ detail });
+
+				let annotationId = selected_items
+					.filter((item) => isAnnotation(item))
+					.map((annotation) => annotation.id);
+				let articleId = selected_items
+					.filter((item) => !isAnnotation(item))
+					.map((article) => article.id);
+
+				const res = await addToList(detail.id, {
+					annotationId,
+					articleId
+				});
+				console.log({ res });
+				if (res.ok) {
+					notifications.notify({
+						message: `Moved ${selected_items.length} articles to ${detail.name}`,
+						title: `Moved to ${detail.name}`,
+						type: 'success'
+					});
+					dispatch();
+					clear();
+				}
+			}
+		});
+	};
 
 	function handleKeydown(e: KeyboardEvent) {
 		if ($disableGlobalKeyboardShortcuts) return;
-		if (!selected_articles?.length) return;
+		if (!selected_items?.length) return;
 		if (e.key === 'Escape') {
 			clear();
 		}
@@ -88,13 +146,13 @@
 	export let actions: Partial<typeof _actions> = _actions;
 
 	// todo: expand this so it can take other things besides articles?
-	export let selected_articles: ArticleInList[];
-	$: article_ids = selected_articles.map(({ id }) => id);
+	export let selected_items: (ArticleInList | Annotation)[];
+	$: ids = selected_items.map(({ id }) => id);
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-{#if selected_articles.length}
+{#if selected_items.length}
 	<div
 		in:gentleFly|local={{
 			duration: 400,
@@ -110,7 +168,7 @@
 			class="dark:ring-black/15 pointer-events-auto flex h-11 flex-row items-center justify-center space-x-4 rounded-lg bg-gray-50 px-4 shadow-2xl ring ring-black/5 dark:bg-gray-800 dark:bg-gradient-to-br"
 		>
 			<span class="text-sm text-gray-500 dark:text-gray-300 lg:text-base">
-				<span>{selected_articles.length}</span> selected</span
+				<span>{selected_items.length}</span> selected</span
 			>
 			<div class="flex space-x-4">
 				<!-- <Button variant="ghost"> Move</Button> -->
@@ -118,10 +176,7 @@
 					<Button
 						variant="ghost"
 						className="space-x-1 flex items-center lg:text-base"
-						on:click={async () => {
-							await archive(article_ids, null, '/', true);
-							clear();
-						}}
+						on:click={add_to_list}
 						><Icon name="viewGridAdd" className="h-4 w-4 stroke-2 stroke-current" />
 						<span>Add to List</span></Button
 					>
@@ -131,7 +186,7 @@
 						variant="ghost"
 						className="space-x-2 flex items-center lg:text-base"
 						on:click={async () => {
-							await archive(article_ids, null, '/', true);
+							await archive(ids, null, '/', true);
 						}}
 						><Icon name="archiveSolid" className="h-4 w-4 fill-current" />
 						<span>Archive</span></Button

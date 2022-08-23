@@ -104,19 +104,20 @@ model List {
 }
 
 model ListItem {
-  id           Int        @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   listId       Int
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  articleId    Int?       @unique
-  bookmarkId   Int?       @unique
-  highlightId  String?    @unique
-  annotationId Int?       @unique
-  type         String
-  article      Article?   @relation(fields: [articleId], references: [id])
-  bookmark     Bookmark?  @relation(fields: [bookmarkId], references: [id])
-  highlight    Highlight? @relation(fields: [highlightId], references: [id])
-  list         List       @relation(fields: [listId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  articleId    Int?        @unique
+  bookmarkId   Int?        @unique
+  highlightId  String?     @unique
+  annotationId Int?        @unique
+  type         String?
+  article      Article?    @relation(fields: [articleId], references: [id])
+  bookmark     Bookmark?   @relation(fields: [bookmarkId], references: [id])
+  highlight    Highlight?  @relation(fields: [highlightId], references: [id])
+  annotation   Annotation? @relation(fields: [annotationId], references: [id])
+  list         List        @relation(fields: [listId], references: [id])
 }
 
 model Media {
@@ -157,16 +158,17 @@ model DomMeta {
 }
 
 model Annotation {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   target     Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
   body       String? // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
   //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  flagged    Boolean  @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  flagged    Boolean   @default(false)
   motivation String?
   articleId  Int
-  article    Article  @relation(fields: [articleId], references: [id])
+  article    Article   @relation(fields: [articleId], references: [id])
+  ListItem   ListItem?
 }
 
 model RssFeed {

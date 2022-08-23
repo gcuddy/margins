@@ -9,5 +9,5 @@ export const ListItemModel = z.object({
   bookmarkId: z.number().int().nullish(),
   highlightId: z.string().nullish(),
   annotationId: z.number().int().nullish(),
-  type: z.string(),
+  type: z.string().nullish(),
 })

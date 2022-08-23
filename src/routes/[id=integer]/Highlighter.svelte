@@ -103,7 +103,12 @@
 	let tooltipLeft = 0;
 
 	const isValidSelection = (sel: Selection) =>
-		sel && !sel.isCollapsed && sel.rangeCount > 0 && sel.containsNode(wrapper, true);
+		sel &&
+		!sel.isCollapsed &&
+		sel.rangeCount > 0 &&
+		sel.containsNode(wrapper, true) &&
+		!sel.anchorNode.parentElement.closest('mark[data-annotation-id]') &&
+		!sel.focusNode.parentElement.closest('mark[data-annotation-id]');
 
 	const unsubscribeSelection = selection.subscribe((val) => {
 		if (!val) return;

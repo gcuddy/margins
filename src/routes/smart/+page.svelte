@@ -48,7 +48,9 @@
 						active_item_id === list.id ? 'bg-gray-100 dark:bg-gray-800' : ''
 					} ${active && 'bg-gray-200 dark:bg-gray-800/90'}`}
 			>
-				<div class="flex h-full  items-center space-x-4 border-b py-3 px-6 lg:px-9">
+				<div
+					class="flex h-full  items-center space-x-4 border-b py-3 px-6 dark:border-gray-700 lg:px-9"
+				>
 					<Icon name="collectionSolid" className="h-4 w-4 fill-gray-600 dark:fill-gray-300" />
 					<div class="flex grow items-center">
 						<SmallPlus size="sm">{list.name}</SmallPlus>

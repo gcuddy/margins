@@ -5,7 +5,7 @@ export const FavoriteModel = z.object({
   position: z.number(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  userId: z.number().int().nullish(),
+  userId: z.string().nullish(),
   articleId: z.number().int().nullish(),
   tagId: z.number().int().nullish(),
   rssId: z.number().int().nullish(),

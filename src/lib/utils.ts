@@ -10,7 +10,7 @@ import { syncStore } from './stores/sync';
 import type { FavoriteSchema } from './types/schemas/Favorite';
 import type { ViewOptions } from './types/schemas/View';
 import dayjs from 'dayjs';
-import { match } from 'ts-pattern';
+import type { AddToListSchema } from './types/schemas/List';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -331,18 +331,8 @@ export async function postAnnotation(annotation: z.infer<typeof AnnotationSchema
 	return res;
 }
 
-export async function createFavorite(
-	data: z.infer<typeof FavoriteSchema>,
-	options?: {
-		pending?: () => void;
-		done?: () => void;
-		error?: () => void;
-	}
-) {
+export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
 	const id = syncStore.addItem();
-	if (options.pending) {
-		options.pending();
-	}
 	const res = await fetch('/favorites.json', {
 		method: 'POST',
 		headers: {
@@ -402,4 +392,17 @@ export function sortArticles<T>(articles: ArticleInList[], opts: ViewOptions) {
  */
 export function clamp(num: number, min: number, max: number) {
 	return num < min ? min : num > max ? max : num;
+}
+
+export async function addToList(listId: number, data: z.infer<typeof AddToListSchema>) {
+	const id = syncStore.addItem();
+	const res = await fetch(`/lists/${listId}`, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	});
+	syncStore.removeItem(id);
+	return res;
 }

@@ -3,6 +3,8 @@ import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 import { ArticleListSelect } from '$lib/types';
 import { error } from '@sveltejs/kit';
+import { z } from 'zod';
+import { AddToListSchema } from '$lib/types/schemas/List';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const { id } = params;
@@ -16,7 +18,8 @@ export const load: PageServerLoad = async ({ params }) => {
 					include: {
 						article: {
 							select: ArticleListSelect
-						}
+						},
+						annotation: true
 					}
 				}
 			}
@@ -64,19 +67,50 @@ export const PATCH: Action = async ({ request, params }) => {
 };
 
 //PUT- used for putting list item (from articleId) in list
+
 export const PUT: Action = async ({ request, params }) => {
 	const { id } = params;
 	try {
 		const data = await getJsonFromRequest(request);
 		/// TODO: flesh out
-		const { articleId } = data;
-		const list = await db.listItem.create({
-			data: {
-				articleId: parseInt(articleId),
-				listId: parseInt(id),
-				type: 'ARTICLE'
+		const { articleId, annotationId } = AddToListSchema.parse(data);
+		console.log({ data });
+		if (articleId) {
+			if (Array.isArray(articleId)) {
+				await db.listItem.createMany({
+					data: articleId.map((articleId) => ({
+						articleId: Number(articleId),
+						listId: Number(id)
+					})),
+					skipDuplicates: true
+				});
+			} else {
+				await db.listItem.create({
+					data: {
+						articleId: Number(articleId),
+						listId: Number(id)
+					}
+				});
 			}
-		});
+		}
+		if (annotationId) {
+			if (Array.isArray(annotationId)) {
+				await db.listItem.createMany({
+					data: annotationId.map((annotationId) => ({
+						annotationId: Number(annotationId),
+						listId: Number(id)
+					})),
+					skipDuplicates: true
+				});
+			} else {
+				await db.listItem.create({
+					data: {
+						annotationId: Number(annotationId),
+						listId: Number(id)
+					}
+				});
+			}
+		}
 	} catch (e) {
 		throw error(400, 'error updating list');
 	}

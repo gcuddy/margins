@@ -103,20 +103,6 @@ interface GenericItem {
 	kbd?: string[][]; // e.g. [ [ 'ctrl', 'c' ], [ 'shift', 'c' ] ]
 }
 
-// 1. Define a User type that includes the "cars" relation.
-const listWithItems = Prisma.validator<Prisma.ListArgs>()({
-	include: {
-		items: {
-			include: {
-				article: true
-			}
-		}
-	}
-});
-
-// 2: This type will include many users and all their cars
-export type ListWithItems = Prisma.ListGetPayload<typeof listWithItems>;
-
 const smartListWithPayload = Prisma.validator<Prisma.SmartListArgs>()({
 	include: {
 		favorite: {
@@ -152,3 +138,20 @@ export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
 });
 
 export type ArticleInList = Prisma.ArticleGetPayload<{ select: typeof ArticleListSelect }>;
+
+// 1. Define a User type that includes the "cars" relation.
+const listWithItems = Prisma.validator<Prisma.ListArgs>()({
+	include: {
+		items: {
+			include: {
+				article: {
+					select: ArticleListSelect
+				},
+				annotation: true
+			}
+		}
+	}
+});
+
+// 2: This type will include many users and all their cars
+export type ListWithItems = Prisma.ListGetPayload<typeof listWithItems>;

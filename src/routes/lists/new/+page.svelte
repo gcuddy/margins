@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Button from '$lib/components/Button.svelte';
+	import KeyboardNav from '$lib/components/helpers/KeyboardNav/KeyboardNav.svelte';
 	import type { PageData } from './$types';
 	export let data: PageData;
 	$: articles = data.articles;
@@ -10,13 +11,16 @@
 		Name
 		<input type="text" name="name" /></label
 	>
-	<div class="flex flex-col">
-		{#each articles as { title, id }}
-			<label>
-				<input type="checkbox" name="articles" value={id} />
-				{title}
-			</label>
-		{/each}
-	</div>
-	<Button type="submit">Submit</Button>
+	<KeyboardNav>
+		<div class="flex flex-col">
+			<!-- copied from /smart - should make this into a component -->
+			{#each articles as { title, id }}
+				<label>
+					<input type="checkbox" name="articles" value={id} />
+					{title}
+				</label>
+			{/each}
+		</div>
+		<Button type="submit">Submit</Button>
+	</KeyboardNav>
 </form>
