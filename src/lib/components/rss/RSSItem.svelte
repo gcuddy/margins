@@ -72,7 +72,7 @@
 <!-- todo: create component that onmount marks item as read -->
 <article
 	bind:this={container}
-	class="flex flex-grow flex-col overflow-auto   bg-gray-50 dark:bg-gray-900"
+	class="flex flex-grow flex-col overflow-y-auto   bg-gray-50 dark:bg-gray-900"
 >
 	<!-- TODO: could this somehow hide on scroll? -->
 	<div class={maxWidth && 'mx-auto max-w-prose'}>
@@ -96,7 +96,7 @@
 			</slot>
 		</div>
 		<div class=" p-4">
-			<ProseWrapper bind:el breakpoints={true} font="sans" class="space-y-6">
+			<ProseWrapper bind:el breakpoints={true} font="sans" class="max-w-prose space-y-6">
 				<header class="not-prose font-sans">
 					<a href={item.link} target="_blank"
 						><H1 lg={false}>
@@ -120,7 +120,7 @@
 						</p>
 					{/if}
 				</header>
-				<div class="">
+				<div class="w-full max-w-prose">
 					{@html item.content || item.contentSnippet || item.summary || '[No content]'}
 				</div>
 			</ProseWrapper>
@@ -146,4 +146,8 @@
 		padding: 2px;
 		background-color: transparent;
 	} */
+
+	article :global(iframe) {
+		width: 100%;
+	}
 </style>

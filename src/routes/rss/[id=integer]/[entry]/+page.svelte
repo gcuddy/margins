@@ -75,7 +75,7 @@
 <!-- We turn off prefetch for the links because we're going to automatically prefetch those items -->
 
 <div
-	class=" flex flex-col overflow-auto ring-gray-500/50 dark:ring-gray-700/50 lg:m-3 lg:rounded-md lg:shadow-2xl lg:ring-1"
+	class=" flex flex-col overflow-y-auto ring-gray-500/50 dark:ring-gray-700/50 lg:m-3 lg:rounded-md lg:shadow-2xl lg:ring-1"
 >
 	<!-- fix having to do this padding by instead using a different layout -->
 	<div
