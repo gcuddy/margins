@@ -69,16 +69,15 @@
 							.filter((a) => a.article.id === article_id && a.motivation === 'describing')
 							.slice(0, 1) as annotation (annotation.id)}
 							{#if annotation.body}
-								<div class="flex items-center space-x-2 transition">
-									{#if select_multiple}
-										<input
-											in:fly|local={{ x: -5 }}
-											type="checkbox"
-											class="h-6 w-6 rounded-full transition"
-											value={annotation}
-											bind:group={selected}
-										/>
-									{/if}
+								<div class="flex items-center transition">
+									<input
+										in:fly|local={{ x: -5 }}
+										type="checkbox"
+										class="h-6 w-0 rounded-full opacity-0 transition-all {select_multiple &&
+											'!w-6 opacity-100 mr-2'}"
+										value={annotation}
+										bind:group={selected}
+									/>
 									<div
 										class="relative max-h-24 overflow-y-auto overflow-x-hidden rounded bg-gradient-to-br from-gray-50 to-gray-100 p-2 shadow ring-1 ring-black/10 dark:bg-gray-800 dark:shadow-2xl"
 									>
