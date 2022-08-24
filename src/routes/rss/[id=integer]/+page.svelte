@@ -16,8 +16,8 @@
 	});
 </script>
 
-<KeyboardNav items={feed.items}>
-	<ul class="overflow-auto">
+<ul class="overflow-auto">
+	<KeyboardNav items={feed.items}>
 		{#each feed.items as item, index (item.id)}
 			<li>
 				<KeyboardNavItem
@@ -28,7 +28,7 @@
 						(active ? 'bg-gray-200' : '')}
 					href="/rss/{item.rssFeedId}/{item.id}"
 				>
-					<h2 class="font-semibold">{item.title || '{no title}'}</h2>
+					<h2 class="truncate font-semibold">{item.title || '{no title}'}</h2>
 					<p class="meta">
 						{#if item.pubDate}
 							<time datetime={dayjs(item.pubDate).toISOString()}
@@ -42,5 +42,5 @@
 				</KeyboardNavItem>
 			</li>
 		{/each}
-	</ul>
-</KeyboardNav>
+	</KeyboardNav>
+</ul>
