@@ -14,6 +14,7 @@
 	export let disabled: boolean = false;
 	export let className = '';
 	export let tooltip: Tooltip | undefined = undefined;
+	export let prefetch = true;
 
 	const [popperRef, popperContent] = createPopperActions({
 		placement: 'bottom',
@@ -84,7 +85,7 @@
 	{#if tooltip}
 		<a
 			{href}
-			sveltekit:prefetch
+			sveltekit:prefetch={prefetch ? true : undefined}
 			use:popperRef
 			on:click
 			on:click={hideTooltip}
@@ -93,13 +94,14 @@
 			on:mouseenter={showTooltip}
 			on:mouseleave={hideTooltip}
 			class={_classname}
+			aria-label={tooltip.text}
 		>
 			<slot>Button</slot>
 		</a>
 	{:else}
 		<a
 			{href}
-			sveltekit:prefetch
+			sveltekit:prefetch={prefetch ? true : undefined}
 			on:click
 			on:click={hideTooltip}
 			on:mouseenter
@@ -125,6 +127,7 @@
 		on:mouseenter={showTooltip}
 		on:mouseleave={hideTooltip}
 		class={_classname}
+		aria-label={tooltip.text}
 	>
 		<slot>Button</slot>
 	</svelte:element>

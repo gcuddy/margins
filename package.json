@@ -59,6 +59,7 @@
 		"svelte-popperjs": "^1.2.11",
 		"svelte-portal": "^2.2.0",
 		"svelte-preprocess": "^4.10.7",
+		"svelte-virtual-infinite-list": "^1.7.10",
 		"tailwindcss": "^3.1.8",
 		"ts-pattern": "^4.0.5",
 		"ts-to-zod": "^1.12.0",

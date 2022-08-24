@@ -9,9 +9,9 @@ import BulkURLs from '$lib/components/BulkURLs.svelte';
 import { commandPaletteStore } from '$lib/components/CommandPalette/store';
 import { showCommandPalette } from '$lib/stores/commands';
 import { cachedArticlesArray } from '$lib/stores/cache';
-import type { Article, Tag } from '@prisma/client';
+import type { Article, RssFeed, Tag } from '@prisma/client';
 import CircularProgressBarSvelte from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
-import { getArticles, getTags, tagsStore } from './sync';
+import { getArticles, getSubscriptions, getTags, subscriptionsStore, tagsStore } from './sync';
 import Icon from '$lib/components/helpers/Icon.svelte';
 
 export const jumpToArticle = () => {
@@ -58,6 +58,26 @@ export const jumpToTag = () => {
 		},
 		prefetch: (val: Tag) => {
 			return `/tags/${val.name}`;
+		}
+	});
+};
+export const jumpToSubscription = () => {
+	getSubscriptions();
+	commandPaletteStore.open({
+		values: subscriptionsStore,
+		onSelect: ({ detail: subscription }) => {
+			goto(`/rss/${subscription.id}`);
+		},
+		itemIcon: () => {
+			return {
+				component: Icon,
+				props: {
+					name: 'rss'
+				}
+			};
+		},
+		prefetch: (val: RssFeed) => {
+			return `/rss/${val.id}`;
 		}
 	});
 };
@@ -175,6 +195,17 @@ export const commands: Command[] = [
 		},
 		icon: 'arrowRight',
 		kbd: [['o', 't']]
+	},
+	{
+		id: 'jump-to-subscription',
+		group: 'jump',
+		name: 'Jump to Subscription',
+		perform: () => {
+			showCommandPalette.out();
+			jumpToSubscription();
+		},
+		icon: 'arrowRight',
+		kbd: [['o', 's']]
 	},
 	{
 		id: 'go-to-search',

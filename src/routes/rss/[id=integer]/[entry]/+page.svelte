@@ -1,41 +1,166 @@
 <script lang="ts">
+	import Button from '$lib/components/Button.svelte';
+
+	import Form from '$lib/components/Form.svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
+
+	import Header from '$lib/components/layout/Header.svelte';
+	import { notifications } from '$lib/stores/notifications';
+
+	let pending_add_item = false;
+
 	import RssItem from '$lib/components/rss/RSSItem.svelte';
 	import type { PageData } from './$types';
+	import { page } from '$app/stores';
+	import { currentFeedList } from '../../+page.svelte';
+	import { goto, invalidate, prefetch, prefetchRoutes } from '$app/navigation';
+	import { browser } from '$app/env';
+	import { onMount } from 'svelte';
 	export let data: PageData;
-	let { item } = data;
+	$: ({ item } = data);
+	$: console.log({ $page });
+	$: if (!$currentFeedList) {
+		// fetch feed and put it in there
+	}
+	$: currentIndex = $currentFeedList?.items.findIndex(($item) => $item.id === item.id);
+	$: nextItem = $currentFeedList?.items[currentIndex + 1]
+		? $currentFeedList.items[currentIndex + 1]
+		: null;
+	$: previousItem = $currentFeedList?.items[currentIndex - 1]
+		? $currentFeedList.items[currentIndex - 1]
+		: null;
+	$: previousRoute = `/rss/${previousItem?.rssFeedId}/${previousItem?.id}`;
+	$: nextRoute = `/rss/${nextItem?.rssFeedId}/${nextItem?.id}`;
+	$: console.log({ currentIndex, nextItem, previousItem, $currentFeedList });
+
+	// TODO: look at prefetch vs prefetchRoutes https://kit.svelte.dev/docs/modules#$app-navigation-prefetch
+	$: if (browser && previousItem && nextItem)
+		Promise.all([prefetch(nextRoute), prefetch(previousRoute)]).then(() =>
+			console.log('!!prefetched!!')
+		);
+	// $: prefetchRoutes([previousRoute, nextRoute]).then(() => console.log('prefetched'));
+
+	let content: HTMLElement;
+	onMount(() => {
+		content.focus();
+	});
 </script>
 
-<div class="flex flex-col overflow-hidden">
-	<!-- <Header>
-		<a sveltekit:prefetch class="flex items-center space-x-2" href="/rss/{item.RssFeed.id}"
-			><Icon name="chevronLeftSolid" />{item?.RssFeed.title}</a
+<!-- listen for j and k to navigate forward and back -->
+<svelte:window
+	on:keydown={(e) => {
+		if (e.key === 'j') {
+			// wish these were instantaneous
+			if (nextItem) {
+				goto(nextRoute, {
+					keepfocus: true,
+					noscroll: false
+				});
+			}
+		} else if (e.key === 'k') {
+			if (previousItem) {
+				goto(previousRoute, {
+					keepfocus: true,
+					noscroll: false
+				});
+			}
+		} else if (e.key === 'Escape') {
+			if ($currentFeedList.href) {
+				goto($currentFeedList.href);
+			}
+		}
+	}}
+/>
+
+<!-- We turn off prefetch for the links because we're going to automatically prefetch those items -->
+
+<div
+	class=" flex flex-col overflow-auto ring-gray-500/50 dark:ring-gray-700/50 lg:m-3 lg:rounded-md lg:shadow-2xl lg:ring-1"
+>
+	<!-- fix having to do this padding by instead using a different layout -->
+	<div
+		class="flex items-center justify-between border-b p-2 pl-12 dark:border-gray-700 dark:bg-gray-800 lg:pl-2"
+	>
+		<div class="flex items-center space-x-2">
+			{#if $currentFeedList}
+				<Button
+					as="a"
+					href={$currentFeedList.href}
+					variant="link"
+					className="flex items-center !px-1"
+					tooltip={{
+						text: `Back to ${$currentFeedList.title}`
+					}}
+				>
+					<Icon name="xSolid" className="h-4 w-4fill-current" />
+				</Button>
+				<Button
+					as={previousItem ? 'a' : 'button'}
+					href={previousItem ? `/rss/${previousItem.rssFeedId}/${previousItem.id}` : undefined}
+					variant="ghost"
+					className="flex items-center !px-1"
+					tooltip={{
+						text: 'Previous item'
+					}}
+					disabled={!previousItem}
+				>
+					<Icon name="chevronUpSolid" />
+				</Button>
+				<!-- TODO: Why is this not working? -->
+				<Button
+					as={nextItem ? 'a' : 'button'}
+					href={nextItem ? `/rss/${nextItem.rssFeedId}/${nextItem.id}` : undefined}
+					variant="ghost"
+					className="flex items-center !px-1"
+					tooltip={{
+						text: 'Next item'
+					}}
+					disabled={!nextItem}
+				>
+					<Icon name="chevronDownSolid" />
+				</Button>
+			{/if}
+		</div>
+		<Form
+			action="/add"
+			method="post"
+			classOverride=""
+			pending={() => {
+				pending_add_item = true;
+			}}
+			error={({ response }) => {
+				pending_add_item = false;
+				notifications.notify({
+					message: 'Error saving',
+					type: 'error'
+				});
+			}}
+			done={async ({ response }) => {
+				const json = await response.json();
+				console.log({ json });
+				pending_add_item = false;
+				notifications.notify({
+					message: `Saved to your library`
+				});
+			}}
 		>
-	</Header> -->
-	<RssItem {item} scrollIntoView={false} linkBack={true} />
-	<!-- <article
-			class="m-3 rounded-2xl bg-gray-50 shadow-xl ring-1 ring-black/5 dark:bg-gray-800 dark:shadow-2xl  dark:ring-white/5"
-		>
-			<div class="overflow-auto">
-				<ProseWrapper breakpoints={false}>
-					<header class="mx-auto max-w-prose">
-						<a href={item.link}
-							><h1 class="text-3xl tracking-tight">
-								{item.title}
-							</h1>
-						</a>
-						<p class="meta">
-							{#if item.pubDate}
-								<time datetime={dayjs(item.pubDate).toISOString()}
-									>{dayjs(item.pubDate).format('MMM D, YYYY')}</time
-								>
-							{/if}
-							{#if item.author}
-								<span> by {item.author}</span>
-							{/if}
-						</p>
-					</header>
-					{@html item.content || item.contentSnippet || item.summary || '[No content]'}
-				</ProseWrapper>
-			</div>
-		</article> -->
+			<Button
+				type="submit"
+				variant="ghost"
+				className="flex items-center space-x-1"
+				tooltip={{
+					text: 'Save to your library'
+				}}
+			>
+				<Icon
+					name={pending_add_item ? 'loading' : 'plusCircleSolid'}
+					className="h-4 w-4 fill-gray-300 {pending_add_item ? 'animate-spin' : ''}"
+				/>
+			</Button>
+		</Form>
+	</div>
+
+	<div class="flex flex-col overflow-hidden">
+		<RssItem bind:el={content} {item} scrollIntoView={false} linkBack={true} />
+	</div>
 </div>

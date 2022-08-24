@@ -1,11 +1,18 @@
 import { cachedArticlesStore } from '$lib/stores/cache';
-import type { Article, Tag } from '@prisma/client';
+import type { Article, RssFeed, Tag } from '@prisma/client';
 import dayjs from 'dayjs';
 import { derived, get, writable, type Writable } from 'svelte/store';
 
 import { set as setIdb, get as getIdb } from 'idb-keyval';
 import { browser } from '$app/env';
 
+interface Cache {
+	lastUpdate: number;
+}
+
+interface CachedSubscriptions extends Cache {
+	subscriptions: RssFeed[];
+}
 interface CachedTags {
 	lastUpdate: number;
 	tags: Tag[];
@@ -18,6 +25,19 @@ if (browser) {
 			console.log('[idb]', 'tags', val);
 			if (val) {
 				tagsStore.set(val);
+			}
+		})
+		.catch((e) => {
+			console.error(e);
+		});
+}
+export const subscriptionsStore = writable<RssFeed[]>([]);
+if (browser) {
+	getIdb('subscriptions')
+		.then((val) => {
+			console.log('[idb]', 'subscriptions', val);
+			if (val) {
+				subscriptionsStore.set(val);
 			}
 		})
 		.catch((e) => {
@@ -45,6 +65,25 @@ export async function getTags() {
 		});
 		console.log('updated tagsStore');
 		return tags;
+	}
+}
+export async function getSubscriptions() {
+	console.log('getting subscriptions');
+	const cachedSubscriptions = await getIdb<CachedSubscriptions | undefined>('subscriptions');
+
+	if (
+		cachedSubscriptions?.lastUpdate &&
+		dayjs(cachedSubscriptions?.lastUpdate).isAfter(dayjs().subtract(1, 'minute'))
+	) {
+		console.log('using cached subscriptions', console.log({ cachedSubscriptions }));
+		return cachedSubscriptions?.subscriptions;
+	} else {
+		const res = await fetch(`/api/subscriptions.json`);
+		console.log({ res });
+		const subscriptions = await res.json();
+		subscriptionsStore.set(subscriptions);
+		console.log('updated subscriptionsStore');
+		return subscriptions;
 	}
 }
 
