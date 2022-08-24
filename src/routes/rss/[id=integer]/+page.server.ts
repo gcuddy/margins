@@ -15,6 +15,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			favorite: true
 		}
 	});
+	console.log(`Found ${feed.title}`);
 	return {
 		feed
 	};

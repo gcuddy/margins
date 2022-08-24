@@ -15,10 +15,7 @@ export const load: PageServerLoad = async () => {
 			{
 				createdAt: 'desc'
 			}
-		],
-		include: {
-			items: true
-		}
+		]
 	});
 	return {
 		feeds

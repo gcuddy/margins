@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { RssFeed } from '@prisma/client';
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import Button from '$lib/components/Button.svelte';
@@ -7,48 +6,37 @@
 	import UrlModal from '$lib/components/modals/URLModal.svelte';
 	import Form from '$lib/components/Form.svelte';
 	import { page } from '$app/stores';
-	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { syncStore } from '$lib/stores/sync';
-	import FavoriteStar from '$lib/components/FavoriteStar.svelte';
-	import type { PageData } from './$types';
 	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
-	const all = [
-		{
-			href: '/rss',
-			text: 'All',
-			id: -1
-		}
-	];
-	export let data: PageData;
-	let { feeds } = data;
-	console.log({ feeds });
+	import { lastFeedRefresh } from '$lib/stores/feeds';
+	import { onMount } from 'svelte';
 
 	let pending_sync = false;
 	let sync_id: string;
+	onMount(async () => {
+		// refresh feeds
+
+		// if lastFeedRefresh is not less than 2 minutes ago, don't refresh feeds
+		// if ($lastFeedRefresh < Date.now() - 2 * 60 * 1000) return;
+		// set last refresh feeds to now
+		// TODO: only refresh if last refresh is more than 2 minutes ago
+		console.log('refreshing feeds');
+		$lastFeedRefresh = Date.now();
+		const id = syncStore.add({
+			title: 'Refreshing feeds'
+		});
+		const res = await fetch('/rss/refresh.json');
+		syncStore.remove(id);
+		// await invalidate('/rss');
+		console.log({ res });
+	});
 </script>
 
 <div class="flex flex-col overflow-hidden">
 	<Header>
 		<DefaultHeader>
 			<div slot="start">
-				<SmallPlus>Feeds</SmallPlus>
-				<!-- {#if $page.url.pathname === '/rss'}
-					<div class="text-gray-500">Feeds</div>
-				{:else}
-					<div class="flex flex-col text-sm sm:flex-row sm:space-x-1">
-						<a sveltekit:prefetch class="flex items-center space-x-2 text-gray-300" href="/rss"
-							><span>Feeds</span></a
-						>
-						<span class="text-gray-500">› {$page.stuff.currentFeed?.title}</span>
-						<FavoriteStar
-							starred={!!$page.stuff.currentFeed?.favorite}
-							favorite_id={$page.stuff.currentFeed?.favorite?.id}
-							data={{
-								rssId: $page.stuff.currentFeed?.id
-							}}
-						/>
-					</div>
-				{/if} -->
+				<SmallPlus>{$page.data.currentSubscriptionTitle || 'Feeds'}</SmallPlus>
 			</div>
 			<div slot="end" class="flex space-x-3">
 				<Form
@@ -76,6 +64,5 @@
 			</div>
 		</DefaultHeader>
 	</Header>
-	<!-- <pre>{feeds}</pre> -->
 	<slot />
 </div>
