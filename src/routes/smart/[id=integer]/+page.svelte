@@ -77,7 +77,7 @@
 		}}
 		{viewOptions}
 	/>
-{/if}
+{:else}{/if}
 <!-- TODO: make work progressively enhanced with actual forms -->
 
 <!-- <div class="flex max-w-md flex-col ">

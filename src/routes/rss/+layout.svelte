@@ -10,6 +10,8 @@
 	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	import { lastFeedRefresh } from '$lib/stores/feeds';
 	import { onMount } from 'svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
+	import { currentFeedList } from './+page.svelte';
 
 	let pending_sync = false;
 	let sync_id: string;
@@ -33,36 +35,5 @@
 </script>
 
 <div class="flex flex-col overflow-hidden">
-	<Header>
-		<DefaultHeader>
-			<div slot="start">
-				<SmallPlus>{$page.data.currentSubscriptionTitle || 'Feeds'}</SmallPlus>
-			</div>
-			<div slot="end" class="flex space-x-3">
-				<Form
-					action="/rss/refresh.json"
-					invalidate="/rss"
-					pending={() => (sync_id = syncStore.addItem())}
-					done={() => syncStore.removeItem(sync_id)}
-					className="hidden md:block"
-				>
-					<Button type="submit" variant="ghost">Refresh Feeds</Button>
-				</Form>
-				<Button
-					on:click={() => {
-						// TODO: turn this into form so it can re-direct to JS-less page
-						console.log('click');
-						modals.open(UrlModal, {
-							formAction: '/rss',
-							placeholder: 'Enter RSS feed URL',
-							name: 'url',
-							invalidate: $page.url.pathname
-						});
-					}}
-					variant="ghost">Add Feed</Button
-				>
-			</div>
-		</DefaultHeader>
-	</Header>
 	<slot />
 </div>

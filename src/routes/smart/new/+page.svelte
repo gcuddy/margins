@@ -27,6 +27,7 @@
 	let and: 'AND' | 'OR' | 'NOT' = 'AND';
 	// $: json[and];
 	let conditions: SmartListCondition[] = [];
+	$: console.log({ conditions });
 	const defaultCondition: SmartListCondition = {
 		field: 'author',
 		type: 'StringFilter',
@@ -128,7 +129,7 @@
 						{#each conditions as condition, index (condition.id)}
 							<Condition
 								on:delete={() => (conditions = conditions.filter((c) => c.id !== condition.id))}
-								{condition}
+								bind:condition
 								bind:json={json[index]}
 							/>
 						{/each}

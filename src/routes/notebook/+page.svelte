@@ -79,7 +79,7 @@
 										bind:group={selected}
 									/>
 									<div
-										class="relative max-h-24 overflow-y-auto overflow-x-hidden rounded bg-gradient-to-br from-gray-50 to-gray-100 p-2 shadow ring-1 ring-black/10 dark:bg-gray-800 dark:shadow-2xl"
+										class="relative max-h-24 overflow-y-auto overflow-x-hidden rounded bg-gradient-to-br from-gray-50 to-gray-100 p-2 shadow ring-1 ring-black/10 dark:bg-gray-800 dark:from-gray-700 dark:to-gray-800 dark:shadow-2xl"
 									>
 										{@html annotation.body}
 									</div>
@@ -99,7 +99,7 @@
 									/>
 								{/if}
 								<li
-									class="relative rounded bg-gradient-to-br from-gray-50 to-gray-100 p-2 shadow ring-1 ring-black/10 dark:bg-gray-800 dark:shadow-2xl"
+									class="relative rounded bg-gradient-to-br from-gray-50 to-gray-100 p-2 shadow ring-1 ring-black/10 dark:bg-gray-800 dark:from-gray-700 dark:to-gray-700 dark:shadow-2xl"
 								>
 									<AnnotationItem
 										text={target.selector?.exact}

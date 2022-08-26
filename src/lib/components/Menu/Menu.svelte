@@ -13,8 +13,6 @@
 	import MenuItem from './MenuItem.svelte';
 	import Icon from '../helpers/Icon.svelte';
 	import { Keys } from '$lib/types/keyboard';
-	import { createFocusStore } from '$lib/stores/focus';
-	import type { SvelteComponentDev } from 'svelte/internal';
 	import type { ComponentProperties } from '$lib/stores/types';
 	export let expanded = false;
 	export let align: 'left' | 'right' = 'left';

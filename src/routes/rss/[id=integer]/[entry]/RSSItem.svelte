@@ -5,13 +5,10 @@
 	import type { Load } from '@sveltejs/kit';
 	import dayjs from 'dayjs';
 	import { onMount } from 'svelte';
-	import H1 from '../atoms/H1.svelte';
-	import Muted from '../atoms/Muted.svelte';
-	import SmallPlus from '../atoms/SmallPlus.svelte';
-	import Button from '../Button.svelte';
-	import Form from '../Form.svelte';
-	import Icon from '../helpers/Icon.svelte';
-	import ProseWrapper from '../ProseWrapper.svelte';
+	import H1 from '$lib/components/atoms/H1.svelte';
+	import Muted from '$lib/components/atoms/Muted.svelte';
+	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
+	import ProseWrapper from '$lib/components/ProseWrapper.svelte';
 
 	export let item: RssItemWithFeed;
 	$: console.log({ item });
@@ -39,21 +36,21 @@
 	// }
 	// $: item.link, !item.is_read && markAsRead();
 
-	onMount(async () => {
-		if (item.is_read) return;
-		const res = await fetch(`/api/mark_item_as_read`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				id: item.id
-			})
-		});
-		if (res.status === 200) {
-			item.is_read = true;
-		}
-	});
+	// onMount(async () => {
+	// 	if (item.is_read) return;
+	// 	const res = await fetch(`/api/mark_item_as_read`, {
+	// 		method: 'POST',
+	// 		headers: {
+	// 			'Content-Type': 'application/json'
+	// 		},
+	// 		body: JSON.stringify({
+	// 			id: item.id
+	// 		})
+	// 	});
+	// 	if (res.status === 200) {
+	// 		item.is_read = true;
+	// 	}
+	// });
 
 	let pending_add_item = false;
 	let item_in_library = false;

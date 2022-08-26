@@ -12,8 +12,15 @@ export const load: PageServerLoad = async () => {
 		where: {
 			is_read: false
 		},
-		include: {
-			RssFeed: true
+		select: {
+			title: true,
+			id: true,
+			pubDate: true,
+			author: true,
+			rssFeedId: true,
+			RssFeed: true,
+			is_read: true,
+			uuid: true
 		},
 		take: 100
 	});

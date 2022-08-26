@@ -3,57 +3,94 @@
 		title: string;
 		href: string;
 		items: RssFeedItem[];
+		activeItem?: RssFeedItem;
 	}>();
 </script>
 
 <script lang="ts">
+	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
+	import Button from '$lib/components/Button.svelte';
+	import { modals } from '$lib/stores/modals';
+	import UrlModal from '$lib/components/modals/URLModal.svelte';
+	import Form from '$lib/components/Form.svelte';
 	import { page } from '$app/stores';
+	import { syncStore } from '$lib/stores/sync';
+	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	import { sortItemsFromFeeds } from '$lib/utils/rss';
 	import type { RssFeedItem } from '@prisma/client';
 	import { feedStore } from './_stores';
 	import type { PageData } from './$types';
 	import { writable } from 'svelte/store';
+	import Header from '$lib/components/layout/Header.svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
 
 	export let data: PageData;
 	let { feeds } = data;
 	feedStore.set(feeds);
 	console.log({ feeds });
-	// let sortedItems: RssFeedItem[] = [];
-	// // $: feeds, (sortedItems = sortItemsFromFeeds(feeds));
-	// // let activeItem: RssFeedItem | undefined;
-	// // function updateItemState(newItem: RssFeedItem) {
-	// // 	const idx = sortedItems.findIndex((item) => item.id === newItem?.id);
-	// // 	if (idx === -1) {
-	// // 		return;
-	// // 	}
-	// // 	sortedItems[idx] = newItem;
-	// // }
-	// // $: activeItem, updateItemState(activeItem);
-	// // $: console.log({ $page });
-	// // let activeIndex = -1;
-	// // $: console.log({ activeIndex });
-	// RSS Fetcher needs to be a background job
-	// on mount, fetch all feeds
-	// fetch('/rss/feeds.json').then((res) => res.json());
-	// onMount(() => {
-	// 	fetch('/rss/refresh.json', {
-	// 		headers: {
-	// 			'Content-Type': 'application/json',
-	// 			Accept: 'application/json'
-	// 		}
-	// 	})
-	// 		.then((res) => res.json())
-	// 		.then((feeds) => {
-	// 			console.log(`got these refreshed feeds`);
-	// 			console.log({ feeds });
-	// 			invalidate('/rss');
-	// 		});
-	// });
-
-	// testing - clean this up
-	// let value = '';
-	// $: value, (sortedItems = sortedItems.filter((item) => item.title?.toLowerCase().includes(value)));
+	let pending_sync = false;
+	let sync_id: string;
 </script>
+
+<Header>
+	<DefaultHeader>
+		<div slot="start" class="flex items-center justify-between">
+			<SmallPlus>{$page.data.currentSubscriptionTitle || 'Feeds'}</SmallPlus>
+		</div>
+		<div slot="end" class="flex space-x-3">
+			{#if $currentFeedList}
+				<Button
+					variant="ghost"
+					className="!px-1"
+					tooltip={{
+						text: 'Mark all as read'
+					}}
+					on:click={async () => {
+						$currentFeedList.items?.forEach((feed) => {
+							feed.is_read = true;
+						});
+						// await fetch('/rss/mark-all-as-read', {
+						// 	method: 'POST'
+						// });
+					}}
+				>
+					<Icon name="checkCircleSolid" />
+				</Button>
+			{/if}
+			<Form
+				action="/rss/refresh.json"
+				invalidate="/rss"
+				pending={() => (sync_id = syncStore.addItem())}
+				done={() => syncStore.removeItem(sync_id)}
+				className="hidden md:block"
+			>
+				<Button
+					type="submit"
+					variant="ghost"
+					tooltip={{
+						text: 'Refresh feeds'
+					}}
+				>
+					<Icon name="refreshSolid" />
+					<span class="sr-only">Refresh Feeds</span></Button
+				>
+			</Form>
+			<Button
+				on:click={() => {
+					// TODO: turn this into form so it can re-direct to JS-less page
+					console.log('click');
+					modals.open(UrlModal, {
+						formAction: '/rss',
+						placeholder: 'Enter RSS feed URL',
+						name: 'url',
+						invalidate: $page.url.pathname
+					});
+				}}
+				variant="ghost">Add Feed</Button
+			>
+		</div>
+	</DefaultHeader>
+</Header>
 
 <div class="grid-cols-12 overflow-auto lg:grid">
 	<div class="col-span-3">

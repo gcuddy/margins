@@ -1844,9 +1844,17 @@ const solidHeroicons = {
 	}
 };
 
+const myIcons = {
+	circle: {
+		box: '24',
+		svg: `<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>`
+	}
+};
+
 export const icons = {
 	...outlineHeroicons,
 	...solidHeroicons,
+	...myIcons,
 	options: outlineHeroicons.dotsHorizontal,
 	arrow: outlineHeroicons.arrowUp,
 	dragHandle2: {

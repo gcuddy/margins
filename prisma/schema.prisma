@@ -211,6 +211,7 @@ model RssFeedItem {
   starred        Boolean           @default(false)
   podcast        Boolean           @default(false)
   played         Boolean           @default(false)
+  image          String?
   link           String?
   guid           String?
   title          String?

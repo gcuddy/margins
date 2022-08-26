@@ -10,8 +10,18 @@
 	import { portal } from 'svelte-portal';
 	import { fade, fly, scale } from 'svelte/transition';
 	import Icon from './helpers/Icon.svelte';
+
+	export let placement:
+		| 'bottom-start'
+		| 'bottom-end'
+		| 'top-start'
+		| 'top-end'
+		| 'right-start'
+		| 'right-end'
+		| 'left-start'
+		| 'left-end' = 'bottom-end';
 	const [popperRef, popperContent] = createPopperActions({
-		placement: 'bottom-end',
+		placement,
 		strategy: 'fixed'
 	});
 

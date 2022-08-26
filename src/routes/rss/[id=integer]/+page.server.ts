@@ -10,6 +10,17 @@ export const load: PageServerLoad = async ({ params }) => {
 			items: {
 				orderBy: {
 					pubDate: 'desc'
+				},
+				select: {
+					title: true,
+					id: true,
+					pubDate: true,
+					author: true,
+					rssFeedId: true,
+					is_read: true,
+					uuid: true,
+					summary: true,
+					contentSnippet: true
 				}
 			},
 			favorite: true

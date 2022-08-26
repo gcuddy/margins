@@ -109,3 +109,22 @@ export const POST: Action = async ({ request }) => {
 		throw error(400);
 	}
 };
+export const PATCH: Action = async ({ request }) => {
+	const json = await getJsonFromRequest(request);
+	try {
+		const createdFeed = await db.rssFeed.update({
+			where: {
+				id: json.id
+			},
+			data: {
+				...json
+			}
+		});
+		return {
+			location: `/rss/${createdFeed.id}`
+		};
+	} catch (error) {
+		console.error(error);
+		throw error(400);
+	}
+};

@@ -9,20 +9,30 @@
 
 	let pending_add_item = false;
 
-	import RssItem from '$lib/components/rss/RSSItem.svelte';
+	// todo: check against library
+	let saved = false;
+
+	import RssItem from './RSSItem.svelte';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { currentFeedList } from '../../+page.svelte';
 	import { goto, invalidate, prefetch, prefetchRoutes } from '$app/navigation';
 	import { browser } from '$app/env';
 	import { onMount } from 'svelte';
+	import MarkAsReadButton from './MarkAsReadButton.svelte';
 	export let data: PageData;
 	$: ({ item } = data);
-	$: console.log({ $page });
+	$: console.log({ data });
 	$: if (!$currentFeedList) {
 		// fetch feed and put it in there
 	}
-	$: currentIndex = $currentFeedList?.items.findIndex(($item) => $item.id === item.id);
+	let currentIndex = -1;
+	$: {
+		currentIndex = $currentFeedList?.items.findIndex(($item) => $item.id === item.id);
+		if ($currentFeedList) {
+			$currentFeedList.activeItem = item;
+		}
+	}
 	$: nextItem = $currentFeedList?.items[currentIndex + 1]
 		? $currentFeedList.items[currentIndex + 1]
 		: null;
@@ -92,7 +102,7 @@
 						text: `Back to ${$currentFeedList.title}`
 					}}
 				>
-					<Icon name="xSolid" className="h-4 w-4fill-current" />
+					<Icon name="xSolid" className="h-4 w-4 fill-current" />
 				</Button>
 				<Button
 					as={previousItem ? 'a' : 'button'}
@@ -120,6 +130,7 @@
 					<Icon name="chevronDownSolid" />
 				</Button>
 			{/if}
+			<MarkAsReadButton bind:item />
 		</div>
 		<Form
 			action="/add"
@@ -136,14 +147,14 @@
 				});
 			}}
 			done={async ({ response }) => {
-				const json = await response.json();
-				console.log({ json });
 				pending_add_item = false;
+				saved = true;
 				notifications.notify({
 					message: `Saved to your library`
 				});
 			}}
 		>
+			<input type="hidden" name="url" value={item.link} />
 			<Button
 				type="submit"
 				variant="ghost"
@@ -151,9 +162,10 @@
 				tooltip={{
 					text: 'Save to your library'
 				}}
+				disabled={saved}
 			>
 				<Icon
-					name={pending_add_item ? 'loading' : 'plusCircleSolid'}
+					name={pending_add_item ? 'loading' : saved ? 'checkCircleSolid' : 'plusCircleSolid'}
 					className="h-4 w-4 fill-gray-300 {pending_add_item ? 'animate-spin' : ''}"
 				/>
 			</Button>
@@ -161,6 +173,8 @@
 	</div>
 
 	<div class="flex flex-col overflow-hidden">
-		<RssItem bind:el={content} {item} scrollIntoView={false} linkBack={true} />
+		<!-- {#key item} -->
+		<RssItem bind:el={content} bind:item scrollIntoView={false} linkBack={true} />
+		<!-- {/key} -->
 	</div>
 </div>

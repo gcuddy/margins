@@ -204,4 +204,8 @@
 </div>
 {#if current_results.length}
 	<Saved articles={current_results} />
+{:else}
+	<pre>
+    {JSON.stringify(list, null, 2)}
+  </pre>
 {/if}
