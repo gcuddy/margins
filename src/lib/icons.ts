@@ -1851,9 +1851,25 @@ const myIcons = {
 	}
 };
 
+const heroIcons2Outline = {
+	square2Stack: {
+		box: '24',
+		svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6a2.25 2.25 0 00-2.25 2.25v6" stroke-width="1.5" stroke="currentColor" />`
+	}
+};
+const heroIcons2Solid = {
+	square2StackSolid: {
+		box: '20',
+		svg: ` <path d="M2 4.25A2.25 2.25 0 014.25 2h6.5A2.25 2.25 0 0113 4.25V5.5H9.25A3.75 3.75 0 005.5 9.25V13H4.25A2.25 2.25 0 012 10.75v-6.5z" />
+  <path d="M9.25 7A2.25 2.25 0 007 9.25v6.5A2.25 2.25 0 009.25 18h6.5A2.25 2.25 0 0018 15.75v-6.5A2.25 2.25 0 0015.75 7h-6.5z" />`
+	}
+};
+
 export const icons = {
 	...outlineHeroicons,
 	...solidHeroicons,
+	...heroIcons2Outline,
+	...heroIcons2Solid,
 	...myIcons,
 	options: outlineHeroicons.dotsHorizontal,
 	arrow: outlineHeroicons.arrowUp,

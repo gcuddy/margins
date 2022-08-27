@@ -25,7 +25,7 @@
 	import Icon from '$lib/components/helpers/Icon.svelte';
 
 	export let data: PageData;
-	let { feeds } = data;
+	$: ({ feeds } = data);
 	feedStore.set(feeds);
 	console.log({ feeds });
 	let pending_sync = false;
@@ -43,7 +43,7 @@
 					variant="ghost"
 					className="!px-1"
 					tooltip={{
-						text: 'Mark all as read'
+						text: 'Mark all as read',
 					}}
 					on:click={async () => {
 						$currentFeedList.items?.forEach((feed) => {
@@ -68,7 +68,7 @@
 					type="submit"
 					variant="ghost"
 					tooltip={{
-						text: 'Refresh feeds'
+						text: 'Refresh feeds',
 					}}
 				>
 					<Icon name="refreshSolid" />
@@ -83,7 +83,7 @@
 						formAction: '/rss',
 						placeholder: 'Enter RSS feed URL',
 						name: 'url',
-						invalidate: $page.url.pathname
+						invalidate: $page.url.pathname,
 					});
 				}}
 				variant="ghost">Add Feed</Button

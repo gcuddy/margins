@@ -13,6 +13,7 @@ import type { Article, RssFeed, Tag } from '@prisma/client';
 import CircularProgressBarSvelte from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
 import { getArticles, getSubscriptions, getTags, subscriptionsStore, tagsStore } from './sync';
 import Icon from '$lib/components/helpers/Icon.svelte';
+import UrlModal from '$lib/components/modals/URLModal.svelte';
 
 export const jumpToArticle = () => {
 	getArticles();
@@ -31,13 +32,13 @@ export const jumpToArticle = () => {
 					maxValue: 1,
 					className: 'h-4 w-4 flex-none shrink-0 basis-5',
 					trailClass: 'stroke-gray-400',
-					pathClass: 'stroke-red-400'
-				}
+					pathClass: 'stroke-red-400',
+				},
 			};
 		},
 		itemDisplay: (val: Article) => {
 			return `<div class="flex"><span class="font-medium">${val.title}</span> <span class="text-sm">${val.author}</span></div>`;
-		}
+		},
 	});
 };
 
@@ -52,13 +53,13 @@ export const jumpToTag = () => {
 			return {
 				component: Icon,
 				props: {
-					name: 'tag'
-				}
+					name: 'tag',
+				},
 			};
 		},
 		prefetch: (val: Tag) => {
 			return `/tags/${val.name}`;
-		}
+		},
 	});
 };
 export const jumpToSubscription = () => {
@@ -72,13 +73,13 @@ export const jumpToSubscription = () => {
 			return {
 				component: Icon,
 				props: {
-					name: 'rss'
-				}
+					name: 'rss',
+				},
 			};
 		},
 		prefetch: (val: RssFeed) => {
 			return `/rss/${val.id}`;
-		}
+		},
 	});
 };
 
@@ -91,15 +92,15 @@ export const commands: Command[] = [
 		icon: 'home',
 		kbd: [
 			['g', 'h'],
-			['cmd', 'e']
-		]
+			['cmd', 'e'],
+		],
 	},
 	{
 		id: 'go-notebook',
 		group: 'default',
 		name: 'Notebook',
 		perform: () => goto('/notebook'),
-		icon: 'bookmarkAlt'
+		icon: 'bookmarkAlt',
 	},
 	{
 		id: 'add-url',
@@ -110,7 +111,7 @@ export const commands: Command[] = [
 			modals.open(URLModal);
 		},
 		icon: 'plusCircle',
-		kbd: [['a']]
+		kbd: [['a']],
 	},
 	{
 		id: 'add-bookmark',
@@ -118,9 +119,9 @@ export const commands: Command[] = [
 		name: 'Add Bookmark from URL',
 		perform: () =>
 			modals.open(URLModal, {
-				formAction: '/api/bookmarks'
+				formAction: '/api/bookmarks',
 			}),
-		icon: `plusCircle`
+		icon: `plusCircle`,
 	},
 	{
 		id: 'go-rss',
@@ -128,7 +129,7 @@ export const commands: Command[] = [
 		name: 'RSS',
 		perform: () => goto('/rss'),
 		icon: 'rss',
-		kbd: [['g', 'r']]
+		kbd: [['g', 'r']],
 	},
 	{
 		id: 'add-directory',
@@ -137,14 +138,14 @@ export const commands: Command[] = [
 		perform: async () => {
 			// await getDirectory();
 		},
-		icon: 'folderAdd'
+		icon: 'folderAdd',
 	},
 	{
 		id: 'toggle-dark-mode',
 		group: 'default',
 		name: 'Toggle Light/Dark mode',
 		perform: () => darkMode.update((d) => !d),
-		icon: 'lightBulb'
+		icon: 'lightBulb',
 	},
 	{
 		id: 'export',
@@ -153,26 +154,42 @@ export const commands: Command[] = [
 		perform: () => {
 			fetch('/__data.json', {
 				headers: {
-					'Content-Type': 'application/json'
-				}
+					'Content-Type': 'application/json',
+				},
 			})
 				.then((res) => res.json())
 				.then((data) => {
 					const urls = data.articles.map((a) => a.url);
 					modals.open(TextareaSvelte, {
 						value: urls.join('\n'),
-						rows: Math.min(10, urls.length)
+						rows: Math.min(10, urls.length),
 					});
 				});
 		},
-		icon: 'save'
+		icon: 'save',
 	},
 	{
 		id: 'add-list-of-urls',
 		group: 'default',
 		name: 'Add list of urls',
 		perform: () => modals.open(BulkURLs),
-		icon: 'plusCircle'
+		icon: 'plusCircle',
+	},
+	{
+		id: 'add-subscription',
+		group: 'default',
+		name: 'Add subscription',
+		perform: () =>
+			modals.open(UrlModal, {
+				formAction: '/rss',
+				placeholder: 'Enter RSS feed URL',
+				name: 'url',
+				invalidate: '/rss',
+				notification: {
+					message: 'Subscription added',
+				},
+			}),
+		icon: 'plusCircle',
 	},
 	{
 		id: 'jump-to-article',
@@ -183,7 +200,7 @@ export const commands: Command[] = [
 			jumpToArticle();
 		},
 		icon: 'arrowRight',
-		kbd: [['o', 'a']]
+		kbd: [['o', 'a']],
 	},
 	{
 		id: 'jump-to-tag',
@@ -194,7 +211,7 @@ export const commands: Command[] = [
 			jumpToTag();
 		},
 		icon: 'arrowRight',
-		kbd: [['o', 't']]
+		kbd: [['o', 't']],
 	},
 	{
 		id: 'jump-to-subscription',
@@ -205,7 +222,7 @@ export const commands: Command[] = [
 			jumpToSubscription();
 		},
 		icon: 'arrowRight',
-		kbd: [['o', 's']]
+		kbd: [['o', 's']],
 	},
 	{
 		id: 'go-to-search',
@@ -214,7 +231,7 @@ export const commands: Command[] = [
 		perform: () => {
 			goto('/search');
 		},
-		icon: 'search'
+		icon: 'search',
 	},
 	{
 		id: 'new-smart-list',
@@ -223,6 +240,6 @@ export const commands: Command[] = [
 		perform: () => {
 			goto('/smart/new');
 		},
-		icon: 'plus'
-	}
+		icon: 'plus',
+	},
 ];

@@ -26,7 +26,7 @@ export function convertItemToArticle(item: Parser.Item): Prisma.ArticleCreateInp
 		url: item.guid || item.link || '',
 		date: item.isoDate || '',
 		image,
-		wordCount
+		wordCount,
 	};
 }
 
@@ -34,13 +34,13 @@ export async function getFeeds() {
 	const feeds = await db.rssFeed.findMany({
 		orderBy: [
 			{
-				createdAt: 'desc'
-			}
+				createdAt: 'desc',
+			},
 		],
 		include: {
 			items: {
 				include: {
-					RssFeed: true
+					RssFeed: true,
 					// RssFeed: {
 					// 	select: {
 					// 		id: true,
@@ -48,9 +48,9 @@ export async function getFeeds() {
 					// 		imageUrl: true
 					// 	}
 					// }
-				}
-			}
-		}
+				},
+			},
+		},
 	});
 	return feeds;
 }
@@ -60,7 +60,7 @@ function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
 	return true;
 }
 
-export async function getRefreshedFeeds(): Promise<RssFeedItem[] | undefined> {
+export async function getRefreshedFeeds() {
 	const feeds = await getFeeds();
 	if (!feeds.length) {
 		return;
@@ -74,6 +74,7 @@ export async function getRefreshedFeeds(): Promise<RssFeedItem[] | undefined> {
 
 	// currently only filtering based on link - we should expand this
 	const currentArticles = new Set(feeds.flatMap((feed) => feed.items.map((item) => item.uuid)));
+	console.log({ currentArticles });
 	// or should i get rssfeedItems to figure it out that way?
 
 	// const currentArticles = new Set(articles.flatMap(article => article));
@@ -83,15 +84,16 @@ export async function getRefreshedFeeds(): Promise<RssFeedItem[] | undefined> {
 		feeds.map(async (feed) => {
 			if (!feed.feedUrl) return;
 			try {
+				const dev = feed.title === 'A Working Library';
 				const { items } = await parser.parseURL(feed.feedUrl);
 				const itemsToAdd = items
-					.map((item) => buildItem(feed.feedUrl, item))
+					.map((item) => buildItem(feed.feedUrl, item, dev))
 					.filter((item) => !currentArticles.has(item.uuid));
 				console.log(`adding ${itemsToAdd.length} items to ${feed.title}`);
 				if (itemsToAdd.length === 0) return;
 				return itemsToAdd.map((item) => ({
 					...item,
-					rssFeedId: feed.id
+					rssFeedId: feed.id,
 				}));
 			} catch {
 				console.log(`could not parse feed`, feed.feedUrl);
@@ -101,16 +103,38 @@ export async function getRefreshedFeeds(): Promise<RssFeedItem[] | undefined> {
 	);
 	const filteredItems = itemsToAdd.flat().filter(notEmpty);
 	const newItems = await db.$transaction(
-		filteredItems.map((item) => db.rssFeedItem.create({ data: item }))
+		filteredItems.map((item) => {
+			const id = item.rssFeedId;
+			delete item.rssFeedId;
+			return db.rssFeed.update({
+				where: { id },
+				data: {
+					items: {
+						createMany: {
+							data: {
+								...item,
+							},
+							skipDuplicates: true,
+						},
+					},
+				},
+			});
+		})
 	);
+	// const newItems = await db.$transaction(
+	// 	filteredItems.map((item) => db.rssFeedItem.create({ data: item }))
+	// );
 	console.timeEnd(`[feedRefresh]`);
 	return newItems;
 }
 
 // return args for rssfeeditem
 // TODO: flesh out build Item
-export function buildItem(feedUrl: string, item: Parser.Item) {
+export function buildItem(feedUrl: string, item: Parser.Item, log = false) {
 	const uuid = buildId(feedUrl, item);
+	if (log) {
+		console.log({ uuid });
+	}
 	return {
 		guid: item.guid || item.id,
 		uuid,
@@ -120,13 +144,17 @@ export function buildItem(feedUrl: string, item: Parser.Item) {
 		creator: item.creator || item.author,
 		link: item.link,
 		pubDate: dayjs(item.pubDate).format(),
-		author: item.creator
+		author: item.creator,
 	};
 }
 
 // TODO: change this to take in my own parser
 export function buildId(feedUrl: string, item: Parser.Item) {
 	const parts: string[] = [];
+	if (item.guid || item.link) {
+		const id = uuid(item.guid || item.link);
+		console.log(item.link, id);
+	}
 	parts.push(feedUrl);
 	// parts.push(id.toString());
 	if (item.guid) {
@@ -136,9 +164,11 @@ export function buildId(feedUrl: string, item: Parser.Item) {
 			parts.push(item.enclosure.url);
 		} else if (item.link) {
 			parts.push(item.link);
+		} else if (item.pubDate) {
+			parts.push(item.pubDate);
+		} else if (item.title) {
+			parts.push(item.title);
 		}
-		if (item.title) parts.push(item.title);
-		if (item.pubDate) parts.push(item.pubDate);
 	}
 	return uuid(parts.filter((p) => p).join(''));
 }
@@ -152,7 +182,7 @@ const linkTypes = [
 	'application/rss+xml',
 	'application/atom+xml',
 	'application/feed+json',
-	'application/json'
+	'application/json',
 ];
 export const linkSelectors = linkTypes
 	.map((lt) => `link[rel="alternate"][type="${lt}"]`)

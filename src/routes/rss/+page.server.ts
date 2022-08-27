@@ -13,12 +13,12 @@ export const load: PageServerLoad = async () => {
 	const feeds = await db.rssFeed.findMany({
 		orderBy: [
 			{
-				createdAt: 'desc'
-			}
-		]
+				title: 'asc',
+			},
+		],
 	});
 	return {
-		feeds
+		feeds,
 	};
 };
 
@@ -52,7 +52,7 @@ async function findFeed(url: string): Promise<{
 	if (contentType && isXml(contentType)) {
 		return {
 			xml: body,
-			url
+			url,
 		};
 	} else {
 		const root = parse(body);
@@ -72,7 +72,7 @@ async function findFeed(url: string): Promise<{
 		href = resolveUrl(url, href);
 		return {
 			xml: await fetch(href).then((res) => res.text()),
-			url: href
+			url: href,
 		};
 	}
 }
@@ -85,6 +85,7 @@ export const POST: Action = async ({ request }) => {
 		// TODO: build my own parser
 		const { xml, url: feedUrl } = await findFeed(url);
 		const parsedFeed = await parseFeed(xml);
+		console.log(`***This is the Parsed Feed***`, parsedFeed);
 		parsedFeed.items[0];
 		const createdFeed = await db.rssFeed.create({
 			data: {
@@ -96,32 +97,13 @@ export const POST: Action = async ({ request }) => {
 				items: {
 					// TODO: there's some gotcha I'm missing in here, like parsing out enclosures. But this will do for now.
 					createMany: {
-						data: parsedFeed.items.map((item) => buildItem(parsedFeed.feedUrl || '', item))
-					}
-				}
-			}
-		});
-		return {
-			location: `/rss/${createdFeed.id}`
-		};
-	} catch (error) {
-		console.error(error);
-		throw error(400);
-	}
-};
-export const PATCH: Action = async ({ request }) => {
-	const json = await getJsonFromRequest(request);
-	try {
-		const createdFeed = await db.rssFeed.update({
-			where: {
-				id: json.id
+						data: parsedFeed.items.map((item) => buildItem(parsedFeed.feedUrl || '', item)),
+					},
+				},
 			},
-			data: {
-				...json
-			}
 		});
 		return {
-			location: `/rss/${createdFeed.id}`
+			location: `/rss/${createdFeed.id}`,
 		};
 	} catch (error) {
 		console.error(error);

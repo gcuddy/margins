@@ -16,6 +16,9 @@
 	export let tooltip: Tooltip | undefined = undefined;
 	export let prefetch = true;
 
+	/**readonly*/
+	export let el: HTMLElement | undefined = undefined;
+
 	const [popperRef, popperContent] = createPopperActions({
 		placement: 'bottom',
 		strategy: 'fixed',
@@ -23,10 +26,10 @@
 			{
 				name: 'offset',
 				options: {
-					offset: [0, 8]
-				}
-			}
-		]
+					offset: [0, 8],
+				},
+			},
+		],
 	});
 
 	export let variant: 'primary' | 'ghost' | 'confirm' | 'link' | 'dashed' | 'transparent' =
@@ -84,6 +87,7 @@
 	<!-- this is a monstrosity but use actions can't be applied conditionally; should probably wrap the action myself -->
 	{#if tooltip}
 		<a
+			bind:this={el}
 			{href}
 			sveltekit:prefetch={prefetch ? true : undefined}
 			use:popperRef
@@ -100,6 +104,7 @@
 		</a>
 	{:else}
 		<a
+			bind:this={el}
 			{href}
 			sveltekit:prefetch={prefetch ? true : undefined}
 			on:click
@@ -116,6 +121,7 @@
 {:else if tooltip}
 	<svelte:element
 		this={as}
+		bind:this={el}
 		type={as === 'button' ? type : undefined}
 		{disabled}
 		{href}
@@ -134,6 +140,7 @@
 {:else}
 	<svelte:element
 		this={as}
+		bind:this={el}
 		type={as === 'button' ? type : undefined}
 		{disabled}
 		{href}

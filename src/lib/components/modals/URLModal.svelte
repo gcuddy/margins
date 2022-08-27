@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$lib/actions/form';
-	import { notifications } from '$lib/stores/notifications';
+	import { notifications, type INotification } from '$lib/stores/notifications';
 	import { modals } from '$lib/stores/modals';
 	import { invalidate } from '$app/navigation';
 	import Spinner from '../Spinner.svelte';
@@ -11,7 +11,7 @@
 	export let formAction = '/add';
 	let inv = '/';
 	export { inv as invalidate };
-	export let notification: TODO = undefined;
+	export let notification: Parameters<typeof notifications['notify']>[0] | undefined = undefined;
 	export let name = 'text';
 
 	let input: HTMLInputElement;
@@ -33,15 +33,18 @@
 				// form.reset();
 				// pending = false;
 				modals.close();
+				if (notification) {
+					notifications.notify(notification);
+				}
 				response.json().then(({ article }) => {
 					notifications.notify({
 						message: `<a href='/${article.id}'>${article.title}</a> <span class="text-gray-600 dark:text-gray-400">added to your inbox</span>`,
 						title: 'Article added',
 						link: {
 							href: `/${article.id}`,
-							text: 'View article'
+							text: 'View article',
 						},
-						type: 'success'
+						type: 'success',
 					});
 				});
 			},
@@ -50,7 +53,7 @@
 				notifications.notify({ message: 'Error adding URL', type: 'error' });
 				form.reset();
 				input.focus();
-			}
+			},
 		}}
 	>
 		<!-- TODO: little css animation like Search? -->

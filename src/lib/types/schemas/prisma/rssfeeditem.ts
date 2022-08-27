@@ -7,6 +7,7 @@ export const RssFeedItemModel = z.object({
   starred: z.boolean(),
   podcast: z.boolean(),
   played: z.boolean(),
+  image: z.string().nullish(),
   link: z.string().nullish(),
   guid: z.string().nullish(),
   title: z.string().nullish(),

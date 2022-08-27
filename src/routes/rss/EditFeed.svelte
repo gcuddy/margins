@@ -6,7 +6,7 @@
 	export let feed: RssFeed;
 </script>
 
-<Form action="/rss" method="patch">
+<Form action="/rss/{feed.id}" method="patch">
 	<div class="flex flex-col">
 		<GenericInput name="title" bind:value={feed.title} />
 	</div>

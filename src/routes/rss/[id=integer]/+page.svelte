@@ -13,7 +13,7 @@
 	$: currentFeedList.set({
 		items: feed.items,
 		title: feed.title,
-		href: '/rss/' + feed.id
+		href: '/rss/' + feed.id,
 	});
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
@@ -25,6 +25,8 @@
 	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import FeedTitleMenu from './FeedTitleMenu.svelte';
+	import { post } from '$lib/utils';
+	import { filteredItems } from '$lib/stores/filter';
 </script>
 
 <Header>
@@ -38,15 +40,16 @@
 					variant="ghost"
 					className="!px-1"
 					tooltip={{
-						text: 'Mark all as read'
+						text: 'Mark all as read',
 					}}
 					on:click={async () => {
-						$currentFeedList.items?.forEach((feed) => {
-							feed.is_read = true;
+						feed.items = feed.items.map((item) => ({
+							...item,
+							is_read: true,
+						}));
+						await post('/api/mark_all_as_read', {
+							rssFeedId: feed.id,
 						});
-						// await fetch('/rss/mark-all-as-read', {
-						// 	method: 'POST'
-						// });
 					}}
 				>
 					<Icon name="checkCircleSolid" />
@@ -63,7 +66,7 @@
 					type="submit"
 					variant="ghost"
 					tooltip={{
-						text: 'Refresh feeds'
+						text: 'Refresh feeds',
 					}}
 				>
 					<Icon name="refreshSolid" />
@@ -78,7 +81,7 @@
 						formAction: '/rss',
 						placeholder: 'Enter RSS feed URL',
 						name: 'url',
-						invalidate: $page.url.pathname
+						invalidate: $page.url.pathname,
 					});
 				}}
 				variant="ghost">Add Feed</Button
@@ -100,7 +103,7 @@
 						} md:px-6 ` + (active ? 'bg-gray-200 dark:bg-gray-800 ring-1' : '')}
 					href="/rss/{item.rssFeedId}/{item.id}"
 				>
-					<h2 class="truncate {!item.is_read ? 'font-bold' : 'font-normal'} ">
+					<h2 class="line-clamp-2 {!item.is_read ? 'font-bold' : 'font-normal'} ">
 						{item.title || '{no title}'}
 					</h2>
 					<p class="meta flex flex-col">

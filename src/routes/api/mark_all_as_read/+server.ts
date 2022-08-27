@@ -4,13 +4,14 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({ request }) => {
 	const json = await getJsonFromRequest(request);
+	console.log(`mark all as read`, { json });
 	await db.rssFeedItem.updateMany({
 		where: {
-			rssFeedId: json.rssFeedId
+			rssFeedId: json.rssFeedId,
 		},
 		data: {
-			is_read: json.unread ? false : true
-		}
+			is_read: json.unread ? false : true,
+		},
 	});
 	return new Response(undefined);
 };

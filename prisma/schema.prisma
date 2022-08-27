@@ -226,7 +226,7 @@ model RssFeedItem {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   rssFeedId      Int
-  RssFeed        RssFeed           @relation(fields: [rssFeedId], references: [id])
+  RssFeed        RssFeed           @relation(fields: [rssFeedId], references: [id], onDelete: Cascade)
   enclosure      RssFeedEnclosure?
 }
 

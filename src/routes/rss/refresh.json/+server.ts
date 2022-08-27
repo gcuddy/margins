@@ -8,20 +8,20 @@ export const GET: RequestHandler = async ({ request }) => {
 	console.log(`you hit the rss/refresh route`);
 	const updatedItems = await getRefreshedFeeds();
 	// return response with prviate cache-control ehader for 60 seconds
-	return new Response(JSON.stringify({ updatedItems }), {
+	return new Response(undefined, {
 		status: 200,
 		headers: {
-			'cache-control': 'private, max-age=300'
-		}
+			'cache-control': 'private, max-age=60',
+		},
 	});
 	return json({
-		items: updatedItems
+		items: updatedItems,
 	});
 };
 
 const redirect = {
 	status: 303,
 	headers: {
-		location: '/rss'
-	}
+		location: '/rss',
+	},
 };
