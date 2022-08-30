@@ -1,0 +1,2 @@
+<!-- TODO: page transition? -->
+<slot />

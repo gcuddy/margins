@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ request }) => {
 	return new Response(undefined, {
 		status: 200,
 		headers: {
-			'cache-control': 'private, max-age=60',
+			'cache-control': 'private, max-age=300',
 		},
 	});
 	return json({

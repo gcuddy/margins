@@ -2,7 +2,7 @@ import { browser } from '$app/env';
 import type { ArticleInList, DomMeta } from './types';
 import { notifications, type INotification } from '$lib/stores/notifications';
 // import { finder } from '@medv/finder';
-import type { Article, Favorite, Prisma } from '@prisma/client';
+import type { Article, Favorite, PodcastEpisode, Prisma } from '@prisma/client';
 import { goto, invalidate } from '$app/navigation';
 import { z } from 'zod';
 import type { AnnotationSchema } from './types/schemas/Annotations';
@@ -11,6 +11,7 @@ import type { FavoriteSchema } from './types/schemas/Favorite';
 import type { ViewOptions } from './types/schemas/View';
 import dayjs from 'dayjs';
 import type { AddToListSchema } from './types/schemas/List';
+import { Md5 } from 'ts-md5';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -19,8 +20,8 @@ export function post(endpoint, data) {
 		// credentials: 'include',
 		body: JSON.stringify(data || {}),
 		headers: {
-			'Content-Type': 'application/json'
-		}
+			'Content-Type': 'application/json',
+		},
 	}).then((r) => r.json());
 }
 export function put(endpoint: string, data: any) {
@@ -30,8 +31,8 @@ export function put(endpoint: string, data: any) {
 		body: JSON.stringify(data || {}),
 		headers: {
 			'Content-Type': 'application/json',
-			Accept: 'application/json'
-		}
+			Accept: 'application/json',
+		},
 	}).then((r) => r.json());
 }
 export function patch(endpoint: string, data: any, notification?: string | INotification) {
@@ -40,13 +41,13 @@ export function patch(endpoint: string, data: any, notification?: string | INoti
 		// credentials: 'include',
 		body: JSON.stringify(data || {}),
 		headers: {
-			'Content-Type': 'application/json'
-		}
+			'Content-Type': 'application/json',
+		},
 	}).then((r) => {
 		if (notification && typeof notification === 'string') {
 			notifications.notify({
 				message: notification,
-				type: 'success'
+				type: 'success',
 			});
 		} else if (notification && typeof notification !== 'string') {
 			notifications.notify(notification);
@@ -115,7 +116,7 @@ export async function processSelection(root?: HTMLElement): {
 						$node: elementList[index],
 						tagName: el.tagName,
 						index,
-						selector: finder(elementList[index])
+						selector: finder(elementList[index]),
 					});
 				});
 			}
@@ -212,7 +213,7 @@ export function convertCssSelectorToDomMeta(
 		if (matches) {
 			return {
 				parentTagName: matches[1],
-				parentIndex: parseInt(matches[2])
+				parentIndex: parseInt(matches[2]),
 			};
 		}
 	} catch (e) {
@@ -293,7 +294,7 @@ export function getNthValueOfSet<T>(set: Set<T>, n: number): T | undefined {
  */
 export const archive = async (ids: number[], go: string | null = '/', inv = go, notify = true) => {
 	const { articles } = await bulkEditArticles(ids, {
-		location: 'ARCHIVE'
+		location: 'ARCHIVE',
 	});
 	// disable save scroll so we don't save our scroll position anymore
 	// disableSaveScroll = true;
@@ -308,7 +309,7 @@ export const archive = async (ids: number[], go: string | null = '/', inv = go, 
 			message: `Archived article${length > 1 ? 's' : ''} ${articles
 				.slice(0, 2)
 				.map((a) => '<a href="' + a.id + '" class="font-medium">' + a.title + '</a>')
-				.join(', ')}${length > 3 ? 'and ' + (length - 3) + ' others' : ''}`
+				.join(', ')}${length > 3 ? 'and ' + (length - 3) + ' others' : ''}`,
 		});
 	}
 };
@@ -323,9 +324,9 @@ export async function postAnnotation(annotation: z.infer<typeof AnnotationSchema
 	const res = await fetch('/annotations', {
 		method: 'POST',
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(annotation)
+		body: JSON.stringify(annotation),
 	});
 	syncStore.removeItem(id);
 	return res;
@@ -336,9 +337,9 @@ export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
 	const res = await fetch('/favorites.json', {
 		method: 'POST',
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(data)
+		body: JSON.stringify(data),
 	});
 	syncStore.removeItem(id);
 	return res;
@@ -348,9 +349,9 @@ export async function deleteFavorite(data: { id: number }) {
 	const res = await fetch('/favorites.json', {
 		method: 'DELETE',
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(data)
+		body: JSON.stringify(data),
 	});
 	syncStore.removeItem(id);
 	return res;
@@ -399,10 +400,14 @@ export async function addToList(listId: number, data: z.infer<typeof AddToListSc
 	const res = await fetch(`/lists/${listId}`, {
 		method: 'PUT',
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(data)
+		body: JSON.stringify(data),
 	});
 	syncStore.removeItem(id);
 	return res;
+}
+
+export function createEpisodeHash(data: Partial<PodcastEpisode>) {
+	return Md5.hashStr(data.podcastId + data.guid || data.url);
 }

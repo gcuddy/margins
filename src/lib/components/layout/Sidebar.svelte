@@ -3,6 +3,7 @@
 		display: string;
 		href: string;
 		icon: IconName;
+		iconClass?: string;
 		// defaults to active if path = href
 		active?: (path: string) => boolean;
 		items?: NavItem[];
@@ -41,46 +42,59 @@
 				{
 					display: 'Inbox',
 					href: '/inbox',
-					icon: 'inbox'
+					icon: 'inbox',
 				},
 				{
 					display: 'Soon',
 					href: '/soon',
-					icon: 'sparkles'
+					icon: 'sparkles',
 				},
 				{
 					display: 'Later',
 					href: '/later',
-					icon: 'calendar'
-				}
-			]
+					icon: 'calendar',
+				},
+			],
 		},
 		{
 			display: 'Subscriptions',
 			href: '/rss',
-			icon: 'rss'
+			icon: 'rss',
+			items: [
+				{
+					display: 'Unread',
+					href: '/rss/unread',
+					icon: 'unread',
+					iconClass: 'text-gray-500 group-hover:text-gray-800',
+				},
+				{
+					display: 'Podcasts',
+					href: '/rss/podcasts',
+					icon: 'microphone',
+				},
+			],
 		},
 		{
 			display: 'Lists',
 			href: '/lists',
-			icon: 'viewGrid'
+			icon: 'viewGrid',
 		},
 		{
 			display: 'Smart Lists',
 			href: '/smart',
-			icon: 'collection'
+			icon: 'collection',
 		},
 		{
 			display: 'Notebook',
 			href: '/notebook',
-			icon: 'bookmarkAlt'
-		}
+			icon: 'bookmarkAlt',
+		},
 	];
 
 	// TODO: un hard code this
 	// sidebar-offset -> hard coding this for now because i can't think of another way
 	const left = tweened(-300, {
-		duration: 150
+		duration: 150,
 	});
 	// const left = spring(-300, {
 	// 	damping: 0.6
