@@ -19,7 +19,6 @@ export const load: PageServerLoad = async ({ params }) => {
 					author: true,
 					rssFeedId: true,
 					is_read: true,
-					uuid: true,
 					summary: true,
 					contentSnippet: true,
 				},

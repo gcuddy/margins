@@ -7,6 +7,7 @@
 	export let display: string;
 	export let href: string;
 	export let icon: IconName;
+	export let iconClass: string;
 	export let items: NavItem[] | undefined = undefined;
 	let indent = 0;
 	export let active: (path: string) => boolean = (path) => path === href;
@@ -24,8 +25,11 @@
 >
 	<Icon
 		wrapper={true}
-		className="w-4 h-4 stroke-2 stroke-gray-500 group-hover:stroke-gray-800 fill-primary-50 dark:fill-transparent dark:group-hover:fill-transparent group-hover:fill-primary-100 dark:group-hover:stroke-primary-100 {isActive &&
-			'stroke-gray-800 dark:stroke-gray-100'} relative"
+		className="w-4 h-4 {iconClass
+			? iconClass
+			: ` stroke-2 stroke-gray-500 group-hover:stroke-gray-800 fill-primary-50 dark:fill-transparent dark:group-hover:fill-transparent group-hover:fill-primary-100 dark:group-hover:stroke-primary-100 ${
+					isActive && 'stroke-gray-800 dark:stroke-gray-100'
+			  } relative`}"
 		name={icon}
 	/>
 	<span class="truncate">{display}</span></a

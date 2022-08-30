@@ -16,6 +16,7 @@
 	import { hideSidebar } from '$lib/stores/sidebar';
 	import { page } from '$app/stores';
 	import { Lucia } from 'lucia-sveltekit/client';
+	import PodcastPlayer from '$lib/components/PodcastPlayer.svelte';
 
 	let sidebarWidth: number;
 </script>
@@ -66,6 +67,7 @@
 			<CommandPalette />
 			<GenericCommandPaletteContainer />
 			<Modals />
+			<PodcastPlayer />
 		</div>
 	</Lucia>
 </div>

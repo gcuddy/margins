@@ -25,16 +25,16 @@
 		const { subscribe, set, update } = writable<StateDefinition<T>>({
 			state: {
 				selectedId: null,
-				activeId: null
-			}
+				activeId: null,
+			},
 		});
 	}
 	const x = createApi();
 	const api = writable({
 		state: {
 			activeId: null,
-			selectedId: null
-		}
+			selectedId: null,
+		},
 	});
 
 	function open() {
@@ -63,6 +63,8 @@
 	export let value = '';
 	export let selectedValue: T[] = [];
 	export let activeIndex = 0;
+
+	/**whether or not to fill the combobox with the selected value*/
 	export let fillValue = true;
 	let className = '';
 	export { className as class };

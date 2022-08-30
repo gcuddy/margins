@@ -1,3 +1,3 @@
-import { auth } from '$lib/lucia.js';
+import { auth } from '$lib/lucia';
 
-export const load = auth.getAuthSession;
+export const load = auth.load;

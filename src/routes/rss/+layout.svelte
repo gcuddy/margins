@@ -25,12 +25,12 @@
 		console.log('refreshing feeds');
 		$lastFeedRefresh = Date.now();
 		const id = syncStore.add({
-			title: 'Refreshing feeds'
+			title: 'Refreshing feeds',
 		});
-		const res = await fetch('/rss/refresh.json');
+		// commenting this out temporarily
+		// const res = await fetch('/rss/refresh.json');
 		syncStore.remove(id);
 		// await invalidate('/rss');
-		console.log({ res });
 	});
 </script>
 

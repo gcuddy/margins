@@ -172,7 +172,12 @@ model Annotation {
 }
 
 model RssFeed {
-  id            Int           @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
+  // itunes_id is actually an Int, so you can set it directly — will be deprecating this soon
+  itunes_id String? @unique
+  //
+
   feedUrl       String        @unique
   title         String?
   link          String?
@@ -181,14 +186,17 @@ model RssFeed {
   imageUrl      String?
   items         RssFeedItem[]
   tag           RssFeedTag[]
+  podcast       Boolean       @default(false)
+  creator       String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   favorite      Favorite?
-  // todo: itunes
+  users         User[]
 
   // this should be unique per user
   // @@unique([feedUrl])
   RssInteraction RssInteraction[]
+  PodcastEpisode PodcastEpisode[]
 }
 
 model RssInteraction {
@@ -205,32 +213,37 @@ model RssInteraction {
 }
 
 model RssFeedItem {
-  id             Int               @id @default(autoincrement())
-  uuid           String            @unique
-  is_read        Boolean           @default(false)
-  starred        Boolean           @default(false)
-  podcast        Boolean           @default(false)
-  played         Boolean           @default(false)
-  image          String?
-  link           String?
-  guid           String?
+  id             Int        @id @default(autoincrement())
   title          String?
   contentSnippet String?
+  summary        String?
+  // use this going forward
+  description    String?
+  is_read        Boolean    @default(false)
+  starred        Boolean    @default(false)
+  podcast        Boolean    @default(false)
+  duration       Int?
+  played         Boolean    @default(false)
+  image          String?
+  link           String?
+  guid           String
   pubDate        DateTime?
   creator        String?
-  summary        String?
   author         String?
   content        String?
   isoDate        DateTime?
   categories     String[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
   rssFeedId      Int
-  RssFeed        RssFeed           @relation(fields: [rssFeedId], references: [id], onDelete: Cascade)
-  enclosure      RssFeedEnclosure?
+  RssFeed        RssFeed    @relation(fields: [rssFeedId], references: [id])
+  enclosure      Json
+  Enclosure      Enclosure?
+
+  @@unique([guid, enclosure])
 }
 
-model RssFeedEnclosure {
+model Enclosure {
   id     Int         @id @default(autoincrement())
   url    String?
   length Int?
@@ -382,22 +395,24 @@ model Highlight2 {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   flagged       Boolean          @default(false)
-  article       Article          @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article       Article          @relation(fields: [articleId], references: [id])
   target        AnnotationTarget @relation(fields: [targetId], references: [id])
 }
 
 model User {
   // id        Int        @id @default(autoincrement())
-  id               String         @id @unique
-  email            String         @unique
-  identifier_token String         @unique
-  hashed_password  String?
-  RefreshToken     RefreshToken[]
-  name             String
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  favorites        Favorite[]
+  id                        String                      @id @unique
+  username                  String                      @unique
+  // email            String         @unique
+  identifier_token          String                      @unique
+  hashed_password           String?
+  RefreshToken              RefreshToken[]
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
+  favorites                 Favorite[]
   // RefreshToken     RefreshToken[]
+  PodcastEpisodeInteraction PodcastEpisodeInteraction[]
+  feeds                     RssFeed[]
 
   @@map("user")
 }
@@ -432,4 +447,28 @@ model Favorite {
   rss         RssFeed?   @relation(fields: [rssId], references: [id])
   smartListId Int?       @unique
   smartList   SmartList? @relation(fields: [smartListId], references: [id])
+}
+
+model PodcastEpisodeInteraction {
+  id        Int            @id @default(autoincrement())
+  timestamp Int
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id])
+  episodeId Int            @unique
+  episode   PodcastEpisode @relation(fields: [episodeId], references: [id])
+  // hash = md5(itunes_id + guid || enclose.url)
+  hash      String         @unique
+}
+
+model PodcastEpisode {
+  id                        Int                         @id @default(autoincrement())
+  podcast                   RssFeed                     @relation(fields: [podcastId], references: [itunes_id])
+  podcastId                 String                      @unique
+  // hash = md5(itunes_id + guid || enclose.url)
+  hash                      String                      @unique
+  guid                      String?
+  url                       String?
+  PodcastEpisodeInteraction PodcastEpisodeInteraction[]
 }

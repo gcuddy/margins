@@ -5,7 +5,7 @@ import type { ComponentProperties } from '../stores/types';
 
 // 1. Define a User type that includes the "cars" relation.
 const articleWithNotesAndTags = Prisma.validator<Prisma.ArticleArgs>()({
-	include: { annotations: true, highlights: true, tags: true, context: true }
+	include: { annotations: true, highlights: true, tags: true, context: true },
 });
 
 // 2: This type will include many users and all their cars
@@ -14,20 +14,20 @@ export type ArticleWithNotesAndTagsAndContext = Prisma.ArticleGetPayload<
 >;
 
 const articleWithTags = Prisma.validator<Prisma.ArticleArgs>()({
-	include: { tags: true }
+	include: { tags: true },
 });
 export type ArticleWithTags = Prisma.ArticleGetPayload<typeof articleWithTags>;
 
 const tagWithArticles = Prisma.validator<Prisma.TagArgs>()({
 	include: {
 		articles: true,
-		favorite: true
-	}
+		favorite: true,
+	},
 });
 export type TagWithArticle = Prisma.TagGetPayload<typeof tagWithArticles>;
 
 const articleWithAnnotations = Prisma.validator<Prisma.ArticleArgs>()({
-	include: { annotations: true }
+	include: { annotations: true },
 });
 export type ArticleWithAnnotations = Prisma.ArticleGetPayload<typeof articleWithAnnotations>;
 
@@ -46,8 +46,8 @@ export type AnnotationWithArticle = Prisma.AnnotationGetPayload<{
 const feedWithItems = Prisma.validator<Prisma.RssFeedArgs>()({
 	include: {
 		items: true,
-		favorite: true
-	}
+		favorite: true,
+	},
 });
 
 export type FeedWithItems = Prisma.RssFeedGetPayload<typeof feedWithItems>;
@@ -89,7 +89,7 @@ export interface AnnotationPos {
 export enum Locations {
 	INBOX = 'INBOX',
 	SOON = 'SOON',
-	LATER = 'LATER'
+	LATER = 'LATER',
 }
 
 // TODO 2022-07-09 use this for Menu, CommandPalette, Sidebar, etc.
@@ -107,10 +107,10 @@ const smartListWithPayload = Prisma.validator<Prisma.SmartListArgs>()({
 	include: {
 		favorite: {
 			select: {
-				id: true
-			}
-		}
-	}
+				id: true,
+			},
+		},
+	},
 });
 export type SmartListWithPayload = Prisma.SmartListGetPayload<typeof smartListWithPayload>;
 
@@ -132,9 +132,9 @@ export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
 	siteName: true,
 	_count: {
 		select: {
-			annotations: true
-		}
-	}
+			annotations: true,
+		},
+	},
 });
 
 export type ArticleInList = Prisma.ArticleGetPayload<{ select: typeof ArticleListSelect }>;
@@ -145,13 +145,30 @@ const listWithItems = Prisma.validator<Prisma.ListArgs>()({
 		items: {
 			include: {
 				article: {
-					select: ArticleListSelect
+					select: ArticleListSelect,
 				},
-				annotation: true
-			}
-		}
-	}
+				annotation: true,
+			},
+		},
+	},
 });
 
 // 2: This type will include many users and all their cars
 export type ListWithItems = Prisma.ListGetPayload<typeof listWithItems>;
+
+export type PopperPlacement =
+	| 'auto'
+	| 'auto-end'
+	| 'auto-start'
+	| 'bottom'
+	| 'bottom-start'
+	| 'bottom-end'
+	| 'top'
+	| 'top-start'
+	| 'top-end'
+	| 'right'
+	| 'right-start'
+	| 'right-end'
+	| 'left'
+	| 'left-start'
+	| 'left-end';
