@@ -28,7 +28,7 @@ generator zod {
 
 datasource db {
   provider          = "postgresql"
-  url               = env("HEROKU_URL")
+  url               = env("RENDER_URL")
   shadowDatabaseUrl = env("HEROKU_SHADOW_URL")
 }
 
