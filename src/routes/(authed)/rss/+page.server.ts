@@ -9,18 +9,18 @@ import Parser from 'rss-parser';
 import { buildItem, isXml, linkSelectors, resolveUrl } from './_rss-utils';
 import parse from 'node-html-parser';
 
-export const load: PageServerLoad = async () => {
-	const feeds = await db.rssFeed.findMany({
-		orderBy: [
-			{
-				title: 'asc',
-			},
-		],
-	});
-	return {
-		feeds,
-	};
-};
+// export const load: PageServerLoad = async () => {
+// 	const feeds = await db.rssFeed.findMany({
+// 		orderBy: [
+// 			{
+// 				title: 'asc',
+// 			},
+// 		],
+// 	});
+// 	return {
+// 		feeds,
+// 	};
+// };
 
 // POST = add feed
 

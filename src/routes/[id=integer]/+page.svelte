@@ -4,7 +4,7 @@
 	$: article = data.article;
 	$: console.log({ data });
 	import { slide } from 'svelte/transition';
-	import { browser } from '$app/env';
+	import { browser } from '$app/environment';
 	import { fade } from 'svelte/transition';
 	import debounce from 'lodash.debounce';
 	import { onDestroy, onMount } from 'svelte';
@@ -44,18 +44,18 @@
 		await fetch(`/api/update/${article.id}`, {
 			method: 'PATCH',
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
 			},
 			body:
 				(data || data === 0) &&
 				JSON.stringify({
-					readProgress: data
-				})
+					readProgress: data,
+				}),
 		});
 	};
 	const debouncedSave = debounce(saveProgress, 500, {
 		leading: true,
-		trailing: true
+		trailing: true,
 	});
 	const unsubscribeScrollY = mainElScroll.subscribe(({ offset }) => {
 		if (browser) {

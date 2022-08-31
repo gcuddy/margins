@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { derived, get, writable, type Writable } from 'svelte/store';
 
 import { set as setIdb, get as getIdb } from 'idb-keyval';
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 
 interface Cache {
 	lastUpdate: number;
@@ -109,7 +109,7 @@ export async function getArticles(): Promise<Article[]> {
 	const { articles } = await res.json();
 	cachedArticlesStore.set({
 		lastUpdate: new Date(),
-		articles
+		articles,
 	});
 	console.log('updated cachedarticlestore', { articles });
 	return articles;

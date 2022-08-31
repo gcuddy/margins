@@ -43,7 +43,7 @@
 		return {
 			destroy: () => {
 				child_elements = child_elements.filter((e) => e !== node);
-			}
+			},
 		};
 	};
 
@@ -161,7 +161,7 @@
 		on:blur
 		on:mouseover
 		on:mouseleave
-		sveltekit:prefetch
+		data-sveltekit-prefetch
 		on:click={(e) => {
 			$navStore.active = $navStore.els[index];
 		}}

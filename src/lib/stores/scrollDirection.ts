@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import { readable } from 'svelte/store';
 
 export default function (el: HTMLElement | Window) {
@@ -32,7 +32,7 @@ export default function (el: HTMLElement | Window) {
 		};
 	});
 	return {
-		subscribe
+		subscribe,
 	};
 }
 

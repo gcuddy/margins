@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import debounce from 'lodash.debounce';
 import { readable } from 'svelte/store';
 
@@ -28,7 +28,7 @@ export default readable<ISelection>(undefined, (set) => {
 		if (!selection || selection.isCollapsed) {
 			set({
 				selection: null,
-				rect: undefined
+				rect: undefined,
 			});
 		}
 	};
@@ -38,14 +38,14 @@ export default readable<ISelection>(undefined, (set) => {
 		document.addEventListener(
 			'pointerup',
 			debounce(handleSelect, 50, {
-				leading: true
+				leading: true,
 			})
 		);
 	if (browser)
 		document.addEventListener(
 			'selectionchange',
 			debounce(removeSelectionIfGone, 100, {
-				leading: true
+				leading: true,
 			})
 		);
 	if (browser) window.addEventListener('resize', debounce(handleResize, 100));

@@ -14,6 +14,7 @@ export const POST: Action = async ({ request, setHeaders }) => {
 	}
 	try {
 		const authenticateUser = await auth.authenticateUser('username', username, password);
+		console.log({ authenticateUser });
 		setHeaders({
 			'set-cookie': authenticateUser.cookies,
 		});

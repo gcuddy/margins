@@ -25,7 +25,7 @@
 </script>
 
 <a
-	sveltekit:prefetch
+	data-sveltekit-prefetch
 	class="leading-sm inline-flex h-6 w-max min-w-fit max-w-[112px] items-center justify-center gap-1 overflow-hidden rounded-full font-medium  transition
   {icon ? 'pr-2 pl-1.5' : 'px-2'}
   {variant === 'primary'

@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import { derived, readable, writable, type Readable } from 'svelte/store';
 
 export const mainEl = writable<HTMLElement>();
@@ -9,7 +9,7 @@ export const mainElScroll = derived(
 		if (!mainEl) {
 			set({
 				y: 0,
-				offset: 0
+				offset: 0,
 			});
 		}
 		let ticking = false;
@@ -43,7 +43,7 @@ export const mainElScroll = derived(
 			set({
 				offset: lastOffset,
 				y: lastScrollTop,
-				down
+				down,
 			});
 			ticking = false;
 		};
@@ -64,7 +64,7 @@ export const mainElScroll = derived(
 	{
 		y: 0,
 		offset: 0,
-		down: false
+		down: false,
 	}
 );
 

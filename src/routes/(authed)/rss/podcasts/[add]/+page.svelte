@@ -49,7 +49,7 @@
 			{#each res.results.filter((r) => r.kind === 'podcast') as result}
 				<li>
 					<!-- 	href="{result.feedUrl}"		 -->
-					<a href="/rss/podcasts/{result.collectionId}" sveltekit:prefetch>
+					<a href="/rss/podcasts/{result.collectionId}" data-sveltekit-prefetch>
 						<img src={result.artworkUrl100} alt="Artwork for {result.collectionName}" />
 						<div>
 							{result.collectionName}

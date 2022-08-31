@@ -19,13 +19,13 @@
 	import { sortItemsFromFeeds } from '$lib/utils/rss';
 	import type { RssFeedItem } from '@prisma/client';
 	import { feedStore } from './_stores';
-	import type { PageData } from './$types';
+	import type { PageData } from '../../../../.svelte-kit/types/src/routes/rss/$types';
 	import { writable } from 'svelte/store';
 	import Header from '$lib/components/layout/Header.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 
 	export let data: PageData;
-	$: ({ feeds } = data);
+	$: ({ feeds } = data.user);
 	feedStore.set(feeds);
 	console.log({ feeds });
 	let pending_sync = false;

@@ -109,7 +109,7 @@
 		articles={results.map((r, i) => ({
 			...r,
 			title: matches[i].title,
-			description: matches[i].content || ''
+			description: matches[i].content || '',
 		}))}
 	/>
 {:else}
@@ -143,7 +143,7 @@
 							trailClass="stroke-gray-400"
 							pathClass="stroke-red-400"
 						/>
-						<a sveltekit:prefetch class="block h-full w-full cursor-default" href={`/${id}`}
+						<a data-sveltekit-prefetch class="block h-full w-full cursor-default" href={`/${id}`}
 							>{title}</a
 						>
 					</li>

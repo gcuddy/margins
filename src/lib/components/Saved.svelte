@@ -46,7 +46,7 @@
 			'/',
 			articles.map((article, index) => ({
 				id: article.id,
-				position: index
+				position: index,
 			}))
 		);
 	// const startDrag = () => (dragDisabled = false);
@@ -85,8 +85,8 @@
 			tags: true,
 			annotationCount: true,
 			date: false,
-			wordCount: false
-		}
+			wordCount: false,
+		},
 	};
 
 	export let viewOptions: ViewOptions = view_options;
@@ -108,7 +108,7 @@
 			flipDurationMs,
 			dragDisabled,
 			dropTargetStyle: {},
-			zoneTabIndex: -1
+			zoneTabIndex: -1,
 		}}
 		use:autoAnimate={{ duration: 500 }}
 		on:consider={handleConsider}
@@ -132,7 +132,7 @@
 					}
 				}}
 			>
-				<!-- <a tabindex="-1" sveltekit:prefetch href="/{item.id}"
+				<!-- <a tabindex="-1" data-sveltekit-prefetch href="/{item.id}"
 									>{ -->
 				<div in:fade class="h-20  md:h-24">
 					<!-- <SavedItem
@@ -230,7 +230,7 @@
 												[
 													{
 														label: 'Archive',
-														icon: 'archive'
+														icon: 'archive',
 													},
 													{
 														label: 'Delete',
@@ -241,26 +241,26 @@
 															form.set('id', item.id.toString());
 															const res = await fetch('/', {
 																method: 'DELETE',
-																body: form
+																body: form,
 															});
 															console.log({ res });
 															if (res.ok) {
 																notifications.notify({
-																	message: 'Article deleted'
+																	message: 'Article deleted',
 																});
 																await invalidate('/');
 															}
-														}
+														},
 													},
 													{
 														label: 'Tag',
-														icon: 'tag'
+														icon: 'tag',
 													},
 													{
 														label: 'Bump to top',
 														icon: 'trendingUp',
-														perform: () => dispatch('bump')
-													}
+														perform: () => dispatch('bump'),
+													},
 												],
 												[
 													{
@@ -268,9 +268,9 @@
 														icon: 'globe',
 														perform: () => {
 															window.open(item.url, '_blank');
-														}
-													}
-												]
+														},
+													},
+												],
 											]}
 										/>
 										<!-- <Menu

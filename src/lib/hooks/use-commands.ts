@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import type { Command } from '$lib/components/CommandPalette/types';
 import { disableGlobalKeyboardShortcuts, lastKey } from '$lib/stores/keyboard';
 import { commandStore } from '$lib/stores/commands';
@@ -10,7 +10,7 @@ const ModifierKey: Record<Modifier, typeof modifierEventKeys[number]> = {
 	alt: 'altKey',
 	ctrl: 'ctrlKey',
 	shift: 'shiftKey',
-	cmd: 'metaKey'
+	cmd: 'metaKey',
 } as const;
 
 function handleModifiers(e: KeyboardEvent, key: ShortcutKey[]) {

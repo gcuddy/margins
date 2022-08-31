@@ -43,7 +43,7 @@
 <SelectActions
 	bind:selected_items={selected}
 	actions={{
-		addToList: true
+		addToList: true,
 	}}
 	on:update={() => {
 		select_multiple = false;
@@ -57,7 +57,7 @@
 				{@const article = _articles.find((a) => a.id === article_id)}
 				<li class="pt-4">
 					<div class="flex items-baseline space-x-4">
-						<a sveltekit:prefetch href="/{article?.id}">
+						<a data-sveltekit-prefetch href="/{article?.id}">
 							<h2 class="text-xl font-medium line-clamp-3">{article?.title}</h2>
 						</a>
 						<Muted>

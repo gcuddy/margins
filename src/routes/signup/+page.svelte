@@ -1,4 +1,7 @@
 <script lang="ts">
+	import Form from '$lib/components/Form.svelte';
+	import GenericInput from '$lib/components/GenericInput.svelte';
+
 	export let errors: { username: string; message: string };
 	let username: string, password: string;
 
@@ -10,14 +13,18 @@
 
 <div>
 	<h2>Create an account</h2>
-	<form on:submit|preventDefault={signup} action="/signup" method="post">
-		<label for="username">username</label><br />
-		<input id="username" name="username" bind:value={username} /><br />
-		<p class="error">{errors?.username || ''}</p>
-		<label for="password">password</label><br />
-		<input type="password" id="password" name="password" bind:value={password} /><br />
-		<input type="submit" value="Continue" class="button" />
-	</form>
+	<Form action="/signup" method="post">
+		<div>
+			<label for="username">username</label><br />
+			<GenericInput id="username" name="username" bind:value={username} />
+			<p class="error">{errors?.username || ''}</p>
+		</div>
+		<div>
+			<label for="password">password</label><br />
+			<GenericInput type="password" id="password" name="password" bind:value={password} /><br />
+			<input type="submit" value="Continue" class="button" />
+		</div>
+	</Form>
 	<p class="error">{errors?.message || ''}</p>
 	<a href="/login" class="link">Sign in</a>
 </div>

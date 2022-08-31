@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import { readable } from 'svelte/store';
 
 // store that holds last 2 keypresses, clearing itself after 1 second

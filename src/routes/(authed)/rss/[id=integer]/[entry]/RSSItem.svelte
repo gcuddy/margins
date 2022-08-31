@@ -78,7 +78,7 @@
 		>
 			<slot name="header">
 				<div class="flex w-full justify-between">
-					<a sveltekit:prefetch class="flex items-center" href="/rss/{item.RssFeed.id}"
+					<a data-sveltekit-prefetch class="flex items-center" href="/rss/{item.RssFeed.id}"
 						><SmallPlus class="text-gray-500 dark:text-gray-400">{item?.RssFeed.title}</SmallPlus
 						></a
 					>

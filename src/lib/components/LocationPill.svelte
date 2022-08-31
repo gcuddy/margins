@@ -13,7 +13,7 @@
 <!-- Taken from Tag.svelte; should componentize this -->
 
 <a
-	sveltekit:prefetch
+	data-sveltekit-prefetch
 	class="leading-sm inline-flex h-6 w-max min-w-fit max-w-fit items-center justify-center gap-1 overflow-hidden rounded-lg border border-gray-200  pr-2 pl-1.5 text-xs
   font-medium text-gray-600 transition hover:border-gray-300 hover:bg-primary-50 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-700 {context_menu_open &&
 		'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-700'}"
@@ -49,20 +49,20 @@
 		[
 			{
 				label: 'Inbox',
-				icon: 'inboxSolid'
+				icon: 'inboxSolid',
 			},
 			{
 				label: 'Soon',
-				icon: 'sparklesSolid'
+				icon: 'sparklesSolid',
 			},
 			{
 				label: 'Later',
-				icon: 'calendarSolid'
+				icon: 'calendarSolid',
 			},
 			{
 				label: 'Archive',
-				icon: 'archiveSolid'
-			}
-		]
+				icon: 'archiveSolid',
+			},
+		],
 	]}
 />

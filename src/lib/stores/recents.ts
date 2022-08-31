@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import type { Article } from '@prisma/client';
 
 // should make search a set but also make it serializable
@@ -25,7 +25,7 @@ function createRecentsStore() {
 	const { subscribe, set, update } = writable<Recents>(
 		storedRecents || {
 			search: [],
-			articles: []
+			articles: [],
 		}
 	);
 
@@ -65,7 +65,7 @@ function createRecentsStore() {
 					updatedAt,
 					url,
 					readProgress,
-					author
+					author,
 				});
 				if (recents.articles.length > 8) {
 					// recents.articleIds.pop();
@@ -82,7 +82,7 @@ function createRecentsStore() {
 		set,
 		update,
 		addRecentSearch,
-		addRecentArticle
+		addRecentArticle,
 	};
 }
 

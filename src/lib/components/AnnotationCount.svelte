@@ -13,7 +13,7 @@
 		bind:this={el}
 		class="flex w-10 shrink flex-row items-center justify-center space-x-1 rounded-full bg-amber-100 bg-gradient-to-br from-amber-100 to-amber-200 py-1 px-2"
 		{href}
-		sveltekit:prefetch
+		data-sveltekit-prefetch
 	>
 		<Icon name="pencilSolid" className="h-3 w-3 fill-amber-900" />
 		<span class="text-xs font-medium text-amber-900">{count}</span>

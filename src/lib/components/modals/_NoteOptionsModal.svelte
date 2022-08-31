@@ -3,7 +3,7 @@
 	import { notebookArticles } from '$lib/stores/notebook';
 	import type { Annotation, Highlight } from '@prisma/client';
 	import { modals } from '$lib/stores/modals';
-	import { browser } from '$app/env';
+	import { browser } from '$app/environment';
 	export let endpoint: string;
 	export let note: Annotation | Highlight;
 	export let articleUrl: string;
@@ -12,13 +12,13 @@
 		fetch(endpoint, {
 			method: 'DELETE',
 			headers: {
-				'Content-Type': 'application/json'
-			}
+				'Content-Type': 'application/json',
+			},
 		}).then((res) => {
 			if (res.status === 200) {
 				modals.close();
 				notifications.notify({
-					message: 'Successfully deleted'
+					message: 'Successfully deleted',
 				});
 				if (note) {
 					notebookArticles.update((n) => {
@@ -53,7 +53,7 @@
 			navigator.clipboard.writeText(url);
 			notifications.notify({
 				message: 'Copied link to highlight to clipboard',
-				type: 'success'
+				type: 'success',
 			});
 		}
 	}

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const PodcastEpisodeSchema = z.object({
+	uuid: z.string(),
 	id: z.number().int(),
 	title: z.string(),
 	description: z.string().optional(),

@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 
 interface Dev {
 	disableListImgs: boolean;
@@ -20,7 +20,7 @@ export const dev = writable<Dev>(
 	storedDev || {
 		disableListImgs: false,
 		keypress: false,
-		activeElement: false
+		activeElement: false,
 	}
 );
 

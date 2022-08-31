@@ -8,6 +8,7 @@ const jsonSchema: z.ZodSchema<Json> = z.lazy(() => z.union([literalSchema, z.arr
 
 export const RssFeedItemModel = z.object({
   id: z.number().int(),
+  uuid: z.string(),
   title: z.string().nullish(),
   contentSnippet: z.string().nullish(),
   summary: z.string().nullish(),

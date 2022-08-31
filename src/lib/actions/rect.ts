@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import debounce from 'lodash.debounce';
 import type { Action } from './types';
 
@@ -16,6 +16,6 @@ export default (node: HTMLElement, cb: (rect: DOMRect) => void): ReturnType<Acti
 			if (browser) {
 				window.removeEventListener('resize', onResize);
 			}
-		}
+		},
 	};
 };

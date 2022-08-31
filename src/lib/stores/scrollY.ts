@@ -1,12 +1,12 @@
 // https://github.com/the-pudding/svelte-starter/blob/main/src/stores/scrollY.js
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import { readable } from 'svelte/store';
 
 export default readable(
 	{
 		y: 0,
 		offset: 0,
-		down: false
+		down: false,
 	},
 	(set) => {
 		let ticking = false;
@@ -18,7 +18,7 @@ export default readable(
 			set({
 				y: lastScrollY,
 				offset: lastOffset,
-				down
+				down,
 			});
 			ticking = false;
 		};

@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import type { Article } from '@prisma/client';
 import { derived, writable } from 'svelte/store';
 

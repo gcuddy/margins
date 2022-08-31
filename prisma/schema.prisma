@@ -33,30 +33,30 @@ datasource db {
 }
 
 model Article {
-  id             Int              @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   title          String
   content        String
   textContent    String
   author         String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  readProgress   Float            @default(0)
-  url            String           @unique
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  readProgress   Float        @default(0)
+  url            String       @unique
   siteName       String?
   colorHash      String?
   date           DateTime
   image          String
   wordCount      Int
-  starred        Boolean          @default(false)
+  starred        Boolean      @default(false)
   css            String?
   description    String?
   wiki           String?
   classification String?
   pdf            Boolean?
   html           String?
-  position       Int              @default(0) //@unique - figure this out
-  trash          Boolean          @default(false)
-  location       String           @default("INBOX")
+  position       Int          @default(0) //@unique - figure this out
+  trash          Boolean      @default(false)
+  location       String       @default("INBOX")
   annotations    Annotation[]
   Bookmark       Bookmark?
   context        Context?
@@ -66,7 +66,6 @@ model Article {
   media          Media?
   tags           Tag[]
   favorite       Favorite?
-  RssInteraction RssInteraction[]
 }
 
 model Bookmark {
@@ -195,25 +194,26 @@ model RssFeed {
 
   // this should be unique per user
   // @@unique([feedUrl])
-  RssInteraction RssInteraction[]
   PodcastEpisode PodcastEpisode[]
 }
 
-model RssInteraction {
-  id        Int      @id @default(autoincrement())
-  articleId Int
-  rssFeedId Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  article   Article  @relation(fields: [articleId], references: [id])
-  rssFeed   RssFeed  @relation(fields: [rssFeedId], references: [id])
-  is_read   Boolean  @default(false)
-  podcast   Boolean  @default(false)
-  played    Boolean  @default(false)
+model RssItemInteraction {
+  id        Int         @id @default(autoincrement())
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  is_read   Boolean     @default(false)
+  podcast   Boolean     @default(false)
+  played    Boolean     @default(false)
+  timestamp Int?
+  userId    String
+  itemUuid  String
+  item      RssFeedItem @relation(fields: [itemUuid], references: [uuid])
+  user      User        @relation(fields: [userId], references: [id])
 }
 
 model RssFeedItem {
   id             Int        @id @default(autoincrement())
+  uuid           String     @unique
   title          String?
   contentSnippet String?
   summary        String?
@@ -240,7 +240,7 @@ model RssFeedItem {
   enclosure      Json
   Enclosure      Enclosure?
 
-  @@unique([guid, enclosure])
+  interactions RssItemInteraction[]
 }
 
 model Enclosure {
@@ -413,6 +413,7 @@ model User {
   // RefreshToken     RefreshToken[]
   PodcastEpisodeInteraction PodcastEpisodeInteraction[]
   feeds                     RssFeed[]
+  RssItemInteraction        RssItemInteraction[]
 
   @@map("user")
 }

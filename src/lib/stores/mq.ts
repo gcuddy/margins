@@ -1,5 +1,5 @@
 // from the-pudding/svelte-starter
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import { readable } from 'svelte/store';
 
 const queries = {
@@ -8,7 +8,7 @@ const queries = {
 	lg: '(min-width: 1024x)',
 	xl: '(min-width: 1280px)',
 	'2xl': '(min-width: 1536px)',
-	reducedMotion: '(prefers-reduced-motion: reduce)'
+	reducedMotion: '(prefers-reduced-motion: reduce)',
 };
 
 function calculateMedia(mqls) {

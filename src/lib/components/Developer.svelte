@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { browser } from '$app/env';
+	import { browser } from '$app/environment';
 
 	import { useCommands } from '$lib/hooks/use-commands';
 
@@ -29,14 +29,14 @@
 				id: 'dev-toggle-keypress',
 				name: 'Developer: Toggle Kepress',
 				icon: 'cog',
-				perform: () => ($dev.keypress = !$dev.keypress)
+				perform: () => ($dev.keypress = !$dev.keypress),
 			},
 			{
 				id: 'dev-toggle-list-imgs',
 				name: 'Developer: Toggle Disable List Imgs',
 				icon: 'cog',
-				perform: () => ($dev.disableListImgs = !$dev.disableListImgs)
-			}
+				perform: () => ($dev.disableListImgs = !$dev.disableListImgs),
+			},
 		],
 		false
 	);
