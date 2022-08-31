@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex"]
+  previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "referentialIntegrity"]
 }
 
 generator zod {
@@ -27,9 +27,9 @@ generator zod {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("RENDER_URL")
-  shadowDatabaseUrl = env("HEROKU_SHADOW_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
 }
 
 model Article {
@@ -232,7 +232,7 @@ model RssFeedItem {
   author         String?
   content        String?
   isoDate        DateTime?
-  categories     String[]
+  // categories     String[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   rssFeedId      Int
@@ -333,9 +333,9 @@ model Selector {
   // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
 
   // A selector can be refined by another selector
-  refinedById Int?      @unique
-  refinedBy   Selector? @relation("refinedBy", fields: [refinedById], references: [id])
-  refines     Selector? @relation("refinedBy")
+  // refinedById Int?      @unique
+  // refinedBy   Selector? @relation("refinedBy", fields: [refinedById], references: [id])
+  // refines     Selector? @relation("refinedBy")
 
   //range selector
   // startSelectorId Int?

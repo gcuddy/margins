@@ -9,5 +9,4 @@ export const SelectorModel = z.object({
   start: z.number().int().nullish(),
   end: z.number().int().nullish(),
   value: z.string().nullish(),
-  refinedById: z.number().int().nullish(),
 })

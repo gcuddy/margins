@@ -26,7 +26,6 @@ export const RssFeedItemModel = z.object({
   author: z.string().nullish(),
   content: z.string().nullish(),
   isoDate: z.date().nullish(),
-  categories: z.string().array(),
   createdAt: z.date(),
   updatedAt: z.date(),
   rssFeedId: z.number().int(),

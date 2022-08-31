@@ -13,7 +13,7 @@ const config = {
 	],
 
 	kit: {
-		adapter: node(),
+		adapter: adapter(),
 		methodOverride: {
 			allowed: ['PATCH', 'PUT', 'DELETE']
 		}
