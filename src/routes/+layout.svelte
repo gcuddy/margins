@@ -11,7 +11,7 @@
 	import Developer from '$lib/components/Developer.svelte';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import GenericCommandPaletteContainer from '$lib/components/CommandPalette/GenericCommandPaletteContainer.svelte';
-	import { dev } from '$app/env';
+	import { dev } from '$app/environment';
 	import { mainEl } from '$lib/stores/main';
 	import { hideSidebar } from '$lib/stores/sidebar';
 	import { page } from '$app/stores';
@@ -19,6 +19,12 @@
 	import PodcastPlayer from '$lib/components/PodcastPlayer.svelte';
 
 	let sidebarWidth: number;
+	// if ($lucia) {
+	// 	console.log({ $lucia });
+	// 	// authenticated
+	// } else {
+	// 	console.log('not authenticated');
+	// }
 </script>
 
 <svelte:head />
@@ -32,16 +38,16 @@
 
 <!-- Todo: josh comeau reset that makes this 100vh/% so we don't screw thigns up -->
 
-<div class="min-h-screen">
-	<Lucia>
+<Lucia>
+	<div class="min-h-screen">
 		<div
 			class="min-h-screen bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50"
 			on:drag
 		>
 			<!-- <nav>
-			<a sveltekit:prefetch href="/">Home</a>
-			<a sveltekit:prefetch href="/notebook">Notebook</a>
-			<a sveltekit:prefetch href="/rss">RSS</a>
+			<a data-sveltekit-prefetch href="/">Home</a>
+			<a data-sveltekit-prefetch href="/notebook">Notebook</a>
+			<a data-sveltekit-prefetch href="/rss">RSS</a>
 		</nav> -->
 			<Notifications />
 			<!-- Grid version -->
@@ -59,6 +65,7 @@
 				>
 					<!-- Header? -->
 					<slot />
+					<PodcastPlayer />
 				</main>
 			</div>
 			<DropBox />
@@ -67,10 +74,9 @@
 			<CommandPalette />
 			<GenericCommandPaletteContainer />
 			<Modals />
-			<PodcastPlayer />
 		</div>
-	</Lucia>
-</div>
+	</div>
+</Lucia>
 
 <style lang="postcss">
 	:global(body > div) {

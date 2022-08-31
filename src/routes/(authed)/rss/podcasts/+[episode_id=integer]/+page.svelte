@@ -5,11 +5,19 @@
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { podcastPlayer } from '$lib/components/PodcastPlayer.svelte';
 	import { formatDate, formatDuration } from '$lib/utils/dates';
-	import type { PageData } from './$types';
+	import type { PageData } from '../../../../../../.svelte-kit/types/src/routes/rss/podcasts/+[episode_id=integer]/$types';
 	export let data: PageData;
 
 	$: episode = { ...data };
+	$: playing = !$podcastPlayer.paused && $podcastPlayer?.episode?.id === episode.id;
 	function play() {
+		// if (!$podcastPlayer.paused && $podcastPlayer.episode.id === episode.id) {
+		// 	return;
+		// }
+		if (playing || $podcastPlayer?.episode?.id === episode.id) {
+			podcastPlayer.toggle();
+			return;
+		}
 		podcastPlayer.load(episode, {
 			...data.RssFeed,
 			url: data.RssFeed.feedUrl,
@@ -27,7 +35,7 @@
 		class="flex items-center justify-between border-b p-2 pl-12 dark:border-gray-700 dark:bg-gray-800 lg:pl-2"
 	>
 		<div class="flex items-center space-x-2">
-			<a href="/rss/podcasts/{data.rssFeedId}">
+			<a data-sveltekit-prefetch href="/rss/podcasts/{data.rssFeedId}">
 				<Icon name="xSolid" className="h-4 w-4 fill-current" />
 			</a>
 		</div>
@@ -58,8 +66,8 @@
 					<a class="text-xl" href="/rss/{data.rssFeedId}">{data.RssFeed.title}</a>
 				</div>
 				<Button className="flex items-center space-x-2 text-lg py-4 px-3 mt-auto" on:click={play}>
-					<Icon name="playSolid" />
-					<span>Play</span></Button
+					<Icon name={playing ? 'pauseSolid' : 'playSolid'} />
+					<span>{playing ? 'Pause' : 'Play'}</span></Button
 				>
 			</div>
 		</div>

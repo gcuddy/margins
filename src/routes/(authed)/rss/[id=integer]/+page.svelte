@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { FeedWithItems } from '$lib/types';
-	import type { PageData } from './$types';
+	import type { PageData } from '../../../../../.svelte-kit/types/src/routes/rss/[id=integer]/$types';
 	import Item from '../RSSListItem.svelte';
 	import { currentFeedList } from '../+page.svelte';
 	import { page } from '$app/stores';

@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import type ModalContainerSvelte from '$lib/components/modals/ModalContainer.svelte';
 import type { Annotation, Highlight } from '@prisma/client';
 import { derived, writable, type Readable } from 'svelte/store';
@@ -59,7 +59,7 @@ function createModalStore() {
 		subscribe,
 		open,
 		close,
-		closeAll
+		closeAll,
 	};
 }
 

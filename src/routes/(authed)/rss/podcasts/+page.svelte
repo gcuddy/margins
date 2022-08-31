@@ -4,7 +4,7 @@
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import { podcastPlayer } from '$lib/components/PodcastPlayer.svelte';
-	import type { PageData } from './$types';
+	import type { PageData } from '../../../../../.svelte-kit/types/src/routes/rss/podcasts/$types';
 	export let data: PageData;
 </script>
 
@@ -25,7 +25,7 @@
 			<a
 				class="flex h-16 items-center space-x-6 rounded p-2 dark:focus-visible:bg-gray-800 dark:active:bg-gray-800"
 				href="/rss/podcasts/{podcast['itunes_id']}"
-				sveltekit:prefetch
+				data-sveltekit-prefetch
 			>
 				<img class="h-16 w-16 rounded-lg" src={podcast.imageUrl} />
 				<div class="flex flex-auto flex-col">

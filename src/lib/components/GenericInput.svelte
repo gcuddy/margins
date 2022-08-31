@@ -6,7 +6,7 @@
 	export let el: HTMLElement | undefined = undefined;
 	export let id = '';
 	export let name = '';
-	export let type: 'text' | 'number' = 'text';
+	export let type: 'text' | 'number' | 'password' = 'text';
 	export let value: string | number = type === 'text' ? '' : 0;
 	export let min: number | undefined = undefined;
 	export let max: number | undefined = undefined;
@@ -38,6 +38,25 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="number"
+		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0 
+  {variant === 'filled'
+			? 'bg-gray-100 dark:bg-gray-700'
+			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
+  {className}"
+		{placeholder}
+		{min}
+		{max}
+		bind:value
+	/>
+{:else}
+	<input
+		on:keydown
+		on:focus
+		on:blur
+		bind:this={el}
+		id={id ? id : undefined}
+		name={name ? name : undefined}
+		type="password"
 		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0 
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { browser } from '$app/env';
+	import { browser } from '$app/environment';
 	import { match } from 'ts-pattern';
 	import selection from '$lib/stores/selection';
 	import { onDestroy, onMount } from 'svelte';
@@ -11,7 +11,7 @@
 		AnnotationPos,
 		NodeRef,
 		SimplifiedHighlightSource,
-		Tooltip as ITooltip
+		Tooltip as ITooltip,
 	} from '$lib/types';
 	// import sanitize from '$lib/sanitize';
 	import { getSelectionHtml } from '$lib/utils';
@@ -28,7 +28,7 @@
 		AnnotationSchema,
 		TargetSchema,
 		TextQuoteSelectorSchema,
-		TextQuoteTarget
+		TextQuoteTarget,
 	} from '$lib/types/schemas/Annotations';
 	import { page } from '$app/stores';
 	import EditHighlightToolTip from '$lib/components/EditHighlightToolTip.svelte';
@@ -91,7 +91,7 @@
 
 	const annotationTooltip: ITooltip = {
 		visible: false,
-		top: 0
+		top: 0,
 	};
 
 	let highlightMenu = false;
@@ -141,7 +141,7 @@
 			articleID,
 			highlight,
 			// sanitizedHtml: sanitize(input),
-			nonTextNodes
+			nonTextNodes,
 		};
 		return highlightBody;
 	};
@@ -315,7 +315,7 @@
 				annotation_opts = {
 					el: annotationParent,
 					value: active_annotation?.body || '',
-					selector
+					selector,
 				};
 				// highlightMenu = true;
 			}
@@ -333,8 +333,8 @@
 			node: {
 				tagName: el.tagName,
 				index: Array.from(wrapper.getElementsByTagName(el.tagName)).indexOf(el),
-				selector: finder(el)
-			}
+				selector: finder(el),
+			},
 		};
 		console.log({ floatingAnnotation });
 	};
@@ -367,7 +367,7 @@
 		annotationEl.dataset.annotationId = id?.toString();
 		annotationEl.dataset.annotation = annotation.toString();
 		const svg = makeIconSvg('annotationSolid', 16, {
-			class: 'inline annotation fill-current'
+			class: 'inline annotation fill-current',
 		});
 		annotationEl.innerHTML = svg;
 
@@ -380,10 +380,10 @@
 				{
 					id: {
 						string: `annotation-${id?.toString()}` || '',
-						first: true
+						first: true,
 					},
 					'data-annotation-id': id?.toString() || '',
-					...attributes
+					...attributes,
 				},
 				annotation ? annotationEl : undefined
 			)
@@ -411,7 +411,7 @@
 						selector,
 						annotation.id,
 						{
-							'data-annotation': annotation.body ? 'true' : 'false'
+							'data-annotation': annotation.body ? 'true' : 'false',
 						},
 						annotation.body ? true : false
 					);
@@ -431,7 +431,7 @@
 				setTimeout(() => {
 					const el = wrapper.querySelector(`#annotation-${a}`);
 					el?.scrollIntoView({
-						block: 'center'
+						block: 'center',
 					});
 				}, 0);
 			}
@@ -483,7 +483,7 @@
 					selector,
 					undefined,
 					{
-						'data-annotation': 'true'
+						'data-annotation': 'true',
 					},
 					true
 				);
@@ -494,7 +494,7 @@
 					el,
 					value: '',
 					highlightInfo,
-					selector
+					selector,
 				};
 				console.log({ annotation_opts });
 			}}
@@ -512,21 +512,21 @@
 				const res = await fetch('/annotations', {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/json'
+						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
 						// jfc let's fix this
 						articleId: articleID,
 						target: {
 							source: articleUrl,
-							selector
-						}
-					})
+							selector,
+						},
+					}),
 				});
 				if (res.ok) {
 					notifications.notify({
 						type: 'success',
-						message: 'Highlight created!'
+						message: 'Highlight created!',
 					});
 					// and add id to the highlight
 					const annotation = await res.json();
@@ -545,7 +545,7 @@
 				} else {
 					notifications.notify({
 						type: 'error',
-						message: 'Highlight failed!'
+						message: 'Highlight failed!',
 					});
 					highlightInfo.forEach((h) => {
 						h.removeHighlights();
@@ -578,24 +578,24 @@
 			const res = await fetch('/annotations', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					// jfc let's fix this
 					articleId: articleID,
 					target: {
 						source: articleUrl,
-						selector
+						selector,
 					},
 					id: id && id !== 'undefined' ? parseInt(id) : undefined,
-					body: value
-				})
+					body: value,
+				}),
 			});
 			syncStore.removeItem(syncId);
 			if (res.ok) {
 				notifications.notify({
 					type: 'success',
-					message: `Annotation ${id ? 'updated' : 'created'}!`
+					message: `Annotation ${id ? 'updated' : 'created'}!`,
 				});
 				// and add id to the highlight
 				const annotation = await res.json();
@@ -617,7 +617,7 @@
 			} else {
 				notifications.notify({
 					type: 'error',
-					message: 'Highlight failed!'
+					message: 'Highlight failed!',
 				});
 				highlightInfo?.forEach((h) => {
 					h.removeHighlights();
@@ -646,18 +646,18 @@
 				const res = await fetch(`/annotations/${active_highlight_id}`, {
 					method: 'DELETE',
 					headers: {
-						'Content-Type': 'application/json'
-					}
+						'Content-Type': 'application/json',
+					},
 				});
 				if (res.ok) {
 					notifications.notify({
 						type: 'success',
-						message: 'Highlight deleted!'
+						message: 'Highlight deleted!',
 					});
 				} else {
 					notifications.notify({
 						type: 'error',
-						message: 'Highlight deletion failed!'
+						message: 'Highlight deletion failed!',
 					});
 				}
 				//todo
@@ -669,7 +669,7 @@
 				annotation_opts = {
 					el: active_highlight_el,
 					value: active_annotation?.body || '',
-					selector: target.selector
+					selector: target.selector,
 				};
 			}}
 			annotation={active_annotation}
@@ -680,7 +680,7 @@
 				annotation_opts = {
 					el: active_highlight_el,
 					value: active_annotation?.body || '',
-					selector: target.selector
+					selector: target.selector,
 				};
 			}}
 		/>

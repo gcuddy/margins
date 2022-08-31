@@ -20,6 +20,7 @@ export const POST: Action = async ({ request, setHeaders }) => {
 				username,
 			},
 		});
+		console.log({ createUser });
 		setHeaders({
 			'set-cookie': createUser.cookies,
 		});

@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import type { Annotation, Highlight } from '@prisma/client';
 import type { SvelteComponentTyped } from 'svelte';
 import { writable } from 'svelte/store';

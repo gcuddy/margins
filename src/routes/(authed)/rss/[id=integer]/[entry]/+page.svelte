@@ -13,11 +13,11 @@
 	let saved = false;
 
 	import RssItem from './RSSItem.svelte';
-	import type { PageData } from './$types';
+	import type { PageData } from '../../../../../../.svelte-kit/types/src/routes/rss/[id=integer]/[entry]/$types';
 	import { page } from '$app/stores';
 	import { currentFeedList } from '../../+page.svelte';
 	import { goto, invalidate, prefetch, prefetchRoutes } from '$app/navigation';
-	import { browser } from '$app/env';
+	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import MarkAsReadButton from './MarkAsReadButton.svelte';
 	export let data: PageData;
@@ -64,14 +64,14 @@
 			if (nextItem) {
 				goto(nextRoute, {
 					keepfocus: true,
-					noscroll: false
+					noscroll: false,
 				});
 			}
 		} else if (e.key === 'k') {
 			if (previousItem) {
 				goto(previousRoute, {
 					keepfocus: true,
-					noscroll: false
+					noscroll: false,
 				});
 			}
 		} else if (e.key === 'Escape') {
@@ -99,7 +99,7 @@
 					variant="link"
 					className="flex items-center !px-1"
 					tooltip={{
-						text: `Back to ${$currentFeedList.title}`
+						text: `Back to ${$currentFeedList.title}`,
 					}}
 				>
 					<Icon name="xSolid" className="h-4 w-4 fill-current" />
@@ -110,7 +110,7 @@
 					variant="ghost"
 					className="flex items-center !px-1"
 					tooltip={{
-						text: 'Previous item'
+						text: 'Previous item',
 					}}
 					disabled={!previousItem}
 				>
@@ -123,7 +123,7 @@
 					variant="ghost"
 					className="flex items-center !px-1"
 					tooltip={{
-						text: 'Next item'
+						text: 'Next item',
 					}}
 					disabled={!nextItem}
 				>
@@ -143,14 +143,14 @@
 				pending_add_item = false;
 				notifications.notify({
 					message: 'Error saving',
-					type: 'error'
+					type: 'error',
 				});
 			}}
 			done={async ({ response }) => {
 				pending_add_item = false;
 				saved = true;
 				notifications.notify({
-					message: `Saved to your library`
+					message: `Saved to your library`,
 				});
 			}}
 		>
@@ -160,7 +160,7 @@
 				variant="ghost"
 				className="flex items-center space-x-1"
 				tooltip={{
-					text: 'Save to your library'
+					text: 'Save to your library',
 				}}
 				disabled={saved}
 			>

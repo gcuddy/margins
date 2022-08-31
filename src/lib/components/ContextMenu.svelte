@@ -102,7 +102,7 @@
 												/>
 											{/if}
 											{#if href}
-												<a sveltekit:prefetch {href}>{label}</a>
+												<a data-sveltekit-prefetch {href}>{label}</a>
 											{:else}
 												<span class="cursor-default">
 													{label}

@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 import type { Action } from './types';
 
@@ -16,7 +16,7 @@ function createScrollLockStore() {
 		isLocked: false,
 		paddingRight: '',
 		overflow: '',
-		depth: 0
+		depth: 0,
 	});
 
 	const restore = () => {
@@ -28,7 +28,7 @@ function createScrollLockStore() {
 				isLocked: false,
 				paddingRight: '',
 				overflow: '',
-				depth: 0
+				depth: 0,
 			};
 		});
 	};
@@ -37,7 +37,7 @@ function createScrollLockStore() {
 		update((state) => {
 			return {
 				...state,
-				depth: state.depth + 1
+				depth: state.depth + 1,
 			};
 		});
 	};
@@ -52,7 +52,7 @@ function createScrollLockStore() {
 		inc,
 		dec,
 		restore,
-		update
+		update,
 	};
 }
 
@@ -91,7 +91,7 @@ export default (node: HTMLElement): ReturnType<Action> => {
 			return {
 				...state,
 				paddingRight,
-				overflow
+				overflow,
 			};
 		});
 	}
@@ -108,6 +108,6 @@ export default (node: HTMLElement): ReturnType<Action> => {
 				// scrollLockState.restore(); // (this wasn't working; i'm not sure why)
 			}
 			unsubscribeState();
-		}
+		},
 	};
 };

@@ -29,7 +29,7 @@
 	function checkDown() {
 		console.log({
 			lastScroll,
-			$mainElScroll
+			$mainElScroll,
 		});
 		if ($mainElScroll.y > lastScroll) {
 			return true;
@@ -50,7 +50,7 @@
 		$mainEl.scrollTo({
 			top: 0,
 			left: 0,
-			behavior: 'smooth'
+			behavior: 'smooth',
 		});
 		const checkIfScrollIsStatic = setInterval(() => {
 			if ($mainEl.scrollTop === 0) {
@@ -64,7 +64,7 @@
 		$mainEl.scrollTo({
 			top: saved_position as number,
 			left: 0,
-			behavior: 'smooth'
+			behavior: 'smooth',
 		});
 		saved_position = null;
 	}
@@ -86,7 +86,7 @@
   {hide ? ' opacity-0' : 'translate-y-0 opacity-100'}
     md:px-3"
 >
-	<a class="flex items-center md:pl-0" sveltekit:prefetch href={back}
+	<a class="flex items-center md:pl-0" data-sveltekit-prefetch href={back}
 		><Icon name="arrow" direction="w" />
 		<span class="sr-only">Back to home</span></a
 	>
@@ -136,17 +136,17 @@
 								TagInputCombobox,
 								{
 									articles: [article],
-									allTags: await getTags()
+									allTags: await getTags(),
 								},
 								{
-									bgClassname: ''
+									bgClassname: '',
 								}
 							);
 						},
-						icon: 'tag'
-					}
+						icon: 'tag',
+					},
 				],
-				[{ display: 'Edit Metadata', perform: () => console.log('edit'), icon: 'pencil' }]
+				[{ display: 'Edit Metadata', perform: () => console.log('edit'), icon: 'pencil' }],
 			]}
 		>
 			<div class="flex items-center">
@@ -169,7 +169,7 @@
 {#if saved_position && $mainElScroll.offset < 0.02}
 	<div
 		transition:fly={{
-			y: 10
+			y: 10,
 		}}
 		class="fixed bottom-4 right-4 text-2xl sm:right-8"
 	>

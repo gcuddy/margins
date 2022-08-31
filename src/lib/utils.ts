@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import type { ArticleInList, DomMeta } from './types';
 import { notifications, type INotification } from '$lib/stores/notifications';
 // import { finder } from '@medv/finder';

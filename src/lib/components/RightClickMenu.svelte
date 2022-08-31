@@ -39,16 +39,16 @@
 				top: y,
 				right: x,
 				bottom: y,
-				left: x
+				left: x,
 			} as DOMRect);
 	}
 	const virtualElement = {
-		getBoundingClientRect: generateGetBoundingClientRect()
+		getBoundingClientRect: generateGetBoundingClientRect(),
 	};
 
 	const [popperRef, popperContent, getInstance] = createPopperActions({
 		placement: 'right-start',
-		strategy: 'fixed'
+		strategy: 'fixed',
 	});
 
 	async function refresh() {
@@ -83,7 +83,7 @@
 			update: () => {
 				node.style.top = `-${x}px`;
 				node.style.left = `-${y}px`;
-			}
+			},
 		};
 	}
 	$: openProp, openProp ? clickButton() : null;
@@ -129,7 +129,7 @@
 											/>
 										{/if}
 										{#if href}
-											<a sveltekit:prefetch {href}>{label}</a>
+											<a data-sveltekit-prefetch {href}>{label}</a>
 										{:else}
 											<span class="cursor-default">
 												{label}

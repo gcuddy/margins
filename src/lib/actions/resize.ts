@@ -1,4 +1,4 @@
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import debounce from 'lodash.debounce';
 import type { Action } from './types';
 
@@ -24,6 +24,6 @@ export default (
 			if (browser) {
 				observer && observer.disconnect();
 			}
-		}
+		},
 	};
 };

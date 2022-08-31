@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { signOut, getSession } from 'lucia-sveltekit/client';
+	const lucia = getSession();
+	console.log({ $lucia });
 	import type { PageData } from './$types';
 	import CustomizeView from '$lib/components/CustomizeView.svelte';
 	import Filter from '$lib/components/Filter.svelte';

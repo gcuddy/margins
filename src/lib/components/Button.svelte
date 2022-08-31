@@ -89,7 +89,7 @@
 		<a
 			bind:this={el}
 			{href}
-			sveltekit:prefetch={prefetch ? true : undefined}
+			data-sveltekit-prefetch={prefetch ? true : undefined}
 			use:popperRef
 			on:click
 			on:click={hideTooltip}
@@ -106,7 +106,7 @@
 		<a
 			bind:this={el}
 			{href}
-			sveltekit:prefetch={prefetch ? true : undefined}
+			data-sveltekit-prefetch={prefetch ? true : undefined}
 			on:click
 			on:click={hideTooltip}
 			on:mouseenter
