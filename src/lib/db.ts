@@ -39,6 +39,6 @@ db.$use(async (params, next) => {
 
 	return result;
 });
-db.$use(cacheMiddleware);
+// db.$use(cacheMiddleware);
 
 if (process.env.NODE_ENV !== 'production') global.db = db;
