@@ -2,7 +2,7 @@
 	import { signOut, getSession } from 'lucia-sveltekit/client';
 	const lucia = getSession();
 	console.log({ $lucia });
-	import type { PageData } from './$types';
+	import type { PageData } from '../../../../.svelte-kit/types/src/routes/[location=location]/$types';
 	import CustomizeView from '$lib/components/CustomizeView.svelte';
 	import Filter from '$lib/components/Filter.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
@@ -10,7 +10,7 @@
 	import Saved from '$lib/components/Saved.svelte';
 	import { goto } from '$app/navigation';
 	import LocationListbox from '$lib/components/LocationListbox.svelte';
-	import type { Location } from '../saved/types/+server';
+	import type { Location } from '../../saved/types/+server';
 
 	export let data: PageData;
 	$: location = data?.location as Location;
