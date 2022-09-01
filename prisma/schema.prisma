@@ -1,366 +1,366 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "referentialIntegrity"]
+    provider        = "prisma-client-js"
+    previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "referentialIntegrity"]
 }
 
 generator zod {
-  provider = "zod-prisma"
-  output   = "../src/lib/types/schemas/prisma" // (default) the directory where generated zod schemas will be saved
+    provider = "zod-prisma"
+    output   = "../src/lib/types/schemas/prisma" // (default) the directory where generated zod schemas will be saved
 
-  relationModel = false // (default) Create and export both plain and related models.
-  // relationModel         = "default" // Do not export model without relations.
-  // relationModel         = false // Do not generate related model
+    relationModel = false // (default) Create and export both plain and related models.
+    // relationModel         = "default" // Do not export model without relations.
+    // relationModel         = false // Do not generate related model
 
-  modelCase = "PascalCase" // (default) Output models using pascal case (ex. UserModel, PostModel)
-  // modelCase             = "camelCase" // Output models using camel case (ex. userModel, postModel)
+    modelCase = "PascalCase" // (default) Output models using pascal case (ex. UserModel, PostModel)
+    // modelCase             = "camelCase" // Output models using camel case (ex. userModel, postModel)
 
-  modelSuffix = "Model" // (default) Suffix to apply to your prisma models when naming Zod schemas
+    modelSuffix = "Model" // (default) Suffix to apply to your prisma models when naming Zod schemas
 
-  // useDecimalJs          = false // (default) represent the prisma Decimal type using as a JS number
-  useDecimalJs = true // represent the prisma Decimal type using Decimal.js (as Prisma does)
+    // useDecimalJs          = false // (default) represent the prisma Decimal type using as a JS number
+    useDecimalJs = true // represent the prisma Decimal type using Decimal.js (as Prisma does)
 
-  // imports = null // (default) will import the referenced file in generated schemas to be used via imports.someExportedVariable
+    // imports = null // (default) will import the referenced file in generated schemas to be used via imports.someExportedVariable
 
-  // https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-by-null-values
-  prismaJsonNullability = true // (default) uses prisma's scheme for JSON field nullability
-  // prismaJsonNullability = false // allows null assignment to optional JSON fields
+    // https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-by-null-values
+    prismaJsonNullability = true // (default) uses prisma's scheme for JSON field nullability
+    // prismaJsonNullability = false // allows null assignment to optional JSON fields
 }
 
 datasource db {
-  provider          = "mysql"
-  url               = env("DATABASE_URL")
-  referentialIntegrity = "prisma"
+    provider             = "mysql"
+    url                  = env("DATABASE_URL")
+    referentialIntegrity = "prisma"
 }
 
 model Article {
-  id             Int          @id @default(autoincrement())
-  title          String
-  content        String
-  textContent    String
-  author         String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  readProgress   Float        @default(0)
-  url            String       @unique
-  siteName       String?
-  colorHash      String?
-  date           DateTime
-  image          String
-  wordCount      Int
-  starred        Boolean      @default(false)
-  css            String?
-  description    String?
-  wiki           String?
-  classification String?
-  pdf            Boolean?
-  html           String?
-  position       Int          @default(0) //@unique - figure this out
-  trash          Boolean      @default(false)
-  location       String       @default("INBOX")
-  annotations    Annotation[]
-  Bookmark       Bookmark?
-  context        Context?
-  highlights     Highlight[]
-  Highlight2     Highlight2[]
-  ListItem       ListItem?
-  media          Media?
-  tags           Tag[]
-  favorite       Favorite?
+    id             Int          @id @default(autoincrement())
+    title          String
+    content        String
+    textContent    String
+    author         String
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+    readProgress   Float        @default(0)
+    url            String       @unique
+    siteName       String?
+    colorHash      String?
+    date           DateTime
+    image          String
+    wordCount      Int
+    starred        Boolean      @default(false)
+    css            String?
+    description    String?
+    wiki           String?
+    classification String?
+    pdf            Boolean?
+    html           String?
+    position       Int          @default(0) //@unique - figure this out
+    trash          Boolean      @default(false)
+    location       String       @default("INBOX")
+    annotations    Annotation[]
+    Bookmark       Bookmark?
+    context        Context?
+    highlights     Highlight[]
+    Highlight2     Highlight2[]
+    ListItem       ListItem?
+    media          Media?
+    tags           Tag[]
+    favorite       Favorite?
 }
 
 model Bookmark {
-  id          Int       @id @default(autoincrement())
-  url         String    @unique
-  title       String
-  description String?
-  createdAt   DateTime  @default(now())
-  html        String
-  articleId   Int?      @unique
-  contextId   Int
-  article     Article?  @relation(fields: [articleId], references: [id])
-  context     Context   @relation(fields: [contextId], references: [id])
-  ListItem    ListItem?
-  tags        Tag[]
+    id          Int       @id @default(autoincrement())
+    url         String    @unique
+    title       String
+    description String?
+    createdAt   DateTime  @default(now())
+    html        String
+    articleId   Int?      @unique
+    contextId   Int
+    article     Article?  @relation(fields: [articleId], references: [id])
+    context     Context   @relation(fields: [contextId], references: [id])
+    ListItem    ListItem?
+    tags        Tag[]
 }
 
 model Context {
-  id          Int        @id @default(autoincrement())
-  url         String     @unique
-  description String?
-  createdAt   DateTime   @default(now())
-  articleId   Int?       @unique
-  Article     Article?   @relation(fields: [articleId], references: [id])
-  Bookmark    Bookmark[]
+    id          Int        @id @default(autoincrement())
+    url         String     @unique
+    description String?
+    createdAt   DateTime   @default(now())
+    articleId   Int?       @unique
+    Article     Article?   @relation(fields: [articleId], references: [id])
+    Bookmark    Bookmark[]
 }
 
 model List {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  items       ListItem[]
+    id          Int        @id @default(autoincrement())
+    name        String     @unique
+    description String?
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+    items       ListItem[]
 }
 
 model ListItem {
-  id           Int         @id @default(autoincrement())
-  listId       Int
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  articleId    Int?        @unique
-  bookmarkId   Int?        @unique
-  highlightId  String?     @unique
-  annotationId Int?        @unique
-  type         String?
-  article      Article?    @relation(fields: [articleId], references: [id])
-  bookmark     Bookmark?   @relation(fields: [bookmarkId], references: [id])
-  highlight    Highlight?  @relation(fields: [highlightId], references: [id])
-  annotation   Annotation? @relation(fields: [annotationId], references: [id])
-  list         List        @relation(fields: [listId], references: [id])
+    id           Int         @id @default(autoincrement())
+    listId       Int
+    createdAt    DateTime    @default(now())
+    updatedAt    DateTime    @updatedAt
+    articleId    Int?        @unique
+    bookmarkId   Int?        @unique
+    highlightId  String?     @unique
+    annotationId Int?        @unique
+    type         String?
+    article      Article?    @relation(fields: [articleId], references: [id])
+    bookmark     Bookmark?   @relation(fields: [bookmarkId], references: [id])
+    highlight    Highlight?  @relation(fields: [highlightId], references: [id])
+    annotation   Annotation? @relation(fields: [annotationId], references: [id])
+    list         List        @relation(fields: [listId], references: [id])
 }
 
 model Media {
-  id          Int     @id @default(autoincrement())
-  url         String
-  title       String
-  description String
-  duration    Int
-  type        String
-  articleId   Int     @unique
-  article     Article @relation(fields: [articleId], references: [id])
+    id          Int     @id @default(autoincrement())
+    url         String
+    title       String
+    description String
+    duration    Int
+    type        String
+    articleId   Int     @unique
+    article     Article @relation(fields: [articleId], references: [id])
 }
 
 model Highlight {
-  id            String    @id @default(cuid())
-  articleId     Int
-  nonTextNodes  String?
-  text          String
-  sanitizedHtml String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  flagged       Boolean   @default(false)
-  startMetaId   Int       @unique
-  endMetaId     Int       @unique
-  article       Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  endMeta       DomMeta   @relation("endMeta", fields: [endMetaId], references: [id])
-  startMeta     DomMeta   @relation("startMeta", fields: [startMetaId], references: [id])
-  ListItem      ListItem?
+    id            String    @id @default(cuid())
+    articleId     Int
+    nonTextNodes  String?
+    text          String
+    sanitizedHtml String?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    flagged       Boolean   @default(false)
+    startMetaId   Int       @unique
+    endMetaId     Int       @unique
+    article       Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+    endMeta       DomMeta   @relation("endMeta", fields: [endMetaId], references: [id])
+    startMeta     DomMeta   @relation("startMeta", fields: [startMetaId], references: [id])
+    ListItem      ListItem?
 }
 
 model DomMeta {
-  id             Int        @id @default(autoincrement())
-  parentTagName  String
-  parentIndex    String
-  textOffset     Int
-  endHighlight   Highlight? @relation("endMeta")
-  startHighlight Highlight? @relation("startMeta")
+    id             Int        @id @default(autoincrement())
+    parentTagName  String
+    parentIndex    String
+    textOffset     Int
+    endHighlight   Highlight? @relation("endMeta")
+    startHighlight Highlight? @relation("startMeta")
 }
 
 model Annotation {
-  id         Int       @id @default(autoincrement())
-  target     Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
-  body       String? // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
-  //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  flagged    Boolean   @default(false)
-  motivation String?
-  articleId  Int
-  article    Article   @relation(fields: [articleId], references: [id])
-  ListItem   ListItem?
+    id         Int       @id @default(autoincrement())
+    target     Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
+    body       String? // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
+    //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+    flagged    Boolean   @default(false)
+    motivation String?
+    articleId  Int
+    article    Article   @relation(fields: [articleId], references: [id])
+    ListItem   ListItem?
 }
 
 model RssFeed {
-  id Int @id @default(autoincrement())
+    id Int @id @default(autoincrement())
 
-  // itunes_id is actually an Int, so you can set it directly — will be deprecating this soon
-  itunes_id String? @unique
-  //
+    // itunes_id is actually an Int, so you can set it directly — will be deprecating this soon
+    itunes_id String? @unique
+    //
 
-  feedUrl       String        @unique
-  title         String?
-  link          String?
-  description   String?
-  lastBuildDate DateTime?
-  imageUrl      String?
-  items         RssFeedItem[]
-  tag           RssFeedTag[]
-  podcast       Boolean       @default(false)
-  creator       String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  favorite      Favorite?
-  users         User[]
+    feedUrl       String        @unique
+    title         String?
+    link          String?
+    description   String?
+    lastBuildDate DateTime?
+    imageUrl      String?
+    items         RssFeedItem[]
+    tag           RssFeedTag[]
+    podcast       Boolean       @default(false)
+    creator       String?
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+    favorite      Favorite?
+    users         User[]
 
-  // this should be unique per user
-  // @@unique([feedUrl])
-  PodcastEpisode PodcastEpisode[]
+    // this should be unique per user
+    // @@unique([feedUrl])
+    PodcastEpisode PodcastEpisode[]
 }
 
 model RssItemInteraction {
-  id        Int         @id @default(autoincrement())
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  is_read   Boolean     @default(false)
-  podcast   Boolean     @default(false)
-  played    Boolean     @default(false)
-  timestamp Int?
-  userId    String
-  itemUuid  String
-  item      RssFeedItem @relation(fields: [itemUuid], references: [uuid])
-  user      User        @relation(fields: [userId], references: [id])
+    id        Int         @id @default(autoincrement())
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
+    is_read   Boolean     @default(false)
+    podcast   Boolean     @default(false)
+    played    Boolean     @default(false)
+    timestamp Int?
+    userId    String
+    itemUuid  String
+    item      RssFeedItem @relation(fields: [itemUuid], references: [uuid])
+    user      User        @relation(fields: [userId], references: [id])
 }
 
 model RssFeedItem {
-  id             Int        @id @default(autoincrement())
-  uuid           String     @unique
-  title          String?
-  contentSnippet String?
-  summary        String?
-  // use this going forward
-  description    String?
-  is_read        Boolean    @default(false)
-  starred        Boolean    @default(false)
-  podcast        Boolean    @default(false)
-  duration       Int?
-  played         Boolean    @default(false)
-  image          String?
-  link           String?
-  guid           String
-  pubDate        DateTime?
-  creator        String?
-  author         String?
-  content        String?
-  isoDate        DateTime?
-  // categories     String[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  rssFeedId      Int
-  RssFeed        RssFeed    @relation(fields: [rssFeedId], references: [id])
-  enclosure      Json
-  Enclosure      Enclosure?
+    id             Int        @id @default(autoincrement())
+    uuid           String     @unique
+    title          String?
+    contentSnippet String?
+    summary        String?
+    // use this going forward
+    description    String?
+    is_read        Boolean    @default(false)
+    starred        Boolean    @default(false)
+    podcast        Boolean    @default(false)
+    duration       Int?
+    played         Boolean    @default(false)
+    image          String?
+    link           String?
+    guid           String
+    pubDate        DateTime?
+    creator        String?
+    author         String?
+    content        String?
+    isoDate        DateTime?
+    // categories     String[]
+    createdAt      DateTime   @default(now())
+    updatedAt      DateTime   @updatedAt
+    rssFeedId      Int
+    RssFeed        RssFeed    @relation(fields: [rssFeedId], references: [id])
+    enclosure      Json
+    Enclosure      Enclosure?
 
-  interactions RssItemInteraction[]
+    interactions RssItemInteraction[]
 }
 
 model Enclosure {
-  id     Int         @id @default(autoincrement())
-  url    String?
-  length Int?
-  type   String?
-  feed   RssFeedItem @relation(fields: [feedId], references: [id])
-  feedId Int         @unique
+    id     Int         @id @default(autoincrement())
+    url    String?
+    length Int?
+    type   String?
+    feed   RssFeedItem @relation(fields: [feedId], references: [id])
+    feedId Int         @unique
 }
 
 model RssFeedTag {
-  id    Int       @id @default(autoincrement())
-  name  String    @unique
-  feeds RssFeed[]
+    id    Int       @id @default(autoincrement())
+    name  String    @unique
+    feeds RssFeed[]
 }
 
 model Tag {
-  id            Int       @id @default(autoincrement())
-  name          String    @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  bookmarkId    Int?
-  rssFeedItemId String?
-  Bookmark      Bookmark? @relation(fields: [bookmarkId], references: [id])
-  articles      Article[]
-  favorite      Favorite?
-  viewOptions   Json?
+    id            Int       @id @default(autoincrement())
+    name          String    @unique
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    bookmarkId    Int?
+    rssFeedItemId String?
+    Bookmark      Bookmark? @relation(fields: [bookmarkId], references: [id])
+    articles      Article[]
+    favorite      Favorite?
+    viewOptions   Json?
 }
 
 model Css {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  domain    String   @unique
-  css       String?
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    domain    String   @unique
+    css       String?
 }
 
 model StringCondition {
-  id       Int     @id @default(autoincrement())
-  contains Boolean
-  value    String
+    id       Int     @id @default(autoincrement())
+    contains Boolean
+    value    String
 }
 
 model SmartListCondition {
-  id          Int     @id @default(autoincrement())
-  smartListId Int?
-  any         Boolean
-  title       String?
+    id          Int     @id @default(autoincrement())
+    smartListId Int?
+    any         Boolean
+    title       String?
 }
 
 model SmartList {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  filter      Json
-  viewOptions Json?
-  // conditions SmartListCondition[]
-  favorite    Favorite?
+    id          Int       @id @default(autoincrement())
+    name        String    @unique
+    filter      Json
+    viewOptions Json?
+    // conditions SmartListCondition[]
+    favorite    Favorite?
 }
 
 model Target {
-  id         Int       @id @default(autoincrement())
-  source     String
-  selector   Selector? @relation(fields: [selectorId], references: [id])
-  selectorId Int       @unique
+    id         Int       @id @default(autoincrement())
+    source     String
+    selector   Selector? @relation(fields: [selectorId], references: [id])
+    selectorId Int       @unique
 }
 
 model Selector {
-  id   Int    @id @default(autoincrement())
-  type String // one of: TextQuoteSelector, TextPositionSelector, cssSelector, rangeselector, etc. (would use enum but they cause problems. zod/middleware will help us out)
+    id   Int    @id @default(autoincrement())
+    type String // one of: TextQuoteSelector, TextPositionSelector, cssSelector, rangeselector, etc. (would use enum but they cause problems. zod/middleware will help us out)
 
-  target Target?
+    target Target?
 
-  // TEXTQUOTESELECTOR (use zod/middleware to enforce this)
-  exact  String? //* actually required
-  prefix String?
-  suffix String?
+    // TEXTQUOTESELECTOR (use zod/middleware to enforce this)
+    exact  String? //* actually required
+    prefix String?
+    suffix String?
 
-  // text position slector (all required)
-  start Int?
-  end   Int?
+    // text position slector (all required)
+    start Int?
+    end   Int?
 
-  // css selector (if type === 'cssSelector', this is required)
-  value String?
+    // css selector (if type === 'cssSelector', this is required)
+    value String?
 
-  //range selector
-  // startSelectorId Int?
-  // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
-  // endSelectorId   Int?
-  // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
+    //range selector
+    // startSelectorId Int?
+    // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
+    // endSelectorId   Int?
+    // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
 
-  // A selector can be refined by another selector
-  // refinedById Int?      @unique
-  // refinedBy   Selector? @relation("refinedBy", fields: [refinedById], references: [id])
-  // refines     Selector? @relation("refinedBy")
+    // A selector can be refined by another selector
+    // refinedById Int?      @unique
+    // refinedBy   Selector? @relation("refinedBy", fields: [refinedById], references: [id])
+    // refines     Selector? @relation("refinedBy")
 
-  //range selector
-  // startSelectorId Int?
-  // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
-  // endSelectorId   Int?
-  // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
+    //range selector
+    // startSelectorId Int?
+    // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
+    // endSelectorId   Int?
+    // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
 
-  // refinedBySelectorId Int?
-  // refinedBy Selector? @relation("refinedBy", fields: [refinedBySelectorId], references: [id])
+    // refinedBySelectorId Int?
+    // refinedBy Selector? @relation("refinedBy", fields: [refinedBySelectorId], references: [id])
 }
 
 model TextPositionSelector {
-  id               Int                @id @default(autoincrement())
-  start            Int
-  end              Int
-  AnnotationTarget AnnotationTarget[]
+    id               Int                @id @default(autoincrement())
+    start            Int
+    end              Int
+    AnnotationTarget AnnotationTarget[]
 }
 
 model TextQuoteSelector {
-  id               Int                @id @default(autoincrement())
-  exact            String
-  prefix           String?
-  suffix           String?
-  type             String             @default("TextQuoteSelector")
-  AnnotationTarget AnnotationTarget[]
+    id               Int                @id @default(autoincrement())
+    exact            String
+    prefix           String?
+    suffix           String?
+    type             String             @default("TextQuoteSelector")
+    AnnotationTarget AnnotationTarget[]
 }
 
 // model RangeSelector {
@@ -374,102 +374,101 @@ model TextQuoteSelector {
 // }
 
 model AnnotationTarget {
-  id                     Int                   @id @default(autoincrement())
-  source                 String
-  selectors              Json
-  rangeSelectorId        Int?
-  textPositionSelectorId Int?
-  textQuoteSelectorId    Int
-  // rangeSelector          RangeSelector?        @relation(fields: [rangeSelectorId], references: [id])
-  textPosition           TextPositionSelector? @relation(fields: [textPositionSelectorId], references: [id])
-  textQuote              TextQuoteSelector     @relation(fields: [textQuoteSelectorId], references: [id])
-  Highlight2             Highlight2[]
+    id                     Int                   @id @default(autoincrement())
+    source                 String
+    selectors              Json
+    rangeSelectorId        Int?
+    textPositionSelectorId Int?
+    textQuoteSelectorId    Int
+    // rangeSelector          RangeSelector?        @relation(fields: [rangeSelectorId], references: [id])
+    textPosition           TextPositionSelector? @relation(fields: [textPositionSelectorId], references: [id])
+    textQuote              TextQuoteSelector     @relation(fields: [textQuoteSelectorId], references: [id])
+    Highlight2             Highlight2[]
 }
 
 model Highlight2 {
-  id            Int              @id @default(autoincrement())
-  articleId     Int
-  targetId      Int
-  text          String
-  sanitizedHtml String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  flagged       Boolean          @default(false)
-  article       Article          @relation(fields: [articleId], references: [id])
-  target        AnnotationTarget @relation(fields: [targetId], references: [id])
+    id            Int              @id @default(autoincrement())
+    articleId     Int
+    targetId      Int
+    text          String
+    sanitizedHtml String?
+    createdAt     DateTime         @default(now())
+    updatedAt     DateTime         @updatedAt
+    flagged       Boolean          @default(false)
+    article       Article          @relation(fields: [articleId], references: [id])
+    target        AnnotationTarget @relation(fields: [targetId], references: [id])
 }
 
 model User {
-  // id        Int        @id @default(autoincrement())
-  id                        String                      @id @unique
-  username                  String                      @unique
-  // email            String         @unique
-  identifier_token          String                      @unique
-  hashed_password           String?
-  RefreshToken              RefreshToken[]
-  createdAt                 DateTime                    @default(now())
-  updatedAt                 DateTime                    @updatedAt
-  favorites                 Favorite[]
-  // RefreshToken     RefreshToken[]
-  PodcastEpisodeInteraction PodcastEpisodeInteraction[]
-  feeds                     RssFeed[]
-  RssItemInteraction        RssItemInteraction[]
+    // id        Int        @id @default(autoincrement())
+    id                        String                      @id @unique
+    username                  String                      @unique
+    // email            String         @unique
+    identifier_token          String                      @unique
+    hashed_password           String?
+    RefreshToken              RefreshToken[]
+    createdAt                 DateTime                    @default(now())
+    updatedAt                 DateTime                    @updatedAt
+    favorites                 Favorite[]
+    // RefreshToken     RefreshToken[]
+    PodcastEpisodeInteraction PodcastEpisodeInteraction[]
+    feeds                     RssFeed[]
+    RssItemInteraction        RssItemInteraction[]
 
-  @@map("user")
+    @@map("user")
 }
 
 model RefreshToken {
-  id            Int    @id @unique @default(autoincrement())
-  refresh_token String @unique @db.VarChar(300)
-  user          User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
-  user_id       String
+    id            Int    @id @unique @default(autoincrement())
+    refresh_token String @unique @db.VarChar(300)
+    user          User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+    user_id       String
 
-  @@index([user_id])
-  @@map("refresh_token")
+    @@index([user_id])
+    @@map("refresh_token")
 }
 
 // either Interaction or Favorite
 //  see https://cloud.prisma.io/gcuddy/prisma-data-test/production/schema
-// let's try Interaction
 model Favorite {
-  id          Int        @id @default(autoincrement())
-  position    Float      @unique
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  userId      String?
-  user        User?      @relation(fields: [userId], references: [id])
-  // count      Int      @default(1)
-  // one of: article, tag, list, or smart list
-  articleId   Int?       @unique
-  article     Article?   @relation(fields: [articleId], references: [id])
-  tagId       Int?       @unique
-  tag         Tag?       @relation(fields: [tagId], references: [id])
-  rssId       Int?       @unique
-  rss         RssFeed?   @relation(fields: [rssId], references: [id])
-  smartListId Int?       @unique
-  smartList   SmartList? @relation(fields: [smartListId], references: [id])
+    id          Int        @id @default(autoincrement())
+    position    Float      @unique
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+    userId      String
+    user        User       @relation(fields: [userId], references: [id])
+    // count      Int      @default(1)
+    // one of: article, tag, list, or smart list
+    articleId   Int?       @unique
+    article     Article?   @relation(fields: [articleId], references: [id])
+    tagId       Int?       @unique
+    tag         Tag?       @relation(fields: [tagId], references: [id])
+    rssId       Int?       @unique
+    rss         RssFeed?   @relation(fields: [rssId], references: [id])
+    smartListId Int?       @unique
+    smartList   SmartList? @relation(fields: [smartListId], references: [id])
 }
 
 model PodcastEpisodeInteraction {
-  id        Int            @id @default(autoincrement())
-  timestamp Int
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  userId    String?
-  user      User?          @relation(fields: [userId], references: [id])
-  episodeId Int            @unique
-  episode   PodcastEpisode @relation(fields: [episodeId], references: [id])
-  // hash = md5(itunes_id + guid || enclose.url)
-  hash      String         @unique
+    id        Int            @id @default(autoincrement())
+    timestamp Int
+    createdAt DateTime       @default(now())
+    updatedAt DateTime       @updatedAt
+    userId    String?
+    user      User?          @relation(fields: [userId], references: [id])
+    episodeId Int            @unique
+    episode   PodcastEpisode @relation(fields: [episodeId], references: [id])
+    // hash = md5(itunes_id + guid || enclose.url)
+    hash      String         @unique
 }
 
 model PodcastEpisode {
-  id                        Int                         @id @default(autoincrement())
-  podcast                   RssFeed                     @relation(fields: [podcastId], references: [itunes_id])
-  podcastId                 String                      @unique
-  // hash = md5(itunes_id + guid || enclose.url)
-  hash                      String                      @unique
-  guid                      String?
-  url                       String?
-  PodcastEpisodeInteraction PodcastEpisodeInteraction[]
+    id                        Int                         @id @default(autoincrement())
+    podcast                   RssFeed                     @relation(fields: [podcastId], references: [itunes_id])
+    podcastId                 String                      @unique
+    // hash = md5(itunes_id + guid || enclose.url)
+    hash                      String                      @unique
+    guid                      String?
+    url                       String?
+    PodcastEpisodeInteraction PodcastEpisodeInteraction[]
 }
