@@ -66,8 +66,8 @@ model Article {
     media          Media?
     tags           Tag[]
     favorite       Favorite?
-    User           User?        @relation(fields: [userId], references: [id])
-    userId         String?
+    User           User         @relation(fields: [userId], references: [id])
+    userId         String
 }
 
 model Bookmark {
