@@ -31,7 +31,8 @@ export const GET: RequestHandler = async ({ request, url: Url }) => {
 			favorites: [],
 			articles: [],
 		});
-	} catch {
+	} catch (e) {
+		console.error(e);
 		throw error(401, 'unauthorized');
 	}
 };
