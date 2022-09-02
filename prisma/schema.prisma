@@ -34,9 +34,9 @@ datasource db {
 
 model Article {
     id             Int          @id @default(autoincrement())
-    title          String
-    content        String
-    textContent    String
+    title          String       @db.Text
+    content        String       @db.LongText
+    textContent    String       @db.LongText
     author         String
     createdAt      DateTime     @default(now())
     updatedAt      DateTime     @updatedAt
@@ -49,7 +49,7 @@ model Article {
     wordCount      Int
     starred        Boolean      @default(false)
     css            String?
-    description    String?
+    description    String?      @db.TinyText
     wiki           String?
     classification String?
     pdf            Boolean?
@@ -66,6 +66,8 @@ model Article {
     media          Media?
     tags           Tag[]
     favorite       Favorite?
+    User           User?        @relation(fields: [userId], references: [id])
+    userId         String?
 }
 
 model Bookmark {
@@ -180,15 +182,15 @@ model RssFeed {
     feedUrl       String        @unique
     title         String?
     link          String?
-    description   String?
+    description   String?       @db.Text
     lastBuildDate DateTime?
-    imageUrl      String?
+    imageUrl      String?       @db.TinyText
     items         RssFeedItem[]
     tag           RssFeedTag[]
     podcast       Boolean       @default(false)
     creator       String?
-    createdAt     DateTime      @default(now())
-    updatedAt     DateTime      @updatedAt
+    createdAt     DateTime      @default(now()) /// @zod.custom(z.string())
+    updatedAt     DateTime      @updatedAt /// @zod.custom(z.string())
     favorite      Favorite?
     users         User[]
 
@@ -215,10 +217,10 @@ model RssFeedItem {
     id             Int        @id @default(autoincrement())
     uuid           String     @unique
     title          String?
-    contentSnippet String?
-    summary        String?
+    contentSnippet String?    @db.TinyText
+    summary        String?    @db.Text
     // use this going forward
-    description    String?
+    description    String?    @db.Text
     is_read        Boolean    @default(false)
     starred        Boolean    @default(false)
     podcast        Boolean    @default(false)
@@ -230,14 +232,14 @@ model RssFeedItem {
     pubDate        DateTime?
     creator        String?
     author         String?
-    content        String?
+    content        String?    @db.Text
     isoDate        DateTime?
     // categories     String[]
     createdAt      DateTime   @default(now())
     updatedAt      DateTime   @updatedAt
     rssFeedId      Int
     RssFeed        RssFeed    @relation(fields: [rssFeedId], references: [id])
-    enclosure      Json
+    enclosure      Json?
     Enclosure      Enclosure?
 
     interactions RssItemInteraction[]
@@ -269,6 +271,8 @@ model Tag {
     articles      Article[]
     favorite      Favorite?
     viewOptions   Json?
+    user          User      @relation(fields: [userId], references: [id])
+    userId        String
 }
 
 model Css {
@@ -409,11 +413,13 @@ model User {
     RefreshToken              RefreshToken[]
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
-    favorites                 Favorite[]
     // RefreshToken     RefreshToken[]
     PodcastEpisodeInteraction PodcastEpisodeInteraction[]
     feeds                     RssFeed[]
     RssItemInteraction        RssItemInteraction[]
+    favorites                 Favorite[]
+    tags                      Tag[]
+    articles                  Article[]
 
     @@map("user")
 }
