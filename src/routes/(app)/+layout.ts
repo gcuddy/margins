@@ -1,12 +1,8 @@
 import { browser } from '$app/environment';
-import { FavoriteModel, RssFeedModel } from '$lib/types/schemas/prisma';
 import { redirect } from '@sveltejs/kit';
 import { get, readable } from 'svelte/store';
-import { z } from 'zod';
 import type { LayoutLoad } from './$types';
 import { User, user as userStore } from '$lib/stores/user';
-import { auth } from '$lib/lucia';
-import { signOut } from 'lucia-sveltekit/client';
 
 export const load: LayoutLoad = async ({ parent, fetch }) => {
 	const { lucia } = await parent();

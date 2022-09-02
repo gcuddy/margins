@@ -5,7 +5,7 @@
 
 <svelte:head />
 
-<Lucia>
+<Lucia on:error={(e) => console.log({ e })}>
 	<div class="min-h-screen">
 		<slot />
 	</div>
