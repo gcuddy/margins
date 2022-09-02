@@ -5,7 +5,7 @@
 	import { matchFieldToType, type SmartListCondition } from '$lib/types/filter';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import type { Prisma } from '@prisma/client';
-	import LocationListbox from 'src/routes/(app)/[location=location]/LocationListbox.svelte';
+	import LocationListbox from '$lib/components/LocationListbox.svelte';
 	export let condition: SmartListCondition;
 
 	const dispatch = createEventDispatcher();

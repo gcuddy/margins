@@ -1,5 +1,5 @@
 import { json as json$1 } from '@sveltejs/kit';
-import parse from '../../add/_parse';
+import parse from '$lib/parse';
 // takes many ids
 // updates all of them with given data
 
@@ -14,7 +14,7 @@ import { PatchArticleData } from '$lib/types/schemas/Article';
 // TODO: add type support for data
 const patchRequest = z.object({
 	ids: z.array(z.number().or(z.string())).nonempty(),
-	data: PatchArticleData
+	data: PatchArticleData,
 	// data: ArticleModel
 });
 
@@ -37,18 +37,18 @@ export const POST: RequestHandler = async ({ request }) => {
 				author: article.author || '',
 				image: article.image || '',
 				date: dayjs(article.date).isValid() ? dayjs(article.date).format() : dayjs().format(),
-				textContent: article.textContent
+				textContent: article.textContent,
 			});
 		}
 
 		const body = await db.article.createMany({
 			data: articles,
-			skipDuplicates: true
+			skipDuplicates: true,
 		});
 		return new Response(undefined, {
 			headers: {
-				location: '/'
-			}
+				location: '/',
+			},
 		});
 	} catch (e) {
 		console.error(e);
@@ -65,9 +65,9 @@ export const PATCH: RequestHandler = async ({ request }) => {
 			parsed.ids.map((id) => {
 				return db.article.update({
 					where: {
-						id: Number(id)
+						id: Number(id),
 					},
-					data: parsed.data
+					data: parsed.data,
 				});
 			})
 		);
@@ -75,10 +75,13 @@ export const PATCH: RequestHandler = async ({ request }) => {
 		return new Response(undefined);
 	} catch (e) {
 		console.error(e);
-		return json$1({
-			error: reportZodOrPrismaError(e)
-		}, {
-			status: 400
-		});
+		return json$1(
+			{
+				error: reportZodOrPrismaError(e),
+			},
+			{
+				status: 400,
+			}
+		);
 	}
 };

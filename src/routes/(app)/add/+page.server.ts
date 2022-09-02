@@ -3,7 +3,7 @@
 import { db } from '$lib/db';
 import type { PageServerLoad, Action } from './$types';
 import dayjs from 'dayjs';
-import parse from './_parse';
+import parse from '$lib/parse';
 import { error } from '@sveltejs/kit';
 import { auth } from '$lib/lucia';
 
