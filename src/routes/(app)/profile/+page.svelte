@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getSession } from 'lucia-sveltekit/client';
+
 	import type { PageData } from './$types';
 	export let data: PageData;
 	$: console.log({ data });
@@ -10,6 +12,8 @@
 
 <button
 	on:click={async () => {
+		console.log('Authorization', await getSession());
+		console.log('Authorization', `Bearer ${data.lucia.access_token}`);
 		const res = await fetch('/api/fetch_user_data', {
 			headers: {
 				Authorization: `Bearer ${data.lucia.access_token}`,
