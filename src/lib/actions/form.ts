@@ -51,7 +51,10 @@ export function enhance(
 		if (pending) pending({ data, form });
 
 		try {
-			headers.set('accept', 'application/json');
+			if (headers) {
+				headers = new Headers();
+				headers?.set('accept', 'application/json');
+			}
 			const options: RequestInit = {
 				method: form.method,
 				headers,
