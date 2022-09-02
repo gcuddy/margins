@@ -77,10 +77,22 @@ const config = {
 						filter: 'saturate(1)',
 					},
 				},
+				'fly-in': {
+					'0%': {
+						opacity: 0,
+						transform: 'translateY(-10px)',
+					},
+					'100%': {
+						opacity: 1,
+						transform: 'translateY(0)',
+					},
+				},
 			},
 			animation: {
 				'fade-in-bg': 'fade-in-bg 0.1s ease-in-out',
 				'saturate-pulse': 'saturate-pulse 0.5s ease-in-out',
+				'fly-in': 'fly-in 1s ease-out',
+				'fast-fly-in': 'fly-in 0.5s ease-out',
 			},
 			transitionDuration: {
 				quick: '0.15s',
