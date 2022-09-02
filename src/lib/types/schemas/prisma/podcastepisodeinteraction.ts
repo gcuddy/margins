@@ -5,7 +5,7 @@ export const PodcastEpisodeInteractionModel = z.object({
   timestamp: z.number().int(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  userId: z.string().nullish(),
+  userId: z.string(),
   episodeId: z.number().int(),
   hash: z.string(),
 })

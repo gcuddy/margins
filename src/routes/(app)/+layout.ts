@@ -8,8 +8,11 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 	const { lucia } = await parent();
 	if (!lucia) throw redirect(302, '/login');
 
+	console.log('running root +layout.ts');
+
 	// If we already have a stored user, then don't fetch it again - we'll be using the store
 	if (browser && get(userStore)) {
+		console.log('returning user store');
 		return {
 			user: userStore,
 		};

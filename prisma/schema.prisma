@@ -66,8 +66,10 @@ model Article {
     media          Media?
     tags           Tag[]
     favorite       Favorite?
-    User           User         @relation(fields: [userId], references: [id])
+    user           User         @relation(fields: [userId], references: [id])
     userId         String
+
+    @@index([userId])
 }
 
 model Bookmark {
@@ -184,7 +186,7 @@ model RssFeed {
     link          String?
     description   String?       @db.Text
     lastBuildDate DateTime?
-    imageUrl      String?       @db.TinyText
+    imageUrl      String?       @db.Text
     items         RssFeedItem[]
     tag           RssFeedTag[]
     podcast       Boolean       @default(false)
@@ -207,17 +209,19 @@ model RssItemInteraction {
     podcast   Boolean     @default(false)
     played    Boolean     @default(false)
     timestamp Int?
-    userId    String
     itemUuid  String
     item      RssFeedItem @relation(fields: [itemUuid], references: [uuid])
+    userId    String
     user      User        @relation(fields: [userId], references: [id])
+
+    @@index([userId, itemUuid])
 }
 
 model RssFeedItem {
     id             Int        @id @default(autoincrement())
     uuid           String     @unique
-    title          String?
-    contentSnippet String?    @db.TinyText
+    title          String?    @db.Text
+    contentSnippet String?    @db.Text
     summary        String?    @db.Text
     // use this going forward
     description    String?    @db.Text
@@ -226,9 +230,9 @@ model RssFeedItem {
     podcast        Boolean    @default(false)
     duration       Int?
     played         Boolean    @default(false)
-    image          String?
+    image          String?    @db.Text
     link           String?
-    guid           String
+    guid           String?
     pubDate        DateTime?
     creator        String?
     author         String?
@@ -273,6 +277,8 @@ model Tag {
     viewOptions   Json?
     user          User      @relation(fields: [userId], references: [id])
     userId        String
+
+    @@index([userId])
 }
 
 model Css {
@@ -453,6 +459,8 @@ model Favorite {
     rss         RssFeed?   @relation(fields: [rssId], references: [id])
     smartListId Int?       @unique
     smartList   SmartList? @relation(fields: [smartListId], references: [id])
+
+    @@index([userId])
 }
 
 model PodcastEpisodeInteraction {
@@ -460,12 +468,14 @@ model PodcastEpisodeInteraction {
     timestamp Int
     createdAt DateTime       @default(now())
     updatedAt DateTime       @updatedAt
-    userId    String?
-    user      User?          @relation(fields: [userId], references: [id])
+    userId    String
+    user      User           @relation(fields: [userId], references: [id])
     episodeId Int            @unique
     episode   PodcastEpisode @relation(fields: [episodeId], references: [id])
     // hash = md5(itunes_id + guid || enclose.url)
     hash      String         @unique
+
+    @@index([userId, episodeId])
 }
 
 model PodcastEpisode {

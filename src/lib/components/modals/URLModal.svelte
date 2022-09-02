@@ -12,24 +12,26 @@
 	export let placeholder = 'Enter URL...';
 	export let formAction = '/add';
 	export let done: Result = async ({ form, response }) => {
-		// await invalidate(inv);
+		invalidate(inv).then(() => {
+			console.log(`invalidated ${inv}`);
+		});
 		// form.reset();
 		// pending = false;
 		modals.close();
 		if (notification) {
 			notifications.notify(notification);
 		}
-		response.json().then(({ article }) => {
-			notifications.notify({
-				message: `<a href='/${article.id}'>${article.title}</a> <span class="text-gray-600 dark:text-gray-400">added to your inbox</span>`,
-				title: 'Article added',
-				link: {
-					href: `/${article.id}`,
-					text: 'View article',
-				},
-				type: 'success',
-			});
-		});
+		// response.json().then(({ article }) => {
+		// 	notifications.notify({
+		// 		message: `<a href='/${article.id}'>${article.title}</a> <span class="text-gray-600 dark:text-gray-400">added to your inbox</span>`,
+		// 		title: 'Article added',
+		// 		link: {
+		// 			href: `/${article.id}`,
+		// 			text: 'View article',
+		// 		},
+		// 		type: 'success',
+		// 	});
+		// });
 	};
 	let inv = '/';
 	export { inv as invalidate };

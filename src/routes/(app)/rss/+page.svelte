@@ -22,8 +22,10 @@
 	import { writable } from 'svelte/store';
 	import Header from '$lib/components/layout/Header.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
+	import { goto } from '$app/navigation';
 
 	export let data: PageData;
+	$: console.log({ data });
 	$: user = data.user;
 	$: ({ feeds } = $user);
 	console.log({ feeds });
@@ -83,6 +85,10 @@
 						formAction: '/rss',
 						placeholder: 'Enter RSS feed URL',
 						name: 'url',
+						done: async ({ response }) => {
+							modals.close();
+							await goto(response.headers.get('Location'));
+						},
 					});
 				}}
 				variant="ghost">Add Feed</Button

@@ -8,6 +8,6 @@ export const RssItemInteractionModel = z.object({
   podcast: z.boolean(),
   played: z.boolean(),
   timestamp: z.number().int().nullish(),
-  userId: z.string(),
   itemUuid: z.string(),
+  userId: z.string(),
 })

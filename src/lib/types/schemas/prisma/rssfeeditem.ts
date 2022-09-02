@@ -20,7 +20,7 @@ export const RssFeedItemModel = z.object({
   played: z.boolean(),
   image: z.string().nullish(),
   link: z.string().nullish(),
-  guid: z.string(),
+  guid: z.string().nullish(),
   pubDate: z.date().nullish(),
   creator: z.string().nullish(),
   author: z.string().nullish(),
