@@ -26,7 +26,11 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 		// await signOut();
 		// window.location.href = '/'
 		return {
-			user: readable(null),
+			user: readable({
+				username: '??',
+				feeds: [],
+				favorites: [],
+			}),
 		};
 	}
 	const fetchedUser: User = await res.json();
