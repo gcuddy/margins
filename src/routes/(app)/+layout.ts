@@ -24,7 +24,7 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 		},
 	});
 	if (!res.ok) {
-		throw redirect(302, '/login');
+		// throw redirect(302, '/login');
 	}
 	const fetchedUser: User = await res.json();
 	if (browser) {
