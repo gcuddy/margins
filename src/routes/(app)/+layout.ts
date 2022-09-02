@@ -6,6 +6,7 @@ import { z } from 'zod';
 import type { LayoutLoad } from './$types';
 import { User, user as userStore } from '$lib/stores/user';
 import { auth } from '$lib/lucia';
+import { signOut } from 'lucia-sveltekit/client';
 
 export const load: LayoutLoad = async ({ parent, fetch }) => {
 	const { lucia } = await parent();
@@ -26,6 +27,8 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 	});
 	if (!res.ok) {
 		// throw redirect(302, '/login');
+		await signOut();
+		window.location.href = '/';
 		return {
 			user: readable(null),
 		};
