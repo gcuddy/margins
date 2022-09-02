@@ -5,6 +5,7 @@ import { get, readable } from 'svelte/store';
 import { z } from 'zod';
 import type { LayoutLoad } from './$types';
 import { User, user as userStore } from '$lib/stores/user';
+import { auth } from '$lib/lucia';
 
 export const load: LayoutLoad = async ({ parent, fetch }) => {
 	const { lucia } = await parent();
@@ -25,6 +26,9 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 	});
 	if (!res.ok) {
 		// throw redirect(302, '/login');
+		return {
+			user: readable(null),
+		};
 	}
 	const fetchedUser: User = await res.json();
 	if (browser) {
