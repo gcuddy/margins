@@ -27,8 +27,8 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 	});
 	if (!res.ok) {
 		// throw redirect(302, '/login');
-		await signOut();
-		window.location.href = '/';
+		// await signOut();
+		// window.location.href = '/'
 		return {
 			user: readable(null),
 		};

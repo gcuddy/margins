@@ -21,39 +21,43 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.lucia) throw error(401, 'unauthorized');
 	try {
 		console.log({ locals });
+		const user = await auth.validateAccessToken(
+			locals.lucia.access_token,
+			locals.lucia.fingerprint_token
+		);
 		const { refresh_token } = locals.lucia;
 		const json = await getJsonFromRequest(request);
 		const data = RssFeedModel.parse(json);
 
 		// can I do this? is this bad practice?? maybe????
-		await db.refreshToken.update({
-			where: {
-				refresh_token,
-				// etc, to get user
-			},
-			data: {
-				user: {
-					update: {
-						feeds: {
-							connectOrCreate: {
-								where: {
-									itunes_id: data.itunes_id,
-								},
-								create: {
-									feedUrl: data.feedUrl,
-									title: data.title,
-									description: data.description,
-									imageUrl: data.imageUrl,
-									creator: data.creator,
-									podcast: true,
-									itunes_id: data.itunes_id,
-								},
-							},
-						},
-					},
-				},
-			},
-		});
+		// await db.refreshToken.update({
+		// 	where: {
+		// 		refresh_token,
+		// 		// etc, to get user
+		// 	},
+		// 	data: {
+		// 		user: {
+		// 			update: {
+		// 				feeds: {
+		// 					connectOrCreate: {
+		// 						where: {
+		// 							itunes_id: data.itunes_id,
+		// 						},
+		// 						create: {
+		// 							feedUrl: data.feedUrl,
+		// 							title: data.title,
+		// 							description: data.description,
+		// 							imageUrl: data.imageUrl,
+		// 							creator: data.creator,
+		// 							podcast: true,
+		// 							itunes_id: data.itunes_id,
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// });
 		// const user = auth.validateRequest(request);
 		//TODO: user interaction
 		// await db.user.update({
@@ -61,16 +65,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		//         id: loc
 		//     }
 		// })
-		// await db.rssFeed.create({
-		// 	data: {
-		// 		feedUrl: data.feedUrl,
-		// 		title: data.title,
-		// 		description: data.description,
-		// 		imageUrl: data.imageUrl,
-		// 		creator: data.creator,
-		// 		podcast: true,
-		// 	},
-		// });
+		await db.rssFeed.create({
+			data: {
+				feedUrl: data.feedUrl,
+				title: data.title,
+				description: data.description,
+				imageUrl: data.imageUrl,
+				creator: data.creator,
+				podcast: true,
+				users: {
+					connect: {
+						id: user.user_id,
+					},
+				},
+			},
+		});
 		return new Response(undefined, { status: 200 });
 	} catch (e) {
 		console.error(e);
