@@ -20,6 +20,9 @@ export const GET: RequestHandler = async ({ request, url: Url }) => {
 				},
 			},
 		});
+		if (!userData) {
+			throw error(400, 'User not found');
+		}
 		console.log({ userData });
 		return json(userData);
 	} catch {
