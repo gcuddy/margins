@@ -11,5 +11,6 @@ export const User = z.object({
 export type User = z.infer<typeof User>;
 
 export const user = writable<z.infer<typeof User>>();
+export const user_data_dirty = writable(false);
 
 export type UserStoreType = typeof user | Readable<User>;

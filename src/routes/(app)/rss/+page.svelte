@@ -22,7 +22,8 @@
 	import { writable } from 'svelte/store';
 	import Header from '$lib/components/layout/Header.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { user_data_dirty } from '$lib/stores/user';
 
 	export let data: PageData;
 	$: console.log({ data });
@@ -85,7 +86,10 @@
 						formAction: '/rss',
 						placeholder: 'Enter RSS feed URL',
 						name: 'url',
+						invalidate: '/api/fetch_user_data',
 						done: async ({ response }) => {
+							user_data_dirty.set(true);
+							await invalidate('/api/fetch_user_data');
 							modals.close();
 							await goto(response.headers.get('Location'));
 						},

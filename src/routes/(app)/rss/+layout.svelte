@@ -12,7 +12,10 @@
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { currentFeedList } from './+page.svelte';
-
+	import type { LayoutData } from './$types';
+	export let data: LayoutData;
+	$: user = data.user;
+	$: ({ feeds } = $user);
 	let pending_sync = false;
 	let sync_id: string;
 	onMount(async () => {
@@ -35,5 +38,6 @@
 </script>
 
 <div class="flex flex-col overflow-hidden">
+	<!-- {feeds} -->
 	<slot />
 </div>
