@@ -8,6 +8,9 @@ import { getJsonFromRequest } from '$lib/utils';
 import Parser from 'rss-parser';
 import { buildItem, isXml, linkSelectors, resolveUrl } from './_rss-utils';
 import parse from 'node-html-parser';
+import { buildRssFeed } from '$lib/rss/parser';
+import { user } from '$lib/stores/user';
+import { auth } from '$lib/lucia';
 
 // export const load: PageServerLoad = async () => {
 // 	const feeds = await db.rssFeed.findMany({
@@ -77,27 +80,31 @@ async function findFeed(url: string): Promise<{
 	}
 }
 
-export const POST: Action = async ({ request }) => {
+export const POST: Action = async ({ request, locals }) => {
 	const json = await getJsonFromRequest(request);
 	try {
 		// This assumes we're getting a *single* url
+		const user = await auth.validateAccessToken(
+			locals.lucia.access_token,
+			locals.lucia.fingerprint_token
+		);
+
 		const url = zUrl.parse(json.url);
 		// TODO: build my own parser
 		const { xml, url: feedUrl } = await findFeed(url);
-		const parsedFeed = await parseFeed(xml);
-		console.log(`***This is the Parsed Feed***`, parsedFeed);
-		parsedFeed.items[0];
+		// const parsedFeed = await parseFeed(xml);
+		const builtFeed = await buildRssFeed({ xml, url: feedUrl });
 		const createdFeed = await db.rssFeed.create({
 			data: {
-				title: parsedFeed.title,
-				feedUrl,
-				link: parsedFeed.link,
-				description: parsedFeed.description,
-				imageUrl: parsedFeed.image?.url,
+				...builtFeed,
 				items: {
-					// TODO: there's some gotcha I'm missing in here, like parsing out enclosures. But this will do for now.
 					createMany: {
-						data: parsedFeed.items.map((item) => buildItem(parsedFeed.feedUrl || '', item)),
+						data: builtFeed.items,
+					},
+				},
+				users: {
+					connect: {
+						id: user.user_id,
 					},
 				},
 			},

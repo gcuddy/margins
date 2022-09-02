@@ -18,15 +18,14 @@
 	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	import { sortItemsFromFeeds } from '$lib/utils/rss';
 	import type { RssFeedItem } from '@prisma/client';
-	import { feedStore } from './_stores';
-	import type { PageData } from '../../../../.svelte-kit/types/src/routes/rss/$types';
+	import type { PageData } from './$types';
 	import { writable } from 'svelte/store';
 	import Header from '$lib/components/layout/Header.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 
 	export let data: PageData;
-	$: ({ feeds } = data.user);
-	feedStore.set(feeds);
+	$: user = data.user;
+	$: ({ feeds } = $user);
 	console.log({ feeds });
 	let pending_sync = false;
 	let sync_id: string;
@@ -79,11 +78,11 @@
 				on:click={() => {
 					// TODO: turn this into form so it can re-direct to JS-less page
 					console.log('click');
+					// TODO: proper invalidation
 					modals.open(UrlModal, {
 						formAction: '/rss',
 						placeholder: 'Enter RSS feed URL',
 						name: 'url',
-						invalidate: $page.url.pathname,
 					});
 				}}
 				variant="ghost">Add Feed</Button
@@ -96,20 +95,20 @@
 	<div class="col-span-3">
 		<ul>
 			<li
-				class="hidden h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:flex md:px-6"
+				class="flex h-10 flex-col justify-center truncate border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
 			>
 				<a href="/rss?filter=all">All</a>
 			</li>
 			<li
-				class="hidden h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:flex md:px-6"
+				class="flex h-10 flex-col justify-center truncate border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
 			>
 				<a href="/rss/unread">Unread</a>
 			</li>
 			{#each feeds as feed (feed.id)}
 				<li
-					class="flex h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
+					class="flex  h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
 				>
-					<a href="/rss/{feed.id}">{feed.title}</a>
+					<a class="truncate" href="/rss/{feed.id}">{feed.title}</a>
 				</li>
 			{/each}
 		</ul>

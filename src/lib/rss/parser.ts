@@ -11,6 +11,41 @@ const parser = new XMLParser({
 	attributeNamePrefix: '',
 });
 
+export async function buildRssFeed({ url, xml }: { url: string; xml?: string }) {
+	if (!xml) {
+		xml = await fetch(url).then((res) => res.text());
+	}
+	const parsedXml = parser.parse(xml);
+	return {
+		title: parsedXml.rss.channel.title,
+		link: parsedXml.rss.channel.link,
+		description: await stripEmptyTags(parsedXml.rss.channel.description),
+		imageUrl: parsedXml.rss.channel.image?.url || '',
+		feedUrl: url,
+		items: await Promise.all(
+			parsedXml.rss.channel.item.map(async (item) => buildFeedItem(item, url))
+		),
+	};
+}
+
+export async function buildFeedItem(item: any, feedUrl: string) {
+	const date = dayjs(item.pubDate).format('ll');
+	const { link, title } = item;
+	const image = item.enclosure?.type === 'image/jpeg' ? item.enclosure.url : '';
+	const description = await stripEmptyTags(item.description);
+	return {
+		title,
+		enclosure: item.enclosure,
+		description,
+		content: item['content:encoded'] || description,
+		link,
+		image,
+		guid: item.guid?.['#text'],
+		creator: item['dc:creator'],
+		uuid: buildId({ guid: item.guid?.['#text'], link, feedUrl }),
+	};
+}
+
 export async function buildPodcast(url: string) {
 	const xml = parser.parse(await fetch(url).then((res) => res.text()));
 	if (xml.rss?.['xmlns:itunes'] !== 'http://www.itunes.com/dtds/podcast-1.0.dtd') {
@@ -38,7 +73,7 @@ function convertToSeconds(duration) {
 
 export function buildId({
 	guid,
-	enclosure: { url },
+	enclosure,
 	link,
 	feedUrl,
 }: {
@@ -52,7 +87,7 @@ export function buildId({
 	const parts: string[] = [];
 	parts.push(feedUrl);
 	parts.push(guid || '');
-	parts.push(url || link || '');
+	parts.push(enclosure?.url || link || '');
 	return getUuidByString(parts.join(''));
 }
 

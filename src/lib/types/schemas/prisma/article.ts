@@ -25,4 +25,5 @@ export const ArticleModel = z.object({
   position: z.number().int(),
   trash: z.boolean(),
   location: z.string(),
+  userId: z.string().nullish(),
 })

@@ -3,7 +3,7 @@ export type Error = ({
 	data,
 	form,
 	response,
-	error
+	error,
 }: {
 	data: FormData;
 	form: HTMLFormElement;
@@ -14,7 +14,7 @@ export type Pending = ({ data, form }: { data: FormData; form: HTMLFormElement }
 export type Result = ({
 	data,
 	form,
-	response
+	response,
 }: {
 	data: FormData;
 	response: Response;
@@ -30,13 +30,15 @@ export function enhance(
 		error,
 		result,
 		invalidate,
-		goto
+		goto,
+		headers,
 	}: {
 		pending?: Pending;
 		error?: Error;
 		result?: Result;
 		invalidate?: Parameters<typeof inv>[0];
 		goto?: boolean;
+		headers?: Headers;
 	} = {}
 ): { destroy: () => void } {
 	let current_token: unknown;
@@ -49,11 +51,10 @@ export function enhance(
 		if (pending) pending({ data, form });
 
 		try {
+			headers.set('accept', 'application/json');
 			const options: RequestInit = {
 				method: form.method,
-				headers: {
-					accept: 'application/json'
-				}
+				headers,
 			};
 			const url = new URL(form.action);
 
@@ -115,6 +116,6 @@ export function enhance(
 	return {
 		destroy() {
 			form.removeEventListener('submit', handle_submit);
-		}
+		},
 	};
 }

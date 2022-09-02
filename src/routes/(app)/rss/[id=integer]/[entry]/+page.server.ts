@@ -5,11 +5,11 @@ export const load: PageServerLoad = async ({ params }) => {
 	const id = parseInt(params.entry);
 	const item = await db.rssFeedItem.findUnique({
 		where: {
-			id
+			id,
 		},
 		include: {
-			RssFeed: true
-		}
+			RssFeed: true,
+		},
 	});
 	// if (!item?.content && item?.link) {
 	// 	// fetch content
@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	// 	});
 	// }
 	return {
-		item
+		item,
 	};
 };
 
@@ -36,11 +36,11 @@ export const PATCH: Action = async ({ params, request }) => {
 		const json = await getJsonFromRequest(request);
 		await db.rssFeedItem.update({
 			where: {
-				id
+				id,
 			},
 			data: {
-				...json
-			}
+				...json,
+			},
 		});
 	} catch (e) {
 		console.error(e);

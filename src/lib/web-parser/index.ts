@@ -8,7 +8,7 @@ import {
 	IS_LINK,
 	IS_SRCSET,
 	KEEP_SELECTORS,
-	STRIP_OUTPUT_TAGS
+	STRIP_OUTPUT_TAGS,
 } from './constants';
 import { scoreNodes } from './scoring';
 import {
@@ -17,7 +17,7 @@ import {
 	scoreCommas,
 	normalizeSpaces,
 	absolutizeSet,
-	printRawHTMLTag
+	printRawHTMLTag,
 } from './utils';
 
 import * as CustomExtractors from './extractors';
@@ -89,7 +89,7 @@ export const POSITIVE_SCORE_HINTS = [
 	'story',
 	'text',
 	'[-_]copy', // usatoday
-	'\\Bcopy'
+	'\\Bcopy',
 ];
 // The above list, joined into a matching regular expression
 export const POSITIVE_SCORE_RE = new RegExp(POSITIVE_SCORE_HINTS.join('|'), 'i');
@@ -150,7 +150,7 @@ export const NEGATIVE_SCORE_HINTS = [
 	'summary',
 	'tags',
 	'tools',
-	'widget'
+	'widget',
 ];
 // The above list, joined into a matching regular expression
 export const NEGATIVE_SCORE_RE = new RegExp(NEGATIVE_SCORE_HINTS.join('|'), 'i');
@@ -170,7 +170,7 @@ export const NON_TOP_CANDIDATE_TAGS = [
 	'input',
 	'img',
 	'link',
-	'meta'
+	'meta',
 ];
 
 export const NON_TOP_CANDIDATE_TAGS_RE = new RegExp(`^(${NON_TOP_CANDIDATE_TAGS.join('|')})$`, 'i');
@@ -247,7 +247,7 @@ const Extractor: IExtractor = {
 			'dcterm:title',
 			'title',
 			'weibo:article:title',
-			'weibo:webpage:title'
+			'weibo:webpage:title',
 		],
 		selectors: [
 			'.hentry .entry-title',
@@ -270,14 +270,14 @@ const Extractor: IExtractor = {
 			'h2.article',
 			'h1',
 			'html head title',
-			'title'
-		]
+			'title',
+		],
 	},
 	author: {
 		meta: [
 			'author',
 			'og:author',
-			'citation_author'
+			'citation_author',
 			// TODO: below are meta tags I want to check, but not till I check the selectors. As a sort of fallback. Maybe I should add one more key...
 			// 'dc:creator',
 			// 'dcterm:creator',
@@ -292,13 +292,13 @@ const Extractor: IExtractor = {
 				'dcterm:creator',
 				'twitter:creator',
 				'weibo:article:user_id',
-				'weibo:webpage:user_id'
-			]
-		}
+				'weibo:webpage:user_id',
+			],
+		},
 	},
 	date_published: {
 		meta: ['article:published_time', 'date', 'dc:date', 'dcterm:date'],
-		selectors: [['time[itemprop="datePublished"]', 'datetime']]
+		selectors: [['time[itemprop="datePublished"]', 'datetime']],
 	},
 	lead_image_url: {
 		meta: [
@@ -308,9 +308,9 @@ const Extractor: IExtractor = {
 			'image',
 			'image_src',
 			'weibo:article:image',
-			'weibo:webpage:image'
+			'weibo:webpage:image',
 		],
-		selectors: []
+		selectors: [],
 	},
 	dek: {
 		meta: [
@@ -320,9 +320,9 @@ const Extractor: IExtractor = {
 			'og:description',
 			'description',
 			'weibo:article:description',
-			'weibo:webpage:description'
+			'weibo:webpage:description',
 		],
-		selectors: []
+		selectors: [],
 	},
 	excerpt: {
 		meta: [
@@ -332,13 +332,13 @@ const Extractor: IExtractor = {
 			'og:description',
 			'description',
 			'weibo:article:description',
-			'weibo:webpage:description'
-		]
+			'weibo:webpage:description',
+		],
 	},
 	siteName: {
-		meta: ['og:site_name']
+		meta: ['og:site_name'],
 	},
-	disableJSONLD: false
+	disableJSONLD: false,
 };
 // TODO: add extend
 
@@ -347,7 +347,7 @@ const ExtractorToMetadata = {
 	date_published: 'date',
 	lead_image_url: 'image',
 	dek: 'description',
-	excerpt: 'description'
+	excerpt: 'description',
 } as const;
 
 type Entries<T> = {
@@ -365,7 +365,7 @@ export class Parser {
 		image: '',
 		url: '',
 		date: '',
-		siteName: ''
+		siteName: '',
 	};
 	extractor: IExtractor;
 	nodeScoreMap: Map<HTMLElement, number> = new Map();
@@ -421,7 +421,7 @@ export class Parser {
 			content: content.innerHTML,
 			...this.metadata,
 			wordCount: content.innerText.split(' ').length,
-			textContent: content.innerText
+			textContent: content.innerText,
 		};
 	}
 
@@ -443,7 +443,7 @@ export class Parser {
 			image: ['lead_image_url'],
 			date: ['date_published'],
 			author: ['author'],
-			siteName: ['siteName']
+			siteName: ['siteName'],
 		} as const;
 		console.log({ metadata: this.metadata });
 		type MetadataToExtractorKeys = keyof typeof metadataToExtractorHash;
@@ -462,7 +462,7 @@ export class Parser {
 						);
 						this.metadata[metaKey] = this.scrapeMetaTags(metaEls, extractor.meta || []);
 						console.log({
-							metaKey: this.metadata[metaKey]
+							metaKey: this.metadata[metaKey],
 						});
 						if (this.metadata[metaKey]) return;
 						this.metadata[metaKey] = this.extractFromSelectors(
@@ -657,7 +657,6 @@ export class Parser {
 		// add ones that score high enough to a wrapper div that will hold our content
 		let index = 0;
 		for (const siblingNode of siblingNodes) {
-			console.log(`first siblingNode: ${siblingNode.rawText}`);
 			index++; // <- this is a ONE-BASED index, not zero-based (matches with length)
 			// taken from mercury parser
 			let siblingCandidate: HTMLElement | undefined = undefined;

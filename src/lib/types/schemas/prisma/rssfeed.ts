@@ -11,6 +11,6 @@ export const RssFeedModel = z.object({
   imageUrl: z.string().nullish(),
   podcast: z.boolean(),
   creator: z.string().nullish(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 })

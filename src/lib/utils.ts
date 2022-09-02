@@ -334,7 +334,7 @@ export async function postAnnotation(annotation: z.infer<typeof AnnotationSchema
 
 export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
 	const id = syncStore.addItem();
-	const res = await fetch('/favorites.json', {
+	const res = await fetch('/api/favorites.json', {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -346,7 +346,7 @@ export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
 }
 export async function deleteFavorite(data: { id: number }) {
 	const id = syncStore.addItem();
-	const res = await fetch('/favorites.json', {
+	const res = await fetch('/api/favorites.json', {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',

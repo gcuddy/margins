@@ -7,11 +7,18 @@ export async function stripTags(html: string) {
 
 export async function stripEmptyTags(html: string) {
 	const parsed = parse(html);
-	// loop through all children and remove those with empty textcontent
-	for (const child of parsed.childNodes) {
-		if (child.textContent?.trim() === '') {
-			child.remove();
+	parsed.querySelectorAll('*:not(hr)').forEach((node) => {
+		if (!node.textContent.trim()) {
+			node.remove();
 		}
-	}
+	});
+	// loop through all children and remove those with empty textcontent
+	// for (const child of parsed.childNodes) {
+	//     // if child has no text content, remove it
+	//     // unless it's a hr
+	// 	if (child.textContent?.trim() === '') {
+	// 		child.remove();
+	// 	}
+	// }
 	return parsed.innerHTML;
 }

@@ -9,8 +9,7 @@
 	import ProseWrapper from '$lib/components/ProseWrapper.svelte';
 	import { notifications } from '$lib/stores/notifications';
 	import { formatDate, formatDuration } from '$lib/utils/dates';
-
-	import type { PageData } from '.svelte-kit/types/src/routes/rss/podcasts/[itunes_id=integer]/$types';
+	import type { PageData } from './$types';
 	import { Transition } from '@rgossiaux/svelte-headlessui';
 	import dayjs from 'dayjs';
 	import duration from 'dayjs/plugin/duration';
@@ -18,10 +17,12 @@
 	export let data: PageData;
 	$: ({ title, imageUrl: image, description, feedUrl: url, items, creator, id } = data.podcast);
 	$: console.log({ data });
-	let existing = false;
+	$: user = data.user;
+	$: existing = $user.feeds.some((f) => f.podcast && Number(f.itunes_id) === Number(id));
+	console.log({ existing });
 	let show_description_modal = false;
 	let pending_subscribe = false;
-	let subscribed = !!existing;
+	let subscribed = existing;
 </script>
 
 <svelte:head>
@@ -79,6 +80,17 @@
 						console.log(error);
 					}}
 					done={() => {
+						$user.feeds = [
+							...$user.feeds,
+							{
+								itunes_id: id,
+								title,
+								imageUrl: image,
+								description,
+								feedUrl: url,
+								podcast: true,
+							},
+						];
 						pending_subscribe = false;
 						subscribed = true;
 						notifications.notify({

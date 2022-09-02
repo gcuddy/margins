@@ -4,8 +4,10 @@
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import { podcastPlayer } from '$lib/components/PodcastPlayer.svelte';
-	import type { PageData } from '../../../../../.svelte-kit/types/src/routes/rss/podcasts/$types';
+	import type { PageData } from './$types';
 	export let data: PageData;
+	$: console.log({ data });
+	$: user = data.user;
 </script>
 
 <Header>
@@ -20,7 +22,7 @@
 </Header>
 
 <ul class="flex flex-col divide-y overflow-auto px-4 dark:divide-gray-700">
-	{#each data.podcasts as podcast}
+	{#each $user.feeds?.filter((f) => f.podcast) || [] as podcast}
 		<li class="py-2" tabindex="-1">
 			<a
 				class="flex h-16 items-center space-x-6 rounded p-2 dark:focus-visible:bg-gray-800 dark:active:bg-gray-800"

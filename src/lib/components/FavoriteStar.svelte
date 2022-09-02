@@ -32,7 +32,7 @@
 				favorite_id = undefined;
 			}
 		}
-		await invalidate('/favorites.json');
+		await invalidate('/api/favorites.json');
 	}}
 >
 	<Icon

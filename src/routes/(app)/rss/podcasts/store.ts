@@ -24,3 +24,5 @@ export async function fetchBooksStore(fetch) {
 	// 	return readable(arrayToDict(fetchedBooks));
 	// }
 }
+
+export const podcast_search_results = writable([]);

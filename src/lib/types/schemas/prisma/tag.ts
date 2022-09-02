@@ -14,4 +14,5 @@ export const TagModel = z.object({
   bookmarkId: z.number().int().nullish(),
   rssFeedItemId: z.string().nullish(),
   viewOptions: jsonSchema,
+  userId: z.string(),
 })

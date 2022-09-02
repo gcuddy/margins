@@ -88,7 +88,7 @@
 >
 	<a class="flex items-center md:pl-0" data-sveltekit-prefetch href={back}
 		><Icon name="arrow" direction="w" />
-		<span class="sr-only">Back to home</span></a
+		<span class="sr-only">Go back</span></a
 	>
 	<div
 		class=" flex -translate-y-24 transform-gpu items-center opacity-0 transition-all {$mainElScroll.y >

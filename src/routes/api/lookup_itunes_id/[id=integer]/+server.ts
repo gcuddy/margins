@@ -10,6 +10,7 @@ export const GET: RequestHandler = async ({ request, params }) => {
 		return new Response('not a podcast', { status: 400 });
 	}
 	const { feedUrl, artworkUrl100, artistName, collectionName, releaseDate } = data;
+	console.log('got itunes id');
 	return json(data, {
 		headers: {
 			// cache for one day (that's what itunes does)

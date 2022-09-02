@@ -13,7 +13,7 @@
 	let saved = false;
 
 	import RssItem from './RSSItem.svelte';
-	import type { PageData } from '../../../../../../.svelte-kit/types/src/routes/rss/[id=integer]/[entry]/$types';
+	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { currentFeedList } from '../../+page.svelte';
 	import { goto, invalidate, prefetch, prefetchRoutes } from '$app/navigation';
@@ -21,7 +21,8 @@
 	import { onMount } from 'svelte';
 	import MarkAsReadButton from './MarkAsReadButton.svelte';
 	export let data: PageData;
-	$: ({ item } = data);
+	$: ({ user, item } = data);
+	// $user.feeds.find(f => f.id === Number($page.params.id))
 	$: console.log({ data });
 	$: if (!$currentFeedList) {
 		// fetch feed and put it in there

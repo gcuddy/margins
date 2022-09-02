@@ -9,6 +9,7 @@
 	export let invalidate: Parameters<typeof Invalidate>[0] = action;
 	// optionally specify notification (shortcut for doing it via done)
 	export let method: 'get' | 'post' | 'put' | 'delete' | 'patch' = 'get';
+	export let headers: Headers | undefined = undefined;
 	let method_override = '';
 	$: if (method !== 'get' && method !== 'post') {
 		method_override = '?_method=' + method;
@@ -31,7 +32,7 @@
 	<form
 		bind:this={el}
 		on:submit|preventDefault
-		use:enhance={{ pending, error, invalidate, result: done, goto }}
+		use:enhance={{ pending, error, invalidate, result: done, goto, headers }}
 		{method}
 		action="{action}{method_override}"
 		class="{classOverride} {className}"

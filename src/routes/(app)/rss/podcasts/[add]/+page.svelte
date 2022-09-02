@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	// TODO: Progressively enhance this
 	import debounce from 'lodash.debounce';
 	let url = 'https://itunes.apple.com/search?media=podcast';
@@ -8,7 +8,12 @@
 		url = url.toString() + `&term=${encodeURIComponent(value)}`;
 		// 		promise = fetch(url);
 		const res = await fetch(url);
-		promise = res.text().then((t) => JSON.parse(t));
+		promise = res.text().then((t) => {
+			const results = JSON.parse(t);
+			$podcast_search_results = results;
+			console.log({ $podcast_search_results });
+			return results;
+		});
 	}
 	const debouncedSearch = debounce(search, 500);
 	$: if (value) {
@@ -19,6 +24,8 @@
 
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	import Combobox from '$lib/components/helpers/Combobox.svelte';
+	import { page } from '$app/stores';
+	import { podcast_search_results } from '../store';
 
 	async function parseUrl(url) {
 		console.log({ url });
