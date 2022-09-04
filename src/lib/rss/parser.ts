@@ -17,7 +17,7 @@ export async function buildRssFeed({ url, xml }: { url: string; xml?: string }) 
 	}
 	//todo: json feed
 	const parsedXml = parser.parse(xml);
-	const data = parsedXml.rss.channel || parsedXml.feed;
+	const data = parsedXml.rss?.channel || parsedXml.feed;
 	return {
 		title: data.title,
 		link: data.link.href || data.link,
