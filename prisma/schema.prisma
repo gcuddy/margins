@@ -45,11 +45,11 @@ model Article {
     siteName       String?
     colorHash      String?
     date           DateTime
-    image          String
+    image          String       @db.Text
     wordCount      Int
     starred        Boolean      @default(false)
     css            String?
-    description    String?      @db.TinyText
+    description    String?      @db.Text // This shouldn't be that long, but we'll use Text to make sure
     wiki           String?
     classification String?
     pdf            Boolean?
@@ -214,39 +214,39 @@ model RssItemInteraction {
     userId    String
     user      User        @relation(fields: [userId], references: [id])
 
+    @@unique([userId, itemUuid])
     @@index([userId, itemUuid])
 }
 
 model RssFeedItem {
-    id             Int        @id @default(autoincrement())
-    uuid           String     @unique
-    title          String?    @db.Text
-    contentSnippet String?    @db.Text
-    summary        String?    @db.Text
+    id             Int                  @id @default(autoincrement())
+    uuid           String               @unique
+    title          String?              @db.Text
+    contentSnippet String?              @db.Text
+    summary        String?              @db.Text
     // use this going forward
-    description    String?    @db.Text
-    is_read        Boolean    @default(false)
-    starred        Boolean    @default(false)
-    podcast        Boolean    @default(false)
+    description    String?              @db.Text
+    is_read        Boolean              @default(false)
+    starred        Boolean              @default(false)
+    podcast        Boolean              @default(false)
     duration       Int?
-    played         Boolean    @default(false)
-    image          String?    @db.Text
+    played         Boolean              @default(false)
+    image          String?              @db.Text
     link           String?
     guid           String?
-    pubDate        DateTime?
+    pubDate        DateTime? // @zod.custom(z.string())
     creator        String?
     author         String?
-    content        String?    @db.Text
-    isoDate        DateTime?
+    content        String?              @db.Text
+    isoDate        DateTime? // @zod.custom(z.string())
     // categories     String[]
-    createdAt      DateTime   @default(now())
-    updatedAt      DateTime   @updatedAt
+    createdAt      DateTime             @default(now()) // @zod.custom(z.string())
+    updatedAt      DateTime             @updatedAt // @zod.custom(z.string())
     rssFeedId      Int
-    RssFeed        RssFeed    @relation(fields: [rssFeedId], references: [id])
+    interactions   RssItemInteraction[]
+    feed           RssFeed              @relation(fields: [rssFeedId], references: [id])
     enclosure      Json?
     Enclosure      Enclosure?
-
-    interactions RssItemInteraction[]
 }
 
 model Enclosure {

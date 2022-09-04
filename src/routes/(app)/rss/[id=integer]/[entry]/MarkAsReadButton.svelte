@@ -5,45 +5,14 @@
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { notifications } from '$lib/stores/notifications';
-	onMount(markRead);
-	async function markRead() {
-		if (item.is_read) return;
-		// optimistic update
-		item.is_read = true;
-		const res = await fetch(`/api/mark_item_as_read`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				id: item.id,
-			}),
-		});
-		if (!res.ok) {
-			item.is_read = false;
-			notifications.notify({
-				type: 'error',
-				message: 'Check your connection',
-			});
-		}
-	}
-	let og_id = item.id;
-	$: if (item.id !== og_id) {
-		item.id = og_id;
-		item.is_read && markRead();
-	}
-
-	// when uuid changes, if item is not read, mark as read
-
 	async function toggleRead() {
 		item.is_read = !item.is_read;
-		const res = await fetch(`/api/mark_item_as_read`, {
+		const res = await fetch(`/rss/${item.rssFeedId}/${item.uuid}/mark_as_read`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
-				id: item.id,
 				unread: !item.is_read,
 			}),
 		});

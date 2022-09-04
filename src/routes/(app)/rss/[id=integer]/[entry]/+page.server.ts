@@ -1,34 +1,22 @@
 import type { PageServerLoad, Action } from './$types';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
-export const load: PageServerLoad = async ({ params }) => {
-	const id = parseInt(params.entry);
-	const item = await db.rssFeedItem.findUnique({
-		where: {
-			id,
-		},
-		include: {
-			RssFeed: true,
-		},
-	});
-	// if (!item?.content && item?.link) {
-	// 	// fetch content
-	// 	// TODO
-	// 	console.log(`Full content not found for id ${id}, let me try and fetch it.`);
-	// 	const { content } = await _parse(item?.link);
-	// 	await db.rssFeedItem.update({
-	// 		where: {
-	// 			id
-	// 		},
-	// 		data: {
-	// 			content
-	// 		}
-	// 	});
-	// }
-	return {
-		item,
-	};
-};
+// export const load: PageServerLoad = async ({ params, parent }) => {
+// 	const id = parseInt(params.entry);
+// 	const data = await parent();
+// 	const item = await db.rssFeedItem.findUnique({
+// 		where: {
+// 			id,
+// 		},
+// 		include: {
+// 			feed: true,
+// 		},
+// 	});
+// 	return {
+// 		item,
+// 		...data,
+// 	};
+// };
 
 export const PATCH: Action = async ({ params, request }) => {
 	try {

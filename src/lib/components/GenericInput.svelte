@@ -10,6 +10,7 @@
 	export let value: string | number = type === 'text' ? '' : 0;
 	export let min: number | undefined = undefined;
 	export let max: number | undefined = undefined;
+	export let autocomplete: string | undefined = undefined;
 </script>
 
 {#if type === 'text'}
@@ -21,12 +22,13 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="text"
-		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0 
+		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
   {className}"
 		{placeholder}
+		{autocomplete}
 		bind:value
 	/>
 {:else if type === 'number'}
@@ -38,12 +40,13 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="number"
-		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0 
+		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
   {className}"
 		{placeholder}
+		{autocomplete}
 		{min}
 		{max}
 		bind:value
@@ -57,12 +60,13 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="password"
-		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0 
+		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
   {className}"
 		{placeholder}
+		{autocomplete}
 		{min}
 		{max}
 		bind:value

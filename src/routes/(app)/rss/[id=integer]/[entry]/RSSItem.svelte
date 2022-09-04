@@ -78,15 +78,14 @@
 		>
 			<slot name="header">
 				<div class="flex w-full justify-between">
-					<a data-sveltekit-prefetch class="flex items-center" href="/rss/{item.RssFeed.id}"
-						><SmallPlus class="text-gray-500 dark:text-gray-400">{item?.RssFeed.title}</SmallPlus
-						></a
+					<a data-sveltekit-prefetch class="flex items-center" href="/rss/{item.feed.id}"
+						><SmallPlus class="text-gray-500 dark:text-gray-400">{item?.feed.title}</SmallPlus></a
 					>
 					<div>
 						<img
 							alt=""
 							class="h-8 w-8 rounded-lg object-cover"
-							src={item.RssFeed.imageUrl || `https://icon.horse/icon/?uri=${item.RssFeed.link}`}
+							src={item.feed.imageUrl || `https://icon.horse/icon/?uri=${item.feed.link}`}
 						/>
 					</div>
 				</div>

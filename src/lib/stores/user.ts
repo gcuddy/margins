@@ -1,16 +1,60 @@
-import { ArticleModel, FavoriteModel, RssFeedModel } from '$lib/types/schemas/prisma';
+import {
+	ArticleModel,
+	FavoriteModel,
+	RssFeedItemModel,
+	RssFeedModel,
+} from '$lib/types/schemas/prisma';
 import { writable, type Readable } from 'svelte/store';
 import { z } from 'zod';
 
 export const User = z.object({
 	username: z.string(),
 	feeds: RssFeedModel.array(),
+	// todo: for storing cursor, should we store it itself or should it just be the last item in the array?
+	feedItems: RssFeedItemModel.array(),
 	favorites: FavoriteModel.array(),
 	articles: ArticleModel.array(),
 });
 export type User = z.infer<typeof User>;
 
-export const user = writable<z.infer<typeof User>>();
+function createUserStore() {
+	const { subscribe, set, update } = writable<User>();
+	const updateData = async (
+		data: 'articles' | 'feeds' | 'favorites',
+		{ access_token }: { access_token: string }
+	) => {
+		//todo: args
+		const res = await fetch(`/api/fetch_user_data?data=${data}`, {
+			headers: {
+				Authorization: `Bearer ${access_token}`,
+			},
+		});
+		user_data_dirty.set(false);
+		if (res.ok) {
+			const fetchedData = await res.json();
+			console.log({ fetchedData });
+			update((user) => {
+				if (user) {
+					return {
+						...user,
+						[data]: fetchedData[data],
+					};
+				}
+			});
+		}
+		if (!res.ok) {
+			console.log({ res });
+		}
+	};
+	return {
+		subscribe,
+		set,
+		update,
+		updateData,
+	};
+}
+
+export const user = createUserStore();
 export const user_data_dirty = writable(false);
 
 export type UserStoreType = typeof user | Readable<User>;

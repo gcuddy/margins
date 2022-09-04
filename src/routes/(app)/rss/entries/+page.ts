@@ -1,3 +1,5 @@
+import { browser } from '$app/environment';
+import { user } from '$lib/stores/user';
 import type { RssFeedItemModel } from '$lib/types/schemas/prisma';
 import type { z } from 'zod';
 import { currentList } from '../store';
@@ -10,11 +12,19 @@ export const load: PageLoad = async ({ fetch }) => {
 		console.log({ data });
 		// const items = RssFeedItemModel.array().parse(data);,
 		const { items, cursor } = data as { items: z.infer<typeof RssFeedItemModel>[]; cursor: number };
+		console.log({ items, cursor });
 		currentList.set({
-			href: '/rss/unread',
+			href: '/rss/entries',
 			items,
-			title: 'Unread',
+			title: 'All Entries',
 		});
+		// if (browser) {
+		// 	// is this safe to do?
+		// 	user.update((u) => {
+		// 		u.feedItems = items;
+		// 		return u;
+		// 	});
+		// }
 		return {
 			items,
 			cursor,

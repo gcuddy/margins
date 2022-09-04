@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			id,
 		},
 		include: {
-			RssFeed: true,
+			feed: true,
 		},
 	});
 	console.log({ episode });
