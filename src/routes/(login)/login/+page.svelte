@@ -31,6 +31,7 @@
 				bind:value={username}
 				placeholder=""
 				class="focus:ring-2"
+				autocomplete="username"
 			/>
 		</div>
 		<div>
@@ -41,6 +42,7 @@
 				bind:value={password}
 				placeholder=""
 				type="password"
+				autocomplete="current-password"
 				class="focus:ring-2"
 			/>
 		</div>
