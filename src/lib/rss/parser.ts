@@ -18,14 +18,17 @@ export async function buildRssFeed({ url, xml }: { url: string; xml?: string }) 
 	//todo: json feed
 	const parsedXml = parser.parse(xml);
 	const data = parsedXml.rss?.channel || parsedXml.feed;
+	const description = getText(data.description, data.subtitle);
 	return {
-		title: data.title,
-		link: data.link.href || data.link,
-		description: await stripEmptyTags(data.description),
-		imageUrl: data.image?.url || '',
+		title: data.title as string,
+		link: getLink(data.link, 'alternate') as string,
+		description: await stripEmptyTags(description),
+		imageUrl: (data.image?.url as string) || '',
 		feedUrl: url,
 		items: await Promise.all(
-			(data.item || data.entry).map(async (item) => buildFeedItem(item, url))
+			(data.item || data.entry).map(async (item) =>
+				buildFeedItem(item, url)
+			) as Prisma.RssFeedItemUncheckedCreateInput[]
 		),
 	};
 }
@@ -35,18 +38,38 @@ const getText = (...items: any) => {
 		if (typeof item === 'string') {
 			return item;
 		}
-		if (item['#text']) {
+		if (item?.['#text']) {
 			return item['#text'] as string;
 		}
 		if (Array.isArray(item)) {
-			return item.map((i) => getText(i)).join(', ');
+			return item.map((i) => getText(i)).join(', ') as string;
 		}
 	}
 	return '';
 };
-export async function buildFeedItem(item: any, feedUrl: string) {
+
+const getLink = (link: any, rel?: string) => {
+	if (typeof link === 'string') {
+		return link;
+	}
+	if (link?.href) {
+		return link.href;
+	}
+	if (Array.isArray(link)) {
+		if (rel) {
+			return link.find((l) => l.rel === rel)?.href || link[0].href;
+		} else {
+			return link[0]?.href;
+		}
+	}
+	return '';
+};
+export async function buildFeedItem(
+	item: any,
+	feedUrl: string
+): Promise<Prisma.RssFeedItemCreateWithoutFeedInput> {
 	const date = dayjs(item.pubDate).format('ll');
-	const { link, title } = item;
+	const { title } = item;
 	const image =
 		item.enclosure?.type === 'image/jpeg'
 			? item.enclosure.url
@@ -60,6 +83,8 @@ export async function buildFeedItem(item: any, feedUrl: string) {
 			item['itunes:summary']
 		)
 	);
+	const guid = getText(item.guid, item.id) || undefined;
+	const link = getLink(item.link);
 	return {
 		title: title?.toString(),
 		enclosure: item.enclosure,
@@ -69,10 +94,10 @@ export async function buildFeedItem(item: any, feedUrl: string) {
 		contentSnippet: (await stripTags(description)).slice(0, 200),
 		link,
 		image,
-		guid: item.guid?.['#text'],
+		guid,
 		// getContent(element, ["creator", "dc:creator", "author", "author.name"]
 		creator: getText(item['dc:creator'], item.creator, item.author, item.author?.name),
-		uuid: buildId({ guid: item.guid?.['#text'], link, feedUrl }),
+		uuid: buildId({ guid, link, feedUrl }),
 	};
 }
 

@@ -1,6 +1,5 @@
 // should this be json.ts,and then load function in index.svelte?
 import type { PageServerLoad, Action } from './$types';
-import { error } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { z } from 'zod';
 import { getJsonFromRequest } from '$lib/utils';
@@ -9,8 +8,8 @@ import Parser from 'rss-parser';
 import { buildItem, isXml, linkSelectors, resolveUrl } from './_rss-utils';
 import parse from 'node-html-parser';
 import { buildRssFeed } from '$lib/rss/parser';
-import { user } from '$lib/stores/user';
 import { auth } from '$lib/lucia';
+import normalizeUrl from 'normalize-url';
 
 // export const load: PageServerLoad = async () => {
 // 	const feeds = await db.rssFeed.findMany({
@@ -88,18 +87,41 @@ export const POST: Action = async ({ request, locals }) => {
 			locals.lucia.access_token,
 			locals.lucia.fingerprint_token
 		);
-
-		const url = zUrl.parse(json.url);
+		const url = normalizeUrl(json.url);
+		// vs...
+		// const url = zUrl.parse(json.url);
 		// TODO: build my own parser
 		const { xml, url: feedUrl } = await findFeed(url);
 		// const parsedFeed = await parseFeed(xml);
 		const builtFeed = await buildRssFeed({ xml, url: feedUrl });
-		const createdFeed = await db.rssFeed.create({
-			data: {
-				...builtFeed,
+		console.log({ builtFeed, items: builtFeed.items });
+		const createdFeed = await db.rssFeed.upsert({
+			where: {
+				feedUrl: builtFeed.feedUrl,
+			},
+			update: {
+				users: {
+					connect: {
+						id: user.user_id,
+					},
+				},
 				items: {
 					createMany: {
 						data: builtFeed.items,
+						skipDuplicates: true,
+					},
+				},
+			},
+			create: {
+				title: builtFeed.title,
+				link: builtFeed.link,
+				description: builtFeed.description,
+				imageUrl: builtFeed.imageUrl,
+				feedUrl: builtFeed.feedUrl,
+				items: {
+					createMany: {
+						data: builtFeed.items,
+						skipDuplicates: true,
 					},
 				},
 				users: {

@@ -6,6 +6,7 @@ export async function stripTags(html: string) {
 }
 
 export async function stripEmptyTags(html: string) {
+	if (!html) return '';
 	const parsed = parse(html);
 	parsed.querySelectorAll('*:not(hr)').forEach((node) => {
 		if (!node.textContent.trim()) {

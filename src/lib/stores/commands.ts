@@ -9,7 +9,7 @@ function createCommandStore() {
 	function add(command: Command, top = true) {
 		update((commands) => {
 			// only add if id is not already in the list
-			if (!commands.find((c) => c.id === command.id)) {
+			if (!commands?.find((c) => c.id === command.id)) {
 				if (top) {
 					return [command, ...commands];
 				} else {
@@ -24,7 +24,7 @@ function createCommandStore() {
 		subscribe,
 		set,
 		add,
-		update
+		update,
 	};
 }
 
@@ -43,7 +43,7 @@ function createSelectedStore() {
 		set,
 		inc: (max = 9) => update((n) => Math.min(n + 1, max)),
 		dec: () => update((n) => Math.max(n - 1, 0)),
-		reset: () => set(0)
+		reset: () => set(0),
 	};
 }
 
@@ -70,7 +70,7 @@ function createShowCommandPaletteStore() {
 		out: () => {
 			set(false);
 			cleanup();
-		}
+		},
 	};
 }
 

@@ -32,6 +32,7 @@ export function enhance(
 		invalidate,
 		goto,
 		headers,
+		check,
 	}: {
 		pending?: Pending;
 		error?: Error;
@@ -39,6 +40,7 @@ export function enhance(
 		invalidate?: Parameters<typeof inv>[0];
 		goto?: boolean;
 		headers?: Headers;
+		check?: ({ data, form }: { data: FormData; form: HTMLFormElement }) => boolean;
 	} = {}
 ): { destroy: () => void } {
 	let current_token: unknown;
@@ -48,6 +50,10 @@ export function enhance(
 
 		const data = new FormData(form);
 
+		if (check) {
+			const checkValid = check({ data, form });
+			if (!checkValid) return;
+		}
 		if (pending) pending({ data, form });
 
 		try {

@@ -54,14 +54,6 @@
 	onMount(() => {
 		content.focus();
 	});
-	$: if ($page.url.pathname === `/rss/${$page.params.id}/${$page.params.entry}` && container) {
-		console.log('scrolling in!');
-		tick().then(() => {
-			container.scrollIntoView({
-				behavior: 'smooth',
-			});
-		});
-	}
 </script>
 
 <!-- listen for j and k to navigate forward and back -->
@@ -102,7 +94,7 @@
 			<div class="flex items-center space-x-2">
 				<Button
 					as="a"
-					href="#rss-items-list"
+					href="/rss/{item.rssFeedId}"
 					variant="link"
 					className="flex items-center !px-1"
 					tooltip={{
@@ -111,6 +103,8 @@
 					on:click={() => {
 						$panes[1]?.scrollIntoView({
 							behavior: 'smooth',
+							// block: 'nearest',
+							// inline: 'start',
 						});
 					}}
 				>
