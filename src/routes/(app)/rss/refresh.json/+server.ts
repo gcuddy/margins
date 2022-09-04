@@ -4,6 +4,7 @@ import { getRefreshedFeeds } from '../_rss-utils';
 
 // can get pased in array of feed ids, or empty array for all
 // should this be a POST?
+// it should return unread items, at least
 export const GET: RequestHandler = async ({ request }) => {
 	console.log(`you hit the rss/refresh route`);
 	const updatedItems = await getRefreshedFeeds();

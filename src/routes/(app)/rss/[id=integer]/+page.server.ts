@@ -1,36 +1,36 @@
 import type { Action, PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
-export const load: PageServerLoad = async ({ params }) => {
-	const id = params.id;
-	const feed = await db.rssFeed.findFirst({
-		where: {
-			id: parseInt(id),
-		},
-		include: {
-			items: {
-				orderBy: {
-					pubDate: 'desc',
-				},
-				select: {
-					title: true,
-					id: true,
-					pubDate: true,
-					author: true,
-					rssFeedId: true,
-					is_read: true,
-					summary: true,
-					contentSnippet: true,
-				},
-			},
-			favorite: true,
-		},
-	});
-	console.log(`Found ${feed.title}`);
-	return {
-		feed,
-	};
-};
+// export const load: PageServerLoad = async ({ params }) => {
+// 	const id = params.id;
+// 	const feed = await db.rssFeed.findFirst({
+// 		where: {
+// 			id: parseInt(id),
+// 		},
+// 		include: {
+// 			items: {
+// 				orderBy: {
+// 					pubDate: 'desc',
+// 				},
+// 				select: {
+// 					title: true,
+// 					id: true,
+// 					pubDate: true,
+// 					author: true,
+// 					rssFeedId: true,
+// 					is_read: true,
+// 					summary: true,
+// 					contentSnippet: true,
+// 				},
+// 			},
+// 			favorite: true,
+// 		},
+// 	});
+// 	console.log(`Found ${feed.title}`);
+// 	return {
+// 		feed,
+// 	};
+// };
 
 export const PATCH: Action = async ({ request, params }) => {
 	const json = await getJsonFromRequest(request);
