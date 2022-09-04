@@ -110,7 +110,6 @@
 			dropTargetStyle: {},
 			zoneTabIndex: -1,
 		}}
-		use:autoAnimate={{ duration: 500 }}
 		on:consider={handleConsider}
 		on:finalize={handleFinalize}
 	>
@@ -132,7 +131,7 @@
 					}
 				}}
 			>
-				<!-- <a tabindex="-1" data-sveltekit-prefetch href="/{item.id}"
+				<!-- <a t abindex="-1" data-sveltekit-prefetch href="/{item.id}"
 									>{ -->
 				<div in:fade class="h-20  md:h-24">
 					<!-- <SavedItem
