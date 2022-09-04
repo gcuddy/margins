@@ -45,7 +45,7 @@
 		"lodash.debounce": "^4.0.8",
 		"lodash.isequal": "^4.5.0",
 		"node-html-parser": "^5.3.3",
-		"normalize-url": "^7.0.3",
+		"normalize-url": "^7.1.0",
 		"postcss": "^8.4.14",
 		"postcss-load-config": "^4.0.1",
 		"prettier": "^2.7.1",
