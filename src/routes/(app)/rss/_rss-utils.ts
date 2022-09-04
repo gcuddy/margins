@@ -40,8 +40,8 @@ export async function getFeeds() {
 		include: {
 			items: {
 				include: {
-					RssFeed: true,
-					// RssFeed: {
+					feed: true,
+					// feed: {
 					// 	select: {
 					// 		id: true,
 					// 		link: true,
@@ -56,7 +56,6 @@ export async function getFeeds() {
 }
 function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
 	if (value === null || value === undefined) return false;
-	const testDummy: TValue = value;
 	return true;
 }
 
