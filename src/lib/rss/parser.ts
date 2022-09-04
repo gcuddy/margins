@@ -15,35 +15,63 @@ export async function buildRssFeed({ url, xml }: { url: string; xml?: string }) 
 	if (!xml) {
 		xml = await fetch(url).then((res) => res.text());
 	}
+	//todo: json feed
 	const parsedXml = parser.parse(xml);
+	const data = parsedXml.rss.channel || parsedXml.feed;
 	return {
-		title: parsedXml.rss.channel.title,
-		link: parsedXml.rss.channel.link,
-		description: await stripEmptyTags(parsedXml.rss.channel.description),
-		imageUrl: parsedXml.rss.channel.image?.url || '',
+		title: data.title,
+		link: data.link.href || data.link,
+		description: await stripEmptyTags(data.description),
+		imageUrl: data.image?.url || '',
 		feedUrl: url,
 		items: await Promise.all(
-			parsedXml.rss.channel.item.map(async (item) => buildFeedItem(item, url))
+			(data.item || data.entry).map(async (item) => buildFeedItem(item, url))
 		),
 	};
 }
 
+const getText = (...items: any) => {
+	for (const item of items) {
+		if (typeof item === 'string') {
+			return item;
+		}
+		if (item['#text']) {
+			return item['#text'] as string;
+		}
+		if (Array.isArray(item)) {
+			return item.map((i) => getText(i)).join(', ');
+		}
+	}
+	return '';
+};
 export async function buildFeedItem(item: any, feedUrl: string) {
 	const date = dayjs(item.pubDate).format('ll');
 	const { link, title } = item;
-	const image = item.enclosure?.type === 'image/jpeg' ? item.enclosure.url : '';
-	const description = await stripEmptyTags(item.description);
+	const image =
+		item.enclosure?.type === 'image/jpeg'
+			? item.enclosure.url
+			: item['media:content']?.url || item['itunes:image']?.href || item['media:thumbnail']?.url;
+	const description = await stripEmptyTags(
+		getText(
+			item.description,
+			item.content,
+			item['content:encoded'],
+			item.summary,
+			item['itunes:summary']
+		)
+	);
 	return {
 		title: title?.toString(),
 		enclosure: item.enclosure,
-		pubDate: dayjs(item.pubDate).format(),
+		pubDate: dayjs(item.pubDate || item.published).format(),
 		description,
-		content: item['content:encoded'] || description,
+		content: item.content?.['#text'] || item['content:encoded'] || description,
 		contentSnippet: (await stripTags(description)).slice(0, 200),
 		link,
 		image,
 		guid: item.guid?.['#text'],
-		creator: item['dc:creator'],
+		// getContent(element, ["creator", "dc:creator", "author", "author.name"]
+		creator: getText(item['dc:creator'], item.creator, item.author, item.author?.name),
 		uuid: buildId({ guid: item.guid?.['#text'], link, feedUrl }),
 	};
 }
