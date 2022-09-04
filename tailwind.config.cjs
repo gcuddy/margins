@@ -87,12 +87,27 @@ const config = {
 						transform: 'translateY(0)',
 					},
 				},
+				shake: {
+					'10%, 90%': {
+						transform: 'translate3d(-2px, 0, 0)',
+					},
+					'20%, 80%': {
+						transform: 'translate3d(2px, 0, 0)',
+					},
+					'30%, 50%, 70%': {
+						transform: 'translate3d(-4px, 0, 0)',
+					},
+					'40%, 60%': {
+						transform: 'translate3d(4px, 0, 0)',
+					},
+				},
 			},
 			animation: {
 				'fade-in-bg': 'fade-in-bg 0.1s ease-in-out',
 				'saturate-pulse': 'saturate-pulse 0.5s ease-in-out',
 				'fly-in': 'fly-in 1s ease-out',
 				'fast-fly-in': 'fly-in 0.5s ease-out',
+				shake: 'shake 0.8s cubic-bezier(.36,.07,.19,.97)',
 			},
 			transitionDuration: {
 				quick: '0.15s',

@@ -3,7 +3,6 @@
 	import { notifications, type INotification } from '$lib/stores/notifications';
 	import { modals } from '$lib/stores/modals';
 	import { invalidate } from '$app/navigation';
-	import Spinner from '../Spinner.svelte';
 	import Icon from '../helpers/Icon.svelte';
 	import Form from '../Form.svelte';
 	import { page } from '$app/stores';
@@ -12,14 +11,17 @@
 	export let term = '';
 	export let placeholder = 'Enter URL...';
 	export let formAction = '/add';
+	export let showSpinner = false;
 	export let pending: Pending = async ({ form }) => {
-		modals.close(modalIndex);
+		showSpinner = true;
 		pending_notification = notifications.notify({
 			message: 'Adding article...',
 		});
 		console.log('pending');
 	};
 	export let done: Result = async ({ form, response }) => {
+		showSpinner = false;
+		modals.close(modalIndex);
 		notifications.remove(pending_notification);
 		await user.updateData('articles', { access_token: $page.data.lucia.access_token });
 		if (inv) {
@@ -55,9 +57,11 @@
 	let input: HTMLInputElement;
 	let pending_notification: string;
 	export let modalIndex: number;
+
+	let display_error = false;
 </script>
 
-<div class="w-full p-2">
+<div class="w-full p-2 {display_error ? 'animate-shake' : ''}">
 	<Form
 		action={formAction}
 		method="post"
@@ -65,6 +69,8 @@
 		{pending}
 		{done}
 		error={async ({ form }) => {
+			showSpinner = false;
+			display_error = true;
 			notifications.remove(pending_notification);
 			notifications.notify({ message: 'Error adding URL', type: 'error' });
 			// form.reset();
@@ -80,9 +86,12 @@
 				class="w-full border-0 bg-inherit focus:ring-0"
 				bind:this={input}
 				bind:value={term}
+				on:input={() => (display_error = false)}
 			/>
 			<div
-				class="absolute right-4 top-0 flex h-full flex-col justify-center opacity-0 transition-opacity"
+				class="absolute right-4 top-0 flex h-full flex-col justify-center opacity-0 transition-opacity {showSpinner
+					? 'opacity-100 animate-spin'
+					: ''}"
 			>
 				<Icon name="loading" className="h-5 w-5 text-primary-600" />
 			</div>
