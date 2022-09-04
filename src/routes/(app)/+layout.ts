@@ -8,7 +8,7 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 	const { lucia } = await parent();
 	if (!lucia) throw redirect(302, '/login');
 
-	console.log('running root +layout.ts');
+	console.log('running root +layout.ts', { lucia });
 	const dirty = get(user_data_dirty);
 	// If we already have a stored user, then don't fetch it again - we'll be using the store
 	if (browser && get(userStore) && !dirty) {
@@ -27,8 +27,8 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 	console.log('fetched data');
 	user_data_dirty.set(false);
 	if (!res.ok) {
-		// throw redirect(302, '/login');
 		// await signOut();
+		throw redirect(302, '/login');
 		// window.location.href = '/'
 		return {
 			user: readable({

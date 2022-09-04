@@ -29,6 +29,8 @@
 		tick().then(() => {
 			container.scrollIntoView({
 				behavior: 'smooth',
+				block: 'nearest',
+				inline: 'start',
 			});
 		});
 	}
@@ -50,6 +52,14 @@
 									: 'text-gray-900 dark:text-gray-100'
 							} md:px-6 ` + (active ? 'bg-gray-200 dark:bg-gray-800 ring-1' : '')}
 						href="/rss/{item.rssFeedId}/{item.uuid}"
+						on:click={async () => {
+							console.log($panes[2]);
+							await tick();
+							$panes[2]?.scrollIntoView({
+								behavior: 'smooth',
+								block: 'nearest',
+							});
+						}}
 					>
 						<h2 class="line-clamp-2 {!item.is_read ? 'font-bold' : 'font-normal'} ">
 							{item.title || '{no title}'}

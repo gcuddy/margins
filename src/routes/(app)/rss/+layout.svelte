@@ -41,6 +41,17 @@
 		// await invalidate('/rss');
 	});
 	let pending_notification: string;
+
+	$: if ($page.url.pathname === `/rss/${$page.params.id}/${$page.params.entry}`) {
+		console.log('scrolling in!');
+		tick().then(() => {
+			$panes[2]?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'nearest',
+				inline: 'start',
+			});
+		});
+	}
 </script>
 
 <Header>
@@ -138,6 +149,8 @@
 							await tick();
 							$panes[1]?.scrollIntoView({
 								behavior: 'smooth',
+								block: 'nearest',
+								inline: 'start',
 							});
 						}}
 						href="/rss/entries">All</a
@@ -151,6 +164,7 @@
 							await tick();
 							$panes[1]?.scrollIntoView({
 								behavior: 'smooth',
+								block: 'nearest',
 							});
 						}}
 						href="/rss/unread">Unread</a
@@ -165,6 +179,7 @@
 								await tick();
 								$panes[1]?.scrollIntoView({
 									behavior: 'smooth',
+									block: 'nearest',
 								});
 							}}
 							class="truncate"
