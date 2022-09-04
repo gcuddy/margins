@@ -59,7 +59,7 @@
 				item.tabIndex = -1;
 			}
 		});
-		console.log({ $navStore, child_elements });
+		// console.log({ $navStore, child_elements });
 		child_elements.forEach((item) => {
 			if (item) {
 				item.tabIndex = 0;
@@ -126,7 +126,7 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
-		console.log({ e });
+		// console.log({ e });
 		if (e.key === 'x') {
 			dispatch('select');
 		}
@@ -136,7 +136,7 @@
 			e.stopImmediatePropagation();
 		}
 	}
-	$: console.log({ index, el });
+	// $: console.log({ index, el });
 	$: $navStore.els[index] = el;
 </script>
 
