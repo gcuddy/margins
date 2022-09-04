@@ -6,7 +6,7 @@
 	$: console.log({ data });
 </script>
 
-<ul class="col-span-3 overflow-auto">
+<ul class="overflow-auto lg:col-span-3">
 	{#each items as item (item.id)}
 		<li>
 			<RssListItem {item} />

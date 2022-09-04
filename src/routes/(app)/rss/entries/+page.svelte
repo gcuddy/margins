@@ -3,6 +3,8 @@
 	import VirtualList from 'svelte-tiny-virtual-list';
 	import InfiniteLoading from 'svelte-infinite-loading';
 	import { stripTags } from '$lib/utils/sanitize';
+	import Muted from '$lib/components/atoms/Muted.svelte';
+	import RssListItem from '../RSSListItem.svelte';
 
 	let loading = false;
 	export let data: PageData;
@@ -31,18 +33,14 @@
 	}
 </script>
 
-<div bind:clientHeight={height} class="col-span-3 h-full overflow-auto">
+<div bind:clientHeight={height} class="h-full overflow-auto lg:col-span-3">
 	<VirtualList width="100%" {height} itemCount={data.items.length} itemSize={80}>
 		<div slot="header">
 			{data.items.length} items
 		</div>
 		<div slot="item" let:index let:style {style}>
 			{@const item = data.items[index]}
-			<div class="flex flex-col overflow-hidden">
-				<span><a href="/rss/{item.feed.id}/{item.uuid}">{item.title}</a></span>
-				<span>{item.feed.title}</span>
-				<!-- <span class="line-clamp-2">{description || contentSnippet}</span> -->
-			</div>
+			<RssListItem {item} />
 		</div>
 		<div slot="footer"><InfiniteLoading distance={200} on:infinite={infiniteHandler} /></div>
 	</VirtualList>

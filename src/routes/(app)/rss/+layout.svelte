@@ -16,6 +16,8 @@
 	import type { LayoutData } from './$types';
 	import { notifications } from '$lib/stores/notifications';
 	import { goto } from '$app/navigation';
+	import { panes } from './store';
+	import { tick } from 'svelte';
 	export let data: LayoutData;
 	$: user = data.user;
 	$: ({ feeds } = $user);
@@ -44,7 +46,7 @@
 <Header>
 	<DefaultHeader>
 		<div slot="start" class="flex items-center justify-between">
-			<SmallPlus>{$page.data.currentSubscriptionTitle || 'Feeds'}</SmallPlus>
+			<SmallPlus>{$page.data.currentList?.title || 'Feeds'}</SmallPlus>
 		</div>
 		<div slot="end" class="flex space-x-3">
 			{#if $page.data['feed_list']}
@@ -125,24 +127,49 @@
 
 <div class="flex flex-col overflow-hidden">
 	<!-- {feeds} -->
-	<div class="h-full grid-cols-12 overflow-auto lg:grid">
-		<div class="col-span-3">
+	<div class="flex h-full snap-x snap-mandatory grid-cols-3 overflow-auto lg:grid lg:grid-cols-12">
+		<div bind:this={$panes[0]} class="min-w-full snap-start lg:col-span-3">
 			<ul>
 				<li
 					class="flex h-10 flex-col justify-center truncate border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
 				>
-					<a href="/rss/entries">All</a>
+					<a
+						on:click={async () => {
+							await tick();
+							$panes[1]?.scrollIntoView({
+								behavior: 'smooth',
+							});
+						}}
+						href="/rss/entries">All</a
+					>
 				</li>
 				<li
 					class="flex h-10 flex-col justify-center truncate border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
 				>
-					<a href="/rss/unread">Unread</a>
+					<a
+						on:click={async () => {
+							await tick();
+							$panes[1]?.scrollIntoView({
+								behavior: 'smooth',
+							});
+						}}
+						href="/rss/unread">Unread</a
+					>
 				</li>
 				{#each feeds as feed (feed.id)}
 					<li
 						class="flex  h-10 flex-col justify-center border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
 					>
-						<a class="truncate" href="/rss/{feed.id}">{feed.title}</a>
+						<a
+							on:click={async () => {
+								await tick();
+								$panes[1]?.scrollIntoView({
+									behavior: 'smooth',
+								});
+							}}
+							class="truncate"
+							href="/rss/{feed.id}">{feed.title}</a
+						>
 					</li>
 				{/each}
 			</ul>
@@ -150,3 +177,13 @@
 		<slot />
 	</div>
 </div>
+
+<style>
+	div {
+		-ms-overflow-style: none; /* IE and Edge */
+		scrollbar-width: none; /* Firefox */
+	}
+	div::-webkit-scrollbar {
+		display: none; /* Chrome, Safari, Opera*/
+	}
+</style>

@@ -17,8 +17,9 @@
 	import { page } from '$app/stores';
 	import { goto, invalidate, prefetch, prefetchRoutes } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import MarkAsReadButton from './MarkAsReadButton.svelte';
+	import { panes } from '../../store';
 	export let data: PageData;
 	$: ({ user, item, currentList } = data);
 	$: console.log({ data });
@@ -27,15 +28,16 @@
 	// 	// fetch feed and put it in there
 	// }
 	let currentIndex = -1;
+	let container: HTMLElement;
 	$: {
-		currentIndex = currentList?.items.findIndex(($item) => $item.id === item.id);
+		currentIndex = $currentList?.items.findIndex(($item) => $item.id === item.id);
 		// if ($currentFeedList) {
 		// 	$currentFeedList.activeItem = item;
 		// }
 	}
-	$: nextItem = currentList?.items[currentIndex + 1] ? currentList.items[currentIndex + 1] : null;
-	$: previousItem = currentList?.items[currentIndex - 1]
-		? currentList.items[currentIndex - 1]
+	$: nextItem = $currentList?.items[currentIndex + 1] ? $currentList.items[currentIndex + 1] : null;
+	$: previousItem = $currentList?.items[currentIndex - 1]
+		? $currentList.items[currentIndex - 1]
 		: null;
 	// $: previousRoute = `/rss/${previousItem?.rssFeedId}/${previousItem?.id}`;
 	// $: nextRoute = `/rss/${nextItem?.rssFeedId}/${nextItem?.id}`;
@@ -52,6 +54,14 @@
 	onMount(() => {
 		content.focus();
 	});
+	$: if ($page.url.pathname === `/rss/${$page.params.id}/${$page.params.entry}` && container) {
+		console.log('scrolling in!');
+		tick().then(() => {
+			container.scrollIntoView({
+				behavior: 'smooth',
+			});
+		});
+	}
 </script>
 
 <!-- listen for j and k to navigate forward and back -->
@@ -60,28 +70,28 @@
 		if (e.key === 'j') {
 			// wish these were instantaneous
 			if (nextItem) {
-				goto(`/rss/${item.rssFeedid}/${nextItem.uuid}`, {
+				goto(`/rss/${item.rssFeedId}/${nextItem.uuid}`, {
 					keepfocus: true,
 					noscroll: false,
 				});
 			}
 		} else if (e.key === 'k') {
 			if (previousItem) {
-				goto(`/rss/${item.rssFeedid}/${previousItem.uuid}`, {
+				goto(`/rss/${item.rssFeedId}/${previousItem.uuid}`, {
 					keepfocus: true,
 					noscroll: false,
 				});
 			}
 		} else if (e.key === 'Escape') {
-			if (currentList.href) {
-				goto(currentList.href);
+			if ($currentList.href) {
+				goto($currentList.href);
 			}
 		}
 	}}
 />
 
 <!-- We turn off prefetch for the links because we're going to automatically prefetch those items -->
-<div class="col-span-6">
+<div class="col-span-6 min-w-full snap-start lg:w-auto" bind:this={$panes[2]} id="rss-items-entry">
 	<div
 		class=" flex flex-col overflow-y-auto ring-gray-500/50 dark:ring-gray-700/50 lg:m-3 lg:rounded-md lg:shadow-2xl lg:ring-1"
 	>
@@ -90,18 +100,24 @@
 			class="flex items-center justify-between border-b p-2 pl-12 dark:border-gray-700 dark:bg-gray-800 lg:pl-2"
 		>
 			<div class="flex items-center space-x-2">
-				<!-- {#if $currentFeedList}
 				<Button
 					as="a"
-					href={$currentFeedList.href}
+					href="#rss-items-list"
 					variant="link"
 					className="flex items-center !px-1"
 					tooltip={{
-						text: `Back to ${$currentFeedList.title}`,
+						text: `Go back`,
+					}}
+					on:click={() => {
+						$panes[1]?.scrollIntoView({
+							behavior: 'smooth',
+						});
 					}}
 				>
 					<Icon name="xSolid" className="h-4 w-4 fill-current" />
 				</Button>
+				<!-- {#if $currentFeedList}
+
 				<Button
 					as={previousItem ? 'a' : 'button'}
 					href={previousItem ? `/rss/${previousItem.rssFeedId}/${previousItem.id}` : undefined}

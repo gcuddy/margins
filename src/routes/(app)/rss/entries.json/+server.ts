@@ -1,14 +1,12 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { auth } from '$lib/lucia';
-export const GET: RequestHandler = async ({ url, locals }) => {
+export const GET: RequestHandler = async ({ url, locals, request }) => {
 	const cursor = url.searchParams.get('cursor');
 	const unread = url.searchParams.get('unread');
+	const have = url.searchParams.get('have')?.split(',') || [];
 	try {
-		const user = await auth.validateAccessToken(
-			locals.lucia.access_token,
-			locals.lucia.fingerprint_token
-		);
+		const user = await auth.validateRequestByCookie(request);
 		console.log({ user });
 		if (cursor) {
 			const items = await db.rssFeedItem.findMany({
@@ -31,6 +29,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 									},
 							  }
 							: undefined,
+					uuid: {
+						notIn: have,
+					},
 				},
 				take: 50,
 				cursor: {

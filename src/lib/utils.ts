@@ -2,7 +2,14 @@ import { browser } from '$app/environment';
 import type { ArticleInList, DomMeta } from './types';
 import { notifications, type INotification } from '$lib/stores/notifications';
 // import { finder } from '@medv/finder';
-import type { Article, Favorite, PodcastEpisode, Prisma } from '@prisma/client';
+import type {
+	Article,
+	Favorite,
+	PodcastEpisode,
+	Prisma,
+	RssFeed,
+	RssFeedItem,
+} from '@prisma/client';
 import { goto, invalidate } from '$app/navigation';
 import { z } from 'zod';
 import type { AnnotationSchema } from './types/schemas/Annotations';
@@ -12,6 +19,7 @@ import type { ViewOptions } from './types/schemas/View';
 import dayjs from 'dayjs';
 import type { AddToListSchema } from './types/schemas/List';
 import { Md5 } from 'ts-md5';
+import type { RssFeedItemModel } from './types/schemas/prisma';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -378,6 +386,31 @@ export function sortArticles<T>(articles: ArticleInList[], opts: ViewOptions) {
 			}
 			case 'manual': {
 				return b.position - a.position;
+			}
+			default:
+				return 0;
+		}
+	});
+}
+
+export function sortFeedItems<T>(items: z.infer<typeof RssFeedItemModel>[], opts: ViewOptions) {
+	const sortBy = opts.sort;
+	return [...items].sort((a, b) => {
+		switch (sortBy) {
+			case 'title':
+				return a.title.localeCompare(b.title);
+			case 'date': {
+				return dayjs(a.pubDate).isBefore(dayjs(b.pubDate)) ? 1 : -1;
+			}
+			case 'author': {
+				return a.author.localeCompare(b.author);
+			}
+			case 'createdAt': {
+				console.log({ a, b });
+				return dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1;
+			}
+			case 'updatedAt': {
+				return dayjs(a.updatedAt).isBefore(dayjs(b.updatedAt)) ? 1 : -1;
 			}
 			default:
 				return 0;

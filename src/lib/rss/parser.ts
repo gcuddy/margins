@@ -36,8 +36,10 @@ export async function buildFeedItem(item: any, feedUrl: string) {
 	return {
 		title: title?.toString(),
 		enclosure: item.enclosure,
+		pubDate: dayjs(item.pubDate).format(),
 		description,
 		content: item['content:encoded'] || description,
+		contentSnippet: (await stripTags(description)).slice(0, 200),
 		link,
 		image,
 		guid: item.guid?.['#text'],

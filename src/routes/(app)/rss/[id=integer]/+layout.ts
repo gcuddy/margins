@@ -1,13 +1,20 @@
 import { browser } from '$app/environment';
 import type { User } from '$lib/stores/user';
 import { user } from '$lib/stores/user';
-import { get } from 'svelte/store';
+import { get, readable } from 'svelte/store';
+import { currentList } from '../store';
 import type { LayoutLoad } from './$types';
-export const load: LayoutLoad = async ({ data, parent, params, fetch }) => {
+export const load: LayoutLoad = async ({ data, parent, params, fetch, url }) => {
 	// const { user } = await parent();
 	// vs importing?
 	let userStore: User;
-	// const { user } = await parent();
+	const d = await parent();
+	console.log({ d });
+	if (browser && get(currentList) && url.pathname !== `/rss/${params.id}`) {
+		return {
+			currentList,
+		};
+	}
 	if (browser) {
 		userStore = get(user);
 	}
@@ -31,14 +38,16 @@ export const load: LayoutLoad = async ({ data, parent, params, fetch }) => {
 			});
 			return u;
 		});
+		currentList.set({
+			href: `/rss/${params.id}`,
+			items,
+			title: feed?.title || 'Feed',
+		});
 		return {
 			items,
 			cursor: fetchedData.cursor,
 			feed,
-			currentList: {
-				items,
-				href: `/rss/${params.id}`,
-			},
+			currentList,
 		};
 	}
 	const [itemsInfo, feed] = await Promise.all([
@@ -49,5 +58,10 @@ export const load: LayoutLoad = async ({ data, parent, params, fetch }) => {
 		items: itemsInfo.items,
 		cursor: itemsInfo.cursor,
 		feed,
+		currentList: readable({
+			href: `/rss/${params.id}`,
+			items: itemsInfo.items,
+			title: feed?.title || 'Feed',
+		}),
 	};
 };

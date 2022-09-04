@@ -8,7 +8,7 @@
 	import dayjs from 'dayjs';
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	export let data: PageData;
-	$: ({ feed, items } = data);
+	$: ({ feed, items, currentList } = data);
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import Button from '$lib/components/Button.svelte';
@@ -21,12 +21,23 @@
 	import FeedTitleMenu from './FeedTitleMenu.svelte';
 	import { post } from '$lib/utils';
 	import { filteredItems } from '$lib/stores/filter';
+	import { tick } from 'svelte';
+	import { panes, sortedItems } from '../store';
+	let container: HTMLElement;
+	$: if ($page.url.pathname === `/rss/${$page.params.id}` && container) {
+		console.log('scrolling in!');
+		tick().then(() => {
+			container.scrollIntoView({
+				behavior: 'smooth',
+			});
+		});
+	}
 </script>
 
-<div class="col-span-3">
+<div class="min-w-full snap-start lg:col-span-3" bind:this={$panes[1]}>
 	<ul class="overflow-auto">
 		<KeyboardNav {items}>
-			{#each items as item, index (item.id)}
+			{#each $sortedItems as item, index (item.id)}
 				<li class="relative">
 					<!-- unread indicator -->
 					<KeyboardNavItem
