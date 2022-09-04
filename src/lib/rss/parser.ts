@@ -34,7 +34,7 @@ export async function buildFeedItem(item: any, feedUrl: string) {
 	const image = item.enclosure?.type === 'image/jpeg' ? item.enclosure.url : '';
 	const description = await stripEmptyTags(item.description);
 	return {
-		title: title.toString(),
+		title: title?.toString(),
 		enclosure: item.enclosure,
 		description,
 		content: item['content:encoded'] || description,
