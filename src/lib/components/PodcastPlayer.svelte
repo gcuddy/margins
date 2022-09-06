@@ -120,10 +120,13 @@
 			class="fixed bottom-0 right-0 w-full bg-amber-50/50 p-1 shadow-2xl ring-1 ring-black/5 backdrop-blur-md dark:bg-black sm:bottom-4 sm:right-4 sm:w-80 sm:rounded-lg sm:p-3"
 		>
 			<div class="w-full px-2 py-1">
-				<div class="flex items-center justify-between sm:flex-col sm:space-y-3">
+				<div
+					class="grid grid-cols-12 items-center justify-between sm:flex sm:flex-col sm:space-y-3"
+				>
 					<div
-						class="flex w-full shrink cursor-default items-center gap-4"
-						on:click={(e) => goto(`/rss/podcasts/+${$podcastPlayer.episode.id}`)}
+						class="col-span-9 flex w-full shrink cursor-default items-center gap-4"
+						on:click={(e) =>
+							goto(`/rss/podcasts/${$podcastPlayer.podcast.id}/${$podcastPlayer.episode.uuid}`)}
 					>
 						<img
 							src={$podcastPlayer.podcast?.image}
@@ -164,7 +167,7 @@
 							<Icon name="xSolid" className="h-3 w-3 sm:h-4 sm:w-4 fill-gray-500" />
 						</button>
 					</div>
-					<div class="hidden w-full flex-col sm:flex">
+					<div class=" hidden w-full flex-col sm:flex">
 						<input
 							type="range"
 							min={0}
@@ -181,7 +184,7 @@
 							</Muted>
 						</div>
 					</div>
-					<div class="flex shrink-0 items-center justify-between sm:w-full">
+					<div class="col-span-3 flex shrink-0 items-center justify-between sm:w-full">
 						<FakeSelect class="hidden sm:block" bind:value={$podcastPlayer.playbackRate}>
 							<option value={0.75}>.75x</option>
 							<option value={1}>1x</option>
