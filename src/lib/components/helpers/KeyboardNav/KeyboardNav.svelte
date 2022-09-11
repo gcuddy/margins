@@ -1,114 +1,160 @@
 <script lang="ts" context="module">
-	export interface NavState<T> {
-		els: HTMLElement[];
-		active: HTMLElement | null;
+	type OptionData = {
+		disabled: boolean;
+		domRef: HTMLElement | null;
+	};
+	export interface NavState {
+		// State
 		changeActiveOnHover: boolean;
-		is_enabled: boolean;
-		items: T[];
-		// you can pass in an array or writable array (used with bind:group, for example) which our store will update
-		selected_items?: Writable<(string | number)[]> | (string | number)[];
+		orientation: 'horizontal' | 'vertical';
+		disabled: boolean;
+		items: { id: string; dataRef: OptionData }[];
+		activeIndex: number | null;
+
+		goToOption(focus: Focus, id?: string): void;
+		registerOption(id: string, dataRef: OptionData): void;
+		unregisterOption(id: string): void;
+	}
+
+	const CONTEXT_NAME = 'keyboard_nav_store';
+
+	export function useKeyboardNavContext(component: string): Readable<NavState> {
+		let context: Writable<NavState> | undefined = getContext(CONTEXT_NAME);
+		if (context === undefined) {
+			throw new Error(`<${component} /> is missing a parent <KeyboardNav /> component.`);
+		}
+		return context;
 	}
 </script>
 
 <script lang="ts">
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
-	import { setContext } from 'svelte';
-	import { writable, type Writable } from 'svelte/store';
+	import { Keys } from '$lib/types/keyboard';
+	import { calculateActiveIndex, Focus } from '$lib/utils/calculate-active-index';
+	import { getContext, onMount, setContext } from 'svelte';
+	import { writable, type Readable, type Writable } from 'svelte/store';
 
-	export let opts: Partial<NavState> = {};
+	export let disabled = false;
+	export let changeActiveOnHover = false;
+	export let horizontal = false;
 
-	type T = $$Generic;
-	export let items: (T & {
-		id: string | number;
-	})[];
-	$: console.log({ items });
+	export let activeIndex: NavState['activeIndex'] = null;
+	let startingIndex = activeIndex;
+	let items: NavState['items'] = [];
+	$: orientation = (horizontal ? 'horizontal' : 'vertical') as NavState['orientation'];
 
-	const defaultOpts: NavState<T> = {
+	const api = writable<NavState>({
+		changeActiveOnHover,
+		disabled,
 		items,
-		els: [],
-		changeActiveOnHover: false,
-		active: null,
-		is_enabled: true
-	};
-	const navStore = writable<NavState<T>>({ ...defaultOpts, ...opts });
-	$: items, ($navStore.items = items);
-	setContext('navStore', navStore);
+		activeIndex,
+		orientation,
+		goToOption(focus: Focus, id?: string) {
+			if (disabled) return;
+			let nextActiveOptionIndex = calculateActiveIndex(
+				focus === Focus.Specific
+					? { focus: Focus.Specific, id: id! }
+					: { focus: focus as Exclude<Focus, Focus.Specific> },
+				{
+					resolveItems: () => items,
+					resolveActiveIndex: () => activeIndex,
+					resolveId: (option) => option.id,
+					resolveDisabled: (option) => option.dataRef.disabled,
+				}
+			);
+			console.log(`setting activeIndex to ${nextActiveOptionIndex}`);
+			activeIndex = nextActiveOptionIndex;
+		},
+		registerOption: (id: string, dataRef) => {
+			let currentActiveItem = activeIndex !== null ? items[activeIndex] : null;
 
+			// hm. copy and pasting but not sure at all about this.
+			let orderMap = Array.from(container.querySelectorAll('[id^="keyboard-nav-item-"]')!).reduce(
+				(lookup, element, index) => Object.assign(lookup, { [element.id]: index }),
+				{}
+			) as Record<string, number>;
+
+			let nextItems = [...items, { id, dataRef }];
+			nextItems.sort((a, z) => orderMap[a.id] - orderMap[z.id]);
+			items = nextItems;
+
+			// Maintain the correct item active
+			activeIndex = (() => {
+				// todo: something here with startingindex to keep it the same
+				if (currentActiveItem === null) return null;
+				return items.indexOf(currentActiveItem);
+			})();
+		},
+		unregisterOption: (id: string) => {
+			let nextItems = items.slice();
+			let currentActiveItem = activeIndex !== null ? nextItems[activeIndex] : null;
+			let idx = nextItems.findIndex((a) => a.id === id);
+			if (idx !== -1) nextItems.splice(idx, 1);
+			items = nextItems;
+			activeIndex = (() => {
+				if (idx === activeIndex) return null;
+				if (currentActiveItem === null) return null;
+
+				// If we removed the option before the actual active index, then it would be out of sync. To
+				// fix this, we will find the correct (new) index position.
+				return nextItems.indexOf(currentActiveItem);
+			})();
+		},
+	});
+	setContext(CONTEXT_NAME, api);
 	let container: HTMLElement | undefined;
+	$: api.update((obj) => {
+		return {
+			...obj,
+			items,
+			activeIndex,
+			disabled,
+			orientation,
+		};
+	});
 
-	const navigateForward = () => {
-		if (!$navStore.els.length) return;
-		if (!$navStore.active || !container?.contains($navStore.active)) {
-			// if there is no active element, set the first one as active
-			// or we'll be here if the element doesn't exist anymore
-			$navStore.els[0].focus();
-			$navStore.active = $navStore.els[0];
-			return;
-		}
-		const index = $navStore.els.indexOf($navStore.active);
-		if (index === -1) return;
-		const next = $navStore.els[index + 1];
-		if (next) {
-			next.focus();
-			$navStore.active = next;
-		}
-	};
-
-	const navigateBackward = () => {
-		if (!$navStore.els.length) return;
-		if (!$navStore.active || !container?.contains($navStore.active)) {
-			// if there is no active element, set the first one as active
-			// or we'll be here if the element doesn't exist anymore
-			$navStore.els[0].focus();
-			$navStore.active = $navStore.els[0];
-			return;
-		}
-		const index = $navStore.els.indexOf($navStore.active);
-		const prev = $navStore.els[index - 1];
-		if (prev) {
-			prev.focus();
-			$navStore.active = prev;
-		}
-	};
-
-	function handleKeydown(e: KeyboardEvent) {
-		console.log('keydown', e.key);
+	async function handleKeydown(event: KeyboardEvent) {
+		if (disabled) return;
 		if ($disableGlobalKeyboardShortcuts) return;
-		// if (e.key === 'Tab' && e.shiftKey) {
-		// 	e.preventDefault();
-		// 	navigateBackward();
-		// 	return;
-		// } else if (e.key === 'Tab') {
-		// 	e.preventDefault();
-		// 	navigateForward();
-		// 	return;
-		// }
-		switch (e.key) {
-			case 'k':
-			case 'ArrowUp':
-				e.preventDefault();
-				navigateBackward();
+
+		switch (event.key) {
+			// Ref: https://www.w3.org/TR/wai-aria-practices-1.2/#keyboard-interaction-12
+
+			case Keys.Enter:
 				break;
-			case 'j':
-			case 'ArrowDown':
-				e.preventDefault();
-				navigateForward();
-				break;
-			case 'Escape':
-				e.preventDefault();
-				break;
-			case 'Enter':
+
+			case $api.orientation === 'horizontal' ? Keys.ArrowRight : Keys.ArrowDown || 'j':
+				event.preventDefault();
+				event.stopPropagation();
+				return $api.goToOption(Focus.Next);
+
+			case $api.orientation === 'horizontal' ? Keys.ArrowLeft : Keys.ArrowUp || 'k':
+				event.preventDefault();
+				event.stopPropagation();
+				return $api.goToOption(Focus.Previous);
+
+			case Keys.Home:
+			case Keys.PageUp:
+				event.preventDefault();
+				event.stopPropagation();
+				return $api.goToOption(Focus.First);
+
+			case Keys.End:
+			case Keys.PageDown:
+				event.preventDefault();
+				event.stopPropagation();
+				return $api.goToOption(Focus.Last);
+
+			case Keys.Tab:
+				event.preventDefault();
+				event.stopPropagation();
+				//hm
 				break;
 		}
 	}
-	$: console.log({ $navStore });
-	$: $navStore.els = $navStore.els.filter((item) => item);
-
-	// when item length changes, reset
-	// $: $navStore.items.length, ($navStore.active = null);
 </script>
 
-<svelte:window on:keydown={$navStore.is_enabled ? handleKeydown : undefined} />
+<svelte:window on:keydown={handleKeydown} />
 
 <!-- Wrapper Item -->
 <div bind:this={container}>
