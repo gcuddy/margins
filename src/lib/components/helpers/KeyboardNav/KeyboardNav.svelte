@@ -42,7 +42,6 @@
 	let startingIndex = activeIndex;
 	let items: NavState['items'] = [];
 	$: orientation = (horizontal ? 'horizontal' : 'vertical') as NavState['orientation'];
-
 	const api = writable<NavState>({
 		changeActiveOnHover,
 		disabled,
@@ -80,7 +79,14 @@
 
 			// Maintain the correct item active
 			activeIndex = (() => {
-				// todo: something here with startingindex to keep it the same
+				if (items[startingIndex]) {
+					// this seems like an ugly way to do this, but maybe it works??
+					// probably missing some edge cases here — maybe virtual lists would be a bad case
+					// or if this does suddenly appear it seems like maybe not the best?
+					let _index = startingIndex;
+					startingIndex = null;
+					return _index;
+				}
 				if (currentActiveItem === null) return null;
 				return items.indexOf(currentActiveItem);
 			})();
@@ -123,12 +129,14 @@
 			case Keys.Enter:
 				break;
 
-			case $api.orientation === 'horizontal' ? Keys.ArrowRight : Keys.ArrowDown || 'j':
+			case $api.orientation === 'horizontal' ? Keys.ArrowRight : Keys.ArrowDown:
+			case $api.orientation === 'vertical' && 'j':
 				event.preventDefault();
 				event.stopPropagation();
 				return $api.goToOption(Focus.Next);
 
 			case $api.orientation === 'horizontal' ? Keys.ArrowLeft : Keys.ArrowUp || 'k':
+			case $api.orientation === 'vertical' && 'k':
 				event.preventDefault();
 				event.stopPropagation();
 				return $api.goToOption(Focus.Previous);
@@ -144,12 +152,6 @@
 				event.preventDefault();
 				event.stopPropagation();
 				return $api.goToOption(Focus.Last);
-
-			case Keys.Tab:
-				event.preventDefault();
-				event.stopPropagation();
-				//hm
-				break;
 		}
 	}
 </script>
