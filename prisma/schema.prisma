@@ -181,25 +181,35 @@ model RssFeed {
     itunes_id String? @unique
     //
 
-    feedUrl       String        @unique
-    title         String?
-    link          String?
-    description   String?       @db.Text
-    lastBuildDate DateTime?
-    imageUrl      String?       @db.Text
-    items         RssFeedItem[]
-    tag           RssFeedTag[]
-    podcast       Boolean       @default(false)
-    creator       String?
-    createdAt     DateTime      @default(now()) /// @zod.custom(z.string())
-    updatedAt     DateTime      @updatedAt /// @zod.custom(z.string())
-    favorite      Favorite?
-    users         User[]
-
+    feedUrl        String           @unique
+    title          String?
+    link           String?
+    description    String?          @db.Text
+    lastBuildDate  DateTime?
+    imageUrl       String?          @db.Text
+    items          RssFeedItem[]
+    tag            RssFeedTag[]
+    podcast        Boolean          @default(false)
+    creator        String?
+    createdAt      DateTime         @default(now()) /// @zod.custom(z.string())
+    updatedAt      DateTime         @updatedAt /// @zod.custom(z.string())
+    favorite       Favorite?
+    // users         User[]
+    users          User[]
     // this should be unique per user
     // @@unique([feedUrl])
     PodcastEpisode PodcastEpisode[]
 }
+
+// model FeedOnUser {
+//     feed RssFeed @relation(fields: [feedId], references: [id])
+//     feedId Int
+//     user User @relation(fields: [userId], references: [id])
+//     userId String
+//     name String?
+
+//     @@id([feedId, userId])
+// }
 
 model RssItemInteraction {
     id        Int         @id @default(autoincrement())
@@ -244,9 +254,11 @@ model RssFeedItem {
     updatedAt      DateTime             @updatedAt // @zod.custom(z.string())
     rssFeedId      Int
     interactions   RssItemInteraction[]
-    feed           RssFeed              @relation(fields: [rssFeedId], references: [id])
-    enclosure      Json?
-    Enclosure      Enclosure?
+    feed           RssFeed              @relation(fields: [rssFeedId], references: [id], onDelete: Cascade)
+    enclosure      Enclosure?
+
+    @@index([rssFeedId])
+    @@index([createdAt, updatedAt, uuid, pubDate])
 }
 
 model Enclosure {
