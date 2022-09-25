@@ -32,6 +32,12 @@ datasource db {
     referentialIntegrity = "prisma"
 }
 
+enum MediaType {
+    TEXT
+    AUDIO
+    VIDEO
+}
+
 model Article {
     id             Int          @id @default(autoincrement())
     title          String       @db.Text
@@ -66,7 +72,7 @@ model Article {
     media          Media?
     tags           Tag[]
     favorite       Favorite?
-    user           User         @relation(fields: [userId], references: [id])
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId         String
 
     @@index([userId])
@@ -163,7 +169,8 @@ model DomMeta {
 model Annotation {
     id         Int       @id @default(autoincrement())
     target     Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
-    body       String? // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
+    body       String?   @db.Text
+    // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
     //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
     createdAt  DateTime  @default(now())
     updatedAt  DateTime  @updatedAt
@@ -220,9 +227,9 @@ model RssItemInteraction {
     played    Boolean     @default(false)
     timestamp Int?
     itemUuid  String
-    item      RssFeedItem @relation(fields: [itemUuid], references: [uuid])
+    item      RssFeedItem @relation(fields: [itemUuid], references: [uuid], onDelete: Cascade)
     userId    String
-    user      User        @relation(fields: [userId], references: [id])
+    user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([userId, itemUuid])
     @@index([userId, itemUuid])
@@ -231,25 +238,15 @@ model RssItemInteraction {
 model RssFeedItem {
     id             Int                  @id @default(autoincrement())
     uuid           String               @unique
-    title          String?              @db.Text
-    contentSnippet String?              @db.Text
-    summary        String?              @db.Text
-    // use this going forward
-    description    String?              @db.Text
-    is_read        Boolean              @default(false)
-    starred        Boolean              @default(false)
-    podcast        Boolean              @default(false)
     duration       Int?
-    played         Boolean              @default(false)
     image          String?              @db.Text
     link           String?
-    guid           String?
-    pubDate        DateTime? // @zod.custom(z.string())
-    creator        String?
     author         String?
-    content        String?              @db.Text
-    isoDate        DateTime? // @zod.custom(z.string())
+    title          String?              @db.TinyText
+    content        String?              @db.LongText
+    contentSnippet String?              @db.Text
     // categories     String[]
+    pubDate        DateTime? // @zod.custom(z.string())
     createdAt      DateTime             @default(now()) // @zod.custom(z.string())
     updatedAt      DateTime             @updatedAt // @zod.custom(z.string())
     rssFeedId      Int
@@ -257,17 +254,19 @@ model RssFeedItem {
     feed           RssFeed              @relation(fields: [rssFeedId], references: [id], onDelete: Cascade)
     enclosure      Enclosure?
 
-    @@index([rssFeedId])
-    @@index([createdAt, updatedAt, uuid, pubDate])
+    @@index([createdAt, updatedAt, uuid, pubDate, rssFeedId])
+    @@index([content(length: 100)])
+    @@fulltext([title, content])
 }
 
 model Enclosure {
-    id     Int         @id @default(autoincrement())
     url    String?
     length Int?
     type   String?
     feed   RssFeedItem @relation(fields: [feedId], references: [id])
     feedId Int         @unique
+
+    @@id([feedId])
 }
 
 model RssFeedTag {
@@ -287,7 +286,7 @@ model Tag {
     articles      Article[]
     favorite      Favorite?
     viewOptions   Json?
-    user          User      @relation(fields: [userId], references: [id])
+    user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId        String
 
     @@index([userId])
@@ -425,9 +424,9 @@ model User {
     // id        Int        @id @default(autoincrement())
     id                        String                      @id @unique
     username                  String                      @unique
+    hashed_password           String?
     // email            String         @unique
     identifier_token          String                      @unique
-    hashed_password           String?
     RefreshToken              RefreshToken[]
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
@@ -444,7 +443,7 @@ model User {
 
 model RefreshToken {
     id            Int    @id @unique @default(autoincrement())
-    refresh_token String @unique @db.VarChar(300)
+    refresh_token String @unique @db.VarChar(420)
     user          User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
     user_id       String
 
@@ -460,7 +459,7 @@ model Favorite {
     createdAt   DateTime   @default(now())
     updatedAt   DateTime   @updatedAt
     userId      String
-    user        User       @relation(fields: [userId], references: [id])
+    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     // count      Int      @default(1)
     // one of: article, tag, list, or smart list
     articleId   Int?       @unique
@@ -481,7 +480,7 @@ model PodcastEpisodeInteraction {
     createdAt DateTime       @default(now())
     updatedAt DateTime       @updatedAt
     userId    String
-    user      User           @relation(fields: [userId], references: [id])
+    user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
     episodeId Int            @unique
     episode   PodcastEpisode @relation(fields: [episodeId], references: [id])
     // hash = md5(itunes_id + guid || enclose.url)
