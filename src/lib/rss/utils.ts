@@ -2,33 +2,8 @@ import type { Article, Prisma, PrismaPromise, RssFeed, RssFeedItem } from '@pris
 import Parser from 'rss-parser';
 import { db } from '$lib/db';
 import dayjs from 'dayjs';
-import type { RssFeedWithItems } from '$lib/types/rss';
 import uuid from 'uuid-by-string';
 import normalizeUrl from 'normalize-url';
-
-// use rehype-parse instead of cheerio?
-// do i get cheerio 'for free' since my parser uses it?
-
-function getImageAndWordCountFromHtml(html: string) {
-	const $ = cheerio.load(html);
-	const image = $('img').attr('src') || '';
-	// get word count from cheerio root element - i get a type error here but not sure how to fix
-	// const wordCount: number = $?.text().split(' ').length || -1;
-	return { image, wordCount: -1 };
-}
-
-export function convertItemToArticle(item: Parser.Item): Prisma.ArticleCreateInput {
-	const { image, wordCount } = getImageAndWordCountFromHtml(item.content);
-	return {
-		title: item.title || '',
-		content: item.content || '',
-		author: item.creator || '',
-		url: item.guid || item.link || '',
-		date: item.isoDate || '',
-		image,
-		wordCount,
-	};
-}
 
 export async function getFeeds() {
 	const feeds = await db.rssFeed.findMany({

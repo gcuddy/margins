@@ -5,6 +5,7 @@ import type { DescribeTextQuoteOptions, Matcher, TextQuoteSelector } from './typ
 import { ownerDocument, toRange } from './utils';
 import { describeTextQuote as abstractDescribeTextQuote } from './abstract/text-quote';
 import { textQuoteSelectorMatcher as abstractTextQuoteSelectorMatcher } from './abstract/match-text-quote';
+import { finder } from '@medv/finder';
 
 /**
  * Returns a {@link TextQuoteSelector} that unambiguously describes the given
@@ -56,6 +57,41 @@ export async function describeTextQuote(
 	);
 }
 
+export async function describeRange(range: Range, scope?: Element) {
+	let start: Element | undefined;
+	let curr: Node;
+	curr = range.startContainer;
+	while (!start) {
+		if (curr instanceof Element) {
+			start = curr;
+		} else {
+			curr = curr.parentNode;
+		}
+	}
+	console.log(
+		finder(start, {
+			root: scope,
+		})
+	);
+	console.log(await describeTextQuote(range, start));
+	curr = range.endContainer;
+	let end: Element | undefined;
+	while (!end) {
+		if (curr instanceof Element) {
+			end = curr;
+		} else {
+			curr = curr.parentNode;
+		}
+	}
+	console.log(
+		finder(end, {
+			root: scope,
+		})
+	);
+	console.log(await describeTextQuote(range, end));
+	console.log(range.startContainer instanceof Element);
+	// finder(range.startContainer)
+}
 /**
  * Find occurrences in a text matching the given {@link
  * TextQuoteSelector}.

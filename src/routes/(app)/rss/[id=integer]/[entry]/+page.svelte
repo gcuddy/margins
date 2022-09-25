@@ -30,7 +30,7 @@
 	let currentIndex = -1;
 	let container: HTMLElement;
 	$: {
-		currentIndex = $currentList?.items.findIndex(($item) => $item.id === item.id);
+		currentIndex = $currentList?.items.findIndex(($item) => $item?.id === item?.id);
 		// if ($currentFeedList) {
 		// 	$currentFeedList.activeItem = item;
 		// }
@@ -99,13 +99,6 @@
 					className="flex items-center !px-1"
 					tooltip={{
 						text: `Go back`,
-					}}
-					on:click={() => {
-						$panes[1]?.scrollIntoView({
-							behavior: 'smooth',
-							// block: 'nearest',
-							// inline: 'start',
-						});
 					}}
 				>
 					<Icon name="xSolid" className="h-4 w-4 fill-current" />

@@ -18,6 +18,7 @@
 	import { goto } from '$app/navigation';
 	import { panes } from './store';
 	import { tick } from 'svelte';
+	import { json } from '@sveltejs/kit';
 	export let data: LayoutData;
 	$: user = data.user;
 	$: ({ feeds } = $user);
@@ -41,17 +42,6 @@
 		// await invalidate('/rss');
 	});
 	let pending_notification: string;
-
-	$: if ($page.url.pathname === `/rss/${$page.params.id}/${$page.params.entry}`) {
-		console.log('scrolling in!');
-		tick().then(() => {
-			$panes[2]?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'nearest',
-				inline: 'start',
-			});
-		});
-	}
 </script>
 
 <Header>
@@ -83,7 +73,11 @@
 				action="/rss/refresh.json"
 				invalidate="/rss"
 				pending={() => (sync_id = syncStore.addItem())}
-				done={() => syncStore.removeItem(sync_id)}
+				done={async ({ response }) => {
+					syncStore.removeItem(sync_id);
+					console.log({ response });
+					console.log('json', await response.json());
+				}}
 				className="hidden md:block"
 			>
 				<Button
@@ -136,10 +130,9 @@
 	</DefaultHeader>
 </Header>
 
-<div class="flex flex-col overflow-hidden">
-	<!-- {feeds} -->
-	<div class="flex h-full snap-x snap-mandatory grid-cols-3 overflow-auto lg:grid lg:grid-cols-12">
-		<div bind:this={$panes[0]} class="min-w-full snap-start lg:col-span-3">
+<!-- <div class="flex h-full flex-col overflow-hidden">
+	<div class="flex h-full snap-x snap-mandatory grid-cols-3 overflow-hidden ">
+		<div bind:this={$panes[0]} class="max-w-s shrink-0 snap-start overflow-auto lg:col-span-3">
 			<ul>
 				<li
 					class="flex h-10 flex-col justify-center truncate border-b border-gray-100 px-4 dark:border-gray-700 md:px-6"
@@ -189,9 +182,10 @@
 				{/each}
 			</ul>
 		</div>
-		<slot />
 	</div>
-</div>
+</div> -->
+
+<slot />
 
 <style>
 	div {

@@ -16,16 +16,11 @@ const RssFeedModel = z.object({
 	creator: z.string().nullish(),
 });
 export const POST: RequestHandler = async ({ request, locals }) => {
-	console.log({ locals });
-	// TODO: typing for locals
-	if (!locals.lucia) throw error(401, 'unauthorized');
 	try {
 		console.log({ locals });
-		const user = await auth.validateAccessToken(
-			locals.lucia.access_token,
-			locals.lucia.fingerprint_token
-		);
-		const { refresh_token } = locals.lucia;
+		const { user } = await auth.validateRequest(request);
+		console.log({ user });
+		// const { refresh_token } = locals.lucia;
 		const json = await getJsonFromRequest(request);
 		const data = RssFeedModel.parse(json);
 
@@ -72,6 +67,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				description: data.description,
 				imageUrl: data.imageUrl,
 				creator: data.creator,
+				itunes_id: data.itunes_id,
 				podcast: true,
 				users: {
 					connect: {

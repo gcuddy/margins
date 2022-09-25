@@ -1,12 +1,15 @@
 <script lang="ts" context="module">
 	export interface NavItem {
 		display: string;
-		href: string;
-		icon: IconName;
+		href?: string;
+		icon?: IconName;
 		iconClass?: string;
+		img?: string;
 		// defaults to active if path = href
 		active?: (path: string) => boolean;
-		items?: NavItem[];
+		items?: Readable<NavItem[]>;
+		collapsible?: boolean;
+		collapsed?: boolean;
 	}
 </script>
 
@@ -28,18 +31,19 @@
 	import { hideSidebar } from '$lib/stores/sidebar';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import { signOut } from 'lucia-sveltekit/client';
-	import type { UserStoreType } from '$lib/stores/user';
+	import { sidebarFeeds, type UserStoreType } from '$lib/stores/user';
+	import { readable, type Readable } from 'svelte/store';
 
 	export let user: UserStoreType;
 
 	export let favorites: FavoriteWithPayload[] = [];
-
-	const hardcodedNav: NavItem[] = [
+	let hardcodedNav: NavItem[];
+	hardcodedNav = [
 		{
 			display: 'Home',
 			href: '/all',
 			icon: 'home',
-			items: [
+			items: readable([
 				{
 					display: 'Inbox',
 					href: '/inbox',
@@ -55,13 +59,13 @@
 					href: '/later',
 					icon: 'calendar',
 				},
-			],
+			]),
 		},
 		{
 			display: 'Subscriptions',
 			href: '/rss',
 			icon: 'rss',
-			items: [
+			items: readable([
 				{
 					display: 'Unread',
 					href: '/rss/unread',
@@ -73,7 +77,14 @@
 					href: '/rss/podcasts',
 					icon: 'microphone',
 				},
-			],
+				{
+					display: 'Subscriptions',
+					icon: 'rss',
+					collapsible: true,
+					collapsed: true,
+					items: sidebarFeeds,
+				},
+			]),
 		},
 		{
 			display: 'Lists',
@@ -132,6 +143,7 @@
 	} else {
 		width = _width;
 	}
+	$: console.log({ $page });
 </script>
 
 {#if sidebarToggle}
@@ -188,7 +200,7 @@
 					],
 				]}
 			>
-				<span class="text-sm font-medium">{$user?.username}</span>
+				<span class="text-sm font-medium">{$page.data.lucia.user.username}</span>
 			</ContextMenu>
 			<div class="flex space-x-2">
 				<Sync />
@@ -222,7 +234,7 @@
 	<div class="flex flex-col space-y-8">
 		<div class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
 			{#each hardcodedNav as nav}
-				<SidebarItem {...nav} />
+				<SidebarItem {...nav} bind:collapsed={nav.collapsed} />
 			{/each}
 		</div>
 		{#if $user.favorites?.length}

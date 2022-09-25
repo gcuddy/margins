@@ -23,16 +23,13 @@ export const load: PageServerLoad = async ({ url }) => {
 export const POST: Action = async ({ request, locals }) => {
 	console.log({ locals });
 	// todo: handle image requests and such
-	const form = await request.formData();
-	const url = <string>form.get('url') || <string>form.get('text');
-	const title = <string>form.get('title');
-	const html = <string>form.get('html');
-	const contextUrl = <string | undefined>form.get('context-url');
 	try {
-		const user = await auth.validateAccessToken(
-			locals.lucia.access_token,
-			locals.lucia.fingerprint_token
-		);
+		const { user } = await auth.validateRequest(request);
+		const form = await request.formData();
+		const url = <string>form.get('url') || <string>form.get('text');
+		const title = <string>form.get('title');
+		const html = <string>form.get('html');
+		const contextUrl = <string | undefined>form.get('context-url');
 		// const user = await auth.validateRequest(request);
 		console.log({ user });
 		const article = await parse(url, html || undefined);

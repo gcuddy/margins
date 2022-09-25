@@ -4,7 +4,7 @@ import {
 	RssFeedItemModel,
 	RssFeedModel,
 } from '$lib/types/schemas/prisma';
-import { writable, type Readable } from 'svelte/store';
+import { derived, writable, type Readable } from 'svelte/store';
 import { z } from 'zod';
 
 export const User = z.object({
@@ -58,3 +58,18 @@ export const user = createUserStore();
 export const user_data_dirty = writable(false);
 
 export type UserStoreType = typeof user | Readable<User>;
+
+export const sidebarFeeds = derived(user, ($user) => {
+	if ($user?.feeds?.length) {
+		return $user.feeds.map((feed) => {
+			return {
+				display: feed.title,
+				href: `/rss/${feed.id}`,
+				img: feed.imageUrl
+					? feed.imageUrl
+					: `https://icon.horse/icon/?uri=${feed.link || feed.feedUrl}`,
+			};
+		});
+	}
+	return [];
+});

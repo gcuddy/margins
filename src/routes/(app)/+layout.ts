@@ -18,27 +18,28 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 		};
 	}
 
-	// Fetch the user, store it, return it
+	// // Fetch the user, store it, return it
 	const res = await fetch('/api/fetch_user_data', {
 		headers: {
 			Authorization: `Bearer ${lucia.access_token}`,
 		},
 	});
 	console.log('fetched data');
-	user_data_dirty.set(false);
-	if (!res.ok) {
-		// await signOut();
-		throw redirect(302, '/login');
-		// window.location.href = '/'
-		return {
-			user: readable({
-				username: '??',
-				feeds: [],
-				favorites: [],
-			}),
-		};
-	}
+	// user_data_dirty.set(false);
+	// if (!res.ok) {
+	// 	// await signOut();
+	// 	throw redirect(302, '/login');
+	// 	// window.location.href = '/'
+	// 	return {
+	// 		user: readable({
+	// 			username: '??',
+	// 			feeds: [],
+	// 			favorites: [],
+	// 		}),
+	// 	};
+	// }
 	const fetchedUser: User = await res.json();
+	console.log('fetched user', { fetchedUser });
 	if (browser) {
 		userStore.set(fetchedUser);
 		return {

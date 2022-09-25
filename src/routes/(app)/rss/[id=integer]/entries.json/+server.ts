@@ -1,7 +1,8 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { auth } from '$lib/lucia';
-export const GET: RequestHandler = async ({ url, locals, params }) => {
+import { request } from '@playwright/test';
+export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 	const cursor = url.searchParams.get('cursor');
 	const unread = url.searchParams.get('unread');
 	const have =
@@ -11,34 +12,34 @@ export const GET: RequestHandler = async ({ url, locals, params }) => {
 			.map((h) => Number(h)) || [];
 	const id = Number(params.id);
 	try {
-		const user = await auth.validateAccessToken(
-			locals.lucia.access_token,
-			locals.lucia.fingerprint_token
-		);
+		const user = await auth.validateRequestByCookie(request);
 		if (cursor) {
 			const items = await db.rssFeedItem.findMany({
 				where: {
 					feed: {
 						id,
 					},
-					NOT: {
-						id: {
-							in: have,
-						},
-					},
-					interactions:
-						unread === 'true'
-							? {
-									some: {
-										user: {
-											id: user['user_id'],
-										},
-										is_read: false,
-									},
-							  }
-							: undefined,
+					// NOT: {
+					// 	id: {
+					// 		in: have,
+					// 	},
+					// },
+					// interactions:
+					// 	unread === 'true'
+					// 		? {
+					// 				some: {
+					// 					user: {
+					// 						id: user['user_id'],
+					// 					},
+					// 					is_read: false,
+					// 				},
+					// 		  }
+					// 		: undefined,
 				},
 				take: 50,
+				orderBy: {
+					pubDate: 'desc',
+				},
 				cursor: {
 					id: Number(cursor),
 				},
@@ -68,24 +69,27 @@ export const GET: RequestHandler = async ({ url, locals, params }) => {
 					feed: {
 						id,
 					},
-					NOT: {
-						id: {
-							in: have,
-						},
-					},
-					interactions:
-						unread === 'true'
-							? {
-									some: {
-										user: {
-											id: user['user_id'],
-										},
-										is_read: false,
-									},
-							  }
-							: undefined,
+					// NOT: {
+					// 	id: {
+					// 		in: have,
+					// 	},
+					// },
+					// interactions:
+					// 	unread === 'true'
+					// 		? {
+					// 				some: {
+					// 					user: {
+					// 						id: user['user_id'],
+					// 					},
+					// 					is_read: false,
+					// 				},
+					// 		  }
+					// 		: undefined,
 				},
 				take: 50,
+				orderBy: {
+					pubDate: 'desc',
+				},
 				include: {
 					interactions: {
 						where: {

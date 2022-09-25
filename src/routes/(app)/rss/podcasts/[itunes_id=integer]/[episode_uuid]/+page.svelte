@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import Dot from '$lib/components/atoms/Dot.svelte';
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import { podcastPlayer } from '$lib/components/PodcastPlayer.svelte';
 	import { formatDate, formatDuration } from '$lib/utils/dates';
-	import type { PageData } from '../../../../../../../.svelte-kit/types/src/routes/rss/podcasts/[itunes_id=integer]/[episode_uuid]/$types';
+	import type { PageData } from './$types';
 	export let data: PageData;
 	$: episode = { ...data.item };
 	$: playing = !$podcastPlayer.paused && $podcastPlayer?.episode?.uuid === episode.uuid;
@@ -24,6 +25,14 @@
 		});
 	}
 </script>
+
+<svelte:window
+	on:keydown={async (e) => {
+		if (e.key === 'Escape') {
+			await goto('/rss/podcasts/' + data.podcast.id);
+		}
+	}}
+/>
 
 <!-- page idea taken from rssitem, i sohuld turn into component -->
 <div
@@ -56,7 +65,9 @@
 			/>
 			<div class="space-y-4 sm:space-y-8">
 				<div class="flex flex-col space-y-2 text-center sm:text-left">
-					<div class="flex space-x-2 text-xs uppercase tracking-tight">
+					<div
+						class="flex space-x-2 place-self-center text-xs uppercase tracking-tight sm:place-self-auto"
+					>
 						<Muted>{formatDate(episode.pubDate)}</Muted>
 						<Dot />
 						<Muted>{formatDuration(episode.duration, 'seconds')}</Muted>
@@ -64,10 +75,16 @@
 					<h1 class="text-2xl font-bold line-clamp-3">{episode.title}</h1>
 					<a class="text-xl" href="/rss/{data.podcast.id}">{data.podcast.title}</a>
 				</div>
-				<Button className="flex items-center space-x-2 text-lg py-4 px-3 mt-auto" on:click={play}>
-					<Icon name={playing ? 'pauseSolid' : 'playSolid'} />
-					<span>{playing ? 'Pause' : 'Play'}</span></Button
-				>
+				<div class="flex items-center justify-center gap-4 sm:justify-start">
+					<Button className="flex items-center space-x-2 text-lg py-4 px-3 mt-auto" on:click={play}>
+						<Icon name={playing ? 'pauseSolid' : 'playSolid'} />
+						<span>{playing ? 'Pause' : 'Play'}</span></Button
+					>
+					<Button className="flex items-center space-x-2 text-lg py-4 px-3 mt-auto" on:click={play}>
+						<Icon name="bookmarkSolid" />
+						<span>Save</span></Button
+					>
+				</div>
 			</div>
 		</div>
 		<div class="prose prose-stone max-w-prose pt-4 leading-normal dark:prose-invert">

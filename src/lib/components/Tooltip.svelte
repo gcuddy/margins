@@ -3,6 +3,7 @@
 	import mq from '$lib/stores/mq';
 	import { isTouchDevice } from '$lib/utils';
 	import { createEventDispatcher } from 'svelte';
+	import { backOut, elasticOut } from 'svelte/easing';
 
 	import { scale, fade } from 'svelte/transition';
 	export let top: number = 0;
@@ -45,15 +46,16 @@
 </script>
 
 <div
-	class="absolute z-10 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/5 dark:border dark:border-gray-800 dark:bg-black/95 dark:ring-black/25"
+	class="absolute z-10 overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5 dark:border dark:border-gray-800 dark:bg-black/95 dark:ring-black/25"
 	style="top: {top}px; left: {left}px; visibility: {visibility};"
 	bind:this={tooltip}
 	in:scale={{
 		start: 0.7,
-		duration: 150
+		duration: 300,
+		easing: backOut,
 	}}
 	out:fade={{
-		duration: 150
+		duration: 150,
 	}}
 	use:clickOutside={() => dispatch('clickOutside')}
 >

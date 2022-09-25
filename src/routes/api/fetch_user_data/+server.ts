@@ -32,6 +32,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 	}
 	try {
 		const user = await auth.validateRequest(request);
+		console.log({ user });
 		const userData = await db.user.findFirst({
 			where: {
 				id: user.user['user_id'],

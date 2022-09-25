@@ -10,7 +10,7 @@
 >
 	<!-- currently using pointerdown so we can beat the selection being cleared -->
 	<button
-		class="col-span-2 flex shrink-0 flex-col items-center rounded-md  p-1 transition hover:bg-black/5 dark:hover:bg-white/20"
+		class="col-span-2 flex shrink-0 flex-col items-center rounded-md  p-1 transition hover:bg-primary-600/10 dark:hover:bg-white/20"
 		on:pointerdown|preventDefault|stopPropagation={(e) => {
 			dispatch('highlight');
 		}}
@@ -18,7 +18,7 @@
 		{#if labels}<span class="text-xs">highlight</span>{/if}</button
 	>
 	<button
-		class="col-span-2 flex shrink-0 flex-col items-center rounded-md p-1 transition hover:bg-black/5 dark:hover:bg-white/20"
+		class="col-span-2 flex shrink-0 flex-col items-center rounded-md p-1 transition hover:bg-primary-600/10 dark:hover:bg-white/20"
 		on:pointerdown|preventDefault|stopPropagation={() => dispatch('annotate')}
 		><Icon name="annotation" />
 		{#if labels}<span class="text-xs">annotate</span>{/if}</button

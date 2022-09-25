@@ -1,7 +1,9 @@
 import { browser } from '$app/environment';
 import type { User } from '$lib/stores/user';
 import { user } from '$lib/stores/user';
-import { get, readable } from 'svelte/store';
+import { get, readable, writable } from 'svelte/store';
+import { set } from 'idb-keyval';
+
 import { currentList } from '../store';
 import type { LayoutLoad } from './$types';
 export const load: LayoutLoad = async ({ data, parent, params, fetch, url }) => {
@@ -10,6 +12,7 @@ export const load: LayoutLoad = async ({ data, parent, params, fetch, url }) => 
 	let userStore: User;
 	const d = await parent();
 	console.log({ d });
+
 	if (browser && get(currentList) && url.pathname !== `/rss/${params.id}`) {
 		return {
 			currentList,
@@ -23,26 +26,22 @@ export const load: LayoutLoad = async ({ data, parent, params, fetch, url }) => 
 		console.log({ userStore });
 		const feed = userStore?.feeds?.find((f) => f.id === Number(params.id));
 		let items = userStore?.feedItems?.filter((i) => i.id === Number(params.id)) || [];
-		// console.log({ items });
+		// // console.log({ items });
 		const res = await fetch(
 			`/rss/${params.id}/entries.json?have=${items.map((i) => i.id).join(',')}`
 		);
 		// console.log({ res });
 		const fetchedData = await res.json();
 		items = [...items, ...fetchedData.items];
-		user.update((u) => {
-			items.forEach((item) => {
-				// prevent duplicates
-				u.feedItems = u.feedItems?.filter((i) => i.id !== item.id);
-				u.feedItems?.push(...items);
-			});
-			return u;
-		});
-		currentList.set({
-			href: `/rss/${params.id}`,
-			items,
-			title: feed?.title || 'Feed',
-		});
+		// user.update((u) => {
+		// 	items.forEach((item) => {
+		// 		// prevent duplicates
+		// 		u.feedItems = u.feedItems?.filter((i) => i.id !== item.id);
+		// 		u.feedItems?.push(...items);
+		// 	});
+		// 	return u;
+		// });
+
 		return {
 			items,
 			cursor: fetchedData.cursor,
@@ -58,7 +57,7 @@ export const load: LayoutLoad = async ({ data, parent, params, fetch, url }) => 
 		items: itemsInfo.items,
 		cursor: itemsInfo.cursor,
 		feed,
-		currentList: readable({
+		currentList: writable({
 			href: `/rss/${params.id}`,
 			items: itemsInfo.items,
 			title: feed?.title || 'Feed',

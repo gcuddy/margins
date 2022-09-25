@@ -1,6 +1,13 @@
 import { writable } from 'svelte/store';
 import { z } from 'zod';
 
+interface BaseViewOptions {
+	sort: string;
+	properties: {
+		[key: string]: boolean;
+	};
+}
+
 export const ViewOptionsSchema = z.object({
 	sort: z.enum(['title', 'date', 'author', 'createdAt', 'updatedAt', 'manual']),
 	properties: z.object({
@@ -12,8 +19,8 @@ export const ViewOptionsSchema = z.object({
 		date: z.boolean(),
 		wordCount: z.boolean(),
 		readProgress: z.boolean(),
-		location: z.boolean()
-	})
+		location: z.boolean(),
+	}),
 });
 
 export type ViewOptions = z.infer<typeof ViewOptionsSchema>;
@@ -29,8 +36,8 @@ export const defaultViewOptions: ViewOptions = {
 		date: false,
 		wordCount: false,
 		readProgress: false,
-		location: false
-	}
+		location: false,
+	},
 };
 
 export function createCustomizeViewStore(options = defaultViewOptions) {
@@ -41,7 +48,7 @@ export function createCustomizeViewStore(options = defaultViewOptions) {
 		update,
 		reset: () => set(options),
 		softReset: () => set(options),
-		hardReset: () => set(defaultViewOptions)
+		hardReset: () => set(defaultViewOptions),
 	};
 }
 

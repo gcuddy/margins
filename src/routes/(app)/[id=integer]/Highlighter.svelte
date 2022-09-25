@@ -20,7 +20,7 @@
 	import { setUpLinkDragHandlers } from './_helpers';
 	import ProseWrapper from '$lib/components/ProseWrapper.svelte';
 	import { mainEl } from '$lib/stores/main';
-	import { createTextQuoteSelectorMatcher, describeTextQuote } from '$lib/annotator';
+	import { createTextQuoteSelectorMatcher, describeRange, describeTextQuote } from '$lib/annotator';
 	import type { TextQuoteSelector } from '$lib/annotator/types';
 	import { highlightText } from '$lib/annotator/highlighter';
 	import { notifications } from '$lib/stores/notifications';
@@ -501,6 +501,7 @@
 			on:highlight={async () => {
 				const userSelection = window.getSelection()?.getRangeAt(0);
 				console.log({ userSelection });
+				describeRange(userSelection, wrapper);
 				if (!userSelection || userSelection.collapsed) return;
 				const selector = await describeTextQuote(userSelection);
 				console.log({ selector });

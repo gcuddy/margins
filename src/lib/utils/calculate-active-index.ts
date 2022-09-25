@@ -20,7 +20,7 @@ export enum Focus {
 	Specific,
 
 	/** Focus no items at all. */
-	Nothing
+	Nothing,
 }
 
 export function calculateActiveIndex<TItem>(

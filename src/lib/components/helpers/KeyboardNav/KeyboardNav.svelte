@@ -157,7 +157,6 @@
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
-
 <!-- Wrapper Item -->
 <div bind:this={container}>
 	<slot />

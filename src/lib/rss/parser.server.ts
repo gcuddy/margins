@@ -4,31 +4,74 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import getUuidByString from 'uuid-by-string';
 dayjs.extend(localizedFormat);
-
+import parse from 'node-html-parser';
 import { XMLParser } from 'fast-xml-parser';
+import { isJson, isXml, linkSelectors, resolveUrl } from './utils';
+import { db } from '$lib/db';
+
 const parser = new XMLParser({
 	ignoreAttributes: false,
 	attributeNamePrefix: '',
 });
-
-export async function buildRssFeed({ url, xml }: { url: string; xml?: string }) {
-	if (!xml) {
-		xml = await fetch(url).then((res) => res.text());
-	}
-	//todo: json feed
+/**
+ * parse xml
+ * @param {string} xml
+ */
+function parseXml(xml) {
 	const parsedXml = parser.parse(xml);
 	const data = parsedXml.rss?.channel || parsedXml.feed;
+	return data;
+}
+/**
+ *
+ *
+ *
+ * @param url the url of the site to find the feed for
+ * @returns XML String of the feed
+ */
+export async function findFeed(url: string) {
+	const _url = new URL(url);
+	// console.log({ _url });
+	const response = await fetch(_url);
+	const body = await response.text();
+	const contentType = response.headers.get('content-type');
+	if ((contentType && isXml(contentType)) || body.trim().startsWith('<?xml')) {
+		return parseXml(body);
+	} else if (isJson(contentType)) {
+		return JSON.parse(body);
+	} else {
+		const root = parse(body);
+		const links = root.querySelectorAll(linkSelectors);
+		let href = '';
+		// const href = link?.attributes.href;
+		while (!href && links.length) {
+			const link = links.shift();
+			// (todo: support json)
+			if (link) {
+				href = link.attributes.href;
+			}
+		}
+		if (!href) {
+			throw Error('Could not find rss feed!');
+		}
+		href = resolveUrl(url, href);
+		return findFeed(href);
+	}
+}
+
+export async function buildRssFeed(data: any, url: string, existingUuids?: string[]) {
 	const description = getText(data.description, data.subtitle);
+	console.log(`attempting to build rss feed for ${url}`);
 	return {
 		title: data.title as string,
-		link: getLink(data.link, 'alternate') as string,
-		description: await stripEmptyTags(description),
+		link: data.home_page_url || (getLink(data.link, 'alternate', undefined) as string),
+		description: description ? await stripEmptyTags(description) : '',
 		imageUrl: (data.image?.url as string) || '',
-		feedUrl: url,
+		feedUrl: data.feed_url || url,
 		items: await Promise.all(
-			(data.item || data.entry).map(async (item) =>
-				buildFeedItem(item, url)
-			) as Prisma.RssFeedItemUncheckedCreateInput[]
+			(data.items || data.item || data.entry)
+				.slice(0, 400)
+				.map(async (item) => buildFeedItem(item, url)) as Prisma.RssFeedItemUncheckedCreateInput[]
 		),
 	};
 }
@@ -48,7 +91,7 @@ const getText = (...items: any) => {
 	return '';
 };
 
-const getLink = (link: any, rel?: string) => {
+const getLink = (link: any, ...rel: (string | undefined)[]) => {
 	if (typeof link === 'string') {
 		return link;
 	}
@@ -56,10 +99,15 @@ const getLink = (link: any, rel?: string) => {
 		return link.href;
 	}
 	if (Array.isArray(link)) {
-		if (rel) {
-			return link.find((l) => l.rel === rel)?.href || link[0].href;
+		if (rel.length) {
+			for (const option of rel) {
+				const _rel = link.find((l) => l.rel === option)?.href;
+				if (_rel) {
+					return _rel;
+				}
+			}
 		} else {
-			return link[0]?.href;
+			return link[0].href;
 		}
 	}
 	return '';
@@ -68,7 +116,6 @@ export async function buildFeedItem(
 	item: any,
 	feedUrl: string
 ): Promise<Prisma.RssFeedItemCreateWithoutFeedInput> {
-	const date = dayjs(item.pubDate).format('ll');
 	const { title } = item;
 	const image =
 		item.enclosure?.type === 'image/jpeg'
@@ -78,25 +125,24 @@ export async function buildFeedItem(
 		getText(
 			item.description,
 			item.content,
+			item.content_html,
 			item['content:encoded'],
 			item.summary,
 			item['itunes:summary']
 		)
 	);
 	const guid = getText(item.guid, item.id) || undefined;
-	const link = getLink(item.link);
+	const link = getLink(item.url) || getLink(item.link);
 	return {
-		title: title?.toString(),
-		enclosure: item.enclosure,
-		pubDate: dayjs(item.pubDate || item.published).format(),
-		description,
-		content: item.content?.['#text'] || item['content:encoded'] || description,
-		contentSnippet: (await stripTags(description)).slice(0, 200),
+		title: getText(title) as string,
+		// enclosure: item.enclosure,
+		pubDate: dayjs(item.date_published || item.pubDate || item.published || item.updated).format(),
+		content: item.content_html || item.content?.['#text'] || item['content:encoded'] || description,
+		contentSnippet: (await stripTags(description))?.slice(0, 200),
 		link,
 		image,
-		guid,
 		// getContent(element, ["creator", "dc:creator", "author", "author.name"]
-		creator: getText(item['dc:creator'], item.creator, item.author, item.author?.name),
+		author: getText(item['dc:creator'], item.creator, item.author, item.author?.name),
 		uuid: buildId({ guid, link, feedUrl }),
 	};
 }
@@ -161,4 +207,52 @@ export async function buildItem(item: any, feedUrl: string) {
 		podcast: true,
 		uuid: buildId({ guid: item.guid?.['#text'], enclosure: item.enclosure, link, feedUrl }),
 	};
+}
+
+export async function getRefreshedItems(user_id?: string) {
+	const feeds = await db.rssFeed.findMany({
+		where: {
+			users: user_id
+				? {
+						some: {
+							id: user_id,
+						},
+				  }
+				: undefined,
+			podcast: false,
+		},
+		include: {
+			items: true,
+		},
+	});
+	const updatedFeeds = await Promise.all(
+		feeds.map(async (f) => {
+			const data = await findFeed(f.feedUrl);
+			return buildRssFeed(data, f.feedUrl);
+		})
+	);
+	const transactions = feeds.map((feed, index) => {
+		return db.rssFeed.update({
+			where: {
+				id: feed.id,
+			},
+			data: {
+				items: {
+					createMany: {
+						skipDuplicates: true,
+						data: updatedFeeds[index].items,
+					},
+				},
+			},
+			include: {
+				items: true,
+			},
+		});
+	});
+	const newFeeds = await db.$transaction(transactions);
+	// return newFeedItems that are diff from updatedFeeds
+	const newItems = newFeeds.flatMap((feed) => feed.items);
+	const oldItems = feeds.flatMap((feed) => feed.items);
+	const newFeedItems = newItems.filter((item) => !oldItems.some((i) => i.uuid === item.uuid));
+	return newFeedItems;
 }

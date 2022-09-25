@@ -98,7 +98,7 @@
 
 <SelectActions {actions} bind:selected_items={selected_articles} on:update />
 
-<KeyboardNav items={$filteredItems}>
+<KeyboardNav>
 	<!-- filteR? -->
 	<!-- use:autoAnimate={{ duration: 500 }} -->
 	<div
@@ -131,7 +131,7 @@
 					}
 				}}
 			>
-				<!-- <a t abindex="-1" data-sveltekit-prefetch href="/{item.id}"
+				<!-- k<a t abindex="-1" data-sveltekit-prefetch href="/{item.id}"
 									>{ -->
 				<div in:fade class="h-20  md:h-24">
 					<!-- <SavedItem

@@ -1,5 +1,5 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { buildPodcast } from '$lib/rss/parser';
+import { buildPodcast } from '$lib/rss/parser.server';
 
 // this currently just handles xml
 export const GET: RequestHandler = async ({ request, url: Url }) => {

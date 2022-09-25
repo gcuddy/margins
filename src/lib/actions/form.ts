@@ -33,6 +33,7 @@ export function enhance(
 		goto,
 		headers,
 		check,
+		access_token,
 	}: {
 		pending?: Pending;
 		error?: Error;
@@ -41,6 +42,7 @@ export function enhance(
 		goto?: boolean;
 		headers?: Headers;
 		check?: ({ data, form }: { data: FormData; form: HTMLFormElement }) => boolean;
+		access_token?: string;
 	} = {}
 ): { destroy: () => void } {
 	let current_token: unknown;
@@ -57,10 +59,9 @@ export function enhance(
 		if (pending) pending({ data, form });
 
 		try {
-			if (headers) {
-				headers = new Headers();
-				headers?.set('accept', 'application/json');
-			}
+			headers = new Headers();
+			headers?.set('accept', 'application/json');
+			headers.has('Authorization') || headers?.set('Authorization', `Bearer ${access_token}`);
 			const options: RequestInit = {
 				method: form.method,
 				headers,

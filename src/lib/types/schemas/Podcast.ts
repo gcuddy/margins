@@ -23,6 +23,7 @@ export const PodcastSchema = z.object({
 	creator: z.string().optional(),
 	url: z.string(),
 	id: z.string(),
+	itunes_id: z.string(),
 });
 
 export type PodcastEpisode = z.infer<typeof PodcastEpisodeSchema>;

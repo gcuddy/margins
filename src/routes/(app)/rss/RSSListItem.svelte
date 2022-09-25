@@ -3,18 +3,23 @@
 	import type { RssItemWithFeed } from '$lib/types/rss';
 	import dayjs from 'dayjs';
 	export let item: RssItemWithFeed;
+	$: hostname = item.feed.link ? new URL(item.feed.link).hostname : '';
 </script>
 
 <article>
 	<a
-		data-sveltekit-prefetch=""
-		class="flex h-20 flex-col justify-between overflow-hidden p-1 text-sm"
+		class="flex h-20 max-w-prose flex-col justify-between overflow-hidden px-4 py-2 text-sm"
 		href="/rss/{item.rssFeedId}/{item.uuid}"
 	>
-		<div class="line-clamp-3">
-			<span class="font-semibold"
-				><a href="/rss/{item.feed.id}/{item.uuid}">{item.title || '{no title}'}</a></span
-			>
+		<div class="flex flex-col">
+			<div class="flex space-x-4 ">
+				<img
+					class="h-5 w-5 shrink-0 rounded-lg"
+					src="https://icon.horse/icon/{hostname}"
+					alt="{hostname} icon"
+				/>
+				<span class="grow truncate text-base font-bold">{item.title || '{no title}'}</span>
+			</div>
 			{#if item.contentSnippet}
 				<span class="truncate">{item.contentSnippet}</span>
 			{/if}

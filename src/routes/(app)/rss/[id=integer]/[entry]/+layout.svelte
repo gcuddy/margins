@@ -6,8 +6,19 @@
 
 	import Header from '$lib/components/layout/Header.svelte';
 	import { notifications } from '$lib/stores/notifications';
+	import { fly } from 'svelte/transition';
+	import type { LayoutData } from './$types';
 
 	let pending_add_item = false;
+	export let data: LayoutData;
 </script>
 
-<slot />
+<!-- TODO: depending on direction (up or down fly in or out) -->
+<div in:fly={{ delay: 100, duration: 200, y: -10 }} out:fly={{ duration: 100, y: 10 }}>
+	<slot />
+</div>
+<!-- {#key data.url}
+	<div in:fly={{ delay: 100, duration: 200, y: -10 }} out:fly={{ duration: 100, y: 10 }}>
+		<slot />
+	</div>
+{/key} -->

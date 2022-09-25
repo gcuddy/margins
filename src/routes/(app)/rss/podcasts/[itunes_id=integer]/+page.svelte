@@ -89,6 +89,7 @@
 								description,
 								feedUrl: url,
 								podcast: true,
+								creator,
 							},
 						];
 						pending_subscribe = false;
@@ -100,12 +101,12 @@
 					}}
 					className="flex justify-center sm:justify-start"
 				>
-					<input type="hidden" name="feedUrl" value={data.podcast.feedUrl} />
-					<input type="hidden" name="title" value={data.podcast.title} />
-					<input type="hidden" name="imageUrl" value={data.podcast.imageUrl} />
-					<input type="hidden" name="description" value={data.podcast.description} />
-					<input type="hidden" name="creator" value={data.podcast.creator} />
-					<input type="hidden" name="itunes_id" value={data.podcast.id} />
+					<input type="hidden" name="feedUrl" value={url} />
+					<input type="hidden" name="title" value={title} />
+					<input type="hidden" name="imageUrl" value={image} />
+					<input type="hidden" name="description" value={description} />
+					<input type="hidden" name="creator" value={creator} />
+					<input type="hidden" name="itunes_id" value={id} />
 					<Button type="submit" className="flex space-x-2 text-lg py-4 px-3">
 						<Icon
 							name={existing || subscribed

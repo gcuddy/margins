@@ -4,7 +4,6 @@ import type { RssFeedItemModel } from '$lib/types/schemas/prisma';
 import type { z } from 'zod';
 import { currentList } from '../store';
 import type { PageLoad } from './$types';
-
 export const load: PageLoad = async ({ fetch }) => {
 	const res = await fetch('/rss/entries.json');
 	try {

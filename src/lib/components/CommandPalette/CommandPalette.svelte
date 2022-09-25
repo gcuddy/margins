@@ -5,7 +5,7 @@
 		filteredActions,
 		selected,
 		showCommandPalette,
-		selectedCommand
+		selectedCommand,
 	} from '$lib/stores/commands';
 	import Dialog from '../helpers/dialog/Dialog.svelte';
 	import DialogOverlay from '../helpers/dialog/DialogOverlay.svelte';
@@ -94,10 +94,10 @@
 			input={{
 				class:
 					'w-full bg-transparent text-lg border-0 focus:ring-0 text-gray-800 dark:text-gray-100 placeholder-gray-400  p-5',
-				placeholder: 'Type a command…'
+				placeholder: 'Type a command…',
 			}}
 			options={{
-				class: `max-h-96 text-sm overflow-y-auto ${!$filteredActions.length ? 'hidden' : ''}`
+				class: `max-h-96 text-sm overflow-y-auto ${!$filteredActions.length ? 'hidden' : ''}`,
 			}}
 			static={true}
 			class="relative mx-auto max-w-2xl divide-y divide-gray-100 overflow-hidden rounded-xl bg-gray-50 text-gray-900 shadow-2xl ring-1 ring-black/5 dark:divide-gray-700 dark:bg-gray-800 dark:text-gray-100"

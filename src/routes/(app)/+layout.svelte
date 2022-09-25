@@ -23,6 +23,7 @@
 	import { page } from '$app/stores';
 	import { Lucia } from 'lucia-sveltekit/client';
 	import PodcastPlayer from '$lib/components/PodcastPlayer.svelte';
+	import ProgressBar from '$lib/components/ProgressBar.svelte';
 
 	let sidebarWidth: number;
 	// if ($lucia) {
@@ -42,10 +43,9 @@
 	<Developer />
 {/if}
 
-<div
-	class="min-h-screen bg-white pb-4 text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50"
-	on:drag
->
+<ProgressBar />
+
+<div class="bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50" on:drag>
 	<Notifications />
 	<!-- Grid version -->
 	<div

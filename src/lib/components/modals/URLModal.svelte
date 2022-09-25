@@ -52,7 +52,7 @@
 	export let name = 'text';
 	let headers = new Headers();
 	$: headers.set('Authorization', `Bearer ${$page.data.lucia.access_token}`);
-	$: console.log({ $page });
+	$: console.log({ $page, headers: headers.get('Authorization') });
 
 	let input: HTMLInputElement;
 	let pending_notification: string;
