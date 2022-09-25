@@ -38,16 +38,17 @@ enum MediaType {
     VIDEO
 }
 
+// This is the "default" item
 model Article {
     id             Int          @id @default(autoincrement())
     title          String       @db.Text
-    content        String       @db.LongText
-    textContent    String       @db.LongText
-    author         String
+    content        String?      @db.LongText
+    textContent    String?      @db.LongText
+    author         String?
     createdAt      DateTime     @default(now())
     updatedAt      DateTime     @updatedAt
     readProgress   Float        @default(0)
-    url            String       @unique
+    url            String?
     siteName       String?
     colorHash      String?
     date           DateTime
@@ -60,6 +61,8 @@ model Article {
     classification String?
     pdf            Boolean?
     html           String?
+    feedItem       RssFeedItem? @relation(fields: [feedItemId], references: [id])
+    feedItemId     Int?
     position       Int          @default(0) //@unique - figure this out
     trash          Boolean      @default(false)
     location       String       @default("INBOX")
@@ -70,11 +73,13 @@ model Article {
     Highlight2     Highlight2[]
     ListItem       ListItem?
     media          Media?
+    type           MediaType
     tags           Tag[]
     favorite       Favorite?
     user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId         String
 
+    @@unique([userId, url])
     @@index([userId])
 }
 
@@ -236,23 +241,24 @@ model RssItemInteraction {
 }
 
 model RssFeedItem {
-    id             Int                  @id @default(autoincrement())
-    uuid           String               @unique
-    duration       Int?
-    image          String?              @db.Text
-    link           String?
-    author         String?
-    title          String?              @db.TinyText
-    content        String?              @db.LongText
-    contentSnippet String?              @db.Text
+    id              Int                  @id @default(autoincrement())
+    uuid            String               @unique
+    duration        Int?
+    image           String?              @db.Text
+    link            String?
+    author          String?
+    title           String?              @db.TinyText
+    content         String?              @db.LongText
+    contentSnippet  String?              @db.Text
     // categories     String[]
-    pubDate        DateTime? // @zod.custom(z.string())
-    createdAt      DateTime             @default(now()) // @zod.custom(z.string())
-    updatedAt      DateTime             @updatedAt // @zod.custom(z.string())
-    rssFeedId      Int
-    interactions   RssItemInteraction[]
-    feed           RssFeed              @relation(fields: [rssFeedId], references: [id], onDelete: Cascade)
-    enclosure      Enclosure?
+    pubDate         DateTime? // @zod.custom(z.string())
+    createdAt       DateTime             @default(now()) // @zod.custom(z.string())
+    updatedAt       DateTime             @updatedAt // @zod.custom(z.string())
+    rssFeedId       Int
+    interactions    RssItemInteraction[]
+    feed            RssFeed              @relation(fields: [rssFeedId], references: [id], onDelete: Cascade)
+    enclosure       Enclosure?
+    linked_articles Article[]
 
     @@index([createdAt, updatedAt, uuid, pubDate, rssFeedId])
     @@index([content(length: 100)])
