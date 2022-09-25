@@ -39,6 +39,7 @@
 		"eslint-plugin-svelte3": "^4.0.0",
 		"fast-xml-parser": "^4.0.9",
 		"html-entities": "^2.3.3",
+		"idb": "^7.0.2",
 		"idb-keyval": "^6.2.0",
 		"lodash.camelcase": "^4.3.0",
 		"lodash.clonedeep": "^4.5.0",
@@ -78,9 +79,9 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@lucia-sveltekit/adapter-prisma": "^0.3.1",
+		"@lucia-sveltekit/adapter-prisma": "^0.3.3",
 		"@prisma/client": "^4.3.1",
-		"lucia-sveltekit": "^0.7.1",
+		"lucia-sveltekit": "^0.8.2",
 		"prisma-redis-middleware": "4.1.1"
 	}
 }
