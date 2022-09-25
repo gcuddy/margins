@@ -16,7 +16,7 @@ interface MarginsDb extends DBSchema {
 let db: IDBPDatabase<MarginsDb>;
 
 if (browser) {
-	db = await openDB<MarginsDb>('margins', 1, {
+	openDB<MarginsDb>('margins', 1, {
 		upgrade(db) {
 			const feedItemsStore = db.createObjectStore('feedItems', {
 				keyPath: 'uuid',
@@ -24,6 +24,8 @@ if (browser) {
 			feedItemsStore.createIndex('uuid', 'uuid', { unique: true });
 			feedItemsStore.createIndex('rssFeedId', 'rssFeedId', { unique: false });
 		},
+	}).then((_db) => {
+		db = _db;
 	});
 }
 
