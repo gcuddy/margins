@@ -430,14 +430,13 @@ model Highlight2 {
 model User {
     // id        Int        @id @default(autoincrement())
     id                        String                      @id @unique @default(cuid())
-    username                  String                      @unique
-    hashed_password           String?
-    // email            String         @unique
     provider_id               String                      @unique
+    hashed_password           String?
+    email                     String                      @unique
+    session                   Session[]
     RefreshToken              RefreshToken[]
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
-    // RefreshToken     RefreshToken[]
     PodcastEpisodeInteraction PodcastEpisodeInteraction[]
     feeds                     RssFeed[]
     RssItemInteraction        RssItemInteraction[]
@@ -446,6 +445,17 @@ model User {
     articles                  Article[]
 
     @@map("user")
+}
+
+model Session {
+    id           Int    @id @unique @default(autoincrement())
+    access_token String @unique
+    user_id      String
+    expires      BigInt
+    user         User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+    @@index([user_id])
+    @@map("session")
 }
 
 model RefreshToken {
