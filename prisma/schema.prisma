@@ -428,7 +428,6 @@ model Highlight2 {
 }
 
 model User {
-    // id        Int        @id @default(autoincrement())
     id                        String                      @id @unique @default(cuid())
     provider_id               String                      @unique
     hashed_password           String?
