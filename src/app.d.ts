@@ -7,15 +7,15 @@ declare namespace App {
 	// interface Locals {}
 	// interface Platform {}
 	// interface Session {}
-	interface PageData {
-		user: import('$lib/stores/user').UserStoreType;
-	}
-	interface Locals {
-		lucia: {
-			access_token: string;
-			refresh_token: string;
-			fingerprint_token: string;
-		} | null;
-	}
+	// interface PageData {
+	// 	user: import('$lib/stores/user').UserStoreType;
+	// }
+	// interface Locals {
+	// 	lucia: {
+	// 		access_token: string;
+	// 		refresh_token: string;
+	// 		fingerprint_token: string;
+	// 	} | null;
+	// }
 	// interface Stuff {}
 }
