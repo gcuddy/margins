@@ -3,7 +3,7 @@ import type { Action } from './$types';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 import { buildRssFeed, findFeed } from '$lib/rss/parser.server';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
 import normalizeUrl from 'normalize-url';
 
 export const POST: Action = async ({ request, locals }) => {
@@ -11,9 +11,8 @@ export const POST: Action = async ({ request, locals }) => {
 	try {
 		// This assumes we're getting a *single* url
 		console.log({ headers: request.headers.get('Authorization') });
-		const { user } = await auth.validateRequest(request);
+		const { userId } = await auth.validateRequest(request);
 		const json = await getJsonFromRequest(request);
-		console.log({ user });
 		const url = normalizeUrl(json.url, {
 			stripWWW: false,
 		});
@@ -32,7 +31,7 @@ export const POST: Action = async ({ request, locals }) => {
 			update: {
 				users: {
 					connect: {
-						id: user.user_id,
+						id: userId,
 					},
 				},
 				items: {
@@ -60,7 +59,7 @@ export const POST: Action = async ({ request, locals }) => {
 				},
 				users: {
 					connect: {
-						id: user.user_id,
+						id: userId,
 					},
 				},
 			},

@@ -95,15 +95,15 @@
 	<article class="mx-auto max-w-3xl py-8 px-4">
 		<header class="space-y-3 pb-4" bind:this={$articleHeader}>
 			<div class="text-sm lg:text-base">
-				<a class="text-gray-400" href={article.url}
+				<a class="text-gray-500 hover:text-primary-700" href={article.url}
 					>{article.siteName || new URL(article.url)?.hostname || article.url}</a
 				>
 			</div>
-			<H1>{article.title}</H1>
+			<H1 class="font-newsreader dark:drop-shadow-sm">{article.title}</H1>
 
 			<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
 			{#if article.description}
-				<div class="text-xl font-medium text-gray-500 dark:text-gray-300">
+				<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
 					{article.description}
 				</div>
 			{/if}
@@ -122,19 +122,24 @@
 						>{article.siteName || new URL(article.url)?.hostname || article.url}</a
 					>
 				</p> -->
-			<div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
-				{#if article.author}
-					<p>{article.author}</p>
-				{/if}
-				{#if article.author && article.date}
-					<!-- <p>&middot;</p> -->
-				{/if}
-				{#if article.date}
-					<p>{dayjs(article.date).format('ll')}</p>
-				{/if}
-				{#if article.wordCount}
-					<span>{article.wordCount} words</span>
-				{/if}
+			<div class="flex justify-between">
+				<div
+					id="origin"
+					class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
+				>
+					{#if article.author}
+						<p>{article.author}</p>
+					{/if}
+					{#if article.author && article.date}
+						<!-- <p>&middot;</p> -->
+					{/if}
+					{#if article.date}
+						<p>{dayjs(article.date).format('ll')}</p>
+					{/if}
+					{#if article.wordCount}
+						<span>{article.wordCount} words</span>
+					{/if}
+				</div>
 			</div>
 			{#if article.tags.length}
 				<div transition:slide|local>

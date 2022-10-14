@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 // import { db } from '$lib/db';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
 import { getRefreshedItems } from '$lib/rss/parser.server';
 // can get pased in array of feed ids, or empty array for all
 // should this be a POST?
@@ -10,8 +10,8 @@ export const GET: RequestHandler = async ({ request }) => {
 	console.log(`you hit the rss/refresh route`);
 	console.time(`[rssRefresh]`);
 	// const updatedItems = await getRefreshedFeeds();
-	const { user } = await auth.validateRequestByCookie(request);
-	const items = await getRefreshedItems(user['user_id']);
+	const { userId } = await auth.validateRequest(request);
+	const items = await getRefreshedItems(userId);
 	console.log({ items });
 	console.timeEnd(`[rssRefresh]`);
 	// return response with prviate cache-control ehader for 60 seconds

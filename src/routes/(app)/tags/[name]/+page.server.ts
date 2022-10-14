@@ -9,16 +9,16 @@ export const load: PageServerLoad = async ({ params }) => {
 	const tag = await db.tag.findFirst({
 		where: {
 			name: {
-				equals: params.name
+				equals: params.name,
 				// mode: 'insensitive' <- for when i use postgres
-			}
+			},
 		},
 		include: {
 			articles: {
-				select: ArticleListSelect
+				select: ArticleListSelect,
 			},
-			favorite: true
-		}
+			favorite: true,
+		},
 	});
 	console.log({ tag });
 	return { tag };
@@ -30,11 +30,11 @@ export const PATCH: Action = async ({ params, request }) => {
 	console.log({ json });
 	const tag = await db.tag.update({
 		where: {
-			name: params.name
+			name: params.name,
 		},
 		data: {
-			...json
-		}
+			...json,
+		},
 	});
 	if (!tag) {
 		throw error(400);

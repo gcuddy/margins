@@ -1,12 +1,9 @@
 import { redirect } from '@sveltejs/kit';
+import { getUser } from 'lucia-sveltekit/load';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ parent }) => {
-	// this might be causing the redirect problem?
-	const { lucia } = await parent();
-	console.log(`(marketing)`, { lucia });
-	if (lucia) throw redirect(302, '/inbox');
-	return {
-		user: null,
-	};
+export const load: PageLoad = async (event) => {
+	const user = await getUser(event);
+	if (user) throw redirect(302, '/inbox');
+	return {};
 };

@@ -1,5 +1,5 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
 import { db } from '$lib/db';
 import { ArticleListSelect } from '$lib/types';
 import type { Prisma } from '@prisma/client';
@@ -31,11 +31,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		};
 	}
 	try {
-		const user = await auth.validateRequest(request);
-		console.log({ user });
+		const { userId } = await auth.validateRequest(request);
 		const userData = await db.user.findFirst({
 			where: {
-				id: user.user['user_id'],
+				id: userId,
 			},
 			select,
 		});

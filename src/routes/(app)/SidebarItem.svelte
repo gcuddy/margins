@@ -66,9 +66,9 @@
 	{/if}
 </svelte:element>
 {#if $items?.length && !_collapsed}
-	<div transition:slide|local class="ml-4 space-y-0.5 border-l border-gray-500/25 pl-1.5">
+	<div class="ml-4 space-y-0.5 border-l border-gray-500/25 pl-1.5">
 		{#each $items.map((i) => ({ ...i, id: useId() })) as item (item.id)}
-			<div transition:slide|local animate:flip>
+			<div animate:flip>
 				<svelte:self {...item} indent={indent + 1} />
 			</div>
 		{/each}

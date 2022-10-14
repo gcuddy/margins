@@ -2,7 +2,6 @@
 	import { enhance, applyAction } from '$app/forms';
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	import Button from '$lib/components/Button.svelte';
-	import Form from '$lib/components/Form.svelte';
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	export let form: { message?: string };
 </script>
@@ -14,9 +13,9 @@
 		class="flex max-w-xs flex-col space-y-6"
 		use:enhance={({ data, cancel }) => {
 			form = {};
-			const username = data.get('username')?.toString() || '';
+			const email = data.get('email')?.toString() || '';
 			const password = data.get('password')?.toString() || '';
-			if (!username || !password) {
+			if (!email || !password) {
 				form.message = 'Invalid input';
 				cancel();
 			}
@@ -31,11 +30,11 @@
 		}}
 	>
 		<div>
-			<label for="username"> <Muted>Username</Muted></label><br />
+			<label for="email"><Muted>Email</Muted></label>
 			<GenericInput id="email" type="email" name="email" placeholder="" class="focus:ring-2" />
 		</div>
 		<div>
-			<label for="password"><Muted>Password</Muted></label><br />
+			<label for="password"><Muted>Password</Muted></label>
 			<GenericInput
 				id="password"
 				name="password"

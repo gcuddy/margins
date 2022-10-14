@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import Dot from '$lib/components/atoms/Dot.svelte';
 	import Muted from '$lib/components/atoms/Muted.svelte';
@@ -80,10 +81,16 @@
 						<Icon name={playing ? 'pauseSolid' : 'playSolid'} />
 						<span>{playing ? 'Pause' : 'Play'}</span></Button
 					>
-					<Button className="flex items-center space-x-2 text-lg py-4 px-3 mt-auto" on:click={play}>
-						<Icon name="bookmarkSolid" />
-						<span>Save</span></Button
-					>
+					<form use:enhance>
+						<input type="hidden" name="title" value={episode.title} />
+						<input type="hidden" name="date" value={episode.pubDate} />
+						<input type="hidden" name="image" value={episode.image} />
+						<input type="hidden" name="url" value={episode.enclosure?.url} />
+						<Button type="submit" className="flex items-center space-x-2 text-lg py-4 px-3 mt-auto">
+							<Icon name="bookmarkSolid" />
+							<span>Save</span></Button
+						>
+					</form>
 				</div>
 			</div>
 		</div>

@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { getJsonFromRequest } from '$lib/utils';
 import { z } from 'zod';
 import { db } from '$lib/db';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
 const RssFeedModel = z.object({
 	id: z.number().int().optional(),
 	itunes_id: z.string().optional(),
@@ -18,8 +18,7 @@ const RssFeedModel = z.object({
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		console.log({ locals });
-		const { user } = await auth.validateRequest(request);
-		console.log({ user });
+		const session = await auth.validateRequest(request);
 		// const { refresh_token } = locals.lucia;
 		const json = await getJsonFromRequest(request);
 		const data = RssFeedModel.parse(json);
@@ -71,7 +70,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				podcast: true,
 				users: {
 					connect: {
-						id: user.user_id,
+						id: session.userId,
 					},
 				},
 			},

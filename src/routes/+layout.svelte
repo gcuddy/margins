@@ -1,15 +1,13 @@
 <script lang="ts">
 	import '../app.css';
-	import { Lucia } from 'lucia-sveltekit/client';
+	import '$lib/styles/font.css';
 </script>
 
 <svelte:head />
 
-<Lucia on:error={(e) => console.log({ e })}>
-	<div class="min-h-screen">
-		<slot />
-	</div>
-</Lucia>
+<div class="min-h-screen">
+	<slot />
+</div>
 
 <style lang="postcss">
 	:global(body > div) {
@@ -20,7 +18,7 @@
 		top: 0;
 	} */
 	:global(::selection) {
-		@apply bg-primary-600/50 dark:bg-primary-800;
+		@apply bg-primary-300/75 dark:bg-primary-800;
 	}
 	:global(html) {
 		@apply dark:bg-gray-800;
