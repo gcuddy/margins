@@ -11,9 +11,9 @@
 	<form
 		use:enhance={({ data, cancel }) => {
 			form = {};
-			const username = data.get('username')?.toString() || '';
+			const email = data.get('email')?.toString() || '';
 			const password = data.get('password')?.toString() || '';
-			if (!username || !password) {
+			if (!email || !password) {
 				form.message = 'Invalid input';
 				cancel();
 			}
@@ -29,14 +29,15 @@
 		class="flex max-w-xs flex-col space-y-6"
 	>
 		<div>
-			<label for="username"><Muted>Username</Muted> </label>
-			<!-- <input id="username" name="username" bind:value={username} /> -->
+			<label for="email"><Muted>Email</Muted> </label>
+			<!-- <input id="email" name="email" bind:value={email} /> -->
 			<GenericInput
-				id="username"
-				name="username"
+				id="email"
+				name="email"
 				placeholder=""
 				class="focus:ring-2"
-				autocomplete="username"
+				autocomplete="email"
+				type="email"
 			/>
 		</div>
 		<div>

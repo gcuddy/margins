@@ -206,7 +206,7 @@
 					],
 				]}
 			>
-				<span class="text-sm font-medium">{$user.username}</span>
+				<span class="text-sm font-medium">{$user.email}</span>
 			</ContextMenu>
 			<div class="flex space-x-2">
 				<Sync />

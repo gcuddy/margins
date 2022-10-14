@@ -22,7 +22,7 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		};
 	} else {
 		select = {
-			username: true,
+			email: true,
 			feeds: true,
 			favorites: true,
 			articles: {
@@ -42,12 +42,6 @@ export const GET: RequestHandler = async ({ request, url }) => {
 			throw error(400, 'User not found');
 		}
 		return json(userData);
-		return json({
-			username: 'test',
-			feeds: [],
-			favorites: [],
-			articles: [],
-		});
 	} catch (e) {
 		console.error(e);
 		throw error(401, 'unauthorized');

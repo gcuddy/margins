@@ -13,7 +13,7 @@ export const actions: Actions = {
 			});
 		}
 		try {
-			const user = await auth.createUser('username', email, {
+			const user = await auth.createUser('email', email, {
 				password,
 				userData: {
 					email,
@@ -28,7 +28,7 @@ export const actions: Actions = {
 				error.message === 'AUTH_DUPLICATE_USER_DATA'
 			) {
 				return invalid(400, {
-					message: 'Username unavailable',
+					message: 'Email unavailable',
 				});
 			}
 			console.error(error);
