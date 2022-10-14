@@ -24,11 +24,7 @@ function createUserStore() {
 		{ access_token }: { access_token: string }
 	) => {
 		//todo: args
-		const res = await fetch(`/api/fetch_user_data?data=${data}`, {
-			headers: {
-				Authorization: `Bearer ${access_token}`,
-			},
-		});
+		const res = await fetch(`/api/fetch_user_data?data=${data}`);
 		user_data_dirty.set(false);
 		if (res.ok) {
 			const fetchedData = await res.json();
