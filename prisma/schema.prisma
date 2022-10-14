@@ -28,15 +28,16 @@ generator zod {
 
 datasource db {
     provider             = "mysql"
+    // provider             = "sql"
     url                  = env("DATABASE_URL")
     referentialIntegrity = "prisma"
 }
 
-enum MediaType {
-    TEXT
-    AUDIO
-    VIDEO
-}
+// enum MediaType {
+//     TEXT
+//     AUDIO
+//     VIDEO
+// }
 
 // This is the "default" item
 model Article {
@@ -53,7 +54,7 @@ model Article {
     colorHash      String?
     date           DateTime
     image          String       @db.Text
-    wordCount      Int
+    wordCount      Int?
     starred        Boolean      @default(false)
     css            String?
     description    String?      @db.Text // This shouldn't be that long, but we'll use Text to make sure
@@ -73,7 +74,7 @@ model Article {
     Highlight2     Highlight2[]
     ListItem       ListItem?
     media          Media?
-    type           MediaType
+    type           Int          @default(0) // 0 = text, 1 = audio, 2 = video
     tags           Tag[]
     favorite       Favorite?
     user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -428,11 +429,11 @@ model Highlight2 {
 
 model User {
     // id        Int        @id @default(autoincrement())
-    id                        String                      @id @unique
+    id                        String                      @id @unique @default(cuid())
     username                  String                      @unique
     hashed_password           String?
     // email            String         @unique
-    identifier_token          String                      @unique
+    provider_id               String                      @unique
     RefreshToken              RefreshToken[]
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
