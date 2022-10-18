@@ -433,7 +433,6 @@ model User {
     hashed_password           String?
     email                     String                      @unique
     session                   Session[]
-    RefreshToken              RefreshToken[]
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
     PodcastEpisodeInteraction PodcastEpisodeInteraction[]
@@ -455,16 +454,6 @@ model Session {
 
     @@index([user_id])
     @@map("session")
-}
-
-model RefreshToken {
-    id            Int    @id @unique @default(autoincrement())
-    refresh_token String @unique @db.VarChar(420)
-    user          User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
-    user_id       String
-
-    @@index([user_id])
-    @@map("refresh_token")
 }
 
 // either Interaction or Favorite

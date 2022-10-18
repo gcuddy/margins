@@ -1,17 +1,18 @@
 import { auth } from '$lib/server/lucia';
 import { invalid, redirect, type Actions } from '@sveltejs/kit';
-import { setCookie } from 'lucia-sveltekit';
 
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
 		const form = await request.formData();
 		const email = form.get('email');
 		const password = form.get('password');
+		// check for empty
 		if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
 			return invalid(400, {
 				message: 'Invalid input',
 			});
 		}
+		console.log({ email, password });
 		try {
 			const user = await auth.createUser('email', email, {
 				password,
@@ -19,8 +20,8 @@ export const actions: Actions = {
 					email,
 				},
 			});
-			const { session, tokens } = await auth.createSession(user.userId);
-			setCookie(cookies, ...tokens.cookies);
+			const { setSessionCookie } = await auth.createSession(user.userId);
+			setSessionCookie(cookies);
 		} catch (e) {
 			const error = e as Error;
 			if (
