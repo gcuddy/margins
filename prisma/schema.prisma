@@ -446,10 +446,10 @@ model User {
 }
 
 model Session {
-    id           Int    @id @unique @default(autoincrement())
-    access_token String @unique
+    id           String @id @unique
     user_id      String
     expires      BigInt
+    idle_expires BigInt
     user         User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
 
     @@index([user_id])
