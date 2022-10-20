@@ -63,18 +63,18 @@
 </script>
 
 {#if $dragging}
-	<div class="fixed bottom-9 left-9 z-50">
+	<div class="fixed bottom-5 left-5 z-50 sm:bottom-9 sm:left-9">
 		<div
 			transition:fade={{ duration: 250 }}
-			class="before:content-['drop to add to inbox'] rounded-full border border-amber-600 bg-amber-300 p-9 text-black shadow-xl transition before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-amber-400 before:p-12 before:transition {dragOver
+			class="before:content-['drop to add to inbox'] grid place-content-center  rounded-full border border-amber-600 bg-amber-300 p-12 text-black shadow-xl transition duration-500 before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-amber-400 before:p-12 before:transition {dragOver
 				? 'before:scale-[2.5] before:opacity-100'
-				: 'before:opacity-0'}"
+				: 'before:opacity-0 before:scale-[1.2]'}"
 			on:dragover={handleDragOver}
 			on:dragleave={handleDragLeave}
 			on:drop={handleDrop}
 		>
 			<span
-				class="absolute top-0 left-0 -z-10 -mt-10 w-full text-center text-xs font-bold text-white transition-opacity {dragOver
+				class="pointer-events-none absolute top-0 left-0 -z-10 -mt-10 w-full text-center text-xs font-bold text-white transition-opacity {dragOver
 					? 'opacity-100'
 					: 'opacity-0'}"
 			>
@@ -85,7 +85,7 @@
 					? 'scale-125'
 					: ''}"
 			>
-				<Icon name="inboxIn" className="h-8 w-8 stroke-2 stroke-amber-900" />
+				<Icon name="inboxIn" className="h-10 w-10 stroke-2 stroke-amber-900" />
 			</span>
 		</div>
 	</div>
