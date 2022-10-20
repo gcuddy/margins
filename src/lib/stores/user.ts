@@ -1,21 +1,13 @@
-import {
-	ArticleModel,
-	FavoriteModel,
-	RssFeedItemModel,
-	RssFeedModel,
-} from '$lib/types/schemas/prisma';
+import type { Article, Favorite, RssFeed, RssFeedItem } from '@prisma/client';
 import { derived, writable, type Readable } from 'svelte/store';
-import { z } from 'zod';
 
-export const User = z.object({
-	email: z.string(),
-	feeds: RssFeedModel.array(),
-	// todo: for storing cursor, should we store it itself or should it just be the last item in the array?
-	feedItems: RssFeedItemModel.array(),
-	favorites: FavoriteModel.array(),
-	articles: ArticleModel.array(),
-});
-export type User = z.infer<typeof User>;
+export type User = {
+	email: string;
+	feeds: RssFeed[];
+	feedItems: RssFeedItem[];
+	favorites: Favorite[];
+	articles: Article[];
+};
 
 function createUserStore() {
 	const { subscribe, set, update } = writable<User>();
