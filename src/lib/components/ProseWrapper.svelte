@@ -16,10 +16,10 @@
 	bind:this={el}
 	on:click
 	class:first_letter
-	class="prose-lg prose-stone mx-auto block break-words {font === 'sans'
+	class="prose prose-stone mx-auto block break-words text-[19px] {font === 'sans'
 		? 'font-sans'
 		: 'font-newsreader'} transition prose-headings:font-sans prose-headings:font-semibold  prose-a:underline prose-a:transition hover:prose-a:text-primary-700  prose-figure:text-gray-500 prose-figure:drop-shadow-sm prose-figcaption:mt-0 prose-figcaption:font-sans prose-figcaption:text-sm prose-figcaption:text-gray-500  prose-img:mx-auto prose-img:rounded dark:prose-invert   dark:prose-figcaption:text-gray-400  {breakpoints
-		? 'sm:prose-lg lg:prose-xl'
+		? 'md:prose-xl 2xl:prose-2xl'
 		: ''} {className}"
 	{style}
 >
@@ -29,5 +29,7 @@
 <style lang="postcss">
 	div.first_letter :global(> *:first-child::first-letter) {
 		@apply float-left pr-2 pl-0.5 text-7xl not-italic text-primary-700;
+	}
+	div {
 	}
 </style>
