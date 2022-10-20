@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { match, P } from 'ts-pattern';
-import { ArticleModel } from './prisma';
-import type { SmartListCondition } from '../filter';
+import type { IntFilterType } from '../filter';
 import { ViewOptionsSchema } from './View';
 
 export const ArticleFilterSchema = z.object({
@@ -13,7 +11,6 @@ export const ArticleFilterSchema = z.object({
 	}),
 });
 
-const articleKeys = ArticleModel.keyof();
 export const IntFilterSchema = z.object({
 	equals: z.number().optional(),
 	in: z.array(z.number()).optional(),
