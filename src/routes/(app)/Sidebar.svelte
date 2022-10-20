@@ -143,7 +143,6 @@
 	} else {
 		width = _width;
 	}
-	$: console.log({ $page });
 </script>
 
 {#if sidebarToggle}
