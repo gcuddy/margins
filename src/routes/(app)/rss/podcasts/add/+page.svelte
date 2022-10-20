@@ -2,7 +2,7 @@
 	// TODO: Progressively enhance this
 	import debounce from 'lodash.debounce';
 	let url = 'https://itunes.apple.com/search?media=podcast';
-	export let value;
+	export let value = '';
 	let promise;
 	async function search() {
 		url = url.toString() + `&term=${encodeURIComponent(value)}`;
@@ -23,8 +23,15 @@
 	}
 
 	import GenericInput from '$lib/components/GenericInput.svelte';
-	import Combobox from '$lib/components/helpers/Combobox.svelte';
-	import { page } from '$app/stores';
+
+	// TODO: this is temporary while pr is open
+	// import {
+	// 	Combobox,
+	// 	ComboboxInput,
+	// 	ComboboxOptions,
+	// 	ComboboxOption,
+	// } from '@rgossiaux/svelte-headlessui';
+
 	import { podcast_search_results } from '../store';
 
 	async function parseUrl(url) {
@@ -48,7 +55,9 @@
 
 <GenericInput bind:value />
 
-<Combobox />
+<!-- <Combobox bind:value on:change={(e) => (value = e.detail)}>
+	<ComboboxInput on:change={(e) => (value = e.detail)} />
+</Combobox> -->
 
 {#if promise}
 	{#await promise}
