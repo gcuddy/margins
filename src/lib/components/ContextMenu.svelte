@@ -30,7 +30,7 @@
 
 	interface MenuItem {
 		label: string;
-		icon: IconName;
+		icon?: IconName;
 		iconProps?: ComponentProperties<Icon>;
 		perform?: () => void;
 		href?: string;
@@ -49,8 +49,8 @@
 <Menu let:open>
 	<MenuButton
 		use={[popperRef, ...buttonActions]}
-		class="group relative z-10 flex items-center rounded-md p-1.5 hover:bg-gray-200 focus:bg-gray-200 focus:ring dark:hover:bg-gray-700 dark:focus:bg-gray-700 {open &&
-			'bg-gray-200 dark:bg-gray-700'}"><slot /></MenuButton
+		class="group relative z-10 flex items-center rounded-md p-1.5 hover:bg-gray-200 focus:bg-gray-200 focus:ring dark:hover:bg-gray-600 dark:focus:bg-gray-600 {open &&
+			'bg-gray-200 dark:bg-gray-600'}"><slot /></MenuButton
 	>
 	<Transition show={open}>
 		{#if open}
@@ -77,29 +77,33 @@
 				>
 					<MenuItems
 						static
-						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-white py-1 opacity-100 shadow-lg ring-1 ring-black/5 focus:outline-none dark:divide-gray-700 dark:bg-gray-800 dark:text-current dark:ring-white/5"
+						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-white py-1 opacity-100 shadow-xl ring-1 ring-black/5 focus:outline-none dark:divide-gray-700 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:text-current dark:ring-white/20"
 					>
 						<!-- can either slot in items yourself, or let component do it for you -->
 						<slot name="items" />
 						{#each items as group}
-							<div class="py-1 px-1">
+							<div class="p-2">
 								{#each group as { href, label, icon, iconProps, perform }}
 									<MenuItem let:active>
 										<div
-											class="flex h-8 cursor-default select-none items-center space-x-3 rounded px-3 text-sm text-gray-900 dark:text-gray-100 {active
-												? 'bg-gray-100 dark:bg-gray-700'
+											class="flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-3 text-sm font-medium text-gray-900 dark:text-gray-50 {active
+												? 'bg-gray-200 dark:bg-gray-600'
 												: ''}"
 											on:click={perform}
 										>
-											{#if iconProps}
-												<Icon name={icon} {...iconProps} />
-											{:else}
-												<Icon
-													className={icons === 'solid'
-														? 'h-4 w-4 fill-current'
-														: 'h-4 w-4 stroke-2 stroke-gray-500 dark:stroke-gray-400'}
-													name={icon}
-												/>
+											{#if icon}
+												{#if iconProps}
+													<Icon name={icon} {...iconProps} />
+												{:else}
+													<Icon
+														className={icons === 'solid'
+															? `h-4 w-4 dark:fill-gray-400 fill-gray-500 ${
+																	active ? 'fill-gray-600 dark:fill-gray-300' : ''
+															  }`
+															: 'h-4 w-4 stroke-2 stroke-gray-500 dark:stroke-gray-400'}
+														name={icon}
+													/>
+												{/if}
 											{/if}
 											{#if href}
 												<a data-sveltekit-prefetch {href}>{label}</a>

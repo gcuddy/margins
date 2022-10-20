@@ -1,5 +1,5 @@
 import type { RssItemWithFeed } from '$lib/types/rss';
-import type { RssFeedItemModel } from '$lib/types/schemas/prisma';
+import type { RssFeedItemModel } from '$lib/types/schemas/rssfeeditem';
 import { sortFeedItems } from '$lib/utils';
 import type { RssFeedItem } from '@prisma/client';
 import { derived, writable } from 'svelte/store';

@@ -168,7 +168,7 @@
 <nav
 	on:click={handleClick}
 	style="width: {width}px;"
-	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-gray-700 dark:bg-gray-900 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {$hideSidebar
+	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-black dark:bg-gray-800 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {$hideSidebar
 		? '-translate-x-72 opacity-0'
 		: 'lg:transition-none left-0'} {sidebarToggle ? 'left-0' : '-left-full'}"
 >
@@ -192,15 +192,21 @@
 						{
 							label: 'Logout',
 							perform: async () => {
-								await signOut();
-								window.location.href = '/';
+								await signOut('/');
 							},
 							icon: 'logoutSolid',
+						},
+						{
+							label: 'Settings',
+							perform: async () => {
+								await goto('/settings');
+							},
+							icon: 'cogSolid',
 						},
 					],
 				]}
 			>
-				<span class="text-sm font-medium">{$page.data.lucia.user.username}</span>
+				<span class="text-sm font-medium">{$user.email}</span>
 			</ContextMenu>
 			<div class="flex space-x-2">
 				<Sync />
@@ -214,8 +220,10 @@
 			<Button
 				on:click={() => {
 					console.log('clicked');
-					modals.open(UrlModal);
+					// modals.open(UrlModal);
 				}}
+				href="/add"
+				as="a"
 				size="sm"
 				variant="ghost"
 				className="space-x-2 grow"

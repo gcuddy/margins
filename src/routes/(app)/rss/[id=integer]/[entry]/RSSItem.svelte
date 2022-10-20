@@ -92,7 +92,7 @@
 			</slot>
 		</div>
 		<div class=" p-4">
-			<ProseWrapper bind:el breakpoints={true} font="sans" class="max-w-prose space-y-6">
+			<ProseWrapper bind:el breakpoints={true} class="max-w-prose space-y-6">
 				<header class="not-prose font-sans">
 					<a href={item.link} target="_blank"
 						><H1 lg={false}>

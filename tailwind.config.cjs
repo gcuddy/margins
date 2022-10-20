@@ -19,7 +19,8 @@ const config = {
 		},
 		extend: {
 			fontFamily: {
-				sans: [...defaultTheme.fontFamily.sans],
+				sans: ['InterVar', ...defaultTheme.fontFamily.sans],
+				newsreader: ['Newsreader', ...defaultTheme.fontFamily.serif],
 			},
 			colors: {
 				light: colors.stone[50],
@@ -123,6 +124,7 @@ const config = {
 		require('@tailwindcss/forms'),
 		require('@tailwindcss/line-clamp'),
 		require('tailwind-gradient-mask-image'),
+		require('tailwind-scrollbar-hide'),
 	],
 };
 

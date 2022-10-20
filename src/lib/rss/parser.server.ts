@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import getUuidByString from 'uuid-by-string';
 dayjs.extend(localizedFormat);
-import parse from 'node-html-parser';
+import { parse } from 'node-html-parser';
 import { XMLParser } from 'fast-xml-parser';
 import { isJson, isXml, linkSelectors, resolveUrl } from './utils';
 import { db } from '$lib/db';
@@ -162,10 +162,11 @@ export async function buildPodcast(url: string) {
 	};
 }
 function convertToSeconds(duration) {
+	console.log({ duration });
 	if (typeof duration === 'number') {
 		return duration;
 	}
-	if (!duration.includes(':')) {
+	if (!duration?.includes(':')) {
 		return Number(duration);
 	}
 	const [minutes, seconds] = duration.split(':');
@@ -209,13 +210,13 @@ export async function buildItem(item: any, feedUrl: string) {
 	};
 }
 
-export async function getRefreshedItems(user_id?: string) {
+export async function getRefreshedItems(userId?: string) {
 	const feeds = await db.rssFeed.findMany({
 		where: {
-			users: user_id
+			users: userId
 				? {
 						some: {
-							id: user_id,
+							id: userId,
 						},
 				  }
 				: undefined,

@@ -69,17 +69,7 @@
 					<Icon name="checkCircleSolid" />
 				</Button>
 			{/if}
-			<Form
-				action="/rss/refresh.json"
-				invalidate="/rss"
-				pending={() => (sync_id = syncStore.addItem())}
-				done={async ({ response }) => {
-					syncStore.removeItem(sync_id);
-					console.log({ response });
-					console.log('json', await response.json());
-				}}
-				className="hidden md:block"
-			>
+			<form action="/rss/refresh.json" class="hidden md:block">
 				<Button
 					type="submit"
 					variant="ghost"
@@ -90,39 +80,41 @@
 					<Icon name="refreshSolid" />
 					<span class="sr-only">Refresh Feeds</span></Button
 				>
-			</Form>
+			</form>
 			<Button
+				as="a"
+				href="/rss/add"
 				on:click={() => {
 					// TODO: turn this into form so it can re-direct to JS-less page
-					console.log('click');
-					// TODO: proper invalidation
-					modals.open(UrlModal, {
-						formAction: '/rss',
-						placeholder: 'Enter RSS feed URL',
-						name: 'url',
-						pending: () => {
-							modals.close();
-							pending_notification = notifications.notify({
-								message: 'adding feed...',
-							});
-						},
-						done: async ({ response }) => {
-							notifications.remove(pending_notification);
-							// user_data_dirty.set(true);
-							// await invalidate('/api/fetch_user_data?data=feeds');
-							console.log(response.headers.get('Location'));
-							goto(response.headers.get('Location')).then(() => {
-								console.log('navigating done');
-								notifications.notify({
-									message: 'Feed added!',
-									type: 'success',
-								});
-							});
-							await userStore.updateData('feeds', {
-								access_token: $page.data.lucia.access_token,
-							});
-						},
-					});
+					// // console.log('click');
+					// // // TODO: proper invalidation
+					// // modals.open(UrlModal, {
+					// // 	formAction: '/rss',
+					// // 	placeholder: 'Enter RSS feed URL',
+					// // 	name: 'url',
+					// // 	pending: () => {
+					// // 		modals.close();
+					// // 		pending_notification = notifications.notify({
+					// // 			message: 'adding feed...',
+					// // 		});
+					// // 	},
+					// // 	done: async ({ response }) => {
+					// // 		notifications.remove(pending_notification);
+					// // 		// user_data_dirty.set(true);
+					// // 		// await invalidate('/api/fetch_user_data?data=feeds');
+					// // 		console.log(response.headers.get('Location'));
+					// // 		goto(response.headers.get('Location')).then(() => {
+					// // 			console.log('navigating done');
+					// // 			notifications.notify({
+					// // 				message: 'Feed added!',
+					// // 				type: 'success',
+					// // 			});
+					// // 		});
+					// // 		await userStore.updateData('feeds', {
+					// // 			access_token: $page.data.lucia.access_token,
+					// // 		});
+					// // 	},
+					// });
 				}}
 				variant="ghost">Add Feed</Button
 			>

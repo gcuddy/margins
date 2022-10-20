@@ -1,13 +1,12 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
 export const GET: RequestHandler = async ({ url, locals, request }) => {
 	const cursor = url.searchParams.get('cursor');
 	const unread = url.searchParams.get('unread');
 	const have = url.searchParams.get('have')?.split(',') || [];
 	try {
-		const { user } = await auth.validateRequestByCookie(request);
-		console.log({ user });
+		const session = await auth.validateRequest(request);
 		if (cursor) {
 			const items = await db.rssFeedItem.findMany({
 				where: {
@@ -17,7 +16,7 @@ export const GET: RequestHandler = async ({ url, locals, request }) => {
 					feed: {
 						users: {
 							some: {
-								id: user['user_id'],
+								id: session['userId'],
 							},
 						},
 					},
@@ -33,7 +32,7 @@ export const GET: RequestHandler = async ({ url, locals, request }) => {
 				include: {
 					interactions: {
 						where: {
-							userId: user['user_id'],
+							userId: session['userId'],
 						},
 					},
 					feed: {
@@ -53,13 +52,13 @@ export const GET: RequestHandler = async ({ url, locals, request }) => {
 				cursor: items[items.length - 1]?.id,
 			});
 		} else {
-			console.log({ user });
+			console.log({ user: session });
 			const items = await db.rssFeedItem.findMany({
 				where: {
 					feed: {
 						users: {
 							some: {
-								id: user['user_id'],
+								id: session['userId'],
 							},
 						},
 					},
@@ -83,7 +82,7 @@ export const GET: RequestHandler = async ({ url, locals, request }) => {
 			// 		feed: {
 			// 			users: {
 			// 				some: {
-			// 					id: user['user_id'],
+			// 					id: user['userId'],
 			// 				},
 			// 			},
 			// 		},
@@ -92,7 +91,7 @@ export const GET: RequestHandler = async ({ url, locals, request }) => {
 			// 				? {
 			// 						some: {
 			// 							user: {
-			// 								id: user['user_id'],
+			// 								id: user['userId'],
 			// 							},
 			// 							is_read: false,
 			// 						},
@@ -103,7 +102,7 @@ export const GET: RequestHandler = async ({ url, locals, request }) => {
 			// 	include: {
 			// 		interactions: {
 			// 			where: {
-			// 				userId: user['user_id'],
+			// 				userId: user['userId'],
 			// 			},
 			// 		},
 			// 		feed: {

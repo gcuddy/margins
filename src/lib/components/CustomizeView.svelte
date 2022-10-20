@@ -7,7 +7,7 @@
 		PopoverOverlay,
 		Disclosure,
 		DisclosureButton,
-		DisclosurePanel
+		DisclosurePanel,
 	} from '@rgossiaux/svelte-headlessui';
 	import isEqual from 'lodash.isequal';
 	import { createPopperActions } from 'svelte-popperjs';
@@ -27,10 +27,10 @@
 			{
 				name: 'offset',
 				options: {
-					offset: [0, 8]
-				}
-			}
-		]
+					offset: [0, 8],
+				},
+			},
+		],
 	});
 
 	// Example Popper configuration
@@ -41,7 +41,7 @@
 	import Icon from './helpers/Icon.svelte';
 	export let viewOptions: ViewOptions = {
 		...defaultViewOptions,
-		properties: { ...defaultViewOptions.properties }
+		properties: { ...defaultViewOptions.properties },
 	};
 	let ogViewOptions = { ...viewOptions, properties: { ...viewOptions.properties } };
 	let changed = false;
@@ -58,7 +58,7 @@
 			variant="ghost"
 			className="space-x-1"
 			tooltip={{
-				text: 'Show view options'
+				text: 'Show view options',
 			}}
 		>
 			<Icon name="adjustmentsSolid" className="h-4 w-4 dark:fill-gray-300" /> <span>View</span>
@@ -85,6 +85,15 @@
 				class=" w-72 rounded-lg bg-gray-50 p-4  shadow-2xl ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/5"
 			>
 				<div class="flex flex-col space-y-3 divide-y">
+					<div class="flex items-center justify-between">
+						<label class="grow" for="">
+							<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm">View</SmallPlus>
+						</label>
+						<MiniSelect bind:value={viewOptions.view}>
+							<option value="list">List</option>
+							<option value="grid">Grid</option>
+						</MiniSelect>
+					</div>
 					<div class="flex items-center justify-between">
 						<label class="grow" for="">
 							<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm">Sorting</SmallPlus>

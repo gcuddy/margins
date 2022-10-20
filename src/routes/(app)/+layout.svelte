@@ -1,11 +1,5 @@
 <!-- <button on:click={signOutUser}>SIGN OUT</button> -->
 <script lang="ts">
-	import { signOut, getSession } from 'lucia-sveltekit/client';
-
-	const signOutUser = async () => {
-		await signOut();
-		window.location.href = '/';
-	};
 	import type { LayoutData } from './$types';
 	export let data: LayoutData;
 	$: ({ user } = data);
@@ -21,17 +15,10 @@
 	import { mainEl } from '$lib/stores/main';
 	import { hideSidebar } from '$lib/stores/sidebar';
 	import { page } from '$app/stores';
-	import { Lucia } from 'lucia-sveltekit/client';
 	import PodcastPlayer from '$lib/components/PodcastPlayer.svelte';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
 
 	let sidebarWidth: number;
-	// if ($lucia) {
-	// 	console.log({ $lucia });
-	// 	// authenticated
-	// } else {
-	// 	console.log('not authenticated');
-	// }
 </script>
 
 <svelte:head />
@@ -42,8 +29,6 @@
 {#if dev}
 	<Developer />
 {/if}
-
-<ProgressBar />
 
 <div class="bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50" on:drag>
 	<Notifications />

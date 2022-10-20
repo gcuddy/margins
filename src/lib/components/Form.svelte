@@ -27,7 +27,7 @@
 </script>
 
 {#if disableJs}
-	<form {method} action="{action}{method_override}" class="{classOverride} {className}">
+	<form {method} {action} class="{classOverride} {className}">
 		<slot />
 	</form>
 {:else}
@@ -42,10 +42,10 @@
 			goto,
 			headers,
 			check,
-			access_token: $page.data.lucia.access_token,
+			access_token: $page.data.lucia?.access_token,
 		}}
 		{method}
-		action="{action}{method_override}"
+		{action}
 		class="{classOverride} {className}"
 	>
 		<slot />

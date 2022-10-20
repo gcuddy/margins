@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { z } from 'zod';
-import type { RssFeedItemModel } from './types/schemas/prisma';
+import type { RssFeedItemModel } from './types/schemas/rssfeeditem';
 
 interface MarginsDb extends DBSchema {
 	feedItems: {

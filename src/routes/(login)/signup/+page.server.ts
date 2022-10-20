@@ -1,51 +1,42 @@
-import type { Action } from './$types';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
+import { invalid, redirect, type Actions } from '@sveltejs/kit';
 
-export const POST: Action = async ({ request, setHeaders }) => {
-	const form = await request.formData();
-	const username = form.get('username');
-	const password = form.get('password');
-	if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
-		return {
-			errors: {
+export const actions: Actions = {
+	default: async ({ request, cookies }) => {
+		const form = await request.formData();
+		const email = form.get('email');
+		const password = form.get('password');
+		// check for empty
+		if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+			return invalid(400, {
 				message: 'Invalid input',
-				username: '',
-			},
-		};
-	}
-	try {
-		const createUser = await auth.createUser('username', username, {
-			password,
-			user_data: {
-				username,
-			},
-		});
-		console.log({ createUser });
-		setHeaders({
-			'set-cookie': createUser.cookies,
-		});
-		return {
-			location: '/inbox',
-		};
-	} catch (e) {
-		const error = e as Error;
-		if (
-			error.message === 'AUTH_DUPLICATE_IDENTIFIER_TOKEN' ||
-			error.message === 'AUTH_DUPLICATE_USER_DATA'
-		) {
-			return {
-				errors: {
-					username: 'Username already taken',
-					message: '',
-				},
-			};
+			});
 		}
-		return {
-			status: 500,
-			errors: {
-				message: 'Unknown error',
-				username: '',
-			},
-		};
-	}
+		try {
+			const user = await auth.createUser('email', email, {
+				password,
+				attributes: {
+					email,
+				},
+			});
+			console.log({ user });
+			const { setSessionCookie } = await auth.createSession(user.userId);
+			setSessionCookie(cookies);
+		} catch (e) {
+			const error = e as Error;
+			if (
+				error.message === 'AUTH_DUPLICATE_IDENTIFIER_TOKEN' ||
+				error.message === 'AUTH_DUPLICATE_USER_DATA'
+			) {
+				return invalid(400, {
+					message: 'Email unavailable',
+				});
+			}
+			console.error(error);
+			return invalid(500, {
+				message: 'Unknown error occurred',
+			});
+		}
+		throw redirect(302, '/login');
+	},
 };

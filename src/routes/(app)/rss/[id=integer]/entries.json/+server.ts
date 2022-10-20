@@ -1,6 +1,6 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
 import { request } from '@playwright/test';
 export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 	const cursor = url.searchParams.get('cursor');
@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 			.map((h) => Number(h)) || [];
 	const id = Number(params.id);
 	try {
-		const user = await auth.validateRequestByCookie(request);
+		const user = await auth.validateRequest(request);
 		if (cursor) {
 			const items = await db.rssFeedItem.findMany({
 				where: {
@@ -29,7 +29,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 					// 		? {
 					// 				some: {
 					// 					user: {
-					// 						id: user['user_id'],
+					// 						id: user['userId'],
 					// 					},
 					// 					is_read: false,
 					// 				},
@@ -47,7 +47,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 				include: {
 					interactions: {
 						where: {
-							userId: user['user_id'],
+							userId: user['userId'],
 						},
 					},
 					feed: {
@@ -79,7 +79,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 					// 		? {
 					// 				some: {
 					// 					user: {
-					// 						id: user['user_id'],
+					// 						id: user['userId'],
 					// 					},
 					// 					is_read: false,
 					// 				},
@@ -93,7 +93,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 				include: {
 					interactions: {
 						where: {
-							userId: user['user_id'],
+							userId: user['userId'],
 						},
 					},
 					feed: {

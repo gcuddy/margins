@@ -5,6 +5,6 @@ import { db } from '$lib/db';
 
 export const auth = lucia({
 	adapter: prisma(db),
-	secret: import.meta.env.VITE_LUCIA_SECRET,
 	env: dev ? 'DEV' : 'PROD',
 });
+export type Auth = typeof auth;

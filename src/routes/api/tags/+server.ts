@@ -4,6 +4,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 import { tagRequestSchema } from '$lib/types/schemas/Tags';
+import { auth } from '$lib/server/lucia';
 
 export const GET: RequestHandler = async () => {
 	// TODO: add limit? only those which have been used?
@@ -12,31 +13,35 @@ export const GET: RequestHandler = async () => {
 };
 
 // patch/post: used for patching articles with tags
-export const POST: RequestHandler = async ({ request }) => {
-	const data = await getJsonFromRequest(request);
+export const POST: RequestHandler = async ({ request, locals }) => {
+	const { userId } = locals.getSession();
+	console.log('received tag request');
 	try {
+		// const { userId } = await auth.validateRequest(request);
+		console.log({ userId });
+		const data = await getJsonFromRequest(request);
 		const parsed = tagRequestSchema.parse(data);
-		const tags = parsed.tags?.map((name) => ({ name }));
+		const tags = parsed.tags?.map((name) => ({ name, userId }));
 		if (tags?.length) {
 			await db.tag.createMany({
 				data: tags,
-				skipDuplicates: true
+				skipDuplicates: true,
 			});
 		}
 		const articles = await db.$transaction(
 			parsed.ids.map((id) => {
 				return db.article.update({
 					where: {
-						id: Number(id)
+						id: Number(id),
 					},
 					data: {
 						tags: {
-							set: tags || []
-						}
+							set: tags || [],
+						},
 					},
 					select: {
-						id: true
-					}
+						id: true,
+					},
 				});
 			})
 		);

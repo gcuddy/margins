@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import { match, P } from 'ts-pattern';
-import { ArticleModel } from './prisma';
-import type { SmartListCondition } from '../filter';
+import type { IntFilterType } from '../filter';
+import { ArticleModel } from './rssfeeditem';
 import { ViewOptionsSchema } from './View';
 
 export const ArticleFilterSchema = z.object({
@@ -9,11 +8,10 @@ export const ArticleFilterSchema = z.object({
 		contains: z.string().optional(),
 		startsWith: z.string().optional(),
 		endsWith: z.string().optional(),
-		equals: z.string().optional()
-	})
+		equals: z.string().optional(),
+	}),
 });
 
-const articleKeys = ArticleModel.keyof();
 export const IntFilterSchema = z.object({
 	equals: z.number().optional(),
 	in: z.array(z.number()).optional(),
@@ -22,7 +20,7 @@ export const IntFilterSchema = z.object({
 	lte: z.number().optional(),
 	gt: z.number().optional(),
 	gte: z.number().optional(),
-	not: z.number().optional()
+	not: z.number().optional(),
 });
 
 export const StringFilterSchema = z.object({
@@ -37,8 +35,7 @@ export const StringFilterSchema = z.object({
 	startsWith: z.string().optional(),
 	endsWith: z.string().optional(),
 	search: z.string().optional(),
-	mode: z.literal('insensitive').optional(),
-	not: z.string().optional()
+	not: z.string().optional(),
 });
 
 export const DateTimeFilterSchema = z.object({
@@ -47,11 +44,11 @@ export const DateTimeFilterSchema = z.object({
 	lte: z.date().or(z.string()).optional(),
 	gt: z.date().or(z.string()).optional(),
 	gte: z.date().or(z.string()).optional(),
-	not: z.date().or(z.string()).optional()
+	not: z.date().or(z.string()).optional(),
 });
 
 export const SmartListSchema = z.object({
-	AND: z.object({})
+	AND: z.object({}),
 });
 type _IntFilter = {
 	field: 'readProgress';
@@ -77,18 +74,18 @@ export const SmartListStringFilter = z.object({
 		title: true,
 		author: true,
 		url: true,
-		siteName: true
+		siteName: true,
 	}).keyof(),
 	type: z.literal('StringFilter'),
 	display: z.string().optional(),
 	filter: StringFilterSchema.keyof(),
 	value: z.string(),
-	id: z.number()
+	id: z.number(),
 });
 
 export const BoolFilterSchema = z.object({
 	equals: z.boolean().optional(),
-	not: z.boolean().optional()
+	not: z.boolean().optional(),
 });
 
 // export type ArticleWhereInput = {
@@ -141,7 +138,7 @@ export const ArticleWhereSchema = z.object({
 	wordCount: IntFilterSchema.optional(),
 	starred: BoolFilterSchema.optional(),
 	// make location be one of Inbox, Archive, etc
-	location: StringFilterSchema.optional()
+	location: StringFilterSchema.optional(),
 });
 const articleWhereKeys = ArticleWhereSchema.keyof();
 export const stringFilterKeys: z.infer<typeof articleWhereKeys>[] = [
@@ -149,7 +146,7 @@ export const stringFilterKeys: z.infer<typeof articleWhereKeys>[] = [
 	'textContent',
 	'author',
 	'url',
-	'location'
+	'location',
 ];
 const dateTimeFilterKeys: z.infer<typeof articleWhereKeys>[] = ['createdAt', 'updatedAt', 'date'];
 const intFilterKeys: z.infer<typeof articleWhereKeys>[] = ['readProgress', 'wordCount'];
@@ -160,7 +157,7 @@ const boolFilterKeys: z.infer<typeof articleWhereKeys>[] = ['starred'];
 export const SmartListFilterSchema = z.object({
 	AND: z.array(ArticleWhereSchema).optional(),
 	OR: z.array(ArticleWhereSchema).optional(),
-	NOT: z.array(ArticleWhereSchema).optional()
+	NOT: z.array(ArticleWhereSchema).optional(),
 });
 // export const SmartListFilterSchema = z.union([
 // 	z.object({
@@ -201,7 +198,7 @@ function whereToSmartConditions(where: z.infer<typeof ArticleWhereSchema>): Smar
 		type,
 		field: key,
 		display: lookup[key].display,
-		filter: value
+		filter: value,
 	};
 	// const result1 = (Object.keys(where) as (keyof typeof where)[]).forEach((key) => {
 	// 	key; // 'AND' | 'OR' | 'NOT'
@@ -216,53 +213,53 @@ function whereToSmartConditions(where: z.infer<typeof ArticleWhereSchema>): Smar
 export const lookup = {
 	author: {
 		display: 'Author',
-		type: 'StringFilter'
+		type: 'StringFilter',
 	},
 	title: {
 		display: 'Title',
-		type: 'StringFilter'
+		type: 'StringFilter',
 	},
 	textContent: {
 		display: 'Text Content',
-		type: 'StringFilter'
+		type: 'StringFilter',
 	},
 	url: {
 		display: 'URL',
-		type: 'StringFilter'
+		type: 'StringFilter',
 	},
 	location: {
 		display: 'Location',
-		type: 'StringFilter'
+		type: 'StringFilter',
 	},
 	createdAt: {
 		display: 'Created At',
-		type: 'DateTimeFilter'
+		type: 'DateTimeFilter',
 	},
 	updatedAt: {
 		display: 'Updated At',
-		type: 'DateTimeFilter'
+		type: 'DateTimeFilter',
 	},
 	readProgress: {
 		display: 'Read Progress',
-		type: 'NumberFilter'
+		type: 'NumberFilter',
 	},
 	date: {
 		display: 'Date',
-		type: 'DateTimeFilter'
+		type: 'DateTimeFilter',
 	},
 	wordCount: {
 		display: 'Word Count',
-		type: 'NumberFilter'
+		type: 'NumberFilter',
 	},
 	starred: {
 		display: 'Starred',
-		type: 'BoolFilter'
-	}
+		type: 'BoolFilter',
+	},
 };
 
 export const SmartListModelSchema = z.object({
 	id: z.number().int(),
 	name: z.string(),
 	filter: SmartListFilterSchema,
-	viewOptions: ViewOptionsSchema
+	viewOptions: ViewOptionsSchema,
 });

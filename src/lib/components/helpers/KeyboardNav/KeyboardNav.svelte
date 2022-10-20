@@ -34,6 +34,8 @@
 	import { getContext, onMount, setContext } from 'svelte';
 	import { writable, type Readable, type Writable } from 'svelte/store';
 
+	let className = '';
+	export { className as class };
 	export let disabled = false;
 	export let changeActiveOnHover = false;
 	export let horizontal = false;
@@ -158,6 +160,6 @@
 
 <svelte:window on:keydown={handleKeydown} />
 <!-- Wrapper Item -->
-<div bind:this={container}>
+<div class={className} bind:this={container}>
 	<slot />
 </div>

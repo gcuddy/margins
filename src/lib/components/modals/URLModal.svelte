@@ -23,7 +23,7 @@
 		showSpinner = false;
 		modals.close(modalIndex);
 		notifications.remove(pending_notification);
-		await user.updateData('articles', { access_token: $page.data.lucia.access_token });
+		await user.updateData('articles');
 		if (inv) {
 			invalidate(inv).then(() => {
 				console.log(`invalidated ${inv}`);
@@ -51,7 +51,6 @@
 	export let notification: Parameters<typeof notifications['notify']>[0] | undefined = undefined;
 	export let name = 'text';
 	let headers = new Headers();
-	$: headers.set('Authorization', `Bearer ${$page.data.lucia.access_token}`);
 	$: console.log({ $page, headers: headers.get('Authorization') });
 
 	let input: HTMLInputElement;

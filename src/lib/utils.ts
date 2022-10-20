@@ -19,7 +19,7 @@ import type { ViewOptions } from './types/schemas/View';
 import dayjs from 'dayjs';
 import type { AddToListSchema } from './types/schemas/List';
 import { Md5 } from 'ts-md5';
-import type { RssFeedItemModel } from './types/schemas/prisma';
+import type { RssFeedItemModel } from './types/schemas/rssfeeditem';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {

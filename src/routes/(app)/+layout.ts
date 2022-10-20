@@ -2,13 +2,14 @@ import { browser } from '$app/environment';
 import { redirect } from '@sveltejs/kit';
 import { get, readable } from 'svelte/store';
 import type { LayoutLoad } from './$types';
-import { User, user as userStore, user_data_dirty } from '$lib/stores/user';
+import { type User, user as userStore, user_data_dirty } from '$lib/stores/user';
+import { getUser } from 'lucia-sveltekit/load';
 
-export const load: LayoutLoad = async ({ parent, fetch }) => {
-	const { lucia } = await parent();
-	if (!lucia) throw redirect(302, '/login');
-
-	console.log('running root +layout.ts', { lucia });
+export const load: LayoutLoad = async (event) => {
+	console.log('trying to fetch!!!');
+	const { fetch } = event;
+	const user = await getUser(event);
+	if (!user) throw redirect(302, '/login');
 	const dirty = get(user_data_dirty);
 	// If we already have a stored user, then don't fetch it again - we'll be using the store
 	if (browser && get(userStore) && !dirty) {
@@ -19,11 +20,7 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 	}
 
 	// // Fetch the user, store it, return it
-	const res = await fetch('/api/fetch_user_data', {
-		headers: {
-			Authorization: `Bearer ${lucia.access_token}`,
-		},
-	});
+	const res = await fetch('/api/fetch_user_data');
 	console.log('fetched data');
 	// user_data_dirty.set(false);
 	// if (!res.ok) {

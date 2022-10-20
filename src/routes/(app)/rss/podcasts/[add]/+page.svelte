@@ -48,6 +48,8 @@
 
 <GenericInput bind:value />
 
+<Combobox />
+
 {#if promise}
 	{#await promise}
 		<p>...waiting</p>

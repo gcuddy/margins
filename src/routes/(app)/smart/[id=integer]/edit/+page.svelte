@@ -75,7 +75,7 @@
 		return {
 			[condition.field]: {
 				[condition.filter]: condition.value,
-				mode: 'insensitive',
+				// mode: 'insensitive',
 			},
 		};
 	});

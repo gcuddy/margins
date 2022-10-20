@@ -4,11 +4,11 @@ import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 import { FavoriteSchema, _FavoriteArgs } from '$lib/types/schemas/Favorite';
 import { z } from 'zod';
-import { auth } from '$lib/lucia';
+import { auth } from '$lib/server/lucia';
 
 export const GET: RequestHandler = async ({ request }) => {
-	const user = await auth.validateRequest(request);
-	console.log({ user });
+	const session = await auth.validateRequest(request);
+	console.log({ user: session });
 	const favorites = await db.favorite.findMany(_FavoriteArgs);
 	return json$1({ favorites });
 };

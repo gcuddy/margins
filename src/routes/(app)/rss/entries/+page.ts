@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import { user } from '$lib/stores/user';
-import type { RssFeedItemModel } from '$lib/types/schemas/prisma';
+import type { RssFeedItemModel } from '$lib/types/schemas/rssfeeditem';
 import type { z } from 'zod';
 import { currentList } from '../store';
 import type { PageLoad } from './$types';

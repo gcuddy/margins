@@ -22,9 +22,9 @@
 	$: condition.field === 'readProgress'
 		? (json[condition.field][condition.filter] = (condition.value as number) / 100)
 		: null;
-	$: condition.type === 'StringFilter' && condition.field !== 'location'
-		? ((json[condition.field] as any).mode = 'insensitive')
-		: null;
+	// $: condition.type === 'StringFilter' && condition.field !== 'location'
+	// 	? ((json[condition.field] as any).mode = 'insensitive')
+	// 	: null;
 </script>
 
 <div class="flex items-center space-x-1">

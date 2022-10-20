@@ -13,7 +13,7 @@
 	let saved = false;
 
 	import RssItem from './RSSItem.svelte';
-	import type { PageData } from './$types';
+	import type { PageData } from '../../../../../../.svelte-kit/types/src/routes/(app)/rss/[id=integer]/[entry]./../../../../../.svelte-kit/types/src/routes/(app)/rss/[id=integer]/[entry]/$types';
 	import { page } from '$app/stores';
 	import { goto, invalidate, prefetch, prefetchRoutes } from '$app/navigation';
 	import { browser } from '$app/environment';
@@ -62,14 +62,14 @@
 		if (e.key === 'j') {
 			// wish these were instantaneous
 			if (nextItem) {
-				goto(`/rss/${item.rssFeedId}/${nextItem.uuid}`, {
+				goto(`/rss/${item?.rssFeedId}/${nextItem.uuid}`, {
 					keepfocus: true,
 					noscroll: false,
 				});
 			}
 		} else if (e.key === 'k') {
 			if (previousItem) {
-				goto(`/rss/${item.rssFeedId}/${previousItem.uuid}`, {
+				goto(`/rss/${item?.rssFeedId}/${previousItem.uuid}`, {
 					keepfocus: true,
 					noscroll: false,
 				});
@@ -83,27 +83,27 @@
 />
 
 <!-- We turn off prefetch for the links because we're going to automatically prefetch those items -->
-<div class="col-span-6 min-w-full snap-start lg:w-auto" bind:this={$panes[2]} id="rss-items-entry">
+
+<div
+	class=" flex h-[97vh] flex-col overflow-y-auto shadow-2xl ring-gray-500/50 dark:ring-gray-700/50 lg:m-3 lg:rounded-md lg:ring-1"
+>
+	<!-- fix having to do this padding by instead using a different layout -->
 	<div
-		class=" flex flex-col overflow-y-auto ring-gray-500/50 dark:ring-gray-700/50 lg:m-3 lg:rounded-md lg:shadow-2xl lg:ring-1"
+		class="flex items-center justify-between border-b p-2 pl-12 dark:border-gray-700 dark:bg-gray-800 lg:pl-2"
 	>
-		<!-- fix having to do this padding by instead using a different layout -->
-		<div
-			class="flex items-center justify-between border-b p-2 pl-12 dark:border-gray-700 dark:bg-gray-800 lg:pl-2"
-		>
-			<div class="flex items-center space-x-2">
-				<Button
-					as="a"
-					href="/rss/{item.rssFeedId}"
-					variant="link"
-					className="flex items-center !px-1"
-					tooltip={{
-						text: `Go back`,
-					}}
-				>
-					<Icon name="xSolid" className="h-4 w-4 fill-current" />
-				</Button>
-				<!-- {#if $currentFeedList}
+		<div class="flex items-center space-x-2">
+			<Button
+				as="a"
+				href="/rss/{item.rssFeedId}"
+				variant="link"
+				className="flex items-center !px-1"
+				tooltip={{
+					text: `Go back`,
+				}}
+			>
+				<Icon name="xSolid" className="h-4 w-4 fill-current" />
+			</Button>
+			<!-- {#if $currentFeedList}
 
 				<Button
 					as={previousItem ? 'a' : 'button'}
@@ -130,52 +130,51 @@
 					<Icon name="chevronDownSolid" />
 				</Button>
 			{/if} -->
-				<MarkAsReadButton bind:item />
-			</div>
-			<Form
-				action="/add"
-				method="post"
-				classOverride=""
-				pending={() => {
-					pending_add_item = true;
+			<MarkAsReadButton bind:item />
+		</div>
+		<Form
+			action="/add"
+			method="post"
+			classOverride=""
+			pending={() => {
+				pending_add_item = true;
+			}}
+			error={({ response }) => {
+				pending_add_item = false;
+				notifications.notify({
+					message: 'Error saving',
+					type: 'error',
+				});
+			}}
+			done={async ({ response }) => {
+				pending_add_item = false;
+				saved = true;
+				notifications.notify({
+					message: `Saved to your library`,
+				});
+			}}
+		>
+			<input type="hidden" name="url" value={item.link} />
+			<Button
+				type="submit"
+				variant="ghost"
+				className="flex items-center space-x-1"
+				tooltip={{
+					text: 'Save to your library',
 				}}
-				error={({ response }) => {
-					pending_add_item = false;
-					notifications.notify({
-						message: 'Error saving',
-						type: 'error',
-					});
-				}}
-				done={async ({ response }) => {
-					pending_add_item = false;
-					saved = true;
-					notifications.notify({
-						message: `Saved to your library`,
-					});
-				}}
+				disabled={saved}
 			>
-				<input type="hidden" name="url" value={item.link} />
-				<Button
-					type="submit"
-					variant="ghost"
-					className="flex items-center space-x-1"
-					tooltip={{
-						text: 'Save to your library',
-					}}
-					disabled={saved}
-				>
-					<Icon
-						name={pending_add_item ? 'loading' : saved ? 'checkCircleSolid' : 'plusCircleSolid'}
-						className="h-4 w-4 fill-gray-300 {pending_add_item ? 'animate-spin' : ''}"
-					/>
-				</Button>
-			</Form>
-		</div>
+				<Icon
+					name={pending_add_item ? 'loading' : saved ? 'checkCircleSolid' : 'plusCircleSolid'}
+					className="h-4 w-4 fill-gray-300 {pending_add_item ? 'animate-spin' : ''}"
+				/>
+			</Button>
+		</Form>
+	</div>
 
-		<div class="flex flex-col overflow-hidden">
-			<!-- {#key item} -->
-			<RssItem bind:el={content} bind:item scrollIntoView={false} linkBack={true} />
-			<!-- {/key} -->
-		</div>
+	<div class="flex h-full flex-col overflow-hidden">
+		<!-- {#key item} -->
+		<RssItem bind:el={content} bind:item scrollIntoView={false} linkBack={true} />
+		<!-- {/key} -->
 	</div>
 </div>
