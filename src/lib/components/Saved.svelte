@@ -130,7 +130,7 @@
 				{index}
 				as="a"
 				href="/{item.id}"
-				class="group col-span-12 h-min md:col-span-4 2xl:col-span-3 {viewOptions.view === 'list'
+				class="group col-span-12 h-min md:col-span-3 2xl:col-span-3 {viewOptions.view === 'list'
 					? '!cursor-default'
 					: ''}"
 				on:select={() => {
