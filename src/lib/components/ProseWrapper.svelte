@@ -16,9 +16,9 @@
 	bind:this={el}
 	on:click
 	class:first_letter
-	class="prose-lg prose-stone mx-auto block break-words {font === 'serif'
-		? 'font-serif'
-		: 'font-sans'} transition prose-a:text-primary-600 prose-a:underline prose-a:transition  hover:prose-a:text-primary-700  prose-figure:drop-shadow-sm prose-figcaption:mx-auto prose-figcaption:max-w-sm  prose-figcaption:text-center prose-img:mx-auto prose-img:rounded  dark:prose-invert dark:prose-a:text-sky-500  {breakpoints
+	class="prose-lg prose-stone mx-auto block break-words {font === 'sans'
+		? 'font-sans'
+		: 'font-newsreader'} transition prose-headings:font-sans prose-headings:font-semibold  prose-a:underline prose-a:transition hover:prose-a:text-primary-700  prose-figure:text-gray-500 prose-figure:drop-shadow-sm prose-figcaption:mt-0 prose-figcaption:font-sans prose-figcaption:text-sm prose-figcaption:text-gray-500  prose-img:mx-auto prose-img:rounded dark:prose-invert   dark:prose-figcaption:text-gray-400  {breakpoints
 		? 'sm:prose-lg lg:prose-xl'
 		: ''} {className}"
 	{style}

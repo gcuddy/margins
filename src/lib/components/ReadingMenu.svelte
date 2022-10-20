@@ -14,6 +14,7 @@
 	import Button from './Button.svelte';
 	import { fly } from 'svelte/transition';
 	import ReadingSidebar from './ReadingSidebar.svelte';
+	import DotMenu from './DotMenu.svelte';
 
 	export let back = '/';
 	export let article: ArticleWithNotesAndTagsAndContext;
@@ -73,7 +74,9 @@
 		// saved_position = null;
 	}
 
+	let moused_over = false;
 	$: hide =
+		!moused_over &&
 		$mainElScroll.down &&
 		$mainElScroll.y > 500 &&
 		$mainElScroll.offset < 0.99 &&
@@ -82,16 +85,22 @@
 
 <!-- -translate-y-12 -->
 <div
-	class="sticky top-0 z-20 flex w-full  transform-gpu justify-between border-b bg-stone-50/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:bg-stone-800/90
-  {hide ? ' opacity-0' : 'translate-y-0 opacity-100'}
-    md:px-3"
+	class="sticky top-0 z-20 flex w-full  transform-cpu justify-between border-b bg-stone-50/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:border-black dark:bg-stone-800/90
+  {hide ? '-translate-y-full' : 'translate-y-0'}
+    after:absolute after:top-0 after:left-0 after:-z-10 after:h-16 after:w-full after:content-[''] md:px-3"
+	on:mouseenter={() => {
+		moused_over = true;
+	}}
+	on:mouseleave={() => {
+		moused_over = false;
+	}}
 >
 	<a class="flex items-center md:pl-0" data-sveltekit-prefetch href={back}
 		><Icon name="arrow" direction="w" />
 		<span class="sr-only">Go back</span></a
 	>
 	<div
-		class=" flex -translate-y-24 transform-gpu items-center opacity-0 transition-all {$mainElScroll.y >
+		class=" flex -translate-y-24 transform-cpu items-center opacity-0 transition-all {$mainElScroll.y >
 			135 && '!translate-y-0 !opacity-100'}"
 	>
 		<!-- This should check when the header is off screen. When it is, it should receive the Title and gently transition it in. -->
@@ -124,7 +133,21 @@
 		</div>
 	</div>
 	<div class="flex items-end space-x-2">
-		<Menu
+		<DotMenu
+			items={[
+				[
+					{
+						label: 'Tag',
+						icon: 'tagSolid',
+					},
+					{
+						label: 'Archive',
+						icon: 'archiveSolid',
+					},
+				],
+			]}
+		/>
+		<!-- <Menu
 			buttonAriaLabel="More option"
 			menuItems={[
 				[
@@ -153,7 +176,7 @@
 				<Icon name="options" />
 				<span class="sr-only">Options</span>
 			</div>
-		</Menu>
+		</Menu> -->
 		<button on:click={() => (reading_sidebar_active = !reading_sidebar_active)} class="group z-40">
 			<Icon
 				name="sidebar"

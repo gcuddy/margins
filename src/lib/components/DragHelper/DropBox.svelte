@@ -43,17 +43,17 @@
 		console.log({ form });
 		fetch('/add', {
 			method: 'POST',
-			body: form
+			body: form,
 		})
 			.then(() => {
 				notifications.notify({
-					message: 'Saved link'
+					message: 'Saved link',
 				});
 			})
 			.catch((e) => {
 				console.error(e);
 				notifications.notify({
-					message: 'Error saving link'
+					message: 'Error saving link',
 				});
 			});
 		// notifications.notify({
@@ -63,18 +63,30 @@
 </script>
 
 {#if $dragging}
-	<div
-		transition:fade={{ duration: 250 }}
-		class="fixed bottom-9 left-9 z-50 rounded-full border border-amber-600 bg-yellow-300 px-4 py-9 text-black shadow hover:bg-yellow-700 hover:ring {dragOver
-			? 'bg-yellow-700 ring'
-			: ''}"
-		on:dragover={handleDragOver}
-		on:dragleave={handleDragLeave}
-		on:drop={handleDrop}
-	>
-		<div class="flex items-center space-x-2 text-2xl font-semibold">
-			<Icon name="inboxIn" />
-			<span>Drop here to add to inbox</span>
+	<div class="fixed bottom-9 left-9 z-50">
+		<div
+			transition:fade={{ duration: 250 }}
+			class="before:content-['drop to add to inbox'] rounded-full border border-amber-600 bg-amber-300 p-9 text-black shadow-xl transition before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-amber-400 before:p-12 before:transition {dragOver
+				? 'before:scale-[2.5] before:opacity-100'
+				: 'before:opacity-0'}"
+			on:dragover={handleDragOver}
+			on:dragleave={handleDragLeave}
+			on:drop={handleDrop}
+		>
+			<span
+				class="absolute top-0 left-0 -z-10 -mt-10 w-full text-center text-xs font-bold text-white transition-opacity {dragOver
+					? 'opacity-100'
+					: 'opacity-0'}"
+			>
+				Drop to add URL to inbox</span
+			>
+			<span
+				class="pointer-events-none relative flex items-center space-x-2 font-semibold transition {dragOver
+					? 'scale-125'
+					: ''}"
+			>
+				<Icon name="inboxIn" className="h-8 w-8 stroke-2 stroke-amber-900" />
+			</span>
 		</div>
 	</div>
 {/if}

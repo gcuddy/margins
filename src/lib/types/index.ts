@@ -130,6 +130,7 @@ export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
 	updatedAt: true,
 	wordCount: true,
 	siteName: true,
+	type: true,
 	_count: {
 		select: {
 			annotations: true,
@@ -172,3 +173,9 @@ export type PopperPlacement =
 	| 'left'
 	| 'left-start'
 	| 'left-end';
+
+export const TYPE = {
+	0: 'text',
+	1: 'audio',
+	2: 'video',
+};

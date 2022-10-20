@@ -5,8 +5,13 @@ export function absolutizeUrls(root: HTMLElement, baseUrl: string, attr: string)
 	for (const node of nodes) {
 		const url = node.getAttribute(attr);
 		if (!url) continue;
-		const absUrl = new URL(url, baseUrl).href;
-		node.setAttribute(attr, absUrl);
+		console.log({ url });
+		try {
+			const absUrl = new URL(url, baseUrl).href;
+			node.setAttribute(attr, absUrl);
+		} catch (e) {
+			console.error(e);
+		}
 	}
 	return root;
 }

@@ -98,9 +98,9 @@
 
 	// TODO: use useCommands(Commands) to handle this automagically
 	let previousPage: string | undefined;
-	afterNavigate((nav) => {
-		previousPage = nav.from?.pathname;
-	});
+	// afterNavigate((nav) => {
+	// 	previousPage = nav.from?.pathname;
+	// });
 	$: console.log({ previousPage });
 	/** Commands that rely on stores */
 
@@ -116,8 +116,8 @@
 				}
 			},
 			icon: 'arrowRight',
-			kbd: [['Escape']]
-		}
+			kbd: [['Escape']],
+		},
 	];
 	onMount(() => {
 		commandsThatRelyOnStores.forEach((command) => commandStore.add(command, false));

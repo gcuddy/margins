@@ -27,7 +27,7 @@
 </script>
 
 {#if disableJs}
-	<form {method} action="{action}{method_override}" class="{classOverride} {className}">
+	<form {method} {action} class="{classOverride} {className}">
 		<slot />
 	</form>
 {:else}
