@@ -21,3 +21,5 @@
 {#each css as rule}
 	{rule.domain} - {rule.css}
 {/each}
+
+<a href="/rss/opml">OPML</a>

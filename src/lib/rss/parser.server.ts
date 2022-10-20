@@ -52,7 +52,8 @@ export async function findFeed(url: string) {
 			}
 		}
 		if (!href) {
-			throw Error('Could not find rss feed!');
+			console.error('Could not find rss feed for url', url);
+			return;
 		}
 		href = resolveUrl(url, href);
 		return findFeed(href);

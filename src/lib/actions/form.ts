@@ -61,7 +61,6 @@ export function enhance(
 		try {
 			headers = new Headers();
 			headers?.set('accept', 'application/json');
-			headers.has('Authorization') || headers?.set('Authorization', `Bearer ${access_token}`);
 			const options: RequestInit = {
 				method: form.method,
 				headers,
