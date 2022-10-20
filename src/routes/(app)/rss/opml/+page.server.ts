@@ -48,10 +48,8 @@ export const actions: Actions = {
 				message: 'Not logged in',
 			});
 		}
-		console.log('hellooooo');
 		const data = await request.formData();
 		console.log({ data });
-		console.log('urls submitted');
 		const urls = data.getAll('url');
 		Promise.all(urls.map(async (url) => addFeed(url as string, userId)));
 	},

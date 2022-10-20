@@ -1,5 +1,5 @@
 import { buildRssFeed, findFeed } from '$lib/rss/parser.server';
-
+import { db } from '$lib/db';
 export async function addFeed(url: string, userId: string) {
 	const data = await findFeed(url);
 	if (!data) return;
