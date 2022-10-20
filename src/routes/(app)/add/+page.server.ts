@@ -25,7 +25,8 @@ export const actions: Actions = {
 		console.log({ locals });
 		// todo: handle image requests and such
 		try {
-			const { userId } = await auth.validateRequest(request);
+			const { userId } = locals.getSession();
+			console.log({ userId });
 			const form = await request.formData();
 			const url = <string>form.get('url') || <string>form.get('text');
 			const title = <string>form.get('title');
@@ -54,7 +55,7 @@ export const actions: Actions = {
 				};
 			}
 		} catch (e) {
-			console.log(e);
+			console.log({ e });
 			throw error(400);
 		}
 	},

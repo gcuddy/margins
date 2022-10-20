@@ -1,11 +1,23 @@
 <script>
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import Button from '$lib/components/Button.svelte';
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
+	import { user } from '$lib/stores/user';
+	let loading = false;
 </script>
 
-<form class="space-y-2 px-10 pt-[10vh] text-lg" use:enhance>
+<form
+	class="space-y-2 px-10 pt-[10vh] text-lg"
+	use:enhance={({ data, action, cancel, form }) => {
+		loading = true;
+		return async ({ result, update }) => {
+			loading = false;
+			await applyAction(result);
+			await user.updateData('feeds');
+		};
+	}}
+>
 	<div class="container mx-auto flex flex-col gap-4">
 		<label for="url">Enter a URL to subscribe to:</label>
 		<GenericInput
@@ -15,8 +27,15 @@
 			placeholder="https://example.com/feed.xml"
 			class="text-xl text-amber-900 dark:text-amber-50"
 		/>
-		<Button type="submit" size="lg" className="place-self-end space-x-2" scaleOnHover={true}
-			><span>Submit</span> <Icon name="arrowSmRightSolid" /></Button
+		<Button
+			type="submit"
+			size="lg"
+			className="place-self-end space-x-2 flex items-center "
+			scaleOnHover={true}
+			><span>Submit</span>
+			<span class="flex items-center justify-center {loading ? 'animate-spin' : ''}">
+				<Icon name={loading ? 'loading' : 'arrowSmRightSolid'} />
+			</span></Button
 		>
 	</div>
 	<!-- <div class="flex gap-3">

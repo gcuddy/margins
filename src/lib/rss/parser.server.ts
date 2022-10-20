@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import getUuidByString from 'uuid-by-string';
 dayjs.extend(localizedFormat);
-import parse from 'node-html-parser';
+import { parse } from 'node-html-parser';
 import { XMLParser } from 'fast-xml-parser';
 import { isJson, isXml, linkSelectors, resolveUrl } from './utils';
 import { db } from '$lib/db';

@@ -1,4 +1,4 @@
 import { auth } from '$lib/server/lucia';
-import type { ServerLoad } from '@sveltejs/kit';
+import type { LayoutServerLoad } from './$types.js';
 
-export const load: ServerLoad = auth.handleServerSession();
+export const load: LayoutServerLoad = auth.handleServerSession();
