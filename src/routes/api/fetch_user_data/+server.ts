@@ -3,7 +3,7 @@ import { auth } from '$lib/server/lucia';
 import { db } from '$lib/db';
 import { ArticleListSelect } from '$lib/types';
 import type { Prisma } from '@prisma/client';
-export const GET: RequestHandler = async ({ request, url }) => {
+export const GET: RequestHandler = async ({ request, url, locals }) => {
 	console.log('Received fetch user data request');
 	const fields = url.searchParams.get('data')?.split(',');
 	let select: Prisma.UserSelect;
@@ -31,6 +31,10 @@ export const GET: RequestHandler = async ({ request, url }) => {
 		};
 	}
 	try {
+		const session = locals.getSession();
+		if (!session) {
+			throw error(401, 'Unauthorized');
+		}
 		const { userId } = await auth.validateRequest(request);
 		const userData = await db.user.findFirst({
 			where: {

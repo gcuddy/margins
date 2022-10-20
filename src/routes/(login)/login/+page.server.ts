@@ -6,6 +6,7 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const email = form.get('email');
 		const password = form.get('password');
+		console.log({ email, password });
 		if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
 			return invalid(400, {
 				message: 'invalid input',

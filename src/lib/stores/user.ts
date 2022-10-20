@@ -8,7 +8,7 @@ import { derived, writable, type Readable } from 'svelte/store';
 import { z } from 'zod';
 
 export const User = z.object({
-	username: z.string(),
+	email: z.string(),
 	feeds: RssFeedModel.array(),
 	// todo: for storing cursor, should we store it itself or should it just be the last item in the array?
 	feedItems: RssFeedItemModel.array(),
@@ -19,10 +19,7 @@ export type User = z.infer<typeof User>;
 
 function createUserStore() {
 	const { subscribe, set, update } = writable<User>();
-	const updateData = async (
-		data: 'articles' | 'feeds' | 'favorites',
-		{ access_token }: { access_token: string }
-	) => {
+	const updateData = async (data: 'articles' | 'feeds' | 'favorites') => {
 		//todo: args
 		const res = await fetch(`/api/fetch_user_data?data=${data}`);
 		user_data_dirty.set(false);

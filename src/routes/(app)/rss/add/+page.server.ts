@@ -8,12 +8,11 @@ export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		console.log({ locals });
 		try {
-			const { userId } = await auth.validateRequest(request);
+			const { userId } = locals.getSession();
 			const json = await getJsonFromRequest(request);
 			const url = normalizeUrl(json.url, {
 				stripWWW: false,
 			});
-			console.log({ url });
 			// vs...
 			// const url = zUrl.parse(json.url);
 			// TODO: build my own parser

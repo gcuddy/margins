@@ -4,7 +4,7 @@
 	import { user } from '$lib/stores/user';
 </script>
 
-<KeyboardNav startingIndex={3}>
+<KeyboardNav>
 	<ul>
 		<li>
 			<KeyboardNavItem as="a" href="/rss/entries" class="focus:bg-red-500" index={0}

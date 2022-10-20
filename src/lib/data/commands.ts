@@ -181,7 +181,7 @@ export const commands: Command[] = [
 		name: 'Add subscription',
 		perform: () =>
 			modals.open(UrlModal, {
-				formAction: '/rss',
+				formAction: '/rss/add',
 				placeholder: 'Enter RSS feed URL',
 				name: 'url',
 				invalidate: '/rss',

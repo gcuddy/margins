@@ -7,3 +7,4 @@ export const auth = lucia({
 	adapter: prisma(db),
 	env: dev ? 'DEV' : 'PROD',
 });
+export type Auth = typeof auth;

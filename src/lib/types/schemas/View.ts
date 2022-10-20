@@ -9,6 +9,7 @@ interface BaseViewOptions {
 }
 
 export const ViewOptionsSchema = z.object({
+	view: z.enum(['list', 'grid']),
 	sort: z.enum(['title', 'date', 'author', 'createdAt', 'updatedAt', 'manual']),
 	properties: z.object({
 		author: z.boolean(),
@@ -26,6 +27,7 @@ export const ViewOptionsSchema = z.object({
 export type ViewOptions = z.infer<typeof ViewOptionsSchema>;
 
 export const defaultViewOptions: ViewOptions = {
+	view: 'list',
 	sort: 'title',
 	properties: {
 		author: true,

@@ -12,14 +12,14 @@ export const actions: Actions = {
 				message: 'Invalid input',
 			});
 		}
-		console.log({ email, password });
 		try {
 			const user = await auth.createUser('email', email, {
 				password,
-				userData: {
+				attributes: {
 					email,
 				},
 			});
+			console.log({ user });
 			const { setSessionCookie } = await auth.createSession(user.userId);
 			setSessionCookie(cookies);
 		} catch (e) {
