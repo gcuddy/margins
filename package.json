@@ -81,7 +81,7 @@
 	"type": "module",
 	"dependencies": {
 		"@lucia-sveltekit/adapter-prisma": "^0.6.0",
-		"@prisma/client": "^4.3.1",
+		"@prisma/client": "^4.5.0",
 		"lucia-sveltekit": "^0.13.2",
 		"prisma-redis-middleware": "4.1.1"
 	}
