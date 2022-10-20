@@ -46,8 +46,8 @@
 						name: LOCATION_TO_ICON_OUTLINE[val.id],
 						className: `h-5 w-5 stroke-2 stroke-current ${
 							active && 'dark:stroke-primary-100 stroke-primary-900'
-						}`
-					}
+						}`,
+					},
 				};
 			},
 			onSelect: async ({ detail }) => {
@@ -55,21 +55,21 @@
 				// optimistic update
 				selected_items = selected_items.map((article) => ({
 					...article,
-					location: detail.id
+					location: detail.id,
 				}));
 				console.log({ selected_articles: selected_items });
 				dispatch();
 				await bulkEditArticles(ids, {
-					location: detail.id
+					location: detail.id,
 				});
 				notifications.notify({
 					message: `Moved ${selected_items.length} articles to ${detail.name}`,
 					title: `Moved to ${detail.name}`,
-					type: 'success'
+					type: 'success',
 				});
 				clear();
 				syncStore.remove(id);
-			}
+			},
 		});
 	};
 	const add_to_list = async () => {
@@ -77,10 +77,11 @@
 		const res = await fetch('/lists', {
 			headers: {
 				'Content-Type': 'application/json',
-				Accept: 'application/json'
-			}
+				Accept: 'application/json',
+			},
 		});
-		const { lists } = await res.json();
+		const lists = await res.json();
+		console.log({ lists });
 		commandPaletteStore.open({
 			values: lists,
 			placeholder: 'Add to list…',
@@ -92,8 +93,8 @@
 						name: 'viewGrid',
 						className: `h-5 w-5 stroke-2 stroke-current ${
 							active && 'dark:stroke-primary-100 stroke-primary-900'
-						}`
-					}
+						}`,
+					},
 				};
 			},
 			onSelect: async ({ detail }) => {
@@ -109,19 +110,19 @@
 
 				const res = await addToList(detail.id, {
 					annotationId,
-					articleId
+					articleId,
 				});
 				console.log({ res });
 				if (res.ok) {
 					notifications.notify({
 						message: `Moved ${selected_items.length} articles to ${detail.name}`,
 						title: `Moved to ${detail.name}`,
-						type: 'success'
+						type: 'success',
 					});
 					dispatch();
 					clear();
 				}
-			}
+			},
 		});
 	};
 
@@ -141,7 +142,7 @@
 		archive: true,
 		tag: true,
 		addToList: true,
-		moveTo: true
+		moveTo: true,
 	};
 	export let actions: Partial<typeof _actions> = _actions;
 
@@ -156,11 +157,11 @@
 	<div
 		in:gentleFly|local={{
 			duration: 400,
-			easing: backOut
+			easing: backOut,
 		}}
 		out:gentleFly|local={{
 			duration: 400,
-			easing: backIn
+			easing: backIn,
 		}}
 		class="pointer-events-none fixed inset-x-0 bottom-9 z-30 flex justify-center"
 	>
@@ -199,7 +200,7 @@
 						on:click={move}
 						tooltip={{
 							text: 'Move to location',
-							kbd: 'm'
+							kbd: 'm',
 						}}
 						><Icon name="arrowSmRight" className="h-4 w-4 stroke-2 stroke-current" />
 						<span>Move to…</span></Button

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { IntFilterType } from '../filter';
+import { ArticleModel } from './rssfeeditem';
 import { ViewOptionsSchema } from './View';
 
 export const ArticleFilterSchema = z.object({
