@@ -92,9 +92,9 @@
 			icon: 'viewGrid',
 		},
 		{
-			display: 'Smart Lists',
+			display: 'Views',
 			href: '/smart',
-			icon: 'collection',
+			icon: 'square2Stack3d',
 		},
 		{
 			display: 'Notebook',
@@ -250,7 +250,7 @@
 				class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm"
 			>
 				<span class="px-2">Favorites</span>
-				{#each favorites as favorite}
+				{#each $user.favorites as favorite}
 					{#if favorite.tag}
 						<div transition:fade>
 							<SidebarItem
