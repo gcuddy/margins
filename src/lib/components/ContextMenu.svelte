@@ -44,13 +44,16 @@
 	export let icons: 'solid' | 'outline' = 'solid';
 
 	export let usePortal = true;
+
+	export let squishy = false;
 </script>
 
 <Menu let:open>
 	<MenuButton
 		use={[popperRef, ...buttonActions]}
-		class="group relative z-10 flex items-center rounded-md p-1.5 hover:bg-gray-200 focus:bg-gray-200 focus:ring dark:hover:bg-gray-600 dark:focus:bg-gray-600 {open &&
-			'bg-gray-200 dark:bg-gray-600'}"><slot /></MenuButton
+		class="group relative z-10 flex items-center rounded-md p-1.5 hover:bg-gray-200 focus:bg-gray-200 focus:ring active:ring-0 dark:hover:bg-gray-600 dark:focus:bg-gray-600 dark:active:text-white {squishy
+			? 'active:scale-95 transition duration-300'
+			: ''} {open && 'bg-gray-200 dark:bg-gray-600'}"><slot /></MenuButton
 	>
 	<Transition show={open}>
 		{#if open}
