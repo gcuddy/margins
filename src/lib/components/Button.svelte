@@ -14,6 +14,7 @@
 	export let disabled: boolean = false;
 	export let className = '';
 	export let scaleOnHover = false;
+	export let squishy = false;
 	export let tooltip: Tooltip | undefined = undefined;
 	export let prefetch = true;
 
@@ -43,8 +44,8 @@
 	export let href: string | undefined = undefined;
 
 	$: _classname = `relative flex h-7 shrink-0 cursor-default select-none appearance-none items-center justify-center truncate rounded-lg transition font-medium shadow-sm focus-visible:ring disabled:opacity-60 ${
-		scaleOnHover ? 'hover:scale-105' : ''
-	}
+		squishy ? 'active:scale-95 transition duration-300' : ''
+	}  ${scaleOnHover ? 'hover:scale-105' : ''}
     ${size === 'md' ? 'text-sm px-2' : size === 'sm' ? 'text-xs px-2' : 'text-base p-4'}
     ${
 			variant === 'ghost'
