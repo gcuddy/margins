@@ -94,11 +94,17 @@
 >
 	<article class="mx-auto max-w-3xl py-8 px-4">
 		<header class="space-y-3 pb-4" bind:this={$articleHeader}>
-			<div class="text-sm lg:text-base">
-				<a class="text-gray-500 hover:text-primary-700" href={article.url}
-					>{article.siteName || new URL(article.url)?.hostname || article.url}</a
-				>
-			</div>
+			<a
+				class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
+				href={article.url}
+			>
+				<img
+					src="https://icon.horse/icon/?uri={article.url}"
+					class="h-5 w-5 rounded-full object-cover"
+					alt=""
+				/>
+				<span>{article.siteName || new URL(article.url)?.hostname || article.url}</span></a
+			>
 			<H1 class="font-newsreader dark:drop-shadow-sm">{article.title}</H1>
 
 			<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
@@ -128,7 +134,7 @@
 					class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
 				>
 					{#if article.author}
-						<p>{article.author}</p>
+						<p><a href="/author/{article.author}">{article.author}</a></p>
 					{/if}
 					{#if article.author && article.date}
 						<!-- <p>&middot;</p> -->
@@ -154,15 +160,16 @@
 			{/if}
 		</header>
 		<!-- this is a very rudimentary check lol -->
-		{#if article.image && !article.content.includes('<img')}
-			<img src={article.image} alt="" class="mx-auto rounded py-2" />
-		{/if}
+
 		<Highlighter
 			articleID={article.id}
 			articleUrl={article.url}
 			bind:annotations={article.annotations}
 			highlights={article.highlights}
 		>
+			{#if article.image && !article.content.includes('<img')}
+				<img src={article.image} alt="" class="mx-auto rounded py-2" />
+			{/if}
 			{@html article.content}
 		</Highlighter>
 		{#if $mainElScroll.offset > 0.97 && article.location !== 'ARCHIVE'}
