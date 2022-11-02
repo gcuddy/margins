@@ -20,6 +20,7 @@ import dayjs from 'dayjs';
 import type { AddToListSchema } from './types/schemas/List';
 import { Md5 } from 'ts-md5';
 import type { RssFeedItemModel } from './types/schemas/rssfeeditem';
+import { user } from './stores/user';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -349,6 +350,7 @@ export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
 		},
 		body: JSON.stringify(data),
 	});
+	user.updateData('favorites');
 	syncStore.removeItem(id);
 	return res;
 }
@@ -361,6 +363,8 @@ export async function deleteFavorite(data: { id: number }) {
 		},
 		body: JSON.stringify(data),
 	});
+	user.updateData('favorites');
+
 	syncStore.removeItem(id);
 	return res;
 }
