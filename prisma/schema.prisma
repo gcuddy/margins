@@ -261,7 +261,7 @@ model RssFeedTag {
 
 model Tag {
     id            Int       @id @default(autoincrement())
-    name          String    @unique
+    name          String
     createdAt     DateTime  @default(now())
     updatedAt     DateTime  @updatedAt
     bookmarkId    Int?
@@ -273,6 +273,7 @@ model Tag {
     user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId        String
 
+    @@unique([name, userId])
     @@index([userId])
 }
 
@@ -418,6 +419,7 @@ model User {
     favorites                 Favorite[]
     tags                      Tag[]
     articles                  Article[]
+    favoriteFolders           FavoriteFolder[]
 
     @@map("user")
 }
@@ -433,25 +435,36 @@ model Session {
     @@map("session")
 }
 
+model FavoriteFolder {
+    id        Int        @id @default(autoincrement())
+    name      String
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+    userId    String
+    user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    favorites Favorite[]
+}
+
 // either Interaction or Favorite
 //  see https://cloud.prisma.io/gcuddy/prisma-data-test/production/schema
 model Favorite {
-    id          Int        @id @default(autoincrement())
-    position    Float      @unique
-    createdAt   DateTime   @default(now())
-    updatedAt   DateTime   @updatedAt
-    userId      String
-    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id               Int             @id @default(autoincrement())
+    createdAt        DateTime        @default(now())
+    updatedAt        DateTime        @updatedAt
+    userId           String
+    user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
     // count      Int      @default(1)
     // one of: article, tag, list, or smart list
-    articleId   Int?       @unique
-    article     Article?   @relation(fields: [articleId], references: [id])
-    tagId       Int?       @unique
-    tag         Tag?       @relation(fields: [tagId], references: [id])
-    rssId       Int?       @unique
-    rss         RssFeed?   @relation(fields: [rssId], references: [id])
-    smartListId Int?       @unique
-    smartList   SmartList? @relation(fields: [smartListId], references: [id])
+    articleId        Int?            @unique
+    article          Article?        @relation(fields: [articleId], references: [id])
+    tagId            Int?            @unique
+    tag              Tag?            @relation(fields: [tagId], references: [id])
+    rssId            Int?            @unique
+    rss              RssFeed?        @relation(fields: [rssId], references: [id])
+    smartListId      Int?            @unique
+    smartList        SmartList?      @relation(fields: [smartListId], references: [id])
+    folder           FavoriteFolder? @relation(fields: [favoriteFolderId], references: [id])
+    favoriteFolderId Int?
 
     @@index([userId])
 }
