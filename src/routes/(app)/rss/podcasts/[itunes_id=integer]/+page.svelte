@@ -39,13 +39,14 @@
 			/> -->
 			<img
 				src={image}
-				class="h-60 w-60 place-self-center rounded-xl shadow-lg sm:place-self-end"
+				class="h-60 w-60 place-self-center rounded-xl shadow-lg sm:place-self-start"
 				alt="Artwork for {title}"
 			/>
 			<div class="space-y-4 sm:space-y-8">
 				<div class="text-center sm:text-left">
 					<h1 class="text-2xl font-bold">{title}</h1>
 					<a class="text-xl" href={url}><Muted>{creator}</Muted></a>
+					<!-- TODO: categories here -->
 				</div>
 				<div class="relative overflow-hidden text-sm line-clamp-4">
 					<div
