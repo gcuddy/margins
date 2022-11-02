@@ -24,8 +24,7 @@
 			break;
 	}
 
-	export let className =
-		hwClass + (!solid ? ` stroke-current stroke-2 fill-none` : ' fill-current');
+	export let className = hwClass + (!solid ? ` stroke-current fill-none` : ' fill-current');
 	// export { className as class };
 </script>
 
@@ -35,6 +34,7 @@
 			xmlns="http://www.w3.org/2000/svg"
 			class={className}
 			{viewBox}
+			stroke-width={!solid ? icons[name].strokeWidth || 2 : undefined}
 			{fill}
 			style="transform: rotate({rotation}deg);"
 			><g> {@html path}</g>
