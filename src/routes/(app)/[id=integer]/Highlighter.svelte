@@ -447,7 +447,7 @@
 </script>
 
 <div>
-	<ProseWrapper bind:el={wrapper} on:click={handleClick} first_letter={true}>
+	<ProseWrapper bind:el={wrapper} on:click={handleClick} first_letter={false}>
 		<slot />
 	</ProseWrapper>
 
