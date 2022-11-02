@@ -3,6 +3,12 @@ import { auth } from '$lib/server/lucia';
 import { db } from '$lib/db';
 import { ArticleListSelect } from '$lib/types';
 import type { Prisma } from '@prisma/client';
+const selectionLookup = {
+	articles: ArticleListSelect,
+	favorites: {
+		tag: true,
+	},
+};
 export const GET: RequestHandler = async ({ request, url, locals }) => {
 	console.log('Received fetch user data request');
 	const fields = url.searchParams.get('data')?.split(',');
@@ -10,9 +16,9 @@ export const GET: RequestHandler = async ({ request, url, locals }) => {
 	if (fields && fields.length) {
 		select = {
 			...fields.reduce((acc, field) => {
-				if (field === 'articles') {
+				if (selectionLookup[field]) {
 					acc[field] = {
-						select: ArticleListSelect,
+						select: selectionLookup[field],
 					};
 				} else {
 					acc[field] = true;
@@ -24,7 +30,9 @@ export const GET: RequestHandler = async ({ request, url, locals }) => {
 		select = {
 			email: true,
 			feeds: true,
-			favorites: true,
+			favorites: {
+				select: selectionLookup.favorites,
+			},
 			articles: {
 				select: ArticleListSelect,
 			},

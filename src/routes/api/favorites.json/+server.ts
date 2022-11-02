@@ -1,4 +1,4 @@
-import { json as json$1 } from '@sveltejs/kit';
+import { error, json as json$1 } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
@@ -17,8 +17,12 @@ const generateNegativePositionWithTwoDecimals = (): number => {
 	return Math.floor(Math.random() * -2000 * 100) / 100;
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	// create a new favorite
+	const { userId } = locals.getSession();
+	if (!userId) {
+		throw error(401, 'Unauthorized');
+	}
 	const json = await getJsonFromRequest(request);
 	const favData = FavoriteSchema.parse(json);
 	console.log({ favData });
@@ -26,7 +30,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const favorite = await db.favorite.create({
 		data: {
 			...favData,
-			position: generateNegativePositionWithTwoDecimals(),
+			userId,
 		},
 	});
 	return json$1({ id: favorite.id });

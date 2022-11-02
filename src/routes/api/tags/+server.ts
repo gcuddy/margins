@@ -36,7 +36,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					},
 					data: {
 						tags: {
-							set: tags || [],
+							set:
+								tags.map((t) => {
+									return {
+										name_userId: {
+											name: t.name,
+											userId: t.userId,
+										},
+									};
+								}) || [],
 						},
 					},
 					select: {
