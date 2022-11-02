@@ -11,21 +11,9 @@ declare namespace Lucia {
 // for information about these interfaces
 // and what to do when importing types
 declare namespace App {
-	// interface Locals {}
-	// interface Platform {}
-	// interface Session {}
-	// interface PageData {
-	// 	user: import('$lib/stores/user').UserStoreType;
-	// }
-	// interface Locals {
-	// 	lucia: {
-	// 		access_token: string;
-	// 		refresh_token: string;
-	// 		fingerprint_token: string;
-	// 	} | null;
-	// }
-	// interface Stuff {}
 	interface Locals {
 		getSession: import('lucia-sveltekit/types').GetSession;
+		setSession: import('lucia-sveltekit/types').SetSession;
+		clearSession: import('lucia-sveltekit/types').ClearSession;
 	}
 }
