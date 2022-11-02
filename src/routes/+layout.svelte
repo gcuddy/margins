@@ -1,6 +1,13 @@
 <script lang="ts">
 	import '../app.css';
 	import '$lib/styles/font.css';
+
+	import { handleSession } from '@lucia-auth/sveltekit/client';
+	import { page } from '$app/stores';
+
+	handleSession(page, () => {
+		console.log('session change');
+	});
 </script>
 
 <svelte:head />

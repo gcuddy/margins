@@ -14,7 +14,7 @@
 </script>
 
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import type { IconName } from '$lib/icons';
 	import { modals } from '$lib/stores/modals';
 	import Button from '$lib/components/Button.svelte';
@@ -30,7 +30,7 @@
 	import ColResizer from '$lib/components/ColResizer.svelte';
 	import { hideSidebar } from '$lib/stores/sidebar';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
-	import { signOut } from 'lucia-sveltekit/client';
+	import { signOut } from '@lucia-auth/sveltekit/client';
 	import { sidebarFeeds, type UserStoreType } from '$lib/stores/user';
 	import { readable, type Readable } from 'svelte/store';
 
@@ -191,7 +191,8 @@
 						{
 							label: 'Logout',
 							perform: async () => {
-								await signOut('/');
+								await signOut();
+								invalidateAll();
 							},
 							icon: 'logoutSolid',
 						},

@@ -1,8 +1,8 @@
 import { auth } from '$lib/server/lucia';
-import { invalid, redirect, type Actions } from '@sveltejs/kit';
+import { invalid, type Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, locals }) => {
 		const form = await request.formData();
 		const email = form.get('email');
 		const password = form.get('password');
@@ -19,24 +19,12 @@ export const actions: Actions = {
 					email,
 				},
 			});
-			console.log({ user });
-			const { setSessionCookie } = await auth.createSession(user.userId);
-			setSessionCookie(cookies);
+			const session = await auth.createSession(user.email);
+			locals.setSession(session);
 		} catch (e) {
-			const error = e as Error;
-			if (
-				error.message === 'AUTH_DUPLICATE_IDENTIFIER_TOKEN' ||
-				error.message === 'AUTH_DUPLICATE_USER_DATA'
-			) {
-				return invalid(400, {
-					message: 'Email unavailable',
-				});
-			}
-			console.error(error);
-			return invalid(500, {
-				message: 'Unknown error occurred',
+			return invalid(400, {
+				message: 'Email already in use',
 			});
 		}
-		throw redirect(302, '/login');
 	},
 };
