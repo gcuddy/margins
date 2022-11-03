@@ -818,7 +818,7 @@ export class Parser {
 		if (!json) {
 			return;
 		}
-		this.metadata.title = this.getJsonLdvalue(json, 'headline', 'title', 'name');
+		this.metadata.title = this.getJsonLdvalue(json, 'title', 'name', 'headline');
 		this.metadata.image = this.getJsonLdvalue(json, ['image', 'url']);
 		this.metadata.url = this.getJsonLdvalue(json, 'url');
 		this.metadata.author = this.getJsonLdvalue(json, ['author', 'name']);
