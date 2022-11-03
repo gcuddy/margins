@@ -167,7 +167,7 @@
 			bind:annotations={article.annotations}
 			highlights={article.highlights}
 		>
-			{#if article.image && !article.content.includes('<img')}
+			{#if article.image && !article.content.includes(article.image)}
 				<img src={article.image} alt="" class="mx-auto rounded py-2" />
 			{/if}
 			{@html article.content}
