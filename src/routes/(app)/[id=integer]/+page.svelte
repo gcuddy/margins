@@ -93,7 +93,7 @@
 	class=""
 >
 	<article class="mx-auto max-w-3xl py-8 px-4">
-		<header class="space-y-3 pb-4" bind:this={$articleHeader}>
+		<header class="space-y-3 pb-4" bind:this={$articleHeader} data-sveltekit-prefetch>
 			<a
 				class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
 				href={article.url}
