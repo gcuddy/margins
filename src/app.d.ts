@@ -13,7 +13,7 @@ declare namespace Lucia {
 declare namespace App {
 	interface Locals {
 		getSession: import('@lucia-auth/sveltekit').GetSession;
+		getSessionUser: import('@lucia-auth/sveltekit').GetSessionUser;
 		setSession: import('@lucia-auth/sveltekit').SetSession;
-		clearSession: import('@lucia-auth/sveltekit').ClearSession;
 	}
 }

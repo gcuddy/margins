@@ -39,14 +39,17 @@ export const GET: RequestHandler = async ({ request, url, locals }) => {
 		};
 	}
 	try {
-		const session = locals.getSession();
+		const session = await locals.getSession();
+		// TODO: this should work but it doesn't
+		// const { session, user } = await locals.getSessionUser();
+		console.log({ session });
 		if (!session) {
 			throw error(401, 'Unauthorized');
 		}
-		const { userId } = await auth.validateRequest(request);
 		const userData = await db.user.findFirst({
+			//todo: is this the best way to do this?
 			where: {
-				id: userId,
+				email: session.userId,
 			},
 			select,
 		});

@@ -29,7 +29,7 @@ async function fetchAndCache(request) {
 
 self.addEventListener('fetch', (e) => {
 	if (e.request.method !== 'GET') {
-		console.log('Service Worker: Fetch', e.request.method, e.request.url);
+		// console.log('Service Worker: Fetch', e.request.method, e.request.url);
 		return;
 	}
 	if (e.request.destination === 'image') {
@@ -49,6 +49,6 @@ self.addEventListener('fetch', (e) => {
 		);
 		return;
 	}
-	console.log('Service Worker: Fetching');
-	console.log({ e });
+	// console.log('Service Worker: Fetching');
+	// console.log({ e });
 });

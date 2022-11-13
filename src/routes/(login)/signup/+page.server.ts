@@ -1,5 +1,6 @@
 import { auth } from '$lib/server/lucia';
-import { invalid, type Actions } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { invalid, redirect, type Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -20,6 +21,7 @@ export const actions: Actions = {
 				},
 			});
 			const session = await auth.createSession(user.email);
+			console.log({ session });
 			locals.setSession(session);
 		} catch (e) {
 			return invalid(400, {
