@@ -24,6 +24,7 @@ export const load: LayoutServerLoad = async ({ fetch, locals, parent }) => {
 	// This is not the best way to do it...
 	const res = await fetch('/api/fetch_user_data');
 	const fetchedUser: User = await res.json();
+	console.log({ fetchedUser });
 	return fetchedUser;
 	console.log('fetched data');
 	// user_data_dirty.set(false);

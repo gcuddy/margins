@@ -15,10 +15,18 @@ export const actions: Actions = {
 		}
 		try {
 			const user = await auth.authenticateUser('email', email, password);
-			const session = await auth.createSession(user.email);
+			console.log({ user });
+			const session = await auth.createSession(user.userId);
+			console.log({ session });
 			locals.setSession(session);
 		} catch (e) {
 			return invalid(400, { message: 'Incorrect email or password' });
 		}
 	},
+};
+
+export const load: PageServerLoad = async ({ locals }) => {
+	const session = await locals.getSession();
+	if (session) throw redirect(302, '/');
+	return {};
 };

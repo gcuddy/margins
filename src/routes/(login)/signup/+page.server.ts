@@ -20,7 +20,8 @@ export const actions: Actions = {
 					email,
 				},
 			});
-			const session = await auth.createSession(user.email);
+			console.log({ user });
+			const session = await auth.createSession(user.userId);
 			console.log({ session });
 			locals.setSession(session);
 		} catch (e) {

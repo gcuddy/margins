@@ -4,9 +4,10 @@
 
 	import { page } from '$app/stores';
 	import { handleSession } from '@lucia-auth/sveltekit/client';
+	console.log('hello');
 
-	handleSession(page, (handleSession) => {
-		console.log(handleSession);
+	handleSession(page, (hasSession) => {
+		console.log(hasSession);
 	});
 </script>
 
