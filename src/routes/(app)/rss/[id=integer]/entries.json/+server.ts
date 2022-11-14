@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 			.map((h) => Number(h)) || [];
 	const id = Number(params.id);
 	try {
-		const user = await auth.validateRequest(request);
+		const session = await locals.getSession();
 		if (cursor) {
 			const items = await db.rssFeedItem.findMany({
 				where: {
@@ -47,7 +47,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 				include: {
 					interactions: {
 						where: {
-							userId: user['userId'],
+							userId: session['userId'],
 						},
 					},
 					feed: {
@@ -93,7 +93,7 @@ export const GET: RequestHandler = async ({ url, locals, params, request }) => {
 				include: {
 					interactions: {
 						where: {
-							userId: user['userId'],
+							userId: session['userId'],
 						},
 					},
 					feed: {

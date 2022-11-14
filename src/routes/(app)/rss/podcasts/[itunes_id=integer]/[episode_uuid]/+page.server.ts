@@ -3,8 +3,8 @@ import type { Actions } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 export const actions: Actions = {
-	default: async ({ request, params }) => {
-		const session = await auth.validateRequest(request);
+	default: async ({ request, params, locals }) => {
+		const session = await locals.getSession();
 		const { url, image, date, title } = await getJsonFromRequest(request);
 		// TODO: link to podcast better
 		console.log({ url, image, date, title });

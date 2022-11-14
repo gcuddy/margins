@@ -18,7 +18,7 @@ const RssFeedModel = z.object({
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		console.log({ locals });
-		const session = await auth.validateRequest(request);
+		const session = await locals.getSession();
 		// const { refresh_token } = locals.lucia;
 		const json = await getJsonFromRequest(request);
 		const data = RssFeedModel.parse(json);

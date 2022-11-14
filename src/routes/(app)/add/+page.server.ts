@@ -25,7 +25,7 @@ export const actions: Actions = {
 		console.log({ locals });
 		// todo: handle image requests and such
 		try {
-			const { userId } = locals.getSession();
+			const { userId } = await locals.getSession();
 			console.log({ userId });
 			const form = await request.formData();
 			const url = <string>form.get('url') || <string>form.get('text');

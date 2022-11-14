@@ -14,7 +14,7 @@ export const GET: RequestHandler = async () => {
 
 // patch/post: used for patching articles with tags
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { userId } = locals.getSession();
+	const { userId } = await locals.getSession();
 	console.log('received tag request');
 	try {
 		// const { userId } = await auth.validateRequest(request);

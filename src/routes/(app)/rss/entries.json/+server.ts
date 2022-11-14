@@ -6,7 +6,7 @@ export const GET: RequestHandler = async ({ url, locals, request }) => {
 	const unread = url.searchParams.get('unread');
 	const have = url.searchParams.get('have')?.split(',') || [];
 	try {
-		const session = await auth.validateRequest(request);
+		const session = await locals.getSession();
 		if (cursor) {
 			const items = await db.rssFeedItem.findMany({
 				where: {
