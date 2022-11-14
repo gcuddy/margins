@@ -15,9 +15,7 @@ export const actions: Actions = {
 		}
 		try {
 			const user = await auth.authenticateUser('email', email, password);
-			console.log({ user });
 			const session = await auth.createSession(user.userId);
-			console.log({ session });
 			locals.setSession(session);
 		} catch (e) {
 			return invalid(400, { message: 'Incorrect email or password' });

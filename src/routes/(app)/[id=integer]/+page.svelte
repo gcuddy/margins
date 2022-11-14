@@ -93,7 +93,7 @@
 	class=""
 >
 	<article class="mx-auto max-w-3xl py-8 px-4">
-		<header class="space-y-3 pb-4" bind:this={$articleHeader}>
+		<header class="space-y-3 pb-4" bind:this={$articleHeader} data-sveltekit-prefetch>
 			<a
 				class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
 				href={article.url}
@@ -167,7 +167,7 @@
 			bind:annotations={article.annotations}
 			highlights={article.highlights}
 		>
-			{#if article.image && !article.content.includes('<img')}
+			{#if article.image && !article.content.includes(article.image)}
 				<img src={article.image} alt="" class="mx-auto rounded py-2" />
 			{/if}
 			{@html article.content}

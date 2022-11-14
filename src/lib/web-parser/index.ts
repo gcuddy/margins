@@ -22,6 +22,7 @@ import {
 
 import * as CustomExtractors from './extractors';
 import { cleanAttributes, stripUnlikelyCandidates } from './dom';
+import { findAuthor } from './utils/fallback-author';
 
 function grabArticle(root: HTMLElement) {
 	// using arc90/readability heuristics
@@ -191,44 +192,29 @@ interface Metadata {
 }
 
 // selectors can take just a string, or a string and a string which indicates the attribute (e.g. ['time', 'datetime']), or a string and a function which takes a matching node and returns a string. please be careful with the latter.
-type Selector = string | [string, string] | [string, (node: Node) => string];
+type Selector = string | [string, string] | [string, (node: HTMLElement) => string];
 
-// is this the right way to do this lol
-type MetaOptional = {
-	selectors: Selector[];
-	meta?: string[];
-};
-type SelectorsOptional = {
-	selectors?: Selector[];
-	meta: string[];
-};
-type Meta = MetaOptional | SelectorsOptional;
-type MetaEntry = Meta & {
-	// if true, will check selectors before meta
-	checkSelectorsFirst?: boolean;
+// When indicating selectors, you can just do an array
+// e.g. ['title', 'meta[name="description"]']
 
-	// fallback - will use if the first batch fail, helpful if you want to check some meta, then some selectors, and then back to meta
-	fallback?: Meta;
-
-	// TODO: add Json-Ld selctor
-};
+type Meta = (Selector | { meta: string[] } | ((node: HTMLElement) => string))[];
 
 // TODO: implement clean, transforms
 interface IExtractor {
-	title: MetaEntry;
-	author: MetaEntry;
-	date_published: MetaEntry;
-	lead_image_url: MetaEntry;
-	dek: MetaEntry;
-	excerpt: MetaEntry;
-	siteName: MetaEntry;
+	title: Meta;
+	author: Meta;
+	date_published: Meta;
+	lead_image_url: Meta;
+	dek: Meta;
+	excerpt: Meta;
+	siteName: Meta;
 	// content is usually chosen with the algo - you can pass in selectors to use those instead
 	// they work differently, though
 	// for now, just an array of selectors to get the root element where the content is
 	content?: string[];
 	disableJSONLD: boolean;
 
-	//todo: json-ld support in MetaEntry
+	//todo: json-ld support in Meta
 }
 
 export type CustomExtractor = Partial<IExtractor> & {
@@ -238,55 +224,45 @@ export type CustomExtractor = Partial<IExtractor> & {
 // TODO: let this be replaced by custom extractors, ala mercury-parser
 // same format as mercury - parser too
 const Extractor: IExtractor = {
-	title: {
-		meta: [
-			'twitter:title',
-			'og:title',
-			'citation_title',
-			'dc:title',
-			'dcterm:title',
-			'title',
-			'weibo:article:title',
-			'weibo:webpage:title',
-		],
-		selectors: [
-			'.hentry .entry-title',
-			'h1#articleHeader',
-			'h1.articleHeader',
-			'h1.article',
-			'.instapaper_title',
-			'#meebo-title',
-			'article h1',
-			'#entry-title',
-			'.entry-title',
-			'#entryTitle',
-			'#entrytitle',
-			'.entryTitle',
-			'.entrytitle',
-			'#articleTitle',
-			'.articleTitle',
-			'post post-title',
-			'h1.title',
-			'h2.article',
-			'h1',
-			'html head title',
-			'title',
-		],
-	},
-	author: {
-		meta: [
-			'author',
-			'og:author',
-			'citation_author',
-			// TODO: below are meta tags I want to check, but not till I check the selectors. As a sort of fallback. Maybe I should add one more key...
-			// 'dc:creator',
-			// 'dcterm:creator',
-			// 'twitter:creator',
-			// 'weibo:article:user_id',
-			// 'weibo:webpage:user_id'
-		],
-		selectors: ['.authors-byline'],
-		fallback: {
+	title: [
+		{
+			meta: [
+				'twitter:title',
+				'og:title',
+				'citation_title',
+				'dc:title',
+				'dcterm:title',
+				'title',
+				'weibo:article:title',
+				'weibo:webpage:title',
+			],
+		},
+		'.hentry .entry-title',
+		'h1#articleHeader',
+		'h1.articleHeader',
+		'h1.article',
+		'.instapaper_title',
+		'#meebo-title',
+		'article h1',
+		'#entry-title',
+		'.entry-title',
+		'#entryTitle',
+		'#entrytitle',
+		'.entryTitle',
+		'.entrytitle',
+		'#articleTitle',
+		'.articleTitle',
+		'post post-title',
+		'h1.title',
+		'h2.article',
+		'h1',
+		'html head title',
+		'title',
+	],
+	author: [
+		{ meta: ['author', 'og:author', 'citation_author'] },
+		'.authors-byline',
+		{
 			meta: [
 				'dc:creator',
 				'dcterm:creator',
@@ -295,49 +271,56 @@ const Extractor: IExtractor = {
 				'weibo:webpage:user_id',
 			],
 		},
-	},
-	date_published: {
-		meta: ['article:published_time', 'date', 'dc:date', 'dcterm:date'],
-		selectors: [['time[itemprop="datePublished"]', 'datetime']],
-	},
-	lead_image_url: {
-		meta: [
-			// in order of priority
-			'og:image',
-			'twitter:image',
-			'image',
-			'image_src',
-			'weibo:article:image',
-			'weibo:webpage:image',
-		],
-		selectors: [],
-	},
-	dek: {
-		meta: [
-			'twitter:description',
-			'dc:description',
-			'dcterm:description',
-			'og:description',
-			'description',
-			'weibo:article:description',
-			'weibo:webpage:description',
-		],
-		selectors: [],
-	},
-	excerpt: {
-		meta: [
-			'twitter:description',
-			'dc:description',
-			'dcterm:description',
-			'og:description',
-			'description',
-			'weibo:article:description',
-			'weibo:webpage:description',
-		],
-	},
-	siteName: {
-		meta: ['og:site_name'],
-	},
+		(el: HTMLElement) => findAuthor(el),
+	],
+	date_published: [
+		{ meta: ['article:published_time', 'date', 'dc:date', 'dcterm:date'] },
+		['time[itemprop="datePublished"]', 'datetime'],
+	],
+	lead_image_url: [
+		{
+			meta: [
+				// in order of priority
+				'og:image',
+				'twitter:image',
+				'image',
+				'image_src',
+				'weibo:article:image',
+				'weibo:webpage:image',
+			],
+		},
+	],
+	dek: [
+		{
+			meta: [
+				'twitter:description',
+				'dc:description',
+				'dcterm:description',
+				'og:description',
+				'description',
+				'weibo:article:description',
+				'weibo:webpage:description',
+			],
+		},
+	],
+	excerpt: [
+		{
+			meta: [
+				'twitter:description',
+				'dc:description',
+				'dcterm:description',
+				'og:description',
+				'description',
+				'weibo:article:description',
+				'weibo:webpage:description',
+			],
+		},
+	],
+	siteName: [
+		{
+			meta: ['og:site_name'],
+		},
+	],
 	disableJSONLD: false,
 };
 // TODO: add extend
@@ -444,7 +427,7 @@ export class Parser {
 			date: ['date_published'],
 			author: ['author'],
 			siteName: ['siteName'],
-		} as const;
+		};
 		console.log({ metadata: this.metadata });
 		type MetadataToExtractorKeys = keyof typeof metadataToExtractorHash;
 		for (const metaKey of Object.keys(metadataToExtractorHash) as MetadataToExtractorKeys[]) {
@@ -452,34 +435,24 @@ export class Parser {
 			if (this.metadata[metaKey]) continue;
 			while (!this.metadata[metaKey]) {
 				console.log(`looking for ${metaKey}`);
+				// TODO: fix this type
 				metadataToExtractorHash[metaKey].forEach((key) => {
-					const extractor = this.extractor[key];
+					const extractor = this.extractor[key] as Meta;
 					if (!extractor) return;
-					if (!extractor.checkSelectorsFirst) {
-						// check meta
-						console.log(
-							`checking meta ${key} - ${this.scrapeMetaTags(metaEls, extractor.meta || [])}`
-						);
-						this.metadata[metaKey] = this.scrapeMetaTags(metaEls, extractor.meta || []);
-						console.log({
-							metaKey: this.metadata[metaKey],
-						});
+					extractor.forEach((e) => {
 						if (this.metadata[metaKey]) return;
-						this.metadata[metaKey] = this.extractFromSelectors(
-							this.root,
-							extractor.selectors || []
-						);
-					} else {
-						// check selectors - how to make this more DRY?
-						this.metadata[metaKey] = this.extractFromSelectors(
-							this.root,
-							extractor.selectors || []
-						);
+						if (typeof e === 'string' || Array.isArray(e)) {
+							// then we're looking for a selector
+							this.metadata[metaKey] = this.extractFromSelectors(this.root, [e]);
+						} else if (typeof e === 'function') {
+							this.metadata[metaKey] = e(this.root);
+						} else {
+							// then we're looking for a meta tag
+							this.metadata[metaKey] = this.scrapeMetaTags(metaEls, e.meta || []);
+						}
 						if (this.metadata[metaKey]) return;
-						this.metadata[metaKey] = this.scrapeMetaTags(metaEls, extractor.meta || []);
-					}
+					});
 				});
-				// TODO: after trying with custom extractor, fall back to default extractor
 				// if we got here, then we didn't find the metadata - break
 				if (!this.metadata[metaKey]) break;
 			}
@@ -818,7 +791,7 @@ export class Parser {
 		if (!json) {
 			return;
 		}
-		this.metadata.title = this.getJsonLdvalue(json, 'headline', 'title', 'name');
+		this.metadata.title = this.getJsonLdvalue(json, 'title', 'name', 'headline');
 		this.metadata.image = this.getJsonLdvalue(json, ['image', 'url']);
 		this.metadata.url = this.getJsonLdvalue(json, 'url');
 		this.metadata.author = this.getJsonLdvalue(json, ['author', 'name']);

@@ -22,7 +22,6 @@ export const actions: Actions = {
 			});
 			console.log({ user });
 			const session = await auth.createSession(user.userId);
-			console.log({ session });
 			locals.setSession(session);
 		} catch (e) {
 			return invalid(400, {

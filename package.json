@@ -55,7 +55,7 @@
 		"prisma": "^4.5.0",
 		"prismjs": "^1.28.0",
 		"rss-parser": "^3.12.0",
-		"string-strip-html": "^11.3.0",
+		"string-strip-html": "^11.6.19",
 		"svelte": "^3.44.0",
 		"svelte-check": "^2.7.1",
 		"svelte-dnd-action": "^0.9.19",
