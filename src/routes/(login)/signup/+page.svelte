@@ -9,26 +9,7 @@
 <!-- TODO: turn this into component -->
 <h2 class="text-2xl font-bold">Let's create an account for Margins</h2>
 <div class="w-full rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">
-	<form
-		class="flex max-w-xs flex-col space-y-6"
-		use:enhance={({ data, cancel }) => {
-			form = {};
-			const email = data.get('email')?.toString() || '';
-			const password = data.get('password')?.toString() || '';
-			if (!email || !password) {
-				form.message = 'Invalid input';
-				cancel();
-			}
-			return async ({ result }) => {
-				if (result.type === 'redirect') {
-					window.location.href = result.location; // invalidateAll() + goto() will not work
-				}
-				if (result.type === 'invalid') {
-					applyAction(result);
-				}
-			};
-		}}
-	>
+	<form class="flex max-w-xs flex-col space-y-6" use:enhance method="post">
 		<div>
 			<label for="email"><Muted>Email</Muted></label>
 			<GenericInput id="email" type="email" name="email" placeholder="" class="focus:ring-2" />

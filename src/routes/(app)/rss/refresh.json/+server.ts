@@ -6,11 +6,11 @@ import { getRefreshedItems } from '$lib/rss/parser.server';
 // can get pased in array of feed ids, or empty array for all
 // should this be a POST?
 // it should return unread items, at least
-export const GET: RequestHandler = async ({ request }) => {
+export const GET: RequestHandler = async ({ request, locals }) => {
 	console.log(`you hit the rss/refresh route`);
 	console.time(`[rssRefresh]`);
 	// const updatedItems = await getRefreshedFeeds();
-	const { userId } = await auth.validateRequest(request);
+	const { userId } = await locals.getSession();
 	const items = await getRefreshedItems(userId);
 	console.log({ items });
 	console.timeEnd(`[rssRefresh]`);

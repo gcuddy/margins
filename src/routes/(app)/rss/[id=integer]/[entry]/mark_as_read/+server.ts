@@ -3,7 +3,10 @@ import { db } from '$lib/db';
 import { auth } from '$lib/server/lucia';
 export const POST: RequestHandler = async ({ params, locals, request, url }) => {
 	try {
-		const { userId } = await auth.validateRequest(request);
+		const { userId } = await locals.getSession();
+		if (!userId) {
+			return error(401, 'Unauthorized');
+		}
 		const is_read = url.searchParams.get('unread') !== 'true';
 		await db.rssFeedItem.update({
 			where: {

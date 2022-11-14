@@ -6,9 +6,10 @@ import { FavoriteSchema, _FavoriteArgs } from '$lib/types/schemas/Favorite';
 import { z } from 'zod';
 import { auth } from '$lib/server/lucia';
 
-export const GET: RequestHandler = async ({ request }) => {
-	const session = await auth.validateRequest(request);
-	console.log({ user: session });
+export const GET: RequestHandler = async ({ locals }) => {
+	const session = await locals.getSession();
+	const user = auth.getSessionUser(session.sessionId);
+	console.log({ user });
 	const favorites = await db.favorite.findMany(_FavoriteArgs);
 	return json$1({ favorites });
 };

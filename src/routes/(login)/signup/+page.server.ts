@@ -1,4 +1,5 @@
 import { auth } from '$lib/server/lucia';
+import type { PageServerLoad } from './$types';
 import { invalid, redirect, type Actions } from '@sveltejs/kit';
 
 export const actions: Actions = {
@@ -23,20 +24,9 @@ export const actions: Actions = {
 			const session = await auth.createSession(user.userId);
 			locals.setSession(session);
 		} catch (e) {
-			const error = e as Error;
-			if (
-				error.message === 'AUTH_DUPLICATE_IDENTIFIER_TOKEN' ||
-				error.message === 'AUTH_DUPLICATE_USER_DATA'
-			) {
-				return invalid(400, {
-					message: 'Email unavailable',
-				});
-			}
-			console.error(error);
-			return invalid(500, {
-				message: 'Unknown error occurred',
+			return invalid(400, {
+				message: 'Email already in use',
 			});
 		}
-		throw redirect(302, '/login');
 	},
 };
