@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Annotation from './Annotation.svelte';
+
 	export let placeholder = 'Enter text…';
 	export let variant: 'filled' | 'ghost' | 'underline' = 'filled';
 	let className = '';
@@ -31,6 +33,7 @@
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		bind:value
 	/>
 {:else if type === 'email'}
@@ -51,6 +54,7 @@
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		bind:value
 	/>
 {:else if type === 'number'}
@@ -62,13 +66,14 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="number"
-		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0
+		class="h-9 w-full rounded-lg border-0 placeholder-gray-400  transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		{min}
 		{max}
 		bind:value
@@ -82,13 +87,14 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="password"
-		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0
+		class="h-9 w-full rounded-lg border-0 placeholder-gray-400  transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		{min}
 		{max}
 		bind:value
