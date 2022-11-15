@@ -12,7 +12,25 @@
 	<form class="flex max-w-xs flex-col space-y-6" use:enhance method="post">
 		<div>
 			<label for="email"><Muted>Email</Muted></label>
-			<GenericInput id="email" type="email" name="email" placeholder="" class="focus:ring-2" />
+			<GenericInput
+				id="email"
+				type="email"
+				name="email"
+				placeholder=""
+				class="focus:ring-2"
+				required
+			/>
+		</div>
+		<div>
+			<label for="username"><Muted>Username</Muted></label>
+			<GenericInput
+				id="username"
+				type="text"
+				name="username"
+				placeholder=""
+				class="focus:ring-2"
+				required
+			/>
 		</div>
 		<div>
 			<label for="password"><Muted>Password</Muted></label>
@@ -21,6 +39,7 @@
 				name="password"
 				placeholder=""
 				type="password"
+				required
 				class="focus:ring-2"
 			/>
 		</div>

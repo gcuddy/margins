@@ -409,10 +409,13 @@ model User {
     id                        String                      @id @unique @default(cuid())
     provider_id               String                      @unique
     hashed_password           String?
-    email                     String                      @unique
     session                   Session[]
     createdAt                 DateTime                    @default(now())
     updatedAt                 DateTime                    @updatedAt
+    //
+    email                     String                      @unique
+    username                  String                      @unique
+    //
     PodcastEpisodeInteraction PodcastEpisodeInteraction[]
     feeds                     RssFeed[]
     RssItemInteraction        RssItemInteraction[]
