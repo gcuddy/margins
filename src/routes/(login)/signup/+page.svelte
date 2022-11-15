@@ -3,13 +3,28 @@
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import GenericInput from '$lib/components/GenericInput.svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
 	export let form: { message?: string };
+
+	let loading = false;
 </script>
 
 <!-- TODO: turn this into component -->
 <h2 class="text-2xl font-bold">Let's create an account for Margins</h2>
 <div class="w-full rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">
-	<form class="flex max-w-xs flex-col space-y-6" use:enhance method="post">
+	<form
+		class="flex max-w-xs flex-col space-y-6"
+		use:enhance={() => {
+			loading = true;
+			return async ({ result, update }) => {
+				update({
+					reset: false,
+				});
+				loading = false;
+			};
+		}}
+		method="post"
+	>
 		<div>
 			<label for="email"><Muted>Email</Muted></label>
 			<GenericInput
@@ -43,7 +58,13 @@
 				class="focus:ring-2"
 			/>
 		</div>
-		<Button type="submit">Sign up</Button>
+		<Button type="submit">
+			{#if loading}
+				<Icon name="loading" className="h-5 w-5 animate-spin text-white" />
+			{:else}
+				<span>Sign up</span>
+			{/if}
+		</Button>
 	</form>
 	<p class="text-center font-medium text-red-400">{form?.message || ''}</p>
 </div>
