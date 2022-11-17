@@ -791,12 +791,14 @@ export class Parser {
 		if (!json) {
 			return;
 		}
-		this.metadata.title = this.getJsonLdvalue(json, 'title', 'name', 'headline');
-		this.metadata.image = this.getJsonLdvalue(json, ['image', 'url']);
-		this.metadata.url = this.getJsonLdvalue(json, 'url');
-		this.metadata.author = this.getJsonLdvalue(json, ['author', 'name']);
-		this.metadata.description = this.getJsonLdvalue(json, 'description');
-		this.metadata.date = this.getJsonLdvalue(json, 'datePublished');
+		const articleJson = json.find((json) => ['Article', 'Blog'].includes(json['@type']));
+		console.log({ articleJson });
+		this.metadata.title = this.getJsonLdvalue(articleJson, 'title', 'name', 'headline');
+		this.metadata.image = this.getJsonLdvalue(articleJson, ['image', 'url']);
+		this.metadata.url = this.getJsonLdvalue(articleJson, 'url');
+		this.metadata.author = this.getJsonLdvalue(articleJson, ['author', 'name']);
+		this.metadata.description = this.getJsonLdvalue(articleJson, 'description');
+		this.metadata.date = this.getJsonLdvalue(articleJson, 'datePublished');
 		this.metadata.siteName = this.getJsonLdvalue(json, 'publisher', 'name');
 		console.log(
 			`Hello, this is our metadata so far after scrapeJsonLd(): ${JSON.stringify(this.metadata)}`
@@ -812,8 +814,8 @@ export class Parser {
 	private getJsonLdvalue(jsons: any[], ...keys: (string | [string, string])[]) {
 		// TODO: abstract this out to utils file
 		// maybe todo: add types for JSONLD
-		for (const key of keys) {
-			for (const json of jsons) {
+		for (const json of jsons) {
+			for (const key of keys) {
 				if (typeof key === 'string') {
 					console.log(`Searching for ${key} in ${JSON.stringify(json)}`);
 					if (json[key] && typeof json[key] === 'string') {
