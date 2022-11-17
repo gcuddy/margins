@@ -791,7 +791,9 @@ export class Parser {
 		if (!json) {
 			return;
 		}
-		const articleJson = json.find((json) => ['Article', 'Blog'].includes(json['@type']));
+		const articleJson = json.filter((json) =>
+			new RegExp(['Article', 'Blog'].join('|')).test(json['@type'])
+		);
 		console.log({ articleJson });
 		this.metadata.title = this.getJsonLdvalue(articleJson, 'title', 'name', 'headline');
 		this.metadata.image = this.getJsonLdvalue(articleJson, ['image', 'url']);
