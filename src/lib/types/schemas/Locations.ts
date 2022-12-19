@@ -1,15 +1,16 @@
-import type { IconName } from '$lib/icons';
 import { z } from 'zod';
 
-export const LOCATIONS = ['INBOX', 'SOON', 'LATER', 'ARCHIVE'] as const;
+import type { IconName } from '$lib/icons';
+
+export const LOCATIONS = ['inbox', 'soon', 'later', 'archive'] as const;
 export const LOCATIONS_WITH_ALL = ['INBOX', 'SOON', 'LATER', 'ARCHIVE', 'ALL'] as const;
 
 export const LOCATION_TO_DISPLAY = {
-	INBOX: 'Inbox',
-	SOON: 'Soon',
-	LATER: 'Later',
-	ARCHIVE: 'Archive',
-	ALL: 'All',
+	inbox: 'Inbox',
+	soon: 'Soon',
+	later: 'Later',
+	archive: 'Archive',
+	all: 'All',
 } as const;
 
 export const LOCATION_LIST = LOCATIONS.map((location) => ({

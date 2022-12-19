@@ -1,21 +1,29 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import {
-		term,
 		commandStore,
 		filteredActions,
 		selected,
-		showCommandPalette,
 		selectedCommand,
+		showCommandPalette,
+		term,
 	} from '$lib/stores/commands';
+	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
+	import { animationHappening, modals } from '$lib/stores/modals';
+	import { selectedItems } from '$lib/stores/selectedItems';
+	import { fadeScale } from '$lib/transitions';
+	import { getUser } from '@lucia-auth/sveltekit/client';
+	import { get } from 'svelte/store';
+	import { fade } from 'svelte/transition';
+	import Combobox from '../helpers/Combobox.svelte';
 	import Dialog from '../helpers/dialog/Dialog.svelte';
 	import DialogOverlay from '../helpers/dialog/DialogOverlay.svelte';
-	import Combobox from '../helpers/Combobox.svelte';
 	import Icon from '../helpers/Icon.svelte';
-	import { fade } from 'svelte/transition';
-	import { fadeScale } from '$lib/transitions';
-	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
 	import KbdGroup from '../kbd/KbdGroup.svelte';
-	import { animationHappening } from '$lib/stores/modals';
+	import TagModal from '../TagModal.svelte';
+	import Selection from './Selection.svelte';
+	import type { Command } from './types';
+
 	function handleKeydown(e: KeyboardEvent) {
 		switch (e.key) {
 			case 'ArrowDown': {
@@ -28,7 +36,7 @@
 			}
 			case 'Enter': {
 				e.preventDefault();
-				$selectedCommand.perform();
+				$selectedCommand.perform({ page: $page });
 				showCommandPalette.out();
 			}
 		}
@@ -62,6 +70,44 @@
 			: disableGlobalKeyboardShortcuts.off();
 
 	let dialogRef: HTMLElement;
+
+	const selected_article_commands: Command[] = [
+		// TODO
+		{
+			id: 'article-tag',
+			name: `Tag article${$selectedItems.length > 1 ? 's' : ''}`,
+			group: 'adhoc-article-commands',
+			icon: 'tag',
+			perform: async () => {
+				modals.open(
+					TagModal,
+					{
+						allTags: $page.data.allTags,
+						articles: $selectedItems,
+					},
+					'tag-modal'
+				);
+				// const res = await updateTagsOnArticles(
+				// 	$selectedItems.map((i) => i.id),
+				// 	['test']
+				// );
+			},
+		},
+		{
+			id: 'article-delete',
+			name: `Delete article${$selectedItems.length > 1 ? 's' : ''}`,
+			group: 'adhoc-article-commands',
+			icon: 'trash',
+			perform: () => {
+				$selectedItems.forEach((item) => {
+					//    TODO: delete
+				});
+			},
+		},
+	];
+	$: $selectedItems.length
+		? selected_article_commands.forEach((command) => commandStore.add(command, true))
+		: ($commandStore = $commandStore.filter((c) => c.group !== 'adhoc-article-commands'));
 </script>
 
 <svelte:window on:keydown={commandListener} on:touchstart={handleTouch} />
@@ -88,7 +134,8 @@
 			bind:value={$term}
 			fillValue={false}
 			on:select={({ detail }) => {
-				detail?.perform();
+				let user = getUser();
+				detail?.perform({ page: $page, user: get(user) });
 				$showCommandPalette = false;
 			}}
 			input={{
@@ -102,8 +149,22 @@
 				}`,
 			}}
 			static={true}
-			class="relative mx-auto max-w-2xl divide-y divide-gray-100 overflow-hidden rounded-xl bg-gray-50 p-2 text-gray-900 shadow-2xl ring-1 ring-black/5 dark:divide-gray-700 dark:bg-gray-800 dark:text-gray-100"
+			class="relative mx-auto max-w-2xl divide-y divide-gray-100 overflow-hidden rounded-xl bg-gray-50 p-2 text-gray-900 shadow-2xl ring-1 ring-black/5 dark:divide-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200"
 		>
+			<div slot="inputPeer" class="flex px-4 text-sm">
+				{#if $selectedItems.length}
+					<Selection>
+						{$selectedItems.length > 1
+							? $selectedItems.length + ' articles'
+							: $selectedItems[0].title}
+					</Selection>
+				{:else if $page.data.entry || $page.data.article}
+					{@const entry = $page.data.entry || $page.data.article}
+					<Selection>
+						{entry.title}
+					</Selection>
+				{/if}
+			</div>
 			<div slot="option" let:value let:active let:selected let:index>
 				<!-- TODO: flesh out this separator -->
 				{#if value.group && value.group !== $filteredActions[index - 1]?.group && index !== 0}

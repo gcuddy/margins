@@ -21,6 +21,8 @@ export const ViewOptionsSchema = z.object({
 		wordCount: z.boolean(),
 		readProgress: z.boolean(),
 		location: z.boolean(),
+		image: z.boolean(),
+		url: z.boolean(),
 	}),
 });
 
@@ -39,6 +41,7 @@ export const defaultViewOptions: ViewOptions = {
 		wordCount: false,
 		readProgress: false,
 		location: false,
+		image: true,
 	},
 };
 

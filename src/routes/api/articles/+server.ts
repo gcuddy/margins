@@ -25,8 +25,8 @@ export const GET: RequestHandler = async ({ request, url }) => {
 	if (date && isValidDate(date)) {
 		where = {
 			updatedAt: {
-				gte: date
-			}
+				gte: date,
+			},
 		};
 	}
 
@@ -36,22 +36,25 @@ export const GET: RequestHandler = async ({ request, url }) => {
 			...fields.reduce((acc, field) => {
 				acc[field] = true;
 				return acc;
-			}, {} as Prisma.ArticleSelect)
+			}, {} as Prisma.ArticleSelect),
 		};
 	}
 	const articles = await db.article.findMany({
 		select,
 		take: limit,
-		where
+		where,
 	});
 	if (!articles) {
 		return new Response(undefined, { status: 400 });
 	}
-	return json$1({
-		articles
-	}, {
-		headers: {
-			'cache-control': 'public, max-age=60, s-maxage=60'
+	return json$1(
+		{
+			articles,
+		},
+		{
+			headers: {
+				'cache-control': 'public, max-age=60, s-maxage=60',
+			},
 		}
-	});
+	);
 };

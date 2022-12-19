@@ -34,7 +34,7 @@
 		display: 'Author',
 		filter: 'contains',
 		value: '',
-		id: 0
+		id: 0,
 	};
 	const newCondition = () => {
 		conditions = [...conditions, { ...defaultCondition, id: useId() }];
@@ -53,11 +53,11 @@
 		const res = await fetch('/filter.json', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
-				[and]: json
-			})
+				[and]: json,
+			}),
 		});
 		if (res.ok) {
 			const { articles } = await res.json();
@@ -69,14 +69,14 @@
 		const res = await fetch(`/smart`, {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
 				name,
 				filter: {
-					[and]: json
-				}
-			})
+					[and]: json,
+				},
+			}),
 		});
 		console.log({ res });
 		if (res.ok) {
@@ -84,7 +84,7 @@
 			goto(`/smart/${id}`);
 			notifications.notify({
 				message: 'Smart list created',
-				type: 'success'
+				type: 'success',
 			});
 		}
 	}
@@ -148,7 +148,7 @@
 	</Form>
 </div>
 {#if current_results.length}
-	<Saved articles={current_results} />
+	<Saved annotations={current_results} />
 {:else}
 	<pre>
     {JSON.stringify(json, null, 2)}

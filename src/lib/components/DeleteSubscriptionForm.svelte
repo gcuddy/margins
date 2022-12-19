@@ -1,0 +1,3 @@
+<form action="/">
+	<slot />
+</form>

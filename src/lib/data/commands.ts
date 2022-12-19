@@ -14,6 +14,8 @@ import CircularProgressBarSvelte from '$lib/components/CircularProgressBar/Circu
 import { getArticles, getSubscriptions, getTags, subscriptionsStore, tagsStore } from './sync';
 import Icon from '$lib/components/helpers/Icon.svelte';
 import UrlModal from '$lib/components/modals/URLModal.svelte';
+import AddModalSvelte from '$lib/components/AddModal.svelte';
+import { getUser } from '@lucia-auth/sveltekit/client';
 
 export const jumpToArticle = () => {
 	getArticles();
@@ -108,7 +110,7 @@ export const commands: Command[] = [
 		name: 'Add URL',
 		perform: () => {
 			console.log('[command] adding url');
-			modals.open(URLModal);
+			modals.open(AddModalSvelte, {}, 'add-url');
 		},
 		icon: 'plusCircle',
 		kbd: [['a']],
@@ -179,16 +181,19 @@ export const commands: Command[] = [
 		id: 'add-subscription',
 		group: 'default',
 		name: 'Add subscription',
-		perform: () =>
-			modals.open(UrlModal, {
-				formAction: '/rss/add',
-				placeholder: 'Enter RSS feed URL',
-				name: 'url',
-				invalidate: '/rss',
-				notification: {
-					message: 'Subscription added',
-				},
-			}),
+		perform: ({ page, user }) => {
+			// goto('');
+			goto(`/u:${user?.username}/subscriptions/new`);
+			// modals.open(UrlModal, {
+			// 	formAction: '/rss/add',
+			// 	placeholder: 'Enter RSS feed URL',
+			// 	name: 'url',
+			// 	invalidate: '/rss',
+			// 	notification: {
+			// 		message: 'Subscription added',
+			// 	},
+			// }
+		},
 		icon: 'plusCircle',
 	},
 	{

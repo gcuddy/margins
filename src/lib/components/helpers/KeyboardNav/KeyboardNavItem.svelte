@@ -16,10 +16,11 @@
 	}
 
 	const dispatch = createEventDispatcher();
-	let el: HTMLElement | undefined;
+	let el: HTMLElement | null = null;
 	let api = useKeyboardNavContext('KeyboardNavItem');
 
 	export let as = 'div';
+	export let href: string | undefined = undefined;
 	export let id = `keyboard-nav-item-${useId()}`;
 	export let disabled = false;
 
@@ -41,7 +42,7 @@
 			if (newActive) {
 				const el = document.getElementById(id);
 				el?.scrollIntoView?.({ block: 'nearest' });
-				el.focus();
+				el?.focus();
 			}
 		}
 		oldActive = newActive;
@@ -69,21 +70,25 @@
 		if (disabled) return;
 		if (active) return;
 		$api.goToOption(Focus.Specific, id);
+		dispatch('active');
 	}
 	function handleLeave() {
 		if (!$api.changeActiveOnHover) return;
 		if (disabled) return;
 		if (!active) return;
 		$api.goToOption(Focus.Nothing);
+		dispatch('active');
 	}
 
 	function handleFocus() {
 		if (disabled) return $api.goToOption(Focus.Nothing);
 		$api.goToOption(Focus.Specific, id);
+		dispatch('active');
 	}
 	async function handleClick(e: MouseEvent) {
 		if (disabled) return e.preventDefault();
 		$api.goToOption(Focus.Specific, id);
+		dispatch('active');
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -110,6 +115,7 @@
 <svelte:element
 	this={as}
 	bind:this={el}
+	{href}
 	on:click={handleClick}
 	on:focus={handleFocus}
 	on:keydown={handleKeydown}
@@ -121,7 +127,6 @@
 	on:blur
 	on:mouseover
 	on:mouseleave
-	data-sveltekit-prefetch
 	on:click
 	class={computedClass}
 	{...propsWeControl}

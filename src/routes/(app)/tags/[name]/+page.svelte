@@ -79,7 +79,7 @@
 <div class="flex h-full flex-auto flex-col overflow-hidden">
 	<!-- todo; overflow-auto and get scrolling to work only WITHIN this container... -->
 	<div class="relative overflow-auto">
-		<Saved articles={tag.articles} {viewOptions} />
+		<Saved annotations={tag.articles} {viewOptions} />
 	</div>
 </div>
 <!-- <Saved articles={tag.articles} /> -->

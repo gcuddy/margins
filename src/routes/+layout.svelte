@@ -4,14 +4,13 @@
 
 	import { page } from '$app/stores';
 	import { handleSession } from '@lucia-auth/sveltekit/client';
-	console.log('hello');
 
-	handleSession(page, (hasSession) => {
-		console.log(hasSession);
-	});
+	handleSession(page);
 </script>
 
-<svelte:head />
+<svelte:head>
+	<title>Margins</title>
+</svelte:head>
 
 <div class="min-h-screen">
 	<slot />

@@ -2,7 +2,9 @@ import { Parser } from '$lib/web-parser';
 export default async function (url: string, html?: string) {
 	let htmlToParse = html;
 	if (!htmlToParse) {
+		console.log({ url });
 		const response = await fetch(url);
+		console.log({ response });
 		if (response.headers.get('content-type')?.includes('text/html')) {
 			htmlToParse = await response.text();
 		} else if (response.headers.get('content-type')?.includes('application/pdf')) {

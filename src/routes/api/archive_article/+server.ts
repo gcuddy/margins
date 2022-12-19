@@ -6,7 +6,7 @@ import { db } from '$lib/db';
 
 const schema = z.object({
 	id: z.number().or(z.string()),
-	trash: z.boolean().optional()
+	trash: z.boolean().optional(),
 });
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -19,15 +19,15 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const article = await db.article.update({
 			where: {
-				id: Number(id)
+				id: Number(id),
 			},
 			data: {
 				location: 'ARCHIVE',
-				trash: trash ? true : false
+				trash: trash ? true : false,
 			},
 			select: {
-				updatedAt: true
-			}
+				updatedAt: true,
+			},
 		});
 		return json(article);
 	} catch (e) {

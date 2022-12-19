@@ -4,7 +4,6 @@ import { buildPodcast } from '$lib/rss/parser.server';
 // this currently just handles xml
 export const GET: RequestHandler = async ({ request, url: Url }) => {
 	// provide either url or feedUrl
-
 	let url = Url.searchParams.get('url');
 	if (!url) {
 		const json = await request.json();

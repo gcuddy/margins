@@ -1,15 +1,15 @@
-import { json as json$1 } from '@sveltejs/kit';
-import parse from '$lib/parse';
+import type { RequestHandler } from '@sveltejs/kit';
+import { error, json as json$1 } from '@sveltejs/kit';
+import dayjs from 'dayjs';
+import { z } from 'zod';
+
 // takes many ids
 // updates all of them with given data
-
 import { reportZodOrPrismaError } from '$lib/api-utils';
 import { db } from '$lib/db';
-import { getJsonFromRequest } from '$lib/utils';
-import type { RequestHandler } from '@sveltejs/kit';
-import { z } from 'zod';
-import dayjs from 'dayjs';
+import parse from '$lib/parse';
 import { PatchArticleData } from '$lib/types/schemas/Article';
+import { getJsonFromRequest } from '$lib/utils';
 
 // TODO: add type support for data
 const patchRequest = z.object({
@@ -21,7 +21,7 @@ const patchRequest = z.object({
 // TODO: add tags (i.e. provide array that gets added, not replaced)
 
 // bulk post articles from urls
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	const json = await getJsonFromRequest(request);
 	console.log({ json });
 	try {
@@ -40,15 +40,12 @@ export const POST: RequestHandler = async ({ request }) => {
 				textContent: article.textContent,
 			});
 		}
-
 		const body = await db.article.createMany({
 			data: articles,
 			skipDuplicates: true,
 		});
 		return new Response(undefined, {
-			headers: {
-				location: '/',
-			},
+			status: 200,
 		});
 	} catch (e) {
 		console.error(e);
@@ -56,11 +53,14 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 };
 
-export const PATCH: RequestHandler = async ({ request }) => {
-	const json = await getJsonFromRequest(request);
+export const PATCH: RequestHandler = async ({ request, locals }) => {
 	try {
+		const session = await locals.validate();
+		if (!session) {
+			throw error(401, 'unauthorized');
+		}
+		const json = await getJsonFromRequest(request);
 		const parsed = patchRequest.parse(json);
-		console.log({ parsed });
 		const articles = await db.$transaction(
 			parsed.ids.map((id) => {
 				return db.article.update({
@@ -71,6 +71,7 @@ export const PATCH: RequestHandler = async ({ request }) => {
 				});
 			})
 		);
+		console.log({ articles });
 		// does it need to return anything?
 		return new Response(undefined);
 	} catch (e) {

@@ -1,301 +1,404 @@
 generator client {
     provider        = "prisma-client-js"
-    previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "referentialIntegrity"]
+    previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "extendedWhereUnique"]
 }
 
 datasource db {
-    provider             = "mysql"
-    // provider             = "sql"
-    url                  = env("DATABASE_URL")
-    referentialIntegrity = "prisma"
+    provider     = "mysql"
+    url          = env("DATABASE_URL")
+    relationMode = "prisma"
 }
 
-// enum MediaType {
-//     TEXT
-//     AUDIO
-//     VIDEO
+// model AnnotationBody {
 // }
 
-// This is the "default" item
+/// State represents the state of an Annotation. The defaults are "Inbox", "Next", "Later", and "Archive".
+model State {
+    id              Int          @id @default(autoincrement())
+    /// Whether or not this state represents things to be looked at later.
+    read_later      Boolean
+    /// The name of the state
+    name            String
+    /// State's UI color as a hex string
+    color           String?
+    /// The type of the state
+    type            Location
+    /// The position of the state
+    position        Float
+    description     String?
+    user            User         @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    userId          String
+    defaultRelation User?        @relation("default_state")
+    // only ONE should be true — how can we enforce this? or should we instead hold a default_state_id under user?
+    default         Boolean      @default(false)
+    createdAt       DateTime     @default(now())
+    updatedAt       DateTime     @updatedAt
+    Annotation      Annotation[]
+
+    @@index([userId])
+}
+
+model Annotation {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // body is used for: page note when type is bookmarking, or annotation when type is highlight/annotation
+    // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
+    //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
+    // for saving structured data
+    body Json?
+
+    tags      Taggings[]
+    type      AnnotationType
+    readLater Boolean        @default(true)
+    private   Boolean        @default(true)
+    target    Json? // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
+    entryId   Int?
+    entry     Entry?         @relation(fields: [entryId], references: [id])
+    metadata  EntryData      @relation(fields: [entryDataId], references: [id])
+    // todo: data (i.e. custom title and metadata)
+
+    /// The state of the annotation. Only relevant if it's a bookmark. (I think.)
+    state   State? @relation(fields: [stateId], references: [id])
+    stateId Int?
+    // stateId 0 = inbox
+
+    /// An annotation will have a parent when it's a type/annotation (i.e. an annotation on a bookmark) or a reply
+    parent   Annotation?  @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    parentId Int?
+    children Annotation[] @relation("references")
+
+    /// The "soft delete" time. Deletions are cleared after 30 days.
+    deleted DateTime?
+    creator User      @relation(fields: [userId], references: [id])
+    userId  String
+
+    sortOrder   Float            @default(-1000)
+    // refs
+    collections CollectionItems?
+    favorite    Favorite?
+
+    // @@unique([userId, entryId]) <- this doesn't quite make sense, because of cihldren. i want it to be when type is bookmark. maybe sql? or maybe children don't get entryid?
+    // again, could solve this by having a sepaerate model or something
+    entryDataId Int
+
+    @@index([entryId])
+    @@index([userId])
+    @@index([stateId])
+    @@index([parentId])
+}
+
+// this loosely corresponds to the web annotation motivation/purpose section, but modified for our use
+enum AnnotationType {
+    bookmark
+    annotation
+    reply
+}
+
+enum Location {
+    inbox
+    soon
+    later
+    archive
+}
+
+model Entry {
+    data         EntryData?
+    context      String? // uri of item it's saved from. not sure if it makes sense for this to be on Document or on Annotation.
+    createdAt    DateTime           @default(now())
+    author       String?
+    location     Location? // only relevant if read later?
+    // this is maybe the "real" title but also stored in data for uesrs
+    title        String?
+    type         DocumentType
+    updatedAt    DateTime           @updatedAt
+    id           Int                @id @default(autoincrement())
+    //todo: expand to fingerprint and url, doi, etc. maybe can all fit in this string, i'm not sure
+    uri          String?            @unique
+    // if it's a rss
+    html         String?            @db.LongText
+    text         String?            @db.LongText
+    image        String?
+    guid         String?            @unique //@ unique?
+    wordCount    Int?
+    summary      String?
+    media        Json?
+    published    DateTime?
+    updated      DateTime?
+    feedId       Int?
+    feed         Feed?              @relation(fields: [feedId], references: [id])
+    interactions EntryInteraction[]
+    EntryMedia   EntryMedia[]
+    annotations  Annotation[]
+
+    @@index([feedId])
+}
+
+model EntryData {
+    id          Int          @id @default(autoincrement())
+    html        String?      @db.LongText
+    text        String?      @db.LongText
+    image       String?
+    wordCount   Int?
+    summary     String?
+    media       EntryMedia[]
+    published   DateTime?
+    updated     DateTime?
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+    document    Entry        @relation(fields: [documentUri], references: [uri])
+    documentUri String       @unique
+
+    // TODO: pdf, image, etc
+
+    // these *can* belong to a user, but don't have to
+    user       User?        @relation(fields: [userId], references: [id])
+    userId     String?
+    Annotation Annotation[]
+
+    @@index([documentUri])
+}
+
+model EntryMedia {
+    id             Int       @id @default(autoincrement())
+    url            String?
+    size           Int?
+    duration       Int?
+    type           String? //mime type
+    title          String?
+    DocumentData   EntryData @relation(fields: [documentDataId], references: [id])
+    documentDataId Int
+    Entry          Entry?    @relation(fields: [entryId], references: [id])
+    entryId        Int?
+
+    @@index([documentDataId])
+}
+
+// tweet, reddit post, bandcamp - these would probably be classified under bookmark, but we could add more types if we want to
+enum DocumentType {
+    article
+    rss
+    pdf
+    epub
+    bookmark
+    image
+    video
+    audio
+}
+
+// @deprecated
 model Article {
-    id             Int          @id @default(autoincrement())
-    title          String       @db.Text
-    content        String?      @db.LongText
-    textContent    String?      @db.LongText
+    id             Int       @id @default(autoincrement())
+    title          String    @db.Text
+    content        String?   @db.LongText
+    textContent    String?   @db.LongText
     author         String?
-    createdAt      DateTime     @default(now())
-    updatedAt      DateTime     @updatedAt
-    readProgress   Float        @default(0)
+    private        Boolean   @default(true)
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+    readProgress   Float?    @default(0)
+    slug           String?
     url            String?
     siteName       String?
     colorHash      String?
-    date           DateTime
-    image          String       @db.Text
+    date           DateTime?
+    image          String?   @db.Text
     wordCount      Int?
-    starred        Boolean      @default(false)
+    starred        Boolean   @default(false)
     css            String?
-    description    String?      @db.Text // This shouldn't be that long, but we'll use Text to make sure
+    description    String?   @db.Text // This shouldn't be that long, but we'll use Text to make sure
     wiki           String?
     classification String?
     pdf            Boolean?
     html           String?
-    feedItem       RssFeedItem? @relation(fields: [feedItemId], references: [id])
-    feedItemId     Int?
-    position       Int          @default(0) //@unique - figure this out
-    trash          Boolean      @default(false)
-    location       String       @default("INBOX")
-    annotations    Annotation[]
-    Bookmark       Bookmark?
+    readLater      Boolean   @default(true)
+    bookmark       Boolean   @default(false)
+    position       Int       @default(0) //@unique - figure this out
+    trash          Boolean   @default(false)
+    location       String    @default("INBOX")
+    // Bookmark       Bookmark?
     context        Context?
-    highlights     Highlight[]
-    Highlight2     Highlight2[]
-    ListItem       ListItem?
-    media          Media?
-    type           Int          @default(0) // 0 = text, 1 = audio, 2 = video
-    tags           Tag[]
+    type           Int       @default(0) // 0 = text, 1 = audio, 2 = video
     favorite       Favorite?
-    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId         String
 
     @@unique([userId, url])
     @@index([userId])
-}
-
-model Bookmark {
-    id          Int       @id @default(autoincrement())
-    url         String    @unique
-    title       String
-    description String?
-    createdAt   DateTime  @default(now())
-    html        String
-    articleId   Int?      @unique
-    contextId   Int
-    article     Article?  @relation(fields: [articleId], references: [id])
-    context     Context   @relation(fields: [contextId], references: [id])
-    ListItem    ListItem?
-    tags        Tag[]
+    @@map("Article")
 }
 
 model Context {
-    id          Int        @id @default(autoincrement())
-    url         String     @unique
+    id          Int      @id @default(autoincrement())
+    url         String   @unique
     description String?
-    createdAt   DateTime   @default(now())
-    articleId   Int?       @unique
-    Article     Article?   @relation(fields: [articleId], references: [id])
-    Bookmark    Bookmark[]
+    createdAt   DateTime @default(now())
+    articleId   Int?     @unique
+    Article     Article? @relation(fields: [articleId], references: [id])
 }
 
-model List {
-    id          Int        @id @default(autoincrement())
-    name        String     @unique
+model Collection {
+    id          Int               @id @default(autoincrement())
+    name        String
+    private     Boolean           @default(true)
+    icon        Json?
+    user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId      String
     description String?
-    createdAt   DateTime   @default(now())
-    updatedAt   DateTime   @updatedAt
-    items       ListItem[]
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
+    items       CollectionItems[]
+    // order       Json // array[] of item ids in order.... /??
+
+    @@unique([userId, name])
+    @@index([userId])
 }
 
-model ListItem {
-    id           Int         @id @default(autoincrement())
-    listId       Int
-    createdAt    DateTime    @default(now())
-    updatedAt    DateTime    @updatedAt
-    articleId    Int?        @unique
-    bookmarkId   Int?        @unique
-    highlightId  String?     @unique
-    annotationId Int?        @unique
-    type         String?
-    article      Article?    @relation(fields: [articleId], references: [id])
-    bookmark     Bookmark?   @relation(fields: [bookmarkId], references: [id])
-    highlight    Highlight?  @relation(fields: [highlightId], references: [id])
-    annotation   Annotation? @relation(fields: [annotationId], references: [id])
-    list         List        @relation(fields: [listId], references: [id])
+model CollectionItems {
+    id           Int                @id @default(autoincrement())
+    collection   Collection         @relation(fields: [collectionId], references: [id])
+    collectionId Int
+    position     Int                @default(0)
+    type         CollectionItemType // probably not needded
+    createdAt    DateTime           @default(now())
+    updatedAt    DateTime           @updatedAt
+    articleId    Int?               @unique
+    annotationId Int?               @unique
+    annotation   Annotation?        @relation(fields: [annotationId], references: [id])
+
+    @@index([collectionId])
+    @@index([articleId])
 }
 
-model Media {
-    id          Int     @id @default(autoincrement())
-    url         String
-    title       String
-    description String
-    duration    Int
-    type        String
-    articleId   Int     @unique
-    article     Article @relation(fields: [articleId], references: [id])
+enum CollectionItemType {
+    ARTICLE
+    BOOKMARK
+    COLLECTION
 }
 
-model Highlight {
-    id            String    @id @default(cuid())
-    articleId     Int
-    nonTextNodes  String?
-    text          String
-    sanitizedHtml String?
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
-    flagged       Boolean   @default(false)
-    startMetaId   Int       @unique
-    endMetaId     Int       @unique
-    article       Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
-    endMeta       DomMeta   @relation("endMeta", fields: [endMetaId], references: [id])
-    startMeta     DomMeta   @relation("startMeta", fields: [startMetaId], references: [id])
-    ListItem      ListItem?
+enum FetchFrequency {
+    realtime
+    daily
+    weekly
+    rnthly
 }
 
-model DomMeta {
-    id             Int        @id @default(autoincrement())
-    parentTagName  String
-    parentIndex    String
-    textOffset     Int
-    endHighlight   Highlight? @relation("endMeta")
-    startHighlight Highlight? @relation("startMeta")
-}
-
-model Annotation {
-    id         Int       @id @default(autoincrement())
-    target     Json // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
-    body       String?   @db.Text
-    // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
-    //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
-    createdAt  DateTime  @default(now())
-    updatedAt  DateTime  @updatedAt
-    flagged    Boolean   @default(false)
-    motivation String?
-    articleId  Int
-    article    Article   @relation(fields: [articleId], references: [id])
-    ListItem   ListItem?
-}
-
-model RssFeed {
+model Feed {
     id Int @id @default(autoincrement())
 
     // itunes_id is actually an Int, so you can set it directly — will be deprecating this soon
     itunes_id String? @unique
     //
 
-    feedUrl        String           @unique
-    title          String?
-    link           String?
-    description    String?          @db.Text
-    lastBuildDate  DateTime?
-    imageUrl       String?          @db.Text
-    items          RssFeedItem[]
-    tag            RssFeedTag[]
-    podcast        Boolean          @default(false)
-    creator        String?
-    createdAt      DateTime         @default(now()) /// @zod.custom(z.string())
-    updatedAt      DateTime         @updatedAt /// @zod.custom(z.string())
-    favorite       Favorite?
-    // users         User[]
-    users          User[]
-    // this should be unique per user
-    // @@unique([feedUrl])
-    PodcastEpisode PodcastEpisode[]
+    feedUrl       String         @unique
+    title         String?
+    link          String?
+    creator       String?
+    description   String?        @db.Text
+    lastBuildDate DateTime?
+    imageUrl      String?        @db.Text
+    entries       Entry[]
+    tags          Taggings[]
+    podcast       Boolean        @default(false)
+    createdAt     DateTime       @default(now()) /// @zod.custom(z.string())
+    updatedAt     DateTime       @updatedAt /// @zod.custom(z.string())
+    favorite      Favorite?
+    active        Boolean        @default(true)
+    /// Velocity refers to the amount of times a feed is published per day.
+    velocity      Int?
+    subscriptions Subscription[]
 }
 
-// model FeedOnUser {
-//     feed RssFeed @relation(fields: [feedId], references: [id])
-//     feedId Int
-//     user User @relation(fields: [userId], references: [id])
-//     userId String
-//     name String?
-
-//     @@id([feedId, userId])
-// }
-
-model RssItemInteraction {
-    id        Int         @id @default(autoincrement())
-    createdAt DateTime    @default(now())
-    updatedAt DateTime    @updatedAt
-    is_read   Boolean     @default(false)
-    podcast   Boolean     @default(false)
-    played    Boolean     @default(false)
-    timestamp Int?
-    itemUuid  String
-    item      RssFeedItem @relation(fields: [itemUuid], references: [uuid], onDelete: Cascade)
+model Subscription {
+    id        Int      @id @default(autoincrement())
+    feed      Feed     @relation(fields: [feedId], references: [id])
+    feedId    Int
     userId    String
-    user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id])
+    createdAt DateTime @default(now()) /// @zod.custom(z.string())
+    updatedAt DateTime @updatedAt /// @zod.custom(z.string())
+    title     String
 
-    @@unique([userId, itemUuid])
-    @@index([userId, itemUuid])
+    @@unique([userId, feedId])
+    // kind - some sort of enum of rss or podcast or tweet i think (maybe unnnecessary because that data is stored on Feed)
+    // custom metadata here: view mode, status, etc
+    // fetchFrequency FetchFrequency @default(realtime)
+    @@index([userId])
+    @@index([feedId])
 }
 
-model RssFeedItem {
-    id              Int                  @id @default(autoincrement())
-    uuid            String               @unique
-    duration        Int?
-    image           String?              @db.Text
-    link            String?
-    author          String?
-    title           String?              @db.TinyText
-    content         String?              @db.LongText
-    contentSnippet  String?              @db.Text
-    // categories     String[]
-    pubDate         DateTime? // @zod.custom(z.string())
-    createdAt       DateTime             @default(now()) // @zod.custom(z.string())
-    updatedAt       DateTime             @updatedAt // @zod.custom(z.string())
-    rssFeedId       Int
-    interactions    RssItemInteraction[]
-    feed            RssFeed              @relation(fields: [rssFeedId], references: [id], onDelete: Cascade)
-    enclosure       Enclosure?
-    linked_articles Article[]
+model History {
+    id            Int               @id @default(autoincrement())
+    createdAt     DateTime          @default(now())
+    interaction   EntryInteraction? @relation(fields: [interactionId], references: [id])
+    interactionId Int?
 
-    @@index([createdAt, updatedAt, uuid, pubDate, rssFeedId])
-    @@index([content(length: 100)])
-    @@fulltext([title, content])
+    @@index([interactionId])
 }
 
-model Enclosure {
-    url    String?
-    length Int?
-    type   String?
-    feed   RssFeedItem @relation(fields: [feedId], references: [id])
-    feedId Int         @unique
+model EntryInteraction {
+    id         Int      @id @default(autoincrement())
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    is_read    Boolean? @default(false)
+    progress   Float?   @default(0)
+    finished   Boolean? @default(false)
+    document   Entry    @relation(fields: [documentId], references: [id])
+    documentId Int
+    userId     String
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id([feedId])
-}
+    // TODO: choose either history model (array of each interaction, or just simple updating last_viewed)
+    history          History[]
+    last_viewed      DateTime  @default(now())
+    last_annotated   DateTime  @default(now())
+    last_interaction DateTime  @default(now())
 
-model RssFeedTag {
-    id    Int       @id @default(autoincrement())
-    name  String    @unique
-    feeds RssFeed[]
+    @@unique([documentId, userId])
+    @@index([documentId])
+    @@index([userId])
 }
 
 model Tag {
-    id            Int       @id @default(autoincrement())
-    name          String
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
-    bookmarkId    Int?
-    rssFeedItemId String?
-    Bookmark      Bookmark? @relation(fields: [bookmarkId], references: [id])
-    articles      Article[]
-    favorite      Favorite?
-    viewOptions   Json?
-    user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId        String
+    id        Int      @id @default(autoincrement())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    favorite    Favorite?
+    // TODO: maybe move viewoptions to ViewPreference
+    viewOptions Json?
+    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId      String
+    taggings    Taggings[]
 
     @@unique([name, userId])
     @@index([userId])
 }
 
-model Css {
-    id        Int      @id @default(autoincrement())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    domain    String   @unique
-    css       String?
-}
+model Taggings {
+    id           Int         @id @default(autoincrement())
+    //   TODO: represents tags on documents and feeds
+    tag          Tag         @relation(fields: [tagId], references: [id])
+    tagId        Int
+    user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId       String
+    feed         Feed?       @relation(fields: [feedId], references: [id])
+    feedId       Int?
+    annotation   Annotation? @relation(fields: [annotationId], references: [id])
+    annotationId Int?
 
-model StringCondition {
-    id       Int     @id @default(autoincrement())
-    contains Boolean
-    value    String
-}
-
-model SmartListCondition {
-    id          Int     @id @default(autoincrement())
-    smartListId Int?
-    any         Boolean
-    title       String?
+    // do those make sense?
+    @@unique([annotationId, userId, tagId])
+    @@unique([feedId, userId, tagId])
+    @@index([userId])
+    @@index([tagId])
+    @@index([feedId])
+    @@index([annotationId])
+    @@index([userId, tagId])
+    @@index([userId, feedId])
+    @@index([userId, annotationId])
 }
 
 model SmartList {
@@ -307,122 +410,35 @@ model SmartList {
     favorite    Favorite?
 }
 
-model Target {
-    id         Int       @id @default(autoincrement())
-    source     String
-    selector   Selector? @relation(fields: [selectorId], references: [id])
-    selectorId Int       @unique
-}
-
-model Selector {
-    id   Int    @id @default(autoincrement())
-    type String // one of: TextQuoteSelector, TextPositionSelector, cssSelector, rangeselector, etc. (would use enum but they cause problems. zod/middleware will help us out)
-
-    target Target?
-
-    // TEXTQUOTESELECTOR (use zod/middleware to enforce this)
-    exact  String? //* actually required
-    prefix String?
-    suffix String?
-
-    // text position slector (all required)
-    start Int?
-    end   Int?
-
-    // css selector (if type === 'cssSelector', this is required)
-    value String?
-
-    //range selector
-    // startSelectorId Int?
-    // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
-    // endSelectorId   Int?
-    // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
-
-    // A selector can be refined by another selector
-    // refinedById Int?      @unique
-    // refinedBy   Selector? @relation("refinedBy", fields: [refinedById], references: [id])
-    // refines     Selector? @relation("refinedBy")
-
-    //range selector
-    // startSelectorId Int?
-    // startSelector   Selector? @relation("startSelector", fields: [startSelectorId], references: [id])
-    // endSelectorId   Int?
-    // endSelector     Selector? @relation("endSelector", fields: [endSelectorId], references: [id])
-
-    // refinedBySelectorId Int?
-    // refinedBy Selector? @relation("refinedBy", fields: [refinedBySelectorId], references: [id])
-}
-
-model TextPositionSelector {
-    id               Int                @id @default(autoincrement())
-    start            Int
-    end              Int
-    AnnotationTarget AnnotationTarget[]
-}
-
-model TextQuoteSelector {
-    id               Int                @id @default(autoincrement())
-    exact            String
-    prefix           String?
-    suffix           String?
-    type             String             @default("TextQuoteSelector")
-    AnnotationTarget AnnotationTarget[]
-}
-
-// model RangeSelector {
-//   id               Int                @id @default(autoincrement())
-//   startSelectorId  Int                @unique
-//   endSelectorId    Int                @unique
-//   textOffset       Int
-//   endSelector      Selector           @relation("end", fields: [endSelectorId], references: [id], map: "end_selector")
-//   startSelector    Selector           @relation("start", fields: [startSelectorId], references: [id], map: "start_selector")
-//   AnnotationTarget AnnotationTarget[]
-// }
-
-model AnnotationTarget {
-    id                     Int                   @id @default(autoincrement())
-    source                 String
-    selectors              Json
-    rangeSelectorId        Int?
-    textPositionSelectorId Int?
-    textQuoteSelectorId    Int
-    // rangeSelector          RangeSelector?        @relation(fields: [rangeSelectorId], references: [id])
-    textPosition           TextPositionSelector? @relation(fields: [textPositionSelectorId], references: [id])
-    textQuote              TextQuoteSelector     @relation(fields: [textQuoteSelectorId], references: [id])
-    Highlight2             Highlight2[]
-}
-
-model Highlight2 {
-    id            Int              @id @default(autoincrement())
-    articleId     Int
-    targetId      Int
-    text          String
-    sanitizedHtml String?
-    createdAt     DateTime         @default(now())
-    updatedAt     DateTime         @updatedAt
-    flagged       Boolean          @default(false)
-    article       Article          @relation(fields: [articleId], references: [id])
-    target        AnnotationTarget @relation(fields: [targetId], references: [id])
-}
-
 model User {
-    id                        String                      @id @unique @default(cuid())
-    provider_id               String                      @unique
-    hashed_password           String?
-    session                   Session[]
-    createdAt                 DateTime                    @default(now())
-    updatedAt                 DateTime                    @updatedAt
+    id               String             @id @unique @default(cuid())
+    provider_id      String             @unique
+    hashed_password  String?
+    session          Session[]
+    createdAt        DateTime           @default(now())
+    updatedAt        DateTime           @updatedAt
     //
-    email                     String                      @unique
-    username                  String                      @unique
+    email            String             @unique
+    username         String             @unique
     //
-    PodcastEpisodeInteraction PodcastEpisodeInteraction[]
-    feeds                     RssFeed[]
-    RssItemInteraction        RssItemInteraction[]
-    favorites                 Favorite[]
-    tags                      Tag[]
-    articles                  Article[]
-    favoriteFolders           FavoriteFolder[]
+    // self relation
+    followedBy       User[]             @relation("UserFollows")
+    following        User[]             @relation("UserFollows")
+    //
+    interactions     EntryInteraction[]
+    favorites        Favorite[]
+    articles         Article[]
+    favoriteFolders  FavoriteFolder[]
+    collections      Collection[]
+    annotations      Annotation[]
+    subscriptions    Subscription[]
+    documentData     EntryData[]
+    stylesheets      Stylesheet[]
+    states           State[]            @relation("user")
+    default_state    State?             @relation("default_state", references: [id], fields: [default_state_id])
+    default_state_id Int?               @unique
+    taggings         Taggings[]
+    tags             Tag[]
 
     @@map("user")
 }
@@ -463,37 +479,39 @@ model Favorite {
     tagId            Int?            @unique
     tag              Tag?            @relation(fields: [tagId], references: [id])
     rssId            Int?            @unique
-    rss              RssFeed?        @relation(fields: [rssId], references: [id])
+    rss              Feed?           @relation(fields: [rssId], references: [id])
     smartListId      Int?            @unique
     smartList        SmartList?      @relation(fields: [smartListId], references: [id])
     folder           FavoriteFolder? @relation(fields: [favoriteFolderId], references: [id])
     favoriteFolderId Int?
+    annotation       Annotation?     @relation(fields: [annotationId], references: [id])
+    annotationId     Int?            @unique
 
     @@index([userId])
+    @@index([articleId])
+    @@index([tagId])
+    @@index([rssId])
+    @@index([smartListId])
+    @@index([favoriteFolderId])
+    @@index([annotationId])
 }
 
-model PodcastEpisodeInteraction {
-    id        Int            @id @default(autoincrement())
-    timestamp Int
-    createdAt DateTime       @default(now())
-    updatedAt DateTime       @updatedAt
-    userId    String
-    user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-    episodeId Int            @unique
-    episode   PodcastEpisode @relation(fields: [episodeId], references: [id])
-    // hash = md5(itunes_id + guid || enclose.url)
-    hash      String         @unique
-
-    @@index([userId, episodeId])
+//todo: user entry/
+model UserEntry {
+    id         Int          @id @default(autoincrement())
+    // this model connects a user with an entry, storing their own custom metadata
+    Stylesheet Stylesheet[]
 }
 
-model PodcastEpisode {
-    id                        Int                         @id @default(autoincrement())
-    podcast                   RssFeed                     @relation(fields: [podcastId], references: [itunes_id])
-    podcastId                 String                      @unique
-    // hash = md5(itunes_id + guid || enclose.url)
-    hash                      String                      @unique
-    guid                      String?
-    url                       String?
-    PodcastEpisodeInteraction PodcastEpisodeInteraction[]
+model Stylesheet {
+    id          Int        @id @default(autoincrement())
+    domain      String
+    css         String     @db.MediumText
+    entry       UserEntry? @relation(fields: [userEntryId], references: [id])
+    userEntryId Int?
+    user        User       @relation(fields: [userId], references: [id])
+    userId      String
+
+    @@index([userEntryId])
+    @@index([userId])
 }

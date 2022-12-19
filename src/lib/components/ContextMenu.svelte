@@ -14,6 +14,7 @@
 		Transition,
 		TransitionChild,
 	} from '@rgossiaux/svelte-headlessui';
+	import { onDestroy } from 'svelte';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { portal } from 'svelte-portal';
 	import { fade, fly, scale } from 'svelte/transition';
@@ -46,15 +47,23 @@
 	export let usePortal = true;
 
 	export let squishy = false;
+
+	let className = 'p-1.5';
+	export { className as class };
+	export let active_styling = true;
 </script>
 
 <Menu let:open>
-	<MenuButton
-		use={[popperRef, ...buttonActions]}
-		class="group relative z-10 flex items-center rounded-md p-1.5 hover:bg-gray-200 focus:bg-gray-200 focus:ring active:ring-0 dark:hover:bg-gray-600 dark:focus:bg-gray-600 dark:active:text-white {squishy
-			? 'active:scale-95 transition duration-300'
-			: ''} {open && 'bg-gray-200 dark:bg-gray-600'}"><slot /></MenuButton
-	>
+	<slot name="button">
+		<MenuButton
+			use={[popperRef, ...buttonActions]}
+			class="group relative z-10 flex items-center rounded-md  {className} {active_styling
+				? 'active:ring-0 dark:hover:bg-gray-600 dark:focus:bg-gray-600 dark:active:text-white focus:bg-gray-200 focus:ring hover:bg-gray-200'
+				: ''} {squishy ? 'active:scale-95 transition duration-300' : ''} {open && active_styling
+				? 'bg-gray-200 dark:bg-gray-600'
+				: ''}"><slot /></MenuButton
+		>
+	</slot>
 	<Transition show={open}>
 		{#if open}
 			<TransitionChild
@@ -80,7 +89,7 @@
 				>
 					<MenuItems
 						static
-						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-white py-1 opacity-100 shadow-xl ring-1 ring-black/5 focus:outline-none dark:divide-gray-700 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:text-current dark:ring-white/20"
+						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-white py-1 opacity-100 shadow-xl ring-1 ring-black/5 focus:outline-none dark:divide-gray-700 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:text-current dark:ring-white/20 dark:backdrop-blur-xl dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200 "
 					>
 						<!-- can either slot in items yourself, or let component do it for you -->
 						<slot name="items" />

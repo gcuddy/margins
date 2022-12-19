@@ -1,5 +1,7 @@
-import { invalid, redirect, type Actions } from '@sveltejs/kit';
+import { type Actions, fail, redirect } from '@sveltejs/kit';
+
 import { auth } from '$lib/server/lucia';
+
 import type { PageServerLoad } from './$types';
 
 export const actions: Actions = {
@@ -9,8 +11,8 @@ export const actions: Actions = {
 		const password = form.get('password');
 		// check for empty
 		if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
-			return invalid(400, {
-				message: 'invalid input',
+			return fail(400, {
+				message: 'fail input',
 			});
 		}
 		try {
@@ -18,13 +20,12 @@ export const actions: Actions = {
 			const session = await auth.createSession(user.userId);
 			locals.setSession(session);
 		} catch (e) {
-			return invalid(400, { message: 'Incorrect email or password' });
+			return fail(400, { message: 'Incorrect email or password' });
 		}
 	},
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const session = await locals.getSession();
+	const session = await locals.validate();
 	if (session) throw redirect(302, '/');
-	return {};
 };

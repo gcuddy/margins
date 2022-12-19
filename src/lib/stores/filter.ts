@@ -1,6 +1,7 @@
-import { page } from '$app/stores';
-import type { ArticleInList } from '$lib/types';
 import { derived, writable } from 'svelte/store';
+
+import { page } from '$app/stores';
+import type { ExtendedAnnotation } from '$lib/annotation';
 
 export const filterTerm = writable('');
 
@@ -13,19 +14,17 @@ interface CurrentItemStore<T> {
 
 function createCurrentItemStore() {
 	// todo: ideally i want this to be able to be set the type later. how is that possible?
-	const { subscribe, set, update } = writable<CurrentItemStore<Partial<ArticleInList>> | null>(
-		null
-	);
+	const { subscribe, set, update } = writable<CurrentItemStore<ExtendedAnnotation> | null>(null);
 
-	const setCurrentItems = <T>(items: ArticleInList[], ...keys: string[]) => {
+	const setCurrentItems = <T>(items: ExtendedAnnotation[], ...keys: string[]) => {
 		set({
 			items,
-			keys
+			keys,
 		});
 	};
 	return {
 		subscribe,
-		setCurrentItems
+		setCurrentItems,
 	};
 }
 

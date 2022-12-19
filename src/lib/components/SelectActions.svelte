@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { invalidate, invalidateAll } from '$app/navigation';
 
 	import { cachedArticlesArray } from '$lib/stores/cache';
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
@@ -19,6 +19,7 @@
 
 	import { createEventDispatcher } from 'svelte';
 	import type { Annotation } from '@prisma/client';
+	import { selectedItems } from '$lib/stores/selectedItems';
 
 	function isAnnotation(item: ArticleInList | Annotation): item is Annotation {
 		return (item as Annotation).target !== undefined;
@@ -57,11 +58,13 @@
 					...article,
 					location: detail.id,
 				}));
+
 				console.log({ selected_articles: selected_items });
 				dispatch();
 				await bulkEditArticles(ids, {
 					location: detail.id,
 				});
+				await invalidateAll();
 				notifications.notify({
 					message: `Moved ${selected_items.length} articles to ${detail.name}`,
 					title: `Moved to ${detail.name}`,

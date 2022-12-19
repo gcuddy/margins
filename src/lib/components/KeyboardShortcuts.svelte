@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { afterNavigate, goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { commands, jumpToArticle, jumpToTag } from '$lib/data/commands';
 	import { commandStore } from '$lib/stores/commands';
 	import { disableGlobalKeyboardShortcuts, lastKey } from '$lib/stores/keyboard';
@@ -45,6 +46,7 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
+		console.log({ e });
 		if ($disableGlobalKeyboardShortcuts) {
 			console.log('not handling keydown because $disableGlobalKeyboardShortcuts is true');
 			return;
@@ -57,7 +59,11 @@
 
 		// first, for keystrokes, let's make sure we're not in an input field, or a textarea
 		const activeElement = document.activeElement;
-		if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+		if (
+			activeElement instanceof HTMLInputElement ||
+			activeElement instanceof HTMLTextAreaElement ||
+			(activeElement instanceof HTMLDivElement && activeElement.contentEditable)
+		) {
 			return;
 		}
 
@@ -91,16 +97,18 @@
 		if (command) {
 			e.preventDefault();
 			console.log('command found, performing ');
-			command.perform();
+			command.perform({ page: $page });
 			return;
 		}
 	}
 
 	// TODO: use useCommands(Commands) to handle this automagically
-	let previousPage: string | undefined;
-	// afterNavigate((nav) => {
-	// 	previousPage = nav.from?.pathname;
-	// });
+	let previousPage: string | null = null;
+	afterNavigate((nav) => {
+		if (nav.from?.route) {
+			previousPage = nav.from.route.id;
+		}
+	});
 	$: console.log({ previousPage });
 	/** Commands that rely on stores */
 
@@ -111,9 +119,11 @@
 			check: () => previousPage !== undefined,
 			name: 'Go back',
 			perform: () => {
-				if (previousPage) {
-					goto(previousPage);
-				}
+				alert(previousPage);
+				console.log({ previousPage });
+				// if (previousPage) {
+				// 	goto(previousPage);
+				// }
 			},
 			icon: 'arrowRight',
 			kbd: [['Escape']],

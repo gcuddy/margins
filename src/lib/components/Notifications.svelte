@@ -44,7 +44,7 @@
 					{/if}
 					{#if typeof message === 'string'}
 						<div>{@html message}</div>
-					{:else}
+					{:else if message}
 						<svelte:component this={message} />
 					{/if}
 					{#if link}

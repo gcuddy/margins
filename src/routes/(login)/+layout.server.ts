@@ -1,11 +1,12 @@
 import { redirect } from '@sveltejs/kit';
+
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-	const session = await locals.getSession();
-	console.log('(login)', { session });
-	if (session) {
-		console.log('session exists');
-		throw redirect(302, '/inbox');
+	console.log(`(login)/layout.server`);
+	const { session, user } = await locals.validateUser();
+	if (session && user) {
+		// TODO: customize "home"
+		throw redirect(302, `/u:${user.username}/inbox`);
 	}
 };

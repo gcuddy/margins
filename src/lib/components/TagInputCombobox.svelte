@@ -10,18 +10,24 @@
 	import Form from './Form.svelte';
 	import { syncStore } from '$lib/stores/sync';
 	import { notifications } from '$lib/stores/notifications';
+	import TagEntry from './TagEntry.svelte';
+	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
+	import { modals } from '$lib/stores/modals';
 	export let allTags: Tag[] = [];
 
 	onMount(() => {
-		getTags().then((tags) => {
-			allTags = tags;
-		});
+		if (!allTags.length) {
+			getTags().then((tags) => {
+				allTags = tags;
+			});
+		}
 	});
 
 	export let className = '';
 	console.log({ allTags });
 	export let value = '';
-	export let articles: ArticleWithTags[];
+	export let articles: ArticleWithTags[] = [];
 
 	export let allow_create_tag = true;
 
@@ -42,7 +48,7 @@
 	$: if (newTagAvailable) {
 		filteredTags.push({
 			name: value,
-			special: true
+			special: true,
 			// perform: (val) => {
 			// 	postTags([...$comboboxState.selected.map((tag) => tag.value), val]);
 			// }
@@ -130,164 +136,36 @@
 			}
 		}, 0);
 	}
+	let inv = 'app:entries';
+	export { inv as invalidate };
 	let form: HTMLFormElement;
-	export let invalidate: string | undefined = '/api/tags';
-
 	let sync_id: string;
+
+	let loading = false;
+	export let size: 'lg' | 'base' = 'base';
 </script>
 
-<Form
+<form
 	action="/api/tags"
 	method="post"
-	bind:el={form}
-	{invalidate}
-	pending={() => {
-		sync_id = syncStore.addItem();
-	}}
-	done={() => {
-		syncStore.removeItem(sync_id);
-	}}
-	error={() => {
-		syncStore.removeItem(sync_id);
-		notifications.notify({
-			message: 'Error',
-			type: 'error'
-		});
+	use:enhance={() => {
+		// todo
+		loading = true;
+		// optimistically udpating state might be better here, then reverting if it fails
+		return async ({ result, update }) => {
+			loading = false;
+			console.log({ result });
+			notifications.notify({
+				message: 'Tag created',
+				type: 'success',
+			});
+			update();
+			modals.close({
+				id: 'tag-modal',
+			});
+			invalidate(inv);
+		};
 	}}
 >
-	{#each articles as article, index}
-		<!-- todo: useThePlatform, wnot qs, right? -->
-		<input type="hidden" name="ids[]" value={article.id} />
-	{/each}
-	<div class="flex items-center px-1 {className}">
-		<div class="flex gap-2 text-xs">
-			{#each Array.from(selectedTags) as tag}
-				<input type="hidden" name="tags[]" value={tag} />
-				<TagComponent
-					tag={{ name: tag }}
-					variant="primary"
-					active={tag === activeTag}
-					on:click={() => (activeTag = tag)}
-				/>
-			{/each}
-		</div>
-		<!-- <TagCloud
-		tags={Array.from(selectedTags)}
-		delIcon={true}
-		on:delete={({ detail: tag }) => {
-			selectedTags.delete(tag);
-			selectedTags = selectedTags;
-		}}
-	/> -->
-		<Combobox
-			fillValue={false}
-			values={filteredTags}
-			bind:value
-			bind:expanded={comboboxExpanded}
-			idResolver={(tag) => tag.name}
-			on:select={({ detail }) => {
-				//TODO
-				selectedTags.add(detail.name);
-				selectedTags = selectedTags;
-				value = '';
-				console.log({ selectedTags });
-				console.log('add');
-			}}
-			input={{
-				class: `px-2 placeholder-gray-400 bg-transparent focus:ring-0 border-0 w-full ${
-					activeTag ? 'caret-transparent' : ''
-				}`,
-				placeholder: `${selectedTags.size ? '' : 'Tags'}`
-			}}
-			options={{
-				class: `absolute z-10 mt-1 ring-1 shadow-xl ring-black/10 bg-gray-700 text-gray-100 max-h-48 overflow-y-auto text-sm rounded-xl p-2 ${
-					filteredTags.length === 0 ? 'hidden' : ''
-				}`
-			}}
-			on:input-click={(e) => {
-				console.log({ e });
-				activeTag = undefined;
-				activeTagIndex = undefined;
-			}}
-			on:keydown={handleKeydown}
-			on:expanded={async ({ detail }) => {
-				console.log({ expanded: detail });
-				if (detail && !allTags.length) {
-					allTags = await getTags();
-					console.log('got tags', { allTags });
-				}
-				if (!detail) {
-					tick().then(() => {
-						form.requestSubmit();
-					});
-				}
-			}}
-			class="relative w-full"
-		>
-			<div slot="option" let:value let:active>
-				<!-- TODO: set off special in their own world ?? (loook at Things) -->
-				<div
-					class="{active ? 'bg-primary-300 text-black' : 'text-gray-200s'} {value.special
-						? ''
-						: ''} rounded-md px-2 py-1 "
-				>
-					<div class="flex gap-2 ">
-						{#if value.special && allow_create_tag}
-							<Icon name="plusCircleSolid" className="w-5 h-5 fill-current" />
-							<span>Create tag: "{value.name}"</span>
-						{:else}
-							<Icon name="tag" className="w-5 h-5 stroke-current stroke-2" />
-							<span>{value.name}</span>
-						{/if}
-					</div>
-				</div>
-			</div>
-		</Combobox>
-	</div>
-
-	<!-- .concat([createNewItem]) -->
-
-	<!-- <Combobox onChange={(val) => console.log(val)}>
-	<ComboboxInput
-		class="w-full border-0 bg-transparent text-sm focus:ring-0"
-		displayValue={(tag) => tag.name}
-		onChange={(val) => (value = val)}
-	/>
-	<ComboboxOptions>
-		{#each filteredTags as tag}
-			<ComboboxOption let:active value={tag}>
-				<div class:bg-teal-400={active}>{tag.name}</div>
-			</ComboboxOption>
-		{/each}
-	</ComboboxOptions>
-</Combobox> -->
-
-	<!-- <Combobox
-	bind:displayValue={value}
-	items={filteredTags.map((tag) => ({
-		id: tag.id.toString(),
-		label: tag.name,
-		value: tag.name
-	}))}
-	selectMultiple={true}
-	bind:ComboboxState={comboboxState}
-	on:close={() => {
-		console.log('closed');
-		postTags();
-	}}
-	placeholder={$comboboxState.selected?.length ? 'Change tags…' : 'Add tags…'}
-	autofocus={true}
-	button={false}
-	stickyItems={[
-		{
-			id: 'create-new',
-			label: (state) => `Create new tag: ${state.value}`,
-			show: (state) => state.value.length > 1
-		}
-	]}
->
-	<slot>
-		<ComboboxInput />
-	</slot>
-</Combobox> -->
-</Form>
+	<TagEntry {articles} {loading} {size} />
+</form>

@@ -8,9 +8,7 @@
 <div
 	class="relative {'before:content-[""] before:w-1 before:bg-gradient-to-br from-primary-400 to-primary-500 before:rounded-md before:absolute before:h-full m'}"
 >
-	<!-- 				ideally:				<a data-sveltekit-prefetch href="/{article?.id}#annotation-{annotation.id}"
- -->
-	<a data-sveltekit-prefetch {href} class="block pl-5">
+	<a {href} class="block pl-5">
 		{#if html}
 			{@html text}
 		{:else}

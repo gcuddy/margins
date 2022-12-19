@@ -5,7 +5,7 @@ export const load: PageServerLoad = async ({ url }) => {
 	console.log({ q });
 	if (!q) {
 		return {
-			results: []
+			results: [],
 		};
 	}
 	// db.article.findMany({
@@ -22,15 +22,15 @@ export const load: PageServerLoad = async ({ url }) => {
 	const results = await db.article.findMany({
 		where: {
 			textContent: {
-				search: q
+				search: q,
 			},
 			title: {
-				search: q
-			}
+				search: q,
+			},
 		},
 		include: {
-			tags: true
-		}
+			tags: true,
+		},
 	});
 	console.time('searchMatching');
 	const matches = results.map((result) => {
@@ -52,12 +52,12 @@ export const load: PageServerLoad = async ({ url }) => {
 		}
 		return {
 			title,
-			content
+			content,
 		};
 	});
 	console.timeEnd('searchMatching');
 	return {
 		results,
-		matches
+		matches,
 	};
 };

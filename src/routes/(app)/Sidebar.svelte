@@ -21,7 +21,6 @@
 	import { tweened, spring } from 'svelte/motion';
 
 	import Icon from '$lib/components/helpers/Icon.svelte';
-	import UrlModal from '$lib/components/modals/URLModal.svelte';
 	import SidebarItem from './SidebarItem.svelte';
 	import { page } from '$app/stores';
 	import Sync from '$lib/components/Sync.svelte';
@@ -34,76 +33,87 @@
 	import { sidebarFeeds, type UserStoreType } from '$lib/stores/user';
 	import { readable, type Readable } from 'svelte/store';
 
-	export let user: UserStoreType;
-	$: console.log({ user });
+	export let user: { username: string; email: string } | null = null;
 
 	export let favorites: FavoriteWithPayload[] = [];
-	let hardcodedNav: NavItem[];
-	hardcodedNav = [
-		{
-			display: 'Home',
-			href: '/all',
-			icon: 'home',
-			items: readable([
-				{
-					display: 'Inbox',
-					href: '/inbox',
-					icon: 'inbox',
-				},
-				{
-					display: 'Soon',
-					href: '/soon',
-					icon: 'sparkles',
-				},
-				{
-					display: 'Later',
-					href: '/later',
-					icon: 'calendar',
-				},
-			]),
-		},
-		{
-			display: 'Subscriptions',
-			href: '/rss',
-			icon: 'rss',
-			items: readable([
-				{
-					display: 'Unread',
-					href: '/rss/unread',
-					icon: 'unread',
-					iconClass: 'text-gray-500 group-hover:text-gray-800',
-				},
-				{
-					display: 'Podcasts',
-					href: '/rss/podcasts',
-					icon: 'microphone',
-				},
-				{
-					display: 'Subscriptions',
-					icon: 'rss',
-					collapsible: true,
-					collapsed: true,
-					items: sidebarFeeds,
-				},
-			]),
-		},
-		{
-			display: 'Lists',
-			href: '/lists',
-			icon: 'viewGrid',
-		},
-		{
-			display: 'Views',
-			href: '/smart',
-			icon: 'square2Stack3d',
-		},
-		{
-			display: 'Notebook',
-			href: '/notebook',
-			icon: 'bookmarkAlt',
-		},
-	];
-
+	let hardcodedNav: NavItem[] = [];
+	if ($page.data.user) {
+		hardcodedNav = [
+			{
+				display: 'Bookmarks',
+				href: `/u:${$page.data.user.username}/all`,
+				icon: 'home',
+				items: readable([
+					{
+						display: 'Inbox',
+						href: `/u:${$page.data.user.username}/inbox`,
+						icon: 'inbox',
+					},
+					{
+						display: 'Soon',
+						href: `/u:${$page.data.user.username}/soon`,
+						icon: 'sparkles',
+					},
+					{
+						display: 'Later',
+						href: `/u:${$page.data.user.username}/later`,
+						icon: 'calendar',
+					},
+					{
+						display: 'Archive',
+						href: `/u:${$page.data.user.username}/archive`,
+						icon: 'archive',
+					},
+				]),
+			},
+			{
+				display: 'Subscriptions',
+				href: `/u:${$page.data.user.username}/subscriptions`,
+				icon: 'rss',
+				items: readable([
+					{
+						display: 'Unread',
+						href: `/u:${$page.data.user.username}/rss/unread`,
+						icon: 'unread',
+						iconClass: 'text-gray-500 group-hover:text-gray-800',
+					},
+					{
+						display: 'Podcasts',
+						href: `/u:${$page.data.user.username}/rss/podcasts`,
+						icon: 'microphone',
+					},
+					{
+						display: 'Subscriptions',
+						icon: 'rss',
+						collapsible: true,
+						collapsed: true,
+						items: sidebarFeeds,
+					},
+				]),
+			},
+			{
+				display: 'Collections',
+				href: `/u:${$page.data.user.username}/collections`,
+				icon: 'rectangleStack',
+			},
+			{
+				display: 'Bookmarks',
+				href: `/u:${$page.data.user.username}/bookmarks`,
+				icon: 'bookmark',
+			},
+			{
+				display: 'Views',
+				href: `/u:${$page.data.user.username}/smart`,
+				icon: 'square2Stack3d',
+			},
+			{
+				display: 'Notebook',
+				href: `/u:${$page.data.user.username}/notebook`,
+				icon: 'bookmarkAlt',
+			},
+		];
+	}
+	export let navItems = hardcodedNav;
 	// TODO: un hard code this
 	// sidebar-offset -> hard coding this for now because i can't think of another way
 	const left = tweened(-300, {
@@ -137,117 +147,134 @@
 	// $: $showCommandPalette && closeSidebar();
 
 	export let width = 240;
+	$: console.log({ width });
 	let _width = width;
-	$: if ($hideSidebar) {
-		_width = width;
-		width = 0;
-	} else {
-		width = _width;
-	}
+	// $: if ($hideSidebar) {
+	// 	_width = width;
+	// 	width = 0;
+	// } else {
+	// 	width = _width;
+	// }
 </script>
 
-{#if user}
-	{#if sidebarToggle}
-		<div class="fixed inset-0 z-10 bg-transparent" on:click={toggleSidebar} />
-	{/if}
+{#if sidebarToggle}
+	<div class="fixed inset-0 z-10 bg-transparent" on:click={toggleSidebar} />
+{/if}
 
-	<!-- Flexbox Version -->
-	<!-- <div
+<!-- Flexbox Version -->
+<!-- <div
 			class="relative flex h-screen h-full min-h-full w-full flex-row items-stretch overflow-hidden text-gray-800 "
 		> -->
-	<!-- Grid: let layout take over without setting width -->
+<!-- Grid: let layout take over without setting width -->
 
-	<!-- TODO: use transforms for this instead -->
-	<!-- toggle button -->
-	<button
-		class="fixed top-0 left-0 z-20 !mt-0 flex h-14 w-12 cursor-default flex-col items-center justify-center p-0.5 pl-2 focus-visible:text-blue-500 lg:hidden"
-		on:click={toggleSidebar}
-	>
-		<Icon name="menu" className="h-5 w-5 stroke-2 stroke-current" />
-		<span class="sr-only">Toggle menu</span>
-	</button>
-	<nav
-		on:click={handleClick}
-		style="width: {width}px;"
-		class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-black dark:bg-gray-800 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {$hideSidebar
-			? '-translate-x-72 opacity-0'
-			: 'lg:transition-none left-0'} {sidebarToggle ? 'left-0' : '-left-full'}"
-	>
-		<!-- splitter -->
-		<div class="relative">
-			<ColResizer
-				class="absolute -right-1 top-0 ml-1 hidden h-screen w-3 cursor-col-resize px-1 lg:block"
-				min={200}
-				bind:width
-			/>
-		</div>
-		<!-- Flexbox: set width -->
-		<!-- <nav
-				class="user-select-none relative flex min-w-max max-w-xs flex-col border-r bg-gray-400 transition-opacity lg:w-56  lg:shrink-0 "
-			> -->
+<!-- TODO: use transforms for this instead -->
+<!-- toggle button -->
+<button
+	class="fixed top-0 left-0 z-20 !mt-0 flex h-14 w-12 cursor-default flex-col items-center justify-center p-0.5 pl-2 focus-visible:text-blue-500 lg:hidden"
+	on:click={toggleSidebar}
+>
+	<Icon name="menu" className="h-5 w-5 stroke-2 stroke-current" />
+	<span class="sr-only">Toggle menu</span>
+</button>
+
+<!-- TODO: make fixed 240px on smaller widths with hamburger menu -->
+<nav
+	on:click={handleClick}
+	style="width: {width}px;"
+	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-black dark:bg-gray-800 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {$hideSidebar
+		? '-translate-x-72 opacity-0'
+		: 'lg:transition-none left-0'} {sidebarToggle ? 'left-0' : '-left-full'}"
+>
+	<!-- splitter -->
+	<div class="relative">
+		<ColResizer
+			class="absolute -right-1 top-0 ml-1 hidden h-screen w-3 cursor-col-resize px-1 lg:block"
+			min={200}
+			bind:width
+		/>
+	</div>
+	<slot>
 		<div class="flex shrink-0 flex-col items-stretch space-y-3 px-5 ">
 			<div class="flex items-center justify-between">
-				<ContextMenu
-					items={[
-						[
-							{
-								label: 'Logout',
-								perform: async () => {
-									await signOut();
-									invalidateAll();
+				{#if user}
+					<ContextMenu
+						items={[
+							[
+								{
+									label: 'Logout',
+									perform: async () => {
+										await signOut();
+										invalidateAll();
+									},
+									icon: 'logoutSolid',
 								},
-								icon: 'logoutSolid',
-							},
-							{
-								label: 'Settings',
-								perform: async () => {
-									await goto('/settings');
+								{
+									label: 'Settings',
+									perform: async () => {
+										await goto(`/u:${$page.data.user?.username}/settings`);
+									},
+									icon: 'cogSolid',
 								},
-								icon: 'cogSolid',
-							},
-						],
-					]}
-				>
-					<span class="text-sm font-medium">{$user?.email}</span>
-				</ContextMenu>
-				<div class="flex space-x-2">
-					<Sync />
-					<a href="/settings" class="focus:ring">
-						<Icon name="cogSolid" className="h-4 w-4 fill-current" /></a
+							],
+						]}
 					>
-				</div>
+						<span class="text-sm font-medium">{user?.username}</span>
+					</ContextMenu>
+					<div class="flex space-x-2">
+						<Sync />
+						<a href="/u:{$page.data.user.username}/settings" class="focus:ring">
+							<Icon name="cogSolid" className="h-4 w-4 fill-current" /></a
+						>
+					</div>
+				{:else}
+					<a href="/login"><span class="text-sm font-medium">Log in</span></a>
+				{/if}
 			</div>
-			<div class="flex space-x-2">
-				<!-- todo: make this work without js? -->
-				<Button
-					on:click={() => {
-						console.log('clicked');
-						// modals.open(UrlModal);
-					}}
-					href="/add"
-					as="a"
-					size="sm"
-					variant="ghost"
-					className="space-x-2 grow"
-				>
-					<Icon name="plusCircle" className="h-4 w-4 stroke-2 stroke-current" />
-					<div class="flex grow">Add URL</div>
-				</Button>
+			{#if user}
+				<div class="flex space-x-2">
+					<!-- todo: make this work without js? -->
+					<Button
+						on:click={() => {
+							console.log('clicked');
+							// modals.open(UrlModal);
+						}}
+						href="/add"
+						as="a"
+						size="sm"
+						variant="ghost"
+						className="space-x-2 grow"
+					>
+						<Icon name="plusCircle" className="h-4 w-4 stroke-2 stroke-current" />
+						<div class="flex grow">Add URL</div>
+					</Button>
 
-				<Button on:click={() => goto('/search')} size="sm" variant="ghost">
-					<Icon name="search" className="h-4 w-4 stroke-2 stroke-current" />
-					<span class="sr-only">Search</span>
-				</Button>
-			</div>
+					<Button on:click={() => goto('/search')} size="sm" variant="ghost">
+						<Icon name="search" className="h-4 w-4 stroke-2 stroke-current" />
+						<span class="sr-only">Search</span>
+					</Button>
+				</div>
+			{/if}
 		</div>
+		{#if !user && $page.data.allTags}
+			<div class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
+				<span class="px-2">Tags</span>
+				{#each $page.data.allTags as tag}
+					{#if tag}
+						{@const text = typeof tag === 'string' ? tag : tag.name}
+						<SidebarItem display={text} href="/u:{$page.params.username}/t:{text}" icon="tag" />
+					{/if}
+				{/each}
+			</div>
+		{/if}
 		<!-- navigation -->
 		<div class="flex flex-col space-y-8">
 			<div class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
-				{#each hardcodedNav as nav}
+				{#each navItems as nav}
 					<SidebarItem {...nav} bind:collapsed={nav.collapsed} />
 				{/each}
 			</div>
-			{#if $user.favorites?.length}
+			<!-- TOOD: fix favorites -->
+			<!-- {#if $user.favorites?.length}
 				<div
 					transition:fade|local={{ duration: 200 }}
 					class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm"
@@ -273,10 +300,10 @@
 						{/if}
 					{/each}
 				</div>
-			{/if}
+			{/if} -->
 		</div>
-	</nav>
-{/if}
+	</slot>
+</nav>
 
 <style lang="postcss">
 	nav {

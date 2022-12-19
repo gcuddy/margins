@@ -1,14 +1,15 @@
 <script lang="ts">
-	import type { Article } from '@prisma/client';
-	export let articles: ArticleInList[];
+	export let annotations: ExtendedAnnotation[];
 	filterTerm.set('');
-	$: articles, currentItems.setCurrentItems(articles, 'title');
+	$: annotations, currentItems.setCurrentItems(annotations, 'title');
 
 	/** Should we render the title and description as safe html or not? */
 	export let html = false;
 
 	/** Should we render the description as a "quote"? */
 	export let quoted = false;
+
+	export let externalLink = false;
 
 	import autoAnimate from '@formkit/auto-animate';
 	import SelectActions from './SelectActions.svelte';
@@ -32,19 +33,23 @@
 	import type { ViewOptions } from '$lib/types/schemas/View';
 	import SavedPillWrapper from './SavedPillWrapper.svelte';
 	import { flip } from 'svelte/animate';
+	import { page } from '$app/stores';
+	import { selected } from '$lib/stores/commands';
+	import { selectedItems } from '$lib/stores/selectedItems';
+	import type { ExtendedAnnotation } from '$lib/annotation';
 	dayjs.extend(localizedFormat);
 	let dragDisabled = false;
 
 	const handleConsider = (e: CustomEvent<DndEvent>) => {
 		//optimistic update
 		console.log('considering', e.detail);
-		articles = e.detail.items;
+		annotations = e.detail.items;
 	};
 	const debouncedPatch = debounce(patch, 300);
 	const saveArticleOrder = () =>
 		debouncedPatch(
 			'/',
-			articles.map((article, index) => ({
+			annotations.map((article, index) => ({
 				id: article.id,
 				position: index,
 			}))
@@ -54,7 +59,7 @@
 
 	const handleFinalize = (e: CustomEvent<DndEvent>) => {
 		//optimistic update
-		articles = e.detail.items;
+		annotations = e.detail.items;
 		// dragDisabled = true;
 		// now save to database
 		// TODO: debounce
@@ -64,20 +69,11 @@
 	$: $filterInputActive ? (flipDurationMs = 0) : (flipDurationMs = 200);
 	let hovering = false;
 
-	let selected_articles: typeof articles = [];
-	// $: selected_articles,
-	// 	articles.forEach((article) => {
-	// 		if (selected_articles.includes(article)) {
-	// 			article = selected_articles.find((a) => a.id === article.id);
-	// 		}
-	// 	});
-	$: console.log({ selected_articles });
-	$: console.log({ articles });
-
 	export let actions: ComponentProperties<SelectActions>['actions'] | undefined = undefined;
-
+	export let font: 'newsreader' | 'sans' = 'newsreader';
+	export let alwaysShowDescription = false;
 	const view_options: ViewOptions = {
-		view: 'grid',
+		view: 'list',
 		sort: 'manual',
 		properties: {
 			author: true,
@@ -87,10 +83,12 @@
 			annotationCount: true,
 			date: false,
 			wordCount: false,
+			image: true,
 		},
 	};
 
-	export let viewOptions: ViewOptions = view_options;
+	export let viewOptions: Partial<ViewOptions> = view_options;
+	$: viewOptions = { ...view_options, ...viewOptions };
 
 	$: dragDisabled = viewOptions.sort != 'manual';
 
@@ -99,7 +97,7 @@
 
 <!-- <svelte:window on:keydown={handleKeydown} /> -->
 
-<SelectActions {actions} bind:selected_items={selected_articles} on:update />
+<SelectActions {actions} bind:selected_items={$selectedItems} on:update />
 
 <!-- todo: virtual list -->
 <KeyboardNav class="h-full {viewOptions.view === 'grid' ? 'TODO:customized-color-here' : ''} ">
@@ -112,7 +110,7 @@
 			? 'grid grid-cols-12 gap-4 container pb-10'
 			: ''}"
 		use:dndzone={{
-			items: articles,
+			items: annotations,
 			flipDurationMs,
 			dragDisabled,
 			dropTargetStyle: {},
@@ -129,39 +127,25 @@
 				let:followTabIndex
 				{index}
 				as="a"
-				href="/{item.id}"
+				href={externalLink ? item.url : `/u:${$page.params.username}/entry/${item.entryId}`}
 				class="group col-span-12 h-min md:col-span-3 2xl:col-span-3 {viewOptions.view === 'list'
 					? '!cursor-default'
 					: ''}"
 				on:select={() => {
-					if (selected_articles.includes(item)) {
-						selected_articles = selected_articles.filter(({ id }) => id !== item.id);
+					if ($selectedItems.includes(item)) {
+						$selectedItems = $selectedItems.filter(({ id }) => id !== item.id);
 					} else {
-						selected_articles = [...selected_articles, item];
+						$selectedItems = [...$selectedItems, item];
 					}
 				}}
 			>
-				<!-- k<a t abindex="-1" data-sveltekit-prefetch href="/{item.id}"
-				x					>{ -->
 				<div class={viewOptions.view === 'list' ? 'h-20  md:h-24' : 'h-44 md:h-72'}>
-					<!-- <SavedItem
-				{item}
-				bind:dragDisabled
-				on:bump={() => {
-					const newIndex = 0;
-					articles.splice(index, 1);
-					articles.splice(newIndex, 0, item);
-					articles = articles;
-					window.scrollTo(0, 0);
-					saveArticleOrder();
-				}}
-			/> -->
 					{#if viewOptions.view}
 						<div
 							class="flex h-full flex-col overflow-hidden  border-gray-100 ring-inset focus:!outline-none focus-visible:!outline-none group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-800 dark:group-focus-visible:bg-gray-800 {viewOptions.view ===
 							'list'
 								? 'border-b  justify-center px-6 '
-								: 'border rounded-lg shadow-lg bg-white/50 dark:bg-stone-800'} {selected_articles.some(
+								: 'border rounded-lg shadow-lg bg-white/50 dark:bg-stone-800'} {$selectedItems.some(
 								(a) => a.id === item.id
 							)
 								? '!bg-gray-100 dark:!bg-blue-800/30'
@@ -175,52 +159,56 @@
 									? 'flex flex-row gap-3'
 									: 'grid grid-cols-12 md:flex md:flex-col gap-2 grow'}"
 							>
-								<div
-									class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition  {viewOptions.view ===
-									'list'
-										? 'h-8 w-8 rounded-md hover:ring'
-										: 'h-full col-span-4 md:w-full md:h-28'}"
-									on:click|stopPropagation
-								>
-									{#if $dev.disableListImgs}
-										<div
-											class="group h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 bg-red-100 object-cover shadow-sm hover:ring-1"
+								{#if viewOptions.properties?.image}
+									<div
+										class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition  {viewOptions.view ===
+										'list'
+											? 'h-8 w-8 rounded-md hover:ring'
+											: 'h-full col-span-4 md:w-full md:h-28'}"
+										on:click|stopPropagation
+									>
+										{#if $dev.disableListImgs}
+											<div
+												class="group h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 bg-red-100 object-cover shadow-sm hover:ring-1"
+											/>
+										{:else}
+											<img
+												class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
+												'list'
+													? 'h-8 w-8 rounded-md shadow-sm hover:ring-1'
+													: ' w-full h-40 rounded-t-md'}"
+												src={item.entry?.image ||
+													`https://icon.horse/icon/?uri=${item.target || item.entry?.uri}`}
+												alt=""
+											/>
+										{/if}
+										<input
+											bind:group={$selectedItems}
+											value={item}
+											type="checkbox"
+											aria-hidden={true}
+											tabindex={-1}
+											class="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-md border-0 bg-transparent  ring-0 {viewOptions.view ===
+											'grid'
+												? 'hidden'
+												: ''}"
 										/>
-									{:else}
-										<img
-											class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
-											'list'
-												? 'h-8 w-8 rounded-md shadow-sm hover:ring-1'
-												: ' w-full h-40 rounded-t-md'}"
-											src={item.image || `https://icon.horse/icon/?uri=${item.url}`}
-											alt=""
-										/>
-									{/if}
-									<input
-										bind:group={selected_articles}
-										value={item}
-										type="checkbox"
-										aria-hidden={true}
-										tabindex={-1}
-										class="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-md border-0 bg-transparent  ring-0 {viewOptions.view ===
-										'grid'
-											? 'hidden'
-											: ''}"
-									/>
-								</div>
-
+									</div>
+								{/if}
 								<div
 									class="relative flex w-full shrink grow flex-col {viewOptions.view === 'list'
 										? 'truncate justify-center'
 										: 'gap-1 col-span-8 px-3'} text-left"
 								>
 									<span
-										class="cursor-pointer font-newsreader text-base font-semibold !leading-tight line-clamp-2 sm:text-lg {viewOptions.view ===
+										class="cursor-pointer {font === 'newsreader'
+											? 'font-newsreader sm:text-lg'
+											: 'font-sans'}  text-base font-semibold !leading-tight line-clamp-2  {viewOptions.view ===
 										'grid'
 											? 'text-lg'
 											: ''}"
 									>
-										{#if html}{@html item.title}{:else}{item.title}{/if}
+										{#if html}{@html item.title || item.entry?.title}{:else}{item.entry?.title}{/if}
 									</span>
 									<!-- url and author around 74,74,74, description around 126,126,126 -->
 									<div
@@ -229,14 +217,14 @@
 											? 'md:text-sm'
 											: ''} "
 									>
-										{#if item.author && viewOptions.properties.author}
-											<span>{item.type}</span>
+										{#if item.url && viewOptions.properties.url}
+											<span>{item.url}</span>
 										{/if}
 										{#if item.author && viewOptions.properties.author}
 											<span>{item.author}</span>
 										{/if}
 										{#if viewOptions.properties.site}
-											<Muted>{item.siteName || new URL(item.url).hostname}</Muted>
+											<Muted>{item.siteName || item.entry.uri}</Muted>
 										{/if}
 										{#if item.date && viewOptions.properties.date && viewOptions.view === 'list'}
 											<Muted>{dayjs(item.date).format('ll')}</Muted>
@@ -249,7 +237,9 @@
 									<div class="flex {viewOptions.view === 'list' ? 'truncate' : 'line-clamp-2'}">
 										{#if viewOptions.properties.description}
 											<p
-												class="hidden  text-xs text-stone-500 dark:text-gray-400 md:block {viewOptions.view ===
+												class="{alwaysShowDescription
+													? ''
+													: 'hidden'}  text-xs text-stone-500 dark:text-gray-400 md:block {viewOptions.view ===
 												'list'
 													? 'md:text-sm truncate'
 													: ''} {quoted && 'before:content-[""] before:border-l-2 before:mr-4'}"

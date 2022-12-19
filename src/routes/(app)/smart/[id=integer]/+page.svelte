@@ -71,7 +71,7 @@
 </Header>
 {#if articles.length}
 	<Saved
-		articles={sortedArticles || articles}
+		annotations={sortedArticles || articles}
 		actions={{
 			addToList: true,
 		}}

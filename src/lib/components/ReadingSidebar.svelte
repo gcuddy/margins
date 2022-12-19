@@ -17,14 +17,14 @@
 	export let active: boolean;
 	export let menu_active = false;
 	$: console.log({ active });
-	const getNote = () => article.annotations.find((a) => a.motivation === 'describing');
+	const getNote = () => article.annotations?.find((a) => a.motivation === 'describing');
 	let note = getNote();
 	note = getNote();
 	let value = note?.body || '';
 	// $: value = note?.body || '';
 	$: console.log({ note });
 
-	$: inArticleNotes = article.annotations.filter((a) => a.motivation !== 'describing');
+	$: inArticleNotes = article.annotations?.filter((a) => a.motivation !== 'describing');
 
 	let tags: Tag[] = [];
 	$: console.log({ tags });
@@ -47,7 +47,26 @@
 	<div class="flex flex-col space-y-2">
 		<span class="text-lg font-semibold">{article.title}</span>
 		<span class="text-base font-medium">{article.author}</span>
-		{article.starred}
+		<!-- {article.starred} -->
+		{article.public}
+		<select
+			name="public"
+			id="public-select"
+			class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-indigo-500 dark:focus:ring-indigo-500"
+			bind:value={article.public}
+			on:change={async (e) => {
+				await tick();
+				const id = syncStore.addItem();
+				console.log(article.public);
+				await bulkEditArticles([article.id], {
+					public: article.public,
+				});
+				syncStore.removeItem(id);
+			}}
+		>
+			<option value={true}>Public</option>
+			<option value={false}>Private</option>
+		</select>
 		<select
 			name=""
 			id=""
@@ -57,7 +76,7 @@
 				await tick();
 				const id = syncStore.addItem();
 				bulkEditArticles([article.id], {
-					location: article.location
+					location: article.location,
 				});
 				syncStore.removeItem(id);
 			}}
@@ -92,18 +111,18 @@
 					// delete the note
 					const id = syncStore.addItem();
 					const res = await fetch(`/annotations/${note.id}`, {
-						method: 'DELETE'
+						method: 'DELETE',
 					});
 					syncStore.removeItem(id);
 					if (!res.ok) {
 						notifications.notify({
 							message: 'Could not delete note',
-							type: 'error'
+							type: 'error',
 						});
 					} else {
 						notifications.notify({
 							message: 'Note deleted',
-							type: 'success'
+							type: 'success',
 						});
 					}
 					return;
@@ -115,30 +134,30 @@
 				const res = await postAnnotation({
 					articleId: article.id,
 					target: {
-						source: article.url
+						source: article.url,
 					},
 					motivation: 'describing',
 					body: value,
-					id: note?.id
+					id: note?.id,
 				});
 				console.log({ json: await res.json() });
 				if (!res.ok) {
 					notifications.notify({
 						title: 'Error saving note',
 						message: res.statusText,
-						type: 'error'
+						type: 'error',
 					});
 				} else {
 					notifications.notify({
 						title: 'Note saved',
 						message: '',
-						type: 'success'
+						type: 'success',
 					});
 				}
 			}}
 		/>
 	</div>
-	{#if inArticleNotes.length}
+	{#if inArticleNotes?.length}
 		<div class="pt-2 pb-4">
 			<span class="font-medium"
 				>Annotations ({article.annotations.filter((a) => a.motivation !== 'describing')

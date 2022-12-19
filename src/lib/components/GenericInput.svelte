@@ -1,8 +1,6 @@
 <script lang="ts">
-	import Annotation from './Annotation.svelte';
-
 	export let placeholder = 'Enter text…';
-	export let variant: 'filled' | 'ghost' | 'underline' = 'filled';
+	export let variant: 'filled' | 'ghost' | 'underline' | 'naked' = 'filled';
 	let className = '';
 	export { className as class };
 	export let el: HTMLElement | undefined = undefined;
@@ -20,16 +18,19 @@
 		on:keydown
 		on:focus
 		on:blur
+		on:input
 		bind:this={el}
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="text"
-		class="h-9 w-full rounded-lg border-0 placeholder-gray-400 transition focus:ring-0
+		class="h-full w-full rounded-lg border-0 placeholder-gray-400 transition focus:ring-0 dark:placeholder-gray-500
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: variant === 'underline'
 			? 'bg-transparent border-b rounded-none border-gray-300 dark:border-gray-600 focus:border-amber-300'
-			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
+			: variant === 'ghost'
+			? 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'
+			: 'bg-transparent'}
   {className}"
 		{placeholder}
 		{autocomplete}

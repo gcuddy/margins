@@ -9,8 +9,6 @@
 	export let viewOptions: ViewOptions;
 
 	let annotationEl: HTMLElement | undefined;
-
-	$: console.log({ item });
 </script>
 
 <!-- TODO: eventually make it so they overlap! -->

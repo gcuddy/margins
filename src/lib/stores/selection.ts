@@ -1,34 +1,34 @@
-import { browser } from '$app/environment';
 import debounce from 'lodash.debounce';
 import { readable } from 'svelte/store';
+
+import { browser } from '$app/environment';
 
 interface ISelection {
 	selection: Selection | null;
 	/** The DOMRect of the first range i.e. getRangeAt(0), updated on resize */
-	rect: DOMRect | undefined;
+	rect?: DOMRect | undefined;
 }
 
 export default readable<ISelection>(undefined, (set) => {
-	const getRect = (sel: Selection | null) => {
-		if (!sel) return;
-		const range = sel.getRangeAt(0);
-		const rect = range.getBoundingClientRect();
-		return rect;
-	};
 	const handleResize = () => {
 		const selection = window.getSelection();
-		if (!selection?.isCollapsed) set({ selection, rect: getRect(selection) });
+		if (selection && !selection?.isCollapsed)
+			set({
+				selection,
+			});
 	};
 	const handleSelect = () => {
 		const selection = document.getSelection();
-		if (!selection?.isCollapsed) set({ selection, rect: getRect(selection) });
+		if (selection && !selection?.isCollapsed)
+			set({
+				selection,
+			});
 	};
 	const removeSelectionIfGone = () => {
 		const selection = document.getSelection();
 		if (!selection || selection.isCollapsed) {
 			set({
 				selection: null,
-				rect: undefined,
 			});
 		}
 	};

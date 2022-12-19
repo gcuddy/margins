@@ -1,5 +1,6 @@
 const colors = require('tailwindcss/colors');
 const defaultTheme = require('tailwindcss/defaultTheme');
+const plugin = require('tailwindcss/plugin');
 
 delete colors['lightBlue'];
 delete colors['warmGray'];
@@ -18,6 +19,11 @@ const config = {
 			gray: colors.stone,
 		},
 		extend: {
+			backgroundColor: {
+				skin: {
+					'entry-bg': 'var(--entry-bg-color)',
+				},
+			},
 			fontFamily: {
 				sans: ['InterVar', ...defaultTheme.fontFamily.sans],
 				newsreader: ['Newsreader', ...defaultTheme.fontFamily.serif],
@@ -113,6 +119,9 @@ const config = {
 			transitionDuration: {
 				quick: '0.15s',
 			},
+			transitionProperty: {
+				'text-color': 'color',
+			},
 			gridTemplateColumns: {
 				overlap: 'repeat(auto-fit,  minmax(10px, max-content))',
 			},
@@ -125,6 +134,10 @@ const config = {
 		require('@tailwindcss/line-clamp'),
 		require('tailwind-gradient-mask-image'),
 		require('tailwind-scrollbar-hide'),
+		// custom modifiers
+		plugin(({ addVariant }) => {
+			addVariant('transparency', ['[data-transparency="true"] &']);
+		}),
 	],
 };
 

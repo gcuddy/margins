@@ -17,7 +17,7 @@
 
 	const state = readable({
 		open,
-		close: onClose
+		close: onClose,
 	});
 	setContext('dialog_state', state);
 	let className = '';
@@ -30,7 +30,7 @@
 	//TODO: type it so that transitionparams succesfully gets config for function passed in
 	function animate<T>(node: HTMLElement, config: T): TransitionConfig {
 		return {
-			duration: 0
+			duration: 0,
 		};
 	}
 
@@ -41,8 +41,9 @@
 	export let outParams: Parameters<typeof out>[1] | undefined = undefined;
 </script>
 
-<svelte:window
+<!-- <svelte:window
 	on:keydown={(event) => {
+		console.log({ event });
 		if (event.defaultPrevented) return;
 		if (event.key !== Keys.Escape) return;
 		if (!open) return;
@@ -54,7 +55,7 @@
 		if (onClose) onClose();
 	}}
 	style="overflow: hidden;"
-/>
+/> -->
 
 {#if open}
 	<!-- 		in:inProp={inParams}
@@ -73,7 +74,7 @@
 		use:scrollLock
 		use:clickOutside={{
 			cb: () => dispatch('close'),
-			useOnChildrenInstead: true
+			useOnChildrenInstead: true,
 		}}
 	>
 		<slot />

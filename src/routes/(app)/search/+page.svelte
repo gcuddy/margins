@@ -106,7 +106,7 @@
 	<Saved
 		html={true}
 		quoted={true}
-		articles={results.map((r, i) => ({
+		annotations={results.map((r, i) => ({
 			...r,
 			title: matches[i].title,
 			description: matches[i].content || '',

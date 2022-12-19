@@ -3,6 +3,7 @@
 	import mq from '$lib/stores/mq';
 	import { isTouchDevice } from '$lib/utils';
 	import { createEventDispatcher } from 'svelte';
+	import { createPopperActions } from 'svelte-popperjs';
 	import { backOut, elasticOut } from 'svelte/easing';
 
 	import { scale, fade } from 'svelte/transition';
@@ -10,12 +11,21 @@
 	export let left: number = 0;
 	export let visibility: 'hidden' | 'visible' = 'hidden';
 
+	const [popperRef, popperContent] = createPopperActions();
 	let mobile = isTouchDevice();
 	// alternatively, provide a DOMRect to attach to instead of top/left
 	export let rect: DOMRect | null = null;
 	// if you do that you should also provide a container:
 	export let container: HTMLElement | Window = window;
 	let tooltip: HTMLDivElement;
+	let DESTROY_POPPER;
+
+	$: getBoundingClientRect = () => ({
+		...rect,
+	});
+	$: if (rect) {
+		const { destroy } = popperRef({ getBoundingClientRect });
+	}
 	$: if (rect) {
 		console.log({ rect });
 		if (tooltip) {

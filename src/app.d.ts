@@ -4,17 +4,19 @@ declare namespace Lucia {
 	type UserAttributes = {
 		email: string;
 		username: string;
+		default_state_id: number;
 	};
 }
 
 /// <reference types="@sveltejs/kit" />
-// See https://kit.svelte.dev/docs/types#app
-// for information about these interfaces
-// and what to do when importing types
 declare namespace App {
 	interface Locals {
-		getSession: import('@lucia-auth/sveltekit').GetSession;
-		getSessionUser: import('@lucia-auth/sveltekit').GetSessionUser;
+		validate: import('@lucia-auth/sveltekit').Validate;
+		validateUser: import('@lucia-auth/sveltekit').ValidateUser;
 		setSession: import('@lucia-auth/sveltekit').SetSession;
+	}
+	interface PageData {
+		user?: import('$lib/user').RootUserData;
+		currentList?: import('$lib/stores/currentList').CurrentList;
 	}
 }

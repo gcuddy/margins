@@ -8,6 +8,7 @@
 		color-scheme: light dark;
 		--sidebar-width: theme('spacing.60');
 		--sidebar-offset: calc(-1 * var(--sidebar-width));
+		--entry-bg-color: theme('colors.white');
 	}
 	html {
 		text-rendering: optimizeLegibility;

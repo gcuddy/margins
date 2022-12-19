@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+
 import type Icon from '../components/helpers/Icon.svelte';
 import type { IconName } from '../icons';
 import type { ComponentProperties } from '../stores/types';
@@ -120,11 +121,13 @@ export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
 	author: true,
 	position: true,
 	readProgress: true,
+	slug: true,
 	tags: true,
 	image: true,
 	location: true,
 	description: true,
 	date: true,
+	mediaType: true,
 	url: true,
 	createdAt: true,
 	updatedAt: true,

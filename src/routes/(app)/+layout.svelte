@@ -17,8 +17,11 @@
 	import { page } from '$app/stores';
 	import PodcastPlayer from '$lib/components/PodcastPlayer.svelte';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
+	import SettingsSidebar from './SettingsSidebar.svelte';
 
 	let sidebarWidth: number;
+	$: currentList = $page.data.currentList;
+	$: count = $page.data.count;
 </script>
 
 <svelte:head />
@@ -29,8 +32,11 @@
 {#if dev}
 	<Developer />
 {/if}
-
-<div class="bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50" on:drag>
+<div
+	class="bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50"
+	data-transparency="true"
+	on:drag
+>
 	<Notifications />
 	<!-- Grid version -->
 	<div
@@ -39,10 +45,18 @@
 		style="--sidebar-width: {sidebarWidth}px;"
 	>
 		<!-- sidebar, but should only be for some layouts -->
-		<Sidebar {user} bind:width={sidebarWidth} />
-
-		<main bind:this={$mainEl} class="relative flex grow flex-col place-items-stretch overflow-auto">
+		<!-- probably better to use layout groups, but this will do for now -->
+		{#if $page.route.id?.startsWith('/(app)/u:[username]/settings')}
+			<Sidebar {user} bind:width={sidebarWidth}>
+				<SettingsSidebar />
+			</Sidebar>
+		{:else}
+			<Sidebar {user} bind:width={sidebarWidth} />
+		{/if}
+		<!-- bind:this={$mainEl} -->
+		<main class="relative flex grow flex-col place-items-stretch overflow-auto">
 			<!-- Header? -->
+			<!-- {$currentList} -->
 			<slot />
 			<PodcastPlayer />
 		</main>

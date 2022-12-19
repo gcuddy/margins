@@ -1,26 +1,21 @@
-import { browser } from '$app/environment';
-import type { ArticleInList, DomMeta } from './types';
-import { notifications, type INotification } from '$lib/stores/notifications';
 // import { finder } from '@medv/finder';
-import type {
-	Article,
-	Favorite,
-	PodcastEpisode,
-	Prisma,
-	RssFeed,
-	RssFeedItem,
-} from '@prisma/client';
-import { goto, invalidate } from '$app/navigation';
-import { z } from 'zod';
-import type { AnnotationSchema } from './types/schemas/Annotations';
-import { syncStore } from './stores/sync';
-import type { FavoriteSchema } from './types/schemas/Favorite';
-import type { ViewOptions } from './types/schemas/View';
+import type { PodcastEpisode, Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
-import type { AddToListSchema } from './types/schemas/List';
 import { Md5 } from 'ts-md5';
-import type { RssFeedItemModel } from './types/schemas/rssfeeditem';
+import { z } from 'zod';
+
+import { browser } from '$app/environment';
+import { goto, invalidateAll } from '$app/navigation';
+import { type INotification, notifications } from '$lib/stores/notifications';
+
+import { syncStore } from './stores/sync';
 import { user } from './stores/user';
+import type { ArticleInList, DomMeta } from './types';
+import type { AnnotationSchema } from './types/schemas/Annotations';
+import type { FavoriteSchema } from './types/schemas/Favorite';
+import type { AddToListSchema } from './types/schemas/List';
+import type { RssFeedItemModel } from './types/schemas/rssfeeditem';
+import type { ViewOptions } from './types/schemas/View';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -66,7 +61,6 @@ export function patch(endpoint: string, data: any, notification?: string | INoti
 }
 
 export function bulkEditArticles(ids: number[], data: Prisma.ArticleUpdateInput) {
-	const endpoint = '/api/bulk';
 	return patch('/api/bulk', { ids, data }).then((res) => {
 		console.log({ res });
 		return res;
@@ -159,6 +153,8 @@ export function parseBracketNotatin(str: string) {
 	return [];
 }
 
+// this is a naive regex that only gets the last instance of eg key[1][value], won't work with multiple nesting
+const keyRegex = /^(.*?)\[(\d)\]\[(.*?)\]/;
 export async function getJsonFromRequest(request: Request) {
 	const contentType = request.headers.get('content-type');
 	console.log({ contentType });
@@ -187,6 +183,17 @@ export async function getJsonFromRequest(request: Request) {
 					data[keyWithoutBrackets] = [val];
 				} else {
 					data[keyWithoutBrackets] = [...(data[keyWithoutBrackets] as (string | Blob)[]), val];
+				}
+			} else if (keyRegex.test(key)) {
+				const [, keyWithoutBrackets, idx, nestedKey] = keyRegex.exec(key);
+				if (!data[keyWithoutBrackets]) {
+					data[keyWithoutBrackets] = [];
+					data[keyWithoutBrackets][Number(idx)] = { [nestedKey]: val };
+				} else {
+					data[keyWithoutBrackets][Number(idx)] = {
+						...data[keyWithoutBrackets][Number(idx)],
+						[nestedKey]: val,
+					};
 				}
 			} else {
 				data[key] = val;
@@ -307,7 +314,7 @@ export const archive = async (ids: number[], go: string | null = '/', inv = go, 
 	});
 	// disable save scroll so we don't save our scroll position anymore
 	// disableSaveScroll = true;
-	await invalidate(inv || '/');
+	await invalidateAll();
 	if (go) {
 		goto(go);
 	}
@@ -447,4 +454,9 @@ export async function addToList(listId: number, data: z.infer<typeof AddToListSc
 
 export function createEpisodeHash(data: Partial<PodcastEpisode>) {
 	return Md5.hashStr(data.podcastId + data.guid || data.url);
+}
+
+export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+	if (value === null || value === undefined) return false;
+	return true;
 }

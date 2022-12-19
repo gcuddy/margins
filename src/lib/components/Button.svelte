@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { IconName } from '$lib/icons';
+	import { show_tooltips } from '$lib/stores/Tooltips';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { fly } from 'svelte/transition';
 	import ButtonTooltip from './ButtonTooltip.svelte';
@@ -23,7 +24,6 @@
 
 	const [popperRef, popperContent] = createPopperActions({
 		placement: 'bottom',
-		strategy: 'fixed',
 		modifiers: [
 			{
 				name: 'offset',
@@ -34,8 +34,14 @@
 		],
 	});
 
-	export let variant: 'primary' | 'ghost' | 'confirm' | 'link' | 'dashed' | 'transparent' =
-		'primary';
+	export let variant:
+		| 'primary'
+		| 'ghost'
+		| 'confirm'
+		| 'link'
+		| 'dashed'
+		| 'transparent'
+		| 'naked' = 'primary';
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let color: 'primary' | 'ghost' | undefined = undefined;
 
@@ -69,19 +75,32 @@
 			variant === 'transparent' &&
 			'bg-white/20 hover:bg-white/30 focus:bg-white/30 text-gray-900 dark:text-gray-50'
 		}
+        ${
+					variant === 'naked' &&
+					'bg-transparent shadow-none hover:bg-gray-100 dark:hover:bg-gray-700'
+				}
     ${className}`;
 
 	let tooltip_visible = false;
 	let tooltip_timeout: ReturnType<typeof setTimeout> | undefined;
 	function showTooltip() {
 		// show tooltip after 300 msecond delay
+		// if show_tooltips is true, then just show it — means we already we're hovering over another one
+		if ($show_tooltips) {
+			tooltip_visible = true;
+		}
 		tooltip_timeout = setTimeout(() => {
 			tooltip_visible = true;
+			show_tooltips.set(true);
 		}, 500);
 	}
 	function hideTooltip() {
 		clearTimeout(tooltip_timeout);
 		tooltip_visible = false;
+		// in 300ms set hide_tooltips to false
+		setTimeout(() => {
+			show_tooltips.set(false);
+		}, 300);
 	}
 
 	// TODO: tooltips
@@ -95,7 +114,6 @@
 		<a
 			bind:this={el}
 			{href}
-			data-sveltekit-prefetch
 			use:popperRef
 			on:click
 			on:click={hideTooltip}

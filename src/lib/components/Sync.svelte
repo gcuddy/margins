@@ -4,7 +4,6 @@
 	import { syncStore } from '$lib/stores/sync';
 	import { onDestroy } from 'svelte';
 	import Icon from './helpers/Icon.svelte';
-	$: console.log({ $syncStore });
 	// let navigating_id: string | undefined;
 	// const unsubscribeNavigating = navigating.subscribe((nav) => {
 	// 	if (nav) {

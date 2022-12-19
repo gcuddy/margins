@@ -1,6 +1,7 @@
+import { type Actions, fail } from '@sveltejs/kit';
+
 import { auth } from '$lib/server/lucia';
-import type { PageServerLoad } from './$types';
-import { invalid, redirect, type Actions } from '@sveltejs/kit';
+import { createDefaultStates } from '$lib/user';
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
@@ -17,7 +18,7 @@ export const actions: Actions = {
 			typeof password !== 'string' ||
 			typeof username !== 'string'
 		) {
-			return invalid(400, {
+			return fail(400, {
 				message: 'Invalid input',
 			});
 		}
@@ -30,12 +31,13 @@ export const actions: Actions = {
 					username,
 				},
 			});
+			await createDefaultStates(user.userId);
 			const session = await auth.createSession(user.userId);
 			locals.setSession(session);
 		} catch (e) {
 			console.log({ e });
-			return invalid(400, {
-				message: 'Email already in use',
+			return fail(400, {
+				message: 'Email/username already in use',
 			});
 		}
 	},

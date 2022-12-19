@@ -1,10 +1,9 @@
-import { json } from '@sveltejs/kit';
-import { reportZodOrPrismaError } from '$lib/api-utils';
 import type { RequestHandler } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
+
 import { db } from '$lib/db';
-import { getJsonFromRequest } from '$lib/utils';
 import { tagRequestSchema } from '$lib/types/schemas/Tags';
-import { auth } from '$lib/server/lucia';
+import { getJsonFromRequest } from '$lib/utils';
 
 export const GET: RequestHandler = async () => {
 	// TODO: add limit? only those which have been used?
@@ -14,14 +13,15 @@ export const GET: RequestHandler = async () => {
 
 // patch/post: used for patching articles with tags
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const { userId } = await locals.getSession();
+	const { userId } = await locals.validate();
 	console.log('received tag request');
 	try {
 		// const { userId } = await auth.validateRequest(request);
 		console.log({ userId });
 		const data = await getJsonFromRequest(request);
+		console.log({ data });
 		const parsed = tagRequestSchema.parse(data);
-		const tags = parsed.tags?.map((name) => ({ name, userId }));
+		const tags = parsed.tags?.map((name) => ({ name, userId })) || [];
 		if (tags?.length) {
 			await db.tag.createMany({
 				data: tags,

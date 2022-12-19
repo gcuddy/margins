@@ -1,5 +1,7 @@
-import { browser } from '$app/environment';
 import debounce from 'lodash.debounce';
+
+import { browser } from '$app/environment';
+
 import type { Action } from './types';
 
 export default (

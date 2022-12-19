@@ -59,6 +59,8 @@
 			'aria-activedescendant': string;
 			onKeydown: (event: KeyboardEvent) => void;
 		};
+		inputPeer: {};
+		inputPeerAfter: {};
 	}
 	export let value = '';
 	export let selectedValue: T[] = [];
@@ -85,6 +87,11 @@
 		  }
 		| undefined = undefined;
 
+	export let inputParent:
+		| {
+				class?: string;
+		  }
+		| undefined = undefined;
 	// export let multiple = false;
 	const dispatch = createEventDispatcher<{
 		select: TValue;
@@ -253,28 +260,32 @@
 		aria-activedescendant={valueIds[activeIndex]}
 		onKeydown={handleKeydown}
 	>
-		<input
-			role="combobox"
-			type="text"
-			bind:value
-			on:keydown={handleKeydown}
-			on:blur={close}
-			on:click={(e) => {
-				dispatch('input-click', e);
-			}}
-			on:input={() => {
-				if (!expanded) {
-					open();
-				}
-			}}
-			aria-controls={optionId}
-			aria-expanded={expanded}
-			aria-activedescendant={valueIds[activeIndex]}
-			aria-autocomplete="list"
-			class={input?.class}
-			placeholder={input?.placeholder}
-			bind:this={inputRef}
-		/>
+		<div class={inputParent?.class}>
+			<slot name="inputPeer" />
+			<input
+				role="combobox"
+				type="text"
+				bind:value
+				on:keydown={handleKeydown}
+				on:blur={close}
+				on:click={(e) => {
+					dispatch('input-click', e);
+				}}
+				on:input={() => {
+					if (!expanded) {
+						open();
+					}
+				}}
+				aria-controls={optionId}
+				aria-expanded={expanded}
+				aria-activedescendant={valueIds[activeIndex]}
+				aria-autocomplete="list"
+				class={input?.class}
+				placeholder={input?.placeholder}
+				bind:this={inputRef}
+			/>
+			<slot name="inputPeerAfter" />
+		</div>
 	</slot>
 
 	<!-- TODO: able to render multiple "groups" ? -->

@@ -1,11 +1,12 @@
 // This is all picked from apache-annotator
 
-import { EmptyScopeError, TextNodeChunker } from './chunk';
-import type { DescribeTextQuoteOptions, Matcher, TextQuoteSelector } from './types';
-import { ownerDocument, toRange } from './utils';
-import { describeTextQuote as abstractDescribeTextQuote } from './abstract/text-quote';
 import { textQuoteSelectorMatcher as abstractTextQuoteSelectorMatcher } from './abstract/match-text-quote';
-import { finder } from '@medv/finder';
+import { describeTextQuote as abstractDescribeTextQuote } from './abstract/text-quote';
+import { EmptyScopeError, TextNodeChunker } from './chunk';
+import { isTextNode } from './highlighter';
+import { buildSelectorFromImage } from './img';
+import type { DescribeTextQuoteOptions, Matcher, RangeSelector, TextQuoteSelector } from './types';
+import { ownerDocument, toRange } from './utils';
 
 /**
  * Returns a {@link TextQuoteSelector} that unambiguously describes the given
@@ -57,40 +58,129 @@ export async function describeTextQuote(
 	);
 }
 
+const NON_TEXT_TAGS = ['img', 'iframe', 'video', 'table'];
+
+/**
+ * An attempt at a "smart" describer that will either use range or not
+ */
+export async function describeSelection(range: Range, scope: Element) {
+	if (!range.toString().trim()) {
+		console.log(`[describe] no text`);
+		console.log(`[describe]`, { range });
+		// No text content - must just be an image!
+		// todo: waht if it's a series of images?
+		// use text quote refined by a css selector
+		// TODO: makeRefinable to add css/xpath to make suer we just select this
+		// use css/xpath selector
+		const walker = ownerDocument(range).createTreeWalker(
+			range.commonAncestorContainer,
+			NodeFilter.SHOW_ELEMENT,
+			{
+				acceptNode: (node) =>
+					range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
+			}
+		);
+		console.log(walker.currentNode);
+		const nodes: Node[] = [];
+		while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
+			console.log(walker.currentNode);
+			if ((walker.currentNode as Element).tagName === 'IMG') {
+				// todo: or others
+				nodes.push(walker.currentNode);
+			}
+		}
+		console.log({ nodes });
+		// TODO: text quote refined by xpath, not just xpath
+		if (nodes[0] instanceof HTMLImageElement) {
+			return buildSelectorFromImage(nodes[0], scope);
+		}
+		if (!isTextNode(range.startContainer)) {
+			range.startContainer.childNodes[range.startOffset];
+			// start walking thru till we get to an img?
+		}
+		// console.log(buildSelectorFromImage(range.cloneContents().querySelector('img'), scope));
+		// return describeRange(range, scope);
+		// return describeTextQuote(range, scope, {
+		// 	minimumQuoteLength: 10,
+		// });
+	} else if (
+		!range.cloneContents().querySelector(NON_TEXT_TAGS.join(',')) &&
+		range.toString().trim()
+	) {
+		// range contains just text
+		console.log('[describe] just text');
+		return describeTextQuote(range, scope);
+		// use textquote
+	} else {
+		console.log(`[describe] combo`);
+		return describeRange(range, scope);
+		// create range
+	}
+}
+
 export async function describeRange(range: Range, scope?: Element) {
-	let start: Element | undefined;
-	let curr: Node;
-	curr = range.startContainer;
-	while (!start) {
-		if (curr instanceof Element) {
-			start = curr;
-		} else {
-			curr = curr.parentNode;
-		}
+	console.log(`describing range`);
+	console.log({ range });
+	const startRange = new Range();
+	if (range.toString().trim()) {
+		// No text content - must just be an image!
 	}
-	console.log(
-		finder(start, {
-			root: scope,
-		})
-	);
-	console.log(await describeTextQuote(range, start));
-	curr = range.endContainer;
-	let end: Element | undefined;
-	while (!end) {
-		if (curr instanceof Element) {
-			end = curr;
-		} else {
-			curr = curr.parentNode;
-		}
+	startRange.setStart(range.startContainer, range.startOffset);
+	// go through till we find something to latch onto
+	if (isTextNode(range.startContainer)) {
+		startRange.setEnd(range.startContainer, range.startContainer.length);
+		console.log({ startRange });
+	} else {
+		// then let's keep expanding till we find one
 	}
-	console.log(
-		finder(end, {
-			root: scope,
-		})
-	);
-	console.log(await describeTextQuote(range, end));
-	console.log(range.startContainer instanceof Element);
-	// finder(range.startContainer)
+	const start = await describeTextQuote(startRange, scope);
+
+	// end
+	const endRange = new Range();
+	endRange.setStart(range.endContainer, range.endOffset);
+	if (isTextNode(range.endContainer)) {
+		startRange.setEnd(range.endContainer, range.endContainer.length);
+	}
+	const end = await describeTextQuote(endRange, scope);
+	const selector: RangeSelector = {
+		type: 'RangeSelector',
+		startSelector: start,
+		endSelector: end,
+	};
+	return selector;
+	// let start: Element | undefined;
+	// let curr: Node;
+	// curr = range.startContainer;
+	// while (!start) {
+	// 	if (curr instanceof Element) {
+	// 		start = curr;
+	// 	} else {
+	// 		curr = curr.parentNode;
+	// 	}
+	// }
+	// console.log(
+	// 	finder(start, {
+	// 		root: scope,
+	// 	})
+	// );
+	// console.log(await describeTextQuote(range, start));
+	// curr = range.endContainer;
+	// let end: Element | undefined;
+	// while (!end) {
+	// 	if (curr instanceof Element) {
+	// 		end = curr;
+	// 	} else {
+	// 		curr = curr.parentNode;
+	// 	}
+	// }
+	// console.log(
+	// 	finder(end, {
+	// 		root: scope,
+	// 	})
+	// );
+	// console.log(await describeTextQuote(range, end));
+	// console.log(range.startContainer instanceof Element);
+	// // finder(range.startContainer)
 }
 /**
  * Find occurrences in a text matching the given {@link

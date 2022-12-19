@@ -45,7 +45,7 @@
 		return {
 			destroy() {
 				node.removeEventListener('mousedown', mousedown, false);
-			}
+			},
 		};
 	}
 
@@ -73,7 +73,7 @@
 		return {
 			destroy() {
 				node.removeEventListener('touchstart', touchdown, false);
-			}
+			},
 		};
 	}
 </script>

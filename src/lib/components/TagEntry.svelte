@@ -1,0 +1,215 @@
+<script lang="ts">
+	import type { ArticleWithTags } from '$lib/types';
+	import type { Article, Tag } from '@prisma/client';
+	import Combobox from './helpers/Combobox.svelte';
+	import { getNthValueOfSet } from '$lib/utils';
+	import TagComponent from './Tags/Tag.svelte';
+	import Icon from './helpers/Icon.svelte';
+	export let allTags: Tag[] = [];
+	export let className = '';
+	export let value = '';
+	export let articles: ArticleWithTags[] = [];
+	export let allow_create_tag = true;
+	type TagInputTag = Pick<Tag, 'name'> & {
+		special?: boolean;
+	};
+	let filteredTags: TagInputTag[];
+	$: filteredTags = allTags
+		.filter((tag) => tag.name.toLowerCase().includes(value.toLowerCase()))
+		.filter((tag) => !selectedTags.has(tag.name));
+
+	// admittedly, this is a frustrating way to do this lol
+	$: newTagAvailable =
+		value.length > 0 &&
+		!(allTags as TagInputTag[])
+			.concat(Array.from(selectedTags).map((tag) => ({ name: tag })))
+			.some((tag) => tag.name.toLowerCase() === value.toLowerCase());
+	$: if (newTagAvailable) {
+		filteredTags.push({
+			name: value,
+			special: true,
+			// perform: (val) => {
+			// 	postTags([...$comboboxState.selected.map((tag) => tag.value), val]);
+			// }
+		});
+	} else {
+		filteredTags = filteredTags.filter((tag) => !tag.special);
+	}
+	// read only
+	export let tags: Tag[] = [];
+
+	// Tag Names must be unique, so we can use a simple Set<string>
+	let selectedTags: Set<string> = new Set();
+	articles
+		.flatMap((article) => article.tags)
+		.map((tag) => tag?.name)
+		.filter((tag) => tag)
+		.forEach((tag) => {
+			console.log({ tag });
+			selectedTags.add(tag);
+		});
+
+	// add passed in tags
+	tags.forEach((tag) => selectedTags.add(tag.name));
+
+	// TODO: this is a very dumb way to do this, FIX IT
+	$: tags = Array.from(selectedTags).map(
+		(tag) => (allTags.find((t) => t.name === tag) as Tag) || { name: tag }
+	);
+
+	let activeTag: string | undefined = undefined;
+	let activeTagIndex: number | undefined = undefined;
+	let comboboxExpanded = false;
+	$: if (activeTag && activeTagIndex !== undefined) {
+		comboboxExpanded = false;
+	}
+
+	function handleKeydown({ detail }: CustomEvent<KeyboardEvent>) {
+		console.log({ detail });
+		const input = detail.target as HTMLInputElement;
+		if (!value && detail.key === 'Backspace') {
+			console.log('trying to delete');
+			console.log({ activeTag, activeTagIndex });
+			if (activeTag && activeTagIndex !== undefined) {
+				console.log('trying to delete');
+				selectedTags.delete(activeTag);
+				activeTagIndex = Math.max(activeTagIndex - 1, 0);
+				selectedTags = selectedTags;
+			}
+			activeTag = getNthValueOfSet(
+				selectedTags,
+				activeTagIndex !== undefined ? activeTagIndex : selectedTags.size - 1
+			);
+			// TODO: this is all getting very confusing. Probably a way to abstract/hoisut this and make it easier
+			if (activeTag)
+				activeTagIndex = selectedTags.has(activeTag) ? selectedTags.size - 1 : undefined;
+		}
+		if (!value && detail.key === 'ArrowLeft' && selectedTags.size) {
+			if (activeTagIndex !== undefined) {
+				console.log('setting activetagindex');
+				console.log({ activeTagIndex });
+				activeTagIndex = Math.max(activeTagIndex - 1, 0);
+				console.log({ activeTagIndex });
+			} else {
+				activeTagIndex = selectedTags.size - 1;
+			}
+			activeTag = getNthValueOfSet(selectedTags, activeTagIndex);
+		}
+		if (!value && detail.key === 'ArrowRight' && selectedTags.size) {
+			if (activeTagIndex !== undefined) {
+				if (activeTagIndex === selectedTags.size - 1) {
+					activeTagIndex = undefined;
+					activeTag = undefined;
+				} else {
+					activeTagIndex = Math.min(activeTagIndex + 1, selectedTags.size - 1);
+					activeTag = getNthValueOfSet(selectedTags, activeTagIndex);
+				}
+			}
+		}
+		if (!value && detail.key === 'Escape') {
+			activeTag = undefined;
+			activeTagIndex = undefined;
+		}
+		setTimeout(() => {
+			console.log(input.value.length);
+			if (input.value.length) {
+				activeTag = undefined;
+				activeTagIndex = undefined;
+			}
+		}, 0);
+	}
+	let form: HTMLFormElement;
+	export let invalidate: string | undefined = '/api/tags';
+
+	let sync_id: string;
+
+	export let loading = false;
+
+	export let size: 'lg' | 'base' = 'base';
+</script>
+
+{#each articles as article, index}
+	<!-- todo: useThePlatform, wnot qs, right? -->
+	<input type="hidden" name="ids[]" value={article.id} />
+{/each}
+<div class="flex items-center px-1 {className}">
+	{#if selectedTags.size}
+		<div class="flex gap-2 pl-2 {size === 'lg' ? 'text-base' : 'text-sm'}">
+			{#each Array.from(selectedTags) as tag}
+				<input type="hidden" name="tags[]" value={tag} />
+				<TagComponent
+					as="span"
+					tag={{ name: tag }}
+					variant="primary"
+					active={tag === activeTag}
+					on:click={() => (activeTag = tag)}
+				/>
+			{/each}
+		</div>
+	{/if}
+	<Combobox
+		fillValue={false}
+		values={filteredTags}
+		bind:value
+		bind:expanded={comboboxExpanded}
+		idResolver={(tag) => tag.name}
+		on:select={({ detail }) => {
+			//TODO
+			selectedTags.add(detail.name);
+			selectedTags = selectedTags;
+			value = '';
+			console.log({ selectedTags });
+			console.log('add');
+		}}
+		input={{
+			class: `px-2 dark:placeholder-gray-500 placeholder-gray-400 bg-transparent focus:ring-0 border-0 w-full ${
+				size === 'lg' ? 'text-lg' : 'text-base'
+			} ${activeTag ? 'caret-transparent' : ''}`,
+			placeholder: `${selectedTags.size ? '' : 'Tags'}`,
+		}}
+		inputParent={{
+			class: 'flex justify-between items-center',
+		}}
+		options={{
+			class: `absolute z-10 mt-1 ring-1 shadow-xl min-w-max ring-black/10 bg-gray-700 text-gray-100 max-h-48 overflow-y-auto text-sm rounded-xl p-2 ${
+				filteredTags.length === 0 ? 'hidden' : ''
+			}`,
+		}}
+		on:input-click={(e) => {
+			console.log({ e });
+			activeTag = undefined;
+			activeTagIndex = undefined;
+		}}
+		on:keydown={handleKeydown}
+		class="relative w-full"
+	>
+		<div slot="inputPeerAfter" class="flex items-center pr-2">
+			{#if loading}
+				<Icon
+					name="loading"
+					className="w-5 h-5 text-current transition {loading
+						? 'opacity-100 animate-spin'
+						: 'opacity-0 '}"
+				/>
+			{/if}
+		</div>
+		<div slot="option" let:value let:active>
+			<!-- TODO: set off special in their own world ?? (loook at Things) -->
+			<div
+				class="{active ? 'bg-primary-300 text-black' : 'text-gray-200s'} {value.special
+					? ''
+					: ''} rounded-md px-2 py-1 "
+			>
+				<div class="flex gap-2 ">
+					{#if value.special && allow_create_tag}
+						<Icon name="plusCircleSolid" className="w-5 h-5 fill-current" />
+						<span>Create tag: "{value.name}"</span>
+					{:else}
+						<Icon name="tag" className="w-5 h-5 stroke-current stroke-2" />
+						<span>{value.name}</span>
+					{/if}
+				</div>
+			</div>
+		</div>
+	</Combobox>
+</div>

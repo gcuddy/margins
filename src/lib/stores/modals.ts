@@ -9,7 +9,8 @@ export const showURLModal = writable(false);
 export const showRSSInputModal = writable(false);
 
 export type ModalComponent = StoredComponent & {
-	containerProps?: ComponentProperties<ModalContainerSvelte>;
+	open: boolean;
+	id?: string;
 };
 
 // add last action for closing etc?
@@ -22,11 +23,11 @@ function createModalStore() {
 	const open = <T>(
 		component: SvelteComponentWithProps<T>,
 		props?: Omit<T, 'isOpen' | 'modalIndex'>,
-		containerProps?: ComponentProperties<ModalContainerSvelte>
+		id?: string
 	) => {
 		let index = 0;
 		update((stack) => {
-			const newStack = [...stack, { component, props, containerProps }];
+			const newStack = [...stack, { component, props, id, open: true }];
 			index = newStack.length;
 			return newStack;
 		});
@@ -37,14 +38,27 @@ function createModalStore() {
 	 * Closes the top modal or the modal with the index specified
 	 * @param idx number (optional) - the index of the modal to close. If not provided removes top element
 	 */
-	const close = (idx?: number) =>
+	const close = ({ idx, id }: { idx?: number; id?: string }) =>
 		update((stack) => {
+			let removed = [];
 			if (idx) {
-				stack.splice(idx, 1);
-			} else {
+				stack[idx].open = false;
+				removed = stack.splice(idx, 1);
+			} else if (id) {
+				return stack.filter((modal) => modal.id !== id);
+				const index = stack.findIndex((modal) => modal.id === id);
+				if (index !== -1) {
+					stack[index].open = false;
+					removed = stack.splice(index, 1);
+				}
+			} else if (!removed.length) {
 				console.log(`closing top modal`);
-				stack.pop();
+				stack[stack.length - 1].open = false;
+				stack.splice(-1);
+				console.log({ stack });
+				// const removed = stack.pop();
 			}
+			console.log({ stack, removed, idx, id });
 			if (stack.length === 0 && browser) {
 				// not sure if this is the right place for this, but hey
 				// let's make sure this is gone or we won't be able to scroll

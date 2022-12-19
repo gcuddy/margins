@@ -1,29 +1,30 @@
 <script lang="ts">
-	import { modals } from '$lib/stores/modals';
-
-	import scrollingDown from '$lib/stores/scrolling-down';
-	import type { ArticleWithNotesAndTagsAndContext, ArticleWithTags } from '$lib/types';
-	import Icon from './helpers/Icon.svelte';
-	import Menu from './Menu/Menu.svelte';
-	import TagInputCombobox from './TagInputCombobox.svelte';
-	import { getTags } from '$lib/data/sync';
+	import { enhance } from '$app/forms';
+	import { goto, invalidate } from '$app/navigation';
+	import { page } from '$app/stores';
+	import type { ICurrentList } from '$lib/stores/currentList';
 	import { mainEl, mainElScroll } from '$lib/stores/main';
 	import scrollDirection from '$lib/stores/scrollDirection';
-	import Muted from './atoms/Muted.svelte';
-	import CircularProgressBar from './CircularProgressBar/CircularProgressBar.svelte';
-	import Button from './Button.svelte';
+	import type { Entry } from '@prisma/client';
 	import { fly } from 'svelte/transition';
-	import ReadingSidebar from './ReadingSidebar.svelte';
+	import Muted from './atoms/Muted.svelte';
+	import Button from './Button.svelte';
+	import CircularProgressBar from './CircularProgressBar/CircularProgressBar.svelte';
 	import DotMenu from './DotMenu.svelte';
+	import Icon from './helpers/Icon.svelte';
+	import LinkPreview from './LinkPreview.svelte';
+	import ReadingSidebar from './ReadingSidebar.svelte';
 
 	export let back = '/';
-	export let article: ArticleWithNotesAndTagsAndContext;
+	export let entry: Entry;
 
 	export let reading_sidebar_active = false;
 
+	export let currentList: ICurrentList | undefined = undefined;
+
 	const scrollDown = scrollDirection($mainEl);
 	$: console.log({ $scrollDown });
-	// $: console.log({ $scrollingDown });
+	$: ({ user } = $page.data);
 
 	let lastScroll = 0;
 	let down = false;
@@ -73,19 +74,50 @@
 	$: if (!ticking && $mainElScroll.offset > 0.05) {
 		// saved_position = null;
 	}
-
 	let moused_over = false;
 	$: hide =
 		!moused_over &&
 		$mainElScroll.down &&
 		$mainElScroll.y > 500 &&
 		$mainElScroll.offset < 0.99 &&
-		!reading_sidebar_active;
+		!reading_sidebar_active &&
+		currentList?.type !== 'rss';
+
+	$: index = currentList?.items?.findIndex((item) => {
+		if ('entryId' in item) {
+			// then we're referring to annotations
+			return item.entryId === entry.id;
+		} else {
+			// then we're in an entry itself
+			return item.id === entry.id;
+		}
+	});
+	$: prev = index ? currentList?.items?.[index - 1] : undefined;
+	$: next = index || index === 0 ? currentList?.items?.[index + 1] : undefined;
+	$: next_url = next
+		? `/u:${$page.data.user?.username}/entry/${'entryId' in next ? next.entryId : next.id}`
+		: undefined;
+	$: prev_url = prev
+		? `/u:${$page.data.user?.username}/entry/${'entryId' in prev ? prev.entryId : prev.id}`
+		: undefined;
+	$: console.log({ currentList, index, next, entry });
+	$: saved = user?.annotations.find((a) => a.entryId === entry.id);
+	$: console.log({ $page });
 </script>
 
+<svelte:window
+	on:keydown={async (e) => {
+		if (e.key === 'j' && next_url) {
+			await goto(next_url);
+		}
+		if (e.key === 'k' && prev_url && !e.metaKey) {
+			await goto(prev_url);
+		}
+	}}
+/>
 <!-- -translate-y-12 -->
 <div
-	class="sticky top-0 z-20 flex w-full  transform-cpu justify-between border-b bg-stone-50/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:border-black dark:bg-stone-800/90
+	class="sticky top-0 z-20  flex min-h-[56px] w-full  transform-cpu justify-between border-b bg-stone-50/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:border-black dark:bg-stone-800/90
   {hide ? '-translate-y-full' : 'translate-y-0'}
     after:absolute after:top-0 after:left-0 after:-z-10 after:h-16 after:w-full after:content-[''] md:px-3"
 	on:mouseenter={() => {
@@ -95,10 +127,76 @@
 		moused_over = false;
 	}}
 >
-	<a class="flex items-center md:pl-0" data-sveltekit-prefetch href={back}
-		><Icon name="arrow" direction="w" />
-		<span class="sr-only">Go back</span></a
-	>
+	<div class="flex items-center gap-2">
+		<a class="flex items-center md:pl-0" href={back}
+			><Icon name="arrow" direction="w" />
+			<span class="sr-only">Go back</span></a
+		>
+		<!-- SAVE TO LIBRARY -->
+		<!-- TODO: what should this show when it's saved? Should it show "un-save"? Archive? Star? Nothing? Maybe it should only show when in RSS? -->
+		<form
+			action="?/save"
+			method="post"
+			use:enhance={() => {
+				// TODO: optimistic update via user store
+				// this will get updated once server data is actually populated
+				if (saved) {
+					user.annotations = user.annotations.filter((a) => a.id !== saved.id);
+				} else {
+					// @ts-ignore only temporary
+					user.annotations = [
+						...user.annotations,
+						{
+							entryId: entry.id,
+						},
+					];
+				}
+				return async ({ update }) => {
+					// update();
+					await invalidate('app:user');
+				};
+			}}
+		>
+			{#if saved}
+				<!-- hidden input to toggle annotation id -->
+				<input type="hidden" name="id" value={saved.id} />
+			{/if}
+			<!-- TODO: pick up here tomorrow -->
+			<!-- {entry} -->
+			<Button
+				type="submit"
+				variant="naked"
+				tooltip={{
+					text: `${saved ? 'Remove from' : 'Save to'} library`,
+					kbd: 's',
+				}}
+				><Icon
+					name="bookmarkMini"
+					className="h-4 w-4 {saved ? 'fill-current' : 'stroke-current'}"
+				/></Button
+			>
+		</form>
+		<Button
+			variant="ghost"
+			as="a"
+			href={prev_url}
+			className="w-7 {prev ? '' : 'opacity-60'}"
+			disabled={prev === undefined}
+		>
+			<Icon name="chevronUp" className="h-4 w-4 stroke-current" />
+		</Button>
+		{#if next}
+			<Button
+				variant="ghost"
+				as="a"
+				href={next_url}
+				className="w-7 {next ? '' : 'opacity-60'}"
+				disabled={next === undefined}
+			>
+				<Icon name="chevronDown" className="h-4 w-4 stroke-current" />
+			</Button>
+		{/if}
+	</div>
 	<div
 		class=" flex -translate-y-24 transform-cpu items-center opacity-0 transition-all {$mainElScroll.y >
 			135 && '!translate-y-0 !opacity-100'}"
@@ -123,16 +221,19 @@
 			</div>
 			<!-- TODO: clicking this will send you back to top, but save current scroll -->
 			<div class="col-span-2  w-52 max-w-xs shrink truncate sm:w-auto md:max-w-md lg:max-w-lg">
-				<span>{article.title}</span>
+				<span>{entry.title}</span>
 			</div>
-			{#if article.author}
+			{#if entry.author}
 				<div class="col-span-1 hidden sm:block">
-					<Muted>{article.author}</Muted>
+					<Muted>{entry.author}</Muted>
 				</div>
 			{/if}
 		</div>
 	</div>
-	<div class="flex items-end space-x-2">
+	<div class="flex items-center space-x-2">
+		<Button variant="naked" className="w-7">
+			<Icon name="documentAdd" className="h-4 w-4 stroke-current" />
+		</Button>
 		<DotMenu
 			items={[
 				[
@@ -201,4 +302,4 @@
 {/if}
 
 <!-- Reading Sidebar -->
-<ReadingSidebar bind:article bind:active={reading_sidebar_active} />
+<!-- <ReadingSidebar bind:article={entry} bind:active={reading_sidebar_active} /> -->

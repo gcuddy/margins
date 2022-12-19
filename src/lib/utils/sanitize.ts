@@ -1,11 +1,11 @@
 import { parse } from 'node-html-parser';
 
-export async function stripTags(html: string) {
+export function stripTags(html: string) {
 	const parsed = parse(html);
 	return parsed.textContent;
 }
 
-export async function stripEmptyTags(html: string) {
+export function stripEmptyTags(html: string) {
 	if (!html) return '';
 	const parsed = parse(html);
 	parsed.querySelectorAll('*:not(hr)').forEach((node) => {

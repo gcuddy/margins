@@ -1,9 +1,10 @@
 import { writable } from 'svelte/store';
 import { v4 as uuidv4 } from 'uuid';
+
 import type { StoredComponent, SvelteComponentWithProps } from './types';
 
 export interface INotification {
-	message: string | StoredComponent;
+	message?: string | StoredComponent;
 	title?: string;
 	link?: {
 		href: string;
@@ -23,7 +24,7 @@ function getDefaultNotificationData(id?: string): Omit<INotification, 'message'>
 		id,
 		timeout: 8500,
 		type: 'info',
-		onClick: () => notifications.remove(id as string)
+		onClick: () => notifications.remove(id as string),
 	};
 }
 
@@ -33,7 +34,7 @@ function notificationStore() {
 	const { subscribe, update } = writable<INotification[]>([]);
 	const notify = <T>(
 		notification: {
-			message: string | SvelteComponentWithProps<T>;
+			message?: string | SvelteComponentWithProps<T>;
 		} & Partial<INotification>
 	) => {
 		const id = uuidv4();
@@ -56,7 +57,7 @@ function notificationStore() {
 	return {
 		subscribe,
 		notify,
-		remove
+		remove,
 	};
 }
 export const notifications = notificationStore();

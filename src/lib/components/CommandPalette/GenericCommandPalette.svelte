@@ -78,7 +78,7 @@
 	import { derived, writable, type Readable, type Writable } from 'svelte/store';
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import type { StoredComponent, StoredComponentTyped } from '$lib/stores/types';
-	import { prefetch } from '$app/navigation';
+	import { preloadData } from '$app/navigation';
 
 	function commandListener({ detail: e }: CustomEvent<KeyboardEvent>) {
 		if (e.key === 'Escape') {
@@ -105,16 +105,16 @@
 		on:keydown={commandListener}
 		on:active={(e) => {
 			if (prefetchProp) {
-				prefetch(prefetchProp(e.detail));
+				preloadData(prefetchProp(e.detail));
 			}
 		}}
 		input={{
 			class:
 				'w-full bg-transparent text-lg border-0 focus:ring-0 text-gray-800 dark:text-gray-100 placeholder-gray-400  p-5',
-			placeholder
+			placeholder,
 		}}
 		options={{
-			class: `max-h-96 text-sm overflow-y-auto ${!$filteredActions?.length ? 'hidden' : ''}`
+			class: `max-h-96 text-sm overflow-y-auto ${!$filteredActions?.length ? 'hidden' : ''}`,
 		}}
 		static={true}
 		expanded={true}
