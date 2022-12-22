@@ -5,6 +5,45 @@ const inlineAnnotationInclude = Prisma.validator<Prisma.AnnotationInclude>()({
 	// TODO...
 });
 
+export const createTemporaryAnnotation = ({
+	entryId,
+	type,
+	userId,
+	body,
+	private: _private,
+	readLater,
+}: {
+	entryId: Annotation['entryId'];
+	type: Annotation['type'];
+	userId: string;
+} & Partial<Annotation>): Annotation => {
+	return {
+		body: body ? body : null,
+		entryId,
+		type,
+		userId,
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		deleted: null,
+		target: null,
+		sortOrder: 0,
+		id: Math.random(),
+		stateId: null,
+		parentId: null,
+		private: _private ? _private : true,
+		readLater: readLater ? readLater : false,
+	};
+};
+
+export const bookmarkExtended = Prisma.validator<Prisma.BookmarkInclude>()({
+	state: true,
+	entry: {
+		include: {
+			annotations: true,
+			interactions: true,
+		},
+	},
+});
 export const annotationExtendedInclude = Prisma.validator<Prisma.AnnotationInclude>()({
 	children: true,
 	state: true,

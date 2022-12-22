@@ -122,23 +122,23 @@ export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
 	position: true,
 	readProgress: true,
 	slug: true,
-	tags: true,
+	// tags: true,
 	image: true,
 	location: true,
 	description: true,
 	date: true,
-	mediaType: true,
+	// mediaType: true,
 	url: true,
 	createdAt: true,
 	updatedAt: true,
 	wordCount: true,
 	siteName: true,
 	type: true,
-	_count: {
-		select: {
-			annotations: true,
-		},
-	},
+	// _count: {
+	// 	select: {
+	// 		annotations: true,
+	// 	},
+	// },
 });
 
 export type ArticleInList = Prisma.ArticleGetPayload<{ select: typeof ArticleListSelect }>;

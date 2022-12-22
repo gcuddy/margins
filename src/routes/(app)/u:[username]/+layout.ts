@@ -5,15 +5,13 @@ import type { ICurrentList } from '$lib/stores/currentList';
 
 import type { LayoutLoad } from './$types';
 export const load: LayoutLoad = async ({ fetch, depends, data }) => {
-	//q: does this work with store in ssr?
-	// console.log(`(app)/layout.ts load function`);
-	// depends('app:user');
-	// const res = await fetch('/api/user.json');
-	// const user = await res.json();
+	// TODO: should I not put this here??
+	const res = await fetch(`/api/v1/tags.json`);
+	// todo: error handling
+	const tags = await res.json();
+	console.log({ tags });
 	return {
-		...data,
-		// user,
-		// currentList: writable<ICurrentList>(),
 		currentList: createCachedValue('currentList', () => writable<ICurrentList>()),
+		tags,
 	};
 };

@@ -6,49 +6,45 @@ import { ArticleListSelect } from '$lib/types';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, url, parent }) => {
-	const data = await parent();
-	const AUTHORIZED = data.user && data.user.username === params.username;
+	console.log(`loading ${url.pathname}`);
+	const { user } = await locals.validateUser();
+	const AUTHORIZED = user && user.username === params.username;
 	if (AUTHORIZED) {
-		throw redirect(302, `/u:${params.username}/inbox`);
+		//TODO: make this customizable or make this a better default home of showing all (maybe non-archived?)
+		throw redirect(307, `/u:${params.username}/inbox`);
 	}
+
 	const take = parseInt(url.searchParams.get('limit') || '20');
 	// load public version
-
 	// two ways to think abuot this:
 	// 1) either fetch all articles from user, then filter them in client
 	// 2) fetch only requested articles from user (and maybe filter them in server)
 	try {
-		if (data.user?.username !== params.username) {
-			const user = await db.user.findUniqueOrThrow({
-				where: {
-					username: params.username,
-				},
-				select: {
-					articles: {
-						orderBy: [
-							{
-								createdAt: 'desc',
-							},
-						],
-						take,
-						select: ArticleListSelect,
-						where: {
-							private: false,
+		const user = await db.user.findUniqueOrThrow({
+			where: {
+				username: params.username,
+			},
+			select: {
+				articles: {
+					orderBy: [
+						{
+							createdAt: 'desc',
 						},
+					],
+					take,
+					select: ArticleListSelect,
+					where: {
+						private: false,
 					},
-					username: true,
 				},
-			});
+				username: true,
+			},
+		});
 
-			console.log(`oops username/page.server just ran as well...`);
-			const tags = user.articles.flatMap((article) => article.tags);
-			return {
-				...user,
-				allTags: tags,
-			};
-		}
+		// const tags = user.articles.flatMap((article) => article.tags);
 		return {
-			...data,
+			...user,
+			// allTags: tags,
 		};
 	} catch (e) {
 		console.error(e);

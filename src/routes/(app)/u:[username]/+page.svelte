@@ -34,4 +34,6 @@
 	</DefaultHeader>
 </Header>
 
+{JSON.stringify(data, null, 2)}
+
 <Saved annotations={data.articles} />

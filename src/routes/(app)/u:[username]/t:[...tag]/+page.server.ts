@@ -1,7 +1,9 @@
 import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+
 import { db } from '$lib/db';
 import { ArticleListSelect } from '$lib/types';
+
+import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
 	const { tag } = params;
 	const raw = tag.split('/');

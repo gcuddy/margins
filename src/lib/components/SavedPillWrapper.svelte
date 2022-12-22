@@ -1,30 +1,32 @@
 <script lang="ts">
+	import { page } from '$app/stores';
+	import type { ExtendedBookmark } from '$lib/bookmark';
 	import type { ArticleInList } from '$lib/types';
 	import type { ViewOptions } from '$lib/types/schemas/View';
 	import AnnotationCount from './AnnotationCount.svelte';
 	import LocationPill from './LocationPill.svelte';
 	import Tag from './Tags/Tag.svelte';
 
-	export let item: ArticleInList;
-	export let viewOptions: ViewOptions;
+	export let item: ExtendedBookmark;
+	export let viewOptions: Partial<ViewOptions>;
 
 	let annotationEl: HTMLElement | undefined;
+
+	$: annotations = item.annotations?.filter((a) => a.type === 'annotation');
+	$: allTags = $page.data.tags;
+	$: tagNames = allTags?.filter((t) => item.tags?.some((i) => i.id === t.id));
 </script>
 
 <!-- TODO: eventually make it so they overlap! -->
 <div class="flex space-x-1 text-xs">
-	<!-- TODO: add type -->
-	{#if item['_count']?.annotations && viewOptions.properties.annotationCount}
-		<AnnotationCount count={item['_count'].annotations} bind:el={annotationEl} />
+	{#if annotations?.length && viewOptions.properties?.annotationCount}
+		<AnnotationCount count={annotations?.length} bind:el={annotationEl} />
 	{/if}
-	{#if item.location && viewOptions.properties.location}
-		<LocationPill location={item.location} />
-	{/if}
-	{#if item.tags?.length && viewOptions.properties.tags}
-		<!-- <div class="hidden sm:flex">
-                    <TagCloud tags={item.tags} />
-                  </div> -->
-		{#each item.tags as tag}
+	<!-- {#if item.state && viewOptions.properties?.location}
+		<LocationPill location={item.state.type} />
+	{/if} -->
+	{#if tagNames?.length && viewOptions.properties?.tags}
+		{#each tagNames as tag}
 			<Tag {tag} variant="ghost" icon={true} delIcon={false} />
 		{/each}
 	{/if}

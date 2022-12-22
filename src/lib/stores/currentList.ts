@@ -1,22 +1,21 @@
 import type { Feed, Subscription } from '@prisma/client';
 import { type Writable, writable } from 'svelte/store';
 
-import type { ExtendedAnnotation } from '$lib/annotation';
-import type { EntryWithAnnotations } from '$lib/entry.server';
+import type { EntryWithBookmark } from '$lib/entry.server';
 
-export type FeedList = {
-	type: 'rss';
+interface List {
+	items: EntryWithBookmark[];
 	slug: string;
-	items: EntryWithAnnotations[];
+}
+interface FeedList extends List {
 	feed: Feed;
 	subscription: Subscription;
-};
-
-export type BookmarkList = {
-	type: 'bookmarks';
-	slug: string;
-	items: ExtendedAnnotation[];
-};
+}
+// export type FeedList = {
+// 	type: 'rss';
+// 	slug: string;
+// 	items: EntryWithBookmark[];
+// };
 
 // export interface ICurrentList {
 // 	type: 'rss' | 'bookmarks';
@@ -24,7 +23,7 @@ export type BookmarkList = {
 // 	items: Entry[] | ExtendedAnnotation[];
 // 	feed?: Feed;
 // }
-export type ICurrentList = FeedList | BookmarkList;
+export type ICurrentList = List | FeedList;
 
 export type CurrentList = Writable<ICurrentList>;
 

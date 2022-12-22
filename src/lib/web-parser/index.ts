@@ -1,6 +1,8 @@
 // much code pulled from readability, mercury-parser, but modified to be faster/type-safe
 
-import { HTMLElement, Node, parse } from 'node-html-parser';
+import { HTMLElement, parse } from 'node-html-parser';
+import { z } from 'zod';
+
 import {
 	CLEAN_CONDITIONALLY_TAGS,
 	DIV_TO_P_BLOCK_TAGS,
@@ -10,18 +12,17 @@ import {
 	KEEP_SELECTORS,
 	STRIP_OUTPUT_TAGS,
 } from './constants';
+import { cleanAttributes, stripUnlikelyCandidates } from './dom';
+import * as CustomExtractors from './extractors';
 import { scoreNodes } from './scoring';
 import {
+	absolutizeSet,
 	absolutizeUrls,
 	changeElementTag,
-	scoreCommas,
 	normalizeSpaces,
-	absolutizeSet,
 	printRawHTMLTag,
+	scoreCommas,
 } from './utils';
-
-import * as CustomExtractors from './extractors';
-import { cleanAttributes, stripUnlikelyCandidates } from './dom';
 import { findAuthor } from './utils/fallback-author';
 
 function grabArticle(root: HTMLElement) {
@@ -181,15 +182,28 @@ export const hasSentencend = (text: string) => SENTENCE_END_RE.test(text);
 
 export const FOOTNOTE_HINT_RE = /\bfootnotes?\b/i;
 
-interface Metadata {
-	title?: string;
-	description?: string;
-	image?: string;
-	url?: string;
-	author?: string;
-	date?: string;
-	siteName?: string;
-}
+export const Metadata = z
+	.object({
+		title: z.string(),
+		summary: z.string(),
+		image: z.string(),
+		url: z.string(),
+		author: z.string(),
+		published: z.string(),
+		siteName: z.string(),
+	})
+	.partial();
+
+type Metadata = z.infer<typeof Metadata>;
+// interface Metadata {
+// 	title?: string;
+// 	summary?: string;
+// 	image?: string;
+// 	url?: string;
+// 	author?: string;
+// 	published?: string;
+// 	siteName?: string;
+// }
 
 // selectors can take just a string, or a string and a string which indicates the attribute (e.g. ['time', 'datetime']), or a string and a function which takes a matching node and returns a string. please be careful with the latter.
 type Selector = string | [string, string] | [string, (node: HTMLElement) => string];
@@ -344,10 +358,10 @@ export class Parser {
 	metadata: Metadata = {
 		title: '',
 		author: '',
-		description: '',
+		summary: '',
 		image: '',
 		url: '',
-		date: '',
+		published: '',
 		siteName: '',
 	};
 	extractor: IExtractor;
@@ -396,15 +410,15 @@ export class Parser {
 			this.metadata.title = this.metadata.url || this.baseUrl;
 		}
 		console.log(`Meta: ${JSON.stringify(this.metadata)}`);
-		if (!this.metadata.description) {
+		if (!this.metadata.summary) {
 			// this.metadata.description = content.innerText.slice(0, 200);
 		}
 		console.timeEnd('parse');
 		return {
-			content: content.innerHTML,
 			...this.metadata,
+			html: content.innerHTML,
+			text: content.innerText,
 			wordCount: content.innerText.split(' ').length,
-			textContent: content.innerText,
 		};
 	}
 
@@ -422,12 +436,12 @@ export class Parser {
 		const metaEls = this.root.querySelectorAll('meta');
 		const metadataToExtractorHash = {
 			title: ['title'],
-			description: ['dek', 'excerpt'],
+			summary: ['dek', 'excerpt'],
 			image: ['lead_image_url'],
-			date: ['date_published'],
+			published: ['date_published'],
 			author: ['author'],
 			siteName: ['siteName'],
-		};
+		} as const;
 		console.log({ metadata: this.metadata });
 		type MetadataToExtractorKeys = keyof typeof metadataToExtractorHash;
 		for (const metaKey of Object.keys(metadataToExtractorHash) as MetadataToExtractorKeys[]) {
@@ -799,8 +813,8 @@ export class Parser {
 		this.metadata.image = this.getJsonLdvalue(articleJson, ['image', 'url']);
 		this.metadata.url = this.getJsonLdvalue(articleJson, 'url');
 		this.metadata.author = this.getJsonLdvalue(articleJson, ['author', 'name']);
-		this.metadata.description = this.getJsonLdvalue(articleJson, 'description');
-		this.metadata.date = this.getJsonLdvalue(articleJson, 'datePublished');
+		this.metadata.summary = this.getJsonLdvalue(articleJson, 'description');
+		this.metadata.published = this.getJsonLdvalue(articleJson, 'datePublished');
 		this.metadata.siteName = this.getJsonLdvalue(json, 'publisher', 'name');
 		console.log(
 			`Hello, this is our metadata so far after scrapeJsonLd(): ${JSON.stringify(this.metadata)}`
@@ -832,7 +846,6 @@ export class Parser {
 						if (arr[0] && typeof arr[0][secondaryKey] === 'string') {
 							console.log(`Found ${key[1]} in ${JSON.stringify(arr[0])}: ${arr[0][secondaryKey]}`);
 							return arr[0][secondaryKey] as string;
-							return json[0][key[1]] as string;
 						}
 					} else if (typeof json[key[0]] === 'string') {
 						return json[key[0]] as string;

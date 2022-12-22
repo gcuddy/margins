@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import EntryList from '$lib/components/EntryList.svelte';
 	import { currentList } from '$lib/stores/currentList';
 	import RssListItem from '../FeedListItem.svelte';
 	import type { PageData } from './$types';
@@ -34,8 +35,9 @@
 	}}
 />
 
-<!-- <ul class="overflow-auto">
-	{#each data.subscription.feed.entries as entry}
+<ul class="overflow-auto">
+	<EntryList items={data.subscription.feed.entries} />
+	<!-- {#each data.subscription.feed.entries as entry}
 		<li
 			on:mouseover={(e) => {
 				if (!peek) return;
@@ -43,5 +45,5 @@
 		>
 			<RssListItem item={entry} feed={data.subscription.feed} />
 		</li>
-	{/each}
-</ul> -->
+	{/each} -->
+</ul>

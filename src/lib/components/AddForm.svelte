@@ -5,6 +5,7 @@
 	import { modals } from '$lib/stores/modals';
 	import { notifications } from '$lib/stores/notifications';
 	import type { Location } from '$lib/types/schemas/Locations';
+	import { getUser } from '@lucia-auth/sveltekit/client';
 	import MiniSwitch from './atoms/MiniSwitch.svelte';
 	import Button from './Button.svelte';
 	import GenericInput from './GenericInput.svelte';
@@ -15,7 +16,7 @@
 	import TagEntry from './TagEntry.svelte';
 
 	export let url = '';
-	export let location: Location = 'INBOX';
+	export let location: Location = 'inbox';
 
 	let textarea: HTMLElement | undefined;
 	let input: HTMLElement | undefined;
@@ -24,12 +25,14 @@
 
 	let fetched_data: Awaited<ReturnType<typeof parse>> | undefined = undefined;
 	let url_error = false;
+
+	const user = getUser();
 </script>
 
 <!-- modal: transparent etc -->
 <form
 	class="space-y-2 text-lg"
-	action="/add"
+	action="/u:{$user?.username}/add"
 	method="post"
 	use:enhance={({ form, data, action, cancel }) => {
 		// `form` is the `<form>` element

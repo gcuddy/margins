@@ -23,7 +23,7 @@
 <!-- can keyboard nav and dnd share the same state? -->
 <!-- also want to have select actions work — not sure we can do that unless we keep in same component -->
 <div bind:offsetHeight={height} class="h-full flex-grow overflow-visible overflow-x-hidden">
-	<KeyboardNav class="h-full">
+	<KeyboardNav class="">
 		<VirtualList
 			{height}
 			itemCount={items.length}
@@ -54,10 +54,10 @@
 				</KeyboardNavItem>
 			</div>
 
-			<div slot="footer">
+			<!-- <div slot="footer">
 				{#if infiniteHandler}<InfiniteLoading distance={200} on:infinite={infiniteHandler} />
 				{/if}
-			</div>
+			</div> -->
 		</VirtualList>
 	</KeyboardNav>
 </div>

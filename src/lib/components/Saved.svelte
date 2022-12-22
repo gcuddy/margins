@@ -1,8 +1,7 @@
 <script lang="ts">
-	export let annotations: ExtendedAnnotation[];
-	filterTerm.set('');
-	$: annotations, currentItems.setCurrentItems(annotations, 'title');
-
+	/// Take in a list of Bookmarks ~~*or* a list of Entries and display them~~
+	export let items: ExtendedBookmark[];
+	$: console.log({ items });
 	/** Should we render the title and description as safe html or not? */
 	export let html = false;
 
@@ -10,68 +9,53 @@
 	export let quoted = false;
 
 	export let externalLink = false;
+	export let actions: ComponentProperties<SelectActions>['actions'] | undefined = undefined;
+	export let font: 'newsreader' | 'sans' = 'newsreader';
+	export let alwaysShowDescription = false;
 
-	import autoAnimate from '@formkit/auto-animate';
 	import SelectActions from './SelectActions.svelte';
 	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME, type DndEvent } from 'svelte-dnd-action';
-	import { patch } from '../utils';
-	import debounce from 'lodash.debounce';
 	import { notifications } from '../stores/notifications';
-	import { writable } from 'svelte/store';
 	import dayjs from 'dayjs';
 	import localizedFormat from 'dayjs/plugin/localizedFormat.js';
 	import Spacer from './helpers/Spacer.svelte';
-	import type { ArticleInList, ArticleWithTags } from '$lib/types';
 	import { dev } from '$lib/stores/developer';
 	import KeyboardNav from './helpers/KeyboardNav/KeyboardNav.svelte';
 	import KeyboardNavItem from './helpers/KeyboardNav/KeyboardNavItem.svelte';
-	import { currentItems, filteredItems, filterInputActive, filterTerm } from '$lib/stores/filter';
-	import { fade } from 'svelte/transition';
+	import { createItemStores } from '$lib/stores/filter';
 	import DotMenu from './DotMenu.svelte';
 	import Muted from './atoms/Muted.svelte';
 	import type { ComponentProperties } from '$lib/stores/types';
 	import type { ViewOptions } from '$lib/types/schemas/View';
 	import SavedPillWrapper from './SavedPillWrapper.svelte';
-	import { flip } from 'svelte/animate';
 	import { page } from '$app/stores';
-	import { selected } from '$lib/stores/commands';
 	import { selectedItems } from '$lib/stores/selectedItems';
-	import type { ExtendedAnnotation } from '$lib/annotation';
+	import type { ExtendedBookmark } from '$lib/bookmark';
+	import type { Prisma } from '@prisma/client';
+	import { entryData } from '$lib/entry';
+	import { invalidateAll } from '$app/navigation';
 	dayjs.extend(localizedFormat);
+
+	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendedBookmark>();
+	$: currentItems.set(items);
+
 	let dragDisabled = false;
 
-	const handleConsider = (e: CustomEvent<DndEvent>) => {
+	const handleConsider = (e: CustomEvent<DndEvent<ExtendedBookmark>>) => {
 		//optimistic update
 		console.log('considering', e.detail);
-		annotations = e.detail.items;
+		items = e.detail.items;
 	};
-	const debouncedPatch = debounce(patch, 300);
-	const saveArticleOrder = () =>
-		debouncedPatch(
-			'/',
-			annotations.map((article, index) => ({
-				id: article.id,
-				position: index,
-			}))
-		);
-	// const startDrag = () => (dragDisabled = false);
-	// const stopDrag = () => (dragDisabled = true);
 
-	const handleFinalize = (e: CustomEvent<DndEvent>) => {
+	const handleFinalize = (e: CustomEvent<DndEvent<ExtendedBookmark>>) => {
 		//optimistic update
-		annotations = e.detail.items;
+		items = e.detail.items;
 		// dragDisabled = true;
 		// now save to database
-		// TODO: debounce
-		saveArticleOrder();
+		// saveArticleOrder();
 	};
 	let flipDurationMs = 200;
-	$: $filterInputActive ? (flipDurationMs = 0) : (flipDurationMs = 200);
 	let hovering = false;
-
-	export let actions: ComponentProperties<SelectActions>['actions'] | undefined = undefined;
-	export let font: 'newsreader' | 'sans' = 'newsreader';
-	export let alwaysShowDescription = false;
 	const view_options: ViewOptions = {
 		view: 'list',
 		sort: 'manual',
@@ -84,25 +68,36 @@
 			date: false,
 			wordCount: false,
 			image: true,
+			readProgress: true,
+			location: true,
+			url: true,
+			pageNote: true,
 		},
 	};
-
 	export let viewOptions: Partial<ViewOptions> = view_options;
 	$: viewOptions = { ...view_options, ...viewOptions };
-
 	$: dragDisabled = viewOptions.sort != 'manual';
 
-	let height: number;
+	const determineData = (data: Prisma.JsonValue | null) => {
+		const parsed = entryData.safeParse(data);
+		if (parsed.success) {
+			return parsed.data;
+		} else {
+			console.error(`failed on data:`, data);
+			console.error(parsed.error);
+		}
+		if (typeof data === 'object') {
+			const dataObject = data as Prisma.JsonObject;
+		}
+		throw Error('Unknown data type');
+	};
 </script>
 
-<!-- <svelte:window on:keydown={handleKeydown} /> -->
-
+<!-- TODO: get this type working -->
 <SelectActions {actions} bind:selected_items={$selectedItems} on:update />
 
 <!-- todo: virtual list -->
 <KeyboardNav class="h-full {viewOptions.view === 'grid' ? 'TODO:customized-color-here' : ''} ">
-	<!-- filteR? -->
-	<!-- use:autoAnimate={{ duration: 500 }} -->
 	<div
 		class="mx-auto h-fit {viewOptions.view === 'grid'
 			? 'p-4'
@@ -110,7 +105,7 @@
 			? 'grid grid-cols-12 gap-4 container pb-10'
 			: ''}"
 		use:dndzone={{
-			items: annotations,
+			items: items,
 			flipDurationMs,
 			dragDisabled,
 			dropTargetStyle: {},
@@ -119,7 +114,9 @@
 		on:consider={handleConsider}
 		on:finalize={handleFinalize}
 	>
-		{#each $filteredItems as item, index (item.id)}
+		{#each $filteredItems || [] as item, index (item.id)}
+			{@const data = determineData(item.data)}
+			{@const pageNotes = item.annotations.filter((a) => a.type === 'note')}
 			<!-- {index} -->
 			<!-- by doing this can't do animate:flip. hm! trying out auto-animate. let's see... -->
 			<KeyboardNavItem
@@ -127,7 +124,9 @@
 				let:followTabIndex
 				{index}
 				as="a"
-				href={externalLink ? item.url : `/u:${$page.params.username}/entry/${item.entryId}`}
+				href={externalLink && item.uri
+					? item.uri
+					: `/u:${$page.params.username}/entry/${item.entryId}`}
 				class="group col-span-12 h-min md:col-span-3 2xl:col-span-3 {viewOptions.view === 'list'
 					? '!cursor-default'
 					: ''}"
@@ -139,7 +138,7 @@
 					}
 				}}
 			>
-				<div class={viewOptions.view === 'list' ? 'h-20  md:h-24' : 'h-44 md:h-72'}>
+				<div class={viewOptions.view === 'list' ? 'h-24 md:h-32' : 'h-44 md:h-72'}>
 					{#if viewOptions.view}
 						<div
 							class="flex h-full flex-col overflow-hidden  border-gray-100 ring-inset focus:!outline-none focus-visible:!outline-none group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-800 dark:group-focus-visible:bg-gray-800 {viewOptions.view ===
@@ -166,6 +165,7 @@
 											? 'h-8 w-8 rounded-md hover:ring'
 											: 'h-full col-span-4 md:w-full md:h-28'}"
 										on:click|stopPropagation
+										on:keydown
 									>
 										{#if $dev.disableListImgs}
 											<div
@@ -177,8 +177,7 @@
 												'list'
 													? 'h-8 w-8 rounded-md shadow-sm hover:ring-1'
 													: ' w-full h-40 rounded-t-md'}"
-												src={item.entry?.image ||
-													`https://icon.horse/icon/?uri=${item.target || item.entry?.uri}`}
+												src={data?.image || `https://icon.horse/icon/?uri=${data?.url}`}
 												alt=""
 											/>
 										{/if}
@@ -208,7 +207,7 @@
 											? 'text-lg'
 											: ''}"
 									>
-										{#if html}{@html item.title || item.entry?.title}{:else}{item.entry?.title}{/if}
+										{#if html}{@html data.title}{:else}{data?.title}{/if}
 									</span>
 									<!-- url and author around 74,74,74, description around 126,126,126 -->
 									<div
@@ -217,25 +216,25 @@
 											? 'md:text-sm'
 											: ''} "
 									>
-										{#if item.url && viewOptions.properties.url}
-											<span>{item.url}</span>
+										{#if item.uri && viewOptions.properties?.url}
+											<span>{item.uri}</span>
 										{/if}
-										{#if item.author && viewOptions.properties.author}
-											<span>{item.author}</span>
+										{#if data.author && viewOptions.properties?.author}
+											<span>{data.author}</span>
 										{/if}
-										{#if viewOptions.properties.site}
-											<Muted>{item.siteName || item.entry.uri}</Muted>
+										{#if viewOptions.properties?.site}
+											<Muted>{data.siteName || item.uri}</Muted>
 										{/if}
-										{#if item.date && viewOptions.properties.date && viewOptions.view === 'list'}
-											<Muted>{dayjs(item.date).format('ll')}</Muted>
+										{#if data.published && viewOptions.properties?.date && viewOptions.view === 'list'}
+											<Muted>{dayjs(data.published).format('ll')}</Muted>
 										{/if}
-										{#if item.wordCount && viewOptions.properties.wordCount && viewOptions.view === 'list'}
-											<Muted>{item.wordCount} words</Muted>
+										{#if data.wordCount && viewOptions.properties?.wordCount && viewOptions.view === 'list'}
+											<Muted>{data.wordCount} words</Muted>
 										{/if}
 										<!-- <span><a href={item.url}>{item.url}</a></span> -->
 									</div>
 									<div class="flex {viewOptions.view === 'list' ? 'truncate' : 'line-clamp-2'}">
-										{#if viewOptions.properties.description}
+										{#if viewOptions.properties?.description}
 											<p
 												class="{alwaysShowDescription
 													? ''
@@ -244,10 +243,21 @@
 													? 'md:text-sm truncate'
 													: ''} {quoted && 'before:content-[""] before:border-l-2 before:mr-4'}"
 											>
-												{#if html}{@html item.description}{:else}{item.description}{/if}
+												{#if html}{@html data.summary}{:else}{data.summary}{/if}
 											</p>
 										{/if}
 									</div>
+									{#if viewOptions.properties?.pageNote && pageNotes.length}
+										<div class="flex pt-1">
+											{#each pageNotes as note}
+												<div
+													class="flex rounded-md bg-amber-400 py-1 px-1.5 text-xs text-amber-900"
+												>
+													{note.body}
+												</div>
+											{/each}
+										</div>
+									{/if}
 								</div>
 								<!-- is this necessary? -->
 								{#if viewOptions.view === 'list'}
@@ -263,11 +273,11 @@
 								>
 									<!-- turning this off for now -->
 									<div class="flex items-center space-x-2">
-										{#if item.date && viewOptions.properties.date && viewOptions.view === 'grid'}
-											<Muted>{dayjs(item.date).format('ll')}</Muted>
+										{#if data.published && viewOptions.properties?.date && viewOptions.view === 'grid'}
+											<Muted>{dayjs(data.published).format('ll')}</Muted>
 										{/if}
-										{#if item.wordCount && viewOptions.properties.wordCount && viewOptions.view === 'grid'}
-											<Muted>{item.wordCount} words</Muted>
+										{#if data.wordCount && viewOptions.properties?.wordCount && viewOptions.view === 'grid'}
+											<Muted>{data.wordCount} words</Muted>
 										{/if}
 									</div>
 									{#if true}
@@ -285,7 +295,7 @@
 															label: 'Delete',
 															icon: 'trash',
 															perform: async () => {
-																if (!window.confirm(`Really delete "${item.title}"?`)) return;
+																if (!window.confirm(`Really delete "${data.title}"?`)) return;
 																const form = new FormData();
 																form.set('id', item.id.toString());
 																const res = await fetch('/', {
@@ -297,7 +307,7 @@
 																	notifications.notify({
 																		message: 'Article deleted',
 																	});
-																	await invalidate('/');
+																	await invalidateAll();
 																}
 															},
 														},
@@ -316,88 +326,26 @@
 															label: 'View Original',
 															icon: 'globe',
 															perform: () => {
-																window.open(item.url, '_blank');
+																window.open(item.uri, '_blank');
 															},
 														},
 													],
 												]}
 											/>
-											<!-- <Menu
-									align="right"
-									menuItems={[
-										[
-											{
-												display: 'Archive',
-												icon: 'archive'
-											},
-											{
-												display: 'Delete',
-												icon: 'trash',
-												perform: async () => {
-													if (!window.confirm(`Really delete "${item.title}"?`)) return;
-													const form = new FormData();
-													form.set('id', item.id.toString());
-													const res = await fetch('/', {
-														method: 'DELETE',
-														body: form
-													});
-													console.log({ res });
-													if (res.ok) {
-														notifications.notify({
-															message: 'Article deleted'
-														});
-														await invalidate('/');
-													}
-												}
-											},
-											{
-												display: 'Tag',
-												icon: 'tag'
-											},
-											{
-												display: 'Bump to top',
-												icon: 'trendingUp',
-												perform: () => dispatch('bump')
-											}
-										],
-										[
-											{
-												display: 'View Original',
-												icon: 'globe',
-												perform: () => {
-													window.open(item.url, '_blank');
-												}
-											}
-										]
-									]}
-									buttonAriaLabel="More options"
-								>
-									<Icon name="options" className="h-6 w-6 stroke-1 stroke-current" />
-									<span class="sr-only">More</span>
-								</Menu> -->
 										</div>
-										<!-- TODO: make entire thing draggable -->
-										<!-- <div
-								on:mousedown={startDrag}
-								on:touchstart={startDrag}
-								on:mouseup={stopDrag}
-								on:touchend={stopDrag}
-								class="drag-handle  flex items-center"
-							>
-								<Icon name="dragHandle2" className="w-4 h-4 stroke-current stroke-0" />
-							</div> -->
 									{:else}
 										<div
 											class="flex flex-col items-end text-xs tabular-nums text-gray-600 dark:text-gray-400 lg:text-sm"
 										>
 											<div>
-												{dayjs(item.date).format('ll')}
+												{dayjs(data.published).format('ll')}
 											</div>
 											<div>
-												{item.wordCount} words
+												{data.wordCount} words
 											</div>
 											<div>
-												{Math.round(item.readProgress * 100)}% read
+												<!-- TODO: implement read progress (interaction — is it on entry or bookmark?) -->
+												<!-- {Math.round(item.readProgress * 100)}% read -->
 											</div>
 										</div>
 									{/if}

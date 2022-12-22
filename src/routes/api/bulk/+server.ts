@@ -36,7 +36,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				title: article.title || '',
 				author: article.author || '',
 				image: article.image || '',
-				date: dayjs(article.date).isValid() ? dayjs(article.date).format() : dayjs().format(),
+				date: dayjs(article.published).isValid()
+					? dayjs(article.published).format()
+					: dayjs().format(),
 				textContent: article.textContent,
 			});
 		}

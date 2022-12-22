@@ -5,11 +5,16 @@
 	import { getNthValueOfSet } from '$lib/utils';
 	import TagComponent from './Tags/Tag.svelte';
 	import Icon from './helpers/Icon.svelte';
+	import type { ExtendedBookmark } from '$lib/bookmark';
+	import { notifications } from '$lib/stores/notifications';
 	export let allTags: Tag[] = [];
+	$: console.log({ allTags });
 	export let className = '';
 	export let value = '';
-	export let articles: ArticleWithTags[] = [];
+	export let items: { tags: Tag[] }[] = [];
+	$: console.log({ items });
 	export let allow_create_tag = true;
+	let ref: HTMLElement | undefined;
 	type TagInputTag = Pick<Tag, 'name'> & {
 		special?: boolean;
 	};
@@ -37,16 +42,18 @@
 	}
 	// read only
 	export let tags: Tag[] = [];
+	/// read only
+	export let pending = false;
 
 	// Tag Names must be unique, so we can use a simple Set<string>
 	let selectedTags: Set<string> = new Set();
-	articles
+	items
 		.flatMap((article) => article.tags)
-		.map((tag) => tag?.name)
+		.map((tag) => allTags.find((a) => a.id === tag.id)?.name)
 		.filter((tag) => tag)
 		.forEach((tag) => {
 			console.log({ tag });
-			selectedTags.add(tag);
+			if (tag) selectedTags.add(tag);
 		});
 
 	// add passed in tags
@@ -106,9 +113,15 @@
 				}
 			}
 		}
-		if (!value && detail.key === 'Escape') {
-			activeTag = undefined;
-			activeTagIndex = undefined;
+		if (detail.key === 'Escape') {
+			if (value) {
+				value = '';
+			} else if (activeTag || activeTagIndex) {
+				activeTag = undefined;
+				activeTagIndex = undefined;
+			} else {
+				ref?.blur();
+			}
 		}
 		setTimeout(() => {
 			console.log(input.value.length);
@@ -128,36 +141,65 @@
 	export let size: 'lg' | 'base' = 'base';
 </script>
 
-{#each articles as article, index}
-	<!-- todo: useThePlatform, wnot qs, right? -->
-	<input type="hidden" name="ids[]" value={article.id} />
-{/each}
+<!-- {#each items as { id }, index} -->
+<!-- todo: useThePlatform, wnot qs, right? -->
+<!-- <input type="hidden" name="ids[]" value={id} /> -->
+<!-- {/each} -->
 <div class="flex items-center px-1 {className}">
 	{#if selectedTags.size}
 		<div class="flex gap-2 pl-2 {size === 'lg' ? 'text-base' : 'text-sm'}">
-			{#each Array.from(selectedTags) as tag}
-				<input type="hidden" name="tags[]" value={tag} />
+			{#each tags as tag, i}
+				<input type="hidden" name="tags[{i}][name]" value={tag.name} />
+				{#if tag.id}<input type="hidden" name="tags[{i}][id]" value={tag.id} />{/if}
 				<TagComponent
 					as="span"
-					tag={{ name: tag }}
+					{tag}
 					variant="primary"
-					active={tag === activeTag}
-					on:click={() => (activeTag = tag)}
+					active={tag.name === activeTag}
+					on:click={() => (activeTag = tag.name)}
 				/>
 			{/each}
 		</div>
 	{/if}
 	<Combobox
+		bind:inputRef={ref}
 		fillValue={false}
 		values={filteredTags}
 		bind:value
 		bind:expanded={comboboxExpanded}
 		idResolver={(tag) => tag.name}
-		on:select={({ detail }) => {
+		on:blur
+		on:blur={() => {
+			console.log('blur!');
+			activeTag = undefined;
+			activeTagIndex = undefined;
+			value = '';
+		}}
+		on:select={async ({ detail }) => {
 			//TODO
+			console.log({ detail });
 			selectedTags.add(detail.name);
 			selectedTags = selectedTags;
 			value = '';
+			// if (detail.special) {
+			// 	// then create the tag
+			// 	try {
+			// 		pending = true;
+			// 		const res = await fetch(`/api/v1/tags.json`, {
+			// 			method: 'POST',
+			// 			body: JSON.stringify({ name: detail.name }),
+			// 		});
+			// 		const data = await res.json();
+			// 		allTags = [...allTags, data];
+			// 		pending = false;
+			// 	} catch {
+			// 		selectedTags.delete(detail.name);
+			// 		notifications.notify({
+			// 			type: 'error',
+			// 			title: 'Failed to create tag',
+			// 		});
+			// 	}
+			// }
 			console.log({ selectedTags });
 			console.log('add');
 		}}

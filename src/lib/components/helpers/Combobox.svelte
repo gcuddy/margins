@@ -194,7 +194,9 @@
 	export let name = '';
 
 	const optionRefs: HTMLElement[] = [];
-	let inputRef: HTMLElement;
+
+	/// Read-only
+	export let inputRef: HTMLElement | undefined = undefined;
 
 	$: if ((staticProp || expanded) && activeIndex > -1) {
 		tick().then(() => optionRefs[activeIndex]?.scrollIntoView({ block: 'nearest' }));
@@ -268,6 +270,7 @@
 				bind:value
 				on:keydown={handleKeydown}
 				on:blur={close}
+				on:blur
 				on:click={(e) => {
 					dispatch('input-click', e);
 				}}

@@ -1,6 +1,6 @@
 generator client {
     provider        = "prisma-client-js"
-    previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "extendedWhereUnique"]
+    previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "extendedWhereUnique", "fieldReference"]
 }
 
 datasource db {
@@ -14,7 +14,7 @@ datasource db {
 
 /// State represents the state of an Annotation. The defaults are "Inbox", "Next", "Later", and "Archive".
 model State {
-    id              Int          @id @default(autoincrement())
+    id              Int        @id @default(autoincrement())
     /// Whether or not this state represents things to be looked at later.
     read_later      Boolean
     /// The name of the state
@@ -26,45 +26,87 @@ model State {
     /// The position of the state
     position        Float
     description     String?
-    user            User         @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    user            User       @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     userId          String
-    defaultRelation User?        @relation("default_state")
+    defaultRelation User?      @relation("default_state")
     // only ONE should be true — how can we enforce this? or should we instead hold a default_state_id under user?
-    default         Boolean      @default(false)
-    createdAt       DateTime     @default(now())
-    updatedAt       DateTime     @updatedAt
-    Annotation      Annotation[]
+    default         Boolean    @default(false)
+    createdAt       DateTime   @default(now())
+    updatedAt       DateTime   @updatedAt
+    bookmarks       Bookmark[]
 
     @@index([userId])
 }
 
-model Annotation {
+model Bookmark {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    // really should be required, but there's some nasty enforcements if it is
+    entry     Entry?   @relation(fields: [uri, entryId], references: [uri, id])
+    uri       String?  @unique
+    entryId   Int?     @unique
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    sortOrder Int?     @default(0)
+    is_read   Boolean  @default(false)
+    progress  Float    @default(0)
+    // we store custom data here too, in case the user has their own data somehow.
+    // title     String?
+    // author    String?
+    // html      String?   @db.LongText
+    // text      String?
+    // image     String?
+    // published DateTime?
+    data      Json?
+    //...etc
 
+    /// can we store interaction data here too?
+    // is_read Boolean etc
+    // or should it be a 1-1 to an Interaction/History model?
+    // I think interaction model makes sense because interactions exist on *entries* still.
+
+    /// The state in which this bookmark is. A state of null indicates it's been interacted with but not saved.
+    state   State? @relation(fields: [stateId], references: [id])
+    stateId Int?
+
+    private       Boolean           @default(true)
+    tags          Tagging[]
+    collections   CollectionItems[]
+    interaction   Interaction?      @relation(fields: [interactionId], references: [id])
+    interactionId Int?              @unique
+    favorite      Favorite?
+    favoriteId    Int?
+    annotations   Annotation[]
+
+    deleted DateTime?
+
+    @@index([uri, entryId])
+    @@index([uri])
+    @@index([userId])
+    @@index([stateId])
+    @@index([userId, stateId])
+    @@index([interactionId, stateId, uri])
+}
+
+model Annotation {
+    id        Int            @id @default(autoincrement())
+    createdAt DateTime       @default(now())
+    updatedAt DateTime       @updatedAt
     // body is used for: page note when type is bookmarking, or annotation when type is highlight/annotation
     // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
     //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
     // for saving structured data
-    body Json?
-
-    tags      Taggings[]
+    body      Json?
+    tags      Tagging[]
     type      AnnotationType
-    readLater Boolean        @default(true)
     private   Boolean        @default(true)
     target    Json? // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
-    entryId   Int?
     entry     Entry?         @relation(fields: [entryId], references: [id])
-    metadata  EntryData      @relation(fields: [entryDataId], references: [id])
-    // todo: data (i.e. custom title and metadata)
+    entryId   Int?
+    // TODO: should an annotation be associated with an entry, an a bookmark, or both, or neither??
 
-    /// The state of the annotation. Only relevant if it's a bookmark. (I think.)
-    state   State? @relation(fields: [stateId], references: [id])
-    stateId Int?
-    // stateId 0 = inbox
-
-    /// An annotation will have a parent when it's a type/annotation (i.e. an annotation on a bookmark) or a reply
+    /// An annotation will have a parent when it's a reply
     parent   Annotation?  @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     parentId Int?
     children Annotation[] @relation("references")
@@ -74,24 +116,25 @@ model Annotation {
     creator User      @relation(fields: [userId], references: [id])
     userId  String
 
-    sortOrder   Float            @default(-1000)
+    sortOrder   Float            @default(0)
     // refs
     collections CollectionItems?
     favorite    Favorite?
+    bookmark    Bookmark?        @relation(fields: [bookmarkId], references: [id])
+    bookmarkId  Int?
 
-    // @@unique([userId, entryId]) <- this doesn't quite make sense, because of cihldren. i want it to be when type is bookmark. maybe sql? or maybe children don't get entryid?
-    // again, could solve this by having a sepaerate model or something
-    entryDataId Int
-
+    // @@unique([userId, entryId]) <- this doesn't quite make sense, because of cihldren. i want it to be when type is bookmark. maybe sql? or maybe children don't get entryid? <- indeed we are now!s
+    // again, could solve this by having a sepaerate model or something <- indeed we are now!s
     @@index([entryId])
     @@index([userId])
-    @@index([stateId])
     @@index([parentId])
+    @@index([bookmarkId])
 }
 
 // this loosely corresponds to the web annotation motivation/purpose section, but modified for our use
 enum AnnotationType {
     bookmark
+    note
     annotation
     reply
 }
@@ -106,33 +149,41 @@ enum Location {
 model Entry {
     data         EntryData?
     context      String? // uri of item it's saved from. not sure if it makes sense for this to be on Document or on Annotation.
-    createdAt    DateTime           @default(now())
+    createdAt    DateTime      @default(now())
     author       String?
     location     Location? // only relevant if read later?
     // this is maybe the "real" title but also stored in data for uesrs
     title        String?
-    type         DocumentType
-    updatedAt    DateTime           @updatedAt
-    id           Int                @id @default(autoincrement())
+    type         DocumentType  @default(article)
+    updatedAt    DateTime      @updatedAt
+    id           Int           @id @default(autoincrement())
     //todo: expand to fingerprint and url, doi, etc. maybe can all fit in this string, i'm not sure
-    uri          String?            @unique
+    uri          String?       @unique
     // if it's a rss
-    html         String?            @db.LongText
-    text         String?            @db.LongText
+    html         String?       @db.LongText
+    text         String?       @db.LongText
     image        String?
-    guid         String?            @unique //@ unique?
+    guid         String?       @unique //@ unique?
     wordCount    Int?
+    siteName     String?
     summary      String?
     media        Json?
     published    DateTime?
     updated      DateTime?
     feedId       Int?
-    feed         Feed?              @relation(fields: [feedId], references: [id])
-    interactions EntryInteraction[]
+    feed         Feed?         @relation(fields: [feedId], references: [id])
+    interactions Interaction[]
     EntryMedia   EntryMedia[]
     annotations  Annotation[]
+    bookmarks    Bookmark[]
+    // Tagging      Tagging[]
+    // eventually move this to explicit due to planetscale indexing?
+    tags         Tag[]
+    entrytags    EntryTag[]
 
+    @@unique([uri, id])
     @@index([feedId])
+    @@index([id, published, createdAt])
 }
 
 model EntryData {
@@ -153,9 +204,8 @@ model EntryData {
     // TODO: pdf, image, etc
 
     // these *can* belong to a user, but don't have to
-    user       User?        @relation(fields: [userId], references: [id])
-    userId     String?
-    Annotation Annotation[]
+    user   User?   @relation(fields: [userId], references: [id])
+    userId String?
 
     @@index([documentUri])
 }
@@ -220,9 +270,9 @@ model Article {
     // Bookmark       Bookmark?
     context        Context?
     type           Int       @default(0) // 0 = text, 1 = audio, 2 = video
-    favorite       Favorite?
     user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId         String
+    favoriteId     Int?
 
     @@unique([userId, url])
     @@index([userId])
@@ -263,12 +313,13 @@ model CollectionItems {
     type         CollectionItemType // probably not needded
     createdAt    DateTime           @default(now())
     updatedAt    DateTime           @updatedAt
-    articleId    Int?               @unique
     annotationId Int?               @unique
     annotation   Annotation?        @relation(fields: [annotationId], references: [id])
+    bookmark     Bookmark?          @relation(fields: [bookmarkId], references: [id])
+    bookmarkId   Int?
 
     @@index([collectionId])
-    @@index([articleId])
+    @@index([bookmarkId])
 }
 
 enum CollectionItemType {
@@ -299,7 +350,7 @@ model Feed {
     lastBuildDate DateTime?
     imageUrl      String?        @db.Text
     entries       Entry[]
-    tags          Taggings[]
+    tags          Tagging[]
     podcast       Boolean        @default(false)
     createdAt     DateTime       @default(now()) /// @zod.custom(z.string())
     updatedAt     DateTime       @updatedAt /// @zod.custom(z.string())
@@ -328,36 +379,27 @@ model Subscription {
     @@index([feedId])
 }
 
-model History {
-    id            Int               @id @default(autoincrement())
-    createdAt     DateTime          @default(now())
-    interaction   EntryInteraction? @relation(fields: [interactionId], references: [id])
-    interactionId Int?
+model Interaction {
+    id        Int       @id @default(autoincrement())
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    is_read   Boolean?  @default(false)
+    progress  Float?    @default(0)
+    finished  Boolean?  @default(false)
+    document  Entry     @relation(fields: [uri], references: [uri])
+    uri       String
+    userId    String
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    bookmark  Bookmark?
 
-    @@index([interactionId])
-}
+    last_viewed      DateTime @default(now())
+    last_annotated   DateTime @default(now())
+    last_interaction DateTime @default(now())
 
-model EntryInteraction {
-    id         Int      @id @default(autoincrement())
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
-    is_read    Boolean? @default(false)
-    progress   Float?   @default(0)
-    finished   Boolean? @default(false)
-    document   Entry    @relation(fields: [documentId], references: [id])
-    documentId Int
-    userId     String
-    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    // TODO: choose either history model (array of each interaction, or just simple updating last_viewed)
-    history          History[]
-    last_viewed      DateTime  @default(now())
-    last_annotated   DateTime  @default(now())
-    last_interaction DateTime  @default(now())
-
-    @@unique([documentId, userId])
-    @@index([documentId])
+    @@unique([userId, uri])
+    @@index([uri])
     @@index([userId])
+    @@map("EntryInteraction")
 }
 
 model Tag {
@@ -371,26 +413,58 @@ model Tag {
     viewOptions Json?
     user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId      String
-    taggings    Taggings[]
+    taggings    Tagging[]
+    entryTags   EntryTag[]
+    entries     Entry[]
 
     @@unique([name, userId])
     @@index([userId])
 }
 
-model Taggings {
-    id           Int         @id @default(autoincrement())
+model EntryTag {
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    tag       Tag      @relation(fields: [tagId], references: [id])
+    tagId     Int
+    entry     Entry    @relation(fields: [entryId], references: [id])
+    entryId   Int
+    user      User     @relation(fields: [userId], references: [id])
+    userId    String
+    // @@index([tagId, entryId])
+    // @@index([userId, tagId])
+    // @@index([userId, entryId])
+
+    @@id([entryId, tagId, userId])
+    @@index([tagId])
+    @@index([entryId])
+    @@index([userId])
+}
+
+model Tagging {
+    id         Int         @id @default(autoincrement())
     //   TODO: represents tags on documents and feeds
-    tag          Tag         @relation(fields: [tagId], references: [id])
-    tagId        Int
-    user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId       String
-    feed         Feed?       @relation(fields: [feedId], references: [id])
-    feedId       Int?
-    annotation   Annotation? @relation(fields: [annotationId], references: [id])
+    // TODO: should we seperate this into multiple models — TagsOnFeed, etc?
+    tag        Tag         @relation(fields: [tagId], references: [id])
+    tagId      Int
+    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId     String
+    feed       Feed?       @relation(fields: [feedId], references: [id])
+    feedId     Int?
+    annotation Annotation? @relation(fields: [annotationId], references: [id])
+
     annotationId Int?
+    bookmark     Bookmark? @relation(fields: [bookmarkId], references: [id])
+    bookmarkId   Int?
+    // TODO: decide if entry should have tag or if it shold be on bookmark
+    // entry        Entry     @relation(fields: [entryId], references: [id])
+    // entryId      Int
+    // @@unique([entryId, userId, tagId])
+    // @@index([entryId])
 
     // do those make sense?
+    // is this wise... in any way?
     @@unique([annotationId, userId, tagId])
+    @@unique([bookmarkId, userId, tagId])
     @@unique([feedId, userId, tagId])
     @@index([userId])
     @@index([tagId])
@@ -399,6 +473,8 @@ model Taggings {
     @@index([userId, tagId])
     @@index([userId, feedId])
     @@index([userId, annotationId])
+    @@index([bookmarkId])
+    @@map("Taggings")
 }
 
 model SmartList {
@@ -411,21 +487,21 @@ model SmartList {
 }
 
 model User {
-    id               String             @id @unique @default(cuid())
-    provider_id      String             @unique
+    id               String           @id @unique @default(cuid())
+    provider_id      String           @unique
     hashed_password  String?
     session          Session[]
-    createdAt        DateTime           @default(now())
-    updatedAt        DateTime           @updatedAt
+    createdAt        DateTime         @default(now())
+    updatedAt        DateTime         @updatedAt
     //
-    email            String             @unique
-    username         String             @unique
+    email            String           @unique
+    username         String           @unique
     //
     // self relation
-    followedBy       User[]             @relation("UserFollows")
-    following        User[]             @relation("UserFollows")
+    followedBy       User[]           @relation("UserFollows")
+    following        User[]           @relation("UserFollows")
     //
-    interactions     EntryInteraction[]
+    interactions     Interaction[]
     favorites        Favorite[]
     articles         Article[]
     favoriteFolders  FavoriteFolder[]
@@ -434,11 +510,13 @@ model User {
     subscriptions    Subscription[]
     documentData     EntryData[]
     stylesheets      Stylesheet[]
-    states           State[]            @relation("user")
-    default_state    State?             @relation("default_state", references: [id], fields: [default_state_id])
-    default_state_id Int?               @unique
-    taggings         Taggings[]
+    states           State[]          @relation("user")
+    default_state    State?           @relation("default_state", references: [id], fields: [default_state_id])
+    default_state_id Int?             @unique
+    taggings         Tagging[]
     tags             Tag[]
+    Bookmark         Bookmark[]
+    EntryTag         EntryTag[]
 
     @@map("user")
 }
@@ -462,20 +540,18 @@ model FavoriteFolder {
     userId    String
     user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
     favorites Favorite[]
+
+    @@index([userId])
 }
 
-// either Interaction or Favorite
-//  see https://cloud.prisma.io/gcuddy/prisma-data-test/production/schema
 model Favorite {
+    //TODO: could also consider making Favorite with a type of favorite vs folder, making parent/child and getting rid of favoritefolder... not sure
     id               Int             @id @default(autoincrement())
     createdAt        DateTime        @default(now())
     updatedAt        DateTime        @updatedAt
     userId           String
+    deleted          DateTime?
     user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-    // count      Int      @default(1)
-    // one of: article, tag, list, or smart list
-    articleId        Int?            @unique
-    article          Article?        @relation(fields: [articleId], references: [id])
     tagId            Int?            @unique
     tag              Tag?            @relation(fields: [tagId], references: [id])
     rssId            Int?            @unique
@@ -486,12 +562,14 @@ model Favorite {
     favoriteFolderId Int?
     annotation       Annotation?     @relation(fields: [annotationId], references: [id])
     annotationId     Int?            @unique
+    bookmark         Bookmark?       @relation(fields: [bookmarkId], references: [id])
+    bookmarkId       Int?            @unique
 
     @@index([userId])
-    @@index([articleId])
     @@index([tagId])
     @@index([rssId])
     @@index([smartListId])
+    @@index([bookmarkId])
     @@index([favoriteFolderId])
     @@index([annotationId])
 }

@@ -12,13 +12,13 @@
 		items,
 		title: feed?.title || 'Feed',
 	});
-	import FeedTitleMenu from '../../subscriptions/FeedTitleMenu.svelte';
+	// import FeedTitleMenu from '../../subscriptions/FeedTitleMenu.svelte';
 	import { panes, sortedItems } from '../store';
 </script>
 
 <div class="flex-none snap-start " bind:this={$panes[1]}>
 	{#if feed}
-		<FeedTitleMenu {feed} />
+		<!-- <FeedTitleMenu {feed} /> -->
 	{/if}
 	<ul class="overflow-auto">
 		<KeyboardNav {items}>

@@ -2,22 +2,28 @@
 	import { enhance } from '$app/forms';
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { createTemporaryAnnotation } from '$lib/annotation';
+	import type { EntryWithBookmark } from '$lib/entry.server';
 	import type { ICurrentList } from '$lib/stores/currentList';
 	import { mainEl, mainElScroll } from '$lib/stores/main';
 	import scrollDirection from '$lib/stores/scrollDirection';
-	import type { Entry } from '@prisma/client';
+	import type { Bookmark, Entry } from '@prisma/client';
+	import type { Metadata } from './types';
 	import { fly } from 'svelte/transition';
-	import Muted from './atoms/Muted.svelte';
-	import Button from './Button.svelte';
-	import CircularProgressBar from './CircularProgressBar/CircularProgressBar.svelte';
-	import DotMenu from './DotMenu.svelte';
-	import Icon from './helpers/Icon.svelte';
-	import LinkPreview from './LinkPreview.svelte';
+	import Muted from '$lib/components/atoms/Muted.svelte';
+	import Button from '$lib/components/Button.svelte';
+	import CircularProgressBar from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
+	import DotMenu from '$lib/components/DotMenu.svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
+	import LinkPreview from '$lib/components/LinkPreview.svelte';
+	// import ReadingSidebar from './ReadingSidebar.svelte';
+	import type { ExtendedBookmark } from '$lib/bookmark';
 	import ReadingSidebar from './ReadingSidebar.svelte';
 
 	export let back = '/';
-	export let entry: Entry;
-
+	export let entry: EntryWithBookmark;
+	export let bookmark: ExtendedBookmark | null = null;
+	export let interaction: { is_read: boolean | null } | null = null;
 	export let reading_sidebar_active = false;
 
 	export let currentList: ICurrentList | undefined = undefined;
@@ -101,13 +107,15 @@
 		? `/u:${$page.data.user?.username}/entry/${'entryId' in prev ? prev.entryId : prev.id}`
 		: undefined;
 	$: console.log({ currentList, index, next, entry });
-	$: saved = user?.annotations.find((a) => a.entryId === entry.id);
+	// $: saved = user?.annotations.find((a) => a.entryId === entry.id);
+	console.log({ entry });
 	$: console.log({ $page });
 </script>
 
 <svelte:window
 	on:keydown={async (e) => {
 		if (e.key === 'j' && next_url) {
+			console.log({ next_url });
 			await goto(next_url);
 		}
 		if (e.key === 'k' && prev_url && !e.metaKey) {
@@ -137,54 +145,57 @@
 		<form
 			action="?/save"
 			method="post"
-			use:enhance={() => {
-				// TODO: optimistic update via user store
-				// this will get updated once server data is actually populated
-				if (saved) {
-					user.annotations = user.annotations.filter((a) => a.id !== saved.id);
+			use:enhance={({ form }) => {
+				// Optimistic UI
+				const temp_id = Math.random();
+				const og = bookmark;
+				if (bookmark) {
+					bookmark = null;
 				} else {
-					// @ts-ignore only temporary
-					user.annotations = [
-						...user.annotations,
-						{
-							entryId: entry.id,
-						},
-					];
+					//@ts-ignore
+					bookmark = {
+						id: temp_id,
+					};
 				}
-				return async ({ update }) => {
-					// update();
-					await invalidate('app:user');
+				const button = form.querySelector('button');
+				if (button) button.disabled = true;
+				return async ({ update, result }) => {
+					if (button) button.disabled = false;
+					console.log({ result });
+					if (result.type === 'error') update();
+					if (result.type === 'success') {
+						if (result.data) bookmark = result.data.bookmark;
+						// else -> invalidate
+					}
 				};
 			}}
 		>
-			{#if saved}
-				<!-- hidden input to toggle annotation id -->
-				<input type="hidden" name="id" value={saved.id} />
-			{/if}
-			<!-- TODO: pick up here tomorrow -->
-			<!-- {entry} -->
+			<input type="hidden" name="id" value={bookmark?.id} />
+			<input type="hidden" name="uri" value={entry} />
 			<Button
 				type="submit"
 				variant="naked"
 				tooltip={{
-					text: `${saved ? 'Remove from' : 'Save to'} library`,
+					text: `${bookmark ? 'Remove from' : 'Save to'} library`,
 					kbd: 's',
 				}}
 				><Icon
 					name="bookmarkMini"
-					className="h-4 w-4 {saved ? 'fill-current' : 'stroke-current'}"
+					className="h-4 w-4 {bookmark ? 'fill-current' : 'stroke-current'}"
 				/></Button
 			>
 		</form>
-		<Button
-			variant="ghost"
-			as="a"
-			href={prev_url}
-			className="w-7 {prev ? '' : 'opacity-60'}"
-			disabled={prev === undefined}
-		>
-			<Icon name="chevronUp" className="h-4 w-4 stroke-current" />
-		</Button>
+		{#if prev}
+			<Button
+				variant="ghost"
+				as="a"
+				href={prev_url}
+				className="w-7 {prev ? '' : 'opacity-60'}"
+				disabled={prev === undefined}
+			>
+				<Icon name="chevronUp" className="h-4 w-4 stroke-current" />
+			</Button>
+		{/if}
 		{#if next}
 			<Button
 				variant="ghost"
@@ -206,6 +217,7 @@
 		<div
 			class="flex grid-cols-4 items-center gap-2"
 			on:click={handleScrollToTop}
+			on:keydown
 			aria-label="Click to scroll to top"
 			title="Click to scroll to top"
 		>
@@ -231,12 +243,35 @@
 		</div>
 	</div>
 	<div class="flex items-center space-x-2">
+		{#if !interaction?.is_read}
+			<div class="h-2 w-2 rounded-full bg-sky-400" />
+		{/if}
 		<Button variant="naked" className="w-7">
 			<Icon name="documentAdd" className="h-4 w-4 stroke-current" />
 		</Button>
 		<DotMenu
 			items={[
 				[
+					{
+						label: `Mark as ${interaction?.is_read ? 'unread' : 'read'}`,
+						icon: 'unread',
+						perform: async () => {
+							const is_read = interaction?.is_read || false;
+							interaction = { ...interaction, is_read: !is_read };
+							const res = await fetch(`/api/interactions`, {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									is_read: !is_read,
+									entryId: entry.id,
+								}),
+							});
+							const updated = await res.json();
+							interaction = updated;
+						},
+					},
 					{
 						label: 'Tag',
 						icon: 'tagSolid',
@@ -302,4 +337,4 @@
 {/if}
 
 <!-- Reading Sidebar -->
-<!-- <ReadingSidebar bind:article={entry} bind:active={reading_sidebar_active} /> -->
+<ReadingSidebar bind:entry bind:active={reading_sidebar_active} />

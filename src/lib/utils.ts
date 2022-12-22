@@ -155,7 +155,7 @@ export function parseBracketNotatin(str: string) {
 
 // this is a naive regex that only gets the last instance of eg key[1][value], won't work with multiple nesting
 const keyRegex = /^(.*?)\[(\d)\]\[(.*?)\]/;
-export async function getJsonFromRequest(request: Request) {
+export async function getJsonFromRequest(request: Request): Promise<Record<string, any>> {
 	const contentType = request.headers.get('content-type');
 	console.log({ contentType });
 	if (contentType?.includes('application/json')) {
@@ -210,7 +210,11 @@ export async function getJsonFromRequest(request: Request) {
 }
 
 export function getHostname(url: string) {
-	return new URL(url).hostname;
+	try {
+		const u = new URL(url).hostname;
+	} catch (e) {
+		return '';
+	}
 }
 
 export function convertDomMetaToCssSelector(meta: DomMeta) {

@@ -4,7 +4,7 @@ import { goto, invalidate } from '$app/navigation';
 import type { Command } from '$lib/components/CommandPalette/types';
 import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
 import { getTags } from '$lib/data/sync';
-import type { EntryWithAnnotations } from '$lib/entry.server';
+import type { EntryWithBookmark } from '$lib/entry.server';
 import { useCommands } from '$lib/hooks/use-commands';
 import { modals } from '$lib/stores/modals';
 import { notifications } from '$lib/stores/notifications';
@@ -12,8 +12,10 @@ import { syncStore } from '$lib/stores/sync';
 import type { RootUserData } from '$lib/user';
 import { patch, post } from '$lib/utils';
 
-export default function useArticleCommands(entry: EntryWithAnnotations, user: RootUserData) {
-	const bookmark = entry.annotations.find((a) => a.type === 'bookmark');
+export default function useArticleCommands(entry: EntryWithBookmark, user: RootUserData) {
+	// test if bookmark
+	const bookmark = entry.bookmark;
+
 	if (!bookmark) {
 		console.warn('No bookmark annotation found');
 	}
@@ -111,7 +113,7 @@ export default function useArticleCommands(entry: EntryWithAnnotations, user: Ro
 			icon: 'tag',
 			perform: async () => {
 				modals.open(TagInputCombobox, {
-					articles: [entry],
+					bookmarks: [entry],
 					allTags: await getTags(),
 					invalidate: `/${entry.id}`,
 				});

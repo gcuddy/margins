@@ -26,6 +26,8 @@
 	export { className as class };
 	export let size: 'xs' | 'sm' | 'base' = 'sm';
 	export let tooltip: Tooltip | undefined = undefined;
+
+	$: console.log({ location });
 </script>
 
 <Listbox value={location} on:change class={className}>

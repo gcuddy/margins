@@ -11,12 +11,15 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (!session) {
 		throw error(401, 'Not authorized');
 	}
-	const annotations = await db.annotation.findMany({
+	const taggings = await db.taggings.findMany({
 		where: {
 			userId: session.userId,
 		},
+		include: {
+			tag: true,
+		},
 	});
-	return json(annotations);
+	return json(taggings);
 };
 
 const PostSchema = z.object({

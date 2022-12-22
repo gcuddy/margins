@@ -6,6 +6,7 @@
 	import { handleSession } from '@lucia-auth/sveltekit/client';
 
 	handleSession(page);
+	$: console.log({ $page });
 </script>
 
 <svelte:head>

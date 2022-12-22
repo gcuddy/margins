@@ -33,7 +33,7 @@
 	import { sidebarFeeds, type UserStoreType } from '$lib/stores/user';
 	import { readable, type Readable } from 'svelte/store';
 
-	export let user: { username: string; email: string } | null = null;
+	export let user: { username: string; email: string } | null = $page.data.user || null;
 
 	export let favorites: FavoriteWithPayload[] = [];
 	let hardcodedNav: NavItem[] = [];
@@ -180,6 +180,7 @@
 <!-- TODO: make fixed 240px on smaller widths with hamburger menu -->
 <nav
 	on:click={handleClick}
+	on:keydown
 	style="width: {width}px;"
 	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-black dark:bg-gray-800 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {$hideSidebar
 		? '-translate-x-72 opacity-0'
@@ -238,7 +239,7 @@
 							console.log('clicked');
 							// modals.open(UrlModal);
 						}}
-						href="/add"
+						href="/u:{user.username}/add"
 						as="a"
 						size="sm"
 						variant="ghost"

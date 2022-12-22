@@ -4,7 +4,7 @@ import { db } from '$lib/db';
 
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ params, locals }) => {
+export const load: LayoutServerLoad = async ({ params, locals, parent }) => {
 	const { session, user } = await locals.validateUser();
 	console.log({ params, user, session });
 	if (user && user.username === params.username) {
@@ -49,8 +49,12 @@ export const load: LayoutServerLoad = async ({ params, locals }) => {
 				},
 			},
 		});
+		const unread = subscription.feed.entries.filter((a, b) => !a.interactions[0]?.is_read);
+		const data = await parent();
 		return {
 			subscription,
+			unread,
+			user,
 		};
 	} else {
 		throw error(401, 'Not authorized');

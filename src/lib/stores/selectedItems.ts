@@ -1,5 +1,9 @@
 import { writable } from 'svelte/store';
 
-import type { ExtendedAnnotation } from '$lib/annotation';
+import type { ExtendedBookmark } from '$lib/bookmark';
 
-export const selectedItems = writable<ExtendedAnnotation[]>([]);
+export const selectedItems = writable<ExtendedBookmark[]>([]);
+
+export const createSelectedItemStore = <T>() => {
+	return writable<T[]>([]);
+};

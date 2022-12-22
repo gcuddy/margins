@@ -21,10 +21,11 @@ import type { RequestHandler } from './$types';
 const InteractionInput = z.object({
 	id: z.number().optional(),
 	userId: z.string().optional(),
-	entryId: z.number(),
+	entryId: z.number().optional(),
 	is_read: z.boolean().optional(),
 	finished: z.boolean().optional(),
 	progress: z.number().optional(),
+	uri: z.string(),
 });
 
 export const POST: RequestHandler = async ({ locals, request }) => {
@@ -35,32 +36,26 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	try {
 		const data = await request.json();
 		const parsed = InteractionInput.parse(data);
-		const { is_read, finished, progress, entryId, userId, id } = parsed;
-		const interaction = await db.entryInteraction.upsert({
+		const { is_read, finished, uri, progress, entryId, userId, id } = parsed;
+		const interaction = await db.interaction.upsert({
 			where: {
 				id,
-				documentId_userId: {
-					userId: userId || session.userId,
-					documentId: entryId,
+				userId_uri: {
+					userId: session.userId,
+					uri,
 				},
 			},
 			create: {
 				userId: userId || session.userId,
-				documentId: entryId,
+				uri,
 				is_read,
 				finished,
 				progress,
-				history: {
-					create: {},
-				},
 			},
 			update: {
 				is_read,
 				finished,
 				progress,
-				history: {
-					create: {},
-				},
 			},
 			select: {
 				id: true,

@@ -5,6 +5,8 @@ import { error, fail } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
 import { connectOrCreateTaggings } from '$lib/tag.server';
+import { createContext } from '$lib/trpc/context';
+import { router } from '$lib/trpc/router';
 
 import type { Actions, PageServerLoad } from './$types';
 
@@ -22,15 +24,11 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, locals, fetch }) => {
+	default: async (event) => {
+		const { request, locals, fetch } = event;
 		console.log({ locals });
 		// todo: handle image requests and such
 		try {
-			const { session, user } = await locals.validateUser();
-			if (!session) {
-				throw error(401);
-			}
-			const { userId } = session;
 			const form = await request.formData();
 			const url = <string>form.get('url') || <string>form.get('text');
 			if (!url) {
@@ -39,21 +37,7 @@ export const actions: Actions = {
 					missing: true,
 				});
 			}
-			const note = <string>form.get('note');
-			const title = <string>form.get('title');
-			const html = <string>form.get('html');
-			const tags = <string[]>form.getAll('tags');
-			const _private = <string>form.get('private');
-			const location = <string>form.get('location');
-			const readLater = <string>form.get('readLater');
-			const contextUrl = <string | undefined>form.get('context-url');
-			const article = await fetch(`/api/parse?url=${encodeURIComponent(url)}`).then((res) =>
-				res.json()
-			);
-			console.log(`result of api/parse.json`, { article });
-			// const article = await parse(url, html || undefined);
-			let context;
-			// TODO: normalize url
+			const article = router.createCaller(await createContext(event));
 			const [entry, bookmark] = await db.$transaction([
 				db.entry.upsert({
 					where: {

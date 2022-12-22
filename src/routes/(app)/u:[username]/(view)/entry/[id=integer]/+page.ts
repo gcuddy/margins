@@ -1,8 +1,9 @@
 import { error } from '@sveltejs/kit';
 import { type Writable, get } from 'svelte/store';
 
-import type { EntryWithAnnotations } from '$lib/entry.server';
+import type { EntryWithBookmark } from '$lib/entry.server';
 import type { ICurrentList } from '$lib/stores/currentList';
+import { trpc } from '$lib/trpc/client';
 
 import type { PageLoad } from './$types';
 
@@ -10,21 +11,11 @@ const getItemFromList = (currentList: Writable<ICurrentList>, entryId: number) =
 	const $currentList = get(currentList);
 	console.log({ $currentList });
 	if (!$currentList) return;
-	if ($currentList.type === 'rss') {
-		return $currentList.items.find((item) => item.id === Number(entryId));
-	} else if ($currentList.type === 'bookmarks') {
-		// then these are annotations... let's massage the list to get the entry
-		$currentList.items.map((item) => {
-			return {
-				...item.entry,
-				annotations: item,
-			};
-		});
-		return $currentList.items.find((item) => item.entryId === entryId);
-	}
+	const entry = $currentList.items?.find((item) => item.id === Number(entryId));
+	return entry;
 };
-
-export const load: PageLoad = async ({ fetch, params, parent, depends }) => {
+export const load: PageLoad = async (event) => {
+	const { fetch, params, parent, depends, data: serverData } = event;
 	// fetch entry
 	// TODO: check cache first (maybe use a store? for now using a map (cache)^)
 
@@ -41,22 +32,23 @@ export const load: PageLoad = async ({ fetch, params, parent, depends }) => {
 	// });
 
 	const data = await parent();
-	// TODO: with annotations
-	// TODO: better way to indicate if data dirty... for example if currentlist more than x seconds old or something
-	let entry: EntryWithAnnotations | undefined = undefined;
+
+	//TODO: fix this type to be inferred from trpc
+	let entry: EntryWithBookmark | undefined = undefined;
 	if (data.currentList) {
-		const item = getItemFromList(data.currentList, Number(params.id));
-		if (item && 'entry' in item && item.entry) {
-			entry = item.entry;
-		} else if (item && 'annotations' in item) {
-			entry = item;
-		}
+		entry = getItemFromList(data.currentList, Number(params.id));
+		// if (item && 'annotations' in item) {
+		// 	entry = item;
+		// } else {
+		// 	entry = item;
+		// }
 	}
 
 	if (!entry) {
-		// fetch
+		// todo: trpc here on server
 		const res = await fetch(`/api/entries/${params.id}`);
 		entry = await res.json();
+		console.log(`fetched entry`, { entry });
 	}
 	const stylesheet = data.user?.stylesheets?.find((stylesheet) => {
 		// const regex = new RegExp(stylesheet.domain, 'i');
@@ -77,10 +69,34 @@ export const load: PageLoad = async ({ fetch, params, parent, depends }) => {
 	console.timeEnd(`entry:${params.id}`);
 
 	// should just be the one, right?
-	const interaction = entry.interactions[0];
+	const interaction = {};
+	console.log({ entry });
+	// let html = entry.html;
+	const id = +params.id;
+	// TODO: should annotations get moved to page.svelte for faster loading? (required js but also that's ok)
+	let html = entry.html;
+	let annotations = entry.annotations;
+	if (!html || !annotations) {
+		const data = await trpc(event).entries.loadData.query({
+			id,
+			data: {
+				html: !entry.html,
+				annotations: !entry.annotations,
+			},
+		});
+		html = data.html || null;
+		annotations = data.annotations || [];
+		console.log({ html, annotations });
+	}
+
 	return {
 		...data,
-		article: entry,
+		...serverData,
+		article: {
+			...entry,
+			html,
+			annotations,
+		},
 		interaction,
 		stylesheet,
 	};

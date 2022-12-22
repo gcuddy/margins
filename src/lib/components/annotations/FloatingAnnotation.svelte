@@ -11,6 +11,10 @@
 	import { spring } from 'svelte/motion';
 	import type { Tag } from '@prisma/client';
 	const dispatch = createEventDispatcher();
+	export let allTags: Tag[] = [];
+	if (!allTags.length) {
+		// fetch them
+	}
 	export let tags: Tag[] = [];
 	$: console.log({ tags });
 	let dragging = false;
@@ -39,9 +43,9 @@
 
 	let scale = spring(1);
 	$: if (dragging) {
-		scale.set(1.2, { soft: true });
+		scale.set(1.1, { soft: true });
 	} else {
-		scale.set(1, { soft: true });
+		scale.set(1);
 	}
 
 	$: console.log({ el });
@@ -112,7 +116,7 @@
 	class="floating-annotation absolute z-20 resize"
 	use:draggable={{
 		position: { x, y },
-		cancel: 'textarea, span, button, .resizer',
+		cancel: 'textarea, span, button, .resizer, .no-drag',
 		bounds: 'main [data-content-container]',
 	}}
 	on:keydown={(e) => {
@@ -133,18 +137,18 @@
 	}}
 >
 	<!-- style:--rotation="{$rotation}deg" -->
-	<!-- style:--scale={$scale} -->
+	<!--  -->
 
-	<div class="annotatation-container transition-opacity ">
+	<div style:--scale={$scale} class="annotatation-container !cursor-grab transition-opacity">
 		<AnnotationInput bind:tags bind:el={container} bind:value on:save on:cancel />
 	</div>
 </div>
 
 <style>
 	:global(.neodrag-dragging) div {
-		/* opacity: 0.9;
+		opacity: 0.95;
 		cursor: grabbing !important;
-		box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); */
+		box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 	}
 	.annotation-container :global(:scope > div) {
 		transform: scale(var(--scale)) rotate(var(--rotation)) !important;

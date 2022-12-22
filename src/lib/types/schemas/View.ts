@@ -23,6 +23,7 @@ export const ViewOptionsSchema = z.object({
 		location: z.boolean(),
 		image: z.boolean(),
 		url: z.boolean(),
+		pageNote: z.boolean(),
 	}),
 });
 
@@ -42,6 +43,8 @@ export const defaultViewOptions: ViewOptions = {
 		readProgress: false,
 		location: false,
 		image: true,
+		url: true,
+		pageNote: true,
 	},
 };
 

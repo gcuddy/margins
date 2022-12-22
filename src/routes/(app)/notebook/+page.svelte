@@ -6,9 +6,9 @@
 	import { TargetSchema } from '$lib/types/schemas/Annotations';
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	import Filter from '$lib/components/Filter.svelte';
-	import { currentItems } from '$lib/stores/filter';
+	// import { currentItems } from '$lib/stores/filter';
 
-	import type { PageData } from '../../../../.svelte-kit/types/src/routes/notebook/$types';
+	// import type { PageData } from '../../../../.svelte-kit/types/src/routes/notebook/$types';
 	import AnnotationItem from '$lib/components/AnnotationItem.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import { fly } from 'svelte/transition';
@@ -19,7 +19,7 @@
 	let { annotations } = data;
 	const _articles = annotations.flatMap((a) => a.article);
 	const article_ids = new Set(annotations.flatMap((a) => a.article.id));
-	currentItems.setCurrentItems(_articles, 'title');
+	// currentItems.setCurrentItems(_articles, 'title');
 	let select_multiple = false;
 
 	let selected: PageData['annotations'] = [];

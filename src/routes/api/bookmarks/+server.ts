@@ -3,8 +3,7 @@
 import { error, json } from '@sveltejs/kit';
 import { z } from 'zod';
 
-import { annotationExtendedInclude } from '$lib/annotation';
-import { db } from '$lib/db';
+import { getBookmarks } from '$lib/bookmark.server';
 
 import type { RequestHandler } from './$types';
 
@@ -18,27 +17,32 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const location = locationSchema.safeParse(url.searchParams.get('location'));
 	const state = url.searchParams.get('state');
 	const take = Number(url.searchParams.get('limit')) || 20;
-	const bookmarks = await db.annotation.findMany({
-		orderBy: [
-			{
-				updatedAt: 'desc',
-			},
-			{
-				sortOrder: 'asc',
-			},
-		],
-		where: {
-			userId: session.userId,
-			type: 'bookmark',
-			stateId: state ? Number(state) : undefined,
-			state: {
-				is: {
-					type: location.success ? location.data : undefined,
-				},
-			},
-		},
-		include: annotationExtendedInclude,
+	const bookmarks = await getBookmarks({
+		userId: session.userId,
+		state: state ? Number(state) : undefined,
+		location: location.success ? location.data : undefined,
 		take,
 	});
+	// const bookmarks = await db.bookmark.findMany({
+	// 	orderBy: [
+	// 		{
+	// 			updatedAt: 'desc',
+	// 		},
+	// 		{
+	// 			sortOrder: 'asc',
+	// 		},
+	// 	],
+	// 	where: {
+	// 		userId: session.userId,
+	// 		stateId: state ? Number(state) : undefined,
+	// 		state: {
+	// 			is: {
+	// 				type: location.success ? location.data : undefined,
+	// 			},
+	// 		},
+	// 	},
+	// 	take,
+	// });
+	console.log('api/bookmarks', { bookmarks });
 	return json(bookmarks);
 };

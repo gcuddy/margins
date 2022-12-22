@@ -9,22 +9,21 @@
 	import type { Tag } from '@prisma/client';
 	import { slide } from 'svelte/transition';
 	import { tick } from 'svelte';
-	import GenericTextarea from './GenericTextarea.svelte';
-	import Icon from './helpers/Icon.svelte';
-	import TagCloud from './TagCloud.svelte';
-	import TagInputCombobox from './TagInputCombobox.svelte';
-	export let article: ArticleWithNotesAndTagsAndContext;
+	import GenericTextarea from '$lib/components/GenericTextarea.svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
+	import TagCloud from '$lib/components/TagCloud.svelte';
+	import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
+	import type { Metadata } from './types';
+	import type { ExtendedAnnotation } from '$lib/annotation';
+	import type { ExtendedBookmark } from '$lib/bookmark';
+	import type { EntryWithBookmark } from '$lib/entry.server';
+	export let entry: EntryWithBookmark;
+	export let bookmark: ExtendedBookmark | undefined = undefined;
 	export let active: boolean;
-	export let menu_active = false;
-	$: console.log({ active });
-	const getNote = () => article.annotations?.find((a) => a.motivation === 'describing');
-	let note = getNote();
-	note = getNote();
-	let value = note?.body || '';
-	// $: value = note?.body || '';
-	$: console.log({ note });
+	// export let menu_active = false;
 
-	$: inArticleNotes = article.annotations?.filter((a) => a.motivation !== 'describing');
+	$: pageNotes = entry?.annotations?.filter((a) => a.type === 'note');
+	$: inlineNotes = entry?.annotations?.filter((a) => a.type === 'annotation');
 
 	let tags: Tag[] = [];
 	$: console.log({ tags });
@@ -45,11 +44,11 @@
 		: 'translate-x-full'}"
 >
 	<div class="flex flex-col space-y-2">
-		<span class="text-lg font-semibold">{article.title}</span>
-		<span class="text-base font-medium">{article.author}</span>
+		<span class="text-lg font-semibold">{entry.title}</span>
+		<span class="text-base font-medium">{entry.author}</span>
 		<!-- {article.starred} -->
-		{article.public}
-		<select
+		<!-- {article.public} -->
+		<!-- <select
 			name="public"
 			id="public-select"
 			class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-indigo-500 dark:focus:ring-indigo-500"
@@ -66,8 +65,8 @@
 		>
 			<option value={true}>Public</option>
 			<option value={false}>Private</option>
-		</select>
-		<select
+		</select> -->
+		<!-- <select
 			name=""
 			id=""
 			class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-indigo-500 dark:focus:ring-indigo-500"
@@ -85,18 +84,13 @@
 			<option value="SOON">Soon</option>
 			<option value="LATER">Later</option>
 			<option value="ARCHIVE">Archive</option>
-		</select>
-		<div transition:slide|local>
-			<TagInputCombobox
-				bind:tags={article.tags}
-				articles={[article]}
-				className="hover:ring-1 rounded-sm ring-gray-300 focus-within:bg-gray-100
-          dark:ring-gray-700 dark:focus-within:bg-gray-700 focus-within:!ring-0 transition
-            "
-				invalidate={`/${article.id}`}
-			/>
-		</div>
-		<GenericTextarea
+		</select> -->
+		{#if entry.tags}
+			<div transition:slide|local>
+				<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
+			</div>
+		{/if}
+		<!-- <GenericTextarea
 			variant="ghost"
 			bind:value
 			placeholder="Notes"
@@ -155,16 +149,13 @@
 					});
 				}
 			}}
-		/>
+		/> -->
 	</div>
-	{#if inArticleNotes?.length}
+	{#if inlineNotes?.length}
 		<div class="pt-2 pb-4">
-			<span class="font-medium"
-				>Annotations ({article.annotations.filter((a) => a.motivation !== 'describing')
-					.length})</span
-			>
+			<span class="font-medium">Annotations ({inlineNotes.length})</span>
 			<div class="flex flex-col space-y-4  text-sm">
-				{#each inArticleNotes as annotation}
+				{#each inlineNotes as annotation}
 					{@const target = TextQuoteTarget.parse(annotation.target)}
 					<a
 						href="#annotation-{annotation.id}"

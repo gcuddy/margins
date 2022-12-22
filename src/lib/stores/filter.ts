@@ -1,7 +1,6 @@
 import { derived, writable } from 'svelte/store';
 
 import { page } from '$app/stores';
-import type { ExtendedAnnotation } from '$lib/annotation';
 
 export const filterTerm = writable('');
 
@@ -12,42 +11,19 @@ interface CurrentItemStore<T> {
 	keys: string[];
 }
 
-function createCurrentItemStore() {
+export function createItemStores<T>() {
 	// todo: ideally i want this to be able to be set the type later. how is that possible?
-	const { subscribe, set, update } = writable<CurrentItemStore<ExtendedAnnotation> | null>(null);
-
-	const setCurrentItems = <T>(items: ExtendedAnnotation[], ...keys: string[]) => {
-		set({
+	let lastPath: string | undefined;
+	const items = writable<CurrentItemStore<T> | null>(null);
+	const { subscribe, set: _set, update } = items;
+	const filterTerm = writable('');
+	const set = (items: T[], ...keys: string[]) => {
+		_set({
 			items,
 			keys,
 		});
 	};
-	return {
-		subscribe,
-		setCurrentItems,
-	};
-}
-
-//TODO: fix type
-export const currentItems = createCurrentItemStore();
-
-function searchObjectKeys(object: any, term: string, ...keys: string[]) {
-	if (keys.length === 0) {
-		return false;
-	}
-	for (const key of keys) {
-		if (object[key] && object[key].toString().toLowerCase().includes(term)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-let lastPath: string | undefined;
-
-export const filteredItems = derived(
-	[filterTerm, currentItems, page],
-	([$term, $currentItems, $page]) => {
+	const filteredItems = derived([filterTerm, items, page], ([$term, $currentItems, $page]) => {
 		if (!lastPath) {
 			lastPath = $page.url.pathname;
 		} else if (lastPath !== $page.url.pathname) {
@@ -63,5 +39,24 @@ export const filteredItems = derived(
 		const { items, keys } = $currentItems;
 		const filtered = items.filter((item) => searchObjectKeys(item, $term, ...keys));
 		return filtered;
+	});
+	return {
+		items: {
+			set,
+		},
+		filteredItems,
+		filterTerm,
+	};
+}
+
+function searchObjectKeys(object: any, term: string, ...keys: string[]) {
+	if (keys.length === 0) {
+		return false;
 	}
-);
+	for (const key of keys) {
+		if (object[key] && object[key].toString().toLowerCase().includes(term)) {
+			return true;
+		}
+	}
+	return false;
+}

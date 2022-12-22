@@ -47,7 +47,8 @@ export default async function (url: string, html?: string) {
 		// const parsed = await parseHtml(htmlToParse as string, url);
 		// console.log({ parsed });
 		const parser = new Parser(url, htmlToParse as string);
-		const p = await parser.parse();
+		const { url: goodbye, ...p } = await parser.parse();
+		// TODO: store as markdown? (that could be... useful)
 		// console.log('parser', { content });
 		return p;
 	} else {

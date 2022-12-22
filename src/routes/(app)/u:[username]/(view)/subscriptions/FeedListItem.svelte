@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Muted from '$lib/components/atoms/Muted.svelte';
+	import type { EntryWithBookmark } from '$lib/entry.server';
 	import type { RssItemWithFeed } from '$lib/types/rss';
 	import { getHostname } from '$lib/utils';
 	import type { Entry } from '@prisma/client';
 	import dayjs from 'dayjs';
-	export let item: Entry;
+	export let item: EntryWithBookmark;
 	export let feed: {
 		feedUrl: string;
 		title: string | null;
@@ -23,6 +24,7 @@
 	$: active = $page.url.pathname === href;
 	let el: HTMLElement;
 	$: active && el && el.scrollIntoView({ block: 'nearest' });
+	$: unread = !item.interactions[0]?.is_read;
 </script>
 
 <article bind:this={el}>
@@ -32,7 +34,8 @@
 			: ''}"
 		{href}
 	>
-		<div class="flex flex-col">
+		<div class="relative flex flex-col">
+			{#if unread}<div class="absolute top-0 left-0 h-4 w-4 rounded-full bg-blue-500" />{/if}
 			<div class="flex space-x-4 ">
 				<img
 					class="h-5 w-5 shrink-0 rounded-lg"

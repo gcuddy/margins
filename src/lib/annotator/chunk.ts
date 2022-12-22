@@ -48,7 +48,7 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 					other.startOffset === this.startOffset &&
 					other.endOffset === this.endOffset
 				);
-			}
+			},
 		};
 	}
 
@@ -97,7 +97,7 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 					return this.scope.intersectsNode(node)
 						? NodeFilter.FILTER_ACCEPT
 						: NodeFilter.FILTER_REJECT;
-				}
+				},
 			}
 		);
 

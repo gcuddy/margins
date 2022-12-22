@@ -7,5 +7,5 @@
 </script>
 
 <div class="p-4">
-	<TagInputCombobox size="lg" {articles} {allTags} />
+	<TagInputCombobox size="lg" {bookmarks} {allTags} />
 </div>

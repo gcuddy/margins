@@ -18,7 +18,7 @@
 	let width = 240;
 </script>
 
-{#if ($page.route.id?.endsWith(`subscriptions/[id=integer]`) || $page.route.id?.endsWith(`entry/[id=integer]`)) && $currentList}
+{#if false && ($page.route.id?.endsWith(`subscriptions/[id=integer]`) || $page.route.id?.endsWith(`entry/[id=integer]`)) && $currentList}
 	<div class="flex h-full place-content-stretch items-stretch overflow-hidden">
 		{#if $currentList?.type === 'rss'}
 			<div class="max-w-sm overflow-auto border-r">

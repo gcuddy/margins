@@ -11,7 +11,7 @@
 	import { archive } from '$lib/utils';
 	import { navigating, page } from '$app/stores';
 	import HighlightMenu from '$lib/components/HighlightMenu.svelte';
-	import ReadingMenu from '$lib/components/ReadingMenu.svelte';
+	import ReadingMenu from './ReadingMenu.svelte';
 	import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
 	import useArticleCommands from './_commands';
 	import { recents } from '$lib/stores/recents';
@@ -24,16 +24,65 @@
 	import selection from '$lib/stores/selection';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { writable } from 'svelte/store';
-	import type { EntryInteraction } from '@prisma/client';
+	import type { Annotation, Bookmark, Entry, Interaction, Tag } from '@prisma/client';
+	import { getUser } from '@lucia-auth/sveltekit/client';
+	import { entryData } from '$lib/entry';
+	import type { Metadata } from './types';
+	import type { ExtendedBookmark } from '$lib/bookmark';
+	import TagEntry from '$lib/components/TagEntry.svelte';
+	import { enhance } from '$app/forms';
+	import { TargetSchema, type Selector } from '$lib/annotation';
+	import { createTextQuoteSelectorMatcher } from '$lib/annotator';
+	import { makeCreateRangeSelectorMatcher } from '$lib/annotator/range';
+	import parse from 'node-html-parser/dist/parse';
+	import { highlightText } from '$lib/annotator/highlighter';
+	import { highlight } from 'prismjs';
+	import { trpc } from '$lib/trpc/client';
 	dayjs.extend(localizedFormat);
 	export let data: PageData;
+	$: console.log(`data for ${$page.params.id}`, { data });
+	console.log(`data for page.svelte`, { data });
 	$: article = data.article;
-	$: bookmark = article.annotations.find((a) => a.type === 'bookmark');
-	$: console.log({ data });
-	$: last_scroll_position = (article?.readProgress as number) || 0;
+	let entry: Metadata;
+	let annotations: Annotation[] = [];
+	let interaction: {
+		is_read: boolean | null;
+		progress: number | null;
+	} | null = null;
+	let tags: Tag[] = data.article.tags;
+	let bookmark: ExtendedBookmark | null = null;
+	if ('entryId' in data.article) {
+		// bookmark
+		// TOOD: zod parsing
+		console.log({ data });
+		if (typeof data.article.data === 'object') {
+			entry = {
+				...entryData.parse(data.article.data),
+				id: data.article.entryId,
+				uri: data.article.uri,
+			};
+			annotations = data.article.annotations;
+			interaction = data.article.interaction;
+			bookmark = data.article;
+		}
+	} else {
+		entry = data.article;
+		annotations = data.article.annotations;
+		interaction = data.article.interaction;
+		bookmark = data.article.bookmark;
+		// TODO: annotations, etc
+	}
+	$: last_scroll_position = (interaction?.progress as number) || 0;
 	$: removeCommands = useArticleCommands(article, $page.data.user);
 
+	// TODO: elements we need to make this a proper "reading": Title, Author, Sumamary, content (data), annotations, the interaction... what else?
+
 	$: currentList = data.currentList;
+	// ??
+	$: current_list_article = $currentList?.items?.find((i) => i.id === article.id);
+	$: console.log({ $currentList, current_list_article });
+	// todo: should current list be "source of truth"?
+
 	let disableSaveScroll = false;
 
 	let context;
@@ -58,9 +107,9 @@
 		console.log($mainEl);
 		// mark as read
 		// optimistic
-		const ogInteraction = data.interaction || {};
-		if (!data.interaction?.is_read) {
-			data.interaction = { ...ogInteraction, is_read: true } as EntryInteraction;
+		const ogInteraction = interaction || {};
+		if (!interaction?.is_read) {
+			data.interaction = { ...ogInteraction, is_read: true };
 			const res = await fetch(`/api/interactions`, {
 				method: 'POST',
 				headers: {
@@ -68,7 +117,7 @@
 				},
 				body: JSON.stringify({
 					is_read: true,
-					entryId: article.id,
+					uri: data.article.uri,
 				}),
 			});
 			console.log({ res });
@@ -78,9 +127,8 @@
 			}
 		}
 		if ($page.data.user?.username === $page.params.username) {
-			console.log(`setting progress to ${data.interaction?.progress}`, $mainEl);
-			const pos = (data.interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
-			last_saved_progress = data.interaction?.progress || 0;
+			const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+			last_saved_progress = interaction?.progress || 0;
 			setTimeout(() => {
 				$mainEl.scrollTo(0, pos);
 			}, 10);
@@ -145,6 +193,9 @@
 	const virtualElement = writable({ getBoundingClientRect });
 	$: $virtualElement = { getBoundingClientRect };
 	popperRef(virtualElement);
+
+	/** Tags */
+	let tagFormRef: HTMLFormElement;
 </script>
 
 <!-- TODO: implement layout select -->
@@ -153,19 +204,17 @@
 </div> --><svelte:window on:mousemove={mousemove} />
 <!-- <div use:popperContent>Tooltip</div> -->
 
-{#if data.AUTHORIZED}
-	<!-- {JSON.stringify($currentList)} -->
-	<ReadingMenu
-		bind:entry={article}
-		back={$currentList ? $currentList.slug : '/'}
-		currentList={$currentList}
-	/>
-{:else}
-	unauhtorized
-{/if}
+<!-- {JSON.stringify($currentList)} -->
+<ReadingMenu
+	{bookmark}
+	bind:entry={data.article}
+	{interaction}
+	back={$currentList ? $currentList.slug : '/'}
+	currentList={$currentList}
+/>
 
 <svelte:head>
-	<title>{article.title}</title>
+	<title>{entry.title}</title>
 </svelte:head>
 
 {@html `<` + `style>${data.stylesheet?.css}</style>`}
@@ -178,8 +227,8 @@
 	data-content-container
 	class=""
 >
-	Read: {data.interaction?.is_read}
 	<article class="mx-auto max-w-3xl py-8 px-4">
+		{JSON.stringify(data, null, 2)}
 		<header class="space-y-3 pb-4" bind:this={$articleHeader}>
 			<a
 				class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
@@ -190,14 +239,14 @@
 					class="h-5 w-5 rounded-full object-cover"
 					alt=""
 				/>
-				<span class="truncate">{article.siteName || article.url || article.uri}</span></a
+				<span class="truncate">{entry.siteName || entry.uri}</span></a
 			>
-			<H1 class="font-newsreader dark:drop-shadow-sm">{article.title}</H1>
+			<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
 
 			<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
-			{#if article.description}
+			{#if entry.summary}
 				<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
-					{article.description}
+					{entry.summary}
 				</div>
 			{/if}
 
@@ -220,17 +269,17 @@
 					id="origin"
 					class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
 				>
-					{#if article.author}
-						<p><a href="/author/{article.author}">{article.author}</a></p>
+					{#if entry.author}
+						<p><a href="/author/{entry.author}">{entry.author}</a></p>
 					{/if}
-					{#if article.author && article.date}
+					{#if entry.author && entry.published}
 						<!-- <p>&middot;</p> -->
 					{/if}
-					{#if article.date}
-						<p>{dayjs(article.date).format('ll')}</p>
+					{#if entry.published}
+						<p>{dayjs(entry.published).format('ll')}</p>
 					{/if}
-					{#if article.wordCount}
-						<span>{article.wordCount} words</span>
+					{#if entry.wordCount}
+						<span>{entry.wordCount} words</span>
 					{/if}
 				</div>
 			</div>
@@ -239,30 +288,25 @@
 					Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
 				</span>
 			{/if}
-			{#if data.authorized}
-				{#if article.tags.length}
-					<div transition:slide|local>
-						<TagInputCombobox
-							articles={[article]}
-							className="hover:ring-1 rounded-sm ring-gray-300 focus-within:bg-gray-100
-          dark:ring-gray-700 dark:focus-within:bg-gray-700 focus-within:!ring-0 transition
-            "
-							invalidate={`/${article.id}`}
-						/>
-					</div>
-				{/if}
+			{#if data.authorized && data.article.bookmark && data.article.tags}
+				<div transition:slide|local>
+					<TagInputCombobox
+						original={{ ...data.article }}
+						allTags={$page.data.tags}
+						tags={data.article.tags.map((tag) => ({
+							...tag,
+							...$page.data.tags?.find((t) => t.id === tag.id),
+						}))}
+					/>
+				</div>
 			{/if}
 		</header>
 		<!-- this is a very rudimentary check lol -->
-		<Highlighter
-			articleID={article.id}
-			articleUrl={article.uri}
-			bind:annotations={article.annotations}
-		>
-			{#if article.image && !article.html?.includes(article.image)}
+		<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
+			<!-- {#if article.image && !article.html?.includes(article.image)}
 				<img src={article.image} alt="" class="mx-auto rounded py-2" />
-			{/if}
-			{@html article.html || article.text || article.summary}
+			{/if} -->
+			{@html entry.html || entry.text || entry.summary}
 		</Highlighter>
 		{#if $mainElScroll.offset > 0.97 && article.location !== 'ARCHIVE' && data.authorized}
 			<div class="fixed bottom-8 right-8" transition:fade>

@@ -54,7 +54,8 @@
 	import { upsertAnnotation } from '$lib/annotation';
 	import { portal } from 'svelte-portal';
 	import Annotation from '$lib/components/Annotation.svelte';
-	import type { EntryWithAnnotations } from '$lib/entry.server';
+	import type { EntryWithBookmark } from '$lib/entry.server';
+	import parse from 'node-html-parser/dist/parse';
 	const [send, receive] = crossfade({
 		duration: 150,
 		fallback: scale,
@@ -123,7 +124,7 @@
 	});
 	export let articleID: number;
 	export let articleUrl: string;
-	export let annotations: EntryWithAnnotations['annotations'] = [];
+	export let annotations: Annotation[] = [];
 	export let readOnly = false;
 
 	// Virtual Selection Element to track selection for annotation menu
@@ -425,11 +426,37 @@
 		return div.outerHTML;
 		// could also return inner, but I like having the wrapping div
 	};
-
+	const tryToWrapOnServer = async () => {
+		for (const annotation of inlineAnnotations) {
+			console.log({ annotation });
+			try {
+				const target = TargetSchema.parse(annotation.target);
+				console.log({ target });
+				const { selector } = target;
+				const matches = createMatcher(selector)(wrapper);
+				const matchList = [];
+				for await (const match of matches) matchList.push(match);
+				const h = matchList.map((match) =>
+					highlight(match, 'mark', {
+						'data-annotation-id': annotation.id.toString(),
+						'data-annotation-content': annotation.body || annotation.tags.length ? 'true' : 'false',
+					})
+				);
+				$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
+				idToElMap.set(annotation.id, {
+					destroy: h.map((h) => h.removeHighlights),
+					els: h.flatMap((h) => h.highlightElements),
+				});
+			} catch (e) {
+				// console.error(e);
+			}
+		}
+	};
 	onMount(async () => {
 		if (browser && wrapper) {
 			// load highlgihts
 			for (const annotation of inlineAnnotations) {
+				console.log({ annotation });
 				try {
 					const target = TargetSchema.parse(annotation.target);
 					console.log({ target });
@@ -749,7 +776,6 @@
 					if (!$page.data.user) return;
 					const { selector, highlightInfo, el } = annotation_opts;
 					const id = el.dataset.annotationId;
-					console.log({ highlightInfo });
 					const annotation = await upsertAnnotation({
 						body: value,
 						target: {
@@ -757,7 +783,7 @@
 							selector,
 							html: annotation_opts.html,
 						},
-						userId: $page.data.user.id,
+						userId: $page.data.user.userId,
 						entryId: articleID,
 						id: (id && Number(id)) || Number(id) === 0 ? Number(id) : undefined,
 						tags: active_annotation_tags,

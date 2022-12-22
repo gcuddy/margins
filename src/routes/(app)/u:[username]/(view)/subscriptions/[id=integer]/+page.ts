@@ -2,6 +2,7 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent, params, url }) => {
 	const data = await parent();
+
 	console.log('id _page.ts', data);
 	// data.currentList.set({
 	// 	type: 'rss',
@@ -9,6 +10,6 @@ export const load: PageLoad = async ({ parent, params, url }) => {
 	// });
 	// if (browser)
 	return {
-		data,
+		...data,
 	};
 };

@@ -9,8 +9,9 @@
 	import LocationListbox from '$lib/components/LocationListbox.svelte';
 	import { defaultViewOptions, type ViewOptions } from '$lib/types/schemas/View';
 	import { page } from '$app/stores';
+	import EntryList from '$lib/components/EntryList.svelte';
 	export let data: PageData;
-	$: ({ articles, location } = data);
+	$: ({ location } = data);
 	// this shouldn't be necessary, since we're requesting from the server - but maybe good to keep in case we want to do something client-side?
 	// $: sortedArticles = articles.filter((a) => a.location === location);
 	let viewOptions: ViewOptions = defaultViewOptions;
@@ -18,7 +19,7 @@
 	$: data.currentList.set({
 		type: 'bookmarks',
 		slug: $page.url.pathname,
-		items: data.annotations,
+		items: data.entries,
 	});
 </script>
 
@@ -39,8 +40,9 @@
 		</div>
 	</DefaultHeader>
 </Header>
-<Saved
-	annotations={data.annotations}
+<!-- {JSON.stringify(data.bookmarks, null, 2)} -->
+<!-- <Saved
+	items={data.entries || data.bookmarks || []}
 	{viewOptions}
 	on:update={(e) => {
 		console.log('update', e);
@@ -48,4 +50,6 @@
 			articles = articles.map((a) => (a.id === article.id ? article : a));
 		});
 	}}
-/>
+/> -->
+
+<EntryList items={data.entries} />

@@ -1,5 +1,6 @@
+import { derived, writable } from 'svelte/store';
+
 import { browser } from '$app/environment';
-import { derived, readable, writable, type Readable } from 'svelte/store';
 
 export const mainEl = writable<HTMLElement>();
 
@@ -31,9 +32,9 @@ export const mainElScroll = derived(
 				downIncrementer = 0;
 				upIncrementer++;
 			}
-			if (downIncrementer === 10) {
+			if (downIncrementer === 6) {
 				down = true;
-			} else if (upIncrementer === 10) {
+			} else if (upIncrementer === 6) {
 				down = false;
 			}
 			lastScrollTop = $mainEl.scrollTop;

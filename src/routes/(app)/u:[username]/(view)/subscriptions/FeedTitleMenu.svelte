@@ -11,53 +11,57 @@
 	import type { SubscriptionWithFeed } from './[id=integer]/types';
 
 	export let subscription: SubscriptionWithFeed;
+	const unread = subscription.feed.entries.filter((a, b) => !a.interactions[0]?.is_read).length;
 	let confirm_modal = false;
 	let delete_subscription_button: HTMLElement;
 </script>
 
-<ContextMenu
-	placement="bottom-start"
-	items={[
-		[
-			{
-				label: 'Edit Feed',
-				icon: 'rssSolid',
-				perform: () => {
-					modals.open(EditFeed, {
-						feed: subscription.feed,
-					});
+<div class="flex flex-col gap-2">
+	<ContextMenu
+		placement="bottom-start"
+		items={[
+			[
+				{
+					label: 'Edit Feed',
+					icon: 'rssSolid',
+					perform: () => {
+						modals.open(EditFeed, {
+							feed: subscription.feed,
+						});
+					},
 				},
-			},
-		],
-		[
-			{
-				label: 'Copy Feed URL',
-				icon: 'square2StackSolid',
-				perform: () => {
-					navigator.clipboard.writeText(subscription.feed.feedUrl);
-					notifications.notify({
-						message: 'Feed URL copied to clipboard',
-						type: 'success',
-					});
+			],
+			[
+				{
+					label: 'Copy Feed URL',
+					icon: 'square2StackSolid',
+					perform: () => {
+						navigator.clipboard.writeText(subscription.feed.feedUrl);
+						notifications.notify({
+							message: 'Feed URL copied to clipboard',
+							type: 'success',
+						});
+					},
 				},
-			},
-		],
-		[
-			{
-				label: 'Delete Subscription',
-				icon: 'trashSolid',
-				perform: () => {
-					confirm_modal = true;
+			],
+			[
+				{
+					label: 'Delete Subscription',
+					icon: 'trashSolid',
+					perform: () => {
+						confirm_modal = true;
+					},
 				},
-			},
-		],
-	]}
->
-	<div class="flex items-center space-x-1">
-		<SmallPlus>{subscription.title}</SmallPlus>
-		<Icon name="chevronDownSolid" className="h-4 w-4 fill-current" />
-	</div>
-</ContextMenu>
+			],
+		]}
+	>
+		<div class="flex items-center space-x-1">
+			<SmallPlus>{subscription.title}</SmallPlus>
+			<Icon name="chevronDownSolid" className="h-4 w-4 fill-current" />
+		</div>
+	</ContextMenu>
+	<div>{unread} unread</div>
+</div>
 
 <ConfirmModal
 	bind:isOpen={confirm_modal}
