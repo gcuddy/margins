@@ -2,15 +2,12 @@
 	import type { IconName } from '$lib/icons';
 	import { colors } from '$lib/types/colors';
 	import type { ChosenIcon } from '$lib/types/icon';
-	import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@rgossiaux/svelte-headlessui';
-	import { Popover, PopoverButton, PopoverPanel } from '@rgossiaux/svelte-headlessui';
-	import { values } from 'idb-keyval';
+	import { Popover, PopoverButton, PopoverPanel, Tab, TabGroup, TabList, TabPanel, TabPanels } from '@rgossiaux/svelte-headlessui';
 	import { createPopperActions } from 'svelte-popperjs';
 	import SmallPlus from './atoms/SmallPlus.svelte';
 	import ColorSwatch from './ColorSwatch.svelte';
-	import Icon from './helpers/Icon.svelte';
-	import { onMount, SvelteComponent } from 'svelte';
 	import EmojiPicker from './EmojiPicker.svelte';
+	import Icon from './helpers/Icon.svelte';
 	const [popperRef, popperContent] = createPopperActions();
 	const popperOptions = {
 		placement: 'bottom-start',

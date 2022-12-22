@@ -1,21 +1,19 @@
 import { goto } from '$app/navigation';
 import type { Command } from '$lib/components/CommandPalette/types';
-import { modals } from '$lib/stores/modals';
 import URLModal from '$lib/components/modals/URLModal.svelte';
+import { modals } from '$lib/stores/modals';
 // import { getDirectory } from '$lib/file-access';
-import { darkMode } from '$lib/stores/settings';
-import TextareaSvelte from '$lib/components/Textarea.svelte';
-import BulkURLs from '$lib/components/BulkURLs.svelte';
-import { commandPaletteStore } from '$lib/components/CommandPalette/store';
-import { showCommandPalette } from '$lib/stores/commands';
-import { cachedArticlesArray } from '$lib/stores/cache';
-import type { Article, RssFeed, Tag } from '@prisma/client';
-import CircularProgressBarSvelte from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
-import { getArticles, getSubscriptions, getTags, subscriptionsStore, tagsStore } from './sync';
-import Icon from '$lib/components/helpers/Icon.svelte';
-import UrlModal from '$lib/components/modals/URLModal.svelte';
 import AddModalSvelte from '$lib/components/AddModal.svelte';
-import { getUser } from '@lucia-auth/sveltekit/client';
+import BulkURLs from '$lib/components/BulkURLs.svelte';
+import CircularProgressBarSvelte from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
+import { commandPaletteStore } from '$lib/components/CommandPalette/store';
+import Icon from '$lib/components/helpers/Icon.svelte';
+import TextareaSvelte from '$lib/components/Textarea.svelte';
+import { cachedArticlesArray } from '$lib/stores/cache';
+import { showCommandPalette } from '$lib/stores/commands';
+import { darkMode } from '$lib/stores/settings';
+import type { Article, RssFeed, Tag } from '@prisma/client';
+import { getArticles, getSubscriptions, getTags, subscriptionsStore, tagsStore } from './sync';
 
 export const jumpToArticle = () => {
 	getArticles();
