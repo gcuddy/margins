@@ -29,7 +29,7 @@ async function fetchAndCache(request) {
 }
 
 self.addEventListener('fetch', (event) => {
-	console.log({ event });
+	// console.log({ event });
 	// const { request } = event;
 
 	// // Prevent Chrome Developer Tools error:
