@@ -7,7 +7,6 @@
 	import KeyboardNavItem from '$lib/components/helpers/KeyboardNav/KeyboardNavItem.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
-	import type { PageData } from '../../../../.svelte-kit/types/src/routes/smart/$types';
 
 	export let data: PageData;
 	$: lists = data.lists;

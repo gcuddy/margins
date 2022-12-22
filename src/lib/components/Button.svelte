@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { IconName } from '$lib/icons';
 	import { show_tooltips } from '$lib/stores/Tooltips';
+	import { createEventDispatcher } from 'svelte';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { fly } from 'svelte/transition';
 	import ButtonTooltip from './ButtonTooltip.svelte';
@@ -103,6 +104,23 @@
 		}, 300);
 	}
 
+	const dispatch = createEventDispatcher();
+
+	function handleClick(e: MouseEvent) {
+		hideTooltip();
+		dispatch("click", e.detail)
+	}
+
+	function handleMouseLeave(e: MouseEvent) {
+		hideTooltip();
+		dispatch("mouseleave", e.detail)
+	}
+
+	function handlemouseenter(e: MouseEvent) {
+		showTooltip();
+		dispatch("mouseenter", e.detail)
+	}
+
 	// TODO: tooltips
 </script>
 
@@ -115,12 +133,10 @@
 			bind:this={el}
 			{href}
 			use:popperRef
-			on:click
-			on:click={hideTooltip}
+			on:click={handleClick}
 			on:mouseenter
-			on:mouseleave
-			on:mouseenter={showTooltip}
-			on:mouseleave={hideTooltip}
+			on:mouseenter={handlemouseenter}
+			on:mouseleave={handleMouseLeave}
 			class={_classname}
 			aria-label={tooltip.text}
 		>
@@ -130,13 +146,9 @@
 		<a
 			bind:this={el}
 			{href}
-			data-sveltekit-prefetch={prefetch ? true : undefined}
-			on:click
-			on:click={hideTooltip}
-			on:mouseenter
-			on:mouseleave
-			on:mouseenter={showTooltip}
-			on:mouseleave={hideTooltip}
+			on:click={handleClick}
+			on:mouseenter={handlemouseenter}
+			on:mouseleave={handleMouseLeave}
 			class={_classname}
 		>
 			<slot>Button</slot>
@@ -149,13 +161,10 @@
 		type={as === 'button' ? type : undefined}
 		{disabled}
 		{href}
-		on:click
-		on:click={hideTooltip}
-		on:mouseenter
-		on:mouseleave
+		on:click={handleClick}
 		use:popperRef
-		on:mouseenter={showTooltip}
-		on:mouseleave={hideTooltip}
+		on:mouseenter={handlemouseenter}
+		on:mouseleave={handleMouseLeave}
 		class={_classname}
 		aria-label={tooltip.text}
 	>
@@ -168,12 +177,9 @@
 		type={as === 'button' ? type : undefined}
 		{disabled}
 		{href}
-		on:click
-		on:click={hideTooltip}
-		on:mouseenter
-		on:mouseleave
-		on:mouseenter={showTooltip}
-		on:mouseleave={hideTooltip}
+		on:click={handleClick}
+		on:mouseenter={handlemouseenter}
+		on:mouseleave={handleMouseLeave}
 		class={_classname}
 	>
 		<slot>Button</slot>

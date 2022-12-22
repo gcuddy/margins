@@ -5,7 +5,7 @@ import { db } from '$lib/db';
 import { buildRssFeed, findFeed } from '$lib/rss/parser.server';
 import { getJsonFromRequest } from '$lib/utils';
 
-export const action: Actions = {
+export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		try {
 			// his assumes we're getting a *single* url

@@ -32,17 +32,17 @@ export const load: PageServerLoad = async ({ url, params }) => {
 	};
 };
 
-export const PATCH: Action = async ({ params, request }) => {
-	const json = await getJsonFromRequest(request);
-	const parsed = SmartListModelSchema.partial().parse(json);
-	await db.smartList.update({
-		where: {
-			id: Number(params.id),
-		},
-		data: {
-			viewOptions: parsed.viewOptions,
-			filter: JSON.stringify(parsed.filter),
-			name: parsed.name,
-		},
-	});
-};
+// export const PATCH: Action = async ({ params, request }) => {
+// 	const json = await getJsonFromRequest(request);
+// 	const parsed = SmartListModelSchema.partial().parse(json);
+// 	await db.smartList.update({
+// 		where: {
+// 			id: Number(params.id),
+// 		},
+// 		data: {
+// 			viewOptions: parsed.viewOptions,
+// 			filter: JSON.stringify(parsed.filter),
+// 			name: parsed.name,
+// 		},
+// 	});
+// };

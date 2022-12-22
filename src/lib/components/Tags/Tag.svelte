@@ -38,7 +38,6 @@
     "
 	href={as === 'a' ? `/tags/${tag.name}` : undefined}
 	{tabindex}
-	on:click
 >
 	{#if icon}
 		<!-- Heroicons solid Tag (TODO: make it be in a component) -->

@@ -22,20 +22,4 @@ export const load: PageServerLoad = async () => {
 	}
 };
 
-export const POST: Action = async ({ request }) => {
-	// TODO: add schema validation
-	try {
-		const json = await getJsonFromRequest(request);
-		const smartList = await db.smartList.create({
-			data: {
-				name: json.name,
-				filter: json.filter
-			}
-		});
-		return {
-			location: `/smart/${smartList.id}`
-		};
-	} catch (e) {
-		throw error(400, 'error creating smart list');
-	}
-};
+

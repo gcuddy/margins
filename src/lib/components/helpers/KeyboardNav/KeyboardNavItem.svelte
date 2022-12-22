@@ -123,11 +123,6 @@
 	on:pointermove={handleMove}
 	on:mouseleave={handleLeave}
 	on:pointerleave={handleLeave}
-	on:focus
-	on:blur
-	on:mouseover
-	on:mouseleave
-	on:click
 	class={computedClass}
 	{...propsWeControl}
 	{...$$restProps}

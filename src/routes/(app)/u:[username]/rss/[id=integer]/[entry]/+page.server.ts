@@ -18,19 +18,19 @@ import { getJsonFromRequest } from '$lib/utils';
 // 	};
 // };
 
-export const PATCH: Action = async ({ params, request }) => {
-	try {
-		const id = parseInt(params.entry);
-		const json = await getJsonFromRequest(request);
-		await db.rssFeedItem.update({
-			where: {
-				id,
-			},
-			data: {
-				...json,
-			},
-		});
-	} catch (e) {
-		console.error(e);
-	}
-};
+// export const PATCH: Action = async ({ params, request }) => {
+// 	try {
+// 		const id = parseInt(params.entry);
+// 		const json = await getJsonFromRequest(request);
+// 		await db.rssFeedItem.update({
+// 			where: {
+// 				id,
+// 			},
+// 			data: {
+// 				...json,
+// 			},
+// 		});
+// 	} catch (e) {
+// 		console.error(e);
+// 	}
+// };

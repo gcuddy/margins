@@ -25,33 +25,33 @@ const listSchema = z.object({
 	articles: z.array(z.string()).optional(),
 });
 
-export const POST: Action = async ({ request }) => {
-	try {
-		const data = await getJsonFromRequest(request);
-		const { name, description, articles } = listSchema.parse(data);
-		const { id } = await db.collection.create({
-			data: {
-				name,
-				description,
-			},
-		});
-		if (articles) {
-			await db.listItem.createMany({
-				data: articles.map((article) => {
-					return {
-						articleId: parseInt(article),
-						listId: id,
-						type: 'ARTICLE',
-					};
-				}),
-				skipDuplicates: true,
-			});
-		}
-		return {
-			location: `/lists/${id}`,
-		};
-	} catch (e) {
-		console.error(e);
-		throw error(400, 'error creating list');
-	}
-};
+// export const POST: Action = async ({ request }) => {
+// 	try {
+// 		const data = await getJsonFromRequest(request);
+// 		const { name, description, articles } = listSchema.parse(data);
+// 		const { id } = await db.collection.create({
+// 			data: {
+// 				name,
+// 				description,
+// 			},
+// 		});
+// 		if (articles) {
+// 			await db.listItem.createMany({
+// 				data: articles.map((article) => {
+// 					return {
+// 						articleId: parseInt(article),
+// 						listId: id,
+// 						type: 'ARTICLE',
+// 					};
+// 				}),
+// 				skipDuplicates: true,
+// 			});
+// 		}
+// 		return {
+// 			location: `/lists/${id}`,
+// 		};
+// 	} catch (e) {
+// 		console.error(e);
+// 		throw error(400, 'error creating list');
+// 	}
+// };
