@@ -29,6 +29,7 @@ function createModalStore() {
 		update((stack) => {
 			const newStack = [...stack, { component, props, id, open: true }];
 			index = newStack.length;
+			console.log({ newStack })
 			return newStack;
 		});
 		return index;

@@ -108,17 +108,16 @@
 
 	function handleClick(e: MouseEvent) {
 		hideTooltip();
-		dispatch("click", e.detail)
 	}
 
 	function handleMouseLeave(e: MouseEvent) {
 		hideTooltip();
-		dispatch("mouseleave", e.detail)
+		dispatch('mouseleave', e.detail);
 	}
 
 	function handlemouseenter(e: MouseEvent) {
 		showTooltip();
-		dispatch("mouseenter", e.detail)
+		dispatch('mouseenter', e.detail);
 	}
 
 	// TODO: tooltips
@@ -147,6 +146,7 @@
 			bind:this={el}
 			{href}
 			on:click={handleClick}
+			on:click
 			on:mouseenter={handlemouseenter}
 			on:mouseleave={handleMouseLeave}
 			class={_classname}

@@ -8,7 +8,6 @@
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import { modals } from '$lib/stores/modals';
 	import FeedTitleMenu from './FeedTitleMenu.svelte';
-	$: console.log({ $page });
 </script>
 
 <Header>

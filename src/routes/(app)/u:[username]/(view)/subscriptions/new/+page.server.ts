@@ -24,7 +24,7 @@ export const actions: Actions = {
 				return error(401, 'Not authorized');
 			}
 			const data = await getJsonFromRequest(request);
-			data.feeds = data.feeds.filter((a) => a.url);
+			data.feeds = (data.feeds as {url?: string;}[]).filter((a) => a.url);
 			const parsed = feedsToAdd.parse(data);
 			// now connect to db, find/create those feeds, update their entries, and add a subscription for the user
 			const addedFeeds = await Promise.all(

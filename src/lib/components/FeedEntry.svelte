@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import { modals } from '$lib/stores/modals';
-	import type { ActionData } from '.svelte-kit/types/src/routes/(app)/u:[username]/subscriptions/new/$types';
 	import Button from './Button.svelte';
 	import GenericInput from './GenericInput.svelte';
 	import Icon from './helpers/Icon.svelte';

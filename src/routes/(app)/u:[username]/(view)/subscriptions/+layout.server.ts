@@ -2,8 +2,8 @@ import { error } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
 
-import type { PageServerLoad } from './$types';
-export const load: PageServerLoad = async ({ params, locals }) => {
+import type { LayoutServerLoad } from './$types';
+export const load: LayoutServerLoad = async ({ params, locals }) => {
 	const { session, user } = await locals.validateUser();
 	if (user && user.username === params.username) {
 		const subscriptions = await db.subscription.findMany({

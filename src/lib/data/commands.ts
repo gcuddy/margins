@@ -9,14 +9,11 @@ import CircularProgressBarSvelte from '$lib/components/CircularProgressBar/Circu
 import { commandPaletteStore } from '$lib/components/CommandPalette/store';
 import Icon from '$lib/components/helpers/Icon.svelte';
 import TextareaSvelte from '$lib/components/Textarea.svelte';
-import { cachedArticlesArray } from '$lib/stores/cache';
 import { showCommandPalette } from '$lib/stores/commands';
 import { darkMode } from '$lib/stores/settings';
 import type { Article, RssFeed, Tag } from '@prisma/client';
-import { getArticles, getSubscriptions, getTags, subscriptionsStore, tagsStore } from './sync';
 
 export const jumpToArticle = () => {
-	getArticles();
 	commandPaletteStore.open({
 		values: cachedArticlesArray,
 		onSelect: ({ detail: article }) => {
@@ -43,7 +40,6 @@ export const jumpToArticle = () => {
 };
 
 export const jumpToTag = () => {
-	getTags();
 	commandPaletteStore.open({
 		values: tagsStore,
 		onSelect: ({ detail: tag }) => {

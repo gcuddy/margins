@@ -14,7 +14,6 @@
 	export let alwaysShowDescription = false;
 
 	import SelectActions from './SelectActions.svelte';
-	import { dndzone, SHADOW_ITEM_MARKER_PROPERTY_NAME, type DndEvent } from 'svelte-dnd-action';
 	import { notifications } from '../stores/notifications';
 	import dayjs from 'dayjs';
 	import localizedFormat from 'dayjs/plugin/localizedFormat.js';
@@ -103,14 +102,7 @@
 			? 'p-4'
 			: ''} w-full space-y-0 overflow-auto {viewOptions.view === 'grid'
 			? 'grid grid-cols-12 gap-4 container pb-10'
-			: ''}"
-		use:dndzone={{
-			items: items,
-			flipDurationMs,
-			dragDisabled,
-			dropTargetStyle: {},
-			zoneTabIndex: -1,
-		}}
+			: ''}"		
 		on:consider={handleConsider}
 		on:finalize={handleFinalize}
 	>

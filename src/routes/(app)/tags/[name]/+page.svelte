@@ -11,7 +11,6 @@
 	import { syncStore } from '$lib/stores/sync';
 	import { ViewOptionsSchema, type ViewOptions } from '$lib/types/schemas/View';
 	import { createFavorite, deleteFavorite, sortArticles } from '$lib/utils';
-	import type { PageData } from '../../../../../.svelte-kit/types/src/routes/tags/[name]/$types';
 
 	export let data: PageData;
 	let { tag } = data;
