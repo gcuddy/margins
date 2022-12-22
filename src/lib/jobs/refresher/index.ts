@@ -116,6 +116,8 @@ export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
 				const entries = await getUpdatedEntries(feed);
 				if (entries) {
 					return entries;
+				} else {
+					return [{}]
 				}
 				// return db.entry.createMany({
 				// 	skipDuplicates: true,

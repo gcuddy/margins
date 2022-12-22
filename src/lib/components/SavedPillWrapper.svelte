@@ -11,16 +11,16 @@
 	export let viewOptions: Partial<ViewOptions>;
 
 	let annotationEl: HTMLElement | undefined;
-
 	$: annotations = item.annotations?.filter((a) => a.type === 'annotation');
+	$: annotationLength = item['_count']?.annotations || annotations?.length;
 	$: allTags = $page.data.tags;
 	$: tagNames = allTags?.filter((t) => item.tags?.some((i) => i.id === t.id));
 </script>
 
 <!-- TODO: eventually make it so they overlap! -->
 <div class="flex space-x-1 text-xs">
-	{#if annotations?.length && viewOptions.properties?.annotationCount}
-		<AnnotationCount count={annotations?.length} bind:el={annotationEl} />
+	{#if annotationLength && viewOptions.properties?.annotationCount}
+		<AnnotationCount count={annotationLength} bind:el={annotationEl} />
 	{/if}
 	<!-- {#if item.state && viewOptions.properties?.location}
 		<LocationPill location={item.state.type} />
