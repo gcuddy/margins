@@ -30,60 +30,60 @@ async function fetchAndCache(request) {
 
 self.addEventListener('fetch', (event) => {
 	console.log({ event });
-	const { request } = event;
+	// const { request } = event;
 
-	// Prevent Chrome Developer Tools error:
-	// Failed to execute 'fetch' on 'ServiceWorkerGlobalScope': 'only-if-cached' can be set only with 'same-origin' mode
-	//
-	// See also https://stackoverflow.com/a/49719964/1217468
-	console.log(`serviceworker`, { request });
-	if (
-		request.method !== 'GET' ||
-		(request.cache === 'only-if-cached' && request.mode !== 'same-origin')
-	) {
-		return;
-	}
+	// // Prevent Chrome Developer Tools error:
+	// // Failed to execute 'fetch' on 'ServiceWorkerGlobalScope': 'only-if-cached' can be set only with 'same-origin' mode
+	// //
+	// // See also https://stackoverflow.com/a/49719964/1217468
+	// console.log(`serviceworker`, { request });
+	// if (
+	// 	request.method !== 'GET' ||
+	// 	(request.cache === 'only-if-cached' && request.mode !== 'same-origin')
+	// ) {
+	// 	return;
+	// }
 
-	event.respondWith(
-		(async function () {
-			const cache = await caches.open(cache_name);
+	// event.respondWith(
+	// 	(async function () {
+	// 		const cache = await caches.open(cache_name);
 
-			const cachedResponsePromise = await cache.match(request);
-			const networkResponsePromise = fetch(request);
+	// 		const cachedResponsePromise = await cache.match(request);
+	// 		const networkResponsePromise = fetch(request);
 
-			if (request.url.startsWith(self.location.origin)) {
-				console.log('serviceworker working');
-				event.waitUntil(
-					(async function () {
-						const networkResponse = await networkResponsePromise;
+	// 		if (request.url.startsWith(self.location.origin)) {
+	// 			console.log('serviceworker working');
+	// 			event.waitUntil(
+	// 				(async function () {
+	// 					const networkResponse = await networkResponsePromise;
 
-						await cache.put(request, networkResponse.clone());
-					})()
-				);
-			}
+	// 					await cache.put(request, networkResponse.clone());
+	// 				})()
+	// 			);
+	// 		}
 
-			return cachedResponsePromise || networkResponsePromise;
-		})()
-	);
+	// 		return cachedResponsePromise || networkResponsePromise;
+	// 	})()
+	// );
 });
 
 // Clean up caches other than current.
 self.addEventListener('activate', (event) => {
-	event.waitUntil(
-		(async function () {
-			const cacheNames = await caches.keys();
+	// event.waitUntil(
+	// 	(async function () {
+	// 		const cacheNames = await caches.keys();
 
-			await Promise.all(
-				cacheNames
-					.filter((cacheName) => {
-						const deleteThisCache = cacheName !== cache_name;
+	// 		await Promise.all(
+	// 			cacheNames
+	// 				.filter((cacheName) => {
+	// 					const deleteThisCache = cacheName !== cache_name;
 
-						return deleteThisCache;
-					})
-					.map((cacheName) => caches.delete(cacheName))
-			);
-		})()
-	);
+	// 					return deleteThisCache;
+	// 				})
+	// 				.map((cacheName) => caches.delete(cacheName))
+	// 		);
+	// 	})()
+	// );
 });
 
 // if (e.request.method !== 'GET') {

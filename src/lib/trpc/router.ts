@@ -1,18 +1,19 @@
-// lib/trpc/router.ts
-import { initTRPC } from '@trpc/server';
 
-import type { Context } from '$lib/trpc/context';
-
-import { bookmarkRouter } from './routes/bookmarks';
+import { bookmarks } from './routes/bookmarks';
 import { entries } from './routes/entries';
-import { parseRouter } from './routes/parse';
-
-export const t = initTRPC.context<Context>().create();
+import { parser } from './routes/parse';
+import { t } from '$lib/trpc/t';
+import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 
 export const router = t.router({
 	entries,
-	bookmarkRouter,
-	parseRouter,
+	bookmarks,
+	parser
 });
 
 export type Router = typeof router;
+
+
+// 👇 type helpers 💡
+export type RouterInputs = inferRouterInputs<Router>;
+export type RouterOutputs = inferRouterOutputs<Router>;

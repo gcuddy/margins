@@ -37,131 +37,21 @@ export const actions: Actions = {
 					missing: true,
 				});
 			}
-			const article = router.createCaller(await createContext(event));
-			const [entry, bookmark] = await db.$transaction([
-				db.entry.upsert({
-					where: {
-						uri: url,
-					},
-					create: {
-						...article,
-						type: DocumentType.article,
-						uri: url,
-					},
-					update: {
-						...article,
-						uri: url,
-					},
-				}),
-				db.bookmark.upsert({
-					where: {
-						uri: url,
-					},
-					create: {
-						data: article,
-						interaction: {
-							connectOrCreate: {
-								where: {
-									userId_uri: {
-										uri: url,
-										userId,
-									},
-								},
-								create: {
-									userId,
-									uri: url,
-								},
-							},
-						},
-						tags: {
-							connectOrCreate: connectOrCreateTaggings({ tags, userId }),
-						},
-						annotations: note
-							? {
-									create: {
-										type: 'note',
-										userId,
-										body: note,
-									},
-							  }
-							: undefined,
-						entry: {
-							connect: {
-								uri: url,
-							},
-						},
-						user: {
-							connect: {
-								id: userId,
-							},
-						},
-						state: {
-							connect: {
-								id: user.default_state_id,
-							},
-						},
-					},
-					update: {
-						data: article,
-					},
-				}),
-			]);
-			console.log({ entry, bookmark });
-			// const bookmark = await db.annotation.upsert({
-			//     where: {
-
-			//     }
-			// })
-			// const newArticle = await db.article.create({
-			// 	data: {
-			// 		...article,
-			// 		url,
-			// 		title: title || article.title || '',
-			// 		author: article.author || '',
-			// 		image: article.image || '',
-			// 		date: dayjs(article.date).isValid() ? dayjs(article.date).format() : dayjs().format(),
-			// 		readProgress: 0,
-			// 		context,
-			// 		type: 0,
-			// 		userId,
-			// 		private: _private === 'on',
-			// 		location,
-			// 		readLater: readLater === 'on',
-			// 		tags: tags.length
-			// 			? {
-			// 					connectOrCreate: tags.map((t) => {
-			// 						return {
-			// 							where: {
-			// 								name_userId: {
-			// 									name: t,
-			// 									userId,
-			// 								},
-			// 							},
-			// 							create: {
-			// 								name: t,
-			// 								userId,
-			// 							},
-			// 						};
-			// 					}),
-			// 			  }
-			// 			: undefined,
-			// 		annotations: !note
-			// 			? undefined
-			// 			: {
-			// 					create: {
-			// 						target: JSON.stringify({
-			// 							source: url,
-			// 						}),
-			// 						motivation: 'describing',
-			// 						body: note,
-			// 					},
-			// 			  },
-			// 	},
-			// });
-			if (entry) {
+			const serverRouter = router.createCaller(await createContext(event))
+			// TODO: differentiate between different types of links
+			// First parse the article
+			const article = await serverRouter.parser.parse(url);
+			console.log(`here's the article we're going to try to add:`, { article })
+			// Now add the article
+			const bookmark = await serverRouter.bookmarks.add({
+				article,
+				url,
+			})
+			console.log(`result of /add`, { bookmark })
+			if (bookmark) {
 				return {
 					// location: `/u:${}/article/${newArticle.id}`,
-					entry,
+					bookmark,
 				};
 			}
 		} catch (e) {

@@ -185,10 +185,10 @@ export const FOOTNOTE_HINT_RE = /\bfootnotes?\b/i;
 export const Metadata = z
 	.object({
 		title: z.string(),
-		summary: z.string(),
-		image: z.string(),
-		url: z.string(),
-		author: z.string(),
+		summary: z.string().max(191),
+		image: z.string().max(191),
+		url: z.string().max(191),
+		author: z.string().max(191),
 		published: z.string(),
 		siteName: z.string(),
 	})
@@ -416,6 +416,7 @@ export class Parser {
 		console.timeEnd('parse');
 		return {
 			...this.metadata,
+			summary: this.metadata.summary?.slice(0,191),
 			html: content.innerHTML,
 			text: content.innerText,
 			wordCount: content.innerText.split(' ').length,

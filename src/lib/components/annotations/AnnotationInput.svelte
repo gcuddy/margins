@@ -40,7 +40,7 @@
 <!-- transparency is a bit much (and maybe causes gpu performance issues), but here were the classes: dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200 -->
 <div
 	bind:this={el}
-	class="annotation-input not-prose relative z-50 flex min-w-max max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-300 bg-white p-2.5  font-sans font-medium shadow-lg transparency:bg-gray-50/90 transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-gray-700 dark:bg-gray-800 dark:shadow-2xl "
+	class="annotation-input not-prose relative z-50 flex min-w-max max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-300 bg-white p-2.5  font-sans font-medium shadow-lg transparency:bg-gray-50/90 transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-gray-700 dark:bg-gray-800 dark:shadow-2xl transparency:dark:bg-gray-800"
 >
 	<div class="resizer absolute bottom-0 right-0">
 		<!-- <Icon name="" /> -->
