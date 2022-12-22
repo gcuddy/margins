@@ -1,8 +1,7 @@
 import { browser } from '$app/environment';
 import type { User } from '$lib/stores/user';
 import { user } from '$lib/stores/user';
-import { get, readable, writable } from 'svelte/store';
-import { set } from 'idb-keyval';
+import { get, writable } from 'svelte/store';
 
 import { currentList } from '../store';
 import type { LayoutLoad } from './$types';

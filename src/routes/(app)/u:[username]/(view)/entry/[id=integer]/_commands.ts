@@ -3,7 +3,6 @@ import type { Annotation } from '@prisma/client';
 import { goto, invalidate } from '$app/navigation';
 import type { Command } from '$lib/components/CommandPalette/types';
 import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
-import { getTags } from '$lib/data/sync';
 import type { EntryWithBookmark } from '$lib/entry.server';
 import { useCommands } from '$lib/hooks/use-commands';
 import { modals } from '$lib/stores/modals';
@@ -113,9 +112,9 @@ export default function useArticleCommands(entry: EntryWithBookmark, user: RootU
 			icon: 'tag',
 			perform: async () => {
 				modals.open(TagInputCombobox, {
-					bookmarks: [entry],
-					allTags: await getTags(),
-					invalidate: `/${entry.id}`,
+					entryId: entry.id,
+					original: entry,
+					tags: entry.tags
 				});
 			},
 		},
