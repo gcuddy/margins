@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import type parse from '$lib/parse';
 	import { modals } from '$lib/stores/modals';
@@ -43,9 +44,10 @@
 			id: 'add-url',
 		});
 		console.log($modals);
-		return ({ result, update }) => {
+		return async ({ result, update }) => {
 			update();
-			if (result.type === 'fail') {
+			await invalidateAll();
+			if (result.type === 'error') {
 				notifications.notify({
 					type: 'error',
 					message: 'Missing URL',

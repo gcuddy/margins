@@ -6,7 +6,7 @@ import { t } from '$lib/trpc/t';
 
 import { logger } from '../middleware/logger';
 
-export const parser = t.router({
+export const publicParse = t.router({
 	parse: t.procedure
 		.use(logger)
 		.input(z.string())

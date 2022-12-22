@@ -51,5 +51,5 @@
 		});
 	}}
 /> -->
-
+{data.entries.length}
 <EntryList items={data.entries} />

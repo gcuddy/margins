@@ -186,7 +186,7 @@ export const Metadata = z
 	.object({
 		title: z.string(),
 		summary: z.string().max(191),
-		image: z.string().max(191),
+		image: z.string().max(2083),
 		url: z.string().max(191),
 		author: z.string().max(191),
 		published: z.string(),

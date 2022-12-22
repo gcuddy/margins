@@ -162,7 +162,7 @@ model Entry {
     // if it's a rss
     html         String?       @db.LongText
     text         String?       @db.LongText
-    image        String?
+    image        String?       @db.VarChar(2083)
     guid         String?       @unique //@ unique?
     wordCount    Int?
     siteName     String?

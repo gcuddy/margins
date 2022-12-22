@@ -214,7 +214,6 @@
 	class=""
 >
 	<article class="mx-auto max-w-3xl py-8 px-4">
-		{JSON.stringify(data, null, 2)}
 		<header class="space-y-3 pb-4" bind:this={$articleHeader}>
 			<a
 				class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"

@@ -40,7 +40,7 @@ export const actions: Actions = {
 			const serverRouter = router.createCaller(await createContext(event))
 			// TODO: differentiate between different types of links
 			// First parse the article
-			const article = await serverRouter.parser.parse(url);
+			const article = await serverRouter.publicParse.parse(url);
 			console.log(`here's the article we're going to try to add:`, { article })
 			// Now add the article
 			const bookmark = await serverRouter.bookmarks.add({
@@ -55,7 +55,7 @@ export const actions: Actions = {
 				};
 			}
 		} catch (e) {
-			console.log({ e });
+			console.error(e);
 			throw error(400);
 		}
 	},

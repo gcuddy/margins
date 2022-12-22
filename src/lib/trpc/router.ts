@@ -1,14 +1,14 @@
 
 import { bookmarks } from './routes/bookmarks';
 import { entries } from './routes/entries';
-import { parser } from './routes/parse';
+import { publicParse } from './routes/publicParse';
 import { t } from '$lib/trpc/t';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 
 export const router = t.router({
 	entries,
 	bookmarks,
-	parser
+	publicParse
 });
 
 export type Router = typeof router;
