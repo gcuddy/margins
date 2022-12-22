@@ -34,7 +34,6 @@ export const handle: Handle = sequence(
 				};
 			} else if (allOk && isQuery) {
 				// should we still cache here just no stale-while revalidate?
-				return {}
 				// return {
 				// 	headers: {
 				// 		'cache-control': `s-maxage=1, stale-while-revalidate`,
