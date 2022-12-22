@@ -9,3 +9,4 @@ export function trpc(init?: TRPCClientInit) {
 	if (!browserClient) browserClient = createTRPCClient<Router>();
 	return browserClient;
 }
+
