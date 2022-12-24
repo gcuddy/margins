@@ -35,6 +35,7 @@ function createModalStore() {
 		return index;
 	};
 
+
 	/**
 	 * Closes the top modal or the modal with the index specified
 	 * @param idx number (optional) - the index of the modal to close. If not provided removes top element

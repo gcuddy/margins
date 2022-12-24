@@ -2,18 +2,27 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import { modals } from '$lib/stores/modals';
+	import { notifications } from '$lib/stores/notifications';
+	import type { ActionData } from '../../routes/(app)/u:[username]/(view)/subscriptions/new/$types';
 	import Checkbox from './atoms/Checkbox.svelte';
 	import Muted from './atoms/Muted.svelte';
 	import SmallPlus from './atoms/SmallPlus.svelte';
-	import Switch from './atoms/Switch.svelte';
 	import Button from './Button.svelte';
 	import GenericInput from './GenericInput.svelte';
 	import Icon from './helpers/Icon.svelte';
-	import type { ActionData } from '../../routes/(app)/u:[username]/(view)/subscriptions/new/$types';
 	export let form: ActionData | undefined = undefined;
 	$: console.log({ form });
 	let searching = false;
 	let adding = false;
+
+	// kind of ugly way to do this...
+	$: form &&
+		'feeds' in form &&
+		!form.feeds.length &&
+		notifications.notify({
+			type: 'error',
+			title: 'No feed found!',
+		});
 </script>
 
 <div class="flex flex-col gap-y-4 p-4">
@@ -125,12 +134,7 @@
 				{/each}
 			</fieldset>
 			<div class="flex justify-end border-t border-gray-500 pt-4 dark:border-gray-700">
-				<Button className="px-3" type="submit" disabled={adding}
-					>Save <Icon
-						name="loading"
-						className="opacity-0 h-5 w-5 text-gray-500 {adding ? 'animate-spin opacity-100' : ''}"
-					/></Button
-				>
+				<Button className="px-3" type="submit" disabled={adding}>Save</Button>
 			</div>
 		</form>
 	{/if}
