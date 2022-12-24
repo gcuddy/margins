@@ -13,23 +13,22 @@
 </script>
 
 {#if data.subscriptions?.length}
-	<List
-		items={data.subscriptions}
-		href={(item) => `/u:${$page.data.user?.username}/subscriptions/${item.feedId}`}
-		let:item
-	>
-		<ListItem>
-			<div>
-				<img
-					class="h-6 w-6 rounded"
-					src={item.feed.imageUrl ||
-						`https://icon.horse/icon/${item.feed.link || new URL(item.feed.feedUrl).hostname}`}
-					alt=""
-				/>
-			</div>
-			<div class="flex"><SmallPlus>{item.title}</SmallPlus></div>
-		</ListItem>
-	</List>
+	<!-- TODO: virtual list -->
+	{#each data.subscriptions as item}
+		<a href="/u:{$page.data.user?.username}/subscriptions/{item.feedId}">
+			<ListItem>
+				<div>
+					<img
+						class="h-6 w-6 rounded"
+						src={item.feed.imageUrl ||
+							`https://icon.horse/icon/${item.feed.link || new URL(item.feed.feedUrl).hostname}`}
+						alt=""
+					/>
+				</div>
+				<div class="flex"><SmallPlus>{item.title}</SmallPlus></div>
+			</ListItem>
+		</a>
+	{/each}
 {:else}
 	<section class="px-2">
 		<div class="mx-auto flex max-w-prose flex-col items-center gap-4 pb-20 pt-32 text-center">

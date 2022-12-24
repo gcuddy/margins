@@ -17,6 +17,7 @@
 	export let dnd_active = true;
 </script>
 
+<!-- get dnd working? -->
 <!-- TODO: incorporate view options? -->
 <!-- <slot item={items[0]} /> -->
 <!-- goal: make a component that allows for easy slots for custom list items, uses virtual lists, supports drag and drop, and supports keboard navigation, as well as, like linear  -->
