@@ -2,6 +2,6 @@
 	import FeedEntry from './FeedEntry.svelte';
 </script>
 
-<div>
+<div class="flex flex-col">
 	<FeedEntry />
 </div>

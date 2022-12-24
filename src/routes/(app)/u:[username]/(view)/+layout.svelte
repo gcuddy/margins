@@ -76,7 +76,7 @@
 		<!-- <slot /> -->
 	</div>
 {:else}
-	<div class="grow overflow-y-auto" bind:this={$mainEl}>
+	<div class="grow" bind:this={$mainEl}>
 		<slot />
 	</div>
 {/if}

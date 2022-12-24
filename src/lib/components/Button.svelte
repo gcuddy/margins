@@ -42,7 +42,8 @@
 		| 'link'
 		| 'dashed'
 		| 'transparent'
-		| 'naked' = 'primary';
+		| 'naked'
+		| 'gradient' = 'primary';
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let color: 'primary' | 'ghost' | undefined = undefined;
 
@@ -59,6 +60,7 @@
 				? 'border border-gray-300 bg-white dark:bg-gray-700 text-gray-600 hover:border-gray-300  hover:bg-gray-100 hover:text-gray-900 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-500 dark:text-gray-300  dark:hover:text-gray-200'
 				: ''
 		}
+    ${variant === 'gradient' ? 'bg-gradient-to-r from-amber-700 to-yellow-700 ' : ''}
     ${
 			variant === 'confirm' &&
 			'border bg-lime-200 border-lime-400 hover:bg-lime-300 hover:border-lime-500 dark:bg-lime-700 hover:dark:bg-lime-600'
@@ -145,7 +147,6 @@
 		<a
 			bind:this={el}
 			{href}
-			on:click={handleClick}
 			on:click
 			on:mouseenter={handlemouseenter}
 			on:mouseleave={handleMouseLeave}

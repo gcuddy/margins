@@ -37,7 +37,9 @@
 	} | null = null;
 	let tags: Tag[] = data.article.tags;
 	let bookmark: ExtendedBookmark | null = null;
-	if ('entryId' in data.article) {
+
+	// TODO: fix this whole mess
+	$: if ('entryId' in data.article) {
 		// bookmark
 		// TOOD: zod parsing
 		console.log({ data });

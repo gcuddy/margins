@@ -222,11 +222,12 @@ export const addSubscription = async ({
 				const published = entry.published || entry.pubDate || entry.pubdate;
 				const description = getText(entry.summary, entry.description);
 				const html = getText(entry.content, entry['content:encoded']) || description;
+				const link = getLink(entry.link)
 				return {
 					title: getText(entry.title),
 					type: DocumentType.rss,
-					image: getImageFromHtml(html),
-					uri: getLink(entry.link),
+					image: getImageFromHtml(html, link),
+					uri: link,
 					guid,
 					html,
 					published: dayjs(published).isValid() ? dayjs(published).format() : undefined,

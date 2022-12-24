@@ -19,9 +19,10 @@
 		special?: boolean;
 	};
 	let filteredTags: TagInputTag[];
-	$: filteredTags = allTags
-		.filter((tag) => tag.name.toLowerCase().includes(value.toLowerCase()))
-		.filter((tag) => !selectedTags.has(tag.name));
+	$: filteredTags =
+		allTags
+			?.filter((tag) => tag.name.toLowerCase().includes(value.toLowerCase()))
+			.filter((tag) => !selectedTags.has(tag.name)) || [];
 
 	// admittedly, this is a frustrating way to do this lol
 	$: newTagAvailable =

@@ -61,7 +61,7 @@
 >
 	<div class="flex flex-col gap-4">
 		<div class="flex justify-between px-2">
-			<div class="flex items-center gap-2">
+			<div class="flex min-w-0 items-center gap-2">
 				<LocationListbox
 					tooltip={{
 						text: 'Location',
@@ -77,9 +77,9 @@
 				/>
 				{#if fetched_data}
 					<div
-						class="flex h-6 items-center gap-2 rounded px-2 text-sm dark:bg-gray-600 dark:text-gray-300"
+						class="flex h-6 flex-1 items-center gap-2 truncate rounded px-2 text-sm dark:bg-gray-600 dark:text-gray-300"
 					>
-						<span>{fetched_data.title || '[No title]'}</span>
+						<span class="truncate">{fetched_data.title || '[No title]'}</span>
 						{#if fetched_data.image}
 							<img class="h-full p-1" src={fetched_data.image} alt="" />
 						{/if}

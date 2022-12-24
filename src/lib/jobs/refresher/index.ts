@@ -10,6 +10,7 @@ import parse from 'node-html-parser';
 
 import { db } from '$lib/db';
 import { isXml } from '$lib/rss/utils';
+import { resolveUrl } from '$lib/feeds/utils';
 
 // TODO: type for this
 const feedSelect = Prisma.validator<Prisma.FeedSelect>()({
@@ -60,7 +61,7 @@ const getLink = (link: any, ...rel: (string | undefined)[]) => {
 	return '';
 };
 
-export const getImageFromHtml = (html: string) => {
+export const getImageFromHtml = (html: string, baseUrl: string) => {
 	const doc = parse(html);
 	let img: string | undefined = undefined;
 	doc.querySelectorAll('img, iframe, video').forEach((el) => {
@@ -83,6 +84,9 @@ export const getImageFromHtml = (html: string) => {
 			}
 		}
 	});
+	if (img) {
+		img = resolveUrl(baseUrl, img);
+	}
 	return img;
 };
 
@@ -195,11 +199,12 @@ async function getUpdatedEntries(feed: FeedToUpdate) {
 					const description = getText(entry.summary, entry.description);
 					console.log({ description });
 					const html = getText(entry.content, entry['content:encoded']) || description;
+					const link = getLink(entry.link)
 					return createEntry(feed.id, {
 						title: getText(entry.title),
 						type: DocumentType.rss,
-						uri: getLink(entry.link),
-						image: getImageFromHtml(entry.content),
+						uri: link,
+						image: getImageFromHtml(entry.content, link),
 						guid,
 						html,
 						published: dayjs(published).isValid() ? dayjs(published).format() : undefined,
