@@ -14,6 +14,16 @@ const getItemFromList = (currentList: Writable<ICurrentList>, entryId: number) =
 	const entry = $currentList.items?.find((item) => item.id === Number(entryId));
 	return entry;
 };
+
+const updateItemFromList = (currentList: Writable<ICurrentList>, entryId: number, data: Partial<ICurrentList['items'][number]>) => {
+	currentList.update(($currentList) => {
+		const idx = $currentList.items.findIndex(item => item.id === entryId);
+		if (idx < 0) return $currentList
+		$currentList.items[idx] = { ...$currentList.items[idx], ...data };
+		return $currentList
+	})
+}
+
 export const load: PageLoad = async (event) => {
 	const { fetch, params, parent, depends, data: serverData } = event;
 	// fetch entry
@@ -66,7 +76,6 @@ export const load: PageLoad = async (event) => {
 	if (!entry) {
 		throw error(404, 'Entry not found');
 	}
-	console.timeEnd(`entry:${params.id}`);
 
 	// should just be the one, right?
 	const interaction = {};
@@ -77,18 +86,25 @@ export const load: PageLoad = async (event) => {
 	let html = entry.html;
 	let annotations = entry.annotations;
 	if (!html || !annotations) {
-		const data = await trpc(event).entries.loadData.query({
+		const loadedData = await trpc(event).entries.loadData.query({
 			id,
 			data: {
-				html: !entry.html,
+				html: !html,
 				annotations: !entry.annotations,
 			},
 		});
-		html = data.html || null;
-		annotations = data.annotations || [];
+		if (!html) html = loadedData.html || null;
+		if (!annotations) annotations = loadedData.annotations || [];
 		console.log({ html, annotations });
+
+		// Update Current List with HTML, so that it's stored in memory and doesn't have to be refetched if we navigate to it again soon (eg by using next/prev buttons)
+		if (data.currentList && !entry.html && html) {
+			updateItemFromList(data.currentList, entry.id, { html, annotations })
+		}
 	}
 
+
+	console.timeEnd(`entry:${params.id}`);
 	return {
 		...data,
 		...serverData,

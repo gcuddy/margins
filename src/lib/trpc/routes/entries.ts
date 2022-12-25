@@ -75,11 +75,13 @@ export const entries = t.router({
 						id,
 					},
 					select: {
-						...data,
+						annotations: data.annotations,
+						html: data.html
 					},
 					// todo: allow no select to be passed in to get everything
 				})
 				.then((data) => {
+					console.log({ data })
 					return data;
 				})
 		),

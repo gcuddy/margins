@@ -268,7 +268,6 @@ model Article {
     trash          Boolean   @default(false)
     location       String    @default("INBOX")
     // Bookmark       Bookmark?
-    context        Context?
     type           Int       @default(0) // 0 = text, 1 = audio, 2 = video
     user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId         String
@@ -281,11 +280,9 @@ model Article {
 
 model Context {
     id          Int      @id @default(autoincrement())
-    url         String   @unique
+    url         String
     description String?
     createdAt   DateTime @default(now())
-    articleId   Int?     @unique
-    Article     Article? @relation(fields: [articleId], references: [id])
 }
 
 model Collection {

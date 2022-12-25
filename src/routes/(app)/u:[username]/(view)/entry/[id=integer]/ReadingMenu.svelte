@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto, invalidate } from '$app/navigation';
+	import { goto, invalidate, preloadData } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { createTemporaryAnnotation } from '$lib/annotation';
 	import type { EntryWithBookmark } from '$lib/entry.server';
@@ -106,6 +106,11 @@
 	$: prev_url = prev
 		? `/u:${$page.data.user?.username}/entry/${'entryId' in prev ? prev.entryId : prev.id}`
 		: undefined;
+
+	// preload next and prev
+	$: next_url && preloadData(next_url);
+	$: prev_url && preloadData(prev_url);
+
 	$: console.log({ currentList, index, next, entry });
 	// $: saved = user?.annotations.find((a) => a.entryId === entry.id);
 	console.log({ entry });

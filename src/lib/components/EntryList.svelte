@@ -35,6 +35,7 @@
 	import { entryData } from '$lib/entry';
 	import { invalidateAll } from '$app/navigation';
 	import type { EntryWithBookmark } from '$lib/entry.server';
+	import { flip } from 'svelte/animate';
 	dayjs.extend(localizedFormat);
 	const selectedItems = createSelectedItemStore<EntryWithBookmark>();
 	const { items: currentItems, filteredItems, filterTerm } = createItemStores<EntryWithBookmark>();
@@ -55,8 +56,9 @@
 		// now save to database
 		// saveArticleOrder();
 	};
-	let flipDurationMs = 200;
+	let flipDurationMs = 125;
 	let hovering = false;
+
 	const view_options: ViewOptions = {
 		view: 'list',
 		sort: 'manual',
@@ -89,7 +91,7 @@
 		class="mx-auto h-fit {viewOptions.view === 'grid'
 			? 'p-4'
 			: ''} w-full space-y-0 overflow-auto {viewOptions.view === 'grid'
-			? 'grid grid-cols-12 gap-4 container pb-10'
+			? 'container grid grid-cols-12 gap-4 pb-10'
 			: ''}"
 		use:dndzone={{
 			items: items,
@@ -106,241 +108,243 @@
 			{@const pageNotes = item.annotations?.filter((a) => a.type === 'note')}
 			<!-- {index} -->
 			<!-- by doing this can't do animate:flip. hm! trying out auto-animate. let's see... -->
-			<KeyboardNavItem
-				let:active
-				let:followTabIndex
-				{index}
-				as="a"
-				href={externalLink && item.uri ? item.uri : `/u:${$page.params.username}/entry/${item.id}`}
-				class="group col-span-12 h-min md:col-span-3 2xl:col-span-3 {viewOptions.view === 'list'
-					? '!cursor-default'
-					: ''}"
-				on:select={() => {
-					if ($selectedItems.includes(item)) {
-						$selectedItems = $selectedItems.filter(({ id }) => id !== item.id);
-					} else {
-						$selectedItems = [...$selectedItems, item];
-					}
-				}}
-			>
-				<div class={viewOptions.view === 'list' ? 'h-24 md:h-32' : 'h-44 md:h-72'}>
-					{#if viewOptions.view}
-						<div
-							class="flex h-full flex-col overflow-hidden  border-gray-100 ring-inset focus:!outline-none focus-visible:!outline-none group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-800 dark:group-focus-visible:bg-gray-800 {viewOptions.view ===
-							'list'
-								? 'border-b  justify-center px-6 '
-								: 'border rounded-lg shadow-lg bg-white/50 dark:bg-stone-800'} {$selectedItems.some(
-								(a) => a.id === item.id
-							)
-								? '!bg-gray-100 dark:!bg-blue-800/30'
-								: ''}"
-							on:mouseenter={() => (hovering = true)}
-							on:mouseleave={() => (hovering = false)}
-						>
+			<div animate:flip={{ duration: flipDurationMs }}>
+				<KeyboardNavItem
+					let:active
+					let:followTabIndex
+					{index}
+					as="a"
+					href={externalLink && item.uri
+						? item.uri
+						: `/u:${$page.params.username}/entry/${item.id}`}
+					class="group col-span-12 h-min md:col-span-3 2xl:col-span-3 {viewOptions.view === 'list'
+						? '!cursor-default'
+						: ''}"
+					on:select={() => {
+						if ($selectedItems.includes(item)) {
+							$selectedItems = $selectedItems.filter(({ id }) => id !== item.id);
+						} else {
+							$selectedItems = [...$selectedItems, item];
+						}
+					}}
+				>
+					<div class={viewOptions.view === 'list' ? 'max-h-24 md:max-h-32' : 'h-44 md:h-72'}>
+						{#if viewOptions.view}
 							<div
-								class="item relative h-full  flex-initial  items-center  transition {viewOptions.view ===
+								class="flex h-full flex-col overflow-hidden  border-gray-100 ring-inset focus:!outline-none focus-visible:!outline-none group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-800 dark:group-focus-visible:bg-gray-800 {viewOptions.view ===
 								'list'
-									? 'flex flex-row gap-3'
-									: 'grid grid-cols-12 md:flex md:flex-col gap-2 grow'}"
+									? 'justify-center  border-b px-6 '
+									: 'rounded-lg border bg-white/50 shadow-lg dark:bg-stone-800'} {$selectedItems.some(
+									(a) => a.id === item.id
+								)
+									? '!bg-gray-100 dark:!bg-blue-800/30'
+									: ''}"
+								on:mouseenter={() => (hovering = true)}
+								on:mouseleave={() => (hovering = false)}
 							>
-								{#if viewOptions.properties?.image}
-									<div
-										class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition  {viewOptions.view ===
-										'list'
-											? 'h-8 w-8 rounded-md hover:ring'
-											: 'h-full col-span-4 md:w-full md:h-28'}"
-										on:click|stopPropagation
-										on:keydown
-									>
-										{#if $dev.disableListImgs}
-											<div
-												class="group h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 bg-red-100 object-cover shadow-sm hover:ring-1"
-											/>
-										{:else}
-											<img
-												class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
-												'list'
-													? 'h-8 w-8 rounded-md shadow-sm hover:ring-1'
-													: ' w-full h-40 rounded-t-md'}"
-												src={data?.image || `https://icon.horse/icon/?uri=${data?.url}`}
-												alt=""
-											/>
-										{/if}
-										<input
-											bind:group={$selectedItems}
-											value={item}
-											type="checkbox"
-											aria-hidden={true}
-											tabindex={-1}
-											class="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-md border-0 bg-transparent  ring-0 {viewOptions.view ===
-											'grid'
-												? 'hidden'
-												: ''}"
-										/>
-									</div>
-								{/if}
 								<div
-									class="relative flex w-full shrink grow flex-col {viewOptions.view === 'list'
-										? 'truncate justify-center'
-										: 'gap-1 col-span-8 px-3'} text-left"
+									class="item relative h-full flex-initial  items-center  p-4  transition {viewOptions.view ===
+									'list'
+										? 'flex flex-row gap-3'
+										: 'grid grow grid-cols-12 gap-2 md:flex md:flex-col'}"
 								>
-									<span
-										class="cursor-pointer {font === 'newsreader'
-											? 'font-newsreader sm:text-lg'
-											: 'font-sans'}  text-base font-semibold !leading-tight line-clamp-2  {viewOptions.view ===
-										'grid'
-											? 'text-lg'
-											: ''}"
-									>
-										{#if html}{@html data.title}{:else}{data?.title}{/if}
-									</span>
-									<!-- url and author around 74,74,74, description around 126,126,126 -->
-									<div
-										class="flex flex-wrap gap-x-4 text-xs text-stone-700 dark:text-gray-300 {viewOptions.view ===
-										'list'
-											? 'md:text-sm'
-											: ''} "
-									>
-										{#if item.uri && viewOptions.properties?.url}
-											<span>{item.uri}</span>
-										{/if}
-										{#if data.author && viewOptions.properties?.author}
-											<span>{data.author}</span>
-										{/if}
-										{#if viewOptions.properties?.site}
-											<Muted>{data.siteName || item.uri}</Muted>
-										{/if}
-										{#if data.published && viewOptions.properties?.date && viewOptions.view === 'list'}
-											<Muted>{dayjs(data.published).format('ll')}</Muted>
-										{/if}
-										{#if data.wordCount && viewOptions.properties?.wordCount && viewOptions.view === 'list'}
-											<Muted>{data.wordCount} words</Muted>
-										{/if}
-										<!-- <span><a href={item.url}>{item.url}</a></span> -->
-									</div>
-									<div class="flex {viewOptions.view === 'list' ? 'truncate' : 'line-clamp-2'}">
-										{#if viewOptions.properties?.description}
-											<p
-												class="{alwaysShowDescription
-													? ''
-													: 'hidden'}  text-xs text-stone-500 dark:text-gray-400 md:block {viewOptions.view ===
-												'list'
-													? 'md:text-sm truncate'
-													: ''} {quoted && 'before:content-[""] before:border-l-2 before:mr-4'}"
-											>
-												{#if html}{@html data.summary}{:else}{data.summary}{/if}
-											</p>
-										{/if}
-									</div>
-									{#if viewOptions.properties?.pageNote && pageNotes?.length}
-										<div class="flex pt-1">
-											{#each pageNotes as note}
-												<div
-													class="flex rounded-md bg-amber-400 py-1 px-1.5 text-xs text-amber-900"
-												>
-													{note.body}
-												</div>
-											{/each}
-										</div>
-									{/if}
-								</div>
-								<!-- is this necessary? -->
-								{#if viewOptions.view === 'list'}
-									<Spacer />
-								{/if}
-
-								<SavedPillWrapper {item} {viewOptions} />
-
-								<div
-									class=" shrink-0 basis-auto items-center text-xs {viewOptions.view === 'list'
-										? 'flex'
-										: 'col-start-12 flex md:place-self-start mt-auto flex-initial justify-between w-full'}"
-								>
-									<!-- turning this off for now -->
-									<div class="flex items-center space-x-2">
-										{#if data.published && viewOptions.properties?.date && viewOptions.view === 'grid'}
-											<Muted>{dayjs(data.published).format('ll')}</Muted>
-										{/if}
-										{#if data.wordCount && viewOptions.properties?.wordCount && viewOptions.view === 'grid'}
-											<Muted>{data.wordCount} words</Muted>
-										{/if}
-									</div>
-									{#if true}
-										<div class="flex items-center">
-											<DotMenu
-												actions={[followTabIndex]}
-												icons="outline"
-												items={[
-													[
-														{
-															label: 'Archive',
-															icon: 'archive',
-														},
-														{
-															label: 'Delete',
-															icon: 'trash',
-															perform: async () => {
-																if (!window.confirm(`Really delete "${data.title}"?`)) return;
-																const form = new FormData();
-																form.set('id', item.id.toString());
-																const res = await fetch('/', {
-																	method: 'DELETE',
-																	body: form,
-																});
-																console.log({ res });
-																if (res.ok) {
-																	notifications.notify({
-																		message: 'Article deleted',
-																	});
-																	await invalidateAll();
-																}
-															},
-														},
-														{
-															label: 'Tag',
-															icon: 'tag',
-														},
-														{
-															label: 'Bump to top',
-															icon: 'trendingUp',
-															perform: () => dispatch('bump'),
-														},
-													],
-													[
-														{
-															label: 'View Original',
-															icon: 'globe',
-															perform: () => {
-																window.open(item.uri, '_blank');
-															},
-														},
-													],
-												]}
-											/>
-										</div>
-									{:else}
+									{#if viewOptions.properties?.image}
 										<div
-											class="flex flex-col items-end text-xs tabular-nums text-gray-600 dark:text-gray-400 lg:text-sm"
+											class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition  {viewOptions.view ===
+											'list'
+												? 'h-8 w-8 rounded-md hover:ring'
+												: 'col-span-4 h-full md:h-28 md:w-full'}"
+											on:click|stopPropagation
+											on:keydown
 										>
-											<div>
-												{dayjs(data.published).format('ll')}
-											</div>
-											<div>
-												{data.wordCount} words
-											</div>
-											<div>
-												<!-- TODO: implement read progress (interaction — is it on entry or bookmark?) -->
-												<!-- {Math.round(item.readProgress * 100)}% read -->
-											</div>
+											{#if $dev.disableListImgs}
+												<div
+													class="group h-8 w-8 shrink-0 cursor-pointer rounded-md border border-black/30 bg-red-100 object-cover shadow-sm hover:ring-1"
+												/>
+											{:else}
+												<img
+													class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
+													'list'
+														? 'h-8 w-8 rounded-md shadow-sm hover:ring-1'
+														: ' h-40 w-full rounded-t-md'}"
+													src={data?.image || `https://icon.horse/icon/?uri=${data?.url}`}
+													alt=""
+												/>
+											{/if}
+											<input
+												bind:group={$selectedItems}
+												value={item}
+												type="checkbox"
+												aria-hidden={true}
+												tabindex={-1}
+												class="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-md border-0 bg-transparent  ring-0 {viewOptions.view ===
+												'grid'
+													? 'hidden'
+													: ''}"
+											/>
 										</div>
 									{/if}
+									<div
+										class="relative flex w-full shrink grow flex-col {viewOptions.view === 'list'
+											? 'justify-center truncate'
+											: 'col-span-8 gap-1 px-3'} text-left"
+									>
+										<span
+											class="cursor-pointer {font === 'newsreader'
+												? 'font-newsreader sm:text-lg'
+												: 'font-sans'}  text-base font-semibold !leading-tight line-clamp-2  {viewOptions.view ===
+											'grid'
+												? 'text-lg'
+												: ''}"
+										>
+											{#if html}{@html data.title}{:else}{data?.title}{/if}
+										</span>
+										<!-- url and author around 74,74,74, description around 126,126,126 -->
+										<div
+											class="flex flex-wrap gap-x-4 text-xs text-stone-700 dark:text-gray-300 {viewOptions.view ===
+											'list'
+												? 'md:text-sm'
+												: ''} "
+										>
+											{#if item.uri && viewOptions.properties?.url}
+												<span>{item.uri}</span>
+											{/if}
+											{#if data.author && viewOptions.properties?.author}
+												<span>{data.author}</span>
+											{/if}
+											{#if viewOptions.properties?.site}
+												<Muted>{data.siteName || item.uri}</Muted>
+											{/if}
+											{#if data.published && viewOptions.properties?.date && viewOptions.view === 'list'}
+												<Muted>{dayjs(data.published).format('ll')}</Muted>
+											{/if}
+											{#if data.wordCount && viewOptions.properties?.wordCount && viewOptions.view === 'list'}
+												<Muted>{data.wordCount} words</Muted>
+											{/if}
+											<!-- <span><a href={item.url}>{item.url}</a></span> -->
+										</div>
+										<div class="flex {viewOptions.view === 'list' ? 'truncate' : 'line-clamp-2'}">
+											{#if viewOptions.properties?.description}
+												<p
+													class="{alwaysShowDescription
+														? ''
+														: 'hidden'}  text-xs text-stone-500 dark:text-gray-400 md:block {viewOptions.view ===
+													'list'
+														? 'truncate md:text-sm'
+														: ''} {quoted && 'before:mr-4 before:border-l-2 before:content-[""]'}"
+												>
+													{#if html}{@html data.summary}{:else}{data.summary}{/if}
+												</p>
+											{/if}
+										</div>
+										{#if viewOptions.properties?.pageNote && pageNotes?.length}
+											<div class="flex pt-1">
+												{#each pageNotes as note}
+													<div
+														class="flex rounded-md bg-amber-400 py-1 px-1.5 text-xs text-amber-900"
+													>
+														{note.body}
+													</div>
+												{/each}
+											</div>
+										{/if}
+									</div>
+									<!-- is this necessary? -->
+									{#if viewOptions.view === 'list'}
+										<Spacer />
+									{/if}
+									<SavedPillWrapper {item} {viewOptions} />
+									<div
+										class=" shrink-0 basis-auto items-center text-xs {viewOptions.view === 'list'
+											? 'flex'
+											: 'col-start-12 mt-auto flex w-full flex-initial justify-between md:place-self-start'}"
+									>
+										<!-- turning this off for now -->
+										<div class="flex items-center space-x-2">
+											{#if data.published && viewOptions.properties?.date && viewOptions.view === 'grid'}
+												<Muted>{dayjs(data.published).format('ll')}</Muted>
+											{/if}
+											{#if data.wordCount && viewOptions.properties?.wordCount && viewOptions.view === 'grid'}
+												<Muted>{data.wordCount} words</Muted>
+											{/if}
+										</div>
+										{#if true}
+											<div class="flex items-center">
+												<DotMenu
+													actions={[followTabIndex]}
+													icons="outline"
+													items={[
+														[
+															{
+																label: 'Archive',
+																icon: 'archive',
+															},
+															{
+																label: 'Delete',
+																icon: 'trash',
+																perform: async () => {
+																	if (!window.confirm(`Really delete "${data.title}"?`)) return;
+																	const form = new FormData();
+																	form.set('id', item.id.toString());
+																	const res = await fetch('/', {
+																		method: 'DELETE',
+																		body: form,
+																	});
+																	console.log({ res });
+																	if (res.ok) {
+																		notifications.notify({
+																			message: 'Article deleted',
+																		});
+																		await invalidateAll();
+																	}
+																},
+															},
+															{
+																label: 'Tag',
+																icon: 'tag',
+															},
+															{
+																label: 'Bump to top',
+																icon: 'trendingUp',
+																perform: () => dispatch('bump'),
+															},
+														],
+														[
+															{
+																label: 'View Original',
+																icon: 'globe',
+																perform: () => {
+																	window.open(item.uri, '_blank');
+																},
+															},
+														],
+													]}
+												/>
+											</div>
+										{:else}
+											<div
+												class="flex flex-col items-end text-xs tabular-nums text-gray-600 dark:text-gray-400 lg:text-sm"
+											>
+												<div>
+													{dayjs(data.published).format('ll')}
+												</div>
+												<div>
+													{data.wordCount} words
+												</div>
+												<div>
+													<!-- TODO: implement read progress (interaction — is it on entry or bookmark?) -->
+													<!-- {Math.round(item.readProgress * 100)}% read -->
+												</div>
+											</div>
+										{/if}
+									</div>
+									<slot />
 								</div>
-								<slot />
 							</div>
-						</div>
-					{:else if viewOptions.view === 'grid'}{/if}
-				</div>
-			</KeyboardNavItem>
+						{:else if viewOptions.view === 'grid'}{/if}
+					</div>
+				</KeyboardNavItem>
+			</div>
 		{/each}
 	</div>
 </KeyboardNav>

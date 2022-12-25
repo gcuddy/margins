@@ -11,7 +11,7 @@
 	import type { SubscriptionWithFeed } from './[id=integer]/types';
 
 	export let subscription: SubscriptionWithFeed;
-	const unread = subscription.feed.entries.filter((a, b) => !a.interactions[0]?.is_read).length;
+	// const unread = subscription.feed.entries.filter((a, b) => !a.interactions[0]?.is_read).length;
 	let confirm_modal = false;
 	let delete_subscription_button: HTMLElement;
 </script>
@@ -60,7 +60,7 @@
 			<Icon name="chevronDownSolid" className="h-4 w-4 fill-current" />
 		</div>
 	</ContextMenu>
-	<div>{unread} unread</div>
+	<div>{0} unread</div>
 </div>
 
 <ConfirmModal

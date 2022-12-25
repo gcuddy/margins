@@ -2,10 +2,12 @@
 	import { page } from '$app/stores';
 	import EntryList from '$lib/components/EntryList.svelte';
 	import { currentList } from '$lib/stores/currentList';
+	import type { ViewOptions } from '$lib/types/schemas/View';
 	import RssListItem from '../FeedListItem.svelte';
 	import type { PageData } from './$types';
 	export let data: PageData;
 	$: console.log({ data });
+
 	let peek = false;
 
 	// $: currentList = $page.data.currentList;
@@ -16,13 +18,32 @@
 	// 	items: data.subscription.feed.entries,
 	// });
 	$: data.currentList.set({
-		items: data.subscription.feed.entries,
+		items: data.entries,
 		slug: $page.url.pathname,
 		type: 'rss',
 		feed: data.subscription.feed,
 		subscription: data.subscription,
 	});
 	$: console.log({ $currentList });
+
+	const DEFAULT_RSS_VIEW_OPTIONS: ViewOptions = {
+		view: 'list',
+		sort: 'published',
+		properties: {
+			author: false,
+			site: false,
+			description: true,
+			tags: true,
+			wordCount: false,
+			date: true,
+			image: false,
+			readProgress: true,
+			location: false,
+			pageNote: false,
+			url: false,
+			annotationCount: true,
+		},
+	};
 </script>
 
 <svelte:window
@@ -36,7 +57,7 @@
 />
 
 <ul class="overflow-auto">
-	<EntryList items={data.subscription.feed.entries} />
+	<EntryList items={data.entries} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} />
 	<!-- {#each data.subscription.feed.entries as entry}
 		<li
 			on:mouseover={(e) => {
