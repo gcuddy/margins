@@ -67,7 +67,7 @@ export class Entries {
 	// could also make this a function -https://www.prisma.io/docs/concepts/components/prisma-client/custom-models
 	private userId?: string;
 
-	constructor(private readonly prisma: PrismaClient['entry']) {}
+	constructor(private readonly prisma: PrismaClient['entry']) { }
 
 	async tag(data: Tag): Promise<Entry> {
 		const parsed = Tag.parse(data);

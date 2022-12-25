@@ -123,6 +123,7 @@
 		],
 	});
 	export let articleID: number;
+	$: console.log({ articleID });
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
 	export let readOnly = false;
@@ -494,7 +495,7 @@
 			}
 			if ($page.data.AUTHORIZED) {
 				const links = Array.from(wrapper.querySelectorAll('a'));
-				setUpLinkDragHandlers(links, { url: articleUrl, id: articleID });
+				// setUpLinkDragHandlers(links, { url: articleUrl, id: articleID });
 			}
 		}
 	});
@@ -838,7 +839,18 @@
 		on:click={handleClick}
 		first_letter={false}
 	>
-		<slot />
+		<div
+			on:dragstart={(e) => {
+				if (e.target instanceof HTMLAnchorElement) {
+					// set context data
+					console.log({ articleUrl, articleID });
+					e.dataTransfer?.setData('context/url', articleUrl);
+					e.dataTransfer?.setData('context/entryId', articleID.toString());
+				}
+			}}
+		>
+			<slot />
+		</div>
 	</ProseWrapper>
 	<annotations>
 		{#each annotationsWithBodyOrTag as annotation}

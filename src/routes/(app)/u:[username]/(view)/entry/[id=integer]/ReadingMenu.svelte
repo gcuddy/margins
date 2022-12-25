@@ -19,9 +19,10 @@
 	// import ReadingSidebar from './ReadingSidebar.svelte';
 	import type { ExtendedBookmark } from '$lib/bookmark';
 	import ReadingSidebar from './ReadingSidebar.svelte';
+	import type { RouterInputs, RouterOutputs } from '$lib/trpc/router';
 
 	export let back = '/';
-	export let entry: EntryWithBookmark;
+	export let entry: RouterOutputs['entries']['load'];
 	export let bookmark: ExtendedBookmark | null = null;
 	export let interaction: { is_read: boolean | null } | null = null;
 	export let reading_sidebar_active = false;
@@ -115,6 +116,8 @@
 	// $: saved = user?.annotations.find((a) => a.entryId === entry.id);
 	console.log({ entry });
 	$: console.log({ $page });
+
+	let downloading = false;
 </script>
 
 <svelte:window
@@ -125,6 +128,9 @@
 		}
 		if (e.key === 'k' && prev_url && !e.metaKey) {
 			await goto(prev_url);
+		}
+		if (e.key === 'Escape' && back) {
+			await goto(back);
 		}
 	}}
 />
@@ -176,7 +182,7 @@
 			}}
 		>
 			<input type="hidden" name="id" value={bookmark?.id} />
-			<input type="hidden" name="uri" value={entry} />
+			<input type="hidden" name="uri" value={entry.uri} />
 			<Button
 				type="submit"
 				variant="naked"
@@ -211,6 +217,35 @@
 			>
 				<Icon name="chevronDown" className="h-4 w-4 stroke-current" />
 			</Button>
+		{/if}
+		<!-- (Re-)download full article -->
+		<!-- This should have encouraged placement if the content is short and especially if it's a feed -->
+		<!-- TODO: It should also show an "active" state if the item has a reader view. Need to figure out how to save that. -->
+		<!-- TODO: only show this if it's type article -->
+		{#if entry.feedId && !entry.custom}
+			<form
+				action="/u:{$page.data.user?.username}/entry/{entry.id}?/download"
+				method="POST"
+				use:enhance={() => {
+					downloading = true;
+					return async ({ form, update }) => {
+						downloading = false;
+						update();
+					};
+				}}
+			>
+				<Button
+					variant="naked"
+					className="w-7 {downloading ? '!animate-pulse' : ''}"
+					tooltip={{ text: 'Download article text' }}
+					type="submit"
+					disabled={downloading}
+				>
+					<input type="hidden" name="url" value={entry.uri} />
+					<!-- <Icon name="documentArrowDownMini" className="h-5 w-5" /> -->
+					<Icon name="article" className="h-4 w-4 fill-none stroke-current" />
+				</Button>
+			</form>
 		{/if}
 	</div>
 	<div
@@ -288,36 +323,6 @@
 				],
 			]}
 		/>
-		<!-- <Menu
-			buttonAriaLabel="More option"
-			menuItems={[
-				[
-					{ display: 'Trash', perform: () => console.log('trash'), icon: 'trash' },
-					{
-						display: 'Tag',
-						perform: async () => {
-							modals.open(
-								TagInputCombobox,
-								{
-									articles: [article],
-									allTags: await getTags(),
-								},
-								{
-									bgClassname: '',
-								}
-							);
-						},
-						icon: 'tag',
-					},
-				],
-				[{ display: 'Edit Metadata', perform: () => console.log('edit'), icon: 'pencil' }],
-			]}
-		>
-			<div class="flex items-center">
-				<Icon name="options" />
-				<span class="sr-only">Options</span>
-			</div>
-		</Menu> -->
 		<button on:click={() => (reading_sidebar_active = !reading_sidebar_active)} class="group z-40">
 			<Icon
 				name="sidebar"

@@ -12,6 +12,6 @@ export const publicParse = t.router({
 		.input(z.string())
 		.query(async ({ input }) => {
 			const normalizedUrl = normalizeUrl(input);
-			return parse(normalizedUrl);
+			return parse(normalizedUrl)
 		}),
 });

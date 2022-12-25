@@ -4,6 +4,11 @@ import { logger } from '$lib/trpc/middleware/logger';
 import { z } from 'zod';
 import { t } from '$lib/trpc/t';
 import { Metadata } from '$lib/web-parser';
+import dayjs from 'dayjs';
+
+
+
+
 
 export const bookmarks = t.router({
 	add: t.procedure
@@ -11,19 +16,26 @@ export const bookmarks = t.router({
 		.use(logger)
 		.input(
 			z.object({
-				url: z.string(),
+				url: z.string().optional(),
+				entryId: z.number().optional(),
 				article: Metadata.extend({
 					html: z.string().optional(),
 					wordCount: z.number().optional(),
-				}),
+				}).optional(),
 				tags: z.object({ name: z.string(), id: z.number().optional() }).array().optional(),
 				note: z.string().optional(),
-			})
+				context: z.object({
+					url: z.string().optional(),
+					entryId: z.number().optional()
+				}).optional(),
+				stateId: z.number().optional()
+			}).refine(data => !!data.url || !!data.entryId, "Need either URL or entryId")
 		)
 		.mutation(({ input, ctx }) =>
 			db.bookmark.upsert({
 				where: {
-					uri: input.url,
+					uri: !input.entryId ? input.url : undefined,
+					entryId: input.entryId
 				},
 				create: {
 					// save own copy?
@@ -31,10 +43,12 @@ export const bookmarks = t.router({
 					entry: {
 						connectOrCreate: {
 							where: {
-								uri: input.url,
+								uri: !input.entryId ? input.url : undefined,
+								id: input.entryId
 							},
 							create: {
 								...input.article,
+								published: input.article ? dayjs(input.article.published).toDate() : undefined,
 								type: 'article',
 								uri: input.url,
 							},
@@ -61,6 +75,12 @@ export const bookmarks = t.router({
 							id: ctx.userId,
 						},
 					},
+					context: input.context,
+					state: input.stateId ? {
+						connect: {
+							id: input.stateId
+						}
+					} : undefined
 					// state: {
 					//     connect: {
 					//     }
@@ -71,4 +91,20 @@ export const bookmarks = t.router({
 				}
 			})
 		),
+	getContext: t.procedure
+		.use(auth)
+		.use(logger)
+		.input(
+			z.object({
+				id: z.number()
+			})
+		).query(({ input: { id }, ctx: { userId } }) => db.bookmark.findUniqueOrThrow({
+			where: {
+				id,
+				userId
+			},
+			select: {
+				context: true
+			}
+		}))
 });

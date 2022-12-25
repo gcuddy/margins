@@ -404,7 +404,15 @@ export class Parser {
 		// todo: fix lazy loaded images
 		// <img data-component="lazy-embed" data-src="https://media.timeout.com/images/105877787/image.jpg" width="100%">
 		this.getMetadata();
-		const content = this.getContent();
+		let html = ""
+		let text = ""
+		try {
+			const content = this.getContent();
+			text = content.innerText;
+			html = content.innerHTML;
+		} catch (e) {
+			console.error(e);
+		}
 		// if there's no title, set it to url
 		if (!this.metadata.title) {
 			this.metadata.title = this.metadata.url || this.baseUrl;
@@ -416,10 +424,11 @@ export class Parser {
 		console.timeEnd('parse');
 		return {
 			...this.metadata,
-			summary: this.metadata.summary?.slice(0,191),
-			html: content.innerHTML,
-			text: content.innerText,
-			wordCount: content.innerText.split(' ').length,
+			summary: this.metadata.summary?.slice(0, 191),
+			html,
+			text,
+			wordCount: text.split(' ').length,
+			type: html ? "article" : "bookmark"
 		};
 	}
 

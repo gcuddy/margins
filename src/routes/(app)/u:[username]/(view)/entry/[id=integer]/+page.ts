@@ -17,6 +17,7 @@ const getItemFromList = (currentList: Writable<ICurrentList>, entryId: number) =
 
 const updateItemFromList = (currentList: Writable<ICurrentList>, entryId: number, data: Partial<ICurrentList['items'][number]>) => {
 	currentList.update(($currentList) => {
+		if (!$currentList?.items) return $currentList
 		const idx = $currentList.items.findIndex(item => item.id === entryId);
 		if (idx < 0) return $currentList
 		$currentList.items[idx] = { ...$currentList.items[idx], ...data };
@@ -56,11 +57,14 @@ export const load: PageLoad = async (event) => {
 
 	if (!entry) {
 		// todo: trpc here on server
-		const res = await fetch(`/api/entries/${params.id}`);
-		entry = await res.json();
+		entry = await trpc(event).entries.load.query({
+			id: +params.id
+		})
+		// const res = await fetch(`/api/entries/${params.id}`);
+		// entry = await res.json();
 		console.log(`fetched entry`, { entry });
 	}
-	const stylesheet = data.user?.stylesheets?.find((stylesheet) => {
+	const stylesheet = data.stylesheets?.find((stylesheet) => {
 		// const regex = new RegExp(stylesheet.domain, 'i');
 		if (!entry?.uri) {
 			return false;
@@ -83,18 +87,20 @@ export const load: PageLoad = async (event) => {
 	// let html = entry.html;
 	const id = +params.id;
 	// TODO: should annotations get moved to page.svelte for faster loading? (required js but also that's ok)
-	let html = entry.html;
-	let annotations = entry.annotations;
+	let { html, annotations, context } = entry
 	if (!html || !annotations) {
+		console.log({ context, html, annotations })
 		const loadedData = await trpc(event).entries.loadData.query({
 			id,
 			data: {
-				html: !html,
+				content: !html,
 				annotations: !entry.annotations,
 			},
 		});
-		if (!html) html = loadedData.html || null;
+		if (!html) html = loadedData.data?.html || loadedData.html || null;
 		if (!annotations) annotations = loadedData.annotations || [];
+
+
 		console.log({ html, annotations });
 
 		// Update Current List with HTML, so that it's stored in memory and doesn't have to be refetched if we navigate to it again soon (eg by using next/prev buttons)

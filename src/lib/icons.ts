@@ -1953,6 +1953,11 @@ export const icons = {
 		box: '24',
 		svg: `<path d="M15 4V20M5 21H19C21.2091 21 23 19.2091 23 17V7C23 4.79086 21.2091 3 19 3H5C2.79086 3 1 4.79086 1 7V17C1 19.2091 2.79086 21 5 21Z"/>`,
 	},
+	article: {
+		box: '24',
+		svg: `<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><path d="M18 14h-8"></path><path d="M15 18h-5"></path><path d="M10 6h8v4h-8V6Z"></path>`,
+		strokeWidth: '1.5'
+	}
 } as const;
 
 export type IconName = keyof typeof icons;
@@ -1960,11 +1965,10 @@ export let name: IconName;
 
 export const makeIconSvg = (name: IconName, size: number, attributes?: Record<string, string>) => {
 	const icon = icons[name];
-	return `<svg width="${size}" height="${size}" viewBox="0 0 ${icon.box} ${icon.box}" ${
-		attributes
-			? Object.entries(attributes)
-					.map(([attr, value]) => attr + '=' + '"' + value + '"')
-					.join(' ')
-			: ''
-	}>${icon.svg}</svg>`;
+	return `<svg width="${size}" height="${size}" viewBox="0 0 ${icon.box} ${icon.box}" ${attributes
+		? Object.entries(attributes)
+			.map(([attr, value]) => attr + '=' + '"' + value + '"')
+			.join(' ')
+		: ''
+		}>${icon.svg}</svg>`;
 };

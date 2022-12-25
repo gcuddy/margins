@@ -90,6 +90,9 @@
 				<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
 			</div>
 		{/if}
+		{#if entry.context}
+			{JSON.stringify(entry.context)}
+		{/if}
 		<!-- <GenericTextarea
 			variant="ghost"
 			bind:value

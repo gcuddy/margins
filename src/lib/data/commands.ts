@@ -233,6 +233,15 @@ export const commands: Command[] = [
 		icon: 'search',
 	},
 	{
+		id: 'go-to-settings',
+		group: 'Navigation',
+		name: 'Go to Settings',
+		perform: ({ page }) => {
+			goto(`/u:${page.data.user?.username}/settings`);
+		},
+		icon: 'cog6ToothMini',
+	},
+	{
 		id: 'new-smart-list',
 		group: 'Lists',
 		name: 'Create new smart list',

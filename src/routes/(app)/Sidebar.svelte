@@ -92,24 +92,19 @@
 				]),
 			},
 			{
+				display: 'Notebook',
+				href: `/u:${$page.data.user.username}/notebook`,
+				icon: 'bookmarkAlt',
+			},
+			{
 				display: 'Collections',
 				href: `/u:${$page.data.user.username}/collections`,
 				icon: 'rectangleStack',
 			},
 			{
-				display: 'Bookmarks',
-				href: `/u:${$page.data.user.username}/bookmarks`,
-				icon: 'bookmark',
-			},
-			{
 				display: 'Views',
 				href: `/u:${$page.data.user.username}/smart`,
 				icon: 'square2Stack3d',
-			},
-			{
-				display: 'Notebook',
-				href: `/u:${$page.data.user.username}/notebook`,
-				icon: 'bookmarkAlt',
 			},
 		];
 	}
@@ -143,6 +138,8 @@
 	// (this would be when page.path or modals change (as of now; this seems hacky))
 	$: $page.url, closeSidebar();
 	$: $modals.length && closeSidebar();
+
+	// $: $page.url.pathname.includes('entry') && hideSidebar.set(true);
 	// $: $commandPaletteStore && closeSidebar();
 	// $: $showCommandPalette && closeSidebar();
 
@@ -183,8 +180,8 @@
 	on:keydown
 	style="width: {width}px;"
 	class="absolute z-10 flex h-full w-60 select-none flex-col space-y-3 border-r bg-gray-50 pt-10 shadow-xl transition-all duration-300 dark:border-black dark:bg-gray-800 dark:shadow-2xl lg:static lg:z-auto lg:pt-0 lg:shadow-none {$hideSidebar
-		? '-translate-x-72 opacity-0'
-		: 'lg:transition-none left-0'} {sidebarToggle ? 'left-0' : '-left-full'}"
+		? '!absolute -translate-x-72 opacity-0'
+		: 'left-0 lg:transition-none'} {sidebarToggle ? 'left-0' : '-left-full'}"
 >
 	<!-- splitter -->
 	<div class="relative">

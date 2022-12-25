@@ -42,6 +42,7 @@ model Bookmark {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    context   Json? // should be uri string / schema that looks like: {entryId?: number; url: string; feedId?: number; }. or use model? hm.
     // really should be required, but there's some nasty enforcements if it is
     entry     Entry?   @relation(fields: [uri, entryId], references: [uri, id])
     uri       String?  @unique
@@ -80,6 +81,7 @@ model Bookmark {
     annotations   Annotation[]
 
     deleted DateTime?
+    Context Context[]
 
     @@index([uri, entryId])
     @@index([uri])
@@ -147,7 +149,7 @@ enum Location {
 }
 
 model Entry {
-    data         EntryData?
+    data         EntryData[]
     context      String? // uri of item it's saved from. not sure if it makes sense for this to be on Document or on Annotation.
     createdAt    DateTime      @default(now())
     author       String?
@@ -164,6 +166,8 @@ model Entry {
     text         String?       @db.LongText
     image        String?       @db.VarChar(2083)
     guid         String?       @unique //@ unique?
+    /// Original represents original data (html, title) in case we've re-download and/or changes...?
+    original     Json?
     wordCount    Int?
     siteName     String?
     summary      String?
@@ -186,28 +190,33 @@ model Entry {
     @@index([id, published, createdAt])
 }
 
+/// Represents user-downloaded/defined data for an entry
 model EntryData {
-    id          Int          @id @default(autoincrement())
-    html        String?      @db.LongText
-    text        String?      @db.LongText
-    image       String?
-    wordCount   Int?
-    summary     String?
-    media       EntryMedia[]
-    published   DateTime?
-    updated     DateTime?
-    createdAt   DateTime     @default(now())
-    updatedAt   DateTime     @updatedAt
-    document    Entry        @relation(fields: [documentUri], references: [uri])
-    documentUri String       @unique
+    id        Int          @id @default(autoincrement())
+    html      String?      @db.LongText
+    text      String?      @db.LongText
+    custom    Json?
+    image     String?
+    wordCount Int?
+    summary   String?
+    media     EntryMedia[]
+    data      Json?
+    published DateTime?
+    updated   DateTime?
+    createdAt DateTime     @default(now())
+    updatedAt DateTime     @updatedAt
+    entry     Entry        @relation(fields: [entryId], references: [id])
+    entryId   Int          @unique
 
     // TODO: pdf, image, etc
 
     // these *can* belong to a user, but don't have to
-    user   User?   @relation(fields: [userId], references: [id])
-    userId String?
+    user   User   @relation(fields: [userId], references: [id])
+    userId String
 
-    @@index([documentUri])
+    @@unique([entryId, userId])
+    @@index([entryId])
+    @@index([userId])
 }
 
 model EntryMedia {
@@ -283,6 +292,8 @@ model Context {
     url         String
     description String?
     createdAt   DateTime @default(now())
+    bookmark    Bookmark @relation(fields: [bookmarkId], references: [id])
+    bookmarkId  Int
 }
 
 model Collection {
@@ -367,6 +378,8 @@ model Subscription {
     createdAt DateTime @default(now()) /// @zod.custom(z.string())
     updatedAt DateTime @updatedAt /// @zod.custom(z.string())
     title     String
+
+    download_full Boolean @default(false)
 
     @@unique([userId, feedId])
     // kind - some sort of enum of rss or podcast or tweet i think (maybe unnnecessary because that data is stored on Feed)

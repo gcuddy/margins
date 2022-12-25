@@ -5,6 +5,7 @@ import { ArticleListSelect } from '$lib/types';
 
 import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
+	const { user, session } = await locals.validateUser();
 	const { tag } = params;
 	const raw = tag.split('/');
 	const tags = [
@@ -20,24 +21,20 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 	if (!tags) {
 		throw error(404, 'Not found');
 	}
-	const { AUTHORIZED } = await parent();
-	const items = await db.article.findMany({
+	const AUTHORIZED = user?.username === params.username;
+	const items = await db.entry.findMany({
 		where: {
 			AND: tags.map((tag) => {
 				return {
 					tags: {
 						some: {
 							name: tag,
+
 						},
 					},
 				};
 			}),
-			user: {
-				username: {
-					equals: params.username,
-				},
-			},
-			private: AUTHORIZED ? true : undefined,
+			// private: AUTHORIZED ? true : undefined,
 		},
 		select: {
 			...ArticleListSelect,

@@ -98,21 +98,21 @@
 		const ogInteraction = interaction || {};
 		if (!interaction?.is_read) {
 			data.interaction = { ...ogInteraction, is_read: true };
-			const res = await fetch(`/api/interactions`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					is_read: true,
-					uri: data.article.uri,
-				}),
-			});
-			console.log({ res });
-			if (!res.ok) {
-				// roll back
-				data.interaction = ogInteraction;
-			}
+			// const res = await fetch(`/api/interactions`, {
+			// 	method: 'POST',
+			// 	headers: {
+			// 		'Content-Type': 'application/json',
+			// 	},
+			// 	body: JSON.stringify({
+			// 		is_read: true,
+			// 		uri: data.article.uri,
+			// 	}),
+			// });
+			// console.log({ res });
+			// if (!res.ok) {
+			// 	// roll back
+			// 	data.interaction = ogInteraction;
+			// }
 		}
 		if ($page.data.user?.username === $page.params.username) {
 			const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
@@ -128,16 +128,16 @@
 		if (!data && data !== 0) return;
 		if (Math.abs(last_saved_progress - data) < 0.005) return;
 		last_saved_progress = data;
-		await fetch(`/api/interactions`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				progress: data,
-				entryId: article.id,
-			}),
-		});
+		// await fetch(`/api/interactions`, {
+		// 	method: 'POST',
+		// 	headers: {
+		// 		'Content-Type': 'application/json',
+		// 	},
+		// 	body: JSON.stringify({
+		// 		progress: data,
+		// 		entryId: article.id,
+		// 	}),
+		// });
 	};
 	const debouncedSave = debounce(saveProgress, 2000, {
 		leading: false,
@@ -293,7 +293,7 @@
 			<!-- {#if article.image && !article.html?.includes(article.image)}
 				<img src={article.image} alt="" class="mx-auto rounded py-2" />
 			{/if} -->
-			{@html entry.html || entry.text || entry.summary}
+			{@html entry.html || entry.text || entry.summary || '[No content]'}
 		</Highlighter>
 		{#if $mainElScroll.offset > 0.97 && article.location !== 'ARCHIVE' && data.authorized}
 			<div class="fixed bottom-8 right-8" transition:fade>

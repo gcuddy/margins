@@ -1,9 +1,11 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 
 import type { Actions, PageServerLoad } from './$types';
+import { router } from '$lib/trpc/router';
+import { createContext } from '$lib/trpc/context';
 
 export const load: PageServerLoad = async (evt) => {
 	const { session, user } = await evt.locals.validateUser();
@@ -22,8 +24,9 @@ export const load: PageServerLoad = async (evt) => {
 };
 
 export const actions: Actions = {
-	save: async ({ params, locals, request }) => {
+	save: async (evt) => {
 		try {
+			const { params, locals, request } = evt;
 			const { user } = await locals.validateUser();
 			if (!user) {
 				throw error(401, 'Not authorized');
@@ -32,7 +35,8 @@ export const actions: Actions = {
 			const stateId = (data.get('stateId') as string | undefined) || user.default_state_id;
 			const id = data.get('id') || '';
 			const uri = data.get('url') as string;
-			console.log({ id });
+			console.log({ id, uri });
+			const serverRouter = router.createCaller(await createContext(evt));
 			if (+id) {
 				// SOFT DELETE
 				await db.bookmark.update({
@@ -44,16 +48,18 @@ export const actions: Actions = {
 					},
 				});
 			} else {
-				//toggle - check if exists first
+				///toggle - check if exists first
 				// todo: this prolly an ineficient way to dhis
-				const bookmark = await db.bookmark.create({
-					data: {
-						entryId: Number(params.id),
-						userId: user.userId,
-						stateId: Number(stateId),
-						uri,
-					},
-				});
+				const bookmark = await serverRouter.bookmarks.add({
+					url: uri,
+					entryId: Number(params.id),
+					stateId: Number(stateId),
+				})
+				// const bookmark = await db.bookmark.create({
+				// 	data: {
+				// 		uri,
+				// 	},
+				// });
 				return { bookmark };
 			}
 		} catch (e) {
@@ -104,4 +110,24 @@ export const actions: Actions = {
 			}),
 		]);
 	},
+	download: async (evt) => {
+		// Downloads custom data to entrydata
+		const url = (await evt.request.formData()).get("url")
+		if (!url || typeof url !== "string") {
+			fail(400, {
+				message: "missing url"
+			})
+		}
+		const serverRouter = router.createCaller(await createContext(evt));
+		const article = await serverRouter.publicParse.parse(url as string);
+		console.log({ article })
+		const entryData = await serverRouter.entries.addData({
+			id: +evt.params.id,
+			article
+		});
+		console.log({ entryData })
+		return {
+			entryData
+		}
+	}
 };

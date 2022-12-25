@@ -49,7 +49,8 @@ export const subscriptions = t.router({
                 author: true,
                 summary: true,
                 id: true,
-                image: true
+                image: true,
+                feedId: true
             },
             // TODO: implement cursor, also probably move this to /feeds.loadEntries
         }).then(entries => {
