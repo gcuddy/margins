@@ -1,5 +1,5 @@
 // import { finder } from '@medv/finder';
-import type { PodcastEpisode, Prisma } from '@prisma/client';
+import type { Annotation, Entry, PodcastEpisode, Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 import { Md5 } from 'ts-md5';
 import { z } from 'zod';
@@ -16,6 +16,7 @@ import type { FavoriteSchema } from './types/schemas/Favorite';
 import type { AddToListSchema } from './types/schemas/List';
 import type { RssFeedItemModel } from './types/schemas/rssfeeditem';
 import type { ViewOptions } from './types/schemas/View';
+import type { RouterOutputs } from './trpc/router';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -464,3 +465,7 @@ export function notEmpty<TValue>(value: TValue | null | undefined): value is TVa
 	if (value === null || value === undefined) return false;
 	return true;
 }
+
+export const isEntry = (item: Pick<Partial<Entry>, "author"> | Annotation): item is Entry => {
+	return (item as Entry).author !== undefined;
+};

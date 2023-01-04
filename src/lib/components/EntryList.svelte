@@ -9,7 +9,6 @@
 	export let quoted = false;
 
 	export let externalLink = false;
-	export let actions: ComponentProperties<SelectActions>['actions'] | undefined = undefined;
 	export let font: 'newsreader' | 'sans' = 'newsreader';
 	export let alwaysShowDescription = false;
 
@@ -86,7 +85,9 @@
 <SelectActions bind:selected_items={$selectedItems} on:update>TODO: entry actions</SelectActions>
 
 <!-- todo: virtual list -->
-<KeyboardNav class="h-full {viewOptions.view === 'grid' ? 'TODO:customized-color-here' : ''} ">
+<KeyboardNav
+	class="h-full overflow-auto {viewOptions.view === 'grid' ? 'TODO:customized-color-here' : ''} "
+>
 	<div
 		class="mx-auto h-fit {viewOptions.view === 'grid'
 			? 'p-4'
@@ -167,7 +168,7 @@
 													'list'
 														? 'h-8 w-8 rounded-md shadow-sm hover:ring-1'
 														: ' h-40 w-full rounded-t-md'}"
-													src={data?.image || `https://icon.horse/icon/?uri=${data?.url}`}
+													src={data?.image}
 													alt=""
 												/>
 											{/if}
@@ -192,12 +193,14 @@
 										<span
 											class="cursor-pointer {font === 'newsreader'
 												? 'font-newsreader sm:text-lg'
-												: 'font-sans'}  text-base font-semibold !leading-tight line-clamp-2  {viewOptions.view ===
-											'grid'
+												: 'font-sans'}  text-base {data.unread
+												? 'font-semibold'
+												: 'font-regular'} !leading-tight line-clamp-2  {viewOptions.view === 'grid'
 												? 'text-lg'
 												: ''}"
 										>
-											{#if html}{@html data.title}{:else}{data?.title}{/if}
+											{#if html}{@html data.title || '[No title]'}{:else}{data?.title ||
+													'[No title]'}{/if}
 										</span>
 										<!-- url and author around 74,74,74, description around 126,126,126 -->
 										<div

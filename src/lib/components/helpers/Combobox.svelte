@@ -1,7 +1,9 @@
 <script lang="ts">
 	// TODO: multiple
-	import { createEventDispatcher, onDestroy, tick } from 'svelte';
-	import { writable } from 'svelte/store';
+	import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
+	import { tweened } from 'svelte/motion';
+	import { derived, writable } from 'svelte/store';
+	import type { number } from 'zod';
 	type T = $$Generic;
 	type TValue = T;
 	export let values: TValue[];
@@ -153,7 +155,7 @@
 				// 	return;
 				// }
 				if (!values.length) return;
-				selectedId = idResolver(val);
+				selectedId = idResolver(val).toString();
 				if (fillValue) value = valueResolver(val);
 				close();
 				dispatch('select', val);
@@ -243,86 +245,113 @@
 		}
 	}
 
+	let ro: ResizeObserver;
+	const height = tweened(200, {
+		duration: 125,
+	});
+
+	onMount(() => {
+		if (ref) {
+			ro = new ResizeObserver(([entry]) => {
+				height.set(entry.contentRect.height);
+			});
+			ro.observe(ref);
+		}
+	});
+
 	onDestroy(() => {
 		close();
+		ro && ro.disconnect();
 	});
+
+	let ref: HTMLElement;
+
+	// const height = derived(ref, ($el, set) => {
+	// 	if (!$el) return;
+	// 	const ro = new ResizeObserver(([entry]) => {
+	// 		set(entry.contentRect.height);
+	// 	});
+	// 	return () => ro.disconnect();
+	// });
 </script>
 
-<div class={className}>
-	<!-- slot props are given IF you want to use them -->
-	{#if name}
-		{#each selectedValue as value}
-			<input type="hidden" {name} value={JSON.stringify(value)} />
-		{/each}
-	{/if}
-	<slot
-		name="input"
-		aria-controls={optionId}
-		aria-expanded={expanded}
-		aria-activedescendant={valueIds[activeIndex]}
-		onKeydown={handleKeydown}
-	>
-		<div class={inputParent?.class}>
-			<slot name="inputPeer" />
-			<input
-				role="combobox"
-				type="text"
-				bind:value
-				on:keydown={handleKeydown}
-				on:blur={close}
-				on:blur
-				on:click={(e) => {
-					dispatch('input-click', e);
-				}}
-				on:input={() => {
-					if (!expanded) {
-						open();
-					}
-				}}
-				aria-controls={optionId}
-				aria-expanded={expanded}
-				aria-activedescendant={valueIds[activeIndex]}
-				aria-autocomplete="list"
-				class={input?.class}
-				placeholder={input?.placeholder}
-				bind:this={inputRef}
-			/>
-			<slot name="inputPeerAfter" />
-		</div>
-	</slot>
-
-	<!-- TODO: able to render multiple "groups" ? -->
-	<slot name="listbox" {activeIndex}>
-		{#if staticProp || expanded}
-			<ul id={optionId} role="listbox" class={options?.class}>
-				<!-- TODO: (maybe) use tiny-virtual-list for rendering li  -->
-				{#each values as value, index (idResolver(value))}
-					{@const id = valueIds[index]}
-					{@const selected = id === selectedId}
-					{@const active = index === activeIndex}
-					<!-- don't actually use optionContainer lol, everything would break -->
-					<slot name="optionContainer">
-						<!-- could use a private component here? -->
-						<li
-							id="cb-option-{id}"
-							aria-selected={selected}
-							class="cursor-pointer"
-							role="option"
-							bind:this={optionRefs[index]}
-							on:pointermove={(e) => handleMove(e, value, active)}
-							on:mousemove={(e) => handleMove(e, value, active)}
-							on:pointerleave={(e) => handleLeave(e, value, active)}
-							on:mouseleave={(e) => handleLeave(e, value, active)}
-							on:focus={(e) => {
-								// todo?
-							}}
-							on:click={(e) => handleClick(e, value, active)}
-						>
-							<slot name="option" {value} {active} {selected} {index} />
-						</li>
-					</slot>
-				{/each}
-			</ul>
+<div style:height="{$height}px">
+	<div class={className} bind:this={ref}>
+		<!-- slot props are given IF you want to use them -->
+		{#if name}
+			{#each selectedValue as value}
+				<input type="hidden" {name} value={JSON.stringify(value)} />
+			{/each}
 		{/if}
-	</slot>
+		<slot
+			name="input"
+			aria-controls={optionId}
+			aria-expanded={expanded}
+			aria-activedescendant={valueIds[activeIndex].toString()}
+			onKeydown={handleKeydown}
+		>
+			<div class={inputParent?.class}>
+				<slot name="inputPeer" />
+				<input
+					role="combobox"
+					type="text"
+					bind:value
+					on:keydown={handleKeydown}
+					on:blur={close}
+					on:blur
+					on:click={(e) => {
+						dispatch('input-click', e);
+					}}
+					on:input={() => {
+						if (!expanded) {
+							open();
+						}
+					}}
+					aria-controls={optionId}
+					aria-expanded={expanded}
+					aria-activedescendant={valueIds[activeIndex]}
+					aria-autocomplete="list"
+					class="border-none focus:ring-0 {input?.class}"
+					placeholder={input?.placeholder}
+					bind:this={inputRef}
+				/>
+				<slot name="inputPeerAfter" />
+			</div>
+		</slot>
+
+		<!-- TODO: able to render multiple "groups" ? -->
+		<slot name="listbox" {activeIndex}>
+			{#if staticProp || expanded}
+				<ul id={optionId} role="listbox" class={options?.class}>
+					<!-- TODO: (maybe) use tiny-virtual-list for rendering li  -->
+					{#each values as value, index (idResolver(value))}
+						{@const id = valueIds[index]}
+						{@const selected = id === selectedId}
+						{@const active = index === activeIndex}
+						<!-- don't actually use optionContainer lol, everything would break -->
+						<slot name="optionContainer">
+							<!-- could use a private component here? -->
+							<li
+								id="cb-option-{id}"
+								aria-selected={selected}
+								class="cursor-pointer"
+								role="option"
+								bind:this={optionRefs[index]}
+								on:pointermove={(e) => handleMove(e, value, active)}
+								on:mousemove={(e) => handleMove(e, value, active)}
+								on:pointerleave={(e) => handleLeave(e, value, active)}
+								on:mouseleave={(e) => handleLeave(e, value, active)}
+								on:focus={(e) => {
+									// todo?
+								}}
+								on:click={(e) => handleClick(e, value, active)}
+							>
+								<slot name="option" {value} {active} {selected} {index} />
+							</li>
+						</slot>
+					{/each}
+				</ul>
+			{/if}
+		</slot>
+	</div>
 </div>

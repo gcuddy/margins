@@ -146,19 +146,21 @@
 <!-- todo: useThePlatform, wnot qs, right? -->
 <!-- <input type="hidden" name="ids[]" value={id} /> -->
 <!-- {/each} -->
-<div class="flex items-center px-1 {className}">
+<div class="flex items-center {className}">
 	{#if selectedTags.size}
-		<div class="flex gap-2 pl-2 {size === 'lg' ? 'text-base' : 'text-sm'}">
+		<div class="flex gap-2 {size === 'lg' ? 'text-base' : 'text-sm'}">
 			{#each tags as tag, i}
-				<input type="hidden" name="tags[{i}][name]" value={tag.name} />
-				{#if tag.id}<input type="hidden" name="tags[{i}][id]" value={tag.id} />{/if}
-				<TagComponent
-					as="span"
-					{tag}
-					variant="primary"
-					active={tag.name === activeTag}
-					on:click={() => (activeTag = tag.name)}
-				/>
+				<div>
+					<input type="hidden" name="tags[{i}][name]" value={tag.name} />
+					{#if tag.id}<input type="hidden" name="tags[{i}][id]" value={tag.id} />{/if}
+					<TagComponent
+						as="span"
+						{tag}
+						variant="primary"
+						active={tag.name === activeTag}
+						on:click={() => (activeTag = tag.name)}
+					/>
+				</div>
 			{/each}
 		</div>
 	{/if}

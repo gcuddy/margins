@@ -3,29 +3,29 @@ import type { Prisma } from '@prisma/client';
 // Make mutually exclusive
 export type PrismaStringFilter =
 	| {
-			contains: string;
-			startsWith?: never;
-			endsWith?: never;
-			equals?: never;
-	  }
+		contains: string;
+		startsWith?: never;
+		endsWith?: never;
+		equals?: never;
+	}
 	| {
-			startsWith: string;
-			contains?: never;
-			endsWith?: never;
-			equals?: never;
-	  }
+		startsWith: string;
+		contains?: never;
+		endsWith?: never;
+		equals?: never;
+	}
 	| {
-			endsWith: string;
-			contains?: never;
-			startsWith?: never;
-			equals?: never;
-	  }
+		endsWith: string;
+		contains?: never;
+		startsWith?: never;
+		equals?: never;
+	}
 	| {
-			equals: string;
-			contains?: never;
-			startsWith?: never;
-			endsWith?: never;
-	  };
+		equals: string;
+		contains?: never;
+		startsWith?: never;
+		endsWith?: never;
+	};
 
 export type FilterField = keyof Omit<Prisma.ArticleWhereInput, 'id' | 'AND' | 'OR' | 'NOT'>;
 // export type FilterField = Omit<keyof Prisma.ArticleWhereInput, 'id' | 'AND' | 'OR' | 'NOT'>;
@@ -47,7 +47,7 @@ export type DateTimeFilterType = keyof Prisma.DateTimeFilter;
 
 // TODO: keep this in sync with zod over in SmartList.ts
 
-const STRING_FIELDS = ['title', 'author', 'url', 'siteName', 'textContent', 'location'] as const;
+const STRING_FIELDS = ['title', 'author', 'uri', 'siteName', 'text', 'location'] as const;
 
 type _StringFilter = {
 	field: typeof STRING_FIELDS[number];
@@ -58,7 +58,7 @@ type _StringFilter = {
 	id: number;
 };
 
-const NUMBER_FIELDS = ['readProgress', 'wordCount'];
+const NUMBER_FIELDS = ['readProgress', 'wordCount'] as const;
 
 type _IntFilter = {
 	field: typeof NUMBER_FIELDS[number];
@@ -69,7 +69,7 @@ type _IntFilter = {
 	id: number;
 };
 
-const BOOL_FIELDS = ['starred'];
+const BOOL_FIELDS = ['unread'] as const;
 
 type _BoolFilter = {
 	field: typeof BOOL_FIELDS[number];
@@ -80,7 +80,7 @@ type _BoolFilter = {
 	id: number;
 };
 
-const DATE_FIELDS = ['createdAt', 'updatedAt', 'date'];
+const DATE_FIELDS = ['createdAt', 'updatedAt', 'published'] as const;
 type _DateTimeFilter = {
 	field: typeof DATE_FIELDS[number];
 	type: 'DateTimeFilter';
@@ -90,7 +90,7 @@ type _DateTimeFilter = {
 	id: number;
 };
 
-const SEARCH_FIELDS = ['textContent'];
+const SEARCH_FIELDS = ['text'] as const;
 
 type _SearchFilter = {
 	field: typeof SEARCH_FIELDS[number];

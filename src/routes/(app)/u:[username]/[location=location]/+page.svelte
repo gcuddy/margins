@@ -10,6 +10,7 @@
 	import { defaultViewOptions, type ViewOptions } from '$lib/types/schemas/View';
 	import { page } from '$app/stores';
 	import EntryList from '$lib/components/EntryList.svelte';
+	import Filters from '$lib/components/Filters/Index.svelte';
 	export let data: PageData;
 	$: ({ location } = data);
 	// this shouldn't be necessary, since we're requesting from the server - but maybe good to keep in case we want to do something client-side?
@@ -51,4 +52,5 @@
 		});
 	}}
 /> -->
+<Filters />
 <EntryList items={data.entries} />

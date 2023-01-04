@@ -12,7 +12,8 @@
 		kbd?: string;
 	}
 
-	export let type: 'submit' | 'reset' | 'button' = 'button';
+	export let type: 'submit' | 'reset' | 'button' | undefined = undefined;
+	export let formaction: string | undefined = undefined;
 	export let disabled: boolean = false;
 	export let className = '';
 	export let scaleOnHover = false;
@@ -135,6 +136,7 @@
 			{href}
 			use:popperRef
 			on:click={handleClick}
+			on:click
 			on:mouseenter
 			on:mouseenter={handlemouseenter}
 			on:mouseleave={handleMouseLeave}
@@ -159,14 +161,16 @@
 	<svelte:element
 		this={as}
 		bind:this={el}
-		type={as === 'button' ? type : undefined}
+		{type}
 		{disabled}
 		{href}
 		on:click={handleClick}
+		on:click
 		use:popperRef
 		on:mouseenter={handlemouseenter}
 		on:mouseleave={handleMouseLeave}
 		class={_classname}
+		{formaction}
 		aria-label={tooltip.text}
 	>
 		<slot>Button</slot>
@@ -175,10 +179,12 @@
 	<svelte:element
 		this={as}
 		bind:this={el}
-		type={as === 'button' ? type : undefined}
+		{type}
 		{disabled}
 		{href}
+		{formaction}
 		on:click={handleClick}
+		on:click
 		on:mouseenter={handlemouseenter}
 		on:mouseleave={handleMouseLeave}
 		class={_classname}

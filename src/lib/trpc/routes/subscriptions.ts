@@ -2,12 +2,10 @@ import { db } from '$lib/db';
 import { auth } from '$lib/trpc/middleware/auth';
 import { logger } from '$lib/trpc/middleware/logger';
 import { z } from 'zod';
-import { t } from '$lib/trpc/t';
+import { protectedProcedure, router } from '$lib/trpc/t';
 
-export const subscriptions = t.router({
-    list: t.procedure
-        .use(auth)
-        .use(logger)
+export const subscriptions = router({
+    list: protectedProcedure
         .query(({ ctx: { userId } }) =>
             db.subscription.findMany({
                 where: {
@@ -27,13 +25,13 @@ export const subscriptions = t.router({
                 },
             })
         ),
-    loadEntries: t.procedure.use(auth).use(logger)
+    loadEntries: protectedProcedure
         .input(z.object({
             feedId: z.number()
         }))
         .query(({ input, ctx }) => db.entry.findMany({
             where: {
-                feedId: input.feedId
+                feedId: input.feedId,
             },
             orderBy: {
                 published: "desc"
@@ -55,40 +53,17 @@ export const subscriptions = t.router({
             // TODO: implement cursor, also probably move this to /feeds.loadEntries
         }).then(entries => {
             // TODO: 
-            return entries
+            // get the interaction and map it to more useful properties
+            return entries.map(e => {
+                const { interactions, ...entry } = e;
+                const progress = interactions[0]?.progress;
+                const unread = !interactions[0]?.is_read;
+                return {
+                    ...e,
+                    progress,
+                    unread
+                }
+            })
         })
         )
-    // add: t.procedure
-    //     .use(auth)
-    //     .use(logger)
-    //     .input(
-    //         z.object({
-    //             feeds: z.array(z.object({ url: z.string().url(), title: z.string() })),
-    //         })
-    //     )
-    //     .mutation(({ input, ctx }) =>
-    //         // eg buildFeed, then
-    //         db.feed.upsert({
-    //             where: {
-    //                 id: 0
-    //             },
-    //             create: {
-
-    //             },
-    //             update: {
-    //                 subscriptions: {
-    //                     // create: 
-    //                 }
-    //             }
-    //         })
-    //         // TODO
-    //         // db.subscription.create({
-    //         //     data: {
-    //         //         title: input.feeds[0].title,
-    //         //         feed: {
-
-    //         //         }
-    //         //     }
-    //         // })
-    //     ),
 });

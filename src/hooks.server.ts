@@ -5,12 +5,12 @@ import { createTRPCHandle } from 'trpc-sveltekit';
 
 import { auth } from '$lib/server/lucia';
 import { createContext } from '$lib/trpc/context';
-import { router } from '$lib/trpc/router';
+import { appRouter } from '$lib/trpc/router';
 
 export const handle: Handle = sequence(
 	handleHooks(auth),
 	createTRPCHandle({
-		router,
+		router: appRouter,
 		createContext,
 		responseMeta({ type, errors, ctx, paths }) {
 			console.log({ paths })
@@ -25,11 +25,11 @@ export const handle: Handle = sequence(
 			const WILL_CACHE = allPublic && allOk && isQuery
 			console.log({ WILL_CACHE })
 			if (WILL_CACHE) {
-				// cache request for 1 day + revalidate once every second
+				// cache request for 1 day + revalidate once every 5 seconds
 				const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 				return {
 					headers: {
-						'cache-control': `s-maxage=1, stale-while-revalidate=${ONE_DAY_IN_SECONDS}`,
+						'cache-control': `s-maxage=5, stale-while-revalidate=${ONE_DAY_IN_SECONDS}`,
 					},
 				};
 			} else if (allOk && isQuery) {

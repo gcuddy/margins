@@ -174,7 +174,7 @@
 				{/if}
 				<div
 					class="rounded-lg p-1 font-medium text-gray-600 dark:text-gray-300  {active
-						? 'bg-amber-400/50 text-gray-800 dark:bg-gray-700 dark:!text-white font-bold'
+						? 'bg-amber-400/50 font-bold text-gray-800 dark:bg-gray-700 dark:!text-white'
 						: ''} flex h-12 w-full items-center justify-between gap-3.5 px-4 py-2"
 				>
 					<div class="flex gap-3.5">

@@ -20,8 +20,8 @@
 	import { tick } from 'svelte';
 	import { json } from '@sveltejs/kit';
 	export let data: LayoutData;
-	$: user = data.user;
-	$: ({ feeds } = $user);
+	// $: user = data;
+	// $: ({ feeds } = $user);
 	let pending_sync = false;
 	let sync_id: string;
 	onMount(async () => {

@@ -1,0 +1,11 @@
+import { createContext } from "$lib/trpc/context";
+import { appRouter } from "$lib/trpc/router";
+import type { PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async (event) => {
+    const caller = await appRouter.createCaller(await createContext(event));
+    const entries = await caller.entries.listForUserSubscriptions();
+    return {
+        entries
+    }
+}

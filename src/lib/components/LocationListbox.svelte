@@ -18,7 +18,7 @@
 	import HiddenInput from './atoms/HiddenInput.svelte';
 	import TooltipRef from './TooltipRef.svelte';
 	import type { Tooltip } from '$lib/stores/Tooltips';
-	export let location: Location | 'ALL';
+	export let location: Location | 'all';
 	export let includeAll = true;
 	export let includeIcon = false;
 	export let variant: 'naked' | 'button' = 'naked';
@@ -55,7 +55,7 @@
 		{#each includeAll ? LOCATIONS_WITH_ALL : LOCATIONS_WITH_ALL.filter((l) => l !== 'ALL') as location (location)}
 			<ListboxOption
 				class={({ active }) =>
-					`flex cursor-default items-center space-x-3 pl-3 pr-5 py-1.5 ${
+					`flex cursor-default items-center space-x-3 py-1.5 pl-3 pr-5 ${
 						active && 'bg-gray-200 dark:bg-gray-700'
 					}`}
 				value={location}

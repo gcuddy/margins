@@ -72,9 +72,9 @@
 				icon: 'rss',
 				items: readable([
 					{
-						display: 'Unread',
-						href: `/u:${$page.data.user.username}/rss/unread`,
-						icon: 'unread',
+						display: 'All Entries',
+						href: `/u:${$page.data.user.username}/subscriptions/all`,
+						icon: 'inbox',
 						iconClass: 'text-gray-500 group-hover:text-gray-800',
 					},
 					{
@@ -202,7 +202,8 @@
 									label: 'Logout',
 									perform: async () => {
 										await signOut();
-										invalidateAll();
+										await invalidateAll();
+										// await goto('/');
 									},
 									icon: 'logoutSolid',
 								},

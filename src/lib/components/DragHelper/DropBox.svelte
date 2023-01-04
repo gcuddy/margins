@@ -42,7 +42,7 @@
 		// todo: only want context if it comes from this page - figure out how to do that
 		// i guess i need to add drag handlers to every link (and image?) on the page, which seems... annoying
 		console.log({ context });
-		const article = await trpc($page).publicParse.parse.query(url);
+		const article = await trpc($page).public.parse.query(url);
 		const bookmark = await trpc($page).bookmarks.add.mutate({
 			article,
 			url,

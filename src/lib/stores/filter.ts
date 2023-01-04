@@ -49,12 +49,12 @@ export function createItemStores<T>() {
 	};
 }
 
-function searchObjectKeys(object: any, term: string, ...keys: string[]) {
+export function searchObjectKeys(object: any, term: string, ...keys: string[]) {
 	if (keys.length === 0) {
 		return false;
 	}
 	for (const key of keys) {
-		if (object[key] && object[key].toString().toLowerCase().includes(term)) {
+		if (object[key] && object[key].toString().toLowerCase().includes(term.toLowerCase())) {
 			return true;
 		}
 	}

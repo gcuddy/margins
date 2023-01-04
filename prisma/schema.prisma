@@ -3,6 +3,11 @@ generator client {
     previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "extendedWhereUnique", "fieldReference"]
 }
 
+generator zod {
+    provider = "prisma-zod-generator"
+    output   = "../src/lib/zod"
+}
+
 datasource db {
     provider     = "mysql"
     url          = env("DATABASE_URL")
@@ -81,7 +86,6 @@ model Bookmark {
     annotations   Annotation[]
 
     deleted DateTime?
-    Context Context[]
 
     @@index([uri, entryId])
     @@index([uri])
@@ -150,7 +154,6 @@ enum Location {
 
 model Entry {
     data         EntryData[]
-    context      String? // uri of item it's saved from. not sure if it makes sense for this to be on Document or on Annotation.
     createdAt    DateTime      @default(now())
     author       String?
     location     Location? // only relevant if read later?
@@ -184,6 +187,7 @@ model Entry {
     // eventually move this to explicit due to planetscale indexing?
     tags         Tag[]
     entrytags    EntryTag[]
+    context      Context[]
 
     @@unique([uri, id])
     @@index([feedId])
@@ -232,6 +236,7 @@ model EntryMedia {
     entryId        Int?
 
     @@index([documentDataId])
+    @@index([entryId])
 }
 
 // tweet, reddit post, bandcamp - these would probably be classified under bookmark, but we could add more types if we want to
@@ -287,13 +292,45 @@ model Article {
     @@map("Article")
 }
 
-model Context {
-    id          Int      @id @default(autoincrement())
-    url         String
+model ContextNode {
+    /// context node refers to a source or referrer — for example, a Discord Server, or another user
+    id          String  @id @default(cuid())
+    name        String
+    url         String?
     description String?
-    createdAt   DateTime @default(now())
-    bookmark    Bookmark @relation(fields: [bookmarkId], references: [id])
-    bookmarkId  Int
+
+    owner  User   @relation(fields: [userId], references: [id])
+    userId String
+
+    refers_to String?
+
+    @@index([userId])
+}
+
+model Context {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+
+    user   User   @relation(fields: [userId], references: [id])
+    userId String
+
+    // entry?
+    entry   Entry? @relation(fields: [entryId], references: [id])
+    entryId Int?
+
+    // feed?
+    feed   Feed? @relation(fields: [feedId], references: [id])
+    feedId Int?
+
+    // url?
+    url String?
+
+    // just a description?
+    description String?
+
+    @@index([userId])
+    @@index([entryId])
+    @@index([feedId])
 }
 
 model Collection {
@@ -367,6 +404,7 @@ model Feed {
     /// Velocity refers to the amount of times a feed is published per day.
     velocity      Int?
     subscriptions Subscription[]
+    context       Context[]
 }
 
 model Subscription {
@@ -396,8 +434,8 @@ model Interaction {
     is_read   Boolean?  @default(false)
     progress  Float?    @default(0)
     finished  Boolean?  @default(false)
-    document  Entry     @relation(fields: [uri], references: [uri])
-    uri       String
+    entry     Entry     @relation(fields: [entryId], references: [id])
+    entryId   Int
     userId    String
     user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     bookmark  Bookmark?
@@ -406,8 +444,8 @@ model Interaction {
     last_annotated   DateTime @default(now())
     last_interaction DateTime @default(now())
 
-    @@unique([userId, uri])
-    @@index([uri])
+    @@unique([userId, entryId])
+    @@index([entryId])
     @@index([userId])
     @@map("EntryInteraction")
 }
@@ -525,8 +563,10 @@ model User {
     default_state_id Int?             @unique
     taggings         Tagging[]
     tags             Tag[]
-    Bookmark         Bookmark[]
+    bookmarks        Bookmark[]
     EntryTag         EntryTag[]
+    context          Context[]
+    context_nodes    ContextNode[]
 
     @@map("user")
 }

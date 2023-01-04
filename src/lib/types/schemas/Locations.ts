@@ -3,14 +3,14 @@ import { z } from 'zod';
 import type { IconName } from '$lib/icons';
 
 export const LOCATIONS = ['inbox', 'soon', 'later', 'archive'] as const;
-export const LOCATIONS_WITH_ALL = ['inbox', 'soon', 'later', 'archive', 'ALL'] as const;
+export const LOCATIONS_WITH_ALL = ['inbox', 'soon', 'later', 'archive', 'all'] as const;
 
 export const LOCATION_TO_DISPLAY = {
 	inbox: 'Inbox',
 	soon: 'Soon',
 	later: 'Later',
 	archive: 'Archive',
-	ALL: 'All',
+	all: 'All',
 } as const;
 
 export const LOCATION_LIST = LOCATIONS.map((location) => ({
@@ -18,12 +18,12 @@ export const LOCATION_LIST = LOCATIONS.map((location) => ({
 	id: location,
 }));
 
-export const LOCATION_TO_ICON_SOLID: Record<Location | 'ALL', IconName> = {
+export const LOCATION_TO_ICON_SOLID: Record<Location | 'all', IconName> = {
 	inbox: 'inboxSolid',
 	soon: 'sparklesSolid',
 	later: 'calendarSolid',
 	archive: 'archiveSolid',
-	ALL: 'inboxStackMini',
+	all: 'inboxStackMini',
 };
 export const LOCATION_TO_ICON_OUTLINE: Record<Location, IconName> = {
 	inbox: 'inbox',

@@ -2,7 +2,7 @@ import { db } from '$lib/db';
 import { auth } from '$lib/trpc/middleware/auth';
 import { logger } from '$lib/trpc/middleware/logger';
 import { z } from 'zod';
-import { t } from '$lib/trpc/t';
+import { protectedProcedure, router } from '$lib/trpc/t';
 import { Metadata } from '$lib/web-parser';
 import dayjs from 'dayjs';
 
@@ -10,10 +10,8 @@ import dayjs from 'dayjs';
 
 
 
-export const bookmarks = t.router({
-	add: t.procedure
-		.use(auth)
-		.use(logger)
+export const bookmarks = router({
+	add: protectedProcedure
 		.input(
 			z.object({
 				url: z.string().optional(),
@@ -91,9 +89,7 @@ export const bookmarks = t.router({
 				}
 			})
 		),
-	getContext: t.procedure
-		.use(auth)
-		.use(logger)
+	getContext: protectedProcedure
 		.input(
 			z.object({
 				id: z.number()
@@ -106,5 +102,16 @@ export const bookmarks = t.router({
 			select: {
 				context: true
 			}
-		}))
+		})),
+	byEntry: protectedProcedure.input(z.object({
+		entryId: z.number()
+	})).query(async ({ ctx, input }) => {
+		const { entryId } = input;
+		const bookmark = await ctx.prisma.bookmark.findFirst({
+			where: {
+				entryId
+			}
+		});
+		return bookmark;
+	})
 });

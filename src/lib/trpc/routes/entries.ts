@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { db } from '$lib/db';
 import { auth } from '$lib/trpc/middleware/auth';
-import { t } from '$lib/trpc/t';
+import { protectedProcedure, router } from '$lib/trpc/t';
 
 import { logger } from '../middleware/logger';
 import { Metadata } from '$lib/web-parser';
@@ -11,10 +11,8 @@ const idInput = z.object({
 	id: z.number(),
 });
 
-export const entries = t.router({
-	list: t.procedure
-		.use(auth)
-		.use(logger)
+export const entries = router({
+	list: protectedProcedure
 		.query(
 			({ ctx: { userId } }) =>
 				db.entry
@@ -30,7 +28,7 @@ export const entries = t.router({
 							updatedAt: true,
 							annotations: {
 								where: {
-									type: 'note',
+									// type: 'note',
 									userId
 								},
 							},
@@ -42,6 +40,14 @@ export const entries = t.router({
 							_count: {
 								select: { annotations: true },
 							},
+							bookmarks: {
+								where: {
+									userId
+								},
+								include: {
+									state: true
+								}
+							}
 						},
 						orderBy: { updatedAt: 'desc' },
 						where: {
@@ -53,12 +59,13 @@ export const entries = t.router({
 						},
 						take: 20,
 					})
-					.then((entries) => entries.map((entry) => ({ ...entry, bookmark: true })))
+					.then((entries) => entries.map((e) => {
+						const { bookmarks, ...entry } = e
+						return { ...entry, bookmark: bookmarks[0] }
+					}))
 			// .then((books) => books.map((book) => ({ ...book, price: book.price.toJSON() })))
 		),
-	load: t.procedure
-		.use(auth)
-		.use(logger)
+	load: protectedProcedure
 		.input(z.object({
 			id: z.number()
 		}))
@@ -73,7 +80,11 @@ export const entries = t.router({
 				id: true,
 				feedId: true,
 				published: true,
-				context: true,
+				context: {
+					where: {
+						userId
+					},
+				},
 				data: {
 					where: {
 						userId
@@ -86,6 +97,9 @@ export const entries = t.router({
 				bookmarks: {
 					where: {
 						userId
+					},
+					include: {
+						state: true
 					}
 				},
 				tags: true,
@@ -98,19 +112,23 @@ export const entries = t.router({
 			},
 		}).then(entry => {
 			const html = entry.data[0]?.html || entry.html;
-			const { data, ...finalEntry } = entry
-			const context = entry.bookmarks[0]?.context
+			const { data, interactions, bookmarks, ...finalEntry } = entry
+			const bookmark = entry.bookmarks[0];
+			const context = entry.bookmarks[0]?.context;
+			const progress = interactions[0]?.progress;
+			const unread = !interactions[0]?.is_read;
 			return {
 				...finalEntry,
+				bookmark,
 				html,
 				context,
-				custom: !!entry.data.length
+				custom: !!entry.data.length,
+				progress,
+				unread,
 			}
 		})
 		),
-	loadData: t.procedure
-		.use(auth)
-		.use(logger)
+	loadData: protectedProcedure
 		.input(
 			idInput.extend({
 				// todo: maybe this shuold be select instead for prisma ergonomics
@@ -152,9 +170,7 @@ export const entries = t.router({
 					};
 				})
 		),
-	getAnnotations: t.procedure
-		.use(auth)
-		.use(logger)
+	getAnnotations: protectedProcedure
 		.input(idInput)
 		.query(({ input: { id } }) =>
 			db.entry
@@ -168,9 +184,7 @@ export const entries = t.router({
 				})
 				.then((data) => data.annotations)
 		),
-	addData: t.procedure
-		.use(auth)
-		.use(logger)
+	addData: protectedProcedure
 		.input(z.object({
 			id: z.number(),
 			article: Metadata.extend({
@@ -192,5 +206,113 @@ export const entries = t.router({
 				html: input.article.html
 			}
 		})
-		)
+		),
+	markAsRead: protectedProcedure
+		.input(z.object({
+			id: z.number(),
+		}))
+		.mutation(({ ctx: { userId }, input: { id } }) => db.interaction.upsert({
+			where: {
+				userId_entryId: {
+					userId,
+					entryId: id
+				}
+			},
+			create: {
+				is_read: true,
+				user: {
+					connect: {
+						id: userId
+					}
+				},
+				entry: {
+					connect: {
+						id
+					}
+				}
+			},
+			update: {
+				is_read: true
+
+			}
+		})),
+	updateInteraction: protectedProcedure
+		.input(z.object({
+			id: z.number(),
+			progress: z.number(),
+			is_read: z.boolean()
+		}))
+		.mutation(({ ctx: { userId }, input: { id, progress, is_read } }) => db.entry.update({
+			where: {
+				id
+			},
+			data: {
+				interactions: {
+					upsert: {
+						where: {
+							userId_entryId: {
+								userId,
+								entryId: id
+							}
+						},
+						create: {
+							progress,
+							is_read,
+							user: {
+								connect: {
+									id: userId
+								}
+							}
+						},
+						update: {
+							progress,
+							is_read
+						}
+					}
+				}
+			}
+		})),
+	byFeed: protectedProcedure.input(
+		z.object({
+			id: z.number()
+		})
+	).query(({ ctx, input }) => {
+		const { id } = input;
+		return ctx.prisma.entry.findMany({
+			where: {
+				feedId: id
+			}
+		})
+	}),
+	byFeeds: protectedProcedure
+		.input(z.object({
+			ids: z.number().array()
+		}))
+		.query(async ({ ctx, input }) => {
+			const { ids } = input;
+			const entries = await ctx.prisma.entry.findMany({
+				where: {
+					feedId: {
+						in: ids
+					}
+				}
+			});
+			return entries;
+		}),
+	listForUserSubscriptions: protectedProcedure.query(async ({ ctx }) => {
+		const { prisma, userId } = ctx;
+		const feedWithEntries = await ctx.prisma.feed.findMany({
+			where: {
+				subscriptions: {
+					some: {
+						userId
+					}
+				}
+			},
+			select: {
+				entries: true
+			}
+		});
+		return feedWithEntries.flatMap(f => f.entries)
+	})
 });

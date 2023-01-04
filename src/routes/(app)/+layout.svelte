@@ -41,7 +41,7 @@
 	<!-- Grid version -->
 	<div
 		class="relative flex h-screen min-h-full w-full overflow-hidden {!$hideSidebar &&
-			'lg:grid-cols-[var(--sidebar-width)_1fr] grid'} "
+			'grid lg:grid-cols-[var(--sidebar-width)_1fr]'} "
 		style="--sidebar-width: {sidebarWidth}px;"
 	>
 		<!-- sidebar, but should only be for some layouts -->
@@ -51,6 +51,7 @@
 				<SettingsSidebar />
 			</Sidebar>
 		{:else}
+			<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
 			<Sidebar {user} bind:width={sidebarWidth} />
 		{/if}
 		<!-- bind:this={$mainEl} -->
