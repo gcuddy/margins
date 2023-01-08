@@ -11,10 +11,13 @@ interface CurrentItemStore<T> {
 	keys: string[];
 }
 
-export function createItemStores<T>() {
+export function createItemStores<T>(startingItems: T[], ...keys: string[]) {
 	// todo: ideally i want this to be able to be set the type later. how is that possible?
 	let lastPath: string | undefined;
-	const items = writable<CurrentItemStore<T> | null>(null);
+	const items = writable<CurrentItemStore<T>>({
+		items: startingItems,
+		keys
+	});
 	const { subscribe, set: _set, update } = items;
 	const filterTerm = writable('');
 	const set = (items: T[], ...keys: string[]) => {
@@ -43,6 +46,8 @@ export function createItemStores<T>() {
 	return {
 		items: {
 			set,
+			subscribe,
+			update
 		},
 		filteredItems,
 		filterTerm,

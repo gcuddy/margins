@@ -50,8 +50,14 @@
 	import { tick } from 'svelte';
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
-	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>();
-	$: currentItems.set(items);
+	const {
+		items: currentItems,
+		filteredItems,
+		filterTerm,
+	} = createItemStores<ExtendableEntry>(items);
+
+	$: items, currentItems.set(items);
+	$: console.log({ filteredItems });
 
 	// clear selecteditems on url change
 	$: $page.url.pathname, ($selectedItems = []);
@@ -124,17 +130,23 @@
 		}
 	}
 
-	const anchorPointIndex = derived(
+	let previousAnchorPoint: Entry | undefined = undefined;
+	const anchorPoint = derived<typeof selectedItems, Entry | undefined>(
 		selectedItems,
 		($s, set) => {
 			if ($s.length === 1) {
-				const a = $s[0];
-				const idx = items.findIndex((i) => i.id === a.id);
-				set(idx);
+				previousAnchorPoint = $s[0];
 			}
+			set(previousAnchorPoint);
 		},
+		undefined
+	);
+	const anchorPointIndex = derived(
+		anchorPoint,
+		($a) => items.findIndex((i) => i.id === $a?.id),
 		-1
 	);
+	$: console.log({ $anchorPointIndex });
 	// const anchorPointIndex = derived([selectedItems, anchorPoint], ([s, a]) =>
 	// 	s.findIndex((s) => s.id === a?.id)
 	// );
