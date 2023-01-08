@@ -13,6 +13,7 @@
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
+	import EntryList from '$lib/components/EntryList.svelte';
 	// TODO: starred - should it only appear when there's just one tag?
 	// TODO: cutomize view - per tag? per view? hmm...
 	// introducing this /t:/t: tag thing is a bit weird... prefer views over this. but let's try it out for now.
@@ -27,7 +28,7 @@
 				<h1><a href="/u:{$page.params.username}">{$page.params.username}</a> /</h1>
 				<h2 class="flex items-center space-x-1">
 					<Icon name="tagMini" className="h-5 w-5 fill-current" /><span
-						><SmallPlus>{data.tags.join(' + ')}</SmallPlus></span
+						><SmallPlus>{data.tag.join(' + ')}</SmallPlus></span
 					>
 				</h2>
 			</div>
@@ -37,4 +38,6 @@
 	</DefaultHeader>
 </Header>
 
-<Saved annotations={data.items} />
+<EntryList items={data.items} />
+
+<!-- <Saved annotations={data.items} /> -->

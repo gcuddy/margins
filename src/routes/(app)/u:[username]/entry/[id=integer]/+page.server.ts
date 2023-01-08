@@ -19,11 +19,27 @@ export const load: PageServerLoad = async (evt) => {
 	}
 	const { id } = evt.params;
 	const caller = await createCaller(evt);
-	const [entry] = await Promise.all([caller.public.loadEntry({
+	// const [entry, bookmark] = await Promise.all([caller.public.loadEntry({
+	// 	id: +id
+	// }),
+	// caller.bookmarks.byEntry({
+	// 	entryId: +id
+	// })
+	// ]);
+	const entry = await caller.entries.load({
 		id: +id
-	})]);
+	});
 	return {
-		article: entry,
+		article: {
+			...entry,
+		},
+		// article: {
+		// 	...entry,
+		// 	bookmark,
+		// 	tags: [],
+		// 	annotations: [],
+		// 	unread: false
+		// },
 		user,
 		authorized,
 	};

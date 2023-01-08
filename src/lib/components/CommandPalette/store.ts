@@ -3,11 +3,11 @@ import { writable } from 'svelte/store';
 import type GenericCommandPalette from './GenericCommandPalette.svelte';
 
 function createCommandPaletteStore<TValue>() {
-	type T = ComponentProperties<GenericCommandPalette>;
+	type T = ComponentProperties<GenericCommandPalette<{}>>;
 
 	interface State {
 		isOpen: boolean;
-		props?: ComponentProperties<GenericCommandPalette>;
+		props?: ComponentProperties<GenericCommandPalette<{}>>;
 	}
 	const { subscribe, set, update } = writable<State>({
 		isOpen: false

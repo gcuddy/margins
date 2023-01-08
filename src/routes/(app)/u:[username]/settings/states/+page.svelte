@@ -36,7 +36,10 @@
 {#each types as type}
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-medium">{type}</h2>
-		<button><Icon name="plusMini" className="h-6 w-6 fill-gray-500" /></button>
+		<form action="?/new" method="post" use:enhance>
+			<input type="hidden" name="location" value={type.toLowerCase()} />
+			<button><Icon name="plusMini" className="h-6 w-6 fill-gray-500" /></button>
+		</form>
 	</div>
 	{#each $page.data.states?.filter((state) => state.type === type.toLowerCase()) || [] as state}
 		{@const defaultState = state.id === $page.data.user?.default_state_id}

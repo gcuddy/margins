@@ -3,15 +3,13 @@
 	import Saved from '$lib/components/Saved.svelte';
 	import { recents } from '$lib/stores/recents';
 	import type { ArticleWithTags } from '$lib/types';
+	import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@rgossiaux/svelte-headlessui';
 
 	export let data: PageData;
 
-	$: ({ results, matches } = data);
-	// export let results: ArticleWithTags[];
-	// export let matches: {
-	// 	title: string;
-	// 	content: string;
-	// }[] = [];
+	$: ({ results, annotations } = data);
+
+	$: console.log({ data });
 
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
@@ -20,7 +18,10 @@
 	import debounce from 'lodash.debounce';
 	import { goto } from '$app/navigation';
 	import CircularProgressBar from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
-	import type { PageData } from '../../../../.svelte-kit/types/src/routes/search/$types';
+	import type { PageData } from './$types';
+	import EntryList from '$lib/components/EntryList.svelte';
+	import AnnotationList from '$lib/components/AnnotationList.svelte';
+	import { page } from '$app/stores';
 
 	export let value = '';
 	let input: HTMLElement;
@@ -63,7 +64,8 @@
 	}
 </script>
 
-<!-- TODO: componentize this -->
+<!-- TODO: just use use:enhance -->
+<!-- TODO: tabs -->
 <Header>
 	<form class="w-full" action="/search" on:submit|preventDefault={handleSubmit}>
 		<div class="group relative w-full">
@@ -103,7 +105,7 @@
 </Header>
 
 {#if results.length}
-	<Saved
+	<!-- <Saved
 		html={true}
 		quoted={true}
 		annotations={results.map((r, i) => ({
@@ -111,7 +113,28 @@
 			title: matches[i].title,
 			description: matches[i].content || '',
 		}))}
-	/>
+	/> -->
+	<!-- TODO: progressive enhancement for tabs -->
+	<TabGroup
+		defaultIndex={data.tab}
+		on:change={(e) => {
+			console.log(e.detail);
+			const url = $page.url;
+			url.searchParams.set('t', e.detail);
+			// window.history.pushState({}, '', url);
+		}}
+	>
+		<TabList>
+			<Tab>Entries {data.results.length}</Tab>
+			<Tab>Annotations {data.annotations.length}</Tab>
+		</TabList>
+		<TabPanels>
+			<TabPanel><EntryList items={data.results} /></TabPanel>
+			<TabPanel>
+				<AnnotationList annotations={data.annotations} />
+			</TabPanel>
+		</TabPanels>
+	</TabGroup>
 {:else}
 	<div class="space-y-5 pt-6 text-sm text-gray-400">
 		<div>
@@ -143,9 +166,7 @@
 							trailClass="stroke-gray-400"
 							pathClass="stroke-red-400"
 						/>
-						<a data-sveltekit-prefetch class="block h-full w-full cursor-default" href={`/${id}`}
-							>{title}</a
-						>
+						<a class="block h-full w-full cursor-default" href={`/${id}`}>{title}</a>
 					</li>
 				{/each}
 			</ul>

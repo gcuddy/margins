@@ -46,7 +46,7 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 		},
 	});
 	return {
-		tags,
+		tag: tags,
 		items,
 	};
 };

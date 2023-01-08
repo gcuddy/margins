@@ -3,10 +3,10 @@ generator client {
     previewFeatures = ["orderByNulls", "fullTextSearch", "fullTextIndex", "extendedWhereUnique", "fieldReference"]
 }
 
-generator zod {
-    provider = "prisma-zod-generator"
-    output   = "../src/lib/zod"
-}
+// generator zod {
+//     provider = "prisma-zod-generator"
+//     output   = "../src/lib/zod"
+// }
 
 datasource db {
     provider     = "mysql"
@@ -21,7 +21,7 @@ datasource db {
 model State {
     id              Int        @id @default(autoincrement())
     /// Whether or not this state represents things to be looked at later.
-    read_later      Boolean
+    // read_later      Boolean
     /// The name of the state
     name            String
     /// State's UI color as a hex string
@@ -29,7 +29,7 @@ model State {
     /// The type of the state
     type            Location
     /// The position of the state
-    position        Float
+    position        Float      @default(0)
     description     String?
     user            User       @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     userId          String
@@ -192,6 +192,7 @@ model Entry {
     @@unique([uri, id])
     @@index([feedId])
     @@index([id, published, createdAt])
+    @@fulltext([text, title])
 }
 
 /// Represents user-downloaded/defined data for an entry

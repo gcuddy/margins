@@ -3,6 +3,7 @@ import { auth } from '$lib/trpc/middleware/auth';
 import { logger } from '$lib/trpc/middleware/logger';
 import { z } from 'zod';
 import { protectedProcedure, router } from '$lib/trpc/t';
+import { LocationSchema } from '$lib/types/schemas/Locations';
 
 export const user = router({
     data: protectedProcedure
@@ -29,13 +30,13 @@ export const user = router({
                             title: true,
                             id: true,
                             feedId: true,
-                            feed: {
-                                select: {
-                                    imageUrl: true,
-                                    link: true,
-                                    feedUrl: true,
-                                },
-                            },
+                            // feed: {
+                            //     select: {
+                            //         imageUrl: true,
+                            //         link: true,
+                            //         feedUrl: true,
+                            //     },
+                            // },
                         },
                     } : undefined,
                     bookmarks: input.bookmarks ? {
@@ -59,6 +60,17 @@ export const user = router({
             data: {
                 color,
                 name
+            }
+        })),
+    createState: protectedProcedure
+        .input(z.object({
+            type: LocationSchema,
+        }))
+        .mutation(({ ctx, input }) => ctx.prisma.state.create({
+            data: {
+                name: "Untitled",
+                type: input.type,
+                userId: ctx.userId
             }
         }))
 });

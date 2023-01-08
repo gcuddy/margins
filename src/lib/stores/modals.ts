@@ -47,6 +47,8 @@ function createModalStore() {
 				stack[idx].open = false;
 				removed = stack.splice(idx, 1);
 			} else if (id) {
+				const idx = stack.findIndex(s => s.id === id);
+				stack[idx].open = false;
 				return stack.filter((modal) => modal.id !== id);
 				const index = stack.findIndex((modal) => modal.id === id);
 				if (index !== -1) {

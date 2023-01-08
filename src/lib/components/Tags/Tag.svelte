@@ -4,6 +4,8 @@
 </script>
 
 <script lang="ts">
+	import { page } from '$app/stores';
+
 	import type { Tag } from '@prisma/client';
 	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher<{
@@ -33,10 +35,10 @@
   {variant === 'primary'
 		? 'bg-primary-200 text-primary-900'
 		: // ghost
-		  'dark:hover:bg-gray-700 border border-gray-200  text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-700 dark:text-gray-400'}
+		  'border border-gray-200 text-gray-600  hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-700'}
     {active ? '!bg-indigo-200 !text-indigo-900' : ''}
     "
-	href={as === 'a' ? `/tags/${tag.name}` : undefined}
+	href={as === 'a' ? `/u:${$page.data.user?.username}/t:${tag.name}` : undefined}
 	{tabindex}
 >
 	{#if icon}

@@ -3,6 +3,8 @@ import { bookmarks } from './routes/bookmarks';
 import { entries } from './routes/entries';
 import { publicRouter } from './routes/public';
 import { subscriptions } from './routes/subscriptions';
+import { filterRouter } from './routes/filters';
+import { annotationRouter } from './routes/annotations';
 import { user } from './routes/user';
 import { router } from '$lib/trpc/t';
 import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
@@ -13,7 +15,9 @@ export const appRouter = router({
 	bookmarks,
 	public: publicRouter,
 	subscriptions,
-	user
+	user,
+	filters: filterRouter,
+	annotations: annotationRouter
 });
 
 export type Router = typeof appRouter;

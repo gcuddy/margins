@@ -115,20 +115,20 @@ const smartListWithPayload = Prisma.validator<Prisma.SmartListArgs>()({
 });
 export type SmartListWithPayload = Prisma.SmartListGetPayload<typeof smartListWithPayload>;
 
-export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
+export const ArticleListSelect = Prisma.validator<Prisma.EntrySelect>()({
 	id: true,
 	title: true,
 	author: true,
-	position: true,
-	readProgress: true,
-	slug: true,
+	// position: true,
+	// readProgress: true,
+	// slug: true,
 	// tags: true,
 	image: true,
 	location: true,
-	description: true,
-	date: true,
+	summary: true,
+	published: true,
 	// mediaType: true,
-	url: true,
+	uri: true,
 	createdAt: true,
 	updatedAt: true,
 	wordCount: true,

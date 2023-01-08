@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
-	$: console.log({ $$props });
 	let className = '';
 	export { className as class };
 	import { Dialog, DialogOverlay } from '@rgossiaux/svelte-headlessui';
@@ -8,7 +7,7 @@
 	// import DialogOverlay from '../helpers/dialog/DialogOverlay.svelte';
 	import { fadeScale } from '$lib/transitions';
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
-	import type { ModalComponent } from '$lib/stores/modals';
+	import { modals, type ModalComponent } from '$lib/stores/modals';
 	import { onDestroy } from 'svelte';
 	let dialogRef: HTMLElement;
 	$: modal.open ? disableGlobalKeyboardShortcuts.on() : disableGlobalKeyboardShortcuts.off();
@@ -24,7 +23,13 @@
 
 <Dialog
 	bind:open={modal.open}
-	on:close={() => (modal.open = false)}
+	on:close={() => {
+		modal.open = false;
+		modals.close({
+			id: modal.id,
+		});
+		// modal.open = false;
+	}}
 	class="fixed inset-0 z-50 overflow-y-auto p-4 pt-[25vh]"
 	{initialFocus}
 >

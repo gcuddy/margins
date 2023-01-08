@@ -6,39 +6,43 @@
 	import EntryList from '$lib/components/EntryList.svelte';
 	import FilterCondition from '$lib/components/Filters/FilterCondition.svelte';
 	import FilterPopover from '$lib/components/Filters/FilterPopover.svelte';
-	import {
-		type FilterOption,
-		type ChildFilterOption,
-		buildFilter,
-	} from '$lib/components/Filters/Index.svelte';
+	// import {
+	// 	type FilterOption,
+	// 	type ChildFilterOption,
+	// 	buildFilter,
+	// } from '$lib/components/Filters/Index.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
-	import { currentList } from '$lib/stores/currentList';
 	import type { ViewOptions } from '$lib/types/schemas/View';
 	import { writable } from 'svelte/store';
 	import { fade } from 'svelte/transition';
 	import RssListItem from '../FeedListItem.svelte';
 	import type { PageData } from './$types';
 	export let data: PageData;
+
 	$: console.log({ data });
 
 	let peek = false;
 
+	$: subscription = data.subscriptions.find((s) => s.feedId === +$page.params.id);
+
 	// $: currentList = $page.data.currentList;
 	// $: console.log({ $currentList });
-	// $: currentList.set({
-	// 	type: 'rss',
-	// 	back: `/u:${$page.data.user?.username}/subscriptions/${$page.params.id}`,
-	// 	items: data.subscription.feed.entries,
-	// });
-	$: data.currentList.set({
-		items: data.entries,
-		slug: $page.url.pathname,
+	$: currentList = data.currentList;
+	$: currentList.set({
 		type: 'rss',
-		feed: data.subscription.feed,
-		subscription: data.subscription,
+		slug: $page.url.pathname,
+		ids: data.entries.map((e) => e.id),
 	});
+	// $: data.currentList.set({
+	// 	items: data.entries,
+	// 	slug: $page.url.pathname,
+	// 	type: 'rss',
+	// 	feed: data.subscription.feed,
+	// 	subscription: data.subscription,
+	// });
 	$: console.log({ $currentList });
-	$: unreads = data.entries.filter((e) => e.unread);
+
+	// $: unreads = $entries.filter((e) => e.unread);
 
 	const DEFAULT_RSS_VIEW_OPTIONS: ViewOptions = {
 		view: 'list',
@@ -61,12 +65,12 @@
 
 	$: only_unread = Boolean($page.url.searchParams.get('unread'));
 
-	let filters = writable<ChildFilterOption[]>([]);
+	// let filters = writable<ChildFilterOption[]>([]);
 
-	$: filteredItems = data.entries.filter((i) => $filters.every((f) => buildFilter(f)(i)));
+	// $: filteredItems = $entries.filter((i) => $filters.every((f) => buildFilter(f)(i)));
 </script>
 
-<svelte:window
+<!-- <svelte:window
 	on:keydown={(e) => {
 		if (e.key === ' ') {
 			peek = !peek;
@@ -74,7 +78,7 @@
 			peek = false;
 		}
 	}}
-/>
+/> -->
 
 <!-- <div class="flex justify-between px-8 py-1">
 	<div class="grid">
@@ -111,8 +115,9 @@
 		</FilterPopover>
 	{/if}
 </div> -->
-<!-- <EntryList items={filteredItems} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} /> -->
 
-{#each filteredItems as item (item.id)}
+<EntryList items={data.entries} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} />
+
+<!-- {#each data.entries as item (item.id)}
 	<a href="/u:{data.user.username}/entry/{item.id}">{item.title}</a>
-{/each}
+{/each} -->

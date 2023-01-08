@@ -4,10 +4,15 @@ import { type Writable, writable } from 'svelte/store';
 import type { EntryWithBookmark } from '$lib/entry.server';
 
 interface List {
-	items: EntryWithBookmark[];
 	slug: string;
+	ids: number[];
+	type?: "rss";
 }
-interface FeedList extends List {
+interface ListItems extends List {
+	items: EntryWithBookmark[];
+}
+
+interface FeedList extends ListItems {
 	feed: Feed;
 	subscription: Subscription;
 }
@@ -24,7 +29,22 @@ interface FeedList extends List {
 // 	feed?: Feed;
 // }
 export type ICurrentList = List | FeedList;
+// export type ICurrentList = List | FeedList;
 
 export type CurrentList = Writable<ICurrentList>;
+
+export function createCurrentListStore() {
+	const { subscribe, set, update } = writable<ICurrentList>();
+
+	return {
+		subscribe,
+		set,
+		update: update(val => {
+			console.log(`current list being updated`)
+			return val
+		})
+	}
+
+}
 
 export const currentList = writable<ICurrentList>();

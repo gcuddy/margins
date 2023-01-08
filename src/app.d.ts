@@ -25,7 +25,7 @@ declare namespace App {
 		};
 		currentList?: import('$lib/stores/currentList').CurrentList;
 		tags?: import('@prisma/client').Tag[];
-		subscriptions?: import("@prisma/client").Subscription[];
+		subscriptions: import("$lib/trpc/router").RouterOutputs["user"]["data"]["subscriptions"];
 		states?: import('@prisma/client').State[];
 	}
 }

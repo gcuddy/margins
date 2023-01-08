@@ -15,7 +15,14 @@
 		default: Slot;
 	}
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+		select:
+			| {
+					shift: boolean;
+			  }
+			| undefined;
+		active: null;
+	}>();
 	let el: HTMLElement | null = null;
 	let api = useKeyboardNavContext('KeyboardNavItem');
 
@@ -95,6 +102,11 @@
 		// console.log({ e });
 		if (e.key === 'x') {
 			dispatch('select');
+		}
+		if (e.key === 'X') {
+			dispatch('select', {
+				shift: true,
+			});
 		}
 		if (e.key === 'Enter') {
 			// have to do this because svelte-dnd-action doesn't play nice with us

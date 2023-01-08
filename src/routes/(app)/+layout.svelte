@@ -2,7 +2,6 @@
 <script lang="ts">
 	import type { LayoutData } from './$types';
 	export let data: LayoutData;
-	$: ({ user } = data);
 	import CommandPalette from '$lib/components/CommandPalette/CommandPalette.svelte';
 	import Notifications from '$lib/components/Notifications.svelte';
 	import Modals from '$lib/components/modals/Modals.svelte';
@@ -14,13 +13,13 @@
 	import { dev } from '$app/environment';
 	import { mainEl } from '$lib/stores/main';
 	import { hideSidebar } from '$lib/stores/sidebar';
-	import { page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import PodcastPlayer from '$lib/components/PodcastPlayer.svelte';
 	import ProgressBar from '$lib/components/ProgressBar.svelte';
 	import SettingsSidebar from './SettingsSidebar.svelte';
+	import PreloadingIndicator from '$lib/components/PreloadingIndicator.svelte';
 
 	let sidebarWidth: number;
-	$: currentList = $page.data.currentList;
 	$: count = $page.data.count;
 </script>
 
@@ -32,6 +31,7 @@
 {#if dev}
 	<Developer />
 {/if}
+
 <div
 	class="bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50"
 	data-transparency="true"
@@ -44,15 +44,19 @@
 			'grid lg:grid-cols-[var(--sidebar-width)_1fr]'} "
 		style="--sidebar-width: {sidebarWidth}px;"
 	>
+		{#if $navigating}
+			<!-- TODO: shouldn't show for search -->
+			<PreloadingIndicator />
+		{/if}
 		<!-- sidebar, but should only be for some layouts -->
 		<!-- probably better to use layout groups, but this will do for now -->
 		{#if $page.route.id?.startsWith('/(app)/u:[username]/settings')}
-			<Sidebar {user} bind:width={sidebarWidth}>
+			<Sidebar bind:width={sidebarWidth}>
 				<SettingsSidebar />
 			</Sidebar>
 		{:else}
 			<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
-			<Sidebar {user} bind:width={sidebarWidth} />
+			<Sidebar bind:width={sidebarWidth} />
 		{/if}
 		<!-- bind:this={$mainEl} -->
 		<main class="relative flex grow flex-col place-items-stretch overflow-auto">

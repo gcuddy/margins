@@ -5,6 +5,27 @@ import { z } from 'zod';
 import { protectedProcedure, router } from '$lib/trpc/t';
 
 export const subscriptions = router({
+    loadAll: protectedProcedure.query(({ ctx }) => {
+        return ctx.prisma.subscription.findMany({
+            where: {
+                userId: ctx.userId
+            },
+            select: {
+                title: true,
+                id: true,
+                feedId: true,
+                feed: {
+                    select: {
+                        imageUrl: true,
+                        link: true,
+                        feedUrl: true,
+                        id: true,
+                        entries: true
+                    }
+                }
+            }
+        })
+    }),
     list: protectedProcedure
         .query(({ ctx: { userId } }) =>
             db.subscription.findMany({
@@ -20,6 +41,7 @@ export const subscriptions = router({
                             imageUrl: true,
                             link: true,
                             feedUrl: true,
+                            id: true
                         },
                     },
                 },

@@ -14,18 +14,26 @@ async function getUser(sesh: Maybe<Session>) {
 			id: sesh.userId
 		},
 		select: {
-			subscriptions: {
-				select: {
-					feedId: true
-				}
-			},
+			// subscriptions: {
+			// 	select: {
+			// 		feedId: true
+			// 	}
+			// },
+			// username: true,
+			// bookmarks: {
+			// 	select: {
+			// 		id: true
+			// 	}
+			// },
 			username: true,
-			bookmarks: {
+			default_state_id: true,
+			states: {
 				select: {
-					id: true
+					id: true,
+					name: true,
+					type: true
 				}
-			},
-
+			}
 		}
 	})
 	if (!user) {
@@ -33,19 +41,22 @@ async function getUser(sesh: Maybe<Session>) {
 	}
 	return {
 		...user,
-		feeds: user.subscriptions.map(s => s.feedId)
 	}
 
 }
 
 export async function createContext(event: RequestEvent) {
 	const session = await event.locals.validate();
-	// const user = await getUser(session);
+	console.log(`trpc-context`, { event, session })
+
+	// REVIEW: this is what cal.com does, but is it a bad idea for speed to do this?
+	const user = await getUser(session);
+	console.log(`trpc-context`, { user })
 	return {
 		// context information
 		userId: session?.userId || '',
 		prisma: db,
-		// user,
+		user,
 	};
 }
 

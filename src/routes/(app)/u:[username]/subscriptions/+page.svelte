@@ -42,13 +42,14 @@
 					}}
 					as="a"
 					href="/u:{$page.data.user?.username}/subscriptions/new"
-					className="p-4"
+					className=" text-white p-5"
 					variant="gradient"
 					scaleOnHover={true}
 					squishy={true}
+					size="lg"
 				>
 					<Icon name="plusSmSolid" className="h-6 w-6 fill-current" />
-					<span class="text-base">Add a subscription</span></Button
+					<span class="text-lg ">Add a subscription</span></Button
 				>
 			</div>
 			<a href="/features/subscriptions" class="text-sm font-medium italic" target="_blank"

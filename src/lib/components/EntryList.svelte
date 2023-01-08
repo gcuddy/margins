@@ -20,6 +20,8 @@
 		dndzone,
 		SHADOW_ITEM_MARKER_PROPERTY_NAME,
 		SHADOW_PLACEHOLDER_ITEM_ID,
+		SOURCES,
+		TRIGGERS,
 		type DndEvent,
 	} from 'svelte-dnd-action';
 	import { notifications } from '../stores/notifications';
@@ -36,7 +38,7 @@
 	import type { ViewOptions } from '$lib/types/schemas/View';
 	import SavedPillWrapper from './SavedPillWrapper.svelte';
 	import { page } from '$app/stores';
-	import { selectedItems } from '$lib/stores/selectedItems';
+	import { selectedItems, selectedIds } from '$lib/stores/selectedItems';
 	import type { ExtendedBookmark } from '$lib/bookmark';
 	import type { Entry, Prisma } from '@prisma/client';
 	import { entryData } from '$lib/entry';
@@ -45,6 +47,7 @@
 	import { flip } from 'svelte/animate';
 	import { derived } from 'svelte/store';
 	import { match } from 'ts-pattern';
+	import { tick } from 'svelte';
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
 	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>();
@@ -57,17 +60,69 @@
 
 	const handleConsider = (e: CustomEvent<DndEvent<ExtendableEntry>>) => {
 		//optimistic update
-		items = e.detail.items;
-		console.log('considering', items);
+		const {
+			items: newItems,
+			info: { trigger, source, id },
+		} = e.detail;
+
+		// if only one or less item selected, just do what we normally do
+		if ($selectedItems.length < 2) {
+			items = newItems;
+			return;
+		}
+
+		// handle multiple drag and drop
+		// if ()
+
+		if (
+			trigger === TRIGGERS.DRAG_STARTED &&
+			source !== SOURCES.KEYBOARD &&
+			$selectedIds.includes(+id)
+		) {
+			console.log(e.detail);
+			items = newItems.filter((item) => !$selectedIds.includes(item.id));
+			return;
+		}
+		items = newItems;
 	};
 
 	const handleFinalize = (e: CustomEvent<DndEvent<ExtendableEntry>>) => {
-		//optimistic update
-		items = e.detail.items;
+		let {
+			items: newItems,
+			info: { trigger, source, id },
+		} = e.detail;
+
+		if ($selectedItems.length > 1) {
+			const idx = newItems.findIndex((item) => item.id === +id);
+			console.log({ idx });
+			newItems = newItems.filter((item) => !$selectedIds.includes(item.id));
+			newItems.splice(idx, 0, ...$selectedItems);
+		}
+		items = newItems;
+		if ($selectedItems.length) {
+			tick().then(() => {
+				// re-calculate checkboxes - these get bungled for some reason. not the best way to do this!
+				//humph
+				$selectedItems = [...$selectedItems];
+				$selectedItems.forEach((item) => {
+					// noooo
+					const checkbox = document.querySelector(`#entry-input-${item.id}`);
+					if (checkbox instanceof HTMLInputElement) {
+						checkbox.checked = true;
+					}
+				});
+			});
+		}
 		// dragDisabled = true;
 		// now save to database
 		// saveArticleOrder();
 	};
+
+	function transformDraggedElement(el: HTMLElement | undefined) {
+		if (!el?.getAttribute('data-selected-items-count') && $selectedItems.length) {
+			el?.setAttribute('data-selected-items-count', $selectedItems.length.toString());
+		}
+	}
 
 	const anchorPointIndex = derived(
 		selectedItems,
@@ -92,19 +147,12 @@
 		// if index less than anchor point, go up. otherwise, go down
 		// e.g. a is 1, selected index is 4 -> selecteditems should be [1,2,3,4]
 		if ($anchorPointIndex < index) {
-			// now add everyhthing between the last selected index and this index
 			// evrything from anchor to index is now new selected items
 			const newSelectedItems = items.slice(
 				$anchorPointIndex > 0 ? $anchorPointIndex : 0,
 				index + 1
 			);
 			$selectedItems = [...newSelectedItems];
-			// add if not in there already
-			// itemsToAdd.forEach((item) => {
-			// 	if ($selectedItems.some((s) => s.id !== item.id)) {
-			// 		$selectedItems = [...$selectedItems, item];
-			// 	}
-			// });
 		} else {
 			// if index is less than anchor point
 			// e.g. si currently is [3,4,5], anchor point is 3. selected index is 1. new si should be [1,2,3]
@@ -112,21 +160,6 @@
 			const newSelectedItems = items.slice(index, $anchorPointIndex + 1);
 			$selectedItems = [...newSelectedItems];
 		}
-
-		// // items up to this item
-		// const itemsUpToThisItem = items.slice($anchorPointIndex, index + 1);
-		// // index of last selected item - bail out w -1 if no lastSelectedItem
-		// const lastSelectedItem = sortedSelected.pop();
-		// const indexOfLastSelectedItemInItems = itemIds.indexOf(lastSelectedItem?.id || -1);
-		// // now add everyhthing between the last selected index and this index
-		// const itemsToAdd = items.slice($anchorPointIndex > 0 ? $anchorPointIndex : 0, index + 1);
-		// // add if not in there already
-		// itemsToAdd.forEach((item) => {
-		// 	if ($selectedItems.some((s) => s.id !== item.id)) {
-		// 		$selectedItems = [...$selectedItems, item];
-		// 	}
-		// });
-		// console.log({ itemsToAdd, $selectedItems });
 	};
 
 	let flipDurationMs = 125;
@@ -175,6 +208,7 @@
 				items: items,
 				flipDurationMs,
 				dragDisabled,
+				transformDraggedElement,
 				dropTargetStyle: {},
 				zoneTabIndex: -1,
 			}}
@@ -212,7 +246,12 @@
 						class="group col-span-12 h-min md:col-span-3 2xl:col-span-3 {viewOptions.view === 'list'
 							? '!cursor-default'
 							: ''}"
-						on:select={() => {
+						on:select={({ detail: shift }) => {
+							if (shift) {
+								// then handle this with a shift click
+								handleShiftClick(index);
+								return;
+							}
 							if ($selectedItems.includes(item)) {
 								$selectedItems = $selectedItems.filter(({ id }) => id !== item.id);
 							} else {
@@ -229,7 +268,7 @@
 										: 'rounded-lg border bg-white/50 shadow-lg dark:bg-stone-800'} {$selectedItems.some(
 										(a) => a.id === item.id
 									)
-										? '!bg-gray-100 dark:!bg-blue-800/30'
+										? '!bg-gray-100 dark:!bg-sky-800/30'
 										: ''}"
 									on:mouseenter={() => (hovering = true)}
 									on:mouseleave={() => (hovering = false)}
@@ -265,6 +304,8 @@
 												{/if}
 												<input
 													bind:group={$selectedItems}
+													checked={$selectedIds.includes(item.id)}
+													id="entry-input-{item.id}"
 													value={item}
 													on:click={(e) => {
 														// handle shift
@@ -483,9 +524,13 @@
 		box-shadow: none !important;
 	}
 	:global(#dnd-action-dragged-el) {
-		@apply scale-105 !rounded-lg !bg-sky-200/80 shadow-2xl transition dark:!bg-sky-700/90;
+		@apply scale-105 !rounded-lg !bg-sky-200/80 shadow-2xl transition dark:!bg-sky-800/30;
 		.item {
 			@apply !border-none;
 		}
+	}
+	:global([data-selected-items-count]::after) {
+		@apply absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-700 p-2 text-xs font-medium shadow transition;
+		content: attr(data-selected-items-count);
 	}
 </style>

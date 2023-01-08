@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { z } from 'zod';
 
 // Make mutually exclusive
 export type PrismaStringFilter =
@@ -107,6 +108,55 @@ export type SmartListCondition =
 	| _BoolFilter
 	| _DateTimeFilter
 	| _SearchFilter;
+
+
+const _BaseFilter = z.object({
+	id: z.number(),
+	display: z.string().optional()
+})
+
+
+export const _StringFilter = _BaseFilter.extend({
+	field: z.enum(STRING_FIELDS),
+	type: z.literal("StringFilter"),
+	value: z.string(),
+	filter: z.enum(["contains"]),
+})
+
+export const _IntFilter = _BaseFilter.extend({
+	field: z.enum(NUMBER_FIELDS),
+	type: z.literal("NumberFilter"),
+	value: z.number(),
+	filter: z.enum(["equals", "lt", "lte", "gt", "gte", "not"]),
+})
+
+export const _BoolFilter = _BaseFilter.extend({
+	field: z.enum(BOOL_FIELDS),
+	type: z.literal("BoolFilter"),
+	value: z.boolean(),
+})
+
+export const _DateTimeFilter = _BaseFilter.extend({
+	field: z.enum(DATE_FIELDS),
+	type: z.literal("DateTimeFilter"),
+	value: z.string().datetime(),
+	filter: z.enum(["lte", "gte"])
+})
+
+export const _SearchFilter = _BaseFilter.extend({
+	field: z.enum(SEARCH_FIELDS),
+	type: z.literal("SearchFilter"),
+	value: z.string(),
+	filter: z.enum(["search"])
+})
+
+export const SmartListCondition = z.union([
+	_StringFilter,
+	_IntFilter,
+	_BoolFilter,
+	_DateTimeFilter,
+	_SearchFilter
+])
 
 export const matchFieldToType = (
 	field: SmartListCondition['field']

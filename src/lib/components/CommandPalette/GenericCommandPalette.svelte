@@ -13,7 +13,7 @@
 	type TValue = T & {
 		name?: string;
 		title?: string;
-		id?: string;
+		id: string | number;
 		check?: () => boolean;
 		keywords?: string;
 		kbd?: string[][];
@@ -43,12 +43,15 @@
 
 	// optionally set an icon ot display for each item, using a stored component
 	export let itemIcon:
-		| (<TT>(
+		| (<T extends { $set: (...args: any) => any }>(
 				value: TValue,
 				active: boolean,
 				selected: boolean,
 				index: number
-		  ) => StoredComponentTyped<TT>)
+		  ) => {
+				component: T;
+				props: ComponentProperties<T>;
+		  })
 		| null = null;
 
 	// optionally, return a string to prefetch when that item is active (for performance but more network requests)
@@ -77,7 +80,12 @@
 	import { fadeScale } from '$lib/transitions';
 	import { derived, writable, type Readable, type Writable } from 'svelte/store';
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-	import type { StoredComponent, StoredComponentTyped } from '$lib/stores/types';
+	import type {
+		ComponentProperties,
+		StoredComponent,
+		StoredComponentTyped,
+		SvelteComponentWithProps,
+	} from '$lib/stores/types';
 	import { preloadData } from '$app/navigation';
 
 	function commandListener({ detail: e }: CustomEvent<KeyboardEvent>) {

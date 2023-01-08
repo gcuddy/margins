@@ -1,24 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import MiniSelect from '$lib/components/atoms/MiniSelect.svelte';
 
 	import Select from '$lib/components/atoms/Select.svelte';
-	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import Form from '$lib/components/Form.svelte';
 	import GenericInput from '$lib/components/GenericInput.svelte';
-	import GenericTextarea from '$lib/components/GenericTextarea.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
-	import Header from '$lib/components/layout/Header.svelte';
-	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
 	import Saved from '$lib/components/Saved.svelte';
 	import { useId } from '$lib/hooks/use-id';
 	import { notifications } from '$lib/stores/notifications';
 	import type { SmartListCondition } from '$lib/types/filter';
-	import type { Article, Prisma, SmartList } from '@prisma/client';
-	import { fly } from 'svelte/transition';
+	import type { Article, Prisma } from '@prisma/client';
+	import { formatPostcssSourceMap } from 'vite';
 
-	import { z } from 'zod';
 	import Condition from './Condition.svelte';
 
 	let json: Array<Prisma.ArticleWhereInput> = [];
@@ -95,7 +89,7 @@
 </script>
 
 <div class="my-4 mx-5 flex rounded bg-gray-100 dark:bg-gray-800  ">
-	<Form className="w-full">
+	<form class="w-full">
 		<div class="flex flex-col space-y-2 divide-y p-4 dark:divide-gray-700">
 			<div class="w-full space-y-2">
 				<GenericInput
@@ -145,7 +139,7 @@
 				</div>
 			</div>
 		</div>
-	</Form>
+	</form>
 </div>
 {#if current_results.length}
 	<Saved annotations={current_results} />

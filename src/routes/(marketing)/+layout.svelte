@@ -20,7 +20,7 @@
 			</ul>
 		</nav>
 	</header>
-	<main>
+	<main class="overflow-y-auto">
 		<slot />
 	</main>
 </div>

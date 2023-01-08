@@ -12,6 +12,8 @@ import TextareaSvelte from '$lib/components/Textarea.svelte';
 import { showCommandPalette } from '$lib/stores/commands';
 import { darkMode } from '$lib/stores/settings';
 import type { Article, RssFeed, Tag } from '@prisma/client';
+import { page } from '$app/stores';
+import { get } from 'svelte/store';
 
 export const jumpToArticle = () => {
 	commandPaletteStore.open({
@@ -40,10 +42,12 @@ export const jumpToArticle = () => {
 };
 
 export const jumpToTag = () => {
+	const $page = get(page);
+	const url = (tag: Tag) => `/u:${$page.data.user?.username}/t:${tag.name}`
 	commandPaletteStore.open({
-		values: tagsStore,
+		values: $page.data.tags,
 		onSelect: ({ detail: tag }) => {
-			goto(`/tags/${tag.name}`);
+			goto(url(tag));
 		},
 		itemIcon: () => {
 			return {
@@ -54,16 +58,18 @@ export const jumpToTag = () => {
 			};
 		},
 		prefetch: (val: Tag) => {
-			return `/tags/${val.name}`;
+			return url(val);
 		},
 	});
 };
 export const jumpToSubscription = () => {
-	getSubscriptions();
+	// getSubscriptions();
+	const $page = get(page);
+	const url = (subscription: typeof $page.data.subscriptions[number]) => `/u:${$page.data.user?.username}/subscriptions/${subscription.feedId}`
 	commandPaletteStore.open({
-		values: subscriptionsStore,
+		values: $page.data.subscriptions,
 		onSelect: ({ detail: subscription }) => {
-			goto(`/rss/${subscription.id}`);
+			goto(url(subscription));
 		},
 		itemIcon: () => {
 			return {
@@ -74,7 +80,7 @@ export const jumpToSubscription = () => {
 			};
 		},
 		prefetch: (val: RssFeed) => {
-			return `/rss/${val.id}`;
+			return url(val);
 		},
 	});
 };

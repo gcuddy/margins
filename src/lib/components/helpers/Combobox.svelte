@@ -5,7 +5,9 @@
 	import { derived, writable } from 'svelte/store';
 	import type { number } from 'zod';
 	type T = $$Generic;
-	type TValue = T;
+	type TValue = T & {
+		id: string | number;
+	};
 	export let values: TValue[];
 	$: console.log({ values });
 
@@ -65,7 +67,9 @@
 		inputPeerAfter: {};
 	}
 	export let value = '';
-	export let selectedValue: T[] = [];
+	export let selectedValue: typeof values = [];
+
+	$: selectedValueIds = selectedValue.map((v) => v.id);
 	export let activeIndex = 0;
 
 	/**whether or not to fill the combobox with the selected value*/
@@ -115,10 +119,12 @@
 
 	let activeId = '';
 	// maybe save more robustly?
-	let selectedId = '';
+	let selectedId: string | number = '';
 	// let lastSelected: T | undefined;
-
+	//  && selectedValue.includes(v))
 	const setActiveIndex = () => (activeIndex = values.findIndex((v) => !v.disabled) ?? 0);
+	$: console.log({ activeIndex });
+	$: if (staticProp) expanded = true;
 
 	function handleKeydown(e: KeyboardEvent) {
 		dispatch('keydown', e);
@@ -142,13 +148,14 @@
 				break;
 			}
 			case 'Enter': {
+				console.log('enter', { selectedId, activeIndex });
 				if (!expanded) {
-					// console.log('hit enter but not expanded');
+					console.log('hit enter but not expanded');
 					return;
 				}
 				e.preventDefault();
 				e.stopPropagation();
-				// console.log({ activeIndex, values });
+				console.log({ activeIndex });
 				const val = values[activeIndex];
 				// if (!value) {
 				// 	dispatch('confirm');
@@ -194,6 +201,8 @@
 	export let expanded = false;
 
 	export let name = '';
+
+	export let animateHeight = true;
 
 	const optionRefs: HTMLElement[] = [];
 
@@ -246,7 +255,7 @@
 	}
 
 	let ro: ResizeObserver;
-	const height = tweened(200, {
+	export let height = tweened(200, {
 		duration: 125,
 	});
 
@@ -272,11 +281,19 @@
 	// 		set(entry.contentRect.height);
 	// 	});
 	// 	return () => ro.disconnect();
+
+	onMount(() => {
+		const index = values.findIndex(({ id }) => selectedValueIds.includes(id));
+		if (index > -1) {
+			activeIndex = index;
+		}
+		console.log({ index });
+	});
 	// });
 </script>
 
-<div style:height="{$height}px">
-	<div class={className} bind:this={ref}>
+<div style:height={animateHeight ? `${$height}px` : undefined}>
+	<div class={className} bind:this={ref} {...$$restProps}>
 		<!-- slot props are given IF you want to use them -->
 		{#if name}
 			{#each selectedValue as value}
@@ -326,7 +343,7 @@
 					<!-- TODO: (maybe) use tiny-virtual-list for rendering li  -->
 					{#each values as value, index (idResolver(value))}
 						{@const id = valueIds[index]}
-						{@const selected = id === selectedId}
+						{@const selected = selectedValueIds.includes(id)}
 						{@const active = index === activeIndex}
 						<!-- don't actually use optionContainer lol, everything would break -->
 						<slot name="optionContainer">

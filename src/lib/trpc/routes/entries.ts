@@ -1,21 +1,31 @@
 import { z } from 'zod';
 
 import { db } from '$lib/db';
-import { auth } from '$lib/trpc/middleware/auth';
-import { protectedProcedure, router } from '$lib/trpc/t';
+import { protectedProcedure, publicProcedure, router } from '$lib/trpc/t';
 
-import { logger } from '../middleware/logger';
+import { LocationSchema } from '$lib/types/schemas/Locations';
 import { Metadata } from '$lib/web-parser';
+// import { EntryWhereInputObjectSchema } from '$lib/zod/schemas';
 
 const idInput = z.object({
 	id: z.number(),
 });
 
 export const entries = router({
-	list: protectedProcedure
+	listBookmarks: protectedProcedure
+		.input(z.object({
+			location: LocationSchema.or(z.literal("all")),
+			stateId: z.number().optional()
+		}).optional())
 		.query(
-			({ ctx: { userId } }) =>
-				db.entry
+			async ({ ctx, input }) => {
+				const { userId, user } = ctx;
+				let stateIds: number[] | undefined = undefined;
+				if (input?.location && input.location !== "all") {
+					stateIds = user?.states.filter(s => s.type === input.location).map(s => s.id)
+				}
+				console.log({ stateIds })
+				const entries = await ctx.prisma.entry
 					.findMany({
 						select: {
 							id: true,
@@ -42,7 +52,7 @@ export const entries = router({
 							},
 							bookmarks: {
 								where: {
-									userId
+									userId,
 								},
 								include: {
 									state: true
@@ -54,6 +64,9 @@ export const entries = router({
 							bookmarks: {
 								some: {
 									userId,
+									stateId: stateIds ? {
+										in: stateIds
+									} : undefined
 								},
 							},
 						},
@@ -63,7 +76,8 @@ export const entries = router({
 						const { bookmarks, ...entry } = e
 						return { ...entry, bookmark: bookmarks[0] }
 					}))
-			// .then((books) => books.map((book) => ({ ...book, price: book.price.toJSON() })))
+				return entries
+			}
 		),
 	load: protectedProcedure
 		.input(z.object({
@@ -272,17 +286,52 @@ export const entries = router({
 				}
 			}
 		})),
-	byFeed: protectedProcedure.input(
+	byFeed: protectedProcedure
+		.input(z.object({ id: z.number() }))
+		.query(async ({ ctx, input }) => {
+			const entries = await ctx.prisma.entry.findMany({
+				where: {
+					feedId: input.id
+				},
+				orderBy: [{
+					published: 'desc'
+				}]
+			})
+			return { entries }
+		}),
+	byFeed2: protectedProcedure.input(
 		z.object({
-			id: z.number()
+			id: z.number(),
+			// limit: z.number().min(1).max(100).nullish(),
+			// cursor: z.number().nullish(), // <-- "cursor" needs to exist, but can be any type		
 		})
-	).query(({ ctx, input }) => {
+	).query(async ({ ctx, input }) => {
+		console.log({ ctx })
+		return {
+			entries: []
+		}
+		console.log(`[BYFEED]`, ctx, input)
+		// const limit = input.limit ?? 50;
 		const { id } = input;
-		return ctx.prisma.entry.findMany({
+		const entries = await ctx.prisma.entry.findMany({
+			take: 25,
 			where: {
 				feedId: id
+			},
+			// cursor: cursor ? { id: cursor } : undefined,
+			orderBy: {
+				published: 'desc'
 			}
-		})
+		});
+		// let nextCursor: typeof cursor | undefined = undefined;
+		// if (entries.length > limit) {
+		// 	const nextItem = entries.pop()
+		// 	nextCursor = nextItem!.id;
+		// }
+		return {
+			entries,
+			// nextCursor
+		}
 	}),
 	byFeeds: protectedProcedure
 		.input(z.object({
@@ -307,12 +356,105 @@ export const entries = router({
 					some: {
 						userId
 					}
-				}
+				},
 			},
 			select: {
 				entries: true
-			}
+			},
+			take: 10
 		});
 		return feedWithEntries.flatMap(f => f.entries)
-	})
+	}),
+	filter: protectedProcedure
+		.input(z.object({
+			name: z.string()
+		}))
+		.query(async ({ ctx, input }) => {
+			const { userId } = ctx;
+			// REVIEW: Is this protected? Should we filter by where it exists in a user's bookmarks or their subscriptions?
+			// (That might be a heavy query)
+			const entries = ctx.prisma.entry.findMany({
+				where: {
+					...input,
+					OR: [
+						{
+							bookmarks: {
+								some: {
+									userId
+								}
+							}
+						},
+						{
+							feed: {
+								subscriptions: {
+									some: {
+										userId
+									}
+								}
+							}
+						}
+					]
+				}
+			})
+			return entries;
+		}),
+	byTag: protectedProcedure
+		.input(z.object({
+			tag: z.string(),
+			// username: z.string(),
+			/// Whether or not to just return bookmarks
+			boookmarks: z.boolean().default(false)
+		}))
+		.query(async ({ ctx, input }) => {
+			const { tag } = input;
+			// REVIEW: I think that the querying username thing from a public perspective should go in public router
+			// const authed = ctx.user?.username === username;
+			const entries = await ctx.prisma.entry.findMany({
+				where: {
+					tags: {
+						some: {
+							name: tag,
+							userId: ctx.userId
+						}
+					}
+				}
+			})
+		}),
+	search: protectedProcedure
+		.input(z.string())
+		.query(async ({ ctx, input: search }) => {
+			const { userId } = ctx;
+
+			return ctx.prisma.entry.findMany({
+				where: {
+					text: {
+						search
+					},
+					title: {
+						search
+					},
+					// REVIEW: where bookmark or feed related — is this what we want?
+					OR: [
+						{
+							bookmarks: {
+								some: {
+									userId
+								}
+							},
+						},
+						{
+							feed: {
+								// REVIEW: should context get user.subscriptions instead of nested query here?
+								subscriptions: {
+									some: {
+										userId
+									}
+								}
+							}
+						}
+
+					]
+				},
+			})
+		})
 });

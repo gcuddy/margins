@@ -2,7 +2,23 @@ import { error } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
 
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
+import { createCaller } from '$lib/trpc/router';
+
+export const load = (async (event) => {
+	const { params } = event;
+	const caller = await createCaller(event);
+	const { entries } = await caller.entries.byFeed({
+		id: +params.id
+	})
+	// const entries = [];
+	const { subscriptions } = await event.parent();
+	const subscription = subscriptions.find(s => s.id === +params.id)
+	return {
+		entries,
+		subscription
+	}
+}) satisfies PageServerLoad
 
 export const actions: Actions = {
 	delete: async ({ params, locals }) => {

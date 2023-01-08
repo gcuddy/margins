@@ -58,8 +58,8 @@
 		<MenuButton
 			use={[popperRef, ...buttonActions]}
 			class="group relative z-10 flex items-center rounded-md  {className} {active_styling
-				? 'active:ring-0 dark:hover:bg-gray-600 dark:focus:bg-gray-600 dark:active:text-white focus:bg-gray-200 focus:ring hover:bg-gray-200'
-				: ''} {squishy ? 'active:scale-95 transition duration-300' : ''} {open && active_styling
+				? 'hover:bg-gray-200 focus:bg-gray-200 focus:ring active:ring-0 dark:hover:bg-gray-600 dark:focus:bg-gray-600 dark:active:text-white'
+				: ''} {squishy ? 'transition duration-300 active:scale-95' : ''} {open && active_styling
 				? 'bg-gray-200 dark:bg-gray-600'
 				: ''}"><slot /></MenuButton
 		>
@@ -89,7 +89,7 @@
 				>
 					<MenuItems
 						static
-						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-white py-1 opacity-100 shadow-xl ring-1 ring-black/5 focus:outline-none dark:divide-gray-700 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:text-current dark:ring-white/20 dark:backdrop-blur-xl dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200 "
+						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-gray-50/90 py-1 opacity-100 shadow-xl ring-1 ring-black/5 backdrop-blur-sm focus:outline-none  dark:divide-gray-700 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:text-current dark:ring-white/20 dark:backdrop-blur-xl dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200 "
 					>
 						<!-- can either slot in items yourself, or let component do it for you -->
 						<slot name="items" />
@@ -97,9 +97,10 @@
 							<div class="p-2">
 								{#each group as { href, label, icon, iconProps, perform }}
 									<MenuItem let:active>
+										<!-- svelte-ignore a11y-click-events-have-key-events -->
 										<div
 											class="flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-3 text-sm font-medium text-gray-900 dark:text-gray-50 {active
-												? 'bg-gray-200 dark:bg-gray-600'
+												? 'bg-primary-300/50 dark:bg-gray-600'
 												: ''}"
 											on:click={perform}
 										>
@@ -118,7 +119,7 @@
 												{/if}
 											{/if}
 											{#if href}
-												<a data-sveltekit-prefetch {href}>{label}</a>
+												<a {href}>{label}</a>
 											{:else}
 												<span class="cursor-default">
 													{label}

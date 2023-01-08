@@ -13,6 +13,7 @@ export const handle: Handle = sequence(
 		router: appRouter,
 		createContext,
 		responseMeta({ type, errors, ctx, paths }) {
+			console.log(`TESTING RESPONSEMETA`)
 			console.log({ paths })
 			// see discussion https://github.com/icflorescu/trpc-sveltekit/issues/2
 			// this example taken from trcrp website

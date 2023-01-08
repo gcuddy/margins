@@ -180,7 +180,10 @@
 			name: 'Content',
 			id: 'text',
 			icon: 'documentText',
-			perform: () => dialogProperties.filter && onModal(dialogProperties.filter),
+			perform: () => {
+				console.log(onModal);
+				// dialogProperties.filter && onModal(dialogProperties.filter)
+			},
 			modifier: 'contains',
 			value: '',
 			key: ['html', 'text', 'author'],

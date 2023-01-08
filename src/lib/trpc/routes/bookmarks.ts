@@ -18,6 +18,7 @@ export const bookmarks = router({
 				entryId: z.number().optional(),
 				article: Metadata.extend({
 					html: z.string().optional(),
+					text: z.string().optional(),
 					wordCount: z.number().optional(),
 				}).optional(),
 				tags: z.object({ name: z.string(), id: z.number().optional() }).array().optional(),
@@ -78,7 +79,12 @@ export const bookmarks = router({
 						connect: {
 							id: input.stateId
 						}
-					} : undefined
+					} : {
+						connect: {
+							// TODO: this should not be nullable
+							id: ctx.user?.default_state_id
+						}
+					}
 					// state: {
 					//     connect: {
 					//     }
@@ -113,5 +119,96 @@ export const bookmarks = router({
 			}
 		});
 		return bookmark;
-	})
+	}),
+	archive: protectedProcedure
+		.input(z.number())
+		.mutation(async ({ ctx, input }) => {
+			// REVIEW: this gets the "first" archive state. this is what we want, right?
+			const stateId = ctx.user?.states.find(s => s.type === "archive")?.id
+			return ctx.prisma.bookmark.update({
+				where: {
+					id: input
+				},
+				data: {
+					stateId
+				}
+			})
+		}),
+	updateState: protectedProcedure.input(z.object({
+		stateId: z.number(),
+		id: z.number().nullish(),
+		entryId: z.number()
+	})).mutation(async ({ ctx, input }) => {
+		const { stateId, id, entryId } = input;
+		const { userId } = ctx;
+		console.log({ stateId, id })
+		if (id) {
+			// update
+			return ctx.prisma.bookmark.update({
+				where: {
+					id,
+					userId
+				},
+				data: {
+					stateId
+				}
+			});
+		} else {
+			return ctx.prisma.bookmark.upsert({
+				where: {
+					entryId,
+					userId
+				},
+				create: {
+					stateId,
+					entryId,
+					userId
+				},
+				update: {
+					stateId
+				}
+			})
+			// create
+		}
+		// console.log({ bookmark })
+		// return {
+		// 	success: true
+		// }
+	}),
+	updateStates: protectedProcedure.input(z.object({
+		stateId: z.number(),
+		ids: z.object({
+			bookmark: z.number().optional(),
+			entry: z.number()
+		})
+	})).mutation(async ({ ctx, input }) => {
+		const { stateId } = input;
+		// TODO:
+		// ctx.prisma.bookmark.updateMany({
+		// 	where: {
+
+		// 	}
+		// })
+		// console.log({ stateId, id })
+		// if (id) {
+		// 	// update
+		// 	return ctx.prisma.bookmark.update({
+		// 		where: {
+		// 			id
+		// 		},
+		// 		data: {
+		// 			stateId
+		// 		}
+		// 	});
+		// } else {
+		// 	return ctx.prisma.bookmark.create({
+		// 		data: {
+		// 			stateId,
+		// 			entryId,
+		// 			userId: ctx.userId
+		// 		}
+		// 	})
+		// 	// create
+		// }
+	}),
 });

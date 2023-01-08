@@ -1,10 +1,15 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import type { ExtendedBookmark } from '$lib/bookmark';
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	import GenericTextarea from '$lib/components/GenericTextarea.svelte';
+	import StateCombobox from '$lib/components/StateCombobox.svelte';
+	import StateListbox from '$lib/components/StateListbox.svelte';
 	import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
 	import type { EntryWithBookmark } from '$lib/entry.server';
+	import { syncStore } from '$lib/stores/sync';
+	import { trpc } from '$lib/trpc/client';
 	import { TextQuoteTarget } from '$lib/types/schemas/Annotations';
 	import type { Tag } from '@prisma/client';
 	import { tweened } from 'svelte/motion';
@@ -15,7 +20,7 @@
 	// export let menu_active = false;
 
 	function customBackOut(t: number) {
-		const s = 0.889;
+		const s = 0.7;
 		return --t * t * ((s + 1) * t + s) + 1;
 	}
 	$: pageNotes = entry?.annotations?.filter((a) => a.type === 'note');
@@ -69,8 +74,6 @@
 				subscription: {$page.data.subscriptions?.find((s) => s.feedId === entry.feedId)?.title}
 			{/if}
 
-			Note:
-			<GenericTextarea />
 			<!-- {article.starred} -->
 			<!-- {article.public} -->
 			<!-- <select
@@ -110,6 +113,26 @@
 			<option value="LATER">Later</option>
 			<option value="ARCHIVE">Archive</option>
 		</select> -->
+			{#if entry.bookmark?.stateId}
+				<StateCombobox
+					state={$page.data.states?.find((state) => state.id === entry.bookmark.stateId)}
+					onSelect={async (state) => {
+						const s = syncStore.add();
+						await trpc().bookmarks.updateState.mutate({
+							id: $page.data.article.bookmark?.id,
+							stateId: state.id,
+							entryId: $page.data.article.id,
+						});
+						await invalidateAll();
+						syncStore.remove(s);
+					}}
+				/>
+				<!-- <StateListbox
+					state={$page.data.states?.find(
+						(state) => state.id === entry.bookmark.stateId || $page.data.user?.default_state_id
+					)}
+				/> -->
+			{/if}
 			{#if entry.tags}
 				<div transition:slide|local>
 					<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
@@ -118,6 +141,9 @@
 			{#if entry.context}
 				{JSON.stringify(entry.context)}
 			{/if}
+
+			Note:
+			<GenericTextarea />
 			<!-- <GenericTextarea
 			variant="ghost"
 			bind:value

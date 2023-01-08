@@ -5,8 +5,9 @@ import type { EntryWithBookmark } from '$lib/entry.server';
 import type { ICurrentList } from '$lib/stores/currentList';
 import { trpc } from '$lib/trpc/client';
 
-import type { PageLoad } from './$types';
+import type { PageLoad, PageLoadEvent } from './$types';
 import type { Entry } from '@prisma/client';
+import type { RouterOutputs } from '$lib/trpc/router';
 
 const getItemFromList = (currentList: Writable<ICurrentList>, entryId: number) => {
 	const $currentList = get(currentList);
@@ -25,6 +26,16 @@ const updateItemFromList = (currentList: Writable<ICurrentList>, entryId: number
 		return $currentList
 	})
 }
+
+// export const load = (async ({ data, parent }) => {
+// 	// TODO: cache current list
+// 	const d = await parent();
+// 	return {
+// 		...data,
+// 		...d,
+// 	}
+
+// }) satisfies PageLoad
 
 export const _load: OldPageLoad = async (event) => {
 	const { fetch, params, parent, depends, data: serverData } = event;
@@ -46,7 +57,7 @@ export const _load: OldPageLoad = async (event) => {
 	const data = await parent();
 
 	//TODO: fix this type to be inferred from trpc
-	let entry: Entry | undefined = undefined;
+	let entry: Partial<RouterOutputs["entries"]["load"]> | undefined = undefined;
 	entry = data.allEntries?.find(a => a.id === +params.id)
 
 	if (!entry && "currentList" in data) {

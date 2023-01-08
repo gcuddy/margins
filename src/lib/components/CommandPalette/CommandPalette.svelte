@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import {
 		commandStore,
@@ -11,8 +12,12 @@
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
 	import { animationHappening, modals } from '$lib/stores/modals';
 	import { selectedItems } from '$lib/stores/selectedItems';
+	import { syncStore } from '$lib/stores/sync';
 	import { fadeScale } from '$lib/transitions';
+	import { trpc } from '$lib/trpc/client';
+	import { LOCATION_TO_ICON_SOLID } from '$lib/types/schemas/Locations';
 	import { getUser } from '@lucia-auth/sveltekit/client';
+	import { tweened } from 'svelte/motion';
 	import { get } from 'svelte/store';
 	import { fade } from 'svelte/transition';
 	import Combobox from '../helpers/Combobox.svelte';
@@ -22,6 +27,7 @@
 	import KbdGroup from '../kbd/KbdGroup.svelte';
 	import TagModal from '../TagModal.svelte';
 	import Selection from './Selection.svelte';
+	import { commandPaletteStore } from './store';
 	import type { Command } from './types';
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -104,10 +110,63 @@
 				});
 			},
 		},
+		{
+			id: 'change-status',
+			name: `Change status…`,
+			group: 'adhoc-article-commands',
+			icon: 'inboxIn',
+			perform: () => {
+				//copied from entry/page.svelte
+				commandPaletteStore.open({
+					values: $page.data.states,
+					itemIcon: (val, active) => {
+						return {
+							component: Icon,
+							props: {
+								name: LOCATION_TO_ICON_SOLID[val.type],
+							},
+						};
+					},
+					onSelect: async (e) => {
+						try {
+							const syncId = syncStore.add();
+							// TODO: when I have a proper updatestates method, use that
+							console.log({ $selectedItems });
+							await Promise.all(
+								$selectedItems.map((item) => {
+									return trpc().bookmarks.updateState.mutate({
+										stateId: e.detail.id as number,
+										entryId: item.id,
+									});
+								})
+							);
+							await invalidateAll();
+							selectedItems.set([]);
+							syncStore.remove(syncId);
+							// 	.then(() => {
+							// 		notifications.notify({
+							// 			type: 'info',
+							// 			title: 'Updated status',
+							// 		});
+							// 	});
+						} catch (err) {
+							throw err;
+						}
+					},
+				});
+				$selectedItems.forEach((item) => {
+					//    TODO: delete
+				});
+			},
+		},
 	];
 	$: $selectedItems.length
 		? selected_article_commands.forEach((command) => commandStore.add(command, true))
 		: ($commandStore = $commandStore.filter((c) => c.group !== 'adhoc-article-commands'));
+
+	let height = tweened(200, {
+		duration: 500,
+	});
 </script>
 
 <svelte:window on:keydown={commandListener} on:touchstart={handleTouch} />
@@ -128,10 +187,12 @@
 			$term = '';
 		}}
 	/>
-	<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
+	<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }} class="contents">
 		<Combobox
 			values={$filteredActions}
 			bind:value={$term}
+			bind:height
+			animateHeight={true}
 			fillValue={false}
 			on:select={({ detail }) => {
 				let user = getUser();
@@ -154,9 +215,7 @@
 			<div slot="inputPeer" class="flex px-4 text-sm">
 				{#if $selectedItems.length}
 					<Selection>
-						{$selectedItems.length > 1
-							? $selectedItems.length + ' articles'
-							: $selectedItems[0].title}
+						{$selectedItems.length > 1 ? $selectedItems.length + ' items' : $selectedItems[0].title}
 					</Selection>
 				{:else if $page.data.entry || $page.data.article}
 					{@const entry = $page.data.entry || $page.data.article}

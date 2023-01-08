@@ -23,17 +23,18 @@
 	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
 	import LocationListbox from '$lib/components/LocationListbox.svelte';
 	import StateListbox from '$lib/components/StateListbox.svelte';
+	import { derived } from 'svelte/store';
 
-	export let back = '/';
 	export let entry: RouterOutputs['entries']['load'];
 	export let bookmark: ExtendedBookmark | null = null;
 	export let interaction: { is_read: boolean | null } | null = null;
 	export let reading_sidebar_active = false;
 
-	export let currentList: ICurrentList | undefined = undefined;
+	// export let currentList: ICurrentList | undefined = undefined;
+
+	$: currentList = $page.data.currentList;
 
 	const scrollDown = scrollDirection($mainEl);
-	$: console.log({ $scrollDown });
 	$: ({ user } = $page.data);
 
 	let lastScroll = 0;
@@ -53,6 +54,8 @@
 	$: down = checkDown();
 	$: console.log({ down });
 	$: console.log($mainElScroll.down);
+
+	$: console.log({ entry });
 
 	let saved_position: number | null;
 	let ticking = true;
@@ -91,34 +94,20 @@
 		$mainElScroll.y > 500 &&
 		$mainElScroll.offset < 0.99 &&
 		!reading_sidebar_active &&
-		currentList?.type !== 'rss';
+		$currentList?.type !== 'rss';
 
-	$: index = currentList?.items?.findIndex((item) => {
-		if ('entryId' in item) {
-			// then we're referring to annotations
-			return item.entryId === entry.id;
-		} else {
-			// then we're in an entry itself
-			return item.id === entry.id;
-		}
-	});
-	$: prev = index ? currentList?.items?.[index - 1] : undefined;
-	$: next = index || index === 0 ? currentList?.items?.[index + 1] : undefined;
-	$: next_url = next
-		? `/u:${$page.data.user?.username}/entry/${'entryId' in next ? next.entryId : next.id}`
-		: undefined;
-	$: prev_url = prev
-		? `/u:${$page.data.user?.username}/entry/${'entryId' in prev ? prev.entryId : prev.id}`
-		: undefined;
+	$: back = $currentList?.slug ?? '';
+	$: index = $currentList?.ids?.findIndex((id) => id === entry.id);
+	$: prev = index ? $currentList?.ids?.[index - 1] : undefined;
+	$: next = index || index === 0 ? $currentList?.ids?.[index + 1] : undefined;
+	$: next_url = next ? `/u:${$page.data.user?.username}/entry/${next}` : undefined;
+	$: prev_url = prev ? `/u:${$page.data.user?.username}/entry/${prev}` : undefined;
+
+	$: console.log({ index, next, prev });
 
 	// preload next and prev
 	$: next_url && preloadData(next_url);
 	$: prev_url && preloadData(prev_url);
-
-	$: console.log({ currentList, index, next, entry });
-	// $: saved = user?.annotations.find((a) => a.entryId === entry.id);
-	console.log({ entry });
-	$: console.log({ $page });
 
 	let downloading = false;
 </script>
@@ -155,10 +144,33 @@
 	}}
 >
 	<div class="mr-auto flex flex-1 items-center gap-2">
-		<a class="flex items-center md:pl-0" href={back}
+		<a class="flex items-center md:pl-0" href={$currentList?.slug || '/'}
 			><Icon name="arrow" direction="w" />
 			<span class="sr-only">Go back</span></a
 		>
+
+		{#if prev}
+			<Button
+				variant="ghost"
+				as="a"
+				href={prev_url}
+				className="w-7 {prev ? '' : 'opacity-60'}"
+				disabled={prev === undefined}
+			>
+				<Icon name="chevronUp" className="h-4 w-4 stroke-current" />
+			</Button>
+		{/if}
+		{#if next}
+			<Button
+				variant="ghost"
+				as="a"
+				href={next_url}
+				className="w-7 {next ? '' : 'opacity-60'}"
+				disabled={next === undefined}
+			>
+				<Icon name="chevronDown" className="h-4 w-4 stroke-current" />
+			</Button>
+		{/if}
 		<!-- SAVE TO LIBRARY -->
 		<!-- TODO: what should this show when it's saved? Should it show "un-save"? Archive? Star? Nothing? Maybe it should only show when in RSS? -->
 		<form
@@ -204,28 +216,14 @@
 				/></Button
 			>
 		</form>
-		{#if prev}
-			<Button
-				variant="ghost"
-				as="a"
-				href={prev_url}
-				className="w-7 {prev ? '' : 'opacity-60'}"
-				disabled={prev === undefined}
-			>
-				<Icon name="chevronUp" className="h-4 w-4 stroke-current" />
-			</Button>
-		{/if}
-		{#if next}
-			<Button
-				variant="ghost"
-				as="a"
-				href={next_url}
-				className="w-7 {next ? '' : 'opacity-60'}"
-				disabled={next === undefined}
-			>
-				<Icon name="chevronDown" className="h-4 w-4 stroke-current" />
-			</Button>
-		{/if}
+		<!-- {#if entry.bookmark}
+			<StateListbox
+				label={false}
+				state={$page.data.states?.find(
+					(state) => state.id === entry.bookmark.stateId || $page.data.user?.default_state_id
+				)}
+			/>
+		{/if} -->
 		<!-- (Re-)download full article -->
 		<!-- This should have encouraged placement if the content is short and especially if it's a feed -->
 		<!-- TODO: It should also show an "active" state if the item has a reader view. Need to figure out how to save that. -->
@@ -254,18 +252,6 @@
 					<Icon name="article" className="h-4 w-4 fill-none stroke-current" />
 				</Button>
 			</form>
-		{/if}
-		{#if entry.bookmark}
-			<!-- if bookmark -->
-			state: {$page.data.states.find(
-				(state) => state.id === entry.bookmark.stateId || $page.data.user?.default_state_id
-			).name}
-			<StateListbox
-				state={$page.data.states.find(
-					(state) => state.id === entry.bookmark.stateId || $page.data.user?.default_state_id
-				)}
-			/>
-			<!-- <LocationListbox /> -->
 		{/if}
 	</div>
 	<div

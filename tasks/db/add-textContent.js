@@ -11,13 +11,13 @@ function getTextContent(html) {
 }
 
 async function main() {
-	const articles = await prisma.article.findMany();
-	for (const article of articles) {
-		if (article.textContent) continue;
-		const textContent = getTextContent(article.content);
-		await prisma.article.update({
-			where: { id: article.id },
-			data: { textContent }
+	const entries = await prisma.entry.findMany();
+	for (const entry of entries) {
+		if (entry.text || !entry.html) continue;
+		const text = getTextContent(entry.html);
+		await prisma.entry.update({
+			where: { id: entry.id },
+			data: { text }
 		});
 	}
 }

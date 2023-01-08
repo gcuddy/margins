@@ -25,6 +25,7 @@
 	$: location = state.type;
 	export let states: State[] = $page.data.states || [];
 	export let includeAll = true;
+	export let label = true;
 	export let includeIcon = true;
 	export let variant: 'naked' | 'button' = 'naked';
 	let className = '';
@@ -56,8 +57,9 @@
 					className="h-4 w-4 fill-gray-600 dark:fill-gray-500"
 				/>
 			{/if}
-			<SmallPlus {size}>{name}</SmallPlus></ListboxButton
-		>
+			{#if label}
+				<SmallPlus {size}>{name}</SmallPlus>{/if}
+		</ListboxButton>
 	</TooltipRef>
 	<ListboxOptions
 		class="absolute z-20 mt-1 flex min-w-min flex-col overflow-hidden rounded-lg bg-gradient-to-br from-gray-100 to-gray-50 text-sm shadow-2xl ring-1 ring-black/5 focus:outline-none dark:from-gray-900 dark:to-gray-800 dark:text-gray-50 dark:shadow-stone-900"

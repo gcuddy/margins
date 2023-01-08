@@ -1,0 +1,504 @@
+<script lang="ts">
+	import { browser } from '$app/environment';
+	import { afterNavigate, invalidateAll } from '$app/navigation';
+	import { navigating, page } from '$app/stores';
+	import type { ExtendedBookmark } from '$lib/bookmark';
+	import H1 from '$lib/components/atoms/H1.svelte';
+	import { commandPaletteStore } from '$lib/components/CommandPalette/store';
+	import type { Command } from '$lib/components/CommandPalette/types';
+	import Icon from '$lib/components/helpers/Icon.svelte';
+	import HighlightMenu from '$lib/components/HighlightMenu.svelte';
+	import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
+	import { entryData } from '$lib/entry';
+	import { useCommands } from '$lib/hooks/use-commands';
+	import articleHeader from '$lib/stores/currentArticle/articleHeader';
+	import { mainEl, mainElScroll } from '$lib/stores/main';
+	import { modals } from '$lib/stores/modals';
+	import { notifications } from '$lib/stores/notifications';
+	import { hideSidebar } from '$lib/stores/sidebar';
+	import { syncStore } from '$lib/stores/sync';
+	import { trpc } from '$lib/trpc/client';
+	import { LOCATION_TO_ICON_SOLID } from '$lib/types/schemas/Locations';
+	import { archive } from '$lib/utils';
+	import type { Annotation, Tag } from '@prisma/client';
+	import { TRPCClientError } from '@trpc/client';
+	import dayjs from 'dayjs';
+	import localizedFormat from 'dayjs/plugin/localizedFormat.js';
+	import debounce from 'lodash.debounce';
+	import { onDestroy } from 'svelte';
+	import { createPopperActions } from 'svelte-popperjs';
+	import { writable } from 'svelte/store';
+	import { fade, slide } from 'svelte/transition';
+	import type { PageData } from './$types';
+	import Highlighter from './Highlighter.svelte';
+	import ReadingMenu from './ReadingMenu.svelte';
+	import ReadingSidebar from './ReadingSidebar.svelte';
+	import type { Metadata } from './types';
+	dayjs.extend(localizedFormat);
+	export let data: PageData;
+	$: console.log(`data for ${$page.params.id}`, { data });
+	console.log(`data for page.svelte`, { data });
+	$: article = data.article;
+	let entry: Metadata;
+	let annotations: Annotation[] = [];
+	let interaction: {
+		is_read: boolean | null;
+		progress: number | null;
+	} | null = null;
+	let tags: Tag[] = data.article.tags;
+	let bookmark: ExtendedBookmark | null = null;
+
+	// TODO: fix this whole mess
+	$: if ('entryId' in data.article) {
+		// bookmark
+		// TOOD: zod parsing
+		console.log({ data });
+		if (typeof data.article.data === 'object') {
+			entry = {
+				...entryData.parse(data.article.data),
+				id: data.article.entryId,
+				uri: data.article.uri,
+			};
+			annotations = data.article.annotations;
+			interaction = data.article.interaction;
+			bookmark = data.article;
+		}
+	} else {
+		entry = data.article;
+		annotations = data.article.annotations;
+		interaction = data.article.interaction;
+		bookmark = data.article.bookmark;
+		// TODO: annotations, etc
+	}
+	$: last_scroll_position = (interaction?.progress as number) || 0;
+	let errors: { message: string; path: string[] }[] | null = null;
+
+	function useArticleCommands() {
+		const articleCommands: Command[] = [
+			{
+				id: 'archive-article',
+				group: 'article',
+				name: 'Archive Article',
+				icon: 'archive',
+				check: () => !!bookmark && bookmark?.state?.type !== 'archive',
+				perform: async () => {
+					// // TODO: optimistically update UI
+					// // find archive location
+					// const stateId = [...user.states]
+					// 	.sort((a, b) => a.position - b.position)
+					// 	.find((state) => state.type === 'archive')?.id;
+					// if (!stateId) {
+					// 	// TODO: what to do here? we shouldn't ever be here right? we should create the default archive state
+					// 	console.error('No state for archiving!');
+					// 	return;
+					// }
+					// const res = await fetch(`/api/annotations/${(bookmark as Annotation).id}`, {
+					// 	method: 'PATCH',
+					// 	body: JSON.stringify({
+					// 		stateId,
+					// 	}),
+					// });
+					// if (res.ok) {
+					// 	notifications.notify({
+					// 		title: 'Archived article',
+					// 		type: 'success',
+					// 	});
+					// 	const bookmark = await res.json();
+					// 	console.log({ bookmark });
+					// }
+					// // archive([entry.id], '/');
+				},
+				kbd: [
+					['ctrl', 'shift', 'a'],
+					['cmd', 'Backspace'],
+				],
+			},
+			{
+				id: 'delete-article',
+				group: 'article',
+				name: 'Delete Article',
+				icon: 'trash',
+				perform: async () => {
+					// await post('/api/archive_article', {
+					// 	id: entry.id,
+					// 	trash: true,
+					// });
+					// await invalidate('/');
+					// goto('/').then(() => {
+					// 	notifications.notify({
+					// 		type: 'success',
+					// 		message: 'Article deleted',
+					// 	});
+					// });
+				},
+			},
+			{
+				id: 'change-status',
+				group: 'article',
+				name: 'Change Status',
+				icon: 'inboxIn',
+				perform: async () => {
+					commandPaletteStore.open({
+						values: $page.data.states,
+						itemIcon: (val, active) => {
+							return {
+								component: Icon,
+								props: {
+									name: LOCATION_TO_ICON_SOLID[val.type],
+								},
+							};
+						},
+						onSelect: async (e) => {
+							try {
+								console.log({
+									id: article.id,
+									stateId: e.detail.id as number,
+								});
+								const syncId = syncStore.add();
+								await trpc().bookmarks.updateState.mutate({
+									id: article.bookmark?.id,
+									stateId: e.detail.id,
+									entryId: article.id,
+								});
+								await invalidateAll();
+								syncStore.remove(syncId);
+								// 	.then(() => {
+								// 		notifications.notify({
+								// 			type: 'info',
+								// 			title: 'Updated status',
+								// 		});
+								// 	});
+							} catch (err) {
+								if (err instanceof TRPCClientError) {
+									errors = JSON.parse(err.message);
+								} else {
+									throw err;
+								}
+							}
+						},
+					});
+				},
+			},
+			{
+				id: 'tag-article',
+				group: 'article',
+				name: 'Tag Article',
+				icon: 'tag',
+				perform: async () => {
+					modals.open(TagInputCombobox, {
+						entryId: entry.id,
+						original: article,
+						tags: article.tags,
+					});
+				},
+			},
+			{
+				id: 're-download-article',
+				group: 'article',
+				name: 'Re-download Article',
+				perform: async () => {
+					const syncId = syncStore.addItem();
+					const id = notifications.notify({
+						title: 'Re-downloading article',
+						message: "This shouldn't take long",
+						timeout: 3000,
+					});
+					const form = new FormData();
+					form.set('text', entry.url);
+					const res = await fetch('/add', {
+						method: 'POST',
+						body: form,
+						headers: {
+							accept: 'application/json',
+						},
+					});
+					{
+						//done
+						syncStore.removeItem(syncId);
+						notifications.notify({
+							title: 'Successfully re-downloaded article',
+							message: 'Article has been re-downloaded. Refresh the page to see it.',
+							type: 'success',
+						});
+					}
+					const _article = await res.json();
+					console.log({ _article });
+					// todo: use zod here
+					await invalidate(`/${entry.id}`);
+				},
+				icon: 'download',
+			},
+			{
+				id: 'add-note',
+				group: 'article',
+				name: 'Add note',
+				perform: () => goto(`/${entry.id}/annotations/new`),
+				icon: 'annotation',
+			},
+		];
+		return useCommands(articleCommands);
+	}
+
+	$: removeCommands = useArticleCommands();
+
+	// TODO: elements we need to make this a proper "reading": Title, Author, Sumamary, content (data), annotations, the interaction... what else?
+
+	$: currentList = data.currentList;
+	// ??
+	$: console.log({ $currentList });
+	// todo: should current list be "source of truth"?
+
+	let disableSaveScroll = false;
+
+	let context;
+	afterNavigate(({ from }) => {
+		console.log({ from });
+	});
+	afterNavigate(() => {
+		console.log(`after navigation`, $mainEl);
+		setTimeout(() => {
+			$mainEl.scrollTo(0, 0);
+			$mainEl.focus();
+		}, 0);
+	});
+
+	let last_saved_progress = 0;
+	afterNavigate(async () => {
+		console.log(`mounting / afternavigate`);
+		// this is a hack-y way to get the slug to be nice
+		// history.replaceState(null, '', getArticleUrl($page.params.username, article.id, article.slug));
+		// recents.addRecentArticle(article);
+		if (!browser) return;
+		console.log($mainEl);
+		// mark as read
+		// optimistic
+		const ogInteraction = interaction || {};
+		if (data.article.unread) {
+			data.article.unread = false;
+			data.interaction = { ...ogInteraction, is_read: true };
+			console.log({ data });
+			const updatedEntry = await trpc($page).entries.markAsRead.mutate({
+				id: data.article.id,
+			});
+			console.log({ updatedEntry });
+			// const res = await fetch(`/api/interactions`, {
+			// 	method: 'POST',
+			// 	headers: {
+			// 		'Content-Type': 'application/json',
+			// 	},
+			// 	body: JSON.stringify({
+			// 		is_read: true,
+			// 		uri: data.article.uri,
+			// 	}),
+			// });
+			// console.log({ res });
+			// if (!res.ok) {
+			// 	// roll back
+			// 	data.interaction = ogInteraction;
+			// }
+		}
+		if ($page.data.user?.username === $page.params.username) {
+			const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+			last_saved_progress = interaction?.progress || 0;
+			setTimeout(() => {
+				$mainEl.scrollTo(0, pos);
+			}, 10);
+		}
+	});
+	const saveProgress = async (data: number) => {
+		if ($navigating) return;
+		if (disableSaveScroll) return;
+		if (!data && data !== 0) return;
+		if (Math.abs(last_saved_progress - data) < 0.005) return;
+		last_saved_progress = data;
+		// await fetch(`/api/interactions`, {
+		// 	method: 'POST',
+		// 	headers: {
+		// 		'Content-Type': 'application/json',
+		// 	},
+		// 	body: JSON.stringify({
+		// 		progress: data,
+		// 		entryId: article.id,
+		// 	}),
+		// });
+	};
+	const debouncedSave = debounce(saveProgress, 2000, {
+		leading: false,
+		trailing: true,
+	});
+	const unsubscribeScrollY = mainElScroll.subscribe(({ offset }) => {
+		if (browser) {
+			// only save if the scroll position has changed by more than .05
+			if (Math.abs(last_scroll_position - offset) > 0.05) {
+				last_scroll_position = offset;
+				console.log('saving');
+				debouncedSave(offset);
+			}
+		}
+	});
+	onDestroy(() => {
+		unsubscribeScrollY && unsubscribeScrollY();
+		removeCommands();
+	});
+
+	const [popperRef, popperContent] = createPopperActions({
+		strategy: 'fixed',
+	});
+
+	let x = 0;
+	let y = 0;
+	const mousemove = (ev: MouseEvent) => {
+		x = ev.clientX;
+		y = ev.clientY;
+	};
+
+	$: getBoundingClientRect = () => ({
+		width: 0,
+		height: 0,
+		top: y,
+		bottom: y,
+		left: x,
+		right: x,
+	});
+	const virtualElement = writable({ getBoundingClientRect });
+	$: $virtualElement = { getBoundingClientRect };
+	popperRef(virtualElement);
+
+	/** Tags */
+	let tagFormRef: HTMLFormElement;
+
+	let reading_sidebar_active = false;
+</script>
+
+<!-- TODO: implement layout select -->
+<!-- <div class="options">
+	<LayoutSelect />
+</div> --><svelte:window on:mousemove={mousemove} />
+<!-- <div use:popperContent>Tooltip</div> -->
+
+<!-- {JSON.stringify($currentList)} -->
+<ReadingMenu
+	{bookmark}
+	bind:entry={data.article}
+	{interaction}
+	back={$currentList ? $currentList.slug : '/'}
+	currentList={$currentList}
+	bind:reading_sidebar_active
+/>
+
+<svelte:head>
+	<title>{entry.title}</title>
+</svelte:head>
+
+{@html `<` + `style>${data.stylesheet?.css}</style>`}
+{#if errors?.length}
+	{#each errors as error}
+		<small class="text-red-500">{error.message}</small>
+	{/each}
+{/if}
+<div class="flex flex-col overflow-hidden bg-skin-entry-bg dark:bg-gray-900">
+	<div
+		on:dblclick|preventDefault|stopPropagation={(e) => {
+			console.log(e);
+			// todo: use x and y to create annotation, attach to nearest node
+		}}
+		data-content-container
+		class="relative flex h-full grow items-stretch overflow-hidden"
+	>
+		<div class="grow overflow-auto" bind:this={$mainEl}>
+			<article class="mx-auto mt-14 max-w-3xl py-8 px-4">
+				<header class="space-y-3 pb-4" bind:this={$articleHeader}>
+					<a
+						class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
+						href={article.feedId
+							? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
+							: article.uri}
+					>
+						<img
+							src="https://icon.horse/icon/?uri={article.uri}"
+							class="h-5 w-5 rounded-full object-cover"
+							alt=""
+						/>
+						<span class="truncate">{entry.siteName || entry.uri}</span></a
+					>
+					<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
+
+					<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
+					{#if entry.summary}
+						<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
+							{entry.summary}
+						</div>
+					{/if}
+
+					<!-- <TagCloud tags={article.tags} /> -->
+					{#if article.context}
+						<!-- TODO: figure this out -->
+						<!-- Via: <a href="/{article.context.articleId}">{article.context.Article.title}</a> -->
+						<pre>context: {JSON.stringify(article.context.url, null, 2)}</pre>
+					{/if}
+					<!-- {#if article.dek}
+
+                {/if} -->
+					<!-- <p>
+					<a class="text-gray-300" href={article.url}
+						>{article.siteName || new URL(article.url)?.hostname || article.url}</a
+					>
+				</p> -->
+					<div class="flex justify-between">
+						<div
+							id="origin"
+							class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
+						>
+							{#if entry.author}
+								<p><a href="/author/{entry.author}">{entry.author}</a></p>
+							{/if}
+							{#if entry.author && entry.published}
+								<!-- <p>&middot;</p> -->
+							{/if}
+							{#if entry.published}
+								<p>{dayjs(entry.published).format('ll')}</p>
+							{/if}
+							{#if entry.wordCount}
+								<span>{entry.wordCount} words</span>
+							{/if}
+						</div>
+					</div>
+					{#if !data.authorized}
+						<span class="rounded bg-amber-400 px-1 text-white">
+							Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
+						</span>
+					{/if}
+					{#if data.authorized && data.article.bookmark && data.article.tags}
+						<div transition:slide|local>
+							<TagInputCombobox
+								original={{ ...data.article }}
+								allTags={$page.data.tags}
+								tags={data.article.tags.map((tag) => ({
+									...tag,
+									...$page.data.tags?.find((t) => t.id === tag.id),
+								}))}
+							/>
+						</div>
+					{/if}
+				</header>
+				<!-- this is a very rudimentary check lol -->
+				<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
+					<!-- {#if article.image && !article.html?.includes(article.image)}
+				<img src={article.image} alt="" class="mx-auto rounded py-2" />
+			{/if} -->
+					{@html entry.html || entry.text || entry.summary || '[No content]'}
+				</Highlighter>
+				{#if $mainElScroll.offset > 0.97 && article.location !== 'ARCHIVE' && data.authorized}
+					<div class="fixed bottom-8 right-8" transition:fade>
+						<button on:click={() => archive([article.id], '/')}>Archive article</button>
+					</div>
+				{/if}
+				<noscript>
+					<HighlightMenu noHighlight={true} articleId={article.id} />
+				</noscript>
+			</article>
+		</div>
+		<!-- Reading Sidebar -->
+		<ReadingSidebar bind:entry={data.article} bind:active={reading_sidebar_active} />
+	</div>
+</div>

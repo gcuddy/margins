@@ -5,7 +5,24 @@ import { db } from '$lib/db';
 import type { Actions } from './$types';
 import { appRouter } from '$lib/trpc/router';
 import { createContext } from '$lib/trpc/context';
+import { LocationSchema } from '$lib/types/schemas/Locations';
 export const actions: Actions = {
+	new: async (evt) => {
+		const data = await evt.request.formData();
+		const location = LocationSchema.safeParse(data.get("location"));
+		if (!location.success) {
+			return fail(400, {
+				error: true
+			})
+		}
+		const caller = appRouter.createCaller(await createContext(evt));
+		const state = await caller.user.createState({
+			type: location.data
+		});
+		return {
+			success: true
+		}
+	},
 	update: async (evt) => {
 		const data = await evt.request.formData();
 		const id = data.get("id");

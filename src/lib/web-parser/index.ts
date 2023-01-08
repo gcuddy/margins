@@ -14,6 +14,7 @@ import {
 } from './constants';
 import { cleanAttributes, stripUnlikelyCandidates } from './dom';
 import * as CustomExtractors from './extractors';
+import { clarifyStringOrObject } from './helpers';
 import { scoreNodes } from './scoring';
 import {
 	absolutizeSet,
@@ -841,26 +842,29 @@ export class Parser {
 		// TODO: abstract this out to utils file
 		// maybe todo: add types for JSONLD
 		for (const json of jsons) {
-			for (const key of keys) {
+			for (let key of keys) {
 				if (typeof key === 'string') {
+					// key = clarifyStringOrObject(key)
 					console.log(`Searching for ${key} in ${JSON.stringify(json)}`);
 					if (json[key] && typeof json[key] === 'string') {
 						return json[key] as string;
 					}
 				} else if (Array.isArray(key)) {
 					console.log(`Searching for ${key[0]} & ${key[1]} in ${JSON.stringify(json)}`);
-					if (Array.isArray(json[key[0]])) {
-						console.log(`Searching for ${key[1]} in ${JSON.stringify(json[key[0]])}`);
-						const arr = json[key[0]];
+					let firstValue = clarifyStringOrObject(json[key[0]])
+					if (Array.isArray(firstValue)) {
+						console.log(`Searching for ${key[1]} in ${JSON.stringify(firstValue)}`);
+						const arr = firstValue;
 						const secondaryKey = key[1];
-						if (arr[0] && typeof arr[0][secondaryKey] === 'string') {
-							console.log(`Found ${key[1]} in ${JSON.stringify(arr[0])}: ${arr[0][secondaryKey]}`);
-							return arr[0][secondaryKey] as string;
-						}
-					} else if (typeof json[key[0]] === 'string') {
-						return json[key[0]] as string;
-					} else if (json[key[0]] && typeof json[key[0]][key[1]] === 'string') {
-						return json[key[0]][key[1]] as string;
+						return arr.filter(a => a[secondaryKey]).map(a => a[secondaryKey]).join(", ")
+						// if (arr[0] && typeof arr[0][secondaryKey] === 'string') {
+						// 	console.log(`Found ${key[1]} in ${JSON.stringify(arr[0])}: ${arr[0][secondaryKey]}`);
+						// 	return arr[0][secondaryKey] as string;
+						// }
+					} else if (typeof firstValue === 'string') {
+						return firstValue as string;
+					} else if (firstValue && typeof firstValue[key[1]] === 'string') {
+						return firstValue[key[1]] as string;
 					}
 				}
 			}

@@ -159,6 +159,14 @@ function parseXml(xml: string) {
 	return data;
 }
 
+
+function getTextContent(html: string) {
+	const root = parse(html);
+	const textContent = root.textContent;
+	return textContent;
+}
+
+
 const createFeedAndEntries = ({
 	title,
 	feedUrl,
@@ -230,6 +238,7 @@ export const addSubscription = async ({
 					uri: link,
 					guid,
 					html,
+					text: getTextContent(html),
 					published: dayjs(published).isValid() ? dayjs(published).format() : undefined,
 					updated: entry.updated,
 					author: getText(entry.author?.name),

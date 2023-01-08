@@ -10,6 +10,7 @@ import { notifications } from '$lib/stores/notifications';
 import { syncStore } from '$lib/stores/sync';
 import type { RootUserData } from '$lib/user';
 import { patch, post } from '$lib/utils';
+import { LOCATION_TO_ICON_SOLID } from '$lib/types/schemas/Locations';
 
 export default function useArticleCommands(entry: EntryWithBookmark, user: RootUserData) {
 	// test if bookmark
@@ -74,6 +75,15 @@ export default function useArticleCommands(entry: EntryWithBookmark, user: RootU
 						message: 'Article deleted',
 					});
 				});
+			},
+		},
+		{
+			id: 'change-status',
+			group: 'article',
+			name: 'Change Status',
+			icon: entry.state ? LOCATION_TO_ICON_SOLID[entry.state.type] : 'inboxIn',
+			perform: async () => {
+
 			},
 		},
 		{

@@ -170,6 +170,7 @@
 		values={filteredTags}
 		bind:value
 		bind:expanded={comboboxExpanded}
+		animateHeight={false}
 		idResolver={(tag) => tag.name}
 		on:blur
 		on:blur={() => {

@@ -1,16 +1,15 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import CustomizeView from '$lib/components/CustomizeView.svelte';
+	import EntryList from '$lib/components/EntryList.svelte';
 	import Filter from '$lib/components/Filter.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import DefaultHeader from '$lib/components/layout/headers/DefaultHeader.svelte';
-	import Saved from '$lib/components/Saved.svelte';
-	import { afterNavigate, goto } from '$app/navigation';
 	import LocationListbox from '$lib/components/LocationListbox.svelte';
+	import { LOCATION_TO_DISPLAY } from '$lib/types/schemas/Locations';
 	import { defaultViewOptions, type ViewOptions } from '$lib/types/schemas/View';
-	import { page } from '$app/stores';
-	import EntryList from '$lib/components/EntryList.svelte';
-	import Filters from '$lib/components/Filters/Index.svelte';
+	import type { PageData } from './$types';
 	export let data: PageData;
 	$: ({ location } = data);
 	// this shouldn't be necessary, since we're requesting from the server - but maybe good to keep in case we want to do something client-side?
@@ -18,10 +17,13 @@
 	let viewOptions: ViewOptions = defaultViewOptions;
 	$: console.log({ data });
 	$: data.currentList.set({
-		type: 'bookmarks',
+		// type: 'bookmarks',
 		slug: $page.url.pathname,
-		items: data.entries,
+		ids: data.entries.map((e) => e.id),
+		// items: data.entries,
 	});
+	$: currentList = data.currentList;
+	$: console.log({ $currentList });
 </script>
 
 <Header>
@@ -52,5 +54,8 @@
 		});
 	}}
 /> -->
-<Filters />
-<EntryList items={data.entries} />
+<!-- <Filters /> -->
+
+<EntryList items={data.entries}>
+	<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
+</EntryList>

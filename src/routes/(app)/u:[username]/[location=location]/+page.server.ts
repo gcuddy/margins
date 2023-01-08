@@ -4,19 +4,21 @@ import { createContext } from '$lib/trpc/context';
 import { appRouter } from '$lib/trpc/router';
 
 import type { PageServerLoad } from './$types';
+import type { Location } from '@prisma/client';
 export const load: PageServerLoad = async (event) => {
-	const { session, user } = await event.locals.validateUser();
+	const { params, locals } = event;
+	const { session, user } = await locals.validateUser();
 	console.log(`location page.server`, { user });
 	if (!session) {
 		throw redirect(302, `/u:${event.params.username}`);
 	}
-	// console.time('entries');
-	// const entries = await router.createCaller(await createContext(event)).entries.list();
-	// console.timeEnd('entries');
-	// console.log(`locationlocation`, { entries });
+	const location = params.location.toLowerCase() as Location | "all";
+	const entries = await appRouter.createCaller(await createContext(event)).entries.listBookmarks({
+		location
+	});
 	return {
 		user,
-		// testing: 'HELLO',
-		// entries,
+		location,
+		entries
 	};
 };

@@ -26,17 +26,18 @@ export const load: PageServerLoad = async ({ url }) => {
 export const actions: Actions = {
 	default: async (event) => {
 		const { request, locals, fetch } = event;
-		console.log({ locals });
 		// todo: handle image requests and such
 		try {
 			const form = await request.formData();
 			const url = <string>form.get('url') || <string>form.get('text');
+			console.log({ url })
 			if (!url) {
 				return fail(400, {
 					url,
 					missing: true,
 				});
 			}
+			const state = form.get("state") as string || "";
 			const serverRouter = appRouter.createCaller(await createContext(event))
 			// TODO: differentiate between different types of links
 			// First parse the article
@@ -46,6 +47,7 @@ export const actions: Actions = {
 			const bookmark = await serverRouter.bookmarks.add({
 				article,
 				url,
+				stateId: state ? +(state) : undefined
 			})
 			console.log(`result of /add`, { bookmark })
 			if (bookmark) {

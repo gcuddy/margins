@@ -7,6 +7,7 @@
 	import { notifications } from '$lib/stores/notifications';
 	import type { Location } from '$lib/types/schemas/Locations';
 	import { getUser } from '@lucia-auth/sveltekit/client';
+	import type { State } from '@prisma/client';
 	import MiniSwitch from './atoms/MiniSwitch.svelte';
 	import Button from './Button.svelte';
 	import GenericInput from './GenericInput.svelte';
@@ -14,10 +15,15 @@
 	import Icon from './helpers/Icon.svelte';
 	import LinkPreview from './LinkPreview.svelte';
 	import LocationListbox from './LocationListbox.svelte';
+	import StateCombobox from './StateCombobox.svelte';
 	import TagEntry from './TagEntry.svelte';
 
 	export let url = '';
 	export let location: Location = 'inbox';
+	export let stateId: number = $page.data.user?.default_state_id as number;
+	export let state: State = $page.data.states?.find((s) => s.id === stateId) as State;
+	export const test = 'hello';
+	$: console.log({ location });
 
 	let textarea: HTMLElement | undefined;
 	let input: HTMLElement | undefined;
@@ -27,7 +33,11 @@
 	let fetched_data: Awaited<ReturnType<typeof parse>> | undefined = undefined;
 	let url_error = false;
 
+	let loading = false;
+
 	const user = getUser();
+
+	console.log({ $modals });
 </script>
 
 <!-- modal: transparent etc -->
@@ -40,29 +50,41 @@
 		// `data` is its `FormData` object
 		// `action` is the URL to which the form is posted
 		// `cancel()` will prevent the submission
-		modals.close({
-			id: 'add-url',
-		});
-		console.log($modals);
+		// modals.close({
+		// 	id: 'add-url',
+		// });
+		loading = true;
+		console.log({ $modals });
 		return async ({ result, update }) => {
-			update();
-			await invalidateAll();
+			if (result.type === 'success') {
+				invalidateAll().then(() => {
+					console.log({ $modals });
+
+					modals.close({
+						id: 'add-url',
+					});
+				});
+				return;
+			}
+			// update();
+			// await invalidateAll();
 			if (result.type === 'error') {
+				console.error('ERROROR');
 				notifications.notify({
 					type: 'error',
 					message: 'Missing URL',
 				});
+				update();
 			}
-			modals.close({
-				id: 'add-url',
-			});
 		};
 	}}
 >
 	<div class="flex flex-col gap-4">
 		<div class="flex justify-between px-2">
 			<div class="flex min-w-0 items-center gap-2">
-				<LocationListbox
+				<StateCombobox {state} />
+
+				<!-- <LocationListbox
 					tooltip={{
 						text: 'Location',
 					}}
@@ -74,7 +96,7 @@
 					includeIcon={true}
 					variant="button"
 					size="xs"
-				/>
+				/> -->
 				{#if fetched_data}
 					<div
 						class="flex h-6 flex-1 items-center gap-2 truncate rounded px-2 text-sm dark:bg-gray-600 dark:text-gray-300"
@@ -176,9 +198,12 @@
 				labelOnRight
 				name="readLater"
 			/>
-			<Button type="submit" size="lg" className="place-self-end space-x-2"
-				><span>Save article</span></Button
-			>
+			<Button type="submit" size="lg" disabled={loading} className="place-self-end space-x-2">
+				{#if !loading}<span>Save article</span>
+				{:else}
+					<Icon name="loading" className="h-5 w-5 animate-spin text-current" />
+				{/if}
+			</Button>
 		</div>
 	</div>
 </form>
