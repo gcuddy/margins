@@ -39,6 +39,7 @@
 	}}
 >
 	<TagEntry
+		size="sm"
 		on:blur={(e) => {
 			// check for diff
 			ref.requestSubmit();

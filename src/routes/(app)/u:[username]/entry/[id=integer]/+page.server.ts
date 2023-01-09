@@ -136,7 +136,7 @@ export const actions: Actions = {
 		// Downloads custom data to entrydata
 		const url = (await evt.request.formData()).get("url")
 		if (!url || typeof url !== "string") {
-			fail(400, {
+			return fail(400, {
 				message: "missing url"
 			})
 		}
@@ -150,6 +150,24 @@ export const actions: Actions = {
 		console.log({ entryData })
 		return {
 			entryData
+		}
+	},
+	note: async (evt) => {
+		const caller = await createCaller(evt);
+		const { request, params } = evt;
+		const data = await request.formData();
+		const annotation = data.get("annotation");
+		if (typeof annotation !== "string" || !annotation) {
+			return fail(400, {
+				annnotation: false
+			})
+		}
+		const createdAnnotation = await caller.annotations.note({
+			entryId: +params.id,
+			body: annotation
+		});
+		return {
+			annotation: createdAnnotation
 		}
 	}
 };

@@ -9,7 +9,7 @@
 	import Icon from '$lib/components/helpers/Icon.svelte';
 	import type { ArticleWithAnnotations } from '$lib/types';
 	import { modals } from '$lib/stores/modals';
-	import AnnotationInput from '$lib/components/AnnotationInput.svelte';
+	import AnnotationInput from '$lib/components/annotations/AnnotationInput.svelte';
 	import type { PageData } from '../../../../../.svelte-kit/types/src/routes/[id=integer]/annotations/$types';
 
 	export let data: PageData;

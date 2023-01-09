@@ -211,4 +211,23 @@ export const bookmarks = router({
 		// 	// create
 		// }
 	}),
+	delete: protectedProcedure.input(z.number().or(z.number().array())).mutation(async ({ ctx, input }) => {
+		console.log({ input })
+		if (Array.isArray(input)) {
+			return ctx.prisma.bookmark.deleteMany({
+				where: {
+					id: {
+						in: input
+					}
+				}
+			})
+		} else {
+			return ctx.prisma.bookmark.delete({
+				where: {
+					id: input,
+					userId: ctx.userId
+				}
+			})
+		}
+	})
 });

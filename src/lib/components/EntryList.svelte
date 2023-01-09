@@ -48,6 +48,12 @@
 	import { derived } from 'svelte/store';
 	import { match } from 'ts-pattern';
 	import { tick } from 'svelte';
+	import { validUrl } from '$lib/utils';
+	import { trpc } from '$lib/trpc/client';
+	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
+	import { syncStore } from '$lib/stores/sync';
+	import Button from './Button.svelte';
+	import { showCommandPalette } from '$lib/stores/commands';
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
 	const {
@@ -201,7 +207,33 @@
 </script>
 
 <!-- TODO: get this type working -->
-<SelectActions bind:selected_items={$selectedItems} on:update>TODO: entry actions</SelectActions>
+<SelectActions bind:selected_items={$selectedItems} on:update>
+	<Button variant="ghost" on:click={() => showCommandPalette.show()}>Actions</Button>
+</SelectActions>
+
+<svelte:window
+	on:paste={async (e) => {
+		console.log(`paste`, e);
+		if ($disableGlobalKeyboardShortcuts) return;
+		const a = document.activeElement;
+		if (a instanceof HTMLTextAreaElement || a instanceof HTMLInputElement) return;
+		// REVIEW: is this how I want to go about this? or should it be scoped more somehow?
+		e.preventDefault();
+		let paste = e.clipboardData?.getData('text');
+		if (paste && validUrl(paste)) {
+			console.log(`got a url!`, paste);
+			const s = syncStore.add();
+			const article = await trpc($page).public.parse.query(paste);
+			await trpc($page).bookmarks.add.mutate({
+				article,
+				url: paste,
+			});
+			await invalidateAll();
+			syncStore.remove(s);
+		}
+		// TODO: interactive toast with setting option for allowing paste or disabling paste
+	}}
+/>
 
 {#if items.length}
 	<!-- todo: virtual list -->

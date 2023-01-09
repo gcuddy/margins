@@ -5,6 +5,8 @@ import { readable } from "svelte/store";
 
 // REVIEW: these should match with Tailwind... how to automate?
 const queries = {
+	"max_sm": "(max-width: 640px)",
+	"max_md": "(max-width: 768px)",
 	"sm": "(min-width: 640px)",
 	"md": "(min-width: 768px)",
 	"lg": "(min-width: 1024px)",
@@ -28,7 +30,7 @@ function calculateMedia(mqls: MQ) {
 	return media;
 }
 
-export default readable({}, (set) => {
+export default readable<Record<keyof typeof queries, boolean>>({}, (set) => {
 	if (!browser) return;
 	const mqls: MQ = {};
 	const onChange = () => set(calculateMedia(mqls));

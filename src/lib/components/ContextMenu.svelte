@@ -16,15 +16,34 @@
 	} from '@rgossiaux/svelte-headlessui';
 	import { onDestroy } from 'svelte';
 	import { createPopperActions } from 'svelte-popperjs';
-	import { portal } from 'svelte-portal';
+	import Portal, { portal } from 'svelte-portal';
 	import { fade, fly, scale } from 'svelte/transition';
 	import Icon from './helpers/Icon.svelte';
 
 	export let placement: PopperPlacement = 'bottom-end';
 	export let strategy: 'fixed' | 'absolute' = 'fixed';
+	export let offset: [number, number] | undefined = undefined;
+	let modifiers = offset
+		? [
+				{
+					name: 'offset',
+					options: {
+						offset,
+					},
+				},
+		  ]
+		: undefined;
 	const [popperRef, popperContent] = createPopperActions({
 		placement,
 		strategy,
+		modifiers: [
+			{
+				name: 'offset',
+				options: {
+					offset,
+				},
+			},
+		],
 	});
 
 	export let overlayClass = '';
@@ -77,19 +96,20 @@
 				<div class="fixed inset-0 z-10 {overlayClass}" />
 			</TransitionChild>
 		{/if}
-		{#if open}
-			<div class="relative z-20" use:popperContent>
-				<TransitionChild
-					enter="transition duration-100 ease-out"
-					enterFrom="transform scale-95 opacity-0"
-					enterTo="transform scale-100 opacity-100"
-					leave="transition duration-75 ease-out"
-					leaveFrom="transform scale-100 opacity-100"
-					leaveTo="transform scale-95 opacity-0"
-				>
+		<Portal>
+			{#if open}
+				<div class="relative z-50" out:fade={{ duration: 150 }} use:popperContent>
+					<!-- <TransitionChild
+						enter="transition duration-100 ease-out"
+						enterFrom="transform scale-95 opacity-0"
+						enterTo="transform scale-100 opacity-100"
+						leave="transition duration-75 ease-out"
+						leaveFrom="transform scale-100 opacity-100"
+						leaveTo="transform scale-95 opacity-0"
+					> -->
 					<MenuItems
 						static
-						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-gray-50/90 py-1 opacity-100 shadow-xl ring-1 ring-black/5 backdrop-blur-sm focus:outline-none  dark:divide-gray-700 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 dark:text-current dark:ring-white/20 dark:backdrop-blur-xl dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200 "
+						class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col divide-y divide-gray-100 rounded-md bg-gray-50/90 py-1 opacity-100 shadow-xl ring-1 ring-black/5 backdrop-blur-sm focus:outline-none  dark:divide-gray-700 dark:bg-zinc-900/50 dark:text-current dark:ring-gray-400/20 dark:backdrop-blur-md dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200 "
 					>
 						<!-- can either slot in items yourself, or let component do it for you -->
 						<slot name="items" />
@@ -132,8 +152,9 @@
 							</div>
 						{/each}
 					</MenuItems>
-				</TransitionChild>
-			</div>
-		{/if}
+					<!-- </TransitionChild> -->
+				</div>
+			{/if}
+		</Portal>
 	</Transition>
 </Menu>

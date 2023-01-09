@@ -104,7 +104,19 @@
 			name: `Delete article${$selectedItems.length > 1 ? 's' : ''}`,
 			group: 'adhoc-article-commands',
 			icon: 'trash',
-			perform: () => {
+			perform: async () => {
+				const confirm = window.confirm(`Really delete ${$selectedItems.length} items?`);
+				if (confirm) {
+					const s = syncStore.add();
+					// REVIEW: soft delete?
+					console.log({ $selectedItems });
+					// TODO: need to fix this type
+					const bookmark_ids: number[] = $selectedItems.map((s) => s.bookmark?.id).filter((i) => i);
+					const deleted = await trpc().bookmarks.delete.mutate(bookmark_ids);
+					console.log({ deleted });
+					await invalidateAll();
+					syncStore.remove(s);
+				}
 				$selectedItems.forEach((item) => {
 					//    TODO: delete
 				});

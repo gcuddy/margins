@@ -373,7 +373,21 @@
 <!-- TODO: implement layout select -->
 <!-- <div class="options">
 	<LayoutSelect />
-</div> --><svelte:window on:mousemove={mousemove} />
+</div> --><svelte:window
+	on:mousemove={mousemove}
+	on:keydown={(e) => {
+		// cmd+c
+		if (e.key === 'c' && e.metaKey && article.uri) {
+			// copy to clipboard and notify
+			navigator.clipboard.writeText(article.uri).then(() =>
+				notifications.notify({
+					type: 'info',
+					title: 'Copied to clipbboard',
+				})
+			);
+		}
+	}}
+/>
 <!-- <div use:popperContent>Tooltip</div> -->
 
 <!-- {JSON.stringify($currentList)} -->

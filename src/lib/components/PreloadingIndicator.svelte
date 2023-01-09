@@ -24,7 +24,7 @@
 	<div class="fade" />
 {/if}
 
-<style>
+<style lang="postcss">
 	.progress-container {
 		position: absolute;
 		top: 0;
@@ -44,10 +44,11 @@
 	}
 
 	.fade {
+		@apply bg-white/30 dark:bg-black/30;
 		position: fixed;
 		width: 100%;
 		height: 100%;
-		background-color: rgba(255, 255, 255, 0.3);
+		/* background-color: rgba(255, 255, 255, 0.3); */
 		pointer-events: none;
 		z-index: 998;
 		animation: fade 0.4s;

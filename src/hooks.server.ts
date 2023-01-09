@@ -30,7 +30,7 @@ export const handle: Handle = sequence(
 				const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 				return {
 					headers: {
-						'cache-control': `s-maxage=5, stale-while-revalidate=${ONE_DAY_IN_SECONDS}`,
+						'cache-control': `s-maxage=60, stale-while-revalidate=${ONE_DAY_IN_SECONDS}`,
 					},
 				};
 			} else if (allOk && isQuery) {

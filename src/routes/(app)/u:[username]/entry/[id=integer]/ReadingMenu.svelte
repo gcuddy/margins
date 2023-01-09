@@ -20,7 +20,10 @@
 	import type { ExtendedBookmark } from '$lib/bookmark';
 	import ReadingSidebar from './ReadingSidebar.svelte';
 	import type { RouterInputs, RouterOutputs } from '$lib/trpc/router';
-	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
+	import {
+		checkIfKeyboardShortcutsAllowed,
+		disableGlobalKeyboardShortcuts,
+	} from '$lib/stores/keyboard';
 	import LocationListbox from '$lib/components/LocationListbox.svelte';
 	import StateListbox from '$lib/components/StateListbox.svelte';
 	import { derived } from 'svelte/store';
@@ -115,6 +118,7 @@
 <svelte:window
 	on:keydown={async (e) => {
 		if ($disableGlobalKeyboardShortcuts) return;
+		if (!checkIfKeyboardShortcutsAllowed()) return;
 		if (e.key === 'j' && next_url) {
 			console.log({ next_url });
 			await goto(next_url);
@@ -133,7 +137,7 @@
 <!-- -translate-y-12 -->
 <!-- going with h-14 which means mt-14 for other stuff -->
 <div
-	class="absolute top-0 z-20 flex h-14 min-h-[56px] w-full  transform-cpu border-b bg-stone-50/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:border-black dark:bg-stone-800/90
+	class="absolute top-0 z-20 flex h-14 min-h-[56px] w-full  transform-cpu border-b bg-stone-50/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100 dark:border-black dark:bg-stone-900/80
   {hide ? ' -translate-y-full' : ' translate-y-0'}
     after:absolute after:top-0 after:left-0 after:-z-10 after:h-16 after:w-full after:content-[''] md:px-3"
 	on:mouseenter={() => {

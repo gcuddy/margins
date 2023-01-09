@@ -139,7 +139,10 @@
 	<!-- style:--rotation="{$rotation}deg" -->
 	<!--  -->
 
-	<div style:--scale={$scale} class="annotatation-container !cursor-grab transition-opacity">
+	<div
+		style:--scale={$scale}
+		class="annotatation-container !cursor-grab shadow-lg transition-opacity"
+	>
 		<AnnotationInput bind:tags bind:el={container} bind:value on:save on:cancel />
 	</div>
 </div>

@@ -3,7 +3,7 @@
 	import type { Article, Tag } from '@prisma/client';
 	import Combobox from './helpers/Combobox.svelte';
 	import { getNthValueOfSet } from '$lib/utils';
-	import TagComponent from './Tags/Tag.svelte';
+	import TagComponent, { type TagVariant } from './Tags/Tag.svelte';
 	import Icon from './helpers/Icon.svelte';
 	import type { ExtendedBookmark } from '$lib/bookmark';
 	import { notifications } from '$lib/stores/notifications';
@@ -125,7 +125,7 @@
 			}
 		}
 		setTimeout(() => {
-			console.log(input.value.length);
+			console.log(input.value.lenigth);
 			if (input.value.length) {
 				activeTag = undefined;
 				activeTagIndex = undefined;
@@ -139,7 +139,9 @@
 
 	export let loading = false;
 
-	export let size: 'lg' | 'base' = 'base';
+	export let size: 'lg' | 'base' | 'sm' = 'base';
+
+	export let pillVariant: TagVariant = 'ghost';
 </script>
 
 <!-- {#each items as { id }, index} -->
@@ -148,7 +150,7 @@
 <!-- {/each} -->
 <div class="flex items-center {className}">
 	{#if selectedTags.size}
-		<div class="flex gap-2 {size === 'lg' ? 'text-base' : 'text-sm'}">
+		<div class="flex gap-2 {size === 'lg' ? 'text-base' : size === 'base' ? 'text-sm' : 'text-xs'}">
 			{#each tags as tag, i}
 				<div>
 					<input type="hidden" name="tags[{i}][name]" value={tag.name} />
@@ -156,7 +158,7 @@
 					<TagComponent
 						as="span"
 						{tag}
-						variant="primary"
+						variant={pillVariant}
 						active={tag.name === activeTag}
 						on:click={() => (activeTag = tag.name)}
 					/>
@@ -209,9 +211,9 @@
 		}}
 		input={{
 			class: `px-2 dark:placeholder-gray-500 placeholder-gray-400 bg-transparent focus:ring-0 border-0 w-full ${
-				size === 'lg' ? 'text-lg' : 'text-base'
+				size === 'lg' ? 'text-lg' : size === 'base' ? 'text-base' : 'text-sm'
 			} ${activeTag ? 'caret-transparent' : ''}`,
-			placeholder: `${selectedTags.size ? '' : 'Tags'}`,
+			placeholder: `${selectedTags.size ? '' : 'Add tag…'}`,
 		}}
 		inputParent={{
 			class: 'flex justify-between items-center',

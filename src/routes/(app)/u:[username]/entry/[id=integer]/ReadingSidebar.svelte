@@ -1,19 +1,32 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { clickOutside } from '$lib/actions/clickOutside';
 	import type { ExtendedBookmark } from '$lib/bookmark';
+	import Annotation from '$lib/components/Annotation.svelte';
+	import AnnotationInput from '$lib/components/annotations/AnnotationInput.svelte';
+	import Muted from '$lib/components/atoms/Muted.svelte';
+	import SmallPlus from '$lib/components/atoms/SmallPlus.svelte';
+	import Button from '$lib/components/Button.svelte';
 	import GenericInput from '$lib/components/GenericInput.svelte';
 	import GenericTextarea from '$lib/components/GenericTextarea.svelte';
+	import Icon from '$lib/components/helpers/Icon.svelte';
 	import StateCombobox from '$lib/components/StateCombobox.svelte';
 	import StateListbox from '$lib/components/StateListbox.svelte';
 	import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
 	import type { EntryWithBookmark } from '$lib/entry.server';
+	import { checkIfKeyboardShortcutsAllowed } from '$lib/stores/keyboard';
+	import mq from '$lib/stores/mq';
 	import { syncStore } from '$lib/stores/sync';
 	import { trpc } from '$lib/trpc/client';
 	import { TextQuoteTarget } from '$lib/types/schemas/Annotations';
 	import type { Tag } from '@prisma/client';
+	import { flip } from 'svelte/animate';
 	import { tweened } from 'svelte/motion';
-	import { slide } from 'svelte/transition';
+	import { writable } from 'svelte/store';
+	import { fade, fly, slide } from 'svelte/transition';
+	import { match } from 'ts-pattern';
 	export let entry: EntryWithBookmark;
 	export let bookmark: ExtendedBookmark | undefined = undefined;
 	export let active: boolean;
@@ -45,105 +58,160 @@
 	} else {
 		WIDTH_SPRING.set(WIDTH).then(() => (display = active));
 	}
+
+	let noting = false;
+
+	const busy = writable({
+		note: false,
+	});
 </script>
 
 <svelte:window
 	on:keydown={(e) => {
 		if (e.key === 'Escape') {
-			active = false;
+			if (checkIfKeyboardShortcutsAllowed()) {
+				active = false;
+			}
 		}
 	}}
 />
 
 <!-- mt-8 to account for reading menu -->
 {#if display}
+	<div class="inset-0 hidden  max-md:fixed max-md:block" />
 	<aside
 		style:margin-left="{$WIDTH_SPRING * -1}px"
 		style:width="{WIDTH}px"
 		style:transform="translateX({$WIDTH_SPRING}px)"
-		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border border-gray-200 bg-gray-50 p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:bg-transparent dark:bg-gradient-to-br  dark:from-gray-800/90 dark:to-gray-900/90 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 sm:w-96 md:relative"
+		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-gray-200 bg-gray-50 p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:bg-transparent dark:bg-gradient-to-br dark:from-gray-800/90  dark:to-gray-900/90 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
 	>
 		<!-- <div class="absolute top-0 left-0 h-full w-full bg-red-500" style:width="450px" /> -->
 
-		<div class="flex flex-col space-y-2">
-			<span class="text-lg font-semibold">{entry.title}</span>
-			<span class="text-base font-medium">{entry.author}</span>
-			{#if entry.type === 'rss' || entry.feedId}
-				<!-- display feed -->
-				<!-- Or just put this in context section -->
-				subscription: {$page.data.subscriptions?.find((s) => s.feedId === entry.feedId)?.title}
-			{/if}
+		<div class="flex flex-col gap-y-2 divide-y dark:divide-gray-700/40">
+			<div class="flex flex-col gap-y-1">
+				<span class="text-lg font-semibold">{entry.title}</span>
+				<span class="text-base font-medium">{entry.author}</span>
+				{#if entry.type === 'rss' || entry.feedId}
+					<!-- display feed -->
+					<!-- Or just put this in context section -->
+					subscription: {$page.data.subscriptions?.find((s) => s.feedId === entry.feedId)?.title}
+				{/if}
+				{#if entry.bookmark?.stateId}
+					<div class="grid grid-cols-[minmax(90px,_auto)_1fr] items-center">
+						<div class="min-w-[90px]"><SmallPlus><Muted>Status</Muted></SmallPlus></div>
+						<StateCombobox
+							state={$page.data.states?.find((state) => state.id === entry.bookmark.stateId)}
+							onSelect={async (state) => {
+								const s = syncStore.add();
+								await trpc().bookmarks.updateState.mutate({
+									id: $page.data.article.bookmark?.id,
+									stateId: state.id,
+									entryId: $page.data.article.id,
+								});
+								await invalidateAll();
+								syncStore.remove(s);
+							}}
+						/>
+						<SmallPlus><Muted>Tags</Muted></SmallPlus>
+						<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
+					</div>
+					<!-- <StateListbox
+							state={$page.data.states?.find(
+								(state) => state.id === entry.bookmark.stateId || $page.data.user?.default_state_id
+							)}
+						/> -->
+				{/if}
+			</div>
 
-			<!-- {article.starred} -->
-			<!-- {article.public} -->
-			<!-- <select
-			name="public"
-			id="public-select"
-			class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-indigo-500 dark:focus:ring-indigo-500"
-			bind:value={article.public}
-			on:change={async (e) => {
-				await tick();
-				const id = syncStore.addItem();
-				console.log(article.public);
-				await bulkEditArticles([article.id], {
-					public: article.public,
-				});
-				syncStore.removeItem(id);
-			}}
-		>
-			<option value={true}>Public</option>
-			<option value={false}>Private</option>
-		</select> -->
-			<!-- <select
-			name=""
-			id=""
-			class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-indigo-500 dark:focus:ring-indigo-500"
-			bind:value={article.location}
-			on:change={async (e) => {
-				await tick();
-				const id = syncStore.addItem();
-				bulkEditArticles([article.id], {
-					location: article.location,
-				});
-				syncStore.removeItem(id);
-			}}
-		>
-			<option value="INBOX">Inbox</option>
-			<option value="SOON">Soon</option>
-			<option value="LATER">Later</option>
-			<option value="ARCHIVE">Archive</option>
-		</select> -->
-			{#if entry.bookmark?.stateId}
-				<StateCombobox
-					state={$page.data.states?.find((state) => state.id === entry.bookmark.stateId)}
-					onSelect={async (state) => {
-						const s = syncStore.add();
-						await trpc().bookmarks.updateState.mutate({
-							id: $page.data.article.bookmark?.id,
-							stateId: state.id,
-							entryId: $page.data.article.id,
-						});
-						await invalidateAll();
-						syncStore.remove(s);
-					}}
-				/>
-				<!-- <StateListbox
-					state={$page.data.states?.find(
-						(state) => state.id === entry.bookmark.stateId || $page.data.user?.default_state_id
-					)}
-				/> -->
-			{/if}
-			{#if entry.tags}
-				<div transition:slide|local>
-					<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
-				</div>
-			{/if}
 			{#if entry.context}
 				{JSON.stringify(entry.context)}
 			{/if}
 
-			Note:
-			<GenericTextarea />
+			<div class="flex flex-col gap-3 p-2 text-sm">
+				<span class="text-gray-400">Notes</span>
+				{#if pageNotes}
+					{#each pageNotes as annotation (annotation.id)}
+						<div
+							animate:flip
+							in:slide|local
+							out:slide|local={{
+								duration: 150,
+							}}
+						>
+							<Annotation {annotation} />
+						</div>
+					{/each}
+				{/if}
+
+				{#if !noting}
+					<button
+						in:fade|local={{ delay: 400 }}
+						class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50 "
+						on:click={() => (noting = true)}
+					>
+						<Icon name="plusMini" className="h-4 w-4 fill-gray-400" />
+						<Muted>Add note</Muted></button
+					>
+				{:else}
+					<!-- REVIEW: is this action ok, since reading sidebar will always be in the entry? -->
+					<!-- TODO: optimistic update  -->
+					<form
+						method="post"
+						action="?/note"
+						use:enhance={({}) => {
+							$busy.note = true;
+							return async ({ result, update }) => {
+								console.log({ result });
+								await update({
+									reset: false,
+								});
+								$busy.note = false;
+								noting = false;
+							};
+						}}
+						transition:fly={{ y: -10 }}
+						on:keydown={(e) => {
+							if (e.key === 'escape') {
+								// todo: noting = false
+							}
+						}}
+					>
+						<AnnotationInput
+							placeholder="Add a page note…"
+							rows={1}
+							shadow_focus={true}
+							include_tags={false}
+							confirmButtonStyle="ghost"
+							class="text-sm"
+						>
+							<svelte:fragment slot="buttons">
+								<Button
+									type="reset"
+									on:click={() => (noting = false)}
+									variant="ghost"
+									size="sm"
+									className="text-sm">Cancel</Button
+								>
+								<Button
+									type="submit"
+									disabled={$busy.note}
+									variant="ghost"
+									size="sm"
+									className="text-sm"
+									>{#if $busy.note}
+										<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+									{:else}
+										Save
+									{/if}
+								</Button>
+							</svelte:fragment>
+						</AnnotationInput>
+					</form>
+				{/if}
+			</div>
+			<!-- Note: -->
+			<!-- <GenericTextarea /> -->
+
 			<!-- <GenericTextarea
 			variant="ghost"
 			bind:value

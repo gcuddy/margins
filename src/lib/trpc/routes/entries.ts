@@ -117,7 +117,15 @@ export const entries = router({
 					}
 				},
 				tags: true,
-				annotations: true,
+				annotations: {
+					include: {
+						creator: {
+							select: {
+								username: true
+							}
+						},
+					}
+				},
 				interactions: {
 					where: {
 						userId
@@ -456,5 +464,12 @@ export const entries = router({
 					]
 				},
 			})
+		}),
+	delete: protectedProcedure.input(z.number()).mutation(async ({ ctx, input }) => {
+		return ctx.prisma.entry.delete({
+			where: {
+				id: input,
+			}
 		})
+	})
 });

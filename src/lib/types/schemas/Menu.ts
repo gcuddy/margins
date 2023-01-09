@@ -4,7 +4,7 @@ import type { ComponentProperties } from '$lib/stores/types';
 
 export interface MenuItem {
 	label: string;
-	icon: IconName;
+	icon?: IconName;
 	iconProps?: ComponentProperties<Icon>;
 	perform?: () => void;
 	href?: string;

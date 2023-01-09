@@ -469,3 +469,13 @@ export function notEmpty<TValue>(value: TValue | null | undefined): value is TVa
 export const isEntry = (item: Pick<Partial<Entry>, "author"> | Annotation): item is Entry => {
 	return (item as Entry).author !== undefined;
 };
+
+export const validUrl = (text: string) => {
+	// console.log({ text })
+	try {
+		const u = new URL(text);
+		return u.origin !== null || u.origin !== "null"
+	} catch {
+		return false
+	}
+}

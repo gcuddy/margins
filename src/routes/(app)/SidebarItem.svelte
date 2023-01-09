@@ -36,7 +36,7 @@
 <svelte:element
 	this={as}
 	class="group flex h-7 cursor-default items-center rounded-lg px-2 font-medium text-gray-700 ring-inset  transition-transform duration-200 hover:bg-gray-200 focus-visible:ring active:scale-95 dark:text-gray-300 dark:hover:bg-gray-600/50
-  {isActive && 'bg-gray-200 dark:bg-gray-600 shadow dark:hover:!bg-gray-600'}
+  {isActive && 'bg-gray-200 shadow dark:bg-gray-600 dark:hover:!bg-gray-600'}
   "
 	data-sveltekit-prefetch={as === 'a' ? '' : undefined}
 	draggable="false"

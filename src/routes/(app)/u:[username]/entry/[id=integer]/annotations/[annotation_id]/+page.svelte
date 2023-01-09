@@ -1,7 +1,7 @@
 <script lang="ts">
 	// TODO: fix this
 	import type { Error, Result } from '$lib/actions/form';
-	import AnnotationInput from '$lib/components/AnnotationInput.svelte';
+	import AnnotationInput from '$lib/components/annotations/AnnotationInput.svelte';
 
 	import Button from '$lib/components/Button.svelte';
 	import Form from '$lib/components/Form.svelte';

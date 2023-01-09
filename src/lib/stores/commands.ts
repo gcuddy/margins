@@ -71,6 +71,9 @@ function createShowCommandPaletteStore() {
 			set(false);
 			cleanup();
 		},
+		show: () => {
+			set(true);
+		}
 	};
 }
 
