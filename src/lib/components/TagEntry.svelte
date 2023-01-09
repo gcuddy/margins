@@ -156,7 +156,7 @@
 					<input type="hidden" name="tags[{i}][name]" value={tag.name} />
 					{#if tag.id}<input type="hidden" name="tags[{i}][id]" value={tag.id} />{/if}
 					<TagComponent
-						as="span"
+						as="a"
 						{tag}
 						variant={pillVariant}
 						active={tag.name === activeTag}

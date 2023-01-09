@@ -22,6 +22,7 @@
 	import { trpc } from '$lib/trpc/client';
 	import { TextQuoteTarget } from '$lib/types/schemas/Annotations';
 	import type { Tag } from '@prisma/client';
+	import { dndzone } from 'svelte-dnd-action';
 	import { flip } from 'svelte/animate';
 	import { tweened } from 'svelte/motion';
 	import { writable } from 'svelte/store';
@@ -96,8 +97,8 @@
 					<!-- Or just put this in context section -->
 					subscription: {$page.data.subscriptions?.find((s) => s.feedId === entry.feedId)?.title}
 				{/if}
-				{#if entry.bookmark?.stateId}
-					<div class="grid grid-cols-[minmax(90px,_auto)_1fr] items-center">
+				<div class="grid grid-cols-[minmax(90px,_auto)_1fr] items-center">
+					{#if entry.bookmark?.stateId}
 						<div class="min-w-[90px]"><SmallPlus><Muted>Status</Muted></SmallPlus></div>
 						<StateCombobox
 							state={$page.data.states?.find((state) => state.id === entry.bookmark.stateId)}
@@ -112,15 +113,15 @@
 								syncStore.remove(s);
 							}}
 						/>
-						<SmallPlus><Muted>Tags</Muted></SmallPlus>
-						<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
-					</div>
-					<!-- <StateListbox
+					{/if}
+					<SmallPlus><Muted>Tags</Muted></SmallPlus>
+					<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
+				</div>
+				<!-- <StateListbox
 							state={$page.data.states?.find(
 								(state) => state.id === entry.bookmark.stateId || $page.data.user?.default_state_id
 							)}
 						/> -->
-				{/if}
 			</div>
 
 			{#if entry.context}
@@ -130,17 +131,20 @@
 			<div class="flex flex-col gap-3 p-2 text-sm">
 				<span class="text-gray-400">Notes</span>
 				{#if pageNotes}
-					{#each pageNotes as annotation (annotation.id)}
-						<div
-							animate:flip
-							in:slide|local
-							out:slide|local={{
-								duration: 150,
-							}}
-						>
-							<Annotation {annotation} />
-						</div>
-					{/each}
+					<!-- TODO: use-dndzone -->
+					<div>
+						{#each pageNotes as annotation (annotation.id)}
+							<div
+								animate:flip
+								in:slide|local
+								out:slide|local={{
+									duration: 150,
+								}}
+							>
+								<Annotation {annotation} />
+							</div>
+						{/each}
+					</div>
 				{/if}
 
 				{#if !noting}

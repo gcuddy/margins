@@ -43,6 +43,9 @@
 					offset,
 				},
 			},
+			{
+				name: 'arrow',
+			},
 		],
 	});
 
@@ -120,7 +123,7 @@
 										<!-- svelte-ignore a11y-click-events-have-key-events -->
 										<div
 											class="flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-3 text-sm font-medium text-gray-900 dark:text-gray-50 {active
-												? 'bg-primary-300/50 dark:bg-gray-600'
+												? 'bg-primary-300/50 dark:bg-gray-500/20'
 												: ''}"
 											on:click={perform}
 										>
