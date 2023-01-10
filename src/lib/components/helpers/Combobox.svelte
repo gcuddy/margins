@@ -5,9 +5,20 @@
 	import { derived, writable } from 'svelte/store';
 	import type { number } from 'zod';
 	type T = $$Generic;
+
 	type TValue = T & {
-		id: string | number;
+		id?: string | number;
+		name?: string;
 	};
+
+	interface Props {
+		values: TValue[];
+	}
+
+	type TProps = Props & {
+		idResolver: Props['values'][number]['id'] extends undefined ? boolean : string;
+	};
+
 	export let values: TValue[];
 	$: console.log({ values });
 
@@ -107,7 +118,7 @@
 		active: TValue;
 	}>();
 
-	export let idResolver: (v: T) => string | number = (v: any) => {
+	export let idResolver: (v: TValue) => string | number = (v: TValue) => {
 		if (typeof v === 'string') {
 			return v;
 		} else {
@@ -184,6 +195,7 @@
 	$: values, setActiveIndex();
 	// $: console.log({ activeIndex });
 	$: valueIds = values.map((v) => {
+		console.log({ v });
 		const id = idResolver(v);
 		if (!id) {
 			throw Error('A proper idResolver must be applied.');

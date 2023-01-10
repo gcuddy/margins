@@ -66,8 +66,6 @@
 
 	export let icons: 'solid' | 'outline' = 'solid';
 
-	export let usePortal = true;
-
 	export let squishy = false;
 
 	let className = 'p-1.5';
@@ -117,15 +115,21 @@
 						<!-- can either slot in items yourself, or let component do it for you -->
 						<slot name="items" />
 						{#each items as group}
-							<div class="p-2">
-								{#each group as { href, label, icon, iconProps, perform }}
-									<MenuItem let:active>
+							<div class="px-1">
+								{#each group as { href, label, icon, iconProps, perform, items }}
+									<MenuItem as="div" let:active>
 										<!-- svelte-ignore a11y-click-events-have-key-events -->
 										<div
-											class="flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-3 text-sm font-medium text-gray-900 dark:text-gray-50 {active
-												? 'bg-primary-300/50 dark:bg-gray-500/20'
+											class="flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-gray-900 dark:text-gray-50 {active
+												? 'bg-primary-300/30 dark:bg-gray-500/20'
 												: ''}"
 											on:click={perform}
+											on:mouseover={() => {
+												console.log('hello');
+											}}
+											on:focus={() => {
+												console.log('hello');
+											}}
 										>
 											{#if icon}
 												{#if iconProps}
@@ -141,15 +145,21 @@
 													/>
 												{/if}
 											{/if}
-											{#if href}
-												<a {href}>{label}</a>
-											{:else}
-												<span class="cursor-default">
+											<span class="grow cursor-default">
+												{#if href}
+													<a {href}>{label}</a>
+												{:else}
 													{label}
-												</span>
-												<!-- button -->
-											{/if}
+													<!-- button -->
+												{/if}
+											</span>
+											<!-- {#if items?.length}
+												<div class="ml-auto" />
+												<Icon name="chevronRightMini" className="h-4 w-4 fill-gray-400" />
+											{/if} -->
 										</div>
+										<!-- TODO: should look into wai-aria for nested menu. Right now it looks like it's impossible with headless-ui in the way Linear does it. -->
+										<!-- settling for a weird version with clicks and sub-menu (not displayed to right) -->
 									</MenuItem>
 								{/each}
 							</div>

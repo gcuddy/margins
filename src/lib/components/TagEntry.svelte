@@ -7,13 +7,15 @@
 	import Icon from './helpers/Icon.svelte';
 	import type { ExtendedBookmark } from '$lib/bookmark';
 	import { notifications } from '$lib/stores/notifications';
-	export let allTags: Tag[] = [];
+	type TagWithNeededProperties = Pick<Tag, 'id' | 'name'>;
+	export let allTags: TagWithNeededProperties[] = [];
 	$: console.log({ allTags });
 	export let className = '';
 	export let value = '';
-	export let items: { tags: Tag[] }[] = [];
+	export let items: { tags: TagWithNeededProperties[] }[] = [];
 	$: console.log({ items });
 	export let allow_create_tag = true;
+
 	let ref: HTMLElement | undefined;
 	type TagInputTag = Pick<Tag, 'name'> & {
 		special?: boolean;
@@ -42,7 +44,7 @@
 		filteredTags = filteredTags.filter((tag) => !tag.special);
 	}
 	// read only
-	export let tags: Tag[] = [];
+	export let tags: TagWithNeededProperties[] = [];
 	/// read only
 	export let pending = false;
 
@@ -125,7 +127,6 @@
 			}
 		}
 		setTimeout(() => {
-			console.log(input.value.lenigth);
 			if (input.value.length) {
 				activeTag = undefined;
 				activeTagIndex = undefined;
@@ -166,14 +167,15 @@
 			{/each}
 		</div>
 	{/if}
+	<!-- @ts-ignore -->
 	<Combobox
 		bind:inputRef={ref}
 		fillValue={false}
 		values={filteredTags}
+		idResolver={(tag) => tag.name}
 		bind:value
 		bind:expanded={comboboxExpanded}
 		animateHeight={false}
-		idResolver={(tag) => tag.name}
 		on:blur
 		on:blur={() => {
 			console.log('blur!');

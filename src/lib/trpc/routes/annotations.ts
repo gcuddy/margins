@@ -63,5 +63,22 @@ export const annotationRouter = router({
                 })
                 return deleted;
             }
+        }),
+    update: protectedProcedure
+        .input(z.object({
+            id: z.number(),
+            data: z.object({
+                private: z.boolean(),
+                body: z.string()
+            }).partial()
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { id, data } = input;
+            return ctx.prisma.annotation.update({
+                where: {
+                    id
+                },
+                data
+            })
         })
 })

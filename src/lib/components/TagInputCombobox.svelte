@@ -5,20 +5,26 @@
 	import type { Tag } from '@prisma/client';
 	import { onMount } from 'svelte';
 	import TagEntry from './TagEntry.svelte';
-	export let allTags: Tag[] = $page.data.tags || [];
 
-	export let tags: Tag[];
+	type AcceptedTag = Omit<Tag, 'createdAt' | 'updatedAt'>;
+
+	export let allTags: AcceptedTag[] = $page.data.tags || [];
+
+	export let tags: AcceptedTag[];
 	export let original: {
-		tags: Tag[];
+		tags: AcceptedTag[];
 	};
 
 	export let entryId: number | undefined = undefined;
 
 	let ref: HTMLFormElement;
+	let c = '';
+	export { c as class };
 </script>
 
 <!-- TODO: make this be able to use multiple ids? -->
 <form
+	class={c}
 	action="{entryId ? `/u:${$page.data.user?.username}/entry/${entryId}` : ''}?/tag"
 	method="post"
 	bind:this={ref}

@@ -27,11 +27,11 @@
 	import LocationListbox from '$lib/components/LocationListbox.svelte';
 	import StateListbox from '$lib/components/StateListbox.svelte';
 	import { derived } from 'svelte/store';
+	import { reading_sidebar } from './stores';
 
 	export let entry: RouterOutputs['entries']['load'];
 	export let bookmark: ExtendedBookmark | null = null;
 	export let interaction: { is_read: boolean | null } | null = null;
-	export let reading_sidebar_active = false;
 
 	// export let currentList: ICurrentList | undefined = undefined;
 
@@ -96,7 +96,7 @@
 		$mainElScroll.down &&
 		$mainElScroll.y > 500 &&
 		$mainElScroll.offset < 0.99 &&
-		!reading_sidebar_active &&
+		!$reading_sidebar.active &&
 		$currentList?.type !== 'rss';
 
 	$: back = $currentList?.slug ?? '';
@@ -130,7 +130,7 @@
 			await goto(back);
 		}
 		if (e.key === 'i' && e.metaKey) {
-			reading_sidebar_active = !reading_sidebar_active;
+			$reading_sidebar.active = !$reading_sidebar.active;
 		}
 	}}
 />
@@ -260,7 +260,7 @@
 	</div>
 	<div
 		class=" flex flex-1 -translate-y-24 transform-cpu items-center justify-center opacity-0 transition-all {$mainElScroll.y >
-			135 && !reading_sidebar_active
+			135 && !$reading_sidebar.active
 			? '!translate-y-0 !opacity-100'
 			: ''}"
 	>
@@ -338,11 +338,11 @@
 			]}
 		/>
 		<Button
-			on:click={() => (reading_sidebar_active = !reading_sidebar_active)}
+			on:click={() => ($reading_sidebar.active = !$reading_sidebar.active)}
 			className="group"
 			variant="naked"
 			tooltip={{
-				text: `${reading_sidebar_active ? 'Hide' : 'Show'} sidebar`,
+				text: `${$reading_sidebar.active ? 'Hide' : 'Show'} sidebar`,
 				kbd: '⌘ i',
 			}}
 		>
@@ -363,7 +363,7 @@
 			</svg> -->
 			<Icon
 				name="sidebar"
-				className="h-5 w-5 stroke-2 stroke-current relative top-px  transition-all {reading_sidebar_active &&
+				className="h-5 w-5 stroke-2 stroke-current relative top-px  transition-all {$reading_sidebar.active &&
 					'fill-primary-100 dark:fill-gray-900'}"
 			/>
 		</Button>

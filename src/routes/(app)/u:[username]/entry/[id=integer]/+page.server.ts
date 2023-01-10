@@ -169,5 +169,26 @@ export const actions: Actions = {
 		return {
 			annotation: createdAnnotation
 		}
-	}
+	},
+	updateNote: async (evt) => {
+		const caller = await createCaller(evt);
+		const { request, params } = evt;
+		const data = await request.formData();
+		const annotation = data.get("annotation");
+		const id = data.get('id');
+		if (typeof annotation !== "string" || !annotation || typeof id !== "string" || !id) {
+			return fail(400, {
+				missing: true
+			})
+		}
+		const updatedAnnotation = await caller.annotations.update({
+			id: +id,
+			data: {
+				body: annotation
+			}
+		})
+		return {
+			annotation: updatedAnnotation
+		}
+	},
 };

@@ -113,21 +113,21 @@
 	/** Commands that rely on stores */
 
 	const commandsThatRelyOnStores: Command[] = [
-		{
-			id: 'go-back',
-			group: 'Navigation',
-			check: () => previousPage !== undefined,
-			name: 'Go back',
-			perform: () => {
-				alert(previousPage);
-				console.log({ previousPage });
-				// if (previousPage) {
-				// 	goto(previousPage);
-				// }
-			},
-			icon: 'arrowRight',
-			kbd: [['Escape']],
-		},
+		// {
+		// 	id: 'go-back',
+		// 	group: 'Navigation',
+		// 	check: () => previousPage !== undefined,
+		// 	name: 'Go back',
+		// 	perform: () => {
+		// 		alert(previousPage);
+		// 		console.log({ previousPage });
+		// 		// if (previousPage) {
+		// 		// 	goto(previousPage);
+		// 		// }
+		// 	},
+		// 	icon: 'arrowRight',
+		// 	kbd: [['Escape']],
+		// },
 	];
 	onMount(() => {
 		commandsThatRelyOnStores.forEach((command) => commandStore.add(command, false));

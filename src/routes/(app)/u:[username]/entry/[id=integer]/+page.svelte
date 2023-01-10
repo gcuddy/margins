@@ -1,43 +1,40 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import { afterNavigate, invalidateAll } from '$app/navigation';
-	import { navigating, page } from '$app/stores';
-	import type { ExtendedBookmark } from '$lib/bookmark';
-	import H1 from '$lib/components/atoms/H1.svelte';
-	import { commandPaletteStore } from '$lib/components/CommandPalette/store';
-	import type { Command } from '$lib/components/CommandPalette/types';
-	import Icon from '$lib/components/helpers/Icon.svelte';
-	import HighlightMenu from '$lib/components/HighlightMenu.svelte';
-	import TagInputCombobox from '$lib/components/TagInputCombobox.svelte';
-	import { entryData } from '$lib/entry';
-	import { useCommands } from '$lib/hooks/use-commands';
-	import articleHeader from '$lib/stores/currentArticle/articleHeader';
-	import { mainEl, mainElScroll } from '$lib/stores/main';
-	import { modals } from '$lib/stores/modals';
-	import { notifications } from '$lib/stores/notifications';
-	import { hideSidebar } from '$lib/stores/sidebar';
-	import { syncStore } from '$lib/stores/sync';
-	import { trpc } from '$lib/trpc/client';
-	import { LOCATION_TO_ICON_SOLID } from '$lib/types/schemas/Locations';
-	import { archive } from '$lib/utils';
-	import type { Annotation, Tag } from '@prisma/client';
-	import { TRPCClientError } from '@trpc/client';
-	import dayjs from 'dayjs';
-	import localizedFormat from 'dayjs/plugin/localizedFormat.js';
-	import debounce from 'lodash.debounce';
-	import { onDestroy } from 'svelte';
-	import { createPopperActions } from 'svelte-popperjs';
-	import { writable } from 'svelte/store';
-	import { fade, slide } from 'svelte/transition';
-	import type { PageData } from './$types';
-	import Highlighter from './Highlighter.svelte';
-	import ReadingMenu from './ReadingMenu.svelte';
-	import ReadingSidebar from './ReadingSidebar.svelte';
-	import type { Metadata } from './types';
+	import { browser } from "$app/environment";
+	import { afterNavigate, invalidateAll } from "$app/navigation";
+	import { navigating, page } from "$app/stores";
+	import type { ExtendedBookmark } from "$lib/bookmark";
+	import H1 from "$lib/components/atoms/H1.svelte";
+	import { commandPaletteStore } from "$lib/components/CommandPalette/store";
+	import type { Command } from "$lib/components/CommandPalette/types";
+	import Icon from "$lib/components/helpers/Icon.svelte";
+	import HighlightMenu from "$lib/components/HighlightMenu.svelte";
+	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
+	import { entryData } from "$lib/entry";
+	import { useCommands } from "$lib/hooks/use-commands";
+	import articleHeader from "$lib/stores/currentArticle/articleHeader";
+	import { mainEl, mainElScroll } from "$lib/stores/main";
+	import { modals } from "$lib/stores/modals";
+	import { notifications } from "$lib/stores/notifications";
+	import { syncStore } from "$lib/stores/sync";
+	import { trpc } from "$lib/trpc/client";
+	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
+	import { archive } from "$lib/utils";
+	import type { Annotation, Tag } from "@prisma/client";
+	import { TRPCClientError } from "@trpc/client";
+	import dayjs from "dayjs";
+	import localizedFormat from "dayjs/plugin/localizedFormat.js";
+	import debounce from "lodash.debounce";
+	import { onDestroy } from "svelte";
+	import { createPopperActions } from "svelte-popperjs";
+	import { writable } from "svelte/store";
+	import { fade, slide } from "svelte/transition";
+	import type { PageData } from "./$types";
+	import Highlighter from "./Highlighter.svelte";
+	import ReadingMenu from "./ReadingMenu.svelte";
+	import ReadingSidebar from "./ReadingSidebar.svelte";
+	import type { Metadata } from "./types";
 	dayjs.extend(localizedFormat);
 	export let data: PageData;
-	$: console.log(`data for ${$page.params.id}`, { data });
-	console.log(`data for page.svelte`, { data });
 	$: article = data.article;
 	let entry: Metadata;
 	let annotations: Annotation[] = [];
@@ -49,11 +46,11 @@
 	let bookmark: ExtendedBookmark | null = null;
 
 	// TODO: fix this whole mess
-	$: if ('entryId' in data.article) {
+	$: if ("entryId" in data.article) {
 		// bookmark
 		// TOOD: zod parsing
 		console.log({ data });
-		if (typeof data.article.data === 'object') {
+		if (typeof data.article.data === "object") {
 			entry = {
 				...entryData.parse(data.article.data),
 				id: data.article.entryId,
@@ -76,11 +73,11 @@
 	function useArticleCommands() {
 		const articleCommands: Command[] = [
 			{
-				id: 'archive-article',
-				group: 'article',
-				name: 'Archive Article',
-				icon: 'archive',
-				check: () => !!bookmark && bookmark?.state?.type !== 'archive',
+				id: "archive-article",
+				group: "article",
+				name: "Archive Article",
+				icon: "archive",
+				check: () => !!bookmark && bookmark?.state?.type !== "archive",
 				perform: async () => {
 					// // TODO: optimistically update UI
 					// // find archive location
@@ -109,15 +106,15 @@
 					// // archive([entry.id], '/');
 				},
 				kbd: [
-					['ctrl', 'shift', 'a'],
-					['cmd', 'Backspace'],
+					["ctrl", "shift", "a"],
+					["cmd", "Backspace"],
 				],
 			},
 			{
-				id: 'delete-article',
-				group: 'article',
-				name: 'Delete Article',
-				icon: 'trash',
+				id: "delete-article",
+				group: "article",
+				name: "Delete Article",
+				icon: "trash",
 				perform: async () => {
 					// await post('/api/archive_article', {
 					// 	id: entry.id,
@@ -133,10 +130,10 @@
 				},
 			},
 			{
-				id: 'change-status',
-				group: 'article',
-				name: 'Change Status',
-				icon: 'inboxIn',
+				id: "change-status",
+				group: "article",
+				name: "Change Status",
+				icon: "inboxIn",
 				perform: async () => {
 					commandPaletteStore.open({
 						values: $page.data.states,
@@ -180,10 +177,10 @@
 				},
 			},
 			{
-				id: 'tag-article',
-				group: 'article',
-				name: 'Tag Article',
-				icon: 'tag',
+				id: "tag-article",
+				group: "article",
+				name: "Tag Article",
+				icon: "tag",
 				perform: async () => {
 					modals.open(TagInputCombobox, {
 						entryId: entry.id,
@@ -193,32 +190,32 @@
 				},
 			},
 			{
-				id: 're-download-article',
-				group: 'article',
-				name: 'Re-download Article',
+				id: "re-download-article",
+				group: "article",
+				name: "Re-download Article",
 				perform: async () => {
 					const syncId = syncStore.addItem();
 					const id = notifications.notify({
-						title: 'Re-downloading article',
+						title: "Re-downloading article",
 						message: "This shouldn't take long",
 						timeout: 3000,
 					});
 					const form = new FormData();
-					form.set('text', entry.url);
-					const res = await fetch('/add', {
-						method: 'POST',
+					form.set("text", entry.url);
+					const res = await fetch("/add", {
+						method: "POST",
 						body: form,
 						headers: {
-							accept: 'application/json',
+							accept: "application/json",
 						},
 					});
 					{
 						//done
 						syncStore.removeItem(syncId);
 						notifications.notify({
-							title: 'Successfully re-downloaded article',
-							message: 'Article has been re-downloaded. Refresh the page to see it.',
-							type: 'success',
+							title: "Successfully re-downloaded article",
+							message: "Article has been re-downloaded. Refresh the page to see it.",
+							type: "success",
 						});
 					}
 					const _article = await res.json();
@@ -226,14 +223,14 @@
 					// todo: use zod here
 					await invalidate(`/${entry.id}`);
 				},
-				icon: 'download',
+				icon: "download",
 			},
 			{
-				id: 'add-note',
-				group: 'article',
-				name: 'Add note',
+				id: "add-note",
+				group: "article",
+				name: "Add note",
 				perform: () => goto(`/${entry.id}/annotations/new`),
-				icon: 'annotation',
+				icon: "annotation",
 			},
 		];
 		return useCommands(articleCommands);
@@ -251,60 +248,51 @@
 	let disableSaveScroll = false;
 
 	let context;
-	afterNavigate(({ from }) => {
-		console.log({ from });
-	});
-	afterNavigate(() => {
-		console.log(`after navigation`, $mainEl);
-		setTimeout(() => {
-			$mainEl.scrollTo(0, 0);
-			$mainEl.focus();
-		}, 0);
-	});
 
 	let last_saved_progress = 0;
-	afterNavigate(async () => {
-		console.log(`mounting / afternavigate`);
-		// this is a hack-y way to get the slug to be nice
-		// history.replaceState(null, '', getArticleUrl($page.params.username, article.id, article.slug));
-		// recents.addRecentArticle(article);
-		if (!browser) return;
-		console.log($mainEl);
-		// mark as read
-		// optimistic
-		const ogInteraction = interaction || {};
-		if (data.article.unread) {
-			data.article.unread = false;
-			data.interaction = { ...ogInteraction, is_read: true };
-			console.log({ data });
-			const updatedEntry = await trpc($page).entries.markAsRead.mutate({
-				id: data.article.id,
-			});
-			console.log({ updatedEntry });
-			// const res = await fetch(`/api/interactions`, {
-			// 	method: 'POST',
-			// 	headers: {
-			// 		'Content-Type': 'application/json',
-			// 	},
-			// 	body: JSON.stringify({
-			// 		is_read: true,
-			// 		uri: data.article.uri,
-			// 	}),
-			// });
-			// console.log({ res });
-			// if (!res.ok) {
-			// 	// roll back
-			// 	data.interaction = ogInteraction;
-			// }
-		}
-		if ($page.data.user?.username === $page.params.username) {
-			const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
-			last_saved_progress = interaction?.progress || 0;
-			setTimeout(() => {
-				$mainEl.scrollTo(0, pos);
-			}, 10);
-		}
-	});
+	// afterNavigate(async (e) => {
+	// 	console.log(`mounting / afternavigate`, e);
+	// 	setTimeout(() => {
+	// 		// $mainEl.scrollTo(0, 0);
+	// 		$mainEl.focus();
+	// 	}, 0);
+	// 	if (!browser) return;
+	// 	console.log($mainEl);
+	// 	// mark as read
+	// 	// optimistic
+	// 	const ogInteraction = interaction || {};
+	// 	if (data.article.unread) {
+	// 		data.article.unread = false;
+	// 		data.interaction = { ...ogInteraction, is_read: true };
+	// 		console.log({ data });
+	// 		const updatedEntry = await trpc($page).entries.markAsRead.mutate({
+	// 			id: data.article.id,
+	// 		});
+	// 		console.log({ updatedEntry });
+	// 		// const res = await fetch(`/api/interactions`, {
+	// 		// 	method: 'POST',
+	// 		// 	headers: {
+	// 		// 		'Content-Type': 'application/json',
+	// 		// 	},
+	// 		// 	body: JSON.stringify({
+	// 		// 		is_read: true,
+	// 		// 		uri: data.article.uri,
+	// 		// 	}),
+	// 		// });
+	// 		// console.log({ res });
+	// 		// if (!res.ok) {
+	// 		// 	// roll back
+	// 		// 	data.interaction = ogInteraction;
+	// 		// }
+	// 	}
+	// 	if ($page.data.user?.username === $page.params.username) {
+	// 		const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+	// 		last_saved_progress = interaction?.progress || 0;
+	// 		setTimeout(() => {
+	// 			$mainEl.scrollTo(0, pos);
+	// 		}, 10);
+	// 	}
+	// });
 	const saveProgress = async (data: number) => {
 		if ($navigating) return;
 		if (disableSaveScroll) return;
@@ -331,18 +319,20 @@
 			// only save if the scroll position has changed by more than .05
 			if (Math.abs(last_scroll_position - offset) > 0.05) {
 				last_scroll_position = offset;
-				console.log('saving');
+				console.log("saving");
 				debouncedSave(offset);
 			}
 		}
 	});
 	onDestroy(() => {
+		console.time("DESTROYING");
 		unsubscribeScrollY && unsubscribeScrollY();
 		removeCommands();
+		console.timeEnd("DESTROYING");
 	});
 
 	const [popperRef, popperContent] = createPopperActions({
-		strategy: 'fixed',
+		strategy: "fixed",
 	});
 
 	let x = 0;
@@ -366,8 +356,6 @@
 
 	/** Tags */
 	let tagFormRef: HTMLFormElement;
-
-	let reading_sidebar_active = false;
 </script>
 
 <!-- TODO: implement layout select -->
@@ -377,17 +365,16 @@
 	on:mousemove={mousemove}
 	on:keydown={(e) => {
 		// cmd+c
-		if (e.key === 'c' && e.metaKey && article.uri) {
+		if (e.key === "c" && e.metaKey && article.uri) {
 			// copy to clipboard and notify
 			navigator.clipboard.writeText(article.uri).then(() =>
 				notifications.notify({
-					type: 'info',
-					title: 'Copied to clipbboard',
+					type: "info",
+					title: "Copied to clipbboard",
 				})
 			);
 		}
-	}}
-/>
+	}} />
 <!-- <div use:popperContent>Tooltip</div> -->
 
 <!-- {JSON.stringify($currentList)} -->
@@ -395,10 +382,8 @@
 	{bookmark}
 	bind:entry={data.article}
 	{interaction}
-	back={$currentList ? $currentList.slug : '/'}
-	currentList={$currentList}
-	bind:reading_sidebar_active
-/>
+	back={$currentList ? $currentList.slug : "/"}
+	currentList={$currentList} />
 
 <svelte:head>
 	<title>{entry.title}</title>
@@ -417,8 +402,7 @@
 			// todo: use x and y to create annotation, attach to nearest node
 		}}
 		data-content-container
-		class="relative flex h-full grow items-stretch overflow-hidden"
-	>
+		class="relative flex h-full grow items-stretch overflow-hidden">
 		<div class="grow overflow-auto" bind:this={$mainEl}>
 			<article class="mx-auto mt-14 max-w-3xl py-8 px-4">
 				<header class="space-y-3 pb-4" bind:this={$articleHeader}>
@@ -426,15 +410,12 @@
 						class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
 						href={article.feedId
 							? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
-							: article.uri}
-					>
+							: article.uri}>
 						<img
 							src="https://icon.horse/icon/?uri={article.uri}"
 							class="h-5 w-5 rounded-full object-cover"
-							alt=""
-						/>
-						<span class="truncate">{entry.siteName || entry.uri}</span></a
-					>
+							alt="" />
+						<span class="truncate">{entry.siteName || entry.uri}</span></a>
 					<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
 
 					<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
@@ -459,10 +440,7 @@
 					>
 				</p> -->
 					<div class="flex justify-between">
-						<div
-							id="origin"
-							class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
-						>
+						<div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
 							{#if entry.author}
 								<p><a href="/author/{entry.author}">{entry.author}</a></p>
 							{/if}
@@ -470,7 +448,7 @@
 								<!-- <p>&middot;</p> -->
 							{/if}
 							{#if entry.published}
-								<p>{dayjs(entry.published).format('ll')}</p>
+								<p>{dayjs(entry.published).format("ll")}</p>
 							{/if}
 							{#if entry.wordCount}
 								<span>{entry.wordCount} words</span>
@@ -490,21 +468,17 @@
 								tags={data.article.tags.map((tag) => ({
 									...tag,
 									...$page.data.tags?.find((t) => t.id === tag.id),
-								}))}
-							/>
+								}))} />
 						</div>
 					{/if}
 				</header>
 				<!-- this is a very rudimentary check lol -->
 				<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
-					<!-- {#if article.image && !article.html?.includes(article.image)}
-				<img src={article.image} alt="" class="mx-auto rounded py-2" />
-			{/if} -->
-					{@html entry.html || entry.text || entry.summary || '[No content]'}
+					{@html entry.html || entry.text || entry.summary || "[No content]"}
 				</Highlighter>
-				{#if $mainElScroll.offset > 0.97 && article.location !== 'ARCHIVE' && data.authorized}
+				{#if $mainElScroll.offset > 0.97 && article.location !== "ARCHIVE" && data.authorized}
 					<div class="fixed bottom-8 right-8" transition:fade>
-						<button on:click={() => archive([article.id], '/')}>Archive article</button>
+						<button on:click={() => archive([article.id], "/")}>Archive article</button>
 					</div>
 				{/if}
 				<noscript>
@@ -513,6 +487,6 @@
 			</article>
 		</div>
 		<!-- Reading Sidebar -->
-		<ReadingSidebar bind:entry={data.article} bind:active={reading_sidebar_active} />
+		<ReadingSidebar bind:entry={data.article} />
 	</div>
 </div>

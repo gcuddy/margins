@@ -1,71 +1,66 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import Tooltip from '$lib/components/Tooltip.svelte';
-	import { highlightElements } from '$lib/stores/misc';
-	import selection from '$lib/stores/selection';
-	import selectionAction from '$lib/actions/selection';
-	import type {
-		AnnotationPos,
-		NodeRef,
-		SimplifiedHighlightSource,
-		Tooltip as ITooltip,
-	} from '$lib/types';
-	import type { Annotation, Tag } from '@prisma/client';
-	import { onDestroy, onMount } from 'svelte';
+	import { browser } from "$app/environment";
+	import Tooltip from "$lib/components/Tooltip.svelte";
+	import { highlightElements } from "$lib/stores/misc";
+	import selection from "$lib/stores/selection";
+	import selectionAction from "$lib/actions/selection";
+	import type { AnnotationPos, NodeRef, SimplifiedHighlightSource, Tooltip as ITooltip } from "$lib/types";
+	import type { Annotation, Tag } from "@prisma/client";
+	import { onDestroy, onMount } from "svelte";
 	// import sanitize from '$lib/sanitize';
-	import { page } from '$app/stores';
+	import { page } from "$app/stores";
 	import {
 		createTextQuoteSelectorMatcher,
 		describeRange,
 		describeSelection,
 		describeTextQuote,
-	} from '$lib/annotator';
-	import { highlightText } from '$lib/annotator/highlighter';
+	} from "$lib/annotator";
+	import { highlightText } from "$lib/annotator/highlighter";
 	import type {
 		CssSelector,
 		RangeSelector,
 		TextPositionSelector,
 		TextQuoteSelector,
-	} from '$lib/annotator/types';
-	import FloatingAnnotation from '$lib/components/annotations/FloatingAnnotation.svelte';
-	import EditHighlightToolTip from '$lib/components/EditHighlightToolTip.svelte';
-	import Icon from '$lib/components/helpers/Icon.svelte';
-	import HighlightToolTip from '$lib/components/HighlightToolTip.svelte';
-	import ProseWrapper from '$lib/components/ProseWrapper.svelte';
-	import { makeIconSvg } from '$lib/icons';
-	import { mainEl } from '$lib/stores/main';
-	import { notifications } from '$lib/stores/notifications';
-	import { syncStore } from '$lib/stores/sync';
-	import type { TextQuoteTarget } from '$lib/types/schemas/Annotations';
-	import { TargetSchema, type Selector } from '$lib/annotation';
-	import { finder } from '@medv/finder';
-	import { createPopperActions } from 'svelte-popperjs';
-	import type { z } from 'zod';
-	import { setUpLinkDragHandlers } from './_helpers';
-	import ContextMenu from '$lib/components/ContextMenu.svelte';
-	import { MenuButton } from '@rgossiaux/svelte-headlessui';
-	import { fade, fly, crossfade, scale } from 'svelte/transition';
-	import { derived, writable } from 'svelte/store';
-	import TooltipMenu from '$lib/components/TooltipMenu.svelte';
-	import AnnotationInput from '$lib/components/annotations/AnnotationInput.svelte';
-	import { nodeFromXPath, xpathFromNode } from '$lib/annotator/xpath';
-	import { buildSelectorFromImage } from '$lib/annotator/img';
-	import { makeCreateRangeSelectorMatcher } from '$lib/annotator/range';
-	import { upsertAnnotation } from '$lib/annotation';
-	import { portal } from 'svelte-portal';
-	import Annotation from '$lib/components/Annotation.svelte';
-	import type { EntryWithBookmark } from '$lib/entry.server';
-	import parse from 'node-html-parser/dist/parse';
+	} from "$lib/annotator/types";
+	import FloatingAnnotation from "$lib/components/annotations/FloatingAnnotation.svelte";
+	import EditHighlightToolTip from "$lib/components/EditHighlightToolTip.svelte";
+	import Icon from "$lib/components/helpers/Icon.svelte";
+	import HighlightToolTip from "$lib/components/HighlightToolTip.svelte";
+	import ProseWrapper from "$lib/components/ProseWrapper.svelte";
+	import { makeIconSvg } from "$lib/icons";
+	import { mainEl } from "$lib/stores/main";
+	import { notifications } from "$lib/stores/notifications";
+	import { syncStore } from "$lib/stores/sync";
+	import type { TextQuoteTarget } from "$lib/types/schemas/Annotations";
+	import { TargetSchema, type Selector } from "$lib/annotation";
+	import { finder } from "@medv/finder";
+	import { createPopperActions } from "svelte-popperjs";
+	import type { z } from "zod";
+	import { setUpLinkDragHandlers } from "./_helpers";
+	import ContextMenu from "$lib/components/ContextMenu.svelte";
+	import { MenuButton } from "@rgossiaux/svelte-headlessui";
+	import { fade, fly, crossfade, scale } from "svelte/transition";
+	import { derived, writable } from "svelte/store";
+	import TooltipMenu from "$lib/components/TooltipMenu.svelte";
+	import AnnotationInput from "$lib/components/annotations/AnnotationInput.svelte";
+	import { nodeFromXPath, xpathFromNode } from "$lib/annotator/xpath";
+	import { buildSelectorFromImage } from "$lib/annotator/img";
+	import { makeCreateRangeSelectorMatcher } from "$lib/annotator/range";
+	import { upsertAnnotation } from "$lib/annotation";
+	import { portal } from "svelte-portal";
+	import Annotation from "$lib/components/Annotation.svelte";
+	import type { EntryWithBookmark } from "$lib/entry.server";
+	import parse from "node-html-parser/dist/parse";
 	const [send, receive] = crossfade({
 		duration: 150,
 		fallback: scale,
 	});
 	const [menuRef, menuContent] = createPopperActions({
-		placement: 'top',
-		strategy: 'fixed',
+		placement: "top",
+		strategy: "fixed",
 		modifiers: [
 			{
-				name: 'preventOverflow',
+				name: "preventOverflow",
 				options: {
 					padding: {
 						top: 75,
@@ -73,7 +68,7 @@
 				},
 			},
 			{
-				name: 'offset',
+				name: "offset",
 				options: {
 					offset: [0, 16],
 				},
@@ -81,11 +76,11 @@
 		],
 	});
 	const [annotationMenuRef, annotationMenuContent] = createPopperActions({
-		placement: 'top',
-		strategy: 'absolute',
+		placement: "top",
+		strategy: "absolute",
 		modifiers: [
 			{
-				name: 'preventOverflow',
+				name: "preventOverflow",
 				options: {
 					padding: {
 						top: 75,
@@ -93,7 +88,7 @@
 				},
 			},
 			{
-				name: 'offset',
+				name: "offset",
 				options: {
 					offset: [0, 8],
 				},
@@ -101,10 +96,10 @@
 		],
 	});
 	const [popperRef, popperContent] = createPopperActions({
-		placement: 'right',
+		placement: "right",
 		modifiers: [
 			{
-				name: 'offset',
+				name: "offset",
 				options: {
 					offset: [-2, 0],
 				},
@@ -112,10 +107,10 @@
 		],
 	});
 	const [imageTooltipRef, imageTooltipContent] = createPopperActions({
-		placement: 'top-end',
+		placement: "top-end",
 		modifiers: [
 			{
-				name: 'offset',
+				name: "offset",
 				options: {
 					offset: [-25, -50],
 				},
@@ -168,7 +163,7 @@
 	// todo: should this be a reactive store?
 	const idToElMap = new Map<number, { destroy: (() => void)[]; els: HTMLElement[] }>();
 	const annotation_els = writable<Record<number, HTMLElement>>();
-	$: inlineAnnotations = annotations.filter((a) => a.type === 'annotation');
+	$: inlineAnnotations = annotations.filter((a) => a.type === "annotation");
 	$: annotationsWithBodyOrTag = inlineAnnotations.filter((a) => a.body || a.tags?.length);
 
 	let active_highlight_el: HTMLElement;
@@ -194,12 +189,12 @@
 	// Not sure if this is a performant way to do this...
 	function updateActiveAnnotation() {
 		wrapper.querySelectorAll(`[data-annotation-id="${active_highlight_id}"]`)?.forEach((el) => {
-			el.classList.add('active');
+			el.classList.add("active");
 		});
 		// remove active class from all other annotations
-		Array.from(wrapper.querySelectorAll('[data-annotation-id]')).forEach((el) => {
+		Array.from(wrapper.querySelectorAll("[data-annotation-id]")).forEach((el) => {
 			if (el.dataset.annotationId !== active_highlight_id?.toString()) {
-				el.classList.remove('active');
+				el.classList.remove("active");
 			}
 		});
 	}
@@ -240,8 +235,8 @@
 		!sel.isCollapsed &&
 		sel.rangeCount > 0 &&
 		sel.containsNode(wrapper, true) &&
-		!sel.anchorNode.parentElement.closest('mark[data-annotation-id]') &&
-		!sel.focusNode.parentElement.closest('mark[data-annotation-id]');
+		!sel.anchorNode.parentElement.closest("mark[data-annotation-id]") &&
+		!sel.focusNode.parentElement.closest("mark[data-annotation-id]");
 
 	const unsubscribeSelection = selection.subscribe((val) => {
 		if (!val) return;
@@ -276,7 +271,7 @@
 		input: Range | string,
 		nonTextNodes: NodeRef[] = []
 	) => {
-		console.log('creating highlight body');
+		console.log("creating highlight body");
 		const highlightBody: HighlightBody = {
 			articleID,
 			highlight,
@@ -297,13 +292,13 @@
 		// return wrapper;
 		// wrapping seems to have weird behavior, so we just use the element itself
 		element.dataset.highlightId = highlightId;
-		element.classList.add('highlight-node');
-		element.addEventListener('click', preventDefault);
+		element.classList.add("highlight-node");
+		element.addEventListener("click", preventDefault);
 	};
 	const unWrapNonTextNode = (element: HTMLElement, highlightId: string) => {
-		element.dataset.highlightId = '';
-		element.classList.remove('highlight-node');
-		element.removeEventListener('click', preventDefault);
+		element.dataset.highlightId = "";
+		element.classList.remove("highlight-node");
+		element.removeEventListener("click", preventDefault);
 	};
 
 	const restoreHighlightedNonTextNode = (node: NonTextNode, highlightId: string) => {
@@ -329,16 +324,16 @@
 		annotations.some((a) => a.id === parseInt(target.dataset.annotationId as string));
 
 	const isAnnotation = (target: HTMLElement) =>
-		!target.closest('.floating-annotation') &&
-		(target.closest('[data-annotation-id]') as HTMLElement) &&
-		target.tagName !== 'BUTTON';
+		!target.closest(".floating-annotation") &&
+		(target.closest("[data-annotation-id]") as HTMLElement) &&
+		target.tagName !== "BUTTON";
 
 	function handleClick(e: MouseEvent) {
 		if (!$page.data.AUTHORIZED) return;
 		const el = e.target as HTMLElement;
 		const annotationParent = isAnnotation(el);
 		if (annotationParent) {
-			console.log('annotation');
+			console.log("annotation");
 			// active_highlight_rect = annotationParent.getBoundingClientRect();
 			active_highlight_el = el;
 			active_highlight_id = parseInt(el.dataset.annotationId as string);
@@ -383,7 +378,7 @@
 		if (!userSelection || userSelection.collapsed) return;
 		return await describeTextQuote(userSelection);
 	}
-	const highlight: typeof highlightText = (match, tagName = 'mark', attributes) => {
+	const highlight: typeof highlightText = (match, tagName = "mark", attributes) => {
 		return highlightText(match, tagName, {
 			...attributes,
 		});
@@ -413,8 +408,8 @@
 		for await (const match of matches) matchList.push(match);
 		console.log({ matchList });
 		return matchList.map((match) =>
-			highlight(match, 'mark', {
-				'data-annotation-id': id?.toString() || '',
+			highlight(match, "mark", {
+				"data-annotation-id": id?.toString() || "",
 				...attributes,
 			})
 		);
@@ -422,7 +417,7 @@
 
 	const makeHTMLFromRange = (range: Range): string => {
 		const cloned = range.cloneContents();
-		const div = document.createElement('div');
+		const div = document.createElement("div");
 		div.appendChild(cloned);
 		return div.outerHTML;
 		// could also return inner, but I like having the wrapping div
@@ -438,9 +433,9 @@
 				const matchList = [];
 				for await (const match of matches) matchList.push(match);
 				const h = matchList.map((match) =>
-					highlight(match, 'mark', {
-						'data-annotation-id': annotation.id.toString(),
-						'data-annotation-content': annotation.body || annotation.tags.length ? 'true' : 'false',
+					highlight(match, "mark", {
+						"data-annotation-id": annotation.id.toString(),
+						"data-annotation-content": annotation.body || annotation.tags.length ? "true" : "false",
 					})
 				);
 				$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
@@ -466,10 +461,9 @@
 					const matchList = [];
 					for await (const match of matches) matchList.push(match);
 					const h = matchList.map((match) =>
-						highlight(match, 'mark', {
-							'data-annotation-id': annotation.id.toString(),
-							'data-annotation-content':
-								annotation.body || annotation.tags.length ? 'true' : 'false',
+						highlight(match, "mark", {
+							"data-annotation-id": annotation.id.toString(),
+							"data-annotation-content": annotation.body || annotation.tags.length ? "true" : "false",
 						})
 					);
 					$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
@@ -482,19 +476,19 @@
 				}
 			}
 			// TODO: eventually this will be ssr-d so we'll be able to go to annotation without js, just a #annotation-{ID} link
-			const a = $page.url.searchParams.get('a');
+			const a = $page.url.searchParams.get("a");
 			if (a && wrapper) {
-				console.log('a', a);
+				console.log("a", a);
 				// go to the annotation
 				setTimeout(() => {
 					const el = wrapper.querySelector(`#annotation-${a}`);
 					el?.scrollIntoView({
-						block: 'center',
+						block: "center",
 					});
 				}, 0);
 			}
 			if ($page.data.AUTHORIZED) {
-				const links = Array.from(wrapper.querySelectorAll('a'));
+				const links = Array.from(wrapper.querySelectorAll("a"));
 				// setUpLinkDragHandlers(links, { url: articleUrl, id: articleID });
 			}
 		}
@@ -519,7 +513,7 @@
 			show_link_tooltip = false;
 			return;
 		}
-		if (e.target?.tagName === 'A') {
+		if (e.target?.tagName === "A") {
 			const el = e.target;
 			setTimeout(() => {
 				show_link_tooltip = true;
@@ -529,7 +523,7 @@
 			// createPopper(e.target, link_tooltip_button, {
 			// 	placement: 'right-end',
 			// });
-			console.log('Trigger hover');
+			console.log("Trigger hover");
 		} else {
 			show_link_tooltip = false;
 		}
@@ -537,7 +531,7 @@
 			destroy_image_tooltip();
 			destroy_image_tooltip = undefined;
 		}
-		if (e.target?.tagName === 'IMG') {
+		if (e.target?.tagName === "IMG") {
 			const el = e.target;
 			show_image_tooltip = true;
 			const { destroy } = imageTooltipRef(el);
@@ -559,8 +553,7 @@
 		},
 		scrollEl: $mainEl,
 	}}
-	on:focus
->
+	on:focus>
 	{#if show_tooltip}
 		<div class="z-40" use:menuContent>
 			<TooltipMenu>
@@ -575,18 +568,18 @@
 							console.log({ userSelection: userRange });
 							if (!userRange || userRange.collapsed) return;
 							const selector = await describeTextQuote(userRange);
-							console.time('described');
+							console.time("described");
 							const described = await describeSelection(userRange, wrapper);
-							console.timeEnd('described');
+							console.timeEnd("described");
 							console.log({ described });
-							if (described?.type === 'TextQuoteSelector') {
+							if (described?.type === "TextQuoteSelector") {
 								const highlightInfo = await highlightSelectorTarget(
 									selector,
 									undefined,
 									{
-										'data-annotation': 'true',
-										'data-annotation-id': 'undefined',
-										'data-annotation-content': 'true',
+										"data-annotation": "true",
+										"data-annotation-id": "undefined",
+										"data-annotation-content": "true",
 									},
 									true
 								);
@@ -597,12 +590,12 @@
 								annotationMenuRef(el);
 								annotation_opts = {
 									el,
-									value: '',
+									value: "",
 									highlightInfo,
 									selector,
 									html,
 								};
-							} else if (described?.type === 'RangeSelector') {
+							} else if (described?.type === "RangeSelector") {
 								// TODO: allow other matchers besides text quote and fix type error
 								const createRangeSelectorMatcher = makeCreateRangeSelectorMatcher(
 									createTextQuoteSelectorMatcher
@@ -620,11 +613,11 @@
 								annotationMenuRef(el);
 								annotation_opts = {
 									el,
-									value: '',
+									value: "",
 									highlightInfo,
 									selector,
 								};
-							} else if (described?.type === 'XPathSelector') {
+							} else if (described?.type === "XPathSelector") {
 								const node = nodeFromXPath(described.value);
 								console.log({ node });
 								if (node) {
@@ -634,7 +627,7 @@
 									annotationMenuRef(el);
 									annotation_opts = {
 										el,
-										value: '',
+										value: "",
 									};
 								}
 							}
@@ -651,10 +644,10 @@
 							// todo: add pending state so that the highlight gets removed if it fails
 
 							console.log({ selector });
-							const res = await fetch('/annotations', {
-								method: 'POST',
+							const res = await fetch("/annotations", {
+								method: "POST",
 								headers: {
-									'Content-Type': 'application/json',
+									"Content-Type": "application/json",
 								},
 								body: JSON.stringify({
 									// jfc let's fix this
@@ -667,16 +660,16 @@
 							});
 							if (res.ok) {
 								notifications.notify({
-									type: 'success',
-									message: 'Highlight created!',
+									type: "success",
+									message: "Highlight created!",
 								});
 								// and add id to the highlight
 								const annotation = await res.json();
 								console.log({ annotation });
 								highlightInfo.forEach((h) => {
 									h.highlightElements.forEach((el) => {
-										el.setAttribute('id', `annotation-${annotation.id}`);
-										el.setAttribute('data-annotation-id', annotation.id);
+										el.setAttribute("id", `annotation-${annotation.id}`);
+										el.setAttribute("data-annotation-id", annotation.id);
 									});
 								});
 								idToElMap.set(annotation.id, {
@@ -686,15 +679,14 @@
 								annotations = [...annotations, annotation];
 							} else {
 								notifications.notify({
-									type: 'error',
-									message: 'Highlight failed!',
+									type: "error",
+									message: "Highlight failed!",
 								});
 								highlightInfo.forEach((h) => {
 									h.removeHighlights();
 								});
 							}
-						}}
-					/>
+						}} />
 				{:else if tooltip_display === TooltipDisplay.Edit}
 					<EditHighlightToolTip
 						on:delete={async () => {
@@ -704,36 +696,34 @@
 							removeHighlights && removeHighlights.destroy.forEach((remove) => remove());
 							console.log({ removeHighlights });
 							// clean up button
-							document
-								.querySelectorAll(`[data-annotation-id="${active_highlight_id}"]`)
-								?.forEach((el) => {
-									el.remove();
-								});
+							document.querySelectorAll(`[data-annotation-id="${active_highlight_id}"]`)?.forEach((el) => {
+								el.remove();
+							});
 							highlightMenu = false;
 							idToElMap.delete(active_highlight_id);
 							annotations = annotations.filter((a) => a.id !== active_highlight_id);
 							const res = await fetch(`/api/annotations/${active_highlight_id}`, {
-								method: 'DELETE',
+								method: "DELETE",
 								headers: {
-									'Content-Type': 'application/json',
+									"Content-Type": "application/json",
 								},
 							});
 							console.log({ res });
 							if (res.status === 204) {
 								notifications.notify({
-									type: 'success',
-									title: 'Highlight deleted',
-									message: 'Undo?',
+									type: "success",
+									title: "Highlight deleted",
+									message: "Undo?",
 								});
 							}
 						}}
 						on:edit={() => {
 							show_tooltip = false;
 							const target = TargetSchema.parse(active_annotation?.target);
-							if (typeof target === 'string') return;
+							if (typeof target === "string") return;
 							annotation_opts = {
 								el: active_highlight_el,
-								value: active_annotation?.body || '',
+								value: active_annotation?.body || "",
 								selector: target.selector,
 							};
 						}}
@@ -741,14 +731,13 @@
 						on:annotate={() => {
 							highlightMenu = false;
 							const target = TargetSchema.parse(active_annotation?.target);
-							if (typeof target === 'string') return;
+							if (typeof target === "string") return;
 							annotation_opts = {
 								el: active_highlight_el,
-								value: active_annotation?.body || '',
+								value: active_annotation?.body || "",
 								selector: target.selector,
 							};
-						}}
-					/>
+						}} />
 				{/if}
 			</TooltipMenu>
 		</div>
@@ -758,8 +747,7 @@
 			bind:this={annotationContainer}
 			data-annotation-entry
 			in:receive={{ key: active_annotation?.id }}
-			out:send={{ key: active_annotation?.id }}
-		>
+			out:send={{ key: active_annotation?.id }}>
 			<FloatingAnnotation
 				bind:tags={active_annotation_tags}
 				on:cancel={() => {
@@ -794,8 +782,8 @@
 					syncStore.removeItem(syncId);
 					if (annotation) {
 						notifications.notify({
-							type: 'success',
-							message: `Annotation ${id ? 'updated' : 'created'}!`,
+							type: "success",
+							message: `Annotation ${id ? "updated" : "created"}!`,
 						});
 						// and add id to the highlight
 						// const annotation = await res.json();
@@ -805,8 +793,8 @@
 							highlightInfo?.forEach((h) => {
 								h.highlightElements.forEach((el) => {
 									console.log({ el });
-									el.setAttribute('id', `annotation-${annotation.id}`);
-									el.setAttribute('data-annotation-id', annotation.id.toString());
+									el.setAttribute("id", `annotation-${annotation.id}`);
+									el.setAttribute("data-annotation-id", annotation.id.toString());
 								});
 							});
 							$annotation_els = {
@@ -821,65 +809,34 @@
 						annotations = [...annotations, annotation];
 					} else {
 						notifications.notify({
-							type: 'error',
-							message: 'Highlight failed!',
+							type: "error",
+							message: "Highlight failed!",
 						});
 						highlightInfo?.forEach((h) => {
 							h.removeHighlights();
 						});
 					}
 				}}
-				{...annotation_opts}
-			/>
+				{...annotation_opts} />
 		</div>
 	{/if}
 	<ProseWrapper
 		bind:dimensions={wrapper_dimensions}
 		bind:el={wrapper}
 		on:click={handleClick}
-		first_letter={false}
-	>
+		first_letter={false}>
 		<div
 			on:dragstart={(e) => {
 				if (e.target instanceof HTMLAnchorElement) {
 					// set context data
 					console.log({ articleUrl, articleID });
-					e.dataTransfer?.setData('context/url', articleUrl);
-					e.dataTransfer?.setData('context/entryId', articleID.toString());
+					e.dataTransfer?.setData("context/url", articleUrl);
+					e.dataTransfer?.setData("context/entryId", articleID.toString());
 				}
-			}}
-		>
+			}}>
 			<slot />
 		</div>
 	</ProseWrapper>
-	<annotations>
-		{#each annotationsWithBodyOrTag as annotation}
-			<!-- use:portal={idToElMap.get(annotation.id)?.els[0]} -->
-			{@const el = $annotation_els?.[annotation.id]}
-			{#if el}
-				{@const el_rect = el.getBoundingClientRect()}
-				<button
-					style:left="calc({el_rect.left - wrapper_dimensions.left} * -1px - 24px)"
-					in:receive={{ key: annotation.id }}
-					out:send={{ key: annotation.id }}
-					use:portal={el}
-					class="absolute top-0 hidden h-4 w-4 cursor-default rounded bg-amber-400/80 backdrop-blur-md sm:block"
-					on:click={() => {
-						active_highlight_id = annotation.id;
-						const active_annotation = annotations.find((a) => a.id === active_highlight_id);
-						const tags = active_annotation?.tags?.flatMap((t) => t.tag) || [];
-						active_annotation_tags = tags;
-						annotation_opts = {
-							el,
-							selector: annotation.target.selector,
-							value: annotation.body,
-							annotation,
-						};
-					}}><span class="sr-only">Open annotation</span></button
-				>
-			{/if}
-		{/each}
-	</annotations>
 </div>
 {#if show_image_tooltip}
 	<div use:imageTooltipContent>
@@ -888,26 +845,23 @@
 			items={[
 				[
 					{
-						icon: 'academicCap',
-						label: 'save',
+						icon: "academicCap",
+						label: "save",
 					},
 				],
 			]}
-			active_styling={false}
-		>
+			active_styling={false}>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke-width="1.5"
 				stroke="currentColor"
-				class="h-10 w-10 fill-black/25 stroke-amber-500"
-			>
+				class="h-10 w-10 fill-black/25 stroke-amber-500">
 				<path
 					stroke-linecap="round"
 					stroke-linejoin="round"
-					d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-				/>
+					d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 			</svg>
 		</ContextMenu>
 	</div>
@@ -920,27 +874,24 @@
 				items={[
 					[
 						{
-							icon: 'academicCap',
-							label: 'save',
+							icon: "academicCap",
+							label: "save",
 						},
 					],
 				]}
 				active_styling={false}
-				class=""
-			>
+				class="">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
 					viewBox="0 0 24 24"
 					stroke-width="1.5"
 					stroke="currentColor"
-					class="h-6 w-6 fill-gray-500 stroke-black"
-				>
+					class="h-6 w-6 fill-gray-500 stroke-black">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-					/>
+						d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 				</svg>
 			</ContextMenu>
 		</div>
@@ -956,7 +907,7 @@
 		@apply relative animate-saturate-pulse scroll-mt-48 rounded-sm bg-yellow-200 transition dark:border-yellow-500 dark:bg-yellow-900/90 dark:text-amber-50;
 		/* maybe broder should just be applied if there's an annotation attached */
 	}
-	:global(mark[data-annotation-id][data-annotation-content='true']) {
+	:global(mark[data-annotation-id][data-annotation-content="true"]) {
 		@apply border-b-2 border-yellow-400;
 	}
 	:global(mark[data-annotation-id].active) {

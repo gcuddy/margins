@@ -104,6 +104,7 @@ model Annotation {
     //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
     // for saving structured data
     body      Json?
+    editedAt  DateTime?
     tags      Tagging[]
     type      AnnotationType
     private   Boolean        @default(true)
@@ -128,6 +129,8 @@ model Annotation {
     favorite    Favorite?
     bookmark    Bookmark?        @relation(fields: [bookmarkId], references: [id])
     bookmarkId  Int?
+    color       AnnotationColor? @relation(fields: [colorId], references: [id])
+    colorId     String?
 
     // @@unique([userId, entryId]) <- this doesn't quite make sense, because of cihldren. i want it to be when type is bookmark. maybe sql? or maybe children don't get entryid? <- indeed we are now!s
     // again, could solve this by having a sepaerate model or something <- indeed we are now!s
@@ -135,6 +138,19 @@ model Annotation {
     @@index([userId])
     @@index([parentId])
     @@index([bookmarkId])
+    @@index([colorId])
+}
+
+model AnnotationColor {
+    color       String
+    name        String?
+    description String?
+    id          String       @id @default(cuid())
+    user        User         @relation(fields: [userId], references: [id])
+    userId      String
+    annotations Annotation[]
+
+    @@index([userId])
 }
 
 // this loosely corresponds to the web annotation motivation/purpose section, but modified for our use
@@ -155,7 +171,8 @@ enum Location {
 model Entry {
     data         EntryData[]
     createdAt    DateTime      @default(now())
-    author       String?
+    // author       String?
+    author       Json? // -> should be enforced as string[]
     location     Location? // only relevant if read later?
     // this is maybe the "real" title but also stored in data for uesrs
     title        String?
@@ -536,38 +553,39 @@ model SmartList {
 }
 
 model User {
-    id               String           @id @unique @default(cuid())
-    provider_id      String           @unique
-    hashed_password  String?
-    session          Session[]
-    createdAt        DateTime         @default(now())
-    updatedAt        DateTime         @updatedAt
+    id                String            @id @unique @default(cuid())
+    provider_id       String            @unique
+    hashed_password   String?
+    session           Session[]
+    createdAt         DateTime          @default(now())
+    updatedAt         DateTime          @updatedAt
     //
-    email            String           @unique
-    username         String           @unique
+    email             String            @unique
+    username          String            @unique
     //
     // self relation
-    followedBy       User[]           @relation("UserFollows")
-    following        User[]           @relation("UserFollows")
+    followedBy        User[]            @relation("UserFollows")
+    following         User[]            @relation("UserFollows")
     //
-    interactions     Interaction[]
-    favorites        Favorite[]
-    articles         Article[]
-    favoriteFolders  FavoriteFolder[]
-    collections      Collection[]
-    annotations      Annotation[]
-    subscriptions    Subscription[]
-    documentData     EntryData[]
-    stylesheets      Stylesheet[]
-    states           State[]          @relation("user")
-    default_state    State?           @relation("default_state", references: [id], fields: [default_state_id])
-    default_state_id Int?             @unique
-    taggings         Tagging[]
-    tags             Tag[]
-    bookmarks        Bookmark[]
-    EntryTag         EntryTag[]
-    context          Context[]
-    context_nodes    ContextNode[]
+    interactions      Interaction[]
+    favorites         Favorite[]
+    articles          Article[]
+    favoriteFolders   FavoriteFolder[]
+    collections       Collection[]
+    annotations       Annotation[]
+    subscriptions     Subscription[]
+    documentData      EntryData[]
+    stylesheets       Stylesheet[]
+    states            State[]           @relation("user")
+    default_state     State?            @relation("default_state", references: [id], fields: [default_state_id])
+    default_state_id  Int?              @unique
+    taggings          Tagging[]
+    tags              Tag[]
+    bookmarks         Bookmark[]
+    EntryTag          EntryTag[]
+    context           Context[]
+    context_nodes     ContextNode[]
+    annotation_colors AnnotationColor[]
 
     @@map("user")
 }

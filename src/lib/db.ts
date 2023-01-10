@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { annotationsMiddleware } from './prisma/middleware';
 // import Redis from 'ioredis';
 // const redis = new Redis(
 // 	`rediss://default:${import.meta.env.UPSTASH_REDIS_REST_TOKEN}@${
@@ -48,6 +49,8 @@ db.$use(async (params, next) => {
 
 	return result;
 });
+
+annotationsMiddleware(db);
 
 // const cacheMiddleware = createPrismaRedisCache({
 // 	models: [

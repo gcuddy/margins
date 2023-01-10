@@ -39,6 +39,7 @@ export const BaseTargetSchema = z.object({
 // Targets
 export const TextQuoteTarget = z.object({
 	source: z.string(),
+	html: z.string().optional(),
 	// should we make this possible to be an array?
 	selector: TextQuoteSelectorSchema
 });

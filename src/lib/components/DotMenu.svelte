@@ -14,8 +14,19 @@
 	export let strategy: 'fixed' | 'absolute' = 'fixed';
 	export let offset: [number, number] | undefined = undefined;
 	export let overlayClass = '';
+	let cls = '';
+	export { cls as class };
 </script>
 
-<ContextMenu {items} {icons} {offset} buttonActions={actions} {placement} {strategy} {overlayClass}>
+<ContextMenu
+	class={cls}
+	{items}
+	{icons}
+	{offset}
+	buttonActions={actions}
+	{placement}
+	{strategy}
+	{overlayClass}
+>
 	<Icon name="ellipsisHorizontalMini" className="h-4 w-4 fill-gray-600 dark:fill-gray-300" />
 </ContextMenu>

@@ -124,6 +124,7 @@ export const entries = router({
 								username: true
 							}
 						},
+						color: true
 					}
 				},
 				interactions: {
