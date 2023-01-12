@@ -1,14 +1,9 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import Tooltip from "$lib/components/Tooltip.svelte";
-	import { highlightElements } from "$lib/stores/misc";
-	import selection from "$lib/stores/selection";
-	import selectionAction from "$lib/actions/selection";
-	import type { AnnotationPos, NodeRef, SimplifiedHighlightSource, Tooltip as ITooltip } from "$lib/types";
-	import type { Annotation, Tag } from "@prisma/client";
-	import { onDestroy, onMount } from "svelte";
-	// import sanitize from '$lib/sanitize';
+	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
+	import selectionAction from "$lib/actions/selection";
+	import { TargetSchema, upsertAnnotation, type Selector } from "$lib/annotation";
 	import {
 		createTextQuoteSelectorMatcher,
 		describeRange,
@@ -16,45 +11,28 @@
 		describeTextQuote,
 	} from "$lib/annotator";
 	import { highlightText } from "$lib/annotator/highlighter";
-	import type {
-		CssSelector,
-		RangeSelector,
-		TextPositionSelector,
-		TextQuoteSelector,
-	} from "$lib/annotator/types";
+	import { makeCreateRangeSelectorMatcher } from "$lib/annotator/range";
+	import type { TextQuoteSelector } from "$lib/annotator/types";
+	import { nodeFromXPath } from "$lib/annotator/xpath";
 	import FloatingAnnotation from "$lib/components/annotations/FloatingAnnotation.svelte";
+	import Swatches from "$lib/components/ColorPicker/Swatches.svelte";
+	import ContextMenu from "$lib/components/ContextMenu.svelte";
 	import EditHighlightToolTip from "$lib/components/EditHighlightToolTip.svelte";
-	import Icon from "$lib/components/helpers/Icon.svelte";
 	import HighlightToolTip from "$lib/components/HighlightToolTip.svelte";
 	import ProseWrapper from "$lib/components/ProseWrapper.svelte";
-	import { makeIconSvg } from "$lib/icons";
-	import { mainEl } from "$lib/stores/main";
-	import { notifications } from "$lib/stores/notifications";
-	import { syncStore } from "$lib/stores/sync";
-	import type { TextQuoteTarget } from "$lib/types/schemas/Annotations";
-	import { TargetSchema, type Selector } from "$lib/annotation";
-	import { finder } from "@medv/finder";
-	import { createPopperActions } from "svelte-popperjs";
-	import type { z } from "zod";
-	import { setUpLinkDragHandlers } from "./_helpers";
-	import ContextMenu from "$lib/components/ContextMenu.svelte";
-	import { MenuButton } from "@rgossiaux/svelte-headlessui";
-	import { fade, fly, crossfade, scale } from "svelte/transition";
-	import { derived, writable } from "svelte/store";
 	import TooltipMenu from "$lib/components/TooltipMenu.svelte";
-	import AnnotationInput from "$lib/components/annotations/AnnotationInput.svelte";
-	import { nodeFromXPath, xpathFromNode } from "$lib/annotator/xpath";
-	import { buildSelectorFromImage } from "$lib/annotator/img";
-	import { makeCreateRangeSelectorMatcher } from "$lib/annotator/range";
-	import { upsertAnnotation } from "$lib/annotation";
-	import { portal } from "svelte-portal";
-	import Annotation from "$lib/components/Annotation.svelte";
-	import type { EntryWithBookmark } from "$lib/entry.server";
-	import parse from "node-html-parser/dist/parse";
-	const [send, receive] = crossfade({
-		duration: 150,
-		fallback: scale,
-	});
+	import { mainEl } from "$lib/stores/main";
+	import { highlightElements } from "$lib/stores/misc";
+	import { notifications } from "$lib/stores/notifications";
+	import { selection } from "$lib/stores/selection";
+	import { syncStore } from "$lib/stores/sync";
+	import type { AnnotationPos, NodeRef, SimplifiedHighlightSource, Tooltip as ITooltip } from "$lib/types";
+	import { finder } from "@medv/finder";
+	import type { Annotation, Tag } from "@prisma/client";
+	import { onDestroy, onMount } from "svelte";
+	import { createPopperActions } from "svelte-popperjs";
+	import { writable } from "svelte/store";
+	import { fade } from "svelte/transition";
 	const [menuRef, menuContent] = createPopperActions({
 		placement: "top",
 		strategy: "fixed",
@@ -118,7 +96,6 @@
 		],
 	});
 	export let articleID: number;
-	$: console.log({ articleID });
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
 	export let readOnly = false;
@@ -143,6 +120,9 @@
 			bottom: rect.bottom,
 			left: rect.x,
 			right: rect.x,
+			x: rect.x,
+			y: rect.y,
+			toJSON: () => ({ ...rect }),
 		};
 	};
 	const virtualElement = writable({ getBoundingClientRect });
@@ -171,7 +151,6 @@
 	let active_highlight_id: number | null = null;
 	$: active_annotation = annotations?.find(({ id }) => id === active_highlight_id);
 	let active_annotation_tags: Tag[] = [];
-	$: console.log({ active_annotation_tags });
 	let annotation_opts: {
 		el: HTMLElement;
 		value: string;
@@ -181,7 +160,6 @@
 		selector: Awaited<TextQuoteSelector>;
 		tags?: { name: string; id?: number }[];
 	} | null = null;
-	$: console.log({ annotation_opts });
 
 	const createTextQuoteMatcher = (selector: TextQuoteSelector) => {
 		return () => createTextQuoteSelectorMatcher(selector);
@@ -203,13 +181,11 @@
 
 	// TODO: add more elements beyond just images, such as videos, iframes, etc.
 	let images: HTMLImageElement[] = [];
-	$: console.log({ images });
 
 	let centerOfWrapper: number;
 
 	let wrapper: HTMLElement;
 	let wrapper_dimensions: DOMRect;
-	$: console.log({ wrapper_dimensions });
 	let highlighter: Highlighter;
 	let validSelection = false;
 
@@ -241,26 +217,32 @@
 	const unsubscribeSelection = selection.subscribe((val) => {
 		if (!val) return;
 		if (!wrapper) return;
-		if (!$page.data.AUTHORIZED) return;
+		if (!$page.data.authorized) return;
+		console.log({ val });
 		const { selection: sel } = val;
-		return;
 		if (sel && isValidSelection(sel)) {
+			console.log("VALID");
 			validSelection = true;
 			tooltipVisible = true;
+			show_tooltip = true;
+			tooltip_display = TooltipDisplay.New;
+			rect = sel.getRangeAt(0).getBoundingClientRect();
 		} else {
+			console.log("INVALID");
+			show_tooltip = false;
 			validSelection = false;
 			tooltipVisible = false;
 		}
-		if (validSelection && val.rect) {
-			console.log({ scrollY: window.scrollY, rect: val.rect });
-			console.log({ $mainEl });
-			tooltipTop = val.rect.top + $mainEl.scrollTop - 36;
-			console.log({ tooltipTop });
-			tooltipLeft = val.rect.left + val.rect.width / 2 - 40;
-			annotationTooltip.top = val.rect.top + $mainEl.scrollTop;
-		}
+		// if (validSelection && val.rect) {
+		// 	console.log({ scrollY: window.scrollY, rect: val.rect });
+		// 	console.log({ $mainEl });
+		// 	tooltipTop = val.rect.top + $mainEl.scrollTop - 36;
+		// 	console.log({ tooltipTop });
+		// 	tooltipLeft = val.rect.left + val.rect.width / 2 - 40;
+		// 	annotationTooltip.top = val.rect.top + $mainEl.scrollTop;
+		// }
+		return;
 	});
-	$: console.log({ $mainEl });
 
 	enum TooltipDisplay {
 		New,
@@ -499,68 +481,16 @@
 	});
 </script>
 
-<div
-	on:mouseleave={() => {
-		// cleanup();
-	}}
-	on:mouseover={(e) => {
-		if (destroy_popper) {
-			// cleanup
-			destroy_popper();
-			destroy_popper = undefined;
-		}
-		if (!(e.target instanceof HTMLElement)) {
-			show_link_tooltip = false;
-			return;
-		}
-		if (e.target?.tagName === "A") {
-			const el = e.target;
-			setTimeout(() => {
-				show_link_tooltip = true;
-				const { destroy } = popperRef(el);
-				destroy_popper = destroy;
-			}, 150);
-			// createPopper(e.target, link_tooltip_button, {
-			// 	placement: 'right-end',
-			// });
-			console.log("Trigger hover");
-		} else {
-			show_link_tooltip = false;
-		}
-		if (destroy_image_tooltip) {
-			destroy_image_tooltip();
-			destroy_image_tooltip = undefined;
-		}
-		if (e.target?.tagName === "IMG") {
-			const el = e.target;
-			show_image_tooltip = true;
-			const { destroy } = imageTooltipRef(el);
-			destroy_image_tooltip = destroy;
-		}
-	}}
-	use:selectionAction={{
-		cb: (sel) => {
-			if (sel.isCollapsed) {
-				show_tooltip = false;
-				// sel.anchorNode?.parentElement?.closest('[data-annotation-entry]');
-			} else {
-				if (sel) {
-				}
-				show_tooltip = true;
-				tooltip_display = TooltipDisplay.New;
-				rect = sel.getRangeAt(0).getBoundingClientRect();
-			}
-		},
-		scrollEl: $mainEl,
-	}}
-	on:focus>
+<div on:focus>
 	{#if show_tooltip}
 		<div class="z-40" use:menuContent>
+			<Swatches />	
 			<TooltipMenu>
 				{#if tooltip_display === TooltipDisplay.New}
 					<HighlightToolTip
 						labels={true}
 						on:annotate={async () => {
+							console.log("annotating");
 							const userSelection = window.getSelection();
 							if (!userSelection) return;
 							const userRange = userSelection.getRangeAt(0);
@@ -686,7 +616,8 @@
 									h.removeHighlights();
 								});
 							}
-						}} />
+						}}
+					/>
 				{:else if tooltip_display === TooltipDisplay.Edit}
 					<EditHighlightToolTip
 						on:delete={async () => {
@@ -737,17 +668,14 @@
 								value: active_annotation?.body || "",
 								selector: target.selector,
 							};
-						}} />
+						}}
+					/>
 				{/if}
 			</TooltipMenu>
 		</div>
 	{/if}
 	{#if annotation_opts !== null}
-		<div
-			bind:this={annotationContainer}
-			data-annotation-entry
-			in:receive={{ key: active_annotation?.id }}
-			out:send={{ key: active_annotation?.id }}>
+		<div bind:this={annotationContainer} data-annotation-entry>
 			<FloatingAnnotation
 				bind:tags={active_annotation_tags}
 				on:cancel={() => {
@@ -759,12 +687,13 @@
 					annotation_opts = null;
 				}}
 				on:save={async (e) => {
-					const { value } = e.detail;
+					const { value, done } = e.detail;
 					console.log({ annotation_opts });
 					if (!annotation_opts) return;
 					if (!$page.data.user) return;
 					const { selector, highlightInfo, el } = annotation_opts;
 					const id = el.dataset.annotationId;
+					const syncId = syncStore.addItem();
 					const annotation = await upsertAnnotation({
 						body: value,
 						target: {
@@ -777,7 +706,8 @@
 						id: (id && Number(id)) || Number(id) === 0 ? Number(id) : undefined,
 						tags: active_annotation_tags,
 					});
-					const syncId = syncStore.addItem();
+					await invalidateAll();
+					done();
 					annotation_opts = null;
 					syncStore.removeItem(syncId);
 					if (annotation) {
@@ -817,14 +747,16 @@
 						});
 					}
 				}}
-				{...annotation_opts} />
+				{...annotation_opts}
+			/>
 		</div>
 	{/if}
 	<ProseWrapper
 		bind:dimensions={wrapper_dimensions}
 		bind:el={wrapper}
 		on:click={handleClick}
-		first_letter={false}>
+		first_letter={false}
+	>
 		<div
 			on:dragstart={(e) => {
 				if (e.target instanceof HTMLAnchorElement) {
@@ -833,7 +765,8 @@
 					e.dataTransfer?.setData("context/url", articleUrl);
 					e.dataTransfer?.setData("context/entryId", articleID.toString());
 				}
-			}}>
+			}}
+		>
 			<slot />
 		</div>
 	</ProseWrapper>
@@ -850,51 +783,23 @@
 					},
 				],
 			]}
-			active_styling={false}>
+			active_styling={false}
+		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke-width="1.5"
 				stroke="currentColor"
-				class="h-10 w-10 fill-black/25 stroke-amber-500">
+				class="h-10 w-10 fill-black/25 stroke-amber-500"
+			>
 				<path
 					stroke-linecap="round"
 					stroke-linejoin="round"
-					d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+					d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+				/>
 			</svg>
 		</ContextMenu>
-	</div>
-{/if}
-{#if show_link_tooltip}
-	<div use:popperContent bind:this={link_tooltip_button}>
-		<div transition:fade={{ duration: 150 }}>
-			<ContextMenu
-				strategy="fixed"
-				items={[
-					[
-						{
-							icon: "academicCap",
-							label: "save",
-						},
-					],
-				]}
-				active_styling={false}
-				class="">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke-width="1.5"
-					stroke="currentColor"
-					class="h-6 w-6 fill-gray-500 stroke-black">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-				</svg>
-			</ContextMenu>
-		</div>
 	</div>
 {/if}
 

@@ -39,7 +39,7 @@
 	let tags: Tag[] = [];
 	$: console.log({ tags });
 
-	let WIDTH = 400;
+	let WIDTH = 428;
 
 	let WIDTH_SPRING = tweened(WIDTH, {
 		duration: 400,
@@ -66,7 +66,13 @@
 	$: savedDate = createRelativeDateStore(entry.bookmark?.createdAt);
 
 	onMount(() => {
-		// TODO: set tweened store with no animation
+		// set tweened store with no animation
+		if ($reading_sidebar.active) {
+			display = $reading_sidebar.active;
+			WIDTH_SPRING.set(0, {
+				duration: 0,
+			});
+		}
 	});
 </script>
 
@@ -77,17 +83,23 @@
 				$reading_sidebar.active = false;
 			}
 		}
-	}} />
+	}}
+/>
 
 <!-- mt-8 to account for reading menu -->
 
 {#if display}
-	<div class="inset-0 hidden  max-md:fixed max-md:block" />
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<div
+		on:click={() => ($reading_sidebar.active = false)}
+		class="inset-0 hidden bg-black/10 max-md:fixed max-md:block"
+	/>
 	<aside
 		style:margin-left="{$WIDTH_SPRING * -1}px"
 		style:width="{WIDTH}px"
 		style:transform="translateX({$WIDTH_SPRING}px)"
-		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-gray-200 bg-gray-50 p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:bg-transparent dark:bg-gradient-to-br dark:from-gray-800/90  dark:to-gray-900/90 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative">
+		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-gray-200 bg-gray-50 p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:bg-transparent dark:bg-gradient-to-br dark:from-gray-800/90  dark:to-gray-900/90 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
+	>
 		<!-- <div class="absolute top-0 left-0 h-full w-full bg-red-500" style:width="450px" /> -->
 
 		<div class="flex flex-col gap-y-2 divide-y dark:divide-gray-700/40">
@@ -123,7 +135,8 @@
 									});
 									await invalidateAll();
 									syncStore.remove(s);
-								}} />
+								}}
+							/>
 						{/if}
 						<Muted class="text-sm">Tags</Muted>
 						<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
@@ -140,21 +153,25 @@
 						<SmallPlus><Muted>Page Notes</Muted></SmallPlus>
 						<Icon
 							name={open ? "chevronUpMini" : "chevronDownMini"}
-							className="h-4 w-4 fill-gray-400 opacity-0 group-hover:opacity-100" />
+							className="h-4 w-4 fill-gray-400 opacity-0 group-hover:opacity-100"
+						/>
 					</DisclosureButton>
 					<button
 						in:fade|local={{ delay: 400 }}
 						disabled={noting}
 						class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50 "
-						on:click={() => (noting = true)}>
+						on:click={() => (noting = true)}
+					>
 						<Icon name="plusMini" className="h-4 w-4 fill-gray-400" />
-						<Muted>Add note</Muted></button>
+						<Muted>Add note</Muted></button
+					>
 				</div>
 				{#if open}
 					<div
 						transition:slide|local={{
 							duration: 75,
-						}}>
+						}}
+					>
 						<DisclosurePanel class="flex flex-col gap-3" static>
 							<!-- TODO: use-dndzone -->
 							{#each pageNotes || [] as annotation (annotation.id)}
@@ -162,9 +179,10 @@
 									{#if annotation.id !== noting_id}
 										<Annotation
 											{annotation}
-											on:edit={() => {
+											onEdit={() => {
 												noting_id = annotation.id;
-											}} />
+											}}
+										/>
 									{:else}
 										<form
 											action="?/updateNote"
@@ -183,7 +201,8 @@
 												if (e.key === "escape") {
 													// todo: noting = false
 												}
-											}}>
+											}}
+										>
 											<input type="hidden" name="id" value={annotation.id} />
 											<AnnotationInput
 												placeholder="Add a page note…"
@@ -192,14 +211,16 @@
 												include_tags={false}
 												confirmButtonStyle="ghost"
 												class="text-sm"
-												value={annotation.body?.toString() || ""}>
+												value={annotation.body?.toString() || ""}
+											>
 												<svelte:fragment slot="buttons">
 													<Button
 														type="reset"
 														on:click={() => (noting_id = null)}
 														variant="ghost"
 														size="sm"
-														className="text-sm">Cancel</Button>
+														className="text-sm">Cancel</Button
+													>
 													<Button disabled={$busy.note} variant="ghost" size="sm" className="text-sm"
 														>{#if $busy.note}
 															<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
@@ -235,21 +256,24 @@
 										if (e.key === "escape") {
 											// todo: noting = false
 										}
-									}}>
+									}}
+								>
 									<AnnotationInput
 										placeholder="Add a page note…"
 										rows={1}
 										shadow_focus={true}
 										include_tags={false}
 										confirmButtonStyle="ghost"
-										class="text-sm">
+										class="text-sm"
+									>
 										<svelte:fragment slot="buttons">
 											<Button
 												type="reset"
 												on:click={() => (noting = false)}
 												variant="ghost"
 												size="sm"
-												className="text-sm">Cancel</Button>
+												className="text-sm">Cancel</Button
+											>
 											<Button
 												type="submit"
 												disabled={$busy.note}
@@ -277,7 +301,8 @@
 							<SmallPlus><Muted>Annotations ({inlineNotes.length})</Muted></SmallPlus>
 							<Icon
 								name={open ? "chevronUpMini" : "chevronDownMini"}
-								className="h-4 w-4 fill-gray-400 opacity-0 group-hover:opacity-100" />
+								className="h-4 w-4 fill-gray-400 opacity-0 group-hover:opacity-100"
+							/>
 						</DisclosureButton>
 					</div>
 					{#if open}

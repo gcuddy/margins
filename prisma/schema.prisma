@@ -118,7 +118,8 @@ model Annotation {
     parentId Int?
     children Annotation[] @relation("references")
 
-    /// The "soft delete" time. Deletions are cleared after 30 days.
+    /// The "soft delete" time. Deletions are cleared after 30 days. 
+    // TODO: unless they have a child? what to do then?
     deleted DateTime?
     creator User      @relation(fields: [userId], references: [id])
     userId  String

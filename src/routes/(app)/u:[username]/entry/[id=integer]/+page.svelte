@@ -374,7 +374,8 @@
 				})
 			);
 		}
-	}} />
+	}}
+/>
 <!-- <div use:popperContent>Tooltip</div> -->
 
 <!-- {JSON.stringify($currentList)} -->
@@ -383,7 +384,8 @@
 	bind:entry={data.article}
 	{interaction}
 	back={$currentList ? $currentList.slug : "/"}
-	currentList={$currentList} />
+	currentList={$currentList}
+/>
 
 <svelte:head>
 	<title>{entry.title}</title>
@@ -402,7 +404,8 @@
 			// todo: use x and y to create annotation, attach to nearest node
 		}}
 		data-content-container
-		class="relative flex h-full grow items-stretch overflow-hidden">
+		class="relative flex h-full grow items-stretch overflow-hidden"
+	>
 		<div class="grow overflow-auto" bind:this={$mainEl}>
 			<article class="mx-auto mt-14 max-w-3xl py-8 px-4">
 				<header class="space-y-3 pb-4" bind:this={$articleHeader}>
@@ -410,12 +413,15 @@
 						class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
 						href={article.feedId
 							? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
-							: article.uri}>
+							: article.uri}
+					>
 						<img
 							src="https://icon.horse/icon/?uri={article.uri}"
 							class="h-5 w-5 rounded-full object-cover"
-							alt="" />
-						<span class="truncate">{entry.siteName || entry.uri}</span></a>
+							alt=""
+						/>
+						<span class="truncate">{entry.siteName || entry.uri}</span></a
+					>
 					<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
 
 					<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
@@ -425,20 +431,6 @@
 						</div>
 					{/if}
 
-					<!-- <TagCloud tags={article.tags} /> -->
-					{#if article.context}
-						<!-- TODO: figure this out -->
-						<!-- Via: <a href="/{article.context.articleId}">{article.context.Article.title}</a> -->
-						<pre>context: {JSON.stringify(article.context.url, null, 2)}</pre>
-					{/if}
-					<!-- {#if article.dek}
-
-                {/if} -->
-					<!-- <p>
-					<a class="text-gray-300" href={article.url}
-						>{article.siteName || new URL(article.url)?.hostname || article.url}</a
-					>
-				</p> -->
 					<div class="flex justify-between">
 						<div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
 							{#if entry.author}
@@ -468,7 +460,8 @@
 								tags={data.article.tags.map((tag) => ({
 									...tag,
 									...$page.data.tags?.find((t) => t.id === tag.id),
-								}))} />
+								}))}
+							/>
 						</div>
 					{/if}
 				</header>
@@ -476,11 +469,6 @@
 				<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
 					{@html entry.html || entry.text || entry.summary || "[No content]"}
 				</Highlighter>
-				{#if $mainElScroll.offset > 0.97 && article.location !== "ARCHIVE" && data.authorized}
-					<div class="fixed bottom-8 right-8" transition:fade>
-						<button on:click={() => archive([article.id], "/")}>Archive article</button>
-					</div>
-				{/if}
 				<noscript>
 					<HighlightMenu noHighlight={true} articleId={article.id} />
 				</noscript>

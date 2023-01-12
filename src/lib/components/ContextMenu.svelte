@@ -1,74 +1,57 @@
 <script lang="ts">
-	import type { Action } from '$lib/actions/types';
+	import type { Action } from "$lib/actions/types";
 
-	import type { IconName } from '$lib/icons';
-	import type { ComponentProperties } from '$lib/stores/types';
-	import { fadeScale } from '$lib/transitions';
-	import type { PopperPlacement } from '$lib/types';
+	import type { IconName } from "$lib/icons";
+	import type { ComponentProperties } from "$lib/stores/types";
+	import type { PopperPlacement } from "$lib/types";
 
 	import {
 		Menu,
 		MenuButton,
-		MenuItems,
 		MenuItem,
+		MenuItems,
 		Transition,
 		TransitionChild,
-	} from '@rgossiaux/svelte-headlessui';
-	import { onDestroy } from 'svelte';
-	import { createPopperActions } from 'svelte-popperjs';
-	import Portal, { portal } from 'svelte-portal';
-	import { fade, fly, scale } from 'svelte/transition';
-	import Icon from './helpers/Icon.svelte';
+	} from "@rgossiaux/svelte-headlessui";
+	import { createPopperActions } from "svelte-popperjs";
+	import Portal from "svelte-portal";
+	import { fade } from "svelte/transition";
+	import Icon from "./helpers/Icon.svelte";
+	import type { MenuItem as IMenuItem } from "$lib/types/schemas/Menu";
+	import { createEventDispatcher } from "svelte";
 
-	export let placement: PopperPlacement = 'bottom-end';
-	export let strategy: 'fixed' | 'absolute' = 'fixed';
+	export let placement: PopperPlacement = "bottom-end";
+	export let strategy: "fixed" | "absolute" = "fixed";
+	const dispatch = createEventDispatcher<{
+		select: IMenuItem;
+	}>();
 	export let offset: [number, number] | undefined = undefined;
-	let modifiers = offset
-		? [
-				{
-					name: 'offset',
-					options: {
-						offset,
-					},
-				},
-		  ]
-		: undefined;
 	const [popperRef, popperContent] = createPopperActions({
 		placement,
 		strategy,
 		modifiers: [
 			{
-				name: 'offset',
+				name: "offset",
 				options: {
 					offset,
 				},
 			},
 			{
-				name: 'arrow',
+				name: "arrow",
 			},
 		],
 	});
 
-	export let overlayClass = '';
+	export let overlayClass = "";
 
-	interface MenuItem {
-		label: string;
-		icon?: IconName;
-		iconProps?: ComponentProperties<Icon>;
-		perform?: () => void;
-		href?: string;
-		enabled?: boolean;
-		kbd?: string[];
-		items?: MenuItem[];
-	}
-	export let items: MenuItem[][];
+	export let items: IMenuItem[][];
 	export let buttonActions: Action[] = [];
 
-	export let icons: 'solid' | 'outline' = 'solid';
+	export let icons: "solid" | "outline" = "solid";
 
 	export let squishy = false;
 
-	let className = 'p-1.5';
+	let className = "p-1.5";
 	export { className as class };
 	export let active_styling = true;
 </script>
@@ -116,48 +99,42 @@
 						<slot name="items" />
 						{#each items as group}
 							<div class="px-1">
-								{#each group as { href, label, icon, iconProps, perform, items }}
-									<MenuItem as="div" let:active>
-										<!-- svelte-ignore a11y-click-events-have-key-events -->
-										<div
-											class="flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-gray-900 dark:text-gray-50 {active
-												? 'bg-primary-300/30 dark:bg-gray-500/20'
-												: ''}"
-											on:click={perform}
-											on:mouseover={() => {
-												console.log('hello');
-											}}
-											on:focus={() => {
-												console.log('hello');
-											}}
-										>
-											{#if icon}
-												{#if iconProps}
-													<Icon name={icon} {...iconProps} />
-												{:else}
-													<Icon
-														className={icons === 'solid'
-															? `h-4 w-4 dark:fill-gray-400 fill-gray-500 ${
-																	active ? 'fill-gray-600 dark:fill-gray-300' : ''
-															  }`
-															: 'h-4 w-4 stroke-2 stroke-gray-500 dark:stroke-gray-400'}
-														name={icon}
-													/>
-												{/if}
+								{#each group.filter( (g) => (g.check ? g.check() : true) ) as { href, label, icon, iconProps, perform, items }}
+									<MenuItem
+										as="button"
+										let:active
+										on:click={perform}
+										class={({ active }) =>
+											`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-gray-900 dark:text-gray-50 ${
+												active ? "bg-primary-300/30 dark:bg-gray-500/20" : ""
+											}`}
+									>
+										{#if icon}
+											{#if iconProps}
+												<Icon name={icon} {...iconProps} />
+											{:else}
+												<Icon
+													className={icons === "solid"
+														? `h-4 w-4 dark:fill-gray-400 fill-gray-500 ${
+																active ? "fill-gray-600 dark:fill-gray-300" : ""
+														  }`
+														: "h-4 w-4 stroke-2 stroke-gray-500 dark:stroke-gray-400"}
+													name={icon}
+												/>
 											{/if}
-											<span class="grow cursor-default">
-												{#if href}
-													<a {href}>{label}</a>
-												{:else}
-													{label}
-													<!-- button -->
-												{/if}
-											</span>
-											<!-- {#if items?.length}
+										{/if}
+										<span class="grow cursor-default">
+											{#if href}
+												<a {href}>{label}</a>
+											{:else}
+												{label}
+												<!-- button -->
+											{/if}
+										</span>
+										<!-- {#if items?.length}
 												<div class="ml-auto" />
 												<Icon name="chevronRightMini" className="h-4 w-4 fill-gray-400" />
 											{/if} -->
-										</div>
 										<!-- TODO: should look into wai-aria for nested menu. Right now it looks like it's impossible with headless-ui in the way Linear does it. -->
 										<!-- settling for a weird version with clicks and sub-menu (not displayed to right) -->
 									</MenuItem>
