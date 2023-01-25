@@ -51,7 +51,7 @@
 		"postcss-load-config": "^4.0.1",
 		"prettier": "^2.7.1",
 		"prettier-plugin-svelte": "^2.7.0",
-		"prettier-plugin-tailwindcss": "^0.1.12",
+		"prettier-plugin-tailwindcss": "^0.2.2",
 		"prisma": "^4.5.0",
 		"prismjs": "^1.28.0",
 		"rss-parser": "^3.12.0",
