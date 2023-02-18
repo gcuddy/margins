@@ -1,5 +1,16 @@
 import { HTMLElement, parse } from 'node-html-parser';
 import { URL } from 'url';
+
+export const absolutizeUrl = (url: string, baseUrl: string) => {
+    try {
+        return new URL(url, baseUrl).href;
+    } catch (e) {
+        console.error(e);
+        return url;
+    }
+};
+
+
 export function absolutizeUrls(root: HTMLElement, baseUrl: string, attr: string) {
 	const nodes = root.querySelectorAll(`[${attr}]:not([class*='footnote'])`);
 	for (const node of nodes) {

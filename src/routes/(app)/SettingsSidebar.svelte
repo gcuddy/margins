@@ -1,17 +1,35 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import Icon from '$lib/components/helpers/Icon.svelte';
-	import type { NavItem } from './Sidebar.svelte';
-	import SidebarItem from './SidebarItem.svelte';
+	import { page } from "$app/stores";
+	import Icon from "$lib/components/helpers/Icon.svelte";
+	import type { NavItem } from "./Sidebar.svelte";
+	import SidebarItem from "./SidebarItem.svelte";
 
 	const sidebarItems: NavItem[] = [
 		{
-			display: 'Stylesheets',
-			href: `/u:${$page.data.user?.username}/settings/stylesheets`,
+			display: "Profile",
+			href: `/settings/profile`,
+			// href: `/u:${$page.data.user?.username}/settings/profile`,
 		},
 		{
-			display: 'States',
-			href: `/u:${$page.data.user?.username}/settings/states`,
+			display: "Appearance",
+			href: `/settings/appearance`,
+			// href: `/u:${$page.data.user?.username}/settings/profile`,
+		},
+		{
+			display: "Stylesheets",
+			href: `/settings/stylesheets`,
+		},
+		{
+			display: "States",
+			href: `/settings/states`,
+		},
+		{
+			display: "Colors",
+			href: `/settings/colors`,
+		},
+		{
+			display: "Integrations",
+			href: `/settings/integrations`,
 		},
 	];
 </script>

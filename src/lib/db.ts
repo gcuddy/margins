@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+
 import { annotationsMiddleware } from './prisma/middleware';
 // import Redis from 'ioredis';
 // const redis = new Redis(
@@ -24,10 +25,10 @@ export const db =
 	globalForPrisma.db ||
 	new PrismaClient({
 		log: [
-			{
-				emit: 'event',
-				level: 'query',
-			},
+			// {
+			// 	emit: 'event',
+			// 	level: 'query',
+			// },
 			'info',
 			'warn',
 			'error',

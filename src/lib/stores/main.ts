@@ -1,6 +1,6 @@
-import { derived, writable } from 'svelte/store';
+import { derived, writable } from "svelte/store";
 
-import { browser } from '$app/environment';
+import { browser } from "$app/environment";
 
 export const mainEl = writable<HTMLElement>();
 
@@ -22,7 +22,6 @@ export const mainElScroll = derived(
 
 		const updateScrollY = () => {
 			const scrollHeight = $mainEl.scrollHeight - window.innerHeight;
-			console.log({ downIncrementer });
 			if ($mainEl.scrollTop > lastScrollTop) {
 				//  we do this to only count the scroll down *if* the user is actually scrolling down 10px or more
 				// it seems insane, but it works!!
@@ -56,10 +55,10 @@ export const mainElScroll = derived(
 			}
 		};
 
-		if (browser) $mainEl?.addEventListener('scroll', onScroll);
+		if (browser) $mainEl?.addEventListener("scroll", onScroll);
 
 		return () => {
-			if (browser) $mainEl?.removeEventListener('scroll', onScroll);
+			if (browser) $mainEl?.removeEventListener("scroll", onScroll);
 		};
 	},
 	{

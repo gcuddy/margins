@@ -1,14 +1,15 @@
 <script lang="ts">
 	// TODO: multiple
-	import { createEventDispatcher, onDestroy, onMount, tick } from 'svelte';
-	import { tweened } from 'svelte/motion';
-	import { derived, writable } from 'svelte/store';
-	import type { number } from 'zod';
+	import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
+	import { tweened } from "svelte/motion";
+	import { derived, writable } from "svelte/store";
+	import type { number } from "zod";
 	type T = $$Generic;
 
 	type TValue = T & {
 		id?: string | number;
 		name?: string;
+		disabled?: boolean;
 	};
 
 	interface Props {
@@ -16,35 +17,12 @@
 	}
 
 	type TProps = Props & {
-		idResolver: Props['values'][number]['id'] extends undefined ? boolean : string;
+		idResolver: Props["values"][number]["id"] extends undefined ? boolean : string;
 	};
 
 	export let values: TValue[];
 	$: console.log({ values });
 
-	interface StateDefinition<T> {
-		selected: {
-			id: string;
-			value: T;
-		}[];
-		open: boolean;
-		state: {
-			activeId: string | null;
-			selectedId: string | null;
-		};
-		options: { id: string; dataRef: ComboboxOptionDataRef<T> }[];
-		activeId: string | null;
-		activationTrigger: ActivationTrigger;
-	}
-	function createApi<T>() {
-		const { subscribe, set, update } = writable<StateDefinition<T>>({
-			state: {
-				selectedId: null,
-				activeId: null,
-			},
-		});
-	}
-	const x = createApi();
 	const api = writable({
 		state: {
 			activeId: null,
@@ -54,7 +32,7 @@
 
 	function open() {
 		expanded = true;
-		dispatch('expanded', expanded);
+		dispatch("expanded", expanded);
 	}
 
 	interface $$Slots {
@@ -69,23 +47,32 @@
 			activeIndex: number;
 		};
 		input: {
-			'aria-controls': string;
-			'aria-expanded': boolean;
-			'aria-activedescendant': string;
+			"aria-controls": string;
+			"aria-expanded": boolean;
+			"aria-activedescendant": string;
 			onKeydown: (event: KeyboardEvent) => void;
 		};
 		inputPeer: {};
 		inputPeerAfter: {};
+		optionContainer: {};
 	}
-	export let value = '';
+	export let value = "";
 	export let selectedValue: typeof values = [];
 
 	$: selectedValueIds = selectedValue.map((v) => v.id);
+
+	const toggle = (value: TValue) => {
+		if (selectedValueIds.includes(value.id)) {
+			selectedValue = selectedValue.filter((v) => v.id !== value.id);
+		} else {
+			selectedValue = [...selectedValue, value];
+		}
+	};
 	export let activeIndex = 0;
 
 	/**whether or not to fill the combobox with the selected value*/
 	export let fillValue = true;
-	let className = '';
+	let className = "";
 	export { className as class };
 
 	let staticProp = false;
@@ -109,38 +96,44 @@
 				class?: string;
 		  }
 		| undefined = undefined;
-	// export let multiple = false;
+	export let multiple = false;
 	const dispatch = createEventDispatcher<{
 		select: TValue;
 		keydown: KeyboardEvent;
-		'input-click': MouseEvent;
+		"input-click": MouseEvent;
 		expanded: boolean;
 		active: TValue;
 	}>();
 
 	export let idResolver: (v: TValue) => string | number = (v: TValue) => {
-		if (typeof v === 'string') {
+		if (typeof v === "string") {
 			return v;
 		} else {
-			return v.id ?? v.value ?? v.name;
+			const id = v.id ?? v.name;
+			if (!id) {
+				throw new Error("Could not resolve id");
+			}
+			return id;
 		}
 	};
 
 	export let valueResolver: (v: T) => string = (v: any) => v.name || v.displayValue || v.value;
 
-	let activeId = '';
+	let activeId = "";
 	// maybe save more robustly?
-	let selectedId: string | number = '';
+	let selectedId: string | number = "";
 	// let lastSelected: T | undefined;
 	//  && selectedValue.includes(v))
 	const setActiveIndex = () => (activeIndex = values.findIndex((v) => !v.disabled) ?? 0);
 	$: console.log({ activeIndex });
 	$: if (staticProp) expanded = true;
+	$: console.log({ expanded });
 
 	function handleKeydown(e: KeyboardEvent) {
-		dispatch('keydown', e);
+		dispatch("keydown", e);
+		const val = values[activeIndex];
 		switch (e.key) {
-			case 'ArrowDown': {
+			case "ArrowDown": {
 				// console.log('ArrowDown');
 				e.preventDefault();
 				e.stopPropagation();
@@ -152,22 +145,21 @@
 				activeIndex = Math.min(activeIndex + 1, values.length - 1);
 				break;
 			}
-			case 'ArrowUp': {
+			case "ArrowUp": {
 				e.preventDefault();
 				e.stopPropagation();
 				activeIndex = Math.max(activeIndex - 1, 0);
 				break;
 			}
-			case 'Enter': {
-				console.log('enter', { selectedId, activeIndex });
+			case "Enter": {
+				console.log("enter", { selectedId, activeIndex });
 				if (!expanded) {
-					console.log('hit enter but not expanded');
+					console.log("hit enter but not expanded");
 					return;
 				}
 				e.preventDefault();
 				e.stopPropagation();
 				console.log({ activeIndex });
-				const val = values[activeIndex];
 				// if (!value) {
 				// 	dispatch('confirm');
 				// 	return;
@@ -175,19 +167,41 @@
 				if (!values.length) return;
 				selectedId = idResolver(val).toString();
 				if (fillValue) value = valueResolver(val);
+				if (multiple) {
+					toggle(val);
+				} else {
+					//select value
+					selectedValue = [val];
+				}
 				close();
-				dispatch('select', val);
+				dispatch("select", val);
 				break;
 			}
-			case 'Escape': {
+			case "Escape": {
 				if (!expanded) return;
 				e.preventDefault();
 				// todo: flesh this out
 				if (!staticProp) {
 					e.stopPropagation();
 				}
-				close();
+				if (onEscape) {
+					onEscape();
+				} else {
+					close();
+				}
+				break;
 				// value = values.find((v) => v.id === selectedId) ?? '';
+			}
+			case " ": {
+				if (!multiple) return;
+				console.log({ activeIndex, expanded, val });
+				if (!expanded) return;
+				if (activeIndex < 0) return;
+				if (!val) return;
+				e.preventDefault();
+				dispatch("select", val);
+				toggle(val);
+				// toggle selection state
 			}
 		}
 	}
@@ -195,11 +209,7 @@
 	$: values, setActiveIndex();
 	// $: console.log({ activeIndex });
 	$: valueIds = values.map((v) => {
-		console.log({ v });
 		const id = idResolver(v);
-		if (!id) {
-			throw Error('A proper idResolver must be applied.');
-		}
 		return id;
 	});
 
@@ -210,29 +220,33 @@
 
 	let optionId = `cb-options-${useId()}`;
 
-	export let expanded = false;
+	export let expanded = staticProp;
 
-	export let name = '';
+	export let name = "";
 
 	export let animateHeight = true;
 
+	export let onEscape: (() => void) | undefined = undefined;
+
 	const optionRefs: HTMLElement[] = [];
+
+	$: console.log({ expanded });
 
 	/// Read-only
 	export let inputRef: HTMLElement | undefined = undefined;
 
 	$: if ((staticProp || expanded) && activeIndex > -1) {
-		tick().then(() => optionRefs[activeIndex]?.scrollIntoView({ block: 'nearest' }));
+		tick().then(() => optionRefs[activeIndex]?.scrollIntoView({ block: "nearest" }));
 	}
 
 	function close() {
-		expanded = false;
+		console.log("close");
+		if (!staticProp) expanded = false;
 		// staticProp = false;
-		// console.log('close');
 		// do i need to set activeIndex to -1?
 		// activeIndex = -1;
 		// this is probably a dumb convention, should just use on:open and on:close
-		dispatch('expanded', expanded);
+		dispatch("expanded", false);
 		// value = '';
 	}
 
@@ -252,7 +266,12 @@
 		if (val.disabled) return e.preventDefault();
 		if (!active) return;
 		selectedId = idResolver(val);
-		dispatch('select', val);
+		dispatch("select", val);
+		if (multiple) {
+			toggle(val);
+		} else {
+			selectedValue = [val];
+		}
 		if (fillValue) value = valueResolver(val);
 		tick().then(() => {
 			close();
@@ -262,7 +281,7 @@
 
 	$: {
 		if (activeIndex > -1) {
-			dispatch('active', values[activeIndex]);
+			dispatch("active", values[activeIndex]);
 		}
 	}
 
@@ -274,10 +293,12 @@
 	onMount(() => {
 		if (ref) {
 			ro = new ResizeObserver(([entry]) => {
+				console.log({ entry, $height });
 				height.set(entry.contentRect.height);
 			});
 			ro.observe(ref);
 		}
+		if (staticProp) expanded = true;
 	});
 
 	onDestroy(() => {
@@ -296,15 +317,16 @@
 
 	onMount(() => {
 		const index = values.findIndex(({ id }) => selectedValueIds.includes(id));
+		console.log({ index });
 		if (index > -1) {
 			activeIndex = index;
 		}
-		console.log({ index });
 	});
 	// });
 </script>
 
 <div style:height={animateHeight ? `${$height}px` : undefined}>
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div class={className} bind:this={ref} {...$$restProps}>
 		<!-- slot props are given IF you want to use them -->
 		{#if name}
@@ -329,7 +351,7 @@
 					on:blur={close}
 					on:blur
 					on:click={(e) => {
-						dispatch('input-click', e);
+						dispatch("input-click", e);
 					}}
 					on:input={() => {
 						if (!expanded) {
@@ -338,7 +360,7 @@
 					}}
 					aria-controls={optionId}
 					aria-expanded={expanded}
-					aria-activedescendant={valueIds[activeIndex]}
+					aria-activedescendant={valueIds[activeIndex]?.toString()}
 					aria-autocomplete="list"
 					class="border-none focus:ring-0 {input?.class}"
 					placeholder={input?.placeholder}
@@ -351,7 +373,7 @@
 		<!-- TODO: able to render multiple "groups" ? -->
 		<slot name="listbox" {activeIndex}>
 			{#if staticProp || expanded}
-				<ul id={optionId} role="listbox" class={options?.class}>
+				<ul id={optionId} role="listbox" class={options?.class} aria-multiselectable={multiple}>
 					<!-- TODO: (maybe) use tiny-virtual-list for rendering li  -->
 					{#each values as value, index (idResolver(value))}
 						{@const id = valueIds[index]}
@@ -362,7 +384,8 @@
 							<!-- could use a private component here? -->
 							<li
 								id="cb-option-{id}"
-								aria-selected={selected}
+								aria-selected={!multiple ? selected : undefined}
+								aria-checked={multiple ? selected : undefined}
 								class="cursor-pointer"
 								role="option"
 								bind:this={optionRefs[index]}

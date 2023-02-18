@@ -1,84 +1,93 @@
 <script lang="ts">
-	import type { IconName } from '$lib/icons';
-	import { colors } from '$lib/types/colors';
-	import type { ChosenIcon } from '$lib/types/icon';
-	import { Popover, PopoverButton, PopoverPanel, Tab, TabGroup, TabList, TabPanel, TabPanels } from '@rgossiaux/svelte-headlessui';
-	import { createPopperActions } from 'svelte-popperjs';
-	import SmallPlus from './atoms/SmallPlus.svelte';
-	import ColorSwatch from './ColorSwatch.svelte';
-	import EmojiPicker from './EmojiPicker.svelte';
-	import Icon from './helpers/Icon.svelte';
+	import type { IconName } from "$lib/icons";
+	import { colors } from "$lib/types/colors";
+	import type { ChosenIcon } from "$lib/types/icon";
+	import {
+		Popover,
+		PopoverButton,
+		PopoverPanel,
+		Tab,
+		TabGroup,
+		TabList,
+		TabPanel,
+		TabPanels,
+	} from "@rgossiaux/svelte-headlessui";
+	import { createPopperActions } from "svelte-popperjs";
+	import SmallPlus from "./atoms/SmallPlus.svelte";
+	import ColorSwatch from "./ColorSwatch.svelte";
+	import EmojiPicker from "./EmojiPicker.svelte";
+	import Icon from "./helpers/Icon.svelte";
 	const [popperRef, popperContent] = createPopperActions();
 	const popperOptions = {
-		placement: 'bottom-start',
-		strategy: 'absolute',
-		modifiers: [{ name: 'offset', options: { offset: [0, 10] } }],
+		placement: "bottom-start",
+		strategy: "absolute",
+		modifiers: [{ name: "offset", options: { offset: [0, 10] } }],
 	};
 
 	// TODO: fill out (maybe from lucide.dev) with about 126
 	const iconsToChooseFrom: IconName[] = [
-		'rectangleStackMini',
-		'academicCapMini',
-		'moonMini',
-		'beakerMini',
-		'bellMini',
-		'boltMini',
-		'bookOpenMini',
-		'bookmarkMini',
-		'briefcaseMini',
-		'buildingLibraryMini',
-		'buildingOfficeMini',
-		'cakeMini',
-		'calculatorMini',
-		'calendarMini',
-		'cameraMini',
-		'chartBarMini',
-		'circleStackMini',
-		'clipboardMini',
-		'commandLineMini',
-		'computerDesktopMini',
-		'cpuChipMini',
-		'creditCardMini',
-		'cubeMini',
-		'documentMini',
-		'envelopeMini',
-		'eyeDropperMini',
-		'filmMini',
-		'fireMini',
-		'flagMini',
-		'globeAmericasMini',
-		'globeAsiaAustraliaMini',
-		'globeEuropeAfricaMini',
-		'heartMini',
-		'inboxMini',
-		'informationCircleMini',
-		'languageMini',
-		'lightBulbMini',
-		'mapMini',
-		'musicalNoteMini',
-		'newspaperMini',
-		'paintBrushMini',
-		'photoMini',
-		'radioMini',
-		'rocketLaunchMini',
-		'sunMini',
-		'swatchMini',
-		'ticketMini',
-		'trophyMini',
-		'truckMini',
-		'tvMini',
+		"rectangleStackMini",
+		"academicCapMini",
+		"moonMini",
+		"beakerMini",
+		"bellMini",
+		"boltMini",
+		"bookOpenMini",
+		"bookmarkMini",
+		"briefcaseMini",
+		"buildingLibraryMini",
+		"buildingOfficeMini",
+		"cakeMini",
+		"calculatorMini",
+		"calendarMini",
+		"cameraMini",
+		"chartBarMini",
+		"circleStackMini",
+		"clipboardMini",
+		"commandLineMini",
+		"computerDesktopMini",
+		"cpuChipMini",
+		"creditCardMini",
+		"cubeMini",
+		"documentMini",
+		"envelopeMini",
+		"eyeDropperMini",
+		"filmMini",
+		"fireMini",
+		"flagMini",
+		"globeAmericasMini",
+		"globeAsiaAustraliaMini",
+		"globeEuropeAfricaMini",
+		"heartMini",
+		"inboxMini",
+		"informationCircleMini",
+		"languageMini",
+		"lightBulbMini",
+		"mapMini",
+		"musicalNoteMini",
+		"newspaperMini",
+		"paintBrushMini",
+		"photoMini",
+		"radioMini",
+		"rocketLaunchMini",
+		"sunMini",
+		"swatchMini",
+		"ticketMini",
+		"trophyMini",
+		"truckMini",
+		"tvMini",
 	];
 	const convertIconToLabel = (icon: IconName) => {
 		return icon
-			.replace(/(Solid|Mini)$/, '')
-			.replace(/([A-Z])/g, ' $1')
+			.replace(/(Solid|Mini)$/, "")
+			.replace(/([A-Z])/g, " $1")
 			.replace(/^./, (str) => str.toUpperCase());
 	};
 
 	export let chosenIcon: ChosenIcon = {
-		name: 'rectangleStackMini',
-		color: '#fff',
-		type: 'icon',
+		name: "rectangleStackMini",
+		color: "#fff",
+		type: "icon",
 	};
 </script>
 
@@ -88,11 +97,11 @@
 	<PopoverButton
 		use={[popperRef]}
 		class="flex h-full w-full items-center justify-center rounded border border-gray-600 px-2 transition"
-		style={chosenIcon.type === 'icon' ? `color: ${chosenIcon.color};` : undefined}
+		style={chosenIcon.type === "icon" ? `color: ${chosenIcon.color};` : undefined}
 	>
-		{#if chosenIcon.type === 'icon'}
+		{#if chosenIcon.type === "icon"}
 			<Icon name={chosenIcon.name} className="w-4 h-4 fill-current" />
-		{:else if chosenIcon.type === 'emoji'}
+		{:else if chosenIcon.type === "emoji"}
 			<div>
 				{chosenIcon.emoji}
 			</div>
@@ -105,21 +114,18 @@
 				<TabList class="flex w-full px-2">
 					<Tab
 						class={({ selected }) =>
-							`px-2 py-3  ${
-								selected ? 'border-b border-primary-300' : 'text-gray-600 dark:text-gray-500'
-							}`}><SmallPlus>Icons</SmallPlus></Tab
+							`px-2 py-3  ${selected ? "border-b border-primary-300" : "text-gray-600 dark:text-gray-500"}`}
+						><SmallPlus>Icons</SmallPlus></Tab
 					>
 					<Tab
 						class={({ selected }) =>
-							`px-2 py-3  ${
-								selected ? 'border-b border-primary-300' : 'text-gray-600 dark:text-gray-500'
-							}`}><SmallPlus>Emoji</SmallPlus></Tab
+							`px-2 py-3  ${selected ? "border-b border-primary-300" : "text-gray-600 dark:text-gray-500"}`}
+						><SmallPlus>Emoji</SmallPlus></Tab
 					>
 					<Tab
 						class={({ selected }) =>
-							`px-2 py-3  ${
-								selected ? 'border-b border-primary-300' : 'text-gray-600 dark:text-gray-500'
-							}`}><SmallPlus>Image</SmallPlus></Tab
+							`px-2 py-3  ${selected ? "border-b border-primary-300" : "text-gray-600 dark:text-gray-500"}`}
+						><SmallPlus>Image</SmallPlus></Tab
 					>
 				</TabList>
 				<TabPanels>
@@ -138,14 +144,14 @@
 								{/each}
 							</div>
 							<div
-								style:color={chosenIcon.type === 'icon' ? chosenIcon.color : undefined}
+								style:color={chosenIcon.type === "icon" ? chosenIcon.color : undefined}
 								class="flex flex-row flex-wrap"
 							>
 								{#each iconsToChooseFrom as icon}
 									<button
 										on:click|preventDefault={() => {
-											chosenIcon.type = 'icon';
-											if (chosenIcon.type === 'icon') {
+											chosenIcon.type = "icon";
+											if (chosenIcon.type === "icon") {
 												chosenIcon.name = icon;
 											}
 											close();
@@ -162,8 +168,8 @@
 					<TabPanel
 						><EmojiPicker
 							on:change={(e) => {
-								chosenIcon.type = 'emoji';
-								if (chosenIcon.type === 'emoji') {
+								chosenIcon.type = "emoji";
+								if (chosenIcon.type === "emoji") {
 									chosenIcon.emoji = e.detail.emoji;
 									chosenIcon.hexcode = e.detail.hexcode;
 									chosenIcon.label = e.detail.label;

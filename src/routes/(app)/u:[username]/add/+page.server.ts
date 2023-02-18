@@ -30,6 +30,7 @@ export const actions: Actions = {
 		try {
 			const form = await request.formData();
 			const url = <string>form.get('url') || <string>form.get('text');
+			const type = form.get('type') as DocumentType;
 			console.log({ url })
 			if (!url) {
 				return fail(400, {
@@ -44,8 +45,20 @@ export const actions: Actions = {
 			const article = await serverRouter.public.parse(url);
 			console.log(`here's the article we're going to try to add:`, { article })
 			// Now add the article
+			let screenshot: string | undefined = undefined
+			if (type === "bookmark") {
+				// get screenshot
+				screenshot = await serverRouter.public.generateScreenshot({
+					url
+				});
+				console.log({ screenshot })
+			}
 			const bookmark = await serverRouter.bookmarks.add({
-				article,
+				article: {
+					...article,
+					screenshot,
+					type
+				},
 				url,
 				stateId: state ? +(state) : undefined
 			})

@@ -6,6 +6,7 @@
 
 	import { createEventDispatcher, tick } from "svelte";
 	import { onMount } from "svelte";
+	import { match } from "ts-pattern";
 	import Button from "../Button.svelte";
 	import GenericTextarea from "../GenericTextarea.svelte";
 	import Icon from "../helpers/Icon.svelte";
@@ -22,6 +23,7 @@
 	export let placeholder = "Add an annotation…";
 	export let rows = 4;
 	$: console.log({ allTags });
+	export let size: "sm" | "base" = "sm";
 	// if (!allTags.length) {
 	// 	if ($page.data.tags) {
 	// 		allTags = $page.data.tags;
@@ -37,7 +39,7 @@
 	const dispatch = createEventDispatcher<{
 		save: {
 			value: string;
-			done: typeof doneSaving;
+			// done: typeof doneSaving;
 		};
 		cancel: void;
 	}>();
@@ -47,12 +49,14 @@
 	export { className as class };
 	onMount(() => {
 		textarea?.focus();
-		textarea?.scrollIntoView({
-			block: "center",
-		});
+		if (scrollIntoView) {
+			textarea?.scrollIntoView({
+				block: "nearest",
+			});
+		}
 	});
 
-	let saving = false;
+	export let saving = false;
 	const doneSaving = () => (saving = false);
 </script>
 
@@ -61,7 +65,7 @@
 <!-- transparency is a bit much (and maybe causes gpu performance issues), but here were the classes: dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200 -->
 <div
 	bind:this={el}
-	class="annotation-input not-prose relative z-50 flex min-w-[min(300px,100vh,100%)] max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-200 bg-white p-2.5 font-sans   transition-shadow transparency:bg-gray-50/90 transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-0 dark:bg-gray-800 dark:ring-1  dark:ring-gray-400/10 focus-within:dark:ring-gray-400/20  transparency:dark:bg-gray-800 {className} {shadow_focus &&
+	class="annotation-input not-prose relative z-50 flex min-w-[min(var(--min-width,300px,100vh,100%Z))] max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-200 bg-elevation p-2.5 font-sans   transition-shadow  transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-0 dark:ring-1  dark:ring-gray-400/10 focus-within:dark:ring-gray-400/20  transparency:dark:bg-gray-800 {className} {shadow_focus &&
 	focused
 		? 'shadow-lg'
 		: shadow_focus
@@ -87,7 +91,7 @@
 				}
 				if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
 					e.preventDefault();
-					dispatch("save", { value, done: doneSaving });
+					dispatch("save", { value });
 				}
 			}}
 			on:focus={() => (focused = true)}
@@ -96,13 +100,18 @@
 			{name}
 			bind:value
 			{rows}
-			class="w-full grow resize-none border-0 bg-transparent p-2 text-sm placeholder-gray-400 transition focus:ring-0"
+			class="w-full grow resize-none border-0 bg-transparent p-2 placeholder-gray-400 transition focus:ring-0 {size ===
+			'base'
+				? 'text-base'
+				: size === 'sm'
+				? 'text-sm'
+				: ''}"
 		/>
 		<!-- <textarea
 		/> -->
 		{#if include_tags}
 			<div class="flex grow items-center font-normal">
-				<TagEntry size="sm" bind:tags className="grow text-xs not-italic" {allTags} />
+				<TagEntry {size} bind:tags className="grow text-xs not-italic" {allTags} />
 			</div>
 		{/if}
 	</div>
@@ -110,17 +119,7 @@
 		<slot name="buttons">
 			<!-- //todo -->
 			<Button variant="ghost" on:click={() => dispatch("cancel")}>Cancel</Button>
-			<Button
-				variant={confirmButtonStyle}
-				type="submit"
-				on:click={() => {
-					saving = true;
-					dispatch("save", {
-						value,
-						done: doneSaving,
-					});
-				}}
-			>
+			<Button variant={confirmButtonStyle} type="submit" on:click={() => dispatch("save", { value })}>
 				{#if saving}
 					<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
 				{:else}

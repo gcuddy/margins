@@ -2,7 +2,6 @@
 	import { browser } from "$app/environment";
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
-	import selectionAction from "$lib/actions/selection";
 	import { TargetSchema, upsertAnnotation, type Selector } from "$lib/annotation";
 	import {
 		createTextQuoteSelectorMatcher,
@@ -15,24 +14,24 @@
 	import type { TextQuoteSelector } from "$lib/annotator/types";
 	import { nodeFromXPath } from "$lib/annotator/xpath";
 	import FloatingAnnotation from "$lib/components/annotations/FloatingAnnotation.svelte";
-	import Swatches from "$lib/components/ColorPicker/Swatches.svelte";
+	import ColorSwatch from "$lib/components/ColorSwatch.svelte";
 	import ContextMenu from "$lib/components/ContextMenu.svelte";
 	import EditHighlightToolTip from "$lib/components/EditHighlightToolTip.svelte";
 	import HighlightToolTip from "$lib/components/HighlightToolTip.svelte";
 	import ProseWrapper from "$lib/components/ProseWrapper.svelte";
 	import TooltipMenu from "$lib/components/TooltipMenu.svelte";
-	import { mainEl } from "$lib/stores/main";
 	import { highlightElements } from "$lib/stores/misc";
 	import { notifications } from "$lib/stores/notifications";
 	import { selection } from "$lib/stores/selection";
 	import { syncStore } from "$lib/stores/sync";
+	import { trpc } from "$lib/trpc/client";
 	import type { AnnotationPos, NodeRef, SimplifiedHighlightSource, Tooltip as ITooltip } from "$lib/types";
 	import { finder } from "@medv/finder";
-	import type { Annotation, Tag } from "@prisma/client";
+	import { type Annotation, type Color, type Tag } from "@prisma/client";
 	import { onDestroy, onMount } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
 	import { writable } from "svelte/store";
-	import { fade } from "svelte/transition";
+	import { reading_sidebar } from "$lib/features/entries/stores";
 	const [menuRef, menuContent] = createPopperActions({
 		placement: "top",
 		strategy: "fixed",
@@ -98,6 +97,9 @@
 	export let articleID: number;
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
+	$: console.log({ annotations });
+	export let currentAnnotationColor: Color = "Yellow";
+	export let showColors = false;
 	export let readOnly = false;
 
 	// Virtual Selection Element to track selection for annotation menu
@@ -144,7 +146,8 @@
 	const idToElMap = new Map<number, { destroy: (() => void)[]; els: HTMLElement[] }>();
 	const annotation_els = writable<Record<number, HTMLElement>>();
 	$: inlineAnnotations = annotations.filter((a) => a.type === "annotation");
-	$: annotationsWithBodyOrTag = inlineAnnotations.filter((a) => a.body || a.tags?.length);
+	// when inlineannotations changes, re-render
+	// $: inlineAnnotations, renderAnnotations();
 
 	let active_highlight_el: HTMLElement;
 	let active_highlight_rect: DOMRect;
@@ -159,6 +162,7 @@
 		highlightInfo?: Awaited<ReturnType<typeof highlightSelectorTarget>>;
 		selector: Awaited<TextQuoteSelector>;
 		tags?: { name: string; id?: number }[];
+		color: string;
 	} | null = null;
 
 	const createTextQuoteMatcher = (selector: TextQuoteSelector) => {
@@ -229,6 +233,8 @@
 			rect = sel.getRangeAt(0).getBoundingClientRect();
 		} else {
 			console.log("INVALID");
+			// if it's in a combobox
+			if (document.activeElement instanceof HTMLInputElement) return;
 			show_tooltip = false;
 			validSelection = false;
 			tooltipVisible = false;
@@ -311,7 +317,7 @@
 		target.tagName !== "BUTTON";
 
 	function handleClick(e: MouseEvent) {
-		if (!$page.data.AUTHORIZED) return;
+		if (!$page.data.authorized) return;
 		const el = e.target as HTMLElement;
 		const annotationParent = isAnnotation(el);
 		if (annotationParent) {
@@ -334,6 +340,7 @@
 			// };
 		} else if (annotation_opts === null) {
 			active_highlight_id = null;
+			show_tooltip = false;
 		}
 	}
 
@@ -430,6 +437,59 @@
 			}
 		}
 	};
+
+	async function renderAnnotations() {
+		console.log(`rendering annotations`);
+		if (!wrapper) return;
+
+		for (const annotation of inlineAnnotations) {
+			try {
+				// check if exists
+				if (document.querySelector(`[data-annotation-id="${annotation.id}"]`)) continue;
+				const target = TargetSchema.parse(annotation.target);
+				console.log({ target });
+				const { selector } = target;
+				const matches = createMatcher(selector)(wrapper);
+				console.log({ matches });
+				const matchList = [];
+				for await (const match of matches) matchList.push(match);
+				const h = matchList.map((match) =>
+					highlight(match, "mark", {
+						"data-annotation-id": annotation.id.toString(),
+						"data-annotation-content": annotation.body || annotation.tags?.length ? "true" : "false",
+					})
+				);
+				$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
+				idToElMap.set(annotation.id, {
+					destroy: h.map((h) => h.removeHighlights),
+					els: h.flatMap((h) => h.highlightElements),
+				});
+			} catch (e) {
+				// console.error(e);
+			}
+		}
+		// remove old ones that don't exist
+
+		const ids = inlineAnnotations.map((i) => i.id);
+		console.log({ idToElMap });
+		const keysToDelete = Array.from(idToElMap.keys()).filter((key) => !ids.includes(key));
+		keysToDelete.forEach((key) => {
+			idToElMap.get(key)?.destroy.forEach((d) => d());
+			idToElMap.delete(key);
+			const els = wrapper?.querySelectorAll(`[data-annotation-id="${key}"]`);
+			els.forEach((el) => {
+				if (!(el instanceof HTMLElement)) return;
+				const id = +(el.dataset.annotationId || "");
+				el.remove();
+				// if (!ids.includes(id)) {
+				// 	// hm! probably doesn't exist!
+				// 	console.log(`removing`, { el });
+				// 	el.remove();
+				// }
+			});
+		});
+	}
+
 	onMount(async () => {
 		if (browser && wrapper) {
 			// load highlgihts
@@ -440,12 +500,14 @@
 					console.log({ target });
 					const { selector } = target;
 					const matches = createMatcher(selector)(wrapper);
+					console.log({ matches });
 					const matchList = [];
 					for await (const match of matches) matchList.push(match);
 					const h = matchList.map((match) =>
 						highlight(match, "mark", {
 							"data-annotation-id": annotation.id.toString(),
-							"data-annotation-content": annotation.body || annotation.tags.length ? "true" : "false",
+							"data-annotation-content": annotation.body || annotation.tags?.length ? "true" : "false",
+							"data-annotation-color": annotation.color,
 						})
 					);
 					$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
@@ -460,12 +522,13 @@
 			// TODO: eventually this will be ssr-d so we'll be able to go to annotation without js, just a #annotation-{ID} link
 			const a = $page.url.searchParams.get("a");
 			if (a && wrapper) {
-				console.log("a", a);
+				console.log("a", { a });
 				// go to the annotation
 				setTimeout(() => {
-					const el = wrapper.querySelector(`#annotation-${a}`);
+					const el = wrapper.querySelector(`[data-annotation-id="${a}"]`);
 					el?.scrollIntoView({
 						block: "center",
+						behavior: "smooth",
 					});
 				}, 0);
 			}
@@ -482,15 +545,83 @@
 </script>
 
 <div on:focus>
+	<!-- REVIEW: positoning of swatch when zoomed out -->
+	<div
+		style:--translate={$reading_sidebar.active ? `${$reading_sidebar.width + 36}px` : undefined}
+		class="fixed transition {show_tooltip && tooltip_display === TooltipDisplay.New
+			? '-translate-y-0 opacity-75 transition hover:opacity-100'
+			: 'translate-y-8 opacity-0'} bottom-3 right-6 {$reading_sidebar.active
+			? '-translate-x-[var(--translate)]'
+			: ''} flex h-6  items-center justify-end rounded-lg transition duration-100 {showColors ? '' : ''}"
+	>
+		{#each [{ name: "Yellow", hex: "#facd5a" }, { name: "Green", hex: "#7bc868" }, { name: "Blue", hex: "#6ab0f2" }, { name: "Pink", hex: "#fb5c88" }, { name: "Purple", hex: "#c885da" }] as { hex, name }, index}
+			{@const selected = currentAnnotationColor === name}
+			{@const size = 36}
+			{@const translate = -1 * (((5 - (index + 1)) * (size * 1) * 5) / 5)}
+			<ColorSwatch
+				--z-index={selected ? 2 : 1}
+				--translate={showColors ? `${translate}px` : `0px`}
+				--swatchSize="36px"
+				on:click={(e) => {
+					if (showColors) {
+						// @ts-ignore
+						currentAnnotationColor = name;
+						//@ts-ignore
+						e.target?.focus();
+					}
+					showColors = !showColors;
+				}}
+				class="absolute z-[var(--z-index)] translate-y-[var(--translate)] {selected} transition {!showColors &&
+				selected
+					? ''
+					: ''}"
+				{hex}
+				{selected}
+				checkmark={false}
+			/>
+		{/each}
+	</div>
 	{#if show_tooltip}
 		<div class="z-40" use:menuContent>
-			<Swatches />	
+			{#if showColors}
+				<!-- <Swatches
+					bind:selected={currentAnnotationColor}
+					colors={[
+						{
+							name: "yellow",
+							hex: "#facc15",
+						},
+						{
+							name: "red",
+							hex: "#ef4444",
+						},
+						{
+							name: "green",
+							hex: "#22c55e",
+						},
+						{
+							name: "purple",
+							hex: "#a855f7",
+						},
+						{
+							name: "blue",
+							hex: "#3b82f6",
+						},
+					]}
+					class="mb-0.5 rounded-lg bg-black p-0.5"
+				/> -->
+			{:else}
+				<!-- <button class="flex justify-end" on:click={() => (showColors = true)}>
+					<Icon name="ellipsisHorizontalCircleMini" className="h-5 w-5 dark:fill-gray-300/50" />
+				</button> -->
+			{/if}
+
 			<TooltipMenu>
 				{#if tooltip_display === TooltipDisplay.New}
 					<HighlightToolTip
+						color={currentAnnotationColor}
 						labels={true}
 						on:annotate={async () => {
-							console.log("annotating");
 							const userSelection = window.getSelection();
 							if (!userSelection) return;
 							const userRange = userSelection.getRangeAt(0);
@@ -510,6 +641,7 @@
 										"data-annotation": "true",
 										"data-annotation-id": "undefined",
 										"data-annotation-content": "true",
+										"data-annotation-color": currentAnnotationColor,
 									},
 									true
 								);
@@ -524,6 +656,7 @@
 									highlightInfo,
 									selector,
 									html,
+									color: currentAnnotationColor,
 								};
 							} else if (described?.type === "RangeSelector") {
 								// TODO: allow other matchers besides text quote and fix type error
@@ -565,41 +698,36 @@
 						on:highlight={async () => {
 							const userSelection = window.getSelection()?.getRangeAt(0);
 							console.log({ userSelection });
+							if (!userSelection) return;
 							describeRange(userSelection, wrapper);
 							if (!userSelection || userSelection.collapsed) return;
 							const selector = await describeTextQuote(userSelection);
 							console.log({ selector });
-							const highlightInfo = await highlightSelectorTarget(selector);
-							window.getSelection()?.removeAllRanges();
-							// todo: add pending state so that the highlight gets removed if it fails
-
-							console.log({ selector });
-							const res = await fetch("/annotations", {
-								method: "POST",
-								headers: {
-									"Content-Type": "application/json",
+							const highlightInfo = await highlightSelectorTarget(
+								selector,
+								undefined,
+								{
+									"data-annotation": "true",
+									"data-annotation-id": "undefined",
+									"data-annotation-content": "true",
+									"data-annotation-color": currentAnnotationColor,
 								},
-								body: JSON.stringify({
-									// jfc let's fix this
-									articleId: articleID,
+								true
+							);
+							window.getSelection()?.removeAllRanges();
+							try {
+								const annotation = await trpc().annotations.save.mutate({
+									entryId: articleID,
 									target: {
 										source: articleUrl,
 										selector,
 									},
-								}),
-							});
-							if (res.ok) {
-								notifications.notify({
-									type: "success",
-									message: "Highlight created!",
+									color: currentAnnotationColor,
 								});
-								// and add id to the highlight
-								const annotation = await res.json();
-								console.log({ annotation });
 								highlightInfo.forEach((h) => {
 									h.highlightElements.forEach((el) => {
 										el.setAttribute("id", `annotation-${annotation.id}`);
-										el.setAttribute("data-annotation-id", annotation.id);
+										el.setAttribute("data-annotation-id", annotation.id.toString());
 									});
 								});
 								idToElMap.set(annotation.id, {
@@ -607,7 +735,9 @@
 									els: highlightInfo.flatMap((h) => h.highlightElements),
 								});
 								annotations = [...annotations, annotation];
-							} else {
+								await invalidateAll();
+							} catch (e) {
+								console.error(e);
 								notifications.notify({
 									type: "error",
 									message: "Highlight failed!",
@@ -659,6 +789,27 @@
 							};
 						}}
 						annotation={active_annotation}
+						on:color={async ({ detail: color }) => {
+							const idx = annotations.findIndex((a) => active_annotation?.id === a.id);
+							console.log({ idx });
+							if (!idx) {
+								throw new Error("Error finding active_annotation");
+							}
+							// optimistic update
+							annotations[idx] = { ...annotations[idx], color };
+							const els = wrapper?.querySelectorAll(`[data-annotation-id="${annotations[idx].id}"]`);
+							els.forEach((el) => {
+								if (el instanceof HTMLElement) {
+									el.dataset.annotationColor = color;
+								}
+							});
+							// send to trpc to update
+							await trpc().annotations.save.mutate({
+								id: annotations[idx].id,
+								color,
+							});
+							await invalidateAll();
+						}}
 						on:annotate={() => {
 							highlightMenu = false;
 							const target = TargetSchema.parse(active_annotation?.target);
@@ -673,41 +824,45 @@
 				{/if}
 			</TooltipMenu>
 		</div>
+		<!-- <AnnotationColorSelector /> -->
 	{/if}
 	{#if annotation_opts !== null}
-		<div bind:this={annotationContainer} data-annotation-entry>
+		<div bind:this={annotationContainer} style:min-width="300px" data-annotation-entry>
 			<FloatingAnnotation
+				size="base"
 				bind:tags={active_annotation_tags}
 				on:cancel={() => {
 					if (!annotation_opts) return;
 					console.log({ annotation_opts });
 					annotation_opts.highlightInfo?.forEach((h) => {
+						// e;
 						h.removeHighlights();
 					});
 					annotation_opts = null;
 				}}
 				on:save={async (e) => {
-					const { value, done } = e.detail;
-					console.log({ annotation_opts });
+					const { value } = e.detail;
 					if (!annotation_opts) return;
 					if (!$page.data.user) return;
 					const { selector, highlightInfo, el } = annotation_opts;
+					console.log({ annotation_opts });
 					const id = el.dataset.annotationId;
 					const syncId = syncStore.addItem();
-					const annotation = await upsertAnnotation({
-						body: value,
+					console.log({ articleID });
+					const annotation = await trpc().annotations.save.mutate({
+						entryId: articleID,
 						target: {
 							source: articleUrl,
 							selector,
 							html: annotation_opts.html,
 						},
-						userId: $page.data.user.userId,
-						entryId: articleID,
-						id: (id && Number(id)) || Number(id) === 0 ? Number(id) : undefined,
-						tags: active_annotation_tags,
+						body: value,
+						color: currentAnnotationColor,
 					});
+					console.log({ annotation });
+					//
 					await invalidateAll();
-					done();
+					// done();
 					annotation_opts = null;
 					syncStore.removeItem(syncId);
 					if (annotation) {
@@ -807,21 +962,43 @@
 	:global(mark) {
 		scroll-padding-top: 100px;
 	}
-	:global(mark[data-annotation-id]) {
+	/* :global(mark[data-annotation-id]) {
 		cursor: pointer;
 		@apply relative animate-saturate-pulse scroll-mt-48 rounded-sm bg-yellow-200 transition dark:border-yellow-500 dark:bg-yellow-900/90 dark:text-amber-50;
-		/* maybe broder should just be applied if there's an annotation attached */
-	}
-	:global(mark[data-annotation-id][data-annotation-content="true"]) {
+	} */
+	/* maybe broder should just be applied if there's an annotation attached */
+	/* :global(mark[data-annotation-id][data-annotation-content="true"]) {
 		@apply border-b-2 border-yellow-400;
 	}
-	:global(mark[data-annotation-id].active) {
+	:global(mark[data-annotation-id][data-annotation-color="Yellow"].active) {
 		@apply bg-yellow-400 dark:bg-yellow-500;
+	}
+	:global(mark[data-annotation-id][data-annotation-color="Green"].active) {
+		@apply bg-green-400 dark:bg-green-500;
+	}
+	:global(mark[data-annotation-id][data-annotation-color="Pink"].active) {
+		@apply bg-pink-400 dark:bg-pink-500;
+	}
+	:global(mark[data-annotation-id][data-annotation-color="Purple"].active) {
+		@apply bg-purple-400 dark:bg-purple-500;
+	}
+	:global(mark[data-annotation-id][data-annotation-color="Blue"].active) {
+		@apply bg-blue-400 dark:bg-blue-500;
 	}
 	:global(.dark mark[id]) {
 		@apply bg-yellow-200/20 text-amber-200;
 	}
 	:global(mark[data-annotation-id] img) {
 		@apply border-4 border-primary-400;
-	}
+	} */
+
+	/* :global(mark[data-annotation-color="Green"]) {
+		background-color: var(--highlight-green);
+	} */
+	/* :global(mark[data-annotation-color]) {
+		@apply bg-[var(--annotationColor)];
+	} */
+	/* :global(mark[data-annotation-color="Yellow"]) {
+		@apply bg-[var(--highlight-yellow)]  dark:bg-highlight-yellow-dark/40;
+	} */
 </style>

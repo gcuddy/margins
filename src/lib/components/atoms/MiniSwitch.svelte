@@ -20,7 +20,7 @@
 			checked={enabled}
 			on:change={(e) => (enabled = e.detail)}
 			class="{enabled
-				? 'bg-primary-600 active:bg-primary-700'
+				? 'bg-accent active:bg-accent/80'
 				: 'bg-gray-400 active:bg-gray-500'} relative inline-flex {size === 'sm'
 				? 'h-4 w-7'
 				: 'h-3 w-5'} shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2  focus-visible:ring-opacity-75 "

@@ -1,5 +1,7 @@
 <!-- <button on:click={signOutUser}>SIGN OUT</button> -->
 <script lang="ts">
+	import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
+
 	import type { LayoutData } from "./$types";
 	export let data: LayoutData;
 	import CommandPalette from "$lib/components/CommandPalette/CommandPalette.svelte";
@@ -10,7 +12,7 @@
 	import Developer from "$lib/components/Developer.svelte";
 	import Sidebar from "./Sidebar.svelte";
 	import GenericCommandPaletteContainer from "$lib/components/CommandPalette/GenericCommandPaletteContainer.svelte";
-	import { dev } from "$app/environment";
+	import { browser, dev } from "$app/environment";
 	import { mainEl } from "$lib/stores/main";
 	import { hideSidebar } from "$lib/stores/sidebar";
 	import { navigating, page } from "$app/stores";
@@ -21,6 +23,17 @@
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
+
+	// const queryClient = new QueryClient({
+	// 	defaultOptions: {
+	// 		queries: {
+	// 			enabled: browser,
+	// 		},
+	// 	},
+	// });
+	// REVIEW: also can do data.queryclient passed by layout.ts
+
+	$: console.log({ queryClient: data.queryClient });
 </script>
 
 <svelte:head />
@@ -31,41 +44,49 @@
 {#if dev}
 	<Developer />
 {/if}
-
-<div
-	class="bg-white text-dark caret-primary-500 dark:bg-gray-900 dark:text-gray-50"
-	data-transparency="true"
-	on:drag>
-	<Notifications />
-	<!-- Grid version -->
+<QueryClientProvider client={data.queryClient}>
 	<div
-		class="relative flex h-screen min-h-full w-full overflow-hidden {!$hideSidebar &&
-			'grid lg:grid-cols-[var(--sidebar-width)_1fr]'} "
-		style="--sidebar-width: {sidebarWidth}px;">
-		{#if $navigating}
-			<!-- TODO: shouldn't show for search -->
-			<PreloadingIndicator />
-		{/if}
-		<!-- sidebar, but should only be for some layouts -->
-		<!-- probably better to use layout groups, but this will do for now -->
-		{#if $page.route.id?.startsWith("/(app)/u:[username]/settings")}
-			<Sidebar bind:width={sidebarWidth}>
-				<SettingsSidebar />
-			</Sidebar>
-		{:else}
-			<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
-			<Sidebar bind:width={sidebarWidth} />
-		{/if}
-		<!-- bind:this={$mainEl} -->
-		<main class="relative flex grow flex-col place-items-stretch overflow-auto">
-			<slot />
-			<PodcastPlayer />
-		</main>
+		class="bg-base text-content caret-primary-500 dark:text-gray-50 simple-scrollbars"
+		data-transparency="true"
+		on:drag
+	>
+		<Notifications />
+		<!-- Grid version -->
+		<div
+			class="relative flex h-screen min-h-full w-full overflow-hidden "
+			style="--sidebar-width: {sidebarWidth}px;"
+		>
+			{#if $navigating}
+				<!-- TODO: shouldn't show for search -->
+				<PreloadingIndicator />
+			{/if}
+			<!-- sidebar, but should only be for some layouts -->
+			<!-- probably better to use layout groups, but this will do for now -->
+			{#if $page.route.id?.startsWith("/(app)/settings")}
+				<Sidebar bind:sidebarWidth>
+					<SettingsSidebar />
+				</Sidebar>
+			{:else}
+				<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
+				<Sidebar bind:sidebarWidth />
+			{/if}
+			<!-- bind:this={$mainEl} -->
+			<main class="relative flex grow flex-col place-items-stretch overflow-auto">
+				<slot />
+				<PodcastPlayer />
+			</main>
+		</div>
+		<DropBox />
+		<!-- hm: think command palettes should be like their own modals -->
+		<!-- TODO: figure out solution here; stacking bugs very possible -->
+		<CommandPalette />
+		<GenericCommandPaletteContainer />
+		<Modals />
 	</div>
-	<DropBox />
-	<!-- hm: think command palettes should be like their own modals -->
-	<!-- TODO: figure out solution here; stacking bugs very possible -->
-	<CommandPalette />
-	<GenericCommandPaletteContainer />
-	<Modals />
-</div>
+</QueryClientProvider>
+
+<style lang="postcss">
+	/* .simple-scrollbars :global(*) {
+		@apply scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-border scrollbar-thumb-rounded-lg scrollbar-track-transparent;
+	} */
+</style>

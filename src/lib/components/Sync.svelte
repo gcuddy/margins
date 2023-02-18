@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { navigating } from '$app/stores';
 
 	import { syncStore } from '$lib/stores/sync';
+	import { useIsFetching } from '@tanstack/svelte-query';
 	import { onDestroy } from 'svelte';
 	import Icon from './helpers/Icon.svelte';
 	// let navigating_id: string | undefined;
@@ -16,6 +16,8 @@
 	onDestroy(() => {
 		// unsubscribeNavigating();
 	});
+
+    const fetching = useIsFetching();
 </script>
 
 <!-- TODO: on hover, tooltip of title and progress -->
@@ -23,6 +25,6 @@
 
 <Icon
 	name="refresh"
-	className="h-4 w-4 stroke-gray-700 dark:stroke-gray-200 stroke-2 opacity-0 transition {$syncStore.length &&
+	className="h-4 w-4 stroke-gray-700 dark:stroke-gray-200 stroke-2 opacity-0 transition {($syncStore.length || $fetching) &&
 		'animate-spin !opacity-100'}"
 />

@@ -1,6 +1,6 @@
-import { AnnotationType, Prisma } from '@prisma/client';
+import { AnnotationType, Prisma } from "@prisma/client";
 
-import { db } from '$lib/db';
+import { db } from "$lib/db";
 
 // TODO: specify fields you need
 export async function getUserData(id: string) {
@@ -51,7 +51,7 @@ export async function getUserData(id: string) {
 		},
 	});
 	if (!user) {
-		throw Error('No user found');
+		throw Error("No user found");
 	}
 	return user;
 }
@@ -61,31 +61,27 @@ export type RootUserData = Prisma.PromiseReturnType<typeof getUserData>;
 export async function createDefaultStates(userId: string) {
 	const states: Prisma.StateCreateManyInput[] = [
 		{
-			name: 'Inbox',
-			type: 'inbox',
+			name: "Inbox",
+			type: "inbox",
 			position: 0,
-			read_later: false,
 			userId,
 		},
 		{
-			name: 'Next',
-			type: 'soon',
+			name: "Next",
+			type: "soon",
 			position: 0,
-			read_later: true,
 			userId,
 		},
 		{
-			name: 'Later',
-			type: 'later',
+			name: "Later",
+			type: "later",
 			position: 0,
-			read_later: true,
 			userId,
 		},
 		{
-			name: 'Archive',
-			type: 'archive',
+			name: "Archive",
+			type: "archive",
 			position: 0,
-			read_later: false,
 			userId,
 		},
 	];
@@ -96,7 +92,7 @@ export async function createDefaultStates(userId: string) {
 			})
 		)
 	);
-	const default_id = records.find((r) => r.name === 'Inbox')?.id;
+	const default_id = records.find((r) => r.name === "Inbox")?.id;
 	await db.user.update({
 		where: {
 			id: userId,

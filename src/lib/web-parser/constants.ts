@@ -256,7 +256,8 @@ export const WHITELIST_ATTRS = [
 	'alt',
 	'xlink:href',
 	'width',
-	'height'
+	'height',
+    'controls'
 ];
 
 export const WHITELIST_ATTRS_RE = new RegExp(`^(${WHITELIST_ATTRS.join('|')})$`, 'i');

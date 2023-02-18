@@ -1,4 +1,5 @@
 import type { HTMLElement } from 'node-html-parser';
+
 import { CANDIDATES_BLACKLIST, CANDIDATES_WHITELIST, WHITELIST_ATTRS_RE } from './constants';
 import { not } from './helpers';
 

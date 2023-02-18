@@ -10,6 +10,15 @@
 	import HighlightMenu from "$lib/components/HighlightMenu.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
 	import { entryData } from "$lib/entry";
+	import BookEntry from "$lib/features/books/BookEntry.svelte";
+	import AudioEntry from "$lib/features/entries/AudioEntry.svelte";
+	import BookmarkEntry from "$lib/features/entries/bookmarks/BookmarkEntry.svelte";
+	import ImageEntry from "$lib/features/entries/ImageEntry.svelte";
+	import { showEntrySelector } from "$lib/features/entries/queries";
+	import TweetEntry from "$lib/features/entries/TweetEntry.svelte";
+	import MovieEntry from "$lib/features/movies/MovieEntry.svelte";
+	import Episode from "$lib/features/podcasts/Episode.svelte";
+	import RecipeEntry from "$lib/features/recipes/RecipeEntry.svelte";
 	import { useCommands } from "$lib/hooks/use-commands";
 	import articleHeader from "$lib/stores/currentArticle/articleHeader";
 	import { mainEl, mainElScroll } from "$lib/stores/main";
@@ -18,8 +27,8 @@
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
-	import { archive } from "$lib/utils";
-	import type { Annotation, Tag } from "@prisma/client";
+	import { Annotation, DocumentType, Tag } from "@prisma/client";
+	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
 	import { TRPCClientError } from "@trpc/client";
 	import dayjs from "dayjs";
 	import localizedFormat from "dayjs/plugin/localizedFormat.js";
@@ -27,26 +36,41 @@
 	import { onDestroy } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
 	import { writable } from "svelte/store";
-	import { fade, slide } from "svelte/transition";
+	import { slide } from "svelte/transition";
 	import type { PageData } from "./$types";
+	import Booster from "./Booster.svelte";
 	import Highlighter from "./Highlighter.svelte";
 	import ReadingMenu from "./ReadingMenu.svelte";
 	import ReadingSidebar from "./ReadingSidebar.svelte";
 	import type { Metadata } from "./types";
+
 	dayjs.extend(localizedFormat);
 	export let data: PageData;
+	const queryClient = useQueryClient();
 	$: article = data.article;
+	// let article: RouterOutputs["entries"]["load"];
+	// $: query = createQuery({
+	// 	...entryDetailsQuery({
+	// 		id: data.id,
+	// 	}),
+	//     onSuccess: (data) => {
+	//         console.log({ data });
+	//         article = data;
+	//     },
+	// });
+
+	$: stylesheet = data.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
 	let entry: Metadata;
 	let annotations: Annotation[] = [];
 	let interaction: {
 		is_read: boolean | null;
 		progress: number | null;
 	} | null = null;
-	let tags: Tag[] = data.article.tags;
+	let tags: Tag[] = data.article?.tags;
 	let bookmark: ExtendedBookmark | null = null;
 
 	// TODO: fix this whole mess
-	$: if ("entryId" in data.article) {
+	$: if ("entryId" in data?.article) {
 		// bookmark
 		// TOOD: zod parsing
 		console.log({ data });
@@ -70,6 +94,17 @@
 	$: last_scroll_position = (interaction?.progress as number) || 0;
 	let errors: { message: string; path: string[] }[] | null = null;
 
+	$: nlpQuery = createQuery({
+		queryKey: ["nlp", { id: data.id }],
+		queryFn: () =>
+			trpc($page).nlp.query({
+				entryId: data.id,
+			}),
+		onSuccess: (nlp) => {
+			console.log({ nlp });
+		},
+	});
+	$: console.log({ $nlpQuery });
 	function useArticleCommands() {
 		const articleCommands: Command[] = [
 			{
@@ -136,7 +171,7 @@
 				icon: "inboxIn",
 				perform: async () => {
 					commandPaletteStore.open({
-						values: $page.data.states,
+						values: $page.data.user?.states,
 						itemIcon: (val, active) => {
 							return {
 								component: Icon,
@@ -232,6 +267,79 @@
 				perform: () => goto(`/${entry.id}/annotations/new`),
 				icon: "annotation",
 			},
+			{
+				id: "add-to-collection",
+				group: "article",
+				name: "Add to Collection",
+				perform: async () => {
+					// REVIEW: should we use createQuery here? Or just call trpc directly?
+					// I think we want to use query so we can do swr
+					// const query = createQuery({
+					// 	queryKey: ['collections'],
+
+					// })
+					const collections = await trpc($page).collections.list.query();
+
+					const values = [...collections];
+					commandPaletteStore.open({
+						values: collections,
+						// itemIcon: (val, active) => {
+						// 	return {
+						// 		component: Icon,
+						// 		props: {
+						// 			name: LOCATION_TO_ICON_SOLID[val.type],
+						// 		},
+						// 	};
+						// },
+						onSelect: async ({ detail }) => {
+							if (detail.id === "create-new" && (detail as unknown as any).value) {
+								// create new
+								const collection = await trpc($page).collections.create.mutate({
+									name: detail.value,
+									entryIds: [entry.id],
+								});
+								console.log({ collection });
+							} else {
+								const collection = await trpc($page).collections.addItem.mutate({
+									id: detail.id,
+									entryId: entry.id,
+								});
+								notifications.notify({
+									title: `Added entry to ${collection.name}`,
+									type: "success",
+									message: `<a href="/u:${$page.data.user?.username}/collection/${collection.id}">View ${collection.name}</a>`,
+									icon: collection.icon,
+								});
+							}
+						},
+						fallback: (input) => ({
+							title: `Create new collection: <span class="text-gray-500 dark:text-gray-400">"${input}"</span>`,
+							id: `create-new`,
+							icon: "plusSm",
+							value: input,
+						}),
+					});
+				},
+				icon: "squaresPlus",
+			},
+			{
+				id: "add-relation",
+				group: "article",
+				name: "Add relation",
+				icon: "arrowRightLeft",
+				perform: async () => {
+					// open entry selector, then add relation
+					showEntrySelector(queryClient, async ({ detail: entry }) => {
+						// add relation
+						await trpc($page).entries.createRelation.mutate({
+							entryId: article.id,
+							relatedEntryId: entry.id,
+							type: "related",
+						});
+						await invalidateAll();
+					});
+				},
+			},
 		];
 		return useCommands(articleCommands);
 	}
@@ -250,6 +358,22 @@
 	let context;
 
 	let last_saved_progress = 0;
+	afterNavigate(() => {
+		if ($mainEl) {
+			console.log({ $mainEl });
+			setTimeout(() => {
+				$mainEl?.focus();
+				console.log(document.activeElement);
+			}, 100);
+			if ($page.data.user?.username === $page.params.username) {
+				const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+				last_saved_progress = interaction?.progress || 0;
+				setTimeout(() => {
+					$mainEl.scrollTo(0, pos);
+				}, 10);
+			}
+		}
+	});
 	// afterNavigate(async (e) => {
 	// 	console.log(`mounting / afternavigate`, e);
 	// 	setTimeout(() => {
@@ -285,13 +409,13 @@
 	// 		// 	data.interaction = ogInteraction;
 	// 		// }
 	// 	}
-	// 	if ($page.data.user?.username === $page.params.username) {
-	// 		const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
-	// 		last_saved_progress = interaction?.progress || 0;
-	// 		setTimeout(() => {
-	// 			$mainEl.scrollTo(0, pos);
-	// 		}, 10);
-	// 	}
+	// if ($page.data.user?.username === $page.params.username) {
+	// 	const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+	// 	last_saved_progress = interaction?.progress || 0;
+	// 	setTimeout(() => {
+	// 		$mainEl.scrollTo(0, pos);
+	// 	}, 10);
+	// }
 	// });
 	const saveProgress = async (data: number) => {
 		if ($navigating) return;
@@ -299,6 +423,10 @@
 		if (!data && data !== 0) return;
 		if (Math.abs(last_saved_progress - data) < 0.005) return;
 		last_saved_progress = data;
+		await trpc($page).entries.updateInteraction.mutate({
+			id: article.id,
+			progress: data,
+		});
 		// await fetch(`/api/interactions`, {
 		// 	method: 'POST',
 		// 	headers: {
@@ -361,7 +489,9 @@
 <!-- TODO: implement layout select -->
 <!-- <div class="options">
 	<LayoutSelect />
-</div> --><svelte:window
+</div> -->
+
+<svelte:window
 	on:mousemove={mousemove}
 	on:keydown={(e) => {
 		// cmd+c
@@ -391,13 +521,13 @@
 	<title>{entry.title}</title>
 </svelte:head>
 
-{@html `<` + `style>${data.stylesheet?.css}</style>`}
+{@html `<` + `style>${data?.css}</style>`}
 {#if errors?.length}
 	{#each errors as error}
 		<small class="text-red-500">{error.message}</small>
 	{/each}
 {/if}
-<div class="flex flex-col overflow-hidden bg-skin-entry-bg dark:bg-gray-900">
+<div class="flex grow flex-col overflow-hidden bg-skin-entry-bg">
 	<div
 		on:dblclick|preventDefault|stopPropagation={(e) => {
 			console.log(e);
@@ -406,75 +536,121 @@
 		data-content-container
 		class="relative flex h-full grow items-stretch overflow-hidden"
 	>
-		<div class="grow overflow-auto" bind:this={$mainEl}>
-			<article class="mx-auto mt-14 max-w-3xl py-8 px-4">
-				<header class="space-y-3 pb-4" bind:this={$articleHeader}>
-					<a
-						class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
-						href={article.feedId
+		<div
+			class="simple-scrollbar article-container relative flex grow flex-col items-stretch overflow-auto focus-visible:outline-none"
+			bind:this={$mainEl}
+			tabindex="-1"
+		>
+			<!-- TODO: py-8 px-4 should be set on a per-type basis -->
+			<article data-article class="mx-auto mt-14  ">
+				{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
+					<header class="space-y-3 pb-4 max-w-prose" bind:this={$articleHeader}>
+						<!-- {article.feedId
 							? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
-							: article.uri}
-					>
-						<img
-							src="https://icon.horse/icon/?uri={article.uri}"
-							class="h-5 w-5 rounded-full object-cover"
-							alt=""
-						/>
-						<span class="truncate">{entry.siteName || entry.uri}</span></a
-					>
-					<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
-
-					<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
-					{#if entry.summary}
-						<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
-							{entry.summary}
-						</div>
-					{/if}
-
-					<div class="flex justify-between">
-						<div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
-							{#if entry.author}
-								<p><a href="/author/{entry.author}">{entry.author}</a></p>
-							{/if}
-							{#if entry.author && entry.published}
-								<!-- <p>&middot;</p> -->
-							{/if}
-							{#if entry.published}
-								<p>{dayjs(entry.published).format("ll")}</p>
-							{/if}
-							{#if entry.wordCount}
-								<span>{entry.wordCount} words</span>
-							{/if}
-						</div>
-					</div>
-					{#if !data.authorized}
-						<span class="rounded bg-amber-400 px-1 text-white">
-							Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
-						</span>
-					{/if}
-					{#if data.authorized && data.article.bookmark && data.article.tags}
-						<div transition:slide|local>
-							<TagInputCombobox
-								original={{ ...data.article }}
-								allTags={$page.data.tags}
-								tags={data.article.tags.map((tag) => ({
-									...tag,
-									...$page.data.tags?.find((t) => t.id === tag.id),
-								}))}
+							: article.uri} -->
+						<a
+							class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
+							href={article.uri}
+						>
+							<img
+								src="https://icon.horse/icon/?uri={article.uri}"
+								class="h-5 w-5 rounded-full object-cover"
+								alt=""
 							/>
+							<span class="truncate">{entry.siteName || entry.uri}</span></a
+						>
+						<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
+
+						<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
+						{#if entry.summary}
+							<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
+								{entry.summary}
+							</div>
+						{/if}
+
+						<div class="flex justify-between">
+							<div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
+								{#if entry.author}
+									<p><a href="/author/{entry.author}">{entry.author}</a></p>
+								{/if}
+								{#if entry.author && entry.published}
+									<!-- <p>&middot;</p> -->
+								{/if}
+								{#if entry.published}
+									<p>{dayjs(entry.published).format("ll")}</p>
+								{/if}
+								{#if entry.wordCount}
+									<span>{entry.wordCount} words</span>
+								{/if}
+							</div>
 						</div>
+						{#if !data.authorized}
+							<span class="rounded bg-amber-400 px-1 text-white">
+								Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
+							</span>
+						{/if}
+						{#if data.authorized && data.article.bookmark && data.article.tags}
+							<div transition:slide|local>
+								<TagInputCombobox
+									original={{ ...data.article }}
+									allTags={$page.data.tags}
+									tags={data.article.tags.map((tag) => ({
+										...tag,
+										...$page.data.tags?.find((t) => t.id === tag.id),
+									}))}
+								/>
+							</div>
+						{/if}
+					</header>
+					{#if article.type === DocumentType.audio}
+						<AudioEntry entry={article} />
 					{/if}
-				</header>
-				<!-- this is a very rudimentary check lol -->
-				<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
-					{@html entry.html || entry.text || entry.summary || "[No content]"}
-				</Highlighter>
-				<noscript>
-					<HighlightMenu noHighlight={true} articleId={article.id} />
-				</noscript>
+					<!-- this is a very rudimentary check lol -->
+					<div id="entry-container">
+						<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
+							{@html entry.html || entry.text || entry.summary || "[No content]"}
+						</Highlighter>
+					</div>
+					<noscript>
+						<HighlightMenu noHighlight={true} articleId={article.id} />
+					</noscript>
+				{:else if article.type === DocumentType.book}
+					<BookEntry entry={article} bookId={article?.googleBooksId} />
+				{:else if article.type === DocumentType.bookmark}
+					<BookmarkEntry entry={article} />
+                {:else if article.type === DocumentType.image}
+                    {#if article.image}
+                        <ImageEntry image={article.image} />
+                    {/if}
+				{:else if article.type === "movie"}
+					<MovieEntry id={data.article.tmdbId} />
+				{:else if article.type === DocumentType.audio && article.podcastIndexId}
+					<!-- decide if podcast or not podcast -->
+					{#if article.podcastIndexId}
+						<Episode episodeId={article.podcastIndexId} />
+					{:else}
+						<AudioEntry entry={article} />
+					{/if}
+				{:else if article.type === "tweet"}
+					<!-- {JSON.stringify(article)} -->
+
+					<TweetEntry tweet={article.original} />
+				{:else if article.type === DocumentType.recipe && article.recipe}
+					<!-- TODO: display html or recipe -->
+                   <RecipeEntry recipe={article.recipe} />
+				{/if}
 			</article>
 		</div>
 		<!-- Reading Sidebar -->
 		<ReadingSidebar bind:entry={data.article} />
+		{#if data.css}
+			<Booster bind:css={data.css} />
+		{/if}
 	</div>
 </div>
+
+<style lang="postcss">
+	.article-container {
+		scrollbar-gutter: auto;
+	}
+</style>

@@ -1,6 +1,8 @@
 import { createCaller, type RouterInputs } from "$lib/trpc/router";
+import { annotationWithBodySchema } from "$lib/trpc/routes/annotations";
 import { fail } from "@sveltejs/kit";
 import { match, P } from "ts-pattern";
+import { z } from "zod";
 import type { Actions, Action } from "./$types";
 
 type TRPCAnnotations = RouterInputs["annotations"];
@@ -9,37 +11,29 @@ type TRPCActions = Partial<Record<keyof TRPCAnnotations, Action>>;
 
 // TODO: type return value to be same as return value of trpc
 
+const updateSchema = z.object({
+	id: z.number(),
+	body: z.string().optional(),
+	private: z.boolean().optional(),
+});
+
 export const actions: TRPCActions = {
 	reply: async (e) => {
-		const data = await e.request.formData();
-		const id = data.get("id");
-		const body = data.get("body");
-		return await match([id, body])
-			.with([P.string, P.string], async ([id, body]) => {
-				if (!body) {
-					// TODO: to make this more elegant should put in the pattern matching
-					return fail(400, {
-						body: false,
-					});
-				}
-				const { annotations } = await createCaller(e);
-				return annotations.reply({
-					id: +id,
-					body,
-				});
-			})
-			.otherwise(([id, body]) =>
-				fail(400, {
-					id: !!id,
-					body: !!body,
-				})
-			);
+		const data = Object.fromEntries(await e.request.formData());
+		const replyData = annotationWithBodySchema.safeParse(data);
+		if (replyData.success) {
+			const { annotations } = await createCaller(e);
+			return annotations.reply(replyData.data);
+		} else {
+			return fail(400, { errors: replyData.error.errors });
+		}
 	},
-	// loadReplies: async (e) => {
-	//     const data = await e.request.formData();
-	//     const id  = data.get("id");
-	//     if (id && typeof id === "string") {
-	//         const
-	//     }
-	// },
+	update: async (e) => {
+		const data = Object.fromEntries(await e.request.formData());
+		const updateData = updateSchema.safeParse(data);
+		if (updateData.success) {
+			const caller = await createCaller(e);
+			await caller.annotations.save(updateData.data);
+		}
+	},
 };

@@ -1,20 +1,19 @@
-import type { ComponentProperties } from '$lib/stores/types';
-import { writable } from 'svelte/store';
-import type GenericCommandPalette from './GenericCommandPalette.svelte';
+import type { ComponentProperties } from "$lib/stores/types";
+import { writable } from "svelte/store";
+import type GenericCommandPalette from "./GenericCommandPalette.svelte";
 
 function createCommandPaletteStore<TValue>() {
-	type T = ComponentProperties<GenericCommandPalette<{}>>;
-
-	interface State {
+	interface State<T extends { id: string | number }> {
 		isOpen: boolean;
-		props?: ComponentProperties<GenericCommandPalette<{}>>;
+		props?: ComponentProperties<GenericCommandPalette<T>>;
 	}
-	const { subscribe, set, update } = writable<State>({
-		isOpen: false
+	const { subscribe, set, update } = writable<State<{ id: number }>>({
+		isOpen: false,
 	});
 	// TODO: fix types so that when you pass in something to values in props, it works (all the other props are from that generic)
-	function open<T>(props: State['props'], open = true) {
-		console.log('recived open request');
+
+	function open<T extends { id: string | number }>(props: State<T>["props"], open = true) {
+		console.log("recived open request");
 		update((state) => {
 			state.isOpen = open;
 			state.props = props;
@@ -25,7 +24,7 @@ function createCommandPaletteStore<TValue>() {
 		open,
 		subscribe,
 		set,
-		update
+		update,
 	};
 }
 

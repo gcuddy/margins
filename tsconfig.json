@@ -9,19 +9,12 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
+		"preserveValueImports": false,
 		"paths": {
-			"$lib": [
-				"src/lib"
-			],
-			"$lib/*": [
-				"src/lib/*"
-			],
-			"@": [
-				"src"
-			],
-			"@/*": [
-				"src/*"
-			]
-		},
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"],
+			"@": ["./src"],
+			"@/*": ["./src/*"]
+		}
 	}
 }

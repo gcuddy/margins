@@ -1,0 +1,102 @@
+<script lang="ts">
+	import { page } from "$app/stores";
+	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
+	import { isTouchDevice } from "$lib/utils";
+	import type { Annotation, Tag } from "@prisma/client";
+
+	import { createEventDispatcher, tick } from "svelte";
+	import { onMount } from "svelte";
+	import { match } from "ts-pattern";
+	import Button from "../Button.svelte";
+	import GenericTextarea from "../GenericTextarea.svelte";
+	import Icon from "../helpers/Icon.svelte";
+	import TagEntry from "../TagEntry.svelte";
+	import TipTap from "../TipTap.svelte";
+	export let value = "";
+	export let el: HTMLElement | undefined = undefined;
+	export let textarea: HTMLElement | undefined = undefined;
+	export let include_tags = true;
+	export let scrollIntoView = true;
+	export let confirmButtonStyle: "ghost" | "confirm" = "confirm";
+	export let allTags: Tag[] = [];
+	export let shadow_focus = false;
+	export let name = "annotation";
+	export let placeholder = "Add an annotation…";
+	export let rows = 4;
+    export let annotation: Annotation | undefined = undefined;
+	$: console.log({ allTags });
+	export let size: "sm" | "base" = "sm";
+	const dispatch = createEventDispatcher<{
+		save: {
+			value: string;
+			// done: typeof doneSaving;
+		};
+		cancel: void;
+	}>();
+	export let focused = false;
+
+	let className = "";
+	export { className as class };
+	onMount(() => {
+		textarea?.focus();
+		if (scrollIntoView) {
+			textarea?.scrollIntoView({
+				block: "nearest",
+			});
+		}
+	});
+
+	export let saving = false;
+	const doneSaving = () => (saving = false);
+</script>
+
+<!-- TODO: TURN INTO FORM -->
+
+<!-- transparency is a bit much (and maybe causes gpu performance issues), but here were the classes: dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200 -->
+<div
+	bind:this={el}
+	class="annotation-input not-prose relative z-50 flex min-w-[min(var(--min-width,300px,100vh,100%))] max-w-prose resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-200 bg-elevation p-2.5 font-sans   transition-shadow  transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-0 dark:ring-1  dark:ring-gray-400/10 focus-within:dark:ring-gray-400/20  transparency:dark:bg-gray-800 {className} {shadow_focus &&
+	focused
+		? 'shadow-lg'
+		: shadow_focus
+		? 'shadow'
+		: ''}"
+>
+	<div class="resizer absolute bottom-0 right-0">
+		<!-- <Icon name="" /> -->
+		<!-- TODO: 8 direction resize -->
+	</div>
+	<!-- todo: auto expand -->
+	<div class="no-drag w-full cursor-default">
+		<TipTap {placeholder} config={{
+            content: annotation?.contentData || ''
+        }} />
+		{#if include_tags}
+			<div class="flex grow items-center font-normal">
+				<!-- <TagEntry {size} bind:tags className="grow text-xs not-italic" {allTags} /> -->
+			</div>
+		{/if}
+	</div>
+	<div class="flex flex-row items-center justify-end space-x-2 self-stretch">
+		<slot name="buttons">
+			<!-- //todo -->
+			<Button variant="ghost" on:click={() => dispatch("cancel")}>Cancel</Button>
+			<Button variant={confirmButtonStyle} type="submit" on:click={() => dispatch("save", { value })}>
+				{#if saving}
+					<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+				{:else}
+					Save
+				{/if}
+			</Button>
+		</slot>
+	</div>
+</div>
+
+<style>
+	:global(.neodrag-dragging) textarea {
+		cursor: grabbing !important;
+	}
+	.annotation-input {
+		transform: scale(var(--scale));
+	}
+</style>

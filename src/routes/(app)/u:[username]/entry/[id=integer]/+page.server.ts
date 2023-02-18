@@ -1,46 +1,35 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from "@sveltejs/kit";
+import { match } from "ts-pattern";
 
-import { db } from '$lib/db';
-import { getJsonFromRequest } from '$lib/utils';
+import { db } from "$lib/db";
+import { saveAnnotationSchema } from "$lib/prisma/zod-inputs";
+import { createContext } from "$lib/trpc/context";
+import { appRouter, createCaller } from "$lib/trpc/router";
+import { getJsonFromRequest } from "$lib/utils";
 
-import { createContext } from '$lib/trpc/context';
-import { appRouter, createCaller } from '$lib/trpc/router';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async (evt) => {
-	const { session, user } = await evt.locals.validateUser();
-	if (!session) {
-		throw redirect(302, '/login');
-	}
-	let authorized = true;
-	if (user?.username !== evt.params.username) {
-		// check if public, else say you don't have access
-		authorized = false;
-	}
+	// const { session, user } = await evt.locals.validateUser();
+	// if (!session) {
+	// 	throw redirect(302, "/login");
+	// }
+	const authorized = true;
+	// if (user?.username !== evt.params.username) {
+	// 	// check if public, else say you don't have access
+	// 	authorized = false;
+	// }
 	const { id } = evt.params;
-	const caller = await createCaller(evt);
-	// const [entry, bookmark] = await Promise.all([caller.public.loadEntry({
-	// 	id: +id
-	// }),
-	// caller.bookmarks.byEntry({
-	// 	entryId: +id
-	// })
-	// ]);
-	const entry = await caller.entries.load({
-		id: +id
-	});
+	// const caller = await createCaller(evt);
+	// const rss = Boolean(evt.cookies.get("rss"));
+	// const entry = await caller.entries.load({
+	// 	id: +id,
+	// });
 	return {
-		article: {
-			...entry,
-		},
 		// article: {
 		// 	...entry,
-		// 	bookmark,
-		// 	tags: [],
-		// 	annotations: [],
-		// 	unread: false
 		// },
-		user,
+        id: +id,
 		authorized,
 	};
 };
@@ -51,12 +40,12 @@ export const actions: Actions = {
 			const { params, locals, request } = evt;
 			const { user } = await locals.validateUser();
 			if (!user) {
-				throw error(401, 'Not authorized');
+				throw error(401, "Not authorized");
 			}
 			const data = await request.formData();
-			const stateId = (data.get('stateId') as string | undefined) || user.default_state_id;
-			const id = data.get('id') || '';
-			const uri = data.get('url') as string;
+			const stateId = (data.get("stateId") as string | undefined) || user.default_state_id;
+			const id = data.get("id") || "";
+			const uri = data.get("url") as string;
 			console.log({ id, uri });
 			const serverRouter = appRouter.createCaller(await createContext(evt));
 			if (+id) {
@@ -76,7 +65,7 @@ export const actions: Actions = {
 					url: uri,
 					entryId: Number(params.id),
 					stateId: Number(stateId),
-				})
+				});
 				// const bookmark = await db.bookmark.create({
 				// 	data: {
 				// 		uri,
@@ -86,7 +75,7 @@ export const actions: Actions = {
 			}
 		} catch (e) {
 			console.error(e);
-			throw error(400, 'error saving');
+			throw error(400, "error saving");
 		}
 	},
 	tag: async (evt) => {
@@ -101,7 +90,7 @@ export const actions: Actions = {
 			id?: string;
 			name: string;
 		}[]; // not quite right type, could include {id, name}
-		const newTags = tags.filter((t) => !t.id);
+		const newTags = tags?.filter((t) => !t.id);
 		// Sequential transaction - create any tags that need creating, then set the value of the entry's tags to be the tags passed in
 		db.$transaction([
 			db.tag.createMany({
@@ -134,23 +123,24 @@ export const actions: Actions = {
 	},
 	download: async (evt) => {
 		// Downloads custom data to entrydata
-		const url = (await evt.request.formData()).get("url")
+		const url = (await evt.request.formData()).get("url");
 		if (!url || typeof url !== "string") {
 			return fail(400, {
-				message: "missing url"
-			})
+				message: "missing url",
+			});
 		}
 		const serverRouter = appRouter.createCaller(await createContext(evt));
 		const article = await serverRouter.public.parse(url as string);
-		console.log({ article })
+		console.log({ article });
 		const entryData = await serverRouter.entries.addData({
 			id: +evt.params.id,
-			article
+			// @ts-expect-error
+			article,
 		});
-		console.log({ entryData })
+		console.log({ entryData });
 		return {
-			entryData
-		}
+			entryData,
+		};
 	},
 	note: async (evt) => {
 		const caller = await createCaller(evt);
@@ -159,36 +149,69 @@ export const actions: Actions = {
 		const annotation = data.get("annotation");
 		if (typeof annotation !== "string" || !annotation) {
 			return fail(400, {
-				annnotation: false
-			})
+				annnotation: false,
+			});
 		}
 		const createdAnnotation = await caller.annotations.note({
 			entryId: +params.id,
-			body: annotation
+			body: annotation,
 		});
 		return {
-			annotation: createdAnnotation
-		}
+			annotation: createdAnnotation,
+		};
 	},
 	updateNote: async (evt) => {
 		const caller = await createCaller(evt);
 		const { request, params } = evt;
 		const data = await request.formData();
 		const annotation = data.get("annotation");
-		const id = data.get('id');
+		const id = data.get("id");
 		if (typeof annotation !== "string" || !annotation || typeof id !== "string" || !id) {
 			return fail(400, {
-				missing: true
-			})
+				missing: true,
+			});
 		}
-		const updatedAnnotation = await caller.annotations.update({
+		const updatedAnnotation = await caller.annotations.save({
 			id: +id,
-			data: {
-				body: annotation
-			}
-		})
+			body: annotation,
+		});
 		return {
-			annotation: updatedAnnotation
-		}
+			annotation: updatedAnnotation,
+		};
 	},
+	annotate: async (evt) => {
+		const data = Object.fromEntries(await evt.request.formData());
+		const annotation = saveAnnotationSchema.safeParse(data);
+		return match(annotation)
+			.with({ success: true }, async ({ data }) => {
+				const caller = await createCaller(evt);
+				const annotation = await caller.annotations.save({
+					...data,
+					entryId: +evt.params.id,
+				});
+				return annotation;
+			})
+			.with({ success: false }, ({ error }) => fail(400, { error }))
+			.exhaustive();
+	},
+	favorite: async (evt) => {
+		const caller = await createCaller(evt);
+		const { params } = evt;
+		const favorite = await caller.favorites.toggle({
+			entryId: +params.id,
+		});
+		return {
+			favorite,
+		};
+	},
+    log: async (evt) => {
+        const caller = await createCaller(evt);
+        const { params } = evt;
+        const log = await caller.log.push({
+            entryId: +params.id,
+        });
+        return {
+            log
+        }
+    }
 };

@@ -1,9 +1,9 @@
 // lib/trpc/context.ts
-import type { RequestEvent } from '@sveltejs/kit';
-import type { inferAsyncReturnType, Maybe } from '@trpc/server';
-import { TRPCError } from '@trpc/server';
+import type { RequestEvent } from "@sveltejs/kit";
+import type { inferAsyncReturnType, Maybe } from "@trpc/server";
+import type { Session } from "lucia-auth";
+
 import { db } from "$lib/db";
-import type { Session } from 'lucia-auth';
 
 async function getUser(sesh: Maybe<Session>) {
 	if (!sesh) {
@@ -11,7 +11,7 @@ async function getUser(sesh: Maybe<Session>) {
 	}
 	const user = await db.user.findUnique({
 		where: {
-			id: sesh.userId
+			id: sesh.userId,
 		},
 		select: {
 			// subscriptions: {
@@ -31,32 +31,30 @@ async function getUser(sesh: Maybe<Session>) {
 				select: {
 					id: true,
 					name: true,
-					type: true
-				}
-			}
-		}
-	})
+					type: true,
+				},
+			},
+		},
+	});
 	if (!user) {
 		return null;
 	}
 	return {
 		...user,
-	}
-
+	};
 }
 
 export async function createContext(event: RequestEvent) {
-	const session = await event.locals.validate();
-	console.log(`trpc-context`, { event, session })
+	const session = await event.locals.validateUser();
 
 	// REVIEW: this is what cal.com does, but is it a bad idea for speed to do this?
-	const user = await getUser(session);
-	console.log(`trpc-context`, { user })
+	// const user = await getUser(session);
 	return {
-		// context information
-		userId: session?.userId || '',
+		// context informationj
+		userId: session?.session?.userId || "",
 		prisma: db,
-		user,
+        user: session?.user
+		// user,
 	};
 }
 

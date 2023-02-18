@@ -19,6 +19,7 @@
 	import Button from './Button.svelte';
 	const dispatch = createEventDispatcher<{
 		save: ViewOptions;
+        view: ViewOptions["view"]
 	}>();
 	const [popperRef, popperContent] = createPopperActions({
 		placement: 'bottom-end',
@@ -89,9 +90,10 @@
 						<label class="grow" for="">
 							<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm">View</SmallPlus>
 						</label>
-						<MiniSelect bind:value={viewOptions.view}>
+						<MiniSelect on:change={() => dispatch("view", viewOptions.view)} bind:value={viewOptions.view}>
 							<option value="list">List</option>
 							<option value="grid">Grid</option>
+							<option value="kanban">Kanban</option>
 						</MiniSelect>
 					</div>
 					<div class="flex items-center justify-between">

@@ -16,7 +16,7 @@
 
 {#if visible}
 	<div class="progress-container">
-		<div class="progress bg-lime-500" style="width: {p * 100}%" />
+		<div class="progress bg-accent" style="width: {p * 100}%" />
 	</div>
 {/if}
 
@@ -44,7 +44,7 @@
 	}
 
 	.fade {
-		@apply bg-white/30 dark:bg-black/30;
+		@apply bg-base/30;
 		position: fixed;
 		width: 100%;
 		height: 100%;

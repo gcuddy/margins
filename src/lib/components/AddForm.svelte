@@ -1,28 +1,32 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
-	import { page } from '$app/stores';
-	import type parse from '$lib/parse';
-	import { modals } from '$lib/stores/modals';
-	import { notifications } from '$lib/stores/notifications';
-	import type { Location } from '$lib/types/schemas/Locations';
-	import { getUser } from '@lucia-auth/sveltekit/client';
-	import type { State } from '@prisma/client';
-	import MiniSwitch from './atoms/MiniSwitch.svelte';
-	import Button from './Button.svelte';
-	import GenericInput from './GenericInput.svelte';
-	import GenericTextarea from './GenericTextarea.svelte';
-	import Icon from './helpers/Icon.svelte';
-	import LinkPreview from './LinkPreview.svelte';
-	import LocationListbox from './LocationListbox.svelte';
-	import StateCombobox from './StateCombobox.svelte';
-	import TagEntry from './TagEntry.svelte';
+	import { enhance } from "$app/forms";
+	import { invalidateAll } from "$app/navigation";
+	import { page } from "$app/stores";
+	import type parse from "$lib/parse";
+	import { modals } from "$lib/stores/modals";
+	import { notifications } from "$lib/stores/notifications";
+	import { trpc } from "$lib/trpc/client";
+	import type { Location } from "$lib/types/schemas/Locations";
+	import { getUser } from "@lucia-auth/sveltekit/client";
+	import type { State } from "@prisma/client";
+	import { createQuery } from "@tanstack/svelte-query";
+	import { fade } from "svelte/transition";
+	import MiniSwitch from "./atoms/MiniSwitch.svelte";
+	import Button from "./Button.svelte";
+	import GenericInput from "./GenericInput.svelte";
+	import GenericTextarea from "./GenericTextarea.svelte";
+	import Icon from "./helpers/Icon.svelte";
+	import LinkPreview from "./LinkPreview.svelte";
+	import LocationListbox from "./LocationListbox.svelte";
+	import StateCombobox from "./StateCombobox.svelte";
+	import TagEntry from "./TagEntry.svelte";
+	import TypeListbox from "./ui/TypeListbox.svelte";
 
-	export let url = '';
-	export let location: Location = 'inbox';
+	export let url = "";
+	export let location: Location = "inbox";
 	export let stateId: number = $page.data.user?.default_state_id as number;
-	export let state: State = $page.data.states?.find((s) => s.id === stateId) as State;
-	export const test = 'hello';
+	export let state: State = $page.data.user?.states?.find((s) => s.id === stateId) as State;
+	export const test = "hello";
 	$: console.log({ location });
 
 	let textarea: HTMLElement | undefined;
@@ -38,6 +42,16 @@
 	const user = getUser();
 
 	console.log({ $modals });
+
+	$: query = createQuery({
+		queryKey: ["parse", url],
+		queryFn: async () => trpc($page).public.parse.query(url),
+		enabled: false,
+		staleTime: 1000 * 60,
+		refetchOnWindowFocus: false,
+	});
+
+	$: console.log({ $query });
 </script>
 
 <!-- modal: transparent etc -->
@@ -56,23 +70,23 @@
 		loading = true;
 		console.log({ $modals });
 		return async ({ result, update }) => {
-			if (result.type === 'success') {
+			if (result.type === "success") {
 				invalidateAll().then(() => {
 					console.log({ $modals });
 
 					modals.close({
-						id: 'add-url',
+						id: "add-url",
 					});
 				});
 				return;
 			}
 			// update();
 			// await invalidateAll();
-			if (result.type === 'error') {
-				console.error('ERROROR');
+			if (result.type === "error") {
+				console.error("ERROROR");
 				notifications.notify({
-					type: 'error',
-					message: 'Missing URL',
+					type: "error",
+					message: "Missing URL",
 				});
 				update();
 			}
@@ -97,13 +111,18 @@
 					variant="button"
 					size="xs"
 				/> -->
-				{#if fetched_data}
+				{#if $query.isInitialLoading || $query.isSuccess}
 					<div
+						in:fade
 						class="flex h-6 flex-1 items-center gap-2 truncate rounded px-2 text-sm dark:bg-gray-600 dark:text-gray-300"
 					>
-						<span class="truncate">{fetched_data.title || '[No title]'}</span>
-						{#if fetched_data.image}
-							<img class="h-full p-1" src={fetched_data.image} alt="" />
+						{#if $query.isInitialLoading}
+							<Icon name="loading" className="h-4 w-4 animate-spin" />
+						{:else if $query.isSuccess && $query.data}
+							{#if $query.data.image}
+								<img class="h-full p-1" src={$query.data.image} alt="" />
+							{/if}
+							<span class="truncate">{$query.data.title || "[No title]"}</span>
 						{/if}
 					</div>
 				{/if}
@@ -113,19 +132,19 @@
 					<Button
 						variant="naked"
 						tooltip={{
-							text: 'Expand',
+							text: "Expand",
 						}}><Icon name="arrowsPointingOutMini" className="h-4 w-4 fill-gray-500" /></Button
 					>
 					<Button
 						variant="naked"
 						on:click={() => {
 							modals.close({
-								id: 'add-url',
+								id: "add-url",
 							});
 						}}
 						tooltip={{
-							text: 'Dismiss',
-							kbd: 'Escape',
+							text: "Dismiss",
+							kbd: "Escape",
 						}}><Icon name="xMarkMini" className="h-4 w-4 fill-gray-500" /></Button
 					>
 				</div>
@@ -147,7 +166,7 @@
 				}}
 				on:keydown={(e) => {
 					console.log({ e });
-					if (e.key === 'Enter') {
+					if (e.key === "Enter") {
 						e.preventDefault();
 						textarea?.focus();
 					}
@@ -156,9 +175,10 @@
 				on:blur={async () => {
 					if (!url) return;
 					try {
-						const u = new URL(url);
-						const res = await fetch(`/api/parse?url=${encodeURIComponent(u.href)}`);
-						fetched_data = await res.json();
+						new URL(url);
+						$query.refetch();
+						// const res = await fetch(`/api/parse?url=${encodeURIComponent(u.href)}`);
+						// fetched_data = await res.json();
 					} catch (e) {
 						console.error(e);
 						url_error = true;
@@ -171,39 +191,37 @@
 				{/if}
 			</div> -->
 		</div>
-		<GenericTextarea
-			bind:el={textarea}
-			name="note"
-			placeholder="Add note…"
-			rows={1}
-			variant="naked"
-		/>
+		<GenericTextarea bind:el={textarea} name="note" placeholder="Add note…" rows={1} variant="naked" />
 		<div class="flex items-center">
 			<TagEntry className="grow" allTags={$page.data.allTags} />
 		</div>
-		<div class="flex max-w-full items-center justify-end gap-4 px-2">
-			<MiniSwitch
-				class="flex items-center justify-between gap-1 text-sm text-gray-500"
-				label="Private"
-				size="xs"
-				enabled
-				labelOnRight
-				name="private"
-			/>
-			<MiniSwitch
-				class="flex items-center justify-between gap-1 text-sm text-gray-500"
-				label="Read Later"
-				size="xs"
-				enabled
-				labelOnRight
-				name="readLater"
-			/>
-			<Button type="submit" size="lg" disabled={loading} className="place-self-end space-x-2">
-				{#if !loading}<span>Save article</span>
-				{:else}
-					<Icon name="loading" className="h-5 w-5 animate-spin text-current" />
-				{/if}
-			</Button>
+		<div class="flex w-full justify-between px-2">
+			<!-- TODO: better component -->
+			<TypeListbox selected={$query.data?.type || "article"} />
+			<div class="flex max-w-full items-center justify-end gap-4">
+				<MiniSwitch
+					class="flex items-center justify-between gap-1 text-sm text-gray-500"
+					label="Private"
+					size="xs"
+					enabled
+					labelOnRight
+					name="private"
+				/>
+				<MiniSwitch
+					class="flex items-center justify-between gap-1 text-sm text-gray-500"
+					label="Read Later"
+					size="xs"
+					enabled
+					labelOnRight
+					name="readLater"
+				/>
+				<Button type="submit" size="lg" disabled={loading} className="place-self-end space-x-2">
+					{#if !loading}<span>Save article</span>
+					{:else}
+						<Icon name="loading" className="h-5 w-5 animate-spin text-current" />
+					{/if}
+				</Button>
+			</div>
 		</div>
 	</div>
 </form>

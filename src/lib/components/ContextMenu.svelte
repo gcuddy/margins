@@ -98,7 +98,7 @@
 						<!-- can either slot in items yourself, or let component do it for you -->
 						<slot name="items" />
 						{#each items as group}
-							<div class="px-1">
+							<div class="flex flex-col px-1 ">
 								{#each group.filter( (g) => (g.check ? g.check() : true) ) as { href, label, icon, iconProps, perform, items }}
 									<MenuItem
 										as="button"
@@ -123,7 +123,7 @@
 												/>
 											{/if}
 										{/if}
-										<span class="grow cursor-default">
+										<span class="cursor-default">
 											{#if href}
 												<a {href}>{label}</a>
 											{:else}

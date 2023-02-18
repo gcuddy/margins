@@ -1,32 +1,33 @@
 <script lang="ts">
-	import { colors, type Color } from '$lib/types/colors';
-	export let color: Color;
-	export let hex: string = '';
-	export let className = '';
-	export let bg = 'gray-900';
-	// export let color: Color;
-	// $: hex = colors[color];
-	if (color === 'Amber') {
-		className = 'bg-amber-500 ring-amber-500 shadow-amber-500';
-	} else if (color === 'Blue') {
-		className = 'bg-blue-500 ring-blue-500 shadow-blue-500';
-	} else if (color === 'Green') {
-		className = 'bg-green-500 ring-green-500 shadow-green-500';
-	} else if (color === 'Indigo') {
-		className = 'bg-indigo-500  ring-indigo-500 shadow-indigo-500';
-	} else if (color === 'Red') {
-		className = 'bg-red-500 ring-red-500 shadow-red-500';
-	}
+	export let hex: string = "";
+	export let selected = false;
+	let c = "";
+	export { c as class };
+	export let checkmark = true;
+	export let hover = true;
+	export let as: keyof HTMLElementTagNameMap = "button";
 </script>
 
-<button
-	on:click
-	aria-label={color}
-	class="inline-flex focus-visible:outline-none focus-visible:ring-1"
->
-	<div color={hex} class="flex h-[22px] w-[22px] rounded-full p-0.5 ">
+<svelte:element this={as} on:click on:keydown class="group inline-flex focus-visible:outline-none {c}">
+	<div
+		style:--swatch={hex}
+		style:--size="var(--swatchSize,18px)"
+		color={hex}
+		class="flex h-[var(--size)] w-[var(--size)] rounded-full p-0.5 "
+	>
 		<div
-			class="w-5 rounded-full ring-offset-1 ring-offset-gray-900 hover:shadow hover:ring-1 {className}"
+			style:height="calc(var(--size) - 4px)"
+			style:width="calc(var(--size) - 4px)"
+			data-selected={checkmark ? selected : undefined}
+			class=" rounded-full bg-[var(--swatch)] shadow-[var(--swatch)] ring-[var(--swatch)] ring-offset-1 ring-offset-gray-900  group-focus:shadow group-focus:ring-1 {hover
+				? 'hover:shadow hover:ring-1'
+				: ''} {selected ? '' : ''}"
 		/>
 	</div>
-</button>
+</svelte:element>
+
+<style>
+	[data-selected="true"] {
+		background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='currentColor' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+	}
+</style>

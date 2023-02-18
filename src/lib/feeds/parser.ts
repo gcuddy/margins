@@ -1,16 +1,16 @@
-import { DocumentType, Prisma } from '@prisma/client';
-import dayjs from 'dayjs';
-import { XMLParser } from 'fast-xml-parser';
-import parse from 'node-html-parser';
-import { z } from 'zod';
+import { DocumentType, Prisma } from "@prisma/client";
+import dayjs from "dayjs";
+import { XMLParser } from "fast-xml-parser";
+import parse from "node-html-parser";
+import { z } from "zod";
 
-import { db } from '$lib/db';
-import { getImageFromHtml } from '$lib/jobs/refresher';
-import { jsonFeedSchema } from '$lib/types/schemas/feeds';
-import { stripEmptyTags } from '$lib/utils/sanitize';
+import { db } from "$lib/db";
+import { getImageFromHtml } from "$lib/jobs/refresher";
+import { jsonFeedSchema } from "$lib/types/schemas/feeds";
+import { stripEmptyTags } from "$lib/utils/sanitize";
 
-import { subscriptionApiSelect } from './types';
-import { getLink, getText, isJson, isXml, linkSelectors, normalizeUrl, resolveUrl } from './utils';
+import { subscriptionApiSelect } from "./types";
+import { getLink, getText, isJson, isXml, linkSelectors, normalizeUrl, resolveUrl } from "./utils";
 
 export interface Feed {
 	input: string;
@@ -22,7 +22,7 @@ export interface Feed {
 }
 const parser = new XMLParser({
 	ignoreAttributes: false,
-	attributeNamePrefix: '',
+	attributeNamePrefix: "",
 });
 
 /**
@@ -44,20 +44,20 @@ export async function findFeed(feedUrl: string): Promise<{
 		const url = new URL(normalizeUrl(feedUrl));
 		console.log({ url: url.toString(), feedUrl });
 		const response = await fetch(url, {
-			method: 'GET',
+			method: "GET",
 			// TODO: headers saying we come in peace
 		});
 		console.log({ response });
 		if (!response.ok) {
-			console.error('Could not find feed.');
+			console.error("Could not find feed.");
 			return {
 				input: feedUrl,
 				feeds: [],
 			};
 		}
 		const body = await response.text();
-		const contentType = response.headers.get('content-type');
-		if ((contentType && isXml(contentType)) || body.trim().startsWith('<?xml')) {
+		const contentType = response.headers.get("content-type");
+		if ((contentType && isXml(contentType)) || body.trim().startsWith("<?xml")) {
 			// We're in XML land
 			const parsed = parser.parse(body);
 			const data = parsed.rss?.channel || parsed.feed;
@@ -89,7 +89,7 @@ export async function findFeed(feedUrl: string): Promise<{
 					],
 				};
 			} catch {
-				console.error('failed parsing JSON Feed');
+				console.error("failed parsing JSON Feed");
 				return {
 					input: feedUrl,
 					feeds: [],
@@ -104,7 +104,7 @@ export async function findFeed(feedUrl: string): Promise<{
 				.filter((l) => l);
 			if (!links.length) {
 				// try /feed as a last ditch effort
-				if (!feedUrl.endsWith('/feed')) {
+				if (!feedUrl.endsWith("/feed")) {
 					// const newUrlToTry = new URL('/feed', feedUrl);
 					// return findFeed(newUrlToTry.href);
 				} else {
@@ -120,17 +120,17 @@ export async function findFeed(feedUrl: string): Promise<{
 			// 	console.log(await findFeed(resolveUrl(url.toString(), link)));
 			// }
 			console.log(`Found ${links.length} links to check!`);
-			console.time('feedCrawl');
+			console.time("feedCrawl");
 			const allFeeds = await Promise.all(
 				links.map(async (link) => {
 					return findFeed(resolveUrl(feedUrl, link));
 				})
 			);
-			console.timeEnd('feedCrawl');
+			console.timeEnd("feedCrawl");
 			console.log({ allFeeds });
 			const favicon = allFeeds.find((f) => {
 				if (!f.favicon) return false;
-				if (f.favicon.startsWith('https://icon.horse')) return false;
+				if (f.favicon.startsWith("https://icon.horse")) return false;
 				return true;
 			})?.favicon;
 			return {
@@ -159,13 +159,11 @@ function parseXml(xml: string) {
 	return data;
 }
 
-
 function getTextContent(html: string) {
 	const root = parse(html);
 	const textContent = root.textContent;
 	return textContent;
 }
-
 
 const createFeedAndEntries = ({
 	title,
@@ -209,15 +207,15 @@ export const addSubscription = async ({
 	const response = await fetch(feedUrl);
 	const body = await response.text();
 	// data should be xml
-	const contentType = response.headers.get('content-type');
+	const contentType = response.headers.get("content-type");
 	let data: ReturnType<typeof createFeedAndEntries> | undefined = undefined;
-	if ((contentType && isXml(contentType)) || body.trim().startsWith('<?xml')) {
+	if ((contentType && isXml(contentType)) || body.trim().startsWith("<?xml")) {
 		const feed = parseXml(body);
 		const description = getText(feed.description, feed.subtitle);
 		data = createFeedAndEntries({
-			title: getText(feed.title) || '',
-			description: description ? stripEmptyTags(description) : '',
-			imageUrl: (feed.image?.url as string) || '',
+			title: getText(feed.title) || "",
+			description: description ? stripEmptyTags(description) : "",
+			imageUrl: (feed.image?.url as string) || "",
 			feedUrl: feed.feed_url || feedUrl,
 			// TODO: types
 			entries: (feed.items || feed.item || feed.entry || []).slice(0, 20).map((entry: any) => {
@@ -227,13 +225,13 @@ export const addSubscription = async ({
 				} else if (entry.id) {
 					guid = getText(entry.id);
 				}
-				const published = entry.published || entry.pubDate || entry.pubdate;
+				const published = entry.published || entry.pubDate || entry.pubdate || entry.updated;
 				const description = getText(entry.summary, entry.description);
-				const html = getText(entry.content, entry['content:encoded']) || description;
-				const link = getLink(entry.link)
+				const html = getText(entry.content, entry["content:encoded"]) || description;
+				const link = getLink(entry.link);
 				return {
 					title: getText(entry.title),
-					type: DocumentType.rss,
+					type: DocumentType.article,
 					image: getImageFromHtml(html, link),
 					uri: link,
 					guid,
@@ -256,10 +254,10 @@ export const addSubscription = async ({
 				return {
 					title: item.title,
 					uri: item.url,
-					type: DocumentType.rss,
+					type: DocumentType.article,
 					published: item.date_published,
 					updated: item.date_modified,
-					author: item.authors?.join(', '),
+					author: item.authors?.join(", "),
 					html: item.content_html,
 					text: item.content_text,
 				};
@@ -268,7 +266,7 @@ export const addSubscription = async ({
 	}
 	if (!data) {
 		// throw Error('Could not find feed');
-		console.error('Could not find feed');
+		console.error("Could not find feed");
 		return;
 	} else if (data) {
 		const feed = await db.feed.upsert({

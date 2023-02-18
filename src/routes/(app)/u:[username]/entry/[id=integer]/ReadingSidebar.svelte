@@ -2,32 +2,45 @@
 	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
+	import resize from "$lib/actions/resize";
 	import Annotation from "$lib/components/Annotation.svelte";
 	import AnnotationInput from "$lib/components/annotations/AnnotationInput.svelte";
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
 	import Button from "$lib/components/Button.svelte";
+	import Filter from "$lib/components/Filters/Filter.svelte";
+	import AnnotationFilter from "$lib/components/Filters/Filter.svelte";
+	import FilterDisplay from "$lib/components/Filters/FilterDisplay.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import StateCombobox from "$lib/components/StateCombobox.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
-	import dayjs from "$lib/dayjs";
+	import Recipe from "$lib/features/recipes/Recipe.svelte";
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
-	import { TextQuoteTarget } from "$lib/types/schemas/Annotations";
-	import type { Tag } from "@prisma/client";
+	import { Collection, Color, Tag } from "@prisma/client";
 	import { Disclosure, DisclosureButton, DisclosurePanel } from "@rgossiaux/svelte-headlessui";
 	import { onMount } from "svelte";
 	import { flip } from "svelte/animate";
 	import { tweened } from "svelte/motion";
 	import { writable } from "svelte/store";
 	import { fade, fly, slide } from "svelte/transition";
-	import ReadingSidebarAnnotationInput from "./ReadingSidebarAnnotationInput.svelte";
 	import ReadingSidebarSection from "./ReadingSidebarSection.svelte";
-	import { reading_sidebar } from "./stores";
+	import { reading_sidebar } from "$lib/features/entries/stores";
+	import MovieEntrySidebar from "$lib/features/movies/MovieEntrySidebar.svelte";
+	import { addEntriesToCollection } from "$lib/features/collections/stores";
+	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
+	import { entryCollectionsQuery } from "$lib/features/entries/queries";
+	import Cluster from "$lib/components/helpers/Cluster.svelte";
+	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
+
 	export let entry: RouterOutputs["entries"]["load"];
+
+	const queryClient = useQueryClient();
+
+	$: collectionsQuery = createQuery(entryCollectionsQuery({ id: entry.id }, $page));
 
 	function customBackOut(t: number) {
 		const s = 0.7;
@@ -35,6 +48,10 @@
 	}
 	$: pageNotes = entry?.annotations?.filter((a) => a.type === "note");
 	$: inlineNotes = entry?.annotations?.filter((a) => a.type === "annotation");
+	// $: inlineNotes, (annotations = inlineNotes);
+	$: console.log({ inlineNotes });
+	const noFilter = () => true;
+	let inlineNotesFilter: (n: (typeof inlineNotes)[number]) => boolean = noFilter;
 
 	let tags: Tag[] = [];
 	$: console.log({ tags });
@@ -80,7 +97,9 @@
 	on:keydown={(e) => {
 		if (e.key === "Escape") {
 			if (checkIfKeyboardShortcutsAllowed()) {
+				e.preventDefault();
 				$reading_sidebar.active = false;
+				e.stopPropagation();
 			}
 		}
 	}}
@@ -95,17 +114,25 @@
 		class="inset-0 hidden bg-black/10 max-md:fixed max-md:block"
 	/>
 	<aside
+		use:resize={(c) => {
+			$reading_sidebar.width = c.contentRect.width;
+		}}
 		style:margin-left="{$WIDTH_SPRING * -1}px"
 		style:width="{WIDTH}px"
 		style:transform="translateX({$WIDTH_SPRING}px)"
-		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-gray-200 bg-gray-50 p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:bg-transparent dark:bg-gradient-to-br dark:from-gray-800/90  dark:to-gray-900/90 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
+		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-l border-border  bg-base p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
 	>
 		<!-- <div class="absolute top-0 left-0 h-full w-full bg-red-500" style:width="450px" /> -->
 
 		<div class="flex flex-col gap-y-2 divide-y dark:divide-gray-700/40">
 			<div class="flex flex-col gap-y-1">
 				<span class="text-lg font-semibold">{entry.title}</span>
-				<span class="text-base font-medium">{entry.author}</span>
+				{#if entry.author}
+					<span class="text-base font-medium">{entry.author}</span>
+				{/if}
+				{#if entry.image && !!entry.recipe}
+					<img src={entry.image} alt="" />
+				{/if}
 			</div>
 			<ReadingSidebarSection>
 				<svelte:fragment slot="heading">Metadata</svelte:fragment>
@@ -114,9 +141,12 @@
 					{#if entry.feedId}
 						<!-- display feed -->
 						<!-- Or just put this in context section -->
-						subscription: {$page.data.subscriptions?.find((s) => s.feedId === entry.feedId)?.title}
+						subscription:
+						<a href="/u:{$page.data.user?.username}/subscriptions/{entry.feedId}"
+							>{$page.data.user?.subscriptions?.find((s) => s.feedId === entry.feedId)?.title}</a
+						>
 					{/if}
-					<div class="grid auto-rows-fr grid-cols-[minmax(90px,_auto)_1fr] items-center text-sm">
+					<div class="grid auto-rows-fr grid-cols-[minmax(90px,_auto)_1fr] items-center gap-1 text-sm">
 						<!-- REVIEW: what metadata to show -->
 						{#if entry.bookmark}
 							<Muted>Saved</Muted>
@@ -125,7 +155,8 @@
 						{#if entry.bookmark?.stateId}
 							<Muted class="text-sm">Status</Muted>
 							<StateCombobox
-								state={$page.data.states?.find((state) => state.id === entry.bookmark.stateId)}
+								state={$page.data.user?.states?.find((state) => state.id === entry.bookmark.stateId) ||
+									$page.data.user?.defaultState}
 								onSelect={async (state) => {
 									const s = syncStore.add();
 									await trpc().bookmarks.updateState.mutate({
@@ -144,9 +175,74 @@
 							<Muted class="text-sm">Context</Muted>
 							{JSON.stringify(entry.context)}
 						{/if}
+						<Muted class="text-sm">Type</Muted>
+						<span>{entry.type}</span>
+						<Muted class="text-sm">Relations</Muted>
+						<div class="flex">
+							{#each entry.relations
+								.map((r) => {
+									// this should prolly happen server side
+									const { type, relatedEntry } = r;
+									return { type, entry: relatedEntry };
+								})
+								.concat(entry.back_relations) || [] as { type, entry }}
+								<div class="flex max-w-[150px] flex-col gap-1 truncate">
+									<!-- todo: little icon -->
+									<a href="/u:{$page.data.user?.username}/entry/{entry.id}" class="truncate text-xs"
+										>{entry.title}</a
+									>
+								</div>
+							{/each}
+						</div>
 					</div>
 				</div>
 			</ReadingSidebarSection>
+			{#if entry.recipe}
+				<ReadingSidebarSection>
+					<svelte:fragment slot="heading">Recipe Ingredients</svelte:fragment>
+					<Recipe recipe={entry.recipe} />
+				</ReadingSidebarSection>
+			{/if}
+			{#if entry.tmdbId}
+				<ReadingSidebarSection>
+					<svelte:fragment slot="heading">Movie Info</svelte:fragment>
+					<MovieEntrySidebar tmdbId={entry.tmdbId} />
+				</ReadingSidebarSection>
+			{/if}
+			<ReadingSidebarSection>
+				<svelte:fragment slot="heading">Collections</svelte:fragment>
+				<button
+					slot="action"
+					class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50 "
+					on:click={() => {
+						addEntriesToCollection(queryClient, [entry.id], (c) => {
+                            //update query data
+                            // TODO: optimistijc update
+                            queryClient.setQueryData(entryCollectionsQuery({id: entry.id}).queryKey, (old) => [...old, c])
+                        });
+					}}
+				>
+					<Icon name="plusMini" className="h-4 w-4 fill-gray-400" />
+					<Muted>Add to collection</Muted></button
+				>
+				{#if $collectionsQuery.isLoading}
+					loading...
+				{:else if $collectionsQuery.isSuccess}
+					<Cluster class="gap-x-4 gap-y-2">
+						{#each $collectionsQuery.data as collection}
+							<li class="rounded bg-elevation py-1 px-2 ring-1 ring-border/50">
+								<a class="flex items-center gap-1" href="/u:{collection.user?.username || $page.data.user?.username}/collection/{collection.id}">
+                                    <!-- @ts-ignore -->
+                                    <ChosenIcon chosenIcon={collection.icon} />
+                                    <span>{collection.name}</span>
+                                </a>
+							</li>
+						{/each}
+					</Cluster>
+				{/if}
+				<!-- <MovieEntrySidebar tmdbId={entry.tmdbId} /> -->
+			</ReadingSidebarSection>
+
 			<Disclosure defaultOpen={true} let:open class="flex flex-col gap-3 p-2 text-sm">
 				<div class="flex items-center justify-between">
 					<DisclosureButton class="group -ml-2 flex items-center gap-2 rounded py-1 px-2 hover:bg-gray-200">
@@ -296,28 +392,88 @@
 			</Disclosure>
 			{#if inlineNotes?.length}
 				<Disclosure defaultOpen={true} let:open class="flex flex-col gap-3 p-2 text-sm">
-					<div>
-						<DisclosureButton class="group -ml-2 flex items-center gap-2 rounded py-1 px-2 hover:bg-gray-200">
-							<SmallPlus><Muted>Annotations ({inlineNotes.length})</Muted></SmallPlus>
-							<Icon
-								name={open ? "chevronUpMini" : "chevronDownMini"}
-								className="h-4 w-4 fill-gray-400 opacity-0 group-hover:opacity-100"
-							/>
-						</DisclosureButton>
-					</div>
-					{#if open}
-						<div transition:slide|local={{ duration: 75 }}>
-							<DisclosurePanel static>
-								<div class="flex flex-col space-y-4  text-sm">
-									{#each inlineNotes as annotation}
-										{@const target = TextQuoteTarget.parse(annotation.target)}
-										<!-- should maybe be an a or button -->
-										<Annotation {annotation} scrollOnClick={true} />
-									{/each}
-								</div>
-							</DisclosurePanel>
+					<!-- Review: if I bind annotations to entry thenit can also filter in article. interesting idea. -->
+					<Filter
+						values={inlineNotes}
+						let:filteredItems
+						let:filters
+						on:filter={({ detail: annotations }) => {
+							console.log({ annotations });
+						}}
+					>
+						<div class="flex items-center justify-between">
+							<DisclosureButton
+								class="group -ml-2 flex items-center gap-2 rounded py-1 px-2 hover:bg-gray-200"
+							>
+								<SmallPlus><Muted>Annotations ({inlineNotes.length})</Muted></SmallPlus>
+								<Icon
+									name={open ? "chevronUpMini" : "chevronDownMini"}
+									className="h-4 w-4 fill-gray-400 opacity-0 group-hover:opacity-100"
+								/>
+							</DisclosureButton>
+							<div>
+								<!-- fix this error (comes from serialization) -->
+								<!-- <AnnotationFilter
+									bind:annotations={entry.annotations}
+									applyFilter={(a) => a.type === "annotation"}
+								/> -->
+								<FilterDisplay
+									placement="bottom-end"
+									{filters}
+									options={[
+										{
+											id: "color",
+											name: "Color",
+											icon: "colorSwatch",
+											multiple: true,
+											options: Object.values(Color).map((c) => ({
+												id: c,
+												name: c,
+												filter: (n) => n.color === c,
+												color: `var(--highlight-${c.toLowerCase()})`,
+											})),
+										},
+										{
+											id: "private",
+											name: "Private",
+											icon: "lockClosedMini",
+											options: [
+												{
+													id: "show-private",
+													name: "Private",
+													filter: (a) => a.private,
+													icon: "lockClosedMini",
+												},
+												{
+													id: "show-public",
+													name: "Public",
+													filter: (a) => !a.private,
+													icon: "lockOpenMini",
+												},
+											],
+										},
+									]}
+								/>
+							</div>
 						</div>
-					{/if}
+						{#if open}
+							<div transition:slide|local={{ duration: 75 }}>
+								<DisclosurePanel static>
+									<div class="flex flex-col space-y-4  text-sm">
+										{#each filteredItems as annotation (annotation.id)}
+											<div
+												animate:flip={{
+													duration: 75,
+												}}
+											>
+												<Annotation {annotation} scrollOnClick={true} />
+											</div>
+										{/each}
+									</div>
+								</DisclosurePanel>
+							</div>
+						{/if}
+					</Filter>
 				</Disclosure>
 			{/if}
 		</div>

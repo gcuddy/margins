@@ -1,117 +1,33 @@
-import type { PageServerLoad, Action } from './$types';
-import { db } from '$lib/db';
-import { getJsonFromRequest } from '$lib/utils';
-import { ArticleListSelect } from '$lib/types';
-import { error } from '@sveltejs/kit';
-import { z } from 'zod';
-import { AddToListSchema } from '$lib/types/schemas/List';
+import { fail } from "@sveltejs/kit";
 
-export const load: PageServerLoad = async ({ params }) => {
-	const { id } = params;
-	try {
-		const list = await db.collection.findUnique({
-			where: {
-				id: Number(id),
-			},
-			include: {
-				items: {
-					include: {
-						article: {
-							select: ArticleListSelect,
-						},
-						annotation: true,
-					},
-				},
-			},
-		});
-		return {
-			list,
-		};
-	} catch (e) {
-		console.error(e);
-		throw error(404, 'List not found');
-	}
+import { createCaller } from "$lib/trpc/router";
+import { createCollectionItemSchema } from "$lib/trpc/routes/collections";
+
+import type { Actions } from "./$types";
+
+
+export const actions: Actions = {
+    favorite: async (e) => {
+        const caller = await createCaller(e);
+        const data = await e.request.formData();
+        return caller.favorites.create({
+            collectionId: Number(e.params.id),
+            sortOrder: Number(data.get("sortOrder")),
+        });
+    },
+    addSection: async (e) => {
+        const caller = await createCaller(e);
+        let obj = Object.fromEntries(await e.request.formData()) as Record<string, string | number>;
+        obj = {
+            ...obj,
+            type: "Section",
+            collectionId: Number(e.params.id),
+        };
+        console.log({obj})
+        const data = createCollectionItemSchema.safeParse(obj);
+        if (!data.success) {
+            return fail(400, { error: JSON.stringify(data.error, null, 2) });
+        }
+        return caller.collections.createItem(data.data);
+    }
 };
-
-// export const PATCH: Action = async ({ request, params }) => {
-// 	const { id } = params;
-// 	try {
-// 		const data = await getJsonFromRequest(request);
-// 		// TODO: zod schema
-// 		const { name, description, items } = data;
-// 		const listItems = await db.listItem.createMany({
-// 			data: items?.map((article) => {
-// 				return {
-// 					articleId: parseInt(article),
-// 					listId: parseInt(id),
-// 					type: 'ARTICLE',
-// 				};
-// 			}),
-// 			skipDuplicates: true,
-// 		});
-// 		const list = await db.collection.update({
-// 			where: {
-// 				id: parseInt(id),
-// 			},
-// 			data: {
-// 				name,
-// 				description,
-// 				items: {
-// 					set: listItems || [],
-// 				},
-// 			},
-// 		});
-// 	} catch (e) {
-// 		throw error(400, 'error updating list');
-// 	}
-// };
-
-// //PUT- used for putting list item (from articleId) in list
-
-// export const PUT: Action = async ({ request, params }) => {
-// 	const { id } = params;
-// 	try {
-// 		const data = await getJsonFromRequest(request);
-// 		/// TODO: flesh out
-// 		const { articleId, annotationId } = AddToListSchema.parse(data);
-// 		console.log({ data });
-// 		if (articleId) {
-// 			if (Array.isArray(articleId)) {
-// 				await db.listItem.createMany({
-// 					data: articleId.map((articleId) => ({
-// 						articleId: Number(articleId),
-// 						listId: Number(id),
-// 					})),
-// 					skipDuplicates: true,
-// 				});
-// 			} else {
-// 				await db.listItem.create({
-// 					data: {
-// 						articleId: Number(articleId),
-// 						listId: Number(id),
-// 					},
-// 				});
-// 			}
-// 		}
-// 		if (annotationId) {
-// 			if (Array.isArray(annotationId)) {
-// 				await db.listItem.createMany({
-// 					data: annotationId.map((annotationId) => ({
-// 						annotationId: Number(annotationId),
-// 						listId: Number(id),
-// 					})),
-// 					skipDuplicates: true,
-// 				});
-// 			} else {
-// 				await db.listItem.create({
-// 					data: {
-// 						annotationId: Number(annotationId),
-// 						listId: Number(id),
-// 					},
-// 				});
-// 			}
-// 		}
-// 	} catch (e) {
-// 		throw error(400, 'error updating list');
-// 	}
-// };

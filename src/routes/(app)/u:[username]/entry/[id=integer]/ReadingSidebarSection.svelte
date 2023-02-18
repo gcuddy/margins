@@ -8,7 +8,7 @@
 </script>
 
 <Disclosure defaultOpen={true} let:open class="flex flex-col space-y-3 p-2 text-sm">
-	<div>
+	<div class="flex items-center justify-between">
 		<DisclosureButton
 			class="group -ml-2 flex items-center gap-2 rounded py-1 px-2 hover:bg-gray-200 dark:hover:bg-gray-700 ">
 			<SmallPlus><Muted class="group-hover:text-gray-50"><slot name="heading" /></Muted></SmallPlus>
@@ -18,6 +18,7 @@
 					? '!rotate-180'
 					: ''}" />
 		</DisclosureButton>
+        <slot name="action" />
 	</div>
 	{#if open}
 		<div

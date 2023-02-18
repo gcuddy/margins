@@ -1,11 +1,21 @@
 import { CLOUDFLARE_ID, S3_ID, S3_SECRET } from "$env/static/private";
-import S3 from 'aws-sdk/clients/s3.js';
+import {
+    S3Client,
+    ListBucketsCommand,
+    ListObjectsV2Command,
+    GetObjectCommand,
+    PutObjectCommand,
+    PutObjectRequest
+} from "@aws-sdk/client-s3";
 
-const s3 = new S3({
+
+const s3 = new S3Client({
     endpoint: `https://${CLOUDFLARE_ID}.r2.cloudflarestorage.com`,
-    accessKeyId: S3_ID,
-    secretAccessKey: S3_SECRET,
-    signatureVersion: 'v4',
+    region: "auto",
+    credentials: {
+        accessKeyId: S3_ID,
+        secretAccessKey: S3_SECRET
+    }
 });
 
 const PUBLIC_BUCKET = 'margins';
@@ -16,11 +26,17 @@ export async function uploadFile({
     Body
 }: {
     Key: string;
-    Body: S3.Body;
+    Body: PutObjectRequest["Body"];
 }) {
-    return s3.upload({
-        Key,
-        Body,
-        Bucket: PUBLIC_BUCKET
-    })
+    try {
+        const data = await s3.send(new PutObjectCommand({
+            Key,
+            Body,
+            Bucket: PUBLIC_BUCKET
+        }))
+
+        return data;
+    } catch (e) {
+        console.error(e)
+    }
 }

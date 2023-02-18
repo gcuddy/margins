@@ -1,5 +1,5 @@
-import { writable } from 'svelte/store';
-import { z } from 'zod';
+import { writable } from "svelte/store";
+import { z } from "zod";
 
 interface BaseViewOptions {
 	sort: string;
@@ -9,29 +9,38 @@ interface BaseViewOptions {
 }
 
 export const ViewOptionsSchema = z.object({
-	view: z.enum(['list', 'grid']),
-	sort: z.enum(['title', 'date', 'author', 'createdAt', 'published', 'updatedAt', 'created', 'manual']),
-	properties: z.object({
-		author: z.boolean(),
-		site: z.boolean(),
-		description: z.boolean(),
-		tags: z.boolean(),
-		annotationCount: z.boolean(),
-		date: z.boolean(),
-		wordCount: z.boolean(),
-		readProgress: z.boolean(),
-		location: z.boolean(),
-		image: z.boolean(),
-		url: z.boolean(),
-		pageNote: z.boolean(),
-	}),
+	view: z.enum(["list", "grid", "slim", "kanban"]),
+	sort: z.enum(["title", "date", "author", "createdAt", "published", "updatedAt", "created", "manual"]),
+	properties: z
+		.object({
+			author: z.boolean(),
+			site: z.boolean(),
+			description: z.boolean(),
+			tags: z.boolean(),
+			annotationCount: z.boolean(),
+			date: z.boolean(),
+			wordCount: z.boolean(),
+			feed: z.boolean(),
+			readProgress: z.boolean(),
+			location: z.boolean(),
+			image: z.boolean(),
+			url: z.boolean(),
+			pageNote: z.boolean(),
+		})
+		.partial(),
+	dates: z
+		.object({
+			relative: z.boolean(),
+		})
+		.partial()
+		.optional(),
 });
 
 export type ViewOptions = z.infer<typeof ViewOptionsSchema>;
 
 export const defaultViewOptions: ViewOptions = {
-	view: 'list',
-	sort: 'title',
+	view: "list",
+	sort: "title",
 	properties: {
 		author: true,
 		site: true,

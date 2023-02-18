@@ -1,14 +1,15 @@
 <script lang="ts">
-	import type { Annotation } from '@prisma/client';
+	import type { ContextualAnnotation } from "$lib/prisma/selects/annotations";
+	import Annotation from "./Annotation.svelte";
+	import AutoAnimate from "./helpers/AutoAnimate.svelte";
 
-	export let annotations: Annotation[];
+	let c = "";
+	export { c as class };
+	export let annotations: ContextualAnnotation[];
 </script>
 
-{#each annotations as annotation}
-	<div class="max-h-24 md:max-h-32">
-		<div class="flex h-full border-gray-100 p-4 dark:border-gray-800">
-			<!-- TODO: link to annotation -->
-			{annotation.body}
-		</div>
-	</div>
-{/each}
+<AutoAnimate class={c}>
+	{#each annotations as annotation}
+		<Annotation {annotation} showParent={true} showEntry={true} />
+	{/each}
+</AutoAnimate>

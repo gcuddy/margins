@@ -1,30 +1,23 @@
-import debounce from 'lodash.debounce';
+import debounce from "lodash.debounce";
 
-import { browser } from '$app/environment';
+import { browser } from "$app/environment";
 
-import type { Action } from './types';
+import type { Action } from "./types";
 
-export default (
-	node: HTMLElement,
-	cb: (entry: ResizeObserverEntry) => void
-): ReturnType<Action> => {
-	let observer: ResizeObserver;
-	const onResize: ResizeObserverCallback = (entries) => {
-		for (const entry of entries) {
-			console.log({ entry });
-			cb(entry);
-		}
-	};
-	node.getBoundingClientRect();
-	if (browser) {
-		console.log('setting up resize observer for', node);
-		observer = new ResizeObserver(debounce(onResize, 300));
-		observer.observe(node);
+export default (node: HTMLElement, cb: (entry: ResizeObserverEntry) => void): ReturnType<Action> => {
+	let observer: ResizeObserver | undefined = undefined;
+	if (!observer) {
+		observer = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				cb(entry);
+			}
+		});
 	}
+	observer.observe(node);
 	return {
 		destroy: () => {
 			if (browser) {
-				observer && observer.disconnect();
+				observer && observer.unobserve(node);
 			}
 		},
 	};

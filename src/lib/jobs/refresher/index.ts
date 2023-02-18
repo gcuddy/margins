@@ -3,14 +3,16 @@
 // questions about how to scale this/whether i need some sort of job thingy
 
 // for now let's just write out the basics.
-import { DocumentType, Prisma } from '@prisma/client';
-import dayjs from 'dayjs';
-import { XMLParser } from 'fast-xml-parser';
-import parse from 'node-html-parser';
+import { DocumentType, Prisma } from "@prisma/client";
+import dayjs from "dayjs";
+import { XMLParser } from "fast-xml-parser";
+import parse from "node-html-parser";
 
-import { db } from '$lib/db';
-import { isXml } from '$lib/rss/utils';
-import { resolveUrl } from '$lib/feeds/utils';
+import { db } from "$lib/db";
+import { isXml } from "$lib/rss/utils";
+import { resolveUrl } from "$lib/feeds/utils";
+
+const log = (msg: string) => console.log(`[refreshFeeds] - ${msg}`);
 
 // TODO: type for this
 const feedSelect = Prisma.validator<Prisma.FeedSelect>()({
@@ -37,10 +39,10 @@ const typedFeedSelect = Prisma.validator<Prisma.FeedArgs>()({
 type FeedToUpdate = Prisma.FeedGetPayload<typeof typedFeedSelect>;
 const parser = new XMLParser({
 	ignoreAttributes: false,
-	attributeNamePrefix: '',
+	attributeNamePrefix: "",
 });
 const getLink = (link: any, ...rel: (string | undefined)[]) => {
-	if (typeof link === 'string') {
+	if (typeof link === "string") {
 		return link;
 	}
 	if (link?.href) {
@@ -58,28 +60,28 @@ const getLink = (link: any, ...rel: (string | undefined)[]) => {
 			return link[0].href;
 		}
 	}
-	return '';
+	return "";
 };
 
 export const getImageFromHtml = (html: string, baseUrl: string) => {
 	const doc = parse(html);
 	let img: string | undefined = undefined;
-	doc.querySelectorAll('img, iframe, video').forEach((el) => {
+	doc.querySelectorAll("img, iframe, video").forEach((el) => {
 		// TODO next... get first image (pass into other stuff)
 		if (img) {
 			return img;
 		}
 		switch (el.tagName) {
-			case 'IMG': {
-				img = el.getAttribute('src');
+			case "IMG": {
+				img = el.getAttribute("src");
 				break;
 			}
-			case 'IFRAME': {
-				img = el.getAttribute('src');
+			case "IFRAME": {
+				img = el.getAttribute("src");
 				break;
 			}
-			case 'VIDEO': {
-				img = el.getAttribute('poster');
+			case "VIDEO": {
+				img = el.getAttribute("poster");
 				break;
 			}
 		}
@@ -92,17 +94,17 @@ export const getImageFromHtml = (html: string, baseUrl: string) => {
 
 const getText = (...items: any): string => {
 	for (const item of items) {
-		if (typeof item === 'string') {
+		if (typeof item === "string") {
 			return item;
 		}
-		if (item?.['#text']) {
-			return item['#text'] as string;
+		if (item?.["#text"]) {
+			return item["#text"] as string;
 		}
 		if (Array.isArray(item)) {
-			return item.map((i) => getText(i)).join(', ') as string;
+			return item.map((i) => getText(i)).join(", ") as string;
 		}
 	}
-	return '';
+	return "";
 };
 export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
 	const feeds = await db.feed.findMany({
@@ -114,14 +116,15 @@ export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
 		},
 		select: feedSelect,
 	});
+	console.time(`[refreshFeeds] - toAdd`);
 	const toAdd = await Promise.all(
 		feeds
 			.flatMap(async (feed) => {
-				const entries = await getUpdatedEntries(feed);
+				const entries = getUpdatedEntries(feed);
 				if (entries) {
 					return entries;
 				} else {
-					return [{}]
+					return [{}];
 				}
 				// return db.entry.createMany({
 				// 	skipDuplicates: true,
@@ -132,13 +135,15 @@ export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
 	);
 	// TODO: better flatmap magic
 	const entriesToAdd = toAdd.flat().filter((a) => a) as ReturnType<typeof createEntry>[];
-
+	console.log({ entriesToAdd });
+	console.timeEnd(`[refreshFeeds] - toAdd`);
 	try {
 		const created = await db.entry.createMany({
 			skipDuplicates: true,
 			data: entriesToAdd,
 		});
 		console.log({ created });
+		return created;
 	} catch (e) {
 		console.error(e);
 	}
@@ -157,9 +162,9 @@ async function getUpdatedEntries(feed: FeedToUpdate) {
 	try {
 		const response = await fetch(feed.feedUrl);
 		const body = await response.text();
-		const contentType = response.headers.get('content-type');
+		const contentType = response.headers.get("content-type");
 		console.log(`checking for updates in ${feed.feedUrl}`);
-		if ((contentType && isXml(contentType)) || body.trim().startsWith('<?xml')) {
+		if ((contentType && isXml(contentType)) || body.trim().startsWith("<?xml")) {
 			// If the type is XML...
 			console.log(`xml`);
 			const data = parseXml(body);
@@ -171,7 +176,7 @@ async function getUpdatedEntries(feed: FeedToUpdate) {
 					const uri = getLink(item.link);
 					console.log({ uri });
 					if (uris.includes(uri)) {
-						console.log('got this uri already');
+						console.log("got this uri already");
 						return false;
 					}
 					let guid: string | undefined = undefined;
@@ -194,15 +199,15 @@ async function getUpdatedEntries(feed: FeedToUpdate) {
 					} else if (entry.id) {
 						guid = getText(entry.id);
 					}
-					const published = entry.published || entry.pubDate || entry.pubdate;
+					const published = entry.published || entry.pubDate || entry.pubdate || entry.updated;
 					console.log({ published });
 					const description = getText(entry.summary, entry.description);
 					console.log({ description });
-					const html = getText(entry.content, entry['content:encoded']) || description;
-					const link = getLink(entry.link)
+					const html = getText(entry.content, entry["content:encoded"]) || description;
+					const link = getLink(entry.link);
 					return createEntry(feed.id, {
 						title: getText(entry.title),
-						type: DocumentType.rss,
+						type: DocumentType.article,
 						uri: link,
 						image: getImageFromHtml(entry.content, link),
 						guid,
@@ -219,7 +224,7 @@ async function getUpdatedEntries(feed: FeedToUpdate) {
 			return [];
 		}
 	} catch (e) {
-		console.error('Error fetching feed: ' + feed.feedUrl);
+		console.error("Error fetching feed: " + feed.feedUrl);
 		return;
 	}
 }

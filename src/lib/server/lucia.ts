@@ -8,7 +8,6 @@ export const auth = lucia({
 	adapter: prisma(db),
 	env: dev ? 'DEV' : 'PROD',
 	transformUserData: (userData) => {
-		console.log(`lucia ${JSON.stringify(userData, null, 2)}`);
 		return {
 			email: userData.email,
 			username: userData.username,

@@ -1,15 +1,31 @@
-import type { Location } from '$lib/types/schemas/Locations';
-import { notEmpty } from '$lib/utils';
-import type { Entry } from '@prisma/client';
-import { error } from '@sveltejs/kit';
+import { entriesByLocationQuery } from "$lib/features/entries/queries";
 
-import type { PageLoad } from './$types';
+import type { PageLoad } from "./$types";
 
-export const load = (async ({ data, parent }) => {
-    return {
-        ...data,
-        ...(await parent())
-    }
+export const load = (async (event) => {
+	const { data, parent } = event;
+	const { queryClient } = await parent();
+
+    console.time("entriesByLocationQuery")
+	// const entries = await queryClient.ensureQueryData(entriesByLocationQuery({
+	// 	location: data.location,
+	// }, event));
+	const entries = await queryClient.ensureQueryData(entriesByLocationQuery({
+		location: data.location,
+	}, event));
+
+    // queryClient.prefetchQuery(entriesByLocationQuery({
+    //     location: data.location
+    // }, event));
+
+	// console.log({entries})
+    console.timeEnd("entriesByLocationQuery")
+
+	return {
+		...data,
+		...(await parent()),
+		entries
+	};
 }) satisfies PageLoad;
 
 // export const load: PageLoad = async (event) => {

@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { fadeScale } from '$lib/transitions';
+	import { fadeScale } from "$lib/transitions";
 
-	import { Dialog, DialogOverlay, DialogTitle } from '@rgossiaux/svelte-headlessui';
-	import { fade } from 'svelte/transition';
+	import { Dialog, DialogOverlay, DialogTitle } from "@rgossiaux/svelte-headlessui";
+	import { fade } from "svelte/transition";
 	// import DialogOverlay from './helpers/dialog/DialogOverlay.svelte';
 	export let open = false;
 	$: initialFocus =
-		(container && (container.querySelector('[data-initial-focus]') as HTMLElement)) || undefined;
+		(container && (container.querySelector("[data-initial-focus]") as HTMLElement)) || undefined;
 	let container: HTMLElement;
-	let className = '';
+	let className = "";
 	export { className as class };
 
-	$: computedClass = !className.includes('max-w-') ? 'max-w-2xl' : '';
+	$: computedClass = !className.includes("max-w-") ? "max-w-2xl" : "";
 </script>
 
 <Dialog

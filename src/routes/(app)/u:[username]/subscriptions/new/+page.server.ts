@@ -1,10 +1,10 @@
-import { error, fail } from '@sveltejs/kit';
-import { z } from 'zod';
+import { error, fail } from "@sveltejs/kit";
+import { z } from "zod";
 
-import { addSubscription, findFeed } from '$lib/feeds/parser';
-import { getJsonFromRequest, notEmpty } from '$lib/utils';
+import { addSubscription, findFeed } from "$lib/feeds/parser";
+import { getJsonFromRequest, notEmpty } from "$lib/utils";
 
-import type { Actions } from './$types';
+import type { Actions } from "./$types";
 
 const feedsToAdd = z.object({
 	feeds: z.array(z.object({ url: z.string().url(), title: z.string() })),
@@ -12,7 +12,7 @@ const feedsToAdd = z.object({
 export const actions: Actions = {
 	search: async ({ request, fetch }) => {
 		const data = await request.formData();
-		const url = data.get('url') as string;
+		const url = data.get("url") as string;
 		console.log({ url });
 		const feedData = await findFeed(url);
 		return feedData;
@@ -21,10 +21,10 @@ export const actions: Actions = {
 		try {
 			const session = await locals.validate();
 			if (!session) {
-				return error(401, 'Not authorized');
+				return error(401, "Not authorized");
 			}
 			const data = await getJsonFromRequest(request);
-			data.feeds = (data.feeds as {url?: string;}[]).filter((a) => a.url);
+			data.feeds = (data.feeds as { url?: string }[]).filter((a) => a.url);
 			const parsed = feedsToAdd.parse(data);
 			// now connect to db, find/create those feeds, update their entries, and add a subscription for the user
 			const addedFeeds = await Promise.all(
@@ -37,7 +37,7 @@ export const actions: Actions = {
 		} catch (e) {
 			console.error(e);
 			return fail(400, {
-				message: 'error parsing data',
+				message: "error parsing data",
 			});
 		}
 	},

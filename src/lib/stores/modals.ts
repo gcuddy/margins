@@ -1,9 +1,9 @@
-import { browser } from '$app/environment';
-import type ModalContainerSvelte from '$lib/components/modals/ModalContainer.svelte';
-import type { Annotation, Highlight } from '@prisma/client';
-import { derived, writable, type Readable } from 'svelte/store';
-import { showCommandPalette } from './commands';
-import type { ComponentProperties, StoredComponent, SvelteComponentWithProps } from './types';
+import { browser } from "$app/environment";
+import type ModalContainerSvelte from "$lib/components/modals/ModalContainer.svelte";
+import type { Annotation, Highlight } from "@prisma/client";
+import { derived, writable, type Readable } from "svelte/store";
+import { showCommandPalette } from "./commands";
+import type { ComponentProperties, StoredComponent, SvelteComponentWithProps } from "./types";
 
 export const showURLModal = writable(false);
 export const showRSSInputModal = writable(false);
@@ -22,19 +22,18 @@ function createModalStore() {
 	// read this here https://www.typescriptlang.org/docs/handbook/2/generics.html
 	const open = <T>(
 		component: SvelteComponentWithProps<T>,
-		props?: Omit<T, 'isOpen' | 'modalIndex'>,
+		props?: Omit<T, "isOpen" | "modalIndex">,
 		id?: string
 	) => {
 		let index = 0;
 		update((stack) => {
 			const newStack = [...stack, { component, props, id, open: true }];
 			index = newStack.length;
-			console.log({ newStack })
+			console.log({ newStack });
 			return newStack;
 		});
 		return index;
 	};
-
 
 	/**
 	 * Closes the top modal or the modal with the index specified
@@ -47,7 +46,7 @@ function createModalStore() {
 				stack[idx].open = false;
 				removed = stack.splice(idx, 1);
 			} else if (id) {
-				const idx = stack.findIndex(s => s.id === id);
+				const idx = stack.findIndex((s) => s.id === id);
 				stack[idx].open = false;
 				return stack.filter((modal) => modal.id !== id);
 				const index = stack.findIndex((modal) => modal.id === id);
@@ -66,7 +65,7 @@ function createModalStore() {
 			if (stack.length === 0 && browser) {
 				// not sure if this is the right place for this, but hey
 				// let's make sure this is gone or we won't be able to scroll
-				document.body.classList.remove('overflow-hidden');
+				document.body.classList.remove("overflow-hidden");
 			}
 			return stack;
 		});

@@ -4,40 +4,71 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../t";
 
 export const filterRouter = router({
-    save: protectedProcedure
-        .input(z.object({
-            id: z.number(),
-            name: z.string().optional(),
-            filter: SmartListCondition.optional(),
-            viewOptions: ViewOptionsSchema.optional()
-        }).or(z.object({
-            name: z.string(),
-            id: z.number().optional(),
-            filter: SmartListCondition,
-            viewOptions: ViewOptionsSchema.optional()
-        })))
-        .mutation(async ({ ctx, input }) => {
-            const { name, id, filter, viewOptions } = input;
-            if (id) {
-                return ctx.prisma.smartList.update({
-                    where: {
-                        id
-                    },
-                    data: {
-                        name,
-                        filter,
-                        viewOptions
-                    },
-
-                })
-            } else if (name && filter) {
-                return ctx.prisma.smartList.create({
-                    data: {
-                        name,
-                        filter,
-                        viewOptions
-                    }
-                })
-            }
-        })
-})
+	save: protectedProcedure
+		.input(
+			// TODO: type this
+			z
+				.object({
+					id: z.number(),
+					name: z.string().optional(),
+					filter: SmartListCondition.optional(),
+					conditions: z.any(),
+					viewOptions: ViewOptionsSchema.optional(),
+				})
+				.or(
+					z.object({
+						name: z.string(),
+						id: z.number().optional(),
+						filter: SmartListCondition.or(z.any()),
+						conditions: z.any(),
+						viewOptions: ViewOptionsSchema.optional(),
+					})
+				)
+		)
+		.mutation(async ({ ctx, input }) => {
+			const { name, id, filter, conditions, viewOptions } = input;
+			const { userId } = ctx;
+			console.log({ name, id, filter });
+			if (id) {
+				return await ctx.prisma.smartList.update({
+					where: {
+						id,
+						userId,
+					},
+					data: {
+						name,
+						filter,
+						conditions,
+						viewOptions,
+					},
+				});
+			} else if (name && filter) {
+				const smartList = await ctx.prisma.smartList.create({
+					data: {
+						name,
+						filter,
+						viewOptions,
+						conditions,
+						userId,
+					},
+				});
+				return smartList;
+			}
+		}),
+	entries: protectedProcedure
+		// TODO: type better....
+		.input(
+			z.object({
+				where: z.object({}),
+			})
+		)
+		.query(async ({ ctx, input }) => {
+			const { prisma } = ctx;
+			const { where } = input;
+			// TODO: make infinite query
+			const entries = await ctx.prisma.entry.findMany({
+				where,
+			});
+			return entries;
+		}),
+});

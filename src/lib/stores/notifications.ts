@@ -1,7 +1,10 @@
-import { writable } from 'svelte/store';
-import { v4 as uuidv4 } from 'uuid';
+import { writable } from "svelte/store";
+import { v4 as uuidv4 } from "uuid";
 
-import type { StoredComponent, SvelteComponentWithProps } from './types';
+import type { IconName } from "$lib/icons";
+import type { ChosenIcon } from "$lib/types/icon";
+
+import type { StoredComponent, SvelteComponentWithProps } from "./types";
 
 export interface INotification {
 	message?: string | StoredComponent;
@@ -12,23 +15,24 @@ export interface INotification {
 	};
 	id: string;
 	timeout: number;
-	type: 'info' | 'success' | 'error';
+	icon?: IconName | ChosenIcon;
+	type: "info" | "success" | "error";
 	onClick?: () => void;
 }
 
-function getDefaultNotificationData(id?: string): Omit<INotification, 'message'> {
+function getDefaultNotificationData(id?: string): Omit<INotification, "message"> {
 	if (!id) {
 		id = uuidv4();
 	}
 	return {
 		id,
-		timeout: 8500,
-		type: 'info',
+		timeout: 5000,
+		type: "info",
 		onClick: () => notifications.remove(id as string),
 	};
 }
 
-type NotificationParam = Pick<INotification, 'message'> & Partial<INotification>;
+type NotificationParam = Pick<INotification, "message"> & Partial<INotification>;
 
 function notificationStore() {
 	const { subscribe, update } = writable<INotification[]>([]);
@@ -48,6 +52,18 @@ function notificationStore() {
 		});
 		return id;
 	};
+	const modify = (id: string, notification: Partial<INotification>) => {
+		update((val) => {
+			const newVal = val.map((n) => {
+				if (n.id === id) {
+					return { ...n, ...notification };
+				}
+				return n;
+			});
+			return newVal;
+		});
+	};
+
 	const remove = (id: string) => {
 		update((val) => val.filter((n) => n.id !== id));
 	};
@@ -58,6 +74,7 @@ function notificationStore() {
 		subscribe,
 		notify,
 		remove,
+		modify,
 	};
 }
 export const notifications = notificationStore();

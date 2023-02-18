@@ -1,5 +1,5 @@
-import { icons } from '$lib/icons';
-import { z } from 'zod';
+import { icons } from "$lib/icons";
+import { z } from "zod";
 
 const icon_keys = Object.keys(icons) as Array<keyof typeof icons>;
 type Icon = Array<keyof typeof icons>[number];
@@ -10,17 +10,17 @@ const emojiRegex = /^\p{Extended_Pictographic}{1}$/u;
 export const chosenIcon = z.union([
 	z.object({
 		name: Icon, // icons
-		type: z.literal('icon'),
+		type: z.literal("icon").default("icon"),
 		color: z.string().regex(hexRegex),
 	}),
 	z.object({
-		emoji: z.string().regex(emojiRegex),
+		emoji: z.string(),
 		hexcode: z.string(),
 		label: z.string(),
-		type: z.literal('emoji'),
+		type: z.literal("emoji"),
 	}),
 	z.object({
-		type: z.literal('image'),
+		type: z.literal("image"),
 		image: z.string().url(),
 	}),
 ]);

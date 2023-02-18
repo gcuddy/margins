@@ -1,24 +1,28 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from "@sveltejs/kit";
 
-import { db } from '$lib/db';
+import { db } from "$lib/db";
 
-import type { Actions, PageServerLoad } from './$types';
-import { createCaller } from '$lib/trpc/router';
+import type { Actions, PageServerLoad } from "./$types";
+import { createCaller } from "$lib/trpc/router";
 
 export const load = (async (event) => {
 	const { params } = event;
-	const caller = await createCaller(event);
-	const { entries } = await caller.entries.byFeed({
-		id: +params.id
-	})
-	// const entries = [];
-	const { subscriptions } = await event.parent();
-	const subscription = subscriptions.find(s => s.id === +params.id)
-	return {
-		entries,
-		subscription
+	try {
+		const caller = await createCaller(event);
+		const { entries } = await caller.entries.byFeed({
+			id: +params.id,
+		});
+		// const entries = [];
+		const { subscriptions } = await event.parent();
+		const subscription = subscriptions.find((s) => s.id === +params.id);
+		return {
+			entries,
+			subscription,
+		};
+	} catch (e) {
+		throw redirect(300, "/login");
 	}
-}) satisfies PageServerLoad
+}) satisfies PageServerLoad;
 
 export const actions: Actions = {
 	delete: async ({ params, locals }) => {
@@ -27,7 +31,7 @@ export const actions: Actions = {
 		// the FEED ID is the one in the params, so it's perhaps a bit confusing.
 		const { user } = await locals.validateUser();
 		if (!user || user.username !== params.username) {
-			return error(401, 'Unauthorized');
+			return error(401, "Unauthorized");
 		}
 		// todo: call /api/subscriptions/:id DELETE... or....
 		try {
@@ -45,7 +49,7 @@ export const actions: Actions = {
 			};
 		} catch (e) {
 			console.error(e);
-			throw error(400, 'Error deleting');
+			throw error(400, "Error deleting");
 		}
 	},
 };

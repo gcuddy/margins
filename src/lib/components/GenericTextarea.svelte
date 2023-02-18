@@ -1,14 +1,14 @@
 <script lang="ts">
-	import autosize from '$lib/actions/autosize';
+	import autosize from "$lib/actions/autosize";
 
-	export let value = '';
-	export let placeholder = 'Enter text…';
-	export let variant: 'filled' | 'ghost' | 'naked' = 'filled';
-	let className = '';
+	export let value = "";
+	export let placeholder = "Enter text…";
+	export let variant: "filled" | "ghost" | "naked" = "filled";
+	let className = "";
 	export { className as class };
 	export let el: HTMLElement | undefined = undefined;
-	export let id = '';
-	export let name = '';
+	export let id = "";
+	export let name = "";
 	export let rows = 2;
 	export let maxRows = 50;
 

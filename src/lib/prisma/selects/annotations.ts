@@ -25,7 +25,6 @@ export const annotationSelect = Prisma.validator<Prisma.AnnotationSelect>()({
 	tags: true,
 	type: true,
 	private: true,
-	parentId: true,
 	deleted: true,
 	body: true,
 	creator: {
@@ -34,5 +33,61 @@ export const annotationSelect = Prisma.validator<Prisma.AnnotationSelect>()({
 		},
 	},
 	color: true,
+	// _count: {
+	// 	select: {
+	// 		children: true,
+	// 	},
+	// },
+	// children: true,
 	// TODO: how to get this to work recursively?
 });
+
+export const contextualAnnotationSelect = Prisma.validator<Prisma.AnnotationSelect>()({
+	...annotationSelect,
+});
+
+export const annotationArgs = Prisma.validator<Prisma.AnnotationArgs>()({
+	include: {
+		creator: {
+			select: {
+				username: true,
+			},
+		},
+		children: {
+			select: {
+				...annotationSelect,
+				_count: {
+					select: {
+						children: true,
+					},
+				},
+			},
+		},
+		tags: true,
+		_count: {
+			select: {
+				children: true,
+			},
+		},
+	},
+});
+
+export const contextualAnnotationArgs = Prisma.validator<Prisma.AnnotationArgs>()({
+	include: {
+		...annotationArgs.include,
+		parent: {
+			select: {
+				...annotationSelect,
+				parent: true,
+			},
+		},
+		entry: {
+			select: {
+				title: true,
+				id: true,
+			},
+		},
+	},
+});
+
+export type ContextualAnnotation = Prisma.AnnotationGetPayload<typeof contextualAnnotationArgs>;

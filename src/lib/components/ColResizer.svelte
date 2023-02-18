@@ -1,11 +1,14 @@
 <script lang="ts">
-	import { clamp } from '$lib/utils';
+	import { clamp } from "$lib/utils";
+	import { createEventDispatcher } from "svelte";
 
-	let className = '';
+	let className = "";
 	export { className as class };
 	export let width: number;
 	export let max = 400;
 	export let min = 200;
+
+	const dispatch = createEventDispatcher();
 
 	let dragging = false;
 	// let pos: number;
@@ -14,6 +17,9 @@
 	function setPos(event: MouseEvent) {
 		const posChange = (width - event.clientX) * -1;
 		const pos = clamp(width + posChange, min, max);
+		if (posChange / width < -0.8) {
+			dispatch("collapse");
+		}
 		width = pos;
 	}
 
@@ -32,19 +38,19 @@
 			const onmouseup = () => {
 				dragging = false;
 
-				window.removeEventListener('mousemove', callback, false);
-				window.removeEventListener('mouseup', onmouseup, false);
+				window.removeEventListener("mousemove", callback, false);
+				window.removeEventListener("mouseup", onmouseup, false);
 			};
 
-			window.addEventListener('mousemove', callback, false);
-			window.addEventListener('mouseup', onmouseup, false);
+			window.addEventListener("mousemove", callback, false);
+			window.addEventListener("mouseup", onmouseup, false);
 		};
 
-		node.addEventListener('mousedown', mousedown, false);
+		node.addEventListener("mousedown", mousedown, false);
 
 		return {
 			destroy() {
-				node.removeEventListener('mousedown', mousedown, false);
+				node.removeEventListener("mousedown", mousedown, false);
 			},
 		};
 	}
@@ -60,19 +66,19 @@
 			const ontouchend = () => {
 				dragging = false;
 
-				window.removeEventListener('touchmove', callback, false);
-				window.removeEventListener('touchend', ontouchend, false);
+				window.removeEventListener("touchmove", callback, false);
+				window.removeEventListener("touchend", ontouchend, false);
 			};
 
-			window.addEventListener('touchmove', callback, false);
-			window.addEventListener('touchend', ontouchend, false);
+			window.addEventListener("touchmove", callback, false);
+			window.addEventListener("touchend", ontouchend, false);
 		};
 
-		node.addEventListener('touchstart', touchdown, false);
+		node.addEventListener("touchstart", touchdown, false);
 
 		return {
 			destroy() {
-				node.removeEventListener('touchstart', touchdown, false);
+				node.removeEventListener("touchstart", touchdown, false);
 			},
 		};
 	}

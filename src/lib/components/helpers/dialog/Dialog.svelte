@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { clickOutside } from '$lib/actions/clickOutside';
+	import { clickOutside } from "$lib/actions/clickOutside";
 
-	import focusTrap from '$lib/actions/focusTrap';
-	import scrollLock from '$lib/actions/scrollLock';
-	import { Keys } from '$lib/types/keyboard';
-	import { createEventDispatcher, onMount, setContext } from 'svelte';
-	import { readable } from 'svelte/store';
-	import type { TransitionConfig } from 'svelte/transition';
+	import focusTrap from "$lib/actions/focusTrap";
+	import scrollLock from "$lib/actions/scrollLock";
+	import { fadeScale } from "$lib/transitions";
+	import { Keys } from "$lib/types/keyboard";
+	import { createEventDispatcher, onMount, setContext } from "svelte";
+	import { readable } from "svelte/store";
+	import type { TransitionConfig } from "svelte/transition";
 	export let open = true;
 	export let ariaLabeledBy: string | undefined = undefined;
 	export let ariaLabel: string | undefined = undefined;
@@ -19,8 +20,8 @@
 		open,
 		close: onClose,
 	});
-	setContext('dialog_state', state);
-	let className = '';
+	setContext("dialog_state", state);
+	let className = "";
 	export { className as class };
 	const dispatch = createEventDispatcher();
 	let dialog: HTMLElement;
@@ -63,6 +64,10 @@
  -->
 	<!-- scrollLock is causing problems; temporarily turningn it off -->
 	<div
+		transition:fadeScale={{
+			duration: 150,
+			baseScale: 0.95,
+		}}
 		bind:this={dialog}
 		role="dialog"
 		aria-modal={open ? true : undefined}
@@ -73,7 +78,7 @@
 		use:focusTrap
 		use:scrollLock
 		use:clickOutside={{
-			cb: () => dispatch('close'),
+			cb: () => dispatch("close"),
 			useOnChildrenInstead: true,
 		}}
 	>

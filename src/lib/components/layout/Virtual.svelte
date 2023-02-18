@@ -6,7 +6,7 @@
 	import { fade } from 'svelte/transition';
 	import type { number, string } from 'zod';
 
-	setDebugMode(true);
+	// setDebugMode(true);
 
 	// TODO: initialRect works for ssr
 

@@ -1,21 +1,28 @@
 <script lang="ts">
-	import AnnotationInput from './AnnotationInput.svelte';
-	import { portal } from 'svelte-portal/src/Portal.svelte';
-	import { fly, fade } from 'svelte/transition';
-	import { createEventDispatcher, onMount } from 'svelte';
-	import { Focus, focusIn } from '$lib/utils/focus-management';
-	import { onDestroy } from 'svelte';
-	export let value = '';
-	export let el: HTMLElement;
-	import { draggable } from '@neodrag/svelte';
-	import { spring } from 'svelte/motion';
-	import type { Tag } from '@prisma/client';
+	import AnnotationInput from "./AnnotationInput.svelte";
+	import { portal } from "svelte-portal/src/Portal.svelte";
+	import { fly, fade } from "svelte/transition";
+	import { ComponentProps, createEventDispatcher, onMount } from "svelte";
+	import { Focus, focusIn } from "$lib/utils/focus-management";
+	import { onDestroy } from "svelte";
+	export let value = "";
+	export let el: HTMLElement | undefined = undefined;
+	import { draggable } from "@neodrag/svelte";
+	import { spring } from "svelte/motion";
+	import type { Tag } from "@prisma/client";
 	const dispatch = createEventDispatcher();
 	export let allTags: Tag[] = [];
 	if (!allTags.length) {
 		// fetch them
 	}
 	export let tags: Tag[] = [];
+
+	interface $$Props extends ComponentProps<AnnotationInput> {
+		tags?: Tag[];
+		value?: string;
+		el?: HTMLElement;
+	}
+
 	$: console.log({ tags });
 	let dragging = false;
 	let container: HTMLElement | undefined;
@@ -29,7 +36,7 @@
 	let x: number = Math.max(
 		Math.min(
 			initialRect.x - (container ? container.offsetWidth : 280) * 1.5,
-			el.closest('prose')?.clientWidth || 600 - (container ? container.offsetWidth : 280)
+			el.closest("prose")?.clientWidth || 600 - (container ? container.offsetWidth : 280)
 		),
 		0
 	);
@@ -52,9 +59,9 @@
 	// export let container: HTMLElement;
 	// $: top = rect.top + container.scrollTop;
 	// $: left = rect.left + rect.width / 2 - container.offsetLeft;
-	function calculateLeftOrRight(): 'left' | 'right' | 'center' | void {
+	function calculateLeftOrRight(): "left" | "right" | "center" | void {
 		if (!container) return;
-		console.log('calculating pos');
+		console.log("calculating pos");
 		const { left, right, width } = el.getBoundingClientRect();
 		console.log({
 			left,
@@ -66,14 +73,14 @@
 		});
 		console.log(document.body.clientWidth - right < container.offsetWidth + 10);
 		if (document.body.clientWidth - (container.offsetWidth + width) < 0) {
-			return 'center';
+			return "center";
 		}
 		if (right - container.offsetWidth > 0) {
-			return 'right';
+			return "right";
 		} else if (left + container.offsetWidth < document.body.clientWidth) {
-			return 'left';
+			return "left";
 		} else {
-			return 'center';
+			return "center";
 		}
 	}
 
@@ -89,10 +96,10 @@
 		if (container) {
 			pos = calculateLeftOrRight();
 		}
-		document.addEventListener('resize', setPos);
+		document.addEventListener("resize", setPos);
 	});
 	onDestroy(() => {
-		document.removeEventListener('resize', setPos);
+		document.removeEventListener("resize", setPos);
 	});
 </script>
 
@@ -116,12 +123,12 @@
 	class="floating-annotation absolute z-20 resize"
 	use:draggable={{
 		position: { x, y },
-		cancel: 'textarea, span, button, .resizer, .no-drag',
-		bounds: 'main [data-content-container]',
+		cancel: "textarea, span, button, .resizer, .no-drag",
+		bounds: "main [data-content-container]",
 	}}
 	on:keydown={(e) => {
-		if (e.key === 'Escape') {
-			dispatch('cancel');
+		if (e.key === "Escape") {
+			dispatch("cancel");
 		}
 	}}
 	on:neodrag={() => {
@@ -138,12 +145,9 @@
 >
 	<!-- style:--rotation="{$rotation}deg" -->
 	<!--  -->
-
-	<div
-		style:--scale={$scale}
-		class="annotatation-container !cursor-grab shadow-lg transition-opacity"
-	>
-		<AnnotationInput bind:tags bind:el={container} bind:value on:save on:cancel />
+	<!-- TODO: form? -->
+	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-lg transition-opacity">
+		<AnnotationInput bind:tags bind:el={container} bind:value on:save on:cancel {...$$restProps} />
 	</div>
 </div>
 
