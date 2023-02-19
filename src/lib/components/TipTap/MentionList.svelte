@@ -167,7 +167,6 @@ bind:this={container}
 class="items z-[600] scrollbar-hide flex max-h-48 w-auto min-w-[250px] max-w-[75vh] grow flex-col overflow-y-auto rounded bg-elevation text-sm shadow-md "
 use:content
 >
-{$state.index}
 	{#if items?.length}
 		{#each $state.items || [] as item, index (index)}
 			<button

@@ -1,20 +1,25 @@
 <script lang="ts">
 	import { getEntriesFromCache, searchEntriesQuery } from "$lib/features/entries/queries";
 	import { useQueryClient } from "@tanstack/svelte-query";
-	import { Editor, EditorOptions, JSONContent } from "@tiptap/core";
+	import type { EditorOptions, JSONContent } from "@tiptap/core";
+	import { createEditor, Editor, EditorContent, BubbleMenu } from "svelte-tiptap";
 	import Image from "@tiptap/extension-image";
 	import Mention from "@tiptap/extension-mention";
 	import Link from "@tiptap/extension-link";
 	import Placeholder from "@tiptap/extension-placeholder";
 	import StarterKit from "@tiptap/starter-kit";
-	import BubbleMenu from "@tiptap/extension-bubble-menu";
+	import cx from "classnames";
+
+	// import BubbleMenu from "@tiptap/extension-bubble-menu";
 
 	import { createEventDispatcher, onDestroy, onMount } from "svelte";
-	import { get, writable } from "svelte/store";
+	import { get, Readable, writable } from "svelte/store";
 	import MentionList, { type State as MentionListState } from "./TipTap/MentionList.svelte";
+	import { browser } from "$app/environment";
+	import Icon from "./helpers/Icon.svelte";
 
 	let element: Element;
-	let editor: Editor;
+	let editor: Readable<Editor>;
 
 	let saved = "";
 	export let config: Partial<EditorOptions> = {};
@@ -34,10 +39,10 @@
 	}>();
 
 	onMount(() => {
-		editor = new Editor({
+		editor = createEditor({
 			content: "<p>Hello World! 🌍️ </p>",
 			...config,
-			element: element,
+			// element: element,
 			extensions: [
 				StarterKit,
 				Image,
@@ -46,9 +51,9 @@
 					showOnlyWhenEditable: false,
 				}),
 				Link,
-				BubbleMenu.configure({
-					element: bubble,
-				}),
+				// BubbleMenu.configure({
+				// 	element: bubble,
+				// }),
 				Mention.configure({
 					HTMLAttributes: {
 						class: "mention",
@@ -195,84 +200,159 @@
 				}),
 			],
 			editorProps: {
-				attributes: {
-					class: `prose mx-auto prose-sm sm:prose p-4 m-1 rounded-md`,
-				},
-			},
-			onTransaction: () => {
-				// force re-render so `editor.isActive` works as expected
-				editor = editor;
+				attributes: () => ({
+					class: cx("m-1 p-4 rounded-md prose mx-auto prose-sm sm:prose relative", {
+						"shadow ring-1 ring-accent": $editor?.isEditable,
+					}),
+				}),
 			},
 		});
 		// debounced auto save on update
-		editor.on("update", () => {
+		$editor.on("update", ({ editor }) => {
 			const json = editor.getJSON();
-			if (saved !== JSON.stringify(json)) {
+			if (saved !== JSON.stringify(json) && !bubble) {
 				console.log("saving");
 				dispatch("update", json);
 			}
 			saved = JSON.stringify(editor.getJSON());
 		});
-		editor.on("blur", ({ editor }) => {
-			dispatch("blur", editor.getJSON());
+		$editor.on("blur", ({ editor }) => {
+			console.log({ bubble });
+			if (browser && !document?.body.contains(bubble)) {
+				dispatch("blur", editor.getJSON());
+			}
 			// editor.setEditable(false);
 		});
-		// editor.on("focus", ({ editor }) => {
-		// 	editor.setEditable(true);
-		// });
 	});
 
-	$: editor?.isFocused ? editor.setEditable(true) : editor?.setEditable(false);
-
-	onDestroy(() => {
-		if (editor) {
-			editor.destroy();
-		}
-	});
+	// onDestroy(() => {
+	// 	if (editor) {
+	// 		editor.destroy();
+	// 	}
+	// });
 
 	let bubble: HTMLElement;
+
+	const toggleBold = () => {
+		$editor.chain().focus().toggleBold().run();
+	};
+	const toggleItalic = () => {
+		$editor.chain().focus().toggleItalic().run();
+	};
+	const setLink = (href: string) => $editor.chain().focus().setLink({ href }).run();
+	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
+	$: console.log({ $editor });
+
+	const conditionallySetEditable = (editable: boolean) => {
+		if (editable) {
+			$editor?.setEditable(true);
+		} else if (browser && !document?.body.contains(bubble)) {
+			$editor?.setEditable(false);
+		}
+	};
+
+	$: $editor?.isFocused ? $editor.setEditable(true) : conditionallySetEditable(false);
+
+    let linkMenu = {
+        active: false,
+        href: "",
+    }
 </script>
 
-<div bind:this={bubble} class="flex">
-	<button
-		on:click={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
-		class:active={editor?.isActive("heading", { level: 1 })}
-	>
-		H1
-	</button>
-	<button
-		on:click={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-		class:active={editor?.isActive("heading", { level: 2 })}
-	>
-		H2
-	</button>
-	<button
-		on:click={() => editor?.chain().focus().setParagraph().run()}
-		class:active={editor?.isActive("paragraph")}
-	>
-		P
-	</button>
-	<button
-		on:click={() => {
-			const url = window.prompt("Image URL");
-			if (!url) return;
-			editor
-				?.chain()
-				.focus()
-				.setImage({
-					src: url,
-				})
-				.run();
-		}}>Image</button
-	>
-</div>
-
-<div bind:this={element} />
+<!-- <div bind:this={element} /> -->
+{#if editor}
+	<BubbleMenu editor={$editor} pluginKey="formatting">
+		<div
+			bind:this={bubble}
+			class="rounded border border-border bg-elevation shadow-md transition transparency:bg-elevation/50 transparency:backdrop-blur-md transparency:backdrop-brightness-75 transparency:backdrop-contrast-75 transparency:backdrop-saturate-200"
+		>
+			{#if !linkMenu.active}
+				<div class="flex items-center space-x-1 py-1 px-2">
+					<button
+						on:click={toggleBold}
+						class:active={isActive("bold")}
+						class={cx("flex h-7 w-7 items-center justify-center rounded")}
+					>
+						<!-- remix icon -->
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4"
+							><path fill="none" d="M0 0h24v24H0z" /><path
+								fill="currentColor"
+								d="M8 11h4.5a2.5 2.5 0 1 0 0-5H8v5zm10 4.5a4.5 4.5 0 0 1-4.5 4.5H6V4h6.5a4.5 4.5 0 0 1 3.256 7.606A4.498 4.498 0 0 1 18 15.5zM8 13v5h5.5a2.5 2.5 0 1 0 0-5H8z"
+							/></svg
+						>
+					</button>
+					<button
+						on:click={toggleItalic}
+						class:active={isActive("italic")}
+						class={cx("flex h-7 w-7 items-center justify-center rounded")}
+					>
+						<!-- remix icon -->
+						<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+							><path fill="none" d="M0 0h24v24H0z" /><path
+								d="M15 20H7v-2h2.927l2.116-12H9V4h8v2h-2.927l-2.116 12H15z"
+								fill="currentColor"
+							/></svg
+						>
+					</button>
+					<button
+						on:click={() => {
+							linkMenu.active = true;
+							const url = $editor.getAttributes("link").href;
+                            console.log({ url })
+                            if (url) {
+                                linkMenu.href = url
+                            }
+						}}
+						class:active={isActive("link")}
+						class={cx("flex h-7 w-7 items-center justify-center rounded")}
+					>
+						<!-- remix icon -->
+						<Icon name="linkMini" className="h-4 w-4 fill-current" />
+					</button>
+				</div>
+			{:else if linkMenu.active}
+				<div class="p-1 flex justify-between items-center">
+					<input
+						placeholder="Enter link"
+						autocorrect="false"
+						class={cx(
+							"h-7 flex-1 border-0 bg-transparent py-1.5 px-3 text-xs outline-none  focus:outline-none focus:ring-0 focus-visible:border-none"
+						)}
+						type="text"
+                        autofocus
+                        bind:value={linkMenu.href}
+                        on:blur={() => {
+                            linkMenu = {...linkMenu, active: false}
+                        }}
+                        on:keydown={(event) => {
+                            if (event.key === "Enter") {
+                                setLink(linkMenu.href)
+                                linkMenu = {
+                                    active: false,
+                                    href: "",
+                                }
+                            }
+                        }}
+					/>
+                    <button class="inline-flex flex-col items-center" on:click={() => {
+                        $editor.chain().focus().unsetLink().run();
+                        linkMenu = {
+                            active: false,
+                            href: "",
+                        }
+                    }}>
+                        <Icon name="trashMini" className="h-4 w-4 fill-muted" />
+                    </button>
+				</div>
+			{/if}
+		</div>
+	</BubbleMenu>
+{/if}
+<EditorContent editor={$editor} />
 
 <style lang="postcss">
 	button.active {
-		background: black;
-		color: white;
+		@apply bg-elevation-hover text-bright;
 	}
 	:global(.ProseMirror p.is-editor-empty:first-child::before) {
 		@apply text-muted;
@@ -282,6 +362,6 @@
 		pointer-events: none;
 	}
 	:global(.ProseMirror.ProseMirror-focused) {
-		@apply shadow ring-1 ring-accent focus-visible:outline-none;
+		@apply shadow-none focus-visible:outline-none;
 	}
 </style>
