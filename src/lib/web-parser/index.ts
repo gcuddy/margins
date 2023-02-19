@@ -384,6 +384,12 @@ export class Parser {
             const content = this.getContent();
             text = content.innerText;
             html = content.innerHTML;
+            // get outgoing links from content
+            const links = this.getLinks(content);
+            this.metadata.extended = {
+                outgoingLinks: links
+            }
+            console.log({ links })
         } catch (e) {
             console.error(e);
         }
@@ -411,12 +417,7 @@ export class Parser {
                 }
             }
         }
-        // get outgoing links from content
-        const links = this.getLinks();
-        this.metadata.extended = {
-            outgoingLinks: links
-        }
-        console.log({ links })
+
         // absolutize this.metadata.iamge
         if (this.metadata.image) {
             this.metadata.image = absolutizeUrl(this.metadata.image, this.baseUrl);
@@ -564,13 +565,13 @@ export class Parser {
         return this.cleanContent(topNode);
     }
 
-    private getLinks() {
-        const links = this.root.querySelectorAll("a");
+    private getLinks(root: HTMLElement) {
+        const links = root.querySelectorAll("a");
         const linksToReturn = links.map((link) => {
             if (!link.getAttribute("href") || !link.innerText) return null;
             return {
                 href: link.getAttribute("href"),
-                text: link.innerText,
+                text: link.innerText.trim(),
             };
         }).filter(Boolean) as { href: string; text: string }[];
         return linksToReturn;
