@@ -18,7 +18,7 @@
 	import { trpc } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import { listPodcastsQuery, podcastSearchQuery } from "$lib/features/podcasts/queries";
-	import { getUser } from "@lucia-auth/sveltekit/client";
+    import { getUser } from "@lucia-auth/sveltekit/client";
 	import { tweened } from "svelte/motion";
 	import { get } from "svelte/store";
 	import { fade } from "svelte/transition";
@@ -461,8 +461,7 @@
 			animateHeight={true}
 			fillValue={false}
 			on:select={({ detail }) => {
-				let user = getUser();
-				detail?.perform({ page: $page, user: get(user) });
+				detail?.perform({ page: $page, user: $user });
 				$showCommandPalette = false;
 			}}
 			input={{

@@ -1,11 +1,9 @@
 import * as z from "zod"
 import * as imports from "../zod-utils"
-import { CompleteSession, SessionModel, CompleteInteraction, InteractionModel, CompleteFavorite, FavoriteModel, CompleteArticle, ArticleModel, CompleteCollection, CollectionModel, CompleteAnnotation, AnnotationModel, CompleteSubscription, SubscriptionModel, CompleteEntryData, EntryDataModel, CompleteStylesheet, StylesheetModel, CompleteState, StateModel, CompleteTagging, TaggingModel, CompleteTag, TagModel, CompleteBookmark, BookmarkModel, CompleteEntryTag, EntryTagModel, CompleteContext, ContextModel, CompleteContextNode, ContextNodeModel, CompleteColorDescription, ColorDescriptionModel, CompleteInvitationCode, InvitationCodeModel, CompleteSmartList, SmartListModel, CompleteTwitterIntegration, TwitterIntegrationModel, CompleteLog, LogModel, CompleteRelation, RelationModel } from "./index"
+import { CompleteSession, SessionModel, CompleteKey, KeyModel, CompleteInteraction, InteractionModel, CompleteFavorite, FavoriteModel, CompleteArticle, ArticleModel, CompleteCollection, CollectionModel, CompleteAnnotation, AnnotationModel, CompleteSubscription, SubscriptionModel, CompleteEntryData, EntryDataModel, CompleteStylesheet, StylesheetModel, CompleteState, StateModel, CompleteTagging, TaggingModel, CompleteTag, TagModel, CompleteBookmark, BookmarkModel, CompleteEntryTag, EntryTagModel, CompleteContext, ContextModel, CompleteContextNode, ContextNodeModel, CompleteColorDescription, ColorDescriptionModel, CompleteInvitationCode, InvitationCodeModel, CompleteSmartList, SmartListModel, CompleteTwitterIntegration, TwitterIntegrationModel, CompleteLog, LogModel, CompleteRelation, RelationModel } from "./index"
 
 export const _UserModel = z.object({
   id: z.string(),
-  provider_id: z.string(),
-  hashed_password: z.string().nullish(),
   createdAt: z.date(),
   updatedAt: z.date(),
   email: z.string(),
@@ -16,6 +14,7 @@ export const _UserModel = z.object({
 
 export interface CompleteUser extends z.infer<typeof _UserModel> {
   session: CompleteSession[]
+  Key: CompleteKey[]
   followedBy: CompleteUser[]
   following: CompleteUser[]
   interactions: CompleteInteraction[]
@@ -50,6 +49,7 @@ export interface CompleteUser extends z.infer<typeof _UserModel> {
  */
 export const UserModel: z.ZodSchema<CompleteUser> = z.lazy(() => _UserModel.extend({
   session: SessionModel.array(),
+  Key: KeyModel.array(),
   followedBy: UserModel.array(),
   following: UserModel.array(),
   interactions: InteractionModel.array(),

@@ -45,8 +45,9 @@ async function getUser(sesh: Maybe<Session>) {
 }
 
 export async function createContext(event: RequestEvent) {
+    console.log(`createContext()`)
 	const session = await event.locals.validateUser();
-
+    console.log({session})
 	// REVIEW: this is what cal.com does, but is it a bad idea for speed to do this?
 	// const user = await getUser(session);
 	return {

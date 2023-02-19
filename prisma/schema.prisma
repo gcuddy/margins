@@ -738,11 +738,21 @@ model SmartList {
     @@index([userId])
 }
 
+model Key {
+    id              String  @id @unique
+    hashed_password String?
+    user_id         String
+    primary         Boolean
+    user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+
+    @@index([user_id])
+    @@map("key")
+}
+
 model User {
     id                 String               @id @unique @default(cuid())
-    provider_id        String               @unique
-    hashed_password    String?
     session            Session[]
+    Key                Key[]
     createdAt          DateTime             @default(now())
     updatedAt          DateTime             @updatedAt
     //
@@ -785,7 +795,7 @@ model User {
 model Session {
     id           String @id @unique
     user_id      String
-    expires      BigInt
+    active_expires      BigInt
     idle_expires BigInt
     user         User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
 

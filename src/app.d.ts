@@ -1,11 +1,7 @@
 /// <reference types="lucia-auth" />
 declare namespace Lucia {
 	type Auth = import("$lib/server/lucia.js").Auth;
-	type UserAttributes = {
-		email: string;
-		username: string;
-		default_state_id: number;
-	};
+	type UserAttributes = Partial<import("@prisma/client").User>
 }
 
 /// <reference types="@sveltejs/kit" />

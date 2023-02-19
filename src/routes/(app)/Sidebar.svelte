@@ -36,7 +36,6 @@
 	import ColResizer from "$lib/components/ColResizer.svelte";
 	import { hideSidebar } from "$lib/stores/sidebar";
 	import ContextMenu from "$lib/components/ContextMenu.svelte";
-	import { signOut } from "@lucia-auth/sveltekit/client";
 	import { sidebarFeeds, type UserStoreType } from "$lib/stores/user";
 	import { readable, type Readable } from "svelte/store";
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
@@ -334,7 +333,7 @@
 		<nav
 			on:click={handleClick}
 			on:keydown
-			class="relative flex h-full max-w-[min(100vw-40px,400px)] grow  flex-col space-y-3  bg-sidebar/90 pt-10 shadow-xl transition duration-300   dark:shadow-2xl lg:pt-0 lg:shadow-none border-border {collapsed
+			class="relative flex h-full max-w-[min(100vw-40px,400px)] grow  flex-col space-y-3  border-border bg-sidebar/90 pt-10 shadow-xl transition   duration-300 dark:shadow-2xl lg:pt-0 lg:shadow-none {collapsed
 				? '-top-2 m-1 rounded-md border  dark:border-gray-600 dark:bg-gray-800'
 				: 'border-r '}"
 		>
@@ -355,7 +354,12 @@
 										{
 											label: "Logout",
 											perform: async () => {
-												await signOut();
+												await fetch(`/u:${user?.username}?/signout`, {
+													method: "POST",
+													headers: {
+														"x-sveltekit-action": "true",
+													},
+												});
 												await invalidateAll();
 												// await goto('/');
 											},
@@ -405,7 +409,7 @@
 									<MenuButton
 										use={[addMenuRef]}
 										class="relative flex h-7 shrink-0 cursor-default select-none appearance-none  items-center justify-center truncate rounded-lg rounded-l-none border border-gray-300  bg-white
-									p-1 font-medium text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring disabled:opacity-60 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+									p-1 font-medium text-gray-600 shadow-sm transition focus-visible:ring disabled:opacity-60 hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-200"
 									>
 										<Icon name="chevronDownMini" className="h-4 w-4 fill-gray-400" />
 									</MenuButton>
@@ -479,7 +483,7 @@
 					</div>
 				{/if}
 				<!-- navigation -->
-				<div class="flex shrink flex-col space-y-8 overflow-y-auto simple-scrollbar">
+				<div class="simple-scrollbar flex shrink flex-col space-y-8 overflow-y-auto">
 					<div class="flex grow flex-col items-stretch space-y-1 px-5 text-sm">
 						{#each navItems as nav}
 							<SidebarItem {...nav} bind:collapsed={nav.collapsed} />

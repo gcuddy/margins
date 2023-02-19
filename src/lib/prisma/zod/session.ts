@@ -5,7 +5,7 @@ import { CompleteUser, UserModel } from "./index"
 export const _SessionModel = z.object({
   id: z.string(),
   user_id: z.string(),
-  expires: z.bigint(),
+  active_expires: z.bigint(),
   idle_expires: z.bigint(),
 })
 

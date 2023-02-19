@@ -16,7 +16,7 @@ export const actions: Actions = {
 			});
 		}
 		try {
-			const user = await auth.authenticateUser('email', email, password);
+			const user = await auth.validateKeyPassword('email', email, password);
 			const session = await auth.createSession(user.userId);
 			locals.setSession(session);
 		} catch (e) {

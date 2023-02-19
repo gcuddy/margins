@@ -1,6 +1,7 @@
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
+import { auth } from '$lib/server/lucia';
 
 import type { Actions } from './$types';
 
@@ -54,51 +55,57 @@ import type { Actions } from './$types';
 // };
 
 export const actions: Actions = {
-	follow: async ({ locals, params }) => {
-		//todo: explicit follows table in schema
-		console.log(`follow ${params.username}`);
-		const session = await locals.validate();
-		if (!session) {
-			throw error(401, 'Unauthorized');
-		}
-		const user = await db.user.update({
-			where: {
-				id: session.userId,
-			},
-			data: {
-				following: {
-					connect: {
-						username: params.username,
-					},
-				},
-			},
-		});
-		console.log(`[FOLLOW]`, { user });
-		return {
-			success: true,
-		};
-	},
-	unfollow: async ({ locals, params }) => {
-		console.log(`unfollow ${params.username}`);
-		const session = await locals.validate();
-		if (!session) {
-			throw error(401, 'Unauthorized');
-		}
-		const user = await db.user.update({
-			where: {
-				id: session.userId,
-			},
-			data: {
-				following: {
-					disconnect: {
-						username: params.username,
-					},
-				},
-			},
-		});
-		console.log(`[UNFOLLOW]`, { user });
-		return {
-			success: true,
-		};
-	},
+    follow: async ({ locals, params }) => {
+        //todo: explicit follows table in schema
+        console.log(`follow ${params.username}`);
+        const session = await locals.validate();
+        if (!session) {
+            throw error(401, 'Unauthorized');
+        }
+        const user = await db.user.update({
+            where: {
+                id: session.userId,
+            },
+            data: {
+                following: {
+                    connect: {
+                        username: params.username,
+                    },
+                },
+            },
+        });
+        console.log(`[FOLLOW]`, { user });
+        return {
+            success: true,
+        };
+    },
+    unfollow: async ({ locals, params }) => {
+        console.log(`unfollow ${params.username}`);
+        const session = await locals.validate();
+        if (!session) {
+            throw error(401, 'Unauthorized');
+        }
+        const user = await db.user.update({
+            where: {
+                id: session.userId,
+            },
+            data: {
+                following: {
+                    disconnect: {
+                        username: params.username,
+                    },
+                },
+            },
+        });
+        console.log(`[UNFOLLOW]`, { user });
+        return {
+            success: true,
+        };
+    },
+    signout: async ({ locals }) => {
+        const session = await locals.validate();
+        if (!session) return fail(401);
+        await auth.invalidateSession(session.sessionId); // invalidate session
+        locals.setSession(null); // remove cookie
+    }
 };
