@@ -112,6 +112,8 @@ model Bookmark {
     favoriteId    Int?
     annotations   Annotation[]
 
+    // TODO: context
+
     deleted DateTime?
 
     @@unique([uri, entryId, userId])
@@ -131,20 +133,25 @@ enum Color {
     Purple
 }
 
+enum RelationType {
+    Related
+    SavedFrom
+}
+
 /// Describes a user-defined relationship between entries. (Just entries, right?)
 model Relation {
-    id             String   @id @default(cuid())
-    createdAt      DateTime @default(now())
-    updatedAt      DateTime @updatedAt
+    id             String       @id @default(cuid())
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
     /// The type of the relation
-    type           String?
-    user           User     @relation(fields: [userId], references: [id])
+    type           RelationType @default(Related)
+    user           User         @relation(fields: [userId], references: [id])
     userId         String
     /// The entry whose relationship is being described
-    entry          Entry    @relation("originatingEntryRelation", fields: [entryId], references: [id])
+    entry          Entry        @relation("originatingEntryRelation", fields: [entryId], references: [id], onDelete: Cascade)
     entryId        Int
     /// The entry that is related to the entry
-    relatedEntry   Entry    @relation("destinationEntryRelation", fields: [relatedEntryId], references: [id])
+    relatedEntry   Entry        @relation("destinationEntryRelation", fields: [relatedEntryId], references: [id], onDelete: Cascade)
     relatedEntryId Int
 
     // can also be from an annotation? Or maybe annotation marks it here
@@ -157,9 +164,9 @@ model Relation {
 
 /// @zod.import(["import { TargetSchema } from '../../schemas'"])
 model Annotation {
-    id          Int            @id @default(autoincrement())
-    createdAt   DateTime       @default(now())
-    updatedAt   DateTime       @updatedAt
+    id          String      @id @default(cuid())
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
     // body is used for: page note when type is bookmarking, or annotation when type is highlight/annotation
     // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
     //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
@@ -167,19 +174,22 @@ model Annotation {
     body        Json?
     // contentData - used for rich tiptap data
     contentData Json?
-    editedAt    DateTime?
-    tags        Tagging[]
-    type        AnnotationType
-    private     Boolean        @default(true)
+
+    /// Optional title, used for longer notes unassociated with an entryo
+    title    String?
+    editedAt DateTime?
+    tags     Tagging[]
+    type     AnnotationType
+    private  Boolean        @default(true)
     /// @zod.custom(imports.TargetSchema)
-    target      Json? // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
-    entry       Entry?         @relation(fields: [entryId], references: [id])
-    entryId     Int?
+    target   Json? // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
+    entry    Entry?         @relation(fields: [entryId], references: [id])
+    entryId  Int?
     // TODO: should an annotation be associated with an entry, an a bookmark, or both, or neither??
 
     /// An annotation will have a parent when it's a reply
     parent   Annotation?  @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-    parentId Int?
+    parentId String?
     children Annotation[] @relation("references")
 
     /// The "soft delete" time. Deletions are cleared after 30 days.
@@ -275,6 +285,7 @@ model Entry {
     schemaOrg Json?
 
     //REVIEW: decide on what json fields to keep
+    /// @zod.custom(imports.EntryExtendedSchema)
     extended Json?
 
     // TODO: bigint?
@@ -499,7 +510,7 @@ model CollectionItems {
     parentId     String?
     createdAt    DateTime           @default(now())
     updatedAt    DateTime           @updatedAt
-    annotationId Int?               @unique
+    annotationId String?               @unique
     annotation   Annotation?        @relation(fields: [annotationId], references: [id])
     bookmark     Bookmark?          @relation(fields: [bookmarkId], references: [id])
     bookmarkId   Int?
@@ -691,7 +702,7 @@ model Tagging {
     feedId     Int?
     annotation Annotation? @relation(fields: [annotationId], references: [id])
 
-    annotationId Int?
+    annotationId String?
     bookmark     Bookmark? @relation(fields: [bookmarkId], references: [id])
     bookmarkId   Int?
     // TODO: decide if entry should have tag or if it shold be on bookmark
@@ -793,11 +804,11 @@ model User {
 }
 
 model Session {
-    id           String @id @unique
-    user_id      String
-    active_expires      BigInt
-    idle_expires BigInt
-    user         User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
+    id             String @id @unique
+    user_id        String
+    active_expires BigInt
+    idle_expires   BigInt
+    user           User   @relation(references: [id], fields: [user_id], onDelete: Cascade)
 
     @@index([user_id])
     @@map("session")
@@ -843,7 +854,7 @@ model Favorite {
     children Favorite[] @relation("parent")
 
     annotation   Annotation? @relation(fields: [annotationId], references: [id])
-    annotationId Int?        @unique
+    annotationId String?        @unique
 
     // REVIEW: or entry/entryId? Makes sense you'd need it in your library to favorite it. but. idk.
     bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])

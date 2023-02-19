@@ -7,7 +7,7 @@ export const _TaggingModel = z.object({
   tagId: z.number().int(),
   userId: z.string(),
   feedId: z.number().int().nullish(),
-  annotationId: z.number().int().nullish(),
+  annotationId: z.string().nullish(),
   bookmarkId: z.number().int().nullish(),
 })
 

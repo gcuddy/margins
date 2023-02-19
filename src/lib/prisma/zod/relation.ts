@@ -1,5 +1,6 @@
 import * as z from "zod"
 import * as imports from "../zod-utils"
+import { RelationType } from "@prisma/client"
 import { CompleteUser, UserModel, CompleteEntry, EntryModel } from "./index"
 
 export const _RelationModel = z.object({
@@ -9,7 +10,7 @@ export const _RelationModel = z.object({
   /**
    * The type of the relation
    */
-  type: z.string().nullish(),
+  type: z.nativeEnum(RelationType),
   userId: z.string(),
   entryId: z.number().int(),
   relatedEntryId: z.number().int(),

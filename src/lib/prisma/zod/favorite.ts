@@ -19,7 +19,7 @@ export const _FavoriteModel = z.object({
    */
   folderName: z.string().nullish(),
   parentId: z.string().nullish(),
-  annotationId: z.number().int().nullish(),
+  annotationId: z.string().nullish(),
   bookmarkId: z.number().int().nullish(),
   collectionId: z.number().int().nullish(),
   entryId: z.number().int().nullish(),

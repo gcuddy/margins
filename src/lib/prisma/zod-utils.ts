@@ -4,7 +4,7 @@ import { TargetSchema } from "$lib/annotation";
 import { chosenIcon } from "$lib/types/icon";
 import { recipeSchema } from "$lib/web-parser/recipe";
 
-export { chosenIcon, recipeSchema,TargetSchema };
+export { chosenIcon, recipeSchema, TargetSchema };
 export * from "$lib/web-parser/schemaOrg";
 
 export const StringNullableFilter = z.object({
@@ -29,7 +29,7 @@ export const StringFilterToDisplay: Record<keyof Pick<typeof StringNullableFilte
     endsWith: "ends with",
     search: "search",
     not: "not",
-} as const ;
+} as const;
 
 // export type IntNullableFilter = {
 //     equals?: number | null
@@ -52,3 +52,10 @@ export const IntNullableFilter = z.object({
     gte: z.number(),
     not: z.number().nullish() // <-- not using nested filter here to simplify
 });
+
+export const EntryExtendedSchema = z.object({
+    outgoingLinks: z.array(z.object({
+        href: z.string(),
+        text: z.string()
+    })),
+}).partial();

@@ -16,7 +16,7 @@ export const _CollectionItemsModel = z.object({
   parentId: z.string().nullish(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  annotationId: z.number().int().nullish(),
+  annotationId: z.string().nullish(),
   bookmarkId: z.number().int().nullish(),
   entryId: z.number().int().nullish(),
 })

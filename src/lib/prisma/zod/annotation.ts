@@ -10,17 +10,21 @@ const literalSchema = z.union([z.string(), z.number(), z.boolean()])
 const jsonSchema: z.ZodSchema<Json> = z.lazy(() => z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)]))
 
 export const _AnnotationModel = z.object({
-  id: z.number().int(),
+  id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   body: jsonSchema,
   contentData: jsonSchema,
+  /**
+   * Optional title, used for longer notes unassociated with an entryo
+   */
+  title: z.string().nullish(),
   editedAt: z.date().nullish(),
   type: z.nativeEnum(AnnotationType),
   private: z.boolean(),
   target: imports.TargetSchema,
   entryId: z.number().int().nullish(),
-  parentId: z.number().int().nullish(),
+  parentId: z.string().nullish(),
   /**
    * The "soft delete" time. Deletions are cleared after 30 days.
    */

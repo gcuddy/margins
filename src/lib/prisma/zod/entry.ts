@@ -39,7 +39,7 @@ export const _EntryModel = z.object({
   enclosureLength: z.number().int().nullish(),
   enclosureType: z.string().nullish(),
   schemaOrg: imports.schemaOrgSchemas,
-  extended: jsonSchema,
+  extended: imports.EntryExtendedSchema,
   /**
    * The TMDB id, if it's a movie or TV show.
    */
