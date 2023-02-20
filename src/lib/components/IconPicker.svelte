@@ -88,11 +88,20 @@
 			.replace(/^./, (str) => str.toUpperCase());
 	};
 
+
+    const defaultChosenIcon: ChosenIcon = {
+        name: "rectangleStackMini",
+        color: "#fbbf24",
+        type: "icon",
+    }
+
 	export let chosenIcon: ChosenIcon = {
 		name: "rectangleStackMini",
 		color: "#fff",
 		type: "icon",
 	};
+    $: chosenIcon = chosenIcon || defaultChosenIcon;
+
     export let iconClass = "h-4 w-4 fill-current";
 </script>
 
@@ -101,7 +110,7 @@
 <Popover class="h-full w-full">
 	<PopoverButton
 		use={[popperRef]}
-		class="flex h-full w-full items-center justify-center rounded border border-gray-600 px-2 transition"
+		class="flex h-full w-full items-center justify-center rounded-lg border border-border px-2 transition"
 		style={chosenIcon.type === "icon" ? `color: ${chosenIcon.color};` : undefined}
 	>
 		{#if chosenIcon.type === "icon"}
