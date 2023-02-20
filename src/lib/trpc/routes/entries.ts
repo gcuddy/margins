@@ -1,8 +1,10 @@
+import { RelationType } from "@prisma/client"
 import { fuzzy } from "fast-fuzzy";
 import { z } from "zod";
 
 import { db } from "$lib/db";
 import { annotationSelect } from "$lib/prisma/selects/annotations";
+import type { EntryExtendedSchema } from "$lib/prisma/zod-utils";
 import { protectedProcedure, router } from "$lib/trpc/t";
 import { LocationSchema } from "$lib/types/schemas/Locations";
 import { Metadata } from "$lib/web-parser";
@@ -115,6 +117,7 @@ export const entriesRouter = router({
                         author: true,
                         id: true,
                         feedId: true,
+                        extended: true,
                         enclosureUrl: true,
                         tmdbId: true,
                         tmdbData: true,
@@ -126,19 +129,6 @@ export const entriesRouter = router({
                         published: true,
                         recipe: true,
                         original: true,
-                        // context: {
-                        //     where: {
-                        //         userId,
-                        //     },
-                        // },
-                        // data: {
-                        //     where: {
-                        //         userId,
-                        //     },
-                        //     select: {
-                        //         html: true,
-                        //     },
-                        // },
                         uri: true,
                         bookmarks: {
                             where: {
@@ -192,11 +182,6 @@ export const entriesRouter = router({
                                         },
                                     },
                                 },
-                                // _count: {
-                                // 	select: {
-                                // 		children: true,
-                                // 	},
-                                // },
                             },
                         },
                         interactions: {
@@ -271,6 +256,7 @@ export const entriesRouter = router({
                         unread,
                         interactions,
                         recipe: entry.recipe as null | Recipe,
+                        extended: entry.extended as z.infer<typeof EntryExtendedSchema> | null
                     };
                 })
         ),
@@ -746,7 +732,7 @@ export const entriesRouter = router({
             z.object({
                 entryId: z.number(),
                 relatedEntryId: z.number(),
-                type: z.enum(["related", "similar", "recommended"]),
+                type: z.nativeEnum(RelationType).default("Related"),
             })
         )
         .mutation(async ({ ctx, input }) => {

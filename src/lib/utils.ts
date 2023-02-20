@@ -16,7 +16,6 @@ import type { FavoriteSchema } from "./types/schemas/Favorite";
 import type { AddToListSchema } from "./types/schemas/List";
 import type { RssFeedItemModel } from "./types/schemas/rssfeeditem";
 import type { ViewOptions } from "./types/schemas/View";
-import type { RouterOutputs } from "./trpc/router";
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -218,6 +217,19 @@ export function getHostname(url: string) {
 		return "";
 	}
 }
+
+export function getPathname(url: string) {
+    try {
+        const u = new URL(url);
+        return u.pathname;
+    } catch (e) {
+        return "";
+    }
+}
+
+const getSimplifiedLink = (link: string) => getHostname(link) + getPathname(link);
+
+
 
 export function convertDomMetaToCssSelector(meta: DomMeta) {
 	return `${meta.parentTagName}:nth-of-type(${meta.parentIndex})`;

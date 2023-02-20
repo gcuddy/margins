@@ -1,16 +1,10 @@
 <script lang="ts">
-	import { page } from "$app/stores";
-	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
-	import { isTouchDevice } from "$lib/utils";
 	import type { Annotation, Tag } from "@prisma/client";
+	import type { JSONContent } from "@tiptap/core";
 
-	import { createEventDispatcher, tick } from "svelte";
-	import { onMount } from "svelte";
-	import { match } from "ts-pattern";
+	import { createEventDispatcher, onMount } from "svelte";
 	import Button from "../Button.svelte";
-	import GenericTextarea from "../GenericTextarea.svelte";
 	import Icon from "../helpers/Icon.svelte";
-	import TagEntry from "../TagEntry.svelte";
 	import TipTap from "../TipTap.svelte";
 	export let value = "";
 	export let el: HTMLElement | undefined = undefined;
@@ -23,15 +17,16 @@
 	export let name = "annotation";
 	export let placeholder = "Add an annotation…";
 	export let rows = 4;
-    export let annotation: Annotation | undefined = undefined;
+	export let annotation: Annotation | undefined = undefined;
 	$: console.log({ allTags });
 	export let size: "sm" | "base" = "sm";
 	const dispatch = createEventDispatcher<{
 		save: {
-			value: string;
+			value: JSONContent;
 			// done: typeof doneSaving;
 		};
 		cancel: void;
+		expand: JSONContent;
 	}>();
 	export let focused = false;
 
@@ -48,6 +43,8 @@
 
 	export let saving = false;
 	const doneSaving = () => (saving = false);
+	export let expandButton = false;
+	let contentData: JSONContent;
 </script>
 
 <!-- TODO: TURN INTO FORM -->
@@ -55,22 +52,40 @@
 <!-- transparency is a bit much (and maybe causes gpu performance issues), but here were the classes: dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200 -->
 <div
 	bind:this={el}
-	class="annotation-input not-prose relative z-50 flex min-w-[min(var(--min-width,300px,100vh,100%))] max-w-prose resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-200 bg-elevation p-2.5 font-sans   transition-shadow  transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-0 dark:ring-1  dark:ring-gray-400/10 focus-within:dark:ring-gray-400/20  transparency:dark:bg-gray-800 {className} {shadow_focus &&
+	class="annotation-input not-prose group relative z-50 flex resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-200 bg-elevation p-2.5 font-sans   transition-shadow  transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-0 dark:ring-1  dark:ring-gray-400/10 focus-within:dark:ring-gray-400/20  transparency:dark:bg-gray-800 {className} {shadow_focus &&
 	focused
 		? 'shadow-lg'
 		: shadow_focus
 		? 'shadow'
 		: ''}"
 >
+	{#if expandButton}
+		<div class="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
+			<Button variant="naked" size="sm" on:click={() => dispatch("expand", contentData)}>
+				<Icon name="arrowsPointingOutMini" className="h-4 w-4 fill-muted" />
+			</Button>
+		</div>
+	{/if}
+
 	<div class="resizer absolute bottom-0 right-0">
 		<!-- <Icon name="" /> -->
 		<!-- TODO: 8 direction resize -->
 	</div>
 	<!-- todo: auto expand -->
 	<div class="no-drag w-full cursor-default">
-		<TipTap {placeholder} config={{
-            content: annotation?.contentData || ''
-        }} />
+		<TipTap
+			bind:editing={focused}
+			focusRing={false}
+            on:update={(e) => {
+                console.log({e})
+                contentData = e.detail;
+            }}
+			{placeholder}
+			class="!max-w-none"
+			config={{
+				content: annotation?.contentData || "",
+			}}
+		/>
 		{#if include_tags}
 			<div class="flex grow items-center font-normal">
 				<!-- <TagEntry {size} bind:tags className="grow text-xs not-italic" {allTags} /> -->
@@ -81,7 +96,7 @@
 		<slot name="buttons">
 			<!-- //todo -->
 			<Button variant="ghost" on:click={() => dispatch("cancel")}>Cancel</Button>
-			<Button variant={confirmButtonStyle} type="submit" on:click={() => dispatch("save", { value })}>
+			<Button variant={confirmButtonStyle} type="submit" on:click={() => dispatch("save", { value: contentData })}>
 				{#if saving}
 					<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
 				{:else}

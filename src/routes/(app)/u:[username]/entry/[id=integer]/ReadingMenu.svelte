@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { goto, invalidate, preloadData } from "$app/navigation";
+	import { goto, invalidate, invalidateAll, preloadData } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { createTemporaryAnnotation } from "$lib/annotation";
 	import type { EntryWithBookmark } from "$lib/entry.server";
@@ -122,11 +122,11 @@
 
 	let downloading = false;
 
-    let displaySettings = {
+	let displaySettings = {
 		font: "newsreader",
 		fontSize: 16,
 		spacing: 1.5,
-	}
+	};
 </script>
 
 <svelte:window
@@ -417,6 +417,18 @@
 					{
 						label: "Archive",
 						icon: "archiveSolid",
+					},
+					{
+						label: "Delete",
+						icon: "trashMini",
+                        perform: async () => {
+                            if (window.confirm("Are you sure you want to delete this entry?")) {
+                                await trpc().entries.delete.mutate(entry.id);
+                                // await goto("/").then(() => {
+                                //     invalidateAll();
+                                // })
+                            }
+                        }
 					},
 				],
 			]}

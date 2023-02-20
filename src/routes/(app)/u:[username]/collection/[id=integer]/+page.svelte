@@ -25,6 +25,7 @@
 	import type { Entry } from "@prisma/client";
 	import { collectionQuery } from "$lib/features/collections/queries";
 	import { page } from "$app/stores";
+	import { nanoid } from "nanoid";
 	export let data: PageData;
 	$: console.log({ data });
 	$: list = data.collection;
@@ -57,6 +58,22 @@
 	// REVIEW: is this necessary?
 	$: query = createQuery({ ...collectionQuery(list.id, $page), onSuccess: (data) => (list = data) });
 	$: console.log({ $query });
+
+	const addDocument = createMutation({
+        mutationFn: ({
+            id
+        }: {
+            id: string
+        }) => trpc().annotations.create.mutate({
+            collectionId: list.id,
+            type: "document",
+            id
+        }),
+        onMutate: async (note) => {
+            // Add annotation to list, open it up
+        }
+    });
+
 	const updateDescription = createMutation({
 		mutationFn: async (contentData) =>
 			trpc().collections.updateCollection.mutate({
@@ -86,6 +103,8 @@
 	$: console.log({ contentData });
 
 	let view: ViewOptions["view"] = "list";
+
+
 </script>
 
 <!-- <pre>
@@ -185,6 +204,12 @@
 		/>
 	{/key}
 
+	<Button on:click={() => $addDocument.mutate({
+        id: nanoid(),
+    })} variant="ghost">
+		<Icon name="plusMini" className="h-4 w-4 fill-current" />
+		<span>Add note</span></Button
+	>
 	<form
 		action="?/addSection"
 		method="post"

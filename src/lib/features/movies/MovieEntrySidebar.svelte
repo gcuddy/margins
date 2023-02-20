@@ -44,7 +44,7 @@
 					>
 						{#each watchProviders["flatrate"] || [] as service}
 							<!-- content here -->
-							<img class="h-10 w-10 rounded-xl" src={makeLogo(service.logo_path, "w92")} alt="" />
+							<img class="h-8 w-8 rounded-xl" src={makeLogo(service.logo_path, "w92")} alt="" />
 							<!-- {service.provider_name} -->
 						{/each}
 					</a>

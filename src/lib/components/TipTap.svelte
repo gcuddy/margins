@@ -1,10 +1,19 @@
+<script lang="ts" context="module">
+	import { generateHTML } from "@tiptap/html";
+
+	export function genHtml(doc: JSONContent) {
+		return generateHTML(doc, [StarterKit, Mention, Link, Image]);
+	}
+</script>
+
 <script lang="ts">
 	import { getEntriesFromCache, searchEntriesQuery } from "$lib/features/entries/queries";
 	import { useQueryClient } from "@tanstack/svelte-query";
-	import type { EditorOptions, JSONContent } from "@tiptap/core";
+	import type { EditorOptions, Extensions, JSONContent } from "@tiptap/core";
 	import { createEditor, Editor, EditorContent, BubbleMenu } from "svelte-tiptap";
 	import Image from "@tiptap/extension-image";
-	import Mention from "@tiptap/extension-mention";
+	import { Mention } from "$lib/tiptap/LinkMention";
+	// import Mention from "@tiptap/extension-mention";
 	import Link from "@tiptap/extension-link";
 	import Placeholder from "@tiptap/extension-placeholder";
 	import StarterKit from "@tiptap/starter-kit";
@@ -24,9 +33,21 @@
 	let saved = "";
 	export let config: Partial<EditorOptions> = {};
 	export let placeholder = "Write something...";
+
+	export let focusRing = true;
+
+	// Read-only variable to bind to
+	export let editing = false;
+
+	let c = "";
+	export { c as class };
+
 	interface $$Props {
 		config?: Partial<EditorOptions>;
 		placeholder?: string;
+		focusRing?: boolean;
+		editing?: boolean;
+		class?: string;
 	}
 
 	const queryClient = useQueryClient();
@@ -80,7 +101,10 @@
 								// pl: cachedEntries.filter
 							});
 							return entries.map((entry) => {
-								return entry.title;
+								return {
+                                    id: entry.id,
+                                    label: entry.title
+                                };
 							});
 							// return ["Tom", "Mary", "Joseph"]
 							// 	.filter((item) => item.toLowerCase().startsWith(query.toLowerCase()))
@@ -114,7 +138,7 @@
 										};
 									});
 								};
-								const setItems = (items: string[]) => {
+								const setItems = (items: {id: string|number; label: string;}[]) => {
 									store.update((state) => {
 										return {
 											...state,
@@ -127,7 +151,7 @@
 									const { index, items, props } = get(store);
 									const item = items[idx ?? index];
 									if (item) {
-										props?.command({ id: item });
+										props?.command(item);
 									}
 								};
 								const setProps = (props: any) => {
@@ -201,18 +225,21 @@
 			],
 			editorProps: {
 				attributes: () => ({
-					class: cx("m-1 p-4 rounded-md prose mx-auto prose-sm sm:prose relative", {
-						"shadow ring-1 ring-accent": $editor?.isEditable,
-					}),
+					class:
+						cx("m-1 p-4 rounded-md prose mx-auto prose-sm sm:prose relative", {
+							"shadow ring-1 ring-accent": $editor?.isEditable && focusRing,
+						}) +
+						" " +
+						c,
 				}),
 			},
 		});
 		// debounced auto save on update
 		$editor.on("update", ({ editor }) => {
 			const json = editor.getJSON();
+			dispatch("update", json);
 			if (saved !== JSON.stringify(json) && !bubble) {
 				console.log("saving");
-				dispatch("update", json);
 			}
 			saved = JSON.stringify(editor.getJSON());
 		});
@@ -246,17 +273,19 @@
 	const conditionallySetEditable = (editable: boolean) => {
 		if (editable) {
 			$editor?.setEditable(true);
+			editing = true;
 		} else if (browser && !document?.body.contains(bubble)) {
 			$editor?.setEditable(false);
+			editing = false;
 		}
 	};
 
-	$: $editor?.isFocused ? $editor.setEditable(true) : conditionallySetEditable(false);
+	$: $editor?.isFocused ? conditionallySetEditable(true) : conditionallySetEditable(false);
 
-    let linkMenu = {
-        active: false,
-        href: "",
-    }
+	let linkMenu = {
+		active: false,
+		href: "",
+	};
 </script>
 
 <!-- <div bind:this={element} /> -->
@@ -298,10 +327,10 @@
 						on:click={() => {
 							linkMenu.active = true;
 							const url = $editor.getAttributes("link").href;
-                            console.log({ url })
-                            if (url) {
-                                linkMenu.href = url
-                            }
+							console.log({ url });
+							if (url) {
+								linkMenu.href = url;
+							}
 						}}
 						class:active={isActive("link")}
 						class={cx("flex h-7 w-7 items-center justify-center rounded")}
@@ -311,7 +340,7 @@
 					</button>
 				</div>
 			{:else if linkMenu.active}
-				<div class="p-1 flex justify-between items-center">
+				<div class="flex items-center justify-between p-1">
 					<input
 						placeholder="Enter link"
 						autocorrect="false"
@@ -319,30 +348,33 @@
 							"h-7 flex-1 border-0 bg-transparent py-1.5 px-3 text-xs outline-none  focus:outline-none focus:ring-0 focus-visible:border-none"
 						)}
 						type="text"
-                        autofocus
-                        bind:value={linkMenu.href}
-                        on:blur={() => {
-                            linkMenu = {...linkMenu, active: false}
-                        }}
-                        on:keydown={(event) => {
-                            if (event.key === "Enter") {
-                                setLink(linkMenu.href)
-                                linkMenu = {
-                                    active: false,
-                                    href: "",
-                                }
-                            }
-                        }}
+						autofocus
+						bind:value={linkMenu.href}
+						on:blur={() => {
+							linkMenu = { ...linkMenu, active: false };
+						}}
+						on:keydown={(event) => {
+							if (event.key === "Enter") {
+								setLink(linkMenu.href);
+								linkMenu = {
+									active: false,
+									href: "",
+								};
+							}
+						}}
 					/>
-                    <button class="inline-flex flex-col items-center" on:click={() => {
-                        $editor.chain().focus().unsetLink().run();
-                        linkMenu = {
-                            active: false,
-                            href: "",
-                        }
-                    }}>
-                        <Icon name="trashMini" className="h-4 w-4 fill-muted" />
-                    </button>
+					<button
+						class="inline-flex flex-col items-center"
+						on:click={() => {
+							$editor.chain().focus().unsetLink().run();
+							linkMenu = {
+								active: false,
+								href: "",
+							};
+						}}
+					>
+						<Icon name="trashMini" className="h-4 w-4 fill-muted" />
+					</button>
 				</div>
 			{/if}
 		</div>
@@ -355,7 +387,7 @@
 		@apply bg-elevation-hover text-bright;
 	}
 	:global(.ProseMirror p.is-editor-empty:first-child::before) {
-		@apply text-muted;
+		@apply text-muted/50;
 		content: attr(data-placeholder);
 		float: left;
 		height: 0;

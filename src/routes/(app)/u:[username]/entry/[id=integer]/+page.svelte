@@ -334,7 +334,6 @@
 						await trpc($page).entries.createRelation.mutate({
 							entryId: article.id,
 							relatedEntryId: entry.id,
-							type: "related",
 						});
 						await invalidateAll();
 					});
@@ -542,7 +541,7 @@
 			tabindex="-1"
 		>
 			<!-- TODO: py-8 px-4 should be set on a per-type basis -->
-			<article data-article class="mx-auto mt-14  ">
+			<article data-article class="mx-auto h-full mt-14  ">
 				{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
 					<header class="space-y-3 pb-4 max-w-prose" bind:this={$articleHeader}>
 						<!-- {article.feedId

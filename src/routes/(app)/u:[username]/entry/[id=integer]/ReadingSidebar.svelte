@@ -35,6 +35,10 @@
 	import { entryCollectionsQuery } from "$lib/features/entries/queries";
 	import Cluster from "$lib/components/helpers/Cluster.svelte";
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
+	import DotMenu from "$lib/components/DotMenu.svelte";
+	import { getHostname, getPathname } from "$lib/utils";
+	import { lookupUrlType } from "$lib/web-parser/urls";
+	import { iconsMini } from "$lib/features/entries/utils";
 
 	export let entry: RouterOutputs["entries"]["load"];
 
@@ -74,7 +78,7 @@
 	}
 
 	let noting = false;
-	let noting_id: number | null = null;
+	let noting_id: string | null = null;
 
 	const busy = writable({
 		note: false,
@@ -171,29 +175,76 @@
 						{/if}
 						<Muted class="text-sm">Tags</Muted>
 						<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
-						{#if entry.context}
+						<!-- {#if entry.context}
 							<Muted class="text-sm">Context</Muted>
 							{JSON.stringify(entry.context)}
+						{/if} -->
+						{#if entry.relations.some((r) => r.type === "SavedFrom")}
+							<Muted class="text-sm">Saved from</Muted>
+							{#each entry.relations.filter((r) => r.type === "SavedFrom") as { relatedEntry }}
+								<a href="/u:{$page.data.user?.username}/entry/{relatedEntry.id}" class="truncate text-xs"
+									>{relatedEntry.title}</a
+								>
+							{/each}
 						{/if}
 						<Muted class="text-sm">Type</Muted>
 						<span>{entry.type}</span>
 						<Muted class="text-sm">Relations</Muted>
-						<div class="flex">
-							{#each entry.relations
+						<Cluster class="gap-x-2 gap-y-2">
+							<!-- to -->
+							{#each entry.relations as relation}
+								<div
+									class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50 "
+								>
+									<!-- todo: little icon -->
+									{#if relation.type === "Related"}
+										<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
+										<span class="sr-only">Related</span>
+									{/if}
+									<a
+										href="/u:{$page.data.user?.username}/entry/{relation.relatedEntry.id}"
+										class="truncate text-xs">{relation.relatedEntry.title}</a
+									>
+								</div>
+							{/each}
+							<!-- back -->
+							{#each entry.back_relations as relation}
+								<div
+									class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50 "
+								>
+									<!-- todo: little icon -->
+									{#if relation.type === "Related"}
+										<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
+										<span class="sr-only">Related</span>
+									{:else if relation.type === "SavedFrom"}
+										<Icon name="arrowRightMini" className="w-3 h-3 fill-muted/80" />
+										<span class="sr-only">Saved from</span>
+									{/if}
+									<a
+										href="/u:{$page.data.user?.username}/entry/{relation.entry.id}"
+										class="truncate text-xs">{relation.entry.title}</a
+									>
+								</div>
+							{/each}
+							<!-- {#each entry.relations
+								.filter((r) => r.type !== "SavedFrom")
 								.map((r) => {
-									// this should prolly happen server side
 									const { type, relatedEntry } = r;
 									return { type, entry: relatedEntry };
 								})
 								.concat(entry.back_relations) || [] as { type, entry }}
-								<div class="flex max-w-[150px] flex-col gap-1 truncate">
-									<!-- todo: little icon -->
+								<div
+									class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50 "
+								>
+									{#if type === "SavedFrom"}
+										<Icon name="arrowsRightLeftMini" className="w-4 h-4 fill-current" />
+									{/if}
 									<a href="/u:{$page.data.user?.username}/entry/{entry.id}" class="truncate text-xs"
 										>{entry.title}</a
 									>
 								</div>
-							{/each}
-						</div>
+							{/each} -->
+						</Cluster>
 					</div>
 				</div>
 			</ReadingSidebarSection>
@@ -201,6 +252,78 @@
 				<ReadingSidebarSection>
 					<svelte:fragment slot="heading">Recipe Ingredients</svelte:fragment>
 					<Recipe recipe={entry.recipe} />
+				</ReadingSidebarSection>
+			{/if}
+			{#if entry.extended?.outgoingLinks?.length}
+				<ReadingSidebarSection defaultOpen={false}>
+					<svelte:fragment slot="heading">Links ({entry.extended?.outgoingLinks?.length})</svelte:fragment>
+					<div class="flex flex-col gap-x-4 gap-y-2 text-sm text-muted">
+						{#each entry.extended?.outgoingLinks as { href, text }}
+							{@const type = lookupUrlType(href)}
+							<button
+								on:click={() => {
+									// scroll to link
+									const el = document.querySelector(`[href="${href}"]`);
+									if (el) {
+										el.scrollIntoView({
+											behavior: "smooth",
+											block: "center",
+											inline: "center",
+										});
+									}
+								}}
+								class="flex items-center justify-between gap-4 rounded bg-elevation py-1 px-2 ring-1 ring-border/50"
+							>
+								<div class="flex min-w-0 gap-2">
+									<Icon name={type ? iconsMini[type] : "linkMini"} className="h-4 w-4  fill-muted/70" />
+									<div class="flex items-center gap-2 truncate">
+										<span class="shrink-0 font-medium">{text}</span>
+										<span class="truncate text-xs">{getHostname(href) + getPathname(href)}</span>
+									</div>
+								</div>
+								<div class="flex items-center gap-1">
+									<DotMenu
+										class="p-1"
+										items={[
+											[
+												{
+													label: "Copy link",
+													perform: () => {
+														navigator.clipboard.writeText(href);
+													},
+													icon: "linkMini",
+												},
+											],
+											[
+												{
+													label: "Save link",
+													perform: async () => {
+														// todo
+														const article = await trpc($page).public.parse.query(href);
+														console.log({ article });
+														await trpc($page).bookmarks.add.mutate({
+															article,
+															url: href,
+															context: {
+																entryId: entry.id,
+															},
+														});
+													},
+													icon: "arrowDownOnSquareMini",
+												},
+											],
+										]}
+									/>
+									<a on:click|stopPropagation {href} target="_blank" rel="noreferrer noopener">
+										<Button variant="naked" as="div">
+											<Icon name="arrowTopRightOnSquareMini" className="h-4 w-4 fill-current" /></Button
+										>
+									</a>
+								</div>
+							</button>
+						{/each}
+					</div>
+					<!-- <Recipe recipe={entry.recipe} /> -->
 				</ReadingSidebarSection>
 			{/if}
 			{#if entry.tmdbId}
@@ -216,10 +339,13 @@
 					class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50 "
 					on:click={() => {
 						addEntriesToCollection(queryClient, [entry.id], (c) => {
-                            //update query data
-                            // TODO: optimistijc update
-                            queryClient.setQueryData(entryCollectionsQuery({id: entry.id}).queryKey, (old) => [...old, c])
-                        });
+							//update query data
+							// TODO: optimistijc update
+							queryClient.setQueryData(entryCollectionsQuery({ id: entry.id }).queryKey, (old) => [
+								...old,
+								c,
+							]);
+						});
 					}}
 				>
 					<Icon name="plusMini" className="h-4 w-4 fill-gray-400" />
@@ -231,11 +357,15 @@
 					<Cluster class="gap-x-4 gap-y-2">
 						{#each $collectionsQuery.data as collection}
 							<li class="rounded bg-elevation py-1 px-2 ring-1 ring-border/50">
-								<a class="flex items-center gap-1" href="/u:{collection.user?.username || $page.data.user?.username}/collection/{collection.id}">
-                                    <!-- @ts-ignore -->
-                                    <ChosenIcon chosenIcon={collection.icon} />
-                                    <span>{collection.name}</span>
-                                </a>
+								<a
+									class="flex items-center gap-1"
+									href="/u:{collection.user?.username ||
+										$page.data.user?.username}/collection/{collection.id}"
+								>
+									<!-- @ts-ignore -->
+									<ChosenIcon chosenIcon={collection.icon} />
+									<span>{collection.name}</span>
+								</a>
 							</li>
 						{/each}
 					</Cluster>

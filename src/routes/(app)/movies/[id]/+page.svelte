@@ -7,6 +7,7 @@
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import dayjs from "$lib/dayjs";
 	import { addEntriesToCollection } from "$lib/features/collections/stores";
+	import MovieEntry from "$lib/features/movies/MovieEntry.svelte";
 	import { configuration } from "$lib/features/movies/tmdb";
 	import { trpc } from "$lib/trpc/client";
 	import { createQuery } from "@tanstack/svelte-query";
@@ -14,13 +15,13 @@
 
 	export let data: PageData;
 
-	$: query = createQuery({
-		queryKey: ["movies", "details", data.id],
-		queryFn: async () => trpc($page).movies.public.byId.query(data.id),
-		staleTime: 5 * 1000 * 60,
-		// refetchOnWindowFocus: false,
-		onSettled: (data) => console.log(data),
-	});
+	// $: query = createQuery({
+	// 	queryKey: ["movies", "details", data.id],
+	// 	queryFn: async () => trpc($page).movies.public.byId.query(data.id),
+	// 	staleTime: 5 * 1000 * 60,
+	// 	// refetchOnWindowFocus: false,
+	// 	onSettled: (data) => console.log(data),
+	// });
 
 	const makeLogo = (path: string, size: (typeof configuration.images.logo_sizes)[number] = "w500") =>
 		configuration.images.secure_base_url + size + path;
@@ -32,14 +33,14 @@
 	] as const;
 </script>
 
+<MovieEntry id={data.id} />
 <!-- TODO: setting to enable "normal" movie page vs very fancy one -->
 
-{#if $query.isLoading}
+<!-- {#if $query.isLoading}
 	<p>Loading...</p>
 {:else if $query.isSuccess}
 	{@const movie = $query.data.movie}
 	{@const logo = movie.images?.logos?.[0]}
-	<!-- TODO: srcset -->
 	<div
 		style:--backgroundImage={`url(https://image.tmdb.org/t/p/w1280/${movie.backdrop_path})`}
 		class="hero-container relative flex h-full max-h-[60vh] flex-col justify-end before:absolute before:inset-0 before:bg-cover before:bg-local before:bg-[50%_33%] before:bg-no-repeat "
@@ -124,7 +125,6 @@
 							>
 								<Icon name="chevronDownMini" />
 							</ContextMenu>
-							<!-- <Button type="submit" size="lg" className="rounded-l-none !px-1" /> -->
 						</div>
 					</form>
 					<div class="flex flex-col">
@@ -137,7 +137,6 @@
 							</Muted>
 						</div>
 						<div class="max-w-prose">
-							<!-- <p>{movie.tagline}</p> -->
 							<p>{movie.overview}</p>
 						</div>
 					</div>
@@ -149,21 +148,16 @@
 				{@const watchProviders = results[locale]}
 				{#if watchProviders}
 					<div>
-						<!-- TODO: localization -->
 						<a target="_blank" href={watchProviders.link}>Watch providers provided by JustWatch</a>
 						<div class="flex flex-col">
 							{#each watchSections as [key, Display]}
-								<!-- content here -->
 								{#if watchProviders?.[key]}
 									<h3>{Display}</h3>
 									<div class="flex items-center gap-1 overflow-x-auto ">
 										{#each watchProviders[key] as service}
-											<!-- content here -->
 											<img class="h-10 w-10 rounded-xl" src={makeLogo(service.logo_path, "w92")} alt="" />
-											<!-- {service.provider_name} -->
 										{/each}
 									</div>
-									<!-- content here -->
 								{/if}
 							{/each}
 						</div>
@@ -174,8 +168,7 @@
 	</div>
 {:else}
 	<p>Error...</p>
-{/if}
-
+{/if} -->
 <style>
 	/* .meta::before {
 		content: "";

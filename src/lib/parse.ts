@@ -1,6 +1,8 @@
+import { books } from "@googleapis/books";
 import { z } from "zod";
 
-import { Parser } from "$lib/web-parser";
+import { GOOGLE_BOOKS_API_KEY } from "$env/static/private";
+import { Metadata, Parser } from "$lib/web-parser";
 
 import { uploadFile } from "./backend/s3.server";
 import { spotify } from "./features/services/spotify";
@@ -9,9 +11,40 @@ import { twitter } from "./features/services/twitter";
 const spotifyRegex = /^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/;
 const spotifyTypeSchema = z.enum(["track", "album", "playlist"]);
 
-const twitterRegex = /https?:\/\/twitter\.com\/(?:\#!\/)?(\w+)\/status(es)?\/(\d+)/;
+const twitterRegex = /https?:\/\/twitter\.com\/(?:#!\/)?(\w+)\/status(es)?\/(\d+)/;
 
-export default async function (url: string, html?: string) {
+const googleBooksRegex = /https?:\/\/www\.google\.com\/books\/edition\/.*\/(.*)/;
+const googleBooksRegexes = [
+    /(?:https?:\/\/books\.google\.com\/books\/about.*?\?id=(?<id>.*))/,
+    /(?:https?:\/\/www\.google\.com\/books\/edition\/.*\/(?<id>.*)?\?)/
+]
+
+
+export default async function (url: string, html?: string): Promise<z.infer<typeof Metadata>> {
+    if (url.includes("books.google.com/books/about" || url.includes("google.com/books/edition"))) {
+        const regexMatch = googleBooksRegexes.find((r) => r.test(url));
+        if (regexMatch) {
+            const match = url.match(regexMatch)
+            const id = match?.groups?.id;
+            if (id) {
+                const results = await books("v1").volumes.get({
+                    key: GOOGLE_BOOKS_API_KEY,
+                    volumeId: id,
+                });
+                const volume = results.data;
+                return {
+                    title: volume.volumeInfo?.title,
+                    author: volume.volumeInfo?.authors?.join(", "),
+                    image: volume.volumeInfo?.imageLinks?.thumbnail,
+                    summary: volume.volumeInfo?.description,
+                    type: "book",
+                    published: volume.volumeInfo?.publishedDate,
+                    uri: 'isbn:' + volume.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier,
+                    googleBooksId: volume.id,
+                }
+            }
+        }
+    }
     if (twitterRegex.test(url)) {
         // extract tweet id
 
@@ -130,7 +163,7 @@ export default async function (url: string, html?: string) {
                 const fileName = url.split("/").at(-1);
 
                 // const file = new File([blob], `file.${type}`);
-               // don't have access to File constructor, so make buffer
+                // don't have access to File constructor, so make buffer
                 // const file = await blob.arrayBuffer();
                 const Key = `images/${url.replace(/[^a-zA-Z0-9]/g, "_")}.${type}`
                 // const Key = `images/${fileName}`

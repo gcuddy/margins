@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { collectionItemSelect } from "$lib/prisma/selects/collections";
 import { _CollectionItemsModel } from "$lib/prisma/zod";
 import { protectedProcedure, publicProcedure, router } from "$lib/trpc/t";
 import type { ChosenIcon } from "$lib/types/icon";
@@ -115,47 +116,48 @@ export const collectionsRouter = router({
                 },
                 include: {
                     items: {
-                        include: {
-                            entry: {
-                                select: {
-                                    id: true,
-                                    title: true,
-                                    uri: true,
-                                    author: true,
-                                    image: true,
-                                    published: true,
-                                    bookmarks: {
-                                        where: {
-                                            userId: ctx.userId
-                                        }
-                                    }
-                                }
-                            },
-                            annotation: true,
-                            children: {
-                                include: {
-                                    entry: {
-                                        select: {
-                                            id: true,
-                                            title: true,
-                                            uri: true,
-                                            author: true,
-                                            image: true,
-                                            published: true,
-                                            bookmarks: {
-                                                where: {
-                                                    userId: ctx.userId
-                                                }
-                                            }
-                                        }
-                                    },
-                                    annotation: true,
-                                },
-                                orderBy: {
-                                    position: "asc"
-                                }
-                            }
-                        },
+                        // include: {
+                        //     entry: {
+                        //         select: {
+                        //             id: true,
+                        //             title: true,
+                        //             uri: true,
+                        //             author: true,
+                        //             image: true,
+                        //             published: true,
+                        //             bookmarks: {
+                        //                 where: {
+                        //                     userId: ctx.userId
+                        //                 }
+                        //             }
+                        //         }
+                        //     },
+                        //     annotation: true,
+                        //     children: {
+                        //         include: {
+                        //             entry: {
+                        //                 select: {
+                        //                     id: true,
+                        //                     title: true,
+                        //                     uri: true,
+                        //                     author: true,
+                        //                     image: true,
+                        //                     published: true,
+                        //                     bookmarks: {
+                        //                         where: {
+                        //                             userId: ctx.userId
+                        //                         }
+                        //                     }
+                        //                 }
+                        //             },
+                        //             annotation: true,
+                        //         },
+                        //         orderBy: {
+                        //             position: "asc"
+                        //         }
+                        //     }
+                        // },
+                        ...collectionItemSelect(ctx.userId, 3),
                         where: {
                             parent: {
                                 is: null

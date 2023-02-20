@@ -16,6 +16,10 @@ export const _AnnotationModel = z.object({
   body: jsonSchema,
   contentData: jsonSchema,
   /**
+   * chosenIcon used for documents only?
+   */
+  chosenIcon: imports.chosenIcon,
+  /**
    * Optional title, used for longer notes unassociated with an entryo
    */
   title: z.string().nullish(),
@@ -42,7 +46,7 @@ export interface CompleteAnnotation extends z.infer<typeof _AnnotationModel> {
   parent?: CompleteAnnotation | null
   children: CompleteAnnotation[]
   creator: CompleteUser
-  collections?: CompleteCollectionItems | null
+  collections: CompleteCollectionItems[]
   favorite?: CompleteFavorite | null
   bookmark?: CompleteBookmark | null
 }
@@ -61,7 +65,7 @@ export const AnnotationModel: z.ZodSchema<CompleteAnnotation> = z.lazy(() => _An
   parent: AnnotationModel.nullish(),
   children: AnnotationModel.array(),
   creator: UserModel,
-  collections: CollectionItemsModel.nullish(),
+  collections: CollectionItemsModel.array(),
   favorite: FavoriteModel.nullish(),
   bookmark: BookmarkModel.nullish(),
 }))

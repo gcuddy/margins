@@ -1,7 +1,7 @@
-import { Color } from "@prisma/client";
+import { AnnotationType, Color } from "@prisma/client";
 import { z } from "zod";
 
-import { TargetSchema } from "./zod-utils";
+import { chosenIcon,TargetSchema } from "$lib/prisma/zod-utils";
 
 export const saveColorDescriptionSchema = z.object({
     color: z.nativeEnum(Color),
@@ -11,17 +11,22 @@ export const saveColorDescriptionSchema = z.object({
 export const saveAnnotationSchema = z.object({
     target: TargetSchema,
     body: z.string(),
-    id: z.number(),
+    id: z.string(),
     entryId: z.number(),
     private: z.boolean(),
     color: z.nativeEnum(Color),
+    type: z.nativeEnum(AnnotationType),
+    contentData: z.object({}).passthrough(),
+    title: z.string(),
+    collectionId: z.number(),
+    chosenIcon: chosenIcon
 });
 
 
 const updateSchema = z.object({
-	body: z.string().optional(),
-	private: z.boolean().optional(),
-	tags: z.string().or(z.array(z.string())).transform(
-		(tags) => (typeof tags === "string" ? tags.split(",") : tags)
-	).optional(),
+    body: z.string().optional(),
+    private: z.boolean().optional(),
+    tags: z.string().or(z.array(z.string())).transform(
+        (tags) => (typeof tags === "string" ? tags.split(",") : tags)
+    ).optional(),
 });

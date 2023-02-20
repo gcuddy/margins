@@ -150,7 +150,7 @@ export const Metadata = _EntryModel
     .extend({
         title: z.string(),
         summary: z.string().max(191),
-        image: z.string().max(2083),
+        image: z.string().max(2083).nullish(),
         url: z.string().max(191),
         author: z.string().max(191),
         published: z.string().or(z.date()),
@@ -567,8 +567,17 @@ export class Parser {
 
     private getLinks(root: HTMLElement) {
         const links = root.querySelectorAll("a");
+        // Check if URL has same origin, and check if url is to a whitelisted site (like unsplash.com)
         const linksToReturn = links.map((link) => {
+            const href = new URL(link.getAttribute("href") || "", this.baseUrl);
+            const base = new URL(this.baseUrl);
             if (!link.getAttribute("href") || !link.innerText) return null;
+            if (link.getAttribute("href") === "#") return null;
+            if (link.getAttribute("href") === "") return null;
+            if (link.getAttribute("href") === "/") return null;
+            if (link.getAttribute("href")?.startsWith("javascript:void(0)")) return null;
+            if ((href.hostname + href.pathname) === (base.hostname + base.pathname)) return null;
+            if (href.hostname === "unsplash.com") return null;
             return {
                 href: link.getAttribute("href"),
                 text: link.innerText.trim(),

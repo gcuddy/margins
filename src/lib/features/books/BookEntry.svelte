@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { invalidate } from "$app/navigation";
+	import { goto, invalidate } from "$app/navigation";
 	import { page } from "$app/stores";
+	import RichAnnotationInput from "$lib/components/annotations/RichAnnotationInput.svelte";
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Button from "$lib/components/Button.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
@@ -10,14 +11,15 @@
 	import { stripGoogleBookCurl } from "$lib/features/books/utils";
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
-	import { createQuery } from "@tanstack/svelte-query";
+	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
+	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
+	import { nanoid } from "nanoid";
+	import { annotationQueryKeys } from "../annotations/queries";
 	import { entryDetailsQuery } from "../entries/queries";
 
 	export let bookId: string;
 	export let placeholderData: RouterOutputs["books"]["public"]["byId"] | undefined = undefined;
 	export let entry: RouterOutputs["entries"]["load"] | undefined = undefined;
-
 
 	$: todayLog = entry?.log.find((log) => dayjs(log.date).isSame(dayjs(), "day"));
 
@@ -29,6 +31,32 @@
 		onSuccess: (book) => console.log({ book }),
 	});
 
+	const queryClient = useQueryClient();
+	const saveNoteMutation = createMutation({
+		// TODO: persist offline
+		mutationFn: (note: RouterInputs["annotations"]["create"] & { id: string }) =>
+			trpc($page).annotations.create.mutate({
+				entryId: entry?.id,
+				...note,
+			}),
+		onMutate: async (note) => {
+			const queryKey = annotationQueryKeys.annotation(note.id);
+			await queryClient.cancelQueries({
+				queryKey,
+			});
+			const previousNote = queryClient.getQueryData(queryKey);
+			queryClient.setQueryData(queryKey, note);
+			// Return a context with the previous and new todo
+			return { previousNote, note };
+		},
+		onError: (err, newNote, context) => {
+			queryClient.setQueryData(["annotations", context?.note.id], context?.previousNote);
+		},
+		// Always refetch after error or success:
+		onSettled: (note) => {
+			if (note) queryClient.invalidateQueries({ queryKey: annotationQueryKeys.annotation(note.id) });
+		},
+	});
 	// const entry = createQuery(entryDetailsQuery({ }))
 
 	let busy = false;
@@ -49,7 +77,7 @@
 		imageLinks.smallThumbnail;
 </script>
 
-<div class="container mx-auto flex flex-col space-y-8 divide-y p-6 dark:divide-gray-700">
+<div class="container mx-auto flex h-full flex-col space-y-8 divide-y p-6 dark:divide-gray-700">
 	{#if $query.isLoading}
 		loading...
 	{:else if $query.isError}
@@ -95,7 +123,7 @@
 					<a class="text-lg"><Muted>{book.authors}</Muted></a>
 
 					{#if bookmark}
-						<StateCombobox
+						<!-- <StateCombobox
 							state={$page.data.user?.states?.find((state) => state.id === bookmark.stateId)}
 							onSelect={async (state) => {
 								const s = syncStore.add();
@@ -120,10 +148,10 @@
 							method="post"
 						>
 							<button>x</button>
-						</form>
+						</form> -->
 					{:else}
 						<form
-							action="?/save"
+							action="/books/{bookId}?/save"
 							method="post"
 							use:enhance={() => {
 								busy = true;
@@ -138,7 +166,7 @@
 							<input type="hidden" name="description" value={book.description} />
 							<input type="hidden" name="published" value={book.publishedDate} />
 							<input type="hidden" name="author" value={book.authors} />
-                            <input type="hidden" name="image" value={image} />
+							<input type="hidden" name="image" value={image} />
 							<!-- {#if book.imageLinks}
 								<input type="hidden" name="image" value={selectImage(book.imageLinks)} />
 							{/if} -->
@@ -188,6 +216,63 @@
 					</div>
 				</div>
 			</div>
+		</div>
+	{/if}
+	{#if entry?.annotations}
+		<div class="grow pt-6">
+			{#if entry.annotations.length}
+				<!-- TODO -->
+			{/if}
+			<!-- <AnnotationInput
+	placeholder="Add a page note…"
+	rows={1}
+	bind:value
+	shadow_focus={true}
+	include_tags={false}
+	confirmButtonStyle="ghost"
+	class="text-sm"
+>
+
+</AnnotationInput> -->
+
+			<RichAnnotationInput
+				on:expand={async(e) => {
+					// create this annotation, send it over to annotation/:id
+					const id = nanoid();
+					// should we snapshot it and just access it there? or set in some sort of store? maybe cache?
+                    console.log({e})
+                    await $saveNoteMutation.mutate({
+                        id,
+                        entryId: entry?.id,
+                        contentData: e.detail,
+                        type: "note",
+                    });
+                    await goto(`/u:${$page.data.user?.username}/annotations/${id}`);
+					// trpc().annotations.create.mutate({
+					// 	id,
+					// 	entryId: entry?.id,
+					// 	contentData: e.detail,
+					// 	type: "note",
+					// });
+				}}
+				expandButton={true}
+				placeholder="Add a page note…"
+				rows={1}
+				shadow_focus={true}
+				include_tags={false}
+				confirmButtonStyle="ghost"
+				class="text-sm"
+			>
+				<svelte:fragment slot="buttons">
+					<Button type="submit" disabled={busy} variant="ghost" size="sm" className="text-sm"
+						>{#if busy}
+							<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+						{:else}
+							Save
+						{/if}
+					</Button>
+				</svelte:fragment>
+			</RichAnnotationInput>
 		</div>
 	{/if}
 </div>

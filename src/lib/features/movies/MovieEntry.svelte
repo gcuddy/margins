@@ -61,13 +61,13 @@
 			style:--backgroundImage={`url(https://image.tmdb.org/t/p/w1280/${
 				movie?.images?.backdrops?.[0].file_path ?? movie.backdrop_path
 			})`}
-			class="hero-container container relative mx-auto flex h-full max-h-[40vh] flex-col justify-end before:absolute before:inset-0  before:bg-cover before:bg-center before:bg-no-repeat "
+			class="hero-container container relative mx-auto flex h-full min-h-[10vh] max-h-[40vh] flex-col justify-end before:absolute before:inset-0  before:bg-cover before:bg-center before:bg-no-repeat "
 		>
 			<div class="poster-gradient-r absolute inset-0" />
 			<div class="poster-gradient-l absolute inset-0" />
 		</div>
 
-		<div class="meta container relative mx-auto -mt-16 grow">
+		<div class="meta container relative mx-auto -mt-2 grow">
 			<div class="z-10 flex justify-between p-4">
 				<div class="flex flex-col gap-2">
 					<div class="flex gap-4">

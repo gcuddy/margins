@@ -15,3 +15,17 @@ export const icons: Record<DocumentType, IconName> = {
     video: "document",
     movie: "film"
 };
+
+export const iconsMini: Record<DocumentType, IconName> = {
+    bookmark: "bookmarkMini",
+    article: "newspaperMini",
+    recipe: "chefMini",
+    tweet: "tweet",
+    audio: "musicalNoteMini",
+    book: "bookOpenMini",
+    album: "musicalNoteMini",
+    epub: "documentTextMini",
+    image: "photoMini",
+    video: "documentMini",
+    movie: "filmMini"
+}

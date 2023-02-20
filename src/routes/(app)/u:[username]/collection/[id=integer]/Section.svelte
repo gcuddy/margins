@@ -1,19 +1,21 @@
 <script lang="ts">
-	import GenericInput from "$lib/components/GenericInput.svelte";
-	import GenericTextarea from "$lib/components/GenericTextarea.svelte";
-	import Icon from "$lib/components/helpers/Icon.svelte";
-	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
-	import { syncStore } from "$lib/stores/sync";
-	import { trpc } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
-	import { Menu, MenuButton, MenuItems, MenuItem } from "@rgossiaux/svelte-headlessui";
-	import { createEventDispatcher, onMount } from "svelte";
-	import { dndzone, TRIGGERS } from "svelte-dnd-action";
-	import { flip } from "svelte/animate";
+import GenericInput from "$lib/components/GenericInput.svelte";
+import GenericTextarea from "$lib/components/GenericTextarea.svelte";
+import Icon from "$lib/components/helpers/Icon.svelte";
+import AnnotationListItem from "$lib/features/annotations/AnnotationListItem.svelte";
+import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
+import { syncStore } from "$lib/stores/sync";
+import { trpc } from "$lib/trpc/client";
+import type { RouterOutputs } from "$lib/trpc/router";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
+import { createEventDispatcher, onMount } from "svelte";
+import { dndzone, TRIGGERS } from "svelte-dnd-action";
+import { flip } from "svelte/animate";
 
 	export let item: RouterOutputs["collections"]["detail"]["items"][number];
 	$: console.log({ item });
 	export let onDrop: (newItems: (typeof item)["children"]) => void;
+    export let recursion = 0;
 
 	const flipDurationMs = 200;
 
@@ -29,9 +31,10 @@
 	});
 </script>
 
-<!-- TODO -->
+<!-- TODO: support/prevent limiting nesting more than N levels deep -->
 <div class="px-6">
 	{#if item.type === "Section"}
+    {recursion}
 		<div class="rounded border border-border">
 			<div class="group flex items-center px-2">
 				<Menu>
@@ -94,6 +97,7 @@
 					flipDurationMs,
 					zoneTabIndex: -1,
 					morphDisabled: true,
+                    // TODO: if recursion > 5, don't let sections get dragged in...
 				}}
 				on:finalize={async (e) => {
 					console.warn("got finalize", e);
@@ -125,7 +129,7 @@
 			>
 				{#each item.children || [] as child (child.id)}
 					<div animate:flip={{ duration: flipDurationMs }}>
-						<svelte:self item={child} />
+						<svelte:self item={child} {onDrop} recursion={recursion + 1} />
 					</div>
 				{/each}
 			</div>
@@ -135,5 +139,6 @@
 		<EntryListItem entry={item.entry} />
 	{:else if item.annotation}
 		<!-- etc -->
+       <AnnotationListItem annotation={item.annotation} />
 	{/if}
 </div>

@@ -164,7 +164,7 @@ model Relation {
 
 /// @zod.import(["import { TargetSchema } from '../../schemas'"])
 model Annotation {
-    id          String      @id @default(cuid())
+    id          String   @id @default(cuid())
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
     // body is used for: page note when type is bookmarking, or annotation when type is highlight/annotation
@@ -175,9 +175,14 @@ model Annotation {
     // contentData - used for rich tiptap data
     contentData Json?
 
+    /// chosenIcon used for documents only?
+    /// @zod.custom(imports.chosenIcon)
+    chosenIcon Json?
+
     /// Optional title, used for longer notes unassociated with an entryo
     title    String?
     editedAt DateTime?
+    // TODO: tags
     tags     Tagging[]
     type     AnnotationType
     private  Boolean        @default(true)
@@ -198,11 +203,11 @@ model Annotation {
     creator User      @relation(fields: [userId], references: [id])
     userId  String
 
-    sortOrder   Float            @default(0)
+    sortOrder   Float             @default(0)
     // refs
-    collections CollectionItems?
+    collections CollectionItems[]
     favorite    Favorite?
-    bookmark    Bookmark?        @relation(fields: [bookmarkId], references: [id])
+    bookmark    Bookmark?         @relation(fields: [bookmarkId], references: [id])
     bookmarkId  Int?
 
     color   Color   @default(Yellow)
@@ -510,7 +515,7 @@ model CollectionItems {
     parentId     String?
     createdAt    DateTime           @default(now())
     updatedAt    DateTime           @updatedAt
-    annotationId String?               @unique
+    annotationId String?            @unique
     annotation   Annotation?        @relation(fields: [annotationId], references: [id])
     bookmark     Bookmark?          @relation(fields: [bookmarkId], references: [id])
     bookmarkId   Int?
@@ -854,7 +859,7 @@ model Favorite {
     children Favorite[] @relation("parent")
 
     annotation   Annotation? @relation(fields: [annotationId], references: [id])
-    annotationId String?        @unique
+    annotationId String?     @unique
 
     // REVIEW: or entry/entryId? Makes sense you'd need it in your library to favorite it. but. idk.
     bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])

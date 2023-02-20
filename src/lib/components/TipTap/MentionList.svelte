@@ -58,7 +58,10 @@
 
 	export type State = {
 		index: number;
-		items: string[];
+		items: {
+            id: string | number;
+            label: string;
+        }[];
 		props?: SuggestionProps;
 	};
 </script>
@@ -70,7 +73,7 @@
 	import { onDestroy } from "svelte";
 
 	export let state: Writable<State>;
-	export let items: string[];
+	export let items: State["items"];
 	// export let contentRect: DOMRect;
 	export let clientRect: SuggestionProps["clientRect"] | undefined = undefined;
 
@@ -91,7 +94,7 @@
 		getBoundingClientRect: () =>
 			rect || { width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0 },
 	});
-	export let command: (command: { id: string }) => void;
+	export let command: (command: { id: string | number; label: string; }) => void;
 
 	interface $$Props extends SuggestionProps {
 		state: Writable<State>;
@@ -103,7 +106,7 @@
 		const item = items[index];
 
 		if (item) {
-			command({ id: item });
+			command(item);
 		}
 	};
 
@@ -177,7 +180,7 @@ use:content
 				on:mouseover={() => ($state.index = index)}
 			>
 				<!-- TODO: display either progress or state  -->
-				{item}
+				{item.label}
 			</button>
 		{/each}
 	{:else}

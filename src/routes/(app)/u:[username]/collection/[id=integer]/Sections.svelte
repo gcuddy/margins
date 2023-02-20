@@ -21,7 +21,7 @@ import type { RouterOutputs } from "$lib/trpc/router";
 		onFinalUpdate([...items]);
 	}
 
-    let dragDisabled = true;
+    let dragDisabled = false;
 
     function startDrag(e: Event) {
 		// preventing default to prevent lag on touch devices (because of the browser checking for screen scrolling)
@@ -64,7 +64,7 @@ import type { RouterOutputs } from "$lib/trpc/router";
 		// onFinalUpdate(e.detail.items)
 		// update server
         if (e.detail.info.source === SOURCES.POINTER) {
-            dragDisabled = true
+            // dragDisabled = true
         }
 		onFinalUpdate(e.detail.items);
 	}}

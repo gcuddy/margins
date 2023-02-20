@@ -12,6 +12,7 @@
 		TabPanel,
 		TabPanels,
 	} from "@rgossiaux/svelte-headlessui";
+	import { createEventDispatcher } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
 	import SmallPlus from "./atoms/SmallPlus.svelte";
 	import ColorSwatch from "./ColorSwatch.svelte";
@@ -23,6 +24,9 @@
 		strategy: "absolute",
 		modifiers: [{ name: "offset", options: { offset: [0, 10] } }],
 	};
+    const dispatch = createEventDispatcher<{
+        choose: ChosenIcon;
+    }>();
 
 	// TODO: fill out (maybe from lucide.dev) with about 126
 	const iconsToChooseFrom: IconName[] = [
@@ -89,6 +93,7 @@
 		color: "#fff",
 		type: "icon",
 	};
+    export let iconClass = "h-4 w-4 fill-current";
 </script>
 
 <!-- palette popver (possibly split into its own component) -->
@@ -100,7 +105,7 @@
 		style={chosenIcon.type === "icon" ? `color: ${chosenIcon.color};` : undefined}
 	>
 		{#if chosenIcon.type === "icon"}
-			<Icon name={chosenIcon.name} className="w-4 h-4 fill-current" />
+			<Icon name={chosenIcon.name} className={iconClass} />
 		{:else if chosenIcon.type === "emoji"}
 			<div>
 				{chosenIcon.emoji}
@@ -108,7 +113,7 @@
 		{/if}
 	</PopoverButton>
 
-	<PopoverPanel use={[[popperContent, popperOptions]]} let:close>
+	<PopoverPanel class="z-10" use={[[popperContent, popperOptions]]} let:close>
 		<div class="w-96 rounded border border-gray-700 bg-gray-900 text-gray-100 shadow-lg">
 			<TabGroup class="divide-y divide-gray-700">
 				<TabList class="flex w-full px-2">
@@ -155,6 +160,7 @@
 												chosenIcon.name = icon;
 											}
 											close();
+                                            dispatch("choose", chosenIcon)
 										}}
 										aria-label={convertIconToLabel(icon)}
 										class="group flex cursor-default items-center rounded bg-transparent p-1.5 transition-text-color duration-150 ease-in-out hover:bg-gray-500 dark:hover:bg-gray-700"
@@ -174,7 +180,9 @@
 									chosenIcon.hexcode = e.detail.hexcode;
 									chosenIcon.label = e.detail.label;
 								}
+
 								close();
+                                dispatch("choose", chosenIcon)
 							}}
 						/></TabPanel
 					>

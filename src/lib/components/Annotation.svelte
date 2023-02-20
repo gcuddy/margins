@@ -31,6 +31,9 @@
 	import { createPopperActions } from "svelte-popperjs";
 	import type { ContextualAnnotation } from "$lib/prisma/selects/annotations";
 	import TagCloud from "./TagCloud.svelte";
+	import { generateHTML } from "@tiptap/core";
+	import { genHtml } from "./TipTap.svelte";
+	import StarterKit from "@tiptap/starter-kit";
 
 	const [menuref, menucontent] = createPopperActions({
 		placement: "bottom-end",
@@ -224,7 +227,7 @@
 								<MenuButton
 									on:click={(e) => e.stopPropagation()}
 									use={[menuref]}
-									class="flex items-center rounded-md p-1 hover:bg-gray-200 focus:bg-gray-200 dark:hover:bg-gray-600 dark:focus:bg-gray-600 dark:active:text-white {open
+									class="flex items-center rounded-md p-1 focus:bg-gray-200 hover:bg-gray-200 dark:focus:bg-gray-600 dark:hover:bg-gray-600 dark:active:text-white {open
 										? 'bg-gray-200 dark:bg-gray-600'
 										: ''}"
 								>
@@ -233,7 +236,7 @@
 								<Portal>
 									<MenuItems
 										use={[menucontent]}
-										class="relative z-30 flex w-56 origin-top-right scale-100 transform flex-col gap-y-2 divide-y divide-border rounded-md bg-elevation/50 py-1 opacity-100 shadow-2xl ring-1  ring-border backdrop-blur-md backdrop-saturate-200 backdrop-contrast-75 backdrop-brightness-75  focus:outline-none dark:divide-gray-700 dark:bg-stone-800 dark:text-current dark:ring-gray-400/20 dark:backdrop-blur-md dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200"
+										class="relative z-30 flex w-56 origin-top-right scale-100 transform flex-col gap-y-2 divide-y divide-border rounded-md bg-elevation/50 py-1 opacity-100 shadow-2xl ring-1  ring-border backdrop-blur-md backdrop-brightness-75 backdrop-contrast-75 backdrop-saturate-200  focus:outline-none dark:divide-gray-700 dark:bg-stone-800 dark:text-current dark:ring-gray-400/20 dark:backdrop-blur-md dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200"
 									>
 										{#if annotation.creator.username === $page.data.user?.username}
 											<div class="px-1">
@@ -250,9 +253,7 @@
 												>
 													<Icon
 														name="pencilMini"
-														className="h-4 w-4  {active
-															? 'fill-bright '
-															: 'fill-muted'}"
+														className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
 													/>
 													<span>Edit</span>
 												</MenuItem>
@@ -275,9 +276,7 @@
 												>
 													<Icon
 														name={annotation.private ? "lockOpenMini" : "lockClosedMini"}
-														className="h-4 w-4  {active
-															? 'fill-bright '
-															: 'fill-muted'}"
+														className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
 													/>
 													<span>Make {annotation.private ? "Public" : "Private"}</span>
 												</MenuItem>
@@ -297,9 +296,7 @@
 												>
 													<Icon
 														name="trashMini"
-														className="h-4 w-4  {active
-															? 'fill-bright '
-															: 'fill-muted'}"
+														className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
 													/>
 													<span>Delete</span>
 												</MenuItem>
@@ -317,9 +314,7 @@
 											>
 												<Icon
 													name="replySolid"
-													className="h-4 w-4  {active
-														? 'fill-bright '
-														: 'fill-muted'}"
+													className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
 												/>
 												<span>Reply</span>
 											</MenuItem>
@@ -334,12 +329,7 @@
 												}}
 												let:active
 											>
-												<Icon
-													name="linkMini"
-													className="h-4 w-4  {active
-														? 'fill-bright '
-														: 'fill-muted'}"
-												/>
+												<Icon name="linkMini" className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}" />
 												<span>Copy link</span>
 											</MenuItem>
 										</div>
@@ -391,6 +381,8 @@
 					{/if}
 					{#if annotation.body}
 						<div class="font-normal">{annotation.body}</div>
+					{:else if annotation.contentData}
+						{@html genHtml(annotation.contentData, [StarterKit])}
 					{/if}
 					{#if "tags" in annotation && annotation.tags?.length}
 						<TagCloud tags={annotation.tags} />

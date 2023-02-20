@@ -142,6 +142,7 @@
 		"@tiptap/extension-link": "^2.0.0-beta.217",
 		"@tiptap/extension-mention": "^2.0.0-beta.217",
 		"@tiptap/extension-placeholder": "^2.0.0-beta.217",
+		"@tiptap/html": "^2.0.0-beta.218",
 		"@tiptap/pm": "^2.0.0-beta.217",
 		"@tiptap/starter-kit": "^2.0.0-beta.217",
 		"@tiptap/suggestion": "^2.0.0-beta.217",
