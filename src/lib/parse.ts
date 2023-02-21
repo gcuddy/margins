@@ -1,12 +1,15 @@
 import { books } from "@googleapis/books";
+import type { youtube_v3 } from "@googleapis/youtube"
 import { z } from "zod";
 
-import { GOOGLE_BOOKS_API_KEY } from "$env/static/private";
+import { GOOGLE_BOOKS_API_KEY, YOUTUBE_KEY } from "$env/static/private";
 import { Metadata, Parser } from "$lib/web-parser";
 
 import { uploadFile } from "./backend/s3.server";
+import dayjs from "./dayjs";
 import { spotify } from "./features/services/spotify";
 import { twitter } from "./features/services/twitter";
+type VideoListResponse = youtube_v3.Schema$VideoListResponse
 
 const spotifyRegex = /^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/;
 const spotifyTypeSchema = z.enum(["track", "album", "playlist"]);
@@ -18,6 +21,24 @@ const googleBooksRegexes = [
     /(?:https?:\/\/books\.google\.com\/books\/about.*?\?id=(?<id>.*))/,
     /(?:https?:\/\/www\.google\.com\/books\/edition\/.*\/(?<id>.*)?\?)/
 ]
+
+const youtubeRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)(?<id>[^"&?/\s]{11})/;
+
+// zod?
+type YoutubeJson = {
+    title: string;
+    author_name: string;
+    author_url: string;
+    type: "video";
+    height: number;
+    width: number;
+    thumbnail_height: number;
+    thumbnail_width: number;
+    thumbnail_url: string;
+    html: string;
+}
+
+
 
 
 export default async function (url: string, html?: string): Promise<z.infer<typeof Metadata>> {
@@ -84,6 +105,43 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                 type: "tweet",
                 original: tweet as any,
             };
+        }
+    }
+    if (youtubeRegex.test(url)) {
+        const match = url.match(youtubeRegex);
+        const id = match?.groups?.id;
+        if (id) {
+            const url = `https://www.youtube.com/watch?v=${id}`;
+            const u = new URL(`https://youtube.googleapis.com/youtube/v3/videos`)
+            u.searchParams.set("part", "snippet,contentDetails,player");
+            u.searchParams.set("id", id);
+            u.searchParams.set("key", YOUTUBE_KEY)
+            const res = await fetch(u.toString());
+            const data = await res.json() as VideoListResponse;
+            const item = data.items?.[0];
+            // const res = await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`);
+            // const data = await res.json() as YoutubeJson;
+            return {
+                title: item?.snippet?.title || "",
+                author: item?.snippet?.channelTitle || "",
+                // author: data.author_name,
+                image: item?.snippet?.thumbnails?.high?.url || "",
+                type: "video",
+                html: item?.player?.embedHtml || "",
+                // or summary? text is the one that gets searched, right? do we need to repliace it? hm.
+                text: item?.snippet?.description || "",
+                summary: item?.snippet?.description || "",
+                uri: url,
+                youtubeId: id,
+                published: item?.snippet?.publishedAt || "",
+                duration: item?.contentDetails?.duration ? dayjs.duration(item?.contentDetails?.duration).asSeconds() : undefined,
+                // extended: {
+                //    authorUrl: data.author_url,
+                // }
+            }
+            // return {
+            //     title: data.title,
+            // }
         }
     }
     // check if spotify
