@@ -178,8 +178,15 @@
 
 	export let width = 240;
 	$: console.log({ width });
-	let _width = width;
+	let _width = width
+    $: console.log({$mq})
 
+    let lgCollapsed = false;
+    $: $mq.max_lg && collapse();
+    $: $mq.lg && !lgCollapsed && expand();
+    // mq.subscribe(val => {
+    //     val.
+    // })
 	const tweenedWidth = tweened(width, {
 		duration: 600,
 		easing: quintOut,
@@ -212,6 +219,9 @@
 
 	function collapse() {
 		if (collapsed) return;
+        if ($mq.lg) {
+            lgCollapsed = true;
+        }
 		show_floating = false;
 		Promise.all([
 			tweenedWidth.set(0),
@@ -224,6 +234,9 @@
 
 	function expand() {
 		if (!collapsed) return;
+        if ($mq.lg) {
+            lgCollapsed = false;
+        }
 		ticking = true;
 		show_floating = false;
 		collapsed = false;
