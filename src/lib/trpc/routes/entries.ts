@@ -1,4 +1,4 @@
-import { RelationType } from "@prisma/client"
+import { DocumentType, RelationType } from "@prisma/client"
 import { fuzzy } from "fast-fuzzy";
 import { z } from "zod";
 
@@ -336,7 +336,7 @@ export const entriesRouter = router({
                 }
             }
         })
-       return collections
+        return collections
     }),
     addData: protectedProcedure
         .input(
@@ -762,5 +762,36 @@ export const entriesRouter = router({
                 },
             });
             return relation;
+        }),
+    list: protectedProcedure
+        .input(z.object({
+            type: z.nativeEnum(DocumentType).optional(),
+            // etc...
+        })).query(async ({ ctx, input }) => {
+            const { userId } = ctx;
+            return await ctx.prisma.entry.findMany({
+                where: {
+                    AND: input,
+                    OR: [
+                        {
+                            bookmarks: {
+                                some: {
+                                    userId,
+                                },
+                            }
+
+                        },
+                        {
+                            feed: {
+                                subscriptions: {
+                                    some: {
+                                        userId,
+                                    },
+                                },
+                            }
+                        },
+                    ],
+                },
+            })
         })
 });

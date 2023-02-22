@@ -7,6 +7,7 @@ export const basicEntrySelect = (userId: string) => Prisma.validator<Prisma.Entr
     author: true,
     image: true,
     published: true,
+    type: true,
     bookmarks: {
         where: {
             userId

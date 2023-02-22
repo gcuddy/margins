@@ -124,11 +124,11 @@
 
 <!-- TODO: keep playing when changing pages by using some sort of layout/store/context -->
 
-<button
+<!-- <button
 	on:click={() => {
 		player?.seekTo(start, true);
 	}}>seek to t</button
->
+> -->
 
 {#if youtubeId}
 	<!-- {playing} -->

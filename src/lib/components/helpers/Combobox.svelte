@@ -10,6 +10,7 @@
 		id?: string | number;
 		name?: string;
 		disabled?: boolean;
+        group?: string;
 	};
 
 	interface Props {

@@ -396,7 +396,9 @@
 							let:item
 							type="kanban"
 						>
-							<a
+                       <EntryListItem class="bg-base border border-border rounded-lg" entry={item} show={{type: true, year: false}} />
+							<!-- <a
+
 								class="flex h-24 items-center gap-4 rounded border border-black/20 bg-white px-4 py-2 shadow-sm dark:bg-gray-800"
 								href="/u:{$page.data.user?.username}/entry/{item.id}"
 							>
@@ -409,7 +411,7 @@
 									<span class="font-medium line-clamp-2">{item.title}</span>
 									<span class="">{item.author}</span>
 								</div>
-							</a>
+							</a> -->
 						</KanbanList>
 						<!-- <section
 							use:dndzone={{
@@ -608,13 +610,13 @@
 														: ''} "
 												>
 													{#if item.uri && viewOptions.properties?.url}
-														<span>{item.uri}</span>
+														<!-- <span>{item.uri}</span> -->
 													{/if}
 													{#if data.author && viewOptions.properties?.author}
 														<span>{data.author}</span>
 													{/if}
 													{#if viewOptions.properties?.site}
-														<Muted>{data.siteName || item.uri}</Muted>
+														<!-- <Muted>{data.siteName || item.uri}</Muted> -->
 													{/if}
 													{#if data.published && viewOptions.properties?.date && viewOptions.view === "list"}
 														<Muted>{dayjs(data.published).format("ll")}</Muted>
@@ -744,6 +746,7 @@
 									{:else if item.type === DocumentType.audio}
 										{@const loaded = $podcastPlayer?.episode?.enclosureUrl === item.enclosureUrl}
 										{@const progress = item.interactions?.[0]?.progress}
+                                        <!-- {@const progress = item.interaction?.progress} -->
 										<!-- Old way: -->
 										<!-- <EpisodeListItem {item} /> -->
 										<!-- New way: -->
@@ -812,7 +815,7 @@
 																			$podcastPlayer.duration - $podcastPlayer.currentTime,
 																			"seconds"
 																		)} left
-																	{:else}
+																	{:else if progress}
 																		{Math.round(progress * 100)}%
 																	{/if}
 																	<!-- {match([loaded, progress, item.duration])

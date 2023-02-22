@@ -22,6 +22,7 @@ generator zod {
     relationModel = "default"
 }
 
+
 // generator zodprismatypes {
 //     provider = "zod-prisma-types"
 //     output   = "../src/lib/prisma/zod-prisma"
@@ -162,7 +163,7 @@ model Relation {
     @@index([userId, entryId])
 }
 
-/// @zod.import(["import { TargetSchema } from '../../schemas'"])
+/// @zod.import(["import { TargetSchema } from '../schemas'"])
 model Annotation {
     id          String   @id @default(cuid())
     createdAt   DateTime @default(now())
@@ -248,7 +249,7 @@ enum Location {
     archive
 }
 
-/// @zod.import(["import {recipeSchema} from '../../schemas'", "import { schemaOrgSchemas } from '../../schemas'"])
+/// @zod.import(["import {recipeSchema} from '../schemas'", "import { schemaOrgSchemas } from '../schemas'"])
 model Entry {
     data            EntryData[]
     // TODO: make all createdATs coerce?
@@ -483,7 +484,7 @@ model Context {
     @@index([feedId])
 }
 
-/// @zod.import(["import { chosenIcon } from '../../schemas'"])
+/// @zod.import(["import { chosenIcon } from '../schemas'"])
 model Collection {
     id          Int               @id @default(autoincrement())
     name        String
@@ -739,7 +740,7 @@ model Tagging {
     @@map("Taggings")
 }
 
-///@zod.import(["import { chosenIcon } from '../../schemas'"])
+///@zod.import(["import { chosenIcon } from '../schemas'"])
 model SmartList {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now())

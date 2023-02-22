@@ -37,10 +37,11 @@
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import { listSubscriptionsQuery } from "$lib/features/subscriptions/queries";
 	import { allowedThemes, darkThemes } from "$lib/features/settings/themes";
-	import { getEntriesFromCache } from "$lib/features/entries/queries";
+	import { getEntriesFromCache, listEntriesQuery } from "$lib/features/entries/queries";
 	import type { Entry } from "@prisma/client";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
-	import type { RouterInputs } from "$lib/trpc/router";
+	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
+	import { searchBookQuery } from "$lib/features/books/queries";
 
 	const queryClient = useQueryClient();
 	const user = getUser();
@@ -78,19 +79,19 @@
 				queryKey: ["bookmarks"],
 			});
 			selectedItems.set([]);
-            // REVIEW: do we need notification here?
-            // TODO: describe what  was updated
-            if ("count" in data) {
-                notifications.notify({
-                    message: `Updated ${data.count} bookmarks`,
-                    type: "success",
-                })
-            } else {
-                notifications.notify({
-                    message: `Updated bookmark`,
-                    type: "success",
-            })
-            }
+			// REVIEW: do we need notification here?
+			// TODO: describe what  was updated
+			if ("count" in data) {
+				notifications.notify({
+					message: `Updated ${data.count} bookmarks`,
+					type: "success",
+				});
+			} else {
+				notifications.notify({
+					message: `Updated bookmark`,
+					type: "success",
+				});
+			}
 		},
 	});
 
@@ -174,6 +175,54 @@
 					slot: () => ({ component: SearchItem }),
 					onSelect: async ({ detail }) => {
 						await goto(`/podcasts/${detail.id}`);
+					},
+				});
+			},
+			icon: "arrowRight",
+			kbd: [["j", "p"]],
+		},
+		{
+			id: "jump-to-book",
+			group: "jump",
+			name: "Jump to book",
+			perform: async () => {
+				showCommandPalette.out();
+				// const existingBooks = await queryClient.ensureQueryData(
+				// 	listEntriesQuery({
+				// 		type: "book",
+				// 	})
+				// );
+				commandPaletteStore.open({
+					query: (v) => {
+						// const filteredBooks = existingBooks.filter((p) =>
+						// 	p.title?.toLowerCase().includes(v.toLowerCase())
+						// );
+						const q = searchBookQuery($page, v);
+						// REVIEW: ideally we wouldn't have to type this
+						return {
+							...q,
+							select: (data) => data.items,
+							// placeholderData: filteredBooks,
+							// select: (data: RouterOutputs["books"]["public"]["search"]) => {
+							// 	// group filtered books, then search results
+							//     return [...filteredBooks, ...data.items];
+							// },
+						};
+					},
+					slot: ({ value, active }) => ({
+						component: EntryListItem,
+						props: {
+							entry: {
+								image: value.volumeInfo?.imageLinks?.thumbnail,
+								title: value.volumeInfo?.title,
+								author: value.volumeInfo?.authors?.join(", "),
+								published: value.volumeInfo?.publishedDate,
+							},
+                            active
+						},
+					}),
+					onSelect: async ({ detail }) => {
+						await goto(`/books/${detail.id}`);
 					},
 				});
 			},

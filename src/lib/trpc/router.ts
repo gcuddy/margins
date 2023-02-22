@@ -14,6 +14,7 @@ import { favoritesRouter } from "./routes/favorites";
 import { filterRouter } from "./routes/filters";
 import { logRouter } from "./routes/log";
 import { moviesRouter } from "./routes/movies";
+import { musicRouter } from "./routes/music";
 import { podcastsRouter } from "./routes/podcasts";
 import { publicRouter } from "./routes/public";
 import { subscriptions } from "./routes/subscriptions";
@@ -32,6 +33,7 @@ export const appRouter = t.router({
     podcasts: podcastsRouter,
     books: booksRouter,
     movies: moviesRouter,
+    music: musicRouter,
     favorites: favoritesRouter,
     log: logRouter,
     nlp: t.procedure.input(z.object({

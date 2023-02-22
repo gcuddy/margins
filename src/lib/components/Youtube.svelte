@@ -129,16 +129,15 @@
 	}
 </script>
 
-<div class={className}>
 	<!-- <div {id} bind:this={playerElem} /> -->
+    <!-- iframe height 100% vs auto? -->
 	<iframe
 		bind:this={playerElem}
         class="aspect-video rounded-xl ring-1 ring-border overflow-hidden"
 		title="YouTube video player"
 		{id}
-		{width}
-		{height}
+		width="100%"
+		height="100%"
 		src="https://www.youtube.com/embed/{videoId}?enablejsapi=1"
 		frameborder="0"
 	/>
-</div>

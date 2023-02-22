@@ -24,6 +24,14 @@ export const getEntriesFromCache = (queryClient: QueryClient) => {
     return data.flatMap(([, entry]) => entry).filter(e => e) as Entry[];
 }
 
+export const listEntriesQuery = (input: RouterInputs["entries"]["list"], init?: TRPCClientInit) => ({
+    queryKey: ["entries", "list", {
+        ...input
+    }],
+    queryFn: async () => trpc(init).entries.list.query(input),
+    staleTime: 1000 * 60 * 60
+}) satisfies CreateQueryOptions;
+
 export const searchEntriesQuery = (input: RouterInputs["entries"]["search"], init?: TRPCClientInit) => ({
     queryKey: ["entries", "search", input.query],
     queryFn: async () => trpc(init).entries.search.query(input),

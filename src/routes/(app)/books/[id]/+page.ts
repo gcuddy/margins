@@ -1,5 +1,6 @@
 import { queryKeys } from "$lib/features/books/queries";
 import type { RouterOutputs } from "$lib/trpc/router";
+
 import type { PageLoad } from "./$types";
 
 export const load = (async (evt) => {

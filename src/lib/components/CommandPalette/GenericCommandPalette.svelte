@@ -45,7 +45,7 @@
 
 	$: Query = query ? createQuery({ ...query($term) }) : undefined;
 	//todo: export function to search value (for derived store)
-
+	export let searchIcon = false;
 	/** Fallback shows when nothing else is found. */
 	export let fallback: ((input: string) => TValue) | undefined = undefined;
 
@@ -131,6 +131,7 @@
 		StoredComponentTyped,
 		SvelteComponentWithProps,
 	} from "$lib/stores/types";
+    import cx from "classnames";
 	import { preloadData } from "$app/navigation";
 	import type { IconName } from "$lib/icons";
 	import Icon from "../helpers/Icon.svelte";
@@ -172,9 +173,11 @@
 			}
 		}}
 		input={{
-			class:
-				"w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
+			class: "w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
 			placeholder,
+		}}
+		inputParent={{
+			class: "flex items-center",
 		}}
 		options={{
 			class: `max-h-96 text-sm overflow-y-auto scrollbar-thin scrollbar scrollbar-thumb-border hover:scrollbar-thumb-muted scrollbar-thumb-rounded-lg scrollbar-track-transparent	 ${
@@ -185,7 +188,25 @@
 		expanded={true}
 		class="relative mx-auto max-w-2xl divide-y divide-border overflow-hidden rounded-xl bg-elevation  shadow-3xl ring-1 ring-border/50 transparency:bg-elevation/70 transparency:backdrop-blur-2xl transparency:backdrop-brightness-125 transparency:backdrop-contrast-100 transparency:backdrop-saturate-200 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200"
 	>
+		<svelte:fragment slot="inputPeer">
+			{#if searchIcon || Query}
+            {@const loading = Query && $Query?.isInitialLoading }
+				<div class="my-3 ml-3 flex items-center">
+					<Icon name={loading ? "loading" : "search"} className={cx("w-4 h-4 transition", {
+                        "animate-spin": loading,
+                        "stroke-muted": !loading,
+                        "fill-muted": loading
+                    })} />
+				</div>
+			{/if}
+		</svelte:fragment>
 		<div slot="option" let:value let:active let:selected let:index>
+			{#if value.group}
+				<div class="h-4 w-full py-2">
+					{value.group}
+					<div class="h-px bg-border " />
+				</div>
+			{/if}
 			<slot {value} {active} {selected} {index}>
 				{#if slot}
 					{@const { component, props } = slot({ value, active, selected, index })}

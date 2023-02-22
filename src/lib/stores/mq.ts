@@ -1,12 +1,14 @@
 // credit https://github.com/the-pudding/svelte-starter/blob/main/src/stores/mq.js
 
-import { browser } from "$app/environment";
 import { readable } from "svelte/store";
+
+import { browser } from "$app/environment";
 
 // REVIEW: these should match with Tailwind... how to automate?
 const queries = {
 	"max_sm": "(max-width: 640px)",
 	"max_md": "(max-width: 768px)",
+	"max_lg": "(max-width: 1024px)",
 	"sm": "(min-width: 640px)",
 	"md": "(min-width: 768px)",
 	"lg": "(min-width: 1024px)",
@@ -22,7 +24,7 @@ function calculateMedia(mqls: MQ) {
 	const media = { classNames: "" } as Record<string | keyof typeof queries, string>;
 	const mediaClasses = [];
 	// let name: keyof typeof queries;
-	for (let name in mqls) {
+	for (const name in mqls) {
 		media[name] = mqls[name].matches;
 		if (media[name]) mediaClasses.push(`mq-${name}`);
 	}
@@ -47,7 +49,7 @@ export default readable<Record<keyof typeof queries, boolean>>({}, (set) => {
 	}
 
 	return () => {
-		for (let q in mqls) {
+		for (const q in mqls) {
 			mqls[q].removeEventListener("change", onChange);
 		}
 	};
