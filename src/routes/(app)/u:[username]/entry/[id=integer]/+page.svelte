@@ -558,76 +558,76 @@
 			<!-- TODO: py-8 px-4 should be set on a per-type basis -->
 			<article data-article class=" mt-14 h-full  ">
 				{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
-					<header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
-						<!-- {article.feedId
-							? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
-							: article.uri} -->
-						<a
-							class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
-							href={article.uri}
-						>
-							<img
-								src="https://icon.horse/icon/?uri={article.uri}"
-								class="h-5 w-5 rounded-full object-cover"
-								alt=""
-							/>
-							<span class="truncate">{entry.siteName || entry.uri}</span></a
-						>
-						<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
-
-						<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
-						{#if entry.summary}
-							<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
-								{entry.summary}
-							</div>
-						{/if}
-
-						<div class="flex justify-between">
-							<div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
-								{#if entry.author}
-									<p><a href="/author/{entry.author}">{entry.author}</a></p>
-								{/if}
-								{#if entry.author && entry.published}
-									<!-- <p>&middot;</p> -->
-								{/if}
-								{#if entry.published}
-									<p>{dayjs(entry.published).format("ll")}</p>
-								{/if}
-								{#if entry.wordCount}
-									<span>{entry.wordCount} words</span>
-								{/if}
-							</div>
-						</div>
-						{#if !data.authorized}
-							<span class="rounded bg-amber-400 px-1 text-white">
-								Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
-							</span>
-						{/if}
-						{#if data.authorized && data.article.bookmark && data.article.tags}
-							<div transition:slide|local>
-								<TagInputCombobox
-									original={{ ...data.article }}
-									allTags={$page.data.tags}
-									tags={data.article.tags.map((tag) => ({
-										...tag,
-										...$page.data.tags?.find((t) => t.id === tag.id),
-									}))}
-								/>
-							</div>
-						{/if}
-					</header>
-					{#if article.type === DocumentType.audio}
-						<AudioEntry entry={article} />
-					{/if}
-					<!-- this is a very rudimentary check lol -->
-					<div id="entry-container">
-						<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
-							{@html entry.html || entry.text || entry.summary || "[No content]"}
-						</Highlighter>
-					</div>
-					<noscript>
-						<HighlightMenu noHighlight={true} articleId={article.id} />
-					</noscript>
+					<div class="px-1">
+                        <header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
+                            <!-- {article.feedId
+                                ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
+                                : article.uri} -->
+                            <a
+                                class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
+                                href={article.uri}
+                            >
+                                <img
+                                    src="https://icon.horse/icon/?uri={article.uri}"
+                                    class="h-5 w-5 rounded-full object-cover"
+                                    alt=""
+                                />
+                                <span class="truncate">{entry.siteName || entry.uri}</span></a
+                            >
+                            <H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
+                            <!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
+                            {#if entry.summary}
+                                <div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
+                                    {entry.summary}
+                                </div>
+                            {/if}
+                            <div class="flex justify-between">
+                                <div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
+                                    {#if entry.author}
+                                        <p><a href="/author/{entry.author}">{entry.author}</a></p>
+                                    {/if}
+                                    {#if entry.author && entry.published}
+                                        <!-- <p>&middot;</p> -->
+                                    {/if}
+                                    {#if entry.published}
+                                        <p>{dayjs(entry.published).format("ll")}</p>
+                                    {/if}
+                                    {#if entry.wordCount}
+                                        <span>{entry.wordCount} words</span>
+                                    {/if}
+                                </div>
+                            </div>
+                            {#if !data.authorized}
+                                <span class="rounded bg-amber-400 px-1 text-white">
+                                    Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
+                                </span>
+                            {/if}
+                            {#if data.authorized && data.article.bookmark && data.article.tags}
+                                <div transition:slide|local>
+                                    <TagInputCombobox
+                                        original={{ ...data.article }}
+                                        allTags={$page.data.tags}
+                                        tags={data.article.tags.map((tag) => ({
+                                            ...tag,
+                                            ...$page.data.tags?.find((t) => t.id === tag.id),
+                                        }))}
+                                    />
+                                </div>
+                            {/if}
+                        </header>
+                        {#if article.type === DocumentType.audio}
+                            <AudioEntry entry={article} />
+                        {/if}
+                        <!-- this is a very rudimentary check lol -->
+                        <div id="entry-container">
+                            <Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
+                                {@html entry.html || entry.text || entry.summary || "[No content]"}
+                            </Highlighter>
+                        </div>
+                        <noscript>
+                            <HighlightMenu noHighlight={true} articleId={article.id} />
+                        </noscript>
+                    </div>
 				{:else if article.type === DocumentType.book}
 					<BookEntry entry={article} bookId={article?.googleBooksId} />
 				{:else if article.type === DocumentType.bookmark}

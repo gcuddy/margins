@@ -35,6 +35,7 @@
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import { entryDetailsQuery } from "$lib/features/entries/queries";
+	import mq from "$lib/stores/mq";
 	const [menuRef, menuContent] = createPopperActions({
 		placement: "top",
 		strategy: "fixed",
@@ -256,7 +257,7 @@
 			console.log("INVALID");
 			// if it's in a combobox
 			if (document.activeElement instanceof HTMLInputElement) return;
-			show_tooltip = false;
+			// show_tooltip = false;
 			validSelection = false;
 			tooltipVisible = false;
 		}
@@ -603,7 +604,7 @@
 		{/each}
 	</div>
 	{#if show_tooltip}
-		<div class="z-40" use:menuContent>
+		<div class="z-40 {!$mq.desktop ? 'text-red-500' : ''}" use:menuContent>
 			{#if showColors}
 				<!-- <Swatches
 					bind:selected={currentAnnotationColor}
@@ -936,6 +937,7 @@
 		first_letter={false}
 	>
 		<div
+        class="!select-text"
 			on:dragstart={(e) => {
 				if (e.target instanceof HTMLAnchorElement) {
 					// set context data

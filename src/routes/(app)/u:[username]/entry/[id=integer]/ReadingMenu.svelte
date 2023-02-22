@@ -339,7 +339,7 @@
 		<!-- This should check when the header is off screen. When it is, it should receive the Title and gently transition it in. -->
 
 		<div
-			class="flex grid-cols-4 items-center gap-2"
+			class="hidden sm:flex grid-cols-4 items-center gap-2"
 			on:click={handleScrollToTop}
 			on:keydown
 			aria-label="Click to scroll to top"
