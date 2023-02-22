@@ -3,10 +3,10 @@ import { z } from "zod";
 import { TargetSchema } from "$lib/annotation";
 import { chosenIcon } from "$lib/types/icon";
 import { recipeSchema } from "$lib/web-parser/recipe";
+export { ViewOptionsSchema } from "$lib/types/schemas/View";
 
 export { chosenIcon, recipeSchema, TargetSchema };
 export * from "$lib/web-parser/schemaOrg";
-
 export const StringNullableFilter = z.object({
     equals: z.string().nullish(),
     in: z.array(z.string()).nullish(),
@@ -58,4 +58,5 @@ export const EntryExtendedSchema = z.object({
         href: z.string(),
         text: z.string()
     })),
+    authorUrl: z.string().nullish(),
 }).partial();

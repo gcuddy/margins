@@ -3,8 +3,6 @@
 import { DocumentType } from '@prisma/client';
 import { error, fail } from '@sveltejs/kit';
 
-import { db } from '$lib/db';
-import { connectOrCreateTaggings } from '$lib/tag.server';
 import { createContext } from '$lib/trpc/context';
 import { appRouter } from '$lib/trpc/router';
 
@@ -43,6 +41,7 @@ export const actions: Actions = {
 			// TODO: differentiate between different types of links
 			// First parse the article
 			const article = await serverRouter.public.parse(url);
+            // ^^ this should be stored in the cache!
 			console.log(`here's the article we're going to try to add:`, { article })
 			// Now add the article
 			let screenshot: string | undefined = undefined

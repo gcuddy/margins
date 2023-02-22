@@ -1,25 +1,33 @@
 <script lang="ts">
 	import type { Annotation, Tag } from "@prisma/client";
-	import type { JSONContent } from "@tiptap/core";
+	import type { EditorOptions, JSONContent } from "@tiptap/core";
 
-	import { createEventDispatcher, onMount } from "svelte";
+	import { ComponentProps, createEventDispatcher, onMount } from "svelte";
 	import Button from "../Button.svelte";
 	import Icon from "../helpers/Icon.svelte";
 	import TipTap from "../TipTap.svelte";
-	export let value = "";
 	export let el: HTMLElement | undefined = undefined;
 	export let textarea: HTMLElement | undefined = undefined;
 	export let include_tags = true;
 	export let scrollIntoView = true;
 	export let confirmButtonStyle: "ghost" | "confirm" = "confirm";
-	export let allTags: Tag[] = [];
 	export let shadow_focus = false;
-	export let name = "annotation";
 	export let placeholder = "Add an annotation…";
-	export let rows = 4;
 	export let annotation: Annotation | undefined = undefined;
-	$: console.log({ allTags });
-	export let size: "sm" | "base" = "sm";
+    export let config: Partial<EditorOptions> = {};
+    // interface $$Props extends ComponentProps<TipTap> {
+    //     el?: HTMLElement;
+    //     textarea?: HTMLElement;
+    //     include_tags?: boolean;
+    //     scrollIntoView?: boolean;
+    //     confirmButtonStyle?: "ghost" | "confirm";
+    //     shadow_focus?: boolean;
+    //     placeholder?: string;
+    //     annotation?: Annotation;
+    //     focused?: boolean;
+    //     saving?: boolean;
+    //     expandButton?: boolean;
+    // }
 	const dispatch = createEventDispatcher<{
 		save: {
 			value: JSONContent;
@@ -30,6 +38,7 @@
 	}>();
 	export let focused = false;
 
+    export let autofocus = false;
 	let className = "";
 	export { className as class };
 	onMount(() => {
@@ -74,16 +83,18 @@
 	<!-- todo: auto expand -->
 	<div class="no-drag w-full cursor-default">
 		<TipTap
+            {autofocus}
 			bind:editing={focused}
 			focusRing={false}
-            on:update={(e) => {
-                console.log({e})
-                contentData = e.detail;
-            }}
+			on:update={(e) => {
+				console.log({ e });
+				contentData = e.detail;
+			}}
 			{placeholder}
 			class="!max-w-none"
 			config={{
 				content: annotation?.contentData || "",
+                ...config
 			}}
 		/>
 		{#if include_tags}
@@ -92,19 +103,25 @@
 			</div>
 		{/if}
 	</div>
-	<div class="flex flex-row items-center justify-end space-x-2 self-stretch">
-		<slot name="buttons">
-			<!-- //todo -->
-			<Button variant="ghost" on:click={() => dispatch("cancel")}>Cancel</Button>
-			<Button variant={confirmButtonStyle} type="submit" on:click={() => dispatch("save", { value: contentData })}>
-				{#if saving}
-					<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
-				{:else}
-					Save
-				{/if}
-			</Button>
-		</slot>
-	</div>
+	<slot name="bottom" {contentData}>
+		<div class="flex flex-row items-center justify-end space-x-2 self-stretch">
+			<slot name="buttons">
+				<!-- //todo -->
+				<Button variant="ghost" on:click={() => dispatch("cancel")}>Cancel</Button>
+				<Button
+					variant={confirmButtonStyle}
+					type="submit"
+					on:click={() => dispatch("save", { value: contentData })}
+				>
+					{#if saving}
+						<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+					{:else}
+						Save
+					{/if}
+				</Button>
+			</slot>
+		</div>
+	</slot>
 </div>
 
 <style>

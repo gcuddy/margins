@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 
+import type { Selector } from "$lib/annotation";
+
 export const baseAnnotationSelect = Prisma.validator<Prisma.AnnotationSelect>()({
 	id: true,
 	createdAt: true,
@@ -79,15 +81,18 @@ export const contextualAnnotationArgs = Prisma.validator<Prisma.AnnotationArgs>(
 			select: {
 				...annotationSelect,
 				parent: true,
-			},
+        },
 		},
 		entry: {
 			select: {
 				title: true,
 				id: true,
+                type: true
 			},
 		},
 	},
 });
 
-export type ContextualAnnotation = Prisma.AnnotationGetPayload<typeof contextualAnnotationArgs>;
+export type ContextualAnnotation = Prisma.AnnotationGetPayload<typeof contextualAnnotationArgs> & {
+    target: Selector | null;
+};

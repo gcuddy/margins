@@ -1,5 +1,6 @@
 <script lang="ts">
 	import autoAnimate from "@formkit/auto-animate";
+	import { createEventDispatcher } from "svelte";
 
 	type T = $$Generic<{
 		id: string | number;
@@ -7,10 +8,13 @@
 	export let items: T[];
 
 	import { dndzone } from "svelte-dnd-action";
+    const dispatch  = createEventDispatcher<{
+        kanbandrop: CustomEvent<DndEvent<T>>;
+    }>();
 	const flipDurationMs = 200;
 
 	export let type: string | undefined = undefined;
-	export let onDrop: (items: T[]) => void;
+	export let onDrop: (e: CustomEvent<DndEvent<T>>) => void;
 	function handleSort(e: CustomEvent<DndEvent<T>>) {
 		items = e.detail.items;
 	}
@@ -18,7 +22,8 @@
 	function handleFinalize(e: CustomEvent<DndEvent<T>>) {
 		const { items: newItems } = e.detail;
 		items = newItems;
-		onDrop(items);
+        dispatch("kanbandrop", e);
+		onDrop(e);
 	}
 </script>
 

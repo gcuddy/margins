@@ -18,6 +18,7 @@ export const _CollectionModel = z.object({
   contentData: jsonSchema,
   createdAt: z.date(),
   updatedAt: z.date(),
+  viewOptions: imports.ViewOptionsSchema.partial(),
 })
 
 export interface CompleteCollection extends z.infer<typeof _CollectionModel> {

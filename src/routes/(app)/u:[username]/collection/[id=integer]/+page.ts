@@ -7,8 +7,10 @@ export const load = (async (e) => {
     const { queryClient } = await parent();
     const query = collectionQuery(Number(params.id), e);
     const collection = await queryClient.ensureQueryData(query);
+    // queryClient.prefetchQuery(query);
     console.log({ collection })
     return {
-        collection
+        collection,
+        id: Number(params.id),
     };
 }) satisfies PageLoad;

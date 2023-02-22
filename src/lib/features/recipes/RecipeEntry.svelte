@@ -19,10 +19,10 @@
 	};
 </script>
 
-<div class="mx-auto flex max-w-prose flex-col gap-4 divide-y divide-border py-6">
+<div class="mx-auto max-w-3xl flex flex-col gap-4 divide-y divide-border py-6">
 	<div class="meta space-y-4 md:space-y-6">
 		<img class="max-h-48 sm:max-h-56 w-full overflow-hidden object-cover" src={image(recipe.image)} alt="" />
-		<H1 class="">{recipe.name}</H1>
+		<H1 xl={true} class="">{recipe.name}</H1>
         {#if recipe.author}
             <p class="text-sm text-gray-500">{Array.isArray(recipe.author) ? recipe.author.map(a => a.name).join(", ") : recipe.author.name}</p>
         {/if}
@@ -55,7 +55,7 @@
 	{/if}
 	<div class="space-y-4 pt-4">
 		<h2>Instructions</h2>
-		<ol class="prose list-decimal">
+		<ol class="prose lg:prose-lg xl:prose-xl list-decimal">
 			{#each recipe.recipeInstructions || [] as instruction}
 				{#if "text" in instruction}
 					<li>{instruction.text}</li>

@@ -1,5 +1,5 @@
-import type { PageLoad } from "./$types";
 import { filterQuery } from "./+page.svelte";
+import type { PageLoad } from "./$types";
 
 export const load = (async (e) => {
 	const { data } = e;

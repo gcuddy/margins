@@ -32,6 +32,9 @@
 	import { createPopperActions } from "svelte-popperjs";
 	import { writable } from "svelte/store";
 	import { reading_sidebar } from "$lib/features/entries/stores";
+	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+	import type { RouterInputs } from "$lib/trpc/router";
+	import { entryDetailsQuery } from "$lib/features/entries/queries";
 	const [menuRef, menuContent] = createPopperActions({
 		placement: "top",
 		strategy: "fixed",
@@ -209,6 +212,24 @@
 	let tooltipVisible = false;
 	let tooltipTop = 0;
 	let tooltipLeft = 0;
+
+    const queryClient = useQueryClient();
+    const entryQueryKey = entryDetailsQuery({id: articleID}).queryKey;
+	const saveAnnotation = createMutation({
+		mutationFn: (input: RouterInputs["annotations"]["save"]) =>
+			trpc($page).annotations.save.mutate({
+				entryId: articleID,
+				...input,
+			}),
+            onSuccess: () => {
+                queryClient.invalidateQueries({
+                    queryKey: entryQueryKey
+                })
+                queryClient.invalidateQueries({
+                    queryKey: ["annotations"],
+                });
+            },
+	});
 
 	const isValidSelection = (sel: Selection) =>
 		sel &&
@@ -697,12 +718,8 @@
 						}}
 						on:highlight={async () => {
 							const userSelection = window.getSelection()?.getRangeAt(0);
-							console.log({ userSelection });
-							if (!userSelection) return;
-							describeRange(userSelection, wrapper);
 							if (!userSelection || userSelection.collapsed) return;
 							const selector = await describeTextQuote(userSelection);
-							console.log({ selector });
 							const highlightInfo = await highlightSelectorTarget(
 								selector,
 								undefined,
@@ -716,14 +733,21 @@
 							);
 							window.getSelection()?.removeAllRanges();
 							try {
-								const annotation = await trpc().annotations.save.mutate({
-									entryId: articleID,
-									target: {
-										source: articleUrl,
-										selector,
-									},
-									color: currentAnnotationColor,
-								});
+								// const annotation = await trpc().annotations.save.mutate({
+								// 	entryId: articleID,
+								// 	target: {
+								// 		source: articleUrl,
+								// 		selector,
+								// 	},
+								// 	color: currentAnnotationColor,
+								// });
+                                const annotation = await $saveAnnotation.mutateAsync({
+                                    target: {
+                                        source: articleUrl,
+                                        selector,
+                                    },
+                                    color: currentAnnotationColor,
+                                });
 								highlightInfo.forEach((h) => {
 									h.highlightElements.forEach((el) => {
 										el.setAttribute("id", `annotation-${annotation.id}`);
@@ -734,8 +758,8 @@
 									destroy: highlightInfo.map((h) => h.removeHighlights),
 									els: highlightInfo.flatMap((h) => h.highlightElements),
 								});
-								annotations = [...annotations, annotation];
-								await invalidateAll();
+								// annotations = [...annotations, annotation];
+								// await invalidateAll();
 							} catch (e) {
 								console.error(e);
 								notifications.notify({
@@ -859,7 +883,6 @@
 						body: value,
 						color: currentAnnotationColor,
 					});
-					console.log({ annotation });
 					//
 					await invalidateAll();
 					// done();

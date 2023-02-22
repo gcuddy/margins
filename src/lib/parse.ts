@@ -130,7 +130,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                 html: item?.player?.embedHtml || "",
                 // or summary? text is the one that gets searched, right? do we need to repliace it? hm.
                 text: item?.snippet?.description || "",
-                summary: item?.snippet?.description || "",
+                summary: item?.snippet?.description?.slice(0,192) || "",
                 uri: url,
                 youtubeId: id,
                 published: item?.snippet?.publishedAt || "",

@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { invalidateAll } from "$app/navigation";
+	import { invalidate, invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import type parse from "$lib/parse";
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
 	import { trpc } from "$lib/trpc/client";
+	import type { RouterOutputs } from "$lib/trpc/router";
 	import type { Location } from "$lib/types/schemas/Locations";
 	import { getUser } from "@lucia-auth/sveltekit/client";
 	import type { State } from "@prisma/client";
-	import { createQuery } from "@tanstack/svelte-query";
+	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
 	import { fade } from "svelte/transition";
 	import MiniSwitch from "./atoms/MiniSwitch.svelte";
 	import Button from "./Button.svelte";
@@ -43,12 +44,36 @@
 
 	console.log({ $modals });
 
+	let articleToAdd: RouterOutputs["public"]["parse"] | null = null;
+
 	$: query = createQuery({
 		queryKey: ["parse", url],
 		queryFn: async () => trpc($page).public.parse.query(url),
 		enabled: false,
 		staleTime: 1000 * 60,
 		refetchOnWindowFocus: false,
+		onSuccess: (data) => {
+			articleToAdd = data;
+		},
+	});
+
+	// TODO: screenshot if bookmark (see /add/page.server.ts)
+	const queryClient = useQueryClient();
+	const addMutation = createMutation({
+		mutationFn: () =>
+			trpc($page).bookmarks.add.mutate({
+				// TODO: fix types mismatch
+				article: articleToAdd,
+				url,
+			}),
+		// TODO: come up with something a bit more sophisticated
+		onSuccess: (data) => {
+			// invalidate
+			// or: invalidateAll()?
+			console.log("invalidating", data);
+			queryClient.invalidateQueries({ queryKey: ["entries"] });
+			// await invalidate("entries");
+		},
 	});
 
 	$: console.log({ $query });
@@ -59,7 +84,7 @@
 	class="space-y-2 text-lg"
 	action="/u:{$user?.username}/add"
 	method="post"
-	use:enhance={({ form, data, action, cancel }) => {
+	use:enhance={async ({ form, data, action, cancel }) => {
 		// `form` is the `<form>` element
 		// `data` is its `FormData` object
 		// `action` is the URL to which the form is posted
@@ -67,30 +92,42 @@
 		// modals.close({
 		// 	id: 'add-url',
 		// });
-		loading = true;
-		console.log({ $modals });
-		return async ({ result, update }) => {
-			if (result.type === "success") {
-				invalidateAll().then(() => {
-					console.log({ $modals });
+		// Prevent form submission, we're going to do it ourselves with the cached data
+		if (articleToAdd) {
+            cancel();
+			// TODO: Optimistic update
+			console.log({ article: articleToAdd, url });
+			$addMutation.mutate();
+			// TODO: invalidation
+			modals.close({
+				id: "add-url",
+			});
+			return;
+		}
+		// loading = true;
+		// console.log({ $modals });
+		// return async ({ result, update }) => {
+		// 	if (result.type === "success") {
+		// 		invalidateAll().then(() => {
+		// 			console.log({ $modals });
 
-					modals.close({
-						id: "add-url",
-					});
-				});
-				return;
-			}
-			// update();
-			// await invalidateAll();
-			if (result.type === "error") {
-				console.error("ERROROR");
-				notifications.notify({
-					type: "error",
-					message: "Missing URL",
-				});
-				update();
-			}
-		};
+		// 			modals.close({
+		// 				id: "add-url",
+		// 			});
+		// 		});
+		// 		return;
+		// 	}
+		// 	// update();
+		// 	// await invalidateAll();
+		// 	if (result.type === "error") {
+		// 		console.error("ERROROR");
+		// 		notifications.notify({
+		// 			type: "error",
+		// 			message: "Missing URL",
+		// 		});
+		// 		update();
+		// 	}
+		// };
 	}}
 >
 	<div class="flex flex-col gap-4">

@@ -34,12 +34,17 @@
 	import { generateHTML } from "@tiptap/core";
 	import { genHtml } from "./TipTap.svelte";
 	import StarterKit from "@tiptap/starter-kit";
+	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+	import { updateAnnotationMutation } from "$lib/features/annotations/mutations";
+	import { entryDetailsQuery } from "$lib/features/entries/queries";
+	import { icons, iconsMini } from "$lib/features/entries/utils";
 
 	const [menuref, menucontent] = createPopperActions({
 		placement: "bottom-end",
 	});
 
 	export let annotation: RouterOutputs["entries"]["load"]["annotations"][number] | ContextualAnnotation;
+    //todo: type target/selector better
 	export let shadowInner = false;
 	export let scrollOnClick = false;
 	export let showParent = false;
@@ -52,7 +57,26 @@
 
 	$: console.log({ annotation });
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+        seek: number;
+    }>();
+	const queryClient = useQueryClient();
+
+	type Entry = RouterOutputs["entries"]["load"];
+	const updateAnnotation = createMutation({
+		...updateAnnotationMutation(),
+		onMutate: async () => {
+			// TODO: get correct context
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["annotations", { id: annotation.id }],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["entries", "details", { id: annotation.entryId }],
+			});
+		},
+	});
 
 	let editing = false;
 	let replying = false;
@@ -286,6 +310,33 @@
 															active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
 														}`}
 													on:click={async () => {
+														$updateAnnotation.mutate({
+															id: annotation.id,
+															type: "note",
+														});
+														// busy = true;
+														// await trpc().annotations.save.mutate({
+														// 	id: annotation.id,
+														// 	private: !annotation.private,
+														// });
+														// await invalidateAnnotations();
+														// busy = false;
+													}}
+													let:active
+													as="div"
+												>
+													<Icon
+														name="documentText"
+														className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
+													/>
+													<span>Convert to page note</span>
+												</MenuItem>
+												<MenuItem
+													class={({ active }) =>
+														`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-content dark:text-gray-50 ${
+															active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
+														}`}
+													on:click={async () => {
 														busy = true;
 														await trpc().annotations.delete.mutate(annotation.id);
 														await invalidateAnnotations();
@@ -340,8 +391,14 @@
 					</div>
 					{#if "entry" in annotation && showEntry && annotation.entry}
 						<Muted class="text-sm italic"
-							>on <a href="/u:{$page.data.user?.username}/entry/{annotation.entry.id}"
-								><SmallPlus>{annotation.entry.title}</SmallPlus></a
+							>
+                            <a class="flex space-x-2 items-center" href="/u:{$page.data.user?.username}/entry/{annotation.entry.id}"
+								>
+                                {#if annotation.entry.type}
+                                <Icon name={iconsMini[annotation.entry.type]} className="h-3 w-3 fill-current" />
+                                <!-- <Icon /> -->
+                                {/if}
+                                <SmallPlus>{annotation.entry.title}</SmallPlus></a
 							></Muted
 						>
 					{/if}
@@ -378,11 +435,23 @@
 								>
 							{/if}
 						</div>
-					{/if}
+                    {:else if annotation.target && annotation.type === "annotation"}
+                        {#if annotation.target.selector?.type === "FragmentSelector"}
+                        <!-- time = t=x,y -->
+                            {@const time = annotation.target.selector.value}
+                            {@const [start, end] = time.split("=")[1].split(",")}
+                            <button on:click={() => {
+                                dispatch("seek", start)
+                            }} class="">
+                                {dayjs.duration(start, "seconds").format("mm:ss")}
+                            </button>
+                        {/if}
+                    {/if}
 					{#if annotation.body}
 						<div class="font-normal">{annotation.body}</div>
 					{:else if annotation.contentData}
-						{@html genHtml(annotation.contentData, [StarterKit])}
+                            <div class="font-normal">
+						{@html genHtml(annotation.contentData)}</div>
 					{/if}
 					{#if "tags" in annotation && annotation.tags?.length}
 						<TagCloud tags={annotation.tags} />

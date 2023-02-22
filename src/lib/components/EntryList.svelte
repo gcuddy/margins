@@ -38,6 +38,7 @@
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import { showCommandPalette } from "$lib/stores/commands";
 	import { dev } from "$lib/stores/developer";
+	import groupBy from "lodash/groupBy";
 	import wdragging from "$lib/stores/dragging";
 	import { createItemStores } from "$lib/stores/filter";
 	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
@@ -65,6 +66,9 @@
 	import KanbanList from "./KanbanList.svelte";
 	import { podcastPlayer } from "./PodcastPlayer.svelte";
 	import SavedPillWrapper from "./SavedPillWrapper.svelte";
+	import { slide } from "svelte/transition";
+	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+	import type { RouterInputs } from "$lib/trpc/router";
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
 	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>(items);
@@ -86,6 +90,23 @@
 	$: $page.url.pathname, ($selectedItems = []);
 
 	let dragDisabled = false;
+
+	// todo: generalize
+    const queryClient = useQueryClient();
+	const updateState = createMutation({
+		mutationFn: (input: RouterInputs["bookmarks"]["updateState"]) =>
+			trpc().bookmarks.updateState.mutate(input),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+               queryKey: ["collections"]
+            })
+            queryClient.invalidateQueries({
+               queryKey: ["entries"]
+            })
+            invalidateAll();
+            // TODO: queryclient invalidation
+        }
+	});
 
 	const handleConsider = (e: CustomEvent<DndEvent<ExtendableEntry>>) => {
 		//optimistic update
@@ -350,7 +371,31 @@
 				<div class="simple-scrollbar flex shrink-0 flex-col overflow-y-auto">
 					<div class="relative flex w-80 grow flex-col">
 						<h2>{state.name}</h2>
-						<KanbanList onDrop={(i) => console.log(i)} {items} let:item type="kanban">
+						<KanbanList
+                            on:kanbandrop
+							onDrop={(e) => {
+								// update state
+								if (e.detail.info.trigger === TRIGGERS.DROPPED_INTO_ZONE) {
+                                    const id = +e.detail.info.id;
+                                    const entry = e.detail.items.find((i) => i.id === id);
+                                    if (entry && "bookmarks" in entry && entry.bookmarks?.length) {
+                                        $updateState.mutate({
+                                            stateId: state.id,
+                                            entryId: +e.detail.info.id,
+                                            id: entry.bookmarks?.[0].id,
+                                        });
+                                    }
+									// console.log(state, { e });
+									// $updateState.mutate({
+									// 	stateId: state.id,
+									// 	// entryId: +e.detail.info.id,
+									// });
+								}
+							}}
+							{items}
+							let:item
+							type="kanban"
+						>
 							<a
 								class="flex h-24 items-center gap-4 rounded border border-black/20 bg-white px-4 py-2 shadow-sm dark:bg-gray-800"
 								href="/u:{$page.data.user?.username}/entry/{item.id}"
@@ -424,7 +469,12 @@
 
 				<!-- takes forever to use animate flip on safari with filtering damn -->
 				<!-- animate:flip={{ duration: $flipDurationMs }} -->
+                <!-- transitions are nice for removing/adding to list, but obnoxious for page transitions -->
+                <!-- in:slide|local={{
+						duration: 125,
+					}} -->
 				<div
+
 					class="focus-within:!outline-none"
 					on:click={(e) => {
 						if (e.shiftKey) {
@@ -827,11 +877,29 @@
 												...item,
 												image: $page.data.S3_BUCKET_PREFIX + item.image,
 											}}
-                                            show={{
-                                                year: false,
-                                                type: true
-                                            }}
+											show={{
+												year: false,
+												type: true,
+											}}
 										/>
+									{:else if item.type === DocumentType.video}
+										<EntryListItem
+											entry={item}
+											show={{
+												year: false,
+												type: true,
+											}}
+										>
+											<div slot="description" class="flex min-w-0 truncate">
+												{#if item.text}
+													<span class="truncate">
+														{item.text}
+													</span>
+												{/if}
+												<!-- spacer -->
+												<Spacer />
+											</div>
+										</EntryListItem>
 									{:else if item.type === DocumentType.recipe}
 										<EntryListItem
 											entry={{

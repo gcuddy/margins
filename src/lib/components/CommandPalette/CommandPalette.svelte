@@ -18,7 +18,7 @@
 	import { trpc } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import { listPodcastsQuery, podcastSearchQuery } from "$lib/features/podcasts/queries";
-    import { getUser } from "@lucia-auth/sveltekit/client";
+	import { getUser } from "@lucia-auth/sveltekit/client";
 	import { tweened } from "svelte/motion";
 	import { get } from "svelte/store";
 	import { fade } from "svelte/transition";
@@ -34,12 +34,13 @@
 	import type { ApiResponse } from "podcastdx-client/dist/src/types";
 	import SearchItem from "$lib/features/podcasts/SearchItem.svelte";
 	import { listCollectionsQuery } from "$lib/features/collections/queries";
-	import { useQueryClient } from "@tanstack/svelte-query";
+	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import { listSubscriptionsQuery } from "$lib/features/subscriptions/queries";
 	import { allowedThemes, darkThemes } from "$lib/features/settings/themes";
 	import { getEntriesFromCache } from "$lib/features/entries/queries";
 	import type { Entry } from "@prisma/client";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
+	import type { RouterInputs } from "$lib/trpc/router";
 
 	const queryClient = useQueryClient();
 	const user = getUser();
@@ -61,6 +62,37 @@
 			}
 		}
 	}
+
+	const updateBookmarkMutation = createMutation({
+		mutationFn: ({ id, entryId, data }: RouterInputs["bookmarks"]["update"]) =>
+			trpc($page).bookmarks.update.mutate({
+				id,
+				entryId,
+				data,
+			}),
+		onSuccess: async (data) => {
+			await queryClient.invalidateQueries({
+				queryKey: ["entries"],
+			});
+			await queryClient.invalidateQueries({
+				queryKey: ["bookmarks"],
+			});
+			selectedItems.set([]);
+            // REVIEW: do we need notification here?
+            // TODO: describe what  was updated
+            if ("count" in data) {
+                notifications.notify({
+                    message: `Updated ${data.count} bookmarks`,
+                    type: "success",
+                })
+            } else {
+                notifications.notify({
+                    message: `Updated bookmark`,
+                    type: "success",
+            })
+            }
+		},
+	});
 
 	function commandListener(e: KeyboardEvent) {
 		if (e.metaKey && e.key === "k") {
@@ -101,7 +133,7 @@
 				const existingCollections = await $page.data.queryClient.ensureQueryData(listCollectionsQuery());
 				commandPaletteStore.open({
 					values: existingCollections,
-					onSelect: async ({detail}) => {
+					onSelect: async ({ detail }) => {
 						await goto(`/u:${$user?.username}/collection/${detail.id}`);
 					},
 				});
@@ -139,7 +171,7 @@
 							},
 						};
 					},
-					slot: () => ({component: SearchItem}),
+					slot: () => ({ component: SearchItem }),
 					onSelect: async ({ detail }) => {
 						await goto(`/podcasts/${detail.id}`);
 					},
@@ -153,11 +185,11 @@
 			group: "jump",
 			name: "Jump to entry",
 			perform: () => {
-				console.log("queryData", queryClient.getQueryData(["entries"]))
+				console.log("queryData", queryClient.getQueryData(["entries"]));
 				const cachedEntries = getEntriesFromCache(queryClient);
 				// const query =
 				// TODO: group into recent
-				console.log({cachedEntries})
+				console.log({ cachedEntries });
 				showCommandPalette.out();
 				// grab entries from queryclient, search for rest
 				commandPaletteStore.open<Entry>({
@@ -165,41 +197,49 @@
 					query: (value) => ({
 						queryKey: ["entries", "search", value],
 						keepPreviousData: true,
-						queryFn: async () => trpc().entries.search.query({
-							query: value,
-							title: true,
-							author: true,
-							text: false
-						}),
+						queryFn: async () =>
+							trpc().entries.search.query({
+								query: value,
+								title: true,
+								author: true,
+								text: false,
+							}),
 						placeholderData: cachedEntries.filter((e) => {
-							return e.title?.toLowerCase().includes(value.toLowerCase()) || e.author?.toLowerCase().includes(value.toLowerCase());
+							return (
+								e.title?.toLowerCase().includes(value.toLowerCase()) ||
+								e.author?.toLowerCase().includes(value.toLowerCase())
+							);
 						}),
 						select: (data) => {
 							// keep placeholder data at the top, but de-dupe by id
-							const filteredCachedEntries = cachedEntries.filter(e => e.title?.toLowerCase().includes(value.toLowerCase()) || e.author?.toLowerCase().includes(value.toLowerCase()))
+							const filteredCachedEntries = cachedEntries.filter(
+								(e) =>
+									e.title?.toLowerCase().includes(value.toLowerCase()) ||
+									e.author?.toLowerCase().includes(value.toLowerCase())
+							);
 							const deduped = [...filteredCachedEntries, ...data].reduce((acc, cur) => {
 								if (!acc.some((e) => e.id === cur.id)) {
 									acc.push(cur);
 								}
 								return acc;
 							}, [] as Entry[]);
-							console.log({deduped})
+							console.log({ deduped });
 							return deduped;
 						},
-						enabled: value.length > 2
+						enabled: value.length > 2,
 						// enabled: value.length > 2,
 					}),
-					slot: ({value, active}) => ({
+					slot: ({ value, active }) => ({
 						component: EntryListItem,
 						props: {
 							entry: value,
-							active
-						}
+							active,
+						},
 					}),
 					onSelect: async (entry) => {
 						await goto(`/u:${$user?.username}/entry/${entry.detail.id}`);
 					},
-				})
+				});
 				// jumpToArticle();
 			},
 			icon: "arrowRight",
@@ -248,7 +288,7 @@
 					values: allowedThemes.map((t) => ({
 						id: t,
 						name: t,
-						icon: "cog"
+						icon: "cog",
 					})),
 					onSelect: async ({ detail }) => {
 						const { name } = detail;
@@ -266,13 +306,13 @@
 							method: "POST",
 							body: formData,
 						});
-					}
-				})
+					},
+				});
 			},
 			icon: "cog",
-		}
-	]
-	settings_commands.forEach(c => commandStore.add(c, false))
+		},
+	];
+	settings_commands.forEach((c) => commandStore.add(c, false));
 
 	const selected_article_commands: Command[] = [
 		// TODO
@@ -338,20 +378,26 @@
 					},
 					onSelect: async (e) => {
 						try {
-							const syncId = syncStore.add();
-							// TODO: when I have a proper updatestates method, use that
 							console.log({ $selectedItems });
-							await Promise.all(
-								$selectedItems.map((item) => {
-									return trpc().bookmarks.updateState.mutate({
-										stateId: e.detail.id as number,
-										entryId: item.id,
-									});
-								})
-							);
-							await invalidateAll();
-							selectedItems.set([]);
-							syncStore.remove(syncId);
+							$updateBookmarkMutation.mutate({
+								entryId: $selectedItems.map((i) => i.id),
+								data: {
+									stateId: e.detail.id as number,
+								},
+							});
+							// const syncId = syncStore.add();
+							// // TODO: when I have a proper updatestates method, use that
+							// await Promise.all(
+							// 	$selectedItems.map((item) => {
+							// 		return trpc().bookmarks.updateState.mutate({
+							// 			stateId: e.detail.id as number,
+							// 			entryId: item.id,
+							// 		});
+							// 	})
+							// );
+							// await invalidateAll();
+							// selectedItems.set([]);
+							// syncStore.remove(syncId);
 							// 	.then(() => {
 							// 		notifications.notify({
 							// 			type: 'info',
@@ -465,8 +511,7 @@
 				$showCommandPalette = false;
 			}}
 			input={{
-				class:
-					"w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
+				class: "w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
 				placeholder: "Type a command…",
 			}}
 			options={{
@@ -475,9 +520,9 @@
 				}`,
 			}}
 			static={true}
-			class="relative mx-auto max-w-2xl divide-y divide-border overflow-hidden rounded-xl bg-elevation transparency:bg-elevation/70 p-2 shadow-3xl ring-1 ring-border transparency:backdrop-blur-2xl  transparency:backdrop-brightness-125 transparency:backdrop-contrast-100 transparency:backdrop-saturate-200 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200"
+			class="relative mx-auto max-w-2xl divide-y divide-border overflow-hidden rounded-xl bg-elevation p-2 shadow-3xl ring-1 ring-border transparency:bg-elevation/70 transparency:backdrop-blur-2xl  transparency:backdrop-brightness-125 transparency:backdrop-contrast-100 transparency:backdrop-saturate-200 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200"
 		>
-		<!-- these settings should maybe be for dark (class should be added if Color(bg) is dark): transparency:backdrop-blur-xl transparency:backdrop-brightness-75 transparency:backdrop-contrast-75 transparency:backdrop-saturate-200 -->
+			<!-- these settings should maybe be for dark (class should be added if Color(bg) is dark): transparency:backdrop-blur-xl transparency:backdrop-brightness-75 transparency:backdrop-contrast-75 transparency:backdrop-saturate-200 -->
 			<div slot="inputPeer" class="flex px-4 text-sm">
 				{#if $selectedItems.length}
 					<Selection>
@@ -504,12 +549,7 @@
 				>
 					<div class="flex gap-3.5">
 						{#if value.icon}
-							<Icon
-								name={value.icon}
-								className="{active
-									? 'stroke-content'
-									: 'stroke-content/75'} h-4 w-4"
-							/>
+							<Icon name={value.icon} className="{active ? 'stroke-content' : 'stroke-content/75'} h-4 w-4" />
 						{/if}
 						<span>{value.name}</span>
 					</div>

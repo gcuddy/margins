@@ -5,7 +5,7 @@ import { trpc } from "$lib/trpc/client";
 
 const queryKeys = () => ({
     list: ["collections"] as const,
-    detail: (id: number) => ["collection", id] as const,
+    detail: (id: number) => [...queryKeys().list, id] as const,
 })
 
 export const listCollectionsQuery = (init?: TRPCClientInit) => ({

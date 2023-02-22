@@ -24,6 +24,7 @@
 
 <!-- TODO: on hover, tooltip of title and progress -->
 <!-- TODO: a11y — progress -->
+<!-- $fetching - removing it for now since i only want to see when mutating -->
 <div
 	on:mouseover={() => (mouseover = true)}
 	on:focus={() => (mouseover = true)}
@@ -33,7 +34,6 @@
 	<Icon
 		name="refresh"
 		className="h-4 w-4 stroke-gray-700 dark:stroke-gray-200 stroke-2 opacity-0 transition {($syncStore.length ||
-			$fetching ||
 			$mutating) &&
 			'animate-spin !opacity-100'}"
 	/>
@@ -45,13 +45,13 @@
 				<Icon
 					name="refresh"
 					className="h-4 w-4 stroke-gray-700 dark:stroke-gray-200 stroke-2 opacity-0 transition {($syncStore.length ||
-						$fetching ||
 						$mutating) &&
 						'animate-spin !opacity-100'}"
 				/>
 				<div class="text-xs text-gray-700 dark:text-gray-200">
 					{#if $syncStore.length}
 						{$syncStore.length} pending
+                        <!--TODO: maybe just mutating  -->
 					{:else if $fetching}
 						{$fetching} Fetching...
 					{:else if $mutating}

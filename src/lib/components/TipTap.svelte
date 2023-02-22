@@ -33,6 +33,7 @@
 	let saved = "";
 	export let config: Partial<EditorOptions> = {};
 	export let placeholder = "Write something...";
+    export let autofocus = false;
 
 	export let focusRing = true;
 
@@ -48,6 +49,7 @@
 		focusRing?: boolean;
 		editing?: boolean;
 		class?: string;
+        autofocus?: boolean;
 	}
 
 	const queryClient = useQueryClient();
@@ -63,6 +65,7 @@
 		editor = createEditor({
 			content: "<p>Hello World! 🌍️ </p>",
 			...config,
+            autofocus,
 			// element: element,
 			extensions: [
 				StarterKit,
@@ -226,7 +229,7 @@
 			editorProps: {
 				attributes: () => ({
 					class:
-						cx("m-1 p-4 rounded-md prose mx-auto prose-sm sm:prose relative", {
+						cx("m-1 p-4 rounded-md prose mx-auto prose-sm sm:prose relative cursor-text", {
 							"shadow ring-1 ring-accent": $editor?.isEditable && focusRing,
 						}) +
 						" " +
@@ -234,6 +237,7 @@
 				}),
 			},
 		});
+
 		// debounced auto save on update
 		$editor.on("update", ({ editor }) => {
 			const json = editor.getJSON();
@@ -250,6 +254,14 @@
 			}
 			// editor.setEditable(false);
 		});
+        if (autofocus) {
+            initiallyAutoFocused = true;
+        }
+        // if (autofocus) {
+        //     console.log('autofocusing')
+        //     $editor.setEditable(true);
+        //     $editor.commands.focus('start')
+        // }
 	});
 
 	// onDestroy(() => {
@@ -270,8 +282,9 @@
 	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
 	$: console.log({ $editor });
 
+    let initiallyAutoFocused = false;
 	const conditionallySetEditable = (editable: boolean) => {
-		if (editable) {
+		if (editable || (autofocus && !initiallyAutoFocused)) {
 			$editor?.setEditable(true);
 			editing = true;
 		} else if (browser && !document?.body.contains(bubble)) {
@@ -280,7 +293,8 @@
 		}
 	};
 
-	$: $editor?.isFocused ? conditionallySetEditable(true) : conditionallySetEditable(false);
+    // set editable false if not focused, lets us click links
+	// $: $editor?.isFocused ? conditionallySetEditable(true) : conditionallySetEditable(false);
 
 	let linkMenu = {
 		active: false,

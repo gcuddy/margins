@@ -1,9 +1,8 @@
+import { writable } from "svelte/store";
+
 import { browser } from "$app/environment";
-import type ModalContainerSvelte from "$lib/components/modals/ModalContainer.svelte";
-import type { Annotation, Highlight } from "@prisma/client";
-import { derived, writable, type Readable } from "svelte/store";
-import { showCommandPalette } from "./commands";
-import type { ComponentProperties, StoredComponent, SvelteComponentWithProps } from "./types";
+
+import type { StoredComponent, SvelteComponentWithProps } from "./types";
 
 export const showURLModal = writable(false);
 export const showRSSInputModal = writable(false);
@@ -47,6 +46,12 @@ function createModalStore() {
 				removed = stack.splice(idx, 1);
 			} else if (id) {
 				const idx = stack.findIndex((s) => s.id === id);
+                console.log({idx})
+                if (idx !== -1) {
+                    return stack.filter((modal) => modal.id !== id);
+                    // stack[idx].open = false;
+                    // removed = stack.splice(idx, 1);
+                }
 				stack[idx].open = false;
 				return stack.filter((modal) => modal.id !== id);
 				const index = stack.findIndex((modal) => modal.id === id);

@@ -32,12 +32,19 @@
 	$: currentList = data.currentList;
 	// $: console.log({ $currentList });
 
-	$: query = createQuery(entriesByLocationQuery(
-		{
-			location: data.location,
-		},
-		$page
-	))
+	$: query = createQuery({
+		...entriesByLocationQuery(
+			{
+				location: data.location,
+			},
+			$page
+		),
+        onSettled: (data) => {
+            console.log('onSettled', data);
+        }
+	});
+
+	$: console.log({ $query });
 
 	const startingFilter: Prisma.EntryWhereInput = {
 		bookmarks: {
@@ -102,13 +109,13 @@
 /> -->
 <!-- <Filters /> -->
 {#if $query.isLoading}
-    <div>Loading...</div>
+	<div>Loading...</div>
 {:else if $query.isError}
-    <div>Error</div>
+	<div>Error</div>
 {:else if $query.isSuccess}
-    <EntryList items={$query.data}>
-        <svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
-    </EntryList>
+	<EntryList items={$query.data}>
+		<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
+	</EntryList>
 {/if}
 <!-- <EntryList items={data.entries}>
 	<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>

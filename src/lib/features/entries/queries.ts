@@ -16,7 +16,7 @@ export const entriesByLocationQuery = (input: RouterInputs["entries"]["listBookm
         ...input
     }],
     queryFn: async () => trpc(init).entries.listBookmarks.query(input),
-    staleTime: 1000 * 60 * 60
+    // staleTime: 1000 * 60 * 60
 }) satisfies CreateQueryOptions;
 
 export const getEntriesFromCache = (queryClient: QueryClient) => {

@@ -297,6 +297,10 @@ model Entry {
     /// The TMDB id, if it's a movie or TV show.
     tmdbId Int? @unique
 
+
+    /// Youtube ID, if it's a youtube video
+    youtubeId String? @unique
+
     // TODO: type this
     /// Tmdb data - could also store this in "original"?
     tmdbData Json?
@@ -493,6 +497,9 @@ model Collection {
     createdAt   DateTime          @default(now())
     updatedAt   DateTime          @updatedAt
     items       CollectionItems[]
+
+    /// @zod.custom(imports.ViewOptionsSchema.partial())
+    viewOptions Json?
     // order       Json // array[] of item ids in order.... /??
     favorites   Favorite[]
 
@@ -734,14 +741,16 @@ model Tagging {
 
 ///@zod.import(["import { chosenIcon } from '../../schemas'"])
 model SmartList {
-    id          Int        @id @default(autoincrement())
-    createdAt   DateTime   @default(now())
-    updatedAt   DateTime   @updatedAt
-    name        String
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    name      String
     /// @zod.custom(imports.chosenIcon)
-    icon        Json?      @default("{\"name\":\"square3Stack3d\",\"type\":\"icon\",\"color\":\"#78716c\"}")
-    filter      Json
-    conditions  Json
+    icon      Json?    @default("{\"name\":\"square3Stack3d\",\"type\":\"icon\",\"color\":\"#78716c\"}")
+
+    //Review: difference
+    filter      Json?
+    conditions  Json?
     viewOptions Json?
     // conditions SmartListCondition[]
     favorites   Favorite[]

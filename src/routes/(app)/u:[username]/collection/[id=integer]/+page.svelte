@@ -26,6 +26,7 @@
 	import { collectionQuery } from "$lib/features/collections/queries";
 	import { page } from "$app/stores";
 	import { nanoid } from "nanoid";
+	import type { RouterInputs } from "$lib/trpc/router";
 	export let data: PageData;
 	$: console.log({ data });
 	$: list = data.collection;
@@ -56,32 +57,30 @@
 
 	const queryClient = useQueryClient();
 	// REVIEW: is this necessary?
-	$: query = createQuery({ ...collectionQuery(list.id, $page), onSuccess: (data) => (list = data) });
-	$: console.log({ $query });
+	$: query = createQuery({ ...collectionQuery(list.id, $page), onSuccess: (data) => (list = data) }); $: console.log({ $query });
 
 	const addDocument = createMutation({
-        mutationFn: ({
-            id
-        }: {
-            id: string
-        }) => trpc().annotations.create.mutate({
-            collectionId: list.id,
-            type: "document",
-            id
-        }),
-        onMutate: async (note) => {
-            // Add annotation to list, open it up
-        }
-    });
+		mutationFn: ({ id }: { id: string }) =>
+			trpc().annotations.create.mutate({
+				collectionId: list.id,
+				type: "document",
+				id,
+			}),
+		onMutate: async (note) => {
+			// Add annotation to list, open it up
+		},
+	});
 
-	const updateDescription = createMutation({
-		mutationFn: async (contentData) =>
+	const updateCollection = createMutation({
+		mutationFn: (data: RouterInputs["collections"]["updateCollection"]["data"]) =>
 			trpc().collections.updateCollection.mutate({
 				id: list.id,
-				data: {
-					contentData,
-				},
+				data
 			}),
+        onSuccess: (data, vars) => {
+            // invalidate entries
+            console.log({data, vars})
+        }
 	});
 	const addSection = createMutation({
 		mutationFn: (title) =>
@@ -100,11 +99,10 @@
 	});
 
 	$: contentData = (list.contentData as JSONContent) || "";
-	$: console.log({ contentData });
+	$: console.log({ contentData, });
 
-	let view: ViewOptions["view"] = "list";
-
-
+	let view: ViewOptions["view"];
+    $: view = data.collection?.viewOptions?.view || "list";
 </script>
 
 <!-- <pre>
@@ -136,47 +134,54 @@
 				<form action="?/favorite" method="post" use:enhance>
 					<input type="hidden" name="sortOrder" value={(data.favorites[0]?.sortOrder ?? 0) - 1} />
 					<!-- on:click={(e) => e.preventDefault()} -->
-					<button type="submit" class="relative flex cursor-default items-center">
+					<!-- <button type="submit" class="relative flex cursor-default items-center">
 						<Icon name="star" className="h-4 w-4 stroke-current {favorited ? 'fill-amber-400' : ''}" />
-					</button>
+					</button> -->
 					<MenuButton type="submit" class="relative flex cursor-default items-center">
 						<Icon name="star" className="h-4 w-4 stroke-current {favorited ? 'fill-amber-400' : ''}" />
 					</MenuButton>
-				</form>
-				<Transition
-					enter="transition ease-out duration-100"
-					enterFrom="transform opacity-0 scale-95"
-					enterTo="transform opacity-100 scale-100"
-					leave="transition ease-in duration-75"
-					leaveFrom="transform opacity-100 scale-100"
-					leaveTo="transform opacity-0 scale-95"
-				>
-					<MenuItems
-						class="absolute left-0 z-40 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+					<Transition
+						enter="transition ease-out duration-100"
+						enterFrom="transform opacity-0 scale-95"
+						enterTo="transform opacity-100 scale-100"
+						leave="transition ease-in duration-75"
+						leaveFrom="transform opacity-100 scale-100"
+						leaveTo="transform opacity-0 scale-95"
 					>
-						<div class="px-1 py-1">
-							<MenuItem as="button" type="submit">Favorite</MenuItem>
-
-							<!-- <MenuItem>Favorite</MenuItem> -->
-						</div>
-						{#if folders.length}
+						<MenuItems
+							class="absolute left-0 z-40 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+						>
 							<div class="px-1 py-1">
-								{#each folders as folder}
-									<MenuItem>{folder.folderName}</MenuItem>
-								{/each}
+								<MenuItem as="button" type="submit">Favorite</MenuItem>
+								<!-- <MenuItem>Favorite</MenuItem> -->
 							</div>
-						{/if}
-					</MenuItems>
-				</Transition>
+							{#if folders.length}
+								<div class="px-1 py-1">
+									{#each folders as folder}
+										<MenuItem>{folder.folderName}</MenuItem>
+									{/each}
+								</div>
+							{/if}
+						</MenuItems>
+					</Transition>
+				</form>
 			</Menu>
 		</div>
 		<div slot="end">
-			<CustomizeView on:view={({ detail }) => (view = detail)} />
+			<CustomizeView on:view={({ detail }) => {
+                data.collection.viewOptions = {
+                    ...data.collection.viewOptions,
+                    view: detail
+                }
+                $updateCollection.mutate({ viewOptions: { view } })
+                // save
+            }} />
+
 		</div>
 	</DefaultHeader>
 </Header>
 
-<!-- secondary header -> should this go in sidebar like reading sidebar/project sidebar for linear? in header / inline like letterboxd? -->
+<!-- secary header -> should this go in sidebar like reading sidebar/project sidebar for linear? in header / inline like letterboxd? -->
 <div class=" container mx-auto">
 	<div class="flex flex-col gap-2 text-sm">
 		<span>List by {list.userId}</span>
@@ -204,9 +209,13 @@
 		/>
 	{/key}
 
-	<Button on:click={() => $addDocument.mutate({
-        id: nanoid(),
-    })} variant="ghost">
+	<Button
+		on:click={() =>
+			$addDocument.mutate({
+				id: nanoid(),
+			})}
+		variant="ghost"
+	>
 		<Icon name="plusMini" className="h-4 w-4 fill-current" />
 		<span>Add note</span></Button
 	>
@@ -237,6 +246,9 @@
 			/>
 		{:else if view === "kanban"}
 			<EntryList
+                on:kanbandrop={async (e) =>{
+                    // TODO: invalidate queries
+                }}
 				items={flattened}
 				viewOptions={{
 					view: "kanban",

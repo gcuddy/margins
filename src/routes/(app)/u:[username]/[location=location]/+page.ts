@@ -10,9 +10,11 @@ export const load = (async (event) => {
 	// const entries = await queryClient.ensureQueryData(entriesByLocationQuery({
 	// 	location: data.location,
 	// }, event));
+    event.depends("entries")
 	const entries = await queryClient.ensureQueryData(entriesByLocationQuery({
 		location: data.location,
 	}, event));
+    console.log({entries})
 
     // queryClient.prefetchQuery(entriesByLocationQuery({
     //     location: data.location

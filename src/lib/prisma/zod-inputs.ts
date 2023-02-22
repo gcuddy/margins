@@ -15,7 +15,7 @@ export const saveAnnotationSchema = z.object({
     entryId: z.number(),
     private: z.boolean(),
     color: z.nativeEnum(Color),
-    type: z.nativeEnum(AnnotationType),
+    type: z.nativeEnum(AnnotationType).default("annotation"),
     contentData: z.object({}).passthrough(),
     title: z.string(),
     collectionId: z.number(),

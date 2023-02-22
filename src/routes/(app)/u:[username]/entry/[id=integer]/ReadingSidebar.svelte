@@ -20,7 +20,7 @@
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
-	import { Collection, Color, Tag } from "@prisma/client";
+	import { Collection, Color, DocumentType, Tag } from "@prisma/client";
 	import { Disclosure, DisclosureButton, DisclosurePanel } from "@rgossiaux/svelte-headlessui";
 	import { onMount } from "svelte";
 	import { flip } from "svelte/animate";
@@ -520,7 +520,7 @@
 					</div>
 				{/if}
 			</Disclosure>
-			{#if inlineNotes?.length}
+			{#if inlineNotes?.length || entry.type === DocumentType.video}
 				<Disclosure defaultOpen={true} let:open class="flex flex-col gap-3 p-2 text-sm">
 					<!-- Review: if I bind annotations to entry thenit can also filter in article. interesting idea. -->
 					<Filter
@@ -596,7 +596,7 @@
 													duration: 75,
 												}}
 											>
-												<Annotation {annotation} scrollOnClick={true} />
+												<Annotation on:seek {annotation} scrollOnClick={true} />
 											</div>
 										{/each}
 									</div>

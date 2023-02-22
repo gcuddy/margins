@@ -149,7 +149,8 @@ export const FOOTNOTE_HINT_RE = /\bfootnotes?\b/i;
 export const Metadata = _EntryModel
     .extend({
         title: z.string(),
-        summary: z.string().max(191),
+        // summary: z.string().max(191).transform(s => s.trim()),
+        summary: z.string().transform(s => s.trim() && s.slice(0, 191)),
         image: z.string().max(2083).nullish(),
         url: z.string().max(191),
         author: z.string().max(191),

@@ -49,26 +49,41 @@ export const annotationRouter = router({
     // TODO: consolidate save and update
     save: protectedProcedure.input(saveAnnotationSchema.partial()).mutation(async ({ ctx, input }) => {
         const { id } = input;
-        if (id) {
-            return await ctx.prisma.annotation.update({
-                where: {
-                    id,
-                    entryId: input.entryId,
-                },
-                data: {
-                    ...input,
-                    // TODO: tags
-                },
-            });
-        } else {
-            return await ctx.prisma.annotation.create({
-                data: {
-                    ...input,
-                    userId: ctx.userId,
-                    type: "annotation",
-                },
-            });
-        }
+        // TODO: write this as upsert
+
+        return await ctx.prisma.annotation.upsert({
+            where: {
+                id: id ?? "",
+            },
+            create: {
+                type: "annotation",
+                ...input,
+                userId: ctx.userId,
+            },
+            update: {
+                ...input
+            }
+        })
+        // if (id) {
+        //     return await ctx.prisma.annotation.update({
+        //         where: {
+        //             id,
+        //             entryId: input.entryId,
+        //         },
+        //         data: {
+        //             ...input,
+        //             // TODO: tags
+        //         },
+        //     });
+        // } else {
+        //     return await ctx.prisma.annotation.create({
+        //         data: {
+        //             ...input,
+        //             userId: ctx.userId,
+        //             type: "annotation",
+        //         },
+        //     });
+        // }
     }),
     note: protectedProcedure
         .input(

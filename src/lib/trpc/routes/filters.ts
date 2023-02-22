@@ -1,6 +1,8 @@
+import { z } from "zod";
+
 import { SmartListCondition } from "$lib/types/filter";
 import { ViewOptionsSchema } from "$lib/types/schemas/View";
-import { z } from "zod";
+
 import { protectedProcedure, router } from "../t";
 
 export const filterRouter = router({
@@ -43,6 +45,7 @@ export const filterRouter = router({
 					},
 				});
 			} else if (name && filter) {
+                console.log("creating new smart list", input)
 				const smartList = await ctx.prisma.smartList.create({
 					data: {
 						name,

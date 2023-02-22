@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import { z } from "zod";
 
 import { db } from "$lib/db";
+import { _BookmarkModel } from "$lib/prisma/zod";
 import { protectedProcedure, router } from "$lib/trpc/t";
 import { Metadata } from "$lib/web-parser";
 
@@ -275,4 +276,38 @@ export const bookmarks = router({
             });
         }
     }),
+    update: protectedProcedure
+        .input(
+            z.object({
+                id: z.number().or(z.number().array()).optional(),
+                entryId: z.number().or(z.number().array()).optional(),
+                data: _BookmarkModel.partial()
+            }).refine(input => !!input.id || !!input.entryId, "Either id or entryId is required")
+        )
+        .mutation(async ({ ctx, input }) => {
+            const { id, entryId, data } = input;
+            if (Array.isArray(id) || Array.isArray(entryId)) {
+                return ctx.prisma.bookmark.updateMany({
+                    where: {
+                        id: Array.isArray(id) ? {
+                            in: id,
+                        } : undefined,
+                        entryId: Array.isArray(entryId) ? {
+                            in: entryId,
+                        } : undefined,
+                        userId: ctx.userId,
+                    },
+                    data,
+                });
+            } else {
+                return ctx.prisma.bookmark.update({
+                    where: {
+                        id: id ?? undefined,
+                        entryId: entryId ?? undefined,
+                        userId: ctx.userId,
+                    },
+                    data,
+                });
+            }
+        })
 });

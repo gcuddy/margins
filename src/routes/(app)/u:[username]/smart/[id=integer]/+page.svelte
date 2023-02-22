@@ -12,11 +12,13 @@
 
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { goto } from "$app/navigation";
 
 	import { page } from "$app/stores";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
 	import Button from "$lib/components/Button.svelte";
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
+	import ContextMenu from "$lib/components/ContextMenu.svelte";
 	import CustomizeView from "$lib/components/CustomizeView.svelte";
 	import EntryList from "$lib/components/EntryList.svelte";
 	import FavoriteStar from "$lib/components/FavoriteStar.svelte";
@@ -64,21 +66,31 @@
 	<DefaultHeader>
 		<div slot="start" class="flex items-center space-x-2">
 			<!-- <Icon name="collectionSolid" /> -->
-			<button
+            <ContextMenu items={[[
+                {
+                    href: `${$page.url.pathname}/edit`,
+                    label: "Edit"
+                }
+            ]]}>
+				<ChosenIcon chosenIcon={list.icon} />
+				<SmallPlus size="base">{list.name}</SmallPlus>
+            </ContextMenu>
+			<!-- <button
 				class="flex items-center gap-2"
 				on:click={() => {
-					modals.open(
-						SmartListEntry,
-						{
-							view: list,
-						},
-						"view-entry"
-					);
+                    goto(`/${$page.url.pathname}/edit`)
+					// modals.open(
+					// 	SmartListEntry,
+					// 	{
+					// 		view: list,
+					// 	},
+					// 	"view-entry"
+					// );
 				}}
 			>
 				<ChosenIcon chosenIcon={list.icon} />
 				<SmallPlus size="base">{list.name}</SmallPlus>
-			</button>
+			</button> -->
 			<form
 				action="?/favorite"
 				method="post"

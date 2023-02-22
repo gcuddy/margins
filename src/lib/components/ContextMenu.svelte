@@ -1,24 +1,22 @@
 <script lang="ts">
 	import type { Action } from "$lib/actions/types";
 
-	import type { IconName } from "$lib/icons";
-	import type { ComponentProperties } from "$lib/stores/types";
 	import type { PopperPlacement } from "$lib/types";
 
+	import type { MenuItem as IMenuItem } from "$lib/types/schemas/Menu";
 	import {
 		Menu,
 		MenuButton,
 		MenuItem,
 		MenuItems,
 		Transition,
-		TransitionChild,
+		TransitionChild
 	} from "@rgossiaux/svelte-headlessui";
+	import { createEventDispatcher } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
 	import Portal from "svelte-portal";
 	import { fade } from "svelte/transition";
 	import Icon from "./helpers/Icon.svelte";
-	import type { MenuItem as IMenuItem } from "$lib/types/schemas/Menu";
-	import { createEventDispatcher } from "svelte";
 
 	export let placement: PopperPlacement = "bottom-end";
 	export let strategy: "fixed" | "absolute" = "fixed";
@@ -101,7 +99,8 @@
 							<div class="flex flex-col px-1 ">
 								{#each group.filter( (g) => (g.check ? g.check() : true) ) as { href, label, icon, iconProps, perform, items }}
 									<MenuItem
-										as="button"
+										as={href ? "a" : "button"}
+                                        href={href ? href : undefined}
 										let:active
 										on:click={perform}
 										class={({ active }) =>
@@ -124,12 +123,12 @@
 											{/if}
 										{/if}
 										<span class="cursor-default">
-											{#if href}
+                                            {label}
+											<!-- {#if href}
 												<a {href}>{label}</a>
 											{:else}
 												{label}
-												<!-- button -->
-											{/if}
+											{/if} -->
 										</span>
 										<!-- {#if items?.length}
 												<div class="ml-auto" />

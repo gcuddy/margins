@@ -6,14 +6,14 @@ const inlineAnnotationInclude = Prisma.validator<Prisma.AnnotationInclude>()({
 });
 
 const TimestampSelectorSchema = z.object({
-    source: z.string(),
-    selector: z.object({
+    // source: z.string()   ,
+    // selector: z.object({
         type: z.literal("FragmentSelector").default("FragmentSelector"),
         conformsTo: z.literal("http://www.w3.org/TR/media-frags/").default("http://www.w3.org/TR/media-frags/"),
         /**  e.g. "t=10,20" */
         value: z.string(),
-    }),
-    html: z.string().optional(),
+    // }),
+    // html: z.string().optional(),
 });
 
 

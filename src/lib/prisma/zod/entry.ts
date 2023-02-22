@@ -45,6 +45,10 @@ export const _EntryModel = z.object({
    */
   tmdbId: z.number().int().nullish(),
   /**
+   * Youtube ID, if it's a youtube video
+   */
+  youtubeId: z.string().nullish(),
+  /**
    * Tmdb data - could also store this in "original"?
    */
   tmdbData: jsonSchema,

@@ -1,17 +1,42 @@
 <script lang="ts" context="module">
 	const _contextKey = "filter__chosenConditions";
 
-	function createChosenConditionStore() {
-		const state = writable<ChosenCondition[]>([]);
+	function createChosenConditionStore({
+        conditions,
+        and
+    }: {
+        conditions: ChosenCondition[];
+        and: "AND" | "OR" | "NOT";
+    }) {
+		const state = writable<{
+            and: "AND" | "OR" | "NOT";
+            conditions: ChosenCondition[];
+        }>({
+            and,
+            conditions
+        });
 
 		function add(condition: ChosenCondition) {
-			state.update((s) => [...s, condition]);
+			state.update((s) => {
+                return {
+                    and: s.and,
+                    conditions: [...s.conditions, condition]
+                }
+            });
 		}
 		function remove(idx: number) {
-			state.update((s) => s.filter((_, i) => i !== idx));
+			state.update((s) => {
+                return {
+                    and: s.and,
+                    conditions: s.conditions.filter((_, i) => i !== idx)
+                }
+            });
 		}
 		function reset() {
-			state.set([]);
+			state.set({
+                and: "AND",
+                conditions: []
+            });
 		}
 		return {
 			subscribe: state.subscribe,
@@ -251,135 +276,27 @@
 </script>
 
 <script lang="ts">
-	import Button from "$lib/components/Button.svelte";
 
 	import GenericInput from "$lib/components/GenericInput.svelte";
-	import Icon from "$lib/components/helpers/Icon.svelte";
 	import type { IconName } from "$lib/icons";
-	import { createStack } from "$lib/stores/undo";
 	import { DocumentType, Prisma } from "@prisma/client";
 	import { ComponentProps, getContext, SvelteComponent } from "svelte";
 	import { writable } from "svelte/store";
 	import type { Entries } from "type-fest";
 	import type { Primitive } from "zod";
 	import { useFilterQuery } from "./filter";
-
-	type E = EntryWhereInput["published"];
-	const e: E = {};
-
-	const store = useFilterQuery();
-	// $store = [
-	// 	{
-	// 		author: {
-	// 			contains: "",
-	// 		},
-	// 	},
-	// ];
-
-	let type: "string" | "number" | "boolean" = "string";
-
-	let values = [
-		{
-			name: "Progress",
-			type: "number",
-		},
-		{
-			name: "Author",
-			type: "string",
-		},
-	];
-	let value = values[0];
-
-	let filter: string;
-
-	$: input = {
-		[filter]: dynamicValue,
-	};
-
-	let dynamicValue: string | number;
-
-	const inputValue = writable("");
-	$: filteredConditions = conditions.filter((condition) =>
-		condition.title.toLowerCase().includes($inputValue.trim())
-	);
-
-	let ref: HTMLElement;
-
-	type X = ConditionForEntry["values"];
-
-	type BasicConditionOrValue = {
-		title: string;
-		field?: keyof EntryWhereInput;
-		id: string;
-		icon?: IconName;
-		type?: "string" | "number" | "boolean";
-		values?: (value: any, userId?: string) => BasicConditionOrValue[];
-		where?: EntryWhereInput[keyof EntryWhereInput];
-	};
-
-	let selectedCondition: BasicConditionOrValue | null = null;
-
-	let show_input = false;
-
-	// how to allow for other inputs?
-
-	// this doesn't work - get to work!
-	type InputComponents = {
-		[key: string]: <T extends SvelteComponent>() => {
-			component: T;
-			props: ComponentProps<T>;
-		};
-	};
-
-	let inputComponents = {
-		string: {
-			component: GenericInput,
-			props: {
-				type: "text",
-			},
-			value: "",
-			title: "Filter by",
-		},
-		number: {
-			component: GenericInput,
-			props: {
-				type: "number",
-			},
-			value: 0,
-			title: "Filter by",
-		},
-	} as const;
-
-	let strI = <T extends SvelteComponent>(component: T, props: ComponentProps<T>, title: string) => {
-		return (value: string) => ({
-			component,
-			props: {
-				...props,
-				value,
-			},
-			title,
-		});
-	};
-
-	// $: selected_input = selectedCondition?.type && inputComponents[selectedCondition?.type];
+// $: selected_input = selectedCondition?.type && inputComponents[selectedCondition?.type];
 	// $: selected_values = selectedCondition?.values?.(selected_input?.value) || [];
 	// $: selected_values.map;
 
-	import type { Placement } from "@popperjs/core";
-	import { Popover, PopoverButton, PopoverPanel } from "@rgossiaux/svelte-headlessui";
-	import { createPopperActions } from "svelte-popperjs";
-	import EntryFilterCondition from "./EntryFilterCondition.svelte";
-	import GenericListbox from "$lib/components/helpers/GenericListbox.svelte";
-	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
 	import { trpc } from "$lib/trpc/client";
-	import EntryFilterButton from "./EntryFilterButton.svelte";
-	import { setContext } from "svelte";
-	import Select from "$lib/components/atoms/Select.svelte";
-	import { page } from "$app/stores";
+	import type { Placement } from "@popperjs/core";
 	import type { Page } from "@sveltejs/kit";
+	import { createQuery } from "@tanstack/svelte-query";
+	import { setContext } from "svelte";
+	import { createPopperActions } from "svelte-popperjs";
 	import { listTagsQuery } from "../tags/queries";
-	import EntryList from "$lib/components/EntryList.svelte";
-	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
+	import { page } from "$app/stores";
 
 	type T = $$Generic;
 
@@ -395,28 +312,30 @@
 
 	let button: HTMLButtonElement;
 
-	let chosenConditions: ChosenCondition[] = [];
-
+	export let conditions: ChosenCondition[] = [];
+    export let and: "AND" | "OR" | "NOT" = "AND";
 	// REVIEW: we should include conditions in the store, that way they're customizable depending on context
-	const chosenConditionsStore = createChosenConditionStore();
+	export let chosenConditionsStore = createChosenConditionStore({
+        conditions,
+        and
+    });
 	setFilterContext(chosenConditionsStore);
-	$: wheres = $chosenConditionsStore.map((c) => ({
+	$: wheres = $chosenConditionsStore.conditions.map((c) => ({
 		[c?.field]: c?.value?.where,
 	}));
 	$: where = {
-		[and]: wheres,
+		[$chosenConditionsStore.and]: wheres,
 	};
 	$: console.log({ where });
 	$: console.log({ $chosenConditionsStore });
 
-	// TODO: should be stored with store and serialized
-	let and: "AND" | "OR" | "NOT" = "AND";
+	// TODO: should be stored with store andj serialized
 
 	$: query = createQuery({
-		enabled: !!$chosenConditionsStore.length,
+		enabled: !!$chosenConditionsStore.conditions.length,
 		queryKey: ["filter", { where }],
 		queryFn: async () => {
-			return trpc().entries.filter.query({
+			return trpc($page).entries.filter.query({
 				where,
 			});
 		},
@@ -428,95 +347,4 @@
 </script>
 
 <!-- TODO: make chosenConditions into a store, don't bind to index but prefer .push onsave/confirm/close -->
-
-
-{#if !$chosenConditionsStore.length}
-	<EntryFilterButton />
-{:else}
-	<div>
-		<Button variant="dashed" className="space-x-1 text-sm" on:click={chosenConditionsStore.reset}>
-			<Icon name="xMarkMini" className="h-4 w-4 fill-muted" /> <span>Clear Filters</span>
-		</Button>
-	</div>
-{/if}
-
-{#if $chosenConditionsStore.length > 1}
-	<!-- transition:fly|local={{ y: -5 }} -->
-	<div class="text-sm text-gray-500">
-		<span>
-			If
-			<Select block={false} bind:value={and} class="mx-1 py-1 pr-8 text-sm">
-				<option value="AND">All</option>
-				<option value="OR">Any</option>
-				<option value="NOT">None</option>
-			</Select>
-			of the following conditions are met
-		</span>
-	</div>
-{/if}
-
-<div class="flex gap-1">
-	{#each $chosenConditionsStore as filter, index}
-		{#if filter}
-			{@const condition = conditions.find((c) => c.id === filter?.id)}
-			{@const conditionValues = condition?.values(filter?.value?.value, $page) || []}
-			<div
-				class="flex h-6 max-w-min shrink items-stretch gap-0.5 truncate rounded text-xs ring-1 ring-border "
-			>
-				<div class="flex items-center gap-1 px-1.5">
-					{#if filter?.icon}
-						<Icon name={filter.icon} className="h-4 w-4 fill-gray-600" />
-					{/if}
-					<span>
-						{filter?.title}
-					</span>
-				</div>
-				{#if Array.isArray(conditionValues) && filter?.type !== "boolean"}
-					<GenericListbox
-						class="flex items-center bg-base px-1.5"
-						let:value={listboxValue}
-						value={filter?.value}
-						values={conditionValues}
-						onChange={(v) => {
-							filter.value.id = v.id;
-							filter.value.where = v.where;
-							filter.value.title = v.title;
-						}}
-					>
-						<button slot="button" let:value>{value?.title}</button>
-						<div>
-							{listboxValue.title}
-						</div>
-					</GenericListbox>
-				{:else if filter?.value?.title}
-					<span class="flex items-center bg-base px-1.5">
-						<!-- TODO: clicking this should trigger listbox with other options -->
-						{filter?.value.title}
-					</span>
-				{/if}
-				<span class="flex items-center bg-base px-1.5">
-					{filter?.value.value}
-				</span>
-				<button
-					class="flex items-center bg-base px-1.5"
-					on:click={() => {
-						chosenConditionsStore.remove(index);
-					}}><Icon name="xMarkMini" className="h-4 w-4 fill-gray-400" /></button
-				>
-			</div>
-		{/if}
-	{/each}
-	{#if $chosenConditionsStore.length}
-		<EntryFilterButton slim={true} />
-	{/if}
-</div>
-
-<!-- {JSON.stringify($chosenConditionsStore, null, 2)} -->
-
-{#if $query.isInitialLoading}
-	<div>Loading...</div>
-{/if}
-
-{#if $query.isSuccess && $query.data}
-	<EntryList items={$query.data} />
-{/if}
+<slot query={$query} {where} chosenConditions={$chosenConditionsStore} />

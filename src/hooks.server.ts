@@ -62,9 +62,10 @@ export const handle: Handle = sequence(
 			} else if (allOk && isQuery) {
 				// is this a good idea?
 				return {
-					headers: {
-						"cache-control": `max-age=0, s-maxage=86400`,
-					},
+                    //No!
+					// headers: {
+					// 	"cache-control": `max-age=0, s-maxage=86400`,
+					// },
 				};
 				// // cache certain things
 				// if (paths?.every((path) => path.includes("listForUserSubscriptions"))) {

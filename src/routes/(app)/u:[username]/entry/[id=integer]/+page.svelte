@@ -9,13 +9,16 @@
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import HighlightMenu from "$lib/components/HighlightMenu.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
+	import Youtube from "$lib/components/Youtube.svelte";
 	import { entryData } from "$lib/entry";
 	import BookEntry from "$lib/features/books/BookEntry.svelte";
 	import AudioEntry from "$lib/features/entries/AudioEntry.svelte";
 	import BookmarkEntry from "$lib/features/entries/bookmarks/BookmarkEntry.svelte";
+	import { containerRefContextKey } from "$lib/features/entries/context";
 	import ImageEntry from "$lib/features/entries/ImageEntry.svelte";
-	import { showEntrySelector } from "$lib/features/entries/queries";
+	import { entryDetailsQuery, showEntrySelector } from "$lib/features/entries/queries";
 	import TweetEntry from "$lib/features/entries/TweetEntry.svelte";
+	import VideoEntry from "$lib/features/entries/VideoEntry.svelte";
 	import MovieEntry from "$lib/features/movies/MovieEntry.svelte";
 	import Episode from "$lib/features/podcasts/Episode.svelte";
 	import RecipeEntry from "$lib/features/recipes/RecipeEntry.svelte";
@@ -29,14 +32,16 @@
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import { Annotation, DocumentType, Tag } from "@prisma/client";
 	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
+	import { isFunction } from "@tiptap/core";
 	import { TRPCClientError } from "@trpc/client";
 	import dayjs from "dayjs";
 	import localizedFormat from "dayjs/plugin/localizedFormat.js";
 	import debounce from "lodash.debounce";
-	import { onDestroy } from "svelte";
+	import { getContext, onDestroy, setContext } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
-	import { writable } from "svelte/store";
+	import { Readable, writable } from "svelte/store";
 	import { slide } from "svelte/transition";
+	import type { YouTubePlayer } from "youtube-player/dist/types";
 	import type { PageData } from "./$types";
 	import Booster from "./Booster.svelte";
 	import Highlighter from "./Highlighter.svelte";
@@ -49,15 +54,19 @@
 	const queryClient = useQueryClient();
 	$: article = data.article;
 	// let article: RouterOutputs["entries"]["load"];
-	// $: query = createQuery({
-	// 	...entryDetailsQuery({
-	// 		id: data.id,
-	// 	}),
-	//     onSuccess: (data) => {
-	//         console.log({ data });
-	//         article = data;
-	//     },
-	// });
+	$: query = createQuery({
+		...entryDetailsQuery({
+			id: data.id,
+		}),
+		onSettled: (data, error) => {
+			console.log(`entrydetails`, { data, error });
+		},
+		onSuccess: (entry) => {
+			console.log({ entry });
+			// REVIEW: is this bad - probaly!
+			data.article = entry;
+		},
+	});
 
 	$: stylesheet = data.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
 	let entry: Metadata;
@@ -483,6 +492,12 @@
 
 	/** Tags */
 	let tagFormRef: HTMLFormElement;
+
+	// const containerRef = writable<HTMLElement | null>(null);
+	setContext(containerRefContextKey, mainEl);
+
+    let player: YouTubePlayer | undefined = undefined;
+    $: console.log({player})
 </script>
 
 <!-- TODO: implement layout select -->
@@ -541,9 +556,9 @@
 			tabindex="-1"
 		>
 			<!-- TODO: py-8 px-4 should be set on a per-type basis -->
-			<article data-article class="mx-auto h-full mt-14  ">
+			<article data-article class="mx-auto mt-14 h-full  ">
 				{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
-					<header class="space-y-3 pb-4 max-w-prose" bind:this={$articleHeader}>
+					<header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
 						<!-- {article.feedId
 							? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
 							: article.uri} -->
@@ -617,10 +632,10 @@
 					<BookEntry entry={article} bookId={article?.googleBooksId} />
 				{:else if article.type === DocumentType.bookmark}
 					<BookmarkEntry entry={article} />
-                {:else if article.type === DocumentType.image}
-                    {#if article.image}
-                        <ImageEntry image={article.image} />
-                    {/if}
+				{:else if article.type === DocumentType.image}
+					{#if article.image}
+						<ImageEntry image={article.image} />
+					{/if}
 				{:else if article.type === "movie"}
 					<MovieEntry id={data.article.tmdbId} />
 				{:else if article.type === DocumentType.audio && article.podcastIndexId}
@@ -636,12 +651,22 @@
 					<TweetEntry tweet={article.original} />
 				{:else if article.type === DocumentType.recipe && article.recipe}
 					<!-- TODO: display html or recipe -->
-                   <RecipeEntry recipe={article.recipe} />
+					<RecipeEntry recipe={article.recipe} />
+				{:else if article.type === DocumentType.video && article.youtubeId}
+					<VideoEntry bind:player entry={article} />
+					<!-- <Youtube videoId={article.youtubeId} /> -->
+					<!-- {@html article.html} -->
 				{/if}
 			</article>
 		</div>
 		<!-- Reading Sidebar -->
-		<ReadingSidebar bind:entry={data.article} />
+		{#if $query.isSuccess}
+			<ReadingSidebar on:seek={async ({detail}) => {
+                console.log({detail})
+                console.log({player})
+                await player?.seekTo(detail, true)
+            }} entry={$query.data} />
+		{/if}
 		{#if data.css}
 			<Booster bind:css={data.css} />
 		{/if}

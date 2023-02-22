@@ -25,6 +25,7 @@ export const entriesRouter = router({
                 .optional()
         )
         .query(async ({ ctx, input }) => {
+            console.log(`listBookmarks`, input)
             const { userId, user } = ctx;
             const entries = await ctx.prisma.entry
                 .findMany({
@@ -120,6 +121,7 @@ export const entriesRouter = router({
                         extended: true,
                         enclosureUrl: true,
                         tmdbId: true,
+                        youtubeId: true,
                         tmdbData: true,
                         googleBooksId: true,
                         podcastIndexId: true,
@@ -256,7 +258,7 @@ export const entriesRouter = router({
                         unread,
                         interactions,
                         recipe: entry.recipe as null | Recipe,
-                        extended: entry.extended as z.infer<typeof EntryExtendedSchema> | null
+                        extended: entry.extended as z.infer<typeof EntryExtendedSchema> | null,
                     };
                 })
         ),

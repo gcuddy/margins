@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { collectionItemSelect } from "$lib/prisma/selects/collections";
-import { _CollectionItemsModel } from "$lib/prisma/zod";
+import { _CollectionItemsModel, _CollectionModel } from "$lib/prisma/zod";
 import { protectedProcedure, publicProcedure, router } from "$lib/trpc/t";
 import type { ChosenIcon } from "$lib/types/icon";
 // import { EntryWhereInputObjectSchema } from '$lib/zod/schemas';
@@ -213,9 +213,10 @@ export const collectionsRouter = router({
     updateCollection: protectedProcedure
         .input(z.object({
             id: z.number(),
-            data: z.object({
-                contentData: z.any()
-            })
+            data: _CollectionModel.partial()
+            // data: z.object({
+            //     contentData: z.any()
+            // })
         }))
         .mutation(async ({ ctx, input }) => ctx.prisma.collection.update({
             where: {
