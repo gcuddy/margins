@@ -1,23 +1,25 @@
 <script lang="ts">
-	import { createEventDispatcher, onDestroy } from 'svelte';
-	import { onMount } from 'svelte';
+	import { createEventDispatcher, onDestroy } from "svelte";
+	import { onMount } from "svelte";
 	const dispatch = createEventDispatcher();
-	import { createPicker, EmojiPicker, darkTheme } from 'picmo';
+	import type { EmojiPicker } from "picmo";
 
 	let container: HTMLElement | undefined;
 	let picker: EmojiPicker | undefined;
-	onMount(() => {
+	onMount(async () => {
+		// dynamic import from picmo
+		const { createPicker } = await import("picmo");
 		picker = createPicker({
 			rootElement: container,
 			emojisPerRow: 12,
-			emojiSize: '17px',
+			emojiSize: "17px",
 			showCategoryTabs: false,
 			showPreview: false,
-			theme: darkTheme,
-			className: 'emoji-picker',
+			// theme: darkTheme,
+			className: "emoji-picker",
 		});
-		picker.addEventListener('emoji:select', (e) => {
-			dispatch('change', e);
+		picker.addEventListener("emoji:select", (e) => {
+			dispatch("change", e);
 		});
 	});
 	// onDestroy(() => {
