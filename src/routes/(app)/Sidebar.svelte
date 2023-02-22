@@ -172,6 +172,7 @@
 	$: $page.url, closeSidebar();
 	$: $modals.length && closeSidebar();
 
+   $: $page.url, $mq.max_lg && collapse();
 	// $: $page.url.pathname.includes('entry') && hideSidebar.set(true);
 	// $: $commandPaletteStore && closeSidebar();
 	// $: $showCommandPalette && closeSidebar();
@@ -184,6 +185,7 @@
     let lgCollapsed = false;
     $: $mq.max_lg && collapse();
     $: $mq.lg && !lgCollapsed && expand();
+
     // mq.subscribe(val => {
     //     val.
     // })
@@ -346,7 +348,7 @@
 		<nav
 			on:click={handleClick}
 			on:keydown
-			class="relative flex h-full max-w-[min(100vw-40px,400px)] grow  flex-col space-y-3  border-border bg-sidebar/90 pt-10 shadow-xl transition   duration-300 dark:shadow-2xl lg:pt-0 lg:shadow-none {collapsed
+			class="relative flex h-full max-w-[min(100vw-40px,400px)] grow  flex-col space-y-3  border-border bg-sidebar pt-10 shadow-xl transition   duration-300 dark:shadow-2xl lg:pt-0 lg:shadow-none {collapsed
 				? '-top-2 m-1 rounded-md border  dark:border-gray-600 dark:bg-gray-800'
 				: 'border-r '}"
 		>
@@ -490,7 +492,9 @@
 						{#each $page.data.allTags as tag}
 							{#if tag}
 								{@const text = typeof tag === "string" ? tag : tag.name}
-								<SidebarItem display={text} href="/u:{$page.params.username}/t:{text}" icon="tag" />
+								<SidebarItem on:click={() => {
+                                    if ($mq.max_lg) collapse();
+                                }} display={text} href="/u:{$page.params.username}/t:{text}" icon="tag" />
 							{/if}
 						{/each}
 					</div>
@@ -499,7 +503,10 @@
 				<div class="simple-scrollbar flex shrink flex-col space-y-8 overflow-y-auto">
 					<div class="flex grow flex-col items-stretch space-y-1 px-5 text-sm">
 						{#each navItems as nav}
-							<SidebarItem {...nav} bind:collapsed={nav.collapsed} />
+							<SidebarItem on:click={() => {
+                                console.log("click")
+                                if ($mq.max_lg) collapse();
+                            }} {...nav} bind:collapsed={nav.collapsed} />
 						{/each}
 					</div>
 					<!-- TOOD: fix favorites -->

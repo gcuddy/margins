@@ -69,6 +69,7 @@
 	import { slide } from "svelte/transition";
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import type { RouterInputs } from "$lib/trpc/router";
+	import { longpress } from "$lib/actions/longpress";
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
 	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>(items);
@@ -89,7 +90,7 @@
 	// clear selecteditems on url change
 	$: $page.url.pathname, ($selectedItems = []);
 
-	let dragDisabled = false;
+	let dragDisabled = true;
 
 	// todo: generalize
     const queryClient = useQueryClient();
@@ -233,7 +234,7 @@
 	};
 	export let viewOptions: Partial<ViewOptions> = view_options;
 	$: viewOptions = { ...view_options, ...viewOptions };
-	$: dragDisabled = viewOptions.sort != "manual";
+	// $: dragDisabled = viewOptions.sort != "manual";
 
 	let animationController: AnimationController | undefined = undefined;
 	export let container: HTMLElement | undefined = undefined;
@@ -476,7 +477,7 @@
 						duration: 125,
 					}} -->
 				<div
-
+                    use:longpress={() => dragDisabled = false}
 					class="focus-within:!outline-none"
 					on:click={(e) => {
 						if (e.shiftKey) {
