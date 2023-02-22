@@ -603,8 +603,8 @@
 			/>
 		{/each}
 	</div>
-	{#if show_tooltip}
-		<div class="z-40 {!$mq.desktop ? 'text-red-500' : ''}" use:menuContent>
+	{#if show_tooltip && $mq.desktop}
+		<div class="z-40 mobile:!fixed mobile:!transform-none mobile:!bottom-4 mobile:!left-0 mobile:!right-0 mobile:!mx-auto " use:menuContent>
 			{#if showColors}
 				<!-- <Swatches
 					bind:selected={currentAnnotationColor}
@@ -850,7 +850,32 @@
 			</TooltipMenu>
 		</div>
 		<!-- <AnnotationColorSelector /> -->
-	{/if}
+	{:else if show_tooltip && !$mq.desktop}
+        <div class="fixed bottom-0 left-0 right-0 z-50">
+            <div class="flex
+                justify-center
+                items-center
+                bg-white
+                shadow
+                rounded
+                p-2
+                text-sm
+                text-gray-700
+                ">
+                <div class="flex items-center">
+                    <div class="mr-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="mr-2">
+                        <span>Highlight</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       {/if}
 	{#if annotation_opts !== null}
 		<div bind:this={annotationContainer} style:min-width="300px" data-annotation-entry>
 			<FloatingAnnotation

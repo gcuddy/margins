@@ -179,6 +179,7 @@ const config = {
 		plugin(({ addVariant }) => {
 			addVariant("transparency", ['[data-transparency="true"] &']);
 			addVariant("elevation", [".elevation &"]);
+			addVariant("mobile", [".mobile &"]);
 		}),
 	],
 };

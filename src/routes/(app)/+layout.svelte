@@ -20,6 +20,7 @@
 	import ProgressBar from "$lib/components/ProgressBar.svelte";
 	import SettingsSidebar from "./SettingsSidebar.svelte";
 	import PreloadingIndicator from "$lib/components/PreloadingIndicator.svelte";
+	import mq from "$lib/stores/mq";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
@@ -46,7 +47,7 @@
 {/if}
 <QueryClientProvider client={data.queryClient}>
 	<div
-		class="bg-base text-content caret-primary-500 dark:text-gray-50 simple-scrollbars"
+		class="bg-base text-content caret-primary-500 dark:text-gray-50 simple-scrollbars {!$mq.desktop ? 'mobile' : ''}"
 		data-transparency="true"
 		on:drag
 	>
