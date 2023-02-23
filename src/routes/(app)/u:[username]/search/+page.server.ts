@@ -17,7 +17,10 @@ export const load: PageServerLoad = async (event) => {
 	const caller = await createCaller(event);
 	// const results =
 
-	const [results, annotations] = await Promise.all([caller.entries.search({query: q}), caller.annotations.search(q)]);
+    //sveltekit awaits top level promises and streams nested. lets await results and nest annotations.
+    const results = caller.entries.search({query: q});
+    const annotations = caller.annotations.search(q)
+	// const [results, annotations] = await Promise.all([caller.entries.search({query: q}), caller.annotations.search(q)]);
 	// console.time('searchMatching');
 	// const matches = results.map((result) => {
 	// 	const regex = new RegExp(q, 'gi');
@@ -44,7 +47,10 @@ export const load: PageServerLoad = async (event) => {
 	// console.timeEnd('searchMatching');
 	return {
 		results,
-		annotations: annotations || [],
+		lazy: {
+            // any way to get count?
+            annotations
+        },
 		q,
 		tab: tab ? +tab : 0,
 		// matches,

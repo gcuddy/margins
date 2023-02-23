@@ -28,6 +28,7 @@
 	import { nanoid } from "nanoid";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import Tabs from "$lib/components/layout/tabs/Tabs.svelte";
+	import AnnotationListItem from "$lib/features/annotations/AnnotationListItem.svelte";
 	export let data: PageData;
 	$: console.log({ data });
 	$: list = data.collection;
@@ -48,7 +49,7 @@
 	// 	const existingIds = articles?.map((a) => a.id) ?? [];
 	// 	return $articles?.articles?.filter((a) => !existingIds.includes(a.id)) || [];
 	// });
-
+	let favorited = false;
 	$: favorited = data.favorites.some((f) => f.collectionId === list.id);
 	$: folders = data.favorites.filter((f) => f.type === "FOLDER");
 
@@ -135,7 +136,19 @@
 				<SmallPlus>{list.name}</SmallPlus>
 			</button>
 			<Menu class="relative">
-				<form action="?/favorite" method="post" use:enhance>
+				<form
+					action="?/favorite"
+					method="post"
+					use:enhance={() => {
+						favorited = true;
+						return async ({ update }) => {
+							await update();
+							await $page.data.queryClient.invalidateQueries({
+								queryKey: ["favorites"],
+							});
+						};
+					}}
+				>
 					<input type="hidden" name="sortOrder" value={(data.favorites[0]?.sortOrder ?? 0) - 1} />
 					<!-- on:click={(e) => e.preventDefault()} -->
 					<!-- <button type="submit" class="relative flex cursor-default items-center">
@@ -172,8 +185,7 @@
 			</Menu>
 		</div>
 		<div slot="end">
-            <Tabs tabs={["List", "Grid", "Kanban"]}>
-            </Tabs>
+			<Tabs tabs={["List", "Grid", "Kanban"]} />
 			<CustomizeView
 				on:view={({ detail: view }) => {
 					data.collection.viewOptions = {
@@ -280,8 +292,13 @@
 						}}
 					/>
 				{:else if $tabSet === "annotations"}
-					Notes
-					<!-- loop through annotations -->
+					<!-- TODO: nested -->
+					{#each list.items as item}
+						{#if item.annotation}
+							<AnnotationListItem annotation={item.annotation} />
+						{/if}
+					{/each}
+					<!-- loop through annota    tions -->
 				{/if}
 			</div>
 		{/if}

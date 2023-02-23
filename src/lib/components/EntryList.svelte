@@ -70,6 +70,7 @@
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import { longpress } from "$lib/actions/longpress";
+	import ImageLoader from "./ui/images/ImageLoader.svelte";
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
 	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>(items);
@@ -556,14 +557,18 @@
 																: data?.image
 																? data?.image
 																: ""}
-														<img
+														<!-- <img
 															class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
 															'list'
 																? 'h-full w-full rounded-md shadow-sm hover:ring-1'
 																: ' h-40 w-full rounded-t-md'}"
 															{src}
 															alt=""
-														/>
+														/> -->
+                                                        <ImageLoader {src} alt="" class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
+															'list'
+																? 'h-full w-full rounded-md shadow-sm hover:ring-1'
+																: ' h-40 w-full rounded-t-md'}" />
 													{/if}
 													<input
 														bind:group={$selectedItems}

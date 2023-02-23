@@ -23,7 +23,7 @@
 
 <img {alt} {src} {...$$restProps} class:loaded bind:this={thisImage} loading="lazy" />
 <ImageSkeleton
-	class="absolute inset-0 {loaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-100"
+	class="absolute inset-0 {loaded ? 'opacity-0' : src ? 'animate-pulse' : 'opacity-100'} transition-opacity duration-100"
 />
 
 <style>

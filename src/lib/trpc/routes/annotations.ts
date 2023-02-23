@@ -34,17 +34,64 @@ export const annotationRouter = router({
         // or: should Body just be a string?
         // [path]?
         const { userId } = ctx;
-        const annotations = await ctx.prisma.annotation.findMany({
+        const [annotations, richAnnotations] = await ctx.prisma.$transaction([ctx.prisma.annotation.findMany({
             where: {
                 // REVIEW: while this works, it seems probably not efficient? maybe okay if annotations are short
-                body: {
-                    string_contains: input,
-                },
+                OR: [
+                    {
+                        body: {
+                            string_contains: input,
+                        },
+                        // Unfortunately, this seems able to only search the first level of the JSON, and only hit exact matches,
+                        // contentData: {
+                        //     path: "$.content[*].content[*].text",
+                        //     array_contains: input
+                        // }
+                    }
+                ],
                 userId,
             },
             ...contextualAnnotationArgs,
-        });
-        return annotations;
+        }),
+        ctx.prisma.annotation.findMany({
+            where: {
+                contentData: {
+                    not: {
+                        equals: null
+                    }
+                },
+                userId
+            },
+            ...contextualAnnotationArgs,
+        })
+        ]);
+        // now filter richannotations
+        console.time("filtering rich annotations")
+        const matchingRichAnnotations: typeof richAnnotations = [];
+        richAnnotations.forEach((a) => {
+            const contentData = a.contentData as JSONContent;
+            // walk through all "text" nodes and search for input
+            let found = false
+            function recurse(node: JSONContent) {
+                // if (found) return true;
+                if (node.type === "text") {
+                    console.log(node.text, input)
+                    if (node.text?.toLowerCase().includes(input.toLowerCase())) {
+                        console.log("found", node.text)
+                        found = true;
+                        matchingRichAnnotations.push(a);
+                       return true;
+                    }
+                }
+                if (node.content && !found) {
+                    node.content.forEach(recurse)
+                }
+            }
+           recurse(contentData);
+        })
+        console.timeEnd("filtering rich annotations")
+        console.log({ matchingRichAnnotations })
+        return [...matchingRichAnnotations, ...annotations];
     }),
     // TODO: consolidate save and update
     save: protectedProcedure.input(saveAnnotationSchema.partial()).mutation(async ({ ctx, input }) => {
@@ -203,7 +250,7 @@ export const annotationRouter = router({
         }),
     create: protectedProcedure.input(saveAnnotationSchema.partial()).mutation(async ({ ctx, input }) => {
         const { userId } = ctx;
-        const { entryId, collectionId, ...rest} = input;
+        const { entryId, collectionId, ...rest } = input;
         return await ctx.prisma.annotation.create({
             data: {
                 ...rest,
@@ -256,6 +303,6 @@ export const annotationRouter = router({
             },
         });
         if (!annotation) return null;
-        return {...annotation, contentData: annotation.contentData as JSONContent | null};
+        return { ...annotation, contentData: annotation.contentData as JSONContent | null };
     })
 });

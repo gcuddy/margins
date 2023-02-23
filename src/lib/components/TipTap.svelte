@@ -118,6 +118,7 @@
 								return {
 									id: entry.id,
 									label: entry.title,
+                                    type: entry.type
 								};
 							});
 							// return ["Tom", "Mary", "Joseph"]
@@ -239,7 +240,7 @@
 			],
 			editorProps: {
 				attributes: () => ({
-					class: cx("m-1 p-4 rounded-md prose shrink-0 mx-auto prose-sm prose-img:max-h-[600px] prose-img:max-w-auto prose-img:h-auto sm:prose relative cursor-text ", {
+					class: cx("m-1 p-4  rounded-md prose shrink-0 mx-auto prose-sm prose-img:max-h-[600px] prose-img:max-w-auto prose-img:h-auto relative cursor-text prose-a:no-underline prose-a:text-accent", {
 							"shadow ring-1 ring-accent": $editor?.isEditable && focusRing,
 						}) +
 						" " +

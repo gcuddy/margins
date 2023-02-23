@@ -97,7 +97,7 @@
 
 	export let chosenIcon: ChosenIcon = {
 		name: "rectangleStackMini",
-		color: "#fff",
+		color: "#fbbf24",
 		type: "icon",
 	};
     $: chosenIcon = chosenIcon || defaultChosenIcon;

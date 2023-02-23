@@ -62,6 +62,10 @@
 		debounced();
 		// TODO: put focus on first search result
 	}
+
+	$: data.lazy?.annotations?.then((a) => {
+		console.log({ a });
+	});
 </script>
 
 <!-- TODO: just use use:enhance -->
@@ -104,7 +108,7 @@
 	</form>
 </Header>
 
-{#if results.length}
+{#if data.q}
 	<!-- <Saved
 		html={true}
 		quoted={true}
@@ -126,12 +130,32 @@
 	>
 		<TabList>
 			<Tab>Entries {data.results.length}</Tab>
-			<Tab>Annotations {data.annotations.length}</Tab>
+			<!-- {data.lazy?.annotations} -->
+			<Tab
+				>Annotations
+                <!-- Q: does awaiting a promise twice have performance drawbacks? -->
+				{#await data.lazy?.annotations}
+					...
+				{:then annotations}
+					{annotations.length}
+				{/await}
+			</Tab>
+			<!-- <Tab>Annotations {data.annotations.length}</Tab> -->
 		</TabList>
 		<TabPanels>
 			<TabPanel><EntryList items={data.results} /></TabPanel>
 			<TabPanel>
-				<AnnotationList annotations={data.annotations} />
+				{#await data.lazy?.annotations}
+					Loading...
+				{:then annotations}
+					{#if annotations}
+						<AnnotationList {annotations} />
+					{:else}
+						No annotations found
+					{/if}
+				{:catch error}
+					{error}
+				{/await}
 			</TabPanel>
 		</TabPanels>
 	</TabGroup>

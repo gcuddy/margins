@@ -61,6 +61,7 @@
 		items: {
             id: string | number;
             label: string;
+            type: DocumentType;
         }[];
 		props?: SuggestionProps;
 	};
@@ -71,6 +72,7 @@
 	import { Readable, Writable, writable } from "svelte/store";
 	import { getContext, tick } from "svelte";
 	import { onDestroy } from "svelte";
+	import type { DocumentType } from "@prisma/client";
 
 	export let state: Writable<State>;
 	export let items: State["items"];
@@ -94,7 +96,7 @@
 		getBoundingClientRect: () =>
 			rect || { width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0, x: 0, y: 0 },
 	});
-	export let command: (command: { id: string | number; label: string; }) => void;
+	export let command: (command: { id: string | number; label: string; type: DocumentType; }) => void;
 
 	interface $$Props extends SuggestionProps {
 		state: Writable<State>;
@@ -180,6 +182,7 @@ use:content
 				on:mouseover={() => ($state.index = index)}
 			>
 				<!-- TODO: display either progress or state  -->
+                {item.type}
 				{item.label}
 			</button>
 		{/each}
