@@ -556,9 +556,9 @@
 			tabindex="-1"
 		>
 			<!-- TODO: py-8 px-4 should be set on a per-type basis -->
-			<article data-article class=" mt-14 h-full  ">
+			<article data-article class=" mt-14 h-full  px-1 sm:p-4">
 				{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
-					<div class="px-1">
+					<div class="">
                         <header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
                             <!-- {article.feedId
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`

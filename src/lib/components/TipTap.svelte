@@ -26,6 +26,7 @@
 	import MentionList, { type State as MentionListState } from "./TipTap/MentionList.svelte";
 	import { browser } from "$app/environment";
 	import Icon from "./helpers/Icon.svelte";
+	import { page } from "$app/stores";
 
 	let element: Element;
 	let editor: Readable<Editor>;
@@ -33,7 +34,7 @@
 	let saved = "";
 	export let config: Partial<EditorOptions> = {};
 	export let placeholder = "Write something...";
-    export let autofocus = false;
+	export let autofocus = false;
 
 	export let focusRing = true;
 
@@ -49,7 +50,7 @@
 		focusRing?: boolean;
 		editing?: boolean;
 		class?: string;
-        autofocus?: boolean;
+		autofocus?: boolean;
 	}
 
 	const queryClient = useQueryClient();
@@ -61,11 +62,21 @@
 		blur: JSONContent;
 	}>();
 
+	function uploadImage(file: File) {
+		const data = new FormData();
+		data.append("image", file);
+		// post this
+		return fetch("/api/upload/image", {
+			method: "POST",
+			body: data,
+		});
+	}
+
 	onMount(() => {
 		editor = createEditor({
 			content: "<p>Hello World! 🌍️ </p>",
 			...config,
-            autofocus,
+			autofocus,
 			// element: element,
 			extensions: [
 				StarterKit,
@@ -105,9 +116,9 @@
 							});
 							return entries.map((entry) => {
 								return {
-                                    id: entry.id,
-                                    label: entry.title
-                                };
+									id: entry.id,
+									label: entry.title,
+								};
 							});
 							// return ["Tom", "Mary", "Joseph"]
 							// 	.filter((item) => item.toLowerCase().startsWith(query.toLowerCase()))
@@ -141,7 +152,7 @@
 										};
 									});
 								};
-								const setItems = (items: {id: string|number; label: string;}[]) => {
+								const setItems = (items: { id: string | number; label: string }[]) => {
 									store.update((state) => {
 										return {
 											...state,
@@ -228,13 +239,62 @@
 			],
 			editorProps: {
 				attributes: () => ({
-					class:
-						cx("m-1 p-4 rounded-md prose mx-auto prose-sm sm:prose relative cursor-text", {
+					class: cx("m-1 p-4 rounded-md prose shrink-0 mx-auto prose-sm prose-img:max-h-[600px] prose-img:max-w-auto prose-img:h-auto sm:prose relative cursor-text ", {
 							"shadow ring-1 ring-accent": $editor?.isEditable && focusRing,
 						}) +
 						" " +
 						c,
 				}),
+				handleDrop: (view, event, slice, moved) => {
+					if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+						// if dropping external files
+						let file = event.dataTransfer.files[0]; // the dropped file
+						let filesize = Number((file.size / 1024 / 1024).toFixed(4)); // get the filesize in MB
+						if ((file.type === "image/jpeg" || file.type === "image/png") && filesize < 10) {
+							// check valid image type under 10MB
+							// const img = new Image
+							console.log(file);
+							const _URL = window.URL || window.webkitURL;
+							const img = document.createElement("img");
+							img.src = _URL.createObjectURL(file);
+							img.onload = () => {
+								if (img.width > 5000 || img.height > 5000) {
+									// todo
+									alert("Image too large");
+								} else {
+									// todo
+									// ipload image
+									uploadImage(file)
+										.then((res) => res.json())
+										.then((data) => {
+                                            const src = $page.data.S3_BUCKET_PREFIX + data.Key;
+											console.log(data);
+											const { schema } = view.state;
+											const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+                                            if (!coordinates) return;
+											const node = schema.nodes.image.create({ src }); // creates the image element
+											const transaction = view.state.tr.insert(coordinates?.pos, node); // places it in the correct position
+											return view.dispatch(transaction);
+											// const { url } = data
+											// const { state } = view
+											// const { tr } = state
+											// const { selection } = tr
+											// const { from } = selection
+											// const node = state.schema.nodes.image.create({ src: url })
+											// tr.insert(from, node)
+											// view.dispatch(tr)
+										});
+								}
+							};
+						} else {
+							// todo
+						}
+						// handle the image upload
+						return true; // handled
+					}
+					console.log("dropped");
+					return false; // use default behavior
+				},
 			},
 		});
 
@@ -254,14 +314,14 @@
 			}
 			// editor.setEditable(false);
 		});
-        if (autofocus) {
-            initiallyAutoFocused = true;
-        }
-        // if (autofocus) {
-        //     console.log('autofocusing')
-        //     $editor.setEditable(true);
-        //     $editor.commands.focus('start')
-        // }
+		if (autofocus) {
+			initiallyAutoFocused = true;
+		}
+		// if (autofocus) {
+		//     console.log('autofocusing')
+		//     $editor.setEditable(true);
+		//     $editor.commands.focus('start')
+		// }
 	});
 
 	// onDestroy(() => {
@@ -282,7 +342,7 @@
 	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
 	$: console.log({ $editor });
 
-    let initiallyAutoFocused = false;
+	let initiallyAutoFocused = false;
 	const conditionallySetEditable = (editable: boolean) => {
 		if (editable || (autofocus && !initiallyAutoFocused)) {
 			$editor?.setEditable(true);
@@ -293,7 +353,7 @@
 		}
 	};
 
-    // set editable false if not focused, lets us click links
+	// set editable false if not focused, lets us click links
 	// $: $editor?.isFocused ? conditionallySetEditable(true) : conditionallySetEditable(false);
 
 	let linkMenu = {
@@ -395,7 +455,6 @@
 	</BubbleMenu>
 {/if}
 <EditorContent editor={$editor} />
-
 <style lang="postcss">
 	button.active {
 		@apply bg-elevation-hover text-bright;
@@ -410,4 +469,7 @@
 	:global(.ProseMirror.ProseMirror-focused) {
 		@apply shadow-none focus-visible:outline-none;
 	}
+    :global(.ProseMirror-selectednode) {
+        @apply ring rounded;
+    }
 </style>

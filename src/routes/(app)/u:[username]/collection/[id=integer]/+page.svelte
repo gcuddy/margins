@@ -2,7 +2,7 @@
 	import Button from "$lib/components/Button.svelte";
 	import TipTap from "$lib/components/TipTap.svelte";
 	import type { PageData } from "./$types";
-
+	import { TabGroup, Tab, localStorageStore } from "@skeletonlabs/skeleton";
 	import { enhance } from "$app/forms";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
@@ -27,6 +27,7 @@
 	import { page } from "$app/stores";
 	import { nanoid } from "nanoid";
 	import type { RouterInputs } from "$lib/trpc/router";
+	import Tabs from "$lib/components/layout/tabs/Tabs.svelte";
 	export let data: PageData;
 	$: console.log({ data });
 	$: list = data.collection;
@@ -57,7 +58,10 @@
 
 	const queryClient = useQueryClient();
 	// REVIEW: is this necessary?
-	$: query = createQuery({ ...collectionQuery(list.id, $page), onSuccess: (data) => (list = data) }); $: console.log({ $query });
+	$: query = createQuery({ ...collectionQuery(list.id, $page), onSuccess: (data) => (list = data) });
+	$: console.log({ $query });
+
+	const tabSet = localStorageStore("tabSet", "entries");
 
 	const addDocument = createMutation({
 		mutationFn: ({ id }: { id: string }) =>
@@ -75,12 +79,12 @@
 		mutationFn: (data: RouterInputs["collections"]["updateCollection"]["data"]) =>
 			trpc().collections.updateCollection.mutate({
 				id: list.id,
-				data
+				data,
 			}),
-        onSuccess: (data, vars) => {
-            // invalidate entries
-            console.log({data, vars})
-        }
+		onSuccess: (data, vars) => {
+			// invalidate entries
+			console.log({ data, vars });
+		},
 	});
 	const addSection = createMutation({
 		mutationFn: (title) =>
@@ -99,10 +103,10 @@
 	});
 
 	$: contentData = (list.contentData as JSONContent) || "";
-	$: console.log({ contentData, });
+	$: console.log({ contentData });
 
 	let view: ViewOptions["view"];
-    $: view = data.collection?.viewOptions?.view || "list";
+	$: view = data.collection?.viewOptions?.view || "list";
 </script>
 
 <!-- <pre>
@@ -168,15 +172,18 @@
 			</Menu>
 		</div>
 		<div slot="end">
-			<CustomizeView on:view={({ detail }) => {
-                data.collection.viewOptions = {
-                    ...data.collection.viewOptions,
-                    view: detail
-                }
-                $updateCollection.mutate({ viewOptions: { view } })
-                // save
-            }} />
-
+            <Tabs tabs={["List", "Grid", "Kanban"]}>
+            </Tabs>
+			<CustomizeView
+				on:view={({ detail: view }) => {
+					data.collection.viewOptions = {
+						...data.collection.viewOptions,
+						view,
+					};
+					$updateCollection.mutate({ viewOptions: { view } });
+					// save
+				}}
+			/>
 		</div>
 	</DefaultHeader>
 </Header>
@@ -244,16 +251,39 @@
 					// ((data.collection.items = n));
 				}}
 			/>
-		{:else if view === "kanban"}
+		{:else if view === "grid"}
 			<EntryList
-                on:kanbandrop={async (e) =>{
-                    // TODO: invalidate queries
-                }}
+				on:kanbandrop={async (e) => {
+					// TODO: invalidate queries
+				}}
 				items={flattened}
 				viewOptions={{
-					view: "kanban",
+					view: "grid",
 				}}
 			/>
+		{:else if view === "kanban"}
+			<div class="flex flex-col space-y-2">
+				<div class="max-w-max overflow-hidden rounded-lg bg-elevation text-sm text-muted">
+					<TabGroup border="" hover="hover:text-bright" active="bg-elevation-hover">
+						<Tab bind:group={$tabSet} value="entries" name="entries">Entries</Tab>
+						<Tab bind:group={$tabSet} value="annotations" name="annotations">Notes</Tab>
+					</TabGroup>
+				</div>
+				{#if $tabSet === "entries"}
+					<EntryList
+						on:kanbandrop={async (e) => {
+							// TODO: invalidate queries
+						}}
+						items={flattened}
+						viewOptions={{
+							view: "kanban",
+						}}
+					/>
+				{:else if $tabSet === "annotations"}
+					Notes
+					<!-- loop through annotations -->
+				{/if}
+			</div>
 		{/if}
 
 		<!-- {#each list.items as item (item.id)}
