@@ -13,7 +13,11 @@ export const load = (async (e) => {
 				enabled: browser,
 				// set queries to be stale after 20 seconds
 				staleTime: 20 * 1000,
+                networkMode: "offlineFirst"
 			},
+            mutations: {
+                networkMode: "offlineFirst"
+            }
 		},
 	});
 

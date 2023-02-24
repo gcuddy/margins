@@ -17,6 +17,7 @@
 	import { tweened } from "svelte/motion";
 
 	export let state = $page.data.user?.states?.find((s) => s.id === $page.data.user?.default_state_id);
+    export let unsaved = false;
 	$: console.log({ state, $page });
 	$: name = state?.name;
 	$: location = state?.type;
@@ -64,11 +65,15 @@
 			class="relative flex cursor-default items-center gap-1 rounded py-1 px-2 text-left transition hover:bg-gray-200 focus-visible:bg-gray-200 focus-visible:ring-2   dark:hover:bg-gray-700 dark:focus-visible:bg-gray-700 dark:focus-visible:ring-offset-stone-900"
 			use={[popperRef]}
 		>
+        {#if unsaved}
+        unsaved
+        {:else}
 			{#if includeIcon}
 				<Icon name={LOCATION_TO_ICON_SOLID[location]} className="h-4 w-4 fill-gray-600 dark:fill-gray-500" />
 			{/if}
 			{#if label}
 				<SmallPlus {size}>{name}</SmallPlus>{/if}
+                {/if}
 		</PopoverButton>
 		<PopoverPanel
 			let:close
@@ -112,7 +117,7 @@
 	<noscript>
 		<!-- select menu here (and don't render above) -->
 	</noscript>
-	<!-- 
+	<!--
 <Listbox
 	value={state.id}
 	on:change={(e) => (state = states.find((s) => s.id === e.detail) || state)}

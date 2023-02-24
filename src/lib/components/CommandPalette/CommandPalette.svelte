@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, invalidateAll } from "$app/navigation";
+	import { goto, invalidate, invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import {
 		commandStore,
@@ -71,6 +71,29 @@
 				entryId,
 				data,
 			}),
+		onMutate: async ({ id, data, entryId }) => {
+			// TODO: setqueriesdaa
+			queryClient.setQueriesData<RouterOutputs["entries"]["listBookmarks"]>(["entries"], (old) => {
+				if (!old || !Array.isArray(old)) return old;
+                console.log({old, id, data, entryId})
+				const newEntries = old.map((entry) => {
+					if (Array.isArray(entryId) ? entryId.includes(entry.id) : entry.id === entryId) {
+                        console.log('entry hit', entry)
+						if (entry.bookmarks) {
+							entry.bookmarks[0] = {
+								...entry.bookmarks[0],
+								...data,
+							};
+                            console.log({entry})
+                           return entry;
+						}
+					}
+					return entry;
+				});
+				return newEntries;
+			});
+            invalidate("entries")
+		},
 		onSuccess: async (data) => {
 			await queryClient.invalidateQueries({
 				queryKey: ["entries"],
@@ -218,7 +241,7 @@
 								author: value.volumeInfo?.authors?.join(", "),
 								published: value.volumeInfo?.publishedDate,
 							},
-                            active
+							active,
 						},
 					}),
 					onSelect: async ({ detail }) => {

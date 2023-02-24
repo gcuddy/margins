@@ -1,4 +1,5 @@
 // import { finder } from '@medv/finder';
+
 import type { Annotation, Entry, PodcastEpisode, Prisma } from "@prisma/client";
 import dayjs from "dayjs";
 import { Md5 } from "ts-md5";
@@ -511,3 +512,12 @@ export function groupBy<T>(array: Iterable<T>, keySelector: KeySelector<T>): Rec
 		{} // start with empty object
 	);
 }
+
+export const trytm = async <T>(promise: Promise<T>) => {
+    try {
+       const data = await promise;
+       return [data, null] as const;
+    } catch (error) {
+       return [null, error] as const;
+    }
+ };

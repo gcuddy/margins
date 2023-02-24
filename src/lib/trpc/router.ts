@@ -49,7 +49,7 @@ export const appRouter = t.router({
         }
         const doc = nlp(entry.text);
         return doc.topics().json();
-    })
+    }),
 });
 
 export type Router = typeof appRouter;

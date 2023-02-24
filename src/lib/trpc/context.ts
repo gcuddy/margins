@@ -4,6 +4,7 @@ import type { inferAsyncReturnType, Maybe } from "@trpc/server";
 import type { Session } from "lucia-auth";
 
 import { db } from "$lib/db";
+import { redis } from "$lib/redis";
 
 async function getUser(sesh: Maybe<Session>) {
 	if (!sesh) {
@@ -54,7 +55,8 @@ export async function createContext(event: RequestEvent) {
 		// context informationj
 		userId: session?.session?.userId || "",
 		prisma: db,
-        user: session?.user
+        user: session?.user,
+        redis
 		// user,
 	};
 }

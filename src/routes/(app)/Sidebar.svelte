@@ -131,6 +131,11 @@
 				href: `/u:${$page.data.user.username}/log`,
 				icon: "lightningBolt",
 			},
+			{
+				display: "Garden",
+				href: `/u:${$page.data.user.username}/garden`,
+				icon: "sprout",
+			},
 		];
 	}
 	export let navItems = hardcodedNav;

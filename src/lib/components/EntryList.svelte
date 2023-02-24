@@ -468,6 +468,7 @@
 			{#each items || [] as item, index (item.id)}
 				{@const data = item}
 				{@const pageNotes = "annotations" in item ? item.annotations?.filter((a) => a.type === "note") : null}
+                {@const progress = item.interactions?.[0]?.progress}
 				<!-- {index} -->
 				<!-- by doing this can't do animate:flip. hm! trying out auto-animate. let's see... -->
 
@@ -569,6 +570,12 @@
 															'list'
 																? 'h-full w-full rounded-md shadow-sm hover:ring-1'
 																: ' h-40 w-full rounded-t-md'}" />
+                                                                {#if progress}
+                                                                {@const progressPercent = Math.round(progress * 100)}
+                                                            <div class="absolute bottom-0 h-1 w-full bg-border/90">
+                                                                <div style:width="{progressPercent}%" class="absolute bottom-0 w-full h-1 bg-accent"></div>
+                                                            </div>
+                                                                {/if}
 													{/if}
 													<input
 														bind:group={$selectedItems}
@@ -751,7 +758,6 @@
 										</div>
 									{:else if item.type === DocumentType.audio}
 										{@const loaded = $podcastPlayer?.episode?.enclosureUrl === item.enclosureUrl}
-										{@const progress = item.interactions?.[0]?.progress}
                                         <!-- {@const progress = item.interaction?.progress} -->
 										<!-- Old way: -->
 										<!-- <EpisodeListItem {item} /> -->

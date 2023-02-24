@@ -41,7 +41,7 @@ export const booksRouter = router({
                 googleBooksId: input.bookId,
                 // or: isbn, etc
             },
-            update:data,
+            update: data,
             create: data
         })
         const bookmark = await ctx.prisma.bookmark.create({
@@ -106,8 +106,13 @@ export const booksRouter = router({
                 });
             }
         }),
-        findGoodreadsBookCover: publicProcedure.input(z.string()).query(async ({ input }) => {
-            // Store in DB, cache for 24 hours
+        findGoodreadsBookCover: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {
+            // Store in DB, cache for 24 hoursp
+            const stored = await ctx.redis.get("goodreads-book-cover:" + input);
+            if (stored) {
+                console.log("Found in cache", stored);
+                return stored;
+            }
             const googleQuery = `${input} site:goodreads.com/book/show`;
             const html = await fetch(
                 `https://www.google.com/search?q=${googleQuery}&sourceid=chrome&ie=UTF-8`
@@ -127,7 +132,12 @@ export const booksRouter = router({
             const goodReadsHtml = await fetch(link).then((res) => res.text());
             const grDoc = parse(goodReadsHtml);
             const src = grDoc.querySelector(`.BookCover__image img`)?.getAttribute("src");
-            if (src) return src;
+            if (src) {
+                await ctx.redis.set("goodreads-book-cover:" + input, src, {
+                    ex: 60 * 60 * 24,
+                });
+                return src;
+            }
         }),
     }),
 });

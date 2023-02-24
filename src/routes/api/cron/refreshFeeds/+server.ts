@@ -2,11 +2,10 @@
 
 import { error, json } from "@sveltejs/kit";
 
+import { CRON_KEY } from "$env/static/private";
 import { refresh } from "$lib/jobs/refresher";
 
 import type { RequestHandler } from "./$types";
-
-import { CRON_KEY } from "$env/static/private";
 
 export const GET: RequestHandler = async ({ request }) => {
 	const apiKey = request.headers.get("authorization");

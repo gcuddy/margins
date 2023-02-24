@@ -372,13 +372,16 @@
 			setTimeout(() => {
 				$mainEl?.focus();
 				console.log(document.activeElement);
-			}, 100);
+			}, 1);
 			if ($page.data.user?.username === $page.params.username) {
-				const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+                console.log({data}, $mainEl.scrollHeight - window.innerHeight)
+                console.log({interaction})
+				const pos = (data.article?.interactions?.[0]?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+                console.log({pos})
 				last_saved_progress = interaction?.progress || 0;
 				setTimeout(() => {
 					$mainEl.scrollTo(0, pos);
-				}, 10);
+				}, 2);
 			}
 		}
 	});

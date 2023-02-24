@@ -27,6 +27,7 @@
 	import { browser } from "$app/environment";
 	import Icon from "./helpers/Icon.svelte";
 	import { page } from "$app/stores";
+	import { LocalFileMention, suggestion } from "$lib/tiptap/LocalFileMention";
 
 	let element: Element;
 	let editor: Readable<Editor>;
@@ -89,6 +90,9 @@
 				// BubbleMenu.configure({
 				// 	element: bubble,
 				// }),
+                LocalFileMention.configure({
+                    suggestion
+                }),
 				Mention.configure({
 					HTMLAttributes: {
 						class: "mention",

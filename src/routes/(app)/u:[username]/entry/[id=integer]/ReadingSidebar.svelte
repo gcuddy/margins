@@ -32,7 +32,7 @@
 	import MovieEntrySidebar from "$lib/features/movies/MovieEntrySidebar.svelte";
 	import { addEntriesToCollection } from "$lib/features/collections/stores";
 	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
-	import { entryCollectionsQuery } from "$lib/features/entries/queries";
+	import { entryCollectionsQuery, entryDetailsQuery } from "$lib/features/entries/queries";
 	import Cluster from "$lib/components/helpers/Cluster.svelte";
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
 	import DotMenu from "$lib/components/DotMenu.svelte";
@@ -63,8 +63,8 @@
 	let WIDTH = 428;
 
 	let WIDTH_SPRING = tweened(WIDTH, {
-		duration: 400,
-		easing: customBackOut,
+		duration: 150,
+		// easing: customBackOut,
 		delay: 0,
 	});
 
@@ -124,7 +124,7 @@
 		style:margin-left="{$WIDTH_SPRING * -1}px"
 		style:--width="{WIDTH}px"
 		style:transform="translateX({$WIDTH_SPRING}px)"
-		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-l border-border  bg-base p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
+		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-l border-border  bg-base p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative shrink-0"
 	>
 		<!-- <div class="absolute top-0 left-0 h-full w-full bg-red-500" style:width="450px" /> -->
 
@@ -168,7 +168,29 @@
 										stateId: state.id,
 										entryId: $page.data.article.id,
 									});
-									await invalidateAll();
+                                    // queryClient.invalidateQueries({
+                                    //     queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
+                                    // })
+                                    // invalidate(entry:id)
+									// await invalidateAll();
+									syncStore.remove(s);
+								}}
+							/>
+                           {:else}
+                           <Muted class="text-sm">Status</Muted>
+							<StateCombobox
+								unsaved={true}
+								onSelect={async (state) => {
+									const s = syncStore.add();
+									await trpc().bookmarks.updateState.mutate({
+										stateId: state.id,
+										entryId: $page.data.article.id,
+                                        uri: $page.data.article.uri,
+									});
+                                    queryClient.invalidateQueries({
+                                        queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
+                                    })
+									// await invalidateAll();
 									syncStore.remove(s);
 								}}
 							/>
@@ -200,6 +222,9 @@
 									{#if relation.type === "Related"}
 										<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
 										<span class="sr-only">Related</span>
+                                    {:else if relation.type === "SavedFrom"}
+                                        <Icon name="arrowLeftMini" className="w-3 h-3 fill-muted/80" />
+                                        <span class="sr-only">Saved from</span>
 									{/if}
 									<a
 										href="/u:{$page.data.user?.username}/entry/{relation.relatedEntry.id}"

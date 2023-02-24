@@ -1,21 +1,19 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { goto, invalidate } from "$app/navigation";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import RichAnnotationInput from "$lib/components/annotations/RichAnnotationInput.svelte";
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Button from "$lib/components/Button.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
-	import StateCombobox from "$lib/components/StateCombobox.svelte";
+	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import dayjs from "$lib/dayjs";
 	import { stripGoogleBookCurl } from "$lib/features/books/utils";
-	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
 	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
 	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
 	import { nanoid } from "nanoid";
 	import { annotationQueryKeys } from "../annotations/queries";
-	import { entryDetailsQuery } from "../entries/queries";
 
 	export let bookId: string;
 	export let placeholderData: RouterOutputs["books"]["public"]["byId"] | undefined = undefined;
@@ -61,6 +59,14 @@
 
 	let busy = false;
 
+    $: isbn = $query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier ??
+			$query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_10")?.identifier
+    $: googleBooksimage = $query.data?.volumeInfo?.imageLinks?.thumbnail || $query.data?.volumeInfo?.imageLinks?.smallThumbnail
+    $: openLibraryImage = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : '';
+
+    $: image = openLibraryImage || googleBooksimage
+
+
 	const selectImage = (imageLinks: {
 		extraLarge?: string;
 		large?: string;
@@ -88,14 +94,20 @@
 			book.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier ??
 			book.industryIdentifiers?.find((i) => i.type === "ISBN_10")?.identifier}
 		{@const bookmark = $page.data.user?.bookmarks?.find((bookmark) => bookmark.entry?.uri === isbn)}
-		{@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)}
+		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
+		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
 		<div class="relative flex flex-col space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12">
-			<div class="flex flex-col gap-4">
-				<img
-					class="w-auto  rounded-xl  border border-border shadow-lg dark:border-border/25 sm:max-h-60"
-					src={image}
+			<div class="flex flex-col gap-4 p-2 sm:p-0 shrink-0">
+				<ImageLoader class="w-auto  rounded  border border-border drop-shadow-2xl dark:border-border/25 sm:max-h-60"
+                src={image || ''}
+                alt=""
+                on:error={e => image = googleBooksimage}  />
+				<!-- <img
+					class="w-auto  rounded  border border-border drop-shadow-2xl dark:border-border/25 sm:max-h-60"
+					src={openLibraryImage}
 					alt=""
-				/>
+                    on:error={e => image = googleBooksimage}
+				/> -->
 
 				{#if $page.route.id?.includes("entry") && $page.params.id}
 					{#if !todayLog}
@@ -236,18 +248,18 @@
 </AnnotationInput> -->
 
 			<RichAnnotationInput
-				on:expand={async(e) => {
+				on:expand={async (e) => {
 					// create this annotation, send it over to annotation/:id
 					const id = nanoid();
 					// should we snapshot it and just access it there? or set in some sort of store? maybe cache?
-                    console.log({e})
-                    await $saveNoteMutation.mutate({
-                        id,
-                        entryId: entry?.id,
-                        contentData: e.detail,
-                        type: "note",
-                    });
-                    await goto(`/u:${$page.data.user?.username}/annotations/${id}`);
+					console.log({ e });
+					await $saveNoteMutation.mutate({
+						id,
+						entryId: entry?.id,
+						contentData: e.detail,
+						type: "note",
+					});
+					await goto(`/u:${$page.data.user?.username}/annotations/${id}`);
 					// trpc().annotations.create.mutate({
 					// 	id,
 					// 	entryId: entry?.id,

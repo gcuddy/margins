@@ -25,6 +25,7 @@ export const entriesRouter = router({
                 .optional()
         )
         .query(async ({ ctx, input }) => {
+            // seems to be too much for ts!
             console.log(`listBookmarks`, input)
             const { userId, user } = ctx;
             const entries = await ctx.prisma.entry
@@ -92,13 +93,7 @@ export const entriesRouter = router({
                     },
                     take: 20,
                 })
-                .then((entries) =>
-                    entries.map((e) => {
-                        const { bookmarks, ...entry } = e;
-                        return { ...entry, bookmark: bookmarks[0] };
-                    })
-                );
-            return entries;
+            return entries
         }),
     load: protectedProcedure
         .input(

@@ -178,10 +178,11 @@ export const bookmarks = router({
                 stateId: z.number(),
                 id: z.number().nullish(),
                 entryId: z.number().optional(),
+                uri: z.string().optional(),
             })
         )
         .mutation(async ({ ctx, input }) => {
-            const { stateId, id, entryId } = input;
+            const { stateId, id, entryId, uri } = input;
             const { userId } = ctx;
             console.log({ stateId, id });
             if (id) {
@@ -198,12 +199,16 @@ export const bookmarks = router({
             } else {
                 return ctx.prisma.bookmark.upsert({
                     where: {
-                        entryId,
-                        userId,
+                        uri_entryId_userId: {
+                           uri: input.uri || '',
+                           entryId: entryId || -1,
+                           userId,
+                        }
                     },
                     create: {
                         stateId,
                         entryId,
+                        uri,
                         userId,
                     },
                     update: {
@@ -276,7 +281,7 @@ export const bookmarks = router({
             });
         }
     }),
-    update: protectedProcedure
+        update: protectedProcedure
         .input(
             z.object({
                 id: z.number().or(z.number().array()).optional(),
