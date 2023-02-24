@@ -36,6 +36,7 @@
 		"@tailwindcss/line-clamp": "^0.4.2",
 		"@tailwindcss/typography": "^0.5.9",
 		"@tanstack/svelte-virtual": "^3.0.0-beta.39",
+		"@total-typescript/ts-reset": "^0.3.7",
 		"@trpc/client": "^10.12.0",
 		"@trpc/server": "^10.12.0",
 		"@twitter-api-v2/plugin-token-refresher": "^1.0.0",
