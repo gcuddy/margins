@@ -58,8 +58,7 @@ const config = {
 			fontFamily: {
 				sans: ["InterVar", ...defaultTheme.fontFamily.sans],
 				newsreader: ["Newsreader", ...defaultTheme.fontFamily.serif],
-				crimson: ["Crimson Text", ...defaultTheme.fontFamily.serif],
-			},
+				crimson: ["Crimson Text", ...defaultTheme.fontFamily.serif], },
 			colors: {
 				light: colors.stone[50],
 				dark: colors.stone[800],

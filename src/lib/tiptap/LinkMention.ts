@@ -8,6 +8,8 @@ import { page } from '$app/stores'
 import { iconsMini } from '$lib/features/entries/utils'
 import { icons } from '$lib/icons'
 
+
+
 export type MentionOptions = {
     HTMLAttributes: Record<string, any>
     renderLabel: (props: { options: MentionOptions; node: ProseMirrorNode }) => string
