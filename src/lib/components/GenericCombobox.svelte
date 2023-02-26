@@ -72,7 +72,7 @@
 <Combobox
 	class="max-w-lg relative overflow-hidden rounded-lg bg-elevation transparency:bg-elevation/70 transparency:backdrop-blur-3xl transparency:backdrop-saturate-200  text-gray-700  shadow-2xl ring-1 ring-border dark:ring-gray-500/10 dark:transparency:bg-black/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200"
 	input={{
-		class: "bg-inherit text-sm",
+		class: "bg-inherit text-sm text-content",
 		placeholder,
 	}}
 	inputParent={{

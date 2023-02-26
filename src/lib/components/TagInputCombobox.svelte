@@ -6,6 +6,10 @@
 	import { onMount } from 'svelte';
 	import TagEntry from './TagEntry.svelte';
 
+    export let inputRef: HTMLElement | undefined = undefined;
+
+    export let expanded = false;
+
 	type AcceptedTag = Omit<Tag, 'createdAt' | 'updatedAt'>;
 
 	export let allTags: AcceptedTag[] = $page.data.tags || [];
@@ -46,6 +50,8 @@
 >
 	<TagEntry
 		size="sm"
+        bind:comboboxExpanded={expanded}
+        bind:ref={inputRef}
 		on:blur={(e) => {
 			// check for diff
 			ref.requestSubmit();

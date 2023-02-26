@@ -8,6 +8,10 @@ export const _InteractionModel = z.object({
   updatedAt: z.date(),
   is_read: z.boolean().nullish(),
   progress: z.number().nullish(),
+  /**
+   * The current page, if it's a book
+   */
+  currentPage: z.number().int().nullish(),
   finished: z.boolean().nullish(),
   entryId: z.number().int(),
   userId: z.string(),

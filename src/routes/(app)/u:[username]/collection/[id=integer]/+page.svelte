@@ -1,73 +1,72 @@
 <script lang="ts">
-	import Button from "$lib/components/Button.svelte";
-	import TipTap from "$lib/components/TipTap.svelte";
-	import type { PageData } from "./$types";
-	import { TabGroup, Tab, localStorageStore } from "@skeletonlabs/skeleton";
 	import { enhance } from "$app/forms";
+	import { page } from "$app/stores";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
+	import Button from "$lib/components/Button.svelte";
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
 	import CollectionEntry from "$lib/components/CollectionEntry.svelte";
+	import CustomizeView from "$lib/components/CustomizeView.svelte";
+	import EntryList from "$lib/components/EntryList.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import Header from "$lib/components/layout/Header.svelte";
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
-	import dayjs from "$lib/dayjs";
-	import { modals } from "$lib/stores/modals";
-	import { chosenIcon } from "$lib/types/icon";
-	import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@rgossiaux/svelte-headlessui";
-	import Sections from "./Sections.svelte";
-	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
-	import { trpc } from "$lib/trpc/client";
-	import type { JSONContent } from "@tiptap/core";
-	import { syncStore } from "$lib/stores/sync";
-	import CustomizeView from "$lib/components/CustomizeView.svelte";
-	import type { ViewOptions } from "$lib/types/schemas/View";
-	import EntryList from "$lib/components/EntryList.svelte";
-	import type { Entry } from "@prisma/client";
-	import { collectionQuery } from "$lib/features/collections/queries";
-	import { page } from "$app/stores";
-	import { nanoid } from "nanoid";
-	import type { RouterInputs } from "$lib/trpc/router";
 	import Tabs from "$lib/components/layout/tabs/Tabs.svelte";
+	import TipTap from "$lib/components/TipTap.svelte";
+	import dayjs from "$lib/dayjs";
 	import AnnotationListItem from "$lib/features/annotations/AnnotationListItem.svelte";
+	import { collectionQuery } from "$lib/features/collections/queries";
+	import { modals } from "$lib/stores/modals";
+	import { syncStore } from "$lib/stores/sync";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import type { RouterInputs } from "$lib/trpc/router";
+	import type { ViewOptions } from "$lib/types/schemas/View";
+	import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@rgossiaux/svelte-headlessui";
+	import { localStorageStore, Tab, TabGroup } from "@skeletonlabs/skeleton";
+	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+	import type { JSONContent } from "@tiptap/core";
+	import { nanoid } from "nanoid";
+	import type { PageData } from "./$types";
+	import Sections from "./Sections.svelte";
 	export let data: PageData;
+    $: query = data.query();
+
+
 	$: console.log({ data });
-	$: list = data.collection;
-	$: entries = list.items
+	$: list = $query.data;
+	$: entries = list?.items
 		?.filter((i) => i.entry)
 		.map((i) => i.entry)
-		.filter((i) => i);
-	$: flattened = list.items
+		.filter(Boolean)
+        || [];
+	$: flattened = list?.items
 		?.flatMap((i) => i.entry || i.children?.flatMap((i) => i.entry) || [])
-		.filter((i) => i);
+		.filter(Boolean)
+        || [];
 	$: console.log({ flattened });
-	//    $: sections = groupBy(list.items, (i) => i.section);
-	$: parsed = chosenIcon.safeParse(list.icon);
-	$: icon = parsed.success && parsed.data;
-	// const cachedArticlesStore = writable([]);
-	// // $: articles = list.items?.flatMap((i) => i.article)?.filter((i) => i) as ArticleInList[];
-	// const availableArticlesToAdd = derived(cachedArticlesStore, ($articles) => {
-	// 	const existingIds = articles?.map((a) => a.id) ?? [];
-	// 	return $articles?.articles?.filter((a) => !existingIds.includes(a.id)) || [];
-	// });
 	let favorited = false;
-	$: favorited = data.favorites.some((f) => f.collectionId === list.id);
+	$: favorited = data.favorites.some((f) => f.collectionId === list?.id);
 	$: folders = data.favorites.filter((f) => f.type === "FOLDER");
-
-	$: console.log({ folders });
-
-	$: console.log({ list });
-
 	const queryClient = useQueryClient();
 	// REVIEW: is this necessary?
-	$: query = createQuery({ ...collectionQuery(list.id, $page), onSuccess: (data) => (list = data) });
-	$: console.log({ $query });
 
 	const tabSet = localStorageStore("tabSet", "entries");
+
+
+    const client = trpcWithQuery($page)
+    const utils = client.createContext()
+    const annotationMutation = client.annotations.create.createMutation({
+        onSuccess: (data) => {
+            if (!list) return;
+            utils.collections.detail.invalidate({
+                id: list?.id
+            })
+        }
+    })
 
 	const addDocument = createMutation({
 		mutationFn: ({ id }: { id: string }) =>
 			trpc().annotations.create.mutate({
-				collectionId: list.id,
+				collectionId: list?.id,
 				type: "document",
 				id,
 			}),
@@ -79,7 +78,7 @@
 	const updateCollection = createMutation({
 		mutationFn: (data: RouterInputs["collections"]["updateCollection"]["data"]) =>
 			trpc().collections.updateCollection.mutate({
-				id: list.id,
+				id: list?.id,
 				data,
 			}),
 		onSuccess: (data, vars) => {
@@ -91,11 +90,11 @@
 		mutationFn: (title) =>
 			trpc().collections.createItem.mutate({
 				type: "Section",
-				collectionId: list.id,
+				collectionId: list?.id,
 				title,
 			}),
 		onMutate: async (title: string) => {
-			const { queryKey } = collectionQuery(list.id);
+			const { queryKey } = collectionQuery(list?.id);
 			await queryClient.cancelQueries({
 				queryKey,
 			});
@@ -130,8 +129,8 @@
 					);
 				}}
 			>
-				{#if icon}
-					<ChosenIcon chosenIcon={icon} />
+				{#if list?.icon}
+					<ChosenIcon chosenIcon={list.icon} />
 				{/if}
 				<SmallPlus>{list.name}</SmallPlus>
 			</button>
@@ -187,11 +186,12 @@
 		<div slot="end">
 			<Tabs tabs={["List", "Grid", "Kanban"]} />
 			<CustomizeView
-				on:view={({ detail: view }) => {
-					data.collection.viewOptions = {
-						...data.collection.viewOptions,
-						view,
-					};
+				on:view={({ detail }) => {
+                    view = detail
+					// data.collection.viewOptions = {
+					// 	...data.collection.viewOptions,
+					// 	view,
+					// };
 					$updateCollection.mutate({ viewOptions: { view } });
 					// save
 				}}
@@ -201,6 +201,13 @@
 </Header>
 
 <!-- secary header -> should this go in sidebar like reading sidebar/project sidebar for linear? in header / inline like letterboxd? -->
+{#if $query.isLoading}
+
+loading...
+
+{:else if $query.isSuccess}
+    {@const list = $query.data}
+
 <div class=" container mx-auto">
 	<div class="flex flex-col gap-2 text-sm">
 		<span>List by {list.userId}</span>
@@ -230,8 +237,10 @@
 
 	<Button
 		on:click={() =>
-			$addDocument.mutate({
+			$annotationMutation.mutate({
 				id: nanoid(),
+                collectionId: list?.id,
+				type: "document",
 			})}
 		variant="ghost"
 	>
@@ -263,16 +272,18 @@
 					// ((data.collection.items = n));
 				}}
 			/>
-		{:else if view === "grid"}
-			<EntryList
-				on:kanbandrop={async (e) => {
-					// TODO: invalidate queries
-				}}
-				items={flattened}
-				viewOptions={{
-					view: "grid",
+            {:else if view === "grid"}
+            <!--multi list grid  -->
+            Divide by section...
+			<Sections
+                {view}
+				items={list.items}
+				onFinalUpdate={(n) => {
+					console.log({ n });
+					// ((data.collection.items = n));
 				}}
 			/>
+
 		{:else if view === "kanban"}
 			<div class="flex flex-col space-y-2">
 				<div class="max-w-max overflow-hidden rounded-lg bg-elevation text-sm text-muted">
@@ -329,3 +340,4 @@
 	{/each} -->
 	</div>
 </div>
+{/if}

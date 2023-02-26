@@ -513,7 +513,8 @@
 	}
 
 	onMount(async () => {
-		if (browser && wrapper) {
+		if (wrapper) {
+            console.log({inlineAnnotations})
 			// load highlgihts
 			for (const annotation of inlineAnnotations) {
 				console.log({ annotation });

@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
-import type { RouterOutputs } from "$lib/trpc/router";
+	import type { RouterOutputs } from "$lib/trpc/router";
+	import classNames from "classnames";
 	import { tick } from "svelte";
 	import { dndzone, SOURCES, TRIGGERS } from "svelte-dnd-action";
 	import { flip } from "svelte/animate";
 	import Section from "./Section.svelte";
 
 	export let items: RouterOutputs["collections"]["detail"]["items"] = [];
-    $: console.log(`sections.svelte`, {items})
+	export let view: "list" | "grid" = "list";
+	$: console.log(`sections.svelte`, { items });
 	export let onFinalUpdate: (newItems: typeof items) => void;
 
 	// chunk items into sections
@@ -21,9 +23,9 @@ import type { RouterOutputs } from "$lib/trpc/router";
 		onFinalUpdate([...items]);
 	}
 
-    let dragDisabled = false;
+	let dragDisabled = false;
 
-    function startDrag(e: Event) {
+	function startDrag(e: Event) {
 		// preventing default to prevent lag on touch devices (because of the browser checking for screen scrolling)
 		e.preventDefault();
 		dragDisabled = false;
@@ -32,17 +34,20 @@ import type { RouterOutputs } from "$lib/trpc/router";
 
 <!-- {JSON.stringify(items)} -->
 <div
+	class={classNames({
+		grid: view === "grid",
+	})}
 	use:dndzone={{
 		items,
 		// type: "section",
 		flipDurationMs,
 		morphDisabled: true,
-        dragDisabled
+		dragDisabled,
 	}}
 	on:consider={(e) => (items = e.detail.items)}
 	on:finalize={async (e) => {
 		console.warn("got finalize section", e);
-        items = e.detail.items;
+		items = e.detail.items;
 
 		if (e.detail.info.trigger === TRIGGERS.DROPPED_INTO_ZONE) {
 			const id = e.detail.info.id;
@@ -51,29 +56,50 @@ import type { RouterOutputs } from "$lib/trpc/router";
 			const position =
 				(e.detail.items[idx - 1]?.position || -1) + (e.detail.items[idx + 1]?.position || -1) / 2;
 			console.log({ position });
-            const s = syncStore.add();
-           await trpc().collections.updateItem.mutate({
-                id,
-                data: {
-                    parentId: null,
-                    position,
-                },
-           });
-           syncStore.remove(s);
+			const s = syncStore.add();
+			await trpc().collections.updateItem.mutate({
+				id,
+				data: {
+					parentId: null,
+					position,
+				},
+			});
+			syncStore.remove(s);
 		}
 		// onFinalUpdate(e.detail.items)
 		// update server
-        if (e.detail.info.source === SOURCES.POINTER) {
-            // dragDisabled = true
-        }
+		if (e.detail.info.source === SOURCES.POINTER) {
+			// dragDisabled = true
+		}
 		onFinalUpdate(e.detail.items);
 	}}
 >
-	{#each items as item, idx (item.id)}
-		<div animate:flip={{ duration: flipDurationMs }}>
-			<Section on:mousedown={startDrag} on:touchstart={startDrag} on:click={() => {
-                tick().then(() => dragDisabled = true)
-            }} {item} onDrop={(newItems) => handleChildrenFinalize(idx, newItems)} />
+	<!-- filter so that we don't get empty items in here -->
+	{#each items.filter((item) => item.entry || item.annotation || item.type === "Section") as item, idx (item.id)}
+		<div class="mx-auto flex flex-col items-stretch" animate:flip={{ duration: flipDurationMs }}>
+			<Section
+				{view}
+				on:mousedown={startDrag}
+				on:touchstart={startDrag}
+				on:click={() => {
+					tick().then(() => (dragDisabled = true));
+				}}
+				{item}
+				onDrop={(newItems) => handleChildrenFinalize(idx, newItems)}
+			/>
 		</div>
 	{/each}
 </div>
+
+<style>
+	div.grid {
+		display: grid;
+		grid-gap: 1rem;
+	}
+
+	@supports (width: min(250px, 100%)) {
+		div.grid {
+			grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+		}
+	}
+</style>

@@ -2,7 +2,7 @@
 	import { page } from "$app/stores";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import TipTap from "$lib/components/TipTap.svelte";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import { createMutation } from "@tanstack/svelte-query";
 	import dayjs from "$lib/dayjs";
@@ -12,9 +12,25 @@
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
 	import IconPicker from "$lib/components/IconPicker.svelte";
 	export let data: PageData;
-	$: ({ annotation } = data);
+	$: query = data.query();
 
-	const updateAnnotationMutation = createMutation({
+    $: console.log({$query})
+
+    const client = trpcWithQuery($page);
+    const utils = client.createContext();
+	const updateAnnotationMutation = client.annotations.save.createMutation({
+        onSuccess: () => {
+            if ($query.data?.collections?.length) {
+                $query.data?.collections.forEach(({ collection }) => {
+                    utils.collections.detail.invalidate({
+                        id: collection.id
+                    })
+                })
+            }
+        }
+    })
+
+    let x = createMutation({
 		mutationFn: (input: RouterInputs["annotations"]["save"]) =>
 			trpc($page).annotations.save.mutate({
 				id: data.annotation.id,
@@ -22,10 +38,13 @@
 			}),
 	});
 
-	$: updatedAt = createRelativeDateStore(annotation.updatedAt);
+	$: updatedAt = createRelativeDateStore($query.data?.updatedAt);
 </script>
 
 <!-- TODO: replicate header here and for article/entry -->
+
+{#if $query.isSuccess && $query.data}
+{@const annotation = $query.data}
 <div class="mx-auto mt-16 mb-8 flex max-w-4xl  flex-col gap-2">
 	<!-- {annotation.createdAt} -->
 	<!-- collections: {JSON.stringify(annotation.collections)} -->
@@ -34,6 +53,7 @@
 			<IconPicker chosenIcon={annotation.chosenIcon} on:choose={({detail: chosenIcon}) => {
                 console.log({chosenIcon})
                 $updateAnnotationMutation.mutate({
+                    id: annotation.id,
                     chosenIcon
                 });
             }} iconClass="h-6 w-6 fill-current " />
@@ -46,9 +66,10 @@
 				const value = e.target.value;
 				$updateAnnotationMutation.mutate({
 					title: value,
+                    id: annotation.id
 				});
 			}}
-			value={data.annotation.title || ""}
+			value={$query.data.title || ""}
 		/>
 	</div>
 	<div class="border-t border-border" />
@@ -79,10 +100,11 @@
 	</div>
 	<!-- TODO: textarea with markdown if no js -->
 	<TipTap
-		on:blur={({ detail: contentData }) => $updateAnnotationMutation.mutate({ contentData })}
+		on:blur={({ detail: contentData }) => $updateAnnotationMutation.mutate({ contentData, id: annotation.id })}
 		class="!max-w-none"
 		config={{
-			content: data.annotation.contentData,
+			content: $query.data.contentData,
 		}}
 	/>
 </div>
+{/if}

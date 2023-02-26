@@ -9,7 +9,7 @@
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import dayjs from "$lib/dayjs";
 	import { stripGoogleBookCurl } from "$lib/features/books/utils";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
 	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
 	import { nanoid } from "nanoid";
@@ -21,13 +21,18 @@
 
 	$: todayLog = entry?.log.find((log) => dayjs(log.date).isSame(dayjs(), "day"));
 
-	$: query = createQuery({
-		queryKey: ["books", "detail", bookId],
-		queryFn: async () => trpc($page).books.public.byId.query(bookId),
+	$: query = trpcWithQuery($page).books.public.byId.createQuery(bookId, {
 		staleTime: 5 * 1000 * 60,
 		placeholderData,
 		onSuccess: (book) => console.log({ book }),
 	});
+	// $: query = createQuery({
+	// 	queryKey: ["books", "detail", bookId],
+	// 	queryFn: async () => trpc($page).books.public.byId.query(bookId),
+	// 	staleTime: 5 * 1000 * 60,
+	// 	placeholderData,
+	// 	onSuccess: (book) => console.log({ book }),
+	// });
 
 	const queryClient = useQueryClient();
 	const saveNoteMutation = createMutation({
@@ -57,15 +62,20 @@
 	});
 	// const entry = createQuery(entryDetailsQuery({ }))
 
+	// TODO: this data should be returned in query
+
 	let busy = false;
 
-    $: isbn = $query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier ??
-			$query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_10")?.identifier
-    $: googleBooksimage = $query.data?.volumeInfo?.imageLinks?.thumbnail || $query.data?.volumeInfo?.imageLinks?.smallThumbnail
-    $: openLibraryImage = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : '';
+	$: isbn =
+		$query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier ??
+		$query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_10")?.identifier;
+	$: googleBooksimage =
+		$query.data?.volumeInfo?.imageLinks?.thumbnail || $query.data?.volumeInfo?.imageLinks?.smallThumbnail;
+	$: openLibraryImage = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : "";
 
-    $: image = openLibraryImage || googleBooksimage
+	$: bookmarked = $page.data.user?.bookmarks.find((bookmark) => bookmark.entry?.uri === `isbn:${isbn}`);
 
+	$: image = openLibraryImage || googleBooksimage;
 
 	const selectImage = (imageLinks: {
 		extraLarge?: string;
@@ -97,11 +107,13 @@
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
 		<div class="relative flex flex-col space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12">
-			<div class="flex flex-col gap-4 p-2 sm:p-0 shrink-0">
-				<ImageLoader class="w-auto  rounded  border border-border drop-shadow-2xl dark:border-border/25 sm:max-h-60"
-                src={image || ''}
-                alt=""
-                on:error={e => image = googleBooksimage}  />
+			<div class="flex shrink-0 flex-col gap-4 p-2 sm:p-0">
+				<ImageLoader
+					class="w-auto  rounded  border border-border drop-shadow-2xl dark:border-border/25 sm:max-h-60"
+					src={image || ""}
+					alt=""
+					on:error={(e) => (image = googleBooksimage)}
+				/>
 				<!-- <img
 					class="w-auto  rounded  border border-border drop-shadow-2xl dark:border-border/25 sm:max-h-60"
 					src={openLibraryImage}
@@ -178,18 +190,21 @@
 							<input type="hidden" name="description" value={book.description} />
 							<input type="hidden" name="published" value={book.publishedDate} />
 							<input type="hidden" name="author" value={book.authors} />
+							<input type="hidden" name="pageCount" value={book.pageCount} />
 							<input type="hidden" name="image" value={image} />
 							<!-- {#if book.imageLinks}
 								<input type="hidden" name="image" value={selectImage(book.imageLinks)} />
 							{/if} -->
 							<input type="hidden" name="isbn" value={isbn} />
-							<Button type="submit" disabled={busy} className="self-start flex items-center">
-								{#if busy}
-									<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
-								{:else}
-									<span>Save</span>
-								{/if}
-							</Button>
+							{#if !bookmarked}
+								<Button type="submit" disabled={busy} className="self-start flex items-center">
+									{#if busy}
+										<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+									{:else}
+										<span>Save</span>
+									{/if}
+								</Button>
+							{/if}
 						</form>
 					{/if}
 					<dl class="grid grid-cols-[1fr,1fr,1fr] gap-3 pt-2">

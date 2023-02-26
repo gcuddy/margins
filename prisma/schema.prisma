@@ -275,6 +275,7 @@ model Entry {
     wordCount       Int?
     siteName        String?
     summary         String?      @db.MediumText
+    pageCount       Int?
     // REVIEW: should this be stored on the bookmark, instead?
     screenshot      String?
     media           Json?
@@ -626,6 +627,8 @@ model Interaction {
     updatedAt DateTime  @updatedAt
     is_read   Boolean?  @default(false)
     progress  Float?    @default(0)
+    /// The current page, if it's a book
+    currentPage Int?
     finished  Boolean?  @default(false)
     entry     Entry     @relation(fields: [entryId], references: [id])
     entryId   Int
@@ -657,6 +660,9 @@ model Log {
 
     entry   Entry @relation(fields: [entryId], references: [id])
     entryId Int
+
+    // TODO: duration, page count, etc.
+    // Should annotations be a form of log?
 
     note String?
 

@@ -1,5 +1,5 @@
 import superjson from "superjson";
-import { type TRPCClientInit, createTRPCClient } from "trpc-sveltekit";
+import { createTRPCClient,type TRPCClientInit } from "trpc-sveltekit";
 
 import type { Router } from "$lib/trpc/router";
 
@@ -36,4 +36,20 @@ export function trpc(init?: TRPCClientInit) {
     //         transformer: superjson,
     //     });
     // return browserClient;
+}
+
+import type { QueryClient } from '@tanstack/svelte-query';
+import { svelteQueryWrapper } from 'trpc-svelte-query-adapter';
+
+let browserClient2: ReturnType<typeof svelteQueryWrapper<Router>>;
+
+export function trpcWithQuery(init?: TRPCClientInit, queryClient?: QueryClient) {
+  const isBrowser = typeof window !== 'undefined';
+  if (isBrowser && browserClient2) return browserClient2;
+  const client = svelteQueryWrapper<Router>({
+    client: createTRPCClient<Router>({ init, transformer: superjson  }),
+    queryClient
+  });
+  if (isBrowser) browserClient2 = client;
+  return client;
 }

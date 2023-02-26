@@ -1,4 +1,5 @@
-import { entriesByLocationQuery } from "$lib/features/entries/queries";
+import { browser } from "$app/environment";
+import { trpcWithQuery } from "$lib/trpc/client";
 
 import type { PageLoad } from "./$types";
 
@@ -11,10 +12,10 @@ export const load = (async (event) => {
 	// 	location: data.location,
 	// }, event));
     event.depends("entries")
-	const entries = await queryClient.ensureQueryData(entriesByLocationQuery({
-		location: data.location,
-	}, event));
-    console.log({entries})
+    const client = trpcWithQuery(event, queryClient);
+    const query = client.entries.listBookmarks.createServerQuery({
+        location: data.location
+    })
 
     // queryClient.prefetchQuery(entriesByLocationQuery({
     //     location: data.location
@@ -26,7 +27,7 @@ export const load = (async (event) => {
 	return {
 		...data,
 		...(await parent()),
-		entries
+        query: !browser ? query : undefined,
 	};
 }) satisfies PageLoad;
 

@@ -1,16 +1,20 @@
-import { collectionQuery } from '$lib/features/collections/queries';
+import { browser } from '$app/environment';
+import { trpcWithQuery } from '$lib/trpc/client';
 
 import type { PageLoad } from './$types';
 
 export const load = (async (e) => {
     const { parent, params } = e
     const { queryClient } = await parent();
-    const query = collectionQuery(Number(params.id), e);
-    const collection = await queryClient.ensureQueryData(query);
-    // queryClient.prefetchQuery(query);
-    console.log({ collection })
+    const client = trpcWithQuery(e, queryClient);
+   if (!browser) {
+    // create server query
+    // else just return id and create in client?
+   }
     return {
-        collection,
+        query: client.collections.detail.createServerQuery({ id: Number(params.id) }, {
+            staleTime: 1000 * 60 * 60 * 24 * 7,
+        }),
         id: Number(params.id),
     };
 }) satisfies PageLoad;

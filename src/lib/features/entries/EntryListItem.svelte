@@ -18,6 +18,9 @@
 		type?: DocumentType;
 	};
 
+    // float
+    export let progress = 0;
+
 	// export let entry: Entry;
 	export let active = false;
 	export let checked = $selectedIds.includes(entry.id);
@@ -66,14 +69,14 @@
 	class="item relative flex h-full flex-initial items-center gap-4  p-4  transition {c}"
 >
 	<div
-		class="flex-inital relative flex h-16 w-14 shrink-0 cursor-pointer flex-row  items-center overflow-hidden rounded-md transition {entry.id
+		class="flex-inital relative flex h-16 w-14 shrink-0 drop-shadow-lg cursor-pointer flex-row  items-center overflow-hidden rounded-md transition {entry.id
 			? 'hover:ring'
 			: ''}"
 		on:click|stopPropagation
 		on:keydown
 	>
 		<img
-			class=" h-full w-full  shrink-0 cursor-pointer rounded-md border border-black/30 object-cover shadow-sm hover:ring-1"
+			class=" h-full w-full  shrink-0 cursor-pointer rounded-md ring-1 ring-border/50  object-cover shadow-sm hover:ring-1"
 			src={imgsrc}
 			alt=""
 		/>

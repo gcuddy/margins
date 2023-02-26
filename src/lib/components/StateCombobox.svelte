@@ -17,7 +17,8 @@
 	import { tweened } from "svelte/motion";
 
 	export let state = $page.data.user?.states?.find((s) => s.id === $page.data.user?.default_state_id);
-    export let unsaved = false;
+	export let unsaved = false;
+    export let buttonWrapper: HTMLDivElement | undefined = undefined;
 	$: console.log({ state, $page });
 	$: name = state?.name;
 	$: location = state?.type;
@@ -58,112 +59,66 @@
 <!-- <GenericCombobox /> -->
 
 <!-- TODO: progressive enhancement version (simple select and go) -->
-{#if state}
-	<Popover --height={$height}>
-		<input type="hidden" name="state" value={state.id} />
+<Popover --height={$height}>
+	<input type="hidden" name="state" value={state.id} />
+	<div bind:this={buttonWrapper} class="button-wrapper">
 		<PopoverButton
-			class="relative flex cursor-default items-center gap-1 rounded py-1 px-2 text-left transition hover:bg-gray-200 focus-visible:bg-gray-200 focus-visible:ring-2   dark:hover:bg-gray-700 dark:focus-visible:bg-gray-700 dark:focus-visible:ring-offset-stone-900"
+			class="relative flex cursor-default items-center gap-1 rounded py-1 px-2 text-left transition focus-visible:bg-gray-200 focus-visible:ring-2 hover:bg-gray-200   dark:focus-visible:bg-gray-700 dark:focus-visible:ring-offset-stone-900 dark:hover:bg-gray-700"
 			use={[popperRef]}
 		>
-        {#if unsaved}
-        unsaved
-        {:else}
-			{#if includeIcon}
-				<Icon name={LOCATION_TO_ICON_SOLID[location]} className="h-4 w-4 fill-gray-600 dark:fill-gray-500" />
-			{/if}
-			{#if label}
-				<SmallPlus {size}>{name}</SmallPlus>{/if}
-                {/if}
-		</PopoverButton>
-		<PopoverPanel
-			let:close
-			class="z-50 h-[calc(var(--height)*1px)] text-sm"
-			use={[[popperContent, popperOptions]]}
-		>
-			<GenericCombobox
-				bind:ref={combobox}
-				bind:height
-				static
-				autofocus
-				values={states}
-				placeholder="Change status…"
-				selectedValue={[state]}
-				onSelect={async (e) => {
-					state = e;
-					// close
-					close(null);
-					if (onSelect) {
-						onSelect(e);
-					}
-				}}
-				let:value
-				let:selected
-				let:active
-			>
-				<div class="flex h-8 items-center gap-2 px-2 text-sm">
+			{#if unsaved}
+				unsaved
+			{:else}
+				{#if includeIcon}
 					<Icon
-						className="h-4 w-4 {active ? 'fill-gray-100' : 'fill-gray-400'}"
-						name={LOCATION_TO_ICON_SOLID[value.type]}
+						name={LOCATION_TO_ICON_SOLID[location]}
+						className="h-4 w-4 fill-gray-600 dark:fill-gray-500"
 					/>
-
-					<span class="grow {active ? 'text-gray-100' : 'text-gray-400'}">{value.name}</span>
-					{#if selected}
-						<Icon name="checkMini" className="h-4 w-4 fill-gray-400" />
-					{/if}
-				</div>
-			</GenericCombobox>
-		</PopoverPanel>
-	</Popover>
-	<noscript>
-		<!-- select menu here (and don't render above) -->
-	</noscript>
-	<!--
-<Listbox
-	value={state.id}
-	on:change={(e) => (state = states.find((s) => s.id === e.detail) || state)}
-	on:change
-	class={className}
->
-	<HiddenInput name="location" value={name} />
-	<ListboxLabel class="sr-only">Current location:</ListboxLabel>
-	<TooltipRef {tooltip}>
-		<ListboxButton
-			class="relative flex cursor-default items-center gap-1 rounded py-1 px-2 text-left transition focus-visible:ring-2  {variant ===
-			'naked'
-				? 'hover:bg-gray-200 focus-visible:bg-gray-200   dark:hover:bg-gray-700 dark:focus-visible:bg-gray-700 dark:focus-visible:ring-offset-stone-900'
-				: 'border border-gray-300 shadow-sm dark:border-gray-600 dark:bg-gray-700'}"
-		>
-			{#if includeIcon}
-				<Icon
-					name={LOCATION_TO_ICON_SOLID[location]}
-					className="h-4 w-4 fill-gray-600 dark:fill-gray-500"
-				/>
+				{/if}
+				{#if label}
+					<SmallPlus {size}>{name}</SmallPlus>{/if}
 			{/if}
-			{#if label}
-				<SmallPlus {size}>{name}</SmallPlus>{/if}
-		</ListboxButton>
-	</TooltipRef>
-	<ListboxOptions
-		class="absolute z-20 mt-1 flex min-w-min flex-col overflow-hidden rounded-lg bg-gradient-to-br from-gray-100 to-gray-50 text-sm shadow-2xl ring-1 ring-black/5 focus:outline-none dark:from-gray-900 dark:to-gray-800 dark:text-gray-50 dark:shadow-stone-900"
+		</PopoverButton>
+	</div>
+	<PopoverPanel
+		let:close
+		class="z-50 h-[calc(var(--height)*1px)] text-sm"
+		use={[[popperContent, popperOptions]]}
 	>
-		{#each states as state (state.id)}
-			<ListboxOption
-				class={({ active }) =>
-					`flex cursor-default items-center space-x-3 py-1.5 pl-3 pr-5 ${
-						active && 'bg-gray-200 dark:bg-gray-700'
-					}`}
-				value={state.id}
-				let:active
-				style="--state-color: {state.color || '#57534e'};"
-			>
+		<GenericCombobox
+			bind:ref={combobox}
+			bind:height
+			static
+			autofocus
+			values={states}
+			placeholder="Change status…"
+			selectedValue={[state]}
+			onSelect={async (e) => {
+				state = e;
+				// close
+				close(null);
+				if (onSelect) {
+					onSelect(e);
+				}
+			}}
+			let:value
+			let:selected
+			let:active
+		>
+			<div class="flex h-8 items-center gap-2 px-2 text-sm">
 				<Icon
-					name={LOCATION_TO_ICON_SOLID[state.type]}
-					className="h-4 w-4 fill-[var(--state-color)] {active &&
-						'dark:fill-gray-100 fill-gray-900'}"
+					className="h-4 w-4 {active ? 'fill-gray-100' : 'fill-gray-400'}"
+					name={LOCATION_TO_ICON_SOLID[value.type]}
 				/>
-				<span>{state.name}</span>
-			</ListboxOption>
-		{/each}
-	</ListboxOptions>
-</Listbox> -->
-{/if}
+
+				<span class="grow {active ? 'text-gray-100' : 'text-gray-400'}">{value.name}</span>
+				{#if selected}
+					<Icon name="checkMini" className="h-4 w-4 fill-gray-400" />
+				{/if}
+			</div>
+		</GenericCombobox>
+	</PopoverPanel>
+</Popover>
+<noscript>
+	<!-- select menu here (and don't render above) -->
+</noscript>

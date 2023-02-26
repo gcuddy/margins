@@ -28,7 +28,7 @@
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import { Annotation, DocumentType, Tag } from "@prisma/client";
 	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
@@ -52,21 +52,29 @@
 	dayjs.extend(localizedFormat);
 	export let data: PageData;
 	const queryClient = useQueryClient();
-	$: article = data.article;
+	// $: article = data.article;
 	// let article: RouterOutputs["entries"]["load"];
-	$: query = createQuery({
-		...entryDetailsQuery({
-			id: data.id,
-		}),
-		onSettled: (data, error) => {
-			console.log(`entrydetails`, { data, error });
-		},
-		onSuccess: (entry) => {
-			console.log({ entry });
-			// REVIEW: is this bad - probaly!
-			data.article = entry;
-		},
-	});
+	$: query = data.query ? data.query() : trpcWithQuery($page).entries.load.createQuery({
+        id: data.id,
+    }, {
+        placeholderData: data.placeholderData,
+    });
+	// $: query = data.query();
+    $: console.log({$query})
+	$: article = $query.data;
+	// $: query = createQuery({
+	// 	...entryDetailsQuery({
+	// 		id: data.id,
+	// 	}),
+	// 	onSettled: (data, error) => {
+	// 		console.log(`entrydetails`, { data, error });
+	// 	},
+	// 	onSuccess: (entry) => {
+	// 		console.log({ entry });
+	// 		// REVIEW: is this bad - probaly!
+	// 		data.article = entry;
+	// 	},
+	// });
 
 	$: stylesheet = data.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
 	let entry: Metadata;
@@ -77,29 +85,29 @@
 	} | null = null;
 	let tags: Tag[] = data.article?.tags;
 	let bookmark: ExtendedBookmark | null = null;
-
+	$: entry = article;
 	// TODO: fix this whole mess
-	$: if ("entryId" in data?.article) {
-		// bookmark
-		// TOOD: zod parsing
-		console.log({ data });
-		if (typeof data.article.data === "object") {
-			entry = {
-				...entryData.parse(data.article.data),
-				id: data.article.entryId,
-				uri: data.article.uri,
-			};
-			annotations = data.article.annotations;
-			interaction = data.article.interaction;
-			bookmark = data.article;
-		}
-	} else {
-		entry = data.article;
-		annotations = data.article.annotations;
-		interaction = data.article.interaction;
-		bookmark = data.article.bookmark;
-		// TODO: annotations, etc
-	}
+	// $: if ("entryId" in data?.article) {
+	// 	// bookmark
+	// 	// TOOD: zod parsing
+	// 	console.log({ data });
+	// 	if (typeof data.article.data === "object") {
+	// 		entry = {
+	// 			...entryData.parse(data.article.data),
+	// 			id: data.article.entryId,
+	// 			uri: data.article.uri,
+	// 		};
+	// 		annotations = data.article.annotations;
+	// 		interaction = data.article.interaction;
+	// 		bookmark = data.article;
+	// 	}
+	// } else {
+	// 	entry = data.article;
+	// 	annotations = data.article.annotations;
+	// 	interaction = data.article.interaction;
+	// 	bookmark = data.article.bookmark;
+	// 	// TODO: annotations, etc
+	// }
 	$: last_scroll_position = (interaction?.progress as number) || 0;
 	let errors: { message: string; path: string[] }[] | null = null;
 
@@ -374,10 +382,11 @@
 				console.log(document.activeElement);
 			}, 1);
 			if ($page.data.user?.username === $page.params.username) {
-                console.log({data}, $mainEl.scrollHeight - window.innerHeight)
-                console.log({interaction})
-				const pos = (data.article?.interactions?.[0]?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
-                console.log({pos})
+				console.log({ data }, $mainEl.scrollHeight - window.innerHeight);
+				console.log({ interaction });
+				const pos =
+					($query.data?.interactions?.[0]?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+				console.log({ pos });
 				last_saved_progress = interaction?.progress || 0;
 				setTimeout(() => {
 					$mainEl.scrollTo(0, pos);
@@ -499,8 +508,8 @@
 	// const containerRef = writable<HTMLElement | null>(null);
 	setContext(containerRefContextKey, mainEl);
 
-    let player: YouTubePlayer | undefined = undefined;
-    $: console.log({player})
+	let player: YouTubePlayer | undefined = undefined;
+	$: console.log({ player });
 </script>
 
 <!-- TODO: implement layout select -->
@@ -526,155 +535,168 @@
 <!-- <div use:popperContent>Tooltip</div> -->
 
 <!-- {JSON.stringify($currentList)} -->
-<ReadingMenu
-	{bookmark}
-	bind:entry={data.article}
-	{interaction}
-	back={$currentList ? $currentList.slug : "/"}
-	currentList={$currentList}
-/>
-
 <svelte:head>
-	<title>{entry.title}</title>
+	<!-- <title>{entry.title}</title> -->
 </svelte:head>
+{#if article}
+	<ReadingMenu
+		{bookmark}
+		bind:entry={article}
+		{interaction}
+		back={$currentList ? $currentList.slug : "/"}
+		currentList={$currentList}
+	/>
 
-{@html `<` + `style>${data?.css}</style>`}
-{#if errors?.length}
-	{#each errors as error}
-		<small class="text-red-500">{error.message}</small>
-	{/each}
-{/if}
-<div class="flex grow flex-col overflow-hidden bg-skin-entry-bg">
-	<div
-		on:dblclick|preventDefault|stopPropagation={(e) => {
-			console.log(e);
-			// todo: use x and y to create annotation, attach to nearest node
-		}}
-		data-content-container
-		class="relative flex h-full grow items-stretch overflow-hidden"
-	>
+	{@html `<` + `style>${data?.css}</style>`}
+	{#if errors?.length}
+		{#each errors as error}
+			<small class="text-red-500">{error.message}</small>
+		{/each}
+	{/if}
+	<div class="flex grow flex-col overflow-hidden bg-skin-entry-bg">
 		<div
-			class="simple-scrollbar article-container relative flex grow flex-col items-stretch overflow-auto focus-visible:outline-none"
-			bind:this={$mainEl}
-			tabindex="-1"
+			on:dblclick|preventDefault|stopPropagation={(e) => {
+				console.log(e);
+				// todo: use x and y to create annotation, attach to nearest node
+			}}
+			data-content-container
+			class="relative flex h-full grow items-stretch overflow-hidden"
 		>
-			<!-- TODO: py-8 px-4 should be set on a per-type basis -->
-			<article data-article class=" mt-14 h-full  px-1 sm:p-4">
-				{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
-					<div class="">
-                        <header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
-                            <!-- {article.feedId
+			<div
+				class="simple-scrollbar article-container relative flex grow flex-col items-stretch overflow-auto focus-visible:outline-none"
+				bind:this={$mainEl}
+				tabindex="-1"
+			>
+				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
+				<article data-article class=" mt-14 h-full  px-1 sm:p-4 select-text">
+					{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
+						<div class="">
+							<header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
+								<!-- {article.feedId
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
                                 : article.uri} -->
-                            <a
-                                class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
-                                href={article.uri}
-                            >
-                                <img
-                                    src="https://icon.horse/icon/?uri={article.uri}"
-                                    class="h-5 w-5 rounded-full object-cover"
-                                    alt=""
-                                />
-                                <span class="truncate">{entry.siteName || entry.uri}</span></a
-                            >
-                            <H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
-                            <!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
-                            {#if entry.summary}
-                                <div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
-                                    {entry.summary}
-                                </div>
-                            {/if}
-                            <div class="flex justify-between">
-                                <div id="origin" class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base">
-                                    {#if entry.author}
-                                        <p><a href="/author/{entry.author}">{entry.author}</a></p>
-                                    {/if}
-                                    {#if entry.author && entry.published}
-                                        <!-- <p>&middot;</p> -->
-                                    {/if}
-                                    {#if entry.published}
-                                        <p>{dayjs(entry.published).format("ll")}</p>
-                                    {/if}
-                                    {#if entry.wordCount}
-                                        <span>{entry.wordCount} words</span>
-                                    {/if}
-                                </div>
-                            </div>
-                            {#if !data.authorized}
-                                <span class="rounded bg-amber-400 px-1 text-white">
-                                    Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
-                                </span>
-                            {/if}
-                            {#if data.authorized && data.article.bookmark && data.article.tags}
-                                <div transition:slide|local>
-                                    <TagInputCombobox
-                                        original={{ ...data.article }}
-                                        allTags={$page.data.tags}
-                                        tags={data.article.tags.map((tag) => ({
-                                            ...tag,
-                                            ...$page.data.tags?.find((t) => t.id === tag.id),
-                                        }))}
-                                    />
-                                </div>
-                            {/if}
-                        </header>
-                        {#if article.type === DocumentType.audio}
-                            <AudioEntry entry={article} />
-                        {/if}
-                        <!-- this is a very rudimentary check lol -->
-                        <div id="entry-container">
-                            <Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
-                                {@html entry.html || entry.text || entry.summary || "[No content]"}
-                            </Highlighter>
-                        </div>
-                        <noscript>
-                            <HighlightMenu noHighlight={true} articleId={article.id} />
-                        </noscript>
-                    </div>
-				{:else if article.type === DocumentType.book}
-					<BookEntry entry={article} bookId={article?.googleBooksId} />
-				{:else if article.type === DocumentType.bookmark}
-					<BookmarkEntry entry={article} />
-				{:else if article.type === DocumentType.image}
-					{#if article.image}
-						<ImageEntry image={article.image} />
-					{/if}
-				{:else if article.type === "movie"}
-					<MovieEntry id={data.article.tmdbId} />
-				{:else if article.type === DocumentType.audio && article.podcastIndexId}
-					<!-- decide if podcast or not podcast -->
-					{#if article.podcastIndexId}
-						<Episode episodeId={article.podcastIndexId} />
-					{:else}
-						<AudioEntry entry={article} />
-					{/if}
-				{:else if article.type === "tweet"}
-					<!-- {JSON.stringify(article)} -->
+								<a
+									class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
+									href={article.uri}
+								>
+									<img
+										src="https://icon.horse/icon/?uri={article.uri}"
+										class="h-5 w-5 rounded-full object-cover"
+										alt=""
+									/>
+									<span class="truncate">{entry.siteName || entry.uri}</span></a
+								>
+								<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
+								<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
+								{#if entry.summary}
+									<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
+										{entry.summary}
+									</div>
+								{/if}
+								<div class="flex justify-between">
+									<div
+										id="origin"
+										class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
+									>
+										{#if entry.author}
+											<p><a href="/author/{entry.author}">{entry.author}</a></p>
+										{/if}
+										{#if entry.author && entry.published}
+											<!-- <p>&middot;</p> -->
+										{/if}
+										{#if entry.published}
+											<p>{dayjs(entry.published).format("ll")}</p>
+										{/if}
+										{#if entry.wordCount}
+											<span>{entry.wordCount} words</span>
+										{/if}
+									</div>
+								</div>
+								{#if !data.authorized}
+									<span class="rounded bg-amber-400 px-1 text-white">
+										Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
+									</span>
+								{/if}
+								{#if data.authorized && article.bookmark && article.tags}
+									<div transition:slide|local>
+										<TagInputCombobox
+											original={{ ...article }}
+											allTags={$page.data.tags}
+											tags={article.tags.map((tag) => ({
+												...tag,
+												...$page.data.tags?.find((t) => t.id === tag.id),
+											}))}
+										/>
+									</div>
+								{/if}
+							</header>
+							{#if article.type === DocumentType.audio}
+								<AudioEntry entry={article} />
+							{/if}
+							<!-- this is a very rudimentary check lol -->
+							<div id="entry-container">
+								<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
+									{@html entry.html || entry.text || entry.summary || "[No content]"}
+								</Highlighter>
+							</div>
+							<noscript>
+								<HighlightMenu noHighlight={true} articleId={article.id} />
+							</noscript>
+						</div>
+					{:else if article.type === DocumentType.book}
+						<BookEntry entry={article} bookId={article?.googleBooksId} />
+					{:else if article.type === DocumentType.bookmark}
+						{@const screenshot = article.screenshot || article.bookmark?.screenshot}
+						<BookmarkEntry
+							entry={{
+								...article,
+								screenshot,
+							}}
+						/>
+					{:else if article.type === DocumentType.image}
+						{#if article.image}
+							<ImageEntry image={article.image} />
+						{/if}
+					{:else if article.type === "movie" && article.tmdbId}
+						<MovieEntry id={article.tmdbId} />
+					{:else if article.type === DocumentType.audio && article.podcastIndexId}
+						<!-- decide if podcast or not podcast -->
+						{#if article.podcastIndexId}
+							<Episode episodeId={article.podcastIndexId} />
+						{:else}
+							<AudioEntry entry={article} />
+						{/if}
+					{:else if article.type === "tweet"}
+						<!-- {JSON.stringify(article)} -->
 
-					<TweetEntry tweet={article.original} />
-				{:else if article.type === DocumentType.recipe && article.recipe}
-					<!-- TODO: display html or recipe -->
-					<RecipeEntry recipe={article.recipe} />
-				{:else if article.type === DocumentType.video && article.youtubeId}
-					<VideoEntry bind:player entry={article} />
-					<!-- <Youtube videoId={article.youtubeId} /> -->
-					<!-- {@html article.html} -->
-				{/if}
-			</article>
+						<TweetEntry tweet={article.original} />
+					{:else if article.type === DocumentType.recipe && article.recipe}
+						<!-- TODO: display html or recipe -->
+						<RecipeEntry recipe={article.recipe} />
+					{:else if article.type === DocumentType.video && article.youtubeId}
+						<VideoEntry bind:player entry={article} />
+						<!-- <Youtube videoId={article.youtubeId} /> -->
+						<!-- {@html article.html} -->
+					{/if}
+				</article>
+			</div>
+			<!-- Reading Sidebar -->
+			{#if $query.isSuccess}
+				<ReadingSidebar
+					on:seek={async ({ detail }) => {
+						console.log({ detail });
+						console.log({ player });
+						await player?.seekTo(detail, true);
+					}}
+					entry={$query.data}
+				/>
+			{/if}
+			{#if data.css}
+				<Booster bind:css={data.css} />
+			{/if}
 		</div>
-		<!-- Reading Sidebar -->
-		{#if $query.isSuccess}
-			<ReadingSidebar on:seek={async ({detail}) => {
-                console.log({detail})
-                console.log({player})
-                await player?.seekTo(detail, true)
-            }} entry={$query.data} />
-		{/if}
-		{#if data.css}
-			<Booster bind:css={data.css} />
-		{/if}
 	</div>
-</div>
+{/if}
 
 <style lang="postcss">
 	.article-container {

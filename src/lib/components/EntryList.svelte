@@ -455,7 +455,7 @@
 				: ''}"
 			use:dndzone={{
 				items: items,
-				flipDurationMs: $flipDurationMs,
+				// flipDurationMs: $flipDurationMs,
 				dragDisabled,
 				transformDraggedElement,
 				dropTargetStyle: {},
@@ -540,7 +540,7 @@
 										>
 											{#if viewOptions.properties?.image}
 												<div
-													class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition  {viewOptions.view ===
+													class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition ring-1 ring-border/50 drop-shadow-xl  {viewOptions.view ===
 													'list'
 														? 'h-16 w-14 rounded-md hover:ring'
 														: 'col-span-4 h-full md:h-28 md:w-full'}"
@@ -566,7 +566,7 @@
 															{src}
 															alt=""
 														/> -->
-                                                        <ImageLoader {src} alt="" class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
+                                                        <ImageLoader wrapper="w-full h-full" {src} alt="" class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
 															'list'
 																? 'h-full w-full rounded-md shadow-sm hover:ring-1'
 																: ' h-40 w-full rounded-t-md'}" />
@@ -880,10 +880,11 @@
 											</div>
 										</div> -->
 									{:else if item.type === DocumentType.bookmark}
+                                    {@const screenshot = item.screenshot || item.bookmarks?.[0]?.screenshot}
 										<EntryListItem
 											entry={{
 												...item,
-												image: $page.data.S3_BUCKET_PREFIX + item.screenshot,
+												image: screenshot ? $page.data.S3_BUCKET_PREFIX + screenshot : null,
 											}}
 										/>
 									{:else if item.type === DocumentType.image}

@@ -29,6 +29,7 @@ export const _EntryModel = z.object({
   wordCount: z.number().int().nullish(),
   siteName: z.string().nullish(),
   summary: z.string().nullish(),
+  pageCount: z.number().int().nullish(),
   screenshot: z.string().nullish(),
   media: jsonSchema,
   published: z.date().nullish(),

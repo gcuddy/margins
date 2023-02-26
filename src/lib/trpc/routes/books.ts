@@ -21,6 +21,7 @@ export const saveInputSchema = z.object({
     description: z.string().optional(),
     isbn: z.string(),
     published: z.coerce.date(),
+    pageCount: z.coerce.number()
 });
 
 export const booksRouter = router({
@@ -35,6 +36,7 @@ export const booksRouter = router({
             type: DocumentType.book,
             uri: 'isbn:' + input.isbn,
             published: input.published,
+            pageCount: input.pageCount
         }
         const bookEntry = await ctx.prisma.entry.upsert({
             where: {
@@ -84,6 +86,13 @@ export const booksRouter = router({
                 // projection: "lite",
             });
             if (results.status === 200) {
+                // ensure no duplicate results
+                const ids = new Set((results.data.items?.map(item => item.id).filter(Boolean)) || []);
+                const items = Array.from(ids).map(id => results.data.items?.find(item => item.id === id)).filter(Boolean);
+                return {
+                    ...results.data,
+                    items
+                }
                 return results.data;
             } else {
                 throw new TRPCError({

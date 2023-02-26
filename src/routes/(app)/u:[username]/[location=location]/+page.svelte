@@ -11,6 +11,7 @@
 	import { useFilterQuery } from "$lib/features/entries/filter";
 	import { entriesByLocationQuery } from "$lib/features/entries/queries";
 	import Filters from "$lib/features/filters/Filters.svelte";
+	import { trpcWithQuery } from "$lib/trpc/client";
 	import { LOCATION_TO_DISPLAY } from "$lib/types/schemas/Locations";
 	import { defaultViewOptions, type ViewOptions } from "$lib/types/schemas/View";
 	import type { Prisma } from "@prisma/client";
@@ -30,32 +31,14 @@
 		// items: data.entries,
 	});
 	$: currentList = data.currentList;
-$: locationStateIds = $page.data.user?.states?.filter(s => s.type === location).map(s => s.id) ?? [];
+	$: locationStateIds = $page.data.user?.states?.filter((s) => s.type === location).map((s) => s.id) ?? [];
 	// $: console.log({ $currentList });
 
-	$: query = createQuery({
-		...entriesByLocationQuery(
-			{
+	$: query = data.query
+		? data.query()
+		: trpcWithQuery($page).entries.listBookmarks.createQuery({
 				location: data.location,
-			},
-			$page
-		),
-        onSettled: (data) => {
-            console.log('onSettled', data);
-        },
-        // This select just confirms that the entry has a bookmark with the correct location
-        // This is useful if we manipulate the cache directly for optimistic updates
-        // (moved to svelte-land below)
-        // select: (entries) => entries.filter(e => {
-        //     const stateId = e.bookmarks?.[0]?.stateId;
-        //     if (!stateId) return true;
-        //     if (locationStateIds.includes(stateId)) {
-        //         return true
-        //     } else {
-        //         return false;
-        //     }
-        // })
-	});
+		  });
 
 	$: console.log({ $query });
 
@@ -126,16 +109,18 @@ $: locationStateIds = $page.data.user?.states?.filter(s => s.type === location).
 {:else if $query.isError}
 	<div>Error</div>
 {:else if $query.isSuccess}
-	<EntryList items={$query.data.filter(e => {
-        const stateId = e.bookmarks?.[0]?.stateId;
-        console.log({stateId, locationStateIds})
-        if (!stateId) return true;
-        if (locationStateIds.includes(stateId)) {
-            return true
-        } else {
-            return false;
-        }
-    })}>
+	<EntryList
+		items={$query.data.filter((e) => {
+			const stateId = e.bookmarks?.[0]?.stateId;
+			console.log({ stateId, locationStateIds });
+			if (!stateId) return true;
+			if (locationStateIds.includes(stateId)) {
+				return true;
+			} else {
+				return false;
+			}
+		})}
+	>
 		<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
 	</EntryList>
 {/if}

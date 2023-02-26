@@ -6,9 +6,11 @@
 	let nativeLoading = false;
 	export let alt: string;
 	export let src: string;
+	export let wrapper = "";
 	interface $$Props extends ComponentProps<Image> {
 		alt: string;
 		src: string;
+       wrapper?: string;
 	}
 	// Determine whether to bypass our intersecting check
 	onMount(() => {
@@ -18,7 +20,7 @@
 	});
 </script>
 
-<IntersectionObserver once={true} let:intersecting>
+<IntersectionObserver class={wrapper} once={true} let:intersecting>
 	{#if intersecting || nativeLoading}
 		<Image on:error {alt} {src} {...$$restProps} />
 	{/if}

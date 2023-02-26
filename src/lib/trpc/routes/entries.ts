@@ -111,6 +111,8 @@ export const entriesRouter = router({
                         title: true,
                         html: true,
                         author: true,
+                        // this is annoying to return but needs to be done for youtube vids?
+                        text: true,
                         id: true,
                         feedId: true,
                         extended: true,
@@ -396,11 +398,12 @@ export const entriesRouter = router({
         .input(
             z.object({
                 id: z.number(),
-                progress: z.number(),
+                progress: z.number().optional(),
                 is_read: z.boolean().optional(),
+                currentPage: z.number().optional(),
             })
         )
-        .mutation(({ ctx: { userId }, input: { id, progress, is_read } }) =>
+        .mutation(({ ctx: { userId }, input: { id, progress, is_read, currentPage } }) =>
             db.entry.update({
                 where: {
                     id,
@@ -422,10 +425,12 @@ export const entriesRouter = router({
                                         id: userId,
                                     },
                                 },
+                                currentPage
                             },
                             update: {
                                 progress,
                                 is_read,
+                                currentPage
                             },
                         },
                     },

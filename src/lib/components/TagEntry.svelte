@@ -16,7 +16,7 @@
 	$: console.log({ items });
 	export let allow_create_tag = true;
 
-	let ref: HTMLElement | undefined;
+	export let ref: HTMLElement | undefined = undefined;
 	type TagInputTag = Pick<Tag, "name"> & {
 		special?: boolean;
 	};
@@ -69,7 +69,7 @@
 
 	let activeTag: string | undefined = undefined;
 	let activeTagIndex: number | undefined = undefined;
-	let comboboxExpanded = false;
+	export let comboboxExpanded = false;
 	$: if (activeTag && activeTagIndex !== undefined) {
 		comboboxExpanded = false;
 	}

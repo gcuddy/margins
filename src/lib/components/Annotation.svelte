@@ -1,43 +1,34 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
+	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
+	import { page } from "$app/stores";
 	import dayjs from "$lib/dayjs";
+	import { updateAnnotationMutation } from "$lib/features/annotations/mutations";
+	import { iconsMini } from "$lib/features/entries/utils";
+	import type { ContextualAnnotation } from "$lib/prisma/selects/annotations";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
 	import { trpc } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { TextQuoteTarget } from "$lib/types/schemas/Annotations";
-	import { onMount } from "svelte";
-	import { tweened } from "svelte/motion";
-	import { createEventDispatcher } from "svelte";
-	import { match } from "ts-pattern";
-	import AnnotationWrapper from "./annotations/AnnotationWrapper.svelte";
-	import Muted from "./atoms/Muted.svelte";
-	import SmallPlus from "./atoms/SmallPlus.svelte";
-	import DotMenu from "./DotMenu.svelte";
-	import Icon from "./helpers/Icon.svelte";
-	import { page } from "$app/stores";
-	import AnnotationInput from "./annotations/AnnotationInput.svelte";
-	import { enhance } from "$app/forms";
 	import {
 		Disclosure,
 		DisclosureButton,
 		DisclosurePanel,
 		Menu,
-		MenuButton,
-		MenuItems,
-		MenuItem,
-		Portal,
+		MenuButton, MenuItem, MenuItems, Portal
 	} from "@rgossiaux/svelte-headlessui";
-	import { createPopperActions } from "svelte-popperjs";
-	import type { ContextualAnnotation } from "$lib/prisma/selects/annotations";
-	import TagCloud from "./TagCloud.svelte";
-	import { generateHTML } from "@tiptap/core";
-	import { genHtml } from "./TipTap.svelte";
-	import StarterKit from "@tiptap/starter-kit";
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-	import { updateAnnotationMutation } from "$lib/features/annotations/mutations";
-	import { entryDetailsQuery } from "$lib/features/entries/queries";
-	import { icons, iconsMini } from "$lib/features/entries/utils";
+	import { createEventDispatcher, onMount } from "svelte";
+	import { createPopperActions } from "svelte-popperjs";
+	import { tweened } from "svelte/motion";
+	import { match } from "ts-pattern";
+	import AnnotationInput from "./annotations/AnnotationInput.svelte";
+	import Muted from "./atoms/Muted.svelte";
+	import SmallPlus from "./atoms/SmallPlus.svelte";
+	import Icon from "./helpers/Icon.svelte";
+	import TagCloud from "./TagCloud.svelte";
+	import { genHtml } from "./TipTap.svelte";
 
 	const [menuref, menucontent] = createPopperActions({
 		placement: "bottom-end",

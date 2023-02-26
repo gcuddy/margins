@@ -15,7 +15,7 @@
 	import { selectedItems } from "$lib/stores/selectedItems";
 	import { syncStore } from "$lib/stores/sync";
 	import { fadeScale } from "$lib/transitions";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import { listPodcastsQuery, podcastSearchQuery } from "$lib/features/podcasts/queries";
 	import { getUser } from "@lucia-auth/sveltekit/client";
@@ -44,6 +44,8 @@
 	import { searchBookQuery } from "$lib/features/books/queries";
 
 	const queryClient = useQueryClient();
+    const client = trpcWithQuery($page);
+    const utils = client.createContext();
 	const user = getUser();
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -63,6 +65,16 @@
 			}
 		}
 	}
+
+    const updateMutation = client.bookmarks.update.createMutation({
+        onMutate: () => {
+            // TODO: set data
+        },
+        onSuccess: async () => {
+            await utils.entries.invalidate();
+            selectedItems.set([]);
+        }
+    });
 
 	const updateBookmarkMutation = createMutation({
 		mutationFn: ({ id, entryId, data }: RouterInputs["bookmarks"]["update"]) =>
@@ -451,7 +463,7 @@
 					onSelect: async (e) => {
 						try {
 							console.log({ $selectedItems });
-							$updateBookmarkMutation.mutate({
+							$updateMutation.mutate({
 								entryId: $selectedItems.map((i) => i.id),
 								data: {
 									stateId: e.detail.id as number,
@@ -532,6 +544,7 @@
 								icon: collection.icon,
 							});
 						}
+                        utils.collections.invalidate();
 					},
 					fallback: (input) => ({
 						title: `Create new collection: <span class="text-muted/70">"${input}"</span>`,

@@ -86,7 +86,9 @@
 					placeholder,
 					showOnlyWhenEditable: false,
 				}),
-				Link,
+				Link.configure({
+                    // openOnClick: false
+                }),
 				// BubbleMenu.configure({
 				// 	element: bubble,
 				// }),

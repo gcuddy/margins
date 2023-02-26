@@ -68,6 +68,7 @@
 		? 'shadow'
 		: ''}"
 >
+<slot name="top"></slot>
 	{#if expandButton}
 		<div class="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
 			<Button variant="naked" size="sm" on:click={() => dispatch("expand", contentData)}>

@@ -38,8 +38,9 @@ function createModalStore() {
 	 * Closes the top modal or the modal with the index specified
 	 * @param idx number (optional) - the index of the modal to close. If not provided removes top element
 	 */
-	const close = ({ idx, id }: { idx?: number; id?: string }) =>
+	const close = (opts?: { idx?: number; id?: string }) =>
 		update((stack) => {
+            const { idx, id } = opts || {};
 			let removed = [];
 			if (idx) {
 				stack[idx].open = false;

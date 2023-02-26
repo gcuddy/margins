@@ -1,21 +1,26 @@
 <script lang="ts">
-import GenericInput from "$lib/components/GenericInput.svelte";
-import GenericTextarea from "$lib/components/GenericTextarea.svelte";
-import Icon from "$lib/components/helpers/Icon.svelte";
-import AnnotationListItem from "$lib/features/annotations/AnnotationListItem.svelte";
-import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
-import { syncStore } from "$lib/stores/sync";
-import { trpc } from "$lib/trpc/client";
-import type { RouterOutputs } from "$lib/trpc/router";
-import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
-import { createEventDispatcher, onMount } from "svelte";
-import { dndzone, TRIGGERS } from "svelte-dnd-action";
-import { flip } from "svelte/animate";
+	import GenericInput from "$lib/components/GenericInput.svelte";
+	import GenericTextarea from "$lib/components/GenericTextarea.svelte";
+	import Icon from "$lib/components/helpers/Icon.svelte";
+	import AnnotationListItem from "$lib/features/annotations/AnnotationListItem.svelte";
+	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
+	import { syncStore } from "$lib/stores/sync";
+	import { trpc } from "$lib/trpc/client";
+	import type { RouterOutputs } from "$lib/trpc/router";
+	import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
+	import { createEventDispatcher, onMount } from "svelte";
+	import { dndzone, TRIGGERS } from "svelte-dnd-action";
+	import { flip } from "svelte/animate";
+	import cx from "classnames";
+	import GridItem from "$lib/features/entries/GridItem.svelte";
+	import AnnotationGridItem from "$lib/features/annotations/AnnotationGridItem.svelte";
 
 	export let item: RouterOutputs["collections"]["detail"]["items"][number];
+
+	export let view: "list" | "grid" = "list";
 	$: console.log({ item });
 	export let onDrop: (newItems: (typeof item)["children"]) => void;
-    export let recursion = 0;
+	export let recursion = 0;
 
 	const flipDurationMs = 200;
 
@@ -32,18 +37,15 @@ import { flip } from "svelte/animate";
 </script>
 
 <!-- TODO: support/prevent limiting nesting more than N levels deep -->
-<div class="px-6">
+<div class={cx("grow", {
+    'px-6':view === 'list',
+})}>
 	{#if item.type === "Section"}
-    {recursion}
+		{recursion}
 		<div class="rounded border border-border">
 			<div class="group flex items-center px-2">
 				<Menu>
-					<MenuButton
-						class="flex flex-col items-center"
-                        on:click
-						on:mousedown
-						on:touchstart
-					>
+					<MenuButton class="flex flex-col items-center" on:click on:mousedown on:touchstart>
 						<Icon name="dragHandle2" className="h-4 w-4 fill-current" />
 					</MenuButton>
 					<MenuItems>
@@ -97,7 +99,7 @@ import { flip } from "svelte/animate";
 					flipDurationMs,
 					zoneTabIndex: -1,
 					morphDisabled: true,
-                    // TODO: if recursion > 5, don't let sections get dragged in...
+					// TODO: if recursion > 5, don't let sections get dragged in...
 				}}
 				on:finalize={async (e) => {
 					console.warn("got finalize", e);
@@ -136,9 +138,17 @@ import { flip } from "svelte/animate";
 		</div>
 		<!-- do section stuff -->
 	{:else if item.entry}
+    {#if view === "list"}
 		<EntryListItem entry={item.entry} />
+    {:else if view === "grid"}
+        <GridItem item={item.entry} />
+    {/if}
 	{:else if item.annotation}
 		<!-- etc -->
-       <AnnotationListItem annotation={item.annotation} />
+       {#if view === "list"}
+		<AnnotationListItem annotation={item.annotation} />
+        {:else if view === "grid"}
+            <AnnotationGridItem annotation={item.annotation} />
+        {/if}
 	{/if}
 </div>

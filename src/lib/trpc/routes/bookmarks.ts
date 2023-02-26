@@ -1,10 +1,27 @@
 import dayjs from "dayjs";
+import { match } from "ts-pattern";
 import { z } from "zod";
 
+import { uploadFile } from "$lib/backend/s3.server";
 import { db } from "$lib/db";
 import { _BookmarkModel } from "$lib/prisma/zod";
 import { protectedProcedure, router } from "$lib/trpc/t";
 import { Metadata } from "$lib/web-parser";
+
+async function generateScreenshot(url: string) {
+    const res = await fetch(`https://admirable-croissant-98e7d9.netlify.app/${encodeURIComponent(url)}/large/1:1/larger/`);
+    const image = await res.arrayBuffer();
+    if (!image) {
+        throw new Error("No image");
+    }
+    const Key = `screenshots/${url.replace(/[^a-zA-Z0-9]/g, "_")}.png`
+    const data = await uploadFile({
+        Key,
+        // @ts-expect-error
+        Body: image
+    })
+   return Key
+}
 
 export const bookmarks = router({
     add: protectedProcedure
@@ -76,6 +93,14 @@ export const bookmarks = router({
                     } : undefined,
                 }
             })
+            const screenshot =  !!input.article?.screenshot;
+            const needScreenshot = input.article?.type === "bookmark";
+            function screenshotReducer() {
+                return match([screenshot, needScreenshot])
+                    .with([false, true], () => generateScreenshot(input.url as string))
+                    .with([true, true], () => input.article?.screenshot as string)
+                    .otherwise(() => undefined);
+            }
             const bookmark = await ctx.prisma.bookmark.upsert({
                 where: {
                     uri_entryId_userId: {
@@ -96,6 +121,7 @@ export const bookmarks = router({
                             id: entry.id,
                         }
                     },
+                    screenshot: await screenshotReducer(),
                     collections: input.collectionId ? {
                         connect: {
                             id: input.collectionId
@@ -314,5 +340,36 @@ export const bookmarks = router({
                     data,
                 });
             }
+        }),
+        screenshot: protectedProcedure
+        .input(z.object({
+            id: z.number(),
+        })).mutation(async ({ ctx, input }) => {
+            const { id } = input;
+            const bookmark = await ctx.prisma.bookmark.findUnique({
+                where: {
+                    id,
+                },
+                select: {
+                    screenshot: true,
+                    uri: true,
+                },
+            });
+            if (!bookmark) {
+                throw new Error("Bookmark not found");
+            }
+            if (!bookmark.screenshot && bookmark.uri) {
+                const screenshot = await generateScreenshot(bookmark.uri);
+                await ctx.prisma.bookmark.update({
+                    where: {
+                        id,
+                    },
+                    data: {
+                        screenshot,
+                    },
+                });
+                return screenshot;
+            }
+            return bookmark.screenshot;
         })
 });

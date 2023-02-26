@@ -11,12 +11,12 @@
 
 	let intersecting = false;
 	let container;
+let c = "";
+export { c as class};
 
 	onMount(() => {
 		if (typeof IntersectionObserver !== "undefined") {
-			const rootMargin = `${bottom}px ${left}px ${top}px ${right}px`;
-
-			const observer = new IntersectionObserver(
+			const rootMargin = `${bottom}px ${left}px ${top}px ${right}px`; const observer = new IntersectionObserver(
 				(entries) => {
 					intersecting = entries[0].isIntersecting;
 					if (intersecting && once) {
@@ -52,14 +52,14 @@
 	});
 </script>
 
-<div bind:this={container}>
+<div class={c} bind:this={container}>
 	<slot {intersecting} />
 </div>
 
 <style>
 	div {
-		width: 100%;
-		height: 100%;
+		/* width: 100%;
+		height: 100%; */
 		position: relative;
 	}
 </style>

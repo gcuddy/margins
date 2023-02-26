@@ -117,6 +117,8 @@
 	import { trpc } from "$lib/trpc/client";
 	import { page } from "$app/stores";
 	import { draggable } from "@neodrag/svelte";
+	import { modals } from "$lib/stores/modals";
+	import AnnotationModal from "./annotations/AnnotationModal.svelte";
 
 	// derived
 	const timestamp = derived(podcastPlayer, ($podcastPlayer) =>
@@ -374,6 +376,14 @@
 										{
 											label: "Take annotation",
 											icon: "pencilSolid",
+                                            perform: () => {
+                                                // open modal
+                                                modals.open(AnnotationModal, {
+                                                    timestamp: $timestamp,
+                                                    entryId: $podcastPlayer.episode?.id,
+                                                    source: $podcastPlayer.episode?.enclosureUrl
+                                                })
+                                            }
 										},
 									],
 								]}

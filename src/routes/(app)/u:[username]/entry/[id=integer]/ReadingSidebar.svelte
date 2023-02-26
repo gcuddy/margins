@@ -18,7 +18,7 @@
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { Collection, Color, DocumentType, Tag } from "@prisma/client";
 	import { Disclosure, DisclosureButton, DisclosurePanel } from "@rgossiaux/svelte-headlessui";
@@ -31,7 +31,7 @@
 	import { reading_sidebar } from "$lib/features/entries/stores";
 	import MovieEntrySidebar from "$lib/features/movies/MovieEntrySidebar.svelte";
 	import { addEntriesToCollection } from "$lib/features/collections/stores";
-	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
+	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
 	import { entryCollectionsQuery, entryDetailsQuery } from "$lib/features/entries/queries";
 	import Cluster from "$lib/components/helpers/Cluster.svelte";
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
@@ -39,9 +39,10 @@
 	import { getHostname, getPathname } from "$lib/utils";
 	import { lookupUrlType } from "$lib/web-parser/urls";
 	import { iconsMini } from "$lib/features/entries/utils";
+	import GenericInput from "$lib/components/GenericInput.svelte";
 
 	export let entry: RouterOutputs["entries"]["load"];
-
+	$: console.log({ entry });
 	const queryClient = useQueryClient();
 
 	$: collectionsQuery = createQuery(entryCollectionsQuery({ id: entry.id }, $page));
@@ -84,7 +85,19 @@
 		note: false,
 	});
 
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
+	const updateInteraction = client.entries.updateInteraction.createMutation();
+
 	$: savedDate = createRelativeDateStore(entry.bookmark?.createdAt);
+
+	// const updateInteraction = createMutation({
+	//     mutationFn: () => trpc
+	// })
+
+	let tagInputRef: HTMLElement | undefined = undefined;
+	let tagInputExpanded = false;
+	let stateComboboxRef: HTMLElement | undefined = undefined;
 
 	onMount(() => {
 		// set tweened store with no animation
@@ -99,6 +112,8 @@
 
 <svelte:window
 	on:keydown={(e) => {
+		const allowed = checkIfKeyboardShortcutsAllowed();
+		if (!allowed) return;
 		if (e.key === "Escape") {
 			if (checkIfKeyboardShortcutsAllowed()) {
 				e.preventDefault();
@@ -106,6 +121,18 @@
 				e.stopPropagation();
 			}
 		}
+		// keyboard shortcuts
+        // return if modifier keys are pressed
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+		if (e.key === "t") {
+			// jump to tag input
+			e.preventDefault();
+			tagInputRef?.focus();
+			tagInputExpanded = true;
+		} else if (e.key === "s") {
+            e.preventDefault();
+            stateComboboxRef?.querySelector("button")?.click();
+        }
 	}}
 />
 
@@ -124,7 +151,7 @@
 		style:margin-left="{$WIDTH_SPRING * -1}px"
 		style:--width="{WIDTH}px"
 		style:transform="translateX({$WIDTH_SPRING}px)"
-		class="z-10 mt-14 flex max-h-full flex-col space-y-5 overflow-auto overflow-y-auto border-l border-border  bg-base p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative shrink-0"
+		class="z-10 mt-14 flex max-h-full shrink-0 flex-col space-y-5 overflow-auto overflow-y-auto border-l  border-border bg-base p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
 	>
 		<!-- <div class="absolute top-0 left-0 h-full w-full bg-red-500" style:width="450px" /> -->
 
@@ -159,6 +186,7 @@
 						{#if entry.bookmark?.stateId}
 							<Muted class="text-sm">Status</Muted>
 							<StateCombobox
+                                bind:buttonWrapper={stateComboboxRef}
 								state={$page.data.user?.states?.find((state) => state.id === entry.bookmark.stateId) ||
 									$page.data.user?.defaultState}
 								onSelect={async (state) => {
@@ -168,16 +196,16 @@
 										stateId: state.id,
 										entryId: $page.data.article.id,
 									});
-                                    // queryClient.invalidateQueries({
-                                    //     queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
-                                    // })
-                                    // invalidate(entry:id)
+									// queryClient.invalidateQueries({
+									//     queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
+									// })
+									// invalidate(entry:id)
 									// await invalidateAll();
 									syncStore.remove(s);
 								}}
 							/>
-                           {:else}
-                           <Muted class="text-sm">Status</Muted>
+						{:else}
+							<Muted class="text-sm">Status</Muted>
 							<StateCombobox
 								unsaved={true}
 								onSelect={async (state) => {
@@ -185,18 +213,23 @@
 									await trpc().bookmarks.updateState.mutate({
 										stateId: state.id,
 										entryId: $page.data.article.id,
-                                        uri: $page.data.article.uri,
+										uri: $page.data.article.uri,
 									});
-                                    queryClient.invalidateQueries({
-                                        queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
-                                    })
+									queryClient.invalidateQueries({
+										queryKey: entryDetailsQuery({ id: $page.data.article.id }).queryKey,
+									});
 									// await invalidateAll();
 									syncStore.remove(s);
 								}}
 							/>
 						{/if}
 						<Muted class="text-sm">Tags</Muted>
-						<TagInputCombobox bind:tags={entry.tags} original={{ ...entry }} />
+						<TagInputCombobox
+							bind:expanded={tagInputExpanded}
+							bind:inputRef={tagInputRef}
+							bind:tags={entry.tags}
+							original={{ ...entry }}
+						/>
 						<!-- {#if entry.context}
 							<Muted class="text-sm">Context</Muted>
 							{JSON.stringify(entry.context)}
@@ -211,6 +244,30 @@
 						{/if}
 						<Muted class="text-sm">Type</Muted>
 						<span>{entry.type}</span>
+						{#if entry.type === DocumentType.book}
+							{@const book = queryClient.getQueryData(["books", "detail", entry.googleBooksId])}
+							{@const pageCount = book?.volumeInfo?.pageCount}
+							{@const currentPage = entry.interactions?.[0]?.currentPage}
+							<Muted class="text-sm">Progress</Muted>
+							<div class="flex items-center gap-2">
+								<div class="w-16">
+									<GenericInput
+										value={currentPage || 0}
+										on:blur={(e) => {
+											if (!e.target.value) return;
+											$updateInteraction.mutate({
+												id: entry.id,
+												currentPage: parseInt(e.target.value),
+												progress: pageCount ? parseInt(e.target.value) / pageCount : undefined,
+											});
+										}}
+										type="number"
+										class="text-xs"
+									/>
+								</div>
+								<span>of {pageCount} pages</span>
+							</div>
+						{/if}
 						<Muted class="text-sm">Relations</Muted>
 						<Cluster class="gap-x-2 gap-y-2">
 							<!-- to -->
@@ -222,9 +279,9 @@
 									{#if relation.type === "Related"}
 										<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
 										<span class="sr-only">Related</span>
-                                    {:else if relation.type === "SavedFrom"}
-                                        <Icon name="arrowLeftMini" className="w-3 h-3 fill-muted/80" />
-                                        <span class="sr-only">Saved from</span>
+									{:else if relation.type === "SavedFrom"}
+										<Icon name="arrowLeftMini" className="w-3 h-3 fill-muted/80" />
+										<span class="sr-only">Saved from</span>
 									{/if}
 									<a
 										href="/u:{$page.data.user?.username}/entry/{relation.relatedEntry.id}"
@@ -245,9 +302,8 @@
 										<Icon name="arrowRightMini" className="w-3 h-3 fill-muted/80" />
 										<span class="sr-only">Saved from</span>
 									{/if}
-									<a
-										href="/u:{$page.data.user?.username}/entry/{relation.entry.id}"
-										class="truncate text-xs">{relation.entry.title}</a
+									<a href="/u:{$page.data.user?.username}/entry/{relation.entry.id}" class="truncate text-xs"
+										>{relation.entry.title}</a
 									>
 								</div>
 							{/each}
@@ -370,6 +426,7 @@
 								...old,
 								c,
 							]);
+                            utils.collections.invalidate();
 						});
 					}}
 				>
@@ -441,9 +498,26 @@
 											use:enhance={({}) => {
 												$busy.note = true;
 												return async ({ result, update }) => {
-													await update({
-														reset: false,
-													});
+													console.log({ result });
+													if (result.type === "success" && result.data) {
+														const { annotation } = result.data;
+														utils.entries.load.setData(
+															{
+																id: entry.id,
+															},
+															(data) => {
+																if (!data) return data;
+																data.annotations = [...data.annotations, annotation];
+																return data;
+															}
+														);
+													}
+													// utils.entries.load.invalidate({
+													//     id: entry.id,
+													// })
+													// await update({
+													// 	reset: false,
+													// });
 													$busy.note = false;
 													noting_id = null;
 												};

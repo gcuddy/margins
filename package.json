@@ -125,6 +125,7 @@
 		"twitter-api-v2": "^1.14.1",
 		"type-fest": "^3.6.0",
 		"typescript": "^4.9.5",
+		"typewind": "^0.1.0",
 		"uuid": "^9.0.0",
 		"uuid-by-string": "^4.0.0",
 		"vite": "^4.1.4",

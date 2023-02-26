@@ -172,7 +172,7 @@ export const actions: Actions = {
 			});
 		}
 		const updatedAnnotation = await caller.annotations.save({
-			id: +id,
+			id,
 			body: annotation,
 		});
 		return {

@@ -1,6 +1,7 @@
 import { parse, stringify } from "css";
 
-import { entryDetailsQuery, getEntriesFromCache } from "$lib/features/entries/queries";
+import { getEntriesFromCache } from "$lib/features/entries/queries";
+import { trpcWithQuery } from "$lib/trpc/client";
 
 import type { PageLoad } from "./$types";
 
@@ -25,8 +26,6 @@ function scopeCss(css: string) {
 export const load = (async (event) => {
     const { data, parent } = event;
 	const parentData = await parent();
-
-
     // TODO: queryclient stuff here
     const { queryClient } = parentData;
     // first, check for cached data and use as placeholder
@@ -34,10 +33,29 @@ export const load = (async (event) => {
     const entries = getEntriesFromCache(queryClient);
     const placeholderData = entries.find(e => e.id === data.id);
 
+    const client = trpcWithQuery(event, queryClient);
+    const query = client.entries.load.createServerQuery({
+        id: data.id,
+    })
+    // const query = !browser ? client.entries.load.createServerQuery({
+    //     id: data.id
+    // }) : undefined;
+    // if (browser) {
+    //     // prefetch
+    //     const utils = client.createContext();
+    //     utils.entries.load.prefetch({
+    //         id: data.id
+    //     })
+    // }
+    console.log({query})
+    // const utils = client.createContext();
+    // utils.entries.load.prefetch({
+    //     id: data.id
+    // })
     // prefetch query
-    const article = queryClient.ensureQueryData(entryDetailsQuery({
-        id: data.id
-    }, event))
+    // const article = queryClient.ensureQueryData(entryDetailsQuery({
+    //     id: data.id
+    // }, event))
     console.time("stylesheet");
 	const stylesheet = parentData.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
 	console.log({ stylesheet });
@@ -46,14 +64,16 @@ export const load = (async (event) => {
 		// SCOPE STYLESHEET
 		return {
 			...data,
-            article,
+            // article,
+            query,
 			css: scopeCss(stylesheet.css),
 		};
 	}
 	console.timeEnd("stylesheet");
 	return {
 		...data,
-        article,
+        // article,
+        query,
         placeholderData
 	};
 }) satisfies PageLoad;
