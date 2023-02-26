@@ -31,7 +31,7 @@
 		top: 0;
 	} */
 	:global(::selection) {
-		@apply bg-primary-300/75 dark:bg-primary-800;
+		/* @apply bg-primary-300/75 dark:bg-primary-800; */
 	}
 	:global(html) {
 		@apply dark:bg-gray-800;

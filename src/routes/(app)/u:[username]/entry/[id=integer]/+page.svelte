@@ -54,10 +54,10 @@
 	const queryClient = useQueryClient();
 	// $: article = data.article;
 	// let article: RouterOutputs["entries"]["load"];
-	$: query = data.query ? data.query() : trpcWithQuery($page).entries.load.createQuery({
+    const client = trpcWithQuery($page);
+    const utils = client.createContext();
+	$: query = data.query ? data.query() : client.entries.load.createQuery({
         id: data.id,
-    }, {
-        placeholderData: data.placeholderData,
     });
 	// $: query = data.query();
     $: console.log({$query})
@@ -443,10 +443,29 @@
 		if (!data && data !== 0) return;
 		if (Math.abs(last_saved_progress - data) < 0.005) return;
 		last_saved_progress = data;
+        if (!article) return;
+        utils.entries.load.setData({
+            id: article.id
+        }, old => {
+            if (!old) return;
+            return {
+                ...old,
+                interactions: [
+                    {
+                        ...old.interactions[0],
+                        progress: data
+                    }
+                ]
+            }
+        });
+        utils.entries.listBookmarks.invalidate();
+        // and prolly invalidate most others too, just don't want to refetch everything in entries since i don't want to refetch current pge?
 		await trpc($page).entries.updateInteraction.mutate({
 			id: article.id,
 			progress: data,
 		});
+        //
+
 		// await fetch(`/api/interactions`, {
 		// 	method: 'POST',
 		// 	headers: {
@@ -635,7 +654,7 @@
 							{/if}
 							<!-- this is a very rudimentary check lol -->
 							<div id="entry-container">
-								<Highlighter articleID={article.id} articleUrl={article.uri} bind:annotations>
+								<Highlighter articleID={article.id} articleUrl={article.uri} annotations={article.annotations}>
 									{@html entry.html || entry.text || entry.summary || "[No content]"}
 								</Highlighter>
 							</div>

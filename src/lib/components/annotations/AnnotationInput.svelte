@@ -65,7 +65,7 @@
 <!-- transparency is a bit much (and maybe causes gpu performance issues), but here were the classes: dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200 -->
 <div
 	bind:this={el}
-	class="annotation-input not-prose relative z-50 flex min-w-[min(var(--min-width,300px,100vh,100%Z))] max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-200 bg-elevation p-2.5 font-sans   transition-shadow  transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-0 dark:ring-1  dark:ring-gray-400/10 focus-within:dark:ring-gray-400/20  transparency:dark:bg-gray-800 {className} {shadow_focus &&
+	class="annotation-input not-prose relative z-50 flex min-w-[var(--min-width,100%)] max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-gray-200 bg-elevation p-2.5 font-sans   transition-shadow  transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:border-0 dark:ring-1  dark:ring-gray-400/10 focus-within:dark:ring-gray-400/20  transparency:dark:bg-gray-800 {className} {shadow_focus &&
 	focused
 		? 'shadow-lg'
 		: shadow_focus
@@ -77,7 +77,7 @@
 		<!-- TODO: 8 direction resize -->
 	</div>
 	<!-- todo: auto expand -->
-	<div class="no-drag w-full cursor-default">
+	<div class="no-drag text-content w-full cursor-default">
 		<GenericTextarea
 			bind:el={textarea}
 			variant="naked"

@@ -182,6 +182,9 @@ export const entriesRouter = router({
                                     },
                                 },
                             },
+                            orderBy: {
+                                createdAt: "asc",
+                            }
                         },
                         interactions: {
                             where: {

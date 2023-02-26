@@ -50,7 +50,7 @@
 				/>
 				<div class="text-xs text-gray-700 dark:text-gray-200">
 					{#if $syncStore.length}
-						{$syncStore.length} pending
+						{$syncStore.length} (syncstore) pending
                         <!--TODO: maybe just mutating  -->
 					{:else if $fetching}
 						{$fetching} Fetching...

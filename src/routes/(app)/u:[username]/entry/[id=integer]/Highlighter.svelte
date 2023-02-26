@@ -24,18 +24,19 @@
 	import { notifications } from "$lib/stores/notifications";
 	import { selection } from "$lib/stores/selection";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { AnnotationPos, NodeRef, SimplifiedHighlightSource, Tooltip as ITooltip } from "$lib/types";
 	import { finder } from "@medv/finder";
 	import { type Annotation, type Color, type Tag } from "@prisma/client";
-	import { onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount, tick } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
 	import { writable } from "svelte/store";
 	import { reading_sidebar } from "$lib/features/entries/stores";
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-	import type { RouterInputs } from "$lib/trpc/router";
+	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
 	import { entryDetailsQuery } from "$lib/features/entries/queries";
 	import mq from "$lib/stores/mq";
+	import { nanoid } from "$lib/nanoid";
 	const [menuRef, menuContent] = createPopperActions({
 		placement: "top",
 		strategy: "fixed",
@@ -103,6 +104,9 @@
 	export let annotations: Annotation[] = [];
 	$: console.log({ annotations });
 	export let currentAnnotationColor: Color = "Yellow";
+
+    $: currentAnnotationColor = active_annotation?.color || "Yellow";
+    $: console.log({ currentAnnotationColor });
 	export let showColors = false;
 	export let readOnly = false;
 
@@ -147,7 +151,7 @@
 	let link_tooltip_button: HTMLElement;
 
 	// todo: should this be a reactive store?
-	const idToElMap = new Map<number, { destroy: (() => void)[]; els: HTMLElement[] }>();
+	const idToElMap = new Map<string, { destroy: (() => void)[]; els: HTMLElement[] }>();
 	const annotation_els = writable<Record<number, HTMLElement>>();
 	$: inlineAnnotations = annotations.filter((a) => a.type === "annotation");
 	// when inlineannotations changes, re-render
@@ -155,7 +159,7 @@
 
 	let active_highlight_el: HTMLElement;
 	let active_highlight_rect: DOMRect;
-	let active_highlight_id: number | null = null;
+	let active_highlight_id: string | null = null;
 	$: active_annotation = annotations?.find(({ id }) => id === active_highlight_id);
 	let active_annotation_tags: Tag[] = [];
 	let annotation_opts: {
@@ -214,23 +218,239 @@
 	let tooltipTop = 0;
 	let tooltipLeft = 0;
 
-    const queryClient = useQueryClient();
-    const entryQueryKey = entryDetailsQuery({id: articleID}).queryKey;
+	const queryClient = useQueryClient();
+	const entryQueryKey = entryDetailsQuery({ id: articleID }).queryKey;
+
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
+
+	function createAnnotation(
+		data: Partial<RouterOutputs["entries"]["load"]["annotations"][number]>
+	): RouterOutputs["entries"]["load"]["annotations"][number] {
+		return {
+			id: data.id || nanoid(),
+			createdAt: new Date(),
+			updatedAt: new Date(),
+			editedAt: null,
+			deleted: null,
+			userId: $page.data.user?.id as string,
+			parentId: null,
+			sortOrder: 0,
+			bookmarkId: null,
+			colorId: currentAnnotationColor,
+			type: "annotation",
+			body: "",
+			contentData: null,
+			chosenIcon: null,
+			title: null,
+			private: false,
+			target: null,
+			entryId: articleID,
+			color: "Yellow",
+			creator: {
+				username: $page.data.user?.username || "",
+			},
+			children: [],
+			...data,
+		};
+	}
+
+	// REVIEW: not a huge advantage to using trpc.query here as opposed to just using createmutation hook from svelte-query
+	const saveMutation = client.annotations.save.createMutation({
+		onMutate: (data) => {
+			utils.entries.load.setData(
+				{
+					id: articleID,
+				},
+				(old) => {
+					console.log({ old, data });
+					return old;
+				}
+			);
+			return;
+			if (data.id) {
+				// optimstically update the cache for this entry
+				// optimistic update: TODO cancel?
+				// snapshot
+				const previous = utils.entries.load.getData();
+				// optimstically update
+				utils.entries.load.setData(
+					{
+						id: articleID,
+					},
+					(old) => {
+						if (!old) return old;
+						// either update or add
+						const existing = old.annotations.find((a) => a.id === data.id);
+						if (!existing) {
+							return {
+								...old,
+								annotations: [
+									...old.annotations,
+									{
+										...createAnnotation(data),
+										...data,
+									},
+								],
+							};
+						}
+						return {
+							...old,
+							annotations: old.annotations.map((a) => {
+								if (a.id === data.id) {
+									return {
+										...a,
+										...data,
+									};
+								}
+								return a;
+							}),
+						};
+					}
+				);
+			}
+		},
+		onSuccess: () => {
+			utils.entries.load.invalidate({
+				id: articleID,
+			});
+			utils.entries.listBookmarks.invalidate();
+		},
+	});
+
+	type AnnotationMutation = {
+		// TODO
+	};
+
 	const saveAnnotation = createMutation({
 		mutationFn: (input: RouterInputs["annotations"]["save"]) =>
 			trpc($page).annotations.save.mutate({
 				entryId: articleID,
 				...input,
 			}),
-            onSuccess: () => {
-                queryClient.invalidateQueries({
-                    queryKey: entryQueryKey
-                })
-                queryClient.invalidateQueries({
-                    queryKey: ["annotations"],
-                });
-            },
+		onMutate: (data) => {
+			const { id } = data;
+			if (!id) return;
+			// then optimsitically update the cache
+			// todo: cancel?
+			// snapshot
+			const previous = utils.entries.load.getData({ id: articleID });
+			// update
+			utils.entries.load.setData(
+				{
+					id: articleID,
+				},
+				(old) => {
+					console.log({ old, data });
+					if (!old) return old;
+					const idx = old.annotations.findIndex((a) => a.id === id);
+					console.log({ idx });
+					if (idx === -1) {
+						// then  add
+						const annotation = createAnnotation(data);
+						console.log({ annotation });
+						return {
+							...old,
+							annotations: [...old.annotations, annotation],
+						};
+					} else {
+						console.log({ old, data });
+						// then update
+                        const updated =  {
+                            ...old,
+                            annotations: [...old.annotations.map((a) => {
+                                if (a.id === id) {
+                                    return {
+                                        ...a,
+                                        ...data,
+                                    };
+                                }
+                                return a;
+                            })],
+                        };
+                        console.log({updated})
+                        return {...updated};
+					}
+				}
+			);
+			tick().then(() => {
+				// scroll into view
+                setTimeout(() => {
+                    const el = document.querySelector(`[data-sidebar-annotation-id="${id}"]`);
+                    // debugger;
+                    console.log({el})
+                    el?.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+				// const el = document.querySelector(`[data-sidebar-annotation-id="${id}"]`);
+                // console.log({el})
+				// el?.scrollIntoView({ behavior: "smooth" });
+			});
+			return { previous };
+		},
+		onError: (err, newAnnotation, context) => {
+			// roll back
+			if (context?.previous) {
+				utils.entries.load.setData(
+					{
+						id: articleID,
+					},
+					context.previous
+				);
+			}
+			console.error(err);
+			notifications.notify({
+				title: "Error",
+				message: "There was an error saving your annotation",
+				type: "error",
+			});
+			console.log({ newAnnotation });
+			// TODO: save annotation to localstorage/idb
+		},
+		onSettled: () => {
+			// Always refetch after error or success:
+			utils.entries.load.invalidate({
+				id: articleID,
+			});
+			utils.entries.listBookmarks.invalidate();
+			utils.annotations.invalidate();
+			// queryClient.invalidateQueries({
+			// 	queryKey: entryQueryKey,
+			// });
+			// queryClient.invalidateQueries({
+			// 	queryKey: ["annotations"],
+			// });
+		},
 	});
+    const deleteAnnotation = client.annotations.delete.createMutation({
+        onMutate: (id) => {
+            utils.entries.load.setData(
+                {
+                    id: articleID,
+                },
+                (old) => {
+                    if (!old) return old;
+                    return {
+                        ...old,
+                        annotations: old.annotations.filter((a) => a.id !== id),
+                    };
+                }
+            );
+        },
+        onSuccess: () => {
+            utils.entries.load.invalidate({
+                id: articleID,
+            });
+            utils.entries.listBookmarks.invalidate();
+            utils.annotations.invalidate();
+        },
+        onError: () => {
+            notifications.notify({
+				title: "Error",
+				message: "There was an error deleting your annotation",
+				type: "error",
+			});
+        }
+    })
 
 	const isValidSelection = (sel: Selection) =>
 		sel &&
@@ -341,12 +561,13 @@
 	function handleClick(e: MouseEvent) {
 		if (!$page.data.authorized) return;
 		const el = e.target as HTMLElement;
+        console.log({el})
 		const annotationParent = isAnnotation(el);
 		if (annotationParent) {
 			console.log("annotation");
 			// active_highlight_rect = annotationParent.getBoundingClientRect();
 			active_highlight_el = el;
-			active_highlight_id = parseInt(el.dataset.annotationId as string);
+			active_highlight_id = el.dataset.annotationId as string;
 			rect = el.getBoundingClientRect();
 			const active_annotation = annotations.find((a) => a.id === active_highlight_id);
 			const tags = active_annotation?.tags?.flatMap((t) => t.tag) || [];
@@ -514,7 +735,7 @@
 
 	onMount(async () => {
 		if (wrapper) {
-            console.log({inlineAnnotations})
+			console.log({ inlineAnnotations });
 			// load highlgihts
 			for (const annotation of inlineAnnotations) {
 				console.log({ annotation });
@@ -605,7 +826,10 @@
 		{/each}
 	</div>
 	{#if show_tooltip && $mq.desktop}
-		<div class="z-40 mobile:!fixed mobile:!transform-none mobile:!bottom-4 mobile:!left-0 mobile:!right-0 mobile:!mx-auto " use:menuContent>
+		<div
+			class="z-40 mobile:!fixed mobile:!bottom-4 mobile:!left-0 mobile:!right-0 mobile:!mx-auto mobile:!transform-none "
+			use:menuContent
+		>
 			{#if showColors}
 				<!-- <Swatches
 					bind:selected={currentAnnotationColor}
@@ -681,7 +905,7 @@
 									html,
 									color: currentAnnotationColor,
 								};
-							} else if (described?.type === "RangeSelector") {
+                        } else if (described?.type === "RangeSelector") {
 								// TODO: allow other matchers besides text quote and fix type error
 								const createRangeSelectorMatcher = makeCreateRangeSelectorMatcher(
 									createTextQuoteSelectorMatcher
@@ -717,6 +941,7 @@
 									};
 								}
 							}
+                            show_tooltip = false;
 						}}
 						on:highlight={async () => {
 							const userSelection = window.getSelection()?.getRangeAt(0);
@@ -743,13 +968,13 @@
 								// 	},
 								// 	color: currentAnnotationColor,
 								// });
-                                const annotation = await $saveAnnotation.mutateAsync({
-                                    target: {
-                                        source: articleUrl,
-                                        selector,
-                                    },
-                                    color: currentAnnotationColor,
-                                });
+								const annotation = await $saveAnnotation.mutateAsync({
+									target: {
+										source: articleUrl,
+										selector,
+									},
+									color: currentAnnotationColor,
+								});
 								highlightInfo.forEach((h) => {
 									h.highlightElements.forEach((el) => {
 										el.setAttribute("id", `annotation-${annotation.id}`);
@@ -777,8 +1002,14 @@
 				{:else if tooltip_display === TooltipDisplay.Edit}
 					<EditHighlightToolTip
 						on:delete={async () => {
+                            if (active_annotation?.body || active_annotation?.contentData) {
+                                // confirm
+                                const c = window.confirm("Are you sure you want to delete?")
+                                if (!c) return;
+                            }
 							console.log({ active_highlight_id });
 							if (active_highlight_id === null) return;
+                            show_tooltip = false;
 							const removeHighlights = idToElMap.get(active_highlight_id);
 							removeHighlights && removeHighlights.destroy.forEach((remove) => remove());
 							console.log({ removeHighlights });
@@ -786,23 +1017,11 @@
 							document.querySelectorAll(`[data-annotation-id="${active_highlight_id}"]`)?.forEach((el) => {
 								el.remove();
 							});
+
 							highlightMenu = false;
 							idToElMap.delete(active_highlight_id);
 							annotations = annotations.filter((a) => a.id !== active_highlight_id);
-							const res = await fetch(`/api/annotations/${active_highlight_id}`, {
-								method: "DELETE",
-								headers: {
-									"Content-Type": "application/json",
-								},
-							});
-							console.log({ res });
-							if (res.status === 204) {
-								notifications.notify({
-									type: "success",
-									title: "Highlight deleted",
-									message: "Undo?",
-								});
-							}
+							$deleteAnnotation.mutate(active_highlight_id);
 						}}
 						on:edit={() => {
 							show_tooltip = false;
@@ -822,7 +1041,7 @@
 								throw new Error("Error finding active_annotation");
 							}
 							// optimistic update
-							annotations[idx] = { ...annotations[idx], color };
+							// annotations[idx] = { ...annotations[idx], color };
 							const els = wrapper?.querySelectorAll(`[data-annotation-id="${annotations[idx].id}"]`);
 							els.forEach((el) => {
 								if (el instanceof HTMLElement) {
@@ -830,11 +1049,15 @@
 								}
 							});
 							// send to trpc to update
-							await trpc().annotations.save.mutate({
-								id: annotations[idx].id,
-								color,
-							});
-							await invalidateAll();
+                            $saveAnnotation.mutate({
+                                id: annotations[idx].id,
+                                color,
+                            })
+							// await trpc().annotations.save.mutate({
+							// 	id: annotations[idx].id,
+							// 	color,
+							// });
+							// await invalidateAll();
 						}}
 						on:annotate={() => {
 							highlightMenu = false;
@@ -852,33 +1075,40 @@
 		</div>
 		<!-- <AnnotationColorSelector /> -->
 	{:else if show_tooltip && !$mq.desktop}
-        <div class="fixed bottom-0 left-0 right-0 z-50">
-            <div class="flex
-                justify-center
+		<div class="fixed bottom-0 left-0 right-0 z-50">
+			<div
+				class="flex
                 items-center
-                bg-white
-                shadow
+                justify-center
                 rounded
+                bg-white
                 p-2
                 text-sm
                 text-gray-700
-                ">
-                <div class="flex items-center">
-                    <div class="mr-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    </div>
-                    <div class="mr-2">
-                        <span>Highlight</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-       {/if}
+                shadow
+                "
+			>
+				<div class="flex items-center">
+					<div class="mr-2">
+						<svg
+							class="h-4 w-4"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+						</svg>
+					</div>
+					<div class="mr-2">
+						<span>Highlight</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 	{#if annotation_opts !== null}
-		<div bind:this={annotationContainer} style:min-width="300px" data-annotation-entry>
+		<div bind:this={annotationContainer} style:--min-width="300px" data-annotation-entry>
 			<FloatingAnnotation
 				size="base"
 				bind:tags={active_annotation_tags}
@@ -892,15 +1122,12 @@
 					annotation_opts = null;
 				}}
 				on:save={async (e) => {
+					if (!annotation_opts || !$page.data.user) return;
 					const { value } = e.detail;
-					if (!annotation_opts) return;
-					if (!$page.data.user) return;
 					const { selector, highlightInfo, el } = annotation_opts;
-					console.log({ annotation_opts });
-					const id = el.dataset.annotationId;
-					const syncId = syncStore.addItem();
-					console.log({ articleID });
-					const annotation = await trpc().annotations.save.mutate({
+                    console.log({annotation_opts})
+					const id = el.dataset.annotationId && el.dataset.annotationId !== "undefined" ? el.dataset.annotationId : nanoid();
+					$saveAnnotation.mutate({
 						entryId: articleID,
 						target: {
 							source: articleUrl,
@@ -909,46 +1136,25 @@
 						},
 						body: value,
 						color: currentAnnotationColor,
+						id,
 					});
-					//
-					await invalidateAll();
-					// done();
 					annotation_opts = null;
-					syncStore.removeItem(syncId);
-					if (annotation) {
-						notifications.notify({
-							type: "success",
-							message: `Annotation ${id ? "updated" : "created"}!`,
-						});
-						// and add id to the highlight
-						// const annotation = await res.json();
-						console.log({ annotation });
-						if (highlightInfo) {
-							console.log({ highlightInfo });
-							highlightInfo?.forEach((h) => {
-								h.highlightElements.forEach((el) => {
-									console.log({ el });
-									el.setAttribute("id", `annotation-${annotation.id}`);
-									el.setAttribute("data-annotation-id", annotation.id.toString());
-								});
-							});
-							$annotation_els = {
-								...$annotation_els,
-								[annotation.id]: highlightInfo[0].highlightElements[0],
-							};
-							idToElMap.set(annotation.id, {
-								destroy: highlightInfo.map((h) => h.removeHighlights),
-								els: highlightInfo.flatMap((h) => h.highlightElements),
-							});
-						}
-						annotations = [...annotations, annotation];
-					} else {
-						notifications.notify({
-							type: "error",
-							message: "Highlight failed!",
-						});
+					if (highlightInfo) {
+						console.log({ highlightInfo });
 						highlightInfo?.forEach((h) => {
-							h.removeHighlights();
+							h.highlightElements.forEach((el) => {
+								console.log({ el });
+								el.setAttribute("id", `annotation-${id}`);
+								el.setAttribute("data-annotation-id", id.toString());
+							});
+						});
+						$annotation_els = {
+							...$annotation_els,
+							[id]: highlightInfo[0].highlightElements[0],
+						};
+						idToElMap.set(id, {
+							destroy: highlightInfo.map((h) => h.removeHighlights),
+							els: highlightInfo.flatMap((h) => h.highlightElements),
 						});
 					}
 				}}
@@ -963,7 +1169,7 @@
 		first_letter={false}
 	>
 		<div
-        class="!select-text"
+			class="!select-text"
 			on:dragstart={(e) => {
 				if (e.target instanceof HTMLAnchorElement) {
 					// set context data

@@ -690,10 +690,13 @@
 								<DisclosurePanel static>
 									<div class="flex flex-col space-y-4  text-sm">
 										{#each filteredItems as annotation (annotation.id)}
+                                        <!-- scroll to latest on creation -->
 											<div
+                                                data-sidebar-annotation-id={annotation.id}
 												animate:flip={{
-													duration: 75,
+													duration: 125,
 												}}
+                                                transition:slide|local={{ duration: 75 }}
 											>
 												<Annotation on:seek {annotation} scrollOnClick={true} />
 											</div>

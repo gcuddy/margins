@@ -147,7 +147,7 @@
 	<!--  -->
 	<!-- TODO: form? -->
 	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-lg transition-opacity">
-		<AnnotationInput bind:tags bind:el={container} bind:value on:save on:cancel {...$$restProps} />
+		<AnnotationInput rows={2} include_tags={false} --min-width="300px" bind:tags bind:el={container} bind:value on:save on:cancel {...$$restProps} />
 	</div>
 </div>
 
