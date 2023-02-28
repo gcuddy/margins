@@ -10,7 +10,7 @@ import { jsonFeedSchema } from "$lib/types/schemas/feeds";
 import { stripEmptyTags } from "$lib/utils/sanitize";
 
 import { subscriptionApiSelect } from "./types";
-import { getLink, getText, isJson, isXml, linkSelectors, normalizeUrl, resolveUrl } from "./utils";
+import { getLink, getText, isAudioType, isJson, isXml, linkSelectors, normalizeUrl, resolveUrl } from "./utils";
 
 export interface Feed {
     input: string;
@@ -219,7 +219,7 @@ const getDuration = (duration: string | number | undefined) => {
 };
 
 
-export function parseEntry(entry: any, podcast: boolean, feedId?: number) {
+export function parseEntry(entry: any, podcast: boolean, feedId?: number, feedImage?: string) {
         console.log(`processing entry`, entry.title)
         let guid: string | undefined = undefined;
         if (entry.guid) {
@@ -233,7 +233,12 @@ export function parseEntry(entry: any, podcast: boolean, feedId?: number) {
         const html = getText(entry.content, entry["content:encoded"]) || description;
         const link = getLink(entry.link);
         console.log(`link`, link)
-        const enclosureUrl = entry.enclosure?.url;
+        let enclosureUrl: string | undefined = undefined;
+        if (entry.enclosure) {
+           if (isAudioType(entry.enclosure.type)) {
+               enclosureUrl = entry.enclosure.url;
+           }
+        }
         const duration = getDuration(entry["itunes:duration"])
         console.log('duration', duration)
         // convert to seconds
@@ -243,9 +248,9 @@ export function parseEntry(entry: any, podcast: boolean, feedId?: number) {
         // }
         const finalEntry = {
             title: getText(entry.title),
-            type: podcast ? DocumentType.audio : DocumentType.article,
+            type: podcast && !!enclosureUrl ? DocumentType.audio : DocumentType.article,
             uri: link || enclosureUrl,
-            image: getLink(entry["itunes:image"]) || getImageFromHtml(entry.content, link),
+            image: getLink(entry["itunes:image"]) || feedImage || getImageFromHtml(entry.content, link),
             guid: guid?.toString(),
             html,
             published: dayjs(published).isValid() ? dayjs(published).format() : undefined,
@@ -294,16 +299,23 @@ export function parseEntry(entry: any, podcast: boolean, feedId?: number) {
             const parsed = parseXml(body);
             const podcast = parsed.rss?.['xmlns:itunes'] === 'http://www.itunes.com/dtds/podcast-1.0.dtd';
             const feed = parsed.rss?.channel || parsed.feed;
+            console.dir(feed, { depth: null })
             const description = getText(feed.description, feed.subtitle);
+            let entries = feed.items || feed.item || feed.entry || [];
+            if (!Array.isArray(entries)) {
+                entries = [entries];
+            }
+            const imageUrl = feed.image?.url || getLink(feed["itunes:image"]) || '';
+            // todo: get podcast data from podcastindexid if it exists
             data = createFeedAndEntries({
                 title: getText(feed.title) || "",
                 description: description ? stripEmptyTags(description) : "",
-                imageUrl: (feed.image?.url as string) || "",
+                imageUrl,
                 feedUrl: feed.feed_url || feedUrl,
                 podcast,
                 // TODO: types
-                entries: (feed.items || feed.item || feed.entry || []).slice(0, 20).map((entry: any) => {
-                    return parseEntry(entry, podcast)
+                entries: entries.slice(0, 20).map((entry: any) => {
+                    return parseEntry(entry, podcast, undefined, imageUrl)
                 }),
             });
         } else if (contentType && isJson(contentType)) {

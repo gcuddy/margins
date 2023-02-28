@@ -5,6 +5,11 @@ function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
 	return true;
 }
 
+
+export function isAudioType(type: string) {
+    return type.includes('audio');
+}
+
 export function normalizeUrl(url: string, options?: Options) {
 	const normalized = $normalizeUrl(url, {
 		stripWWW: false,
@@ -70,7 +75,7 @@ export const getLink = (link: any, ...rel: (string | undefined)[]) => {
 				}
 			}
 		} else {
-			return link[0].href;
+			return link[0]?.href;
 		}
 	}
 	return '';
