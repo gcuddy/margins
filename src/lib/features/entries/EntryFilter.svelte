@@ -2,41 +2,41 @@
 	const _contextKey = "filter__chosenConditions";
 
 	function createChosenConditionStore({
-        conditions,
-        and
-    }: {
-        conditions: ChosenCondition[];
-        and: "AND" | "OR" | "NOT";
-    }) {
+		conditions,
+		and,
+	}: {
+		conditions: ChosenCondition[];
+		and: "AND" | "OR" | "NOT";
+	}) {
 		const state = writable<{
-            and: "AND" | "OR" | "NOT";
-            conditions: ChosenCondition[];
-        }>({
-            and,
-            conditions
-        });
+			and: "AND" | "OR" | "NOT";
+			conditions: ChosenCondition[];
+		}>({
+			and,
+			conditions,
+		});
 
 		function add(condition: ChosenCondition) {
 			state.update((s) => {
-                return {
-                    and: s.and,
-                    conditions: [...s.conditions, condition]
-                }
-            });
+				return {
+					and: s.and,
+					conditions: [...s.conditions, condition],
+				};
+			});
 		}
 		function remove(idx: number) {
 			state.update((s) => {
-                return {
-                    and: s.and,
-                    conditions: s.conditions.filter((_, i) => i !== idx)
-                }
-            });
+				return {
+					and: s.and,
+					conditions: s.conditions.filter((_, i) => i !== idx),
+				};
+			});
 		}
 		function reset() {
 			state.set({
-                and: "AND",
-                conditions: []
-            });
+				and: "AND",
+				conditions: [],
+			});
 		}
 		return {
 			subscribe: state.subscribe,
@@ -232,66 +232,68 @@
 				}));
 			},
 		},
-        {
-            title: "Status",
-            field: "bookmarks",
-            icon: "inboxStackMini",
-            id: "status",
-            multiple: false,
-            type: "boolean",
-            values: async (_, page) => {
-                const queryClient = page.data.queryClient;
-                const userId = page.data.user?.id;
-                const states = page.data.user?.states || [];
-                return states.map(state => ({
-                    title: state.name,
-                    id: state.name,
-                    where: {
-                        some: {
-                            userId,
-                            stateId: state.id,
-                        }
-                    }
-                }))
-            }
-        },
-        {
-            title: "Status Type",
-            field: "bookmarks",
-            icon: "circleStackMini",
-            id: "status-type",
-            multiple: false,
-            type: "boolean",
-            values: async (_, page) => {
-                const queryClient = page.data.queryClient;
-                const userId = page.data.user?.id;
-                const states = page.data.user?.states || [];
-                const locations = Array.from(new Set(states.map(state => state.type)));
-                return locations.map(location => ({
-                    title: location,
-                    id: location,
-                    where: {
-                        some: {
-                            userId,
-                            state: {
-                                type: location,
-                            }
-                        }
-                    }
-                })).concat({
-                    title: "Is not archive",
-                    id: "is-not-archive",
-                    where: {
-                        none: {
-                            userId,
-                            state: {
-                                type: "archive",
-                            }
-                        }
-                    }
-                })
-            }
-        },
+		{
+			title: "Status",
+			field: "bookmarks",
+			icon: "inboxStackMini",
+			id: "status",
+			multiple: false,
+			type: "boolean",
+			values: async (_, page) => {
+				const queryClient = page.data.queryClient;
+				const userId = page.data.user?.id;
+				const states = page.data.user?.states || [];
+				return states.map((state) => ({
+					title: state.name,
+					id: state.name,
+					where: {
+						some: {
+							userId,
+							stateId: state.id,
+						},
+					},
+				}));
+			},
+		},
+		{
+			title: "Status Type",
+			field: "bookmarks",
+			icon: "circleStackMini",
+			id: "status-type",
+			multiple: false,
+			type: "boolean",
+			values: async (_, page) => {
+				const queryClient = page.data.queryClient;
+				const userId = page.data.user?.id;
+				const states = page.data.user?.states || [];
+				const locations = Array.from(new Set(states.map((state) => state.type)));
+				return locations
+					.map((location) => ({
+						title: location,
+						id: location,
+						where: {
+							some: {
+								userId,
+								state: {
+									type: location,
+								},
+							},
+						},
+					}))
+					.concat({
+						title: "Is not archive",
+						id: "is-not-archive",
+						where: {
+							none: {
+								userId,
+								state: {
+									type: "archive",
+								},
+							},
+						},
+					});
+			},
+		},
 		{
 			title: "Type",
 			icon: "documentMagnifyingGlassMini",
@@ -330,13 +332,45 @@
 			field: "published",
 			id: "published",
 			type: "date",
-			values: dateValues
+			values: dateValues,
+		},
+		{
+			title: "Annotations",
+			icon: "pencilMini",
+			field: "annotations",
+			id: "annotations",
+			type: "boolean",
+			values: (_, page) => [
+				{
+					title: "Contains annotations",
+					id: "contains-annotations",
+					where: {
+						some: {
+							type: {
+								in: ["annotation", "note"],
+							},
+                            userId: page.data.user?.id
+						},
+					},
+				},
+				{
+					title: "Does not contain annotation",
+					id: "no-annotations",
+					where: {
+						none: {
+							type: {
+								in: ["annotation", "note"],
+							},
+                            userId: page.data.user?.id
+						},
+					},
+				},
+			],
 		},
 	];
 </script>
 
 <script lang="ts">
-
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import type { IconName } from "$lib/icons";
 	import { DocumentType, Location, Prisma } from "@prisma/client";
@@ -345,7 +379,7 @@
 	import type { Entries } from "type-fest";
 	import type { Primitive } from "zod";
 	import { useFilterQuery } from "./filter";
-// $: selected_input = selectedCondition?.type && inputComponents[selectedCondition?.type];
+	// $: selected_input = selectedCondition?.type && inputComponents[selectedCondition?.type];
 	// $: selected_values = selectedCondition?.values?.(selected_input?.value) || [];
 	// $: selected_values.map;
 
@@ -373,12 +407,12 @@
 	let button: HTMLButtonElement;
 
 	export let conditions: ChosenCondition[] = [];
-    export let and: "AND" | "OR" | "NOT" = "AND";
+	export let and: "AND" | "OR" | "NOT" = "AND";
 	// REVIEW: we should include conditions in the store, that way they're customizable depending on context
 	export let chosenConditionsStore = createChosenConditionStore({
-        conditions,
-        and
-    });
+		conditions,
+		and,
+	});
 	setFilterContext(chosenConditionsStore);
 	$: wheres = $chosenConditionsStore.conditions.map((c) => ({
 		[c?.field]: c?.value?.where,
