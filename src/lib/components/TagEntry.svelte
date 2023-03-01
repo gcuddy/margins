@@ -48,6 +48,10 @@
 	/// read only
 	export let pending = false;
 
+
+    export let placeholder = "Add tag…";
+    export let placeholderIcon = false;
+
 	// Tag Names must be unique, so we can use a simple Set<string>
 	let selectedTags: Set<string> = new Set();
 	items
@@ -139,7 +143,7 @@
 
 	export let loading = false;
 
-	export let size: "lg" | "base" | "sm" = "base";
+	export let size: "lg" | "base" | "sm" | "xs" = "base";
 
 	export let pillVariant: TagVariant = "ghost";
 </script>
@@ -212,10 +216,10 @@
 			console.log("add");
 		}}
 		input={{
-			class: `px-2 py-1 dark:placeholder-gray-500 placeholder-gray-400 bg-transparent focus:ring-0 border-0 w-full ${
-				size === "lg" ? "text-lg" : size === "base" ? "text-base" : "text-sm"
+			class: `px-2 py-1 placeholder-muted/50 bg-transparent focus:ring-0 border-0 w-full ${
+				size === "lg" ? "text-lg" : size === "base" ? "text-base" : size === "sm" ? "text-sm" : "text-xs"
 			} ${activeTag ? "caret-transparent" : ""}`,
-			placeholder: `${selectedTags.size ? "" : "Add tag…"}`,
+			placeholder: `${selectedTags.size ? "" : placeholder}`,
 		}}
 		inputParent={{
 			class: "flex justify-between items-center",

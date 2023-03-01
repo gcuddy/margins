@@ -80,7 +80,7 @@
 			trpc($page).bookmarks.add.mutate({
 				// TODO: fix types mismatch
 				article: articleToAdd,
-				url,
+                url: articleToAdd?.uri || articleToAdd?.url || url
 			}),
 		// TODO: come up with something a bit more sophisticated
 		onSuccess: (data) => {

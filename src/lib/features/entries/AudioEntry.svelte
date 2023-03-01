@@ -1,7 +1,10 @@
 <script lang="ts">
+	import AnnotationModal from "$lib/components/annotations/AnnotationModal.svelte";
 	import Muted from "$lib/components/atoms/Muted.svelte";
+	import Button from "$lib/components/Button.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
+	import { modals } from "$lib/stores/modals";
 	import type { Entry, Interaction } from "@prisma/client";
 	import EpisodeListItem from "./EpisodeListItem.svelte";
 
@@ -18,7 +21,7 @@
 		// }
 		interactions: Interaction[];
 	};
-    console.log([entry])
+	console.log([entry]);
 	$: interaction = entry.interactions?.[0];
 </script>
 
@@ -36,10 +39,10 @@
 		<button
 			on:click|preventDefault|stopPropagation={() => {
 				if (!entry.enclosureUrl) return;
-                if ($podcastPlayer.episode?.enclosureUrl === entry.enclosureUrl) {
-                    $podcastPlayer.paused = !$podcastPlayer.paused;
-                    return;
-                }
+				if ($podcastPlayer.episode?.enclosureUrl === entry.enclosureUrl) {
+					$podcastPlayer.paused = !$podcastPlayer.paused;
+					return;
+				}
 				podcastPlayer.load(
 					{
 						title: entry.title || "",
@@ -64,6 +67,17 @@
 			{/if}
 		</button>
 	</div>
+</div>
+<div class="mt-1 flex justify-end">
+	<Button
+		on:click={() => {
+			modals.open(AnnotationModal, {
+				timestamp: $podcastPlayer.currentTime ? Math.floor($podcastPlayer.currentTime) : 0,
+				entryId: $podcastPlayer.episode?.id,
+				source: $podcastPlayer.episode?.enclosureUrl,
+			});
+		}}>Annotate</Button
+	>
 </div>
 
 <!-- <EpisodeListItem item={entry} /> -->

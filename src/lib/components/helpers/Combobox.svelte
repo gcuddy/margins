@@ -326,7 +326,7 @@
 	// });
 </script>
 
-<div style:height={animateHeight ? `${$height}px` : undefined}>
+<!-- <div style:height={animateHeight ? `${$height}px` : undefined}> -->
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div class={className} bind:this={ref} {...$$restProps}>
 		<!-- slot props are given IF you want to use them -->
@@ -407,4 +407,4 @@
 			{/if}
 		</slot>
 	</div>
-</div>
+<!-- </div> -->

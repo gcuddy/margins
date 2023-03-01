@@ -9,6 +9,11 @@ export const _LogModel = z.object({
   date: z.date(),
   userId: z.string(),
   entryId: z.number().int(),
+  duration: z.number().int().nullish(),
+  startingPage: z.number().int().nullish(),
+  endingPage: z.number().int().nullish(),
+  season: z.number().int().nullish(),
+  episode: z.number().int().nullish(),
   note: z.string().nullish(),
 })
 

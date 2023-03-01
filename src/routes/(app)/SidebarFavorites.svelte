@@ -29,7 +29,6 @@
 		mutationFn: (input: RouterInputs["favorites"]["update"]) => trpc().favorites.update.mutate(input),
 	});
 
-	$: console.log({ favorites });
 
 	const newFolderFn = () => ({
 		id: nanoid(),

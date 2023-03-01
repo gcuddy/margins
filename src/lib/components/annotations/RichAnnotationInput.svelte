@@ -104,8 +104,8 @@
 			}}
 		/>
 		{#if include_tags}
-			<div class="flex grow items-center font-normal">
-				<TagEntry size="sm" className="grow text-xs not-italic" />
+			<div class="flex grow items-center font-normal px-2 text-xs">
+				<TagEntry size="xs" placeholder="" className="grow !text-xs not-italic" />
 			</div>
 		{/if}
 	</div>

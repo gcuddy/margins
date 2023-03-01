@@ -11,7 +11,9 @@ export const load = (async (e) => {
         defaultOptions: {
             queries: {
                 enabled: browser,
-                staleTime: 1000, // 1 second
+                staleTime: 1000 * 60 * 5, // 5 minutes
+                // cachetime 24 hours for persiter
+                      cacheTime: 1000 * 60 * 60 * 24, // 24 hours
                 networkMode: "offlineFirst"
             },
             mutations: {
@@ -23,7 +25,6 @@ export const load = (async (e) => {
     // get favorites
     console.time("favorites");
     const favorites = data.authorized ? await queryClient.ensureQueryData(favoritesQuery(e)) : []
-    console.log({ favorites });
     console.timeEnd("favorites");
 
     return { queryClient, favorites, ...data };

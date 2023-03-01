@@ -312,7 +312,7 @@ export const bookmarks = router({
             z.object({
                 id: z.number().or(z.number().array()).optional(),
                 entryId: z.number().or(z.number().array()).optional(),
-                data: _BookmarkModel.partial()
+                data: _BookmarkModel.partial(),
             }).refine(input => !!input.id || !!input.entryId, "Either id or entryId is required")
         )
         .mutation(async ({ ctx, input }) => {

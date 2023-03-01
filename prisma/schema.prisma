@@ -662,6 +662,12 @@ model Log {
 
     // TODO: duration, page count, etc.
     // Should annotations be a form of log?
+    duration Int?
+    startingPage Int?
+    endingPage Int?
+
+    season Int?
+    episode Int?
 
     note String?
 

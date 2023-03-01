@@ -58,11 +58,9 @@
 	const client = trpcWithQuery($page);
 	const utils = client.createContext();
 	$: entryId = data.id;
-	$: query = data.query
-		? data.query()
-		: client.entries.load.createQuery({
-				id: data.id,
-		  });
+	$: query = client.entries.load.createQuery({
+		id: data.id,
+	});
 	// $: query = data.query();
 	$: console.log({ $query });
 	$: article = $query.data;
@@ -345,14 +343,14 @@
 				group: "article",
 				name: "Re-download Article",
 				perform: async () => {
-                    if (!entry.uri || !entry.id) return;
+					if (!entry.uri || !entry.id) return;
 					// This is not a good way to do this — updates entry for everyone
-                    const parsed = await trpc().public.parse.query({url: entry.uri});
-                    const updatedEntry = await trpc().entries.update.mutate({
-                        id: entry.id,
-                        data: parsed
-                    })
-                    utils.entries.load.invalidate({ id: entry.id });
+					const parsed = await trpc().public.parse.query({ url: entry.uri });
+					const updatedEntry = await trpc().entries.update.mutate({
+						id: entry.id,
+						data: parsed,
+					});
+					utils.entries.load.invalidate({ id: entry.id });
 				},
 				icon: "download",
 			},
@@ -461,6 +459,8 @@
 				$mainEl?.focus();
 				console.log(document.activeElement);
 			}, 1);
+            // scroll to position if it's an article
+            if ($query.data?.type !== "article") return;
 			if ($page.data.user?.username === $page.params.username) {
 				console.log({ data }, $mainEl.scrollHeight - window.innerHeight);
 				console.log({ interaction });
@@ -744,7 +744,7 @@
 									articleID={article.id}
 									articleUrl={article.uri}
 									annotations={article.annotations}
-                                    entry={article}
+									entry={article}
 								>
 									{@html entry.html || entry.text || entry.summary || "[No content]"}
 								</Highlighter>

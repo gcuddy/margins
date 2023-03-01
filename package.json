@@ -142,6 +142,7 @@
 		"@noble/hashes": "^1.2.0",
 		"@prisma/client": "^4.10.1",
 		"@skeletonlabs/skeleton": "^0.132.5",
+		"@tanstack/query-async-storage-persister": "^4.24.10",
 		"@tanstack/svelte-query": "^4.24.10",
 		"@tiptap/core": "^2.0.0-beta.218",
 		"@tiptap/extension-bubble-menu": "^2.0.0-beta.218",

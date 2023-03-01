@@ -812,7 +812,7 @@ export class Parser {
         author: "",
         summary: "",
         image: "",
-        url: "",
+        uri: "",
         published: "",
         siteName: "",
         type: "article",
@@ -900,7 +900,7 @@ export class Parser {
         }
         // if there's no title, set it to url
         if (!this.metadata.title) {
-            this.metadata.title = this.metadata.url || this.baseUrl;
+            this.metadata.title = this.metadata.uri || this.baseUrl;
         }
         console.log(`Meta: ${JSON.stringify(this.metadata)}`);
         if (!this.metadata.summary) {
@@ -1437,7 +1437,7 @@ export class Parser {
         console.log({ articleJson });
         this.metadata.title = this.getJsonLdvalue(articleJson, "title", "name", "headline");
         this.metadata.image = this.getJsonLdvalue(articleJson, ["image", "url", (a) => a[0].url]);
-        this.metadata.url = this.getJsonLdvalue(articleJson, "url");
+        this.metadata.uri = this.getJsonLdvalue(articleJson, "url");
         this.metadata.author = this.getJsonLdvalue(articleJson, ["author", "name"]);
         this.metadata.summary = this.getJsonLdvalue(articleJson, "description");
         this.metadata.published = this.getJsonLdvalue(articleJson, "datePublished");
