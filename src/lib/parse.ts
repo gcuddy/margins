@@ -38,9 +38,6 @@ type YoutubeJson = {
     html: string;
 }
 
-
-
-
 export default async function (url: string, html?: string): Promise<z.infer<typeof Metadata>> {
     if (url.includes("books.google.com/books/about" || url.includes("google.com/books/edition"))) {
         const regexMatch = googleBooksRegexes.find((r) => r.test(url));
@@ -101,7 +98,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                 text: tweet.data.text,
                 author: tweet.includes?.users?.[0]?.name,
                 published: tweet.data.created_at,
-                image: tweet.includes?.media?.[0]?.preview_image_url || null,
+                image: tweet.includes?.media?.[0]?.preview_image_url || tweet.includes?.media?.[0]?.url || null,
                 type: "tweet",
                 original: tweet as any,
             };
@@ -263,12 +260,13 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             return { ...p, type: "bookmark" };
         } else {
             console.log({ isArticle });
-            const { url: goodbye, ...p } = await parser.parse();
+            const p = await parser.parse();
+            // const { url: goodbye, ...p } = await parser.parse();
             console.log({ type: p.type });
             // TODO: store as markdown? (that could be... useful)
             // console.log('parser', { content });
             // or bookmark?
-            return { ...p };
+            return { ...p, published: dayjs(p.published).toISOString() };
         }
     } else {
         return {

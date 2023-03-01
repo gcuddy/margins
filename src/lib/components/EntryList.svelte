@@ -71,6 +71,7 @@
 	import type { RouterInputs } from "$lib/trpc/router";
 	import { longpress } from "$lib/actions/longpress";
 	import ImageLoader from "./ui/images/ImageLoader.svelte";
+	import { flip } from "svelte/animate";
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
 	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>(items);
@@ -288,7 +289,7 @@
 		if (!url) return;
 		if (!validUrl(url)) return;
 		const n = notifications.notify({ message: "Adding url..." });
-		const parsed = await trpc().public.parse.query(url);
+		const parsed = await trpc().public.parse.query({url});
 		console.log({ parsed });
 		await trpc().bookmarks.add.mutate({
 			article: parsed,
@@ -315,11 +316,12 @@
 	// });
 	onMount(() => {
 		if (container) {
-			animationController = autoAnimate(container);
-			// disable until explicitly enabled
-			animationController.disable();
+			// animationController = autoAnimate(container);
+			//REVIEW: disable until explicitly enabled
+			// animationController.disable();
 		}
 	});
+    $: console.log({animationController})
 	onDestroy(() => {
 		unsubscribeDisableAnimation && unsubscribeDisableAnimation();
 	});
@@ -345,7 +347,7 @@
 				title: `Saving url…`,
 			});
 			const s = syncStore.add();
-			const article = await trpc($page).public.parse.query(paste);
+			const article = await trpc($page).public.parse.query({url: paste});
 			console.log({ article });
 			await trpc($page).bookmarks.add.mutate({
 				article,
@@ -455,13 +457,17 @@
 				: ''}"
 			use:dndzone={{
 				items: items,
-				// flipDurationMs: $flipDurationMs,
+				flipDurationMs: 125,
 				dragDisabled,
 				transformDraggedElement,
 				dropTargetStyle: {},
 				zoneTabIndex: -1,
 			}}
 			bind:this={container}
+            use:autoAnimate={{
+                // this wasn't working with autoanimaet(container) for some reason
+                duration: 125
+            }}
 			on:consider={handleConsider}
 			on:finalize={handleFinalize}
 		>
@@ -531,7 +537,7 @@
 									on:mouseleave={() => (hovering = false)}
 								>
 									<!-- {#if item.type === DocumentType.article || item.type === "tweet"} -->
-									{#if item.type === DocumentType.article || item.type === DocumentType.tweet}
+									{#if item.type === DocumentType.article}
 										<div
 											class="item relative h-full flex-initial  items-center  p-4  transition {viewOptions.view ===
 											'list'
@@ -553,7 +559,7 @@
 														/>
 													{:else}
 														{@const src =
-															item.type === DocumentType.tweet
+															item.type === DocumentType.tweet && !data?.image
 																? "/images/twitter.png"
 																: data?.image
 																? data?.image
@@ -775,7 +781,7 @@
 											</svelte:fragment>
 											<svelte:fragment slot="description">
 												{#if item.enclosureUrl}
-													<div class="flex justify-between gap-2">
+													<div class="flex items-center">
 														<div
 															class="flex cursor-default items-center space-x-1"
 															on:click|preventDefault|stopPropagation={() => {
@@ -827,6 +833,10 @@
 																			$podcastPlayer.duration - $podcastPlayer.currentTime,
 																			"seconds"
 																		)} left
+																	{:else if progress && item.duration}
+                                                                        {formatDuration(item.duration - item.duration * progress, "seconds")} left
+                                                                    {:else if !progress && item.duration}
+                                                                        {formatDuration(item.duration, "seconds")}
 																	{:else if progress}
 																		{Math.round(progress * 100)}%
 																	{/if}
@@ -892,6 +902,17 @@
 											entry={{
 												...item,
 												image: $page.data.S3_BUCKET_PREFIX + item.image,
+											}}
+											show={{
+												year: false,
+												type: true,
+											}}
+										/>
+									{:else if item.type === DocumentType.tweet}
+										<EntryListItem
+											entry={{
+												...item,
+												// image: $page.data.S3_BUCKET_PREFIX + item.image,
 											}}
 											show={{
 												year: false,

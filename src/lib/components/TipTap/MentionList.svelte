@@ -161,7 +161,6 @@
 
 	const selectItem = (index: number) => {
 		const item = items[index];
-
 		if (item) {
 			command(item);
 		}
@@ -237,7 +236,8 @@
 			>
 				<!-- TODO: display either progress or state  -->
 				<!-- {item.type} -->
-				{item.label}
+                {JSON.stringify(item)}
+				<!-- {item.label} -->
 			</button>
 		{/each}
 	{:else}

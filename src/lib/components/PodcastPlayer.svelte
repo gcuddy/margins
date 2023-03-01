@@ -18,7 +18,7 @@
 		title: string | null;
 		enclosureUrl: string;
 		image?: string;
-        // REVIEW: how are these 3 ids different?
+		// REVIEW: how are these 3 ids different?
 		id?: number;
 		pIndexId?: number;
 		entryId?: number;
@@ -68,6 +68,7 @@
 			load: (episode: Episode, podcast?: Podcast, progress?: number | null) => {
 				let play = false;
 				update((state) => {
+                    console.log({state,podcast})
 					if (state.episode?.id === episode.id) {
 						return state;
 					}
@@ -114,7 +115,7 @@
 	import Icon from "./helpers/Icon.svelte";
 	import Progress from "./helpers/Progress.svelte";
 	import { createMutation, createQuery } from "@tanstack/svelte-query";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { page } from "$app/stores";
 	import { draggable } from "@neodrag/svelte";
 	import { modals } from "$lib/stores/modals";
@@ -162,7 +163,6 @@
 	const unsubscribePodcastPlayer = podcastPlayer.subscribe((val) => {
 		// console.log({ val });
 		if (!val.episode?.pIndexId) return;
-		console.log({ val });
 		if (podcastIndexFeedId === val.episode?.pIndexId) return;
 		podcastIndexFeedId = val.episode?.pIndexId;
 		// if (podcastIndexFeedId) {
@@ -176,20 +176,48 @@
 		$podcastPlayer.duration - $podcastPlayer.currentTime < 10
 	) {
 		trpc().podcasts.updateEpisodeInteraction.mutate({
-			podcastIndexId: $podcastPlayer.episode?.entryId ? undefined : BigInt(+($podcastPlayer.episode?.pIndexId || $podcastPlayer.episode?.id)),
+			podcastIndexId: $podcastPlayer.episode?.entryId
+				? undefined
+				: BigInt(+($podcastPlayer.episode?.pIndexId || $podcastPlayer.episode?.id)),
 			entryId: $podcastPlayer.episode?.entryId,
 			progress: 1,
 			finished: true,
 		});
 	}
 
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
+	const updateInteraction = client.podcasts.updateEpisodeInteraction.createMutation({
+		onSuccess: (interaction) => {
+			// update data for entry
+			if (!interaction) return;
+			utils.entries.load.setData(
+				{
+					id: interaction.entryId,
+				},
+				(old) => {
+					if (!old) return;
+					return {
+						...old,
+						interactions: [
+							{
+								...old.interactions[0],
+								...interaction,
+							},
+						],
+					};
+				}
+			);
+		},
+	});
+
 	// save time
 	const debouncedSave = debounce(async () => {
 		if (!$podcastPlayer.episode?.id || !$podcastPlayer.episode.entryId) return;
-		trpc().podcasts.updateEpisodeInteraction.mutate({
-			podcastIndexId: $podcastPlayer.episode.entryId ? undefined :  BigInt($podcastPlayer.episode.id),
-			entryId: $podcastPlayer.episode.entryId,
-			progress: $timestamp / $podcastPlayer.duration,
+        $updateInteraction.mutate({
+            podcastIndexId: $podcastPlayer.episode.entryId ? undefined : BigInt($podcastPlayer.episode.id),
+            entryId: $podcastPlayer.episode.entryId,
+            progress: $timestamp / $podcastPlayer.duration,
 		});
 		// $podcastPlayer.episode.entryId = interaction.entryId;
 		// await post('/api/set_podcast_progress', {
@@ -247,7 +275,9 @@
 			transition:fly={{
 				y: 10,
 			}}
-			use:draggable={{}}
+			use:draggable={{
+                cancel: ".seeker"
+            }}
 			class="fixed bottom-0 right-0 w-full bg-elevation/50 p-1 shadow-2xl ring-1 ring-border backdrop-blur-md dark:bg-black sm:bottom-4 sm:right-4 sm:w-80 sm:rounded-lg sm:p-3"
 		>
 			<div class="w-full px-2 py-1">
@@ -262,7 +292,13 @@
 							alt=""
 						/>
 						<div class="flex grow flex-col space-y-1 truncate text-sm sm:space-y-0">
-							<span class="truncate font-medium">{$podcastPlayer.episode.title}</span>
+                           {#if $podcastPlayer.episode?.entryId}
+                           <a href="/u:{$page.data.user?.username}/entry/{$podcastPlayer.episode?.entryId}" class="truncate font-medium">{$podcastPlayer.episode.title}</a>
+                           {:else if $podcastPlayer.episode?.pIndexId && $podcastPlayer.episode?.id}
+                           <a href="/podcasts/{$podcastPlayer.episode?.pIndexId}/{$podcastPlayer.episode?.id}" class="truncate font-medium">{$podcastPlayer.episode.title}</a>
+                           {:else}
+                           <span class="truncate font-medium">{$podcastPlayer.episode.title}</span>
+                           {/if}
 							<Progress
 								class="h-1 w-full appearance-none rounded-full bg-gray-500 transition-[width] dark:bg-gray-600/50 sm:hidden {$podcastPlayer.loading
 									? 'animate-pulse'
@@ -303,7 +339,7 @@
 							<Icon name="xSolid" className="h-3 w-3 sm:h-4 sm:w-4 fill-gray-500" />
 						</button>
 					</div>
-					<div class=" hidden w-full flex-col sm:flex">
+					<div class=" hidden w-full flex-col sm:flex seeker">
 						<input
 							type="range"
 							min={0}
@@ -376,14 +412,14 @@
 										{
 											label: "Take annotation",
 											icon: "pencilSolid",
-                                            perform: () => {
-                                                // open modal
-                                                modals.open(AnnotationModal, {
-                                                    timestamp: $timestamp,
-                                                    entryId: $podcastPlayer.episode?.id,
-                                                    source: $podcastPlayer.episode?.enclosureUrl
-                                                })
-                                            }
+											perform: () => {
+												// open modal
+												modals.open(AnnotationModal, {
+													timestamp: $timestamp,
+													entryId: $podcastPlayer.episode?.id,
+													source: $podcastPlayer.episode?.enclosureUrl,
+												});
+											},
 										},
 									],
 								]}

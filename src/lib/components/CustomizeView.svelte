@@ -105,8 +105,8 @@
 							<option value="title">Title</option>
 							<option value="author">Author</option>
 							<option value="date">Publish Date</option>
-							<option value="createdAt">Added</option>
-							<option value="updatedAt">Updated</option>
+							<option value="created">Saved</option>
+							<!-- <option value="updatedAt">Updated</option> -->
 						</MiniSelect>
 					</div>
 					<Disclosure class="flex flex-col space-y-2 pt-2" let:open>

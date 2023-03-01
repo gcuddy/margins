@@ -5,7 +5,7 @@
 	import type parse from "$lib/parse";
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import type { Location } from "$lib/types/schemas/Locations";
 	import { getUser } from "@lucia-auth/sveltekit/client";
@@ -48,7 +48,7 @@
 
 	$: query = createQuery({
 		queryKey: ["parse", url],
-		queryFn: async () => trpc($page).public.parse.query(url),
+		queryFn: async () => trpc($page).public.parse.query({url}),
 		enabled: false,
 		staleTime: 1000 * 60,
 		refetchOnWindowFocus: false,
@@ -59,7 +59,23 @@
 
 	// TODO: screenshot if bookmark (see /add/page.server.ts)
 	const queryClient = useQueryClient();
-	const addMutation = createMutation({
+    const client = trpcWithQuery($page)
+    const utils = client.createContext();
+	const addMutation = client.bookmarks.add.createMutation({
+        onMutate: (data) => {
+            // TODO: optimistic update
+            if (data?.stateId) {
+                // place it in respective state query, if that exists
+
+            }
+        },
+        onSuccess: (data) => {
+            // Invalidte all queries? queryClient.invalidateQueries()
+            utils.entries.invalidate();
+        }
+    });
+
+    createMutation({
 		mutationFn: () =>
 			trpc($page).bookmarks.add.mutate({
 				// TODO: fix types mismatch
@@ -93,11 +109,15 @@
 		// 	id: 'add-url',
 		// });
 		// Prevent form submission, we're going to do it ourselves with the cached data
+        console.log({articleToAdd})
 		if (articleToAdd) {
             cancel();
 			// TODO: Optimistic update
 			console.log({ article: articleToAdd, url });
-			$addMutation.mutate();
+			$addMutation.mutate({
+                article: articleToAdd,
+                url
+            });
 			// TODO: invalidation
 			modals.close({
 				id: "add-url",

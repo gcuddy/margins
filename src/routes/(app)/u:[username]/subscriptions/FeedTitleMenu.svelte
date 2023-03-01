@@ -5,6 +5,7 @@
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
+	import EditSubscription from '$lib/features/subscriptions/EditSubscription.svelte';
 	import { modals } from '$lib/stores/modals';
 	import { notifications } from '$lib/stores/notifications';
 	// import EditFeed from '../rss/EditFeed.svelte';
@@ -25,8 +26,8 @@
 					label: 'Edit Feed',
 					icon: 'rssSolid',
 					perform: () => {
-						modals.open(EditFeed, {
-							feed: subscription.feed,
+						modals.open(EditSubscription, {
+							subscription
 						});
 					},
 				},

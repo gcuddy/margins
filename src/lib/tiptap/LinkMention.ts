@@ -38,7 +38,7 @@ export const Mention = Node.create<MentionOptions>({
         return {
             HTMLAttributes: {},
             renderLabel({ options, node }) {
-                return `${options.suggestion.char}${node.attrs.label ?? node.attrs.id}`
+                return `${node.attrs.label ?? node.attrs.id}`
             },
             suggestion: {
                 char: '@',
@@ -150,17 +150,17 @@ export const Mention = Node.create<MentionOptions>({
         const iconName = type ? iconsMini[type] : undefined;
         const icon = iconName ? icons[iconName] : undefined;
        console.log({icon})
-        return ['span',
-            icon ? createsvg(icon) : '',
-            [
-                'a',
-                mergeAttributes({ 'data-type': this.name }, this.options.HTMLAttributes, HTMLAttributes),
-                this.options.renderLabel({
-                    options: this.options,
-                    node,
-                }),
-            ]
-        ]
+        // return ['span',
+        //     icon ? createsvg(icon) : '',
+        //     [
+        //         'a',
+        //         mergeAttributes({ 'data-type': this.name }, this.options.HTMLAttributes, HTMLAttributes),
+        //         this.options.renderLabel({
+        //             options: this.options,
+        //             node,
+        //         }),
+        //     ]
+        // ]
         return [
             'a',
             mergeAttributes({ 'data-type': this.name }, this.options.HTMLAttributes, HTMLAttributes),

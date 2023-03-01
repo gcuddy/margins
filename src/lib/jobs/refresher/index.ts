@@ -16,7 +16,7 @@ import { isXml } from "$lib/rss/utils";
 const log = (msg: string) => console.log(`[refreshFeeds] - ${msg}`);
 
 // TODO: type for this
-const feedSelect = Prisma.validator<Prisma.FeedSelect>()({
+export const feedSelect = Prisma.validator<Prisma.FeedSelect>()({
     feedUrl: true,
     id: true,
     entries: {
@@ -135,6 +135,10 @@ export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
             subscriptions: {
                 some: {},
             },
+            // TODO: allow passing in full feeds instead of ids to prevent extra db call
+            id: feed_ids ? {
+                in: feed_ids,
+            } : undefined,
         },
         select: feedSelect,
     });

@@ -96,7 +96,7 @@
 	{...$$restProps}
 >
 	<div slot="option" let:value let:active let:selected class="px-2">
-		<div class="rounded {active ? 'bg-black/10 dark:bg-gray-400/20' : ''}">
+		<div class="rounded {active ? 'bg-elevation-hover' : ''}">
 			<slot {value} {active} {selected} />
 		</div>
 	</div>

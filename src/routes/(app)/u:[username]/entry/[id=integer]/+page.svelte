@@ -45,6 +45,7 @@
 	import type { PageData } from "./$types";
 	import Booster from "./Booster.svelte";
 	import Highlighter from "./Highlighter.svelte";
+	import { createAnnotation, SaveAnnotationMutationKey } from "./mutations";
 	import ReadingMenu from "./ReadingMenu.svelte";
 	import ReadingSidebar from "./ReadingSidebar.svelte";
 	import type { Metadata } from "./types";
@@ -54,14 +55,96 @@
 	const queryClient = useQueryClient();
 	// $: article = data.article;
 	// let article: RouterOutputs["entries"]["load"];
-    const client = trpcWithQuery($page);
-    const utils = client.createContext();
-	$: query = data.query ? data.query() : client.entries.load.createQuery({
-        id: data.id,
-    });
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
+	$: entryId = data.id;
+	$: query = data.query
+		? data.query()
+		: client.entries.load.createQuery({
+				id: data.id,
+		  });
 	// $: query = data.query();
-    $: console.log({$query})
+	$: console.log({ $query });
 	$: article = $query.data;
+
+	const saveAnnotationMutation = client.annotations.save.createMutation({
+		onMutate: (data) => {
+			// utils.entries.load.setData(
+			// 	{
+			// 		id: entryId,
+			// 	},
+			// 	(old) => {
+			// 		console.log({ old, data });
+			// 		return old;
+			// 	}
+			// );
+			// return;
+			if (data.id) {
+				// optimstically update the cache for this entry
+				// optimistic update: TODO cancel?
+				// snapshot
+				const previous = utils.entries.load.getData();
+				// optimstically update
+				utils.entries.load.setData(
+					{
+						id: entryId,
+					},
+					(old) => {
+						if (!old) return old;
+						if (!$page.data.user) return old;
+						// either update or add
+						const existing = old.annotations.find((a) => a.id === data.id);
+						console.log("existing: ", existing);
+						if (!existing) {
+							console.log({ data, old });
+							console.log("hllloeoeooeoe");
+							const annotation = createAnnotation(data, {
+								entryId,
+								user: $page.data.user,
+							});
+							console.log({ annotation });
+							const updated = {
+								...old,
+								annotations: [
+									...old.annotations,
+									{
+										...createAnnotation(data, {
+											entryId,
+											user: $page.data.user,
+										}),
+										...data,
+									},
+								],
+							};
+							console.log({ updated });
+							return updated;
+						}
+						return {
+							...old,
+							annotations: old.annotations.map((a) => {
+								if (a.id === data.id) {
+									return {
+										...a,
+										...data,
+									};
+								}
+								return a;
+							}),
+						};
+					}
+				);
+			}
+		},
+		onSuccess: () => {
+			utils.entries.load.invalidate({
+				id: entryId,
+			});
+			utils.entries.listBookmarks.invalidate();
+		},
+	});
+
+	setContext(SaveAnnotationMutationKey, saveAnnotationMutation);
+
 	// $: query = createQuery({
 	// 	...entryDetailsQuery({
 	// 		id: data.id,
@@ -209,7 +292,23 @@
 									stateId: e.detail.id,
 									entryId: article.id,
 								});
-								await invalidateAll();
+								// set article state directly
+								utils.entries.load.setData(
+									{
+										id: article.id,
+									},
+									(old) => {
+										if (!old) return old;
+										return {
+											...old,
+											bookmark: {
+												...old.bookmark,
+												state: e.detail,
+												stateId: e.detail.id,
+											},
+										};
+									}
+								);
 								syncStore.remove(syncId);
 								// 	.then(() => {
 								// 		notifications.notify({
@@ -246,34 +345,14 @@
 				group: "article",
 				name: "Re-download Article",
 				perform: async () => {
-					const syncId = syncStore.addItem();
-					const id = notifications.notify({
-						title: "Re-downloading article",
-						message: "This shouldn't take long",
-						timeout: 3000,
-					});
-					const form = new FormData();
-					form.set("text", entry.url);
-					const res = await fetch("/add", {
-						method: "POST",
-						body: form,
-						headers: {
-							accept: "application/json",
-						},
-					});
-					{
-						//done
-						syncStore.removeItem(syncId);
-						notifications.notify({
-							title: "Successfully re-downloaded article",
-							message: "Article has been re-downloaded. Refresh the page to see it.",
-							type: "success",
-						});
-					}
-					const _article = await res.json();
-					console.log({ _article });
-					// todo: use zod here
-					await invalidate(`/${entry.id}`);
+                    if (!entry.uri || !entry.id) return;
+					// This is not a good way to do this — updates entry for everyone
+                    const parsed = await trpc().public.parse.query({url: entry.uri});
+                    const updatedEntry = await trpc().entries.update.mutate({
+                        id: entry.id,
+                        data: parsed
+                    })
+                    utils.entries.load.invalidate({ id: entry.id });
 				},
 				icon: "download",
 			},
@@ -321,6 +400,7 @@
 									id: detail.id,
 									entryId: entry.id,
 								});
+								// update...
 								notifications.notify({
 									title: `Added entry to ${collection.name}`,
 									type: "success",
@@ -442,29 +522,35 @@
 		if (disableSaveScroll) return;
 		if (!data && data !== 0) return;
 		if (Math.abs(last_saved_progress - data) < 0.005) return;
+		// check to make sure it's an article
+		// REVIEW: should we move this logic into a separate component?
+		if ($query.data?.type !== "article") return;
 		last_saved_progress = data;
-        if (!article) return;
-        utils.entries.load.setData({
-            id: article.id
-        }, old => {
-            if (!old) return;
-            return {
-                ...old,
-                interactions: [
-                    {
-                        ...old.interactions[0],
-                        progress: data
-                    }
-                ]
-            }
-        });
-        utils.entries.listBookmarks.invalidate();
-        // and prolly invalidate most others too, just don't want to refetch everything in entries since i don't want to refetch current pge?
+		if (!article) return;
+		utils.entries.load.setData(
+			{
+				id: article.id,
+			},
+			(old) => {
+				if (!old) return;
+				return {
+					...old,
+					interactions: [
+						{
+							...old.interactions[0],
+							progress: data,
+						},
+					],
+				};
+			}
+		);
+		utils.entries.listBookmarks.invalidate();
+		// and prolly invalidate most others too, just don't want to refetch everything in entries since i don't want to refetch current pge?
 		await trpc($page).entries.updateInteraction.mutate({
 			id: article.id,
 			progress: data,
 		});
-        //
+		//
 
 		// await fetch(`/api/interactions`, {
 		// 	method: 'POST',
@@ -587,9 +673,9 @@
 				tabindex="-1"
 			>
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
-				<article data-article class=" mt-14 h-full  px-1 sm:p-4 select-text">
+				<article data-article class=" mt-14 h-full  select-text px-1 sm:p-4 ">
 					{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
-						<div class="">
+						<div class="pb-16">
 							<header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
 								<!-- {article.feedId
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
@@ -654,7 +740,12 @@
 							{/if}
 							<!-- this is a very rudimentary check lol -->
 							<div id="entry-container">
-								<Highlighter articleID={article.id} articleUrl={article.uri} annotations={article.annotations}>
+								<Highlighter
+									articleID={article.id}
+									articleUrl={article.uri}
+									annotations={article.annotations}
+                                    entry={article}
+								>
 									{@html entry.html || entry.text || entry.summary || "[No content]"}
 								</Highlighter>
 							</div>

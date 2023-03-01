@@ -37,6 +37,8 @@
 	import { entryDetailsQuery } from "$lib/features/entries/queries";
 	import mq from "$lib/stores/mq";
 	import { nanoid } from "$lib/nanoid";
+	import type { JSONContent } from "@tiptap/core";
+	import { findNodes } from "$lib/components/TipTap.svelte";
 	const [menuRef, menuContent] = createPopperActions({
 		placement: "top",
 		strategy: "fixed",
@@ -99,14 +101,15 @@
 			},
 		],
 	});
+	export let entry: RouterOutputs["entries"]["load"];
 	export let articleID: number;
 	export let articleUrl: string;
 	export let annotations: Annotation[] = [];
 	$: console.log({ annotations });
 	export let currentAnnotationColor: Color = "Yellow";
 
-    $: currentAnnotationColor = active_annotation?.color || "Yellow";
-    $: console.log({ currentAnnotationColor });
+	$: currentAnnotationColor = active_annotation?.color || "Yellow";
+	$: console.log({ currentAnnotationColor });
 	export let showColors = false;
 	export let readOnly = false;
 
@@ -160,11 +163,12 @@
 	let active_highlight_el: HTMLElement;
 	let active_highlight_rect: DOMRect;
 	let active_highlight_id: string | null = null;
+	$: console.log({ active_highlight_id });
 	$: active_annotation = annotations?.find(({ id }) => id === active_highlight_id);
 	let active_annotation_tags: Tag[] = [];
 	let annotation_opts: {
 		el: HTMLElement;
-		value: string;
+		value: string | JSONContent;
 		html?: string;
 		annotation: Annotation;
 		highlightInfo?: Awaited<ReturnType<typeof highlightSelectorTarget>>;
@@ -237,7 +241,6 @@
 			parentId: null,
 			sortOrder: 0,
 			bookmarkId: null,
-			colorId: currentAnnotationColor,
 			type: "annotation",
 			body: "",
 			contentData: null,
@@ -256,18 +259,19 @@
 	}
 
 	// REVIEW: not a huge advantage to using trpc.query here as opposed to just using createmutation hook from svelte-query
+	// set this in context above so it can be accessed by readingsidebar without repetition
 	const saveMutation = client.annotations.save.createMutation({
 		onMutate: (data) => {
-			utils.entries.load.setData(
-				{
-					id: articleID,
-				},
-				(old) => {
-					console.log({ old, data });
-					return old;
-				}
-			);
-			return;
+			// utils.entries.load.setData(
+			// 	{
+			// 		id: articleID,
+			// 	},
+			// 	(old) => {
+			// 		console.log({ old, data });
+			// 		return old;
+			// 	}
+			// );
+			// // return;
 			if (data.id) {
 				// optimstically update the cache for this entry
 				// optimistic update: TODO cancel?
@@ -318,6 +322,22 @@
 		},
 	});
 
+	const createRelation = client.entries.createRelation.createMutation({
+		onMutate: (data) => {
+			// utils.client.entries.load.
+			const entry = utils.entries.load.getData({
+				id: articleID,
+			});
+			const entryIds = Array.isArray(data.entryId) ? data.entryId : [data.entryId];
+		},
+		onSuccess: () => {
+			utils.entries.load.invalidate({
+				id: articleID,
+			});
+			// utils.entries.listBookmarks.invalidate();
+		},
+	});
+
 	type AnnotationMutation = {
 		// TODO
 	};
@@ -356,33 +376,35 @@
 					} else {
 						console.log({ old, data });
 						// then update
-                        const updated =  {
-                            ...old,
-                            annotations: [...old.annotations.map((a) => {
-                                if (a.id === id) {
-                                    return {
-                                        ...a,
-                                        ...data,
-                                    };
-                                }
-                                return a;
-                            })],
-                        };
-                        console.log({updated})
-                        return {...updated};
+						const updated = {
+							...old,
+							annotations: [
+								...old.annotations.map((a) => {
+									if (a.id === id) {
+										return {
+											...a,
+											...data,
+										};
+									}
+									return a;
+								}),
+							],
+						};
+						console.log({ updated });
+						return { ...updated };
 					}
 				}
 			);
 			tick().then(() => {
 				// scroll into view
-                setTimeout(() => {
-                    const el = document.querySelector(`[data-sidebar-annotation-id="${id}"]`);
-                    // debugger;
-                    console.log({el})
-                    el?.scrollIntoView({ behavior: "smooth" });
-                }, 100);
+				setTimeout(() => {
+					const el = document.querySelector(`[data-sidebar-annotation-id="${id}"]`);
+					// debugger;
+					console.log({ el });
+					el?.scrollIntoView({ behavior: "smooth" });
+				}, 100);
 				// const el = document.querySelector(`[data-sidebar-annotation-id="${id}"]`);
-                // console.log({el})
+				// console.log({el})
 				// el?.scrollIntoView({ behavior: "smooth" });
 			});
 			return { previous };
@@ -421,36 +443,36 @@
 			// });
 		},
 	});
-    const deleteAnnotation = client.annotations.delete.createMutation({
-        onMutate: (id) => {
-            utils.entries.load.setData(
-                {
-                    id: articleID,
-                },
-                (old) => {
-                    if (!old) return old;
-                    return {
-                        ...old,
-                        annotations: old.annotations.filter((a) => a.id !== id),
-                    };
-                }
-            );
-        },
-        onSuccess: () => {
-            utils.entries.load.invalidate({
-                id: articleID,
-            });
-            utils.entries.listBookmarks.invalidate();
-            utils.annotations.invalidate();
-        },
-        onError: () => {
-            notifications.notify({
+	const deleteAnnotation = client.annotations.delete.createMutation({
+		onMutate: (id) => {
+			utils.entries.load.setData(
+				{
+					id: articleID,
+				},
+				(old) => {
+					if (!old) return old;
+					return {
+						...old,
+						annotations: old.annotations.filter((a) => a.id !== id),
+					};
+				}
+			);
+		},
+		onSuccess: () => {
+			utils.entries.load.invalidate({
+				id: articleID,
+			});
+			utils.entries.listBookmarks.invalidate();
+			utils.annotations.invalidate();
+		},
+		onError: () => {
+			notifications.notify({
 				title: "Error",
 				message: "There was an error deleting your annotation",
 				type: "error",
 			});
-        }
-    })
+		},
+	});
 
 	const isValidSelection = (sel: Selection) =>
 		sel &&
@@ -561,7 +583,7 @@
 	function handleClick(e: MouseEvent) {
 		if (!$page.data.authorized) return;
 		const el = e.target as HTMLElement;
-        console.log({el})
+		console.log({ el });
 		const annotationParent = isAnnotation(el);
 		if (annotationParent) {
 			console.log("annotation");
@@ -667,7 +689,8 @@
 				const h = matchList.map((match) =>
 					highlight(match, "mark", {
 						"data-annotation-id": annotation.id.toString(),
-						"data-annotation-content": annotation.body || annotation.tags.length ? "true" : "false",
+						"data-annotation-content":
+							annotation.body || annotation.contentData || annotation.tags.length ? "true" : "false",
 					})
 				);
 				$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
@@ -681,7 +704,7 @@
 		}
 	};
 
-	async function renderAnnotations() {
+	async function __renderAnnotations() {
 		console.log(`rendering annotations`);
 		if (!wrapper) return;
 
@@ -699,7 +722,8 @@
 				const h = matchList.map((match) =>
 					highlight(match, "mark", {
 						"data-annotation-id": annotation.id.toString(),
-						"data-annotation-content": annotation.body || annotation.tags?.length ? "true" : "false",
+						"data-annotation-content":
+							annotation.body || annotation.contentData || annotation.tags?.length ? "true" : "false",
 					})
 				);
 				$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
@@ -733,36 +757,44 @@
 		});
 	}
 
+	async function renderAnnotations() {
+        console.log("rendering annotations")
+		for (const annotation of inlineAnnotations) {
+			console.log({ annotation });
+			try {
+				const target = TargetSchema.parse(annotation.target);
+				console.log({ target });
+				const { selector } = target;
+				const matches = createMatcher(selector)(wrapper);
+				console.log({ matches });
+				const matchList = [];
+				for await (const match of matches) matchList.push(match);
+				const h = matchList.map((match) =>
+					highlight(match, "mark", {
+						"data-annotation-id": annotation.id.toString(),
+						"data-annotation-content":
+							annotation.body || annotation.contentData || annotation.tags?.length ? "true" : "false",
+						"data-annotation-color": annotation.color,
+					})
+				);
+				$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
+				idToElMap.set(annotation.id, {
+					destroy: h.map((h) => h.removeHighlights),
+					els: h.flatMap((h) => h.highlightElements),
+				});
+			} catch (e) {
+				console.error(e);
+			}
+		}
+	}
+
+    $: entry.id && renderAnnotations();
 	onMount(async () => {
+		console.log("running on mount");
 		if (wrapper) {
 			console.log({ inlineAnnotations });
 			// load highlgihts
-			for (const annotation of inlineAnnotations) {
-				console.log({ annotation });
-				try {
-					const target = TargetSchema.parse(annotation.target);
-					console.log({ target });
-					const { selector } = target;
-					const matches = createMatcher(selector)(wrapper);
-					console.log({ matches });
-					const matchList = [];
-					for await (const match of matches) matchList.push(match);
-					const h = matchList.map((match) =>
-						highlight(match, "mark", {
-							"data-annotation-id": annotation.id.toString(),
-							"data-annotation-content": annotation.body || annotation.tags?.length ? "true" : "false",
-							"data-annotation-color": annotation.color,
-						})
-					);
-					$annotation_els = { ...$annotation_els, [annotation.id]: h[0].highlightElements[0] };
-					idToElMap.set(annotation.id, {
-						destroy: h.map((h) => h.removeHighlights),
-						els: h.flatMap((h) => h.highlightElements),
-					});
-				} catch (e) {
-					// console.error(e);
-				}
-			}
+           await renderAnnotations();
 			// TODO: eventually this will be ssr-d so we'll be able to go to annotation without js, just a #annotation-{ID} link
 			const a = $page.url.searchParams.get("a");
 			if (a && wrapper) {
@@ -905,7 +937,7 @@
 									html,
 									color: currentAnnotationColor,
 								};
-                        } else if (described?.type === "RangeSelector") {
+							} else if (described?.type === "RangeSelector") {
 								// TODO: allow other matchers besides text quote and fix type error
 								const createRangeSelectorMatcher = makeCreateRangeSelectorMatcher(
 									createTextQuoteSelectorMatcher
@@ -941,52 +973,45 @@
 									};
 								}
 							}
-                            show_tooltip = false;
+							show_tooltip = false;
 						}}
 						on:highlight={async () => {
 							const userSelection = window.getSelection()?.getRangeAt(0);
 							if (!userSelection || userSelection.collapsed) return;
 							const selector = await describeTextQuote(userSelection);
-							const highlightInfo = await highlightSelectorTarget(
-								selector,
-								undefined,
-								{
-									"data-annotation": "true",
-									"data-annotation-id": "undefined",
-									"data-annotation-content": "true",
-									"data-annotation-color": currentAnnotationColor,
-								},
-								true
-							);
-							window.getSelection()?.removeAllRanges();
 							try {
-								// const annotation = await trpc().annotations.save.mutate({
-								// 	entryId: articleID,
-								// 	target: {
-								// 		source: articleUrl,
-								// 		selector,
-								// 	},
-								// 	color: currentAnnotationColor,
-								// });
-								const annotation = await $saveAnnotation.mutateAsync({
+								const id = nanoid();
+								const highlightInfo = await highlightSelectorTarget(
+									selector,
+									undefined,
+									{
+										"data-annotation": "true",
+										"data-annotation-id": id,
+										"data-annotation-content": "false",
+										"data-annotation-color": currentAnnotationColor,
+									},
+									true
+								);
+								$saveAnnotation.mutate({
 									target: {
 										source: articleUrl,
 										selector,
 									},
 									color: currentAnnotationColor,
+									id,
 								});
+								window.getSelection()?.removeAllRanges();
+								show_tooltip = false;
 								highlightInfo.forEach((h) => {
 									h.highlightElements.forEach((el) => {
-										el.setAttribute("id", `annotation-${annotation.id}`);
-										el.setAttribute("data-annotation-id", annotation.id.toString());
+										el.setAttribute("id", `annotation-${id}`);
+										el.setAttribute("data-annotation-id", id.toString());
 									});
 								});
-								idToElMap.set(annotation.id, {
+								idToElMap.set(id, {
 									destroy: highlightInfo.map((h) => h.removeHighlights),
 									els: highlightInfo.flatMap((h) => h.highlightElements),
 								});
-								// annotations = [...annotations, annotation];
-								// await invalidateAll();
 							} catch (e) {
 								console.error(e);
 								notifications.notify({
@@ -1002,14 +1027,14 @@
 				{:else if tooltip_display === TooltipDisplay.Edit}
 					<EditHighlightToolTip
 						on:delete={async () => {
-                            if (active_annotation?.body || active_annotation?.contentData) {
-                                // confirm
-                                const c = window.confirm("Are you sure you want to delete?")
-                                if (!c) return;
-                            }
+							if (active_annotation?.body || active_annotation?.contentData) {
+								// confirm
+								const c = window.confirm("Are you sure you want to delete?");
+								if (!c) return;
+							}
 							console.log({ active_highlight_id });
 							if (active_highlight_id === null) return;
-                            show_tooltip = false;
+							show_tooltip = false;
 							const removeHighlights = idToElMap.get(active_highlight_id);
 							removeHighlights && removeHighlights.destroy.forEach((remove) => remove());
 							console.log({ removeHighlights });
@@ -1029,15 +1054,16 @@
 							if (typeof target === "string") return;
 							annotation_opts = {
 								el: active_highlight_el,
-								value: active_annotation?.body || "",
+								value: active_annotation?.body || active_annotation?.contentData || "",
 								selector: target.selector,
 							};
 						}}
 						annotation={active_annotation}
 						on:color={async ({ detail: color }) => {
+							console.log({ active_annotation, active_highlight_id, annotations });
 							const idx = annotations.findIndex((a) => active_annotation?.id === a.id);
 							console.log({ idx });
-							if (!idx) {
+							if (idx === -1) {
 								throw new Error("Error finding active_annotation");
 							}
 							// optimistic update
@@ -1049,10 +1075,10 @@
 								}
 							});
 							// send to trpc to update
-                            $saveAnnotation.mutate({
-                                id: annotations[idx].id,
-                                color,
-                            })
+							$saveAnnotation.mutate({
+								id: annotations[idx].id,
+								color,
+							});
 							// await trpc().annotations.save.mutate({
 							// 	id: annotations[idx].id,
 							// 	color,
@@ -1061,6 +1087,7 @@
 						}}
 						on:annotate={() => {
 							highlightMenu = false;
+							show_tooltip = false;
 							const target = TargetSchema.parse(active_annotation?.target);
 							if (typeof target === "string") return;
 							annotation_opts = {
@@ -1110,6 +1137,7 @@
 	{#if annotation_opts !== null}
 		<div bind:this={annotationContainer} style:--min-width="300px" data-annotation-entry>
 			<FloatingAnnotation
+				rich={true}
 				size="base"
 				bind:tags={active_annotation_tags}
 				on:cancel={() => {
@@ -1122,11 +1150,32 @@
 					annotation_opts = null;
 				}}
 				on:save={async (e) => {
+					console.log({ e });
 					if (!annotation_opts || !$page.data.user) return;
 					const { value } = e.detail;
+					if (typeof value === "object") {
+						const mentionNodes = findNodes(value, "mention");
+						const mentionNodesToAdd = mentionNodes.filter((node) => {
+							const { id } = node;
+							return entry.relations.some((r) => r.relatedEntry?.id === id) === false;
+						});
+						console.log({ mentionNodesToAdd });
+						for (const node of mentionNodesToAdd) {
+							if (!node.attrs?.id) continue;
+							$createRelation.mutate({
+								entryId: articleID,
+								relatedEntryId: node.attrs.id,
+							});
+						}
+					}
+					console.log({ value });
 					const { selector, highlightInfo, el } = annotation_opts;
-                    console.log({annotation_opts})
-					const id = el.dataset.annotationId && el.dataset.annotationId !== "undefined" ? el.dataset.annotationId : nanoid();
+					console.log({ annotation_opts });
+					console.log({ idToElMap });
+					const id =
+						el.dataset.annotationId && el.dataset.annotationId !== "undefined"
+							? el.dataset.annotationId
+							: nanoid();
 					$saveAnnotation.mutate({
 						entryId: articleID,
 						target: {
@@ -1134,7 +1183,8 @@
 							selector,
 							html: annotation_opts.html,
 						},
-						body: value,
+						body: typeof value === "string" ? value : undefined,
+						contentData: typeof value === "object" ? value : undefined,
 						color: currentAnnotationColor,
 						id,
 					});
@@ -1156,6 +1206,18 @@
 							destroy: highlightInfo.map((h) => h.removeHighlights),
 							els: highlightInfo.flatMap((h) => h.highlightElements),
 						});
+					} else {
+						// get from idToElMap
+						const els = idToElMap.get(id)?.els;
+						console.log({ value });
+						if (els) {
+							els.forEach((el) => {
+								el.setAttribute("data-annotation-content", !!value ? "true" : "false");
+							});
+						}
+					}
+					if (typeof value === "object") {
+						// TODO: look for links, add relations
 					}
 				}}
 				{...annotation_opts}

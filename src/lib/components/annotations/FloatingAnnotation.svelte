@@ -5,11 +5,15 @@
 	import { ComponentProps, createEventDispatcher, onMount } from "svelte";
 	import { Focus, focusIn } from "$lib/utils/focus-management";
 	import { onDestroy } from "svelte";
-	export let value = "";
+	export let value: string | JSONContent = "";
 	export let el: HTMLElement | undefined = undefined;
 	import { draggable } from "@neodrag/svelte";
 	import { spring } from "svelte/motion";
 	import type { Tag } from "@prisma/client";
+	import RichAnnotationInput from "./RichAnnotationInput.svelte";
+	import type { JSONContent } from "@tiptap/core";
+	import { fadeScale } from "$lib/transitions";
+	import { backInOut } from "svelte/easing";
 	const dispatch = createEventDispatcher();
 	export let allTags: Tag[] = [];
 	if (!allTags.length) {
@@ -17,13 +21,19 @@
 	}
 	export let tags: Tag[] = [];
 
+	export let rich = false;
+
+
+    let saving = false;
+
 	interface $$Props extends ComponentProps<AnnotationInput> {
 		tags?: Tag[];
-		value?: string;
+		value?: string | JSONContent;
 		el?: HTMLElement;
+		rich?: boolean;
 	}
 
-	$: console.log({ tags });
+	$: console.log({ tags, $$props });
 	let dragging = false;
 	let container: HTMLElement | undefined;
 
@@ -92,8 +102,8 @@
 
 	$: pos = calculateLeftOrRight();
 	onMount(() => {
-		focusIn(container, Focus.First);
 		if (container) {
+			if (!rich) focusIn(container, Focus.First);
 			pos = calculateLeftOrRight();
 		}
 		document.addEventListener("resize", setPos);
@@ -111,7 +121,6 @@
 <div
 	use:portal={el}
 	on:mousemove={(e) => {
-		console.log({ e });
 		if (e.movementX > 2) {
 			rotation.set(2, { soft: true });
 		} else if (e.movementX < -2) {
@@ -119,7 +128,12 @@
 		}
 	}}
 	in:fly={{ y: 10 }}
-	out:fade
+	out:fadeScale={{
+        easing: backInOut,
+        duration: 400,
+        baseScale: .8,
+
+    }}
 	class="floating-annotation absolute z-20 resize"
 	use:draggable={{
 		position: { x, y },
@@ -146,8 +160,30 @@
 	<!-- style:--rotation="{$rotation}deg" -->
 	<!--  -->
 	<!-- TODO: form? -->
-	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-lg transition-opacity">
-		<AnnotationInput rows={2} include_tags={false} --min-width="300px" bind:tags bind:el={container} bind:value on:save on:cancel {...$$restProps} />
+	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-xl transition-opacity">
+		{#if rich}
+			<RichAnnotationInput
+            autofocus
+				config={{
+					content: value,
+				}}
+				on:cancel
+				on:save
+				class="w-80"
+			/>
+		{:else}
+			<AnnotationInput
+				rows={2}
+				include_tags={false}
+				--min-width="300px"
+				bind:tags
+				bind:el={container}
+				bind:value
+				on:save
+				on:cancel
+				{...$$restProps}
+			/>
+		{/if}
 	</div>
 </div>
 

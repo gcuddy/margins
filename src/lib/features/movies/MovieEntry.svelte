@@ -79,7 +79,7 @@
 							/>
 						</div>
 						<div class="flex flex-col gap-2">
-							<h1 class=" font-serif text-5xl font-bold dark:drop-shadow-lg">{movie.title}</h1>
+							<h1 class="font-sans text-5xl font-black dark:drop-shadow-lg">{movie.title}</h1>
 							{#if !bookmarked}
 								<form class="flex flex-col" action="?/save" use:enhance method="post">
 									<input type="hidden" name="title" value={movie.title} />

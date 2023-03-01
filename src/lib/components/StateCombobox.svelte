@@ -37,8 +37,8 @@
 	// Example Popper configuration
 	const popperOptions = {
 		placement: "bottom-start",
-		strategy: "absolute",
-		modifiers: [{ name: "offset", options: { offset: [0, 10] } }],
+		strategy: "fixed",
+		// modifiers: [{ name: "offset", options: { offset: [0, 10] } }],
 	};
 
 	$: console.log({ location, states });
@@ -64,6 +64,10 @@
 	<div bind:this={buttonWrapper} class="button-wrapper">
 		<PopoverButton
 			class="relative flex cursor-default items-center gap-1 rounded py-1 px-2 text-left transition focus-visible:bg-gray-200 focus-visible:ring-2 hover:bg-gray-200   dark:focus-visible:bg-gray-700 dark:focus-visible:ring-offset-stone-900 dark:hover:bg-gray-700"
+            on:click={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }}
 			use={[popperRef]}
 		>
 			{#if unsaved}
@@ -94,6 +98,7 @@
 			placeholder="Change status…"
 			selectedValue={[state]}
 			onSelect={async (e) => {
+                console.log({e})
 				state = e;
 				// close
 				close(null);
@@ -107,11 +112,11 @@
 		>
 			<div class="flex h-8 items-center gap-2 px-2 text-sm">
 				<Icon
-					className="h-4 w-4 {active ? 'fill-gray-100' : 'fill-gray-400'}"
+					className="h-4 w-4 {active ? 'fill-bright' : 'fill-muted/80'}"
 					name={LOCATION_TO_ICON_SOLID[value.type]}
 				/>
 
-				<span class="grow {active ? 'text-gray-100' : 'text-gray-400'}">{value.name}</span>
+				<span class="grow {active ? 'text-bright' : 'text-muted/80'}">{value.name}</span>
 				{#if selected}
 					<Icon name="checkMini" className="h-4 w-4 fill-gray-400" />
 				{/if}

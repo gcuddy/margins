@@ -1,6 +1,7 @@
+import { derived, get,writable } from "svelte/store";
+
 import type { Command } from "$lib/components/CommandPalette/types";
 import { commands } from "$lib/data/commands";
-import { writable, derived } from "svelte/store";
 export const term = writable("");
 
 function createCommandStore() {
@@ -59,6 +60,7 @@ function createShowCommandPaletteStore() {
 	return {
 		subscribe,
 		set,
+        isOpen: () => get(showCommandPalette),
 		toggle: () =>
 			update((t) => {
 				if (t) {

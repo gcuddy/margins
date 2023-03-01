@@ -21,6 +21,13 @@
 	import SettingsSidebar from "./SettingsSidebar.svelte";
 	import PreloadingIndicator from "$lib/components/PreloadingIndicator.svelte";
 	import mq from "$lib/stores/mq";
+	import { trpcWithQuery } from "$lib/trpc/client";
+	import type { RouterOutputs } from "$lib/trpc/router";
+	import { notifications } from "$lib/stores/notifications";
+	import { selectedItems } from "$lib/stores/selectedItems";
+	import { setContext } from "svelte";
+	import { UpdateBookmarkMutationKey } from "$lib/features/entries/mutations";
+	import MutationProvider from "./MutationProvider.svelte";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
@@ -46,44 +53,48 @@
 	<Developer />
 {/if}
 <QueryClientProvider client={data.queryClient}>
-	<div
-		class="bg-base text-content caret-primary-500 dark:text-gray-50 simple-scrollbars {!$mq.desktop ? 'mobile' : ''}"
-		data-transparency="true"
-		on:drag
-	>
-		<Notifications />
-		<!-- Grid version -->
+	<MutationProvider>
 		<div
-			class="relative flex h-screen min-h-full w-full overflow-hidden "
-			style="--sidebar-width: {sidebarWidth}px;"
+			class="simple-scrollbars bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
+				? 'mobile'
+				: ''}"
+			data-transparency="true"
+			on:drag
 		>
-			{#if $navigating}
-				<!-- TODO: shouldn't show for search -->
-				<PreloadingIndicator />
-			{/if}
-			<!-- sidebar, but should only be for some layouts -->
-			<!-- probably better to use layout groups, but this will do for now -->
-			{#if $page.route.id?.startsWith("/(app)/settings")}
-				<Sidebar bind:sidebarWidth>
-					<SettingsSidebar />
-				</Sidebar>
-			{:else}
-				<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
-				<Sidebar bind:sidebarWidth />
-			{/if}
-			<!-- bind:this={$mainEl} -->
-			<main class="relative flex grow flex-col place-items-stretch overflow-auto">
-				<slot />
-				<PodcastPlayer />
-			</main>
+			<Notifications />
+			<!-- Grid version -->
+			<div
+				class="relative flex h-screen min-h-full w-full overflow-hidden "
+				style="--sidebar-width: {sidebarWidth}px;"
+			>
+				{#if $navigating}
+					<!-- TODO: shouldn't show for search -->
+					<PreloadingIndicator />
+				{/if}
+				<!-- sidebar, but should only be for some layouts -->
+				<!-- probably better to use layout groups, but this will do for now -->
+				{#if $page.route.id?.startsWith("/(app)/settings")}
+					<Sidebar bind:sidebarWidth>
+						<SettingsSidebar />
+					</Sidebar>
+				{:else}
+					<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
+					<Sidebar bind:sidebarWidth />
+				{/if}
+				<!-- bind:this={$mainEl} -->
+				<main class="relative flex grow flex-col place-items-stretch overflow-auto">
+					<slot />
+					<PodcastPlayer />
+				</main>
+			</div>
+			<DropBox />
+			<!-- hm: think command palettes should be like their own modals -->
+			<!-- TODO: figure out solution here; stacking bugs very possible -->
+			<CommandPalette />
+			<GenericCommandPaletteContainer />
+			<Modals />
 		</div>
-		<DropBox />
-		<!-- hm: think command palettes should be like their own modals -->
-		<!-- TODO: figure out solution here; stacking bugs very possible -->
-		<CommandPalette />
-		<GenericCommandPaletteContainer />
-		<Modals />
-	</div>
+	</MutationProvider>
 </QueryClientProvider>
 
 <style lang="postcss">

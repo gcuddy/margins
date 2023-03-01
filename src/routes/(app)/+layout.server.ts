@@ -1,6 +1,9 @@
 
+import type { Location } from "@prisma/client";
+
 import { createContext } from "$lib/trpc/context";
 import { appRouter } from "$lib/trpc/router";
+import { groupBy } from "$lib/utils";
 
 import type { LayoutServerLoad } from "./$types";
 
@@ -14,8 +17,6 @@ export const load: LayoutServerLoad = async (event) => {
     event.depends("user:data");
     const caller = appRouter.createCaller(await createContext(event));
     try {
-
-
         const userData = await caller.user.data({
             bookmarks: false,
             subscriptions: true,
@@ -30,13 +31,19 @@ export const load: LayoutServerLoad = async (event) => {
         const sortedStates = userData.states?.sort(
             (a, b) => locations.indexOf(a.type) - locations.indexOf(b.type)
         );
+        const locationLookup = groupBy(sortedStates || [], (state) => state.type);
+        const stateIdToLocation: Map<number, Location> = new Map((sortedStates || []).map((state) => [state.id, state.type]))
+        const stateIdToName: Map<number, string> = new Map((sortedStates || []).map((state) => [state.id, state.name]))
         return {
             user: {
                 ...userData,
                 states: sortedStates,
+                locationLookup,
+                stateIdToLocation,
+                stateIdToName,
             },
             theme,
-            authorized: true
+            authorized: true,
             // subscriptions,
             // bookmarks,
             // allEntries

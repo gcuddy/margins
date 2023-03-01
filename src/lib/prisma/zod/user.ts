@@ -1,6 +1,6 @@
 import * as z from "zod"
 import * as imports from "../zod-utils"
-import { CompleteSession, SessionModel, CompleteKey, KeyModel, CompleteInteraction, InteractionModel, CompleteFavorite, FavoriteModel, CompleteArticle, ArticleModel, CompleteCollection, CollectionModel, CompleteAnnotation, AnnotationModel, CompleteSubscription, SubscriptionModel, CompleteEntryData, EntryDataModel, CompleteStylesheet, StylesheetModel, CompleteState, StateModel, CompleteTagging, TaggingModel, CompleteTag, TagModel, CompleteBookmark, BookmarkModel, CompleteEntryTag, EntryTagModel, CompleteContext, ContextModel, CompleteContextNode, ContextNodeModel, CompleteColorDescription, ColorDescriptionModel, CompleteInvitationCode, InvitationCodeModel, CompleteSmartList, SmartListModel, CompleteTwitterIntegration, TwitterIntegrationModel, CompleteLog, LogModel, CompleteRelation, RelationModel } from "./index"
+import { CompleteSession, SessionModel, CompleteKey, KeyModel, CompleteInteraction, InteractionModel, CompleteFavorite, FavoriteModel, CompleteArticle, ArticleModel, CompleteCollection, CollectionModel, CompleteAnnotation, AnnotationModel, CompleteSubscription, SubscriptionModel, CompleteEntryData, EntryDataModel, CompleteStylesheet, StylesheetModel, CompleteState, StateModel, CompleteTagging, TaggingModel, CompleteTag, TagModel, CompleteBookmark, BookmarkModel, CompleteEntryTag, EntryTagModel, CompleteContext, ContextModel, CompleteContextNode, ContextNodeModel, CompleteColorDescription, ColorDescriptionModel, CompleteInvitationCode, InvitationCodeModel, CompleteSmartList, SmartListModel, CompleteTwitterIntegration, TwitterIntegrationModel, CompleteLog, LogModel, CompleteRelation, RelationModel, CompleteAuthorizationKey, AuthorizationKeyModel } from "./index"
 
 export const _UserModel = z.object({
   id: z.string(),
@@ -40,6 +40,7 @@ export interface CompleteUser extends z.infer<typeof _UserModel> {
   TwitterIntegration: CompleteTwitterIntegration[]
   Log: CompleteLog[]
   relations: CompleteRelation[]
+  AuthorizationKey?: CompleteAuthorizationKey | null
 }
 
 /**
@@ -75,4 +76,5 @@ export const UserModel: z.ZodSchema<CompleteUser> = z.lazy(() => _UserModel.exte
   TwitterIntegration: TwitterIntegrationModel.array(),
   Log: LogModel.array(),
   relations: RelationModel.array(),
+  AuthorizationKey: AuthorizationKeyModel.nullish(),
 }))

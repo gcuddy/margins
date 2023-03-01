@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { navigating } from '$app/stores';
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	import Button from '$lib/components/Button.svelte';
 	import GenericInput from '$lib/components/GenericInput.svelte';
@@ -14,7 +15,7 @@
 		use:enhance={() => {
 			loading = true;
 			return async ({ result, update }) => {
-				update({
+				await update({
 					reset: false,
 				});
 				loading = false;
@@ -49,7 +50,7 @@
 			/>
 		</div>
 		<Button type="submit" className="text-base">
-			{#if loading}
+			{#if loading || $navigating}
 				<Icon name="loading" className="h-5 w-5 animate-spin text-white" />
 			{:else}
 				Login

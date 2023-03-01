@@ -13,10 +13,17 @@
 	import Filters from "$lib/features/filters/Filters.svelte";
 	import { trpcWithQuery } from "$lib/trpc/client";
 	import { LOCATION_TO_DISPLAY } from "$lib/types/schemas/Locations";
-	import { defaultViewOptions, type ViewOptions } from "$lib/types/schemas/View";
+	import {
+		createCustomizeViewStore,
+		defaultViewOptions,
+		sortEntries,
+		ViewOptionsContextKey,
+		type ViewOptions,
+	} from "$lib/types/schemas/View";
 	import type { Prisma } from "@prisma/client";
 	import { createQuery } from "@tanstack/svelte-query";
 	import SuperJSON from "superjson";
+	import { setContext } from "svelte";
 	import type { PageData } from "./$types";
 	export let data: PageData;
 	$: ({ location } = data);
@@ -57,6 +64,9 @@
 	};
 	$: console.log({ filter: SuperJSON.stringify(startingFilter) });
 	let filters: Prisma.EntryWhereInput[] = [startingFilter];
+
+	const viewOptionsStore = createCustomizeViewStore();
+	setContext(ViewOptionsContextKey, viewOptionsStore);
 </script>
 
 <Header>
@@ -84,7 +94,7 @@
 		</div>
 		<div slot="end" class="flex">
 			<Filter />
-			<CustomizeView bind:viewOptions />
+			<CustomizeView bind:viewOptions={$viewOptionsStore} />
 		</div>
 	</DefaultHeader>
 </Header>
@@ -109,10 +119,10 @@
 {:else if $query.isError}
 	<div>Error</div>
 {:else if $query.isSuccess}
+	{@const sortedEntries = sortEntries($query.data, $viewOptionsStore.sort)}
 	<EntryList
-		items={$query.data.filter((e) => {
+		items={sortedEntries.filter((e) => {
 			const stateId = e.bookmarks?.[0]?.stateId;
-			console.log({ stateId, locationStateIds });
 			if (!stateId) return true;
 			if (locationStateIds.includes(stateId)) {
 				return true;

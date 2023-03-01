@@ -1,9 +1,9 @@
 import { error, redirect } from "@sveltejs/kit";
 
 import { db } from "$lib/db";
+import { createCaller } from "$lib/trpc/router";
 
 import type { Actions, PageServerLoad } from "./$types";
-import { createCaller } from "$lib/trpc/router";
 
 export const load = (async (event) => {
 	const { params } = event;
@@ -14,7 +14,7 @@ export const load = (async (event) => {
 		});
 		// const entries = [];
 		const { subscriptions } = await event.parent();
-		const subscription = subscriptions.find((s) => s.id === +params.id);
+		const subscription = subscriptions.find((s) => s.feedId === +params.id);
 		return {
 			entries,
 			subscription,
@@ -52,4 +52,7 @@ export const actions: Actions = {
 			throw error(400, "Error deleting");
 		}
 	},
+    edit: async (e) => {
+        // TODO!
+    }
 };

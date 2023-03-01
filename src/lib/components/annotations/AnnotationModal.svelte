@@ -12,10 +12,33 @@
     const utils = trpcWithQuery($page).createContext();
 
     const saveAnnotation = trpcWithQuery().annotations.save.createMutation({
-        onSuccess: () => {
-           if (entryId) utils.entries.load.invalidate({
+        onMutate: (data) => {
+           // TODO update
+        },
+        onSuccess: (data) => {
+            console.log({entryId})
+            utils.annotations.invalidate();
+console.log({data, entryId})
+           if (entryId) {
+            utils.entries.load.setData({
                 id: entryId
+            }, old => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    annotations: [...old.annotations, {
+                        ...data,
+                        creator: {
+                            username: $page.data.user?.username || ''
+                        },
+                        children: []
+                    }]
+                }
             })
+            // utils.entries.load.invalidate({
+            //     id: entryId
+            // })
+           }
         }
     });
 

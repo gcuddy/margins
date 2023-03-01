@@ -40,6 +40,10 @@
 	import { lookupUrlType } from "$lib/web-parser/urls";
 	import { iconsMini } from "$lib/features/entries/utils";
 	import GenericInput from "$lib/components/GenericInput.svelte";
+	import autoAnimate from "@formkit/auto-animate";
+	import { useSaveAnnotation } from "./mutations";
+	import { nanoid } from "$lib/nanoid";
+	import { useUpdateBookmark } from "$lib/features/entries/mutations";
 
 	export let entry: RouterOutputs["entries"]["load"];
 	$: console.log({ entry });
@@ -88,6 +92,8 @@
 	const client = trpcWithQuery($page);
 	const utils = client.createContext();
 	const updateInteraction = client.entries.updateInteraction.createMutation();
+	const saveAnnotationMutation = useSaveAnnotation();
+	const updateBookmark = useUpdateBookmark();
 
 	$: savedDate = createRelativeDateStore(entry.bookmark?.createdAt);
 
@@ -122,17 +128,17 @@
 			}
 		}
 		// keyboard shortcuts
-        // return if modifier keys are pressed
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
+		// return if modifier keys are pressed
+		if (e.ctrlKey || e.metaKey || e.altKey) return;
 		if (e.key === "t") {
 			// jump to tag input
 			e.preventDefault();
 			tagInputRef?.focus();
 			tagInputExpanded = true;
 		} else if (e.key === "s") {
-            e.preventDefault();
-            stateComboboxRef?.querySelector("button")?.click();
-        }
+			e.preventDefault();
+			stateComboboxRef?.querySelector("button")?.click();
+		}
 	}}
 />
 
@@ -186,22 +192,30 @@
 						{#if entry.bookmark?.stateId}
 							<Muted class="text-sm">Status</Muted>
 							<StateCombobox
-                                bind:buttonWrapper={stateComboboxRef}
+								bind:buttonWrapper={stateComboboxRef}
 								state={$page.data.user?.states?.find((state) => state.id === entry.bookmark.stateId) ||
 									$page.data.user?.defaultState}
 								onSelect={async (state) => {
-									const s = syncStore.add();
-									await trpc().bookmarks.updateState.mutate({
-										id: $page.data.article.bookmark?.id,
-										stateId: state.id,
-										entryId: $page.data.article.id,
+                                    const bookmarkId = entry.bookmark.id;
+									$updateBookmark.mutate({
+                                        id: entry.bookmark.id,
+										entryId: entry.id,
+                                        data: {
+                                            stateId: state.id
+                                        }
 									});
-									// queryClient.invalidateQueries({
-									//     queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
-									// })
-									// invalidate(entry:id)
-									// await invalidateAll();
-									syncStore.remove(s);
+									// const s = syncStore.add();
+									// await trpc().bookmarks.updateState.mutate({
+									// 	id: $page.data.article.bookmark?.id,
+									// 	stateId: state.id,
+									// 	entryId: $page.data.article.id,
+									// });
+									// // queryClient.invalidateQueries({
+									// //     queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
+									// // })
+									// // invalidate(entry:id)
+									// // await invalidateAll();
+									// syncStore.remove(s);
 								}}
 							/>
 						{:else}
@@ -212,9 +226,10 @@
 									const s = syncStore.add();
 									await trpc().bookmarks.updateState.mutate({
 										stateId: state.id,
-										entryId: $page.data.article.id,
-										uri: $page.data.article.uri,
+										entryId: entry.id,
+										uri: entry.uri || undefined,
 									});
+                                    utils.entries.invalidate();
 									queryClient.invalidateQueries({
 										queryKey: entryDetailsQuery({ id: $page.data.article.id }).queryKey,
 									});
@@ -380,7 +395,7 @@
 													label: "Save link",
 													perform: async () => {
 														// todo
-														const article = await trpc($page).public.parse.query(href);
+														const article = await trpc($page).public.parse.query({url: href});
 														console.log({ article });
 														await trpc($page).bookmarks.add.mutate({
 															article,
@@ -426,7 +441,7 @@
 								...old,
 								c,
 							]);
-                            utils.collections.invalidate();
+							utils.collections.invalidate();
 						});
 					}}
 				>
@@ -480,141 +495,167 @@
 							duration: 75,
 						}}
 					>
-						<DisclosurePanel class="flex flex-col gap-3" static>
+						<DisclosurePanel static>
 							<!-- TODO: use-dndzone -->
-							{#each pageNotes || [] as annotation (annotation.id)}
-								<div>
-									{#if annotation.id !== noting_id}
-										<Annotation
-											{annotation}
-											onEdit={() => {
-												noting_id = annotation.id;
-											}}
-										/>
-									{:else}
-										<form
-											action="?/updateNote"
-											method="post"
-											use:enhance={({}) => {
-												$busy.note = true;
-												return async ({ result, update }) => {
-													console.log({ result });
-													if (result.type === "success" && result.data) {
-														const { annotation } = result.data;
-														utils.entries.load.setData(
-															{
-																id: entry.id,
-															},
-															(data) => {
-																if (!data) return data;
-																data.annotations = [...data.annotations, annotation];
-																return data;
-															}
-														);
+							<div class="flex flex-col gap-3" use:autoAnimate>
+								{#each pageNotes || [] as annotation (annotation.id)}
+									<div>
+										{#if annotation.id !== noting_id}
+											<Annotation
+												{annotation}
+												on:delete={(e) => {
+													// remove
+													console.log("HELLLLOOOO");
+													utils.entries.load.setData(
+														{
+															id: entry.id,
+														},
+														(old) => {
+															if (!old) return old;
+															old = {
+																...old,
+																annotations: old.annotations.filter((a) => a.id !== annotation.id),
+															};
+															console.log({ old });
+															return old;
+														}
+													);
+												}}
+												onEdit={() => {
+													noting_id = annotation.id;
+												}}
+											/>
+										{:else}
+											<form
+												action="?/updateNote"
+												method="post"
+												use:enhance={({}) => {
+													$busy.note = true;
+													return async ({ result, update }) => {
+														console.log({ result });
+														if (result.type === "success" && result.data) {
+															const { annotation } = result.data;
+															utils.entries.load.setData(
+																{
+																	id: entry.id,
+																},
+																(data) => {
+																	if (!data) return data;
+																	data.annotations = [...data.annotations, annotation];
+																	return data;
+																}
+															);
+														}
+														// utils.entries.load.invalidate({
+														//     id: entry.id,
+														// })
+														// await update({
+														// 	reset: false,
+														// });
+														$busy.note = false;
+														noting_id = null;
+													};
+												}}
+												on:keydown={(e) => {
+													if (e.key === "escape") {
+														// todo: noting = false
 													}
-													// utils.entries.load.invalidate({
-													//     id: entry.id,
-													// })
-													// await update({
-													// 	reset: false,
-													// });
-													$busy.note = false;
-													noting_id = null;
-												};
-											}}
-											on:keydown={(e) => {
-												if (e.key === "escape") {
-													// todo: noting = false
-												}
-											}}
-										>
-											<input type="hidden" name="id" value={annotation.id} />
-											<AnnotationInput
-												placeholder="Add a page note…"
-												rows={1}
-												shadow_focus={true}
-												include_tags={false}
-												confirmButtonStyle="ghost"
-												class="text-sm"
-												value={annotation.body?.toString() || ""}
+												}}
 											>
-												<svelte:fragment slot="buttons">
-													<Button
-														type="reset"
-														on:click={() => (noting_id = null)}
-														variant="ghost"
-														size="sm"
-														className="text-sm">Cancel</Button
-													>
-													<Button disabled={$busy.note} variant="ghost" size="sm" className="text-sm"
-														>{#if $busy.note}
-															<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
-														{:else}
-															Save
-														{/if}
-													</Button>
-												</svelte:fragment>
-											</AnnotationInput>
-										</form>
-									{/if}
-								</div>
-							{/each}
-							{#if noting}
-								<!-- REVIEW: is this action ok, since reading sidebar will always be in the entry? -->
-								<!-- TODO: optimistic update  -->
-								<form
-									action="?/note"
-									method="post"
-									use:enhance={({}) => {
-										$busy.note = true;
-										return async ({ result, update }) => {
-											console.log({ result });
-											await update({
-												reset: false,
+												<input type="hidden" name="id" value={annotation.id} />
+												<AnnotationInput
+													placeholder="Add a page note…"
+													rows={1}
+													shadow_focus={true}
+													include_tags={false}
+													confirmButtonStyle="ghost"
+													class="text-sm"
+													value={annotation.body?.toString() || ""}
+												>
+													<svelte:fragment slot="buttons">
+														<Button
+															type="reset"
+															on:click={() => (noting_id = null)}
+															variant="ghost"
+															size="sm"
+															className="text-sm">Cancel</Button
+														>
+														<Button disabled={$busy.note} variant="ghost" size="sm" className="text-sm"
+															>{#if $busy.note}
+																<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+															{:else}
+																Save
+															{/if}
+														</Button>
+													</svelte:fragment>
+												</AnnotationInput>
+											</form>
+										{/if}
+									</div>
+								{/each}
+
+								{#if noting}
+									<!-- REVIEW: is this action ok, since reading sidebar will always be in the entry? -->
+									<!-- TODO: optimistic update  -->
+									<form
+										action="?/note"
+										method="post"
+										on:submit|preventDefault={(e) => {
+											// let's handle this ourselves and set it directly.
+											if (!e.target) return;
+											const isForm = e.target instanceof HTMLFormElement;
+											if (!isForm) return;
+											const data = new FormData(e.target);
+											const body = data.get("annotation");
+											if (!body || typeof body !== "string") return;
+											$saveAnnotationMutation.mutate({
+												entryId: entry.id,
+												body,
+												id: nanoid(),
+												type: "note",
 											});
-											$busy.note = false;
 											noting = false;
-										};
-									}}
-									transition:fly={{ y: -10 }}
-									on:keydown={(e) => {
-										if (e.key === "escape") {
-											// todo: noting = false
-										}
-									}}
-								>
-									<AnnotationInput
-										placeholder="Add a page note…"
-										rows={1}
-										shadow_focus={true}
-										include_tags={false}
-										confirmButtonStyle="ghost"
-										class="text-sm"
+										}}
+										in:fly={{ y: -10 }}
+										on:keydown={(e) => {
+											if (e.key === "escape") {
+												// todo: noting = false
+											}
+										}}
 									>
-										<svelte:fragment slot="buttons">
-											<Button
-												type="reset"
-												on:click={() => (noting = false)}
-												variant="ghost"
-												size="sm"
-												className="text-sm">Cancel</Button
-											>
-											<Button
-												type="submit"
-												disabled={$busy.note}
-												variant="ghost"
-												size="sm"
-												className="text-sm"
-												>{#if $busy.note}
-													<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
-												{:else}
-													Save
-												{/if}
-											</Button>
-										</svelte:fragment>
-									</AnnotationInput>
-								</form>
-							{/if}
+										<AnnotationInput
+											placeholder="Add a page note…"
+											rows={1}
+											shadow_focus={true}
+											include_tags={false}
+											confirmButtonStyle="ghost"
+											class="text-sm"
+										>
+											<svelte:fragment slot="buttons">
+												<Button
+													type="reset"
+													on:click={() => (noting = false)}
+													variant="ghost"
+													size="sm"
+													className="text-sm">Cancel</Button
+												>
+												<Button
+													type="submit"
+													disabled={$busy.note}
+													variant="ghost"
+													size="sm"
+													className="text-sm"
+													>{#if $busy.note}
+														<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+													{:else}
+														Save
+													{/if}
+												</Button>
+											</svelte:fragment>
+										</AnnotationInput>
+									</form>
+								{/if}
+							</div>
 						</DisclosurePanel>
 					</div>
 				{/if}
@@ -688,17 +729,39 @@
 						{#if open}
 							<div transition:slide|local={{ duration: 75 }}>
 								<DisclosurePanel static>
-									<div class="flex flex-col space-y-4  text-sm">
+									<div class="flex flex-col space-y-4  text-sm" use:autoAnimate>
 										{#each filteredItems as annotation (annotation.id)}
-                                        <!-- scroll to latest on creation -->
+											<!-- scroll to latest on creation -->
 											<div
-                                                data-sidebar-annotation-id={annotation.id}
+												data-sidebar-annotation-id={annotation.id}
 												animate:flip={{
 													duration: 125,
 												}}
-                                                transition:slide|local={{ duration: 75 }}
+												transition:slide|local={{ duration: 75 }}
 											>
-												<Annotation on:seek {annotation} scrollOnClick={true} />
+												<Annotation
+													on:delete={(e) => {
+														// remove
+														console.log("HELLLLOOOO");
+														utils.entries.load.setData(
+															{
+																id: entry.id,
+															},
+															(old) => {
+																if (!old) return old;
+																old = {
+																	...old,
+																	annotations: old.annotations.filter((a) => a.id !== annotation.id),
+																};
+																console.log({ old });
+																return old;
+															}
+														);
+													}}
+													on:seek
+													{annotation}
+													scrollOnClick={true}
+												/>
 											</div>
 										{/each}
 									</div>

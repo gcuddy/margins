@@ -13,7 +13,10 @@ declare namespace App {
 	}
 	interface PageData {
 		// user?: import('$lib/user').RootUserData;
-		user?: import("$lib/trpc/router").RouterOutputs["user"]["data"];
+		user?: import("$lib/trpc/router").RouterOutputs["user"]["data"] & {
+            stateIdToLocation: Map<number, import("@prisma/client").Location>;
+            stateIdToName: Map<number, string>;
+        };
 		currentList?: import("$lib/stores/currentList").CurrentList;
 		// tags?: import("@prisma/client").Tag[];
 		// subscriptions?: import("$lib/trpc/router").RouterOutputs["user"]["data"]["subscriptions"];
@@ -21,6 +24,7 @@ declare namespace App {
 		filterMap?: import("$lib/stores/filter").FilterMapStore;
 		queryClient: import("@tanstack/svelte-query").QueryClient;
 		favorites?: import("$lib/trpc/router").RouterOutputs["favorites"]["list"];
+        location?:  import("@prisma/client").Location
         S3_BUCKET_PREFIX: string;
 	}
 }

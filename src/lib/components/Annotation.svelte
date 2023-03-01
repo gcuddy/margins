@@ -7,8 +7,9 @@
 	import { updateAnnotationMutation } from "$lib/features/annotations/mutations";
 	import { iconsMini } from "$lib/features/entries/utils";
 	import type { ContextualAnnotation } from "$lib/prisma/selects/annotations";
+	import { modals } from "$lib/stores/modals";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { TextQuoteTarget } from "$lib/types/schemas/Annotations";
 	import {
@@ -29,6 +30,8 @@
 	import AnnotationInput from "./annotations/AnnotationInput.svelte";
 	import Muted from "./atoms/Muted.svelte";
 	import SmallPlus from "./atoms/SmallPlus.svelte";
+	import ConfirmModal from "./ConfirmModal.svelte";
+	import ConfirmModalContent from "./ConfirmModalContent.svelte";
 	import Icon from "./helpers/Icon.svelte";
 	import TagCloud from "./TagCloud.svelte";
 	import { genHtml } from "./TipTap.svelte";
@@ -37,7 +40,10 @@
 		placement: "bottom-end",
 	});
 
-	export let annotation: RouterOutputs["entries"]["load"]["annotations"][number] | ContextualAnnotation;
+	type TAnnotation = $$Generic<
+		RouterOutputs["entries"]["load"]["annotations"][number] | ContextualAnnotation
+	>;
+	export let annotation: TAnnotation;
 	//todo: type target/selector better
 	export let shadowInner = false;
 	export let scrollOnClick = false;
@@ -54,6 +60,7 @@
 
 	const dispatch = createEventDispatcher<{
 		seek: number;
+		delete: TAnnotation;
 	}>();
 	const queryClient = useQueryClient();
 
@@ -140,10 +147,30 @@
 		maxHeight.set(clampedSize);
 	}
 
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
+
+	const deleteAnnotation = client.annotations.delete.createMutation({
+		// TODO
+		// onMutate
+        onMutate: () => {
+            // TODO: cancel refetches
+            // TODO: capture the previous value
+        //    const previous = utils.entries.load
+        },
+		onSuccess: () => {
+			// TODO: More invlaidations
+			if (annotation.entryId)
+				utils.entries.load.invalidate({
+					id: annotation.entryId,
+				});
+		},
+	});
+
 	onMount(() => {
-        if (wrapper) {
-            scrollIntoView && wrapper.scrollIntoView();
-        }
+		if (wrapper) {
+			scrollIntoView && wrapper.scrollIntoView();
+		}
 		if (browser && window && content) {
 			const height = content.firstElementChild?.getBoundingClientRect()?.height;
 			console.log({ height });
@@ -166,7 +193,7 @@
 	});
 
 	let saving = false;
-    let wrapper: HTMLElement;
+	let wrapper: HTMLElement;
 </script>
 
 <!-- REVIEW: for some reason, animate-pulse not working, but can't tell if this is issue that will go away -->
@@ -337,10 +364,29 @@
 																active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
 															}`}
 														on:click={async () => {
-															busy = true;
-															await trpc().annotations.delete.mutate(annotation.id);
-															await invalidateAnnotations();
-															busy = false;
+															modals.open(
+																ConfirmModalContent,
+																{
+																	title: "Are you sure you want to delete this annotation?",
+																	description: "This action cannot be undone.",
+																	onConfirm: () => {
+																		dispatch("delete", annotation);
+																		$deleteAnnotation.mutate(annotation.id);
+																		// busy = true;
+																		// trpc().annotations.delete.mutate(annotation.id);
+																		// invalidateAnnotations();
+																		// busy = false;
+																	},
+																},
+																"confirm-annotation",
+																{
+																	maxWidth: "max-w-md",
+																}
+															);
+															// busy = true;
+															// await trpc().annotations.delete.mutate(annotation.id);
+															// await invalidateAnnotations();
+															// busy = false;
 														}}
 														let:active
 														as="div"
@@ -455,9 +501,9 @@
 							{/if}
 						{/if}
 						{#if annotation.body}
-							<div class="font-normal">{annotation.body}</div>
+							<div class="font-normal prose-sm prose">{annotation.body}</div>
 						{:else if annotation.contentData}
-							<div class="font-normal">
+							<div class="font-normal prose prose-sm">
 								{@html genHtml(annotation.contentData)}
 							</div>
 						{/if}

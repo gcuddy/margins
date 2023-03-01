@@ -1,7 +1,7 @@
 import * as z from "zod"
 import * as imports from "../zod-utils"
 import { AnnotationType, Color } from "@prisma/client"
-import { CompleteTagging, TaggingModel, CompleteEntry, EntryModel, CompleteUser, UserModel, CompleteCollectionItems, CollectionItemsModel, CompleteFavorite, FavoriteModel, CompleteBookmark, BookmarkModel } from "./index"
+import { CompleteEntry, EntryModel, CompleteUser, UserModel, CompleteCollectionItems, CollectionItemsModel, CompleteFavorite, FavoriteModel, CompleteBookmark, BookmarkModel, CompleteTag, TagModel } from "./index"
 
 // Helper schema for JSON fields
 type Literal = boolean | number | string
@@ -37,11 +37,9 @@ export const _AnnotationModel = z.object({
   sortOrder: z.number(),
   bookmarkId: z.number().int().nullish(),
   color: z.nativeEnum(Color),
-  colorId: z.string().nullish(),
 })
 
 export interface CompleteAnnotation extends z.infer<typeof _AnnotationModel> {
-  tags: CompleteTagging[]
   entry?: CompleteEntry | null
   parent?: CompleteAnnotation | null
   children: CompleteAnnotation[]
@@ -49,6 +47,7 @@ export interface CompleteAnnotation extends z.infer<typeof _AnnotationModel> {
   collections: CompleteCollectionItems[]
   favorite?: CompleteFavorite | null
   bookmark?: CompleteBookmark | null
+  tags: CompleteTag[]
 }
 
 /**
@@ -57,7 +56,6 @@ export interface CompleteAnnotation extends z.infer<typeof _AnnotationModel> {
  * NOTE: Lazy required in case of potential circular dependencies within schema
  */
 export const AnnotationModel: z.ZodSchema<CompleteAnnotation> = z.lazy(() => _AnnotationModel.extend({
-  tags: TaggingModel.array(),
   entry: EntryModel.nullish(),
   /**
    * An annotation will have a parent when it's a reply
@@ -68,4 +66,5 @@ export const AnnotationModel: z.ZodSchema<CompleteAnnotation> = z.lazy(() => _An
   collections: CollectionItemsModel.array(),
   favorite: FavoriteModel.nullish(),
   bookmark: BookmarkModel.nullish(),
+  tags: TagModel.array(),
 }))

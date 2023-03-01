@@ -22,7 +22,6 @@ generator zod {
     relationModel = "default"
 }
 
-
 // generator zodprismatypes {
 //     provider = "zod-prisma-types"
 //     output   = "../src/lib/prisma/zod-prisma"
@@ -184,7 +183,7 @@ model Annotation {
     title    String?
     editedAt DateTime?
     // TODO: tags
-    tags     Tagging[]
+    // tags     Tagging[]
     type     AnnotationType
     private  Boolean        @default(true)
     /// @zod.custom(imports.TargetSchema)
@@ -211,8 +210,9 @@ model Annotation {
     bookmark    Bookmark?         @relation(fields: [bookmarkId], references: [id])
     bookmarkId  Int?
 
-    color   Color   @default(Yellow)
-    colorId String?
+    color Color @default(Yellow)
+    tags  Tag[]
+    // tagId Int?
 
     // @@unique([userId, entryId]) <- this doesn't quite make sense, because of cihldren. i want it to be when type is bookmark. maybe sql? or maybe children don't get entryid? <- indeed we are now!s
     // again, could solve this by having a sepaerate model or something <- indeed we are now!s
@@ -220,7 +220,6 @@ model Annotation {
     @@index([userId])
     @@index([parentId])
     @@index([bookmarkId])
-    @@index([colorId])
 }
 
 model ColorDescription {
@@ -298,7 +297,6 @@ model Entry {
     // TODO: bigint?
     /// The TMDB id, if it's a movie or TV show.
     tmdbId Int? @unique
-
 
     /// Youtube ID, if it's a youtube video
     youtubeId String? @unique
@@ -610,6 +608,7 @@ model Subscription {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     title     String
+    tags      Tag[]
 
     download_full Boolean @default(false)
 
@@ -622,19 +621,19 @@ model Subscription {
 }
 
 model Interaction {
-    id        Int       @id @default(autoincrement())
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
-    is_read   Boolean?  @default(false)
-    progress  Float?    @default(0)
+    id          Int       @id @default(autoincrement())
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    is_read     Boolean?  @default(false)
+    progress    Float?    @default(0)
     /// The current page, if it's a book
     currentPage Int?
-    finished  Boolean?  @default(false)
-    entry     Entry     @relation(fields: [entryId], references: [id])
-    entryId   Int
-    userId    String
-    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    bookmark  Bookmark?
+    finished    Boolean?  @default(false)
+    entry       Entry     @relation(fields: [entryId], references: [id])
+    entryId     Int
+    userId      String
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    bookmark    Bookmark?
 
     // TODO: History/log (for logging non-articles, like books and movies)
 
@@ -677,14 +676,16 @@ model Tag {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    favorite    Favorite?
+    favorite      Favorite?
     // TODO: maybe move viewoptions to ViewPreference
-    viewOptions Json?
-    user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId      String
-    taggings    Tagging[]
-    entryTags   EntryTag[]
-    entries     Entry[]
+    viewOptions   Json?
+    user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId        String
+    taggings      Tagging[]
+    entryTags     EntryTag[]
+    entries       Entry[]
+    annotations   Annotation[]
+    subscriptions Subscription[]
 
     @@unique([name, userId])
     @@index([userId])
@@ -710,20 +711,20 @@ model EntryTag {
 }
 
 model Tagging {
-    id         Int         @id @default(autoincrement())
+    id     Int    @id @default(autoincrement())
     //   TODO: represents tags on documents and feeds
     // TODO: should we seperate this into multiple models — TagsOnFeed, etc?
-    tag        Tag         @relation(fields: [tagId], references: [id])
-    tagId      Int
-    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId     String
-    feed       Feed?       @relation(fields: [feedId], references: [id])
-    feedId     Int?
-    annotation Annotation? @relation(fields: [annotationId], references: [id])
+    tag    Tag    @relation(fields: [tagId], references: [id])
+    tagId  Int
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+    feed   Feed?  @relation(fields: [feedId], references: [id])
+    feedId Int?
+    // annotation Annotation? @relation(fields: [annotationId], references: [id])
 
-    annotationId String?
-    bookmark     Bookmark? @relation(fields: [bookmarkId], references: [id])
-    bookmarkId   Int?
+    // annotationId String?
+    bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
+    bookmarkId Int?
     // TODO: decide if entry should have tag or if it shold be on bookmark
     // entry        Entry     @relation(fields: [entryId], references: [id])
     // entryId      Int
@@ -732,16 +733,16 @@ model Tagging {
 
     // do those make sense?
     // is this wise... in any way?
-    @@unique([annotationId, userId, tagId])
+    // @@unique([annotationId, userId, tagId])
     @@unique([bookmarkId, userId, tagId])
     @@unique([feedId, userId, tagId])
     @@index([userId])
     @@index([tagId])
     @@index([feedId])
-    @@index([annotationId])
+    // @@index([annotationId])
     @@index([userId, tagId])
     @@index([userId, feedId])
-    @@index([userId, annotationId])
+    // @@index([userId, annotationId])
     @@index([bookmarkId])
     @@map("Taggings")
 }
@@ -820,8 +821,15 @@ model User {
     TwitterIntegration TwitterIntegration[]
     Log                Log[]
     relations          Relation[]
-
+    AuthorizationKey   AuthorizationKey?
     @@map("user")
+}
+
+model AuthorizationKey {
+    id     String @id @default(cuid())
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @unique
+    @@index([userId])
 }
 
 model Session {

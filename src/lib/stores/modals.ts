@@ -1,6 +1,8 @@
+import type { ComponentProps } from "svelte";
 import { writable } from "svelte/store";
 
 import { browser } from "$app/environment";
+import type ModalContainer from "$lib/components/modals/ModalContainer.svelte";
 
 import type { StoredComponent, SvelteComponentWithProps } from "./types";
 
@@ -10,6 +12,7 @@ export const showRSSInputModal = writable(false);
 export type ModalComponent = StoredComponent & {
 	open: boolean;
 	id?: string;
+    containerProps?: Partial<ComponentProps<ModalContainer>>
 };
 
 // add last action for closing etc?
@@ -22,11 +25,12 @@ function createModalStore() {
 	const open = <T>(
 		component: SvelteComponentWithProps<T>,
 		props?: Omit<T, "isOpen" | "modalIndex">,
-		id?: string
+		id?: string,
+        containerProps?: ModalComponent["containerProps"]
 	) => {
 		let index = 0;
 		update((stack) => {
-			const newStack = [...stack, { component, props, id, open: true }];
+			const newStack = [...stack, { component, props, id, open: true, containerProps }];
 			index = newStack.length;
 			console.log({ newStack });
 			return newStack;

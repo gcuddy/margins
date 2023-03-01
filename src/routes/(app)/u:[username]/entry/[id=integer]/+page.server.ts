@@ -130,7 +130,7 @@ export const actions: Actions = {
 			});
 		}
 		const serverRouter = appRouter.createCaller(await createContext(evt));
-		const article = await serverRouter.public.parse(url as string);
+		const article = await serverRouter.public.parse({url});
 		console.log({ article });
 		const entryData = await serverRouter.entries.addData({
 			id: +evt.params.id,

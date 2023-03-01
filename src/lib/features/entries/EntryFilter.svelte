@@ -232,6 +232,66 @@
 				}));
 			},
 		},
+        {
+            title: "Status",
+            field: "bookmarks",
+            icon: "inboxStackMini",
+            id: "status",
+            multiple: false,
+            type: "boolean",
+            values: async (_, page) => {
+                const queryClient = page.data.queryClient;
+                const userId = page.data.user?.id;
+                const states = page.data.user?.states || [];
+                return states.map(state => ({
+                    title: state.name,
+                    id: state.name,
+                    where: {
+                        some: {
+                            userId,
+                            stateId: state.id,
+                        }
+                    }
+                }))
+            }
+        },
+        {
+            title: "Status Type",
+            field: "bookmarks",
+            icon: "circleStackMini",
+            id: "status-type",
+            multiple: false,
+            type: "boolean",
+            values: async (_, page) => {
+                const queryClient = page.data.queryClient;
+                const userId = page.data.user?.id;
+                const states = page.data.user?.states || [];
+                const locations = Array.from(new Set(states.map(state => state.type)));
+                return locations.map(location => ({
+                    title: location,
+                    id: location,
+                    where: {
+                        some: {
+                            userId,
+                            state: {
+                                type: location,
+                            }
+                        }
+                    }
+                })).concat({
+                    title: "Is not archive",
+                    id: "is-not-archive",
+                    where: {
+                        none: {
+                            userId,
+                            state: {
+                                type: "archive",
+                            }
+                        }
+                    }
+                })
+            }
+        },
 		{
 			title: "Type",
 			icon: "documentMagnifyingGlassMini",
@@ -279,7 +339,7 @@
 
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import type { IconName } from "$lib/icons";
-	import { DocumentType, Prisma } from "@prisma/client";
+	import { DocumentType, Location, Prisma } from "@prisma/client";
 	import { ComponentProps, getContext, SvelteComponent } from "svelte";
 	import { writable } from "svelte/store";
 	import type { Entries } from "type-fest";

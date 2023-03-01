@@ -10,6 +10,7 @@
 	import { createMutation } from "@tanstack/svelte-query";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import { goto } from "$app/navigation";
+	import IconPicker from "$lib/components/IconPicker.svelte";
 	let name = "";
 	export let data: PageData;
 	name = data.list?.name || "";
@@ -22,12 +23,13 @@
 
     // REVIEW: i have to be able to generalize this somehow, right?
 	const mutation = createMutation({
-		mutationFn: ({conditions, filter}: Partial<RouterInputs["filters"]["save"]>) =>
+		mutationFn: ({conditions, filter, icon}: Partial<RouterInputs["filters"]["save"]>) =>
 			trpc($page).filters.save.mutate({
 				conditions,
 				filter,
 				name,
 				id: data.list?.id,
+                icon
 			}),
         onSuccess: (data) => {
             // TODO: update filters with new data
@@ -41,7 +43,8 @@
 	<div class="my-4 mx-5 flex rounded bg-gray-100 dark:bg-gray-800  ">
 		<form class="w-full">
 			<div class="flex flex-col space-y-2 divide-y p-4 dark:divide-gray-700">
-				<div class="w-full space-y-2">
+				<div class="flex items-center gap-1.5">
+                    <IconPicker bind:chosenIcon={data.list.icon} class="w-7 h-7" />
 					<GenericInput
 						bind:value={name}
 						class="grow !bg-transparent font-medium"
@@ -65,6 +68,7 @@
                                 $mutation.mutate({
                                     conditions: chosenConditions,
                                     filter: where,
+                                    icon: data.list.icon
                                 })
 								// trpc($page).filters.save.mutate({
 								// 	conditions: chosenConditions,

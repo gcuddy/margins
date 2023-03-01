@@ -12,8 +12,11 @@ import parse from "$lib/parse";
 import { publicProcedure, router } from "$lib/trpc/t";
 
 export const publicRouter = router({
-    parse: publicProcedure.input(z.string()).query(async ({ input }) => {
-        const normalizedUrl = normalizeUrl(input);
+    parse: publicProcedure.input(z.object({
+        url: z.string(),
+        html: z.string().optional()
+    })).query(async ({ input }) => {
+        const normalizedUrl = normalizeUrl(input.url);
         const parsed = await parse(normalizedUrl);
         return parsed;
     }),

@@ -13,7 +13,7 @@
 	$: self = data.username === $page.data.user?.username;
 
 	// this needs to update after use enhance
-	$: following = $page.data.user?.following.some((u) => u.username === data.username);
+	$: following = $page.data.user?.following?.some((u) => u.username === data.username);
 </script>
 
 <!-- todo: hoist this header to layout -->

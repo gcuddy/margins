@@ -40,7 +40,7 @@ export const actions: Actions = {
 			const serverRouter = appRouter.createCaller(await createContext(event))
 			// TODO: differentiate between different types of links
 			// First parse the article
-			const article = await serverRouter.public.parse(url);
+			const article = await serverRouter.public.parse({url});
             // ^^ this should be stored in the cache!
 			console.log(`here's the article we're going to try to add:`, { article })
 			// Now add the article

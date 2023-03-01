@@ -8,16 +8,22 @@
 
     export let inputRef: HTMLElement | undefined = undefined;
 
+    export let submitOnBlur = true;
+
     export let expanded = false;
 
-	type AcceptedTag = Omit<Tag, 'createdAt' | 'updatedAt'>;
+	type AcceptedTag = {
+        id?: number;
+        name: string;
+    };
+	// type AcceptedTag = Omit<Tag, 'createdAt' | 'updatedAt'>;
 
 	export let allTags: AcceptedTag[] = $page.data.tags || [];
 
 	export let tags: AcceptedTag[];
 	export let original: {
 		tags: AcceptedTag[];
-	};
+	}
 
 	export let entryId: number | undefined = undefined;
 
@@ -54,6 +60,7 @@
         bind:ref={inputRef}
 		on:blur={(e) => {
 			// check for diff
+            if (!submitOnBlur) return;
 			ref.requestSubmit();
 
 			// let same =

@@ -43,7 +43,7 @@
 							? 'fill-lime-500'
 							: type === 'error'
 							? 'fill-red-500'
-							: 'fill-primary-500'}"
+							: 'fill-accent saturate-50'}"
 					/>
 				{/if}
 				<div class="space-y-1">

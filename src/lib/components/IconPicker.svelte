@@ -103,11 +103,14 @@
     $: chosenIcon = chosenIcon || defaultChosenIcon;
 
     export let iconClass = "h-4 w-4 fill-current";
+
+    let c = 'h-full w-full';
+    export { c as class};
 </script>
 
 <!-- palette popver (possibly split into its own component) -->
 
-<Popover class="h-full w-full">
+<Popover class="{c}">
 	<PopoverButton
 		use={[popperRef]}
 		class="flex h-full w-full items-center justify-center rounded-lg border border-border px-2 transition"

@@ -378,10 +378,13 @@
 													method: "POST",
 													headers: {
 														"x-sveltekit-action": "true",
+                                                        // content-type
+                                                        "Content-Type": "application/x-www-form-urlencoded"
 													},
+                                                    body: null,
 												});
 												await invalidateAll();
-												// await goto('/');
+												await goto('/');
 											},
 											icon: "logoutSolid",
 										},

@@ -84,9 +84,10 @@ export async function getEpisodes(prisma: PrismaClient, podcastIndexId: number, 
 			summary: episode.description,
 			duration: episode.duration,
 			guid: episode.guid,
-			original: JSON.stringify(episode),
+			// original: JSON.stringify(episode),
 			image: episode.image,
 			podcastIndexId: episode.id,
+            type: DocumentType.audio
 		}))
 	);
 	// return await prisma.feed.update({
@@ -393,6 +394,7 @@ export const podcastsRouter = router({
 						},
 					},
 					feed: {
+                        // TODO: connect to feedUrl if it exists, and update it with podcastIndexId
 						connectOrCreate: {
 							where: {
 								podcastIndexId,
@@ -414,8 +416,7 @@ export const podcastsRouter = router({
 					},
 				},
 			});
-			const data = await getEpisodes(prisma, podcastIndexId);
-			// update feed with data
+			const data = await getEpisodes(prisma, podcastIndexId); // update feed with data
 			await prisma.feed.update({
 				where: {
 					podcastIndexId,

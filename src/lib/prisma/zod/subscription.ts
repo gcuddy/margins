@@ -1,6 +1,6 @@
 import * as z from "zod"
 import * as imports from "../zod-utils"
-import { CompleteFeed, FeedModel, CompleteUser, UserModel } from "./index"
+import { CompleteFeed, FeedModel, CompleteUser, UserModel, CompleteTag, TagModel } from "./index"
 
 export const _SubscriptionModel = z.object({
   id: z.number().int(),
@@ -15,6 +15,7 @@ export const _SubscriptionModel = z.object({
 export interface CompleteSubscription extends z.infer<typeof _SubscriptionModel> {
   feed: CompleteFeed
   user: CompleteUser
+  tags: CompleteTag[]
 }
 
 /**
@@ -25,4 +26,5 @@ export interface CompleteSubscription extends z.infer<typeof _SubscriptionModel>
 export const SubscriptionModel: z.ZodSchema<CompleteSubscription> = z.lazy(() => _SubscriptionModel.extend({
   feed: FeedModel,
   user: UserModel,
+  tags: TagModel.array(),
 }))

@@ -169,11 +169,13 @@
 													$podcastPlayer.loading = true;
 													podcastPlayer.load(
 														{
+                                                           pIndexId: item.feedId,
 															...item,
 															entryId,
 														},
 														{
 															title: $podcast.data?.feed.title,
+                                                            podcastIndexId: item.feedId
 														},
 														interaction?.progress
 													);

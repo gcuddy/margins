@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { db } from "$lib/db";
 import { annotationSelect } from "$lib/prisma/selects/annotations";
+import { entryListSelect } from "$lib/prisma/selects/entry";
 import type { EntryExtendedSchema } from "$lib/prisma/zod-utils";
 import { protectedProcedure, router } from "$lib/trpc/t";
 import { LocationSchema } from "$lib/types/schemas/Locations";
@@ -30,54 +31,7 @@ export const entriesRouter = router({
             const { userId, user } = ctx;
             const entries = await ctx.prisma.entry
                 .findMany({
-                    select: {
-                        id: true,
-                        title: true,
-                        author: true,
-                        // html: true,
-                        screenshot: true,
-                        image: true,
-                        type: true,
-                        enclosureUrl: true,
-                        duration: true,
-                        uri: true,
-                        published: true,
-                        summary: true,
-                        updatedAt: true,
-                        annotations: {
-                            where: {
-                                // type: 'note',
-                                userId,
-                            },
-                        },
-                        tags: {
-                            select: {
-                                id: true,
-                            },
-                            where: {
-                                userId
-                            }
-                        },
-                        bookmarks: {
-                            where: {
-                                userId,
-                            },
-                            include: {
-                                state: true,
-                            },
-                        },
-                        interactions: {
-                            where: {
-                                userId
-                            }
-                        },
-                        feed: {
-                            select: {
-                                id: true,
-                                title: true
-                            }
-                        }
-                    },
+                    select: entryListSelect(userId),
                     orderBy: { updatedAt: "desc" },
                     where: {
                         bookmarks: {
@@ -597,18 +551,19 @@ export const entriesRouter = router({
                     ],
                 },
                 take: 25,
-                include: {
-                    bookmarks: {
-                        where: {
-                            userId,
-                        },
-                    },
-                    // interactions: {
-                    // 	where: {
+                select: entryListSelect(userId)
+                // include: {
+                //     bookmarks: {
+                //         where: {
+                //             userId,
+                //         },
+                //     },
+                //     // interactions: {
+                //     // 	where: {
 
-                    // 	}
-                    // }
-                },
+                //     // 	}
+                //     // }
+                // },
             });
             return entries.map((e) => ({ ...e, bookmark: e.bookmarks?.[0] }));
         }),
@@ -735,7 +690,7 @@ export const entriesRouter = router({
     createRelation: protectedProcedure
         .input(
             z.object({
-                entryId: z.number(),
+                entryId: z.number().or(z.number().array()),
                 relatedEntryId: z.number(),
                 type: z.nativeEnum(RelationType).default("Related"),
             })
@@ -743,28 +698,55 @@ export const entriesRouter = router({
         .mutation(async ({ ctx, input }) => {
             const { entryId, relatedEntryId, type } = input;
             const userId = ctx.userId;
-            const relation = await ctx.prisma.relation.upsert({
-                where: {
-                    userId_entryId_relatedEntryId: {
-                        userId,
+            if (Array.isArray(entryId)) {
+                const relations = await ctx.prisma.$transaction(
+                    entryId.map((entryId) => ctx.prisma.relation.upsert({
+                        where: {
+                            userId_entryId_relatedEntryId: {
+                                userId,
+                                entryId,
+                                relatedEntryId,
+                            }
+                        },
+                        create: {
+                            entryId,
+                            relatedEntryId,
+                            type,
+                            userId
+                        },
+                        update: {
+                            type,
+                        },
+                        select: {
+                            id: true,
+                        },
+                    })
+                    ))
+                return relations;
+            } else {
+                const relation = await ctx.prisma.relation.upsert({
+                    where: {
+                        userId_entryId_relatedEntryId: {
+                            userId,
+                            entryId,
+                            relatedEntryId,
+                        }
+                    },
+                    create: {
                         entryId,
                         relatedEntryId,
-                    }
-                },
-                create: {
-                    entryId,
-                    relatedEntryId,
-                    type,
-                    userId
-                },
-                update: {
-                    type,
-                },
-                select: {
-                    id: true,
-                },
-            });
-            return relation;
+                        type,
+                        userId
+                    },
+                    update: {
+                        type,
+                    },
+                    select: {
+                        id: true,
+                    },
+                });
+                return relation;
+            }
         }),
     list: protectedProcedure
         .input(z.object({

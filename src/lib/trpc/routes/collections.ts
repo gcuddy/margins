@@ -28,6 +28,15 @@ export const collectionsRouter = router({
             where: {
                 userId: ctx.userId,
             },
+            // with items?
+
+            include: {
+                items: {
+                    where: {
+                        type: "Section"
+                    }
+                }
+            }
         });
         return collections.map((collection) => {
             return {

@@ -8,5 +8,6 @@ export const load = (async (e) => {
     const client = trpcWithQuery(e, queryClient);
     return {
         query: client.annotations.detail.createServerQuery({ id: e.params.id }),
+        id: e.params.id,
     };
 }) satisfies PageLoad;

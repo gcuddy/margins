@@ -66,7 +66,7 @@
 	<DefaultHeader>
 		<div slot="start" class="flex items-center space-x-2">
 			<!-- <Icon name="collectionSolid" /> -->
-            <ContextMenu items={[[
+            <ContextMenu class="p-1.5 space-x-2" items={[[
                 {
                     href: `${$page.url.pathname}/edit`,
                     label: "Edit"

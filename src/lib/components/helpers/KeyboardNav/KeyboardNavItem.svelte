@@ -32,7 +32,6 @@
 	export let disabled = false;
 
 	$: active = $api.activeIndex !== null ? $api.items[$api.activeIndex]?.id === id : false;
-	$: console.log({ active, activeIndex: $api.activeIndex });
 	onMount(() =>
 		$api.registerOption(id, {
 			disabled,

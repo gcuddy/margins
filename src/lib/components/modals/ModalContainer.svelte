@@ -17,6 +17,7 @@
 		(container && (container.querySelector("[data-initial-focus]") as HTMLElement)) || undefined;
 	$: console.log({ initialFocus });
 	export let modal: ModalComponent;
+    export let maxWidth = "max-w-2xl";
 	onDestroy(() => {
 		disableGlobalKeyboardShortcuts.off();
 	});
@@ -45,7 +46,7 @@
 		}} -->
 		<!-- should these "root" classes be customizable? -->
 		<div
-			class="relative z-50 mx-auto max-w-2xl rounded-xl bg-gray-50 font-medium text-gray-900 shadow-2xl ring-1 ring-black/5 transparency:bg-gray-50/50 transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:bg-gray-800 dark:text-gray-100 dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200 {className}"
+			class="relative z-50 mx-auto {maxWidth} rounded-xl bg-gray-50 font-medium text-gray-900 shadow-2xl ring-1 ring-black/5 transparency:bg-gray-50/50 transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 dark:bg-gray-800 dark:text-gray-100 dark:transparency:bg-gray-800/50 dark:transparency:backdrop-blur-xl dark:transparency:backdrop-brightness-75 dark:transparency:backdrop-contrast-75 dark:transparency:backdrop-saturate-200 {className}"
 			bind:this={container}
 		>
 			<slot />

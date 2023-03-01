@@ -177,6 +177,7 @@
 		class={_classname}
 		{formaction}
 		aria-label={tooltip.text}
+        {...$$restProps}
 	>
 		<slot>Button</slot>
 	</svelte:element>
@@ -193,6 +194,7 @@
 		on:mouseenter={handlemouseenter}
 		on:mouseleave={handleMouseLeave}
 		class={_classname}
+        {...$$restProps}
 	>
 		<slot>Button</slot>
 	</svelte:element>

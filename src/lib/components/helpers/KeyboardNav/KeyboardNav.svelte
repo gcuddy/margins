@@ -28,7 +28,9 @@
 </script>
 
 <script lang="ts">
-	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
+	import { showCommandPalette } from "$lib/stores/commands";
+
+	import { checkIfKeyboardShortcutsAllowed, disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
 	import { Keys } from "$lib/types/keyboard";
 	import { calculateActiveIndex, Focus } from "$lib/utils/calculate-active-index";
 	import { getContext, onMount, setContext } from "svelte";
@@ -122,8 +124,11 @@
 	});
 
 	async function handleKeydown(event: KeyboardEvent) {
+        console.log({$showCommandPalette})
 		if (disabled) return;
 		if ($disableGlobalKeyboardShortcuts) return;
+		if ($showCommandPalette) return;
+        if (!checkIfKeyboardShortcutsAllowed()) return
 
 		switch (event.key) {
 			// Ref: https://www.w3.org/TR/wai-aria-practices-1.2/#keyboard-interaction-12

@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
 import { auth } from '$lib/server/lucia';
@@ -103,9 +103,11 @@ export const actions: Actions = {
         };
     },
     signout: async ({ locals }) => {
+        console.log('signing out')
         const session = await locals.validate();
         if (!session) return fail(401);
         await auth.invalidateSession(session.sessionId); // invalidate session
         locals.setSession(null); // remove cookie
+        throw redirect(307, '/login');
     }
 };

@@ -117,6 +117,9 @@
 	<DefaultHeader>
 		<div slot="start" class="flex items-center gap-4">
 			<!-- <Icon name="viewGrid" className="h-5 w-5 stroke-2 dark:stroke-gray-400" /> -->
+            <span>
+                {$page.params.username} >
+            </span>
 			<button
 				class="flex items-center gap-2"
 				on:click={() => {

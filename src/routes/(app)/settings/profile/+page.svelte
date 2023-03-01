@@ -10,6 +10,8 @@
 
 	let copied = false;
 	let confetti = false;
+
+    let bookmarklet = `javascript:(function(){var%20d=document,s=d.createElement('script');s.src='http://127.0.0.1:5173/bookmarklet.js';(d.body||d.head).appendChild(s);})();`
 </script>
 
 <section>
@@ -19,6 +21,12 @@
 		<Button variant="ghost" href="/settings/account">Change password</Button>
 		<Button variant="ghost" href="/settings/account">Change email</Button>
 	</div>
+</section>
+
+<section>
+    <h2>Bookmarklet</h2>
+    <p>Drag this link to your bookmarks bar to save articles to Margins with a single click.</p>
+    <a href="{bookmarklet}">Save to Margins</a>
 </section>
 
 <section>

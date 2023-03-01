@@ -15,7 +15,12 @@
 	export let el: HTMLElement | undefined = undefined;
 	export let textarea: HTMLElement | undefined = undefined;
 	export let include_tags = true;
-	export let scrollIntoView = true;
+	export let scrollIntoView:
+		| boolean
+		| {
+				behavior?: "auto" | "smooth";
+				block?: "start" | "center" | "end" | "nearest";
+		  } = true;
 	export let confirmButtonStyle: "ghost" | "confirm" = "confirm";
 	export let allTags: Tag[] = [];
 	export let shadow_focus = false;
@@ -49,9 +54,13 @@
 	export { className as class };
 	onMount(() => {
 		textarea?.focus();
-		if (scrollIntoView) {
-			textarea?.scrollIntoView({
+		if (!!scrollIntoView) {
+			const default_opts = {
 				block: "nearest",
+			} as const;
+			const opts = typeof scrollIntoView === "boolean" ? default_opts : scrollIntoView;
+			textarea?.scrollIntoView({
+				...opts,
 			});
 		}
 	});
@@ -77,7 +86,7 @@
 		<!-- TODO: 8 direction resize -->
 	</div>
 	<!-- todo: auto expand -->
-	<div class="no-drag text-content w-full cursor-default">
+	<div class="no-drag w-full cursor-default text-content">
 		<GenericTextarea
 			bind:el={textarea}
 			variant="naked"

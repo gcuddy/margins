@@ -18,6 +18,7 @@
 		// }
 		interactions: Interaction[];
 	};
+    console.log([entry])
 	$: interaction = entry.interactions?.[0];
 </script>
 

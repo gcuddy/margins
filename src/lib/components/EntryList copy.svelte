@@ -255,7 +255,7 @@
 		if (paste && validUrl(paste)) {
 			console.log(`got a url!`, paste);
 			const s = syncStore.add();
-			const article = await trpc($page).public.parse.query(paste);
+			const article = await trpc($page).public.parse.query({url: paste});
 			await trpc($page).bookmarks.add.mutate({
 				article,
 				url: paste,

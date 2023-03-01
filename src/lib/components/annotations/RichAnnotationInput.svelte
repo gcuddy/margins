@@ -5,6 +5,7 @@
 	import { ComponentProps, createEventDispatcher, onMount } from "svelte";
 	import Button from "../Button.svelte";
 	import Icon from "../helpers/Icon.svelte";
+	import TagEntry from "../TagEntry.svelte";
 	import TipTap from "../TipTap.svelte";
 	export let el: HTMLElement | undefined = undefined;
 	export let textarea: HTMLElement | undefined = undefined;
@@ -53,7 +54,7 @@
 	export let saving = false;
 	const doneSaving = () => (saving = false);
 	export let expandButton = false;
-	let contentData: JSONContent;
+	let contentData: JSONContent = annotation?.contentData || [];
 </script>
 
 <!-- TODO: TURN INTO FORM -->
@@ -87,10 +88,14 @@
             {autofocus}
 			bind:editing={focused}
 			focusRing={false}
+           on:blur
 			on:update={(e) => {
 				console.log({ e });
 				contentData = e.detail;
 			}}
+            on:create={e => {
+                contentData = e.detail
+            }}
 			{placeholder}
 			class="!max-w-none"
 			config={{
@@ -100,7 +105,7 @@
 		/>
 		{#if include_tags}
 			<div class="flex grow items-center font-normal">
-				<!-- <TagEntry {size} bind:tags className="grow text-xs not-italic" {allTags} /> -->
+				<TagEntry size="sm" className="grow text-xs not-italic" />
 			</div>
 		{/if}
 	</div>

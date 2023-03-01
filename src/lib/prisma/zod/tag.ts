@@ -1,6 +1,6 @@
 import * as z from "zod"
 import * as imports from "../zod-utils"
-import { CompleteFavorite, FavoriteModel, CompleteUser, UserModel, CompleteTagging, TaggingModel, CompleteEntryTag, EntryTagModel, CompleteEntry, EntryModel } from "./index"
+import { CompleteFavorite, FavoriteModel, CompleteUser, UserModel, CompleteTagging, TaggingModel, CompleteEntryTag, EntryTagModel, CompleteEntry, EntryModel, CompleteAnnotation, AnnotationModel, CompleteSubscription, SubscriptionModel } from "./index"
 
 // Helper schema for JSON fields
 type Literal = boolean | number | string
@@ -23,6 +23,8 @@ export interface CompleteTag extends z.infer<typeof _TagModel> {
   taggings: CompleteTagging[]
   entryTags: CompleteEntryTag[]
   entries: CompleteEntry[]
+  annotations: CompleteAnnotation[]
+  subscriptions: CompleteSubscription[]
 }
 
 /**
@@ -36,4 +38,6 @@ export const TagModel: z.ZodSchema<CompleteTag> = z.lazy(() => _TagModel.extend(
   taggings: TaggingModel.array(),
   entryTags: EntryTagModel.array(),
   entries: EntryModel.array(),
+  annotations: AnnotationModel.array(),
+  subscriptions: SubscriptionModel.array(),
 }))

@@ -1,9 +1,11 @@
 import { error } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
-import { ArticleListSelect } from '$lib/types';
+import { entriesThatBelongToUser, entryListSelect } from '$lib/prisma/selects/entry';
+import { basicSubscriptionSelect } from '$lib/prisma/selects/subscription';
 
 import type { PageServerLoad } from './$types';
+
 export const load: PageServerLoad = async ({ params, locals, parent }) => {
 	const { user, session } = await locals.validateUser();
 	const { tag } = params;
@@ -34,19 +36,33 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 					},
 				};
 			}),
+            ...entriesThatBelongToUser(user?.userId || "")
 			// private: AUTHORIZED ? true : undefined,
 		},
 		select: {
-			...ArticleListSelect,
-			tags: {
-				include: {
-					favorite: true,
-				},
-			},
+			...entryListSelect(user?.userId || "")
 		},
+	});
+
+    const subscriptions = db.subscription.findMany({
+		where: {
+			AND: tags.map((tag) => {
+				return {
+					tags: {
+						some: {
+							name: tag,
+						},
+					},
+				};
+			}),
+		},
+		select: basicSubscriptionSelect,
 	});
 	return {
 		tag: tags,
 		items,
+        lazy: {
+            subscriptions
+        }
 	};
 };

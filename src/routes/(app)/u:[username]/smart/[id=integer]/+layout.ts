@@ -1,5 +1,5 @@
 import { filterQuery } from "./+page.svelte";
-import type { PageLoad } from "./$types";
+import type { LayoutLoad } from "./$types";
 
 export const load = (async (e) => {
 	const { data } = e;
@@ -26,4 +26,4 @@ export const load = (async (e) => {
 		// initialData: Promise.resolve(initialData),
 		// initialData: queryClient.ensureQueryData(query)
 	};
-}) satisfies PageLoad;
+}) satisfies LayoutLoad;

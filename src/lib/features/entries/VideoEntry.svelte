@@ -10,11 +10,12 @@
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import debounce from "lodash/debounce";
 	import { nanoid } from "$lib/nanoid";
-	import { fly, scale } from "svelte/transition";
+	import { fade, fly, scale } from "svelte/transition";
 	import type { RequireAtLeastOne } from "type-fest";
 	import type { YouTubePlayer } from "youtube-player/dist/types";
 	import { createAnnotationMutation } from "../annotations/mutations";
 	import { entryDetailsQuery } from "./queries";
+	import autoAnimate from "@formkit/auto-animate";
 	type Entry = RouterOutputs["entries"]["load"];
 	export let entry: RequireAtLeastOne<Entry, "youtubeId">;
 	$: ({ youtubeId } = entry);
@@ -129,7 +130,7 @@
 		player?.seekTo(start, true);
 	}}>seek to t</button
 > -->
-
+<div use:autoAnimate>
 {#if youtubeId}
 	<!-- {playing} -->
 	<!-- {$currentTime} -->
@@ -173,12 +174,11 @@
 	{/if}
 	<!-- {timestamp} -->
 	{#if annotating}
-		<div
-			in:fly={{
+    <!-- in:fly={{
 				y: -10,
 				opacity: 0.75,
-			}}
-			out:scale
+			}} -->
+		<div
 		>
 			<!-- TODO: save as snapshot -->
 			<RichAnnotationInput autofocus={true}>
@@ -220,3 +220,4 @@
         {@html entry.text}
     </div>
 {/if}
+</div>

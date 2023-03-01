@@ -1,23 +1,14 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import Muted from "$lib/components/atoms/Muted.svelte";
-	import Button from "$lib/components/Button.svelte";
-	import CustomizeView from "$lib/components/CustomizeView.svelte";
 	import EntryList from "$lib/components/EntryList.svelte";
-	import FilterCondition from "$lib/components/Filters/FilterCondition.svelte";
-	import FilterPopover from "$lib/components/Filters/FilterPopover.svelte";
 	// import {
 	// 	type FilterOption,
 	// 	type ChildFilterOption,
 	// 	buildFilter,
 	// } from '$lib/components/Filters/Index.svelte';
-	import Icon from "$lib/components/helpers/Icon.svelte";
 	import type { createFilterStores } from "$lib/stores/filter";
 	import type { ViewOptions } from "$lib/types/schemas/View";
-	import { getContext, setContext } from "svelte";
-	import { writable } from "svelte/store";
-	import { fade } from "svelte/transition";
-	import RssListItem from "../FeedListItem.svelte";
+	import { getContext } from "svelte";
 	import type { PageData } from "./$types";
 	export let data: PageData;
 
@@ -68,7 +59,8 @@
 	$: only_unread = Boolean($page.url.searchParams.get("unread"));
 
 	// get filter context (since we can't use slot props here from root layout)
-	const stores: ReturnType<typeof createFilterStores<typeof data["entries"][number]>> = getContext("filter");
+	const stores: ReturnType<typeof createFilterStores<(typeof data)["entries"][number]>> =
+		getContext("filter");
 	const { filteredItems } = stores;
 	// let filters = writable<ChildFilterOption[]>([]);
 
@@ -121,7 +113,10 @@
 	{/if}
 </div> -->
 
-<EntryList items={$filteredItems} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} />
+<EntryList
+	items={$filteredItems.map((i) => ({ ...i, image: i.image || data.subscription?.feed.imageUrl || null }))}
+	viewOptions={DEFAULT_RSS_VIEW_OPTIONS}
+/>
 
 <!-- {#each data.entries as item (item.id)}
 	<a href="/u:{data.user.username}/entry/{item.id}">{item.title}</a>

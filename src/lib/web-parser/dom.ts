@@ -38,8 +38,8 @@ export function convertToParagraphs(els: HTMLElement[]) {
 	// return $;
 }
 
-export function cleanAttributes(root: HTMLElement) {
-	const node = root.parentNode?.childNodes?.length ? root.parentNode : root;
+export function cleanAttributes(node: HTMLElement) {
+	// const node = root.parentNode?.childNodes?.length ? root.parentNode : root;
 
 	node.querySelectorAll('*').forEach((el) => {
 		const { attributes } = el;

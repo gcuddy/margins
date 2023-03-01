@@ -2,8 +2,52 @@
 	import { generateHTML } from "@tiptap/html";
 
 	export function genHtml(doc: JSONContent) {
-		return generateHTML(doc, [StarterKit, Mention, Link, Image]);
+		return generateHTML(doc, [
+			StarterKit,
+			Mention.configure({
+				HTMLAttributes: {
+					class: "mention",
+					href: "#",
+				},
+				// suggestion,
+				renderLabel({ options, node }) {
+					console.log("renderLabel", options, node);
+					return `${node.attrs.label ?? node.attrs.id}`;
+				},
+			}),
+			Link,
+			Image,
+		]);
 	}
+
+    // find deeply nested mention node in the document
+    export function findNodes(doc: JSONContent, type: string) {
+        const nodes: JSONContent[] = [];
+        function find(node: JSONContent) {
+            if (node.type === type) {
+                nodes.push(node);
+            }
+            if (node.content) {
+                node.content.forEach(find);
+            }
+        }
+        find(doc);
+        return nodes;
+    }
+
+    //   const nodes: JSONContent[] = [];
+
+    // if (!doc.content) return nodes;
+
+    //     let node = doc.content?.find((n) => n.type === type);
+    //     if (node) return node;
+    //     if (!doc.content) return;
+    //     for (let n of doc.content) {
+    //         if (n.content) {
+    //             node = n.content.find((n) => n.type === type);
+    //             if (node) return node;
+    //         }
+    //     }
 </script>
 
 <script lang="ts">
@@ -61,6 +105,8 @@
 	const dispatch = createEventDispatcher<{
 		update: JSONContent;
 		blur: JSONContent;
+        create: JSONContent;
+		mention: { id?: string | number; label?: string; type?: string };
 	}>();
 
 	function uploadImage(file: File) {
@@ -87,14 +133,14 @@
 					showOnlyWhenEditable: false,
 				}),
 				Link.configure({
-                    // openOnClick: false
-                }),
+					openOnClick: false,
+				}),
 				// BubbleMenu.configure({
 				// 	element: bubble,
 				// }),
-                LocalFileMention.configure({
-                    suggestion
-                }),
+				LocalFileMention.configure({
+					suggestion,
+				}),
 				Mention.configure({
 					HTMLAttributes: {
 						class: "mention",
@@ -124,7 +170,7 @@
 								return {
 									id: entry.id,
 									label: entry.title,
-                                    type: entry.type
+									type: entry.type,
 								};
 							});
 							// return ["Tom", "Mary", "Joseph"]
@@ -135,9 +181,6 @@
 						decorationTag: "a",
 						render: () => {
 							let component: MentionList;
-							//store.dispatch("onKeydown");
-							// REVIEW: this is a hack-y way to get the keyboard event to the child component
-							// TODO: support selectItem
 							const createState = () => {
 								const store = writable<MentionListState>({
 									index: 0,
@@ -173,6 +216,7 @@
 									const item = items[idx ?? index];
 									if (item) {
 										props?.command(item);
+										dispatch("mention", item);
 									}
 								};
 								const setProps = (props: any) => {
@@ -193,7 +237,6 @@
 								};
 							};
 							const state = createState();
-
 							let command: (props: any) => void;
 							return {
 								onStart: (props) => {
@@ -246,9 +289,13 @@
 			],
 			editorProps: {
 				attributes: () => ({
-					class: cx("m-1 p-4  rounded-md prose shrink-0 mx-auto prose-sm prose-img:max-h-[600px] prose-img:max-w-auto prose-img:h-auto relative cursor-text prose-a:no-underline prose-a:text-accent", {
-							"shadow ring-1 ring-accent": $editor?.isEditable && focusRing,
-						}) +
+					class:
+						cx(
+							"m-1 p-4  rounded-md prose shrink-0 mx-auto prose-sm not-italic prose-img:max-h-[600px] prose-img:max-w-auto prose-img:h-auto relative cursor-text prose-a:no-underline prose-a:text-accent",
+							{
+								"shadow ring-1 ring-accent": $editor?.isEditable && focusRing,
+							}
+						) +
 						" " +
 						c,
 				}),
@@ -274,11 +321,11 @@
 									uploadImage(file)
 										.then((res) => res.json())
 										.then((data) => {
-                                            const src = $page.data.S3_BUCKET_PREFIX + data.Key;
+											const src = $page.data.S3_BUCKET_PREFIX + data.Key;
 											console.log(data);
 											const { schema } = view.state;
 											const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
-                                            if (!coordinates) return;
+											if (!coordinates) return;
 											const node = schema.nodes.image.create({ src }); // creates the image element
 											const transaction = view.state.tr.insert(coordinates?.pos, node); // places it in the correct position
 											return view.dispatch(transaction);
@@ -304,6 +351,11 @@
 				},
 			},
 		});
+
+        $editor.on("create", ({ editor }) => {
+            const json = editor.getJSON();
+			dispatch("create", json);
+        })
 
 		// debounced auto save on update
 		$editor.on("update", ({ editor }) => {
@@ -462,6 +514,7 @@
 	</BubbleMenu>
 {/if}
 <EditorContent editor={$editor} />
+
 <style lang="postcss">
 	button.active {
 		@apply bg-elevation-hover text-bright;
@@ -476,7 +529,7 @@
 	:global(.ProseMirror.ProseMirror-focused) {
 		@apply shadow-none focus-visible:outline-none;
 	}
-    :global(.ProseMirror-selectednode) {
-        @apply ring rounded;
-    }
+	:global(.ProseMirror-selectednode) {
+		@apply rounded ring;
+	}
 </style>

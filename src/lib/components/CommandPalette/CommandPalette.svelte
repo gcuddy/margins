@@ -37,15 +37,15 @@
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import { listSubscriptionsQuery } from "$lib/features/subscriptions/queries";
 	import { allowedThemes, darkThemes } from "$lib/features/settings/themes";
-	import { getEntriesFromCache, listEntriesQuery } from "$lib/features/entries/queries";
+	import { getEntriesFromCache, listEntriesQuery, showEntrySelector } from "$lib/features/entries/queries";
 	import type { Entry } from "@prisma/client";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
 	import { searchBookQuery } from "$lib/features/books/queries";
 
 	const queryClient = useQueryClient();
-    const client = trpcWithQuery($page);
-    const utils = client.createContext();
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
 	const user = getUser();
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -66,15 +66,93 @@
 		}
 	}
 
-    const updateMutation = client.bookmarks.update.createMutation({
-        onMutate: () => {
-            // TODO: set data
-        },
-        onSuccess: async () => {
-            await utils.entries.invalidate();
+	const updateMutation = client.bookmarks.update.createMutation({
+		onMutate: ({ id, entryId, data }) => {
+			// TODO: set data
+			// TODO: type location?
+			console.log({ id, data, $page, entryId });
+			if (data.stateId && $page.data.location && entryId && $page.data.user) {
+				// update current lists
+                const newLocation = $page.data.user.stateIdToLocation.get(data.stateId as number);
+                const newStateName = $page.data.user.stateIdToName.get(data.stateId as number);
+                const entriesToMove: RouterOutputs["entries"]["listBookmarks"] = [];
+				utils.entries.listBookmarks.setData(
+					{
+						location: $page.data.location,
+					},
+					(old) => {
+						console.log({ old });
+						if (!old) return old;
+                        if (!$page.data.user) return old;
+						let updated = false;
+
+						const updatedEntries = old.map((entry) => {
+							if (Array.isArray(entryId) ? entryId.includes(entry.id) : entry.id === entryId) {
+								console.log({ entry });
+								updated = true;
+								entriesToMove.push(entry);
+								return {
+									...entry,
+									bookmarks: [
+										{
+											...entry.bookmarks[0],
+											...data,
+										},
+									],
+								};
+							}
+							return entry;
+						});
+						if (entriesToMove.length) {
+							if (data.stateId && $page.data.user) {
+								if (entriesToMove.length === 1) {
+									notifications.notify({
+										title: `${entriesToMove[0].title} moved to ${newStateName}`,
+										// message: `Updated bookmark for ${entry.title}`,
+										type: "info",
+									});
+								} else {
+									notifications.notify({
+										title: `Moved ${entriesToMove.length} bookmarks to ${newStateName}`,
+										type: "info",
+										timeout: 3000,
+									});
+								}
+							}
+						}
+						if (updated) selectedItems.set([]);
+						return updatedEntries;
+					}
+				);
+                console.log({newLocation, entriesToMove, $page})
+                if (newLocation && newLocation !== $page.data.location) {
+                    utils.entries.listBookmarks.setData({
+                        location: newLocation
+                    }, old => {
+                        if (!old) return old;
+                        const updated =  [...old, ...entriesToMove];
+                        console.log({updated})
+                        return updated;
+                    })
+                }
+			}
+		},
+		onSuccess: async () => {
+			await utils.entries.invalidate();
+			selectedItems.set([]);
+		},
+	});
+
+    const createRelation = client.entries.createRelation.createMutation({
+        onSuccess: async (data) => {
+            notifications.notify({
+                title: `Relation${Array.isArray(data) && data.length ? 's' : ''} created`,
+                type: "info",
+            })
+            utils.entries.invalidate();
             selectedItems.set([]);
-        }
-    });
+        },
+    })
 
 	const updateBookmarkMutation = createMutation({
 		mutationFn: ({ id, entryId, data }: RouterInputs["bookmarks"]["update"]) =>
@@ -87,24 +165,24 @@
 			// TODO: setqueriesdaa
 			queryClient.setQueriesData<RouterOutputs["entries"]["listBookmarks"]>(["entries"], (old) => {
 				if (!old || !Array.isArray(old)) return old;
-                console.log({old, id, data, entryId})
+				console.log({ old, id, data, entryId });
 				const newEntries = old.map((entry) => {
 					if (Array.isArray(entryId) ? entryId.includes(entry.id) : entry.id === entryId) {
-                        console.log('entry hit', entry)
+						console.log("entry hit", entry);
 						if (entry.bookmarks) {
 							entry.bookmarks[0] = {
 								...entry.bookmarks[0],
 								...data,
 							};
-                            console.log({entry})
-                           return entry;
+							console.log({ entry });
+							return entry;
 						}
 					}
 					return entry;
 				});
 				return newEntries;
 			});
-            invalidate("entries")
+			invalidate("entries");
 		},
 		onSuccess: async (data) => {
 			await queryClient.invalidateQueries({
@@ -498,6 +576,22 @@
 				});
 			},
 		},
+        {
+				id: "add-relation",
+				group: "article",
+				name: "Add relation",
+				icon: "arrowRightLeft",
+				perform: async () => {
+					// open entry selector, then add relation
+					showEntrySelector(queryClient, async ({ detail: entry }) => {
+						// add relation
+						$createRelation.mutate({
+							entryId: $selectedItems.map((i) => i.id),
+							relatedEntryId: entry.id,
+						});
+					});
+				},
+			},
 		{
 			id: "add-to-collection",
 			group: "adhoc-article-commands",
@@ -544,7 +638,7 @@
 								icon: collection.icon,
 							});
 						}
-                        utils.collections.invalidate();
+						utils.collections.invalidate();
 					},
 					fallback: (input) => ({
 						title: `Create new collection: <span class="text-muted/70">"${input}"</span>`,

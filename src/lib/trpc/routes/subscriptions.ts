@@ -1,7 +1,7 @@
-import { db } from '$lib/db';
-import { auth } from '$lib/trpc/middleware/auth';
-import { logger } from '$lib/trpc/middleware/logger';
 import { z } from 'zod';
+
+import { db } from '$lib/db';
+import { basicSubscriptionSelect } from '$lib/prisma/selects/subscription';
 import { protectedProcedure, router } from '$lib/trpc/t';
 
 export const subscriptions = router({
@@ -33,17 +33,7 @@ export const subscriptions = router({
                     userId,
                 },
                 select: {
-                    title: true,
-                    id: true,
-                    feedId: true,
-                    feed: {
-                        select: {
-                            imageUrl: true,
-                            link: true,
-                            feedUrl: true,
-                            id: true
-                        },
-                    },
+                   ...basicSubscriptionSelect
                 },
             })
         ),
@@ -74,7 +64,7 @@ export const subscriptions = router({
             },
             // TODO: implement cursor, also probably move this to /feeds.loadEntries
         }).then(entries => {
-            // TODO: 
+            // TODO:
             // get the interaction and map it to more useful properties
             return entries.map(e => {
                 const { interactions, ...entry } = e;
@@ -87,5 +77,53 @@ export const subscriptions = router({
                 }
             })
         })
-        )
+        ),
+    update: protectedProcedure
+        .input(z.object({
+            data: z.object({
+                title: z.string().optional(),
+                tags: z.array(z.object({
+                    id: z.number().optional(),
+                    name: z.string()
+                })).optional()
+            }),
+            id: z.number().optional(),
+            feedId: z.number().optional()
+        }).refine(data => !!data.id || !!data.feedId, "One of data.id or data.feedid must be set")).mutation(async ({ input, ctx }) => {
+            const { data, id, feedId } = input;
+            const { userId } = ctx;
+            // create any tags that don't exist
+            const tagsToCreate = data.tags?.filter(t => !t.id) || [];
+            const tags = data.tags?.filter(t => t.id) || [];
+            if (tagsToCreate.length) {
+                await ctx.prisma.tag.createMany({
+                    data: tagsToCreate.map(t => ({
+                        name: t.name,
+                        userId
+                    })),
+                    skipDuplicates: true,
+                })
+            }
+            await ctx.prisma.subscription.update({
+                where: {
+                    id: id ?? undefined,
+                    userId_feedId: feedId ? {
+                        feedId,
+                        userId
+                    } : undefined,
+                    userId
+                },
+                data: {
+                    title: data.title ?? undefined,
+                    tags: data.tags ? {
+                        set: data.tags.map(t => ({
+                            name_userId: {
+                                name: t.name,
+                                userId
+                            }
+                        }))
+                    } : undefined,
+                }
+            })
+        })
 });

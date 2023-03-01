@@ -6,7 +6,7 @@
 </script>
 
 {#each $modals as modal, i (modal.id || i)}
-	<ModalContainer {modal}>
+	<ModalContainer {modal} {...modal.containerProps}>
 		<svelte:component this={modal.component} {...modal.props} modalIndex={i} /></ModalContainer
 	>
 {/each}
