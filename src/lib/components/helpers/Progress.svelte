@@ -8,7 +8,7 @@
 	export let innerClass = 'bg-blue-500';
 </script>
 
-<div class="relative" on:click>
+<div class="relative grow" on:click>
 	<div
 		on:click
 		role="progressbar"

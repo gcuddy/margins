@@ -135,6 +135,12 @@ export const entriesRouter = router({
                                         },
                                     },
                                 },
+                               tags: {
+                                select: {
+                                    id: true,
+                                    name: true
+                                }
+                               }
                             },
                             orderBy: {
                                 createdAt: "asc",

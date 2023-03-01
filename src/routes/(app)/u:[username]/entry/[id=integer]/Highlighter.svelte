@@ -102,9 +102,10 @@
 		],
 	});
 	export let entry: RouterOutputs["entries"]["load"];
+    $: annotations = entry.annotations;
 	export let articleID: number;
 	export let articleUrl: string;
-	export let annotations: Annotation[] = [];
+	// export let annotations: Annotation[] = [];
 	$: console.log({ annotations });
 	export let currentAnnotationColor: Color = "Yellow";
 
@@ -165,7 +166,8 @@
 	let active_highlight_id: string | null = null;
 	$: console.log({ active_highlight_id });
 	$: active_annotation = annotations?.find(({ id }) => id === active_highlight_id);
-	let active_annotation_tags: Tag[] = [];
+	let active_annotation_tags: typeof annotations[number]["tags"] = [];
+    $: active_annotation_tags = active_annotation?.tags || [];
 	let annotation_opts: {
 		el: HTMLElement;
 		value: string | JSONContent;
@@ -579,7 +581,6 @@
 		!target.closest(".floating-annotation") &&
 		(target.closest("[data-annotation-id]") as HTMLElement) &&
 		target.tagName !== "BUTTON";
-
 	function handleClick(e: MouseEvent) {
 		if (!$page.data.authorized) return;
 		const el = e.target as HTMLElement;
@@ -592,9 +593,6 @@
 			active_highlight_id = el.dataset.annotationId as string;
 			rect = el.getBoundingClientRect();
 			const active_annotation = annotations.find((a) => a.id === active_highlight_id);
-			const tags = active_annotation?.tags?.flatMap((t) => t.tag) || [];
-			console.log({ tags });
-			active_annotation_tags = tags;
 			const { selector } = TargetSchema.parse(active_annotation?.target);
 			tooltip_display = TooltipDisplay.Edit;
 			show_tooltip = true;
@@ -758,7 +756,7 @@
 	}
 
 	async function renderAnnotations() {
-        console.log("rendering annotations")
+		console.log("rendering annotations");
 		for (const annotation of inlineAnnotations) {
 			console.log({ annotation });
 			try {
@@ -788,13 +786,13 @@
 		}
 	}
 
-    $: entry.id && renderAnnotations();
+	$: entry.id && renderAnnotations();
 	onMount(async () => {
 		console.log("running on mount");
 		if (wrapper) {
 			console.log({ inlineAnnotations });
 			// load highlgihts
-           await renderAnnotations();
+			await renderAnnotations();
 			// TODO: eventually this will be ssr-d so we'll be able to go to annotation without js, just a #annotation-{ID} link
 			const a = $page.url.searchParams.get("a");
 			if (a && wrapper) {
@@ -1139,7 +1137,7 @@
 			<FloatingAnnotation
 				rich={true}
 				size="base"
-				bind:tags={active_annotation_tags}
+				tags={active_annotation_tags}
 				on:cancel={() => {
 					if (!annotation_opts) return;
 					console.log({ annotation_opts });
@@ -1152,14 +1150,16 @@
 				on:save={async (e) => {
 					console.log({ e });
 					if (!annotation_opts || !$page.data.user) return;
-					const { value } = e.detail;
+                    const tagsChanged = JSON.stringify(active_annotation_tags) !== JSON.stringify(e.detail.tags);
+                    console.log({tagsChanged})
+					const { value, tags } = e.detail;
 					if (typeof value === "object") {
 						const mentionNodes = findNodes(value, "mention");
 						const mentionNodesToAdd = mentionNodes.filter((node) => {
 							const { id } = node;
 							return entry.relations.some((r) => r.relatedEntry?.id === id) === false;
 						});
-						console.log({ mentionNodesToAdd });
+						console.log({ mentionNodesToAdd })
 						for (const node of mentionNodesToAdd) {
 							if (!node.attrs?.id) continue;
 							$createRelation.mutate({
@@ -1187,6 +1187,7 @@
 						contentData: typeof value === "object" ? value : undefined,
 						color: currentAnnotationColor,
 						id,
+                        tags
 					});
 					annotation_opts = null;
 					if (highlightInfo) {

@@ -115,6 +115,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             u.searchParams.set("key", YOUTUBE_KEY)
             const res = await fetch(u.toString());
             const data = await res.json() as VideoListResponse;
+            console.dir({data}, {depth: null});
             const item = data.items?.[0];
             // const res = await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`);
             // const data = await res.json() as YoutubeJson;

@@ -1,10 +1,11 @@
 <script lang="ts">
 	import Saved from "$lib/components/Saved.svelte";
 	import CustomizeView from "$lib/components/CustomizeView.svelte";
+	import AnnotationList from "$lib/components/AnnotationList.svelte";
 	import FavoriteStar from "$lib/components/FavoriteStar.svelte";
 	import { notifications } from "$lib/stores/notifications";
 	import { syncStore } from "$lib/stores/sync";
-	import { ViewOptionsSchema, type ViewOptions } from "$lib/types/schemas/View";
+	import type { ViewOptionsSchema, ViewOptions } from "$lib/types/schemas/View";
 	import { createFavorite, deleteFavorite, sortArticles } from "$lib/utils";
 	import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@rgossiaux/svelte-headlessui";
 
@@ -60,6 +61,15 @@
 				{subscriptions.length}
 			{/await}
 		</Tab>
+		<Tab
+			>Notes
+			<!-- Q: does awaiting a promise twice have performance drawbacks? -->
+			{#await data.lazy?.annotations}
+				...
+			{:then annotations}
+				{annotations.length}
+			{/await}
+		</Tab>
 		<!-- <Tab>Annotations {data.annotations.length}</Tab> -->
 	</TabList>
 	<TabPanels>
@@ -89,6 +99,13 @@
 				{/if}
 			{:catch error}
 				{error}
+			{/await}
+		</TabPanel>
+		<TabPanel>
+			{#await data.lazy?.annotations}
+				Loading...
+			{:then annotations}
+				<AnnotationList {annotations} />
 			{/await}
 		</TabPanel>
 	</TabPanels>

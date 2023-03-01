@@ -11,7 +11,7 @@
 	import GenericTextarea from "../GenericTextarea.svelte";
 	import Icon from "../helpers/Icon.svelte";
 	import TagEntry from "../TagEntry.svelte";
-	export let value = "";
+	export let value: string = "";
 	export let el: HTMLElement | undefined = undefined;
 	export let textarea: HTMLElement | undefined = undefined;
 	export let include_tags = true;

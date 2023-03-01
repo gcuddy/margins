@@ -14,22 +14,34 @@
 	import type { JSONContent } from "@tiptap/core";
 	import { fadeScale } from "$lib/transitions";
 	import { backInOut } from "svelte/easing";
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+		save: {
+			value: string | JSONContent;
+			tags: {
+				id?: number;
+				name: string;
+			}[];
+		};
+		cancel: void;
+	}>();
 	export let allTags: Tag[] = [];
 	if (!allTags.length) {
 		// fetch them
 	}
-	export let tags: Tag[] = [];
+	export let tags: { id?: number; name: string }[] = [];
 
 	export let rich = false;
 
 	let saving = false;
 
+	// This is getting an error because we have two annotationinput componentsin the same file
+	// @ts-expect-error
 	interface $$Props extends ComponentProps<AnnotationInput> {
-		tags?: Tag[];
-		value?: string | JSONContent;
+		tags?: { id?: number; name: string }[];
+		value: string | JSONContent;
 		el?: HTMLElement;
 		rich?: boolean;
+		saving?: boolean;
 	}
 
 	$: console.log({ tags, $$props });
@@ -162,13 +174,18 @@
 		{#if rich}
 			<RichAnnotationInput
 				autofocus
+				bind:tags
 				config={{
 					content: value,
 				}}
 				on:cancel
 				on:save={(e) => {
 					saving = true;
-					dispatch("save", e.detail);
+					dispatch("save", {
+						value: e.detail.value,
+						// TODO
+						tags,
+					});
 				}}
 				class="w-80"
 			/>
@@ -180,7 +197,14 @@
 				bind:tags
 				bind:el={container}
 				bind:value
-				on:save
+				on:save={(e) => {
+					saving = true;
+					dispatch("save", {
+						value: e.detail.value,
+						// TODO
+						tags,
+					});
+				}}
 				on:cancel
 				{...$$restProps}
 			/>
@@ -194,7 +218,10 @@
 		cursor: grabbing !important;
 		box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 	}
-	.annotation-container :global(:scope > div) {
-		transform: scale(var(--scale)) rotate(var(--rotation)) !important;
+	:global(.neodrag-dragging) textarea {
+		cursor: grabbing !important;
 	}
+	/* .annotation-container :global(:scope > div) {
+		transform: scale(var(--scale)) rotate(var(--rotation)) !important;
+	} */
 </style>

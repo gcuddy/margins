@@ -216,8 +216,8 @@
 			</RichAnnotationInput>
 		</div>
 	{/if}
-    <div class="prose">
-        {@html entry.text}
+    <div class="prose whitespace-pre-line">
+        {entry.text}
     </div>
 {/if}
 </div>

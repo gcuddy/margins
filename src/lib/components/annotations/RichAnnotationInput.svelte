@@ -15,6 +15,10 @@
 	export let shadow_focus = false;
 	export let placeholder = "Add an annotation…";
 	export let annotation: Annotation | undefined = undefined;
+    export let tags: {
+        id?: number;
+        name: string;
+    }[] = [];
     export let config: Partial<EditorOptions> = {};
     // interface $$Props extends ComponentProps<TipTap> {
     //     el?: HTMLElement;
@@ -54,7 +58,8 @@
 	export let saving = false;
 	const doneSaving = () => (saving = false);
 	export let expandButton = false;
-	let contentData: JSONContent = annotation?.contentData || [];
+	let contentData: JSONContent;
+    $: contentData = (annotation?.contentData as JSONContent | null) || [];
 </script>
 
 <!-- TODO: TURN INTO FORM -->
@@ -99,13 +104,13 @@
 			{placeholder}
 			class="!max-w-none"
 			config={{
-				content: annotation?.contentData || "",
+				content: contentData || "",
                 ...config
 			}}
 		/>
 		{#if include_tags}
 			<div class="flex grow items-center font-normal px-2 text-xs">
-				<TagEntry size="xs" placeholder="" className="grow !text-xs not-italic" />
+				<TagEntry bind:tags size="xs" placeholder="" className="grow !text-xs not-italic" />
 			</div>
 		{/if}
 	</div>
@@ -131,9 +136,6 @@
 </div>
 
 <style>
-	:global(.neodrag-dragging) textarea {
-		cursor: grabbing !important;
-	}
 	.annotation-input {
 		transform: scale(var(--scale));
 	}

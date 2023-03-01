@@ -783,7 +783,7 @@
 												{#if item.enclosureUrl}
 													<div class="flex items-center">
 														<div
-															class="flex cursor-default items-center space-x-1"
+															class="flex cursor-default grow w-full items-center space-x-1"
 															on:click|preventDefault|stopPropagation={() => {
 																if (loaded) {
 																	podcastPlayer.toggle();

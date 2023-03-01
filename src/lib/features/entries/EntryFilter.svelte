@@ -66,6 +66,7 @@
 		where?: T;
 		id: string;
 		icon?: IconName;
+		onDeviceFilter?: (entry: EntryInList) => boolean;
 	};
 	type Condition<TWhereInput extends {}, TModel extends Record<keyof TWhereInput, any>> = {
 		[K in keyof TWhereInput]: {
@@ -349,7 +350,7 @@
 							type: {
 								in: ["annotation", "note"],
 							},
-                            userId: page.data.user?.id
+							userId: page.data.user?.id,
 						},
 					},
 				},
@@ -361,7 +362,7 @@
 							type: {
 								in: ["annotation", "note"],
 							},
-                            userId: page.data.user?.id
+							userId: page.data.user?.id,
 						},
 					},
 				},
@@ -391,6 +392,7 @@
 	import { createPopperActions } from "svelte-popperjs";
 	import { listTagsQuery } from "../tags/queries";
 	import { page } from "$app/stores";
+	import type { EntryInList } from "$lib/prisma/selects/entry";
 
 	type T = $$Generic;
 

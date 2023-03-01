@@ -80,14 +80,14 @@ export const annotationRouter = router({
                         console.log("found", node.text)
                         found = true;
                         matchingRichAnnotations.push(a);
-                       return true;
+                        return true;
                     }
                 }
                 if (node.content && !found) {
                     node.content.forEach(recurse)
                 }
             }
-           recurse(contentData);
+            recurse(contentData);
         })
         console.timeEnd("filtering rich annotations")
         console.log({ matchingRichAnnotations })
@@ -96,19 +96,46 @@ export const annotationRouter = router({
     // TODO: consolidate save and update
     save: protectedProcedure.input(saveAnnotationSchema.partial()).mutation(async ({ ctx, input }) => {
         const { id } = input;
+        const { tags, ...rest } = input;
         // TODO: write this as upsert
-
+        const tagsToCreate = tags?.filter(t => !t.id) || [];
+        console.log({tags, tagsToCreate})
+        if (tagsToCreate.length) {
+            await ctx.prisma.tag.createMany({
+                data: tagsToCreate.map(t => ({
+                    name: t.name,
+                    userId: ctx.userId
+                })),
+                skipDuplicates: true
+            });
+        }
         return await ctx.prisma.annotation.upsert({
             where: {
                 id: id ?? "",
             },
             create: {
                 type: "annotation",
-                ...input,
+                ...rest,
                 userId: ctx.userId,
+                tags: tags ? {
+                    connect: tags.map(t => ({
+                        name_userId: {
+                            name: t.name,
+                            userId: ctx.userId
+                        }
+                    }))
+                } : undefined
             },
             update: {
-                ...input
+                ...rest,
+                tags: tags ? {
+                    set: tags.map(t => ({
+                        name_userId: {
+                            name: t.name,
+                            userId: ctx.userId
+                        }
+                    }))
+                } : undefined
             }
         })
         // if (id) {
@@ -250,7 +277,7 @@ export const annotationRouter = router({
         }),
     create: protectedProcedure.input(saveAnnotationSchema.partial()).mutation(async ({ ctx, input }) => {
         const { userId } = ctx;
-        const { entryId, collectionId, ...rest } = input;
+        const { entryId, collectionId, tags, ...rest } = input;
         return await ctx.prisma.annotation.create({
             data: {
                 ...rest,
@@ -269,6 +296,20 @@ export const annotationRouter = router({
                     create: {
                         collectionId,
                     }
+                } : undefined,
+                tags: tags ? {
+                    connectOrCreate: tags.map(t => ({
+                        where: {
+                            name_userId: {
+                                name: t.name,
+                                userId
+                            }
+                        },
+                        create: {
+                            name: t.name,
+                            userId
+                        }
+                    })),
                 } : undefined
             },
         });

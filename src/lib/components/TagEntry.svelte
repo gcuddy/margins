@@ -7,8 +7,9 @@
 	import Icon from "./helpers/Icon.svelte";
 	import type { ExtendedBookmark } from "$lib/bookmark";
 	import { notifications } from "$lib/stores/notifications";
+	import { page } from "$app/stores";
 	type TagWithNeededProperties = Pick<Tag, "id" | "name">;
-	export let allTags: TagWithNeededProperties[] = [];
+	export let allTags: TagWithNeededProperties[] = $page.data.tags || [];
 	$: console.log({ allTags });
 	export let className = "";
 	export let value = "";
@@ -44,7 +45,8 @@
 		filteredTags = filteredTags.filter((tag) => !tag.special);
 	}
 	// read only
-	export let tags: TagWithNeededProperties[] = [];
+	export let tags: {id?: number; name: string;}[] = [];
+    $: console.log({tags})
 	/// read only
 	export let pending = false;
 

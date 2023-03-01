@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
+import { annotationArgs } from '$lib/prisma/selects/annotations';
 import { entriesThatBelongToUser, entryListSelect } from '$lib/prisma/selects/entry';
 import { basicSubscriptionSelect } from '$lib/prisma/selects/subscription';
 
@@ -58,11 +59,27 @@ export const load: PageServerLoad = async ({ params, locals, parent }) => {
 		},
 		select: basicSubscriptionSelect,
 	});
+    const annotations = db.annotation.findMany({
+        where: {
+			AND: tags.map((tag) => {
+				return {
+					tags: {
+						some: {
+							name: tag,
+						},
+					},
+				};
+			}),
+            userId: user?.userId || ""
+		},
+        ...annotationArgs
+    })
 	return {
 		tag: tags,
 		items,
         lazy: {
-            subscriptions
+            subscriptions,
+            annotations
         }
 	};
 };
