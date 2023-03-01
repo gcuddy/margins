@@ -23,8 +23,7 @@
 
 	export let rich = false;
 
-
-    let saving = false;
+	let saving = false;
 
 	interface $$Props extends ComponentProps<AnnotationInput> {
 		tags?: Tag[];
@@ -129,11 +128,10 @@
 	}}
 	in:fly={{ y: 10 }}
 	out:fadeScale={{
-        easing: backInOut,
-        duration: 400,
-        baseScale: .8,
-
-    }}
+		easing: saving ? backInOut : undefined,
+		duration: 400,
+		baseScale: 0.9,
+	}}
 	class="floating-annotation absolute z-20 resize"
 	use:draggable={{
 		position: { x, y },
@@ -163,12 +161,15 @@
 	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-xl transition-opacity">
 		{#if rich}
 			<RichAnnotationInput
-            autofocus
+				autofocus
 				config={{
 					content: value,
 				}}
 				on:cancel
-				on:save
+				on:save={(e) => {
+					saving = true;
+					dispatch("save", e.detail);
+				}}
 				class="w-80"
 			/>
 		{:else}
