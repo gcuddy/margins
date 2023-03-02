@@ -32,13 +32,6 @@
 	// $: sortedArticles = articles.filter((a) => a.location === location);
 	let viewOptions: ViewOptions = defaultViewOptions;
 	// $: console.log({ data });
-	$: data.currentList.set({
-		// type: 'bookmarks',
-		slug: $page.url.pathname,
-		// ids: data.entries.map((e) => e.id),
-		// items: data.entries,
-	});
-	$: currentList = data.currentList;
 	$: locationStateIds = $page.data.user?.states?.filter((s) => s.type === location).map((s) => s.id) ?? [];
 	// $: console.log({ $currentList });
 
