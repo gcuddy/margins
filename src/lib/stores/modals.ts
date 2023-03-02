@@ -66,7 +66,7 @@ function createModalStore() {
 				}
 			} else if (!removed.length) {
 				console.log(`closing top modal`);
-				stack[stack.length - 1].open = false;
+				if (stack[stack.length-1]) stack[stack.length - 1].open = false;
 				stack.splice(-1);
 				console.log({ stack });
 				// const removed = stack.pop();

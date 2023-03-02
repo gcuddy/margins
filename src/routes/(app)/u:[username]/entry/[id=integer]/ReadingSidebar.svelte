@@ -200,6 +200,7 @@
 									$updateBookmark.mutate({
                                         id: entry.bookmark.id,
 										entryId: entry.id,
+                                        uri: entry.uri,
                                         data: {
                                             stateId: state.id
                                         }
@@ -223,18 +224,27 @@
 							<StateCombobox
 								unsaved={true}
 								onSelect={async (state) => {
-									const s = syncStore.add();
-									await trpc().bookmarks.updateState.mutate({
-										stateId: state.id,
-										entryId: entry.id,
-										uri: entry.uri || undefined,
-									});
-                                    utils.entries.invalidate();
-									queryClient.invalidateQueries({
-										queryKey: entryDetailsQuery({ id: $page.data.article.id }).queryKey,
-									});
-									// await invalidateAll();
-									syncStore.remove(s);
+									// const s = syncStore.add();
+                                    console.log({entry})
+                                    const bookmark = await $updateBookmark.mutateAsync({
+                                        entryId: entry.id,
+                                        uri: entry.uri || 'undefined',
+                                        data: {
+                                            stateId: state.id
+                                        }
+                                    })
+                                    console.log({bookmark})
+									// await trpc().bookmarks.updateState.mutate({
+									// 	stateId: state.id,
+									// 	entryId: entry.id,
+									// 	uri: entry.uri || undefined,
+									// });
+                                    // utils.entries.invalidate();
+									// queryClient.invalidateQueries({
+									// 	queryKey: entryDetailsQuery({ id: $page.data.article.id }).queryKey,
+									// });
+									// // await invalidateAll();
+									// syncStore.remove(s);
 								}}
 							/>
 						{/if}

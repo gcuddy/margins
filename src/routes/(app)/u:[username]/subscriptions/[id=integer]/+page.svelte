@@ -20,12 +20,12 @@
 
 	// $: currentList = $page.data.currentList;
 	// $: console.log({ $currentList });
-	$: currentList = data.currentList;
-	$: currentList.set({
-		type: "rss",
-		slug: $page.url.pathname,
-		ids: data.entries.map((e) => e.id),
-	});
+	// $: currentList = data.currentList;
+	// $: currentList.set({
+	// 	type: "rss",
+	// 	slug: $page.url.pathname,
+	// 	ids: data.entries.map((e) => e.id),
+	// });
 	// $: data.currentList.set({
 	// 	items: data.entries,
 	// 	slug: $page.url.pathname,
@@ -33,7 +33,6 @@
 	// 	feed: data.subscription.feed,
 	// 	subscription: data.subscription,
 	// });
-	$: console.log({ $currentList });
 
 	// $: unreads = $entries.filter((e) => e.unread);
 

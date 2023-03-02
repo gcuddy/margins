@@ -20,7 +20,7 @@ async function generateScreenshot(url: string) {
         // @ts-expect-error
         Body: image
     })
-   return Key
+    return Key
 }
 
 export const bookmarks = router({
@@ -93,7 +93,7 @@ export const bookmarks = router({
                     } : undefined,
                 }
             })
-            const screenshot =  !!input.article?.screenshot;
+            const screenshot = !!input.article?.screenshot;
             const needScreenshot = input.article?.type === "bookmark";
             function screenshotReducer() {
                 return match([screenshot, needScreenshot])
@@ -226,9 +226,9 @@ export const bookmarks = router({
                 return ctx.prisma.bookmark.upsert({
                     where: {
                         uri_entryId_userId: {
-                           uri: input.uri || '',
-                           entryId: entryId || -1,
-                           userId,
+                            uri: input.uri || '',
+                            entryId: entryId || -1,
+                            userId,
                         }
                     },
                     create: {
@@ -307,16 +307,18 @@ export const bookmarks = router({
             });
         }
     }),
-        update: protectedProcedure
+    update: protectedProcedure
         .input(
             z.object({
                 id: z.number().or(z.number().array()).optional(),
                 entryId: z.number().or(z.number().array()).optional(),
                 data: _BookmarkModel.partial(),
+                uri: z.string().optional(),
             }).refine(input => !!input.id || !!input.entryId, "Either id or entryId is required")
         )
         .mutation(async ({ ctx, input }) => {
-            const { id, entryId, data } = input;
+            const { id, entryId, data, uri } = input;
+            const { userId } = ctx;
             if (Array.isArray(id) || Array.isArray(entryId)) {
                 return ctx.prisma.bookmark.updateMany({
                     where: {
@@ -330,18 +332,44 @@ export const bookmarks = router({
                     },
                     data,
                 });
-            } else {
-                return ctx.prisma.bookmark.update({
+            } else if (uri) {
+                const { stateId, interactionId, favoriteId, entryId, id, ...rest } = data;
+                return ctx.prisma.bookmark.upsert({
                     where: {
-                        id: id ?? undefined,
-                        entryId: entryId ?? undefined,
-                        userId: ctx.userId,
+                        // id: id ?? undefined,
+                        // entryId: entryId ?? undefined,
+                        // userId,
+                        uri_entryId_userId: {
+                            uri: input.uri || '',
+                            entryId: entryId || -1,
+                            userId,
+                        }
                     },
-                    data,
+                    update: data,
+                    create: {
+                        // ...rest,
+                        entry: {
+                            connect: {
+                                uri
+                            }
+                        },
+                        user: {
+                            connect: {
+                                id: userId
+                            }
+                        },
+                        state: stateId ? {
+                            connect: {
+                                id: stateId
+                            }
+                        } : undefined
+                        // uri,
+                        // userId
+                    }
                 });
             }
         }),
-        screenshot: protectedProcedure
+    screenshot: protectedProcedure
         .input(z.object({
             id: z.number(),
         })).mutation(async ({ ctx, input }) => {

@@ -57,6 +57,7 @@
 {:else if $query.isError}
 	error
 {:else if $query.isSuccess}
+	{@const { episode, entry } = $query.data}
 	<div class="relative flex flex-col space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12">
 		<!-- <img
         src={image}

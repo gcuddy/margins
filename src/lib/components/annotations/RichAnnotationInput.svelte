@@ -58,8 +58,8 @@
 	export let saving = false;
 	const doneSaving = () => (saving = false);
 	export let expandButton = false;
-	let contentData: JSONContent;
-    $: contentData = (annotation?.contentData as JSONContent | null) || [];
+	let contentData = annotation?.contentData || '';
+
 </script>
 
 <!-- TODO: TURN INTO FORM -->
@@ -136,7 +136,4 @@
 </div>
 
 <style>
-	.annotation-input {
-		transform: scale(var(--scale));
-	}
 </style>

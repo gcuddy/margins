@@ -14,6 +14,7 @@
 	import type { JSONContent } from "@tiptap/core";
 	import { fadeScale } from "$lib/transitions";
 	import { backInOut } from "svelte/easing";
+	import { clamp } from "lodash";
 	const dispatch = createEventDispatcher<{
 		save: {
 			value: string | JSONContent;
@@ -173,6 +174,7 @@
 	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-xl transition-opacity">
 		{#if rich}
 			<RichAnnotationInput
+            class="w-[min(95vw,25rem)]"
 				autofocus
 				bind:tags
 				config={{
@@ -187,7 +189,6 @@
 						tags,
 					});
 				}}
-				class="w-80"
 			/>
 		{:else}
 			<AnnotationInput
@@ -221,6 +222,7 @@
 	:global(.neodrag-dragging) textarea {
 		cursor: grabbing !important;
 	}
+
 	/* .annotation-container :global(:scope > div) {
 		transform: scale(var(--scale)) rotate(var(--rotation)) !important;
 	} */

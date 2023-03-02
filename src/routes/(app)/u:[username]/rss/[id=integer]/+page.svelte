@@ -7,11 +7,11 @@
 	import Muted from '$lib/components/atoms/Muted.svelte';
 	export let data: PageData;
 	$: ({ feed, items, currentList } = data);
-	$: currentList.set({
-		href: `/rss/${$page.params.id}`,
-		items,
-		title: feed?.title || 'Feed',
-	});
+	// $: currentList.set({
+	// 	href: `/rss/${$page.params.id}`,
+	// 	items,
+	// 	title: feed?.title || 'Feed',
+	// });
 	// import FeedTitleMenu from '../../subscriptions/FeedTitleMenu.svelte';
 	import { panes, sortedItems } from '../store';
 </script>
