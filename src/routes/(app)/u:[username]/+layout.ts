@@ -1,9 +1,9 @@
+import { redirect } from "@sveltejs/kit";
 import { writable } from "svelte/store";
 
 import { createCachedValue } from "$lib/cache";
 
 import type { LayoutLoad } from "./$types";
-import { redirect } from "@sveltejs/kit";
 
 export const load: LayoutLoad = async ({ fetch, depends, data, parent }) => {
 	// TODO: should I not put this here??
@@ -13,10 +13,10 @@ export const load: LayoutLoad = async ({ fetch, depends, data, parent }) => {
 		const tags = await res.json();
 		console.log({ tags });
 		return {
-			currentList: writable<ICurrentList>({
-				slug: "/",
-				ids: [],
-			}),
+			// currentList: writable<ICurrentList>({
+			// 	slug: "/",
+			// 	ids: [],
+			// }),
 			selectedItems: writable([]),
 			tags,
 			filterMap: createCachedValue("filterMap", () => writable(new Map())),

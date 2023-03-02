@@ -1,5 +1,7 @@
 
 import type { Location } from "@prisma/client";
+import { redirect } from "@sveltejs/kit";
+import { TRPCError } from "@trpc/server";
 
 import { createContext } from "$lib/trpc/context";
 import { appRouter } from "$lib/trpc/router";
@@ -49,6 +51,13 @@ export const load: LayoutServerLoad = async (event) => {
             // allEntries
         };
     } catch (error) {
+        if (error instanceof TRPCError) {
+            console.log("TRPC ERROR")
+            if (error.code === "UNAUTHORIZED") {
+                // TODO: unauthorized site
+                throw redirect(307, "/login")
+            }
+        }
         console.error(error);
         return {
             theme,
