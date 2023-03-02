@@ -72,6 +72,7 @@
 	import { longpress } from "$lib/actions/longpress";
 	import ImageLoader from "./ui/images/ImageLoader.svelte";
 	import { flip } from "svelte/animate";
+	import mq from "$lib/stores/mq";
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
 	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>(items);
@@ -548,7 +549,7 @@
 												<div
 													class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition ring-1 ring-border/50 drop-shadow-xl  {viewOptions.view ===
 													'list'
-														? 'h-16 w-14 rounded-md hover:ring'
+														? ' h-12 w-10 sm:h-16 sm:w-14 rounded-md hover:ring'
 														: 'col-span-4 h-full md:h-28 md:w-full'}"
 													on:click|stopPropagation
 													on:keydown
@@ -780,7 +781,7 @@
 												<Muted>{dayjs(item.published).format("ll")}</Muted>
 											</svelte:fragment>
 											<svelte:fragment slot="description">
-												{#if item.enclosureUrl}
+												{#if item.enclosureUrl && $mq.sm}
 													<div class="flex items-center">
 														<div
 															class="flex cursor-default grow w-full items-center space-x-1"

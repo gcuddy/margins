@@ -74,18 +74,6 @@
 					goto(`/u:${$page.params.username}/${location.toLowerCase()}`);
 				}}
 			/>
-			<button
-				on:click={() => {
-					filters = [
-						...filters,
-						{
-							author: {
-								contains: "a",
-							},
-						},
-					];
-				}}>add filter</button
-			>
 		</div>
 		<div slot="end" class="flex">
 			<Filter />

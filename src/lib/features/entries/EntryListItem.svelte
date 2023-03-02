@@ -77,7 +77,7 @@
 	class="item relative flex h-full flex-initial items-center gap-4  p-4  transition {c}"
 >
 	<div
-		class="flex-inital relative flex h-16 w-14 shrink-0 cursor-pointer flex-row items-center  overflow-hidden rounded-md drop-shadow-lg transition {entry.id
+		class="flex-inital relative flex h-12 w-10 sm:h-16 sm:w-14 shrink-0 cursor-pointer flex-row items-center  overflow-hidden rounded-md drop-shadow-lg transition {entry.id
 			? 'hover:ring'
 			: ''}"
 		on:click|stopPropagation
@@ -137,7 +137,7 @@
 		<slot name="description" />
 	</div>
 	<!-- metadata grower -->
-	<div class="flex grow justify-between">
+	<div class="hidden sm:flex grow justify-between">
 		<Spacer />
 		{#if entry.tags?.length}
 			{#if entry.tags.length < 5}

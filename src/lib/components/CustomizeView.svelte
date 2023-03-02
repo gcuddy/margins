@@ -57,13 +57,13 @@
 	<PopoverButton as="div" use={[popperRef]}>
 		<Button
 			variant="ghost"
-			className="space-x-1"
+			className="space-x-1 sm:!text-sm md:!text-base !text-xs"
 			tooltip={{
 				text: 'Show view options',
 			}}
 		>
-			<Icon name="adjustmentsSolid" className="h-4 w-4 dark:fill-gray-300" /> <span>View</span>
-			<Icon name="chevronDownSolid" className="h-4 w-4 dark:fill-gray-300" />
+			<Icon name="adjustmentsSolid" className="h-3 w-3 sm:h-4 sm:w-4 dark:fill-gray-300" /> <span>View</span>
+			<Icon name="chevronDownSolid" className="h-3 w-3 sm:h-4 sm:w-4 dark:fill-gray-300" />
 		</Button></PopoverButton
 	>
 	<PopoverOverlay />

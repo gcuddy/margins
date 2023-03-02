@@ -12,6 +12,11 @@
 		collapsed?: boolean;
 	}
 
+    export const externalIsshowing = writable(false);
+
+	export const isShowing = writable(false);
+
+
 	export const favoritesQuery = (init?: TRPCClientInit) =>
 		({
 			// REVIEW: should key include user? should this just be in user.data in layout.server? many questions!
@@ -37,7 +42,7 @@
 	import { hideSidebar } from "$lib/stores/sidebar";
 	import ContextMenu from "$lib/components/ContextMenu.svelte";
 	import { sidebarFeeds, type UserStoreType } from "$lib/stores/user";
-	import { readable, type Readable } from "svelte/store";
+	import { readable, writable, type Readable } from "svelte/store";
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
 	import { backInOut, backOut, bounceOut, cubicOut, elasticOut, quadOut, quintOut } from "svelte/easing";
 	import mq from "$lib/stores/mq";
@@ -67,7 +72,7 @@
 					{
 						display: "Inbox",
 						href: `/u:${$page.data.user.username}/inbox`,
-                    icon: "inbox",
+						icon: "inbox",
 					},
 					{
 						display: "Now",
@@ -177,23 +182,23 @@
 	$: $page.url, closeSidebar();
 	$: $modals.length && closeSidebar();
 
-   $: $page.url, $mq.max_lg && collapse();
+	$: $page.url, $mq.max_lg && collapse();
 	// $: $page.url.pathname.includes('entry') && hideSidebar.set(true);
 	// $: $commandPaletteStore && closeSidebar();
 	// $: $showCommandPalette && closeSidebar();
 
 	export let width = 240;
 	$: console.log({ width });
-	let _width = width
-    $: console.log({$mq})
+	let _width = width;
+	$: console.log({ $mq });
 
-    let lgCollapsed = false;
-    $: $mq.max_lg && collapse();
-    $: $mq.lg && !lgCollapsed && expand();
+	let lgCollapsed = false;
+	$: $mq.max_lg && collapse();
+	$: $mq.lg && !lgCollapsed && expand();
 
-    // mq.subscribe(val => {
-    //     val.
-    // })
+	// mq.subscribe(val => {
+	//     val.
+	// })
 	const tweenedWidth = tweened(width, {
 		duration: 600,
 		easing: quintOut,
@@ -225,10 +230,12 @@
 	const leftSize = () => width * -1.1;
 
 	function collapse() {
+		isShowing.set(false);
+		externalIsshowing.set(false);
 		if (collapsed) return;
-        if ($mq.lg) {
-            lgCollapsed = true;
-        }
+		if ($mq.lg) {
+			lgCollapsed = true;
+		}
 		show_floating = false;
 		Promise.all([
 			tweenedWidth.set(0),
@@ -239,11 +246,16 @@
 		]).then(() => (collapsed = true));
 	}
 
+	$: $tweenedWidth ? isShowing.set(true) : isShowing.set(false);
+    $: $isShowing, externalIsshowing.set($isShowing);
+
+    $: $externalIsshowing ? expand() : collapse();
+
 	function expand() {
 		if (!collapsed) return;
-        if ($mq.lg) {
-            lgCollapsed = false;
-        }
+		if ($mq.lg) {
+			lgCollapsed = false;
+		}
 		ticking = true;
 		show_floating = false;
 		collapsed = false;
@@ -322,13 +334,13 @@
 {/if}
 <div>
 	<!-- {show_floating} -->
-	<button
+	<!-- <button
 		class="fixed top-0 left-0 z-20 !mt-0 flex h-14 w-12 cursor-default flex-col items-center justify-center p-0.5 pl-2 focus-visible:text-blue-500 lg:hidden"
 		on:click={toggleSidebar}
 	>
 		<Icon name="menu" className="h-5 w-5 stroke-2 stroke-current" />
 		<span class="sr-only">Toggle menu</span>
-	</button>
+	</button> -->
 
 	<!-- Spacer which has width when big enough, otherwise 0 -->
 	<div style:--width="{$tweenedWidth}px" class="w-0 md:w-[var(--width)]" />
@@ -378,13 +390,13 @@
 													method: "POST",
 													headers: {
 														"x-sveltekit-action": "true",
-                                                        // content-type
-                                                        "Content-Type": "application/x-www-form-urlencoded"
+														// content-type
+														"Content-Type": "application/x-www-form-urlencoded",
 													},
-                                                    body: null,
+													body: null,
 												});
 												await invalidateAll();
-												await goto('/');
+												await goto("/");
 											},
 											icon: "logoutSolid",
 										},
@@ -510,9 +522,14 @@
 						{#each $page.data.allTags as tag}
 							{#if tag}
 								{@const text = typeof tag === "string" ? tag : tag.name}
-								<SidebarItem on:click={() => {
-                                    if ($mq.max_lg) collapse();
-                                }} display={text} href="/u:{$page.params.username}/t:{text}" icon="tag" />
+								<SidebarItem
+									on:click={() => {
+										if ($mq.max_lg) collapse();
+									}}
+									display={text}
+									href="/u:{$page.params.username}/t:{text}"
+									icon="tag"
+								/>
 							{/if}
 						{/each}
 					</div>
@@ -521,10 +538,14 @@
 				<div class="simple-scrollbar flex shrink flex-col space-y-8 overflow-y-auto">
 					<div class="flex grow flex-col items-stretch space-y-1 px-5 text-sm">
 						{#each navItems as nav}
-							<SidebarItem on:click={() => {
-                                console.log("click")
-                                if ($mq.max_lg) collapse();
-                            }} {...nav} bind:collapsed={nav.collapsed} />
+							<SidebarItem
+								on:click={() => {
+									console.log("click");
+									if ($mq.max_lg) collapse();
+								}}
+								{...nav}
+								bind:collapsed={nav.collapsed}
+							/>
 						{/each}
 					</div>
 					<!-- TOOD: fix favorites -->
