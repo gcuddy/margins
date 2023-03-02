@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
+	import AnnotationModal from "$lib/components/annotations/AnnotationModal.svelte";
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Button from "$lib/components/Button.svelte";
 	import DotMenu from "$lib/components/DotMenu.svelte";
@@ -8,6 +9,7 @@
 	import Progress from "$lib/components/helpers/Progress.svelte";
 	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
 	import dayjs from "$lib/dayjs";
+	import { modals } from "$lib/stores/modals";
 	import { trpc } from "$lib/trpc/client";
 	import { formatDate, formatDuration } from "$lib/utils/dates";
 	import { DocumentType, Entry } from "@prisma/client";
@@ -140,6 +142,19 @@
 						items={[
 							[
 								{
+									label: "Annotate",
+									icon: "chatBubbleBottomCenterTextMini",
+									perform: () => {
+										modals.open(AnnotationModal, {
+											timestamp: $podcastPlayer.currentTime ? Math.floor($podcastPlayer.currentTime) : 0,
+											entryId: $podcastPlayer.episode?.id,
+											source: $podcastPlayer.episode?.enclosureUrl,
+										});
+									},
+								},
+							],
+							[
+								{
 									label: "Add to collection",
 									icon: "viewGridAddSolid",
 									perform: async () => {
@@ -161,7 +176,6 @@
 													duration: episode.duration,
 													uri: episode.link || episode.enclosureUrl,
 													guid: episode.guid,
-													original: JSON.stringify(episode),
 													image: episode.image || episode.feedImage,
 													type: DocumentType.audio,
 												},

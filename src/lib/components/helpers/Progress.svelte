@@ -8,11 +8,10 @@
 	export let innerClass = 'bg-blue-500';
 </script>
 
-<div class="relative grow" on:click>
 	<div
 		on:click
 		role="progressbar"
-		class="relative w-full overflow-hidden {className}"
+		class="relative overflow-hidden {className}"
 		aria-valuenow={value}
 		aria-valuemin={min}
 		aria-valuemax={max}
@@ -22,7 +21,6 @@
 			style="--progress-amount: {(value / max) * 100 + `%`}"
 		/>
 	</div>
-</div>
 
 <style>
 	inner {

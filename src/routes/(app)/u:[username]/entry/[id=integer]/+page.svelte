@@ -45,7 +45,6 @@
 	import type { PageData } from "./$types";
 	import Booster from "./Booster.svelte";
 	import Highlighter from "./Highlighter.svelte";
-	import { createAnnotation, SaveAnnotationMutationKey } from "./mutations";
 	import ReadingMenu from "./ReadingMenu.svelte";
 	import ReadingSidebar from "./ReadingSidebar.svelte";
 	import type { Metadata } from "./types";
@@ -64,84 +63,6 @@
 	// $: query = data.query();
 	$: console.log({ $query });
 	$: article = $query.data;
-
-	const saveAnnotationMutation = client.annotations.save.createMutation({
-		onMutate: (data) => {
-			// utils.entries.load.setData(
-			// 	{
-			// 		id: entryId,
-			// 	},
-			// 	(old) => {
-			// 		console.log({ old, data });
-			// 		return old;
-			// 	}
-			// );
-			// return;
-			if (data.id) {
-				// optimstically update the cache for this entry
-				// optimistic update: TODO cancel?
-				// snapshot
-				const previous = utils.entries.load.getData();
-				// optimstically update
-				utils.entries.load.setData(
-					{
-						id: entryId,
-					},
-					(old) => {
-						if (!old) return old;
-						if (!$page.data.user) return old;
-						// either update or add
-						const existing = old.annotations.find((a) => a.id === data.id);
-						console.log("existing: ", existing);
-						if (!existing) {
-							console.log({ data, old });
-							console.log("hllloeoeooeoe");
-							const annotation = createAnnotation(data, {
-								entryId,
-								user: $page.data.user,
-							});
-							console.log({ annotation });
-							const updated = {
-								...old,
-								annotations: [
-									...old.annotations,
-									{
-										...createAnnotation(data, {
-											entryId,
-											user: $page.data.user,
-										}),
-										...data,
-									},
-								],
-							};
-							console.log({ updated });
-							return updated;
-						}
-						return {
-							...old,
-							annotations: old.annotations.map((a) => {
-								if (a.id === data.id) {
-									return {
-										...a,
-										...data,
-									};
-								}
-								return a;
-							}),
-						};
-					}
-				);
-			}
-		},
-		onSuccess: () => {
-			utils.entries.load.invalidate({
-				id: entryId,
-			});
-			utils.entries.listBookmarks.invalidate();
-		},
-	});
-
-	setContext(SaveAnnotationMutationKey, saveAnnotationMutation);
 
 	// $: query = createQuery({
 	// 	...entryDetailsQuery({

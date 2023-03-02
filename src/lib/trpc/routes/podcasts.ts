@@ -69,13 +69,13 @@ async function episodeToEntry(episodeId: number) {
     })
 }
 
-export async function getEpisodes(prisma: PrismaClient, { podcastIndexId, feedUrl }: { podcastIndexId: number; feedUrl: string; }, since?: number) {
+export async function getEpisodes({ podcastIndexId, feedUrl }: { podcastIndexId: number; feedUrl: string; }, since?: number) {
     const { items: episodes } = await client.episodesByFeedId(podcastIndexId, {
         since,
     });
 
     return Prisma.validator<Prisma.EntryCreateManyInput[]>()(
-        episodes.map((episode) => ({
+        episodes.slice(0,10).map((episode) => ({
             title: episode.title,
             published: dayjs.unix(episode.datePublished).toDate(),
             enclosureUrl: episode.enclosureUrl,
@@ -413,13 +413,17 @@ export const podcastsRouter = router({
                                 feedUrl: podcast.url,
                                 description: podcast.description,
                                 // guid: podcast.podcastGuid,
-                                podcastIndexData: podcast as unknown as Prisma.JsonObject,
+                                // podcastIndexData: podcast as unknown as Prisma.JsonObject,
+
+                                // entries: {
+
+                                // }
                             },
                         },
                     },
                 },
             });
-            const data = await getEpisodes(prisma, {podcastIndexId, feedUrl: podcast.url}); // update feed with data
+            const data = await getEpisodes({podcastIndexId, feedUrl: podcast.url}); // update feed with data
             await prisma.feed.update({
                 where: {
                     podcastIndexId,

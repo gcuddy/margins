@@ -22,6 +22,8 @@ module.exports = {
 		'@typescript-eslint/no-non-null-assertion': 'off',
 		'@typescript-eslint/no-empty-interface': 'off',
 
+       '@typescript-eslint/switch-exhaustiveness-check': 'warn',
+
 		// no duplicates
 		'no-duplicate-imports': 'off', // use import/no-duplicates instead
 		'import/no-duplicates': 'warn', // capable of consolidating imports

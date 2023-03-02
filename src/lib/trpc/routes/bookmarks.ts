@@ -332,6 +332,15 @@ export const bookmarks = router({
                     },
                     data,
                 });
+
+            }  else if (id) {
+                return ctx.prisma.bookmark.update({
+                    where: {
+                        id,
+                        userId
+                    },
+                    data
+                })
             } else if (uri) {
                 const { stateId, interactionId, favoriteId, entryId, id, ...rest } = data;
                 return ctx.prisma.bookmark.upsert({

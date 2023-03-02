@@ -3,6 +3,7 @@
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import Spacer from "$lib/components/helpers/Spacer.svelte";
+	import Pill from "$lib/components/Pill.svelte";
 	import StateCombobox from "$lib/components/StateCombobox.svelte";
 	import TagCloud from "$lib/components/TagCloud.svelte";
 	import dayjs from "$lib/dayjs";
@@ -74,10 +75,10 @@
 	this={entry.id || href ? "a" : "div"}
 	href={entry.id ? `/u:${$page.data.user?.username}/entry/${entry.id}` : href}
 	class:active
-	class="item relative flex h-full flex-initial items-center gap-4  p-4  transition {c}"
+	class="item group relative flex h-full flex-initial items-center gap-4  p-4  transition {c}"
 >
 	<div
-		class="flex-inital relative flex h-12 w-10 sm:h-16 sm:w-14 shrink-0 cursor-pointer flex-row items-center  overflow-hidden rounded-md drop-shadow-lg transition {entry.id
+		class="flex-inital group/button relative flex h-12 w-10 shrink-0 cursor-pointer flex-row items-center overflow-hidden rounded-md  drop-shadow-lg transition sm:h-16 sm:w-14 {entry.id
 			? 'hover:ring'
 			: ''}"
 		on:click|stopPropagation
@@ -121,6 +122,27 @@
 				{#if entry.published && show.year}
 					<Muted class="text-sm">{dayjs(entry.published).year()}</Muted>
 				{/if}
+				<div class="flex items-center gap-0.5">
+					{#if entry.annotations.length}
+						{@const pageNotes = entry.annotations.filter((a) => a.type === "note")}
+						{@const inlineNotes = entry.annotations.filter((a) => a.type === "annotation")}
+						{#if pageNotes.length}
+							<Pill icon="documentMini">
+								{pageNotes.length}
+							</Pill>
+						{/if}
+						{#if inlineNotes.length}
+							<Pill fill="fill-accent/70" icon="pencilMini">
+								{inlineNotes.length}
+							</Pill>
+						{/if}
+					{/if}
+                    {#if entry.relations.length || entry.back_relations.length}
+                        <Pill icon="arrowsRightLeftMini">
+                            {entry.relations?.length + entry.back_relations?.length}
+                        </Pill>
+                    {/if}
+				</div>
 			</slot>
 		</div>
 		<slot name="author">
@@ -137,7 +159,7 @@
 		<slot name="description" />
 	</div>
 	<!-- metadata grower -->
-	<div class="hidden sm:flex grow justify-between">
+	<div class="hidden grow justify-between sm:flex">
 		<Spacer />
 		{#if entry.tags?.length}
 			{#if entry.tags.length < 5}
@@ -146,11 +168,11 @@
 				<span>{entry.tags.length} tags</span>
 			{/if}
 		{/if}
-        <!-- don't show if location is present since it's redundant -->
-        {#if !$page.data.location && entry.bookmarks?.[0]?.state}
-           <StateCombobox state={entry.bookmarks?.[0]?.state} />
-           <!-- {entry.bookmarks?.[0]?.state?.name} -->
-        {/if}
+		<!-- don't show if location is present since it's redundant -->
+		{#if !$page.data.location && entry.bookmarks?.[0]?.state}
+			<StateCombobox state={entry.bookmarks?.[0]?.state} />
+			<!-- {entry.bookmarks?.[0]?.state?.name} -->
+		{/if}
 	</div>
 </svelte:element>
 

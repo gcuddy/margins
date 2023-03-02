@@ -41,38 +41,37 @@
 	// });
 	// REVIEW: also can do data.queryclient passed by layout.ts
 
-	$: console.log({ queryClient: data.queryClient });
-    import { persistQueryClient } from "@tanstack/query-persist-client-core";
-   import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import * as devalue from "devalue";
-    import { get as getItem, set as setItem, del as removeItem } from "idb-keyval";
+	// $: console.log({ queryClient: data.queryClient });
+	// import { persistQueryClient } from "@tanstack/query-persist-client-core";
+	// import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+	// import * as devalue from "devalue";
+	// import { get as getItem, set as setItem, del as removeItem } from "idb-keyval";
 
-    let unsubscribePersister: () => void;
+	// let unsubscribePersister: () => void;
 
-    onMount(() => {
-        const idbPersister = createAsyncStoragePersister({
-            storage: {
-                getItem: async (key) => getItem(key) as Promise<string | null>,
-                setItem,
-                removeItem
-            },
-            key: "margins.cache",
-            throttleTime: 2000,
-            serialize: (data) => devalue.stringify(data),
-            deserialize: (data) => devalue.parse(data),
-        })
+	// onMount(() => {
+	// 	const idbPersister = createAsyncStoragePersister({
+	// 		storage: {
+	// 			getItem: async (key) => getItem(key) as Promise<string | null>,
+	// 			setItem,
+	// 			removeItem,
+	// 		},
+	// 		key: "margins.cache",
+	// 		throttleTime: 2000,
+	// 		serialize: (data) => devalue.stringify(data),
+	// 		deserialize: (data) => devalue.parse(data),
+	// 	});
 
-        const [unsubscribe, promise] = persistQueryClient({
-            queryClient: data.queryClient,
-            persister: idbPersister,
-        })
-        unsubscribePersister = unsubscribe;
-    })
+	// 	const [unsubscribe, promise] = persistQueryClient({
+	// 		queryClient: data.queryClient,
+	// 		persister: idbPersister,
+	// 	});
+	// 	unsubscribePersister = unsubscribe;
+	// });
 
-    onDestroy(() => {
-        unsubscribePersister?.();
-    })
-
+	// onDestroy(() => {
+	// 	unsubscribePersister?.();
+	// });
 </script>
 
 <svelte:head />

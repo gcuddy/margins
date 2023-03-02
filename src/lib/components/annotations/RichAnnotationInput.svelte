@@ -41,6 +41,9 @@
 		cancel: void;
 		expand: JSONContent;
 	}>();
+    export let onSave: (value: JSONContent) => void = () => {};
+    export let onCancel: () => void = () => {};
+    export let onExpand: (value: JSONContent) => void = () => {};
 	export let focused = false;
 
     export let autofocus = false;
@@ -77,7 +80,10 @@
 <slot name="top"></slot>
 	{#if expandButton}
 		<div class="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100">
-			<Button variant="naked" size="sm" on:click={() => dispatch("expand", contentData)}>
+			<Button variant="naked" size="sm" on:click={() => {
+                dispatch("expand", contentData)
+                onExpand(contentData)
+            }}>
 				<Icon name="arrowsPointingOutMini" className="h-4 w-4 fill-muted" />
 			</Button>
 		</div>
@@ -118,11 +124,17 @@
 		<div class="flex flex-row items-center justify-end space-x-2 self-stretch">
 			<slot name="buttons">
 				<!-- //todo -->
-				<Button variant="ghost" on:click={() => dispatch("cancel")}>Cancel</Button>
+				<Button variant="ghost" on:click={() =>{
+                    dispatch("cancel")
+                    onCancel()
+                }}>Cancel</Button>
 				<Button
 					variant={confirmButtonStyle}
 					type="submit"
-					on:click={() => dispatch("save", { value: contentData })}
+					on:click={() => {
+                        dispatch("save", { value: contentData })
+                        onSave(contentData)
+                    }}
 				>
 					{#if saving}
 						<Icon name="loading" className="animate-spin h-4 w-4 text-current" />

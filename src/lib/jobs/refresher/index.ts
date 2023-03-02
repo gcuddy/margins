@@ -11,6 +11,8 @@ import { db } from "$lib/db";
 import { parseEntry } from "$lib/feeds/parser";
 import { resolveUrl } from "$lib/feeds/utils";
 import { isXml } from "$lib/rss/utils";
+import { getEpisodes } from "$lib/trpc/routes/podcasts";
+import dayjs from "$lib/dayjs";
 
 
 const log = (msg: string) => console.log(`[refreshFeeds] - ${msg}`);
@@ -19,6 +21,8 @@ const log = (msg: string) => console.log(`[refreshFeeds] - ${msg}`);
 export const feedSelect = Prisma.validator<Prisma.FeedSelect>()({
     feedUrl: true,
     id: true,
+    podcastIndexId: true,
+    lastParsed: true,
     entries: {
         // some sort of public id. right nwo that's the uri but obviously that's a bit naive
         select: {
@@ -135,6 +139,9 @@ export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
             subscriptions: {
                 some: {},
             },
+            lastParsed: {
+                lt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+            },
             // TODO: allow passing in full feeds instead of ids to prevent extra db call
             id: feed_ids ? {
                 in: feed_ids,
@@ -143,8 +150,43 @@ export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
         select: feedSelect,
     });
     console.time(`[refreshFeeds] - toAdd`);
+    // start to chunk our work
+    // if we have feeds that have a podcastindexId, let's use that to update them.
+    // otherwise, we should use the feedUrl to update them.
+    // let's also check when it was lastcrawled. if it's been less than an hour, let's not update it.
+
+    const feedsWithPodcastIndexId = feeds.filter(feed => !!feed.podcastIndexId);
+    const feedsWithoutPodcastIndexId = feeds.filter(feed => !feed.podcastIndexId);
+
+    const newPodcastEpisodes = await Promise.all(feedsWithPodcastIndexId.flatMap(async feed => {
+        const lastCrawled = feed.lastParsed || new Date(0);
+        const now = new Date();
+        const diff = now.getTime() - lastCrawled.getTime();
+        const diffHours = diff / 1000 / 60 / 60;
+        if (diffHours < 1) {
+            return [];
+        }
+        const podcastIndexId = feed.podcastIndexId;
+        if (!podcastIndexId) {
+            return [];
+        }
+        if (!feed.feedUrl) {
+            return [];
+        }
+        const episodes = await getEpisodes({
+            podcastIndexId,
+            feedUrl: feed.feedUrl
+        }, dayjs(lastCrawled).unix());
+        const guids = feed.entries.map(entry => entry.guid);
+        const episodesToAdd = episodes.filter(e => !guids.includes(e.guid));
+        console.log({episodesToAdd})
+        console.log(`[refreshFeeds] - ${feed.feedUrl} - ${episodesToAdd.length} new episodes`);
+        return episodesToAdd
+    }))
+
+
     const toAdd = await Promise.all(
-        feeds
+        feedsWithoutPodcastIndexId
             .flatMap(async (feed) => {
                 const entries = getUpdatedEntries(feed);
                 if (entries) {
@@ -161,12 +203,23 @@ export async function refresh({ feed_ids }: { feed_ids?: number[] }) {
     );
     // TODO: better flatmap magic
     const entriesToAdd = toAdd.flat().filter((a) => a) as ReturnType<typeof createEntry>[];
-    console.log({ toAdd, entriesToAdd });
+    const episodesToAdd = newPodcastEpisodes.flat();
+    // console.log({ toAdd, entriesToAdd });
     console.timeEnd(`[refreshFeeds] - toAdd`);
     try {
         const created = await db.entry.createMany({
             skipDuplicates: true,
-            data: entriesToAdd,
+            data: [...entriesToAdd, ...episodesToAdd]
+        });
+        const updated = await db.feed.updateMany({
+            where: {
+                id: {
+                    in: feeds.map((f) => f.id),
+                },
+            },
+            data: {
+                lastParsed: new Date(),
+            },
         });
         console.log({ created });
         return created;
@@ -223,7 +276,7 @@ async function getUpdatedEntries(feed: FeedToUpdate) {
                 })
                 .map((entry) => {
                     // SEE: duplicated in parseEntry now, import from there in feeds/parrser
-                   return parseEntry(entry, podcast, feed.id)
+                    return parseEntry(entry, podcast, feed.id)
                     // console.log(`processing entry`, entry.title)
                     // let guid: string | undefined = undefined;
                     // if (entry.guid) {

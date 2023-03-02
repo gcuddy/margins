@@ -7,34 +7,20 @@
 	// 	buildFilter,
 	// } from '$lib/components/Filters/Index.svelte';
 	import type { createFilterStores } from "$lib/stores/filter";
+	import { trpcWithQuery } from "$lib/trpc/client";
 	import type { ViewOptions } from "$lib/types/schemas/View";
 	import { getContext } from "svelte";
 	import type { PageData } from "./$types";
-	export let data: PageData;
+     export let data: PageData;
 
 	$: console.log({ data });
 
+
+    $: query = trpcWithQuery($page).entries.byFeed.createQuery({
+        id: +data.id,
+    })
 	let peek = false;
 
-	$: subscription = data.subscriptions.find((s) => s.feedId === +$page.params.id);
-
-	// $: currentList = $page.data.currentList;
-	// $: console.log({ $currentList });
-	// $: currentList = data.currentList;
-	// $: currentList.set({
-	// 	type: "rss",
-	// 	slug: $page.url.pathname,
-	// 	ids: data.entries.map((e) => e.id),
-	// });
-	// $: data.currentList.set({
-	// 	items: data.entries,
-	// 	slug: $page.url.pathname,
-	// 	type: 'rss',
-	// 	feed: data.subscription.feed,
-	// 	subscription: data.subscription,
-	// });
-
-	// $: unreads = $entries.filter((e) => e.unread);
 
 	const DEFAULT_RSS_VIEW_OPTIONS: ViewOptions = {
 		view: "list",
@@ -112,10 +98,17 @@
 	{/if}
 </div> -->
 
+{#if $query.isLoading}
+Loading...
+{:else if $query.isError}
+error
+{:else if $query.isSuccess}
+
 <EntryList
-	items={$filteredItems.map((i) => ({ ...i, image: i.image || data.subscription?.feed.imageUrl || null }))}
+	items={$query.data.entries}
 	viewOptions={DEFAULT_RSS_VIEW_OPTIONS}
 />
+{/if}
 
 <!-- {#each data.entries as item (item.id)}
 	<a href="/u:{data.user.username}/entry/{item.id}">{item.title}</a>

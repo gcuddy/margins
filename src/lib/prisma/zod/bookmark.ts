@@ -21,6 +21,8 @@ export const _BookmarkModel = z.object({
   progress: z.number(),
   screenshot: z.string().nullish(),
   data: jsonSchema,
+  dueDate: z.date().nullish(),
+  snoozedUntil: z.date().nullish(),
   source: z.string().nullish(),
   stateId: z.number().int().nullish(),
   private: z.boolean(),

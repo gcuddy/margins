@@ -30,12 +30,17 @@
 	import { Popover, PopoverButton, PopoverPanel } from "@rgossiaux/svelte-headlessui";
 	import DisplaySettings from "$lib/components/ui/DisplaySettings/DisplaySettings.svelte";
 	import GenericPopover from "$lib/components/GenericPopover.svelte";
+	import { modals } from "$lib/stores/modals";
+	import DatePicker from "$lib/components/DatePicker.svelte";
+	import { useUpdateBookmark } from "$lib/features/entries/mutations";
 
 	export let entry: RouterOutputs["entries"]["load"];
 	export let bookmark: ExtendedBookmark | null = null;
 	export let interaction: { is_read: boolean | null } | null = null;
 
 	// export let currentList: ICurrentList | undefined = undefined;
+
+	const updateBookmark = useUpdateBookmark();
 
 	$: currentList = $page.data.currentList;
 
@@ -339,7 +344,7 @@
 		<!-- This should check when the header is off screen. When it is, it should receive the Title and gently transition it in. -->
 
 		<div
-			class="hidden sm:flex grid-cols-4 items-center gap-2"
+			class="hidden grid-cols-4 items-center gap-2 sm:flex"
 			on:click={handleScrollToTop}
 			on:keydown
 			aria-label="Click to scroll to top"
@@ -419,16 +424,46 @@
 						icon: "archiveSolid",
 					},
 					{
+						label: "Set due date for material",
+						icon: "calendarDaysMini",
+						perform: () => {
+							modals.open(
+								DatePicker,
+								{
+									onConfirm: (dueDate) => {
+										const id = entry.bookmark?.id;
+										$updateBookmark.mutate({
+											id: id ? [id] : undefined,
+                                            entryId: entry.id,
+											uri: entry.uri ?? undefined,
+											data: {
+												dueDate,
+											},
+										});
+									},
+								},
+								"date-picker",
+								{
+									maxWidth: "max-w-min",
+								}
+							);
+						},
+					},
+					{
+						label: "Attach external file",
+						icon: "paperClipMini",
+					},
+					{
 						label: "Delete",
 						icon: "trashMini",
-                        perform: async () => {
-                            if (window.confirm("Are you sure you want to delete this entry?")) {
-                                await trpc().entries.delete.mutate(entry.id);
-                                // await goto("/").then(() => {
-                                //     invalidateAll();
-                                // })
-                            }
-                        }
+						perform: async () => {
+							if (window.confirm("Are you sure you want to delete this entry?")) {
+								await trpc().entries.delete.mutate(entry.id);
+								// await goto("/").then(() => {
+								//     invalidateAll();
+								// })
+							}
+						},
 					},
 				],
 			]}

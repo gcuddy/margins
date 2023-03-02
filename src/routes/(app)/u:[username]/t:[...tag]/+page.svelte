@@ -42,6 +42,7 @@
 </Header>
 
 <TabGroup
+    class="h-full"
 	on:change={(e) => {
 		console.log(e.detail);
 		const url = $page.url;
@@ -72,8 +73,8 @@
 		</Tab>
 		<!-- <Tab>Annotations {data.annotations.length}</Tab> -->
 	</TabList>
-	<TabPanels>
-		<TabPanel><EntryList items={data.items} /></TabPanel>
+	<TabPanels class="h-full">
+		<TabPanel class="h-full"><EntryList items={data.items} /></TabPanel>
 		<TabPanel>
 			{#await data.lazy?.subscriptions}
 				Loading...

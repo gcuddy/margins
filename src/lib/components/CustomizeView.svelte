@@ -57,7 +57,7 @@
 	<PopoverButton as="div" use={[popperRef]}>
 		<Button
 			variant="ghost"
-			className="space-x-1 sm:!text-sm md:!text-base !text-xs"
+			className="space-x-1 sm:!text-sm !text-xs"
 			tooltip={{
 				text: 'Show view options',
 			}}
@@ -106,6 +106,7 @@
 							<option value="author">Author</option>
 							<option value="date">Publish Date</option>
 							<option value="created">Saved</option>
+							<option value="due">Due</option>
 							<!-- <option value="updatedAt">Updated</option> -->
 						</MiniSelect>
 					</div>

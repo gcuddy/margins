@@ -368,6 +368,53 @@
 				},
 			],
 		},
+        {
+            title: "Snoozed",
+            id: "snoozed",
+            field:"bookmarks",
+            icon: "clockMini",
+            type: "boolean",
+            values: (_, page) => [{
+                id: "snoozed",
+                title: "Is snoozed",
+                where: {
+                    some: {
+                        userId: page.data.user?.id,
+                        snoozedUntil: {
+                            // TODO: this is relative, not absolute (today)
+                            gte: new Date()
+                        }
+                    }
+                }
+            }]
+
+        },
+        {
+            title: "Belongs to a subscription which is tagged",
+           id: 'subscription-tagged',
+           field: "feed",
+           type: "boolean",
+           values: (_, page) => {
+                const tags = page.data.tags || []
+                const userId = page.data.user?.id
+                return tags.map(tag => ({
+                    id: tag.name,
+                    title: tag.name,
+                    where: {
+                        subscriptions: {
+                            some: {
+                                userId,
+                                tags: {
+                                    some: {
+                                        id: tag.id
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+           }
+        }
 	];
 </script>
 

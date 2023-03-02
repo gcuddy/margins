@@ -64,7 +64,9 @@ export const entryListSelect = (userId: string) => Prisma.validator<Prisma.Entry
             id: true,
             title: true
         }
-    }
+    },
+    relations: true,
+    back_relations: true,
 })
 
 const entryInListArgs = Prisma.validator<Prisma.EntryArgs>()({

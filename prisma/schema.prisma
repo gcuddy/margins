@@ -96,6 +96,9 @@ model Bookmark {
     screenshot String?
     data       Json?
 
+    dueDate DateTime?
+    snoozedUntil DateTime?
+
     // Different than context? e.g. "newsletter", "rss"
     source String?
 

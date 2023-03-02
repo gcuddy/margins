@@ -32,6 +32,7 @@
 	<div class="flex flex-col">
 		<GenericInput name="title" bind:value={subscription.title} />
 	</div>
+    {JSON.stringify(subscription)}
 	<TagInputCombobox bind:tags={subscription.tags} submitOnBlur={false} />
 	<Button type="submit">Submit</Button>
 </form>

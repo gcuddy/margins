@@ -42,11 +42,16 @@
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
 	import { searchBookQuery } from "$lib/features/books/queries";
+	import DatePicker from "../DatePicker.svelte";
+	import RichAnnotationInput from "../annotations/RichAnnotationInput.svelte";
+	import { useSaveAnnotation } from "$lib/features/annotations/mutations";
 
 	const queryClient = useQueryClient();
 	const client = trpcWithQuery($page);
 	const utils = client.createContext();
 	const user = getUser();
+
+	const saveAnnotationMutation = useSaveAnnotation();
 
 	function handleKeydown(e: KeyboardEvent) {
 		switch (e.key) {
@@ -73,9 +78,9 @@
 			console.log({ id, data, $page, entryId });
 			if (data.stateId && $page.data.location && entryId && $page.data.user) {
 				// update current lists
-                const newLocation = $page.data.user.stateIdToLocation.get(data.stateId as number);
-                const newStateName = $page.data.user.stateIdToName.get(data.stateId as number);
-                const entriesToMove: RouterOutputs["entries"]["listBookmarks"] = [];
+				const newLocation = $page.data.user.stateIdToLocation.get(data.stateId as number);
+				const newStateName = $page.data.user.stateIdToName.get(data.stateId as number);
+				const entriesToMove: RouterOutputs["entries"]["listBookmarks"] = [];
 				utils.entries.listBookmarks.setData(
 					{
 						location: $page.data.location,
@@ -83,7 +88,7 @@
 					(old) => {
 						console.log({ old });
 						if (!old) return old;
-                        if (!$page.data.user) return old;
+						if (!$page.data.user) return old;
 						let updated = false;
 
 						const updatedEntries = old.map((entry) => {
@@ -124,17 +129,20 @@
 						return updatedEntries;
 					}
 				);
-                console.log({newLocation, entriesToMove, $page})
-                if (newLocation && newLocation !== $page.data.location) {
-                    utils.entries.listBookmarks.setData({
-                        location: newLocation
-                    }, old => {
-                        if (!old) return old;
-                        const updated =  [...old, ...entriesToMove];
-                        console.log({updated})
-                        return updated;
-                    })
-                }
+				console.log({ newLocation, entriesToMove, $page });
+				if (newLocation && newLocation !== $page.data.location) {
+					utils.entries.listBookmarks.setData(
+						{
+							location: newLocation,
+						},
+						(old) => {
+							if (!old) return old;
+							const updated = [...old, ...entriesToMove];
+							console.log({ updated });
+							return updated;
+						}
+					);
+				}
 			}
 		},
 		onSuccess: async () => {
@@ -143,16 +151,16 @@
 		},
 	});
 
-    const createRelation = client.entries.createRelation.createMutation({
-        onSuccess: async (data) => {
-            notifications.notify({
-                title: `Relation${Array.isArray(data) && data.length ? 's' : ''} created`,
-                type: "info",
-            })
-            utils.entries.invalidate();
-            selectedItems.set([]);
-        },
-    })
+	const createRelation = client.entries.createRelation.createMutation({
+		onSuccess: async (data) => {
+			notifications.notify({
+				title: `Relation${Array.isArray(data) && data.length ? "s" : ""} created`,
+				type: "info",
+			});
+			utils.entries.invalidate();
+			selectedItems.set([]);
+		},
+	});
 
 	const updateBookmarkMutation = createMutation({
 		mutationFn: ({ id, entryId, data }: RouterInputs["bookmarks"]["update"]) =>
@@ -465,12 +473,12 @@
 			name: "Jump to Tag",
 			perform: () => {
 				showCommandPalette.out();
-                commandPaletteStore.open({
-                    values: $page.data.tags,
-                    onSelect: async ({ detail }) => {
-                        await goto(`/u:${$page.data.user?.username}/t:${detail.name}`);
-                    },
-                });
+				commandPaletteStore.open({
+					values: $page.data.tags,
+					onSelect: async ({ detail }) => {
+						await goto(`/u:${$page.data.user?.username}/t:${detail.name}`);
+					},
+				});
 			},
 			icon: "arrowRight",
 			kbd: [["o", "t"]],
@@ -485,7 +493,7 @@
 				commandPaletteStore.open({
 					values: subscriptions,
 					onSelect: async ({ detail }) => {
-						await goto(`/u:${$page.data.user?.username}/subscriptions/${detail.id}`);
+						await goto(`/u:${$page.data.user?.username}/subscriptions/${detail.feedId}`);
 					},
 				});
 			},
@@ -579,6 +587,51 @@
 			},
 		},
 		{
+			id: "add-note",
+			name: "Add note",
+			group: "adhoc-article-commands",
+			icon: "pencilAlt",
+			perform: () => {
+				modals.open(RichAnnotationInput, {
+					onCancel: () => modals.close(),
+					onSave: (contentData) => {
+						$saveAnnotationMutation.mutate({
+							entryId: $selectedItems.map((i) => i.id),
+							contentData,
+                            type: "note"
+						});
+                        $selectedItems = [];
+                        modals.close();
+					},
+				});
+			},
+		},
+		{
+			id: "snooze",
+			name: "Snooze",
+			group: "adhoc-article-commands",
+			icon: "clock",
+			perform: () => {
+				modals.open(
+					DatePicker,
+					{
+						onConfirm: (date) => {
+							$updateMutation.mutate({
+								entryId: $selectedItems.map((i) => i.id),
+								data: {
+									snoozedUntil: date,
+								},
+							});
+						},
+					},
+					"date-picker",
+					{
+						maxWidth: "max-w-min",
+					}
+				);
+			},
+		},
+		{
 			id: "change-status",
 			name: `Change status…`,
 			group: "adhoc-article-commands",
@@ -633,22 +686,22 @@
 				});
 			},
 		},
-        {
-				id: "add-relation",
-				group: "article",
-				name: "Add relation",
-				icon: "arrowRightLeft",
-				perform: async () => {
-					// open entry selector, then add relation
-					showEntrySelector(queryClient, async ({ detail: entry }) => {
-						// add relation
-						$createRelation.mutate({
-							entryId: $selectedItems.map((i) => i.id),
-							relatedEntryId: entry.id,
-						});
+		{
+			id: "add-relation",
+			group: "article",
+			name: "Add relation",
+			icon: "arrowRightLeft",
+			perform: async () => {
+				// open entry selector, then add relation
+				showEntrySelector(queryClient, async ({ detail: entry }) => {
+					// add relation
+					$createRelation.mutate({
+						entryId: $selectedItems.map((i) => i.id),
+						relatedEntryId: entry.id,
 					});
-				},
+				});
 			},
+		},
 		{
 			id: "add-to-collection",
 			group: "adhoc-article-commands",

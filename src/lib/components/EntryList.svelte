@@ -813,7 +813,7 @@
 																	className="h-6 w-6 fill-primary-500/80"
 																/>
 															</div>
-															<div class="flex w-full items-center text-sm transition-[width]">
+															<div class="flex items-center text-sm transition-[width]">
 																<Progress
 																	class="h-1 appearance-none rounded-full bg-gray-500 transition-[width] dark:bg-gray-600/50 {loaded
 																		? 'mr-2 w-24'

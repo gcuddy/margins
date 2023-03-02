@@ -23,7 +23,7 @@
 	export let tags: AcceptedTag[];
 	export let original: {
 		tags: AcceptedTag[];
-	}
+	} | undefined = undefined;
 
 	export let entryId: number | undefined = undefined;
 
@@ -72,7 +72,6 @@
 			// }
 		}}
 		bind:tags
-		items={[original]}
-		{allTags}
-	/>
+        />
+		<!-- items={[original]} -->
 </form>

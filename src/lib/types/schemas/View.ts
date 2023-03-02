@@ -13,7 +13,7 @@ interface BaseViewOptions {
 
 export const ViewOptionsSchema = z.object({
 	view: z.enum(["list", "grid", "slim", "kanban"]),
-	sort: z.enum(["title", "date", "author", "published", "updated", "created", "manual"]),
+	sort: z.enum(["title", "date", "due", "author", "published", "updated", "created", "manual"]),
 	properties: z
 		.object({
 			author: z.boolean(),
@@ -60,7 +60,7 @@ export const defaultViewOptions: ViewOptions = {
 	},
 };
 
-function compareTwoMaybeDates(a: Date | null, b: Date | null) {
+function compareTwoMaybeDates(a: Date | null | undefined, b: Date | null | undefined) {
     if (a && b) {
         return a > b ? -1 : 1;
     } else if (a) {
@@ -99,6 +99,8 @@ export function sortEntries(entries: EntryInList[], sort: ViewOptions["sort"]) {
             return entries.sort((a, b) => compareTwoMaybeDates(a.published, b.published));
         case "updated":
             return entries.sort((a, b) => compareTwoMaybeDates(a.updatedAt, b.updatedAt));
+        case "due":
+            return entries.sort((a, b) => compareTwoMaybeDates(a.bookmarks?.[0]?.dueDate, b.bookmarks?.[0]?.dueDate));
         case "manual":
             return entries
         default:

@@ -41,7 +41,17 @@ export const entriesRouter = router({
                                 },
                                 state: {
                                     type: input?.location !== "all" ? input?.location : undefined
-                                }
+                                },
+                                OR: [
+                                    {
+                                        snoozedUntil: {
+                                            lte: new Date()
+                                        },
+                                    },
+                                    {
+                                        snoozedUntil: null,
+                                    }
+                                ]
                             },
                         },
                     },
@@ -784,5 +794,9 @@ export const entriesRouter = router({
                     ],
                 },
             })
-        })
+        }),
+    // note: protectedProcedure
+    //     .input(z.object({
+    //         id: z.number().or(z.number().array())
+    //     }))
 });

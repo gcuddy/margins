@@ -25,6 +25,7 @@
 	</div>
 	{#if open}
 		<div
+            class="z-[1]"
 			transition:slide|local={{
 				duration: 200,
 			}}

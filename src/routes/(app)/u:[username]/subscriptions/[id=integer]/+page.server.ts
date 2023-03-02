@@ -1,28 +1,8 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 
 import { db } from "$lib/db";
-import { createCaller } from "$lib/trpc/router";
 
-import type { Actions, PageServerLoad } from "./$types";
-
-export const load = (async (event) => {
-	const { params } = event;
-	try {
-		const caller = await createCaller(event);
-		const { entries } = await caller.entries.byFeed({
-			id: +params.id,
-		});
-		// const entries = [];
-		const { subscriptions } = await event.parent();
-		const subscription = subscriptions.find((s) => s.feedId === +params.id);
-		return {
-			entries,
-			subscription,
-		};
-	} catch (e) {
-		throw redirect(300, "/login");
-	}
-}) satisfies PageServerLoad;
+import type { Actions } from "./$types";
 
 export const actions: Actions = {
 	delete: async ({ params, locals }) => {

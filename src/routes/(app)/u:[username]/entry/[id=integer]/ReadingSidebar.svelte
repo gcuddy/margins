@@ -41,9 +41,12 @@
 	import { iconsMini } from "$lib/features/entries/utils";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import autoAnimate from "@formkit/auto-animate";
-	import { useSaveAnnotation } from "./mutations";
+	import { useSaveAnnotation } from "$lib/features/annotations/mutations";
 	import { nanoid } from "$lib/nanoid";
 	import { useUpdateBookmark } from "$lib/features/entries/mutations";
+	import dayjs from "$lib/dayjs";
+	import GenericPopover from "$lib/components/GenericPopover.svelte";
+	import DatePicker from "$lib/components/DatePicker.svelte";
 
 	export let entry: RouterOutputs["entries"]["load"];
 	$: console.log({ entry });
@@ -196,14 +199,14 @@
 								state={$page.data.user?.states?.find((state) => state.id === entry.bookmark.stateId) ||
 									$page.data.user?.defaultState}
 								onSelect={async (state) => {
-                                    const bookmarkId = entry.bookmark.id;
+									const bookmarkId = entry.bookmark.id;
 									$updateBookmark.mutate({
-                                        id: entry.bookmark.id,
+										id: entry.bookmark.id,
 										entryId: entry.id,
-                                        uri: entry.uri,
-                                        data: {
-                                            stateId: state.id
-                                        }
+										uri: entry.uri,
+										data: {
+											stateId: state.id,
+										},
 									});
 									// const s = syncStore.add();
 									// await trpc().bookmarks.updateState.mutate({
@@ -225,21 +228,21 @@
 								unsaved={true}
 								onSelect={async (state) => {
 									// const s = syncStore.add();
-                                    console.log({entry})
-                                    const bookmark = await $updateBookmark.mutateAsync({
-                                        entryId: entry.id,
-                                        uri: entry.uri || 'undefined',
-                                        data: {
-                                            stateId: state.id
-                                        }
-                                    })
-                                    console.log({bookmark})
+									console.log({ entry });
+									const bookmark = await $updateBookmark.mutateAsync({
+										entryId: entry.id,
+										uri: entry.uri || "undefined",
+										data: {
+											stateId: state.id,
+										},
+									});
+									console.log({ bookmark });
 									// await trpc().bookmarks.updateState.mutate({
 									// 	stateId: state.id,
 									// 	entryId: entry.id,
 									// 	uri: entry.uri || undefined,
 									// });
-                                    // utils.entries.invalidate();
+									// utils.entries.invalidate();
 									// queryClient.invalidateQueries({
 									// 	queryKey: entryDetailsQuery({ id: $page.data.article.id }).queryKey,
 									// });
@@ -351,6 +354,16 @@
 								</div>
 							{/each} -->
 						</Cluster>
+						{#if entry.bookmark?.dueDate}
+								<Muted class="text-sm">Due Date</Muted>
+                                <GenericPopover>
+                                    <svelte:fragment slot="button">
+                                    <span>{dayjs(entry.bookmark?.dueDate).format("l")}</span></svelte:fragment>
+                                    <div slot="panel" let:close>
+                                        <DatePicker onConfirm={() => close(null)} />
+                                    </div>
+                                </GenericPopover>
+						{/if}
 					</div>
 				</div>
 			</ReadingSidebarSection>
@@ -405,7 +418,7 @@
 													label: "Save link",
 													perform: async () => {
 														// todo
-														const article = await trpc($page).public.parse.query({url: href});
+														const article = await trpc($page).public.parse.query({ url: href });
 														console.log({ article });
 														await trpc($page).bookmarks.add.mutate({
 															article,
