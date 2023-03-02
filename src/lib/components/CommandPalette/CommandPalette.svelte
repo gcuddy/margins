@@ -408,12 +408,69 @@
 			kbd: [["o", "a"]],
 		},
 		{
+			id: "jump-to-note",
+			group: "jump",
+			name: "Jump to note",
+			perform: () => {
+				commandPaletteStore.open<Entry>({
+					// values: cachedEntries,
+					query: (value) => ({
+						queryKey: ["entries", "search", value],
+						keepPreviousData: true,
+						queryFn: async () =>
+							trpc().annotations.search.query({
+								query: value,
+								title: true,
+								author: true,
+								text: false,
+							}),
+						select: (data) => {
+							// keep placeholder data at the top, but de-dupe by id
+							const filteredCachedEntries = cachedEntries.filter(
+								(e) =>
+									e.title?.toLowerCase().includes(value.toLowerCase()) ||
+									e.author?.toLowerCase().includes(value.toLowerCase())
+							);
+							const deduped = [...filteredCachedEntries, ...data].reduce((acc, cur) => {
+								if (!acc.some((e) => e.id === cur.id)) {
+									acc.push(cur);
+								}
+								return acc;
+							}, [] as Entry[]);
+							console.log({ deduped });
+							return deduped;
+						},
+						enabled: value.length > 2,
+						// enabled: value.length > 2,
+					}),
+					slot: ({ value, active }) => ({
+						component: EntryListItem,
+						props: {
+							entry: value,
+							active,
+						},
+					}),
+					onSelect: async (entry) => {
+						await goto(`/u:${$user?.username}/entry/${entry.detail.id}`);
+					},
+				});
+				// jumpToArticle();
+			},
+			icon: "arrowRight",
+			kbd: [["o", "a"]],
+		},
+		{
 			id: "jump-to-tag",
 			group: "jump",
 			name: "Jump to Tag",
 			perform: () => {
 				showCommandPalette.out();
-				jumpToTag();
+                commandPaletteStore.open({
+                    values: $page.data.tags,
+                    onSelect: async ({ detail }) => {
+                        await goto(`/u:${$page.data.user?.username}/t:${detail.name}`);
+                    },
+                });
 			},
 			icon: "arrowRight",
 			kbd: [["o", "t"]],

@@ -20,6 +20,7 @@
 		ViewOptionsContextKey,
 		type ViewOptions,
 	} from "$lib/types/schemas/View";
+	import { groupBy } from "$lib/utils";
 	import type { Prisma } from "@prisma/client";
 	import { createQuery } from "@tanstack/svelte-query";
 	import SuperJSON from "superjson";
@@ -48,6 +49,7 @@
 		  });
 
 	$: console.log({ $query });
+    $: console.log('groupby', groupBy($query.data || [], (e) =>e.bookmarks?.[0]?.state?.name ?? "n"))
 
 	const startingFilter: Prisma.EntryWhereInput = {
 		bookmarks: {

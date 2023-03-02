@@ -38,8 +38,8 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <svelte:element
 	this={as}
-	class="group flex h-7 !cursor-default items-center rounded-lg px-2 font-medium text-muted ring-inset  transition-transform duration-200 hover:bg-sidebar-hover focus-visible:ring active:scale-95 dark:text-gray-300 dark:hover:bg-gray-600/50
-  {isActive && 'bg-sidebar-hover shadow dark:bg-gray-600 dark:hover:!bg-gray-600'}
+	class="group flex h-7 !cursor-default items-center rounded-lg px-2 font-medium text-muted ring-inset  transition-transform duration-200 hover:bg-sidebar-hover focus-visible:ring active:scale-95 dark:text-gray-300
+  {isActive && 'bg-sidebar-hover shadow '}
   "
 	draggable="false"
 	href={as === "a" ? href : undefined}

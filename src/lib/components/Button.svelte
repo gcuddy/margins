@@ -66,7 +66,7 @@
 		}
     ${
 			variant === "ghost"
-				? "border border-gray-300 bg-white dark:bg-gray-700 text-gray-600 hover:border-gray-300  hover:bg-gray-100 hover:text-gray-900 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-500 dark:text-gray-300  dark:hover:text-gray-200"
+				? "border border-gray-300 bg-elevation/90 text-gray-600 hover:border-gray-300  hover:bg-gray-100 hover:text-gray-900 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-500 dark:text-gray-300  dark:hover:text-gray-200"
 				: ""
 		}
     ${variant === "gradient" ? "bg-gradient-to-r from-amber-700 to-yellow-700 " : ""}

@@ -67,10 +67,10 @@
 					{
 						display: "Inbox",
 						href: `/u:${$page.data.user.username}/inbox`,
-						icon: "inbox",
+                    icon: "inbox",
 					},
 					{
-						display: "Soon",
+						display: "Now",
 						href: `/u:${$page.data.user.username}/soon`,
 						icon: "sparkles",
 					},
