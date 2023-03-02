@@ -7,7 +7,7 @@
 
 	let container: HTMLElement;
 	onMount(() => {
-		container?.querySelector("button")?.focus();
+		// container?.querySelector("button")?.focus();
 	});
 
 	export let color: string | undefined = undefined;

@@ -855,7 +855,7 @@
 			/>
 		{/each}
 	</div>
-	{#if show_tooltip && $mq.desktop}
+	{#if show_tooltip}
 		<div
 			class="z-40 mobile:!fixed mobile:!bottom-4 mobile:!left-0 mobile:!right-0 mobile:!mx-auto mobile:!transform-none "
 			use:menuContent
