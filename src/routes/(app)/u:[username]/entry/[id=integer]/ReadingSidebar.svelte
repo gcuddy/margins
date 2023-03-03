@@ -170,6 +170,18 @@
 				{#if entry.author}
 					<span class="text-base font-medium">{entry.author}</span>
 				{/if}
+				{#if entry.type === DocumentType.book && entry.uri?.startsWith("isbn:")}
+					<!-- bookshop link -->
+					<a
+						href="https://bookshop.org/book/{entry.uri.replace('isbn:', '')}"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="text-sm text-muted flex items-center">
+                        <span>Bookshop</span>
+                        <Icon name="arrowTopRightOnSquareMini" className="w-4 h-4 ml-1 fill-muted" />
+                        </a
+					>
+				{/if}
 				{#if entry.image && !!entry.recipe}
 					<img src={entry.image} alt="" />
 				{/if}
@@ -355,14 +367,15 @@
 							{/each} -->
 						</Cluster>
 						{#if entry.bookmark?.dueDate}
-								<Muted class="text-sm">Due Date</Muted>
-                                <GenericPopover>
-                                    <svelte:fragment slot="button">
-                                    <span>{dayjs(entry.bookmark?.dueDate).format("l")}</span></svelte:fragment>
-                                    <div slot="panel" let:close>
-                                        <DatePicker onConfirm={() => close(null)} />
-                                    </div>
-                                </GenericPopover>
+							<Muted class="text-sm">Due Date</Muted>
+							<GenericPopover>
+								<svelte:fragment slot="button">
+									<span>{dayjs(entry.bookmark?.dueDate).format("l")}</span></svelte:fragment
+								>
+								<div slot="panel" let:close>
+									<DatePicker onConfirm={() => close(null)} />
+								</div>
+							</GenericPopover>
 						{/if}
 					</div>
 				</div>

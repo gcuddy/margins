@@ -116,7 +116,8 @@
 			console.log({ article: articleToAdd, url });
 			$addMutation.mutate({
                 article: articleToAdd,
-                url
+                url: articleToAdd?.uri || url,
+                originalUrl: url,
             });
 			// TODO: invalidation
 			modals.close({

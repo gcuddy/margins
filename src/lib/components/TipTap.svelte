@@ -20,34 +20,34 @@
 		]);
 	}
 
-    // find deeply nested mention node in the document
-    export function findNodes(doc: JSONContent, type: string) {
-        const nodes: JSONContent[] = [];
-        function find(node: JSONContent) {
-            if (node.type === type) {
-                nodes.push(node);
-            }
-            if (node.content) {
-                node.content.forEach(find);
-            }
-        }
-        find(doc);
-        return nodes;
-    }
+	// find deeply nested mention node in the document
+	export function findNodes(doc: JSONContent, type: string) {
+		const nodes: JSONContent[] = [];
+		function find(node: JSONContent) {
+			if (node.type === type) {
+				nodes.push(node);
+			}
+			if (node.content) {
+				node.content.forEach(find);
+			}
+		}
+		find(doc);
+		return nodes;
+	}
 
-    //   const nodes: JSONContent[] = [];
+	//   const nodes: JSONContent[] = [];
 
-    // if (!doc.content) return nodes;
+	// if (!doc.content) return nodes;
 
-    //     let node = doc.content?.find((n) => n.type === type);
-    //     if (node) return node;
-    //     if (!doc.content) return;
-    //     for (let n of doc.content) {
-    //         if (n.content) {
-    //             node = n.content.find((n) => n.type === type);
-    //             if (node) return node;
-    //         }
-    //     }
+	//     let node = doc.content?.find((n) => n.type === type);
+	//     if (node) return node;
+	//     if (!doc.content) return;
+	//     for (let n of doc.content) {
+	//         if (n.content) {
+	//             node = n.content.find((n) => n.type === type);
+	//             if (node) return node;
+	//         }
+	//     }
 </script>
 
 <script lang="ts">
@@ -61,6 +61,9 @@
 	import Link from "@tiptap/extension-link";
 	import Placeholder from "@tiptap/extension-placeholder";
 	import StarterKit from "@tiptap/starter-kit";
+	import TaskItem from "@tiptap/extension-task-item";
+	import TaskList from "@tiptap/extension-task-list";
+
 	import cx from "classnames";
 
 	// import BubbleMenu from "@tiptap/extension-bubble-menu";
@@ -105,7 +108,7 @@
 	const dispatch = createEventDispatcher<{
 		update: JSONContent;
 		blur: JSONContent;
-        create: JSONContent;
+		create: JSONContent;
 		mention: { id?: string | number; label?: string; type?: string };
 	}>();
 
@@ -134,6 +137,17 @@
 				}),
 				Link.configure({
 					openOnClick: false,
+				}),
+				TaskList,
+				TaskItem.configure({
+					nested: true,
+					onReadOnlyChecked: () => {
+						console.log("onReadOnlyChecked");
+						return false;
+					},
+					HTMLAttributes: {
+						class: "todo",
+					},
 				}),
 				// BubbleMenu.configure({
 				// 	element: bubble,
@@ -352,10 +366,10 @@
 			},
 		});
 
-        $editor.on("create", ({ editor }) => {
-            const json = editor.getJSON();
+		$editor.on("create", ({ editor }) => {
+			const json = editor.getJSON();
 			dispatch("create", json);
-        })
+		});
 
 		// debounced auto save on update
 		$editor.on("update", ({ editor }) => {
@@ -396,6 +410,9 @@
 	};
 	const toggleItalic = () => {
 		$editor.chain().focus().toggleItalic().run();
+	};
+	const toggleTasklist = () => {
+		$editor.chain().focus().toggleTaskList().run();
 	};
 	const setLink = (href: string) => $editor.chain().focus().setLink({ href }).run();
 	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
@@ -471,6 +488,33 @@
 						<!-- remix icon -->
 						<Icon name="linkMini" className="h-4 w-4 fill-current" />
 					</button>
+					<!-- divider -->
+					<div class="h-4 w-px bg-border/40" />
+					<button
+						on:click={toggleTasklist}
+						class:active={isActive("taskList")}
+						class={cx("flex h-7 w-7 items-center justify-center rounded")}
+					>
+						<!-- remix icon -->
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							><line x1="10" y1="6" x2="21" y2="6" /><line x1="10" y1="12" x2="21" y2="12" /><line
+								x1="10"
+								y1="18"
+								x2="21"
+								y2="18"
+							/><polyline points="3 6 4 7 6 5" /><polyline points="3 12 4 13 6 11" /><polyline
+								points="3 18 4 19 6 17"
+							/></svg
+						>
+					</button>
 				</div>
 			{:else if linkMenu.active}
 				<div class="flex items-center justify-between p-1">
@@ -531,5 +575,22 @@
 	}
 	:global(.ProseMirror-selectednode) {
 		@apply rounded ring;
+	}
+	:global(.ProseMirror ul[data-type="taskList"]) {
+		padding-left: 0px;
+	}
+	:global(.ProseMirror ul[data-type="taskList"] li) {
+		display: flex;
+		align-items: center;
+        margin: 0;
+	}
+	:global(.ProseMirror ul[data-type="taskList"] li > * ) {
+        margin: 0;
+	}
+	:global(.ProseMirror ul[data-type="taskList"] li > label ) {
+        margin-right: 0.5rem;
+	}
+	:global(.ProseMirror ul[data-type="taskList"] li input[type="checkbox"] ) {
+        @apply rounded bg-transparent border-border;
 	}
 </style>

@@ -123,7 +123,7 @@
 					<Muted class="text-sm">{dayjs(entry.published).year()}</Muted>
 				{/if}
 				<div class="flex items-center gap-0.5">
-					{#if entry.annotations.length}
+					{#if entry.annotations?.length}
 						{@const pageNotes = entry.annotations.filter((a) => a.type === "note")}
 						{@const inlineNotes = entry.annotations.filter((a) => a.type === "annotation")}
 						{#if pageNotes.length}
@@ -137,7 +137,7 @@
 							</Pill>
 						{/if}
 					{/if}
-                    {#if entry.relations.length || entry.back_relations.length}
+                    {#if entry.relations?.length || entry.back_relations?.length}
                         <Pill icon="arrowsRightLeftMini">
                             {entry.relations?.length + entry.back_relations?.length}
                         </Pill>

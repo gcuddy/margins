@@ -1,4 +1,4 @@
-import { books } from "@googleapis/books";
+import { books, books_v1 } from "@googleapis/books";
 import type { youtube_v3 } from "@googleapis/youtube"
 import { z } from "zod";
 
@@ -9,6 +9,7 @@ import { uploadFile } from "./backend/s3.server";
 import dayjs from "./dayjs";
 import { spotify } from "./features/services/spotify";
 import { twitter } from "./features/services/twitter";
+import parse from "node-html-parser";
 type VideoListResponse = youtube_v3.Schema$VideoListResponse
 
 const spotifyRegex = /^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/;
@@ -22,7 +23,10 @@ const googleBooksRegexes = [
     /(?:https?:\/\/www\.google\.com\/books\/edition\/.*\/(?<id>.*)?\?)/
 ]
 
+const amazonBooksRegex = /https?:\/\/www\.amazon\.com\/.*\/dp\/(?<id>.*)/;
+
 const youtubeRegex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)(?<id>[^"&?/\s]{11})/;
+
 
 // zod?
 type YoutubeJson = {
@@ -38,7 +42,74 @@ type YoutubeJson = {
     html: string;
 }
 
+function returnBookFromGoogleBook(volume: books_v1.Schema$Volume) {
+    return {
+        title: volume.volumeInfo?.title,
+        author: volume.volumeInfo?.authors?.join(", "),
+        image: volume.volumeInfo?.imageLinks?.thumbnail,
+        summary: volume.volumeInfo?.description,
+        type: "book",
+        published: volume.volumeInfo?.publishedDate,
+        uri: 'isbn:' + volume.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier,
+        googleBooksId: volume.id,
+    } as const
+}
+
+
 export default async function (url: string, html?: string): Promise<z.infer<typeof Metadata>> {
+    const urlObj = new URL(url);
+    let htmlToParse = html;
+    const bshop = urlObj.hostname.includes("bookshop.org")
+    console.log({ bshop })
+    if (urlObj.hostname.includes("bookshop.org")) {
+        // try bookshop parsing
+        if (!htmlToParse) htmlToParse = await fetch(url).then((r) => r.text());
+        console.log({ htmlToParse })
+        let isbn = /\d{13}/.exec(url)?.[0];
+        if (htmlToParse) {
+            const doc = parse(htmlToParse);
+            if (!isbn) isbn = doc.querySelector('meta[property="book:isbn"]')?.getAttribute("content")
+            console.log({ isbn })
+            if (isbn) {
+                // try to get book from google books
+                const results = await books("v1").volumes.list({
+                    key: GOOGLE_BOOKS_API_KEY,
+                    q: `isbn:${isbn}`,
+                });
+                const volume = results.data.items?.[0];
+                if (volume) {
+                    return returnBookFromGoogleBook(volume);
+                }
+            }
+        }
+    }
+    if (amazonBooksRegex.test(url)) {
+        // try to get isbn from title
+        if (!htmlToParse) {
+            htmlToParse = await fetch(url).then((r) => r.text());
+        }
+        if (htmlToParse) {
+            const doc = parse(htmlToParse);
+            const detailsEl = doc.querySelector(".detail-bullet-list");
+            const rawText = detailsEl?.textContent;
+            if (rawText) {
+                const chunks = rawText.split(":").map(t => t.trim());
+                const isbnIndex = chunks.findIndex((t) => t.toLowerCase().includes("isbn-13"));
+                const isbn = chunks[isbnIndex + 1].match(/[\d-]+/)?.[0];
+                if (isbn) {
+                    const results = await books("v1").volumes.list({
+                        key: GOOGLE_BOOKS_API_KEY,
+                        q: `isbn:${isbn}`,
+                    });
+                    const volume = results.data.items?.[0];
+                    if (volume) {
+                        // sorry for this insane nesting mess
+                        return returnBookFromGoogleBook(volume);
+                    }
+                }
+            }
+        }
+    }
     if (url.includes("books.google.com/books/about" || url.includes("google.com/books/edition"))) {
         const regexMatch = googleBooksRegexes.find((r) => r.test(url));
         if (regexMatch) {
@@ -50,16 +121,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                     volumeId: id,
                 });
                 const volume = results.data;
-                return {
-                    title: volume.volumeInfo?.title,
-                    author: volume.volumeInfo?.authors?.join(", "),
-                    image: volume.volumeInfo?.imageLinks?.thumbnail,
-                    summary: volume.volumeInfo?.description,
-                    type: "book",
-                    published: volume.volumeInfo?.publishedDate,
-                    uri: 'isbn:' + volume.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier,
-                    googleBooksId: volume.id,
-                }
+                return returnBookFromGoogleBook(volume);
             }
         }
     }
@@ -115,7 +177,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             u.searchParams.set("key", YOUTUBE_KEY)
             const res = await fetch(u.toString());
             const data = await res.json() as VideoListResponse;
-            console.dir({data}, {depth: null});
+            console.dir({ data }, { depth: null });
             const item = data.items?.[0];
             // const res = await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`);
             // const data = await res.json() as YoutubeJson;
@@ -128,7 +190,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                 html: item?.player?.embedHtml || "",
                 // or summary? text is the one that gets searched, right? do we need to repliace it? hm.
                 text: item?.snippet?.description || "",
-                summary: item?.snippet?.description?.slice(0,192) || "",
+                summary: item?.snippet?.description?.slice(0, 192) || "",
                 uri: url,
                 youtubeId: id,
                 published: item?.snippet?.publishedAt || "",
@@ -165,7 +227,6 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             }
         }
     }
-    let htmlToParse = html;
     if (!htmlToParse) {
         console.log({ url });
         const response = await fetch(url);

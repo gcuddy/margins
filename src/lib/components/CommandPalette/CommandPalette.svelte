@@ -9,7 +9,7 @@
 		showCommandPalette,
 		term,
 	} from "$lib/stores/commands";
-	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
+	import { checkIfKeyboardShortcutsAllowed, disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
 	import { animationHappening, modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
 	import { selectedItems } from "$lib/stores/selectedItems";
@@ -229,6 +229,8 @@
 		if (e.touches.length === 2) {
 			e.preventDefault();
 			setTimeout(() => {
+               if (!checkIfKeyboardShortcutsAllowed()) return;
+               if ($modals.length) return;
 				showCommandPalette.toggle();
 			}, 100);
 		}

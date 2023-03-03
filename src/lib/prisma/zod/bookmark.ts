@@ -21,6 +21,10 @@ export const _BookmarkModel = z.object({
   progress: z.number(),
   screenshot: z.string().nullish(),
   data: jsonSchema,
+  /**
+   * The original url of the bookmark, if it's different than the entry's url
+   */
+  originalUrl: z.string().nullish(),
   dueDate: z.date().nullish(),
   snoozedUntil: z.date().nullish(),
   source: z.string().nullish(),

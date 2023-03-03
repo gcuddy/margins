@@ -30,6 +30,7 @@ export const bookmarks = router({
                 .object({
                     url: z.string().optional(),
                     entryId: z.number().optional(),
+                    originalUrl: z.string().optional(),
                     article: Metadata.extend({
                         html: z.string().optional(),
                         text: z.string().optional(),
@@ -60,7 +61,7 @@ export const bookmarks = router({
                 create: {
                     type: "article",
                     ...input.article,
-                    published: input.article ? dayjs(input.article.published).toDate() : undefined,
+                    published: input.article?.published ? dayjs(input.article.published).toDate() : undefined,
                     uri: input.url,
                     relations: input.context?.entryId ? {
                         create: {
@@ -79,6 +80,7 @@ export const bookmarks = router({
                     // TODO
                     // DO I really want to do that?
                     ...input.article,
+                    published: input.article?.published ? dayjs(input.article.published).toDate() : undefined,
                     relations: input.context?.entryId ? {
                         create: {
                             type: "SavedFrom",
@@ -122,6 +124,7 @@ export const bookmarks = router({
                         }
                     },
                     screenshot: await screenshotReducer(),
+                    originalUrl: input.originalUrl,
                     collections: input.collectionId ? {
                         connect: {
                             id: input.collectionId
@@ -333,7 +336,7 @@ export const bookmarks = router({
                     data,
                 });
 
-            }  else if (id) {
+            } else if (id) {
                 return ctx.prisma.bookmark.update({
                     where: {
                         id,

@@ -96,7 +96,10 @@ model Bookmark {
     screenshot String?
     data       Json?
 
-    dueDate DateTime?
+    /// The original url of the bookmark, if it's different than the entry's url
+    originalUrl String?
+
+    dueDate      DateTime?
     snoozedUntil DateTime?
 
     // Different than context? e.g. "newsletter", "rss"
@@ -665,11 +668,11 @@ model Log {
 
     // TODO: duration, page count, etc.
     // Should annotations be a form of log?
-    duration Int?
+    duration     Int?
     startingPage Int?
-    endingPage Int?
+    endingPage   Int?
 
-    season Int?
+    season  Int?
     episode Int?
 
     note String?
@@ -831,6 +834,7 @@ model User {
     Log                Log[]
     relations          Relation[]
     AuthorizationKey   AuthorizationKey?
+
     @@map("user")
 }
 
@@ -838,6 +842,7 @@ model AuthorizationKey {
     id     String @id @default(cuid())
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String @unique
+
     @@index([userId])
 }
 

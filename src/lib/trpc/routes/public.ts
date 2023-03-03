@@ -10,15 +10,24 @@ import { uploadFile } from "$lib/backend/s3.server";
 import { normalizeUrl } from "$lib/feeds/utils";
 import parse from "$lib/parse";
 import { publicProcedure, router } from "$lib/trpc/t";
+import type { Metadata } from '$lib/web-parser';
 
 export const publicRouter = router({
     parse: publicProcedure.input(z.object({
         url: z.string(),
         html: z.string().optional()
-    })).query(async ({ input }) => {
+    })).query(async ({ input, ctx }) => {
+        const cached = await ctx.redis.get(input.url);
+        if (cached) {
+            return cached as Metadata;
+        }
         const normalizedUrl = normalizeUrl(input.url);
         const parsed = await parse(normalizedUrl);
-        return parsed;
+        await ctx.redis.set(input.url, parsed, {
+            // cache for one day
+            ex: 60 * 60 * 24
+        })
+        return parsed as Metadata;
     }),
     parseMarkdown: publicProcedure.input(z.object({
         markdown: z.string()

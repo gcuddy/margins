@@ -163,7 +163,7 @@ export const Metadata = _EntryModel
     })
     .partial();
 
-type Metadata = z.infer<typeof Metadata>;
+export type Metadata = z.infer<typeof Metadata>;
 // interface Metadata {
 // 	title?: string;
 // 	summary?: string;
