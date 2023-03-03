@@ -11,9 +11,9 @@ export const GET: RequestHandler = async () => {
 	const tags = await db.tag.findMany({
 		where: {
 			articles: {
-				some: {}
-			}
-		}
+				some: {},
+			},
+		},
 	});
 	return json(tags);
 };
@@ -33,33 +33,33 @@ export const PATCH: RequestHandler = async ({ request, url }) => {
 			ids.map((id) => {
 				return db.article.update({
 					where: {
-						id
+						id,
 					},
 					data: {
 						tags: {
 							set: tags.map((tag) => {
 								return {
-									name: tag
+									name: tag,
 								};
-							})
-						}
+							}),
+						},
 					},
 					include: {
-						tags: true
-					}
+						tags: true,
+					},
 				});
 			})
 		);
 		return json({
-			articles: updatedArticles
+			articles: updatedArticles,
 		});
 	} catch (e) {
 		return json(
 			{
-				error: reportZodOrPrismaError(e)
+				error: reportZodOrPrismaError(e),
 			},
 			{
-				status: 400
+				status: 400,
 			}
 		);
 	}

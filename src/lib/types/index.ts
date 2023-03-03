@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+
 import type Icon from '../components/helpers/Icon.svelte';
 import type { IconName } from '../icons';
 import type { ComponentProperties } from '../stores/types';
@@ -114,28 +115,30 @@ const smartListWithPayload = Prisma.validator<Prisma.SmartListArgs>()({
 });
 export type SmartListWithPayload = Prisma.SmartListGetPayload<typeof smartListWithPayload>;
 
-export const ArticleListSelect = Prisma.validator<Prisma.ArticleSelect>()({
+export const ArticleListSelect = Prisma.validator<Prisma.EntrySelect>()({
 	id: true,
 	title: true,
 	author: true,
-	position: true,
-	readProgress: true,
-	tags: true,
+	// position: true,
+	// readProgress: true,
+	// slug: true,
+	// tags: true,
 	image: true,
 	location: true,
-	description: true,
-	date: true,
-	url: true,
+	summary: true,
+	published: true,
+	// mediaType: true,
+	uri: true,
 	createdAt: true,
 	updatedAt: true,
 	wordCount: true,
 	siteName: true,
 	type: true,
-	_count: {
-		select: {
-			annotations: true,
-		},
-	},
+	// _count: {
+	// 	select: {
+	// 		annotations: true,
+	// 	},
+	// },
 });
 
 export type ArticleInList = Prisma.ArticleGetPayload<{ select: typeof ArticleListSelect }>;

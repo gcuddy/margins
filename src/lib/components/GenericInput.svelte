@@ -1,39 +1,49 @@
 <script lang="ts">
-	export let placeholder = 'Enter text…';
-	export let variant: 'filled' | 'ghost' | 'underline' = 'filled';
-	let className = '';
+	import type { Writable } from "svelte/store";
+
+	export let placeholder = "Enter text…";
+	export let variant: "filled" | "ghost" | "underline" | "naked" = "filled";
+	let className = "";
 	export { className as class };
 	export let el: HTMLElement | undefined = undefined;
-	export let id = '';
-	export let name = '';
-	export let type: 'text' | 'number' | 'password' | 'email' = 'text';
-	export let value: string | number = type === 'number' ? 0 : '';
+	export let id = "";
+	export let name = "";
+	export let type: "text" | "number" | "password" | "email" = "text";
+	type InputValue = string | number;
+	export let value: InputValue | Writable<InputValue> = type === "number" ? 0 : "";
 	export let min: number | undefined = undefined;
 	export let max: number | undefined = undefined;
 	export let autocomplete: string | undefined = undefined;
+
+	// interface $$Props extends 
 </script>
 
-{#if type === 'text'}
+{#if type === "text"}
 	<input
 		on:keydown
+		on:change
 		on:focus
 		on:blur
+		on:input
 		bind:this={el}
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="text"
-		class="h-9 w-full rounded-lg border-0 placeholder-gray-400 transition focus:ring-0
+		class="h-full w-full rounded-lg border-0 placeholder-gray-400 transition focus:ring-0 dark:placeholder-gray-500
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: variant === 'underline'
-			? 'bg-transparent border-b rounded-none border-gray-300 dark:border-gray-600 focus:border-amber-300'
-			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
+			? 'rounded-none border-b border-gray-300 bg-transparent focus:border-amber-300 dark:border-gray-600'
+			: variant === 'ghost'
+			? 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'
+			: 'bg-transparent'}
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		bind:value
 	/>
-{:else if type === 'email'}
+{:else if type === "email"}
 	<input
 		on:keydown
 		on:focus
@@ -46,14 +56,15 @@
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
 			: variant === 'underline'
-			? 'bg-transparent border-b rounded-none border-gray-300 dark:border-gray-600 focus:border-amber-300'
-			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
+			? 'rounded-none border-b border-gray-300 bg-transparent focus:border-amber-300 dark:border-gray-600'
+			: 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'}
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		bind:value
 	/>
-{:else if type === 'number'}
+{:else if type === "number"}
 	<input
 		on:keydown
 		on:focus
@@ -62,18 +73,19 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="number"
-		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0
+		class="h-9 w-full rounded-lg border-0 placeholder-gray-400  transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
-			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
+			: 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'}
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		{min}
 		{max}
 		bind:value
 	/>
-{:else if type === 'password'}
+{:else if type === "password"}
 	<input
 		on:keydown
 		on:focus
@@ -82,13 +94,14 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="password"
-		class="h-9 w-full rounded border-0 placeholder-gray-400  transition focus:ring-0
+		class="h-9 w-full rounded-lg border-0 placeholder-gray-400  transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
-			: 'bg-transparent hover:ring-1 ring-gray-300 focus:bg-gray-100'}
+			: 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'}
   {className}"
 		{placeholder}
 		{autocomplete}
+		{...$$restProps}
 		{min}
 		{max}
 		bind:value

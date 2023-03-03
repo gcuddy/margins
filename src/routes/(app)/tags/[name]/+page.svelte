@@ -11,7 +11,6 @@
 	import { syncStore } from '$lib/stores/sync';
 	import { ViewOptionsSchema, type ViewOptions } from '$lib/types/schemas/View';
 	import { createFavorite, deleteFavorite, sortArticles } from '$lib/utils';
-	import type { PageData } from '../../../../../.svelte-kit/types/src/routes/tags/[name]/$types';
 
 	export let data: PageData;
 	let { tag } = data;
@@ -79,7 +78,7 @@
 <div class="flex h-full flex-auto flex-col overflow-hidden">
 	<!-- todo; overflow-auto and get scrolling to work only WITHIN this container... -->
 	<div class="relative overflow-auto">
-		<Saved articles={tag.articles} {viewOptions} />
+		<Saved annotations={tag.articles} {viewOptions} />
 	</div>
 </div>
 <!-- <Saved articles={tag.articles} /> -->

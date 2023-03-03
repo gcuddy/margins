@@ -63,7 +63,9 @@ export function highlightText(
 } {
 	// First put all nodes in an array (splits start and end nodes if needed)
 	const nodes = textNodesInRange(toRange(target));
-
+	// get non-text-nodes in range
+	const nontextnodes = nonTextNodesInRange(toRange(target));
+	console.log({ target, nontextnodes });
 	// Highlight each node
 	const highlightElements: HTMLElement[] = [];
 	let nodeIndex = 0;
@@ -88,7 +90,7 @@ export function highlightText(
 	}
 	return {
 		removeHighlights,
-		highlightElements
+		highlightElements,
 	};
 }
 
@@ -111,14 +113,15 @@ function textNodesInRange(range: Range): Text[] {
 	// Collect the text nodes.
 	const walker = ownerDocument(range).createTreeWalker(
 		range.commonAncestorContainer,
-		NodeFilter.SHOW_TEXT,
+		NodeFilter.SHOW_ALL,
 		{
 			acceptNode: (node) =>
-				range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+				range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
 		}
 	);
 	walker.currentNode = range.startContainer;
 
+	console.log({ currentNode: walker.currentNode });
 	// // Optimise by skipping nodes that are explicitly outside the range.
 	// const NodeTypesWithCharacterOffset = [
 	//  Node.TEXT_NODE,
@@ -135,8 +138,17 @@ function textNodesInRange(range: Range): Text[] {
 
 	const nodes: Text[] = [];
 	if (isTextNode(walker.currentNode)) nodes.push(walker.currentNode);
-	while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1)
-		nodes.push(walker.currentNode as Text);
+	while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
+		console.log({ currentNode: walker.currentNode });
+		if (isTextNode(walker.currentNode) && walker.currentNode.textContent?.trim()) {
+			nodes.push(walker.currentNode as Text);
+		} else if (
+			walker.currentNode.nodeType === 1 &&
+			(walker.currentNode as Element).querySelector('img')
+		) {
+			nodes.push(walker.currentNode as Text);
+		}
+	}
 	return nodes;
 }
 
@@ -190,6 +202,32 @@ function removeHighlight(highlightElement: HTMLElement) {
 	}
 }
 
-function isTextNode(node: Node): node is Text {
+export function isTextNode(node: Node): node is Text {
 	return node.nodeType === Node.TEXT_NODE;
 }
+
+const nonTextNodesInRange = (range: Range) => {
+	console.log(range, isTextNode(range.startContainer));
+	if (isTextNode(range.startContainer)) {
+		// todo
+	} else {
+		const start = range.startContainer.childNodes[range.startOffset];
+		// todo: if istextnode endcontainer
+		const end = range.endContainer.childNodes[range.endOffset];
+		const walker = ownerDocument(range).createTreeWalker(
+			range.commonAncestorContainer,
+			NodeFilter.SHOW_ELEMENT,
+			{
+				acceptNode: (node) =>
+					range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
+			}
+		);
+		walker.currentNode = range.startContainer;
+		const nodes: Node[] = [];
+		if (!isTextNode(walker.currentNode)) nodes.push(walker.currentNode);
+		while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
+			nodes.push(walker.currentNode);
+			console.log(walker.currentNode);
+		}
+	}
+};

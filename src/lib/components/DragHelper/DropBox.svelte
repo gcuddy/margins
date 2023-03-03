@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import dragging from '$lib/stores/dragging';
 	import { notifications } from '$lib/stores/notifications';
 	import { syncStore } from '$lib/stores/sync';
+	import { trpc } from '$lib/trpc/client';
 	import { fade } from 'svelte/transition';
 	import Icon from '../helpers/Icon.svelte';
 	let dragOver = false;
@@ -25,40 +27,31 @@
 		console.log({ url });
 		if (url) {
 			const syncId = syncStore.addItem();
-			const contextUrl = e.dataTransfer?.getData('context-url');
-			const contextId = e.dataTransfer?.getData('context-id');
-			console.log({ contextUrl, contextId });
-			submitLink(url, { id: contextId, url: contextUrl }).then(() => syncStore.removeItem(syncId));
+			const contextUrl = e.dataTransfer?.getData('context/url');
+			const contextEntryId = e.dataTransfer?.getData('context/entryId');
+			console.log({ contextUrl, contextEntryId });
+			submitLink(url, {
+				url: contextUrl,
+				entryId: contextEntryId ? +contextEntryId : undefined,
+			}).then(() => syncStore.removeItem(syncId));
 		}
 		$dragging = false;
 		dropping = false;
 	}
-	async function submitLink(url: string, context?: { id?: string; url?: string }) {
+	async function submitLink(url: string, context: { url?: string; entryId?: number }) {
 		// todo: only want context if it comes from this page - figure out how to do that
 		// i guess i need to add drag handlers to every link (and image?) on the page, which seems... annoying
-		const form = new FormData();
-		form.set('text', url);
-		if (context?.url) form.set('context-url', context.url);
-		if (context?.id) form.set('context-id', context.id);
-		console.log({ form });
-		fetch('/add', {
-			method: 'POST',
-			body: form,
-		})
-			.then(() => {
-				notifications.notify({
-					message: 'Saved link',
-				});
-			})
-			.catch((e) => {
-				console.error(e);
-				notifications.notify({
-					message: 'Error saving link',
-				});
-			});
-		// notifications.notify({
-		// 	message: 'Link submitted'
-		// });
+		console.log({ context });
+		const article = await trpc($page).public.parse.query({url});
+		const bookmark = await trpc($page).bookmarks.add.mutate({
+			article,
+			url,
+			context,
+		});
+		notifications.notify({
+			type: 'success',
+			title: 'Saved link',
+		});
 	}
 </script>
 
@@ -68,7 +61,7 @@
 			transition:fade={{ duration: 250 }}
 			class="before:content-['drop to add to inbox'] grid place-content-center  rounded-full border border-amber-600 bg-amber-300 p-12 text-black shadow-xl transition duration-500 before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-amber-400 before:p-12 before:transition {dragOver
 				? 'before:scale-[2.5] before:opacity-100'
-				: 'before:opacity-0 before:scale-[1.2]'}"
+				: 'before:scale-[1.2] before:opacity-0'}"
 			on:dragover={handleDragOver}
 			on:dragleave={handleDragLeave}
 			on:drop={handleDrop}

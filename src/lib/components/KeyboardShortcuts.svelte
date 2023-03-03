@@ -1,42 +1,43 @@
 <script lang="ts">
-	import { afterNavigate, goto } from '$app/navigation';
-	import { commands, jumpToArticle, jumpToTag } from '$lib/data/commands';
-	import { commandStore } from '$lib/stores/commands';
-	import { disableGlobalKeyboardShortcuts, lastKey } from '$lib/stores/keyboard';
-	import { onMount } from 'svelte';
-	import type { Command } from './CommandPalette/types';
+	import { afterNavigate, goto } from "$app/navigation";
+	import { page } from "$app/stores";
+	import { commands, jumpToArticle, jumpToTag } from "$lib/data/commands";
+	import { commandStore } from "$lib/stores/commands";
+	import { disableGlobalKeyboardShortcuts, lastKey } from "$lib/stores/keyboard";
+	import { onMount } from "svelte";
+	import type { Command } from "./CommandPalette/types";
 
 	// export writable globalKeyboar (this should maybe be a svelte compnent)
 	let timeout: number;
 
 	function handleKeyCombos(e: KeyboardEvent) {
 		const key = e.key;
-		if ($lastKey === 'g') {
+		if ($lastKey === "g") {
 			switch (key) {
-				case 'h': {
-					goto('/');
-					$lastKey = '';
+				case "h": {
+					goto("/");
+					$lastKey = "";
 					return true;
 				}
-				case 'r': {
-					goto('/rss');
-					$lastKey = '';
+				case "r": {
+					goto("/rss");
+					$lastKey = "";
 					return true;
 				}
 			}
 		}
-		if ($lastKey === 'o') {
+		if ($lastKey === "o") {
 			switch (key) {
-				case 'a': {
+				case "a": {
 					e.preventDefault();
 					jumpToArticle();
-					$lastKey = '';
+					$lastKey = "";
 					return true;
 				}
-				case 't': {
+				case "t": {
 					e.preventDefault();
 					jumpToTag();
-					$lastKey = '';
+					$lastKey = "";
 					return true;
 				}
 			}
@@ -46,22 +47,26 @@
 
 	function handleKeydown(e: KeyboardEvent) {
 		if ($disableGlobalKeyboardShortcuts) {
-			console.log('not handling keydown because $disableGlobalKeyboardShortcuts is true');
+			console.log("not handling keydown because $disableGlobalKeyboardShortcuts is true");
 			return;
 		}
 
 		// j and K and x are used for navigateion, so we don't want to handle them here
-		if (e.key === 'j' || e.key === 'k' || e.key === 'x') {
+		if (e.key === "j" || e.key === "k" || e.key === "x") {
 			return;
 		}
 
 		// first, for keystrokes, let's make sure we're not in an input field, or a textarea
 		const activeElement = document.activeElement;
-		if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+		if (
+			activeElement instanceof HTMLInputElement ||
+			activeElement instanceof HTMLTextAreaElement ||
+			(activeElement instanceof HTMLDivElement && activeElement.contentEditable)
+		) {
 			return;
 		}
 
-		if ($lastKey === 'g' || $lastKey === 'o') {
+		if ($lastKey === "g" || $lastKey === "o") {
 			if (handleKeyCombos(e)) {
 				$lastKey = e.key;
 				return;
@@ -74,7 +79,7 @@
 			clearTimeout(timeout);
 		}
 		timeout = window.setTimeout(() => {
-			$lastKey = '';
+			$lastKey = "";
 		}, 750);
 
 		// now just looking for single commands
@@ -90,34 +95,38 @@
 		console.log({ command });
 		if (command) {
 			e.preventDefault();
-			console.log('command found, performing ');
-			command.perform();
+			console.log("command found, performing ");
+			command.perform({ page: $page });
 			return;
 		}
 	}
 
 	// TODO: use useCommands(Commands) to handle this automagically
-	let previousPage: string | undefined;
-	// afterNavigate((nav) => {
-	// 	previousPage = nav.from?.pathname;
-	// });
+	let previousPage: string | null = null;
+	afterNavigate((nav) => {
+		if (nav.from?.route) {
+			previousPage = nav.from.route.id;
+		}
+	});
 	$: console.log({ previousPage });
 	/** Commands that rely on stores */
 
 	const commandsThatRelyOnStores: Command[] = [
-		{
-			id: 'go-back',
-			group: 'Navigation',
-			check: () => previousPage !== undefined,
-			name: 'Go back',
-			perform: () => {
-				if (previousPage) {
-					goto(previousPage);
-				}
-			},
-			icon: 'arrowRight',
-			kbd: [['Escape']],
-		},
+		// {
+		// 	id: 'go-back',
+		// 	group: 'Navigation',
+		// 	check: () => previousPage !== undefined,
+		// 	name: 'Go back',
+		// 	perform: () => {
+		// 		alert(previousPage);
+		// 		console.log({ previousPage });
+		// 		// if (previousPage) {
+		// 		// 	goto(previousPage);
+		// 		// }
+		// 	},
+		// 	icon: 'arrowRight',
+		// 	kbd: [['Escape']],
+		// },
 	];
 	onMount(() => {
 		commandsThatRelyOnStores.forEach((command) => commandStore.add(command, false));

@@ -35,7 +35,7 @@
 		if (e.target !== e.currentTarget) return;
 		e.preventDefault();
 		e.stopPropagation();
-		if ($state.close) {
+		if ($state?.close) {
 			console.log('clicked overlay, closing');
 			$state.close();
 		}

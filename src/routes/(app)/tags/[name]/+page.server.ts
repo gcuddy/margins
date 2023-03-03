@@ -24,19 +24,19 @@ export const load: PageServerLoad = async ({ params }) => {
 	return { tag };
 };
 
-export const PATCH: Action = async ({ params, request }) => {
-	console.log('Patching Tag');
-	const json = await getJsonFromRequest(request);
-	console.log({ json });
-	const tag = await db.tag.update({
-		where: {
-			name: params.name,
-		},
-		data: {
-			...json,
-		},
-	});
-	if (!tag) {
-		throw error(400);
-	}
-};
+// export const PATCH: Action = async ({ params, request }) => {
+// 	console.log('Patching Tag');
+// 	const json = await getJsonFromRequest(request);
+// 	console.log({ json });
+// 	const tag = await db.tag.update({
+// 		where: {
+// 			name: params.name,
+// 		},
+// 		data: {
+// 			...json,
+// 		},
+// 	});
+// 	if (!tag) {
+// 		throw error(400);
+// 	}
+// };

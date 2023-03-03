@@ -1,5 +1,17 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { createPrismaRedisCache } from 'prisma-redis-middleware';
+import { PrismaClient } from '@prisma/client';
+
+import { annotationsMiddleware } from './prisma/middleware';
+// import Redis from 'ioredis';
+// const redis = new Redis(
+// 	`rediss://default:${import.meta.env.UPSTASH_REDIS_REST_TOKEN}@${
+// 		import.meta.env.UPSTASH_REDIS_REST_URL
+// 	}:37650`
+// );
+// Upstash
+// import { Redis } from '@upstash/redis';
+// import { createPrismaRedisCache } from 'prisma-redis-middleware';
+// const redis = Redis.fromEnv();
+// console.log({ redis });
 
 declare global {
 	// allow global `var` declarations
@@ -7,27 +19,26 @@ declare global {
 	var db: PrismaClient | undefined;
 }
 
-const cacheMiddleware: Prisma.Middleware = createPrismaRedisCache({
-	models: [{ model: 'RssFeed' }, { model: 'RssFeedItem', cacheTime: 1000 * 60 * 10 }],
-	excludeModels: ['User'],
-	storage: { type: 'memory', options: { invalidation: true, log: console } },
-	cacheTime: 1000 * 60, // 1 minute
-	onHit: (key) => {
-		console.log('hit', key);
-	},
-	onMiss: (key) => {
-		console.log('miss', key);
-	},
-	onError: (key) => {
-		console.log('error', key);
-	},
-});
+const globalForPrisma = global as unknown as { db: PrismaClient };
+
 export const db =
-	global.db ||
+	globalForPrisma.db ||
 	new PrismaClient({
-		log: ['query'],
+		log: [
+			// {
+			// 	emit: 'event',
+			// 	level: 'query',
+			// },
+			'info',
+			'warn',
+			'error',
+		],
 	});
 
+db.$on('query', (e) => {
+	console.log('Query: ' + e.query);
+	console.log('Duration: ' + e.duration + 'ms');
+});
 db.$use(async (params, next) => {
 	const before = Date.now();
 
@@ -39,6 +50,35 @@ db.$use(async (params, next) => {
 
 	return result;
 });
+
+annotationsMiddleware(db);
+
+// const cacheMiddleware = createPrismaRedisCache({
+// 	models: [
+// 		{ model: 'User', excludeMethods: ['findMany'] },
+// 		{ model: 'Entry', cacheTime: 180, cacheKey: 'html' },
+// 	],
+// 	storage: {
+// 		type: 'redis',
+// 		options: {
+// 			client: redis,
+// 			log: console,
+// 		},
+// 	},
+// 	cacheTime: 300,
+// 	excludeModels: ['Product', 'Cart'],
+// 	excludeMethods: ['count', 'groupBy'],
+// 	onHit: (key) => {
+// 		console.log('hit', key);
+// 	},
+// 	onMiss: (key) => {
+// 		console.log('miss', key);
+// 	},
+// 	onError: (key) => {
+// 		console.log('error', key);
+// 	},
+// });
+
 // db.$use(cacheMiddleware);
 
-if (process.env.NODE_ENV !== 'production') global.db = db;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.db = db;

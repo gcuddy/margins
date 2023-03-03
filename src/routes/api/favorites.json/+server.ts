@@ -1,13 +1,14 @@
-import { error, json as json$1 } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { db } from '$lib/db';
-import { getJsonFromRequest } from '$lib/utils';
-import { FavoriteSchema, _FavoriteArgs } from '$lib/types/schemas/Favorite';
+import { error, json as json$1 } from '@sveltejs/kit';
 import { z } from 'zod';
+
+import { db } from '$lib/db';
 import { auth } from '$lib/server/lucia';
+import { _FavoriteArgs, FavoriteSchema } from '$lib/types/schemas/Favorite';
+import { getJsonFromRequest } from '$lib/utils';
 
 export const GET: RequestHandler = async ({ locals }) => {
-	const session = await locals.getSession();
+	const session = await locals.validate();
 	const user = auth.getSessionUser(session.sessionId);
 	console.log({ user });
 	const favorites = await db.favorite.findMany(_FavoriteArgs);
@@ -20,7 +21,7 @@ const generateNegativePositionWithTwoDecimals = (): number => {
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	// create a new favorite
-	const { userId } = locals.getSession();
+	const { userId } = locals.validate();
 	if (!userId) {
 		throw error(401, 'Unauthorized');
 	}

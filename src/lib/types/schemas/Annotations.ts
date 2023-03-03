@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import type { Color } from "@prisma/client";
+import { z } from "zod";
 
 interface Selector {
 	/**
@@ -15,7 +16,7 @@ interface Selector {
 // We have to use lazy to do recursive
 const Selector: z.ZodType<Selector> = z.lazy(() =>
 	z.object({
-		refinedBy: Selector.optional()
+		refinedBy: Selector.optional(),
 	})
 );
 
@@ -24,28 +25,29 @@ const Selector: z.ZodType<Selector> = z.lazy(() =>
 // Does this make a big difference?
 
 export const TextQuoteSelectorSchema = z.object({
-	type: z.literal('TextQuoteSelector'),
+	type: z.literal("TextQuoteSelector"),
 	exact: z.string(),
 	prefix: z.string().optional(),
-	suffix: z.string().optional()
+	suffix: z.string().optional(),
 });
 
 // or other selectors, and make them all refinable by one of the selectors
 
 export const BaseTargetSchema = z.object({
-	source: z.string().url()
+	source: z.string().url(),
 });
 
 // Targets
 export const TextQuoteTarget = z.object({
 	source: z.string(),
+	html: z.string().optional(),
 	// should we make this possible to be an array?
-	selector: TextQuoteSelectorSchema
+	selector: TextQuoteSelectorSchema,
 });
 
 export const TargetSchema = TextQuoteTarget.or(BaseTargetSchema);
 
-export const Motivation = z.literal('describing').or(z.literal('highlighting'));
+export const Motivation = z.literal("describing").or(z.literal("highlighting"));
 
 export const AnnotationSchema = z.object({
 	body: z.string().optional().nullable(),
@@ -54,9 +56,13 @@ export const AnnotationSchema = z.object({
 	articleId: z.number(),
 	// Todo: abstract this out to a common schema
 	target: TargetSchema,
-	motivation: Motivation.nullable().optional()
+	motivation: Motivation.nullable().optional(),
 });
 
 export const delSchema = z.object({
-	id: z.number()
+	id: z.number(),
 });
+
+export const HighlightColorValues: Record<Color, string> = {
+	Yellow: "string",
+};

@@ -5,14 +5,214 @@
 
 @layer base {
 	:root {
-		color-scheme: light dark;
-		--sidebar-width: theme('spacing.60');
+
+
+
+		color-scheme: light;
+		--sidebar-width: theme("spacing.60");
 		--sidebar-offset: calc(-1 * var(--sidebar-width));
+		--entry-bg-color: theme("colors.white");
+
+		--bh: 20deg;
+		--bs: 6%;
+		--bl: 100%;
+
+		--color-base: 0deg 0% 100%;
+		--color-base-hover: 20deg 6% 96%;
+		--color-border: 20deg 5.9% 90%;
+		--color-sidebar: 90deg 9% 98%;
+		--color-sidebar-hover: 20deg 11% 93%;
+
+		--color-elevation: 20deg 6% 98%;
+		--color-elevation-hover: 20deg 6% 90%;
+
+
+		/* --color-border: var(--bh) calc(var(--bs) * .68) calc(var(--bl) * 1.53); */
+		/* --color-base-hover: var(--bh) calc(var(--bs) * .8) calc(var(--bl) * 1.35); */
+		/* --color-elevation-hover: var(--bh) calc(var(--bs) * .5) calc(var(--bl) * 1.8); */
+		/* //stone-900 */
+		--color-content: 24deg 9.8% 10%;
+		--color-muted: 30deg 6.3% 25.1%;
+
+		--color-accent: 43deg 96% 56.3%;
+		--color-accent-hover: 43deg 96% 66.3%;
+         --color-text-on-accent: 43deg 90% 15%;
+
+
+
+
+		/* annotations */
+		--highlight-yellow: theme(colors.highlight.yellow);
+		--highlight-pink: theme(colors.highlight.pink);
+		--highlight-blue: theme(colors.sky.400);
+		--highlight-purple: theme(colors.purple.400);
+		--highlight-pink: theme(colors.pink.400);
+		--highlight-green: theme(colors.green.400);
+
+		/* TODO: class based dark mode */
+		@media (prefers-color-scheme: dark) {
+			--highlight-yellow: theme(colors.highlight.yellow-dark);
+			--highlight-blue: theme(colors.sky.600);
+			--highlight-purple: theme(colors.purple.600);
+			--highlight-pink: theme(colors.pink.600);
+			--highlight-green: theme(colors.green.600);
+		}
 	}
+
+	.dark {
+		color-scheme: dark;
+	}
+
+	/* REVIEW: is the best way to define themes? Can we do it in a js file, and use rgb etc? */
+	[data-theme="synthwave"] {
+		color-scheme: dark;
+		/* pull from x? */
+		/* --primary: 231 121 193; */
+
+		--bh: 250deg;
+		--bs: 20%;
+		--bl: 17%;
+
+		--color-base: var(--bh) var(--bs) var(--bl);
+		/* REVIEW: use color generator for these */
+		--color-elevation: var(--bh) calc(var(--bs) * .9) calc(var(--bl) * 1.15);
+		--color-border: var(--bh) calc(var(--bs) * .68) calc(var(--bl) * 1.53);
+		--color-base-hover: var(--bh) calc(var(--bs) * .8) calc(var(--bl) * 1.35);
+		--color-elevation-hover: var(--bh) calc(var(--bs) * .5) calc(var(--bl) * 1.8);
+
+		--sh: 267deg;
+		--ss: 27%;
+		--sl: 15%;
+		--color-sidebar: var(--sh) var(--ss) var(--sl);
+		--color-sidebar-hover: var(--sh) calc(var(--ss) * .73) calc(var(--sl) * 1.4);
+		/* sidebar text color? */
+
+
+		/* text colors - on base */
+		/* -- */
+		--ch: 260deg;
+		--cs: 60%;
+		--cl: 98%;
+		--color-content: var(--ch) var(--cs) var(--cl);
+		--color-bright: var(--ch) var(--cs) 100%;
+		/* --color-dimmer: var(--ch) 6% 81%; */
+		--color-muted: 260deg 60% 80%;
+
+		--ah: 25deg;
+		--as: 98%;
+		--al: 61%;
+		--color-accent: var(--ah) var(--as) var(--al);
+		--color-accent-hover: var(--ah) calc(var(--as)) calc(var(--al) * 1.13);
+		/* text on accent? (can be generated automatically too) */
+
+		--entry-bg-color: hsla(var(--color-base) / 0.8);
+
+		.prose {
+			--tw-prose-body: hsla(var(--color-content) / 0.8);
+			--tw-prose-headings: hsl(var(--color-content));
+			--tw-prose-lead: hsl(var(--color-content));
+			--tw-prose-links: hsl(var(--color-content));
+			--tw-prose-bold: hsl(var(--color-content));
+			--tw-prose-counters: hsl(var(--color-content));
+			--tw-prose-bullets: hsla(var(--color-content) / 0.5);
+			--tw-prose-hr: hsla(var(--color-content) / 0.2);
+			--tw-prose-quotes: hsl(var(--color-content));
+			--tw-prose-quote-borders: hsla(var(--color-content) / 0.2);
+			--tw-prose-captions: hsla(var(--color-content) / 0.5);
+			--tw-prose-code: hsl(var(--color-content));
+			--tw-prose-pre-code: hsl(var(--nc));
+			--tw-prose-pre-bg: hsl(var(--n));
+			--tw-prose-th-borders: hsla(var(--color-content) / 0.5);
+			--tw-prose-td-borders: hsla(var(--color-content) / 0.2);
+		}
+
+		/* --secondary: theme() */
+	}
+
+	[data-theme="dark"] {
+		color-scheme: dark;
+		--gray-700: 30deg 6% 25%;
+		--color-base: 24deg 10% 10%;
+		--color-border: var(--gray-700);
+
+		--color-elevation: 12deg 6.5% 15.1%;
+		--color-elevation-hover: 30deg 6% 25%;
+
+		--color-content: 60deg 5% 96%;
+
+		/* ?? gray-300  */
+		--color-muted: rgb(214 211 209);
+	}
+
+	mark[data-annotation-color] {
+		cursor: default;
+	}
+
+	mark[data-annotation-color="Yellow"] {
+		@apply bg-yellow-400/90 dark:bg-yellow-600/5 dark:text-yellow-50/90;
+
+		&.active {
+			@apply bg-yellow-600 text-gray-900;
+		}
+
+		&[data-annotation-content="true"] {
+			@apply border-b-2 border-yellow-600;
+		}
+	}
+	mark[data-annotation-color="Green"] {
+		@apply bg-lime-500/40 dark:bg-lime-900/80 dark:text-green-100/90;
+
+		&.active {
+			@apply bg-lime-600 text-white;
+		}
+
+		&[data-annotation-content="true"] {
+			@apply border-b-2 border-lime-300;
+		}
+	}
+	mark[data-annotation-color="Blue"] {
+		@apply bg-blue-500/40 dark:bg-blue-800/60 dark:text-blue-100/90;
+
+		&.active {
+			@apply bg-blue-600 text-white;
+		}
+
+		&[data-annotation-content="true"] {
+			@apply border-b-2 border-blue-600;
+		}
+	}
+	mark[data-annotation-color="Pink"] {
+		@apply bg-pink-500/40 dark:bg-pink-800/60 dark:text-pink-100/90;
+
+		&[data-annotation-content="true"] {
+			@apply border-b-2 border-pink-600;
+		}
+		&.active {
+			@apply border-pink-900 bg-pink-600 text-white;
+		}
+	}
+	mark[data-annotation-color="Purple"] {
+		@apply bg-purple-500/40 dark:bg-purple-800/60 dark:text-purple-100/90;
+
+		&.active {
+			@apply bg-purple-600 text-white;
+		}
+
+		&[data-annotation-content="true"] {
+			@apply border-b-2 border-purple-600;
+		}
+	}
+
 	html {
 		text-rendering: optimizeLegibility;
 	}
 	/* [id] {
 		scroll-margin-top: 2ex;
 	} */
+}
+
+@layer components {
+	.simple-scrollbar {
+		@apply scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-muted scrollbar-thumb-rounded-lg scrollbar-track-transparent;
+	}
 }

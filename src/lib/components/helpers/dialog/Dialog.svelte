@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { clickOutside } from '$lib/actions/clickOutside';
+	import { clickOutside } from "$lib/actions/clickOutside";
 
-	import focusTrap from '$lib/actions/focusTrap';
-	import scrollLock from '$lib/actions/scrollLock';
-	import { Keys } from '$lib/types/keyboard';
-	import { createEventDispatcher, onMount, setContext } from 'svelte';
-	import { readable } from 'svelte/store';
-	import type { TransitionConfig } from 'svelte/transition';
+	import focusTrap from "$lib/actions/focusTrap";
+	import scrollLock from "$lib/actions/scrollLock";
+	import { fadeScale } from "$lib/transitions";
+	import { Keys } from "$lib/types/keyboard";
+	import { createEventDispatcher, onMount, setContext } from "svelte";
+	import { readable } from "svelte/store";
+	import type { TransitionConfig } from "svelte/transition";
 	export let open = true;
 	export let ariaLabeledBy: string | undefined = undefined;
 	export let ariaLabel: string | undefined = undefined;
@@ -17,10 +18,10 @@
 
 	const state = readable({
 		open,
-		close: onClose
+		close: onClose,
 	});
-	setContext('dialog_state', state);
-	let className = '';
+	setContext("dialog_state", state);
+	let className = "";
 	export { className as class };
 	const dispatch = createEventDispatcher();
 	let dialog: HTMLElement;
@@ -30,7 +31,7 @@
 	//TODO: type it so that transitionparams succesfully gets config for function passed in
 	function animate<T>(node: HTMLElement, config: T): TransitionConfig {
 		return {
-			duration: 0
+			duration: 0,
 		};
 	}
 
@@ -41,8 +42,9 @@
 	export let outParams: Parameters<typeof out>[1] | undefined = undefined;
 </script>
 
-<svelte:window
+<!-- <svelte:window
 	on:keydown={(event) => {
+		console.log({ event });
 		if (event.defaultPrevented) return;
 		if (event.key !== Keys.Escape) return;
 		if (!open) return;
@@ -54,7 +56,7 @@
 		if (onClose) onClose();
 	}}
 	style="overflow: hidden;"
-/>
+/> -->
 
 {#if open}
 	<!-- 		in:inProp={inParams}
@@ -62,6 +64,10 @@
  -->
 	<!-- scrollLock is causing problems; temporarily turningn it off -->
 	<div
+		transition:fadeScale={{
+			duration: 150,
+			baseScale: 0.95,
+		}}
 		bind:this={dialog}
 		role="dialog"
 		aria-modal={open ? true : undefined}
@@ -72,8 +78,8 @@
 		use:focusTrap
 		use:scrollLock
 		use:clickOutside={{
-			cb: () => dispatch('close'),
-			useOnChildrenInstead: true
+			cb: () => dispatch("close"),
+			useOnChildrenInstead: true,
 		}}
 	>
 		<slot />

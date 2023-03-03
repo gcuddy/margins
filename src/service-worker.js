@@ -1,54 +1,69 @@
 import { build, files, prerendered, version } from '$service-worker';
 
-const cache_name = `cache-${version}`;
-self.addEventListener('install', (e) => {
-	console.log('Service Worker: Installed');
-	console.log({ build, files, prerendered, version });
+const CACHE = `cache-${version}`;
+const ASSETS = [
+	...build,
+	...files
+];
+
+self.addEventListener('install', async (e) => {
+	async function addFilesToCache() {
+		// console.log({ build, files, prerendered, version });
+		const cache = await caches.open(CACHE);
+		await cache.addAll(ASSETS);
+		console.log('Service Worker: Installed');
+	}
+
+	// @ts-ignore
+	e.waitUntil(addFilesToCache())
 });
 
-/**
- * Fetch the asset from the network and store it in the cache.
- * Fall back to the cache if the user is offline.
- * @param {Request} request
- * @returns
- */
-async function fetchAndCache(request) {
-	const cache = await caches.open(`offline-${version}`);
-
-	try {
-		const response = await fetch(request);
-		cache.put(request, response.clone());
-		return response;
-	} catch (err) {
-		const response = await cache.match(request);
-		if (response) return response;
-
-		throw err;
+self.addEventListener('activate', (event) => {
+	async function deleteOldCaches() {
+		for (const key of await caches.keys()) {
+			if (key !== CACHE) await caches.delete(key);
+		}
 	}
-}
 
-self.addEventListener('fetch', (e) => {
-	if (e.request.method !== 'GET') {
-		// console.log('Service Worker: Fetch', e.request.method, e.request.url);
-		return;
+	// @ts-ignore
+	event.waitUntil(deleteOldCaches());
+
+});
+
+self.addEventListener('fetch', (event) => {
+	// ignore POST requests etc
+	// @ts-ignore
+	if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) return;
+
+	async function respond() {
+		// @ts-ignore
+		const url = new URL(event.request.url);
+		const cache = await caches.open(CACHE);
+
+		// `build`/`files` can always be served from the cache
+		if (ASSETS.includes(url.pathname)) {
+			// @ts-ignore
+			return cache.match(event.request);
+		}
+
+		// for everything else, try the network first, but
+		// fall back to the cache if we're offline
+		try {
+			// @ts-ignore
+			const response = await fetch(event.request);
+
+			if (response.status === 200) {
+				// @ts-ignore
+				cache.put(event.request, response.clone());
+			}
+
+			return response;
+		} catch {
+			// @ts-ignore
+			return cache.match(event.request);
+		}
 	}
-	if (e.request.destination === 'image') {
-		e.respondWith(
-			caches.open(cache_name).then((cache) => {
-				return cache.match(e.request).then((cachedResponse) => {
-					const fetchedResponse = fetch(e.request).then((networkResponse) => {
-						cache.put(e.request, networkResponse.clone());
-						return networkResponse;
-					});
-					return cachedResponse || fetchedResponse;
-				});
-			})
-			// fetch(e.request).catch(() => {
-			// 	return caches.match('/images/placeholder.png');
-			// })
-		);
-		return;
-	}
-	// console.log('Service Worker: Fetching');
-	// console.log({ e });
+
+	// @ts-ignore
+	event.respondWith(respond());
 });

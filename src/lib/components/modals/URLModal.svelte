@@ -2,7 +2,7 @@
 	import type { Pending, Result } from '$lib/actions/form';
 	import { notifications, type INotification } from '$lib/stores/notifications';
 	import { modals } from '$lib/stores/modals';
-	import { invalidate } from '$app/navigation';
+	import { invalidate, invalidateAll } from '$app/navigation';
 	import Icon from '../helpers/Icon.svelte';
 	import Form from '../Form.svelte';
 	import { page } from '$app/stores';
@@ -21,9 +21,11 @@
 	};
 	export let done: Result = async ({ form, response }) => {
 		showSpinner = false;
-		modals.close(modalIndex);
+		// modals.close(modalIndex);
 		notifications.remove(pending_notification);
-		await user.updateData('articles');
+		// await user.updateData('articles');
+		// this isn't ideal - figure out another solution
+		await invalidateAll();
 		if (inv) {
 			invalidate(inv).then(() => {
 				console.log(`invalidated ${inv}`);

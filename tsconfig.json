@@ -7,7 +7,15 @@
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
-		"sourceMap": true
-		// "strict": true
+		"sourceMap": true,
+		"strict": true,
+		"preserveValueImports": false,
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"],
+			"@": ["./src"],
+			"@/*": ["./src/*"]
+		},
+        "types": ["@types/wicg-file-system-access"]
 	}
 }

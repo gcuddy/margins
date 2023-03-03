@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 
 function createDisableGlobalKeyboardShortcutsStore(initial = false) {
 	const { subscribe, set, update } = writable(initial);
@@ -21,3 +21,14 @@ function createDisableGlobalKeyboardShortcutsStore(initial = false) {
 export const disableGlobalKeyboardShortcuts = createDisableGlobalKeyboardShortcutsStore();
 
 export const lastKey = writable('');
+
+export const checkIfKeyboardShortcutsAllowed = () => {
+	if (get(disableGlobalKeyboardShortcuts)) return false;
+	const a = document.activeElement;
+	if (a instanceof HTMLTextAreaElement || a instanceof HTMLInputElement) {
+		return false;
+	}
+    // check if contenteditable
+    if (a instanceof HTMLElement && a.getAttribute('contenteditable') === 'true') return false
+	return true
+}

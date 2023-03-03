@@ -17,13 +17,28 @@ function createSyncStore() {
 	const removeItem = (uuid: string) => {
 		update((items) => items.filter((item) => item.uuid !== uuid));
 	};
+
+    // const await = async (promise: Promise<any>, params?: Omit<Partial<SyncItem>, 'uuid'>) => {
+    //     const uuid = addItem(params);
+    //     // add error handling
+    //     return promise.then((result) => {
+    //         removeItem(uuid);
+    //         return result;
+    //     }).catch((error) => {
+    //         removeItem(uuid);
+    //         throw error;
+    //     });
+    //     // promise.finally(() => removeItem(uuid));
+    // }
+
 	return {
 		subscribe,
 		addItem,
 		removeItem,
 		// convenience methods
 		add: addItem,
-		remove: removeItem
+		remove: removeItem,
+        // await,
 	};
 }
 export const syncStore = createSyncStore();

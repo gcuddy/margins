@@ -29,7 +29,7 @@
 </script>
 
 {#if wrapper}
-	<div class="inline-flex items-center">
+	<div class="inline-flex items-center" {...$$restProps}>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			class={className}

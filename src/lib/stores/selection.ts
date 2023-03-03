@@ -1,57 +1,142 @@
-import { browser } from '$app/environment';
-import debounce from 'lodash.debounce';
-import { readable } from 'svelte/store';
+import debounce from "lodash.debounce";
+import { derived, readable } from "svelte/store";
+
+import { browser } from "$app/environment";
+import { mainEl } from "./main";
 
 interface ISelection {
 	selection: Selection | null;
 	/** The DOMRect of the first range i.e. getRangeAt(0), updated on resize */
-	rect: DOMRect | undefined;
+	rect?: DOMRect | undefined;
 }
 
 export default readable<ISelection>(undefined, (set) => {
-	const getRect = (sel: Selection | null) => {
-		if (!sel) return;
-		const range = sel.getRangeAt(0);
-		const rect = range.getBoundingClientRect();
-		return rect;
-	};
+	let ticking = false;
 	const handleResize = () => {
 		const selection = window.getSelection();
-		if (!selection?.isCollapsed) set({ selection, rect: getRect(selection) });
+		if (selection && !selection?.isCollapsed)
+			set({
+				selection,
+			});
+		ticking = false;
 	};
 	const handleSelect = () => {
 		const selection = document.getSelection();
-		if (!selection?.isCollapsed) set({ selection, rect: getRect(selection) });
+		if (selection && !selection?.isCollapsed)
+			set({
+				selection,
+			});
+		ticking = false;
 	};
 	const removeSelectionIfGone = () => {
 		const selection = document.getSelection();
 		if (!selection || selection.isCollapsed) {
 			set({
 				selection: null,
-				rect: undefined,
 			});
 		}
+		ticking = false;
 	};
-	// if (browser) document.addEventListener('selectionchange', debounce(handleSelect, 50));
-	// todo: i'm using pointerup to avoid re-calculating each time selection changes, but this maybe should be a separate store
-	if (browser)
-		document.addEventListener(
-			'pointerup',
-			debounce(handleSelect, 50, {
-				leading: true,
-			})
-		);
-	if (browser)
-		document.addEventListener(
-			'selectionchange',
-			debounce(removeSelectionIfGone, 100, {
-				leading: true,
-			})
-		);
-	if (browser) window.addEventListener('resize', debounce(handleResize, 100));
+
+	const onPointerUp = () => {
+		if (!ticking) {
+			requestAnimationFrame(handleSelect);
+			ticking = true;
+		}
+	};
+	const onSelectionChange = () => {
+		if (!ticking) {
+			requestAnimationFrame(removeSelectionIfGone);
+			ticking = true;
+		}
+	};
+	const onResize = () => {
+		if (!ticking) {
+			requestAnimationFrame(handleResize);
+			ticking = true;
+		}
+	};
+
+	const onScroll = () => {
+		if (!ticking) {
+			requestAnimationFrame(handleResize);
+			ticking = true;
+		}
+	};
+
+	if (browser) document.addEventListener("pointerup", onPointerUp);
+	if (browser) document.addEventListener("selectionchange", onSelectionChange);
+	if (browser) window.addEventListener("resize", onResize);
 	return () => {
-		if (browser) document.removeEventListener('pointerup', handleSelect);
-		if (browser) document.removeEventListener('selectionchange', removeSelectionIfGone);
-		if (browser) window.removeEventListener('resize', handleResize);
+		if (browser) document.removeEventListener("pointerup", onPointerUp);
+		if (browser) document.removeEventListener("selectionchange", onSelectionChange);
+		if (browser) window.removeEventListener("resize", onResize);
+	};
+});
+
+export const selection = derived<typeof mainEl, ISelection>(mainEl, ($mainEl, set) => {
+	console.log("running derived selection store");
+	let ticking = false;
+	const handleResize = () => {
+		const selection = window.getSelection();
+		if (selection && !selection?.isCollapsed)
+			set({
+				selection,
+			});
+		ticking = false;
+	};
+	const handleSelect = () => {
+		const selection = document.getSelection();
+		if (selection && !selection?.isCollapsed)
+			set({
+				selection,
+			});
+		ticking = false;
+	};
+	const removeSelectionIfGone = () => {
+		const selection = document.getSelection();
+		if (!selection || selection.isCollapsed) {
+			set({
+				selection: null,
+			});
+		}
+		ticking = false;
+	};
+
+	const onPointerUp = () => {
+		if (!ticking) {
+			requestAnimationFrame(handleSelect);
+			ticking = true;
+		}
+	};
+	const onSelectionChange = () => {
+		if (!ticking) {
+			requestAnimationFrame(removeSelectionIfGone);
+			ticking = true;
+		}
+	};
+	const onResize = () => {
+		if (!ticking) {
+			requestAnimationFrame(handleResize);
+			ticking = true;
+		}
+	};
+
+	const onScroll = () => {
+		if (!ticking) {
+			requestAnimationFrame(handleResize);
+			ticking = true;
+		}
+	};
+
+	if (browser) document.addEventListener("pointerup", onPointerUp);
+	if (browser) document.addEventListener("selectionchange", onSelectionChange);
+	if (browser) window.addEventListener("resize", onResize);
+	if (browser && $mainEl) $mainEl.addEventListener("scroll", onScroll);
+	return () => {
+		if (browser) document.removeEventListener("pointerup", onPointerUp);
+		if (browser) document.removeEventListener("selectionchange", onSelectionChange);
+		if (browser) window.removeEventListener("resize", onResize);
+		if (browser && $mainEl) $mainEl.removeEventListener("scroll", onScroll);
 	};
 });

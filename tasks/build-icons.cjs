@@ -24,7 +24,7 @@ fs.readdirSync(src).forEach((file) => {
 	const box = svg.attributes.viewBox.split(' ')[2];
 	icons[camelize(path.basename(file, '.svg') + append)] = {
 		box,
-		svg: svg.innerHTML.trim()
+		svg: svg.innerHTML.trim(),
 	};
 });
 pbcopy(JSON.stringify(icons, null, 2));

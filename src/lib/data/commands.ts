@@ -1,22 +1,21 @@
-import { goto } from '$app/navigation';
-import type { Command } from '$lib/components/CommandPalette/types';
-import { modals } from '$lib/stores/modals';
-import URLModal from '$lib/components/modals/URLModal.svelte';
+import { goto } from "$app/navigation";
+import type { Command } from "$lib/components/CommandPalette/types";
+import URLModal from "$lib/components/modals/URLModal.svelte";
+import { modals } from "$lib/stores/modals";
 // import { getDirectory } from '$lib/file-access';
-import { darkMode } from '$lib/stores/settings';
-import TextareaSvelte from '$lib/components/Textarea.svelte';
-import BulkURLs from '$lib/components/BulkURLs.svelte';
-import { commandPaletteStore } from '$lib/components/CommandPalette/store';
-import { showCommandPalette } from '$lib/stores/commands';
-import { cachedArticlesArray } from '$lib/stores/cache';
-import type { Article, RssFeed, Tag } from '@prisma/client';
-import CircularProgressBarSvelte from '$lib/components/CircularProgressBar/CircularProgressBar.svelte';
-import { getArticles, getSubscriptions, getTags, subscriptionsStore, tagsStore } from './sync';
-import Icon from '$lib/components/helpers/Icon.svelte';
-import UrlModal from '$lib/components/modals/URLModal.svelte';
+import AddModalSvelte from "$lib/components/AddModal.svelte";
+import BulkURLs from "$lib/components/BulkURLs.svelte";
+import CircularProgressBarSvelte from "$lib/components/CircularProgressBar/CircularProgressBar.svelte";
+import { commandPaletteStore } from "$lib/components/CommandPalette/store";
+import Icon from "$lib/components/helpers/Icon.svelte";
+import TextareaSvelte from "$lib/components/Textarea.svelte";
+import { showCommandPalette } from "$lib/stores/commands";
+import { darkMode } from "$lib/stores/settings";
+import type { Article, RssFeed, Tag } from "@prisma/client";
+import { page } from "$app/stores";
+import { get } from "svelte/store";
 
 export const jumpToArticle = () => {
-	getArticles();
 	commandPaletteStore.open({
 		values: cachedArticlesArray,
 		onSelect: ({ detail: article }) => {
@@ -30,9 +29,9 @@ export const jumpToArticle = () => {
 					value: val.readProgress,
 					minValue: 0,
 					maxValue: 1,
-					className: 'h-4 w-4 flex-none shrink-0 basis-5',
-					trailClass: 'stroke-gray-400',
-					pathClass: 'stroke-red-400',
+					className: "h-4 w-4 flex-none shrink-0 basis-5",
+					trailClass: "stroke-gray-400",
+					pathClass: "stroke-red-400",
 				},
 			};
 		},
@@ -43,203 +42,188 @@ export const jumpToArticle = () => {
 };
 
 export const jumpToTag = () => {
-	getTags();
+	const $page = get(page);
+	const url = (tag: Tag) => `/u:${$page.data.user?.username}/t:${tag.name}`;
 	commandPaletteStore.open({
-		values: tagsStore,
+		values: $page.data.tags,
 		onSelect: ({ detail: tag }) => {
-			goto(`/tags/${tag.name}`);
+			goto(url(tag));
 		},
 		itemIcon: () => {
 			return {
 				component: Icon,
 				props: {
-					name: 'tag',
+					name: "tag",
 				},
 			};
 		},
 		prefetch: (val: Tag) => {
-			return `/tags/${val.name}`;
+			return url(val);
 		},
 	});
 };
+
 export const jumpToSubscription = () => {
-	getSubscriptions();
+	// getSubscriptions();
+	const $page = get(page);
+	const url = (subscription: (typeof $page.data.subscriptions)[number]) =>
+		`/u:${$page.data.user?.username}/subscriptions/${subscription.feedId}`;
 	commandPaletteStore.open({
-		values: subscriptionsStore,
+		values: $page.data.subscriptions,
 		onSelect: ({ detail: subscription }) => {
-			goto(`/rss/${subscription.id}`);
+			goto(url(subscription));
 		},
 		itemIcon: () => {
 			return {
 				component: Icon,
 				props: {
-					name: 'rss',
+					name: "rss",
 				},
 			};
 		},
 		prefetch: (val: RssFeed) => {
-			return `/rss/${val.id}`;
+			return url(val);
 		},
 	});
 };
 
 export const commands: Command[] = [
 	{
-		id: 'go-home',
-		group: 'default',
-		name: 'Home',
-		perform: () => goto('/'),
-		icon: 'home',
+		id: "go-home",
+		group: "default",
+		name: "Home",
+		perform: () => goto("/"),
+		icon: "home",
 		kbd: [
-			['g', 'h'],
-			['cmd', 'e'],
+			["g", "h"],
+			["cmd", "e"],
 		],
 	},
 	{
-		id: 'go-notebook',
-		group: 'default',
-		name: 'Notebook',
-		perform: () => goto('/notebook'),
-		icon: 'bookmarkAlt',
+		id: "go-notebook",
+		group: "default",
+		name: "Notebook",
+		perform: () => goto("/notebook"),
+		icon: "bookmarkAlt",
 	},
 	{
-		id: 'add-url',
-		group: 'default',
-		name: 'Add URL',
+		id: "add-url",
+		group: "default",
+		name: "Add URL",
 		perform: () => {
-			console.log('[command] adding url');
-			modals.open(URLModal);
+			console.log("[command] adding url");
+			modals.open(AddModalSvelte, {}, "add-url");
 		},
-		icon: 'plusCircle',
-		kbd: [['a']],
+		icon: "plusCircle",
+		kbd: [["a"]],
 	},
 	{
-		id: 'add-bookmark',
-		group: 'default',
-		name: 'Add Bookmark from URL',
+		id: "add-bookmark",
+		group: "default",
+		name: "Add Bookmark from URL",
 		perform: () =>
 			modals.open(URLModal, {
-				formAction: '/api/bookmarks',
+				formAction: "/api/bookmarks",
 			}),
 		icon: `plusCircle`,
 	},
 	{
-		id: 'go-rss',
-		group: 'default',
-		name: 'RSS',
-		perform: () => goto('/rss'),
-		icon: 'rss',
-		kbd: [['g', 'r']],
+		id: "go-rss",
+		group: "default",
+		name: "RSS",
+		perform: () => goto("/rss"),
+		icon: "rss",
+		kbd: [["g", "r"]],
 	},
 	{
-		id: 'add-directory',
-		group: 'default',
-		name: 'Add Directory of PDF Files',
+		id: "add-directory",
+		group: "default",
+		name: "Add Directory of PDF Files",
 		perform: async () => {
 			// await getDirectory();
 		},
-		icon: 'folderAdd',
+		icon: "folderAdd",
 	},
 	{
-		id: 'toggle-dark-mode',
-		group: 'default',
-		name: 'Toggle Light/Dark mode',
+		id: "toggle-dark-mode",
+		group: "default",
+		name: "Toggle Light/Dark mode",
 		perform: () => darkMode.update((d) => !d),
-		icon: 'lightBulb',
+		icon: "lightBulb",
 	},
 	{
-		id: 'export',
-		group: 'default',
-		name: 'Export Data',
+		id: "export",
+		group: "default",
+		name: "Export Data",
 		perform: () => {
-			fetch('/__data.json', {
+			fetch("/__data.json", {
 				headers: {
-					'Content-Type': 'application/json',
+					"Content-Type": "application/json",
 				},
 			})
 				.then((res) => res.json())
 				.then((data) => {
 					const urls = data.articles.map((a) => a.url);
 					modals.open(TextareaSvelte, {
-						value: urls.join('\n'),
+						value: urls.join("\n"),
 						rows: Math.min(10, urls.length),
 					});
 				});
 		},
-		icon: 'save',
+		icon: "save",
 	},
 	{
-		id: 'add-list-of-urls',
-		group: 'default',
-		name: 'Add list of urls',
+		id: "add-list-of-urls",
+		group: "default",
+		name: "Add list of urls",
 		perform: () => modals.open(BulkURLs),
-		icon: 'plusCircle',
+		icon: "plusCircle",
 	},
 	{
-		id: 'add-subscription',
-		group: 'default',
-		name: 'Add subscription',
-		perform: () =>
-			modals.open(UrlModal, {
-				formAction: '/rss/add',
-				placeholder: 'Enter RSS feed URL',
-				name: 'url',
-				invalidate: '/rss',
-				notification: {
-					message: 'Subscription added',
-				},
-			}),
-		icon: 'plusCircle',
-	},
-	{
-		id: 'jump-to-article',
-		group: 'jump',
-		name: 'Jump to article',
-		perform: () => {
-			showCommandPalette.out();
-			jumpToArticle();
+		id: "add-subscription",
+		group: "default",
+		name: "Add subscription",
+		perform: ({ page, user }) => {
+			// goto('');
+			goto(`/u:${user?.username}/subscriptions/new`);
+			// modals.open(UrlModal, {
+			// 	formAction: '/rss/add',
+			// 	placeholder: 'Enter RSS feed URL',
+			// 	name: 'url',
+			// 	invalidate: '/rss',
+			// 	notification: {
+			// 		message: 'Subscription added',
+			// 	},
+			// }
 		},
-		icon: 'arrowRight',
-		kbd: [['o', 'a']],
+		icon: "plusCircle",
+	},
+
+	{
+		id: "go-to-search",
+		group: "Navigation",
+		name: "Go to Search",
+		perform: () => {
+			goto("/search");
+		},
+		icon: "search",
 	},
 	{
-		id: 'jump-to-tag',
-		group: 'jump',
-		name: 'Jump to Tag',
-		perform: () => {
-			showCommandPalette.out();
-			jumpToTag();
+		id: "go-to-settings",
+		group: "Navigation",
+		name: "Go to Settings",
+		perform: ({ page }) => {
+			goto(`/settings`);
 		},
-		icon: 'arrowRight',
-		kbd: [['o', 't']],
+		icon: "cog6ToothMini",
 	},
 	{
-		id: 'jump-to-subscription',
-		group: 'jump',
-		name: 'Jump to Subscription',
+		id: "new-smart-list",
+		group: "Lists",
+		name: "Create new smart list",
 		perform: () => {
-			showCommandPalette.out();
-			jumpToSubscription();
+			goto("/smart/new");
 		},
-		icon: 'arrowRight',
-		kbd: [['o', 's']],
-	},
-	{
-		id: 'go-to-search',
-		group: 'Navigation',
-		name: 'Go to Search',
-		perform: () => {
-			goto('/search');
-		},
-		icon: 'search',
-	},
-	{
-		id: 'new-smart-list',
-		group: 'Lists',
-		name: 'Create new smart list',
-		perform: () => {
-			goto('/smart/new');
-		},
-		icon: 'plus',
+		icon: "plus",
 	},
 ];

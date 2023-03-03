@@ -1,15 +1,18 @@
-import { browser } from '$app/environment';
-import type ModalContainerSvelte from '$lib/components/modals/ModalContainer.svelte';
-import type { Annotation, Highlight } from '@prisma/client';
-import { derived, writable, type Readable } from 'svelte/store';
-import { showCommandPalette } from './commands';
-import type { ComponentProperties, StoredComponent, SvelteComponentWithProps } from './types';
+import type { ComponentProps } from "svelte";
+import { writable } from "svelte/store";
+
+import { browser } from "$app/environment";
+import type ModalContainer from "$lib/components/modals/ModalContainer.svelte";
+
+import type { StoredComponent, SvelteComponentWithProps } from "./types";
 
 export const showURLModal = writable(false);
 export const showRSSInputModal = writable(false);
 
 export type ModalComponent = StoredComponent & {
-	containerProps?: ComponentProperties<ModalContainerSvelte>;
+	open: boolean;
+	id?: string;
+    containerProps?: Partial<ComponentProps<ModalContainer>>
 };
 
 // add last action for closing etc?
@@ -21,13 +24,15 @@ function createModalStore() {
 	// read this here https://www.typescriptlang.org/docs/handbook/2/generics.html
 	const open = <T>(
 		component: SvelteComponentWithProps<T>,
-		props?: Omit<T, 'isOpen' | 'modalIndex'>,
-		containerProps?: ComponentProperties<ModalContainerSvelte>
+		props?: Omit<T, "isOpen" | "modalIndex">,
+		id?: string,
+        containerProps?: ModalComponent["containerProps"]
 	) => {
 		let index = 0;
 		update((stack) => {
-			const newStack = [...stack, { component, props, containerProps }];
+			const newStack = [...stack, { component, props, id, open: true, containerProps }];
 			index = newStack.length;
+			console.log({ newStack });
 			return newStack;
 		});
 		return index;
@@ -37,18 +42,40 @@ function createModalStore() {
 	 * Closes the top modal or the modal with the index specified
 	 * @param idx number (optional) - the index of the modal to close. If not provided removes top element
 	 */
-	const close = (idx?: number) =>
+	const close = (opts?: { idx?: number; id?: string }) =>
 		update((stack) => {
+            const { idx, id } = opts || {};
+			let removed = [];
 			if (idx) {
-				stack.splice(idx, 1);
-			} else {
+				stack[idx].open = false;
+				removed = stack.splice(idx, 1);
+			} else if (id) {
+				const idx = stack.findIndex((s) => s.id === id);
+                console.log({idx})
+                if (idx !== -1) {
+                    return stack.filter((modal) => modal.id !== id);
+                    // stack[idx].open = false;
+                    // removed = stack.splice(idx, 1);
+                }
+				stack[idx].open = false;
+				return stack.filter((modal) => modal.id !== id);
+				const index = stack.findIndex((modal) => modal.id === id);
+				if (index !== -1) {
+					stack[index].open = false;
+					removed = stack.splice(index, 1);
+				}
+			} else if (!removed.length) {
 				console.log(`closing top modal`);
-				stack.pop();
+				if (stack[stack.length-1]) stack[stack.length - 1].open = false;
+				stack.splice(-1);
+				console.log({ stack });
+				// const removed = stack.pop();
 			}
+			console.log({ stack, removed, idx, id });
 			if (stack.length === 0 && browser) {
 				// not sure if this is the right place for this, but hey
 				// let's make sure this is gone or we won't be able to scroll
-				document.body.classList.remove('overflow-hidden');
+				document.body.classList.remove("overflow-hidden");
 			}
 			return stack;
 		});

@@ -12,9 +12,11 @@
 	export let isOpen = true;
 	let className = '';
 	export { className as class };
-	let confirm_button: HTMLElement | null = null;
+	let confirm_button: HTMLElement | undefined = undefined;
 	$: console.log({ confirm_button });
+    export let description = "";
 	export let confirmText = 'Confirm';
+    export let onConfirm = () => {};
 	const dispatch = createEventDispatcher();
 </script>
 
@@ -48,12 +50,15 @@
 					{#if $$slots.description}
 						<DialogDescription><slot name="description" /></DialogDescription>
 					{/if}
-					<slot />
+					<slot>
+                        {description}
+                    </slot>
 					<div class="flex justify-end ">
 						<div class="flex flex-row-reverse gap-2">
 							<Button
 								on:click={() => {
 									dispatch('confirm');
+                                    onConfirm();
 									isOpen = false;
 								}}
 								className="focus:ring focus-visible:ring active:ring"

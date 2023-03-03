@@ -1,55 +1,73 @@
-import { browser } from '$app/environment';
-import { redirect } from '@sveltejs/kit';
-import { get, readable } from 'svelte/store';
-import type { LayoutServerLoad } from './$types';
-import { type User, user as userStore, user_data_dirty } from '$lib/stores/user';
 
-export const load: LayoutServerLoad = async ({ fetch, locals, parent }) => {
-	const data = await parent();
-	console.log({ data });
-	const session = await locals.getSession();
-	console.log(`(app)/+layout.server.ts: load: session: ${JSON.stringify(session)}`);
-	console.log({ session });
-	if (!session) throw redirect(302, '/login');
-	const dirty = get(user_data_dirty);
-	// If we already have a stored user, then don't fetch it again - we'll be using the store
-	if (browser && get(userStore) && !dirty) {
-		console.log('returning user store');
-		return {
-			user: userStore,
-		};
-	}
+import type { Location } from "@prisma/client";
+import { redirect } from "@sveltejs/kit";
+import { TRPCError } from "@trpc/server";
 
-	// // Fetch the user, store it, return it
-	// This is not the best way to do it...
-	const res = await fetch('/api/fetch_user_data');
-	const fetchedUser: User = await res.json();
-	console.log({ fetchedUser });
-	return fetchedUser;
-	console.log('fetched data');
-	// user_data_dirty.set(false);
-	// if (!res.ok) {
-	// 	// await signOut();
-	// 	throw redirect(302, '/login');
-	// 	// window.location.href = '/'
-	// 	return {
-	// 		user: readable({
-	// 			username: '??',
-	// 			feeds: [],
-	// 			favorites: [],
-	// 		}),
-	// 	};
-	// }
+import { createContext } from "$lib/trpc/context";
+import { appRouter } from "$lib/trpc/router";
+import { groupBy } from "$lib/utils";
 
-	console.log('fetched user', { fetchedUser });
-	if (browser) {
-		userStore.set(fetchedUser);
-		return {
-			user: userStore,
-		};
-	}
-	// last resort - return a readable store
-	return {
-		user: readable(fetchedUser),
-	};
+import type { LayoutServerLoad } from "./$types";
+
+export const load: LayoutServerLoad = async (event) => {
+    const { locals, depends } = event;
+    // const { user } = await locals.validateUser();
+    // console.log(`(app)/layout.server.ts load function`);
+
+    const theme = event.cookies.get("theme");
+    // load settings
+    event.depends("user:data");
+    const caller = appRouter.createCaller(await createContext(event));
+    try {
+        const userData = await caller.user.data({
+            bookmarks: false,
+            subscriptions: true,
+            stylesheets: true,
+            states: true,
+            color_descriptions: true,
+        })
+        // TODO: we should return a mutable store with this, but can't do that on the server (instead use layout.ts)
+        // const userStore
+
+        const locations = ["inbox", "soon", "later", "archive"];
+        const sortedStates = userData.states?.sort(
+            (a, b) => locations.indexOf(a.type) - locations.indexOf(b.type)
+        );
+        const locationLookup = groupBy(sortedStates || [], (state) => state.type);
+        const stateIdToLocation: Map<number, Location> = new Map((sortedStates || []).map((state) => [state.id, state.type]))
+        const stateIdToName: Map<number, string> = new Map((sortedStates || []).map((state) => [state.id, state.name]))
+        return {
+            user: {
+                ...userData,
+                states: sortedStates,
+                locationLookup,
+                stateIdToLocation,
+                stateIdToName,
+            },
+            theme,
+            authorized: true,
+            // subscriptions,
+            // bookmarks,
+            // allEntries
+        };
+    } catch (error) {
+        if (error instanceof TRPCError) {
+            console.log("TRPC ERROR")
+            if (error.code === "UNAUTHORIZED") {
+                // TODO: unauthorized site
+                throw redirect(307, "/login")
+            }
+        }
+        console.error(error);
+        return {
+            theme,
+            authorized: false,
+            user: null
+        }
+    }
+    // return {
+    // 	// theme
+    // 	// user,
+    //     authorized: false
+    // };
 };

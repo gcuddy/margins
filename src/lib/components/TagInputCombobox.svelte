@@ -1,293 +1,77 @@
 <script lang="ts">
-	import type { ArticleWithTags } from '$lib/types';
-	import type { Article, Tag } from '@prisma/client';
-	import Combobox from './helpers/Combobox.svelte';
-	import { getNthValueOfSet } from '$lib/utils';
-	import TagComponent from './Tags/Tag.svelte';
-	import Icon from './helpers/Icon.svelte';
-	import { onMount, tick } from 'svelte';
-	import { getTags } from '$lib/data/sync';
-	import Form from './Form.svelte';
-	import { syncStore } from '$lib/stores/sync';
+	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
 	import { notifications } from '$lib/stores/notifications';
-	export let allTags: Tag[] = [];
+	import type { Tag } from '@prisma/client';
+	import { onMount } from 'svelte';
+	import TagEntry from './TagEntry.svelte';
 
-	onMount(() => {
-		getTags().then((tags) => {
-			allTags = tags;
-		});
-	});
+    export let inputRef: HTMLElement | undefined = undefined;
 
-	export let className = '';
-	console.log({ allTags });
-	export let value = '';
-	export let articles: ArticleWithTags[];
+    export let submitOnBlur = true;
 
-	export let allow_create_tag = true;
+    export let expanded = false;
 
-	type TagInputTag = Pick<Tag, 'name'> & {
-		special?: boolean;
-	};
-	let filteredTags: TagInputTag[];
-	$: filteredTags = allTags
-		.filter((tag) => tag.name.toLowerCase().includes(value.toLowerCase()))
-		.filter((tag) => !selectedTags.has(tag.name));
+	type AcceptedTag = {
+        id?: number;
+        name: string;
+    };
+	// type AcceptedTag = Omit<Tag, 'createdAt' | 'updatedAt'>;
 
-	// admittedly, this is a frustrating way to do this lol
-	$: newTagAvailable =
-		value.length > 0 &&
-		!(allTags as TagInputTag[])
-			.concat(Array.from(selectedTags).map((tag) => ({ name: tag })))
-			.some((tag) => tag.name.toLowerCase() === value.toLowerCase());
-	$: if (newTagAvailable) {
-		filteredTags.push({
-			name: value,
-			special: true
-			// perform: (val) => {
-			// 	postTags([...$comboboxState.selected.map((tag) => tag.value), val]);
-			// }
-		});
-	} else {
-		filteredTags = filteredTags.filter((tag) => !tag.special);
-	}
-	// read only
-	export let tags: Tag[] = [];
+	export let allTags: AcceptedTag[] = $page.data.tags || [];
 
-	// Tag Names must be unique, so we can use a simple Set<string>
-	let selectedTags: Set<string> = new Set();
-	articles
-		.flatMap((article) => article.tags)
-		.map((tag) => tag?.name)
-		.filter((tag) => tag)
-		.forEach((tag) => {
-			console.log({ tag });
-			selectedTags.add(tag);
-		});
+	export let tags: AcceptedTag[];
+	export let original: {
+		tags: AcceptedTag[];
+	} | undefined = undefined;
 
-	// TODO: this is a very dumb way to do this, FIX IT
-	$: tags = Array.from(selectedTags).map(
-		(tag) => (allTags.find((t) => t.name === tag) as Tag) || { name: tag }
-	);
+	export let entryId: number | undefined = undefined;
 
-	let activeTag: string | undefined = undefined;
-	let activeTagIndex: number | undefined = undefined;
-	let comboboxExpanded = false;
-	$: if (activeTag && activeTagIndex !== undefined) {
-		comboboxExpanded = false;
-	}
-
-	function handleKeydown({ detail }: CustomEvent<KeyboardEvent>) {
-		console.log({ detail });
-		const input = detail.target as HTMLInputElement;
-		if (!value && detail.key === 'Backspace') {
-			console.log('trying to delete');
-			console.log({ activeTag, activeTagIndex });
-			if (activeTag && activeTagIndex !== undefined) {
-				console.log('trying to delete');
-				selectedTags.delete(activeTag);
-				activeTagIndex = Math.max(activeTagIndex - 1, 0);
-				selectedTags = selectedTags;
-			}
-			activeTag = getNthValueOfSet(
-				selectedTags,
-				activeTagIndex !== undefined ? activeTagIndex : selectedTags.size - 1
-			);
-			// TODO: this is all getting very confusing. Probably a way to abstract/hoisut this and make it easier
-			if (activeTag)
-				activeTagIndex = selectedTags.has(activeTag) ? selectedTags.size - 1 : undefined;
-		}
-		if (!value && detail.key === 'ArrowLeft' && selectedTags.size) {
-			if (activeTagIndex !== undefined) {
-				console.log('setting activetagindex');
-				console.log({ activeTagIndex });
-				activeTagIndex = Math.max(activeTagIndex - 1, 0);
-				console.log({ activeTagIndex });
-			} else {
-				activeTagIndex = selectedTags.size - 1;
-			}
-			activeTag = getNthValueOfSet(selectedTags, activeTagIndex);
-		}
-		if (!value && detail.key === 'ArrowRight' && selectedTags.size) {
-			if (activeTagIndex !== undefined) {
-				if (activeTagIndex === selectedTags.size - 1) {
-					activeTagIndex = undefined;
-					activeTag = undefined;
-				} else {
-					activeTagIndex = Math.min(activeTagIndex + 1, selectedTags.size - 1);
-					activeTag = getNthValueOfSet(selectedTags, activeTagIndex);
-				}
-			}
-		}
-		if (!value && detail.key === 'Escape') {
-			activeTag = undefined;
-			activeTagIndex = undefined;
-		}
-		setTimeout(() => {
-			console.log(input.value.length);
-			if (input.value.length) {
-				activeTag = undefined;
-				activeTagIndex = undefined;
-			}
-		}, 0);
-	}
-	let form: HTMLFormElement;
-	export let invalidate: string | undefined = '/api/tags';
-
-	let sync_id: string;
+	let ref: HTMLFormElement;
+	let c = '';
+	export { c as class };
 </script>
 
-<Form
-	action="/api/tags"
+<!-- TODO: make this be able to use multiple ids? -->
+<form
+	class={c}
+	action="{entryId ? `/u:${$page.data.user?.username}/entry/${entryId}` : ''}?/tag"
 	method="post"
-	bind:el={form}
-	{invalidate}
-	pending={() => {
-		sync_id = syncStore.addItem();
-	}}
-	done={() => {
-		syncStore.removeItem(sync_id);
-	}}
-	error={() => {
-		syncStore.removeItem(sync_id);
-		notifications.notify({
-			message: 'Error',
-			type: 'error'
-		});
+	bind:this={ref}
+	use:enhance={() => {
+		return ({ update, result }) => {
+			if (result.type === 'success') {
+				notifications.notify({
+					title: 'Tag saved',
+					type: 'success',
+				});
+			} else {
+				notifications.notify({
+					title: 'Error saving tag',
+					type: 'error',
+				});
+			}
+		};
 	}}
 >
-	{#each articles as article, index}
-		<!-- todo: useThePlatform, wnot qs, right? -->
-		<input type="hidden" name="ids[]" value={article.id} />
-	{/each}
-	<div class="flex items-center px-1 {className}">
-		<div class="flex gap-2 text-xs">
-			{#each Array.from(selectedTags) as tag}
-				<input type="hidden" name="tags[]" value={tag} />
-				<TagComponent
-					tag={{ name: tag }}
-					variant="primary"
-					active={tag === activeTag}
-					on:click={() => (activeTag = tag)}
-				/>
-			{/each}
-		</div>
-		<!-- <TagCloud
-		tags={Array.from(selectedTags)}
-		delIcon={true}
-		on:delete={({ detail: tag }) => {
-			selectedTags.delete(tag);
-			selectedTags = selectedTags;
+	<TagEntry
+		size="sm"
+        bind:comboboxExpanded={expanded}
+        bind:ref={inputRef}
+		on:blur={(e) => {
+			// check for diff
+            if (!submitOnBlur) return;
+			ref.requestSubmit();
+
+			// let same =
+			// 	original?.tags.length === tags.length &&
+			// 	original.tags.every((btag) => tags.some((tag) => btag.id === tag.id));
+			// console.log({ same });
+			// if (!same) {
+			// 	ref.requestSubmit();
+			// }
 		}}
-	/> -->
-		<Combobox
-			fillValue={false}
-			values={filteredTags}
-			bind:value
-			bind:expanded={comboboxExpanded}
-			idResolver={(tag) => tag.name}
-			on:select={({ detail }) => {
-				//TODO
-				selectedTags.add(detail.name);
-				selectedTags = selectedTags;
-				value = '';
-				console.log({ selectedTags });
-				console.log('add');
-			}}
-			input={{
-				class: `px-2 placeholder-gray-400 bg-transparent focus:ring-0 border-0 w-full ${
-					activeTag ? 'caret-transparent' : ''
-				}`,
-				placeholder: `${selectedTags.size ? '' : 'Tags'}`
-			}}
-			options={{
-				class: `absolute z-10 mt-1 ring-1 shadow-xl ring-black/10 bg-gray-700 text-gray-100 max-h-48 overflow-y-auto text-sm rounded-xl p-2 ${
-					filteredTags.length === 0 ? 'hidden' : ''
-				}`
-			}}
-			on:input-click={(e) => {
-				console.log({ e });
-				activeTag = undefined;
-				activeTagIndex = undefined;
-			}}
-			on:keydown={handleKeydown}
-			on:expanded={async ({ detail }) => {
-				console.log({ expanded: detail });
-				if (detail && !allTags.length) {
-					allTags = await getTags();
-					console.log('got tags', { allTags });
-				}
-				if (!detail) {
-					tick().then(() => {
-						form.requestSubmit();
-					});
-				}
-			}}
-			class="relative w-full"
-		>
-			<div slot="option" let:value let:active>
-				<!-- TODO: set off special in their own world ?? (loook at Things) -->
-				<div
-					class="{active ? 'bg-primary-300 text-black' : 'text-gray-200s'} {value.special
-						? ''
-						: ''} rounded-md px-2 py-1 "
-				>
-					<div class="flex gap-2 ">
-						{#if value.special && allow_create_tag}
-							<Icon name="plusCircleSolid" className="w-5 h-5 fill-current" />
-							<span>Create tag: "{value.name}"</span>
-						{:else}
-							<Icon name="tag" className="w-5 h-5 stroke-current stroke-2" />
-							<span>{value.name}</span>
-						{/if}
-					</div>
-				</div>
-			</div>
-		</Combobox>
-	</div>
-
-	<!-- .concat([createNewItem]) -->
-
-	<!-- <Combobox onChange={(val) => console.log(val)}>
-	<ComboboxInput
-		class="w-full border-0 bg-transparent text-sm focus:ring-0"
-		displayValue={(tag) => tag.name}
-		onChange={(val) => (value = val)}
-	/>
-	<ComboboxOptions>
-		{#each filteredTags as tag}
-			<ComboboxOption let:active value={tag}>
-				<div class:bg-teal-400={active}>{tag.name}</div>
-			</ComboboxOption>
-		{/each}
-	</ComboboxOptions>
-</Combobox> -->
-
-	<!-- <Combobox
-	bind:displayValue={value}
-	items={filteredTags.map((tag) => ({
-		id: tag.id.toString(),
-		label: tag.name,
-		value: tag.name
-	}))}
-	selectMultiple={true}
-	bind:ComboboxState={comboboxState}
-	on:close={() => {
-		console.log('closed');
-		postTags();
-	}}
-	placeholder={$comboboxState.selected?.length ? 'Change tags…' : 'Add tags…'}
-	autofocus={true}
-	button={false}
-	stickyItems={[
-		{
-			id: 'create-new',
-			label: (state) => `Create new tag: ${state.value}`,
-			show: (state) => state.value.length > 1
-		}
-	]}
->
-	<slot>
-		<ComboboxInput />
-	</slot>
-</Combobox> -->
-</Form>
+		bind:tags
+        />
+		<!-- items={[original]} -->
+</form>

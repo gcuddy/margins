@@ -1,15 +1,16 @@
-import type { IconName } from '$lib/icons';
 import { z } from 'zod';
 
-export const LOCATIONS = ['INBOX', 'SOON', 'LATER', 'ARCHIVE'] as const;
-export const LOCATIONS_WITH_ALL = ['INBOX', 'SOON', 'LATER', 'ARCHIVE', 'ALL'] as const;
+import type { IconName } from '$lib/icons';
+
+export const LOCATIONS = ['inbox', 'soon', 'later', 'archive'] as const;
+export const LOCATIONS_WITH_ALL = ['inbox', 'soon', 'later', 'archive', 'all'] as const;
 
 export const LOCATION_TO_DISPLAY = {
-	INBOX: 'Inbox',
-	SOON: 'Soon',
-	LATER: 'Later',
-	ARCHIVE: 'Archive',
-	ALL: 'All',
+	inbox: 'Inbox',
+	soon: 'Soon',
+	later: 'Later',
+	archive: 'Archive',
+	all: 'All',
 } as const;
 
 export const LOCATION_LIST = LOCATIONS.map((location) => ({
@@ -17,18 +18,18 @@ export const LOCATION_LIST = LOCATIONS.map((location) => ({
 	id: location,
 }));
 
-export const LOCATION_TO_ICON_SOLID: Record<LocationWithAll, IconName> = {
-	INBOX: 'inboxSolid',
-	SOON: 'sparklesSolid',
-	LATER: 'calendarSolid',
-	ARCHIVE: 'archiveSolid',
-	ALL: 'inboxStackMini',
+export const LOCATION_TO_ICON_SOLID: Record<Location | 'all', IconName> = {
+	inbox: 'inboxSolid',
+	soon: 'sparklesSolid',
+	later: 'calendarSolid',
+	archive: 'archiveSolid',
+	all: 'inboxStackMini',
 };
 export const LOCATION_TO_ICON_OUTLINE: Record<Location, IconName> = {
-	INBOX: 'inbox',
-	SOON: 'sparkles',
-	LATER: 'calendar',
-	ARCHIVE: 'archive',
+	inbox: 'inbox',
+	soon: 'sparkles',
+	later: 'calendar',
+	archive: 'archive',
 };
 
 export const LocationSchema = z.enum(LOCATIONS);

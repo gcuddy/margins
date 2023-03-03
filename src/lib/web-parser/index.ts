@@ -1,199 +1,182 @@
 // much code pulled from readability, mercury-parser, but modified to be faster/type-safe
 
-import { HTMLElement, Node, parse } from 'node-html-parser';
+import { DocumentType } from "@prisma/client";
+import { HTMLElement, parse } from "node-html-parser";
+import { z } from "zod";
+
+import { _EntryModel } from "$lib/prisma/zod";
+
+import { fixLazyLoadedImages } from "./clean";
 import {
-	CLEAN_CONDITIONALLY_TAGS,
-	DIV_TO_P_BLOCK_TAGS,
-	IS_IMAGE,
-	IS_LINK,
-	IS_SRCSET,
-	KEEP_SELECTORS,
-	STRIP_OUTPUT_TAGS,
-} from './constants';
-import { scoreNodes } from './scoring';
+    CLEAN_CONDITIONALLY_TAGS,
+    DIV_TO_P_BLOCK_TAGS,
+    IS_IMAGE,
+    IS_LINK,
+    IS_SRCSET,
+    KEEP_SELECTORS,
+    STRIP_OUTPUT_TAGS,
+} from "./constants";
+import { cleanAttributes } from "./dom";
+import * as CustomExtractors from "./extractors";
+import { clarifyStringOrObject } from "./helpers";
+import { cleanUpNaughtyUrl, fixImages } from "./images";
+import { isProbablyReaderable } from "./readable";
+import { recipeSchema } from "./recipe";
+import { getSchemas } from "./schemaOrg";
 import {
-	absolutizeUrls,
-	changeElementTag,
-	scoreCommas,
-	normalizeSpaces,
-	absolutizeSet,
-	printRawHTMLTag,
-} from './utils';
-
-import * as CustomExtractors from './extractors';
-import { cleanAttributes, stripUnlikelyCandidates } from './dom';
-import { findAuthor } from './utils/fallback-author';
-
-function grabArticle(root: HTMLElement) {
-	// using arc90/readability heuristics
-	root = stripUnlikelyCandidates(root);
-	const nodesToScore = root.querySelectorAll('p, pre, td');
-	const divsToParagraphs = root
-		.querySelectorAll('div')
-		.filter((e) => e.querySelectorAll(DIV_TO_P_BLOCK_TAGS).length === 0);
-	divsToParagraphs.forEach((e) => e.replaceWith(changeElementTag(e, 'p')));
-	nodesToScore.push(...divsToParagraphs);
-	return scoreNodes(nodesToScore);
-}
-
-async function grabCss(root: HTMLElement, baseUrl: string) {
-	// TODO: inline element styles
-	// grab all element styles
-	const css = root.querySelectorAll('style');
-	// fetch remote stylesheets
-	const cssUrls = [...root.querySelectorAll('link[rel="stylesheet"]')].map((e) =>
-		e.getAttribute('href')
-	);
-	const cssTexts = await Promise.all(
-		cssUrls
-			.filter((e) => e)
-			.map((e) => new URL(<string>e, baseUrl).href)
-			.map((url) => fetch(url).then((r) => r.text()))
-	);
-	return [...css]
-		.map((e) => e.outerHTML)
-		.concat(cssTexts)
-		.join('\n');
-}
-
-/** start new class part */
-
-// export const DIV_TO_P_BLOCK_TAGS = [
-// 	'a',
-// 	'blockquote',
-// 	'dl',
-// 	'div',
-// 	'img',
-// 	'p',
-// 	'pre',
-// 	'table'
-// ].join(',');
+    absolutizeSet,
+    absolutizeUrl,
+    absolutizeUrls,
+    isSingleImage,
+    normalizeSpaces,
+    printRawHTMLTag,
+    scoreCommas,
+} from "./utils";
+import { findAuthor } from "./utils/fallback-author";
 
 // TODO: ability to add/modify this list
 // TODO: add "boost" to certain tags via a map
 export const POSITIVE_SCORE_HINTS = [
-	'article',
-	'articlecontent',
-	'instapaper_body',
-	'blog',
-	'body',
-	'content',
-	'entry-content-asset',
-	'entry',
-	'hentry',
-	'main',
-	'Normal',
-	'page',
-	'pagination',
-	'permalink',
-	'post',
-	'story',
-	'text',
-	'[-_]copy', // usatoday
-	'\\Bcopy',
+    "article",
+    "articlecontent",
+    "instapaper_body",
+    "blog",
+    "body",
+    "content",
+    "entry-content-asset",
+    "entry",
+    "hentry",
+    "main",
+    "Normal",
+    "page",
+    "pagination",
+    "permalink",
+    "post",
+    "story",
+    "text",
+    "[-_]copy", // usatoday
+    "\\Bcopy",
 ];
 // The above list, joined into a matching regular expression
-export const POSITIVE_SCORE_RE = new RegExp(POSITIVE_SCORE_HINTS.join('|'), 'i');
+export const POSITIVE_SCORE_RE = new RegExp(POSITIVE_SCORE_HINTS.join("|"), "i");
 
 // TODO: same as for positive
 export const NEGATIVE_SCORE_HINTS = [
-	'adbox',
-	'advert',
-	'author',
-	'bio',
-	'bookmark',
-	'bottom',
-	'byline',
-	'clear',
-	'com-',
-	'combx',
-	'comment',
-	'comment\\B',
-	'contact',
-	'copy',
-	'credit',
-	'crumb',
-	'date',
-	'deck',
-	'excerpt',
-	'featured', // tnr.com has a featured_content which throws us off
-	'foot',
-	'footer',
-	//   "footnote", <- not sure about this one
-	'graf',
-	'head',
-	'info',
-	'infotext', // newscientist.com copyright
-	'instapaper_ignore',
-	'jump',
-	'linebreak',
-	'link',
-	'masthead',
-	'media',
-	'meta',
-	'modal',
-	'outbrain', // slate.com junk
-	'promo',
-	'pr_', // autoblog - press release
-	'related',
-	'respond',
-	'roundcontent', // lifehacker restricted content warning
-	'scroll',
-	'secondary',
-	'share',
-	'shopping',
-	'shoutbox',
-	'side',
-	'sidebar',
-	'sponsor',
-	'stamp',
-	'sub',
-	'summary',
-	'tags',
-	'tools',
-	'widget',
+    "adbox",
+    "advert",
+    "author",
+    "bio",
+    "bookmark",
+    "bottom",
+    "byline",
+    "clear",
+    "com-",
+    "combx",
+    "comment",
+    "comment\\B",
+    "contact",
+    "copy",
+    "credit",
+    "crumb",
+    "date",
+    "deck",
+    "excerpt",
+    "featured", // tnr.com has a featured_content which throws us off
+    "foot",
+    "footer",
+    //   "footnote", <- not sure about this one
+    "graf",
+    "head",
+    "info",
+    "infotext", // newscientist.com copyright
+    "instapaper_ignore",
+    "jump",
+    "linebreak",
+    "link",
+    "masthead",
+    "media",
+    "meta",
+    "modal",
+    "outbrain", // slate.com junk
+    "promo",
+    "pr_", // autoblog - press release
+    "related",
+    "respond",
+    "roundcontent", // lifehacker restricted content warning
+    "scroll",
+    "secondary",
+    "share",
+    "shopping",
+    "shoutbox",
+    "side",
+    "sidebar",
+    "sponsor",
+    "stamp",
+    "sub",
+    "summary",
+    "tags",
+    "tools",
+    "widget",
 ];
 // The above list, joined into a matching regular expression
-export const NEGATIVE_SCORE_RE = new RegExp(NEGATIVE_SCORE_HINTS.join('|'), 'i');
+export const NEGATIVE_SCORE_RE = new RegExp(NEGATIVE_SCORE_HINTS.join("|"), "i");
 
-export const PHOTO_HINTS = ['figure', 'photo', 'image', 'caption'];
-export const PHOTO_HINTS_RE = new RegExp(PHOTO_HINTS.join('|'), 'i');
+export const PHOTO_HINTS = ["figure", "photo", "image", "caption"];
+export const PHOTO_HINTS_RE = new RegExp(PHOTO_HINTS.join("|"), "i");
 
 export const NON_TOP_CANDIDATE_TAGS = [
-	'br',
-	'b',
-	'i',
-	'label',
-	'hr',
-	'area',
-	'base',
-	'basefont',
-	'input',
-	'img',
-	'link',
-	'meta',
+    "br",
+    "b",
+    "i",
+    "label",
+    "hr",
+    "area",
+    "base",
+    "basefont",
+    "input",
+    "img",
+    "link",
+    "meta",
 ];
 
-export const NON_TOP_CANDIDATE_TAGS_RE = new RegExp(`^(${NON_TOP_CANDIDATE_TAGS.join('|')})$`, 'i');
+export const NON_TOP_CANDIDATE_TAGS_RE = new RegExp(`^(${NON_TOP_CANDIDATE_TAGS.join("|")})$`, "i");
 
-const SENTENCE_END_RE = new RegExp('.( |$)');
+const SENTENCE_END_RE = new RegExp(".( |$)");
 export const hasSentencend = (text: string) => SENTENCE_END_RE.test(text);
 
 export const FOOTNOTE_HINT_RE = /\bfootnotes?\b/i;
 
-interface Metadata {
-	title?: string;
-	description?: string;
-	image?: string;
-	url?: string;
-	author?: string;
-	date?: string;
-	siteName?: string;
-}
+// TODO: shouldn't I just replace this with EntryModel generated by zod prisma
+
+export const Metadata = _EntryModel
+    .extend({
+        title: z.string(),
+        // summary: z.string().max(191).transform(s => s.trim()),
+        summary: z.string().transform(s => s.trim() && s.slice(0, 191)),
+        image: z.string().max(2083).nullish(),
+        url: z.string().max(191),
+        author: z.string().max(191),
+        published: z.string().or(z.date()),
+        siteName: z.string(),
+        type: z.nativeEnum(DocumentType).default(DocumentType.article),
+        recipe: recipeSchema,
+    })
+    .partial();
+
+export type Metadata = z.infer<typeof Metadata>;
+// interface Metadata {
+// 	title?: string;
+// 	summary?: string;
+// 	image?: string;
+// 	url?: string;
+// 	author?: string;
+// 	published?: string;
+// 	siteName?: string;
+// }
 
 // selectors can take just a string, or a string and a string which indicates the attribute (e.g. ['time', 'datetime']), or a string and a function which takes a matching node and returns a string. please be careful with the latter.
-type Selector = string | [string, string] | [string, (node: HTMLElement) => string];
-
+type Selector = string | [string, string] | [string, (node: HTMLElement) => string] | [string, string, string]
+// e.g. [string,string,string] indcicates .class, attr, attrValue (after json parse)
 // When indicating selectors, you can just do an array
 // e.g. ['title', 'meta[name="description"]']
 
@@ -201,811 +184,1675 @@ type Meta = (Selector | { meta: string[] } | ((node: HTMLElement) => string))[];
 
 // TODO: implement clean, transforms
 interface IExtractor {
-	title: Meta;
-	author: Meta;
-	date_published: Meta;
-	lead_image_url: Meta;
-	dek: Meta;
-	excerpt: Meta;
-	siteName: Meta;
-	// content is usually chosen with the algo - you can pass in selectors to use those instead
-	// they work differently, though
-	// for now, just an array of selectors to get the root element where the content is
-	content?: string[];
-	disableJSONLD: boolean;
-
-	//todo: json-ld support in Meta
+    title: Meta;
+    author: Meta;
+    date_published: Meta;
+    lead_image_url: Meta;
+    dek: Meta;
+    excerpt: Meta;
+    siteName: Meta;
+    // content is usually chosen with the algo - you can pass in selectors to use those instead
+    // they work differently, though
+    // for now, just an array of selectors to get the root element where the content is
+    content?: string[] | {
+        selectors: string[];
+        clean: string[];
+    };
+    disableJSONLD: boolean;
+    enclosureUrl?: Meta;
+    duration?: Meta;
+    /** Optionally can define type, or an array of arrays that indiciates to check for that selector and return that documenttype, a single string indicating just use that as fallback */
+    type?: DocumentType | ([string, DocumentType] | DocumentType)[];
+    //todo: json-ld support in Meta
 }
 
 export type CustomExtractor = Partial<IExtractor> & {
-	domain: string;
+    domain: string | string[];
 };
 
 // TODO: let this be replaced by custom extractors, ala mercury-parser
 // same format as mercury - parser too
 const Extractor: IExtractor = {
-	title: [
-		{
-			meta: [
-				'twitter:title',
-				'og:title',
-				'citation_title',
-				'dc:title',
-				'dcterm:title',
-				'title',
-				'weibo:article:title',
-				'weibo:webpage:title',
-			],
-		},
-		'.hentry .entry-title',
-		'h1#articleHeader',
-		'h1.articleHeader',
-		'h1.article',
-		'.instapaper_title',
-		'#meebo-title',
-		'article h1',
-		'#entry-title',
-		'.entry-title',
-		'#entryTitle',
-		'#entrytitle',
-		'.entryTitle',
-		'.entrytitle',
-		'#articleTitle',
-		'.articleTitle',
-		'post post-title',
-		'h1.title',
-		'h2.article',
-		'h1',
-		'html head title',
-		'title',
-	],
-	author: [
-		{ meta: ['author', 'og:author', 'citation_author'] },
-		'.authors-byline',
-		{
-			meta: [
-				'dc:creator',
-				'dcterm:creator',
-				'twitter:creator',
-				'weibo:article:user_id',
-				'weibo:webpage:user_id',
-			],
-		},
-		(el: HTMLElement) => findAuthor(el),
-	],
-	date_published: [
-		{ meta: ['article:published_time', 'date', 'dc:date', 'dcterm:date'] },
-		['time[itemprop="datePublished"]', 'datetime'],
-	],
-	lead_image_url: [
-		{
-			meta: [
-				// in order of priority
-				'og:image',
-				'twitter:image',
-				'image',
-				'image_src',
-				'weibo:article:image',
-				'weibo:webpage:image',
-			],
-		},
-	],
-	dek: [
-		{
-			meta: [
-				'twitter:description',
-				'dc:description',
-				'dcterm:description',
-				'og:description',
-				'description',
-				'weibo:article:description',
-				'weibo:webpage:description',
-			],
-		},
-	],
-	excerpt: [
-		{
-			meta: [
-				'twitter:description',
-				'dc:description',
-				'dcterm:description',
-				'og:description',
-				'description',
-				'weibo:article:description',
-				'weibo:webpage:description',
-			],
-		},
-	],
-	siteName: [
-		{
-			meta: ['og:site_name'],
-		},
-	],
-	disableJSONLD: false,
+    title: [
+        {
+            meta: [
+                "twitter:title",
+                "og:title",
+                "citation_title",
+                "dc:title",
+                "dcterm:title",
+                "title",
+                "weibo:article:title",
+                "weibo:webpage:title",
+            ],
+        },
+        ".hentry .entry-title",
+        "h1#articleHeader",
+        "h1.articleHeader",
+        "h1.article",
+        ".instapaper_title",
+        "#meebo-title",
+        "article h1",
+        "#entry-title",
+        ".entry-title",
+        "#entryTitle",
+        "#entrytitle",
+        ".entryTitle",
+        ".entrytitle",
+        "#articleTitle",
+        ".articleTitle",
+        "post post-title",
+        "h1.title",
+        "h2.article",
+        "h1",
+        "html head title",
+        "title",
+    ],
+    author: [
+        { meta: ["author", "og:author", "citation_author"] },
+        ".authors-byline",
+        {
+            meta: [
+                "dc:creator",
+                "dcterm:creator",
+                "twitter:creator",
+                "weibo:article:user_id",
+                "weibo:webpage:user_id",
+            ],
+        },
+        (el: HTMLElement) => findAuthor(el) || "",
+    ],
+    date_published: [
+        { meta: ["article:published_time", "date", "dc:date", "dcterm:date"] },
+        ['time[itemprop="datePublished"]', "datetime"],
+    ],
+    lead_image_url: [
+        {
+            meta: [
+                // in order of priority
+                "og:image",
+                "twitter:image",
+                "image",
+                "image_src",
+                "weibo:article:image",
+                "weibo:webpage:image",
+            ],
+        },
+    ],
+    dek: [
+        {
+            meta: [
+                "twitter:description",
+                "dc:description",
+                "dcterm:description",
+                "og:description",
+                "description",
+                "weibo:article:description",
+                "weibo:webpage:description",
+            ],
+        },
+    ],
+    excerpt: [
+        {
+            meta: [
+                "twitter:description",
+                "dc:description",
+                "dcterm:description",
+                "og:description",
+                "description",
+                "weibo:article:description",
+                "weibo:webpage:description",
+            ],
+        },
+    ],
+    siteName: [
+        {
+            meta: ["og:site_name"],
+        },
+    ],
+    disableJSONLD: false,
 };
 // TODO: add extend
 
 const ExtractorToMetadata = {
-	title: 'title',
-	date_published: 'date',
-	lead_image_url: 'image',
-	dek: 'description',
-	excerpt: 'description',
+    title: "title",
+    date_published: "date",
+    lead_image_url: "image",
+    dek: "description",
+    excerpt: "description",
 } as const;
 
 type Entries<T> = {
-	[K in keyof T]: [K, T[K]];
+    [K in keyof T]: [K, T[K]];
 }[keyof T][];
 
+
+function isProbablyVisible(node: HTMLElement) {
+    return (!node.getAttribute("style") && !node.hasAttribute("hidden") && (!node.hasAttribute("aria-hidden") || node.getAttribute("aria-hidden") !== "true" || (node.classNames.indexOf("fallback-image") !== -1)))
+}
+
+function getNextNode(node: HTMLElement, ignoreSelfAndKids: boolean) {
+    if (!ignoreSelfAndKids && node.childNodes.some(n => n.nodeType === 1)) {
+        return node.childNodes.find(n => n.nodeType === 1) as HTMLElement;
+    }
+    if (node.nextElementSibling) {
+        return node.nextElementSibling
+    }
+    do {
+        node = node.parentNode
+    } while (node && !node.nextElementSibling);
+    return node && node.nextElementSibling;
+}
+
+function removeAndGetNext(node: HTMLElement) {
+    const nextNode = getNextNode(node, true);
+    node.parentNode.removeChild(node);
+    return nextNode;
+}
+
+
+function grabArticle(root: HTMLElement) {
+    /***
+   * grabArticle - Using a variety of metrics (content score, classname, element types), find the content that is
+   *         most likely to be the stuff a user wants to read. Then return it wrapped up in a div.
+   *
+   * @param page a document to run upon. Needs to be a full document, complete with body.
+   * @return Element
+  **/
+
+    const meta = new Map();
+
+    const pageCacheHtml = page.innerHTML;
+
+    while (true) {
+
+        // First, node prepping. Trash nodes that look cruddy (like ones with the
+        // class name "comment", etc), and turn divs into P tags where they have been
+        // used inappropriately (as in, where they contain no other block level elements.)
+        const elementsToScore: HTMLElement[] = [];
+
+        let shouldRemoveTitleHeader = true;
+
+        let node = root;
+
+        while (node) {
+
+            if (node.tagName === "HTML") {
+                meta.set("lang", node.getAttribute("lang"));
+            }
+
+            const matchString = node.classNames + " " + node.id;
+
+            if (isProbablyVisible(node)) {
+                node = removeAndGetNext(node);
+                continue;
+            }
+
+            // User is not able to see elements applied with both "aria-modal = true" and "role = dialog"
+            if (node.getAttribute("aria-modal") == "true" && node.getAttribute("role") == "dialog") {
+                node = removeAndGetNext(node);
+                continue;
+            }
+
+            // Check to see if this node is a byline, and remove it if it is.
+            if (this._checkByline(node, matchString)) {
+                node = this._removeAndGetNext(node);
+                continue;
+            }
+
+            if (shouldRemoveTitleHeader && this._headerDuplicatesTitle(node)) {
+                this.log("Removing header: ", node.textContent.trim(), this._articleTitle.trim());
+                shouldRemoveTitleHeader = false;
+                node = this._removeAndGetNext(node);
+                continue;
+            }
+
+            // Remove unlikely candidates
+            if (stripUnlikelyCandidates) {
+                if (this.REGEXPS.unlikelyCandidates.test(matchString) &&
+                    !this.REGEXPS.okMaybeItsACandidate.test(matchString) &&
+                    !this._hasAncestorTag(node, "table") &&
+                    !this._hasAncestorTag(node, "code") &&
+                    node.tagName !== "BODY" &&
+                    node.tagName !== "A") {
+                    this.log("Removing unlikely candidate - " + matchString);
+                    node = this._removeAndGetNext(node);
+                    continue;
+                }
+
+                if (this.UNLIKELY_ROLES.includes(node.getAttribute("role"))) {
+                    this.log("Removing content with role " + node.getAttribute("role") + " - " + matchString);
+                    node = this._removeAndGetNext(node);
+                    continue;
+                }
+            }
+
+            // Remove DIV, SECTION, and HEADER nodes without any content(e.g. text, image, video, or iframe).
+            if ((node.tagName === "DIV" || node.tagName === "SECTION" || node.tagName === "HEADER" ||
+                node.tagName === "H1" || node.tagName === "H2" || node.tagName === "H3" ||
+                node.tagName === "H4" || node.tagName === "H5" || node.tagName === "H6") &&
+                this._isElementWithoutContent(node)) {
+                node = this._removeAndGetNext(node);
+                continue;
+            }
+
+            if (this.DEFAULT_TAGS_TO_SCORE.indexOf(node.tagName) !== -1) {
+                elementsToScore.push(node);
+            }
+
+            // Turn all divs that don't have children block level elements into p's
+            if (node.tagName === "DIV") {
+                // Put phrasing content into paragraphs.
+                let p = null;
+                let childNode = node.firstChild;
+                while (childNode) {
+                    const nextSibling = childNode.nextSibling;
+                    if (this._isPhrasingContent(childNode)) {
+                        if (p !== null) {
+                            p.appendChild(childNode);
+                        } else if (!this._isWhitespace(childNode)) {
+                            p = doc.createElement("p");
+                            node.replaceChild(p, childNode);
+                            p.appendChild(childNode);
+                        }
+                    } else if (p !== null) {
+                        while (p.lastChild && this._isWhitespace(p.lastChild)) {
+                            p.removeChild(p.lastChild);
+                        }
+                        p = null;
+                    }
+                    childNode = nextSibling;
+                }
+
+                // Sites like http://mobile.slate.com encloses each paragraph with a DIV
+                // element. DIVs with only a P element inside and no text content can be
+                // safely converted into plain P elements to avoid confusing the scoring
+                // algorithm with DIVs with are, in practice, paragraphs.
+                if (this._hasSingleTagInsideElement(node, "P") && this._getLinkDensity(node) < 0.25) {
+                    const newNode = node.children[0];
+                    node.parentNode.replaceChild(newNode, node);
+                    node = newNode;
+                    elementsToScore.push(node);
+                } else if (!this._hasChildBlockElement(node)) {
+                    node = this._setNodeTag(node, "P");
+                    elementsToScore.push(node);
+                }
+            }
+            node = this._getNextNode(node);
+        }
+
+        /**
+         * Loop through all paragraphs, and assign a score to them based on how content-y they look.
+         * Then add their score to their parent node.
+         *
+         * A score is determined by things like number of commas, class names, etc. Maybe eventually link density.
+        **/
+        var candidates = [];
+        this._forEachNode(elementsToScore, function (elementToScore) {
+            if (!elementToScore.parentNode || typeof (elementToScore.parentNode.tagName) === "undefined")
+                return;
+
+            // If this paragraph is less than 25 characters, don't even count it.
+            const innerText = this._getInnerText(elementToScore);
+            if (innerText.length < 25)
+                return;
+
+            // Exclude nodes with no ancestor.
+            const ancestors = this._getNodeAncestors(elementToScore, 5);
+            if (ancestors.length === 0)
+                return;
+
+            let contentScore = 0;
+
+            // Add a point for the paragraph itself as a base.
+            contentScore += 1;
+
+            // Add points for any commas within this paragraph.
+            contentScore += innerText.split(",").length;
+
+            // For every 100 characters in this paragraph, add another point. Up to 3 points.
+            contentScore += Math.min(Math.floor(innerText.length / 100), 3);
+
+            // Initialize and score ancestors.
+            this._forEachNode(ancestors, function (ancestor, level) {
+                if (!ancestor.tagName || !ancestor.parentNode || typeof (ancestor.parentNode.tagName) === "undefined")
+                    return;
+
+                if (typeof (ancestor.readability) === "undefined") {
+                    this._initializeNode(ancestor);
+                    candidates.push(ancestor);
+                }
+
+                // Node score divider:
+                // - parent:             1 (no division)
+                // - grandparent:        2
+                // - great grandparent+: ancestor level * 3
+                if (level === 0)
+                    var scoreDivider = 1;
+                else if (level === 1)
+                    scoreDivider = 2;
+                else
+                    scoreDivider = level * 3;
+                ancestor.readability.contentScore += contentScore / scoreDivider;
+            });
+        });
+
+        // After we've calculated scores, loop through all of the possible
+        // candidate nodes we found and find the one with the highest score.
+        const topCandidates = [];
+        for (let c = 0, cl = candidates.length; c < cl; c += 1) {
+            const candidate = candidates[c];
+
+            // Scale the final candidates score based on link density. Good content
+            // should have a relatively small link density (5% or less) and be mostly
+            // unaffected by this operation.
+            const candidateScore = candidate.readability.contentScore * (1 - this._getLinkDensity(candidate));
+            candidate.readability.contentScore = candidateScore;
+
+            this.log("Candidate:", candidate, "with score " + candidateScore);
+
+            for (let t = 0; t < this._nbTopCandidates; t++) {
+                const aTopCandidate = topCandidates[t];
+
+                if (!aTopCandidate || candidateScore > aTopCandidate.readability.contentScore) {
+                    topCandidates.splice(t, 0, candidate);
+                    if (topCandidates.length > this._nbTopCandidates)
+                        topCandidates.pop();
+                    break;
+                }
+            }
+        }
+
+        let topCandidate = topCandidates[0] || null;
+        let neededToCreateTopCandidate = false;
+        var parentOfTopCandidate;
+
+        // If we still have no top candidate, just use the body as a last resort.
+        // We also have to copy the body node so it is something we can modify.
+        if (topCandidate === null || topCandidate.tagName === "BODY") {
+            // Move all of the page's children into topCandidate
+            topCandidate = doc.createElement("DIV");
+            neededToCreateTopCandidate = true;
+            // Move everything (not just elements, also text nodes etc.) into the container
+            // so we even include text directly in the body:
+            while (page.firstChild) {
+                this.log("Moving child out:", page.firstChild);
+                topCandidate.appendChild(page.firstChild);
+            }
+
+            page.appendChild(topCandidate);
+
+            this._initializeNode(topCandidate);
+        } else if (topCandidate) {
+            // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
+            // and whose scores are quite closed with current `topCandidate` node.
+            const alternativeCandidateAncestors = [];
+            for (let i = 1; i < topCandidates.length; i++) {
+                if (topCandidates[i].readability.contentScore / topCandidate.readability.contentScore >= 0.75) {
+                    alternativeCandidateAncestors.push(this._getNodeAncestors(topCandidates[i]));
+                }
+            }
+            const MINIMUM_TOPCANDIDATES = 3;
+            if (alternativeCandidateAncestors.length >= MINIMUM_TOPCANDIDATES) {
+                parentOfTopCandidate = topCandidate.parentNode;
+                while (parentOfTopCandidate.tagName !== "BODY") {
+                    let listsContainingThisAncestor = 0;
+                    for (let ancestorIndex = 0; ancestorIndex < alternativeCandidateAncestors.length && listsContainingThisAncestor < MINIMUM_TOPCANDIDATES; ancestorIndex++) {
+                        listsContainingThisAncestor += Number(alternativeCandidateAncestors[ancestorIndex].includes(parentOfTopCandidate));
+                    }
+                    if (listsContainingThisAncestor >= MINIMUM_TOPCANDIDATES) {
+                        topCandidate = parentOfTopCandidate;
+                        break;
+                    }
+                    parentOfTopCandidate = parentOfTopCandidate.parentNode;
+                }
+            }
+            if (!topCandidate.readability) {
+                this._initializeNode(topCandidate);
+            }
+
+            // Because of our bonus system, parents of candidates might have scores
+            // themselves. They get half of the node. There won't be nodes with higher
+            // scores than our topCandidate, but if we see the score going *up* in the first
+            // few steps up the tree, that's a decent sign that there might be more content
+            // lurking in other places that we want to unify in. The sibling stuff
+            // below does some of that - but only if we've looked high enough up the DOM
+            // tree.
+            parentOfTopCandidate = topCandidate.parentNode;
+            let lastScore = topCandidate.readability.contentScore;
+            // The scores shouldn't get too low.
+            const scoreThreshold = lastScore / 3;
+            while (parentOfTopCandidate.tagName !== "BODY") {
+                if (!parentOfTopCandidate.readability) {
+                    parentOfTopCandidate = parentOfTopCandidate.parentNode;
+                    continue;
+                }
+                const parentScore = parentOfTopCandidate.readability.contentScore;
+                if (parentScore < scoreThreshold)
+                    break;
+                if (parentScore > lastScore) {
+                    // Alright! We found a better parent to use.
+                    topCandidate = parentOfTopCandidate;
+                    break;
+                }
+                lastScore = parentOfTopCandidate.readability.contentScore;
+                parentOfTopCandidate = parentOfTopCandidate.parentNode;
+            }
+
+            // If the top candidate is the only child, use parent instead. This will help sibling
+            // joining logic when adjacent content is actually located in parent's sibling node.
+            parentOfTopCandidate = topCandidate.parentNode;
+            while (parentOfTopCandidate.tagName != "BODY" && parentOfTopCandidate.children.length == 1) {
+                topCandidate = parentOfTopCandidate;
+                parentOfTopCandidate = topCandidate.parentNode;
+            }
+            if (!topCandidate.readability) {
+                this._initializeNode(topCandidate);
+            }
+        }
+
+        // Now that we have the top candidate, look through its siblings for content
+        // that might also be related. Things like preambles, content split by ads
+        // that we removed, etc.
+        let articleContent = doc.createElement("DIV");
+        if (isPaging)
+            articleContent.id = "readability-content";
+
+        const siblingScoreThreshold = Math.max(10, topCandidate.readability.contentScore * 0.2);
+        // Keep potential top candidate's parent node to try to get text direction of it later.
+        parentOfTopCandidate = topCandidate.parentNode;
+        let siblings = parentOfTopCandidate.children;
+
+        for (let s = 0, sl = siblings.length; s < sl; s++) {
+            let sibling = siblings[s];
+            let append = false;
+
+            this.log("Looking at sibling node:", sibling, sibling.readability ? ("with score " + sibling.readability.contentScore) : "");
+            this.log("Sibling has score", sibling.readability ? sibling.readability.contentScore : "Unknown");
+
+            if (sibling === topCandidate) {
+                append = true;
+            } else {
+                let contentBonus = 0;
+
+                // Give a bonus if sibling nodes and top candidates have the example same classname
+                if (sibling.className === topCandidate.className && topCandidate.className !== "")
+                    contentBonus += topCandidate.readability.contentScore * 0.2;
+
+                if (sibling.readability &&
+                    ((sibling.readability.contentScore + contentBonus) >= siblingScoreThreshold)) {
+                    append = true;
+                } else if (sibling.nodeName === "P") {
+                    const linkDensity = this._getLinkDensity(sibling);
+                    const nodeContent = this._getInnerText(sibling);
+                    const nodeLength = nodeContent.length;
+
+                    if (nodeLength > 80 && linkDensity < 0.25) {
+                        append = true;
+                    } else if (nodeLength < 80 && nodeLength > 0 && linkDensity === 0 &&
+                        nodeContent.search(/\.( |$)/) !== -1) {
+                        append = true;
+                    }
+                }
+            }
+
+            if (append) {
+                this.log("Appending node:", sibling);
+
+                if (this.ALTER_TO_DIV_EXCEPTIONS.indexOf(sibling.nodeName) === -1) {
+                    // We have a node that isn't a common block level element, like a form or td tag.
+                    // Turn it into a div so it doesn't get filtered out later by accident.
+                    this.log("Altering sibling:", sibling, "to div.");
+
+                    sibling = this._setNodeTag(sibling, "DIV");
+                }
+
+                articleContent.appendChild(sibling);
+                // Fetch children again to make it compatible
+                // with DOM parsers without live collection support.
+                siblings = parentOfTopCandidate.children;
+                // siblings is a reference to the children array, and
+                // sibling is removed from the array when we call appendChild().
+                // As a result, we must revisit this index since the nodes
+                // have been shifted.
+                s -= 1;
+                sl -= 1;
+            }
+        }
+
+        if (this._debug)
+            this.log("Article content pre-prep: " + articleContent.innerHTML);
+        // So we have all of the content that we need. Now we clean it up for presentation.
+        this._prepArticle(articleContent);
+        if (this._debug)
+            this.log("Article content post-prep: " + articleContent.innerHTML);
+
+        if (neededToCreateTopCandidate) {
+            // We already created a fake div thing, and there wouldn't have been any siblings left
+            // for the previous loop, so there's no point trying to create a new div, and then
+            // move all the children over. Just assign IDs and class names here. No need to append
+            // because that already happened anyway.
+            topCandidate.id = "readability-page-1";
+            topCandidate.className = "page";
+        } else {
+            const div = doc.createElement("DIV");
+            div.id = "readability-page-1";
+            div.className = "page";
+            while (articleContent.firstChild) {
+                div.appendChild(articleContent.firstChild);
+            }
+            articleContent.appendChild(div);
+        }
+
+        if (this._debug)
+            this.log("Article content after paging: " + articleContent.innerHTML);
+
+        let parseSuccessful = true;
+
+        // Now that we've gone through the full algorithm, check to see if
+        // we got any meaningful content. If we didn't, we may need to re-run
+        // grabArticle with different flags set. This gives us a higher likelihood of
+        // finding the content, and the sieve approach gives us a higher likelihood of
+        // finding the -right- content.
+        const textLength = this._getInnerText(articleContent, true).length;
+        if (textLength < this._charThreshold) {
+            parseSuccessful = false;
+            page.innerHTML = pageCacheHtml;
+
+            if (this._flagIsActive(this.FLAG_STRIP_UNLIKELYS)) {
+                this._removeFlag(this.FLAG_STRIP_UNLIKELYS);
+                this._attempts.push({ articleContent: articleContent, textLength: textLength });
+            } else if (this._flagIsActive(this.FLAG_WEIGHT_CLASSES)) {
+                this._removeFlag(this.FLAG_WEIGHT_CLASSES);
+                this._attempts.push({ articleContent: articleContent, textLength: textLength });
+            } else if (this._flagIsActive(this.FLAG_CLEAN_CONDITIONALLY)) {
+                this._removeFlag(this.FLAG_CLEAN_CONDITIONALLY);
+                this._attempts.push({ articleContent: articleContent, textLength: textLength });
+            } else {
+                this._attempts.push({ articleContent: articleContent, textLength: textLength });
+                // No luck after removing flags, just return the longest text we found during the different loops
+                this._attempts.sort(function (a, b) {
+                    return b.textLength - a.textLength;
+                });
+
+                // But first check if we actually have something
+                if (!this._attempts[0].textLength) {
+                    return null;
+                }
+
+                articleContent = this._attempts[0].articleContent;
+                parseSuccessful = true;
+            }
+        }
+
+        if (parseSuccessful) {
+            // Find out text direction from ancestors of final top candidate.
+            const ancestors = [parentOfTopCandidate, topCandidate].concat(this._getNodeAncestors(parentOfTopCandidate));
+            this._someNode(ancestors, function (ancestor) {
+                if (!ancestor.tagName)
+                    return false;
+                const articleDir = ancestor.getAttribute("dir");
+                if (articleDir) {
+                    this._articleDir = articleDir;
+                    return true;
+                }
+                return false;
+            });
+            return articleContent;
+        }
+    }
+}
+
 export class Parser {
-	baseUrl: string;
-	html: string;
-	root!: HTMLElement;
-	metadata: Metadata = {
-		title: '',
-		author: '',
-		description: '',
-		image: '',
-		url: '',
-		date: '',
-		siteName: '',
-	};
-	extractor: IExtractor;
-	nodeScoreMap: Map<HTMLElement, number> = new Map();
+    baseUrl: string;
+    html: string;
+    root!: HTMLElement;
+    metadata: Metadata = {
+        title: "",
+        author: "",
+        summary: "",
+        image: "",
+        uri: "",
+        published: "",
+        siteName: "",
+        type: "article",
+        enclosureUrl: undefined,
+    };
+    extractor: IExtractor;
+    customExtractor = false;
+    nodeScoreMap: Map<HTMLElement, number> = new Map();
 
-	constructor(baseUrl: string, html?: string, customExtractor?: CustomExtractor) {
-		this.baseUrl = baseUrl;
-		if (html) {
-			this.html = html;
-		} else {
-			this.html = '';
-		}
-		if (customExtractor) {
-			this.extractor = { ...Extractor, ...customExtractor };
-		} else {
-			this.extractor = Extractor;
-			// look to match domain
-			const url = new URL(baseUrl);
-			const domain = url.hostname;
-			for (const [key, value] of Object.entries(CustomExtractors)) {
-				if (value.domain === domain) {
-					console.log(`Sweet, found a custom extractor for ${domain}!`);
-					this.extractor = { ...Extractor, ...value };
-					break;
-				}
-			}
-			console.log(`here's the extractor we're going with:`, this.extractor);
-		}
-	}
+    constructor(baseUrl: string, html?: string, customExtractor?: CustomExtractor) {
+        this.baseUrl = baseUrl;
+        if (html) {
+            this.html = html;
+        } else {
+            this.html = "";
+        }
+        if (customExtractor) {
+            this.extractor = { ...Extractor, ...customExtractor };
+            this.customExtractor = true;
+        } else {
+            this.extractor = Extractor;
+            console.log({ CustomExtractors })
+            // look to match domain
+            const url = new URL(baseUrl);
+            const domain = url.hostname;
+            console.log({ domain })
+            for (const [key, value] of Object.entries(CustomExtractors)) {
+                console.log(`custom`, [key, value])
+                // parse pattern if it has * in it
+                const matchString = (test: string | string[], domain: string): boolean => {
+                    if (Array.isArray(test)) {
+                        return test.some(d => matchString(d, domain));
+                    }
+                    if (test.includes("*")) {
+                        const regex = new RegExp(test.replace(/\*/g, ".*"));
+                        return regex.test(domain);
+                    }
+                    return test === domain;
+                }
+                if (matchString(value.domain, domain)) {
+                    console.log(`Sweet, found a custom extractor for ${domain}!`);
+                    this.extractor = { ...Extractor, ...value };
+                    this.customExtractor = true;
+                    break;
+                }
+            }
+            console.log(`here's the extractor we're going with:`, this.extractor);
+        }
+    }
 
-	async parse() {
-		console.time('parse');
-		if (!this.html) {
-			await this.fetchHtml(this.baseUrl).then((html) => (this.html = html));
-		}
-		this.getRoot();
-		if (!this.root) {
-			throw new Error('No root to parse');
-		}
-		// todo: fix lazy loaded images
-		// <img data-component="lazy-embed" data-src="https://media.timeout.com/images/105877787/image.jpg" width="100%">
-		this.getMetadata();
-		const content = this.getContent();
-		// if there's no title, set it to url
-		if (!this.metadata.title) {
-			this.metadata.title = this.metadata.url || this.baseUrl;
-		}
-		console.log(`Meta: ${JSON.stringify(this.metadata)}`);
-		if (!this.metadata.description) {
-			// this.metadata.description = content.innerText.slice(0, 200);
-		}
-		console.timeEnd('parse');
-		return {
-			content: content.innerHTML,
-			...this.metadata,
-			wordCount: content.innerText.split(' ').length,
-			textContent: content.innerText,
-		};
-	}
+    async parse() {
+        const usereadability = true;
+        console.log({ usereadability })
+        console.time("parse");
+        if (!this.html) {
+            await this.fetchHtml(this.baseUrl).then((html) => (this.html = html));
+        }
+        // should do this if no custom extractor provided
+        this.getRoot();
+        if (!this.root) {
+            throw new Error("No root to parse");
+        }
+        this.unwrapNoscriptImages();
+        // todo: fix lazy loaded images
+        // <img data-component="lazy-embed" data-src="https://media.timeout.com/images/105877787/image.jpg" width="100%">
+        this.getMetadata();
+        // remove scripts
+        this.removeScripts();
 
-	private getRoot() {
-		if (!this.html) {
-			throw new Error('No html to parse');
-		}
-		this.root = parse(this.html);
-	}
+        let html = "";
+        let text = "";
+        try {
+            const content = this.getContent();
+            text = content.innerText;
+            html = content.innerHTML;
+            console.log({ html })
+            // get outgoing links from content
+            const links = this.getLinks(content);
+            this.metadata.extended = {
+                outgoingLinks: links
+            }
+            console.log({ links })
+        } catch (e) {
+            console.error(e);
+        }
+        // if there's no title, set it to url
+        if (!this.metadata.title) {
+            this.metadata.title = this.metadata.uri || this.baseUrl;
+        }
+        console.log(`Meta: ${JSON.stringify(this.metadata)}`);
+        if (!this.metadata.summary) {
+            // this.metadata.description = content.innerText.slice(0, 200);
+        }
 
-	private getMetadata() {
-		if (!this.extractor.disableJSONLD) {
-			this.scrapeJsonLd();
-		}
-		const metaEls = this.root.querySelectorAll('meta');
-		const metadataToExtractorHash = {
-			title: ['title'],
-			description: ['dek', 'excerpt'],
-			image: ['lead_image_url'],
-			date: ['date_published'],
-			author: ['author'],
-			siteName: ['siteName'],
-		};
-		console.log({ metadata: this.metadata });
-		type MetadataToExtractorKeys = keyof typeof metadataToExtractorHash;
-		for (const metaKey of Object.keys(metadataToExtractorHash) as MetadataToExtractorKeys[]) {
-			// if we already have the metadata, continue
-			if (this.metadata[metaKey]) continue;
-			while (!this.metadata[metaKey]) {
-				console.log(`looking for ${metaKey}`);
-				// TODO: fix this type
-				metadataToExtractorHash[metaKey].forEach((key) => {
-					const extractor = this.extractor[key] as Meta;
-					if (!extractor) return;
-					extractor.forEach((e) => {
-						if (this.metadata[metaKey]) return;
-						if (typeof e === 'string' || Array.isArray(e)) {
-							// then we're looking for a selector
-							this.metadata[metaKey] = this.extractFromSelectors(this.root, [e]);
-						} else if (typeof e === 'function') {
-							this.metadata[metaKey] = e(this.root);
-						} else {
-							// then we're looking for a meta tag
-							this.metadata[metaKey] = this.scrapeMetaTags(metaEls, e.meta || []);
-						}
-						if (this.metadata[metaKey]) return;
-					});
-				});
-				// if we got here, then we didn't find the metadata - break
-				if (!this.metadata[metaKey]) break;
-			}
-		}
-		// todo: place here: try fallbacks
-		this.cleanMetadata();
-		// TODO: fix not properly getting description 2022-03-30 16:47 where i left off
-		// if no image, put in request to screenshot site, or else create svg from text of article - is that possible?
-		// todo: add selecting image from content via mercury-parser
-		// TODO: add get url and get content if selector present
-	}
+        if (!this.metadata.image && html) {
+            console.log(`No image, trying to get one from the content`)
+            // if there's no image, try to get one from the content
+            const content = parse(html);
+            const imageList = content.querySelectorAll("img");
+            while (!this.metadata.image && imageList.length > 0) {
+                const img = imageList.shift();
+                console.log(`Trying to get image from content`, img)
+                if (img) {
+                    this.metadata.image = img.getAttribute("src");
+                } else {
+                    break;
+                }
+            }
+        }
 
-	private cleanMetadata() {
-		// just some simple house cleaning:
-		// let's start with the author
-		if (this.metadata.author) {
-			// first let's trim whitespace
-			this.metadata.author = this.metadata.author.trim();
+        if (this.metadata.image) {
+            // absolutize this.metadata.iamge
+            this.metadata.image = absolutizeUrl(this.metadata.image, this.baseUrl);
+            // clean up bad url
+            this.metadata.image = cleanUpNaughtyUrl(this.metadata.image);
+        }
+        console.timeEnd("parse");
+        console.log({ html })
+        return {
+            ...this.metadata,
+            summary: this.metadata.summary?.slice(0, 191),
+            html,
+            text,
+            wordCount: text.split(" ").length,
+            // type: html ? "article" : "bookmark",
+        };
+    }
 
-			// if the author starts with "by " then the author, remove the "by "
-			if (this.metadata.author && this.metadata.author.toLowerCase().startsWith('by ')) {
-				this.metadata.author = this.metadata.author.slice(3);
-			}
-		}
-	}
+    isReaderable() {
+        this.getRoot();
+        return isProbablyReaderable(this.root);
+    }
 
-	private scrapeMetaTags(metaEls: HTMLElement[], names: string[]) {
-		// only scrape where metadata is not already set
-		for (const name of names) {
-			const meta = metaEls.find(
-				(el) => el.getAttribute('name') === name || el.getAttribute('property') === name
-			);
-			console.log(`Found meta tag ${name}`);
-			if (meta) return meta.getAttribute('content');
-		}
-	}
+    private getRoot() {
+        if (!this.html) {
+            throw new Error("No html to parse");
+        }
+        this.root = parse(this.html);
+    }
 
-	private getContent() {
-		console.log('*** Starting to Get Content ***');
-		let topNode: HTMLElement | undefined;
-		if (this.extractor.content) {
-			topNode = this.extractContentFromSelectors(this.root, this.extractor.content || []);
-			// get content this way
-			// return content
-		}
-		if (!topNode) {
-			const nodesToScore = this.getNodesToScore();
-			this.scoreNodes(nodesToScore);
-			topNode = this.getTopCandidate();
-		}
-		if (!topNode) {
-			// if STILL no top node, then we've got a problem
-			throw new Error('No top candidate');
-		}
-		// now clean up node
-		return this.cleanContent(topNode);
-	}
+    private getMetadata() {
+        if (!this.extractor.disableJSONLD) {
+            this.scrapeJsonLd();
+        }
+        const metaEls = this.root.querySelectorAll("meta");
+        const metadataToExtractorHash = {
+            title: ["title"],
+            summary: ["dek", "excerpt"],
+            image: ["lead_image_url"],
+            published: ["date_published"],
+            author: ["author"],
+            siteName: ["siteName"],
+            enclosureUrl: ["enclosureUrl"],
+            duration: ["duration"],
+        } as const;
+        console.log({ metadata: this.metadata });
+        type MetadataToExtractorKeys = keyof typeof metadataToExtractorHash;
+        for (const metaKey of Object.keys(metadataToExtractorHash) as MetadataToExtractorKeys[]) {
+            // if we already have the metadata, continue
+            if (this.metadata[metaKey]) continue;
+            while (!this.metadata[metaKey]) {
+                console.log(`looking for ${metaKey}`);
+                // TODO: fix this type
+                metadataToExtractorHash[metaKey].forEach((key) => {
+                    const extractor = this.extractor[key] as Meta;
+                    if (!extractor) return;
+                    extractor.forEach((e) => {
+                        if (this.metadata[metaKey]) return;
+                        if (typeof e === "string" || Array.isArray(e)) {
+                            // then we're looking for a selector
+                            this.metadata[metaKey] = this.extractFromSelectors(this.root, [e]);
+                        } else if (typeof e === "function") {
+                            this.metadata[metaKey] = e(this.root);
+                        } else {
+                            // then we're looking for a meta tag
+                            this.metadata[metaKey] = this.scrapeMetaTags(metaEls, e.meta || []);
+                        }
+                        if (this.metadata[metaKey]) return;
+                    });
+                });
+                // if we got here, then we didn't find the metadata - break
+                if (!this.metadata[metaKey]) break;
+            }
+        }
+        if (this.extractor.type) {
+            // try to parse type
+            if (Array.isArray(this.extractor.type)) {
+                // array
+                for (const typeToTry of this.extractor.type) {
+                    if (Array.isArray(typeToTry)) {
+                        // check if typetotry[0] selector erxists on root
+                        if (this.root.querySelector(typeToTry[0])) {
+                            this.metadata.type = typeToTry[1];
+                            break;
+                        }
+                    } else {
+                        this.metadata.type = typeToTry;
+                        break;
+                    }
+                }
+            } else {
+                this.metadata.type = this.extractor.type
+            }
+        }
+        // todo: place here: try fallbacks
+        this.cleanMetadata();
+        // TODO: fix not properly getting description 2022-03-30 16:47 where i left off
+        // if no image, put in request to screenshot site, or else create svg from text of article - is that possible?
+        // todo: add selecting image from content via mercury-parser
+        // TODO: add get url and get content if selector present
+    }
 
-	private scoreNodes(nodes: HTMLElement[]) {
-		console.log('*** Starting to Score Nodes ***');
-		console.log(
-			`We have ${nodes.length} nodes to score! Here's a look at them:`,
-			JSON.stringify(
-				nodes.map((node) => node.rawText),
-				null,
-				2
-			)
-		);
-		for (const node of nodes) {
-			const parent = node.parentNode;
-			// console.log({ parent });
-			const grandparent = parent?.parentNode;
-			const text = node.innerText;
-			//   skip if no parent or text is less than 25
-			if (!parent) continue;
-			if (text.length < 25) continue;
-			//   initialize parent & grandparent nodes if they're not in our map
-			if (!this.nodeScoreMap.has(parent)) {
-				this.initializeNode(parent);
-			}
-			if (grandparent && !this.nodeScoreMap.has(grandparent)) {
-				this.initializeNode(grandparent);
-			}
-			// TODO: 20220322191700 this is where i left off
-			// now score the paragraph itself (which we're in)
-			// should this be a separate function?
-			let score = 1; // starting at 1 as a base
+    private cleanMetadata() {
+        // just some simple house cleaning:
+        // let's start with the author
+        if (this.metadata.author) {
+            // first let's trim whitespace
+            this.metadata.author = this.metadata.author.trim();
 
-			// add points for commas (idk, everyone seems to do this, seems arbitrary)
-			score += text.split(',').length;
+            // if the author starts with "by " then the author, remove the "by "
+            if (this.metadata.author && this.metadata.author.toLowerCase().startsWith("by ")) {
+                this.metadata.author = this.metadata.author.slice(3);
+            }
+        }
 
-			// add another point (up to 3 points) for every 50 chars in the paragraph (readability does 100 chars, but i like mercury-parser doing 50)
-			score += Math.min(Math.floor(text.length / 50), 3);
+    }
 
-			// arbitrarily adding 2/3 to parent and 1/3 to grandparent
-			// readability adds full to parent and 1/2 to grandparent
-			// mercury-parser add .25 to parent and 0 to grandparent...
-			this.updateScore(parent, score * (2 / 3));
-			if (grandparent) this.updateScore(grandparent, score * (1 / 3));
-		}
-	}
-	private getLinkDensity(container: HTMLElement) {
-		const links = container.querySelectorAll('a');
-		const textLength = container.innerText.length;
-		const linkLength = links.reduce((acc: number, el: HTMLElement) => acc + el.innerText.length, 0);
-		if (!textLength && linkLength) return 1;
-		if (textLength) return linkLength / textLength;
-		return 0;
-	}
+    private scrapeMetaTags(metaEls: HTMLElement[], names: string[]) {
+        // only scrape where metadata is not already set
+        for (const name of names) {
+            const meta = metaEls.find(
+                (el) => el.getAttribute("name") === name || el.getAttribute("property") === name
+            );
+            console.log(`Found meta tag ${name}`);
+            if (meta) return meta.getAttribute("content");
+        }
+    }
 
-	private compareScores(a: HTMLElement | number, b: HTMLElement | number) {
-		if (!a && a !== 0) return false;
-		if (!b && b !== 0) return true;
-		const a_score = typeof a === 'number' ? a : this.nodeScoreMap.get(a);
-		const b_score = typeof b === 'number' ? b : this.nodeScoreMap.get(b);
-		if (a_score && b_score) {
-			return a_score >= b_score;
-		} else if (a_score && !b_score) {
-			return true;
-		}
-		return false;
-	}
+    private getContent() {
+        console.log("*** Starting to Get Content ***");
+        let topNode: HTMLElement | undefined;
+        if (this.extractor.content) {
+            const selectors = Array.isArray(this.extractor.content) ? this.extractor.content : this.extractor.content.selectors;
+            topNode = this.extractContentFromSelectors(this.root, selectors);
+            // clean
+            if ("clean" in this.extractor.content) {
+                this.extractor.content.clean.forEach((cleaner) => {
+                    topNode?.querySelectorAll(cleaner).forEach((el) => el.remove());
+                })
+            }
 
-	private getTopCandidate() {
-		// update scores with link density - can we do that before?
-		console.log('*** 🥁 Starting to Get Top Candidate 🥁 ***');
-		console.log(`First, a look at our scorecard: ${JSON.stringify(this.nodeScoreMap)}`);
-		let topCandidate: HTMLElement | undefined = undefined;
-		for (const [el] of this.nodeScoreMap) {
-			this.updateScore(el, (score) => score * (1 - this.getLinkDensity(el)));
-			if (!topCandidate || this.compareScores(el, topCandidate)) {
-				topCandidate = el;
-			}
-		}
-		if (!topCandidate) {
-			const body = this.root.querySelector('body');
-			if (body) {
-				topCandidate = body;
-			} else {
-				// set to whole html, but this is only if there's no body tag - unlikely
-				topCandidate = this.root.querySelector('html') as HTMLElement;
-			}
-		}
-		// console.log({ topCandidate });
-		// console.log(JSON.stringify(this.nodeScoreMap.entries(), null, 2));
-		// now merge all its siblings to create our article, before processing
-		// console.log({ topCandidateSibling: topCandidate?.previousElementSibling });
-		topCandidate = this.mergeSiblings(topCandidate as HTMLElement);
+            // get content this way
+            // return content
+        }
+        if (!topNode) {
+            const nodesToScore = this.getNodesToScore();
+            this.scoreNodes(nodesToScore);
+            topNode = this.getTopCandidate();
+        }
+        if (!topNode) {
+            // if STILL no top node, then we've got a problem
+            throw new Error("No top candidate");
+        }
+        console.log({ topNode: topNode.innerHTML });
+        // now clean up node
+        return this.cleanContent(topNode);
+    }
 
-		// look in arc90 preparticle and mercury-parser cleaners/content
-		// TODO: next page link?
+    private getLinks(root: HTMLElement) {
+        const links = root.querySelectorAll("a");
+        // Check if URL has same origin, and check if url is to a whitelisted site (like unsplash.com)
+        const linksToReturn = links.map((link) => {
+            const href = new URL(link.getAttribute("href") || "", this.baseUrl);
+            const base = new URL(this.baseUrl);
+            if (!link.getAttribute("href") || !link.innerText) return null;
+            if (link.getAttribute("href") === "#") return null;
+            if (link.getAttribute("href") === "") return null;
+            if (link.getAttribute("href") === "/") return null;
+            if (link.getAttribute("href")?.startsWith("javascript:void(0)")) return null;
+            if ((href.hostname + href.pathname) === (base.hostname + base.pathname)) return null;
+            if (href.hostname === "unsplash.com") return null;
+            return {
+                href: link.getAttribute("href"),
+                text: link.innerText.trim(),
+            };
+        }).filter(Boolean) as { href: string; text: string }[];
+        return linksToReturn;
+    }
+    private getNodeAncestors(node: HTMLElement, maxDepth = 0) {
+        let i = 0;
+        const ancestors: HTMLElement[] = [];
+        while (node.parentNode) {
+            ancestors.push(node.parentNode);
+            if (maxDepth && ++i === maxDepth)
+                break;
+            node = node.parentNode;
+        }
+        return ancestors;
+    }
+    private scoreNodes(nodes: HTMLElement[]) {
+        console.log("*** Starting to Score Nodes ***");
+        console.log(
+            `We have ${nodes.length} nodes to score! Here's a look at them:`,
+            JSON.stringify(
+                nodes.map((node) => printRawHTMLTag(node)),
+                null,
+                2
+            )
+        );
+        const candidates = [];
+        for (const node of nodes) {
+            const parent = node.parentNode;
+            console.log({ parent });
+            if (!parent) continue;
+            //   skip if no parent or text is less than 25
+            const text = node.innerText;
+            if (text.length < 25) continue;
+            const ancestors = this.getNodeAncestors(node, 5);
+            console.log({ ancestors })
+            if (ancestors.length === 0) {
+                continue;
+            }
+            let score = 0;
+            score += 1; // starting at 1 as a base
+            score += text.split(",").length; // add points for commas
+            score += Math.min(Math.floor(text.length / 100), 3); // For every 100 characters in this paragraph, add another point. Up to 3 points.
 
-		// we should also run a check to see if the top candidate is usable
+            ancestors.forEach(ancestor => {
+                if (!ancestor.tagName || !ancestor.parentNode) return;
+                if (!this.nodeScoreMap.has(ancestor)) {
+                    this.initializeNode(ancestor);
+                    candidates.push(ancestor);
+                }
 
-		// we also need to get the proper metadata
-		return topCandidate;
-	}
+                // Node score divider:
+                // - parent:             1 (no division)
+                // - grandparent:        2
+                // - great grandparent+: ancestor level * 3
+                //     if (level === 0)
+                //         var scoreDivider = 1;
+                //     else if (level === 1)
+                //         scoreDivider = 2;
+                //     else
+                //         scoreDivider = level * 3;
+                //     ancestor.readability.contentScore += contentScore / scoreDivider;
+            })
 
-	private mergeSiblings(topCandidate: HTMLElement) {
-		console.log('*** Starting to Merge Siblings ***');
-		console.log(
-			`Ok, so here's what our topCandidate looks like so far:`,
-			printRawHTMLTag(topCandidate)
-		);
-		const topCandidateScore = this.nodeScoreMap.get(topCandidate);
-		if (!topCandidateScore) {
-			throw Error('Error getting top candidate score');
-		}
-		// mercury-parser uses .25, arc90 uses .2,
-		const siblingScoreThreshold = Math.max(10, topCandidateScore * 0.25);
-		const wrapper = parse('<div></div>');
-		const siblingNodes = topCandidate.parentNode.childNodes;
-		// console.log({ siblingNodes });
-		// loop thru all siblings
-		// add ones that score high enough to a wrapper div that will hold our content
-		let index = 0;
-		for (const siblingNode of siblingNodes) {
-			index++; // <- this is a ONE-BASED index, not zero-based (matches with length)
-			// taken from mercury parser
-			let siblingCandidate: HTMLElement | undefined = undefined;
-			if (siblingNode.nodeType === 1) {
-				siblingCandidate = siblingNode as HTMLElement;
-			}
-			if (!siblingCandidate) continue;
-			if (NON_TOP_CANDIDATE_TAGS_RE.test(siblingCandidate.tagName)) continue;
-			const siblingScore = this.nodeScoreMap.get(siblingCandidate);
-			if (!siblingScore) continue;
-			//   if it's actually the top candidate, then append to our wrapper
-			// console.log('mergesiblings', { siblingCandidate, topCandidate });
-			if (siblingCandidate === topCandidate) {
-				wrapper.appendChild(siblingCandidate);
-				continue;
-			}
-			// score the siblingCandidate now
-			let contentBonus = 0;
 
-			// give a bonus if sibling nodes and top candidates have the example same classname
-			if (siblingCandidate.classList.toString() === topCandidate.classList.toString()) {
-				contentBonus += topCandidateScore * 0.2;
-			}
-			// now let's test link density
-			const linkDensity = this.getLinkDensity(siblingCandidate);
-			// give it a small bonus if it has a low link density, give it a penalty if it's highger
-			if (linkDensity < 0.05) {
-				contentBonus += 20;
-			} else if (linkDensity >= 0.5) {
-				contentBonus -= 20;
-			}
-			const newScore = siblingScore + contentBonus;
-			// console.log(
-			// 	`Looking at sibling ${siblingCandidate.tagName}.${siblingCandidate.classNames} with score ${siblingScore}`
-			// );
-			if (newScore >= siblingScoreThreshold) {
-				wrapper.appendChild(siblingCandidate);
-				// console.log(`Added`);
-				continue;
-			}
-			// let's do further inspecting if it's a P
-			if (siblingCandidate.tagName === 'P') {
-				const siblingContent = siblingCandidate.innerText;
-				const siblingContentLength = siblingContent.length;
-				if (siblingContentLength > 80 && linkDensity < 0.25) {
-					wrapper.appendChild(siblingCandidate);
-					// console.log(`Added`);
-					continue;
-				}
-				if (siblingContentLength <= 80 && linkDensity === 0 && hasSentencend(siblingContent)) {
-					wrapper.appendChild(siblingCandidate);
-					// console.log(`Added`);
-					continue;
-				}
-			}
-			// make sure div.footnotes gets added
-			if (siblingNodes.length - index <= 2) {
-				// it's in the last couple of nodes
-				if (
-					FOOTNOTE_HINT_RE.test(siblingCandidate.classList.toString()) ||
-					FOOTNOTE_HINT_RE.test(siblingCandidate.id)
-				) {
-					wrapper.appendChild(siblingCandidate);
-					// console.log(`Added`);
-					continue;
-				}
-			}
-		}
-		// todo: arc90 turns nodes into divs if they're not divs or ps
-		// https://github.com/masukomi/arc90-readability/blob/aca36d14c6a4096d0dcaea94539d4576a485abff/js/readability.js#L930
-		return wrapper;
-	}
 
-	private initializeNode(node: HTMLElement) {
-		// console.log('-- initializing node --');
-		this.nodeScoreMap.set(node, 0);
-		// Modifiying this slightly from arc90 to get with the times (stolen from Mercury-Parser's constants)
-		switch (node.tagName) {
-			case 'DIV': {
-				this.updateScore(node, 5);
-				break;
-			}
-			case 'PRE':
-			case 'TD':
-			case 'OL':
-			case 'UL':
-			case 'DL':
-			case 'BLOCKQUOTE': {
-				this.updateScore(node, 3);
-				break;
-			}
-			case 'ADDRESS':
-			case 'FORM':
-				this.updateScore(node, -3);
-				break;
-			case 'TH':
-				this.updateScore(node, -5);
-				break;
-		}
-		this.updateScore(node, this.getWeight(node));
-		// console.log({ nodeScoreMap: this.nodeScoreMap.get(node) });
-	}
+            const grandparent = parent?.parentNode;
+            //   initialize parent & grandparent nodes if they're not in our map
+            if (!this.nodeScoreMap.has(parent)) {
+                this.initializeNode(parent);
+            }
+            if (grandparent && !this.nodeScoreMap.has(grandparent)) {
+                this.initializeNode(grandparent);
+            }
+            // TODO: 20220322191700 this is where i left off
+            // now score the paragraph itself (which we're in)
+            // should this be a separate function?
 
-	private getWeight(el: HTMLElement) {
-		// TODO: setting to turn this off
-		let weight = 0;
-		// to think about: is it better to use simple regex, or match within domtokenlist?
-		const classNames = el.classList.toString();
-		if (el.id) {
-			// testing out ids being worth a bit more...
-			if (NEGATIVE_SCORE_RE.test(el.id)) weight -= 30;
-			if (POSITIVE_SCORE_RE.test(el.id)) weight += 30;
-		}
-		if (classNames) {
-			// test classname and add/subtract points depending on match
-			if (NEGATIVE_SCORE_RE.test(classNames)) weight -= 25;
-			if (POSITIVE_SCORE_RE.test(classNames)) weight += 25;
-			// try to keep photos
-			if (PHOTO_HINTS_RE.test(classNames)) weight += 15;
-		}
-		// console.log({ weight });
-		return weight;
-	}
+            // add points for commas (idk, everyone seems to do this, seems arbitrary)
 
-	private updateScore(node: HTMLElement, score: number | ((n: number) => number)) {
-		// console.log('-- Updating score --');
-		const currentScore = this.nodeScoreMap.get(node);
-		// console.log({ currentScore });
-		if (typeof currentScore !== 'number') return;
-		if (typeof score === 'number') {
-			this.nodeScoreMap.set(node, currentScore + score);
-		} else {
-			this.nodeScoreMap.set(node, score(currentScore));
-		}
-		// console.log(`Updated score for ${node.tagName} to ${this.nodeScoreMap.get(node)}`);
-	}
+            // add another point (up to 3 points) for every 50 chars in the paragraph (readability does 100 chars, but i like mercury-parser doing 50)
 
-	private getNodesToScore() {
-		const nodesToScore = this.root.querySelectorAll('p, pre, td');
-		const divsToParagraphs = this.root
-			.querySelectorAll('div')
-			.filter((e) => e.querySelectorAll(DIV_TO_P_BLOCK_TAGS).length === 0);
-		divsToParagraphs.forEach((e) => e.replaceWith(this.changeElementTag(e, 'p')));
-		nodesToScore.push(...divsToParagraphs);
-		return nodesToScore;
-	}
+            // arbitrarily adding 2/3 to parent and 1/3 to grandparent
+            // readability adds full to parent and 1/2 to grandparent
+            // mercury-parser add .25 to parent and 0 to grandparent...
+            this.updateScore(parent, score * (2 / 3));
+            if (grandparent) this.updateScore(grandparent, score * (1 / 3));
+        }
+    }
+    private getLinkDensity(container: HTMLElement) {
+        const links = container.querySelectorAll("a");
+        const textLength = container.innerText.length;
+        const linkLength = links.reduce((acc: number, el: HTMLElement) => acc + el.innerText.length, 0);
+        if (!textLength && linkLength) return 1;
+        if (textLength) return linkLength / textLength;
+        return 0;
+    }
 
-	private changeElementTag(element: HTMLElement, tagName: string) {
-		return parse(`<${tagName}>${element.innerHTML}</${tagName}>`);
-	}
+    private compareScores(a: HTMLElement | number, b: HTMLElement | number) {
+        if (!a && a !== 0) return false;
+        if (!b && b !== 0) return true;
+        const a_score = typeof a === "number" ? a : this.nodeScoreMap.get(a);
+        const b_score = typeof b === "number" ? b : this.nodeScoreMap.get(b);
+        if (a_score && b_score) {
+            return a_score >= b_score;
+        } else if (a_score && !b_score) {
+            return true;
+        }
+        return false;
+    }
 
-	private scrapeJsonLd() {
-		const jsonLd = this.root?.querySelectorAll('script[type="application/ld+json"]');
-		if (!jsonLd) {
-			return;
-		}
-		const json = jsonLd.map((json) => JSON.parse(json.innerHTML));
-		// JSON.parse(jsonLd.innerHTML);
-		if (!json) {
-			return;
-		}
-		this.metadata.title = this.getJsonLdvalue(json, 'title', 'name', 'headline');
-		this.metadata.image = this.getJsonLdvalue(json, ['image', 'url']);
-		this.metadata.url = this.getJsonLdvalue(json, 'url');
-		this.metadata.author = this.getJsonLdvalue(json, ['author', 'name']);
-		this.metadata.description = this.getJsonLdvalue(json, 'description');
-		this.metadata.date = this.getJsonLdvalue(json, 'datePublished');
-		this.metadata.siteName = this.getJsonLdvalue(json, 'publisher', 'name');
-		console.log(
-			`Hello, this is our metadata so far after scrapeJsonLd(): ${JSON.stringify(this.metadata)}`
-		);
-	}
+    private getTopCandidate() {
+        // update scores with link density - can we do that before?
+        console.log("*** 🥁 Starting to Get Top Candidate 🥁 ***");
+        console.log(`First, a look at our scorecard: ${JSON.stringify(
+            Array.from(this.nodeScoreMap.entries())
+                .map(([el, score]) => ({
+                    el: printRawHTMLTag(el),
+                    score
+                }))
+        )}`);
+        let topCandidate: HTMLElement | undefined = undefined;
+        for (const [el] of this.nodeScoreMap) {
+            this.updateScore(el, (score) => score * (1 - this.getLinkDensity(el)));
+            if (!topCandidate || this.compareScores(el, topCandidate)) {
+                topCandidate = el;
+            }
+        }
+        if (!topCandidate) {
+            const body = this.root.querySelector("body");
+            if (body) {
+                topCandidate = body;
+            } else {
+                // set to whole html, but this is only if there's no body tag - unlikely
+                topCandidate = this.root.querySelector("html") as HTMLElement;
+            }
+        }
+        // console.log({ topCandidate });
+        // console.log(JSON.stringify(this.nodeScoreMap.entries(), null, 2));
+        // now merge all its siblings to create our article, before processing
+        // console.log({ topCandidateSibling: topCandidate?.previousElementSibling });
+        topCandidate = this.mergeSiblings(topCandidate as HTMLElement);
 
-	/**
-	 *
-	 * @param json - array of json-ld objects
-	 * @param keys - keys to search for. Either pass in a string (e.g. 'description') or [string, string] (e.g. ['author', 'name']) — the first key will be used to search for the value, the second will be used to search for the value of the first key's value
-	 * @returns the value of the first key that is found
-	 */
-	private getJsonLdvalue(jsons: any[], ...keys: (string | [string, string])[]) {
-		// TODO: abstract this out to utils file
-		// maybe todo: add types for JSONLD
-		for (const key of keys) {
-			for (const json of jsons) {
-				if (typeof key === 'string') {
-					console.log(`Searching for ${key} in ${JSON.stringify(json)}`);
-					if (json[key] && typeof json[key] === 'string') {
-						return json[key] as string;
-					}
-				} else if (Array.isArray(key)) {
-					console.log(`Searching for ${key[0]} & ${key[1]} in ${JSON.stringify(json)}`);
-					if (Array.isArray(json[key[0]])) {
-						console.log(`Searching for ${key[1]} in ${JSON.stringify(json[key[0]])}`);
-						const arr = json[key[0]];
-						const secondaryKey = key[1];
-						if (arr[0] && typeof arr[0][secondaryKey] === 'string') {
-							console.log(`Found ${key[1]} in ${JSON.stringify(arr[0])}: ${arr[0][secondaryKey]}`);
-							return arr[0][secondaryKey] as string;
-							return json[0][key[1]] as string;
-						}
-					} else if (typeof json[key[0]] === 'string') {
-						return json[key[0]] as string;
-					} else if (json[key[0]] && typeof json[key[0]][key[1]] === 'string') {
-						return json[key[0]][key[1]] as string;
-					}
-				}
-			}
-		}
-		return undefined;
-	}
+        // look in arc90 preparticle and mercury-parser cleaners/content
+        // TODO: next page link?
 
-	private cleanContent(node: HTMLElement) {
-		// convert top level html or body tag to div
-		if (node.tagName === 'HTML' || node.tagName === 'BODY') {
-			node.replaceWith(this.changeElementTag(node, 'div'));
-		}
-		['href', 'src'].forEach((a) => absolutizeUrls(node, this.baseUrl, a));
-		absolutizeSet(node, this.baseUrl);
-		// did that work?
-		// console.log(node.querySelectorAll('a[href]'));
-		STRIP_OUTPUT_TAGS.forEach((tag) => {
-			const elements = node.querySelectorAll(tag);
-			console.log('elements to strip', elements);
-			elements.forEach((e) => {
-				const matches = e.parentNode.querySelectorAll(KEEP_SELECTORS.join(', '));
-				if (!matches.some((match) => match === e)) {
-					console.log('stripping', e);
-					e.remove();
-				}
-			});
-		});
-		const hOnes = node.querySelectorAll('h1');
-		if (hOnes.length < 3) {
-			hOnes.forEach((e) => e.remove());
-		} else {
-			hOnes.forEach((e) => {
-				e.replaceWith(this.changeElementTag(e, 'h2'));
-			});
-		}
-		const otherHeaders = node.querySelectorAll('h2, h3, h4, h5, h6');
-		otherHeaders.forEach((header) => {
-			if (normalizeSpaces(header.innerText) === this.metadata.title) {
-				header.remove();
-			}
-			if (this.getWeight(header) < 0) {
-				// header.remove();
-			}
-		});
-		const tagsToClean = node.querySelectorAll(CLEAN_CONDITIONALLY_TAGS);
-		tagsToClean.forEach((tag) => {
-			// if it's a form, drop it
-			if (tag.tagName === 'FORM') {
-				tag.remove();
-				return;
-			}
-			//todo: keep class
-			const weight = this.getWeight(tag);
-			if (weight < 0) {
-				tag.remove();
-			} else {
-				const tagContent = normalizeSpaces(tag.innerText);
-				if (scoreCommas(tagContent) < 10) {
-					const pCount = tag.querySelectorAll('p').length;
-					const inputCount = tag.querySelectorAll('input').length;
-					if (inputCount > pCount / 3) {
-						tag.remove();
-						return;
-					}
-					const imgCount = tag.querySelectorAll('img').length;
-					if (tagContent.length < 25 && imgCount === 0) {
-						tag.remove();
-						return;
-					}
-					const density = this.getLinkDensity(tag);
-					if (weight < 25 && density > 0.2 && tagContent.length > 75) {
-						tag.remove();
-						return;
-					}
-					if (weight >= 25 && density > 0.5) {
-						// this one i'm unsure of
-					}
-					const scriptCount = tag.querySelectorAll('script').length;
-					if (scriptCount > 0 && tagContent.length < 150) {
-						tag.remove();
-						return;
-					}
-				}
-			}
-		});
+        // we should also run a check to see if the top candidate is usable
 
-		// clean up lazy loaded images
-		node = this.convertLazyLoadedImages(node);
+        // we also need to get the proper metadata
+        return topCandidate;
+    }
 
-		// todo: remove empty paragraphs, and remove unneccessary attributes
+    private mergeSiblings(topCandidate: HTMLElement) {
+        console.log("*** Starting to Merge Siblings ***");
+        console.log(`Ok, so here's what our topCandidate looks like so far:`, topCandidate.innerHTML);
 
-		/** Remove Attributes */
-		node = cleanAttributes(node);
+        const topCandidateScore = this.nodeScoreMap.get(topCandidate);
+        if (!topCandidateScore) {
+            throw Error("Error getting top candidate score");
+        }
+        // mercury-parser uses .25, arc90 uses .2,
+        const siblingScoreThreshold = Math.max(10, topCandidateScore * 0.2);
+        const wrapper = parse("<div></div>");
+        const siblingNodes = topCandidate.parentNode.childNodes;
+        console.log({ siblingNodes });
+        // loop thru all siblings
+        // add ones that score high enough to a wrapper div that will hold our content
+        let index = 0;
+        for (const siblingNode of siblingNodes) {
+            index++; // <- this is a ONE-BASED index, not zero-based (matches with length)
+            // taken from mercury parser
+            let siblingCandidate: HTMLElement | undefined = undefined;
+            if (siblingNode.nodeType === 1) {
+                siblingCandidate = siblingNode as HTMLElement;
+            }
+            if (!siblingCandidate) continue;
+            if (NON_TOP_CANDIDATE_TAGS_RE.test(siblingCandidate.tagName)) continue;
+            const siblingScore = this.nodeScoreMap.get(siblingCandidate);
+            if (!siblingScore) continue;
+            //   if it's actually the top candidate, then append to our wrapper
+            // console.log('mergesiblings', { siblingCandidate, topCandidate });
+            if (siblingCandidate === topCandidate) {
+                wrapper.appendChild(siblingCandidate);
+                continue;
+            }
+            // score the siblingCandidate now
+            let contentBonus = 0;
 
-		// also check arc90 for what they do
-		return node;
-	}
+            // give a bonus if sibling nodes and top candidates have the example same classname
+            if (siblingCandidate.classList.toString() === topCandidate.classList.toString()) {
+                contentBonus += topCandidateScore * 0.2;
+            }
+            // now let's test link density
+            const linkDensity = this.getLinkDensity(siblingCandidate);
+            // give it a small bonus if it has a low link density, give it a penalty if it's highger
+            if (linkDensity < 0.05) {
+                contentBonus += 20;
+            } else if (linkDensity >= 0.5) {
+                contentBonus -= 20;
+            }
+            const newScore = siblingScore + contentBonus;
+            // console.log(
+            // 	`Looking at sibling ${siblingCandidate.tagName}.${siblingCandidate.classNames} with score ${siblingScore}`
+            // );
+            if (newScore >= siblingScoreThreshold) {
+                wrapper.appendChild(siblingCandidate);
+                // console.log(`Added`);
+                continue;
+            }
+            // let's do further inspecting if it's a P
+            if (siblingCandidate.tagName === "P") {
+                const siblingContent = siblingCandidate.innerText;
+                const siblingContentLength = siblingContent.length;
+                if (siblingContentLength > 80 && linkDensity < 0.25) {
+                    wrapper.appendChild(siblingCandidate);
+                    // console.log(`Added`);
+                    continue;
+                }
+                if (siblingContentLength <= 80 && linkDensity === 0 && hasSentencend(siblingContent)) {
+                    wrapper.appendChild(siblingCandidate);
+                    // console.log(`Added`);
+                    continue;
+                }
+            }
+            // make sure div.footnotes gets added
+            if (siblingNodes.length - index <= 2) {
+                // it's in the last couple of nodes
+                if (
+                    FOOTNOTE_HINT_RE.test(siblingCandidate.classList.toString()) ||
+                    FOOTNOTE_HINT_RE.test(siblingCandidate.id)
+                ) {
+                    wrapper.appendChild(siblingCandidate);
+                    // console.log(`Added`);
+                    continue;
+                }
+            }
+        }
+        console.log(`Ok, so here's what our topCandidate looks like after merging siblings:`, wrapper.innerHTML);
+        // todo: arc90 turns nodes into divs if they're not divs or ps
+        // https://github.com/masukomi/arc90-readability/blob/aca36d14c6a4096d0dcaea94539d4576a485abff/js/readability.js#L930
+        return wrapper;
+    }
 
-	private extractFromSelectors(root: HTMLElement, selectors: Selector[], maxChildren = 1) {
-		console.log({ selectors });
-		for (const selector of selectors) {
-			// This seems wrong… how can I be doing this for each metadata piece?
-			console.log(`trying this selector:`, selector);
-			const elements = root.querySelectorAll(typeof selector === 'string' ? selector : selector[0]);
-			// if (elements.length !== 1) continue;
-			// currently, it just gets the first match ?
-			const element = elements[0];
-			if (!element) continue;
-			if (element && element.childNodes.length > maxChildren) continue;
-			console.log(`we've got a match! for ${selector}:`, element);
-			if (element && typeof selector === 'string') {
-				const text = element.textContent;
-				console.log(`and here's the text:`, text);
-				if (text) return text;
-			} else if (element && typeof selector[1] === 'function') {
-				const text = selector[1](element);
-				console.log(`and here's the text:`, text);
-				if (text) return text;
-			} else if (element && typeof selector[1] === 'string') {
-				const text = element.getAttribute(selector[1]);
-				console.log(`and here's the text:`, text);
-				if (text) return text;
-			}
-		}
-	}
+    private initializeNode(node: HTMLElement) {
+        // console.log('-- initializing node --');
+        this.nodeScoreMap.set(node, 0);
+        // Modifiying this slightly from arc90 to get with the times (stolen from Mercury-Parser's constants)
+        switch (node.tagName) {
+            case "DIV": {
+                this.updateScore(node, 5);
+                break;
+            }
+            case "PRE":
+            case "TD":
+            case "OL":
+            case "UL":
+            case "DL":
+            case "BLOCKQUOTE": {
+                this.updateScore(node, 3);
+                break;
+            }
+            case "ADDRESS":
+            case "FORM":
+                this.updateScore(node, -3);
+                break;
+            case "TH":
+                this.updateScore(node, -5);
+                break;
+        }
+        this.updateScore(node, this.getWeight(node));
+        // console.log({ nodeScoreMap: this.nodeScoreMap.get(node) });
+    }
 
-	private extractContentFromSelectors(root: HTMLElement, selectors: string[]) {
-		console.log(
-			`Attempting to extract **content** from selectors, because these were provided:`,
-			selectors
-		);
-		for (const selector of selectors) {
-			console.log(`trying this selector:`, selector);
-			const element = root.querySelector(selector);
-			if (!element) continue;
-			console.log(`Woohoo! Nice! We've got a match for your selector: ${selector}.`, element);
-			return element;
-		}
-	}
+    private getWeight(el: HTMLElement) {
+        // TODO: setting to turn this off
+        let weight = 0;
+        // to think about: is it better to use simple regex, or match within domtokenlist?
+        const classNames = el.classList.toString();
+        if (el.id) {
+            // testing out ids being worth a bit more...
+            if (NEGATIVE_SCORE_RE.test(el.id)) weight -= 30;
+            if (POSITIVE_SCORE_RE.test(el.id)) weight += 30;
+        }
+        if (classNames) {
+            // test classname and add/subtract points depending on match
+            if (NEGATIVE_SCORE_RE.test(classNames)) weight -= 25;
+            if (POSITIVE_SCORE_RE.test(classNames)) weight += 25;
+            // try to keep photos
+            if (PHOTO_HINTS_RE.test(classNames)) weight += 15;
+        }
+        // console.log({ weight });
+        return weight;
+    }
 
-	private convertLazyLoadedImages(node: HTMLElement) {
-		// credit https://github.com/postlight/mercury-parser/blob/HEAD/src/resource/utils/dom/convert-lazy-loaded-images.js
-		const imgs = node.querySelectorAll('img');
-		for (const img of imgs) {
-			const attrs = img.attributes;
-			for (const attr in attrs) {
-				const value = attrs[attr];
-				if (!value) continue;
-				if (attr !== 'srcset' && IS_LINK.test(value) && IS_SRCSET.test(value)) {
-					img.setAttribute('srcset', value);
-				} else if (
-					attr !== 'src' &&
-					attr !== 'srcset' &&
-					IS_LINK.test(value) &&
-					IS_IMAGE.test(value)
-				) {
-					img.setAttribute('src', value);
-				}
-			}
-		}
+    private updateScore(node: HTMLElement, score: number | ((n: number) => number)) {
+        // console.log('-- Updating score --');
+        const currentScore = this.nodeScoreMap.get(node);
+        // console.log({ currentScore });
+        if (typeof currentScore !== "number") return;
+        if (typeof score === "number") {
+            this.nodeScoreMap.set(node, currentScore + score);
+        } else {
+            this.nodeScoreMap.set(node, score(currentScore));
+        }
+        // console.log(`Updated score for ${node.tagName} to ${this.nodeScoreMap.get(node)}`);
+    }
 
-		// convert amp-img to img tag
-		const ampImgs = node.querySelectorAll('amp-img');
-		for (const ampImg of ampImgs) {
-			console.log('ampImg', ampImg);
-			ampImg.replaceWith(`<img src="${ampImg.getAttribute('src')}">`);
-		}
+    private getNodesToScore() {
+        const nodesToScore = this.root.querySelectorAll("p, pre, td");
+        const divsToParagraphs = this.root
+            .querySelectorAll("div")
+            .filter((e) => e.querySelectorAll(DIV_TO_P_BLOCK_TAGS).length === 0);
+        console.log({ divsToParagraphs })
+        divsToParagraphs.forEach((e) => e.replaceWith(this.changeElementTag(e, "p")));
+        nodesToScore.push(...divsToParagraphs);
+        console.log({ nodesToScore })
+        return nodesToScore;
+    }
 
-		return node;
-	}
+    private changeElementTag(element: HTMLElement, tagName: string) {
+        return parse(`<${tagName}>${element.innerHTML}</${tagName}>`);
+    }
 
-	async fetchHtml(url: string) {
-		return await fetch(url).then((r) => r.text());
-	}
+    private scrapeJsonLd() {
+        const jsonLd = this.root?.querySelectorAll('script[type="application/ld+json"]');
+        console.log({ jsonLd });
+        if (!jsonLd) {
+            return;
+        }
+        const json = jsonLd.flatMap((json) => JSON.parse(json.innerHTML));
+        console.log(JSON.stringify(json));
+        // JSON.parse(jsonLd.innerHTML);
+        if (!json) {
+            return;
+        }
+        const articleJson = json.filter((json) =>
+            new RegExp(["Article", "Blog", "NewsArticle"].join("|")).test(json["@type"])
+        );
+        console.log({ articleJson });
+        this.metadata.title = this.getJsonLdvalue(articleJson, "title", "name", "headline");
+        this.metadata.image = this.getJsonLdvalue(articleJson, ["image", "url", (a) => a[0].url]);
+        this.metadata.uri = this.getJsonLdvalue(articleJson, "url");
+        this.metadata.author = this.getJsonLdvalue(articleJson, ["author", "name"]);
+        this.metadata.summary = this.getJsonLdvalue(articleJson, "description");
+        this.metadata.published = this.getJsonLdvalue(articleJson, "datePublished");
+        this.metadata.siteName = this.getJsonLdvalue(articleJson, "publisher", "name");
+
+        // look for schemas that will give us more info
+        // check for book schema
+        // const bookJson = json.find((json) => json["@type"] === "Book");
+        console.time("getSchemas");
+        const schemas = getSchemas(json);
+        console.log({ schemas, length: schemas.length })
+        if (schemas.length === 1) {
+            // then we can use it
+            //otherwise we'll have to offer a choice
+            const { schema, type } = schemas[0];
+            this.metadata.type = type;
+            this.metadata.title = schema.name;
+            if (schema.image) {
+                if (typeof schema.image === "string") {
+                    this.metadata.image = schema.image;
+                }
+                if (Array.isArray(schema.image)) {
+                    if (typeof schema.image[0] === "string") {
+                        this.metadata.image = schema.image[0];
+                    } else {
+                        this.metadata.image = schema.image[0].url;
+                    }
+                }
+            }
+            if (schema.author) {
+                if (typeof schema.author === "string") {
+                    this.metadata.author = schema.author;
+                }
+                if (Array.isArray(schema.author)) {
+                    if (typeof schema.author[0] === "string") {
+                        this.metadata.author = schema.author[0];
+                    } else {
+                        this.metadata.author = schema.author[0].name;
+                    }
+                } else if (typeof schema.author === "object") {
+                    this.metadata.author = schema.author.name;
+                }
+            }
+            if (schema["@type"] === "Book" && schema.isbn) {
+                this.metadata.uri = schema.isbn;
+            }
+            this.metadata.schemaOrg = schema;
+            // this.metadata.image = schema.image;
+        }
+        console.timeEnd("getSchemas");
+        const recipeJson = json.find((json) => {
+            console.log({ json });
+            const obj = clarifyStringOrObject(json["@type"]);
+            console.log({ obj });
+            if (typeof obj === "string") {
+                return json["@type"] === "Recipe";
+            } else if (Array.isArray(obj)) {
+                return obj.some((o) => o === "Recipe");
+            }
+        });
+        if (recipeJson) {
+            const recipe = recipeSchema.safeParse(recipeJson);
+            if (recipe.success) {
+                this.metadata.recipe = recipe.data;
+                this.metadata.type = "recipe";
+                console.log(`recipe found!`, recipe.data);
+            } else {
+                console.log(`error with recipe`, recipe.error);
+            }
+        }
+        console.log(`Hello, this is our metadata so far after scrapeJsonLd(): ${JSON.stringify(this.metadata)}`);
+    }
+
+    /**
+     *
+     * @param json - array of json-ld objects
+     * @param keys - keys to search for. Either pass in a string (e.g. 'description') or [string, string] (e.g. ['author', 'name']) — the first key will be used to search for the value, the second will be used to search for the value of the first key's value
+     * @returns the value of the first key that is found
+     */
+    private getJsonLdvalue(jsons: any[], ...keys: (string | [string, string] | [string, string, (o: any[]) => any])[]): string {
+        // TODO: abstract this out to utils file
+        // maybe todo: add types for JSONLD
+        for (const json of jsons) {
+            for (const key of keys) {
+                if (typeof key === "string") {
+                    // key = clarifyStringOrObject(key)
+                    console.log(`Searching for ${key} in ${JSON.stringify(json)}`);
+                    if (json[key] && typeof json[key] === "string") {
+                        return json[key] as string;
+                    }
+                } else if (Array.isArray(key)) {
+                    console.log(`Searching for ${key[0]} & ${key[1]} in ${JSON.stringify(json)}`);
+                    const firstValue = clarifyStringOrObject(json[key[0]]);
+                    if (Array.isArray(firstValue)) {
+                        console.log(`Searching for ${key[1]} in ${JSON.stringify(firstValue)}`);
+                        const arr = firstValue;
+                        const secondaryKey = key[1];
+                        console.log({ arr, secondaryKey })
+                        const fn = key[2] || ((o) => o.map((o) => o[secondaryKey]).join(", "));
+                        console.log({ fn })
+                        const filtered = arr
+                            .filter((a) => typeof a === "object" ? a[secondaryKey] : a)
+                        console.log({ filtered })
+                        return fn(filtered);
+                        // if (arr[0] && typeof arr[0][secondaryKey] === 'string') {
+                        // 	console.log(`Found ${key[1]} in ${JSON.stringify(arr[0])}: ${arr[0][secondaryKey]}`);
+                        // 	return arr[0][secondaryKey] as string;
+                        // }
+                    } else if (typeof firstValue === "string") {
+                        return firstValue as string;
+                    } else if (firstValue && typeof firstValue[key[1]] === "string") {
+                        return firstValue[key[1]] as string;
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+
+    private cleanContent(node: HTMLElement) {
+        // convert top level html or body tag to div
+        if (node.tagName === "HTML" || node.tagName === "BODY") {
+            node.replaceWith(this.changeElementTag(node, "div"));
+        }
+        node = fixLazyLoadedImages(node);
+        console.log(`node after fixLazyLoadedImages: ${node.outerHTML}`);
+        ["href", "src"].forEach((a) => absolutizeUrls(node, this.baseUrl, a));
+        absolutizeSet(node, this.baseUrl);
+        // did that work?
+        // console.log(node.querySelectorAll('a[href]'));
+        STRIP_OUTPUT_TAGS.forEach((tag) => {
+            const elements = node.querySelectorAll(tag);
+            console.log("elements to strip", elements);
+            elements.forEach((e) => {
+                const matches = e.parentNode.querySelectorAll(KEEP_SELECTORS.join(", "));
+                if (!matches.some((match) => match === e)) {
+                    console.log("stripping", e);
+                    e.remove();
+                }
+            });
+        });
+        const hOnes = node.querySelectorAll("h1");
+        if (hOnes.length < 3) {
+            hOnes.forEach((e) => e.remove());
+        } else {
+            hOnes.forEach((e) => {
+                e.replaceWith(this.changeElementTag(e, "h2"));
+            });
+        }
+        const otherHeaders = node.querySelectorAll("h2, h3, h4, h5, h6");
+        otherHeaders.forEach((header) => {
+            if (normalizeSpaces(header.innerText) === this.metadata.title) {
+                header.remove();
+            }
+            if (this.getWeight(header) < 0) {
+                // header.remove();
+            }
+        });
+        console.log(`node after otherheaders: ${node.outerHTML}`);
+
+        const tagsToClean = node.querySelectorAll(CLEAN_CONDITIONALLY_TAGS);
+        tagsToClean.forEach((tag) => {
+            // if it's a form, drop it
+            if (tag.tagName === "FORM") {
+                tag.remove();
+                return;
+            }
+            //todo: keep class
+            const weight = this.getWeight(tag);
+            if (weight < 0) {
+                tag.remove();
+            } else {
+                const tagContent = normalizeSpaces(tag.innerText);
+                if (scoreCommas(tagContent) < 10) {
+                    const pCount = tag.querySelectorAll("p").length;
+                    const inputCount = tag.querySelectorAll("input").length;
+                    if (inputCount > pCount / 3) {
+                        tag.remove();
+                        return;
+                    }
+                    const imgCount = tag.querySelectorAll("img").length;
+                    if (tagContent.length < 25 && imgCount === 0) {
+                        tag.remove();
+                        return;
+                    }
+                    const density = this.getLinkDensity(tag);
+                    if (weight < 25 && density > 0.2 && tagContent.length > 75) {
+                        tag.remove();
+                        return;
+                    }
+                    if (weight >= 25 && density > 0.5) {
+                        // this one i'm unsure of
+                    }
+                    const scriptCount = tag.querySelectorAll("script").length;
+                    if (scriptCount > 0 && tagContent.length < 150) {
+                        tag.remove();
+                        return;
+                    }
+                }
+            }
+        });
+
+        console.log(`node after tagsToClean: ${node.outerHTML}`);
+
+        // clean up lazy loaded images
+        node = this.convertLazyLoadedImages(node);
+
+        console.log(`node after convertLazyLoadedImages: ${node.outerHTML}`);
+
+        // fix images with bad urls
+        node = fixImages(node);
+
+        console.log(`node after fixImages: ${node.outerHTML}`);
+
+        // TODO: upload images to s3
+
+        // todo: remove empty paragraphs, and remove unneccessary attributes
+
+        /** Remove Attributes */
+        node = cleanAttributes(node);
+
+        console.log(`node after cleanAttributes: ${node.outerHTML}`);
+
+        // also check arc90 for what they do
+        return node;
+    }
+
+    private extractFromSelectors(root: HTMLElement, selectors: Selector[], maxChildren = 10) {
+        console.log({ selectors });
+        for (const selector of selectors) {
+            // This seems wrong… how can I be doing this for each metadata piece?
+            console.log(`trying this selector:`, selector);
+            const elements = root.querySelectorAll(typeof selector === "string" ? selector : selector[0]);
+            // if (elements.length !== 1) continue;
+            // currently, it just gets the first match ?
+            const element = elements[0];
+            console.log({ elements, element })
+            if (!element) continue;
+            if (element && element.childNodes.length > maxChildren) continue;
+            console.log(`we've got a match! for ${selector}:`, element);
+            console.log({ selector })
+            if (element && typeof selector === "string") {
+                console.log("selector is a string")
+                const text = element.textContent;
+                console.log(`and here's the text:`, text);
+                if (text) return text;
+            } else if (element && typeof selector[1] === "function") {
+                console.log("selector[1] is a function")
+                const text = selector[1](element);
+                console.log(`and here's the text:`, text);
+                if (text) return text;
+            } else if (element && typeof selector[1] === "string" && typeof selector[2] === 'string') {
+                const text = element.getAttribute(selector[1]);
+                console.log(`here's data for ${selector[1]} on ${selector[0]}`, text)
+                try {
+                    if (text) {
+                        const json = JSON.parse(text);
+                        if (json && json[selector[2]]) {
+                            console.log(`and here's the text:`, json[selector[2]]);
+                            return json[selector[2]];
+                        }
+                    }
+                } catch (e) {
+                    console.log(`Couldn't parse JSON`, e);
+                }
+            } else if (element && typeof selector[1] === "string") {
+                const text = element.getAttribute(selector[1]);
+                console.log(`and here's the text:`, text);
+                if (text) return text;
+            }
+        }
+    }
+
+    private extractContentFromSelectors(root: HTMLElement, selectors: string[]) {
+        console.log(`here's the root:`, root.innerHTML)
+        console.log(`Attempting to extract **content** from selectors, because these were provided:`, selectors);
+        for (const selector of selectors) {
+            console.log(`trying this selector:`, selector);
+            const element = root.querySelector(selector);
+            if (!element) continue;
+            console.log(`Woohoo! Nice! We've got a match for your selector: ${selector}.`, element);
+            console.log(element.innerHTML)
+            return element;
+        }
+    }
+
+    private convertLazyLoadedImages(node: HTMLElement) {
+        // credit https://github.com/postlight/mercury-parser/blob/HEAD/src/resource/utils/dom/convert-lazy-loaded-images.js
+        const imgs = node.querySelectorAll("img");
+        for (const img of imgs) {
+            const attrs = img.attributes;
+            for (const attr in attrs) {
+                const value = attrs[attr];
+                if (!value) continue;
+                if (attr !== "srcset" && IS_LINK.test(value) && IS_SRCSET.test(value)) {
+                    img.setAttribute("srcset", value);
+                } else if (attr !== "src" && attr !== "srcset" && IS_LINK.test(value) && IS_IMAGE.test(value)) {
+                    img.setAttribute("src", value);
+                } else if (
+                    attr === "data-src" &&
+                    IS_LINK.test(value) &&
+                    IS_IMAGE.test(value) &&
+                    !IS_LINK.test(attrs.src) &&
+                    !IS_IMAGE.test(attrs.src)
+                ) {
+                    // then set that as src?
+                    img.setAttribute("src", value);
+                }
+            }
+        }
+
+        // convert amp-img to img tag
+        const ampImgs = node.querySelectorAll("amp-img");
+        for (const ampImg of ampImgs) {
+            console.log("ampImg", ampImg);
+            ampImg.replaceWith(`<img src="${ampImg.getAttribute("src")}">`);
+        }
+
+        return node;
+    }
+
+    /**
+     * Find all <noscript> that are located after <img> nodes, and which contain only one
+    * <img> element. Replace the first image with the image from inside the <noscript> tag,
+    * and remove the <noscript> tag. This improves the quality of the images we use on
+    * some sites (e.g. Medium). {@link https://github.com/mozilla/readability/blob/8e8ec27cd2013940bc6f3cc609de10e35a1d9d86/Readability.js#L1576}
+     * @param node HTMLElement
+     */
+    private unwrapNoscriptImages() {
+        const imgs = this.root.querySelectorAll("img");
+        imgs.forEach(img => {
+            for (const [name, value] of Object.entries(img.attributes)) {
+                switch (name) {
+                    case "src":
+                    case "srcset":
+                    case "data-src":
+                    case "data-srcset":
+                        return;
+                }
+                if (/\.(jpg|jpeg|png|webp)/i.test(value)) {
+                    return;
+                }
+            }
+            img.parentNode.removeChild(img);
+        })
+        const noscripts = this.root.querySelectorAll("noscript");
+        noscripts.forEach(noscript => {
+            if (!isSingleImage(noscript)) return;
+
+            // If noscript has previous sibling and it only contains image,
+            // replace it with noscript content. However we also keep old
+            // attributes that might contains image.
+            const prevElement = noscript.previousElementSibling;
+            if (prevElement && isSingleImage(prevElement)) {
+                let prevImg = prevElement;
+                if (prevImg.tagName !== "IMG") {
+                    prevImg = prevElement.getElementsByTagName("img")[0];
+                }
+                const newImg = noscript.getElementsByTagName("img")[0];
+                for (const [name, value] of Object.entries(newImg.attributes)) {
+                    if (value === "") continue;
+                    if (name === "src" || name === "srcset" || /\.(jpg|jpeg|png|webp)/i.test(value)) {
+                        if (newImg.getAttribute(name) === value) {
+                            continue;
+                        }
+                        let attrName = name;
+                        if (newImg.hasAttribute(attrName)) {
+                            attrName = 'data-old-' + attrName;
+                        }
+                        newImg.setAttribute(attrName, value);
+                    }
+                }
+                noscript.parentNode.replaceWith(noscript.firstChild, prevElement)
+            }
+        })
+    }
+    private removeScripts() {
+        const scripts = this.root.querySelectorAll("script, noscript");
+        scripts.forEach(script => script.parentNode.removeChild(script));
+    }
+    private prepDocument() {
+        const doc = this.root;
+        // Remove all style tags
+        const styles = doc.querySelectorAll("style");
+        styles.forEach(style => style.parentNode.removeChild(style));
+
+    }
+    /**
+   * Replaces 2 or more successive <br> elements with a single <p>.
+   * Whitespace between <br> elements are ignored. For example:
+   *   <div>foo<br>bar<br> <br><br>abc</div>
+   * will become:
+   *   <div>foo<br>bar<p>abc</p></div>
+   */
+    private replaceBrs(el: HTMLElement) {
+        const brs = el.querySelectorAll("br");
+        brs.forEach(br => {
+            let next = br.nextSibling;
+            const replaced = false;
+            while ((next = this.nextNode(next)) && (next.tagName === "BR")) {
+                // TODO
+            }
+
+        })
+    }
+
+    nextNode(node: HTMLElement) {
+        let next = node;
+        while (next && next.nodeType !== Node.ELEMENT_NODE && /^\s*$/.test(node.textContent || '')) {
+            next = next.nextSibling;
+        }
+        return next;
+    }
+
+    async fetchHtml(url: string) {
+        return await fetch(url).then((r) => r.text());
+    }
 }

@@ -1,5 +1,6 @@
-import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
+
+import { browser } from '$app/environment';
 
 export default writable(false, (set) => {
 	let timeOut: NodeJS.Timeout;

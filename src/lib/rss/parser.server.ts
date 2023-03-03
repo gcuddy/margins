@@ -1,13 +1,17 @@
-import { stripEmptyTags, stripTags } from '$lib/utils/sanitize';
 import type { Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import getUuidByString from 'uuid-by-string';
+
+import { stripEmptyTags, stripTags } from '$lib/utils/sanitize';
 dayjs.extend(localizedFormat);
-import { parse } from 'node-html-parser';
 import { XMLParser } from 'fast-xml-parser';
-import { isJson, isXml, linkSelectors, resolveUrl } from './utils';
+import { parse } from 'node-html-parser';
+import { z } from 'zod';
+
 import { db } from '$lib/db';
+
+import { isJson, isXml, linkSelectors, resolveUrl } from './utils';
 
 const parser = new XMLParser({
 	ignoreAttributes: false,
@@ -31,8 +35,8 @@ function parseXml(xml) {
  */
 export async function findFeed(url: string) {
 	const _url = new URL(url);
-	// console.log({ _url });
 	const response = await fetch(_url);
+	console.log({ response });
 	const body = await response.text();
 	const contentType = response.headers.get('content-type');
 	if ((contentType && isXml(contentType)) || body.trim().startsWith('<?xml')) {
@@ -59,6 +63,25 @@ export async function findFeed(url: string) {
 		return findFeed(href);
 	}
 }
+
+// make zod schema from rss spec
+// https://validator.w3.org/feed/docs/rss2.html
+const rssSchema = z.object({
+	title: z.string(),
+	link: z.string(),
+	description: z.string(),
+	language: z.string(),
+	lastBuildDate: z.string(),
+	item: z.array(
+		z.object({
+			title: z.string(),
+			link: z.string(),
+			description: z.string(),
+			pubDate: z.string(),
+			guid: z.string(),
+		})
+	),
+});
 
 export async function buildRssFeed(data: any, url: string, existingUuids?: string[]) {
 	const description = getText(data.description, data.subtitle);

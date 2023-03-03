@@ -19,6 +19,7 @@
 	import Button from './Button.svelte';
 	const dispatch = createEventDispatcher<{
 		save: ViewOptions;
+        view: ViewOptions["view"]
 	}>();
 	const [popperRef, popperContent] = createPopperActions({
 		placement: 'bottom-end',
@@ -56,13 +57,13 @@
 	<PopoverButton as="div" use={[popperRef]}>
 		<Button
 			variant="ghost"
-			className="space-x-1"
+			className="space-x-1 sm:!text-sm !text-xs"
 			tooltip={{
 				text: 'Show view options',
 			}}
 		>
-			<Icon name="adjustmentsSolid" className="h-4 w-4 dark:fill-gray-300" /> <span>View</span>
-			<Icon name="chevronDownSolid" className="h-4 w-4 dark:fill-gray-300" />
+			<Icon name="adjustmentsSolid" className="h-3 w-3 sm:h-4 sm:w-4 dark:fill-gray-300" /> <span>View</span>
+			<Icon name="chevronDownSolid" className="h-3 w-3 sm:h-4 sm:w-4 dark:fill-gray-300" />
 		</Button></PopoverButton
 	>
 	<PopoverOverlay />
@@ -89,9 +90,10 @@
 						<label class="grow" for="">
 							<SmallPlus class="text-gray-500 dark:text-gray-400" size="sm">View</SmallPlus>
 						</label>
-						<MiniSelect bind:value={viewOptions.view}>
+						<MiniSelect on:change={() => dispatch("view", viewOptions.view)} bind:value={viewOptions.view}>
 							<option value="list">List</option>
 							<option value="grid">Grid</option>
+							<option value="kanban">Kanban</option>
 						</MiniSelect>
 					</div>
 					<div class="flex items-center justify-between">
@@ -103,8 +105,9 @@
 							<option value="title">Title</option>
 							<option value="author">Author</option>
 							<option value="date">Publish Date</option>
-							<option value="createdAt">Added</option>
-							<option value="updatedAt">Updated</option>
+							<option value="created">Saved</option>
+							<option value="due">Due</option>
+							<!-- <option value="updatedAt">Updated</option> -->
 						</MiniSelect>
 					</div>
 					<Disclosure class="flex flex-col space-y-2 pt-2" let:open>

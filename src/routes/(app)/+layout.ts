@@ -1,11 +1,31 @@
-import { browser } from '$app/environment';
-import type { LayoutLoad } from './$types';
-import { type User, user as userStore, user_data_dirty } from '$lib/stores/user';
+import { QueryClient } from "@tanstack/svelte-query";
 
-export const load: LayoutLoad = async ({ data }) => {
-	userStore.set({ ...data } as User);
-	console.log({ data });
-	return {
-		user: userStore,
-	};
-};
+import { browser } from "$app/environment";
+
+import type { LayoutLoad } from "./$types";
+import { favoritesQuery } from "./Sidebar.svelte";
+
+export const load = (async (e) => {
+    const { data } = e;
+    const queryClient = new QueryClient({
+        defaultOptions: {
+            queries: {
+                enabled: browser,
+                staleTime: 1000 * 60 * 5, // 5 minutes
+                // cachetime 24 hours for persiter
+                      cacheTime: 1000 * 60 * 60 * 24, // 24 hours
+                networkMode: "offlineFirst"
+            },
+            mutations: {
+                networkMode: "offlineFirst"
+            }
+        },
+    });
+
+    // get favorites
+    console.time("favorites");
+    const favorites = data.authorized ? await queryClient.ensureQueryData(favoritesQuery(e)) : []
+    console.timeEnd("favorites");
+
+    return { queryClient, favorites, ...data };
+}) satisfies LayoutLoad;

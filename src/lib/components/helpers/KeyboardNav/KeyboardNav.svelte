@@ -6,7 +6,7 @@
 	export interface NavState {
 		// State
 		changeActiveOnHover: boolean;
-		orientation: 'horizontal' | 'vertical';
+		orientation: "horizontal" | "vertical";
 		disabled: boolean;
 		items: { id: string; dataRef: OptionData }[];
 		activeIndex: number | null;
@@ -16,7 +16,7 @@
 		unregisterOption(id: string): void;
 	}
 
-	const CONTEXT_NAME = 'keyboard_nav_store';
+	const CONTEXT_NAME = "keyboard_nav_store";
 
 	export function useKeyboardNavContext(component: string): Readable<NavState> {
 		let context: Writable<NavState> | undefined = getContext(CONTEXT_NAME);
@@ -28,22 +28,24 @@
 </script>
 
 <script lang="ts">
-	import { disableGlobalKeyboardShortcuts } from '$lib/stores/keyboard';
-	import { Keys } from '$lib/types/keyboard';
-	import { calculateActiveIndex, Focus } from '$lib/utils/calculate-active-index';
-	import { getContext, onMount, setContext } from 'svelte';
-	import { writable, type Readable, type Writable } from 'svelte/store';
+	import { showCommandPalette } from "$lib/stores/commands";
 
-	let className = '';
+	import { checkIfKeyboardShortcutsAllowed, disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
+	import { Keys } from "$lib/types/keyboard";
+	import { calculateActiveIndex, Focus } from "$lib/utils/calculate-active-index";
+	import { getContext, onMount, setContext } from "svelte";
+	import { writable, type Readable, type Writable } from "svelte/store";
+
+	let className = "";
 	export { className as class };
 	export let disabled = false;
 	export let changeActiveOnHover = false;
 	export let horizontal = false;
 
-	export let activeIndex: NavState['activeIndex'] = null;
+	export let activeIndex: NavState["activeIndex"] = null;
 	let startingIndex = activeIndex;
-	let items: NavState['items'] = [];
-	$: orientation = (horizontal ? 'horizontal' : 'vertical') as NavState['orientation'];
+	let items: NavState["items"] = [];
+	$: orientation = (horizontal ? "horizontal" : "vertical") as NavState["orientation"];
 	const api = writable<NavState>({
 		changeActiveOnHover,
 		disabled,
@@ -70,7 +72,7 @@
 			let currentActiveItem = activeIndex !== null ? items[activeIndex] : null;
 
 			// hm. copy and pasting but not sure at all about this.
-			let orderMap = Array.from(container.querySelectorAll('[id^="keyboard-nav-item-"]')!).reduce(
+			let orderMap = Array.from(container?.querySelectorAll('[id^="keyboard-nav-item-"]')!).reduce(
 				(lookup, element, index) => Object.assign(lookup, { [element.id]: index }),
 				{}
 			) as Record<string, number>;
@@ -110,7 +112,7 @@
 		},
 	});
 	setContext(CONTEXT_NAME, api);
-	let container: HTMLElement | undefined;
+	export let container: HTMLElement | undefined = undefined;
 	$: api.update((obj) => {
 		return {
 			...obj,
@@ -122,8 +124,11 @@
 	});
 
 	async function handleKeydown(event: KeyboardEvent) {
+        console.log({$showCommandPalette})
 		if (disabled) return;
 		if ($disableGlobalKeyboardShortcuts) return;
+		if ($showCommandPalette) return;
+        if (!checkIfKeyboardShortcutsAllowed()) return
 
 		switch (event.key) {
 			// Ref: https://www.w3.org/TR/wai-aria-practices-1.2/#keyboard-interaction-12
@@ -131,14 +136,14 @@
 			case Keys.Enter:
 				break;
 
-			case $api.orientation === 'horizontal' ? Keys.ArrowRight : Keys.ArrowDown:
-			case $api.orientation === 'vertical' && 'j':
+			case $api.orientation === "horizontal" ? Keys.ArrowRight : Keys.ArrowDown:
+			case $api.orientation === "vertical" && "j":
 				event.preventDefault();
 				event.stopPropagation();
 				return $api.goToOption(Focus.Next);
 
-			case $api.orientation === 'horizontal' ? Keys.ArrowLeft : Keys.ArrowUp || 'k':
-			case $api.orientation === 'vertical' && 'k':
+			case $api.orientation === "horizontal" ? Keys.ArrowLeft : Keys.ArrowUp || "k":
+			case $api.orientation === "vertical" && "k":
 				event.preventDefault();
 				event.stopPropagation();
 				return $api.goToOption(Focus.Previous);

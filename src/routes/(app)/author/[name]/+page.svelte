@@ -13,9 +13,9 @@
 <Header>
 	<DefaultHeader>
 		<div slot="start">
-			<SmallPlus>{$page.params.name}</SmallPlus>
+			<SmallPlus>All entries with author {$page.params.name}</SmallPlus>
 		</div>
 	</DefaultHeader>
 </Header>
 
-<Saved articles={data.articles} />
+<!-- <Saved annotations={data.articles} /> -->

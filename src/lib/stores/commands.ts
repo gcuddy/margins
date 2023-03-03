@@ -1,7 +1,8 @@
-import type { Command } from '$lib/components/CommandPalette/types';
-import { commands } from '$lib/data/commands';
-import { writable, derived } from 'svelte/store';
-export const term = writable('');
+import { derived, get,writable } from "svelte/store";
+
+import type { Command } from "$lib/components/CommandPalette/types";
+import { commands } from "$lib/data/commands";
+export const term = writable("");
 
 function createCommandStore() {
 	const { subscribe, set, update } = writable(commands);
@@ -32,7 +33,8 @@ export const commandStore = createCommandStore();
 //todo: use useCommand to handle setup easily
 // const fuse = new Fuse(commands, {)
 export const filteredActions = derived([term, commandStore], ([$term, $items]) => {
-	$items = $items?.filter((i) => !('check' in i) || i.check?.());
+	// TODO: sort by group
+	$items = $items?.filter((i) => !("check" in i) || i.check?.());
 	return $items?.filter((x) => (x?.name + x?.keywords).toLowerCase().includes($term.toLowerCase()));
 });
 
@@ -53,11 +55,12 @@ function createShowCommandPaletteStore() {
 	const { subscribe, set, update } = writable(false);
 	const cleanup = () => {
 		selected.reset();
-		term.set('');
+		term.set("");
 	};
 	return {
 		subscribe,
 		set,
+        isOpen: () => get(showCommandPalette),
 		toggle: () =>
 			update((t) => {
 				if (t) {
@@ -70,6 +73,9 @@ function createShowCommandPaletteStore() {
 		out: () => {
 			set(false);
 			cleanup();
+		},
+		show: () => {
+			set(true);
 		},
 	};
 }

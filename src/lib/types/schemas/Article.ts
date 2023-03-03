@@ -19,14 +19,15 @@ export const ArticleSchema = z.object({
 	date: z.date(),
 	image: z.string(),
 	starred: z.boolean(),
+	public: z.boolean(),
 	position: z.number().int().nonnegative(),
 	location: LocationSchema,
-	trash: z.boolean()
+	trash: z.boolean(),
 });
 // this is without relations!
 
 export const PatchArticleData = ArticleSchema.omit({
 	id: true,
 	createdAt: true,
-	updatedAt: true
+	updatedAt: true,
 }).partial();

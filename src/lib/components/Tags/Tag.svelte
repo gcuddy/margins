@@ -4,6 +4,8 @@
 </script>
 
 <script lang="ts">
+	import { page } from '$app/stores';
+
 	import type { Tag } from '@prisma/client';
 	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher<{
@@ -22,21 +24,22 @@
 	export let active = false;
 	export let link = true;
 	export let tabindex = -1;
+	export let as = 'a';
 </script>
 
-<a
+<svelte:element
+	this={as}
 	data-sveltekit-prefetch
-	class="leading-sm inline-flex h-6 w-max min-w-fit max-w-[112px] items-center justify-center gap-1 overflow-hidden rounded-full font-medium  transition
+	class="leading-sm inline-flex h-6 w-max min-w-fit max-w-[112px] cursor-default items-center justify-center gap-1 overflow-hidden rounded-full font-medium  transition
   {icon ? 'pr-2 pl-1.5' : 'px-2'}
   {variant === 'primary'
 		? 'bg-primary-200 text-primary-900'
 		: // ghost
-		  'dark:hover:bg-gray-700 border border-gray-200  text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-700 dark:text-gray-400'}
+		  'border border-gray-200 text-gray-600  hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:bg-gray-700'}
     {active ? '!bg-indigo-200 !text-indigo-900' : ''}
     "
-	href={link ? `/tags/${tag.name}` : undefined}
+	href={as === 'a' ? `/u:${$page.data.user?.username}/t:${tag.name}` : undefined}
 	{tabindex}
-	on:click
 >
 	{#if icon}
 		<!-- Heroicons solid Tag (TODO: make it be in a component) -->
@@ -60,4 +63,4 @@
 			<Icon name="xSolid" className="h-3 w-3 fill-current" /></button
 		>
 	{/if}
-</a>
+</svelte:element>
