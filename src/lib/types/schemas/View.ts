@@ -94,7 +94,7 @@ export function sortEntries(entries: EntryInList[], sort: ViewOptions["sort"]) {
         case "author":
             return entries.sort((a, b) => compareTwoMaybeStrings(a.author, b.author));
         case "created":
-            return entries.sort((a, b) => compareTwoMaybeDates(a.createdAt, b.createdAt));
+            return entries.sort((a, b) => compareTwoMaybeDates(a.bookmarks?.[0]?.createdAt, b.bookmarks?.[0]?.createdAt));
         case "published":
             return entries.sort((a, b) => compareTwoMaybeDates(a.published, b.published));
         case "updated":

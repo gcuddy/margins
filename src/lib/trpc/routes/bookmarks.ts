@@ -335,7 +335,6 @@ export const bookmarks = router({
                     },
                     data,
                 });
-
             } else if (id) {
                 return ctx.prisma.bookmark.update({
                     where: {
@@ -411,5 +410,27 @@ export const bookmarks = router({
                 return screenshot;
             }
             return bookmark.screenshot;
+        }),
+    /// Intended to be used when entry is already created, faster than .add
+    create: protectedProcedure
+        .input(z.object({
+            entryId_uri: z.array(z.object({
+                entryId: z.number().optional(),
+                uri: z.string().optional(),
+            })),
+            data: _BookmarkModel.partial(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const { entryId_uri, data } = input;
+            const { stateId, ...rest } = data;
+            const { userId } = ctx;
+            return ctx.prisma.bookmark.createMany({
+                data: entryId_uri.map(({entryId, uri}) => ({
+                    entryId,
+                    uri,
+                    userId,
+                    ...data,
+                })),
+            });
         })
 });

@@ -442,13 +442,14 @@ export const entriesRouter = router({
                         published: "desc",
                     },
                 ],
-                include: {
-                    interactions: {
-                        where: {
-                            userId: ctx.userId,
-                        },
-                    },
-                },
+                select: entryListSelect(ctx.userId)
+                // include: {
+                //     interactions: {
+                //         where: {
+                //             userId: ctx.userId,
+                //         },
+                //     },
+                // },
             })
             .then((entries) => {
                 return entries.map((e) => {

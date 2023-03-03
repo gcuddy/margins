@@ -3,13 +3,15 @@ import type { PageLoad } from './$types';
 
 export const load = (async (event) => {
     const { params } = event;
-    const client = trpcWithQuery(event);
-    const utils = client.createContext();
     //    TODO: infinite
+    // const query
+    const {queryClient, subscriptions } = await event.parent();
+
+    const client = trpcWithQuery(event, queryClient);
+    const utils = client.createContext();
     utils.entries.byFeed.prefetch({
         id: +params.id
     })
-    const { subscriptions } = await event.parent();
     const subscription = subscriptions.find((s) => s.feedId === +params.id);
     return {
         subscription,

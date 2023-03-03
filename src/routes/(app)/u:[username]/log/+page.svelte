@@ -15,7 +15,7 @@
 
 	const q = createQuery({
 		...logQuery($page),
-		select: (data) => groupBy(data, (item) => dayjs(item.date).format("MMMM YYYY")),
+		select: (data) => groupby(data, (item) => dayjs(item.date).format("MMMM YYYY")),
 	});
 </script>
 

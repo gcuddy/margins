@@ -1,26 +1,19 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import EntryList from "$lib/components/EntryList.svelte";
-	// import {
-	// 	type FilterOption,
-	// 	type ChildFilterOption,
-	// 	buildFilter,
-	// } from '$lib/components/Filters/Index.svelte';
 	import type { createFilterStores } from "$lib/stores/filter";
 	import { trpcWithQuery } from "$lib/trpc/client";
 	import type { ViewOptions } from "$lib/types/schemas/View";
 	import { getContext } from "svelte";
 	import type { PageData } from "./$types";
-     export let data: PageData;
+	export let data: PageData;
 
 	$: console.log({ data });
 
-
-    $: query = trpcWithQuery($page).entries.byFeed.createQuery({
-        id: +data.id,
-    })
+	$: query = trpcWithQuery($page).entries.byFeed.createQuery({
+		id: +data.id,
+	});
 	let peek = false;
-
 
 	const DEFAULT_RSS_VIEW_OPTIONS: ViewOptions = {
 		view: "list",
@@ -44,9 +37,9 @@
 	$: only_unread = Boolean($page.url.searchParams.get("unread"));
 
 	// get filter context (since we can't use slot props here from root layout)
-	const stores: ReturnType<typeof createFilterStores<(typeof data)["entries"][number]>> =
-		getContext("filter");
-	const { filteredItems } = stores;
+	// const stores: ReturnType<typeof createFilterStores<(typeof data)["entries"][number]>> =
+	// 	getContext("filter");
+	// const { filteredItems } = stores;
 	// let filters = writable<ChildFilterOption[]>([]);
 
 	// $: filteredItems = $entries.filter((i) => $filters.every((f) => buildFilter(f)(i)));
@@ -99,15 +92,11 @@
 </div> -->
 
 {#if $query.isLoading}
-Loading...
+	Loading...
 {:else if $query.isError}
-error
+	error
 {:else if $query.isSuccess}
-
-<EntryList
-	items={$query.data.entries}
-	viewOptions={DEFAULT_RSS_VIEW_OPTIONS}
-/>
+	<EntryList items={$query.data.entries} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} />
 {/if}
 
 <!-- {#each data.entries as item (item.id)}

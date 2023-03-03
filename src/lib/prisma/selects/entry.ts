@@ -30,6 +30,7 @@ export const entryListSelect = (userId: string) => Prisma.validator<Prisma.Entry
     published: true,
     summary: true,
     createdAt: true,
+    feedId: true,
     updatedAt: true,
     annotations: {
         where: {

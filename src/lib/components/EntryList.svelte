@@ -10,7 +10,7 @@
 			interaction?: Interaction;
 		}
 	>;
-	export let items: T[];
+	export let items: EntryInList[] | Record<string, EntryInList[]>;
 	$: console.log({ items });
 	/** Should we render the title and description as safe html or not? */
 	export let html = false;
@@ -73,22 +73,24 @@
 	import ImageLoader from "./ui/images/ImageLoader.svelte";
 	import { flip } from "svelte/animate";
 	import mq from "$lib/stores/mq";
+	import type { EntryInList } from "$lib/prisma/selects/entry";
 	dayjs.extend(localizedFormat);
 	// const selectedItems = createSelectedItemStore<ExtendableEntry>();
-	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>(items);
+    $: flattenedItems = Array.isArray(items) ? items : Object.values(items).flat();
+	const { items: currentItems, filteredItems, filterTerm } = createItemStores<ExtendableEntry>(flattenedItems);
 
 	// fix bigint issue
 	BigInt.prototype.toJSON = function () {
 		return this.toString();
 	};
 
-	$: items, currentItems.set(items);
+	$: items, currentItems.set(flattenedItems);
 	$: console.log({ filteredItems });
 
 	let groupedByState: Dictionary<typeof items>;
 	// $: if ("bookmarks" in items) items = items.map(i => ({...i, bookmark: i.bookmarks[0]}))
 	$: if (viewOptions.view === "kanban")
-		groupedByState = groupBy(items, (item) => item.bookmarks?.[0]?.stateId);
+		groupedByState = groupBy(flattenedItems, (item) => item.bookmarks?.[0]?.stateId);
 
 	// clear selecteditems on url change
 	$: $page.url.pathname, ($selectedItems = []);
@@ -96,20 +98,20 @@
 	let dragDisabled = true;
 
 	// todo: generalize
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 	const updateState = createMutation({
 		mutationFn: (input: RouterInputs["bookmarks"]["updateState"]) =>
 			trpc().bookmarks.updateState.mutate(input),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-               queryKey: ["collections"]
-            })
-            queryClient.invalidateQueries({
-               queryKey: ["entries"]
-            })
-            invalidateAll();
-            // TODO: queryclient invalidation
-        }
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["collections"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["entries"],
+			});
+			invalidateAll();
+			// TODO: queryclient invalidation
+		},
 	});
 
 	const handleConsider = (e: CustomEvent<DndEvent<ExtendableEntry>>) => {
@@ -290,7 +292,7 @@
 		if (!url) return;
 		if (!validUrl(url)) return;
 		const n = notifications.notify({ message: "Adding url..." });
-		const parsed = await trpc().public.parse.query({url});
+		const parsed = await trpc().public.parse.query({ url });
 		console.log({ parsed });
 		await trpc().bookmarks.add.mutate({
 			article: parsed,
@@ -322,7 +324,7 @@
 			// animationController.disable();
 		}
 	});
-    $: console.log({animationController})
+	$: console.log({ animationController });
 	onDestroy(() => {
 		unsubscribeDisableAnimation && unsubscribeDisableAnimation();
 	});
@@ -348,7 +350,7 @@
 				title: `Saving url…`,
 			});
 			const s = syncStore.add();
-			const article = await trpc($page).public.parse.query({url: paste});
+			const article = await trpc($page).public.parse.query({ url: paste });
 			console.log({ article });
 			await trpc($page).bookmarks.add.mutate({
 				article,
@@ -377,19 +379,19 @@
 					<div class="relative flex w-80 grow flex-col">
 						<h2>{state.name}</h2>
 						<KanbanList
-                            on:kanbandrop
+							on:kanbandrop
 							onDrop={(e) => {
 								// update state
 								if (e.detail.info.trigger === TRIGGERS.DROPPED_INTO_ZONE) {
-                                    const id = +e.detail.info.id;
-                                    const entry = e.detail.items.find((i) => i.id === id);
-                                    if (entry && "bookmarks" in entry && entry.bookmarks?.length) {
-                                        $updateState.mutate({
-                                            stateId: state.id,
-                                            entryId: +e.detail.info.id,
-                                            id: entry.bookmarks?.[0].id,
-                                        });
-                                    }
+									const id = +e.detail.info.id;
+									const entry = e.detail.items.find((i) => i.id === id);
+									if (entry && "bookmarks" in entry && entry.bookmarks?.length) {
+										$updateState.mutate({
+											stateId: state.id,
+											entryId: +e.detail.info.id,
+											id: entry.bookmarks?.[0].id,
+										});
+									}
 									// console.log(state, { e });
 									// $updateState.mutate({
 									// 	stateId: state.id,
@@ -401,7 +403,11 @@
 							let:item
 							type="kanban"
 						>
-                       <EntryListItem class="bg-base border border-border rounded-lg" entry={item} show={{type: true, year: false}} />
+							<EntryListItem
+								class="rounded-lg border border-border bg-base"
+								entry={item}
+								show={{ type: true, year: false }}
+							/>
 							<!-- <a
 
 								class="flex h-24 items-center gap-4 rounded border border-black/20 bg-white px-4 py-2 shadow-sm dark:bg-gray-800"
@@ -465,28 +471,28 @@
 				zoneTabIndex: -1,
 			}}
 			bind:this={container}
-            use:autoAnimate={{
-                // this wasn't working with autoanimaet(container) for some reason
-                duration: 125
-            }}
+			use:autoAnimate={{
+				// this wasn't working with autoanimaet(container) for some reason
+				duration: 125,
+			}}
 			on:consider={handleConsider}
 			on:finalize={handleFinalize}
 		>
 			{#each items || [] as item, index (item.id)}
 				{@const data = item}
 				{@const pageNotes = "annotations" in item ? item.annotations?.filter((a) => a.type === "note") : null}
-                {@const progress = item.interactions?.[0]?.progress}
+				{@const progress = item.interactions?.[0]?.progress}
 				<!-- {index} -->
 				<!-- by doing this can't do animate:flip. hm! trying out auto-animate. let's see... -->
 
 				<!-- takes forever to use animate flip on safari with filtering damn -->
 				<!-- animate:flip={{ duration: $flipDurationMs }} -->
-                <!-- transitions are nice for removing/adding to list, but obnoxious for page transitions -->
-                <!-- in:slide|local={{
+				<!-- transitions are nice for removing/adding to list, but obnoxious for page transitions -->
+				<!-- in:slide|local={{
 						duration: 125,
 					}} -->
 				<div
-                    use:longpress={() => dragDisabled = false}
+					use:longpress={() => (dragDisabled = false)}
 					class="focus-within:!outline-none"
 					on:click={(e) => {
 						if (e.shiftKey) {
@@ -547,9 +553,9 @@
 										>
 											{#if viewOptions.properties?.image}
 												<div
-													class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  transition ring-1 ring-border/50 drop-shadow-xl  {viewOptions.view ===
+													class="flex-inital relative flex shrink-0 cursor-pointer flex-row items-center overflow-hidden  ring-1 ring-border/50 drop-shadow-xl transition  {viewOptions.view ===
 													'list'
-														? ' h-12 w-10 sm:h-16 sm:w-14 rounded-md hover:ring'
+														? ' h-12 w-10 rounded-md hover:ring sm:h-16 sm:w-14'
 														: 'col-span-4 h-full md:h-28 md:w-full'}"
 													on:click|stopPropagation
 													on:keydown
@@ -573,16 +579,24 @@
 															{src}
 															alt=""
 														/> -->
-                                                        <ImageLoader wrapper="w-full h-full" {src} alt="" class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
+														<ImageLoader
+															wrapper="w-full h-full"
+															{src}
+															alt=""
+															class=" shrink-0 cursor-pointer  border border-black/30 object-cover   {viewOptions.view ===
 															'list'
 																? 'h-full w-full rounded-md shadow-sm hover:ring-1'
-																: ' h-40 w-full rounded-t-md'}" />
-                                                                {#if progress}
-                                                                {@const progressPercent = Math.round(progress * 100)}
-                                                            <div class="absolute bottom-0 h-1 w-full bg-border/90">
-                                                                <div style:width="{progressPercent}%" class="absolute bottom-0 w-full h-1 bg-accent"></div>
-                                                            </div>
-                                                                {/if}
+																: ' h-40 w-full rounded-t-md'}"
+														/>
+														{#if progress}
+															{@const progressPercent = Math.round(progress * 100)}
+															<div class="absolute bottom-0 h-1 w-full bg-border/90">
+																<div
+																	style:width="{progressPercent}%"
+																	class="absolute bottom-0 h-1 w-full bg-accent"
+																/>
+															</div>
+														{/if}
 													{/if}
 													<input
 														bind:group={$selectedItems}
@@ -765,7 +779,7 @@
 										</div>
 									{:else if item.type === DocumentType.audio}
 										{@const loaded = $podcastPlayer?.episode?.enclosureUrl === item.enclosureUrl}
-                                        <!-- {@const progress = item.interaction?.progress} -->
+										<!-- {@const progress = item.interaction?.progress} -->
 										<!-- Old way: -->
 										<!-- <EpisodeListItem {item} /> -->
 										<!-- New way: -->
@@ -778,13 +792,21 @@
 											}}
 										>
 											<svelte:fragment slot="author-extended">
+												{#if item.feedId}
+													{@const subscription = $page.data.user?.subscriptions?.find(
+														(s) => s.feedId === item.feedId
+													)}
+													{#if subscription}
+														<Muted>{subscription.title}</Muted>
+													{/if}
+												{/if}
 												<Muted>{dayjs(item.published).format("ll")}</Muted>
 											</svelte:fragment>
 											<svelte:fragment slot="description">
 												{#if item.enclosureUrl && $mq.sm}
 													<div class="flex items-center">
 														<div
-															class="flex cursor-default grow w-full items-center space-x-1"
+															class="flex w-full grow cursor-default items-center space-x-1"
 															on:click|preventDefault|stopPropagation={() => {
 																if (loaded) {
 																	podcastPlayer.toggle();
@@ -835,9 +857,9 @@
 																			"seconds"
 																		)} left
 																	{:else if progress && item.duration}
-                                                                        {formatDuration(item.duration - item.duration * progress, "seconds")} left
-                                                                    {:else if !progress && item.duration}
-                                                                        {formatDuration(item.duration, "seconds")}
+																		{formatDuration(item.duration - item.duration * progress, "seconds")} left
+																	{:else if !progress && item.duration}
+																		{formatDuration(item.duration, "seconds")}
 																	{:else if progress}
 																		{Math.round(progress * 100)}%
 																	{/if}
@@ -891,7 +913,7 @@
 											</div>
 										</div> -->
 									{:else if item.type === DocumentType.bookmark}
-                                    {@const screenshot = item.screenshot || item.bookmarks?.[0]?.screenshot}
+										{@const screenshot = item.screenshot || item.bookmarks?.[0]?.screenshot}
 										<EntryListItem
 											entry={{
 												...item,

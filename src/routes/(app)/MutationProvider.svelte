@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import { UpdateBookmarkMutationKey } from "$lib/features/entries/mutations";
+	import { CreateBookmarkMutationKey, UpdateBookmarkMutationKey } from "$lib/features/entries/mutations";
 	import { notifications } from "$lib/stores/notifications";
 	import { selectedItems } from "$lib/stores/selectedItems";
 	import { trpcWithQuery } from "$lib/trpc/client";
@@ -90,6 +90,14 @@
 			selectedItems.set([]);
 		},
 	});
+    const createBookmarkMutation = client.bookmarks.create.createMutation({
+        onSuccess: () => {
+            utils.entries.invalidate();
+            utils.bookmarks.invalidate();
+        }
+    });
+
+    setContext(CreateBookmarkMutationKey, createBookmarkMutation);
 
 	// $: entryId = $page.route.id?.includes("entry") && ($page.data.id as number | undefined);
 	const saveAnnotationMutation = client.annotations.save.createMutation({

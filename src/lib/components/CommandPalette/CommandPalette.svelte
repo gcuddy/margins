@@ -45,6 +45,7 @@
 	import DatePicker from "../DatePicker.svelte";
 	import RichAnnotationInput from "../annotations/RichAnnotationInput.svelte";
 	import { useSaveAnnotation } from "$lib/features/annotations/mutations";
+	import { useCreateBookmark } from "$lib/features/entries/mutations";
 
 	const queryClient = useQueryClient();
 	const client = trpcWithQuery($page);
@@ -52,6 +53,8 @@
 	const user = getUser();
 
 	const saveAnnotationMutation = useSaveAnnotation();
+
+    const createBookmarkMutation = useCreateBookmark();
 
 	function handleKeydown(e: KeyboardEvent) {
 		switch (e.key) {
@@ -639,6 +642,8 @@
 			group: "adhoc-article-commands",
 			icon: "inboxIn",
 			perform: () => {
+
+                console.log({$page})
 				//copied from entry/page.svelte
 				commandPaletteStore.open({
 					values: $page.data.user?.states,
@@ -653,31 +658,30 @@
 					onSelect: async (e) => {
 						try {
 							console.log({ $selectedItems });
-							$updateMutation.mutate({
-								entryId: $selectedItems.map((i) => i.id),
-								data: {
-									stateId: e.detail.id as number,
-								},
-							});
-							// const syncId = syncStore.add();
-							// // TODO: when I have a proper updatestates method, use that
-							// await Promise.all(
-							// 	$selectedItems.map((item) => {
-							// 		return trpc().bookmarks.updateState.mutate({
-							// 			stateId: e.detail.id as number,
-							// 			entryId: item.id,
-							// 		});
-							// 	})
-							// );
-							// await invalidateAll();
-							// selectedItems.set([]);
-							// syncStore.remove(syncId);
-							// 	.then(() => {
-							// 		notifications.notify({
-							// 			type: 'info',
-							// 			title: 'Updated status',
-							// 		});
-							// 	});
+                            const bookmarksToCreate = $selectedItems.filter((i) => !i.bookmarks?.[0]);
+                            const bookmarksToUpdate = $selectedItems.filter((i) => !!i.bookmarks?.[0]);
+                            if (bookmarksToCreate.length) $createBookmarkMutation.mutate({
+                                entryId_uri: $selectedItems.map((i) => ({
+                                    entryId: i.id,
+                                    uri: i.uri ?? undefined
+                                })),
+                                data: {
+                                    stateId: e.detail.id as number,
+                                }
+                            });
+                            if (bookmarksToUpdate.length) $updateMutation.mutate({
+                                entryId: $selectedItems.map((i) => i.id),
+                                data: {
+                                    stateId: e.detail.id as number,
+                                }
+                            });
+                            console.log({ bookmarksToCreate, bookmarksToUpdate });
+							// $updateMutation.mutate({
+							// 	entryId: $selectedItems.map((i) => i.id),
+							// 	data: {
+							// 		stateId: e.detail.id as number,
+							// 	},
+							// });
 						} catch (err) {
 							throw err;
 						}

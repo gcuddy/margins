@@ -10,7 +10,7 @@ export const load: LayoutServerLoad = async (event) => {
 	const caller = await createCaller(event);
 	const subscriptions = await caller.subscriptions.list();
 	if (user && user.username === params.username) {
-		return { user, subscriptions };
+		return { subscriptions };
 	} else {
 		throw error(401, 'Not authorized');
 	}
