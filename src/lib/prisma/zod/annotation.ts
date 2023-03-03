@@ -13,7 +13,7 @@ export const _AnnotationModel = z.object({
   id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  body: jsonSchema,
+  body: z.string().nullish(),
   contentData: jsonSchema,
   /**
    * chosenIcon used for documents only?
