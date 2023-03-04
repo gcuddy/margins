@@ -49,6 +49,7 @@
 	$: query = createQuery({
 		queryKey: ["parse", url],
 		queryFn: async () => trpc($page).public.parse.query({url}),
+        retry: false,
 		enabled: false,
 		staleTime: 1000 * 60,
 		refetchOnWindowFocus: false,
