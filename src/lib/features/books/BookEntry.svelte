@@ -22,7 +22,9 @@
 
 	$: todayLog = entry?.log.find((log) => dayjs(log.date).isSame(dayjs(), "day"));
 
-	$: query = trpcWithQuery($page).books.public.byId.createQuery(bookId, {
+    const client = trpcWithQuery($page);
+    const utils = client.createContext();
+	$: query = client.books.public.byId.createQuery(bookId, {
 		staleTime: 5 * 1000 * 60,
 		placeholderData,
 		onSuccess: (book) => console.log({ book }),
@@ -97,12 +99,16 @@
 <div class="container mx-auto flex h-full flex-col space-y-8 divide-y p-6 dark:divide-gray-700">
 	{#if entry && !$query.isSuccess}
     {@const isbn = entry.uri?.replace("isbn:", "")}
-    <BookEntryLayout {bookId} image={entry.image} fallbackImage={googleBooksimage} title={entry.title} {isbn} description={entry.text} author={entry.author}  >
+    <BookEntryLayout {bookId} image={entry.image} fallbackImage={googleBooksimage} title={entry.title} {isbn} description={entry.text} author={entry.author} published={entry.published}  >
         <svelte:fragment slot="underImage">
             {#if $page.route.id?.includes("entry") && $page.params.id}
 					{#if !todayLog}
 						<form
-							use:enhance
+							use:enhance={() => {
+                                return () => {
+                                    utils.entries.invalidate()
+                                }
+                            }}
 							method="post"
 							action="/u:{$page.data.user?.username}/entry/{$page.params.id}?/log"
 						>
@@ -128,15 +134,19 @@
 			book.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier ??
 			book.industryIdentifiers?.find((i) => i.type === "ISBN_10")?.identifier}
 		{@const bookmark = $page.data.user?.bookmarks?.find((bookmark) => bookmark.entry?.uri === isbn)}
-        {@const {title, subtitle, authors, publisher, language, pageCount, description} = book}
+        {@const {title, subtitle, authors, publisher, language, pageCount, description, publishedDate} = book}
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
-       <BookEntryLayout {bookId} {image} fallbackImage={googleBooksimage} genres={book.categories?.[0]?.split(" /")[0]} {title} {publisher} {isbn} {language} {pageCount} {subtitle} {description} author={authors?.join(", ")}  >
+       <BookEntryLayout {bookId} {image} fallbackImage={googleBooksimage} genres={book.categories?.[0]?.split(" /")[0]} {title} {publisher} {isbn} {language} {pageCount} {subtitle} {description} author={authors?.join(", ")} published={publishedDate}  >
         <svelte:fragment slot="underImage">
             {#if $page.route.id?.includes("entry") && $page.params.id}
 					{#if !todayLog}
 						<form
-							use:enhance
+							use:enhance={() => {
+                                return () => {
+                                    utils.entries.invalidate()
+                                }
+                            }}
 							method="post"
 							action="/u:{$page.data.user?.username}/entry/{$page.params.id}?/log"
 						>
