@@ -4,6 +4,7 @@ import { DocumentType } from "@prisma/client";
 import { HTMLElement, parse } from "node-html-parser";
 import { z } from "zod";
 import { Readability } from '@mozilla/readability'
+import crypto from 'crypto';
 
 import { _EntryModel } from "$lib/prisma/zod";
 
@@ -36,6 +37,10 @@ import {
 import { findAuthor } from "./utils/fallback-author";
 import { JSDOM } from "./linkedom";
 import { parseHTML } from "linkedom";
+import { s3, uploadFile } from "$lib/backend/s3.server";
+import { nanoid } from "nanoid";
+import { S3_BUCKET_PREFIX } from "$env/static/private";
+import { HeadObjectCommand } from "@aws-sdk/client-s3";
 
 // TODO: ability to add/modify this list
 // TODO: add "boost" to certain tags via a map
@@ -948,19 +953,108 @@ export class Parser {
             var article = new Readability(doc.window.document, {
                 debug: true
             }).parse();
-            // if (article?.content) {
-            //     ["href", "src"].forEach((a) => absolutizeUrls(article!.content.ownerDocument as unknown as HTMLElement, this.baseUrl, a));
-            // }
-            console.log({article})
+            let root: HTMLElement | null = null
+            if (article?.content) {
+                // Now apply our own transformations with node-html-parser... kind of ugly
+                root = parse(article.content);
+                ["href", "src"].forEach((a) => absolutizeUrls(root!, this.baseUrl, a));
+                // remove srcset
+                root!.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
+                // go thru srcs, get images, and upload to s3
+                // TODO: upsert by noting if src is already s3 url (somehow...)
+                await Promise.all(root.querySelectorAll("[src]").map(async el => {
+                    // check if url
+                    const src = el.getAttribute("src");
+                    if (!src) return;
+                    if (/^http/.test(src)) {
+                        // upload to s3
+                        // replace src with s3 url\
+                        //
+                        // Fetch the image and stream it to s3
+
+                        // set Key to hashed version of src with crypto
+                        const hash = crypto.createHash('sha256');
+                        hash.update(src);
+                        const Key = hash.digest('hex');
+                        // check if already exists
+                        const exists = await s3.send(new HeadObjectCommand({
+                            Key,
+                            Bucket: "margins",
+                        })).catch(e => {
+                            if (e.name === "NotFound") {
+                                return false;
+                            }
+                            throw e;
+                        });
+                        console.log({ exists })
+                        if (exists) {
+                            el.setAttribute("src", `${S3_BUCKET_PREFIX}${Key}`);
+                            return;
+                        }
+                        const response = await fetch(src);
+                        const buffer = await response.arrayBuffer();
+                        uploadFile({
+                            Key,
+                            Body: buffer,
+                        });
+                        el.setAttribute("src", `${S3_BUCKET_PREFIX}${Key}`);
+                    }
+                }))
+            }
             let html = '';
             if (article) {
                 this.metadata.title = article.title || this.metadata.title;
                 this.metadata.summary = article.excerpt || this.metadata.summary;
                 this.metadata.author = article.byline || this.metadata.author;
-                this.metadata.html = article.content || this.metadata.html;
+                this.metadata.html = root?.outerHTML || article.content || this.metadata.html;
                 this.metadata.text = article.textContent || this.metadata.text;
                 this.metadata.siteName = article.siteName || this.metadata.siteName;
             }
+            if (!this.metadata.image) {
+                // try to get the apple-touch-icon
+                const appleTouchIcon = this.root.querySelector("link[rel='apple-touch-icon']");
+                if (appleTouchIcon) {
+                    this.metadata.image = appleTouchIcon.getAttribute("href") || "";
+                }
+            }
+            if (this.metadata.image?.trim()) {
+                // absolutize this.metadata.iamge
+                this.metadata.image = absolutizeUrl(this.metadata.image, this.baseUrl);
+                // clean up bad url
+                this.metadata.image = cleanUpNaughtyUrl(this.metadata.image);
+
+                // upload to s3
+                // replace src with s3 url
+                const hash = crypto.createHash('sha256');
+                hash.update(this.metadata.image);
+                const Key = hash.digest('hex');
+
+                const exists = await s3.send(new HeadObjectCommand({
+                    Key,
+                    Bucket: "margins",
+                })).catch(e => {
+                    if (e.name === "NotFound") {
+                        return false;
+                    }
+                    throw e;
+                });
+                console.log({ exists })
+                if (exists) {
+                    this.metadata.image = `${S3_BUCKET_PREFIX}${Key}`;
+                } else {
+                    const response = await fetch(this.metadata.image);
+                    const buffer = await response.arrayBuffer();
+                    await uploadFile({
+                        Key,
+                        //@ts-expect-error
+                        Body: buffer,
+                    });
+                    this.metadata.image = `${S3_BUCKET_PREFIX}${Key}`;
+                }
+
+            }
+            console.log({ metadata: this.metadata })
+
             return {
                 ...this.metadata,
             }
@@ -1059,7 +1153,6 @@ export class Parser {
     private getMetadata() {
         if (!this.extractor.disableJSONLD) {
             this.scrapeJsonLd();
-            return
         }
         const metaEls = this.root.querySelectorAll("meta");
         const metadataToExtractorHash = {
@@ -1703,7 +1796,7 @@ export class Parser {
         tag = tag.toLowerCase();
         const tagsToRemove = tagsList.filter(node => {
             let isList = tag === "ul" || tag === "ol";
-            console.log({isList})
+            console.log({ isList })
             if (!isList) {
                 let listLength = 0;
                 const listNodes = node.querySelectorAll("ol, ul");
@@ -2580,6 +2673,8 @@ export class Parser {
                     console.log(`Couldn't parse JSON`, e);
                 }
             } else if (element && typeof selector[1] === "string") {
+                console.log("selector[1] is a string", selector[1])
+                console.log(element.attrs[selector[1]])
                 const text = element.getAttribute(selector[1]);
                 console.log(`and here's the text:`, text);
                 if (text) return text;

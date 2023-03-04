@@ -11,6 +11,7 @@ import { normalizeUrl } from "$lib/feeds/utils";
 import parse from "$lib/parse";
 import { publicProcedure, router } from "$lib/trpc/t";
 import type { Metadata } from '$lib/web-parser';
+import { dev } from '$app/environment';
 
 export const publicRouter = router({
     parse: publicProcedure.input(z.object({
@@ -18,7 +19,7 @@ export const publicRouter = router({
         html: z.string().optional()
     })).query(async ({ input, ctx }) => {
         const cached = await ctx.redis.get(input.url);
-        if (cached) {
+        if (cached && !dev) {
             return cached as Metadata;
         }
         const normalizedUrl = normalizeUrl(input.url);

@@ -5,11 +5,12 @@ import {
     ListObjectsV2Command,
     GetObjectCommand,
     PutObjectCommand,
-    PutObjectRequest
+    PutObjectRequest,
+    HeadObjectCommand
 } from "@aws-sdk/client-s3";
 
 
-const s3 = new S3Client({
+export const s3 = new S3Client({
     endpoint: `https://${CLOUDFLARE_ID}.r2.cloudflarestorage.com`,
     region: "auto",
     credentials: {
