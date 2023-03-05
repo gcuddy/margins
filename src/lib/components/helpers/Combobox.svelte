@@ -288,14 +288,14 @@
 
 	let ro: ResizeObserver;
 	export let height = tweened(200, {
-		duration: 125,
-	});
+        duration: 0
+    });
 
 	onMount(() => {
 		if (ref) {
 			ro = new ResizeObserver(([entry]) => {
 				console.log({ entry, $height });
-				height.set(entry.contentRect.height);
+				// height.set(entry.contentRect.height);
 			});
 			ro.observe(ref);
 		}
@@ -326,7 +326,6 @@
 	// });
 </script>
 
-<!-- <div style:height={animateHeight ? `${$height}px` : undefined}> -->
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div class={className} bind:this={ref} {...$$restProps}>
 		<!-- slot props are given IF you want to use them -->
@@ -407,4 +406,3 @@
 			{/if}
 		</slot>
 	</div>
-<!-- </div> -->
