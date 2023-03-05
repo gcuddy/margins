@@ -3,9 +3,11 @@
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import Spacer from "$lib/components/helpers/Spacer.svelte";
+	import MiniAnnotation from "$lib/components/MiniAnnotation.svelte";
 	import Pill from "$lib/components/Pill.svelte";
 	import StateCombobox from "$lib/components/StateCombobox.svelte";
 	import TagCloud from "$lib/components/TagCloud.svelte";
+	import { genHtml } from "$lib/components/TipTap.svelte";
 	import dayjs from "$lib/dayjs";
 	import type { EntryInList } from "$lib/prisma/selects/entry";
 	import { selectedIds, selectedItems } from "$lib/stores/selectedItems";
@@ -127,21 +129,68 @@
 						{@const pageNotes = entry.annotations.filter((a) => a.type === "note")}
 						{@const inlineNotes = entry.annotations.filter((a) => a.type === "annotation")}
 						{#if pageNotes.length}
-							<Pill icon="documentMini">
+							<Pill icon="documentMini" popup={true}>
 								{pageNotes.length}
+								<div class="flex flex-col space-y-2" slot="popup">
+									<div class="py-1 border-b border-border/80">
+                                        <h2 class="font-medium text-sm">Page Notes</h2>
+                                    </div>
+									<div class="flex flex-col space-y-1.5 text-xs">
+										{#each pageNotes.sort((a,b) => a.createdAt > b.createdAt ? -1 : 1).slice(0,3) as note}
+											<MiniAnnotation clamp="line-clamp-3" annotation={note} />
+										{/each}
+                                        {#if pageNotes.length > 3}
+                                            <span class="text-accent/80 px-1">+{pageNotes.length - 3} more</span>
+                                        {/if}
+									</div>
+								</div>
 							</Pill>
 						{/if}
 						{#if inlineNotes.length}
-							<Pill fill="fill-accent/70" icon="pencilMini">
+							<Pill fill="fill-accent/70" popup={true} icon="pencilMini">
 								{inlineNotes.length}
+                                <div class="flex flex-col space-y-2" slot="popup">
+									<div class="py-1 border-b border-border/80">
+                                        <h2 class="font-medium text-sm">Annotations</h2>
+                                    </div>
+									<div class="flex flex-col space-y-1.5 text-xs">
+										{#each inlineNotes.sort((a,b) => a.createdAt > b.createdAt ? -1 : 1).slice(0,3) as note, idx}
+
+											<MiniAnnotation clamp="line-clamp-3" annotation={note} />
+										{/each}
+                                        {#if inlineNotes.length > 3}
+                                            <span class="px-1 text-accent/80">+{inlineNotes.length - 3} more</span>
+                                        {/if}
+									</div>
+								</div>
 							</Pill>
 						{/if}
 					{/if}
-                    {#if entry.relations?.length || entry.back_relations?.length}
-                        <Pill icon="arrowsRightLeftMini">
-                            {entry.relations?.length + entry.back_relations?.length}
-                        </Pill>
-                    {/if}
+					{#if entry.relations?.length || entry.back_relations?.length}
+                    {@const total = entry.relations?.length + entry.back_relations?.length}
+                    {@const slicedRelations = entry.relations?.slice(0,3) || []}
+                    {@const slicedBackRelations = entry.back_relations?.slice(0,3) || []}
+                    {@const slicedRelationsTotal = slicedRelations?.length + slicedBackRelations?.length}
+						<Pill icon="arrowsRightLeftMini" popup={true}>
+							{total}
+                            <div class="flex flex-col space-y-2" slot="popup">
+                                <div class="py-1 border-b border-border/80">
+                                    <h2 class="font-medium text-sm">Relations</h2>
+                                </div>
+                                <div class="flex flex-col space-y-1.5 text-xs px-1">
+                                  {#each slicedRelations as relation}
+                                    <a href="/entry/{relation.relatedEntry.id}">{relation.relatedEntry.title}</a>
+                                  {/each}
+                                  {#each slicedBackRelations as relation}
+                                    <a href="/entry/{relation.entry.id}">{relation.entry.title}</a>
+                                  {/each}
+                                    {#if total > slicedRelationsTotal}
+                                        <span class="text-accent/80">+{total - slicedRelationsTotal} more</span>
+                                    {/if}
+                                </div>
+                            </div>
+						</Pill>
+					{/if}
 				</div>
 			</slot>
 		</div>
