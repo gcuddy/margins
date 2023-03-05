@@ -30,5 +30,6 @@ export const checkIfKeyboardShortcutsAllowed = () => {
 	}
     // check if contenteditable
     if (a instanceof HTMLElement && a.getAttribute('contenteditable') === 'true') return false
+    if (a instanceof HTMLElement && a.classList.contains("ProseMirror")) return false
 	return true
 }

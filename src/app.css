@@ -146,10 +146,11 @@
 
 	mark[data-annotation-color] {
 		cursor: default;
+        @apply rounded-sm;
 	}
 
 	mark[data-annotation-color="Yellow"] {
-		@apply bg-yellow-400/90 dark:bg-yellow-600/5 dark:text-yellow-50/90;
+		@apply bg-yellow-400/90 dark:bg-yellow-600/10 dark:text-yellow-50/90;
 
 		&.active {
 			@apply bg-yellow-600 text-gray-900;

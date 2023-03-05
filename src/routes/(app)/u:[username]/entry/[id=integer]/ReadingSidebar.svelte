@@ -125,9 +125,9 @@
 		if (!allowed) return;
 		if (e.key === "Escape") {
 			if (checkIfKeyboardShortcutsAllowed()) {
-				e.preventDefault();
-				$reading_sidebar.active = false;
-				e.stopPropagation();
+				// e.preventDefault();
+				// $reading_sidebar.active = false;
+				// e.stopPropagation();
 			}
 		}
 		// keyboard shortcuts

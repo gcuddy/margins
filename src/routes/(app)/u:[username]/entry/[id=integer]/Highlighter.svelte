@@ -898,6 +898,10 @@
 					<HighlightToolTip
 						color={currentAnnotationColor}
 						labels={true}
+                        on:close={() => {
+                            console.log("close")
+                            show_tooltip = false;
+                        }}
 						on:annotate={async () => {
 							const userSelection = window.getSelection();
 							if (!userSelection) return;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
 	import { createEventDispatcher, onMount } from "svelte";
 	import Swatches from "./ColorPicker/Swatches.svelte";
 	import Icon from "./helpers/Icon.svelte";
@@ -11,7 +12,22 @@
 	});
 
 	export let color: string | undefined = undefined;
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (!checkIfKeyboardShortcutsAllowed()) return;
+        if (e.key === "Escape") {
+            dispatch("close");
+        }
+        if (e.key === "h") {
+            dispatch("highlight");
+        }
+        if (e.key === "a") {
+            dispatch("annotate");
+        }
+    }
 </script>
+
+<svelte:window on:keydown={handleKeydown}/>
 
 <div style:--annotationColor={color} class="relative">
 	<div
@@ -39,12 +55,12 @@
 			{#if labels}<span class="text-xs">annotate</span>{/if}</button
 		>
 	</div>
-	<button class="absolute" on:pointerdown|preventDefault|stopPropagation={() => dispatch("annotate")}
+	<!-- <button class="absolute" on:pointerdown|preventDefault|stopPropagation={() => dispatch("annotate")}
 		><div class="text-[var(--annotationColor)]">
 			<Icon name="annotation" />
 		</div>
 		{#if labels}<span class="text-xs">annotate</span>{/if}</button
-	>
+	> -->
 	<!-- <div>
 		<Swatches class="" />
 	</div> -->
