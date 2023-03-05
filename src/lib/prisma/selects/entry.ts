@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { baseAnnotationSelect } from "./annotations";
 
 export const basicEntrySelect = (userId: string) => Prisma.validator<Prisma.EntrySelect>()({
     id: true,
@@ -37,6 +38,7 @@ export const entryListSelect = (userId: string) => Prisma.validator<Prisma.Entry
             // type: 'note',
             userId,
         },
+        select: baseAnnotationSelect
     },
     tags: {
         select: {
@@ -66,8 +68,30 @@ export const entryListSelect = (userId: string) => Prisma.validator<Prisma.Entry
             title: true
         }
     },
-    relations: true,
-    back_relations: true,
+    relations: {
+        select: {
+           id: true,
+           type: true,
+           relatedEntry: {
+                select: {
+                    id: true,
+                    title: true,
+                }
+           }
+        }
+    },
+    back_relations: {
+        select: {
+            id: true,
+            type: true,
+            entry: {
+                 select: {
+                     id: true,
+                     title: true,
+                 }
+            }
+         }
+    },
 })
 
 const entryInListArgs = Prisma.validator<Prisma.EntryArgs>()({
