@@ -40,7 +40,7 @@ export const annotationRouter = router({
                 OR: [
                     {
                         body: {
-                            string_contains: input,
+                            contains: input,
                         },
                         // Unfortunately, this seems able to only search the first level of the JSON, and only hit exact matches,
                         // contentData: {
