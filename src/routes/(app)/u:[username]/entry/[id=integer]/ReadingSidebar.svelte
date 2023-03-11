@@ -117,6 +117,8 @@
 			});
 		}
 	});
+
+	let editing_entry = false;
 </script>
 
 <svelte:window
@@ -166,9 +168,24 @@
 
 		<div class="flex flex-col gap-y-2 divide-y dark:divide-gray-700/40">
 			<div class="flex flex-col gap-y-1">
-				<span class="text-lg font-semibold">{entry.title}</span>
-				{#if entry.author}
+				<div class="flex items-center justify-between">
+                    {#if entry.title && !editing_entry}
+					<span class="text-lg font-semibold">{entry.title}</span>
+				{:else if editing_entry}
+					<input class="text-lg font-semibold" value={entry.title} placeholder="title" />
+				{/if}
+					<Button
+						on:click={() => (editing_entry = !editing_entry)}
+						variant="naked"
+					>
+						<Icon name="pencilMini" className="h-3 w-3 fill-current" />
+						<span class="sr-only">edit</span>
+					</Button>
+				</div>
+				{#if entry.author && !editing_entry}
 					<span class="text-base font-medium">{entry.author}</span>
+				{:else if editing_entry}
+					<input class="text-base font-medium" value={entry.author} placeholder="author" />
 				{/if}
 				{#if entry.type === DocumentType.book && entry.uri?.startsWith("isbn:")}
 					<!-- bookshop link -->
@@ -176,11 +193,11 @@
 						href="https://bookshop.org/book/{entry.uri.replace('isbn:', '')}"
 						target="_blank"
 						rel="noopener noreferrer"
-						class="text-sm text-muted flex items-center">
-                        <span>Bookshop</span>
-                        <Icon name="arrowTopRightOnSquareMini" className="w-4 h-4 ml-1 fill-muted" />
-                        </a
+						class="flex items-center text-sm text-muted"
 					>
+						<span>Bookshop</span>
+						<Icon name="arrowTopRightOnSquareMini" className="w-4 h-4 ml-1 fill-muted" />
+					</a>
 				{/if}
 				{#if entry.image && !!entry.recipe}
 					<img src={entry.image} alt="" />

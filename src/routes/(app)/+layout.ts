@@ -11,9 +11,9 @@ export const load = (async (e) => {
         defaultOptions: {
             queries: {
                 enabled: browser,
-                staleTime: 1000 * 60 * 5, // 5 minutes
+                staleTime: 1000 * 60 * 60, // 1 hour
                 // cachetime 24 hours for persiter
-                      cacheTime: 1000 * 60 * 60 * 24, // 24 hours
+                cacheTime: 1000 * 60 * 60 * 24, // 24 hours
                 networkMode: "offlineFirst"
             },
             mutations: {
