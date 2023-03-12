@@ -28,9 +28,14 @@
 	import { onDestroy, onMount, setContext } from "svelte";
 	import { UpdateBookmarkMutationKey } from "$lib/features/entries/mutations";
 	import MutationProvider from "./MutationProvider.svelte";
+	import { writable } from "svelte/store";
+	import { createCurrentListStore, setCurrentListContext } from "$lib/stores/currentList";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
+
+    const current_list = createCurrentListStore();
+    setCurrentListContext(current_list);
 
 	// const queryClient = new QueryClient({
 	// 	defaultOptions: {
