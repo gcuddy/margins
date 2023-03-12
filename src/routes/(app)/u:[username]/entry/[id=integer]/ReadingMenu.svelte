@@ -4,7 +4,7 @@
 	import { page } from "$app/stores";
 	import { createTemporaryAnnotation } from "$lib/annotation";
 	import type { EntryWithBookmark } from "$lib/entry.server";
-	import type { ICurrentList } from "$lib/stores/currentList";
+	import { getCurrentListContext, ICurrentList } from "$lib/stores/currentList";
 	import { mainEl, mainElScroll } from "$lib/stores/main";
 	import scrollDirection from "$lib/stores/scrollDirection";
 	import type { Bookmark, Entry } from "@prisma/client";
@@ -42,7 +42,7 @@
 
 	const updateBookmark = useUpdateBookmark();
 
-	$: currentList = $page.data.currentList;
+	$: currentList = getCurrentListContext();
 
 	const scrollDown = scrollDirection($mainEl);
 	$: ({ user } = $page.data);
@@ -113,11 +113,11 @@
 		!$reading_sidebar.active;
 
 	$: back = $currentList?.slug ?? "";
-	$: index = $currentList?.ids?.findIndex((id) => id === entry.id);
-	$: prev = index ? $currentList?.ids?.[index - 1] : undefined;
-	$: next = index || index === 0 ? $currentList?.ids?.[index + 1] : undefined;
-	$: next_url = next ? `/u:${$page.data.user?.username}/entry/${next}` : undefined;
-	$: prev_url = prev ? `/u:${$page.data.user?.username}/entry/${prev}` : undefined;
+	$: index = $currentList?.entries?.findIndex(($entry) => $entry.id === entry.id);
+	$: prev = index > -1 ? $currentList?.entries?.[index - 1] : undefined;
+	$: next = index > -1 ? $currentList?.entries?.[index + 1] : undefined;
+	$: next_url = next ? `/u:${$page.data.user?.username}/entry/${next.id}` : undefined;
+	$: prev_url = prev ? `/u:${$page.data.user?.username}/entry/${prev.id}` : undefined;
 
 	$: console.log({ index, next, prev });
 

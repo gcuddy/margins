@@ -11,6 +11,7 @@
 	import { useFilterQuery } from "$lib/features/entries/filter";
 	import { entriesByLocationQuery } from "$lib/features/entries/queries";
 	import Filters from "$lib/features/filters/Filters.svelte";
+	import { getCurrentListContext } from "$lib/stores/currentList";
 	import { trpcWithQuery } from "$lib/trpc/client";
 	import { LOCATION_TO_DISPLAY } from "$lib/types/schemas/Locations";
 	import {
@@ -34,6 +35,10 @@
 	// $: console.log({ data });
 	$: locationStateIds = $page.data.user?.states?.filter((s) => s.type === location).map((s) => s.id) ?? [];
 	// $: console.log({ $currentList });
+
+    const current_list = getCurrentListContext();
+
+
 
 	$: query = data.query
 		? data.query()
@@ -62,6 +67,17 @@
 
 	const viewOptionsStore = createCustomizeViewStore();
 	setContext(ViewOptionsContextKey, viewOptionsStore);
+
+	$: sortedEntries = $query.isSuccess ? sortEntries($query.data, $viewOptionsStore.sort).filter((e) => {
+			const stateId = e.bookmarks?.[0]?.stateId;
+			if (!stateId) return true;
+            return locationStateIds.includes(stateId)
+		}) : [];
+
+    $: current_list.set({
+        entries: sortedEntries,
+        slug: $page.url.pathname
+    })
 </script>
 
 <Header>
@@ -85,34 +101,13 @@
 <Filters />
 
 <EntryFilter />
-<!-- {JSON.stringify(data.bookmarks, null, 2)} -->
-<!-- <Saved
-	items={data.entries || data.bookmarks || []}
-	{viewOptions}
-	on:update={(e) => {
-		console.log('update', e);
-		e.detail.articles.forEach((article) => {
-			articles = articles.map((a) => (a.id === article.id ? article : a));
-		});
-	}}
-/> -->
-<!-- <Filters /> -->
 {#if $query.isLoading}
 	<div>Loading...</div>
 {:else if $query.isError}
 	<div>Error</div>
 {:else if $query.isSuccess}
-	{@const sortedEntries = sortEntries($query.data, $viewOptionsStore.sort)}
 	<EntryList
-		items={sortedEntries.filter((e) => {
-			const stateId = e.bookmarks?.[0]?.stateId;
-			if (!stateId) return true;
-			if (locationStateIds.includes(stateId)) {
-				return true;
-			} else {
-				return false;
-			}
-		})}
+		items={sortedEntries}
 	>
 		<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
 	</EntryList>
