@@ -82,6 +82,12 @@ export const booksRouter = router({
     }),
     public: router({
         search: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
+            // get from redis
+            const stored = await ctx.redis.get("books:" + input);
+            if (stored) {
+                console.log("Found in cache", stored);
+                return stored;
+            }
             const url = new URL(googleBooksApi);
             url.searchParams.set("q", input);
             const results = await books("v1").volumes.list({
@@ -93,6 +99,14 @@ export const booksRouter = router({
                 // ensure no duplicate results
                 const ids = new Set((results.data.items?.map(item => item.id).filter(Boolean)) || []);
                 const items = Array.from(ids).map(id => results.data.items?.find(item => item.id === id)).filter(Boolean);
+                // store in redis (this should also use cache-control headers)
+                await ctx.redis.set("books:" + input, {
+                    ...results.data,
+                    items
+                }, {
+                    // expire after 1 day
+                    ex: 60 * 60 * 24
+                });
                 return {
                     ...results.data,
                     items
@@ -107,7 +121,7 @@ export const booksRouter = router({
         }),
         byId: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {
             // store in redis (this should also use cache-control headers)
-            const useRedis = !dev;
+            const useRedis = true;
             const book = await ctx.redis.get("book:" + input);
             if (book) {
                 console.log("Found in cache", book);

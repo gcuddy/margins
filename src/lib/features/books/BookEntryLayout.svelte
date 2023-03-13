@@ -8,8 +8,12 @@
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import dayjs from "$lib/dayjs";
 	import { notifications } from "$lib/stores/notifications";
+	import { trpcWithQuery } from "$lib/trpc/client";
 	import type { Maybe } from "@trpc/server";
 	import { fade } from "svelte/transition";
+
+    const client = trpcWithQuery($page)
+   const utils = client.createContext();
 
 	let busy = false;
     let saved = false;
@@ -45,8 +49,8 @@
 		</ImageLoader>
 		<slot name="underImage" />
 	</div>
-	<div class="space-y-4">
-		<div class="flex h-60 flex-col text-center sm:text-left">
+	<div class="space-y-4 grow">
+		<div class="flex h-60 flex-col text-center sm:text-left max-w-prose w-[min(65ch,100%)]">
 			<h1 class="text-2xl font-bold">{title}</h1>
 			{#if subtitle}
 				<Muted class="text-lg font-medium">{subtitle}</Muted>
@@ -93,6 +97,7 @@
 					use:enhance={() => {
 						busy = true;
 						return async ({ update, result }) => {
+                            utils.entries.invalidate();
 							if (result.type === "success") {
                                 console.log({result})
                                 // await goto(`/u:${$page.data.user?.username}/entry/${result.data?.entryId}`)
@@ -106,8 +111,8 @@
                                 setTimeout(() => {
                                     bookmarked = true;
                                 }, 2000);
-                                return
                             }
+
 							await update();
 							busy = false;
 						};
