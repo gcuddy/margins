@@ -20,15 +20,21 @@
 	export let placeholderData: RouterOutputs["books"]["public"]["byId"] | undefined = undefined;
 	export let entry: RouterOutputs["entries"]["load"] | undefined = undefined;
 
+    export let title = "";
+
+
 	$: todayLog = entry?.log.find((log) => dayjs(log.date).isSame(dayjs(), "day"));
 
     const client = trpcWithQuery($page);
     const utils = client.createContext();
 	$: query = client.books.public.byId.createQuery(bookId, {
 		staleTime: 5 * 1000 * 60,
-		placeholderData,
+		// placeholderData,
 		onSuccess: (book) => console.log({ book }),
 	});
+
+    $: title = entry?.title || $query.data?.volumeInfo?.title || placeholderData?.volumeInfo?.title || "";
+
 	// $: query = createQuery({
 	// 	queryKey: ["books", "detail", bookId],
 	// 	queryFn: async () => trpc($page).books.public.byId.query(bookId),
@@ -96,10 +102,10 @@
 		imageLinks.smallThumbnail;
 </script>
 
-<div class="container mx-auto flex h-full flex-col space-y-8 divide-y p-6 dark:divide-gray-700">
+<div class="container mx-auto flex h-full flex-col space-y-8 divide-y p-6 dark:divide-gray-700" style:--book-shadow-color={$query.data?.color}>
 	{#if entry && !$query.isSuccess}
     {@const isbn = entry.uri?.replace("isbn:", "")}
-    <BookEntryLayout {bookId} image={entry.image} fallbackImage={googleBooksimage} title={entry.title} {isbn} description={entry.text} author={entry.author} published={entry.published}  >
+    <BookEntryLayout {bookId} image={entry.image} fallbackImage={googleBooksimage} title={entry.title} {isbn} description={entry.text} author={entry.author} published={entry.published} {bookmarked}  >
         <svelte:fragment slot="underImage">
             {#if $page.route.id?.includes("entry") && $page.params.id}
 					{#if !todayLog}
@@ -137,9 +143,9 @@
         {@const {title, subtitle, authors, publisher, language, pageCount, description, publishedDate} = book}
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
-       <BookEntryLayout {bookId} {image} fallbackImage={googleBooksimage} genres={book.categories?.[0]?.split(" /")[0]} {title} {publisher} {isbn} {language} {pageCount} {subtitle} {description} author={authors?.join(", ")} published={publishedDate}  >
+       <BookEntryLayout {bookmarked} {bookId} {image} fallbackImage={googleBooksimage} genres={book.categories?.[0]?.split(" /")[0]} {title} {publisher} {isbn} {language} {pageCount} {subtitle} {description} author={authors?.join(", ")} published={publishedDate}  >
         <svelte:fragment slot="underImage">
-            {#if $page.route.id?.includes("entry") && $page.params.id}
+            <!-- {#if $page.route.id?.includes("entry") && $page.params.id}
 					{#if !todayLog}
 						<form
 							use:enhance={() => {
@@ -158,7 +164,7 @@
 					{:else}
 						Logged today
 					{/if}
-				{/if}
+				{/if} -->
         </svelte:fragment>
        </BookEntryLayout>
 
