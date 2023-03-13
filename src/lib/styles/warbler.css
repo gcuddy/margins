@@ -1,0 +1,29 @@
+@font-face {
+	src: url("/fonts/WarblerVariableV1-VF.woff2") format("woff2"),
+		url("/fonts/WarblerVariableV1-VF.woff") format("woff");
+	font-family: "Warbler Variable Web";
+	font-style: normal;
+	font-weight: 400;
+}
+@font-face {
+	src: url("/fonts/WarblerText-Regular.woff2") format("woff2"),
+		url("/fonts/WarblerText-Regular.woff") format("woff");
+	font-family: "Warbler Text Web";
+	font-style: normal;
+	font-weight: 400;
+}
+
+@font-face {
+	src: url("/fonts/WarblerText-Italic.woff2") format("woff2"),
+		url("/fonts/WarblerText-Italic.woff") format("woff");
+	font-family: "Warbler Text Web";
+	font-style: italic;
+	font-weight: 400;
+}
+@font-face {
+	src: url("/fonts/WarblerText-SemiBold.woff2") format("woff2"),
+		url("/fonts/WarblerText-SemiBold.woff") format("woff");
+	font-family: "Warbler Text Web";
+	font-style: normal;
+	font-weight: 600;
+}

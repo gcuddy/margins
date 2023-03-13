@@ -1,9 +1,10 @@
 <script>
 	import Button from '$lib/components/Button.svelte';
 	import Icon from '$lib/components/helpers/Icon.svelte';
+    import "$lib/styles/warbler.css"
 </script>
 
-<div class="min-h-screen bg-amber-50 text-amber-900">
+<div class="min-h-screen bg-amber-50 text-amber-900 pb-16">
 	<header class="sticky top-0">
 		<nav>
 			<ul class=" mx-auto flex items-center justify-end space-x-4 p-4">
