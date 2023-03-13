@@ -163,6 +163,7 @@
 		"compromise": "^14.8.2",
 		"date-picker-svelte": "^2.2.5",
 		"epubjs": "^0.3.93",
+		"fast-average-color-node": "^2.6.0",
 		"highlight.js": "^11.7.0",
 		"idb-keyval": "^6.2.0",
 		"linkedom": "^0.14.22",

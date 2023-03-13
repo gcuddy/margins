@@ -6,12 +6,16 @@ const googleBooksApi = "https://www.googleapis.com/books/v1/volumes";
 
 // REVIEW: do we really need to import whole googleApis/books? We get TS... but a simple fetched and type coercion could be fine too
 
-import { books } from "@googleapis/books";
+import { books, books_v1 } from "@googleapis/books";
 import { DocumentType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import parse from "node-html-parser";
 
+import { getAverageColor } from 'fast-average-color-node';
+
 import { GOOGLE_BOOKS_API_KEY } from "$env/static/private";
+import { dev } from "$app/environment";
+import Color from "color";
 
 export const saveInputSchema = z.object({
     bookId: z.string(),
@@ -78,6 +82,12 @@ export const booksRouter = router({
     }),
     public: router({
         search: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
+            // get from redis
+            const stored = await ctx.redis.get("books:" + input);
+            if (stored) {
+                console.log("Found in cache", stored);
+                return stored;
+            }
             const url = new URL(googleBooksApi);
             url.searchParams.set("q", input);
             const results = await books("v1").volumes.list({
@@ -89,6 +99,14 @@ export const booksRouter = router({
                 // ensure no duplicate results
                 const ids = new Set((results.data.items?.map(item => item.id).filter(Boolean)) || []);
                 const items = Array.from(ids).map(id => results.data.items?.find(item => item.id === id)).filter(Boolean);
+                // store in redis (this should also use cache-control headers)
+                await ctx.redis.set("books:" + input, {
+                    ...results.data,
+                    items
+                }, {
+                    // expire after 1 day
+                    ex: 60 * 60 * 24
+                });
                 return {
                     ...results.data,
                     items
@@ -101,13 +119,47 @@ export const booksRouter = router({
                 });
             }
         }),
-        byId: publicProcedure.input(z.string()).query(async ({ input }) => {
+        byId: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {
+            // store in redis (this should also use cache-control headers)
+            const useRedis = true;
+            const book = await ctx.redis.get("book:" + input);
+            if (book) {
+                console.log("Found in cache", book);
+                if (useRedis) return book as books_v1.Schema$Volume & {
+                    color?: string;
+                };
+            }
             const results = await books("v1").volumes.get({
                 key: GOOGLE_BOOKS_API_KEY,
                 volumeId: input,
             });
             if (results.status === 200) {
-                return results.data;
+                // get image color
+                const image = results.data.volumeInfo?.imageLinks?.thumbnail;
+                if (image) {
+                    const bookColor = await getAverageColor(image);
+                    const c = Color(bookColor.rgba);
+                    const color = c.fade(0.75);
+                    console.log({ color });
+                    const data = {
+                        ...results.data,
+                        color: color.rgb().string()
+                    }
+                    await ctx.redis.set("book:" + input, data, {
+                        // expire after 1 week
+                        ex: 60 * 60 * 24 * 7,
+                    });
+                    return data;
+                }
+                const { data } = results;
+                await ctx.redis.set("book:" + input, data, {
+                    // expire after 1 week
+                    ex: 60 * 60 * 24 * 7,
+                });
+                return {
+                    ...data,
+                    color: undefined,
+                };
             } else {
                 throw new TRPCError({
                     code: "INTERNAL_SERVER_ERROR",

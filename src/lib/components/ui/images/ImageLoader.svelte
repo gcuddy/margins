@@ -22,6 +22,7 @@
 
 <IntersectionObserver class={wrapper} once={true} let:intersecting>
 	{#if intersecting || nativeLoading}
-		<Image on:error {alt} {src} {...$$restProps} />
+		<Image on:error {alt} {src} {...$$restProps}>
+        <slot /></Image>
 	{/if}
 </IntersectionObserver>
