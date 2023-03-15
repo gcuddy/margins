@@ -405,7 +405,9 @@ enum DocumentType {
     album
     playlist
     recipe
+    game
 }
+
 
 // @deprecated
 model Article {
