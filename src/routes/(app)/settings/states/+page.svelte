@@ -2,18 +2,13 @@
 	import { enhance } from "$app/forms";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
-	import MiniSelect from "$lib/components/atoms/MiniSelect.svelte";
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Button from "$lib/components/Button.svelte";
-	import Input from "$lib/components/ColorPicker/Input.svelte";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
-	import StateListbox from "$lib/components/StateListbox.svelte";
 	import { notifications } from "$lib/stores/notifications";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
-	import { Location } from "@prisma/client";
 
-	import ColorPicker from "svelte-awesome-color-picker";
 
 	$: default_state = $page.data.user?.states?.find((state) => state.id === $page.data.user?.default_state_id);
 	$: console.log({ default_state });

@@ -169,6 +169,7 @@
 		"fast-average-color-node": "^2.6.0",
 		"highlight.js": "^11.7.0",
 		"idb-keyval": "^6.2.0",
+		"igdb-api-node": "^5.0.2",
 		"linkedom": "^0.14.22",
 		"lodash.groupby": "^4.6.0",
 		"lucia-auth": "^0.6.1",

@@ -464,7 +464,7 @@
 				: ''}"
 			use:dndzone={{
 				items: items,
-				flipDurationMs: 125,
+				flipDurationMs: 200,
 				dragDisabled,
 				transformDraggedElement,
 				dropTargetStyle: {},
@@ -473,7 +473,7 @@
 			bind:this={container}
 			use:autoAnimate={{
 				// this wasn't working with autoanimaet(container) for some reason
-				duration: 125,
+				duration: 200,
 			}}
 			on:consider={handleConsider}
 			on:finalize={handleFinalize}
