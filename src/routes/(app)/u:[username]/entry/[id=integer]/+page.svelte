@@ -122,8 +122,8 @@
 		onSuccess: (nlp) => {
 			console.log({ nlp });
 		},
+        enabled: false
 	});
-	$: console.log({ $nlpQuery });
 	function useArticleCommands() {
 		const articleCommands: Command[] = [
 			{
