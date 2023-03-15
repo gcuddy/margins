@@ -11,11 +11,14 @@ import { DocumentType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import parse from "node-html-parser";
 
+import dayjs from "$lib/dayjs"
+
 import { getAverageColor } from 'fast-average-color-node';
 
 import { GOOGLE_BOOKS_API_KEY } from "$env/static/private";
 import { dev } from "$app/environment";
 import Color from "color";
+import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
 
 export const saveInputSchema = z.object({
     bookId: z.string(),
@@ -24,31 +27,33 @@ export const saveInputSchema = z.object({
     image: z.string().optional(),
     description: z.string().optional(),
     isbn: z.string(),
-    published: z.coerce.date(),
-    pageCount: z.coerce.number()
 });
 
 export const booksRouter = router({
-    save: protectedProcedure.input(saveInputSchema).query(async ({ ctx, input }) => {
+    save: protectedProcedure.input(z.object({
+        bookId: z.string(),
+        isbn: z.string(),
+        data: EntryCreateInputSchema,
+    })).mutation(async ({ ctx, input }) => {
         const { userId } = ctx;
         const data = {
             googleBooksId: input.bookId,
-            author: input.author,
-            image: input.image,
-            title: input.title,
-            summary: input.description,
-            type: DocumentType.book,
             uri: 'isbn:' + input.isbn,
-            published: input.published,
-            pageCount: input.pageCount
+            type: DocumentType.book,
         }
         const bookEntry = await ctx.prisma.entry.upsert({
             where: {
                 googleBooksId: input.bookId,
                 // or: isbn, etc
             },
-            update: data,
-            create: data
+            update: {
+                ...input.data,
+                ...data,
+            },
+            create: {
+                ...input.data,
+                ...data
+            }
         })
         const bookmark = await ctx.prisma.bookmark.create({
             data: {
@@ -200,5 +205,42 @@ export const booksRouter = router({
                 return src;
             }
         }),
+        update: publicProcedure.input(z.object({
+            googleBooksId: z.string(),
+        })).mutation(async ({ ctx, input }) => {
+            const result = await books("v1").volumes.get({
+                key: GOOGLE_BOOKS_API_KEY,
+                volumeId: input.googleBooksId,
+                // projection: "lite",
+            });
+            if (result.status === 200) {
+                const item = result.data;
+                if (!item) {
+                    throw new TRPCError({
+                        code: "INTERNAL_SERVER_ERROR",
+                        message: "Book not found",
+                    });
+                }
+                const data = {
+                    googleBooksId: item.id,
+                    type: DocumentType.book,
+                    title: item.volumeInfo?.title,
+                    summary: item.volumeInfo?.subtitle,
+                    html: item.volumeInfo?.description,
+                    author: item.volumeInfo?.authors?.join(', '),
+                    publisher: item.volumeInfo?.publisher,
+                    published: dayjs(item.volumeInfo?.publishedDate).toDate(),
+                    genres: item.volumeInfo?.categories?.[0]?.split('/')[0],
+                    language: item.volumeInfo?.language,
+                    pageCount: item.volumeInfo?.pageCount,
+                }
+                const updated = await ctx.prisma.entry.update({
+                    where: {
+                        googleBooksId: input.googleBooksId,
+                    },
+                    data,
+                })
+            }
+        })
     }),
 });

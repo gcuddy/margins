@@ -12,23 +12,41 @@
 	import type { Maybe } from "@trpc/server";
 	import { fade } from "svelte/transition";
 
-    const client = trpcWithQuery($page)
-   const utils = client.createContext();
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
+
+	const saveBookMutation = client.books.save.createMutation({
+		onMutate: () => {
+			busy = true;
+		},
+		onSettled: () => {
+			busy = false;
+			utils.entries.invalidate();
+		},
+		onSuccess: () => {
+			saved = true;
+			notifications.notify({
+				title: "Book saved",
+				message: "Book saved successfully into inbox",
+				type: "success",
+			});
+		},
+	});
 
 	let busy = false;
-    let saved = false;
+	let saved = false;
 
 	export let image: Maybe<string> = "";
 	export let fallbackImage: Maybe<string> = "";
-	export let title: Maybe<string> = "";
+	export let title = "";
 	export let subtitle: Maybe<string> = "";
-	export let author: Maybe<string> = "";
+	export let author = "";
 	export let description: Maybe<string> = "";
 	export let bookId: string;
 	export let pageCount: number | undefined | null = undefined;
 	export let published: Date | string | undefined | null = undefined;
 	export let bookmarked = false;
-	export let isbn: string | undefined | null = undefined;
+	export let isbn = "";
 
 	export let genres: Maybe<string> = "";
 	export let publisher: Maybe<string> = "";
@@ -49,8 +67,8 @@
 		</ImageLoader>
 		<slot name="underImage" />
 	</div>
-	<div class="space-y-4 grow">
-		<div class="flex h-60 flex-col text-center sm:text-left max-w-prose w-[min(65ch,100%)]">
+	<div class="grow space-y-4">
+		<div class="flex h-60 w-[min(65ch,100%)] max-w-prose flex-col text-center sm:text-left">
 			<h1 class="text-2xl font-bold">{title}</h1>
 			{#if subtitle}
 				<Muted class="text-lg font-medium">{subtitle}</Muted>
@@ -90,32 +108,26 @@
 				<!-- TODO -->
 			{:else}
 				<form
-                    out:fade|local
 					action="/books/{bookId}?/save"
 					method="post"
 					class="mt-auto"
-					use:enhance={() => {
-						busy = true;
-						return async ({ update, result }) => {
-                            utils.entries.invalidate();
-							if (result.type === "success") {
-                                console.log({result})
-                                // await goto(`/u:${$page.data.user?.username}/entry/${result.data?.entryId}`)
-                                notifications.notify({
-                                    title: "Book saved",
-                                    message: "Book saved successfully into inbox",
-                                    type: "success",
-                                })
-                                busy = false;
-                                saved = true;
-                                setTimeout(() => {
-                                    bookmarked = true;
-                                }, 2000);
-                            }
-
-							await update();
-							busy = false;
-						};
+					on:submit|preventDefault={() => {
+						$saveBookMutation.mutate({
+							bookId,
+							isbn,
+							data: {
+								title,
+								html: description,
+								published,
+								author,
+								pageCount,
+								image: image || undefined,
+								genres,
+								publisher,
+								language,
+								summary: subtitle,
+							},
+						});
 					}}
 				>
 					<input type="hidden" name="bookId" value={bookId} />
@@ -133,10 +145,10 @@
 						<Button type="submit" disabled={busy} className="self-start flex items-center space-x-2">
 							{#if busy}
 								<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
-                                <span>Saving…</span>
-                            {:else if saved}
-                                <Icon name="checkCircleMini" className="h-4 w-4 fill-current" />
-                                <span>Saved!</span>
+								<span>Saving…</span>
+							{:else if saved}
+								<Icon name="checkCircleMini" className="h-4 w-4 fill-current" />
+								<span>Saved!</span>
 							{:else}
 								<span>Save to Inbox</span>
 							{/if}
