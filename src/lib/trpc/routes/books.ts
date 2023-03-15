@@ -225,7 +225,7 @@ export const booksRouter = router({
                     googleBooksId: item.id,
                     type: DocumentType.book,
                     title: item.volumeInfo?.title,
-                    summary: item.volumeInfo?.subtitle,
+                    summary: item.volumeInfo?.subtitle || null,
                     html: item.volumeInfo?.description,
                     author: item.volumeInfo?.authors?.join(', '),
                     publisher: item.volumeInfo?.publisher,
