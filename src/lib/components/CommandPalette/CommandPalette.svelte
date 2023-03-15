@@ -272,7 +272,8 @@
 			name: "Jump to podcast",
 			perform: async () => {
 				showCommandPalette.out();
-				const existingPodcasts = await $page.data.queryClient.ensureQueryData(listPodcastsQuery());
+				const existingPodcasts = [];
+				// const existingPodcasts = await $page.data.queryClient.ensureQueryData(listPodcastsQuery());
 				commandPaletteStore.open({
 					query: (v) => {
 						// TODO: massage results by bumping saved podcasts to the top
@@ -284,10 +285,11 @@
 						return {
 							...q,
 							placeholderData: filteredPodcasts,
+                            enabled: v.length > 2,
 							select: (data: ApiResponse.Search) => {
 								// REVIEW: this is probably to expensive to do on every keypress
 								// TODO: initally jump in with existing podcasts, and use simple includes
-								const sortedFeeds = data.feeds.sort((a, b) => {
+								const sortedFeeds = data.feeds?.sort((a, b) => {
 									const aSaved = existingPodcasts.some((p) => p.podcastIndexId === a.id);
 									const bSaved = existingPodcasts.some((p) => p.podcastIndexId === b.id);
 									if (aSaved && !bSaved) return -1;

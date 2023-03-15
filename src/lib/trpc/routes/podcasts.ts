@@ -2,12 +2,14 @@ import { DocumentType, Prisma, PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
 import PodcastIdxClient from "podcastdx-client";
-import type { ApiResponse } from "podcastdx-client/dist/src/types";
+import type { ApiResponse, PIApiPodcast } from "podcastdx-client/dist/src/types";
 import { z } from "zod";
 
 import { PODCASTINDEX_API_KEY, PODCASTINDEX_API_SECRET } from "$env/static/private";
 import dayjs from "$lib/dayjs";
 import { protectedProcedure, publicProcedure, router } from "$lib/trpc/t";
+import { getAverageColor } from "fast-average-color-node";
+import Color from "color";
 
 const podcastIndexApiUrl = `https://api.podcastindex.org/api/1.0`;
 
@@ -28,6 +30,10 @@ const buildHeaders = () => {
     return headers;
 };
 
+// const client = new PodcastIdxClient({
+//     key: PODCASTINDEX_API_KEY,
+//     secret: PODCASTINDEX_API_SECRET,
+// });
 const client = new PodcastIdxClient({
     key: "PQNXWJMNEKUCDDSDMMYP",
     secret: "D$euz2V58hN4E2Y4dN5C#fNtrNfdMHBxJFeXXkhb",
@@ -75,7 +81,7 @@ export async function getEpisodes({ podcastIndexId, feedUrl }: { podcastIndexId:
     });
 
     return Prisma.validator<Prisma.EntryCreateManyInput[]>()(
-        episodes.slice(0,10).map((episode) => ({
+        episodes.slice(0, 10).map((episode) => ({
             title: episode.title,
             published: dayjs.unix(episode.datePublished).toDate(),
             enclosureUrl: episode.enclosureUrl,
@@ -83,7 +89,7 @@ export async function getEpisodes({ podcastIndexId, feedUrl }: { podcastIndexId:
             enclosureLength: episode.enclosureLength,
             summary: episode.description,
             // uri is constructed of feedUrl + guid
-            uri: feedUrl ? feedUrl : 'it:' + episode.feedItunesId + "::" +  episode.guid,
+            uri: feedUrl ? feedUrl : 'it:' + episode.feedItunesId + "::" + episode.guid,
             // uri: ,
             duration: episode.duration,
             guid: episode.guid,
@@ -423,7 +429,7 @@ export const podcastsRouter = router({
                     },
                 },
             });
-            const data = await getEpisodes({podcastIndexId, feedUrl: podcast.url}); // update feed with data
+            const data = await getEpisodes({ podcastIndexId, feedUrl: podcast.url }); // update feed with data
             await prisma.feed.update({
                 where: {
                     podcastIndexId,
@@ -441,101 +447,51 @@ export const podcastsRouter = router({
         }),
     public: router({
         search: publicProcedure.input(z.string()).query(async ({ ctx, input }) => {
-            // TODO: add in title as well
-            console.time("client");
-            const client = new PodcastIdxClient({
-                key: "PQNXWJMNEKUCDDSDMMYP",
-                secret: "D$euz2V58hN4E2Y4dN5C#fNtrNfdMHBxJFeXXkhb",
-            });
-            console.log({ input, client });
-            console.timeEnd("client");
-            const json = await client.search(input);
-            return json;
-            // const headers = buildHeaders();
-            // console.log({ headers });
-            // async function searchPodcasts(type: "bytitle" | "byterm") {
-            // 	const res = await fetch(podcastIndexApiUrl + `/search/${type}?q=${encodeURIComponent(input)}`, {
-            // 		headers,
-            // 	});
-            // 	if (!res.ok) {
-            // 		console.log({ res });
-            // 		throw new TRPCError({
-            // 			code: "INTERNAL_SERVER_ERROR",
-            // 		});
-            // 	}
-            // 	const json: ApiResponse.Search = await res.json();
-            // 	return {
-            // 		...json,
-            // 		feeds: json.feeds.slice(0, 25),
-            // 	};
-            // }
-
-            // // Roll my own to get better results
-            // // REVIEW: should these be split into multiple routes, then called in promise.all on the client?
-            // const [term, title] = await Promise.all([searchPodcasts("byterm"), searchPodcasts("bytitle")]);
-
-            // // filter out duplicates, keeping title feeds first
-            // const ids = new Set([...title.feeds, ...term.feeds].map((f) => f.id));
-            // const feeds = Array.from(ids)
-            // 	.map((id) => title.feeds.find((i) => i.id === id) || term.feeds.find((i) => i.id === id))
-            // 	.filter((f) => f) as ApiResponse.Search["feeds"];
-            // console.log({ feeds });
-            // return {
-            // 	feeds,
-            // };
-
-            // REVIEW: could also roll my own of thi
-            // try {
-            // 	const results = await client.search(input, {});
-            // 	console.log({ results });
-            // 	return results;
-            // } catch (e) {
-            // 	console.error(e);
-            // }
-
-            // const time = Math.floor(Date.now() / 1000);
-            // const str = PODCASTINDEX_API_SECRET + PODCASTINDEX_API_KEY + time;
-            // const b = sha1(str);
-            // const hex = bytesToHex(b);
-            // const url = `https://api.podcastindex.org/api/1.0/search/byterm?q=` + input;
-            // // console.log({ url });
-            // console.log({ hex });
-            // const res = await fetch(url, {
-            // 	method: "GET",
-            // 	headers: {
-            // 		"X-Auth-Date": "" + time,
-            // 		"X-Auth-Key": PODCASTINDEX_API_KEY,
-            // 		Authorization: hex,
-            // 		"User-Agent": "Margins/0.1",
-            // 	},
-            // });
-            // console.log({ res });
-        }),
-        getPodcastDetailsByPodcastIndexId: publicProcedure.input(z.number()).query(async ({ input }) => {
-            // const headers = buildHeaders();
-            // const res = await fetch(podcastIndexApiUrl + `/podcasts/byfeedid?id=${encodeURIComponent(input)}`, {
-            // 	headers,
-            // });
-            // const episodes: ApiResponse.Podcast = await res.json();
-
-            try {
-                const podcast = await client.podcastById(input);
-                console.log({ podcast });
-                return podcast;
-            } catch (e) {
-                console.error(e);
+            // check cache
+            console.log("search")
+            const cached = await ctx.redis.get(`podcast:search:${input}`);
+            if (cached) {
+                console.log("cache hit", cached)
+                return cached as ApiResponse.Search
             }
+            console.log("cache miss")
+            const json = await client.search(input);
+            await ctx.redis.set(`podcast:search:${input}`, json, {
+                // expire after 1 hour
+                ex: 60 * 60,
+            });
+            return json;
+        }),
+        getPodcastDetailsByPodcastIndexId: publicProcedure.input(z.coerce.number()).query(async ({ input, ctx }) => {
+            interface Podcast extends PIApiPodcast {
+                color: string;
+            }
+            const cached = await ctx.redis.get(`podcast:${input}`);
+            if (cached) {
+                console.log("cache hit", cached)
+                return cached as Podcast
+            }
+            const podcast = await client.podcastById(input);
+            // get image color
+            const image = podcast.feed.artwork || podcast.feed.image;
+            const color = await getAverageColor(image);
+            const c = Color(color.rgb);
+            const finalC = c.fade(0.75);
+            const podcastData = {
+                ...podcast.feed,
+                color: finalC.rgb().string(),
+            };
+            await ctx.redis.set(`podcast:${input}`, podcastData, {
+                // expire after 1 day
+                ex: 60 * 60 * 24,
+            });
+            return podcastData
         }),
         getPodcastEpisodesByPodcastIndexId: publicProcedure.input(z.number()).query(async ({ input, ctx }) => {
-            // const headers = buildHeaders();
-            // const res = await fetch(podcastIndexApiUrl + `/episodes/byfeedid?id=${encodeURIComponent(input)}`, {
-            // 	headers,
-            // });
             try {
                 const episodes = await client.episodesByFeedId(input, {
-                    max: 100,
+                    max: 10,
                 });
-                // get entries + interaction as well
                 const entries = await ctx.prisma.entry.findMany({
                     where: {
                         feed: {
@@ -550,16 +506,11 @@ export const podcastsRouter = router({
                         } : undefined
                     }
                 })
-                // console.dir({ entries }, { depth: null })
                 const finished = entries.filter(e => e.interactions[0]?.finished).map(e => e.podcastIndexId);
-
                 return { episodes, finished, entries };
             } catch (e) {
                 console.error(e);
             }
-            // const episodes = [];
-            // // const episodes: ApiResponse.Episodes = await res.json();
-            // return episodes;
         }),
         episodeById: publicProcedure.input(z.coerce.number()).query(async ({ input, ctx }) => {
             // get entry and fetch
@@ -575,6 +526,69 @@ export const podcastsRouter = router({
             ]);
             const { episode } = episodeInfo;
             return { episode, entry };
+        }),
+        itunesSearch: publicProcedure.input(z.string()).query(async ({ input, ctx }) => {
+            // check cache
+            const cached = await ctx.redis.get(`podcast:itunes:search:${input}`);
+            if (cached) {
+                return cached as {
+                    resultCount: number;
+                    results: {
+                        artistName: string;
+                        artworkUrl600: string;
+                        feedUrl: string;
+                        genres: string[];
+                        id: number;
+                        name: string;
+                        releaseDate: string;
+                        url: string;
+                    }[]
+                }
+            }
+            const json = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(input)}&entity=podcast&limit=50`).then(r => r.json());
+            await ctx.redis.set(`podcast:itunes:search:${input}`, json, {
+                // expire after 1 hour
+                ex: 60 * 60,
+            });
+            return json as {
+                resultCount: number;
+                results: {
+                    artistName: string;
+                    artworkUrl600: string;
+                    feedUrl: string;
+                    genres: string[];
+                    id: number;
+                    name: string;
+                    releaseDate: string;
+                    url: string;
+                }[]
+            };
+        }),
+        byiTunesId: publicProcedure.input(z.coerce.number()).query(async ({ input, ctx }) => {
+            // check redis
+            const cached = await ctx.redis.get(`podcast:itunes:${input}`);
+            if (cached) {
+                return cached as ApiResponse.Podcast
+            }
+            const podcast = await client.podcastByItunesId(input);
+            await ctx.redis.set(`podcast:itunes:${input}`, podcast, {
+                // expire after 1 day
+                ex: 60 * 60 * 24,
+            });
+            return podcast;
+        }),
+        byId: publicProcedure.input(z.coerce.number()).query(async ({ input, ctx }) => {
+            // check redis
+            const cached = await ctx.redis.get(`podcast:${input}`);
+            if (cached) {
+                return cached as ApiResponse.Podcast
+            }
+            const podcast = await client.podcastById(input);
+            await ctx.redis.set(`podcast:${input}`, podcast, {
+                // expire after 1 day
+                ex: 60 * 60 * 24,
+            });
+            return podcast;
         }),
         byPodcastIndexId: publicProcedure.input(z.number()).query(async ({ input }) => {
             // REVIEW: should this return episodes + podcast details, or just episodes? Is it better to do it it on client side and break it up here?

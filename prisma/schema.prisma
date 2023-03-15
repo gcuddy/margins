@@ -16,10 +16,9 @@ datasource db {
 
 // TODO: fully transition from zod-prisma to zod-prisma-types when it's less buggy
 generator zod {
-    provider      = "zod-prisma"
-    output        = "../src/lib/prisma/zod"
-    imports       = "../src/lib/prisma/zod-utils"
-    relationModel = "default"
+    provider = "zod-prisma-types"
+    output   = "../src/lib/prisma/zod-prisma"
+    createRelationValuesTypes = true
 }
 
 // generator zodprismatypes {
@@ -168,7 +167,7 @@ model Relation {
     @@index([userId, entryId])
 }
 
-/// @zod.import(["import { TargetSchema } from '../schemas'"])
+/// @zod.import(["import { TargetSchema, chosenIcon, schemaOrgSchemas, ViewOptionsSchema } from '../schemas'"])
 model Annotation {
     id          String   @id @default(cuid())
     createdAt   DateTime @default(now())
@@ -177,12 +176,12 @@ model Annotation {
     // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
     //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
     // for saving structured data
-    body        String? @db.MediumText()
+    body        String?  @db.MediumText()
     // contentData - used for rich tiptap data
     contentData Json?
 
     /// chosenIcon used for documents only?
-    /// @zod.custom(imports.chosenIcon)
+    /// @zod.custom.use(chosenIcon)
     chosenIcon Json?
 
     /// Optional title, used for longer notes unassociated with an entryo
@@ -192,7 +191,7 @@ model Annotation {
     // tags     Tagging[]
     type     AnnotationType
     private  Boolean        @default(true)
-    /// @zod.custom(imports.TargetSchema)
+    /// @zod.custom.use(TargetSchema)
     target   Json? // see https://www.w3.org/TR/annotation-model/#complete-example — using hypothes.is model of multiple selectors?
     entry    Entry?         @relation(fields: [entryId], references: [id])
     entryId  Int?
@@ -207,7 +206,7 @@ model Annotation {
     // TODO: unless they have a child? what to do then?
     deleted DateTime?
     creator User      @relation(fields: [userId], references: [id])
-    userId  String @default("")
+    userId  String    @default("")
 
     sortOrder   Float             @default(0)
     // refs
@@ -254,11 +253,10 @@ enum Location {
     archive
 }
 
-/// @zod.import(["import {recipeSchema} from '../schemas'", "import { schemaOrgSchemas } from '../schemas'"])
+/// @zod.import(["import {recipeSchema, EntryExtendedSchema} from '../schemas'"])
 model Entry {
     data            EntryData[]
     // TODO: make all createdATs coerce?
-    /// @zod.custom(z.coerce.date())
     createdAt       DateTime     @default(now())
     // author       String?
     author          String? // -> TODO: switch to Json, should be enforced as string[]
@@ -293,12 +291,19 @@ model Entry {
     enclosureType   String?
     /// Relevant schema.org metadata about this entry
 
-    /// @zod.custom(imports.schemaOrgSchemas)
+    /// @zod.custom.use(schemaOrgSchemas)
     schemaOrg Json?
 
     //REVIEW: decide on what json fields to keep
-    /// @zod.custom(imports.EntryExtendedSchema)
+    /// @zod.custom.use(EntryExtendedSchema)
     extended Json?
+
+    /// The publisher for books, company for plays, etc.
+    publisher String?
+
+    language String?
+
+    genres String?
 
     // TODO: bigint?
     /// The TMDB id, if it's a movie or TV show.
@@ -319,7 +324,7 @@ model Entry {
     relations      Relation[] @relation("originatingEntryRelation")
     back_relations Relation[] @relation("destinationEntryRelation")
 
-    /// @zod.custom(imports.recipeSchema)
+    /// @zod.custom.use(recipeSchema)
     recipe          Json?
     interactions    Interaction[]
     EntryMedia      EntryMedia[]
@@ -491,12 +496,12 @@ model Context {
     @@index([feedId])
 }
 
-/// @zod.import(["import { chosenIcon } from '../schemas'"])
+/// @zod.import(["import { chosenIcon } from '../schemas'", "import { ViewOptionsSchema } from '../zod-utils'"])
 model Collection {
     id          Int               @id @default(autoincrement())
     name        String
     private     Boolean           @default(true)
-    /// @zod.custom(imports.chosenIcon)
+    /// @zod.custom.use(chosenIcon)
     icon        Json?             @default("{\"name\":\"rectangleStack\",\"type\":\"icon\",\"color\":\"#ef4444\"}")
     user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId      String
@@ -506,7 +511,7 @@ model Collection {
     updatedAt   DateTime          @updatedAt
     items       CollectionItems[]
 
-    /// @zod.custom(imports.ViewOptionsSchema.partial())
+    /// @zod.custom.use(ViewOptionsSchema.partial())
     viewOptions Json?
     // order       Json // array[] of item ids in order.... /??
     favorites   Favorite[]
@@ -765,9 +770,9 @@ model Tagging {
 model SmartList {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
     name      String
-    /// @zod.custom(imports.chosenIcon)
+    /// @zod.custom.use(chosenIcon)
     icon      Json?    @default("{\"name\":\"square3Stack3d\",\"type\":\"icon\",\"color\":\"#78716c\"}")
 
     //Review: difference
@@ -779,7 +784,7 @@ model SmartList {
     private     Boolean    @default(true)
     description String?
     user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId      String @default("")
+    userId      String     @default("")
 
     @@unique([userId, name])
     @@index([userId])

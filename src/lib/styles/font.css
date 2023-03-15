@@ -1,73 +1,74 @@
 /* Variable fonts usage: */
 @supports (font-variation-settings: normal) {
 	:root {
-		font-family: 'InterVar', sans-serif;
+		font-family: "InterVar", sans-serif;
 		font-optical-sizing: auto;
 	}
 }
 @font-face {
-	font-family: 'InterVar';
+	font-family: "InterVar";
 	font-weight: 100 900;
 	font-display: swap;
 	font-style: normal;
-	src: url('/fonts/Inter.var.woff2') format('woff2-variations');
+	src: url("/fonts/Inter.var.woff2") format("woff2-variations");
 	/* src: url('/fonts/Inter.var.woff2') format ('woff2'); */
 }
 @font-face {
-	font-family: 'InterVar';
+	font-family: "InterVar";
 	font-weight: 100 900;
 	font-display: swap;
 	font-style: italic;
-	src: url('/fonts/Inter-italic.var.woff2') format('woff2-variations');
+	src: url("/fonts/Inter-italic.var.woff2") format("woff2-variations");
 }
 @font-face {
-	font-family: 'Newsreader';
+	font-family: "Newsreader";
 	font-weight: 100 900;
 	font-display: swap;
 	font-style: normal;
-	src: url('/fonts/Newsreader-VariableFont_opsz,wght.woff2');
+	src: url("/fonts/Newsreader-VariableFont_opsz,wght.woff2");
 }
 @font-face {
-	font-family: 'Newsreader';
+	font-family: "Newsreader";
 	font-weight: 100 900;
 	font-display: swap;
 	font-style: italic;
-	src: url('/fonts/Newsreader-Italic-VariableFont_opsz,wght.woff2');
+	src: url("/fonts/Newsreader-Italic-VariableFont_opsz,wght.woff2");
 }
 
 /* crimson-text-regular - latin */
 @font-face {
-    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-    font-family: 'Crimson Text';
-    font-style: normal;
-    font-weight: 400;
-    src: url('/fonts/crimson-text-v19-latin-regular.woff2') format('woff2'), /* Chrome 36+, Opera 23+, Firefox 39+ */
-         url('/fonts/crimson-text-v19-latin-regular.woff') format('woff'); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-  }
-  /* crimson-text-italic - latin */
-  @font-face {
-    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-    font-family: 'Crimson Text';
-    font-style: italic;
-    font-weight: 400;
-    src: url('/fonts/crimson-text-v19-latin-italic.woff2') format('woff2'), /* Chrome 36+, Opera 23+, Firefox 39+ */
-         url('/fonts/crimson-text-v19-latin-italic.woff') format('woff'); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-  }
-  /* crimson-text-700 - latin */
-  @font-face {
-    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-    font-family: 'Crimson Text';
-    font-style: normal;
-    font-weight: 700;
-    src: url('/fonts/crimson-text-v19-latin-700.woff2') format('woff2'), /* Chrome 36+, Opera 23+, Firefox 39+ */
-         url('/fonts/crimson-text-v19-latin-700.woff') format('woff'); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-  }
-  /* crimson-text-700italic - latin */
-  @font-face {
-    font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-    font-family: 'Crimson Text';
-    font-style: italic;
-    font-weight: 700;
-    src: url('/fonts/crimson-text-v19-latin-700italic.woff2') format('woff2'), /* Chrome 36+, Opera 23+, Firefox 39+ */
-         url('/fonts/crimson-text-v19-latin-700italic.woff') format('woff'); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-  }
+	font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Crimson Text";
+	font-style: normal;
+	font-weight: 400;
+	src: url("/fonts/crimson-text-v19-latin-regular.woff2") format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */ url("/fonts/crimson-text-v19-latin-regular.woff") format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+/* crimson-text-italic - latin */
+@font-face {
+	font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Crimson Text";
+	font-style: italic;
+	font-weight: 400;
+	src: url("/fonts/crimson-text-v19-latin-italic.woff2") format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */ url("/fonts/crimson-text-v19-latin-italic.woff") format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+/* crimson-text-700 - latin */
+@font-face {
+	font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Crimson Text";
+	font-style: normal;
+	font-weight: 700;
+	src: url("/fonts/crimson-text-v19-latin-700.woff2") format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */ url("/fonts/crimson-text-v19-latin-700.woff") format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+/* crimson-text-700italic - latin */
+@font-face {
+	font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Crimson Text";
+	font-style: italic;
+	font-weight: 700;
+	src: url("/fonts/crimson-text-v19-latin-700italic.woff2") format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */ url("/fonts/crimson-text-v19-latin-700italic.woff")
+			format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
