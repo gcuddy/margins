@@ -411,6 +411,7 @@ enum DocumentType {
     playlist
     recipe
     game
+    board_game
 }
 
 
