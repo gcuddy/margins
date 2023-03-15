@@ -42,6 +42,12 @@ export const _EntryModel = z.object({
   schemaOrg: imports.schemaOrgSchemas,
   extended: imports.EntryExtendedSchema,
   /**
+   * The publisher for books, company for plays, etc.
+   */
+  publisher: z.string().nullish(),
+  language: z.string().nullish(),
+  genres: z.string().nullish(),
+  /**
    * The TMDB id, if it's a movie or TV show.
    */
   tmdbId: z.number().int().nullish(),

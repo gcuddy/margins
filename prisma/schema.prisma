@@ -177,7 +177,7 @@ model Annotation {
     // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
     //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
     // for saving structured data
-    body        String? @db.MediumText()
+    body        String?  @db.MediumText()
     // contentData - used for rich tiptap data
     contentData Json?
 
@@ -207,7 +207,7 @@ model Annotation {
     // TODO: unless they have a child? what to do then?
     deleted DateTime?
     creator User      @relation(fields: [userId], references: [id])
-    userId  String @default("")
+    userId  String    @default("")
 
     sortOrder   Float             @default(0)
     // refs
@@ -299,6 +299,13 @@ model Entry {
     //REVIEW: decide on what json fields to keep
     /// @zod.custom(imports.EntryExtendedSchema)
     extended Json?
+
+    /// The publisher for books, company for plays, etc.
+    publisher String?
+
+    language String?
+
+    genres String?
 
     // TODO: bigint?
     /// The TMDB id, if it's a movie or TV show.
@@ -763,7 +770,7 @@ model Tagging {
 model SmartList {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
     name      String
     /// @zod.custom(imports.chosenIcon)
     icon      Json?    @default("{\"name\":\"square3Stack3d\",\"type\":\"icon\",\"color\":\"#78716c\"}")
@@ -777,7 +784,7 @@ model SmartList {
     private     Boolean    @default(true)
     description String?
     user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId      String @default("")
+    userId      String     @default("")
 
     @@unique([userId, name])
     @@index([userId])

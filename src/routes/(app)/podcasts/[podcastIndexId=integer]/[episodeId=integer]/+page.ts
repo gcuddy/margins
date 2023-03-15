@@ -7,7 +7,7 @@ export const load = (async (e) => {
 	const { queryClient, id } = await e.parent();
 	const placeholderData = queryClient
 		.getQueryData<ApiResponse.Episodes>(queryKeys.episodes(id))
-		?.items.find((d) => d.id === episodeId);
+		?.items?.find((d) => d.id === episodeId);
 	console.log({ placeholderData, episodeId });
 	return {
 		episodeId,

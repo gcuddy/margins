@@ -139,7 +139,7 @@ export const booksRouter = router({
                 if (image) {
                     const bookColor = await getAverageColor(image);
                     const c = Color(bookColor.rgba);
-                    const color = c.fade(0.75);
+                    const color = c.fade(0.15);
                     console.log({ color });
                     const data = {
                         ...results.data,

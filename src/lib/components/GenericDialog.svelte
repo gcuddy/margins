@@ -41,7 +41,7 @@
 					leaveTo="opacity-0 scale-95"
 				>
 					<div
-						class="relative z-50 mx-auto flex h-[93vh] max-w-full flex-col space-y-3 rounded-t-xl bg-base px-5 py-3 text-content shadow-2xl ring-1 ring-border/50 dark:bg-gray-700 dark:text-gray-100 sm:h-auto sm:max-w-md sm:rounded-xl sm:py-4 {className}"
+						class="relative z-50 mx-auto flex h-[93vh] max-w-full flex-col space-y-3 rounded-t-xl bg-elevation px-5 py-3 text-content shadow-2xl ring-1 ring-border/50 dark:text-gray-100 sm:h-auto sm:max-w-md sm:rounded-xl sm:py-4 {className}"
 					>
 						{#if done_button || $$slots.title}
 							<div class="grid grid-cols-3">

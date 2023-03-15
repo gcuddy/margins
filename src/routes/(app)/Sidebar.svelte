@@ -501,6 +501,16 @@
 											<Icon name="document" className="fill-gray-400 h-4 w-4" />
 											<span>Add note</span>
 										</MenuItem>
+										<MenuItem
+											href="/music/search"
+											class={({ active }) =>
+												`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-gray-900 dark:text-gray-50 ${
+													active ? "bg-primary-300/30 dark:bg-gray-500/20" : ""
+												}`}
+										>
+											<Icon name="musicalNoteMini" className="fill-gray-400 h-4 w-4" />
+											<span>Add album</span>
+										</MenuItem>
 									</MenuItems>
 								</Menu>
 							</div>

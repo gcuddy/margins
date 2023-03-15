@@ -1,18 +1,20 @@
 <script lang="ts">
-	import { page } from "$app/stores";
-	import { createQuery } from "@tanstack/svelte-query";
-	import type { PageData } from "./$types";
-	import { podcastDetailsQuery, podcastEpisodesQuery, queryKeys } from "$lib/features/podcasts/queries";
-	import Muted from "$lib/components/atoms/Muted.svelte";
-	import GenericDialog from "$lib/components/GenericDialog.svelte";
-	import Button from "$lib/components/Button.svelte";
-	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
 	import { enhance, SubmitFunction } from "$app/forms";
-	import { notifications } from "$lib/stores/notifications";
+	import { page } from "$app/stores";
+	import Muted from "$lib/components/atoms/Muted.svelte";
+	import Button from "$lib/components/Button.svelte";
+	import GenericDialog from "$lib/components/GenericDialog.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import Progress from "$lib/components/helpers/Progress.svelte";
-	import { formatDuration } from "$lib/utils/dates";
 	import ImageSkeleton from "$lib/components/layout/Skeletons/ImageSkeleton.svelte";
+	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
+	import { podcastDetailsQuery, podcastEpisodesQuery } from "$lib/features/podcasts/queries";
+	import { notifications } from "$lib/stores/notifications";
+	import { trpcWithQuery } from "$lib/trpc/client";
+	import { formatDuration } from "$lib/utils/dates";
+	import { createQuery } from "@tanstack/svelte-query";
+	import type { PageData } from "./$types";
+	import { useCurrentPodcast } from "./+layout.svelte";
 
 	export let data: PageData;
 
@@ -20,10 +22,15 @@
 
 	let subscribed: boolean;
 	$: subscribed = !!$page.data.user?.subscriptions?.some((s) => s.feed?.podcastIndexId === data.id);
-
-	$: podcast = createQuery({ ...podcastDetailsQuery($page, data.id), placeholderData: data.searchResult });
+	const currentPodcast = useCurrentPodcast();
+	// $: podcast = createQuery({ ...podcastDetailsQuery($page, data.id), placeholderData: data.searchResult });
+	const client = trpcWithQuery($page);
+	$: podcast = client.podcasts.public.getPodcastDetailsByPodcastIndexId.createQuery(data.id);
 	$: episodes = createQuery(podcastEpisodesQuery($page, data.id));
-
+    $: console.log({$currentPodcast})
+	$: currentPodcast.set({
+		podcast: $podcast.data?.title,
+	});
 	$: console.log({ $podcast, data, $episodes });
 
 	let show_description_modal = false;
@@ -50,18 +57,21 @@
 
 <div class="">
 	<div class="container mx-auto flex flex-col space-y-8 p-6 dark:divide-gray-700">
-		<div class="relative flex justify-center flex-col space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12">
+		<div class="relative flex flex-col justify-center space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12">
 			<!-- <img
 				src={image}
 				class="absolute h-full w-full opacity-25 blur-3xl"
 				alt="Artwork for {title}"
 			/> -->
 			{#if $podcast}
-			    <div class="h-60 w-60 place-self-center overflow-hidden rounded-xl shadow-lg sm:place-self-start">
-				    {#if $podcast.isLoading || !$podcast.data?.feed.artwork}
+				<div
+					style:--shadow-color={$podcast.data?.color}
+					class="max-h-60 w-60 ring-1 ring-border/50 place-self-center overflow-hidden rounded-xl shadow-lg dark:shadow-2xl dark:shadow-[var(--shadow-color)] sm:place-self-start"
+				>
+					{#if $podcast.isLoading || !$podcast?.data?.artwork}
 						<ImageSkeleton class="animate-pulse" />
 					{:else if $podcast.isSuccess}
-						<img src={$podcast.data?.feed?.artwork} class="" alt="Artwork for {$podcast.data?.feed.title}" />
+						<img src={$podcast.data?.artwork} class="" alt="Artwork for {$podcast.data.title}" />
 					{/if}
 				</div>
 				{#if $podcast.isLoading}
@@ -69,29 +79,34 @@
 				{:else if $podcast.isError}
 					<p>Error: {$podcast.error}</p>
 				{:else if $podcast.isSuccess && $podcast.data}
-					{@const feed = $podcast.data.feed}
-
 					<div class="space-y-4 sm:space-y-8">
-						<div class="text-center sm:text-left">
-							<h1 class="text-2xl font-bold">{feed.title}</h1>
-							<a class="text-xl" href={feed.url}><Muted>{feed.author}</Muted></a>
+						<div class="flex flex-col gap-1 text-center sm:text-left">
+							<h1 class="text-2xl font-bold">{$podcast.data.title}</h1>
+							<a class="text-xl" href={$podcast.data.url}><Muted>{$podcast.data.author}</Muted></a>
+							{#if $podcast.data.categories}
+								<div class="flex gap-1">
+									{#each Object.values($podcast.data.categories) as category}
+										<span class="text-xs lowercase text-muted">{category}</span>
+									{/each}
+								</div>
+							{/if}
 							<!-- TODO: categories here -->
 						</div>
 						<div class="relative overflow-hidden text-sm line-clamp-4">
 							<div class="prose text-sm  leading-normal gradient-mask-br-50 dark:prose-invert">
-								{@html feed.description}
+								{@html $podcast.data.description}
 							</div>
 							<button
 								on:click={() => (show_description_modal = true)}
-								class="absolute bottom-0 right-0 cursor-default bg-base pl-1 pt-1 font-medium text-primary-600 dark:bg-gray-900 dark:to-gray-900"
+								class="absolute bottom-0 right-0 cursor-default bg-base pl-1 pt-1 font-medium text-accent"
 							>
 								Read more
 							</button>
 							<GenericDialog bind:isOpen={show_description_modal}>
 								<svelte:fragment slot="title">About</svelte:fragment>
-								<span class="font-bold" slot="description">{feed.title}</span>
+								<span class="font-bold" slot="description">{$podcast.data.title}</span>
 								<div class="prose text-sm   leading-normal dark:prose-invert">
-									{@html feed.description}
+									{@html $podcast.data.description}
 								</div>
 							</GenericDialog>
 						</div>
@@ -104,8 +119,8 @@
 								<input type="hidden" name="unsubscribe" value="true" />
 								<input type="hidden" name="subscriptionId" value={subscription?.id} />
 							{/if}
-							<input type="hidden" name="title" value={feed.title} />
-							<input type="hidden" name="podcastIndexId" value={feed.id} />
+							<input type="hidden" name="title" value={$podcast.data.title} />
+							<input type="hidden" name="podcastIndexId" value={$podcast.data.id} />
 							<Button type="submit" className="flex space-x-2 text-lg py-4 px-3">
 								{subscribed ? "Subscribed" : "Subscribe"}
 								<!-- <Icon
@@ -123,7 +138,7 @@
 				{/if}
 			{/if}
 		</div>
-		<div class="max-w-prose w-full mx-auto pt-2">
+		<div class="mx-auto w-full max-w-prose pt-2">
 			<h2 class="text-xl font-bold">Episodes</h2>
 			<div class="flex flex-col dark:divide-gray-700">
 				<ol class="divide-y divide-border dark:divide-gray-700">
@@ -169,13 +184,13 @@
 													$podcastPlayer.loading = true;
 													podcastPlayer.load(
 														{
-                                                           pIndexId: item.feedId,
+															pIndexId: item.feedId,
 															...item,
 															entryId,
 														},
 														{
 															title: $podcast.data?.feed.title,
-                                                            podcastIndexId: item.feedId
+															podcastIndexId: item.feedId,
 														},
 														interaction?.progress
 													);
@@ -275,5 +290,8 @@
 		50% {
 			opacity: 0.5;
 		}
+	}
+	.small-caps {
+		font-variant-caps: small-caps;
 	}
 </style>
