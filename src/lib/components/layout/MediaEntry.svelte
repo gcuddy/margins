@@ -16,7 +16,7 @@
 <div class="flex-flex-col relative w-full max-w-4xl space-y-6">
 	<div class="relative flex justify-center space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12">
 		<div
-			class="{image_dimensions} place-self-center overflow-hidden rounded-xl shadow-lg ring-1 ring-border/25 sm:place-self-start"
+			class="{image_dimensions} place-self-center shrink-0 overflow-hidden rounded-xl shadow-lg ring-1 ring-border/25 sm:place-self-start"
 		>
 			{#if loading || !image}
 				<ImageSkeleton

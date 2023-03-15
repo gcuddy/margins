@@ -14,8 +14,29 @@ import parse from "$lib/parse";
 import { publicProcedure, router } from "$lib/trpc/t";
 import type { Metadata } from '$lib/web-parser';
 import { dev } from '$app/environment';
-import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
+import { BOARD_GAME_ID, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 import type { Redis } from '@upstash/redis';
+
+
+const boardGameSchema = z.object({
+    games: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        image_url: z.string(),
+        thumb_url: z.string(),
+        year_published: z.coerce.number(),
+        description: z.string(),
+        msrp: z.coerce.number(),
+        primary_designer: z.object({
+            name: z.string().optional(),
+        }).nullish(),
+        min_players: z.coerce.number(),
+        max_players: z.coerce.number(),
+        min_playtime: z.coerce.number(),
+        max_playtime: z.coerce.number(),
+        min_age: z.coerce.number(),
+    }))
+});
 
 const twitchResponse = z.object({
     access_token: z.string(),
@@ -202,10 +223,31 @@ export const publicRouter = router({
                     'Authorization': 'Bearer ' + access_token,
                 },
                 // get name, cover url, and release date
-                body: `where id = ${input.id}; fields *, cover.url, platforms.name;`
+                body: `where id = ${input.id}; fields *, cover.url, platforms.name, websites.*;`
             });
             // TODO: involved companies is bloated, want to just get the parent companies?
             const data = await response.json();
             return data[0];
         }),
+    boardgames: publicProcedure
+        .input(z.object({
+            search: z.string()
+        }))
+        .query(async ({ ctx, input }) => {
+            const res = await fetch(`https://api.boardgameatlas.com/api/search?name=${input.search}&pretty=true&client_id=${BOARD_GAME_ID}`)
+            const data = await res.json();
+            console.log({ data })
+            const parsed = boardGameSchema.parse(data);
+            return parsed.games;
+        }),
+    boardGameById: publicProcedure
+        .input(z.object({
+            id: z.string()
+        }))
+        .query(async ({ ctx, input }) => {
+            const res = await fetch(`https://api.boardgameatlas.com/api/search?ids=${input.id}&pretty=true&client_id=${BOARD_GAME_ID}`)
+            const data = await res.json();
+            const parsed = boardGameSchema.parse(data);
+            return parsed.games[0];
+        })
 });

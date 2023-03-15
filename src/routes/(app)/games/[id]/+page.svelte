@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Button from "$lib/components/Button.svelte";
-	import MediaEntryHeader from "$lib/components/layout/MediaEntryHeader.svelte";
+	import MediaEntryHeader from "$lib/components/layout/MediaEntry.svelte";
 	import dayjs from "$lib/dayjs";
 
 	export let data;
@@ -30,6 +30,8 @@
 						</dd>
 					</div>
 				</dl>
+                <!-- todo: websites -->
+                {game.websites}
             </div>
 			<div slot="actions">
 
