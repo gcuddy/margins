@@ -25,7 +25,7 @@
 	import StateListbox from "$lib/components/StateListbox.svelte";
 	import { derived } from "svelte/store";
 	import { reading_sidebar } from "$lib/features/entries/stores";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { nanoid } from "nanoid";
 	import { Popover, PopoverButton, PopoverPanel } from "@rgossiaux/svelte-headlessui";
 	import DisplaySettings from "$lib/components/ui/DisplaySettings/DisplaySettings.svelte";
@@ -40,6 +40,8 @@
 
 	// export let currentList: ICurrentList | undefined = undefined;
 
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
 	const updateBookmark = useUpdateBookmark();
 
 	$: currentList = getCurrentListContext();
@@ -434,7 +436,7 @@
 										const id = entry.bookmark?.id;
 										$updateBookmark.mutate({
 											id: id ? [id] : undefined,
-                                            entryId: entry.id,
+											entryId: entry.id,
 											uri: entry.uri ?? undefined,
 											data: {
 												dueDate,
@@ -447,6 +449,20 @@
 									maxWidth: "max-w-min",
 								}
 							);
+						},
+					},
+					{
+						label: "Update book data",
+						check: () => entry.type === "book",
+						icon: "bookOpenMini",
+						perform: async () => {
+                            if (!entry.googleBooksId) return;
+							await trpc().books.public.update.mutate({
+								googleBooksId: entry.googleBooksId,
+							});
+							utils.entries.load.invalidate({
+								id: entry.id,
+							});
 						},
 					},
 					{

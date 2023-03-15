@@ -4,3 +4,4 @@ export * from "$lib/web-parser/schemaOrg";
 export { TargetSchema };
 export { recipeSchema } from "$lib/web-parser/recipe";
 export { chosenIcon } from "$lib/types/icon";
+export * from "./zod-utils"

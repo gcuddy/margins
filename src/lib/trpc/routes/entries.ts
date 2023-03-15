@@ -81,6 +81,11 @@ export const entriesRouter = router({
                         feedId: true,
                         extended: true,
                         enclosureUrl: true,
+                        genres: true,
+                        language: true,
+                        publisher: true,
+                        pageCount: true,
+                        summary: true,
                         tmdbId: true,
                         youtubeId: true,
                         tmdbData: true,
@@ -145,12 +150,12 @@ export const entriesRouter = router({
                                         },
                                     },
                                 },
-                               tags: {
-                                select: {
-                                    id: true,
-                                    name: true
+                                tags: {
+                                    select: {
+                                        id: true,
+                                        name: true
+                                    }
                                 }
-                               }
                             },
                             orderBy: {
                                 createdAt: "asc",

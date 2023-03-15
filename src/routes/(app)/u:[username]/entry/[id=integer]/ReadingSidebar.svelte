@@ -303,7 +303,6 @@
 						<span>{entry.type}</span>
 						{#if entry.type === DocumentType.book}
 							{@const book = queryClient.getQueryData(["books", "detail", entry.googleBooksId])}
-							{@const pageCount = book?.volumeInfo?.pageCount}
 							{@const currentPage = entry.interactions?.[0]?.currentPage}
 							<Muted class="text-sm">Progress</Muted>
 							<div class="flex items-center gap-2">
@@ -322,7 +321,7 @@
 										class="text-xs"
 									/>
 								</div>
-								<span>of {pageCount} pages</span>
+								<span>of {entry.pageCount} pages</span>
 							</div>
 						{/if}
 						<Muted class="text-sm">Relations</Muted>
