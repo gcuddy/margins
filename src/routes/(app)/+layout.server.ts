@@ -20,11 +20,11 @@ export const load: LayoutServerLoad = async (event) => {
     const caller = appRouter.createCaller(await createContext(event));
     try {
         const userData = await caller.user.data({
-            bookmarks: false,
-            subscriptions: true,
-            stylesheets: true,
+            // bookmarks: false,
+            // subscriptions: true,
+            // stylesheets: true,
             states: true,
-            color_descriptions: true,
+            // color_descriptions: true,
         })
         // TODO: we should return a mutable store with this, but can't do that on the server (instead use layout.ts)
         // const userStore

@@ -13,7 +13,12 @@ export const load = (async (event) => {
 	// }, event));
     event.depends("entries")
     const client = trpcWithQuery(event, queryClient);
-    const query = client.entries.listBookmarks.createServerQuery({
+    const utils = client.createContext();
+    // const query = client.entries.listBookmarks.createServerQuery({
+    //     location: data.location
+    // });
+
+    utils.entries.listBookmarks.prefetch({
         location: data.location
     })
 
@@ -27,7 +32,7 @@ export const load = (async (event) => {
 	return {
 		...data,
 		...(await parent()),
-        query: !browser ? query : undefined,
+        // query: !browser ? query : undefined,
 	};
 }) satisfies PageLoad;
 

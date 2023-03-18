@@ -44,28 +44,28 @@ export const userRouter = router({
 						default_state_id: true,
 						email: true,
 						...input,
-						subscriptions: input.subscriptions
-							? {
-								select: {
-									title: true,
-									id: true,
-									feedId: true,
-									feed: {
-										select: {
-											podcast: true,
-											podcastIndexId: true,
-										},
-									},
-									// feed: {
-									//     select: {
-									//         imageUrl: true,
-									//         link: true,
-									//         feedUrl: true,
-									//     },
-									// },
-								},
-							}
-							: undefined,
+						// subscriptions: input.subscriptions
+						// 	? {
+						// 		select: {
+						// 			title: true,
+						// 			id: true,
+						// 			feedId: true,
+						// 			feed: {
+						// 				select: {
+						// 					podcast: true,
+						// 					podcastIndexId: true,
+						// 				},
+						// 			},
+						// 			// feed: {
+						// 			//     select: {
+						// 			//         imageUrl: true,
+						// 			//         link: true,
+						// 			//         feedUrl: true,
+						// 			//     },
+						// 			// },
+						// 		},
+						// 	}
+						// 	: undefined,
 						// bookmarks: input.bookmarks
 						// 	? {
 						// 			include: {
@@ -73,18 +73,18 @@ export const userRouter = router({
 						// 			},
 						// 	  }
 						// 	: undefined,
-						bookmarks: {
-							include: {
-								entry: {
-									select: {
-										id: true,
-										uri: true,
-										podcastIndexId: true,
-                                        tmdbId: true
-									},
-								},
-							},
-						},
+						// bookmarks: {
+						// 	include: {
+						// 		entry: {
+						// 			select: {
+						// 				id: true,
+						// 				uri: true,
+						// 				podcastIndexId: true,
+                        //                 tmdbId: true
+						// 			},
+						// 		},
+						// 	},
+						// },
 					},
 				});
 				return {

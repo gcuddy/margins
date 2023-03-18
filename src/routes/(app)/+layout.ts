@@ -24,8 +24,9 @@ export const load = (async (e) => {
 
     // get favorites
     console.time("favorites");
-    const favorites = data.authorized ? await queryClient.ensureQueryData(favoritesQuery(e)) : []
+    // figure out a way to make this better
+    // const favorites = data.authorized ? await queryClient.ensureQueryData(favoritesQuery(e)) : []
     console.timeEnd("favorites");
 
-    return { queryClient, favorites, ...data };
+    return { queryClient, ...data };
 }) satisfies LayoutLoad;

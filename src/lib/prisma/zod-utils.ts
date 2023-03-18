@@ -3,6 +3,7 @@ import { z } from "zod";
 import { TargetSchema } from "$lib/annotation";
 import { chosenIcon } from "$lib/types/icon";
 import { recipeSchema } from "$lib/web-parser/recipe";
+import { EntryCreateInputSchema } from "./zod-prisma";
 export { ViewOptionsSchema } from "$lib/types/schemas/View";
 
 export { chosenIcon, recipeSchema, TargetSchema };
@@ -59,4 +60,16 @@ export const EntryExtendedSchema = z.object({
         text: z.string()
     })),
     authorUrl: z.string().nullish(),
+    boardGame: z.object({
+        min_players: z.number(),
+        max_players: z.number(),
+        min_playtime: z.number(),
+        max_playtime: z.number(),
+        min_age: z.number(),
+        categories: z.array(z.string())
+    }).partial()
 }).partial();
+
+export const EntryJsonFields = z.object({
+    extended: EntryExtendedSchema,
+}).partial()

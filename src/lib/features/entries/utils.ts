@@ -13,7 +13,8 @@ export const icons: Record<DocumentType, IconName> = {
     epub: "documentText",
     image: "photo",
     video: "videoCamera",
-    movie: "film"
+    movie: "film",
+    board_game: "dice"
 };
 
 export const iconsMini: Record<DocumentType, IconName> = {
@@ -27,5 +28,6 @@ export const iconsMini: Record<DocumentType, IconName> = {
     epub: "documentTextMini",
     image: "photoMini",
     video: "videoCameraMini",
-    movie: "filmMini"
+    movie: "filmMini",
+    board_game: "dice"
 }

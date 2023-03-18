@@ -353,6 +353,7 @@
 					on:click={(e) => {
 						dispatch("input-click", e);
 					}}
+                   on:input
 					on:input={() => {
 						if (!expanded) {
 							open();

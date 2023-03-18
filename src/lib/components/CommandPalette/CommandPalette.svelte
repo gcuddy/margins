@@ -46,6 +46,7 @@
 	import RichAnnotationInput from "../annotations/RichAnnotationInput.svelte";
 	import { useSaveAnnotation } from "$lib/features/annotations/mutations";
 	import { useCreateBookmark } from "$lib/features/entries/mutations";
+	import BasicSearchItem from "$lib/features/entries/BasicSearchItem.svelte";
 
 	const queryClient = useQueryClient();
 	const client = trpcWithQuery($page);
@@ -54,7 +55,7 @@
 
 	const saveAnnotationMutation = useSaveAnnotation();
 
-    const createBookmarkMutation = useCreateBookmark();
+	const createBookmarkMutation = useCreateBookmark();
 
 	function handleKeydown(e: KeyboardEvent) {
 		switch (e.key) {
@@ -232,8 +233,8 @@
 		if (e.touches.length === 2) {
 			e.preventDefault();
 			setTimeout(() => {
-               if (!checkIfKeyboardShortcutsAllowed()) return;
-               if ($modals.length) return;
+				if (!checkIfKeyboardShortcutsAllowed()) return;
+				if ($modals.length) return;
 				showCommandPalette.toggle();
 			}, 100);
 		}
@@ -267,6 +268,70 @@
 			},
 		},
 		{
+			id: "jump-to-board-game",
+			group: "jump",
+			name: "Jump to board game",
+			icon: "arrowRight",
+			perform: async () => {
+				showCommandPalette.out();
+				commandPaletteStore.open({
+					queryResult: (search) =>
+						client.public.boardgames.createQuery({
+							search,
+						}, {
+                            enabled: search.length > 2
+                        }),
+					slot: ({ value, active, selected }) => ({
+						component: BasicSearchItem,
+						props: {
+							href: `/boardgames/${value.id}`,
+							image: value.image_url,
+							title: value.name,
+							year: value.year_published,
+                            active,
+						},
+					}),
+                    onSelect: async ({ detail }) => {
+                        await goto(`/bgames/${detail.id}`);
+                    },
+                    debounce: 200,
+                    placeholder: "Search board games…",
+				});
+			},
+		},
+		{
+			id: "jump-to-game",
+			group: "jump",
+			name: "Jump to game",
+			icon: "arrowRight",
+			perform: async () => {
+				showCommandPalette.out();
+				commandPaletteStore.open({
+					queryResult: (search) =>
+						client.public.games.createQuery({
+							search,
+						}, {
+                            enabled: search.length > 2
+                        }),
+					slot: ({ value, active, selected }) => ({
+						component: BasicSearchItem,
+						props: {
+							href: `/games/${value.id}`,
+							image: value.cover.url,
+							title: value.name,
+							year: value.first_release_date,
+                            active,
+						},
+					}),
+                    onSelect: async ({ detail }) => {
+                        await goto(`/games/${detail.id}`);
+                    },
+                    debounce: 200,
+                    placeholder: "Search games…",
+				});
+			},
+		},
+		{
 			id: "jump-to-podcast",
 			group: "jump",
 			name: "Jump to podcast",
@@ -285,7 +350,7 @@
 						return {
 							...q,
 							placeholderData: filteredPodcasts,
-                            enabled: v.length > 2,
+							enabled: v.length > 2,
 							select: (data: ApiResponse.Search) => {
 								// REVIEW: this is probably to expensive to do on every keypress
 								// TODO: initally jump in with existing podcasts, and use simple includes
@@ -300,6 +365,7 @@
 							},
 						};
 					},
+                    debounce: 150,
 					slot: () => ({ component: SearchItem }),
 					onSelect: async ({ detail }) => {
 						await goto(`/podcasts/${detail.id}`);
@@ -605,10 +671,10 @@
 						$saveAnnotationMutation.mutate({
 							entryId: $selectedItems.map((i) => i.id),
 							contentData,
-                            type: "note"
+							type: "note",
 						});
-                        $selectedItems = [];
-                        modals.close();
+						$selectedItems = [];
+						modals.close();
 					},
 				});
 			},
@@ -644,8 +710,7 @@
 			group: "adhoc-article-commands",
 			icon: "inboxIn",
 			perform: () => {
-
-                console.log({$page})
+				console.log({ $page });
 				//copied from entry/page.svelte
 				commandPaletteStore.open({
 					values: $page.data.user?.states,
@@ -660,24 +725,26 @@
 					onSelect: async (e) => {
 						try {
 							console.log({ $selectedItems });
-                            const bookmarksToCreate = $selectedItems.filter((i) => !i.bookmarks?.[0]);
-                            const bookmarksToUpdate = $selectedItems.filter((i) => !!i.bookmarks?.[0]);
-                            if (bookmarksToCreate.length) $createBookmarkMutation.mutate({
-                                entryId_uri: $selectedItems.map((i) => ({
-                                    entryId: i.id,
-                                    uri: i.uri ?? undefined
-                                })),
-                                data: {
-                                    stateId: e.detail.id as number,
-                                }
-                            });
-                            if (bookmarksToUpdate.length) $updateMutation.mutate({
-                                entryId: $selectedItems.map((i) => i.id),
-                                data: {
-                                    stateId: e.detail.id as number,
-                                }
-                            });
-                            console.log({ bookmarksToCreate, bookmarksToUpdate });
+							const bookmarksToCreate = $selectedItems.filter((i) => !i.bookmarks?.[0]);
+							const bookmarksToUpdate = $selectedItems.filter((i) => !!i.bookmarks?.[0]);
+							if (bookmarksToCreate.length)
+								$createBookmarkMutation.mutate({
+									entryId_uri: $selectedItems.map((i) => ({
+										entryId: i.id,
+										uri: i.uri ?? undefined,
+									})),
+									data: {
+										stateId: e.detail.id as number,
+									},
+								});
+							if (bookmarksToUpdate.length)
+								$updateMutation.mutate({
+									entryId: $selectedItems.map((i) => i.id),
+									data: {
+										stateId: e.detail.id as number,
+									},
+								});
+							console.log({ bookmarksToCreate, bookmarksToUpdate });
 							// $updateMutation.mutate({
 							// 	entryId: $selectedItems.map((i) => i.id),
 							// 	data: {

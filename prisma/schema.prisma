@@ -16,9 +16,9 @@ datasource db {
 
 // TODO: fully transition from zod-prisma to zod-prisma-types when it's less buggy
 generator zod {
-    provider = "zod-prisma-types"
-    output   = "../src/lib/prisma/zod-prisma"
-    createRelationValuesTypes = true
+    provider                  = "zod-prisma-types"
+    output                    = "../src/lib/prisma/zod-prisma"
+    // createRelationValuesTypes = true
 }
 
 // generator zodprismatypes {
@@ -289,13 +289,20 @@ model Entry {
     enclosureUrl    String?      @db.VarChar(2083)
     enclosureLength Int?
     enclosureType   String?
+
+    // board game data
+    // min_players  Int?
+    // max_players  Int?
+    // min_playtime Int?
+    // max_playtime Int?
+    // min_age      Int?
     /// Relevant schema.org metadata about this entry
 
     /// @zod.custom.use(schemaOrgSchemas)
     schemaOrg Json?
 
     //REVIEW: decide on what json fields to keep
-    /// @zod.custom.use(EntryExtendedSchema)
+    //
     extended Json?
 
     /// The publisher for books, company for plays, etc.
@@ -414,7 +421,6 @@ enum DocumentType {
     board_game
 }
 
-
 // @deprecated
 model Article {
     id             Int       @id @default(autoincrement())
@@ -512,7 +518,7 @@ model Collection {
     updatedAt   DateTime          @updatedAt
     items       CollectionItems[]
 
-    /// @zod.custom.use(ViewOptionsSchema.partial())
+    // @zod.custom.use(ViewOptionsSchema)
     viewOptions Json?
     // order       Json // array[] of item ids in order.... /??
     favorites   Favorite[]

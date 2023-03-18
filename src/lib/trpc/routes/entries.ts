@@ -10,6 +10,7 @@ import { protectedProcedure, router } from "$lib/trpc/t";
 import { LocationSchema } from "$lib/types/schemas/Locations";
 import { Metadata } from "$lib/web-parser";
 import type { Recipe } from "$lib/web-parser/recipe";
+import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
 
 const idInput = z.object({
     id: z.number(),
@@ -683,26 +684,12 @@ export const entriesRouter = router({
     create: protectedProcedure
         .input(
             z.object({
-                data: z.object({
-                    id: z.number().optional(),
-                    tmdbId: z.number().optional(),
-                    title: z.string(),
-                    // todo
-                }).passthrough()
+                data: EntryCreateInputSchema
             })
         )
         .mutation(async ({ ctx, input }) => {
-            const entry = await ctx.prisma.entry.upsert({
-                where: {
-                    id: input.data.id ? input.data.id : -1,
-                    tmdbId: input.data.tmdbId ? input.data.tmdbId : -1,
-                },
-                create: {
-                    ...input.data,
-                },
-                update: {
-                    ...input.data,
-                },
+            const entry = await ctx.prisma.entry.create({
+                data: input.data,
                 select: {
                     id: true,
                 },

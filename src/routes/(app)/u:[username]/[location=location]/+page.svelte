@@ -40,9 +40,7 @@
 
 
 
-	$: query = data.query
-		? data.query()
-		: trpcWithQuery($page).entries.listBookmarks.createQuery({
+	$: query = trpcWithQuery($page).entries.listBookmarks.createQuery({
 				location: data.location,
 		  });
 

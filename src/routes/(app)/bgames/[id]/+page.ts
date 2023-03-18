@@ -14,6 +14,7 @@ export const load = (async (e) => {
     const initialData = queries.find((d) => {
             return d.id === e.params.id;
     });
+   console.log({initialData})
    if (!initialData) {
         await utils.public.boardGameById.prefetch({
            id: e.params.id

@@ -2,12 +2,8 @@
 	import { page } from "$app/stores";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
-	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import { trpcWithQuery } from "$lib/trpc/client";
-	import dayjs from "$lib/dayjs";
 	import debounce from "lodash/debounce";
-
-	// let value = "";
 	let form: HTMLFormElement;
 
 	const client = trpcWithQuery($page);
@@ -24,22 +20,10 @@
 
 	const handleInput = debounce((e) => {
         value = e.target.value;
-		// if (typeof HTMLFormElement.prototype.requestSubmit == "function") {
-		// 	form.requestSubmit();
-		// }
 	}, 300, {
         leading: true
     });
 
-	// export function submitReplaceState(e: SubmitEvent) {
-	// 	e.preventDefault();
-	// 	const form = e.target as HTMLFormElement;
-	// 	const url = new URL(form.action);
-	// 	// @ts-expect-error
-	// 	const params = new URLSearchParams(new FormData(form));
-	// 	url.search = params.toString();
-	// 	goto(url, { replaceState: true, keepFocus: true, noScroll: true });
-	// }
 </script>
 
 <svelte:head>

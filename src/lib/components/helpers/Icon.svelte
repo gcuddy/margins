@@ -36,6 +36,7 @@
 			{viewBox}
 			stroke-width={!solid ? icons[name].strokeWidth || 2 : undefined}
 			{fill}
+            stroke-linecap="round"
 			style="transform: rotate({rotation}deg);"
 			><g> {@html path}</g>
 		</svg>

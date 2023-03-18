@@ -12,10 +12,9 @@
 		collapsed?: boolean;
 	}
 
-    export const externalIsshowing = writable(false);
+	export const externalIsshowing = writable(false);
 
 	export const isShowing = writable(false);
-
 
 	export const favoritesQuery = (init?: TRPCClientInit) =>
 		({
@@ -53,7 +52,7 @@
 	import MiniPlayer from "./MiniPlayer.svelte";
 	import MenuItemsContainer from "$lib/components/ui/Menu/MenuItemsContainer.svelte";
 	import { createQuery, CreateQueryOptions } from "@tanstack/svelte-query";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { dndzone } from "svelte-dnd-action";
 	import SidebarFavorites from "./SidebarFavorites.svelte";
 	import type { TRPCClientInit } from "trpc-sveltekit";
@@ -247,9 +246,9 @@
 	}
 
 	$: $tweenedWidth ? isShowing.set(true) : isShowing.set(false);
-    $: $isShowing, externalIsshowing.set($isShowing);
+	$: $isShowing, externalIsshowing.set($isShowing);
 
-    $: $externalIsshowing ? expand() : collapse();
+	$: $externalIsshowing ? expand() : collapse();
 
 	function expand() {
 		if (!collapsed) return;
@@ -292,7 +291,7 @@
 		placement: "bottom-end",
 	});
 
-	const favoriteQuery = createQuery(favoritesQuery($page));
+	$: favoriteQuery = trpcWithQuery($page).favorites.list.createQuery();
 </script>
 
 {#if sidebarToggle}

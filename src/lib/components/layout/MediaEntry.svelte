@@ -9,6 +9,7 @@
 	export let image = "";
 	export let title = "";
 	export let author = "";
+    export let publisher: string | undefined = undefined;
 	export let description = "";
 	export let year: string | number | undefined = undefined;
 </script>
@@ -29,14 +30,19 @@
 			{/if}
 		</div>
 		<div class="grow flex flex-col space-y-4 sm:space-y-8">
-			<div class="text-center sm:text-left">
+			<div class="text-center sm:text-left flex flex-col">
 				<div class="flex items-baseline gap-3">
 					<h1 class="text-2xl font-bold">{title}</h1>
 					{#if year}
 						<span><Muted>{year}</Muted></span>
 					{/if}
 				</div>
-				<span><Muted>{author}</Muted></span>
+				<span><Muted>{author}</Muted>
+                {#if publisher}
+                    <Muted> / {publisher}</Muted>
+                {/if}
+                </span>
+                <slot name="top" />
 				<!-- TODO: categories here -->
 			</div>
 			{#if description}

@@ -10,7 +10,7 @@
 			interaction?: Interaction;
 		}
 	>;
-	export let items: EntryInList[] | Record<string, EntryInList[]>;
+	export let items: EntryInList[];
 	$: console.log({ items });
 	/** Should we render the title and description as safe html or not? */
 	export let html = false;
@@ -471,10 +471,6 @@
 				zoneTabIndex: -1,
 			}}
 			bind:this={container}
-			use:autoAnimate={{
-				// this wasn't working with autoanimaet(container) for some reason
-				duration: 200,
-			}}
 			on:consider={handleConsider}
 			on:finalize={handleFinalize}
 		>
@@ -977,7 +973,10 @@
 											</div>
 										</EntryListItem>
 									{:else}
-										{item.title}
+                                    <EntryListItem entry={item}>
+
+                                    </EntryListItem>
+										<!-- {item.title} -->
 									{/if}
 									{#if item[SHADOW_ITEM_MARKER_PROPERTY_NAME]}
 										<div class="custom-shadow-item" />

@@ -30,11 +30,18 @@ const boardGameSchema = z.object({
         primary_designer: z.object({
             name: z.string().optional(),
         }).nullish(),
+        primary_publisher: z.object({
+            name: z.string().optional(),
+        }).nullish(),
+        official_url: z.string().nullish(),
         min_players: z.coerce.number(),
         max_players: z.coerce.number(),
         min_playtime: z.coerce.number(),
         max_playtime: z.coerce.number(),
         min_age: z.coerce.number(),
+        categories: z.array(z.object({
+            id: z.string(),
+        })).optional(),
     }))
 });
 
@@ -226,7 +233,26 @@ export const publicRouter = router({
                 body: `where id = ${input.id}; fields *, cover.url, platforms.name, websites.*;`
             });
             // TODO: involved companies is bloated, want to just get the parent companies?
-            const data = await response.json();
+            const data = await response.json() as {
+                name: string;
+                cover: {
+                    url: string;
+                };
+                id: number;
+                first_release_date: number;
+                involved_companies: {
+                    company: {
+                        name: string;
+                    }
+                }[];
+                platforms: {
+                    name: string;
+                }[];
+                websites: {
+                    url: string;
+                    category: number;
+                }[];
+            }[];
             return data[0];
         }),
     boardgames: publicProcedure

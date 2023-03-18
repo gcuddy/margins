@@ -7,6 +7,8 @@ import { db } from "$lib/db";
 import { _BookmarkModel } from "$lib/prisma/zod";
 import { protectedProcedure, router } from "$lib/trpc/t";
 import { Metadata } from "$lib/web-parser";
+import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
+// import { EntryJsonFields } from "$lib/prisma/schemas";
 
 async function generateScreenshot(url: string) {
     const res = await fetch(`https://admirable-croissant-98e7d9.netlify.app/${encodeURIComponent(url)}/large/1:1/larger/`);
@@ -425,12 +427,62 @@ export const bookmarks = router({
             const { stateId, ...rest } = data;
             const { userId } = ctx;
             return ctx.prisma.bookmark.createMany({
-                data: entryId_uri.map(({entryId, uri}) => ({
+                data: entryId_uri.map(({ entryId, uri }) => ({
                     entryId,
                     uri,
                     userId,
                     ...data,
                 })),
             });
+        }),
+    save: protectedProcedure
+        .input(z.object({
+            entry: z.object({
+                id: z.number()
+            }).or(EntryCreateInputSchema.and(z.object({
+                // TODO!!
+                extended: z.any()
+            }))),
+        })).mutation(async ({ ctx, input }) => {
+        const { entry } = input;
+        if ("id" in entry) {
+            return ctx.prisma.bookmark.create({
+                data: {
+                    entry: {
+                        connect: {
+                            id: entry.id
+                        }
+                    },
+                    user: {
+                        connect: {
+                            id: ctx.userId
+                        }
+                    }
+                }
+            })
+        } else {
+            const { id } = await ctx.prisma.entry.create({
+                data: entry
+            });
+            return ctx.prisma.bookmark.create({
+                data: {
+                    entry: {
+                        connect: {
+                            id
+                        }
+                    },
+                    user: {
+                        connect: {
+                            id: ctx.userId
+                        }
+                    },
+                    state: {
+                        connect: {
+                            id: ctx.user.default_state_id
+                        }
+                    }
+                }
+            })
+        }
         })
 });
