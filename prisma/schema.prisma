@@ -16,8 +16,8 @@ datasource db {
 
 // TODO: fully transition from zod-prisma to zod-prisma-types when it's less buggy
 generator zod {
-    provider                  = "zod-prisma-types"
-    output                    = "../src/lib/prisma/zod-prisma"
+    provider = "zod-prisma-types"
+    output   = "../src/lib/prisma/zod-prisma"
     // createRelationValuesTypes = true
 }
 
@@ -803,6 +803,7 @@ model Key {
     user_id         String
     primary         Boolean
     user            User    @relation(references: [id], fields: [user_id], onDelete: Cascade)
+    expires         BigInt?
 
     @@index([user_id])
     @@map("key")
