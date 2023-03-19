@@ -22,6 +22,7 @@ export const redisSessionAdapter =
 			getSession: async (sessionId) => {
 				const sessionData = await sessionRedis.get(sessionId);
 				if (!sessionData) return null;
+                console.log({sessionData})
 				return sessionData as SessionSchema
 			},
 			getSessionsByUserId: async (userId) => {
@@ -30,21 +31,23 @@ export const redisSessionAdapter =
 					sessionIds.map((id) => sessionRedis.get(id))
 				);
 				const sessions = sessionData.filter(Boolean)
+                console.log({sessions})
 				return sessions as SessionSchema[];
 			},
 			setSession: async (session) => {
-				await Promise.all([
+				console.log(await Promise.all([
 					userSessionRedis.lpush(session.user_id, session.id),
 					sessionRedis.set(session.id, session, {
 						ex: Math.floor(Number(session.idle_expires) / 1000)
 					})
-				]);
+				]));
 			},
 			deleteSession: async (...sessionIds) => {
 				const targetSessionData = await Promise.all(
 					sessionIds.map((id) => sessionRedis.get(id))
 				);
 				const sessions = targetSessionData.filter(Boolean) as SessionSchema[];
+                console.log({sessions})
 				await Promise.all([
 					...sessionIds.map((id) => sessionRedis.del(id)),
 					...sessions.map((session) =>

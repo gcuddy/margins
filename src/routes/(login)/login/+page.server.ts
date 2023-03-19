@@ -12,14 +12,16 @@ export const actions: Actions = {
 		// check for empty
 		if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
 			return fail(400, {
-				message: 'fail input',
+				message: 'Invalid input',
 			});
 		}
 		try {
-			const user = await auth.validateKeyPassword('email', email, password);
-			const session = await auth.createSession(user.userId);
+			const key = await auth.useKey('email', email, password);
+			const session = await auth.createSession(key.userId);
+           console.log({session})
 			locals.setSession(session);
 		} catch (e) {
+            console.error(e);
 			return fail(400, { message: 'Incorrect email or password' });
 		}
 	},
