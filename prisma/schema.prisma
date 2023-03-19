@@ -797,7 +797,7 @@ model SmartList {
     @@index([userId])
 }
 
-model jey {
+model Key {
     id              String  @id @unique
     hashed_password String?
     user_id         String
