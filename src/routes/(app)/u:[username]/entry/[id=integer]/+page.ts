@@ -1,9 +1,14 @@
 import { parse, stringify } from "css";
+import type { Config } from '@sveltejs/adapter-vercel';
 
 import { getEntriesFromCache } from "$lib/features/entries/queries";
 import { trpcWithQuery } from "$lib/trpc/client";
 
 import type { PageLoad } from "./$types";
+
+export const config: Config = {
+    runtime: "nodejs16.x"
+}
 
 function scopeCss(css: string) {
     console.time("scopeCss");
@@ -35,7 +40,7 @@ export const load = (async (event) => {
 
     const client = trpcWithQuery(event, queryClient);
     // const query = client.entries.load.createServerQuery({
-    //     id: data.id,
+//     id: data.id,
     // })
     const utils = client.createContext();
     utils.entries.load.prefetch({

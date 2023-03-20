@@ -6,7 +6,7 @@ const googleBooksApi = "https://www.googleapis.com/books/v1/volumes";
 
 // REVIEW: do we really need to import whole googleApis/books? We get TS... but a simple fetched and type coercion could be fine too
 
-import { books, books_v1 } from "@googleapis/books";
+import type { books_v1 } from "@googleapis/books";
 import { DocumentType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import parse from "node-html-parser";
@@ -16,7 +16,6 @@ import dayjs from "$lib/dayjs"
 import { getAverageColor } from 'fast-average-color-node';
 
 import { GOOGLE_BOOKS_API_KEY } from "$env/static/private";
-import { dev } from "$app/environment";
 import Color from "color";
 import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
 
@@ -95,32 +94,35 @@ export const booksRouter = router({
             }
             const url = new URL(googleBooksApi);
             url.searchParams.set("q", input);
-            const results = await books("v1").volumes.list({
-                key: GOOGLE_BOOKS_API_KEY,
-                q: input,
-                // projection: "lite",
+            url.searchParams.set("key", GOOGLE_BOOKS_API_KEY);
+
+            // convert above to a fetch
+            const response = await fetch(url.toString(), {
+                headers: {
+                    "Content-Type": "application/json",
+                },
             });
-            if (results.status === 200) {
+           const results = await response.json() as books_v1.Schema$Volumes;
+            if (response.status === 200) {
                 // ensure no duplicate results
-                const ids = new Set((results.data.items?.map(item => item.id).filter(Boolean)) || []);
-                const items = Array.from(ids).map(id => results.data.items?.find(item => item.id === id)).filter(Boolean);
+                const ids = new Set((results.items?.map(item => item.id).filter(Boolean)) || []);
+                const items = Array.from(ids).map(id => results.items?.find(item => item.id === id)).filter(Boolean);
                 // store in redis (this should also use cache-control headers)
                 await ctx.redis.set("books:" + input, {
-                    ...results.data,
+                    ...results.items,
                     items
                 }, {
                     // expire after 1 day
                     ex: 60 * 60 * 24
                 });
                 return {
-                    ...results.data,
+                    ...results.items,
                     items
                 }
-                return results.data;
             } else {
                 throw new TRPCError({
                     code: "INTERNAL_SERVER_ERROR",
-                    cause: results,
+                    cause: response,
                 });
             }
         }),
@@ -134,35 +136,40 @@ export const booksRouter = router({
                     color?: string;
                 };
             }
-            const results = await books("v1").volumes.get({
-                key: GOOGLE_BOOKS_API_KEY,
-                volumeId: input,
+            const url = new URL(googleBooksApi + "/" + input);
+            url.searchParams.set("key", GOOGLE_BOOKS_API_KEY);
+
+            const response = await fetch(url.toString(), {
+                headers: {
+                    "Content-Type": "application/json",
+                },
             });
-            if (results.status === 200) {
+            const results = await response.json() as books_v1.Schema$Volume;
+
+            if (response.status === 200) {
                 // get image color
-                const image = results.data.volumeInfo?.imageLinks?.thumbnail;
+                const image = results.volumeInfo?.imageLinks?.thumbnail;
                 if (image) {
                     const bookColor = await getAverageColor(image);
                     const c = Color(bookColor.rgba);
                     const color = c.fade(0.15);
                     console.log({ color });
                     const data = {
-                        ...results.data,
+                        ...results,
                         color: color.rgb().string()
                     }
                     await ctx.redis.set("book:" + input, data, {
                         // expire after 1 week
                         ex: 60 * 60 * 24 * 7,
                     });
-                    return data;
+                    return data
                 }
-                const { data } = results;
-                await ctx.redis.set("book:" + input, data, {
+                await ctx.redis.set("book:" + input, results, {
                     // expire after 1 week
                     ex: 60 * 60 * 24 * 7,
                 });
                 return {
-                    ...data,
+                    ...results,
                     color: undefined,
                 };
             } else {
@@ -208,13 +215,16 @@ export const booksRouter = router({
         update: publicProcedure.input(z.object({
             googleBooksId: z.string(),
         })).mutation(async ({ ctx, input }) => {
-            const result = await books("v1").volumes.get({
-                key: GOOGLE_BOOKS_API_KEY,
-                volumeId: input.googleBooksId,
-                // projection: "lite",
+            const url = new URL(googleBooksApi + "/" + input.googleBooksId);
+            url.searchParams.set("key", GOOGLE_BOOKS_API_KEY);
+            const response = await fetch(url.toString(), {
+                headers: {
+                    "Content-Type": "application/json",
+                },
             });
-            if (result.status === 200) {
-                const item = result.data;
+            const item = await response.json() as books_v1.Schema$Volume;
+
+            if (response.status === 200) {
                 if (!item) {
                     throw new TRPCError({
                         code: "INTERNAL_SERVER_ERROR",

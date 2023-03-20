@@ -1,4 +1,4 @@
-import { books, books_v1 } from "@googleapis/books";
+import type { books_v1 } from "@googleapis/books";
 import type { youtube_v3 } from "@googleapis/youtube"
 import { z } from "zod";
 
@@ -10,6 +10,7 @@ import dayjs from "./dayjs";
 import { spotify } from "./features/services/spotify";
 import { twitter } from "./features/services/twitter";
 import parse from "node-html-parser";
+import { books } from "./features/books/googlebooks.server";
 type VideoListResponse = youtube_v3.Schema$VideoListResponse
 
 const spotifyRegex = /^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/;
@@ -72,11 +73,8 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             console.log({ isbn })
             if (isbn) {
                 // try to get book from google books
-                const results = await books("v1").volumes.list({
-                    key: GOOGLE_BOOKS_API_KEY,
-                    q: `isbn:${isbn}`,
-                });
-                const volume = results.data.items?.[0];
+                const results = await books.search(`isbn:${isbn}`)
+                const volume = results.items?.[0];
                 if (volume) {
                     return returnBookFromGoogleBook(volume);
                 }
@@ -97,11 +95,8 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                 const isbnIndex = chunks.findIndex((t) => t.toLowerCase().includes("isbn-13"));
                 const isbn = chunks[isbnIndex + 1].match(/[\d-]+/)?.[0];
                 if (isbn) {
-                    const results = await books("v1").volumes.list({
-                        key: GOOGLE_BOOKS_API_KEY,
-                        q: `isbn:${isbn}`,
-                    });
-                    const volume = results.data.items?.[0];
+                    const results = await books.search(`isbn:${isbn}`);
+                    const volume = results.items?.[0];
                     if (volume) {
                         // sorry for this insane nesting mess
                         return returnBookFromGoogleBook(volume);
@@ -116,11 +111,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             const match = url.match(regexMatch)
             const id = match?.groups?.id;
             if (id) {
-                const results = await books("v1").volumes.get({
-                    key: GOOGLE_BOOKS_API_KEY,
-                    volumeId: id,
-                });
-                const volume = results.data;
+               const volume = await books.get(id);
                 return returnBookFromGoogleBook(volume);
             }
         }
