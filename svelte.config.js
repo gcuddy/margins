@@ -12,7 +12,7 @@ const config = {
 	preprocess: [
 		preprocess({
 			postcss: true,
-		}),
+		})  ,
         mdsvex({
             extensions: ["md"]
         })
@@ -20,7 +20,7 @@ const config = {
 
 	kit: {
 		adapter: vercel({
-            runtime: 'edge'
+            // runtime: 'edge'
         }),
 	},
 };
