@@ -102,7 +102,7 @@
 		imageLinks.smallThumbnail;
 </script>
 
-<div class="container mx-auto flex h-full flex-col space-y-8 divide-y p-6 dark:divide-gray-700" style:--book-shadow-color={$query.data?.color}>
+<div class="container select-text mx-auto flex h-full flex-col space-y-8 divide-y p-6 dark:divide-gray-700" style:--book-shadow-color={$query.data?.color}>
 	{#if entry}
     <!-- {JSON.stringify(entry)} -->
     {@const isbn = entry.uri?.replace("isbn:", "")}
