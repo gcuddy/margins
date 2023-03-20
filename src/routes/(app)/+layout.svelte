@@ -29,12 +29,17 @@
 	import { UpdateBookmarkMutationKey } from "$lib/features/entries/mutations";
 	import MutationProvider from "./MutationProvider.svelte";
 	import { createCurrentListStore, setCurrentListContext } from "$lib/stores/currentList";
+	import { createUserDataStore, setUserDataContext } from "$lib/stores/userdata";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
 
     const current_list = createCurrentListStore();
     setCurrentListContext(current_list);
+
+
+    const user_data = createUserDataStore();
+    setUserDataContext(user_data);
 
 	// const queryClient = new QueryClient({
 	// 	defaultOptions: {

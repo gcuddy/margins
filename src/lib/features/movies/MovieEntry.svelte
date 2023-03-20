@@ -17,7 +17,8 @@
 	export let entryId: number | undefined = undefined;
 	export let item: RouterOutputs["movies"]["public"]["byId"] | undefined = undefined;
 
-	$: bookmarked = $page.data.user?.bookmarks.some((b) => b.entry?.tmdbId === id) || false;
+	// $: bookmarked = $page.data.user?.bookmarks.some((b) => b.entry?.tmdbId === id) || false;
+   $: bookmarked = false;
 
 	$: query = createQuery({
 		queryKey: ["movies", "details", id],

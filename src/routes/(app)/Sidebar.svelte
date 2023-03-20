@@ -56,6 +56,7 @@
 	import { dndzone } from "svelte-dnd-action";
 	import SidebarFavorites from "./SidebarFavorites.svelte";
 	import type { TRPCClientInit } from "trpc-sveltekit";
+	import { getUserDataContext } from "$lib/stores/userdata";
 
 	export let user: { username: string; email: string } | null = $page.data.user || null;
 
@@ -291,7 +292,15 @@
 		placement: "bottom-end",
 	});
 
-	$: favoriteQuery = trpcWithQuery($page).favorites.list.createQuery();
+	const user_data = getUserDataContext();
+	$: favoriteQuery = trpcWithQuery($page).favorites.list.createQuery(undefined, {
+		onSuccess: (favorites) => {
+			user_data.update((data) => {
+				data.favorites = favorites;
+				return data;
+			});
+		},
+	});
 </script>
 
 {#if sidebarToggle}
