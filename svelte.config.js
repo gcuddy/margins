@@ -12,14 +12,16 @@ const config = {
 	preprocess: [
 		preprocess({
 			postcss: true,
-		}),
+		})  ,
         mdsvex({
             extensions: ["md"]
         })
 	],
 
 	kit: {
-		adapter: vercel(),
+		adapter: vercel({
+            // runtime: 'edge'
+        }),
 	},
 };
 

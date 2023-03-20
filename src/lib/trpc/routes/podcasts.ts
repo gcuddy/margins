@@ -1,6 +1,5 @@
 import { DocumentType, Prisma, PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
-import crypto from "crypto";
 import PodcastIdxClient from "podcastdx-client";
 import type { ApiResponse, PIApiPodcast } from "podcastdx-client/dist/src/types";
 import { z } from "zod";
@@ -13,13 +12,14 @@ import Color from "color";
 
 const podcastIndexApiUrl = `https://api.podcastindex.org/api/1.0`;
 
-const buildHeaders = () => {
+const buildHeaders = async () => {
     const apiHeaderTime = Math.floor(Date.now() / 1000);
-    const sha1Algorithm = "sha1";
-    const sha1Hash = crypto.createHash(sha1Algorithm);
     const data4Hash = PODCASTINDEX_API_KEY + PODCASTINDEX_API_SECRET + apiHeaderTime;
-    sha1Hash.update(data4Hash);
-    const hash4Header = sha1Hash.digest("hex");
+    const encoder = new TextEncoder();
+    const data = encoder.encode(data4Hash);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash4Header = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
     const headers = {
         "Content-Type": "application/json",
         "X-Auth-Date": `${apiHeaderTime}`,
