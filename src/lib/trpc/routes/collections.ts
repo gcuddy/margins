@@ -125,47 +125,6 @@ export const collectionsRouter = router({
                 },
                 include: {
                     items: {
-                        // include: {
-                        //     entry: {
-                        //         select: {
-                        //             id: true,
-                        //             title: true,
-                        //             uri: true,
-                        //             author: true,
-                        //             image: true,
-                        //             published: true,
-                        //             bookmarks: {
-                        //                 where: {
-                        //                     userId: ctx.userId
-                        //                 }
-                        //             }
-                        //         }
-                        //     },
-                        //     annotation: true,
-                        //     children: {
-                        //         include: {
-                        //             entry: {
-                        //                 select: {
-                        //                     id: true,
-                        //                     title: true,
-                        //                     uri: true,
-                        //                     author: true,
-                        //                     image: true,
-                        //                     published: true,
-                        //                     bookmarks: {
-                        //                         where: {
-                        //                             userId: ctx.userId
-                        //                         }
-                        //                     }
-                        //                 }
-                        //             },
-                        //             annotation: true,
-                        //         },
-                        //         orderBy: {
-                        //             position: "asc"
-                        //         }
-                        //     }
-                        // },
                         ...collectionItemSelect(ctx.userId, 3),
                         where: {
                             parent: {

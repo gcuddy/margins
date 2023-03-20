@@ -17,6 +17,7 @@
 	import { collectionQuery } from "$lib/features/collections/queries";
 	import { modals } from "$lib/stores/modals";
 	import { syncStore } from "$lib/stores/sync";
+	import { getUserDataContext } from "$lib/stores/userdata";
 	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import type { ViewOptions } from "$lib/types/schemas/View";
@@ -28,22 +29,21 @@
 	import type { PageData } from "./$types";
 	import Sections from "./Sections.svelte";
 	export let data: PageData;
-    $: query = data.query();
-
+	$: query = data.query();
 
 	$: console.log({ data });
 	$: list = $query.data;
-	$: entries = list?.items
-		?.filter((i) => i.entry)
-		.map((i) => i.entry)
-		.filter(Boolean)
-        || [];
-	$: flattened = list?.items
-		?.flatMap((i) => i.entry || i.children?.flatMap((i) => i.entry) || [])
-		.filter(Boolean)
-        || [];
+	$: entries =
+		list?.items
+			?.filter((i) => i.entry)
+			.map((i) => i.entry)
+			.filter(Boolean) || [];
+	$: flattened =
+		list?.items?.flatMap((i) => i.entry || i.children?.flatMap((i) => i.entry) || []).filter(Boolean) || [];
 	$: console.log({ flattened });
 	let favorited = false;
+    // $: favoritesQuery = client.favorites.list.createQuery();
+
 	$: favorited = data.favorites.some((f) => f.collectionId === list?.id);
 	$: folders = data.favorites.filter((f) => f.type === "FOLDER");
 	const queryClient = useQueryClient();
@@ -51,17 +51,16 @@
 
 	const tabSet = localStorageStore("tabSet", "entries");
 
-
-    const client = trpcWithQuery($page)
-    const utils = client.createContext()
-    const annotationMutation = client.annotations.create.createMutation({
-        onSuccess: (data) => {
-            if (!list) return;
-            utils.collections.detail.invalidate({
-                id: list?.id
-            })
-        }
-    })
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
+	const annotationMutation = client.annotations.create.createMutation({
+		onSuccess: (data) => {
+			if (!list) return;
+			utils.collections.detail.invalidate({
+				id: list?.id,
+			});
+		},
+	});
 
 	const addDocument = createMutation({
 		mutationFn: ({ id }: { id: string }) =>
@@ -117,9 +116,9 @@
 	<DefaultHeader>
 		<div slot="start" class="flex items-center gap-4">
 			<!-- <Icon name="viewGrid" className="h-5 w-5 stroke-2 dark:stroke-gray-400" /> -->
-            <span>
-                {$page.params.username} >
-            </span>
+			<span>
+				{$page.params.username} >
+			</span>
 			<button
 				class="flex items-center gap-2"
 				on:click={() => {
@@ -190,7 +189,7 @@
 			<Tabs tabs={["List", "Grid", "Kanban"]} />
 			<CustomizeView
 				on:view={({ detail }) => {
-                    view = detail
+					view = detail;
 					// data.collection.viewOptions = {
 					// 	...data.collection.viewOptions,
 					// 	view,
@@ -205,119 +204,116 @@
 
 <!-- secary header -> should this go in sidebar like reading sidebar/project sidebar for linear? in header / inline like letterboxd? -->
 {#if $query.isLoading}
-
-loading...
-
+	loading...
 {:else if $query.isSuccess}
-    {@const list = $query.data}
+	{@const list = $query.data}
 
-<div class=" container mx-auto">
-	<div class="flex flex-col gap-2 text-sm">
-		<span>List by {list.userId}</span>
-		<span>Updated {dayjs(list.updatedAt).fromNow()}</span>
-		<span>{list.description}</span>
-	</div>
+	<div class=" container mx-auto">
+		<div class="flex flex-col gap-2 text-sm">
+			<span>List by {list.userId}</span>
+			<span>Updated {dayjs(list.updatedAt).fromNow()}</span>
+			<span>{list.description}</span>
+		</div>
 
-	{#key contentData}
-		<TipTap
-			on:blur={async ({ detail: contentData }) => {
-				//    $updateDescription.mutate(data)
-				console.log({ contentData });
-				const s = syncStore.add();
-				await trpc().collections.updateCollection.mutate({
-					id: list.id,
-					data: {
-						contentData,
-					},
-				});
-				syncStore.remove(s);
-			}}
-			config={{
-				content: contentData,
-			}}
-		/>
-	{/key}
+		{#key contentData}
+			<TipTap
+				on:blur={async ({ detail: contentData }) => {
+					//    $updateDescription.mutate(data)
+					console.log({ contentData });
+					const s = syncStore.add();
+					await trpc().collections.updateCollection.mutate({
+						id: list.id,
+						data: {
+							contentData,
+						},
+					});
+					syncStore.remove(s);
+				}}
+				config={{
+					content: contentData,
+				}}
+			/>
+		{/key}
 
-	<Button
-		on:click={() =>
-			$annotationMutation.mutate({
-				id: nanoid(),
-                collectionId: list?.id,
-				type: "document",
-			})}
-		variant="ghost"
-	>
-		<Icon name="plusMini" className="h-4 w-4 fill-current" />
-		<span>Add note</span></Button
-	>
-	<form
-		action="?/addSection"
-		method="post"
-		on:submit={() => {
-			// instead of use:enhance we'll use custom mutation
-		}}
-		class="flex justify-end px-4"
-	>
-		<input type="hidden" name="title" value="Untitled" />
-		<Button type="submit" variant="ghost">
-			<Icon name="plusMini" className="h-4 w-4 fill-current" />
-			<span>Add section</span></Button
+		<Button
+			on:click={() =>
+				$annotationMutation.mutate({
+					id: nanoid(),
+					collectionId: list?.id,
+					type: "document",
+				})}
+			variant="ghost"
 		>
-	</form>
+			<Icon name="plusMini" className="h-4 w-4 fill-current" />
+			<span>Add note</span></Button
+		>
+		<form
+			action="?/addSection"
+			method="post"
+			on:submit={() => {
+				// instead of use:enhance we'll use custom mutation
+			}}
+			class="flex justify-end px-4"
+		>
+			<input type="hidden" name="title" value="Untitled" />
+			<Button type="submit" variant="ghost">
+				<Icon name="plusMini" className="h-4 w-4 fill-current" />
+				<span>Add section</span></Button
+			>
+		</form>
 
-	<div class=" flex grow flex-col items-stretch">
-		<!-- REVIEW: this is probably a terrible way to do it, but only list mode allows sections? -->
-		{#if view === "list"}
-			<Sections
-				items={list.items}
-				onFinalUpdate={(n) => {
-					console.log({ n });
-					// ((data.collection.items = n));
-				}}
-			/>
-            {:else if view === "grid"}
-            <!--multi list grid  -->
-            Divide by section...
-			<Sections
-                {view}
-				items={list.items}
-				onFinalUpdate={(n) => {
-					console.log({ n });
-					// ((data.collection.items = n));
-				}}
-			/>
-
-		{:else if view === "kanban"}
-			<div class="flex flex-col space-y-2">
-				<div class="max-w-max overflow-hidden rounded-lg bg-elevation text-sm text-muted">
-					<TabGroup border="" hover="hover:text-bright" active="bg-elevation-hover">
-						<Tab bind:group={$tabSet} value="entries" name="entries">Entries</Tab>
-						<Tab bind:group={$tabSet} value="annotations" name="annotations">Notes</Tab>
-					</TabGroup>
+		<div class=" flex grow flex-col items-stretch">
+			<!-- REVIEW: this is probably a terrible way to do it, but only list mode allows sections? -->
+			{#if view === "list"}
+				<Sections
+					items={list.items}
+					onFinalUpdate={(n) => {
+						console.log({ n });
+						// ((data.collection.items = n));
+					}}
+				/>
+			{:else if view === "grid"}
+				<!--multi list grid  -->
+				Divide by section...
+				<Sections
+					{view}
+					items={list.items}
+					onFinalUpdate={(n) => {
+						console.log({ n });
+						// ((data.collection.items = n));
+					}}
+				/>
+			{:else if view === "kanban"}
+				<div class="flex flex-col space-y-2">
+					<div class="max-w-max overflow-hidden rounded-lg bg-elevation text-sm text-muted">
+						<TabGroup border="" hover="hover:text-bright" active="bg-elevation-hover">
+							<Tab bind:group={$tabSet} value="entries" name="entries">Entries</Tab>
+							<Tab bind:group={$tabSet} value="annotations" name="annotations">Notes</Tab>
+						</TabGroup>
+					</div>
+					{#if $tabSet === "entries"}
+						<EntryList
+							on:kanbandrop={async (e) => {
+								// TODO: invalidate queries
+							}}
+							items={flattened}
+							viewOptions={{
+								view: "kanban",
+							}}
+						/>
+					{:else if $tabSet === "annotations"}
+						<!-- TODO: nested -->
+						{#each list.items as item}
+							{#if item.annotation}
+								<AnnotationListItem annotation={item.annotation} />
+							{/if}
+						{/each}
+						<!-- loop through annota    tions -->
+					{/if}
 				</div>
-				{#if $tabSet === "entries"}
-					<EntryList
-						on:kanbandrop={async (e) => {
-							// TODO: invalidate queries
-						}}
-						items={flattened}
-						viewOptions={{
-							view: "kanban",
-						}}
-					/>
-				{:else if $tabSet === "annotations"}
-					<!-- TODO: nested -->
-					{#each list.items as item}
-						{#if item.annotation}
-							<AnnotationListItem annotation={item.annotation} />
-						{/if}
-					{/each}
-					<!-- loop through annota    tions -->
-				{/if}
-			</div>
-		{/if}
+			{/if}
 
-		<!-- {#each list.items as item (item.id)}
+			<!-- {#each list.items as item (item.id)}
 
 		<div class="border">
 			{#if item.type === "Section"}
@@ -341,6 +337,6 @@ loading...
 			{/if}
 		</div>
 	{/each} -->
+		</div>
 	</div>
-</div>
 {/if}

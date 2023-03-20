@@ -82,7 +82,7 @@
 		$query.data?.volumeInfo?.imageLinks?.thumbnail || $query.data?.volumeInfo?.imageLinks?.smallThumbnail;
 	$: openLibraryImage = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : "";
 
-	$: bookmarked = $page.data.user?.bookmarks.some((bookmark) => bookmark.entry?.uri === `isbn:${isbn}`);
+    $: bookmarked = !!entry?.bookmark;
 
 	$: image = openLibraryImage || googleBooksimage;
 
