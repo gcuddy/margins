@@ -19,7 +19,9 @@ const config = {
 	],
 
 	kit: {
-		adapter: vercel(),
+		adapter: vercel({
+            runtime: 'edge'
+        }),
 	},
 };
 
