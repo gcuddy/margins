@@ -7,6 +7,7 @@
 					where: filter,
 				}),
 			keepPreviousData: true,
+            staleTime: 1000
 		} satisfies CreateQueryOptions);
 </script>
 
