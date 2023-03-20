@@ -4,7 +4,6 @@ import { DocumentType } from "@prisma/client";
 import { HTMLElement, parse } from "node-html-parser";
 import { z } from "zod";
 import { Readability } from '@mozilla/readability'
-import crypto from 'crypto';
 
 import { _EntryModel } from "$lib/prisma/zod";
 
@@ -1025,10 +1024,10 @@ export class Parser {
 
                 // upload to s3
                 // replace src with s3 url
-                const hash = crypto.createHash('sha256');
-                hash.update(this.metadata.image);
-                const Key = hash.digest('hex');
-
+                const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(this.metadata.image));
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+                const Key = hashHex;
                 const exists = await s3.send(new HeadObjectCommand({
                     Key,
                     Bucket: "margins",
