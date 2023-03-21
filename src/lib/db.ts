@@ -10,15 +10,15 @@ declare global {
 
 const globalForPrisma = global as unknown as { db: PrismaClient };
 
-export const db =
-	globalForPrisma.db ||
-	new PrismaClient({
-		log: [
-			'info',
-			'warn',
-			'error',
-		],
-	});
+// export const db =
+// 	globalForPrisma.db ||
+// 	new PrismaClient({
+// 		log: [
+// 			'info',
+// 			'warn',
+// 			'error',
+// 		],
+// 	});
 
 db.$use(async (params, next) => {
 	const before = Date.now();
