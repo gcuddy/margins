@@ -20,9 +20,11 @@ export const redisSessionAdapter =
 			redisClient;
 		return {
 			getSession: async (sessionId) => {
+                console.time("getSession")
 				const sessionData = await sessionRedis.get(sessionId);
 				if (!sessionData) return null;
                 console.log({sessionData})
+                console.timeEnd("getSession")
 				return sessionData as SessionSchema
 			},
 			getSessionsByUserId: async (userId) => {

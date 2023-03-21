@@ -8,7 +8,7 @@ import { Metadata, Parser } from "$lib/web-parser";
 import { uploadFile } from "./backend/s3.server";
 import dayjs from "./dayjs";
 import { spotify } from "./features/services/spotify";
-import { twitter } from "./features/services/twitter";
+import { twitter } from "./twitter";
 import parse from "node-html-parser";
 import { books } from "./features/books/googlebooks.server";
 type VideoListResponse = youtube_v3.Schema$VideoListResponse
@@ -121,7 +121,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
 
         const [, , , id] = url.match(twitterRegex) || [];
         if (id) {
-            const tweet = await twitter.v2.singleTweet(id, {
+            const tweet = await twitter.singleTweet(id, {
                 expansions: [
                     "author_id",
                     "attachments.media_keys",
@@ -142,8 +142,6 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                     "in_reply_to_user_id",
                 ],
             });
-            twitter.v2.singleTweet;
-            tweet.includes?.media;
             console.dir({ tweet }, { depth: null });
             return {
                 title: tweet.data.text.slice(0, 100),
@@ -153,7 +151,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                 published: tweet.data.created_at,
                 image: tweet.includes?.media?.[0]?.preview_image_url || tweet.includes?.media?.[0]?.url || null,
                 type: "tweet",
-                original: tweet as any,
+                // original: tweet as any,
             };
         }
     }

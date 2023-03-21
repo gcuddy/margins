@@ -97,7 +97,7 @@ const adapter = <DB extends Kysely<any>>(
                 .selectAll()
                 .where("id", "=", userId)
                 .executeTakeFirst();
-                console.log('got data');
+            console.log('got data');
             console.timeEnd("getUser");
             console.log({data})
             return data ?? null;
