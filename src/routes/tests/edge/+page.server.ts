@@ -7,11 +7,12 @@ export const config: Config = {
 
 export const load = async () => {
   console.time("load");
-  const books = await db
-    .selectFrom("Entry")
-    .selectAll()
-    .where("type", "=", "book")
-    .execute();
+ const books  = "test";
+//   const books = await db
+//     .selectFrom("Entry")
+//     .selectAll()
+//     .where("type", "=", "book")
+//     .execute();
   console.timeEnd("load");
   return {
     books

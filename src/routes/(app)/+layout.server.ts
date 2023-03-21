@@ -11,14 +11,18 @@ import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async (event) => {
     const { locals, depends } = event;
-    // const { user } = await locals.validateUser();
-    // console.log(`(app)/layout.server.ts load function`);
+    const session = await locals.validate();
+    console.log(`(app)/layout.server.ts load function`);
 
     const theme = event.cookies.get("theme");
     // load settings
     event.depends("user:data");
-    const caller = appRouter.createCaller(await createContext(event));
+
     try {
+        if (!session) {
+            throw new Error("unauthorized")
+        }
+        const caller = appRouter.createCaller(await createContext(event));
         const userData = await caller.user.data({
             // bookmarks: false,
             // subscriptions: true,
