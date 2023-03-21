@@ -7,22 +7,23 @@ import { mdsvex } from "mdsvex"
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	// Consult https://github.com/sveltejs/svelte-preprocess
-	// for more information about preprocessors
-	preprocess: [
-		preprocess({
-			postcss: true,
-		})  ,
-        mdsvex({
-            extensions: ["md"]
-        })
-	],
+  // Consult https://github.com/sveltejs/svelte-preprocess
+  // for more information about preprocessors
+  preprocess: [
+    preprocess({
+      postcss: true,
+    }),
+    mdsvex({
+      extensions: ["md"]
+    })
+  ],
 
-	kit: {
-		adapter: vercel({
-            // runtime: 'edge'
-        }),
-	},
+  kit: {
+    adapter: vercel({
+      // runtime: 'edge'
+      runtime: "nodejs16.x"
+    }),
+  },
 };
 
 export default config;
