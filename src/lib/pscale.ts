@@ -11,6 +11,4 @@ const config = {
   }
 // export const conn = connect(config)
 
-export const db = new Kysely<DB>({
-  dialect: new PlanetScaleDialect(config),
-});
+// export const db = new Kysely<DB>({ dialect: new PlanetScaleDialect(config), });

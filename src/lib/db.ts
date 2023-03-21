@@ -1,5 +1,14 @@
-import { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
+import {Kysely} from 'kysely'
+import {PlanetScaleDialect} from 'kysely-planetscale'
+import type { DB } from "./prisma/kysely/types"
+import { DATABASE_PASSWORD, DATABASE_USERNAME } from "$env/static/private"
 
+const config = {
+    host: 'aws.connect.psdb.cloud',
+    username: DATABASE_USERNAME,
+    password: DATABASE_PASSWORD
+}
 import { annotationsMiddleware } from './prisma/middleware';
 
 declare global {
@@ -10,6 +19,9 @@ declare global {
 
 const globalForPrisma = global as unknown as { db: PrismaClient };
 
+export const db = new Kysely<DB>({
+  dialect: new PlanetScaleDialect(config),
+});
 // export const db =
 // 	globalForPrisma.db ||
 // 	new PrismaClient({
@@ -20,18 +32,18 @@ const globalForPrisma = global as unknown as { db: PrismaClient };
 // 		],
 // 	});
 
-db.$use(async (params, next) => {
-	const before = Date.now();
+// db.$use(async (params, next) => {
+// 	const before = Date.now();
 
-	const result = await next(params);
+// 	const result = await next(params);
 
-	const after = Date.now();
+// 	const after = Date.now();
 
-	console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
+// 	console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
 
-	return result;
-});
+// 	return result;
+// });
 
-annotationsMiddleware(db);
+// annotationsMiddleware(db);
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.db = db;
+// if (process.env.NODE_ENV !== 'production') globalForPrisma.db = db;
