@@ -3,7 +3,6 @@
 	import { get } from "idb-keyval";
 	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
-	import { remark } from "remark";
 
 	export let data: PageData;
 	console.log(data.directory);
@@ -39,7 +38,6 @@
 		contents = await file.text();
 		console.log(contents);
 	}
-	$: console.log({ remark });
 
 	onMount(async () => {
 		if (!data.contents) {

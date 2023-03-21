@@ -1,7 +1,3 @@
-import rehypeStringify from 'rehype-stringify';
-import remarkParse from 'remark-parse';
-import remarkRehype from 'remark-rehype';
-import { unified } from 'unified'
 import { z } from "zod";
 
 import { uploadFile } from "$lib/backend/s3.server";
@@ -95,12 +91,13 @@ export const publicRouter = router({
   parseMarkdown: publicProcedure.input(z.object({
     markdown: z.string()
   })).query(async ({ ctx, input }) => {
-    const { value } = unified()
-      .use(remarkParse)
-      .use(remarkRehype, { allowDangerousHtml: true })
-      .use(rehypeStringify, { allowDangerousHtml: true })
-      .processSync(input.markdown);
-    console.log({ value })
+    // const { value } = unified()
+    //   .use(remarkParse)
+    //   .use(remarkRehype, { allowDangerousHtml: true })
+    //   .use(rehypeStringify, { allowDangerousHtml: true })
+    //   .processSync(input.markdown);
+    // console.log({ value })
+    const value = ''
     return value;
   }),
   loadEntry: publicProcedure
