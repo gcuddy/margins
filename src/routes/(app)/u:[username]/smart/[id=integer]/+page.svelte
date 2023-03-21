@@ -13,7 +13,6 @@
 
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { goto } from "$app/navigation";
 
 	import { page } from "$app/stores";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
@@ -22,21 +21,16 @@
 	import ContextMenu from "$lib/components/ContextMenu.svelte";
 	import CustomizeView from "$lib/components/CustomizeView.svelte";
 	import EntryList from "$lib/components/EntryList.svelte";
-	import FavoriteStar from "$lib/components/FavoriteStar.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 
 	import Header from "$lib/components/layout/Header.svelte";
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
-	import SmartListEntry from "$lib/components/SmartListEntry.svelte";
-	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
 	import { ViewOptionsSchema, type ViewOptions } from "$lib/types/schemas/View";
 	import type { Prisma } from "@prisma/client";
 	import { createQuery, CreateQueryOptions } from "@tanstack/svelte-query";
-	import { nanoid } from "nanoid";
 	import type { TRPCClientInit } from "trpc-sveltekit";
 	import type { PageData } from "./$types";
 

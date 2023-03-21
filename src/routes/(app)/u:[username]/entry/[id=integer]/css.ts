@@ -18,7 +18,6 @@ export function scopeCss(css?: string) {
 	console.timeEnd("scopeCss");
 	return str;
 }
-
 export function unscopeCss(css?: string) {
 	if (!css) return;
 	console.time("unscopeCss");
