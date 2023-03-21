@@ -4,7 +4,6 @@
 	import { onMount } from "svelte";
 	import type { PageData } from "./$types";
 	import { remark } from "remark";
-	import remarkObsidian from "remark-obsidian";
 
 	export let data: PageData;
 	console.log(data.directory);
@@ -41,7 +40,6 @@
 		console.log(contents);
 	}
 	$: console.log({ remark });
-	$: console.log({ remarkObsidian });
 
 	onMount(async () => {
 		if (!data.contents) {
