@@ -55,6 +55,7 @@ export async function createContext(event: RequestEvent) {
 		// context informationj
 		userId: session?.session?.userId || "",
 		prisma: db,
+        db,
         user: session?.user,
         redis
 		// user,

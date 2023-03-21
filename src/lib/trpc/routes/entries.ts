@@ -30,6 +30,10 @@ export const entriesRouter = router({
             // seems to be too much for ts!
             console.log(`listBookmarks`, input)
             const { userId, user } = ctx;
+            // const entries = await ctx.db.selectFrom("Bookmark")
+            //     .select([
+            //         ""
+            //     ])
             const entries = await ctx.prisma.entry
                 .findMany({
                     select: entryListSelect(userId),

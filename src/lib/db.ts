@@ -4,7 +4,7 @@ import {PlanetScaleDialect} from 'kysely-planetscale'
 import type { DB } from "./prisma/kysely/types"
 import { DATABASE_PASSWORD, DATABASE_USERNAME } from "$env/static/private"
 
-const config = {
+export const config = {
     host: 'aws.connect.psdb.cloud',
     username: DATABASE_USERNAME,
     password: DATABASE_PASSWORD
