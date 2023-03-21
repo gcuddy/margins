@@ -1,7 +1,5 @@
 import rehypeStringify from 'rehype-stringify';
 import remarkObsidian from 'remark-obsidian';
-import igdb from 'igdb-api-node';
-
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import { unified } from 'unified'

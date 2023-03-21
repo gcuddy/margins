@@ -1,8 +1,8 @@
 import type { Config } from '@sveltejs/adapter-vercel';
 import { db } from "$lib/pscale"
-// export const config: Config = {
-//     runtime: "edge"
-// }
+export const config: Config = {
+    runtime: "edge"
+}
 
 export const load = async () => {
     console.time("load");
