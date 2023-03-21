@@ -6,7 +6,7 @@ import { dev } from '$app/environment';
 import { redis, redisSessionAdapter } from '$lib/redis';
 import kysely from "$lib/auth/kysley-pscale-adapter"
 import { Kysely } from "kysely";
-import { db } from "$lib/pscale";
+import { db } from "$lib/db";
 export const auth = lucia({
      // TODO: type error here?
 	adapter: {
