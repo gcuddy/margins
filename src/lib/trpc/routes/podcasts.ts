@@ -5,8 +5,8 @@ import { z } from "zod";
 import { PODCASTINDEX_API_KEY, PODCASTINDEX_API_SECRET } from "$env/static/private";
 import dayjs from "$lib/dayjs";
 import { protectedProcedure, publicProcedure, router } from "$lib/trpc/t";
-import { getAverageColor } from "fast-average-color-node";
-import Color from "color";
+// import { FastAverageColor } from "fast-average-color";
+// import Color from "color";
 
 const podcastIndexApiUrl = `https://api.podcastindex.org/api/1.0`;
 
@@ -536,14 +536,15 @@ export const podcastsRouter = router({
       }
       const podcast = await client.podcastById(input);
       // get image color
-      const image = podcast.feed.artwork || podcast.feed.image;
-      const color = await getAverageColor(image);
-      const c = Color(color.rgb);
-      const finalC = c.fade(0.75);
-      const podcastData = {
-        ...podcast.feed,
-        color: finalC.rgb().string(),
-      };
+      // const image = podcast.feed.artwork || podcast.feed.image;
+      // const color = await getAverageColor(image);
+      // const c = Color(color.rgb);
+      // const finalC = c.fade(0.75);
+      // const podcastData = {
+      //   ...podcast.feed,
+      //   color: finalC.rgb().string(),
+      // };
+      const podcastData = podcast.feed;
       await ctx.redis.set(`podcast:${input}`, podcastData, {
         // expire after 1 day
         ex: 60 * 60 * 24,
