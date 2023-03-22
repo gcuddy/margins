@@ -26,10 +26,9 @@ generator kysely {
 
     // Optionally provide a destination directory for the generated file
     // and a filename of your choice
-    output = "../src/lib/prisma/kysely"
+    output   = "../src/lib/prisma/kysely"
     fileName = "types.ts"
 }
-
 
 // generator zodprismatypes {
 //     provider = "zod-prisma-types"
@@ -225,9 +224,10 @@ model Annotation {
     bookmark    Bookmark?         @relation(fields: [bookmarkId], references: [id])
     bookmarkId  Int?
 
-    color Color @default(Yellow)
-    tags  Tag[]
+    color          Color            @default(Yellow)
+    tags           Tag[]
     // tagId Int?
+    annotation_tag annotation_tag[]
 
     // @@unique([userId, entryId]) <- this doesn't quite make sense, because of cihldren. i want it to be when type is bookmark. maybe sql? or maybe children don't get entryid? <- indeed we are now!s
     // again, could solve this by having a sepaerate model or something <- indeed we are now!s
@@ -355,6 +355,7 @@ model Entry {
     CollectionItems CollectionItems[]
     favorites       Favorite[]
     log             Log[]
+    TagOnEntry      TagOnEntry[]
 
     @@unique([uri, id])
     @@index([feedId])
@@ -362,6 +363,32 @@ model Entry {
     @@fulltext([text, title, author])
     @@fulltext([title, author])
     @@fulltext([text])
+}
+
+model annotation_tag {
+    tagId        Int
+    annotationId String
+    annotation   Annotation @relation(fields: [annotationId], references: [id])
+    tag          Tag        @relation(fields: [tagId], references: [id])
+
+    @@id([annotationId, tagId])
+    @@index([tagId])
+    @@index([annotationId])
+}
+
+model TagOnEntry {
+    id      Int    @id @default(autoincrement())
+    tag     Tag    @relation(fields: [tagId], references: [id])
+    tagId   Int
+    entry   Entry  @relation(fields: [entryId], references: [id])
+    entryId Int
+    user    User   @relation(fields: [userId], references: [id])
+    userId  String
+
+    @@unique([tagId, entryId, userId])
+    @@index([tagId])
+    @@index([entryId])
+    @@index([userId])
 }
 
 /// Represents user-downloaded/defined data for an entry
@@ -712,16 +739,18 @@ model Tag {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    favorite      Favorite?
+    favorite       Favorite?
     // TODO: maybe move viewoptions to ViewPreference
-    viewOptions   Json?
-    user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId        String
-    taggings      Tagging[]
-    entryTags     EntryTag[]
-    entries       Entry[]
-    annotations   Annotation[]
-    subscriptions Subscription[]
+    viewOptions    Json?
+    user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId         String
+    taggings       Tagging[]
+    entryTags      EntryTag[]
+    entries        Entry[]
+    annotations    Annotation[]
+    subscriptions  Subscription[]
+    TagOnEntry     TagOnEntry[]
+    annotation_tag annotation_tag[]
 
     @@unique([name, userId])
     @@index([userId])
@@ -859,6 +888,7 @@ model User {
     Log                Log[]
     relations          Relation[]
     AuthorizationKey   AuthorizationKey?
+    TagOnEntry         TagOnEntry[]
 
     @@map("user")
 }

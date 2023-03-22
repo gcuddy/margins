@@ -50,6 +50,10 @@ export type Annotation = {
 	bookmarkId: number | null;
 	color: Generated<Color>;
 };
+export type annotation_tag = {
+	tagId: number;
+	annotationId: string;
+};
 export type Article = {
 	id: Generated<number>;
 	title: string;
@@ -381,6 +385,12 @@ export type Tagging = {
 	feedId: number | null;
 	bookmarkId: number | null;
 };
+export type TagOnEntry = {
+	id: Generated<number>;
+	tagId: number;
+	entryId: number;
+	userId: string;
+};
 export type TwitterIntegration = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
@@ -405,6 +415,7 @@ export type UserEntry = {
 };
 export type DB = {
 	Annotation: Annotation;
+	annotation_tag: annotation_tag;
 	Article: Article;
 	AuthorizationKey: AuthorizationKey;
 	Bookmark: Bookmark;
@@ -431,6 +442,7 @@ export type DB = {
 	Subscription: Subscription;
 	Tag: Tag;
 	Taggings: Tagging;
+	TagOnEntry: TagOnEntry;
 	TwitterIntegration: TwitterIntegration;
 	user: User;
 	UserEntry: UserEntry;

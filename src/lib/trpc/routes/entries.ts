@@ -6,17 +6,45 @@ import { db } from "$lib/db";
 import { annotationSelect } from "$lib/prisma/selects/annotations";
 import { entryListSelect } from "$lib/prisma/selects/entry";
 import type { EntryExtendedSchema } from "$lib/prisma/zod-utils";
-import { protectedProcedure, router } from "$lib/trpc/t";
+import { protectedProcedure, publicProcedure, router } from "$lib/trpc/t";
 import { LocationSchema } from "$lib/types/schemas/Locations";
 import { Metadata } from "$lib/web-parser";
 import type { Recipe } from "$lib/web-parser/recipe";
 import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
+import { sql } from "kysely";
 
 const idInput = z.object({
     id: z.number(),
 });
 
 export const entriesRouter = router({
+    loadUserData: protectedProcedure
+        .input(z.object({
+            id: z.number(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const { userId, user } = ctx;
+            const { id } = input;
+            // User data includes annotations, tags (from parent), state, bookmark, progress, relations, etc;
+            const [annotations, bookmark] = await Promise.all([
+                db.selectFrom("Annotation as a")
+                    .innerJoin("user as au", "au.id", "a.userId")
+                    .select(["a.id", "a.contentData", "a.body", "a.target", "a.entryId", "a.parentId", "a.createdAt", "a.editedAt", "a.type", "a.color", "au.username", sql<number>`SELECT count(*) FROM Annotation a WHERE a.parentId = a.id`.as("children_count")])
+                    .where("a.userId", "=", userId)
+                    .where("a.deleted", "is", null)
+                    .where("a.entryId", "=", id)
+                    .execute(),
+                db.selectFrom("Bookmark as b")
+                    .leftJoin("State as s", "s.id", "b.stateId")
+                    .leftJoin("EntryInteraction as i", (j) => j.on("i.entryId", "=", id).on("i.userId", "=", userId))
+                    .select(["b.id as bookmark_id", "b.stateId as state_id", "b.createdAt", "i.progress"])
+                    .executeTakeFirst()
+            ])
+           return {
+                annotations,
+                bookmark
+           }
+        }),
     listBookmarks: protectedProcedure
         .input(
             z
@@ -34,7 +62,19 @@ export const entriesRouter = router({
             //     .select([
             //         ""
             //     ])
-            const entries = await ctx.prisma.entry
+            const entries = db
+                .selectFrom("Bookmark as b")
+                .innerJoin("Entry as e", "e.id", "b.entryId")
+                .innerJoin("State as s", "s.id", "b.stateId")
+                .leftJoin("Annotation as a", "a.entryId", "e.id")
+                .select(["e.id", "e.image", "e.title", "e.author", "e.uri", "s.name as state", sql<number>`(select count(a.id) from Annotation a where a.entryId = e.id)`.as("annotations")])
+                // .where("s.type", "=", "later")
+                // .where("b.userId", "=", session.userId)
+                .limit(10)
+                // Do I need to do this?
+                // .groupBy("e.id")
+                .execute();
+            const entrdkies = await ctx.prisma.entry
                 .findMany({
                     select: entryListSelect(userId),
                     orderBy: { updatedAt: "desc" },
@@ -796,4 +836,23 @@ export const entriesRouter = router({
     //     .input(z.object({
     //         id: z.number().or(z.number().array())
     //     }))
+    public: router({
+        byId: publicProcedure
+            .input(z.object({
+                id: z.number().or(z.number().array())
+            }))
+            .query(async ({ ctx, input }) => {
+                const { id } = input;
+                if (Array.isArray(id)) {
+                    // TODO
+                } else {
+                    return db
+                        .selectFrom("Entry as e")
+                        .where("e.id", "=", id)
+                        .select(["e.title", "e.html", "e.author", "e.id", "e.feedId", "e.enclosureUrl", "e.uri", "e.image", "e.published"])
+                        .executeTakeFirst();
+                }
+
+            })
+    })
 });

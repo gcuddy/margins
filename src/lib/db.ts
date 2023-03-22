@@ -10,6 +10,7 @@ export const config = {
     password: DATABASE_PASSWORD
 }
 import { annotationsMiddleware } from './prisma/middleware';
+import { dev } from '$app/environment';
 
 declare global {
 	// allow global `var` declarations
@@ -21,6 +22,13 @@ const globalForPrisma = global as unknown as { db: PrismaClient };
 
 export const db = new Kysely<DB>({
   dialect: new PlanetScaleDialect(config),
+  log: (event) => {
+    if (!dev) return
+    if (event.level === "query") {
+        console.log(event.query.sql)
+        console.log(event.query.parameters)
+    }
+  }
 });
 // export const db =
 // 	globalForPrisma.db ||

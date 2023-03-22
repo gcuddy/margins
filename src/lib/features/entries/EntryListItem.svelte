@@ -17,7 +17,7 @@
 	import type { HTMLAnchorAttributes } from "svelte/elements";
 	import { icons } from "./utils";
 
-	export let entry: EntryInList;
+	export let entry: Partial<EntryInList> & Pick<EntryInList, "id">;
 
 	// float
 	export let progress = 0;
@@ -125,7 +125,7 @@
 					<Muted class="text-sm">{dayjs(entry.published).year()}</Muted>
 				{/if}
 				<div class="flex items-center gap-0.5">
-					{#if entry.annotations?.length}
+					{#if entry.annotations?.length && Array.isArray(entry.annotations)}
 						{@const pageNotes = entry.annotations.filter((a) => a.type === "note")}
 						{@const inlineNotes = entry.annotations.filter((a) => a.type === "annotation")}
 						{#if pageNotes.length}
@@ -168,7 +168,7 @@
 						{/if}
 					{/if}
 					{#if entry.relations?.length || entry.back_relations?.length}
-						{@const total = entry.relations?.length + entry.back_relations?.length}
+						{@const total = typeof entry.relations === "number" ? entry.relations :  entry.relations?.length ?? 0 + (entry.back_relations?.length ?? 0)}
 						{@const slicedRelations = entry.relations?.slice(0, 3) || []}
 						{@const slicedBackRelations = entry.back_relations?.slice(0, 3) || []}
 						{@const slicedRelationsTotal = slicedRelations?.length + slicedBackRelations?.length}
