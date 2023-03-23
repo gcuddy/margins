@@ -3,24 +3,21 @@ import type { Location } from "@prisma/client";
 import { redirect } from "@sveltejs/kit";
 import { TRPCError } from "@trpc/server";
 
-import { createContext } from "$lib/trpc/context";
 import { appRouter, createCaller } from "$lib/trpc/router";
 import { groupBy } from "$lib/utils";
-import { db } from "$lib/db";
 
 import type { LayoutServerLoad } from "./$types";
-import { trpc } from "$lib/trpc/client";
 
 import type { Config } from '@sveltejs/adapter-vercel';
 
 export const config: Config = {
-    runtime: "edge"
+    runtime: "edge",
+    split: true
     // runtime: "nodejs18.x"
 }
 
 export const load: LayoutServerLoad = async (event) => {
     const { locals, depends } = event;
-    console.log(`(app)/layout.server.ts load function`);
     const theme = event.cookies.get("theme");
     // load settings
     event.depends("user:data");
