@@ -33,6 +33,6 @@ export const load = async ({ locals }) => {
         .execute();
     console.timeEnd("load");
     return {
-       entries
+        entries
     }
 }

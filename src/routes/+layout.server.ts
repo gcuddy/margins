@@ -8,7 +8,7 @@ import type { Config } from '@sveltejs/adapter-vercel';
 
 
 export const config: Config = {
-    runtime: "edge"
+    // runtime: "edge"
 }
 export const load: LayoutServerLoad = handleServerSession((e) => {
     return {
