@@ -14,8 +14,8 @@ import { trpc } from "$lib/trpc/client";
 import type { Config } from '@sveltejs/adapter-vercel';
 
 export const config: Config = {
-    // runtime: "edge"
-    runtime: "nodejs18.x"
+    runtime: "edge"
+    // runtime: "nodejs18.x"
 }
 
 export const load: LayoutServerLoad = async (event) => {
