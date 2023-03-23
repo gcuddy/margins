@@ -20,8 +20,8 @@ const config = {
 
 	kit: {
 		adapter: vercel({
-			runtime: "edge",
-			//   runtime: "nodejs18.x",
+			// runtime: "edge",
+			runtime: "nodejs18.x",
 		}),
 	},
 };

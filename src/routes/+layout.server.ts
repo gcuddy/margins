@@ -4,8 +4,14 @@ import { S3_BUCKET_PREFIX } from '$env/static/private';
 
 import type { LayoutServerLoad } from './$types.js';
 
+import type { Config } from '@sveltejs/adapter-vercel';
+
+
+export const config: Config = {
+    runtime: "edge"
+}
 export const load: LayoutServerLoad = handleServerSession((e) => {
-   return {
+    return {
         S3_BUCKET_PREFIX
-   }
+    }
 });
