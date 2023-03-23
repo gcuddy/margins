@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { WebPlayback } from "svelte-spotify-web-playback";
 	import { PUBLIC_SPOTIFY_CLIENT_ID } from "$env/static/public";
 	import type { PageData } from "./$types";
 	let wrapper;

@@ -2,9 +2,9 @@
 import type { JSONContent } from "@tiptap/core";
 import { z } from "zod";
 
-import {
-    contextualAnnotationArgs
-} from "$lib/prisma/selects/annotations";
+// import {
+//     contextualAnnotationArgs
+// } from "$lib/prisma/selects/annotations";
 import { saveAnnotationSchema } from "$lib/prisma/zod-inputs";
 
 import { protectedProcedure, router } from "../t";

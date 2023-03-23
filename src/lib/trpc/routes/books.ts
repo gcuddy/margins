@@ -7,7 +7,6 @@ const googleBooksApi = "https://www.googleapis.com/books/v1/volumes";
 // REVIEW: do we really need to import whole googleApis/books? We get TS... but a simple fetched and type coercion could be fine too
 
 import type { books_v1 } from "@googleapis/books";
-import { DocumentType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 // import parse from "node-html-parser";
 
@@ -16,7 +15,6 @@ import dayjs from "$lib/dayjs"
 // import { getAverageColor } from 'fast-average-color-node';
 
 import { GOOGLE_BOOKS_API_KEY } from "$env/static/private";
-import Color from "color";
 import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
 
 export const saveInputSchema = z.object({
@@ -38,7 +36,7 @@ export const booksRouter = router({
         const data = {
             googleBooksId: input.bookId,
             uri: 'isbn:' + input.isbn,
-            type: DocumentType.book,
+            type: "book",
         }
         const bookEntry = await ctx.prisma.entry.upsert({
             where: {
@@ -233,7 +231,7 @@ export const booksRouter = router({
                 }
                 const data = {
                     googleBooksId: item.id,
-                    type: DocumentType.book,
+                    type: "book",
                     title: item.volumeInfo?.title,
                     summary: item.volumeInfo?.subtitle || null,
                     html: item.volumeInfo?.description,
