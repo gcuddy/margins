@@ -1,34 +1,33 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 // import { auth } from './middleware/auth';
 // import { logger } from './middleware/logger';
-import superjson from "superjson";
 
 import type { Context } from "$lib/trpc/context";
-
+import { transformer } from "./transformer";
 export const t = initTRPC.context<Context>().create({
-	transformer: superjson,
+    transformer,
 });
 
 export const router = t.router;
 export const middleware = t.middleware;
 
 const auth = middleware(async ({ next, ctx }) => {
-	if (!ctx.userId) throw new TRPCError({ code: "UNAUTHORIZED" });
-	// return next();
-	return next({
-		ctx: {
-			// user: ctx.user,
-			userId: ctx.userId,
-		},
-	});
+    if (!ctx.userId) throw new TRPCError({ code: "UNAUTHORIZED" });
+    // return next();
+    return next({
+        ctx: {
+            // user: ctx.user,
+            userId: ctx.userId,
+        },
+    });
 });
 
 const logger = middleware(async ({ path, type, next }) => {
-	const start = Date.now();
-	const result = await next();
-	const ms = Date.now() - start;
-	console.log(`[trpc] ${result.ok ? "OK" : "ERR"} ${type} ${path} - ${ms}ms`);
-	return result;
+    const start = Date.now();
+    const result = await next();
+    const ms = Date.now() - start;
+    console.log(`[trpc] ${result.ok ? "OK" : "ERR"} ${type} ${path} - ${ms}ms`);
+    return result;
 });
 
 export const publicProcedure = t.procedure.use(logger);
