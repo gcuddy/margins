@@ -12,7 +12,7 @@ import type { Config } from '@sveltejs/adapter-vercel';
 
 export const config: Config = {
     runtime: "edge",
-    split: true
+    // split: true
     // runtime: "nodejs18.x"
 }
 

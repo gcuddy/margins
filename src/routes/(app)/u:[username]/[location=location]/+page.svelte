@@ -6,8 +6,8 @@
 	import Header from "$lib/components/layout/Header.svelte";
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
 	import LocationListbox from "$lib/components/LocationListbox.svelte";
+	import BasicSearchItem from "$lib/features/entries/BasicSearchItem.svelte";
 	import EntryFilter from "$lib/features/entries/EntryFilter.svelte";
-	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import Filters from "$lib/features/filters/Filters.svelte";
 	import { getCurrentListContext } from "$lib/stores/currentList";
 	import { trpcWithQuery } from "$lib/trpc/client";
@@ -95,10 +95,17 @@
 {:else if $query.isError}
 	<div>Error</div>
 {:else if $query.isSuccess}
-	{JSON.stringify($query.data)}
-	{#each $query.data as entry}
-		<!-- <EntryListItem {entry} /> -->
-	{/each}
+	<!-- {JSON.stringify($query.data)} -->
+	<ul class="space-y-4">
+		{#each $query.data as entry}
+			<BasicSearchItem
+				title={entry.title}
+				href={entry.uri}
+				image={entry.image}
+			/>
+			<!-- <EntryListItem {entry} /> -->
+		{/each}
+	</ul>
 	<!-- <EntryList
 		items={sortedEntries}
 	>
