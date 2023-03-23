@@ -1,7 +1,7 @@
 {
-	"editor.formatOnSave": false,
-    "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": true
-    },
-    "html.format.wrapLineLength": 99999,
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	},
+	"html.format.wrapLineLength": 99999
 }

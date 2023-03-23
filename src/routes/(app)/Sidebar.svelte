@@ -16,12 +16,6 @@
 
 	export const isShowing = writable(false);
 
-	export const favoritesQuery = (init?: TRPCClientInit) =>
-		({
-			// REVIEW: should key include user? should this just be in user.data in layout.server? many questions!
-			queryKey: ["favorites"] as const,
-			queryFn: async () => await trpc(init).favorites.list.query(),
-		} satisfies CreateQueryOptions);
 </script>
 
 <script lang="ts">
