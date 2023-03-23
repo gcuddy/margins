@@ -89,17 +89,16 @@ const adapter = <DB extends Kysely<any>>(
     const kysely = db as Kysely<KyselyLuciaDatabase>;
     return {
         getUser: async (userId) => {
-            console.log({userId})
+            console.log({ userId })
             console.time("getUser")
-            console.log({kysely})
+            console.log({ kysely })
             const data = await kysely
                 .selectFrom("user")
                 .selectAll()
                 .where("id", "=", userId)
                 .executeTakeFirst();
-            console.log('got data');
             console.timeEnd("getUser");
-            console.log({data})
+            console.log({ data })
             return data ?? null;
         },
         getSessionAndUserBySessionId: async (sessionId) => {

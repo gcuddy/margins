@@ -4,37 +4,25 @@ import { redirect } from "@sveltejs/kit";
 import { TRPCError } from "@trpc/server";
 
 import { createContext } from "$lib/trpc/context";
-import { appRouter } from "$lib/trpc/router";
+import { appRouter, createCaller } from "$lib/trpc/router";
 import { groupBy } from "$lib/utils";
+import { db } from "$lib/db";
 
 import type { LayoutServerLoad } from "./$types";
+import { trpc } from "$lib/trpc/client";
 
 export const load: LayoutServerLoad = async (event) => {
     const { locals, depends } = event;
-    const session = await locals.validate();
     console.log(`(app)/layout.server.ts load function`);
-
     const theme = event.cookies.get("theme");
     // load settings
     event.depends("user:data");
-
     try {
-        if (!session) {
-            throw new Error("unauthorized")
-        }
-        const caller = appRouter.createCaller(await createContext(event));
-        const userData = await caller.user.data({
-            // bookmarks: false,
-            // subscriptions: true,
-            // stylesheets: true,
-            states: true,
-            // color_descriptions: true,
-        })
-        // TODO: we should return a mutable store with this, but can't do that on the server (instead use layout.ts)
-        // const userStore
-
+        const client = await createCaller(event);
+        const tags = client.user.getTags()
+        const [user, states] = await Promise.all([client.user.getUser(), client.user.getStates()]);
         const locations = ["inbox", "soon", "later", "archive"];
-        const sortedStates = userData.states?.sort(
+        const sortedStates = states?.sort(
             (a, b) => locations.indexOf(a.type) - locations.indexOf(b.type)
         );
         const locationLookup = groupBy(sortedStates || [], (state) => state.type);
@@ -42,11 +30,12 @@ export const load: LayoutServerLoad = async (event) => {
         const stateIdToName: Map<number, string> = new Map((sortedStates || []).map((state) => [state.id, state.name]))
         return {
             user: {
-                ...userData,
+                ...user,
                 states: sortedStates,
                 locationLookup,
                 stateIdToLocation,
                 stateIdToName,
+                tags,
             },
             theme,
             authorized: true,

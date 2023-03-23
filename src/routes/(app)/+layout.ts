@@ -3,7 +3,7 @@ import { QueryClient } from "@tanstack/svelte-query";
 import { browser } from "$app/environment";
 
 import type { LayoutLoad } from "./$types";
-import { favoritesQuery } from "./Sidebar.svelte";
+import { trpcWithQuery } from "$lib/trpc/client";
 
 export const load = (async (e) => {
     const { data } = e;
@@ -25,8 +25,9 @@ export const load = (async (e) => {
     // get favorites
     console.time("favorites");
     // figure out a way to make this better
-    const favorites = data.authorized ? await queryClient.ensureQueryData(favoritesQuery(e)) : []
+    const client = trpcWithQuery(e, queryClient);
+    const utils = client.createContext();
+    // const favorites = data.authorized ? utils.favorites.list.getData() ?? (await utils.favorites.list.fetch()) : []
     console.timeEnd("favorites");
-
-    return { queryClient, favorites, ...data };
+    return { queryClient, ...data };
 }) satisfies LayoutLoad;

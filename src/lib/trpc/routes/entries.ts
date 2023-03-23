@@ -1,4 +1,4 @@
-import { DocumentType, RelationType } from "@prisma/client"
+import { DocumentType, RelationType } from "@prisma/client";
 import { fuzzy } from "fast-fuzzy";
 import { z } from "zod";
 
@@ -19,31 +19,57 @@ const idInput = z.object({
 
 export const entriesRouter = router({
     loadUserData: protectedProcedure
-        .input(z.object({
-            id: z.number(),
-        }))
+        .input(
+            z.object({
+                id: z.number(),
+            })
+        )
         .query(async ({ ctx, input }) => {
             const { userId, user } = ctx;
             const { id } = input;
             // User data includes annotations, tags (from parent), state, bookmark, progress, relations, etc;
             const [annotations, bookmark] = await Promise.all([
-                db.selectFrom("Annotation as a")
+                db
+                    .selectFrom("Annotation as a")
                     .innerJoin("user as au", "au.id", "a.userId")
-                    .select(["a.id", "a.contentData", "a.body", "a.target", "a.entryId", "a.parentId", "a.createdAt", "a.editedAt", "a.type", "a.color", "au.username", sql<number>`SELECT count(*) FROM Annotation a WHERE a.parentId = a.id`.as("children_count")])
+                    .select([
+                        "a.id",
+                        "a.contentData",
+                        "a.body",
+                        "a.target",
+                        "a.entryId",
+                        "a.parentId",
+                        "a.createdAt",
+                        "a.editedAt",
+                        "a.type",
+                        "a.color",
+                        "au.username",
+                        sql<number>`SELECT count(*) FROM Annotation a WHERE a.parentId = a.id`.as(
+                            "children_count"
+                        ),
+                    ])
                     .where("a.userId", "=", userId)
                     .where("a.deleted", "is", null)
                     .where("a.entryId", "=", id)
                     .execute(),
-                db.selectFrom("Bookmark as b")
+                db
+                    .selectFrom("Bookmark as b")
                     .leftJoin("State as s", "s.id", "b.stateId")
-                    .leftJoin("EntryInteraction as i", (j) => j.on("i.entryId", "=", id).on("i.userId", "=", userId))
-                    .select(["b.id as bookmark_id", "b.stateId as state_id", "b.createdAt", "i.progress"])
-                    .executeTakeFirst()
-            ])
+                    .leftJoin("EntryInteraction as i", (j) =>
+                        j.on("i.entryId", "=", id).on("i.userId", "=", userId)
+                    )
+                    .select([
+                        "b.id as bookmark_id",
+                        "b.stateId as state_id",
+                        "b.createdAt",
+                        "i.progress",
+                    ])
+                    .executeTakeFirst(),
+            ]);
             return {
                 annotations,
-                bookmark
-            }
+                bookmark,
+            };
         }),
     listBookmarks: protectedProcedure
         .input(
@@ -55,22 +81,38 @@ export const entriesRouter = router({
                 .optional()
         )
         .query(async ({ ctx, input }) => {
-            // seems to be too much for ts!
-            console.log(`listBookmarks`, input)
+            console.log(`listBookmarks`, input);
             const { userId, user } = ctx;
-            const entries = db
+            let entries = db
                 .selectFrom("Bookmark as b")
                 .innerJoin("Entry as e", "e.id", "b.entryId")
                 .innerJoin("State as s", "s.id", "b.stateId")
-                .leftJoin("EntryInteraction as i", (j) => j.onRef("i.entryId", "=", "e.id").on("i.userId", "=", userId))
-                .select(["e.id", "e.image", "e.published", "e.title", "e.author", "e.uri", "i.progress", "s.name as state", sql<string>`(select count(a.id) from Annotation a where a.entryId = e.id)`.as("annotations"), sql<string>`(select count(r.id) from Relation r where r.entryId = e.id or r.relatedEntryId = e.id)`.as("relations")])
-                // .where("s.type", "=", "later")
+                .leftJoin("EntryInteraction as i", (j) =>
+                    j.onRef("i.entryId", "=", "e.id").on("i.userId", "=", userId)
+                )
+                .select([
+                    "e.id",
+                    "e.image",
+                    "e.published",
+                    "e.title",
+                    "e.author",
+                    "e.uri",
+                    "i.progress",
+                    "s.name as state",
+                    sql<string>`(select count(a.id) from Annotation a where a.entryId = e.id)`.as(
+                        "annotations"
+                    ),
+                    sql<string>`(select count(r.id) from Relation r where r.entryId = e.id or r.relatedEntryId = e.id)`.as(
+                        "relations"
+                    ),
+                ])
                 .where("b.userId", "=", userId)
-                .where("s.type", "=", "inbox")
                 .orderBy("b.createdAt", "desc")
-                .limit(10)
-                .execute();
-            return entries
+                .limit(10);
+            if (input?.location && input?.location !== "all") {
+                entries = entries.where("s.type", "=", input.location);
+            }
+            return entries.execute();
         }),
     load: protectedProcedure
         .input(
@@ -121,13 +163,13 @@ export const entriesRouter = router({
                         },
                         tags: {
                             where: {
-                                userId
-                            }
+                                userId,
+                            },
                         },
                         annotations: {
                             where: {
                                 deleted: null,
-                                userId
+                                userId,
                             },
                             include: {
                                 creator: {
@@ -166,13 +208,13 @@ export const entriesRouter = router({
                                 tags: {
                                     select: {
                                         id: true,
-                                        name: true
-                                    }
-                                }
+                                        name: true,
+                                    },
+                                },
                             },
                             orderBy: {
                                 createdAt: "asc",
-                            }
+                            },
                         },
                         interactions: {
                             where: {
@@ -185,12 +227,12 @@ export const entriesRouter = router({
                                 date: {
                                     // Today
                                     gte: new Date(new Date().setHours(0, 0, 0, 0)),
-                                }
-                            }
+                                },
+                            },
                         },
                         relations: {
                             where: {
-                                userId
+                                userId,
                             },
                             select: {
                                 type: true,
@@ -198,14 +240,14 @@ export const entriesRouter = router({
                                     select: {
                                         title: true,
                                         id: true,
-                                        type: true
-                                    }
-                                }
-                            }
+                                        type: true,
+                                    },
+                                },
+                            },
                         },
                         back_relations: {
                             where: {
-                                userId
+                                userId,
                             },
                             select: {
                                 type: true,
@@ -213,10 +255,10 @@ export const entriesRouter = router({
                                     select: {
                                         title: true,
                                         id: true,
-                                        type: true
-                                    }
-                                }
-                            }
+                                        type: true,
+                                    },
+                                },
+                            },
                         },
                         // REVIEW: this whole thing might be too expqensive, maybe split into separate calls?
                         // CollectionItems: {
@@ -229,7 +271,7 @@ export const entriesRouter = router({
                     },
                 })
                 .then((entry) => {
-                    const html = entry.html
+                    const html = entry.html;
                     // const html = entry.data[0]?.html || entry.html;
                     const { interactions, bookmarks, ...finalEntry } = entry;
                     const bookmark = entry.bookmarks[0];
@@ -246,7 +288,9 @@ export const entriesRouter = router({
                         unread,
                         interactions,
                         recipe: entry.recipe as null | Recipe,
-                        extended: entry.extended as z.infer<typeof EntryExtendedSchema> | null,
+                        extended: entry.extended as z.infer<
+                            typeof EntryExtendedSchema
+                        > | null,
                     };
                 })
         ),
@@ -306,26 +350,28 @@ export const entriesRouter = router({
             })
             .then((data) => data.annotations)
     ),
-    getCollections: protectedProcedure.input(idInput).query(async ({ ctx, input: { id } }) => {
-        const collections = await ctx.prisma.collection.findMany({
-            where: {
-                items: {
-                    some: {
-                        entryId: id
-                        // TODO: public vs private, per user, etc
-                    }
-                }
-            },
-            include: {
-                user: {
-                    select: {
-                        username: true
-                    }
-                }
-            }
-        })
-        return collections
-    }),
+    getCollections: protectedProcedure
+        .input(idInput)
+        .query(async ({ ctx, input: { id } }) => {
+            const collections = await ctx.prisma.collection.findMany({
+                where: {
+                    items: {
+                        some: {
+                            entryId: id,
+                            // TODO: public vs private, per user, etc
+                        },
+                    },
+                },
+                include: {
+                    user: {
+                        select: {
+                            username: true,
+                        },
+                    },
+                },
+            });
+            return collections;
+        }),
     addData: protectedProcedure
         .input(
             z.object({
@@ -394,42 +440,43 @@ export const entriesRouter = router({
                 currentPage: z.number().optional(),
             })
         )
-        .mutation(({ ctx: { userId }, input: { id, progress, is_read, currentPage } }) =>
-            db.entry.update({
-                where: {
-                    id,
-                },
-                data: {
-                    interactions: {
-                        upsert: {
-                            where: {
-                                userId_entryId: {
-                                    userId,
-                                    entryId: id,
-                                },
-                            },
-                            create: {
-                                progress,
-                                is_read,
-                                user: {
-                                    connect: {
-                                        id: userId,
+        .mutation(
+            ({ ctx: { userId }, input: { id, progress, is_read, currentPage } }) =>
+                db.entry.update({
+                    where: {
+                        id,
+                    },
+                    data: {
+                        interactions: {
+                            upsert: {
+                                where: {
+                                    userId_entryId: {
+                                        userId,
+                                        entryId: id,
                                     },
                                 },
-                                currentPage
-                            },
-                            update: {
-                                progress,
-                                is_read,
-                                currentPage
+                                create: {
+                                    progress,
+                                    is_read,
+                                    user: {
+                                        connect: {
+                                            id: userId,
+                                        },
+                                    },
+                                    currentPage,
+                                },
+                                update: {
+                                    progress,
+                                    is_read,
+                                    currentPage,
+                                },
                             },
                         },
                     },
-                },
-                select: {
-                    id: true
-                }
-            })
+                    select: {
+                        id: true,
+                    },
+                })
         ),
     update: protectedProcedure
         .input(
@@ -449,37 +496,39 @@ export const entriesRouter = router({
                 data,
             });
         }),
-    byFeed: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-        const entries = await ctx.prisma.entry
-            .findMany({
-                where: {
-                    feedId: input.id,
-                },
-                orderBy: [
-                    {
-                        published: "desc",
+    byFeed: protectedProcedure
+        .input(z.object({ id: z.number() }))
+        .query(async ({ ctx, input }) => {
+            const entries = await ctx.prisma.entry
+                .findMany({
+                    where: {
+                        feedId: input.id,
                     },
-                ],
-                select: entryListSelect(ctx.userId)
-                // include: {
-                //     interactions: {
-                //         where: {
-                //             userId: ctx.userId,
-                //         },
-                //     },
-                // },
-            })
-            .then((entries) => {
-                return entries.map((e) => {
-                    const unread = !e.interactions[0]?.is_read;
-                    return {
-                        ...e,
-                        unread,
-                    };
+                    orderBy: [
+                        {
+                            published: "desc",
+                        },
+                    ],
+                    select: entryListSelect(ctx.userId),
+                    // include: {
+                    //     interactions: {
+                    //         where: {
+                    //             userId: ctx.userId,
+                    //         },
+                    //     },
+                    // },
+                })
+                .then((entries) => {
+                    return entries.map((e) => {
+                        const unread = !e.interactions[0]?.is_read;
+                        return {
+                            ...e,
+                            unread,
+                        };
+                    });
                 });
-            });
-        return { entries };
-    }),
+            return { entries };
+        }),
 
     byFeeds: protectedProcedure
         .input(
@@ -586,7 +635,7 @@ export const entriesRouter = router({
                     ],
                 },
                 take: 25,
-                select: entryListSelect(userId)
+                select: entryListSelect(userId),
                 // include: {
                 //     bookmarks: {
                 //         where: {
@@ -626,77 +675,95 @@ export const entriesRouter = router({
                 },
             });
         }),
-    search: protectedProcedure.input(z.object({
-        query: z.string(),
-        title: z.boolean().default(true),
-        text: z.boolean().default(true),
-        author: z.boolean().default(true),
-    })).query(async ({ ctx, input }) => {
-        const { userId } = ctx;
-        const { query: search, title, text, author } = input;
-        console.log({ input })
-        // TODO: massage results by relevance by weighting title > author > text
-        const entries = await ctx.prisma.entry.findMany({
-            where: {
-                text: text ? {
-                    search,
-                } : undefined,
-                title: title ? {
-                    search,
-                } : undefined,
-                author: author ? {
-                    search,
-                } : undefined,
-                // REVIEW: where bookmark or feed related — is this what we want?
-                OR: [
-                    {
-                        bookmarks: {
-                            some: {
-                                userId,
-                            },
-                        },
-                    },
-                    {
-                        feed: {
-                            // REVIEW: should context get user.subscriptions instead of nested query here?
-                            subscriptions: {
+    search: protectedProcedure
+        .input(
+            z.object({
+                query: z.string(),
+                title: z.boolean().default(true),
+                text: z.boolean().default(true),
+                author: z.boolean().default(true),
+            })
+        )
+        .query(async ({ ctx, input }) => {
+            const { userId } = ctx;
+            const { query: search, title, text, author } = input;
+            console.log({ input });
+            // TODO: massage results by relevance by weighting title > author > text
+            const entries = await ctx.prisma.entry.findMany({
+                where: {
+                    text: text
+                        ? {
+                            search,
+                        }
+                        : undefined,
+                    title: title
+                        ? {
+                            search,
+                        }
+                        : undefined,
+                    author: author
+                        ? {
+                            search,
+                        }
+                        : undefined,
+                    // REVIEW: where bookmark or feed related — is this what we want?
+                    OR: [
+                        {
+                            bookmarks: {
                                 some: {
                                     userId,
                                 },
                             },
                         },
-                    },
-                ],
-            },
-            // TODO: order by relevance (when Prisma makes that available for mysql)
-            // @see https://www.prisma.io/docs/concepts/components/prisma-client/filtering-and-sorting#sort-by-relevance-postgresql
-            // orderByy: {
-            //     _relevance:
-            // }
-        });
-        const weights = {
-            title: 3,
-            author: 2,
-            text: 1
-        }
-        entries.sort((a, b) => {
-            const scoreA = weights.title * (a.title ? fuzzy(search, a.title) : 0) + weights.author * (a.author ? fuzzy(search, a.author) : 0) + weights.text * (a.text ? fuzzy(search, a.text) : 0);
-            const scoreB = weights.title * (b.title ? fuzzy(search, b.title) : 0) + weights.author * (b.author ? fuzzy(search, b.author) : 0) + weights.text * (b.text ? fuzzy(search, b.text) : 0);
-            return scoreB - scoreA;
-        })
-        return entries;
-    }),
-    delete: protectedProcedure.input(z.number()).mutation(async ({ ctx, input }) => {
-        return ctx.prisma.entry.delete({
-            where: {
-                id: input,
-            },
-        });
-    }),
+                        {
+                            feed: {
+                                // REVIEW: should context get user.subscriptions instead of nested query here?
+                                subscriptions: {
+                                    some: {
+                                        userId,
+                                    },
+                                },
+                            },
+                        },
+                    ],
+                },
+                // TODO: order by relevance (when Prisma makes that available for mysql)
+                // @see https://www.prisma.io/docs/concepts/components/prisma-client/filtering-and-sorting#sort-by-relevance-postgresql
+                // orderByy: {
+                //     _relevance:
+                // }
+            });
+            const weights = {
+                title: 3,
+                author: 2,
+                text: 1,
+            };
+            entries.sort((a, b) => {
+                const scoreA =
+                    weights.title * (a.title ? fuzzy(search, a.title) : 0) +
+                    weights.author * (a.author ? fuzzy(search, a.author) : 0) +
+                    weights.text * (a.text ? fuzzy(search, a.text) : 0);
+                const scoreB =
+                    weights.title * (b.title ? fuzzy(search, b.title) : 0) +
+                    weights.author * (b.author ? fuzzy(search, b.author) : 0) +
+                    weights.text * (b.text ? fuzzy(search, b.text) : 0);
+                return scoreB - scoreA;
+            });
+            return entries;
+        }),
+    delete: protectedProcedure
+        .input(z.number())
+        .mutation(async ({ ctx, input }) => {
+            return ctx.prisma.entry.delete({
+                where: {
+                    id: input,
+                },
+            });
+        }),
     create: protectedProcedure
         .input(
             z.object({
-                data: EntryCreateInputSchema
+                data: EntryCreateInputSchema,
             })
         )
         .mutation(async ({ ctx, input }) => {
@@ -721,28 +788,30 @@ export const entriesRouter = router({
             const userId = ctx.userId;
             if (Array.isArray(entryId)) {
                 const relations = await ctx.prisma.$transaction(
-                    entryId.map((entryId) => ctx.prisma.relation.upsert({
-                        where: {
-                            userId_entryId_relatedEntryId: {
-                                userId,
+                    entryId.map((entryId) =>
+                        ctx.prisma.relation.upsert({
+                            where: {
+                                userId_entryId_relatedEntryId: {
+                                    userId,
+                                    entryId,
+                                    relatedEntryId,
+                                },
+                            },
+                            create: {
                                 entryId,
                                 relatedEntryId,
-                            }
-                        },
-                        create: {
-                            entryId,
-                            relatedEntryId,
-                            type,
-                            userId
-                        },
-                        update: {
-                            type,
-                        },
-                        select: {
-                            id: true,
-                        },
-                    })
-                    ))
+                                type,
+                                userId,
+                            },
+                            update: {
+                                type,
+                            },
+                            select: {
+                                id: true,
+                            },
+                        })
+                    )
+                );
                 return relations;
             } else {
                 const relation = await ctx.prisma.relation.upsert({
@@ -751,13 +820,13 @@ export const entriesRouter = router({
                             userId,
                             entryId,
                             relatedEntryId,
-                        }
+                        },
                     },
                     create: {
                         entryId,
                         relatedEntryId,
                         type,
-                        userId
+                        userId,
                     },
                     update: {
                         type,
@@ -770,10 +839,13 @@ export const entriesRouter = router({
             }
         }),
     list: protectedProcedure
-        .input(z.object({
-            type: z.nativeEnum(DocumentType).optional(),
-            // etc...
-        })).query(async ({ ctx, input }) => {
+        .input(
+            z.object({
+                type: z.nativeEnum(DocumentType).optional(),
+                // etc...
+            })
+        )
+        .query(async ({ ctx, input }) => {
             const { userId } = ctx;
             return await ctx.prisma.entry.findMany({
                 where: {
@@ -784,8 +856,7 @@ export const entriesRouter = router({
                                 some: {
                                     userId,
                                 },
-                            }
-
+                            },
                         },
                         {
                             feed: {
@@ -794,11 +865,11 @@ export const entriesRouter = router({
                                         userId,
                                     },
                                 },
-                            }
+                            },
                         },
                     ],
                 },
-            })
+            });
         }),
     // note: protectedProcedure
     //     .input(z.object({
@@ -806,16 +877,31 @@ export const entriesRouter = router({
     //     }))
     public: router({
         byId: publicProcedure
-            .input(z.object({
-                id: z.number()
-            }))
+            .input(
+                z.object({
+                    id: z.number(),
+                })
+            )
             .query(async ({ ctx, input }) => {
                 const { id } = input;
                 return db
                     .selectFrom("Entry as e")
                     .where("e.id", "=", id)
-                    .select(["e.title", "e.html", "e.author", "e.id", "e.feedId", "e.enclosureUrl", "e.uri", "e.image", "e.published", "e.type", "e.podcastIndexId", "e.googleBooksId"])
+                    .select([
+                        "e.title",
+                        "e.html",
+                        "e.author",
+                        "e.id",
+                        "e.feedId",
+                        "e.enclosureUrl",
+                        "e.uri",
+                        "e.image",
+                        "e.published",
+                        "e.type",
+                        "e.podcastIndexId",
+                        "e.googleBooksId",
+                    ])
                     .executeTakeFirstOrThrow();
-            })
-    })
+            }),
+    }),
 });
