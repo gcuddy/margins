@@ -11,9 +11,9 @@ import type { LayoutServerLoad } from "./$types";
 import type { Config } from '@sveltejs/adapter-vercel';
 
 export const config: Config = {
-    runtime: "edge",
+    // runtime: "edge",
     // split: true
-    // runtime: "nodejs18.x"
+    runtime: "nodejs18.x"
 }
 
 export const load: LayoutServerLoad = async (event) => {

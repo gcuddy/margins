@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 
-	import type { IconName } from "$lib/icons";
-	import Icon from "$lib/components/helpers/Icon.svelte";
-	import type { NavItem } from "./Sidebar.svelte";
-	import { slide } from "svelte/transition";
-	import type { Readable } from "svelte/store";
-	import { map } from "zod";
-	import { useId } from "$lib/hooks/use-id";
-	import { flip } from "svelte/animate";
-	import type { ChosenIcon as ChosenIconType } from "$lib/types/icon";
 	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
+	import Icon from "$lib/components/helpers/Icon.svelte";
+	import { useId } from "$lib/hooks/use-id";
+	import type { IconName } from "$lib/icons";
+	import type { ChosenIcon as ChosenIconType } from "$lib/types/icon";
+	import { flip } from "svelte/animate";
+	import type { Readable } from "svelte/store";
+	import type { NavItem } from "./Sidebar.svelte";
 
 	// TODO: use disclosure component
 	// import { Disclosure, DisclosureButton, DisclosurePanel } from '@rgossiaux/svelte-headlessui';
@@ -38,7 +36,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <svelte:element
 	this={as}
-	class="group flex h-7 !cursor-default items-center rounded-lg px-2 font-medium text-muted ring-inset  transition-transform duration-200 hover:bg-sidebar-hover focus-visible:ring active:scale-95 dark:text-gray-300
+	class="group flex h-7 !cursor-default items-center rounded-lg px-2 font-medium text-muted ring-inset  transition-transform duration-200 focus-visible:ring hover:bg-sidebar-hover active:scale-95 dark:text-gray-300
   {isActive && 'bg-sidebar-hover shadow '}
   "
 	draggable="false"
@@ -48,18 +46,18 @@
 >
 	<span class="flex items-center space-x-2 truncate">
 		{#if icon}
-		{#if typeof icon === "string"}
-			<Icon
-				wrapper={true}
-				className="w-4 h-4 {iconClass
-					? iconClass
-					: ` stroke-muted   dark:fill-transparent dark:group-hover:fill-transparent  ${
-							isActive && 'stroke-current'
-					  } relative`}"
-				name={icon}
-			/>
+			{#if typeof icon === "string"}
+				<Icon
+					wrapper={true}
+					className="w-4 h-4 {iconClass
+						? iconClass
+						: ` stroke-muted   dark:fill-transparent dark:group-hover:fill-transparent  ${
+								isActive && 'stroke-current'
+						  } relative`}"
+					name={icon}
+				/>
 			{:else}
-			<ChosenIcon chosenIcon={icon} />
+				<ChosenIcon chosenIcon={icon} />
 			{/if}
 		{:else if img}
 			<img src={img} class="h-4 w-4 rounded-md" alt="" />

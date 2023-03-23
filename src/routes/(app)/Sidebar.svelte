@@ -15,44 +15,42 @@
 	export const externalIsshowing = writable(false);
 
 	export const isShowing = writable(false);
-
 </script>
 
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
+	import Button from "$lib/components/Button.svelte";
 	import type { IconName } from "$lib/icons";
 	import { modals } from "$lib/stores/modals";
-	import Button from "$lib/components/Button.svelte";
-	import { tweened, spring } from "svelte/motion";
+	import { tweened } from "svelte/motion";
 
-	import Icon from "$lib/components/helpers/Icon.svelte";
-	import SidebarItem from "./SidebarItem.svelte";
 	import { page } from "$app/stores";
-	import Sync from "$lib/components/Sync.svelte";
-	import type { FavoriteWithPayload } from "$lib/types/schemas/Favorite";
-	import { fade } from "svelte/transition";
 	import ColResizer from "$lib/components/ColResizer.svelte";
-	import { hideSidebar } from "$lib/stores/sidebar";
 	import ContextMenu from "$lib/components/ContextMenu.svelte";
-	import { sidebarFeeds, type UserStoreType } from "$lib/stores/user";
-	import { readable, writable, type Readable } from "svelte/store";
-	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
-	import { backInOut, backOut, bounceOut, cubicOut, elasticOut, quadOut, quintOut } from "svelte/easing";
-	import mq from "$lib/stores/mq";
-	import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
-	import { createPopperActions } from "svelte-popperjs";
+	import Icon from "$lib/components/helpers/Icon.svelte";
 	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
-	import DotMenu from "$lib/components/DotMenu.svelte";
-	import MiniPlayer from "./MiniPlayer.svelte";
-	import MenuItemsContainer from "$lib/components/ui/Menu/MenuItemsContainer.svelte";
-	import { createQuery, CreateQueryOptions } from "@tanstack/svelte-query";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
-	import { dndzone } from "svelte-dnd-action";
-	import SidebarFavorites from "./SidebarFavorites.svelte";
-	import type { TRPCClientInit } from "trpc-sveltekit";
+	import Sync from "$lib/components/Sync.svelte";
+	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
+	import mq from "$lib/stores/mq";
+	import { sidebarFeeds } from "$lib/stores/user";
 	import { getUserDataContext } from "$lib/stores/userdata";
+	import { trpcWithQuery } from "$lib/trpc/client";
+	import type { FavoriteWithPayload } from "$lib/types/schemas/Favorite";
+	import {
+		Menu,
+		MenuButton,
+		MenuItem,
+		MenuItems,
+	} from "@rgossiaux/svelte-headlessui";
+	import { createPopperActions } from "svelte-popperjs";
+	import { quintOut } from "svelte/easing";
+	import { readable, writable, type Readable } from "svelte/store";
+	import MiniPlayer from "./MiniPlayer.svelte";
+	import SidebarFavorites from "./SidebarFavorites.svelte";
+	import SidebarItem from "./SidebarItem.svelte";
 
-	export let user: { username: string; email: string } | null = $page.data.user || null;
+	export let user: { username: string; email: string } | null =
+		$page.data.user || null;
 
 	export let favorites: FavoriteWithPayload[] = [];
 	let hardcodedNav: NavItem[] = [];
@@ -253,9 +251,11 @@
 		ticking = true;
 		show_floating = false;
 		collapsed = false;
-		Promise.all([tweenedWidth.set(width), tweenedLeft.set(0), tweenedTop.set(0)]).then(
-			() => (ticking = false)
-		);
+		Promise.all([
+			tweenedWidth.set(width),
+			tweenedLeft.set(0),
+			tweenedTop.set(0),
+		]).then(() => (ticking = false));
 	}
 
 	let show_floating = false;
@@ -287,14 +287,17 @@
 	});
 
 	const user_data = getUserDataContext();
-	$: favoriteQuery = trpcWithQuery($page).favorites.list.createQuery(undefined, {
-		onSuccess: (favorites) => {
-			user_data.update((data) => {
-				data.favorites = favorites;
-				return data;
-			});
-		},
-	});
+	$: favoriteQuery = trpcWithQuery($page).favorites.list.createQuery(
+		undefined,
+		{
+			onSuccess: (favorites) => {
+				user_data.update((data) => {
+					data.favorites = favorites;
+					return data;
+				});
+			},
+		}
+	);
 </script>
 
 {#if sidebarToggle}
@@ -379,7 +382,9 @@
 				bind:width
 			/>
 			<slot>
-				<div class="flex shrink-0 flex-col items-stretch space-y-3 overflow-y-auto px-5 ">
+				<div
+					class="flex shrink-0 flex-col items-stretch space-y-3 overflow-y-auto px-5 "
+				>
 					<div class="flex items-center justify-between">
 						{#if user}
 							<ContextMenu
@@ -421,7 +426,9 @@
 								>
 							</div>
 						{:else}
-							<a href="/login"><span class="text-sm font-medium">Log in</span></a>
+							<a href="/login"
+								><span class="text-sm font-medium">Log in</span></a
+							>
 						{/if}
 					</div>
 					{#if user}
@@ -439,7 +446,10 @@
 									variant="ghost"
 									className="space-x-2 grow rounded-r-none"
 								>
-									<Icon name="plusCircle" className="h-4 w-4 stroke-2 stroke-current" />
+									<Icon
+										name="plusCircle"
+										className="h-4 w-4 stroke-2 stroke-current"
+									/>
 									<div class="flex grow">Add URL</div>
 								</Button>
 								<Menu class="flex items-center">
@@ -448,7 +458,10 @@
 										class="relative flex h-7 shrink-0 cursor-default select-none appearance-none  items-center justify-center truncate rounded-lg rounded-l-none border border-gray-300  bg-white
 									p-1 font-medium text-gray-600 shadow-sm transition focus-visible:ring disabled:opacity-60 hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-200"
 									>
-										<Icon name="chevronDownMini" className="h-4 w-4 fill-gray-400" />
+										<Icon
+											name="chevronDownMini"
+											className="h-4 w-4 fill-gray-400"
+										/>
 									</MenuButton>
 									<MenuItems
 										class="z-20 mt-2 flex w-56 origin-top-right scale-100 transform flex-col gap-1  rounded-md bg-gray-50/90 p-2 py-1 opacity-100 shadow-xl ring-1 ring-black/5 backdrop-blur-sm focus:outline-none  dark:divide-gray-700 dark:bg-zinc-900/50 dark:text-current dark:ring-gray-400/20 dark:backdrop-blur-md dark:backdrop-brightness-75 dark:backdrop-contrast-75 dark:backdrop-saturate-200"
@@ -470,7 +483,10 @@
 													active ? "bg-primary-300/30 dark:bg-gray-500/20" : ""
 												}`}
 										>
-											<Icon name="microphoneMini" className="fill-gray-400 h-4 w-4" />
+											<Icon
+												name="microphoneMini"
+												className="fill-gray-400 h-4 w-4"
+											/>
 											<span>Add podcast</span>
 										</MenuItem>
 										<MenuItem
@@ -480,7 +496,10 @@
 													active ? "bg-primary-300/30 dark:bg-gray-500/20" : ""
 												}`}
 										>
-											<Icon name="bookOpenMini" className="fill-gray-400 h-4 w-4" />
+											<Icon
+												name="bookOpenMini"
+												className="fill-gray-400 h-4 w-4"
+											/>
 											<span>Add book</span>
 										</MenuItem>
 										<MenuItem
@@ -490,7 +509,10 @@
 													active ? "bg-primary-300/30 dark:bg-gray-500/20" : ""
 												}`}
 										>
-											<Icon name="playCircleMini" className="fill-gray-400 h-4 w-4" />
+											<Icon
+												name="playCircleMini"
+												className="fill-gray-400 h-4 w-4"
+											/>
 											<span>Add movie or TV show</span>
 										</MenuItem>
 										<MenuItem
@@ -510,7 +532,10 @@
 													active ? "bg-primary-300/30 dark:bg-gray-500/20" : ""
 												}`}
 										>
-											<Icon name="musicalNoteMini" className="fill-gray-400 h-4 w-4" />
+											<Icon
+												name="musicalNoteMini"
+												className="fill-gray-400 h-4 w-4"
+											/>
 											<span>Add album</span>
 										</MenuItem>
 									</MenuItems>
@@ -522,14 +547,19 @@
 								size="sm"
 								variant="ghost"
 							>
-								<Icon name="search" className="h-4 w-4 stroke-2 stroke-current" />
+								<Icon
+									name="search"
+									className="h-4 w-4 stroke-2 stroke-current"
+								/>
 								<span class="sr-only">Search</span>
 							</Button>
 						</div>
 					{/if}
 				</div>
 				{#if !user && $page.data.allTags}
-					<div class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
+					<div
+						class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm"
+					>
 						<span class="px-2">Tags</span>
 						{#each $page.data.allTags as tag}
 							{#if tag}
@@ -547,7 +577,9 @@
 					</div>
 				{/if}
 				<!-- navigation -->
-				<div class="simple-scrollbar flex shrink flex-col space-y-8 overflow-y-auto">
+				<div
+					class="simple-scrollbar flex shrink flex-col space-y-8 overflow-y-auto"
+				>
 					<div class="flex grow flex-col items-stretch space-y-1 px-5 text-sm">
 						{#each navItems as nav}
 							<SidebarItem
