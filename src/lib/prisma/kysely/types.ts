@@ -5,7 +5,12 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 export type Color = "Yellow" | "Blue" | "Green" | "Pink" | "Purple";
 export type RelationType = "Related" | "SavedFrom";
-export type AnnotationType = "bookmark" | "note" | "annotation" | "reply" | "document";
+export type AnnotationType =
+	| "bookmark"
+	| "note"
+	| "annotation"
+	| "reply"
+	| "document";
 export type Location = "inbox" | "soon" | "later" | "archive";
 export type DocumentType =
 	| "article"
@@ -26,7 +31,11 @@ export type DocumentType =
 	| "recipe"
 	| "game"
 	| "board_game";
-export type CollectionItemType = "Entry" | "Annotation" | "Section" | "Collection";
+export type CollectionItemType =
+	| "Entry"
+	| "Annotation"
+	| "Section"
+	| "Collection";
 export type FetchFrequency = "realtime" | "daily" | "weekly" | "rnthly";
 export type FeedType = "PODCAST";
 export type FavoriteType = "FOLDER" | "FAVORITE";
