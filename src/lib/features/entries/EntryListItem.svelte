@@ -7,12 +7,10 @@
 	import Pill from "$lib/components/Pill.svelte";
 	import StateCombobox from "$lib/components/StateCombobox.svelte";
 	import TagCloud from "$lib/components/TagCloud.svelte";
-	import { genHtml } from "$lib/components/TipTap.svelte";
 	import dayjs from "$lib/dayjs";
 	import type { EntryInList } from "$lib/prisma/selects/entry";
 	import { selectedIds, selectedItems } from "$lib/stores/selectedItems";
-	import { IntFilterSchema } from "$lib/types/schemas/SmartList";
-	import { DocumentType, Entry } from "@prisma/client";
+	import type { DocumentType, Entry } from "@prisma/client";
 	import { createEventDispatcher, onDestroy } from "svelte";
 	import type { HTMLAnchorAttributes } from "svelte/elements";
 	import { icons } from "./utils";
@@ -55,7 +53,7 @@
 	// also allow to pass in as value
 	// export { entry as value};
 	$: imgsrc =
-		entry.type === DocumentType.tweet && !entry.image
+		entry.type === "tweet" && !entry.image
 			? "/images/twitter.png"
 			: entry?.image
 			? entry?.image
@@ -73,9 +71,9 @@
 	// something like getContext(viewOptions) and then use that
 </script>
 
+<!-- href={entry.id ? `/u:${$page.data.user?.username}/entry/${entry.id}` : href} -->
 <svelte:element
 	this={entry.id || href ? "a" : "div"}
-	href={entry.id ? `/u:${$page.data.user?.username}/entry/${entry.id}` : href}
 	class:active
 	class="item group relative flex h-full flex-initial items-center gap-4  p-4  transition {c}"
 >
@@ -103,7 +101,9 @@
 							$selectedItems = [...$selectedItems, entry];
 						}
 					} else {
-						$selectedItems = $selectedItems.filter((item) => item.id !== entry.id);
+						$selectedItems = $selectedItems.filter(
+							(item) => item.id !== entry.id
+						);
 					}
 				}}
 				on:click={() => {
@@ -126,8 +126,12 @@
 				{/if}
 				<div class="flex items-center gap-0.5">
 					{#if entry.annotations?.length && Array.isArray(entry.annotations)}
-						{@const pageNotes = entry.annotations.filter((a) => a.type === "note")}
-						{@const inlineNotes = entry.annotations.filter((a) => a.type === "annotation")}
+						{@const pageNotes = entry.annotations.filter(
+							(a) => a.type === "note"
+						)}
+						{@const inlineNotes = entry.annotations.filter(
+							(a) => a.type === "annotation"
+						)}
 						{#if pageNotes.length}
 							<Pill icon="documentMini" popup={true}>
 								{pageNotes.length}
@@ -136,11 +140,15 @@
 										<h2 class="text-sm font-medium">Page Notes</h2>
 									</div>
 									<div class="flex flex-col space-y-1.5 text-xs">
-										{#each pageNotes.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1)).slice(0, 3) as note}
+										{#each pageNotes
+											.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+											.slice(0, 3) as note}
 											<MiniAnnotation clamp="line-clamp-3" annotation={note} />
 										{/each}
 										{#if pageNotes.length > 3}
-											<span class="px-1 text-accent/80">+{pageNotes.length - 3} more</span>
+											<span class="px-1 text-accent/80"
+												>+{pageNotes.length - 3} more</span
+											>
 										{/if}
 									</div>
 								</div>
@@ -160,7 +168,9 @@
 											<MiniAnnotation clamp="line-clamp-3" annotation={note} />
 										{/each}
 										{#if inlineNotes.length > 3}
-											<span class="px-1 text-accent/80">+{inlineNotes.length - 3} more</span>
+											<span class="px-1 text-accent/80"
+												>+{inlineNotes.length - 3} more</span
+											>
 										{/if}
 									</div>
 								</div>
@@ -168,10 +178,16 @@
 						{/if}
 					{/if}
 					{#if entry.relations?.length || entry.back_relations?.length}
-						{@const total = typeof entry.relations === "number" ? entry.relations :  entry.relations?.length ?? 0 + (entry.back_relations?.length ?? 0)}
+						{@const total =
+							typeof entry.relations === "number"
+								? entry.relations
+								: entry.relations?.length ??
+								  0 + (entry.back_relations?.length ?? 0)}
 						{@const slicedRelations = entry.relations?.slice(0, 3) || []}
-						{@const slicedBackRelations = entry.back_relations?.slice(0, 3) || []}
-						{@const slicedRelationsTotal = slicedRelations?.length + slicedBackRelations?.length}
+						{@const slicedBackRelations =
+							entry.back_relations?.slice(0, 3) || []}
+						{@const slicedRelationsTotal =
+							slicedRelations?.length + slicedBackRelations?.length}
 						<Pill icon="arrowsRightLeftMini" popup={true}>
 							{total}
 							<div class="flex flex-col space-y-2" slot="popup">
@@ -182,29 +198,47 @@
 									{#each slicedRelations as relation}
 										<div class="flex gap-1">
 											{#if relation.type === "Related"}
-												<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
+												<Icon
+													name="arrowsRightLeftMini"
+													className="w-3 h-3 fill-muted/80"
+												/>
 												<span class="sr-only">Related</span>
 											{:else if relation.type === "SavedFrom"}
-												<Icon name="arrowRightMini" className="w-3 h-3 fill-muted/80" />
+												<Icon
+													name="arrowRightMini"
+													className="w-3 h-3 fill-muted/80"
+												/>
 												<span class="sr-only">Saved from</span>
 											{/if}
-											<a href="/entry/{relation.relatedEntry.id}">{relation.relatedEntry.title}</a>
+											<a href="/entry/{relation.relatedEntry.id}"
+												>{relation.relatedEntry.title}</a
+											>
 										</div>
 									{/each}
 									{#each slicedBackRelations as relation}
 										<div class="flex gap-1">
 											{#if relation.type === "Related"}
-												<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
+												<Icon
+													name="arrowsRightLeftMini"
+													className="w-3 h-3 fill-muted/80"
+												/>
 												<span class="sr-only">Related</span>
 											{:else if relation.type === "SavedFrom"}
-												<Icon name="arrowRightMini" className="w-3 h-3 fill-muted/80" />
+												<Icon
+													name="arrowRightMini"
+													className="w-3 h-3 fill-muted/80"
+												/>
 												<span class="sr-only">Saved from</span>
 											{/if}
-											<a href="/entry/{relation.entry.id}">{relation.entry.title}</a>
+											<a href="/entry/{relation.entry.id}"
+												>{relation.entry.title}</a
+											>
 										</div>
 									{/each}
 									{#if total > slicedRelationsTotal}
-										<span class="text-accent/80">+{total - slicedRelationsTotal} more</span>
+										<span class="text-accent/80"
+											>+{total - slicedRelationsTotal} more</span
+										>
 									{/if}
 								</div>
 							</div>
@@ -216,7 +250,10 @@
 		<slot name="author">
 			<div class="flex items-center gap-2 text-sm">
 				{#if show.type && entry.type}
-					<Icon name={icons[entry.type] || "document"} className="h-4 w-4 stroke-muted/80" />
+					<Icon
+						name={icons[entry.type] || "document"}
+						className="h-4 w-4 stroke-muted/80"
+					/>
 				{/if}
 				{#if entry.author}
 					<Muted class="text-sm">{entry.author}</Muted>

@@ -36,7 +36,7 @@ export const load = async (event) => {
     const caller = await createCaller(event);
     const entries = await caller.entries.listBookmarks({
         location: "inbox"
-    })
+    });
     return {
         entries
     }

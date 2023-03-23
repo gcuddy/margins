@@ -12,21 +12,12 @@
 	import Developer from "$lib/components/Developer.svelte";
 	import Sidebar from "./Sidebar.svelte";
 	import GenericCommandPaletteContainer from "$lib/components/CommandPalette/GenericCommandPaletteContainer.svelte";
-	import { browser, dev } from "$app/environment";
-	import { mainEl } from "$lib/stores/main";
-	import { hideSidebar } from "$lib/stores/sidebar";
+	import {  dev } from "$app/environment";
 	import { navigating, page } from "$app/stores";
 	import PodcastPlayer from "$lib/components/PodcastPlayer.svelte";
-	import ProgressBar from "$lib/components/ProgressBar.svelte";
 	import SettingsSidebar from "./SettingsSidebar.svelte";
 	import PreloadingIndicator from "$lib/components/PreloadingIndicator.svelte";
 	import mq from "$lib/stores/mq";
-	import { trpcWithQuery } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
-	import { notifications } from "$lib/stores/notifications";
-	import { selectedItems } from "$lib/stores/selectedItems";
-	import { onDestroy, onMount, setContext } from "svelte";
-	import { UpdateBookmarkMutationKey } from "$lib/features/entries/mutations";
 	import MutationProvider from "./MutationProvider.svelte";
 	import { createCurrentListStore, setCurrentListContext } from "$lib/stores/currentList";
 	import { createUserDataStore, setUserDataContext } from "$lib/stores/userdata";
@@ -41,46 +32,6 @@
     const user_data = createUserDataStore();
     setUserDataContext(user_data);
 
-	// const queryClient = new QueryClient({
-	// 	defaultOptions: {
-	// 		queries: {
-	// 			enabled: browser,
-	// 		},
-	// 	},
-	// });
-	// REVIEW: also can do data.queryclient passed by layout.ts
-
-	// $: console.log({ queryClient: data.queryClient });
-	// import { persistQueryClient } from "@tanstack/query-persist-client-core";
-	// import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-	// import * as devalue from "devalue";
-	// import { get as getItem, set as setItem, del as removeItem } from "idb-keyval";
-
-	// let unsubscribePersister: () => void;
-
-	// onMount(() => {
-	// 	const idbPersister = createAsyncStoragePersister({
-	// 		storage: {
-	// 			getItem: async (key) => getItem(key) as Promise<string | null>,
-	// 			setItem,
-	// 			removeItem,
-	// 		},
-	// 		key: "margins.cache",
-	// 		throttleTime: 2000,
-	// 		serialize: (data) => devalue.stringify(data),
-	// 		deserialize: (data) => devalue.parse(data),
-	// 	});
-
-	// 	const [unsubscribe, promise] = persistQueryClient({
-	// 		queryClient: data.queryClient,
-	// 		persister: idbPersister,
-	// 	});
-	// 	unsubscribePersister = unsubscribe;
-	// });
-
-	// onDestroy(() => {
-	// 	unsubscribePersister?.();
-	// });
 </script>
 
 <svelte:head />

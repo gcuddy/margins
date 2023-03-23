@@ -2,26 +2,25 @@
 	import { browser } from "$app/environment";
 	import { afterNavigate, invalidateAll } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
-	import type { ExtendedBookmark } from "$lib/bookmark";
 	import H1 from "$lib/components/atoms/H1.svelte";
 	import { commandPaletteStore } from "$lib/components/CommandPalette/store";
 	import type { Command } from "$lib/components/CommandPalette/types";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import HighlightMenu from "$lib/components/HighlightMenu.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
-	import Youtube from "$lib/components/Youtube.svelte";
 	import BookEntry from "$lib/features/books/BookEntry.svelte";
 	import AudioEntry from "$lib/features/entries/AudioEntry.svelte";
 	import BookmarkEntry from "$lib/features/entries/bookmarks/BookmarkEntry.svelte";
 	import { containerRefContextKey } from "$lib/features/entries/context";
 	import ImageEntry from "$lib/features/entries/ImageEntry.svelte";
-	import { entryDetailsQuery, showEntrySelector } from "$lib/features/entries/queries";
+	import { showEntrySelector } from "$lib/features/entries/queries";
 	import TweetEntry from "$lib/features/entries/TweetEntry.svelte";
 	import VideoEntry from "$lib/features/entries/VideoEntry.svelte";
 	import MovieEntry from "$lib/features/movies/MovieEntry.svelte";
 	import Episode from "$lib/features/podcasts/Episode.svelte";
 	import RecipeEntry from "$lib/features/recipes/RecipeEntry.svelte";
 	import { useCommands } from "$lib/hooks/use-commands";
+	import type { Location } from "$lib/prisma/kysely/types";
 	import articleHeader from "$lib/stores/currentArticle/articleHeader";
 	import { mainEl, mainElScroll } from "$lib/stores/main";
 	import { modals } from "$lib/stores/modals";
@@ -29,16 +28,15 @@
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
-	import { Annotation, DocumentType, Tag } from "@prisma/client";
-	import { createQuery, useQueryClient } from "@tanstack/svelte-query";
-	import { isFunction } from "@tiptap/core";
+	import type { Annotation, DocumentType, Tag } from "@prisma/client";
+	import { useQueryClient } from "@tanstack/svelte-query";
 	import { TRPCClientError } from "@trpc/client";
 	import dayjs from "dayjs";
 	import localizedFormat from "dayjs/plugin/localizedFormat.js";
 	import debounce from "lodash.debounce";
-	import { getContext, onDestroy, setContext } from "svelte";
+	import { onDestroy, setContext } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
-	import { Readable, writable } from "svelte/store";
+	import { writable } from "svelte/store";
 	import { slide } from "svelte/transition";
 	import type { YouTubePlayer } from "youtube-player/dist/types";
 	import type { PageData } from "./$types";
@@ -46,7 +44,6 @@
 	import Highlighter from "./Highlighter.svelte";
 	import ReadingMenu from "./ReadingMenu.svelte";
 	import ReadingSidebar from "./ReadingSidebar.svelte";
-	import type { Metadata } from "./types";
 	dayjs.extend(localizedFormat);
 
 	export let data: PageData;
@@ -54,19 +51,32 @@
 	const client = trpcWithQuery($page);
 	const utils = client.createContext();
 
+	let location: Location | undefined = undefined;
+
 	$: entryId = data.id;
 	$: entryQuery = client.entries.public.byId.createQuery({
 		id: data.id,
 	});
-    $: entryData = client.entries.loadUserData.createQuery({
-        id: data.id,
-    })
+	$: entryData = client.entries.loadUserData.createQuery(
+		{
+			id: data.id,
+		},
+		{
+			onSuccess: ({ state_id }) => {
+				if (state_id && data.user?.stateIdToLocation) {
+					location = data.user?.stateIdToLocation.get(state_id);
+				}
+			},
+		}
+	);
 	// $: query = data.query();
 
-	$: stylesheet = data.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
+	// $: stylesheet = data.user?.stylesheets?.find((s) =>
+	// 	article?.uri?.includes(s.domain)
+	// );
 	let annotations: Annotation[] = [];
-	let tags = []
-	$: last_scroll_position = ($entryData?.data?.bookmark?.progress) || 0;
+	let tags = [];
+	$: last_scroll_position = $entryData?.data?.progress || 0;
 
 	function useArticleCommands() {
 		const articleCommands: Command[] = [
@@ -75,7 +85,7 @@
 				group: "article",
 				name: "Archive Article",
 				icon: "archive",
-				check: () => !!bookmark && bookmark?.state?.type !== "archive",
+				check: () => location !== "archive",
 				perform: async () => {
 					// // TODO: optimistically update UI
 					// // find archive location
@@ -251,7 +261,10 @@
 						// 	};
 						// },
 						onSelect: async ({ detail }) => {
-							if (detail.id === "create-new" && (detail as unknown as any).value) {
+							if (
+								detail.id === "create-new" &&
+								(detail as unknown as any).value
+							) {
 								// create new
 								const collection = await trpc($page).collections.create.mutate({
 									name: detail.value,
@@ -259,10 +272,12 @@
 								});
 								console.log({ collection });
 							} else {
-								const collection = await trpc($page).collections.addItem.mutate({
-									id: detail.id,
-									entryId: entry.id,
-								});
+								const collection = await trpc($page).collections.addItem.mutate(
+									{
+										id: detail.id,
+										entryId: entry.id,
+									}
+								);
 								// update...
 								notifications.notify({
 									title: `Added entry to ${collection.name}`,
@@ -317,14 +332,13 @@
 				$mainEl?.focus();
 				console.log(document.activeElement);
 			}, 1);
-            // scroll to position if it's an article
-            if ($entryQuery.data?.type !== "article") return;
+			// scroll to position if it's an article
+			if ($entryQuery.data?.type !== "article") return;
 			if ($page.data.user?.username === $page.params.username) {
 				console.log({ data }, $mainEl.scrollHeight - window.innerHeight);
-                const progress = $entryData.data?.bookmark?.progress || 0;
-                if (!progress) return;
-				const pos =
-					(progress) * ($mainEl.scrollHeight - window.innerHeight);
+				const progress = $entryData.data?.progress || 0;
+				if (!progress) return;
+				const pos = progress * ($mainEl.scrollHeight - window.innerHeight);
 				console.log({ pos });
 				last_saved_progress = progress || 0;
 				setTimeout(() => {
@@ -342,7 +356,7 @@
 		// REVIEW: should we move this logic into a separate component?
 		if ($entryQuery.data?.type !== "article") return;
 		last_saved_progress = data;
-        const article = $entryQuery.data;
+		const article = $entryQuery.data;
 		if (!article) return;
 		utils.entries.loadUserData.setData(
 			{
@@ -352,10 +366,7 @@
 				if (!old) return;
 				return {
 					...old,
-					bookmark: {
-                        ...old.bookmark,
-                        progress: data,
-                    }
+					progress: data,
 				};
 			}
 		);
@@ -447,12 +458,14 @@
 	<!-- <title>{entry.title}</title> -->
 </svelte:head>
 {#if $entryQuery.isSuccess}
-{@const article = $entryQuery.data}
+	{@const article = $entryQuery.data}
 	<ReadingMenu
-		bookmark={$entryData.isSuccess && $entryData.data?.bookmark?.bookmark_id ? {id: $entryData.data?.bookmark?.bookmark_id} : undefined}
-        entry={$entryQuery.data}
+		bookmark={$entryData.isSuccess && $entryData.data?.bookmark_id
+			? { id: $entryData.data?.bookmark_id }
+			: undefined}
+		entry={$entryQuery.data}
 	/>
-<!--  -->
+	<!--  -->
 	<!-- {@html `<` + `style>${data?.css}</style>`} -->
 	<!-- {#if errors?.length}
 		{#each errors as error}
@@ -475,9 +488,12 @@
 			>
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
 				<article data-article class=" mt-14 h-full  select-text px-1 sm:p-4 ">
-					{#if article.type === "article" || article.type === DocumentType.rss || (article.type === DocumentType.audio && !article.podcastIndexId)}
+					{#if article.type === "article" || article.type === "rss" || (article.type === "audio" && !article.podcastIndexId)}
 						<div class="pb-16">
-							<header class="max-w-prose space-y-3 pb-4" bind:this={$articleHeader}>
+							<header
+								class="max-w-prose space-y-3 pb-4"
+								bind:this={$articleHeader}
+							>
 								<!-- {article.feedId
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
                                 : article.uri} -->
@@ -492,10 +508,14 @@
 									/>
 									<span class="truncate">{article.uri}</span></a
 								>
-								<H1 class="font-newsreader dark:drop-shadow-sm">{article.title}</H1>
+								<H1 class="font-newsreader dark:drop-shadow-sm"
+									>{article.title}</H1
+								>
 								<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
 								{#if article.summary}
-									<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
+									<div
+										class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl"
+									>
 										{article.summary}
 									</div>
 								{/if}
@@ -505,7 +525,9 @@
 										class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
 									>
 										{#if article.author}
-											<p><a href="/author/{article.author}">{article.author}</a></p>
+											<p>
+												<a href="/author/{article.author}">{article.author}</a>
+											</p>
 										{/if}
 										{#if article.author && article.published}
 											<!-- <p>&middot;</p> -->
@@ -520,7 +542,9 @@
 								</div>
 								{#if !data.authorized}
 									<span class="rounded bg-amber-400 px-1 text-white">
-										Annotated by <a href="/u:{$page.params.username}">{$page.params.username}</a>
+										Annotated by <a href="/u:{$page.params.username}"
+											>{$page.params.username}</a
+										>
 									</span>
 								{/if}
 								{#if data.authorized && article.bookmark && article.tags}
@@ -543,11 +567,17 @@
 							<div id="entry-container">
 								<Highlighter
 									articleID={article.id}
-									articleUrl={article.uri ?? ''}
-									annotations={$entryData.isSuccess && $entryData.data.annotations ? $entryData.data?.annotations : []}
+									articleUrl={article.uri ?? ""}
+									annotations={$entryData.isSuccess &&
+									$entryData.data.annotations
+										? $entryData.data?.annotations
+										: []}
 									entry={article}
 								>
-									{@html article.html || article.text || article.summary || "[No content]"}
+									{@html article.html ||
+										article.text ||
+										article.summary ||
+										"[No content]"}
 								</Highlighter>
 							</div>
 							<noscript>
@@ -557,7 +587,8 @@
 					{:else if article.type === DocumentType.book}
 						<BookEntry entry={article} bookId={article?.googleBooksId} />
 					{:else if article.type === DocumentType.bookmark}
-						{@const screenshot = article.screenshot || article.bookmark?.screenshot}
+						{@const screenshot =
+							article.screenshot || article.bookmark?.screenshot}
 						<BookmarkEntry
 							entry={{
 								...article,

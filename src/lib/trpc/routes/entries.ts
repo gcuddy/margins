@@ -54,7 +54,6 @@ export const entriesRouter = router({
                     .execute(),
                 db
                     .selectFrom("Bookmark as b")
-                    .leftJoin("State as s", "s.id", "b.stateId")
                     .leftJoin("EntryInteraction as i", (j) =>
                         j.on("i.entryId", "=", id).on("i.userId", "=", userId)
                     )
@@ -64,11 +63,13 @@ export const entriesRouter = router({
                         "b.createdAt",
                         "i.progress",
                     ])
+                    .where("b.userId", "=", userId)
+                    .where("b.entryId", "=", id)
                     .executeTakeFirst(),
             ]);
             return {
                 annotations,
-                bookmark,
+                ...bookmark,
             };
         }),
     listBookmarks: protectedProcedure

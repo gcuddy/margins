@@ -27,7 +27,7 @@ export const load = (async (e) => {
     // figure out a way to make this better
     const client = trpcWithQuery(e, queryClient);
     const utils = client.createContext();
-    // const favorites = data.authorized ? utils.favorites.list.getData() ?? (await utils.favorites.list.fetch()) : []
+    const favorites = data.authorized ? utils.favorites.list.getData() ?? (await utils.favorites.list.fetch()) : []
     console.timeEnd("favorites");
-    return { queryClient, ...data };
+    return { queryClient, favorites, ...data };
 }) satisfies LayoutLoad;

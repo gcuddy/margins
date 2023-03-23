@@ -287,7 +287,7 @@ model Entry {
     original        Json?
     wordCount       Int?
     siteName        String?
-    summary         String?      @db.MediumText
+    summary         String?      @db.VarChar(255)
     pageCount       Int?
     // REVIEW: should this be stored on the bookmark, instead?
     screenshot      String?

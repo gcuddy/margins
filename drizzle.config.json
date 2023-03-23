@@ -1,0 +1,5 @@
+{
+	"out": "./drizzle/migrations",
+	"schema": "/Users/guscuddy/Dropbox/Projects/margins/src/lib/db/schema.ts",
+	"connectionString": "mysql://127.0.0.1:3306/margins"
+}

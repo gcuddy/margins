@@ -36,14 +36,9 @@ export const load = (async (event) => {
     // const placeholderData = entries.find(e => e.id === data.id);
     const client = trpcWithQuery(event, queryClient);
     const utils = client.createContext();
-    await Promise.all([
-        utils.entries.public.byId.prefetch({
-            id: data.id
-        }),
-        utils.entries.loadUserData.prefetch({
-            id: data.id
-        })
-    ])
+    const params = {
+        id: data.id
+    } as const;
     // console.time("stylesheet");
     // const stylesheet = parentData.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
     // console.log({ stylesheet });
@@ -59,9 +54,8 @@ export const load = (async (event) => {
     // }
     // console.timeEnd("stylesheet");
     return {
-        ...data
-        // article,
-        // query,
-        // placeholderData
+        ...data,
+        entry: utils.entries.public.byId.getData(params) ?? utils.entries.public.byId.fetch(params),
+        data: utils.entries.loadUserData.getData(params) ?? utils.entries.loadUserData.fetch(params),
     };
 }) satisfies PageLoad;

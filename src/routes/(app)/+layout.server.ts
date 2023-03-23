@@ -59,6 +59,7 @@ export const load: LayoutServerLoad = async (event) => {
             }
         }
         console.error(error);
+        throw redirect(307, "/login")
         return {
             theme,
             authorized: false,
