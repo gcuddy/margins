@@ -102,11 +102,10 @@
 		],
 	});
 	export let entry: RouterOutputs["entries"]["load"];
-    $: annotations = entry.annotations;
+    export let annotations = [];
 	export let articleID: number;
 	export let articleUrl: string;
 	// export let annotations: Annotation[] = [];
-	$: console.log({ annotations });
 	export let currentAnnotationColor: Color = "Yellow";
 
 	$: currentAnnotationColor = active_annotation?.color || "Yellow";

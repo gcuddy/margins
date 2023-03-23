@@ -34,8 +34,10 @@
 	import DatePicker from "$lib/components/DatePicker.svelte";
 	import { useUpdateBookmark } from "$lib/features/entries/mutations";
 
-	export let entry: RouterOutputs["entries"]["load"];
-	export let bookmark: ExtendedBookmark | null = null;
+	export let entry: RouterOutputs["entries"]["public"]["byId"]
+	export let bookmark: {
+        id: number;
+    } | null = null;
 	export let interaction: { is_read: boolean | null } | null = null;
 
 	// export let currentList: ICurrentList | undefined = undefined;

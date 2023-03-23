@@ -40,10 +40,10 @@ export const entriesRouter = router({
                     .select(["b.id as bookmark_id", "b.stateId as state_id", "b.createdAt", "i.progress"])
                     .executeTakeFirst()
             ])
-           return {
+            return {
                 annotations,
                 bookmark
-           }
+            }
         }),
     listBookmarks: protectedProcedure
         .input(
@@ -58,50 +58,18 @@ export const entriesRouter = router({
             // seems to be too much for ts!
             console.log(`listBookmarks`, input)
             const { userId, user } = ctx;
-            // const entries = await ctx.db.selectFrom("Bookmark")
-            //     .select([
-            //         ""
-            //     ])
             const entries = db
                 .selectFrom("Bookmark as b")
                 .innerJoin("Entry as e", "e.id", "b.entryId")
                 .innerJoin("State as s", "s.id", "b.stateId")
-                .leftJoin("Annotation as a", "a.entryId", "e.id")
-                .select(["e.id", "e.image", "e.title", "e.author", "e.uri", "s.name as state", sql<number>`(select count(a.id) from Annotation a where a.entryId = e.id)`.as("annotations")])
+                .leftJoin("EntryInteraction as i", (j) => j.onRef("i.entryId", "=", "e.id").on("i.userId", "=", userId))
+                .select(["e.id", "e.image", "e.published", "e.title", "e.author", "e.uri", "i.progress", "s.name as state", sql<string>`(select count(a.id) from Annotation a where a.entryId = e.id)`.as("annotations"), sql<string>`(select count(r.id) from Relation r where r.entryId = e.id or r.relatedEntryId = e.id)`.as("relations")])
                 // .where("s.type", "=", "later")
-                // .where("b.userId", "=", session.userId)
+                .where("b.userId", "=", userId)
+                .where("s.type", "=", "inbox")
+                .orderBy("b.createdAt", "desc")
                 .limit(10)
-                // Do I need to do this?
-                // .groupBy("e.id")
                 .execute();
-            const entrdkies = await ctx.prisma.entry
-                .findMany({
-                    select: entryListSelect(userId),
-                    orderBy: { updatedAt: "desc" },
-                    where: {
-                        bookmarks: {
-                            some: {
-                                user: {
-                                    id: userId
-                                },
-                                state: {
-                                    type: input?.location !== "all" ? input?.location : undefined
-                                },
-                                OR: [
-                                    {
-                                        snoozedUntil: {
-                                            lte: new Date()
-                                        },
-                                    },
-                                    {
-                                        snoozedUntil: null,
-                                    }
-                                ]
-                            },
-                        },
-                    },
-                    take: 20,
-                })
             return entries
         }),
     load: protectedProcedure
@@ -839,20 +807,15 @@ export const entriesRouter = router({
     public: router({
         byId: publicProcedure
             .input(z.object({
-                id: z.number().or(z.number().array())
+                id: z.number()
             }))
             .query(async ({ ctx, input }) => {
                 const { id } = input;
-                if (Array.isArray(id)) {
-                    // TODO
-                } else {
-                    return db
-                        .selectFrom("Entry as e")
-                        .where("e.id", "=", id)
-                        .select(["e.title", "e.html", "e.author", "e.id", "e.feedId", "e.enclosureUrl", "e.uri", "e.image", "e.published"])
-                        .executeTakeFirst();
-                }
-
+                return db
+                    .selectFrom("Entry as e")
+                    .where("e.id", "=", id)
+                    .select(["e.title", "e.html", "e.author", "e.id", "e.feedId", "e.enclosureUrl", "e.uri", "e.image", "e.published", "e.type", "e.podcastIndexId", "e.googleBooksId"])
+                    .executeTakeFirstOrThrow();
             })
     })
 });

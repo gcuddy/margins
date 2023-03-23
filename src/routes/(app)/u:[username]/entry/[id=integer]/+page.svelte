@@ -10,7 +10,6 @@
 	import HighlightMenu from "$lib/components/HighlightMenu.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
 	import Youtube from "$lib/components/Youtube.svelte";
-	import { entryData } from "$lib/entry";
 	import BookEntry from "$lib/features/books/BookEntry.svelte";
 	import AudioEntry from "$lib/features/entries/AudioEntry.svelte";
 	import BookmarkEntry from "$lib/features/entries/bookmarks/BookmarkEntry.svelte";
@@ -48,82 +47,27 @@
 	import ReadingMenu from "./ReadingMenu.svelte";
 	import ReadingSidebar from "./ReadingSidebar.svelte";
 	import type { Metadata } from "./types";
-
 	dayjs.extend(localizedFormat);
+
 	export let data: PageData;
 	const queryClient = useQueryClient();
-	// $: article = data.article;
-	// let article: RouterOutputs["entries"]["load"];
 	const client = trpcWithQuery($page);
 	const utils = client.createContext();
+
 	$: entryId = data.id;
-	$: query = client.entries.load.createQuery({
+	$: entryQuery = client.entries.public.byId.createQuery({
 		id: data.id,
 	});
+    $: entryData = client.entries.loadUserData.createQuery({
+        id: data.id,
+    })
 	// $: query = data.query();
-	$: console.log({ $query });
-	$: article = $query.data;
-
-	// $: query = createQuery({
-	// 	...entryDetailsQuery({
-	// 		id: data.id,
-	// 	}),
-	// 	onSettled: (data, error) => {
-	// 		console.log(`entrydetails`, { data, error });
-	// 	},
-	// 	onSuccess: (entry) => {
-	// 		console.log({ entry });
-	// 		// REVIEW: is this bad - probaly!
-	// 		data.article = entry;
-	// 	},
-	// });
 
 	$: stylesheet = data.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
-	let entry: Metadata;
 	let annotations: Annotation[] = [];
-	let interaction: {
-		is_read: boolean | null;
-		progress: number | null;
-	} | null = null;
-	let tags: Tag[] = data.article?.tags;
-	let bookmark: ExtendedBookmark | null = null;
-	$: entry = article;
-	// TODO: fix this whole mess
-	// $: if ("entryId" in data?.article) {
-	// 	// bookmark
-	// 	// TOOD: zod parsing
-	// 	console.log({ data });
-	// 	if (typeof data.article.data === "object") {
-	// 		entry = {
-	// 			...entryData.parse(data.article.data),
-	// 			id: data.article.entryId,
-	// 			uri: data.article.uri,
-	// 		};
-	// 		annotations = data.article.annotations;
-	// 		interaction = data.article.interaction;
-	// 		bookmark = data.article;
-	// 	}
-	// } else {
-	// 	entry = data.article;
-	// 	annotations = data.article.annotations;
-	// 	interaction = data.article.interaction;
-	// 	bookmark = data.article.bookmark;
-	// 	// TODO: annotations, etc
-	// }
-	$: last_scroll_position = (interaction?.progress as number) || 0;
-	let errors: { message: string; path: string[] }[] | null = null;
+	let tags = []
+	$: last_scroll_position = ($entryData?.data?.bookmark?.progress) || 0;
 
-	$: nlpQuery = createQuery({
-		queryKey: ["nlp", { id: data.id }],
-		queryFn: () =>
-			trpc($page).nlp.query({
-				entryId: data.id,
-			}),
-		onSuccess: (nlp) => {
-			console.log({ nlp });
-		},
-        enabled: false
-	});
 	function useArticleCommands() {
 		const articleCommands: Command[] = [
 			{
@@ -361,13 +305,6 @@
 
 	$: removeCommands = useArticleCommands();
 
-	// TODO: elements we need to make this a proper "reading": Title, Author, Sumamary, content (data), annotations, the interaction... what else?
-
-	$: currentList = data.currentList;
-	// ??
-	$: console.log({ $currentList });
-	// todo: should current list be "source of truth"?
-
 	let disableSaveScroll = false;
 
 	let context;
@@ -381,63 +318,21 @@
 				console.log(document.activeElement);
 			}, 1);
             // scroll to position if it's an article
-            if ($query.data?.type !== "article") return;
+            if ($entryQuery.data?.type !== "article") return;
 			if ($page.data.user?.username === $page.params.username) {
 				console.log({ data }, $mainEl.scrollHeight - window.innerHeight);
-				console.log({ interaction });
+                const progress = $entryData.data?.bookmark?.progress || 0;
+                if (!progress) return;
 				const pos =
-					($query.data?.interactions?.[0]?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
+					(progress) * ($mainEl.scrollHeight - window.innerHeight);
 				console.log({ pos });
-				last_saved_progress = interaction?.progress || 0;
+				last_saved_progress = progress || 0;
 				setTimeout(() => {
 					$mainEl.scrollTo(0, pos);
-				}, 2);
+				}, 0);
 			}
 		}
 	});
-	// afterNavigate(async (e) => {
-	// 	console.log(`mounting / afternavigate`, e);
-	// 	setTimeout(() => {
-	// 		// $mainEl.scrollTo(0, 0);
-	// 		$mainEl.focus();
-	// 	}, 0);
-	// 	if (!browser) return;
-	// 	console.log($mainEl);
-	// 	// mark as read
-	// 	// optimistic
-	// 	const ogInteraction = interaction || {};
-	// 	if (data.article.unread) {
-	// 		data.article.unread = false;
-	// 		data.interaction = { ...ogInteraction, is_read: true };
-	// 		console.log({ data });
-	// 		const updatedEntry = await trpc($page).entries.markAsRead.mutate({
-	// 			id: data.article.id,
-	// 		});
-	// 		console.log({ updatedEntry });
-	// 		// const res = await fetch(`/api/interactions`, {
-	// 		// 	method: 'POST',
-	// 		// 	headers: {
-	// 		// 		'Content-Type': 'application/json',
-	// 		// 	},
-	// 		// 	body: JSON.stringify({
-	// 		// 		is_read: true,
-	// 		// 		uri: data.article.uri,
-	// 		// 	}),
-	// 		// });
-	// 		// console.log({ res });
-	// 		// if (!res.ok) {
-	// 		// 	// roll back
-	// 		// 	data.interaction = ogInteraction;
-	// 		// }
-	// 	}
-	// if ($page.data.user?.username === $page.params.username) {
-	// 	const pos = (interaction?.progress || 0) * ($mainEl.scrollHeight - window.innerHeight);
-	// 	last_saved_progress = interaction?.progress || 0;
-	// 	setTimeout(() => {
-	// 		$mainEl.scrollTo(0, pos);
-	// 	}, 10);
-	// }
-	// });
 	const saveProgress = async (data: number) => {
 		if ($navigating) return;
 		if (disableSaveScroll) return;
@@ -445,10 +340,11 @@
 		if (Math.abs(last_saved_progress - data) < 0.005) return;
 		// check to make sure it's an article
 		// REVIEW: should we move this logic into a separate component?
-		if ($query.data?.type !== "article") return;
+		if ($entryQuery.data?.type !== "article") return;
 		last_saved_progress = data;
+        const article = $entryQuery.data;
 		if (!article) return;
-		utils.entries.load.setData(
+		utils.entries.loadUserData.setData(
 			{
 				id: article.id,
 			},
@@ -456,12 +352,10 @@
 				if (!old) return;
 				return {
 					...old,
-					interactions: [
-						{
-							...old.interactions[0],
-							progress: data,
-						},
-					],
+					bookmark: {
+                        ...old.bookmark,
+                        progress: data,
+                    }
 				};
 			}
 		);
@@ -471,18 +365,6 @@
 			id: article.id,
 			progress: data,
 		});
-		//
-
-		// await fetch(`/api/interactions`, {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		'Content-Type': 'application/json',
-		// 	},
-		// 	body: JSON.stringify({
-		// 		progress: data,
-		// 		entryId: article.id,
-		// 	}),
-		// });
 	};
 	const debouncedSave = debounce(saveProgress, 2000, {
 		leading: false,
@@ -547,15 +429,15 @@
 	on:mousemove={mousemove}
 	on:keydown={(e) => {
 		// cmd+c
-		if (e.key === "c" && e.metaKey && article.uri) {
-			// copy to clipboard and notify
-			navigator.clipboard.writeText(article.uri).then(() =>
-				notifications.notify({
-					type: "info",
-					title: "Copied to clipbboard",
-				})
-			);
-		}
+		// if (e.key === "c" && e.metaKey && article.uri) {
+		// 	// copy to clipboard and notify
+		// 	navigator.clipboard.writeText(article.uri).then(() =>
+		// 		notifications.notify({
+		// 			type: "info",
+		// 			title: "Copied to clipbboard",
+		// 		})
+		// 	);
+		// }
 	}}
 />
 <!-- <div use:popperContent>Tooltip</div> -->
@@ -564,21 +446,19 @@
 <svelte:head>
 	<!-- <title>{entry.title}</title> -->
 </svelte:head>
-{#if article}
+{#if $entryQuery.isSuccess}
+{@const article = $entryQuery.data}
 	<ReadingMenu
-		{bookmark}
-		bind:entry={article}
-		{interaction}
-		back={$currentList ? $currentList.slug : "/"}
-		currentList={$currentList}
+		bookmark={$entryData.isSuccess && $entryData.data?.bookmark?.bookmark_id ? {id: $entryData.data?.bookmark?.bookmark_id} : undefined}
+        entry={$entryQuery.data}
 	/>
-
-	{@html `<` + `style>${data?.css}</style>`}
-	{#if errors?.length}
+<!--  -->
+	<!-- {@html `<` + `style>${data?.css}</style>`} -->
+	<!-- {#if errors?.length}
 		{#each errors as error}
 			<small class="text-red-500">{error.message}</small>
 		{/each}
-	{/if}
+	{/if} -->
 	<div class="flex grow flex-col overflow-hidden bg-skin-entry-bg">
 		<div
 			on:dblclick|preventDefault|stopPropagation={(e) => {
@@ -610,13 +490,13 @@
 										class="h-5 w-5 rounded-full object-cover"
 										alt=""
 									/>
-									<span class="truncate">{entry.siteName || entry.uri}</span></a
+									<span class="truncate">{article.uri}</span></a
 								>
-								<H1 class="font-newsreader dark:drop-shadow-sm">{entry.title}</H1>
+								<H1 class="font-newsreader dark:drop-shadow-sm">{article.title}</H1>
 								<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
-								{#if entry.summary}
+								{#if article.summary}
 									<div class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl">
-										{entry.summary}
+										{article.summary}
 									</div>
 								{/if}
 								<div class="flex justify-between">
@@ -624,17 +504,17 @@
 										id="origin"
 										class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
 									>
-										{#if entry.author}
-											<p><a href="/author/{entry.author}">{entry.author}</a></p>
+										{#if article.author}
+											<p><a href="/author/{article.author}">{article.author}</a></p>
 										{/if}
-										{#if entry.author && entry.published}
+										{#if article.author && article.published}
 											<!-- <p>&middot;</p> -->
 										{/if}
-										{#if entry.published}
-											<p>{dayjs(entry.published).format("ll")}</p>
+										{#if article.published}
+											<p>{dayjs(article.published).format("ll")}</p>
 										{/if}
-										{#if entry.wordCount}
-											<span>{entry.wordCount} words</span>
+										{#if article.wordCount}
+											<span>{article.wordCount} words</span>
 										{/if}
 									</div>
 								</div>
@@ -663,11 +543,11 @@
 							<div id="entry-container">
 								<Highlighter
 									articleID={article.id}
-									articleUrl={article.uri}
-									annotations={article.annotations}
+									articleUrl={article.uri ?? ''}
+									annotations={$entryData.isSuccess && $entryData.data.annotations ? $entryData.data?.annotations : []}
 									entry={article}
 								>
-									{@html entry.html || entry.text || entry.summary || "[No content]"}
+									{@html article.html || article.text || article.summary || "[No content]"}
 								</Highlighter>
 							</div>
 							<noscript>
@@ -712,14 +592,14 @@
 				</article>
 			</div>
 			<!-- Reading Sidebar -->
-			{#if $query.isSuccess}
+			{#if $entryQuery.isSuccess}
 				<ReadingSidebar
 					on:seek={async ({ detail }) => {
 						console.log({ detail });
 						console.log({ player });
 						await player?.seekTo(detail, true);
 					}}
-					entry={$query.data}
+					entry={$entryQuery.data}
 				/>
 			{/if}
 			{#if data.css}

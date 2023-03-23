@@ -154,43 +154,37 @@ export const favoritesRouter = router({
 			}
 		}),
 	list: protectedProcedure
-		.query(async ({ ctx: { userId, prisma } }) => {
-			const favorites = await prisma.favorite.findMany({
-				where: {
-					userId,
-					parent: null
-					// OR: [
-					// 	{
-					// 		entry: {
-					// 			isNot: null,
-					// 		}
-					// 	},
-					// 	{
-					// 		tag: {
-					// 			isNot: null,
-					// 		}
-					// 	},
-					// 	{
-					// 		annotation: {
-					// 			isNot: null,
-					// 		}
-					// 	},
-
-					// ]
-				},
-				select: {
-					...rootFavoriteSelect
-				},
-				orderBy: [
-					{
-						sortOrder: "asc",
-					},
-					{
-						createdAt: "asc",
-					},
-				],
-			});
-			return favorites as RootFavorite[];
+		.query(async ({ ctx: { userId, prisma, db } }) => {
+            const favorites = db
+                .selectFrom("Favorite as f")
+                .leftJoin("Entry as e", "f.entryId", "e.id")
+                .leftJoin("Tag as t", "f.tagId", "t.id")
+                // .leftJoin("Annotation as a", "f.annotationId", "a.id")
+                .leftJoin("Collection as c", "f.collectionId", "c.id")
+                .leftJoin("SmartList as v", "f.smartListId", "v.id")
+                .select([
+                    "f.type as type",
+                    "f.sortOrder as sortOrder",
+                    "f.id as id",
+                    "f.folderName as folderName",
+                    "e.id as entry_id",
+                    "e.title as entry_title",
+                    "e.type as entry_type",
+                    "t.id as tag_id",
+                    "t.name as tag_name",
+                    // "a.id as annotation_id",
+                    // "a.title as annotation_title",
+                    "c.id as collection_id",
+                    "c.name as collection_name",
+                    "v.id as view_id",
+                    "v.name as view_name",
+                ])
+                .where("f.userId", "=", userId)
+                .where("f.parentId", "is", null)
+                .orderBy("f.sortOrder", "asc")
+                .orderBy("f.createdAt", "asc")
+                .execute();
+			return favorites;
 		}),
 	update: protectedProcedure
 		.input(

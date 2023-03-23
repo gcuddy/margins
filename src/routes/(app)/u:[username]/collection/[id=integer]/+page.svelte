@@ -42,7 +42,6 @@
 		list?.items?.flatMap((i) => i.entry || i.children?.flatMap((i) => i.entry) || []).filter(Boolean) || [];
 	$: console.log({ flattened });
 	let favorited = false;
-    // $: favoritesQuery = client.favorites.list.createQuery();
 
 	$: favorited = data.favorites.some((f) => f.collectionId === list?.id);
 	$: folders = data.favorites.filter((f) => f.type === "FOLDER");

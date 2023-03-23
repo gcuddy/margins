@@ -104,11 +104,12 @@
 {:else if $query.isError}
 	<div>Error</div>
 {:else if $query.isSuccess}
-	<EntryList
+{JSON.stringify($query.data)}
+	<!-- <EntryList
 		items={sortedEntries}
 	>
 		<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
-	</EntryList>
+	</EntryList> -->
 {/if}
 <!-- <EntryList items={data.entries}>
 	<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>

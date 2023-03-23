@@ -9,7 +9,6 @@
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import type { ComponentProps } from "svelte";
 	import { match, P } from "ts-pattern";
-	import { favoritesQuery } from "./Sidebar.svelte";
 	import SidebarItem from "./SidebarItem.svelte";
 
 	export let favorite: RouterOutputs["favorites"]["list"][number];
@@ -21,15 +20,15 @@
 	const moveToFolderMutation = createMutation({
 		mutationFn: updateFavorite,
 		onSuccess: (data) => {
-			queryClient.invalidateQueries({
-				queryKey: favoritesQuery().queryKey,
-			});
+			// queryClient.invalidateQueries({
+			// 	queryKey: favoritesQuery().queryKey,
+			// });
 		},
 	});
 
 	const itemReducer = (f: typeof favorite) =>
 		match<typeof favorite, ComponentProps<SidebarItem>>(f)
-			.with({ entry: P.select(P.not(P.nullish)) }, ({ title, id, type }) => ({
+			.with({ entry_id: P.not(P.nullish), entry_title: P.not(P.nullish), entry_type: P.not(P.nullish) }, ({entry_id: id, entry_title: title , entry_type: type}) => ({
 				display: title || "[no title]",
 				href: `/u:${$page.data.user?.username}/entry/${id}`,
 				icon:
@@ -47,25 +46,25 @@
 						? "tweet"
 						: "document",
 			}))
-			.with({ tag: P.select(P.not(P.nullish)) }, ({ name }) => ({
-				display: name,
-				href: `/u:${$page.data.user?.username}/t:${name}`,
-				icon: "tag",
-			}))
-			.with({ feed: P.select(P.not(P.nullish)) }, ({ title, id }) => ({
-				display: title || "[no title]",
-				href: `/u:${$page.data.user?.username}/subscriptions/${id}`,
-				icon: "rss",
-			}))
-			.with({ smartList: P.select(P.not(P.nullish)) }, ({ name, id, icon: chosenIcon }) => ({
+			// .with({ tag: P.select(P.not(P.nullish)) }, ({ name }) => ({
+			// 	display: name,
+			// 	href: `/u:${$page.data.user?.username}/t:${name}`,
+			// 	icon: "tag",
+			// }))
+			// .with({ feed: P.select(P.not(P.nullish)) }, ({ title, id }) => ({
+			// 	display: title || "[no title]",
+			// 	href: `/u:${$page.data.user?.username}/subscriptions/${id}`,
+			// 	icon: "rss",
+			// }))
+			.with({ view_id: P.not(P.nullish), view_name: P.not(P.nullish) }, ({ view_name: name, view_id: id }) => ({
 				display: name,
 				href: `/u:${$page.data.user?.username}/smart/${id}`,
-				icon: chosenIcon ? chosenIcon : "square3Stack3d",
+				icon: "square3Stack3d",
 			}))
-			.with({ collection: P.select(P.not(P.nullish)) }, ({ name, id, icon }) => ({
+			.with({ collection_id: P.not(P.nullish), collection_name: P.not(P.nullish) }, ({ collection_id: id, collection_name: name }) => ({
 				display: name,
 				href: `/u:${$page.data.user?.username}/collection/${id}`,
-				icon: icon ? icon : "collection",
+				icon: "collection",
 			}))
 			.otherwise(() => ({
 				display: "unknown",
