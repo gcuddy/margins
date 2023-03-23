@@ -34,7 +34,6 @@ import {
     scoreCommas,
 } from "./utils";
 import { findAuthor } from "./utils/fallback-author";
-import { JSDOM } from "./linkedom";
 import { parseHTML } from "linkedom";
 import { s3, uploadFile } from "$lib/backend/s3.server";
 import { nanoid } from "nanoid";

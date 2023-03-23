@@ -1,4 +1,4 @@
-import { DocumentType, RelationType } from "@prisma/client";
+// import { DocumentType, RelationType } from "@prisma/client";
 import { fuzzy } from "fast-fuzzy";
 import { z } from "zod";
 
@@ -780,7 +780,7 @@ export const entriesRouter = router({
             z.object({
                 entryId: z.number().or(z.number().array()),
                 relatedEntryId: z.number(),
-                type: z.nativeEnum(RelationType).default("Related"),
+                type: z.enum(["Related"]).default("Related"),
             })
         )
         .mutation(async ({ ctx, input }) => {
@@ -841,7 +841,7 @@ export const entriesRouter = router({
     list: protectedProcedure
         .input(
             z.object({
-                type: z.nativeEnum(DocumentType).optional(),
+                type: z.enum(["Related"]).optional(),
                 // etc...
             })
         )

@@ -1,4 +1,4 @@
-import { AnnotationType, Prisma } from "@prisma/client";
+// import { AnnotationType, Prisma } from "@prisma/client";
 import type { JSONContent } from "@tiptap/core";
 import { z } from "zod";
 
@@ -23,7 +23,7 @@ export const annotationRouter = router({
             where: {
                 userId,
                 deleted: null,
-                type: AnnotationType.annotation,
+                type: "annotation",
             },
             ...contextualAnnotationArgs,
         });
@@ -219,7 +219,7 @@ export const annotationRouter = router({
             const { id, body } = input;
             const annotation = await ctx.prisma.annotation.create({
                 data: {
-                    type: AnnotationType.reply,
+                    type: "reply",
                     body,
                     parentId: id,
                     userId,
@@ -276,7 +276,7 @@ export const annotationRouter = router({
                         id: input.entryId,
                     }
                 } : undefined,
-                type: input.type || AnnotationType.annotation,
+                type: input.type || "annotation",
                 creator: {
                     connect: {
                         id: userId
