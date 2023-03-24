@@ -7,7 +7,7 @@ import { trpcWithQuery } from "$lib/trpc/client";
 import type { PageLoad } from "./$types";
 
 export const config: Config = {
-    runtime: "nodejs16.x"
+    // runtime: "nodejs16.x"
 }
 
 function scopeCss(css: string) {
@@ -39,10 +39,12 @@ export const load = (async (event) => {
     const params = {
         id: data.id
     } as const;
+    console.time("entry");
     const [entry, entryData] = await Promise.all([
         utils.entries.public.byId.prefetch(params),
         utils.entries.loadUserData.prefetch(params)
     ])
+    console.timeEnd("entry");
     return {
         ...data,
     };

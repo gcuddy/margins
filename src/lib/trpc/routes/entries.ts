@@ -906,7 +906,7 @@ export const entriesRouter = router({
                 }
                 const { db, redis } = ctx;
                 const { id } = input;
-                if (!dev) {
+                if (true) {
                     const cached = await redis.get(`entry:${id}`);
                     if (cached) {
                         console.log("cache hit");
