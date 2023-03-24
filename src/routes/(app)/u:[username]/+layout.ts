@@ -1,4 +1,5 @@
 export const config = {
     // split: true,
-    runtime: "nodejs18.x",
+    // can this be edge?
+    runtime: "edge",
 }
