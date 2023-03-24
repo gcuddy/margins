@@ -487,7 +487,7 @@
 				tabindex="-1"
 			>
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
-				<article data-article class=" mt-14 h-full  select-text px-1 sm:p-4 ">
+				<article data-article class=" mt-14 h-full select-text px-1 sm:p-4">
 					{#if article.type === "article" || article.type === "rss" || (article.type === "audio" && !article.podcastIndexId)}
 						<div class="pb-16">
 							<header
@@ -630,7 +630,10 @@
 						console.log({ player });
 						await player?.seekTo(detail, true);
 					}}
-					entry={$entryQuery.data}
+					entry={{
+						...$entryQuery.data,
+						...$entryData.data,
+					}}
 				/>
 			{/if}
 			{#if data.css}

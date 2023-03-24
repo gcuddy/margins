@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import resize from "$lib/actions/resize";
 	import Annotation from "$lib/components/Annotation.svelte";
@@ -8,51 +7,53 @@
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
 	import Button from "$lib/components/Button.svelte";
+	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
+	import DatePicker from "$lib/components/DatePicker.svelte";
+	import DotMenu from "$lib/components/DotMenu.svelte";
 	import Filter from "$lib/components/Filters/Filter.svelte";
-	import AnnotationFilter from "$lib/components/Filters/Filter.svelte";
 	import FilterDisplay from "$lib/components/Filters/FilterDisplay.svelte";
+	import GenericInput from "$lib/components/GenericInput.svelte";
+	import GenericPopover from "$lib/components/GenericPopover.svelte";
+	import Cluster from "$lib/components/helpers/Cluster.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
+	import LoadingSpinner from "$lib/components/LoadingSpinner.svelte";
 	import StateCombobox from "$lib/components/StateCombobox.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
+	import dayjs from "$lib/dayjs";
+	import { useSaveAnnotation } from "$lib/features/annotations/mutations";
+	import { addEntriesToCollection } from "$lib/features/collections/stores";
+	import { useUpdateBookmark } from "$lib/features/entries/mutations";
+	import { reading_sidebar } from "$lib/features/entries/stores";
+	import { iconsMini } from "$lib/features/entries/utils";
+	import MovieEntrySidebar from "$lib/features/movies/MovieEntrySidebar.svelte";
 	import Recipe from "$lib/features/recipes/Recipe.svelte";
+	import { nanoid } from "$lib/nanoid";
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
-	import { syncStore } from "$lib/stores/sync";
 	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
-	import { Collection, Color, DocumentType, Tag } from "@prisma/client";
-	import { Disclosure, DisclosureButton, DisclosurePanel } from "@rgossiaux/svelte-headlessui";
+	import { getHostname, getPathname } from "$lib/utils";
+	import { lookupUrlType } from "$lib/web-parser/urls";
+	import autoAnimate from "@formkit/auto-animate";
+	import { Color, DocumentType, Tag } from "@prisma/client";
+	import {
+		Disclosure,
+		DisclosureButton,
+		DisclosurePanel,
+	} from "@rgossiaux/svelte-headlessui";
+	import { useQueryClient } from "@tanstack/svelte-query";
 	import { onMount } from "svelte";
 	import { flip } from "svelte/animate";
+	import { cubicOut } from "svelte/easing";
 	import { tweened } from "svelte/motion";
 	import { writable } from "svelte/store";
 	import { fade, fly, slide } from "svelte/transition";
 	import ReadingSidebarSection from "./ReadingSidebarSection.svelte";
-	import { reading_sidebar } from "$lib/features/entries/stores";
-	import MovieEntrySidebar from "$lib/features/movies/MovieEntrySidebar.svelte";
-	import { addEntriesToCollection } from "$lib/features/collections/stores";
-	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
-	import { entryCollectionsQuery, entryDetailsQuery } from "$lib/features/entries/queries";
-	import Cluster from "$lib/components/helpers/Cluster.svelte";
-	import ChosenIcon from "$lib/components/ChosenIcon.svelte";
-	import DotMenu from "$lib/components/DotMenu.svelte";
-	import { getHostname, getPathname } from "$lib/utils";
-	import { lookupUrlType } from "$lib/web-parser/urls";
-	import { iconsMini } from "$lib/features/entries/utils";
-	import GenericInput from "$lib/components/GenericInput.svelte";
-	import autoAnimate from "@formkit/auto-animate";
-	import { useSaveAnnotation } from "$lib/features/annotations/mutations";
-	import { nanoid } from "$lib/nanoid";
-	import { useUpdateBookmark } from "$lib/features/entries/mutations";
-	import dayjs from "$lib/dayjs";
-	import GenericPopover from "$lib/components/GenericPopover.svelte";
-	import DatePicker from "$lib/components/DatePicker.svelte";
 
-	export let entry: RouterOutputs["entries"]["load"];
+	export let entry: RouterOutputs["entries"]["public"]["byId"] &
+		Partial<RouterOutputs["entries"]["loadUserData"]>;
 	$: console.log({ entry });
 	const queryClient = useQueryClient();
-
-	$: collectionsQuery = createQuery(entryCollectionsQuery({ id: entry.id }, $page));
 
 	function customBackOut(t: number) {
 		const s = 0.7;
@@ -63,7 +64,8 @@
 	// $: inlineNotes, (annotations = inlineNotes);
 	$: console.log({ inlineNotes });
 	const noFilter = () => true;
-	let inlineNotesFilter: (n: (typeof inlineNotes)[number]) => boolean = noFilter;
+	let inlineNotesFilter: (n: (typeof inlineNotes)[number]) => boolean =
+		noFilter;
 
 	let tags: Tag[] = [];
 	$: console.log({ tags });
@@ -71,8 +73,8 @@
 	let WIDTH = 428;
 
 	let WIDTH_SPRING = tweened(WIDTH, {
-		duration: 150,
-		// easing: customBackOut,
+		duration: 250,
+		easing: cubicOut,
 		delay: 0,
 	});
 
@@ -98,7 +100,27 @@
 	const saveAnnotationMutation = useSaveAnnotation();
 	const updateBookmark = useUpdateBookmark();
 
-	$: savedDate = createRelativeDateStore(entry.bookmark?.createdAt);
+	$: collectionsQuery = client.entries.getCollections.createQuery(
+		{
+			id: entry.id,
+		},
+		{
+			enabled: !!entry,
+		}
+	);
+	$: ({ data: collections, isLoading: collectionsLoading } = $collectionsQuery);
+
+	$: relationsQuery = client.entries.getRelations.createQuery(
+		{
+			id: entry.id,
+		},
+		{
+			enabled: !!entry,
+		}
+	);
+	$: ({ data: relations, isLoading: relationsLoading } = $relationsQuery);
+
+	$: savedDate = createRelativeDateStore(entry.bookmark_createdAt);
 
 	// const updateInteraction = createMutation({
 	//     mutationFn: () => trpc
@@ -162,18 +184,22 @@
 		style:margin-left="{$WIDTH_SPRING * -1}px"
 		style:--width="{WIDTH}px"
 		style:transform="translateX({$WIDTH_SPRING}px)"
-		class="z-10 mt-14 flex max-h-full shrink-0 flex-col space-y-5 overflow-auto overflow-y-auto border-l  border-border bg-base p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
+		class="z-10 mt-14 flex max-h-full shrink-0 flex-col space-y-5 overflow-auto overflow-y-auto border-l border-border bg-base p-4 shadow-lg backdrop-blur-md transition-shadow dark:border-gray-700 dark:shadow-stone-900 max-md:absolute max-md:top-0 max-md:right-0 max-md:bottom-0 max-md:border-l sm:w-96 md:relative"
 	>
 		<!-- <div class="absolute top-0 left-0 h-full w-full bg-red-500" style:width="450px" /> -->
 
 		<div class="flex flex-col gap-y-2 divide-y dark:divide-gray-700/40">
 			<div class="flex flex-col gap-y-1">
 				<div class="flex items-center justify-between">
-                    {#if entry.title && !editing_entry}
-					<span class="text-lg font-semibold">{entry.title}</span>
-				{:else if editing_entry}
-					<input class="text-lg font-semibold" value={entry.title} placeholder="title" />
-				{/if}
+					{#if entry.title && !editing_entry}
+						<span class="text-lg font-semibold">{entry.title}</span>
+					{:else if editing_entry}
+						<input
+							class="text-lg font-semibold"
+							value={entry.title}
+							placeholder="title"
+						/>
+					{/if}
 					<Button
 						on:click={() => (editing_entry = !editing_entry)}
 						variant="naked"
@@ -185,7 +211,11 @@
 				{#if entry.author && !editing_entry}
 					<span class="text-base font-medium">{entry.author}</span>
 				{:else if editing_entry}
-					<input class="text-base font-medium" value={entry.author} placeholder="author" />
+					<input
+						class="text-base font-medium"
+						value={entry.author}
+						placeholder="author"
+					/>
 				{/if}
 				{#if entry.type === DocumentType.book && entry.uri?.startsWith("isbn:")}
 					<!-- bookshop link -->
@@ -196,7 +226,10 @@
 						class="flex items-center text-sm text-muted"
 					>
 						<span>Bookshop</span>
-						<Icon name="arrowTopRightOnSquareMini" className="w-4 h-4 ml-1 fill-muted" />
+						<Icon
+							name="arrowTopRightOnSquareMini"
+							className="w-4 h-4 ml-1 fill-muted"
+						/>
 					</a>
 				{/if}
 				{#if entry.image && !!entry.recipe}
@@ -211,44 +244,39 @@
 						<!-- display feed -->
 						<!-- Or just put this in context section -->
 						subscription:
-						<a href="/u:{$page.data.user?.username}/subscriptions/{entry.feedId}"
-							>{$page.data.user?.subscriptions?.find((s) => s.feedId === entry.feedId)?.title}</a
+						<a
+							href="/u:{$page.data.user?.username}/subscriptions/{entry.feedId}"
+							>{$page.data.user?.subscriptions?.find(
+								(s) => s.feedId === entry.feedId
+							)?.title}</a
 						>
 					{/if}
-					<div class="grid auto-rows-fr grid-cols-[minmax(90px,_auto)_1fr] items-center gap-1 text-sm">
+					<div
+						class="grid auto-rows-fr grid-cols-[minmax(90px,_auto)_1fr] items-center gap-1 text-sm"
+					>
 						<!-- REVIEW: what metadata to show -->
-						{#if entry.bookmark}
+						{#if entry.bookmark_id}
 							<Muted>Saved</Muted>
 							<div class="px-2">{$savedDate}</div>
 						{/if}
-						{#if entry.bookmark?.stateId}
+						{#if entry.state_id}
+							{@const state = $page.data.user?.states.find(
+								(s) => s.id === entry.state_id
+							)}
 							<Muted class="text-sm">Status</Muted>
 							<StateCombobox
 								bind:buttonWrapper={stateComboboxRef}
-								state={$page.data.user?.states?.find((state) => state.id === entry.bookmark.stateId) ||
-									$page.data.user?.defaultState}
+								{state}
 								onSelect={async (state) => {
-									const bookmarkId = entry.bookmark.id;
+									const bookmarkId = entry.bookmark_id;
 									$updateBookmark.mutate({
-										id: entry.bookmark.id,
+										id: bookmarkId,
 										entryId: entry.id,
 										uri: entry.uri,
 										data: {
 											stateId: state.id,
 										},
 									});
-									// const s = syncStore.add();
-									// await trpc().bookmarks.updateState.mutate({
-									// 	id: $page.data.article.bookmark?.id,
-									// 	stateId: state.id,
-									// 	entryId: $page.data.article.id,
-									// });
-									// // queryClient.invalidateQueries({
-									// //     queryKey: entryDetailsQuery({id: $page.data.article.id}).queryKey
-									// // })
-									// // invalidate(entry:id)
-									// // await invalidateAll();
-									// syncStore.remove(s);
 								}}
 							/>
 						{:else}
@@ -291,18 +319,24 @@
 							<Muted class="text-sm">Context</Muted>
 							{JSON.stringify(entry.context)}
 						{/if} -->
-						{#if entry.relations.some((r) => r.type === "SavedFrom")}
+						{#if relations?.relations.some((r) => r.type === "SavedFrom")}
 							<Muted class="text-sm">Saved from</Muted>
-							{#each entry.relations.filter((r) => r.type === "SavedFrom") as { relatedEntry }}
-								<a href="/u:{$page.data.user?.username}/entry/{relatedEntry.id}" class="truncate text-xs"
-									>{relatedEntry.title}</a
+							{#each relations?.relations.filter((r) => r.type === "SavedFrom") as r}
+								<a
+									href="/u:{$page.data.user
+										?.username}/entry/{r.related_entry_id}"
+									class="truncate text-xs">{r.related_entry_title}</a
 								>
 							{/each}
 						{/if}
 						<Muted class="text-sm">Type</Muted>
 						<span>{entry.type}</span>
 						{#if entry.type === DocumentType.book}
-							{@const book = queryClient.getQueryData(["books", "detail", entry.googleBooksId])}
+							{@const book = queryClient.getQueryData([
+								"books",
+								"detail",
+								entry.googleBooksId,
+							])}
 							{@const currentPage = entry.interactions?.[0]?.currentPage}
 							<Muted class="text-sm">Progress</Muted>
 							<div class="flex items-center gap-2">
@@ -314,7 +348,9 @@
 											$updateInteraction.mutate({
 												id: entry.id,
 												currentPage: parseInt(e.target.value),
-												progress: pageCount ? parseInt(e.target.value) / pageCount : undefined,
+												progress: pageCount
+													? parseInt(e.target.value) / pageCount
+													: undefined,
 											});
 										}}
 										type="number"
@@ -325,68 +361,72 @@
 							</div>
 						{/if}
 						<Muted class="text-sm">Relations</Muted>
-						<Cluster class="gap-x-2 gap-y-2">
-							<!-- to -->
-							{#each entry.relations as relation}
-								<div
-									class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50 "
-								>
-									<!-- todo: little icon -->
-									{#if relation.type === "Related"}
-										<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
-										<span class="sr-only">Related</span>
-									{:else if relation.type === "SavedFrom"}
-										<Icon name="arrowLeftMini" className="w-3 h-3 fill-muted/80" />
-										<span class="sr-only">Saved from</span>
-									{/if}
-									<a
-										href="/u:{$page.data.user?.username}/entry/{relation.relatedEntry.id}"
-										class="truncate text-xs">{relation.relatedEntry.title}</a
+						{#if relationsLoading}
+							<LoadingSpinner />
+						{:else if relations}
+							{@const { relations: to_relations, back_relations } = relations}
+							<Cluster class="gap-x-2 gap-y-2">
+								<!-- to -->
+								{#each to_relations as relation}
+									<div
+										class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50"
 									>
-								</div>
-							{/each}
-							<!-- back -->
-							{#each entry.back_relations as relation}
-								<div
-									class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50 "
-								>
-									<!-- todo: little icon -->
-									{#if relation.type === "Related"}
-										<Icon name="arrowsRightLeftMini" className="w-3 h-3 fill-muted/80" />
-										<span class="sr-only">Related</span>
-									{:else if relation.type === "SavedFrom"}
-										<Icon name="arrowRightMini" className="w-3 h-3 fill-muted/80" />
-										<span class="sr-only">Saved from</span>
-									{/if}
-									<a href="/u:{$page.data.user?.username}/entry/{relation.entry.id}" class="truncate text-xs"
-										>{relation.entry.title}</a
+										<!-- todo: little icon -->
+										{#if relation.type === "Related"}
+											<Icon
+												name="arrowsRightLeftMini"
+												className="w-3 h-3 fill-muted/80"
+											/>
+											<span class="sr-only">Related</span>
+										{:else if relation.type === "SavedFrom"}
+											<Icon
+												name="arrowLeftMini"
+												className="w-3 h-3 fill-muted/80"
+											/>
+											<span class="sr-only">Saved from</span>
+										{/if}
+										<a
+											href="/u:{$page.data.user
+												?.username}/entry/{relation.related_entry_id}"
+											class="truncate text-xs">{relation.related_entry_title}</a
+										>
+									</div>
+								{/each}
+								<!-- back -->
+								{#each back_relations as relation}
+									<div
+										class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50"
 									>
-								</div>
-							{/each}
-							<!-- {#each entry.relations
-								.filter((r) => r.type !== "SavedFrom")
-								.map((r) => {
-									const { type, relatedEntry } = r;
-									return { type, entry: relatedEntry };
-								})
-								.concat(entry.back_relations) || [] as { type, entry }}
-								<div
-									class="flex max-w-[220px] gap-1 truncate rounded bg-elevation py-1 px-2 ring-1 ring-border/50 "
-								>
-									{#if type === "SavedFrom"}
-										<Icon name="arrowsRightLeftMini" className="w-4 h-4 fill-current" />
-									{/if}
-									<a href="/u:{$page.data.user?.username}/entry/{entry.id}" class="truncate text-xs"
-										>{entry.title}</a
-									>
-								</div>
-							{/each} -->
-						</Cluster>
+										<!-- todo: little icon -->
+										{#if relation.type === "Related"}
+											<Icon
+												name="arrowsRightLeftMini"
+												className="w-3 h-3 fill-muted/80"
+											/>
+											<span class="sr-only">Related</span>
+										{:else if relation.type === "SavedFrom"}
+											<Icon
+												name="arrowRightMini"
+												className="w-3 h-3 fill-muted/80"
+											/>
+											<span class="sr-only">Saved from</span>
+										{/if}
+										<a
+											href="/u:{$page.data.user
+												?.username}/entry/{relation.related_entry_id}"
+											class="truncate text-xs">{relation.related_entry_title}</a
+										>
+									</div>
+								{/each}
+							</Cluster>
+						{/if}
+
 						{#if entry.bookmark?.dueDate}
 							<Muted class="text-sm">Due Date</Muted>
 							<GenericPopover>
 								<svelte:fragment slot="button">
-									<span>{dayjs(entry.bookmark?.dueDate).format("l")}</span></svelte:fragment
+									<span>{dayjs(entry.bookmark?.dueDate).format("l")}</span
+									></svelte:fragment
 								>
 								<div slot="panel" let:close>
 									<DatePicker onConfirm={() => close(null)} />
@@ -404,7 +444,9 @@
 			{/if}
 			{#if entry.extended?.outgoingLinks?.length}
 				<ReadingSidebarSection defaultOpen={false}>
-					<svelte:fragment slot="heading">Links ({entry.extended?.outgoingLinks?.length})</svelte:fragment>
+					<svelte:fragment slot="heading"
+						>Links ({entry.extended?.outgoingLinks?.length})</svelte:fragment
+					>
 					<div class="flex flex-col gap-x-4 gap-y-2 text-sm text-muted">
 						{#each entry.extended?.outgoingLinks as { href, text }}
 							{@const type = lookupUrlType(href)}
@@ -423,10 +465,15 @@
 								class="flex items-center justify-between gap-4 rounded bg-elevation py-1 px-2 ring-1 ring-border/50"
 							>
 								<div class="flex min-w-0 gap-2">
-									<Icon name={type ? iconsMini[type] : "linkMini"} className="h-4 w-4  fill-muted/70" />
+									<Icon
+										name={type ? iconsMini[type] : "linkMini"}
+										className="h-4 w-4  fill-muted/70"
+									/>
 									<div class="flex items-center gap-2 truncate">
 										<span class="shrink-0 font-medium">{text}</span>
-										<span class="truncate text-xs">{getHostname(href) + getPathname(href)}</span>
+										<span class="truncate text-xs"
+											>{getHostname(href) + getPathname(href)}</span
+										>
 									</div>
 								</div>
 								<div class="flex items-center gap-1">
@@ -447,7 +494,9 @@
 													label: "Save link",
 													perform: async () => {
 														// todo
-														const article = await trpc($page).public.parse.query({ url: href });
+														const article = await trpc(
+															$page
+														).public.parse.query({ url: href });
 														console.log({ article });
 														await trpc($page).bookmarks.add.mutate({
 															article,
@@ -462,9 +511,17 @@
 											],
 										]}
 									/>
-									<a on:click|stopPropagation {href} target="_blank" rel="noreferrer noopener">
+									<a
+										on:click|stopPropagation
+										{href}
+										target="_blank"
+										rel="noreferrer noopener"
+									>
 										<Button variant="naked" as="div">
-											<Icon name="arrowTopRightOnSquareMini" className="h-4 w-4 fill-current" /></Button
+											<Icon
+												name="arrowTopRightOnSquareMini"
+												className="h-4 w-4 fill-current"
+											/></Button
 										>
 									</a>
 								</div>
@@ -484,15 +541,18 @@
 				<svelte:fragment slot="heading">Collections</svelte:fragment>
 				<button
 					slot="action"
-					class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50 "
+					class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50"
 					on:click={() => {
 						addEntriesToCollection(queryClient, [entry.id], (c) => {
-							//update query data
-							// TODO: optimistijc update
-							queryClient.setQueryData(entryCollectionsQuery({ id: entry.id }).queryKey, (old) => [
-								...old,
-								c,
-							]);
+							utils.entries.getCollections.setData(
+								{
+									id: entry.id,
+								},
+								(old) => {
+									if (!old) return old;
+									return [...old, c];
+								}
+							);
 							utils.collections.invalidate();
 						});
 					}}
@@ -500,18 +560,17 @@
 					<Icon name="plusMini" className="h-4 w-4 fill-gray-400" />
 					<Muted>Add to collection</Muted></button
 				>
-				{#if $collectionsQuery.isLoading}
+				{#if collectionsLoading}
 					loading...
-				{:else if $collectionsQuery.isSuccess}
+				{:else if collections}
 					<Cluster class="gap-x-4 gap-y-2">
-						{#each $collectionsQuery.data as collection}
+						{#each collections as collection}
 							<li class="rounded bg-elevation py-1 px-2 ring-1 ring-border/50">
 								<a
 									class="flex items-center gap-1"
-									href="/u:{collection.user?.username ||
+									href="/u:{collection.username ||
 										$page.data.user?.username}/collection/{collection.id}"
 								>
-									<!-- @ts-ignore -->
 									<ChosenIcon chosenIcon={collection.icon} />
 									<span>{collection.name}</span>
 								</a>
@@ -522,9 +581,15 @@
 				<!-- <MovieEntrySidebar tmdbId={entry.tmdbId} /> -->
 			</ReadingSidebarSection>
 
-			<Disclosure defaultOpen={true} let:open class="flex flex-col gap-3 p-2 text-sm">
+			<Disclosure
+				defaultOpen={true}
+				let:open
+				class="flex flex-col gap-3 p-2 text-sm"
+			>
 				<div class="flex items-center justify-between">
-					<DisclosureButton class="group -ml-2 flex items-center gap-2 rounded py-1 px-2 hover:bg-gray-200">
+					<DisclosureButton
+						class="group -ml-2 flex items-center gap-2 rounded py-1 px-2 hover:bg-gray-200"
+					>
 						<SmallPlus><Muted>Page Notes</Muted></SmallPlus>
 						<Icon
 							name={open ? "chevronUpMini" : "chevronDownMini"}
@@ -534,7 +599,7 @@
 					<button
 						in:fade|local={{ delay: 400 }}
 						disabled={noting}
-						class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50 "
+						class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50"
 						on:click={() => (noting = true)}
 					>
 						<Icon name="plusMini" className="h-4 w-4 fill-gray-400" />
@@ -566,7 +631,9 @@
 															if (!old) return old;
 															old = {
 																...old,
-																annotations: old.annotations.filter((a) => a.id !== annotation.id),
+																annotations: old.annotations.filter(
+																	(a) => a.id !== annotation.id
+																),
 															};
 															console.log({ old });
 															return old;
@@ -593,7 +660,10 @@
 																},
 																(data) => {
 																	if (!data) return data;
-																	data.annotations = [...data.annotations, annotation];
+																	data.annotations = [
+																		...data.annotations,
+																		annotation,
+																	];
 																	return data;
 																}
 															);
@@ -632,9 +702,16 @@
 															size="sm"
 															className="text-sm">Cancel</Button
 														>
-														<Button disabled={$busy.note} variant="ghost" size="sm" className="text-sm"
+														<Button
+															disabled={$busy.note}
+															variant="ghost"
+															size="sm"
+															className="text-sm"
 															>{#if $busy.note}
-																<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+																<Icon
+																	name="loading"
+																	className="animate-spin h-4 w-4 text-current"
+																/>
 															{:else}
 																Save
 															{/if}
@@ -698,7 +775,10 @@
 													size="sm"
 													className="text-sm"
 													>{#if $busy.note}
-														<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+														<Icon
+															name="loading"
+															className="animate-spin h-4 w-4 text-current"
+														/>
 													{:else}
 														Save
 													{/if}
@@ -713,7 +793,11 @@
 				{/if}
 			</Disclosure>
 			{#if inlineNotes?.length || entry.type === DocumentType.video}
-				<Disclosure defaultOpen={true} let:open class="flex flex-col gap-3 p-2 text-sm">
+				<Disclosure
+					defaultOpen={true}
+					let:open
+					class="flex flex-col gap-3 p-2 text-sm"
+				>
 					<!-- Review: if I bind annotations to entry thenit can also filter in article. interesting idea. -->
 					<Filter
 						values={inlineNotes}
@@ -727,7 +811,9 @@
 							<DisclosureButton
 								class="group -ml-2 flex items-center gap-2 rounded py-1 px-2 hover:bg-gray-200"
 							>
-								<SmallPlus><Muted>Annotations ({inlineNotes.length})</Muted></SmallPlus>
+								<SmallPlus
+									><Muted>Annotations ({inlineNotes.length})</Muted></SmallPlus
+								>
 								<Icon
 									name={open ? "chevronUpMini" : "chevronDownMini"}
 									className="h-4 w-4 fill-gray-400 opacity-0 group-hover:opacity-100"
@@ -781,7 +867,7 @@
 						{#if open}
 							<div transition:slide|local={{ duration: 75 }}>
 								<DisclosurePanel static>
-									<div class="flex flex-col space-y-4  text-sm" use:autoAnimate>
+									<div class="flex flex-col space-y-4 text-sm" use:autoAnimate>
 										{#each filteredItems as annotation (annotation.id)}
 											<!-- scroll to latest on creation -->
 											<div
@@ -803,7 +889,9 @@
 																if (!old) return old;
 																old = {
 																	...old,
-																	annotations: old.annotations.filter((a) => a.id !== annotation.id),
+																	annotations: old.annotations.filter(
+																		(a) => a.id !== annotation.id
+																	),
 																};
 																console.log({ old });
 																return old;

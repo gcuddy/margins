@@ -41,7 +41,7 @@
 	});
 
 	type TAnnotation = $$Generic<
-		RouterOutputs["entries"]["load"]["annotations"][number] | ContextualAnnotation
+		RouterOutputs["entries"]["getAnnotations"][number]
 	>;
 	export let annotation: TAnnotation;
 	//todo: type target/selector better
@@ -153,11 +153,11 @@
 	const deleteAnnotation = client.annotations.delete.createMutation({
 		// TODO
 		// onMutate
-        onMutate: () => {
-            // TODO: cancel refetches
-            // TODO: capture the previous value
-        //    const previous = utils.entries.load
-        },
+		onMutate: () => {
+			// TODO: cancel refetches
+			// TODO: capture the previous value
+			//    const previous = utils.entries.load
+		},
 		onSuccess: () => {
 			// TODO: More invlaidations
 			if (annotation.entryId)
@@ -229,17 +229,22 @@
 		<div
 			class="annotation-input {'parent' in annotation
 				? ''
-				: ''} not-prose relative flex max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg  border border-border   bg-elevation px-4 py-3 font-sans font-medium {shadowInner
+				: ''} not-prose relative flex max-w-md resize scroll-mt-12 flex-col items-start gap-2.5 rounded-lg border border-border bg-elevation px-4 py-3 font-sans font-medium {shadowInner
 				? 'shadow-inner'
-				: 'shadow'} transition   transparency:bg-elevation/90 transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200     {busy
+				: 'shadow'} transition transparency:bg-elevation/90 transparency:backdrop-blur-xl transparency:backdrop-brightness-125 transparency:backdrop-saturate-200 {busy
 				? 'opacity-50'
 				: ''} {isParent ? 'w-full' : ''}"
 		>
 			{#if display_parent && "parent" in annotation && annotation.parent}
-				<svelte:self isParent={true} annotation={annotation.parent} shadowInner={true} />
+				<svelte:self
+					isParent={true}
+					annotation={annotation.parent}
+					shadowInner={true}
+				/>
 			{/if}
 			<div
-				class="flex w-full flex-col gap-2 {'parent' in annotation && annotation.parent
+				class="flex w-full flex-col gap-2 {'parent' in annotation &&
+				annotation.parent
 					? 'border-l border-gray-500/25 pl-3'
 					: ''}"
 			>
@@ -250,22 +255,26 @@
 						style:--annotation-color={color}
 						on:click={() => {
 							if (!scrollOnClick) return;
-							document.querySelector(`[data-annotation-id="${annotation.id}"]`)?.scrollIntoView({
-								block: "center",
-								inline: "start",
-								behavior: "smooth",
-							});
+							document
+								.querySelector(`[data-annotation-id="${annotation.id}"]`)
+								?.scrollIntoView({
+									block: "center",
+									inline: "start",
+									behavior: "smooth",
+								});
 						}}
 					>
 						<div class="flex items-center justify-between">
 							<div>
 								<SmallPlus
-									><a on:click|stopPropagation href="/u:{annotation.creator.username}"
-										>{annotation.creator.username}</a
+									><a on:click|stopPropagation href="/u:{annotation.username}"
+										>{annotation.username}</a
 									></SmallPlus
 								>
 								<Muted class="text-xs">
-									<time datetime={dayjs(annotation.createdAt).format()}>{$date}</time>
+									<time datetime={dayjs(annotation.createdAt).format()}
+										>{$date}</time
+									>
 									{annotation.editedAt ? "(edited)" : ""}
 								</Muted>
 							</div>
@@ -282,7 +291,10 @@
 											? 'bg-gray-200 dark:bg-gray-600'
 											: ''}"
 									>
-										<Icon name="ellipsisHorizontalMini" className="h-4 w-4 fill-bright dark:fill-gray-300" />
+										<Icon
+											name="ellipsisHorizontalMini"
+											className="h-4 w-4 fill-bright dark:fill-gray-300"
+										/>
 									</MenuButton>
 									<Portal>
 										<MenuItems
@@ -294,7 +306,9 @@
 													<MenuItem
 														class={({ active }) =>
 															`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-content dark:text-gray-50 ${
-																active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
+																active
+																	? "bg-elevation-hover dark:bg-gray-500/20"
+																	: ""
 															}`}
 														on:click={() => {
 															editing = true;
@@ -304,14 +318,18 @@
 													>
 														<Icon
 															name="pencilMini"
-															className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
+															className="h-4 w-4  {active
+																? 'fill-bright '
+																: 'fill-muted'}"
 														/>
 														<span>Edit</span>
 													</MenuItem>
 													<MenuItem
 														class={({ active }) =>
 															`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-content dark:text-gray-50 ${
-																active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
+																active
+																	? "bg-elevation-hover dark:bg-gray-500/20"
+																	: ""
 															}`}
 														on:click={async () => {
 															busy = true;
@@ -326,15 +344,25 @@
 														as="div"
 													>
 														<Icon
-															name={annotation.private ? "lockOpenMini" : "lockClosedMini"}
-															className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
+															name={annotation.private
+																? "lockOpenMini"
+																: "lockClosedMini"}
+															className="h-4 w-4  {active
+																? 'fill-bright '
+																: 'fill-muted'}"
 														/>
-														<span>Make {annotation.private ? "Public" : "Private"}</span>
+														<span
+															>Make {annotation.private
+																? "Public"
+																: "Private"}</span
+														>
 													</MenuItem>
 													<MenuItem
 														class={({ active }) =>
 															`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-content dark:text-gray-50 ${
-																active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
+																active
+																	? "bg-elevation-hover dark:bg-gray-500/20"
+																	: ""
 															}`}
 														on:click={async () => {
 															$updateAnnotation.mutate({
@@ -354,20 +382,25 @@
 													>
 														<Icon
 															name="documentText"
-															className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
+															className="h-4 w-4  {active
+																? 'fill-bright '
+																: 'fill-muted'}"
 														/>
 														<span>Convert to page note</span>
 													</MenuItem>
 													<MenuItem
 														class={({ active }) =>
 															`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-content dark:text-gray-50 ${
-																active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
+																active
+																	? "bg-elevation-hover dark:bg-gray-500/20"
+																	: ""
 															}`}
 														on:click={async () => {
 															modals.open(
 																ConfirmModalContent,
 																{
-																	title: "Are you sure you want to delete this annotation?",
+																	title:
+																		"Are you sure you want to delete this annotation?",
 																	description: "This action cannot be undone.",
 																	onConfirm: () => {
 																		dispatch("delete", annotation);
@@ -393,7 +426,9 @@
 													>
 														<Icon
 															name="trashMini"
-															className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
+															className="h-4 w-4  {active
+																? 'fill-bright '
+																: 'fill-muted'}"
 														/>
 														<span>Delete</span>
 													</MenuItem>
@@ -403,7 +438,9 @@
 												<MenuItem
 													class={({ active }) =>
 														`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-content dark:text-gray-50 ${
-															active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
+															active
+																? "bg-elevation-hover dark:bg-gray-500/20"
+																: ""
 														}`}
 													on:click={() => (replying = true)}
 													as="div"
@@ -411,7 +448,9 @@
 												>
 													<Icon
 														name="replySolid"
-														className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
+														className="h-4 w-4  {active
+															? 'fill-bright '
+															: 'fill-muted'}"
 													/>
 													<span>Reply</span>
 												</MenuItem>
@@ -419,7 +458,9 @@
 													as="div"
 													class={({ active }) =>
 														`flex h-8 cursor-default select-none items-center space-x-3 rounded-lg px-2 text-sm font-medium text-content dark:text-gray-50 ${
-															active ? "bg-elevation-hover dark:bg-gray-500/20" : ""
+															active
+																? "bg-elevation-hover dark:bg-gray-500/20"
+																: ""
 														}`}
 													on:click={() => {
 														//TODO
@@ -428,7 +469,9 @@
 												>
 													<Icon
 														name="linkMini"
-														className="h-4 w-4  {active ? 'fill-bright ' : 'fill-muted'}"
+														className="h-4 w-4  {active
+															? 'fill-bright '
+															: 'fill-muted'}"
 													/>
 													<span>Copy link</span>
 												</MenuItem>
@@ -442,10 +485,14 @@
 							<Muted class="text-sm italic">
 								<a
 									class="flex items-center space-x-2"
-									href="/u:{$page.data.user?.username}/entry/{annotation.entry.id}"
+									href="/u:{$page.data.user?.username}/entry/{annotation.entry
+										.id}"
 								>
 									{#if annotation.entry.type}
-										<Icon name={iconsMini[annotation.entry.type]} className="h-3 w-3 fill-current" />
+										<Icon
+											name={iconsMini[annotation.entry.type]}
+											className="h-3 w-3 fill-current"
+										/>
 										<!-- <Icon /> -->
 									{/if}
 									<SmallPlus>{annotation.entry.title}</SmallPlus></a
@@ -453,8 +500,11 @@
 							>
 						{/if}
 						{#if "parent" in annotation && showParent && annotation.parent}
-							<button class="max-w-max" on:click={() => (display_parent = !display_parent)}
-								><span>Replying to {annotation.parent.creator.username}</span></button
+							<button
+								class="max-w-max"
+								on:click={() => (display_parent = !display_parent)}
+								><span>Replying to {annotation.parent.creator.username}</span
+								></button
 							>
 						{/if}
 						{#if target}
@@ -480,8 +530,9 @@
 								{#if expandable}
 									<button
 										on:click|stopPropagation
-										class="z-10 col-start-12 row-start-1 row-end-1 cursor-default place-self-end pl-4  font-semibold text-primary-600 backdrop-opacity-50  "
-										on:click={() => (more = !more)}>{more ? "Less" : "More"}</button
+										class="z-10 col-start-12 row-start-1 row-end-1 cursor-default place-self-end pl-4 font-semibold text-primary-600 backdrop-opacity-50"
+										on:click={() => (more = !more)}
+										>{more ? "Less" : "More"}</button
 									>
 								{/if}
 							</div>
@@ -501,9 +552,9 @@
 							{/if}
 						{/if}
 						{#if annotation.body}
-							<div class="font-normal prose-sm prose">{annotation.body}</div>
+							<div class="prose prose-sm font-normal">{annotation.body}</div>
 						{:else if annotation.contentData}
-							<div class="font-normal prose prose-sm">
+							<div class="prose prose-sm font-normal">
 								{@html genHtml(annotation.contentData)}
 							</div>
 						{/if}
@@ -516,7 +567,8 @@
 				{/if}
 				{#if annotation.children?.length || ("_count" in annotation && annotation._count.children)}
 					{@const count =
-						annotation.children?.length || ("_count" in annotation && annotation._count.children)}
+						annotation.children?.length ||
+						("_count" in annotation && annotation._count.children)}
 					<!-- TODO: on click load replies -->
 					<!-- TODO: progressively enhance by having this be a link to dedicated entry/annotations page -->
 					<Disclosure class="w-full space-y-2">
@@ -527,7 +579,9 @@
 						>
 							{count} repl{count > 1 ? "ies" : "y"}
 						</DisclosureButton>
-						<DisclosurePanel class="flex w-full flex-col gap-2 border-l border-gray-500/50 pl-2">
+						<DisclosurePanel
+							class="flex w-full flex-col gap-2 border-l border-gray-500/50 pl-2"
+						>
 							{#if annotation.children}
 								{#each annotation.children as child}
 									<svelte:self annotation={child} />

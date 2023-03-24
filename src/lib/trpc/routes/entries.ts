@@ -13,6 +13,7 @@ import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
 import { sql } from "kysely";
 import type { DocumentType, Entry } from "$lib/prisma/kysely/types";
 import { dev } from "$app/environment";
+import type { ChosenIcon } from "$lib/types/icon";
 
 const idInput = z.object({
     id: z.number(),
@@ -61,7 +62,7 @@ export const entriesRouter = router({
                     .select([
                         "b.id as bookmark_id",
                         "b.stateId as state_id",
-                        "b.createdAt",
+                        "b.createdAt as bookmark_createdAt",
                         "i.progress",
                     ])
                     .where("b.userId", "=", userId)
@@ -97,6 +98,7 @@ export const entriesRouter = router({
                     "e.id",
                     "e.image",
                     "e.published",
+                    "e.type",
                     "e.title",
                     "e.author",
                     "e.uri",
@@ -115,7 +117,15 @@ export const entriesRouter = router({
             if (input?.location && input?.location !== "all") {
                 entries = entries.where("s.type", "=", input.location);
             }
-            return entries.execute();
+            const awaitedEntries = await entries.execute();
+            return awaitedEntries.map(e => {
+                return {
+                    ...e,
+                    progress: e.progress || 0,
+                    annotations: Number(e.annotations) || 0,
+                    relations: Number(e.relations) || 0,
+                }
+            })
         }),
     load: protectedProcedure
         .input(
@@ -123,7 +133,7 @@ export const entriesRouter = router({
                 id: z.number(),
             })
         )
-        .query(({ ctx: { userId }, input: { id } }) =>
+        .query(({ ctx: { userId, db }, input: { id } }) =>
             db.entry
                 .findUniqueOrThrow({
                     where: {
@@ -341,40 +351,77 @@ export const entriesRouter = router({
                     };
                 })
         ),
-    getAnnotations: protectedProcedure.input(idInput).query(({ input: { id } }) =>
-        db.entry
-            .findUniqueOrThrow({
-                where: {
-                    id,
-                },
-                select: {
-                    annotations: true,
-                },
-            })
-            .then((data) => data.annotations)
+    getAnnotations: protectedProcedure.input(idInput).query(({ input: { id }, ctx }) => {
+        const { db } = ctx;
+        return db.selectFrom("Annotation as a")
+            .innerJoin("user as au", "au.id", "a.userId")
+            .select([
+                "a.id",
+                "a.contentData",
+                "a.private",
+                "a.color",
+                "a.body",
+                "a.target",
+                "a.entryId",
+                "a.parentId",
+                "a.createdAt",
+                "a.editedAt",
+                "a.type",
+                "a.color",
+                "au.username",
+                // sql<number>`SELECT count(*) FROM Annotation a WHERE a.parentId = a.id`.as(
+                //     "children_count"
+                // ),
+            ])
+            .where("a.entryId", "=", id)
+            .where("a.userId", "=", ctx.userId)
+            .execute();
+    }
     ),
+    getRelations: protectedProcedure
+        .input(
+            z.object({
+                id: z.number(),
+            })
+        )
+        .query(async ({ input: { id, }, ctx }) => {
+            const { db } = ctx;
+            let [relations, back_relations] = await Promise.all([db
+                .selectFrom("Relation as r")
+                .innerJoin("Entry as e", "e.id", "r.relatedEntryId")
+                .select(["r.entryId", "r.type", "e.title as related_entry_title", "e.id as related_entry_id",])
+                .where("r.entryId", "=", id)
+                .execute(),
+            db.selectFrom("Relation as r")
+                .innerJoin("Entry as e", "e.id", "r.entryId")
+                .select(["r.relatedEntryId as entryId", "r.type", "e.title as related_entry_title", "e.id as related_entry_id",])
+                .where("r.relatedEntryId", "=", id)
+                .execute()
+            ])
+            return {
+                relations,
+                back_relations
+            }
+        }),
     getCollections: protectedProcedure
         .input(idInput)
         .query(async ({ ctx, input: { id } }) => {
-            const collections = await ctx.prisma.collection.findMany({
-                where: {
-                    items: {
-                        some: {
-                            entryId: id,
-                            // TODO: public vs private, per user, etc
-                        },
-                    },
-                },
-                include: {
-                    user: {
-                        select: {
-                            username: true,
-                        },
-                    },
-                },
-            });
-            return collections;
+            const { db } = ctx;
+            const collections = await db
+                .selectFrom("Collection as c")
+                .innerJoin("CollectionItems as ci", "ci.collectionId", "c.id")
+                .innerJoin("user as u", "u.id", "c.userId")
+                .select(["c.id", "c.name", "c.icon", "u.username"])
+                .where("ci.entryId", "=", id)
+                .execute();
+            return collections as {
+                id: number;
+                username: string;
+                name: string;
+                icon: ChosenIcon;
+            }[]
         }),
+
     addData: protectedProcedure
         .input(
             z.object({

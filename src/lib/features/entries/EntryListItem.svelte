@@ -14,8 +14,31 @@
 	import { createEventDispatcher, onDestroy } from "svelte";
 	import type { HTMLAnchorAttributes } from "svelte/elements";
 	import { icons } from "./utils";
+	import type { RouterOutputs } from "$lib/trpc/router";
+	import { trpcWithQuery } from "$lib/trpc/client";
+	import LoadingSpinner from "$lib/components/LoadingSpinner.svelte";
 
-	export let entry: Partial<EntryInList> & Pick<EntryInList, "id">;
+	const client = trpcWithQuery($page);
+
+	export let entry: RouterOutputs["entries"]["listBookmarks"][number];
+
+	let show_metadata = false;
+	$: relationsQuery = client.entries.getRelations.createQuery(
+		{
+			id: entry.id,
+		},
+		{
+			enabled: show_metadata,
+		}
+	);
+	$: annotationsQuery = client.entries.getAnnotations.createQuery(
+		{
+			id: entry.id,
+		},
+		{
+			enabled: show_metadata,
+		}
+	);
 
 	// float
 	export let progress = 0;
@@ -75,17 +98,17 @@
 	this={entry.id || href ? "a" : "div"}
 	href={entry.id ? `/u:${$page.data.user?.username}/entry/${entry.id}` : href}
 	class:active
-	class="item group relative flex h-full flex-initial items-center gap-4  p-4  transition {c}"
+	class="item group relative flex h-full flex-initial items-center gap-4 p-4 transition {c}"
 >
 	<div
-		class="flex-inital group/button relative flex h-12 w-10 shrink-0 cursor-pointer flex-row items-center overflow-hidden rounded-md  drop-shadow-lg transition sm:h-16 sm:w-14 {entry.id
+		class="flex-inital group/button relative flex h-12 w-10 shrink-0 cursor-pointer flex-row items-center overflow-hidden rounded-md drop-shadow-lg transition sm:h-16 sm:w-14 {entry.id
 			? 'hover:ring'
 			: ''}"
 		on:click|stopPropagation
 		on:keydown
 	>
 		<img
-			class=" h-full w-full  shrink-0 cursor-pointer rounded-md object-cover shadow-sm  ring-1 ring-border/50 hover:ring-1"
+			class=" h-full w-full shrink-0 cursor-pointer rounded-md object-cover shadow-sm ring-1 ring-border/50 hover:ring-1"
 			src={imgsrc}
 			alt=""
 		/>
@@ -125,43 +148,35 @@
 					<Muted class="text-sm">{dayjs(entry.published).year()}</Muted>
 				{/if}
 				<div class="flex items-center gap-0.5">
-					{#if entry.annotations?.length && Array.isArray(entry.annotations)}
-						{@const pageNotes = entry.annotations.filter(
-							(a) => a.type === "note"
-						)}
-						{@const inlineNotes = entry.annotations.filter(
-							(a) => a.type === "annotation"
-						)}
-						{#if pageNotes.length}
-							<Pill icon="documentMini" popup={true}>
-								{pageNotes.length}
-								<div class="flex flex-col space-y-2" slot="popup">
-									<div class="border-b border-border/80 py-1">
-										<h2 class="text-sm font-medium">Page Notes</h2>
-									</div>
-									<div class="flex flex-col space-y-1.5 text-xs">
+					{#if entry.annotations}
+						<Pill
+							popup={true}
+							icon="pencilMini"
+							on:showPopup={() => {
+								show_metadata = true;
+							}}
+						>
+							{entry.annotations}
+							<div class="flex flex-col space-y-2" slot="popup">
+								<div class="border-b border-border/80 py-1">
+									<h2 class="text-sm font-medium">Annotations</h2>
+								</div>
+								<div class="flex flex-col space-y-1.5 text-xs">
+									{#if $annotationsQuery.isLoading}
+										<LoadingSpinner />
+									{:else if $annotationsQuery.data}
+										{@const annotations = $annotationsQuery.data}
+										{@const pageNotes = annotations.filter(
+											(a) => a.type === "note"
+										)}
+										{@const inlineNotes = annotations.filter(
+											(a) => a.type === "annotation"
+										)}
 										{#each pageNotes
 											.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
-											.slice(0, 3) as note}
+											.slice(0, 3) as note, idx}
 											<MiniAnnotation clamp="line-clamp-3" annotation={note} />
 										{/each}
-										{#if pageNotes.length > 3}
-											<span class="px-1 text-accent/80"
-												>+{pageNotes.length - 3} more</span
-											>
-										{/if}
-									</div>
-								</div>
-							</Pill>
-						{/if}
-						{#if inlineNotes.length}
-							<Pill fill="fill-accent/70" popup={true} icon="pencilMini">
-								{inlineNotes.length}
-								<div class="flex flex-col space-y-2" slot="popup">
-									<div class="border-b border-border/80 py-1">
-										<h2 class="text-sm font-medium">Annotations</h2>
-									</div>
-									<div class="flex flex-col space-y-1.5 text-xs">
 										{#each inlineNotes
 											.sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
 											.slice(0, 3) as note, idx}
@@ -172,73 +187,83 @@
 												>+{inlineNotes.length - 3} more</span
 											>
 										{/if}
-									</div>
+									{/if}
 								</div>
-							</Pill>
-						{/if}
+							</div>
+						</Pill>
 					{/if}
-					{#if entry.relations?.length || entry.back_relations?.length}
-						{@const total =
-							typeof entry.relations === "number"
-								? entry.relations
-								: entry.relations?.length ??
-								  0 + (entry.back_relations?.length ?? 0)}
-						{@const slicedRelations = entry.relations?.slice(0, 3) || []}
-						{@const slicedBackRelations =
-							entry.back_relations?.slice(0, 3) || []}
-						{@const slicedRelationsTotal =
-							slicedRelations?.length + slicedBackRelations?.length}
-						<Pill icon="arrowsRightLeftMini" popup={true}>
-							{total}
+					<!-- Entry.relations can be a number (or array?) -->
+					{#if !!entry.relations}
+						{@const total = entry.relations}
+						<Pill
+							icon="arrowsRightLeftMini"
+							on:showPopup={() => {
+								// relations
+								show_metadata = true;
+							}}
+							popup={true}
+						>
+							{entry.relations}
 							<div class="flex flex-col space-y-2" slot="popup">
 								<div class="border-b border-border/80 py-1">
 									<h2 class="text-sm font-medium">Relations</h2>
 								</div>
 								<div class="flex flex-col space-y-1.5 px-1 text-xs">
-									{#each slicedRelations as relation}
-										<div class="flex gap-1">
-											{#if relation.type === "Related"}
-												<Icon
-													name="arrowsRightLeftMini"
-													className="w-3 h-3 fill-muted/80"
-												/>
-												<span class="sr-only">Related</span>
-											{:else if relation.type === "SavedFrom"}
-												<Icon
-													name="arrowRightMini"
-													className="w-3 h-3 fill-muted/80"
-												/>
-												<span class="sr-only">Saved from</span>
-											{/if}
-											<a href="/entry/{relation.relatedEntry.id}"
-												>{relation.relatedEntry.title}</a
+									{#if $relationsQuery.isInitialLoading}
+										<LoadingSpinner />
+									{:else if $relationsQuery.data}
+										{@const slicedRelations =
+											$relationsQuery.data.relations?.slice(0, 3) || []}
+										{@const slicedBackRelations =
+											$relationsQuery.data.back_relations?.slice(0, 3) || []}
+										{@const slicedRelationsTotal =
+											slicedRelations?.length + slicedBackRelations?.length}
+
+										{#each slicedRelations as relation}
+											<div class="flex gap-1">
+												{#if relation.type === "Related"}
+													<Icon
+														name="arrowsRightLeftMini"
+														className="w-3 h-3 fill-muted/80"
+													/>
+													<span class="sr-only">Related</span>
+												{:else if relation.type === "SavedFrom"}
+													<Icon
+														name="arrowRightMini"
+														className="w-3 h-3 fill-muted/80"
+													/>
+													<span class="sr-only">Saved from</span>
+												{/if}
+												<a href="/entry/{relation.related_entry_id}"
+													>{relation.related_entry_title}</a
+												>
+											</div>
+										{/each}
+										{#each slicedBackRelations as relation}
+											<div class="flex gap-1">
+												{#if relation.type === "Related"}
+													<Icon
+														name="arrowsRightLeftMini"
+														className="w-3 h-3 fill-muted/80"
+													/>
+													<span class="sr-only">Related</span>
+												{:else if relation.type === "SavedFrom"}
+													<Icon
+														name="arrowRightMini"
+														className="w-3 h-3 fill-muted/80"
+													/>
+													<span class="sr-only">Saved from</span>
+												{/if}
+												<a href="/entry/{relation.related_entry_id}"
+													>{relation.related_entry_title}</a
+												>
+											</div>
+										{/each}
+										{#if total > slicedRelationsTotal}
+											<span class="text-accent/80"
+												>+{total - slicedRelationsTotal} more</span
 											>
-										</div>
-									{/each}
-									{#each slicedBackRelations as relation}
-										<div class="flex gap-1">
-											{#if relation.type === "Related"}
-												<Icon
-													name="arrowsRightLeftMini"
-													className="w-3 h-3 fill-muted/80"
-												/>
-												<span class="sr-only">Related</span>
-											{:else if relation.type === "SavedFrom"}
-												<Icon
-													name="arrowRightMini"
-													className="w-3 h-3 fill-muted/80"
-												/>
-												<span class="sr-only">Saved from</span>
-											{/if}
-											<a href="/entry/{relation.entry.id}"
-												>{relation.entry.title}</a
-											>
-										</div>
-									{/each}
-									{#if total > slicedRelationsTotal}
-										<span class="text-accent/80"
-											>+{total - slicedRelationsTotal} more</span
-										>
+										{/if}
 									{/if}
 								</div>
 							</div>
