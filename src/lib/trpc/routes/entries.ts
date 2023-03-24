@@ -2,7 +2,6 @@
 import { fuzzy } from "fast-fuzzy";
 import { z } from "zod";
 
-import { db } from "$lib/db";
 import { annotationSelect } from "$lib/prisma/selects/annotations";
 import { entryListSelect } from "$lib/prisma/selects/entry";
 import type { EntryExtendedSchema } from "$lib/prisma/zod-utils";
@@ -12,6 +11,7 @@ import { Metadata } from "$lib/web-parser";
 import type { Recipe } from "$lib/web-parser/recipe";
 import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
 import { sql } from "kysely";
+import type { DocumentType, Entry } from "$lib/prisma/kysely/types";
 
 const idInput = z.object({
     id: z.number(),
@@ -25,7 +25,7 @@ export const entriesRouter = router({
             })
         )
         .query(async ({ ctx, input }) => {
-            const { userId, user } = ctx;
+            const { userId, user, db } = ctx;
             const { id } = input;
             // User data includes annotations, tags (from parent), state, bookmark, progress, relations, etc;
             const [annotations, bookmark] = await Promise.all([
@@ -44,9 +44,9 @@ export const entriesRouter = router({
                         "a.type",
                         "a.color",
                         "au.username",
-                        sql<number>`SELECT count(*) FROM Annotation a WHERE a.parentId = a.id`.as(
-                            "children_count"
-                        ),
+                        // sql<number>`SELECT count(*) FROM Annotation a WHERE a.parentId = a.id`.as(
+                        //     "children_count"
+                        // ),
                     ])
                     .where("a.userId", "=", userId)
                     .where("a.deleted", "is", null)
@@ -82,6 +82,7 @@ export const entriesRouter = router({
                 .optional()
         )
         .query(async ({ ctx, input }) => {
+            const { db } = ctx;
             console.log(`listBookmarks`, input);
             const { userId, user } = ctx;
             let entries = db
@@ -884,8 +885,28 @@ export const entriesRouter = router({
                 })
             )
             .query(async ({ ctx, input }) => {
+                type Entry = {
+                    title: string | null;
+                    html: string | null;
+                    author: string | null;
+                    id: number;
+                    feedId: number | null;
+                    enclosureUrl: string | null;
+                    uri: string | null;
+                    image: string | null;
+                    published: Date | null;
+                    type: DocumentType | null;
+                    podcastIndexId: bigint | null;
+                    googleBooksId: string | null;
+                }
+                const { db, redis } = ctx;
                 const { id } = input;
-                return db
+                const cached = await redis.get(`entry:${id}`);
+                if (cached) {
+                    console.log("cache hit");
+                    return cached as Entry;
+                }
+                const entry: Entry = await db
                     .selectFrom("Entry as e")
                     .where("e.id", "=", id)
                     .select([
@@ -903,6 +924,10 @@ export const entriesRouter = router({
                         "e.googleBooksId",
                     ])
                     .executeTakeFirstOrThrow();
+                await redis.set(`entry:${id}`, entry, {
+                    ex: 60 * 60 * 24,
+                });
+                return entry;
             }),
     }),
 });

@@ -2,7 +2,6 @@
 
 import type { Annotation, Entry, PodcastEpisode, Prisma } from "@prisma/client";
 import dayjs from "dayjs";
-import { Md5 } from "ts-md5";
 import { z } from "zod";
 
 import { browser } from "$app/environment";
@@ -17,7 +16,7 @@ import type { FavoriteSchema } from "./types/schemas/Favorite";
 import type { AddToListSchema } from "./types/schemas/List";
 import type { RssFeedItemModel } from "./types/schemas/rssfeeditem";
 import type { ViewOptions } from "./types/schemas/View";
-import { debounce } from "lodash";
+import debounce from "lodash/debounce";
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -472,9 +471,6 @@ export async function addToList(listId: number, data: z.infer<typeof AddToListSc
     return res;
 }
 
-export function createEpisodeHash(data: Partial<PodcastEpisode>) {
-    return Md5.hashStr(data.podcastId + data.guid || data.url);
-}
 
 export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
     if (value === null || value === undefined) return false;

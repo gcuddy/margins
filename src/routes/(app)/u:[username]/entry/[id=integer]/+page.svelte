@@ -560,7 +560,7 @@
 									</div>
 								{/if}
 							</header>
-							{#if article.type === DocumentType.audio}
+							{#if article.type === "audio"}
 								<AudioEntry entry={article} />
 							{/if}
 							<!-- this is a very rudimentary check lol -->
@@ -584,9 +584,9 @@
 								<HighlightMenu noHighlight={true} articleId={article.id} />
 							</noscript>
 						</div>
-					{:else if article.type === DocumentType.book}
+					{:else if article.type === "book"}
 						<BookEntry entry={article} bookId={article?.googleBooksId} />
-					{:else if article.type === DocumentType.bookmark}
+					{:else if article.type === "bookmark"}
 						{@const screenshot =
 							article.screenshot || article.bookmark?.screenshot}
 						<BookmarkEntry
@@ -595,13 +595,13 @@
 								screenshot,
 							}}
 						/>
-					{:else if article.type === DocumentType.image}
+					{:else if article.type === "image"}
 						{#if article.image}
 							<ImageEntry image={article.image} />
 						{/if}
 					{:else if article.type === "movie" && article.tmdbId}
 						<MovieEntry id={article.tmdbId} />
-					{:else if article.type === DocumentType.audio && article.podcastIndexId}
+					{:else if article.type === "audio" && article.podcastIndexId}
 						<!-- decide if podcast or not podcast -->
 						{#if article.podcastIndexId}
 							<Episode episodeId={article.podcastIndexId} />
@@ -612,10 +612,10 @@
 						<!-- {JSON.stringify(article)} -->
 
 						<TweetEntry tweet={article.original} />
-					{:else if article.type === DocumentType.recipe && article.recipe}
+					{:else if article.type === "recipe" && article.recipe}
 						<!-- TODO: display html or recipe -->
 						<RecipeEntry recipe={article.recipe} />
-					{:else if article.type === DocumentType.video && article.youtubeId}
+					{:else if article.type === "video" && article.youtubeId}
 						<VideoEntry bind:player entry={article} />
 						<!-- <Youtube videoId={article.youtubeId} /> -->
 						<!-- {@html article.html} -->

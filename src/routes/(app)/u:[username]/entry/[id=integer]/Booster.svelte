@@ -9,18 +9,18 @@
 	// this should use codemirror..... eventually
 	// import { CodeJar } from "codejar";
 	import { onMount } from "svelte";
-	import hljs from "highlight.js/lib/core";
-	import hlcss from "highlight.js/lib/languages/css";
-	hljs.registerLanguage("css", hlcss);
+	// import hljs from "highlight.js/lib/core";
+	// import hlcss from "highlight.js/lib/languages/css";
+	// hljs.registerLanguage("css", hlcss);
 	import { scopeCss, unscopeCss } from "./css";
-	import debounce from "lodash.debounce";
+	// import debounce from "lodash.debounce";
 
 	let ref: HTMLTextAreaElement;
 
-	const scope = debounce(scopeCss, 500);
+	// const scope = debounce(scopeCss, 500);
 
 	onMount(async () => {
-		const { CodeJar } = await import("codejar");
+		// const { CodeJar } = await import("codejar");
 		const jar = CodeJar(ref, hljs.highlightElement);
 		jar.updateCode(unscopeCss(css) || "");
 		jar.onUpdate((code) => {

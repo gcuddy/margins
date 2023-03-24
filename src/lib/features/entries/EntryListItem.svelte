@@ -7,7 +7,7 @@
 	import Pill from "$lib/components/Pill.svelte";
 	import StateCombobox from "$lib/components/StateCombobox.svelte";
 	import TagCloud from "$lib/components/TagCloud.svelte";
-	import dayjs from "$lib/dayjs";
+	import dayjs from "dayjs";
 	import type { EntryInList } from "$lib/prisma/selects/entry";
 	import { selectedIds, selectedItems } from "$lib/stores/selectedItems";
 	import type { DocumentType, Entry } from "@prisma/client";
@@ -71,9 +71,9 @@
 	// something like getContext(viewOptions) and then use that
 </script>
 
-<!-- href={entry.id ? `/u:${$page.data.user?.username}/entry/${entry.id}` : href} -->
 <svelte:element
 	this={entry.id || href ? "a" : "div"}
+	href={entry.id ? `/u:${$page.data.user?.username}/entry/${entry.id}` : href}
 	class:active
 	class="item group relative flex h-full flex-initial items-center gap-4  p-4  transition {c}"
 >

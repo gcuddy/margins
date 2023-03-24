@@ -48,20 +48,19 @@ export const load: LayoutServerLoad = async (event) => {
             // allEntries
         };
     } catch (error) {
-        if (error instanceof TRPCError) {
-            console.log("TRPC ERROR")
-            if (error.code === "UNAUTHORIZED") {
-                // TODO: unauthorized site
-                throw redirect(307, "/login")
-            }
-        }
+        console.error(error);
+        // if (error instanceof TRPCError) {
+        //     console.log("TRPC ERROR")
+        //     if (error.code === "UNAUTHORIZED") {
+        //         // TODO: unauthorized site
+        //         throw redirect(307, "/login")
+        //     }
+        // }
         console.error(error);
         throw redirect(307, "/login")
-        return {
-            theme,
-            authorized: false,
-            user: null
-        }
+        // return {
+        //     theme, authorized: false, user: null
+        // }
     }
     // return {
     // 	// theme

@@ -3,14 +3,13 @@
 	import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
 	import { tweened } from "svelte/motion";
 	import { derived, writable } from "svelte/store";
-	import type { number } from "zod";
 	type T = $$Generic;
 
 	type TValue = T & {
 		id?: string | number;
 		name?: string;
 		disabled?: boolean;
-        group?: string;
+		group?: string;
 	};
 
 	interface Props {
@@ -18,7 +17,9 @@
 	}
 
 	type TProps = Props & {
-		idResolver: Props["values"][number]["id"] extends undefined ? boolean : string;
+		idResolver: Props["values"][number]["id"] extends undefined
+			? boolean
+			: string;
 	};
 
 	export let values: TValue[];
@@ -118,14 +119,16 @@
 		}
 	};
 
-	export let valueResolver: (v: T) => string = (v: any) => v.name || v.displayValue || v.value;
+	export let valueResolver: (v: T) => string = (v: any) =>
+		v.name || v.displayValue || v.value;
 
 	let activeId = "";
 	// maybe save more robustly?
 	let selectedId: string | number = "";
 	// let lastSelected: T | undefined;
 	//  && selectedValue.includes(v))
-	const setActiveIndex = () => (activeIndex = values.findIndex((v) => !v.disabled) ?? 0);
+	const setActiveIndex = () =>
+		(activeIndex = values.findIndex((v) => !v.disabled) ?? 0);
 	$: console.log({ activeIndex });
 	$: if (staticProp) expanded = true;
 	$: console.log({ expanded });
@@ -237,7 +240,9 @@
 	export let inputRef: HTMLElement | undefined = undefined;
 
 	$: if ((staticProp || expanded) && activeIndex > -1) {
-		tick().then(() => optionRefs[activeIndex]?.scrollIntoView({ block: "nearest" }));
+		tick().then(() =>
+			optionRefs[activeIndex]?.scrollIntoView({ block: "nearest" })
+		);
 	}
 
 	function close() {
@@ -251,12 +256,20 @@
 		// value = '';
 	}
 
-	function handleMove(e: MouseEvent | PointerEvent, val: TValue, active: boolean) {
+	function handleMove(
+		e: MouseEvent | PointerEvent,
+		val: TValue,
+		active: boolean
+	) {
 		if (val.disabled) return;
 		if (active) return;
 		activeIndex = values.indexOf(val);
 	}
-	function handleLeave(e: MouseEvent | PointerEvent, val: TValue, active: boolean) {
+	function handleLeave(
+		e: MouseEvent | PointerEvent,
+		val: TValue,
+		active: boolean
+	) {
 		// console.log('handleLeave');
 		if (val.disabled) return;
 		if (!active) return;
@@ -288,8 +301,8 @@
 
 	let ro: ResizeObserver;
 	export let height = tweened(200, {
-        duration: 0
-    });
+		duration: 0,
+	});
 
 	onMount(() => {
 		if (ref) {
@@ -326,84 +339,89 @@
 	// });
 </script>
 
-	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<div class={className} bind:this={ref} {...$$restProps}>
-		<!-- slot props are given IF you want to use them -->
-		{#if name}
-			{#each selectedValue as value}
-				<input type="hidden" {name} value={JSON.stringify(value)} />
-			{/each}
-		{/if}
-		<slot
-			name="input"
-			aria-controls={optionId}
-			aria-expanded={expanded}
-			aria-activedescendant={valueIds[activeIndex].toString()}
-			onKeydown={handleKeydown}
-		>
-			<div class={inputParent?.class}>
-				<slot name="inputPeer" />
-				<input
-					role="combobox"
-					type="text"
-					bind:value
-					on:keydown={handleKeydown}
-					on:blur={close}
-					on:blur
-					on:click={(e) => {
-						dispatch("input-click", e);
-					}}
-                   on:input
-					on:input={() => {
-						if (!expanded) {
-							open();
-						}
-					}}
-					aria-controls={optionId}
-					aria-expanded={expanded}
-					aria-activedescendant={valueIds[activeIndex]?.toString()}
-					aria-autocomplete="list"
-					class="border-none focus:ring-0 {input?.class}"
-					placeholder={input?.placeholder}
-					bind:this={inputRef}
-				/>
-				<slot name="inputPeerAfter" />
-			</div>
-		</slot>
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<div class={className} bind:this={ref} {...$$restProps}>
+	<!-- slot props are given IF you want to use them -->
+	{#if name}
+		{#each selectedValue as value}
+			<input type="hidden" {name} value={JSON.stringify(value)} />
+		{/each}
+	{/if}
+	<slot
+		name="input"
+		aria-controls={optionId}
+		aria-expanded={expanded}
+		aria-activedescendant={valueIds[activeIndex].toString()}
+		onKeydown={handleKeydown}
+	>
+		<div class={inputParent?.class}>
+			<slot name="inputPeer" />
+			<input
+				role="combobox"
+				type="text"
+				bind:value
+				on:keydown={handleKeydown}
+				on:blur={close}
+				on:blur
+				on:click={(e) => {
+					dispatch("input-click", e);
+				}}
+				on:input
+				on:input={() => {
+					if (!expanded) {
+						open();
+					}
+				}}
+				aria-controls={optionId}
+				aria-expanded={expanded}
+				aria-activedescendant={valueIds[activeIndex]?.toString()}
+				aria-autocomplete="list"
+				class="border-none focus:ring-0 {input?.class}"
+				placeholder={input?.placeholder}
+				bind:this={inputRef}
+			/>
+			<slot name="inputPeerAfter" />
+		</div>
+	</slot>
 
-		<!-- TODO: able to render multiple "groups" ? -->
-		<slot name="listbox" {activeIndex}>
-			{#if staticProp || expanded}
-				<ul id={optionId} role="listbox" class={options?.class} aria-multiselectable={multiple}>
-					<!-- TODO: (maybe) use tiny-virtual-list for rendering li  -->
-					{#each values as value, index (idResolver(value))}
-						{@const id = valueIds[index]}
-						{@const selected = selectedValueIds.includes(id)}
-						{@const active = index === activeIndex}
-						<!-- don't actually use optionContainer lol, everything would break -->
-						<slot name="optionContainer">
-							<!-- could use a private component here? -->
-							<li
-								id="cb-option-{id}"
-								aria-selected={!multiple ? selected : undefined}
-								aria-checked={multiple ? selected : undefined}
-								class="cursor-pointer"
-								role="option"
-								bind:this={optionRefs[index]}
-								on:pointermove={(e) => handleMove(e, value, active)}
-								on:mousemove={(e) => handleMove(e, value, active)}
-								on:pointerleave={(e) => handleLeave(e, value, active)}
-								on:mouseleave={(e) => handleLeave(e, value, active)}
-								on:focus={(e) => {
-									// todo?
-								}}
-								on:click={(e) => handleClick(e, value, active)}
-							>
-								<slot name="option" {value} {active} {selected} {index} />
-							</li>
-						</slot>
-					{/each}
-				</ul>
-			{/if}
-		</slot>
-	</div>
+	<!-- TODO: able to render multiple "groups" ? -->
+	<slot name="listbox" {activeIndex}>
+		{#if staticProp || expanded}
+			<ul
+				id={optionId}
+				role="listbox"
+				class={options?.class}
+				aria-multiselectable={multiple}
+			>
+				<!-- TODO: (maybe) use tiny-virtual-list for rendering li  -->
+				{#each values as value, index (idResolver(value))}
+					{@const id = valueIds[index]}
+					{@const selected = selectedValueIds.includes(id)}
+					{@const active = index === activeIndex}
+					<!-- don't actually use optionContainer lol, everything would break -->
+					<slot name="optionContainer">
+						<!-- could use a private component here? -->
+						<li
+							id="cb-option-{id}"
+							aria-selected={!multiple ? selected : undefined}
+							aria-checked={multiple ? selected : undefined}
+							class="cursor-pointer"
+							role="option"
+							bind:this={optionRefs[index]}
+							on:pointermove={(e) => handleMove(e, value, active)}
+							on:mousemove={(e) => handleMove(e, value, active)}
+							on:pointerleave={(e) => handleLeave(e, value, active)}
+							on:mouseleave={(e) => handleLeave(e, value, active)}
+							on:focus={(e) => {
+								// todo?
+							}}
+							on:click={(e) => handleClick(e, value, active)}
+						>
+							<slot name="option" {value} {active} {selected} {index} />
+						</li>
+					</slot>
+				{/each}
+			</ul>
+		{/if}
+	</slot>
+</div>

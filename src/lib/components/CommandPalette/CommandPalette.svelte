@@ -9,7 +9,10 @@
 		showCommandPalette,
 		term,
 	} from "$lib/stores/commands";
-	import { checkIfKeyboardShortcutsAllowed, disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
+	import {
+		checkIfKeyboardShortcutsAllowed,
+		disableGlobalKeyboardShortcuts,
+	} from "$lib/stores/keyboard";
 	import { animationHappening, modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
 	import { selectedItems } from "$lib/stores/selectedItems";
@@ -17,7 +20,10 @@
 	import { fadeScale } from "$lib/transitions";
 	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
-	import { listPodcastsQuery, podcastSearchQuery } from "$lib/features/podcasts/queries";
+	import {
+		listPodcastsQuery,
+		podcastSearchQuery,
+	} from "$lib/features/podcasts/queries";
 	import { getUser } from "@lucia-auth/sveltekit/client";
 	import { tweened } from "svelte/motion";
 	import { get } from "svelte/store";
@@ -31,18 +37,20 @@
 	import Selection from "./Selection.svelte";
 	import { commandPaletteStore } from "./store";
 	import type { Command } from "./types";
-	import type { ApiResponse } from "podcastdx-client/dist/src/types";
 	import SearchItem from "$lib/features/podcasts/SearchItem.svelte";
 	import { listCollectionsQuery } from "$lib/features/collections/queries";
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import { listSubscriptionsQuery } from "$lib/features/subscriptions/queries";
 	import { allowedThemes, darkThemes } from "$lib/features/settings/themes";
-	import { getEntriesFromCache, listEntriesQuery, showEntrySelector } from "$lib/features/entries/queries";
+	import {
+		getEntriesFromCache,
+		listEntriesQuery,
+		showEntrySelector,
+	} from "$lib/features/entries/queries";
 	import type { Entry } from "@prisma/client";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
 	import { searchBookQuery } from "$lib/features/books/queries";
-	import DatePicker from "../DatePicker.svelte";
 	import RichAnnotationInput from "../annotations/RichAnnotationInput.svelte";
 	import { useSaveAnnotation } from "$lib/features/annotations/mutations";
 	import { useCreateBookmark } from "$lib/features/entries/mutations";
@@ -82,8 +90,12 @@
 			console.log({ id, data, $page, entryId });
 			if (data.stateId && $page.data.location && entryId && $page.data.user) {
 				// update current lists
-				const newLocation = $page.data.user.stateIdToLocation.get(data.stateId as number);
-				const newStateName = $page.data.user.stateIdToName.get(data.stateId as number);
+				const newLocation = $page.data.user.stateIdToLocation.get(
+					data.stateId as number
+				);
+				const newStateName = $page.data.user.stateIdToName.get(
+					data.stateId as number
+				);
 				const entriesToMove: RouterOutputs["entries"]["listBookmarks"] = [];
 				utils.entries.listBookmarks.setData(
 					{
@@ -96,7 +108,11 @@
 						let updated = false;
 
 						const updatedEntries = old.map((entry) => {
-							if (Array.isArray(entryId) ? entryId.includes(entry.id) : entry.id === entryId) {
+							if (
+								Array.isArray(entryId)
+									? entryId.includes(entry.id)
+									: entry.id === entryId
+							) {
 								console.log({ entry });
 								updated = true;
 								entriesToMove.push(entry);
@@ -158,7 +174,9 @@
 	const createRelation = client.entries.createRelation.createMutation({
 		onSuccess: async (data) => {
 			notifications.notify({
-				title: `Relation${Array.isArray(data) && data.length ? "s" : ""} created`,
+				title: `Relation${
+					Array.isArray(data) && data.length ? "s" : ""
+				} created`,
 				type: "info",
 			});
 			utils.entries.invalidate();
@@ -175,25 +193,32 @@
 			}),
 		onMutate: async ({ id, data, entryId }) => {
 			// TODO: setqueriesdaa
-			queryClient.setQueriesData<RouterOutputs["entries"]["listBookmarks"]>(["entries"], (old) => {
-				if (!old || !Array.isArray(old)) return old;
-				console.log({ old, id, data, entryId });
-				const newEntries = old.map((entry) => {
-					if (Array.isArray(entryId) ? entryId.includes(entry.id) : entry.id === entryId) {
-						console.log("entry hit", entry);
-						if (entry.bookmarks) {
-							entry.bookmarks[0] = {
-								...entry.bookmarks[0],
-								...data,
-							};
-							console.log({ entry });
-							return entry;
+			queryClient.setQueriesData<RouterOutputs["entries"]["listBookmarks"]>(
+				["entries"],
+				(old) => {
+					if (!old || !Array.isArray(old)) return old;
+					console.log({ old, id, data, entryId });
+					const newEntries = old.map((entry) => {
+						if (
+							Array.isArray(entryId)
+								? entryId.includes(entry.id)
+								: entry.id === entryId
+						) {
+							console.log("entry hit", entry);
+							if (entry.bookmarks) {
+								entry.bookmarks[0] = {
+									...entry.bookmarks[0],
+									...data,
+								};
+								console.log({ entry });
+								return entry;
+							}
 						}
-					}
-					return entry;
-				});
-				return newEntries;
-			});
+						return entry;
+					});
+					return newEntries;
+				}
+			);
 			invalidate("entries");
 		},
 		onSuccess: async (data) => {
@@ -245,7 +270,9 @@
 	$: console.log({ $showCommandPalette });
 
 	$: $showCommandPalette,
-		$showCommandPalette ? disableGlobalKeyboardShortcuts.on() : disableGlobalKeyboardShortcuts.off();
+		$showCommandPalette
+			? disableGlobalKeyboardShortcuts.on()
+			: disableGlobalKeyboardShortcuts.off();
 
 	let dialogRef: HTMLElement;
 
@@ -258,7 +285,8 @@
 			icon: "collection",
 			perform: async () => {
 				showCommandPalette.out();
-				const existingCollections = await $page.data.queryClient.ensureQueryData(listCollectionsQuery());
+				const existingCollections =
+					await $page.data.queryClient.ensureQueryData(listCollectionsQuery());
 				commandPaletteStore.open({
 					values: existingCollections,
 					onSelect: async ({ detail }) => {
@@ -276,11 +304,14 @@
 				showCommandPalette.out();
 				commandPaletteStore.open({
 					queryResult: (search) =>
-						client.public.boardgames.createQuery({
-							search,
-						}, {
-                            enabled: search.length > 2
-                        }),
+						client.public.boardgames.createQuery(
+							{
+								search,
+							},
+							{
+								enabled: search.length > 2,
+							}
+						),
 					slot: ({ value, active, selected }) => ({
 						component: BasicSearchItem,
 						props: {
@@ -288,14 +319,14 @@
 							image: value.image_url,
 							title: value.name,
 							year: value.year_published,
-                            active,
+							active,
 						},
 					}),
-                    onSelect: async ({ detail }) => {
-                        await goto(`/bgames/${detail.id}`);
-                    },
-                    debounce: 200,
-                    placeholder: "Search board games…",
+					onSelect: async ({ detail }) => {
+						await goto(`/bgames/${detail.id}`);
+					},
+					debounce: 200,
+					placeholder: "Search board games…",
 				});
 			},
 		},
@@ -308,11 +339,14 @@
 				showCommandPalette.out();
 				commandPaletteStore.open({
 					queryResult: (search) =>
-						client.public.games.createQuery({
-							search,
-						}, {
-                            enabled: search.length > 2
-                        }),
+						client.public.games.createQuery(
+							{
+								search,
+							},
+							{
+								enabled: search.length > 2,
+							}
+						),
 					slot: ({ value, active, selected }) => ({
 						component: BasicSearchItem,
 						props: {
@@ -320,14 +354,14 @@
 							image: value.cover.url,
 							title: value.name,
 							year: value.first_release_date,
-                            active,
+							active,
 						},
 					}),
-                    onSelect: async ({ detail }) => {
-                        await goto(`/games/${detail.id}`);
-                    },
-                    debounce: 200,
-                    placeholder: "Search games…",
+					onSelect: async ({ detail }) => {
+						await goto(`/games/${detail.id}`);
+					},
+					debounce: 200,
+					placeholder: "Search games…",
 				});
 			},
 		},
@@ -355,8 +389,12 @@
 								// REVIEW: this is probably to expensive to do on every keypress
 								// TODO: initally jump in with existing podcasts, and use simple includes
 								const sortedFeeds = data.feeds?.sort((a, b) => {
-									const aSaved = existingPodcasts.some((p) => p.podcastIndexId === a.id);
-									const bSaved = existingPodcasts.some((p) => p.podcastIndexId === b.id);
+									const aSaved = existingPodcasts.some(
+										(p) => p.podcastIndexId === a.id
+									);
+									const bSaved = existingPodcasts.some(
+										(p) => p.podcastIndexId === b.id
+									);
 									if (aSaved && !bSaved) return -1;
 									if (!aSaved && bSaved) return 1;
 									return 0;
@@ -365,7 +403,7 @@
 							},
 						};
 					},
-                    debounce: 150,
+					debounce: 150,
 					slot: () => ({ component: SearchItem }),
 					onSelect: async ({ detail }) => {
 						await goto(`/podcasts/${detail.id}`);
@@ -460,12 +498,15 @@
 									e.title?.toLowerCase().includes(value.toLowerCase()) ||
 									e.author?.toLowerCase().includes(value.toLowerCase())
 							);
-							const deduped = [...filteredCachedEntries, ...data].reduce((acc, cur) => {
-								if (!acc.some((e) => e.id === cur.id)) {
-									acc.push(cur);
-								}
-								return acc;
-							}, [] as Entry[]);
+							const deduped = [...filteredCachedEntries, ...data].reduce(
+								(acc, cur) => {
+									if (!acc.some((e) => e.id === cur.id)) {
+										acc.push(cur);
+									}
+									return acc;
+								},
+								[] as Entry[]
+							);
 							console.log({ deduped });
 							return deduped;
 						},
@@ -512,12 +553,15 @@
 									e.title?.toLowerCase().includes(value.toLowerCase()) ||
 									e.author?.toLowerCase().includes(value.toLowerCase())
 							);
-							const deduped = [...filteredCachedEntries, ...data].reduce((acc, cur) => {
-								if (!acc.some((e) => e.id === cur.id)) {
-									acc.push(cur);
-								}
-								return acc;
-							}, [] as Entry[]);
+							const deduped = [...filteredCachedEntries, ...data].reduce(
+								(acc, cur) => {
+									if (!acc.some((e) => e.id === cur.id)) {
+										acc.push(cur);
+									}
+									return acc;
+								},
+								[] as Entry[]
+							);
 							console.log({ deduped });
 							return deduped;
 						},
@@ -562,11 +606,15 @@
 			name: "Jump to Subscription",
 			perform: async () => {
 				showCommandPalette.out();
-				const subscriptions = await queryClient.ensureQueryData(listSubscriptionsQuery());
+				const subscriptions = await queryClient.ensureQueryData(
+					listSubscriptionsQuery()
+				);
 				commandPaletteStore.open({
 					values: subscriptions,
 					onSelect: async ({ detail }) => {
-						await goto(`/u:${$page.data.user?.username}/subscriptions/${detail.feedId}`);
+						await goto(
+							`/u:${$page.data.user?.username}/subscriptions/${detail.feedId}`
+						);
 					},
 				});
 			},
@@ -642,13 +690,17 @@
 			group: "adhoc-article-commands",
 			icon: "trash",
 			perform: async () => {
-				const confirm = window.confirm(`Really delete ${$selectedItems.length} items?`);
+				const confirm = window.confirm(
+					`Really delete ${$selectedItems.length} items?`
+				);
 				if (confirm) {
 					const s = syncStore.add();
 					// REVIEW: soft delete?
 					console.log({ $selectedItems });
 					// TODO: need to fix this type
-					const bookmark_ids: number[] = $selectedItems.map((s) => s.bookmark?.id).filter((i) => i);
+					const bookmark_ids: number[] = $selectedItems
+						.map((s) => s.bookmark?.id)
+						.filter((i) => i);
 					const deleted = await trpc().bookmarks.delete.mutate(bookmark_ids);
 					console.log({ deleted });
 					await invalidateAll();
@@ -725,8 +777,12 @@
 					onSelect: async (e) => {
 						try {
 							console.log({ $selectedItems });
-							const bookmarksToCreate = $selectedItems.filter((i) => !i.bookmarks?.[0]);
-							const bookmarksToUpdate = $selectedItems.filter((i) => !!i.bookmarks?.[0]);
+							const bookmarksToCreate = $selectedItems.filter(
+								(i) => !i.bookmarks?.[0]
+							);
+							const bookmarksToUpdate = $selectedItems.filter(
+								(i) => !!i.bookmarks?.[0]
+							);
 							if (bookmarksToCreate.length)
 								$createBookmarkMutation.mutate({
 									entryId_uri: $selectedItems.map((i) => ({
@@ -802,7 +858,10 @@
 					// 	};
 					// },
 					onSelect: async ({ detail }) => {
-						if (detail.id === "create-new" && (detail as unknown as any).value) {
+						if (
+							detail.id === "create-new" &&
+							(detail as unknown as any).value
+						) {
 							// create new
 							const collection = await trpc($page).collections.create.mutate({
 								name: detail.value,
@@ -816,7 +875,9 @@
 							});
 							notifications.notify({
 								title: `Added ${
-									$selectedItems.length === 1 ? "entry" : $selectedItems.length + " entries"
+									$selectedItems.length === 1
+										? "entry"
+										: $selectedItems.length + " entries"
 								} to ${collection.name}`,
 								type: "success",
 								message: `<a href="/u:${$page.data.user?.username}/collection/${collection.id}">View ${collection.name}</a>`,
@@ -837,8 +898,12 @@
 		},
 	];
 	$: $selectedItems.length
-		? selected_article_commands.forEach((command) => commandStore.add(command, true))
-		: ($commandStore = $commandStore.filter((c) => c.group !== "adhoc-article-commands"));
+		? selected_article_commands.forEach((command) =>
+				commandStore.add(command, true)
+		  )
+		: ($commandStore = $commandStore.filter(
+				(c) => c.group !== "adhoc-article-commands"
+		  ));
 
 	let height = tweened(200, {
 		duration: 500,
@@ -848,7 +913,10 @@
 <svelte:window on:keydown={commandListener} on:touchstart={handleTouch} />
 <!-- todo: use virtual list -->
 
-<Dialog bind:open={$showCommandPalette} class="fixed inset-0 z-50 overflow-y-auto p-4 pt-[15vh]">
+<Dialog
+	bind:open={$showCommandPalette}
+	class="fixed inset-0 z-50 overflow-y-auto p-4 pt-[15vh]"
+>
 	<DialogOverlay
 		bind:el={dialogRef}
 		class="fixed inset-0 "
@@ -863,7 +931,10 @@
 			$term = "";
 		}}
 	/>
-	<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }} class="contents">
+	<div
+		transition:fadeScale={{ duration: 150, baseScale: 0.95 }}
+		class="contents"
+	>
 		<Combobox
 			values={$filteredActions}
 			bind:value={$term}
@@ -875,7 +946,8 @@
 				$showCommandPalette = false;
 			}}
 			input={{
-				class: "w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
+				class:
+					"w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
 				placeholder: "Type a command…",
 			}}
 			options={{
@@ -890,7 +962,9 @@
 			<div slot="inputPeer" class="flex px-4 text-sm">
 				{#if $selectedItems.length}
 					<Selection>
-						{$selectedItems.length > 1 ? $selectedItems.length + " items" : $selectedItems[0].title}
+						{$selectedItems.length > 1
+							? $selectedItems.length + " items"
+							: $selectedItems[0].title}
 					</Selection>
 				{:else if $page.data.entry || $page.data.article}
 					{@const entry = $page.data.entry || $page.data.article}
@@ -913,7 +987,12 @@
 				>
 					<div class="flex gap-3.5">
 						{#if value.icon}
-							<Icon name={value.icon} className="{active ? 'stroke-content' : 'stroke-content/75'} h-4 w-4" />
+							<Icon
+								name={value.icon}
+								className="{active
+									? 'stroke-content'
+									: 'stroke-content/75'} h-4 w-4"
+							/>
 						{/if}
 						<span>{value.name}</span>
 					</div>
