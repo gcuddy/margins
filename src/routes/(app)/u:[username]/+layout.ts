@@ -1,4 +1,4 @@
 export const config = {
-    split: true,
+    // split: true,
     runtime: "nodejs18.x",
 }
