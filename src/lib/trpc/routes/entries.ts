@@ -12,6 +12,7 @@ import type { Recipe } from "$lib/web-parser/recipe";
 import { EntryCreateInputSchema } from "$lib/prisma/zod-prisma";
 import { sql } from "kysely";
 import type { DocumentType, Entry } from "$lib/prisma/kysely/types";
+import { dev } from "$app/environment";
 
 const idInput = z.object({
     id: z.number(),
@@ -898,13 +899,19 @@ export const entriesRouter = router({
                     type: DocumentType | null;
                     podcastIndexId: bigint | null;
                     googleBooksId: string | null;
+                    genres: string | null;
+                    publisher: string | null;
+                    language: string | null;
+                    pageCount: number | null;
                 }
                 const { db, redis } = ctx;
                 const { id } = input;
-                const cached = await redis.get(`entry:${id}`);
-                if (cached) {
-                    console.log("cache hit");
-                    return cached as Entry;
+                if (!dev) {
+                    const cached = await redis.get(`entry:${id}`);
+                    if (cached) {
+                        console.log("cache hit");
+                        return cached as Entry;
+                    }
                 }
                 const entry: Entry = await db
                     .selectFrom("Entry as e")
@@ -915,6 +922,10 @@ export const entriesRouter = router({
                         "e.author",
                         "e.id",
                         "e.feedId",
+                        "e.pageCount",
+                        "e.language",
+                        "e.publisher",
+                        "e.genres",
                         "e.enclosureUrl",
                         "e.uri",
                         "e.image",
@@ -925,7 +936,7 @@ export const entriesRouter = router({
                     ])
                     .executeTakeFirstOrThrow();
                 await redis.set(`entry:${id}`, entry, {
-                    ex: 60 * 60 * 24,
+                    ex: dev ? 10 : 60 * 60 * 24,
                 });
                 return entry;
             }),

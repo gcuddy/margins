@@ -19,6 +19,15 @@ export const config: Config = {
 export const load: LayoutServerLoad = async (event) => {
     const { locals, depends } = event;
     const theme = event.cookies.get("theme");
+    const session = await locals.validate();
+    if (!session) {
+        return {
+            theme,
+            session: null,
+            user: null,
+            authorized: false,
+        }
+    }
     // load settings
     event.depends("user:data");
     try {

@@ -11,7 +11,7 @@ export const config: Config = {
     runtime: "edge",
     // runtime: "nodejs18.x"
 }
-export const load: LayoutServerLoad = handleServerSession((e) => {
+export const load: LayoutServerLoad = handleServerSession(async (e) => {
     return {
         S3_BUCKET_PREFIX
     }

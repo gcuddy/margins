@@ -39,23 +39,11 @@ export const load = (async (event) => {
     const params = {
         id: data.id
     } as const;
-    // console.time("stylesheet");
-    // const stylesheet = parentData.user?.stylesheets?.find((s) => article?.uri?.includes(s.domain));
-    // console.log({ stylesheet });
-
-    // if (stylesheet) {
-    //     // SCOPE STYLESHEET
-    //     return {
-    //         ...data,
-    //         // article,
-    //         // query,
-    //         css: scopeCss(stylesheet.css),
-    //     };
-    // }
-    // console.timeEnd("stylesheet");
+    const [entry, entryData] = await Promise.all([
+        utils.entries.public.byId.prefetch(params),
+        utils.entries.loadUserData.prefetch(params)
+    ])
     return {
         ...data,
-        entry: utils.entries.public.byId.getData(params) ?? utils.entries.public.byId.fetch(params),
-        data: utils.entries.loadUserData.getData(params) ?? utils.entries.loadUserData.fetch(params),
     };
 }) satisfies PageLoad;

@@ -288,7 +288,7 @@ model Entry {
     wordCount       Int?
     siteName        String?
     summary         String?      @db.VarChar(255)
-    pageCount       Int?
+    pageCount       Int?         @db.UnsignedSmallInt
     // REVIEW: should this be stored on the bookmark, instead?
     screenshot      String?
     media           Json?
@@ -316,11 +316,11 @@ model Entry {
     extended Json?
 
     /// The publisher for books, company for plays, etc.
-    publisher String?
+    publisher String? @db.VarChar(191)
 
-    language String?
+    language String? @db.VarChar(100)
 
-    genres String?
+    genres String? @db.VarChar(191)
 
     // TODO: bigint?
     /// The TMDB id, if it's a movie or TV show.
