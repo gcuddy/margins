@@ -13,6 +13,7 @@
 	import type { DocumentType, Entry } from "@prisma/client";
 	import { createEventDispatcher, onDestroy } from "svelte";
 	import type { HTMLAnchorAttributes } from "svelte/elements";
+	import { Image } from "@unpic/svelte";
 	import { icons } from "./utils";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { trpcWithQuery } from "$lib/trpc/client";
@@ -107,11 +108,23 @@
 		on:click|stopPropagation
 		on:keydown
 	>
-		<img
-			class=" h-full w-full shrink-0 cursor-pointer rounded-md object-cover shadow-sm ring-1 ring-border/50 hover:ring-1"
-			src={imgsrc}
-			alt=""
-		/>
+		<!-- if remote image -->
+		{#if imgsrc.startsWith("http")}
+			<Image
+				src={imgsrc}
+				class=" h-full w-full shrink-0 cursor-pointer rounded-md object-cover shadow-sm ring-1 ring-border/50 hover:ring-1"
+				layout="constrained"
+				width={56}
+				height={64}
+				alt=""
+			/>
+		{:else}
+			<img
+				class=" h-full w-full shrink-0 cursor-pointer rounded-md object-cover shadow-sm ring-1 ring-border/50 hover:ring-1"
+				src={imgsrc}
+				alt=""
+			/>
+		{/if}
 		{#if entry.id}
 			<input
 				id="entry-input-{entry.id}"
