@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/svelte-query";
 
 import { browser } from "$app/environment";
 
+// import { H } from "highlight.run";
 import type { LayoutLoad } from "./$types";
 import { trpcWithQuery } from "$lib/trpc/client";
 
@@ -21,6 +22,11 @@ export const load = (async (e) => {
             }
         },
     });
+    if (data.user?.userId && browser) {
+        // H.identify(data.user.username, {
+        //     id: data.user.userId,
+        // });
+    }
 
     // get favorites
     console.time("favorites");

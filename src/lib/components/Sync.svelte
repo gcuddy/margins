@@ -20,6 +20,15 @@
 	const mutating = useIsMutating();
 
 	let mouseover = false;
+	let timeout = null;
+	let _mutating = false;
+	$: if ($mutating) {
+		setTimeout(() => {
+			_mutating = true;
+		}, 500);
+	} else {
+		_mutating = false;
+	}
 </script>
 
 <!-- TODO: on hover, tooltip of title and progress -->
@@ -34,7 +43,7 @@
 	<Icon
 		name="refresh"
 		className="h-4 w-4 stroke-gray-700 dark:stroke-gray-200 stroke-2 opacity-0 transition {($syncStore.length ||
-			$mutating) &&
+			_mutating) &&
 			'animate-spin !opacity-100'}"
 	/>
 	{#if mouseover}
@@ -51,7 +60,7 @@
 				<div class="text-xs text-gray-700 dark:text-gray-200">
 					{#if $syncStore.length}
 						{$syncStore.length} (syncstore) pending
-                        <!--TODO: maybe just mutating  -->
+						<!--TODO: maybe just mutating  -->
 					{:else if $fetching}
 						{$fetching} Fetching...
 					{:else if $mutating}
