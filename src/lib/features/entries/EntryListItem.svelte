@@ -115,6 +115,7 @@
 				class=" h-full w-full shrink-0 cursor-pointer rounded-md object-cover shadow-sm ring-1 ring-border/50 hover:ring-1"
 				layout="constrained"
 				width={56}
+				cdn="vercel"
 				height={64}
 				alt=""
 			/>

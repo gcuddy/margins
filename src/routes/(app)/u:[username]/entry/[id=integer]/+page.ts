@@ -6,9 +6,6 @@ import { trpcWithQuery } from "$lib/trpc/client";
 
 import type { PageLoad } from "./$types";
 
-export const config: Config = {
-    // runtime: "nodejs16.x"
-}
 
 function scopeCss(css: string) {
     console.time("scopeCss");
