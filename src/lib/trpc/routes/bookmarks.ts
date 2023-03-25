@@ -55,7 +55,22 @@ export const bookmarks = router({
                 .refine((data) => !!data.url || !!data.entryId, "Need either URL or entryId")
         )
         .mutation(async ({ input, ctx }) => {
-            const entry = await ctx.prisma.entry.upsert({
+            console.log({ article: input.article })
+            const entry = await ctx.db.insertInto("Entry").values({
+                updatedAt: new Date(),
+                type: "article",
+                uri: input.url,
+                ...input.article,
+            }).ignore().execute();
+            const id = entry[0].insertId;
+            const __bookmark = await ctx.db.insertInto("Bookmark").values({
+                entryId: Number(id),
+                userId: ctx.userId,
+                updatedAt: new Date(),
+                stateId: input.stateId ?? ctx.user?.default_state_id
+            }).execute();
+            return;
+            const entsdsry1 = await ctx.prisma.entry.upsert({
                 where: {
                     uri: !input.entryId ? input.url : undefined,
                     id: input.entryId,
@@ -444,45 +459,45 @@ export const bookmarks = router({
                 extended: z.any()
             }))),
         })).mutation(async ({ ctx, input }) => {
-        const { entry } = input;
-        if ("id" in entry) {
-            return ctx.prisma.bookmark.create({
-                data: {
-                    entry: {
-                        connect: {
-                            id: entry.id
-                        }
-                    },
-                    user: {
-                        connect: {
-                            id: ctx.userId
-                        }
-                    }
-                }
-            })
-        } else {
-            const { id } = await ctx.prisma.entry.create({
-                data: entry
-            });
-            return ctx.prisma.bookmark.create({
-                data: {
-                    entry: {
-                        connect: {
-                            id
-                        }
-                    },
-                    user: {
-                        connect: {
-                            id: ctx.userId
-                        }
-                    },
-                    state: {
-                        connect: {
-                            id: ctx.user.default_state_id
+            const { entry } = input;
+            if ("id" in entry) {
+                return ctx.prisma.bookmark.create({
+                    data: {
+                        entry: {
+                            connect: {
+                                id: entry.id
+                            }
+                        },
+                        user: {
+                            connect: {
+                                id: ctx.userId
+                            }
                         }
                     }
-                }
-            })
-        }
+                })
+            } else {
+                const { id } = await ctx.prisma.entry.create({
+                    data: entry
+                });
+                return ctx.prisma.bookmark.create({
+                    data: {
+                        entry: {
+                            connect: {
+                                id
+                            }
+                        },
+                        user: {
+                            connect: {
+                                id: ctx.userId
+                            }
+                        },
+                        state: {
+                            connect: {
+                                id: ctx.user.default_state_id
+                            }
+                        }
+                    }
+                })
+            }
         })
 });

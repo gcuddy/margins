@@ -5,6 +5,8 @@
 	import { page } from "$app/stores";
 	import { handleSession } from "@lucia-auth/sveltekit/client";
 
+	import { Toaster } from "svelte-french-toast";
+
 	handleSession(page);
 	$: console.log({ $page });
 
@@ -18,8 +20,15 @@
 	<title>Margins</title>
 </svelte:head>
 
-<div class="min-h-screen h-full ">
+<div class="h-full min-h-screen">
 	<slot />
+	<Toaster
+		position="bottom-center"
+		toastOptions={{
+			// className: "bg-base text-content rounded-full",
+			// style: "background-color: inherit;",
+		}}
+	/>
 </div>
 
 <style lang="postcss">
@@ -36,5 +45,4 @@
 	:global(html) {
 		@apply dark:bg-gray-800;
 	}
-
 </style>

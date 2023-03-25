@@ -3,7 +3,7 @@ import { z } from "zod";
 import { uploadFile } from "$lib/backend/s3.server";
 // import { getScreenshot } from "$lib/features/entries/bookmarks/image";
 import { normalizeUrl } from "$lib/feeds/utils";
-// import parse from "$lib/parse";
+import parse from "$lib/parse";
 import { publicProcedure, router } from "$lib/trpc/t";
 import type { Metadata } from '$lib/web-parser';
 import { dev } from '$app/environment';

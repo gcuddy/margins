@@ -2,7 +2,7 @@ import { dev } from '$app/environment';
 import type { HandleClientError } from '@sveltejs/kit';
 import { H } from 'highlight.run';
 
-H.init('0dq999eo', {
+!dev && H.init('0dq999eo', {
     environment: dev ? 'development' : 'production',
     version: 'commit:abcdefg12345',
     networkRecording: {

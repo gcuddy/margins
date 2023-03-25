@@ -960,44 +960,47 @@ export class Parser {
                 root!.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
                 // go thru srcs, get images, and upload to s3
                 // TODO: upsert by noting if src is already s3 url (somehow...)
-                await Promise.all(root.querySelectorAll("[src]").map(async el => {
-                    // check if url
-                    const src = el.getAttribute("src");
-                    if (!src) return;
-                    if (/^http/.test(src)) {
-                        // upload to s3
-                        // replace src with s3 url\
-                        //
-                        // Fetch the image and stream it to s3
+                if (false) {
 
-                        // set Key to hashed version of src with crypto
-                        const hash = crypto.createHash('sha256');
-                        hash.update(src);
-                        const Key = hash.digest('hex');
-                        // check if already exists
-                        const exists = await s3.send(new HeadObjectCommand({
-                            Key,
-                            Bucket: "margins",
-                        })).catch(e => {
-                            if (e.name === "NotFound") {
-                                return false;
+                    await Promise.all(root.querySelectorAll("[src]").map(async el => {
+                        // check if url
+                        const src = el.getAttribute("src");
+                        if (!src) return;
+                        if (/^http/.test(src)) {
+                            // upload to s3
+                            // replace src with s3 url\
+                            //
+                            // Fetch the image and stream it to s3
+
+                            // set Key to hashed version of src with crypto
+                            const hash = crypto.createHash('sha256');
+                            hash.update(src);
+                            const Key = hash.digest('hex');
+                            // check if already exists
+                            const exists = await s3.send(new HeadObjectCommand({
+                                Key,
+                                Bucket: "margins",
+                            })).catch(e => {
+                                if (e.name === "NotFound") {
+                                    return false;
+                                }
+                                throw e;
+                            });
+                            console.log({ exists })
+                            if (exists) {
+                                el.setAttribute("src", `${S3_BUCKET_PREFIX}${Key}`);
+                                return;
                             }
-                            throw e;
-                        });
-                        console.log({ exists })
-                        if (exists) {
+                            const response = await fetch(src);
+                            const buffer = await response.arrayBuffer();
+                            uploadFile({
+                                Key,
+                                Body: buffer,
+                            });
                             el.setAttribute("src", `${S3_BUCKET_PREFIX}${Key}`);
-                            return;
                         }
-                        const response = await fetch(src);
-                        const buffer = await response.arrayBuffer();
-                        uploadFile({
-                            Key,
-                            Body: buffer,
-                        });
-                        el.setAttribute("src", `${S3_BUCKET_PREFIX}${Key}`);
-                    }
-                }))
+                    }))
+                }
             }
             let html = '';
             if (article) {

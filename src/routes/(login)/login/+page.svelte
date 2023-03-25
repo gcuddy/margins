@@ -1,25 +1,39 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { navigating } from '$app/stores';
-	import Muted from '$lib/components/atoms/Muted.svelte';
-	import Button from '$lib/components/Button.svelte';
-	import GenericInput from '$lib/components/GenericInput.svelte';
-	import Icon from '$lib/components/helpers/Icon.svelte';
-	export let form: { message?: string };
+	import { navigating } from "$app/stores";
+	import Muted from "$lib/components/atoms/Muted.svelte";
+	import Button from "$lib/components/Button.svelte";
+	import GenericInput from "$lib/components/GenericInput.svelte";
+	import Icon from "$lib/components/helpers/Icon.svelte";
+	import { superForm } from "sveltekit-superforms/client";
+	import toast from "svelte-french-toast";
+
+	// export let form: { message?: string };
+	export let data;
+	const { form, errors, constraints, enhance } = superForm(data.form);
 	let loading = false;
 </script>
 
 <h2 class="text-2xl font-bold">Log in to Margins</h2>
 <div class="rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">
 	<form
-		use:enhance={() => {
-			loading = true;
-			return async ({ result, update }) => {
-				await update({
-					reset: false,
-				});
-				loading = false;
-			};
+		use:enhance={{
+			// onError: "apply",
+			// onSubmit: () => {
+			// 	loading = true;
+			// 	return async ({ result, update }) => {
+			// 		await update({
+			// 			reset: false,
+			// 		});
+			// 		loading = false;
+			// 	};
+			// },
+			onUpdated: ({ form }) => {
+				if (form.errors) {
+					toast.error("Invalid email or password");
+				} else {
+					toast.success("Logged in");
+				}
+			},
 		}}
 		class="flex max-w-xs flex-col space-y-6"
 		method="post"
@@ -34,7 +48,9 @@
 				class="focus:ring-2"
 				autocomplete="email"
 				required
+				bind:value={$form.email}
 				type="email"
+				{...$constraints.email}
 			/>
 		</div>
 		<div>
@@ -47,6 +63,8 @@
 				type="password"
 				autocomplete="current-password"
 				class="focus:ring-2"
+				bind:value={$form.password}
+				{...$constraints.password}
 			/>
 		</div>
 		<Button type="submit" className="text-base">
@@ -56,7 +74,7 @@
 				Login
 			{/if}
 		</Button>
-		<p class="text-center font-medium text-red-400">{form?.message || ''}</p>
+		<p class="text-center font-medium text-red-400">{form?.message || ""}</p>
 	</form>
 </div>
 

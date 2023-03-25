@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { HTMLInputAttributes } from "svelte/elements";
 	import type { Writable } from "svelte/store";
 
 	export let placeholder = "Enter text…";
@@ -10,12 +11,27 @@
 	export let name = "";
 	export let type: "text" | "number" | "password" | "email" = "text";
 	type InputValue = string | number;
-	export let value: InputValue | Writable<InputValue> = type === "number" ? 0 : "";
+	export let value: InputValue | Writable<InputValue> =
+		type === "number" ? 0 : "";
 	export let min: number | undefined = undefined;
 	export let max: number | undefined = undefined;
 	export let autocomplete: string | undefined = undefined;
 
-	// interface $$Props extends 
+	interface $$Props extends HTMLInputAttributes {
+		placeholder?: string;
+		variant?: "filled" | "ghost" | "underline" | "naked";
+		class?: string;
+		el?: HTMLElement;
+		id?: string;
+		name?: string;
+		type?: "text" | "number" | "password" | "email";
+		value?: InputValue | Writable<InputValue>;
+		min?: number;
+		max?: number;
+		autocomplete?: string;
+	}
+
+	// interface $$Props extends
 </script>
 
 {#if type === "text"}
@@ -35,7 +51,7 @@
 			: variant === 'underline'
 			? 'rounded-none border-b border-gray-300 bg-transparent focus:border-amber-300 dark:border-gray-600'
 			: variant === 'ghost'
-			? 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'
+			? 'bg-transparent ring-gray-300 focus:bg-gray-100 hover:ring-1'
 			: 'bg-transparent'}
   {className}"
 		{placeholder}
@@ -57,7 +73,7 @@
 			? 'bg-gray-100 dark:bg-gray-700'
 			: variant === 'underline'
 			? 'rounded-none border-b border-gray-300 bg-transparent focus:border-amber-300 dark:border-gray-600'
-			: 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'}
+			: 'bg-transparent ring-gray-300 focus:bg-gray-100 hover:ring-1'}
   {className}"
 		{placeholder}
 		{autocomplete}
@@ -73,10 +89,10 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="number"
-		class="h-9 w-full rounded-lg border-0 placeholder-gray-400  transition focus:ring-0
+		class="h-9 w-full rounded-lg border-0 placeholder-gray-400 transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
-			: 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'}
+			: 'bg-transparent ring-gray-300 focus:bg-gray-100 hover:ring-1'}
   {className}"
 		{placeholder}
 		{autocomplete}
@@ -94,10 +110,10 @@
 		id={id ? id : undefined}
 		name={name ? name : undefined}
 		type="password"
-		class="h-9 w-full rounded-lg border-0 placeholder-gray-400  transition focus:ring-0
+		class="h-9 w-full rounded-lg border-0 placeholder-gray-400 transition focus:ring-0
   {variant === 'filled'
 			? 'bg-gray-100 dark:bg-gray-700'
-			: 'bg-transparent ring-gray-300 hover:ring-1 focus:bg-gray-100'}
+			: 'bg-transparent ring-gray-300 focus:bg-gray-100 hover:ring-1'}
   {className}"
 		{placeholder}
 		{autocomplete}
