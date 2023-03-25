@@ -1,4 +1,4 @@
-import { parse, stringify } from "css";
+// import { parse, stringify } from "css";
 import type { Config } from '@sveltejs/adapter-vercel';
 
 import { getEntriesFromCache } from "$lib/features/entries/queries";
