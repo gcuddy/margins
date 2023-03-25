@@ -8,18 +8,23 @@
 	export let as: keyof HTMLElementTagNameMap = "button";
 </script>
 
-<svelte:element this={as} on:click on:keydown class="group inline-flex focus-visible:outline-none {c}">
+<svelte:element
+	this={as}
+	on:click
+	on:keydown
+	class="group inline-flex focus-visible:outline-none {c}"
+>
 	<div
 		style:--swatch={hex}
 		style:--size="var(--swatchSize,18px)"
 		color={hex}
-		class="flex h-[var(--size)] w-[var(--size)] rounded-full p-0.5 "
+		class="flex h-[var(--size)] w-[var(--size)] rounded-full p-0.5"
 	>
 		<div
 			style:height="calc(var(--size) - 4px)"
 			style:width="calc(var(--size) - 4px)"
 			data-selected={checkmark ? selected : undefined}
-			class=" rounded-full bg-[var(--swatch)] shadow-[var(--swatch)] ring-[var(--swatch)] ring-offset-1 ring-offset-gray-900  group-focus:shadow group-focus:ring-1 {hover
+			class=" rounded-full bg-[var(--swatch)] shadow-[var(--swatch)] ring-[var(--swatch)] ring-offset-1 ring-offset-gray-900 group-focus:shadow group-focus:ring-1 {hover
 				? 'hover:shadow hover:ring-1'
 				: ''} {selected ? '' : ''}"
 		/>

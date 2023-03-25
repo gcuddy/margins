@@ -20,7 +20,7 @@ export const saveAnnotationSchema = z.object({
     title: z.string(),
     collectionId: z.number(),
     chosenIcon: chosenIcon,
-   tags: z.array(z.object({
+    tags: z.array(z.object({
         id: z.number().optional(),
         name: z.string()
     }))

@@ -14,7 +14,6 @@
 	import type { JSONContent } from "@tiptap/core";
 	import { fadeScale } from "$lib/transitions";
 	import { backInOut } from "svelte/easing";
-	import { clamp } from "lodash";
 	const dispatch = createEventDispatcher<{
 		save: {
 			value: string | JSONContent;
@@ -58,7 +57,8 @@
 	let x: number = Math.max(
 		Math.min(
 			initialRect.x - (container ? container.offsetWidth : 280) * 1.5,
-			el.closest("prose")?.clientWidth || 600 - (container ? container.offsetWidth : 280)
+			el.closest("prose")?.clientWidth ||
+				600 - (container ? container.offsetWidth : 280)
 		),
 		0
 	);
@@ -171,10 +171,13 @@
 	<!-- style:--rotation="{$rotation}deg" -->
 	<!--  -->
 	<!-- TODO: form? -->
-	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-xl transition-opacity">
+	<div
+		style:--scale={$scale}
+		class="annotatation-container !cursor-grab shadow-xl transition-opacity"
+	>
 		{#if rich}
 			<RichAnnotationInput
-            class="w-[min(95vw,25rem)]"
+				class="w-[min(95vw,25rem)]"
 				autofocus
 				bind:tags
 				config={{
