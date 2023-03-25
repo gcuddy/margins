@@ -12,7 +12,7 @@
 	// import hljs from "highlight.js/lib/core";
 	// import hlcss from "highlight.js/lib/languages/css";
 	// hljs.registerLanguage("css", hlcss);
-	import { scopeCss, unscopeCss } from "./css";
+	// import { scopeCss, unscopeCss } from "./css";
 	// import debounce from "lodash.debounce";
 
 	let ref: HTMLTextAreaElement;
