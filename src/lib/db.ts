@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { Kysely } from 'kysely'
+import { Kysely, RawBuilder, sql } from 'kysely'
 import { PlanetScaleDialect } from 'kysely-planetscale'
 import type { DB } from "./prisma/kysely/types"
 import { DATABASE_PASSWORD, DATABASE_USERNAME } from "$env/static/private"
@@ -29,6 +29,11 @@ export const db = new Kysely<DB>({
         }
     }
 });
+
+export function json<T>(obj: T): RawBuilder<T> {
+    return sql`${JSON.stringify(obj)}`;
+}
+
 // export const db =
 // 	globalForPrisma.db ||
 // 	new PrismaClient({

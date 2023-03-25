@@ -8,6 +8,8 @@ import { z } from "zod";
 import { saveAnnotationSchema } from "$lib/prisma/zod-inputs";
 
 import { protectedProcedure, router } from "../t";
+import { nanoid } from "$lib/nanoid";
+import { json } from "$lib/db";
 
 const idSchema = z.object({
     id: z.string() // <- cuid or nanoid
@@ -99,55 +101,114 @@ export const annotationRouter = router({
     }).partial()).mutation(async ({ ctx, input }) => {
         const { id } = input;
         const { tags, entryId, ...rest } = input;
-        // TODO: write this as upsert
-        const tagsToCreate = tags?.filter(t => !t.id) || [];
-        console.log({ tags, tagsToCreate })
-        if (tagsToCreate.length) {
-            await ctx.prisma.tag.createMany({
-                data: tagsToCreate.map(t => ({
-                    name: t.name,
+        // if there's an id, then update
+        let ids: string[] = [];
+        const entryIds = Array.isArray(entryId) ? entryId : [entryId];
+        const data = {
+            ...rest,
+            contentData: rest.contentData ? json(rest.contentData) : null,
+            target: rest.target ? json(rest.target) : null,
+            type: "annotation",
+            updatedAt: new Date(),
+            // TODO
+        } as const;
+        let values = entryIds.map((entryId) => ({
+            id: id ?? nanoid(),
+            userId: ctx.userId,
+            entryId,
+            ...data
+        } as const));
+        ids = values.map(v => v.id);
+        await ctx.db.insertInto("Annotation").values(values)
+            .onDuplicateKeyUpdate(data)
+            .execute();
+        return;
+        if (tags?.length) {
+            await ctx.db.insertInto("Tag")
+                .values(tags.map(tag => ({
+                    name: tag.name,
+                    updatedAt: new Date(),
                     userId: ctx.userId
-                })),
-                skipDuplicates: true
-            });
+                })))
+                .ignore()
+                .execute();
+            // now insert into annotation_tag
+            await ctx.db.insertInto("annotation_tag")
+                .columns(["annotationId", "tagId"])
+                .expression(eb => eb.selectFrom("Annotation").select("id"))
         }
-        const upsertArgs = (entryId?: number): Prisma.AnnotationUpsertArgs => ({
-            where: {
-                id: id ?? "",
-            },
-            create: {
-                type: "annotation",
-                ...rest,
-                entryId,
-                userId: ctx.userId,
-                tags: tags ? {
-                    connect: tags.map(t => ({
-                        name_userId: {
-                            name: t.name,
-                            userId: ctx.userId
-                        }
-                    }))
-                } : undefined
-            },
-            update: {
-                ...rest,
-                entryId,
-                tags: tags ? {
-                    set: tags.map(t => ({
-                        name_userId: {
-                            name: t.name,
-                            userId: ctx.userId
-                        }
-                    }))
-                } : undefined
-            }
-        })
-        if (Array.isArray(entryId)) {
-            const annotations = await ctx.prisma.$transaction(entryId.map(e => ctx.prisma.annotation.upsert(upsertArgs(e))))
-            return annotations;
-        } else {
-            return await ctx.prisma.annotation.upsert(upsertArgs(entryId))
-        }
+
+        return;
+        ctx.db.transaction
+        // TODO: TAGS
+        // const tagsToCreate = tags?.filter(t => !t.id).map(t => ({ name: t.name, userId: ctx.userId, updatedAt: new Date() }) as const) || [];
+        // let tagIds: number[] = tags?.filter(t => t.id).filter(Boolean).map(t => t.id!) || [];
+        // if (tagsToCreate.length) {
+        //     const tags = await ctx.db.insertInto("Tag")
+        //         .values(tagsToCreate)
+        //         .execute();
+        //     tagIds = [...tagIds, ...tags.map(t => t.insertId)];
+        // }
+        // if (tags?.length) {
+        //     await ctx.db.insertInto("annotation_tag")
+        //         .values(ids.map(id => ({
+        //             annotationId: id,
+        //             // where to get tagId?
+        //         })))
+        // }
+
+        // // map over entryids and create annotation ids for each, then create tags for each id
+        // // let ids = entryIds.map(() => nanoid());
+
+        // await ctx.db.insertInto("Annotation")
+        //     .values({
+        //         id: nanoid(),
+        //         type: "annotation",
+        //         updatedAt: new Date(),
+        //         // TODO
+        //         entryId: 0,
+        //         userId: ctx.userId,
+        //         ...rest
+        //     });
+        // // Then take the annotations and create the tags
+
+        // const upsertArgs = (entryId?: number): Prisma.AnnotationUpsertArgs => ({
+        //     where: {
+        //         id: id ?? "",
+        //     },
+        //     create: {
+        //         type: "annotation",
+        //         ...rest,
+        //         entryId,
+        //         userId: ctx.userId,
+        //         tags: tags ? {
+        //             connect: tags.map(t => ({
+        //                 name_userId: {
+        //                     name: t.name,
+        //                     userId: ctx.userId
+        //                 }
+        //             }))
+        //         } : undefined
+        //     },
+        //     update: {
+        //         ...rest,
+        //         entryId,
+        //         tags: tags ? {
+        //             set: tags.map(t => ({
+        //                 name_userId: {
+        //                     name: t.name,
+        //                     userId: ctx.userId
+        //                 }
+        //             }))
+        //         } : undefined
+        //     }
+        // })
+        // if (Array.isArray(entryId)) {
+        //     const annotations = await ctx.prisma.$transaction(entryId.map(e => ctx.prisma.annotation.upsert(upsertArgs(e))))
+        //     return annotations;
+        // } else {
+        //     return await ctx.prisma.annotation.upsert(upsertArgs(entryId))
+        // }
     }),
     note: protectedProcedure
         .input(
