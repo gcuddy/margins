@@ -4,7 +4,8 @@ import type { RequestHandler } from './$types';
 import { error, json } from "@sveltejs/kit"
 import type { Config } from '@sveltejs/adapter-vercel';
 export const config: Config = {
-    runtime: "edge"
+    runtime: "nodejs18.x",
+    split: true
 }
 
 export const GET: RequestHandler = async ({ url }) => {
