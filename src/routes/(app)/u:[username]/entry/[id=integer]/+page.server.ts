@@ -17,7 +17,6 @@ export const load: PageServerLoad = async (evt) => {
     if (user?.username === evt.params.username) {
         authorized = true;
     }
-    console.log({ authorized });
     return {
         id: +id,
         authorized,
