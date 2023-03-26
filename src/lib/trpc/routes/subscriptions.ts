@@ -28,14 +28,11 @@ export const subscriptions = router({
     }),
     list: protectedProcedure
         .query(({ ctx: { userId } }) =>
-            db.subscription.findMany({
-                where: {
-                    userId,
-                },
-                select: {
-                   ...basicSubscriptionSelect
-                },
-            })
+            db.selectFrom("Subscription as s")
+                .innerJoin("Feed as f", "s.feedId", "f.id")
+                .select(["s.id", "s.title", "s.feedId", "f.imageUrl", "f.link", "f.feedUrl"])
+                .where("s.userId", "=", userId)
+                .execute()
         ),
     loadEntries: protectedProcedure
         .input(z.object({

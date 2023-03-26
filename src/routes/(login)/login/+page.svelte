@@ -6,12 +6,19 @@
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import { superForm } from "sveltekit-superforms/client";
 	import toast from "svelte-french-toast";
+	import SuperDebug from "sveltekit-superforms/client/SuperDebug.svelte";
 
 	// export let form: { message?: string };
 	export let data;
-	const { form, errors, constraints, enhance } = superForm(data.form);
+	const { form, errors, constraints, enhance } = superForm(data.form, {
+		onError: (e) => {
+			console.log("error", e);
+		},
+	});
 	let loading = false;
 </script>
+
+<SuperDebug data={$form} />
 
 <h2 class="text-2xl font-bold">Log in to Margins</h2>
 <div class="rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">

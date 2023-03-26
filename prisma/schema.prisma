@@ -277,7 +277,7 @@ model Entry {
     updatedAt       DateTime     @updatedAt
     id              Int          @id @default(autoincrement())
     //todo: expand to fingerprint and url, doi, etc. maybe can all fit in this string, i'm not sure
-    uri             String?      @unique
+    uri             String?      @unique @db.VarChar(500)
     // if it's a rss
     html            String?      @db.LongText
     text            String?      @db.LongText
@@ -360,6 +360,7 @@ model Entry {
     @@unique([uri, id])
     @@index([feedId])
     @@index([id, published, createdAt])
+    @@index([published])
     @@fulltext([text, title, author])
     @@fulltext([title, author])
     @@fulltext([text])
@@ -627,7 +628,7 @@ model Feed {
 
     /// IF we're using a podcast, then we use podcastIndex to save/index entries. Do we even need to save them into our db? Probably — what if pidx goes down, or something.
     podcastIndexId Int?    @unique
-    feedUrl        String? @unique
+    feedUrl        String? @unique @db.VarChar(255)
 
     /// Store lastParsed time to diff against feed updated time
     lastParsed DateTime?

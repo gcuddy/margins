@@ -602,41 +602,34 @@ export const entriesRouter = router({
             z
                 .object({
                     take: z.number().min(1).max(100).default(50),
-                    cursor: z.number().nullish(),
+                    cursor: z.date().nullish(),
                 })
                 .default({
                     take: 50,
-                    cursor: undefined,
+                    cursor: null,
                 })
         )
         .query(async ({ ctx, input }) => {
             const { cursor, take } = input;
             console.log(`listforusersubscriptions`, { input });
             const { prisma, userId } = ctx;
-            const entries = await prisma.entry.findMany({
-                take: take + 1,
-                where: {
-                    feed: {
-                        subscriptions: {
-                            some: {
-                                userId,
-                            },
-                        },
-                    },
-                },
-                cursor: cursor
-                    ? {
-                        id: cursor,
-                    }
-                    : undefined,
-                orderBy: {
-                    published: "desc",
-                },
-            });
+            let query = ctx.db.selectFrom("Entry as e")
+                .innerJoin("Feed as f", "f.id", "e.feedId")
+                .innerJoin("Subscription as s", (j) =>
+                    j.onRef("s.feedId", "=", "f.id").on("s.userId", "=", userId)
+                )
+                .select(["e.id", "e.title", "e.published", "e.uri", "e.feedId"])
+                .where("s.userId", "=", userId)
+                .orderBy("e.published", "desc")
+                .limit(take + 1);
+            if (cursor) {
+                query = query.where("e.published", "<", cursor);
+            }
+            const entries = await query.execute();
             let nextCursor: typeof cursor | undefined = undefined;
             if (entries.length > take) {
                 const nextItem = entries.pop();
-                nextCursor = nextItem!.id;
+                nextCursor = nextItem!.published;
             }
             return { entries, nextCursor };
         }),

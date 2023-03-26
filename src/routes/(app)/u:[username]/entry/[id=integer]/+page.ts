@@ -36,11 +36,13 @@ export const load = (async (event) => {
     const params = {
         id: data.id
     } as const;
+    console.log("entry load", { data, parentData, params })
     console.time("entry");
     const [entry, entryData] = await Promise.all([
         utils.entries.public.byId.prefetch(params),
         utils.entries.loadUserData.prefetch(params)
     ])
+    console.log({ entry, entryData })
     console.timeEnd("entry");
     return {
         ...data,

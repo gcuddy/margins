@@ -9,19 +9,20 @@ import { getJsonFromRequest } from "$lib/utils";
 
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async (evt) => {
-    const { parent } = evt;
-    const { id } = evt.params;
-    const { user } = await parent();
-    let authorized = false;
-    if (user?.username === evt.params.username) {
-        authorized = true;
-    }
-    return {
-        id: +id,
-        authorized,
-    };
-};
+// export const load: PageServerLoad = async (evt) => {
+//     const { parent } = evt;
+//     const { id } = evt.params;
+//     const { user } = await parent();
+//     let authorized = false;
+//     if (user?.username === evt.params.username) {
+//         authorized = true;
+//     }
+//     console.log({ authorized });
+//     return {
+//         id: +id,
+//         authorized,
+//     };
+// };
 
 export const actions: Actions = {
     save: async (evt) => {

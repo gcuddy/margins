@@ -14,12 +14,12 @@ import { dev } from '$app/environment';
 declare global {
     // allow global `var` declarations
     // eslint-disable-next-line no-var
-    var db: PrismaClient | undefined;
+    var db: Kysely<DB> | undefined;
 }
 
-const globalForPrisma = global as unknown as { db: PrismaClient };
+const globalForKyseley = global as unknown as { db: Kysely<DB> };
 
-export const db = new Kysely<DB>({
+export const db = globalForKyseley.db || new Kysely<DB>({
     dialect: new PlanetScaleDialect(config),
     log: (event) => {
         if (!dev) return
@@ -58,4 +58,4 @@ export function json<T>(obj: T): RawBuilder<T> {
 
 // annotationsMiddleware(db);
 
-// if (process.env.NODE_ENV !== 'production') globalForPrisma.db = db;
+if (process.env.NODE_ENV !== 'production') globalForKyseley.db = db;

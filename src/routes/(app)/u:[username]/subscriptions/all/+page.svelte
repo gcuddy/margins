@@ -8,7 +8,11 @@
 	import { trpc } from "$lib/trpc/client";
 	import type { Entry } from "@prisma/client";
 	import { page } from "$app/stores";
-	import { createVirtualizer, SvelteVirtualizer, Virtualizer } from "@tanstack/svelte-virtual";
+	import {
+		createVirtualizer,
+		SvelteVirtualizer,
+		Virtualizer,
+	} from "@tanstack/svelte-virtual";
 	import type { Readable } from "svelte/store";
 	import resize from "$lib/actions/resize";
 	import { mainEl } from "$lib/stores/main";
@@ -75,9 +79,11 @@
 
 	// $: cursor = data.nextCursor;
 
-	const getEntries = async ({ pageParam = 0 }) => {
+	const getEntries = async ({ pageParam }) => {
 		console.log(`getEntries`, { pageParam });
-		const { entries, nextCursor } = await trpc($page).entries.listForUserSubscriptions.query({
+		const { entries, nextCursor } = await trpc(
+			$page
+		).entries.listForUserSubscriptions.query({
 			cursor: pageParam,
 		});
 		// cursor = nextCursor;
@@ -123,7 +129,9 @@
 	console.log({ items: $query.data });
 	let ref: HTMLElement | null = null;
 	const v = createVirtualizer({
-		count: $query?.hasNextPage ? $filteredItems.length + 1 : $filteredItems.length,
+		count: $query?.hasNextPage
+			? $filteredItems.length + 1
+			: $filteredItems.length,
 		overscan: 5,
 		getScrollElement: () => ref,
 		estimateSize: () => 40,
@@ -138,7 +146,9 @@
 
 	onMount(() => {
 		virtualizer = createVirtualizer({
-			count: $query?.hasNextPage ? $filteredItems.length + 1 : $filteredItems.length,
+			count: $query?.hasNextPage
+				? $filteredItems.length + 1
+				: $filteredItems.length,
 			overscan: 0,
 			getScrollElement: () => (ref ? ref : null),
 			estimateSize: () => 40,
@@ -151,12 +161,18 @@
 	$: $filteredItems,
 		$v?.setOptions({
 			...$v.options,
-			count: $query?.hasNextPage ? $filteredItems.length + 1 : $filteredItems.length,
+			count: $query?.hasNextPage
+				? $filteredItems.length + 1
+				: $filteredItems.length,
 		});
 
 	$: if ($v && $filteredItems) {
 		const lastItem = $v.getVirtualItems().at(-1);
-		console.log({ lastItemIndex: lastItem?.index, itemsLength: $items.length, $query });
+		console.log({
+			lastItemIndex: lastItem?.index,
+			itemsLength: $items.length,
+			$query,
+		});
 		if (
 			lastItem?.index &&
 			lastItem.index >= $items.length - 1 &&
@@ -207,7 +223,9 @@
 	>
 		{@const item = $filteredItems[virtualRow.index]}
 		{@const isLoaderRow = virtualRow.index > $filteredItems.length - 1}
-		{@const subscription = data.subscriptions.find((s) => s.feedId === item?.feedId)}
+		{@const subscription = data.subscriptions.find(
+			(s) => s.feedId === item?.feedId
+		)}
 		<!-- {JSON.stringify(item.title)} -->
 		<a
 			href={`/u:${$page.params.username}/entry/${item.id}`}
@@ -257,7 +275,7 @@
 {:else if false}
 	<!-- TODO: make this into a component -->
 	<!-- <EntryList items={$filteredItems} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} /> -->
-	<div class="h-96 grow overflow-auto will-change-transform ">
+	<div class="h-96 grow overflow-auto will-change-transform">
 		{#if v}
 			<!-- {JSON.stringify($v.getVirtualItems())} -->
 			<!-- use:dndzone={{
@@ -293,7 +311,9 @@
 				{#each $v.getVirtualItems() as virtualRow, index}
 					{@const item = $filteredItems[virtualRow.index]}
 					{@const isLoaderRow = virtualRow.index > $filteredItems.length - 1}
-					{@const subscription = data.subscriptions.find((s) => s.feedId === item?.feedId)}
+					{@const subscription = data.subscriptions.find(
+						(s) => s.feedId === item?.feedId
+					)}
 					<!-- {JSON.stringify(item.title)} -->
 					{#if !isLoaderRow}
 						<div
@@ -301,13 +321,18 @@
 							class:odd={virtualRow.index % 2}
 							style="height: {virtualRow.size}px; transform: translateY({virtualRow.start}px); position: absolute; top:0; left:0; width: 100%;"
 						>
-							<a href={`/u:${$page.params.username}/entry/${item.id}`} class="min-w-0 grow p-2">
+							<a
+								href={`/u:${$page.params.username}/entry/${item.id}`}
+								class="min-w-0 grow p-2"
+							>
 								<div class="flex items-center truncate p-2">
 									<div class="flex w-36 flex-none items-center gap-2">
 										<!-- favicon -->
 										<div class="h-4 w-4 shrink-0 overflow-hidden rounded">
 											{#if item.uri}
-												<img src="https://icon.horse/icon/{getHostname(item.uri)}" />
+												<img
+													src="https://icon.horse/icon/{getHostname(item.uri)}"
+												/>
 												<!-- <img src="https://icon.horse/icon/{getHostname(item.uri)}" alt="" /> -->
 											{/if}
 										</div>
