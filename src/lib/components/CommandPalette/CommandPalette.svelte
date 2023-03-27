@@ -371,38 +371,12 @@
 			name: "Jump to podcast",
 			perform: async () => {
 				showCommandPalette.out();
-				const existingPodcasts = [];
-				// const existingPodcasts = await $page.data.queryClient.ensureQueryData(listPodcastsQuery());
 				commandPaletteStore.open({
-					query: (v) => {
-						// TODO: massage results by bumping saved podcasts to the top
-						const filteredPodcasts = existingPodcasts.filter((p) =>
-							p.title?.toLowerCase().includes(v.toLowerCase())
-						);
-						const q = podcastSearchQuery($page, v);
-						// REVIEW: ideally we wouldn't have to type this
-						return {
-							...q,
-							placeholderData: filteredPodcasts,
-							enabled: v.length > 2,
-							select: (data: ApiResponse.Search) => {
-								// REVIEW: this is probably to expensive to do on every keypress
-								// TODO: initally jump in with existing podcasts, and use simple includes
-								const sortedFeeds = data.feeds?.sort((a, b) => {
-									const aSaved = existingPodcasts.some(
-										(p) => p.podcastIndexId === a.id
-									);
-									const bSaved = existingPodcasts.some(
-										(p) => p.podcastIndexId === b.id
-									);
-									if (aSaved && !bSaved) return -1;
-									if (!aSaved && bSaved) return 1;
-									return 0;
-								});
-								return sortedFeeds;
-							},
-						};
-					},
+					queryResult: (search) =>
+						client.podcasts.public.search.createQuery(search, {
+							enabled: search.length > 2,
+							select: (data) => data.feeds,
+						}),
 					debounce: 150,
 					slot: () => ({ component: SearchItem }),
 					onSelect: async ({ detail }) => {
@@ -977,11 +951,11 @@
 				<!-- TODO: flesh out this separator -->
 				{#if value.group && value.group !== $filteredActions[index - 1]?.group && index !== 0}
 					<div class="h-4 w-full py-2">
-						<div class="h-px bg-border " />
+						<div class="h-px bg-border" />
 					</div>
 				{/if}
 				<div
-					class="rounded-lg p-1 font-medium text-muted   {active
+					class="rounded-lg p-1 font-medium text-muted {active
 						? 'bg-elevation-hover/90 font-bold'
 						: ''} flex h-12 w-full items-center justify-between gap-3.5 px-4 py-2"
 				>

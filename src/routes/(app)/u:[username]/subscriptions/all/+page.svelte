@@ -5,7 +5,7 @@
 	import { getContext, onDestroy, onMount } from "svelte";
 	import { DEFAULT_RSS_VIEW_OPTIONS } from "../view_options";
 	import type { PageData } from "./$types";
-	import { trpc } from "$lib/trpc/client";
+	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { Entry } from "@prisma/client";
 	import { page } from "$app/stores";
 	import {
@@ -31,6 +31,7 @@
 	import { goto } from "$app/navigation";
 	import { syncStore } from "$lib/stores/sync";
 	import Autosizer from "$lib/components/helpers/Autosizer.svelte";
+	import { getCurrentListContext } from "$lib/stores/currentList";
 
 	dayjs.updateLocale("en", {
 		relativeTime: {
@@ -77,35 +78,16 @@
 
 	const { filteredItems, items } = stores;
 
-	// $: cursor = data.nextCursor;
-
-	const getEntries = async ({ pageParam }) => {
-		console.log(`getEntries`, { pageParam });
-		const { entries, nextCursor } = await trpc(
-			$page
-		).entries.listForUserSubscriptions.query({
-			cursor: pageParam,
-		});
-		// cursor = nextCursor;
-		return { entries, nextCursor };
-	};
-	// this is cached via load function (REVIEW: or is it?)
-	const query = createInfiniteQuery({
-		// queryFn: getEntries,
-		queryKey: ["subscriptions", "all"],
-		queryFn: getEntries,
-		getNextPageParam: ({ nextCursor }) => nextCursor,
-		// initialData: {
-		// 	pages: [
-		// 		{
-		// 			entries: data.entries as unknown as Awaited<ReturnType<typeof getEntries>>["entries"],
-		// 			nextCursor: data.nextCursor,
-		// 		},
-		// 	],
-		// 	pageParams: [0],
-		// },
-		refetchOnWindowFocus: true,
-	});
+	const query = trpcWithQuery(
+		$page
+	).entries.listForUserSubscriptions.createInfiniteQuery(
+		{
+			take: 25,
+		},
+		{
+			getNextPageParam: (lastPage) => lastPage.nextCursor,
+		}
+	);
 
 	$: console.log({ $query, items: $query.data });
 
@@ -194,6 +176,12 @@
 		// height = window.innerHeight - blockSize - 32;
 	}
 	let draggedOver;
+
+	const current_list = getCurrentListContext();
+	$: current_list.set({
+		entries: $filteredItems,
+		slug: $page.url.pathname,
+	});
 </script>
 
 <!-- {#each data.entries as entry}
@@ -223,9 +211,9 @@
 	>
 		{@const item = $filteredItems[virtualRow.index]}
 		{@const isLoaderRow = virtualRow.index > $filteredItems.length - 1}
-		{@const subscription = data.subscriptions.find(
+		<!-- {@const subscription = data.subscriptions.find(
 			(s) => s.feedId === item?.feedId
-		)}
+		)} -->
 		<!-- {JSON.stringify(item.title)} -->
 		<a
 			href={`/u:${$page.params.username}/entry/${item.id}`}
@@ -241,7 +229,7 @@
 						{/if}
 					</div>
 					<div class="shrink truncate">
-						{subscription?.title}
+						{item.feed_title}
 					</div>
 				</div>
 				<div class="ml-4 mr-4 block truncate">
@@ -311,9 +299,9 @@
 				{#each $v.getVirtualItems() as virtualRow, index}
 					{@const item = $filteredItems[virtualRow.index]}
 					{@const isLoaderRow = virtualRow.index > $filteredItems.length - 1}
-					{@const subscription = data.subscriptions.find(
+					<!-- {@const subscription = data.subscriptions.find(
 						(s) => s.feedId === item?.feedId
-					)}
+					)} -->
 					<!-- {JSON.stringify(item.title)} -->
 					{#if !isLoaderRow}
 						<div
@@ -337,7 +325,7 @@
 											{/if}
 										</div>
 										<div class="shrink truncate">
-											{subscription?.title}
+											{item.feed_title}
 										</div>
 									</div>
 									<div class="ml-4 mr-4 block truncate">

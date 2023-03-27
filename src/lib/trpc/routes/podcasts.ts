@@ -31,7 +31,7 @@ const buildHeaders = async () => {
 class PodcastClient {
     private key: string;
     private secret: string;
-    private base = "https://api.podcastindex.org/api/1.0`"
+    private base = "https://api.podcastindex.org"
 
     constructor({ key, secret }: { key: string; secret: string; }) {
         this.key = key;
@@ -40,7 +40,9 @@ class PodcastClient {
 
     private async buildHeaders(Key: string) {
         const apiHeaderTime = Math.floor(Date.now() / 1000);
-        const data4Hash = this.key + this.secret + apiHeaderTime;
+        console.log({ apiHeaderTime, Key, secret: this.secret })
+        const data4Hash = Key + this.secret + apiHeaderTime;
+        console.log({ data4Hash })
         const encoder = new TextEncoder();
         const data = encoder.encode(data4Hash);
         const hashBuffer = await crypto.subtle.digest("SHA-1", data);
@@ -56,21 +58,30 @@ class PodcastClient {
         return new Headers(headers);
     }
 
-    private async fetch(endpoint: string, params?: Record<string, string | number | boolean>) {
-        const url = new URL(this.base, endpoint);
+    private async fetch(endpoint: `/${string}`, params?: Record<string, string | number | boolean>) {
+        const url = new URL("/api/1.0" + endpoint, this.base);
         if (params) {
             for (let key in params) {
                 const value = params[key];
                 url.searchParams.set(key, value.toString());
             }
         }
-        return fetch(url).then(res => res.json()).catch(e => console.error(e));
+        console.log(`Fetching ${url.toString()}`)
+        return fetch(url, {
+            headers: await this.buildHeaders(this.key)
+        }).then(res => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                throw new Error(`Error fetching ${url}: ${res.status} ${res.statusText}`);
+            }
+        }).catch(e => console.error(e));
     }
 
     async episodeById(id: number, opts?: {
         fulltext?: boolean;
     }) {
-        const data = await this.fetch('episodes/byid', {
+        const data = await this.fetch('/episodes/byid', {
             id: id.toString(),
             ...opts
         })
@@ -88,7 +99,7 @@ class PodcastClient {
         since?: number;
         fulltext?: boolean;
     }) {
-        const data = await this.fetch("episodes/byfeedid", {
+        const data = await this.fetch("/episodes/byfeedid", {
             id: Array.isArray(id) ? id.join(",") : id.toString(),
             ...opts
         });
@@ -96,24 +107,29 @@ class PodcastClient {
     }
 
     async podcastById(id: number) {
-        const data = await this.fetch("podcasts/byfeedid", {
+        const data = await this.fetch("/podcasts/byfeedid", {
             id
         });
         return data as ApiResponse.PodcastById;
     }
 
     async podcastByItunesId(id: number) {
-        const data = await this.fetch("podcasts/byitunesid", {
+        const data = await this.fetch("/podcasts/byitunesid", {
             id
         });
         return data as ApiResponse.Podcast;
     }
 
     async search(q: string) {
-        const data = await this.fetch("search/byterm", {
-            q
-        });
-        return data as ApiResponse.Search;
+        console.log(q)
+        try {
+            const data = await this.fetch("/search/byterm", {
+                q
+            });
+            return data as ApiResponse.Search;
+        } catch (e) {
+            console.error(e)
+        }
     }
 
 
@@ -236,28 +252,6 @@ export const podcastsRouter = router({
     }),
     episodes: protectedProcedure.query(async ({ ctx, input }) => {
         const { prisma, userId } = ctx;
-        // get subscriptinos
-        // const feeds = await ctx.prisma.feed.findMany({
-        // 	where: {
-        // 		podcastIndexId: {
-        // 			not: null,
-        // 		},
-        // 		subscriptions: {
-        // 			some: {
-        // 				userId,
-        // 			},
-        // 		},
-        // 	},
-        // 	include: {
-        // 		entries: true,
-        // 	},
-        // });
-        // get max 200
-        // const ids = feeds.map((f) => f.podcastIndexId as number).slice(0, 200);
-        // const episodes = await client.episodesByFeedId(ids);
-        // return episodes.items;
-        // REVIEW: ideally we do this with entries so we can see a lot better... but oh well.
-        // REVIEW: this performance is not great
         const episodes = await prisma.entry.findMany({
             where: {
                 // podcastIndexId: {
@@ -519,6 +513,7 @@ export const podcastsRouter = router({
             }
             console.log("cache miss")
             const json = await client.search(input);
+            console.log({ json })
             await ctx.redis.set(`podcast:search:${input}`, json, {
                 // expire after 1 hour
                 ex: 60 * 60,
@@ -553,25 +548,22 @@ export const podcastsRouter = router({
         }),
         getPodcastEpisodesByPodcastIndexId: publicProcedure.input(z.number()).query(async ({ input, ctx }) => {
             try {
-                const episodes = await client.episodesByFeedId(input, {
+                const cached = await ctx.redis.get(`podcast:episodes:${input}`) as ApiResponse.Episodes | undefined;
+                const episodes = cached ?? await client.episodesByFeedId(input, {
                     max: 10,
                 });
-                const entries = await ctx.prisma.entry.findMany({
-                    where: {
-                        feed: {
-                            podcastIndexId: input,
-                        }
-                    },
-                    include: {
-                        interactions: ctx.userId ? {
-                            where: {
-                                userId: ctx.userId,
-                            }
-                        } : undefined
-                    }
-                })
-                const finished = entries.filter(e => e.interactions[0]?.finished).map(e => e.podcastIndexId);
-                return { episodes, finished, entries };
+                if (!cached) {
+                    await ctx.redis.set(`podcast:episodes:${input}`, episodes, {
+                        // expire after 1 hour
+                        ex: 60 * 60,
+                    });
+                }
+                let query = ctx.db.selectFrom("Entry as e")
+                    .innerJoin("Feed as f", q => q.onRef("e.feedId", "=", "f.id").on("f.podcastIndexId", "=", input))
+                    .leftJoin("EntryInteraction as i", q => q.onRef("e.id", "=", "i.entryId").on("i.userId", "=", ctx.userId))
+                    .select(["e.title", "e.id", "e.podcastIndexId", "e.enclosureUrl", "e.feedId", "i.finished", "i.progress"])
+                const entries = await query.orderBy("e.published", "desc").limit(10).execute();
+                return { episodes, entries };
             } catch (e) {
                 console.error(e);
             }
@@ -582,11 +574,7 @@ export const podcastsRouter = router({
                 client.episodeById(input, {
                     fulltext: true,
                 }),
-                ctx.prisma.entry.findFirst({
-                    where: {
-                        podcastIndexId: input,
-                    },
-                }),
+                ctx.db.selectFrom("Entry").select("Entry.id").where("podcastIndexId", "=", BigInt(input)).limit(1).executeTakeFirst(),
             ]);
             const { episode } = episodeInfo;
             return { episode, entry };

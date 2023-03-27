@@ -3,13 +3,17 @@
 	import { afterNavigate, beforeNavigate } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
-	import { createVirtualizer, createWindowVirtualizer } from "@tanstack/svelte-virtual";
+	import {
+		createVirtualizer,
+		createWindowVirtualizer,
+	} from "@tanstack/svelte-virtual";
 	import { createEventDispatcher, onMount } from "svelte";
 	import { match, P } from "ts-pattern";
 	export let ref: HTMLElement | null = null;
 
 	type V = Parameters<typeof createVirtualizer>[0];
-	type RequireKeys<T extends object, K extends keyof T> = Required<Pick<T, K>> & Omit<T, K>;
+	type RequireKeys<T extends object, K extends keyof T> = Required<Pick<T, K>> &
+		Omit<T, K>;
 	const dispatch = createEventDispatcher<{
 		end: null;
 		enter: {
@@ -21,7 +25,7 @@
 		overscan: 5,
 		getScrollElement: () => ref,
 		estimateSize: () => 40,
-		debug: true,
+		// debug: true,
 		initialRect: {
 			height: 800,
 			width: 100,
@@ -145,7 +149,11 @@
 					class:odd={virtualRow.index % 2}
 					style="height: {virtualRow.size}px; transform: translateY({virtualRow.start}px); position: absolute; top:0; left:0; width: 100%;"
 				>
-					<slot {isLoaderRow} active={activeIndex === virtualRow.index} {virtualRow} />
+					<slot
+						{isLoaderRow}
+						active={activeIndex === virtualRow.index}
+						{virtualRow}
+					/>
 				</div>
 			{/each}
 		</div>

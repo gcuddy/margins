@@ -15,17 +15,15 @@
 	$: console.log({ data });
 	$: user = data.user;
 
-	const query = createQuery({
-		...allEpisodesQuery($page),
-		onSuccess: (data) => console.log({ data }),
-		// initialData: data.initialData,
-	});
+	const query = data.query();
 	$: console.log({ $query });
 
 	const formatDuration = (seconds: number) => {
 		const d = dayjs.duration(seconds, "seconds");
 
-		return d.format(`${d.hours() > 0 ? "H[h]" : ""} ${d.minutes() > 0 ? "m[m]" : ""}`);
+		return d.format(
+			`${d.hours() > 0 ? "H[h]" : ""} ${d.minutes() > 0 ? "m[m]" : ""}`
+		);
 	};
 </script>
 
@@ -35,7 +33,9 @@
 			<SmallPlus>Podcasts</SmallPlus>
 		</div>
 		<div slot="end">
-			<button on:click={() => trpc($page).podcasts.refresh.mutate()}> Refresh pods </button>
+			<button on:click={() => trpc($page).podcasts.refresh.mutate()}>
+				Refresh pods
+			</button>
 			<a href="/podcasts/search">Add Podcasts</a>
 		</div>
 	</DefaultHeader>
@@ -46,7 +46,7 @@
 		<p>Loading...</p>
 	{:else if $query.isSuccess}
 		<!-- else if content here -->
-		{#each $query.data as item}
+		{#each $query.data.pages.flatMap((p) => p.entries) as item}
 			<!-- {episode.title} -->
 			<li class="group flex gap-2 py-2">
 				<div class="shrink-0">
@@ -59,10 +59,10 @@
 									title: item.title || "",
 									id: item.id,
 									enclosureUrl: item.enclosureUrl,
-									image: item.image || item.feed?.imageUrl || "",
+									image: item.image || item.feed_image || "",
 								},
 								{
-									title: item.feed?.title,
+									title: item.feed_title,
 									// id: item.feed?.podcastIndexId,
 								}
 							);
@@ -70,7 +70,7 @@
 					>
 						<img
 							class="absolute top-0 h-20 w-20 rounded-lg shadow"
-							src={item.image || item.feed?.imageUrl}
+							src={item.image || item.feed_image}
 							alt=""
 						/>
 						<Icon
@@ -80,17 +80,21 @@
 					</button>
 				</div>
 				<div class="flex flex-col space-y-1">
-					<div class="flex space-x-2 text-xs font-medium uppercase tracking-tight">
+					<div
+						class="flex space-x-2 text-xs font-medium uppercase tracking-tight"
+					>
 						<Muted>{dayjs(item.published).format("l")}</Muted>
 						{#if item.duration}
 							<Muted>{formatDuration(item.duration)}</Muted>
 						{/if}
 					</div>
 					<h2 class="font-semibold">
-						<a href="/podcasts/{item.feed?.podcastIndexId}/{item.podcastIndexId}">{item.title}</a>
+						<a href="/podcasts/{item.feed_pindex}/{item.e_pindex}"
+							>{item.title}</a
+						>
 					</h2>
 					<div class="max-h-20 overflow-hidden line-clamp-2">
-						<Muted class="text-sm">{@html item.summary}</Muted>
+						<Muted class="text-sm">{@html item.html}</Muted>
 					</div>
 					<div class="flex cursor-default items-center space-x-1">
 						<div class="flex flex-col items-center" />

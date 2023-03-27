@@ -491,42 +491,22 @@ export const entriesRouter = router({
             })
         )
         .mutation(
-            ({ ctx: { userId }, input: { id, progress, is_read, currentPage } }) =>
-                db.entry.update({
-                    where: {
-                        id,
-                    },
-                    data: {
-                        interactions: {
-                            upsert: {
-                                where: {
-                                    userId_entryId: {
-                                        userId,
-                                        entryId: id,
-                                    },
-                                },
-                                create: {
-                                    progress,
-                                    is_read,
-                                    user: {
-                                        connect: {
-                                            id: userId,
-                                        },
-                                    },
-                                    currentPage,
-                                },
-                                update: {
-                                    progress,
-                                    is_read,
-                                    currentPage,
-                                },
-                            },
-                        },
-                    },
-                    select: {
-                        id: true,
-                    },
-                })
+            ({ ctx: { userId, db }, input: { id, progress, is_read, currentPage } }) =>
+                db.insertInto("EntryInteraction")
+                    .values({
+                        entryId: id,
+                        progress,
+                        is_read,
+                        userId,
+                        currentPage,
+                        updatedAt: new Date()
+                    })
+                    .onDuplicateKeyUpdate({
+                        progress,
+                        is_read,
+                        currentPage
+                    })
+                    .execute()
         ),
     update: protectedProcedure
         .input(
@@ -601,27 +581,36 @@ export const entriesRouter = router({
         .input(
             z
                 .object({
-                    take: z.number().min(1).max(100).default(50),
+                    take: z.number().min(1).max(100).default(25),
                     cursor: z.date().nullish(),
+                    podcasts: z.boolean().default(false),
                 })
-                .default({
-                    take: 50,
-                    cursor: null,
-                })
+            // .default({
+            //     take: 25,
+            //     cursor: null,
+            // })
         )
         .query(async ({ ctx, input }) => {
             const { cursor, take } = input;
             console.log(`listforusersubscriptions`, { input });
-            const { prisma, userId } = ctx;
+            const { userId } = ctx;
             let query = ctx.db.selectFrom("Entry as e")
                 .innerJoin("Feed as f", "f.id", "e.feedId")
                 .innerJoin("Subscription as s", (j) =>
                     j.onRef("s.feedId", "=", "f.id").on("s.userId", "=", userId)
                 )
-                .select(["e.id", "e.title", "e.published", "e.uri", "e.feedId"])
+                .select(["e.id", "e.title", "e.published", "e.uri", "e.feedId", "e.image", "e.duration", "e.enclosureUrl", "s.title as feed_title", "f.podcastIndexId as feed_pindex", "f.imageUrl as feed_image"])
                 .where("s.userId", "=", userId)
                 .orderBy("e.published", "desc")
                 .limit(take + 1);
+
+            if (input.podcasts) {
+                query = query
+                    .select(["e.podcastIndexId as e_pindex", "e.html"])
+                    .where(qb => qb
+                        .where("f.podcastIndexId", "is not", null)
+                        .orWhere("f.podcast", "=", true))
+            }
             if (cursor) {
                 query = query.where("e.published", "<", cursor);
             }
@@ -946,12 +935,10 @@ export const entriesRouter = router({
                 }
                 const { db, redis } = ctx;
                 const { id } = input;
-                if (true) {
-                    const cached = await redis.get(`entry:${id}`);
-                    if (cached) {
-                        console.log("cache hit");
-                        return cached as Entry;
-                    }
+                const cached = await redis.get(`entry:${id}`);
+                if (cached) {
+                    console.log("cache hit");
+                    return cached as Entry;
                 }
                 const entry: Entry = await db
                     .selectFrom("Entry as e")

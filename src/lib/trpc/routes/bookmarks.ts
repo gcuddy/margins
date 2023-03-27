@@ -340,61 +340,34 @@ export const bookmarks = router({
             const { id, entryId, data, uri } = input;
             const { userId } = ctx;
             if (Array.isArray(id) || Array.isArray(entryId)) {
-                return ctx.prisma.bookmark.updateMany({
-                    where: {
-                        id: Array.isArray(id) ? {
-                            in: id,
-                        } : undefined,
-                        entryId: Array.isArray(entryId) ? {
-                            in: entryId,
-                        } : undefined,
-                        userId: ctx.userId,
-                    },
-                    data,
-                });
+                let mutation = ctx.db.updateTable("Bookmark as b")
+                    .set(data)
+                    .where("b.userId", "=", userId)
+                if (Array.isArray(id)) {
+                    mutation = mutation.where("b.id", "in", id);
+                }
+                if (Array.isArray(entryId)) {
+                    mutation = mutation.where("b.entryId", "in", entryId);
+                }
+                return mutation.execute();
             } else if (id) {
-                return ctx.prisma.bookmark.update({
-                    where: {
-                        id,
-                        userId
-                    },
-                    data
-                })
+                return ctx.db.updateTable("Bookmark as b")
+                    .set(data)
+                    .where("b.id", "=", id)
+                    .where("b.userId", "=", userId)
+                    .execute();
             } else if (uri) {
                 const { stateId, interactionId, favoriteId, entryId, id, ...rest } = data;
-                return ctx.prisma.bookmark.upsert({
-                    where: {
-                        // id: id ?? undefined,
-                        // entryId: entryId ?? undefined,
-                        // userId,
-                        uri_entryId_userId: {
-                            uri: input.uri || '',
-                            entryId: entryId || -1,
-                            userId,
-                        }
-                    },
-                    update: data,
-                    create: {
-                        // ...rest,
-                        entry: {
-                            connect: {
-                                uri
-                            }
-                        },
-                        user: {
-                            connect: {
-                                id: userId
-                            }
-                        },
-                        state: stateId ? {
-                            connect: {
-                                id: stateId
-                            }
-                        } : undefined
-                        // uri,
-                        // userId
-                    }
-                });
+                let mutation = ctx.db.insertInto("Bookmark")
+                    .values({
+                        stateId,
+                        interactionId,
+                        favoriteId,
+                        updatedAt: new Date(),
+                        userId: ctx.userId,
+                        entryId: entryId ?? ctx.db.selectFrom("Entry").select("id").where("uri", "=", uri).limit(1),
+                    }).onDuplicateKeyUpdate(data);
+                return mutation.execute();
             }
         }),
     screenshot: protectedProcedure

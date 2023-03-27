@@ -1,10 +1,15 @@
+import { trpcWithQuery } from "$lib/trpc/client";
 import type { PageLoad } from "./$types";
-import { allEpisodesQuery } from "./queries";
 
 export const load = (async (evt) => {
-	const { queryClient } = await evt.parent();
-	const initialData = await queryClient.ensureQueryData(allEpisodesQuery(evt));
-	return {
-		initialData,
-	};
+    const { queryClient } = await evt.parent();
+    const client = trpcWithQuery(evt, queryClient);
+    const query = client.entries.listForUserSubscriptions.createServerInfiniteQuery({
+        podcasts: true
+    }, {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+    });
+    return {
+        query,
+    };
 }) satisfies PageLoad;

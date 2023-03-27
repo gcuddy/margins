@@ -5,9 +5,6 @@
 
 @layer base {
 	:root {
-
-
-
 		color-scheme: light;
 		--sidebar-width: theme("spacing.60");
 		--sidebar-offset: calc(-1 * var(--sidebar-width));
@@ -26,7 +23,6 @@
 		--color-elevation: 20deg 6% 98%;
 		--color-elevation-hover: 20deg 6% 90%;
 
-
 		/* --color-border: var(--bh) calc(var(--bs) * .68) calc(var(--bl) * 1.53); */
 		/* --color-base-hover: var(--bh) calc(var(--bs) * .8) calc(var(--bl) * 1.35); */
 		/* --color-elevation-hover: var(--bh) calc(var(--bs) * .5) calc(var(--bl) * 1.8); */
@@ -36,10 +32,7 @@
 
 		--color-accent: 43deg 96% 56.3%;
 		--color-accent-hover: 43deg 96% 66.3%;
-         --color-text-on-accent: 43deg 90% 15%;
-
-
-
+		--color-text-on-accent: 43deg 90% 15%;
 
 		/* annotations */
 		--highlight-yellow: theme(colors.highlight.yellow);
@@ -75,18 +68,19 @@
 
 		--color-base: var(--bh) var(--bs) var(--bl);
 		/* REVIEW: use color generator for these */
-		--color-elevation: var(--bh) calc(var(--bs) * .9) calc(var(--bl) * 1.15);
-		--color-border: var(--bh) calc(var(--bs) * .68) calc(var(--bl) * 1.53);
-		--color-base-hover: var(--bh) calc(var(--bs) * .8) calc(var(--bl) * 1.35);
-		--color-elevation-hover: var(--bh) calc(var(--bs) * .5) calc(var(--bl) * 1.8);
+		--color-elevation: var(--bh) calc(var(--bs) * 0.9) calc(var(--bl) * 1.15);
+		--color-border: var(--bh) calc(var(--bs) * 0.68) calc(var(--bl) * 1.53);
+		--color-base-hover: var(--bh) calc(var(--bs) * 0.8) calc(var(--bl) * 1.35);
+		--color-elevation-hover: var(--bh) calc(var(--bs) * 0.5)
+			calc(var(--bl) * 1.8);
 
 		--sh: 267deg;
 		--ss: 27%;
 		--sl: 15%;
 		--color-sidebar: var(--sh) var(--ss) var(--sl);
-		--color-sidebar-hover: var(--sh) calc(var(--ss) * .73) calc(var(--sl) * 1.4);
+		--color-sidebar-hover: var(--sh) calc(var(--ss) * 0.73)
+			calc(var(--sl) * 1.4);
 		/* sidebar text color? */
-
 
 		/* text colors - on base */
 		/* -- */
@@ -140,13 +134,14 @@
 
 		--color-content: 60deg 5% 96%;
 
+		--color-sidebar: 24deg 10% 10%;
 		/* ?? gray-300  */
 		--color-muted: rgb(214 211 209);
 	}
 
 	mark[data-annotation-color] {
 		cursor: default;
-        @apply rounded-sm;
+		@apply rounded-sm;
 	}
 
 	mark[data-annotation-color="Yellow"] {
@@ -214,6 +209,6 @@
 
 @layer components {
 	.simple-scrollbar {
-		@apply scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-muted scrollbar-thumb-rounded-lg scrollbar-track-transparent;
+		@apply scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border scrollbar-thumb-rounded-lg hover:scrollbar-thumb-muted;
 	}
 }

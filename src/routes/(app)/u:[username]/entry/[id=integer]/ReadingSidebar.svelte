@@ -272,7 +272,6 @@
 									$updateBookmark.mutate({
 										id: bookmarkId,
 										entryId: entry.id,
-										uri: entry.uri,
 										data: {
 											stateId: state.id,
 										},

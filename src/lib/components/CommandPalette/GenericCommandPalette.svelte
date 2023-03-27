@@ -21,8 +21,12 @@
 	// TODO: GENERIC ACTION TYPE
 	// TODO: fix TValue troubles
 	// allows stores to be passed in; we will read them
-	export let query: ((term: string) => CreateQueryOptions<TValue[]>) | undefined = undefined;
-	export let queryResult: ((term: string) => CreateQueryResult<TValue[]>) | undefined = undefined;
+	export let query:
+		| ((term: string) => CreateQueryOptions<TValue[]>)
+		| undefined = undefined;
+	export let queryResult:
+		| ((term: string) => CreateQueryResult<TValue[]>)
+		| undefined = undefined;
 	export let values: TValue[] | Writable<TValue[]> | Readable<TValue[]> = [];
 
 	type StoredComponent<T extends SvelteComponent> = {
@@ -69,7 +73,12 @@
 
 	// optional Raw html or StoredComponent to display per item
 	export let itemDisplay:
-		| ((value: TValue, active: boolean, selected: boolean, index: number) => string | StoredComponent)
+		| ((
+				value: TValue,
+				active: boolean,
+				selected: boolean,
+				index: number
+		  ) => string | StoredComponent)
 		| null = null;
 
 	// optionally set an icon ot display for each item, using a stored component
@@ -90,7 +99,9 @@
 	export { prefetchProp as prefetch };
 	/** STORE SETUP (maybe put in sep file or module) **/
 	export let term = writable("");
-	const commandStore = Array.isArray(values) ? writable<TValue[]>(values) : values;
+	const commandStore = Array.isArray(values)
+		? writable<TValue[]>(values)
+		: values;
 	$: console.log({ commandStore, $commandStore, $filteredActions });
 	//TODO Use Fuse
 	// TODO: fix type problems
@@ -109,7 +120,9 @@
 		}
 		$items = $items?.filter((i) => !("check" in i) || i?.check?.());
 		const filteredItems = $items?.filter((x) =>
-			((x?.name || x?.title) + (x?.keywords || "")).toLowerCase().includes($term.toLowerCase())
+			((x?.name || x?.title) + (x?.keywords || ""))
+				.toLowerCase()
+				.includes($term.toLowerCase())
 		);
 		if (filteredItems.length) {
 			return filteredItems;
@@ -122,7 +135,12 @@
 
 	import Combobox from "../helpers/Combobox.svelte";
 	import { fadeScale } from "$lib/transitions";
-	import { derived, writable, type Readable, type Writable } from "svelte/store";
+	import {
+		derived,
+		writable,
+		type Readable,
+		type Writable,
+	} from "svelte/store";
 	import {
 		ComponentProps,
 		ComponentType,
@@ -147,7 +165,11 @@
 	import { page } from "$app/stores";
 	import type { Page } from "@sveltejs/kit";
 	import ChosenIconComponent from "../ChosenIcon.svelte";
-	import { createQuery, CreateQueryOptions, CreateQueryResult } from "@tanstack/svelte-query";
+	import {
+		createQuery,
+		CreateQueryOptions,
+		CreateQueryResult,
+	} from "@tanstack/svelte-query";
 	import { match } from "ts-pattern";
 	import debouncefn from "lodash/debounce";
 
@@ -162,13 +184,16 @@
 
 	$: QueryResult = queryResult ? queryResult($term) : undefined;
 
-    $: debounced = debouncefn((value: string) => {
-        term.set(value)
-    }, debounce, {
-        leading: true,
-        trailing: true,
-    });
-
+	$: debounced = debouncefn(
+		(value: string) => {
+			term.set(value);
+		},
+		debounce,
+		{
+			leading: true,
+			trailing: true,
+		}
+	);
 </script>
 
 <div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
@@ -180,15 +205,19 @@
 			? $QueryResult.data
 			: $filteredActions || []}
 		on:input={(e) => {
-            console.log({$term})
-            if (e.currentTarget && "value" in e.currentTarget && typeof e.currentTarget.value === "string") {
-                if (debounce) {
-                    debounced(e.currentTarget.value);
-                } else {
-                    term.set(e.currentTarget.value);
-                }
-            }
-        }}
+			console.log({ $term });
+			if (
+				e.currentTarget &&
+				"value" in e.currentTarget &&
+				typeof e.currentTarget.value === "string"
+			) {
+				if (debounce) {
+					debounced(e.currentTarget.value);
+				} else {
+					term.set(e.currentTarget.value);
+				}
+			}
+		}}
 		fillValue={false}
 		animateHeight={true}
 		on:select={(e) => {
@@ -206,7 +235,8 @@
 			}
 		}}
 		input={{
-			class: "w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
+			class:
+				"w-full bg-transparent text-lg border-0 focus:ring-0 text-content placeholder-muted p-4",
 			placeholder,
 		}}
 		inputParent={{
@@ -227,7 +257,9 @@
 	>
 		<svelte:fragment slot="inputPeer">
 			{#if searchIcon || Query || QueryResult}
-				{@const loading = Query && $Query?.isInitialLoading || QueryResult && $QueryResult?.isInitialLoading}
+				{@const loading =
+					(Query && $Query?.isInitialLoading) ||
+					(QueryResult && $QueryResult?.isInitialLoading)}
 				<div class="my-3 ml-3 flex items-center">
 					<Icon
 						name={loading ? "loading" : "search"}
@@ -244,16 +276,27 @@
 			{#if value.group}
 				<div class="h-4 w-full py-2">
 					{value.group}
-					<div class="h-px bg-border " />
+					<div class="h-px bg-border" />
 				</div>
 			{/if}
 			<slot {value} {active} {selected} {index}>
 				{#if slot}
-					{@const { component, props } = slot({ value, active, selected, index })}
+					{@const { component, props } = slot({
+						value,
+						active,
+						selected,
+						index,
+					})}
 					{#if props}
 						<svelte:component this={component} {...props} />
 					{:else}
-						<svelte:component this={component} {value} {active} {selected} {index} />
+						<svelte:component
+							this={component}
+							{value}
+							{active}
+							{selected}
+							{index}
+						/>
 					{/if}
 				{:else}
 					<div
@@ -265,7 +308,12 @@
 							<div class="absolute left-0 h-full w-1 bg-accent" />
 						{/if}
 						{#if itemIcon}
-							{@const { component, props } = itemIcon(value, active, selected, index)}
+							{@const { component, props } = itemIcon(
+								value,
+								active,
+								selected,
+								index
+							)}
 							{#if component}
 								<svelte:component this={component} {...props} />
 							{/if}
@@ -287,7 +335,9 @@
 									<svelte:component this={item.component} {...props} />
 								{/if}
 							{:else}
-								{@html typeof value === "string" ? value : value.name || value.title}
+								{@html typeof value === "string"
+									? value
+									: value.name || value.title}
 							{/if}
 						</div>
 						{#if value.kbd}

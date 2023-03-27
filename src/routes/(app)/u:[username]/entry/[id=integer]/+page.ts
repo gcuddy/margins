@@ -2,7 +2,7 @@
 import type { Config } from '@sveltejs/adapter-vercel';
 
 import { getEntriesFromCache } from "$lib/features/entries/queries";
-import { trpcWithQuery } from "$lib/trpc/client";
+import { trpc, trpcWithQuery } from "$lib/trpc/client";
 
 import type { PageLoad } from "./$types";
 
@@ -25,26 +25,27 @@ function scopeCss(css: string) {
     return str;
 }
 
+// const publicQuery = createquery for public entries, with no user data, skipping batch link
+
 export const load = (async (event) => {
-    const { data, parent } = event;
+    console.log("helloooooooo")
+    const { parent, params } = event;
     const parentData = await parent();
     const { queryClient } = parentData;
     // const entries = getEntriesFromCache(queryClient);
     // const placeholderData = entries.find(e => e.id === data.id);
     const client = trpcWithQuery(event, queryClient);
     const utils = client.createContext();
-    const params = {
-        id: data.id
+    const opts = {
+        id: +params.id
     } as const;
-    console.log("entry load", { data, parentData, params })
-    console.time("entry");
-    const [entry, entryData] = await Promise.all([
-        utils.entries.public.byId.prefetch(params),
-        utils.entries.loadUserData.prefetch(params)
+    const [entry] = await Promise.all([
+        utils.entries.public.byId.prefetch(opts),
+        // utils.entries.loadUserData.prefetch(opts)
     ])
-    console.log({ entry, entryData })
-    console.timeEnd("entry");
+    console.log({ entry })
     return {
-        ...data,
+        // ...data,
+        id: +params.id,
     };
 }) satisfies PageLoad;

@@ -64,10 +64,10 @@
 	//         return locationStateIds.includes(stateId)
 	// 	}) : [];
 
-	// $: current_list.set({
-	//     entries: sortedEntries,
-	//     slug: $page.url.pathname
-	// })
+	$: current_list.set({
+		entries: $query.data ?? [],
+		slug: $page.url.pathname,
+	});
 </script>
 
 <Header>

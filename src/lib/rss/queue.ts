@@ -76,17 +76,26 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
         const new_items = itemsToAdd.filter(Boolean);
         await pipeline.exec();
 
+        // TODO: think about getting from podcastindex instead of rss feed for nice data
+
         // TODO: Podcast etc
-        await db.insertInto("Entry").values(new_items.map(item => ({
-            feedId,
-            title: item.title ?? null,
-            uri: item.link ?? null,
-            guid: item.guid ?? null,
-            published: item.pubDate ? new Date(item.pubDate) : null,
-            author: (item.author || item["dc:creator"] || item.itunes?.author) ?? null,
-            html: item.content ?? null,
-            updatedAt: new Date(),
-        }))).onDuplicateKeyUpdate({
+        await db.insertInto("Entry").values(new_items.map(item => {
+
+            const enclosureUrl = item.enclosure?.url;
+            const type = item.enclosure?.type === "audio/mpeg" ? "audio" : "article" as const;
+            return ({
+                feedId,
+                title: item.title ?? null,
+                uri: item.link ?? enclosureUrl ?? null,
+                guid: item.guid ?? null,
+                published: item.pubDate ? new Date(item.pubDate) : item.isoDate ? new Date(item.isoDate) : null,
+                author: (item.author || item["dc:creator"] || item.itunes?.author) ?? null,
+                html: item.content ?? null,
+                updatedAt: new Date(),
+                type,
+                enclosureUrl,
+            }) as const
+        })).onDuplicateKeyUpdate({
             feedId,
         }).execute();
     } catch (e) {
