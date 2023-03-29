@@ -499,17 +499,21 @@
 								<!-- {article.feedId
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
                                 : article.uri} -->
-								<a
-									class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
-									href={article.uri}
-								>
-									<img
-										src="https://icon.horse/icon/?uri={article.uri}"
-										class="h-5 w-5 rounded-full object-cover"
-										alt=""
-									/>
-									<span class="truncate">{article.uri}</span></a
-								>
+								{#if article.uri?.startsWith("http")}
+									<a
+										class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
+										href={article.uri}
+									>
+										<img
+											src="https://icon.horse/icon/?uri={article.uri}"
+											class="h-5 w-5 rounded-full object-cover"
+											alt=""
+										/>
+
+										<span class="truncate">{new URL(article.uri).hostname}</span
+										>
+									</a>
+								{/if}
 								<H1 class="">{article.title}</H1>
 								<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
 								{#if article.summary}
