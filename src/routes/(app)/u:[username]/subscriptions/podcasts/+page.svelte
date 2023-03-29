@@ -2,15 +2,15 @@
 	import { page } from "$app/stores";
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
+	import Icon from "$lib/components/helpers/Icon.svelte";
 	import Header from "$lib/components/layout/Header.svelte";
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
 	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
-	import { trpc } from "$lib/trpc/client";
-	import { createQuery } from "@tanstack/svelte-query";
+	import ImageSkeleton from "$lib/components/ui/skeleton/ImageSkeleton.svelte";
 	import dayjs from "$lib/dayjs";
+	import { trpc } from "$lib/trpc/client";
+	import { Image } from "@unpic/svelte";
 	import type { PageData } from "./$types";
-	import { allEpisodesQuery } from "./queries";
-	import Icon from "$lib/components/helpers/Icon.svelte";
 	export let data: PageData;
 	$: console.log({ data });
 	$: user = data.user;
@@ -68,11 +68,22 @@
 							);
 						}}
 					>
-						<img
-							class="absolute top-0 h-20 w-20 rounded-lg shadow"
-							src={item.image || item.feed_image}
-							alt=""
-						/>
+						{#if item.feed_image}
+							{@const src = `https://margins.b-cdn.net/${item.feed_image}`}
+							<Image
+								class="absolute top-0 h-20 w-20 rounded-lg shadow"
+								{src}
+								alt=""
+								cdn="bunny"
+								width={80}
+								height={80}
+								layout="constrained"
+							/>
+						{:else}
+							<ImageSkeleton
+								class="absolute top-0 h-20 w-20 rounded-lg shadow"
+							/>
+						{/if}
 						<Icon
 							name="playCircle"
 							className=" h-12 group-hover/button:fill-primary-400/95 group-hover:opacity-100 opacity-0 duration-200 transition w-12 stroke-black fill-gray-300/75 inset-0"
@@ -89,9 +100,7 @@
 						{/if}
 					</div>
 					<h2 class="font-semibold">
-						<a href="/podcasts/{item.feed_pindex}/{item.e_pindex}"
-							>{item.title}</a
-						>
+						<a href="/u:{user.username}/entry/{item.id}">{item.title}</a>
 					</h2>
 					<div class="max-h-20 overflow-hidden line-clamp-2">
 						<Muted class="text-sm">{@html item.html}</Muted>

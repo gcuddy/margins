@@ -370,7 +370,7 @@
 		<nav
 			on:click={handleClick}
 			on:keydown
-			class="relative flex h-full max-w-[min(100vw-40px,400px)] grow  flex-col space-y-3  border-border bg-sidebar pt-10 shadow-xl transition   duration-300 dark:shadow-2xl lg:pt-0 lg:shadow-none {collapsed
+			class="relative flex h-full max-w-[min(100vw-40px,400px)] grow flex-col space-y-3 border-border bg-sidebar pt-10 shadow-xl transition duration-300 dark:shadow-2xl lg:pt-0 lg:shadow-none {collapsed
 				? '-top-2 m-1 rounded-md border  dark:border-gray-600 dark:bg-gray-800'
 				: 'border-r '}"
 		>
@@ -383,7 +383,7 @@
 			/>
 			<slot>
 				<div
-					class="flex shrink-0 flex-col items-stretch space-y-3 overflow-y-auto px-5 "
+					class="flex shrink-0 flex-col items-stretch space-y-3 overflow-y-auto px-5"
 				>
 					<div class="flex items-center justify-between">
 						{#if user}

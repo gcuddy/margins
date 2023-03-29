@@ -26,7 +26,7 @@
 	import LocationListbox from "./LocationListbox.svelte";
 	import StateCombobox from "./StateCombobox.svelte";
 	import TagEntry from "./TagEntry.svelte";
-	import TypeListbox from "./ui/TypeListbox.svelte";
+	import TypeListbox from "./TypeListbox.svelte";
 
 	export let url = "";
 	export let location: Location = "inbox";

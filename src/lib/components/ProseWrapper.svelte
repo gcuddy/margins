@@ -8,7 +8,7 @@
 	export let el: HTMLElement | undefined = undefined;
 	export let style: string | undefined = undefined;
 	export let first_letter = false;
-	export let font: "sans" | "serif" | "mono" = "serif";
+	export let font: "sans" | "serif" | "mono" = "sans";
 
 	// read-only
 	export let dimensions: DOMRect | undefined;
@@ -33,9 +33,9 @@
 	bind:this={el}
 	on:click
 	class:first_letter
-	class="prose  mx-auto block break-words {font === 'sans'
+	class="prose mx-auto block break-words {font === 'sans'
 		? 'font-sans'
-		: 'font-newsreader'} !prose-headings:font-semibold !prose-headings:prose-a:font-semibold transition prose-headings:font-sans prose-a:underline prose-a:transition  hover:prose-a:text-accent/90 prose-figure:text-gray-500 prose-figure:drop-shadow-sm  prose-figcaption:mt-0 prose-figcaption:font-sans prose-figcaption:text-sm prose-figcaption:text-gray-500 prose-code:font-normal prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none  prose-img:mx-auto prose-img:rounded  dark:prose-figcaption:text-gray-400   dark:prose-img:ring-1 dark:prose-img:ring-white/5  {breakpoints
+		: 'font-newsreader'} !prose-headings:font-semibold !prose-headings:prose-a:font-semibold transition prose-headings:font-sans prose-a:underline prose-a:transition prose-figure:text-gray-500 prose-figure:drop-shadow-sm prose-figcaption:mt-0 prose-figcaption:font-sans prose-figcaption:text-sm prose-figcaption:text-gray-500 prose-code:font-normal prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none prose-img:mx-auto prose-img:rounded hover:prose-a:text-accent/90 dark:prose-figcaption:text-gray-400 dark:prose-img:ring-1 dark:prose-img:ring-white/5 {breakpoints
 		? 'md:prose-xl 2xl:prose-2xl'
 		: ''} {className}"
 	{style}

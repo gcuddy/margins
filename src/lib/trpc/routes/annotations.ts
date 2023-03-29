@@ -21,14 +21,31 @@ export const annotationWithBodySchema = idSchema.extend({ body: z.string().min(1
 export const annotationRouter = router({
     list: protectedProcedure.query(async ({ ctx, input }) => {
         const { userId, prisma } = ctx;
-        const annotations = await prisma.annotation.findMany({
-            where: {
-                userId,
-                deleted: null,
-                type: "annotation",
-            },
-            ...contextualAnnotationArgs,
-        });
+        const annotations = await ctx.db.selectFrom("Annotation as a")
+            .innerJoin("user as au", "au.id", "a.userId")
+            .select([
+                "a.id",
+                "a.contentData",
+                "a.private",
+                "a.color",
+                "a.body",
+                "a.target",
+                "a.entryId",
+                "a.parentId",
+                "a.createdAt",
+                "a.editedAt",
+                "a.type",
+                "a.color",
+                "au.username",
+                // sql<number>`SELECT count(*) FROM Annotation a WHERE a.parentId = a.id`.as(
+                //     "children_count"
+                // ),
+            ])
+            .where("a.userId", "=", ctx.userId)
+            .where("a.deleted", "is", null)
+            .where("a.type", "=", "annotation")
+            .orderBy("a.createdAt", "desc")
+            .execute();
         return annotations;
     }),
     search: protectedProcedure.input(z.string()).query(async ({ ctx, input }) => {

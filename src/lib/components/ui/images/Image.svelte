@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ImageSkeleton from "$lib/components/layout/Skeletons/ImageSkeleton.svelte";
+	import ImageSkeleton from "$lib/components/ui/skeleton/ImageSkeleton.svelte";
 	import { onMount } from "svelte";
 	import type { HTMLImgAttributes } from "svelte/elements";
 
@@ -21,9 +21,21 @@
 	});
 </script>
 
-<img on:error {alt} {src} {...$$restProps} class:loaded bind:this={thisImage} loading="lazy" />
+<img
+	on:error
+	{alt}
+	{src}
+	{...$$restProps}
+	class:loaded
+	bind:this={thisImage}
+	loading="lazy"
+/>
 <ImageSkeleton
-	class="absolute inset-0 {loaded ? 'opacity-0' : src ? 'animate-pulse' : 'opacity-100'} transition-opacity duration-100"
+	class="absolute inset-0 {loaded
+		? 'opacity-0'
+		: src
+		? 'animate-pulse'
+		: 'opacity-100'} transition-opacity duration-100"
 />
 <slot />
 

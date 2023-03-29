@@ -1,27 +1,27 @@
 <script>
-	import Button from '$lib/components/Button.svelte';
-	import Icon from '$lib/components/helpers/Icon.svelte';
-    import "$lib/styles/warbler.css"
+	import Button from "$lib/components/ui/Button.svelte";
+	import "$lib/styles/warbler.css";
 </script>
 
-<div class="min-h-screen bg-amber-50 text-amber-900 pb-16">
-	<header class="sticky top-0">
+<div class="flex min-h-screen select-text flex-col bg-amber-50">
+	<header class="container sticky top-0 z-40">
 		<nav>
 			<ul class=" mx-auto flex items-center justify-end space-x-4 p-4">
-				<li><a href="/login">Login</a></li>
-				<li>
+				<li><Button as="a" href="/login">Login</Button></li>
+				<!-- <li>
 					<Button
 						as="a"
 						href="/signup"
 						size="lg"
 						className="flex font-bold items-center gap-1 py-6"
-						scaleOnHover={true}><span>Get Margins</span> <Icon name="arrowSmRight" /></Button
+						scaleOnHover={true}
+						><span>Get Margins</span> <Icon name="arrowSmRight" /></Button
 					>
-				</li>
+				</li> -->
 			</ul>
 		</nav>
 	</header>
-	<main class="overflow-y-auto">
+	<main class="flex-1">
 		<slot />
 	</main>
 </div>

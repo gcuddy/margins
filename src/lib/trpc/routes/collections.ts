@@ -4,6 +4,7 @@ import { collectionItemSelect } from "$lib/prisma/selects/collections";
 import { _CollectionItemsModel, _CollectionModel } from "$lib/prisma/zod";
 import { protectedProcedure, publicProcedure, router } from "$lib/trpc/t";
 import type { ChosenIcon } from "$lib/types/icon";
+import type { Annotation, CollectionItems } from "$lib/prisma/kysely/types";
 // import { EntryWhereInputObjectSchema } from '$lib/zod/schemas';
 
 const idInput = z.object({
@@ -119,29 +120,127 @@ export const collectionsRouter = router({
         .input(idInput)
         .query(async ({ ctx, input }) => {
             const { id } = input;
-            const collection = await ctx.prisma.collection.findUniqueOrThrow({
-                where: {
-                    id,
-                },
-                include: {
-                    items: {
-                        ...collectionItemSelect(ctx.userId, 3),
-                        where: {
-                            parent: {
-                                is: null
-                            }
-                        },
-                        orderBy: {
-                            position: "asc"
-                        }
-                    },
-                },
-            });
-            //REVIEW: should we use an access enum?
-            if (collection.userId !== ctx.userId && collection.private) {
-                throw new Error("Unauthorized");
+            let collectionQuery = ctx.db.selectFrom("Collection")
+                .select(["id", "name", "icon", "private", "userId", "icon", "updatedAt", "createdAt", "description"])
+                .where("id", "=", id);
+
+            if (ctx.userId) {
+                collectionQuery = collectionQuery.where("userId", "=", ctx.userId)
+            } else {
+                collectionQuery = collectionQuery.where("private", "=", false)
             }
-            return { ...collection, icon: collection.icon as ChosenIcon };
+            console.log({ id })
+            // select c.id, c.position, c.note, c.parentId, c.type, e.title as entry_title, e.id as entry_id, e.uri as entry_uri, e.author as entry_author, e.image as entry_image, e.published as entry_published, e.type as entry_type, a.type as annotation_type, a.body as annotation_body, a.contentData as annotation_contentData, a.title as annotation_title, a.chosenIcon as annotation_icon, a.id as annotation_id, a.updatedAt as annotation_updatedAt from CollectionItems as c
+            // left join Entry e on e.id = c.entryId
+            // left join Annotation a on a.id = c.annotationId
+            // where collectionId = 30;
+            let itemsQuery = ctx.db.selectFrom("CollectionItems as c")
+                .leftJoin("Entry as e", "e.id", "c.entryId")
+                .leftJoin("Annotation as a", "a.id", "c.annotationId")
+                .select([
+                    "c.id",
+                    "c.position",
+                    "c.note",
+                    "c.parentId",
+                    "c.type",
+                    "e.title as entry_title",
+                    "e.id as entry_id",
+                    "e.uri as entry_uri",
+                    "e.author as entry_author",
+                    "e.image as entry_image",
+                    "e.published as entry_published",
+                    "e.type as entry_type",
+                    "a.type as annotation_type",
+                    "a.body as annotation_body",
+                    "a.contentData as annotation_contentData",
+                    "a.title as annotation_title",
+                    "a.chosenIcon as annotation_icon",
+                    "a.id as annotation_id",
+                    "a.updatedAt as annotation_updatedAt"
+                ])
+                .where("collectionId", "=", id)
+                .orderBy("position", "asc");
+            const [collection, items] = await Promise.all([
+                collectionQuery.executeTakeFirstOrThrow(),
+                itemsQuery.execute(),
+            ]);
+            console.log({ collection, items })
+
+            // todo: transform items into array of objects with nested annotations and entries
+            // here lies dragons
+            interface CollectionItem {
+                id: string;
+                position: number;
+                note: string | null;
+                parentId: string | null;
+                type: string;
+                entry: {
+                    title: string | null;
+                    id: number;
+                    uri: string | null;
+                    author: string | null;
+                    image: string | null;
+                    published: Date | null;
+                    type: string | null;
+                } | null;
+                annotation: {
+                    type: Annotation["type"] | null;
+                    body: string | null;
+                    contentData: any;
+                    title: string | null;
+                    chosenIcon: any;
+                    id: string;
+                    updatedAt: Date | null;
+                } | null;
+                children: CollectionItem[];
+            }
+
+            const itemMap = new Map<string, CollectionItem>();
+            const rootItems: CollectionItem[] = [];
+
+            // first pass: build itemMap and rootItems
+            for (const item of items) {
+                const collectionItem: CollectionItem = {
+                    id: item.id,
+                    position: item.position,
+                    note: item.note,
+                    parentId: item.parentId,
+                    type: item.type,
+                    entry: item.entry_id
+                        ? {
+                            title: item.entry_title,
+                            id: item.entry_id,
+                            uri: item.entry_uri,
+                            author: item.entry_author,
+                            image: item.entry_image,
+                            published: item.entry_published,
+                            type: item.entry_type,
+                        } : null,
+                    annotation: item.annotation_id
+                        ? {
+                            type: item.annotation_type,
+                            body: item.annotation_body,
+                            contentData: item.annotation_contentData,
+                            title: item.annotation_title,
+                            chosenIcon: item.annotation_icon,
+                            id: item.annotation_id,
+                            updatedAt: item.annotation_updatedAt,
+                        } : null,
+                    children: [],
+                };
+                itemMap.set(item.id, collectionItem)
+                if (item.parentId === null) {
+                    rootItems.push(collectionItem);
+                }
+            }
+            for (const item of itemMap.values()) {
+                if (!item.parentId) continue;
+                const parent = itemMap.get(item.parentId);
+                if (!parent) continue;
+                parent.children.push(item);
+            }
+            console.log({ collection })
+            return { ...collection, items: rootItems };
         }
         ),
     createItem: protectedProcedure

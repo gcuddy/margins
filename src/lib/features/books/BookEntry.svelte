@@ -99,9 +99,10 @@
 		$query.data?.volumeInfo?.industryIdentifiers?.find(
 			(i) => i.type === "ISBN_10"
 		)?.identifier;
-	$: googleBooksimage =
+	$: googleBooksimage = stripGoogleBookCurl(
 		$query.data?.volumeInfo?.imageLinks?.thumbnail ||
-		$query.data?.volumeInfo?.imageLinks?.smallThumbnail;
+			$query.data?.volumeInfo?.imageLinks?.smallThumbnail
+	);
 	$: openLibraryImage = isbn
 		? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`
 		: "";

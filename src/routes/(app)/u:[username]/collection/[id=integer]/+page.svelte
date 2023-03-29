@@ -17,11 +17,16 @@
 	import { collectionQuery } from "$lib/features/collections/queries";
 	import { modals } from "$lib/stores/modals";
 	import { syncStore } from "$lib/stores/sync";
-	import { getUserDataContext } from "$lib/stores/userdata";
 	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import type { ViewOptions } from "$lib/types/schemas/View";
-	import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@rgossiaux/svelte-headlessui";
+	import {
+		Menu,
+		MenuButton,
+		MenuItem,
+		MenuItems,
+		Transition,
+	} from "@rgossiaux/svelte-headlessui";
 	import { localStorageStore, Tab, TabGroup } from "@skeletonlabs/skeleton";
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import type { JSONContent } from "@tiptap/core";
@@ -30,20 +35,15 @@
 	import Sections from "./Sections.svelte";
 	export let data: PageData;
 	$: query = data.query();
-
-	$: console.log({ data });
 	$: list = $query.data;
-	$: entries =
-		list?.items
-			?.filter((i) => i.entry)
-			.map((i) => i.entry)
-			.filter(Boolean) || [];
 	$: flattened =
-		list?.items?.flatMap((i) => i.entry || i.children?.flatMap((i) => i.entry) || []).filter(Boolean) || [];
+		list?.items
+			?.flatMap((i) => i.entry || i.children?.flatMap((i) => i.entry) || [])
+			.filter(Boolean) || [];
 	$: console.log({ flattened });
 	let favorited = false;
 
-	$: favorited = data.favorites.some((f) => f.collectionId === list?.id);
+	$: favorited = data.favorites.some((f) => f.collection_id === list?.id);
 	$: folders = data.favorites.filter((f) => f.type === "FOLDER");
 	const queryClient = useQueryClient();
 	// REVIEW: is this necessary?
@@ -54,7 +54,7 @@
 	const utils = client.createContext();
 	const annotationMutation = client.annotations.create.createMutation({
 		onSuccess: (data) => {
-			if (!list) return;
+			if (!list?.id) return;
 			utils.collections.detail.invalidate({
 				id: list?.id,
 			});
@@ -74,7 +74,9 @@
 	});
 
 	const updateCollection = createMutation({
-		mutationFn: (data: RouterInputs["collections"]["updateCollection"]["data"]) =>
+		mutationFn: (
+			data: RouterInputs["collections"]["updateCollection"]["data"]
+		) =>
 			trpc().collections.updateCollection.mutate({
 				id: list?.id,
 				data,
@@ -100,7 +102,7 @@
 		},
 	});
 
-	$: contentData = (list.contentData as JSONContent) || "";
+	$: contentData = (list?.contentData as JSONContent) || "";
 	$: console.log({ contentData });
 
 	let view: ViewOptions["view"];
@@ -133,7 +135,7 @@
 				{#if list?.icon}
 					<ChosenIcon chosenIcon={list.icon} />
 				{/if}
-				<SmallPlus>{list.name}</SmallPlus>
+				<SmallPlus>{list?.name}</SmallPlus>
 			</button>
 			<Menu class="relative">
 				<form
@@ -149,13 +151,25 @@
 						};
 					}}
 				>
-					<input type="hidden" name="sortOrder" value={(data.favorites[0]?.sortOrder ?? 0) - 1} />
+					<input
+						type="hidden"
+						name="sortOrder"
+						value={(data.favorites[0]?.sortOrder ?? 0) - 1}
+					/>
 					<!-- on:click={(e) => e.preventDefault()} -->
 					<!-- <button type="submit" class="relative flex cursor-default items-center">
 						<Icon name="star" className="h-4 w-4 stroke-current {favorited ? 'fill-amber-400' : ''}" />
 					</button> -->
-					<MenuButton type="submit" class="relative flex cursor-default items-center">
-						<Icon name="star" className="h-4 w-4 stroke-current {favorited ? 'fill-amber-400' : ''}" />
+					<MenuButton
+						type="submit"
+						class="relative flex cursor-default items-center"
+					>
+						<Icon
+							name="star"
+							className="h-4 w-4 stroke-current {favorited
+								? 'fill-amber-400'
+								: ''}"
+						/>
 					</MenuButton>
 					<Transition
 						enter="transition ease-out duration-100"
@@ -284,10 +298,20 @@
 				/>
 			{:else if view === "kanban"}
 				<div class="flex flex-col space-y-2">
-					<div class="max-w-max overflow-hidden rounded-lg bg-elevation text-sm text-muted">
-						<TabGroup border="" hover="hover:text-bright" active="bg-elevation-hover">
-							<Tab bind:group={$tabSet} value="entries" name="entries">Entries</Tab>
-							<Tab bind:group={$tabSet} value="annotations" name="annotations">Notes</Tab>
+					<div
+						class="max-w-max overflow-hidden rounded-lg bg-elevation text-sm text-muted"
+					>
+						<TabGroup
+							border=""
+							hover="hover:text-bright"
+							active="bg-elevation-hover"
+						>
+							<Tab bind:group={$tabSet} value="entries" name="entries"
+								>Entries</Tab
+							>
+							<Tab bind:group={$tabSet} value="annotations" name="annotations"
+								>Notes</Tab
+							>
 						</TabGroup>
 					</div>
 					{#if $tabSet === "entries"}

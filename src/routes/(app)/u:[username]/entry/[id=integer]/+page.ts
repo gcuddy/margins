@@ -41,6 +41,9 @@ export const load = (async (event) => {
     } as const;
     const [entry] = await Promise.all([
         utils.entries.public.byId.prefetch(opts),
+        // utils.entries.getAnnotations.prefetch(opts),
+        // utils.entries.getRelations.prefetch(opts),
+        // utils.entries.getCollections.prefetch(opts),
         // utils.entries.loadUserData.prefetch(opts)
     ])
     console.log({ entry })

@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { goto, invalidate, invalidateAll, preloadData } from "$app/navigation";
+	import {
+		goto,
+		invalidate,
+		invalidateAll,
+		preloadData,
+	} from "$app/navigation";
 	import { page } from "$app/stores";
 	import { createTemporaryAnnotation } from "$lib/annotation";
 	import type { EntryWithBookmark } from "$lib/entry.server";
@@ -20,24 +25,31 @@
 	import type { ExtendedBookmark } from "$lib/bookmark";
 	import ReadingSidebar from "./ReadingSidebar.svelte";
 	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
-	import { checkIfKeyboardShortcutsAllowed, disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
+	import {
+		checkIfKeyboardShortcutsAllowed,
+		disableGlobalKeyboardShortcuts,
+	} from "$lib/stores/keyboard";
 	import LocationListbox from "$lib/components/LocationListbox.svelte";
 	import StateListbox from "$lib/components/StateListbox.svelte";
 	import { derived } from "svelte/store";
 	import { reading_sidebar } from "$lib/features/entries/stores";
 	import { trpc, trpcWithQuery } from "$lib/trpc/client";
 	import { nanoid } from "nanoid";
-	import { Popover, PopoverButton, PopoverPanel } from "@rgossiaux/svelte-headlessui";
-	import DisplaySettings from "$lib/components/ui/DisplaySettings/DisplaySettings.svelte";
+	import {
+		Popover,
+		PopoverButton,
+		PopoverPanel,
+	} from "@rgossiaux/svelte-headlessui";
+	import DisplaySettings from "$lib/components/DisplaySettings.svelte";
 	import GenericPopover from "$lib/components/GenericPopover.svelte";
 	import { modals } from "$lib/stores/modals";
 	import DatePicker from "$lib/components/DatePicker.svelte";
 	import { useUpdateBookmark } from "$lib/features/entries/mutations";
 
-	export let entry: RouterOutputs["entries"]["public"]["byId"]
+	export let entry: RouterOutputs["entries"]["public"]["byId"];
 	export let bookmark: {
-        id: number;
-    } | null = null;
+		id: number;
+	} | null = null;
 	export let interaction: { is_read: boolean | null } | null = null;
 
 	// export let currentList: ICurrentList | undefined = undefined;
@@ -117,11 +129,17 @@
 		!$reading_sidebar.active;
 
 	$: back = $currentList?.slug ?? "";
-	$: index = $currentList?.entries?.findIndex(($entry) => $entry.id === entry.id);
+	$: index = $currentList?.entries?.findIndex(
+		($entry) => $entry.id === entry.id
+	);
 	$: prev = index > -1 ? $currentList?.entries?.[index - 1] : undefined;
 	$: next = index > -1 ? $currentList?.entries?.[index + 1] : undefined;
-	$: next_url = next ? `/u:${$page.data.user?.username}/entry/${next.id}` : undefined;
-	$: prev_url = prev ? `/u:${$page.data.user?.username}/entry/${prev.id}` : undefined;
+	$: next_url = next
+		? `/u:${$page.data.user?.username}/entry/${next.id}`
+		: undefined;
+	$: prev_url = prev
+		? `/u:${$page.data.user?.username}/entry/${prev.id}`
+		: undefined;
 
 	$: console.log({ index, next, prev });
 
@@ -162,7 +180,7 @@
 <!-- -translate-y-12 -->
 <!-- going with h-14 which means mt-14 for other stuff -->
 <div
-	class="absolute top-0 z-20 flex h-14 min-h-[56px] w-full  transform-cpu border-b border-border bg-base/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100
+	class="absolute top-0 z-20 flex h-14 min-h-[56px] w-full transform-cpu border-b border-border bg-base/90 py-1 px-2 backdrop-blur-lg transition duration-500 hover:opacity-100
   {hide ? ' -translate-y-full' : ' translate-y-0'}
     after:absolute after:top-0 after:left-0 after:-z-10 after:h-16 after:w-full after:content-[''] md:px-3"
 	on:mouseenter={() => {
@@ -298,7 +316,12 @@
 					await $page.data.queryClient.invalidateQueries(["favorites"]);
 				}}
 			>
-				<Icon name="star" className="h-4 w-4 stroke-current {favorited ? 'fill-yellow-400' : ''}" />
+				<Icon
+					name="star"
+					className="h-4 w-4 stroke-current {favorited
+						? 'fill-yellow-400'
+						: ''}"
+				/>
 			</button>
 		</form>
 		<!-- {#if entry.bookmark}
@@ -356,7 +379,7 @@
 		>
 			<!-- TODO: clicking this will send you back to top, but save current scroll -->
 			<div
-				class="col-span-2  flex w-52 max-w-xs shrink flex-col text-center text-sm sm:w-auto md:max-w-md lg:max-w-lg"
+				class="col-span-2 flex w-52 max-w-xs shrink flex-col text-center text-sm sm:w-auto md:max-w-md lg:max-w-lg"
 			>
 				<span class="truncate">{entry.title}</span>
 				{#if entry.author}
@@ -370,7 +393,11 @@
 	<div class="ml-auto flex flex-1 items-center justify-end space-x-2">
 		<GenericPopover>
 			<svelte:fragment slot="button">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					width="24"
+					height="24"
 					><path fill="none" d="M0 0h24v24H0z" /><path
 						d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
 					/></svg
@@ -387,7 +414,9 @@
 				value={$mainElScroll.offset}
 				className="h-4 w-4 stroke-2 transition-all"
 				trailClass="stroke-gray-400"
-				pathClass={$mainElScroll.offset < 0.99 ? "stroke-primary-600" : "stroke-lime-600"}
+				pathClass={$mainElScroll.offset < 0.99
+					? "stroke-primary-600"
+					: "stroke-lime-600"}
 			/>
 		</div>
 		{#if entry.unread}
@@ -458,7 +487,7 @@
 						check: () => entry.type === "book",
 						icon: "bookOpenMini",
 						perform: async () => {
-                            if (!entry.googleBooksId) return;
+							if (!entry.googleBooksId) return;
 							await trpc().books.public.update.mutate({
 								googleBooksId: entry.googleBooksId,
 							});
@@ -475,7 +504,9 @@
 						label: "Delete",
 						icon: "trashMini",
 						perform: async () => {
-							if (window.confirm("Are you sure you want to delete this entry?")) {
+							if (
+								window.confirm("Are you sure you want to delete this entry?")
+							) {
 								await trpc().entries.delete.mutate(entry.id);
 								// await goto("/").then(() => {
 								//     invalidateAll();
@@ -528,6 +559,8 @@
 		}}
 		class="fixed bottom-4 right-4 text-2xl sm:right-8"
 	>
-		<Button on:click={returnToPosition} variant="ghost">Return to position</Button>
+		<Button on:click={returnToPosition} variant="ghost"
+			>Return to position</Button
+		>
 	</div>
 {/if}

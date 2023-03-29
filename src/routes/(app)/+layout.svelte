@@ -12,26 +12,30 @@
 	import Developer from "$lib/components/Developer.svelte";
 	import Sidebar from "./Sidebar.svelte";
 	import GenericCommandPaletteContainer from "$lib/components/CommandPalette/GenericCommandPaletteContainer.svelte";
-	import {  dev } from "$app/environment";
+	import { dev } from "$app/environment";
 	import { navigating, page } from "$app/stores";
 	import PodcastPlayer from "$lib/components/PodcastPlayer.svelte";
 	import SettingsSidebar from "./SettingsSidebar.svelte";
 	import PreloadingIndicator from "$lib/components/PreloadingIndicator.svelte";
 	import mq from "$lib/stores/mq";
 	import MutationProvider from "./MutationProvider.svelte";
-	import { createCurrentListStore, setCurrentListContext } from "$lib/stores/currentList";
-	import { createUserDataStore, setUserDataContext } from "$lib/stores/userdata";
+	import {
+		createCurrentListStore,
+		setCurrentListContext,
+	} from "$lib/stores/currentList";
+	import {
+		createUserDataStore,
+		setUserDataContext,
+	} from "$lib/stores/userdata";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
 
-    const current_list = createCurrentListStore();
-    setCurrentListContext(current_list);
+	const current_list = createCurrentListStore();
+	setCurrentListContext(current_list);
 
-
-    const user_data = createUserDataStore();
-    setUserDataContext(user_data);
-
+	const user_data = createUserDataStore();
+	setUserDataContext(user_data);
 </script>
 
 <svelte:head />
@@ -45,7 +49,7 @@
 <QueryClientProvider client={data.queryClient}>
 	<MutationProvider>
 		<div
-			class="simple-scrollbars bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
+			class="simple-scrollbars app bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
 				? 'mobile'
 				: ''}"
 			data-transparency="true"
@@ -54,7 +58,7 @@
 			<Notifications />
 			<!-- Grid version -->
 			<div
-				class="relative flex h-screen min-h-full w-full overflow-hidden "
+				class="relative flex h-screen min-h-full w-full overflow-hidden"
 				style="--sidebar-width: {sidebarWidth}px;"
 			>
 				{#if $navigating}
@@ -72,7 +76,9 @@
 					<Sidebar bind:sidebarWidth />
 				{/if}
 				<!-- bind:this={$mainEl} -->
-				<main class="relative flex grow flex-col place-items-stretch overflow-auto">
+				<main
+					class="relative flex grow flex-col place-items-stretch overflow-auto"
+				>
 					<slot />
 					<PodcastPlayer />
 				</main>

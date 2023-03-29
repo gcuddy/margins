@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { icons } from "$lib/features/entries/utils";
 	import { DocumentType } from "@prisma/client";
-	import GenericListbox from "../helpers/GenericListbox.svelte";
-	import Icon from "../helpers/Icon.svelte";
+	import GenericListbox from "./helpers/GenericListbox.svelte";
+	import Icon from "./helpers/Icon.svelte";
 	const types = Object.values(DocumentType);
 	export let allowedTypes: DocumentType[] = ["article", "bookmark", "recipe"];
 	export let selected = allowedTypes[0];
@@ -17,7 +17,12 @@
 	// };
 </script>
 
-<GenericListbox values={allowedTypes} bind:value={selected} let:value name="type">
+<GenericListbox
+	values={allowedTypes}
+	bind:value={selected}
+	let:value
+	name="type"
+>
 	<svelte:fragment slot="button" let:value>
 		<div class="flex items-center gap-2 text-sm">
 			<Icon name={icons[value]} className="h-4 w-4 stroke-gray-500" />

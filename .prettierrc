@@ -1,3 +1,6 @@
 {
-	"useTabs": true
+	"useTabs": true,
+	"trailingComma": "es5",
+	"printWidth": 80,
+	"svelteSortOrder": "options-scripts-markup-styles"
 }

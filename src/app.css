@@ -17,7 +17,8 @@
 		--color-base: 0deg 0% 100%;
 		--color-base-hover: 20deg 6% 96%;
 		--color-border: 20deg 5.9% 90%;
-		--color-sidebar: 90deg 9% 98%;
+		--color-sidebar: var(--color-base);
+		/* --color-sidebar: 90deg 9% 98%; */
 		--color-sidebar-hover: 20deg 11% 93%;
 
 		--color-elevation: 20deg 6% 98%;
@@ -52,12 +53,12 @@
 		}
 	}
 
-	.dark {
+	.dark .app {
 		color-scheme: dark;
 	}
 
 	/* REVIEW: is the best way to define themes? Can we do it in a js file, and use rgb etc? */
-	[data-theme="synthwave"] {
+	[data-theme="synthwave"] .app {
 		color-scheme: dark;
 		/* pull from x? */
 		/* --primary: 231 121 193; */
@@ -123,7 +124,7 @@
 		/* --secondary: theme() */
 	}
 
-	[data-theme="dark"] {
+	[data-theme="dark"] .app {
 		color-scheme: dark;
 		--gray-700: 30deg 6% 25%;
 		--color-base: 24deg 10% 10%;
@@ -142,6 +143,13 @@
 	mark[data-annotation-color] {
 		cursor: default;
 		@apply rounded-sm;
+	}
+
+	input {
+		@apply outline-none;
+	}
+	input[type="checkbox"] {
+		@apply appearance-none;
 	}
 
 	mark[data-annotation-color="Yellow"] {

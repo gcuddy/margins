@@ -13,9 +13,8 @@
 		"paths": {
 			"$lib": ["./src/lib"],
 			"$lib/*": ["./src/lib/*"],
-			"@": ["./src"],
-			"@/*": ["./src/*"]
+			"@/*": ["./*"]
 		},
-        "types": ["@types/wicg-file-system-access"]
+		"types": ["@types/wicg-file-system-access"]
 	}
 }

@@ -100,25 +100,25 @@
 	const saveAnnotationMutation = useSaveAnnotation();
 	const updateBookmark = useUpdateBookmark();
 
-	$: collectionsQuery = client.entries.getCollections.createQuery(
-		{
-			id: entry.id,
-		},
-		{
-			enabled: !!entry,
-		}
-	);
-	$: ({ data: collections, isLoading: collectionsLoading } = $collectionsQuery);
+	// $: collectionsQuery = client.entries.getCollections.createQuery(
+	// 	{
+	// 		id: entry.id,
+	// 	},
+	// 	{
+	// 		enabled: !!entry,
+	// 	}
+	// );
+	// $: ({ data: collections, isLoading: collectionsLoading } = $collectionsQuery);
 
-	$: relationsQuery = client.entries.getRelations.createQuery(
-		{
-			id: entry.id,
-		},
-		{
-			enabled: !!entry,
-		}
-	);
-	$: ({ data: relations, isLoading: relationsLoading } = $relationsQuery);
+	// $: relationsQuery = client.entries.getRelations.createQuery(
+	// 	{
+	// 		id: entry.id,
+	// 	},
+	// 	{
+	// 		enabled: !!entry,
+	// 	}
+	// );
+	// $: ({ data: relations, isLoading: relationsLoading } = $relationsQuery);
 
 	$: savedDate = createRelativeDateStore(entry.bookmark_createdAt);
 
@@ -318,7 +318,7 @@
 							<Muted class="text-sm">Context</Muted>
 							{JSON.stringify(entry.context)}
 						{/if} -->
-						{#if relations?.relations.some((r) => r.type === "SavedFrom")}
+						<!-- {#if relations?.relations.some((r) => r.type === "SavedFrom")}
 							<Muted class="text-sm">Saved from</Muted>
 							{#each relations?.relations.filter((r) => r.type === "SavedFrom") as r}
 								<a
@@ -327,7 +327,7 @@
 									class="truncate text-xs">{r.related_entry_title}</a
 								>
 							{/each}
-						{/if}
+						{/if} -->
 						<Muted class="text-sm">Type</Muted>
 						<span>{entry.type}</span>
 						{#if entry.type === DocumentType.book}

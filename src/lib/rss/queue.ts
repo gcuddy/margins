@@ -31,32 +31,54 @@ export async function getFeedText(feedUrl: string) {
     return text;
 }
 
+type LastProcessed = {
+    last_processed_id: string | null;
+    last_processed_date: string | null;
+} | null;
 
 export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedUrl: string, id: number }) {
     try {
-        const lastProcessedItemId = await redis.get(`last_processed_item:${feedUrl}`);
+        const lastProcessedItem = await redis.get(`last_processed_item:${feedUrl}`) as LastProcessed;
+        console.log(`Attempting to process feed ${feedUrl}. Last processed item: `, lastProcessedItem)
         const text = await getFeedText(feedUrl);
         // now parse feed text
         const feed = await parser.parseString(text);
         // console.log(feed)
 
-        // if lastProcessedItemId is undefined, then we want to process the first 50 items. otherwise, process everything *up to* the lastProcessedItemId
-        let slice = lastProcessedItemId ? [0, feed.items.findIndex(i => i.guid === lastProcessedItemId || i.link === lastProcessedItemId)] : [0, 50];
+
+
+        // if lastProcessedItemId || lastProcessedDate is undefined, then we want to process the first 50 items. otherwise, process everything *up to* the lastProcessedItemId
+        let slice = [0, 50];
+        if (lastProcessedItem?.last_processed_id || lastProcessedItem?.last_processed_date) {
+            const index = feed.items.filter(Boolean).findIndex((item) => {
+                if (lastProcessedItem?.last_processed_id && (item.guid === lastProcessedItem?.last_processed_id || item.link === lastProcessedItem?.last_processed_id || item.enclosure?.url === lastProcessedItem?.last_processed_id)) {
+                    return true;
+                }
+                if (lastProcessedItem?.last_processed_date && item.isoDate === lastProcessedItem?.last_processed_date) {
+                    return true;
+                }
+                return false;
+            });
+            console.log(`last processed index for ${feedUrl}`, index)
+            if (index > -1) {
+                slice = [0, index];
+            }
+        }
+
 
         const newItems = feed.items.slice(...slice).filter((item) => {
-            if (lastProcessedItemId && (item.guid === lastProcessedItemId || item.link === lastProcessedItemId)) {
+            if (lastProcessedItem?.last_processed_id && (item.guid === lastProcessedItem?.last_processed_id || item.link === lastProcessedItem?.last_processed_id || item.enclosure?.url === lastProcessedItem?.last_processed_id)) {
                 return false;
             }
             return true;
         });
         // If there are no new items, return early
         if (newItems.length === 0) {
+            console.log(`No new items for ${feedUrl}.`)
             return;
         }
         console.log(`Processing ${newItems.length} new items for ${feedUrl}...`)
         // Store the GUID of the last processed item for this feed
-        const pipeline = redis.pipeline();
-        pipeline.set(`lastProcessedItem:${feedUrl}`, newItems[0].guid || newItems[0].link);
         // Add the new items to the database
         const itemsToAdd = await Promise.all(newItems.map(async item => {
             // Use the GUID or URL as the unique identifier for each item
@@ -74,13 +96,14 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
             // console.log({ exists })
         }));
         const new_items = itemsToAdd.filter(Boolean);
-        await pipeline.exec();
-
+        await redis.set(`last_processed_item:${feedUrl}`, {
+            last_processed_id: new_items[0].guid || new_items[0].link || new_items[0].enclosure?.url,
+            last_processed_date: new_items[0].isoDate,
+        });
         // TODO: think about getting from podcastindex instead of rss feed for nice data
 
         // TODO: Podcast etc
         await db.insertInto("Entry").values(new_items.map(item => {
-
             const enclosureUrl = item.enclosure?.url;
             const type = item.enclosure?.type === "audio/mpeg" ? "audio" : "article" as const;
             return ({
@@ -109,6 +132,7 @@ export async function processFeeds(redis: Redis) {
         // Get the next 100 feeds from the queue
         console.time("processFeeds")
         console.time("getFeedsToProcess")
+        // 40 feeds takes ~30 seconds
         const feeds = await getFeedsToProcess(redis, 40);
         console.timeEnd("getFeedsToProcess")
         console.log("feeds", feeds);

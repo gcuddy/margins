@@ -2,7 +2,7 @@
 <script lang="ts">
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import GenericDialog from "$lib/components/GenericDialog.svelte";
-	import ImageSkeleton from "$lib/components/layout/Skeletons/ImageSkeleton.svelte";
+	import ImageSkeleton from "$lib/components/ui/skeleton/ImageSkeleton.svelte";
 	let show_description_modal = false;
 	export let img = "";
 	export let title = "";
@@ -15,9 +15,15 @@
 </script>
 
 <div class="">
-	<div class="container mx-auto flex flex-col space-y-8 p-6 dark:divide-gray-700">
-		<div class="relative flex flex-col justify-center space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12">
-			<div class="h-60 w-60 place-self-center overflow-hidden rounded-xl shadow-lg sm:place-self-start">
+	<div
+		class="container mx-auto flex flex-col space-y-8 p-6 dark:divide-gray-700"
+	>
+		<div
+			class="relative flex flex-col justify-center space-y-8 sm:flex-row sm:space-y-0 sm:space-x-12"
+		>
+			<div
+				class="h-60 w-60 place-self-center overflow-hidden rounded-xl shadow-lg sm:place-self-start"
+			>
 				{#if img}
 					<img src={img} class="" alt="" />
 				{:else if loading}
@@ -34,8 +40,8 @@
 					<p class="text-red-500">Error</p>
 				</slot>
 			{:else if success}
-				<div class="space-y-4 sm:space-y-8 flex flex-col justify-between">
-					<div class="text-center sm:text-left flex flex-col">
+				<div class="flex flex-col justify-between space-y-4 sm:space-y-8">
+					<div class="flex flex-col text-center sm:text-left">
 						<h1 class="text-2xl font-bold">{title}</h1>
 						<svelte:element this={url ? "a" : "span"} class="text-xl" href={url}
 							><Muted>{author}</Muted></svelte:element
@@ -45,7 +51,9 @@
 					</div>
 					{#if description}
 						<div class="relative overflow-hidden text-sm line-clamp-4">
-							<div class="prose text-sm  leading-normal gradient-mask-br-50 dark:prose-invert">
+							<div
+								class="prose text-sm leading-normal gradient-mask-br-50 dark:prose-invert"
+							>
 								{@html description}
 							</div>
 							<button
@@ -57,7 +65,7 @@
 							<GenericDialog bind:isOpen={show_description_modal}>
 								<svelte:fragment slot="title">About</svelte:fragment>
 								<span class="font-bold" slot="description">{title}</span>
-								<div class="prose text-sm   leading-normal dark:prose-invert">
+								<div class="prose text-sm leading-normal dark:prose-invert">
 									{@html description}
 								</div>
 							</GenericDialog>
@@ -68,6 +76,6 @@
 				</div>
 			{/if}
 		</div>
-       <slot name="content" />
+		<slot name="content" />
 	</div>
 </div>

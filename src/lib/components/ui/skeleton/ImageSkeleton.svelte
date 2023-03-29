@@ -1,9 +1,17 @@
-<script>
-	let c = "";
-	export { c as class };
+<script lang="ts">
+	import { cn } from "$lib/utils/tailwind";
+	import type { HTMLAttributes } from "svelte/elements";
+	let className: string | undefined | null = "";
+	export { className as class };
+	interface $$Props extends HTMLAttributes<HTMLDivElement> {}
 </script>
 
-<div class="flex h-full w-full items-center justify-center rounded bg-gray-300 dark:bg-gray-700 {c}">
+<div
+	class={cn(
+		"flex h-full w-full items-center justify-center rounded bg-gray-300 dark:bg-gray-700",
+		className
+	)}
+>
 	<svg
 		class="h-full w-full scale-50 text-gray-200"
 		xmlns="http://www.w3.org/2000/svg"

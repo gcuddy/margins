@@ -20,16 +20,14 @@
 	<title>Margins</title>
 </svelte:head>
 
-<div class="h-full min-h-screen">
-	<slot />
-	<Toaster
-		position="bottom-center"
-		toastOptions={{
-			// className: "bg-base text-content rounded-full",
-			// style: "background-color: inherit;",
-		}}
-	/>
-</div>
+<slot />
+<Toaster
+	position="bottom-center"
+	toastOptions={{
+		// className: "bg-base text-content rounded-full",
+		// style: "background-color: inherit;",
+	}}
+/>
 
 <style lang="postcss">
 	/* :global(body > div) {

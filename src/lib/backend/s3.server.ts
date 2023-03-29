@@ -1,12 +1,9 @@
 import { CLOUDFLARE_ID, S3_ID, S3_SECRET } from "$env/static/private";
 import {
-    S3Client,
-    ListBucketsCommand,
-    ListObjectsV2Command,
-    GetObjectCommand,
     PutObjectCommand,
+    PutObjectCommandInput,
     PutObjectRequest,
-    HeadObjectCommand
+    S3Client
 } from "@aws-sdk/client-s3";
 
 
@@ -21,21 +18,18 @@ export const s3 = new S3Client({
 
 const PUBLIC_BUCKET = 'margins';
 
-// upload file
-export async function uploadFile({
-    Key,
-    Body
-}: {
+type Input = Omit<PutObjectCommandInput, "Bucket"> & {
     Key: string;
-    Body: PutObjectRequest["Body"];
-}) {
+}
+
+
+// upload file
+export async function uploadFile(input: Input) {
     try {
         const data = await s3.send(new PutObjectCommand({
-            Key,
-            Body,
-            Bucket: PUBLIC_BUCKET
+            Bucket: PUBLIC_BUCKET,
+            ...input
         }))
-
         return data;
     } catch (e) {
         console.error(e)

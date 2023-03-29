@@ -891,7 +891,7 @@
 			? '-translate-y-0 opacity-75 transition hover:opacity-100'
 			: 'translate-y-8 opacity-0'} bottom-3 right-6 {$reading_sidebar.active
 			? '-translate-x-[var(--translate)]'
-			: ''} flex h-6  items-center justify-end rounded-lg transition duration-100 {showColors
+			: ''} flex h-6 items-center justify-end rounded-lg transition duration-100 {showColors
 			? ''
 			: ''}"
 	>
@@ -924,7 +924,7 @@
 	</div>
 	{#if show_tooltip}
 		<div
-			class="z-40 mobile:!fixed mobile:!bottom-4 mobile:!left-0 mobile:!right-0 mobile:!mx-auto mobile:!transform-none "
+			class="z-40 mobile:!fixed mobile:!bottom-4 mobile:!left-0 mobile:!right-0 mobile:!mx-auto mobile:!transform-none"
 			use:menuContent
 		>
 			{#if showColors}
@@ -1335,12 +1335,7 @@
 			/>
 		</div>
 	{/if}
-	<ProseWrapper
-		bind:dimensions={wrapper_dimensions}
-		bind:el={wrapper}
-		on:click={handleClick}
-		first_letter={false}
-	>
+	<div bind:this={wrapper} on:click={handleClick} first_letter={false}>
 		<div
 			class="!select-text"
 			on:dragstart={(e) => {
@@ -1354,7 +1349,7 @@
 		>
 			<slot />
 		</div>
-	</ProseWrapper>
+	</div>
 </div>
 {#if show_image_tooltip}
 	<div use:imageTooltipContent>

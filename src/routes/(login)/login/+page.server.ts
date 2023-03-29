@@ -46,8 +46,10 @@ export const actions = {
 
 export const load: PageServerLoad = async (event) => {
     const { locals } = event;
-    const session = await locals.validate();
-    if (session) throw redirect(302, '/');
+    console.log(`login page load`)
+    const { session, user } = await locals.validateUser();
+    console.log({ session, user })
+    if (session && user) throw redirect(302, `/u:${user.username}/inbox`);
     const form = await superValidate(event, schema);
     return { form }
 };

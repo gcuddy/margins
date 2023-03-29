@@ -6,6 +6,7 @@
 	import Header from "$lib/components/layout/Header.svelte";
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
 	import LocationListbox from "$lib/components/LocationListbox.svelte";
+	import Button from "$lib/components/ui/Button.svelte";
 	import BasicSearchItem from "$lib/features/entries/BasicSearchItem.svelte";
 	import EntryFilter from "$lib/features/entries/EntryFilter.svelte";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
@@ -91,6 +92,8 @@
 <Filters />
 
 <EntryFilter />
+
+<div><Button>Test</Button></div>
 {#if $query.isLoading}
 	<div>Loading...</div>
 {:else if $query.isError}

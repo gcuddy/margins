@@ -5,8 +5,8 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
     console.log(`marketing page load`)
-    const { session, user } = await locals.validateUser();
-    if (session && user) {
-        throw redirect(302, `/u:${user.username}/inbox`);
-    }
+    // const { session, user } = await locals.validateUser();
+    // if (session && user) {
+    //     throw redirect(302, `/u:${user.username}/inbox`);
+    // }
 };

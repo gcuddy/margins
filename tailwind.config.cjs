@@ -27,6 +27,13 @@ const config = {
 
 	darkMode: "class",
 	theme: {
+		container: {
+			center: true,
+			padding: "1.5rem",
+			screens: {
+				"2xl": "1440px",
+			},
+		},
 		colors: {
 			...colors,
 			gray: colors.stone,
@@ -58,7 +65,8 @@ const config = {
 			fontFamily: {
 				sans: ["InterVar", ...defaultTheme.fontFamily.sans],
 				newsreader: ["Newsreader", ...defaultTheme.fontFamily.serif],
-				crimson: ["Crimson Text", ...defaultTheme.fontFamily.serif], },
+				crimson: ["Crimson Text", ...defaultTheme.fontFamily.serif],
+			},
 			colors: {
 				light: colors.stone[50],
 				dark: colors.stone[800],
@@ -169,11 +177,12 @@ const config = {
 	// ?
 	plugins: [
 		require("@tailwindcss/typography"),
-		require("@tailwindcss/forms"),
+		// require("@tailwindcss/forms"),
 		require("@tailwindcss/line-clamp"),
 		require("tailwind-gradient-mask-image"),
 		require("tailwind-scrollbar")({ nocompatible: true }),
 		require("tailwind-scrollbar-hide"),
+		require("tailwindcss-animate"),
 		// custom modifiers
 		plugin(({ addVariant }) => {
 			addVariant("transparency", ['[data-transparency="true"] &']);

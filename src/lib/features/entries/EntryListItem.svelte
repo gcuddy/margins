@@ -109,14 +109,19 @@
 		on:keydown
 	>
 		<!-- if remote image -->
-		{#if imgsrc.startsWith("http")}
+		{#if imgsrc.startsWith("https://pub-281a7c9dc6e94f59acee8afd0e4d4a80.r2.dev/")}
+			{@const src = imgsrc.replace(
+				"https://pub-281a7c9dc6e94f59acee8afd0e4d4a80.r2.dev/",
+				"https://margins.b-cdn.net/"
+			)}
 			<Image
-				src={imgsrc}
+				{src}
 				class=" h-full w-full shrink-0 cursor-pointer rounded-md object-cover shadow-sm ring-1 ring-border/50 hover:ring-1"
 				layout="constrained"
 				width={56}
 				height={64}
 				alt=""
+				cdn="bunny"
 			/>
 		{:else}
 			<img

@@ -33,11 +33,13 @@
 	$: as = href ? "a" : "div";
 </script>
 
+<!-- <Button variant="ghost" class="w-full justify-start" size="sm">Test</Button> -->
+
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <svelte:element
 	this={as}
-	class="group flex h-7 !cursor-default items-center rounded-lg px-2 font-medium text-muted ring-inset  transition-transform duration-200 focus-visible:ring hover:bg-sidebar-hover active:scale-95 dark:text-gray-300
-  {isActive && 'bg-sidebar-hover shadow '}
+	class="group flex h-7 !cursor-default items-center rounded-lg px-2 font-medium text-muted ring-inset transition-transform duration-200 focus-visible:ring hover:bg-sidebar-hover active:scale-95 dark:text-gray-300
+  {isActive && 'bg-sidebar-hover'}
   "
 	draggable="false"
 	href={as === "a" ? href : undefined}

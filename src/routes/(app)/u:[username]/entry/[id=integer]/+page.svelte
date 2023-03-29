@@ -2,7 +2,7 @@
 	import { browser } from "$app/environment";
 	import { afterNavigate, invalidateAll } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
-	import H1 from "$lib/components/atoms/H1.svelte";
+	import { H1 } from "$lib/components/ui/typography";
 	import { commandPaletteStore } from "$lib/components/CommandPalette/store";
 	import type { Command } from "$lib/components/CommandPalette/types";
 	import Icon from "$lib/components/helpers/Icon.svelte";
@@ -42,8 +42,9 @@
 	import type { PageData } from "./$types";
 	import Booster from "./Booster.svelte";
 	import Highlighter from "./Highlighter.svelte";
-	import ReadingMenu from "./ReadingMenu.svelte";
-	import ReadingSidebar from "./ReadingSidebar.svelte";
+	import Lead from "$lib/components/ui/typography/Lead.svelte";
+	// import ReadingMenu from "./ReadingMenu.svelte";
+	// import ReadingSidebar from "./ReadingSidebar.svelte";
 	dayjs.extend(localizedFormat);
 
 	export let data: PageData;
@@ -66,6 +67,7 @@
 				if (state_id && data.user?.stateIdToLocation) {
 					location = data.user?.stateIdToLocation.get(state_id);
 				}
+				console.log("success@");
 			},
 		}
 	);
@@ -459,12 +461,12 @@
 </svelte:head>
 {#if $entryQuery.isSuccess}
 	{@const article = $entryQuery.data}
-	<ReadingMenu
+	<!-- <ReadingMenu
 		bookmark={$entryData.isSuccess && $entryData.data?.bookmark_id
 			? { id: $entryData.data?.bookmark_id }
 			: undefined}
 		entry={$entryQuery.data}
-	/>
+	/> -->
 	<!--  -->
 	<!-- {@html `<` + `style>${data?.css}</style>`} -->
 	<!-- {#if errors?.length}
@@ -487,13 +489,13 @@
 				tabindex="-1"
 			>
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
-				<article data-article class=" mt-14 h-full select-text px-1 sm:p-4">
+				<article
+					data-article
+					class=" prose prose-stone mx-auto mt-14 h-full select-text px-1 sm:p-4"
+				>
 					{#if article.type === "article" || article.type === "rss" || (article.type === "audio" && !article.podcastIndexId)}
 						<div class="pb-16">
-							<header
-								class="max-w-prose space-y-3 pb-4"
-								bind:this={$articleHeader}
-							>
+							<header class="space-y-3 pb-4" bind:this={$articleHeader}>
 								<!-- {article.feedId
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
                                 : article.uri} -->
@@ -508,16 +510,15 @@
 									/>
 									<span class="truncate">{article.uri}</span></a
 								>
-								<H1 class="font-newsreader dark:drop-shadow-sm"
-									>{article.title}</H1
-								>
+								<H1 class="">{article.title}</H1>
 								<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
 								{#if article.summary}
-									<div
+									<Lead>{article.summary}</Lead>
+									<!-- <div
 										class="text-lg text-gray-500 dark:text-gray-300 sm:text-xl"
 									>
 										{article.summary}
-									</div>
+									</div> -->
 								{/if}
 								<div class="flex justify-between">
 									<div
@@ -624,7 +625,7 @@
 			</div>
 			<!-- Reading Sidebar -->
 			{#if $entryQuery.isSuccess}
-				<ReadingSidebar
+				<!-- <ReadingSidebar
 					on:seek={async ({ detail }) => {
 						console.log({ detail });
 						console.log({ player });
@@ -634,7 +635,7 @@
 						...$entryQuery.data,
 						...$entryData.data,
 					}}
-				/>
+				/> -->
 			{/if}
 			{#if data.css}
 				<Booster bind:css={data.css} />
