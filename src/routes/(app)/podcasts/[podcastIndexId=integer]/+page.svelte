@@ -18,6 +18,7 @@
 	import { createQuery } from "@tanstack/svelte-query";
 	import type { PageData } from "./$types";
 	import { useCurrentPodcast } from "./+layout.svelte";
+	import { Image } from "@unpic/svelte";
 
 	export let data: PageData;
 
@@ -83,11 +84,19 @@
 					{#if $podcast.isLoading || !$podcast?.data?.artwork}
 						<ImageSkeleton class="animate-pulse" />
 					{:else if $podcast.isSuccess}
-						<img
+						<Image
 							src={$podcast.data?.artwork}
 							class=""
 							alt="Artwork for {$podcast.data.title}"
+							width={240}
+							height={240}
+							layout="constrained"
 						/>
+						<!-- <img
+							src={$podcast.data?.artwork}
+							class=""
+							alt="Artwork for {$podcast.data.title}"
+						/> -->
 					{/if}
 				</div>
 				{#if $podcast.isLoading}

@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { classNames } from "$lib/utils/tailwind";
 	let c = "";
 	export { c as class };
-    $: classes = classNames(c);
+	$: classes = classNames(c);
 </script>
 
 <ul class="cluster {classes}">
