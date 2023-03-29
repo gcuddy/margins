@@ -7,7 +7,6 @@
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
 	import LocationListbox from "$lib/components/LocationListbox.svelte";
 	import Button from "$lib/components/ui/Button.svelte";
-	import BasicSearchItem from "$lib/features/entries/BasicSearchItem.svelte";
 	import EntryFilter from "$lib/features/entries/EntryFilter.svelte";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import Filters from "$lib/features/filters/Filters.svelte";
@@ -16,7 +15,6 @@
 	import {
 		createCustomizeViewStore,
 		defaultViewOptions,
-		sortEntries,
 		ViewOptionsContextKey,
 		type ViewOptions,
 	} from "$lib/types/schemas/View";

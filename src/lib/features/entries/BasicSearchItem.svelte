@@ -12,7 +12,7 @@
 <li>
 	<a {href} class="flex items-center gap-4" class:active>
 		<ImageLoader
-			src={image}
+			src={image || ""}
 			class="h-12 w-10 rounded object-cover shadow-lg sm:h-16 sm:w-14"
 			alt=""
 		/>
@@ -23,8 +23,8 @@
 	</a>
 </li>
 
-<style lang="postcss">
+<style>
 	.active {
-		@apply bg-elevation-hover;
+		background-color: var(--bg-elevation-hover);
 	}
 </style>
