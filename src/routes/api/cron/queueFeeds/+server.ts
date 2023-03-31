@@ -8,12 +8,12 @@ export const config: Config = {
     split: true
 }
 
-export const GET: RequestHandler = async ({ url }) => {
+export const POST: RequestHandler = async ({ url }) => {
     // verify key is correct
-    const key = url.searchParams.get("key");
-    if (key !== "xxItiwHxkYOfv5GW/BzyCc80EnpFu1ByZCmNe4UkSaw=") {
-        throw error(401, "Not authorized")
-    }
+    // const key = url.searchParams.get("key");
+    // if (key !== "xxItiwHxkYOfv5GW/BzyCc80EnpFu1ByZCmNe4UkSaw=") {
+    //     throw error(401, "Not authorized")
+    // }
     try {
         const feeds = await getFeedUrlsFromDatabase();
         console.log({ feeds })

@@ -8,7 +8,7 @@ export const config: Config = {
     split: true
 }
 
-export const GET: RequestHandler = async () => {
+export const POST: RequestHandler = async () => {
     await processFeeds(redis);
     return new Response();
 };
