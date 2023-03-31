@@ -1050,7 +1050,7 @@ export class Parser {
         console.log("prepped document")
         const content = this.grabArticle();
 
-        if (content) {
+        if (false) {
             // Now apply our own transformations with node-html-parser... kind of ugly
             const root = content;
             ["href", "src"].forEach((a) => absolutizeUrls(root!, this.baseUrl, a));
