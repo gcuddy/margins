@@ -109,7 +109,7 @@
 		on:keydown
 	>
 		<!-- if remote image -->
-		{#if imgsrc.startsWith("https://pub-281a7c9dc6e94f59acee8afd0e4d4a80.r2.dev/")}
+		{#if imgsrc.startsWith("https")}
 			{@const src = imgsrc.replace(
 				"https://pub-281a7c9dc6e94f59acee8afd0e4d4a80.r2.dev/",
 				"https://margins.b-cdn.net/"
@@ -121,8 +121,8 @@
 				width={56}
 				height={64}
 				alt=""
-				cdn="bunny"
 			/>
+			<!-- cdn="bunny" -->
 		{:else}
 			<img
 				class=" h-full w-full shrink-0 cursor-pointer rounded-md object-cover shadow-sm ring-1 ring-border/50 hover:ring-1"
@@ -244,6 +244,7 @@
 														name="arrowsRightLeftMini"
 														className="w-3 h-3 fill-muted/80"
 													/>
+
 													<span class="sr-only">Related</span>
 												{:else if relation.type === "SavedFrom"}
 													<Icon

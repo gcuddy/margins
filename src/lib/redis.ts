@@ -1,13 +1,19 @@
 import { Redis } from '@upstash/redis'
+import { Client } from '@upstash/qstash';
+
 import type {
     SessionSchema,
     SessionAdapter,
     AdapterFunction
 } from "lucia-auth";
+import { UPSTASH_QSTASH_TOKEN } from '$env/static/private';
 
 export const redis = new Redis({
     url: 'https://us1-careful-gobbler-37650.upstash.io',
     token: 'AZMSASQgODZhNmYxZmEtZmQwZS00ZWFmLTlkOWMtMmViMzE4NWYzYThmNjNkNTc4MGMwNDAwNDYxNjhiMTViNThkMzVlZjQ4YmY=',
+});
+export const qstash = new Client({
+    token: UPSTASH_QSTASH_TOKEN
 });
 
 export const redisSessionAdapter =

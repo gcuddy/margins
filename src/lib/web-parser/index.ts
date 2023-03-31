@@ -35,10 +35,13 @@ import {
 } from "./utils";
 import { findAuthor } from "./utils/fallback-author";
 import { parseHTML } from "linkedom";
-import { s3, uploadFile } from "$lib/backend/s3.server";
+import { fetchAndUploadImage, s3, uploadFile, upsertImageUrl } from "$lib/backend/s3.server";
 import { nanoid } from "nanoid";
-import { S3_BUCKET_PREFIX } from "$env/static/private";
+import { S3_BUCKET_PREFIX, VERCEL_URL } from "$env/static/private";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
+import { generateKeyFromUrl } from "$lib/backend/utils";
+import { qstash } from "$lib/redis";
+import { PUBLIC_API_BASE } from "$env/static/public";
 
 // TODO: ability to add/modify this list
 // TODO: add "boost" to certain tags via a map
@@ -946,6 +949,7 @@ export class Parser {
         }
         this.getRoot();
         this.getMetadata();
+        console.log("got metadta")
         if (usereadability) {
             var doc = parseHTML(this.html);
             var article = new Readability(doc.window.document, {
@@ -960,46 +964,42 @@ export class Parser {
                 root!.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
                 // go thru srcs, get images, and upload to s3
                 // TODO: upsert by noting if src is already s3 url (somehow...)
-                if (false) {
-
-                    await Promise.all(root.querySelectorAll("[src]").map(async el => {
+                if (article?.content) {
+                    const urls = await Promise.all(root.querySelectorAll("img[src]").map(async el => {
                         // check if url
                         const src = el.getAttribute("src");
                         if (!src) return;
                         if (/^http/.test(src)) {
-                            // upload to s3
-                            // replace src with s3 url\
-                            //
-                            // Fetch the image and stream it to s3
-
-                            // set Key to hashed version of src with crypto
-                            const hash = crypto.createHash('sha256');
-                            hash.update(src);
-                            const Key = hash.digest('hex');
-                            // check if already exists
-                            const exists = await s3.send(new HeadObjectCommand({
-                                Key,
-                                Bucket: "margins",
-                            })).catch(e => {
-                                if (e.name === "NotFound") {
-                                    return false;
-                                }
-                                throw e;
-                            });
-                            console.log({ exists })
-                            if (exists) {
-                                el.setAttribute("src", `${S3_BUCKET_PREFIX}${Key}`);
-                                return;
+                            try {
+                                const u = new URL(src);
+                                u.search = "";
+                                u.hash = "";
+                                const _src = u.toString();
+                                const ext = _src.split(".").pop();
+                                const Key = await generateKeyFromUrl(_src, ext)
+                                const newSrc = 'https://margins.b-cdn.net/' + Key
+                                console.log({ newSrc })
+                                el.setAttribute("src", newSrc);
+                                el.setAttribute("data-canonical-src", src);
+                                return {
+                                    url: _src,
+                                    key: Key
+                                };
+                            } catch (e) {
+                                console.error(e)
                             }
-                            const response = await fetch(src);
-                            const buffer = await response.arrayBuffer();
-                            uploadFile({
-                                Key,
-                                Body: buffer,
-                            });
-                            el.setAttribute("src", `${S3_BUCKET_PREFIX}${Key}`);
                         }
-                    }))
+                    })).then(res => res.filter(Boolean))
+                    if (urls.length) {
+                        const res = await qstash.publishJSON({
+                            url: new URL('/api/jobs/processImages', dev ? PUBLIC_API_BASE : 'https://' + VERCEL_URL).toString(),
+                            body: {
+                                urls
+                            }
+                        })
+                        console.log('QStash response:', res);
+                    }
+                    console.log({ urls })
                 }
             }
             let html = '';
@@ -1023,36 +1023,9 @@ export class Parser {
                 this.metadata.image = absolutizeUrl(this.metadata.image, this.baseUrl);
                 // clean up bad url
                 this.metadata.image = cleanUpNaughtyUrl(this.metadata.image);
-
-                // upload to s3
-                // replace src with s3 url
-                const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(this.metadata.image));
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-                const Key = hashHex;
-                const exists = await s3.send(new HeadObjectCommand({
-                    Key,
-                    Bucket: "margins",
-                })).catch(e => {
-                    if (e.name === "NotFound") {
-                        return false;
-                    }
-                    throw e;
-                });
-                console.log({ exists })
-                if (exists) {
-                    this.metadata.image = `${S3_BUCKET_PREFIX}${Key}`;
-                } else {
-                    const response = await fetch(this.metadata.image);
-                    const buffer = await response.arrayBuffer();
-                    await uploadFile({
-                        Key,
-                        //@ts-expect-error
-                        Body: buffer,
-                    });
-                    this.metadata.image = `${S3_BUCKET_PREFIX}${Key}`;
-                }
-
+                const img = await upsertImageUrl(this.metadata.image);
+                console.log({ img })
+                this.metadata.image = img;
             }
             console.log({ metadata: this.metadata })
 

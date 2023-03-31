@@ -2,7 +2,7 @@
 	export interface NavItem {
 		display: string;
 		href?: string;
-		icon?: IconName;
+		icon?: IconName | ComponentType;
 		iconClass?: string;
 		img?: string;
 		// defaults to active if path = href
@@ -48,6 +48,8 @@
 	import MiniPlayer from "./MiniPlayer.svelte";
 	import SidebarFavorites from "./SidebarFavorites.svelte";
 	import SidebarItem from "./SidebarItem.svelte";
+	import { AlignLeftIcon } from "lucide-svelte";
+	import type { ComponentType } from "svelte";
 
 	export let user: { username: string; email: string } | null =
 		$page.data.user || null;
@@ -91,8 +93,7 @@
 					{
 						display: "All Entries",
 						href: `/u:${$page.data.user.username}/subscriptions/all`,
-						icon: "inbox",
-						iconClass: "text-gray-500 group-hover:text-gray-800",
+						icon: AlignLeftIcon,
 					},
 					{
 						display: "Podcasts",
@@ -558,8 +559,7 @@
 				</div>
 				{#if !user && $page.data.allTags}
 					<div
-						class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm"
-					>
+						class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
 						<span class="px-2">Tags</span>
 						{#each $page.data.allTags as tag}
 							{#if tag}

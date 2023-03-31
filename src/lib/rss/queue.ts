@@ -65,6 +65,10 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
             }
         }
 
+        console.log("slice", slice)
+
+        // console.log(`Here's the first item of: ${feedUrl}`, feed.items[0])
+
 
         const newItems = feed.items.slice(...slice).filter((item) => {
             if (lastProcessedItem?.last_processed_id && (item.guid === lastProcessedItem?.last_processed_id || item.link === lastProcessedItem?.last_processed_id || item.enclosure?.url === lastProcessedItem?.last_processed_id)) {
@@ -77,7 +81,8 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
             console.log(`No new items for ${feedUrl}.`)
             return;
         }
-        console.log(`Processing ${newItems.length} new items for ${feedUrl}...`)
+        console.log(`Processing ${newItems.length} new items for ${feedUrl}...`);
+        // console.log(`Again, here's the first item of: ${feedUrl}`, newItems[0])
         // Store the GUID of the last processed item for this feed
         // Add the new items to the database
         const itemsToAdd = await Promise.all(newItems.map(async item => {
@@ -95,7 +100,25 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
             }
             // console.log({ exists })
         }));
+        console.log(`Actually adding ${itemsToAdd.length} new items for ${feedUrl}...`)
         const new_items = itemsToAdd.filter(Boolean);
+        console.log(`*Actually* adding ${new_items.length} new items for ${feedUrl}...`)
+        // console.log(`Here's the first item for ${feedUrl}`, { itemsToAdd: itemsToAdd[0], new_items: new_items[0] })
+        if (new_items.length === 0) {
+            if (!lastProcessedItem || !lastProcessedItem.last_processed_id || !lastProcessedItem.last_processed_date) {
+                const uniqueId = feed.items[0].guid || feed.items[0].link || feed.items[0].enclosure?.url;
+                const date = feed.items[0].isoDate || feed.items[0].pubDate;
+                console.log(`No new items for ${feedUrl}, but no lastProcessedItem values set. Setting last processed item to the first item in the feed. Using values: `, { uniqueId, date })
+                // set the last processed item to the first item in the feed so that we can fail faster next time
+                await redis.set(`last_processed_item:${feedUrl}`, {
+                    last_processed_id: uniqueId,
+                    last_processed_date: date,
+                });
+                return;
+            }
+            console.log(`No new items for ${feedUrl}.`)
+            return;
+        }
         await redis.set(`last_processed_item:${feedUrl}`, {
             last_processed_id: new_items[0].guid || new_items[0].link || new_items[0].enclosure?.url,
             last_processed_date: new_items[0].isoDate,
@@ -103,6 +126,7 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
         // TODO: think about getting from podcastindex instead of rss feed for nice data
 
         // TODO: Podcast etc
+        console.log(`Inserting ${new_items.length} new items for ${feedUrl}...`)
         await db.insertInto("Entry").values(new_items.map(item => {
             const enclosureUrl = item.enclosure?.url;
             const type = item.enclosure?.type === "audio/mpeg" ? "audio" : "article" as const;
@@ -144,7 +168,7 @@ export async function processFeeds(redis: Redis) {
             pipeline.lrem("queue:feeds", 0, feed);
             pipeline.srem("queued_feeds", feed.feedUrl);
             await pipeline.exec();
-            console.log("Processed feed", feed.feedUrl)
+            // console.log("Processed feed", feed.feedUrl)
         }))
         console.timeEnd("processFeeds")
         console.log("all done")

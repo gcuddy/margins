@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
 import { db } from '$lib/db';
@@ -7,22 +7,24 @@ import { getJsonFromRequest } from '$lib/utils';
 import type { Action, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, depends }) => {
-	const session = await locals.validate();
-	depends('app:collections');
-	const lists = await db.collection.findMany({
-		where: {
-			userId: session.userId,
-		},
-	});
-	return {
-		lists,
-	};
+    const session = await locals.validate();
+    if (!session) {
+        throw redirect(302, '/');
+    }
+    depends('app:collections');
+    const lists = await db.selectFrom("Collection")
+        .selectAll()
+        .where("userId", "=", session.userId)
+        .execute();
+    return {
+        lists,
+    };
 };
 
 const listSchema = z.object({
-	name: z.string(),
-	description: z.string().optional(),
-	articles: z.array(z.string()).optional(),
+    name: z.string(),
+    description: z.string().optional(),
+    articles: z.array(z.string()).optional(),
 });
 
 // export const POST: Action = async ({ request }) => {

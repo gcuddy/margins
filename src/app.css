@@ -128,6 +128,7 @@
 		color-scheme: dark;
 		--gray-700: 30deg 6% 25%;
 		--color-base: 24deg 10% 10%;
+		--color-content: 210deg 20% 98%;
 		--color-border: var(--gray-700);
 
 		--color-elevation: 12deg 6.5% 15.1%;
@@ -136,8 +137,8 @@
 		--color-content: 60deg 5% 96%;
 
 		--color-sidebar: 24deg 10% 10%;
-		/* ?? gray-300  */
-		--color-muted: rgb(214 211 209);
+		/* ?? gray-400  */
+		--color-muted: 24deg 5% 64%;
 	}
 
 	mark[data-annotation-color] {

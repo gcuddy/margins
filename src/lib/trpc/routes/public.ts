@@ -81,12 +81,16 @@ export const publicRouter = router({
             return cached as Metadata;
         }
         const normalizedUrl = normalizeUrl(input.url);
-        const parsed = await parse(normalizedUrl);
-        await ctx.redis.set(input.url, parsed, {
-            // cache for one day
-            ex: 60 * 60 * 24
-        })
-        return parsed as Metadata;
+        try {
+            const parsed = await parse(normalizedUrl);
+            await ctx.redis.set(input.url, parsed, {
+                // cache for one day
+                ex: 60 * 60 * 24
+            })
+            return parsed as Metadata;
+        } catch (e) {
+            console.error(e)
+        }
     }),
     parseMarkdown: publicProcedure.input(z.object({
         markdown: z.string()

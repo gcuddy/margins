@@ -7,6 +7,7 @@
 	import type { Command } from "$lib/components/CommandPalette/types";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import HighlightMenu from "$lib/components/HighlightMenu.svelte";
+	import { Image } from "@unpic/svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
 	import BookEntry from "$lib/features/books/BookEntry.svelte";
 	import AudioEntry from "$lib/features/entries/AudioEntry.svelte";
@@ -474,7 +475,7 @@
 			<small class="text-red-500">{error.message}</small>
 		{/each}
 	{/if} -->
-	<div class="flex grow flex-col overflow-hidden bg-skin-entry-bg">
+	<div class="flex grow flex-col overflow-hidden">
 		<div
 			on:dblclick|preventDefault|stopPropagation={(e) => {
 				console.log(e);
@@ -491,7 +492,7 @@
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
 				<article
 					data-article
-					class=" prose prose-stone mx-auto mt-14 h-full select-text px-1 sm:p-4"
+					class=" prose prose-stone mx-auto mt-14 h-full select-text px-1 dark:prose-invert sm:p-4"
 				>
 					{#if article.type === "article" || article.type === "rss" || (article.type === "audio" && !article.podcastIndexId)}
 						<div class="pb-16">
@@ -500,14 +501,26 @@
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
                                 : article.uri} -->
 								{#if article.uri?.startsWith("http")}
+									{@const domain = new URL(article.uri).hostname.replace(
+										"www.",
+										""
+									)}
 									<a
 										class="flex items-center space-x-2 text-sm text-gray-500 hover:text-primary-700 lg:text-base"
 										href={article.uri}
 									>
-										<img
-											src="https://icon.horse/icon/?uri={article.uri}"
+										<!-- <img
+											src="https://icon.horse/icon/{domain}"
 											class="h-5 w-5 rounded-full object-cover"
 											alt=""
+										/> -->
+										<Image
+											class="h-5 w-5 rounded-full border object-cover"
+											alt="Favicon for {domain}"
+											width={20}
+											height={20}
+											layout="constrianed"
+											src="https://www.google.com/s2/favicons?domain={domain}&sz=32"
 										/>
 
 										<span class="truncate">{new URL(article.uri).hostname}</span
