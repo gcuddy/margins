@@ -42,6 +42,7 @@ import { HeadObjectCommand } from "@aws-sdk/client-s3";
 import { generateKeyFromUrl } from "$lib/backend/utils";
 import { qstash } from "$lib/redis";
 import { PUBLIC_API_BASE } from "$env/static/public";
+import { dev } from "$app/environment";
 
 // TODO: ability to add/modify this list
 // TODO: add "boost" to certain tags via a map
