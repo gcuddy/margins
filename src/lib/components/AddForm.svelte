@@ -53,9 +53,15 @@
 
 	let articleToAdd: RouterOutputs["public"]["parse"] | null = null;
 
+	async function parse() {
+		return await fetch(`/api/parse/${encodeURIComponent(url)}`, {
+            method: "GET",
+        }).then((res) => res.json());
+	}
+
 	$: query = createQuery({
 		queryKey: ["parse", url],
-		queryFn: async () => trpc($page).public.parse.query({ url }),
+		queryFn: parse,
 		retry: false,
 		enabled: false,
 		staleTime: 1000 * 60,
