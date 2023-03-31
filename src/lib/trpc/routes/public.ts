@@ -3,7 +3,7 @@ import { z } from "zod";
 import { uploadFile } from "$lib/backend/s3.server";
 // import { getScreenshot } from "$lib/features/entries/bookmarks/image";
 import { normalizeUrl } from "$lib/feeds/utils";
-import parse from "$lib/parse";
+// import parse from "$lib/parse";
 import { publicProcedure, router } from "$lib/trpc/t";
 import type { Metadata } from '$lib/web-parser';
 import { dev } from '$app/environment';
@@ -82,12 +82,13 @@ export const publicRouter = router({
         }
         const normalizedUrl = normalizeUrl(input.url);
         try {
-            const parsed = await parse(normalizedUrl);
+            const parsed = {};
             await ctx.redis.set(input.url, parsed, {
                 // cache for one day
                 ex: 60 * 60 * 24
             })
             return parsed as Metadata;
+
         } catch (e) {
             console.error(e)
         }

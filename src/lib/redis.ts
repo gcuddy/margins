@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis'
-import { Client } from '@upstash/qstash';
+import { Client } from '$lib/qstash/client/client';
 
 import type {
     SessionSchema,
