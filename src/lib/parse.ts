@@ -5,6 +5,9 @@ import { z } from "zod";
 import { GOOGLE_BOOKS_API_KEY, YOUTUBE_KEY } from "$env/static/private";
 import { Metadata, Parser } from "$lib/web-parser";
 
+import { Readability, isProbablyReaderable } from '@mozilla/readability'
+import { parseHTML } from "linkedom";
+
 import { uploadFile } from "./backend/s3.server";
 import dayjs from "./dayjs";
 import { spotify } from "./features/services/spotify";
@@ -111,7 +114,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             const match = url.match(regexMatch)
             const id = match?.groups?.id;
             if (id) {
-               const volume = await books.get(id);
+                const volume = await books.get(id);
                 return returnBookFromGoogleBook(volume);
             }
         }
@@ -294,30 +297,44 @@ export default async function (url: string, html?: string): Promise<z.infer<type
     if (htmlToParse) {
         // const parsed = await parseHtml(htmlToParse as string, url);
         // console.log({ parsed });
-        const parser = new Parser(url, htmlToParse as string);
-        const isArticle = parser.isReaderable();
+
+
+        // const parser = new Parser(url, htmlToParse as string);
+        // const isArticle = parser.isReaderable();
+        const doc = parseHTML(htmlToParse as string);
+        const isArticle = isProbablyReaderable(doc.window.document)
         console.log({ isArticle });
         const generateScreenshot = true;
         if (!isArticle) {
             // then it's a bookmark... right?
-            const { url: goodbye, ...p } = await parser.parse();
+            // const { url: goodbye, ...p } = await parser.parse();
             // get screenshot and upload to s3
             // can we get access to svelte fetch here?
             // maybe do that when we're saving it instead?
             // or only if there's no bookmark?
             // see: /screenshot/:url
             // const res = await fetch()
-            // generate screenshot
-            return { ...p, type: "bookmark" };
+            // generate screenshot'
+            const title = doc.window.document.title;
+            return { url, title, type: "bookmark" };
         } else {
             console.log({ isArticle });
-            const p = await parser.parse();
+            const p = new Readability(doc.window.document).parse();
+            if (!p) {
+                throw new Error("Could not parse article");
+            }
             // const { url: goodbye, ...p } = await parser.parse();
-            console.log({ type: p.type });
+            // console.log({ type: p.type });
             // TODO: store as markdown? (that could be... useful)
             // console.log('parser', { content });
             // or bookmark?
-            return { ...p, published: dayjs(p.published).toISOString() };
+            return {
+                title: p?.title,
+                summary: p?.excerpt,
+                html: p?.content,
+                text: p?.textContent,
+                author: p?.byline,
+            };
         }
     } else {
         return {
