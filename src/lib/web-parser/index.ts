@@ -1050,6 +1050,7 @@ export class Parser {
         console.log("prepped document")
         const content = this.grabArticle();
 
+
         console.timeEnd("readability")
         console.timeEnd("parse")
         let html = "";
@@ -1058,9 +1059,9 @@ export class Parser {
         text = content.innerText;
         html = content.innerHTML;
         const links = this.getLinks(content);
-        this.metadata.extended = {
-            outgoingLinks: links
-        }
+        // this.metadata.extended = {
+        //     outgoingLinks: links
+        // }
         console.log('got links')
         // if there's no title, set it to url
         if (!this.metadata.title) {
@@ -1223,19 +1224,20 @@ export class Parser {
     }
 
     // a re-write of getcontent to more thoroughly follow readability algorithm
-    private grabArticle() {
+    private grabArticle(opts?: {
+        stripUnlikelyCandidates?: boolean;
+        shouldRemoveTitleHeader?: boolean;
+    }) {
+        let { stripUnlikelyCandidates = true, shouldRemoveTitleHeader = true } = opts || {};
         let node = this.root.querySelector("html");
         console.log({ node })
         if (!node) {
             throw new Error("No root node found");
         }
-        let shouldRemoveTitleHeader = true;
-        let stripUnlikelyCandidates = true;
 
         const elementsToScore: HTMLElement[] = [];
         while (node) {
             if (node.tagName === "HTML") {
-                // TODO: lang type
                 // this.metadata.lang = node.getAttribute("lang");
             }
             let matchString = node.classNames + " " + node.id;
@@ -1320,10 +1322,12 @@ export class Parser {
                         if (p !== null) {
                             (p as HTMLElement).appendChild(childNode);
                         } else if (this.isWhitespace(childNode)) {
-                            p = parse("<p></p>");
-                            // does this make any sense?
-                            childNode.replaceWith(p);
-                            p.appendChild(childNode);
+                            console.log("is whitespace")
+                            // p = parse("<p></p>");
+                            // console.log({ childNode, p })
+                            // // does this make any sense?
+                            // childNode.replaceWith(p);
+                            // p.appendChild(childNode);
                         }
                     } else if (p !== null) {
                         // REVIEW: jfc typescript
