@@ -594,6 +594,7 @@ export const entriesRouter = router({
             const { cursor, take } = input;
             console.log(`listforusersubscriptions`, { input });
             const { userId } = ctx;
+            // select e.id, e.title, e.published, e.uri, e.feedId, e.image, e.duration, e.enclosureUrl, s.title as feed_title, f.podcastIndexId as feed_pindex, f.imageUrl as feed_image from Entry as e join Feed as f on f.id = e.feedId join Subscription as s on s.feedId = f.id and s.userId = 'kvDQosqGkyqwGwo' order by e.published desc limit 25;
             let query = ctx.db.selectFrom("Entry as e")
                 .innerJoin("Feed as f", "f.id", "e.feedId")
                 .innerJoin("Subscription as s", (j) =>

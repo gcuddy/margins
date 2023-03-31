@@ -37,9 +37,9 @@ import { findAuthor } from "./utils/fallback-author";
 import { parseHTML } from "linkedom";
 import { fetchAndUploadImage, s3, uploadFile, upsertImageUrl } from "$lib/backend/s3.server";
 import { nanoid } from "nanoid";
-import { S3_BUCKET_PREFIX, VERCEL_URL } from "$env/static/private";
+import { S3_BUCKET_PREFIX } from "$env/static/private";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
-import { generateKeyFromUrl } from "$lib/backend/utils";
+// import { generateKeyFromUrl } from "$lib/backend/utils";
 import { qstash } from "$lib/redis";
 import { PUBLIC_API_BASE } from "$env/static/public";
 import { dev } from "$app/environment";
@@ -997,7 +997,7 @@ export class Parser {
                     })).then(res => res.filter(Boolean))
                     if (urls.length) {
                         const res = await qstash.publishJSON({
-                            url: new URL('/api/jobs/processImages', dev ? PUBLIC_API_BASE : 'https://' + VERCEL_URL).toString(),
+                            url: new URL('/api/jobs/processImages', PUBLIC_API_BASE).toString(),
                             body: {
                                 urls
                             }
