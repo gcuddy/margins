@@ -16,7 +16,7 @@
 </script>
 
 <div
-	class="container flex h-full flex-col items-center justify-center space-y-10 p-10 text-white"
+	class="container flex h-full flex-col items-center justify-center space-y-10 p-10 dark:bg-slate-900"
 >
 	<H1>Playground</H1>
 	<Lead>A place to play with some UI components. Inspired by shadcn.</Lead>

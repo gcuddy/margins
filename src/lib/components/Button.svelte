@@ -69,7 +69,11 @@
 				? "border border-gray-300 bg-elevation/90 text-gray-600 hover:border-gray-300  hover:bg-gray-100 hover:text-gray-900 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-500 dark:text-gray-300  dark:hover:text-gray-200"
 				: ""
 		}
-    ${variant === "gradient" ? "bg-gradient-to-r from-amber-700 to-yellow-700 " : ""}
+    ${
+			variant === "gradient"
+				? "bg-gradient-to-r from-amber-700 to-yellow-700 "
+				: ""
+		}
     ${
 			variant === "confirm" &&
 			"border bg-lime-200 border-lime-400 hover:bg-lime-300 hover:border-lime-500 dark:bg-lime-700 hover:dark:bg-lime-600"
@@ -87,7 +91,10 @@
 			variant === "transparent" &&
 			"bg-white/20 hover:bg-white/30 focus:bg-white/30 text-gray-900 dark:text-gray-50"
 		}
-        ${variant === "naked" && "bg-transparent shadow-none hover:bg-base-hover dark:hover:bg-gray-700"}
+        ${
+					variant === "naked" &&
+					"bg-transparent shadow-none hover:bg-base-hover dark:hover:bg-gray-700"
+				}
     ${className}`;
 
 	let tooltip_visible = false;
@@ -177,7 +184,7 @@
 		class={_classname}
 		{formaction}
 		aria-label={tooltip.text}
-        {...$$restProps}
+		{...$$restProps}
 	>
 		<slot>Button</slot>
 	</svelte:element>
@@ -194,7 +201,7 @@
 		on:mouseenter={handlemouseenter}
 		on:mouseleave={handleMouseLeave}
 		class={_classname}
-        {...$$restProps}
+		{...$$restProps}
 	>
 		<slot>Button</slot>
 	</svelte:element>
