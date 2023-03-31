@@ -17,17 +17,21 @@ export const POST: RequestHandler = async ({ request }) => {
         throw error(400, 'Invalid request body');
     }
     const { urls, id } = parsed.data;
-    const keys = await Promise.all(urls.map(async ({ url, key }) => {
-        const newKey = await upsertImageUrl(url, key);
-        return {
-            url,
-            oldKey: key,
-            newKey
-        }
-    }));
-    const keysToUpdate = keys.filter(({ oldKey, newKey }) => oldKey !== newKey);
-    console.log({ keysToUpdate })
-    return json(keys)
+    return json({
+        urls,
+        id
+    })
+    // const keys = await Promise.all(urls.map(async ({ url, key }) => {
+    //     const newKey = await upsertImageUrl(url, key);
+    //     return {
+    //         url,
+    //         oldKey: key,
+    //         newKey
+    //     }
+    // }));
+    // const keysToUpdate = keys.filter(({ oldKey, newKey }) => oldKey !== newKey);
+    // console.log({ keysToUpdate })
+    // return json(keys)
     if (!keysToUpdate.length) {
         return json(keys);
     }

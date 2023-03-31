@@ -1140,6 +1140,7 @@ export class Parser {
             console.log({ img })
             this.metadata.image = img;
         }
+        console.log({ metadata: this.metadata })
         console.timeEnd("parse");
         return {
             ...this.metadata,
