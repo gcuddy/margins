@@ -1050,7 +1050,50 @@ export class Parser {
         console.log("prepped document")
         const content = this.grabArticle();
 
-
+        if (content) {
+            // Now apply our own transformations with node-html-parser... kind of ugly
+            const root = content;
+            ["href", "src"].forEach((a) => absolutizeUrls(root!, this.baseUrl, a));
+            // remove srcset
+            root!.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
+            // go thru srcs, get images, and upload to s3
+            // TODO: upsert by noting if src is already s3 url (somehow...)
+            const urls = await Promise.all(root.querySelectorAll("img[src]").map(async el => {
+                // check if url
+                const src = el.getAttribute("src");
+                if (!src) return;
+                if (/^http/.test(src)) {
+                    try {
+                        const u = new URL(src);
+                        u.search = "";
+                        u.hash = "";
+                        const _src = u.toString();
+                        const ext = _src.split(".").pop();
+                        const Key = await generateKeyFromUrl(_src, ext)
+                        const newSrc = 'https://margins.b-cdn.net/' + Key
+                        console.log({ newSrc })
+                        el.setAttribute("src", newSrc);
+                        el.setAttribute("data-canonical-src", src);
+                        return {
+                            url: _src,
+                            key: Key
+                        };
+                    } catch (e) {
+                        console.error(e)
+                    }
+                }
+            })).then(res => res.filter(Boolean))
+            if (urls.length) {
+                const res = await qstash.publishJSON({
+                    url: new URL('/api/jobs/processImages', PUBLIC_API_BASE).toString(),
+                    body: {
+                        urls
+                    }
+                })
+                console.log('QStash response:', res);
+            }
+            console.log({ urls })
+        }
         console.timeEnd("readability")
         console.timeEnd("parse")
         let html = "";
@@ -1093,6 +1136,9 @@ export class Parser {
             this.metadata.image = absolutizeUrl(this.metadata.image, this.baseUrl);
             // clean up bad url
             this.metadata.image = cleanUpNaughtyUrl(this.metadata.image);
+            const img = await upsertImageUrl(this.metadata.image);
+            console.log({ img })
+            this.metadata.image = img;
         }
         console.timeEnd("parse");
         return {
