@@ -4,7 +4,7 @@ import { DocumentType } from "@prisma/client";
 import { HTMLElement, parse } from "node-html-parser";
 import { z } from "zod";
 import { Readability } from '@mozilla/readability'
-
+import crypto from "crypto";
 import { _EntryModel } from "$lib/prisma/zod";
 
 import { fixLazyLoadedImages } from "./clean";
@@ -977,7 +977,11 @@ export class Parser {
                                 u.hash = "";
                                 const _src = u.toString();
                                 const ext = _src.split(".").pop();
-                                const Key = await generateKeyFromUrl(_src, ext)
+                                // const Key = await generateKeyFromUrl(_src, ext)
+
+                                const hash = crypto.createHash('sha256');
+                                hash.update(src);
+                                const Key = hash.digest('hex') + '.' + ext;
                                 const newSrc = 'https://margins.b-cdn.net/' + Key
                                 console.log({ newSrc })
                                 el.setAttribute("src", newSrc);
