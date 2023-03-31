@@ -39,7 +39,7 @@ import { nanoid } from "nanoid";
 import { S3_BUCKET_PREFIX } from "$env/static/private";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
 import { generateKeyFromUrl } from "$lib/backend/utils";
-import { qstash } from "$lib/redis";
+// import { qstash } from "$lib/redis";
 import { PUBLIC_API_BASE } from "$env/static/public";
 import { dev } from "$app/environment";
 
@@ -955,6 +955,7 @@ export class Parser {
             var article = new Readability(doc.window.document, {
                 debug: true
             }).parse();
+            console.log("got article", article)
             let root: HTMLElement | null = null
             if (article?.content) {
                 // Now apply our own transformations with node-html-parser... kind of ugly
@@ -991,13 +992,13 @@ export class Parser {
                         }
                     })).then(res => res.filter(Boolean))
                     if (urls.length) {
-                        const res = await qstash.publishJSON({
-                            url: new URL('/api/jobs/processImages', PUBLIC_API_BASE).toString(),
-                            body: {
-                                urls
-                            }
-                        })
-                        console.log('QStash response:', res);
+                        // const res = await qstash.publishJSON({
+                        //     url: new URL('/api/jobs/processImages', PUBLIC_API_BASE).toString(),
+                        //     body: {
+                        //         urls
+                        //     }
+                        // })
+                        // console.log('QStash response:', res);
                     }
                     console.log({ urls })
                 }

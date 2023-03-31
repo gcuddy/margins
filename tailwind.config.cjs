@@ -178,7 +178,6 @@ const config = {
 	plugins: [
 		require("@tailwindcss/typography"),
 		// require("@tailwindcss/forms"),
-		require("@tailwindcss/line-clamp"),
 		require("tailwind-gradient-mask-image"),
 		require("tailwind-scrollbar")({ nocompatible: true }),
 		require("tailwind-scrollbar-hide"),
