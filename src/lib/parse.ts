@@ -299,15 +299,15 @@ export default async function (url: string, html?: string): Promise<z.infer<type
         // console.log({ parsed });
 
 
-        // const parser = new Parser(url, htmlToParse as string);
-        // const isArticle = parser.isReaderable();
-        const doc = parseHTML(htmlToParse as string);
-        const isArticle = isProbablyReaderable(doc.window.document)
+        const parser = new Parser(url, htmlToParse as string);
+        const isArticle = parser.isReaderable();
+        // const doc = parseHTML(htmlToParse as string);
+        // const isArticle = isProbablyReaderable(doc.window.document)
         console.log({ isArticle });
         const generateScreenshot = true;
         if (!isArticle) {
             // then it's a bookmark... right?
-            // const { url: goodbye, ...p } = await parser.parse();
+            const { url: goodbye, ...p } = await parser.parse();
             // get screenshot and upload to s3
             // can we get access to svelte fetch here?
             // maybe do that when we're saving it instead?
@@ -315,11 +315,11 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             // see: /screenshot/:url
             // const res = await fetch()
             // generate screenshot'
-            const title = doc.window.document.title;
-            return { url, title, type: "bookmark" };
+            // const title = doc.window.document.title;
+            return { url, ...p, type: "bookmark" };
         } else {
             console.log({ isArticle });
-            const p = new Readability(doc.window.document).parse();
+            const p = await new Parser(url, htmlToParse as string).parse();
             if (!p) {
                 throw new Error("Could not parse article");
             }
@@ -329,11 +329,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             // console.log('parser', { content });
             // or bookmark?
             return {
-                title: p?.title,
-                summary: p?.excerpt,
-                html: p?.content,
-                text: p?.textContent,
-                author: p?.byline,
+                ...p
             };
         }
     } else {
