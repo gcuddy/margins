@@ -940,8 +940,7 @@ export class Parser {
     }
 
     async parse() {
-        const usereadability = false;
-
+        const usereadability = true;
         console.log({ usereadability })
         console.time("parse");
         if (!this.html) {
