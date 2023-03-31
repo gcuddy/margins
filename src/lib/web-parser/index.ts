@@ -38,7 +38,7 @@ import { fetchAndUploadImage, s3, uploadFile, upsertImageUrl } from "$lib/backen
 import { nanoid } from "nanoid";
 import { S3_BUCKET_PREFIX } from "$env/static/private";
 import { HeadObjectCommand } from "@aws-sdk/client-s3";
-// import { generateKeyFromUrl } from "$lib/backend/utils";
+import { generateKeyFromUrl } from "$lib/backend/utils";
 import { qstash } from "$lib/redis";
 import { PUBLIC_API_BASE } from "$env/static/public";
 import { dev } from "$app/environment";
@@ -976,10 +976,7 @@ export class Parser {
                                 u.hash = "";
                                 const _src = u.toString();
                                 const ext = _src.split(".").pop();
-                                // const Key = await generateKeyFromUrl(_src, ext)
-
-                                const hash = Math.random().toString();
-                                const Key = hash + '.' + ext;
+                                const Key = await generateKeyFromUrl(_src, ext)
                                 const newSrc = 'https://margins.b-cdn.net/' + Key
                                 console.log({ newSrc })
                                 el.setAttribute("src", newSrc);
