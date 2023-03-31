@@ -1024,9 +1024,9 @@ export class Parser {
                 this.metadata.image = absolutizeUrl(this.metadata.image, this.baseUrl);
                 // clean up bad url
                 this.metadata.image = cleanUpNaughtyUrl(this.metadata.image);
-                const img = await upsertImageUrl(this.metadata.image);
-                console.log({ img })
-                this.metadata.image = img;
+                // const img = await upsertImageUrl(this.metadata.image);
+                // console.log({ img })
+                // this.metadata.image = img;
             }
             console.log({ metadata: this.metadata })
 

@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { z } from 'zod';
 import { upsertImageUrl } from '$lib/backend/s3.server';
 import { db } from "$lib/db"
+import type { Config } from '@sveltejs/adapter-vercel';
 const schema = z.object({
     urls: z.array(z.object({
         url: z.string().url(),
@@ -10,6 +11,9 @@ const schema = z.object({
     })),
     id: z.number().optional(),
 })
+export const config: Config = {
+    runtime: "nodejs18.x"
+}
 export const POST: RequestHandler = async ({ request }) => {
     const data = await request.json();
     const parsed = schema.safeParse(data);
