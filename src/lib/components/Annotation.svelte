@@ -123,9 +123,10 @@
 
 	function fetchChildren() {
 		if (browser) {
-			return trpc().annotations.loadReplies.query({
-				id: annotation.id,
-			});
+			// return trpc().annotations.loadReplies.query({
+			// 	id: annotation.id,
+			// });
+			return [];
 		}
 	}
 	async function invalidateAnnotations() {
