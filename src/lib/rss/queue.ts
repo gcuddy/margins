@@ -2,6 +2,7 @@
 
 import type { Redis } from "@upstash/redis";
 import { config, db } from "$lib/db"
+import { getFeedText } from "$lib/rss/utils";
 import Parser from 'rss-parser';
 import { connect } from "@planetscale/database";
 
@@ -26,10 +27,6 @@ export const getFeedUrlsFromDatabase = async () => {
     return feeds.map((feed) => ({ feedUrl: feed.feedUrl as string, id: feed.id })).filter(Boolean);
 }
 
-export async function getFeedText(feedUrl: string) {
-    const text = await fetch(feedUrl).then((res) => res.text());
-    return text;
-}
 
 type LastProcessed = {
     last_processed_id: string | null;

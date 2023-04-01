@@ -2,7 +2,13 @@
 	import { page } from "$app/stores";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
 	import Button from "$lib/components/ui/Button.svelte";
-	import Dialog from "$lib/components/Dialog.svelte";
+	import {
+		Dialog,
+		DialogTitle,
+		DialogContent,
+		DialogFooter,
+		DialogHeader,
+	} from "$lib/components/ui/dialog";
 	import FeedModal from "$lib/components/FeedModal.svelte";
 	import Filter from "$lib/components/Filters/Filter.svelte";
 	import FilterDisplay from "$lib/components/Filters/FilterDisplay.svelte";
@@ -20,6 +26,7 @@
 	import { writable } from "svelte/store";
 	import type { LayoutData } from "./$types";
 	import FeedTitleMenu from "./FeedTitleMenu.svelte";
+	import FeedEntry from "$lib/components/FeedEntry.svelte";
 	export let data: LayoutData;
 	let modal = false;
 	type Entries = RouterOutputs["entries"]["byFeed"]["entries"];
@@ -93,8 +100,31 @@
 				{/if}
 			</div>
 			<div class="flex gap-2" slot="end">
-				<Button
-					variant="texture"
+				<Dialog>
+					<svelte:fragment slot="trigger">
+						<!-- as="a" -->
+						<Button
+							variant="ghost"
+							size="sm"
+							href="/u:{$page.params.username}/subscriptions/new"
+						>
+							<Icon name="plusSmall" className="h-5 w-5 fill-current" />
+							<span>Add Subscription</span></Button
+						>
+					</svelte:fragment>
+					<DialogContent let:close>
+						<DialogHeader>
+							<!-- <DialogTitle>Add subscription</DialogTitle> -->
+						</DialogHeader>
+						<FeedEntry {close} />
+						<!-- <DialogFooter>
+
+                        </DialogFooter> -->
+					</DialogContent>
+				</Dialog>
+				<!-- <Button
+					variant="ghost"
+					size="sm"
 					as="a"
 					href="/u:{$page.params.username}/subscriptions/new"
 					on:click={(e) => {
@@ -105,7 +135,7 @@
 				>
 					<Icon name="plusSmall" className="h-5 w-5 fill-current" />
 					<span>Add Subscription</span></Button
-				>
+				> -->
 			</div>
 		</DefaultHeader>
 	</Header>

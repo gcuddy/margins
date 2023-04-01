@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import EntryList from "$lib/components/EntryList.svelte";
+	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
+
 	import type { createFilterStores } from "$lib/stores/filter";
 	import { trpcWithQuery } from "$lib/trpc/client";
 	import type { ViewOptions } from "$lib/types/schemas/View";
@@ -96,7 +98,10 @@
 {:else if $query.isError}
 	error
 {:else if $query.isSuccess}
-	<EntryList items={$query.data.entries} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} />
+	{#each $query.data as entry}
+		<EntryListItem {entry} />
+	{/each}
+	<!-- <EntryList items={$query.data} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} /> -->
 {/if}
 
 <!-- {#each data.entries as item (item.id)}

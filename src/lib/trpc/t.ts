@@ -12,7 +12,7 @@ export const router = t.router;
 export const middleware = t.middleware;
 
 const auth = middleware(async ({ next, ctx }) => {
-    console.log(`protectedProcedure`, { ctx })
+    // console.log(`protectedProcedure`, { ctx })
     if (!ctx.session || !ctx.userId || !ctx.user) throw new TRPCError({ code: 'UNAUTHORIZED' });
     return next({ ctx })
 });

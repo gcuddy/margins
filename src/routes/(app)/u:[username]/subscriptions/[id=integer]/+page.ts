@@ -5,16 +5,15 @@ export const load = (async (event) => {
     const { params } = event;
     //    TODO: infinite
     // const query
-    const {queryClient, subscriptions } = await event.parent();
+    const { queryClient } = await event.parent();
 
     const client = trpcWithQuery(event, queryClient);
     const utils = client.createContext();
     utils.entries.byFeed.prefetch({
         id: +params.id
     })
-    const subscription = subscriptions.find((s) => s.feedId === +params.id);
+    // const subscription = subscriptions.find((s) => s.feedId === +params.id);
     return {
-        subscription,
         id: +params.id,
     };
 }) satisfies PageLoad;

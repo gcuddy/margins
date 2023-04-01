@@ -28,13 +28,13 @@
 	)}
 	{...$$restProps}
 >
-	<slot />
+	<slot close={$api?.close} />
 
 	<!-- Dialog.Close -->
+	<!-- data-state={open ? "open" : "closed"} -->
 	<button
-		data-state={open ? "open" : "closed"}
 		on:click={() => $api.close()}
-		class="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-gray-100 hover:opacity-100 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-900 dark:data-[state=open]:bg-gray-800"
+		class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-gray-100 hover:opacity-100 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-900 dark:data-[state=open]:bg-gray-800"
 	>
 		<X class="h-4 w-4" />
 		<span class="sr-only">Close</span>

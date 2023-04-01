@@ -529,35 +529,28 @@ export const entriesRouter = router({
     byFeed: protectedProcedure
         .input(z.object({ id: z.number() }))
         .query(async ({ ctx, input }) => {
-            const entries = await ctx.prisma.entry
-                .findMany({
-                    where: {
-                        feedId: input.id,
-                    },
-                    orderBy: [
-                        {
-                            published: "desc",
-                        },
-                    ],
-                    select: entryListSelect(ctx.userId),
-                    // include: {
-                    //     interactions: {
-                    //         where: {
-                    //             userId: ctx.userId,
-                    //         },
-                    //     },
-                    // },
-                })
-                .then((entries) => {
-                    return entries.map((e) => {
-                        const unread = !e.interactions[0]?.is_read;
-                        return {
-                            ...e,
-                            unread,
-                        };
-                    });
-                });
-            return { entries };
+            const entries = await ctx.db.selectFrom("Entry as e")
+                .leftJoin("EntryInteraction as i", "i.entryId", "e.id")
+                .select([
+                    "e.id",
+                    "e.image",
+                    "e.published",
+                    "e.type",
+                    "e.title",
+                    "e.author",
+                    "e.uri",
+                    "i.progress",
+                    sql<string>`(select count(a.id) from Annotation a where a.entryId = e.id)`.as(
+                        "annotations"
+                    ),
+                    sql<string>`(select count(r.id) from Relation r where r.entryId = e.id or r.relatedEntryId = e.id)`.as(
+                        "relations"
+                    ),
+                ])
+                .where("e.feedId", "=", input.id)
+                .orderBy("e.published", "desc")
+                .execute();
+            return entries;
         }),
 
     byFeeds: protectedProcedure
