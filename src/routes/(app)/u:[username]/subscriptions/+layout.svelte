@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
-	import Button from "$lib/components/Button.svelte";
+	import Button from "$lib/components/ui/Button.svelte";
 	import Dialog from "$lib/components/Dialog.svelte";
 	import FeedModal from "$lib/components/FeedModal.svelte";
 	import Filter from "$lib/components/Filters/Filter.svelte";
@@ -71,15 +71,22 @@
 				{#if $page.data.subscription}
 					<FeedTitleMenu subscription={$page.data.subscription} />
 				{:else}
-					<div><SmallPlus>{$page.data.title || "Subscriptions"}</SmallPlus></div>
+					<div>
+						<SmallPlus>{$page.data.title || "Subscriptions"}</SmallPlus>
+					</div>
 				{/if}
 				{#if $page.data.entries}
 					<div>
 						{#if !_filters.length}
 							<FilterDisplay {filters} options={filterOptions} />
 						{:else}
-							<Button variant="dashed" className="space-x-1 text-sm" on:click={() => filters.reset()}>
-								<Icon name="xMarkMini" className="h-4 w-4 dark:fill-gray-300" /> <span>Clear Filters</span>
+							<Button
+								variant="dashed"
+								className="space-x-1 text-sm"
+								on:click={() => filters.reset()}
+							>
+								<Icon name="xMarkMini" className="h-4 w-4 dark:fill-gray-300" />
+								<span>Clear Filters</span>
 							</Button>
 						{/if}
 					</div>
@@ -87,7 +94,7 @@
 			</div>
 			<div class="flex gap-2" slot="end">
 				<Button
-					variant="ghost"
+					variant="texture"
 					as="a"
 					href="/u:{$page.params.username}/subscriptions/new"
 					on:click={(e) => {
@@ -99,22 +106,16 @@
 					<Icon name="plusSmall" className="h-5 w-5 fill-current" />
 					<span>Add Subscription</span></Button
 				>
-				<button
-					on:click={async () => {
-						const res = await fetch("/api/refresh", {
-							method: "POST",
-						});
-						const json = await res.json();
-						console.log({ json });
-					}}>refresh</button
-				>
 			</div>
 		</DefaultHeader>
 	</Header>
 	<div class="flex grow flex-col overflow-hidden">
 		{#if filteredItems}
 			<div>
-				<SearchInput value={searchTerm} on:active={({ detail: active }) => disableAnimation.set(active)} />
+				<SearchInput
+					value={searchTerm}
+					on:active={({ detail: active }) => disableAnimation.set(active)}
+				/>
 			</div>
 			{#if _filters.length}
 				<div class="p-3">

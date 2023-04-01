@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { show_tooltips } from '$lib/stores/Tooltips';
-	import { createPopperActions } from 'svelte-popperjs';
-	import { fly } from 'svelte/transition';
-	import ButtonTooltip from './ButtonTooltip.svelte';
+	import { show_tooltips } from "$lib/stores/Tooltips";
+	import { createPopperActions } from "svelte-popperjs";
+	import { fly } from "svelte/transition";
+	import ButtonTooltip from "./ButtonTooltip.svelte";
 	interface Tooltip {
 		text: string;
 		kbd?: string;
 	}
 	export let tooltip: Tooltip | undefined = undefined;
 	const [popperRef, popperContent] = createPopperActions({
-		placement: 'bottom',
+		placement: "bottom",
 		modifiers: [
 			{
-				name: 'offset',
+				name: "offset",
 				options: {
 					offset: [0, 8],
 				},
@@ -43,13 +43,18 @@
 </script>
 
 {#if tooltip}
-	<div use:popperRef on:click={hideTooltip} on:mouseenter={showTooltip} on:mouseleave={hideTooltip}>
+	<div
+		use:popperRef
+		on:click={hideTooltip}
+		on:mouseenter={showTooltip}
+		on:mouseleave={hideTooltip}
+	>
 		<slot />
 	</div>
 	{#if tooltip && tooltip_visible}
 		<!-- todo: add delay -->
 		<div use:popperContent class="z-50">
-			<div transition:fly={{ y: 5, duration: 150 }}>
+			<div transition:fly|local={{ y: 5, duration: 150 }}>
 				<ButtonTooltip {...tooltip} />
 			</div>
 		</div>

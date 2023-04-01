@@ -210,7 +210,7 @@
 {#if tooltip && tooltip_visible}
 	<!-- todo: add delay -->
 	<div use:popperContent class="z-50">
-		<div transition:fly={{ y: 5, duration: 150 }}>
+		<div transition:fly|local={{ y: 5, duration: 150 }}>
 			<ButtonTooltip {...tooltip} />
 		</div>
 	</div>

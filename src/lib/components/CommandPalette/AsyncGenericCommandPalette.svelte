@@ -26,7 +26,12 @@
 
 	// optional Raw html or StoredComponent to display per item
 	export let itemDisplay:
-		| ((value: TValue, active: boolean, selected: boolean, index: number) => string | StoredComponent)
+		| ((
+				value: TValue,
+				active: boolean,
+				selected: boolean,
+				index: number
+		  ) => string | StoredComponent)
 		| null = null;
 
 	// optionally set an icon ot display for each item, using a stored component
@@ -51,7 +56,12 @@
 
 	import Combobox from "../helpers/Combobox.svelte";
 	import { fadeScale } from "$lib/transitions";
-	import { derived, writable, type Readable, type Writable } from "svelte/store";
+	import {
+		derived,
+		writable,
+		type Readable,
+		type Writable,
+	} from "svelte/store";
 	import {
 		ComponentProps,
 		ComponentType,
@@ -74,7 +84,11 @@
 	import { page } from "$app/stores";
 	import type { Page } from "@sveltejs/kit";
 	import ChosenIconComponent from "../ChosenIcon.svelte";
-	import { createQuery, CreateQueryOptions, CreateQueryResult } from "@tanstack/svelte-query";
+	import {
+		createQuery,
+		CreateQueryOptions,
+		CreateQueryResult,
+	} from "@tanstack/svelte-query";
 
 	function commandListener({ detail: e }: CustomEvent<KeyboardEvent>) {
 		if (e.key === "Escape") {
@@ -85,7 +99,7 @@
 	export let placeholder: string = "Search…";
 </script>
 
-<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
+<div transition:fadeScale|local={{ duration: 150, baseScale: 0.95 }}>
 	<!-- TODO: make onselect a prop -->
 	<Combobox
 		values={Query && $Query?.isSuccess ? $Query.data : $filteredActions || []}
@@ -112,7 +126,9 @@
 			placeholder,
 		}}
 		options={{
-			class: `max-h-96 text-sm overflow-y-auto ${!Query || !$Query?.data?.length ? "hidden" : ""}`,
+			class: `max-h-96 text-sm overflow-y-auto ${
+				!Query || !$Query?.data?.length ? "hidden" : ""
+			}`,
 		}}
 		static={true}
 		expanded={true}

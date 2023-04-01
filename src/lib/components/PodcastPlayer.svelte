@@ -272,7 +272,7 @@
 <div class="relative">
 	{#if $podcastPlayer?.episode?.enclosureUrl}
 		<figure
-			transition:fly={{
+			transition:fly|local={{
 				y: 10,
 			}}
 			use:draggable={{

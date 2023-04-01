@@ -11,13 +11,17 @@
 	import { onDestroy } from "svelte";
 	import { backIn, backOut } from "svelte/easing";
 	let dialogRef: HTMLElement;
-	$: modal.open ? disableGlobalKeyboardShortcuts.on() : disableGlobalKeyboardShortcuts.off();
+	$: modal.open
+		? disableGlobalKeyboardShortcuts.on()
+		: disableGlobalKeyboardShortcuts.off();
 	let container: HTMLElement;
 	$: initialFocus =
-		(container && (container.querySelector("[data-initial-focus]") as HTMLElement)) || undefined;
+		(container &&
+			(container.querySelector("[data-initial-focus]") as HTMLElement)) ||
+		undefined;
 	$: console.log({ initialFocus });
 	export let modal: ModalComponent;
-    export let maxWidth = "max-w-2xl";
+	export let maxWidth = "max-w-2xl";
 	onDestroy(() => {
 		disableGlobalKeyboardShortcuts.off();
 	});
@@ -35,10 +39,10 @@
 	class="fixed inset-0 z-50 overflow-y-auto p-4 pt-[25vh]"
 	{initialFocus}
 >
-	<div transition:fade={{ duration: 150 }}>
+	<div transition:fade|local={{ duration: 150 }}>
 		<DialogOverlay class="fixed inset-0 bg-gray-50/50 dark:bg-gray-900/30" />
 	</div>
-	<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
+	<div transition:fadeScale|local={{ duration: 150, baseScale: 0.95 }}>
 		<!-- out:fadeScale={{
 			duration: 150,
 			baseScale: 0.95,
