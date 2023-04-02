@@ -929,11 +929,11 @@ export const entriesRouter = router({
                 }
                 const { db, redis } = ctx;
                 const { id } = input;
-                const cached = await redis.get(`entry:${id}`);
-                if (cached) {
-                    console.log("cache hit");
-                    return cached as Entry;
-                }
+                // const cached = await redis.get(`entry:${id}`);
+                // if (cached) {
+                //     console.log("cache hit");
+                //     return cached as Entry;
+                // }
                 const entry: Entry = await db
                     .selectFrom("Entry as e")
                     .where("e.id", "=", id)
@@ -956,9 +956,9 @@ export const entriesRouter = router({
                         "e.googleBooksId",
                     ])
                     .executeTakeFirstOrThrow();
-                await redis.set(`entry:${id}`, entry, {
-                    ex: dev ? 10 : 60 * 60 * 24,
-                });
+                // await redis.set(`entry:${id}`, entry, {
+                //     ex: dev ? 10 : 60 * 60 * 24,
+                // });
                 return entry;
             }),
     }),
