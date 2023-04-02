@@ -10,6 +10,12 @@
 		DialogTitle,
 	} from "$lib/components/ui/dialog";
 	import {
+		Tabs,
+		TabsList,
+		TabsTrigger,
+		TabsContent,
+	} from "$lib/components/ui/tabs";
+	import {
 		DropdownMenu,
 		DropdownMenuContent,
 		DropdownMenuSeparator,
@@ -18,8 +24,9 @@
 	} from "$lib/components/ui/dropdown-menu";
 	import Input from "$lib/components/ui/Input.svelte";
 	import Label from "$lib/components/ui/Label.svelte";
+	import Separator from "$lib/components/ui/Separator.svelte";
 	import Switch from "$lib/components/ui/Switch.svelte";
-	import { H1, Lead } from "$lib/components/ui/typography";
+	import { H1, H2, Lead } from "$lib/components/ui/typography";
 </script>
 
 <div
@@ -78,4 +85,49 @@
 			</DialogFooter>
 		</DialogContent>
 	</Dialog>
+
+	<Separator />
+	<H2>Tabs</H2>
+	<Tabs class="w-[400px]">
+		<TabsList>
+			<TabsTrigger>Account</TabsTrigger>
+			<TabsTrigger>Password</TabsTrigger>
+		</TabsList>
+		<TabsContent>
+			<p class="text-sm text-slate-500 dark:text-slate-400">
+				Make changes to your account here. Click save when you're done.
+			</p>
+			<div class="grid gap-2 py-4">
+				<div class="space-y-1">
+					<Label for="name">Name</Label>
+					<Input id="name" value="Pedro Duarte" />
+				</div>
+				<div class="space-y-1">
+					<Label for="username">Username</Label>
+					<Input id="username" value="@peduarte" />
+				</div>
+			</div>
+			<div class="flex">
+				<Button>Save changes</Button>
+			</div>
+		</TabsContent>
+		<TabsContent>
+			<p class="text-sm text-slate-500 dark:text-slate-400">
+				Change your password here. After saving, you'll be logged out.
+			</p>
+			<div class="grid gap-2 py-4">
+				<div class="space-y-1">
+					<Label for="current">Current password</Label>
+					<Input id="current" type="password" />
+				</div>
+				<div class="space-y-1">
+					<Label for="new">New password</Label>
+					<Input id="new" type="password" />
+				</div>
+			</div>
+			<div class="flex">
+				<Button>Save password</Button>
+			</div>
+		</TabsContent>
+	</Tabs>
 </div>

@@ -491,7 +491,7 @@
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
 				<article
 					data-article
-					class=" prose prose-stone mx-auto mt-14 h-full select-text px-1 dark:prose-invert sm:p-4"
+					class=" prose prose-stone mx-auto h-full select-text px-1 dark:prose-invert sm:p-4"
 				>
 					{#if article.type === "article" || article.type === "rss" || (article.type === "audio" && !article.podcastIndexId)}
 						<div class="pb-16">

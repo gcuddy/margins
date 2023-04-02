@@ -13,7 +13,7 @@
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
 	import { mainEl, mainElScroll } from "$lib/stores/main";
 	import { cn } from "$lib/utils/tailwind";
-	import { MoreVertical, Tag, X } from "lucide-svelte";
+	import { ListPlus, MoreVertical, RefreshCwIcon, Tag, X } from "lucide-svelte";
 	import { tweened } from "svelte/motion";
 	const currentList = getCurrentListContext();
 
@@ -24,10 +24,6 @@
 			}
 		}
 	}
-
-	const topBarHeight = tweened(56, {
-		duration: 200,
-	});
 	// $: $mainElScroll.down ? topBarHeight.set(0) : topBarHeight.set(56);
 </script>
 
@@ -35,13 +31,11 @@
 
 {#if $currentList.entries?.length}
 	<div
-		class="flex flex-col overflow-hidden rounded-lg border border-border bg-transparent shadow-lg backdrop-blur-lg transition sm:m-4"
+		class="flex flex-col overflow-hidden rounded-lg border border-border bg-transparent shadow-lg backdrop-blur-lg transition sm:m-2"
 	>
 		<div
-			style:--height="{$topBarHeight}px"
 			class={cn(
-				"flex h-[--height] shrink-0 items-center justify-between border-b px-3 transition hover:opacity-100",
-				$mainElScroll.down && "opacity-25"
+				"flex h-14 shrink-0 items-center justify-between border-b border-border px-3 transition hover:opacity-100"
 			)}
 		>
 			<Button
@@ -70,6 +64,14 @@
 						<Tag class="mr-2 h-4 w-4" />
 						<span>Add tags</span>
 						<DropdownMenuShortcut>T</DropdownMenuShortcut>
+					</DropdownMenuItem>
+					<DropdownMenuItem>
+						<ListPlus class="mr-2 h-4 w-4" />
+						<span>Add to Collection</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem>
+						<RefreshCwIcon class="mr-2 h-4 w-4" />
+						<span>Re-download data</span>
 					</DropdownMenuItem>
 					<DropdownMenuItem>Billing</DropdownMenuItem>
 					<DropdownMenuItem>Team</DropdownMenuItem>

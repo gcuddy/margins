@@ -12,7 +12,7 @@
 	}
 </script>
 
-<MenuItem let:active as="div">
+<MenuItem let:active as="div" on:click>
 	<div
 		class={cn(
 			"relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm font-medium outline-none focus:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-gray-700",

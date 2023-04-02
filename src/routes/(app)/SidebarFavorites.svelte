@@ -7,7 +7,11 @@
 	import autoAnimate from "@formkit/auto-animate";
 	import { createMutation } from "@tanstack/svelte-query";
 	import { nanoid } from "nanoid";
-	import { dndzone, overrideItemIdKeyNameBeforeInitialisingDndZones, setDebugMode } from "svelte-dnd-action";
+	import {
+		dndzone,
+		overrideItemIdKeyNameBeforeInitialisingDndZones,
+		setDebugMode,
+	} from "svelte-dnd-action";
 	import SidebarFavorite from "./SidebarFavorite.svelte";
 	import SidebarFavoriteFolder from "./SidebarFavoriteFolder.svelte";
 	import SidebarItem from "./SidebarItem.svelte";
@@ -26,9 +30,9 @@
 	// });
 	const mutation = createMutation({
 		mutationKey: ["favorites", "reorder"],
-		mutationFn: (input: RouterInputs["favorites"]["update"]) => trpc().favorites.update.mutate(input),
+		mutationFn: (input: RouterInputs["favorites"]["update"]) =>
+			trpc().favorites.update.mutate(input),
 	});
-
 
 	const newFolderFn = () => ({
 		id: nanoid(),
@@ -48,7 +52,8 @@
 	}
 
 	const create = createMutation({
-		mutationFn: (input: RouterInputs["favorites"]["create"]) => trpc().favorites.create.mutate(input),
+		mutationFn: (input: RouterInputs["favorites"]["create"]) =>
+			trpc().favorites.create.mutate(input),
 		onMutate: () => {
 			favorites = [newFolder, ...favorites];
 		},
@@ -58,8 +63,10 @@
 </script>
 
 <section class="space-y-1e flex grow flex-col items-stretch px-5 text-sm">
-	<div class="group flex items-center justify-between  text-gray-500">
-		<span class="pl-2">Favorites</span>
+	<div class="group flex items-center justify-between">
+		<h2 class="relative pl-2 text-lg font-semibold tracking-tight">
+			Favorites
+		</h2>
 		<button
 			on:click={() => {
 				pendingFolder = true;
@@ -72,7 +79,7 @@
 				// 	...favorites,
 				// ];
 			}}
-			class="flex items-center rounded-md p-1 opacity-0 transition hover:bg-gray-200 group-hover:opacity-100"
+			class="flex items-center rounded-md p-1 opacity-0 transition group-hover:opacity-100 hover:bg-gray-200"
 			><Icon name="folderPlusMini" className="h-4 w-4 fill-current" /></button
 		>
 	</div>

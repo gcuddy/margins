@@ -3,6 +3,7 @@
 	import { page } from "$app/stores";
 	import CustomizeView from "$lib/components/CustomizeView.svelte";
 	import Filter from "$lib/components/Filter.svelte";
+	import ItemList from "$lib/components/ItemList.svelte";
 	import Header from "$lib/components/layout/Header.svelte";
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
 	import LocationListbox from "$lib/components/LocationListbox.svelte";
@@ -91,22 +92,22 @@
 
 <EntryFilter />
 
-<div><Button>Test</Button></div>
 {#if $query.isLoading}
 	<div>Loading...</div>
 {:else if $query.isError}
 	<div>Error</div>
 {:else if $query.isSuccess}
 	<!-- {JSON.stringify($query.data)} -->
-	{#each $query.data as entry}
-		<EntryListItem {entry} />
-		<!-- <BasicSearchItem
+	<ItemList entries={$query.data} />
+	<!-- {#each $query.data as entry} -->
+	<!-- <EntryListItem {entry} /> -->
+	<!-- <BasicSearchItem
 				title={entry.title}
 				href={entry.uri}
 				image={entry.image}
 			/> -->
-		<!-- <EntryListItem {entry} /> -->
-	{/each}
+	<!-- <EntryListItem {entry} /> -->
+	<!-- {/each} -->
 	<!-- <EntryList
 		items={sortedEntries}
 	>

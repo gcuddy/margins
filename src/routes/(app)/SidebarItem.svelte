@@ -133,7 +133,7 @@
 		<slot name="end" />
 	</span>
 </svelte:element> -->
-{#if $items?.length && !_collapsed}
+<!-- {#if $items?.length && !_collapsed}
 	<div class="ml-4 space-y-0.5 border-l border-gray-500/25 pl-1.5">
 		{#each $items.map((i) => ({ ...i, id: useId() })) as item (item.id)}
 			<div animate:flip>
@@ -141,4 +141,4 @@
 			</div>
 		{/each}
 	</div>
-{/if}
+{/if} -->
