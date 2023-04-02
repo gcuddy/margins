@@ -52,6 +52,9 @@ export async function addSubscription(input: Input) {
         // (should happen in bg)
         await db.insertInto("Entry")
             .values(entries)
+            .onDuplicateKeyUpdate({
+                feedId
+            })
             .execute();
 
         // add subscription

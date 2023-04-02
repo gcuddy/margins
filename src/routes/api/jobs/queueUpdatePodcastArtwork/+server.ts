@@ -1,8 +1,13 @@
 import type { RequestHandler } from './$types';
 import { db } from "$lib/db"
 import { redis } from '$lib/redis';
-import { error, json } from '@sveltejs/kit';
+import { Config, error, json } from '@sveltejs/kit';
 import { QUEUE_LIST, QUEUE_SET } from '$lib/rss/feed-images.server';
+
+export const config: Config = {
+    runtime: "nodejs18.x"
+}
+
 export const GET: RequestHandler = async () => {
     try {
         const podcasts = await db.selectFrom("Feed")

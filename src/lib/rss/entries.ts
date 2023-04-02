@@ -6,6 +6,8 @@ type Item = {
     [key: string]: any;
 } & Parser.Item;
 
+// TODO: adapter for RSS, Atom, JSON Feed
+
 export function adaptEntryFromItem(item: Item, feedId: Feed["id"]) {
     const enclosureUrl = item.enclosure?.url;
     const type = item.enclosure?.type === "audio/mpeg" ? "audio" : "article" as const;

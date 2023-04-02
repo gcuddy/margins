@@ -99,10 +99,10 @@
 							<Muted>{formatDuration(item.duration)}</Muted>
 						{/if}
 					</div>
-					<h2 class="font-semibold">
+					<h2 class="line-clamp-2 font-semibold">
 						<a href="/u:{user.username}/entry/{item.id}">{item.title}</a>
 					</h2>
-					<div class="max-h-20 overflow-hidden line-clamp-2">
+					<div class="line-clamp-2 max-h-20 overflow-hidden">
 						<Muted class="text-sm">{@html item.html}</Muted>
 					</div>
 					<div class="flex cursor-default items-center space-x-1">

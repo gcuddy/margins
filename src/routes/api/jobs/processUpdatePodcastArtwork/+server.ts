@@ -3,6 +3,11 @@ import { redis } from '$lib/redis';
 import { QUEUE_LIST, QUEUE_SET, getImagesAndUpload, getPodcastImagesToProcess } from '$lib/rss/feed-images.server';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import type { Config } from '@sveltejs/adapter-vercel';
+
+export const config: Config = {
+    runtime: "nodejs18.x"
+}
 
 export const GET: RequestHandler = async () => {
     try {
