@@ -6,6 +6,11 @@ import { getJsonFromRequest, notEmpty } from "$lib/utils";
 
 import type { Actions } from "./$types";
 import { addSubscription } from "$lib/rss/subscription";
+import type { Config } from "@sveltejs/adapter-vercel";
+
+export const config: Config = {
+    runtime: "nodejs18.x"
+}
 
 const feedsToAdd = z.object({
     feeds: z.array(z.object({ url: z.string().url(), title: z.string() })),
