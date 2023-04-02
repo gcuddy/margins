@@ -4,7 +4,7 @@
 	interface $$Props extends ComponentProps<TabGroup<"div">> {}
 </script>
 
-<TabGroup {...$$restProps}>
+<TabGroup on:change {...$$restProps}>
 	<slot />
 	<TabPanels let:selectedIndex>
 		<slot name="panels" {selectedIndex} />

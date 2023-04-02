@@ -60,7 +60,7 @@
 		hardcodedNav = [
 			{
 				display: "Library",
-				href: `/u:${$page.data.user.username}/all`,
+				href: `/u:${$page.data.user.username}/inbox`,
 				icon: "buildingLibrary",
 				items: readable([
 					{
@@ -87,7 +87,7 @@
 			},
 			{
 				display: "Subscriptions",
-				href: `/u:${$page.data.user.username}/subscriptions`,
+				href: `/u:${$page.data.user.username}/subscriptions/all`,
 				icon: "rss",
 				items: readable([
 					{
@@ -365,13 +365,14 @@
 	<div
 		style:--top="{$tweenedTop}px"
 		style="width: {width}px; left: {$tweenedLeft}px"
-		class="fixed bottom-0 top-0 z-40 md:top-[var(--top)]"
+		class="min-h-screen"
 	>
+		<!-- class="fixed bottom-0 top-0 z-40 md:top-[var(--top)]" -->
 		<!-- TODO: sidebarColor css variable (for theming) -->
 		<nav
 			on:click={handleClick}
 			on:keydown
-			class="relative flex h-full max-w-[min(100vw-40px,400px)] grow flex-col space-y-3 border-border bg-sidebar pt-10 shadow-xl transition duration-300 dark:shadow-2xl lg:pt-0 lg:shadow-none {collapsed
+			class="relative flex h-full min-h-screen max-w-[min(100vw-40px,400px)] grow flex-col space-y-3 border-border bg-sidebar pt-10 shadow-xl transition duration-300 dark:shadow-2xl lg:pt-0 lg:shadow-none {collapsed
 				? '-top-2 m-1 rounded-md border  dark:border-gray-600 dark:bg-gray-800'
 				: 'border-r '}"
 		>
@@ -559,7 +560,8 @@
 				</div>
 				{#if !user && $page.data.allTags}
 					<div
-						class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm">
+						class="flex grow flex-col items-stretch space-y-1 overflow-y-auto px-5 text-sm"
+					>
 						<span class="px-2">Tags</span>
 						{#each $page.data.allTags as tag}
 							{#if tag}

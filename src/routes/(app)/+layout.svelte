@@ -49,7 +49,7 @@
 <QueryClientProvider client={data.queryClient}>
 	<MutationProvider>
 		<div
-			class="simple-scrollbars app bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
+			class="simple-scrollbars app container bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
 				? 'mobile'
 				: ''}"
 			data-transparency="true"
@@ -77,7 +77,7 @@
 				{/if}
 				<!-- bind:this={$mainEl} -->
 				<main
-					class="relative flex grow flex-col place-items-stretch overflow-auto"
+					class="relative flex h-full grow flex-col place-items-stretch overflow-auto"
 				>
 					<slot />
 					<PodcastPlayer />

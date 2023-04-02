@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useDropDownMenuContext } from "$lib/components/ui/dropdown-menu/DropdownMenu.svelte";
+	import { fadeScale } from "$lib/transitions";
 	import { cn } from "$lib/utils/tailwind";
 	import { MenuItems, Portal, Transition } from "@rgossiaux/svelte-headlessui";
 	import { getContext } from "svelte";
@@ -76,7 +77,7 @@
 			<MenuItems
 				static
 				class={cn(
-					"z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-100 bg-white p-1 text-gray-700 shadow-md outline-none dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400",
+					"z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-100 bg-white p-1 text-gray-700 shadow-md outline-none  dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400",
 					c
 				)}
 			>

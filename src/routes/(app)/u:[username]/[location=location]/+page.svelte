@@ -8,11 +8,18 @@
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
 	import LocationListbox from "$lib/components/LocationListbox.svelte";
 	import Button from "$lib/components/ui/Button.svelte";
+	import { H1 } from "$lib/components/ui/typography";
 	import EntryFilter from "$lib/features/entries/EntryFilter.svelte";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import Filters from "$lib/features/filters/Filters.svelte";
 	import { getCurrentListContext } from "$lib/stores/currentList";
 	import { trpcWithQuery } from "$lib/trpc/client";
+	import {
+		Tabs,
+		TabsList,
+		TabsTrigger,
+		TabsContent,
+	} from "$lib/components/ui/tabs";
 	import {
 		createCustomizeViewStore,
 		defaultViewOptions,
@@ -68,9 +75,14 @@
 		entries: $query.data ?? [],
 		slug: $page.url.pathname,
 	});
+
+	const locations = ["Inbox", "Soon", "Later", "Archive"];
+	$: index = locations
+		.map((l) => l.toLowerCase())
+		.indexOf(location.toLowerCase());
 </script>
 
-<Header>
+<!-- <Header>
 	<DefaultHeader>
 		<div slot="start" class="flex items-center gap-2">
 			<LocationListbox
@@ -86,34 +98,49 @@
 			<CustomizeView bind:viewOptions={$viewOptionsStore} />
 		</div>
 	</DefaultHeader>
-</Header>
+</Header> -->
+<div class="px-6 py-4">
+	<!-- <H1>Library</H1> -->
 
-<Filters />
-
-<EntryFilter />
-
-{#if $query.isLoading}
-	<div>Loading...</div>
-{:else if $query.isError}
-	<div>Error</div>
-{:else if $query.isSuccess}
-	<!-- {JSON.stringify($query.data)} -->
-	<ItemList entries={$query.data} />
-	<!-- {#each $query.data as entry} -->
-	<!-- <EntryListItem {entry} /> -->
-	<!-- <BasicSearchItem
-				title={entry.title}
-				href={entry.uri}
-				image={entry.image}
-			/> -->
-	<!-- <EntryListItem {entry} /> -->
-	<!-- {/each} -->
-	<!-- <EntryList
-		items={sortedEntries}
+	<Tabs
+		on:change={(e) => {
+			let locationIndex = e.detail;
+			let location = locations[locationIndex].toLowerCase();
+			goto(`/u:${$page.params.username}/${location}`);
+		}}
+		defaultIndex={index}
+		class="h-full space-y-6"
 	>
-		<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
-	</EntryList> -->
-{/if}
-<!-- <EntryList items={data.entries}>
-	<svelte:fragment slot="empty">No entries in {LOCATION_TO_DISPLAY[location]}</svelte:fragment>
-</EntryList> -->
+		<TabsList>
+			{#each locations as location}
+				<TabsTrigger as="a" href="/u:margins/{location.toLowerCase()}"
+					>{location}</TabsTrigger
+				>
+			{/each}
+		</TabsList>
+		<svelte:fragment slot="panels">
+			{#each locations as location}
+				<TabsContent class="border-none p-0">
+					<h2 class="text-2xl font-semibold tracking-tight">
+						{location}
+					</h2>
+					<ItemList entries={$query.data ?? []} loading={$query.isLoading} />
+				</TabsContent>
+			{/each}
+			<!-- <TabsContent
+				>{#if $query.isLoading}
+					<div>Loading...</div>
+				{:else if $query.isError}
+					<div>Error</div>
+				{:else if $query.isSuccess}
+					<ItemList entries={$query.data} />
+				{/if}
+			</TabsContent>
+			<TabsContent /> -->
+		</svelte:fragment>
+	</Tabs>
+
+	<Filters />
+
+	<EntryFilter />
+</div>

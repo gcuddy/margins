@@ -34,7 +34,7 @@
 >
 	<H1>Playground</H1>
 	<Lead>A place to play with some UI components. Inspired by shadcn.</Lead>
-	<Checkbox />
+	<Checkbox class="transition active:scale-105" />
 
 	<div class="flex w-full max-w-sm items-center space-x-2">
 		<Label for="email">Email</Label>
