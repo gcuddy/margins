@@ -9,6 +9,13 @@
 		DialogHeader,
 		DialogTitle,
 	} from "$lib/components/ui/dialog";
+	import {
+		DropdownMenu,
+		DropdownMenuContent,
+		DropdownMenuSeparator,
+		DropdownMenuItem,
+		DropdownMenuTrigger,
+	} from "$lib/components/ui/dropdown-menu";
 	import Input from "$lib/components/ui/Input.svelte";
 	import Label from "$lib/components/ui/Label.svelte";
 	import Switch from "$lib/components/ui/Switch.svelte";
@@ -30,6 +37,20 @@
 	<Input type="email" placeholder="Email" disabled />
 
 	<Switch />
+
+	<DropdownMenu>
+		<DropdownMenuTrigger>
+			<Button>My account</Button>
+		</DropdownMenuTrigger>
+		<DropdownMenuContent>
+			<div>My account</div>
+			<DropdownMenuSeparator />
+			<DropdownMenuItem>Profile</DropdownMenuItem>
+			<DropdownMenuItem>Billing</DropdownMenuItem>
+			<DropdownMenuItem>Team</DropdownMenuItem>
+			<DropdownMenuItem>Subscription</DropdownMenuItem>
+		</DropdownMenuContent>
+	</DropdownMenu>
 
 	<Dialog>
 		<svelte:fragment slot="trigger">

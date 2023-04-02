@@ -486,7 +486,6 @@
 		>
 			<div
 				class="simple-scrollbar article-container relative flex grow flex-col items-stretch overflow-auto focus-visible:outline-none"
-				bind:this={$mainEl}
 				tabindex="-1"
 			>
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
