@@ -19,12 +19,12 @@
 <DropdownMenu>
 	<DropdownMenuTrigger
 		class={cn(
-			"flex h-8 w-8 items-center justify-center rounded-md border transition-colors hover:bg-gray-50 dark:hover:bg-gray-700",
+			"flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700",
 			c
 		)}
 	>
 		<slot>
-			<MoreVertical class="stroke-muted h-4 w-4" /></slot
+			<MoreVertical class="h-4 w-4 stroke-muted" /></slot
 		>
 	</DropdownMenuTrigger>
 	<DropdownMenuContent class="w-56">

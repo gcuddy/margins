@@ -131,12 +131,6 @@
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
-<button
-	on:click={() => {
-		const x = $v.scrollToIndex(40);
-	}}>scroll</button
->
-{activeIndex}
 <div bind:this={ref} style:height="{height}px" class="grow overflow-y-auto">
 	<!-- TODO -->
 	{#if v}

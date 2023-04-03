@@ -6,6 +6,7 @@
 	import Header from "$lib/components/layout/Header.svelte";
 	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
 	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
+	import Separator from "$lib/components/ui/Separator.svelte";
 	import ImageSkeleton from "$lib/components/ui/skeleton/ImageSkeleton.svelte";
 	import dayjs from "$lib/dayjs";
 	import { trpc } from "$lib/trpc/client";
@@ -27,7 +28,11 @@
 	};
 </script>
 
-<Header>
+<h2 class="text-2xl font-semibold tracking-tight">Podcasts</h2>
+<p class="text-sm text-gray-500 dark:text-gray-400">Your latest podcasts.</p>
+<Separator class="my-4" />
+
+<!-- <Header>
 	<DefaultHeader>
 		<div slot="start">
 			<SmallPlus>Podcasts</SmallPlus>
@@ -39,8 +44,8 @@
 			<a href="/podcasts/search">Add Podcasts</a>
 		</div>
 	</DefaultHeader>
-</Header>
-<ul class="flex flex-col divide-y overflow-auto px-4 dark:divide-gray-700">
+</Header> -->
+<ul class="flex flex-col divide-y overflow-auto px-4 dark:divide-gray-700 overflow-y-auto">
 	<!-- {JSON.stringify($query)} -->
 	{#if $query.isLoading}
 		<p>Loading...</p>

@@ -1,32 +1,14 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
-	import Button from "$lib/components/ui/Button.svelte";
-	import {
-		Dialog,
-		DialogTitle,
-		DialogContent,
-		DialogFooter,
-		DialogHeader,
-	} from "$lib/components/ui/dialog";
-	import FeedModal from "$lib/components/FeedModal.svelte";
 	import Filter from "$lib/components/Filters/Filter.svelte";
-	import FilterDisplay from "$lib/components/Filters/FilterDisplay.svelte";
 	import FiltersList from "$lib/components/Filters/FiltersList.svelte";
 	import SearchInput from "$lib/components/Filters/SearchInput.svelte";
 	import type { ChildOption } from "$lib/components/Filters/SimpleFilter.svelte";
-	import Icon from "$lib/components/helpers/Icon.svelte";
-	import Header from "$lib/components/layout/Header.svelte";
-	import DefaultHeader from "$lib/components/layout/headers/DefaultHeader.svelte";
-	import ModalContainer from "$lib/components/modals/ModalContainer.svelte";
-	import { modals } from "$lib/stores/modals";
+	import { Tabs, TabsList, TabsTrigger } from "$lib/components/ui/tabs";
 	import type { RouterOutputs } from "$lib/trpc/router";
-	import type { Prisma } from "@prisma/client";
-	import { ComponentProps, setContext } from "svelte";
+	import { setContext } from "svelte";
 	import { writable } from "svelte/store";
 	import type { LayoutData } from "./$types";
-	import FeedTitleMenu from "./FeedTitleMenu.svelte";
-	import FeedEntry from "$lib/components/FeedEntry.svelte";
 	export let data: LayoutData;
 	let modal = false;
 	type Entries = RouterOutputs["entries"]["byFeed"]["entries"];
@@ -62,6 +44,12 @@
 			// },
 		},
 	];
+
+	const routes = [
+		"/(app)/u:[username]/subscriptions/all",
+		"/(app)/u:[username]/subscriptions/podcasts",
+	];
+	$: currentIndex = routes.indexOf($page.route.id);
 </script>
 
 <Filter
@@ -72,7 +60,7 @@
 	let:filteredItems
 	let:_filters
 >
-	<Header>
+	<!-- <Header>
 		<DefaultHeader>
 			<div slot="start" class="flex items-center gap-2">
 				{#if $page.data.subscription}
@@ -102,7 +90,6 @@
 			<div class="flex gap-2" slot="end">
 				<Dialog>
 					<svelte:fragment slot="trigger">
-						<!-- as="a" -->
 						<Button
 							variant="ghost"
 							size="sm"
@@ -114,32 +101,14 @@
 					</svelte:fragment>
 					<DialogContent let:close>
 						<DialogHeader>
-							<!-- <DialogTitle>Add subscription</DialogTitle> -->
 						</DialogHeader>
 						<FeedEntry {close} />
-						<!-- <DialogFooter>
-
-                        </DialogFooter> -->
 					</DialogContent>
 				</Dialog>
-				<!-- <Button
-					variant="ghost"
-					size="sm"
-					as="a"
-					href="/u:{$page.params.username}/subscriptions/new"
-					on:click={(e) => {
-						e.preventDefault();
-						modals.open(FeedModal, {}, "feed-entry");
-						modal = true;
-					}}
-				>
-					<Icon name="plusSmall" className="h-5 w-5 fill-current" />
-					<span>Add Subscription</span></Button
-				> -->
 			</div>
 		</DefaultHeader>
-	</Header>
-	<div class="flex grow flex-col overflow-hidden">
+	</Header> -->
+	<div class="flex h-full grow flex-col px-8 py-6">
 		{#if filteredItems}
 			<div>
 				<SearchInput
@@ -153,8 +122,25 @@
 				</div>
 			{/if}
 		{/if}
-		test
-		<slot />
+		<Tabs defaultIndex={currentIndex}>
+			<TabsList>
+				<TabsTrigger
+					as="a"
+					href="/u:{$page.data.user?.username}/subscriptions/all"
+					>All</TabsTrigger
+				>
+				<TabsTrigger
+					as="a"
+					href="/u:{$page.data.user?.username}/subscriptions/podcasts"
+					>Podcasts</TabsTrigger
+				>
+			</TabsList>
+			<div class="mt-2" slot="panels">
+				<slot />
+				<!-- <TabsContent><slot /></TabsContent> -->
+				<!-- <TabsContent><slot /></TabsContent> -->
+			</div>
+		</Tabs>
 	</div>
 </Filter>
 <!-- <Dialog open={modal}>

@@ -18,8 +18,8 @@
 
 <div class="flex items-center justify-between p-4">
 	<div class="flex items-center gap-4">
-		<div class="w-10 h-10 overflow-hidden rounded-md">
-			<Image
+		<div class="h-10 w-10 overflow-hidden rounded-md">
+			<!-- <Image
 				class="object-cover w-10 aspect-square hover:scale-105"
 				src={entry.image || fallback_image}
 				on:error={(e) => {
@@ -31,8 +31,8 @@
 				layout="constrained"
 				width={40}
 				height={40}
-			/>
-            </div>
+			/> -->
+		</div>
 		<!-- <img
 
 		/> -->

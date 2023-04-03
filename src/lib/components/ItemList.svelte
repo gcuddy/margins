@@ -8,7 +8,9 @@
 	export let loading = false;
 </script>
 
-<div class="divide-y divide-gray-200 rounded-md border border-gray-200">
+<div
+	class="divide-y divide-gray-200 rounded-md border border-gray-200 dark:divide-gray-700 dark:border-gray-700"
+>
 	{#if !loading}
 		{#each entries as entry}
 			<EntryItem {entry} />

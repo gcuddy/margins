@@ -21,7 +21,7 @@
 	import { cn } from "$lib/utils/tailwind";
 	export let ref: HTMLDivElement | undefined = undefined;
 	export let orientation: Orientation = DEFAULT_ORIENTATION;
-	export let decorative: boolean = false;
+	export let decorative: boolean = true;
 	let className: string | null | undefined = "";
 	export { className as class };
 

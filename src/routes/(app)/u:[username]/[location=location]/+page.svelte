@@ -29,6 +29,7 @@
 	import type { Prisma } from "@prisma/client";
 	import { setContext } from "svelte";
 	import type { PageData } from "./$types";
+	import Separator from "$lib/components/ui/Separator.svelte";
 	export let data: PageData;
 	$: ({ location } = data);
 	// this shouldn't be necessary, since we're requesting from the server - but maybe good to keep in case we want to do something client-side?
@@ -120,10 +121,11 @@
 		</TabsList>
 		<svelte:fragment slot="panels">
 			{#each locations as location}
-				<TabsContent class="border-none p-0">
+				<TabsContent class="grid items-start gap-8 border-none p-0">
 					<h2 class="text-2xl font-semibold tracking-tight">
 						{location}
 					</h2>
+
 					<ItemList entries={$query.data ?? []} loading={$query.isLoading} />
 				</TabsContent>
 			{/each}

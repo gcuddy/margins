@@ -20,6 +20,8 @@ export function adaptEntryFromItem(item: Item, feedId: Feed["id"]) {
             // TODO: queue this image for download
         }
     }
+    const html = item["content:encoded"] ?? item.content ?? null;
+    console.log({ html })
     return ({
         feedId,
         title: item.title ?? null,
@@ -27,7 +29,7 @@ export function adaptEntryFromItem(item: Item, feedId: Feed["id"]) {
         guid: item.guid ?? null,
         published: item.pubDate ? new Date(item.pubDate) : item.isoDate ? new Date(item.isoDate) : null,
         author: (item.author || item["dc:creator"] || item.itunes?.author) ?? null,
-        html: item["content:encoded"] ?? item.content ?? null,
+        html,
         updatedAt: new Date(),
         image,
         type,

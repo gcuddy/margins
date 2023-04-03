@@ -1,37 +1,25 @@
 <script lang="ts">
-	import EntryList from "$lib/components/EntryList.svelte";
-	import { createInfiniteQuery } from "@tanstack/svelte-query";
-	import type { FilterStores } from "$lib/stores/filter";
-	import { getContext, onDestroy, onMount } from "svelte";
-	import { DEFAULT_RSS_VIEW_OPTIONS } from "../view_options";
-	import type { PageData } from "./$types";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
-	import type { Entry } from "@prisma/client";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
+	import { EntryItem } from "$lib/components/entry-item";
+	import List from "$lib/components/helpers/List.svelte";
+	import Separator from "$lib/components/ui/Separator.svelte";
+	import dayjs from "$lib/dayjs";
+	import { getCurrentListContext } from "$lib/stores/currentList";
+	import type { FilterStores } from "$lib/stores/filter";
+	import { mainEl } from "$lib/stores/main";
+	import { syncStore } from "$lib/stores/sync";
+	import { trpcWithQuery } from "$lib/trpc/client";
+	import { getHostname } from "$lib/utils";
+	import type { Entry } from "@prisma/client";
 	import {
 		createVirtualizer,
 		SvelteVirtualizer,
-		Virtualizer,
 	} from "@tanstack/svelte-virtual";
+	import { getContext, onDestroy, onMount } from "svelte";
+	import { SHADOW_PLACEHOLDER_ITEM_ID } from "svelte-dnd-action";
 	import type { Readable } from "svelte/store";
-	import resize from "$lib/actions/resize";
-	import { mainEl } from "$lib/stores/main";
-	import {
-		dndzone,
-		overrideItemIdKeyNameBeforeInitialisingDndZones,
-		SHADOW_ITEM_MARKER_PROPERTY_NAME,
-		SHADOW_PLACEHOLDER_ITEM_ID,
-	} from "svelte-dnd-action";
-	import autoAnimate from "@formkit/auto-animate";
-	import { getHostname } from "$lib/utils";
-	import dayjs from "$lib/dayjs";
-	import KeyboardNav from "$lib/components/helpers/KeyboardNav/KeyboardNav.svelte";
-	import KeyboardNavItem from "$lib/components/helpers/KeyboardNav/KeyboardNavItem.svelte";
-	import List from "$lib/components/helpers/List.svelte";
-	import { goto } from "$app/navigation";
-	import { syncStore } from "$lib/stores/sync";
-	import Autosizer from "$lib/components/helpers/Autosizer.svelte";
-	import { getCurrentListContext } from "$lib/stores/currentList";
+	import type { PageData } from "./$types";
 
 	dayjs.updateLocale("en", {
 		relativeTime: {
@@ -187,8 +175,16 @@
 <!-- {#each data.entries as entry}
 	<a href="/u:{data.user.username}/entry/{entry.id}">{entry.title}</a>
 {/each} -->
+<h2 class="text-2xl font-semibold tracking-tight">All items</h2>
+<p class="text-sm text-gray-500 dark:text-gray-400">
+	Catch up with new entries from your subscriptions.
+</p>
+<Separator class="my-4" />
 <div class="flex grow flex-col">
-	<List
+	{#each $filteredItems as entry}
+		<EntryItem {entry} />
+	{/each}
+	<!-- <List
 		{height}
 		opts={{
 			count: $filteredItems.length,
@@ -209,23 +205,16 @@
 			console.log({ item });
 		}}
 	>
-		{@const item = $filteredItems[virtualRow.index]}
+		{@const entry = $filteredItems[virtualRow.index]}
 		{@const isLoaderRow = virtualRow.index > $filteredItems.length - 1}
-		<!-- {@const subscription = data.subscriptions.find(
-			(s) => s.feedId === item?.feedId
-		)} -->
-		<!-- {JSON.stringify(item.title)} -->
 		<a
 			href={`/u:${$page.params.username}/entry/${item.id}`}
 			class="flex min-w-0 grow p-2 {active ? 'bg-sky-400/50' : ''}"
 		>
 			<div class="flex items-center truncate p-2">
 				<div class="flex w-36 flex-none items-center gap-2">
-					<!-- favicon -->
 					<div class="h-4 w-4 shrink-0 overflow-hidden rounded">
 						{#if item.uri}
-							<!-- <img src="https://icon.horse/icon/{getHostname(item.uri)}" /> -->
-							<!-- <img src="https://icon.horse/icon/{getHostname(item.uri)}" alt="" /> -->
 						{/if}
 					</div>
 					<div class="shrink truncate">
@@ -238,22 +227,19 @@
 							{item.title}
 						</span>
 					</div>
-					<!-- {item.text} -->
 				</div>
 				<div class="ml-auto mr-1 flex flex-none flex-row-reverse">
 					<time>
 						{#if item.published}
-							<!-- {displayTime(item.published)} -->
 						{/if}
 					</time>
-					<!-- {} -->
 				</div>
 			</div>
 		</a>
 		{#if isLoaderRow}
 			loading...
 		{/if}
-	</List>
+	</List> -->
 </div>
 <!-- {draggedOver}
 {$filteredItems.length} items

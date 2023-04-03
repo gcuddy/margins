@@ -31,7 +31,8 @@
 
 	export let items: Readable<NavItem[]> | undefined = undefined;
 	let indent = 0;
-	export let active: (path: string) => boolean = (path) => path === href;
+	export let active: (path: string) => boolean = (path) =>
+		path.startsWith(href);
 
 	$: isActive = active($page.url.pathname);
 	$: as = href ? "a" : "div";
