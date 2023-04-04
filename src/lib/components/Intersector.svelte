@@ -3,8 +3,8 @@
 
 	// Component that emits events when it arrives on screen
 	export let cb: () => void;
-	let io: IntersectionObserver;
-	let ref: HTMLElement;
+	let io: IntersectionObserver | undefined = undefined;
+	let ref: HTMLElement | undefined = undefined;
 	onMount(() => {
 		io = new IntersectionObserver((entries) => {
 			entries.forEach((entry) => {
@@ -13,11 +13,11 @@
 				}
 			});
 		});
-		io.observe(ref);
+		if (ref) io.observe(ref);
 	});
 
 	onDestroy(() => {
-		io.unobserve(ref);
+		if (io && ref) io.unobserve(ref);
 	});
 </script>
 
