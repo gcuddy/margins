@@ -82,16 +82,17 @@
 
 	const { filteredItems, items } = stores;
 
-	const query = trpcWithQuery(
-		$page
-	).entries.listForUserSubscriptions.createInfiniteQuery(
-		{
-			take: 25,
-		},
-		{
-			getNextPageParam: (lastPage) => lastPage.nextCursor,
-		}
-	);
+	// const query = trpcWithQuery(
+	// 	$page
+	// ).entries.listForUserSubscriptions.createInfiniteQuery(
+	// 	{
+	// 		take: 25,
+	// 	},
+	// 	{
+	// 		getNextPageParam: (lastPage) => lastPage.nextCursor,
+	// 	}
+	// );
+	const query = data.query();
 
 	$: console.log({ $query, items: $query.data });
 
@@ -217,7 +218,7 @@
 <div class="flex grow flex-col" bind:this={parentRef}>
 	<!-- TODO: eventually virtualizer -->
 	<!-- {#each $query.data?.entries ?? [] as item} -->
-	<ItemList {entries} />
+	<ItemList loading={$query.isLoading} {entries} />
 	<Intersector
 		cb={() => {
 			// alert("intersector");
