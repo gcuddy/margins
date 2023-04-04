@@ -19,6 +19,7 @@ export async function addFeedToDb(feed: ParserOutput) {
             description,
             link,
             feedUrl,
+            imageUrl: image?.url,
             updatedAt: new Date(),
             podcast: !!itunes
         })

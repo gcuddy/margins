@@ -1,20 +1,18 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import EntryList from "$lib/components/EntryList.svelte";
-	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
+	import Intersector from "$lib/components/Intersector.svelte";
+	import ItemList from "$lib/components/ItemList.svelte";
+	import { getCurrentListContext } from "$lib/stores/currentList";
 
-	import type { createFilterStores } from "$lib/stores/filter";
-	import { trpcWithQuery } from "$lib/trpc/client";
 	import type { ViewOptions } from "$lib/types/schemas/View";
-	import { getContext } from "svelte";
 	import type { PageData } from "./$types";
 	export let data: PageData;
 
 	$: console.log({ data });
 
-	$: query = trpcWithQuery($page).entries.byFeed.createQuery({
-		id: +data.id,
-	});
+	$: query = data.query();
+	$: entries = $query.data?.pages.flatMap((page) => page.entries) ?? [];
+
 	let peek = false;
 
 	const DEFAULT_RSS_VIEW_OPTIONS: ViewOptions = {
@@ -38,13 +36,11 @@
 
 	$: only_unread = Boolean($page.url.searchParams.get("unread"));
 
-	// get filter context (since we can't use slot props here from root layout)
-	// const stores: ReturnType<typeof createFilterStores<(typeof data)["entries"][number]>> =
-	// 	getContext("filter");
-	// const { filteredItems } = stores;
-	// let filters = writable<ChildFilterOption[]>([]);
-
-	// $: filteredItems = $entries.filter((i) => $filters.every((f) => buildFilter(f)(i)));
+	const current_list = getCurrentListContext();
+	$: current_list.set({
+		entries,
+		slug: $page.url.pathname,
+	});
 </script>
 
 <!-- <svelte:window
@@ -57,53 +53,12 @@
 	}}
 /> -->
 
-<!-- <div class="flex justify-between px-8 py-1">
-	<div class="grid">
-		{#if $filters.length}
-			<div class="col-start-1 row-start-1" transition:fade={{ duration: 100 }}>
-				<Button
-					variant="dashed"
-					on:click={() => {
-						filters.set([]);
-					}}>Clear filters</Button
-				>
-			</div>
-		{:else}
-			<div class="col-start-1 row-start-1" transition:fade={{ duration: 100 }}>
-				<FilterPopover items={data.entries} bind:filters />
-			</div>
-		{/if}
-	</div>
-	<CustomizeView />
-</div> -->
-<!-- <div class="flex gap-2 px-8 py-1">
-	Test
-	{#each $filters as filter}
-		<FilterCondition
-			{filter}
-			onDelete={() => ($filters = $filters.filter((f) => f.id !== filter.id))}
-		/>
-	{/each}
-	{#if $filters.length}
-		<FilterPopover items={data.entries} bind:filters>
-			<Button variant="naked" className="h-5 w-5">
-				<Icon name="plusSm" />
-			</Button>
-		</FilterPopover>
-	{/if}
-</div> -->
-
-{#if $query.isLoading}
-	Loading...
-{:else if $query.isError}
-	error
-{:else if $query.isSuccess}
-	{#each $query.data as entry}
-		<EntryListItem {entry} />
-	{/each}
-	<!-- <EntryList items={$query.data} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} /> -->
-{/if}
-
-<!-- {#each data.entries as item (item.id)}
-	<a href="/u:{data.user.username}/entry/{item.id}">{item.title}</a>
-{/each} -->
+<ItemList {entries} loading={$query.isLoading} />
+<Intersector
+	cb={() => {
+		// alert("intersector");
+		if ($query.hasNextPage && !$query.isFetchingNextPage) {
+			$query.fetchNextPage();
+		}
+	}}>Loading...</Intersector
+>

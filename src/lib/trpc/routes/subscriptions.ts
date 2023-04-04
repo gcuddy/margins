@@ -30,7 +30,7 @@ export const subscriptions = router({
         .query(({ ctx: { userId } }) =>
             db.selectFrom("Subscription as s")
                 .innerJoin("Feed as f", "s.feedId", "f.id")
-                .select(["s.id", "s.title", "s.feedId", "f.imageUrl", "f.link", "f.feedUrl"])
+                .select(["s.id as subscription_id", "s.title as subscription_title", "s.feedId as feed_id", "f.imageUrl as feed_image", "f.link as feed_link", "f.feedUrl as feed_url"])
                 .where("s.userId", "=", userId)
                 .execute()
         ),

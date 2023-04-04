@@ -527,9 +527,13 @@ export const entriesRouter = router({
             });
         }),
     byFeed: protectedProcedure
-        .input(z.object({ id: z.number() }))
+        .input(z.object({
+            id: z.number(), take: z.number().min(1).max(100).default(25),
+            cursor: z.date().nullish(),
+        }))
         .query(async ({ ctx, input }) => {
-            const entries = await ctx.db.selectFrom("Entry as e")
+            const { cursor } = input
+            let query = ctx.db.selectFrom("Entry as e")
                 .leftJoin("EntryInteraction as i", "i.entryId", "e.id")
                 .select([
                     "e.id",
@@ -549,8 +553,17 @@ export const entriesRouter = router({
                 ])
                 .where("e.feedId", "=", input.id)
                 .orderBy("e.published", "desc")
-                .execute();
-            return entries;
+                .limit(input.take + 1);
+            if (cursor) {
+                query = query.where("e.published", "<", cursor);
+            }
+            const entries = await query.execute();
+            let nextCursor: typeof cursor | undefined = undefined;
+            if (entries.length > input.take) {
+                const nextItem = entries.pop();
+                nextCursor = nextItem!.published;
+            }
+            return { entries, nextCursor };
         }),
 
     byFeeds: protectedProcedure

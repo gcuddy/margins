@@ -1,3 +1,4 @@
+import { upsertImageUrl } from "$lib/backend/s3.server";
 import { db } from "$lib/db"
 import { adaptEntryFromItem } from "$lib/rss/entries";
 import { addFeedToDb, getFeed } from "$lib/rss/feed";
@@ -41,13 +42,28 @@ export async function addSubscription(input: Input) {
     }
     if (!feed) {
         // create it
-        const feed = await getFeed(input.feedUrl!);
+        let feed = await getFeed(input.feedUrl!);
+        // add image if there is none
+        if (!feed.image && feed.link) {
+            try {
+                const domain = new URL(feed.link).hostname;
+                // download from icon.horse, upload to s3, set as image
+                const icon_horse = `https://icon.horse/icon/${domain}`;
+                const image_url = await upsertImageUrl(icon_horse);
+                console.log(`Found icon for ${feed.link}: ${image_url}`)
+                feed.image = {
+                    url: image_url
+                }
+            } catch (e) {
+                console.error(`Could not get icon for ${feed.link}`), e;
+            }
+        }
         const feedId = await addFeedToDb(feed);
         if (!feedId) {
             console.log({ feedId })
             throw new Error("Could not add feed to db");
         }
-        const entries = feed.items.map(item => adaptEntryFromItem(item, feedId));
+        const entries = await Promise.all(feed.items.slice(0, 50).map(item => adaptEntryFromItem(item, feedId)));
 
         // (should happen in bg)
         await db.insertInto("Entry")

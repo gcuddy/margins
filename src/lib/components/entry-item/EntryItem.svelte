@@ -13,6 +13,7 @@
 		Partial<
 			Pick<Entry, "feedId"> & {
 				feed_title: string | null;
+				feed_image: string | null;
 			}
 		>;
 	export let entry: EntryItemProps;
@@ -27,6 +28,12 @@
 		if (img?.startsWith("https://")) {
 			return img;
 		}
+		// if (img) {
+		// 	return img;
+		// }
+		// if (entry.feed_image) {
+		// 	return entry.feed_image;
+		// }
 		return fallback_image;
 	}
 </script>
@@ -60,7 +67,7 @@
 			</a>
 			{#if entry.feedId && entry.feed_title}
 				<a
-					href="{username ? `/u:${username}` : ''}/subscription/{entry.feedId}"
+					href="{username ? `/u:${username}` : ''}/subscriptions/{entry.feedId}"
 					class="text-sm text-gray-600 dark:text-gray-500"
 				>
 					{entry.feed_title}

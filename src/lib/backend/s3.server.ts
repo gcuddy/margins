@@ -76,7 +76,7 @@ const reasonable_image_extensions = [
     "tif",
 ]
 
-export async function upsertImageUrl(url: string, key?: string) {
+export async function upsertImageUrl(url: string, key?: string): Promise<string> {
     const u = new URL(url);
     u.search = "";
     u.hash = "";
@@ -102,6 +102,6 @@ export async function upsertImageUrl(url: string, key?: string) {
     const newKey = await fetchAndUploadImage(_src, {
         key: ext && reasonable_image_extensions.includes(ext) ? Key : undefined
     })
-    const newSrc = CDN + key || newKey;
+    const newSrc = CDN + (key ?? newKey);
     return newSrc;
 }

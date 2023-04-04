@@ -125,7 +125,7 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
 
         // TODO: Podcast etc
         console.log(`Inserting ${new_items.length} new items for ${feedUrl}...`);
-        const entries = new_items.map(item => adaptEntryFromItem(item, feedId));
+        const entries = await Promise.all(new_items.map(item => adaptEntryFromItem(item, feedId)));
         await db.insertInto("Entry").values(entries).onDuplicateKeyUpdate({
             feedId,
         }).execute();

@@ -11,6 +11,7 @@ import { stripEmptyTags } from "$lib/utils/sanitize";
 
 import { subscriptionApiSelect } from "./types";
 import { getLink, getText, isAudioType, isJson, isXml, linkSelectors, normalizeUrl, resolveUrl } from "./utils";
+import { getHostname } from "$lib/utils";
 
 export interface Feed {
     input: string;
@@ -65,7 +66,7 @@ export async function findFeed(feedUrl: string): Promise<{
             const image = data?.image?.url || data?.icon;
             return {
                 input: feedUrl,
-                favicon: image || `https://icon.horse/icon/?uri=${feedUrl}`,
+                favicon: image || `https://icon.horse/icon/${getHostname(data.link || data.url || feedUrl)}`,
                 feeds: [
                     {
                         title,
@@ -166,7 +167,7 @@ function getTextContent(html: string) {
 
 const createFeedAndEntries = ({
     title,
-    feedUrl,link,
+    feedUrl, link,
     entries,
     lastBuildDate,
     podcast
@@ -220,144 +221,144 @@ const getDuration = (duration: string | number | undefined) => {
 
 
 export function parseEntry(entry: any, podcast: boolean, feedId?: number, feedImage?: string) {
-        console.log(`processing entry`, entry.title)
-        let guid: string | undefined = undefined;
-        if (entry.guid) {
-            guid = getText(entry.guid);
-        } else if (entry.id) {
-            guid = getText(entry.id);
-        }
-        console.log(`guid`, guid)
-        const published = entry.published || entry.pubDate || entry.pubdate || entry.updated;
-        const description = getText(entry.summary, entry.description);
-        const html = getText(entry.content, entry["content:encoded"]) || description;
-        const link = getLink(entry.link);
-        console.log(`link`, link)
-        let enclosureUrl: string | undefined = undefined;
-        if (entry.enclosure) {
-           if (isAudioType(entry.enclosure.type)) {
-               enclosureUrl = entry.enclosure.url;
-           }
-        }
-        const duration = getDuration(entry["itunes:duration"])
-        console.log('duration', duration)
-        // convert to seconds
-        // if (duration) {
-        //     const [hours, minutes, seconds] = duration.split(':').map(Number)
-        //     duration = (hours * 60 * 60 + minutes * 60 + seconds)
-        // }
-        const finalEntry = {
-            title: getText(entry.title),
-            type: podcast && !!enclosureUrl ? DocumentType.audio : DocumentType.article,
-            uri: link || enclosureUrl,
-            image: getLink(entry["itunes:image"]) || feedImage || getImageFromHtml(entry.content, link),
-            guid: guid?.toString(),
-            html,
-            published: dayjs(published).isValid() ? dayjs(published).format() : undefined,
-            updated: entry.updated,
-            enclosureUrl,
-            duration,
-            author: getText(entry.author?.name || entry["itunes:author"] || ''),
-            summary: html === description ? undefined : description,
-            feedId
-            // TODO: episode no., ordering
-        }
-        // const finalEntry = createEntry(feed.id, {
-        // 	title: getText(entry.title),
-        // 	type: podcast ? DocumentType.audio : DocumentType.article,
-        // 	uri: link || enclosureUrl,
-        // 	image: getImageFromHtml(entry.content, link),
-        // 	guid,
-        // 	html,
-        // 	published: dayjs(published).isValid() ? dayjs(published).format() : undefined,
-        // 	updated: entry.updated,
-        //     enclosureUrl,
-        //     duration,
-        // 	author: getText(entry.author?.name),
-        // 	summary: html === description ? undefined : description,
-        // });
-        console.log("final entry");
-        return finalEntry
+    console.log(`processing entry`, entry.title)
+    let guid: string | undefined = undefined;
+    if (entry.guid) {
+        guid = getText(entry.guid);
+    } else if (entry.id) {
+        guid = getText(entry.id);
     }
+    console.log(`guid`, guid)
+    const published = entry.published || entry.pubDate || entry.pubdate || entry.updated;
+    const description = getText(entry.summary, entry.description);
+    const html = getText(entry.content, entry["content:encoded"]) || description;
+    const link = getLink(entry.link);
+    console.log(`link`, link)
+    let enclosureUrl: string | undefined = undefined;
+    if (entry.enclosure) {
+        if (isAudioType(entry.enclosure.type)) {
+            enclosureUrl = entry.enclosure.url;
+        }
+    }
+    const duration = getDuration(entry["itunes:duration"])
+    console.log('duration', duration)
+    // convert to seconds
+    // if (duration) {
+    //     const [hours, minutes, seconds] = duration.split(':').map(Number)
+    //     duration = (hours * 60 * 60 + minutes * 60 + seconds)
+    // }
+    const finalEntry = {
+        title: getText(entry.title),
+        type: podcast && !!enclosureUrl ? DocumentType.audio : DocumentType.article,
+        uri: link || enclosureUrl,
+        image: getLink(entry["itunes:image"]) || feedImage || getImageFromHtml(entry.content, link),
+        guid: guid?.toString(),
+        html,
+        published: dayjs(published).isValid() ? dayjs(published).format() : undefined,
+        updated: entry.updated,
+        enclosureUrl,
+        duration,
+        author: getText(entry.author?.name || entry["itunes:author"] || ''),
+        summary: html === description ? undefined : description,
+        feedId
+        // TODO: episode no., ordering
+    }
+    // const finalEntry = createEntry(feed.id, {
+    // 	title: getText(entry.title),
+    // 	type: podcast ? DocumentType.audio : DocumentType.article,
+    // 	uri: link || enclosureUrl,
+    // 	image: getImageFromHtml(entry.content, link),
+    // 	guid,
+    // 	html,
+    // 	published: dayjs(published).isValid() ? dayjs(published).format() : undefined,
+    // 	updated: entry.updated,
+    //     enclosureUrl,
+    //     duration,
+    // 	author: getText(entry.author?.name),
+    // 	summary: html === description ? undefined : description,
+    // });
+    console.log("final entry");
+    return finalEntry
+}
 
-    export const addSubscription = async ({
-        feedUrl,
-        userId,
-        title,
-    }: {
-        feedUrl: string;
-        title: string;
-        userId: string;
-    }) => {
-        // todo: somehow have this cached so i don't have to re-fetch on search/add
-        const response = await fetch(feedUrl);
-        const body = await response.text();
-        // data should be xml
-        const contentType = response.headers.get("content-type");
-        let data: ReturnType<typeof createFeedAndEntries> | undefined = undefined;
-        if ((contentType && isXml(contentType)) || body.trim().startsWith("<?xml")) {
-            const parsed = parseXml(body);
-            const podcast = parsed.rss?.['xmlns:itunes'] === 'http://www.itunes.com/dtds/podcast-1.0.dtd';
-            const feed = parsed.rss?.channel || parsed.feed;
-            console.dir(feed, { depth: null })
-            const description = getText(feed.description, feed.subtitle);
-            let entries = feed.items || feed.item || feed.entry || [];
-            if (!Array.isArray(entries)) {
-                entries = [entries];
-            }
-            const imageUrl = feed.image?.url || getLink(feed["itunes:image"]) || '';
-            // todo: get podcast data from podcastindexid if it exists
-            data = createFeedAndEntries({
-                title: getText(feed.title) || "",
-                description: description ? stripEmptyTags(description) : "",
-                imageUrl,
-                feedUrl: feed.feed_url || feedUrl,
-                podcast,
-                // TODO: types
-                entries: entries.slice(0, 20).map((entry: any) => {
-                    return parseEntry(entry, podcast, undefined, imageUrl)
-                }),
-            });
-        } else if (contentType && isJson(contentType)) {
-            const { title, feed_url, items } = jsonFeedSchema.parse(JSON.parse(body));
-            console.log(`[json feed] ${feed_url}`);
-            data = createFeedAndEntries({
-                title,
-                feedUrl: feedUrl,
-                entries: items.map((item) => {
-                    return {
-                        title: item.title,
-                        uri: item.url,
-                        type: DocumentType.article,
-                        published: item.date_published,
-                        updated: item.date_modified,
-                        author: item.authors?.join(", "),
-                        html: item.content_html,
-                        text: item.content_text,
-                    };
-                }),
-            });
+export const addSubscription = async ({
+    feedUrl,
+    userId,
+    title,
+}: {
+    feedUrl: string;
+    title: string;
+    userId: string;
+}) => {
+    // todo: somehow have this cached so i don't have to re-fetch on search/add
+    const response = await fetch(feedUrl);
+    const body = await response.text();
+    // data should be xml
+    const contentType = response.headers.get("content-type");
+    let data: ReturnType<typeof createFeedAndEntries> | undefined = undefined;
+    if ((contentType && isXml(contentType)) || body.trim().startsWith("<?xml")) {
+        const parsed = parseXml(body);
+        const podcast = parsed.rss?.['xmlns:itunes'] === 'http://www.itunes.com/dtds/podcast-1.0.dtd';
+        const feed = parsed.rss?.channel || parsed.feed;
+        console.dir(feed, { depth: null })
+        const description = getText(feed.description, feed.subtitle);
+        let entries = feed.items || feed.item || feed.entry || [];
+        if (!Array.isArray(entries)) {
+            entries = [entries];
         }
-        if (!data) {
-            // throw Error('Could not find feed');
-            console.error("Could not find feed");
-            return;
-        } else if (data) {
-            const feed = await db.feed.upsert({
-                where: {
-                    feedUrl: data.feedUrl,
-                },
-                create: data,
-                update: data,
-            });
-            // now create subscription
-            return db.subscription.create({
-                data: {
-                    userId,
-                    title,
-                    feedId: feed.id,
-                },
-                select: subscriptionApiSelect,
-            });
-        }
+        const imageUrl = feed.image?.url || getLink(feed["itunes:image"]) || '';
+        // todo: get podcast data from podcastindexid if it exists
+        data = createFeedAndEntries({
+            title: getText(feed.title) || "",
+            description: description ? stripEmptyTags(description) : "",
+            imageUrl,
+            feedUrl: feed.feed_url || feedUrl,
+            podcast,
+            // TODO: types
+            entries: entries.slice(0, 20).map((entry: any) => {
+                return parseEntry(entry, podcast, undefined, imageUrl)
+            }),
+        });
+    } else if (contentType && isJson(contentType)) {
+        const { title, feed_url, items } = jsonFeedSchema.parse(JSON.parse(body));
+        console.log(`[json feed] ${feed_url}`);
+        data = createFeedAndEntries({
+            title,
+            feedUrl: feedUrl,
+            entries: items.map((item) => {
+                return {
+                    title: item.title,
+                    uri: item.url,
+                    type: DocumentType.article,
+                    published: item.date_published,
+                    updated: item.date_modified,
+                    author: item.authors?.join(", "),
+                    html: item.content_html,
+                    text: item.content_text,
+                };
+            }),
+        });
     }
+    if (!data) {
+        // throw Error('Could not find feed');
+        console.error("Could not find feed");
+        return;
+    } else if (data) {
+        const feed = await db.feed.upsert({
+            where: {
+                feedUrl: data.feedUrl,
+            },
+            create: data,
+            update: data,
+        });
+        // now create subscription
+        return db.subscription.create({
+            data: {
+                userId,
+                title,
+                feedId: feed.id,
+            },
+            select: subscriptionApiSelect,
+        });
+    }
+}
