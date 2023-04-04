@@ -56,7 +56,7 @@
 				href="{username ? `/u:${username}` : ''}/entry/{entry.id}"
 				class="line-clamp-2 font-semibold hover:underline"
 			>
-				{entry.title}
+				{entry.title ?? "[No title]"}
 			</a>
 			{#if entry.feedId && entry.feed_title}
 				<a
