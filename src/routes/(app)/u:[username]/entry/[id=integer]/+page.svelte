@@ -35,7 +35,7 @@
 	import dayjs from "dayjs";
 	import localizedFormat from "dayjs/plugin/localizedFormat.js";
 	import debounce from "lodash.debounce";
-	import { onDestroy, setContext } from "svelte";
+	import { onDestroy, onMount, setContext } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
 	import { writable } from "svelte/store";
 	import { slide } from "svelte/transition";
@@ -80,6 +80,22 @@
 	let annotations: Annotation[] = [];
 	let tags = [];
 	$: last_scroll_position = $entryData?.data?.progress || 0;
+
+	let articleRef: HTMLElement | undefined = undefined;
+
+	onMount(() => {
+		// set up onerrors for imgs to set src to data-canonical-src (if it exists)
+		const imgs = articleRef?.querySelectorAll("img");
+		if (imgs) {
+			imgs.forEach((img) => {
+				img.onerror = () => {
+					if (img.dataset.canonicalSrc) {
+						img.src = img.dataset.canonicalSrc;
+					}
+				};
+			});
+		}
+	});
 
 	function useArticleCommands() {
 		const articleCommands: Command[] = [
@@ -490,6 +506,7 @@
 			>
 				<!-- TODO: py-8 px-4 should be set on a per-type basis -->
 				<article
+					bind:this={articleRef}
 					data-article
 					class=" prose prose-stone mx-auto h-full select-text px-1 dark:prose-invert sm:p-4"
 				>

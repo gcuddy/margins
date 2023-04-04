@@ -112,13 +112,15 @@
 		defaultIndex={index}
 		class="h-full space-y-6"
 	>
-		<TabsList>
-			{#each locations as location}
-				<TabsTrigger as="a" href="/u:margins/{location.toLowerCase()}"
-					>{location}</TabsTrigger
-				>
-			{/each}
-		</TabsList>
+		<div class="overflow-x-auto">
+			<TabsList>
+				{#each locations as location}
+					<TabsTrigger as="a" href="/u:margins/{location.toLowerCase()}"
+						>{location}</TabsTrigger
+					>
+				{/each}
+			</TabsList>
+		</div>
 		<svelte:fragment slot="panels">
 			{#each locations as location}
 				<TabsContent class="grid items-start gap-8 border-none p-0">

@@ -27,9 +27,25 @@
 		createUserDataStore,
 		setUserDataContext,
 	} from "$lib/stores/userdata";
+	import { writable } from "svelte/store";
+	import { setContext } from "svelte";
+	import { beforeNavigate } from "$app/navigation";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
+
+	const last_urls = writable<string[]>([]);
+	setContext("last_urls", last_urls);
+
+	beforeNavigate(() => {
+		last_urls.update((urls) => {
+			if (urls.length > 10) {
+				urls.pop();
+			}
+			urls.unshift($page.url.pathname);
+			return urls;
+		});
+	});
 
 	const current_list = createCurrentListStore();
 	setCurrentListContext(current_list);

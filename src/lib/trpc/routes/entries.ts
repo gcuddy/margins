@@ -593,7 +593,7 @@ export const entriesRouter = router({
                 .innerJoin("Subscription as s", (j) =>
                     j.onRef("s.feedId", "=", "f.id").on("s.userId", "=", userId)
                 )
-                .select(["e.id", "e.title", "e.published", "e.uri", "e.feedId", "e.image", "e.duration", "e.enclosureUrl", "s.title as feed_title", "f.podcastIndexId as feed_pindex", "f.imageUrl as feed_image"])
+                .select(["e.id", "e.title", "e.published", "e.author", "e.type", "e.uri", "e.feedId", "e.image", "e.duration", "e.enclosureUrl", "s.title as feed_title", "f.podcastIndexId as feed_pindex", "f.imageUrl as feed_image"])
                 .where("s.userId", "=", userId)
                 .orderBy("e.published", "desc")
                 .limit(take + 1);

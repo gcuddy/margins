@@ -609,16 +609,28 @@
 	<div
 		class="bg-100 fixed bottom-0 left-0 right-0 z-50 hidden h-14 w-full items-center justify-between px-4 backdrop-blur-md dark:bg-gray-950/90 max-sm:flex"
 	>
-		<a href="/u:{$page.data.user?.username}/inbox">
+		<a
+			class="flex h-10 w-10 items-center justify-center rounded-full active:scale-95 active:bg-gray-200"
+			href="/u:{$page.data.user?.username}/inbox"
+		>
 			<Landmark class="h-6 w-6 stroke-muted" />
 		</a>
-		<a href="/u:{$page.data.user?.username}/subscriptions">
+		<a
+			class="flex h-10 w-10 items-center justify-center rounded-full active:scale-95 active:bg-gray-200"
+			href="/u:{$page.data.user?.username}/subscriptions"
+		>
 			<Rss class="h-6 w-6 stroke-muted" />
 		</a>
-		<a href="/u:{$page.data.user?.username}/search">
+		<a
+			class="flex h-10 w-10 items-center justify-center rounded-full active:scale-95 active:bg-gray-200"
+			href="/u:{$page.data.user?.username}/search"
+		>
 			<Search class="h-6 w-6 stroke-muted" />
 		</a>
-		<a href="/u:{$page.data.user?.username}">
+		<a
+			class="flex h-10 w-10 items-center justify-center rounded-full active:scale-95 active:bg-gray-200"
+			href="/u:{$page.data.user?.username}"
+		>
 			<User class="h-6 w-6 stroke-muted" />
 		</a>
 	</div>

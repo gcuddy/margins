@@ -14,7 +14,9 @@
 	import { mainEl, mainElScroll } from "$lib/stores/main";
 	import { cn } from "$lib/utils/tailwind";
 	import { ListPlus, MoreVertical, RefreshCwIcon, Tag, X } from "lucide-svelte";
+	import { getContext } from "svelte";
 	import { tweened } from "svelte/motion";
+	import type { Writable } from "svelte/store";
 	const currentList = getCurrentListContext();
 
 	async function handleKeydown(e: KeyboardEvent) {
@@ -24,6 +26,8 @@
 			}
 		}
 	}
+
+	const last_urls: Writable<string[]> = getContext("last_urls");
 	// $: $mainElScroll.down ? topBarHeight.set(0) : topBarHeight.set(56);
 </script>
 
@@ -43,6 +47,13 @@
 				href={$currentList.slug}
 				variant="subtle"
 				class="h-10 w-10 rounded-full p-3"
+				on:click={(e) => {
+					if ($last_urls[0] === $currentList.slug) {
+						// then just go back to the previous page
+						e.preventDefault();
+						history.back();
+					}
+				}}
 			>
 				<X class="stroke-muted" />
 			</Button>

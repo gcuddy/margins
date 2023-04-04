@@ -14,6 +14,7 @@
 	export { c as class };
 	type EntryProps = Pick<Entry, "id" | "title">;
 	export let entry: EntryProps;
+	// TODO
 </script>
 
 <DropdownMenu>

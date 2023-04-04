@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { EntryItem } from "$lib/components/entry-item";
-	import List from "$lib/components/helpers/List.svelte";
+	import Intersector from "$lib/components/Intersector.svelte";
+	import ItemList from "$lib/components/ItemList.svelte";
 	import Separator from "$lib/components/ui/Separator.svelte";
+	import VirtualRow from "$lib/components/VirtualRow.svelte";
 	import dayjs from "$lib/dayjs";
 	import { getCurrentListContext } from "$lib/stores/currentList";
 	import type { FilterStores } from "$lib/stores/filter";
@@ -15,11 +16,26 @@
 	import {
 		createVirtualizer,
 		SvelteVirtualizer,
+		createWindowVirtualizer,
 	} from "@tanstack/svelte-virtual";
-	import { getContext, onDestroy, onMount } from "svelte";
+	import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
 	import { SHADOW_PLACEHOLDER_ITEM_ID } from "svelte-dnd-action";
 	import type { Readable } from "svelte/store";
 	import type { PageData } from "./$types";
+	import type { Snapshot } from "./$types";
+
+	export const snapshot: Snapshot = {
+		capture: () => {
+			const scroll = document.querySelector("main")?.scrollTop;
+			console.log({ scroll });
+			return scroll;
+		},
+		restore: (value) => {
+			if (value) {
+				document.querySelector("main")?.scrollTo(0, value);
+			}
+		},
+	};
 
 	dayjs.updateLocale("en", {
 		relativeTime: {
@@ -98,46 +114,58 @@
 	let virtualizer: Readable<SvelteVirtualizer<HTMLElement, Element>>;
 	console.log({ items: $query.data });
 	let ref: HTMLElement | null = null;
-	const v = createVirtualizer({
+
+	$: windowVirtualizer = createWindowVirtualizer({
 		count: $query?.hasNextPage
 			? $filteredItems.length + 1
 			: $filteredItems.length,
+		estimateSize: () => 60,
 		overscan: 5,
-		getScrollElement: () => ref,
-		estimateSize: () => 40,
 		getItemKey: (index) => $filteredItems[index]?.id,
 		debug: true,
-		initialRect: {
-			height: 800,
-			width: 100,
-		},
-		// getItemKey,
 	});
 
-	onMount(() => {
-		virtualizer = createVirtualizer({
-			count: $query?.hasNextPage
-				? $filteredItems.length + 1
-				: $filteredItems.length,
-			overscan: 0,
-			getScrollElement: () => (ref ? ref : null),
-			estimateSize: () => 40,
-			getItemKey: (index) => $filteredItems[index]?.id,
-			debug: true,
-			// getItemKey,
-		});
-	});
+	// const v = createVirtualizer({
+	// 	count: $query?.hasNextPage
+	// 		? $filteredItems.length + 1
+	// 		: $filteredItems.length,
+	// 	overscan: 5,
+	// 	getScrollElement: () => ref,
+	// 	estimateSize: () => 40,
+	// 	getItemKey: (index) => $filteredItems[index]?.id,
+	// 	debug: true,
+	// 	initialRect: {
+	// 		height: 800,
+	// 		width: 100,
+	// 	},
+	// 	// getItemKey,
+	// });
+
+	// onMount(() => {
+	// 	virtualizer = createVirtualizer({
+	// 		count: $query?.hasNextPage
+	// 			? $filteredItems.length + 1
+	// 			: $filteredItems.length,
+	// 		overscan: 0,
+	// 		getScrollElement: () => (ref ? ref : null),
+	// 		estimateSize: () => 40,
+	// 		getItemKey: (index) => $filteredItems[index]?.id,
+	// 		debug: true,
+	// 		// getItemKey,
+	// 	});
+	// });
 	// TODO: pick up here 2023-01-17
 	$: $filteredItems,
-		$v?.setOptions({
-			...$v.options,
+		$windowVirtualizer?.setOptions({
+			...$windowVirtualizer.options,
 			count: $query?.hasNextPage
 				? $filteredItems.length + 1
 				: $filteredItems.length,
+			scrollMargin: parentOffsetRef ?? 0,
 		});
 
-	$: if ($v && $filteredItems) {
-		const lastItem = $v.getVirtualItems().at(-1);
+	$: if ($windowVirtualizer && $filteredItems) {
+		const lastItem = $windowVirtualizer.getVirtualItems().at(-1);
 		console.log({
 			lastItemIndex: lastItem?.index,
 			itemsLength: $items.length,
@@ -155,21 +183,27 @@
 	}
 
 	$: console.log({ $filteredItems });
-	let height = 600;
-	function handleResize(r: ResizeObserverEntry) {
-		const { blockSize } = r.borderBoxSize[0];
-		console.log({ blockSize });
-		console.log($mainEl);
-		height = 600;
-		// height = window.innerHeight - blockSize - 32;
-	}
-	let draggedOver;
 
 	const current_list = getCurrentListContext();
 	$: current_list.set({
 		entries: $filteredItems,
 		slug: $page.url.pathname,
 	});
+	let parentRef: HTMLElement | null = null;
+
+	let parentOffsetRef: number | undefined = undefined;
+
+	afterUpdate(() => {
+		parentOffsetRef = parentRef?.offsetTop;
+	});
+
+	$: console.log({ parentOffsetRef });
+
+	$: virtualItems = $windowVirtualizer.getVirtualItems();
+
+	$: console.log({ $windowVirtualizer });
+
+	$: entries = $query.data?.pages.flatMap((p) => p.entries) ?? [];
 </script>
 
 <!-- {#each data.entries as entry}
@@ -180,10 +214,37 @@
 	Catch up with new entries from your subscriptions.
 </p>
 <Separator class="my-4" />
-<div class="flex grow flex-col">
-	{#each $filteredItems as entry}
+<div class="flex grow flex-col" bind:this={parentRef}>
+	<!-- TODO: eventually virtualizer -->
+	<!-- {#each $query.data?.entries ?? [] as item} -->
+	<ItemList {entries} />
+	<Intersector
+		cb={() => {
+			// alert("intersector");
+			if ($query.hasNextPage && !$query.isFetchingNextPage) {
+				$query.fetchNextPage();
+			}
+		}}>Loading...</Intersector
+	>
+	<!-- <div
+		class="relative w-full"
+		style:height="{$windowVirtualizer.getTotalSize()}px"
+	>
+		<div
+			class="absolute left-0 top-0 w-full"
+			style:transform="translateY({virtualItems[0]?.start -
+				$windowVirtualizer.options.scrollMargin})"
+		>
+			{#each virtualItems as row (row.key)}
+				<VirtualRow ref={$windowVirtualizer.measureElement} item={row}>
+					
+				</VirtualRow>
+			{/each}
+		</div>
+	</div> -->
+	<!-- {#each $filteredItems as entry}
 		<EntryItem {entry} />
-	{/each}
+	{/each} -->
 	<!-- <List
 		{height}
 		opts={{
@@ -244,122 +305,6 @@
 <!-- {draggedOver}
 {$filteredItems.length} items
 {$v.getVirtualItems().length} vitems -->
-{#if $query.isLoading}
-	loading
-{:else if false}
-	<!-- TODO: make this into a component -->
-	<!-- <EntryList items={$filteredItems} viewOptions={DEFAULT_RSS_VIEW_OPTIONS} /> -->
-	<div class="h-96 grow overflow-auto will-change-transform">
-		{#if v}
-			<!-- {JSON.stringify($v.getVirtualItems())} -->
-			<!-- use:dndzone={{
-					items: $v.getVirtualItems(),
-					dragDisabled: $filteredItems.length !== $items.length,
-				}} -->
-			<div
-				on:consider={(e) => {
-					// TODO:
-					console.log("consider", e);
-					// $items = e.detail.items.filter((i) => i.is);
-					const newItems = e.detail.items.map((i) => $items[i.index]);
-					draggedOver = e.detail.info.id;
-					console.log({ SHADOW_PLACEHOLDER_ITEM_ID });
-					// $items = [];
-					// items.update(($items) => {
-					// 	newItems.forEach((item) => {
-					// 		const idx = $items.findIndex((i) => i.id === item.id);
-					// 		$items[idx] = item;
-					// 	});
-					// 	return $items;
-					// });
-					// $items = $items;
-					// console.log({ newItems, $items });
-					// $items = newItems;
-				}}
-				on:finalize={() => {
-					console.log({ $items, items: $v.getVirtualItems() });
-					// $items = $items;
-				}}
-				style="height: {$v.getTotalSize()}px; width: 100%; position: relative"
-			>
-				{#each $v.getVirtualItems() as virtualRow, index}
-					{@const item = $filteredItems[virtualRow.index]}
-					{@const isLoaderRow = virtualRow.index > $filteredItems.length - 1}
-					<!-- {@const subscription = data.subscriptions.find(
-						(s) => s.feedId === item?.feedId
-					)} -->
-					<!-- {JSON.stringify(item.title)} -->
-					{#if !isLoaderRow}
-						<div
-							class="flex"
-							class:odd={virtualRow.index % 2}
-							style="height: {virtualRow.size}px; transform: translateY({virtualRow.start}px); position: absolute; top:0; left:0; width: 100%;"
-						>
-							<a
-								href={`/u:${$page.params.username}/entry/${item.id}`}
-								class="min-w-0 grow p-2"
-							>
-								<div class="flex items-center truncate p-2">
-									<div class="flex w-36 flex-none items-center gap-2">
-										<!-- favicon -->
-										<div class="h-4 w-4 shrink-0 overflow-hidden rounded">
-											{#if item.uri}
-												<img
-													src="https://icon.horse/icon/{getHostname(item.uri)}"
-												/>
-												<!-- <img src="https://icon.horse/icon/{getHostname(item.uri)}" alt="" /> -->
-											{/if}
-										</div>
-										<div class="shrink truncate">
-											{item.feed_title}
-										</div>
-									</div>
-									<div class="ml-4 mr-4 block truncate">
-										<div class="truncate">
-											<span class="truncate">
-												{item.title}
-											</span>
-										</div>
-										<!-- {item.text} -->
-									</div>
-									<div class="ml-auto mr-1 flex flex-none flex-row-reverse">
-										<time>
-											{#if item.published}
-												{displayTime(item.published)}
-											{/if}
-										</time>
-										<!-- {} -->
-									</div>
-								</div>
-							</a>
-							<!-- {} -->
-						</div>
-						<!-- {#if $filteredItems.length === $items.length}
-							{isLoaderRow ? ($query.hasNextPage ? "Loading..." : "") : item.title}
-						{/if}
-						{isLoaderRow ? ($query.hasNextPage ? "Loading..." : "") : item.title} -->
-					{/if}
-				{/each}
-			</div>
-		{/if}
-		<!-- {#if virtualizer}
-			<div style="height: {$virtualizer.getTotalSize()}px; width: 100%; position: relative">
-				{#each $virtualizer.getVirtualItems() as virtualRow}
-					{@const item = $filteredItems[virtualRow.index]}
-					{@const isLoaderRow = virtualRow.index > $filteredItems.length - 1}
-
-					<div
-						class="row"
-						class:odd={virtualRow.index % 2}
-						style="height: {virtualRow.size}px; transform: translateY({virtualRow.start}px)"
-					>
-						{isLoaderRow ? ($query.hasNextPage ? "Loading..." : "Nothing more to load") : item.title}
-					</div>
-				{/each}
-			</div>
-		{/if} -->
-	</div>
-{/if}
 
 <!-- <button on:click={() => $query.fetchNextPage()} disabled={!$query.hasNextPage || $query.isFetchingNextPage}>
 	{#if $query.isFetching}

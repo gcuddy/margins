@@ -26,7 +26,6 @@
 
 	$: ({ popperContent } = $state);
 
-	$: console.log({ popperContent, type: typeof popperContent });
 	$: popperOpts = {
 		strategy: "fixed",
 		modifiers: [

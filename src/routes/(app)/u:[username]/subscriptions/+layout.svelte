@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import Filter from "$lib/components/Filters/Filter.svelte";
 	import FiltersList from "$lib/components/Filters/FiltersList.svelte";
@@ -108,7 +109,7 @@
 			</div>
 		</DefaultHeader>
 	</Header> -->
-	<div class="flex h-full grow flex-col px-8 py-6">
+	<div class="flex h-full grow flex-col px-4 py-6 sm:px-6 md:px-8">
 		{#if filteredItems}
 			<div>
 				<SearchInput
@@ -122,7 +123,15 @@
 				</div>
 			{/if}
 		{/if}
-		<Tabs defaultIndex={currentIndex}>
+		<Tabs
+			data-sveltekit-keepfocus
+			on:change={(e) => {
+				let index = e.detail;
+				const slug = ["all", "podcasts"].at(index);
+				goto(`/u:${$page.data.user?.username}/subscriptions/${slug}`);
+			}}
+			defaultIndex={currentIndex}
+		>
 			<TabsList>
 				<TabsTrigger
 					as="a"
