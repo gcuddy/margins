@@ -1,4 +1,5 @@
 import { trpcWithQuery } from '$lib/trpc/client';
+import type { RouterOutputs } from '$lib/trpc/router';
 import type { PageLoad } from './$types';
 
 export const load = (async (event) => {
@@ -8,14 +9,15 @@ export const load = (async (event) => {
     const { queryClient, user } = await event.parent();
 
     const client = trpcWithQuery(event, queryClient);
+    const ctx = client.createContext();
     const query = client.entries.byFeed.createServerInfiniteQuery({
         id: +params.id,
         take: 25
     }, {
         getNextPageParam: (lastPage) => lastPage.nextCursor
     })
-    const subscription = user.subscriptions.find((s) => s.feed_id === +params.id);
-    // const subscription = subscriptions.find((s) => s.feedId === +params.id);
+    const subscriptions = await ctx.subscriptions.list.fetch()
+    const subscription = subscriptions.find((s) => s.feed_id === +params.id);
     return {
         id: +params.id,
         title: subscription?.subscription_title,

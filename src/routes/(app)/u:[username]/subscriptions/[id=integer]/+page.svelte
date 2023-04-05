@@ -2,6 +2,7 @@
 	import { page } from "$app/stores";
 	import Intersector from "$lib/components/Intersector.svelte";
 	import ItemList from "$lib/components/ItemList.svelte";
+	import Button from "$lib/components/ui/Button.svelte";
 	import { getCurrentListContext } from "$lib/stores/currentList";
 
 	import type { ViewOptions } from "$lib/types/schemas/View";
@@ -60,5 +61,9 @@
 		if ($query.hasNextPage && !$query.isFetchingNextPage) {
 			$query.fetchNextPage();
 		}
-	}}>Loading...</Intersector
+	}}
 >
+	{#if $query.hasNextPage}
+		Loading...
+	{/if}
+</Intersector>

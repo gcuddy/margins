@@ -92,35 +92,48 @@ export const subscriptions = router({
             // create any tags that don't exist
             const tagsToCreate = data.tags?.filter(t => !t.id) || [];
             const tags = data.tags?.filter(t => t.id) || [];
-            if (tagsToCreate.length) {
-                await ctx.prisma.tag.createMany({
-                    data: tagsToCreate.map(t => ({
-                        name: t.name,
-                        userId
-                    })),
-                    skipDuplicates: true,
-                })
-            }
-            await ctx.prisma.subscription.update({
-                where: {
-                    id: id ?? undefined,
-                    userId_feedId: feedId ? {
-                        feedId,
-                        userId
-                    } : undefined,
-                    userId
-                },
-                data: {
-                    title: data.title ?? undefined,
-                    tags: data.tags ? {
-                        set: data.tags.map(t => ({
-                            name_userId: {
-                                name: t.name,
-                                userId
-                            }
-                        }))
-                    } : undefined,
+            if (data.title) {
+                let query = ctx.db.updateTable("Subscription")
+                    .set({
+                        title: data.title,
+                    })
+                if (id) {
+                    query = query.where("id", "=", id)
+                } else if (feedId) {
+                    query = query.where("feedId", "=", feedId).where("userId", "=", userId)
                 }
-            })
+                const result = await query.execute();
+                return;
+            }
+            // if (tagsToCreate.length) {
+            //     await ctx.prisma.tag.createMany({
+            //         data: tagsToCreate.map(t => ({
+            //             name: t.name,
+            //             userId
+            //         })),
+            //         skipDuplicates: true,
+            //     })
+            // }
+            // await ctx.prisma.subscription.update({
+            //     where: {
+            //         id: id ?? undefined,
+            //         userId_feedId: feedId ? {
+            //             feedId,
+            //             userId
+            //         } : undefined,
+            //         userId
+            //     },
+            //     data: {
+            //         title: data.title ?? undefined,
+            //         tags: data.tags ? {
+            //             set: data.tags.map(t => ({
+            //                 name_userId: {
+            //                     name: t.name,
+            //                     userId
+            //                 }
+            //             }))
+            //         } : undefined,
+            //     }
+            // })
         })
 });

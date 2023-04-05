@@ -27,6 +27,7 @@
 	import Separator from "$lib/components/ui/Separator.svelte";
 	import Switch from "$lib/components/ui/Switch.svelte";
 	import { H1, H2, Lead } from "$lib/components/ui/typography";
+	import toast from "svelte-french-toast";
 </script>
 
 <div
@@ -130,4 +131,10 @@
 			</div>
 		</TabsContent>
 	</Tabs>
+
+	<Button
+		on:click={() => {
+			toast("Toast");
+		}}>Toast</Button
+	>
 </div>

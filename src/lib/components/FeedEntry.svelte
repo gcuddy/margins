@@ -17,8 +17,12 @@
 	import toast from "svelte-french-toast";
 	import { goto } from "$app/navigation";
 	import { Loader2 } from "lucide-svelte";
+	import { trpcWithQuery } from "$lib/trpc/client";
 	export let form: ActionData | undefined = undefined;
 	export let close = () => {};
+
+	const client = trpcWithQuery($page);
+	const ctx = client.createContext();
 	$: console.log({ close });
 	$: console.log({ form });
 	let searching = false;
@@ -117,6 +121,7 @@
 						if (!result.data) return;
 						const { added } = result.data;
 						const id = added?.[0]?.feed_id;
+						await ctx.subscriptions.list.invalidate();
 						if (id) {
 							await goto(`/u:${$page.data.user?.username}/subscriptions/${id}`);
 						}

@@ -1,46 +1,24 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="" class="">
-	<head>
-		<meta charset="utf-8" />
-		<link
-			rel="apple-touch-icon"
-			sizes="180kx180"
-			href="%sveltekit.assets%/apple-touch-icon.png"
-		/>
-		<link
-			rel="icon"
-			type="image/png"
-			sizes="32x32"
-			href="%sveltekit.assets%/favicon-32x32.png"
-		/>
-		<link
-			rel="icon"
-			type="image/png"
-			sizes="16x16"
-			href="%sveltekit.assets%/favicon-16x16.png"
-		/>
-		<!-- <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" /> -->
-		<link
-			rel="mask-icon"
-			href="%sveltekit.assets%/safari-pinned-tab.svg"
-			color="#5bbad5"
-		/>
-		<meta name="msapplication-TileColor" content="#da532c" />
-		<meta name="theme-color" content="#ffffff" />
-		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-		<meta
-			name="viewport"
-			content="width=device-width,initial-scale=1,maximum-scale=1,height=device-height,user-scalable=no"
-		/>
-		%sveltekit.head%
-	</head>
-	<!-- mobile tag for testing purpposes -->
-	<body
-		class="min-h-screen select-none text-gray-950 antialiased dark:text-gray-50"
-		data-transparency="true"
-		data-sveltekit-preload-data="hover"
-	>
-		<div style="display: contents">%sveltekit.body%</div>
-	</body>
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="apple-touch-icon" sizes="180kx180" href="%sveltekit.assets%/apple-touch-icon.png" />
+	<link rel="icon" type="image/png" sizes="32x32" href="%sveltekit.assets%/favicon-32x32.png" />
+	<link rel="icon" type="image/png" sizes="16x16" href="%sveltekit.assets%/favicon-16x16.png" />
+	<!-- <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" /> -->
+	<link rel="mask-icon" href="%sveltekit.assets%/safari-pinned-tab.svg" color="#5bbad5" />
+	<meta name="msapplication-TileColor" content="#da532c" />
+	<meta name="theme-color" content="#ffffff" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,height=device-height,user-scalable=no" />
+	%sveltekit.head%
+</head>
+<!-- mobile tag for testing purpposes -->
+
+<body class="min-h-screen select-none text-gray-950 antialiased dark:text-gray-50 dark:bg-gray-900 bg-gray-50" data-transparency="true" data-sveltekit-preload-data="hover">
+	<div style="display: contents">%sveltekit.body%</div>
+</body>
+
 </html>

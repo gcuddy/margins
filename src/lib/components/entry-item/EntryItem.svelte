@@ -38,7 +38,7 @@
 	}
 </script>
 
-<div class="flex items-center justify-between p-4">
+<div class="flex items-center justify-between gap-2 p-4">
 	<div class="flex items-center gap-4">
 		<div class="h-8 w-8 shrink-0 overflow-hidden rounded-md sm:h-10 sm:w-10">
 			<Image
@@ -65,17 +65,29 @@
 			>
 				{entry.title ?? "[No title]"}
 			</a>
-			{#if entry.feedId && entry.feed_title}
-				<a
-					href="{username ? `/u:${username}` : ''}/subscriptions/{entry.feedId}"
-					class="text-sm text-gray-600 dark:text-gray-500"
-				>
-					{entry.feed_title}
-				</a>
-			{/if}
+			<div class="flex gap-1.5">
+				{#if entry.feedId && entry.feed_title}
+					<a
+						href="{username
+							? `/u:${username}`
+							: ''}/subscriptions/{entry.feedId}"
+						class="text-sm text-gray-600 dark:text-gray-500"
+					>
+						{entry.feed_title}
+					</a>
+				{/if}
+				{#if entry.author && entry.feedId && entry.feed_title}
+					<span class="text-sm text-gray-600 dark:text-gray-500">·</span>
+				{/if}
+				{#if entry.author}
+					<span class="text-sm text-gray-600 dark:text-gray-500">
+						{entry.author}
+					</span>
+				{/if}
+			</div>
 			<div>
 				{#if entry.published}
-					<p class="text-sm text-slate-600">
+					<p class="text-sm text-gray-600 dark:text-gray-500">
 						{formatDate(entry.published?.toDateString())}
 					</p>
 				{/if}

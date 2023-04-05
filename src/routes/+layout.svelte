@@ -26,6 +26,10 @@
 	toastOptions={{
 		// className: "bg-base text-content rounded-full",
 		// style: "background-color: inherit;",
+		// style:
+		// "border-radius: 200px; background-color: hsl(var(--color-base)); color: hsl(var(--color-content));",
+		className:
+			"!shadow-lg dark:!border-gray-700 !text-gray-950 dark:!text-gray-50 !bg-white !border-gray-200 dark:!bg-gray-800 dark:!border-gray-700",
 	}}
 />
 

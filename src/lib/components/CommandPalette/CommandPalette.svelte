@@ -580,14 +580,17 @@
 			name: "Jump to Subscription",
 			perform: async () => {
 				showCommandPalette.out();
-				const subscriptions = await queryClient.ensureQueryData(
-					listSubscriptionsQuery()
-				);
+				const subscriptions =
+					utils.subscriptions.list.getData() ??
+					(await utils.subscriptions.list.fetch());
 				commandPaletteStore.open({
-					values: subscriptions,
+					values: subscriptions.map((s) => ({
+						id: s.feed_id,
+						name: s.subscription_title,
+					})),
 					onSelect: async ({ detail }) => {
 						await goto(
-							`/u:${$page.data.user?.username}/subscriptions/${detail.feedId}`
+							`/u:${$page.data.user?.username}/subscriptions/${detail.id}`
 						);
 					},
 				});

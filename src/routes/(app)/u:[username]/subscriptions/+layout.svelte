@@ -6,9 +6,11 @@
 	import FiltersList from "$lib/components/Filters/FiltersList.svelte";
 	import SearchInput from "$lib/components/Filters/SearchInput.svelte";
 	import type { ChildOption } from "$lib/components/Filters/SimpleFilter.svelte";
+	import SubscriptionOperations from "$lib/components/SubscriptionOperations.svelte";
 	import Button from "$lib/components/ui/Button.svelte";
 	import { Dialog, DialogContent } from "$lib/components/ui/dialog";
 	import { Tabs, TabsList, TabsTrigger } from "$lib/components/ui/tabs";
+	import H1 from "$lib/components/ui/typography/H1.svelte";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { Plus } from "lucide-svelte";
 	import { setContext } from "svelte";
@@ -49,12 +51,6 @@
 			// },
 		},
 	];
-
-	const routes = [
-		"/(app)/u:[username]/subscriptions/all",
-		"/(app)/u:[username]/subscriptions/podcasts",
-	];
-	$: currentIndex = routes.indexOf($page.route.id);
 </script>
 
 <Filter
@@ -87,9 +83,9 @@
 				const slug = ["all", "podcasts"].at(index);
 				goto(`/u:${$page.data.user?.username}/subscriptions/${slug}`);
 			}}
-			defaultIndex={currentIndex}
+			defaultIndex={$page.url.pathname.endsWith("all") ? 0 : 1}
 		>
-			<div class="flex justify-between">
+			<div class="flex items-center justify-between">
 				{#if $page.url.pathname.endsWith("all") || $page.url.pathname.endsWith("podcasts")}
 					<TabsList>
 						<TabsTrigger
@@ -104,7 +100,12 @@
 						>
 					</TabsList>
 				{:else if $page.data.title}
-					<h2>{$page.data.title}</h2>
+					<div class="flex items-center gap-6">
+						<H1>{$page.data.title}</H1>
+						{#if $page.data.subscription}
+							<SubscriptionOperations subscription={$page.data.subscription} />
+						{/if}
+					</div>
 				{/if}
 				<Dialog>
 					<svelte:fragment slot="trigger">
