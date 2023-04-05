@@ -5,6 +5,9 @@ import { _CollectionItemsModel, _CollectionModel } from "$lib/prisma/zod";
 import { protectedProcedure, publicProcedure, router } from "$lib/trpc/t";
 import type { ChosenIcon } from "$lib/types/icon";
 import type { Annotation, CollectionItems } from "$lib/prisma/kysely/types";
+import type { Insertable } from "kysely";
+import { TRPCError } from "@trpc/server";
+import { nanoid } from "$lib/nanoid";
 // import { EntryWhereInputObjectSchema } from '$lib/zod/schemas';
 
 const idInput = z.object({
@@ -25,20 +28,13 @@ export const updateCollectionItemScehma = z.object({
 
 export const collectionsRouter = router({
     list: protectedProcedure.query(async ({ ctx }) => {
-        const collections = await ctx.prisma.collection.findMany({
-            where: {
-                userId: ctx.userId,
-            },
-            // with items?
+        const collections = await ctx.db.selectFrom("Collection as c")
+            // .leftJoin("CollectionItems as ci", (join) => join.onRef("ci.collectionId", "=", "c.id").on("ci.type", "=", "Section"))
+            .selectAll()
+            .where("c.userId", "=", ctx.userId)
+            .orderBy("c.updatedAt", "desc")
+            .execute();
 
-            include: {
-                items: {
-                    where: {
-                        type: "Section"
-                    }
-                }
-            }
-        });
         return collections.map((collection) => {
             return {
                 ...collection,
@@ -51,33 +47,56 @@ export const collectionsRouter = router({
         .input(
             z.object({
                 entryIds: z.number().array().optional().default([]),
-                annotationIds: z.number().array().optional().default([]),
+                annotationIds: z.string().array().optional().default([]),
                 name: z.string(),
             })
         )
         .mutation(async ({ ctx, input }) => {
             const { name, entryIds, annotationIds } = input;
-            const collection = await ctx.prisma.collection.create({
-                data: {
+            const collection = await ctx.db.insertInto("Collection")
+                .values({
                     name,
                     userId: ctx.userId,
-                    items: {
-                        createMany: {
-                            data: [
-                                ...entryIds.map((entryId) => {
-                                    return {
-                                        entryId,
-                                    };
-                                }),
-                                ...annotationIds.map((annotationId) => ({
-                                    annotationId,
-                                })),
-                            ],
-                        },
-                    },
-                },
-            });
-            return { ...collection, icon: collection.icon as ChosenIcon };
+                    updatedAt: new Date(),
+                })
+                .executeTakeFirstOrThrow();
+            const collectionId = Number(collection.insertId);
+            if (!collectionId) {
+                throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: "Could not create collection",
+                });
+            }
+            // quickly select the collection we just created
+            const _collection = await ctx.db.selectFrom("Collection")
+                .selectAll()
+                .where("id", "=", collectionId)
+                .executeTakeFirstOrThrow();
+            type CIInsert = Insertable<CollectionItems>;
+            const insert_arr: CIInsert[] = []
+            for (const entryId of entryIds) {
+                insert_arr.push({
+                    collectionId,
+                    entryId,
+                    type: "Entry",
+                    id: nanoid(),
+                    updatedAt: new Date(),
+                })
+            }
+            for (const annotationId of annotationIds) {
+                insert_arr.push({
+                    collectionId,
+                    annotationId,
+                    type: "Annotation",
+                    id: nanoid(),
+                    updatedAt: new Date(),
+                })
+            }
+            const collectionItems = await ctx.db.insertInto("CollectionItems")
+                .values(insert_arr)
+                .ignore()
+                .execute();
+            return { ..._collection, icon: _collection.icon as ChosenIcon };
         }),
     addItem: protectedProcedure
         .input(

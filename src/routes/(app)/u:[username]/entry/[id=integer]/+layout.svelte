@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { page } from "$app/stores";
+	import EntryOperations from "$lib/components/EntryOperations.svelte";
 	import Button, { buttonVariants } from "$lib/components/ui/Button.svelte";
 	import {
 		DropdownMenu,
@@ -59,7 +61,16 @@
 			</Button>
 			<!-- TODO: next and previous, name of current list, index and remaining items -->
 			<!-- TODO -->
-			<DropdownMenu>
+			<EntryOperations
+				class={cn(
+					buttonVariants({
+						class: "h-10 w-10 rounded-full border-none p-3",
+						variant: "subtle",
+					})
+				)}
+				entry={{ id: +$page.params.id }}
+			/>
+			<!-- <DropdownMenu>
 				<DropdownMenuTrigger
 					class={cn(
 						buttonVariants({
@@ -88,7 +99,7 @@
 					<DropdownMenuItem>Team</DropdownMenuItem>
 					<DropdownMenuItem>Subscription</DropdownMenuItem>
 				</DropdownMenuContent>
-			</DropdownMenu>
+			</DropdownMenu> -->
 		</div>
 		<div bind:this={$mainEl} class="overflow-y-auto">
 			<slot />

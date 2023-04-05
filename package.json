@@ -63,6 +63,7 @@
 		"autosize": "^6.0.1",
 		"aws-sdk": "^2.1343.0",
 		"codejar": "^3.7.0",
+		"command-score": "^0.1.2",
 		"css": "^3.0.0",
 		"dayjs": "^1.11.7",
 		"devalue": "^4.3.0",

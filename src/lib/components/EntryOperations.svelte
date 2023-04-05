@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/stores";
 	import {
 		DropdownMenu,
 		DropdownMenuTrigger,
@@ -7,13 +8,18 @@
 		DropdownMenuSeparator,
 		DropdownMenuShortcut,
 	} from "$lib/components/ui/dropdown-menu";
+	import { addEntriesToCollection } from "$lib/features/collections/stores";
+	import { trpcWithQuery } from "$lib/trpc/client";
 	import { cn } from "$lib/utils/tailwind";
 	import type { Entry } from "@prisma/client";
 	import { ListPlus, MoreVertical, RefreshCwIcon, Tag } from "lucide-svelte";
 	let c = "";
 	export { c as class };
-	type EntryProps = Pick<Entry, "id" | "title">;
+	type EntryProps = Pick<Entry, "id">;
 	export let entry: EntryProps;
+
+	const client = trpcWithQuery($page);
+	const utils = client.createContext();
 	// TODO
 </script>
 
@@ -34,7 +40,14 @@
 			<span>Add tags</span>
 			<DropdownMenuShortcut>T</DropdownMenuShortcut>
 		</DropdownMenuItem>
-		<DropdownMenuItem>
+		<DropdownMenuItem
+			on:click={() => {
+				addEntriesToCollection([entry.id], (c) => {
+					utils.entries.invalidate();
+					utils.collections.invalidate();
+				});
+			}}
+		>
 			<ListPlus class="mr-2 h-4 w-4" />
 			<span>Add to Collection</span>
 		</DropdownMenuItem>

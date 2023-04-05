@@ -569,8 +569,10 @@
 											layout="constrained"
 										/>
 									{/if}
-									<div class="grid gap-1">
-										<H1 class="line-clamp-3">{article.title}</H1>
+									<div class="flex flex-col gap-1">
+										<span class="line-clamp-3">
+											<H1><span>{article.title}</span></H1>
+										</span>
 										{#if article.feed_title}
 											<div
 												class="flex items-center gap-x-2 text-lg font-semibold md:text-xl"

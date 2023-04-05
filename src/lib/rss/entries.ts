@@ -50,7 +50,7 @@ export async function adaptEntryFromItem(item: Item, feedId: Feed["id"]) {
     return ({
         feedId,
         title: item.title ?? null,
-        uri: await followUrl(item.link ?? enclosureUrl) ?? null,
+        uri: item.link ?? enclosureUrl ?? null,
         guid: item.guid ?? null,
         published: item.pubDate ? new Date(item.pubDate) : item.isoDate ? new Date(item.isoDate) : null,
         author: (item.author || item["dc:creator"] || item.itunes?.author) ?? null,
