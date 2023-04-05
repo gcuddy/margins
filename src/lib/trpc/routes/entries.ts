@@ -30,7 +30,7 @@ export const entriesRouter = router({
             const { userId, user, db } = ctx;
             const { id } = input;
             // User data includes annotations, tags (from parent), state, bookmark, progress, relations, etc;
-            const [annotations, bookmark] = await Promise.all([
+            const [annotations, bookmark, interaction] = await Promise.all([
                 db
                     .selectFrom("Annotation as a")
                     .innerJoin("user as au", "au.id", "a.userId")
@@ -56,22 +56,32 @@ export const entriesRouter = router({
                     .execute(),
                 db
                     .selectFrom("Bookmark as b")
-                    .leftJoin("EntryInteraction as i", (j) =>
-                        j.on("i.entryId", "=", id).on("i.userId", "=", userId)
-                    )
                     .select([
                         "b.id as bookmark_id",
                         "b.stateId as state_id",
                         "b.createdAt as bookmark_createdAt",
-                        "i.progress",
                     ])
                     .where("b.userId", "=", userId)
                     .where("b.entryId", "=", id)
                     .executeTakeFirst(),
+                db
+                    .selectFrom("EntryInteraction as i")
+                    .select([
+                        "i.id as interaction_id",
+                        "i.progress as progress",
+                        "i.finished as finished",
+                        "i.is_read as is_read",
+                    ])
+                    .where("i.userId", "=", userId)
+                    .where("i.entryId", "=", id)
+                    .executeTakeFirst(),
+
             ]);
+            console.log({ bookmark })
             return {
                 annotations,
                 ...bookmark,
+                ...interaction
             };
         }),
     listBookmarks: protectedProcedure
@@ -947,8 +957,9 @@ export const entriesRouter = router({
                 //     console.log("cache hit");
                 //     return cached as Entry;
                 // }
-                const entry: Entry = await db
+                const entry = await db
                     .selectFrom("Entry as e")
+                    .leftJoin("Feed as f", "f.id", "e.feedId")
                     .where("e.id", "=", id)
                     .select([
                         "e.title",
@@ -956,6 +967,8 @@ export const entriesRouter = router({
                         "e.author",
                         "e.id",
                         "e.feedId",
+                        "f.imageUrl as feed_image",
+                        "f.title as feed_title",
                         "e.pageCount",
                         "e.language",
                         "e.publisher",

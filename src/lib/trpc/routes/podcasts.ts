@@ -800,22 +800,28 @@ export const podcastsRouter = router({
         }))
         .mutation(async ({ input, ctx }) => {
             const { podcastIndexId, finished, enclosureUrl, progress } = input;
+            const { userId } = ctx;
             console.log({ input })
             let entryId = input.entryId;
             if (!entryId && podcastIndexId) {
-                const entry = await ctx.prisma.entry.findUnique({
-                    where: {
-                        podcastIndexId,
-                    },
-                });
+                const entry = await ctx.db.selectFrom("Entry")
+                    .select("id")
+                    .where("podcastIndexId", "=", podcastIndexId)
+                    .executeTakeFirst();
                 if (!entry) {
                     // try to create
                     if (podcastIndexId) {
-                        const ep = (await episodeToEntry(Number(podcastIndexId)));
-                        const e = await ctx.prisma.entry.create({
-                            data: ep,
-                        });
-                        entryId = e.id;
+                        // const ep = (await episodeToEntry(Number(podcastIndexId)));
+                        // TODO: get metadata
+
+                        const e = await ctx.db.insertInto("Entry")
+                            .values({
+                                podcastIndexId: podcastIndexId,
+                                updatedAt: new Date(),
+                                // ...TODO
+                            })
+                            .executeTakeFirst();
+                        entryId = Number(e.insertId ?? 0);
                     }
                     //
                 } else {
@@ -826,31 +832,23 @@ export const podcastsRouter = router({
                 }
             }
             if (!entryId) return;
-            return ctx.prisma.interaction.upsert({
-                where: {
-                    userId_entryId: {
-                        userId: ctx.userId,
-                        entryId: entryId,
-                    }
-                },
-                update: {
+
+            const interaction = await ctx.db.insertInto("EntryInteraction")
+                .values({
                     finished,
                     progress,
-                },
-                create: {
+                    userId,
+                    entryId,
+                    updatedAt: new Date(),
+                })
+                .onDuplicateKeyUpdate({
                     finished,
                     progress,
-                    user: {
-                        connect: {
-                            id: ctx.userId,
-                        },
-                    },
-                    entry: {
-                        connect: {
-                            id: entryId,
-                        },
-                    },
-                },
-            });
+                    updatedAt: new Date(),
+                })
+                .executeTakeFirst();
+            console.log({ interaction });
+            return interaction.numInsertedOrUpdatedRows
+
         })
 });

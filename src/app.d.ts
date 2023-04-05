@@ -17,6 +17,7 @@ declare namespace App {
             stateIdToLocation: Map<number, import("@prisma/client").Location>;
             stateIdToName: Map<number, string>;
             states: import("$lib/trpc/router").RouterOutputs["user"]["getStates"];
+            subscriptions: import("$lib/trpc/router").RouterOutputs["subscriptions"]["list"];
         };
         currentList?: import("$lib/stores/currentList").CurrentList;
         // tags?: import("@prisma/client").Tag[];

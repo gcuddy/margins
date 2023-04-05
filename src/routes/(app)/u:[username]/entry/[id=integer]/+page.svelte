@@ -44,6 +44,11 @@
 	import Booster from "./Booster.svelte";
 	import Highlighter from "./Highlighter.svelte";
 	import Lead from "$lib/components/ui/typography/Lead.svelte";
+	import { cn } from "$lib/utils/tailwind";
+	import Button from "$lib/components/ui/Button.svelte";
+	import { Pause, Play } from "lucide-svelte";
+	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
+	import { formatDuration } from "$lib/utils/dates";
 	// import ReadingMenu from "./ReadingMenu.svelte";
 	// import ReadingSidebar from "./ReadingSidebar.svelte";
 	dayjs.extend(localizedFormat);
@@ -79,7 +84,7 @@
 	// );
 	let annotations: Annotation[] = [];
 	let tags = [];
-	$: last_scroll_position = $entryData?.data?.progress || 0;
+	$: last_progress = $entryData?.data?.progress ?? 0;
 
 	let articleRef: HTMLElement | undefined = undefined;
 
@@ -403,8 +408,8 @@
 	const unsubscribeScrollY = mainElScroll.subscribe(({ offset }) => {
 		if (browser) {
 			// only save if the scroll position has changed by more than .05
-			if (Math.abs(last_scroll_position - offset) > 0.05) {
-				last_scroll_position = offset;
+			if (Math.abs(last_progress - offset) > 0.05) {
+				last_progress = offset;
 				console.log("saving");
 				debouncedSave(offset);
 			}
@@ -478,6 +483,13 @@
 </svelte:head>
 {#if $entryQuery.isSuccess}
 	{@const article = $entryQuery.data}
+	{@const podcast = article.type === "audio" && !!article.feedId}
+	{@const subscription = article.feedId
+		? $page.data.user?.subscriptions.find((s) => s.feed_id === article.feedId)
+		: undefined}
+	{@const feed_image = article.feed_image?.startsWith("http")
+		? article.feed_image
+		: `https://margins.b-cdn.net/${article.feed_image}`}
 	<!-- <ReadingMenu
 		bookmark={$entryData.isSuccess && $entryData.data?.bookmark_id
 			? { id: $entryData.data?.bookmark_id }
@@ -508,15 +520,18 @@
 				<article
 					bind:this={articleRef}
 					data-article
-					class=" prose prose-stone mx-auto h-full select-text px-1 dark:prose-invert sm:p-4"
+					class={cn(
+						"prose prose-stone mx-auto h-full select-text px-1 dark:prose-invert sm:p-4",
+						podcast && article.feed_image && "max-w-4xl"
+					)}
 				>
 					{#if article.type === "article" || article.type === "rss" || (article.type === "audio" && !article.podcastIndexId)}
 						<div class="pb-16">
-							<header class="space-y-3 pb-4" bind:this={$articleHeader}>
+							<header class="space-y-3" bind:this={$articleHeader}>
 								<!-- {article.feedId
                                 ? `/u:${$page.data.user?.username}/subscriptions/${article.feedId}`
                                 : article.uri} -->
-								{#if article.uri?.startsWith("http")}
+								{#if !podcast && article.uri?.startsWith("http")}
 									{@const domain = new URL(article.uri).hostname.replace(
 										"www.",
 										""
@@ -543,7 +558,42 @@
 										>
 									</a>
 								{/if}
-								<H1 class="">{article.title}</H1>
+								<div class="not-prose flex gap-5">
+									{#if feed_image && podcast}
+										<Image
+											class="aspect-square h-48 w-48 shrink-0 rounded object-cover max-sm:hidden"
+											src={feed_image}
+											alt=""
+											width={192}
+											height={192}
+											layout="constrained"
+										/>
+									{/if}
+									<div class="grid gap-1">
+										<H1 class="line-clamp-3">{article.title}</H1>
+										{#if article.feed_title}
+											<div
+												class="flex items-center gap-x-2 text-lg font-semibold md:text-xl"
+											>
+												{#if feed_image}
+													<Image
+														class="hidden aspect-square h-6 w-6 shrink-0 rounded-lg object-cover max-sm:block"
+														src={feed_image}
+														alt=""
+														width={24}
+														height={24}
+														layout="constrained"
+													/>
+												{/if}
+												<a
+													href={`/u:${$page.data.user?.username}/subscriptions/${article.feedId}`}
+												>
+													{article.feed_title}
+												</a>
+											</div>
+										{/if}
+									</div>
+								</div>
 								<!-- TODO: DEK/Description goes here — but only if it's an actual one, not a shitty one. So how do we determine that? -->
 								{#if article.summary}
 									<Lead>{article.summary}</Lead>
@@ -558,7 +608,7 @@
 										id="origin"
 										class="flex space-x-3 text-sm text-gray-500 dark:text-gray-300 lg:text-base"
 									>
-										{#if article.author}
+										{#if article.author && !podcast}
 											<p>
 												<a href="/author/{article.author}">{article.author}</a>
 											</p>
@@ -567,7 +617,24 @@
 											<!-- <p>&middot;</p> -->
 										{/if}
 										{#if article.published}
-											<p>{dayjs(article.published).format("ll")}</p>
+											<span>{dayjs(article.published).format("ll")}</span>
+										{/if}
+										{#if last_progress && podcast}
+											{@const loaded =
+												$podcastPlayer.loaded &&
+												$podcastPlayer.episode?.enclosureUrl ===
+													article.enclosureUrl}
+											{#if loaded}
+												<span>
+													{formatDuration(
+														$podcastPlayer.duration -
+															$podcastPlayer.currentTime,
+														"seconds"
+													)} left
+												</span>
+											{:else}
+												<span>{Math.round(last_progress * 100)}% complete</span>
+											{/if}
 										{/if}
 										{#if article.wordCount}
 											<span>{article.wordCount} words</span>
@@ -595,10 +662,58 @@
 								{/if}
 							</header>
 							{#if article.type === "audio"}
-								<AudioEntry entry={article} />
+								{@const playing =
+									$podcastPlayer.loaded &&
+									!$podcastPlayer.paused &&
+									$podcastPlayer.episode?.enclosureUrl === article.enclosureUrl}
+								<!-- Audio Bar -->
+								<div class="my-4 flex items-center">
+									<Button
+										size="lg"
+										class="text-lg"
+										on:click={() => {
+											if (!article.enclosureUrl) return;
+											if (
+												$podcastPlayer.episode?.enclosureUrl ===
+												article.enclosureUrl
+											) {
+												$podcastPlayer.paused = !$podcastPlayer.paused;
+												return;
+											}
+											podcastPlayer.load(
+												{
+													title: article.title || "",
+													id: article.id,
+													enclosureUrl: article.enclosureUrl,
+													image: feed_image || article.image || "",
+													entryId: article.id,
+												},
+												{
+													title: article.feed_title,
+													// id: item.feed?.podcastIndexId,
+												},
+												$entryData.data?.progress
+												// interaction?.progress || undefined
+											);
+										}}
+									>
+										{#if playing}
+											<Pause class="mr-2 h-5 w-5" />
+											<span>Pause</span>
+										{:else}
+											<Play class="mr-2 h-5 w-5" />
+											<span>Play</span>
+										{/if}
+									</Button>
+									<Button variant="link">
+										<!-- <Play class="mr-2 h-5 w-5" /> -->
+										<span>Add</span>
+									</Button>
+								</div>
+								<!-- <AudioEntry entry={article} /> -->
 							{/if}
 							<!-- this is a very rudimentary check lol -->
-							<div id="entry-container">
+							<div id="entry-container" class="max-w-prose">
 								<Highlighter
 									articleID={article.id}
 									articleUrl={article.uri ?? ""}
@@ -635,7 +750,7 @@
 						{/if}
 					{:else if article.type === "movie" && article.tmdbId}
 						<MovieEntry id={article.tmdbId} />
-					{:else if article.type === "audio" && article.podcastIndexId}
+					{:else if article.type === "audio"}
 						<!-- decide if podcast or not podcast -->
 						{#if article.podcastIndexId}
 							<Episode episodeId={article.podcastIndexId} />
