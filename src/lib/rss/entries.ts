@@ -58,6 +58,6 @@ export async function adaptEntryFromItem(item: Item, feedId: Feed["id"]) {
         updatedAt: new Date(),
         image,
         type,
-        enclosureUrl,
+        enclosureUrl: type === "audio" ? enclosureUrl : null,
     }) as const
 }
