@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { Dialog } from "@rgossiaux/svelte-headlessui";
 	import DialogTrigger from "./DialogTrigger.svelte";
+	import type { ComponentProps } from "svelte";
+
 	export let isOpen = false;
+	interface $$Props extends ComponentProps<Dialog<"div">> {
+		isOpen?: boolean;
+	}
 </script>
 
 <div>

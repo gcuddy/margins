@@ -47,10 +47,14 @@
 		onSelect?.($_value);
 	}
 
-	onDestroy(() => {
-		unmounter();
+	function destroy() {
+		console.log("destroying item", id);
+		console.log({ unmounter });
+		if (unmounter) unmounter();
 		el?.removeEventListener(SELECT_EVENT, handleSelect);
-	});
+	}
+
+	onDestroy(destroy);
 
 	interface $$Props extends HTMLBaseAttributes {
 		/** Whether this item is currently disabled. */
@@ -69,6 +73,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if render}
 	<div
+		{...$$restProps}
 		bind:this={el}
 		data-cmdk-item
 		role="option"

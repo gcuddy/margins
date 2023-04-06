@@ -1,11 +1,11 @@
 <script lang="ts" context="module">
-	export const LIST_SELECTOR = `[data-cmdk-list-sizer=""]`;
-	export const GROUP_SELECTOR = `[data-cmdk-group=""]`;
-	export const GROUP_ITEMS_SELECTOR = `[data-cmdk-group-items=""]`;
-	export const GROUP_HEADING_SELECTOR = `[data-cmdk-group-heading=""]`;
-	export const ITEM_SELECTOR = `[data-cmdk-item=""]`;
+	export const LIST_SELECTOR = `[data-cmdk-list-sizer]`;
+	export const GROUP_SELECTOR = `[data-cmdk-group]`;
+	export const GROUP_ITEMS_SELECTOR = `[data-cmdk-group-items]`;
+	export const GROUP_HEADING_SELECTOR = `[data-cmdk-group-heading]`;
+	export const ITEM_SELECTOR = `[data-cmdk-item]`;
 	export const VALID_ITEM_SELECTOR = `${ITEM_SELECTOR}:not([aria-disabled="true"])`;
-	export const SELECT_EVENT = `data-cmdk-item-select`;
+	export const SELECT_EVENT = `cmdk-item-select`;
 	export const VALUE_ATTR = `data-value`;
 
 	type State = {
@@ -65,14 +65,13 @@
 
 <script lang="ts">
 	import { useId } from "$lib/hooks/use-id";
+	// @ts-ignore
 	import commandScore from "command-score";
 	import { getContext, setContext, tick } from "svelte";
 	import type { HTMLBaseAttributes } from "svelte/elements";
 	import { writable, type Readable, type Writable } from "svelte/store";
 
-	let rootEl: HTMLElement | undefined;
-
-	let ref: HTMLElement;
+	let ref: HTMLElement | undefined = undefined;
 
 	const defaultFilter: Required<CommandProps>["filter"] = (value, search) =>
 		commandScore(value, search);
@@ -110,8 +109,9 @@
 					console.log("sorted");
 					tick().then(() => {
 						console.log("tick");
-						scrollSelectedIntoView();
-						console.log("scrolled");
+						selectFirstItem();
+						// scrollSelectedIntoView();
+						console.log("selected first");
 					});
 				} else if (key === "value") {
 					// opts is a boolean referring to whether it should NOT be scrolled into view
@@ -190,7 +190,7 @@
 	/** Sorts items by score, and groups by highest item score. */
 	function sort() {
 		if (
-			ref ||
+			!ref ||
 			$state.search ||
 			// Explicitly false, because true | undefined is the default
 			$propsRef.shouldFilter === false
@@ -218,7 +218,7 @@
 		// Sort items within groups to bottom
 		// Sort items outside of groups
 		// Sort groups to bottom (pushes all non-grouped items to the top)
-		const list = rootEl?.querySelector(LIST_SELECTOR);
+		const list = ref?.querySelector(LIST_SELECTOR);
 
 		// Sort the items
 		getValidItems()
@@ -250,7 +250,7 @@
 		groups
 			.sort((a, b) => b[1] - a[1])
 			.forEach((group) => {
-				const element = rootEl?.querySelector(
+				const element = ref?.querySelector(
 					`${GROUP_SELECTOR}[${VALUE_ATTR}="${group[0]}"]`
 				);
 				element?.parentElement?.appendChild(element);
@@ -322,6 +322,7 @@
 	function selectFirstItem() {
 		const item = getValidItems().find((item) => !item.ariaDisabled);
 		const value = item?.getAttribute(VALUE_ATTR);
+		console.log(`selectfirstitem`, { item, value });
 		state.setState("value", value ?? "");
 	}
 
@@ -373,7 +374,9 @@
 				sort();
 
 				// Could be initial mount, select the first item if none already selected
+				console.log("item mounted", { id, $allItems, $state });
 				if (!$state.value) {
+					console.log("selecting first item");
 					selectFirstItem();
 				}
 			});
@@ -382,10 +385,11 @@
 				$ids.delete(id);
 				$allItems.delete(id);
 				$state.filtered.items.delete(id);
-
+				console.log("item unmounted", { id, $allItems, $state });
 				// Batch this, multiple items could be removed in one pass
 				tick().then(() => {
 					filterItems();
+					console.log("selecting first item");
 					// The item removed could have been the selected one,
 					// so selection should be moved to the first
 					selectFirstItem();
@@ -455,6 +459,7 @@
 		const selected = getSelectedItem();
 		const items = getValidItems();
 		const index = items.findIndex((item) => item === selected);
+		console.log(`updateSelectedByChange`, { selected, items, index, change });
 
 		// Get item at this index
 		let newSelected = items[index + change];
@@ -496,6 +501,7 @@
 	const last = () => updateSelectedToIndex(getValidItems().length - 1);
 
 	const next = (e: KeyboardEvent) => {
+		console.log("next", e);
 		e.preventDefault();
 
 		if (e.metaKey) {
@@ -506,6 +512,7 @@
 			updateSelectedToGroup(1);
 		} else {
 			// Next item
+			console.log("next item");
 			updateSelectedByChange(1);
 		}
 	};
@@ -527,10 +534,11 @@
 </script>
 
 <div
-	bind:this={rootEl}
+	bind:this={ref}
 	{...$$restProps}
 	data-cmdk-root
 	on:keydown={(e) => {
+		console.log({ e });
 		if (!e.defaultPrevented) {
 			switch (e.key) {
 				case "n":
