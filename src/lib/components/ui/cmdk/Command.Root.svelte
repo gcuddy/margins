@@ -160,6 +160,10 @@
 		 * Optionally set to `true` to turn on looping around when using the arrow keys.
 		 */
 		loop?: boolean;
+		/**
+		 *  Event handler called when the user presses a key.
+		 */
+		onKeydown?: (event: KeyboardEvent) => void;
 	}
 
 	interface $$Props extends CommandProps {}
@@ -169,6 +173,7 @@
 	export let value = "";
 	export let onValueChange = (value: string) => {};
 	export let loop = false;
+	export let onKeydown: $$Props["onKeydown"] = undefined;
 
 	function score(value: string) {
 		console.log(`scoring ${value}`);
@@ -538,7 +543,7 @@
 	{...$$restProps}
 	data-cmdk-root
 	on:keydown={(e) => {
-		console.log({ e });
+		onKeydown?.(e);
 		if (!e.defaultPrevented) {
 			switch (e.key) {
 				case "n":

@@ -17,11 +17,13 @@
 		CommandSeparator,
 		CommandShortcut,
 	} from "$lib/components/ui/command";
+	import { H2 } from "$lib/components/ui/typography";
+	import NestedCommand from "./NestedCommand.svelte";
 </script>
 
 <div class="p-10">
 	<Command
-		class="rounded-lg border border-slate-100  shadow-md dark:border-slate-800"
+		class="rounded-lg border border-gray-100  shadow-md dark:border-gray-800"
 	>
 		<CommandInput placeholder="Type a command or search..." />
 		<CommandList>
@@ -60,4 +62,6 @@
 			</CommandGroup>
 		</CommandList>
 	</Command>
+	<H2>Multi-page</H2>
+	<NestedCommand />
 </div>

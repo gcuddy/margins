@@ -10,7 +10,7 @@
 </script>
 
 <span
-	class={cn("ml-auto text-xs tracking-widest text-slate-500", className)}
+	class={cn("ml-auto text-xs tracking-widest text-gray-500", className)}
 	{...$$restProps}
 >
 	<slot /></span
