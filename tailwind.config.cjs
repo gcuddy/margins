@@ -39,7 +39,7 @@ const config = {
 		},
 		colors: {
 			...colors,
-			gray: colors.stone,
+			gray: colors.slate,
 			highlight: {
 				yellow: "#ffd700",
 				"yellow-dark": "#ecc100",

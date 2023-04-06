@@ -30,6 +30,7 @@
 	import { writable } from "svelte/store";
 	import { setContext } from "svelte";
 	import { beforeNavigate } from "$app/navigation";
+	import Commander from "./Commander.svelte";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;
@@ -64,48 +65,50 @@
 {/if}
 <QueryClientProvider client={data.queryClient}>
 	<MutationProvider>
-		<div
-			class="simple-scrollbars app container bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
-				? 'mobile'
-				: ''}"
-			data-transparency="true"
-			on:drag
-		>
-			<Notifications />
-			<!-- Grid version -->
+		<Commander>
 			<div
-				class="relative flex h-screen min-h-full w-full overflow-hidden"
-				style="--sidebar-width: {sidebarWidth}px;"
+				class="simple-scrollbars app container bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
+					? 'mobile'
+					: ''}"
+				data-transparency="true"
+				on:drag
 			>
-				{#if $navigating}
-					<!-- TODO: shouldn't show for search -->
-					<PreloadingIndicator />
-				{/if}
-				<!-- sidebar, but should only be for some layouts -->
-				<!-- probably better to use layout groups, but this will do for now -->
-				{#if $page.route.id?.startsWith("/(app)/settings")}
-					<Sidebar bind:sidebarWidth>
-						<SettingsSidebar />
-					</Sidebar>
-				{:else}
-					<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
-					<Sidebar bind:sidebarWidth />
-				{/if}
-				<!-- bind:this={$mainEl} -->
-				<main
-					class="relative flex h-full grow flex-col place-items-stretch overflow-auto"
+				<Notifications />
+				<!-- Grid version -->
+				<div
+					class="relative flex h-screen min-h-full w-full overflow-hidden"
+					style="--sidebar-width: {sidebarWidth}px;"
 				>
-					<slot />
-					<PodcastPlayer />
-				</main>
+					{#if $navigating}
+						<!-- TODO: shouldn't show for search -->
+						<PreloadingIndicator />
+					{/if}
+					<!-- sidebar, but should only be for some layouts -->
+					<!-- probably better to use layout groups, but this will do for now -->
+					{#if $page.route.id?.startsWith("/(app)/settings")}
+						<Sidebar bind:sidebarWidth>
+							<SettingsSidebar />
+						</Sidebar>
+					{:else}
+						<!-- {:else if !$page.route.id?.startsWith('/(app)/u:[username]/entry')} -->
+						<Sidebar bind:sidebarWidth />
+					{/if}
+					<!-- bind:this={$mainEl} -->
+					<main
+						class="relative flex h-full grow flex-col place-items-stretch overflow-auto"
+					>
+						<slot />
+						<PodcastPlayer />
+					</main>
+				</div>
+				<DropBox />
+				<!-- hm: think command palettes should be like their own modals -->
+				<!-- TODO: figure out solution here; stacking bugs very possible -->
+				<CommandPalette />
+				<GenericCommandPaletteContainer />
+				<Modals />
 			</div>
-			<DropBox />
-			<!-- hm: think command palettes should be like their own modals -->
-			<!-- TODO: figure out solution here; stacking bugs very possible -->
-			<CommandPalette />
-			<GenericCommandPaletteContainer />
-			<Modals />
-		</div>
+		</Commander>
 	</MutationProvider>
 </QueryClientProvider>
 

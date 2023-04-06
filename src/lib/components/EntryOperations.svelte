@@ -13,6 +13,7 @@
 	import { cn } from "$lib/utils/tailwind";
 	import type { Entry } from "@prisma/client";
 	import { ListPlus, MoreVertical, RefreshCwIcon, Tag } from "lucide-svelte";
+	import toast from "svelte-french-toast";
 	let c = "";
 	export { c as class };
 	type EntryProps = Pick<Entry, "id">;
@@ -20,6 +21,34 @@
 
 	const client = trpcWithQuery($page);
 	const utils = client.createContext();
+
+	async function refreshData() {
+		const data = new FormData();
+		data.append("id", String(entry.id));
+		const response = await fetch(
+			`/u:${$page.data.user?.username}/entry/${entry.id}?/refreshData`,
+			{
+				method: "POST",
+				body: data,
+				headers: {
+					"x-sveltekit-action": "true",
+				},
+			}
+		);
+		if (response.ok) {
+			toast.success("Data refreshed");
+			utils.entries.invalidate();
+		} else {
+			toast.error("Failed to refresh data");
+		}
+	}
+
+	const refreshMutation = client.entries.refreshData.createMutation({
+		onSuccess: () => {
+			utils.entries.invalidate();
+		},
+	});
+
 	// TODO
 </script>
 
@@ -51,7 +80,7 @@
 			<ListPlus class="mr-2 h-4 w-4" />
 			<span>Add to Collection</span>
 		</DropdownMenuItem>
-		<DropdownMenuItem>
+		<DropdownMenuItem on:click={refreshData}>
 			<RefreshCwIcon class="mr-2 h-4 w-4" />
 			<span>Re-download data</span>
 		</DropdownMenuItem>

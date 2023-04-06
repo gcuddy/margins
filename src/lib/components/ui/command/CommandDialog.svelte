@@ -8,10 +8,11 @@
 	import { Dialog, DialogContent } from "$lib/components/ui/dialog";
 	import type { ComponentProps } from "svelte";
 	import Command from "$lib/components/ui/command/Command.svelte";
+	export let isOpen = false;
 	interface $$Props extends ComponentProps<Dialog> {}
 </script>
 
-<Dialog {...$$props}>
+<Dialog bind:isOpen {...$$restProps}>
 	<DialogContent
 		class="overflow-hidden p-0 shadow-2xl [&_[dialog-overlay]]:bg-red-100"
 	>

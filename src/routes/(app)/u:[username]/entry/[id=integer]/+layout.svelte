@@ -106,5 +106,15 @@
 		</div>
 	</div>
 {:else}
+	<EntryOperations
+		class={cn(
+			buttonVariants({
+				class: "h-10 w-10 rounded-full border-none p-3",
+				variant: "subtle",
+			}),
+			"fixed right-4 top-4 z-40 opacity-50 transition hover:opacity-100"
+		)}
+		entry={{ id: +$page.params.id }}
+	/>
 	<slot />
 {/if}

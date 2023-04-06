@@ -83,10 +83,12 @@ export const publicRouter = router({
         const normalizedUrl = normalizeUrl(input.url);
         try {
             const parsed = await parse(normalizedUrl);
-            await ctx.redis.set(input.url, parsed, {
-                // cache for one day
-                ex: 60 * 60 * 24
-            })
+            if (!dev) {
+                await ctx.redis.set(input.url, parsed, {
+                    // cache for one day
+                    ex: 60 * 60 * 24
+                })
+            }
             return parsed as Metadata;
         } catch (e) {
             console.error(e)

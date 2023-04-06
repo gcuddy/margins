@@ -7,7 +7,10 @@ import { createContext } from "$lib/trpc/context";
 import { appRouter, createCaller } from "$lib/trpc/router";
 import { getJsonFromRequest } from "$lib/utils";
 
-import type { Actions, PageServerLoad } from "./$types";
+import type { Actions, PageServerLoad, } from "./$types";
+import { z } from "zod";
+import { superValidate } from "sveltekit-superforms/server";
+import type { Metadata } from "$lib/web-parser";
 
 // export const load: PageServerLoad = async (evt) => {
 //     const { parent } = evt;
@@ -22,6 +25,17 @@ import type { Actions, PageServerLoad } from "./$types";
 //         authorized,
 //     };
 // };
+
+const idSchema = z.object({
+    id: z.number(),
+})
+
+export const load = (async (evt) => {
+    const form = await superValidate(evt, idSchema)
+    return {
+        form
+    }
+}) satisfies PageServerLoad;
 
 export const actions: Actions = {
     save: async (evt) => {
@@ -201,6 +215,34 @@ export const actions: Actions = {
         });
         return {
             log
+        }
+    },
+    refreshData: async (evt) => {
+        // get url from db
+        const form = await superValidate(evt, idSchema);
+        console.log({ form });
+        if (!form.valid) {
+            return fail(400, { form })
+        }
+        const { id } = form.data;
+        const { uri } = await db.selectFrom("Entry")
+            .select(["uri"])
+            .where("id", "=", id)
+            .executeTakeFirstOrThrow();
+        if (!uri) {
+            throw new Error("No URI found");
+        }
+        const data = await evt.fetch(`/api/parse/${encodeURIComponent(uri)}`, {
+            method: "GET",
+        }).then((res) => res.json()) as Metadata;
+        console.log({ data });
+        await db.updateTable("Entry")
+            .set(data)
+            .where("id", "=", id)
+            .execute();
+
+        return {
+            form
         }
     }
 };

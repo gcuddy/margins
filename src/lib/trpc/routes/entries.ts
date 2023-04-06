@@ -527,14 +527,46 @@ export const entriesRouter = router({
             })
         )
         .mutation(async ({ ctx, input }) => {
-            const { prisma } = ctx;
-            const { id, data } = input;
-            return await prisma.entry.update({
-                where: {
-                    id,
-                },
-                data,
-            });
+            const { db } = ctx;
+
+            await db.updateTable("Entry")
+                .set({
+                    ...input.data
+                })
+                .where("id", "=", input.id)
+                .execute();
+            // const { prisma } = ctx;
+            // const { id, data } = input;
+            // return await prisma.entry.update({
+            //     where: {
+            //         id,
+            //     },
+            //     data,
+            // });
+        }),
+    refreshData: protectedProcedure
+        .input(z.object({
+            id: z.number(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            // get url from db
+            const { uri } = await ctx.db.selectFrom("Entry")
+                .select(["uri"])
+                .where("id", "=", input.id)
+                .executeTakeFirstOrThrow();
+            if (!uri) {
+                throw new Error("No URI found");
+            }
+            const data = await fetch(`/api/parse/${encodeURIComponent(uri)}`, {
+                method: "GET",
+            }).then((res) => res.json()) as Metadata;
+            console.log({ data });
+            await ctx.db.updateTable("Entry")
+                .set({
+                    ...data,
+                })
+                .where("id", "=", input.id)
+                .execute();
         }),
     byFeed: protectedProcedure
         .input(z.object({

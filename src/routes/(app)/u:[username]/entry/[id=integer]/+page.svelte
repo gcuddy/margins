@@ -92,6 +92,7 @@
 		// set up onerrors for imgs to set src to data-canonical-src (if it exists)
 		const imgs = articleRef?.querySelectorAll("img");
 		if (imgs) {
+			console.log("Setting up imgs", imgs);
 			imgs.forEach((img) => {
 				img.onerror = () => {
 					if (img.dataset.canonicalSrc) {

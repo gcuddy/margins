@@ -17,8 +17,9 @@
 		CommandSeparator,
 		CommandShortcut,
 	} from "$lib/components/ui/command";
-	import { H2 } from "$lib/components/ui/typography";
+	import { H2, H3 } from "$lib/components/ui/typography";
 	import NestedCommand from "./NestedCommand.svelte";
+	import DialogCommand from "./DialogCommand.svelte";
 </script>
 
 <div class="p-10">
@@ -62,6 +63,14 @@
 			</CommandGroup>
 		</CommandList>
 	</Command>
-	<H2>Multi-page</H2>
-	<NestedCommand />
+	<H2>Examples</H2>
+
+	<div class="grid gap-3">
+		<H3>Nested multi-page</H3>
+		<NestedCommand />
+	</div>
+	<div class="grid gap-3">
+		<H3>Dialog</H3>
+		<DialogCommand />
+	</div>
 </div>
