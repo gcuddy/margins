@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import EntryOperations from "$lib/components/EntryOperations.svelte";
-	import AspectRatio from "$lib/components/ui/AspectRatio.svelte";
+	// import EntryOperations from "$lib/components/EntryOperations.svelte";
+	// import AspectRatio from "$lib/components/ui/AspectRatio.svelte";
 	import { formatDate } from "$lib/utils/date";
 	import type { Entry } from "@prisma/client";
 	import { Image } from "@unpic/svelte";
@@ -41,7 +41,7 @@
 <div class="flex items-center justify-between gap-2 p-4">
 	<div class="flex items-center gap-4">
 		<div class="h-8 w-8 shrink-0 overflow-hidden rounded-md sm:h-10 sm:w-10">
-			<Image
+			<!-- <Image
 				class="aspect-square w-10 object-cover hover:scale-105"
 				src={getSrc(entry.image)}
 				on:error={(e) => {
@@ -53,7 +53,7 @@
 				layout="constrained"
 				width={40}
 				height={40}
-			/>
+			/> -->
 		</div>
 		<!-- <img
 
@@ -94,5 +94,5 @@
 			</div>
 		</div>
 	</div>
-	<EntryOperations entry={{ id: entry.id, title: entry.title }} />
+	<!-- <EntryOperations entry={{ id: entry.id, title: entry.title }} /> -->
 </div>

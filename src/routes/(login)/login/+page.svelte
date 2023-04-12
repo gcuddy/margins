@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { navigating } from "$app/stores";
-	import Muted from "$lib/components/atoms/Muted.svelte";
+	import { navigating, page } from "$app/stores";
 	import Button from "$lib/components/Button.svelte";
-	import GenericInput from "$lib/components/GenericInput.svelte";
+	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
+	import Input from "$lib/components/ui/Input.svelte";
+	import Label from "$lib/components/ui/Label.svelte";
 	import { superForm } from "sveltekit-superforms/client";
-	import toast from "svelte-french-toast";
-	import SuperDebug from "sveltekit-superforms/client/SuperDebug.svelte";
 
 	// export let form: { message?: string };
 	export let data;
@@ -16,39 +15,19 @@
 		},
 	});
 	let loading = false;
+
+	$: message = $page.url.searchParams.get("message") ?? "";
 </script>
 
-<SuperDebug data={$form} />
+<!-- <SuperDebug data={$form} /> -->
 
 <h2 class="text-2xl font-bold">Log in to Margins</h2>
 <div class="rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">
-	<form
-		use:enhance={{
-			// onError: "apply",
-			// onSubmit: () => {
-			// 	loading = true;
-			// 	return async ({ result, update }) => {
-			// 		await update({
-			// 			reset: false,
-			// 		});
-			// 		loading = false;
-			// 	};
-			// },
-			onUpdated: ({ form }) => {
-				if (form.errors) {
-					toast.error("Invalid email or password");
-				} else {
-					toast.success("Logged in");
-				}
-			},
-		}}
-		class="flex max-w-xs flex-col space-y-6"
-		method="post"
-	>
+	<form class="flex max-w-xs flex-col space-y-6" method="post">
 		<div>
 			<!-- TODO: allow email OR username -->
-			<label for="email"><Muted>Email</Muted> </label>
-			<GenericInput
+			<Label for="email"><Muted>Email</Muted></Label>
+			<Input
 				id="email"
 				name="email"
 				placeholder=""
@@ -61,8 +40,8 @@
 			/>
 		</div>
 		<div>
-			<label for="password"><Muted>Password</Muted></label>
-			<GenericInput
+			<Label for="password"><Muted>Password</Muted></Label>
+			<Input
 				id="password"
 				name="password"
 				required
@@ -74,6 +53,7 @@
 				{...$constraints.password}
 			/>
 		</div>
+		<!-- <input type="submit" /> -->
 		<Button type="submit" className="text-base">
 			{#if loading || $navigating}
 				<Icon name="loading" className="h-5 w-5 animate-spin text-white" />

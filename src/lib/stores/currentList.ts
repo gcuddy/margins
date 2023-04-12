@@ -1,5 +1,5 @@
 import type { Entry, Feed, Subscription } from '@prisma/client';
-import { type Writable, writable } from 'svelte/store';
+import { type Writable, writable, derived, get } from 'svelte/store';
 
 import type { EntryWithBookmark } from '$lib/entry.server';
 import { getContext, setContext } from 'svelte';
@@ -34,16 +34,29 @@ export type ICurrentList = List | FeedList;
 
 export type CurrentList = Writable<ICurrentList>;
 
-export type CurrentListStore = {
-	entries: Pick<Entry, "id">[];
+
+type BasicEntryInList = Pick<Entry, "id">
+
+export type CurrentListStore<T extends BasicEntryInList = BasicEntryInList> = {
+	entries: T[];
 	slug?: string;
+	context?: "bookmarks" | "rss";
 	//    optionally, subscription etc
+
+	// INFINITE QUERIES
+	cursor?: string | Date | number | null;
+	fetcher?: (cursor: Date) => Promise<{ entries: T[]; nextCursor?: Date | null; }>;
+
+
+	// State
+	loading?: boolean;
 }
 
 export function createCurrentListStore() {
-	const { subscribe, set, update } = writable<CurrentListStore>({
+	const store = writable<CurrentListStore>({
 		entries: []
 	});
+	const { subscribe, set, update } = store;
 
 	return {
 		subscribe,
@@ -51,7 +64,28 @@ export function createCurrentListStore() {
 		update: update(val => {
 			console.log(`current list being updated`)
 			return val
-		})
+		}),
+		hasMore: derived(store, $store => !!$store.cursor),
+		fetch: async () => {
+			store.update(store => {
+				store.loading = true;
+				return store;
+			})
+			const state = get(store)
+			if (!state.cursor) {
+				throw new Error(`No cursor set`)
+			}
+			if (!state.fetcher) {
+				throw new Error(`No fetcher set`)
+			}
+			const { entries, nextCursor } = await state.fetcher(state.cursor);
+			store.update((store) => {
+				store.cursor = nextCursor;
+				store.entries = [...store.entries, ...entries];
+				store.loading = false;
+				return store;
+			})
+		}
 	}
 }
 

@@ -11,6 +11,8 @@
 	type State = {
 		search: string;
 		value: string;
+		active_id: string;
+		selected: string | string[];
 		filtered: {
 			count: number;
 			items: Map<string, number>;
@@ -28,6 +30,7 @@
 		listId: string;
 		labelId: string;
 		inputId: string;
+		multiple: boolean;
 	};
 
 	export function useCommand() {
@@ -48,6 +51,8 @@
 			value: State[K],
 			opts?: any
 		) => void;
+		toggle: (value: string) => void;
+		close: () => void;
 	};
 
 	export function useState() {
@@ -67,7 +72,7 @@
 	import { useId } from "$lib/hooks/use-id";
 	// @ts-ignore
 	import commandScore from "command-score";
-	import { getContext, setContext, tick } from "svelte";
+	import { createEventDispatcher, getContext, setContext, tick } from "svelte";
 	import type { HTMLBaseAttributes } from "svelte/elements";
 	import { writable, type Readable, type Writable } from "svelte/store";
 
@@ -80,8 +85,17 @@
 		const store = writable<State>({
 			/** Value of the search query. */
 			search: "",
-			/** Currently selected item value. */
+			active_id: "",
+			/** Currently active item value. */
 			value: "",
+			/** Currently selected item */
+			selected: multiple
+				? selected && Array.isArray(selected)
+					? selected
+					: selected
+					? [selected]
+					: []
+				: selected || "",
 			filtered: {
 				/** The count of all visible items. */
 				count: 0,
@@ -120,12 +134,32 @@
 					}
 				}
 			},
+			toggle: (value) => {
+				console.log("toggle", value);
+				store.update((state) => {
+					if (Array.isArray(state.selected)) {
+						if (state.selected.includes(value)) {
+							state.selected = state.selected.filter((v) => v !== value);
+							dispatch("remove", { value });
+						} else {
+							state.selected = [...state.selected, value];
+							dispatch("add", { value });
+						}
+					} else {
+						if (state.selected === value) {
+							state.selected = "";
+							dispatch("remove", { value });
+						} else {
+							state.selected = value;
+							dispatch("add", { value });
+						}
+					}
+					return state;
+				});
+			},
+			close: () => dispatch("close"),
 		};
 	}
-
-	const state = createStateStore();
-
-	setStateContext(state);
 
 	const allItems = writable<Set<string>>(new Set()); // [...itemIds]
 	const allGroups = writable<Map<string, Set<string>>>(new Map()); // groupId → [...itemIds]
@@ -153,7 +187,7 @@
 		 */
 		value?: string;
 		/**
-		 * Event handler called when the selected item of the menu changes.
+		 * Event htandler called when the selected item of the menu changes.
 		 */
 		onValueChange?: (value: string) => void;
 		/**
@@ -164,6 +198,18 @@
 		 *  Event handler called when the user presses a key.
 		 */
 		onKeydown?: (event: KeyboardEvent) => void;
+		/**
+		 *  Optionally set to `true` to allow multiple items to be selected.
+		 */
+		multiple?: boolean;
+		/**
+		 *  Optionally provide previously selected items.
+		 */
+		selected?: string | string[];
+		/**
+		 *  Optionally provide a function to be called when the menu is empty.
+		 */
+		emptyAction?: () => void;
 	}
 
 	interface $$Props extends CommandProps {}
@@ -174,6 +220,25 @@
 	export let onValueChange = (value: string) => {};
 	export let loop = false;
 	export let onKeydown: $$Props["onKeydown"] = undefined;
+	export let multiple = false;
+	export let selected: $$Props["selected"] = undefined;
+	export let emptyAction: $$Props["emptyAction"] = undefined;
+
+	// dispatcher for close event
+	const dispatch = createEventDispatcher<{
+		close: void;
+		add: { value: string };
+		remove: { value: string };
+	}>();
+
+	// $: $state.selected, dispatch("select", { value: $state.value });
+
+	const state = createStateStore();
+
+	setStateContext(state);
+
+	// $: $state.value,
+	// tick().then(() => ($state.active_id = getSelectedItem()?.id ?? ""));
 
 	function score(value: string) {
 		console.log(`scoring ${value}`);
@@ -185,7 +250,8 @@
 	/** Getters */
 
 	function getSelectedItem() {
-		return ref?.querySelector(`${ITEM_SELECTOR}[aria-selected="true"]`);
+		return ref?.querySelector(`${ITEM_SELECTOR}[data-active="true"]`);
+		// return ref?.querySelector(`${ITEM_SELECTOR}[aria-selected="true"]`);
 	}
 
 	function getValidItems() {
@@ -327,8 +393,9 @@
 	function selectFirstItem() {
 		const item = getValidItems().find((item) => !item.ariaDisabled);
 		const value = item?.getAttribute(VALUE_ATTR);
-		console.log(`selectfirstitem`, { item, value });
+		const id = item?.id;
 		state.setState("value", value ?? "");
+		state.setState("active_id", id ?? "");
 	}
 
 	const listId = useId().toString();
@@ -339,6 +406,7 @@
 		listId,
 		labelId,
 		inputId,
+		multiple,
 		group: (id) => {
 			if (!$allGroups.has(id)) {
 				$allGroups.set(id, new Set());
@@ -381,7 +449,6 @@
 				// Could be initial mount, select the first item if none already selected
 				console.log("item mounted", { id, $allItems, $state });
 				if (!$state.value) {
-					console.log("selecting first item");
 					selectFirstItem();
 				}
 			});
@@ -390,11 +457,9 @@
 				$ids.delete(id);
 				$allItems.delete(id);
 				$state.filtered.items.delete(id);
-				console.log("item unmounted", { id, $allItems, $state });
 				// Batch this, multiple items could be removed in one pass
 				tick().then(() => {
 					filterItems();
-					console.log("selecting first item");
 					// The item removed could have been the selected one,
 					// so selection should be moved to the first
 					selectFirstItem();
@@ -458,6 +523,7 @@
 		const item = items[index];
 		const attr = item?.getAttribute(VALUE_ATTR);
 		if (attr) state.setState("value", attr);
+		state.setState("active_id", item?.id ?? "");
 	}
 
 	function updateSelectedByChange(change: 1 | -1) {
@@ -478,8 +544,10 @@
 					: items[index + change];
 		}
 
-		if (newSelected)
+		if (newSelected) {
 			state.setState("value", newSelected.getAttribute(VALUE_ATTR)!);
+			state.setState("active_id", newSelected.id);
+		}
 	}
 
 	function updateSelectedToGroup(change: 1 | -1) {
@@ -496,6 +564,7 @@
 		}
 
 		const attr = item?.getAttribute(VALUE_ATTR);
+		state.setState("active_id", item?.id ?? "");
 		if (attr) {
 			state.setState("value", attr);
 		} else {
@@ -589,7 +658,27 @@
 					if (item) {
 						const event = new Event(SELECT_EVENT);
 						item.dispatchEvent(event);
+					} else {
+						const button = ref?.querySelector("[data-cmdk-empty] button");
+						if (button && button instanceof HTMLButtonElement) {
+							button.click();
+						}
+						emptyAction?.();
 					}
+					dispatch("close");
+					break;
+				}
+				case " ": {
+					// Trigger item onSelect
+					if (multiple) {
+						e.preventDefault();
+						const item = getSelectedItem();
+						if (item) {
+							const event = new Event(SELECT_EVENT);
+							item.dispatchEvent(event);
+						}
+					}
+					break;
 				}
 			}
 		}
@@ -603,6 +692,6 @@
 	>
 		{label}
 	</label>
-	<slot />
+	<slot selected={$state.selected} />
 	<!-- Context -->
 </div>

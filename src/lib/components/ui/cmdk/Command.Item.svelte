@@ -13,6 +13,7 @@
 
 	export let disabled = false;
 	export let onSelect: ((value: string) => void) | undefined = undefined;
+
 	export let value: string | undefined = undefined;
 
 	$: value = value || el?.textContent?.trim()?.toLowerCase();
@@ -29,7 +30,11 @@
 		el.addEventListener(SELECT_EVENT, handleSelect);
 	}
 
-	$: selected = $state.value && $state.value === value;
+	$: selected =
+		Array.isArray($state.selected) && value
+			? $state.selected.includes(value)
+			: $state.selected === value;
+	$: active = $state.value && $state.value === value;
 	$: render =
 		$context.filter() === false
 			? true
@@ -41,15 +46,25 @@
 
 	function select() {
 		state.setState("value", $_value, true);
+		state.setState("active_id", id, true);
 	}
 
-	function handleSelect() {
+	function handleSelect(e: Event) {
+		console.log("handle select", e);
+		console.log({ $_value });
+		state.toggle($_value);
 		onSelect?.($_value);
+		if (
+			!e.defaultPrevented &&
+			(e instanceof MouseEvent || e instanceof PointerEvent) &&
+			// check to make sure we didn't click a checkbox
+			!(e.target instanceof HTMLInputElement)
+		) {
+			state.close();
+		}
 	}
 
 	function destroy() {
-		console.log("destroying item", id);
-		console.log({ unmounter });
 		if (unmounter) unmounter();
 		el?.removeEventListener(SELECT_EVENT, handleSelect);
 	}
@@ -73,6 +88,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if render}
 	<div
+		{id}
 		{...$$restProps}
 		bind:this={el}
 		data-cmdk-item
@@ -80,9 +96,10 @@
 		aria-selected={selected || undefined}
 		data-selected={selected || undefined}
 		aria-disabled={disabled || undefined}
+		data-active={active || undefined}
 		on:pointermove={disabled ? undefined : select}
 		on:click={disabled ? undefined : handleSelect}
 	>
-		<slot />
+		<slot {selected} {handleSelect} />
 	</div>
 {/if}

@@ -20,6 +20,7 @@
 				},
 				size: {
 					default: "h-10 py-2 px-4",
+					xs: "h-8 px-2 text-xs rounded-lg",
 					sm: "h-9 px-2 rounded-md",
 					lg: "h-11 px-8 rounded-md",
 				},
@@ -54,6 +55,7 @@
 	this={as}
 	{...$$restProps}
 	on:click
+	on:pointerdown
 	class={cn(buttonVariants({ variant, size, class: c }))}
 >
 	<slot />

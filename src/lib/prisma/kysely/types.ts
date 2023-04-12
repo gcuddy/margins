@@ -3,6 +3,7 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	? ColumnType<S, I | undefined, U>
 	: ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+export type Status = "Backlog" | "Now" | "Archive";
 export type Color = "Yellow" | "Blue" | "Green" | "Pink" | "Purple";
 export type RelationType = "Related" | "SavedFrom";
 export type AnnotationType =
@@ -42,7 +43,7 @@ export type FavoriteType = "FOLDER" | "FAVORITE";
 export type Annotation = {
 	id: string;
 	createdAt: Generated<Timestamp>;
-	updatedAt: Timestamp;
+	updatedAt: Generated<Timestamp>;
 	body: string | null;
 	contentData: unknown | null;
 	chosenIcon: unknown | null;
@@ -105,8 +106,8 @@ export type Bookmark = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	context: unknown | null;
-	uri: string | null;
 	entryId: number | null;
+	uri: string | null;
 	userId: string;
 	sortOrder: Generated<number | null>;
 	is_read: Generated<boolean>;
@@ -118,6 +119,7 @@ export type Bookmark = {
 	snoozedUntil: Timestamp | null;
 	source: string | null;
 	stateId: number | null;
+	status: Generated<Status>;
 	private: Generated<boolean>;
 	interactionId: number | null;
 	favoriteId: number | null;
@@ -383,7 +385,7 @@ export type Tag = {
 	id: Generated<number>;
 	name: string;
 	createdAt: Generated<Timestamp>;
-	updatedAt: Timestamp;
+	updatedAt: Generated<Timestamp>;
 	viewOptions: unknown | null;
 	userId: string;
 };

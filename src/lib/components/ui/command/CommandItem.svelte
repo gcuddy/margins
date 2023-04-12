@@ -12,11 +12,13 @@
 </script>
 
 <CommandItem
+	let:selected
+	let:handleSelect
 	{...$$restProps}
 	class={cn(
-		"relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm font-medium outline-none aria-selected:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:aria-selected:bg-gray-700",
+		"relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm font-medium outline-none data-[disabled]:pointer-events-none data-[active]:bg-gray-100 data-[disabled]:opacity-50 dark:data-[active]:bg-gray-700",
 		className
 	)}
 >
-	<slot />
+	<slot {selected} {handleSelect} />
 </CommandItem>

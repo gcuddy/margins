@@ -11,11 +11,15 @@
 </script>
 
 <Command
+	let:selected
+	on:close
+	on:add
+	on:remove
 	{...$$restProps}
 	class={cn(
 		"flex h-full w-full flex-col overflow-hidden rounded-lg bg-white dark:bg-gray-800",
 		className
 	)}
 >
-	<slot />
+	<slot {selected} />
 </Command>

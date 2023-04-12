@@ -14,6 +14,8 @@
 <input
 	type="checkbox"
 	bind:checked
+	on:click
+	on:change
 	{...$$restProps}
 	class={cn(
 		"peer h-4 w-4 shrink-0 cursor-pointer rounded-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-50 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-900",

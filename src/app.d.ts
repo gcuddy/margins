@@ -10,6 +10,8 @@ declare namespace App {
         validate: import("@lucia-auth/sveltekit").Validate;
         validateUser: import("@lucia-auth/sveltekit").ValidateUser;
         setSession: import("@lucia-auth/sveltekit").SetSession;
+
+        map: Map<string, unknown;
     }
     interface PageData {
         // user?: import('$lib/user').RootUserData;

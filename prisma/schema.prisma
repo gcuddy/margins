@@ -86,6 +86,15 @@ model State {
     @@index([userId])
 }
 
+// based on PARA
+enum Status {
+    // Inbox?
+    Backlog
+    Now
+    // Area / Keep around  / Pinned aaaaaaaaaaaa
+    Archive
+}
+
 model Bookmark {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now())
@@ -93,9 +102,9 @@ model Bookmark {
     context   Json? // should be uri string / schema that looks like: {entryId?: number; url: string; feedId?: number; }. or use model? hm.
     // really should be required, but there's some nasty enforcements if it is
 
-    entry      Entry?  @relation(fields: [uri, entryId], references: [uri, id])
-    uri        String?
+    entry      Entry?  @relation(fields: [entryId], references: [id])
     entryId    Int?
+    uri        String?
     user       User    @relation(fields: [userId], references: [id])
     userId     String
     sortOrder  Int?    @default(0)
@@ -117,6 +126,8 @@ model Bookmark {
     state   State? @relation(fields: [stateId], references: [id])
     stateId Int?
 
+    status Status @default(Backlog)
+
     private       Boolean           @default(true)
     tags          Tagging[]
     collections   CollectionItems[]
@@ -131,6 +142,8 @@ model Bookmark {
     deleted DateTime?
 
     @@unique([uri, entryId, userId])
+    @@unique([entryId, userId])
+    @@index([entryId])
     @@index([uri, entryId])
     @@index([uri])
     @@index([userId])
@@ -180,7 +193,7 @@ model Relation {
 model Annotation {
     id          String   @id @default(cuid())
     createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    updatedAt   DateTime @default(now()) @updatedAt
     // body is used for: page note when type is bookmarking, or annotation when type is highlight/annotation
     // maybe Json  see model. Different possibilties (.e.g. image, video, sound,  — but i think for now we'll just stick with representing it as text. can always rewrite this later if we need to)
     //TODO: motivation, purpose, and expanded target/body. again, see complete examlpe in annotation model
@@ -738,7 +751,7 @@ model Tag {
     id             Int              @id @default(autoincrement())
     name           String
     createdAt      DateTime         @default(now())
-    updatedAt      DateTime         @updatedAt
+    updatedAt      DateTime         @default(now()) @updatedAt
     favorite       Favorite?
     // TODO: maybe move viewoptions to ViewPreference
     viewOptions    Json?

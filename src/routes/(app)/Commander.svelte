@@ -35,10 +35,10 @@
 
 <CommandDialog
 	bind:isOpen
-	class="rounded-lg border border-gray-100  shadow-md dark:border-gray-800"
+	class="rounded-lg border border-gray-100  shadow-md  dark:border-gray-800"
 >
 	<CommandInput placeholder="Type a command or search..." />
-	<CommandList>
+	<CommandList class="scrollbar-hide">
 		<CommandEmpty>No results found.</CommandEmpty>
 		<CommandGroup heading="Suggestions">
 			<CommandItem>
@@ -74,3 +74,15 @@
 		</CommandGroup>
 	</CommandList>
 </CommandDialog>
+
+<style>
+	:global([data-cmdk-list]) {
+		height: min(300px, var(--cmdk-list-height));
+		max-height: 400px;
+		overflow: auto;
+		-ms-scroll-chaining: none;
+		overscroll-behavior: contain;
+		transition: 0.1s ease;
+		transition-property: height;
+	}
+</style>

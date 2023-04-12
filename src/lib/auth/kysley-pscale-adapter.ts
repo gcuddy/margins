@@ -102,6 +102,7 @@ const adapter = <DB extends Kysely<any>>(
             return data ?? null;
         },
         getSessionAndUserBySessionId: async (sessionId) => {
+            console.time("getSessionAndUserBySessionId")
             const data = await kysely
                 .selectFrom("session")
                 .innerJoin("user", "user.id", "session.user_id")
@@ -122,6 +123,7 @@ const adapter = <DB extends Kysely<any>>(
                 _session_user_id,
                 ...user
             } = data;
+            console.timeEnd("getSessionAndUserBySessionId")
             return {
                 user,
                 session: transformSessionData({
@@ -133,20 +135,24 @@ const adapter = <DB extends Kysely<any>>(
             };
         },
         getSession: async (sessionId) => {
+            console.time("getSession")
             const data = await kysely
                 .selectFrom("session")
                 .selectAll()
                 .where("id", "=", sessionId)
                 .executeTakeFirst();
+            console.timeEnd("getSession")
             if (!data) return null;
             return transformSessionData(data);
         },
         getSessionsByUserId: async (userId) => {
+            console.time("getSessionsByUserId")
             const result = await kysely
                 .selectFrom("session")
                 .selectAll()
                 .where("user_id", "=", userId)
                 .execute();
+            console.timeEnd("getSessionsByUserId")
             return result.map((val) => transformSessionData(val));
         },
         setUser: async (userId, attributes, key) => {

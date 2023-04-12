@@ -28,6 +28,11 @@ export const actions = {
             const session = await auth.createSession(key.userId);
             console.log({ session })
             locals.setSession(session);
+            const redirectTo = event.url.searchParams.get("redirectTo")
+            if (redirectTo) {
+                console.log({ redirectTo })
+                throw redirect(302, `/${redirectTo.slice(1)}`);
+            }
             return {
                 form
             }

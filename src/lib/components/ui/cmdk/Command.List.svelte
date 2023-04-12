@@ -38,6 +38,7 @@
 	aria-label="Suggestions"
 	id={$context.listId}
 	aria-labelledby={$context.inputId}
+	aria-multiselectable={$context.multiple ? true : undefined}
 >
 	<div data-cmdk-list-sizer bind:this={sizer}>
 		<slot />

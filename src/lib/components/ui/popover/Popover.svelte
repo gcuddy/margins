@@ -31,6 +31,6 @@
 	setPopoverContext({ popperRef, popperContent });
 </script>
 
-<Popover>
-	<slot />
+<Popover let:open let:close>
+	<slot {open} {close} />
 </Popover>

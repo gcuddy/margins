@@ -1,19 +1,35 @@
+import { handleLoginRedirect } from '$lib/utils/redirects';
+import { ServerLoadEvent, fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms/server';
 import { fetchRss, inputSchema } from './fetch.server';
-import { fail, redirect } from '@sveltejs/kit';
+
+
+function cacher(key: string, fn: () => any, event: ServerLoadEvent) {
+    if (!event.locals.map) {
+        event.locals.map = new Map();
+    }
+    console.log('entries', event.locals.map?.entries())
+    if (!event.locals.map.has(key)) {
+        event.locals.map.set(key, fn());
+    }
+    return event.locals.map.get(key);
+}
 
 export const load = async (event) => {
+    console.log('datarequerst', event.isDataRequest);
+
     const session = await event.locals.validate();
+    console.log("locals", event.locals)
     if (!session) {
-        throw redirect(307, "/login?redirect" + event.url.pathname)
+        throw redirect(302, handleLoginRedirect(event))
     }
     const form = superValidate(event, inputSchema);
+
+    // console.log(`cacher`, cacher('rss', () => fetchRss({ take: 25, userId: session.userId }), event))
     return {
-        lazy: {
-            // feeds: 
-        },
         feeds: fetchRss({ take: 25, userId: session.userId }),
-        form
+        form,
+        userId: session.userId,
     }
 }
 
