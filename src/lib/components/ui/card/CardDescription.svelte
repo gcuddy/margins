@@ -8,6 +8,6 @@
 	}
 </script>
 
-<p class={cn("text-sm text-gray-600 dark:text-gray-400", className)}>
+<p class={cn("text-sm text-muted-foreground", className)}>
 	<slot />
 </p>

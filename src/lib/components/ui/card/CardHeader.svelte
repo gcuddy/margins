@@ -8,6 +8,6 @@
 	}
 </script>
 
-<div class={cn("grid gap-1 p-6", className)}>
+<div class={cn("flex flex-col space-y-1.5 p-6", className)} {...$$restProps}>
 	<slot />
 </div>

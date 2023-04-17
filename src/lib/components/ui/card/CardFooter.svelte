@@ -8,6 +8,6 @@
 	}
 </script>
 
-<div class={cn("border-t bg-gray-50 py-4 dark:bg-gray-900", className)}>
+<div class={cn("flex items-center p-6 pt-0", className)} {...$$restProps}>
 	<slot />
 </div>

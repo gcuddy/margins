@@ -6,6 +6,12 @@
 	// import { getCurrentListContext } from "$lib/stores/currentList";
 	import { TableOfContents } from "@skeletonlabs/skeleton";
 	import { fly } from "svelte/transition";
+	import {
+		Card,
+		CardContent,
+		CardHeader,
+		CardTitle,
+	} from "$lib/components/ui/card";
 	export let data;
 
 	// const currentList = getCurrentListContext();
@@ -28,41 +34,45 @@
 			in:fly|local={{
 				y: -10,
 			}}
-			class="sticky top-10 hidden w-72 space-y-4 xl:block"
+			class="sticky top-10 hidden xl:block"
 		>
-			<H3>Metadata</H3>
-			{#if $page.data.tagForm}
-				<div class="flex items-center space-x-4">
-					<Subtle>Tags</Subtle>
-					<TagPopover data={$page.data.tagForm} entry={$page.data.entry} />
-				</div>
-			{/if}
-			{#if $page.data.updateBookmarkForm}
-				<div class="flex items-center space-x-4">
-					<Subtle>Status</Subtle>
-					<StatusPopover
-						data={$page.data.updateBookmarkForm}
-						entry={$page.data.entry}
-					/>
-				</div>
-			{/if}
-			{#if $page.data.type === "entry"}
-				{#key $page.data.entry?.id}
-					<TableOfContents
-						active="font-bold"
-						scrollParent="html"
-						target="#article"
-					/>
-				{/key}
-			{/if}
-			<div class="flex items-center space-x-4">
-				<Subtle>Snooze</Subtle>
-				<!-- <StatusPopover
-					data={$page.data.updateBookmarkForm}
-					entry={$page.data.entry}
-				/> -->
-				<input type="date" name="" id="" />
-			</div>
+			<Card class="w-72">
+				<CardHeader><CardTitle>Metadata</CardTitle></CardHeader>
+				<CardContent class="space-y-4">
+					{#if $page.data.tagForm}
+						<div class="flex items-center space-x-4">
+							<Subtle>Tags</Subtle>
+							<TagPopover data={$page.data.tagForm} entry={$page.data.entry} />
+						</div>
+					{/if}
+					{#if $page.data.updateBookmarkForm}
+						<div class="flex items-center space-x-4">
+							<Subtle>Status</Subtle>
+							<StatusPopover
+								data={$page.data.updateBookmarkForm}
+								entry={$page.data.entry}
+							/>
+						</div>
+					{/if}
+					{#if $page.data.type === "entry"}
+						{#key $page.data.entry?.id}
+							<TableOfContents
+								active="font-bold"
+								scrollParent="html"
+								target="#article"
+							/>
+						{/key}
+					{/if}
+					<div class="flex items-center space-x-4">
+						<Subtle>Snooze</Subtle>
+						<!-- <StatusPopover
+							data={$page.data.updateBookmarkForm}
+							entry={$page.data.entry}
+							/> -->
+						<input type="date" name="" id="" />
+					</div>
+				</CardContent>
+			</Card>
 		</aside>
 	{/if}
 </div>

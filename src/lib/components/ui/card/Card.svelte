@@ -8,7 +8,13 @@
 	}
 </script>
 
-<div class={cn("overflow-hidden rounded-lg border", className)}>
+<div
+	{...$$restProps}
+	class={cn(
+		"rounded-lg border bg-card text-card-foreground shadow-sm",
+		className
+	)}
+>
 	<!--  -->
 	<slot />
 </div>

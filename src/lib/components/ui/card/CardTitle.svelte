@@ -8,6 +8,9 @@
 	}
 </script>
 
-<h4 class={cn("text-lg font-medium", className)}>
+<h3
+	class={cn("text-lg font-semibold leading-none tracking-tight", className)}
+	{...$$restProps}
+>
 	<slot />
-</h4>
+</h3>

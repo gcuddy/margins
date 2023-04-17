@@ -8,6 +8,6 @@
 	}
 </script>
 
-<div class={cn("px-6 pb-4", className)}>
+<div class={cn("p-6 pt-0", className)} {...$$restProps}>
 	<slot />
 </div>
