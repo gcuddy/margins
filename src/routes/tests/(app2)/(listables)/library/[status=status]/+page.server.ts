@@ -19,10 +19,11 @@ export const load = (async (event) => {
     const status = statusLookup[event.params.status.toLowerCase() as keyof typeof statusLookup];
     if (!status) {
         // this shouldn't be the case given our param checker, bt just in case
-        throw redirect(302, "/library/backlog");
+        throw redirect(302, "/library/now");
     }
     const userId = session.userId;
     return {
-        entries: fetchList({ take: 25, userId, status })
+        entries: fetchList({ take: 25, userId, status }),
+        status: status.toLocaleLowerCase(),
     };
 })

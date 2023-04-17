@@ -1,5 +1,7 @@
-<script>
+<script lang="ts">
 	import { page } from "$app/stores";
+	import EntryList from "$lib/components/entries/EntryList.svelte";
+	import Button from "$lib/components/ui/Button.svelte";
 	import { H1 } from "$lib/components/ui/typography";
 	import { getCurrentListContext } from "$lib/stores/currentList";
 	import LibraryTabs from "./LibraryTabs.svelte";
@@ -26,11 +28,14 @@
 </div>
 
 <ul>
-	{#each $currentList.entries as entry}
+	<EntryList entries={data.entries.entries} />
+	<!-- {#each data.entries.entries as entry}
 		<li>
-			<a href="/tests/entry/{entry.id}">{entry.title}</a>
+			<Button variant="link" as="a" href="/tests/{entry.type}/{getId(entry)}">
+				{entry.title}
+			</Button>
 		</li>
-	{/each}
+	{/each} -->
 	{#if $hasMore}
 		<li>
 			<a href="/tests/library/{data.status}/?cursor={$currentList.cursor}">

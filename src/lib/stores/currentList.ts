@@ -35,7 +35,7 @@ export type ICurrentList = List | FeedList;
 export type CurrentList = Writable<ICurrentList>;
 
 
-type BasicEntryInList = Pick<Entry, "id">
+type BasicEntryInList = Pick<Entry, "id" | "title" | "type">
 
 export type CurrentListStore<T extends BasicEntryInList = BasicEntryInList> = {
 	entries: T[];

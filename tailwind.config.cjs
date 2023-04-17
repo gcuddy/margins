@@ -29,10 +29,11 @@ const config = {
 	theme: {
 		container: {
 			center: true,
-			padding: {
-				DEFAULT: 0,
-				sm: "1.5rem",
-			},
+			// padding: {
+			// 	DEFAULT: 0,
+			// 	sm: "1.5rem",
+			// },
+			padding: "1.5rem",
 			screens: {
 				"2xl": "1440px",
 			},

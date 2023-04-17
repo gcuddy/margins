@@ -1,15 +1,9 @@
 <script lang="ts">
+	import { cn } from "$lib/utils/tailwind";
 	let c = "";
 	export { c as class };
-	$: classes = classNames(c);
 </script>
 
-<ul class="cluster {classes}">
+<ul class={cn("flex flex-wrap items-center justify-start", c)}>
 	<slot />
 </ul>
-
-<style lang="postcss">
-	.cluster {
-		@apply flex flex-wrap items-center justify-start;
-	}
-</style>

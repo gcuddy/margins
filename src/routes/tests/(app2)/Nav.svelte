@@ -1,7 +1,7 @@
 <script>
 	import { page } from "$app/stores";
 	import Button from "$lib/components/ui/Button.svelte";
-	import { Library, Rss } from "lucide-svelte";
+	import { LayoutList, Library, Rss, SearchIcon } from "lucide-svelte";
 
 	/**
 	 * @type {{label: string; icon: import("svelte").ComponentType; href: string; active: (url: string) => boolean;}[]}
@@ -19,6 +19,18 @@
 			icon: Rss,
 			active: (url) => url.startsWith("/tests/subscriptions"),
 		},
+		{
+			label: "Collections",
+			href: "/tests/collections",
+			icon: LayoutList,
+			active: (url) => url.startsWith("/tests/collections"),
+		},
+		{
+			label: "Search",
+			href: "/tests/search",
+			icon: SearchIcon,
+			active: (url) => url.startsWith("/tests/search?type=my"),
+		},
 	];
 </script>
 
@@ -31,8 +43,8 @@
 			class="flex w-full items-center justify-start space-x-2"
 			variant={nav_item.active($page.url.pathname) ? "subtle" : "ghost"}
 		>
-			<svelte:component this={nav_item.icon} class="h-4 w-4" />
-			<span>{nav_item.label}</span>
+			<svelte:component this={nav_item.icon} class="h-6 w-6 lg:h-4 lg:w-4" />
+			<span class="hidden lg:inline">{nav_item.label}</span>
 		</Button>
 	{/each}
 	<!-- <Button variant="ghost">Subscriptions</Button> -->

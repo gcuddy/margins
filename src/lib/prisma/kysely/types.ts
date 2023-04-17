@@ -15,6 +15,7 @@ export type AnnotationType =
 export type Location = "inbox" | "soon" | "later" | "archive";
 export type DocumentType =
 	| "article"
+	| "podcast"
 	| "rss"
 	| "pdf"
 	| "epub"
@@ -37,18 +38,12 @@ export type CollectionItemType =
 	| "Annotation"
 	| "Section"
 	| "Collection";
-export type FetchFrequency = "realtime" | "daily" | "weekly" | "rnthly";
-export type FeedType = "PODCAST";
 export type FavoriteType = "FOLDER" | "FAVORITE";
 export type Annotation = {
 	id: string;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Generated<Timestamp>;
 	body: string | null;
-	contentData: unknown | null;
-	chosenIcon: unknown | null;
-	title: string | null;
-	editedAt: Timestamp | null;
 	type: AnnotationType;
 	private: Generated<boolean>;
 	target: unknown | null;
@@ -58,11 +53,19 @@ export type Annotation = {
 	userId: Generated<string>;
 	sortOrder: Generated<number>;
 	bookmarkId: number | null;
+	editedAt: Timestamp | null;
 	color: Generated<Color>;
+	contentData: unknown | null;
+	title: string | null;
+	chosenIcon: unknown | null;
 };
 export type annotation_tag = {
 	tagId: number;
 	annotationId: string;
+};
+export type AnnotationToTag = {
+	A: string;
+	B: number;
 };
 export type Article = {
 	id: Generated<number>;
@@ -105,51 +108,51 @@ export type Bookmark = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
-	context: unknown | null;
-	entryId: number | null;
 	uri: string | null;
+	entryId: number | null;
 	userId: string;
 	sortOrder: Generated<number | null>;
-	is_read: Generated<boolean>;
-	progress: Generated<number>;
-	screenshot: string | null;
 	data: unknown | null;
-	originalUrl: string | null;
-	dueDate: Timestamp | null;
-	snoozedUntil: Timestamp | null;
-	source: string | null;
 	stateId: number | null;
-	status: Generated<Status>;
 	private: Generated<boolean>;
 	interactionId: number | null;
 	favoriteId: number | null;
 	deleted: Timestamp | null;
+	is_read: Generated<boolean>;
+	progress: Generated<number>;
+	context: unknown | null;
+	screenshot: string | null;
+	source: string | null;
+	dueDate: Timestamp | null;
+	snoozedUntil: Timestamp | null;
+	originalUrl: string | null;
+	status: Generated<Status>;
 };
 export type Collection = {
 	id: Generated<number>;
 	name: string;
 	private: Generated<boolean>;
-	icon: Generated<unknown | null>;
+	icon: unknown | null;
 	userId: string;
 	description: string | null;
-	contentData: unknown | null;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
+	contentData: unknown | null;
 	viewOptions: unknown | null;
 };
 export type CollectionItems = {
 	id: string;
 	collectionId: number;
 	position: Generated<number>;
-	note: string | null;
-	type: Generated<CollectionItemType>;
-	title: string | null;
-	parentId: string | null;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	annotationId: string | null;
 	bookmarkId: number | null;
 	entryId: number | null;
+	note: string | null;
+	parentId: string | null;
+	type: Generated<CollectionItemType>;
+	title: string | null;
 };
 export type ColorDescription = {
 	userId: string;
@@ -158,12 +161,12 @@ export type ColorDescription = {
 };
 export type Context = {
 	id: Generated<number>;
-	createdAt: Generated<Timestamp>;
-	userId: string;
-	entryId: number | null;
-	feedId: number | null;
 	url: string | null;
 	description: string | null;
+	createdAt: Generated<Timestamp>;
+	entryId: number | null;
+	feedId: number | null;
+	userId: string;
 };
 export type ContextNode = {
 	id: string;
@@ -186,47 +189,48 @@ export type Entry = {
 	text: string | null;
 	image: string | null;
 	guid: string | null;
-	original: unknown | null;
 	wordCount: number | null;
 	siteName: string | null;
 	summary: string | null;
-	pageCount: number | null;
-	screenshot: string | null;
 	media: unknown | null;
 	published: Timestamp | null;
 	updated: Timestamp | null;
+	feedId: number | null;
+	original: unknown | null;
+	recipe: unknown | null;
 	podcastIndexId: bigint | null;
-	googleBooksId: string | null;
-	enclosureUrl: string | null;
+	duration: number | null;
 	enclosureLength: number | null;
 	enclosureType: string | null;
-	schemaOrg: unknown | null;
-	extended: unknown | null;
-	publisher: string | null;
-	language: string | null;
-	genres: string | null;
+	enclosureUrl: string | null;
+	googleBooksId: string | null;
 	tmdbId: number | null;
-	youtubeId: string | null;
+	schemaOrg: unknown | null;
 	tmdbData: unknown | null;
-	duration: number | null;
-	feedId: number | null;
-	recipe: unknown | null;
+	screenshot: string | null;
+	extended: unknown | null;
+	youtubeId: string | null;
+	pageCount: number | null;
+	genres: string | null;
+	language: string | null;
+	publisher: string | null;
+	author_extra: unknown | null;
 };
 export type EntryData = {
 	id: Generated<number>;
 	html: string | null;
 	text: string | null;
-	custom: unknown | null;
 	image: string | null;
 	wordCount: number | null;
 	summary: string | null;
-	data: unknown | null;
 	published: Timestamp | null;
 	updated: Timestamp | null;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
-	entryId: number;
 	userId: string;
+	data: unknown | null;
+	entryId: number;
+	custom: unknown | null;
 };
 export type EntryMedia = {
 	id: Generated<number>;
@@ -245,32 +249,31 @@ export type EntryTag = {
 	entryId: number;
 	userId: string;
 };
+export type EntryToTag = {
+	A: number;
+	B: number;
+};
 export type Favorite = {
 	id: string;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
-	sortOrder: Generated<number | null>;
 	userId: string;
 	deleted: Timestamp | null;
 	tagId: number | null;
-	feedId: number | null;
 	smartListId: number | null;
-	type: Generated<FavoriteType>;
-	folderName: string | null;
-	parentId: string | null;
 	annotationId: string | null;
 	bookmarkId: number | null;
-	collectionId: number | null;
 	entryId: number | null;
+	feedId: number | null;
+	sortOrder: Generated<number | null>;
+	folderName: string | null;
+	parentId: string | null;
+	type: Generated<FavoriteType>;
+	collectionId: number | null;
 };
 export type Feed = {
 	id: Generated<number>;
-	itunes_id: string | null;
-	itunesId: number | null;
-	podcastIndexId: number | null;
 	feedUrl: string | null;
-	lastParsed: Timestamp | null;
-	guid: string | null;
 	title: string | null;
 	link: string | null;
 	creator: string | null;
@@ -281,8 +284,13 @@ export type Feed = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	active: Generated<boolean>;
-	podcastIndexData: unknown | null;
 	velocity: number | null;
+	podcastIndexId: number | null;
+	lastParsed: Timestamp | null;
+	podcastIndexData: unknown | null;
+	guid: string | null;
+	itunesId: number | null;
+	itunes_id: string | null;
 };
 export type Interaction = {
 	id: Generated<number>;
@@ -290,13 +298,14 @@ export type Interaction = {
 	updatedAt: Timestamp;
 	is_read: Generated<boolean | null>;
 	progress: Generated<number | null>;
-	currentPage: number | null;
 	finished: Generated<boolean | null>;
-	entryId: number;
 	userId: string;
 	last_viewed: Generated<Timestamp>;
 	last_annotated: Generated<Timestamp>;
 	last_interaction: Generated<Timestamp>;
+	entryId: number;
+	currentPage: number | null;
+	epsiodes_watched: unknown | null;
 };
 export type InvitationCode = {
 	code: string;
@@ -315,15 +324,30 @@ export type Log = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
-	date: Timestamp;
-	userId: string;
 	entryId: number;
-	duration: number | null;
-	startingPage: number | null;
-	endingPage: number | null;
-	season: number | null;
-	episode: number | null;
 	note: string | null;
+	userId: string;
+	date: Timestamp;
+	duration: number | null;
+	endingPage: number | null;
+	episode: number | null;
+	season: number | null;
+	startingPage: number | null;
+};
+export type Person = {
+	id: Generated<number>;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Generated<Timestamp>;
+	name: string;
+	tmdbId: number | null;
+};
+export type person_to_entry = {
+	id: Generated<number>;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Generated<Timestamp>;
+	personId: number;
+	entryId: number;
+	role: string;
 };
 export type Relation = {
 	id: string;
@@ -337,20 +361,20 @@ export type Relation = {
 export type Session = {
 	id: string;
 	user_id: string;
-	active_expires: Generated<bigint>;
 	idle_expires: bigint;
+	active_expires: Generated<bigint>;
 };
 export type SmartList = {
 	id: Generated<number>;
-	createdAt: Generated<Timestamp>;
-	updatedAt: Generated<Timestamp>;
 	name: string;
-	icon: Generated<unknown | null>;
 	filter: unknown | null;
-	conditions: unknown | null;
 	viewOptions: unknown | null;
-	private: Generated<boolean>;
+	conditions: unknown | null;
+	icon: unknown | null;
+	createdAt: Generated<Timestamp>;
 	description: string | null;
+	private: Generated<boolean>;
+	updatedAt: Generated<Timestamp>;
 	userId: Generated<string>;
 };
 export type State = {
@@ -380,6 +404,10 @@ export type Subscription = {
 	updatedAt: Timestamp;
 	title: string;
 	download_full: Generated<boolean>;
+};
+export type SubscriptionToTag = {
+	A: number;
+	B: number;
 };
 export type Tag = {
 	id: Generated<number>;
@@ -424,9 +452,14 @@ export type User = {
 export type UserEntry = {
 	id: Generated<number>;
 };
+export type UserFollows = {
+	A: string;
+	B: string;
+};
 export type DB = {
 	Annotation: Annotation;
 	annotation_tag: annotation_tag;
+	_AnnotationToTag: AnnotationToTag;
 	Article: Article;
 	AuthorizationKey: AuthorizationKey;
 	Bookmark: Bookmark;
@@ -439,22 +472,27 @@ export type DB = {
 	EntryData: EntryData;
 	EntryMedia: EntryMedia;
 	EntryTag: EntryTag;
+	_EntryToTag: EntryToTag;
 	Favorite: Favorite;
 	Feed: Feed;
 	EntryInteraction: Interaction;
 	InvitationCode: InvitationCode;
 	key: Key;
 	Log: Log;
+	Person: Person;
+	person_to_entry: person_to_entry;
 	Relation: Relation;
 	session: Session;
 	SmartList: SmartList;
 	State: State;
 	Stylesheet: Stylesheet;
 	Subscription: Subscription;
+	_SubscriptionToTag: SubscriptionToTag;
 	Tag: Tag;
 	Taggings: Tagging;
 	TagOnEntry: TagOnEntry;
 	TwitterIntegration: TwitterIntegration;
 	user: User;
 	UserEntry: UserEntry;
+	_UserFollows: UserFollows;
 };

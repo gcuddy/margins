@@ -2,28 +2,34 @@
 	import Button from "$lib/components/ui/Button.svelte";
 	import { H1, Subtle } from "$lib/components/ui/typography";
 	import { getCurrentListContext } from "$lib/stores/currentList";
-	import { EditIcon, Highlighter, LoaderIcon } from "lucide-svelte";
-	import { fly, scale } from "svelte/transition";
+	import { EditIcon, Highlighter } from "lucide-svelte";
+	import { scale } from "svelte/transition";
 	import { superForm } from "sveltekit-superforms/client";
 	import type { PageData } from "./$types";
 
 	import { browser } from "$app/environment";
+	import type { Annotation } from "$lib/annotation";
 	import {
 		createTextQuoteSelectorMatcher,
 		describeTextQuote,
 	} from "$lib/annotator";
 	import { highlightText } from "$lib/annotator/highlighter";
 	import type { TextQuoteSelector } from "$lib/annotator/types";
-	import { onDestroy, onMount } from "svelte";
+	import AnnotationForm from "$lib/components/AnnotationForm.svelte";
+	import { onDestroy, onMount, tick } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
 	import { derived, writable } from "svelte/store";
-	import AnnotationForm from "$lib/components/AnnotationForm.svelte";
-	import { draggable } from "@neodrag/svelte";
+	import Book from "./Book.svelte";
+	import BookmarkForm from "./BookmarkForm.svelte";
+	import Movie from "./Movie.svelte";
+	import Podcast from "./Podcast.svelte";
+	import Tv from "./TV.svelte";
 
 	export let data: PageData;
+	$: ({ type } = data);
 	const currentList = getCurrentListContext();
 	$: currentIndex = $currentList.entries.findIndex(
-		(e) => e.id === data.entry.id
+		(e) => e.id === data.entry?.id
 	);
 	$: nextId = $currentList.entries[currentIndex + 1]?.id;
 	$: prevId = $currentList.entries[currentIndex - 1]?.id;
@@ -62,6 +68,7 @@
 	});
 
 	function handleSelect(e: Event) {
+		if (data.type !== "article") return;
 		const fn = () => {
 			selection.set(window.getSelection());
 		};
@@ -79,7 +86,6 @@
 		],
 	});
 	const [annotationRef, annotationContent] = createPopperActions({
-		strategy: "fixed",
 		modifiers: [
 			{
 				name: "offset",
@@ -97,6 +103,14 @@
 		const range = $selection?.getRangeAt(0);
 		if (!range || range.collapsed) return;
 		const selector = await describeTextQuote(range);
+		$currentAnnotation.annotation = {
+			...$currentAnnotation.annotation,
+			target: {
+				selector,
+				source: "",
+			},
+		};
+		console.log({ selector, $currentAnnotation });
 		const els = await highlightSelectorTarget(selector);
 		return els;
 	};
@@ -159,6 +173,44 @@
 	let showAnnotationForm = false;
 	let temporaryAnnotationHighlight: Awaited<ReturnType<typeof highlight>> =
 		undefined;
+	const currentAnnotation = writable<{
+		show: boolean;
+		highlight?: Awaited<ReturnType<typeof highlight>>;
+		annotation?: Partial<Annotation>;
+	}>({
+		show: false,
+	});
+
+	$: console.log({ $currentAnnotation });
+
+	// Type Guards
+	function isMovie(data: PageData): data is PageData & {
+		movie: NonNullable<PageData["movie"]>;
+		type: "movie";
+	} {
+		return data.type === "movie" && data.movie !== null;
+	}
+
+	function isBook(data: PageData): data is PageData & {
+		book: NonNullable<PageData["book"]>;
+		type: "book";
+	} {
+		return data.type === "book" && data.book !== null;
+	}
+
+	function isPodcast(data: PageData): data is PageData & {
+		podcast: NonNullable<PageData["podcast"]>;
+		type: "podcast";
+	} {
+		return data.type === "podcast" && data.podcast !== null;
+	}
+
+	function isTV(data: PageData): data is PageData & {
+		tv: NonNullable<PageData["tv"]>;
+		type: "tv";
+	} {
+		return data.type === "tv" && data.tv !== null;
+	}
 </script>
 
 {#if $showAnnotationTooltip && $selection && !$scrolling}
@@ -188,7 +240,7 @@
 						console.log({ els });
 						clearSelection();
 					}}
-					class="flex h-auto flex-col space-y-1"
+					class="flex h-auto flex-col space-y-1 dark:hover:bg-gray-700"
 					variant="ghost"
 				>
 					<Highlighter class="h-5 w-5" />
@@ -204,11 +256,15 @@
 							const el = els[0].highlightElements[0];
 							temporaryAnnotationHighlight = els;
 							annotationRef(el);
-							showAnnotationForm = true;
+							tick().then(() => {
+								showAnnotationForm = true;
+								$currentAnnotation.show = true;
+								$currentAnnotation.highlight = els;
+							});
 						}
 					}}
 					variant="ghost"
-					class="flex h-auto flex-col space-y-1"
+					class="flex h-auto flex-col space-y-1 dark:hover:bg-gray-700"
 				>
 					<EditIcon class="h-5 w-5" />
 					<Subtle class="text-xs">Annotate</Subtle>
@@ -218,22 +274,33 @@
 	</div>
 {/if}
 
-{#if showAnnotationForm}
+{#if $currentAnnotation.show && data.entry}
 	<div use:annotationContent>
+		<!-- use:draggable -->
 		<div
 			in:scale={{
 				duration: 200,
 				start: 0.9,
 			}}
-			use:draggable
 		>
 			<AnnotationForm
+				autofocus
+				annotation={$currentAnnotation.annotation}
+				entry={data.entry}
 				on:cancel={() => {
-					showAnnotationForm = false;
+					$currentAnnotation.show = false;
 					temporaryAnnotationHighlight?.forEach((h) => {
 						h.removeHighlights();
 					});
 					temporaryAnnotationHighlight = undefined;
+					currentAnnotation.set({
+						show: false,
+					});
+				}}
+				on:save={() => {
+					currentAnnotation.set({
+						show: false,
+					});
 				}}
 				data={data.annotationForm}
 			/>
@@ -260,51 +327,35 @@
 	</div>
 {/if}
 
-<div class="prose prose-slate dark:prose-invert">
-	<H1>{data.entry.title}</H1>x
-	<form action="?/bookmark" method="post" use:enhance>
-		{#if data.entry.bookmark}
-			<input type="hidden" value={data.entry.bookmark.id} name="id" />
-		{/if}
-		<Button disabled={$submitting}>
-			<span>Bookmark</span>
-			{#if $delayed}
-				<div
-					in:fly|local={{
-						x: -10,
-					}}
-				>
-					<LoaderIcon class="ml-2 h-4 w-4 animate-spin" />
-				</div>
-			{/if}
-		</Button>
-	</form>
-	<!-- <Command>
-		<CommandInput placeholder="Filter label..." />
-		<CommandList>
-			<CommandEmpty>No label found.</CommandEmpty>
-			<CommandGroup>
-				{#each labels as label (label)}
-					<CommandItem
-						onSelect={(value) => {
-							//   setLabel(value)
-							//   setOpen(false)
-						}}
-					>
-						{label}
-					</CommandItem>
-				{/each}
-			</CommandGroup>
-		</CommandList>
-	</Command> -->
-	<!-- TODO: tag form -->
-	Annotations: {data.entry.annotations.length}
-	Collections: {data.entry.collections.length}
-	Relations: {data.entry.relations.length}
-	Bookmark: {JSON.stringify(data.entry.bookmark)}
-	Tags: {JSON.stringify(data.entry.tags)}
+{#if type === "article"}
+	<div class="prose prose-slate dark:prose-invert">
+		<H1>{data.entry?.title}</H1>x
+		<BookmarkForm data={data.bookmarkForm} />
+		Annotations: {data.entry?.annotations?.length}
+		Collections: {data.entry?.collections?.length}
+		Relations: {data.entry?.relations?.length}
+		Bookmark: {JSON.stringify(data.entry?.bookmark)}
+		Tags: {JSON.stringify(data.entry?.tags)}
 
-	<div bind:this={articleWrapper} id="article" class="select-text">
-		{@html data.entry.html}
+		<div bind:this={articleWrapper} id="article" class="select-text">
+			{@html data.entry?.html}
+		</div>
 	</div>
-</div>
+{:else if isMovie(data)}
+	<Movie {data} />
+{:else if isBook(data)}
+	<Book {data} />
+{:else if isPodcast(data)}
+	<Podcast {data} />
+{:else if isTV(data)}
+	<Tv {data} />
+{/if}
+
+<style lang="postcss">
+	#article :global(mark) {
+		@apply bg-yellow-100;
+	}
+	:global(.dark) #article :global(mark) {
+		@apply bg-yellow-900/80 text-gray-50;
+	}
+</style>

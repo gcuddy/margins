@@ -13,14 +13,15 @@ function getTags(userId: string) {
 
 export const load = async (event) => {
 
-    const session = await event.locals.validate();
-    if (!session) {
+    const { user } = await event.locals.validateUser();
+    if (!user) {
         return {}
     }
     return {
         user_data: {
             // lazy loaded promises
-            tags: createCachedValue("tags", () => getTags(session.userId)),
+            tags: createCachedValue("tags", () => getTags(user.userId)),
+            ...user
         }
     }
 }

@@ -9,7 +9,11 @@
 	import type { ComponentProps } from "svelte";
 	import Command from "$lib/components/ui/command/Command.svelte";
 	export let isOpen = false;
-	interface $$Props extends ComponentProps<Dialog> {}
+	export let onKeydown: ComponentProps<Command>["onKeydown"] = undefined;
+	interface $$Props extends ComponentProps<Dialog> {
+		isOpen?: boolean;
+		onKeydown?: ComponentProps<Command>["onKeydown"];
+	}
 </script>
 
 <Dialog bind:isOpen {...$$restProps}>
@@ -18,6 +22,8 @@
 	>
 		<!-- s -->
 		<Command
+			on:close
+			{onKeydown}
 			class="[&_[data-cmdk-group-heading]]:px-2 [&_[data-cmdk-group-heading]]:font-medium [&_[data-cmdk-group-heading]]:text-gray-500 [&_[data-cmdk-group]:not([hidden])_~[data-cmdk-group]]:pt-0 [&_[data-cmdk-group]]:px-2 [&_[data-cmdk-input-wrapper]_svg]:h-5 [&_[data-cmdk-input-wrapper]_svg]:w-5 [&_[data-cmdk-input]]:h-12 [&_[data-cmdk-item]]:px-2 [&_[data-cmdk-item]]:py-3 [&_[data-cmdk-item]_svg]:h-5 [&_[data-cmdk-item]_svg]:w-5"
 		>
 			<!-- slot -->

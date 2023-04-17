@@ -80,11 +80,12 @@
 	<!-- <p class="text-sm text-slate-500 dark:text-slate-400">Status</p> -->
 	{#each entry.tags ?? [] as tag, i}
 		<!-- {#each $form.tags as tag, i} -->
-		<span
+		<a
+			href="/tests/tag/{tag.name}"
 			class="rounded-lg bg-slate-900 px-2 py-1 text-xs text-slate-50 dark:bg-slate-800 dark:text-slate-100"
 		>
 			{tag.name}
-		</span>
+		</a>
 	{/each}
 	<Popover let:close>
 		<PopoverTrigger
@@ -99,6 +100,7 @@
 			Add tag
 		</PopoverTrigger>
 		<PopoverContent
+			align="left"
 			class="p-0"
 			on:open={(e) => {
 				value = "";

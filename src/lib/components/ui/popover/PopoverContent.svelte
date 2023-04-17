@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getPopoverContext } from "$lib/components/ui/popover/Popover.svelte";
 	import { cn } from "$lib/utils/tailwind";
+	import type { Placement } from "@popperjs/core";
 	import { PopoverPanel, Transition } from "@rgossiaux/svelte-headlessui";
 	import { ComponentProps, createEventDispatcher, getContext } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -10,6 +11,8 @@
 	export { className as class };
 	interface $$Props extends ComponentProps<PopoverPanel<"div" | "form">> {
 		class?: string;
+		align?: "top" | "bottom" | "left" | "right";
+		offset?: number;
 	}
 
 	const { popperContent } = getPopoverContext();
@@ -22,7 +25,19 @@
 
 	$: console.log({ $api, open });
 
-	export let popperOpts = {};
+	export let align: "top" | "bottom" | "left" | "right" = "bottom";
+	$: y = align === "top" ? 20 : align === "bottom" ? -20 : 0;
+	$: x = align === "left" ? 20 : align === "right" ? -20 : 0;
+	let placement: Placement;
+	export let offset = 4;
+	$: placement =
+		align === "top"
+			? "top"
+			: align === "bottom"
+			? "bottom"
+			: align === "left"
+			? "left-start"
+			: "right-start";
 	const dispatch = createEventDispatcher<{
 		open: { open: boolean };
 	}>();
@@ -33,8 +48,20 @@
 
 <!-- animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2  -->
 {#if open}
-	<div use:popperContent>
-		<div transition:fly={{ y: 20, duration: 200 }}>
+	<div
+		use:popperContent={{
+			placement,
+			modifiers: [
+				{
+					name: "offset",
+					options: {
+						offset: [0, offset],
+					},
+				},
+			],
+		}}
+	>
+		<div transition:fly={{ x, y, duration: 200 }}>
 			<PopoverPanel
 				{...$$restProps}
 				class={cn(

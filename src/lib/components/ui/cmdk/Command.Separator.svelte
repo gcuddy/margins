@@ -12,6 +12,8 @@
 	interface $$Props extends HTMLBaseAttributes {
 		alwaysRender?: boolean;
 	}
+
+	$: console.log({ $$props });
 </script>
 
 {#if render || alwaysRender}

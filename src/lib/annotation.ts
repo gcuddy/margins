@@ -46,14 +46,14 @@ export const TargetSchema = z.object({
 export type TargetSchema = z.infer<typeof TargetSchema>;
 
 export const annotationSchema = z.object({
-    type: z.literal('annotation'),
+    type: z.literal('annotation').default("annotation"),
     body: z.string(),
     id: z.string().optional(),
     userId: z.string(),
     private: z.boolean().optional(),
     target: TargetSchema,
     entryId: z.number().optional(),
-    tags: z.string().array(),
+    // tags: z.string().array(),
     // entry: z
     //     .object({
     //         connect: z.object({

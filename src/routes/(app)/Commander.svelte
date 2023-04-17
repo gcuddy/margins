@@ -2,6 +2,7 @@
 	import {
 		Calculator,
 		Calendar,
+		Cog,
 		CreditCard,
 		Settings,
 		Smile,
@@ -18,8 +19,20 @@
 		CommandSeparator,
 		CommandShortcut,
 	} from "$lib/components/ui/command";
+	import { writable } from "svelte/store";
+
+	import { page as spage } from "$app/stores";
 
 	let isOpen = false;
+
+	const search = writable("");
+	const pages = writable<string[]>([]);
+	$: page = $pages[$pages.length - 1];
+	$: page, search.set("");
+
+	$: if (!isOpen) {
+		$pages = [];
+	}
 </script>
 
 <svelte:window
@@ -33,45 +46,95 @@
 
 <slot />
 
+<!-- class="rounded-lg border border-gray-100  shadow-md  dark:border-gray-800" -->
 <CommandDialog
 	bind:isOpen
-	class="rounded-lg border border-gray-100  shadow-md  dark:border-gray-800"
+	onKeydown={(e) => {
+		console.log("custom", e.key, $search);
+		if (e.key === "Escape" || (e.key === "Backspace" && !$search)) {
+			e.preventDefault();
+			$pages = $pages.slice(0, -1);
+		}
+	}}
 >
-	<CommandInput placeholder="Type a command or search..." />
+	<CommandInput
+		bind:value={$search}
+		placeholder="Type a command or search..."
+	/>
 	<CommandList class="scrollbar-hide">
 		<CommandEmpty>No results found.</CommandEmpty>
-		<CommandGroup heading="Suggestions">
-			<CommandItem>
-				<Calendar class="mr-2 h-4 w-4" />
-				<span>Calendar</span>
+		{#if !page}
+			<CommandGroup heading="Suggestions">
+				<CommandItem>
+					<Calendar class="mr-2 h-4 w-4" />
+					<span>Calendar</span>
+				</CommandItem>
+				<CommandItem>
+					<Smile class="mr-2 h-4 w-4" />
+					<span>Search Emoji</span>
+				</CommandItem>
+				<CommandItem>
+					<Calculator class="mr-2 h-4 w-4" />
+					<span>Calculator</span>
+				</CommandItem>
+			</CommandGroup>
+			<CommandSeparator />
+			<CommandGroup heading="Settings">
+				<CommandItem onSelect={() => ($pages = [...$pages, "theme"])}>
+					<Cog class="mr-2 h-4 w-4" />
+					<span>Change theme</span>
+					<!-- <CommandShortcut>⌘P</CommandShortcut> -->
+				</CommandItem>
+				<CommandItem>
+					<CreditCard class="mr-2 h-4 w-4" />
+					<span>Billing</span>
+					<CommandShortcut>⌘B</CommandShortcut>
+				</CommandItem>
+				<CommandItem>
+					<Settings class="mr-2 h-4 w-4" />
+					<span>Settings</span>
+					<CommandShortcut>⌘S</CommandShortcut>
+				</CommandItem>
+			</CommandGroup>
+		{/if}
+		{#if page === "theme"}
+			<CommandItem
+				onSelect={() => {
+					document.documentElement.setAttribute("data-theme", "light");
+					document.documentElement.classList.remove("dark");
+					fetch(
+						"/tests?/setTheme&theme=light&redirectTo=" + $spage.url.pathname,
+						{
+							method: "POST",
+							body: new FormData(),
+						}
+					);
+					isOpen = false;
+				}}
+			>
+				<Cog class="mr-2 h-4 w-4" />
+				<span>Light</span>
+				<!-- <CommandShortcut>⌘P</CommandShortcut> -->
 			</CommandItem>
-			<CommandItem>
-				<Smile class="mr-2 h-4 w-4" />
-				<span>Search Emoji</span>
+			<CommandItem
+				onSelect={() => {
+					document.documentElement.setAttribute("data-theme", "dark");
+					document.documentElement.classList.add("dark");
+					fetch(
+						"/tests?/setTheme&theme=dark&redirectTo=" + $spage.url.pathname,
+						{
+							method: "POST",
+							body: new FormData(),
+						}
+					);
+					isOpen = false;
+				}}
+			>
+				<Cog class="mr-2 h-4 w-4" />
+				<span>Dark</span>
+				<!-- <CommandShortcut>⌘P</CommandShortcut> -->
 			</CommandItem>
-			<CommandItem>
-				<Calculator class="mr-2 h-4 w-4" />
-				<span>Calculator</span>
-			</CommandItem>
-		</CommandGroup>
-		<CommandSeparator />
-		<CommandGroup heading="Settings">
-			<CommandItem>
-				<User class="mr-2 h-4 w-4" />
-				<span>Profile</span>
-				<CommandShortcut>⌘P</CommandShortcut>
-			</CommandItem>
-			<CommandItem>
-				<CreditCard class="mr-2 h-4 w-4" />
-				<span>Billing</span>
-				<CommandShortcut>⌘B</CommandShortcut>
-			</CommandItem>
-			<CommandItem>
-				<Settings class="mr-2 h-4 w-4" />
-				<span>Settings</span>
-				<CommandShortcut>⌘S</CommandShortcut>
-			</CommandItem>
-		</CommandGroup>
+		{/if}
 	</CommandList>
 </CommandDialog>
 

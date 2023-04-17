@@ -19,11 +19,13 @@
 	import { cn } from "$lib/utils/tailwind";
 	import type { Validation } from "sveltekit-superforms";
 	import { superForm } from "sveltekit-superforms/client";
+	import toast from "svelte-french-toast";
+	import type { Message } from "$lib/types";
 
 	export let entry: Pick<Entry, "id"> & {
 		bookmark?: Pick<Bookmark, "id" | "status">;
 	};
-	export let data: Validation<UpdateBookmarkSchema>;
+	export let data: Validation<UpdateBookmarkSchema, Message>;
 	export let action_prefix = `/tests/entry/${entry.id}`;
 
 	const statuses = {
@@ -33,11 +35,14 @@
 	};
 	const statusValues = Object.keys(statuses) as (keyof typeof statuses)[];
 
-	const { form, enhance } = superForm(data, {
+	const { form, enhance, message } = superForm(data, {
 		dataType: "json",
 		onSubmit: (data) => {
 			console.log("submit", data);
 		},
+		// onResult({ result }) {
+		// 	toast($message?.text || "Updated bookmark");
+		// },
 	});
 
 	let value = "";
@@ -49,6 +54,10 @@
 	function handleSelect(value: string) {
 		$form.status = value as keyof typeof statuses;
 		formEl?.requestSubmit();
+	}
+
+	$: if ($message?.status === "success") {
+		toast.success($message.text);
 	}
 </script>
 
@@ -81,7 +90,7 @@
 				+ Set Status
 			{/if}
 		</PopoverTrigger>
-		<PopoverContent class="p-0">
+		<PopoverContent align="left" class="p-0">
 			<Command>
 				<CommandInput bind:value placeholder="Change status" />
 				<CommandList class="scrollbar-none">

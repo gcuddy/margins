@@ -26,6 +26,9 @@ export async function fetchList({ take, cursor, userId, status }: z.infer<typeof
             "e.title",
             "e.author",
             "e.uri",
+            "e.tmdbId",
+            "e.googleBooksId",
+            "e.podcastIndexId",
             "b.status"
         ])
         .select((eb) => [

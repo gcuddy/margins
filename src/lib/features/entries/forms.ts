@@ -1,8 +1,17 @@
+import { types } from "$lib/types";
+import { BookmarkSchema } from "$lib/prisma/zod-prisma";
 import { z } from "zod"
 
 export const bookmarkSchema = z.object({
-    id: z.number().optional()
+    id: z.number().optional(),
+    entryId: z.number(),
+    tmdbId: z.number().optional(),
+    googleBooksId: z.string().optional(),
+    podcastIndexId: z.coerce.bigint().optional(),
+    type: z.enum(types).default("article")
 })
+
+export type BookmarkSchema = typeof bookmarkSchema;
 
 export const tag = z.object({
     id: z.number().optional(),
