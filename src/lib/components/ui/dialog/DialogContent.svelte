@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { cn } from "$lib/utils/tailwind";
-	import { X } from "lucide-svelte";
-	import { getContext } from "svelte";
-	import type { HTMLBaseAttributes } from "svelte/elements";
-	import type { Readable } from "svelte/store";
-	import DialogOverlay from "./DialogOverlay.svelte";
+	import { cn } from '$lib/utils/tailwind';
+	import { X } from 'lucide-svelte';
+	import { getContext } from 'svelte';
+	import type { HTMLBaseAttributes } from 'svelte/elements';
+	import type { Readable } from 'svelte/store';
+	import DialogOverlay from './DialogOverlay.svelte';
 	const api: Readable<{
 		close: () => void;
-		dialogState: import("@rgossiaux/svelte-headlessui/components/dialog/Dialog.svelte").DialogStates;
-	}> = getContext("headlessui-dialog-context");
+		dialogState: import('@rgossiaux/svelte-headlessui/components/dialog/Dialog.svelte').DialogStates;
+	}> = getContext('headlessui-dialog-context');
 	$: open = $api.dialogState === 0;
-	let c = "";
+	let c = '';
 	export { c as class };
 	interface $$Props extends HTMLBaseAttributes {
 		class?: string;
@@ -20,10 +20,9 @@
 <DialogOverlay />
 <!-- Content -->
 <div
-	data-state={open ? "open" : "closed"}
+	data-state={open ? 'open' : 'closed'}
 	class={cn(
-		"fixed z-50 grid w-full gap-4 rounded-b-lg bg-white p-6 animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 sm:max-w-lg sm:rounded-lg sm:zoom-in-90 data-[state=open]:sm:slide-in-from-bottom-0",
-		"dark:bg-gray-900",
+		'fixed z-50 grid w-full gap-4 rounded-b-lg border bg-background p-6 shadow-lg animate-in data-[state=open]:fade-in-90 data-[state=open]:slide-in-from-bottom-10 sm:max-w-lg sm:rounded-lg sm:zoom-in-90 data-[state=open]:sm:slide-in-from-bottom-0',
 		c
 	)}
 	{...$$restProps}

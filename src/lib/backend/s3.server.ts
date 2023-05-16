@@ -3,7 +3,7 @@ import { generateKeyFromUrl } from "$lib/backend/utils";
 import {
     HeadObjectCommand,
     PutObjectCommand,
-    PutObjectCommandInput,
+    type PutObjectCommandInput,
     PutObjectRequest,
     S3Client
 } from "@aws-sdk/client-s3";

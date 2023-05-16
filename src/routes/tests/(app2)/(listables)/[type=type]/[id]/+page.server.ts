@@ -1,22 +1,30 @@
 import { annotationSchema } from "$lib/annotation";
+import { books } from '$lib/api/gbook';
+import pindex from '$lib/api/pindex';
+import { tmdb } from '$lib/api/tmdb';
+import dayjs from "$lib/dayjs";
 import { db, json } from "$lib/db";
 import { bookmarkSchema, tagSchema, updateBookmarkSchema } from '$lib/features/entries/forms';
 import { nanoid } from "$lib/nanoid";
+import type { Entry } from "$lib/prisma/kysely/types";
+import { interactionSchema, validateAuthedForm } from "$lib/schemas";
+import type { Message, Type } from "$lib/types";
 import { fail } from '@sveltejs/kit';
-import { message, superValidate } from 'sveltekit-superforms/server';
-import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
-import { getMovieDetailsFromApi, tmdb } from '$lib/api/tmdb';
-import { books } from '$lib/api/gbook';
-import pindex from '$lib/api/pindex';
 import type { Insertable } from "kysely";
-import type { Entry, Person } from "$lib/prisma/kysely/types";
-import type { Message } from "$lib/types";
-import dayjs from "$lib/dayjs";
+import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
+import { message, superValidate } from 'sveltekit-superforms/server';
+import type { Actions, PageServerLoad } from "./$types";
+import spotify from "$lib/api/spotify";
+import { getFirstBookmarkSort } from "$lib/db/selects";
+import { upsertAnnotation } from "$lib/queries/server";
+import { Tweet, tweet_types } from "$lib/api/twitter";
 
 
 
 export const load = (async (event) => {
-    const { id, type } = event.params;
+    const { id, type: _type } = event.params;
+
+    const type = _type as Type;
 
     const session = await event.locals.validate();
 
@@ -24,24 +32,28 @@ export const load = (async (event) => {
 
     let podcast: ReturnType<(typeof pindex)["episodeById"]> | null = null;
 
-
+    event.depends("entry")
     let query = db.selectFrom("Entry")
-        .select(["id", "title", "html", "author"])
+        .select(["id", "title", "html", "author", "uri", "type", "image", "wordCount",
+            "published", "podcastIndexId", "googleBooksId", "tmdbId", "spotifyId", 'youtubeId'
+        ])
         .$if(!!session, q => q.select(eb => [
             jsonArrayFrom(eb.selectFrom("Annotation")
-                .select(["Annotation.id", "Annotation.contentData"])
+                .innerJoin("user", "user.id", "Annotation.userId")
+                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title"])
                 .whereRef("Annotation.entryId", "=", "Entry.id")
                 .where("Annotation.userId", "=", session!.userId)
-                .orderBy("Annotation.createdAt", "asc")).as("annotations"),
+                .orderBy("Annotation.start", "asc")
+                .orderBy("Annotation.createdAt", "asc").limit(100)).as("annotations"),
             jsonArrayFrom(eb.selectFrom("Collection as c")
-                .select(["c.id", "c.contentData"])
+                .select(["c.id", "c.name"])
                 .innerJoin("CollectionItems as ci", "ci.collectionId", "c.id")
                 .whereRef("ci.entryId", "=", "Entry.id")
                 .where("c.userId", "=", session!.userId)
             ).as("collections"),
             jsonArrayFrom(eb.selectFrom("Relation as r")
-                .innerJoin("Entry as e", "e.id", "r.relatedEntryId")
-                .select(["r.entryId", "r.type", "e.title as related_entry_title", "e.id as related_entry_id",])
+                .select(["r.type"])
+                .select(eb => jsonObjectFrom(eb.selectFrom("Entry as e").whereRef("e.id", "=", "r.relatedEntryId").select(["e.title", "e.id", "e.type", "e.spotifyId", "e.tmdbId", "e.googleBooksId", "e.podcastIndexId"])).as("related_entry"))
                 .whereRef("r.entryId", "=", "Entry.id")
                 .where("r.userId", "=", session!.userId)
             ).as("relations"),
@@ -57,8 +69,14 @@ export const load = (async (event) => {
                 .whereRef("Bookmark.entryId", "=", "Entry.id")
                 .where("Bookmark.userId", "=", session!.userId)
             ).as("bookmark"),
+            jsonObjectFrom(eb.selectFrom("EntryInteraction as i")
+                .select(["i.id", "i.currentPage", "i.progress", "i.date_started", "i.date_finished", "i.title", "i.note"])
+                .whereRef("i.entryId", "=", "Entry.id")
+                .where("i.userId", "=", session!.userId)
+                .limit(1)
+            ).as("interaction")
         ]))
-
+        .$if(type === "tweet", qb => qb.select(["Entry.original as tweet"]))
     switch (type) {
         case "movie":
             query = query
@@ -79,13 +97,21 @@ export const load = (async (event) => {
             // if id starts with p, this indicates it's a pointer to the podcastindexid
             // else, it's a podcast saved without a podcastindexid (i.e. a private podcast or something of the sort)
             const podcastIndexId = id.startsWith("p") ? id.slice(1) : undefined;
+            console.log({ podcastIndexId })
             if (podcastIndexId) {
                 query = query
                     .where("Entry.podcastIndexId", "=", BigInt(podcastIndexId));
                 podcast = pindex.episodeById(+podcastIndexId);
+                console.log({ podcast })
                 break;
             }
+            break;
         };
+        case "album": {
+            // query = query
+            query = query.where("Entry.spotifyId", "=", id);
+            break;
+        }
         default:
             query = query
                 .where("Entry.id", "=", +id);
@@ -105,6 +131,7 @@ export const load = (async (event) => {
 
     const annotationForm = superValidate({
         entryId: entry?.id,
+        userId: session?.userId,
     }, annotationSchema, { id: "annotation" });
 
     const bookmarkForm = superValidate({
@@ -113,26 +140,61 @@ export const load = (async (event) => {
         tmdbId: type === "movie" || type === "tv" ? +id : undefined,
         googleBooksId: type === "book" ? id : undefined,
         podcastIndexId: type === "podcast" && id.startsWith("p") ? BigInt(id.slice(1)) : undefined,
-        //@ts-expect-error
-        type,
+        spotifyId: type === "album" ? id : undefined,
+        type: type as Type,
     }, bookmarkSchema, { id: "bookmark" });
+
+    // TODO: multiple interactions support
+    const interactionForm = superValidate({
+        ...entry?.interaction,
+        entryId: entry?.id,
+    }, interactionSchema, { id: "interaction" });
+
+
 
     return {
         tagForm,
-        entry,
+        entry: entry ? validate_entry_type(entry) : undefined,
         updateBookmarkForm,
         bookmarkForm,
         annotationForm,
+        interactionForm,
         type,
         // TODO: move these to endpoint to use in +page.ts with better cachings
         movie: type === "movie" ? tmdb.movie.details(+id) : null,
         book: type === "book" ? books.get(id) : null,
         tv: type === "tv" ? tmdb.tv.details(+id) : null,
-        podcast
+        album: type === "album" ? spotify.album(id) : null,
+        podcast,
+        extras: {
+            season: type === "tv" && event.url.searchParams.get("tab") === "episodes" ? tmdb.tv.season(+id, +(event.url.searchParams.get("season") ?? "1")) : null,
+        }
     };
-})
+}) satisfies PageServerLoad
 
-export const actions = {
+
+function validate_entry_type<TEntry extends { tweet?: unknown }>(entry: TEntry): TEntry & {
+    tweet: Tweet | undefined
+} {
+    let tweet: Tweet | undefined = undefined
+    if (entry.tweet) {
+        const {
+            data,
+            problems
+        } = tweet_types.tweet(entry?.tweet)
+        if (data) {
+            tweet = data;
+        } else {
+            console.log({ problems })
+        }
+    }
+    entry.tweet = tweet;
+    return entry as TEntry & {
+        tweet: Tweet | undefined
+    }
+}
+
+export const actions: Actions = {
     updateBookmark: async (e) => {
         const { request, params, locals } = e;
         const session = await locals.validate();
@@ -154,7 +216,7 @@ export const actions = {
             .execute();
         return message(form, {
             status: "success",
-            text: "Status updated to " + status
+            text: status ? `Status updated to ${status}` : undefined
         })
     },
     bookmark: async ({ request, params, locals }) => {
@@ -162,7 +224,8 @@ export const actions = {
         if (!session) {
             return fail(401)
         }
-        const { type } = params;
+        let { type } = params;
+        type = type.toLowerCase();
         const bookmarkForm = await superValidate(request, bookmarkSchema, { id: "bookmark" });
 
         let entryId = type === "entry" ? +params.id : bookmarkForm.data.entryId;
@@ -206,7 +269,6 @@ export const actions = {
                     }
                 }
             } else if (type === "book" && data.googleBooksId) {
-
                 const book = await books.get(data.googleBooksId);
                 console.log({ book })
                 let image = book.volumeInfo.imageLinks?.thumbnail;
@@ -226,6 +288,8 @@ export const actions = {
                     published: dayjs(book.volumeInfo.publishedDate).toDate(),
                     image,
                     type: "book",
+                    publisher: book.volumeInfo.publisher,
+                    pageCount: book.volumeInfo.pageCount,
                 }
             } else if (type === "podcast" && data.podcastIndexId) {
                 //todo
@@ -239,6 +303,19 @@ export const actions = {
                     published: new Date(episode.datePublished * 1000),
                     type: "podcast",
                     image: episode.image || episode.feedImage,
+                }
+            } else if (type === "album" && data.spotifyId) {
+                const album = await spotify.album(data.spotifyId);
+                insertable = {
+                    ...insertable,
+                    title: album.name,
+                    uri: `spotify:album:${album.id}`,
+                    spotifyId: album.id,
+                    image: album.images[0].url,
+                    author: album.artists.map(a => a.name).join(", "),
+                    published: new Date(album.release_date),
+                    type: "album",
+
                 }
             }
             const entry = await db.insertInto("Entry")
@@ -259,7 +336,8 @@ export const actions = {
                 .values({
                     updatedAt: new Date(),
                     entryId,
-                    userId: session.userId
+                    userId: session.userId,
+                    sort_order: await getFirstBookmarkSort(session.userId)
                 })
                 .execute();
             return message(bookmarkForm, "Bookmark created")
@@ -274,29 +352,27 @@ export const actions = {
             return fail(401)
         }
         const annotationForm = await superValidate(request, annotationSchema, { id: "annotation" });
-        console.dir({ annotationForm }, {
-            depth: null
-        });
-        let { id, ...annotation } = annotationForm.data;
-        if (!id) {
-            id = nanoid();
-        }
-        const a = await db.insertInto("Annotation")
-            .values({
-                id,
-                ...annotation,
-                target: annotation.target ? json(annotation.target) : undefined,
-                userId: session.userId,
-            })
-            .onDuplicateKeyUpdate({
-                ...annotation,
-                target: annotation.target ? json(annotation.target) : undefined,
-                userId: session.userId,
-            })
-            .execute();
-        console.dir({ a }, { depth: null });
-        console.log({ annotationForm })
+        let annotation = annotationForm.data;
+        annotation.userId = session.userId;
+        const id = await upsertAnnotation(annotation);
+        annotationForm.data.id = id;
         return message(annotationForm, "Annotation saved")
+    },
+    deleteAnnotation: async ({ request, params, locals }) => {
+        const session = await locals.validate();
+        if (!session) {
+            return fail(401)
+        }
+        const data = await request.formData();
+        const id = data.get("id");
+        if (!id) {
+            return fail(400)
+        }
+        await db.deleteFrom("Annotation")
+            .where("userId", "=", session.userId)
+            .where("id", "=", String(id))
+            .execute();
+        return { succcess: true }
     },
     tag: async ({ request, params, locals }) => {
         const session = await locals.validate();
@@ -313,7 +389,7 @@ export const actions = {
 
         // then we have an array of tags
         const tagsToAdd = tagForm.data.tags.filter(tag => !tag.id);
-        let tagIds = tagForm.data.tags.filter(tag => tag.id).map(tag => tag.id).filter(Boolean);
+        const tagIds = tagForm.data.tags.filter(tag => tag.id).map(tag => tag.id).filter(Boolean);
         console.log({ tagsToAdd, existingTagIds: tagIds })
         if (!tagIds.length) {
             // then delete all existing tags on this entry 
@@ -439,6 +515,20 @@ export const actions = {
             //     name,
             // }
         }
-    }
+    },
+    interaction: validateAuthedForm(interactionSchema, {
+        id: "interaction"
+    }, async ({ form, session }) => {
+        console.log({ form })
+        await db.insertInto("EntryInteraction")
+            .values({
+                ...form.data,
+                userId: session.userId,
+                updatedAt: new Date(),
+            })
+            .onDuplicateKeyUpdate(form.data)
+            .execute();
+        return { interactionForm: form };
+    }),
 }
 

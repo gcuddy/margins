@@ -1,3 +1,8 @@
+<script lang="ts" context="module">
+	export const tabContent =
+		"mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+</script>
+
 <script lang="ts">
 	import { TabPanel } from "@rgossiaux/svelte-headlessui";
 
@@ -11,11 +16,6 @@
 	}
 </script>
 
-<TabPanel
-	class={cn(
-		"mt-2 rounded-md border border-gray-200 p-6 dark:border-gray-700",
-		className
-	)}
->
+<TabPanel class={cn(tabContent, className)}>
 	<slot />
 </TabPanel>

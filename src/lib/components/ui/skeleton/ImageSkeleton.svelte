@@ -8,7 +8,7 @@
 
 <div
 	class={cn(
-		"flex h-full w-full items-center justify-center rounded bg-gray-300 dark:bg-gray-700",
+		"flex h-full w-full items-center justify-center rounded-md bg-muted",
 		className
 	)}
 >

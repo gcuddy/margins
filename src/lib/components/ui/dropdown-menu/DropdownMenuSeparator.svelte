@@ -3,7 +3,7 @@
 </script>
 
 <Separator
-	class="-mx-1 my-1 h-px w-auto bg-gray-100 dark:bg-gray-700"
+	class="-mx-1 my-1 h-px bg-muted"
 	decorative={false}
 	orientation="horizontal"
 />

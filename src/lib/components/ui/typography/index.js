@@ -7,4 +7,4 @@ export { default as Large } from "./Large.svelte";
 export { default as Lead } from "./Lead.svelte";
 export { default as P } from "./P.svelte";
 export { default as Small } from "./Small.svelte";
-export { default as Subtle } from "./Subtle.svelte";
+export { default as Muted } from "./Muted.svelte";

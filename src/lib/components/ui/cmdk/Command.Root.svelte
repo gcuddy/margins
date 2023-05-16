@@ -46,11 +46,7 @@
 	}
 
 	type StateStore = Writable<State> & {
-		setState: <K extends keyof State>(
-			key: K,
-			value: State[K],
-			opts?: any
-		) => void;
+		setState: <K extends keyof State>(key: K, value: State[K], opts?: any) => void;
 		toggle: (value: string) => void;
 		close: () => void;
 	};
@@ -69,25 +65,25 @@
 </script>
 
 <script lang="ts">
-	import { useId } from "$lib/hooks/use-id";
+	import { useId } from '$lib/hooks/use-id';
 	// @ts-ignore
-	import commandScore from "command-score";
-	import { createEventDispatcher, getContext, setContext, tick } from "svelte";
-	import type { HTMLBaseAttributes } from "svelte/elements";
-	import { writable, type Readable, type Writable } from "svelte/store";
+	import commandScore from 'command-score';
+	import { createEventDispatcher, getContext, setContext, tick } from 'svelte';
+	import type { HTMLBaseAttributes } from 'svelte/elements';
+	import { writable, type Readable, type Writable } from 'svelte/store';
 
 	let ref: HTMLElement | undefined = undefined;
 
-	const defaultFilter: Required<CommandProps>["filter"] = (value, search) =>
+	const defaultFilter: Required<CommandProps>['filter'] = (value, search) =>
 		commandScore(value, search);
 
 	function createStateStore(): StateStore {
 		const store = writable<State>({
 			/** Value of the search query. */
-			search: "",
-			active_id: "",
+			search: '',
+			active_id: '',
 			/** Currently active item value. */
-			value: "",
+			value: '',
 			/** Currently selected item */
 			selected: multiple
 				? selected && Array.isArray(selected)
@@ -95,15 +91,15 @@
 					: selected
 					? [selected]
 					: []
-				: selected || "",
+				: selected || '',
 			filtered: {
 				/** The count of all visible items. */
 				count: 0,
 				/** Map from visible item id to its search score. */
 				items: new Map(),
 				/** Set of groups with at least one visible item. */
-				groups: new Set(),
-			},
+				groups: new Set()
+			}
 		});
 
 		return {
@@ -115,19 +111,19 @@
 					console.log({ state });
 					return state;
 				});
-				if (key === "search") {
-					console.log("search");
+				if (key === 'search') {
+					console.log('search');
 					filterItems();
-					console.log("filtered items");
+					console.log('filtered items');
 					sort();
-					console.log("sorted");
+					console.log('sorted');
 					tick().then(() => {
-						console.log("tick");
+						console.log('tick');
 						selectFirstItem();
 						// scrollSelectedIntoView();
-						console.log("selected first");
+						console.log('selected first');
 					});
-				} else if (key === "value") {
+				} else if (key === 'value') {
 					// opts is a boolean referring to whether it should NOT be scrolled into view
 					if (!opts) {
 						tick().then(() => scrollSelectedIntoView());
@@ -135,29 +131,29 @@
 				}
 			},
 			toggle: (value) => {
-				console.log("toggle", value);
+				console.log('toggle', value);
 				store.update((state) => {
 					if (Array.isArray(state.selected)) {
 						if (state.selected.includes(value)) {
 							state.selected = state.selected.filter((v) => v !== value);
-							dispatch("remove", { value });
+							dispatch('remove', { value });
 						} else {
 							state.selected = [...state.selected, value];
-							dispatch("add", { value });
+							dispatch('add', { value });
 						}
 					} else {
 						if (state.selected === value) {
-							state.selected = "";
-							dispatch("remove", { value });
+							state.selected = '';
+							dispatch('remove', { value });
 						} else {
 							state.selected = value;
-							dispatch("add", { value });
+							dispatch('add', { value });
 						}
 					}
 					return state;
 				});
 			},
-			close: () => dispatch("close"),
+			close: () => dispatch('close')
 		};
 	}
 
@@ -213,16 +209,16 @@
 	}
 
 	interface $$Props extends CommandProps {}
-	export let label = "";
+	export let label = '';
 	export let shouldFilter = true;
-	export let filter: $$Props["filter"] = undefined;
-	export let value = "";
+	export let filter: $$Props['filter'] = undefined;
+	export let value = '';
 	export let onValueChange = (value: string) => {};
 	export let loop = false;
-	export let onKeydown: $$Props["onKeydown"] = undefined;
+	export let onKeydown: $$Props['onKeydown'] = undefined;
 	export let multiple = false;
-	export let selected: $$Props["selected"] = undefined;
-	export let emptyAction: $$Props["emptyAction"] = undefined;
+	export let selected: $$Props['selected'] = undefined;
+	export let emptyAction: $$Props['emptyAction'] = undefined;
 
 	// dispatcher for close event
 	const dispatch = createEventDispatcher<{
@@ -260,6 +256,7 @@
 
 	/** Sorts items by score, and groups by highest item score. */
 	function sort() {
+		// Refactor this: this function is causing a lot of performance issues
 		if (
 			!ref ||
 			$state.search ||
@@ -311,9 +308,7 @@
 					);
 				} else {
 					list?.appendChild(
-						item.parentElement === list
-							? item
-							: item.closest(`${GROUP_ITEMS_SELECTOR} > *`)!
+						item.parentElement === list ? item : item.closest(`${GROUP_ITEMS_SELECTOR} > *`)!
 					);
 				}
 			});
@@ -321,9 +316,7 @@
 		groups
 			.sort((a, b) => b[1] - a[1])
 			.forEach((group) => {
-				const element = ref?.querySelector(
-					`${GROUP_SELECTOR}[${VALUE_ATTR}="${group[0]}"]`
-				);
+				const element = ref?.querySelector(`${GROUP_SELECTOR}[${VALUE_ATTR}="${group[0]}"]`);
 				element?.parentElement?.appendChild(element);
 			});
 	}
@@ -340,7 +333,7 @@
 			return;
 		}
 
-		console.log("Filtering items...");
+		console.log('Filtering items...');
 
 		// Reset the groups
 		$state.filtered.groups = new Set();
@@ -382,11 +375,11 @@
 				item
 					.closest(GROUP_SELECTOR)
 					?.querySelector(GROUP_HEADING_SELECTOR)
-					?.scrollIntoView({ block: "nearest" });
+					?.scrollIntoView({ block: 'nearest' });
 			}
 
 			// Ensure the item is always in view
-			item.scrollIntoView({ block: "nearest" });
+			item.scrollIntoView({ block: 'nearest' });
 		}
 	}
 
@@ -394,8 +387,8 @@
 		const item = getValidItems().find((item) => !item.ariaDisabled);
 		const value = item?.getAttribute(VALUE_ATTR);
 		const id = item?.id;
-		state.setState("value", value ?? "");
-		state.setState("active_id", id ?? "");
+		state.setState('value', value ?? '');
+		state.setState('active_id', id ?? '');
 	}
 
 	const listId = useId().toString();
@@ -430,6 +423,7 @@
 		// Track item lifecycle (mount, unmount)
 
 		item: (id, groupId) => {
+			console.time('item');
 			$allItems.add(id);
 			// Track this item within the group
 			if (groupId) {
@@ -442,30 +436,34 @@
 
 			// Batch this, multiple items can mount in one pass
 			// and we should not be filtering/sorting/emitting each time
-			tick().then(() => {
-				filterItems();
-				sort();
+			console.time('tick');
+			filterItems();
+			sort();
 
-				// Could be initial mount, select the first item if none already selected
-				console.log("item mounted", { id, $allItems, $state });
-				if (!$state.value) {
-					selectFirstItem();
-				}
-			});
+			// Could be initial mount, select the first item if none already selected
+			if (!$state.value) {
+				selectFirstItem();
+			}
+			console.timeEnd('tick');
+			console.timeEnd('item');
 
 			return () => {
+				console.time('item remove');
 				$ids.delete(id);
 				$allItems.delete(id);
 				$state.filtered.items.delete(id);
 				// Batch this, multiple items could be removed in one pass
 				tick().then(() => {
+					console.time('tick remove');
 					filterItems();
 					// The item removed could have been the selected one,
 					// so selection should be moved to the first
 					selectFirstItem();
+					console.timeEnd('tick remove');
 				});
+				console.timeEnd('item remove');
 			};
-		},
+		}
 	});
 
 	setCommandContext(context);
@@ -478,7 +476,7 @@
 		filter,
 		value,
 		onValueChange,
-		loop,
+		loop
 	});
 
 	$: $propsRef = {
@@ -487,8 +485,10 @@
 		filter,
 		value,
 		onValueChange,
-		loop,
+		loop
 	};
+
+	$: console.log({ $propsRef });
 
 	/**
 	 *
@@ -522,8 +522,8 @@
 		const items = getValidItems();
 		const item = items[index];
 		const attr = item?.getAttribute(VALUE_ATTR);
-		if (attr) state.setState("value", attr);
-		state.setState("active_id", item?.id ?? "");
+		if (attr) state.setState('value', attr);
+		state.setState('active_id', item?.id ?? '');
 	}
 
 	function updateSelectedByChange(change: 1 | -1) {
@@ -545,8 +545,8 @@
 		}
 
 		if (newSelected) {
-			state.setState("value", newSelected.getAttribute(VALUE_ATTR)!);
-			state.setState("active_id", newSelected.id);
+			state.setState('value', newSelected.getAttribute(VALUE_ATTR)!);
+			state.setState('active_id', newSelected.id);
 		}
 	}
 
@@ -564,9 +564,9 @@
 		}
 
 		const attr = item?.getAttribute(VALUE_ATTR);
-		state.setState("active_id", item?.id ?? "");
+		state.setState('active_id', item?.id ?? '');
 		if (attr) {
-			state.setState("value", attr);
+			state.setState('value', attr);
 		} else {
 			updateSelectedByChange(change);
 		}
@@ -575,7 +575,7 @@
 	const last = () => updateSelectedToIndex(getValidItems().length - 1);
 
 	const next = (e: KeyboardEvent) => {
-		console.log("next", e);
+		console.log('next', e);
 		e.preventDefault();
 
 		if (e.metaKey) {
@@ -586,7 +586,7 @@
 			updateSelectedToGroup(1);
 		} else {
 			// Next item
-			console.log("next item");
+			console.log('next item');
 			updateSelectedByChange(1);
 		}
 	};
@@ -615,43 +615,45 @@
 		onKeydown?.(e);
 		if (!e.defaultPrevented) {
 			switch (e.key) {
-				case "n":
-				case "j": {
+				case 'n':
+				case 'j': {
+					console.log('j');
 					// vim keybind down
 					if (e.ctrlKey) {
+						console.log('ctrl+j');
 						next(e);
 					}
 					break;
 				}
-				case "ArrowDown": {
+				case 'ArrowDown': {
 					next(e);
 					break;
 				}
-				case "p":
-				case "k": {
+				case 'p':
+				case 'k': {
 					// vim keybind up
 					if (e.ctrlKey) {
 						prev(e);
 					}
 					break;
 				}
-				case "ArrowUp": {
+				case 'ArrowUp': {
 					prev(e);
 					break;
 				}
-				case "Home": {
+				case 'Home': {
 					// First item
 					e.preventDefault();
 					updateSelectedToIndex(0);
 					break;
 				}
-				case "End": {
+				case 'End': {
 					// Last item
 					e.preventDefault();
 					last();
 					break;
 				}
-				case "Enter": {
+				case 'Enter': {
 					// Trigger item onSelect
 					e.preventDefault();
 					const item = getSelectedItem();
@@ -659,16 +661,16 @@
 						const event = new Event(SELECT_EVENT);
 						item.dispatchEvent(event);
 					} else {
-						const button = ref?.querySelector("[data-cmdk-empty] button");
+						const button = ref?.querySelector('[data-cmdk-empty] button');
 						if (button && button instanceof HTMLButtonElement) {
 							button.click();
 						}
 						emptyAction?.();
 					}
-					dispatch("close");
+					dispatch('close');
 					break;
 				}
-				case " ": {
+				case ' ': {
 					// Trigger item onSelect
 					if (multiple) {
 						e.preventDefault();
@@ -684,12 +686,7 @@
 		}
 	}}
 >
-	<label
-		class="sr-only"
-		data-cmdk-label
-		for={$context.inputId}
-		id={$context.labelId}
-	>
+	<label class="sr-only" data-cmdk-label for={$context.inputId} id={$context.labelId}>
 		{label}
 	</label>
 	<slot selected={$state.selected} />

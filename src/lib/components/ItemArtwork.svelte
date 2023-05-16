@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { cn } from "$lib/utils/tailwind";
-	import type { HTMLAttributes } from "svelte/elements";
-	import AspectRatio from "./ui/AspectRatio.svelte";
-	import smoothload from "$lib/actions/smoothload";
+	import { cn } from '$lib/utils/tailwind';
+	import type { HTMLAttributes } from 'svelte/elements';
+	import AspectRatio from './ui/AspectRatio.svelte';
+	import smoothload from '$lib/actions/smoothload';
 
-	export let aspectRatio = 3 / 4;
-	let className = "";
+	export let aspectRatio = 4 / 4;
+	let className = '';
 	export { className as class };
 
 	interface $$Props extends HTMLAttributes<HTMLDivElement> {
@@ -19,12 +19,19 @@
 			date?: string | null;
 			type: string;
 		};
+		q?: string;
 	}
 
-	export let item: $$Props["item"];
+	export let item: $$Props['item'];
+	export let q = '';
 </script>
 
-<a href="/tests/{item.type}/{item.id}" class={cn("space-y-3", className)}>
+<a
+	href="/tests/{item.type === 'rss' ? 'article' : item.type}/{item.id}{item.type === 'article'
+		? '#:~:text=' + q
+		: ''}"
+	class={cn('space-y-3', className)}
+>
 	<!--  -->
 	<AspectRatio ratio={aspectRatio} class="overflow-hidden rounded-md">
 		<!-- Image -->
@@ -32,7 +39,7 @@
 			use:smoothload
 			src={item.image}
 			alt={item.title}
-			class="rounded-md object-cover transition-all hover:scale-105"
+			class="h-full rounded-md object-cover transition-all"
 		/>
 	</AspectRatio>
 	<div class="space-y-1 text-sm">

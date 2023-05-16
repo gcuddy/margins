@@ -30,7 +30,7 @@
 	import { writable } from "svelte/store";
 	import { setContext } from "svelte";
 	import { beforeNavigate } from "$app/navigation";
-	import Commander from "./Commander.svelte";
+	import Commander from "../tests/(app2)/Commander.svelte";
 
 	let sidebarWidth: number;
 	$: count = $page.data.count;

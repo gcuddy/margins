@@ -1,51 +1,88 @@
-<script>
-	import { page } from "$app/stores";
-	import MainNav from "$lib/components/MainNav.svelte";
-	import { cn } from "$lib/utils/tailwind";
-	import Commander from "../../(app)/Commander.svelte";
-	import Nav from "./Nav.svelte";
+<script lang="ts">
+	import { page } from '$app/stores';
+	import MainNav, { MenuBar } from './MainNav.svelte';
+	import { cn } from '$lib/utils/tailwind';
+	import { ComponentType, onMount, setContext } from 'svelte';
+	import type Commander from './Commander.svelte';
+	import Nav from './Nav.svelte';
+	import { Readable, Writable, writable } from 'svelte/store';
+	import type { LayoutData } from './$types';
+	import GenericCommander from '$lib/commands/GenericCommander.svelte';
+	import AudioPlayer from '$lib/components/AudioPlayer.svelte';
+	import DropBox from '$lib/components/DragHelper/DropBox.svelte';
+	import { QueryClientProvider } from '@tanstack/svelte-query';
+
+	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
+	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
+
 	// export let data;
 
 	// $: isEntry = $page.route.id?.includes("entry");
 	let isEntry = false;
+	$: is_article = $page.url.pathname.startsWith('/tests/article');
+	$: is_settings = $page.url.pathname.startsWith('/tests/settings');
+
+	export let data: LayoutData;
+
+	const menu = writable<MenuBar>({
+		center: false,
+		show: true,
+		entry: undefined
+	});
+	setContext('mainnav', menu);
+
+	// lazy load components?
+	let commander: ComponentType<Commander> | undefined = undefined;
+	onMount(async () => {
+		let module = await import('./Commander.svelte');
+		commander = module.default;
+	});
 </script>
 
-<Commander>
-	<div class="flex flex-col space-y-6">
-		<header class="container sticky top-0 z-40">
-			<!-- dfdfd -->
-			<div
-				class="flex h-16 items-center justify-between border-b border-b-slate-200 py-4"
-			>
+<QueryClientProvider client={data.queryClient}>
+	{#if commander}
+		<svelte:component this={commander} />
+	{/if}
+	<Dialog />	
+	<GenericCommander>
+		<div class="flex h-full grow flex-col space-y-6">
+			<header class="container sticky top-0 z-40">
 				<MainNav />
-				<!-- <MainNav items={dashboardConfig.mainNav} />
-				<UserAccountNav
-				  user={{
-					name: user.name,
-					image: user.image,
-					email: user.email,
-				  }}
-				/> -->
-			</div>
-		</header>
-		<div
-			class={cn(
-				"container grid gap-12",
-				!isEntry && "md:grid-cols-[auto_1fr] lg:grid-cols-[200px,1fr]"
-			)}
-		>
-			<!-- w-[200px] -->
-			<aside
+			</header>
+			<div
 				class={cn(
-					"sticky top-20 hidden flex-col self-start md:flex",
-					isEntry && "md:hidden"
+					'container grid grow',
+					!isEntry && 'sm:grid-cols-[auto_1fr] lg:grid-cols-5',
+					is_article && ' lg:grid-cols-[auto,1fr] 2xl:grid-cols-5'
 				)}
 			>
-				<Nav />
-			</aside>
-			<main class="flex w-full flex-1 flex-col">
-				<slot />
-			</main>
+				<!-- w-[200px] -->
+				<aside
+					class={cn(
+						'sticky top-20 hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex',
+						isEntry && 'md:hidden'
+					)}
+				>
+					{#if $page.url.pathname.startsWith('/tests/settings')}
+						<!-- todo -->
+					{:else}
+						<Nav user_data={data.user_data} />
+					{/if}
+				</aside>
+				<main
+					class={cn(
+						'flex h-full w-full flex-1 flex-col px-4 py-6 sm:border-l lg:px-8',
+						$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
+						is_article ? '2xl:col-span-4' : 'lg:col-span-4',
+						is_settings && 'border-none lg:col-span-3'
+					)}
+				>
+					<slot />
+				</main>
+			</div>
 		</div>
-	</div>
-</Commander>
+		<!-- <AudioPlayer /> -->
+		<DropBox />
+	</GenericCommander>
+	<SvelteQueryDevtools initialIsOpen={false} />
+</QueryClientProvider>

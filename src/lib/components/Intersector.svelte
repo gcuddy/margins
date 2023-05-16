@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount } from 'svelte';
 
 	// Component that emits events when it arrives on screen
 	export let cb: () => void;
@@ -17,7 +17,7 @@
 	});
 
 	onDestroy(() => {
-		if (io && ref) io.unobserve(ref);
+		if (io) io.disconnect();
 	});
 </script>
 

@@ -6,11 +6,6 @@
 	interface $$Props extends HTMLBaseAttributes {}
 </script>
 
-<blockquote
-	class={cn(
-		"mt-6 border-l-2 border-gray-300 pl-6 italic text-gray-800 dark:border-gray-600 dark:text-gray-200",
-		className
-	)}
->
+<blockquote class={cn("mt-6 border-l-2 pl-6 italic", className)}>
 	<slot />
 </blockquote>

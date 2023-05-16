@@ -113,7 +113,7 @@
 						size="sm" -->
 						<Button
 							size="sm"
-							variant="subtle"
+							variant="secondary"
 							href="/u:{$page.params.username}/subscriptions/new"
 						>
 							<Plus class="mr-2 h-4 w-4" />

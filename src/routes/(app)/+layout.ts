@@ -29,20 +29,20 @@ function groupBy<T>(array: Iterable<T>, keySelector: KeySelector<T>): Record<str
 export const load = (async (e) => {
     const { data } = e;
     const { theme } = data;
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: {
-                enabled: browser,
-                staleTime: 1000 * 60 * 60, // 1 hour
-                // cachetime 24 hours for persiter
-                cacheTime: 1000 * 60 * 60 * 24, // 24 hours
-                networkMode: "offlineFirst"
-            },
-            mutations: {
-                networkMode: "offlineFirst"
-            }
-        },
-    });
+    // const queryClient = new QueryClient({
+    //     defaultOptions: {
+    //         queries: {
+    //             enabled: browser,
+    //             staleTime: 1000 * 60 * 60, // 1 hour
+    //             // cachetime 24 hours for persiter
+    //             cacheTime: 1000 * 60 * 60 * 24, // 24 hours
+    //             networkMode: "offlineFirst"
+    //         },
+    //         mutations: {
+    //             networkMode: "offlineFirst"
+    //         }
+    //     },
+    // });
     const client = trpcWithQuery(e, queryClient);
     const utils = client.createContext();
     const favorites = data.authorized ? utils.favorites.list.getData() ?? (await utils.favorites.list.fetch()) : []

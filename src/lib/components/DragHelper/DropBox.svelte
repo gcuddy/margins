@@ -4,8 +4,13 @@
 	import { notifications } from '$lib/stores/notifications';
 	import { syncStore } from '$lib/stores/sync';
 	import { trpc } from '$lib/trpc/client';
-	import { fade } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	import Icon from '../helpers/Icon.svelte';
+	import { BookPlus } from 'lucide-svelte';
+	import { post } from '$lib/utils/forms';
+	import { invalidateAll } from '$app/navigation';
+	import toast from 'svelte-french-toast';
+	import type { AddUrlObj } from '$lib/schemas';
 	let dragOver = false;
 	let dropping = false;
 	let draggedUrl = '';
@@ -22,17 +27,15 @@
 		e.preventDefault();
 		dragOver = false;
 		console.log(e);
-		console.log(e.relatedTarget || e.fromElement);
 		const url = e.dataTransfer?.getData('text/uri-list');
 		console.log({ url });
-		if (url) {
+		if (url){
 			const syncId = syncStore.addItem();
-			const contextUrl = e.dataTransfer?.getData('context/url');
-			const contextEntryId = e.dataTransfer?.getData('context/entryId');
-			console.log({ contextUrl, contextEntryId });
+			const context_url = e.dataTransfer?.getData('context/url');
+			const context_entryid = e.dataTransfer?.getData('context/id');
 			submitLink(url, {
-				url: contextUrl,
-				entryId: contextEntryId ? +contextEntryId : undefined,
+				url: context_url,
+				entryId: context_entryid ? +context_entryid : undefined
 			}).then(() => syncStore.removeItem(syncId));
 		}
 		$dragging = false;
@@ -42,24 +45,37 @@
 		// todo: only want context if it comes from this page - figure out how to do that
 		// i guess i need to add drag handlers to every link (and image?) on the page, which seems... annoying
 		console.log({ context });
-		const article = await trpc($page).public.parse.query({url});
-		const bookmark = await trpc($page).bookmarks.add.mutate({
-			article,
+		const promise = post<AddUrlObj>('/tests?/addUrl', {
 			url,
-			context,
+			status: "Backlog",
+			via_entryid: context.entryId,
 		});
-		notifications.notify({
-			type: 'success',
-			title: 'Saved link',
+		toast.promise(promise, {
+			loading: 'Saving link',
+			success: 'Saved link',
+			error: 'Failed to save link'
 		});
+		// invalidateAll();
+		// toast.success('Saved link');
+		// const article = await trpc($page).public.parse.query({url});
+		// const bookmark = await trpc($page).bookmarks.add.mutate({
+		// 	article,
+		// 	url,
+		// 	context,
+		// });
+		// notifications.notify({
+		// 	type: 'success',
+		// 	title: 'Saved link',
+		// });
 	}
 </script>
 
 {#if $dragging}
 	<div class="fixed bottom-5 left-5 z-50 sm:bottom-9 sm:left-9">
 		<div
-			transition:fade={{ duration: 250 }}
-			class="before:content-['drop to add to inbox'] grid place-content-center  rounded-full border border-amber-600 bg-amber-300 p-12 text-black shadow-xl transition duration-500 before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-amber-400 before:p-12 before:transition {dragOver
+			in:fly={{ duration: 250, x: -100 }}
+			out:fade={{ duration: 250 }}
+			class="before:content-['drop to add to inbox'] grid place-content-center rounded-full border bg-accent p-12 text-accent-foreground shadow-xl transition duration-500 before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-accent/90 before:p-12 before:transition {dragOver
 				? 'before:scale-[2.5] before:opacity-100'
 				: 'before:scale-[1.2] before:opacity-0'}"
 			on:dragover={handleDragOver}
@@ -67,7 +83,7 @@
 			on:drop={handleDrop}
 		>
 			<span
-				class="pointer-events-none absolute top-0 left-0 -z-10 -mt-10 w-full text-center text-xs font-bold text-white transition-opacity {dragOver
+				class="pointer-events-none absolute left-0 top-0 -z-10 -mt-10 w-full text-center text-xs font-bold text-accent-foreground transition-opacity {dragOver
 					? 'opacity-100'
 					: 'opacity-0'}"
 			>
@@ -78,7 +94,7 @@
 					? 'scale-125'
 					: ''}"
 			>
-				<Icon name="inboxIn" className="h-10 w-10 stroke-2 stroke-amber-900" />
+				<BookPlus class="h-8 w-8" />
 			</span>
 		</div>
 	</div>

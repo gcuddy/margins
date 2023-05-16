@@ -2,6 +2,7 @@
 // import node from '@sveltejs/adapter-node';
 import vercel from "@sveltejs/adapter-vercel";
 import preprocess from "svelte-preprocess";
+// import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 import { mdsvex } from "mdsvex";
 
@@ -25,6 +26,18 @@ const config = {
 			// runtime: "nodejs18.x",
 		}),
 	},
+
+	vitePlugin: {
+		experimental: {
+			inspector: {
+				holdMode: true
+			}
+		}
+	},
+
+	compilerOptions: {
+
+	}
 };
 
 export default config;

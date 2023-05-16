@@ -10,6 +10,7 @@ import { error, json } from '@sveltejs/kit';
 export const config: Config = {
     runtime: "nodejs18.x"
 }
+
 export const GET: RequestHandler = async ({ params, setHeaders }) => {
     const { url } = params;
     const cached = await redis.get(url);

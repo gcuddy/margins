@@ -51,10 +51,18 @@
 </script>
 
 <script lang="ts">
-	import { getEntriesFromCache, searchEntriesQuery } from "$lib/features/entries/queries";
+	import {
+		getEntriesFromCache,
+		searchEntriesQuery,
+	} from "$lib/features/entries/queries";
 	import { useQueryClient } from "@tanstack/svelte-query";
 	import type { EditorOptions, Extensions, JSONContent } from "@tiptap/core";
-	import { createEditor, Editor, EditorContent, BubbleMenu } from "svelte-tiptap";
+	import {
+		createEditor,
+		Editor,
+		EditorContent,
+		BubbleMenu,
+	} from "svelte-tiptap";
 	import Image from "@tiptap/extension-image";
 	import { Mention } from "$lib/tiptap/LinkMention";
 	// import Mention from "@tiptap/extension-mention";
@@ -70,7 +78,9 @@
 
 	import { createEventDispatcher, onDestroy, onMount } from "svelte";
 	import { get, Readable, writable } from "svelte/store";
-	import MentionList, { type State as MentionListState } from "./TipTap/MentionList.svelte";
+	import MentionList, {
+		type State as MentionListState,
+	} from "./TipTap/MentionList.svelte";
 	import { browser } from "$app/environment";
 	import Icon from "./helpers/Icon.svelte";
 	import { page } from "$app/stores";
@@ -204,7 +214,9 @@
 									store.update((state) => {
 										return {
 											...state,
-											index: (state.index + state.items.length - 1) % state.items.length,
+											index:
+												(state.index + state.items.length - 1) %
+												state.items.length,
 										};
 									});
 								};
@@ -216,7 +228,9 @@
 										};
 									});
 								};
-								const setItems = (items: { id: string | number; label: string }[]) => {
+								const setItems = (
+									items: { id: string | number; label: string }[]
+								) => {
 									store.update((state) => {
 										return {
 											...state,
@@ -314,11 +328,19 @@
 						c,
 				}),
 				handleDrop: (view, event, slice, moved) => {
-					if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+					if (
+						!moved &&
+						event.dataTransfer &&
+						event.dataTransfer.files &&
+						event.dataTransfer.files[0]
+					) {
 						// if dropping external files
 						let file = event.dataTransfer.files[0]; // the dropped file
 						let filesize = Number((file.size / 1024 / 1024).toFixed(4)); // get the filesize in MB
-						if ((file.type === "image/jpeg" || file.type === "image/png") && filesize < 10) {
+						if (
+							(file.type === "image/jpeg" || file.type === "image/png") &&
+							filesize < 10
+						) {
 							// check valid image type under 10MB
 							// const img = new Image
 							console.log(file);
@@ -338,10 +360,16 @@
 											const src = $page.data.S3_BUCKET_PREFIX + data.Key;
 											console.log(data);
 											const { schema } = view.state;
-											const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+											const coordinates = view.posAtCoords({
+												left: event.clientX,
+												top: event.clientY,
+											});
 											if (!coordinates) return;
 											const node = schema.nodes.image.create({ src }); // creates the image element
-											const transaction = view.state.tr.insert(coordinates?.pos, node); // places it in the correct position
+											const transaction = view.state.tr.insert(
+												coordinates?.pos,
+												node
+											); // places it in the correct position
 											return view.dispatch(transaction);
 											// const { url } = data
 											// const { state } = view
@@ -414,7 +442,8 @@
 	const toggleTasklist = () => {
 		$editor.chain().focus().toggleTaskList().run();
 	};
-	const setLink = (href: string) => $editor.chain().focus().setLink({ href }).run();
+	const setLink = (href: string) =>
+		$editor.chain().focus().setLink({ href }).run();
 	$: isActive = (name: string, attrs = {}) => $editor.isActive(name, attrs);
 	$: console.log({ $editor });
 
@@ -446,14 +475,17 @@
 			class="rounded border border-border bg-elevation shadow-md transition transparency:bg-elevation/50 transparency:backdrop-blur-md transparency:backdrop-brightness-75 transparency:backdrop-contrast-75 transparency:backdrop-saturate-200"
 		>
 			{#if !linkMenu.active}
-				<div class="flex items-center space-x-1 py-1 px-2">
+				<div class="flex items-center space-x-1 px-2 py-1">
 					<button
 						on:click={toggleBold}
 						class:active={isActive("bold")}
 						class={cx("flex h-7 w-7 items-center justify-center rounded")}
 					>
 						<!-- remix icon -->
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4"
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							class="h-4 w-4"
 							><path fill="none" d="M0 0h24v24H0z" /><path
 								fill="currentColor"
 								d="M8 11h4.5a2.5 2.5 0 1 0 0-5H8v5zm10 4.5a4.5 4.5 0 0 1-4.5 4.5H6V4h6.5a4.5 4.5 0 0 1 3.256 7.606A4.498 4.498 0 0 1 18 15.5zM8 13v5h5.5a2.5 2.5 0 1 0 0-5H8z"
@@ -466,7 +498,12 @@
 						class={cx("flex h-7 w-7 items-center justify-center rounded")}
 					>
 						<!-- remix icon -->
-						<svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"
+						<svg
+							class="h-4 w-4"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							width="24"
+							height="24"
 							><path fill="none" d="M0 0h24v24H0z" /><path
 								d="M15 20H7v-2h2.927l2.116-12H9V4h8v2h-2.927l-2.116 12H15z"
 								fill="currentColor"
@@ -505,12 +542,14 @@
 							stroke-width="1.5"
 							stroke-linecap="round"
 							stroke-linejoin="round"
-							><line x1="10" y1="6" x2="21" y2="6" /><line x1="10" y1="12" x2="21" y2="12" /><line
+							><line x1="10" y1="6" x2="21" y2="6" /><line
 								x1="10"
-								y1="18"
+								y1="12"
 								x2="21"
-								y2="18"
-							/><polyline points="3 6 4 7 6 5" /><polyline points="3 12 4 13 6 11" /><polyline
+								y2="12"
+							/><line x1="10" y1="18" x2="21" y2="18" /><polyline
+								points="3 6 4 7 6 5"
+							/><polyline points="3 12 4 13 6 11" /><polyline
 								points="3 18 4 19 6 17"
 							/></svg
 						>
@@ -522,7 +561,7 @@
 						placeholder="Enter link"
 						autocorrect="false"
 						class={cx(
-							"h-7 flex-1 border-0 bg-transparent py-1.5 px-3 text-xs outline-none  focus:outline-none focus:ring-0 focus-visible:border-none"
+							"h-7 flex-1 border-0 bg-transparent px-3 py-1.5 text-xs outline-none  focus:outline-none focus:ring-0 focus-visible:border-none"
 						)}
 						type="text"
 						autofocus
@@ -560,9 +599,6 @@
 <EditorContent editor={$editor} />
 
 <style lang="postcss">
-	button.active {
-		@apply bg-elevation-hover text-bright;
-	}
 	:global(.ProseMirror p.is-editor-empty:first-child::before) {
 		@apply text-muted/50;
 		content: attr(data-placeholder);
@@ -582,15 +618,15 @@
 	:global(.ProseMirror ul[data-type="taskList"] li) {
 		display: flex;
 		align-items: center;
-        margin: 0;
+		margin: 0;
 	}
-	:global(.ProseMirror ul[data-type="taskList"] li > * ) {
-        margin: 0;
+	:global(.ProseMirror ul[data-type="taskList"] li > *) {
+		margin: 0;
 	}
-	:global(.ProseMirror ul[data-type="taskList"] li > label ) {
-        margin-right: 0.5rem;
+	:global(.ProseMirror ul[data-type="taskList"] li > label) {
+		margin-right: 0.5rem;
 	}
-	:global(.ProseMirror ul[data-type="taskList"] li input[type="checkbox"] ) {
-        @apply rounded bg-transparent border-border;
+	:global(.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]) {
+		@apply rounded border-border bg-transparent;
 	}
 </style>

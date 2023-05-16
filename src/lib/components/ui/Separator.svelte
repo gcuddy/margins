@@ -38,7 +38,7 @@
 
 <div
 	class={cn(
-		"bg-gray-200 dark:bg-gray-700",
+		"shrink-0 bg-border",
 		orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
 		className
 	)}

@@ -1,19 +1,18 @@
 import type { books_v1 } from "@googleapis/books";
-import type { youtube_v3 } from "@googleapis/youtube"
+import type { youtube_v3 } from "@googleapis/youtube";
 import { z } from "zod";
 
-import { GOOGLE_BOOKS_API_KEY, YOUTUBE_KEY } from "$env/static/private";
-import { Metadata, Parser } from "$lib/web-parser";
+import { YOUTUBE_KEY } from "$env/static/private";
+import { Parser, type Metadata } from "$lib/web-parser";
 
-import { Readability, isProbablyReaderable } from '@mozilla/readability'
-import { parseHTML } from "linkedom";
 
+import parse from "node-html-parser";
 import { uploadFile } from "./backend/s3.server";
 import dayjs from "./dayjs";
+import { books } from "./features/books/googlebooks.server";
 import { spotify } from "./features/services/spotify";
 import { twitter } from "./twitter";
-import parse from "node-html-parser";
-import { books } from "./features/books/googlebooks.server";
+import type { Tweet } from "./api/twitter";
 type VideoListResponse = youtube_v3.Schema$VideoListResponse
 
 const spotifyRegex = /^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/;
@@ -144,7 +143,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                     "referenced_tweets",
                     "in_reply_to_user_id",
                 ],
-            });
+            }) as Tweet;
             console.dir({ tweet }, { depth: null });
             return {
                 title: tweet.data.text.slice(0, 100),
@@ -154,7 +153,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
                 published: tweet.data.created_at,
                 image: tweet.includes?.media?.[0]?.preview_image_url || tweet.includes?.media?.[0]?.url || null,
                 type: "tweet",
-                // original: tweet as any,
+                original: tweet as any,
             };
         }
     }
@@ -299,7 +298,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
         // console.log({ parsed });
 
 
-        const parser = new Parser(url, htmlToParse as string);
+        const parser = new Parser(url, htmlToParse);
         const isArticle = parser.isReaderable();
         // const doc = parseHTML(htmlToParse as string);
         // const isArticle = isProbablyReaderable(doc.window.document)
@@ -319,7 +318,7 @@ export default async function (url: string, html?: string): Promise<z.infer<type
             return { url, ...p, type: "bookmark" };
         } else {
             console.log({ isArticle });
-            const p = await new Parser(url, htmlToParse as string).parse();
+            const p = await new Parser(url, htmlToParse).parse();
             if (!p) {
                 throw new Error("Could not parse article");
             }

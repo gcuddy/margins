@@ -1,4 +1,5 @@
 <script lang="ts">
+	import getRef from "$lib/actions/get-ref";
 	import { getPopoverContext } from "$lib/components/ui/popover/Popover.svelte";
 
 	import { PopoverButton } from "@rgossiaux/svelte-headlessui";
@@ -52,12 +53,17 @@
 			PopoverButton<SupportedElement | typeof SvelteComponent>
 		> {
 		class?: string;
+		ref?: HTMLElement;
 	}
 
 	const { popperRef } = getPopoverContext();
+
+	export let ref: HTMLElement | undefined = undefined;
+
+	const getNode = (node: HTMLElement) => ref = node;
 </script>
 
 <!-- Portal? -->
-<PopoverButton use={[popperRef]} {...$$restProps}>
+<PopoverButton use={[popperRef, [getRef, getNode]]} {...$$restProps}>
 	<slot />
 </PopoverButton>

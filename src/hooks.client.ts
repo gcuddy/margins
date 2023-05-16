@@ -1,6 +1,6 @@
-import { dev } from '$app/environment';
+// import { dev } from '$app/environment';
 import type { HandleClientError } from '@sveltejs/kit';
-import { H } from 'highlight.run';
+// import { H } from 'highlight.run';
 
 // !dev && H.init('0dq999eo', {
 //     environment: dev ? 'development' : 'production',
@@ -14,6 +14,6 @@ import { H } from 'highlight.run';
 //     },
 //     // tracingOrigins: {}
 // });
-export const handleError = (({ error, event }) => {
+// export const handleError = (({ error, event }) => {
 
-}) satisfies HandleClientError
+// }) satisfies HandleClientError

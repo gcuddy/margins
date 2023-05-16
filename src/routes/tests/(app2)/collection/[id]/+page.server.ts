@@ -1,35 +1,112 @@
 import { db } from "$lib/db";
-import { error } from "@sveltejs/kit";
+import { error, fail } from "@sveltejs/kit";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/mysql";
+import type { Actions, PageServerLoad } from "./$types";
+import pin from "$lib/server/actions/pin";
+import { nanoid } from "$lib/nanoid";
+import { annotations } from "$lib/db/selects";
+import { z } from "zod";
+import { superValidate } from "sveltekit-superforms/server";
+import { validateAuthedForm } from "$lib/schemas";
 
-export async function load({ params, locals }) {
+const collectionSchema = z.object({
+    name: z.string(),
+    description: z.string().nullish(),
+})
+
+export const load = (async ({ params, locals, depends }) => {
     const { user } = await locals.validateUser();
     if (!user) throw error(401)
-    console.time("collection")
+    console.time("collection");
+    depends("collection")
     const collection = await db.selectFrom("Collection as c")
-        .select(["c.id", "c.name"])
+        .leftJoin("Favorite as p", "p.collectionId", "c.id")
+        .select(["c.id", "c.name", "p.id as pin_id", "c.description"])
         .select(eb => [
             jsonArrayFrom(
                 eb.selectFrom('CollectionItems as ci')
-                    .innerJoin("Entry as e", "e.id", "ci.entryId")
-                    .select(["ci.id", "ci.entryId", "ci.note", "e.title as entry_title"])
-
-                    // .select(eb => [
-                    //     jsonObjectFrom(
-                    //         eb.selectFrom('Entry as e')
-                    //             .select(["e.id", "e.title", "e.uri", "e.image"])
-                    //             .whereRef('e.id', '=', 'ci.entryId')
-                    //     ).as("entry")
-                    // ])
+                    .select(["ci.id", "ci.entryId", "ci.note", "ci.type"])
+                    .select(eb => [
+                        jsonObjectFrom(
+                            eb.selectFrom('Entry as e')
+                                .select(["e.id",
+                                    "e.image",
+                                    "e.published",
+                                    "e.type",
+                                    "e.title",
+                                    "e.author",
+                                    "e.uri",
+                                    "e.tmdbId",
+                                    "e.googleBooksId",
+                                    "e.spotifyId",
+                                    "e.podcastIndexId", "e.wordCount"])
+                                .whereRef('e.id', '=', 'ci.entryId')
+                        ).as("entry"),
+                        jsonObjectFrom(
+                            eb.selectFrom('Annotation as a')
+                                .innerJoin("Entry as e", "a.entryId", "e.id")
+                                .select(annotations.notebook_select)
+                                .whereRef('a.id', '=', 'ci.annotationId')
+                        ).as("annotation"),
+                        // collectionItem.withAnnotation(eb).as("annotation")
+                    ])
                     .whereRef('ci.collectionId', '=', 'c.id')
+                    .where(({ or, cmpr }) => or([
+                        cmpr('ci.entryId', 'is not', null),
+                        cmpr('ci.annotationId', 'is not', null)
+                    ]))
                     .orderBy('ci.position')
             ).as('items'),
         ])
-        .where("userId", "=", user.userId)
-        .where("id", "=", +params.id)
+        .where("c.userId", "=", user.userId)
+        .where("c.id", "=", +params.id)
         .executeTakeFirstOrThrow();
+    // Todo: make nested json objects type nullable
     console.timeEnd("collection")
     return {
-        collection
+        collection,
+        form: superValidate(collection, collectionSchema)
+    }
+}) satisfies PageServerLoad;
+
+export const actions: Actions = {
+    edit: validateAuthedForm(collectionSchema, async ({ form, params, session }) => {
+        const { name, description } = form.data;
+        await db.updateTable("Collection")
+            .set({
+                name,
+                description,
+                updatedAt: new Date()
+            })
+            .where("id", "=", +params.id)
+            .where("userId", "=", session.userId)
+            .execute();
+    }),
+    pin: async ({ locals, request, params }) => {
+        const session = await locals.validate();
+        if (!session) return fail(401);
+
+        const data = await request.formData();
+
+        const pin_id = data.get("pin_id");
+
+        if (pin_id && typeof pin_id === "string") {
+            await db.deleteFrom("Favorite")
+                .where("id", "=", pin_id)
+                .where("userId", "=", session.userId)
+                .execute();
+        }
+        else {
+            // insert
+            const id = nanoid();
+            await db.insertInto("Favorite")
+                .values({
+                    id,
+                    userId: session.userId,
+                    collectionId: +params.id,
+                    updatedAt: new Date(),
+                })
+                .execute();
+        }
     }
 }

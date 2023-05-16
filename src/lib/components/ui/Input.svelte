@@ -1,32 +1,37 @@
-<script lang="ts">
-	import type { HTMLInputAttributes } from "svelte/elements";
-
-	import { cn } from "$lib/utils/tailwind";
-	import { cva, VariantProps } from "class-variance-authority";
-
-	const inputVariants = cva(
-		"flex h-10 w-full rounded-md  bg-transparent py-2 px-3 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-offset-2  focus:ring-gray-400  disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-50 dark:focus:ring-gray-400 dark:focus:ring-offset-gray-900",
+<script lang="ts" context="module">
+	export const inputVariants = cva(
+		'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
 		{
 			variants: {
 				variant: {
-					naked: "bg-transparent border-none",
-					default: "border border-gray-300  focus:ring-2",
-				},
-			},
+					naked: 'bg-transparent border-none',
+					default: ''
+				}
+			}
 		}
 	);
+</script>
 
-	export let value: string | number | undefined = undefined;
+<script lang="ts">
+	import type { HTMLInputAttributes } from 'svelte/elements';
+
+	import { cn } from '$lib/utils/tailwind';
+	import { cva, VariantProps } from 'class-variance-authority';
+
+	export let value: $$Props['value'] = undefined;
 	export let ref: HTMLInputElement | undefined = undefined;
-	let className = "";
+	let className = '';
 	export { className as class };
-	export let variant: $$Props["variant"] = "default";
-	interface $$Props
-		extends HTMLInputAttributes,
-			VariantProps<typeof inputVariants> {
+	export let variant: $$Props['variant'] = 'default';
+	interface $$Props extends HTMLInputAttributes, VariantProps<typeof inputVariants> {
 		ref?: HTMLInputElement;
-		value?: string | number | undefined;
+		value?: string | number | null | undefined;
 		class?: string;
+	}
+
+
+	export const focus = () => {
+		ref?.focus();
 	}
 </script>
 
@@ -35,7 +40,7 @@
 	class={cn(
 		inputVariants({
 			variant,
-			class: className,
+			class: className
 		})
 	)}
 	on:focus

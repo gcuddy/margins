@@ -1,39 +1,24 @@
-import { writable } from 'svelte/store';
-import { browser } from '$app/environment';
-import type { Article } from '@prisma/client';
+import type { EntryInList } from '$lib/db/selects';
+import { localStorageStore } from '@skeletonlabs/skeleton';
 
 // should make search a set but also make it serializable
 interface Recents {
 	search: string[];
 	// store just a subset of article Type
-	articles: Pick<
-		Article,
-		'id' | 'title' | 'date' | 'updatedAt' | 'url' | 'readProgress' | 'author'
-	>[];
+	entries: EntryInList[];
 }
 
-let storedRecents: Recents | undefined;
 
-if (browser) {
-	const stored = localStorage.getItem('recents');
-	if (stored) {
-		storedRecents = JSON.parse(stored);
-	}
-}
 
 function createRecentsStore() {
-	const { subscribe, set, update } = writable<Recents>(
-		storedRecents || {
+	const { subscribe, set, update } = localStorageStore<Recents>(
+		"recents_store",
+		{
 			search: [],
-			articles: [],
+			entries: [],
 		}
 	);
-
-	if (browser) {
-		subscribe((value) => (localStorage.recents = JSON.stringify(value)));
-	}
-
-	function addRecentSearch(search: string) {
+	function add_search(search: string) {
 		update((recents) => {
 			if (!search.trim()) return recents;
 			if (recents.search.indexOf(search) === -1) {
@@ -49,29 +34,26 @@ function createRecentsStore() {
 			return recents;
 		});
 	}
-	function addRecentArticle({ id, title, date, updatedAt, url, readProgress, author }: Article) {
+	function add_entry(entry: EntryInList) {
 		update((recents) => {
-			if (!id) return recents;
-			if (!recents.articles) {
-				recents.articles = [];
+			if (!entry.id) return recents;
+			if (!recents.entries) {
+				recents.entries = [];
 			}
-			if (!recents.articles.find((a) => a.id === id)) {
-				// recents.search.push(search);
+			const existing = recents.entries.find((a) => a.id === entry.id);
+			if (!existing) {
+				// destructure everything in case we got passed extra fields
+				const { id, title, author, googleBooksId, image, podcastIndexId, published, spotifyId, tmdbId, type, uri, wordCount, progress, sort_order, } = entry;
 				// add to top
-				recents.articles.unshift({
-					id,
-					title,
-					date,
-					updatedAt,
-					url,
-					readProgress,
-					author,
-				});
-				if (recents.articles.length > 8) {
-					// recents.articleIds.pop();
+				recents.entries.unshift({ id, title, author, googleBooksId, image, podcastIndexId, published, spotifyId, tmdbId, type, uri, wordCount, progress, sort_order, });
+				if (recents.entries.length > 8) {
 					// slice to 8
-					recents.articles = recents.articles.slice(0, 8);
+					recents.entries = recents.entries.slice(0, 8);
 				}
+			} else {
+				// move to top
+				recents.entries = recents.entries.filter((a) => a.id !== entry.id);
+				recents.entries.unshift(existing);
 			}
 			return recents;
 		});
@@ -81,19 +63,9 @@ function createRecentsStore() {
 		subscribe,
 		set,
 		update,
-		addRecentSearch,
-		addRecentArticle,
+		add_search,
+		add_entry,
 	};
 }
 
 export const recents = createRecentsStore();
-
-// export const recents = writable<Recents>(
-// 	storedRecents || {
-// 		search: []
-// 	}
-// );
-
-// if (browser) {
-// 	recents.subscribe((value) => (localStorage.recents = JSON.stringify(value)));
-// }

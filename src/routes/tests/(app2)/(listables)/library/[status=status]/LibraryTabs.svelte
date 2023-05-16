@@ -1,30 +1,102 @@
-<script>
-	import { page } from "$app/stores";
-	import { cn } from "$lib/utils/tailwind";
+<script lang="ts">
+	import { page } from '$app/stores';
+	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
+	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
+	import { bg } from '$lib/data/styles';
+	import type { EntryInList } from '$lib/db/selects';
+	import { receive, send } from '$lib/transitions';
+	import type { Status } from '@prisma/client';
+	import { fade, fly } from 'svelte/transition';
 
-	const prefix = "/tests";
+	const prefix = '/tests';
 	const tabs = [
-		{ name: "Backlog", href: "/library/backlog" },
-		{ name: "Now", href: "/library/now" },
-		{ name: "Archive", href: "/library/archive" },
-	];
+		{ name: 'Backlog', href: '/library/backlog' },
+		{ name: 'Now', href: '/library/now' },
+		{ name: 'Archive', href: '/library/archive' }
+	] as const;
+
+	let archiving_entries: EntryInList[] = [];
+
+
+	let moving_entries: Record<Status, EntryInList[]> = {
+		Backlog: [],
+		Now: [],
+		Archive: []
+	};
+
+	export function move_entries(entries: EntryInList[], status: Status) {
+		moving_entries[status] = Array.from(new Set([...entries, ...moving_entries[status]]));
+	}
+
+	let _highlight_archive = false;
+
+	function highlight_archive() {
+		const archive = document.querySelector('[data-tab="Archive"]');
+		console.log({ archive });
+		if (archive) {
+			_highlight_archive = true;
+			setTimeout(() => {
+				_highlight_archive = false;
+			}, 1000);
+		}
+	}
 </script>
 
-<div
-	class="inline-flex items-center justify-center rounded-md bg-gray-100 p-1 dark:bg-gray-800"
->
+<!-- <Tabs>
+	<TabsList>
+		{#each tabs as tab}
+			<TabsTrigger
+				as="a"
+				href={prefix + tab.href}
+				on:click={(e) => {
+					e.preventDefault();
+					console.log(e);
+				}}>{tab.name}</TabsTrigger
+			>
+		{/each}
+	</TabsList>
+</Tabs> -->
+
+<div class={tabList}>
 	<!--  -->
 	{#each tabs as { name, href }}
 		{@const selected = $page.url.pathname === prefix + href}
 		<a
+			draggable="false"
 			href={prefix + href}
-			class={cn(
-				"inline-flex min-w-[100px] items-center justify-center rounded-[0.185rem] px-3 py-1.5  text-sm font-medium text-gray-700 transition-all  disabled:pointer-events-none disabled:opacity-50 dark:text-gray-200 ",
-				selected &&
-					"bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-gray-100"
-			)}
+			class={tabTrigger({
+				selected,
+				class: `relative transition-colors`
+			})}
+			class:animate-scale-1={name === 'Archive' && _highlight_archive}
+			data-tab={name}
 		>
 			{name}
+			<div class="absolute inset-0 z-10 flex items-center justify-center -space-x-[.9rem]">
+				{#each moving_entries[name] as entry, i (entry.id)}
+					<!-- on:introend={highlight_archive} -->
+					<img
+						on:introend={() => {
+							console.log("running introend")
+							moving_entries[name] = moving_entries[name].filter((e) => e.id !== entry.id);
+							setTimeout(() => {
+								// archiving_entries = archiving_entries.filter((e) => e.id !== entry.id);
+							}, 250);
+						}}
+						in:receive={{
+							key: `${name.toLowerCase()}-${entry.id}`
+						}}
+						out:fly={{
+							y: 10,
+							opacity: 0,
+							delay: 200
+						}}
+						src={entry.image}
+						class="h-4 w-4 rounded-full opacity-50 relative border"
+						alt=""
+					/>
+				{/each}
+			</div>
 		</a>
 	{/each}
 </div>

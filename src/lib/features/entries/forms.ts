@@ -8,6 +8,7 @@ export const bookmarkSchema = z.object({
     tmdbId: z.number().optional(),
     googleBooksId: z.string().optional(),
     podcastIndexId: z.coerce.bigint().optional(),
+    spotifyId: z.string().optional(),
     type: z.enum(types).default("article")
 })
 

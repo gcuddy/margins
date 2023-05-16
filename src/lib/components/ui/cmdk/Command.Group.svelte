@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { useCommand, useState } from "./Command.Root.svelte";
 	import { useId } from "$lib/hooks/use-id";
-	import { ComponentType, setContext } from "svelte";
+	import { type ComponentType, setContext } from "svelte";
 	import type { HTMLBaseAttributes } from "svelte/elements";
 
 	const id = useId().toString();

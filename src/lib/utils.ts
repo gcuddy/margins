@@ -1,22 +1,23 @@
 // import { finder } from '@medv/finder';
 
-import type { Annotation, Entry, PodcastEpisode, Prisma } from "@prisma/client";
+import type { Annotation, Entry, Prisma } from "@prisma/client";
 import dayjs from "dayjs";
-import { z } from "zod";
+// import { z } from "zod";
 
 import { browser } from "$app/environment";
 import { goto, invalidateAll } from "$app/navigation";
-import { type INotification, notifications } from "$lib/stores/notifications";
+import { notifications, type INotification } from "$lib/stores/notifications";
 
+import type { DebounceSettings } from "lodash";
+import debounce from "lodash/debounce";
 import { syncStore } from "./stores/sync";
 import { user } from "./stores/user";
 import type { ArticleInList, DomMeta } from "./types";
 import type { AnnotationSchema } from "./types/schemas/Annotations";
 import type { FavoriteSchema } from "./types/schemas/Favorite";
 import type { AddToListSchema } from "./types/schemas/List";
-import type { RssFeedItemModel } from "./types/schemas/rssfeeditem";
 import type { ViewOptions } from "./types/schemas/View";
-import debounce from "lodash/debounce";
+import type { RssFeedItemModel } from "./types/schemas/rssfeeditem";
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -232,154 +233,18 @@ const getSimplifiedLink = (link: string) => getHostname(link) + getPathname(link
 
 
 
-export function convertDomMetaToCssSelector(meta: DomMeta) {
-    return `${meta.parentTagName}:nth-of-type(${meta.parentIndex})`;
-}
-
-const cssSelectorRegex = /[A-z]*[0-9]*?:nth-of-type\([0-9]+\)/;
-const cssSelectorMeta = z.string().regex(cssSelectorRegex);
-
-export function convertCssSelectorToDomMeta(
-    rawCssSelector: z.infer<typeof cssSelectorMeta>
-): Partial<DomMeta> | undefined {
-    try {
-        const cssSelector = cssSelectorMeta.parse(rawCssSelector);
-        const matches = cssSelectorRegex.exec(cssSelector);
-        if (matches) {
-            return {
-                parentTagName: matches[1],
-                parentIndex: parseInt(matches[2]),
-            };
-        }
-    } catch (e) {
-        console.error(e);
-        throw Error("Improper css selector provided");
-    }
-}
-
-// async function describeCurrentSelection(
-// 	sel?: Selection,
-// 	root?: HTMLElement
-// ): Promise<Selector[] | undefined> {
-// 	if (typeof window.getSelection === 'undefined') return;
-// 	if (!sel) sel = window.getSelection() || undefined;
-// 	const userSelection = sel?.getRangeAt(0);
-// 	if (!userSelection || userSelection.collapsed) return;
-// 	const selectors: Selector[] = [];
-// 	selectors.push(await describeTextQuote(userSelection, root));
-// 	selectors.push(await describeTextPosition(userSelection, root));
-// 	if (sel?.anchorNode) {
-// 		let startEl: HTMLElement | null = null;
-// 		if (sel.anchorNode instanceof HTMLElement) startEl = sel.anchorNode;
-// 		else if (sel.anchorNode?.parentElement) startEl = sel.anchorNode.parentElement;
-// 		if (startEl) {
-// 			// selectors.push(await describeCss(startEl, root));
-// 			// todo: refactor
-// 			let endEl: HTMLElement | null = null;
-// 			if (sel.focusNode instanceof HTMLElement) endEl = sel.focusNode;
-// 			else if (sel.focusNode?.parentElement) endEl = sel.focusNode.parentElement;
-// 			if (endEl) {
-// 				// return range Selector
-// 				// TODO: extend CssSelector interface with optional textoffset, getting using web-highlighter technique
-// 				const start = await describeCss(startEl, root);
-// 				const rangeSelector: RangeSelector = {
-// 					type: 'RangeSelector',
-// 					// todo: refined by offset in each ??
-// 					startSelector: {
-// 						...start,
-// 						refinedBy: await describeTextPosition(userSelection, startEl)
-// 					}, // refined by: text position (but just keeping start/end same?)
-// 					endSelector: await describeCss(endEl, root)
-// 					// refinedBy:
-// 				};
-// 				console.log({ rangeSelector });
-// 			} else {
-// 				// return regular selector
-// 			}
-// 		}
-// 	}
-// 	return [...selectors];
-// }
-
-// export const createMatcher = makeRefinable((selector) => {
-// 	// const innerCreateMatcher = {
-// 	// 	TextQuoteSelector: createTextQuoteSelectorMatcher,
-// 	// 	TextPositionSelector: createTextPositionSelectorMatcher,
-// 	// 	RangeSelector: makeCreateRangeSelectorMatcher(createMatcher)
-// 	// }[selector.type];
-// 	// this isn't working
-// 	return;
-// 	if (!innerCreateMatcher) {
-// 		throw new Error(`Unsupported selector type: ${selector.type}`);
-// 	}
-
-// 	return innerCreateMatcher(selector);
-// });
 
 export function getNthValueOfSet<T>(set: Set<T>, n: number): T | undefined {
     const values = [...set];
     return values[n];
 }
 
-/**
- *
- * @param ids array of article ids to archive
- * @param go where to go after archiving. if null will stay in place.
- * @param inv the route to invalidate. defaults to go. if that's null, defaults to "/".
- */
-export const archive = async (ids: number[], go: string | null = "/", inv = go, notify = true) => {
-    const { articles } = await bulkEditArticles(ids, {
-        location: "ARCHIVE",
-    });
-    // disable save scroll so we don't save our scroll position anymore
-    // disableSaveScroll = true;
-    await invalidateAll();
-    if (go) {
-        goto(go);
-    }
-    if (notify) {
-        const length: number = articles.length;
-        notifications.notify({
-            title: `Article${ids.length > 1 ? "s" : ""} archived`,
-            message: `Archived article${length > 1 ? "s" : ""} ${articles
-                .slice(0, 2)
-                .map((a) => '<a href="' + a.id + '" class="font-medium">' + a.title + "</a>")
-                .join(", ")}${length > 3 ? "and " + (length - 3) + " others" : ""}`,
-        });
-    }
-};
-
 // note: this isn't foolproof, but it works for our simple needs
 export function isTouchDevice() {
     return "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 }
 
-export async function postAnnotation(annotation: z.infer<typeof AnnotationSchema>) {
-    const id = syncStore.addItem();
-    const res = await fetch("/annotations", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(annotation),
-    });
-    syncStore.removeItem(id);
-    return res;
-}
 
-export async function createFavorite(data: z.infer<typeof FavoriteSchema>) {
-    const id = syncStore.addItem();
-    const res = await fetch("/api/favorites.json", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-    });
-    user.updateData("favorites");
-    syncStore.removeItem(id);
-    return res;
-}
 export async function deleteFavorite(data: { id: number }) {
     const id = syncStore.addItem();
     const res = await fetch("/api/favorites.json", {
@@ -423,53 +288,6 @@ export function sortArticles<T>(articles: ArticleInList[], opts: ViewOptions) {
     });
 }
 
-export function sortFeedItems<T>(items: z.infer<typeof RssFeedItemModel>[], opts: ViewOptions) {
-    const sortBy = opts.sort;
-    return [...items].sort((a, b) => {
-        switch (sortBy) {
-            case "title":
-                return a.title.localeCompare(b.title);
-            case "date": {
-                return dayjs(a.pubDate).isBefore(dayjs(b.pubDate)) ? 1 : -1;
-            }
-            case "author": {
-                return a.author.localeCompare(b.author);
-            }
-            case "createdAt": {
-                console.log({ a, b });
-                return dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1;
-            }
-            case "updatedAt": {
-                return dayjs(a.updatedAt).isBefore(dayjs(b.updatedAt)) ? 1 : -1;
-            }
-            default:
-                return 0;
-        }
-    });
-}
-
-/**
- * Clamp `num` to the range `[min, max]`
- * @param {number} num
- * @param {number} min
- * @param {number} max
- */
-export function clamp(num: number, min: number, max: number) {
-    return num < min ? min : num > max ? max : num;
-}
-
-export async function addToList(listId: number, data: z.infer<typeof AddToListSchema>) {
-    const id = syncStore.addItem();
-    const res = await fetch(`/lists/${listId}`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-    });
-    syncStore.removeItem(id);
-    return res;
-}
 
 
 export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
@@ -519,14 +337,16 @@ export const trytm = async <T>(promise: Promise<T>) => {
     }
 };
 
-export function asyncDebounce<F extends (...args: any[]) => Promise<any>>(func: F, wait?: number) {
-    const throttled = debounce((resolve, reject, args: Parameters<F>) => {
+export function asyncDebounce<F extends (...args: unknown[]) => Promise<unknown>>(func: F, wait?: number, options?: DebounceSettings) {
+    const debounced = debounce((resolve, reject, args: Parameters<F>) => {
         func(...args)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             .then(resolve)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             .catch(reject);
-    }, wait);
+    }, wait, options);
     return (...args: Parameters<F>): ReturnType<F> =>
         new Promise((resolve, reject) => {
-            throttled(resolve, reject, args);
+            debounced(resolve, reject, args);
         }) as ReturnType<F>;
 }

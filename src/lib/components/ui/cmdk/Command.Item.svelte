@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { SELECT_EVENT, useCommand, useState } from "./Command.Root.svelte";
-	import { useId } from "$lib/hooks/use-id";
-	import { getContext, onDestroy } from "svelte";
-	import type { HTMLBaseAttributes } from "svelte/elements";
-	import { writable } from "svelte/store";
+	import { SELECT_EVENT, useCommand, useState } from './Command.Root.svelte';
+	import { useId } from '$lib/hooks/use-id';
+	import { getContext, onDestroy } from 'svelte';
+	import type { HTMLBaseAttributes } from 'svelte/elements';
+	import { writable } from 'svelte/store';
 
 	const id = useId().toString();
 	let el: HTMLElement | undefined = undefined;
-	const groupId: string = getContext("cmdk_group");
+	const groupId: string = getContext('cmdk_group');
 	const context = useCommand();
 	const state = useState();
 
@@ -16,13 +16,14 @@
 
 	export let value: string | undefined = undefined;
 
+
 	$: value = value || el?.textContent?.trim()?.toLowerCase();
 
-	const _value = writable<string>(value ?? "");
+	const _value = writable<string>(value ?? '');
 
 	$: if (value) {
 		$context.value(id, value);
-		el?.setAttribute("data-value", value);
+		el?.setAttribute('data-value', value);
 		$_value = value;
 	}
 
@@ -45,12 +46,12 @@
 	$: unmounter = $context.item(id, groupId);
 
 	function select() {
-		state.setState("value", $_value, true);
-		state.setState("active_id", id, true);
+		state.setState('value', $_value, true);
+		state.setState('active_id', id, true);
 	}
 
 	function handleSelect(e: Event) {
-		console.log("handle select", e);
+		console.log('handle select', e);
 		console.log({ $_value });
 		state.toggle($_value);
 		onSelect?.($_value);
@@ -100,6 +101,6 @@
 		on:pointermove={disabled ? undefined : select}
 		on:click={disabled ? undefined : handleSelect}
 	>
-		<slot {selected} {handleSelect} />
+		<slot {selected} {handleSelect} state={$state} />
 	</div>
 {/if}

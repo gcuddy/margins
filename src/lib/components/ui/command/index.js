@@ -7,3 +7,4 @@ export { default as CommandEmpty } from './CommandEmpty.svelte';
 export { default as CommandGroup } from './CommandGroup.svelte';
 export { default as CommandShortcut } from './CommandShortcut.svelte';
 export { default as CommandSeparator } from './CommandSeparator.svelte';
+export { default as CommandFallback } from './CommandFallback.svelte';

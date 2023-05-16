@@ -47,7 +47,7 @@
 			<Button
 				as="a"
 				href={$currentList.slug}
-				variant="subtle"
+				variant="secondary"
 				class="h-10 w-10 rounded-full p-3"
 				on:click={(e) => {
 					if ($last_urls[0] === $currentList.slug) {
@@ -65,7 +65,7 @@
 				class={cn(
 					buttonVariants({
 						class: "h-10 w-10 rounded-full border-none p-3",
-						variant: "subtle",
+						variant: "secondary",
 					})
 				)}
 				entry={{ id: +$page.params.id }}
@@ -75,7 +75,7 @@
 					class={cn(
 						buttonVariants({
 							class: "h-10 w-10 rounded-full p-3",
-							variant: "subtle",
+							variant: "secondary",
 						})
 					)}
 				>
@@ -110,7 +110,7 @@
 		class={cn(
 			buttonVariants({
 				class: "h-10 w-10 rounded-full border-none p-3",
-				variant: "subtle",
+				variant: "secondary",
 			}),
 			"fixed right-4 top-4 z-40 opacity-50 transition hover:opacity-100"
 		)}

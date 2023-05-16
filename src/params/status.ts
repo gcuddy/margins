@@ -7,7 +7,6 @@ export const match: ParamMatcher = (param) => {
     // if (param.toUpperCase() === 'all') {
     // 	return true;
     // }
-    console.log({ param, statuses, result: statuses.includes(param.toLowerCase()) })
     return statuses.includes(param.toLowerCase());
     // const location = LocationSchema.safeParse(param.toLowerCase());
     // if (location.success) {

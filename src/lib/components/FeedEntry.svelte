@@ -12,7 +12,7 @@
 	import Input from "$lib/components/ui/Input.svelte";
 	import Icon from "./helpers/Icon.svelte";
 	import Label from "$lib/components/ui/Label.svelte";
-	import { Subtle } from "$lib/components/ui/typography";
+	import { Muted } from "$lib/components/ui/typography";
 	import Switch from "$lib/components/ui/Switch.svelte";
 	import toast from "svelte-french-toast";
 	import { goto } from "$app/navigation";
@@ -58,7 +58,7 @@
 		}}
 	>
 		<div>
-			<Label class="px-3" for="url"><Subtle>Add subscription</Subtle></Label>
+			<Label class="px-3" for="url"><Muted>Add subscription</Muted></Label>
 			<!-- < for="url"
 				><SmallPlus><Muted>Add Subscription</Muted></SmallPlus></label
 			> -->
@@ -131,7 +131,7 @@
 			class="flex flex-col gap-y-4 px-3"
 		>
 			<fieldset class="space-y-4">
-				<legend><Subtle>Feeds</Subtle></legend>
+				<legend><Muted>Feeds</Muted></legend>
 				{#each form.feeds as feed, index}
 					{@const id = `feed-${index}`}
 					<div class="space-y-0.5">
@@ -168,7 +168,7 @@
 						</div>
 						<div class="col-span-full flex justify-end pr-2">
 							<Label class="row-start-2" for="feed-checkbox-{index}">
-								<Subtle class="text-xs">{feed.url}</Subtle>
+								<Muted class="text-xs">{feed.url}</Muted>
 							</Label>
 						</div>
 					</div>

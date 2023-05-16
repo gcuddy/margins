@@ -138,7 +138,7 @@ const adapter = <DB extends Kysely<any>>(
             console.time("getSession")
             const data = await kysely
                 .selectFrom("session")
-                .selectAll()
+                .select(["active_expires", "id", "idle_expires", "user_id"])
                 .where("id", "=", sessionId)
                 .executeTakeFirst();
             console.timeEnd("getSession")
@@ -158,7 +158,7 @@ const adapter = <DB extends Kysely<any>>(
         setUser: async (userId, attributes, key) => {
             try {
                 const userResult = await kysely.transaction().execute(async (trx) => {
-                    let result: Selectable<KyselyUser> | null = null;
+                    const result: Selectable<KyselyUser> | null = null;
                     await trx
                         .insertInto("user")
                         .values({

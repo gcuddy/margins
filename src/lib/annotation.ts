@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { TextPositionSelector as ITextPositionSelector } from './annotator/types';
 const TimestampSelectorSchema = z.object({
     // source: z.string()   ,
     // selector: z.object({
@@ -22,6 +23,12 @@ export const XPathSelectorSchema = z.object({
     value: z.string(),
 });
 
+const TextPositionSelector: z.ZodType<ITextPositionSelector> = z.object({
+    type: z.literal('TextPositionSelector'),
+    start: z.number(),
+    end: z.number(),
+})
+
 // TODO: this is not really complete but it works for now
 export const RangeSelectorSchema = z.object({
     type: z.literal('RangeSelector'),
@@ -29,17 +36,27 @@ export const RangeSelectorSchema = z.object({
     endSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema]),
 });
 
+// This is our own extension
+export const BookSelectorSchema = z.object({
+    type: z.literal('BookSelector'),
+    // Value is optional - we could just be noting the page num, and the body contains our annotation
+    value: z.string().optional(),
+    pageNumber: z.number(),
+})
+
 export const SelectorSchema = z.union([
     XPathSelectorSchema,
     TextQuoteSelectorSchema,
     RangeSelectorSchema,
-    TimestampSelectorSchema
+    TimestampSelectorSchema,
+    BookSelectorSchema,
+    TextPositionSelector
 ]);
 export type Selector = z.infer<typeof SelectorSchema>;
 
 export const TargetSchema = z.object({
     source: z.string(),
-    selector: SelectorSchema,
+    selector: SelectorSchema.or(z.tuple([TextQuoteSelectorSchema, TextPositionSelector])).or(z.tuple([TextQuoteSelectorSchema, BookSelectorSchema])),
     html: z.string().optional(),
 });
 
@@ -47,11 +64,12 @@ export type TargetSchema = z.infer<typeof TargetSchema>;
 
 export const annotationSchema = z.object({
     type: z.literal('annotation').default("annotation"),
-    body: z.string(),
+    body: z.string().nullish(),
     id: z.string().optional(),
     userId: z.string(),
     private: z.boolean().optional(),
-    target: TargetSchema,
+    title: z.string().optional(),
+    target: TargetSchema.optional(),
     entryId: z.number().optional(),
     // tags: z.string().array(),
     // entry: z

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { HTMLBaseAttributes } from "svelte/elements";
 
-	export let progress: number;
+	export let progress: number | undefined = undefined;
 
 	interface $$Props extends HTMLBaseAttributes {
-		progress: number;
+		progress?: number;
 	}
 </script>
 

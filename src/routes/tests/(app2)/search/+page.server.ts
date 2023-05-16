@@ -3,11 +3,14 @@ import { books } from '$lib/api/gbook';
 import pindex from '$lib/api/pindex';
 import { redis } from '$lib/redis';
 import type { books_v1 } from '@googleapis/books';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { Movie, Search, TV, Person } from 'tmdb-ts';
 import { db } from '$lib/db';
 import { sql } from 'kysely';
 import { getId } from '$lib/utils/entries';
+import type { PageServerLoad } from './$types';
+import spotify from '$lib/api/spotify';
+import { annotations } from '$lib/db/selects';
 
 type GoodObject = {
     id: string | number;
@@ -29,11 +32,11 @@ type TvPlusType = TV & {
 type PersonPlusType = Person & {
     media_type: "person";
 };
+type MultiSearch = Search<MoviePlusType | TvPlusType | PersonPlusType>;
 const googleBooksApi = "https://www.googleapis.com/books/v1/volumes";
 
 
 
-type MultiSearch = Search<MoviePlusType | TvPlusType | PersonPlusType>;
 
 function adaptTmdb(tmdb: MoviePlusType | TvPlusType): GoodObject {
     if (tmdb.media_type === "movie") {
@@ -70,10 +73,13 @@ function adaptBook(book: books_v1.Schema$Volume): GoodObject {
 }
 
 
-export const load = async (e) => {
+export const load = (async (e) => {
     console.time("search")
     console.log({ e })
     const type = e.url.searchParams.get("type");
+
+    const session = await e.locals.validate();
+    if (!session) throw error(401, "Unauthorized");
     if (!type) {
         throw redirect(307, e.url.pathname + "?type=my");
     }
@@ -133,11 +139,21 @@ export const load = async (e) => {
                 ex: 60 * 60 * 24
             });
         }
+
+        // maybe don't do this if we're caching....
+        const bookmarks = db.selectFrom("Bookmark as b")
+            .innerJoin("Entry as e", "e.id", "b.entryId")
+            .where("b.userId", "=", session.userId)
+            .where("e.googleBooksId", "in", adapted.map(a => a.id as string))
+            .select(["e.googleBooksId", "b.status"])
+            .execute();
+
         return {
             // ...results.items,
             results: adapted,
             type,
-            q
+            q,
+            bookmarks
         }
     }
     if (type === "my") {
@@ -155,7 +171,9 @@ export const load = async (e) => {
                 "author",
                 "googleBooksId",
                 "tmdbId",
-                "podcastIndexId"
+                "podcastIndexId",
+                "uri",
+                "spotifyId"
             ])
             .limit(10)
             .orderBy("createdAt", "desc")
@@ -175,6 +193,28 @@ export const load = async (e) => {
             }))
         }
     }
+    if (type === "notes") {
+        // look for entries with this title
+
+        console.time("note search")
+        const notes = await db.selectFrom("Annotation as a")
+            .leftJoin("Entry as e", "a.entryId", "e.id")
+            .where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${q})`)
+            .select(annotations.notebook_select)
+            .limit(10)
+            .orderBy("a.createdAt", "desc")
+            .execute();
+
+        console.timeEnd("note search")
+
+
+        return {
+            type,
+            q,
+            results: [],
+            notes
+        }
+    }
     if (type === "podcasts") {
         const podcasts = await pindex.search(q);
         return {
@@ -190,5 +230,24 @@ export const load = async (e) => {
 
     }
 
+    if (type === "music") {
+        // TODO: search spotify
 
-}
+        const albums = spotify.search(q).then(r => r.albums.items.map(a => ({
+            id: a.id,
+            title: a.name,
+            type: "album",
+            image: a.images[0]?.url,
+            date: a.release_date,
+            author: a.artists[0]?.name
+        })));
+
+        return {
+            type,
+            q,
+            results: albums
+        }
+    }
+
+
+}) satisfies PageServerLoad

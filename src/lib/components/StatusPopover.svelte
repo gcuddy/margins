@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { CheckCircle2, Circle, HelpCircle } from "lucide-svelte";
 	import {
 		Command,
 		CommandEmpty,
@@ -13,109 +12,82 @@
 		PopoverContent,
 		PopoverTrigger,
 	} from "$lib/components/ui/popover";
-	import type { Bookmark, Entry } from "@prisma/client";
-	import { buttonVariants } from "./ui/Button.svelte";
-	import type { UpdateBookmarkSchema } from "$lib/features/entries/forms";
 	import { cn } from "$lib/utils/tailwind";
-	import type { Validation } from "sveltekit-superforms";
-	import { superForm } from "sveltekit-superforms/client";
-	import toast from "svelte-french-toast";
-	import type { Message } from "$lib/types";
-
-	export let entry: Pick<Entry, "id"> & {
-		bookmark?: Pick<Bookmark, "id" | "status">;
-	};
-	export let data: Validation<UpdateBookmarkSchema, Message>;
-	export let action_prefix = `/tests/entry/${entry.id}`;
+	import type { Placement } from "@popperjs/core";
+	import { CheckCircle2, Circle, HelpCircle } from "lucide-svelte";
+	import { createEventDispatcher } from "svelte";
+	import { buttonVariants } from "./ui/Button.svelte";
 
 	const statuses = {
 		Backlog: HelpCircle,
 		Now: Circle,
 		Archive: CheckCircle2,
 	};
-	const statusValues = Object.keys(statuses) as (keyof typeof statuses)[];
 
-	const { form, enhance, message } = superForm(data, {
-		dataType: "json",
-		onSubmit: (data) => {
-			console.log("submit", data);
-		},
-		// onResult({ result }) {
-		// 	toast($message?.text || "Updated bookmark");
-		// },
-	});
+	export let status: keyof typeof statuses | null = null;
+	export let placement: Placement = "left";
+	let className = "";
+	export { className as class };
+	const statusValues = Object.keys(statuses) as (keyof typeof statuses)[];
 
 	let value = "";
 
-	let formEl: HTMLFormElement;
-
 	// import SuperDebug from "sveltekit-superforms/client/SuperDebug.svelte";
 
+	const dispatch = createEventDispatcher();
 	function handleSelect(value: string) {
-		$form.status = value as keyof typeof statuses;
-		formEl?.requestSubmit();
-	}
-
-	$: if ($message?.status === "success") {
-		toast.success($message.text);
+		dispatch("select", value);
 	}
 </script>
 
 <!-- <SuperDebug data={$form} /> -->
 
-<form
-	class=""
-	bind:this={formEl}
-	use:enhance
-	method="post"
-	action="{action_prefix}?/updateBookmark"
->
-	<Popover let:close>
-		<PopoverTrigger
-			class={cn(
-				buttonVariants({
-					variant: "outline",
-					size: "xs",
-				}),
-				"w-[100px]"
-			)}
-		>
-			{#if $form.status}
+<Popover let:close>
+	<PopoverTrigger
+		class={cn(
+			// buttonVariants({
+			// 	variant: "outline",
+			// }),
+			className
+		)}
+	>
+		<slot>
+			{#if status}
 				<svelte:component
-					this={statuses[$form.status]}
+					this={statuses[status]}
 					class="mr-2 h-4 w-4 shrink-0"
 				/>
-				<span>{$form.status}</span>
+				<span>{status}</span>
 			{:else}
 				+ Set Status
 			{/if}
-		</PopoverTrigger>
-		<PopoverContent align="left" class="p-0">
-			<Command>
-				<CommandInput bind:value placeholder="Change status" />
-				<CommandList class="scrollbar-none">
-					<CommandEmpty>No status found</CommandEmpty>
-					<CommandGroup>
-						{#each statusValues as status}
-							<CommandItem
-								value={status}
-								onSelect={(value) => {
-									handleSelect(value);
-									close(null);
-								}}
-							>
-								<svelte:component
-									this={statuses[status]}
-									class="mr-2 h-4 w-4 {status === entry.bookmark?.status
-										? 'opacity-100'
-										: 'opacity-40'}"
-								/>
-								<span>{status}</span>
-							</CommandItem>
-						{/each}
-					</CommandGroup>
-				</CommandList>
-			</Command>
-		</PopoverContent>
-	</Popover>
-</form>
+		</slot>
+	</PopoverTrigger>
+	<PopoverContent {placement} class="p-0">
+		<Command>
+			<CommandInput bind:value placeholder="Change status" />
+			<CommandList class="scrollbar-none">
+				<CommandEmpty>No status found</CommandEmpty>
+				<CommandGroup>
+					{#each statusValues as _status}
+						<CommandItem
+							value={_status}
+							onSelect={(value) => {
+								handleSelect(value);
+								close(null);
+							}}
+						>
+							<svelte:component
+								this={statuses[_status]}
+								class="mr-2 h-4 w-4 {status === _status
+									? 'opacity-100'
+									: 'opacity-40'}"
+							/>
+							<span>{_status}</span>
+						</CommandItem>
+					{/each}
+				</CommandGroup>
+			</CommandList>
+		</Command>
+	</PopoverContent>
+</Popover>

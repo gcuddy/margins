@@ -17,3 +17,7 @@ export type PickByValue<T, ValueType> = Pick<
 
 
 export type Promiseable<T> = T | Promise<T>;
+
+export type KeysThatBeginWith<T, Phrase extends string> = keyof {
+    [K in keyof T as K extends `${Phrase}${infer R}` ? K : never]: T[K]
+};

@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
-	import resize from "$lib/actions/resize";
+	import { browser } from '$app/environment';
+	import resize from '$lib/actions/resize';
 
-	let className = "";
+	let className = '';
 	export { className as class };
 	export let breakpoints = true;
 	export let el: HTMLElement | undefined = undefined;
 	export let style: string | undefined = undefined;
 	export let first_letter = false;
-	export let font: "sans" | "serif" | "mono" = "sans";
+	export let font: 'sans' | 'serif' | 'mono' = 'sans';
 
 	// read-only
 	export let dimensions: DOMRect | undefined;
@@ -44,10 +44,10 @@
 </div>
 
 <style lang="postcss">
-	div.first_letter :global(> *:first-child::first-letter) {
+	/* div.first_letter :global(> *:first-child::first-letter) {
 		@apply float-left pr-2 pl-0.5 text-7xl not-italic text-primary-700;
 	}
 	div :global(iframe[src*="youtube"]:not(:where([class~="not-prose"] *))) {
 		@apply rounded;
-	}
+	} */
 </style>

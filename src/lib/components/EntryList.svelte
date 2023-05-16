@@ -285,7 +285,7 @@
 		dragging.set(false);
 	}
 	async function handleDrop(e: DragEvent) {
-		dragging.set(false);
+		dragging.set(false); 
 		console.log("drop", e);
 		const url = e.dataTransfer?.getData("text/uri-list");
 		console.log({ url });

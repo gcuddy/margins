@@ -7,8 +7,7 @@
 
 <DialogTitle
 	class={cn(
-		"text-lg font-semibold text-slate-900",
-		"dark:text-slate-50",
+		"text-lg font-semibold leading-none tracking-tight",
 		$$props.class
 	)}
 	{...$$restProps}><slot /></DialogTitle

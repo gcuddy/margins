@@ -39,3 +39,13 @@ export function gentleFly(
 		}
 	};
 }
+
+
+import { crossfade } from 'svelte/transition';
+import { cubicOut } from 'svelte/easing';
+
+export const [send, receive] = crossfade({
+	// delay: 500,
+	duration: 500,
+	easing: cubicOut
+});

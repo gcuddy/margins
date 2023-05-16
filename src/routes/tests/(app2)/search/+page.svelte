@@ -1,40 +1,55 @@
 <script lang="ts">
-	import { page } from "$app/stores";
-	import ItemArtwork from "$lib/components/ItemArtwork.svelte";
-	import Input from "$lib/components/ui/Input.svelte";
-	import Label from "$lib/components/ui/Label.svelte";
-	import { H1 } from "$lib/components/ui/typography";
-	import { cn } from "$lib/utils/tailwind";
+	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
+	import ItemArtwork from '$lib/components/ItemArtwork.svelte';
+	import Annotation from '$lib/components/notebook/Annotation.svelte';
+	import Input from '$lib/components/ui/Input.svelte';
+	import Label from '$lib/components/ui/Label.svelte';
+	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
+	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
+	import { H1 } from '$lib/components/ui/typography';
+	import { cn } from '$lib/utils/tailwind';
+	import { Search } from 'lucide-svelte';
+	import { superForm } from 'sveltekit-superforms/client';
 	export let data;
 	const prefix = $page.url.pathname;
 	const tabs = [
 		{
-			name: "My stuff",
-			href: "my",
+			name: 'My stuff',
+			href: 'my'
 		},
 		{
-			name: "Movies + TV",
-			href: "movies",
+			name: 'Notebook',
+			href: 'notes'
 		},
 		{
-			name: "Books",
-			href: "books",
+			name: 'Movies + TV',
+			href: 'movies'
 		},
 		{
-			name: "Podcasts",
-			href: "podcasts",
+			name: 'Books',
+			href: 'books'
 		},
+		{
+			name: 'Podcasts',
+			href: 'podcasts'
+		},
+		{
+			name: 'Music',
+			href: 'music'
+		}
 	];
-	let q = data.q ?? "";
+	let q = data.q ?? '';
 	// $: q = $page.url.searchParams.get("q") ?? "";
-	$: tab = $page.url.searchParams.get("type");
+	$: tab = $page.url.searchParams.get('type');
 
 	const setType = (type: string) => {
 		const Url = $page.url;
-		Url.searchParams.set("type", type);
-		if (q) Url.searchParams.set("q", q);
+		Url.searchParams.set('type', type);
+		if (q) Url.searchParams.set('q', q);
 		return Url.toString();
 	};
+	let loading = false;
 </script>
 
 <H1>Search</H1>
@@ -42,29 +57,35 @@
 <form data-sveltekit-keepfocus class="my-4">
 	<input type="hidden" name="type" value={tab} />
 	<Label for="search" class="sr-only">Search</Label>
-	<Input bind:value={q} id="search" name="q" placeholder="search" />
+	<div class="flex items-center">
+		<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
+		<Input autofocus class="" bind:value={q} id="search" name="q" placeholder="search" />
+	</div>
 </form>
-<div
-	class="inline-flex items-center justify-center rounded-md bg-gray-100 p-1 dark:bg-gray-800"
->
-	<!--  -->
-	{#each tabs as { name, href }}
-		{@const selected = tab === href}
-		<a
-			href="?type={href}{q ? '&q=' + q : ''}"
-			class={cn(
-				"inline-flex min-w-[100px] items-center justify-center rounded-[0.185rem] px-3 py-1.5  text-sm font-medium text-gray-700 transition-all  disabled:pointer-events-none disabled:opacity-50 dark:text-gray-200 ",
-				selected &&
-					"bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-gray-100"
-			)}
-		>
-			{name}
-		</a>
-	{/each}
+<div>
+	<div class={tabList}>
+		<!--  -->
+		{#each tabs as { name, href }}
+			{@const selected = tab === href}
+			<a href="?type={href}{q ? '&q=' + q : ''}" class={tabTrigger({ selected })}>
+				{name}
+			</a>
+		{/each}
+	</div>
 </div>
 
-<div class="mx-auto mt-4 flex flex-wrap justify-center gap-4 px-2 pb-4">
-	{#each data.results || [] as result}
-		<ItemArtwork item={result} class="w-32" />
-	{/each}
+<div
+	class=" mt-4 grid grid-cols-2 gap-x-1 gap-y-4 px-2 pb-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+>
+	{#key data.results}
+		{#if data.notes}
+			{#each data.notes || [] as note}
+				<Annotation class="col-span-2" annotation={note} />
+			{/each}
+		{:else}
+			{#each data.results || [] as result}
+				<ItemArtwork {q} item={result} class="w-32" />
+			{/each}
+		{/if}
+	{/key}
 </div>

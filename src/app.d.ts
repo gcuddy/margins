@@ -11,7 +11,6 @@ declare namespace App {
         validateUser: import("@lucia-auth/sveltekit").ValidateUser;
         setSession: import("@lucia-auth/sveltekit").SetSession;
 
-        map: Map<string, unknown;
     }
     interface PageData {
         // user?: import('$lib/user').RootUserData;
@@ -21,12 +20,15 @@ declare namespace App {
             states: import("$lib/trpc/router").RouterOutputs["user"]["getStates"];
             subscriptions: import("$lib/trpc/router").RouterOutputs["subscriptions"]["list"];
         };
+        user_data?: {
+            tags?: Promise<{ id: string; name: string; }[]>;
+        }
         currentList?: import("$lib/stores/currentList").CurrentList;
         // tags?: import("@prisma/client").Tag[];
         // subscriptions?: import("$lib/trpc/router").RouterOutputs["user"]["data"]["subscriptions"];
         // states?: import("@prisma/client").State[];
         filterMap?: import("$lib/stores/filter").FilterMapStore;
-        queryClient: import("@tanstack/svelte-query").QueryClient;
+        queryClient?: import("@tanstack/svelte-query").QueryClient;
         favorites?: import("$lib/trpc/router").RouterOutputs["favorites"]["list"];
         location?: import("@prisma/client").Location
         S3_BUCKET_PREFIX: string;
@@ -35,9 +37,12 @@ declare namespace App {
 
 declare type Item = import("svelte-dnd-action").Item;
 declare type DndEvent<ItemType = Item> = import("svelte-dnd-action").DndEvent<ItemType>;
+
 declare namespace svelte.JSX {
     interface HTMLAttributes<T> {
         onconsider?: (event: CustomEvent<DndEvent<ItemType>> & { target: EventTarget & T }) => void;
         onfinalize?: (event: CustomEvent<DndEvent<ItemType>> & { target: EventTarget & T }) => void;
+        onenter?: (event: CustomEvent) => void;
+        onexit?: (event: CustomEvent) => void;
     }
 }

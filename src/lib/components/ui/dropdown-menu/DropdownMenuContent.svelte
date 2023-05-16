@@ -1,56 +1,39 @@
 <script lang="ts">
-	import { useDropDownMenuContext } from "$lib/components/ui/dropdown-menu/DropdownMenu.svelte";
-	import { fadeScale } from "$lib/transitions";
-	import { cn } from "$lib/utils/tailwind";
-	import { MenuItems, Portal, Transition } from "@rgossiaux/svelte-headlessui";
-	import { getContext } from "svelte";
-	import type { HTMLBaseAttributes } from "svelte/elements";
-	import type { Readable } from "svelte/store";
-	import { fade, fly, slide } from "svelte/transition";
+	import { useDropDownMenuContext } from '$lib/components/ui/dropdown-menu/DropdownMenu.svelte';
+	import { fadeScale } from '$lib/transitions';
+	import { cn } from '$lib/utils/tailwind';
+	import type { Placement } from '@popperjs/core';
+	import { MenuItems, Portal, Transition } from '@rgossiaux/svelte-headlessui';
+	import { getContext } from 'svelte';
+	import type { HTMLBaseAttributes } from 'svelte/elements';
+	import type { Readable } from 'svelte/store';
+	import { fade, fly, slide } from 'svelte/transition';
 
-	const state = useDropDownMenuContext("DropdownMenuContent");
+	const state = useDropDownMenuContext('DropdownMenuContent');
 	const headlessui_state: Readable<{
-		menuState: import("@rgossiaux/svelte-headlessui/components/menu/Menu.svelte").MenuStates;
-	}> = getContext("headlessui-menu-context");
+		menuState: import('@rgossiaux/svelte-headlessui/components/menu/Menu.svelte').MenuStates;
+	}> = getContext('headlessui-menu-context');
 
 	$: open = $headlessui_state.menuState === 0;
 
-	let c = "";
+	let c = '';
 	export { c as class };
-	export let offset: number = 4;
+	export let offset = 4;
+	export let xoffset = 0;
+	export let placement: Placement = 'auto';
 
 	interface $$Props extends HTMLBaseAttributes {
 		offset?: number;
 		class?: string;
+		placement?: Placement;
+		xoffset?: number;
 	}
 
-	$: ({ popperContent } = $state);
+	const { popperContent } = $state;
+	// let ({ popperContent } = $state);
 
-	$: popperOpts = {
-		strategy: "fixed",
-		modifiers: [
-			{
-				name: "offset",
-				options: {
-					offset: [0, offset],
-				},
-			},
-			{
-				name: "preventOverflow",
-				options: {
-					padding: 16,
-				},
-			},
-			// {
-			// 	name: "flip",
-			// 	options: {
-			// 		fallbackPlacements: ["top", "bottom"],
-			// 	},
-			// },
-		],
-	};
 	$: propsWeControl = {
-		"data-state": open ? "open" : "closed",
+		'data-state': open ? 'open' : 'closed'
 	};
 </script>
 
@@ -68,15 +51,32 @@
 <Portal>
 	{#if open}
 		<div
-			use:popperContent={popperOpts}
+			use:popperContent={{
+				strategy: 'fixed',
+				placement,
+				modifiers: [
+					{
+						name: 'offset',
+						options: {
+							offset: [xoffset, offset]
+						}
+					},
+					{
+						name: 'preventOverflow',
+						options: {
+							padding: 16
+						}
+					}
+				]
+			}}
 			out:fade|local={{
-				duration: 200,
+				duration: 200
 			}}
 		>
 			<MenuItems
 				static
 				class={cn(
-					"z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-100 bg-white p-1 text-gray-700 shadow-md outline-none  dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400",
+					'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
 					c
 				)}
 			>

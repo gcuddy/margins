@@ -1,11 +1,11 @@
 <script lang="ts">
-	import "../app.css";
-	import "$lib/styles/font.css";
+	import '../app.css';
+	import '$lib/styles/font.css';
 
-	import { page } from "$app/stores";
-	import { handleSession } from "@lucia-auth/sveltekit/client";
+	import { page } from '$app/stores';
+	import { handleSession } from '@lucia-auth/sveltekit/client';
 
-	import { Toaster } from "svelte-french-toast";
+	import { Toaster } from 'svelte-french-toast';
 
 	handleSession(page);
 	$: console.log({ $page });
@@ -24,12 +24,13 @@
 <Toaster
 	position="bottom-center"
 	toastOptions={{
-		// className: "bg-base text-content rounded-full",
-		// style: "background-color: inherit;",
-		// style:
-		// "border-radius: 200px; background-color: hsl(var(--color-base)); color: hsl(var(--color-content));",
-		className:
-			"!shadow-lg dark:!border-gray-700 !text-gray-950 dark:!text-gray-50 !bg-white !border-gray-200 dark:!bg-gray-800 dark:!border-gray-700",
+		style:
+			'border-width:1px; background-color: hsl(var(--background)); color: hsl(var(--foreground));',
+		className: '!shadow-lg !rounded-md !p-6 !pr-8 !text-sm',
+		iconTheme: {
+			primary: 'hsl(var(--primary))',
+			secondary: 'hsl(var(--secondary))'
+		}
 	}}
 />
 

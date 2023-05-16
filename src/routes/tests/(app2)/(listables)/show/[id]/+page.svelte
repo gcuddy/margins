@@ -1,8 +1,9 @@
 <script lang="ts">
-	import smoothload from "$lib/actions/smoothload";
-	import Button, { buttonVariants } from "$lib/components/ui/Button.svelte";
-	import Separator from "$lib/components/ui/Separator.svelte";
-	import { H1, H2, Lead, Subtle } from "$lib/components/ui/typography";
+	import smoothload from '$lib/actions/smoothload';
+	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import Separator from '$lib/components/ui/Separator.svelte';
+	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
+	import { H1, H2, Lead, Muted } from '$lib/components/ui/typography';
 	export let data;
 </script>
 
@@ -15,13 +16,13 @@
 			use:smoothload
 		/>
 		<div class="flex flex-col gap-2">
-			<Subtle>Podcast</Subtle>
+			<Muted>Podcast</Muted>
 			<H1>{data.podcast?.title}</H1>
 			<Lead>
 				{data.podcast?.author}
 			</Lead>
 			<div class="flex space-x-4">
-				<Button>Play</Button>
+				<Button>Subscribe</Button>
 				<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 			</div>
 		</div>
@@ -29,19 +30,19 @@
 	<!-- 
 	<dl class="grid grid-cols-[1fr,1fr,1fr] gap-3 pt-2 text-sm">
 		<div class="flex flex-col">
-			<dt class="text-xs uppercase"><Subtle>Release Date</Subtle></dt>
+			<dt class="text-xs uppercase"><Muted>Release Date</Muted></dt>
 			<dd>
-				<Subtle>
+				<Muted>
 					{data.movie.release_date}
-				</Subtle>
+				</Muted>
 			</dd>
 		</div>
 		<div class="flex flex-col">
-			<dt class="text-xs uppercase"><Subtle>Runtime</Subtle></dt>
+			<dt class="text-xs uppercase"><Muted>Runtime</Muted></dt>
 			<dd>
-				<Subtle>
+				<Muted>
 					{data.movie.runtime} minutes
-				</Subtle>
+				</Muted>
 			</dd>
 		</div>
 	</dl> -->
@@ -57,15 +58,20 @@
 			<H2>Episodes</H2>
 			<div class="flex flex-col gap-y-2">
 				{#await data.lazy.episodes}
-					loading...
+					{#each Array(5) as _}
+						<div class="space-y-2 p-3">
+							<Skeleton class="h-8 w-full" />
+							<Skeleton class="h-16 w-full" />
+						</div>
+					{/each}
 				{:then episodes}
 					{#each episodes as episode}
 						<a
-							class="space-y-2 rounded p-3 transition hover:bg-gray-400 dark:hover:bg-gray-800"
+							class="space-y-2 rounded-md p-3 transition hover:bg-accent"
 							href="/tests/podcast/p{episode.id}"
 						>
 							<span class="line-clamp-2 font-bold">{episode.title}</span>
-							<p class="line-clamp-2 text-sm text-slate-700 dark:text-gray-300">
+							<p class="line-clamp-2 text-sm text-muted-foreground">
 								{@html episode.description}
 							</p>
 						</a>

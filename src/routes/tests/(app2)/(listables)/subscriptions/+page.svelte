@@ -1,76 +1,35 @@
-<script>
-	import { page } from "$app/stores";
-	import Intersector from "$lib/components/Intersector.svelte";
-	import { getCurrentListContext } from "$lib/stores/currentList";
-	import { fetchMore } from "./utils";
+<script lang="ts">
+	import rover from '$lib/actions/rover';
+	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
 
 	export let data;
-
-	let fetching_more = false;
-	$: cache = data.cache;
-	$: $cache.set(["rss", "all"], {
-		fn: fetchMore,
-		// time in seconds
-		staleTime: 60,
-	});
-
-	const currentList = getCurrentListContext();
-	$: currentList.set({
-		entries: data.feeds.entries,
-		slug: $page.url.pathname,
-		context: "rss",
-		cursor: data.feeds.nextCursor,
-		fetcher: (cursor) =>
-			fetchMore({
-				cursor,
-				take: 25,
-			}),
-	});
-
-	// preferred api: cache.createquery or cache.query
-	// returns a query store that can be used to get data and cache data
-	// optionally can also use idb
+	$: query = data.query();
 </script>
 
-{#each data.feeds.entries as entry}
-	<div class="flex flex-col">
-		<a href="/tests/entry/{entry.id}">{entry.title}</a>
-		<span> {entry.feed_title}</span>
+{#if $query.isLoading}
+	<div class="mt-4 flex flex-col space-y-4">
+		{#each Array(10) as _}
+			<div>
+				<Skeleton class="h-7 w-1/4" />
+				<Skeleton class="mt-1 h-7 w-1/2" />
+			</div>
+		{/each}
 	</div>
-{/each}
-
-<!-- progressively enhance by adding a form/url param to paginate by going to next page with ?timestamp=-->
-<Intersector
-	cb={() => {
-		// alert("intersector");
-		if (!fetching_more && data.feeds.nextCursor) {
-			fetchMore({
-				cursor: data.feeds.nextCursor,
-				take: 25,
-			}).then((newData) => {
-				data.feeds.entries = [...data.feeds.entries, ...newData.entries];
-				data.feeds.nextCursor = newData.nextCursor;
-			});
-		}
-	}}
->
-	{#if fetching_more}
-		loading...
-	{/if}
-</Intersector>
-
-<!-- <form action="?/fetchMore" method="post">
-	<input type="hidden" name="cursor" value={data.feeds.nextCursor} />
-	<Button type="submit">Load more</Button>
-</form> -->
-
-<!-- {#await data.lazy.feeds}
-	loading...
-{:then { entries, nextCursor }}
-	{#each entries as entry}
-		<div>
-			<h2>{entry.title}</h2>
-		</div>
-	{/each}
-
-{/await} -->
+{:else if $query.isSuccess}
+	<ul use:rover class="mt-4 space-y-4">
+		{#each $query.data as subscription}
+			<li class="flex items-center gap-x-4">
+				<img
+					src={(subscription.imageUrl &&
+						!subscription.imageUrl.startsWith('http') &&
+						data.S3_BUCKET_PREFIX + subscription.imageUrl) ||
+						subscription.imageUrl ||
+						`https://icon.horse/icon?uri=${subscription.feedUrl}`}
+					class="aspect-square h-12 rounded-md object-cover"
+					alt=""
+				/>
+				<a href="/tests/subscription/{subscription.feedId}">{subscription.title}</a>
+			</li>
+		{/each}
+	</ul>
+{/if}

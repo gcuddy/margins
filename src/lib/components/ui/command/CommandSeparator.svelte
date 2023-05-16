@@ -15,7 +15,7 @@
 
 <CommandSeparator
 	{...$$restProps}
-	class={cn("-mx-1 h-px bg-gray-100 dark:bg-gray-700", className)}
+	class={cn("-mx-1 h-px bg-border", className)}
 >
 	<slot />
 </CommandSeparator>

@@ -2,6 +2,13 @@ const colors = require("tailwindcss/colors");
 const defaultTheme = require("tailwindcss/defaultTheme");
 const plugin = require("tailwindcss/plugin");
 
+delete colors['lightBlue'];
+delete colors['warmGray'];
+delete colors['trueGray'];
+delete colors['coolGray'];
+delete colors['blueGray'];
+
+
 /** @type {import('tailwindcss').Config} */
 const config = {
 	content: ["./src/**/*.{html,js,svelte,ts}"],
@@ -39,38 +46,38 @@ const config = {
 			},
 			colors: {
 				// TODO: / <alpha-value> ?
-				border: "hsl(var(--border))",
-				input: "hsl(var(--input))",
-				ring: "hsl(var(--ring))",
-				background: "hsl(var(--background))",
-				foreground: "hsl(var(--foreground))",
+				border: "hsl(var(--border) / <alpha-value>)",
+				input: "hsl(var(--input) / <alpha-value>)",
+				ring: "hsl(var(--ring) / <alpha-value>)",
+				background: "hsl(var(--background) / <alpha-value>)",
+				foreground: "hsl(var(--foreground) / <alpha-value>)",
 				primary: {
-					DEFAULT: "hsl(var(--primary))",
-					foreground: "hsl(var(--primary-foreground))",
+					DEFAULT: "hsl(var(--primary) / <alpha-value>)",
+					foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
 				},
 				secondary: {
-					DEFAULT: "hsl(var(--secondary))",
-					foreground: "hsl(var(--secondary-foreground))",
+					DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
+					foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
 				},
 				destructive: {
-					DEFAULT: "hsl(var(--destructive))",
-					foreground: "hsl(var(--destructive-foreground))",
+					DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+					foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
 				},
 				muted: {
-					DEFAULT: "hsl(var(--muted))",
-					foreground: "hsl(var(--muted-foreground))",
+					DEFAULT: "hsl(var(--muted) / <alpha-value>)",
+					foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
 				},
 				accent: {
-					DEFAULT: "hsl(var(--accent))",
-					foreground: "hsl(var(--accent-foreground))",
+					DEFAULT: "hsl(var(--accent) / <alpha-value>)",
+					foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
 				},
 				popover: {
-					DEFAULT: "hsl(var(--popover))",
-					foreground: "hsl(var(--popover-foreground))",
+					DEFAULT: "hsl(var(--popover) / <alpha-value>)",
+					foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
 				},
 				card: {
-					DEFAULT: "hsl(var(--card))",
-					foreground: "hsl(var(--card-foreground))",
+					DEFAULT: "hsl(var(--card) / <alpha-value>)",
+					foreground: "hsl(var(--card-foreground) / <alpha-value>)",
 				},
 				// border: "hsl(var(--color-border) / <alpha-value>)",
 				// sidebar: "hsl(var(--color-sidebar) / <alpha-value>)",
@@ -101,6 +108,24 @@ const config = {
 			gridTemplateColumns: {
 				overlap: "repeat(auto-fit,  minmax(10px, max-content))",
 			},
+			keyframes: {
+				'flash': {
+					from: {
+						'background-color': 'hsl(var(--accent))',
+						'color': 'hsl(var(--accent-foreground))',
+					}
+				},
+				'scale': {
+					// scale to 1.5 then back
+					'0%': { transform: 'scale(1)' },
+					'50%': { transform: 'scale(1.25)' },
+					'100%': { transform: 'scale(1)' },
+				}
+			},
+			animation: {
+				'flash': 'flash 4s',
+				'scale-1': 'scale 1s ease-in-out',
+			}
 		},
 	},
 	// ?

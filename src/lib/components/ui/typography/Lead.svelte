@@ -6,6 +6,6 @@
 	interface $$Props extends HTMLBaseAttributes {}
 </script>
 
-<p class={cn("text-xl text-gray-700 dark:text-gray-400", className)}>
+<p class={cn("text-xl text-muted-foreground", className)}>
 	<slot />
 </p>

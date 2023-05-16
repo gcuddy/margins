@@ -1,54 +1,111 @@
-import type { ColumnType } from "kysely";
+import type { ColumnType } from 'kysely';
 export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	? ColumnType<S, I | undefined, U>
 	: ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
-export type Status = "Backlog" | "Now" | "Archive";
-export type Color = "Yellow" | "Blue" | "Green" | "Pink" | "Purple";
-export type RelationType = "Related" | "SavedFrom";
-export type AnnotationType =
-	| "bookmark"
-	| "note"
-	| "annotation"
-	| "reply"
-	| "document";
-export type Location = "inbox" | "soon" | "later" | "archive";
+export type Status = 'Backlog' | 'Now' | 'Archive';
+export const Status = {
+	Backlog: 'Backlog',
+	Now: 'Now',
+	Archive: 'Archive'
+};
+export type Color = 'Yellow' | 'Blue' | 'Green' | 'Pink' | 'Purple';
+export const Color = {
+	Yellow: 'Yellow',
+	Blue: 'Blue',
+	Green: 'Green',
+	Pink: 'Pink',
+	Purple: 'Purple'
+};
+export type RelationType = 'Related' | 'SavedFrom';
+export const RelationType = {
+	Related: 'Related',
+	SavedFrom: 'SavedFrom'
+};
+export type AnnotationType = 'bookmark' | 'note' | 'annotation' | 'reply' | 'document';
+export const AnnotationType = {
+	bookmark: 'bookmark',
+	note: 'note',
+	annotation: 'annotation',
+	reply: 'reply',
+	document: 'document'
+};
+export type Location = 'inbox' | 'soon' | 'later' | 'archive';
+export const Location = {
+	inbox: 'inbox',
+	soon: 'soon',
+	later: 'later',
+	archive: 'archive'
+};
 export type DocumentType =
-	| "article"
-	| "podcast"
-	| "rss"
-	| "pdf"
-	| "epub"
-	| "bookmark"
-	| "image"
-	| "video"
-	| "tweet"
-	| "audio"
-	| "book"
-	| "movie"
-	| "tv"
-	| "song"
-	| "album"
-	| "playlist"
-	| "recipe"
-	| "game"
-	| "board_game";
-export type CollectionItemType =
-	| "Entry"
-	| "Annotation"
-	| "Section"
-	| "Collection";
-export type FavoriteType = "FOLDER" | "FAVORITE";
+	| 'article'
+	| 'podcast'
+	| 'rss'
+	| 'pdf'
+	| 'epub'
+	| 'bookmark'
+	| 'image'
+	| 'video'
+	| 'tweet'
+	| 'audio'
+	| 'book'
+	| 'movie'
+	| 'tv'
+	| 'song'
+	| 'album'
+	| 'playlist'
+	| 'recipe'
+	| 'game'
+	| 'board_game';
+export const DocumentType = {
+	article: 'article',
+	podcast: 'podcast',
+	rss: 'rss',
+	pdf: 'pdf',
+	epub: 'epub',
+	bookmark: 'bookmark',
+	image: 'image',
+	video: 'video',
+	tweet: 'tweet',
+	audio: 'audio',
+	book: 'book',
+	movie: 'movie',
+	tv: 'tv',
+	song: 'song',
+	album: 'album',
+	playlist: 'playlist',
+	recipe: 'recipe',
+	game: 'game',
+	board_game: 'board_game'
+};
+export type CollectionItemType = 'Entry' | 'Annotation' | 'Section' | 'Collection';
+export const CollectionItemType = {
+	Entry: 'Entry',
+	Annotation: 'Annotation',
+	Section: 'Section',
+	Collection: 'Collection'
+};
+export type FavoriteType = 'FOLDER' | 'FAVORITE';
+export const FavoriteType = {
+	FOLDER: 'FOLDER',
+	FAVORITE: 'FAVORITE'
+};
 export type Annotation = {
 	id: string;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Generated<Timestamp>;
 	body: string | null;
 	type: AnnotationType;
-	private: Generated<boolean>;
+	private: Generated<number>;
+	/**
+	 * @zod.custom.use(TargetSchema)
+	 */
 	target: unknown | null;
 	entryId: number | null;
 	parentId: string | null;
+	/**
+	 * The "soft delete" time. Deletions are cleared after 30 days.
+	 */
 	deleted: Timestamp | null;
 	userId: Generated<string>;
 	sortOrder: Generated<number>;
@@ -56,11 +113,35 @@ export type Annotation = {
 	editedAt: Timestamp | null;
 	color: Generated<Color>;
 	contentData: unknown | null;
+	/**
+	 * Optional title, used for longer notes unassociated with an entryo
+	 */
 	title: string | null;
+	/**
+	 * chosenIcon used for documents only?
+	 * @zod.custom.use(chosenIcon)
+	 */
 	chosenIcon: unknown | null;
+	html: string | null;
+	/**
+	 * Auto-generated from the target
+	 */
+	quote: string | null;
+	exact: string | null;
+	start: number | null;
+};
+export type annotation_ref = {
+	referencerId: string;
+	referencingId: string;
 };
 export type annotation_tag = {
 	tagId: number;
+	annotationId: string;
+};
+export type annotation_to_entry_reference = {
+	createdAt: Generated<Timestamp>;
+	updatedAt: Generated<Timestamp>;
+	entryId: number;
 	annotationId: string;
 };
 export type AnnotationToTag = {
@@ -73,7 +154,7 @@ export type Article = {
 	content: string | null;
 	textContent: string | null;
 	author: string | null;
-	private: Generated<boolean>;
+	private: Generated<number>;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	readProgress: Generated<number | null>;
@@ -84,17 +165,17 @@ export type Article = {
 	date: Timestamp | null;
 	image: string | null;
 	wordCount: number | null;
-	starred: Generated<boolean>;
+	starred: Generated<number>;
 	css: string | null;
 	description: string | null;
 	wiki: string | null;
 	classification: string | null;
-	pdf: boolean | null;
+	pdf: number | null;
 	html: string | null;
-	readLater: Generated<boolean>;
-	bookmark: Generated<boolean>;
+	readLater: Generated<number>;
+	bookmark: Generated<number>;
 	position: Generated<number>;
-	trash: Generated<boolean>;
+	trash: Generated<number>;
 	location: Generated<string>;
 	type: Generated<number>;
 	userId: string;
@@ -114,24 +195,35 @@ export type Bookmark = {
 	sortOrder: Generated<number | null>;
 	data: unknown | null;
 	stateId: number | null;
-	private: Generated<boolean>;
+	private: Generated<number>;
 	interactionId: number | null;
 	favoriteId: number | null;
 	deleted: Timestamp | null;
-	is_read: Generated<boolean>;
+	is_read: Generated<number>;
 	progress: Generated<number>;
 	context: unknown | null;
 	screenshot: string | null;
 	source: string | null;
 	dueDate: Timestamp | null;
 	snoozedUntil: Timestamp | null;
+	/**
+	 * The original url of the bookmark, if it's different than the entry's url
+	 */
 	originalUrl: string | null;
 	status: Generated<Status>;
+	sort_order: Generated<number>;
+	/**
+	 * The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
+	 */
+	review_timestamp: number | null;
 };
 export type Collection = {
 	id: Generated<number>;
 	name: string;
-	private: Generated<boolean>;
+	private: Generated<number>;
+	/**
+	 * @zod.custom.use(chosenIcon)
+	 */
 	icon: unknown | null;
 	userId: string;
 	description: string | null;
@@ -152,6 +244,9 @@ export type CollectionItems = {
 	note: string | null;
 	parentId: string | null;
 	type: Generated<CollectionItemType>;
+	/**
+	 * This applies to sections only
+	 */
 	title: string | null;
 };
 export type ColorDescription = {
@@ -169,6 +264,9 @@ export type Context = {
 	userId: string;
 };
 export type ContextNode = {
+	/**
+	 * context node refers to a source or referrer — for example, a Discord Server, or another user
+	 */
 	id: string;
 	name: string;
 	url: string | null;
@@ -196,25 +294,50 @@ export type Entry = {
 	published: Timestamp | null;
 	updated: Timestamp | null;
 	feedId: number | null;
+	/**
+	 * Original represents original data (html, title) in case we've re-download and/or changes...?
+	 */
 	original: unknown | null;
+	/**
+	 * @zod.custom.use(recipeSchema)
+	 */
 	recipe: unknown | null;
-	podcastIndexId: bigint | null;
+	podcastIndexId: number | null;
+	/**
+	 * The duration of the entry, in seconds
+	 */
 	duration: number | null;
 	enclosureLength: number | null;
 	enclosureType: string | null;
 	enclosureUrl: string | null;
 	googleBooksId: string | null;
+	/**
+	 * The TMDB id, if it's a movie or TV show.
+	 */
 	tmdbId: number | null;
+	/**
+	 * @zod.custom.use(schemaOrgSchemas)
+	 */
 	schemaOrg: unknown | null;
+	/**
+	 * Tmdb data - could also store this in "original"?
+	 */
 	tmdbData: unknown | null;
 	screenshot: string | null;
 	extended: unknown | null;
+	/**
+	 * Youtube ID, if it's a youtube video
+	 */
 	youtubeId: string | null;
 	pageCount: number | null;
 	genres: string | null;
 	language: string | null;
+	/**
+	 * The publisher for books, company for plays, etc.
+	 */
 	publisher: string | null;
 	author_extra: unknown | null;
+	spotifyId: string | null;
 };
 export type EntryData = {
 	id: Generated<number>;
@@ -266,6 +389,9 @@ export type Favorite = {
 	entryId: number | null;
 	feedId: number | null;
 	sortOrder: Generated<number | null>;
+	/**
+	 * The name of the folder. Only applies to favorites of type folder.
+	 */
 	folderName: string | null;
 	parentId: string | null;
 	type: Generated<FavoriteType>;
@@ -280,36 +406,62 @@ export type Feed = {
 	description: string | null;
 	lastBuildDate: Timestamp | null;
 	imageUrl: string | null;
-	podcast: Generated<boolean>;
+	podcast: Generated<number>;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
-	active: Generated<boolean>;
+	active: Generated<number>;
+	/**
+	 * Velocity refers to the amount of times a feed is published per day.
+	 */
 	velocity: number | null;
+	/**
+	 * IF we're using a podcast, then we use podcastIndex to save/index entries. Do we even need to save them into our db? Probably — what if pidx goes down, or something.
+	 */
 	podcastIndexId: number | null;
+	/**
+	 * Store lastParsed time to diff against feed updated time
+	 */
 	lastParsed: Timestamp | null;
+	/**
+	 * Additional data provided by podcastIndex
+	 */
 	podcastIndexData: unknown | null;
 	guid: string | null;
 	itunesId: number | null;
+	/**
+	 * Deprecated
+	 */
 	itunes_id: string | null;
 };
 export type Interaction = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
-	is_read: Generated<boolean | null>;
+	is_read: Generated<number | null>;
 	progress: Generated<number | null>;
-	finished: Generated<boolean | null>;
+	finished: Generated<number | null>;
 	userId: string;
 	last_viewed: Generated<Timestamp>;
 	last_annotated: Generated<Timestamp>;
 	last_interaction: Generated<Timestamp>;
 	entryId: number;
+	/**
+	 * The current page, if it's a book
+	 */
 	currentPage: number | null;
 	epsiodes_watched: unknown | null;
+	/**
+	 * Optionally, a title for the interaction
+	 */
+	title: string | null;
+	date_finished: Timestamp | null;
+	date_started: Timestamp | null;
+	note: string | null;
+	rating: number | null;
 };
 export type InvitationCode = {
 	code: string;
-	used: Generated<boolean>;
+	used: Generated<number>;
 	ownerId: string;
 	usedById: string | null;
 };
@@ -317,8 +469,8 @@ export type Key = {
 	id: string;
 	hashed_password: string | null;
 	user_id: string;
-	primary: boolean;
-	expires: bigint | null;
+	primary: number;
+	expires: number | null;
 };
 export type Log = {
 	id: Generated<number>;
@@ -353,6 +505,9 @@ export type Relation = {
 	id: string;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
+	/**
+	 * The type of the relation
+	 */
 	type: Generated<RelationType>;
 	userId: string;
 	entryId: number;
@@ -361,8 +516,8 @@ export type Relation = {
 export type Session = {
 	id: string;
 	user_id: string;
-	idle_expires: bigint;
-	active_expires: Generated<bigint>;
+	idle_expires: number;
+	active_expires: Generated<number>;
 };
 export type SmartList = {
 	id: Generated<number>;
@@ -370,22 +525,38 @@ export type SmartList = {
 	filter: unknown | null;
 	viewOptions: unknown | null;
 	conditions: unknown | null;
+	/**
+	 * @zod.custom.use(chosenIcon)
+	 */
 	icon: unknown | null;
 	createdAt: Generated<Timestamp>;
 	description: string | null;
-	private: Generated<boolean>;
+	private: Generated<number>;
 	updatedAt: Generated<Timestamp>;
 	userId: Generated<string>;
 };
 export type State = {
 	id: Generated<number>;
+	/**
+	 * Whether or not this state represents things to be looked at later.
+	 * The name of the state
+	 */
 	name: string;
+	/**
+	 * State's UI color as a hex string
+	 */
 	color: string | null;
+	/**
+	 * The type of the state
+	 */
 	type: Location;
+	/**
+	 * The position of the state
+	 */
 	position: Generated<number>;
 	description: string | null;
 	userId: string;
-	default: Generated<boolean>;
+	default: Generated<number>;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 };
@@ -403,7 +574,7 @@ export type Subscription = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	title: string;
-	download_full: Generated<boolean>;
+	download_full: Generated<number>;
 };
 export type SubscriptionToTag = {
 	A: number;
@@ -430,6 +601,9 @@ export type TagOnEntry = {
 	entryId: number;
 	userId: string;
 };
+export type Task = {
+	id: Generated<number>;
+};
 export type TwitterIntegration = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
@@ -448,6 +622,7 @@ export type User = {
 	username: Generated<string>;
 	default_state_id: number | null;
 	default_archive_id: number | null;
+	home_items: unknown | null;
 };
 export type UserEntry = {
 	id: Generated<number>;
@@ -458,7 +633,9 @@ export type UserFollows = {
 };
 export type DB = {
 	Annotation: Annotation;
+	annotation_ref: annotation_ref;
 	annotation_tag: annotation_tag;
+	annotation_to_entry_reference: annotation_to_entry_reference;
 	_AnnotationToTag: AnnotationToTag;
 	Article: Article;
 	AuthorizationKey: AuthorizationKey;
@@ -491,6 +668,7 @@ export type DB = {
 	Tag: Tag;
 	Taggings: Tagging;
 	TagOnEntry: TagOnEntry;
+	Task: Task;
 	TwitterIntegration: TwitterIntegration;
 	user: User;
 	UserEntry: UserEntry;

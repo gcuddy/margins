@@ -6,14 +6,14 @@
 		H3,
 		Lead,
 		Small,
-		Subtle,
+		Muted,
 	} from "$lib/components/ui/typography";
 	import { Image } from "@unpic/svelte";
 	import { Armchair, Edit3, Glasses, Layers, Rss, Zap } from "lucide-svelte";
 </script>
 
 <section
-	class="container grid items-center justify-center gap-6 pt-6 pb-8 md:pt-10 md:pb-12 lg:pt-16 lg:pb-24"
+	class="container grid items-center justify-center gap-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:pb-24 lg:pt-16"
 >
 	<img
 		width={500}

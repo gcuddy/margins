@@ -13,12 +13,13 @@
 
 <CommandItem
 	let:selected
+	let:state
 	let:handleSelect
 	{...$$restProps}
 	class={cn(
-		"relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm font-medium outline-none data-[disabled]:pointer-events-none data-[active]:bg-gray-100 data-[disabled]:opacity-50 dark:data-[active]:bg-gray-700",
+		"relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[active]:bg-accent data-[active]:text-accent-foreground data-[disabled]:opacity-50",
 		className
 	)}
 >
-	<slot {selected} {handleSelect} />
+	<slot {selected} {handleSelect} {state} />
 </CommandItem>

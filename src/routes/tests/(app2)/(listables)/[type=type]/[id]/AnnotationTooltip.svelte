@@ -1,0 +1,47 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
+	import Button from '$lib/components/ui/Button.svelte';
+	import TooltipContent from '$lib/components/ui/TooltipContent.svelte';
+	import { Muted } from '$lib/components/ui/typography';
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import { EditIcon, TrashIcon } from 'lucide-svelte';
+	import type { ComponentProps } from 'svelte';
+	import type { ContentAction } from 'svelte-popperjs';
+	import { fly } from 'svelte/transition';
+	interface $$Props extends ComponentProps<TooltipContent<any>> {
+		popperContent: ContentAction<any>;
+            id: string;
+	}
+	export let popperContent: ContentAction<any>;
+
+    export let id: string;
+    const queryClient = useQueryClient();
+</script>
+
+<TooltipContent
+	class="z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none animate-in fade-in fade-out slide-in-from-bottom-3 duration-300"
+	on:mouseenter
+	on:mouseleave
+	{popperContent}
+	{...$$restProps}
+>
+	<div data-annotation-id={id} class="flex justify-between space-x-2">
+		<Button class="flex h-auto flex-col space-y-1" variant="ghost">
+			<EditIcon class="h-5 w-5" />
+			<Muted class="text-xs">Edit</Muted>
+		</Button>
+		<form use:enhance={() => {
+            invalidate('entry');
+            queryClient.invalidateQueries({
+                queryKey: ['notebook']
+            })
+        }} class="contents" method="post" action="?/deleteAnnotation">
+            <input type="hidden" name="id" value={id}>
+			<Button class="flex h-auto flex-col space-y-1" variant="ghost">
+				<TrashIcon class="h-5 w-5" />
+				<Muted class="text-xs">Delete</Muted>
+			</Button>
+		</form>
+	</div>
+</TooltipContent>

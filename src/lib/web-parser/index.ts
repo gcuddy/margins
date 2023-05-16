@@ -1,7 +1,7 @@
 // much code pulled from readability, mercury-parser, but modified to be faster/type-safe
 
 import { DocumentType } from "@prisma/client";
-import { HTMLElement, parse } from "node-html-parser";
+import { type HTMLElement, parse } from "node-html-parser";
 import { z } from "zod";
 import { Readability } from '@mozilla/readability'
 import { _EntryModel } from "$lib/prisma/zod";
@@ -950,9 +950,9 @@ export class Parser {
         this.getMetadata();
         console.log("got metadta")
         if (usereadability) {
-            var doc = parseHTML(this.html);
-            var article = new Readability(doc.window.document, {
-                debug: true
+            const doc = parseHTML(this.html);
+            const article = new Readability(doc.window.document, {
+                // debug: true
             }).parse();
             console.log("got article", article)
             let root: HTMLElement | null = null
@@ -961,10 +961,10 @@ export class Parser {
                 root = parse(article.content);
                 ["href", "src"].forEach((a) => absolutizeUrls(root!, this.baseUrl, a));
                 // remove srcset
-                root!.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
+                root.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
                 // go thru srcs, get images, and upload to s3
                 // TODO: upsert by noting if src is already s3 url (somehow...)
-                if (article?.content) {
+                if (false) {
                     const urls = await Promise.all(root.querySelectorAll("img[src]").map(async el => {
                         // check if url
                         const src = el.getAttribute("src");
@@ -1002,7 +1002,6 @@ export class Parser {
                     console.log({ urls })
                 }
             }
-            let html = '';
             if (article) {
                 this.metadata.title = article.title || this.metadata.title;
                 this.metadata.summary = article.excerpt || this.metadata.summary;
@@ -1010,6 +1009,7 @@ export class Parser {
                 this.metadata.html = root?.outerHTML || article.content || this.metadata.html;
                 this.metadata.text = article.textContent || this.metadata.text;
                 this.metadata.siteName = article.siteName || this.metadata.siteName;
+                this.metadata.wordCount = article.textContent.split(" ").length;
             }
             if (!this.metadata.image) {
                 // try to get the apple-touch-icon
@@ -1052,9 +1052,9 @@ export class Parser {
         if (content) {
             // Now apply our own transformations with node-html-parser... kind of ugly
             const root = content;
-            ["href", "src"].forEach((a) => absolutizeUrls(root!, this.baseUrl, a));
+            ["href", "src"].forEach((a) => absolutizeUrls(root, this.baseUrl, a));
             // remove srcset
-            root!.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
+            root.querySelectorAll("[srcset]").forEach((el) => el.removeAttribute("srcset"));
             // go thru srcs, get images, and upload to s3
             // TODO: upsert by noting if src is already s3 url (somehow...)
             const urls = await Promise.all(root.querySelectorAll("img[src]").map(async el => {
@@ -1286,7 +1286,7 @@ export class Parser {
             if (node.tagName === "HTML") {
                 // this.metadata.lang = node.getAttribute("lang");
             }
-            let matchString = node.classNames + " " + node.id;
+            const matchString = node.classNames + " " + node.id;
 
             console.log("matchString: ", matchString);
             if (!isProbablyVisible(node)) {
@@ -1362,7 +1362,7 @@ export class Parser {
                 // REVIEW this
                 let childNode = node.firstChild as HTMLElement;
                 while (childNode) {
-                    let nextSibling = childNode.nextSibling;
+                    const nextSibling = childNode.nextSibling;
                     if (this.isPhrasingContent(childNode)) {
                         console.log('is phrasing content')
                         if (p !== null) {
@@ -1402,7 +1402,7 @@ export class Parser {
                     elementsToScore.push(node);
                 }
             }
-            node = getNextNode(node as HTMLElement);
+            node = getNextNode(node);
             console.log('end of loop')
         }
         console.log("made it through loop")
@@ -1425,7 +1425,7 @@ export class Parser {
             }
 
             // Exclude nodes with no ancestor.
-            var ancestors = this.getNodeAncestors(elementToScore, 5);
+            const ancestors = this.getNodeAncestors(elementToScore, 5);
             if (ancestors.length === 0)
                 return;
 
@@ -1474,7 +1474,7 @@ export class Parser {
             this.updateScore(candidate, contentScore => contentScore * (1 - this.getLinkDensity(candidate)));
             const candidateScore = this.nodeScoreMap.get(candidate) as number;
             console.log("Candidate:", candidate, "with score " + candidateScore);
-            let nbTopCandidates = 5
+            const nbTopCandidates = 5
             for (let t = 0; t < nbTopCandidates; t++) {
                 const aTopCandidate = topCandidates[t];
                 if (!aTopCandidate || candidateScore > (this.nodeScoreMap.get(aTopCandidate) || 0)) {
@@ -1487,7 +1487,7 @@ export class Parser {
             }
         }
         let topCandidate: HTMLElement | null = topCandidates[0] || null;
-        let neededToCreateTopCandidate = false;
+        const neededToCreateTopCandidate = false;
         let parentOfTopCandidate: HTMLElement;
 
         // If we still have no top candidate, just use the body as a last resort.
@@ -1571,12 +1571,12 @@ export class Parser {
             throw new Error("No top candidate found");
         }
         const articleContent = parse(`<div></div>`)
-        const topCandidateScore = this.nodeScoreMap.get(topCandidate as HTMLElement) || 0;
+        const topCandidateScore = this.nodeScoreMap.get(topCandidate) || 0;
         const siblingScoreThreshold = Math.max(10, topCandidateScore * 0.2);
         parentOfTopCandidate = topCandidate.parentNode;
         let siblings = parentOfTopCandidate.childNodes;
 
-        for (let sib of siblings) {
+        for (const sib of siblings) {
             let sibling = sib as HTMLElement;
             console.log("Looking at sibling node:", sibling, this.nodeScoreMap.has(sibling) ? ("with score " + this.nodeScoreMap.get(sibling)) : "");
             let append = false;
@@ -1787,7 +1787,7 @@ export class Parser {
         if (!e || e.tagName?.toLowerCase() === "svg")
             return;
         // Remove `style` and deprecated presentational attributes
-        for (var i = 0; i < PRESENTATIONAL_ATTRIBUTES.length; i++) {
+        for (let i = 0; i < PRESENTATIONAL_ATTRIBUTES.length; i++) {
             e.removeAttribute(PRESENTATIONAL_ATTRIBUTES[i]);
         }
 
@@ -1796,7 +1796,7 @@ export class Parser {
             e.removeAttribute("height");
         }
         console.log("got here")
-        let childNodes = e.childNodes.filter(node => node.nodeType === 1) as HTMLElement[];
+        const childNodes = e.childNodes.filter(node => node.nodeType === 1) as HTMLElement[];
         for (const c of childNodes) {
             this.cleanStyles(c);
         }
@@ -1817,7 +1817,7 @@ export class Parser {
         // TODO: allow option to turn off
 
         // For now copying over from Readability, though I'm certain there are ways to squeeze out more performance
-        let tagsList = e.getElementsByTagName(tag);
+        const tagsList = e.getElementsByTagName(tag);
         tag = tag.toLowerCase();
         const tagsToRemove = tagsList.filter(node => {
             let isList = tag === "ul" || tag === "ol";
@@ -1843,7 +1843,7 @@ export class Parser {
             const weight = this.getWeight(node);
             console.log("Cleaning conditionally", node.rawTagName + " " + node.rawAttrs);
 
-            let contentScore = 0;
+            const contentScore = 0;
             if (weight + contentScore < 0) {
                 return true;
             }
@@ -1871,11 +1871,11 @@ export class Parser {
                     }
                     embedCount++;
                 }
-                let linkDensity = this.getLinkDensity(node);
-                let contentLength = this.getInnerText(node).length;
+                const linkDensity = this.getLinkDensity(node);
+                const contentLength = this.getInnerText(node).length;
                 // 🙏🏼 from Readabiltiy
                 // Throwing up a prayer by keeping it as a var here
-                var haveToRemove =
+                const haveToRemove =
                     (img > 1 && p / img < 0.5 && !this.hasAncestorTag(node, "figure")) ||
                     (!isList && li > p) ||
                     (input > Math.floor(p / 3)) ||
@@ -1891,7 +1891,7 @@ export class Parser {
                             return haveToRemove;
                         }
                     }
-                    let li_count = node.getElementsByTagName("li").length;
+                    const li_count = node.getElementsByTagName("li").length;
                     // Only allow the list to remain if every li contains an image
                     if (img == li_count) {
                         return false;
@@ -1919,10 +1919,10 @@ export class Parser {
     }
 
     private getTextDensity(e: HTMLElement, tags: string[]): number {
-        let textLength = this.getInnerText(e, true).length;
+        const textLength = this.getInnerText(e, true).length;
         if (textLength === 0) return 0;
         let childrenLength = 0;
-        let children = e.querySelectorAll(tags.join(","));
+        const children = e.querySelectorAll(tags.join(","));
         children.forEach(child => childrenLength += this.getInnerText(child, true).length);
         return childrenLength / textLength;
     }
@@ -1982,7 +1982,7 @@ export class Parser {
             if (node.parentNode.tagName === tagName && (!filterFn || filterFn(node.parentNode))) {
                 return true;
             }
-            node = node.parentNode as HTMLElement;
+            node = node.parentNode;
             depth++;
         }
         return false;
@@ -2221,7 +2221,7 @@ export class Parser {
         // console.log(JSON.stringify(this.nodeScoreMap.entries(), null, 2));
         // now merge all its siblings to create our article, before processing
         // console.log({ topCandidateSibling: topCandidate?.previousElementSibling });
-        topCandidate = this.mergeSiblings(topCandidate as HTMLElement);
+        topCandidate = this.mergeSiblings(topCandidate);
 
         // look in arc90 preparticle and mercury-parser cleaners/content
         // TODO: next page link?
@@ -2541,7 +2541,7 @@ export class Parser {
                         // 	return arr[0][secondaryKey] as string;
                         // }
                     } else if (typeof firstValue === "string") {
-                        return firstValue as string;
+                        return firstValue;
                     } else if (firstValue && typeof firstValue[key[1]] === "string") {
                         return firstValue[key[1]] as string;
                     }
@@ -2749,8 +2749,8 @@ export class Parser {
                 // Here we assume if image is less than 100 bytes (or 133B after encoded to base64)
                 // it will be too small, therefore it might be placeholder image.
                 if (srcCouldBeRemoved) {
-                    var b64starts = src.search(/base64\s*/i) + 7;
-                    var b64length = src.length - b64starts;
+                    const b64starts = src.search(/base64\s*/i) + 7;
+                    const b64length = src.length - b64starts;
                     if (b64length < 133) {
                         elem.removeAttribute("src");
                     }

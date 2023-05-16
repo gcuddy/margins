@@ -1,10 +1,16 @@
-import autosize from 'autosize';
+import autosizefn from 'autosize';
 
-export default (node: HTMLElement) => {
-    autosize(node);
+const autosize = (node: HTMLElement) => {
+    autosizefn(node);
+
     return {
         destroy() {
-            autosize.destroy(node);
+            autosizefn.destroy(node);
         },
     };
 };
+
+autosize.update = autosizefn.update;
+autosize.destroy = autosizefn.destroy;
+
+export default autosize;

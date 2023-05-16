@@ -141,7 +141,7 @@ function textNodesInRange(range: Range): Text[] {
 	while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
 		console.log({ currentNode: walker.currentNode });
 		if (isTextNode(walker.currentNode) && walker.currentNode.textContent?.trim()) {
-			nodes.push(walker.currentNode as Text);
+			nodes.push(walker.currentNode);
 		} else if (
 			walker.currentNode.nodeType === 1 &&
 			(walker.currentNode as Element).querySelector('img')
