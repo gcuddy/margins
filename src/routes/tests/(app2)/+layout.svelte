@@ -19,7 +19,7 @@
 
 	// $: isEntry = $page.route.id?.includes("entry");
 	let isEntry = false;
-	$: is_article = $page.url.pathname.startsWith('/tests/article');
+	$: is_article = $page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf')
 	$: is_settings = $page.url.pathname.startsWith('/tests/settings');
 
 	export let data: LayoutData;
@@ -53,14 +53,15 @@
 				class={cn(
 					'container grid grow',
 					!isEntry && 'sm:grid-cols-[auto_1fr] lg:grid-cols-5',
-					is_article && ' lg:grid-cols-[auto,1fr] 2xl:grid-cols-5'
+					is_article && 'grid-cols-5'
 				)}
 			>
 				<!-- w-[200px] -->
 				<aside
 					class={cn(
 						'sticky top-20 hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex',
-						isEntry && 'md:hidden'
+						isEntry && 'md:hidden',
+						is_article && 'sm:hidden'
 					)}
 				>
 					{#if $page.url.pathname.startsWith('/tests/settings')}
@@ -71,10 +72,11 @@
 				</aside>
 				<main
 					class={cn(
-						'flex h-full w-full flex-1 flex-col px-4 py-6 sm:border-l lg:px-8',
+						'flex h-full w-full flex-1 flex-col px-4 py-6 lg:px-8',
 						$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
-						is_article ? '2xl:col-span-4' : 'lg:col-span-4',
-						is_settings && 'border-none lg:col-span-3'
+						is_article ? ' col-span-5' : 'lg:col-span-4',
+						is_settings && 'border-none lg:col-span-3',
+						!is_article && 'sm:border-l'
 					)}
 				>
 					<slot />

@@ -1,6 +1,6 @@
 import { bulkEntriesSchema, urlSchema } from '$lib/schemas';
 import { handleLoginRedirect } from '$lib/utils/redirects';
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms/server';
 import { fetchList } from '../fetch.server';
 import type { PageServerLoad } from './$types';
@@ -29,6 +29,14 @@ export const load = (async (event) => {
     const response = await fetch(
         `/api/entries/library/${status.toLowerCase()}.json?after_sort=${url.searchParams.get('after_sort') ?? ''}&after_updated=${url.searchParams.get('after_updated') ?? ''}&search=${url.searchParams.get('search') ?? ''}&type=${type ?? ''}`,
     )
+    if (!response.ok) {
+        console.error(response)
+        if (response.status === 401) {
+            throw redirect(302, handleLoginRedirect(event));
+        } else {
+            throw error(response.status, await response.text());
+        }
+    } 
     const { entries, next } = await response.json() as LibraryResponse;
     console.log({ entries, next })
 

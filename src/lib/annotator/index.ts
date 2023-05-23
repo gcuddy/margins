@@ -1,6 +1,7 @@
 // This is all picked from apache-annotator
 
 import { textQuoteSelectorMatcher as abstractTextQuoteSelectorMatcher } from './abstract/match-text-quote';
+import { textPositionSelectorMatcher as abstractTextPositionSelectorMatcher } from './abstract/match-text-position';
 import { describeTextQuote as abstractDescribeTextQuote } from './abstract/text-quote';
 import { describeTextPosition as abstractDescribeTextPosition } from './abstract/text-position';
 
@@ -247,6 +248,53 @@ export function createTextQuoteSelectorMatcher(
 		}
 	};
 }
+
+
+/**
+ * Find the range of text corresponding to the given {@link
+* TextPositionSelector}.
+*
+* The start and end positions are measured relative to the first text character
+* in the given scope.
+*
+* The function is curried, taking first the selector and then the scope.
+*
+* Its end result is an (async) generator producing a single {@link https://developer.mozilla.org/en-US/docs/Web/API/Range
+* | Range} to represent the match (unlike e.g. a {@link TextQuoteSelector}, a
+* TextPositionSelector cannot have multiple matches).
+*
+* @example
+* ```
+* const selector = { type: 'TextPositionSelector', start: 702, end: 736 };
+* const scope = document.body;
+* const matches = textQuoteSelectorMatcher(selector)(scope);
+* const match = (await matches.next()).value;
+* // ⇒ Range { startContainer: #text, startOffset: 64, endContainer: #text,
+* //   endOffset: 98, … }
+* ```
+*
+* @param selector - The {@link TextPositionSelector} to be anchored.
+* @returns A {@link Matcher} function that applies `selector` within a given
+* `scope`.
+*
+* @public
+*/
+export function createTextPositionSelectorMatcher(
+	selector: TextPositionSelector,
+): Matcher<Node | Range, Range> {
+	const abstractMatcher = abstractTextPositionSelectorMatcher(selector);
+
+	return async function* matchAll(scope) {
+		const textChunks = new TextNodeChunker(scope);
+
+		const matches = abstractMatcher(textChunks);
+
+		for await (const abstractMatch of matches) {
+			yield textChunks.chunkRangeToRange(abstractMatch);
+		}
+	};
+}
+
 
 /**
  * Returns a {@link TextPositionSelector} that points at the target text within

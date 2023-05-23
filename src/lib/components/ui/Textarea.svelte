@@ -3,6 +3,7 @@
 	import autosize from '$lib/actions/autosize';
 	import type { HTMLTextareaAttributes } from 'svelte/elements';
 	import { Writable, writable } from 'svelte/store';
+	import { tick } from 'svelte';
 	let className = '';
 	export let value: string | null | undefined = '';
 
@@ -14,9 +15,17 @@
 		value?: string | null;
 	}
 	export let el: HTMLTextAreaElement | undefined = undefined;
-	export let onInput: $$Props["onInput"] = undefined;
+	export let onInput: $$Props['onInput'] = undefined;
 
 	$: console.log({ value });
+
+	export const focus = () => {
+		console.log('received focus request');
+		console.log({ el });
+		tick().then(() => {
+			el?.focus();
+		});
+	};
 </script>
 
 <textarea

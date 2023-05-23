@@ -78,7 +78,7 @@
 			</Button>
 		{/if}
 		<!-- logo -->
-		<div class="flex grow justify-center">
+		<div class="flex grow line-clamp-2 justify-center text-xs md:text-sm lg:text-base">
 			{#if $menu.center && $menu.entry?.title}
 				<div transition:fly|local>
 					{$menu.entry?.title}
@@ -88,7 +88,7 @@
 					{$menu.html}
 				</div>
 			{:else if $menu.center && $page.data.title}
-				<div class="flex-grow">
+				<div class="flex-grow ">
 					{$page.data.title}
 				</div>
 			{/if}

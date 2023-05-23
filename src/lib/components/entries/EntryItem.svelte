@@ -11,6 +11,7 @@
 	import { receive, send } from '$lib/transitions';
 	import type { Status } from '@prisma/client';
 	import Badge from '../ui/Badge.svelte';
+	import { page } from '$app/stores';
 
 	export let entry: EntryInList;
 	function getDomain(url: string) {
@@ -23,7 +24,6 @@
 	export let checked = false;
 
 	$: href = `/tests/${getType(entry.type)}/${getId(entry)}`;
-
 
 	export let out_key: Status = 'Archive';
 
@@ -41,7 +41,7 @@
 	let anchor_el: HTMLAnchorElement;
 </script>
 
-		<!-- out:send|local={{
+<!-- out:send|local={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
 <div class="flex grow items-center gap-x-4">
@@ -49,9 +49,12 @@
 		class="group/select relative h-16 w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
 	>
 		{#if entry.image || entry.uri}
+			{@const src = entry.image?.startsWith('/')
+				? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
+				: entry.image}
 			<img
 				use:smoothload
-				src={entry.image ?? `https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
+				src={src ?? `https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
 				on:error={(e) => {
 					if (entry.uri) {
 						//@ts-ignore
@@ -112,7 +115,9 @@
 	<div class="ml-auto hidden shrink-0 items-center gap-x-2 md:flex">
 		{#if entry.tags}
 			{#each entry.tags as tag (tag.id)}
-				<Badge class="text-xs" as="a" href='/tests/tag/{tag.name}' variant="outline">{tag.name}</Badge>
+				<Badge class="text-xs" as="a" href="/tests/tag/{tag.name}" variant="outline"
+					>{tag.name}</Badge
+				>
 			{/each}
 		{/if}
 		{#if entry.wordCount}

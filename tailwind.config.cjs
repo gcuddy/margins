@@ -19,6 +19,7 @@ const config = {
 			padding: "2rem",
 			screens: {
 				"2xl": "1440px",
+				"3xl": "1600px",
 			},
 		},
 		colors: {
@@ -125,6 +126,9 @@ const config = {
 			animation: {
 				'flash': 'flash 4s',
 				'scale-1': 'scale 1s ease-in-out',
+			},
+			screens: {
+				'3xl': '1600px',
 			}
 		},
 	},

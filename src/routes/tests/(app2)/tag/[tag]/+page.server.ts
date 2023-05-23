@@ -1,11 +1,11 @@
-import { db } from "$lib/db"
+import { db } from "$lib/db";
+import type { EntryInList } from "$lib/db/selects";
 import { nanoid } from "$lib/nanoid";
 import { bulkEntriesSchema } from "$lib/schemas";
-import pin from "$lib/server/actions/pin";
 import { error, fail } from "@sveltejs/kit";
 import { superValidate } from "sveltekit-superforms/server";
 
-export async function load({ locals, params }) {
+export async function load({ locals, params, url, fetch }) {
 
     const session = await locals.validate();
     const { tag } = params;
@@ -14,15 +14,27 @@ export async function load({ locals, params }) {
         throw error(401, "Unauthorized");
     }
 
-    const tag_deets = await db.selectFrom("Tag")
-        .leftJoin("Favorite as pin", "pin.tagId", "Tag.id")
-        .where("Tag.name", "=", tag)
-        .where("Tag.userId", "=", session.userId)
-        .select(["Tag.id", "Tag.name", "pin.id as pin_id"])
-        .executeTakeFirstOrThrow();
+
+    // use api route for pagination
+    const [{ entries, nextCursor }, tag_deets] = await
+        Promise.all([
+            fetch(`/api/entries/tag/${params.tag}.json?cursor=${url.searchParams.get('cursor') ?? ''}`).then(r => r.json() as Promise<{
+                entries: (EntryInList & {
+                    tag_id: number;
+                })[], nextCursor: number | undefined
+            }>),
+            db.selectFrom("Tag")
+                .leftJoin("Favorite as pin", "pin.tagId", "Tag.id")
+                .where("Tag.name", "=", tag)
+                .where("Tag.userId", "=", session.userId)
+                .select(["Tag.id", "Tag.name", "pin.id as pin_id"])
+                .executeTakeFirstOrThrow()
+        ])
 
     return {
         tag: tag_deets,
+        entries,
+        nextCursor,
         session,
         bulkForm: superValidate(bulkEntriesSchema),
     }

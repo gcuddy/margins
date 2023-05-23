@@ -83,19 +83,6 @@
 	}
 </script>
 
-<Button
-	on:click={() => {
-		queryClient
-			.invalidateQueries({
-				queryKey: queryKeys.tags._def,
-			})
-			.then(() => {
-				console.log('invalidated');
-			});
-	}}
->
-	Invalidate
-</Button>
 <form
 	class="flex max-w-xs flex-wrap items-center space-x-2"
 	bind:this={formEl}

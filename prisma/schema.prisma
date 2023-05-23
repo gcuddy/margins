@@ -886,6 +886,7 @@ enum Color {
 enum RelationType {
   Related
   SavedFrom
+  Grouped // <- Used to refer to a PDF belonging to a Book, for example
 }
 
 enum AnnotationType {

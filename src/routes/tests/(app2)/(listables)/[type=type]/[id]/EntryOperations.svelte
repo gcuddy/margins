@@ -34,7 +34,7 @@
 	import type { ComponentProps } from 'svelte';
 	import toast from 'svelte-french-toast';
 
-	export let data: ComponentProps<AnnotationForm<any>>['data'];
+	export let data: ComponentProps<AnnotationForm>['data'];
 	export let entry: Pick<Entry, 'id' | 'type'>;
 
 	let show_note_form = false;

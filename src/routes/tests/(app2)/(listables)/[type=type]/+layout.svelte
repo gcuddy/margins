@@ -47,7 +47,7 @@
 	</div>
 </div> -->
 <div class="relative flex items-start gap-10">
-	<div class="flex flex-1 flex-col overflow-x-hidden">
+	<div id="entry-wrapper" class="flex flex-1 flex-col overflow-x-hidden">
 		<slot />
 	</div>
 	{#if $page.data.entry}

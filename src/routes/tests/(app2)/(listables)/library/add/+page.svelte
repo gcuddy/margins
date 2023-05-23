@@ -32,7 +32,10 @@
 		<legend>Add file</legend>
 		<Input accept=".pdf" name="file" type="file" />
 		<Button>Submit</Button>
+		<Button formaction="?/thumbnail">Generate thumbnail</Button>
 	</fieldset>
 </form>
 
 {data.S3_BUCKET_PREFIX}{form?.Key}
+
+{JSON.stringify(form)}

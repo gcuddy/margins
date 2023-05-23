@@ -1,17 +1,16 @@
 <script lang="ts">
-	import type { AnyZodObject } from 'zod';
-
+	
+	import { invalidateAll } from '$app/navigation';
 	import type { Annotation, AnnotationSchema } from '$lib/annotation';
 	import type { Entry } from '@prisma/client';
+	import { Loader2Icon } from 'lucide-svelte';
 	import { createEventDispatcher, onMount, tick } from 'svelte';
 	import { superForm } from 'sveltekit-superforms/client';
-	import type { UnwrapEffects, Validation, ZodValidation } from 'sveltekit-superforms/index';
+	import type { UnwrapEffects, Validation } from 'sveltekit-superforms/index';
 	import Button from './ui/Button.svelte';
 	import Textarea from './ui/Textarea.svelte';
-	import { invalidateAll } from '$app/navigation';
-	import { Loader2Icon } from 'lucide-svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
-	import { queryKeys } from '$lib/queries/keys';
+	import { draggable } from "@neodrag/svelte" 
+
 	const dispatch = createEventDispatcher<{
 		cancel: undefined;
 		save: {
@@ -31,11 +30,15 @@
 	export let footer = true;
 	export let header: string | undefined = undefined;
 
+	let _draggable = false;
+	export { _draggable as draggable };
+
+
+	
 	let el: HTMLFormElement;
 
 	$: console.log({ data });
 
-	const queryClient = useQueryClient();
 	let { validators, ...restOpts } = opts ?? {};
 	console.log({ opts });
 	const superFrm = superForm(data, {
@@ -51,9 +54,6 @@
 		},
 		onUpdated: ({ form }) => {
 			console.log('updated', { form });
-			queryClient.invalidateQueries({
-				queryKey: ['notebook']
-			});
 		},
 		...restOpts,
 		dataType: 'json'
@@ -68,27 +68,31 @@
 			...annotation
 		});
 
-	let textarea: HTMLTextAreaElement;
+	let textarea: Textarea;
 
 	onMount(() => {
 		console.log('mounting annotationform', { $form });
 		if (autofocus) {
-			tick().then(() => textarea?.focus());
+			// this is the only hack that works to focus it
+			setTimeout(() => {
+				textarea.focus();
+			}, 0);
 		}
 	});
 </script>
 
-<!-- <div
-	class="z-50 flex w-72 flex-col space-y-3 rounded-md border border-slate-100 bg-white p-4 shadow-md outline-none dark:border-slate-800 dark:bg-slate-800"
-> -->
-<form class={c} action="/tests/entry/{entry.id}?/annotate" method="post" use:enhance bind:this={el}>
+<form use:draggable={{
+	disabled: !_draggable,
+	cancel: 'button, textarea',
+	bounds: 'body' // #entry-wrapper is a bit too constraining
+}} class={c} action="/tests/entry/{entry.id}?/annotate" method="post" use:enhance bind:this={el}>
 	<slot form={superFrm} name="header">
 		{#if header}
 			<div>{@html header}</div>
 		{/if}
 	</slot>
 	<slot name="content" {el} {form} submitting={$submitting} delayed={$delayed}>
-		<Textarea bind:el={textarea} bind:value={$form.body} />
+		<Textarea placeholder="Write your note..." class="border-none" bind:this={textarea} bind:value={$form.body} />
 	</slot>
 	{#if footer}
 		<slot name="footer" {form} submitting={$submitting} delayed={$delayed}>

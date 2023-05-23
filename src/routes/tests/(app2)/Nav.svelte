@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
-	import { BookMarked, Layers, Box, Library, Rss, SearchIcon, TreePine, Home, Tag } from 'lucide-svelte';
+	import { BookMarked, Layers, Box, Library, Rss, SearchIcon, TreePine, Home, Tag, PinIcon } from 'lucide-svelte';
 	import type { LayoutData } from './$types';
 	import { Small } from '$lib/components/ui/typography';
 	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
@@ -66,7 +66,7 @@
 		}
 	];
 
-	$: in_article = $page.url.pathname.startsWith('/tests/article');
+	$: in_article = $page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
 
 	$: collapsed = in_article ? !$mq['2xl'] : !$mq.lg;
 
@@ -94,7 +94,17 @@
 					/>
 					<span class="hidden {in_article ? '2xl:inline' : 'lg:inline'}">{nav_item.label}</span>
 				</Button>
-			{/each}
+				{/each}
+				<Button
+					as="a"
+					href='/tests/pins'
+					size="sm"
+					class="lg:hidden flex w-full items-center justify-start"
+					variant='ghost'
+				>
+					<PinIcon class="h-6 w-6" />
+				</Button>
+			
 		</div>
 	</div>
 	{#if user_data}

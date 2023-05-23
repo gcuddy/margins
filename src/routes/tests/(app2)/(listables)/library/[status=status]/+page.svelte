@@ -329,7 +329,7 @@
 	/>
 	{#if data.next}
 		<a
-			href="/library?status={data.status}&after_sort={data.next.sort_order}&after_updated={data.next
+			href="{$page.url.pathname}?after_sort={data.next.sort_order}&after_updated={data.next
 				.updatedAt}">next page</a
 		>
 	{/if}

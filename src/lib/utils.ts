@@ -350,3 +350,7 @@ export function asyncDebounce<F extends (...args: unknown[]) => Promise<unknown>
             debounced(resolve, reject, args);
         }) as ReturnType<F>;
 }
+
+export function word_count(str: string) {
+    return str.split(" ").length;
+}

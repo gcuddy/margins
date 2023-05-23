@@ -58,6 +58,7 @@ export const TargetSchema = z.object({
     source: z.string(),
     selector: SelectorSchema.or(z.tuple([TextQuoteSelectorSchema, TextPositionSelector])).or(z.tuple([TextQuoteSelectorSchema, BookSelectorSchema])),
     html: z.string().optional(),
+    page_num: z.number().optional(),
 });
 
 export type TargetSchema = z.infer<typeof TargetSchema>;

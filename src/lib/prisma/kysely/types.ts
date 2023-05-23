@@ -17,10 +17,11 @@ export const Color = {
 	Pink: 'Pink',
 	Purple: 'Purple'
 };
-export type RelationType = 'Related' | 'SavedFrom';
+export type RelationType = 'Related' | 'SavedFrom' | 'Grouped';
 export const RelationType = {
 	Related: 'Related',
-	SavedFrom: 'SavedFrom'
+	SavedFrom: 'SavedFrom',
+	Grouped: 'Grouped'
 };
 export type AnnotationType = 'bookmark' | 'note' | 'annotation' | 'reply' | 'document';
 export const AnnotationType = {

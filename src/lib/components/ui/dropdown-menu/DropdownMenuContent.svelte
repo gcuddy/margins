@@ -72,6 +72,7 @@
 			out:fade|local={{
 				duration: 200
 			}}
+			class="z-50"
 		>
 			<MenuItems
 				static

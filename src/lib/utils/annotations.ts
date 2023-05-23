@@ -42,6 +42,9 @@ export function generateTextFragmentLink(baseUrl: string, annotation: {
 
 export function getTargetSelector<TType extends Selector["type"]>(target: TargetSchema, type: TType): Extract<Selector, { type: TType }> | undefined {
     if (Array.isArray(target.selector)) {
+        if (type === "TextQuoteSelector") {
+            return target.selector[0] as Extract<Selector, { type: TType }> | undefined;
+        }
         return target.selector.find((s) => s.type === type) as Extract<Selector, { type: TType }> | undefined;
     }
     if (target.selector.type === type) {

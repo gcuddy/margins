@@ -51,18 +51,18 @@ export const tweet_types = scope({
                 like_count: "number",
                 quote_count: "number"
             },
-            attachments: {
+            'attachments?': {
                 media_keys: "string[]"
             },
-            entities: {
+            'entities?': {
                 "urls?": "url[]",
                 "mentions?": "mentions[]",
                 "hashtags?": "hashtags[]"
             }
         },
         includes: {
-            media: "media[]",
-            users: "user[]"
+            'media?': "media[]",
+            'users?': "user[]"
         }
     },
 }).compile();

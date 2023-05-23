@@ -19,7 +19,7 @@
 	import { persisted } from 'svelte-local-storage-store';
 
 	import Annotation from './[id]/Annotation.svelte';
-	import { fly } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
 		ArrowUpRightFromCircle,
@@ -44,6 +44,7 @@
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
 	import { triggerDownload } from '$lib/utils/annotations';
+	import mq from '$lib/stores/mq';
 
 	const render = persisted('sidebar', false);
 	$: console.log({ $render });
@@ -73,24 +74,34 @@
 	const commander_store = getCommanderContext();
 </script>
 
-<aside class="right-4 top-16 max-lg:fixed max-lg:z-50 lg:sticky">
+{#if $render && $mq.max_sm}
+<div transition:fade={{duration: 150 }} aria-hidden="true" class="transition-all bg-background/80 backdrop-blur-sm fixed inset-0"></div>
+{/if}
+<aside class="right-4 z-10 top-16 fixed max-lg:shadow-lg ">
 	{#if $render}
 		<div
-			class=" hidden h-[calc(100vh-6rem)] flex-col gap-2 overflow-y-auto overflow-x-hidden pb-4 max-lg:absolute max-lg:right-0 max-lg:top-0 lg:flex"
+			class="h-[calc(100vh-6rem)] flex-col gap-2 overflow-y-auto overflow-x-hidden pb-4 max-lg:absolute max-lg:right-0 max-lg:top-0 flex"
 			in:fly|local={{
 				y: -10
 			}}
 		>
-			<Card class="h-full w-[calc(100vw-2rem)]  overflow-y-auto md:w-80">
+			<Card class="h-full w-[calc(100vw-2rem)]  overflow-y-auto sm:w-80">
 				<CardHeader class="">
 					<div class="flex items-center justify-between gap-x-2">
 						<CardTitle>Details</CardTitle>
-						<Button on:click={() => ($render = false)} size="sm" variant="ghost" class="px-2">
+						<Button on:click={() => ($render = false)} size="sm" variant="ghost" class="absolute top-4 right-4 px-2">
 							<XIcon class="h-4 w-4" />
 						</Button>
 					</div>
 				</CardHeader>
 				<CardContent class="space-y-4">
+
+					{#if $page.data.entry?.uri?.startsWith('http')}
+					<div class="flex items-center space-x-4">
+						<Muted>URL</Muted>
+						<Muted class="truncate"><a href={$page.data.entry.uri} target="_blank">{$page.data.entry.uri}</a></Muted>
+					</div>
+					{/if}
 					{#if $page.data.tagForm}
 						<div class="flex items-center space-x-4">
 							<Muted>Tags</Muted>

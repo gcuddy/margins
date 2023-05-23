@@ -65,13 +65,15 @@
 		fontSize: number;
 		lineHeight: number;
 		autoHide: boolean;
+		focusMode: boolean;
 	};
 	const defaultOpts: Opts = {
 		alignment,
 		font,
 		fontSize,
 		lineHeight,
-		autoHide: true
+		autoHide: true,
+		focusMode: false
 	};
 
 	const appearance = persisted('appearance', defaultOpts);
@@ -140,7 +142,8 @@
 				}
 			}
 		],
-		placement: 'top'
+		placement: 'top',
+		strategy: 'fixed'
 	});
 
 	let articleWrapper: HTMLElement | undefined = undefined;
@@ -545,6 +548,7 @@
 			}}
 		>
 			<AnnotationForm
+				draggable
 				autofocus
 				class={popoverVariants()}
 				annotation={$currentAnnotation.annotation}
@@ -585,7 +589,7 @@
 	</div>
 {/if}
 
-<div class="prose prose-slate dark:prose-invert">
+<div class="prose mx-auto prose-slate dark:prose-invert">
 	<h1
 		use:inView={{
 			top: 56
@@ -616,8 +620,8 @@
 		class="select-text"
 		on:pointerdown={handlePointerDown}
 		use:drag_context={{
-			'context/id': data.entry.id.toString(),
-			'context/url': data.entry.uri,
+			'context/id': data.entry?.id.toString() ?? '',
+			'context/url': data.entry?.uri ?? '',
 		}}
 	>
 		<div
@@ -667,6 +671,10 @@
 			<div class="grid grid-cols-[auto,160px] items-center">
 				<Label class="flex" for="alignment">Auto-hide menu</Label>
 				<Switch bind:checked={$appearance.autoHide} />
+			</div>
+			<div class="grid grid-cols-[auto,160px] items-center">
+				<Label class="flex" for="alignment">Focus Mode</Label>
+				<Switch bind:checked={$appearance.focusMode} />
 			</div>
 			<div class="grid grid-cols-[auto,160px] items-center">
 				<Label class="flex" for="alignment">Alignment</Label>

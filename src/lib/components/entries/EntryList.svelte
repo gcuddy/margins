@@ -42,6 +42,9 @@
 	export let entries: EntryInList[];
 	$: console.log({ entries });
 
+	export let endpoint: string | undefined = undefined;
+	export let cursor_param = 'cursor';
+
 	let className = '';
 	export { className as class };
 
@@ -403,7 +406,7 @@
 	<!-- .filter((e) => !removed_ids.includes(e.id)) -->
 	{#each entries as entry (entry.id)}
 		<li
-		use:autoAnimate
+			animate:flip={{ duration: 200 }}
 			class="group flex !cursor-default items-center space-x-4 bg-background px-2 py-4"
 		>
 			<!-- <input
@@ -429,7 +432,12 @@
 			/>
 		</li>
 	{/each}
-	<Intersector cb={() => dispatch('end')} />
+	<Intersector
+		cb={() => {
+			dispatch('end');
+			if (!endpoint) return;
+		}}
+	/>
 </ul>
 
 <!-- TODO: a11y -->
@@ -534,17 +542,20 @@
 								{/if}
 							{/each}
 						</form>
-						<Button size="lg" on:click={async () => {
-							const tags = await $page.data.user_data?.tags;
-							if (!tags) return;
-							commander_store.open_items(tags, {
-								render: (tag) => tag.name
-								// onclose: () => {
-								// 	// console.log('closed');
-								// 	// commander_store.close();
-								// },
-							})
-						}}>
+						<Button
+							size="lg"
+							on:click={async () => {
+								const tags = await $page.data.user_data?.tags;
+								if (!tags) return;
+								commander_store.open_items(tags, {
+									render: (tag) => tag.name
+									// onclose: () => {
+									// 	// console.log('closed');
+									// 	// commander_store.close();
+									// },
+								});
+							}}
+						>
 							<TagIcon class="mr-2 h-4 w-4 shrink-0" />
 							Tag
 						</Button>
