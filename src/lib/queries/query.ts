@@ -7,6 +7,7 @@ import type { Queries, Mutations } from "../../routes/tests/(app2)/queries.serve
 import type { RequestEvent } from "@sveltejs/kit";
 import { parse, stringify } from "devalue";
 import type { Session, User } from "lucia-auth";
+import { dev } from "$app/environment";
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
@@ -99,7 +100,7 @@ export async function mutation<T extends keyof Mutations>(
             try {
                 parse(text);
             } catch (e) {
-                console.error(e);
+                dev && console.error(e);
                 return undefined;
             }
         }) as Awaited<Data>;

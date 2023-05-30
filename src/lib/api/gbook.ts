@@ -5,7 +5,7 @@ import type { books_v1 } from "@googleapis/books";
 
 const googleBooksApi = "https://www.googleapis.com/books/v1/volumes";
 
-type Book = books_v1.Schema$Volume & {
+export type Book = books_v1.Schema$Volume & {
     volumeInfo: NonNullable<books_v1.Schema$Volume["volumeInfo"]>;
 }
 

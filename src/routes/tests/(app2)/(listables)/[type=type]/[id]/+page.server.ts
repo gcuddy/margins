@@ -18,6 +18,9 @@ import spotify from "$lib/api/spotify";
 import { getFirstBookmarkSort } from "$lib/db/selects";
 import { upsertAnnotation } from "$lib/queries/server";
 import { Tweet, tweet_types } from "$lib/api/twitter";
+import { z } from "zod";
+import { validate_form } from "$lib/utils/forms";
+import { relationSchema, update_relation } from "$lib/server/mutations";
 
 
 
@@ -40,7 +43,7 @@ export const load = (async (event) => {
         .$if(!!session, q => q.select(eb => [
             jsonArrayFrom(eb.selectFrom("Annotation")
                 .innerJoin("user", "user.id", "Annotation.userId")
-                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title"])
+                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
                 .whereRef("Annotation.entryId", "=", "Entry.id")
                 .where("Annotation.userId", "=", session!.userId)
                 .orderBy("Annotation.start", "asc")
@@ -52,11 +55,18 @@ export const load = (async (event) => {
                 .where("c.userId", "=", session!.userId)
             ).as("collections"),
             jsonArrayFrom(eb.selectFrom("Relation as r")
-                .select(["r.type"])
+                .select(["r.type", "r.id"])
                 .select(eb => jsonObjectFrom(eb.selectFrom("Entry as e").whereRef("e.id", "=", "r.relatedEntryId").select(["e.title", "e.id", "e.type", "e.spotifyId", "e.tmdbId", "e.googleBooksId", "e.podcastIndexId"])).as("related_entry"))
                 .whereRef("r.entryId", "=", "Entry.id")
                 .where("r.userId", "=", session!.userId)
             ).as("relations"),
+            // todo: compare these?
+            jsonArrayFrom(eb.selectFrom("Relation as r")
+                .select(["r.type", "r.id"])
+                .select(eb => jsonObjectFrom(eb.selectFrom("Entry as e").whereRef("e.id", "=", "r.entryId").select(["e.title", "e.id", "e.type", "e.spotifyId", "e.tmdbId", "e.googleBooksId", "e.podcastIndexId"])).as("related_entry"))
+                .whereRef("r.relatedEntryId", "=", "Entry.id")
+                .where("r.userId", "=", session!.userId)
+            ).as("back_relations"),
             jsonArrayFrom(eb.selectFrom("TagOnEntry as toe")
                 .innerJoin("Tag as t", "t.id", "toe.tagId")
                 .select(["t.id", "t.name"])
@@ -530,5 +540,50 @@ export const actions: Actions = {
             .execute();
         return { interactionForm: form };
     }),
+    relation: async ({ locals, request, params }) => {
+        const session = await locals.validate();
+        if (!session) return fail(401);
+        const data = await request.formData();
+        const id = data.get('id');
+        if (id) {
+            // delete
+            await db.deleteFrom('Relation')
+                .where('id', '=', String(id))
+                .execute();
+            return
+        }
+        const entryId = +params.id
+        const parsed = relation_schema.safeParse(Object.fromEntries(data));
+        console.dir({
+            parsed,
+        }, {
+            depth: null
+        })
+        if (!parsed.success) return fail(400, parsed.error.flatten().fieldErrors);
+        const { relatedEntryId, type } = parsed.data;
+        await db.insertInto('Relation')
+            .values({
+                entryId,
+                relatedEntryId,
+                type,
+                updatedAt: new Date(),
+                userId: session.userId,
+                id: nanoid(),
+            })
+            .onDuplicateKeyUpdate({
+                updatedAt: new Date(),
+                type
+            })
+            .execute();
+    },
+    update_relation: validate_form(relationSchema, async ({
+        data
+    }) => {
+        await update_relation(data);
+    })
 }
 
+const relation_schema = z.object({
+    relatedEntryId: z.coerce.number().int(),
+    type: z.enum(["Related", "SavedFrom", "Grouped"]).default("Related").optional(),
+})

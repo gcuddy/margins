@@ -5,26 +5,16 @@ import { svelteQueryWrapper } from 'trpc-svelte-query-adapter';
 import type { Router } from "$lib/trpc/router";
 import { transformer } from "./transformer";
 
-let browserClient: ReturnType<typeof createTRPCClient<Router>>;
+let browserClient: ReturnType<typeof svelteQueryWrapper<Router>>;
 
-export function trpc(init?: TRPCClientInit) {
+export function trpc(init?: TRPCClientInit, queryClient?: QueryClient) {
     const isBrowser = typeof window !== 'undefined';
     if (isBrowser && browserClient) return browserClient;
     const client = createTRPCClient<Router>({ init, transformer });
-    if (isBrowser) browserClient = client;
-    return client;
-}
-
-
-let browserClient2: ReturnType<typeof svelteQueryWrapper<Router>>;
-
-export function trpcWithQuery(init?: TRPCClientInit, queryClient?: QueryClient) {
-    const isBrowser = typeof window !== 'undefined';
-    if (isBrowser && browserClient2) return browserClient2;
-    const client = svelteQueryWrapper<Router>({
-        client: createTRPCClient<Router>({ init, transformer }),
-        queryClient
-    });
-    if (isBrowser) browserClient2 = client;
-    return client;
+    const query_client = svelteQueryWrapper<Router>({
+        client,
+        queryClient: queryClient as any // <- this is bc of mismatching types with query-5
+    })
+    if (isBrowser) browserClient = query_client;
+    return query_client;
 }

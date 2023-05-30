@@ -1,25 +1,42 @@
 <script lang="ts">
-	import { cn } from "$lib/utils/tailwind";
-	import type { HTMLSelectAttributes } from "svelte/elements";
+	import { cn } from '$lib/utils/tailwind';
+	import type { HTMLSelectAttributes } from 'svelte/elements';
 
 	export let value: any | undefined = undefined;
-	let className = "";
+	let className = '';
 	export { className as class };
+
+	type Option = { value: any; label: string } | string;
+
 	interface $$Props extends HTMLSelectAttributes {
 		class?: string;
+		options?: Option[];
+		onChange?: (e: Event) => void;
 	}
+	export let options: Option[] = [];
+	export let onChange: (e: Event) => void = () => {};
+
 </script>
 
 <select
 	class={cn(
-		"flex h-10 w-full appearance-none items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+		'flex h-10 w-full appearance-none items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
 		className
 	)}
 	on:change
+	on:change={onChange}
 	bind:value
 	{...$$restProps}
 >
-	<slot />
+	<slot>
+		{#each options as option}
+			{#if typeof option === 'object'}
+				<option value={option.value}>{option.label}</option>
+			{:else}
+				<option value={option}>{option}</option>
+			{/if}
+		{/each}
+	</slot>
 </select>
 
 <style>

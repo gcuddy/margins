@@ -6,7 +6,7 @@
 	import toast from "svelte-french-toast";
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import type { Location } from "$lib/types/schemas/Locations";
 	import { getUser } from "@lucia-auth/sveltekit/client";
@@ -73,7 +73,7 @@
 
 	// TODO: screenshot if bookmark (see /add/page.server.ts)
 	const queryClient = useQueryClient();
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const addMutation = client.bookmarks.add.createMutation({
 		onMutate: (data) => {

@@ -4,19 +4,21 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import TooltipContent from '$lib/components/ui/TooltipContent.svelte';
 	import { Muted } from '$lib/components/ui/typography';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	// import { useQueryClient } from '@tanstack/svelte-query';
 	import { EditIcon, TrashIcon } from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
 	import type { ContentAction } from 'svelte-popperjs';
 	import { fly } from 'svelte/transition';
 	interface $$Props extends ComponentProps<TooltipContent<any>> {
 		popperContent: ContentAction<any>;
-            id: string;
+		id: string;
 	}
 	export let popperContent: ContentAction<any>;
 
-    export let id: string;
-    const queryClient = useQueryClient();
+	export let id: string;
+	// const queryClient = useQueryClient();
+
+	let show_annotation = false;
 </script>
 
 <TooltipContent
@@ -27,21 +29,35 @@
 	{...$$restProps}
 >
 	<div data-annotation-id={id} class="flex justify-between space-x-2">
-		<Button class="flex h-auto flex-col space-y-1" variant="ghost">
+		<Button
+			on:click={() => {
+				show_annotation = true;
+			}}
+			class="flex h-auto flex-col space-y-1"
+			variant="ghost"
+		>
 			<EditIcon class="h-5 w-5" />
 			<Muted class="text-xs">Edit</Muted>
 		</Button>
-		<form use:enhance={() => {
-            invalidate('entry');
-            queryClient.invalidateQueries({
-                queryKey: ['notebook']
-            })
-        }} class="contents" method="post" action="?/deleteAnnotation">
-            <input type="hidden" name="id" value={id}>
+		<form
+			use:enhance={() => {
+				invalidate('entry');
+				// queryClient.invalidateQueries({
+				//     queryKey: ['notebook']
+				// })
+			}}
+			class="contents"
+			method="post"
+			action="?/deleteAnnotation"
+		>
+			<input type="hidden" name="id" value={id} />
 			<Button class="flex h-auto flex-col space-y-1" variant="ghost">
 				<TrashIcon class="h-5 w-5" />
 				<Muted class="text-xs">Delete</Muted>
 			</Button>
 		</form>
 	</div>
+	{#if show_annotation}
+		<div>testsingsgnisngin</div>
+	{/if}
 </TooltipContent>

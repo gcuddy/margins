@@ -1,9 +1,9 @@
-import { trpcWithQuery } from "$lib/trpc/client";
+import { trpc } from "$lib/trpc/client";
 import type { PageLoad } from "./$types";
 
 export const load = (async (evt) => {
     const { queryClient } = await evt.parent();
-    const client = trpcWithQuery(evt, queryClient);
+    const client = trpc(evt, queryClient);
     const query = client.entries.listForUserSubscriptions.createServerInfiniteQuery({
         podcasts: true
     }, {

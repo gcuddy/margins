@@ -8,7 +8,10 @@ const isAnnotation = (el: HTMLElement): el is HTMLElement & {
     }
 } => !!el.dataset.annotationId || !!el.closest('[data-annotation-id]');
 
-export function setup() {
+export function setup(opts?: {
+    context: Map<unknown, unknown>
+}) {
+    const { context } = opts || {}
     onMount(() => {
         let tooltip: AnnotationTooltip | null = null;
         let timeout: number;
@@ -40,7 +43,8 @@ export function setup() {
                             popperContent,
                             y: -10,
                             id: target.dataset.annotationId,
-                        }
+                        },
+                        context
                     });
 
 

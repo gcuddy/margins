@@ -1,23 +1,8 @@
-import type { LayoutLoad } from "./$types";
-import { QueryClient, keepPreviousData } from '@tanstack/svelte-query'
-import { browser } from '$app/environment';
-import { create_cache } from "$lib/state";
-import { createCachedValue } from "$lib/cache";
+import { query_cache } from "$lib/state/query-state";
 
-export const load = (({ data }) => {
-    const queryClient = new QueryClient({
-        defaultOptions: {
-            queries: {
-                enabled: browser,
-                staleTime: 1000 * 60 * 2, // 2 minutes,
-                placeholderData: keepPreviousData
-            },
-            mutations: {
-                networkMode: "offlineFirst"
-            }
-        },
-    })
-
-
-    return { queryClient, state: createCachedValue("state", create_cache), ...data }
-}) satisfies LayoutLoad;
+export async function load() {
+    const query_state = query_cache();
+    return {
+        query_state
+    }
+}

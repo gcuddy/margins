@@ -153,17 +153,17 @@
 							</a>
 						{/each}
 					</div>
-					<div class="flex flex-col gap-y-4">
+					<div class="flex flex-col gap-y-2 divide-y">
 						{#if data.extras.season}
 							{#await data.extras.season}
 								Loading
 							{:then season}
 								{#each season.episodes as episode}
-									<div class="not-prose flex gap-x-2">
+									<div class="not-prose pt-2 flex items-center gap-x-2">
 										<div class=" shrink-0">
 											<img
 												use:smoothload
-												class="aspect-square w-20 rounded-md object-cover"
+												class="aspect-square w-16 rounded-lg border-2 object-cover"
 												alt=""
 												src="https://image.tmdb.org/t/p/w300/{episode.still_path}"
 											/>

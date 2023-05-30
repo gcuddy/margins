@@ -2,16 +2,16 @@
 	import { page } from "$app/stores";
 	import dayjs from "$lib/dayjs";
 	import { modals } from "$lib/stores/modals";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import RichAnnotationInput from "./RichAnnotationInput.svelte";
 
 	export let timestamp: number | undefined = undefined;
     export let entryId: number | undefined = undefined;
     export let source = '';
 
-    const utils = trpcWithQuery($page).createContext();
+    const utils = trpc($page).createContext();
 
-    const saveAnnotation = trpcWithQuery().annotations.save.createMutation({
+    const saveAnnotation = trpc().annotations.save.createMutation({
         onMutate: (data) => {
            // TODO update
         },

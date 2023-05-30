@@ -30,7 +30,7 @@
 	import { nanoid } from "$lib/nanoid";
 	import { checkIfKeyboardShortcutsAllowed } from "$lib/stores/keyboard";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { getHostname, getPathname } from "$lib/utils";
 	import { lookupUrlType } from "$lib/web-parser/urls";
@@ -94,7 +94,7 @@
 		note: false,
 	});
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const updateInteraction = client.entries.updateInteraction.createMutation();
 	const saveAnnotationMutation = useSaveAnnotation();

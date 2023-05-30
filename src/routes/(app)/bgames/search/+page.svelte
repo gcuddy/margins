@@ -2,11 +2,11 @@
 	import { page } from "$app/stores";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import debounce from "lodash/debounce";
 	let form: HTMLFormElement;
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 
 	let value = "";
 	$: query = client.public.boardgames.createQuery(

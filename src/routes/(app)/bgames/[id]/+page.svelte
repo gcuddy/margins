@@ -7,10 +7,10 @@
 	import MediaEntry from "$lib/components/layout/MediaEntry.svelte";
 	import dayjs from "$lib/dayjs";
 	import { categories } from "$lib/features/entries/boardgame";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	export let data;
 	$: ({ id, initialData } = data);
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const mutation = client.bookmarks.save.createMutation();
 	$: query = client.public.boardGameById.createQuery(
 		{

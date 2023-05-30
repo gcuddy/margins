@@ -1,0 +1,1 @@
+export const S3_BUCKET_PREFIX = 'https://pub-281a7c9dc6e94f59acee8afd0e4d4a80.r2.dev/' 

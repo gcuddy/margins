@@ -28,7 +28,6 @@ export async function GET({ params, locals, url }) {
     console.log({ cursor })
     console.time("fetchList");
     const { entries, next } = await get_library(userId, status, { search, type: is_type(type) ? type : undefined }, cursor)
-    console.log({ entries, next })
     console.timeEnd("fetchList");
 
     return json({ entries, next });

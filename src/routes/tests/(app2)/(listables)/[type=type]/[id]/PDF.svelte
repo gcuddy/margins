@@ -13,6 +13,7 @@
 	import {
 		ChevronLeftIcon,
 		ChevronRightIcon,
+		GroupIcon,
 		MoreHorizontalIcon,
 		TextSelectIcon,
 		ZoomInIcon,
@@ -39,10 +40,15 @@
 		DropdownMenuContent,
 		DropdownMenuGroup,
 		DropdownMenuItem,
+		DropdownMenuSeparator,
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
 	import { get_pdf_text } from '$lib/utils/pdf';
 	import toast from 'svelte-french-toast';
+	import { useCommanderContext } from '../../../Commander.svelte';
+	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
+	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
+	import { post } from '$lib/utils/forms';
 	export let data: PageData;
 
 	let thumbnails = [];
@@ -274,6 +280,8 @@
 	}
 
 	const main_nav = useMenuBar();
+
+	const commander = getCommanderContext();
 </script>
 
 <!-- keyboard nav -->
@@ -289,8 +297,6 @@
 		}
 	}}
 />
-
-<Button on:click={() => render_annotations(currentPage)}>re-render annotations</Button>
 
 <div class="fixed inset-x-0 bottom-8 z-50 mx-auto">
 	<div
@@ -347,6 +353,42 @@
 						Read as text
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
+				<DropdownMenuSeparator />
+				<DropdownMenuGroup>
+					<DropdownMenuItem
+						on:click={() => {
+							commander.open({
+								component: JumpToEntry,
+								placeholder: 'Select item to group PDF under...',
+								shouldFilter: false,
+								props: {
+									onSelect(entry) {
+										if (!data.entry) return;
+										// TODO: add grouping relation
+										toast
+											.promise(
+												post(`/tests/entry/${data.entry.id}?/relation`, {
+													relatedEntryId: entry.id,
+													type: 'Grouped'
+												}),
+												{
+													loading: 'Grouping PDF...',
+													success: 'PDF grouped',
+													error: 'Failed to group PDF'
+												}
+											).finally(() => {
+												console.log('promise done');
+												commander.close();
+											});
+									}
+								}
+							});
+						}}
+					>
+						<GroupIcon class="mr-2 h-4 w-4" />
+						Group
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	</div>
@@ -371,7 +413,7 @@
 	<div bind:this={wrapper} id="article" style="--scale-factor: {scale};">
 		<!-- floating toolbar -->
 		{#if show_text_version}
-			<div class="prose prose-slate dark:prose-invert whitespace-pre-line space-y-4">
+			<div class="prose prose-slate space-y-4 whitespace-pre-line dark:prose-invert">
 				{@html text}
 			</div>
 		{:else}

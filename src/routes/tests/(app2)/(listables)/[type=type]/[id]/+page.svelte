@@ -6,9 +6,14 @@
 	import { page } from '$app/stores';
 	import { mutation } from '$lib/queries/query';
 	import { recents } from '$lib/stores/recents';
-	import Mentions from './Mentions.svelte';
+	import { cn } from '$lib/utils/tailwind';
+	import { update_entry } from '$lib/state/entries';
+	import { onMount } from 'svelte';
+	import { get_module } from './module';
+	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
+
 	$: ({ type } = data);
 	const currentList = getCurrentListContext();
 	$: currentIndex = $currentList.entries.findIndex((e) => e.id === data.entry?.id);
@@ -31,6 +36,25 @@
 			is_read: true
 		});
 	});
+
+	sync();
+	
+	function sync() {
+		if (!data.entry) return;
+		update_entry(data.entry.id, data.entry);
+	}
+
+	// todo
+	let current_list = true;
+
+
+	onMount(async () => {
+		// try to get component if it doesn't exist, for example we're mounting this component elsewhere
+		if (!data.component) {
+			const module = await get_module(data.type)
+			data.component = module?.default
+		}
+	})
 </script>
 
 <svelte:head>
@@ -58,22 +82,29 @@
 	</div>
 {/if}
 
-{#if type === 'article'}
-	<svelte:component this={data.component} {data}>
-		{@html data.entry?.html}
-	</svelte:component>
-{:else}
-<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
-	<svelte:component this={data.component} {data} />
-{/if}
+<div
+	class={cn(
+		'px-4'
+		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
+	)}
+>
+	{#if type === 'article'}
+		<svelte:component this={data.component} {data}>
+			{@html data.entry?.html}
+		</svelte:component>
+	{:else}
+		<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
+		<svelte:component this={data.component} {data} />
+	{/if}
+</div>
 
 {#if data.entry && data.entry.title}
-	<Mentions
+	<!-- <Mentions
 		entry={{
 			id: data.entry.id,
 			title: data.entry.title
 		}}
-	/>
+	/> -->
 {/if}
 
 <style lang="postcss">

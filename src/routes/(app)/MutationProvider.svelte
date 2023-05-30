@@ -3,13 +3,13 @@
 	import { CreateBookmarkMutationKey, UpdateBookmarkMutationKey } from "$lib/features/entries/mutations";
 	import { notifications } from "$lib/stores/notifications";
 	import { selectedItems } from "$lib/stores/selectedItems";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { setContext } from "svelte";
 	import { createAnnotation, SaveAnnotationMutationKey } from "$lib/features/annotations/mutations";
 
 	console.time("MutationProvider");
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const updateMutation = client.bookmarks.update.createMutation({
 		onMutate: ({ id, entryId, data }) => {

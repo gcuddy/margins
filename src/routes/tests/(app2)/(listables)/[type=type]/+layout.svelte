@@ -46,8 +46,8 @@
 		</DropdownMenu>
 	</div>
 </div> -->
-<div class="relative flex items-start gap-10">
-	<div id="entry-wrapper" class="flex flex-1 flex-col overflow-x-hidden">
+<div class="relative flex items-start gap-2">
+	<div id="entry-wrapper" class="flex grow flex-col overflow-x-hidden min-h-full">
 		<slot />
 	</div>
 	{#if $page.data.entry}

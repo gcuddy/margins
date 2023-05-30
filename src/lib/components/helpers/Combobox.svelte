@@ -1,8 +1,6 @@
 <script lang="ts">
 	// TODO: multiple
 	import { createEventDispatcher, onDestroy, onMount, tick } from "svelte";
-	import { tweened } from "svelte/motion";
-	import { derived, writable } from "svelte/store";
 	type T = $$Generic;
 
 	type TValue = T & {
@@ -16,21 +14,14 @@
 		values: TValue[];
 	}
 
-	type TProps = Props & {
-		idResolver: Props["values"][number]["id"] extends undefined
-			? boolean
-			: string;
-	};
+	// type TProps = Props & {
+	// 	idResolver: Props["values"][number]["id"] extends undefined
+	// 		? boolean
+	// 		: string;
+	// };
 
 	export let values: TValue[];
-	$: console.log({ values });
 
-	const api = writable({
-		state: {
-			activeId: null,
-			selectedId: null,
-		},
-	});
 
 	function open() {
 		expanded = true;
@@ -300,34 +291,16 @@
 	}
 
 	let ro: ResizeObserver;
-	export let height = tweened(200, {
-		duration: 0,
-	});
 
 	onMount(() => {
-		if (ref) {
-			ro = new ResizeObserver(([entry]) => {
-				console.log({ entry, $height });
-				// height.set(entry.contentRect.height);
-			});
-			ro.observe(ref);
-		}
 		if (staticProp) expanded = true;
 	});
 
 	onDestroy(() => {
 		close();
-		ro && ro.disconnect();
 	});
 
 	let ref: HTMLElement;
-
-	// const height = derived(ref, ($el, set) => {
-	// 	if (!$el) return;
-	// 	const ro = new ResizeObserver(([entry]) => {
-	// 		set(entry.contentRect.height);
-	// 	});
-	// 	return () => ro.disconnect();
 
 	onMount(() => {
 		const index = values.findIndex(({ id }) => selectedValueIds.includes(id));
@@ -336,7 +309,6 @@
 			activeIndex = index;
 		}
 	});
-	// });
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->

@@ -40,7 +40,8 @@ export function generateTextFragmentLink(baseUrl: string, annotation: {
 }
 
 
-export function getTargetSelector<TType extends Selector["type"]>(target: TargetSchema, type: TType): Extract<Selector, { type: TType }> | undefined {
+export function getTargetSelector<TType extends Selector["type"]>(_target: unknown | TargetSchema, type: TType): Extract<Selector, { type: TType }> | undefined {
+    const target = _target as TargetSchema;
     if (Array.isArray(target.selector)) {
         if (type === "TextQuoteSelector") {
             return target.selector[0] as Extract<Selector, { type: TType }> | undefined;
@@ -69,13 +70,13 @@ export function triggerDownload({ title, author, uri }: Pick<Entry, 'title' | 'a
         const quote = getTargetSelector(a.target as TargetSchema, "TextQuoteSelector");
         let text = '';
         if (quote) {
-            text = `> ${quote.exact}\n\n`
+            text = `> ${quote.exact}\n`
         }
         if (a.body) {
-            text += a.body
+            text += `\n${a.body}\n`
         }
         return text;
-    }).join("\n\n---\n\n")
+    }).join("\n---\n\n")
     const blob = new Blob([header, md], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -83,5 +84,4 @@ export function triggerDownload({ title, author, uri }: Pick<Entry, 'title' | 'a
     a.download = `${title ?? 'annotations'}${author ? ' - ' + author : ''}.md`;
     a.click();
     URL.revokeObjectURL(url);
-
 }

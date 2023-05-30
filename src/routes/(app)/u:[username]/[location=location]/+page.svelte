@@ -13,7 +13,7 @@
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
 	import Filters from "$lib/features/filters/Filters.svelte";
 	import { getCurrentListContext } from "$lib/stores/currentList";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import {
 		Tabs,
 		TabsList,
@@ -41,7 +41,7 @@
 
 	const current_list = getCurrentListContext();
 
-	$: query = trpcWithQuery($page).entries.listBookmarks.createQuery({
+	$: query = trpc($page).entries.listBookmarks.createQuery({
 		location: data.location,
 	});
 

@@ -10,7 +10,7 @@
 	import type { FilterStores } from "$lib/stores/filter";
 	import { mainEl } from "$lib/stores/main";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import { getHostname } from "$lib/utils";
 	import type { Entry } from "@prisma/client";
 	import {
@@ -82,7 +82,7 @@
 
 	const { filteredItems, items } = stores;
 
-	// const query = trpcWithQuery(
+	// const query = trpc(
 	// 	$page
 	// ).entries.listForUserSubscriptions.createInfiniteQuery(
 	// 	{

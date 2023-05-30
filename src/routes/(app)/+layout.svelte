@@ -65,7 +65,6 @@
 {/if}
 <QueryClientProvider client={data.queryClient}>
 	<MutationProvider>
-		<Commander>
 			<div
 				class="simple-scrollbars app container bg-base text-content caret-primary-500 dark:text-gray-50 {!$mq.desktop
 					? 'mobile'
@@ -108,7 +107,6 @@
 				<GenericCommandPaletteContainer />
 				<Modals />
 			</div>
-		</Commander>
 	</MutationProvider>
 </QueryClientProvider>
 

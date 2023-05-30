@@ -1,10 +1,10 @@
-import { trpcWithQuery } from '$lib/trpc/client';
+import { trpc } from '$lib/trpc/client';
 import type { RouterOutputs } from '$lib/trpc/router';
 import type { PageLoad } from './$types';
 
 export const load = (async (e) => {
     const { queryClient } = await e.parent();
-    const client = trpcWithQuery(e, queryClient);
+    const client = trpc(e, queryClient);
     const utils = client.createContext()
     const queries = queryClient.getQueriesData({
         queryKey: [["public", "boardgames"]]

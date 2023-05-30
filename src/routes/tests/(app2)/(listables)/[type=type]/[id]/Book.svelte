@@ -21,6 +21,7 @@
 	import EntryOperations from './EntryOperations.svelte';
 	import Interaction from './Interaction.svelte';
 	import InteractionForm from './InteractionForm.svelte';
+	import { get_genre } from '$lib/features/books/utils';
 
 	type Book = PageData['book'];
 	export let data: PageData & {
@@ -64,6 +65,8 @@
 	const tabs = ['Summary', 'Interactions', 'Notes'];
 
 	$: tab_param = $page.url.searchParams.get('tab') ?? tabs[0].toLowerCase();
+
+	$: pdf = data.entry?.relations?.concat(data.entry?.back_relations ?? []).find((r) => r.type === 'Grouped' && r.related_entry?.type === 'pdf')
 </script>
 
 <div class="flex select-text flex-col gap-4">
@@ -104,6 +107,12 @@
 				{/if}
 			</div>
 			<div class="flex items-center gap-2">
+				{#if !!pdf}
+					 <!-- content here -->
+					 <Button as="a" href="/tests/pdf/{pdf.related_entry.id}">
+						Read
+					 </Button>
+				{/if}	
 				<BookmarkForm data={data.bookmarkForm} />
 				{#if data.entry}
 					<EntryOperations data={data.annotationForm} entry={data.entry} />
@@ -113,6 +122,11 @@
 	</div>
 
 	<div class="prose prose-slate mt-6 dark:prose-invert">
+	<span>genre</span>	
+	<Muted>
+		{get_genre(book)}
+		{book.volumeInfo?.categories?.join(', ')}
+	</Muted>
 		<!-- this is the js-free version, but how's the a11y? -->
 		<div class={cn(tabList, 'not-prose')} data-sveltekit-keepfocus>
 			{#each tabs as tab}

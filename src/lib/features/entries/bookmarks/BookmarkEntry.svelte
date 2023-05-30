@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import Icon from "$lib/components/helpers/Icon.svelte";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 
 	export let entry: {
 		screenshot: string | null;
@@ -13,7 +13,7 @@
         };
         id: number;
 	};
-    const getScreenshot = trpcWithQuery($page).bookmarks.screenshot.createMutation({
+    const getScreenshot = trpc($page).bookmarks.screenshot.createMutation({
         onSuccess: (screenshot) => {
             if (screenshot) {
                 entry.screenshot = screenshot;

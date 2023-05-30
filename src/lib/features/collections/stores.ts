@@ -2,14 +2,14 @@ import type { QueryClient } from "@tanstack/svelte-query";
 
 import { commandPaletteStore } from "$lib/components/CommandPalette/store";
 import { notifications } from "$lib/stores/notifications";
-import { trpc, trpcWithQuery } from "$lib/trpc/client";
+import { trpc, trpc } from "$lib/trpc/client";
 import type { RouterOutputs } from "$lib/trpc/router";
 
 type Collection = RouterOutputs["collections"]["addItem"]
 
 // REVIEW: hate that we have to get the queryClient passed in....
 export const addEntriesToCollection = async (entryIds: number[], onSelect?: (c: Collection) => void) => {
-    const client = trpcWithQuery();
+    const client = trpc();
     const ctx = client.createContext();
     const collections = ctx.collections.list.getData() ?? await ctx.collections.list.fetch();
     let collection: Collection | undefined = undefined

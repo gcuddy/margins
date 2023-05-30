@@ -11,7 +11,7 @@ const { subscribe, update } = writable(
     {} as {
         [id: string]: EntryInList & {
             tags?: {
-                id: string;
+                id: number;
                 name: string;
             }[]
         }

@@ -22,7 +22,7 @@
 	import Input from "$lib/components/ui/Input.svelte";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import Button from "$lib/components/ui/Button.svelte";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import { page } from "$app/stores";
 	import { invalidateAll } from "$app/navigation";
 	import toast from "svelte-french-toast";
@@ -33,7 +33,7 @@
 	let newTitle = subscription?.subscription_title ?? "";
 	let showRenameDialog = false;
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const ctx = client.createContext();
 
 	const mutation = client.subscriptions.update.createMutation({

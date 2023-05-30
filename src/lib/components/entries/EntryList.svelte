@@ -112,7 +112,7 @@
 	import toast from 'svelte-french-toast';
 	import { tick } from 'svelte';
 	import { dndzone } from 'svelte-dnd-action';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	// import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { queryKeys } from '$lib/queries/keys';
 	import type { Snapshot } from '@sveltejs/kit';
 	import { receive, send } from '$lib/transitions';
@@ -120,6 +120,7 @@
 	import { invalidate } from '$app/navigation';
 	import { cmd_open } from '../ui/command/stores';
 	import autoAnimate from '@formkit/auto-animate';
+	import { writable } from 'svelte/store';
 
 	const statuses = {
 		Backlog: HelpCircle,
@@ -127,74 +128,74 @@
 		Archive: CheckCircle2
 	} as const;
 
-	const queryClient = useQueryClient();
+	// const queryClient = useQueryClient();
 
-	const updateBookmark = createMutation({
-		mutationFn: (data: MutationInput<'updateBookmark'>) => mutation($page, 'updateBookmark', data),
-		onSettled: (data) => {
-			console.log('onSettled', data);
+	// const updateBookmark = createMutation({
+	// 	mutationFn: (data: MutationInput<'updateBookmark'>) => mutation($page, 'updateBookmark', data),
+	// 	onSettled: (data) => {
+	// 		console.log('onSettled', data);
 
-			// queryClient.invalidateQueries({
-			// 	queryKey: queryKeys.entries._def
-			// });
-			// queryClient.invalidateQueries(undefined);
-			// queryClient
-			// 	.invalidateQueries({
-			// 		queryKey: ['library']
-			// 	})
-			// 	.then(() => {
-			// 		toast.success('Updated bookmark');
-			// 	});
-		},
-		onMutate: (vars) => {
-			queryClient.setQueriesData(
-				{ queryKey: ['entries'] },
-				(
-					oldData:
-						| {
-								pages: {
-									entries: EntryInList[];
-								};
-						  }
-						| { entries: EntryInList[] }
-						| undefined
-				) => {
-					console.log({ oldData });
-					if (!oldData) return oldData;
-					if ('pages' in oldData) {
-						const { pages } = oldData;
-						const { entries } = pages;
-						if ('entryId' in vars) {
-							const { entryId, data } = vars;
-							const entry = entries.find((e) => e.id === entryId);
-							if (!entry) return oldData;
-							Object.assign(entry, data);
-							return oldData;
-						}
-						// const { id, status } = args[0];
-						// const entry = entries.find((e) => e.id === id);
-						// if (!entry) return oldData;
-						// entry.status = status;
-						return oldData;
-					}
-					const { entries } = oldData;
+	// 		// queryClient.invalidateQueries({
+	// 		// 	queryKey: queryKeys.entries._def
+	// 		// });
+	// 		// queryClient.invalidateQueries(undefined);
+	// 		// queryClient
+	// 		// 	.invalidateQueries({
+	// 		// 		queryKey: ['library']
+	// 		// 	})
+	// 		// 	.then(() => {
+	// 		// 		toast.success('Updated bookmark');
+	// 		// 	});
+	// 	},
+	// 	onMutate: (vars) => {
+	// 		queryClient.setQueriesData(
+	// 			{ queryKey: ['entries'] },
+	// 			(
+	// 				oldData:
+	// 					| {
+	// 							pages: {
+	// 								entries: EntryInList[];
+	// 							};
+	// 					  }
+	// 					| { entries: EntryInList[] }
+	// 					| undefined
+	// 			) => {
+	// 				console.log({ oldData });
+	// 				if (!oldData) return oldData;
+	// 				if ('pages' in oldData) {
+	// 					const { pages } = oldData;
+	// 					const { entries } = pages;
+	// 					if ('entryId' in vars) {
+	// 						const { entryId, data } = vars;
+	// 						const entry = entries.find((e) => e.id === entryId);
+	// 						if (!entry) return oldData;
+	// 						Object.assign(entry, data);
+	// 						return oldData;
+	// 					}
+	// 					// const { id, status } = args[0];
+	// 					// const entry = entries.find((e) => e.id === id);
+	// 					// if (!entry) return oldData;
+	// 					// entry.status = status;
+	// 					return oldData;
+	// 				}
+	// 				const { entries } = oldData;
 
-					return oldData;
-				}
-			);
+	// 				return oldData;
+	// 			}
+	// 		);
+	// 	}
+	// });
+
+
+
+	const updateSortOrder = writable({
+		mutate: (data: MutationInput<'updateBookmarkSortOrder'>) => {
+			mutation($page, 'updateBookmarkSortOrder', data).finally(() => {
+				// invalidate
+			})
 		}
-	});
+	})
 
-	const updateSortOrder = createMutation({
-		mutationFn: (data: MutationInput<'updateBookmarkSortOrder'>) =>
-			mutation($page, 'updateBookmarkSortOrder', data),
-		onSettled: (e) => {
-			console.log('onSettled');
-			queryClient.invalidateQueries({
-				queryKey: queryKeys.entries.library._def
-			});
-		}
-	});
 
 	const kbds = {
 		Backlog: 'b',

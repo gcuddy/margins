@@ -1,7 +1,7 @@
 import { db } from "$lib/db"
 import type { Annotation, Collection, CollectionItems, DB, Entry, Feed } from "$lib/prisma/kysely/types";
-import type { Status } from "@prisma/client";
-import type { ExpressionBuilder, InferResult, OrderByExpression, RawBuilder, ReferenceExpression, SelectExpression } from "kysely";
+import type { RelationType, Status } from "@prisma/client";
+import type { ExpressionBuilder, InferResult, OrderByExpression, RawBuilder, ReferenceExpression, SelectExpression, SelectQueryBuilder } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/mysql";
 
 type S = SelectExpression<DB & Record<"e", Entry>, "e">;
@@ -32,6 +32,17 @@ export type EntryInList = InferResult<ReturnType<typeof selectEntryInList>>[numb
     progress?: number | null;
     status?: Status;
     tags?: { id: number; name: string; }[];
+    annotations?: AnnotationsInEntry[];
+    num_annotations?: `${number}` | number;
+    relations?: {
+        id: string;
+        type: RelationType;
+        entry: EntryInList;
+    }[];
+    collections: {
+        id: number;
+        name: string;
+    }[];
 }
 
 
@@ -50,7 +61,7 @@ export const collectionItem = {
 }
 
 export const entry = {
-    withAnnotations: ["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title"] as const
+    withAnnotations: ["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title", "Annotation.exact", "Annotation.createdAt"] as const
 }
 
 function entryAnnotations() {
@@ -75,8 +86,32 @@ export const annotations = {
                 .select(entrySelect)
                 .whereRef("r.annotationId", "=", "a.id")
             ).as('references')
-        }
+        },
+        tags: (eb: AliasedAEb) => jsonArrayFrom(
+            eb.selectFrom("annotation_tag as at")
+                .innerJoin("Tag as t", "at.annotationId", "a.id")
+                .select(["t.id", "t.name"])
+                .whereRef("at.annotationId", "=", "a.id")
+        ).as('tags'),
+        username: <T extends string>(eb: AliasedAEb, as: T) => jsonObjectFrom(
+            eb.selectFrom("user as u")
+                .select("username")
+                .whereRef("a.userId", "=", "u.id")
+        ).as(as),
+        parent: (eb: AliasedAEb) => jsonObjectFrom(
+            eb.selectFrom("Annotation as parent")
+                .whereRef("parent.id", "=", "a.parentId")
+                .select(annotations.select)
+        ).as('parent')
     }
+}
+
+export function contextual_annotation(eb: AliasedAEb) {
+    return [
+        annotations.with.tags(eb),
+        annotations.with.username(eb, 'creator'),
+        withEntry(eb)
+    ]
 }
 
 export const feed = {

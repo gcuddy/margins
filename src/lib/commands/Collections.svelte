@@ -7,12 +7,22 @@
 	import CommandItem from '$lib/components/ui/command/CommandItem.svelte';
 	import { queryKeys } from '$lib/queries/keys';
 	import type { QueryOutput } from '$lib/queries/query';
-	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { create_query } from '$lib/state/query-state';
 	import { Box } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 
-	const queryClient = useQueryClient();
-	const query = createQuery(queryKeys.collections.list($page));
+	import { query as qquery } from "$lib/queries/query"
+	// const query = createQuery(queryKeys.collections.list($page));
+
+	
+	const query = create_query({
+		key: 'collections',
+		fn: async () => qquery($page, "collections", {}),
+		stale_time: 1000
+	})
+
+	
+	// $q[0]
 
 	export let onSelect = (collection: QueryOutput<'collections'>[number]) => {
 		console.log({ collection });

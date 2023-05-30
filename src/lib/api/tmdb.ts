@@ -64,6 +64,18 @@ type PersonPlusType = Person & {
 };
 type MultiSearch = Search<MoviePlusType | TvPlusType | PersonPlusType>;
 
+
+export type List = {
+    description: string;
+    favorite_count: number;
+    id: string;
+    item_count: number;
+    iso_639_1: string;
+    list_type: string;
+    name: string;
+    poster_path: string | null
+}
+
 const VOTE_THRESHOLD = 20;
 
 export const base = 'https://api.themoviedb.org/3';

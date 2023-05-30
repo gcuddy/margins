@@ -12,6 +12,8 @@ import { fetchRss, inputSchema as rssInputSchema } from "./(listables)/subscript
 import { annotationSchema } from "$lib/annotation";
 import { type Condition, View } from "./views/new/View";
 import spotify from "$lib/api/spotify";
+import { get_entry_details } from "$lib/server/queries";
+import { typeSchema } from "$lib/types";
 
 
 interface Query<I extends (z.ZodTypeAny), Data> {
@@ -22,6 +24,7 @@ interface Query<I extends (z.ZodTypeAny), Data> {
         }
     }) => Promise<Data>;
     schema?: I;
+    headers?: Record<string, string>;
 }
 
 export const query = <I extends z.ZodTypeAny, Data>(args: Query<I, Data>) => args;
@@ -162,7 +165,7 @@ export const mutations = ({
             entryId: z.number().int(),
             id: z.number().int().optional(),
             progress: z.number().min(0).max(1).nullish(),
-            is_read: z.boolean().optional(),
+            is_read: z.coerce.boolean().transform(b => +b).optional(),
             last_viewed: z.date().optional(),
         }),
         fn: async ({ input, ctx }) => {
@@ -184,6 +187,35 @@ const qSchema = z.object({
 
 
 export const queries = ({
+    get_entry_deets: query({
+        schema: z.object({
+            id: z.number().int()
+        }),
+        fn: async ({ input: { id } }) => {
+            // 
+            const entry = await db.selectFrom("Entry as e")
+                .where('id', '=', id)
+                .select(entrySelect)
+                .select(["e.html"])
+                .executeTakeFirstOrThrow();
+            return entry;
+        },
+        headers: {
+            "cache-control": `s-maxage=1, stale-while-revalidate=${60 * 60 * 24}`,
+        }
+    }),
+    get_entry: query({
+        schema: z.object({
+            id: z.number().int(),
+            type: typeSchema
+        }),
+        fn: async ({ input, ctx }) => {
+            return get_entry_details(input.id, {
+                userId: ctx.userId,
+                type: input.type
+            })
+        }
+    }),
     view_entries: query({
         schema: z.object({
             conditions: z.any().array(),

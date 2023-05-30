@@ -20,12 +20,12 @@
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 
 	export let annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title'> & {
-		username?: string;
+		username?: string | null;
 	};
 
 	interface $$Props extends Omit<ComponentProps<AnnotationForm>, 'annotation'> {
 		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title'> & {
-			username?: string;
+			username?: string | null;
 		};
 	}
 

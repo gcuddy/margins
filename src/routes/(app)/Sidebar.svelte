@@ -34,7 +34,7 @@
 	import mq from "$lib/stores/mq";
 	import { sidebarFeeds } from "$lib/stores/user";
 	import { getUserDataContext } from "$lib/stores/userdata";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import type { FavoriteWithPayload } from "$lib/types/schemas/Favorite";
 	import {
 		Menu,
@@ -288,7 +288,7 @@
 	});
 
 	const user_data = getUserDataContext();
-	$: favoriteQuery = trpcWithQuery($page).favorites.list.createQuery(
+	$: favoriteQuery = trpc($page).favorites.list.createQuery(
 		undefined,
 		{
 			onSuccess: (favorites) => {

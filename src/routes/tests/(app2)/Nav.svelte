@@ -2,11 +2,24 @@
 	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
-	import { BookMarked, Layers, Box, Library, Rss, SearchIcon, TreePine, Home, Tag, PinIcon } from 'lucide-svelte';
+	import {
+		BookMarked,
+		Layers,
+		Box,
+		Library,
+		Rss,
+		SearchIcon,
+		TreePine,
+		Home,
+		Tag,
+		PinIcon
+	} from 'lucide-svelte';
 	import type { LayoutData } from './$types';
 	import { Small } from '$lib/components/ui/typography';
 	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import mq from '$lib/stores/mq';
+	import { useMenuBar } from './MainNav.svelte';
+	import ColResizer from '$lib/components/ColResizer.svelte';
 
 	type Nav = {
 		label: string;
@@ -66,14 +79,24 @@
 		}
 	];
 
-	$: in_article = $page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
+	$: in_article =
+		$page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
 
 	$: collapsed = in_article ? !$mq['2xl'] : !$mq.lg;
 
 	export let user_data: LayoutData['user_data'];
+
+	const menu_bar = useMenuBar();
+
+	export let width = 240;
 </script>
 
-<nav class="grid items-start gap-2 overflow-y-auto">
+<nav
+	style:--width='{width}px'
+	class="grid items-start gap-2 overflow-y-auto max-w-[--width] {$menu_bar.show
+		? 'opacity-100'
+		: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
+>
 	<div class="px-4 py-2">
 		<div
 			class="space-y-1 transition-opacity {in_article
@@ -94,17 +117,16 @@
 					/>
 					<span class="hidden {in_article ? '2xl:inline' : 'lg:inline'}">{nav_item.label}</span>
 				</Button>
-				{/each}
-				<Button
-					as="a"
-					href='/tests/pins'
-					size="sm"
-					class="lg:hidden flex w-full items-center justify-start"
-					variant='ghost'
-				>
-					<PinIcon class="h-6 w-6" />
-				</Button>
-			
+			{/each}
+			<Button
+				as="a"
+				href="/tests/pins"
+				size="sm"
+				class="flex w-full items-center justify-start lg:hidden"
+				variant="ghost"
+			>
+				<PinIcon class="h-6 w-6" />
+			</Button>
 		</div>
 	</div>
 	{#if user_data}
@@ -161,7 +183,9 @@
 	<!-- <Button variant="ghost">Subscriptions</Button> -->
 </nav>
 {#if $audioPlayer.audio?.src}
-	<div class="mt-auto flex shrink-0 flex-col pb-2 {collapsed ? '' : 'mt-auto border-t'}">
+	<div style:--width='{width}px' class="mt-auto flex shrink-0 flex-col max-w-[--width] pb-2 {collapsed ? '' : 'mt-auto border-t'}">
 		<AudioPlayer {collapsed} />
 	</div>
 {/if}
+
+<ColResizer bind:width max={500} class="absolute px-2 w-0 h-full after:bg-border after:w-px after:block after:h-full cursor-col-resize right-0 top-0 bottom-0" />

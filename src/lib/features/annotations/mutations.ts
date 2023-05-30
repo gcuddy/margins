@@ -13,7 +13,7 @@ export const updateAnnotationMutation = (init?: TRPCClientInit) => ({
 import { getContext } from "svelte";
 
 import { nanoid } from "$lib/nanoid";
-import type { trpcWithQuery } from "$lib/trpc/client";
+import type { trpc } from "$lib/trpc/client";
 import type { RouterOutputs } from "$lib/trpc/router";
 
 export const SaveAnnotationMutationKey = "saveAnnotationMutation" as const;
@@ -23,7 +23,7 @@ export function useSaveAnnotation() {
     if (!mutation) {
         throw new Error("No saveAnnotationMutation context found");
     }
-    return mutation as ReturnType<ReturnType<typeof trpcWithQuery>["annotations"]["save"]["createMutation"]>;
+    return mutation as ReturnType<ReturnType<typeof trpc>["annotations"]["save"]["createMutation"]>;
 }
 
 export function createAnnotation(

@@ -17,11 +17,11 @@
 	import toast from "svelte-french-toast";
 	import { goto } from "$app/navigation";
 	import { Loader2 } from "lucide-svelte";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	export let form: ActionData | undefined = undefined;
 	export let close = () => {};
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const ctx = client.createContext();
 	$: console.log({ close });
 	$: console.log({ form });

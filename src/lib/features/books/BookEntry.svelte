@@ -9,7 +9,7 @@
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import dayjs from "$lib/dayjs";
 	import { stripGoogleBookCurl } from "$lib/features/books/utils";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
 	import {
 		createMutation,
@@ -30,7 +30,7 @@
 
 	// $: todayLog = entry?.log.find((log) => dayjs(log.date).isSame(dayjs(), "day"));
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	$: query = client.books.public.byId.createQuery(bookId, {
 		staleTime: 5 * 1000 * 60,

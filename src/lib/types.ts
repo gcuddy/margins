@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const types = [
     // "entry",
     "movie",
@@ -12,6 +14,8 @@ export const types = [
 ] as const;
 
 export type Type = typeof types[number];
+
+export const typeSchema = z.enum(types);
 
 export type Message = { status: 'error' | 'success'; text: string };
 

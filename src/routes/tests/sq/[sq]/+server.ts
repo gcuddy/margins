@@ -21,6 +21,10 @@ export const GET: RequestHandler = (async (event) => {
     console.log(`running sq ${sq}`, new Date())
     const params = await queryctx(event, query.schema)
     const result = await query.fn(params);
+    if (query.headers) {
+        console.log(`setting headers for ${event.url.toString()}`)
+        event.setHeaders(query.headers)
+    } 
     console.dir({ result }, { depth: null })
     console.timeEnd(`[sq] ${sq}`)
     return json(result)

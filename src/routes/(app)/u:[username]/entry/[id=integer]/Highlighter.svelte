@@ -28,7 +28,7 @@
 	import { notifications } from "$lib/stores/notifications";
 	import { selection } from "$lib/stores/selection";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import type {
 		AnnotationPos,
 		NodeRef,
@@ -244,7 +244,7 @@
 	const queryClient = useQueryClient();
 	const entryQueryKey = entryDetailsQuery({ id: articleID }).queryKey;
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 
 	function createAnnotation(

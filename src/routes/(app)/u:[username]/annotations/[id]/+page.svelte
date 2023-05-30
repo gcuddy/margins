@@ -2,7 +2,7 @@
 	import { page } from "$app/stores";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import TipTap from "$lib/components/TipTap.svelte";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import { createMutation } from "@tanstack/svelte-query";
 	import dayjs from "$lib/dayjs";
@@ -16,7 +16,7 @@
 
 	$: console.log({ $query });
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const updateAnnotationMutation = client.annotations.save.createMutation({
 		onMutate: (updatedAnnotation) => {

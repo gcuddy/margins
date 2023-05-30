@@ -2,24 +2,23 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { BookmarkSchema } from '$lib/features/entries/forms';
 	import { queryKeys } from '$lib/queries/keys';
-	import { useQueryClient } from '@tanstack/svelte-query';
 	import { LoaderIcon } from 'lucide-svelte';
+	import { getContext } from 'svelte';
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { Validation } from 'sveltekit-superforms/index';
 
 	export let data: Validation<BookmarkSchema>;
-const queryClient = useQueryClient();
 	$: ({ form, enhance, submitting, delayed } = superForm(data, {
 		resetForm: true,
 		onUpdated: () => {
-			queryClient.invalidateQueries({
-				queryKey: queryKeys.entries._def
-			})
 		}
 	}));
 	$: bookmarked = !!$form.id;
+
+	const hover_entry = getContext("hover_entry")
 </script>
 
+{#if !hover_entry}
 <form method="post" use:enhance action="?/bookmark">
 	<input type="hidden" bind:value={$form.id} name="id" />
 	<input type="hidden" bind:value={$form.entryId} name="entryId" />
@@ -37,3 +36,4 @@ const queryClient = useQueryClient();
 		{/if}
 	</Button>
 </form>
+{/if}

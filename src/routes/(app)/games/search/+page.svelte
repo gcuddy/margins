@@ -3,13 +3,13 @@
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import dayjs from "$lib/dayjs";
 	import debounce from "lodash/debounce";
 
 	let value = "";
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 
 	$: query = client.public.games.createQuery(
 		{

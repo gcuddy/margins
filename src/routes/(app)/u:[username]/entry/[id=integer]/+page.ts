@@ -2,7 +2,7 @@
 import type { Config } from '@sveltejs/adapter-vercel';
 
 import { getEntriesFromCache } from "$lib/features/entries/queries";
-import { trpc, trpcWithQuery } from "$lib/trpc/client";
+import { trpc, trpc } from "$lib/trpc/client";
 
 import type { PageLoad } from "./$types";
 
@@ -34,7 +34,7 @@ export const load = (async (event) => {
     const { queryClient } = parentData;
     // const entries = getEntriesFromCache(queryClient);
     // const placeholderData = entries.find(e => e.id === data.id);
-    const client = trpcWithQuery(event, queryClient);
+    const client = trpc(event, queryClient);
     const utils = client.createContext();
     const opts = {
         id: +params.id

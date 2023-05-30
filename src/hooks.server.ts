@@ -4,9 +4,9 @@ import { sequence } from "@sveltejs/kit/hooks";
 
 import { darkThemes } from "$lib/features/settings/themes";
 import { auth } from "$lib/server/lucia";
-// import { createTRPCHandle } from "trpc-sveltekit";
-// import { createContext } from "$lib/trpc/context";
-// import { appRouter } from "$lib/trpc/router";
+import { createTRPCHandle } from "trpc-sveltekit";
+import { createContext } from "$lib/trpc/context";
+import { appRouter } from "$lib/trpc/router";
 
 const handleTheme = (async ({ event, resolve }) => {
 	let theme: string | null = null;
@@ -62,7 +62,7 @@ export const handle: Handle = sequence(
 	// 		} else if (allOk && isQuery) {
 	// 			// is this a good idea?
 	// 			return {
-    //                 //No!
+	// 				//No!
 	// 				// headers: {
 	// 				// 	"cache-control": `max-age=0, s-maxage=86400`,
 	// 				// },

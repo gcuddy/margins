@@ -21,7 +21,6 @@
 	import { superForm } from "sveltekit-superforms/client";
 	import toast from "svelte-french-toast";
 	import type { Message } from "$lib/types";
-	import { useQueryClient } from "@tanstack/svelte-query";
 	import { queryKeys } from "$lib/queries/keys";
 	import { invalidated, update_entry } from "$lib/state/entries";
 
@@ -37,7 +36,6 @@
 		Archive: CheckCircle2,
 	};
 	const statusValues = Object.keys(statuses) as (keyof typeof statuses)[];
-	const queryClient = useQueryClient()	
 	const { form, enhance, message } = superForm(data, {
 		dataType: "json",
 		onSubmit: (data) => {
@@ -69,9 +67,9 @@
 
 	$: if ($message?.status === "success") {
 		toast.success($message.text);
-		queryClient.invalidateQueries({
-			queryKey: queryKeys.entries.library._def
-		})
+		// queryClient.invalidateQueries({
+		// 	queryKey: queryKeys.entries.library._def
+		// })
 	}
 </script>
 

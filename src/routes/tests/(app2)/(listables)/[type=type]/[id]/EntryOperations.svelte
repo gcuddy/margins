@@ -21,6 +21,7 @@
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
 	import { mutation } from '$lib/queries/query';
+	import { state, update_entry } from '$lib/state/entries';
 	import type { Entry } from '@prisma/client';
 	import {
 		ArrowLeftRight,
@@ -127,35 +128,42 @@
 </DropdownMenu>
 
 <Dialog bind:isOpen={show_note_form}>
-<DialogContent>
-	<AnnotationForm
-		opts={{
-			onResult: ({ cancel }) => {
-				show_note_form = false;
-				cancel();
-				invalidate('entry');
-			}
-		}}
-		{data}
-		{entry}
-		class="contents"
-	>
-		<svelte:fragment slot="header">
-			<DialogHeader>
-				<DialogTitle>Add note</DialogTitle>
-				<!-- <DialogDescription>Copy and paste the URL to add.</DialogDescription> -->
-			</DialogHeader>
-		</svelte:fragment>
-		<svelte:fragment slot="footer" let:delayed>
-			<DialogFooter>
-				<Button>
-					<span>Save</span>
-					{#if delayed}
-						<LoaderIcon class="animate-spin" />
-					{/if}
-				</Button>
-			</DialogFooter>
-		</svelte:fragment>
-	</AnnotationForm>
-</DialogContent>
+	<DialogContent>
+		<AnnotationForm
+			opts={{
+				onResult: ({ cancel, result }) => {
+					console.log({ result });
+					show_note_form = false;
+					if (result.type === 'success') {
+						if (result.data?.form?.data) {
+							update_entry(entry.id, {
+								annotations: [...($state[entry.id].annotations ?? []), result.data.form.data]
+							});
+						}
+					}
+					cancel();
+				}
+			}}
+			{data}
+			{entry}
+			class="contents"
+		>
+			<svelte:fragment slot="header">
+				<DialogHeader>
+					<DialogTitle>Add note</DialogTitle>
+					<!-- <DialogDescription>Copy and paste the URL to add.</DialogDescription> -->
+				</DialogHeader>
+			</svelte:fragment>
+			<svelte:fragment slot="footer" let:delayed>
+				<DialogFooter>
+					<Button>
+						<span>Save</span>
+						{#if delayed}
+							<LoaderIcon class="animate-spin" />
+						{/if}
+					</Button>
+				</DialogFooter>
+			</svelte:fragment>
+		</AnnotationForm>
+	</DialogContent>
 </Dialog>

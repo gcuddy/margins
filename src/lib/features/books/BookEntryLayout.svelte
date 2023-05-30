@@ -8,11 +8,11 @@
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import dayjs from "$lib/dayjs";
 	import { notifications } from "$lib/stores/notifications";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import type { Maybe } from "@trpc/server";
 	import { fade } from "svelte/transition";
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 
 	const saveBookMutation = client.books.save.createMutation({

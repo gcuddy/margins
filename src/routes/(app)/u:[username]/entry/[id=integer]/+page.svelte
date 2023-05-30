@@ -27,7 +27,7 @@
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import type { Annotation, DocumentType, Tag } from "@prisma/client";
 	import { useQueryClient } from "@tanstack/svelte-query";
@@ -55,7 +55,7 @@
 
 	export let data: PageData;
 	const queryClient = useQueryClient();
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 
 	let location: Location | undefined = undefined;

@@ -16,10 +16,10 @@
 	import { Image } from "@unpic/svelte";
 	import { icons } from "./utils";
 	import type { RouterOutputs } from "$lib/trpc/router";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import LoadingSpinner from "$lib/components/LoadingSpinner.svelte";
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 
 	export let entry: RouterOutputs["entries"]["listBookmarks"][number];
 

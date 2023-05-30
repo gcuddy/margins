@@ -10,6 +10,8 @@ import { saveAnnotationSchema } from "$lib/prisma/zod-inputs";
 import { protectedProcedure, router } from "../t";
 import { nanoid } from "$lib/nanoid";
 import { json } from "$lib/db";
+import { sql } from "kysely";
+import { annotations, contextual_annotation, withEntry } from "$lib/db/selects";
 
 const idSchema = z.object({
     id: z.string() // <- cuid or nanoid
@@ -20,7 +22,6 @@ export const annotationWithBodySchema = idSchema.extend({ body: z.string().min(1
 // TODO: clean up create, save, note, etc... into create, update, delete, etc.
 export const annotationRouter = router({
     list: protectedProcedure.query(async ({ ctx, input }) => {
-        const { userId, prisma } = ctx;
         const annotations = await ctx.db.selectFrom("Annotation as a")
             .innerJoin("user as au", "au.id", "a.userId")
             .select([
@@ -53,41 +54,32 @@ export const annotationRouter = router({
         // or: should Body just be a string?
         // [path]?
         const { userId } = ctx;
-        const [annotations, richAnnotations] = await ctx.prisma.$transaction([ctx.prisma.annotation.findMany({
-            where: {
-                // REVIEW: while this works, it seems probably not efficient? maybe okay if annotations are short
-                OR: [
-                    {
-                        body: {
-                            contains: input,
-                        },
-                        // Unfortunately, this seems able to only search the first level of the JSON, and only hit exact matches,
-                        // contentData: {
-                        //     path: "$.content[*].content[*].text",
-                        //     array_contains: input
-                        // }
-                    }
-                ],
-                userId,
-            },
-            ...contextualAnnotationArgs,
-        }),
-        ctx.prisma.annotation.findMany({
-            where: {
-                contentData: {
-                    not: {
-                        equals: null
-                    }
-                },
-                userId
-            },
-            ...contextualAnnotationArgs,
-        })
-        ]);
+
+        const [notes, rich_annotations] = await Promise.all([ctx.db.selectFrom("Annotation as a")
+            .where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${input})`)
+            .select(annotations.select)
+            .select(eb => [
+                withEntry(eb),
+                annotations.with.tags(eb),
+                annotations.with.username(eb, 'creator')
+            ])
+            .where("a.userId", "=", ctx.userId)
+            .where("a.contentData", "is", null)
+            // TODO: paginate?
+            .limit(25)
+            .orderBy("a.createdAt", "desc").execute(),
+        ctx.db.selectFrom("Annotation as a")
+            .where("contentData", "is not", null)
+            .where("userId", "=", userId)
+            .select("contentData")
+            .select(annotations.select)
+            .select(eb => contextual_annotation(eb))
+            .execute()
+        ])
         // now filter richannotations
         console.time("filtering rich annotations")
-        const matchingRichAnnotations: typeof richAnnotations = [];
-        richAnnotations.forEach((a) => {
+        const matchingRichAnnotations: typeof rich_annotations = [];
+        rich_annotations.forEach((a) => {
             const contentData = a.contentData as JSONContent;
             // walk through all "text" nodes and search for input
             let found = false
@@ -110,7 +102,7 @@ export const annotationRouter = router({
         })
         console.timeEnd("filtering rich annotations")
         console.log({ matchingRichAnnotations })
-        return [...matchingRichAnnotations, ...annotations];
+        return [...matchingRichAnnotations, ...notes];
     }),
     // TODO: consolidate save and update
     save: protectedProcedure.input(saveAnnotationSchema.extend({
@@ -119,7 +111,7 @@ export const annotationRouter = router({
         const { id } = input;
         const { tags, entryId, ...rest } = input;
         // if there's an id, then update
-        let ids: string[] = [];
+        const ids: string[] = [];
         const entryIds = Array.isArray(entryId) ? entryId : [entryId];
         const data = {
             ...rest,
@@ -129,103 +121,17 @@ export const annotationRouter = router({
             updatedAt: new Date(),
             // TODO
         } as const;
-        let values = entryIds.map((entryId) => ({
+        const values = entryIds.map((entryId) => ({
             id: id ?? nanoid(),
             userId: ctx.userId,
             entryId,
             ...data
         } as const));
-        ids = values.map(v => v.id);
+        // ids = values.map(v => v.id);
         await ctx.db.insertInto("Annotation").values(values)
             .onDuplicateKeyUpdate(data)
             .execute();
         return;
-        if (tags?.length) {
-            await ctx.db.insertInto("Tag")
-                .values(tags.map(tag => ({
-                    name: tag.name,
-                    updatedAt: new Date(),
-                    userId: ctx.userId
-                })))
-                .ignore()
-                .execute();
-            // now insert into annotation_tag
-            await ctx.db.insertInto("annotation_tag")
-                .columns(["annotationId", "tagId"])
-                .expression(eb => eb.selectFrom("Annotation").select("id"))
-        }
-
-        return;
-        ctx.db.transaction
-        // TODO: TAGS
-        // const tagsToCreate = tags?.filter(t => !t.id).map(t => ({ name: t.name, userId: ctx.userId, updatedAt: new Date() }) as const) || [];
-        // let tagIds: number[] = tags?.filter(t => t.id).filter(Boolean).map(t => t.id!) || [];
-        // if (tagsToCreate.length) {
-        //     const tags = await ctx.db.insertInto("Tag")
-        //         .values(tagsToCreate)
-        //         .execute();
-        //     tagIds = [...tagIds, ...tags.map(t => t.insertId)];
-        // }
-        // if (tags?.length) {
-        //     await ctx.db.insertInto("annotation_tag")
-        //         .values(ids.map(id => ({
-        //             annotationId: id,
-        //             // where to get tagId?
-        //         })))
-        // }
-
-        // // map over entryids and create annotation ids for each, then create tags for each id
-        // // let ids = entryIds.map(() => nanoid());
-
-        // await ctx.db.insertInto("Annotation")
-        //     .values({
-        //         id: nanoid(),
-        //         type: "annotation",
-        //         updatedAt: new Date(),
-        //         // TODO
-        //         entryId: 0,
-        //         userId: ctx.userId,
-        //         ...rest
-        //     });
-        // // Then take the annotations and create the tags
-
-        // const upsertArgs = (entryId?: number): Prisma.AnnotationUpsertArgs => ({
-        //     where: {
-        //         id: id ?? "",
-        //     },
-        //     create: {
-        //         type: "annotation",
-        //         ...rest,
-        //         entryId,
-        //         userId: ctx.userId,
-        //         tags: tags ? {
-        //             connect: tags.map(t => ({
-        //                 name_userId: {
-        //                     name: t.name,
-        //                     userId: ctx.userId
-        //                 }
-        //             }))
-        //         } : undefined
-        //     },
-        //     update: {
-        //         ...rest,
-        //         entryId,
-        //         tags: tags ? {
-        //             set: tags.map(t => ({
-        //                 name_userId: {
-        //                     name: t.name,
-        //                     userId: ctx.userId
-        //                 }
-        //             }))
-        //         } : undefined
-        //     }
-        // })
-        // if (Array.isArray(entryId)) {
-        //     const annotations = await ctx.prisma.$transaction(entryId.map(e => ctx.prisma.annotation.upsert(upsertArgs(e))))
-        //     return annotations;
-        // } else {
-        //     return await ctx.prisma.annotation.upsert(upsertArgs(entryId))
-        // }
     }),
     note: protectedProcedure
         .input(

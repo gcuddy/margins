@@ -19,7 +19,8 @@
 
 	// $: isEntry = $page.route.id?.includes("entry");
 	let isEntry = false;
-	$: is_article = $page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf')
+	$: is_article =
+		$page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
 	$: is_settings = $page.url.pathname.startsWith('/tests/settings');
 
 	export let data: LayoutData;
@@ -37,54 +38,50 @@
 		let module = await import('./Commander.svelte');
 		commander = module.default;
 	});
+
+	export let sidebar_width = 240;
 </script>
 
-<QueryClientProvider client={data.queryClient}>
-	{#if commander}
-		<svelte:component this={commander} />
-	{/if}
-	<Dialog />	
-	<GenericCommander>
-		<div class="flex h-full grow flex-col space-y-6">
-			<header class="container sticky top-0 z-40">
-				<MainNav />
-			</header>
-			<div
+{#if commander}
+	<svelte:component this={commander} />
+{/if}
+<Dialog />
+<GenericCommander>
+	<div class="flex h-full grow flex-col space-y-6">
+		<header class="container sticky top-0 z-40">
+			<MainNav />
+		</header>
+		<div class={cn('container grid grid-cols-[auto,1fr,auto] gap-2')}>
+			<!-- w-[200px] -->
+			<aside
 				class={cn(
-					'container grid grow',
-					!isEntry && 'sm:grid-cols-[auto_1fr] lg:grid-cols-5',
-					is_article && 'grid-cols-5'
+					'sticky top-20 hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex'
+					// isEntry && 'md:hidden',
+					// is_article && 'sm:hidden'
 				)}
 			>
-				<!-- w-[200px] -->
-				<aside
-					class={cn(
-						'sticky top-20 hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex',
-						isEntry && 'md:hidden',
-						is_article && 'sm:hidden'
-					)}
-				>
-					{#if $page.url.pathname.startsWith('/tests/settings')}
-						<!-- todo -->
-					{:else}
-						<Nav user_data={data.user_data} />
-					{/if}
-				</aside>
-				<main
-					class={cn(
-						'flex h-full w-full flex-1 flex-col px-4 py-6 lg:px-8',
-						$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
-						is_article ? ' col-span-5' : 'lg:col-span-4',
-						is_settings && 'border-none lg:col-span-3',
-						!is_article && 'sm:border-l'
-					)}
-				>
-					<slot />
-				</main>
-			</div>
+				{#if $page.url.pathname.startsWith('/tests/settings')}
+					<!-- todo -->
+				{:else}
+					<Nav bind:width={sidebar_width} user_data={data.user_data} />
+				{/if}
+			</aside>
+			<main
+				class={cn(
+					'flex h-full w-full flex-1 flex-col',
+					$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
+					'relative',
+					'col-start-2'
+					// 'px-4 py-6 lg:px-8'
+					// is_article ? ' col-span-5' : 'lg:col-span-4',
+					// is_settings && 'border-none lg:col-span-3',
+					// !is_article && 'sm:border-l'
+				)}
+			>
+				<slot />
+			</main>
 		</div>
-		<!-- <AudioPlayer /> -->
-		<DropBox />
-	</GenericCommander>
-	<SvelteQueryDevtools initialIsOpen={false} />
-</QueryClientProvider>
+	</div>
+	<!-- <AudioPlayer /> -->
+	<DropBox />
+</GenericCommander>

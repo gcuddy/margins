@@ -1,4 +1,4 @@
-import { trpcWithQuery } from '$lib/trpc/client';
+import { trpc } from '$lib/trpc/client';
 import type { RouterOutputs } from '$lib/trpc/router';
 import type { PageLoad } from './$types';
 
@@ -8,7 +8,7 @@ export const load = (async (event) => {
     // const query
     const { queryClient, user } = await event.parent();
 
-    const client = trpcWithQuery(event, queryClient);
+    const client = trpc(event, queryClient);
     const ctx = client.createContext();
     const query = client.entries.byFeed.createServerInfiniteQuery({
         id: +params.id,

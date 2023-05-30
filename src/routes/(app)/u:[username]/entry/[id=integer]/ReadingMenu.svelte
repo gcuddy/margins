@@ -33,7 +33,7 @@
 	import StateListbox from "$lib/components/StateListbox.svelte";
 	import { derived } from "svelte/store";
 	import { reading_sidebar } from "$lib/features/entries/stores";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import { nanoid } from "nanoid";
 	import {
 		Popover,
@@ -54,7 +54,7 @@
 
 	// export let currentList: ICurrentList | undefined = undefined;
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const updateBookmark = useUpdateBookmark();
 

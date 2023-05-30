@@ -3,7 +3,7 @@
 	import Button from "$lib/components/Button.svelte";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import type { Subscription } from "@prisma/client";
 	export let subscription: Subscription & {
         tags: {
@@ -11,7 +11,7 @@
             name: string;
         }[];
     };
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const updateSubscription = client.subscriptions.update.createMutation();
     let tags: {
         id?: number;

@@ -1,4 +1,4 @@
-import { trpcWithQuery } from "$lib/trpc/client";
+import { trpc } from "$lib/trpc/client";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = (async (event) => {
@@ -9,13 +9,13 @@ export const load: PageLoad = (async (event) => {
     const data = await event.parent();
     console.log(`subscriptions/all +page.server.ts:load: data:`, data)
     console.log({ data })
-    const client = trpcWithQuery(event, data.queryClient);
+    const client = trpc(event, data.queryClient);
     const query = client.entries.listForUserSubscriptions.createServerInfiniteQuery({
         take: 25,
     }, {
         getNextPageParam: (lastPage) => lastPage.nextCursor,
     });
-    // const client = trpcWithQuery(event, data.queryClient);
+    // const client = trpc(event, data.queryClient);
     // const query = client.entries.listForUserSubscriptions.createServerInfiniteQuery();
     // console.log({ query })
 

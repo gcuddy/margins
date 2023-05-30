@@ -242,7 +242,7 @@
 					alt=""
 					src={$audioPlayer.audio.image}
 				/>
-				<div class="flex min-w-0 flex-col">
+				<div class="flex min-w-0 truncate flex-col">
 					<svelte:element
 						this={$audioPlayer.audio?.slug ? 'a' : 'span'}
 						href={$audioPlayer.audio?.slug}
@@ -250,7 +250,7 @@
 					>
 						{$audioPlayer.audio.title}
 					</svelte:element>
-					<span class="truncate text-sm/4 text-muted-foreground">
+					<span class="text-sm/4 text-muted-foreground">
 						{$audioPlayer.audio.artist}
 					</span>
 				</div>

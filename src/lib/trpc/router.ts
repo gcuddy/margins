@@ -1,6 +1,4 @@
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import nlp from "compromise";
-import { z } from "zod";
 
 import { t } from "$lib/trpc/t";
 
@@ -36,20 +34,6 @@ export const appRouter = t.router({
     music: musicRouter,
     favorites: favoritesRouter,
     log: logRouter,
-    nlp: t.procedure.input(z.object({
-        entryId: z.number()
-    })).query(async ({ input, ctx }) => {
-        const entry = await ctx.prisma.entry.findUnique({
-            where: {
-                id: input.entryId
-            }
-        });
-        if (!entry || !entry.text) {
-            return {};
-        }
-        const doc = nlp(entry.text);
-        return doc.topics().json();
-    }),
 });
 
 export type Router = typeof appRouter;

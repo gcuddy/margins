@@ -301,6 +301,7 @@ model Entry {
   log             Log[]
   TagOnEntry      TagOnEntry[]
   referenced_by   annotation_to_entry_reference[]
+  EntryContent    EntryContent[]
 
   @@unique([uri, id])
   @@index([feedId])
@@ -309,6 +310,23 @@ model Entry {
   @@fulltext([text, title, author])
   @@fulltext([title, author])
   @@fulltext([text])
+}
+
+// represents user modifications to an entry
+model EntryContent {
+  entry_id Int
+  user_id  String
+  entry    Entry  @relation(fields: [entry_id], references: [id])
+  user     User   @relation(fields: [user_id], references: [id])
+
+  title  String?
+  text   String?
+  html   String?
+  author String?
+
+  @@id([entry_id, user_id])
+  @@index([user_id])
+  @@index([entry_id])
 }
 
 model annotation_tag {
@@ -731,6 +749,7 @@ model User {
   relations          Relation[]
   AuthorizationKey   AuthorizationKey?
   TagOnEntry         TagOnEntry[]
+  EntryContent       EntryContent[]
 
   @@map("user")
 }
@@ -899,9 +918,16 @@ enum AnnotationType {
 
 enum Location {
   inbox
-  soon
-  later
+  now
+  backlog
+  review
   archive
+
+  ///@deprecated
+  soon
+
+  ///@deprecated
+  later
 }
 
 enum DocumentType {

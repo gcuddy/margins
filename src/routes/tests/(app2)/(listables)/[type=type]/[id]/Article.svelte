@@ -1,3 +1,15 @@
+<script lang="ts" context="module">
+	export type AnnotationCtx = Writable<
+		Map<
+			string,
+			{
+				highlightElements: HTMLElement[];
+				removeHighlights: () => void;
+			}[]
+		>
+	>;
+</script>
+
 <script lang="ts">
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
@@ -34,7 +46,6 @@
 	import EntryOperations from './EntryOperations.svelte';
 	import Tooltip from '$lib/components/ui/Tooltip.svelte';
 	import { getTargetSelector } from '$lib/utils/annotations';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { mutation } from '$lib/queries/query';
 	import { elementReady } from '$lib/utils/dom';
 	import inView from '$lib/actions/inview';
@@ -43,6 +54,7 @@
 	import { enhance } from '$app/forms';
 	import image_tools from './images';
 	import drag_context from '$lib/actions/drag-context';
+	import { update_entry } from '$lib/state/entries';
 
 	export let data: PageData;
 
@@ -193,34 +205,61 @@
 		// };
 	}
 
-	const annotationCtx = new Map<string, Awaited<ReturnType<typeof highlightSelectorTarget>>>();
+	const annotationCtx = writable(
+		new Map<string, Awaited<ReturnType<typeof highlightSelectorTarget>>>()
+	);
 
 	export function deleteAnnotation(id: string) {
 		console.log('DELETING ANNOTATION');
-		const ctx = annotationCtx.get(id);
+		const ctx = $annotationCtx.get(id);
 		if (ctx) {
 			for (const item of ctx) {
 				item.removeHighlights();
 			}
 		}
-		annotationCtx.delete(id);
+		$annotationCtx.delete(id);
 	}
 
 	$: if (data.entry?.annotations) {
 		console.log('entry change!');
 		const annotations = data.entry?.annotations;
-		// find ids in annotationCtx that are not in annotations, and remove them
+		if (data.entry?.id) {
+			update_entry(data.entry.id, {
+				annotations
+			})
+		}
+		// find ids in $annotationCtx that are not in annotations, and remove them
 		const existingIds = annotations.map((a) => a.id);
-		for (const [id, ctx] of annotationCtx) {
+		for (const [id, ctx] of $annotationCtx) {
 			console.log({ id, ctx, annotations });
 			if (!existingIds.includes(id)) {
 				console.log('deleting');
 				for (const item of ctx) {
 					item.removeHighlights();
 				}
-				annotationCtx.delete(id);
+				$annotationCtx.delete(id);
 			}
 		}
+	}
+
+	function createMutation<T>(opts: { mutationFn: () => Promise<T> }) {
+		const store = writable({
+			mutate,
+			isPending: false
+		});
+
+		function mutate() {
+			store.update((s) => ({ ...s, isPending: true }));
+			const promise = opts.mutationFn();
+			promise.finally(() => {
+				store.update((s) => ({ ...s, isPending: false }));
+			});
+			return promise;
+		}
+
+		return {
+			subscribe: store.subscribe
+		};
 	}
 
 	const saveProgressMutation = createMutation({
@@ -233,7 +272,7 @@
 	});
 
 	beforeNavigate(() => {
-		annotationCtx.clear();
+		$annotationCtx.clear();
 		// save progress
 		if ($saveProgressMutation.isPending) return;
 		if (cancel_save) cancel_save();
@@ -268,7 +307,7 @@
 					'data-has-body': `${!!annotation.body}`,
 					id: `annotation-${annotation.id}`
 				});
-				annotationCtx.set(annotation.id, ctx);
+				$annotationCtx.set(annotation.id, ctx);
 			}
 		}
 
@@ -381,9 +420,11 @@
 
 	export let options_el: HTMLElement;
 
-	hovers.setup();
-
-	const queryClient = useQueryClient();
+	const hover_context = new Map();
+	hover_context.set('annotation_ctx', annotationCtx);
+	hovers.setup({
+		context: hover_context
+	});
 
 	const isAnnotation = (
 		el: HTMLElement
@@ -397,6 +438,7 @@
 	let showEditMenu = false;
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target as HTMLElement;
+		console.log({ target, isAnnotation: isAnnotation(target) });
 		if (!isAnnotation(target)) {
 			showEditMenu = false;
 			return;
@@ -404,6 +446,8 @@
 		editMenuRef(target);
 		showEditMenu = true;
 	}
+
+	const hover_entry: boolean = getContext('hover_entry')
 </script>
 
 {#if showEditMenu && !scrolling}
@@ -448,11 +492,14 @@
 					entry={data.entry}
 					footer={false}
 					opts={{
+						onResult(event) {
+							console.log({event})
+						},
 						onUpdate: ({ form }) => {
 							console.log('ON UPDATED');
-							queryClient.invalidateQueries({
-								queryKey: ['notebook']
-							});
+							// queryClient.invalidateQueries({
+							// 	queryKey: ['notebook']
+							// });
 							if (form.valid) {
 								elementReady(`[data-sidebar-annotation-id=${form.data.id}]`).then((el) => {
 									console.log({ el });
@@ -553,6 +600,11 @@
 				class={popoverVariants()}
 				annotation={$currentAnnotation.annotation}
 				entry={data.entry}
+				opts={{
+					onResult(event) {
+						console.log({event})
+					}
+				}}
 				on:cancel={() => {
 					$currentAnnotation.show = false;
 					temporaryAnnotationHighlight?.els.forEach((h) => {
@@ -589,7 +641,7 @@
 	</div>
 {/if}
 
-<div class="prose mx-auto prose-slate dark:prose-invert">
+<div class="prose prose-slate dark:prose-invert">
 	<h1
 		use:inView={{
 			top: 56
@@ -621,7 +673,7 @@
 		on:pointerdown={handlePointerDown}
 		use:drag_context={{
 			'context/id': data.entry?.id.toString() ?? '',
-			'context/url': data.entry?.uri ?? '',
+			'context/url': data.entry?.uri ?? ''
 		}}
 	>
 		<div
@@ -648,7 +700,7 @@
 </div>
 
 <!-- TODO: appearance switcher -->
-
+{#if !hover_entry}
 <div class="fixed bottom-4 right-4 z-20">
 	<!-- <Button variant="outline" class="w-10 rounded-full p-0">
 		<Settings2 class="h-4 w-4" />
@@ -714,6 +766,7 @@
 	</Popover>
 	<Tooltip placement="left" ref={options_el}>Show appearance options</Tooltip>
 </div>
+{/if}
 
 <style>
 	div :global(p) {

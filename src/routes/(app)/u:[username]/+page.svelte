@@ -10,9 +10,9 @@
 	export let data: PageData;
 	$: console.log($page.data.user);
 
-	$: self = data.username === $page.data.user?.username;
+	// $: self = data.username === $page.data.user?.username;
 
-	// this needs to update after use enhance
+	// // this needs to update after use enhance
 	$: following = $page.data.user?.following?.some((u) => u.username === data.username);
 </script>
 
@@ -36,4 +36,4 @@
 
 {JSON.stringify(data, null, 2)}
 
-<Saved annotations={data.articles} />
+<!-- <Saved annotations={data.articles} /> -->

@@ -9,7 +9,7 @@
 		DropdownMenuShortcut,
 	} from "$lib/components/ui/dropdown-menu";
 	import { addEntriesToCollection } from "$lib/features/collections/stores";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import { cn } from "$lib/utils/tailwind";
 	import type { Entry } from "@prisma/client";
 	import { ListPlus, MoreVertical, RefreshCwIcon, Tag } from "lucide-svelte";
@@ -19,7 +19,7 @@
 	type EntryProps = Pick<Entry, "id">;
 	export let entry: EntryProps;
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 
 	async function refreshData() {

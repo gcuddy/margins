@@ -18,7 +18,7 @@
 	import { selectedItems } from "$lib/stores/selectedItems";
 	import { syncStore } from "$lib/stores/sync";
 	import { fadeScale } from "$lib/transitions";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import {
 		listPodcastsQuery,
@@ -57,7 +57,7 @@
 	import BasicSearchItem from "$lib/features/entries/BasicSearchItem.svelte";
 
 	const queryClient = useQueryClient();
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const user = getUser();
 

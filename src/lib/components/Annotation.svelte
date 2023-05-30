@@ -9,7 +9,7 @@
 	import type { ContextualAnnotation } from "$lib/prisma/selects/annotations";
 	import { modals } from "$lib/stores/modals";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import { TextQuoteTarget } from "$lib/types/schemas/Annotations";
 	import {
@@ -148,7 +148,7 @@
 		maxHeight.set(clampedSize);
 	}
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 
 	const deleteAnnotation = client.annotations.delete.createMutation({

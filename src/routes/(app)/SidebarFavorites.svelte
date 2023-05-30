@@ -25,7 +25,7 @@
 
 	// setDebugMode(true);
 
-	// trpcWithQuery().favorites.update.useMutation({
+	// trpc().favorites.update.useMutation({
 
 	// });
 	const mutation = createMutation({

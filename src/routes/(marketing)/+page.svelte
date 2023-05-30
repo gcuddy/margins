@@ -1,15 +1,9 @@
 <script>
-	import Button from "$lib/components/ui/Button.svelte";
-	import {
-		H1,
-		H2,
-		H3,
-		Lead,
-		Small,
-		Muted,
-	} from "$lib/components/ui/typography";
-	import { Image } from "@unpic/svelte";
-	import { Armchair, Edit3, Glasses, Layers, Rss, Zap } from "lucide-svelte";
+	import Button from '$lib/components/ui/Button.svelte';
+	import Accordion from '$lib/components/ui/accordion/Accordion.svelte';
+	import { H1, H2, H3, Lead, Small, Muted } from '$lib/components/ui/typography';
+	import { Image } from '@unpic/svelte';
+	import { Armchair, Edit3, Glasses, Layers, Rss, Zap } from 'lucide-svelte';
 </script>
 
 <section
@@ -38,15 +32,9 @@
 <section class="container grid justify-center gap-6 py-8 md:py-12 lg:py-24">
 	<H2 class="md:text-4xl">What can Margins do for you?</H2>
 	<Lead>Quite a lot, actually.</Lead>
-	<ul
-		class="grid justify-center gap-4 sm:grid-cols-2 md:max-w-[56rem] md:grid-cols-3"
-	>
-		<div
-			class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl"
-		>
-			<li
-				class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200"
-			>
+	<ul class="grid justify-center gap-4 sm:grid-cols-2 md:max-w-[56rem] md:grid-cols-3">
+		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
+			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
 				<Glasses class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Read Later</h3>
@@ -56,44 +44,28 @@
 				</div>
 			</li>
 		</div>
-		<div
-			class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl"
-		>
-			<li
-				class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200"
-			>
+		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
+			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
 				<Rss class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
-					<h3 class="text-lg font-bold text-gray-100 md:text-xl">
-						Subscriptions
-					</h3>
+					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Subscriptions</h3>
 					<span class="text-sm text-gray-200"
 						>Podcasts, RSS, emails, and anything you can throw at it.</span
 					>
 				</div>
 			</li>
 		</div>
-		<div
-			class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl"
-		>
-			<li
-				class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200"
-			>
+		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
+			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
 				<Edit3 class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Annotate</h3>
-					<span class="text-sm text-gray-200"
-						>Highlight, annotate, and share documents.</span
-					>
+					<span class="text-sm text-gray-200">Highlight, annotate, and share documents.</span>
 				</div>
 			</li>
 		</div>
-		<div
-			class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl"
-		>
-			<li
-				class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200"
-			>
+		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
+			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
 				<Layers class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Organize</h3>
@@ -103,35 +75,35 @@
 				</div>
 			</li>
 		</div>
-		<div
-			class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl"
-		>
-			<li
-				class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200"
-			>
+		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
+			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
 				<Armchair class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Any Media</h3>
-					<span class="text-sm text-gray-200"
-						>Track books, movies, TV, games, and more.</span
-					>
+					<span class="text-sm text-gray-200">Track books, movies, TV, games, and more.</span>
 				</div>
 			</li>
 		</div>
-		<div
-			class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl"
-		>
-			<li
-				class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200"
-			>
+		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
+			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
 				<Zap class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Integrate</h3>
-					<span class="text-sm text-gray-200"
-						>Integrate, export and share your notes.</span
-					>
+					<span class="text-sm text-gray-200">Integrate, export and share your notes.</span>
 				</div>
 			</li>
 		</div>
 	</ul>
+</section>
+<section class="container grid justify-center gap-6 py-8 md:py-12 lg:py-24">
+	<H2>Frequently Asked Questions</H2>
+	<Accordion
+		items={[
+			{
+				value: 'margins',
+				heading: 'What is Margins?',
+				content: 'Cool'
+			}
+		]}
+	/>
 </section>

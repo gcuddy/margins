@@ -3,10 +3,11 @@
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import { Dialog, DialogContent } from '$lib/components/ui/dialog';
+	import { Dialog, DialogContent, DialogHeader, DialogTitle } from '$lib/components/ui/dialog';
 	import DialogTrigger from '$lib/components/ui/dialog/DialogTrigger.svelte';
 	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
 	import { isUpcoming } from '$lib/utils/date';
+	import type { List } from "$lib/api/tmdb"
 
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
@@ -20,6 +21,10 @@
 	$: writers = data.movie.credits.crew.filter((c) => c.job === 'Screenplay');
 
 	$: upcoming = isUpcoming(new Date(data.movie.release_date));
+
+	const promises = {
+		lists: () => fetch(`/api/tmdb/movie/${data.movie.id}/lists`).then((r) => r.json())as Promise<{ results: List[]}>
+	};
 </script>
 
 <div class="flex select-text flex-col gap-4">
@@ -122,6 +127,32 @@
 	{/if}
 {/if}
 
+<Dialog>
+	<svelte:fragment slot="trigger">
+		<Button>View Lists</Button>
+	</svelte:fragment>
+	<DialogContent class="sm:max-w-[75vw]">
+		<DialogHeader>
+			<DialogTitle>Lists</DialogTitle>
+		</DialogHeader>
+		<div class="flex flex-col overflow-y-auto">
+		{#await promises.lists()}
+			loading
+		{:then {results: lists}}
+			{#each lists.sort((a,b) => a.favorite_count - b.favorite_count) as list}
+				<div class="flex items-center gap-2">
+					<a href="/tests/lists/t{list.id}">{list.name}</a>
+					{#if list.description}
+						<Muted>{list.description}</Muted>
+					{/if}
+				</div>
+			{/each}
+		{:catch error}
+			{error.message}
+		{/await}
+	</div>
+	</DialogContent>
+</Dialog>
 <H3>Cast</H3>
 <Cluster class="max-w-prose gap-1">
 	{#each data.movie.credits.cast.slice(0, 10) as { name, character }}

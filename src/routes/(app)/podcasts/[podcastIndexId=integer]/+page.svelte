@@ -13,7 +13,7 @@
 		podcastEpisodesQuery,
 	} from "$lib/features/podcasts/queries";
 	import { notifications } from "$lib/stores/notifications";
-	import { trpcWithQuery } from "$lib/trpc/client";
+	import { trpc } from "$lib/trpc/client";
 	import { formatDuration } from "$lib/utils/dates";
 	import { createQuery } from "@tanstack/svelte-query";
 	import type { PageData } from "./$types";
@@ -30,7 +30,7 @@
 	);
 	const currentPodcast = useCurrentPodcast();
 	// $: podcast = createQuery({ ...podcastDetailsQuery($page, data.id), placeholderData: data.searchResult });
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	$: podcast =
 		client.podcasts.public.getPodcastDetailsByPodcastIndexId.createQuery(
 			data.id

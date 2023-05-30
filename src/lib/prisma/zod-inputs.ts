@@ -13,7 +13,8 @@ export const saveAnnotationSchema = z.object({
     body: z.string(),
     id: z.string(),
     entryId: z.number(),
-    private: z.boolean(),
+    // Transform to tinyint(1) to make mysql happy
+    private: z.boolean().transform(p => +p),
     color: z.nativeEnum(Color),
     type: z.nativeEnum(AnnotationType).default("annotation"),
     contentData: z.object({}).passthrough(),

@@ -17,7 +17,7 @@
 	import { collectionQuery } from "$lib/features/collections/queries";
 	import { modals } from "$lib/stores/modals";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+	import { trpc, trpc } from "$lib/trpc/client";
 	import type { RouterInputs } from "$lib/trpc/router";
 	import type { ViewOptions } from "$lib/types/schemas/View";
 	import {
@@ -50,7 +50,7 @@
 
 	const tabSet = localStorageStore("tabSet", "entries");
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const annotationMutation = client.annotations.create.createMutation({
 		onSuccess: (data) => {
