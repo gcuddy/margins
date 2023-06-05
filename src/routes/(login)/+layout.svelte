@@ -1,4 +1,4 @@
-<div class="flex min-h-screen flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
+<div class="flex min-h-screen flex-col items-center justify-center">
 	<div class="flex animate-fast-fly-in flex-col items-center justify-center space-y-4">
 		<div class="flex">
 			<div class="max-w-xs px-2">

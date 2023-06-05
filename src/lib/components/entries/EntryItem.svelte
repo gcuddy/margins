@@ -19,6 +19,7 @@
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { ago, now } from '$lib/utils/date';
 	import { relations_icons } from '$lib/features/relations/icons';
+	import toggle_clamp from '$lib/actions/toggle-clamp';
 
 	export let entry: EntryInList;
 	function getDomain(url: string) {
@@ -145,7 +146,7 @@
 												'TextQuoteSelector'
 											)}
 											{#if text_quote}
-												<div class="line-clamp-2 border-l px-3 italic">
+												<div class="line-clamp-2 border-l px-3 italic" use:toggle_clamp>
 													{text_quote.exact}
 												</div>
 											{:else}
@@ -153,7 +154,7 @@
 											{/if}
 										{/if}
 										{#if annotation.body}
-											<div class="line-clamp-2">
+											<div class="line-clamp-2"  use:toggle_clamp>
 												{annotation.body}
 											</div>
 										{/if}

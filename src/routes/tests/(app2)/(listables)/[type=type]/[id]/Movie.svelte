@@ -86,7 +86,7 @@
 		</div>
 	</dl>
 
-	<div class="prose prose-slate space-y-4 dark:prose-invert">
+	<div class="prose prose-stone space-y-4 dark:prose-invert">
 		<div>
 			{@html data.movie.overview}
 		</div>

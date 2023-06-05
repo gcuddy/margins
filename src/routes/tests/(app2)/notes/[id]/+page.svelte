@@ -23,7 +23,7 @@
 		{data.form.data.title ?? 'Untitled'}
 	</H1>
 	{#if data.form.data.body}
-		<div class="prose prose-slate dark:prose-invert">
+		<div class="prose prose-stone dark:prose-invert">
 			{@html md.render(data.form.data.body)}
 		</div>
 	{/if}

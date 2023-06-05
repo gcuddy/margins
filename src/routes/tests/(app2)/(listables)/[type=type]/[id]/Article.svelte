@@ -492,9 +492,9 @@
 					entry={data.entry}
 					footer={false}
 					opts={{
-						onResult(event) {
-							console.log({event})
-						},
+						// onResult(event) {
+						// 	console.log({event})
+						// },
 						onUpdate: ({ form }) => {
 							console.log('ON UPDATED');
 							// queryClient.invalidateQueries({
@@ -600,11 +600,6 @@
 				class={popoverVariants()}
 				annotation={$currentAnnotation.annotation}
 				entry={data.entry}
-				opts={{
-					onResult(event) {
-						console.log({event})
-					}
-				}}
 				on:cancel={() => {
 					$currentAnnotation.show = false;
 					temporaryAnnotationHighlight?.els.forEach((h) => {
@@ -641,7 +636,7 @@
 	</div>
 {/if}
 
-<div class="prose prose-slate dark:prose-invert">
+<div class="prose prose-stone dark:prose-invert">
 	<h1
 		use:inView={{
 			top: 56

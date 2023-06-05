@@ -3,11 +3,12 @@
 	import type { HTMLAttributes } from "svelte/elements";
 	let className: string | undefined | null = "";
 	export { className as class };
-	interface $$Props extends HTMLAttributes<HTMLDivElement> {
-		class?: string;
-	}
+	export let as = 'div';
+	// interface $$Props extends HTMLAttributes<HTMLDivElement> {
+	// 	class?: string;
+	// }
 </script>
 
-<div class={cn("p-6 pt-0", className)} {...$$restProps}>
+<svelte:element this={as} class={cn("p-6 pt-0", className)} {...$$restProps}>
 	<slot />
-</div>
+</svelte:element>

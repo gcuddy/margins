@@ -2,21 +2,26 @@
 	import Muted from '$lib/components/ui/typography/Muted.svelte';
 	import MagicString from 'magic-string';
 	import dayjs from '$lib/dayjs';
-	import type { PageData } from './$types';
+	import type { Tweet } from '$lib/api/twitter';
 	import Card from '$lib/components/ui/Card.svelte';
 	import { onMount } from 'svelte';
+	import { create_query } from '$lib/state/query-state';
+	import { query } from '$lib/queries/query';
+	import { page } from '$app/stores';
 
-	type Tweet = NonNullable<NonNullable<PageData['entry']>['tweet']>;
+    // TODO: tweet_query etc
 
-	export let data: PageData & {
-		entry: {
-			tweet: Tweet;
-		};
-	};
+    export let id: string;
 
-	$: tweet = data.entry.tweet;
+    const tweet_query = create_query({
+        key: `tweet:${id}`,
+        stale_time: 1000 * 5 * 60,
+        fn: () => query($page, 'get_tweet', { id})
+    })
 
 	function buildTweet(s: MagicString) {
+        if (!$tweet_query.isSuccess) return;
+        const tweet = $tweet_query.data;
 		// wrap text in <p> tags
 		s.prepend('<p>');
 		s.append('</p>');
@@ -61,16 +66,16 @@
 			}
 		});
 	}
-	$: console.log({ tweet });
 	let html = '';
-	$: if (tweet) {
-		const s = new MagicString(tweet.data.text);
+	$: if ($tweet_query.isSuccess) {
+		const s = new MagicString($tweet_query.data.data.text);
 		buildTweet(s);
 		html = s.toString();
 	}
 </script>
 
-{#if tweet}
+{#if $tweet_query.isSuccess}
+    {@const tweet = $tweet_query.data}
 	{@const username = tweet.includes?.users?.at(0)?.username}
 	<Card class="max-w-prose">
 		<div class="flex flex-col gap-4">
@@ -95,26 +100,6 @@
 			</a>
 		</div>
 	</Card>
-	<!-- <div
-		class=" mx-auto flex max-w-prose flex-col gap-4 rounded-lg border border-gray-400 bg-white p-4 shadow dark:border-gray-700 dark:bg-gray-800"
-	>
-		<div class="flex items-center gap-3 text-sm">
-			<img
-				class="h-10 w-10 rounded-full"
-				alt=""
-				src={tweet.includes?.users?.at(0)?.profile_image_url}
-			/>
-			<div>
-				<div class="font-medium">{tweet.includes?.users?.at(0)?.name}</div>
-				<Muted>@{tweet.includes?.users?.at(0)?.username}</Muted>
-			</div>
-		</div>
-		<div>{@html html}</div>
-		<div class="flex gap-4 text-sm">
-			<Muted>{dayjs(tweet.data.created_at).format('h:mm A')}</Muted>
-			<Muted>{dayjs(tweet.data.created_at).format('ll')}</Muted>
-		</div>
-	</div> -->
 {:else}
 	<p>Error parsing tweet</p>
 {/if}

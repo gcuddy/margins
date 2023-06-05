@@ -413,7 +413,7 @@
 	<div bind:this={wrapper} id="article" style="--scale-factor: {scale};">
 		<!-- floating toolbar -->
 		{#if show_text_version}
-			<div class="prose prose-slate space-y-4 whitespace-pre-line dark:prose-invert">
+			<div class="prose prose-stone space-y-4 whitespace-pre-line dark:prose-invert">
 				{@html text}
 			</div>
 		{:else}

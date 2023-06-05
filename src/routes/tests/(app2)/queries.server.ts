@@ -14,6 +14,8 @@ import { type Condition, View } from "./views/new/View";
 import spotify from "$lib/api/spotify";
 import { get_entry_details } from "$lib/server/queries";
 import { typeSchema } from "$lib/types";
+import { twitter } from "$lib/twitter";
+import type { Tweet } from "$lib/api/twitter";
 
 
 interface Query<I extends (z.ZodTypeAny), Data> {
@@ -448,6 +450,34 @@ export const queries = ({
         }),
         fn: async ({ ctx: { userId }, input }) => fetchRss({ ...input, userId })
     }),
+    get_tweet: query({
+        schema: z.object({
+            id: z.string()
+        }),
+        fn: async ({ input: { id } }) => {
+            return await twitter.singleTweet(id, {
+                expansions: [
+                    "author_id",
+                    "attachments.media_keys",
+                    "in_reply_to_user_id",
+                    "referenced_tweets.id",
+                    "referenced_tweets.id.author_id",
+                    "entities.mentions.username",
+                ],
+                "media.fields": ["url", "preview_image_url", "type", "alt_text", "duration_ms", "variants"],
+                "user.fields": ["name", "username", "profile_image_url"],
+                "tweet.fields": [
+                    "created_at",
+                    "conversation_id",
+                    "text",
+                    "entities",
+                    "public_metrics",
+                    "referenced_tweets",
+                    "in_reply_to_user_id",
+                ],
+            }) as Tweet;
+        }
+    })
 }) as const;
 
 export type Queries = typeof queries;

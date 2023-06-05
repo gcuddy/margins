@@ -121,7 +121,7 @@
 		</div>
 	</div>
 
-	<div class="prose prose-slate mt-6 dark:prose-invert">
+	<div class="prose prose-stone mt-6 dark:prose-invert">
 	<span>genre</span>	
 	<Muted>
 		{get_genre(book)}

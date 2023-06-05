@@ -44,7 +44,7 @@ const config = {
 				sans: ["InterVar", ...defaultTheme.fontFamily.sans],
 				newsreader: ["Newsreader", ...defaultTheme.fontFamily.serif],
 				crimson: ["Crimson Text", ...defaultTheme.fontFamily.serif],
-				serif: ['Baskerville', ...defaultTheme.fontFamily.serif],
+				serif: ['Newsreader', 'Baskerville', ...defaultTheme.fontFamily.serif],
 			},
 			colors: {
 				// TODO: / <alpha-value> ?

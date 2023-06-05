@@ -27,7 +27,17 @@
 	import { BookMarked, ChevronDown, FilmIcon, Library, PencilIcon, Plus } from 'lucide-svelte';
 	import { superForm } from 'sveltekit-superforms/client';
 	import MarkdownIt from 'markdown-it';
-	import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardSkeleton, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardSkeleton,
+		CardTitle
+	} from '$components/ui/card';
+	import { getId, make_link } from '$lib/utils/entries';
+	import Tweet from '$components/Tweet.svelte';
 
 	const md = new MarkdownIt();
 
@@ -181,33 +191,43 @@
 			</noscript>
 		</form>
 	{:else if $form.description}
-		<div class="prose prose-sm prose-slate dark:prose-invert">
+		<div class="prose prose-sm prose-stone dark:prose-invert">
 			{@html md.render($form.description)}
 		</div>
 	{/if}
 </div>
 <!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
-<div use:rover class="mt-8 flex flex-wrap justify-between ">
+<div use:rover class="mt-8 flex flex-wrap gap-4">
 	{#key data.collection}
 		{#each data.collection.items.filter((i) => !!i.entry || !!i.annotation) as item, i}
-		<Card>
-			<CardContent>
-				<img class="row-span-5 object-contain" src={item.entry?.image} />
-			</CardContent>
-			<CardFooter>
-				{item.entry?.title}
-			</CardFooter>
-		</Card>
-			<div class="group grid grid-cols-1 grid-rows-5 h-72 w-72  overflow-hidden gap-y-4 p-4">
+			<div class="w-48 space-y-3">
+				{#if item.entry?.type === 'tweet'}
+					{@const id = item.entry?.uri?.split('/').pop()}
+					<Tweet {id} />
+				{:else}
+				<div class="overflow-hidden rounded-md">
+					<img class="aspect-square h-48 w-48 object-cover" alt="" src={item.entry?.image} />
+				</div>
+				{#if item.entry}
+					<a href={make_link(item.entry)} class="text-sm font-medium">
+						{item.entry?.title}
+					</a>
+				{/if}
+				{/if}
+			</div>
+			<!-- <Card class='w-72 space-y-3'>
+				<CardContent class='overflow-hidden rounded-md'>
+				</CardContent>
+				<CardFooter class='shrink-0'>
+					{item.entry?.title}
+				</CardFooter>
+			</Card> -->
+			<!-- <div class="group grid grid-cols-1 grid-rows-5 h-72 w-72  overflow-hidden gap-y-4 p-4">
 				{#if item.entry}
 				<img class="row-span-5 object-contain" src={item.entry.image} />
-					<!-- <div
-					class='border w-full grow shrink-0 rounded bg-card text-card-foreground'>	
-					</div> -->
 					<div class="p-3 text-xs">
 						{item.entry.title}
 					</div>
-					<!-- <EntryItem entry={item.entry} /> -->
 				{:else if item.annotation}
 					{#if item.annotation.type === 'annotation'}
 						<Annotation annotation={item.annotation} />
@@ -217,7 +237,7 @@
 				{:else}
 					{JSON.stringify(item)}
 				{/if}
-			</div>
+			</div> -->
 		{/each}
 	{/key}
 </div>

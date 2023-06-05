@@ -128,11 +128,11 @@
 				</AnnotationForm>
 				<!-- <Textarea
 					value={annotation.body}
-					class="prose prose-sm prose-slate dark:prose-invert"
+					class="prose prose-sm prose-stone dark:prose-invert"
 				/>
 				<Button size="sm">Save</Button> -->
 			{:else}
-				<div class="prose prose-sm prose-slate dark:prose-invert">
+				<div class="prose prose-sm prose-stone dark:prose-invert">
 					{@html md.render(annotation.body)}
 					<!-- {annotation.body} -->
 				</div>

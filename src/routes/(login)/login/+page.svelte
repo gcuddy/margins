@@ -1,12 +1,21 @@
 <script lang="ts">
 	import { navigating, page } from "$app/stores";
-	import Button from "$lib/components/Button.svelte";
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
-	import Input from "$lib/components/ui/Input.svelte";
-	import Label from "$lib/components/ui/Label.svelte";
 	import { superForm } from "sveltekit-superforms/client";
-
+	
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardTitle
+	} from "$components/ui/card";
+	import Button from "$components/ui/Button.svelte";
+	import Input from "$components/ui/Input.svelte";
+	import Label from "$components/ui/Label.svelte";
+	
 	// export let form: { message?: string };
 	export let data;
 	const { form, errors, constraints, enhance } = superForm(data.form, {
@@ -16,31 +25,32 @@
 	});
 	let loading = false;
 
-	$: message = $page.url.searchParams.get("message") ?? "";
 </script>
 
-<!-- <SuperDebug data={$form} /> -->
 
-<h2 class="text-2xl font-bold">Log in to Margins</h2>
-<div class="rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">
-	<form class="flex max-w-xs flex-col space-y-6" method="post">
-		<div>
-			<!-- TODO: allow email OR username -->
-			<Label for="email"><Muted>Email</Muted></Label>
+<Card as='form' method='post'>
+	<CardHeader class="space-y-1">
+		<CardTitle class="text-2xl">Log in to Margins</CardTitle>
+		<CardDescription>
+			Enter your email and password below.
+		</CardDescription>
+	</CardHeader>
+	<CardContent class='grid gap-4'>
+		<div class="grid gap-2">
+			<Label for="email">Email</Label>
 			<Input
 				id="email"
+				type="email"
 				name="email"
 				placeholder=""
-				class="focus:ring-2"
 				autocomplete="email"
 				required
 				bind:value={$form.email}
-				type="email"
 				{...$constraints.email}
 			/>
 		</div>
-		<div>
-			<Label for="password"><Muted>Password</Muted></Label>
+		<div class="grid gap-2">
+			<Label for="password">Password</Label>
 			<Input
 				id="password"
 				name="password"
@@ -53,17 +63,12 @@
 				{...$constraints.password}
 			/>
 		</div>
-		<!-- <input type="submit" /> -->
-		<Button type="submit" className="text-base">
-			{#if loading || $navigating}
-				<Icon name="loading" className="h-5 w-5 animate-spin text-white" />
-			{:else}
-				Login
-			{/if}
-		</Button>
-		<p class="text-center font-medium text-red-400">{form?.message || ""}</p>
-	</form>
-</div>
+	</CardContent>
+	<CardFooter>
+		<Button class="w-full">Login</Button>
+	</CardFooter>
+
+</Card>
 
 <div>
 	Don't have an account? <a class="font-bold" href="/signup">Sign up</a>
