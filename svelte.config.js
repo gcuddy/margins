@@ -25,6 +25,10 @@ const config = {
 			// split: true,
 			// runtime: "nodejs18.x",
 		}),
+		alias: {
+			$components: "src/lib/components",
+			"$components/*": "src/lib/components/*"
+		}	
 	},
 
 	vitePlugin: {

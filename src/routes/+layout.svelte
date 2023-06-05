@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../app.css';
+	import '../app.postcss';
 	import '$lib/styles/font.css';
 
 	import { page } from '$app/stores';

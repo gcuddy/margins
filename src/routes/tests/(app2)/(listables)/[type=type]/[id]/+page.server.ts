@@ -164,13 +164,13 @@ export const load = (async (event) => {
 
     return {
         tagForm,
-        entry: entry ? validate_entry_type(entry) : undefined,
         updateBookmarkForm,
         bookmarkForm,
         annotationForm,
         interactionForm,
         type,
         // TODO: move these to endpoint to use in +page.ts with better cachings
+        entry: entry ? validate_entry_type(entry) : undefined,
         movie: type === "movie" ? tmdb.movie.details(+id) : null,
         book: type === "book" ? books.get(id) : null,
         tv: type === "tv" ? tmdb.tv.details(+id) : null,

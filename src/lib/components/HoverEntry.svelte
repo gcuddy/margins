@@ -5,12 +5,14 @@
 	import Skeleton from './ui/skeleton/Skeleton.svelte';
 	import Entry from '../../routes/tests/(app2)/(listables)/[type=type]/[id]/+page.svelte';
 	import { setContext } from 'svelte';
+	import type { Type } from '$lib/types';
 
 	export let id: number;
+	export let type: Type;
 
 	const q = create_query({
-		key: `entry-deets:${id}`,
-		fn: async () => query($page, 'get_entry_deets', { id }),
+		key: `entry:${id}`,
+		fn: async () => query($page, 'get_entry', { id, type }),
 		stale_time: 1000 * 60 * 5
 	});
 

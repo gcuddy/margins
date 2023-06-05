@@ -90,7 +90,7 @@ export function create_query<TData>({ key, stale_time = 0, fn, enabled }: {
 }) {
     console.log(`create_query`)
 
-    const query_lookup = get_query_context();
+    // const query_lookup = get_query_context();
 
     const { subscribe, update, set } = writable<QueryResult<TData>>({
         data: undefined,
