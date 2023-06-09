@@ -20,6 +20,7 @@
 	import { ago, now } from '$lib/utils/date';
 	import { relations_icons } from '$lib/features/relations/icons';
 	import toggle_clamp from '$lib/actions/toggle-clamp';
+	import Clamp from '$components/Clamp.svelte';
 
 	export let entry: EntryInList;
 	function getDomain(url: string) {
@@ -146,15 +147,18 @@
 												'TextQuoteSelector'
 											)}
 											{#if text_quote}
-												<div class="line-clamp-2 border-l px-3 italic" use:toggle_clamp>
+											<Clamp clamp={2} class='border-l px-3 italic'>
+												{text_quote.exact}
+											</Clamp>
+												<!-- <div class="line-clamp-2 border-l px-3 italic">
 													{text_quote.exact}
-												</div>
+												</div> -->
 											{:else}
 												{JSON.stringify(annotation.target)}
 											{/if}
 										{/if}
 										{#if annotation.body}
-											<div class="line-clamp-2"  use:toggle_clamp>
+											<div class="line-clamp-2">
 												{annotation.body}
 											</div>
 										{/if}

@@ -197,7 +197,7 @@
 	}}
 	class="flex items-center justify-between"
 >
-	<H1>Library</H1>
+	<H1>{data.Status}</H1>
 	<div class="flex items-center gap-x-2">
 		<Dialog bind:isOpen={url_modal}>
 			<svelte:fragment slot="trigger">

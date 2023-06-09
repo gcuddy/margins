@@ -205,14 +205,21 @@
 					{@const id = item.entry?.uri?.split('/').pop()}
 					<Tweet {id} />
 				{:else}
-				<div class="overflow-hidden rounded-md">
-					<img class="aspect-square h-48 w-48 object-cover" alt="" src={item.entry?.image} />
-				</div>
 				{#if item.entry}
-					<a href={make_link(item.entry)} class="text-sm font-medium">
-						{item.entry?.title}
-					</a>
-				{/if}
+					<div class="overflow-hidden rounded-md">
+						<img class="aspect-square h-48 w-48 object-cover" alt="" src={item.entry?.image} />
+					</div>
+						<a href={make_link(item.entry)} class="text-sm font-medium">
+							{item.entry?.title}
+						</a>
+						{:else if item.annotation}
+						<div class='overflow-hidden rounded-md text-sm'>
+							{item.annotation.body}
+						</div>
+						<a href="" class='text-sm font-medium'>
+							{item.annotation.title}
+						</a>
+					{/if}
 				{/if}
 			</div>
 			<!-- <Card class='w-72 space-y-3'>
