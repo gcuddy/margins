@@ -72,7 +72,7 @@
 			data-tab={name}
 		>
 			{name}
-			<div class="absolute inset-0 z-10 flex items-center justify-center -space-x-[.9rem]">
+			<div class="absolute inset-0 -top-4 z-10 flex items-center justify-center -space-x-[.9rem]">
 				{#each moving_entries[name] as entry, i (entry.id)}
 					<!-- on:introend={highlight_archive} -->
 					<img
@@ -89,10 +89,11 @@
 						out:fly={{
 							y: 10,
 							opacity: 0,
-							delay: 200
+							delay: 300,
+							duration: 500
 						}}
 						src={entry.image}
-						class="h-4 w-4 rounded-full opacity-50 relative border"
+						class="h-5 w-5 rounded-full shadow relative border"
 						alt=""
 					/>
 				{/each}

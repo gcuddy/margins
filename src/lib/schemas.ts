@@ -66,9 +66,10 @@ export function validateAuthedForm<TSchema extends ZodValidation<AnyZodObject>, 
     }
 }
 
+export const isbn_regex = /^(?=(?:\D*\d){10}(?:(?:\D*\d){3})?$)[\d-]+$/;
 
 export const urlSchema = z.object({
-    url: z.string().url(),
+    url: z.string().url().or(z.string().regex(isbn_regex)),
 })
 
 export const add_url_schema = urlSchema.extend({

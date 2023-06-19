@@ -17,13 +17,13 @@ export const GET: RequestHandler = async ({ params, setHeaders }) => {
     if (cached && !dev) {
         return json(cached);
     }
-    const normalizedUrl = normalizeUrl(url);
+    // const normalizedUrl = normalizeUrl(url);
     setHeaders({
         // cache for 60 seconds
         'Cache-Control': `max-age=60`,
     })
     try {
-        const parsed = await parse(normalizedUrl);
+        const parsed = await parse(url);
         if (!dev) {
             await redis.set(url, parsed, {
                 // cache for one day

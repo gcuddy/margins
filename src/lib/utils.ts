@@ -354,3 +354,7 @@ export function asyncDebounce<F extends (...args: unknown[]) => Promise<unknown>
 export function word_count(str: string) {
     return str.split(" ").length;
 }
+
+export function check_inert(el: HTMLElement) {
+    return el.hasAttribute("inert") || el.closest("[inert]") !== null;
+}

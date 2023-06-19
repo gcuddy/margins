@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import smoothload from '$lib/actions/smoothload';
 	import { useState } from '$lib/components/ui/cmdk/Command.Root.svelte';
-	import { CommandGroup } from '$lib/components/ui/command';
+	import { CommandEmpty, CommandGroup } from '$lib/components/ui/command';
 	import CommandItem from '$lib/components/ui/command/CommandItem.svelte';
 	import { Muted, Small } from '$lib/components/ui/typography';
 	import type { EntryInList } from '$lib/db/selects';
@@ -55,7 +55,7 @@
 	});
 </script>
 
-<!-- <CommandLoading>Loading...</CommandLoading> -->
+<CommandEmpty>No results</CommandEmpty>
 <CommandGroup>
 	{#await value ? promise : [] then notes}
 		{#each notes as note}

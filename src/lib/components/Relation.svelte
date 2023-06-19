@@ -21,6 +21,7 @@
 	import { invalidate } from '$app/navigation';
 	import HoverCard from './ui/hover-card/HoverCard.svelte';
 	import HoverEntry from './HoverEntry.svelte';
+	import { page } from '$app/stores';
 
 	const icons: Record<Relation['type'], ComponentType> = {
 		Related: ArrowRightLeft,
@@ -106,6 +107,6 @@
 	</form> -->
 	</Badge>
 	<div slot="content">
-		<HoverEntry id={entry.id} />
+		<HoverEntry id={entry.id} type={$page.data.type} />
 	</div>
 </HoverCard>

@@ -4,7 +4,7 @@
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
+	import type AnnotationForm from '$lib/components/AnnotationForm.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
 		Dialog,
@@ -34,6 +34,7 @@
 	} from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
 	import toast from 'svelte-french-toast';
+	import NoteForm from './NoteForm.svelte';
 
 	export let data: ComponentProps<AnnotationForm>['data'];
 	export let entry: Pick<Entry, 'id' | 'type'>;
@@ -127,43 +128,4 @@
 	</DropdownMenuContent>
 </DropdownMenu>
 
-<Dialog bind:isOpen={show_note_form}>
-	<DialogContent>
-		<AnnotationForm
-			opts={{
-				onResult: ({ cancel, result }) => {
-					console.log({ result });
-					show_note_form = false;
-					if (result.type === 'success') {
-						if (result.data?.form?.data) {
-							update_entry(entry.id, {
-								annotations: [...($state[entry.id].annotations ?? []), result.data.form.data]
-							});
-						}
-					}
-					cancel();
-				}
-			}}
-			{data}
-			{entry}
-			class="contents"
-		>
-			<svelte:fragment slot="header">
-				<DialogHeader>
-					<DialogTitle>Add note</DialogTitle>
-					<!-- <DialogDescription>Copy and paste the URL to add.</DialogDescription> -->
-				</DialogHeader>
-			</svelte:fragment>
-			<svelte:fragment slot="footer" let:delayed>
-				<DialogFooter>
-					<Button>
-						<span>Save</span>
-						{#if delayed}
-							<LoaderIcon class="animate-spin" />
-						{/if}
-					</Button>
-				</DialogFooter>
-			</svelte:fragment>
-		</AnnotationForm>
-	</DialogContent>
-</Dialog>
+<NoteForm bind:isOpen={show_note_form} {data} {entry}  />

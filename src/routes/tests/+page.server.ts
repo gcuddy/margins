@@ -29,7 +29,7 @@ export const actions: Actions = {
             cookies.set("theme", theme, {
                 path: "/",
                 maxAge: 60 * 60 * 24 * 365,
-                secure: dev ? false : true, 
+                secure: dev ? false : true,
             })
         }
         if (redirectTo) {
@@ -38,7 +38,10 @@ export const actions: Actions = {
     },
     addUrl: validateAuthedForm(add_url_schema, async ({ form, fetch, session }) => {
         const { url, status, via_entryid, via_url } = form.data;
-        const uri = normalizeUrl(url)
+        // check if url is isbn
+        const is_isbn = /^(\d{10}|\d{13})$/.test(url);
+
+        const uri = is_isbn ? `isbn:${url}` : normalizeUrl(url)
         let entryId: number;
         // try selecting the entry first
         const existing_entry = await db.selectFrom("Entry")

@@ -23,7 +23,7 @@
 	import { types } from '$lib/types';
 	import { cn } from '$lib/utils/tailwind';
 	import debounce from 'just-debounce-it';
-	import { FilterIcon, Loader2Icon, Plus } from 'lucide-svelte';
+	import { FilterIcon, Loader2Icon, Plus, XIcon } from 'lucide-svelte';
 	import toast from 'svelte-french-toast';
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { Snapshot } from './$types';
@@ -33,6 +33,7 @@
 	import { invalidated, state } from '$lib/state/entries';
 	import { fade } from 'svelte/transition';
 	import { onDestroy } from 'svelte';
+	import { check_inert } from '$lib/utils';
 
 	$: filter_type = $page.url.searchParams.get('type');
 	export let data;
@@ -112,7 +113,10 @@
 	let url_modal = false;
 
 	let filter: Input;
+	let container: HTMLElement;
+
 	function handle_keydown(e: KeyboardEvent) {
+		if (check_inert(container)) return;
 		if (e.key === '/') {
 			e.preventDefault();
 			filter.focus();
@@ -188,6 +192,7 @@
 <svelte:window on:keydown={handle_keydown} />
 
 <div
+	bind:this={container}
 	use:inView
 	on:exit={() => {
 		$menu.center = true;
@@ -212,12 +217,16 @@
 				<form action="/tests?/addUrl" method="post" use:enhance_add_url>
 					<DialogHeader>
 						<DialogTitle>Add URL</DialogTitle>
-						<DialogDescription>Copy and paste the URL to add.</DialogDescription>
+						<DialogDescription>Copy and paste the URL or ISBN to add.</DialogDescription>
 					</DialogHeader>
 					<div class="grid gap-4 py-4">
 						<div class="grid gap-2">
-							<Label for="url">URL</Label>
-							<Input name="url" id="url" placeholder="https://example.com/article" />
+							<Label for="url">URL or ISBN</Label>
+							<Input
+								name="url"
+								id="url"
+								placeholder="https://example.com/article, 0801856736, etc."
+							/>
 						</div>
 					</div>
 					<DialogFooter>
@@ -235,9 +244,16 @@
 
 		<Popover let:close>
 			<PopoverTrigger
-				class={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'border-dashed')}
+				class={cn(!filter_type && buttonVariants({ variant: 'outline', size: 'sm' }), 'border-dashed')}
 			>
-				<FilterIcon class="h-4 w-4" />
+				{#if filter_type}
+					<Badge variant="secondary" class="">
+						{filter_type}
+					</Badge>
+				{:else}
+					<FilterIcon class="mr-2 h-4 w-4" />
+					Filter
+				{/if}
 			</PopoverTrigger>
 			<PopoverContent>
 				<Small>Filter</Small>
@@ -257,7 +273,7 @@
 									keepFocus: true,
 									replaceState: true,
 									noScroll: true,
-									invalidateAll: false
+									invalidateAll: true
 								});
 								close(null);
 								// invalidate('entries');
@@ -272,9 +288,11 @@
 			</PopoverContent>
 		</Popover>
 		{#if filter_type}
-			<Badge variant="secondary" class="">
-				{filter_type}
-			</Badge>
+			<div class="flex">
+				<Button as="a" href={$page.url.pathname} variant="ghost" size="sm">
+					Reset <XIcon class="ml-2 h-4 w-4" />
+				</Button>
+			</div>
 		{/if}
 	</div>
 	<form

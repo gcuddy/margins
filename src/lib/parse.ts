@@ -13,6 +13,7 @@ import { books } from "./features/books/googlebooks.server";
 import { spotify } from "./features/services/spotify";
 import { twitter } from "./twitter";
 import type { Tweet } from "./api/twitter";
+import { isbn_regex } from "./schemas";
 type VideoListResponse = youtube_v3.Schema$VideoListResponse
 
 const spotifyRegex = /^(spotify:|https:\/\/[a-z]+\.spotify\.com\/)/;
@@ -64,6 +65,17 @@ export default async function (url: string, html?: string): Promise<z.infer<type
     let htmlToParse = html;
     const bshop = urlObj.hostname.includes("bookshop.org")
     console.log({ bshop })
+
+    // check for isbn
+    if (url.startsWith('isbn:')) {
+        const isbn = url.replace('isbn:', '');
+        const results = await books.search(`isbn:${isbn}`)
+        const volume = results.items?.[0];
+        if (volume) {
+            return returnBookFromGoogleBook(volume);
+        }
+    }
+
     if (urlObj.hostname.includes("bookshop.org")) {
         // try bookshop parsing
         if (!htmlToParse) htmlToParse = await fetch(url).then((r) => r.text());

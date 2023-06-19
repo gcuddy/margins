@@ -147,9 +147,9 @@
 												'TextQuoteSelector'
 											)}
 											{#if text_quote}
-											<Clamp clamp={2} class='border-l px-3 italic'>
-												{text_quote.exact}
-											</Clamp>
+												<Clamp clamp={2} class="border-l px-3 italic">
+													{text_quote.exact}
+												</Clamp>
 												<!-- <div class="line-clamp-2 border-l px-3 italic">
 													{text_quote.exact}
 												</div> -->
@@ -158,9 +158,9 @@
 											{/if}
 										{/if}
 										{#if annotation.body}
-											<div class="line-clamp-2">
+											<Clamp clamp={2}>
 												{annotation.body}
-											</div>
+											</Clamp>
 										{/if}
 									</div>
 								</div>
@@ -182,17 +182,21 @@
 						<div slot="content" class="flex flex-col gap-2 bg-card text-card-foreground">
 							<span class="font-semibold tracking-tight">Relations</span>
 							{#each data.relations as relation}
-								<a href={make_link(relation.entry)} class="flex items-center gap-3 text-xs cursor-pointer">
-									<svelte:component this={relations_icons[relation.type]} class="h-3 w-3 shrink-0" />	
+								<a
+									href={make_link(relation.entry)}
+									class="flex cursor-pointer items-center gap-3 text-xs"
+								>
+									<svelte:component
+										this={relations_icons[relation.type]}
+										class="h-3 w-3 shrink-0"
+									/>
 									<img
 										use:smoothload
 										src={get_image(relation.entry)}
 										class="aspect-square w-10 rounded-full object-cover"
 										alt=""
 									/>
-									<span class="font-semibold">
-										{relation.entry.title}</span
-									>
+									<span class="font-semibold"> {relation.entry.title}</span>
 								</a>
 							{/each}
 						</div>

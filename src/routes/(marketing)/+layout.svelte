@@ -3,7 +3,7 @@
 	import "$lib/styles/warbler.css";
 </script>
 
-<div class="flex min-h-screen select-text flex-col bg-amber-50">
+<div class="flex min-h-screen select-text flex-col">
 	<header class="container sticky top-0 z-40">
 		<nav>
 			<ul class=" mx-auto flex items-center justify-end space-x-4 p-4">

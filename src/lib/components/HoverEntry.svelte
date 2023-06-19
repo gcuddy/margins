@@ -26,12 +26,14 @@
 {:else if $q.isSuccess}
 	<div class="max-h-64 overflow-y-auto">
 		<div class="hover-entry">
-			<Entry
+
+			{JSON.stringify($q.data)}
+			<!-- <Entry
 				data={{
 					entry: $q.data,
 					type: $q.data.type
 				}}
-			/>
+			/> -->
 		</div>
 	</div>
 {/if}

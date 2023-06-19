@@ -214,7 +214,8 @@ export const queries = ({
         fn: async ({ input, ctx }) => {
             return get_entry_details(input.id, {
                 userId: ctx.userId,
-                type: input.type
+                type: input.type,
+                use_entry_id: true
             })
         }
     }),

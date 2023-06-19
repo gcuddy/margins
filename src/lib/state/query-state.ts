@@ -1,5 +1,8 @@
 import { getContext, setContext } from "svelte";
-import { get, writable } from "svelte/store";
+import { derived, get, writable } from "svelte/store";
+import type { Mutations } from "../../routes/tests/(app2)/queries.server";
+import { page } from "$app/stores";
+import { type MutationInput, mutation } from "$lib/queries/query";
 
 // const query_lookup = writable(
 //     {} as {
@@ -83,6 +86,8 @@ type QueryResult<TData = unknown> = QueryLoading<TData> | QuerySuccess<TData>;
 type CreateQueryOpts<TData = unknown> = {
     key: string, stale_time?: number, fn: () => Promise<TData>, enabled?: boolean
 }
+
+
 
 // TODO: allow for passing in of store and using dynamic enabled option (will need to use derived store)
 export function create_query<TData>({ key, stale_time = 0, fn, enabled }: {
@@ -193,4 +198,39 @@ export function create_query<TData>({ key, stale_time = 0, fn, enabled }: {
             return query.subscribe(...args);
         }
     }
+}
+
+export function create_mutation<TMutation extends keyof Mutations>(fn: TMutation) {
+
+    const store = writable({
+        mutate: (data: MutationInput<TMutation>) => {
+            store.update(s => {
+                return {
+                    ...s,
+                    isPending: true,
+                }
+            })
+            return mutation(get(page), fn, data).finally(() => {
+                store.update(s => {
+                    return {
+                        ...s,
+                        isPending: false,
+                    }
+                })
+            })
+        },
+        isPending: false,
+    });
+
+    return {
+        subscribe: store.subscribe,
+    }
+
+    // return derived(page, ($page, set) => {
+    //     return {
+    //         mutate: (data: MutationInput<TMutation>) => {
+    //             return mutation(get(page), fn, data);
+    //         }
+    //     }
+    // })
 }

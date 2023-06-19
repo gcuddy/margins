@@ -54,6 +54,8 @@
 		},
 	});
 
+	$: console.log({$form})
+
 	export let action_prefix = `/tests/entry/${entry.id}`;
 
 	let value = "";
@@ -90,6 +92,7 @@
 			class={cn(
 				buttonVariants({
 					variant: "outline",
+					size: 'xs'
 				}),
 				"w-[100px]"
 			)}

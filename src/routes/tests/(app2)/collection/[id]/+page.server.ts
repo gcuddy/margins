@@ -53,7 +53,8 @@ export const load = (async ({ params, locals, depends }) => {
                     .whereRef('ci.collectionId', '=', 'c.id')
                     .where(({ or, cmpr }) => or([
                         cmpr('ci.entryId', 'is not', null),
-                        cmpr('ci.annotationId', 'is not', null)
+                        cmpr('ci.annotationId', 'is not', null),
+                        // cmpr('ci.type', '=', 'Section')
                     ]))
                     .orderBy('ci.position')
             ).as('items'),
@@ -108,5 +109,22 @@ export const actions: Actions = {
                 })
                 .execute();
         }
+    },
+    add_section: async ({ locals, params, }) => {
+        // todo
+        console.log('hello')
+        const session = await locals.validate();
+        if (!session) return fail(401);
+        const id = nanoid();
+        await db.insertInto("CollectionItems")
+            .values({
+                id,
+                collectionId: +params.id,
+                position: 0,
+                type: "Section",
+                updatedAt: new Date(),
+            })
+            .execute();
+
     }
 }

@@ -38,6 +38,7 @@
 	} from '$components/ui/card';
 	import { getId, make_link } from '$lib/utils/entries';
 	import Tweet from '$components/Tweet.svelte';
+	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
 
 	const md = new MarkdownIt();
 
@@ -196,30 +197,49 @@
 		</div>
 	{/if}
 </div>
+
+<form action="?/add_section" method="post">
+	<Button>Add section</Button>
+</form>
+
+<!-- {JSON.stringify(data.collection.items)} -->
 <!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
 <div use:rover class="mt-8 flex flex-wrap gap-4">
 	{#key data.collection}
-		{#each data.collection.items.filter((i) => !!i.entry || !!i.annotation) as item, i}
+		{#each data.collection.items as item, i}
+			{#if item.type === 'Section'}
+				Section
+			{/if}
 			<div class="w-48 space-y-3">
+				<OptionsMenu variant="ghost" size="xs" items={[
+					[
+						{
+							text: "Add note",
+							onSelect: () => {
+								//todo
+							}
+						}
+					]
+				]} />
 				{#if item.entry?.type === 'tweet'}
 					{@const id = item.entry?.uri?.split('/').pop()}
-					<Tweet {id} />
-				{:else}
-				{#if item.entry}
+					{#if id}
+						<Tweet {id} />
+					{/if}
+				{:else if item.entry}
 					<div class="overflow-hidden rounded-md">
 						<img class="aspect-square h-48 w-48 object-cover" alt="" src={item.entry?.image} />
 					</div>
-						<a href={make_link(item.entry)} class="text-sm font-medium">
-							{item.entry?.title}
-						</a>
-						{:else if item.annotation}
-						<div class='overflow-hidden rounded-md text-sm'>
-							{item.annotation.body}
-						</div>
-						<a href="" class='text-sm font-medium'>
-							{item.annotation.title}
-						</a>
-					{/if}
+					<a href={make_link(item.entry)} class="text-sm font-medium">
+						{item.entry?.title}
+					</a>
+				{:else if item.annotation}
+					<div class="overflow-hidden rounded-md text-sm">
+						{item.annotation.body}
+					</div>
+					<a href="" class="text-sm font-medium">
+						{item.annotation.title}
+					</a>
 				{/if}
 			</div>
 			<!-- <Card class='w-72 space-y-3'>

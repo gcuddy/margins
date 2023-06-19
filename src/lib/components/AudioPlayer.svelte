@@ -170,6 +170,7 @@
 	import Textarea from './ui/Textarea.svelte';
 	import AnnotationForm from './AnnotationForm.svelte';
 	import { useTimeStampNote } from './ui/singletons/dialogs';
+	import { create_mutation } from '$lib/state/query-state';
 
 	const timestamp = derived(audioPlayer, ($audioPlayer) =>
 		$audioPlayer.state.currentTime ? Math.floor($audioPlayer.state.currentTime) : 0
@@ -178,13 +179,17 @@
 	export { className as class };
 	export let collapsed = false;
 
-	const saveInteraction = createMutation({
-		mutationFn: (data: MutationInput<'saveInteraction'>) =>
-			mutation($page, 'saveInteraction', data),
-		onSuccess(data, variables, context) {
-			variables;
-		}
-	});
+	// const saveInteraction = createMutation({
+	// 	mutationFn: (data: MutationInput<'saveInteraction'>) =>
+	// 		mutation($page, 'saveInteraction', data),
+	// 	onSuccess(data, variables, context) {
+	// 		variables;
+	// 	}
+	// });
+
+	const saveInteraction = create_mutation('saveInteraction');
+
+
 
 	// const { debounce: debounced_save, cancel } = debounce(5000);
 

@@ -66,7 +66,9 @@
 
 	$: tab_param = $page.url.searchParams.get('tab') ?? tabs[0].toLowerCase();
 
-	$: pdf = data.entry?.relations?.concat(data.entry?.back_relations ?? []).find((r) => r.type === 'Grouped' && r.related_entry?.type === 'pdf')
+	$: pdf = data.entry?.relations
+		?.concat(data.entry?.back_relations ?? [])
+		.find((r) => r.type === 'Grouped' && r.related_entry?.type === 'pdf');
 </script>
 
 <div class="flex select-text flex-col gap-4">
@@ -108,11 +110,9 @@
 			</div>
 			<div class="flex items-center gap-2">
 				{#if !!pdf}
-					 <!-- content here -->
-					 <Button as="a" href="/tests/pdf/{pdf.related_entry.id}">
-						Read
-					 </Button>
-				{/if}	
+					<!-- content here -->
+					<Button as="a" href="/tests/pdf/{pdf.related_entry.id}">Read</Button>
+				{/if}
 				<BookmarkForm data={data.bookmarkForm} />
 				{#if data.entry}
 					<EntryOperations data={data.annotationForm} entry={data.entry} />
@@ -122,11 +122,6 @@
 	</div>
 
 	<div class="prose prose-stone mt-6 dark:prose-invert">
-	<span>genre</span>	
-	<Muted>
-		{get_genre(book)}
-		{book.volumeInfo?.categories?.join(', ')}
-	</Muted>
 		<!-- this is the js-free version, but how's the a11y? -->
 		<div class={cn(tabList, 'not-prose')} data-sveltekit-keepfocus>
 			{#each tabs as tab}
@@ -146,7 +141,16 @@
 		</div>
 		<div class={tabContent}>
 			{#if tab_param === 'summary'}
-				{@html book.volumeInfo?.description}
+				<div>
+					{@html book.volumeInfo?.description}
+				</div>
+				<div>
+					<span>genre</span>
+					<Muted>
+						{get_genre(book)}
+						<!-- {boeok.volumeInfo?.categories?.join(', ')} -->
+					</Muted>
+				</div>
 			{/if}
 			{#if tab_param === 'interactions'}
 				{#if data.entry?.interaction}

@@ -15,7 +15,7 @@ export const bookmarkSchema = z.object({
 export type BookmarkSchema = typeof bookmarkSchema;
 
 export const tag = z.object({
-    id: z.string().optional(),
+    id: z.number().optional(),
     name: z.string().min(1).max(50),
 })
 

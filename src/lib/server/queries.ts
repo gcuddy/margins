@@ -1,3 +1,6 @@
+import { books } from "$lib/api/gbook";
+import spotify from "$lib/api/spotify";
+import { tmdb } from "$lib/api/tmdb";
 import { db } from "$lib/db"
 import { entrySelect } from "$lib/db/selects";
 import type { Bookmark, DB, Entry, Interaction } from "$lib/prisma/kysely/types";
@@ -6,6 +9,7 @@ import type { Status } from "@prisma/client";
 import type { ExpressionBuilder } from "kysely";
 import type { Nullable } from "kysely/dist/cjs/util/type-utils";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/mysql";
+import pindex from '$lib/api/pindex';
 
 type AliasedEb = ExpressionBuilder<DB & Record<"b", Bookmark> & Record<"e", Entry> & Record<"i", Nullable<Interaction>>, "b" | "e" | "i">
 
@@ -135,7 +139,8 @@ export type LibraryResponse = Awaited<ReturnType<typeof get_library>>;
 
 export async function get_entry_details(id: string | number, opts?: {
     type: Type,
-    userId?: string
+    userId?: string,
+    use_entry_id?: boolean;
 }) {
     const { userId, type } = opts || {};
     let query = db.selectFrom("Entry")
@@ -189,47 +194,77 @@ export async function get_entry_details(id: string | number, opts?: {
             ).as("interaction")
         ]))
         .$if(type === "tweet", qb => qb.select(["Entry.original as tweet"]))
-    switch (type) {
-        case "movie":
-            query = query
-                .where("Entry.tmdbId", "=", +id)
-                .where("Entry.type", "=", "movie");
-            break;
-        case "tv":
-            query = query
-                .where("Entry.tmdbId", "=", +id)
-                .where("Entry.type", "=", "tv");
-            break;
-        case "book":
-            query = query
-                // .where("Entry.uri", "=", `isbn:${id}`);
-                .where("Entry.googleBooksId", "=", id.toString());
-            break;
-        case "podcast": {
-            // if id starts with p, this indicates it's a pointer to the podcastindexid
-            // else, it's a podcast saved without a podcastindexid (i.e. a private podcast or something of the sort)
-            const podcastIndexId = id.toString().startsWith("p") ? id.toString().slice(1) : undefined;
-            console.log({ podcastIndexId })
-            if (podcastIndexId) {
+
+    if (!opts?.use_entry_id) {
+        switch (type) {
+            case "movie":
                 query = query
-                    .where("Entry.podcastIndexId", "=", +podcastIndexId);
+                    .where("Entry.tmdbId", "=", +id)
+                    .where("Entry.type", "=", "movie");
+                break;
+            case "tv":
+                query = query
+                    .where("Entry.tmdbId", "=", +id)
+                    .where("Entry.type", "=", "tv");
+                break;
+            case "book":
+                query = query
+                    // .where("Entry.uri", "=", `isbn:${id}`);
+                    .where("Entry.googleBooksId", "=", id.toString());
+                break;
+            case "podcast": {
+                // if id starts with p, this indicates it's a pointer to the podcastindexid
+                // else, it's a podcast saved without a podcastindexid (i.e. a private podcast or something of the sort)
+                const podcastIndexId = id.toString().startsWith("p") ? id.toString().slice(1) : undefined;
+                console.log({ podcastIndexId })
+                if (podcastIndexId) {
+                    query = query
+                        .where("Entry.podcastIndexId", "=", +podcastIndexId);
+                    break;
+                }
+                break;
+            };
+            case "album": {
+                // query = query
+                query = query.where("Entry.spotifyId", "=", id.toString());
                 break;
             }
-            break;
-        };
-        case "album": {
-            // query = query
-            query = query.where("Entry.spotifyId", "=", id.toString());
-            break;
+            default:
+                query = query
+                    .where("Entry.id", "=", +id);
+                break;
         }
-        default:
-            query = query
-                .where("Entry.id", "=", +id);
-            break;
+    } else {
+        query = query.where("Entry.id", "=", +id);
     }
+
+    const get_media = async (type: Type, id: string | number) => {
+        switch (type) {
+            case "movie":
+                return tmdb.movie.details(+id);
+            case "tv":
+                return tmdb.tv.details(+id);
+            case "book":
+                return books.get(id.toString());
+            case "podcast":
+                return pindex.episodeById(+id)
+            case "album":
+                return spotify.album(id.toString());
+            default:
+                return null;
+        }
+    }
+
+    // const [entry, ]
 
     const entry = await query
         .executeTakeFirst();
 
-    return entry;
+    return {
+        movie: type === "movie" ? tmdb.movie.details(+id) : null,
+        book: type === "book" ? books.get(id.toString()) : null,
+        tv: type === "tv" ? tmdb.tv.details(+id) : null,
+        album: type === "album" ? spotify.album(id.toString()) : null,
+        entry: query.executeTakeFirst(),
+    }
 }

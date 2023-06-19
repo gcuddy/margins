@@ -87,6 +87,7 @@
 			class={cn(
 				buttonVariants({
 					variant: "outline",
+					size: 'xs'
 				}),
 				"w-[100px]"
 			)}

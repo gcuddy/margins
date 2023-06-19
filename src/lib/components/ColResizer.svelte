@@ -16,6 +16,12 @@
 	export let max = 400;
 	export let min = 200;
 
+	export let direction: 'n' | 'e' | 's' | 'w' = 'e'
+
+	export let disabled = false;
+
+	let container: HTMLElement;
+
 	const dispatch = createEventDispatcher();
 
 	let dragging = false;
@@ -23,6 +29,37 @@
 	// $: pos = clamp(pos, min, max);
 
 	function setPos(event: MouseEvent) {
+		console.log({event})
+
+		if (disabled) return;
+
+		const { top, left } = container.getBoundingClientRect();
+
+		console.log({ top, left });
+
+		switch (direction) {
+			case 'w': {
+				const pos_change = left - event.clientX;
+				width = clamp(width + pos_change, min, max);
+				break;
+			}
+			case 'e': {
+				const pos_change = event.clientX - left;
+				width = clamp(width + pos_change, min, max);
+				break;
+			}
+			case 'n': {
+				const pos_change = top - event.clientY;
+				width = clamp(width + pos_change, min, max);
+				break;
+			}
+			case 's': {
+				const pos_change = event.clientY - top;
+				width = clamp(width + pos_change, min, max);
+				break;
+			}
+		}
+		return;
 		const posChange = (width - event.clientX) * -1;
 		const pos = clamp(width + posChange, min, max);
 		if (posChange / width < -0.8) {
@@ -92,4 +129,4 @@
 	}
 </script>
 
-<div class={className} role="separator" use:drag={setPos} use:touchDrag={setTouchPos} />
+<div bind:this={container} class={className} role="separator" use:drag={setPos} use:touchDrag={setTouchPos} />
