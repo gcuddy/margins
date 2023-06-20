@@ -23,7 +23,7 @@
 	import { types } from '$lib/types';
 	import { cn } from '$lib/utils/tailwind';
 	import debounce from 'just-debounce-it';
-	import { FilterIcon, Loader2Icon, Plus, XIcon } from 'lucide-svelte';
+	import { Check, FilterIcon, Loader2Icon, Plus, XIcon } from 'lucide-svelte';
 	import toast from 'svelte-french-toast';
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { Snapshot } from './$types';
@@ -34,6 +34,13 @@
 	import { fade } from 'svelte/transition';
 	import { onDestroy } from 'svelte';
 	import { check_inert } from '$lib/utils';
+	import {
+		Command,
+		CommandInput,
+		CommandGroup,
+		CommandItem,
+		CommandList
+	} from '$components/ui/command';
 
 	$: filter_type = $page.url.searchParams.get('type');
 	export let data;
@@ -244,7 +251,10 @@
 
 		<Popover let:close>
 			<PopoverTrigger
-				class={cn(!filter_type && buttonVariants({ variant: 'outline', size: 'sm' }), 'border-dashed')}
+				class={cn(
+					!filter_type && buttonVariants({ variant: 'outline', size: 'sm' }),
+					'border-dashed'
+				)}
 			>
 				{#if filter_type}
 					<Badge variant="secondary" class="">
@@ -255,10 +265,68 @@
 					Filter
 				{/if}
 			</PopoverTrigger>
-			<PopoverContent>
-				<Small>Filter</Small>
-				<!-- <div class="flex gap-x-1 overflow-x-auto scrollbar-hide">
-			</div> -->
+			<PopoverContent placement='bottom-start' class="w-[200px] p-0">
+				<Command>
+					<CommandInput placeholder="Filter..." />
+					<CommandList>
+						<CommandGroup>
+							{#each types as type}
+								{@const selected = filter_type === type.toLowerCase()}
+								<CommandItem
+									onSelect={() => {
+										filter_type = selected ? '' : type.toLowerCase();
+										const url = $page.url;
+										invalidated.set(true);
+										if (filter_type) url.searchParams.set('type', filter_type);
+										else url.searchParams.delete('type');
+										goto(url, {
+											keepFocus: true,
+											replaceState: true,
+											noScroll: true,
+											invalidateAll: true
+										});
+										close(null);
+									}}
+								>
+									<div
+										class={cn(
+											'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+											selected
+												? 'bg-primary text-primary-foreground'
+												: 'opacity-50 [&_svg]:invisible'
+										)}
+									>
+										<Check class={cn('h-4 w-4')} />
+									</div>
+									<span>
+										{type}
+									</span>
+								</CommandItem>
+								<!-- <Button
+									on:click={async () => {
+										filter_type = selected ? '' : type.toLowerCase();
+										const url = $page.url;
+										invalidated.set(true);
+										if (filter_type) url.searchParams.set('type', filter_type);
+										else url.searchParams.delete('type');
+										goto(url, {
+											keepFocus: true,
+											replaceState: true,
+											noScroll: true,
+											invalidateAll: true
+										});
+										close(null);
+									}}
+									variant={selected ? 'secondary' : 'outline'}
+									size="sm"
+								>
+									{type}
+								</Button> -->
+							{/each}
+						</CommandGroup>
+					</CommandList>
+				</Command>
+				<!-- <Small>Filter</Small>
 				<Cluster class="gap-1">
 					{#each types as type}
 						{@const selected = filter_type === type.toLowerCase()}
@@ -276,7 +344,6 @@
 									invalidateAll: true
 								});
 								close(null);
-								// invalidate('entries');
 							}}
 							variant={selected ? 'secondary' : 'outline'}
 							size="sm"
@@ -284,7 +351,7 @@
 							{type}
 						</Button>
 					{/each}
-				</Cluster>
+				</Cluster> -->
 			</PopoverContent>
 		</Popover>
 		{#if filter_type}

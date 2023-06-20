@@ -31,12 +31,15 @@ export const AnnotationType = {
 	reply: 'reply',
 	document: 'document'
 };
-export type Location = 'inbox' | 'soon' | 'later' | 'archive';
+export type Location = 'inbox' | 'now' | 'backlog' | 'review' | 'archive' | 'soon' | 'later';
 export const Location = {
 	inbox: 'inbox',
+	now: 'now',
+	backlog: 'backlog',
+	review: 'review',
+	archive: 'archive',
 	soon: 'soon',
-	later: 'later',
-	archive: 'archive'
+	later: 'later'
 };
 export type DocumentType =
 	| 'article'
@@ -339,6 +342,14 @@ export type Entry = {
 	publisher: string | null;
 	author_extra: unknown | null;
 	spotifyId: string | null;
+};
+export type EntryContent = {
+	entry_id: number;
+	user_id: string;
+	title: string | null;
+	text: string | null;
+	html: string | null;
+	author: string | null;
 };
 export type EntryData = {
 	id: Generated<number>;
@@ -647,6 +658,7 @@ export type DB = {
 	Context: Context;
 	ContextNode: ContextNode;
 	Entry: Entry;
+	EntryContent: EntryContent;
 	EntryData: EntryData;
 	EntryMedia: EntryMedia;
 	EntryTag: EntryTag;

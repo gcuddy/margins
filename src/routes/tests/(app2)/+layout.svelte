@@ -55,7 +55,7 @@
 			<!-- w-[200px] -->
 			<aside
 				class={cn(
-					'sticky top-20 hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex'
+					'sticky top-20 border-r hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex'
 					// isEntry && 'md:hidden',
 					// is_article && 'sm:hidden'
 				)}

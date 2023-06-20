@@ -182,10 +182,11 @@
 	{/if}
 	<!-- <Button variant="ghost">Subscriptions</Button> -->
 </nav>
+<ColResizer bind:width max={500} class="absolute inset-y-0 w-2 cursor-col-resize z-40 -right-[3px]" />
 {#if $audioPlayer.audio?.src}
-	<div style:--width='{width}px' class="mt-auto flex shrink-0 flex-col max-w-[--width] pb-2 {collapsed ? '' : 'mt-auto border-t'}">
+<!-- we subtract 8 to account for colresizer -->
+	<div style:--width="{width}px" class="mt-auto flex shrink-0 flex-col pb-2 max-w-[--width] {collapsed ? '' : 'mt-auto border-t'}">
 		<AudioPlayer {collapsed} />
 	</div>
 {/if}
 
-<ColResizer bind:width max={500} class="absolute px-2 w-0 h-full after:bg-border after:w-px after:block after:h-full cursor-col-resize right-0 top-0 bottom-0" />

@@ -235,7 +235,7 @@
 
 }			bind:playbackRate={$audioPlayer.state.playbackRate} -->
 	{#if !collapsed}
-		<div class={cn(' relative flex flex-col gap-y-4 bg-popover p-4', className)}>
+		<div class={cn('relative flex flex-col gap-y-4 bg-popover p-4', className)}>
 			<div class="absolute right-0 top-0">
 				<Button size="sm" variant="ghost" class="p-1" on:click={audioPlayer.clear}>
 					<XIcon class="h-3 w-3" />
@@ -247,7 +247,7 @@
 					alt=""
 					src={$audioPlayer.audio.image}
 				/>
-				<div class="flex min-w-0 truncate flex-col">
+				<div class="flex min-w-0 flex-col">
 					<svelte:element
 						this={$audioPlayer.audio?.slug ? 'a' : 'span'}
 						href={$audioPlayer.audio?.slug}

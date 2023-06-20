@@ -63,6 +63,14 @@
 					options: {
 						offset: [0, offset]
 					}
+				},
+				{
+					name: 'preventOverflow',
+					options: {
+						padding: {
+							top: 16 * 3.5
+						}
+					}
 				}
 			]
 		}}
