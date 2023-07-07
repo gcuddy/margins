@@ -7,15 +7,10 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { Collapsible } from 'radix-svelte';
 
-	import {
-		CardContent,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card';
+	import { CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Muted } from '$lib/components/ui/typography';
 	import { TableOfContents } from '@skeletonlabs/skeleton';
 	import { persisted } from 'svelte-local-storage-store';
-
 
 	import { invalidate } from '$app/navigation';
 	import ColResizer from '$components/ColResizer.svelte';
@@ -41,6 +36,7 @@
 		ChevronUpIcon,
 		FileDown,
 		InfoIcon,
+		Locate,
 		MoreHorizontalIcon,
 		PlusIcon,
 		XIcon
@@ -51,6 +47,7 @@
 	import { useMenuBar } from '../../MainNav.svelte';
 	import Annotation from './[id]/Annotation.svelte';
 	import NoteForm from './[id]/NoteForm.svelte';
+	import Input from '$components/ui/Input.svelte';
 
 	const render = persisted('sidebar', false);
 	let flash = false;
@@ -91,7 +88,6 @@
 	$: if (width) {
 		debounced_set_width();
 	}
-
 
 	$: data = $page.data.entry?.id ? $state[$page.data.entry.id] : undefined;
 	$: console.log({ $state });
@@ -172,6 +168,14 @@
 								>
 							</div>
 						{/if}
+						<div class="flex items-center space-x-4">
+							<Muted>Author</Muted>
+
+							<Input variant="ghost" value={$page.data.entry?.author} />
+							<Button as="a" href="/tests/people/{$page.data.entry?.author}" variant="ghost" size="sm">
+								<Locate class="h-3 w-3" />
+							</Button>
+						</div>
 						{#if $page.data.tagForm}
 							<div class="flex items-center space-x-4">
 								<Muted>Tags</Muted>
@@ -294,27 +298,27 @@
 						<h3 class=" top-0 bg-card py-2 text-lg font-semibold leading-none tracking-tight">
 							Notes
 						</h3>
-						<div class="flex gap-1 items-center">
-						<Button size='xs' variant='ghost' on:click={() => show_note_form = true}>
-							<PlusIcon class="h-4 w-4" />
-						</Button>
-						<DropdownMenu>
-							<DropdownMenuTrigger class={buttonVariants({ size: 'xs', variant: 'ghost' })}>
-								<MoreHorizontalIcon class="h-4 w-4" />
-							</DropdownMenuTrigger>
-							<DropdownMenuContent>
-								<DropdownMenuGroup>
-									<DropdownMenuItem
-										on:click={() =>
-											triggerDownload($page.data.entry, $page.data.entry?.annotations)}
-									>
-										<FileDown class="mr-2 h-4 w-4" />
-										Export notes to markdown
-									</DropdownMenuItem>
-								</DropdownMenuGroup>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</div>
+						<div class="flex items-center gap-1">
+							<Button size="xs" variant="ghost" on:click={() => (show_note_form = true)}>
+								<PlusIcon class="h-4 w-4" />
+							</Button>
+							<DropdownMenu>
+								<DropdownMenuTrigger class={buttonVariants({ size: 'xs', variant: 'ghost' })}>
+									<MoreHorizontalIcon class="h-4 w-4" />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent>
+									<DropdownMenuGroup>
+										<DropdownMenuItem
+											on:click={() =>
+												triggerDownload($page.data.entry, $page.data.entry?.annotations)}
+										>
+											<FileDown class="mr-2 h-4 w-4" />
+											Export notes to markdown
+										</DropdownMenuItem>
+									</DropdownMenuGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</div>
 					</div>
 					<div class="grid gap-4">
 						{#each data.annotations
@@ -352,6 +356,5 @@
 		<Tooltip placement="left" ref={button_el}>Show sidebar</Tooltip>
 	</div>
 {/if}
-
 
 <NoteForm bind:isOpen={show_note_form} data={$page.data.annotationForm} entry={$page.data.entry} />

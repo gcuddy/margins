@@ -5,6 +5,7 @@
 			variants: {
 				variant: {
 					naked: 'bg-transparent border-none',
+					ghost: 'border-none transition bg-transparent hover:ring-1 hover:ring-ring focus-visible:ring-0 focus-visible:bg-input',
 					default: ''
 				}
 			}
