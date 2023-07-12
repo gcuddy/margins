@@ -1,24 +1,44 @@
+<script lang="ts" context="module">
+	// export const player = writable<YouTubePlayer | undefined>(undefined);
+</script>
+
 <script lang="ts">
 	import { page } from '$app/stores';
+	import Editor from '$components/ui/editor/Editor.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import type Youtube from '$lib/components/Youtube.svelte';
+	import player_store from '$lib/stores/player';
 	import { PlayCircleIcon } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
+	import { readable, writable } from 'svelte/store';
 	import type { YouTubePlayer } from 'youtube-player/dist/types';
 	export let player: YouTubePlayer | undefined = undefined;
+
+	const play_state = writable<'playing' | 'paused' | 'ended' | 'buffering' | 'cued' | 'unstarted'>('unstarted');
+
+	$: if (player) {
+		player_store.set({
+			type: 'youtube',
+			player,
+			timestamp: 0
+		})
+	}
 	export let data: {
 		entry?: {
 			youtubeId: string;
+			text: string;
 		};
 	};
 	$: youtubeId = data.entry?.youtubeId;
 	let timestamp = 0;
 	let annotating = false;
+	$: console.log({ annotating });
 
 	let width = 640;
 	$: height = width * 0.5625;
 
 	let loaded = false;
+
 
 	let Youtube: ComponentType<Youtube> | undefined = undefined;
 
@@ -57,7 +77,6 @@
 	{#if youtubeId}
 		<div class="relative flex aspect-video">
 			{#if !loaded}
-				<!-- <button on:click={loadYoutube}>load youtube</button> -->
 				<img
 					class="absolute inset-0 object-cover"
 					src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
@@ -75,7 +94,7 @@
 					options={{
 						playerVars: {
 							autoplay: 1
-						}
+						},
 					}}
 					on:ready={() => {
 						console.log('ready');
@@ -102,20 +121,23 @@
 			<div class="my-2 flex justify-end">
 				<Button
 					on:click={async () => {
-						if (!player) return;
-						timestamp = await player?.getCurrentTime();
+						console.log(player);
+						// timestamp = await player?.getCurrentTime();
+						console.log({ timestamp });
 						annotating = !annotating;
-					}}
-					variant="ghost">Annotate</Button
+					}}>Annotate</Button
 				>
 			</div>
 		{/if}
 		<div class="prose whitespace-pre-line">
-			<!-- {entry.text} -->
+			{data.entry?.text}
 		</div>
 	{:else}
 		<div class="flex h-64 items-center justify-center">
 			<div class="text-2xl text-muted">No video</div>
 		</div>
+	{/if}
+	{#if annotating}
+		<Editor />
 	{/if}
 </div>

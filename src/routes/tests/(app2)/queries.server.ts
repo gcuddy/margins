@@ -1,6 +1,6 @@
 import { tmdb } from "$lib/api/tmdb";
 import { db } from "$lib/db";
-import { annotations, entrySelect, feed, withEntry } from "$lib/db/selects";
+import { annotationWithEntry, annotations, entrySelect, feed, withEntry } from "$lib/db/selects";
 import { nanoid } from "$lib/nanoid";
 import { add_to_collection, deleteAnnotation, getNotebook, getNotebookSchema, s_add_to_collection, updateBookmark, updateBookmarkSchema, upsertAnnotation } from "$lib/queries/server";
 import { sql } from "kysely";
@@ -229,6 +229,16 @@ export const queries = ({
         }
     }),
 
+    get_annotation: query({
+        schema: z.object({
+            id: z.string()
+        }),
+        fn: async ({ input }) => {
+            const query = annotationWithEntry().where('a.id', '=', input.id);
+            return await query.executeTakeFirstOrThrow();
+        }
+    }),
+
     list_subscriptions: query({
         fn: async ({ ctx }) => {
             return await db.selectFrom("Subscription as s")
@@ -358,6 +368,33 @@ export const queries = ({
                     "e.wordCount"
                 ])
                 .limit(10)
+                // .orderBy("createdAt", "desc")
+                .execute();
+        },
+        schema: qSchema
+    }),
+    search_titles: query({
+        fn: async ({ input, ctx }) => {
+            const match_q = `${input.q}*`;;
+            const like_q = `%${input.q}%`;
+            return await db.selectFrom("Entry as e")
+                .innerJoin("Bookmark as b", join => join.onRef("e.id", "=", "b.entryId").on("b.userId", "=", ctx.userId))
+                .where(sql`MATCH(title,author) AGAINST (${match_q} IN BOOLEAN MODE) and (title like ${like_q} or author like ${like_q})`)
+                .select([
+                    "e.id",
+                    "e.title",
+                    "e.type",
+                    "e.image",
+                    "e.published",
+                    "e.author",
+                    "e.googleBooksId",
+                    "e.tmdbId",
+                    "e.podcastIndexId",
+                    "e.spotifyId",
+                    "e.uri",
+                    "e.wordCount"
+                ])
+                .limit(25)
                 // .orderBy("createdAt", "desc")
                 .execute();
         },

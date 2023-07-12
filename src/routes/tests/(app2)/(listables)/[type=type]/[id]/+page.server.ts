@@ -37,7 +37,7 @@ export const load = (async (event) => {
 
     event.depends("entry")
     let query = db.selectFrom("Entry")
-        .select(["id", "title", "html", "author", "uri", "type", "image", "wordCount",
+        .select(["id", "title", "html", 'text', "author", "uri", "type", "image", "wordCount",
             "published", "podcastIndexId", "googleBooksId", "tmdbId", "spotifyId", 'youtubeId'
         ])
         .$if(!!session, q => q.select(eb => [

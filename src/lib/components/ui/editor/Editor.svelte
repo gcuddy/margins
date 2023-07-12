@@ -1,12 +1,27 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import type { Editor as TEditor } from '@tiptap/core';
 	import { createEditor, Editor, EditorContent } from 'svelte-tiptap';
-	import type { Readable } from 'svelte/store';
+	import { writable, type Readable } from 'svelte/store';
 	import { TiptapExtensions } from './extensions';
 	import { TiptapEditorProps } from './props';
 	import BubbleMenu from './BubbleMenu.svelte';
+	import debounce from 'just-debounce-it';
+	import { persisted } from 'svelte-local-storage-store';
 
 	let editor: Readable<Editor>;
+
+	const save_status = writable('Saved');
+	const content = persisted<any>('editor__content', '');
+
+	const debounced_update = debounce(async ({ editor }: { editor: TEditor }) => {
+		const json = editor.getJSON();
+		save_status.set('Saving...');
+		content.set(json);
+		setTimeout(() => {
+			save_status.set('Saved');
+		}, 500);
+	}, 750);
 
 	onMount(() => {
 		editor = createEditor({
@@ -14,10 +29,20 @@
 			editorProps: TiptapEditorProps,
 			onUpdate: (e) => {
 				// TODO
+				$save_status = 'Unsaved';
+				// const selection = e.editor.state.selection;
+				debounced_update(e);
 			},
 			autofocus: 'end'
 		});
 	});
+
+	let hydrated = false;
+	$: if (editor && content && $content && !hydrated) {
+		// hydrate content from localstorage if not yet hydrated
+		$editor.commands.setContent($content);
+		hydrated = true;
+	}
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -28,13 +53,13 @@
 	class="relative min-h-[500px] w-full max-w-screen-lg border-stone-200 p-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg"
 >
 	<!--  -->
-	<!-- <div class="absolute right-5 top-5 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400">
-	{saveStatus}
-  </div> -->
+	<div class="absolute right-5 top-5 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400">
+		{$save_status}
+	</div>
 
-  {#if editor}
-  	<BubbleMenu editor={$editor} />
-  {/if}
+	{#if editor}
+		<BubbleMenu editor={$editor} />
+	{/if}
 
 	<EditorContent editor={$editor} />
 </div>
@@ -54,6 +79,28 @@
 		pointer-events: none;
 		height: 0;
 	}
+
+	.ProseMirror iframe {
+		min-height: 600px;
+		transition: filter 0.1s ease-in-out;
+
+		&:hover {
+			cursor: pointer;
+			filter: brightness(90%);
+		}
+	}
+
+	.ProseMirror-selectednode iframe {
+		outline: 3px solid #5abbf7;
+		filter: brightness(90%);
+	}
+
+	div[data-youtube-video] {
+		cursor: move;
+		padding-right: 24px;
+	}
+
+
 
 	/* Custom image styles */
 

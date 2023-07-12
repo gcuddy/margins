@@ -46,7 +46,15 @@ export async function query<T extends keyof Queries>(
     },
     fn: T,
     input: Parameters<Queries[T]["fn"]>[0]["input"] extends IsAny<Parameters<Queries[T]["fn"]>[0]["input"]> ? undefined : Parameters<Queries[T]["fn"]>[0]["input"],
+    options?: {
+        stale_time: number;
+    }
 ): Promise<Awaited<ReturnType<Queries[T]["fn"]>>> {
+    if (options) {
+        if (options.stale_time) {
+            // todo
+        }
+    }
     console.log(`running query ${fn}`, new Date());
     console.log({ input })
     const init = (base || {}) as QueryInit;

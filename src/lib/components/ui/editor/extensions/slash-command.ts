@@ -16,9 +16,14 @@ import {
     Image as ImageIcon,
     Code,
     CheckSquare,
+    ClockIcon,
 } from "lucide-svelte";
 import type { ComponentType } from "svelte";
 import { createPopperActions } from "svelte-popperjs";
+import { handleImageUplaod } from "../utils";
+import { get } from "svelte/store";
+import { page } from "$app/stores";
+import player from "$lib/stores/player";
 
 
 interface CommandItemProps {
@@ -62,8 +67,16 @@ const Command = Extension.create({
     },
 })
 
-const getSuggestionItems = ({ query }: { query: string }) => {
-    return [
+const getSuggestionItems = (props: { query: string }) => {
+    const { query } = props;
+    console.log({ props });
+
+    const $page = get(page);
+    console.log({ pagedata: $page.data });
+    // Are we currently in a video?
+    const video = $page.data?.entry?.type === 'video' && !!$page.data.entry?.youtubeId;
+
+    const items = [
         {
             title: "Text",
             description: "Just start typing with plain text.",
@@ -183,14 +196,56 @@ const getSuggestionItems = ({ query }: { query: string }) => {
                 input.onchange = async (event) => {
                     if (input.files?.length) {
                         const file = input.files[0];
-                        //   TODO
-                        //   return handleImageUpload(file, editor.view, event);
+                        return handleImageUplaod(file, editor.view, event);
                     }
                 };
                 input.click();
             },
         },
-    ].filter((item) => {
+    ];
+
+    if (video) {
+        items.push({
+            title: "Timestamp",
+            description: "Capture a timestamp.",
+            searchTerms: ["timestamp", "time", "video"],
+            icon: ClockIcon,
+            command: async ({ editor, range }: CommandProps) => {
+
+                // TODO: get player from page 
+                const $player = get(player);
+                if ($player && $player.type === "youtube") {
+                    console.log('hello')
+                    const time = Math.floor(Number(await $player.player.getCurrentTime()));
+                    editor
+                        .chain()
+                        .focus()
+                        .insertContentAt(range, [
+                            // {
+                            //     type: this.name,
+                            //     attrs: props,
+                            // },
+                            // {
+                            //     type: 'text',
+                            //     text: props.title,
+                            // },
+                            {
+                                type: "youtubeTimestamp",
+                                attrs: {
+                                    timestamp: time,
+                                    entry_id: $page.data.entry?.id,
+                                    youtube_id: $page.data.entry?.youtubeId,
+                                    title: $page.data.entry?.title,
+                                }
+                            }
+                        ])
+                        .run();
+                }
+            },
+        })
+    }
+
+    return items.filter((item) => {
         if (typeof query === "string" && query.length > 0) {
             const search = query.toLowerCase();
             return (

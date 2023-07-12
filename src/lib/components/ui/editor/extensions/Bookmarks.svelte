@@ -1,22 +1,22 @@
 <script lang="ts">
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import type { QueryOutput } from '$lib/queries/query';
 	import type { SuggestionProps } from '@tiptap/suggestion';
+	import { Loader2 } from 'lucide-svelte';
 	import { onMount, type ComponentType, tick } from 'svelte';
 	import { createPopperActions, type ContentAction } from 'svelte-popperjs';
-	import { writable } from 'svelte/store';
+	import { Writable, writable } from 'svelte/store';
 	import { fade, scale } from 'svelte/transition';
 
-	interface CommandItemProps {
-		title: string;
-		description: string;
-		icon: ComponentType;
-	}
-
 	type $$Props = {
-		items: CommandItemProps[];
+		items: QueryOutput<'search'>;
+		loading: Writable<boolean>;
 	} & SuggestionProps;
 
-	export let items: CommandItemProps[] = [];
+	export let items: QueryOutput<'search'> = [];
 	export let command: any;
+	export let query = '';
+	export let loading: $$Props['loading'];
 
 	export let clientRect: $$Props['clientRect'] = undefined;
 
@@ -69,28 +69,21 @@
 			if (el) {
 				el.scrollIntoView({
 					block: 'nearest',
-					inline: 'nearest',
-					behavior: 'instant'
+					inline: 'nearest'
 				});
 			}
-		})
+		});
 	}
-
-	// export const updateScrollView = (container: HTMLElement, item: HTMLElement) => {
-	// 	const containerHeight = container.offsetHeight;
-	// 	const itemHeight = item ? item.offsetHeight : 0;
-
-	// 	const top = item.offsetTop;
-	// 	const bottom = top + itemHeight;
-
-	// 	if (top < container.scrollTop) {
-	// 		container.scrollTop -= container.scrollTop - top + 5;
-	// 	} else if (bottom > containerHeight + container.scrollTop) {
-	// 		container.scrollTop += bottom - containerHeight - container.scrollTop + 5;
-	// 	}
-	// };
-
 	$: console.log({ $$props });
+
+	// export let decorationNode: HTMLElement;
+
+	// $: if (!query) {
+	// 	console.log({decorationNode})
+	// 	decorationNode?.classList.add('is-empty')
+	// } else {
+	// 	decorationNode?.classList.remove('is-empty')
+	// }
 
 	let animate = false;
 	onMount(() => {
@@ -128,32 +121,47 @@
 		}}
 		use:content
 	>
-		{#if items.length > 0}
-			<div
-				id="slash-command"
-				bind:this={commandListContainer}
-				class="z-50 h-auto max-h-[330px] w-72 overflow-y-auto scroll-smooth rounded-md border border-stone-200 bg-white px-1 py-2 shadow-md transition-all"
-			>
+		<div
+			id="slash-command"
+			bind:this={commandListContainer}
+			class="z-50 h-auto max-h-[330px] w-72 overflow-y-auto scroll-smooth rounded-md border bg-popover px-1 py-2 shadow-md transition-all"
+		>
+			<span class="text-muted-foregorund mb-2 flex items-center gap-x-2 text-sm">
+				Search for a page
+				{#if $loading}
+					<Loader2 class="h-4 w-4 animate-spin" />
+				{/if}
+			</span>
+			{#if items.length > 0}
 				{#each items as item, index}
 					<button
 						data-index={index}
-						class={`flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm text-stone-900 hover:bg-stone-100 ${
-							index === $selectedIndex ? 'bg-stone-100 text-stone-900' : ''
+						class={`flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm text-popover-foreground hover:bg-accent ${
+							index === $selectedIndex ? 'bg-accent text-accent-foreground' : ''
 						}`}
 						on:click={() => selectItem(index)}
 					>
 						<div
-							class="flex h-10 w-10 items-center justify-center rounded-md border border-stone-200 bg-white"
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-background"
 						>
-							<svelte:component this={item.icon} />
+							<EntryIcon type={item.type} />
 						</div>
 						<div>
-							<p class="font-medium">{item.title}</p>
-							<p class="text-xs text-stone-500">{item.description}</p>
+							<p class="line-clamp-2 font-medium">{item.title}</p>
+							<p class="line-clamp-2 text-xs text-muted-foreground">{item.author}</p>
 						</div>
 					</button>
 				{/each}
-			</div>
-		{/if}
+			{:else if !$loading}
+				<div class="flex items-center justify-center text-muted-foreground">No results found</div>
+			{/if}
+		</div>
 	</div>
 {/if}
+
+<style>
+	:global(.bookmark-suggester.is-empty::after) {
+		content: 'Search for a bookmark…';
+		@apply text-muted-foreground;
+	}
+</style>

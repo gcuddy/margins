@@ -49,7 +49,7 @@
 	const debounce = (value: string) => {
 		clearTimeout(timer);
 		timer = window.setTimeout(() => {
-			promise = client.query('search', {
+			promise = client.query('search_titles', {
 				q: value
 			});
 		}, 300);

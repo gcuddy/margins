@@ -148,6 +148,9 @@ const config = {
 			addVariant("mobile", [".mobile &"]);
 		}),
 	],
+	future: {
+		hoverOnlyWhenSupported: true,
+	}
 };
 
 module.exports = config;

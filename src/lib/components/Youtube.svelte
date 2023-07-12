@@ -39,6 +39,7 @@
 	// Update videoId and load new video if URL changes
 	// $: play(videoId);
 	async function createPlayer() {
+		console.log('creating player')
 		player = await YoutubePlayer(playerElem, options);
 		console.log({ player });
 		await player.playVideo();
@@ -100,6 +101,7 @@
 	function onPlayerStateChange(event: CustomEvent & { data: number }) {
 		console.log('state change', event);
 		dispatch('stateChange', event);
+		options?.events?.stateChange?.(event);
 
 		switch (event.data) {
 			case PlayerState.ENDED:
@@ -139,13 +141,26 @@
 <!-- <div {id} bind:this={playerElem} /> -->
 <!-- iframe height 100% vs auto? -->
 <!-- class="aspect-video overflow-hidden rounded-xl ring-1 ring-border" -->
-<iframe
+<!-- <iframe
 	title="YouTube video player"
-	class="abslute inset-0"
+	class="absolute inset-0"
 	{id}
 	width="100%"
 	height="100%"
 	frameborder="0"
-	src="https://www.youtube-nocookie.com/embed/{videoId}?amp=&autoplay=1&rel=0&showinfo=0"
-/>
+	src="https://www.youtube.com/embed/{videoId}?enablejsapi=1?autoplay=1"
+/> -->
+
+<iframe
+		bind:this={playerElem}
+        class="aspect-video rounded-xl ring-1 ring-border overflow-hidden"
+		title="YouTube video player"
+		{id}
+		width="100%"
+		height="100%"
+		src="https://www.youtube.com/embed/{videoId}?enablejsapi=1"
+		frameborder="0"
+	/>
 <!-- src="https://www.youtube.com/embed/{videoId}?enablejsapi=1?autoplay=1" -->
+<!-- 	src="https://www.youtube-nocookie.com/embed/{videoId}?amp=&autoplay=1&rel=0&showinfo=0"
+ -->

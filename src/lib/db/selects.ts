@@ -147,7 +147,7 @@ export function genericWithEntry<EB extends ExpressionBuilder<DB, keyof DB>, Ali
 }
 
 // private just for type inference
-function annotationWithEntry() {
+export function annotationWithEntry() {
     const a = db.selectFrom("Annotation as a")
         .select(annotations.select)
         .select(withEntry);

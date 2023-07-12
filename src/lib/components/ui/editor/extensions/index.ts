@@ -14,8 +14,16 @@ import Highlight from "@tiptap/extension-highlight";
 // TODO: Mentions
 
 import SlashCommand from "./slash-command";
+import Youtube from '@tiptap/extension-youtube'
+
 
 import { InputRule } from "@tiptap/core";
+import BookmarkCommand from "./bookmarks";
+import { SvelteCounterExtension } from "../nodes/link";
+import { iframeNode } from "../nodes/iframes";
+import AnnotationCommand from "./annotations";
+import { AnnotationExtension } from "../nodes/annotation";
+import { YoutubeTimestampNode } from "../nodes";
 
 export const TiptapExtensions = [
     StarterKit.configure({
@@ -107,9 +115,12 @@ export const TiptapExtensions = [
         includeChildren: true,
     }),
     SlashCommand,
+    BookmarkCommand,
+    AnnotationCommand,
     TiptapUnderline,
     TextStyle,
     Color,
+
     Highlight.configure({
         multicolor: true,
     }),
@@ -128,5 +139,9 @@ export const TiptapExtensions = [
         linkify: true,
         transformCopiedText: true,
     }),
-
+    SvelteCounterExtension,
+    AnnotationExtension,
+    iframeNode,
+    Youtube,
+    YoutubeTimestampNode
 ]

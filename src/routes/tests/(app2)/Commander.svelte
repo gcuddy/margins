@@ -73,10 +73,14 @@
 	})
 
 
-	$: if (!page) {
+	$: if (!$page) {
 		$state.shouldFilter = true;
 		$state.placeholder = 'Type a command or search...';
 	}
+
+	$: console.log({
+		$state
+	})
 </script>
 
 <svelte:window
