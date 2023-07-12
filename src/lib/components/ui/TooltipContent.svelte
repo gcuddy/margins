@@ -19,7 +19,7 @@
 	<div
 		on:mouseenter
 		on:mouseleave
-		in:fly={{
+		in:fly|global={{
 			x,
 			y,
 			delay

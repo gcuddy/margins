@@ -84,7 +84,7 @@
 	<DialogContent let:close>
 		{#key page}
 			{#if !page}
-				<div transition:fly|local class="flex flex-col space-y-4">
+				<div transition:fly class="flex flex-col space-y-4">
 					<button on:click={() => (pages = [...pages, 'collection'])}>Collection</button>
 					<button on:click={() => (pages = [...pages, 'view'])}>View</button>
 				</div>

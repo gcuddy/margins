@@ -58,8 +58,8 @@
 	{#if popup && showPopup}
 		<!-- TODO: figure out why  and lcick causes buggy behavior -->
 		<div
-			in:fade|local={{ duration: 150, delay: 250 }}
-			out:fade|local={{ duration: 150 }}
+			in:fade={{ duration: 150, delay: 250 }}
+			out:fade={{ duration: 150 }}
 			class="z-30 w-72 rounded-md border border-border bg-base p-2 shadow-lg"
 			use:content
 		>

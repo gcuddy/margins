@@ -41,7 +41,7 @@
 
 {#if showing}
 	<div
-		transition:fly|local={{
+		transition:fly={{
 			x: 50
 		}}
 		on:introend={() => {

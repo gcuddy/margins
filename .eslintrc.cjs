@@ -7,24 +7,29 @@ module.exports = {
 	extends: [
 		'eslint:recommended',
 		'plugin:@typescript-eslint/recommended',
+		'plugin:svelte/recommended',
 		'prettier',
 		'plugin:tailwindcss/recommended',
 		'plugin:@tanstack/eslint-plugin-query/recommended'
 	],
-	plugins: ['svelte3', '@typescript-eslint', '@tanstack/query'],
+	plugins: ['@typescript-eslint', '@tanstack/query'],
 	ignorePatterns: ['*.cjs'],
-	overrides: [{ files: ['*.svelte'], processor: 'svelte3/svelte3' },
-	{
-		extends: [
-			// "plugin:@typescript-eslint/recommended-requiring-type-checking"
-		],
-		files: ["*.ts", "*.tsx"],
-		parserOptions: {
-			project: path.join(__dirname, "tsconfig.json"),
-		},
-		// exclude svelte +page.ts and +page.server.ts files from type-checking
-		excludedFiles: ["+page.ts", "+page.server.ts", "+server.ts"],
+	overrides: [{
+		files: ['*.svelte'], processor: 'svelte-eslint-parser', parserOptions: {
+			parser: '@typescript-eslint/parser',
+		}
 	}],
+	// {
+	// 	extends: [
+	// 		// "plugin:@typescript-eslint/recommended-requiring-type-checking"
+	// 	],
+	// 	files: ["*.ts", "*.tsx"],
+	// 	parserOptions: {
+	// 		project: path.join(__dirname, "tsconfig.json"),
+	// 	},
+	// 	// exclude svelte +page.ts and +page.server.ts files from type-checking
+	// 	excludedFiles: ["+page.ts", "+page.server.ts", "+server.ts"],
+	// }],
 	rules: {
 		"@typescript-eslint/consistent-type-imports": [
 			"warn",
@@ -36,12 +41,10 @@ module.exports = {
 		"@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
 		"@typescript-eslint/switch-exhaustiveness-check": "error"
 	},
-	settings: {
-		'svelte3/typescript': () => require('typescript'),
-	},
 	parserOptions: {
 		sourceType: 'module',
 		ecmaVersion: 2020,
+		extraFileExtensions: ['.svelte'],
 	},
 	env: {
 		browser: true,

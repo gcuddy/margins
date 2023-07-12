@@ -39,7 +39,7 @@
 {#if $form.ids.length}
 	<div
 		class={cn(popoverVariants(), 'fixed bottom-14 left-0 right-0 mx-auto w-max')}
-		transition:fly|local={{ y: 30 }}
+		transition:fly={{ y: 30 }}
 	>
 		<form use:enhance method="post" class="flex flex-col gap-4">
 			<Muted>{$form.ids.length} notes</Muted>

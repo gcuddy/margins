@@ -50,7 +50,7 @@
 
 	interface $$Props
 		extends ComponentProps<
-			PopoverButton<SupportedElement | typeof SvelteComponent>
+			PopoverButton<SupportedElement | typeof SvelteComponent<any>>
 		> {
 		class?: string;
 		ref?: HTMLElement;

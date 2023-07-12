@@ -174,7 +174,7 @@
 		{/if}
 		<!-- {timestamp} -->
 		{#if annotating}
-			<!-- in:fly={{
+			<!-- in:fly|global={{
 				y: -10,
 				opacity: 0.75,
 			}} -->

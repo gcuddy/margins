@@ -123,7 +123,7 @@
 />
 {#if animate}
 	<div
-		transition:fade={{
+		transition:fade|global={{
 			duration: 200
 		}}
 		use:content

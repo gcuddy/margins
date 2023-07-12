@@ -450,7 +450,7 @@
 				popoverVariants(),
 				'fixed bottom-10 left-0 right-0 mx-auto w-max bg-popover/90 backdrop-blur-sm'
 			)}
-			transition:fly|local={{ y: 30 }}
+			transition:fly={{ y: 30 }}
 			bind:this={actions_div}
 		>
 			<div class="flex flex-col gap-4">

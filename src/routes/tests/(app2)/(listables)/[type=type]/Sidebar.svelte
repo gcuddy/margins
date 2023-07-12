@@ -115,7 +115,7 @@
 
 {#if $render && $mq.max_lg}
 	<div
-		transition:fade={{ duration: 150 }}
+		transition:fade|global={{ duration: 150 }}
 		aria-hidden="true"
 		class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
 	/>
@@ -125,7 +125,7 @@
 	<!-- When mainnav is hidden, translate up a bit to center it vertically -->
 	<div
 		bind:this={container}
-		transition:fly|local={{ y: 10, duration: 200 }}
+		transition:fly={{ y: 10, duration: 200 }}
 		class="sticky bottom-0 left-0 right-0 top-14 max-h-[calc(100vh-(3.5rem))] w-80 transition-transform duration-300 lg:w-[--width] {$mainnav.show
 			? ''
 			: '-translate-y-7'}"

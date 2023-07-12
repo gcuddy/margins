@@ -22,7 +22,7 @@ import Button from "$lib/components/Button.svelte";
 {/if}
 
 {#if $chosenConditionsStore.conditions.length > 1}
-	<!-- transition:fly|local={{ y: -5 }} -->
+	<!-- transition:fly={{ y: -5 }} -->
 	<div class="text-sm text-gray-500">
 		<span>
 			If

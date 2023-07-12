@@ -42,7 +42,7 @@
 
 {#if annotations.length}
 	{#each annotations as annotation (annotation.id)}
-		<div animate:flip transition:scale>
+		<div animate:flip transition:scale|global>
 			<div>
 				<p>{annotation.body}</p>
 				<p>{annotation.createdAt}</p>

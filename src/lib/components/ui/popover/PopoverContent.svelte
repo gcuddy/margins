@@ -75,7 +75,7 @@
 			]
 		}}
 	>
-		<div transition:fly={{ x, y, duration: 200 }}>
+		<div transition:fly|global={{ x, y, duration: 200 }}>
 			<PopoverPanel {...$$restProps} class={cn(popoverVariants(), className)}>
 				<slot />
 			</PopoverPanel>

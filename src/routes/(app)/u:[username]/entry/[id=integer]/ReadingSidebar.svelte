@@ -596,7 +596,7 @@
 						/>
 					</DisclosureButton>
 					<button
-						in:fade|local={{ delay: 400 }}
+						in:fade={{ delay: 400 }}
 						disabled={noting}
 						class="flex items-center self-end rounded-lg p-1.5 text-xs font-medium dark:hover:bg-gray-700/50"
 						on:click={() => (noting = true)}
@@ -607,7 +607,7 @@
 				</div>
 				{#if open}
 					<div
-						transition:slide|local={{
+						transition:slide={{
 							duration: 75,
 						}}
 					>
@@ -744,7 +744,7 @@
 											});
 											noting = false;
 										}}
-										in:fly={{ y: -10 }}
+										in:fly|global={{ y: -10 }}
 										on:keydown={(e) => {
 											if (e.key === "escape") {
 												// todo: noting = false
@@ -864,7 +864,7 @@
 							</div>
 						</div>
 						{#if open}
-							<div transition:slide|local={{ duration: 75 }}>
+							<div transition:slide={{ duration: 75 }}>
 								<DisclosurePanel static>
 									<div class="flex flex-col space-y-4 text-sm" use:autoAnimate>
 										{#each filteredItems as annotation (annotation.id)}
@@ -874,7 +874,7 @@
 												animate:flip={{
 													duration: 125,
 												}}
-												transition:slide|local={{ duration: 75 }}
+												transition:slide={{ duration: 75 }}
 											>
 												<Annotation
 													on:delete={(e) => {

@@ -454,7 +454,7 @@
 	<div use:editMenuContent class="z-10 select-none">
 		<div
 			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
-			in:scale|local={{
+			in:scale={{
 				start: 0.9
 			}}
 		>
@@ -480,7 +480,7 @@
 	>
 		<div
 			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
-			in:scale|local={{
+			in:scale={{
 				delay: 50,
 				start: 0.9
 			}}
@@ -589,7 +589,7 @@
 	<div use:annotationContent>
 		<!-- use:draggable -->
 		<div
-			in:scale={{
+			in:scale|global={{
 				duration: 200,
 				start: 0.9
 			}}

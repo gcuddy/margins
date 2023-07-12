@@ -39,11 +39,11 @@
 	class="fixed inset-0 z-50 overflow-y-auto p-4 pt-[25vh]"
 	{initialFocus}
 >
-	<div transition:fade|local={{ duration: 150 }}>
+	<div transition:fade={{ duration: 150 }}>
 		<DialogOverlay class="fixed inset-0 bg-gray-50/50 dark:bg-gray-900/30" />
 	</div>
-	<div transition:fadeScale|local={{ duration: 150, baseScale: 0.95 }}>
-		<!-- out:fadeScale={{
+	<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
+		<!-- out:fadeScale|global={{
 			duration: 150,
 			baseScale: 0.95,
 			easing: backIn,

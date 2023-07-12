@@ -100,7 +100,7 @@
 	import {
 		type ComponentProps,
 		type ComponentType,
-		type SvelteComponentTyped,
+		type SvelteComponent,
 		getContext,
 		setContext
 	} from 'svelte';

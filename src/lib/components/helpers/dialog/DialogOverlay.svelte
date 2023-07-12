@@ -42,13 +42,13 @@
 	}
 </script>
 
-<!-- in:inProp={inParams}
-out:out={inParams} -->
+<!-- in:inProp|global={inParams}
+out:out|global={inParams} -->
 <div
 	class={className}
 	on:click={handleClick}
 	aria-hidden="true"
-	transition:transition={transitionParams}
+	transition:transition|global={transitionParams}
 	on:introstart
 	on:outrostart
 	on:introend

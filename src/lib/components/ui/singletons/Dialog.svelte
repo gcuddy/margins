@@ -80,7 +80,7 @@
 </script>
 
 <script lang="ts">
-	import type { ComponentEvents, ComponentProps, ComponentType, SvelteComponentTyped } from 'svelte';
+	import type { ComponentEvents, ComponentProps, ComponentType, SvelteComponent } from 'svelte';
 
 	import {
 		Dialog,

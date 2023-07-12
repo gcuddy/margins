@@ -52,7 +52,7 @@
 	$: data = $state[entry.id];
 </script>
 
-<!-- out:send|local={{
+<!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
 <div class="flex grow items-center gap-x-4">

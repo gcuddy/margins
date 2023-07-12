@@ -140,7 +140,7 @@
 			<div class="flex flex-col gap-4 pt-4 md:flex-row md:justify-between">
 				<div class="grow space-y-2">
 					{#if conditions.length > 1}
-						<!-- transition:fly|local={{ y: -5 }} -->
+						<!-- transition:fly={{ y: -5 }} -->
 						<div class="text-sm text-gray-500">
 							<span>
 								If

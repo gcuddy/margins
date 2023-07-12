@@ -554,7 +554,7 @@
 
 {#if saved_position && $mainElScroll.offset < 0.02}
 	<div
-		transition:fly={{
+		transition:fly|global={{
 			y: 10,
 		}}
 		class="fixed bottom-4 right-4 text-2xl sm:right-8"

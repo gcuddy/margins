@@ -34,10 +34,10 @@
 	<div class="rounded-lg bg-gray-800/80 p-2 dark:bg-black">
 		{#if true}
 			<div
-				out:send={{
+				out:send|global={{
 					key: "player",
 				}}
-				in:receive={{
+				in:receive|global={{
 					key: "player",
 				}}
 				class="relative  h-full w-full "
@@ -55,7 +55,7 @@
 				</div>
 				<div class="absolute bottom-0 flex w-full items-center justify-between">
 					<div
-						out:send={{
+						out:send|global={{
 							key: "meta",
 						}}
 						class="relative flex h-5 w-5 select-none items-center overflow-hidden rounded "
@@ -93,10 +93,10 @@
 			</div>
 		{:else if expanded}
 			<div
-				out:send={{
+				out:send|global={{
 					key: "player",
 				}}
-				in:receive={{
+				in:receive|global={{
 					key: "player",
 				}}
 				class="col-start-1 col-end-1 row-start-1 row-end-1 grid grid-rows-2"

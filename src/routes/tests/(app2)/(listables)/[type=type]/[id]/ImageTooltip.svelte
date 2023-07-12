@@ -9,7 +9,7 @@
 
 <!-- position a menu absolutely in bottom-right of img -->
 
-<div transition:fade use:popperContent>
+<div transition:fade|global use:popperContent>
 	<Button class="absolute bottom-0 right-0">
 		<MoreHorizontal />
 	</Button>

@@ -83,10 +83,10 @@
 								// archiving_entries = archiving_entries.filter((e) => e.id !== entry.id);
 							}, 250);
 						}}
-						in:receive={{
+						in:receive|global={{
 							key: `${name.toLowerCase()}-${entry.id}`
 						}}
-						out:fly={{
+						out:fly|global={{
 							y: 10,
 							opacity: 0,
 							delay: 300,

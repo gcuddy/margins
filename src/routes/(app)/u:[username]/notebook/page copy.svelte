@@ -71,7 +71,7 @@
 							{#if annotation.body}
 								<div class="flex items-center transition">
 									<input
-										in:fly|local={{ x: -5 }}
+										in:fly={{ x: -5 }}
 										type="checkbox"
 										class="h-6 w-0 rounded-full opacity-0 transition-all {select_multiple &&
 											'!w-6 opacity-100 mr-2'}"
@@ -91,7 +91,7 @@
 							<div class="flex items-center space-x-2">
 								{#if select_multiple}
 									<input
-										in:fly|local={{ x: -5 }}
+										in:fly={{ x: -5 }}
 										type="checkbox"
 										class="h-6 w-6  rounded-full"
 										value={annotation}

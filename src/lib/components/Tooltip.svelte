@@ -59,12 +59,12 @@
 	class="absolute z-10 overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black/5 dark:border dark:border-gray-800 dark:bg-black/95 dark:ring-black/25"
 	style="top: {top}px; left: {left}px; visibility: {visibility};"
 	bind:this={tooltip}
-	in:scale={{
+	in:scale|global={{
 		start: 0.7,
 		duration: 300,
 		easing: backOut,
 	}}
-	out:fade={{
+	out:fade|global={{
 		duration: 150,
 	}}
 	use:clickOutside={() => dispatch('clickOutside')}

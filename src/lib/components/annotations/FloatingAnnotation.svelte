@@ -139,8 +139,8 @@
 			rotation.set(-2, { soft: true });
 		}
 	}}
-	in:fly={{ y: 10 }}
-	out:fadeScale={{
+	in:fly|global={{ y: 10 }}
+	out:fadeScale|global={{
 		easing: saving ? backInOut : undefined,
 		duration: 400,
 		baseScale: 0.9,

@@ -484,7 +484,7 @@
 				<!-- takes forever to use animate flip on safari with filtering damn -->
 				<!-- animate:flip={{ duration: $flipDurationMs }} -->
 				<!-- transitions are nice for removing/adding to list, but obnoxious for page transitions -->
-				<!-- in:slide|local={{
+				<!-- in:slide={{
 						duration: 125,
 					}} -->
 				<div

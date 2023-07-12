@@ -73,8 +73,8 @@
 {#if $dragging}
 	<div class="fixed bottom-5 left-5 z-50 sm:bottom-9 sm:left-9">
 		<div
-			in:fly={{ duration: 250, x: -100 }}
-			out:fade={{ duration: 250 }}
+			in:fly|global={{ duration: 250, x: -100 }}
+			out:fade|global={{ duration: 250 }}
 			class="before:content-['drop to add to inbox'] grid place-content-center rounded-full border bg-accent p-12 text-accent-foreground shadow-xl transition duration-500 before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-accent/90 before:p-12 before:transition {dragOver
 				? 'before:scale-[2.5] before:opacity-100'
 				: 'before:scale-[1.2] before:opacity-0'}"

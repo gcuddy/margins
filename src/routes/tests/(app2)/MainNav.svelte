@@ -80,11 +80,11 @@
 		<!-- logo -->
 		<div class="flex grow line-clamp-2 justify-center text-xs md:text-sm lg:text-base">
 			{#if $menu.center && $menu.entry?.title}
-				<div transition:fly|local>
+				<div transition:fly>
 					{$menu.entry?.title}
 				</div>
 			{:else if $menu.center && $menu.html}
-				<div transition:fly|local>
+				<div transition:fly>
 					{$menu.html}
 				</div>
 			{:else if $menu.center && $page.data.title}

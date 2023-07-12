@@ -30,7 +30,7 @@
 	export let values: TValue[] | Writable<TValue[]> | Readable<TValue[]> = [];
 
 	type StoredComponent<T extends SvelteComponent> = {
-		component: typeof SvelteComponent;
+		component: typeof SvelteComponent<any>;
 		// REVIEW: how come this doesn't work?
 		props?: ComponentProps<T>;
 	};
@@ -147,8 +147,7 @@
 		createEventDispatcher,
 		onDestroy,
 		onMount,
-		SvelteComponent,
-		SvelteComponentTyped,
+		SvelteComponent
 	} from "svelte";
 	import type {
 		ComponentProperties,
@@ -196,7 +195,7 @@
 	);
 </script>
 
-<div transition:fadeScale|local={{ duration: 150, baseScale: 0.95 }}>
+<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
 	<!-- TODO: make onselect a prop -->
 	<Combobox
 		values={Query && $Query?.isSuccess

@@ -93,7 +93,7 @@
 	{#if open}
 		<!-- todo: make this fly instead -->
 		<div
-			transition:fade|local={{ duration: 150 }}
+			transition:fade={{ duration: 150 }}
 			use:popperContent
 			class="z-20"
 		>

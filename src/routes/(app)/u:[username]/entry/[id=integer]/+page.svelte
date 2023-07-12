@@ -652,7 +652,7 @@
 									</span>
 								{/if}
 								{#if data.authorized && article.bookmark && article.tags}
-									<div transition:slide|local>
+									<div transition:slide>
 										<TagInputCombobox
 											original={{ ...article }}
 											allTags={$page.data.tags}

@@ -44,7 +44,7 @@
 		on:consider={(e) => {
 			favorite.children = e.detail.items;
 		}}
-		transition:slide
+		transition:slide|global
 		on:introstart={() => (expanding = true)}
 		on:introend={() => (expanding = false)}
 		on:outrostart={() => (expanding = true)}

@@ -99,7 +99,7 @@
 	export let placeholder: string = "Search…";
 </script>
 
-<div transition:fadeScale|local={{ duration: 150, baseScale: 0.95 }}>
+<div transition:fadeScale={{ duration: 150, baseScale: 0.95 }}>
 	<!-- TODO: make onselect a prop -->
 	<Combobox
 		values={Query && $Query?.isSuccess ? $Query.data : $filteredActions || []}

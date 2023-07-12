@@ -127,7 +127,7 @@
 					}
 				}}
 			>
-				<div in:fade class="h-20  md:h-24">
+				<div in:fade|global class="h-20  md:h-24">
 					<div
 						class="dark: flex h-full flex-col justify-center border-b border-gray-100 px-6 ring-inset  focus:!outline-none focus-visible:!outline-none group-focus-visible:bg-gray-50 group-focus-visible:ring-1 dark:border-gray-700 dark:group-focus-visible:bg-gray-800  {selected_articles.some(
 							(a) => a.id === item.id

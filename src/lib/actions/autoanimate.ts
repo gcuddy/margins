@@ -28,6 +28,6 @@ const autoanimate = ((
 			animationController.destroy && animationController.destroy();
 		},
 	};
-}) satisfies Action;
+}) satisfies Action<HTMLElement, any>;
 
 export default autoanimate;

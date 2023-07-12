@@ -46,7 +46,7 @@
 	>
 		<div
 			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
-			in:scale|local={{
+			in:scale={{
 				delay: 50,
 				start: 0.9
 			}}

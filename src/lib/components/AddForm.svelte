@@ -185,7 +185,7 @@
 				/> -->
 				{#if $query.isInitialLoading || $query.isSuccess}
 					<div
-						in:fade
+						in:fade|global
 						class="flex h-6 flex-1 items-center gap-2 truncate rounded px-2 text-sm dark:bg-gray-600 dark:text-gray-300"
 					>
 						{#if $query.isInitialLoading}

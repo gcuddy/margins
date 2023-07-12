@@ -69,7 +69,7 @@
 					}
 				]
 			}}
-			out:fade|local={{
+			out:fade={{
 				duration: 200
 			}}
 			class="z-50"

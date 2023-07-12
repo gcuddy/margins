@@ -83,7 +83,7 @@ $: console.log({$state})
 
 {#if $render && $mq.max_sm}
 	<div
-		transition:fade={{ duration: 150 }}
+		transition:fade|global={{ duration: 150 }}
 		aria-hidden="true"
 		class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
 	/>
@@ -94,7 +94,7 @@ $: console.log({$state})
 		<aside style:--sidebar-width='{width}px' class=" z-10 max-lg:shadow-lg">
 			<div
 				class="flex h-[calc(100vh-6rem)] flex-col gap-2 overflow-y-auto overflow-x-hidden pb-4 max-lg:absolute max-lg:right-0 max-lg:top-0"
-				in:fly|local={{
+				in:fly={{
 					y: -10
 				}}
 			>

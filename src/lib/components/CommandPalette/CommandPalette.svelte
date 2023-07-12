@@ -909,7 +909,7 @@
 		}}
 	/>
 	<div
-		transition:fadeScale|local={{ duration: 150, baseScale: 0.95 }}
+		transition:fadeScale={{ duration: 150, baseScale: 0.95 }}
 		class="contents"
 	>
 		<Combobox

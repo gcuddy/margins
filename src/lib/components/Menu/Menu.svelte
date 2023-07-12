@@ -162,7 +162,7 @@
 			id="menu-{id}"
 			tabindex="0"
 			on:keydown={handleMenuKeydown}
-			out:fade={{ duration: 200 }}
+			out:fade|global={{ duration: 200 }}
 			bind:this={menu}
 			on:click={(e) => {
 				close();
