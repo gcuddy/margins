@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "fullTextIndex", "orderByNulls", "extendedWhereUnique"]
+  previewFeatures = ["extendedWhereUnique", "fullTextIndex", "fullTextSearch"]
 }
 
 generator zod {
@@ -40,7 +40,7 @@ model State {
   /// State's UI color as a hex string
   color           String?
   /// The type of the state
-  type            Location
+  type            State_type
   /// The position of the state
   position        Float      @default(0)
   description     String?
@@ -239,7 +239,7 @@ model person_to_entry {
 model Entry {
   createdAt       DateTime                        @default(now())
   author          String?
-  location        Location?
+  location        Entry_location?
   title           String?                         @db.VarChar(2083)
   type            DocumentType                    @default(article)
   updatedAt       DateTime                        @updatedAt
@@ -301,7 +301,6 @@ model Entry {
   log             Log[]
   TagOnEntry      TagOnEntry[]
   referenced_by   annotation_to_entry_reference[]
-  EntryContent    EntryContent[]
 
   @@unique([uri, id])
   @@index([feedId])
@@ -310,23 +309,6 @@ model Entry {
   @@fulltext([text, title, author])
   @@fulltext([title, author])
   @@fulltext([text])
-}
-
-// represents user modifications to an entry
-model EntryContent {
-  entry_id Int
-  user_id  String
-  entry    Entry  @relation(fields: [entry_id], references: [id])
-  user     User   @relation(fields: [user_id], references: [id])
-
-  title  String?
-  text   String?
-  html   String?
-  author String?
-
-  @@id([entry_id, user_id])
-  @@index([user_id])
-  @@index([entry_id])
 }
 
 model annotation_tag {
@@ -749,7 +731,6 @@ model User {
   relations          Relation[]
   AuthorizationKey   AuthorizationKey?
   TagOnEntry         TagOnEntry[]
-  EntryContent       EntryContent[]
 
   @@map("user")
 }
@@ -905,7 +886,7 @@ enum Color {
 enum RelationType {
   Related
   SavedFrom
-  Grouped // <- Used to refer to a PDF belonging to a Book, for example
+  Grouped
 }
 
 enum AnnotationType {
@@ -914,20 +895,6 @@ enum AnnotationType {
   annotation
   reply
   document
-}
-
-enum Location {
-  inbox
-  now
-  backlog
-  review
-  archive
-
-  ///@deprecated
-  soon
-
-  ///@deprecated
-  later
 }
 
 enum DocumentType {
@@ -962,4 +929,18 @@ enum CollectionItemType {
 enum FavoriteType {
   FOLDER
   FAVORITE
+}
+
+enum Entry_location {
+  inbox
+  soon
+  later
+  archive
+}
+
+enum State_type {
+  inbox
+  soon
+  later
+  archive
 }
