@@ -132,18 +132,18 @@
 			<div
 				id="slash-command"
 				bind:this={commandListContainer}
-				class="z-50 h-auto max-h-[330px] w-72 overflow-y-auto scroll-smooth rounded-md border border-stone-200 bg-white px-1 py-2 shadow-md transition-all"
+				class="z-50 h-auto max-h-[330px] w-72 overflow-y-auto scroll-smooth rounded-md border bg-popover px-1 py-2 shadow-md transition-all"
 			>
 				{#each items as item, index}
 					<button
 						data-index={index}
-						class={`flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm text-stone-900 hover:bg-stone-100 ${
-							index === $selectedIndex ? 'bg-stone-100 text-stone-900' : ''
+						class={`flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm text-popover-foreground hover:bg-accent ${
+							index === $selectedIndex ? 'bg-accent text-accent-foreground' : ''
 						}`}
 						on:click={() => selectItem(index)}
 					>
 						<div
-							class="flex h-10 w-10 items-center justify-center rounded-md border border-stone-200 bg-white"
+							class="flex h-10 w-10 items-center justify-center rounded-md border text-stone-700 bg-white"
 						>
 							<svelte:component this={item.icon} />
 						</div>
