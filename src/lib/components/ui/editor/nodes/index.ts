@@ -1,10 +1,10 @@
 
 import { Node, mergeAttributes } from '@tiptap/core';
 import { SvelteNodeViewRenderer } from 'svelte-tiptap';
-import YoutubeTimestamp from './youtube-timestamp/YoutubeTimestamp.svelte';
+import Timestamp from './timestamp/Timestamp.svelte';
 
-export const YoutubeTimestampNode = Node.create({
-    name: 'youtubeTimestamp',
+export const TimestampNode = Node.create({
+    name: 'timestamp',
     group: 'inline',
     atom: true,
     inline: true,
@@ -18,24 +18,30 @@ export const YoutubeTimestampNode = Node.create({
             entry_id: {
                 default: null,
             },
+            pindex_id: {
+                default: null,
+            },
             youtube_id: {
                 default: null,
             },
             title: {
+                default: null
+            },
+            image: {
                 default: null
             }
         };
     },
 
     parseHTML() {
-        return [{ tag: 'youtube-timestamp' }];
+        return [{ tag: 'timestamp' }];
     },
 
     renderHTML({ HTMLAttributes }) {
-        return ['youtube-timestamp', mergeAttributes(HTMLAttributes)];
+        return ['timestamp', mergeAttributes(HTMLAttributes)];
     },
 
     addNodeView() {
-        return SvelteNodeViewRenderer(YoutubeTimestamp);
+        return SvelteNodeViewRenderer(Timestamp);
     },
 });

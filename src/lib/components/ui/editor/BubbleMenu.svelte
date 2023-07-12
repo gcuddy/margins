@@ -32,7 +32,6 @@
 	}
 
 	$: shouldShow = ({ editor }) => {
-		console.log({editor})
 		// don't show if image is selected
 		if (editor.isActive('image') || editor.isActive('annotationExtension')) {
 			return false;

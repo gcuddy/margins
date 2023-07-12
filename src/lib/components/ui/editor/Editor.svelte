@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { Editor as TEditor } from '@tiptap/core';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import type { JSONContent, Editor as TEditor } from '@tiptap/core';
 	import { createEditor, Editor, EditorContent } from 'svelte-tiptap';
 	import { writable, type Readable } from 'svelte/store';
 	import { TiptapExtensions } from './extensions';
@@ -9,15 +9,25 @@
 	import debounce from 'just-debounce-it';
 	import { persisted } from 'svelte-local-storage-store';
 
+
+	export let id: string | number | undefined = undefined;
+
 	let editor: Readable<Editor>;
 
 	const save_status = writable('Saved');
-	const content = persisted<any>('editor__content', '');
+
+	// TODO: make this persist to indexeddb
+	const content = persisted<any>('editor__content' + (id ?? ''), '');
+
+	const dispatch = createEventDispatcher<{
+		save: JSONContent;
+	}>();
 
 	const debounced_update = debounce(async ({ editor }: { editor: TEditor }) => {
 		const json = editor.getJSON();
 		save_status.set('Saving...');
 		content.set(json);
+		dispatch('save', json);
 		setTimeout(() => {
 			save_status.set('Saved');
 		}, 500);

@@ -72,9 +72,13 @@ const getSuggestionItems = (props: { query: string }) => {
     console.log({ props });
 
     const $page = get(page);
+    const $player = get(player);
+
     console.log({ pagedata: $page.data });
     // Are we currently in a video?
     const video = $page.data?.entry?.type === 'video' && !!$page.data.entry?.youtubeId;
+
+    const audio = $player?.type === 'audio';
 
     const items = [
         {
@@ -230,7 +234,7 @@ const getSuggestionItems = (props: { query: string }) => {
                             //     text: props.title,
                             // },
                             {
-                                type: "youtubeTimestamp",
+                                type: "timestamp",
                                 attrs: {
                                     timestamp: time,
                                     entry_id: $page.data.entry?.id,
@@ -242,6 +246,34 @@ const getSuggestionItems = (props: { query: string }) => {
                         .run();
                 }
             },
+        })
+    }
+
+    if (audio) {
+        items.push({
+            title: "Timestamp",
+            description: "Capture a timestamp from the current audio.",
+            searchTerms: ["timestamp", "time", "audio"],
+            icon: ClockIcon,
+            command: async ({ editor, range }: CommandProps) => {
+                const $audioPlayer = get($player.player);
+                const time = $audioPlayer.state.currentTime;
+                editor
+                    .chain()
+                    .focus()
+                    .insertContentAt(range, [
+                        {
+                            type: "timestamp",
+                            attrs: {
+                                timestamp: time,
+                                entry_id: $audioPlayer.audio?.entry_id,
+                                title: $audioPlayer.audio?.title,
+                                image: $audioPlayer.audio?.image,
+                            }
+                        }
+                    ])
+                    .run();
+            }
         })
     }
 

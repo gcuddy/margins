@@ -23,7 +23,7 @@
 	import { types } from '$lib/types';
 	import { cn } from '$lib/utils/tailwind';
 	import debounce from 'just-debounce-it';
-	import { Check, FilterIcon, Loader2Icon, Plus, XIcon } from 'lucide-svelte';
+	import { ArrowDownUpIcon, Check, FilterIcon, Loader2Icon, Plus, XIcon } from 'lucide-svelte';
 	import toast from 'svelte-french-toast';
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { Snapshot } from './$types';
@@ -41,6 +41,10 @@
 		CommandItem,
 		CommandList
 	} from '$components/ui/command';
+	import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
+	import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
+	import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
+	import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
 
 	$: filter_type = $page.url.searchParams.get('type');
 	export let data;
@@ -361,6 +365,20 @@
 				</Button>
 			</div>
 		{/if}
+		<DropdownMenu>
+			<DropdownMenuTrigger class={buttonVariants({variant: "secondary", size: 'sm'})}>
+					<ArrowDownUpIcon class="h-4 w-4 mr-2" />
+					Sort
+			</DropdownMenuTrigger>
+			<DropdownMenuContent placement="bottom">
+				<DropdownMenuItem>
+					Name
+				</DropdownMenuItem>
+				<DropdownMenuItem>
+					Author
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	</div>
 	<form
 		bind:this={form}

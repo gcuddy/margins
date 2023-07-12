@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import Editor from '$components/ui/editor/Editor.svelte';
 	import smoothload from '$lib/actions/smoothload';
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
@@ -15,6 +16,8 @@
 	export let data: PageData & {
 		podcast: NonNullable<Podcast>;
 	};
+
+	let noting = false;
 
 	$: console.log({ data });
 
@@ -54,7 +57,7 @@
 								src: episode.enclosureUrl,
 								title: episode.title,
 								artist: episode.feedTitle,
-								image: episode.feedImage,
+								image: data.podcast.episode.image || data.podcast.episode.feedImage,
 								entry_id: data.entry?.id,
 								interaction_id: data.entry?.interaction?.id,
 								slug: $page.url.pathname,
@@ -76,11 +79,17 @@
 				</div>
 			</div>
 		</div>
-
+		<button on:click={() => noting = !noting}>annotate</button>
+		{#if noting}
+			<Editor id={data.entry?.id} on:save={(e) => {
+				console.log({e})
+			}} />
+		{:else}
 		<div class="prose prose-stone space-y-4 dark:prose-invert">
 			<div>
 				{@html data.podcast.episode.description}
 			</div>
 		</div>
+		{/if}
 	</div>
 {/if}

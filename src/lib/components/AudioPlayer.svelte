@@ -171,6 +171,7 @@
 	import AnnotationForm from './AnnotationForm.svelte';
 	import { useTimeStampNote } from './ui/singletons/dialogs';
 	import { create_mutation } from '$lib/state/query-state';
+	import player from '$lib/stores/player';
 
 	const timestamp = derived(audioPlayer, ($audioPlayer) =>
 		$audioPlayer.state.currentTime ? Math.floor($audioPlayer.state.currentTime) : 0
@@ -225,6 +226,17 @@
 	onDestroy(() => {
 		unsubscribe_timestamp();
 	});
+
+
+	$: if (!$audioPlayer.state.paused) {
+		// if playing, set global player store
+		player.set({
+			// REVIEW: should we set the store, or the value of the store?
+			player: audioPlayer,
+			type: "audio",
+			timestamp: $audioPlayer.state.currentTime
+		})
+	}
 </script>
 
 {#if $audioPlayer?.audio?.src}
@@ -243,7 +255,7 @@
 			</div>
 			<div class="flex gap-3 pt-2">
 				<img
-					class="aspect-square w-12 shrink-0 gap-1 rounded-md"
+					class="aspect-square w-12 h-12 object-cover shrink-0 gap-1 rounded-md"
 					alt=""
 					src={$audioPlayer.audio.image}
 				/>

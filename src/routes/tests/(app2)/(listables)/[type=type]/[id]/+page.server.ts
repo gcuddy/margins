@@ -27,6 +27,8 @@ import { relationSchema, update_relation } from "$lib/server/mutations";
 export const load = (async (event) => {
     const { id, type: _type } = event.params;
 
+    //TODO: redirect entry/id to type/id
+
     const type = _type as Type;
 
     const session = await event.locals.validate();

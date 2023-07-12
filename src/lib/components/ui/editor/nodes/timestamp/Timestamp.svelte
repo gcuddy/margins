@@ -16,13 +16,14 @@
 
 	function handleClick() {
 		// if we're on the page...
-		console.log("CLICKKKK");
-		console.log($page.data.entry?.id, node.attrs.entry_id, $page.data.entry?.youtubeId, node.attrs.youtube_id, $player, $player?.type)
 		if ($page.data.entry?.id == node.attrs.entry_id && $page.data.entry?.youtubeId == node.attrs.youtube_id && $player && $player.type === 'youtube') {
 			$player.player.seekTo(node.attrs.timestamp, true);
 			toast(TimestampToast)
 		}
+		// TODO: audioplayer
 	}
+
+	$: console.log({node})
 </script>
 
 <NodeViewWrapper
@@ -31,6 +32,11 @@
 		ring: selected
 	})}
 >
-	<button on:click={handleClick}>{timestamp}</button>
+	<button on:click={handleClick}>
+		{#if node.attrs.image}
+		<img src="{node.attrs.image}" class="relative -top-px m-0 inline aspect-square h-[.9em] w-[.9em] rounded-full object-cover align-middle" alt="">
+		{/if}
+	<span class="text-muted-foreground  tabular-nums">{timestamp}</span>
+	</button>
 </NodeViewWrapper>
 

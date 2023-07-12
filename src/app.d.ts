@@ -1,4 +1,5 @@
 /// <reference types="lucia-auth" />
+
 declare namespace Lucia {
     type Auth = import("$lib/server/lucia.js").Auth;
     type UserAttributes = Partial<import("@prisma/client").User>
@@ -24,6 +25,7 @@ declare namespace App {
             tags?: Promise<{ id: string; name: string; }[]>;
         }
         currentList?: import("$lib/stores/currentList").CurrentList;
+        current_entry_id?: import('svelte/store').Writable<number | null>;
         // tags?: import("@prisma/client").Tag[];
         // subscriptions?: import("$lib/trpc/router").RouterOutputs["user"]["data"]["subscriptions"];
         // states?: import("@prisma/client").State[];
