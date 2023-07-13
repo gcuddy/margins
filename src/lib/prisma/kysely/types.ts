@@ -3,64 +3,35 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	? ColumnType<S, I | undefined, U>
 	: ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
-export type Status = 'Backlog' | 'Now' | 'Archive';
+
 export const Status = {
 	Backlog: 'Backlog',
 	Now: 'Now',
 	Archive: 'Archive'
-};
-export type Color = 'Yellow' | 'Blue' | 'Green' | 'Pink' | 'Purple';
+} as const;
+export type Status = (typeof Status)[keyof typeof Status];
 export const Color = {
 	Yellow: 'Yellow',
 	Blue: 'Blue',
 	Green: 'Green',
 	Pink: 'Pink',
 	Purple: 'Purple'
-};
-export type RelationType = 'Related' | 'SavedFrom' | 'Grouped';
+} as const;
+export type Color = (typeof Color)[keyof typeof Color];
 export const RelationType = {
 	Related: 'Related',
 	SavedFrom: 'SavedFrom',
 	Grouped: 'Grouped'
-};
-export type AnnotationType = 'bookmark' | 'note' | 'annotation' | 'reply' | 'document';
+} as const;
+export type RelationType = (typeof RelationType)[keyof typeof RelationType];
 export const AnnotationType = {
 	bookmark: 'bookmark',
 	note: 'note',
 	annotation: 'annotation',
 	reply: 'reply',
 	document: 'document'
-};
-export type Location = 'inbox' | 'now' | 'backlog' | 'review' | 'archive' | 'soon' | 'later';
-export const Location = {
-	inbox: 'inbox',
-	now: 'now',
-	backlog: 'backlog',
-	review: 'review',
-	archive: 'archive',
-	soon: 'soon',
-	later: 'later'
-};
-export type DocumentType =
-	| 'article'
-	| 'podcast'
-	| 'rss'
-	| 'pdf'
-	| 'epub'
-	| 'bookmark'
-	| 'image'
-	| 'video'
-	| 'tweet'
-	| 'audio'
-	| 'book'
-	| 'movie'
-	| 'tv'
-	| 'song'
-	| 'album'
-	| 'playlist'
-	| 'recipe'
-	| 'game'
-	| 'board_game';
+} as const;
+export type AnnotationType = (typeof AnnotationType)[keyof typeof AnnotationType];
 export const DocumentType = {
 	article: 'article',
 	podcast: 'podcast',
@@ -81,19 +52,34 @@ export const DocumentType = {
 	recipe: 'recipe',
 	game: 'game',
 	board_game: 'board_game'
-};
-export type CollectionItemType = 'Entry' | 'Annotation' | 'Section' | 'Collection';
+} as const;
+export type DocumentType = (typeof DocumentType)[keyof typeof DocumentType];
 export const CollectionItemType = {
 	Entry: 'Entry',
 	Annotation: 'Annotation',
 	Section: 'Section',
 	Collection: 'Collection'
-};
-export type FavoriteType = 'FOLDER' | 'FAVORITE';
+} as const;
+export type CollectionItemType = (typeof CollectionItemType)[keyof typeof CollectionItemType];
 export const FavoriteType = {
 	FOLDER: 'FOLDER',
 	FAVORITE: 'FAVORITE'
-};
+} as const;
+export type FavoriteType = (typeof FavoriteType)[keyof typeof FavoriteType];
+export const Entry_location = {
+	inbox: 'inbox',
+	soon: 'soon',
+	later: 'later',
+	archive: 'archive'
+} as const;
+export type Entry_location = (typeof Entry_location)[keyof typeof Entry_location];
+export const State_type = {
+	inbox: 'inbox',
+	soon: 'soon',
+	later: 'later',
+	archive: 'archive'
+} as const;
+export type State_type = (typeof State_type)[keyof typeof State_type];
 export type Annotation = {
 	id: string;
 	createdAt: Generated<Timestamp>;
@@ -185,9 +171,32 @@ export type Article = {
 	userId: string;
 	favoriteId: number | null;
 };
+export type AuthKey = {
+	id: string;
+	hashed_password: string | null;
+	user_id: string;
+	primary_key: Generated<number>;
+	expires: number | null;
+};
 export type AuthorizationKey = {
 	id: string;
 	userId: string;
+};
+export type AuthSession = {
+	id: string;
+	user_id: string;
+	idle_expires: number;
+	active_expires: Generated<number>;
+};
+export type AuthUser = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	email: string;
+	username: Generated<string>;
+	default_state_id: number | null;
+	default_archive_id: number | null;
+	home_items: unknown | null;
 };
 export type Bookmark = {
 	id: Generated<number>;
@@ -281,7 +290,7 @@ export type ContextNode = {
 export type Entry = {
 	createdAt: Generated<Timestamp>;
 	author: string | null;
-	location: Location | null;
+	location: Entry_location | null;
 	title: string | null;
 	type: Generated<DocumentType>;
 	updatedAt: Timestamp;
@@ -342,14 +351,6 @@ export type Entry = {
 	publisher: string | null;
 	author_extra: unknown | null;
 	spotifyId: string | null;
-};
-export type EntryContent = {
-	entry_id: number;
-	user_id: string;
-	title: string | null;
-	text: string | null;
-	html: string | null;
-	author: string | null;
 };
 export type EntryData = {
 	id: Generated<number>;
@@ -477,13 +478,6 @@ export type InvitationCode = {
 	ownerId: string;
 	usedById: string | null;
 };
-export type Key = {
-	id: string;
-	hashed_password: string | null;
-	user_id: string;
-	primary: number;
-	expires: number | null;
-};
 export type Log = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
@@ -525,12 +519,6 @@ export type Relation = {
 	entryId: number;
 	relatedEntryId: number;
 };
-export type Session = {
-	id: string;
-	user_id: string;
-	idle_expires: number;
-	active_expires: Generated<number>;
-};
 export type SmartList = {
 	id: Generated<number>;
 	name: string;
@@ -561,7 +549,7 @@ export type State = {
 	/**
 	 * The type of the state
 	 */
-	type: Location;
+	type: State_type;
 	/**
 	 * The position of the state
 	 */
@@ -626,16 +614,6 @@ export type TwitterIntegration = {
 	expiresIn: number;
 	twitterId: string;
 };
-export type User = {
-	id: string;
-	createdAt: Generated<Timestamp>;
-	updatedAt: Timestamp;
-	email: string;
-	username: Generated<string>;
-	default_state_id: number | null;
-	default_archive_id: number | null;
-	home_items: unknown | null;
-};
 export type UserEntry = {
 	id: Generated<number>;
 };
@@ -644,12 +622,18 @@ export type UserFollows = {
 	B: string;
 };
 export type DB = {
+	_AnnotationToTag: AnnotationToTag;
+	_EntryToTag: EntryToTag;
+	_SubscriptionToTag: SubscriptionToTag;
+	_UserFollows: UserFollows;
 	Annotation: Annotation;
 	annotation_ref: annotation_ref;
 	annotation_tag: annotation_tag;
 	annotation_to_entry_reference: annotation_to_entry_reference;
-	_AnnotationToTag: AnnotationToTag;
 	Article: Article;
+	auth_key: AuthKey;
+	auth_session: AuthSession;
+	auth_user: AuthUser;
 	AuthorizationKey: AuthorizationKey;
 	Bookmark: Bookmark;
 	Collection: Collection;
@@ -658,32 +642,25 @@ export type DB = {
 	Context: Context;
 	ContextNode: ContextNode;
 	Entry: Entry;
-	EntryContent: EntryContent;
 	EntryData: EntryData;
+	EntryInteraction: Interaction;
 	EntryMedia: EntryMedia;
 	EntryTag: EntryTag;
-	_EntryToTag: EntryToTag;
 	Favorite: Favorite;
 	Feed: Feed;
-	EntryInteraction: Interaction;
 	InvitationCode: InvitationCode;
-	key: Key;
 	Log: Log;
 	Person: Person;
 	person_to_entry: person_to_entry;
 	Relation: Relation;
-	session: Session;
 	SmartList: SmartList;
 	State: State;
 	Stylesheet: Stylesheet;
 	Subscription: Subscription;
-	_SubscriptionToTag: SubscriptionToTag;
 	Tag: Tag;
 	Taggings: Tagging;
 	TagOnEntry: TagOnEntry;
 	Task: Task;
 	TwitterIntegration: TwitterIntegration;
-	user: User;
 	UserEntry: UserEntry;
-	_UserFollows: UserFollows;
 };

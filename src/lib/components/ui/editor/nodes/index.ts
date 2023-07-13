@@ -2,6 +2,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { SvelteNodeViewRenderer } from 'svelte-tiptap';
 import Timestamp from './timestamp/Timestamp.svelte';
+import Srs from './srs/SRS.svelte';
 
 export const TimestampNode = Node.create({
     name: 'timestamp',
@@ -45,3 +46,36 @@ export const TimestampNode = Node.create({
         return SvelteNodeViewRenderer(Timestamp);
     },
 });
+
+export const SRSNode = Node.create({
+    name: 'srs',
+    group: 'block',
+    atom: true,
+    inline: false,
+    selectable: true,
+    // content: "inline*",
+    // isloating: true,
+    // defining: true,
+    // selectable: true,
+    // content: "inline*",
+
+    addAttributes() {
+        return {
+            count: {
+                default: 0
+            }
+        }
+    },
+
+    parseHTML() {
+        return [{ tag: 'srs-component' }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['srs-component', mergeAttributes(HTMLAttributes), 0];
+    },
+
+    addNodeView() {
+        return SvelteNodeViewRenderer(Srs);
+    }
+})

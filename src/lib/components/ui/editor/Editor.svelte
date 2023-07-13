@@ -50,6 +50,7 @@
 	let hydrated = false;
 	$: if (editor && content && $content && !hydrated) {
 		// hydrate content from localstorage if not yet hydrated
+		console.log('being run')
 		$editor.commands.setContent($content);
 		hydrated = true;
 	}
@@ -57,8 +58,8 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
-	on:click={() => {
-		$editor?.chain().focus().run();
+	on:click|self={() => {
+		// $editor?.chain().focus().run();
 	}}
 	class="relative min-h-[500px] w-full max-w-screen-lg border-stone-200 p-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg"
 >

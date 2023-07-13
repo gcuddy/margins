@@ -1,6 +1,8 @@
 import lucia from 'lucia-auth';
 
 import { dev } from '$app/environment';
+import { sveltekit } from "lucia-auth/middleware";
+
 // import { db } from '$lib/db';
 import kysely from "$lib/auth/kysley-pscale-adapter";
 import { db } from "$lib/db";
@@ -16,6 +18,7 @@ export const auth = lucia({
     //     })
     // },
     env: dev ? 'DEV' : 'PROD',
+    middleware: sveltekit(),
     transformUserData: (userData) => {
         console.log({ userData })
         return {

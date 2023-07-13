@@ -23,7 +23,7 @@ import { SvelteCounterExtension } from "../nodes/link";
 import { iframeNode } from "../nodes/iframes";
 import AnnotationCommand from "./annotations";
 import { AnnotationExtension } from "../nodes/annotation";
-import { TimestampNode } from "../nodes";
+import { SRSNode, TimestampNode } from "../nodes";
 
 export const TiptapExtensions = [
     StarterKit.configure({
@@ -143,5 +143,6 @@ export const TiptapExtensions = [
     AnnotationExtension,
     iframeNode,
     Youtube,
-    TimestampNode
+    TimestampNode,
+    SRSNode
 ]

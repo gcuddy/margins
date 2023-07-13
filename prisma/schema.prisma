@@ -21,12 +21,12 @@ datasource db {
 }
 
 model InvitationCode {
-  code     String  @id @default(cuid())
-  used     Boolean @default(false)
+  code     String    @id @default(cuid())
+  used     Boolean   @default(false)
   ownerId  String
-  usedById String? @unique
-  owner    User    @relation("owner", fields: [ownerId], references: [id])
-  usedby   User?   @relation("user", fields: [usedById], references: [id])
+  usedById String?   @unique
+  owner    AuthUser  @relation("owner", fields: [ownerId], references: [id])
+  usedby   AuthUser? @relation("user", fields: [usedById], references: [id])
 
   @@index([ownerId])
 }
@@ -48,8 +48,8 @@ model State {
   default         Boolean    @default(false)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
-  user            User       @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  defaultRelation User?      @relation("default_state")
+  user            AuthUser   @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  defaultRelation AuthUser?  @relation("default_state")
   bookmarks       Bookmark[]
 
   @@index([userId])
@@ -83,7 +83,7 @@ model Bookmark {
   /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
   review_timestamp Int?
   entry            Entry?            @relation(fields: [entryId], references: [id])
-  user             User              @relation(fields: [userId], references: [id])
+  user             AuthUser          @relation(fields: [userId], references: [id])
   state            State?            @relation(fields: [stateId], references: [id])
   tags             Tagging[]
   collections      CollectionItems[]
@@ -116,7 +116,7 @@ model Relation {
   userId         String
   entryId        Int
   relatedEntryId Int
-  user           User         @relation(fields: [userId], references: [id])
+  user           AuthUser     @relation(fields: [userId], references: [id])
   entry          Entry        @relation("originatingEntryRelation", fields: [entryId], references: [id], onDelete: Cascade)
   relatedEntry   Entry        @relation("destinationEntryRelation", fields: [relatedEntryId], references: [id], onDelete: Cascade)
 
@@ -160,7 +160,7 @@ model Annotation {
   entry            Entry?                          @relation(fields: [entryId], references: [id])
   parent           Annotation?                     @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children         Annotation[]                    @relation("references")
-  creator          User                            @relation(fields: [userId], references: [id])
+  creator          AuthUser                        @relation(fields: [userId], references: [id])
   collections      CollectionItems[]
   favorite         Favorite?
   bookmark         Bookmark?                       @relation(fields: [bookmarkId], references: [id])
@@ -205,7 +205,7 @@ model ColorDescription {
   userId      String
   color       Color
   description String?
-  user        User    @relation(fields: [userId], references: [id])
+  user        AuthUser @relation(fields: [userId], references: [id])
 
   @@id([userId, color])
   @@index([userId])
@@ -323,13 +323,13 @@ model annotation_tag {
 }
 
 model TagOnEntry {
-  id      Int    @id @default(autoincrement())
+  id      Int      @id @default(autoincrement())
   tagId   Int
   entryId Int
   userId  String
-  tag     Tag    @relation(fields: [tagId], references: [id])
-  entry   Entry  @relation(fields: [entryId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
+  tag     Tag      @relation(fields: [tagId], references: [id])
+  entry   Entry    @relation(fields: [entryId], references: [id])
+  user    AuthUser @relation(fields: [userId], references: [id])
 
   @@unique([tagId, entryId, userId])
   @@index([tagId])
@@ -355,7 +355,7 @@ model EntryData {
   custom    Json?
   media     EntryMedia[]
   entry     Entry        @relation(fields: [entryId], references: [id])
-  user      User         @relation(fields: [userId], references: [id])
+  user      AuthUser     @relation(fields: [userId], references: [id])
 
   @@unique([entryId, userId])
   @@index([entryId])
@@ -410,7 +410,7 @@ model Article {
   type           Int       @default(0)
   userId         String
   favoriteId     Int?
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, url])
   @@index([userId])
@@ -419,13 +419,13 @@ model Article {
 
 model ContextNode {
   /// context node refers to a source or referrer — for example, a Discord Server, or another user
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   url         String?
   description String?
   userId      String
   refers_to   String?
-  owner       User    @relation(fields: [userId], references: [id])
+  owner       AuthUser @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
@@ -438,7 +438,7 @@ model Context {
   entryId     Int?
   feedId      Int?
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        AuthUser @relation(fields: [userId], references: [id])
   entry       Entry?   @relation(fields: [entryId], references: [id])
   feed        Feed?    @relation(fields: [feedId], references: [id])
 
@@ -460,7 +460,7 @@ model Collection {
   updatedAt   DateTime          @updatedAt
   contentData Json?
   viewOptions Json?
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       CollectionItems[]
   favorites   Favorite[]
 
@@ -541,7 +541,7 @@ model Subscription {
   title         String
   download_full Boolean  @default(false)
   feed          Feed     @relation(fields: [feedId], references: [id])
-  user          User     @relation(fields: [userId], references: [id])
+  user          AuthUser @relation(fields: [userId], references: [id])
   tags          Tag[]
 
   @@unique([userId, feedId])
@@ -571,7 +571,7 @@ model Interaction {
   note             String?
   rating           Int?
   entry            Entry     @relation(fields: [entryId], references: [id])
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
   bookmark         Bookmark?
 
   @@unique([userId, entryId])
@@ -593,7 +593,7 @@ model Log {
   episode      Int?
   season       Int?
   startingPage Int?
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   entry        Entry    @relation(fields: [entryId], references: [id])
 
   @@unique([userId, entryId, date])
@@ -609,7 +609,7 @@ model Tag {
   viewOptions    Json?
   userId         String
   favorite       Favorite?
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           AuthUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
   taggings       Tagging[]
   entryTags      EntryTag[]
   entries        Entry[]
@@ -630,7 +630,7 @@ model EntryTag {
   userId    String
   tag       Tag      @relation(fields: [tagId], references: [id])
   entry     Entry    @relation(fields: [entryId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  user      AuthUser @relation(fields: [userId], references: [id])
 
   @@id([entryId, tagId, userId])
   @@index([tagId])
@@ -645,7 +645,7 @@ model Tagging {
   feedId     Int?
   bookmarkId Int?
   tag        Tag       @relation(fields: [tagId], references: [id])
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
   feed       Feed?     @relation(fields: [feedId], references: [id])
   bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
 
@@ -675,25 +675,25 @@ model SmartList {
   updatedAt   DateTime   @default(now()) @updatedAt
   userId      String     @default("")
   favorites   Favorite[]
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        AuthUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, name])
   @@index([userId])
 }
 
-model Key {
-  id              String  @id @unique
+model AuthKey {
+  id              String   @id @unique
   hashed_password String?
   user_id         String
-  primary         Boolean
+  primary_key     Boolean @default(true)
   expires         BigInt?
-  user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  auth_user       AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
-  @@map("key")
+  @@map("auth_key")
 }
 
-model User {
+model AuthUser {
   id                 String               @id @unique @default(cuid())
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
@@ -702,10 +702,10 @@ model User {
   default_state_id   Int?                 @unique
   default_archive_id Int?
   home_items         Json?
-  session            Session[]
-  Key                Key[]
-  followedBy         User[]               @relation("UserFollows")
-  following          User[]               @relation("UserFollows")
+  auth_session       AuthSession[]
+  auth_key           AuthKey[]
+  followedBy         AuthUser[]           @relation("UserFollows")
+  following          AuthUser[]           @relation("UserFollows")
   interactions       Interaction[]
   favorites          Favorite[]
   articles           Article[]
@@ -732,26 +732,26 @@ model User {
   AuthorizationKey   AuthorizationKey?
   TagOnEntry         TagOnEntry[]
 
-  @@map("user")
+  @@map("auth_user")
 }
 
 model AuthorizationKey {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String   @id @default(cuid())
+  userId String   @unique
+  user   AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
-model Session {
-  id             String @id @unique
+model AuthSession {
+  id             String   @id @unique
   user_id        String
   idle_expires   BigInt
-  active_expires BigInt @default(0)
-  user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  active_expires BigInt   @default(0)
+  auth_user      AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
-  @@map("session")
+  @@map("auth_session")
 }
 
 model Favorite {
@@ -772,7 +772,7 @@ model Favorite {
   parentId     String?
   type         FavoriteType @default(FAVORITE)
   collectionId Int?         @unique
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tag          Tag?         @relation(fields: [tagId], references: [id])
   feed         Feed?        @relation(fields: [feedId], references: [id])
   smartList    SmartList?   @relation(fields: [smartListId], references: [id])
@@ -813,7 +813,7 @@ model Stylesheet {
   userEntryId Int?
   userId      String
   entry       UserEntry? @relation(fields: [userEntryId], references: [id])
-  user        User       @relation(fields: [userId], references: [id])
+  user        AuthUser   @relation(fields: [userId], references: [id])
 
   @@index([userEntryId])
   @@index([userId])
@@ -828,7 +828,7 @@ model TwitterIntegration {
   refreshToken String?
   expiresIn    Int
   twitterId    String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

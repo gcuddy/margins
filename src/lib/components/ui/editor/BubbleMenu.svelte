@@ -33,7 +33,7 @@
 
 	$: shouldShow = ({ editor }) => {
 		// don't show if image is selected
-		if (editor.isActive('image') || editor.isActive('annotationExtension')) {
+		if (editor.isActive('image') || editor.isActive('annotationExtension') || editor.isActive('srs')) {
 			return false;
 		}
 		return editor.view.state.selection.content().size > 0;

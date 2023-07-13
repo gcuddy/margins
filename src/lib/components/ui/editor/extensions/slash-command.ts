@@ -17,6 +17,7 @@ import {
     Code,
     CheckSquare,
     ClockIcon,
+    SparklesIcon,
 } from "lucide-svelte";
 import type { ComponentType } from "svelte";
 import { createPopperActions } from "svelte-popperjs";
@@ -204,6 +205,21 @@ const getSuggestionItems = (props: { query: string }) => {
                     }
                 };
                 input.click();
+            },
+        },
+        {
+            title: "SRS Card",
+            description: "Create a new SRS card.",
+            searchTerms: ["srs", "card", "flashcard"],
+            icon: SparklesIcon,
+            command: ({ editor, range }: CommandProps) => {
+                editor
+                    .chain()
+                    .focus()
+                    .insertContentAt(range, [{
+                        type: 'srs',
+                    }])
+                    .run()
             },
         },
     ];

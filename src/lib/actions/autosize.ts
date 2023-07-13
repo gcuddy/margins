@@ -2,6 +2,7 @@ import autosizefn from 'autosize';
 
 const autosize = (node: HTMLElement) => {
     autosizefn(node);
+    console.log({ autosizefn })
 
     return {
         destroy() {

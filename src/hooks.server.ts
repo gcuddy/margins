@@ -1,12 +1,8 @@
-import { handleHooks } from "@lucia-auth/sveltekit";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 
 import { darkThemes } from "$lib/features/settings/themes";
 import { auth } from "$lib/server/lucia";
-import { createTRPCHandle } from "trpc-sveltekit";
-import { createContext } from "$lib/trpc/context";
-import { appRouter } from "$lib/trpc/router";
 
 const handleTheme = (async ({ event, resolve }) => {
 	let theme: string | null = null;
@@ -36,7 +32,10 @@ const handleTheme = (async ({ event, resolve }) => {
 }) satisfies Handle
 
 export const handle: Handle = sequence(
-	handleHooks(auth),
+	async ({ event, resolve }) => {
+		event.locals = auth.handleRequest(event);
+		return await resolve(event);
+	},
 	// createTRPCHandle({
 	// 	router: appRouter,
 	// 	createContext,
