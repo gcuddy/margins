@@ -23,4 +23,13 @@
 		],
 		"description": "Import PageData type from ./types"
 	},
+	"Script lang='ts'": {
+		"scope": "svelte",
+		"prefix": "s-script",
+		"body": [
+			"<script lang='ts'>",
+			"$0",
+			"</script>"
+		],
+	},
 }

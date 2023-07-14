@@ -61,12 +61,12 @@ export const collectionItem = {
 }
 
 export const entry = {
-    withAnnotations: ["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title", "Annotation.exact", "Annotation.createdAt"] as const
+    withAnnotations: ["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "auth_user.username", "Annotation.title", "Annotation.exact", "Annotation.createdAt"] as const
 }
 
 function entryAnnotations() {
     return db.selectFrom("Annotation")
-        .leftJoin("user", "Annotation.userId", "user.id")
+        .leftJoin("auth_user", "Annotation.userId", "auth_user.id")
         .select(entry.withAnnotations)
 }
 

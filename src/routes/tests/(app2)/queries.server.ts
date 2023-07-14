@@ -61,6 +61,22 @@ export const mutations = ({
         schema: idSchema,
         fn: async ({ ctx: { userId }, input: { id } }) => deleteAnnotation(userId, id)
     }),
+    update_note: query({
+        schema: z.object({
+            id: z.string(),
+            body: z.string().optional(),
+            reponse: z.string().optional(),
+            contentData: z.any().optional(),
+
+        }),
+        fn: async ({ ctx: { userId }, input }) => {
+            const { id, ...rest } = input;
+            await db.updateTable("Annotation as a")
+                .where('a.id', '=', id)
+                .set(rest)
+                .execute();
+        }
+    }),
     updateBookmarkSortOrder: query({
         schema: z.object({
             data: z.array(z.object({
@@ -194,7 +210,7 @@ export const queries = ({
             id: z.number().int()
         }),
         fn: async ({ input: { id } }) => {
-            // 
+            //
             const entry = await db.selectFrom("Entry as e")
                 .where('id', '=', id)
                 .select(entrySelect)

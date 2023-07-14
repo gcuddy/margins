@@ -15,8 +15,8 @@ type AliasedEb = ExpressionBuilder<DB & Record<"b", Bookmark> & Record<"e", Entr
 
 function get_annotations(eb: AliasedEb, userId: string) {
     return eb.selectFrom("Annotation")
-        .innerJoin("user", "user.id", "Annotation.userId")
-        .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title"])
+        .innerJoin("auth_user", "auth_user.id", "Annotation.userId")
+        .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "auth_user.username", "Annotation.title"])
         // .select(eb.fn.count("Annotation.id").as("count")
         .whereRef("Annotation.entryId", "=", "e.id")
         .where("Annotation.userId", "=", userId)
@@ -59,8 +59,8 @@ export async function get_library(userId: string, status: Status, filter: {
         ])
         .select((eb) => [
             jsonArrayFrom(eb.selectFrom("Annotation")
-                .innerJoin("user", "user.id", "Annotation.userId")
-                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
+                .innerJoin("auth_user", "auth_user.id", "Annotation.userId")
+                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "auth_user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
                 // .select((eb) => eb.fn.countAll('Annotation').as('num_annotations'))
                 // .select(eb.fn.count("Annotation.id").as("count")
                 .whereRef("Annotation.entryId", "=", "e.id")
@@ -149,8 +149,8 @@ export async function get_entry_details(id: string | number, opts?: {
         ])
         .$if(!!userId, q => q.select(eb => [
             jsonArrayFrom(eb.selectFrom("Annotation")
-                .innerJoin("user", "user.id", "Annotation.userId")
-                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
+                .innerJoin("auth_user", "auth_user.id", "Annotation.userId")
+                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "auth_user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
                 .whereRef("Annotation.entryId", "=", "Entry.id")
                 .where("Annotation.userId", "=", userId!)
                 .orderBy("Annotation.start", "asc")

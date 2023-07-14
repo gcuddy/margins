@@ -218,6 +218,9 @@ const getSuggestionItems = (props: { query: string }) => {
                     .focus()
                     .insertContentAt(range, [{
                         type: 'srs',
+                        attrs: {
+                            entry_id: $page.data?.entry?.id,
+                        }
                     }])
                     .run()
             },
@@ -232,7 +235,7 @@ const getSuggestionItems = (props: { query: string }) => {
             icon: ClockIcon,
             command: async ({ editor, range }: CommandProps) => {
 
-                // TODO: get player from page 
+                // TODO: get player from page
                 const $player = get(player);
                 if ($player && $player.type === "youtube") {
                     console.log('hello')

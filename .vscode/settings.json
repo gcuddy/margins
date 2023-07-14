@@ -1,17 +1,3 @@
 {
-	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": true
-	},
-	"html.format.wrapLineLength": 99999,
-	"typescript.tsdk": "node_modules/typescript/lib",
-	"tailwindCSS.classAttributes": [
-		"class",
-		"className",
-		"content",
-		"description",
-		"footer",
-		"header",
-		"title"
-	]
+
 }

@@ -9,6 +9,8 @@
 	import type { ComponentProps } from 'svelte';
 	import type { ContentAction } from 'svelte-popperjs';
 	import { fly } from 'svelte/transition';
+	import FloatingAnnotation from './FloatingAnnotation.svelte';
+	import { portal } from 'svelte-portal';
 	interface $$Props extends ComponentProps<TooltipContent<any>> {
 		popperContent: ContentAction<any>;
 		id: string;
@@ -21,6 +23,7 @@
 	let show_annotation = false;
 </script>
 
+{#if !show_annotation}
 <TooltipContent
 	class="z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none animate-in fade-in fade-out slide-in-from-bottom-3 duration-300"
 	on:mouseenter
@@ -57,7 +60,10 @@
 			</Button>
 		</form>
 	</div>
-	{#if show_annotation}
-		<div>testsingsgnisngin</div>
-	{/if}
 </TooltipContent>
+{/if}
+{#if show_annotation}
+    <div class="max-w-sm max-h-64" use:portal use:popperContent>
+        <FloatingAnnotation />
+    </div>
+{/if}

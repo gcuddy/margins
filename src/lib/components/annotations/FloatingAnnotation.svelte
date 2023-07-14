@@ -6,7 +6,6 @@
 	import { Focus, focusIn } from "$lib/utils/focus-management";
 	import { onDestroy } from "svelte";
 	export let value: string | JSONContent = "";
-	export let el: HTMLElement | undefined = undefined;
 	import { draggable } from "@neodrag/svelte";
 	import { spring } from "svelte/motion";
 	import type { Tag } from "@prisma/client";
@@ -14,6 +13,9 @@
 	import type { JSONContent } from "@tiptap/core";
 	import { fadeScale } from "$lib/transitions";
 	import { backInOut } from "svelte/easing";
+
+
+	let el: HTMLElement;
 	const dispatch = createEventDispatcher<{
 		save: {
 			value: string | JSONContent;

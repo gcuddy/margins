@@ -2,7 +2,7 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { SvelteNodeViewRenderer } from 'svelte-tiptap';
 import Timestamp from './timestamp/Timestamp.svelte';
-import Srs from './srs/SRS.svelte';
+import Srs from './srs/SRSNode.svelte';
 
 export const TimestampNode = Node.create({
     name: 'timestamp',
@@ -61,8 +61,17 @@ export const SRSNode = Node.create({
 
     addAttributes() {
         return {
-            count: {
-                default: 0
+            id: {
+                default: null
+            },
+            entry_id: {
+                default: null
+            },
+            prompt: {
+                default: null
+            },
+            response: {
+                default: null
             }
         }
     },

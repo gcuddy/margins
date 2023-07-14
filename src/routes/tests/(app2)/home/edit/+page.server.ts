@@ -20,7 +20,7 @@ export const actions: Actions = {
         if (!session) return fail(401);
         const data = await request.formData();
         const ids = schema.parse(data.getAll("id"));
-        await db.updateTable("user")
+        await db.updateTable("auth_user")
             .set({
                 home_items: json(ids)
             })

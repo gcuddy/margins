@@ -14,14 +14,16 @@
 	import type { YouTubePlayer } from 'youtube-player/dist/types';
 	export let player: YouTubePlayer | undefined = undefined;
 
-	const play_state = writable<'playing' | 'paused' | 'ended' | 'buffering' | 'cued' | 'unstarted'>('unstarted');
+	const play_state = writable<'playing' | 'paused' | 'ended' | 'buffering' | 'cued' | 'unstarted'>(
+		'unstarted'
+	);
 
 	$: if (player) {
 		player_store.set({
 			type: 'youtube',
 			player,
 			timestamp: 0
-		})
+		});
 	}
 	export let data: {
 		entry?: {
@@ -38,7 +40,6 @@
 	$: height = width * 0.5625;
 
 	let loaded = false;
-
 
 	let Youtube: ComponentType<Youtube> | undefined = undefined;
 
@@ -94,7 +95,7 @@
 					options={{
 						playerVars: {
 							autoplay: 1
-						},
+						}
 					}}
 					on:ready={() => {
 						console.log('ready');
@@ -129,15 +130,16 @@
 				>
 			</div>
 		{/if}
-		<div class="prose whitespace-pre-line">
-			{data.entry?.text}
-		</div>
+		{#if annotating}
+			<Editor />
+		{:else}
+			<div class="prose whitespace-pre-line">
+				{data.entry?.text}
+			</div>
+		{/if}
 	{:else}
 		<div class="flex h-64 items-center justify-center">
 			<div class="text-2xl text-muted">No video</div>
 		</div>
-	{/if}
-	{#if annotating}
-		<Editor />
 	{/if}
 </div>

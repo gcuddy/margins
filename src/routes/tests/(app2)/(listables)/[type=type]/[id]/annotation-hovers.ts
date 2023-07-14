@@ -43,6 +43,7 @@ export function setup(opts?: {
                             popperContent,
                             y: -10,
                             id: target.dataset.annotationId,
+                            el: target
                         },
                         context
                     });
@@ -61,7 +62,7 @@ export function setup(opts?: {
 
             } else {
                 if (tooltip) {
-                    tooltip?.$destroy();
+                    // tooltip?.$destroy();
                     tooltip = null;
                 }
             }

@@ -12,7 +12,7 @@ declare global {
 
 /// <reference types="@sveltejs/kit" />
 declare namespace App {
-    type AuthRequest = import("lucia").AuthRequest;
+    type AuthRequest = import("lucia-auth").AuthRequest;
 
     interface Locals extends AuthRequest { }
 

@@ -1,4 +1,5 @@
 import lucia from 'lucia-auth';
+import "lucia-auth/polyfill/node";
 
 import { dev } from '$app/environment';
 import { sveltekit } from "lucia-auth/middleware";
@@ -19,8 +20,7 @@ export const auth = lucia({
     // },
     env: dev ? 'DEV' : 'PROD',
     middleware: sveltekit(),
-    transformUserData: (userData) => {
-        console.log({ userData })
+    transformDatabaseUser: (userData) => {
         return {
             email: userData.email,
             username: userData.username,

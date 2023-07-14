@@ -170,6 +170,14 @@ model Annotation {
   referenced_by    annotation_ref[]                @relation("referencing")
   referencing      annotation_ref[]                @relation("referencer")
 
+  // srs stuff
+  srs              Boolean   @default(false)
+  response         String?   @db.MediumText // only for srs cards
+  due_timestamp    DateTime?
+  last_reviewed_at DateTime?
+  interval_ms      Int?
+  srs_created_at   DateTime?
+
   @@index([entryId])
   @@index([userId])
   @@index([parentId])
@@ -685,7 +693,7 @@ model AuthKey {
   id              String   @id @unique
   hashed_password String?
   user_id         String
-  primary_key     Boolean @default(true)
+  primary_key     Boolean  @default(true)
   expires         BigInt?
   auth_user       AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -895,6 +903,9 @@ enum AnnotationType {
   annotation
   reply
   document
+
+  // srs
+  qa
 }
 
 enum DocumentType {

@@ -8,16 +8,21 @@
 	import BubbleMenu from './BubbleMenu.svelte';
 	import debounce from 'just-debounce-it';
 	import { persisted } from 'svelte-local-storage-store';
+	import { cn } from '$lib/utils/tailwind';
 
 
 	export let id: string | number | undefined = undefined;
+    let className = '';
+    export { className as class};
 
 	let editor: Readable<Editor>;
 
 	const save_status = writable('Saved');
 
 	// TODO: make this persist to indexeddb
-	const content = persisted<any>('editor__content' + (id ?? ''), '');
+
+    export let content: JSONContent | undefined = undefined;
+	const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
 	const dispatch = createEventDispatcher<{
 		save: JSONContent;
@@ -26,7 +31,7 @@
 	const debounced_update = debounce(async ({ editor }: { editor: TEditor }) => {
 		const json = editor.getJSON();
 		save_status.set('Saving...');
-		content.set(json);
+		content_store.set(json);
 		dispatch('save', json);
 		setTimeout(() => {
 			save_status.set('Saved');
@@ -48,20 +53,23 @@
 	});
 
 	let hydrated = false;
-	$: if (editor && content && $content && !hydrated) {
+	$: if (editor && content_store && $content_store && !hydrated) {
 		// hydrate content from localstorage if not yet hydrated
 		console.log('being run')
-		$editor.commands.setContent($content);
+		$editor.commands.setContent($content_store);
 		hydrated = true;
 	}
 </script>
 
+<!-- min-h-[500px] -->
+
 <!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
 	on:click|self={() => {
 		// $editor?.chain().focus().run();
 	}}
-	class="relative min-h-[500px] w-full max-w-screen-lg border-stone-200 p-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg"
+	class={cn("relative bg-background  w-full max-w-screen-lg border-stone-200 p-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg", className)}
 >
 	<!--  -->
 	<div class="absolute right-5 top-5 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400">

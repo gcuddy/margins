@@ -22,8 +22,6 @@
     } & ComponentProps<TAs extends 'input' ? Input :  Textarea>;
     let input: HTMLInputElement;
 
-    $: console.log(md.render(value))
-
     function handle_click(e: Event) {
         console.log({e})
             active = true;
@@ -60,9 +58,12 @@
     {@html md.render(value)}
     <!-- {value} -->
 </div>
+{#if $$props.name}
+    <input type="hidden" name={$$props.name} {value}>
+{/if}
 {:else}
     <slot {value}>
-        <svelte:component  this={component} {placeholder} class="leading-tight" variant='naked'  bind:ref={input} on:blur={() => active = false} on:focus={() => active = true} bind:value {...$$restProps}  />
+        <svelte:component this={component} {placeholder} class="leading-tight" variant='naked'  bind:ref={input} on:blur={() => active = false} on:focus={() => active = true} bind:value {...$$restProps}  />
     </slot>
     {/if}
 

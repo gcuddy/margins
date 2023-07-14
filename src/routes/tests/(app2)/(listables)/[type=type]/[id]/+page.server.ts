@@ -44,8 +44,8 @@ export const load = (async (event) => {
         ])
         .$if(!!session, q => q.select(eb => [
             jsonArrayFrom(eb.selectFrom("Annotation")
-                .innerJoin("user", "user.id", "Annotation.userId")
-                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
+                .innerJoin("auth_user", "auth_user.id", "Annotation.userId")
+                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "auth_user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
                 .whereRef("Annotation.entryId", "=", "Entry.id")
                 .where("Annotation.userId", "=", session!.userId)
                 .orderBy("Annotation.start", "asc")
@@ -404,7 +404,7 @@ export const actions: Actions = {
         const tagIds = tagForm.data.tags.filter(tag => tag.id).map(tag => tag.id).filter(Boolean);
         console.log({ tagsToAdd, existingTagIds: tagIds })
         if (!tagIds.length) {
-            // then delete all existing tags on this entry 
+            // then delete all existing tags on this entry
             await db.deleteFrom("TagOnEntry")
                 .where("entryId", "=", +params.id)
                 .execute();
