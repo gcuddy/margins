@@ -123,6 +123,7 @@
 />
 {#if animate}
 	<div
+        class="z-[99]"
 		transition:fade|global={{
 			duration: 200
 		}}

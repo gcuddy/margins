@@ -4,6 +4,7 @@
 	import { md } from '$lib/markdown';
 	import { CheckCircle2Icon, CircleSlashIcon, EyeIcon } from 'lucide-svelte';
 	import { fly } from 'svelte/transition';
+	import Card from '../Card.svelte';
 
     export let data;
 
@@ -15,12 +16,12 @@
 
 </script>
 
-<div>
+
+<Card note={data.note} />
+
+<!-- <div>
 {@html md.render(data.note.body ?? '')}
 
-
-<!-- data: -->
-<!-- {JSON.stringify(data.note)} -->
 
 Next due: {data.note.due_timestamp}
 </div>
@@ -29,7 +30,7 @@ Next due: {data.note.due_timestamp}
 
 <div in:fly>
     {@html md.render(data.note.response ?? '')}
-</div>    
+</div>
 <form use:enhance action="?/mark" method="post">
 <Button name="remembered" value={0} type="submit">
     <CircleSlashIcon class="h-5 w-5 mr-2" />
@@ -38,7 +39,7 @@ Next due: {data.note.due_timestamp}
 <Button name="remembered" value={1} type="submit">
     <CheckCircle2Icon class="h-5 w-5 mr-2" />
     Remembered
-</Button>   
+</Button>
 </form>
 
 {:else}
@@ -50,4 +51,4 @@ Next due: {data.note.due_timestamp}
     Show Answer
 </Button>
 
-{/if}
+{/if} -->

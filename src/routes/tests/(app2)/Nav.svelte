@@ -12,7 +12,10 @@
 		TreePine,
 		Home,
 		Tag,
-		PinIcon
+		PinIcon,
+
+		BrainCircuit
+
 	} from 'lucide-svelte';
 	import type { LayoutData } from './$types';
 	import { Small } from '$lib/components/ui/typography';
@@ -69,6 +72,12 @@
 			label: 'Views',
 			href: '/tests/views',
 			icon: Layers,
+			active: (url) => url === '/tests/views'
+		},
+		{
+			label: 'Memory Palace',
+			href: '/tests/playground/srs',
+			icon: BrainCircuit,
 			active: (url) => url === '/tests/views'
 		},
 		{

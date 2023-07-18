@@ -28,18 +28,29 @@ interface MetadataInfo {
     Subject?: string
 }
 
+export async function get_pdf_fingerprint(
+    pdf: PDFDocumentProxy
+) {
+    return pdf.fingerprints[0];
+}
+
 export async function parse_pdf(
     pdf: PDFDocumentProxy,
     parseText = false
 ) {
+    let text: string | undefined = undefined;
     if (parseText) {
         // todo - see https://github.com/omnivore-app/omnivore/blob/c9fcbe72ddc6f40dd06e7073b8ffe3c1e71bd650/packages/pdf-handler/src/pdf.ts#LL106C14-L106C25
+        text = await get_pdf_text(pdf, {
+            type: 'text'
+        });
     }
     const metadata = await pdf.getMetadata();
     const info = metadata.info as MetadataInfo;
     return {
         title: info.Title,
         author: info.Author,
+        text
     }
 }
 
@@ -182,4 +193,24 @@ const parse_page_items = (pdfItems: TextItem[]): Page => {
     return {
         lines,
     }
+}
+
+
+export async function build_toc(pdf: PDFDocumentProxy) {
+    const toc = await pdf.getOutline();
+    if (!toc) {
+        return [];
+    }
+    const toc_items: TocItem[] = [];
+    for (let i = 0; i < toc.length; i++) {
+        const item = toc[i];
+        toc_items.push({
+            title: item.title,
+            page: item.dest[0],
+            children: await build_toc(pdf)
+        })
+
+    }
+    return toc_items;
+
 }

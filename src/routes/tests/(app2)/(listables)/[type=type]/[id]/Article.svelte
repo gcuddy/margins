@@ -55,6 +55,7 @@
 	import image_tools from './images';
 	import drag_context from '$lib/actions/drag-context';
 	import { update_entry } from '$lib/state/entries';
+	import Attachments from './Attachments.svelte';
 
 	export let data: PageData;
 
@@ -647,7 +648,7 @@
 		on:exit={() => {
 			$mainnav.center = true;
 		}}
-		class="text-6xl font-medium"
+		class="text-4xl font-normal break-words hyphens-manual"
 	>
 		{data.entry?.title}
 	</h1>
@@ -660,6 +661,7 @@
 	{#if data.entry}
 		<EntryOperations data={data.annotationForm} entry={data.entry} />
 	{/if}
+    <Attachments {data} />
 
 	<div
 		bind:this={articleWrapper}

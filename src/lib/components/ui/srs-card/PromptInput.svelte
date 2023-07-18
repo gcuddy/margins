@@ -4,12 +4,14 @@
 	import { createEventDispatcher } from 'svelte';
 	import Button from '../Button.svelte';
 	import Label from '../Label.svelte';
+	import type { TargetSchema } from '$lib/annotation';
 
 	export let parent_id: string | undefined = undefined;
 	export let entry_id: number | undefined = undefined;
 	export let id: string | undefined = undefined;
 	export let prompt = '';
 	export let response = '';
+	export let target_schema: TargetSchema | undefined = undefined;
 
 	let pending = false;
 
@@ -20,10 +22,13 @@
 	// todo: use id to fetch most recent prompt and response
 </script>
 
+<!-- TODO: accept target selector for full annottation -->
+
 <form
 	class="contents"
 	method="post"
 	action="/tests/playground/srs?/new"
+	on:blur
 	use:enhance={() => {
 		pending = true;
 		return async ({ update, result }) => {
@@ -40,6 +45,9 @@
 		};
 	}}
 >
+	{#if target_schema}
+		<input type="hidden" name="target" value={JSON.stringify(target_schema)} />
+	{/if}
 	{#if parent_id}
 		<input type="hidden" name="parent_id" value={parent_id} />
 	{/if}
@@ -50,7 +58,13 @@
 		<input type="hidden" name="id" value={id} />
 	{/if}
 	<Label for="prompt">Prompt</Label>
-	<MarkdownBox bind:value={prompt} id="prompt" name="body" placeholder="Enter prompt here" />
+	<MarkdownBox
+		bind:value={prompt}
+		id="prompt"
+		name="body"
+		autocomplete="off"
+		placeholder="Enter prompt here"
+	/>
 	<Label for="response">Response</Label>
 	<MarkdownBox
 		id="response"

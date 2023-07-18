@@ -1,957 +1,971 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["extendedWhereUnique", "fullTextIndex", "fullTextSearch"]
+    provider        = "prisma-client-js"
+    previewFeatures = ["extendedWhereUnique", "fullTextIndex", "fullTextSearch"]
 }
 
 generator zod {
-  provider = "zod-prisma-types"
-  output   = "../src/lib/prisma/zod-prisma"
+    provider = "zod-prisma-types"
+    output   = "../src/lib/prisma/zod-prisma"
 }
 
 generator kysely {
-  provider = "prisma-kysely"
-  output   = "../src/lib/prisma/kysely"
-  fileName = "types.ts"
+    provider = "prisma-kysely"
+    output   = "../src/lib/prisma/kysely"
+    fileName = "types.ts"
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+    provider     = "mysql"
+    url          = env("DATABASE_URL")
+    relationMode = "prisma"
 }
 
 model InvitationCode {
-  code     String    @id @default(cuid())
-  used     Boolean   @default(false)
-  ownerId  String
-  usedById String?   @unique
-  owner    AuthUser  @relation("owner", fields: [ownerId], references: [id])
-  usedby   AuthUser? @relation("user", fields: [usedById], references: [id])
+    code     String    @id @default(cuid())
+    used     Boolean   @default(false)
+    ownerId  String
+    usedById String?   @unique
+    owner    AuthUser  @relation("owner", fields: [ownerId], references: [id])
+    usedby   AuthUser? @relation("user", fields: [usedById], references: [id])
 
-  @@index([ownerId])
+    @@index([ownerId])
 }
 
 /// State represents the state of an Annotation. The defaults are "Inbox", "Next", "Later", and "Archive".
 model State {
-  id              Int        @id @default(autoincrement())
-  /// Whether or not this state represents things to be looked at later.
-  /// The name of the state
-  name            String
-  /// State's UI color as a hex string
-  color           String?
-  /// The type of the state
-  type            State_type
-  /// The position of the state
-  position        Float      @default(0)
-  description     String?
-  userId          String
-  default         Boolean    @default(false)
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  user            AuthUser   @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  defaultRelation AuthUser?  @relation("default_state")
-  bookmarks       Bookmark[]
+    id              Int        @id @default(autoincrement())
+    /// Whether or not this state represents things to be looked at later.
+    /// The name of the state
+    name            String
+    /// State's UI color as a hex string
+    color           String?
+    /// The type of the state
+    type            State_type
+    /// The position of the state
+    position        Float      @default(0)
+    description     String?
+    userId          String
+    default         Boolean    @default(false)
+    createdAt       DateTime   @default(now())
+    updatedAt       DateTime   @updatedAt
+    user            AuthUser   @relation("user", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    defaultRelation AuthUser?  @relation("default_state")
+    bookmarks       Bookmark[]
 
-  @@index([userId])
+    @@index([userId])
 }
 
 model Bookmark {
-  id               Int               @id @default(autoincrement())
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  uri              String?
-  entryId          Int?
-  userId           String
-  sortOrder        Int?              @default(0)
-  data             Json?
-  stateId          Int?
-  private          Boolean           @default(true)
-  interactionId    Int?              @unique
-  favoriteId       Int?
-  deleted          DateTime?
-  is_read          Boolean           @default(false)
-  progress         Float             @default(0)
-  context          Json?
-  screenshot       String?
-  source           String?
-  dueDate          DateTime?
-  snoozedUntil     DateTime?
-  /// The original url of the bookmark, if it's different than the entry's url
-  originalUrl      String?
-  status           Status            @default(Backlog)
-  sort_order       Int               @default(0)
-  /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
-  review_timestamp Int?
-  entry            Entry?            @relation(fields: [entryId], references: [id])
-  user             AuthUser          @relation(fields: [userId], references: [id])
-  state            State?            @relation(fields: [stateId], references: [id])
-  tags             Tagging[]
-  collections      CollectionItems[]
-  interaction      Interaction?      @relation(fields: [interactionId], references: [id])
-  favorite         Favorite?
-  annotations      Annotation[]
+    id               Int               @id @default(autoincrement())
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    uri              String?
+    entryId          Int?
+    userId           String
+    sortOrder        Int?              @default(0)
+    data             Json?
+    stateId          Int?
+    private          Boolean           @default(true)
+    interactionId    Int?              @unique
+    favoriteId       Int?
+    deleted          DateTime?
+    is_read          Boolean           @default(false)
+    progress         Float             @default(0)
+    context          Json?
+    screenshot       String?
+    source           String?
+    dueDate          DateTime?
+    snoozedUntil     DateTime?
+    /// The original url of the bookmark, if it's different than the entry's url
+    originalUrl      String?
+    status           Status            @default(Backlog)
+    sort_order       Int               @default(0)
+    /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
+    review_timestamp Int?
+    entry            Entry?            @relation(fields: [entryId], references: [id])
+    user             AuthUser          @relation(fields: [userId], references: [id])
+    state            State?            @relation(fields: [stateId], references: [id])
+    tags             Tagging[]
+    collections      CollectionItems[]
+    interaction      Interaction?      @relation(fields: [interactionId], references: [id])
+    favorite         Favorite?
+    annotations      Annotation[]
 
-  @@unique([uri, entryId, userId])
-  @@unique([entryId, userId])
-  @@index([entryId])
-  @@index([uri, entryId])
-  @@index([uri])
-  @@index([userId])
-  @@index([stateId])
-  @@index([userId, stateId])
-  @@index([interactionId, stateId, uri])
+    bookmarked Boolean @default(true) // Is this actually in the user's library?
+
+    // Custom Metadata (?) - should this be a separate model?
+    title String?
+
+    @@unique([uri, entryId, userId])
+    @@unique([entryId, userId])
+    @@index([entryId])
+    @@index([uri, entryId])
+    @@index([uri])
+    @@index([userId])
+    @@index([stateId])
+    @@index([userId, stateId])
+    @@index([interactionId, stateId, uri])
 }
 
 model Task {
-  id Int @id @default(autoincrement())
+    id Int @id @default(autoincrement())
 }
 
 /// Describes a user-defined relationship between entries. (Just entries, right?)
 model Relation {
-  id             String       @id @default(cuid())
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  /// The type of the relation
-  type           RelationType @default(Related)
-  userId         String
-  entryId        Int
-  relatedEntryId Int
-  user           AuthUser     @relation(fields: [userId], references: [id])
-  entry          Entry        @relation("originatingEntryRelation", fields: [entryId], references: [id], onDelete: Cascade)
-  relatedEntry   Entry        @relation("destinationEntryRelation", fields: [relatedEntryId], references: [id], onDelete: Cascade)
+    id             String       @id @default(cuid())
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+    /// The type of the relation
+    type           RelationType @default(Related)
+    userId         String
+    entryId        Int
+    relatedEntryId Int
+    user           AuthUser     @relation(fields: [userId], references: [id])
+    entry          Entry        @relation("originatingEntryRelation", fields: [entryId], references: [id], onDelete: Cascade)
+    relatedEntry   Entry        @relation("destinationEntryRelation", fields: [relatedEntryId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, entryId, relatedEntryId])
-  @@index([userId])
-  @@index([entryId])
-  @@index([relatedEntryId])
-  @@index([userId, entryId])
+    @@unique([userId, entryId, relatedEntryId])
+    @@index([userId])
+    @@index([entryId])
+    @@index([relatedEntryId])
+    @@index([userId, entryId])
 }
 
 /// @zod.import(["import { TargetSchema, chosenIcon, schemaOrgSchemas, ViewOptionsSchema } from '../schemas'"])
 model Annotation {
-  id               String                          @id @default(cuid())
-  createdAt        DateTime                        @default(now())
-  updatedAt        DateTime                        @default(now()) @updatedAt
-  body             String?                         @db.MediumText
-  type             AnnotationType
-  private          Boolean                         @default(true)
-  /// @zod.custom.use(TargetSchema)
-  target           Json?
-  entryId          Int?
-  parentId         String?
-  /// The "soft delete" time. Deletions are cleared after 30 days.
-  deleted          DateTime?
-  userId           String                          @default("")
-  sortOrder        Float                           @default(0)
-  bookmarkId       Int?
-  editedAt         DateTime?
-  color            Color                           @default(Yellow)
-  contentData      Json?
-  /// Optional title, used for longer notes unassociated with an entryo
-  title            String?
-  /// chosenIcon used for documents only?
-  /// @zod.custom.use(chosenIcon)
-  chosenIcon       Json?
-  html             String?
-  /// Auto-generated from the target
-  quote            String?
-  exact            String?                         @db.MediumText
-  start            Int?
-  entry            Entry?                          @relation(fields: [entryId], references: [id])
-  parent           Annotation?                     @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children         Annotation[]                    @relation("references")
-  creator          AuthUser                        @relation(fields: [userId], references: [id])
-  collections      CollectionItems[]
-  favorite         Favorite?
-  bookmark         Bookmark?                       @relation(fields: [bookmarkId], references: [id])
-  tags             Tag[]
-  annotation_tag   annotation_tag[]
-  entry_references annotation_to_entry_reference[]
-  referenced_by    annotation_ref[]                @relation("referencing")
-  referencing      annotation_ref[]                @relation("referencer")
+    id               String                          @id @default(cuid())
+    createdAt        DateTime                        @default(now())
+    updatedAt        DateTime                        @default(now()) @updatedAt
+    body             String?                         @db.MediumText
+    type             AnnotationType
+    private          Boolean                         @default(true)
+    /// @zod.custom.use(TargetSchema)
+    target           Json?
+    entryId          Int?
+    parentId         String?
+    /// The "soft delete" time. Deletions are cleared after 30 days.
+    deleted          DateTime?
+    userId           String                          @default("")
+    sortOrder        Float                           @default(0)
+    bookmarkId       Int?
+    editedAt         DateTime?
+    color            Color                           @default(Yellow)
+    contentData      Json?
+    /// Optional title, used for longer notes unassociated with an entryo
+    title            String?
+    /// chosenIcon used for documents only?
+    /// @zod.custom.use(chosenIcon)
+    chosenIcon       Json?
+    html             String?
+    /// Auto-generated from the target
+    quote            String?
+    exact            String?                         @db.MediumText
+    start            Int?
+    entry            Entry?                          @relation(fields: [entryId], references: [id])
+    parent           Annotation?                     @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    children         Annotation[]                    @relation("references")
+    creator          AuthUser                        @relation(fields: [userId], references: [id])
+    collections      CollectionItems[]
+    favorite         Favorite?
+    bookmark         Bookmark?                       @relation(fields: [bookmarkId], references: [id])
+    tags             Tag[]
+    annotation_tag   annotation_tag[]
+    entry_references annotation_to_entry_reference[]
+    referenced_by    annotation_ref[]                @relation("referencing")
+    referencing      annotation_ref[]                @relation("referencer")
 
-  // srs stuff
-  srs              Boolean   @default(false)
-  response         String?   @db.MediumText // only for srs cards
-  due_timestamp    DateTime?
-  last_reviewed_at DateTime?
-  interval_ms      Int?
-  srs_created_at   DateTime?
+    // srs stuff
+    srs              Boolean   @default(false)
+    response         String?   @db.MediumText // only for srs cards
+    due_timestamp    DateTime?
+    last_reviewed_at DateTime?
+    interval_ms      Int?
+    srs_created_at   DateTime?
 
-  @@index([entryId])
-  @@index([userId])
-  @@index([parentId])
-  @@index([bookmarkId])
-  @@fulltext([title, body, exact])
+    @@index([entryId])
+    @@index([userId])
+    @@index([parentId])
+    @@index([bookmarkId])
+    @@fulltext([title, body, exact])
 }
 
 model annotation_ref {
-  referencerId  String
-  referencingId String
-  referencer    Annotation @relation("referencer", fields: [referencerId], references: [id])
-  referencing   Annotation @relation("referencing", fields: [referencingId], references: [id])
+    referencerId  String
+    referencingId String
+    referencer    Annotation @relation("referencer", fields: [referencerId], references: [id])
+    referencing   Annotation @relation("referencing", fields: [referencingId], references: [id])
 
-  @@id([referencerId, referencingId])
-  @@index([referencerId])
-  @@index([referencingId])
+    @@id([referencerId, referencingId])
+    @@index([referencerId])
+    @@index([referencingId])
 }
 
 model annotation_to_entry_reference {
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @default(now()) @updatedAt
-  entryId      Int
-  annotationId String
-  Annotation   Annotation @relation(fields: [annotationId], references: [id])
-  Entry        Entry      @relation(fields: [entryId], references: [id])
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @default(now()) @updatedAt
+    entryId      Int
+    annotationId String
+    Annotation   Annotation @relation(fields: [annotationId], references: [id])
+    Entry        Entry      @relation(fields: [entryId], references: [id])
 
-  @@id([annotationId, entryId])
-  @@index([annotationId])
-  @@index([entryId])
+    @@id([annotationId, entryId])
+    @@index([annotationId])
+    @@index([entryId])
 }
 
 model ColorDescription {
-  userId      String
-  color       Color
-  description String?
-  user        AuthUser @relation(fields: [userId], references: [id])
+    userId      String
+    color       Color
+    description String?
+    user        AuthUser @relation(fields: [userId], references: [id])
 
-  @@id([userId, color])
-  @@index([userId])
+    @@id([userId, color])
+    @@index([userId])
 }
 
 model Person {
-  id              Int               @id @default(autoincrement())
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @default(now()) @updatedAt
-  name            String
-  tmdbId          Int?              @unique
-  person_to_entry person_to_entry[]
+    id              Int               @id @default(autoincrement())
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @default(now()) @updatedAt
+    name            String
+    tmdbId          Int?              @unique
+    person_to_entry person_to_entry[]
 }
 
 model person_to_entry {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  personId  Int
-  entryId   Int
-  role      String
-  Entry     Entry    @relation(fields: [entryId], references: [id])
-  Person    Person   @relation(fields: [personId], references: [id])
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+    personId  Int
+    entryId   Int
+    role      String
+    Entry     Entry    @relation(fields: [entryId], references: [id])
+    Person    Person   @relation(fields: [personId], references: [id])
 
-  @@unique([personId, entryId])
-  @@index([personId])
-  @@index([entryId])
+    @@unique([personId, entryId])
+    @@index([personId])
+    @@index([entryId])
 }
 
 /// @zod.import(["import {recipeSchema, EntryExtendedSchema} from '../schemas'"])
 model Entry {
-  createdAt       DateTime                        @default(now())
-  author          String?
-  location        Entry_location?
-  title           String?                         @db.VarChar(2083)
-  type            DocumentType                    @default(article)
-  updatedAt       DateTime                        @updatedAt
-  id              Int                             @id @default(autoincrement())
-  uri             String?                         @unique @db.VarChar(500)
-  html            String?                         @db.LongText
-  text            String?                         @db.LongText
-  image           String?                         @db.VarChar(2083)
-  guid            String?
-  wordCount       Int?
-  siteName        String?
-  summary         String?                         @db.VarChar(255)
-  media           Json?
-  published       DateTime?
-  updated         DateTime?
-  feedId          Int?
-  /// Original represents original data (html, title) in case we've re-download and/or changes...?
-  original        Json?
-  /// @zod.custom.use(recipeSchema)
-  recipe          Json?
-  podcastIndexId  BigInt?                         @unique
-  /// The duration of the entry, in seconds
-  duration        Int?
-  enclosureLength Int?
-  enclosureType   String?
-  enclosureUrl    String?                         @db.VarChar(2083)
-  googleBooksId   String?                         @unique
-  /// The TMDB id, if it's a movie or TV show.
-  tmdbId          Int?                            @unique
-  /// @zod.custom.use(schemaOrgSchemas)
-  schemaOrg       Json?
-  /// Tmdb data - could also store this in "original"?
-  tmdbData        Json?
-  screenshot      String?
-  extended        Json?
-  /// Youtube ID, if it's a youtube video
-  youtubeId       String?                         @unique
-  pageCount       Int?                            @db.UnsignedSmallInt
-  genres          String?
-  language        String?                         @db.VarChar(100)
-  /// The publisher for books, company for plays, etc.
-  publisher       String?
-  author_extra    Json?
-  spotifyId       String?                         @unique
-  data            EntryData[]
-  person          person_to_entry[]
-  feed            Feed?                           @relation(fields: [feedId], references: [id])
-  relations       Relation[]                      @relation("originatingEntryRelation")
-  back_relations  Relation[]                      @relation("destinationEntryRelation")
-  interactions    Interaction[]
-  EntryMedia      EntryMedia[]
-  annotations     Annotation[]
-  bookmarks       Bookmark[]
-  tags            Tag[]
-  entrytags       EntryTag[]
-  context         Context[]
-  CollectionItems CollectionItems[]
-  favorites       Favorite[]
-  log             Log[]
-  TagOnEntry      TagOnEntry[]
-  referenced_by   annotation_to_entry_reference[]
+    createdAt       DateTime                        @default(now())
+    author          String?
+    location        Entry_location?
+    title           String?                         @db.VarChar(2083)
+    type            DocumentType                    @default(article)
+    updatedAt       DateTime                        @updatedAt
+    id              Int                             @id @default(autoincrement())
+    uri             String?                         @unique @db.VarChar(500)
+    html            String?                         @db.LongText
+    text            String?                         @db.LongText
+    image           String?                         @db.VarChar(2083)
+    guid            String?
+    wordCount       Int?
+    siteName        String?
+    summary         String?                         @db.VarChar(255)
+    media           Json?
+    published       DateTime?
+    updated         DateTime?
+    feedId          Int?
+    /// Original represents original data (html, title) in case we've re-download and/or changes...?
+    original        Json?
+    /// @zod.custom.use(recipeSchema)
+    recipe          Json?
+    podcastIndexId  BigInt?                         @unique
+    /// The duration of the entry, in seconds
+    duration        Int?
+    enclosureLength Int?
+    enclosureType   String?
+    enclosureUrl    String?                         @db.VarChar(2083)
+    googleBooksId   String?                         @unique
+    /// The TMDB id, if it's a movie or TV show.
+    tmdbId          Int?                            @unique
+    /// @zod.custom.use(schemaOrgSchemas)
+    schemaOrg       Json?
+    /// Tmdb data - could also store this in "original"?
+    tmdbData        Json?
+    screenshot      String?
+    extended        Json?
+    /// Youtube ID, if it's a youtube video
+    youtubeId       String?                         @unique
+    pageCount       Int?                            @db.UnsignedSmallInt
+    genres          String?
+    language        String?                         @db.VarChar(100)
+    /// The publisher for books, company for plays, etc.
+    publisher       String?
+    author_extra    Json?
+    spotifyId       String?                         @unique
+    data            EntryData[]
+    person          person_to_entry[]
+    feed            Feed?                           @relation(fields: [feedId], references: [id])
+    relations       Relation[]                      @relation("originatingEntryRelation")
+    back_relations  Relation[]                      @relation("destinationEntryRelation")
+    interactions    Interaction[]
+    EntryMedia      EntryMedia[]
+    annotations     Annotation[]
+    bookmarks       Bookmark[]
+    tags            Tag[]
+    entrytags       EntryTag[]
+    context         Context[]
+    CollectionItems CollectionItems[]
+    favorites       Favorite[]
+    log             Log[]
+    TagOnEntry      TagOnEntry[]
+    referenced_by   annotation_to_entry_reference[]
 
-  @@unique([uri, id])
-  @@index([feedId])
-  @@index([id, published, createdAt])
-  @@index([published])
-  @@fulltext([text, title, author])
-  @@fulltext([title, author])
-  @@fulltext([text])
+    pdf_fingerprint String? @unique
+
+    // An entry can be owned by a user, such as a PDF uploaded by them. In this case, they should have sole pemrmissions on it.
+    owned_by_id String?
+    owned_by    AuthUser? @relation(fields: [owned_by_id], references: [id])
+
+    @@unique([uri, id])
+    @@index([feedId])
+    @@index([id, published, createdAt])
+    @@index([published])
+    @@index([owned_by_id])
+    @@fulltext([text, title, author])
+    @@fulltext([title, author])
+    @@fulltext([text])
 }
 
 model annotation_tag {
-  tagId        Int
-  annotationId String
-  annotation   Annotation @relation(fields: [annotationId], references: [id])
-  tag          Tag        @relation(fields: [tagId], references: [id])
+    tagId        Int
+    annotationId String
+    annotation   Annotation @relation(fields: [annotationId], references: [id])
+    tag          Tag        @relation(fields: [tagId], references: [id])
 
-  @@id([annotationId, tagId])
-  @@index([tagId])
-  @@index([annotationId])
+    @@id([annotationId, tagId])
+    @@index([tagId])
+    @@index([annotationId])
 }
 
 model TagOnEntry {
-  id      Int      @id @default(autoincrement())
-  tagId   Int
-  entryId Int
-  userId  String
-  tag     Tag      @relation(fields: [tagId], references: [id])
-  entry   Entry    @relation(fields: [entryId], references: [id])
-  user    AuthUser @relation(fields: [userId], references: [id])
+    id      Int      @id @default(autoincrement())
+    tagId   Int
+    entryId Int
+    userId  String
+    tag     Tag      @relation(fields: [tagId], references: [id])
+    entry   Entry    @relation(fields: [entryId], references: [id])
+    user    AuthUser @relation(fields: [userId], references: [id])
 
-  @@unique([tagId, entryId, userId])
-  @@index([tagId])
-  @@index([entryId])
-  @@index([userId])
+    @@unique([tagId, entryId, userId])
+    @@index([tagId])
+    @@index([entryId])
+    @@index([userId])
 }
 
 /// Represents user-downloaded/defined data for an entry
 model EntryData {
-  id        Int          @id @default(autoincrement())
-  html      String?      @db.LongText
-  text      String?      @db.LongText
-  image     String?
-  wordCount Int?
-  summary   String?
-  published DateTime?
-  updated   DateTime?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  userId    String
-  data      Json?
-  entryId   Int          @unique
-  custom    Json?
-  media     EntryMedia[]
-  entry     Entry        @relation(fields: [entryId], references: [id])
-  user      AuthUser     @relation(fields: [userId], references: [id])
+    id        Int          @id @default(autoincrement())
+    html      String?      @db.LongText
+    text      String?      @db.LongText
+    image     String?
+    wordCount Int?
+    summary   String?
+    published DateTime?
+    updated   DateTime?
+    createdAt DateTime     @default(now())
+    updatedAt DateTime     @updatedAt
+    userId    String
+    data      Json?
+    entryId   Int          @unique
+    custom    Json?
+    media     EntryMedia[]
+    entry     Entry        @relation(fields: [entryId], references: [id])
+    user      AuthUser     @relation(fields: [userId], references: [id])
 
-  @@unique([entryId, userId])
-  @@index([entryId])
-  @@index([userId])
+    @@unique([entryId, userId])
+    @@index([entryId])
+    @@index([userId])
 }
 
 model EntryMedia {
-  id             Int       @id @default(autoincrement())
-  url            String?
-  size           Int?
-  duration       Int?
-  type           String?
-  title          String?
-  documentDataId Int
-  entryId        Int?
-  DocumentData   EntryData @relation(fields: [documentDataId], references: [id])
-  Entry          Entry?    @relation(fields: [entryId], references: [id])
+    id             Int       @id @default(autoincrement())
+    url            String?
+    size           Int?
+    duration       Int?
+    type           String?
+    title          String?
+    documentDataId Int
+    entryId        Int?
+    DocumentData   EntryData @relation(fields: [documentDataId], references: [id])
+    Entry          Entry?    @relation(fields: [entryId], references: [id])
 
-  @@index([documentDataId])
-  @@index([entryId])
+    @@index([documentDataId])
+    @@index([entryId])
 }
 
 model Article {
-  id             Int       @id @default(autoincrement())
-  title          String    @db.Text
-  content        String?   @db.LongText
-  textContent    String?   @db.LongText
-  author         String?
-  private        Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  readProgress   Float?    @default(0)
-  slug           String?
-  url            String?
-  siteName       String?
-  colorHash      String?
-  date           DateTime?
-  image          String?   @db.Text
-  wordCount      Int?
-  starred        Boolean   @default(false)
-  css            String?
-  description    String?   @db.Text
-  wiki           String?
-  classification String?
-  pdf            Boolean?
-  html           String?
-  readLater      Boolean   @default(true)
-  bookmark       Boolean   @default(false)
-  position       Int       @default(0)
-  trash          Boolean   @default(false)
-  location       String    @default("INBOX")
-  type           Int       @default(0)
-  userId         String
-  favoriteId     Int?
-  user           AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id             Int       @id @default(autoincrement())
+    title          String    @db.Text
+    content        String?   @db.LongText
+    textContent    String?   @db.LongText
+    author         String?
+    private        Boolean   @default(true)
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
+    readProgress   Float?    @default(0)
+    slug           String?
+    url            String?
+    siteName       String?
+    colorHash      String?
+    date           DateTime?
+    image          String?   @db.Text
+    wordCount      Int?
+    starred        Boolean   @default(false)
+    css            String?
+    description    String?   @db.Text
+    wiki           String?
+    classification String?
+    pdf            Boolean?
+    html           String?
+    readLater      Boolean   @default(true)
+    bookmark       Boolean   @default(false)
+    position       Int       @default(0)
+    trash          Boolean   @default(false)
+    location       String    @default("INBOX")
+    type           Int       @default(0)
+    userId         String
+    favoriteId     Int?
+    user           AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, url])
-  @@index([userId])
-  @@map("Article")
+    @@unique([userId, url])
+    @@index([userId])
+    @@map("Article")
 }
 
 model ContextNode {
-  /// context node refers to a source or referrer — for example, a Discord Server, or another user
-  id          String   @id @default(cuid())
-  name        String
-  url         String?
-  description String?
-  userId      String
-  refers_to   String?
-  owner       AuthUser @relation(fields: [userId], references: [id])
+    /// context node refers to a source or referrer — for example, a Discord Server, or another user
+    id          String   @id @default(cuid())
+    name        String
+    url         String?
+    description String?
+    userId      String
+    refers_to   String?
+    owner       AuthUser @relation(fields: [userId], references: [id])
 
-  @@index([userId])
+    @@index([userId])
 }
 
 model Context {
-  id          Int      @id @default(autoincrement())
-  url         String?
-  description String?
-  createdAt   DateTime @default(now())
-  entryId     Int?
-  feedId      Int?
-  userId      String
-  user        AuthUser @relation(fields: [userId], references: [id])
-  entry       Entry?   @relation(fields: [entryId], references: [id])
-  feed        Feed?    @relation(fields: [feedId], references: [id])
+    id          Int      @id @default(autoincrement())
+    url         String?
+    description String?
+    createdAt   DateTime @default(now())
+    entryId     Int?
+    feedId      Int?
+    userId      String
+    user        AuthUser @relation(fields: [userId], references: [id])
+    entry       Entry?   @relation(fields: [entryId], references: [id])
+    feed        Feed?    @relation(fields: [feedId], references: [id])
 
-  @@index([userId])
-  @@index([entryId])
-  @@index([feedId])
+    @@index([userId])
+    @@index([entryId])
+    @@index([feedId])
 }
 
 /// @zod.import(["import { chosenIcon } from '../schemas'", "import { ViewOptionsSchema } from '../zod-utils'"])
 model Collection {
-  id          Int               @id @default(autoincrement())
-  name        String
-  private     Boolean           @default(true)
-  /// @zod.custom.use(chosenIcon)
-  icon        Json?
-  userId      String
-  description String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  contentData Json?
-  viewOptions Json?
-  user        AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items       CollectionItems[]
-  favorites   Favorite[]
+    id          Int               @id @default(autoincrement())
+    name        String
+    private     Boolean           @default(true)
+    /// @zod.custom.use(chosenIcon)
+    icon        Json?
+    userId      String
+    description String?
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
+    contentData Json?
+    viewOptions Json?
+    user        AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    items       CollectionItems[]
+    favorites   Favorite[]
 
-  @@unique([userId, name])
-  @@index([userId])
+    @@unique([userId, name])
+    @@index([userId])
 }
 
 model CollectionItems {
-  id           String             @id @default(cuid())
-  collectionId Int
-  position     Float              @default(0)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  annotationId String?            @unique
-  bookmarkId   Int?
-  entryId      Int?
-  note         String?
-  parentId     String?
-  type         CollectionItemType @default(Entry)
-  /// This applies to sections only
-  title        String?
-  collection   Collection         @relation(fields: [collectionId], references: [id])
-  children     CollectionItems[]  @relation("parent")
-  parent       CollectionItems?   @relation("parent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  annotation   Annotation?        @relation(fields: [annotationId], references: [id])
-  bookmark     Bookmark?          @relation(fields: [bookmarkId], references: [id])
-  entry        Entry?             @relation(fields: [entryId], references: [id])
+    id           String             @id @default(cuid())
+    collectionId Int
+    position     Float              @default(0)
+    createdAt    DateTime           @default(now())
+    updatedAt    DateTime           @updatedAt
+    annotationId String?            @unique
+    bookmarkId   Int?
+    entryId      Int?
+    note         String?
+    parentId     String?
+    type         CollectionItemType @default(Entry)
+    /// This applies to sections only
+    title        String?
+    collection   Collection         @relation(fields: [collectionId], references: [id])
+    children     CollectionItems[]  @relation("parent")
+    parent       CollectionItems?   @relation("parent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    annotation   Annotation?        @relation(fields: [annotationId], references: [id])
+    bookmark     Bookmark?          @relation(fields: [bookmarkId], references: [id])
+    entry        Entry?             @relation(fields: [entryId], references: [id])
 
-  @@unique([collectionId, annotationId])
-  @@unique([collectionId, entryId])
-  @@unique([collectionId, bookmarkId])
-  @@index([collectionId])
-  @@index([bookmarkId])
-  @@index([entryId])
-  @@index([parentId])
+    @@unique([collectionId, annotationId])
+    @@unique([collectionId, entryId])
+    @@unique([collectionId, bookmarkId])
+    @@index([collectionId])
+    @@index([bookmarkId])
+    @@index([entryId])
+    @@index([parentId])
 }
 
 model Feed {
-  id               Int            @id @default(autoincrement())
-  feedUrl          String?        @unique @db.VarChar(255)
-  title            String?
-  link             String?
-  creator          String?
-  description      String?        @db.Text
-  lastBuildDate    DateTime?
-  imageUrl         String?        @db.Text
-  podcast          Boolean        @default(false)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  active           Boolean        @default(true)
-  /// Velocity refers to the amount of times a feed is published per day.
-  velocity         Int?
-  /// IF we're using a podcast, then we use podcastIndex to save/index entries. Do we even need to save them into our db? Probably — what if pidx goes down, or something.
-  podcastIndexId   Int?           @unique
-  /// Store lastParsed time to diff against feed updated time
-  lastParsed       DateTime?
-  /// Additional data provided by podcastIndex
-  podcastIndexData Json?
-  guid             String?
-  itunesId         Int?           @unique
-  /// Deprecated
-  itunes_id        String?        @unique
-  entries          Entry[]
-  tags             Tagging[]
-  favorites        Favorite[]
-  subscriptions    Subscription[]
-  context          Context[]
+    id               Int            @id @default(autoincrement())
+    feedUrl          String?        @unique @db.VarChar(255)
+    title            String?
+    link             String?
+    creator          String?
+    description      String?        @db.Text
+    lastBuildDate    DateTime?
+    imageUrl         String?        @db.Text
+    podcast          Boolean        @default(false)
+    createdAt        DateTime       @default(now())
+    updatedAt        DateTime       @updatedAt
+    active           Boolean        @default(true)
+    /// Velocity refers to the amount of times a feed is published per day.
+    velocity         Int?
+    /// IF we're using a podcast, then we use podcastIndex to save/index entries. Do we even need to save them into our db? Probably — what if pidx goes down, or something.
+    podcastIndexId   Int?           @unique
+    /// Store lastParsed time to diff against feed updated time
+    lastParsed       DateTime?
+    /// Additional data provided by podcastIndex
+    podcastIndexData Json?
+    guid             String?
+    itunesId         Int?           @unique
+    /// Deprecated
+    itunes_id        String?        @unique
+    entries          Entry[]
+    tags             Tagging[]
+    favorites        Favorite[]
+    subscriptions    Subscription[]
+    context          Context[]
 
-  @@index([podcastIndexId])
+    @@index([podcastIndexId])
 }
 
 model Subscription {
-  id            Int      @id @default(autoincrement())
-  feedId        Int
-  userId        String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  title         String
-  download_full Boolean  @default(false)
-  feed          Feed     @relation(fields: [feedId], references: [id])
-  user          AuthUser @relation(fields: [userId], references: [id])
-  tags          Tag[]
+    id            Int      @id @default(autoincrement())
+    feedId        Int
+    userId        String
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    title         String
+    download_full Boolean  @default(false)
+    feed          Feed     @relation(fields: [feedId], references: [id])
+    user          AuthUser @relation(fields: [userId], references: [id])
+    tags          Tag[]
 
-  @@unique([userId, feedId])
-  @@index([userId])
-  @@index([feedId])
+    @@unique([userId, feedId])
+    @@index([userId])
+    @@index([feedId])
 }
 
 model Interaction {
-  id               Int       @id @default(autoincrement())
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  is_read          Boolean?  @default(false)
-  progress         Float?    @default(0)
-  finished         Boolean?  @default(false)
-  userId           String
-  last_viewed      DateTime  @default(now())
-  last_annotated   DateTime  @default(now())
-  last_interaction DateTime  @default(now())
-  entryId          Int
-  /// The current page, if it's a book
-  currentPage      Int?
-  epsiodes_watched Json?
-  /// Optionally, a title for the interaction
-  title            String?
-  date_finished    DateTime?
-  date_started     DateTime?
-  note             String?
-  rating           Int?
-  entry            Entry     @relation(fields: [entryId], references: [id])
-  user             AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookmark         Bookmark?
+    id               Int       @id @default(autoincrement())
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
+    is_read          Boolean?  @default(false)
+    progress         Float?    @default(0)
+    finished         Boolean?  @default(false)
+    userId           String
+    last_viewed      DateTime  @default(now())
+    last_annotated   DateTime  @default(now())
+    last_interaction DateTime  @default(now())
+    entryId          Int
+    /// The current page, if it's a book
+    currentPage      Int?
+    epsiodes_watched Json?
+    /// Optionally, a title for the interaction
+    title            String?
+    date_finished    DateTime?
+    date_started     DateTime?
+    note             String?
+    rating           Int?
+    entry            Entry     @relation(fields: [entryId], references: [id])
+    user             AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    bookmark         Bookmark?
 
-  @@unique([userId, entryId])
-  @@index([entryId])
-  @@index([userId])
-  @@map("EntryInteraction")
+    @@unique([userId, entryId])
+    @@index([entryId])
+    @@index([userId])
+    @@map("EntryInteraction")
 }
 
 model Log {
-  id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  entryId      Int
-  note         String?
-  userId       String
-  date         DateTime
-  duration     Int?
-  endingPage   Int?
-  episode      Int?
-  season       Int?
-  startingPage Int?
-  user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  entry        Entry    @relation(fields: [entryId], references: [id])
+    id           Int      @id @default(autoincrement())
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    entryId      Int
+    note         String?
+    userId       String
+    date         DateTime
+    duration     Int?
+    endingPage   Int?
+    episode      Int?
+    season       Int?
+    startingPage Int?
+    user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+    entry        Entry    @relation(fields: [entryId], references: [id])
 
-  @@unique([userId, entryId, date])
-  @@index([entryId])
-  @@index([userId])
+    @@unique([userId, entryId, date])
+    @@index([entryId])
+    @@index([userId])
 }
 
 model Tag {
-  id             Int              @id @default(autoincrement())
-  name           String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @default(now()) @updatedAt
-  viewOptions    Json?
-  userId         String
-  favorite       Favorite?
-  user           AuthUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  taggings       Tagging[]
-  entryTags      EntryTag[]
-  entries        Entry[]
-  annotations    Annotation[]
-  subscriptions  Subscription[]
-  TagOnEntry     TagOnEntry[]
-  annotation_tag annotation_tag[]
+    id             Int              @id @default(autoincrement())
+    name           String
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @default(now()) @updatedAt
+    viewOptions    Json?
+    userId         String
+    favorite       Favorite?
+    user           AuthUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    taggings       Tagging[]
+    entryTags      EntryTag[]
+    entries        Entry[]
+    annotations    Annotation[]
+    subscriptions  Subscription[]
+    TagOnEntry     TagOnEntry[]
+    annotation_tag annotation_tag[]
 
-  @@unique([name, userId])
-  @@index([userId])
+    @@unique([name, userId])
+    @@index([userId])
 }
 
 model EntryTag {
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tagId     Int
-  entryId   Int
-  userId    String
-  tag       Tag      @relation(fields: [tagId], references: [id])
-  entry     Entry    @relation(fields: [entryId], references: [id])
-  user      AuthUser @relation(fields: [userId], references: [id])
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    tagId     Int
+    entryId   Int
+    userId    String
+    tag       Tag      @relation(fields: [tagId], references: [id])
+    entry     Entry    @relation(fields: [entryId], references: [id])
+    user      AuthUser @relation(fields: [userId], references: [id])
 
-  @@id([entryId, tagId, userId])
-  @@index([tagId])
-  @@index([entryId])
-  @@index([userId])
+    @@id([entryId, tagId, userId])
+    @@index([tagId])
+    @@index([entryId])
+    @@index([userId])
 }
 
 model Tagging {
-  id         Int       @id @default(autoincrement())
-  tagId      Int
-  userId     String
-  feedId     Int?
-  bookmarkId Int?
-  tag        Tag       @relation(fields: [tagId], references: [id])
-  user       AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  feed       Feed?     @relation(fields: [feedId], references: [id])
-  bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
+    id         Int       @id @default(autoincrement())
+    tagId      Int
+    userId     String
+    feedId     Int?
+    bookmarkId Int?
+    tag        Tag       @relation(fields: [tagId], references: [id])
+    user       AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    feed       Feed?     @relation(fields: [feedId], references: [id])
+    bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
 
-  @@unique([bookmarkId, userId, tagId])
-  @@unique([feedId, userId, tagId])
-  @@index([userId])
-  @@index([tagId])
-  @@index([feedId])
-  @@index([userId, tagId])
-  @@index([userId, feedId])
-  @@index([bookmarkId])
-  @@map("Taggings")
+    @@unique([bookmarkId, userId, tagId])
+    @@unique([feedId, userId, tagId])
+    @@index([userId])
+    @@index([tagId])
+    @@index([feedId])
+    @@index([userId, tagId])
+    @@index([userId, feedId])
+    @@index([bookmarkId])
+    @@map("Taggings")
 }
 
 /// @zod.import(["import { chosenIcon } from '../schemas'"])
 model SmartList {
-  id          Int        @id @default(autoincrement())
-  name        String
-  filter      Json?
-  viewOptions Json?
-  conditions  Json?
-  /// @zod.custom.use(chosenIcon)
-  icon        Json?
-  createdAt   DateTime   @default(now())
-  description String?
-  private     Boolean    @default(true)
-  updatedAt   DateTime   @default(now()) @updatedAt
-  userId      String     @default("")
-  favorites   Favorite[]
-  user        AuthUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id          Int        @id @default(autoincrement())
+    name        String
+    filter      Json?
+    viewOptions Json?
+    conditions  Json?
+    /// @zod.custom.use(chosenIcon)
+    icon        Json?
+    createdAt   DateTime   @default(now())
+    description String?
+    private     Boolean    @default(true)
+    updatedAt   DateTime   @default(now()) @updatedAt
+    userId      String     @default("")
+    favorites   Favorite[]
+    user        AuthUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, name])
-  @@index([userId])
+    @@unique([userId, name])
+    @@index([userId])
 }
 
 model AuthKey {
-  id              String   @id @unique
-  hashed_password String?
-  user_id         String
-  primary_key     Boolean  @default(true)
-  expires         BigInt?
-  auth_user       AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    id              String   @id @unique
+    hashed_password String?
+    user_id         String
+    primary_key     Boolean  @default(true)
+    expires         BigInt?
+    auth_user       AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([user_id])
-  @@map("auth_key")
+    @@index([user_id])
+    @@map("auth_key")
 }
 
 model AuthUser {
-  id                 String               @id @unique @default(cuid())
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  email              String               @unique
-  username           String               @unique @default("")
-  default_state_id   Int?                 @unique
-  default_archive_id Int?
-  home_items         Json?
-  auth_session       AuthSession[]
-  auth_key           AuthKey[]
-  followedBy         AuthUser[]           @relation("UserFollows")
-  following          AuthUser[]           @relation("UserFollows")
-  interactions       Interaction[]
-  favorites          Favorite[]
-  articles           Article[]
-  collections        Collection[]
-  annotations        Annotation[]
-  subscriptions      Subscription[]
-  documentData       EntryData[]
-  stylesheets        Stylesheet[]
-  states             State[]              @relation("user")
-  default_state      State?               @relation("default_state", fields: [default_state_id], references: [id])
-  taggings           Tagging[]
-  tags               Tag[]
-  bookmarks          Bookmark[]
-  EntryTag           EntryTag[]
-  context            Context[]
-  context_nodes      ContextNode[]
-  color_descriptions ColorDescription[]
-  invitationCodes    InvitationCode[]     @relation("owner")
-  invitationCode     InvitationCode?      @relation("user")
-  views              SmartList[]
-  TwitterIntegration TwitterIntegration[]
-  Log                Log[]
-  relations          Relation[]
-  AuthorizationKey   AuthorizationKey?
-  TagOnEntry         TagOnEntry[]
+    id                 String               @id @unique @default(cuid())
+    createdAt          DateTime             @default(now())
+    updatedAt          DateTime             @updatedAt
+    email              String               @unique
+    username           String               @unique @default("")
+    default_state_id   Int?                 @unique
+    default_archive_id Int?
+    home_items         Json?
+    auth_session       AuthSession[]
+    auth_key           AuthKey[]
+    followedBy         AuthUser[]           @relation("UserFollows")
+    following          AuthUser[]           @relation("UserFollows")
+    interactions       Interaction[]
+    favorites          Favorite[]
+    articles           Article[]
+    collections        Collection[]
+    annotations        Annotation[]
+    subscriptions      Subscription[]
+    documentData       EntryData[]
+    stylesheets        Stylesheet[]
+    states             State[]              @relation("user")
+    default_state      State?               @relation("default_state", fields: [default_state_id], references: [id])
+    taggings           Tagging[]
+    tags               Tag[]
+    bookmarks          Bookmark[]
+    EntryTag           EntryTag[]
+    context            Context[]
+    context_nodes      ContextNode[]
+    color_descriptions ColorDescription[]
+    invitationCodes    InvitationCode[]     @relation("owner")
+    invitationCode     InvitationCode?      @relation("user")
+    views              SmartList[]
+    TwitterIntegration TwitterIntegration[]
+    Log                Log[]
+    relations          Relation[]
+    AuthorizationKey   AuthorizationKey?
+    TagOnEntry         TagOnEntry[]
 
-  @@map("auth_user")
+    custom_entries Entry[]
+
+    @@map("auth_user")
 }
 
 model AuthorizationKey {
-  id     String   @id @default(cuid())
-  userId String   @unique
-  user   AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id     String   @id @default(cuid())
+    userId String   @unique
+    user   AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+    @@index([userId])
 }
 
 model AuthSession {
-  id             String   @id @unique
-  user_id        String
-  idle_expires   BigInt
-  active_expires BigInt   @default(0)
-  auth_user      AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    id             String   @id @unique
+    user_id        String
+    idle_expires   BigInt
+    active_expires BigInt   @default(0)
+    auth_user      AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([user_id])
-  @@map("auth_session")
+    @@index([user_id])
+    @@map("auth_session")
 }
 
 model Favorite {
-  id           String       @id @default(cuid())
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  userId       String
-  deleted      DateTime?
-  tagId        Int?         @unique
-  smartListId  Int?
-  annotationId String?      @unique
-  bookmarkId   Int?         @unique
-  entryId      Int?
-  feedId       Int?
-  sortOrder    Float?       @default(0)
-  /// The name of the folder. Only applies to favorites of type folder.
-  folderName   String?
-  parentId     String?
-  type         FavoriteType @default(FAVORITE)
-  collectionId Int?         @unique
-  user         AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tag          Tag?         @relation(fields: [tagId], references: [id])
-  feed         Feed?        @relation(fields: [feedId], references: [id])
-  smartList    SmartList?   @relation(fields: [smartListId], references: [id])
-  parent       Favorite?    @relation("parent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children     Favorite[]   @relation("parent")
-  annotation   Annotation?  @relation(fields: [annotationId], references: [id])
-  bookmark     Bookmark?    @relation(fields: [bookmarkId], references: [id])
-  collection   Collection?  @relation(fields: [collectionId], references: [id])
-  entry        Entry?       @relation(fields: [entryId], references: [id])
+    id           String       @id @default(cuid())
+    createdAt    DateTime     @default(now())
+    updatedAt    DateTime     @updatedAt
+    userId       String
+    deleted      DateTime?
+    tagId        Int?         @unique
+    smartListId  Int?
+    annotationId String?      @unique
+    bookmarkId   Int?         @unique
+    entryId      Int?
+    feedId       Int?
+    sortOrder    Float?       @default(0)
+    /// The name of the folder. Only applies to favorites of type folder.
+    folderName   String?
+    parentId     String?
+    type         FavoriteType @default(FAVORITE)
+    collectionId Int?         @unique
+    user         AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tag          Tag?         @relation(fields: [tagId], references: [id])
+    feed         Feed?        @relation(fields: [feedId], references: [id])
+    smartList    SmartList?   @relation(fields: [smartListId], references: [id])
+    parent       Favorite?    @relation("parent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    children     Favorite[]   @relation("parent")
+    annotation   Annotation?  @relation(fields: [annotationId], references: [id])
+    bookmark     Bookmark?    @relation(fields: [bookmarkId], references: [id])
+    collection   Collection?  @relation(fields: [collectionId], references: [id])
+    entry        Entry?       @relation(fields: [entryId], references: [id])
 
-  @@unique([userId, entryId])
-  @@unique([userId, annotationId])
-  @@unique([userId, collectionId])
-  @@unique([userId, bookmarkId])
-  @@unique([userId, tagId])
-  @@unique([userId, feedId])
-  @@unique([userId, smartListId])
-  @@index([userId])
-  @@index([tagId])
-  @@index([collectionId])
-  @@index([feedId])
-  @@index([smartListId])
-  @@index([bookmarkId])
-  @@index([annotationId])
-  @@index([entryId])
-  @@index([parentId])
+    @@unique([userId, entryId])
+    @@unique([userId, annotationId])
+    @@unique([userId, collectionId])
+    @@unique([userId, bookmarkId])
+    @@unique([userId, tagId])
+    @@unique([userId, feedId])
+    @@unique([userId, smartListId])
+    @@index([userId])
+    @@index([tagId])
+    @@index([collectionId])
+    @@index([feedId])
+    @@index([smartListId])
+    @@index([bookmarkId])
+    @@index([annotationId])
+    @@index([entryId])
+    @@index([parentId])
 }
 
 model UserEntry {
-  id         Int          @id @default(autoincrement())
-  Stylesheet Stylesheet[]
+    id         Int          @id @default(autoincrement())
+    Stylesheet Stylesheet[]
 }
 
 model Stylesheet {
-  id          Int        @id @default(autoincrement())
-  domain      String
-  css         String     @db.MediumText
-  userEntryId Int?
-  userId      String
-  entry       UserEntry? @relation(fields: [userEntryId], references: [id])
-  user        AuthUser   @relation(fields: [userId], references: [id])
+    id          Int        @id @default(autoincrement())
+    domain      String
+    css         String     @db.MediumText
+    userEntryId Int?
+    userId      String
+    entry       UserEntry? @relation(fields: [userEntryId], references: [id])
+    user        AuthUser   @relation(fields: [userId], references: [id])
 
-  @@index([userEntryId])
-  @@index([userId])
+    @@index([userEntryId])
+    @@index([userId])
 }
 
 model TwitterIntegration {
-  id           Int      @id @default(autoincrement())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  userId       String   @unique
-  accessToken  String?
-  refreshToken String?
-  expiresIn    Int
-  twitterId    String
-  user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id           Int      @id @default(autoincrement())
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+    userId       String   @unique
+    accessToken  String?
+    refreshToken String?
+    expiresIn    Int
+    twitterId    String
+    user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+    @@index([userId])
 }
 
 model AnnotationToTag {
-  A String
-  B Int
+    A String
+    B Int
 
-  @@unique([A, B], map: "_AnnotationToTag_AB_unique")
-  @@index([B], map: "_AnnotationToTag_B_index")
-  @@map("_AnnotationToTag")
+    @@unique([A, B], map: "_AnnotationToTag_AB_unique")
+    @@index([B], map: "_AnnotationToTag_B_index")
+    @@map("_AnnotationToTag")
 }
 
 model EntryToTag {
-  A Int
-  B Int
+    A Int
+    B Int
 
-  @@unique([A, B], map: "_EntryToTag_AB_unique")
-  @@index([B], map: "_EntryToTag_B_index")
-  @@map("_EntryToTag")
+    @@unique([A, B], map: "_EntryToTag_AB_unique")
+    @@index([B], map: "_EntryToTag_B_index")
+    @@map("_EntryToTag")
 }
 
 model SubscriptionToTag {
-  A Int
-  B Int
+    A Int
+    B Int
 
-  @@unique([A, B], map: "_SubscriptionToTag_AB_unique")
-  @@index([B], map: "_SubscriptionToTag_B_index")
-  @@map("_SubscriptionToTag")
+    @@unique([A, B], map: "_SubscriptionToTag_AB_unique")
+    @@index([B], map: "_SubscriptionToTag_B_index")
+    @@map("_SubscriptionToTag")
 }
 
 model UserFollows {
-  A String
-  B String
+    A String
+    B String
 
-  @@unique([A, B], map: "_UserFollows_AB_unique")
-  @@index([B], map: "_UserFollows_B_index")
-  @@map("_UserFollows")
+    @@unique([A, B], map: "_UserFollows_AB_unique")
+    @@index([B], map: "_UserFollows_B_index")
+    @@map("_UserFollows")
 }
 
 enum Status {
-  Backlog
-  Now
-  Archive
+    Backlog
+    Now
+    Archive
 }
 
 enum Color {
-  Yellow
-  Blue
-  Green
-  Pink
-  Purple
+    Yellow
+    Blue
+    Green
+    Pink
+    Purple
 }
 
 enum RelationType {
-  Related
-  SavedFrom
-  Grouped
+    Related
+    SavedFrom
+    Grouped
 }
 
 enum AnnotationType {
-  bookmark
-  note
-  annotation
-  reply
-  document
+    bookmark
+    note
+    annotation
+    reply
+    document
 
-  // srs
-  qa
+    // srs
+    qa
 }
 
 enum DocumentType {
-  article
-  podcast
-  rss
-  pdf
-  epub
-  bookmark
-  image
-  video
-  tweet
-  audio
-  book
-  movie
-  tv
-  song
-  album
-  playlist
-  recipe
-  game
-  board_game
+    article
+    podcast
+    rss
+    pdf
+    epub
+    bookmark
+    image
+    video
+    tweet
+    audio
+    book
+    movie
+    tv
+    song
+    album
+    playlist
+    recipe
+    game
+    board_game
 }
 
 enum CollectionItemType {
-  Entry
-  Annotation
-  Section
-  Collection
+    Entry
+    Annotation
+    Section
+    Collection
 }
 
 enum FavoriteType {
-  FOLDER
-  FAVORITE
+    FOLDER
+    FAVORITE
 }
 
 enum Entry_location {
-  inbox
-  soon
-  later
-  archive
+    inbox
+    soon
+    later
+    archive
 }
 
 enum State_type {
-  inbox
-  soon
-  later
-  archive
+    inbox
+    soon
+    later
+    archive
 }

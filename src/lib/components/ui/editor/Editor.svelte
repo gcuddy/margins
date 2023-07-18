@@ -3,25 +3,30 @@
 	import type { JSONContent, Editor as TEditor } from '@tiptap/core';
 	import { createEditor, Editor, EditorContent } from 'svelte-tiptap';
 	import { writable, type Readable } from 'svelte/store';
-	import { TiptapExtensions } from './extensions';
+	import { generate_tiptap_extensions, TiptapExtensionProps } from './extensions';
 	import { TiptapEditorProps } from './props';
 	import BubbleMenu from './BubbleMenu.svelte';
 	import debounce from 'just-debounce-it';
 	import { persisted } from 'svelte-local-storage-store';
 	import { cn } from '$lib/utils/tailwind';
 
-
 	export let id: string | number | undefined = undefined;
-    let className = '';
-    export { className as class};
+	let className = '';
+	export { className as class };
 
 	let editor: Readable<Editor>;
 
 	const save_status = writable('Saved');
 
+    export let size: 'sm' | 'lg' = 'lg';
+
 	// TODO: make this persist to indexeddb
 
-    export let content: JSONContent | undefined = undefined;
+	export let showSaveStatus = false;
+
+    export let extensions: TiptapExtensionProps | undefined = undefined;
+
+	export let content: JSONContent | undefined = undefined;
 	const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
 	const dispatch = createEventDispatcher<{
@@ -38,9 +43,15 @@
 		}, 500);
 	}, 750);
 
+    export const save = (cb: (json: JSONContent) => void) => {
+        if (!editor) return;
+        const json = $editor.getJSON();
+        cb(json);
+    }
+
 	onMount(() => {
 		editor = createEditor({
-			extensions: TiptapExtensions,
+			extensions: generate_tiptap_extensions(extensions),
 			editorProps: TiptapEditorProps,
 			onUpdate: (e) => {
 				// TODO
@@ -55,7 +66,7 @@
 	let hydrated = false;
 	$: if (editor && content_store && $content_store && !hydrated) {
 		// hydrate content from localstorage if not yet hydrated
-		console.log('being run')
+		console.log('being run');
 		$editor.commands.setContent($content_store);
 		hydrated = true;
 	}
@@ -69,12 +80,20 @@
 	on:click|self={() => {
 		// $editor?.chain().focus().run();
 	}}
-	class={cn("relative bg-background  w-full max-w-screen-lg border-stone-200 p-12 px-8 sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg", className)}
+	class={cn(
+		'relative  w-full max-w-screen-lg p-12 px-8 sm:mb-[calc(2    0vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg',
+		className
+	)}
+    data-size={size}
 >
 	<!--  -->
-	<div class="absolute right-5 top-5 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400">
-		{$save_status}
-	</div>
+	{#if showSaveStatus}
+		<div
+			class="absolute right-5 top-5 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400"
+		>
+			{$save_status}
+		</div>
+	{/if}
 
 	{#if editor}
 		<BubbleMenu editor={$editor} />
@@ -118,8 +137,6 @@
 		cursor: move;
 		padding-right: 24px;
 	}
-
-
 
 	/* Custom image styles */
 

@@ -8,13 +8,14 @@ import pdfjs from "pdfjs-dist/legacy/build/pdf"
 import { make_thumbnail, parse_pdf } from '$lib/utils/pdf';
 import { uploadFile } from '$lib/backend/s3.server';
 import { nanoid } from 'nanoid';
+import type { Actions } from './$types';
 
 
 export const config: Config = {
     runtime: "nodejs18.x",
 }
 
-export const actions = {
+export const actions: Actions = {
     thumbnail: async (event) => {
         const data = await event.request.formData();
         const file = data.get("file") as Blob;

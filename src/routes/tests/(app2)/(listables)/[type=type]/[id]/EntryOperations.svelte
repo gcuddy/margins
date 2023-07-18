@@ -30,7 +30,8 @@
 		Edit,
 		ListPlus,
 		LoaderIcon,
-		MoreHorizontal
+		MoreHorizontal,
+		Paperclip
 	} from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
 	import toast from 'svelte-french-toast';
@@ -53,6 +54,26 @@
 			toast.success('Added to collection');
 			invalidate('entry');
 		});
+	}
+
+	function handle_pdf_upload(file: File) {
+		if (!file.type.includes('pdf')) {
+			toast.error('File must be a PDF');
+		} else if (file.size / 1024 / 1024 > 50) {
+			toast.error('File size too big (max 50MB).');
+		} else {
+            toast.promise(
+                fetch(`/api/upload?related_entry_id=${entry.id}`, {
+                    method: 'POST',
+                    body: file
+                }),
+                {
+                    loading: 'Uploading...',
+                    success: 'File uploaded',
+                    error: 'Error uploading file'
+                }
+            )
+        }
 	}
 </script>
 
@@ -121,6 +142,23 @@
 				<ListPlus class="mr-2 h-4 w-4" />
 				<span>Add to Collection</span></DropdownMenuItem
 			>
+			<DropdownMenuItem
+				on:click={() => {
+					const input = document.createElement('input');
+					input.type = 'file';
+					input.accept = 'pdf';
+					input.onchange = async (event) => {
+						if (input.files?.length) {
+							const file = input.files[0];
+                            return handle_pdf_upload(file);
+						}
+					};
+					input.click();
+				}}
+			>
+				<Paperclip class="mr-2 h-4 w-4" />
+				<span>Attach file </span>
+			</DropdownMenuItem>
 		</DropdownMenuGroup>
 		<!-- <DropdownMenuItem>Billing</DropdownMenuItem>
 		<DropdownMenuItem>Team</DropdownMenuItem>
@@ -128,4 +166,4 @@
 	</DropdownMenuContent>
 </DropdownMenu>
 
-<NoteForm bind:isOpen={show_note_form} {data} {entry}  />
+<NoteForm bind:isOpen={show_note_form} {data} {entry} />

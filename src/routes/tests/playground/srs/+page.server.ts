@@ -1,4 +1,4 @@
-import { db } from '$lib/db';
+import { db, json } from '$lib/db';
 import { nanoid } from '$lib/nanoid';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
@@ -13,8 +13,8 @@ export async function load() {
 
 export const actions: Actions = {
 	new: async ({ request, locals }) => {
-		// const session = await locals.validate();
-		// if (!session) return fail(401);
+		const session = await locals.validate();
+		if (!session) return fail(401);
 		const data = await request.formData();
 		const body = data.get('body');
 		const response = data.get('response');
@@ -29,6 +29,9 @@ export const actions: Actions = {
 
 		const entry_id = data.get('entry_id');
 		const parent_id = data.get('parent_id');
+        const target = data.get('target');
+
+        console.log({target});
 
 		await db
 			.insertInto('Annotation')
@@ -42,8 +45,9 @@ export const actions: Actions = {
 				updatedAt: new Date(),
 				createdAt: new Date(),
 				entryId: entry_id ? +entry_id : null,
-				parentId: typeof parent_id === 'string' ? parent_id : null
-				// userId: session.userId
+				parentId: typeof parent_id === 'string' ? parent_id : null,
+                target: typeof target === 'string' ? json(JSON.parse(target)) : null,
+				userId: session.userId
 			})
 			.onDuplicateKeyUpdate({
 				body,

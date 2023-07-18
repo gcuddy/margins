@@ -72,6 +72,7 @@ export const annotationSchema = z.object({
     title: z.string().optional(),
     target: TargetSchema.optional(),
     entryId: z.number().optional(),
+    contentData: z.any()
     // tags: z.string().array(),
     // entry: z
     //     .object({

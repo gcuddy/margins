@@ -41,3 +41,8 @@ export async function upload_file_from_form({ request, locals, session: sesh }: 
     console.log({ uploaded_file })
     return { Key, fileName: file.name, file };
 }
+
+
+export async function upload_pdf() {
+    // TODO
+}

@@ -1,4 +1,4 @@
-import { readable, writable } from 'svelte/store';
+import { Readable, readable, writable } from 'svelte/store';
 import type { EntryInList } from '$lib/db/selects';
 import { tick } from 'svelte';
 
@@ -7,14 +7,21 @@ import { tick } from 'svelte';
 // serverless functions, which means we don't need to care — the
 // function won't be kept alive long enough for it to matter.
 
+type EntryState = EntryInList & {
+    tags?: {
+        id: number;
+        name: string;
+    }[]
+} & {
+    type: "pdf";
+    outline?: Readable<{title: string; pageNumber: number; active: boolean}[]>
+}
+
+// TODO: think this with something like indexeddb?
+
 const { subscribe, update } = writable(
     {} as {
-        [id: string]: EntryInList & {
-            tags?: {
-                id: number;
-                name: string;
-            }[]
-        }
+        [id: string]: EntryState
     }
 );
 
@@ -28,7 +35,7 @@ export const stale_time = readable(2000);
 
 // Note: could probably use a Map instead of an object, but I'm not sure if that would be better or not.
 
-export function init_entries(entries: EntryInList[]) {
+export function init_entries(entries: EntryState[]) {
     update((lookup) => {
         for (const entry of entries) {
             if (!lookup[entry.id]) {
@@ -43,9 +50,9 @@ export function init_entries(entries: EntryInList[]) {
     })
 }
 
-export function update_entry(id: number, entry: Partial<EntryInList>): void;
-export function update_entry(entry: { id: number } & Partial<EntryInList>): void;
-export function update_entry(id_or_entry: number | { id: number } & Partial<EntryInList>, entry?: Partial<EntryInList>) {
+export function update_entry(id: number, entry: Partial<EntryState>): void;
+export function update_entry(entry: { id: number } & Partial<EntryState>): void;
+export function update_entry(id_or_entry: number | { id: number } & Partial<EntryState>, entry?: Partial<EntryState>) {
     let id: number;
     if (typeof id_or_entry === 'number') {
         id = id_or_entry;

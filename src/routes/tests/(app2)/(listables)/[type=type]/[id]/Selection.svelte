@@ -15,12 +15,14 @@
 
 	type AnnotationEvent = {
 		form: Writable<Annotation>;
-		el: HTMLFormElement;	
-	}
-   
-    const dispatch = createEventDispatcher<{
+		el: HTMLFormElement;
+	};
+
+	const dispatch = createEventDispatcher<{
 		highlight: AnnotationEvent;
-		annotate: AnnotationEvent;
+		annotate: {
+            popperContent: typeof popperContent;
+        };
 	}>();
 
 	const show_tooltip = derived(selection, ($selection) => {
@@ -71,12 +73,12 @@
 					</svelte:fragment>
 				</AnnotationForm>
 				<Button
-					on:pointerdown={() => dispatch('annotate')}
+					on:pointerdown={() => dispatch('annotate', { popperContent })}
 					variant="ghost"
 					class="flex h-auto flex-col space-y-1"
 				>
 					<EditIcon class="h-5 w-5" />
-					<Muted class="text-xs">Annotate</Muted>
+					<Muted class="text-xs">Note</Muted>
 				</Button>
 			</div>
 		</div>

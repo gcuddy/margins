@@ -6,7 +6,7 @@
 </script>
 
 
-<div class="relative flex items-start gap-2">
+<div class="relative flex items-start gap-2 grow">
 	<div id="entry-wrapper" class="flex grow flex-col overflow-x-hidden h-full">
 		<slot />
 	</div>

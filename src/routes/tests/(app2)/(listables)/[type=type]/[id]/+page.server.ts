@@ -45,7 +45,7 @@ export const load = (async (event) => {
         .$if(!!session, q => q.select(eb => [
             jsonArrayFrom(eb.selectFrom("Annotation")
                 .innerJoin("auth_user", "auth_user.id", "Annotation.userId")
-                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "auth_user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact"])
+                .select(["Annotation.id", "Annotation.contentData", "Annotation.start", "Annotation.body", "Annotation.target", "Annotation.entryId", "auth_user.username", "Annotation.title", "Annotation.createdAt", "Annotation.exact", "Annotation.parentId"])
                 .whereRef("Annotation.entryId", "=", "Entry.id")
                 .where("Annotation.userId", "=", session!.userId)
                 .orderBy("Annotation.start", "asc")

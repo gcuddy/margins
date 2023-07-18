@@ -128,15 +128,21 @@ export async function upsertAnnotation(data: z.infer<AnnotationSchema>,) {
     if (!id) {
         id = nanoid();
     }
+    console.log({id, annotation})
     await db.insertInto("Annotation")
         .values({
             id,
+            updatedAt: new Date(),
             ...annotation,
+            private: annotation.private ? 1 : 0,
             target: annotation.target ? json(annotation.target) : undefined,
+            contentData: annotation.contentData ? json(annotation.contentData) : undefined,
         })
         .onDuplicateKeyUpdate({
             ...annotation,
+            private: annotation.private ? 1 : 0,
             target: annotation.target ? json(annotation.target) : undefined,
+            contentData: annotation.contentData ? json(annotation.contentData) : undefined,
         })
         .execute();
     return id;

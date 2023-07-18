@@ -41,13 +41,16 @@
 		PlusIcon,
 		XIcon
 	} from 'lucide-svelte';
-	import { onMount } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import toast from 'svelte-french-toast';
 	import { fade, fly } from 'svelte/transition';
 	import { useMenuBar } from '../../MainNav.svelte';
 	import Annotation from './[id]/Annotation.svelte';
 	import NoteForm from './[id]/NoteForm.svelte';
 	import Input from '$components/ui/Input.svelte';
+	import type { Writable } from 'svelte/store';
+	import type { PDFDocumentProxy } from 'pdfjs-dist';
+	import type Pdf from './[id]/PDF.svelte';
 
 	const render = persisted('sidebar', false);
 	let flash = false;
@@ -90,6 +93,9 @@
 	}
 
 	$: data = $page.data.entry?.id ? $state[$page.data.entry.id] : undefined;
+    $: outline = data?.outline;
+
+
 	$: console.log({ $state });
 
 	const mainnav = useMenuBar();
@@ -107,8 +113,11 @@
 
 	const open_sections = persisted('sidebar_open_sections', {
 		details: true,
-		notes: true
+		notes: true,
+		outline: true
 	});
+
+    const pdf = getContext('pdf') as Writable<null | Pdf>
 </script>
 
 <svelte:window on:keydown={on_keydown} />
@@ -172,7 +181,12 @@
 							<Muted>Author</Muted>
 
 							<Input variant="ghost" value={$page.data.entry?.author} />
-							<Button as="a" href="/tests/people/{$page.data.entry?.author}" variant="ghost" size="sm">
+							<Button
+								as="a"
+								href="/tests/people/{$page.data.entry?.author}"
+								variant="ghost"
+								size="sm"
+							>
 								<Locate class="h-3 w-3" />
 							</Button>
 						</div>
@@ -292,6 +306,32 @@
 					</CardContent>
 				</Collapsible.Content>
 			</Collapsible.Root>
+			{#if outline && $outline?.length}
+				<Collapsible.Root bind:open={$open_sections.outline}>
+					<div class="p-6">
+						<Collapsible.Trigger
+							class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group -ml-2 transition')}
+						>
+							<CardTitle>
+								Outline
+								<ChevronUpIcon
+									class="inline h-4 w-4 transition group-data-[state='open']:rotate-180"
+								/>
+							</CardTitle></Collapsible.Trigger
+						>
+						<Collapsible.Content transition>
+							<ol>
+								{#each $outline as outline}
+									<li>
+										<a class:font-bold={outline.active} data-sveltekit-replacestate data-sveltekit-noscroll on:click={() => {
+                                        }} href="#page-{outline.pageNumber}">{outline.title}</a>
+									</li>
+								{/each}
+							</ol>
+						</Collapsible.Content>
+					</div>
+				</Collapsible.Root>
+			{/if}
 			{#if data?.annotations?.length}
 				<div class="p-6">
 					<div class="flex items-center justify-between">

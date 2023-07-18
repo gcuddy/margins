@@ -8,8 +8,9 @@
 	import { recents } from '$lib/stores/recents';
 	import { cn } from '$lib/utils/tailwind';
 	import { update_entry } from '$lib/state/entries';
-	import { onMount } from 'svelte';
+	import { onMount, setContext } from 'svelte';
 	import { get_module } from './module';
+	import { writable } from 'svelte/store';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
@@ -38,7 +39,9 @@
 	});
 
 	sync();
-	
+
+    setContext('pdf', writable(null));
+
 	function sync() {
 		if (!data.entry) return;
 		update_entry(data.entry.id, data.entry);
@@ -84,7 +87,7 @@
 
 <div
 	class={cn(
-		'px-4'
+		'px-4 grow'
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >

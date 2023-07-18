@@ -25,8 +25,8 @@ export function getType(type: Entry["type"]) {
     return type
 }
 
-export function make_link(entry: EntryInList) {
-    return `${prefix}/${getType(entry.type)}/${getId(entry)}`
+export function make_link(entry: EntryInList, subpath = "") {
+    return `${prefix}/${getType(entry.type)}/${getId(entry)}${subpath ? '#' + subpath : ''}`
 }
 
 function get_domain(url: string) {

@@ -18,13 +18,14 @@
 	import { page } from '$app/stores';
 	import { formatTimeDuration } from '$lib/utils/dates';
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
+	import { render_html } from '$components/ui/editor/utils';
 
-	export let annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title'> & {
+	export let annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData'> & {
 		username?: string | null;
 	};
 
 	interface $$Props extends Omit<ComponentProps<AnnotationForm>, 'annotation'> {
-		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title'> & {
+		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData'> & {
 			username?: string | null;
 		};
 	}
@@ -138,6 +139,12 @@
 				</div>
 			{/if}
 		{/if}
+        {#if annotation.contentData}
+        <div class="prose prose-sm prose-stone dark:prose-invert">
+            <!-- {@html render_html(annotation.contentData)} -->
+            <!-- {annotation.body} -->
+        </div>
+        {/if}
 	</CardContent>
 	<!-- <CardFooter class="p-3">
 	</CardFooter> -->

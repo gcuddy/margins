@@ -3,7 +3,9 @@
 	import Button from '$components/ui/Button.svelte';
 	import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '$components/ui/card';
 	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
+	import type { AnnotationWithEntry } from '$lib/db/selects';
 	import { md } from '$lib/markdown';
+	import { make_link } from '$lib/utils/entries';
 
 	export const [send, receive] = crossfade({
 		// delay: 500,
@@ -29,6 +31,7 @@
 		ChevronsRightIcon,
 		CircleSlashIcon,
 		EyeIcon,
+		InfoIcon,
 		MoreVerticalIcon,
 		TrashIcon
 	} from 'lucide-svelte';
@@ -36,14 +39,26 @@
 	import { quintOut } from 'svelte/easing';
 	import { crossfade, fade, fly, scale } from 'svelte/transition';
 
-	export let note: { body: string | null; id: string; response: string | null } & Annotation;
+	export let note: {
+		body: string | null;
+		id: string;
+		response: string | null;
+	} & AnnotationWithEntry;
 
 	// TODO: use url params for js-free (or post answer and get from cookies or something)
 	let show_answer = false;
 
 	let pending = false;
 
-	const dispatch = createEventDispatcher();
+    let show_info = false;
+
+	type Event = 'Remembered' | 'Forgotten' | 'Deleted';
+
+	const dispatch = createEventDispatcher<{
+		done: {
+			type: Event;
+		};
+	}>();
 
 	$: body = md.render(note.body ?? '');
 	$: response = md.render(note.response ?? '');
@@ -51,8 +66,9 @@
 	//   $: source =
 </script>
 
+<!-- h-96 -->
 <div
-	class="rounded-lg border bg-card text-card-foreground shadow-sm p-8 max-w-prose h-96 flex flex-col justify-between"
+	class="rounded-lg border bg-card text-card-foreground shadow-sm p-8 max-w-prose flex flex-col justify-between"
 >
 	<div class="flex justify-end">
 		{#if show_answer}
@@ -71,6 +87,14 @@
 			items={[
 				[
 					{
+						text: 'Show Info',
+						icon: InfoIcon,
+						onSelect: () => {
+							console.log({note});
+                            show_info = true;
+						}
+					},
+					{
 						text: 'Delete',
 						icon: TrashIcon,
 						onSelect: () => {
@@ -80,7 +104,9 @@
 								body: JSON.stringify({})
 							}).then(() => {
 								pending = false;
-								dispatch('done');
+								dispatch('done', {
+                                    type: 'Deleted'
+                                });
 							});
 						}
 					}
@@ -113,23 +139,25 @@
 	</div>
 	{#if show_answer}
 		<form
-			use:enhance={() => {
+			use:enhance={({ formData }) => {
 				pending = true;
+				const remembered = +(formData.get('remembered') || 0);
+
 				return async ({ update }) => {
 					await update();
 					// Get results and update state of this Card, and bind that to the parent component
 					pending = false;
-					dispatch('done');
+					dispatch('done', { type: remembered ? 'Remembered' : 'Forgotten' });
 				};
 			}}
 			action="/tests/playground/srs/{note.id}?/mark"
 			method="post"
 		>
-			<Button name="remembered" value={0} type="submit">
+			<Button disabled={pending} name="remembered" value={0} type="submit">
 				<CircleSlashIcon class="h-5 w-5 mr-2" />
 				Forgotten
 			</Button>
-			<Button name="remembered" value={1} type="submit">
+			<Button disabled={pending} name="remembered" value={1} type="submit">
 				<CheckCircle2Icon class="h-5 w-5 mr-2" />
 				Remembered
 			</Button>
@@ -145,10 +173,10 @@
 				<EyeIcon class="h-5 w-5 mr-2" />
 				Show Answer
 			</Button>
-			{#if note.parentId || note.entryId}
+			{#if note.entry}
 				<Button
 					as="a"
-					href="/tests/entry/{note.entryId}"
+					href={make_link(note.entry, `annotation-${note.id}`)}
 					on:click={() => {
 						console.log({ note });
 					}}
@@ -160,4 +188,7 @@
 			{/if}
 		</div>
 	{/if}
+    {#if show_info}
+        <span>Due: </span>
+    {/if}
 </div>
