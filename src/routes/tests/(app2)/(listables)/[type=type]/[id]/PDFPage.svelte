@@ -1,6 +1,6 @@
 <script lang="ts">
 	import inView from '$lib/actions/inview';
-	import { renderTextLayer } from 'pdfjs-dist';
+	import { renderTextLayer, PixelsPerInch } from 'pdfjs-dist';
 	import type { PDFPageProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 	import { createEventDispatcher, onMount, tick } from 'svelte';
 	import {
@@ -17,10 +17,24 @@
 
 	export let page: PDFPageProxy;
 	export let scale: number;
+	export let scrollTop: number;
+	export let clientHeight: number;
+	export let isFocused = false;
+	let elementTop = 0;
+	let elementHeight = 0;
+
+	function updateElementBounds() {
+		if (!wrapper) return;
+		elementTop = wrapper.offsetTop;
+		elementHeight = wrapper.offsetHeight;
+	}
+
+	let old_scale = scale;
 	let canvas: HTMLCanvasElement;
+	let in_view = false;
 	import type { PageData } from './$types';
 	export let annotations: NonNullable<NonNullable<PageData['entry']>['annotations']>;
-
+	$: console.log({ PixelsPerInch });
 	let highlights: {
 		highlightElements: {
 			element: HTMLElement;
@@ -34,7 +48,19 @@
 
 	let viewport: PageViewport;
 
-	$: actualSizeViewport = viewport?.clone({ scale });
+	// $: if (scale !== old_scale) {
+	//     old_scale = scale;
+	//     console.log(`scale chagne`, { scale });
+	//     viewport = page.getViewport({ scale });
+	// }
+
+	$: pixelRatio = window.devicePixelRatio || 1;
+
+	$: viewport = page.getViewport({ scale: scale * pixelRatio });
+
+	$: if (viewport) {
+		dispatch('viewport', viewport);
+	}
 
 	$: console.log({ viewport });
 
@@ -45,15 +71,18 @@
 
 	const dispatch = createEventDispatcher();
 
-    const scales: Record<number, number> = {
+	const scales: Record<number, number> = {
 		1: 3.2,
 		2: 4
 	};
 
 	export async function drawPage() {
+		await tick();
 		if (renderTask) return;
 		const canvasContext = canvas.getContext('2d');
 		if (!canvasContext) return;
+		console.log(`Rendering page ${page.pageNumber} at scale ${scale}`);
+		viewport = page.getViewport({ scale: scale * pixelRatio });
 		renderTask = page.render({
 			canvasContext,
 			viewport
@@ -70,6 +99,10 @@
 			viewport,
 			textDivs: []
 		});
+
+		renderAnnotations();
+
+		updateElementBounds();
 
 		renderTask.promise
 			.then(() => {
@@ -173,40 +206,76 @@
 		renderTask = null;
 	};
 
-	const pixelRatio = window.devicePixelRatio || 1;
+	$: console.log({ viewport });
+	$: ({ pageHeight, pageWidth } = (viewport?.rawDims || { pageHeight: 0, pageWidth: 0 }) as {
+		pageHeight: number;
+		pageWidth: number;
+	});
 
-    $: _scale = scales[window.devicePixelRatio || 1] || scale;
-	$: viewport = page.getViewport({ scale: _scale });
+	$: canvasScaleRatio = scale >= 1 ? scale * pixelRatio : 1;
+	$: if (scale !== old_scale) {
+		// drawPage();
+		const canvasContext = canvas.getContext('2d');
+		// clear canvas
+		if (canvasContext) {
+			page.render({
+				canvasContext,
+				viewport
+			});
+		}
+		console.log('yeah');
+	}
 
-	$: style = {
-		width: Math.ceil(actualSizeViewport?.width / pixelRatio || 0),
-		height: Math.ceil(actualSizeViewport?.height / pixelRatio || 0)
-	};
-    $: ({pageHeight, pageWidth} = (viewport?.rawDims || {pageHeight: 0, pageWidth: 0}) as {pageHeight: number, pageWidth: number});
+	// read-only
+	export let scale_to_fit = 1;
+	$: scale_to_fit = (wrapper?.parentElement?.offsetWidth || 0) / pageHeight;
+	$: console.log({ scale_to_fit });
+
+	let zooming = false;
+	function cssTransform() {}
+
+	function isElementFocused() {
+		if (!elementHeight) return;
+		const halfHeight = elementHeight / 2;
+		const halfScreen = clientHeight / 2;
+		const delta = elementHeight >= halfScreen ? halfScreen : halfHeight;
+		const threshold = scrollTop + delta;
+		const elementBottom = elementTop + elementHeight;
+		const focused = elementTop < threshold && elementBottom >= threshold;
+		if (focused && (focused !== isFocused)) {
+			dispatch('focused', page.pageNumber);
+		}
+        isFocused = focused;
+		return isFocused;
+	}
+	$: scrollTop, isElementFocused();
 </script>
 
 <div
 	bind:this={wrapper}
-	use:inView
+	use:inView={{ progress: true }}
 	on:exit={() => {
+		in_view = false;
 		destroyPage();
 	}}
 	on:enter={() => {
+		in_view = true;
 		drawPage();
 	}}
+	on:progress={(e) => console.log('progress', { e })}
 	id="container"
-	class="relative"
-    data-page-number={page.pageNumber}
-    style:width="calc(var(--scale-factor) * {pageHeight})px"
-    style:height="calc(var(--scale-factor) * {pageWidth})px"
-    data-loaded={!!page}
+	class="relative my-0 mx-auto"
+	data-page-number={page.pageNumber}
+	style:width="calc(var(--scale-factor) * {pageWidth}px)"
+	style:height="calc(var(--scale-factor) * {pageHeight}px)"
+	data-loaded={!!page}
 >
 	{#key scale}
 		<svg
-			style:width="{style.width}px"
-			style:height="{style.height}px"
+			style:width="calc(var(--scale-factor) * {pageWidth}px)"
+			style:height="calc(var(--scale-factor) * {pageHeight}px)"
 			id="svg-layer"
-			class="absolute inset-0 h-full w-full overflow-hidden mix-blend-multiply"
+			class="absolute inset-0 mix-blend-multiply pointer-events-none z-[3]"
 		>
 			{#each highlights.filter((h) => h.pageNumber === page.pageNumber) as highlight}
 				{#each highlight.highlightElements as highlightElement}
@@ -225,21 +294,33 @@
 			{/each}
 		</svg>
 	{/key}
-    <!-- style:width="{style.width}px"
-    style:height="{style.height}px" -->
-	<div
-		class="absolute inset-0"
-		bind:this={text_layer}
-		id="text-layer"
-	/>
-	<canvas
-		width={Math.ceil(viewport?.width || 0)}
-		height={Math.ceil(viewport?.height || 0)}
-		style:width="{style.width}px"
-		style:height="{style.height}px"
+
+	<div class="absolute inset-0" bind:this={text_layer} id="text-layer" />
+
+	<!-- CanvasWrapper -->
+	<div>
+		<canvas
+			width={!zooming ? Math.ceil(pageWidth * canvasScaleRatio) : ''}
+			height={!zooming ? Math.ceil(pageHeight * canvasScaleRatio) : ''}
+			class="block m-0"
+			style:width="{pageWidth}px"
+			style:height="{pageHeight}px"
+			style:zoom="var(--scale-factor)"
+			data-zooming={zooming ? 'true' : undefined}
+			bind:this={canvas}
+			id="pdf-canvas"
+		/>
+		<!-- <canvas
+		width={Math.round(viewport?.width * pixelRatio)}
+        height={Math.round(viewport?.height * pixelRatio)}
+        class="block m-0"
+		style:width="{pageWidth}px"
+		style:height="{pageHeight}px"
+        style:zoom='var(--scale-factor)'
 		bind:this={canvas}
 		id="pdf-canvas"
-	/>
+	/> -->
+	</div>
 </div>
 
 <style>
@@ -267,5 +348,10 @@
 	#text-layer :global(mark) {
 		background-color: rgba(0, 0, 0, 0) !important;
 		color: inherit !important;
+	}
+
+	canvas[zooming] {
+		width: 100%;
+		height: 100%;
 	}
 </style>

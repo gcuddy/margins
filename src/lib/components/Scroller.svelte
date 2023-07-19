@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount, tick } from 'svelte';
-	import { dndzone } from 'svelte-dnd-action';
-type T = $$Generic;
+	type T = $$Generic;
 	export let items: T[];
 
 	export function capture() {
@@ -111,12 +110,11 @@ type T = $$Generic;
 	>
 		<slot name="header" />
 
-		<div use:dndzone={{
-			items
-		}} 
-		on:consider={(e) => items = e.detail.items}
-		on:finalize={(e) => items = e.detail.items}
-		bind:this={content} style:padding-top="{top}px" style:padding-bottom="{bottom}px">
+		<div
+			bind:this={content}
+			style:padding-top="{top}px"
+			style:padding-bottom="{bottom}px"
+		>
 			{#each items.slice(a, b) as item, i (item)}
 				<div class="flow-root" data-item-id={a + i} use:measure={a + i}>
 					<slot name="item" {item} i={a + i} />

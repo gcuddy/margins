@@ -69,6 +69,9 @@
 	import { cn } from '$lib/utils/tailwind';
 	import type { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
 	import PdfPage from './PDFPage.svelte';
+	import resize from '$lib/actions/resize';
+	import throttle from 'lodash/throttle';
+
 	export let data: PageData;
 
 	$: annotations = data.entry?.annotations ?? [];
@@ -99,11 +102,7 @@
 	let leftSidebarScrollTop = 0;
 	let frame: number;
 
-
-
-    let pages: PDFPageProxy[] = [];
-
-
+	let pages: PDFPageProxy[] = [];
 
 	function poll() {
 		if (leftSidebar?.scrollTop !== leftSidebarScrollTop) {
@@ -315,9 +314,9 @@
 
 	onMount(async () => {
 		// await import??
-        if (!data?.entry?.uri) return;
+		if (!data?.entry?.uri) return;
 
-        const pdf_path = data.entry.uri.startsWith('http')
+		const pdf_path = data.entry.uri.startsWith('http')
 			? data.entry.uri
 			: data.S3_BUCKET_PREFIX + data.entry.uri;
 		console.log({ pdf_path });
@@ -328,11 +327,21 @@
 			disableStream: true
 		}).promise;
 		totalPages = pdfDocument.numPages;
-        const promises = Array.from({
-            length: totalPages
-        }).map((_, i) => pdfDocument.getPage(i + 1))
+		const promises = Array.from({
+			length: totalPages
+		}).map((_, i) => pdfDocument.getPage(i + 1));
 
-        pages = await Promise.all(promises);
+		pages = await Promise.all(promises);
+
+		const viewport = pages[0].getViewport({ scale: 1 });
+		console.log({ wrapper, viewport });
+		scale = wrapper?.offsetWidth / viewport.width;
+		wrapperHeight = wrapper?.offsetHeight || 0;
+		console.log({ scale });
+
+		thumbnails = Array.from({
+			length: totalPages
+		}).map((_, i) => i);
 
 		// await loadPDF();
 		frame = requestAnimationFrame(poll);
@@ -363,12 +372,16 @@
 		2: 4
 	};
 
-	let scale = 2;
+	let scale = 1.06667;
 	let viewport_scale = scale;
+	let scale_to_fit = scale;
 
-	async function renderPage(pageNumber: number, opts?: {
-        noScrollThumbnails?: boolean
-    }) {
+	async function renderPage(
+		pageNumber: number,
+		opts?: {
+			noScrollThumbnails?: boolean;
+		}
+	) {
 		if (!pdfDocument) return;
 		const page = await pdfDocument.getPage(pageNumber);
 		viewport_scale = scale * scales[window.devicePixelRatio || 1] || scale;
@@ -411,15 +424,14 @@
 		});
 
 		// make sure outline is scrolled into view
-        if (!opts?.noScrollThumbnails) {
-
-            const outline = document.querySelector(`[data-thumbnail-page="${currentPage}"]`);
-            if (!outline) {
-                leftSidebar?.scrollTo({
-                    top: (136 * (currentPage - 1)) - (outline_container_height / 3)
-                });
-            }
-        }
+		if (!opts?.noScrollThumbnails) {
+			const outline = document.querySelector(`[data-thumbnail-page="${currentPage}"]`);
+			if (!outline) {
+				leftSidebar?.scrollTo({
+					top: 136 * (currentPage - 1) - outline_container_height / 3
+				});
+			}
+		}
 
 		render_annotations(currentPage);
 	}
@@ -470,6 +482,8 @@
 			rect
 		};
 	};
+
+	let wrapperHeight = wrapper?.offsetHeight || 0;
 
 	async function highlight() {
 		const range = window.getSelection()?.getRangeAt(0);
@@ -556,6 +570,25 @@
 		scroller?.scrollTo({
 			top: 0
 		});
+
+    const scrollBounds = {
+        scrollTop: 0,
+        clientHeight: 0,
+        didReachBottom: false,
+        isBottomVisible() {
+            return this.scrollTop + this.clientHeight >= (scroller?.scrollHeight || 0);
+        }
+    }
+
+	function updateScrollBounds() {
+		if (!scroller) return;
+		const { scrollTop, clientHeight } = scroller;
+		scrollBounds.scrollTop = scrollTop;
+		scrollBounds.clientHeight = clientHeight;
+		scrollBounds.didReachBottom = scrollBounds.isBottomVisible();
+	}
+
+    const throttledUpdateScrollBounds = throttle(updateScrollBounds, 250);
 </script>
 
 <!-- keyboard nav -->
@@ -733,8 +766,8 @@
 			on:click={() => {
 				currentPage = thumbnail + 1;
 				renderPage(thumbnail + 1, {
-                    noScrollThumbnails: true
-                });
+					noScrollThumbnails: true
+				});
 			}}
 		>
 			{#if !dummy}
@@ -794,7 +827,7 @@
 			<Button
 				on:click={() => {
 					scale += 0.25;
-					renderPage(currentPage);
+					// renderPage(currentPage);
 				}}
 				size="sm"
 				variant="ghost"
@@ -805,7 +838,7 @@
 			<Button
 				on:click={() => {
 					scale -= 0.25;
-					renderPage(currentPage);
+					// renderPage(currentPage);
 				}}
 				size="sm"
 				variant="ghost"
@@ -879,26 +912,43 @@
 	</div>
 </div>
 
-<div
-	class="grow h-[calc(100vh-6rem)] overflow-hidden relative min-w-[350px]"
-	style:height="min({(viewport?.height * scale) / viewport_scale}px, 100%)"
->
+<!-- style:height="min({(viewport?.height * scale) / viewport_scale}px, 100%)" -->
+<div class="grow h-[calc(100vh-6rem)] overflow-hidden relative min-w-[350px]">
 	<!-- pdf content container -->
 	<div class="absolute inset-0 min-w-[350px]">
 		<!-- pdf viewer container -->
-		<div bind:this={scroller} class="absolute overflow-auto border inset-0">
-			<div bind:this={wrapper} id="article" style="--scale-factor: {scale};">
+		<div on:scroll={throttledUpdateScrollBounds} bind:this={scroller} class="absolute overflow-auto border inset-0">
+			<div
+				use:resize={(e) => {
+					console.log({ e });
+				}}
+				bind:this={wrapper}
+				id="article"
+				style="--scale-factor: {scale};"
+			>
 				<!-- floating toolbar -->
 				{#if show_text_version}
 					<div class="prose prose-stone space-y-4 whitespace-pre-line dark:prose-invert">
 						{@html text}
 					</div>
 				{:else}
-                {#each pages as page (page.pageNumber)}
-                    <PdfPage on:rendered={() => {
-                        console.log("rendered", page.pageNumber)
-                    }} {page} bind:scale {annotations} />
-                {/each}
+                <!-- TODO: Scrolly.svelte -->
+					{#each pages as page (page.pageNumber)}
+						<PdfPage
+							on:rendered={() => {
+								console.log('rendered', page.pageNumber);
+							}}
+                            on:focused={(e) => {
+                                console.log('focused!', e)
+                                // currentPage = page.pageNumber ;
+                            }}
+							{page}
+							bind:scale
+							bind:scale_to_fit
+							{annotations}
+                            {...scrollBounds}
+						/>
+					{/each}
 					<!-- Page -->
 					<!-- <div id="container">
 						{#key scale}
