@@ -28,7 +28,7 @@
 		PageViewport,
 		PDFWorker
 	} from 'pdfjs-dist';
-	import { getContext, onMount, tick } from 'svelte';
+	import { getContext, onDestroy, onMount, tick } from 'svelte';
 	import type { PageData } from './$types';
 	import Selection from './Selection.svelte';
 	import { getTargetSelector } from '$lib/utils/annotations';
@@ -63,9 +63,11 @@
 	import { update_entry } from '$lib/state/entries';
 	import { Writable, get, writable } from 'svelte/store';
 	import Input from '$components/ui/Input.svelte';
+	import { leftSidebarPortal } from '../LeftSidebar.svelte';
+	import VirtualList from '$components/ui/internal/VirtualList.svelte';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { cn } from '$lib/utils/tailwind';
 	export let data: PageData;
-
-	let thumbnails = [];
 
 	$: annotations = data.entry?.annotations ?? [];
 
@@ -87,11 +89,54 @@
 	let unscaled_viewport: PageViewport;
 	let container: HTMLElement;
 
-    const toc = writable<{
+	let thumbnails: number[] = [];
+	let thumbnail_map = new Map<number, string>();
+	let virtualList: VirtualList;
+
+	let outline_container_height = 0;
+	let leftSidebar: HTMLElement;
+	let leftSidebarScrollTop = 0;
+	let frame: number;
+	function poll() {
+		if (leftSidebar?.scrollTop !== leftSidebarScrollTop) {
+			leftSidebarScrollTop = leftSidebar.scrollTop;
+		}
+
+		frame = requestAnimationFrame(poll);
+	}
+
+	async function make_thumbnail(page_num: number) {
+		console.log(`Making thumbnail for page ${page_num}`);
+		if (thumbnail_map.has(page_num)) {
+			return thumbnail_map.get(page_num);
+		}
+		const canvas = document.createElement('canvas');
+		// let canvas = tmp_canvas;
+		if (!pdfDocument) return;
+		const context = canvas.getContext('2d');
+		if (!context) return;
+		const scale = 0.2;
+		const page = await pdfDocument.getPage(page_num);
+		const viewport = page.getViewport({ scale: 0.5 });
+		canvas.height = viewport.height;
+		canvas.width = viewport.width;
+		const task = page.render({
+			canvasContext: context,
+			viewport
+		});
+		await task.promise;
+		const data_url = canvas.toDataURL('image/png');
+		thumbnail_map.set(page_num, data_url);
+		return data_url;
+	}
+
+	const toc = writable<
+		{
 			title: string;
 			pageNumber: number;
-            active: boolean;
-		}[]>([])
+			active: boolean;
+		}[]
+	>([]);
 
 	// function handleResize() {
 	// 	var containerWidth = container.offsetWidth;
@@ -119,6 +164,7 @@
 	// save progress
 	$: currentPage, save_progress();
 
+	// $: currentPage, browser && !document.querySelector(`[data-thumbnail-page="${currentPage}"]`) && virtualList? .scrollTo(currentPage - 1);
 	async function render_annotations(page: number) {
 		console.log(`rendering annotations for ${page}`);
 		await tick();
@@ -215,9 +261,16 @@
 			});
 		}
 
-
-
 		const outline = await pdfDocument.getOutline();
+
+		thumbnails = Array.from({
+			length: totalPages
+		}).map((_, i) => i);
+
+		// for (let i = 0; i < totalPages; i++) {
+		//     thumbnails.push(make_thumbnail(i + 1))
+		// }
+		console.log({ thumbnails });
 
 		if (outline) {
 			for (const item of outline) {
@@ -230,7 +283,7 @@
 						$toc.push({
 							title: item.title,
 							pageNumber: pageNumber + 1,
-                            active: false,
+							active: false
 						});
 					}
 				} else {
@@ -239,7 +292,7 @@
 					$toc.push({
 						title: item.title,
 						pageNumber: pageNumber + 1,
-                        active: false
+						active: false
 					});
 				}
 			}
@@ -254,7 +307,13 @@
 
 	onMount(async () => {
 		// await import??
-		loadPDF();
+		await loadPDF();
+		frame = requestAnimationFrame(poll);
+	});
+	onDestroy(() => {
+		if (browser) {
+			cancelAnimationFrame(frame);
+		}
 	});
 
 	$: if ($page.url.hash.startsWith('#page-')) {
@@ -268,7 +327,7 @@
 
 		// delete hash
 		console.log('pushing state');
-        goto($page.url.pathname)
+		goto($page.url.pathname);
 	}
 	// afterUpdate(loadPDF);
 
@@ -280,7 +339,9 @@
 	let scale = 2;
 	let viewport_scale = scale;
 
-	async function renderPage(pageNumber: number) {
+	async function renderPage(pageNumber: number, opts?: {
+        noScrollThumbnails?: boolean
+    }) {
 		if (!pdfDocument) return;
 		const page = await pdfDocument.getPage(pageNumber);
 		viewport_scale = scale * scales[window.devicePixelRatio || 1] || scale;
@@ -299,13 +360,13 @@
 		// wrapper.style.width = Math.floor(viewport.width / 10) + 'pt';
 		// wrapper.style.height = Math.floor(viewport.height / 10) + 'pt';
 
-        if ($toc.length) {
-            const idx = $toc.findLastIndex(t => t.pageNumber <= currentPage);
-            if (idx > -1) {
-                $toc.forEach(t => t.active = false);
-                $toc[idx].active = true;
-            }
-        }
+		if ($toc.length) {
+			const idx = $toc.findLastIndex((t) => t.pageNumber <= currentPage);
+			if (idx > -1) {
+				$toc.forEach((t) => (t.active = false));
+				$toc[idx].active = true;
+			}
+		}
 
 		const renderTask = page.render({ canvasContext: context, viewport });
 		await renderTask.promise;
@@ -323,11 +384,21 @@
 			textDivs: []
 		});
 
+		// make sure outline is scrolled into view
+        if (!opts?.noScrollThumbnails) {
+
+            const outline = document.querySelector(`[data-thumbnail-page="${currentPage}"]`);
+            if (!outline) {
+                leftSidebar?.scrollTo({
+                    top: (136 * (currentPage - 1)) - (outline_container_height / 3)
+                });
+            }
+        }
+
 		render_annotations(currentPage);
 	}
 
 	$: console.log({ highlights });
-
 
 	function goToPreviousPage() {
 		window.getSelection()?.removeAllRanges();
@@ -604,8 +675,80 @@
 	</div>
 {/if}
 
+<!-- Left Sidebar -->
+<div
+	class="overflow-y-auto h-[calc(100vh-var(--nav-height))] border grow shrink-0 basis-1/3 max-w-xs"
+	use:leftSidebarPortal
+	bind:this={leftSidebar}
+	bind:clientHeight={outline_container_height}
+>
+	<!-- Thumbnails -->
+	<VirtualList
+		bind:this={virtualList}
+		items={thumbnails}
+		let:item={thumbnail}
+		itemHeight={136}
+		containerHeight={outline_container_height}
+		scrollTop={leftSidebarScrollTop}
+		let:dummy
+		let:y
+	>
+		{@const active = currentPage === thumbnail + 1}
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
+		<div
+			data-thumbnail-page={thumbnail + 1}
+			class="relative p-2 flex flex-col cursor-pointer justify-end items-center rounded-md pointer max-w-full mx-8 {active
+				? 'bg-secondary'
+				: ''}"
+			draggable="false"
+			class:dummy
+			style="top:{y}px;"
+			on:click={() => {
+				currentPage = thumbnail + 1;
+				renderPage(thumbnail + 1, {
+                    noScrollThumbnails: true
+                });
+			}}
+		>
+			{#if !dummy}
+				{#if thumbnail_map.has(thumbnail + 1)}
+					<img
+						src={thumbnail_map.get(thumbnail + 1)}
+						draggable="false"
+						class="h-auto w-24 object-cover rounded-sm max-w-full max-h-[120px]"
+						alt=""
+						class:ring={active}
+					/>
+				{:else}
+					{#await make_thumbnail(thumbnail + 1)}
+						<Skeleton class="h-[136px] w-24" />
+					{:then src}
+						{#if src}
+							<img
+								{src}
+								draggable="false"
+								class="h-auto w-24 object-cover rounded-sm max-w-full max-h-[120px]"
+								class:ring={active}
+								alt=""
+							/>
+						{/if}
+					{/await}
+				{/if}
+				<span
+					class={cn(
+						'tabular-nums  flex justify-center items-center absolute min-w-[20px] h-4 b-4 rounded-xl font-medium text-xs px-1 bg-muted text-muted-foreground',
+						active && 'bg-accent text-accent-foreground'
+					)}>{thumbnail + 1}</span
+				>
+			{/if}
+		</div>
+	</VirtualList>
+	{#each thumbnails.slice(0, 25) as thumbnail}{/each}
+</div>
+
 <!-- PDF Toolbar -->
-<div class="c-pdf-toolbar flex items-stretch justify-between relative px-3 py-1">
+<div class="c-pdf-toolbar h-[--nav-height] flex items-stretch justify-between relative px-3 py-1">
 	<!-- Pdf Toolbar - left -->
 	<div class="c-pdf-toolbar-left flex items-center gap-3">
 		<div class="flex tabular-nums text-sm gap-x-1 shrink-0 items-center">

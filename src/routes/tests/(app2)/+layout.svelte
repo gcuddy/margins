@@ -23,6 +23,14 @@
 		$page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
 	$: is_settings = $page.url.pathname.startsWith('/tests/settings');
 
+	// Right now this is hardcoded...
+
+	const is_entry = writable(false);
+	setContext('is_entry', is_entry);
+	$: $page.route.id?.startsWith(`/tests/(app2)/(listables)/[type=type]/[id]`)
+		? is_entry.set(true)
+		: is_entry.set(false);
+
 	export let data: LayoutData;
 
 	const menu = writable<MenuBar>({
@@ -47,15 +55,17 @@
 {/if}
 <Dialog />
 <GenericCommander>
-	<div class="flex h-full grow flex-col space-y-6">
-		<header class="container sticky top-0 z-40">
-			<MainNav />
-		</header>
+	<div class="flex h-full grow flex-col gap-y-6">
+		{#if !$is_entry}
+			<header class="container sticky top-0 z-40">
+				<MainNav />
+			</header>
+		{/if}
 		<div class={cn('container grid grid-cols-[auto,1fr,auto] gap-2')}>
 			<!-- w-[200px] -->
 			<aside
 				class={cn(
-					'sticky top-20 border-r hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex'
+					'sticky top-20 hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex'
 					// isEntry && 'md:hidden',
 					// is_article && 'sm:hidden'
 				)}

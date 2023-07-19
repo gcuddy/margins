@@ -100,6 +100,7 @@
 	export let width = 240;
 </script>
 
+{#if !in_article}
 <nav
 	style:--width='{width}px'
 	class="grid items-start gap-2 overflow-y-auto max-w-[--width] {$menu_bar.show
@@ -192,10 +193,10 @@
 	<!-- <Button variant="ghost">Subscriptions</Button> -->
 </nav>
 <ColResizer bind:width max={500} class="absolute inset-y-0 w-2 cursor-col-resize z-40 -right-[3px]" />
+{/if}
 {#if $audioPlayer.audio?.src}
 <!-- we subtract 8 to account for colresizer -->
 	<div style:--width="{width}px" class="mt-auto flex shrink-0 flex-col pb-2 max-w-[--width] {collapsed ? '' : 'mt-auto border-t'}">
 		<AudioPlayer {collapsed} />
 	</div>
 {/if}
-
