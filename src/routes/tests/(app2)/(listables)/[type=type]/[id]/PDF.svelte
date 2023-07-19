@@ -67,6 +67,8 @@
 	import VirtualList from '$components/ui/internal/VirtualList.svelte';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import { cn } from '$lib/utils/tailwind';
+	import type { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
+	import PdfPage from './PDFPage.svelte';
 	export let data: PageData;
 
 	$: annotations = data.entry?.annotations ?? [];
@@ -86,7 +88,6 @@
 	let wrapper: HTMLDivElement;
 	let text_layer: HTMLDivElement;
 	let viewport: PageViewport;
-	let unscaled_viewport: PageViewport;
 	let container: HTMLElement;
 
 	let thumbnails: number[] = [];
@@ -97,6 +98,13 @@
 	let leftSidebar: HTMLElement;
 	let leftSidebarScrollTop = 0;
 	let frame: number;
+
+
+
+    let pages: PDFPageProxy[] = [];
+
+
+
 	function poll() {
 		if (leftSidebar?.scrollTop !== leftSidebarScrollTop) {
 			leftSidebarScrollTop = leftSidebar.scrollTop;
@@ -307,7 +315,26 @@
 
 	onMount(async () => {
 		// await import??
-		await loadPDF();
+        if (!data?.entry?.uri) return;
+
+        const pdf_path = data.entry.uri.startsWith('http')
+			? data.entry.uri
+			: data.S3_BUCKET_PREFIX + data.entry.uri;
+		console.log({ pdf_path });
+		// Load the PDF document
+		pdfDocument = await getDocument({
+			url: pdf_path,
+			disableAutoFetch: true,
+			disableStream: true
+		}).promise;
+		totalPages = pdfDocument.numPages;
+        const promises = Array.from({
+            length: totalPages
+        }).map((_, i) => pdfDocument.getPage(i + 1))
+
+        pages = await Promise.all(promises);
+
+		// await loadPDF();
 		frame = requestAnimationFrame(poll);
 	});
 	onDestroy(() => {
@@ -346,7 +373,6 @@
 		const page = await pdfDocument.getPage(pageNumber);
 		viewport_scale = scale * scales[window.devicePixelRatio || 1] || scale;
 		viewport = page.getViewport({ scale: viewport_scale });
-		unscaled_viewport = page.getViewport({ scale: 1 });
 		const context = canvas.getContext('2d');
 		if (!context) throw new Error('Could not get canvas context');
 		canvas.height = viewport.height;
@@ -868,8 +894,13 @@
 						{@html text}
 					</div>
 				{:else}
+                {#each pages as page (page.pageNumber)}
+                    <PdfPage on:rendered={() => {
+                        console.log("rendered", page.pageNumber)
+                    }} {page} bind:scale {annotations} />
+                {/each}
 					<!-- Page -->
-					<div id="container">
+					<!-- <div id="container">
 						{#key scale}
 							<svg
 								style:width="{(viewport?.width * scale) / viewport_scale}px"
@@ -896,7 +927,7 @@
 						{/key}
 						<div class="absolute inset-0" bind:this={text_layer} id="text-layer" />
 						<canvas bind:this={canvas} id="pdf-canvas" />
-					</div>
+					</div> -->
 				{/if}
 			</div>
 		</div>

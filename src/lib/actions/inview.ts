@@ -13,11 +13,11 @@ type Params = {
  * 	on:enter={() => console.log("enter")}
  * 	on:exit={() => console.log("exit")}
  * >
- * 
+ *
  * optional params { root, top, bottom, progress }
  * top and bottom are numbers
  * use:inView={{ bottom: 100 }} // 100 pixels from bottom of viewport
- * 
+ *
  * progress is a boolean for incremental updates
  * use:inView={{ progres: true }}
  */
@@ -27,7 +27,6 @@ export default function inView(node: HTMLElement, params: Params = {}) {
     const handleIntersect = (entries: IntersectionObserverEntry[]) => {
         // get *latest* entry
         const e = entries.slice(-1);
-        console.log({ e })
         const intersecting = e[0].isIntersecting;
         const v = intersecting ? "enter" : "exit";
         node.dispatchEvent(new CustomEvent(v));
