@@ -13,7 +13,7 @@
 	import { H1 } from '$lib/components/ui/typography';
 	import { name } from '$lib/icons';
 	import { Loader2, PlusCircle } from 'lucide-svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { superForm } from 'sveltekit-superforms/client';
 	export let data;
 

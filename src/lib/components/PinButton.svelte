@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import Button from './ui/Button.svelte';
 	import { PinIcon } from 'lucide-svelte';
 	import { cn } from '$lib/utils/tailwind';

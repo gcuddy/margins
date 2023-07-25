@@ -74,7 +74,7 @@
 	import { update_entry } from '$lib/state/entries';
 	import Attachments from './Attachments.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { draggable } from '@neodrag/svelte';
 
 	export let data: PageData;

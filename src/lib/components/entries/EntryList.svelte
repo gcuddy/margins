@@ -109,7 +109,7 @@
 	import Collections from '$lib/commands/Collections.svelte';
 	import { mutation, type MutationInput } from '$lib/queries/query';
 	import { page } from '$app/stores';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { tick } from 'svelte';
 	import { dndzone } from 'svelte-dnd-action';
 	// import { createMutation, useQueryClient } from '@tanstack/svelte-query';

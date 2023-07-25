@@ -7,7 +7,7 @@
 	import { H1 } from '$lib/components/ui/typography';
 	import { cn } from '$lib/utils/tailwind';
 	import { PinIcon } from 'lucide-svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import type { Snapshot } from './$types.js';
 
 	export let data;

@@ -37,7 +37,7 @@
 	import { statuses, statusesWithIcons, Status } from '$lib/status';
 	import { contextMenuItem } from '$components/ui/context-menu/ContextMenuItem.svelte';
 	import { mutation } from '$lib/queries/query';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 
 	export let entry: EntryInList;
 	function getDomain(url: string) {
@@ -58,29 +58,47 @@
 
 	export async function move_entry(status: Status) {
 		out_key = status;
+		const { status: old_status, sort_order: old_sort_order } = entry;
 		dispatch('move', { status, entries: [entry] });
 		mutation($page, 'update_status', {
 			ids: [entry.id],
 			status
 		})
 			.then(() => {
-                toast.success('Entry moved')
-            })
+				toast.success('Entry moved', {
+					action: old_status
+						? {
+								label: 'Undo',
+								onClick: () => {
+									dispatch('move', {
+										status: old_status,
+										entries: [entry]
+									});
+									mutation($page, 'update_status', {
+										ids: [entry.id],
+										status: old_status,
+                                        sort_order: old_sort_order
+									});
+								}
+						  }
+						: undefined
+				});
+			})
 			.catch(() => {
-                // TODO: move back and display error message
-            });
+				// TODO: move back and display error message
+			});
 
-		toast.promise(
-			mutation($page, 'update_status', {
-				ids: [entry.id],
-				status
-			}),
-			{
-				loading: 'Moving entry...',
-				success: 'Entry moved!',
-				error: 'Failed to move entry'
-			}
-		);
+		// toast.promise(
+		// 	mutation($page, 'update_status', {
+		// 		ids: [entry.id],
+		// 		status
+		// 	}),
+		// 	{
+		// 		loading: 'Moving entry...',
+		// 		success: 'Entry moved!',
+		// 		error: 'Failed to move entry'
+		// 	}
+		// );
 
 		// await tick();
 	}

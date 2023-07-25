@@ -17,7 +17,7 @@
 	import Label from '$lib/components/ui/Label.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import { superForm } from 'sveltekit-superforms/client';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { goto, invalidate, invalidateAll } from '$app/navigation';
 	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
 	import { statusLookup, types } from '$lib/types';
@@ -104,7 +104,7 @@
 	}
 
 	$: {
-		console.log("setting new filter_type on queryKey")	
+		console.log("setting new filter_type on queryKey")
 		// $options.queryKey[3] = {
 		// 	...$options.queryKey[3],
 		// 	type: filter_type

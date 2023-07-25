@@ -17,7 +17,7 @@
 	import { mutation } from '$lib/queries/query.js';
 	import { cn } from '$lib/utils/tailwind.js';
 	import { ListPlus, MoreHorizontal, PlusCircle, TrashIcon } from 'lucide-svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { fly } from 'svelte/transition';
 	import { superForm } from 'sveltekit-superforms/client';
 
@@ -36,7 +36,7 @@
 	<Lead>
 		Evergreen notes are where you build the building blocks of your knowledge.
 	</Lead>
-</div>	
+</div>
 	<div class="flex gap-x-2">
 		<DropdownMenu>
 			<DropdownMenuTrigger

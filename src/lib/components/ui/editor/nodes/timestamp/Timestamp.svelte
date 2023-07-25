@@ -3,7 +3,7 @@
 	import player from '$lib/stores/player';
 	import { cn } from '$lib/utils/tailwind';
 	import type { NodeViewProps } from '@tiptap/core';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { NodeViewWrapper } from 'svelte-tiptap';
 	import TimestampToast from './TimestampToast.svelte';
 

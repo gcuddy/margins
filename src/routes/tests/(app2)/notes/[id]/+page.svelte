@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { H1 } from '$lib/components/ui/typography';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import Editor from '../Editor.svelte';
 	import TipTapEditor from '$components/ui/editor/Editor.svelte';
 	import MarkdownIt from 'markdown-it';

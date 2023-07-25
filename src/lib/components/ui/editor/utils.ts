@@ -1,5 +1,5 @@
 import type { EditorView } from '@tiptap/pm/view';
-import toast from 'svelte-french-toast';
+import { toast } from 'svelte-sonner';
 import type { Editor } from 'svelte-tiptap';
 import slugify from 'slugify';
 

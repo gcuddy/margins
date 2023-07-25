@@ -14,7 +14,7 @@
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import { mutation } from '$lib/queries/query';
 	import { page } from '$app/stores';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 
 	export let isOpen = false;
 	export let entry: { id: number };

@@ -45,7 +45,7 @@
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
 	import { build_toc, get_pdf_text } from '$lib/utils/pdf';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { useCommanderContext } from '../../../Commander.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';

@@ -5,7 +5,7 @@
 	import { page } from '$app/stores';
 	import { handleSession } from '@lucia-auth/sveltekit/client';
 
-	import { Toaster } from 'svelte-french-toast';
+	import { Toaster } from 'svelte-sonner';
 
 	handleSession(page);
 	$: console.log({ $page });
@@ -21,18 +21,20 @@
 </svelte:head>
 
 <slot />
-<Toaster
-	position="bottom-center"
+<!-- TODO: customize -->
+<!-- position="bottom-center"
 	toastOptions={{
-		style:
-			'border-width:1px; background-color: hsl(var(--background)); color: hsl(var(--foreground));',
-		className: '!shadow-lg !rounded-md !p-6 !pr-8 !text-sm',
-		iconTheme: {
-			primary: 'hsl(var(--primary))',
-			secondary: 'hsl(var(--secondary))'
-		}
-	}}
-/>
+		// style:
+		// 	'border-width:1px; background-color: hsl(var(--background)); color: hsl(var(--foreground));',
+		// className: '!shadow-lg !rounded-md !p-6 !pr-8 !text-sm',
+		// iconTheme: {
+		// 	primary: 'hsl(var(--primary))',
+		// 	secondary: 'hsl(var(--secondary))'
+		// }
+	}} -->
+<Toaster toastOptions={{
+    class: 'toast'
+}}/>
 
 <style lang="postcss">
 	/* :global(body > div) {

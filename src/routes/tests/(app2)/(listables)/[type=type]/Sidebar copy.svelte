@@ -34,7 +34,7 @@
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { mutation } from '$lib/queries/query';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { invalidate } from '$app/navigation';
 	import {
 		DropdownMenu,
@@ -76,7 +76,7 @@
 
 
 	$: data = $page.data.entry?.id ? $state[$page.data.entry.id] : undefined;
-$: console.log({$state})	
+$: console.log({$state})
 </script>
 
 

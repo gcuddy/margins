@@ -136,10 +136,12 @@ export const mutations = {
 	update_status: query({
 		schema: z.object({
 			status: z.nativeEnum(Status),
-			ids: z.array(z.number().int())
+			ids: z.array(z.number().int()),
+			sort_order: z.number().int().optional()
 		}),
 		fn: async ({ input, ctx }) => {
-			const new_sort_order = await getFirstBookmarkSort(ctx.userId, input.status);
+			const new_sort_order =
+				input.sort_order ?? (await getFirstBookmarkSort(ctx.userId, input.status));
 			await db
 				.updateTable('Bookmark')
 				.where('entryId', 'in', input.ids)

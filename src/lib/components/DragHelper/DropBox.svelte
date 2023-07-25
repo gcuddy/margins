@@ -9,7 +9,7 @@
 	import { BookPlus } from 'lucide-svelte';
 	import { post } from '$lib/utils/forms';
 	import { invalidateAll } from '$app/navigation';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import type { AddUrlObj } from '$lib/schemas';
 	let dragOver = false;
 	let dropping = false;

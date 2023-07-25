@@ -16,7 +16,7 @@
 	import { MoreHorizontal } from 'lucide-svelte';
 	import { buttonVariants } from '../ui/Button.svelte';
 	import { generateTextFragmentLink, getTargetSelector } from '$lib/utils/annotations';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 
 	const md = new MarkdownIt();
 	let className = '';

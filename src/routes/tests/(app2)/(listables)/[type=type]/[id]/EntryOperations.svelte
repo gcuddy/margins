@@ -34,7 +34,7 @@
 		Paperclip
 	} from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import NoteForm from './NoteForm.svelte';
 
 	export let data: ComponentProps<AnnotationForm>['data'];

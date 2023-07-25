@@ -61,107 +61,107 @@
 	:root {
 		--background: 0 0% 100%;
 		--foreground: 24 10% 10%;
-	 
+
 		--muted: 60 5% 96.1%;
 		--muted-foreground: 25 5% 45%;
-	 
+
 		--popover: 0 0% 100%;
 		--popover-foreground: 24 10% 10%;
-	 
+
 		--card: 0 0% 100%;
 		--card-foreground: 24 10% 10%;
-	 
+
 		--border: 20 6% 90%;
 		--input: 20 6% 90%;
-	 
+
 		/* --primary: 0 72% 51%; */
 		--primary: 24 10% 10%;
 	--primary-foreground: 60 5% 98%;
-	 
+
 		--secondary: 60 5% 96%;
 		--secondary-foreground: 24 10% 10%;
-	 
+
 		--accent: 60 5% 96%;
 		--accent-foreground: 24 10% 10%;
-	 
+
 		--destructive: 0 100% 50%;
 	--destructive-foreground: 60 5% 98%;
-	 
+
 		--ring: 24 5% 64%;
-	
+
 		--radius: 0.5rem;
 
 		--radius: .75rem;
 	  }
-	 
+
 	  .dark {
 		color-scheme: dark;
 		--background: 20 14% 4%;
 			--foreground: 20 6% 90%;
-	
+
 		--muted: 24 10% 10%;
 			--muted-foreground: 24 5% 57%;
-	
+
 		--accent: 12 6% 15%;
 		--accent-foreground: 60 5% 98%;
 			/* --accent: 360 85% 60%;
 									--accent-foreground: 0 0% 100%; */
 		--popover: 20 14% 4%;
 			--popover-foreground: 24 6% 64%;
-	
+
 		--border: 12 6% 15%;
 			--input: 12 6% 15%;
-	
+
 		--card: 20 14% 4%;
 			--card-foreground: 20 6% 90%;
-	
+
 		--primary: 60 10% 98%;
 				--primary: 0 72% 51%;
 			--primary-foreground: 28 9% 1%;
-	
+
 		--secondary: 24 10% 10%;
 			--secondary-foreground: 60 5% 98%;
-	
+
 		--destructive: 0 63% 31%;
 	--destructive-foreground: 60 5% 98%;
-	
+
 		/* --ring: 12 6% 15%; */
 			--ring: 25 5% 45%;
-	
+
 		/* --radius: 0.5rem; */
 	  }
 	  [data-theme="synthwave"] {
 		color-scheme: dark;
 		--background: 250 20% 17%;
 		--foreground: 267 27% 15%;
-	
+
 		--muted: 24 10% 10%;
 			--muted-foreground: 24 5% 57%;
-	
+
 		--accent: 6 92% 71%;
 		--accent-foreground: 294 22% 20%;
-	
+
 		--popover: 246 22% 11%;
 		--popover-foreground: 0 0% 100%;
-	
+
 		--border: 231 35% 44%;
 		--input: 12 6% 15%;
-	
+
 		--card: 20 14% 4%;
 			--card-foreground: 20 6% 90%;
-	
+
 		--primary: 269 28% 15%;
 		--primary-foreground: 269 4% 65%;
-	
+
 		--secondary: 24 10% 10%;
 			--secondary-foreground: 60 5% 98%;
-	
+
 		--destructive: 0 63% 31%;
 		--destructive-foreground: 60 5% 98%;
-	
+
 		/* --ring: 12 6% 15%; */
 			--ring: 25 5% 45%;
-	
+
 		--radius: 0.5rem;
 	  }
 
@@ -169,33 +169,33 @@
 		:root:not([data-theme]) {
 			--background: 20 14% 4%;
 				--foreground: 20 6% 90%;
-		
+
 			--muted: 24 10% 10%;
 				--muted-foreground: 24 5% 57%;
-		
+
 			--accent: 12 6% 15%;
 				--accent-foreground: 60 5% 98%;
 /* --accent: 358 85% 52%;
 	--accent-foreground: 0 0% 100%; */
-		
+
 			--popover: 20 14% 4%;
 				--popover-foreground: 24 6% 64%;
-		
+
 			--border: 12 6% 15%;
 				--input: 12 6% 15%;
-		
+
 			--card: 20 14% 4%;
 				--card-foreground: 20 6% 90%;
-		
+
 			--primary: 60 10% 98%;
 				--primary-foreground: 28 9% 1%;
-		
+
 			--secondary: 24 10% 10%;
 				--secondary-foreground: 60 5% 98%;
-		
+
 			--destructive: 0 63% 31%;
 			--destructive-foreground: 60 5% 98%;
-		
+
 			/* --ring: 12 6% 15%; */
 				--ring: 25 5% 45%;
 
@@ -212,7 +212,7 @@
 				@apply decoration-yellow-700/90;
 			}
 
-		}	
+		}
 	  }
 
 	/* REVIEW: is the best way to define themes? Can we do it in a js file, and use rgb etc? */
@@ -412,4 +412,10 @@
 	.simple-scrollbar {
 		@apply scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border scrollbar-thumb-rounded-lg hover:scrollbar-thumb-muted;
 	}
+
+    .toast[data-sonner-toast] {
+        [data-button] {
+            @apply bg-primary text-primary-foreground hover:bg-primary/90;
+        }
+    }
 }

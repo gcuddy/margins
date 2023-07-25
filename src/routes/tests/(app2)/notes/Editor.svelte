@@ -5,7 +5,7 @@
 	import Textarea from '$lib/components/ui/Textarea.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { z } from 'zod';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { PlusCircleIcon } from 'lucide-svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';

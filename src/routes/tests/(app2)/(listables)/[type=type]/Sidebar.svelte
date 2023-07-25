@@ -42,7 +42,7 @@
 		XIcon
 	} from 'lucide-svelte';
 	import { getContext, onMount } from 'svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { fade, fly } from 'svelte/transition';
 	import { useMenuBar } from '../../MainNav.svelte';
 	import Annotation from './[id]/Annotation.svelte';

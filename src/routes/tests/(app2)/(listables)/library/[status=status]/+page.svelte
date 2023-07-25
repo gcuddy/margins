@@ -24,7 +24,7 @@
 	import { cn } from '$lib/utils/tailwind';
 	import debounce from 'just-debounce-it';
 	import { ArrowDownUpIcon, Check, FilterIcon, Loader2Icon, Plus, XIcon } from 'lucide-svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { Snapshot } from './$types';
 	import LibraryTabs from './LibraryTabs.svelte';

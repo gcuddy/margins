@@ -38,7 +38,7 @@
 		TrashIcon
 	} from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
-	import toast from 'svelte-french-toast';
+	import { toast } from 'svelte-sonner';
 	import { quintOut } from 'svelte/easing';
 	import { crossfade, fade, fly, scale } from 'svelte/transition';
 
