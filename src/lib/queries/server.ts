@@ -128,7 +128,7 @@ export async function upsertAnnotation(data: z.infer<AnnotationSchema>,) {
     if (!id) {
         id = nanoid();
     }
-    console.log({id, annotation})
+    console.log({id, annotation});
     await db.insertInto("Annotation")
         .values({
             id,
@@ -145,7 +145,10 @@ export async function upsertAnnotation(data: z.infer<AnnotationSchema>,) {
             contentData: annotation.contentData ? json(annotation.contentData) : undefined,
         })
         .execute();
-    return id;
+    return {
+        id,
+
+    };
 }
 
 

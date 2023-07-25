@@ -14,6 +14,7 @@
 	import MarkdownBox from '$components/MarkdownBox.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import { enhance } from '$app/forms';
+	import { formatDate } from '$lib/utils/date';
 
 	export let data;
 
@@ -66,6 +67,17 @@ Allow linking to sources (either other parent annotations or entries itself)
 	</DialogContent>
 </Dialog>
 
-{#each data.srs_notes as note}
-	<a href="/tests/playground/srs/{note.id}">{note.body}</a>
-{/each}
+<table>
+	{#each data.srs_notes as note}
+		<tr>
+			<td>
+				<a href="/tests/playground/srs/{note.id}">{note.body}</a>
+			</td>
+			<td>
+				{#if note.due_timestamp}
+					{formatDate(note.due_timestamp)}
+				{/if}
+			</td>
+		</tr>
+	{/each}
+</table>

@@ -12,12 +12,17 @@
 	export let prompt = '';
 	export let response = '';
 	export let target_schema: TargetSchema | undefined = undefined;
+	export let active = false;
+	export let editable = true;
+    $: console.log({editable})
 
 	let pending = false;
 
 	const dispatch = createEventDispatcher<{
 		save: { id: string };
 	}>();
+
+	export let showButton = true;
 
 	// todo: use id to fetch most recent prompt and response
 </script>
@@ -28,7 +33,9 @@
 	class="contents"
 	method="post"
 	action="/tests/playground/srs?/new"
-	on:blur
+	on:blur={() => {
+        console.log(`Form blur`)
+    }}
 	use:enhance={() => {
 		pending = true;
 		return async ({ update, result }) => {
@@ -57,15 +64,22 @@
 	{#if id}
 		<input type="hidden" name="id" value={id} />
 	{/if}
-	<Label for="prompt">Prompt</Label>
+	<!-- <Label for="prompt">Prompt</Label> -->
 	<MarkdownBox
 		bind:value={prompt}
 		id="prompt"
 		name="body"
 		autocomplete="off"
 		placeholder="Enter prompt here"
+		as="textarea"
+		rows={1}
+		{active}
+        on:blur={(e) =>console.log({e})}
+		on:keydown={(e) => console.log({ e })}
+		class="font-medium"
+		{editable}
 	/>
-	<Label for="response">Response</Label>
+	<!-- <Label for="response">Response</Label> -->
 	<MarkdownBox
 		id="response"
 		name="response"
@@ -73,6 +87,12 @@
 		as="textarea"
 		rows={1}
 		bind:value={response}
+		on:keydown
+        on:blur={(e) =>console.log({e})}
+
+		{editable}
 	/>
-	<Button disabled={pending} type="submit">Save</Button>
+	{#if showButton}
+		<Button disabled={pending} type="submit">Save</Button>
+	{/if}
 </form>

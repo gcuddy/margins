@@ -13,8 +13,8 @@ function assertIsBook(book: books_v1.Schema$Volume): asserts book is Book {
     if (!book.volumeInfo) throw new Error("Invalid book");
 }
 
-const time = (msg: string) => dev && console.time(msg);
-const timeEnd = (msg: string) => dev && console.timeEnd(msg);
+const time = (msg: string) => dev && console.time(`[gbook] ${msg}`);
+const timeEnd = (msg: string) => dev && console.timeEnd(`[gbook] ${msg}`);
 
 
 export const books = {

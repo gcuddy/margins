@@ -28,8 +28,8 @@ export type TiptapExtensionProps = {
     placeholder?: string;
 }
 
-export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}) => {
-
+export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, context?: any) => {
+    // TODO: get context (as passed in), then pass in to things like SlashCommands
 	const TiptapExtensions = [
 		StarterKit.configure({
 			bulletList: {

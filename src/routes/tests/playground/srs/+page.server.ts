@@ -4,7 +4,7 @@ import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
 export async function load() {
-	const srs_notes = await db.selectFrom('Annotation').where('srs', '=', 1).where('deleted', 'is', null).selectAll().execute();
+	const srs_notes = await db.selectFrom('Annotation').where('srs', '=', 1).where('deleted', 'is', null).selectAll().orderBy("due_timestamp", 'asc').execute();
 
 	return {
 		srs_notes

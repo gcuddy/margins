@@ -11,7 +11,7 @@
 </script>
 
 <nav class="h-[--nav-height] flex items-center">
-    <Button as="a" href="/tests/library/backlog">
+    <Button variant="ghost" as="a" href="/tests/library/backlog">
         <ArrowLeft />
     </Button>
 </nav>

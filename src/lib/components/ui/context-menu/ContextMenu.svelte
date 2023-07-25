@@ -1,15 +1,22 @@
-<script lang='ts'>
-      import { createContextMenu } from '@melt-ui/svelte'
+<script lang="ts">
+	import { cn } from '$lib/utils/tailwind';
+	import type { createContextMenu } from '@melt-ui/svelte';
+    import ContextMenuItem from './ContextMenuItem.svelte';
 
-      const { menu, item, trigger } = createContextMenu()
+	type ContextMenu = ReturnType<typeof createContextMenu>;
+	let className = '';
+	export { className as class };
+	export let menu: ContextMenu['menu'];
 
 </script>
 
-
-
-<span {...$trigger} use:trigger>Right click here.</span>
-<div {...$menu} use:menu>
-  <div {...$item} use:item>...</div>
-  <div {...$item} use:item>...</div>
-  <div {...$item} use:item>...</div>
+<div
+	{...$$restProps}
+	class={cn(
+		'z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+		className
+	)}
+	melt={$menu}
+>
+	<slot {ContextMenuItem} />
 </div>

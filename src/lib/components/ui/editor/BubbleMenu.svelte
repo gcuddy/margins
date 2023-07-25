@@ -32,6 +32,7 @@
 	}
 
 	$: shouldShow = ({ editor }) => {
+        if (!editor.isEditable) return false;
 		// don't show if image is selected
 		if (editor.isActive('image') || editor.isActive('annotationExtension') || editor.isActive('srs')) {
 			return false;

@@ -32,6 +32,8 @@
 
 	let promise: Promise<QueryOutput<'search'>> = new Promise(() => {});
 
+    $: console.log({promise})
+
 	export let onSelect: (entry: EntryInList) => void = (entry) => {
 		console.log({ entry, id: getId(entry) });
 		goto(`/tests/${entry.type}/${getId(entry)}`);
@@ -85,6 +87,8 @@
 					<Muted class="text-xs">{entry.type}</Muted>
 				</div>
 			</CommandItem>
+        {:else}
+            No results found.
 		{/each}
 	</CommandGroup>
 {/await}

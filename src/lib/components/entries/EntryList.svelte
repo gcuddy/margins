@@ -408,7 +408,7 @@
 	{#each entries as entry (entry.id)}
 		<li
 			animate:flip={{ duration: 200 }}
-			class="group flex !cursor-default items-center space-x-4 bg-background px-2 py-4"
+			class="group flex !cursor-default items-center space-x-4 bg-background"
 		>
 			<!-- <input
 				bind:group={$form.ids}
@@ -419,6 +419,7 @@
 			/> -->
 			<!-- {entry.sort_order} -->
 			<EntryItem
+                on:move
 				bind:this={entryItems[entry.id]}
 				checked={$form.ids?.includes(entry.id)}
 				on:focus={() => (active_id = entry.id)}

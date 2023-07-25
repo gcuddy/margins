@@ -220,8 +220,11 @@ const getSuggestionItems = (props: { query: string }) => {
                         type: 'srs',
                         attrs: {
                             entry_id: $page.data?.entry?.id,
+                            active: true
                         }
-                    }])
+                    }], {
+                        updateSelection: true
+                    })
                     .run()
             },
         },
@@ -367,6 +370,10 @@ const renderItems = () => {
         },
     };
 };
+
+function CreateSlashCommand(context: any) {
+
+}
 
 const SlashCommand = Command.configure({
     suggestion: {

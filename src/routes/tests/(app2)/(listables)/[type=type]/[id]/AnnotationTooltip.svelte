@@ -6,7 +6,7 @@
 	import { Muted } from '$lib/components/ui/typography';
 	// import { useQueryClient } from '@tanstack/svelte-query';
 	import { EditIcon, TrashIcon } from 'lucide-svelte';
-	import type { ComponentProps } from 'svelte';
+	import { createEventDispatcher, type ComponentProps } from 'svelte';
 	import type { ContentAction } from 'svelte-popperjs';
 	import { fly } from 'svelte/transition';
 	import FloatingAnnotation from './FloatingAnnotation.svelte';
@@ -20,14 +20,18 @@
 
 	import type { PageData } from './$types';
 	import type { JSONContent } from '@tiptap/core';
+	import { clickOutside } from '$lib/actions/clickOutside';
 
 	export let id: string;
 	// const queryClient = useQueryClient();
 
 	let show_annotation = false;
+    $: console.log({show_annotation})
 
 	$: annotation = ($page.data as PageData).entry?.annotations?.find((a) => a.id === id);
 	$: contentData = annotation?.contentData as JSONContent | undefined;
+
+	const dispatch = createEventDispatcher();
 </script>
 
 {#if !show_annotation}
@@ -38,7 +42,11 @@
 		{popperContent}
 		{...$$restProps}
 	>
-		<div data-annotation-id={id} class="flex justify-between space-x-2">
+    <!-- use:clickOutside={() => (show_annotation = false)} -->
+		<div
+			data-annotation-id={id}
+			class="flex justify-between space-x-2"
+		>
 			<Button
 				on:click={() => {
 					show_annotation = true;
@@ -49,19 +57,13 @@
 				<EditIcon class="h-5 w-5" />
 				<Muted class="text-xs">Edit</Muted>
 			</Button>
-			<form
-				use:enhance={() => {
-					invalidate('entry');
-					// queryClient.invalidateQueries({
-					//     queryKey: ['notebook']
-					// })
-				}}
-				class="contents"
-				method="post"
-				action="?/deleteAnnotation"
-			>
+			<form use:enhance class="contents" method="post" action="?/deleteAnnotation">
 				<input type="hidden" name="id" value={id} />
-				<Button class="flex h-auto flex-col space-y-1" variant="ghost">
+				<Button
+					on:click={() => dispatch('delete')}
+					class="flex h-auto flex-col space-y-1"
+					variant="ghost"
+				>
 					<TrashIcon class="h-5 w-5" />
 					<Muted class="text-xs">Delete</Muted>
 				</Button>
@@ -71,8 +73,12 @@
 {/if}
 {#if show_annotation}
 	<div class="max-w-sm max-h-64" use:portal use:popperContent>
-		<FloatingAnnotation annotation_id={id} content={contentData} on:save={(e) => {
-            if (annotation) annotation.contentData = e.detail;
-        }} />
+		<FloatingAnnotation
+			annotation_id={id}
+			content={contentData}
+			on:save={(e) => {
+				if (annotation) annotation.contentData = e.detail;
+			}}
+		/>
 	</div>
 {/if}

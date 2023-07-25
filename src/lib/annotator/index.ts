@@ -235,6 +235,7 @@ export function createTextQuoteSelectorMatcher(
 
 	return async function* matchAll(scope) {
 		let textChunks;
+        console.log({scope})
 		try {
 			textChunks = new TextNodeChunker(scope);
 		} catch (err) {

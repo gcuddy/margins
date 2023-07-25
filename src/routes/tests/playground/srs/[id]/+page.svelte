@@ -12,7 +12,7 @@
     let show_answer = false;
 
     export let form;
-    $: console.log({form});
+    $: console.log({form, note: data.note});
 
 </script>
 

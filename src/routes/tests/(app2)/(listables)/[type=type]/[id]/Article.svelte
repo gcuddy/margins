@@ -8,6 +8,23 @@
 			}[]
 		>
 	>;
+
+    // export this so that we can access it elsewhere............ (TODO probably should extract it to another component)
+	export const currentAnnotation = writable<{
+		show: boolean;
+		highlight?:
+			| {
+					selector: TargetSchema['selector'];
+					els: {
+						highlightElements: HTMLElement[];
+						removeHighlights: () => void;
+					}[];
+			  }
+			| undefined;
+		annotation?: Partial<Annotation>;
+	}>({
+		show: false
+	});
 </script>
 
 <script lang="ts">
@@ -46,7 +63,7 @@
 	import EntryOperations from './EntryOperations.svelte';
 	import Tooltip from '$lib/components/ui/Tooltip.svelte';
 	import { getTargetSelector } from '$lib/utils/annotations';
-	import { mutation } from '$lib/queries/query';
+	import { mutation, query } from '$lib/queries/query';
 	import { elementReady } from '$lib/utils/dom';
 	import inView from '$lib/actions/inview';
 	import type { MenuBar } from '../../../MainNav.svelte';
@@ -56,17 +73,20 @@
 	import drag_context from '$lib/actions/drag-context';
 	import { update_entry } from '$lib/state/entries';
 	import Attachments from './Attachments.svelte';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import toast from 'svelte-french-toast';
+	import { draggable } from '@neodrag/svelte';
 
 	export let data: PageData;
 
 	const mainnav: Writable<MenuBar> = getContext('mainnav');
 
 	let align = ['left', 'justify'] as const;
-	type Alignment = (typeof align)[number];
+	type Alignment = typeof align[number];
 	let alignment: Alignment = align[0];
 
 	let fonts = ['sans', 'newsreader', 'crimson'] as const;
-	type Font = (typeof fonts)[number];
+	type Font = typeof fonts[number];
 	let font: Font = fonts[0];
 
 	let fontSize = 16;
@@ -155,7 +175,7 @@
 				}
 			}
 		],
-		placement: 'top',
+		placement: 'right',
 		strategy: 'fixed'
 	});
 
@@ -177,6 +197,7 @@
 		const text_quote_selector = await describeTextQuote(range);
 		$currentAnnotation.annotation = {
 			...$currentAnnotation.annotation,
+			id: $currentAnnotation.annotation?.id || nanoid(),
 			target: {
 				selector: [text_quote_selector, text_position_selector],
 				source: ''
@@ -227,7 +248,7 @@
 		if (data.entry?.id) {
 			update_entry(data.entry.id, {
 				annotations
-			})
+			});
 		}
 		// find ids in $annotationCtx that are not in annotations, and remove them
 		const existingIds = annotations.map((a) => a.id);
@@ -325,6 +346,18 @@
 			console.log({ el });
 			if (el) {
 				el.scrollIntoView();
+                // now show currentAnnotation
+                const annotation = annotations.find(a => a.id === id);
+                tick().then(() => {
+
+                    console.log({annotation})
+                    if (annotation) {
+                        annotationRef(el);
+                        $currentAnnotation.show = true;
+                        $currentAnnotation.annotation = annotation;
+                    }
+                })
+
 			}
 		}
 	});
@@ -409,15 +442,10 @@
 	});
 
 	let temporaryAnnotationHighlight: Awaited<ReturnType<typeof highlight>> | undefined = undefined;
-	const currentAnnotation = writable<{
-		show: boolean;
-		highlight?: Awaited<ReturnType<typeof highlight>>;
-		annotation?: Partial<Annotation>;
-	}>({
-		show: false
-	});
 
 	$: console.log({ $currentAnnotation });
+
+	let activeEditor: Editor;
 
 	export let options_el: HTMLElement;
 
@@ -448,7 +476,7 @@
 		showEditMenu = true;
 	}
 
-	const hover_entry: boolean = getContext('hover_entry')
+	const hover_entry: boolean = getContext('hover_entry');
 </script>
 
 {#if showEditMenu && !scrolling}
@@ -587,15 +615,73 @@
 {/if}
 
 {#if $currentAnnotation.show && data.entry}
-	<div use:annotationContent>
+	<div use:annotationContent class="z-10">
 		<!-- use:draggable -->
 		<div
-			in:scale|global={{
+			in:scale={{
 				duration: 200,
 				start: 0.9
 			}}
+			use:draggable
+			class={cn(popoverVariants(), 'flex flex-col gap-y-4')}
 		>
-			<AnnotationForm
+			<Editor
+				id={$currentAnnotation.annotation?.id}
+                content={$currentAnnotation.annotation?.contentData ?? undefined}
+				blank
+				class="sm:shadow-none shadow-none border-none sm:px-4 px-4 py-6"
+				bind:this={activeEditor}
+			/>
+			<div class="flex justify-end gap-3">
+				<Button
+					on:click={() => {
+						$currentAnnotation.show = false;
+						temporaryAnnotationHighlight?.els.forEach((h) => {
+							h.removeHighlights();
+						});
+						temporaryAnnotationHighlight = undefined;
+						currentAnnotation.set({
+							show: false
+						});
+					}}
+					variant="secondary"
+				>
+					Cancel
+				</Button>
+				<Button
+					on:click={() => {
+						activeEditor.save((contentData) => {
+							// TODO here
+							if (!data.entry?.id) return;
+							console.log({ $currentAnnotation });
+							const id = $currentAnnotation.annotation?.id ?? nanoid();
+
+							$currentAnnotation.show = false;
+							if (!$currentAnnotation.highlight) return;
+							toast.promise(
+								mutation($page, 'save_note', {
+									entryId: data.entry.id,
+									id,
+									contentData,
+									type: 'annotation',
+									target: {
+										source: '',
+										selector: $currentAnnotation.highlight?.selector
+									}
+								}),
+								{
+									loading: 'Saving note...',
+									success: 'Note saved!',
+									error: 'Failed to save note'
+								}
+							);
+						});
+					}}
+				>
+					Save
+				</Button>
+			</div>
+			<!-- <AnnotationForm
 				draggable
 				autofocus
 				class={popoverVariants()}
@@ -632,7 +718,7 @@
 					}
 				}}
 				data={data.annotationForm}
-			/>
+			/> -->
 		</div>
 	</div>
 {/if}
@@ -661,7 +747,7 @@
 	{#if data.entry}
 		<EntryOperations data={data.annotationForm} entry={data.entry} />
 	{/if}
-    <Attachments {data} />
+	<Attachments {data} />
 
 	<div
 		bind:this={articleWrapper}
@@ -698,71 +784,71 @@
 
 <!-- TODO: appearance switcher -->
 {#if !hover_entry}
-<div class="fixed bottom-4 right-4 z-20">
-	<!-- <Button variant="outline" class="w-10 rounded-full p-0">
+	<div class="fixed bottom-4 right-4 z-20">
+		<!-- <Button variant="outline" class="w-10 rounded-full p-0">
 		<Settings2 class="h-4 w-4" />
 		<span class="sr-only">Open popover</span>
 	</Button> -->
-	<Popover>
-		<PopoverTrigger
-			bind:ref={options_el}
-			class={cn(
-				buttonVariants({
-					variant: 'outline'
-				}),
-				'w-10 rounded-full p-0'
-			)}
-		>
-			<Settings2 class="h-4 w-4" />
-			<span class="sr-only">Open popover</span>
-		</PopoverTrigger>
-		<PopoverContent class="max-w-sm space-y-4" placement="top-start">
-			<div class="grid grid-cols-[auto,160px] items-center">
-				<Label class="flex" for="alignment">Auto-hide menu</Label>
-				<Switch bind:checked={$appearance.autoHide} />
-			</div>
-			<div class="grid grid-cols-[auto,160px] items-center">
-				<Label class="flex" for="alignment">Focus Mode</Label>
-				<Switch bind:checked={$appearance.focusMode} />
-			</div>
-			<div class="grid grid-cols-[auto,160px] items-center">
-				<Label class="flex" for="alignment">Alignment</Label>
-				<NativeSelect id="alignment" bind:value={$appearance.alignment}>
-					{#each align as a}
-						<option value={a}>
-							{a}
-						</option>
-					{/each}
-				</NativeSelect>
-			</div>
-			<div class="grid grid-cols-[auto,160px] items-center">
-				<Label class="flex" for="font-family">Font</Label>
-				<NativeSelect id="font-family" bind:value={$appearance.font}>
-					{#each fonts as a}
-						<option value={a}>
-							{a}
-						</option>
-					{/each}
-				</NativeSelect>
-			</div>
-			<div class="grid grid-cols-[auto,160px] items-center">
-				<div class="flex flex-col">
-					<Label for="font-size">Font size</Label>
-					<Muted class="text-xs">{$appearance.fontSize}</Muted>
+		<Popover>
+			<PopoverTrigger
+				bind:ref={options_el}
+				class={cn(
+					buttonVariants({
+						variant: 'outline'
+					}),
+					'w-10 rounded-full p-0'
+				)}
+			>
+				<Settings2 class="h-4 w-4" />
+				<span class="sr-only">Open popover</span>
+			</PopoverTrigger>
+			<PopoverContent class="max-w-sm space-y-4" placement="top-start">
+				<div class="grid grid-cols-[auto,160px] items-center">
+					<Label class="flex" for="alignment">Auto-hide menu</Label>
+					<Switch bind:checked={$appearance.autoHide} />
 				</div>
-				<Slider id="font-size" min={14} max={24} bind:value={$appearance.fontSize} />
-			</div>
-			<div class="grid grid-cols-[auto,160px] items-center">
-				<div class="flex flex-col">
-					<Label for="leading">Line height</Label>
-					<Muted class="text-xs">{$appearance.lineHeight}</Muted>
+				<div class="grid grid-cols-[auto,160px] items-center">
+					<Label class="flex" for="alignment">Focus Mode</Label>
+					<Switch bind:checked={$appearance.focusMode} />
 				</div>
-				<Slider id="leading" min={1} max={2} step={0.25} bind:value={$appearance.lineHeight} />
-			</div>
-		</PopoverContent>
-	</Popover>
-	<Tooltip placement="left" ref={options_el}>Show appearance options</Tooltip>
-</div>
+				<div class="grid grid-cols-[auto,160px] items-center">
+					<Label class="flex" for="alignment">Alignment</Label>
+					<NativeSelect id="alignment" bind:value={$appearance.alignment}>
+						{#each align as a}
+							<option value={a}>
+								{a}
+							</option>
+						{/each}
+					</NativeSelect>
+				</div>
+				<div class="grid grid-cols-[auto,160px] items-center">
+					<Label class="flex" for="font-family">Font</Label>
+					<NativeSelect id="font-family" bind:value={$appearance.font}>
+						{#each fonts as a}
+							<option value={a}>
+								{a}
+							</option>
+						{/each}
+					</NativeSelect>
+				</div>
+				<div class="grid grid-cols-[auto,160px] items-center">
+					<div class="flex flex-col">
+						<Label for="font-size">Font size</Label>
+						<Muted class="text-xs">{$appearance.fontSize}</Muted>
+					</div>
+					<Slider id="font-size" min={14} max={24} bind:value={$appearance.fontSize} />
+				</div>
+				<div class="grid grid-cols-[auto,160px] items-center">
+					<div class="flex flex-col">
+						<Label for="leading">Line height</Label>
+						<Muted class="text-xs">{$appearance.lineHeight}</Muted>
+					</div>
+					<Slider id="leading" min={1} max={2} step={0.25} bind:value={$appearance.lineHeight} />
+				</div>
+			</PopoverContent>
+		</Popover>
+		<Tooltip placement="left" ref={options_el}>Show appearance options</Tooltip>
+	</div>
 {/if}
 
 <style>

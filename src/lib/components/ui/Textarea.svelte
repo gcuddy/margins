@@ -13,12 +13,14 @@
 		class?: string;
 		el?: HTMLTextAreaElement;
 		onInput?: (value: string | null | undefined) => void;
+        onBlur?: (e: FocusEvent) => void;
 		value?: string | null;
 	}
 	export let el: HTMLTextAreaElement | undefined = undefined;
 	export let ref: HTMLTextAreaElement | undefined = undefined;
 	$: ref = el;
 	export let onInput: $$Props['onInput'] = undefined;
+    export let onBlur: $$Props['onBlur'] = undefined;
 
 	$: console.log({ value });
 
@@ -57,6 +59,7 @@
 		})
 	)}
 	on:blur
+    on:blur={(e) => onBlur?.(e)}
 	on:input={() => onInput?.(value)}
 	on:input
 	on:focus

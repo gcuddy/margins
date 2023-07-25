@@ -59,8 +59,8 @@
 	function handle_pdf_upload(file: File) {
 		if (!file.type.includes('pdf')) {
 			toast.error('File must be a PDF');
-		} else if (file.size / 1024 / 1024 > 50) {
-			toast.error('File size too big (max 50MB).');
+		} else if (file.size / 1024 / 1024 > 100) {
+			toast.error('File size too big (max 100MB).');
 		} else {
             toast.promise(
                 fetch(`/api/upload?related_entry_id=${entry.id}`, {
@@ -69,7 +69,10 @@
                 }),
                 {
                     loading: 'Uploading...',
-                    success: 'File uploaded',
+                    success: () => {
+                        invalidate('entry');
+                        return 'File uploaded'
+                    },
                     error: 'Error uploading file'
                 }
             )
@@ -157,7 +160,7 @@
 				}}
 			>
 				<Paperclip class="mr-2 h-4 w-4" />
-				<span>Attach file </span>
+				<span>Attach PDF</span>
 			</DropdownMenuItem>
 		</DropdownMenuGroup>
 		<!-- <DropdownMenuItem>Billing</DropdownMenuItem>

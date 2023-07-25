@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte';
-	import type { JSONContent, Editor as TEditor } from '@tiptap/core';
+	import { createEventDispatcher, onMount, setContext } from 'svelte';
+	import type { EditorOptions, JSONContent, Editor as TEditor } from '@tiptap/core';
 	import { createEditor, Editor, EditorContent } from 'svelte-tiptap';
 	import { writable, type Readable } from 'svelte/store';
 	import { generate_tiptap_extensions, TiptapExtensionProps } from './extensions';
@@ -11,12 +11,20 @@
 	import { cn } from '$lib/utils/tailwind';
 
 	export let id: string | number | undefined = undefined;
+
+    export let context: unknown | undefined = undefined;
+    export let options: Partial<EditorOptions> = {};
+
 	let className = '';
 	export { className as class };
 
 	let editor: Readable<Editor>;
 
 	const save_status = writable('Saved');
+
+    setContext('editor_context', {
+        testing: true
+    })
 
     export let size: 'sm' | 'lg' = 'lg';
 
@@ -27,6 +35,7 @@
     export let extensions: TiptapExtensionProps | undefined = undefined;
 
 	export let content: JSONContent | undefined = undefined;
+    export let blank = false;
 	const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
 	const dispatch = createEventDispatcher<{
@@ -49,9 +58,14 @@
         cb(json);
     }
 
+    export const getJSON = () => {
+        // if (!editor) {};
+        return $editor.getJSON();
+    }
+
 	onMount(() => {
 		editor = createEditor({
-			extensions: generate_tiptap_extensions(extensions),
+			extensions: generate_tiptap_extensions(extensions, context),
 			editorProps: TiptapEditorProps,
 			onUpdate: (e) => {
 				// TODO
@@ -59,12 +73,22 @@
 				// const selection = e.editor.state.selection;
 				debounced_update(e);
 			},
-			autofocus: 'end'
+            content,
+			autofocus: 'start',
+            ...options
 		});
+        if (content) hydrated = true;
 	});
 
+    $: if (editor && options.editable && !$editor.isEditable) {
+        $editor.setEditable(true);
+        $editor.commands.focus();
+    } else if (editor && !options.editable && $editor.isEditable) {
+        $editor.setEditable(false);
+    }
+
 	let hydrated = false;
-	$: if (editor && content_store && $content_store && !hydrated) {
+	$: if (editor && !blank && content_store && $content_store && !hydrated) {
 		// hydrate content from localstorage if not yet hydrated
 		console.log('being run');
 		$editor.commands.setContent($content_store);
@@ -94,6 +118,7 @@
 			{$save_status}
 		</div>
 	{/if}
+    <slot name="top" />
 
 	{#if editor}
 		<BubbleMenu editor={$editor} />

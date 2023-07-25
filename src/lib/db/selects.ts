@@ -37,7 +37,7 @@ export type EntryInList = InferResult<ReturnType<typeof selectEntryInList>>[numb
     relations?: {
         id: string;
         type: RelationType;
-        related_entry?: EntryInList;
+        entry?: EntryInList;
     }[];
     collections?: {
         id: number;

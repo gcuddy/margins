@@ -27,7 +27,7 @@
 </script>
 
 <Card>
-	<form class="contents" method="post" use:enhance>
+	<form class="contents" method="post">
 		<CardHeader class="space-y-1">
 			<CardTitle class="text-2xl">Log in to Margins</CardTitle>
 			<CardDescription>Enter your email and password below.</CardDescription>

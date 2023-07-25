@@ -19,13 +19,22 @@
 	import { formatTimeDuration } from '$lib/utils/dates';
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import { render_html } from '$components/ui/editor/utils';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import Button from '$components/ui/Button.svelte';
 
-	export let annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData'> & {
+    let editor: Editor;
+
+    let pending = false;
+
+	export let annotation: Pick<
+		Annotation,
+		'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData' | 'type'
+	> & {
 		username?: string | null;
 	};
 
 	interface $$Props extends Omit<ComponentProps<AnnotationForm>, 'annotation'> {
-		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData'> & {
+		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData' | 'type'> & {
 			username?: string | null;
 		};
 	}
@@ -35,6 +44,8 @@
 
 	let editing = false;
 	let pending_delete = false;
+
+    let title = !!annotation.title;
 </script>
 
 <Card class={pending_delete ? 'opacity-50' : ''}>
@@ -78,10 +89,10 @@
 					</Blockquote>
 				</a>
 			{:else if fragment_selector}
-			<!-- TODO: click to jump to timestamp -->
+				<!-- TODO: click to jump to timestamp -->
 				<span>
 					<Small>
-						{@const value = fragment_selector.value.split("=")[1]}
+						{@const value = fragment_selector.value.split('=')[1]}
 						{formatTimeDuration(+value, 's')}
 					</Small>
 				</span>
@@ -139,12 +150,40 @@
 				</div>
 			{/if}
 		{/if}
-        {#if annotation.contentData}
-        <div class="prose prose-sm prose-stone dark:prose-invert">
-            <!-- {@html render_html(annotation.contentData)} -->
-            <!-- {annotation.body} -->
-        </div>
-        {/if}
+		{#if annotation.contentData}
+			<Editor
+				class="border-none p-1 sm:p-1"
+				content={annotation.contentData}
+				options={{ editable: editing && !pending }}
+                bind:this={editor}
+			/>
+			{#if editing}
+				<div class="flex justify-end gap-x-4">
+					<Button disabled={pending} variant="ghost" on:click={() => (editing = false)}>Cancel</Button>
+					<Button
+                        disabled={pending}
+						variant="secondary"
+						on:click={() => {
+                            pending = true;
+                            const contentData = editor.getJSON();
+                            mutation($page, 'save_note', {
+                                id: annotation.id,
+                                contentData,
+                                type: annotation.type,
+                                entryId: annotation.entryId ?? undefined,
+                            }).then(() => {
+                                pending = false;
+                                editing = false;
+                                invalidateAll();
+                            })
+						}}>Save</Button
+					>
+				</div>
+			{/if}
+			<!-- <div class="prose prose-sm prose-stone dark:prose-invert">
+				{@html render_html(annotation.contentData)}
+			</div> -->
+		{/if}
 	</CardContent>
 	<!-- <CardFooter class="p-3">
 	</CardFooter> -->

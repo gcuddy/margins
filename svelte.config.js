@@ -2,20 +2,24 @@
 // import node from '@sveltejs/adapter-node';
 import vercel from '@sveltejs/adapter-vercel';
 import preprocess from 'svelte-preprocess';
+import { preprocessMeltUI } from '@melt-ui/pp'
+import sequence from 'svelte-sequential-preprocessor'
+
 // import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { mdsvex } from 'mdsvex';
 /** @type {import('@sveltejs/kit').Config}*/
 const config = {
 	// Consult https://github.com/sveltejs/svelte-preprocess
 	// for more information about preprocessors
-	preprocess: [
+	preprocess: sequence([
 		preprocess({
 			postcss: true
 		}),
 		mdsvex({
 			extensions: ['md']
-		})
-	],
+		}),
+        preprocessMeltUI()
+	]),
 	kit: {
 		adapter: vercel({
 			runtime: 'edge'
@@ -25,13 +29,6 @@ const config = {
 		alias: {
 			$components: 'src/lib/components',
 			'$components/*': 'src/lib/components/*'
-		}
-	},
-	vitePlugin: {
-		experimental: {
-			inspector: {
-				holdMode: true
-			}
 		}
 	},
 	compilerOptions: {},

@@ -88,6 +88,7 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 	 * @param scope A Range that overlaps with at least one text node.
 	 */
 	constructor(scope: Node | Range) {
+        console.log({scope})
 		this.scope = toRange(scope);
 		this.iter = ownerDocument(scope).createNodeIterator(
 			this.scope.commonAncestorContainer,

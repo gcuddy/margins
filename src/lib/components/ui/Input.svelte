@@ -28,7 +28,10 @@
 		ref?: HTMLInputElement;
 		value?: string | number | null | undefined;
 		class?: string;
+        onBlur?: (e: FocusEvent) => void;
 	}
+
+    export let onBlur: $$Props['onBlur'] = undefined;
 
 
 	export const focus = () => {
@@ -49,6 +52,7 @@
 	on:change
 	on:keydown
 	on:input
+    on:blur={(e) => onBlur?.(e)}
 	bind:this={ref}
 	{...$$restProps}
 />

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { invalidate } from '$app/navigation';
+	import { fly } from 'svelte/transition';
 	import Card from '../Card.svelte';
 
 	export let data;
@@ -6,6 +8,9 @@
 	let note_index = 0;
 
 	let completed = false;
+
+	$: console.log({ data, note_index });
+
 </script>
 
 <!-- Load First -->
@@ -17,20 +22,29 @@
 -->
 
 {#if data.notes_to_review.length && !completed}
-	<Card
-		note={data.notes_to_review[note_index]}
-		on:done={({ detail }) => {
-			if (detail.type === 'Forgotten') {
-				data.notes_to_review.push(data.notes_to_review[note_index]);
-				data.notes_to_review = data.notes_to_review;
-			}
-			if (note_index < data.notes_to_review.length - 1) {
-				note_index++;
-			} else {
-				completed = true;
-			}
-		}}
-	/>
+	{#key note_index}
+		<div>
+			<Card
+				note={data.notes_to_review[0]}
+				on:done={({ detail }) => {
+					if (detail.type === 'Forgotten') {
+						// data.notes_to_review.push(data.notes_to_review[note_index]);
+						// data.notes_to_review = data.notes_to_review;
+					}
+                    // splice out first note
+                    data.notes_to_review.splice(0, 1);
+                    data.notes_to_review = data.notes_to_review;
+					// if (note_index < data.notes_to_review.length - 1) {
+					// 	note_index++;
+					// } else if (data.notes_to_review.length) {
+					// 	completed = true;
+					// }
+					// invalidate
+					invalidate('review');
+				}}
+			/>
+		</div>
+	{/key}
 {:else}
 	<div>
 		<h1>Completed</h1>

@@ -122,7 +122,7 @@
 				<CommandItem
 					onSelect={() => {
 						$state.pages = [...$state.pages, 'open-collection'];
-					$state.shouldFilter = false;	
+					$state.shouldFilter = false;
 					}}
 				>
 					<ArrowRight class="mr-2 h-4 w-4" />
@@ -182,6 +182,16 @@
 				>
 					<ArrowRight class="mr-2 h-4 w-4" />
 					<span>Go to advanced Search</span>
+				</CommandItem>
+				<CommandItem
+					value="go to srs flash cards memory palace"
+					onSelect={() => {
+						goto(`/tests/playground/srs`);
+						$state.isOpen = false;
+					}}
+				>
+					<ArrowRight class="mr-2 h-4 w-4" />
+					<span>Go to SRS</span>
 				</CommandItem>
 			</CommandGroup>
 			<CommandSeparator />
@@ -257,7 +267,7 @@
 							} else {
 								document.documentElement.classList.remove('dark');
 							}
-						console.log('fetching')	
+						console.log('fetching')
 							fetch(`/tests?/setTheme&theme=${theme}&redirectTo=` + $spage.url.pathname, {
 								method: 'POST',
 								body: new FormData()

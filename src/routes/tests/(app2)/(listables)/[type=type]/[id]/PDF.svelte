@@ -26,9 +26,10 @@
 		renderTextLayer,
 		version,
 		PageViewport,
-		PDFWorker
+		PDFWorker,
+		PixelsPerInch
 	} from 'pdfjs-dist';
-	import { getContext, onDestroy, onMount, tick } from 'svelte';
+	import { ComponentProps, getContext, onDestroy, onMount, tick } from 'svelte';
 	import type { PageData } from './$types';
 	import Selection from './Selection.svelte';
 	import { getTargetSelector } from '$lib/utils/annotations';
@@ -71,6 +72,10 @@
 	import PdfPage from './PDFPage.svelte';
 	import resize from '$lib/actions/resize';
 	import throttle from 'lodash/throttle';
+	import Scroller from '$components/Scroller.svelte';
+	import NativeSelect from '$components/ui/NativeSelect.svelte';
+	import { createRenderQueueContext } from '$components/pdf-viewer/rendering-queue';
+	import { pdf_context } from '$components/pdf-viewer/api';
 
 	export let data: PageData;
 
@@ -83,7 +88,7 @@
 	GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.js`;
 
 	let pdfDocument: PDFDocumentProxy;
-	$: console.log({ pdfDocument });
+	$: console.log({ pdfDocument, scale });
 
 	let currentPage = data.entry?.interaction?.currentPage ?? 1;
 	let totalPages = 0;
@@ -93,9 +98,12 @@
 	let viewport: PageViewport;
 	let container: HTMLElement;
 
+	let pdfPages: PdfPage[] = [];
+	let pdfPageElements: HTMLDivElement[] = [];
+	let pdfPageHighlights: NonNullable<ComponentProps<PdfPage>['highlights']>[] = [];
+
 	let thumbnails: number[] = [];
 	let thumbnail_map = new Map<number, string>();
-	let virtualList: VirtualList;
 
 	let outline_container_height = 0;
 	let leftSidebar: HTMLElement;
@@ -103,6 +111,8 @@
 	let frame: number;
 
 	let pages: PDFPageProxy[] = [];
+
+	let labels: string[] = [];
 
 	function poll() {
 		if (leftSidebar?.scrollTop !== leftSidebarScrollTop) {
@@ -312,6 +322,8 @@
 		await renderPage(currentPage);
 	}
 
+	let hydrated = false;
+
 	onMount(async () => {
 		// await import??
 		if (!data?.entry?.uri) return;
@@ -334,14 +346,38 @@
 		pages = await Promise.all(promises);
 
 		const viewport = pages[0].getViewport({ scale: 1 });
+
+        const firstPagePromise = pdfDocument.getPage(1);
+
 		console.log({ wrapper, viewport });
-		scale = wrapper?.offsetWidth / viewport.width;
+		// scale = wrapper?.offsetWidth / viewport.width;
 		wrapperHeight = wrapper?.offsetHeight || 0;
+		wrapperWidth = wrapper?.offsetWidth || 0;
 		console.log({ scale });
+
+        Promise.all([firstPagePromise]).then(([firstPdfPage]) => {
+            const viewport = firstPdfPage.getViewport({
+                scale: 1 * PixelsPerInch.PDF_TO_CSS_UNITS
+            });
+
+            $state.scale = viewport.scale;
+        })
+
+
+
+		console.log({ pdfDocument });
+		labels =
+			(await pdfDocument.getPageLabels()) ??
+			Array.from({ length: totalPages }, (_, i) => (i + 1).toString());
+		console.log({ labels });
 
 		thumbnails = Array.from({
 			length: totalPages
 		}).map((_, i) => i);
+		hydrated = true;
+
+		// scroll to currentPage
+		pdfPageElements[currentPage - 1]?.scrollIntoView();
 
 		// await loadPDF();
 		frame = requestAnimationFrame(poll);
@@ -372,9 +408,32 @@
 		2: 4
 	};
 
+	type Zoom = number | 'fit';
+
 	let scale = 1.06667;
 	let viewport_scale = scale;
 	let scale_to_fit = scale;
+
+	const semantic_scales = {
+		auto: 'auto',
+		fit: 'fit',
+	} as const;
+
+    const preset_scales = {
+
+    }
+	let scale_value: number | keyof typeof semantic_scales = 1 * PixelsPerInch.PDF_TO_CSS_UNITS;
+
+	const MAX_AUTO_SCALE = 1.25 * PixelsPerInch.PDF_TO_CSS_UNITS;
+	const SCROLLBAR_PADDING = 40;
+
+	// $: if (scale_value === 'auto') {
+	//     scale = scale_to_fit;
+	// } else if (scale_value === 'fit') {
+	//     scale = scale_to_fit;
+	// } else {
+	//     scale = scale_value;
+	// }
 
 	async function renderPage(
 		pageNumber: number,
@@ -436,7 +495,6 @@
 		render_annotations(currentPage);
 	}
 
-	$: console.log({ highlights });
 
 	function goToPreviousPage() {
 		window.getSelection()?.removeAllRanges();
@@ -456,7 +514,6 @@
 
 	const debounced_goto = debounce(renderPage, 250, true);
 
-	$: currentPage, debounced_goto(currentPage);
 
 	// x={rect.left - wrapper_rect.left}
 	// y={highlightElement.parentElement?.offsetTop}
@@ -483,19 +540,25 @@
 		};
 	};
 
-	let wrapperHeight = wrapper?.offsetHeight || 0;
+	let wrapperHeight = 0;
+	let wrapperWidth = 0;
 
 	async function highlight() {
 		const range = window.getSelection()?.getRangeAt(0);
 		if (!range || range.collapsed) return;
-		const text_quote_selector = await describeTextQuote(range);
+		const text_quote_selector = await describeTextQuote(range, wrapper);
 		console.log({ text_quote_selector });
-		const text_position_selector = describeTextPosition(range);
+		const text_position_selector = describeTextPosition(range, wrapper);
 		console.log({ text_position_selector });
 
+		const page_num = Number(
+            //@ts-expect-errors
+			range.startContainer.parentElement?.closest(`[data-page-number]`)?.dataset?.pageNumber || 0
+		);
+		console.log({ page_num });
 		const target: TargetSchema = {
 			source: `pdf:${pdfDocument.fingerprints[0]}`,
-			page_num: currentPage,
+			page_num,
 			selector: [text_quote_selector, text_position_selector]
 		};
 
@@ -503,15 +566,33 @@
 		const h = await highlightSelectorTarget(text_quote_selector, {
 			'data-annotation-id': id
 		});
+		console.log({ h });
 
-		highlights = [
-			...highlights,
-			{
-				highlightElements: h.flatMap((h) => h.highlightElements).map(calculate_h),
-				pageNumber: currentPage,
-				id
-			}
-		];
+		if (target.page_num) {
+			pdfPages[target.page_num - 1]?.addHighlight({
+				highlightElements: h.flatMap((h) => h.highlightElements),
+				id,
+				pageNumber: page_num,
+				removeHighlights: () => h.map((h) => h.removeHighlights())
+			});
+			// pdfPageHighlights[target.page_num - 1] = [
+			//     ...pdfPageHighlights[target.page_num],
+			//     {
+			//         highlightElements: h.flatMap((h) => h.highlightElements),
+			//         id,
+			//         pageNumber: page_num
+			//     }
+			// ];
+		}
+
+		// highlights = [
+		// 	...highlights,
+		// 	{
+		// 		highlightElements: h.flatMap((h) => h.highlightElements).map(calculate_h),
+		// 		pageNumber: currentPage,
+		// 		id
+		// 	}
+		// ];
 
 		window.getSelection()?.removeAllRanges();
 
@@ -525,12 +606,15 @@
 		selector: TextQuoteSelector | TextPositionSelector,
 		attrs?: Record<string, string>
 	) {
+		console.log(`highlightSelectorTarget`, { selector });
 		let matches: AsyncGenerator<Range, void, void>;
 		if (selector.type === 'TextQuoteSelector') {
-			matches = createTextQuoteSelectorMatcher(selector)(text_layer!);
+			// REVIEW: should these be moved to the PdfPage component?
+			matches = createTextQuoteSelectorMatcher(selector)(wrapper);
 		} else {
-			matches = createTextPositionSelectorMatcher(selector)(text_layer!);
+			matches = createTextPositionSelectorMatcher(selector)(wrapper);
 		}
+		console.log({ matches });
 
 		// Modifying the DOM while searching can mess up; see issue #112.
 		// Therefore, we first collect all matches before highlighting them.
@@ -565,20 +649,16 @@
 	});
 
 	let scroller: HTMLElement;
+	let virtualScroller: Scroller<any>;
 
-	$: currentPage,
-		scroller?.scrollTo({
-			top: 0
-		});
-
-    const scrollBounds = {
-        scrollTop: 0,
-        clientHeight: 0,
-        didReachBottom: false,
-        isBottomVisible() {
-            return this.scrollTop + this.clientHeight >= (scroller?.scrollHeight || 0);
-        }
-    }
+	const scrollBounds = {
+		scrollTop: 0,
+		clientHeight: 0,
+		didReachBottom: false,
+		isBottomVisible() {
+			return this.scrollTop + this.clientHeight >= (scroller?.scrollHeight || 0);
+		}
+	};
 
 	function updateScrollBounds() {
 		if (!scroller) return;
@@ -586,13 +666,126 @@
 		scrollBounds.scrollTop = scrollTop;
 		scrollBounds.clientHeight = clientHeight;
 		scrollBounds.didReachBottom = scrollBounds.isBottomVisible();
+
+		// check elements in view
+		// TODO: start with first guess, then refine
+		const top = scroller.scrollTop,
+			bottom = top + scroller.clientHeight;
+		const left = scroller.scrollLeft,
+			right = left + scroller.clientWidth;
+		const firstInViewElIndex = pdfPageElements.findIndex((el) => {
+			const elementBottom = el.offsetTop + el.clientTop + el.clientHeight;
+			return elementBottom > top;
+		});
+
+		const visible: {
+			el: HTMLElement;
+			pageNum: number;
+			x: number;
+			y: number;
+			percent: number;
+			widthPercent: number;
+		}[] = [];
+		// now start looping thru elements
+		// if element is in view, add it to the list
+		// if element is not in view, stop
+		let lastEdge = -1;
+		for (let i = firstInViewElIndex; i < pdfPageElements.length; i++) {
+			const el = pdfPageElements[i];
+			const currentWidth = el.offsetLeft + el.clientLeft;
+			const currentHeight = el.offsetTop + el.clientTop;
+			const viewWidth = el.clientWidth,
+				viewHeight = el.clientHeight;
+			const viewRight = currentWidth + viewWidth;
+			const viewBottom = currentHeight + viewHeight;
+			if (lastEdge === -1) {
+				if (viewBottom >= bottom) {
+					lastEdge = viewBottom;
+				}
+			} else if (currentHeight > lastEdge) {
+				break;
+			}
+
+			if (
+				viewBottom <= top ||
+				currentHeight >= bottom ||
+				viewRight <= left ||
+				currentWidth >= right
+			) {
+				continue;
+			}
+
+			const hiddenHeight = Math.max(0, top - currentHeight) + Math.max(0, viewBottom - bottom);
+			const hiddenWidth = Math.max(0, left - currentWidth) + Math.max(0, viewRight - right);
+
+			const fractionHeight = (viewHeight - hiddenHeight) / viewHeight,
+				fractionWidth = (viewWidth - hiddenWidth) / viewWidth;
+			const percent = (fractionHeight * fractionWidth * 100) | 0;
+
+			visible.push({
+				el,
+				x: currentWidth,
+				y: currentHeight,
+				percent,
+				pageNum: i + 1,
+				widthPercent: (fractionWidth * 100) | 0
+			});
+		}
+
+		const first = visible[0],
+			last = visible.at(-1);
+		// sort by visibility
+
+		// find highest percent
+		const highest = visible.reduce((a, b) => (a.percent > b.percent ? a : b));
+
+		// visible.sort((a, b) => {
+		// 	const pc = a.percent - b.percent;
+		// 	if (Math.abs(pc) > 0.001) {
+		// 		return -pc;
+		// 	}
+		// 	return a.pageNum - b.pageNum;
+		// });
+
+		// console.log({ visible });
+
+		currentPage = highest.pageNum;
+
+		update_thumbnail_scroll();
 	}
 
-    const throttledUpdateScrollBounds = throttle(updateScrollBounds, 250);
+	const throttledUpdateScrollBounds = throttle(updateScrollBounds, 250);
+
+    createRenderQueueContext();
+
+    const state = pdf_context();
+
+	function scroll_page_into_view(page_num: number) {
+		const page = pdfPageElements[page_num - 1];
+		console.log({ page });
+		if (!page) return;
+		page.scrollIntoView();
+	}
+
+	function update_thumbnail_scroll() {
+		virtualScroller?.scrollTo(currentPage - 1, {
+			height: 136
+		});
+	}
+
+
+
+	function handle_resize(event: UIEvent & { currentTarget: EventTarget & Window; }) {
+		throw new Error('Function not implemented.');
+	}
+
+
+
 </script>
 
 <!-- keyboard nav -->
 <svelte:window
+on:resize={handle_resize}
 	on:keydown={(e) => {
 		if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
 			e.preventDefault();
@@ -603,22 +796,25 @@
 			goToNextPage();
 		}
 		// If space, check if the scroller is scrolled to the bottom. If so, go to next page
-		if (e.key === ' ' && scroller) {
-			const { scrollHeight, scrollTop, clientHeight } = scroller;
-			console.log({ scrollHeight, scrollTop, clientHeight });
-			if (scrollHeight - scrollTop === clientHeight) {
-				console.log('scrolled to bottom');
-				goToNextPage();
-				e.preventDefault();
-			}
-		}
+		// if (e.key === ' ' && scroller) {
+		// 	const { scrollHeight, scrollTop, clientHeight } = scroller;
+		// 	console.log({ scrollHeight, scrollTop, clientHeight });
+		// 	if (scrollHeight - scrollTop === clientHeight) {
+		// 		console.log('scrolled to bottom');
+		// 		goToNextPage();
+		// 		e.preventDefault();
+		// 	}
+		// }
 	}}
 />
 
 <Selection
 	on:highlight={async ({ detail }) => {
 		const { form, el } = detail;
-		const { h, ...target } = await highlight();
+		const highlight_data = await highlight();
+		if (!highlight_data) return;
+		// tell page to re-render annotations
+		const { h, ...target } = highlight_data;
 		if (!target) return;
 		console.log('form', get(form));
 		console.log({ el });
@@ -630,17 +826,27 @@
 
 		if (!data.entry) return;
 
-		// update_entry(data.entry.id, {
-		// 	annotations: [
-		// 		...(data.entry.annotations || []),
-		// 		{
-		//             target,
-		//             username: data.user_data.username,
+		if (data?.entry) {
+			data.entry.annotations = [
+				...(data.entry.annotations || []),
+				{
+					target,
+					username: data.user_data.username
+				}
+			];
+		}
 
-		//         }
-		// 		// annotation
-		// 	]
-		// });
+		update_entry(data.entry.id, {
+			annotations: [
+				...(data.entry.annotations || []),
+				{
+					target,
+					username: data.user_data.username
+				}
+				// annotation
+			]
+		});
+		// if (target.page_num) pdfPages[target.page_num - 1]?.renderAnnotations()
 
 		mutation($page, 'save_note', {
 			type: 'annotation',
@@ -734,15 +940,69 @@
 	</div>
 {/if}
 
+<noscript> Javascript is required to view PDFs. </noscript>
+
 <!-- Left Sidebar -->
 <div
 	class="overflow-y-auto h-[calc(100vh-var(--nav-height))] border grow shrink-0 basis-1/3 max-w-xs"
 	use:leftSidebarPortal
 	bind:this={leftSidebar}
-	bind:clientHeight={outline_container_height}
 >
 	<!-- Thumbnails -->
-	<VirtualList
+	{#if hydrated}
+		<Scroller bind:this={virtualScroller} items={thumbnails} b={10}>
+			<div slot="item" let:item={thumbnail}>
+				{@const active = currentPage === thumbnail + 1}
+				<button
+					data-thumbnail-page={thumbnail + 1}
+					class:selected={active}
+					class="relative h-[136px] p-2 flex flex-col cursor-pointer justify-end items-center rounded-md pointer max-w-full mx-8 {active
+						? 'bg-secondary'
+						: ''}"
+					draggable="false"
+					on:click={() => {
+						currentPage = thumbnail + 1;
+						scroll_page_into_view(thumbnail + 1);
+						// renderPage(thumbnail + 1, {
+						// 	noScrollThumbnails: true
+						// });
+					}}
+				>
+					{#if thumbnail_map.has(thumbnail + 1)}
+						<img
+							src={thumbnail_map.get(thumbnail + 1)}
+							draggable="false"
+							class="h-auto w-24 object-cover rounded-sm max-w-full max-h-[120px] ring-red-500"
+							alt=""
+							class:ring={active}
+						/>
+					{:else}
+						{#await make_thumbnail(thumbnail + 1)}
+							<Skeleton class="h-[136px] w-24" />
+						{:then src}
+							{#if src}
+								<img
+									{src}
+									draggable="false"
+									class="h-auto w-24 object-cover rounded-sm max-w-full max-h-[120px] ring-red-500"
+									class:ring={active}
+									alt=""
+								/>
+							{/if}
+						{/await}
+					{/if}
+					<span
+						class={cn(
+							'tabular-nums  flex justify-center items-center absolute min-w-[20px] h-4 b-4 rounded-xl font-medium text-xs px-1 bg-muted text-muted-foreground',
+							active && 'bg-accent text-accent-foreground'
+						)}>{labels[thumbnail]}</span
+					>
+				</button>
+			</div>
+			<!-- sdsd -->
+		</Scroller>
+	{/if}
+	<!-- <VirtualList
 		bind:this={virtualList}
 		items={thumbnails}
 		let:item={thumbnail}
@@ -753,8 +1013,6 @@
 		let:y
 	>
 		{@const active = currentPage === thumbnail + 1}
-		<!-- svelte-ignore a11y-click-events-have-key-events -->
-		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div
 			data-thumbnail-page={thumbnail + 1}
 			class="relative p-2 flex flex-col cursor-pointer justify-end items-center rounded-md pointer max-w-full mx-8 {active
@@ -802,8 +1060,7 @@
 				>
 			{/if}
 		</div>
-	</VirtualList>
-	{#each thumbnails.slice(0, 25) as thumbnail}{/each}
+	</VirtualList> -->
 </div>
 
 <!-- PDF Toolbar -->
@@ -812,11 +1069,18 @@
 	<div class="c-pdf-toolbar-left flex items-center gap-3">
 		<div class="flex tabular-nums text-sm gap-x-1 shrink-0 items-center">
 			<Input
-				type="number"
-				value={currentPage}
-				on:blur={(e) => {
-					currentPage = parseInt(e.target.value);
-					renderPage(currentPage);
+				value={labels[currentPage - 1]}
+				on:change={(e) => {
+					// @ts-expect-error
+					const value = e.target?.value;
+					console.log({ e });
+					if (!value) return;
+					console.log({ value });
+					console.log({ labels });
+					const idx = labels.indexOf(value);
+					console.log({ idx });
+					if (idx === -1) return;
+					scroll_page_into_view(idx + 1);
 				}}
 				min={1}
 				max={totalPages}
@@ -846,6 +1110,32 @@
 				<ZoomOutIcon class="h-4 w-4" />
 				<span class="sr-only">Zoom out</span>
 			</Button>
+			<NativeSelect
+				on:change={(e) => {
+					//@ts-expect-error
+					const value = e.target?.value;
+					if (!value) return;
+					if (value === 'auto') {
+						// scale = 'auto';
+					} else if (value === 'fit') {
+						// scale = 'fit';
+					} else {
+						scale = Number(value);
+					}
+				}}
+				bind:value={scale_value}
+			>
+				<option value="auto">Auto</option>
+				<option value="fit">Fit to page</option>
+				<option value={0.5 * PixelsPerInch.PDF_TO_CSS_UNITS}>50%</option>
+				<option value={0.75 * PixelsPerInch.PDF_TO_CSS_UNITS}>75%</option>
+				<option value={1 * PixelsPerInch.PDF_TO_CSS_UNITS}>100%</option>
+				<option value={1.25 * PixelsPerInch.PDF_TO_CSS_UNITS}>125%</option>
+				<option value={1.5 * PixelsPerInch.PDF_TO_CSS_UNITS}>150%</option>
+				<option value={2 * PixelsPerInch.PDF_TO_CSS_UNITS}>200%</option>
+				<option value={3 * PixelsPerInch.PDF_TO_CSS_UNITS}>300%</option>
+				<option value={4 * PixelsPerInch.PDF_TO_CSS_UNITS}>400%</option>
+			</NativeSelect>
 		</div>
 		<DropdownMenu>
 			<DropdownMenuTrigger class={buttonVariants({ variant: 'ghost', size: 'sm' })}>
@@ -855,6 +1145,10 @@
 				<DropdownMenuGroup>
 					<DropdownMenuItem
 						on:click={() => {
+							if (show_text_version) {
+								show_text_version = false;
+								return;
+							}
 							toast.promise(get_pdf_text(pdfDocument), {
 								loading: 'Loading text version...',
 								success: (val) => {
@@ -867,7 +1161,7 @@
 						}}
 					>
 						<TextSelectIcon class="mr-2 h-4 w-4" />
-						Read as text
+						Read as {show_text_version ? 'PDF' : 'text'}
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
@@ -917,14 +1211,28 @@
 	<!-- pdf content container -->
 	<div class="absolute inset-0 min-w-[350px]">
 		<!-- pdf viewer container -->
-		<div on:scroll={throttledUpdateScrollBounds} bind:this={scroller} class="absolute overflow-auto border inset-0">
+		<div
+			on:scroll={throttledUpdateScrollBounds}
+			bind:this={scroller}
+			class="absolute overflow-auto border inset-0"
+		>
 			<div
 				use:resize={(e) => {
-					console.log({ e });
+					// console.log(`resize wrapper`, { e });
+					// wrapperWidth = e.contentBoxSize[0].inlineSize;
+					// wrapperHeight = e.contentBoxSize[0].blockSize;
+					// if (!pdfPages[0]) return;
+					// const width = pdfPages[0].getWidth();
+					// const currentScale = pdfPages[0].getScale();
+					// const pageWidthScale = ((wrapperWidth - SCROLLBAR_PADDING) / width) * currentScale;
+					// console.log({ MAX_AUTO_SCALE, pageWidthScale });
+					// if (scale_value === 'auto') {
+					// 	scale = Math.min(MAX_AUTO_SCALE, pageWidthScale);
+					// }
 				}}
 				bind:this={wrapper}
 				id="article"
-				style="--scale-factor: {scale};"
+                style:--scale-factor="{$state.scale}"
 			>
 				<!-- floating toolbar -->
 				{#if show_text_version}
@@ -932,21 +1240,45 @@
 						{@html text}
 					</div>
 				{:else}
-                <!-- TODO: Scrolly.svelte -->
-					{#each pages as page (page.pageNumber)}
+					<!-- TODO: Scrolly.svelte -->
+					<!-- {#if hydrated}
+					<Scroller items={pages} key={'pageNumber'}>
+						<svelte:fragment slot="item" let:item={page}>
+							<PdfPage
+								on:rendered={() => {
+									console.log('rendered', page.pageNumber);
+								}}
+								on:focused={(e) => {
+									console.log('focused!', e);
+									// currentPage = page.pageNumber ;
+								}}
+								{page}
+								bind:scale
+								bind:scale_to_fit
+								{annotations}
+								{...scrollBounds}
+							/>
+						</svelte:fragment>
+					</Scroller>
+                    {/if} -->
+                    <!-- bind:scale -->
+					{#each pages as page, i (page.pageNumber)}
 						<PdfPage
+							bind:ref={pdfPageElements[i]}
+							bind:this={pdfPages[i]}
+							bind:highlights={pdfPageHighlights[i]}
 							on:rendered={() => {
 								console.log('rendered', page.pageNumber);
 							}}
-                            on:focused={(e) => {
-                                console.log('focused!', e)
-                                // currentPage = page.pageNumber ;
-                            }}
+							on:focused={(e) => {
+								console.log('focused!', e);
+								// currentPage = page.pageNumber ;
+							}}
 							{page}
-							bind:scale
+                            {scale}
 							bind:scale_to_fit
 							{annotations}
-                            {...scrollBounds}
+							{...scrollBounds}
 						/>
 					{/each}
 					<!-- Page -->

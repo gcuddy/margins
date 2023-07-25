@@ -29,7 +29,7 @@
 		console.log(e);
 		const url = e.dataTransfer?.getData('text/uri-list');
 		console.log({ url });
-		if (url){
+		if (url) {
 			const syncId = syncStore.addItem();
 			const context_url = e.dataTransfer?.getData('context/url');
 			const context_entryid = e.dataTransfer?.getData('context/id');
@@ -47,8 +47,8 @@
 		console.log({ context });
 		const promise = post<AddUrlObj>('/tests?/addUrl', {
 			url,
-			status: "Backlog",
-			via_entryid: context.entryId,
+			status: 'Backlog',
+			via_entryid: context.entryId
 		});
 		toast.promise(promise, {
 			loading: 'Saving link',

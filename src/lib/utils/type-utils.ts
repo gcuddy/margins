@@ -21,3 +21,14 @@ export type Promiseable<T> = T | Promise<T>;
 export type KeysThatBeginWith<T, Phrase extends string> = keyof {
     [K in keyof T as K extends `${Phrase}${infer R}` ? K : never]: T[K]
 };
+
+
+/**
+ * Function to assert that a value is not null or undefined. Useful for Svelte syntax, which doesn't support ! operator.
+ */
+export function assert<T>(value: T): NonNullable<T> {
+    if (!value) {
+        throw new Error("Value is null or undefined");
+    }
+    return value;
+}

@@ -593,13 +593,14 @@
 					</button>
 				</div>
 			{/if}
+
 		</div>
 	</BubbleMenu>
 {/if}
 <EditorContent editor={$editor} />
 
 <style lang="postcss">
-	:global(.ProseMirror p.is-editor-empty:first-child::before) {
+	/* :global(.ProseMirror p.is-editor-empty:first-child::before) {
 		@apply text-muted/50;
 		content: attr(data-placeholder);
 		float: left;
@@ -628,5 +629,5 @@
 	}
 	:global(.ProseMirror ul[data-type="taskList"] li input[type="checkbox"]) {
 		@apply rounded border-border bg-transparent;
-	}
+	} */
 </style>

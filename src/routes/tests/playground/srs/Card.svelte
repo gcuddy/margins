@@ -5,7 +5,9 @@
 	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
 	import type { AnnotationWithEntry } from '$lib/db/selects';
 	import { md } from '$lib/markdown';
+	import { formatDate } from '$lib/utils/date';
 	import { make_link } from '$lib/utils/entries';
+	import { assert } from '$lib/utils/type-utils';
 
 	export const [send, receive] = crossfade({
 		// delay: 500,
@@ -36,14 +38,11 @@
 		TrashIcon
 	} from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
+	import toast from 'svelte-french-toast';
 	import { quintOut } from 'svelte/easing';
 	import { crossfade, fade, fly, scale } from 'svelte/transition';
 
-	export let note: {
-		body: string | null;
-		id: string;
-		response: string | null;
-	} & AnnotationWithEntry;
+	export let note: Pick<Annotation, 'body' | 'id' | 'response' | 'due_timestamp' |'last_reviewed_at' | 'interval_ms' | 'parentId'> & AnnotationWithEntry;
 
 	// TODO: use url params for js-free (or post answer and get from cookies or something)
 	let show_answer = false;
@@ -143,11 +142,14 @@
 				pending = true;
 				const remembered = +(formData.get('remembered') || 0);
 
-				return async ({ update }) => {
+				return async ({ update, result }) => {
 					await update();
 					// Get results and update state of this Card, and bind that to the parent component
 					pending = false;
 					dispatch('done', { type: remembered ? 'Remembered' : 'Forgotten' });
+                    if (result.type === 'success') {
+                        toast.success(`Scheduled flash card for ${formatDate(result.data.new_due_timestamp_ms)}`)
+                    }
 				};
 			}}
 			action="/tests/playground/srs/{note.id}?/mark"
@@ -174,9 +176,10 @@
 				Show Answer
 			</Button>
 			{#if note.entry}
+            <!-- note.parentId ? `/tests/notes/${note.parentId}` :  -->
 				<Button
 					as="a"
-					href={make_link(note.entry, `annotation-${note.id}`)}
+					href={make_link(note.entry, `annotation-${note.parentId ? note.parentId : note.id}`)}
 					on:click={() => {
 						console.log({ note });
 					}}
@@ -189,6 +192,12 @@
 		</div>
 	{/if}
     {#if show_info}
-        <span>Due: </span>
+
+        <p>Due: {note.due_timestamp} </p>
+        <p>Last Reviewed: {note.last_reviewed_at} </p>
+        {#if note.interval_ms}
+        <p>Interval: {note.interval_ms / 60 / 60 / 60 / 24} days </p>
+        {/if}
+        <p>Entry </p>
     {/if}
 </div>

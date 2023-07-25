@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
@@ -12,7 +13,14 @@
 	} from '$lib/components/ui/dropdown-menu';
 	import { mutation } from '$lib/queries/query';
 	import type { Annotation } from '@prisma/client';
-	import { Edit, ListPlus, MoreHorizontal, PackagePlus, TrashIcon } from 'lucide-svelte';
+	import {
+		ArrowRightIcon,
+		Edit,
+		ListPlus,
+		MoreHorizontal,
+		PackagePlus,
+		TrashIcon
+	} from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 
 	// export let data: ComponentProps<AnnotationForm>["data"];
@@ -45,7 +53,7 @@
 		</DropdownMenuGroup>
 		<DropdownMenuGroup>
 			<DropdownMenuItem
-			on:click={() =>
+				on:click={() =>
 					commander.open({
 						component: Collections,
 						props: {
@@ -58,11 +66,18 @@
 						}
 					})}
 			>
-			<PackagePlus class="mr-2 h-4 w-4" />
-			<span>Add to Collection</span></DropdownMenuItem
+				<PackagePlus class="mr-2 h-4 w-4" />
+				<span>Add to Collection</span></DropdownMenuItem
 			>
 		</DropdownMenuGroup>
 		<DropdownMenuGroup>
+			<DropdownMenuItem on:click={() => {
+                //
+                goto(`/tests/notes/${annotation.id}`)
+            }}>
+				<ArrowRightIcon class="mr-2 h-4 w-4" />
+				<span>View Annotation out of context </span></DropdownMenuItem
+			>
 			<DropdownMenuItem on:click={() => dispatch('delete')}>
 				<TrashIcon class="mr-2 h-4 w-4" />
 				<span>Delete</span></DropdownMenuItem

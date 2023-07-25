@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount, tick } from 'svelte';
 	type T = $$Generic;
+
 	export let items: T[];
+
+	type Key = T extends {} ? keyof T : undefined;
+	export let key: Key = undefined as Key;
 
 	export function capture() {
 		const scroll = scroller.scrollTop;
@@ -32,16 +36,40 @@
 	let scroller: HTMLDivElement;
 	let content: HTMLDivElement;
 
-	let a = 0;
-	let b = items.length;
+	export let a = 0;
+	export let b = items.length;
+    export let estimatedHeight = 100;
 	let offset = 0;
 	let top = 0;
 	let bottom = 0;
 	let heights: number[] = [];
 
+	$: console.log({ items });
+
 	$: average = heights.reduce((a, b) => a + b, 0) / heights.length;
+    $: console.log({a, b, offset, top, bottom, heights, average})
+
+	export function scrollTo(index: number, opts?: {
+        height?: number;
+    }) {
+        console.log('scrollTo', index)
+		tick().then(() => {
+			// check if the item is already visible
+			const el = content.querySelector(`[data-item-id="${index}"]`);
+			if (
+				el &&
+				el.getBoundingClientRect().top >= 0 &&
+				el.getBoundingClientRect().bottom <= scroller.getBoundingClientRect().bottom
+			)
+				return;
+			const height = opts?.height ?? heights[index] ?? average;
+            console.log('scrolling to', {index, height, offset, a, b, total: index * height})
+			scroller.scrollTo(0, (height * index) - offset);
+		});
+	}
 
 	function measure(node: HTMLDivElement, id: number) {
+		console.log('measuring', id);
 		const height = node.clientHeight;
 		const current_height = heights[id];
 
@@ -110,12 +138,8 @@
 	>
 		<slot name="header" />
 
-		<div
-			bind:this={content}
-			style:padding-top="{top}px"
-			style:padding-bottom="{bottom}px"
-		>
-			{#each items.slice(a, b) as item, i (item)}
+		<div bind:this={content} style:padding-top="{top}px" style:padding-bottom="{bottom}px">
+			{#each items.slice(a, b) as item, i (key ? item[key] : item)}
 				<div class="flow-root" data-item-id={a + i} use:measure={a + i}>
 					<slot name="item" {item} i={a + i} />
 				</div>

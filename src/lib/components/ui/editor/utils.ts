@@ -1,6 +1,7 @@
 import type { EditorView } from '@tiptap/pm/view';
 import toast from 'svelte-french-toast';
 import type { Editor } from 'svelte-tiptap';
+import slugify from 'slugify';
 
 /**
  * Handles Uploads to S3 on client side with toast notifications.
@@ -23,7 +24,7 @@ export const handleImageUplaod = (
 		toast.error('File type not supported.');
 	}
 	// check if the file size is less than 50MB
-	else if (file.size / 1024 / 1024 > 50) {
+	else if (file.size  / 1024 / 1024 > 50) {
 		toast.error('File size too big (max 50MB).');
 	} else {
 		toast.promise(
@@ -31,7 +32,7 @@ export const handleImageUplaod = (
 				method: 'POST',
 				headers: {
 					'content-type': file?.type || 'application/octet-stream',
-					filename: file.name || 'image.png'
+					filename: slugify(file.name) || 'image.png'
 				},
 				body: file
 			}).then(async (res) => {
@@ -67,7 +68,10 @@ export const handleImageUplaod = (
 			{
 				loading: 'Uploading image...',
 				success: 'Image uploaded successfully.',
-				error: (e) => e.message
+				error: (e) => {
+                    console.log(e);
+                    return e.message
+                }
 			}
 		);
 	}

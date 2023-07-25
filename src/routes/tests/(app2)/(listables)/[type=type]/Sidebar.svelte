@@ -51,6 +51,7 @@
 	import type { Writable } from 'svelte/store';
 	import type { PDFDocumentProxy } from 'pdfjs-dist';
 	import type Pdf from './[id]/PDF.svelte';
+	import NoteModal from './[id]/NoteModal.svelte';
 
 	const render = persisted('sidebar', false);
 	let flash = false;
@@ -332,7 +333,6 @@
 					</div>
 				</Collapsible.Root>
 			{/if}
-			{#if data?.annotations?.length}
 				<div class="p-6">
 					<div class="flex items-center justify-between">
 						<h3 class=" top-0 bg-card py-2 text-lg font-semibold leading-none tracking-tight">
@@ -362,14 +362,13 @@
 					</div>
 					<div class="grid gap-4">
 						{#each data.annotations
-							.filter((a) => !!a.body || !!a.target)
+							.filter((a) => !!a.body || !!a.target || !!a.contentData)
 							.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
 							<Annotation {annotation} data={$page.data.annotationForm} entry={$page.data.entry} />
 						{/each}
 					</div>
 				</div>
-			{/if}
-		</aside>
+            </aside>
 
 		<!-- Resizer -->
 		<ColResizer
@@ -397,4 +396,4 @@
 	</div>
 {/if}
 
-<NoteForm bind:isOpen={show_note_form} data={$page.data.annotationForm} entry={$page.data.entry} />
+<NoteModal bind:isOpen={show_note_form} entry={$page.data.entry} />
