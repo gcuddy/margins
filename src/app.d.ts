@@ -25,7 +25,7 @@ declare namespace App {
             subscriptions: import("$lib/trpc/router").RouterOutputs["subscriptions"]["list"];
         };
         user_data?: {
-            tags?: Promise<{ id: string; name: string; }[]>;
+            tags?: Promise<{ id: number; name: string; }[]>;
         }
         currentList?: import("$lib/stores/currentList").CurrentList;
         current_entry_id?: import('svelte/store').Writable<number | null>;

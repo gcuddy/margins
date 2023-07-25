@@ -1,54 +1,55 @@
-import { createCachedValue } from "$lib/cache";
-import { db } from "$lib/db";
-import { jsonObjectFrom } from "kysely/helpers/mysql";
-import type { LayoutServerLoad } from "./$types";
+import { createCachedValue } from '$lib/cache';
+import { db } from '$lib/db';
+import { jsonObjectFrom } from 'kysely/helpers/mysql';
+import type { LayoutServerLoad } from './$types';
 
 function getTags(userId: string) {
-    console.time("getTags");
-    const tags = db.selectFrom("Tag")
-        .select(["id", "name"])
-        .where("userId", "=", userId)
-        .execute();
-    console.timeEnd("getTags");
-    return tags;
+	console.time('getTags');
+	const tags = db
+		.selectFrom('Tag')
+		.select(['id', 'name'])
+		.where('userId', '=', userId)
+		.orderBy('name', 'asc')
+		.execute();
+	console.timeEnd('getTags');
+	return tags;
 }
 
 export const load = (async (event) => {
-    const { user } = await event.locals.validateUser();
-    if (!user) {
-        return {}
-    }
+	const { user } = await event.locals.validateUser();
+	if (!user) {
+		return {};
+	}
 
-    const pins = db.selectFrom("Favorite as p")
-        .where("p.userId", "=", user.userId)
-        .select(
-            eb => [
-                jsonObjectFrom(
-                    eb.selectFrom("SmartList as v")
-                        .whereRef("v.id", "=", "p.smartListId")
-                        .select(["v.name", "v.id"])
-                ).as("view"),
-                jsonObjectFrom(
-                    eb.selectFrom("Collection as c")
-                        .whereRef("c.id", "=", "p.collectionId")
-                        .select(["c.name", "c.id"])
-                ).as("collection"),
-                jsonObjectFrom(
-                    eb.selectFrom("Tag as t")
-                        .whereRef("t.id", "=", "p.tagId")
-                        .select(["t.name", "t.id"])
-                ).as("tag"),
-            ]
-        )
-        .select("p.id")
-        .execute();
-    return {
-        user_data: {
-            // lazy loaded promises
-            tags: createCachedValue("tags", () => getTags(user.userId)),
-            pins,
-            // normal user data
-            ...user
-        }
-    }
-}) satisfies LayoutServerLoad
+	const pins = db
+		.selectFrom('Favorite as p')
+		.where('p.userId', '=', user.userId)
+		.select((eb) => [
+			jsonObjectFrom(
+				eb
+					.selectFrom('SmartList as v')
+					.whereRef('v.id', '=', 'p.smartListId')
+					.select(['v.name', 'v.id'])
+			).as('view'),
+			jsonObjectFrom(
+				eb
+					.selectFrom('Collection as c')
+					.whereRef('c.id', '=', 'p.collectionId')
+					.select(['c.name', 'c.id'])
+			).as('collection'),
+			jsonObjectFrom(
+				eb.selectFrom('Tag as t').whereRef('t.id', '=', 'p.tagId').select(['t.name', 't.id'])
+			).as('tag')
+		])
+		.select('p.id')
+		.execute();
+	return {
+		user_data: {
+			// lazy loaded promises
+			tags: createCachedValue('tags', () => getTags(user.userId)),
+			pins,
+			// normal user data
+			...user
+		}
+	};
+}) satisfies LayoutServerLoad;

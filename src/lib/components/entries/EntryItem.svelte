@@ -11,7 +11,7 @@
 	import { receive, send } from '$lib/transitions';
 	import Badge from '../ui/Badge.svelte';
 	import { page } from '$app/stores';
-	import { state } from '$lib/state/entries';
+	import { state, update_entry } from '$lib/state/entries';
 	import {
 		ArrowLeftRightIcon,
 		CheckCircle2Icon,
@@ -20,6 +20,7 @@
 		CircleIcon,
 		FileTextIcon,
 		PencilIcon,
+		TagIcon,
 		TrendingUpIcon
 	} from 'lucide-svelte';
 	import HoverCard from '../ui/hover-card/HoverCard.svelte';
@@ -38,8 +39,10 @@
 	import { contextMenuItem } from '$components/ui/context-menu/ContextMenuItem.svelte';
 	import { mutation } from '$lib/queries/query';
 	import { toast } from 'svelte-sonner';
+	import ContextMenuCheckboxItem from '$components/ui/context-menu/ContextMenuCheckboxItem.svelte';
 
 	export let entry: EntryInList;
+
 	function getDomain(url: string) {
 		const domain = url.replace(/https?:\/\//, '').split('/')[0];
 		return domain;
@@ -65,7 +68,7 @@
 			status
 		})
 			.then(() => {
-				toast.success('Entry moved', {
+				toast.success('Entry moved to ' + status, {
 					action: old_status
 						? {
 								label: 'Undo',
@@ -77,7 +80,7 @@
 									mutation($page, 'update_status', {
 										ids: [entry.id],
 										status: old_status,
-                                        sort_order: old_sort_order
+										sort_order: old_sort_order
 									});
 								}
 						  }
@@ -105,7 +108,8 @@
 
 	$: dispatch('checked', checked);
 
-	const { trigger, menu, item, createSubMenu, createMenuRadioGroup } = createContextMenu();
+	const { trigger, menu, item, createSubMenu, createMenuRadioGroup, checkboxItem, open } =
+		createContextMenu();
 
 	const { radioGroup, radioItem, isChecked } = createMenuRadioGroup({
 		value: entry.status
@@ -116,6 +120,19 @@
 	$: data = $state[entry.id];
 
 	$: attachment = data?.relations?.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');
+
+	let tag_state_dirty = false;
+
+	$: if (!$open && tag_state_dirty) {
+        console.log(`updating tags on entry ${entry.id}`, data.tags)
+		mutation($page, 'set_tags_on_entry', {
+			entries: [entry.id],
+			tags: data.tags ?? []
+		}).then(() => {
+			tag_state_dirty = false;
+			toast.success('Tags updated');
+		});
+	}
 </script>
 
 <!-- out:send={{
@@ -290,8 +307,8 @@
 		</div>
 	</div>
 	<div class="ml-auto hidden shrink-0 items-center gap-x-2 md:flex">
-		{#if entry.tags}
-			{#each entry.tags as tag (tag.id)}
+		{#if data.tags}
+			{#each data.tags as tag (tag.id)}
 				<Badge class="text-xs" as="a" href="/tests/tag/{tag.name}" variant="outline"
 					>{tag.name}</Badge
 				>
@@ -317,10 +334,56 @@
 </div> -->
 
 <ContextMenu {menu} let:ContextMenuItem>
-	<ContextMenuItem {item} inset>
+	<ContextMenuItem
+		onSelect={() => {
+			// TODO: dispatch and bump to top
+		}}
+		{item}
+		inset
+	>
 		<ContextMenuIcon icon={TrendingUpIcon} />
 		<span>Bump to top</span>
 	</ContextMenuItem>
+	{#if $page.data.user_data}
+		<ContextSubMenu {createSubMenu} inset>
+			<ContextMenuIcon icon={TagIcon} />
+			<span>Tag</span>
+			<svelte:fragment slot="content">
+				<!-- TODO: use virtual list component? -->
+				{#await $page.data.user_data.tags}
+					Loading...
+				{:then tags}
+					{#each tags || [] as tag}
+						<ContextMenuCheckboxItem
+							{checkboxItem}
+							useCheckbox
+							checked={!!entry.tags?.some((t) => t.id === tag.id)}
+							onSelect={() => {
+								// TODO: update tag
+								console.log('update tag');
+								// We set the state here so that the UI updates immediately
+								update_entry(entry.id, {
+                                    tags: data.tags?.some((t) => t.id === tag.id)
+                                    ? data.tags?.filter((t) => t.id !== tag.id)
+                                    : [...(data.tags || []), tag]
+								});
+                                // We set tag_state_dirty to let the context menu know that when it closes, we should call the mutation on the server
+                                // TODO or should it be debounced?
+                                tag_state_dirty = true;
+
+								// mutation($page, 'update_tags_on_entry', {
+								//     entries: [entry.id],
+								//     tags: [tag.id]
+								// })
+							}}
+						>
+							{tag.name}
+						</ContextMenuCheckboxItem>
+					{/each}
+				{/await}
+			</svelte:fragment>
+		</ContextSubMenu>
+	{/if}
 	<ContextSubMenu inset {createSubMenu}>
 		<!-- Trigger Slot -->
 		<ContextMenuIcon icon={CircleDashedIcon} />

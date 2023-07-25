@@ -15,6 +15,8 @@ import {
 	getNotebook,
 	getNotebookSchema,
 	s_add_to_collection,
+	set_tags_on_entry,
+	tagsOnEntrySchema,
 	updateBookmark,
 	updateBookmarkSchema,
 	upsertAnnotation
@@ -249,6 +251,12 @@ export const mutations = {
 				})
 				.onDuplicateKeyUpdate(input)
 				.execute();
+		}
+	}),
+	set_tags_on_entry: query({
+		schema: tagsOnEntrySchema,
+		fn: async ({ input, ctx }) => {
+			return set_tags_on_entry({ ...input, userId: ctx.userId });
 		}
 	})
 };

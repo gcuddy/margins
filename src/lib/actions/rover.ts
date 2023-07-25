@@ -6,9 +6,9 @@ type Opts = {
 
 
 /**
- * 
+ *
  * @param node Parent element to run roving tabindex on
- * @returns 
+ * @returns
  */
 export default function rover(node: HTMLElement, opts?: Opts) {
 
@@ -133,9 +133,9 @@ export default function rover(node: HTMLElement, opts?: Opts) {
 
     return {
         destroy() {
+            observer.disconnect();
             node.removeEventListener("focusin", setUpFocus);
             window.removeEventListener("keydown", keyboard_nav);
-            observer.disconnect();
         },
         update(opts?: Opts) {
             const { linkSelector = "a", idAttr, initialId } = opts || {};

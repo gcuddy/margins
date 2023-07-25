@@ -272,12 +272,12 @@
 	}}
 />
 
-<ul
-	use:rover={{
+	<!-- use:rover={{
 		linkSelector: 'a[data-id]',
 		idAttr: 'data-id',
 		initialId: active_id
-	}}
+	}} -->
+<ul
 	class={cn('divide-y divide-border', className)}
 	use:dndzone={{
 		items: entries,
