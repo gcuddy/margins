@@ -361,7 +361,7 @@
 						</div>
 					</div>
 					<div class="grid gap-4">
-						{#each data.annotations
+						{#each data?.annotations || []
 							.filter((a) => !!a.body || !!a.target || !!a.contentData)
 							.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
 							<Annotation {annotation} data={$page.data.annotationForm} entry={$page.data.entry} />

@@ -76,7 +76,7 @@
 		},
 		{
 			label: 'Memory Palace',
-			href: '/tests/playground/srs',
+			href: '/tests/srs',
 			icon: BrainCircuit,
 			active: (url) => url === '/tests/views'
 		},

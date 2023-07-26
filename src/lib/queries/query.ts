@@ -61,14 +61,20 @@ export async function query<T extends keyof Queries>(
 		? undefined
 		: Parameters<Queries[T]['fn']>[0]['input'],
 	options?: {
-		stale_time: number;
+		stale_time?: number;
+		cache?: boolean;
+		enabled?: boolean;
 	}
 ): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
 	if (options) {
 		if (options.stale_time) {
 			// todo
 		}
+		// if (options.enabled === false) {
+		//     return;
+		// }
 	}
+	type Data = Awaited<ReturnType<Queries[T]['fn']>>;
 	console.log(`running query ${fn}`, new Date());
 	console.log({ input });
 	const init = (base || {}) as QueryInit;
@@ -81,13 +87,22 @@ export async function query<T extends keyof Queries>(
 	console.log({ fetcher });
 	const data = stringify(input);
 	console.log({ data });
-	let url = (init.url?.origin ?? '') + `/tests/sq/${fn}?input=${encodeURIComponent(data)}`;
+	let url: string = (init.url?.origin ?? '') + `/tests/sq/${fn}?input=${encodeURIComponent(data)}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}
-	type Data = Awaited<ReturnType<Queries[T]['fn']>>;
+	if (options) {
+		if (options.cache) {
+			if (query_store_cache_lookup.has(url)) {
+				return query_store_cache_lookup.get(url) as Data;
+			}
+		}
+	}
 	const final = (await fetcher(url).then((res) => res.json())) as Awaited<Data>;
 	console.dir({ final }, { depth: null });
+    if (options?.cache) {
+        query_store_cache_lookup.set(url, final as Awaited<Data>)
+    }
 	return final;
 }
 
@@ -177,7 +192,7 @@ export class Query {
 		if (userId) {
 			url += `&userId=${userId}`;
 		}
-    type Data = Awaited<ReturnType<Queries[T]['fn']>>;
+		type Data = Awaited<ReturnType<Queries[T]['fn']>>;
 		// if (query_store_cache_lookup.has(url)) {
 		//     return query_store_cache_lookup.get(url) as Data;
 		// }

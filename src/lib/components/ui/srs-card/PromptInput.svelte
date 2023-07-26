@@ -5,6 +5,7 @@
 	import Button from '../Button.svelte';
 	import Label from '../Label.svelte';
 	import type { TargetSchema } from '$lib/annotation';
+	import Input from '../Input.svelte';
 
 	export let parent_id: string | undefined = undefined;
 	export let entry_id: number | undefined = undefined;
@@ -14,7 +15,9 @@
 	export let target_schema: TargetSchema | undefined = undefined;
 	export let active = false;
 	export let editable = true;
-    $: console.log({editable})
+
+    let form: HTMLFormElement;
+	$: console.log({ editable });
 
 	let pending = false;
 
@@ -24,6 +27,8 @@
 
 	export let showButton = true;
 
+    export const submit = () => form.requestSubmit();
+
 	// todo: use id to fetch most recent prompt and response
 </script>
 
@@ -32,10 +37,11 @@
 <form
 	class="contents"
 	method="post"
-	action="/tests/playground/srs?/new"
+	action="/tests/srs?/new"
+    bind:this={form}
 	on:blur={() => {
-        console.log(`Form blur`)
-    }}
+		console.log(`Form blur`);
+	}}
 	use:enhance={() => {
 		pending = true;
 		return async ({ update, result }) => {
@@ -74,7 +80,7 @@
 		as="textarea"
 		rows={1}
 		{active}
-        on:blur={(e) =>console.log({e})}
+		on:blur={(e) => console.log({ e })}
 		on:keydown={(e) => console.log({ e })}
 		class="font-medium"
 		{editable}
@@ -88,10 +94,12 @@
 		rows={1}
 		bind:value={response}
 		on:keydown
-        on:blur={(e) =>console.log({e})}
-
+		on:blur={(e) => console.log({ e })}
 		{editable}
 	/>
+	<noscript>
+		<Input name="entry_id" value={entry_id} placeholder="Entry ID" />
+	</noscript>
 	{#if showButton}
 		<Button disabled={pending} type="submit">Save</Button>
 	{/if}

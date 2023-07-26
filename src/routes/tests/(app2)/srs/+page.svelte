@@ -15,15 +15,23 @@
 	import Label from '$components/ui/Label.svelte';
 	import { enhance } from '$app/forms';
 	import { formatDate } from '$lib/utils/date';
+	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
+	import { PlusCircle } from 'lucide-svelte';
+	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
+	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
 
 	export let data;
 
 	let pending = false;
 
 	$: console.log({ data });
+
+	let promptInput: PromptInput;
+
+    const commander_store = getCommanderContext();
 </script>
 
-<Button as="a" href="/tests/playground/srs/review">Start Review Session</Button>
+<Button as="a" href="/tests/srs/review">Start Review Session</Button>
 
 <Dialog>
 	<!-- TODO: allow tags etc (also possibly make body/response accept contentdata with tiptap... but maybe this is idiotic.)
@@ -34,7 +42,22 @@ Allow linking to sources (either other parent annotations or entries itself)
 	</svelte:fragment>
 
 	<DialogContent let:close>
-		<form
+		<DialogHeader>
+			<DialogTitle>New Card</DialogTitle>
+		</DialogHeader>
+		<PromptInput showButton={false} bind:this={promptInput} />
+		<DialogFooter>
+            <Button on:click={() => {
+                commander_store.open({
+                    component: JumpToEntry
+                })
+            }} class="mr-auto -ml-1" variant="ghost">
+                <PlusCircle class="h-4 w-4 mr-2" />
+                Link with entry
+            </Button>
+			<Button disabled={pending} type="submit">Save</Button>
+		</DialogFooter>
+		<!-- <form
 			class="contents"
 			method="post"
 			action="?/new"
@@ -63,7 +86,7 @@ Allow linking to sources (either other parent annotations or entries itself)
 			<DialogFooter>
 				<Button disabled={pending} type="submit">Save</Button>
 			</DialogFooter>
-		</form>
+		</form> -->
 	</DialogContent>
 </Dialog>
 
@@ -71,7 +94,7 @@ Allow linking to sources (either other parent annotations or entries itself)
 	{#each data.srs_notes as note}
 		<tr>
 			<td>
-				<a href="/tests/playground/srs/{note.id}">{note.body}</a>
+				<a href="/tests/srs/{note.id}">{note.body}</a>
 			</td>
 			<td>
 				{#if note.due_timestamp}

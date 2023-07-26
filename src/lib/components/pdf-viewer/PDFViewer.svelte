@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import * as pdfjs from 'pdfjs-dist';
 	import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 	// import downloadsvg from './images/toolbarDownload.svg?url';
@@ -11,12 +11,21 @@
 	import './pdfviewer.css';
 	import { ZoomInIcon } from 'lucide-svelte';
 	import { nanoid } from 'nanoid';
-	import { createTextPositionSelectorMatcher, createTextQuoteSelectorMatcher, describeTextPosition, describeTextQuote } from '$lib/annotator';
+	import {
+		createTextPositionSelectorMatcher,
+		createTextQuoteSelectorMatcher,
+		describeTextPosition,
+		describeTextQuote
+	} from '$lib/annotator';
 	import type { TargetSchema } from '$lib/annotation';
 	import type { PDFDocumentProxy } from 'pdfjs-dist';
 	import type { TextPositionSelector, TextQuoteSelector } from '$lib/annotator/types';
 	import { highlightText } from '$lib/annotator/highlighter';
+	import { getTargetSelector } from '$lib/utils/annotations';
 	import Button from '$components/Button.svelte';
+	import type { Annotation } from '@prisma/client';
+
+	export let annotations: Pick<Annotation, 'id' | 'target'>[] = [];
 
 	pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -52,7 +61,7 @@
 	let password_message = '';
 	let _prev_gap_top = '8px';
 	let _prev_gap_bottom = '8px';
-    let pdf_document: PDFDocumentProxy;
+	let pdf_document: PDFDocumentProxy;
 
 	//Init button handlers (some require hydration on mount)
 	let onPasswordSubmit: () => void;
@@ -60,7 +69,7 @@
 	let onZoomOut: () => void;
 	let onPageDisplay: () => void;
 
-    async function highlightSelectorTarget(
+	async function highlightSelectorTarget(
 		selector: TextQuoteSelector | TextPositionSelector,
 		attrs?: Record<string, string>
 	) {
@@ -82,14 +91,14 @@
 		return matchList.map((match) => highlightText(match, 'mark', attrs));
 	}
 
-    async function highlight() {
+	async function highlight() {
 		const range = window.getSelection()?.getRangeAt(0);
 		if (!range || range.collapsed) return;
 		const text_quote_selector = await describeTextQuote(range, container);
 		const text_position_selector = describeTextPosition(range, container);
 
 		const page_num = Number(
-            //@ts-expect-errors
+			//@ts-expect-errors
 			range.startContainer.parentElement?.closest(`[data-page-number]`)?.dataset?.pageNumber || 0
 		);
 		const target: TargetSchema = {
@@ -102,6 +111,10 @@
 		const h = await highlightSelectorTarget(text_quote_selector, {
 			'data-annotation-id': id
 		});
+
+
+        // TODO: calculate x,y,w,h of highlight and store it in the annotation
+
 		console.log({ h });
 
 		// if (target.page_num) {
@@ -138,6 +151,31 @@
 		};
 	}
 
+	async function render_annotations(pageNum: number) {
+		await tick();
+		for (const annotation of annotations) {
+			if (!annotation.target) continue;
+			const page_num = (annotation.target as TargetSchema).page_num;
+			const text_quote_selector = getTargetSelector(
+				annotation.target as TargetSchema,
+				'TextQuoteSelector'
+			);
+			const text_position_selector = getTargetSelector(
+				annotation.target as TargetSchema,
+				'TextPositionSelector'
+			);
+			// const page_selector = getTargetSelector(annotation.target as TargetSchema, 'BookSelector');
+			if (!text_quote_selector || !page_num) continue;
+			if (page_num !== pageNum) continue;
+
+			// check if the annotation element already exists
+			const existing = container.querySelector(`[data-annotation-id="${annotation.id}"]`);
+			if (existing) continue;
+			const h = await highlightSelectorTarget(text_quote_selector, {
+				'data-annotation-id': annotation.id
+			});
+		}
+	}
 
 	const printPdf = (url: string) => {
 		const iframe = document.createElement('iframe');
@@ -182,10 +220,13 @@
 				eventBus: event_bus
 			});
 
-            event_bus.on("pagerendered", (e) => {
-                // can use this to render SVG highlights (we use our annotator to highlight textlayer, and then attach svgs to those elements)
-                console.log(e)
-            })
+
+
+			event_bus.on('pagerendered', ({ pageNumber }: { pageNumber: number }) => {
+				render_annotations(pageNumber);
+				// can use this to render SVG highlights (we use our annotator to highlight textlayer, and then attach svgs to those elements)
+				// console.log(`pagerendered`, e);
+			});
 
 			// (Optionally) enable find controller.
 			const pdf_find_controller = new pdfjs_viewer.PDFFindController({
@@ -213,7 +254,7 @@
 			});
 			loading_task.promise
 				.then((_pdf_document) => {
-                    pdf_document = _pdf_document;
+					pdf_document = _pdf_document;
 					pdf_viewer.setDocument(pdf_document);
 					pdf_link_service.setDocument(pdf_document, null);
 					pdf_viewer.currentScale = scale;
@@ -289,7 +330,7 @@
 		{:else}
 			<div class="spdfbanner">
 				<span class="toolbarbutton" on:click={onZoomIn}>
-                    <ZoomInIcon />
+					<ZoomInIcon />
 					<!-- <img title="Zoom In" src={zoominsvg} alt="zoom in" class="spdfbutton" /> -->
 				</span>
 				<span class="toolbarbutton" on:click={onZoomOut}>
@@ -312,7 +353,7 @@
 				<span class="toolbarbutton" on:click={() => download(INTERNAL_URL)}>
 					<!-- <img title="Download" src={downloadsvg} alt="download" class="spdfbutton" /> -->
 				</span>
-                <Button on:click={highlight}>Highlight</Button>
+				<Button on:click={highlight}>Highlight</Button>
 			</div>
 			<div class="spdfinner">
 				<div id="viewerContainer" style="background-color: rgb(55 65 81);" bind:this={container}>

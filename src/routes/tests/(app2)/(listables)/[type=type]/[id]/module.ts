@@ -20,7 +20,7 @@ export function get_module(type: Parameters<PageLoad>[0]["data"]["type"]) {
         case "tweet":
             return import("./Tweet.svelte");
         case "pdf":
-            return import("./PDF.svelte");
+            return import("./PDFViewer.svelte");
         default:
             return undefined;
     }

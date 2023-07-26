@@ -186,7 +186,7 @@
 				<CommandItem
 					value="go to srs flash cards memory palace"
 					onSelect={() => {
-						goto(`/tests/playground/srs`);
+						goto(`/tests/srs`);
 						$state.isOpen = false;
 					}}
 				>

@@ -1,4 +1,4 @@
-import { Readable, readable, writable } from 'svelte/store';
+import { Readable, derived, readable, writable } from 'svelte/store';
 import type { EntryInList } from '$lib/db/selects';
 import { tick } from 'svelte';
 
@@ -26,6 +26,8 @@ const { subscribe, update } = writable(
 );
 
 export const state = { subscribe };
+
+export const entries_in_state = derived(state, $state =>  Object.values($state))
 
 
 export const invalidated = writable(false);

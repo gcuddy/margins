@@ -98,7 +98,7 @@
 						icon: TrashIcon,
 						onSelect: () => {
 							pending = true;
-							fetch(`/tests/playground/srs/${note.id}?/delete`, {
+							fetch(`/tests/srs/${note.id}?/delete`, {
 								method: 'POST',
 								body: JSON.stringify({})
 							}).then(() => {
@@ -152,7 +152,7 @@
                     }
 				};
 			}}
-			action="/tests/playground/srs/{note.id}?/mark"
+			action="/tests/srs/{note.id}?/mark"
 			method="post"
 		>
 			<Button disabled={pending} name="remembered" value={0} type="submit">
