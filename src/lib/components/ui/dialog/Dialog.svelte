@@ -20,6 +20,7 @@
 		open={isOpen}
 		on:close={() => (isOpen = false)}
 		on:close
+        {...$$restProps}
 	>
 		<!-- TODO -->
 		<slot />

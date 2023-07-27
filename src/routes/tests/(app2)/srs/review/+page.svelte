@@ -34,6 +34,7 @@
                     // splice out first note
                     data.notes_to_review.splice(0, 1);
                     data.notes_to_review = data.notes_to_review;
+                    console.log({data})
 					// if (note_index < data.notes_to_review.length - 1) {
 					// 	note_index++;
 					// } else if (data.notes_to_review.length) {

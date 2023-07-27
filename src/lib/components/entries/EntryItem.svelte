@@ -51,6 +51,7 @@
 	const dispatch = createEventDispatcher<{
 		checked: boolean;
 		move: { status: Status; entries: EntryInList[] };
+		reorder: { position: number; entry: EntryInList };
 	}>();
 
 	export let checked = false;
@@ -124,7 +125,7 @@
 	let tag_state_dirty = false;
 
 	$: if (!$open && tag_state_dirty) {
-        console.log(`updating tags on entry ${entry.id}`, data.tags)
+		console.log(`updating tags on entry ${entry.id}`, data.tags);
 		mutation($page, 'set_tags_on_entry', {
 			entries: [entry.id],
 			tags: data.tags ?? []
@@ -337,6 +338,20 @@
 	<ContextMenuItem
 		onSelect={() => {
 			// TODO: dispatch and bump to top
+			console.log('bump to top');
+			dispatch('reorder', {
+				position: 0,
+				entry
+			});
+			// REVIEW should this post logic be abstracted to the parent entryList (which is what controls drag-and-drop)?
+			// update_status automatically sets sort_order to top if not passed in
+			if (!entry.status) {
+				throw new Error('Missing status');
+			}
+			mutation($page, 'update_status', {
+				ids: [entry.id],
+				status: entry.status
+			});
 		}}
 		{item}
 		inset
@@ -363,13 +378,13 @@
 								console.log('update tag');
 								// We set the state here so that the UI updates immediately
 								update_entry(entry.id, {
-                                    tags: data.tags?.some((t) => t.id === tag.id)
-                                    ? data.tags?.filter((t) => t.id !== tag.id)
-                                    : [...(data.tags || []), tag]
+									tags: data.tags?.some((t) => t.id === tag.id)
+										? data.tags?.filter((t) => t.id !== tag.id)
+										: [...(data.tags || []), tag]
 								});
-                                // We set tag_state_dirty to let the context menu know that when it closes, we should call the mutation on the server
-                                // TODO or should it be debounced?
-                                tag_state_dirty = true;
+								// We set tag_state_dirty to let the context menu know that when it closes, we should call the mutation on the server
+								// TODO or should it be debounced?
+								tag_state_dirty = true;
 
 								// mutation($page, 'update_tags_on_entry', {
 								//     entries: [entry.id],

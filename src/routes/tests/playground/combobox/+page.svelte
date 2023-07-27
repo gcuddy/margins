@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Combobox from '$components/ui/combobox/Combobox.svelte';
+	import Command from '$components/ui/combobox/Command.svelte';
 	import type { EntryInList } from '$lib/db/selects';
 	import { query } from '$lib/queries/query';
 	import { entries_in_state } from '$lib/state/entries';
@@ -87,7 +88,7 @@
 		const items_we_dont_have = new_items.filter((new_item) =>
 			items.some((item) => item.id !== new_item.id)
 		);
-        console.log({items_we_dont_have})
+		console.log({ items_we_dont_have });
 		const items_to_filter = [...items, ...items_we_dont_have];
 		// let's make sure we don't add the same thing twice by making a set with the ids
 		const item_ids = new Set(items_to_filter.map((i) => i.id));
@@ -122,7 +123,7 @@
 			}
 		);
 
-        console.log({new_items})
+		console.log({ new_items });
 
 		add_to_items(new_items);
 		return;
@@ -145,7 +146,7 @@
 		items = [...already_existing_items, ...items_to_append];
 	}
 
-	const debounced_search = debounce(search, 500);
+	const debounced_search = debounce(search, 250);
 
 	$: if (input) {
 		debounced_search();
@@ -154,10 +155,27 @@
 	}
 </script>
 
-<Combobox
-	bind:input
-	{items}
-	{filterFunction}
-	itemId={'id'}
-	itemToString={(item) => item.title ?? ''}
-/>
+<div>
+	<button> e </button>
+	<Combobox
+		bind:input
+		{items}
+		{filterFunction}
+		itemId={'id'}
+		itemToString={(item) => item.title ?? ''}
+	/>
+</div>
+<!-- <Combobox items={[
+    {
+        heading: "Test",
+        items: [
+            {
+                test: "d"
+            }
+        ]
+    }
+]} /> -->
+
+<!-- <Command {items} {filterFunction} itemToString={(item) => item.title ?? ''}>
+	Testing testing
+</Command> -->

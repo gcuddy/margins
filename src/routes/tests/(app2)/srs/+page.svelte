@@ -19,6 +19,9 @@
 	import { PlusCircle } from 'lucide-svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
+	import Combobox from '$components/ui/combobox/Combobox.svelte';
+	import EntryCombobox from '$components/ui/combobox/EntryCombobox.svelte';
+	import type { EntryInList } from '$lib/db/selects';
 
 	export let data;
 
@@ -28,33 +31,34 @@
 
 	let promptInput: PromptInput;
 
-    const commander_store = getCommanderContext();
+	const commander_store = getCommanderContext();
+
+    let selected_entry: EntryInList | undefined = undefined;
+
+    let new_card_dialog = false;
 </script>
 
 <Button as="a" href="/tests/srs/review">Start Review Session</Button>
 
-<Dialog>
+<Dialog isOpen={new_card_dialog}>
 	<!-- TODO: allow tags etc (also possibly make body/response accept contentdata with tiptap... but maybe this is idiotic.)
 Allow linking to sources (either other parent annotations or entries itself)
 -->
 	<svelte:fragment slot="trigger">
-		<Button>New Card</Button>
+		<Button on:click={() => {
+            new_card_dialog = true;
+        }}>New Card</Button>
 	</svelte:fragment>
 
 	<DialogContent let:close>
 		<DialogHeader>
 			<DialogTitle>New Card</DialogTitle>
 		</DialogHeader>
-		<PromptInput showButton={false} bind:this={promptInput} />
+		<PromptInput entry_id={selected_entry?.id} showButton={false} bind:this={promptInput} />
 		<DialogFooter>
-            <Button on:click={() => {
-                commander_store.open({
-                    component: JumpToEntry
-                })
-            }} class="mr-auto -ml-1" variant="ghost">
-                <PlusCircle class="h-4 w-4 mr-2" />
-                Link with entry
-            </Button>
+			<div class="mr-auto">
+				<EntryCombobox bind:selected={selected_entry} placeholder="Link to entry" />
+			</div>
 			<Button disabled={pending} type="submit">Save</Button>
 		</DialogFooter>
 		<!-- <form

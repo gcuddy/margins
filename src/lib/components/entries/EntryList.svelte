@@ -420,6 +420,14 @@
 			<!-- {entry.sort_order} -->
 			<EntryItem
                 on:move
+                on:reorder={(e) => {
+                    const { entry, position } = e.detail;
+                    const idx = entries.findIndex((e) => e.id === entry.id);
+                    const moved = entries[idx];
+                    entries.splice(idx, 1);
+                    entries.splice(position, 0, moved);
+                    entries = entries;
+                }}
 				bind:this={entryItems[entry.id]}
 				checked={$form.ids?.includes(entry.id)}
 				on:focus={() => (active_id = entry.id)}

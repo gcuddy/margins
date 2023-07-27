@@ -1,10 +1,6 @@
 <script lang="ts">
-	import Input from '$components/ui/Input.svelte';
 	import type { Editor, NodeViewProps } from '@tiptap/core';
-	import cx from 'classnames';
 	import { NodeViewWrapper } from 'svelte-tiptap';
-	import SRS from '../../../../../../routes/tests/srs/+page.svelte';
-	import MarkdownBox from '$components/MarkdownBox.svelte';
 	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
 	import { cn } from '$lib/utils/tailwind';
 	import { getContext } from 'svelte';

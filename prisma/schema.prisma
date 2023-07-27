@@ -180,7 +180,7 @@ model Annotation {
     response         String?   @db.MediumText // only for srs cards
     due_timestamp    DateTime?
     last_reviewed_at DateTime?
-    interval_ms      Int?
+    interval_ms      BigInt?
     srs_created_at   DateTime?
 
     @@index([entryId])

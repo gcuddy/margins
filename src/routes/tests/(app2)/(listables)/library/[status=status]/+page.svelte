@@ -50,12 +50,12 @@
 	export let data;
 	let value = $page.url.searchParams.get('search') ?? '';
 
-	let filtered_entries = data.entries;
+	$: filtered_entries = data.entries;
 
-	$: {
-		const regexQuery = new RegExp(value, 'i');
-		filtered_entries = data.entries?.filter((entry) => entry.title?.match(regexQuery));
-	}
+	// $: {
+	// 	const regexQuery = new RegExp(value, 'i');
+	// 	filtered_entries = data.entries?.filter((entry) => entry.title?.match(regexQuery));
+	// }
 
 	let can_restore = false;
 
@@ -188,6 +188,15 @@
 			form.requestSubmit();
 		}
 	}, 200);
+
+    const handle_filter_input = (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        const value = target.value;
+        // optimistic update by filtering the entries in js first
+        // const regexQuery = new RegExp(value, 'i');
+        // filtered_entries = data.entries?.filter((entry) => entry.title?.match(regexQuery));
+        debounced_submit();
+    }
 
 	$: is_searching = $navigating?.to?.url.pathname === $page.url.pathname;
 
@@ -389,7 +398,7 @@
 		<Input
 			bind:this={filter}
 			{value}
-			on:input={debounced_submit}
+			on:input={handle_filter_input}
 			placeholder="Filter in list..."
 			type="text"
 			name="search"
@@ -427,7 +436,7 @@
 				data.entries[index].status = e.detail.status;
 			});
 		}}
-		entries={data.entries?.filter((e) => e.status === data.Status)}
+		entries={filtered_entries?.filter((e) => e.status === data.Status)}
 		on:end={more}
 	/>
 	{#if data.next}
