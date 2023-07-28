@@ -1,3 +1,7 @@
+<script lang="ts" context="module">
+	export type SaveStatus = 'Saved' | 'Saving...' | 'Unsaved' | null;
+</script>
+
 <script lang="ts">
 	import { createEventDispatcher, onMount, setContext } from 'svelte';
 	import type { EditorOptions, JSONContent, Editor as TEditor } from '@tiptap/core';
@@ -9,59 +13,114 @@
 	import debounce from 'just-debounce-it';
 	import { persisted } from 'svelte-local-storage-store';
 	import { cn } from '$lib/utils/tailwind';
+	import { toast } from 'svelte-sonner';
+	import { MutationInput, mutation } from '$lib/queries/query';
+	import { page } from '$app/stores';
+	import { fade } from 'svelte/transition';
+	import { badgeVariants } from '../Badge.svelte';
+	import { Transaction } from '@tiptap/pm/state';
+	import { save_srs_nodes } from './utils';
 
 	export let id: string | number | undefined = undefined;
 
-    export let context: unknown | undefined = undefined;
-    export let options: Partial<EditorOptions> = {};
+	export let context: unknown | undefined = undefined;
+	export let options: Partial<EditorOptions> = {};
 
 	let className = '';
 	export { className as class };
 
 	let editor: Readable<Editor>;
 
-	const save_status = writable('Saved');
+	export let save_status = writable<SaveStatus>(null);
+	export let onUpdate: EditorOptions['onUpdate'] | undefined = undefined;
 
-    setContext('editor_context', {
-        testing: true
-    })
+	setContext('editor_context', {
+		testing: true
+	});
 
-    export let size: 'sm' | 'lg' = 'lg';
+	export let size: 'sm' | 'lg' = 'lg';
 
 	// TODO: make this persist to indexeddb
 
-	export let showSaveStatus = false;
+	/**
+	 * Whether to show the save status in the top right. When set to "auto", it will only show after a save.
+	 */
+	export let showSaveStatus: boolean | 'auto' = false;
 
-    export let extensions: TiptapExtensionProps | undefined = undefined;
+	export let extensions: TiptapExtensionProps | undefined = undefined;
 
 	export let content: JSONContent | undefined = undefined;
-    export let blank = false;
+	export let blank = false;
 	const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
 	const dispatch = createEventDispatcher<{
 		save: JSONContent;
+		blur: {
+			editor: TEditor;
+			event: FocusEvent;
+			transaction: Transaction;
+		};
 	}>();
 
 	const debounced_update = debounce(async ({ editor }: { editor: TEditor }) => {
 		const json = editor.getJSON();
-		save_status.set('Saving...');
 		content_store.set(json);
-		dispatch('save', json);
-		setTimeout(() => {
-			save_status.set('Saved');
-		}, 500);
+		// onUpdate?.(editor);
+		// save_status.set('Saving...');
+		// dispatch('save', json);
+		// setTimeout(() => {
+		// 	save_status.set('Saved');
+		// }, 500);
 	}, 750);
 
-    export const save = (cb: (json: JSONContent) => void) => {
-        if (!editor) return;
-        const json = $editor.getJSON();
-        cb(json);
-    }
+	export const save = (cb: (json: JSONContent) => void) => {
+		if (!editor) return;
+		const json = $editor.getJSON();
+		cb(json);
+	};
 
-    export const getJSON = () => {
-        // if (!editor) {};
-        return $editor.getJSON();
-    }
+	export const saveNote = async (note: MutationInput<'save_note'>) => {
+		const contentData = $editor.getJSON();
+		console.log({ contentData });
+		return mutation($page, 'save_note', {
+			...note,
+			contentData
+		});
+	};
+
+	export const saveNoteToEntry = (
+		entry: number | { id: number },
+		opts?: {
+			onSuccess?: () => void;
+			hideToast?: boolean;
+		}
+	) => {
+		const contentData = $editor.getJSON();
+		const entryId = typeof entry === 'number' ? entry : entry.id;
+
+		if (!opts?.hideToast) {
+			toast.promise(
+				mutation($page, 'save_note', {
+					type: 'note',
+					contentData,
+					entryId
+				}),
+				{
+					loading: 'Saving...',
+					success: ({ id }) => {
+						if (opts?.onSuccess) opts.onSuccess();
+						return 'Saved!';
+					},
+					error: 'Failed to save.'
+				}
+			);
+		}
+	};
+
+	export const getJSON = () => {
+		// if (!editor) {};
+		return $editor.getJSON();
+	};
 
 	onMount(() => {
 		editor = createEditor({
@@ -71,21 +130,27 @@
 				// TODO
 				$save_status = 'Unsaved';
 				// const selection = e.editor.state.selection;
-				debounced_update(e);
+				onUpdate?.(e);
+				// debounced_update(e);
 			},
-            content,
+			content,
 			autofocus: 'start',
-            ...options
+			...options
 		});
-        if (content) hydrated = true;
+		if (content) hydrated = true;
+		$editor.on('blur', (e) => {
+			// TODO check if bubble menu is open
+            save_srs_nodes(e.editor.getJSON());
+			dispatch('blur', e);
+		});
 	});
 
-    $: if (editor && options.editable && !$editor.isEditable) {
-        $editor.setEditable(true);
-        $editor.commands.focus();
-    } else if (editor && !options.editable && $editor.isEditable) {
-        $editor.setEditable(false);
-    }
+	$: if (editor && options.editable && !$editor.isEditable) {
+		$editor.setEditable(true);
+		$editor.commands.focus();
+	} else if (editor && options.editable === false && $editor.isEditable) {
+		$editor.setEditable(false);
+	}
 
 	let hydrated = false;
 	$: if (editor && !blank && content_store && $content_store && !hydrated) {
@@ -93,6 +158,14 @@
 		console.log('being run');
 		$editor.commands.setContent($content_store);
 		hydrated = true;
+	}
+
+	let just_saved = false;
+	$: if (save_status && $save_status === 'Saved') {
+		just_saved = true;
+		setTimeout(() => {
+			just_saved = false;
+		}, 3000);
 	}
 </script>
 
@@ -105,20 +178,27 @@
 		// $editor?.chain().focus().run();
 	}}
 	class={cn(
-		'relative  w-full max-w-screen-lg p-12 px-8 sm:mb-[calc(2    0vh)] sm:rounded-lg sm:border sm:px-12 sm:shadow-lg',
+		'relative  w-full max-w-screen-lg p-12 px-8 sm:mb-[calc(2    0vh)] sm:rounded-lg  sm:px-12 ',
+		// sm:shadow-lg sm:border
 		className
 	)}
-    data-size={size}
+	data-size={size}
 >
 	<!--  -->
-	{#if showSaveStatus}
+	{#if showSaveStatus === true || (showSaveStatus === 'auto' && $save_status === 'Saved' && just_saved)}
 		<div
-			class="absolute right-5 top-5 mb-5 rounded-lg bg-stone-100 px-2 py-1 text-sm text-stone-400"
+			transition:fade={{ duration: 150 }}
+			class={cn(
+				badgeVariants({
+					variant: 'secondary'
+				}),
+				'absolute right-5 top-5 mb-5 text-muted-foreground font-normal'
+			)}
 		>
-			{$save_status}
+			{showSaveStatus === 'auto' ? 'Changes saved' : $save_status}
 		</div>
 	{/if}
-    <slot name="top" />
+	<slot name="top" />
 
 	{#if editor}
 		<BubbleMenu editor={$editor} />

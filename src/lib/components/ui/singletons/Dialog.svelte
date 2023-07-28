@@ -20,7 +20,7 @@
 		});
 
 		const open = <
-			TComponent extends SvelteComponentTyped,
+			TComponent extends SvelteComponent,
 			TFooterComponent extends SvelteComponentTyped
 		>({
 			content,

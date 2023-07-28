@@ -6,6 +6,7 @@
 	import Label from '../Label.svelte';
 	import type { TargetSchema } from '$lib/annotation';
 	import Input from '../Input.svelte';
+	import { notes } from '$lib/state/annotations';
 
 	export let parent_id: string | undefined = undefined;
 	export let entry_id: number | undefined = undefined;
@@ -16,8 +17,8 @@
 	export let active = false;
 	export let editable = true;
 
-    let form: HTMLFormElement;
-	$: console.log({ editable });
+	let form: HTMLFormElement;
+	$: console.log({ editable, $$props });
 
 	let pending = false;
 
@@ -27,7 +28,13 @@
 
 	export let showButton = true;
 
-    export const submit = () => form.requestSubmit();
+	export const submit = () => form.requestSubmit();
+
+	// $: state = id ? $notes['id'] : { body: prompt, response };
+
+    $: if (id) {
+        notes.update_item(id, { body: prompt, response })
+    }
 
 	// todo: use id to fetch most recent prompt and response
 </script>
@@ -38,7 +45,7 @@
 	class="contents"
 	method="post"
 	action="/tests/srs?/new"
-    bind:this={form}
+	bind:this={form}
 	on:blur={() => {
 		console.log(`Form blur`);
 	}}

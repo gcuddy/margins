@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import Button from '$lib/components/ui/Button.svelte';
+	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import Dialog2 from '$lib/components/ui/dialog2/Dialog.svelte';
 	import {
 		Dialog,
 		DialogTrigger,
@@ -22,6 +23,9 @@
 	import Interaction from './Interaction.svelte';
 	import InteractionForm from './InteractionForm.svelte';
 	import { get_genre } from '$lib/features/books/utils';
+	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
+	import Editor from '$components/ui/editor/Editor.svelte';
+    let editor: Editor;
 
 	type Book = PageData['book'];
 	export let data: PageData & {
@@ -175,10 +179,26 @@
 				{/if}
 			{/if}
 			{#if tab_param === 'notes'}
-				<Button>
-					<PlusCircle class="mr-2 h-4 w-4" />
-					New note</Button
-				>
+				<Dialog2>
+					<svelte:fragment slot="trigger" let:trigger>
+						<button class={buttonVariants()} melt={trigger}>
+							<PlusCircle class="mr-2 h-4 w-4" />
+							New note
+						</button>
+					</svelte:fragment>
+
+					<Editor blank bind:this={editor} />
+
+                    <svelte:fragment slot="footer" let:open>
+                        <button class={buttonVariants()} on:click={() => {
+                            if (!data.entry) return;
+                            editor.saveNoteToEntry(data.entry.id);
+                            open.set(false)
+                        }}>
+                            Save
+                        </button>
+                    </svelte:fragment>
+				</Dialog2>
 				{#each data.entry?.annotations ?? [] as annotation}
 					<Annotation
 						data={data.annotationForm}

@@ -39,16 +39,16 @@
 
 	function copyLinkToHighlight(annotation: AnnotationWithTarget) {
 		if (!annotation.entry?.uri) return;
-		const selector = getTargetSelector(annotation.target, "TextQuoteSelector")
+		const selector = getTargetSelector(annotation.target, 'TextQuoteSelector');
 		if (!selector) return;
-		console.log({annotation})
-		const link = generateTextFragmentLink(annotation.entry.uri, selector)
+		console.log({ annotation });
+		const link = generateTextFragmentLink(annotation.entry.uri, selector);
 		if (link) {
 			navigator.clipboard.writeText(link);
-			toast.success('Copied link to highlight')
+			toast.success('Copied link to highlight');
 			return;
 		}
-		toast.error('Could not copy link to highlight')
+		toast.error('Could not copy link to highlight');
 	}
 </script>
 
@@ -81,7 +81,8 @@
 						<DropdownMenuItem>Use for evergreen note</DropdownMenuItem>
 						{#if hasTarget(annotation) && annotation.entry?.uri && annotation.target.selector.type === 'TextQuoteSelector'}
 							<DropdownMenuItem
-								on:click={() => hasTarget(annotation) && copyLinkToHighlight(annotation)}>Copy link to highlight</DropdownMenuItem
+								on:click={() => hasTarget(annotation) && copyLinkToHighlight(annotation)}
+								>Copy link to highlight</DropdownMenuItem
 							>
 						{/if}
 					</DropdownMenuContent>

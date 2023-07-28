@@ -24,7 +24,7 @@ export const handleImageUplaod = (
 		toast.error('File type not supported.');
 	}
 	// check if the file size is less than 50MB
-	else if (file.size  / 1024 / 1024 > 50) {
+	else if (file.size / 1024 / 1024 > 50) {
 		toast.error('File size too big (max 50MB).');
 	} else {
 		toast.promise(
@@ -69,9 +69,9 @@ export const handleImageUplaod = (
 				loading: 'Uploading image...',
 				success: 'Image uploaded successfully.',
 				error: (e) => {
-                    console.log(e);
-                    return e.message
-                }
+					console.log(e);
+					return e.message;
+				}
 			}
 		);
 	}
@@ -162,3 +162,16 @@ export function findNodes(doc: JSONContent, type: string) {
 	return nodes;
 }
 
+export function save_srs_nodes(doc: JSONContent) {
+	const nodes = findNodes(doc, 'srs') as {
+		type: 'srs';
+		attr: {
+			// can I get this type from the schema?
+			entry_id?: null | number;
+			id: null | string;
+			prompt: string | null;
+			response: string | null;
+		};
+	}[];
+	console.log({ nodes });
+}

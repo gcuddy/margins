@@ -4,7 +4,7 @@ import { handleImageUplaod } from "./utils";
 
 export const TiptapEditorProps: EditorProps = {
     attributes: {
-        class: `data-[size=lg]:prose-lg prose-headings:font-display font-default focus:outline-none max-w-full`,
+        class: `prose data-[size=lg]:prose-lg prose-headings:font-display font-default focus:outline-none max-w-full`,
     },
     handleDOMEvents: {
         keydown: (_view, event) => {

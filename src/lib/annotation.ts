@@ -2,87 +2,91 @@ import { z } from 'zod';
 import type { TextPositionSelector as ITextPositionSelector } from './annotator/types';
 import { AnnotationType } from '@prisma/client';
 const TimestampSelectorSchema = z.object({
-    // source: z.string()   ,
-    // selector: z.object({
-    type: z.literal("FragmentSelector").default("FragmentSelector"),
-    conformsTo: z.literal("http://www.w3.org/TR/media-frags/").default("http://www.w3.org/TR/media-frags/"),
-    /**  e.g. "t=10,20" */
-    value: z.string(),
-    // }),
-    // html: z.string().optional(),
+	// source: z.string()   ,
+	// selector: z.object({
+	type: z.literal('FragmentSelector').default('FragmentSelector'),
+	conformsTo: z
+		.literal('http://www.w3.org/TR/media-frags/')
+		.default('http://www.w3.org/TR/media-frags/'),
+	/**  e.g. "t=10,20" */
+	value: z.string()
+	// }),
+	// html: z.string().optional(),
 });
 
 export const TextQuoteSelectorSchema = z.object({
-    type: z.literal('TextQuoteSelector'),
-    exact: z.string(),
-    prefix: z.string().optional(),
-    suffix: z.string().optional(),
+	type: z.literal('TextQuoteSelector'),
+	exact: z.string(),
+	prefix: z.string().optional(),
+	suffix: z.string().optional()
 });
 
 export const XPathSelectorSchema = z.object({
-    type: z.literal('XPathSelector'),
-    value: z.string(),
+	type: z.literal('XPathSelector'),
+	value: z.string()
 });
 
 const TextPositionSelector: z.ZodType<ITextPositionSelector> = z.object({
-    type: z.literal('TextPositionSelector'),
-    start: z.number(),
-    end: z.number(),
-})
+	type: z.literal('TextPositionSelector'),
+	start: z.number(),
+	end: z.number()
+});
 
 // TODO: this is not really complete but it works for now
 export const RangeSelectorSchema = z.object({
-    type: z.literal('RangeSelector'),
-    startSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema]),
-    endSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema]),
+	type: z.literal('RangeSelector'),
+	startSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema]),
+	endSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema])
 });
 
 // This is our own extension
 export const BookSelectorSchema = z.object({
-    type: z.literal('BookSelector'),
-    // Value is optional - we could just be noting the page num, and the body contains our annotation
-    value: z.string().optional(),
-    pageNumber: z.number(),
-})
+	type: z.literal('BookSelector'),
+	// Value is optional - we could just be noting the page num, and the body contains our annotation
+	value: z.string().optional(),
+	pageNumber: z.number()
+});
 
 export const SelectorSchema = z.union([
-    XPathSelectorSchema,
-    TextQuoteSelectorSchema,
-    RangeSelectorSchema,
-    TimestampSelectorSchema,
-    BookSelectorSchema,
-    TextPositionSelector
+	XPathSelectorSchema,
+	TextQuoteSelectorSchema,
+	RangeSelectorSchema,
+	TimestampSelectorSchema,
+	BookSelectorSchema,
+	TextPositionSelector
 ]);
 export type Selector = z.infer<typeof SelectorSchema>;
 
 export const TargetSchema = z.object({
-    source: z.string(),
-    selector: SelectorSchema.or(z.tuple([TextQuoteSelectorSchema, TextPositionSelector])).or(z.tuple([TextQuoteSelectorSchema, BookSelectorSchema])),
-    html: z.string().optional(),
-    page_num: z.number().optional(),
+	source: z.string(),
+	selector: SelectorSchema.or(z.tuple([TextQuoteSelectorSchema, TextPositionSelector])).or(
+		z.tuple([TextQuoteSelectorSchema, BookSelectorSchema])
+	),
+	html: z.string().optional(),
+	page_num: z.number().optional()
 });
 
 export type TargetSchema = z.infer<typeof TargetSchema>;
 
 export const annotationSchema = z.object({
-    type: z.nativeEnum(AnnotationType).default("annotation"),
-    body: z.string().nullish(),
-    id: z.string().optional(),
-    userId: z.string(),
-    private: z.boolean().optional(),
-    title: z.string().optional(),
-    target: TargetSchema.optional(),
-    entryId: z.number().optional(),
-    contentData: z.any()
-    // tags: z.string().array(),
-    // entry: z
-    //     .object({
-    //         connect: z.object({
-    //             id: z.number().optional(),
-    //             uri: z.string().optional(),
-    //         }),
-    //     })
-    //     .optional(),
+	type: z.nativeEnum(AnnotationType).optional(),
+	body: z.string().nullish(),
+	id: z.string().optional(),
+	userId: z.string(),
+	private: z.boolean().nullish(),
+	title: z.string().nullish(),
+	target: TargetSchema.nullish(),
+	entryId: z.number().nullish(),
+	contentData: z.any().nullish()
+	// tags: z.string().array(),
+	// entry: z
+	//     .object({
+	//         connect: z.object({
+	//             id: z.number().optional(),
+	//             uri: z.string().optional(),
+	//         }),
+	//     })
+	//     .optional(),
 });
 
 export type Annotation = z.infer<typeof annotationSchema>;

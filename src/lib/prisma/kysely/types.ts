@@ -86,7 +86,7 @@ export type Annotation = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Generated<Timestamp>;
 	body: string | null;
-	type: AnnotationType;
+	type: Generated<AnnotationType>;
 	private: Generated<number>;
 	/**
 	 * @zod.custom.use(TargetSchema)

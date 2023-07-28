@@ -100,11 +100,13 @@ export async function query<T extends keyof Queries>(
 	}
 	const final = (await fetcher(url).then((res) => res.json())) as Awaited<Data>;
 	console.dir({ final }, { depth: null });
-    if (options?.cache) {
-        query_store_cache_lookup.set(url, final as Awaited<Data>)
-    }
+	if (options?.cache) {
+		query_store_cache_lookup.set(url, final as Awaited<Data>);
+	}
 	return final;
 }
+
+export const isMutating = writable(false);
 
 export async function mutation<T extends keyof Mutations>(
 	base: {
@@ -123,30 +125,39 @@ export async function mutation<T extends keyof Mutations>(
 		userId: string | null;
 	}>
 ): Promise<Awaited<ReturnType<Mutations[T]['fn']>>> {
+	isMutating.set(true);
 	const { fetcher = fetch, userId = null } = base || {};
 	let url = base.url.origin + `/tests/sq/${fn}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}
 	type Data = Awaited<ReturnType<Mutations[T]['fn']>>;
-	return (await fetcher(url, {
+
+	const final = (await fetcher(url, {
 		method: 'POST',
 		body: stringify({
 			input,
 			userId
 		})
 	})
-		.then((res) => res.text())
-		.then((text) => {
-			if (!text || text === 'undefined') return undefined;
-			try {
-				parse(text);
-			} catch (e) {
-				dev && console.error(e);
-				return undefined;
-			}
+		// TODO: should we use devalue on server / here?
+		// .then((text) => {
+		// 	if (!text || text === 'undefined') return undefined;
+		// 	console.log({ text });
+		// 	try {
+		// 		return JSON.parse(text);
+		// 		// parse(text); //??
+		// 	} catch (e) {
+		// 		dev && console.error(e);
+		// 		return undefined;
+		// 	}
+		// })
+		.then((res) => res.json())
+		.finally(() => {
+			isMutating.set(false);
 		})) as Awaited<Data>;
-	// return final;
+
+	return final;
 }
 
 type Fn = keyof Queries;

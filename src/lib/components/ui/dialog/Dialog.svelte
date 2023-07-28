@@ -7,6 +7,8 @@
 	interface $$Props extends ComponentProps<Dialog<'div'>> {
 		isOpen?: boolean;
 	}
+
+
 </script>
 
 <div>

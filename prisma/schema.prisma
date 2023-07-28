@@ -138,7 +138,7 @@ model Annotation {
     createdAt        DateTime                        @default(now())
     updatedAt        DateTime                        @default(now()) @updatedAt
     body             String?                         @db.MediumText
-    type             AnnotationType
+    type             AnnotationType                  @default(annotation)
     private          Boolean                         @default(true)
     /// @zod.custom.use(TargetSchema)
     target           Json?

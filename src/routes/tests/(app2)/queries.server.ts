@@ -42,7 +42,7 @@ import { Status } from '@prisma/client';
 interface Query<I extends z.ZodTypeAny, Data> {
 	staleTime?: number;
 	fn: (args: {
-		input: I extends z.ZodType<object> ? z.infer<I> : undefined;
+		input: I extends z.ZodType<object> ? z.input<I> : undefined;
 		ctx: {
 			userId: string;
 		};

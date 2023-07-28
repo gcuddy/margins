@@ -229,7 +229,7 @@
 		"svelte-hero-icons": "^5.0.0",
 		"svelte-local-storage-store": "^0.5.0",
 		"svelte-sonner": "^0.1.2",
-		"svelte-tiptap": "^1.1.1",
+		"svelte-tiptap": "^1.1.2",
 		"tailwind-merge": "^1.13.2",
 		"tailwind-scrollbar": "^3.0.4",
 		"tippy.js": "^6.3.7",

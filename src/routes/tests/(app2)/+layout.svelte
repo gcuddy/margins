@@ -14,6 +14,7 @@
 
 	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
 	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
+	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
 
 	// export let data;
 
@@ -54,6 +55,7 @@
 	<svelte:component this={commander} />
 {/if}
 <Dialog />
+<DialogStore />
 <GenericCommander>
 	<div class="flex h-full grow flex-col gap-y-6">
 		{#if !$is_entry}

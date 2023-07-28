@@ -32,3 +32,6 @@ export function assert<T>(value: T): NonNullable<T> {
     }
     return value;
 }
+
+
+export type ValueOf<T> = T[keyof T];

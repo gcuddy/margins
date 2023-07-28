@@ -3,8 +3,9 @@
 	import { NodeViewWrapper } from 'svelte-tiptap';
 	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
 	import { cn } from '$lib/utils/tailwind';
-	import { getContext } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import { currentAnnotation } from '../../../../../../routes/tests/(app2)/(listables)/[type=type]/[id]/Article.svelte';
+	import { notes } from '$lib/state/annotations';
 
 	export let node: NodeViewProps['node'];
 	export let updateAttributes: NodeViewProps['updateAttributes'];
@@ -12,11 +13,9 @@
 	export let editor: Editor;
 
 	$: editable = editor.isEditable && selected;
-	$: console.log({ editor });
-	$: console.log({ $$props });
 
 	const context = getContext('editor_context');
-	console.log({ context });
+	$: console.log({ node });
 
 	let prompt = node.attrs.prompt;
 	let response = node.attrs.response;
@@ -33,9 +32,26 @@
 			id
 		});
 
+		if (id) {
+			console.log('updating item');
+			notes.update_item(id, { body: prompt, response });
+		}
+
 		// and submit form...
 		console.log(`TODO: submit form with ${prompt} and ${response} and ${id}`);
 	}
+
+    onMount(() => {
+        if (id) {
+            // see if we have any deets from state
+            const note = $notes[id];
+            console.log({note});
+            if (note) {
+                prompt = note.body;
+                response = note.response;
+            }
+        }
+    })
 </script>
 
 <!-- TODO: don't show input when not seloected (just show Prompt) -->
@@ -45,12 +61,18 @@
 <NodeViewWrapper
 	id="svelte-component"
 	contenteditable="false"
-	class={cn('px-4 pb-4 my-4 border-l-2 border-primary border-2 flex flex-col max-w-prose', editable && 'ring')}
+	class={cn(
+		'px-4 pb-4 my-4 border-l-2 border-primary border-2 flex flex-col max-w-prose',
+		editable && 'ring'
+	)}
 >
 	<!-- TODO: Render Markdown with Latex -->
 	<!-- <MarkdownBox placeholder="Enter prompt here" />
 <MarkdownBox placeholder="Enter response here" as="textarea" rows={1} /> -->
-	<PromptInput
+{prompt}
+
+{response}
+	<!-- <PromptInput
 		on:keydown={(e) => {
 			console.log('keydown', e);
 		}}
@@ -65,5 +87,5 @@
 		entry_id={node.attrs.entry_id}
 		editable={editor.isEditable || selected}
 		showButton={false}
-	/>
+	/> -->
 </NodeViewWrapper>
