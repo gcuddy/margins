@@ -48,12 +48,14 @@
 	import Annotation from './[id]/Annotation.svelte';
 	import NoteForm from './[id]/NoteForm.svelte';
 	import Input from '$components/ui/Input.svelte';
-	import type { Writable } from 'svelte/store';
+	import { writable, type Writable } from 'svelte/store';
 	import type { PDFDocumentProxy } from 'pdfjs-dist';
 	import type Pdf from './[id]/PDF.svelte';
 	import NoteModal from './[id]/NoteModal.svelte';
 
-	const render = persisted('sidebar', false);
+	// const render = persisted('sidebar', false);
+    export let render: Writable<boolean> = getContext("rightSidebar") ?? writable(false);
+
 	let flash = false;
 	let prev_annotation_count: number = $page.data.entry?.annotations?.length ?? 0;
 
@@ -120,6 +122,8 @@
 
     const pdf = getContext('pdf') as Writable<null | Pdf>
 </script>
+
+<!-- TODO: on small sizes, use dialog component to make either drawer or vaul like component -->
 
 <svelte:window on:keydown={on_keydown} />
 

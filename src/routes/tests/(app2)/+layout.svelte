@@ -11,7 +11,7 @@
 	import AudioPlayer from '$lib/components/AudioPlayer.svelte';
 	import DropBox from '$lib/components/DragHelper/DropBox.svelte';
 	import { QueryClientProvider } from '@tanstack/svelte-query';
-
+	import 'katex/dist/katex.min.css';
 	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
 	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
 	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';

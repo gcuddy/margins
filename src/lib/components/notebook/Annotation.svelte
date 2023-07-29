@@ -17,6 +17,8 @@
 	import { buttonVariants } from '../ui/Button.svelte';
 	import { generateTextFragmentLink, getTargetSelector } from '$lib/utils/annotations';
 	import { toast } from 'svelte-sonner';
+	import { render_html } from '$components/ui/editor/utils';
+	import Editor from '$components/ui/editor/Editor.svelte';
 
 	const md = new MarkdownIt();
 	let className = '';
@@ -103,5 +105,10 @@
 		<div>
 			{@html md.render(annotation.body)}
 		</div>
+    {:else if annotation.contentData}
+    <Editor content={annotation.contentData} options={{editable: false}} />
+        <!-- <div>
+            {@html render_html(annotation.contentData)}
+        </div> -->
 	{/if}
 </div>

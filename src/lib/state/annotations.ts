@@ -9,6 +9,8 @@ import {
 } from 'svelte/store';
 import { KV } from './idb';
 import type { Annotation } from '@prisma/client';
+import { persist, createIndexedDBStorage } from "@macfja/svelte-persistent-store"
+
 import { browser } from '$app/environment';
 import { make_state } from './utils';
 // const db = browser ? new KV('margins', 'notes') : null;
@@ -116,4 +118,9 @@ function makeIndexedDBStore<T>(
 // 	[id: string]: Partial<Annotation>;
 // }> = writable({});
 
-export const notes = make_state<Annotation, 'id'>('id');
+const notes_store = make_state<Annotation, 'id'>('id');
+export { notes_store as notes}
+
+
+// This creates a store that is persisted in IndexedDB — but should test more
+// export const notes = persist(notes_store, createIndexedDBStorage(), "notes")

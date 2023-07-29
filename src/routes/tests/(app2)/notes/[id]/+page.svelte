@@ -62,7 +62,7 @@
 		<div class="prose prose-stone dark:prose-invert">
 			{@html md.render(data.form.data.body)}
 		</div>
-	{:else if data.note.contentData}
+	{:else}
 		<TipTapEditor
 			showSaveStatus="auto"
 			{save_status}
@@ -79,7 +79,7 @@
 				}
 			}}
 			bind:this={editor}
-			content={data.note.contentData}
+			content={data.note.contentData ?? []}
 			class="[&_.ProseMirror-focused]:ring"
 		>
 			<svelte:fragment slot="top">

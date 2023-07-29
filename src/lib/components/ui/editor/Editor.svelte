@@ -18,7 +18,7 @@
 	import { page } from '$app/stores';
 	import { fade } from 'svelte/transition';
 	import { badgeVariants } from '../Badge.svelte';
-	import { Transaction } from '@tiptap/pm/state';
+	import type { Transaction } from '@tiptap/pm/state';
 	import { save_srs_nodes } from './utils';
 
 	export let id: string | number | undefined = undefined;
@@ -49,7 +49,7 @@
 
 	export let extensions: TiptapExtensionProps | undefined = undefined;
 
-	export let content: JSONContent | undefined = undefined;
+	export let content: string | JSONContent | undefined = undefined;
 	export let blank = false;
 	const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
@@ -140,8 +140,9 @@
 		if (content) hydrated = true;
 		$editor.on('blur', (e) => {
 			// TODO check if bubble menu is open
-            save_srs_nodes(e.editor.getJSON());
+			save_srs_nodes(e.editor.getJSON());
 			dispatch('blur', e);
+			console.log({ e });
 		});
 	});
 
@@ -201,7 +202,7 @@
 	<slot name="top" />
 
 	{#if editor}
-		<BubbleMenu editor={$editor} />
+		<!-- <BubbleMenu editor={$editor} /> -->
 	{/if}
 
 	<EditorContent editor={$editor} />
@@ -321,5 +322,27 @@
 
 	.tippy-box {
 		max-width: 400px !important;
+	}
+	.Tiptap-mathematics-editor {
+		background: #202020;
+		color: #fff;
+		font-family: monospace;
+		padding: 0.2rem 0.5rem;
+	}
+
+	.Tiptap-mathematics-render {
+		cursor: pointer;
+		padding: 0 0.25rem;
+		transition: background 0.2s;
+
+		&:hover {
+			background: #eee;
+		}
+	}
+
+	.Tiptap-mathematics-editor,
+	.Tiptap-mathematics-render {
+		border-radius: 0.25rem;
+		display: inline-block;
 	}
 </style>

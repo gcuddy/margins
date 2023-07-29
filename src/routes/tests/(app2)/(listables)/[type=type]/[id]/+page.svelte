@@ -87,7 +87,8 @@
 
 <div
 	class={cn(
-		'px-4 grow'
+		'px-4 grow',
+        "mt-[calc(var(--nav-height)+24px)]" // margin top is nav height + 24px (to account for header)
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >

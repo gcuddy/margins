@@ -78,7 +78,7 @@ export const annotations = {
     notebook_select: ["a.id", "a.title", "a.body", "a.userId", "a.deleted", "a.target", "a.type", "a.exact",
         "e.title as entry_title", "e.id as entry_id", "e.type as entry_type", "e.uri as entry_uri", "e.image as entry_image", "e.author as entry_author", "e.podcastIndexId", "e.googleBooksId", "e.tmdbId"
     ] as const,
-    select: ["a.id", "a.title", "a.body", "a.userId", "a.deleted", "a.target", "a.type", "a.exact", "a.updatedAt"] as const,
+    select: ["a.id", "a.title", "a.body", "a.userId", "a.deleted", "a.target", "a.type", "a.exact", "a.updatedAt", "a.contentData"] as const,
     with: {
         references: (eb: AliasedAEb) => {
             return jsonArrayFrom(eb.selectFrom("annotation_to_entry_reference as r")

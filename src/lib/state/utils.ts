@@ -25,5 +25,5 @@ export function make_state<TValue extends {}, TKey extends keyof TValue>(id: TKe
 		});
 	};
 
-	return { subscribe, init, update_item };
+	return { subscribe, init, update_item, set, update };
 }

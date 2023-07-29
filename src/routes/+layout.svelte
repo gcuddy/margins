@@ -32,9 +32,12 @@
 		// 	secondary: 'hsl(var(--secondary))'
 		// }
 	}} -->
-<Toaster toastOptions={{
-    class: 'toast'
-}}/>
+<Toaster
+	toastOptions={{
+		class: 'toast',
+	}}
+/>
+<!-- theme="system" -->
 
 <style lang="postcss">
 	/* :global(body > div) {

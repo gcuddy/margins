@@ -9,7 +9,7 @@
 		>
 	>;
 
-    // export this so that we can access it elsewhere............ (TODO probably should extract it to another component)
+	// export this so that we can access it elsewhere............ (TODO probably should extract it to another component)
 	export const currentAnnotation = writable<{
 		show: boolean;
 		highlight?:
@@ -285,12 +285,15 @@
 	}
 
 	const saveProgressMutation = createMutation({
-		mutationFn: () =>
-			mutation($page, 'saveInteraction', {
-				entryId: data.entry!.id,
-				id: data.entry?.interaction?.id,
-				progress: $scroll
-			})
+		mutationFn: async () => {
+            if (initializing) return;
+			console.log('mutating');
+			// mutation($page, 'saveInteraction', {
+			// 	entryId: data.entry!.id,
+			// 	id: data.entry?.interaction?.id,
+			// 	progress: $scroll
+			// })
+		}
 	});
 
 	beforeNavigate(() => {
@@ -305,6 +308,11 @@
 			entry: undefined
 		};
 	});
+
+	/** Variable to track when we're initializing an article. */
+	let initializing = true;
+	const doneInitializing = () => tick().then(() => (initializing = false));
+
 	// highlight stored annotations
 	afterNavigate(async () => {
 		if (data.type !== 'article') return;
@@ -313,13 +321,20 @@
 		console.log('scrolling to', data.entry?.interaction?.progress);
 		if (data.entry?.interaction?.progress) {
 			console.log('scrolling to', data.entry?.interaction?.progress);
+			initializing = true;
 			$scroll = data.entry.interaction.progress;
 			document.documentElement.scrollTo({
 				top: $scroll * document.documentElement.scrollHeight
 			});
 		}
 		const annotations = data.entry?.annotations;
-		if (!annotations) return;
+		if (!annotations) {
+			// wait for scroll
+			setTimeout(() => {
+				doneInitializing();
+			}, 250);
+			return;
+		}
 		for (const annotation of annotations) {
 			let target = annotation.target as TargetSchema;
 			const selector = getTargetSelector(target, 'TextQuoteSelector');
@@ -346,20 +361,22 @@
 			console.log({ el });
 			if (el) {
 				el.scrollIntoView();
-                // now show currentAnnotation
-                const annotation = annotations.find(a => a.id === id);
-                tick().then(() => {
-
-                    console.log({annotation})
-                    if (annotation) {
-                        annotationRef(el);
-                        $currentAnnotation.show = true;
-                        $currentAnnotation.annotation = annotation;
-                    }
-                })
-
+				// now show currentAnnotation
+				const annotation = annotations.find((a) => a.id === id);
+				tick().then(() => {
+					console.log({ annotation });
+					if (annotation) {
+						annotationRef(el);
+						$currentAnnotation.show = true;
+						$currentAnnotation.annotation = annotation;
+					}
+				});
 			}
 		}
+		// wait for scroll
+		setTimeout(() => {
+			doneInitializing();
+		}, 250);
 	});
 
 	popperRef(virtualEl);
@@ -391,7 +408,7 @@
 	});
 
 	let lastScrollTop = 0;
-	let scrollingDown = writable(false);
+	export let scrollingDown: Writable<boolean> = getContext('scrollingDown') || writable(false);
 
 	const uScrollingDown = scrollingDown.subscribe((down) => {
 		console.log({ down, $appearance, lastScrollTop });
@@ -399,7 +416,11 @@
 	});
 
 	const setScrollOffset = () => {
+		console.log({ initializing });
+		if (initializing) return;
 		// set how far the user has scrolled
+		// TODO await tick?
+		// TODO This shuoldn't be set if the document is loading (and we scroll to position)
 		const scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 		const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
 		$scroll = scrollTop / height;
@@ -627,7 +648,7 @@
 		>
 			<Editor
 				id={$currentAnnotation.annotation?.id}
-                content={$currentAnnotation.annotation?.contentData ?? undefined}
+				content={$currentAnnotation.annotation?.contentData ?? undefined}
 				blank
 				class="sm:shadow-none shadow-none border-none sm:px-4 px-4 py-6"
 				bind:this={activeEditor}

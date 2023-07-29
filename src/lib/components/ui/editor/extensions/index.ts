@@ -10,6 +10,8 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import { Markdown } from 'tiptap-markdown';
 import Highlight from '@tiptap/extension-highlight';
+import Mathematics from '@tiptap-pro/extension-mathematics'
+
 
 // TODO: Mentions
 
@@ -23,6 +25,7 @@ import { iframeNode } from '../nodes/iframes';
 import AnnotationCommand from './annotations';
 import { AnnotationExtension } from '../nodes/annotation';
 import { SRSNode, TimestampNode } from '../nodes';
+import Flashcard from '../nodes/flashcard';
 
 export type TiptapExtensionProps = {
     placeholder?: string;
@@ -147,7 +150,9 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		iframeNode,
 		Youtube,
 		TimestampNode,
-		SRSNode
+		SRSNode,
+        Mathematics,
+        Flashcard
 	];
 	return TiptapExtensions;
 };

@@ -2,6 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { SvelteNodeViewRenderer } from 'svelte-tiptap';
 import Timestamp from './timestamp/Timestamp.svelte';
 import Srs from './srs/SRSNode.svelte';
+import type { MarkdownNodeSpec } from 'tiptap-markdown';
 
 export const TimestampNode = Node.create({
 	name: 'timestamp',
@@ -78,24 +79,38 @@ export const SRSNode = Node.create({
 		};
 	},
 
+	// TODO: enforce this for markdown
+	addStorage(): { markdown: MarkdownNodeSpec } {
+		return {
+			markdown: {
+				serialize(state, node) {
+					// TODO Srs customization
+					// For now, write the prompt and response as markdown
+					// Prompt should start with Q., Response should start with A.
+					state.write(`Q. ${node.attrs.prompt}\n`);
+					state.write(`A. ${node.attrs.response}\n\n`);
+				}
+			}
+		};
+	},
+
 	parseHTML() {
 		return [{ tag: 'srs-component' }];
 	},
 
 	renderHTML({ HTMLAttributes }) {
-		return ['srs-component', mergeAttributes(HTMLAttributes), 0];
+		return ['srs-component', mergeAttributes(HTMLAttributes)];
 	},
 
 	addNodeView() {
 		return SvelteNodeViewRenderer(Srs);
 	},
 
-
 	addKeyboardShortcuts() {
 		return {
 			// Backspace
 			Backspace: (e) => {
-                console.log(`Backspace`, e)
+				console.log(`Backspace`, e);
 				return this.editor.commands.command(({ tr, state }) => {
 					let isNode = false;
 					const { selection } = state;

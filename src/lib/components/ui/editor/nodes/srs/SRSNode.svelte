@@ -6,6 +6,7 @@
 	import { getContext, onMount } from 'svelte';
 	import { currentAnnotation } from '../../../../../../routes/tests/(app2)/(listables)/[type=type]/[id]/Article.svelte';
 	import { notes } from '$lib/state/annotations';
+	import TEditor from '../../Editor.svelte';
 
 	export let node: NodeViewProps['node'];
 	export let updateAttributes: NodeViewProps['updateAttributes'];
@@ -41,17 +42,17 @@
 		console.log(`TODO: submit form with ${prompt} and ${response} and ${id}`);
 	}
 
-    onMount(() => {
-        if (id) {
-            // see if we have any deets from state
-            const note = $notes[id];
-            console.log({note});
-            if (note) {
-                prompt = note.body;
-                response = note.response;
-            }
-        }
-    })
+	onMount(() => {
+		if (id) {
+			// see if we have any deets from state
+			const note = $notes[id];
+			console.log({ note });
+			if (note) {
+				prompt = note.body;
+				response = note.response;
+			}
+		}
+	});
 </script>
 
 <!-- TODO: don't show input when not seloected (just show Prompt) -->
@@ -69,9 +70,9 @@
 	<!-- TODO: Render Markdown with Latex -->
 	<!-- <MarkdownBox placeholder="Enter prompt here" />
 <MarkdownBox placeholder="Enter response here" as="textarea" rows={1} /> -->
-{prompt}
+	{prompt}
 
-{response}
+	{response}
 	<!-- <PromptInput
 		on:keydown={(e) => {
 			console.log('keydown', e);
@@ -88,4 +89,6 @@
 		editable={editor.isEditable || selected}
 		showButton={false}
 	/> -->
+
+	<TEditor blank />
 </NodeViewWrapper>
