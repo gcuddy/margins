@@ -8,14 +8,20 @@
 
 	import { cn } from "$lib/utils/tailwind";
 	import type { HTMLBaseAttributes } from "svelte/elements";
-	let className: string | null = "";
+	import { getTabsContext, type Tabs } from "./utils";
+	import type { Maybe } from "$lib/utils/type-utils";
+	let className: Maybe<string> = "";
 	export { className as class };
 
 	interface $$Props extends HTMLBaseAttributes {
-		class?: string | null;
+        content?: Tabs["content"];
+        value: string;
 	}
+    export let content: Tabs["content"] = getTabsContext().content;
+    $: console.log({content})
+    export let value: string;
 </script>
 
-<TabPanel class={cn(tabContent, className)}>
+<div melt={$content(value)} {...$$restProps} class={cn(tabContent, className)}>
 	<slot />
-</TabPanel>
+</div>

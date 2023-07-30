@@ -8,10 +8,19 @@
 
 	import { cn } from "$lib/utils/tailwind";
 	import { cva } from "class-variance-authority";
-	let className = "";
+	import type { Maybe } from "$lib/utils/type-utils";
+	import type { HTMLAttributes, HTMLBaseAttributes } from "svelte/elements";
+	import { getTabsContext, type Tabs } from "./utils";
+	let className: Maybe<string> = "";
 	export { className as class };
+
+    type $$Props = HTMLAttributes<HTMLDivElement> & {
+        list?: Tabs["list"];
+    };
+
+    export let list: Tabs["list"] = getTabsContext().list;
 </script>
 
-<TabList class={cn(tabList, className)}>
+<div melt={$list} class={cn(tabList, className)}>
 	<slot />
-</TabList>
+</div>
