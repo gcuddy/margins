@@ -310,8 +310,12 @@
 	});
 
 	/** Variable to track when we're initializing an article. */
-	let initializing = true;
+	let initializing = false;
 	const doneInitializing = () => tick().then(() => (initializing = false));
+
+    const jumping = getContext('jumping') as Writable<boolean>;
+
+
 
 	// highlight stored annotations
 	afterNavigate(async () => {
@@ -370,6 +374,7 @@
 						$currentAnnotation.show = true;
 						$currentAnnotation.annotation = annotation;
 					}
+                    $jumping = false;
 				});
 			}
 		}
@@ -396,7 +401,7 @@
 
 	const { debounce: debounced_save, cancel: cancel_save } = debounce(5000);
 
-	const scrolling = writable(false);
+	const scrolling = getContext('scrolling') as Writable<boolean> ?? writable(false);
 
 	let scroll = writable(0);
 
@@ -416,8 +421,8 @@
 	});
 
 	const setScrollOffset = () => {
-		console.log({ initializing });
-		if (initializing) return;
+		// console.log({ initializing });
+		// if (initializing) return;
 		// set how far the user has scrolled
 		// TODO await tick?
 		// TODO This shuoldn't be set if the document is loading (and we scroll to position)

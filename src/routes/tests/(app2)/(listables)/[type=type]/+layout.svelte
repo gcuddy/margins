@@ -5,6 +5,7 @@
 	import LeftSidebar from './LeftSidebar.svelte';
 	import Header from './Header.svelte';
 	import { writable } from 'svelte/store';
+	import { persisted } from 'svelte-local-storage-store';
 	// export let data;
 
 	const is_entry = getContext('is_entry');
@@ -12,11 +13,18 @@
 	const scrollingDown = writable(false);
 	setContext('scrollingDown', scrollingDown);
 
+    /** A store to track whether or not we're jumping to a new point (i.e. when an annotation is clicked and we're scrolling to it.)*/
+    const jumping = writable(false)
+    setContext('jumping', jumping);
+
     const rightSidebar = writable(false);
     setContext('rightSidebar', rightSidebar);
+
+    const rightSidebarWidth = persisted("rightSidebarWidth", 360);
+    setContext('rightSidebarWidth', rightSidebarWidth);
 </script>
 
-<div style:--nav-height="4rem" class="relative flex items-start gap-2 grow">
+<div style:--nav-height="4rem" style:--right-sidebar-width="{$rightSidebarWidth}px" class="relative flex items-start gap-2 grow">
 	<!-- Left sidebar -->
 	<!-- <div class="flex flex-col max-md:fixed md:sticky top-0 max-md:basis-0 "> -->
 	<LeftSidebar />

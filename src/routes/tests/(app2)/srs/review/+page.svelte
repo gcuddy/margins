@@ -22,7 +22,7 @@
 -->
 
 {#if data.notes_to_review.length && !completed}
-	{#key note_index}
+	{#key data.notes_to_review.length}
 		<div>
 			<Card
 				note={data.notes_to_review[0]}

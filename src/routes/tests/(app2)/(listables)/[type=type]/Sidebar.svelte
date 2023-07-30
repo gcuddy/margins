@@ -82,18 +82,21 @@
 
 	let show_note_form = false;
 
-	const width_store = persisted('sidebar__width', 360);
+    const jumping = getContext("jumping") as Writable<boolean> ?? writable(false);
+
+    // REVIEW should we be debouncing this?
+	const width_store = getContext("rightSidebarWidth") as Writable<number> ?? persisted('sidebar__width', 360);
 
 	export let width = $width_store || 360;
 
 	// debounce width update and set store
-	const debounced_set_width = debounce(() => {
-		width_store.set(width);
-	}, 250);
+	// const debounced_set_width = debounce(() => {
+	// 	width_store.set(width);
+	// }, 50);
 
-	$: if (width) {
-		debounced_set_width();
-	}
+	// $: if (width) {
+	// 	debounced_set_width();
+	// }
 
 	$: data = $page.data.entry?.id ? $state[$page.data.entry.id] : undefined;
     $: outline = data?.outline;
@@ -137,16 +140,14 @@
 {#if $render}
 	<!-- Ensure max height is 100vh minus the header size, which is currently 3.5rem -->
 	<!-- When mainnav is hidden, translate up a bit to center it vertically -->
+    <!-- style:--width="{width}px" -->
 	<div
 		bind:this={container}
-		transition:fly={{ y: 10, duration: 200 }}
-		class="sticky bottom-0 left-0 right-0 top-14 max-h-[calc(100vh-(3.5rem))] w-80 transition-transform duration-300 lg:w-[--width] {$mainnav.show
-			? ''
-			: '-translate-y-7'}"
-		style:--width="{width}px"
+		transition:fly={{ x: $width_store, duration: 250 }}
+		class="fixed right-0 top-0 h-screen w-80 transition-transform duration-300 lg:w-[--right-sidebar-width]"
 	>
 		<aside
-			class="z-10 flex max-h-[calc(100vh-(3.5rem))] flex-col divide-y overflow-y-auto overflow-x-hidden rounded-lg border bg-card text-card-foreground shadow-sm max-lg:absolute max-lg:right-0 max-lg:top-0"
+			class="z-10 flex h-full flex-col divide-y overflow-y-auto overflow-x-hidden border-l border-r bg-card text-card-foreground max-lg:absolute max-lg:right-0 max-lg:top-0"
 		>
 			<Collapsible.Root bind:open={$open_sections.details}>
 				<CardHeader class="">
@@ -162,14 +163,14 @@
 							</CardTitle></Collapsible.Trigger
 						>
 
-						<Button
+						<!-- <Button
 							on:click={() => ($render = false)}
 							size="sm"
 							variant="ghost"
 							class="absolute right-4 top-4 px-2"
 						>
 							<XIcon class="h-4 w-4" />
-						</Button>
+						</Button> -->
 					</div>
 				</CardHeader>
 				<Collapsible.Content transition>
@@ -380,7 +381,7 @@
 			max={550}
 			direction="w"
 			class="absolute -left-1 bottom-0 top-0 z-50 w-2 cursor-col-resize after:absolute after:inset-y-0 after:left-0.5 after:w-0.5 "
-			bind:width
+			bind:width={$width_store}
 		/>
 		<!-- <div class='-left-1 absolute bottom-0 top-0 w-2 cursor-col-resize z-50 after:absolute after:inset-y-0 after:w-0.5 after:left-0.5 '></div> -->
 	</div>

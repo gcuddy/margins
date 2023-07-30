@@ -8,7 +8,7 @@
 	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
 	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
 	import type { Annotation } from '$lib/prisma/kysely/types';
-	import type { ComponentProps } from 'svelte';
+	import { getContext, type ComponentProps } from 'svelte';
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import Input from '$lib/components/ui/Input.svelte';
 	import InputText from '$lib/components/ui/forms/InputText.svelte';
@@ -21,6 +21,9 @@
 	import { render_html } from '$components/ui/editor/utils';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import Button from '$components/ui/Button.svelte';
+	import type { Writable } from 'svelte/store';
+
+    const jumping = getContext('jumping') as Writable<boolean>;
 
     let editor: Editor;
 
@@ -83,7 +86,9 @@
 			{@const selector = getTargetSelector(annotation.target, 'TextQuoteSelector')}
 			{@const fragment_selector = getTargetSelector(annotation.target, 'FragmentSelector')}
 			{#if selector}
-				<a href="#annotation-{annotation.id}">
+				<a on:click={() => {
+                    $jumping = true;
+                }} href="#annotation-{annotation.id}">
 					<Blockquote class="mt-0 line-clamp-4 text-sm">
 						{@html selector.exact}
 					</Blockquote>

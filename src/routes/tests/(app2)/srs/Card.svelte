@@ -68,6 +68,7 @@
 <!-- h-96 -->
 <div
 	class="rounded-lg border bg-card text-card-foreground shadow-sm p-8 max-w-prose flex flex-col justify-between"
+    in:fly={{delay: 200}}
 >
 	<div class="flex justify-end">
 		{#if show_answer}
