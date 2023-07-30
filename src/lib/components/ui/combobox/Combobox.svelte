@@ -69,7 +69,7 @@
 			'flex h-10 items-center justify-between rounded-md bg-white px-3 pr-12'
 		)}
 		{placeholder}
-		value={$inputValue}
+		bind:value={$inputValue}
 	/>
 
 	<div class="absolute right-1 top-1/2 z-10 -translate-y-1/2 text-magnum-700">

@@ -17,11 +17,12 @@
     const jumping = writable(false)
     setContext('jumping', jumping);
 
-    const rightSidebar = writable(false);
+    const rightSidebar = persisted('rightSidebar', false);
     setContext('rightSidebar', rightSidebar);
 
     const rightSidebarWidth = persisted("rightSidebarWidth", 360);
     setContext('rightSidebarWidth', rightSidebarWidth);
+
 </script>
 
 <div style:--nav-height="4rem" style:--right-sidebar-width="{$rightSidebarWidth}px" class="relative flex items-start gap-2 grow">

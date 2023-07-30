@@ -503,6 +503,7 @@
 	}
 
 	const hover_entry: boolean = getContext('hover_entry');
+
 </script>
 
 {#if showEditMenu && !scrolling}

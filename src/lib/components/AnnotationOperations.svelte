@@ -76,7 +76,7 @@
                 goto(`/tests/notes/${annotation.id}`)
             }}>
 				<ArrowRightIcon class="mr-2 h-4 w-4" />
-				<span>View Annotation out of context </span></DropdownMenuItem
+				<span>Go to annotation</span></DropdownMenuItem
 			>
 			<DropdownMenuItem on:click={() => dispatch('delete')}>
 				<TrashIcon class="mr-2 h-4 w-4" />

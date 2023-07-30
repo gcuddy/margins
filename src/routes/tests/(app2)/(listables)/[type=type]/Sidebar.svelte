@@ -28,7 +28,7 @@
 	import { mutation } from '$lib/queries/query';
 	import { state, update_entry } from '$lib/state/entries';
 	import mq from '$lib/stores/mq';
-	import { check_inert } from '$lib/utils';
+	import { check_inert, getHostname } from '$lib/utils';
 	import { triggerDownload } from '$lib/utils/annotations';
 	import { cn } from '$lib/utils/tailwind';
 	import debounce from 'just-debounce-it';
@@ -55,6 +55,10 @@
 	import { TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
 	import { createTabs } from '@melt-ui/svelte';
 	import { createTabsContext } from '$components/ui/tabs/utils';
+	import Sheet from '$components/ui/sheet/Sheet.svelte';
+	import scrollLock from '$lib/actions/scrollLock';
+	import { removeScroll } from '$lib/helpers';
+	import { backOut } from 'svelte/easing';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
@@ -131,14 +135,25 @@
 	// "details" | "notes"
 	const currentTab = persisted('sidebar_current_tab', 'details');
 
-    $: console.log({currentTab})
+	$: console.log({ currentTab });
 
 	const { root, list, trigger, content, value } = createTabsContext({
-		value: $currentTab ?? 'details',
+		value: $currentTab ?? 'details'
 	});
 	$: if ($value) {
 		currentTab.set($value);
-        console.log({$value})
+		console.log({ $value });
+	}
+
+	let cleanupRemoveScroll: ReturnType<typeof removeScroll> | undefined;
+
+	$: if ($render && $mq.max_lg) {
+		// then we should set scroll lock on the body (else get rid of it)
+		// position: fixed; overflow: hidden; top: -4016px; left: 0px; right: 0px; padding-right: 16px;
+		cleanupRemoveScroll = removeScroll();
+	} else {
+		console.log('removing scroll lock');
+		cleanupRemoveScroll?.();
 	}
 </script>
 
@@ -147,32 +162,40 @@
 <svelte:window on:keydown={on_keydown} />
 
 {#if $render && $mq.max_lg}
-	<div
+	<!-- <div
 		transition:fade|global={{ duration: 150 }}
-		aria-hidden="true"
+    aria-hidden="true"
 		class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
-	/>
+	/> -->
 {/if}
 {#if $render}
 	<!-- Ensure max height is 100vh minus the header size, which is currently 3.5rem -->
 	<!-- When mainnav is hidden, translate up a bit to center it vertically -->
 	<!-- style:--width="{width}px" -->
+
+    <!-- Hidden Shadow Element -->
+        <div transition:fly={{ x: $width_store, duration: 300, opacity: 1 }} class="bg-transparent z-0 w-[--right-sidebar-width] grow shrink-0">
+
+        </div>
+
 	<div
 		bind:this={container}
-		transition:fly={{ x: $width_store, duration: 250 }}
-		class="fixed right-0 top-0 h-screen w-80 transition-transform duration-300 lg:w-[--right-sidebar-width]"
+		transition:fly={{ x: $width_store, duration: 300, opacity: 1 }}
+		class="fixed right-0 top-0 h-screen transition-transform duration-300 lg:w-[--right-sidebar-width]"
 	>
 		<aside
-			class="z-10 flex h-full flex-col overflow-x-hidden border-l border-r bg-card text-card-foreground max-lg:absolute max-lg:right-0 max-lg:top-0"
+			class="z-10 flex h-full flex-col overflow-x-hidden border-l border-r bg-card text-card-foreground max-lg:absolute max-lg:right-0 max-lg:top-0 max-sm:w-screen"
 			melt={$root}
 		>
-        <!-- 2.5rem is size of sidebar toggle -->
-        <div class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height]">
-			<TabsList class="grow">
-				<TabsTrigger class="grow" value="details">Details</TabsTrigger>
-				<TabsTrigger class="grow" value="notes">Notes</TabsTrigger>
-			</TabsList>
-        </div>
+			<!-- 2.5rem is size of sidebar toggle -->
+			<div
+				class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height]"
+			>
+				<TabsList class="grow">
+					<TabsTrigger class="grow" value="details">Details</TabsTrigger>
+					<TabsTrigger class="grow" value="notes">Notes</TabsTrigger>
+				</TabsList>
+			</div>
 			<TabsContent value="details">
 				<Collapsible.Root bind:open={$open_sections.details}>
 					<CardHeader class="">
@@ -209,6 +232,15 @@
 									<Muted class="truncate"
 										><a href={$page.data.entry.uri} target="_blank">{$page.data.entry.uri}</a
 										></Muted
+									>
+								</div>
+							{/if}
+							{#if $page.data.entry?.uri?.startsWith('http')}
+								{@const domain = getHostname($page.data.entry.uri)}
+								<div class="flex items-center space-x-4">
+									<Muted>Domain</Muted>
+									<Muted class="truncate"
+										><a href="/tests/domain/{domain}">{domain}</a></Muted
 									>
 								</div>
 							{/if}
@@ -427,6 +459,8 @@
 		<!-- <div class='-left-1 absolute bottom-0 top-0 w-2 cursor-col-resize z-50 after:absolute after:inset-y-0 after:w-0.5 after:left-0.5 '></div> -->
 	</div>
 {/if}
+<!-- {:else if $mq.max_md}
+        <Sheet open={render}>Testing</Sheet> -->
 
 {#if !$render}
 	<div class="absolute right-0 top-0">
@@ -442,4 +476,4 @@
 	</div>
 {/if}
 
-<NoteModal bind:isOpen={show_note_form} entry={$page.data.entry} />
+<!-- <NoteModal bind:isOpen={show_note_form} entry={$page.data.entry} /> -->

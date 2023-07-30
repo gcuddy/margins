@@ -58,6 +58,8 @@
 
 	$: href = `/tests/${getType(entry.type)}/${getId(entry)}`;
 
+    $: tag_ids = entry.tags?.map(t => t.id) || [];
+
 	export let out_key: Status = 'Archive';
 
 	export async function move_entry(status: Status) {
