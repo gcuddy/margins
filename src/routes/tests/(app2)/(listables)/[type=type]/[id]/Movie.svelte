@@ -67,7 +67,7 @@
 		</div>
 	</div>
 
-	<dl class="grid grid-cols-[1fr,1fr,1fr] gap-3 pt-2 text-sm">
+	<dl class="grid grid-cols-[1fr,1fr,1fr] gap-3 pt-2 text-sm w-fit">
 		<div class="flex flex-col">
 			<dt class="text-xs uppercase"><Muted>Release Date</Muted></dt>
 			<dd>

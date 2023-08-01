@@ -337,6 +337,8 @@ model annotation_tag {
     annotation   Annotation @relation(fields: [annotationId], references: [id])
     tag          Tag        @relation(fields: [tagId], references: [id])
 
+    // TODO: user relation?
+
     @@id([annotationId, tagId])
     @@index([tagId])
     @@index([annotationId])

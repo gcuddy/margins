@@ -9,7 +9,7 @@ import {
 } from 'svelte/store';
 import { KV } from './idb';
 import type { Annotation } from '@prisma/client';
-import { persist, createIndexedDBStorage } from "@macfja/svelte-persistent-store"
+// import { persist, createIndexedDBStorage } from "@macfja/svelte-persistent-store"
 
 import { browser } from '$app/environment';
 import { make_state } from './utils';

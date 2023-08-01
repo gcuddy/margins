@@ -9,3 +9,7 @@ export const statusesWithIcons = {
 export const statuses = Object.keys(statusesWithIcons) as (keyof typeof statusesWithIcons)[];
 
 export type Status = keyof typeof statusesWithIcons;
+
+export function isStatus(s: string): s is Status {
+    return statuses.includes(s as Status);
+}

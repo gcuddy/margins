@@ -63,7 +63,7 @@
 				<MainNav />
 			</header>
 		{/if}
-		<div class={cn('container grid grid-cols-[auto,1fr,auto] gap-2')}>
+		<div class={cn('container grid grid-cols-[auto,1fr,auto]')}>
 			<!-- w-[200px] -->
 			<aside
 				class={cn(

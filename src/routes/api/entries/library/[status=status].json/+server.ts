@@ -13,7 +13,7 @@ export async function GET({ params, locals, url }) {
     }
 
     const userId = session.userId;
-    const status = statusLookup[params.status as keyof typeof statusLookup];
+    const status = statusLookup[params.status as keyof typeof statusLookup] ?? null;
     const after_sort = url.searchParams.get("after_sort");
     const after_updatedAt = url.searchParams.get("after_updated");
     console.log({ after_sort, after_updatedAt })

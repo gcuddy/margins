@@ -36,7 +36,7 @@ export const load = (async (event) => {
         } else {
             throw error(response.status, await response.text());
         }
-    } 
+    }
     const { entries, next } = await response.json() as LibraryResponse;
     console.log({ entries, next })
 

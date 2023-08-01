@@ -10,8 +10,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import { Markdown } from 'tiptap-markdown';
 import Highlight from '@tiptap/extension-highlight';
-import Mathematics from '@tiptap-pro/extension-mathematics'
-
+import Mathematics from '@tiptap-pro/extension-mathematics';
 
 // TODO: Mentions
 
@@ -26,13 +25,14 @@ import AnnotationCommand from './annotations';
 import { AnnotationExtension } from '../nodes/annotation';
 import { SRSNode, TimestampNode } from '../nodes';
 import Flashcard from '../nodes/flashcard';
+import Tag from './tags';
 
 export type TiptapExtensionProps = {
-    placeholder?: string;
-}
+	placeholder?: string;
+};
 
 export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, context?: any) => {
-    // TODO: get context (as passed in), then pass in to things like SlashCommands
+	// TODO: get context (as passed in), then pass in to things like SlashCommands
 	const TiptapExtensions = [
 		StarterKit.configure({
 			bulletList: {
@@ -71,7 +71,7 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 				color: '#DBEAFE',
 				width: 4
 			},
-			gapcursor: false
+			gapcursor: false,
 		}),
 		// patch to fix horizontal rule bug: https://github.com/ueberdosis/tiptap/pull/3859#issuecomment-1536799740
 		HorizontalRule.extend({
@@ -101,8 +101,13 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		}),
 		TiptapLink.configure({
 			HTMLAttributes: {
+
 				class:
-					'text-stone-400 underline underline-offset-[3px] hover:text-stone-600 transition-colors cursor-pointer'
+
+					'text-stone-400 underline underline-offset-[3px] hover:text-stone-600 transition-colors cursor-pointer',
+
+				// target: null // opens in current tab
+
 			}
 		}),
 		TiptapImage.configure({
@@ -151,8 +156,9 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		Youtube,
 		TimestampNode,
 		SRSNode,
-        Mathematics,
-        Flashcard
+		Mathematics,
+		Flashcard,
+		Tag
 	];
 	return TiptapExtensions;
 };

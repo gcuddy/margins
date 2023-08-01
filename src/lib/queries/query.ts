@@ -93,6 +93,7 @@ export async function query<T extends keyof Queries>(
 	}
 	if (options) {
 		if (options.cache) {
+            // TODO: stale time (wil require caching lookup time)
 			if (query_store_cache_lookup.has(url)) {
 				return query_store_cache_lookup.get(url) as Data;
 			}

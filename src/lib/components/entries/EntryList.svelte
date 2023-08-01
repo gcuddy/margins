@@ -21,6 +21,8 @@
 	import type { BulkEntries } from '$lib/schemas';
 	import { superForm } from 'sveltekit-superforms/client';
 
+	export let view = 'List';
+
 	// type EntryInList = Pick<
 	// 	Entry,
 	// 	| "id"
@@ -121,6 +123,8 @@
 	import { cmd_open } from '../ui/command/stores';
 	import autoAnimate from '@formkit/auto-animate';
 	import { writable } from 'svelte/store';
+	import NativeSelect from '$components/ui/NativeSelect.svelte';
+	import KanbanList from './KanbanList.svelte';
 
 	const statuses = {
 		Backlog: HelpCircle,
@@ -186,16 +190,13 @@
 	// 	}
 	// });
 
-
-
 	const updateSortOrder = writable({
 		mutate: (data: MutationInput<'updateBookmarkSortOrder'>) => {
 			mutation($page, 'updateBookmarkSortOrder', data).finally(() => {
 				// invalidate
-			})
+			});
 		}
-	})
-
+	});
 
 	const kbds = {
 		Backlog: 'b',
@@ -272,72 +273,52 @@
 	}}
 />
 
-	<!-- use:rover={{
+<!-- use:rover={{
 		linkSelector: 'a[data-id]',
 		idAttr: 'data-id',
 		initialId: active_id
 	}} -->
-<ul
-	class={cn('divide-y divide-border', className)}
-	use:dndzone={{
-		items: entries,
-		flipDurationMs: 200,
-		dragDisabled: !dndEnabled
-	}}
-	on:consider={(e) => (entries = e.detail.items)}
-	on:finalize={(e) => {
-		entries = e.detail.items;
-		console.log(e.detail);
-		const moved_id = e.detail.info.id;
-		const idx = entries.findIndex((e) => e.id === Number(moved_id));
-		const moved = entries[idx];
-		// we have to ensure all previous items have a sort_order less than the moved item
-		// and all items after have a sort_order greater than the moved item
-		const prev = entries.slice(0, idx);
-		const next = entries.slice(idx + 1);
 
-		let new_sort_order = 0;
+{#if view === 'List'}
+	<ul
+		class={cn('divide-y divide-border', className)}
+		use:dndzone={{
+			items: entries,
+			flipDurationMs: 200,
+			dragDisabled: !dndEnabled,
+			dropTargetStyle: {}
+		}}
+		on:consider={(e) => (entries = e.detail.items)}
+		on:finalize={(e) => {
+			entries = e.detail.items;
+			console.log(e.detail);
+			const moved_id = e.detail.info.id;
+			const idx = entries.findIndex((e) => e.id === Number(moved_id));
+			const moved = entries[idx];
+			// we have to ensure all previous items have a sort_order less than the moved item
+			// and all items after have a sort_order greater than the moved item
+			const prev = entries.slice(0, idx);
+			const next = entries.slice(idx + 1);
 
-		console.log({ idx });
-		if (idx === 0) {
-			// we're at the top - get the next item's sort_order, and subtract 100
-			new_sort_order = (next[0]?.sort_order ?? 0) - 100;
-			$updateSortOrder.mutate({
-				data: [
-					{
-						id: moved.id,
-						sort_order: new_sort_order
-					}
-				]
-			});
-			moved.sort_order = new_sort_order;
-			return;
-		} else if (idx === entries.length - 1) {
-			// we're at the bottom - get the previous item's sort_order, and add 100
-			new_sort_order = (prev[prev.length - 1]?.sort_order ?? 0) + 100;
-			$updateSortOrder.mutate({
-				data: [
-					{
-						id: moved.id,
-						sort_order: new_sort_order
-					}
-				]
-			});
-			moved.sort_order = new_sort_order;
-			return;
-		} else {
-			console.log({ prev, next });
-			// we're in the middle - this is a more complex calculation
-			// let's first check the previous item and next item. if they have a gap of more than 10, we can just put it in the middle
-			const prev_sort_order = prev[prev.length - 1]?.sort_order ?? 0;
-			const next_sort_order = next[0]?.sort_order ?? 0;
+			let new_sort_order = 0;
 
-			console.log({
-				prev_sort_order,
-				next_sort_order
-			});
-			if (next_sort_order - prev_sort_order > 10) {
-				new_sort_order = Math.round(prev_sort_order + (next_sort_order - prev_sort_order) / 2);
+			console.log({ idx });
+			if (idx === 0) {
+				// we're at the top - get the next item's sort_order, and subtract 100
+				new_sort_order = (next[0]?.sort_order ?? 0) - 100;
+				$updateSortOrder.mutate({
+					data: [
+						{
+							id: moved.id,
+							sort_order: new_sort_order
+						}
+					]
+				});
+				moved.sort_order = new_sort_order;
+				return;
+			} else if (idx === entries.length - 1) {
+				// we're at the bottom - get the previous item's sort_order, and add 100
+				new_sort_order = (prev[prev.length - 1]?.sort_order ?? 0) + 100;
 				$updateSortOrder.mutate({
 					data: [
 						{
@@ -349,106 +330,132 @@
 				moved.sort_order = new_sort_order;
 				return;
 			} else {
-				console.log('we have to change all the sort_orders');
-				// we're going to have to change all the sort_orders on *one* side of the moved item
-				// let's find out which side has less items, so that we can make the least amount of changes
-				if (prev.length < next.length) {
-					// we're going to have to change the sort_orders of the previous items
-					// we'll start with the previous item's sort_order, and add 100 to each item
-					new_sort_order = prev_sort_order + 1;
-					let data = [
-						{
-							id: moved.id,
-							sort_order: new_sort_order
-						}
-					];
-					let running_sort_order = new_sort_order;
-					for (let i = prev.length - 1; i >= 0; i--) {
-						running_sort_order -= 100;
-						entries[i].sort_order = running_sort_order;
-						data.push({
-							id: entries[i].id,
-							sort_order: running_sort_order
-						});
-					}
+				console.log({ prev, next });
+				// we're in the middle - this is a more complex calculation
+				// let's first check the previous item and next item. if they have a gap of more than 10, we can just put it in the middle
+				const prev_sort_order = prev[prev.length - 1]?.sort_order ?? 0;
+				const next_sort_order = next[0]?.sort_order ?? 0;
+
+				console.log({
+					prev_sort_order,
+					next_sort_order
+				});
+				if (next_sort_order - prev_sort_order > 10) {
+					new_sort_order = Math.round(prev_sort_order + (next_sort_order - prev_sort_order) / 2);
 					$updateSortOrder.mutate({
-						data
+						data: [
+							{
+								id: moved.id,
+								sort_order: new_sort_order
+							}
+						]
 					});
+					moved.sort_order = new_sort_order;
+					return;
 				} else {
-					console.log('next is shorter');
-					// we're going to have to change the sort_orders of the next items
-					// we'll start with the next item's sort_order, and subtract 100 to each item
-					new_sort_order = prev_sort_order + 100;
-					let data = [
-						{
-							id: moved.id,
-							sort_order: new_sort_order
+					console.log('we have to change all the sort_orders');
+					// we're going to have to change all the sort_orders on *one* side of the moved item
+					// let's find out which side has less items, so that we can make the least amount of changes
+					if (prev.length < next.length) {
+						// we're going to have to change the sort_orders of the previous items
+						// we'll start with the previous item's sort_order, and add 100 to each item
+						new_sort_order = prev_sort_order + 1;
+						let data = [
+							{
+								id: moved.id,
+								sort_order: new_sort_order
+							}
+						];
+						let running_sort_order = new_sort_order;
+						for (let i = prev.length - 1; i >= 0; i--) {
+							running_sort_order -= 100;
+							entries[i].sort_order = running_sort_order;
+							data.push({
+								id: entries[i].id,
+								sort_order: running_sort_order
+							});
 						}
-					];
-					console.log({ data });
-					entries[idx].sort_order = new_sort_order;
-					let running_sort_order = new_sort_order;
-					for (let i = 0; i < next.length; i++) {
-						running_sort_order += 100;
-						entries[idx + i + 1].sort_order = running_sort_order;
-						data.push({
-							id: next[i].id,
-							sort_order: running_sort_order
+						$updateSortOrder.mutate({
+							data
+						});
+					} else {
+						console.log('next is shorter');
+						// we're going to have to change the sort_orders of the next items
+						// we'll start with the next item's sort_order, and subtract 100 to each item
+						new_sort_order = prev_sort_order + 100;
+						let data = [
+							{
+								id: moved.id,
+								sort_order: new_sort_order
+							}
+						];
+						console.log({ data });
+						entries[idx].sort_order = new_sort_order;
+						let running_sort_order = new_sort_order;
+						for (let i = 0; i < next.length; i++) {
+							running_sort_order += 100;
+							entries[idx + i + 1].sort_order = running_sort_order;
+							data.push({
+								id: next[i].id,
+								sort_order: running_sort_order
+							});
+						}
+						$updateSortOrder.mutate({
+							data
 						});
 					}
-					$updateSortOrder.mutate({
-						data
-					});
 				}
 			}
-		}
-	}}
->
-	<!-- .filter((e) => !removed_ids.includes(e.id)) -->
-	{#each entries as entry (entry.id)}
-		<li
-			animate:flip={{ duration: 200 }}
-			class="group flex !cursor-default items-center space-x-4 bg-background"
-		>
-			<!-- <input
+		}}
+	>
+		<!-- .filter((e) => !removed_ids.includes(e.id)) -->
+		{#each entries as entry (entry.id)}
+			<li
+				animate:flip={{ duration: 200 }}
+				class="group flex !cursor-default items-center space-x-4 bg-background"
+			>
+				<!-- <input
 				bind:group={$form.ids}
 				tabindex="-1"
 				value={entry.id}
 				type="checkbox"
 				class="opacity-0 transition checked:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100"
 			/> -->
-			<!-- {entry.sort_order} -->
-			<EntryItem
-                on:move
-                on:reorder={(e) => {
-                    const { entry, position } = e.detail;
-                    const idx = entries.findIndex((e) => e.id === entry.id);
-                    const moved = entries[idx];
-                    entries.splice(idx, 1);
-                    entries.splice(position, 0, moved);
-                    entries = entries;
-                }}
-				bind:this={entryItems[entry.id]}
-				checked={$form.ids?.includes(entry.id)}
-				on:focus={() => (active_id = entry.id)}
-				on:checked={(e) => {
-					if (e.detail) {
-						$form.ids = [...($form.ids ?? []), entry.id];
-					} else {
-						$form.ids = $form.ids?.filter((id) => id !== entry.id);
-					}
-				}}
-				{entry}
-			/>
-		</li>
-	{/each}
-	<Intersector
-		cb={() => {
-			dispatch('end');
-			if (!endpoint) return;
-		}}
-	/>
-</ul>
+				<!-- {entry.sort_order} -->
+				<EntryItem
+					on:move
+					on:reorder={(e) => {
+						const { entry, position } = e.detail;
+						const idx = entries.findIndex((e) => e.id === entry.id);
+						const moved = entries[idx];
+						entries.splice(idx, 1);
+						entries.splice(position, 0, moved);
+						entries = entries;
+					}}
+					bind:this={entryItems[entry.id]}
+					checked={$form.ids?.includes(entry.id)}
+					on:focus={() => (active_id = entry.id)}
+					on:checked={(e) => {
+						if (e.detail) {
+							$form.ids = [...($form.ids ?? []), entry.id];
+						} else {
+							$form.ids = $form.ids?.filter((id) => id !== entry.id);
+						}
+					}}
+					{entry}
+				/>
+			</li>
+		{/each}
+		<Intersector
+			cb={() => {
+				dispatch('end');
+				if (!endpoint) return;
+			}}
+		/>
+	</ul>
+{:else if view === 'Grid'}{:else if view === 'Kanban'}
+	<KanbanList {entries} />
+{/if}
 
 <!-- TODO: a11y -->
 

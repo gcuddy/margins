@@ -358,3 +358,7 @@ export function word_count(str: string) {
 export function check_inert(el: HTMLElement) {
     return el.hasAttribute("inert") || el.closest("[inert]") !== null;
 }
+
+export function check_inside_input(el = document.activeElement) {
+    return el?.closest("input, textarea, [contenteditable]") !== null;
+}

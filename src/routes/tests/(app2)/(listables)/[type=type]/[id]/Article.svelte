@@ -40,7 +40,7 @@
 	import * as hovers from './annotation-hovers';
 
 	import { browser } from '$app/environment';
-	import { afterNavigate, beforeNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import type { Annotation, TargetSchema } from '$lib/annotation';
 	import {
@@ -76,6 +76,7 @@
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import { toast } from 'svelte-sonner';
 	import { draggable } from '@neodrag/svelte';
+	import { getHostname } from '$lib/utils';
 
 	export let data: PageData;
 
@@ -286,7 +287,7 @@
 
 	const saveProgressMutation = createMutation({
 		mutationFn: async () => {
-            if (initializing) return;
+			if (initializing) return;
 			console.log('mutating');
 			// mutation($page, 'saveInteraction', {
 			// 	entryId: data.entry!.id,
@@ -313,9 +314,7 @@
 	let initializing = false;
 	const doneInitializing = () => tick().then(() => (initializing = false));
 
-    const jumping = getContext('jumping') as Writable<boolean>;
-
-
+	const jumping = getContext('jumping') as Writable<boolean>;
 
 	// highlight stored annotations
 	afterNavigate(async () => {
@@ -374,7 +373,7 @@
 						$currentAnnotation.show = true;
 						$currentAnnotation.annotation = annotation;
 					}
-                    $jumping = false;
+					$jumping = false;
 				});
 			}
 		}
@@ -401,7 +400,7 @@
 
 	const { debounce: debounced_save, cancel: cancel_save } = debounce(5000);
 
-	const scrolling = getContext('scrolling') as Writable<boolean> ?? writable(false);
+	const scrolling = (getContext('scrolling') as Writable<boolean>) ?? writable(false);
 
 	let scroll = writable(0);
 
@@ -503,7 +502,6 @@
 	}
 
 	const hover_entry: boolean = getContext('hover_entry');
-
 </script>
 
 {#if showEditMenu && !scrolling}
@@ -560,10 +558,10 @@
 								elementReady(`[data-sidebar-annotation-id=${form.data.id}]`).then((el) => {
 									console.log({ el });
 									if (el) {
-										el.scrollIntoView({
-											behavior: 'smooth',
-											block: 'center'
-										});
+										// el.scrollIntoView({
+										// 	behavior: 'smooth',
+										// 	block: 'center'
+										// });
 									}
 								});
 							}
@@ -597,10 +595,10 @@
 								elementReady(`[data-sidebar-annotation-id="${id}"]`).then((el) => {
 									console.log({ el });
 									if (el) {
-										el.scrollIntoView({
-											behavior: 'smooth',
-											block: 'center'
-										});
+										// el.scrollIntoView({
+										// 	behavior: 'smooth',
+										// 	block: 'center'
+										// });
 									}
 								});
 							}}
@@ -685,6 +683,28 @@
 
 							$currentAnnotation.show = false;
 							if (!$currentAnnotation.highlight) return;
+							// optimistic update
+							update_entry(data.entry.id, {
+								annotations: [
+									...(data.entry.annotations ?? []),
+									{
+										id,
+										contentData,
+										// type: 'annotation',
+										target: {
+											source: '',
+											selector: $currentAnnotation.highlight?.selector
+										},
+										exact: null,
+										body: null,
+										username: $page.data.user_data?.username,
+										createdAt: new Date(),
+										entryId: data.entry.id,
+										start: null,
+										title: null
+									}
+								]
+							});
 							toast.promise(
 								mutation($page, 'save_note', {
 									entryId: data.entry.id,
@@ -695,13 +715,14 @@
 										source: '',
 										selector: $currentAnnotation.highlight?.selector
 									}
-								}),
+								}).finally(() => invalidate('entry')),
 								{
 									loading: 'Saving note...',
 									success: 'Note saved!',
 									error: 'Failed to save note'
 								}
 							);
+							$currentAnnotation.annotation = undefined;
 						});
 					}}
 				>
@@ -750,31 +771,41 @@
 	</div>
 {/if}
 
-<div class="prose prose-stone dark:prose-invert">
-	<h1
-		use:inView={{
-			top: 56
-		}}
-		on:enter={() => {
-			$mainnav.center = false;
-		}}
-		on:exit={() => {
-			$mainnav.center = true;
-		}}
-		class="text-4xl font-normal break-words hyphens-manual"
-	>
-		{data.entry?.title}
-	</h1>
-	<Lead class="not-prose"
-		><a href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}">{data.entry?.author}</a
-		></Lead
-	>
-	<Muted>{data.entry?.uri}</Muted>
-	<BookmarkForm data={data.bookmarkForm} />
-	{#if data.entry}
-		<EntryOperations data={data.annotationForm} entry={data.entry} />
-	{/if}
-	<Attachments {data} />
+<div class="prose prose-stone dark:prose-invert mx-auto">
+	<header class="flex flex-col gap-2 border-b not-prose space-y-3 pb-8">
+		{#if data.entry?.uri?.startsWith('http')}
+			<div class="flex items-center">
+				<img
+					src={`https://icons.duckduckgo.com/ip3/${getHostname(data.entry?.uri)}.ico`}
+					class="w-4 h-4 rounded mr-2"
+				/>
+				<Muted class="text-xs font-medium uppercase tracking-wider"
+					>{getHostname(data.entry?.uri).replace('www.', '')}</Muted
+				>
+			</div>{/if}
+		<h1
+			use:inView={{
+				top: 56
+			}}
+			on:enter={() => {
+				$mainnav.center = false;
+			}}
+			on:exit={() => {
+				$mainnav.center = true;
+			}}
+			class="text-4xl !mt-0 font-extrabold tracking-tight lg:text-5xl break-words hyphens-manual"
+		>
+			{data.entry?.title}
+		</h1>
+        {#if data.entry?.author}
+		<Lead class="not-prose"
+			><a href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}"
+				>{data.entry?.author}</a
+			></Lead
+		>{/if}
+		<!-- <BookmarkForm data={data.bookmarkForm} /> -->
+		<Attachments {data} />
+	</header>
 
 	<div
 		bind:this={articleWrapper}

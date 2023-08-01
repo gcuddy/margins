@@ -1,4 +1,7 @@
-import { get, writable } from 'svelte/store';
+import type { PDFViewer } from 'pdfjs-dist/web/pdf_viewer';
+import { getContext, setContext } from 'svelte';
+import { persisted } from 'svelte-local-storage-store';
+import { Writable, get, writable } from 'svelte/store';
 
 const InvisibleCharactersRegExp = /[\x01-\x1F]/g;
 
@@ -127,4 +130,60 @@ export function approximateFraction(x: number) {
 export function roundToDivide(x: number, div: number) {
 	const r = x % div;
 	return r === 0 ? x : Math.round(x - r + div);
+}
+
+type PdfState = {
+	opts: Writable<{
+		scale: number | 'page-fit' | 'page-width' | 'auto';
+	}>;
+	pdf_viewer: PDFViewer | null;
+};
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 2.3;
+
+function pdf_state() {
+	const { subscribe, set, update } = writable<PdfState>({
+		opts: persisted('pdf_options', {
+			scale: 'auto'
+		}),
+		pdf_viewer: null
+	});
+
+    function zoom(dir: "in" | "out") {
+        update((state) => {
+            if (!state.pdf_viewer) return state;
+            // if (typeof state.scale !== 'number') return state;
+            if (state.pdf_viewer.currentScale <= MAX_SCALE) {
+                const scale = dir === "in" ? state.pdf_viewer.currentScale + 0.1 : state.pdf_viewer.currentScale - 0.1;
+                state.pdf_viewer.currentScale = scale;
+                // set opts
+                state.opts.update((opts) => ({ ...opts, scale }));
+            }
+            return state;
+        });
+    }
+
+	return {
+		subscribe,
+		set,
+		update,
+		zoomIn: () => zoom("in"),
+        zoomOut: () => zoom("out"),
+	};
+}
+
+export function createPdfStateContext() {
+	const pdfState = pdf_state();
+
+	setContext('pdfState', pdfState);
+
+	return pdfState;
+}
+
+export function getPdfStateContext() {
+	const ctx = getContext('pdfState');
+	if (!ctx) {
+		throw new Error('pdfState context not found');
+	}
+	return ctx as ReturnType<typeof createPdfStateContext>;
 }

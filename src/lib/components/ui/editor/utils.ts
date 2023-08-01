@@ -142,13 +142,18 @@ import { generateHTML } from '@tiptap/html';
 import type { JSONContent } from '@tiptap/core';
 import { generate_tiptap_extensions } from './extensions';
 import { TiptapEditorProps } from './props';
+import type { DocumentType } from '@prisma/client';
 
 export function render_html(doc: JSONContent) {
 	return generateHTML(doc, generate_tiptap_extensions());
 }
 
+export type NodeType<T> = {
+	attrs: T;
+};
+
 // find deeply nested mention node in the document
-export function findNodes(doc: JSONContent, type: string) {
+export function findNodes<TType = JSONContent>(doc: JSONContent, type: string) {
 	const nodes: JSONContent[] = [];
 	function find(node: JSONContent) {
 		if (node.type === type) {
@@ -159,7 +164,7 @@ export function findNodes(doc: JSONContent, type: string) {
 		}
 	}
 	find(doc);
-	return nodes;
+	return nodes as TType[];
 }
 
 export function save_srs_nodes(doc: JSONContent) {
@@ -174,4 +179,22 @@ export function save_srs_nodes(doc: JSONContent) {
 		};
 	}[];
 	console.log({ nodes });
+}
+
+export function isJSONContent(content: unknown): content is JSONContent {
+	/** dangerous - but yeh */
+	return typeof content === 'object';
+}
+
+export function extractDataFromContentData(contentData: JSONContent) {
+	const tags = findNodes<NodeType<{ id: number; name: string }>>(contentData, 'tag');
+	// lol need to change that name...
+	const links = findNodes<NodeType<{ title: string; id: number; type: DocumentType }>>(
+		contentData,
+		'svelteCounterComponent'
+	);
+	return {
+		tags: tags.map((tag) => tag.attrs),
+		links: links.map((link) => link.attrs)
+	};
 }

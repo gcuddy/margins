@@ -25,6 +25,7 @@
 
 	export let context: unknown | undefined = undefined;
 	export let options: Partial<EditorOptions> = {};
+	export let readonly = false;
 
 	let className = '';
 	export { className as class };
@@ -51,7 +52,7 @@
 
 	export let content: string | JSONContent | undefined = undefined;
 	export let blank = false;
-	const content_store = persisted<any>('editor__content' + (id ?? ''), content);
+	// const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
 	const dispatch = createEventDispatcher<{
 		save: JSONContent;
@@ -64,7 +65,7 @@
 
 	const debounced_update = debounce(async ({ editor }: { editor: TEditor }) => {
 		const json = editor.getJSON();
-		content_store.set(json);
+		// content_store.set(json);
 		// onUpdate?.(editor);
 		// save_status.set('Saving...');
 		// dispatch('save', json);
@@ -135,31 +136,36 @@
 			},
 			content,
 			autofocus: 'start',
+            editable: false,
 			...options
 		});
 		if (content) hydrated = true;
 		$editor.on('blur', (e) => {
 			// TODO check if bubble menu is open
+            e.editor.setEditable(false);
 			save_srs_nodes(e.editor.getJSON());
 			dispatch('blur', e);
 			console.log({ e });
 		});
+        $editor.on("focus", (e) => {
+            e.editor.setEditable(true);
+        })
 	});
 
-	$: if (editor && options.editable && !$editor.isEditable) {
-		$editor.setEditable(true);
-		$editor.commands.focus();
-	} else if (editor && options.editable === false && $editor.isEditable) {
-		$editor.setEditable(false);
-	}
+	// $: if (editor && options.editable && !$editor.isEditable) {
+	// 	$editor.setEditable(true);
+	// 	$editor.commands.focus();
+	// } else if (editor && options.editable === false && $editor.isEditable) {
+	// 	$editor.setEditable(false);
+	// }
 
 	let hydrated = false;
-	$: if (editor && !blank && content_store && $content_store && !hydrated) {
-		// hydrate content from localstorage if not yet hydrated
-		console.log('being run');
-		$editor.commands.setContent($content_store);
-		hydrated = true;
-	}
+	// $: if (editor && !blank && content_store && $content_store && !hydrated) {
+	// 	// hydrate content from localstorage if not yet hydrated
+	// 	console.log('being run');
+	// 	$editor.commands.setContent($content_store);
+	// 	hydrated = true;
+	// }
 
 	let just_saved = false;
 	$: if (save_status && $save_status === 'Saved') {
@@ -175,11 +181,17 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-	on:click|self={() => {
-		// $editor?.chain().focus().run();
+	on:click={(e) => {
+        if (e.target instanceof HTMLAnchorElement) return;
+		if (!readonly) $editor?.setEditable(true);
+		$editor?.chain().focus().run();
 	}}
 	class={cn(
-		'relative  w-full max-w-screen-lg p-12 px-8 sm:mb-[calc(2    0vh)] sm:rounded-lg  sm:px-12 ',
+		// ' w-full max-w-screen-lg sm:mb-[calc(2    0vh)] sm:rounded-lg p-6 ',
+		'relative ',
+		/* shadcn textarea */ 'min-h-[80px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+        $editor?.isFocused && $editor?.isEditable && 'ring-offset-background ring-2 ring-ring ring-offset-2',
+		// 'p-12 px-8  sm:px-12',
 		// sm:shadow-lg sm:border
 		className
 	)}
@@ -202,14 +214,17 @@
 	<slot name="top" />
 
 	{#if editor}
-		<!-- <BubbleMenu editor={$editor} /> -->
+		<BubbleMenu editor={$editor} />
 	{/if}
 
 	<EditorContent editor={$editor} />
 </div>
 
+<!-- TODO: make not global -->
 <style global>
+
 	.ProseMirror .is-editor-empty:first-child::before {
+        @apply text-muted-foreground;
 		content: attr(data-placeholder);
 		float: left;
 		color: #adb5bd;
@@ -217,6 +232,7 @@
 		height: 0;
 	}
 	.ProseMirror .is-empty::before {
+        @apply text-muted-foreground;
 		content: attr(data-placeholder);
 		float: left;
 		color: #adb5bd;

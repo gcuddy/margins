@@ -18,39 +18,103 @@
 			onSelect: undefined
 		});
 
+		function open<Component extends SvelteComponent>({
+			placeholder = '',
+			component,
+			props,
+			shouldFilter = false
+		}: {
+			placeholder?: string;
+			shouldFilter?: boolean;
+			component: ComponentType<Component>;
+			props?: ComponentProps<Component>;
+		}) {
+			console.log('OPENN');
+			store.set({
+				open: true,
+				placeholder,
+				shouldFilter,
+				component,
+				props
+			});
+		}
+
+		function close() {
+			store.set({
+				open: false,
+				placeholder: '',
+				component: null,
+				props: undefined,
+				shouldFilter: false
+			});
+		}
+
+		// Specific features
+
+		function addToCollection(entry_id: number) {
+			let $page: Page;
+			const unsubscribe = page_store.subscribe((page) => ($page = page));
+			open({
+				component: Collections,
+				placeholder: 'Add to collection...',
+				props: {
+					onSelect: (c) => {
+						update_entry(entry_id, (data) => {
+							return {
+								collections: [
+									...(data.collections ?? []),
+									{
+										id: c.id,
+										name: c.name
+									}
+								]
+							};
+						});
+						close();
+						toast.promise(
+							mutation($page, 'addToCollection', {
+								entryId: $page.data.entry?.id,
+								collectionId: c.id
+							}).finally(() => {
+								invalidate('entry');
+							}),
+							{
+								loading: 'Adding to collection...',
+								success: 'Added to collection',
+								error: 'Failed to add to collection'
+							}
+						);
+					},
+					onFallback: (name) => {
+						close();
+						toast.promise(
+							mutation($page, 'createCollection', {
+								name,
+								items: [
+									{
+										entryId: $page.data.entry.id
+									}
+								]
+							}).finally(() => invalidate('entry')),
+							{
+								loading: 'Creating collection...',
+								success: 'Created collection and added entry',
+								error: 'Failed to create collection'
+							}
+						);
+					}
+				}
+			});
+			unsubscribe();
+		}
+
 		return {
 			subscribe: store.subscribe,
 			set: store.set,
 			update: store.update,
-			open: <Component extends SvelteComponentTyped>({
-				placeholder = '',
-				component,
-				props,
-				shouldFilter = false
-			}: {
-				placeholder?: string;
-				shouldFilter?: boolean;
-				component: ComponentType<Component>;
-				props?: ComponentProps<Component>;
-			}) => {
-				console.log('OPENN');
-				store.set({
-					open: true,
-					placeholder,
-					shouldFilter,
-					component,
-					props
-				});
-			},
-			close: () => {
-				store.set({
-					open: false,
-					placeholder: '',
-					component: null,
-					props: undefined,
-					shouldFilter: false
-				});
-			},
+			open,
+			close,
+			addToCollection,
 			open_items: <TItem>(
 				items: TItem[],
 				{
@@ -105,6 +169,13 @@
 		setContext
 	} from 'svelte';
 	import { writable } from 'svelte/store';
+	import Collections from './Collections.svelte';
+	import { toast } from 'svelte-sonner';
+	import { mutation } from '$lib/queries/query';
+	import type { Page } from '@sveltejs/kit';
+	import { update_entry } from '$lib/state/entries';
+	import { invalidate } from '$app/navigation';
+	import { page as page_store } from '$app/stores';
 
 	const search = writable('');
 	const pages = writable<string[]>([]);
@@ -122,7 +193,7 @@
 	}
 
 	store.subscribe((store) => {
-		console.log(`Setting cmd_open to ${store.open}`)
+		console.log(`Setting cmd_open to ${store.open}`);
 		cmd_open.set(store.open);
 	});
 

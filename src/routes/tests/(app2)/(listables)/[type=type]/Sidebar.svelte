@@ -28,7 +28,7 @@
 	import { mutation } from '$lib/queries/query';
 	import { state, update_entry } from '$lib/state/entries';
 	import mq from '$lib/stores/mq';
-	import { check_inert, getHostname } from '$lib/utils';
+	import { check_inert, check_inside_input, getHostname } from '$lib/utils';
 	import { triggerDownload } from '$lib/utils/annotations';
 	import { cn } from '$lib/utils/tailwind';
 	import debounce from 'just-debounce-it';
@@ -59,6 +59,9 @@
 	import scrollLock from '$lib/actions/scrollLock';
 	import { removeScroll } from '$lib/helpers';
 	import { backOut } from 'svelte/easing';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import { extractDataFromContentData, findNodes, isJSONContent } from '$components/ui/editor/utils';
+	import { nanoid } from 'nanoid';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
@@ -116,8 +119,9 @@
 	let container: HTMLElement;
 
 	function on_keydown(e: KeyboardEvent) {
-		if (!container) return;
-		if (check_inert(container)) return;
+		if (container && check_inert(container)) return;
+		console.log({ e });
+		if (e.target instanceof Element && check_inside_input(e.target)) return;
 		if (e.key === 'i' && e.metaKey) {
 			e.preventDefault();
 			$render = !$render;
@@ -173,10 +177,10 @@
 	<!-- When mainnav is hidden, translate up a bit to center it vertically -->
 	<!-- style:--width="{width}px" -->
 
-    <!-- Hidden Shadow Element -->
-        <div transition:fly={{ x: $width_store, duration: 300, opacity: 1 }} class="bg-transparent z-0 w-[--right-sidebar-width] grow shrink-0">
+	<!-- Hidden Shadow Element -->
+	<!-- <div transition:fly={{ x: $width_store, duration: 300, opacity: 1 }} class="bg-transparent z-0 w-[--right-sidebar-width] shrink-0">
 
-        </div>
+        </div> -->
 
 	<div
 		bind:this={container}
@@ -239,9 +243,7 @@
 								{@const domain = getHostname($page.data.entry.uri)}
 								<div class="flex items-center space-x-4">
 									<Muted>Domain</Muted>
-									<Muted class="truncate"
-										><a href="/tests/domain/{domain}">{domain}</a></Muted
-									>
+									<Muted class="truncate"><a href="/tests/domain/{domain}">{domain}</a></Muted>
 								</div>
 							{/if}
 							<div class="flex items-center space-x-4">
@@ -410,11 +412,45 @@
 				</Collapsible.Root>
 			{/if}
 			<TabsContent class="overflow-y-auto" value="notes">
-				<div class="p-6">
+				{@const note = data?.annotations?.find((a) => a.type === 'note')}
+				<div class="p-6 flex flex-col gap-4">
+					<div>
+						<h3 class=" text-lg font-semibold leading-none tracking-tight">Page Note</h3>
+						<Editor
+							content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
+							on:blur={({ detail: { editor } }) => {
+
+                                // TODO: only do this if the content has changed
+
+								const contentData = editor.getJSON();
+								if (!data) throw new Error('No data');
+								const id = note?.id ?? nanoid();
+
+								// TODO: should filing away tags and relations happen in the editor, here, or on the server?
+								// It would look like this:
+								const { tags, links } = extractDataFromContentData(contentData);
+
+								mutation($page, 'save_note', {
+									contentData,
+									entryId: data.id,
+									type: 'note',
+									id,
+									tags,
+									relations: links.map((link) => ({ relatedEntryId: link.id }))
+								});
+								update_entry(data.id).annotation({
+									contentData,
+									entryId: data.id,
+									type: 'note',
+									id
+								});
+							}}
+							options={{ autofocus: false }}
+							--empty-placeholder="Add a page note..."
+						/>
+					</div>
 					<div class="flex items-center justify-between">
-						<h3 class=" top-0 bg-card py-2 text-lg font-semibold leading-none tracking-tight">
-							Notes
-						</h3>
+						<h3 class=" text-lg font-semibold leading-none tracking-tight">Annotations</h3>
 						<div class="flex items-center gap-1">
 							<Button size="xs" variant="ghost" on:click={() => (show_note_form = true)}>
 								<PlusIcon class="h-4 w-4" />
@@ -438,11 +474,17 @@
 						</div>
 					</div>
 					<div class="grid gap-4">
-						{#each data?.annotations || []
-								.filter((a) => !!a.body || !!a.target || !!a.contentData)
+						{#if data?.annotations}
+							{#each data?.annotations
+								.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
 								.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
-							<Annotation {annotation} data={$page.data.annotationForm} entry={$page.data.entry} />
-						{/each}
+								<Annotation
+									{annotation}
+									data={$page.data.annotationForm}
+									entry={$page.data.entry}
+								/>
+							{/each}
+						{/if}
 					</div>
 				</div>
 			</TabsContent>
@@ -463,7 +505,7 @@
         <Sheet open={render}>Testing</Sheet> -->
 
 {#if !$render}
-	<div class="absolute right-0 top-0">
+	<!-- <div class="absolute right-0 top-0">
 		<Button
 			bind:ref={button_el}
 			on:click={() => ($render = !$render)}
@@ -473,7 +515,7 @@
 			<InfoIcon class="h-4 w-4" />
 		</Button>
 		<Tooltip placement="left" ref={button_el}>Show sidebar</Tooltip>
-	</div>
+	</div> -->
 {/if}
 
 <!-- <NoteModal bind:isOpen={show_note_form} entry={$page.data.entry} /> -->

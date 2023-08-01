@@ -1,3 +1,7 @@
+import type { page } from '$app/stores';
+import type { Page } from '@melt-ui/svelte';
+import type { Readable } from 'svelte/store';
+
 /**
  * PickByValue
  * @desc From `T` pick a set of properties by value matching `ValueType`.
@@ -11,29 +15,28 @@
  *   type Props = PickByValue<Props, number | undefined>;
  */
 export type PickByValue<T, ValueType> = Pick<
-    T,
-    { [Key in keyof T]-?: T[Key] extends ValueType ? Key : never }[keyof T]
+	T,
+	{ [Key in keyof T]-?: T[Key] extends ValueType ? Key : never }[keyof T]
 >;
-
 
 export type Promiseable<T> = T | Promise<T>;
 
 export type KeysThatBeginWith<T, Phrase extends string> = keyof {
-    [K in keyof T as K extends `${Phrase}${infer R}` ? K : never]: T[K]
+	[K in keyof T as K extends `${Phrase}${infer R}` ? K : never]: T[K];
 };
-
 
 /**
  * Function to assert that a value is not null or undefined. Useful for Svelte syntax, which doesn't support ! operator.
  */
 export function assert<T>(value: T): NonNullable<T> {
-    if (!value) {
-        throw new Error("Value is null or undefined");
-    }
-    return value;
+	if (!value) {
+		throw new Error('Value is null or undefined');
+	}
+	return value;
 }
-
 
 export type ValueOf<T> = T[keyof T];
 
 export type Maybe<T> = T | null | undefined;
+
+// Type to unwrap value from store

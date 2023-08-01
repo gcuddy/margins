@@ -8,7 +8,7 @@
 	import { recents } from '$lib/stores/recents';
 	import { cn } from '$lib/utils/tailwind';
 	import { update_entry } from '$lib/state/entries';
-	import { onMount, setContext } from 'svelte';
+	import { getContext, onMount, setContext } from 'svelte';
 	import { get_module } from './module';
 	import { writable } from 'svelte/store';
 	// import Mentions from './Mentions.svelte';
@@ -50,6 +50,8 @@
 	// todo
 	let current_list = true;
 
+    const rightSidebar = getContext('rightSidebar') as Writable<boolean>;
+
 
 	onMount(async () => {
 		// try to get component if it doesn't exist, for example we're mounting this component elsewhere
@@ -87,8 +89,9 @@
 
 <div
 	class={cn(
-		'px-4 grow',
-        "mt-[calc(var(--nav-height)+24px)]" // margin top is nav height + 24px (to account for header)
+		'grow',
+        type !== 'pdf' && "mt-[calc(var(--nav-height)+24px)]", // margin top is nav height + 24px (to account for header) (pdf handles this itself)
+        $rightSidebar ? "w-[calc(100%-(var(--right-sidebar-width)))]" : 'w-full' // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { getContext, onMount, tick } from 'svelte';
 	import * as pdfjs from 'pdfjs-dist';
 	import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 	// import downloadsvg from './images/toolbarDownload.svg?url';
@@ -24,6 +24,9 @@
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import Button from '$components/Button.svelte';
 	import type { Annotation } from '@prisma/client';
+	import { writable, type Writable } from 'svelte/store';
+	import trackScroll from '$lib/actions/trackScroll';
+	import { getPdfStateContext } from './utils';
 
 	export let annotations: Pick<Annotation, 'id' | 'target'>[] = [];
 
@@ -38,9 +41,14 @@
 	let styles = ''; //allows component to recieve classes
 	export { styles as style };
 
-	export let scale = 1;
+    const pdf_state = getPdfStateContext();
+    $: opts = $pdf_state.opts
+
 	const MIN_SCALE = 0.5;
 	const MAX_SCALE = 2.3;
+
+	export let scrollingDown = (getContext('scrollingDown') as Writable<boolean>) ?? writable(false);
+	$: console.log({ $scrollingDown });
 
 	enum SpreadModes { //init display modes.
 		'NONE',
@@ -65,8 +73,6 @@
 
 	//Init button handlers (some require hydration on mount)
 	let onPasswordSubmit: () => void;
-	let onZoomIn: () => void;
-	let onZoomOut: () => void;
 	let onPageDisplay: () => void;
 
 	async function highlightSelectorTarget(
@@ -112,8 +118,7 @@
 			'data-annotation-id': id
 		});
 
-
-        // TODO: calculate x,y,w,h of highlight and store it in the annotation
+		// TODO: calculate x,y,w,h of highlight and store it in the annotation
 
 		console.log({ h });
 
@@ -220,8 +225,6 @@
 				eventBus: event_bus
 			});
 
-
-
 			event_bus.on('pagerendered', ({ pageNumber }: { pageNumber: number }) => {
 				render_annotations(pageNumber);
 				// can use this to render SVG highlights (we use our annotator to highlight textlayer, and then attach svgs to those elements)
@@ -240,6 +243,7 @@
 				findController: pdf_find_controller,
 				l10n: pdfjs_viewer.NullL10n
 			});
+            $pdf_state.pdf_viewer = pdf_viewer;
 			pdf_link_service.setViewer(pdf_viewer);
 			return { pdf_viewer, pdf_link_service };
 		});
@@ -257,26 +261,25 @@
 					pdf_document = _pdf_document;
 					pdf_viewer.setDocument(pdf_document);
 					pdf_link_service.setDocument(pdf_document, null);
-					pdf_viewer.currentScale = scale;
+                    // pdf_viewer.currentScaleValue = "page-width";
+                    console.log({pdf_viewer})
+                    // if (typeof $opts.scale === 'number') {
+                    //     pdf_viewer.currentScale = $opts.scale;
+                    // } else {
+                    //     pdf_viewer.currentScaleValue = $opts.scale;
+                    // }
 					pdf_viewer.spreadMode = _spread_mode;
 				})
 				.catch(function (error) {
 					password_error = true;
 					password_message = error.message;
 				});
-
-			onZoomIn = () => {
-				if (scale <= MAX_SCALE) {
-					scale = scale + 0.1;
-					pdf_viewer.currentScale = scale;
-				}
-			};
-			onZoomOut = () => {
-				if (scale >= MIN_SCALE) {
-					scale = scale - 0.1;
-					pdf_viewer.currentScale = scale;
-				}
-			};
+			// onZoomOut = () => {
+			// 	if (scale >= MIN_SCALE) {
+			// 		scale = scale - 0.1;
+			// 		pdf_viewer.currentScale = scale;
+			// 	}
+			// };
 			onPageDisplay = () => {
 				_spread_mode = (_spread_mode + 1) % 3;
 				pdf_viewer.spreadMode = _spread_mode;
@@ -328,35 +331,15 @@
 				</div>
 			</div>
 		{:else}
-			<div class="spdfbanner">
-				<span class="toolbarbutton" on:click={onZoomIn}>
-					<ZoomInIcon />
-					<!-- <img title="Zoom In" src={zoominsvg} alt="zoom in" class="spdfbutton" /> -->
-				</span>
-				<span class="toolbarbutton" on:click={onZoomOut}>
-					<!-- <img title="Zoom Out" src={zoomoutsvg} alt="zoom out" class="spdfbutton" /> -->
-				</span>
-				<span class="toolbarbutton" on:click={onPageGap}>
-					<!-- <img title="Toggle Page Display" src={gapsvg} alt="toggle page gap" class="spdfbutton" /> -->
-				</span>
-				<span class="toolbarbutton" on:click={onPageDisplay}>
-					<!-- <img
-						title="Toggle Page Display"
-						src={spreadsvg}
-						alt="toggle page display"
-						class="spdfbutton"
-					/> -->
-				</span>
-				<span class="toolbarbutton" on:click={() => printPdf(INTERNAL_URL)}>
-					<!-- <img title="Print" src={printsvg} alt="print" class="spdfbutton" /> -->
-				</span>
-				<span class="toolbarbutton" on:click={() => download(INTERNAL_URL)}>
-					<!-- <img title="Download" src={downloadsvg} alt="download" class="spdfbutton" /> -->
-				</span>
-				<Button on:click={highlight}>Highlight</Button>
-			</div>
 			<div class="spdfinner">
-				<div id="viewerContainer" style="background-color: rgb(55 65 81);" bind:this={container}>
+				<div
+					id="viewerContainer"
+					use:trackScroll={{
+						scrollingDown
+					}}
+					class="pt-[80px]"
+					bind:this={container}
+				>
 					<div id="viewer" class="pdfViewer" />
 				</div>
 			</div>

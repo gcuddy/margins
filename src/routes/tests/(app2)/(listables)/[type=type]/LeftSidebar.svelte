@@ -14,15 +14,20 @@
 	export let show = false;
 
 	const scrollingDown = getContext('scrollingDown') as Writable<boolean>;
-    const rightSidebar = getContext('rightSidebar') as Writable<boolean>;
+	const rightSidebar = getContext('rightSidebar') as Writable<boolean>;
+	const navWidth = getContext('navWidth') as Writable<number>;
+
+	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }> | undefined | null;
+	$: if (borderBoxSize) $navWidth = $navWidth = borderBoxSize[borderBoxSize.length - 1]?.inlineSize;
 </script>
 
 <nav
+	bind:borderBoxSize
 	class={cn(
 		'h-[--nav-height] flex items-center transition-transform transform fixed  left-0 top-0 z-[51] pl-4 w-full',
 		!show && 'w-min max-w-min border-b',
 		$scrollingDown && '-translate-y-full',
-        $rightSidebar && $mq.max_md && 'opacity-0'
+		$rightSidebar && $mq.max_md && 'opacity-0'
 	)}
 >
 	<Button variant="ghost" as="a" href="/tests/library/backlog">

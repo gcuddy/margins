@@ -19,7 +19,8 @@ import {
 	tagsOnEntrySchema,
 	updateBookmark,
 	updateBookmarkSchema,
-	upsertAnnotation
+	upsertAnnotation,
+    upsertAnnotationSchema
 } from '$lib/queries/server';
 import { sql } from 'kysely';
 import { z } from 'zod';
@@ -74,10 +75,10 @@ export const mutations = {
 	//     }
 	// }),
 	save_note: query({
-		schema: annotationSchema.omit({
+		schema: upsertAnnotationSchema.omit({
 			userId: true
 		}),
-		fn: async ({ ctx: { userId }, input }) => upsertAnnotation({ ...input, userId })
+		fn: async ({ ctx: { userId }, input }) => upsertAnnotation({ ...input, target: input.target as any, userId })
 	}),
 	deleteAnnotation: query({
 		schema: idSchema,
@@ -197,6 +198,19 @@ export const mutations = {
 	addToCollection: query({
 		schema: s_add_to_collection,
 		fn: async ({ input, ctx: { userId } }) => add_to_collection({ ...input, userId })
+	}),
+	removeEntryFromCollection: query({
+		fn: async ({ input, ctx: { userId } }) => {
+			await db
+				.deleteFrom('CollectionItems')
+				.where('collectionId', '=', input.collectionId)
+				.where('entryId', '=', input.entryId)
+				.execute();
+		},
+		schema: z.object({
+			collectionId: z.number().int(),
+			entryId: z.number().int()
+		})
 	}),
 	addRelation: query({
 		schema: z.object({
@@ -425,7 +439,12 @@ export const queries = {
 	collections: query({
 		staleTime: 1000,
 		fn: ({ ctx }) => {
-			return db.selectFrom('Collection').where('userId', '=', ctx.userId).selectAll().execute();
+			return db
+				.selectFrom('Collection')
+				.where('userId', '=', ctx.userId)
+				.orderBy('name', 'asc')
+				.selectAll()
+				.execute();
 		}
 	}),
 	search: query({

@@ -1,9 +1,10 @@
-import type { AnnotationSchema } from '$lib/annotation';
+import { annotationSchema, type AnnotationSchema } from '$lib/annotation';
 import { db, json } from '$lib/db';
-import { annotations, withEntry } from '$lib/db/selects';
+import { annotations, entrySelect, withEntry } from '$lib/db/selects';
 import { tagSchema } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
+import { RelationType } from '@prisma/client';
 import { sql } from 'kysely';
 import { z } from 'zod';
 
@@ -114,8 +115,25 @@ export async function deleteAnnotation(userId: string, id: string) {
 	await db.deleteFrom('Annotation').where('userId', '=', userId).where('id', '=', id).execute();
 }
 
-export async function upsertAnnotation(data: z.infer<AnnotationSchema>) {
-	const { id: _id, ...annotation } = data;
+export const upsertAnnotationSchema = annotationSchema.extend({
+	relations: z
+		.object({
+			relatedEntryId: z.number().int(),
+			type: z.nativeEnum(RelationType).default('Related')
+		})
+		.array()
+		.default([]),
+	tags: z
+		.object({
+			id: z.number(),
+			name: z.string()
+		})
+		.array()
+		.default([])
+});
+
+export async function upsertAnnotation(data: z.input<typeof upsertAnnotationSchema>) {
+	const { id: _id, relations, tags, ...annotation } = data;
 	let id = _id;
 	if (!id) {
 		id = nanoid();
@@ -138,6 +156,51 @@ export async function upsertAnnotation(data: z.infer<AnnotationSchema>) {
 			contentData: annotation.contentData ? json(annotation.contentData) : undefined
 		})
 		.execute();
+
+	if (relations?.length) {
+		const { entryId } = await db
+			.selectFrom('Annotation')
+			.where('id', '=', id)
+			.select(['entryId'])
+			.executeTakeFirstOrThrow();
+		// add relations
+		// TODO: remove relations that were present but not in the annotation anymore?
+		if (entryId) {
+			await db
+				.insertInto('Relation')
+				.values(
+					relations.map((relation) => ({
+						entryId,
+						relatedEntryId: relation.relatedEntryId,
+						id: nanoid(),
+						updatedAt: new Date(),
+						userId: data.userId,
+						type: relation.type
+					}))
+				)
+				.ignore()
+				.execute();
+		}
+	}
+	if (tags?.length) {
+		// set tags on annotation
+		// TODO
+		// transaction - if one fails, all fail
+		await db.transaction().execute(async (trx) => {
+			await trx.deleteFrom('annotation_tag').where('annotationId', '=', id!).execute();
+
+			return await trx
+				.insertInto('annotation_tag')
+				.values(
+					tags.map((tag) => ({
+						annotationId: id!,
+						tagId: tag.id
+					}))
+				)
+				.ignore()
+				.execute();
+		});
+	}
 	return {
 		id
 	};
@@ -199,11 +262,35 @@ export async function add_to_collection(
 
 // MUTATIONS
 
-export const tagsOnEntrySchema = tagSchema.and(
-	z.object({
-		entries: z.array(z.number().int())
+const entries_schema = z.object({
+	entries: z.array(z.number().int())
+});
+
+export const tagsOnEntrySchema = tagSchema.and(entries_schema);
+
+export const collectionsOnEntrySchema = z
+	.object({
+		collections: z.array(z.number().int())
 	})
-);
+	.and(entries_schema);
+
+export async function set_collections_on_entry({
+	collections,
+	entries,
+	userId
+}: z.infer<typeof collectionsOnEntrySchema> & { userId: string }) {
+	// first, delete any existing collections on these entries
+	// TODO
+	// await db
+	// 	.deleteFrom('CollectionItems')
+	// 	.where('entryId', 'in', entries)
+	// 	.where('collectionId', 'in', collections)
+	// 	.execute();
+	// const values = entries.flatMap((entryId) =>
+	// 	collections.map((collectionId) => ({ entryId, collectionId }))
+	// );
+	// await db.insertInto('CollectionItems').values([]);
+}
 
 export async function set_tags_on_entry({
 	tags,
@@ -235,4 +322,20 @@ export async function set_tags_on_entry({
 
 	// // TODO: use string ids to make this more efficient
 	// return message(tagForm, 'Tags added');
+}
+
+// TODO cursor pagination and ordering
+export async function get_notes_for_tag({ name, userId }: { name: string; userId: string }) {
+	let query = db
+		.selectFrom('annotation_tag as at')
+		.innerJoin('Annotation as a', 'a.id', 'at.annotationId')
+		.innerJoin('Tag as t', (join) => join.onRef('t.id', '=', 'at.tagId').on("t.name", "=", name))
+        .select(annotations.select)
+        .select('t.id as tag_id')
+        .where('a.userId', '=', userId)
+		.where('deleted', 'is', null)
+		.orderBy('a.updatedAt', 'desc')
+
+    return await query.execute();
+
 }
