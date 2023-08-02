@@ -26,7 +26,7 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
         }
     }
     const input = url.searchParams.get("input");
-    console.log({ input })
+    // console.log({ input })
     if (!input) {
         console.warn("Provided schema but missing input");
         return {
@@ -38,9 +38,9 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
         // throw error(400, "Missing input");
     }
     const data = parse(input) as unknown;
-    console.dir({ data }, { depth: null });
+    // console.dir({ data }, { depth: null });
     const parsed = schema.safeParse(data);
-    console.log({ parsed })
+    // console.log({ parsed })
     if (!parsed.success) {
         throw error(400, "Data doesn't match schema");
     }

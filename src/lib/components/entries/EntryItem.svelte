@@ -1,47 +1,42 @@
 <script lang="ts">
-	import { preloadCode, preloadData } from '$app/navigation';
+	import { preloadData } from '$app/navigation';
+	import { page } from '$app/stores';
+	import Clamp from '$components/Clamp.svelte';
+	import type ContextMenu from '$components/ui/context-menu/ContextMenu.svelte';
+	import type ContextMenuCheckboxItem from '$components/ui/context-menu/ContextMenuCheckboxItem.svelte';
+	import type ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
+	import type ContextSubMenu from '$components/ui/context-menu/ContextSubMenu.svelte';
+	import type ContextMenuItem from '$components/ui/context-menu/ContextMenuItem.svelte';
+	import { contextMenuItem as contextMenuItemClass } from '$components/ui/context-menu/ContextMenuItem.svelte';
 	import smoothload from '$lib/actions/smoothload';
 	import type { EntryInList } from '$lib/db/selects';
-	import { getId, getType, get_image, make_link } from '$lib/utils/entries';
-	import clsx from 'clsx';
-	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
-	import { Muted, Small } from '../ui/typography';
-	import { createEventDispatcher, tick } from 'svelte';
-	import Progress from '../ui/Progress.svelte';
-	import { receive, send } from '$lib/transitions';
-	import Badge from '../ui/Badge.svelte';
-	import { page } from '$app/stores';
+	import { relations_icons } from '$lib/features/relations/icons';
+	import { mutation, query } from '$lib/queries/query';
 	import { state, update_entry } from '$lib/state/entries';
+	import { Status, statuses, statusesWithIcons } from '$lib/status';
+	import { getTargetSelector } from '$lib/utils/annotations';
+	import { ago, now } from '$lib/utils/date';
+	import { getId, getType, get_image, make_link } from '$lib/utils/entries';
+	import { createContextMenu } from '@melt-ui/svelte';
+	import { VariantProps, cva } from 'class-variance-authority';
+	import clsx from 'clsx';
 	import {
 		ArrowLeftRightIcon,
 		BoxIcon,
-		CheckCircle2Icon,
 		CheckIcon,
 		CircleDashedIcon,
-		CircleIcon,
 		FileTextIcon,
 		PencilIcon,
 		TagIcon,
 		TrendingUpIcon
 	} from 'lucide-svelte';
-	import HoverCard from '../ui/hover-card/HoverCard.svelte';
-	import MiniAnnotation from '../MiniAnnotation.svelte';
-	import { getTargetSelector } from '$lib/utils/annotations';
-	import { ago, now } from '$lib/utils/date';
-	import { relations_icons } from '$lib/features/relations/icons';
-	import toggle_clamp from '$lib/actions/toggle-clamp';
-	import Clamp from '$components/Clamp.svelte';
-	import Editor from '$components/ui/editor/Editor.svelte';
-	import { createContextMenu } from '@melt-ui/svelte';
-	import ContextMenu from '$components/ui/context-menu/ContextMenu.svelte';
-	import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
-	import ContextSubMenu from '$components/ui/context-menu/ContextSubMenu.svelte';
-	import { statuses, statusesWithIcons, Status } from '$lib/status';
-	import { contextMenuItem } from '$components/ui/context-menu/ContextMenuItem.svelte';
-	import { mutation, query } from '$lib/queries/query';
+	import { ComponentType, createEventDispatcher, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import ContextMenuCheckboxItem from '$components/ui/context-menu/ContextMenuCheckboxItem.svelte';
-	import { VariantProps, cva } from 'class-variance-authority';
+	import Badge from '../ui/Badge.svelte';
+	import HoverCard from '../ui/hover-card/HoverCard.svelte';
+	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
+	import { Muted, Small } from '../ui/typography';
+	import { render_html } from '$components/ui/editor/utils';
 
 	const entryItemVariants = cva('flex grow relative data-[state=open]:bg-accent', {
 		variants: {
@@ -158,6 +153,30 @@
 			toast.success('Tags updated');
 		});
 	}
+
+	let contextMenu: ComponentType<ContextMenu>;
+	let contextMenuItem: ComponentType<ContextMenuItem>;
+	let contextMenuCheckboxItem: ComponentType<ContextMenuCheckboxItem>;
+	let contextMenuIcon: ComponentType<ContextMenuIcon>;
+	let contextMenuSubmenu: ComponentType<ContextSubMenu>;
+
+	onMount(async () => {
+		// dynamically import context menu (to avoid jank)
+		//     import ContextMenu from '$components/ui/context-menu/ContextMenu.svelte';
+		// import ContextMenuCheckboxItem from '$components/ui/context-menu/ContextMenuCheckboxItem.svelte';
+		// import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
+		// import { contextMenuItem } from '$components/ui/context-menu/ContextMenuItem.svelte';
+		// import ContextSubMenu from '$components/ui/context-menu/ContextSubMenu.svelte';
+
+		contextMenu = (await import('$components/ui/context-menu/ContextMenu.svelte')).default;
+		contextMenuItem = (await import('$components/ui/context-menu/ContextMenuItem.svelte')).default;
+		contextMenuCheckboxItem = (
+			await import('$components/ui/context-menu/ContextMenuCheckboxItem.svelte')
+		).default;
+		contextMenuIcon = (await import('$components/ui/context-menu/ContextMenuIcon.svelte')).default;
+		contextMenuSubmenu = (await import('$components/ui/context-menu/ContextSubMenu.svelte'))
+			.default;
+	});
 </script>
 
 <!-- out:send={{
@@ -271,11 +290,12 @@
 													{annotation.body}
 												</Clamp>
 											{:else if annotation.contentData}
-												<Editor
+                                                {@html render_html(annotation.contentData)}
+												<!-- <Editor
 													class="line-clamp-2"
 													content={annotation.contentData}
 													options={{ editable: false }}
-												/>
+												/> -->
 											{/if}
 										</div>
 									</div>
@@ -363,8 +383,10 @@
 	<div class="item" melt={$item}>Check for Updates...</div>
 </div> -->
 
-<ContextMenu {menu} let:ContextMenuItem>
-	<ContextMenuItem
+<svelte:component this={contextMenu} {menu}>
+	<!--  -->
+	<svelte:component
+		this={contextMenuItem}
 		onSelect={() => {
 			// TODO: dispatch and bump to top
 			console.log('bump to top');
@@ -385,12 +407,12 @@
 		{item}
 		inset
 	>
-		<ContextMenuIcon icon={TrendingUpIcon} />
+		<svelte:component this={contextMenuIcon} icon={TrendingUpIcon} />
 		<span>Bump to top</span>
-	</ContextMenuItem>
+	</svelte:component>
 	{#if $page.data.user_data}
-		<ContextSubMenu {createSubMenu} inset>
-			<ContextMenuIcon icon={TagIcon} />
+		<svelte:component this={contextMenuSubmenu} {createSubMenu} inset>
+			<svelte:component this={contextMenuIcon} icon={TagIcon} />
 			<span>Tag</span>
 			<svelte:fragment slot="content">
 				<!-- TODO: use virtual list component? -->
@@ -398,7 +420,8 @@
 					Loading...
 				{:then tags}
 					{#each tags || [] as tag}
-						<ContextMenuCheckboxItem
+						<svelte:component
+							this={contextMenuCheckboxItem}
 							{checkboxItem}
 							useCheckbox
 							checked={!!entry.tags?.some((t) => t.id === tag.id)}
@@ -422,15 +445,14 @@
 							}}
 						>
 							{tag.name}
-						</ContextMenuCheckboxItem>
+						</svelte:component>
 					{/each}
 				{/await}
 			</svelte:fragment>
-		</ContextSubMenu>
+		</svelte:component>
 	{/if}
-	<ContextSubMenu inset {createSubMenu}>
-		<!-- Trigger Slot -->
-		<ContextMenuIcon icon={CircleDashedIcon} />
+	<svelte:component this={contextMenuSubmenu} {createSubMenu} inset>
+		<svelte:component this={contextMenuIcon} icon={CircleDashedIcon} />
 		Status
 		<svelte:fragment slot="content">
 			<!-- TODO: Custom statuses -->
@@ -446,7 +468,7 @@
 								move_entry(status);
 							}
 						}}
-						class={contextMenuItem({ inset: false })}
+						class={contextMenuItemClass({ inset: false })}
 					>
 						<div class="flex shrink-0 items-center justify-center w-4 h-4 mr-0.5 -ml-2">
 							{#if $isChecked(status)}
@@ -460,33 +482,20 @@
 						<span class="grow inline-flex items-center truncate">{status}</span>
 					</div>
 				{/each}
-				<!-- <ContextMenuItem inset {item}>
-					<ContextMenuIcon icon={CircleDashedIcon} />
-					Backlog
-				</ContextMenuItem>
-				<ContextMenuItem inset {item}>
-					<ContextMenuIcon icon={CircleIcon} />
-					Now
-				</ContextMenuItem>
-				<ContextMenuItem inset {item}>
-					<ContextMenuIcon icon={CheckCircle2Icon} />
-					Archive
-				</ContextMenuItem> -->
 			</div>
 		</svelte:fragment>
-	</ContextSubMenu>
-	<ContextSubMenu inset {createSubMenu}>
-		<!-- Trigger Slot -->
-		<ContextMenuIcon icon={BoxIcon} />
+	</svelte:component>
+	<svelte:component this={contextMenuSubmenu} {createSubMenu} inset>
+		<svelte:component this={contextMenuIcon} icon={BoxIcon} />
 		Collections
 		<svelte:fragment slot="content" let:open>
-			<!-- TODO: Sort checked to top -->
 			{#await open ? query($page, 'collections', {}, { cache: true }) : []}
 				Loading...
 			{:then collections}
 				{#each collections || [] as collection}
 					{@const checked = !!data.collections?.some((c) => c.id === collection.id)}
-					<ContextMenuCheckboxItem
+					<svelte:component
+                        this={contextMenuCheckboxItem}
 						{checkboxItem}
 						useCheckbox
 						{checked}
@@ -499,10 +508,10 @@
 									entryId: entry.id
 								});
 							} else {
-                                mutation($page, 'removeEntryFromCollection', {
-                                    collectionId: collection.id,
-                                    entryId: entry.id
-                                });
+								mutation($page, 'removeEntryFromCollection', {
+									collectionId: collection.id,
+									entryId: entry.id
+								});
 							}
 							update_entry(entry.id, {
 								collections: data.collections?.some((c) => c.id === collection.id)
@@ -527,12 +536,12 @@
 						}}
 					>
 						{collection.name}
-					</ContextMenuCheckboxItem>
+					</svelte:component>
 				{/each}
 			{/await}
 		</svelte:fragment>
-	</ContextSubMenu>
-</ContextMenu>
+	</svelte:component>
+</svelte:component>
 
 <style lang="postcss">
 	.menu {

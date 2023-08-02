@@ -12,6 +12,8 @@ import { nanoid } from '$lib/nanoid';
 import {
 	add_to_collection,
 	deleteAnnotation,
+	entry_by_id,
+	entry_by_id_schema,
 	getNotebook,
 	getNotebookSchema,
 	get_notes_for_tag,
@@ -691,7 +693,11 @@ export const queries = {
 				.select(['Tag.id', 'Tag.name', 'pin.id as pin_id'])
 				.executeTakeFirstOrThrow();
 		}
-	})
+	}),
+    entry_by_id: query({
+        schema: entry_by_id_schema,
+        fn: entry_by_id
+    })
 } as const;
 
 export type Queries = typeof queries;

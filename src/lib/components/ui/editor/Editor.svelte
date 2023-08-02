@@ -26,6 +26,7 @@
 	export let context: unknown | undefined = undefined;
 	export let options: Partial<EditorOptions> = {};
 	export let readonly = false;
+    export let focusRing = true;
 
 	let className = '';
 	export { className as class };
@@ -34,6 +35,8 @@
 
 	export let save_status = writable<SaveStatus>(null);
 	export let onUpdate: EditorOptions['onUpdate'] | undefined = undefined;
+    export let onFocus: EditorOptions['onFocus'] | undefined = undefined;
+    export let onBlur: EditorOptions['onBlur'] | undefined = undefined;
 
 	setContext('editor_context', {
 		testing: true
@@ -144,11 +147,13 @@
 			// TODO check if bubble menu is open
             e.editor.setEditable(false);
 			save_srs_nodes(e.editor.getJSON());
+            onBlur?.(e);
 			dispatch('blur', e);
 			console.log({ e });
 		});
         $editor.on("focus", (e) => {
             e.editor.setEditable(true);
+            onFocus?.(e);
         })
 	});
 
@@ -190,7 +195,7 @@
 		// ' w-full max-w-screen-lg sm:mb-[calc(2    0vh)] sm:rounded-lg p-6 ',
 		'relative ',
 		/* shadcn textarea */ 'min-h-[80px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-        $editor?.isFocused && $editor?.isEditable && 'ring-offset-background ring-2 ring-ring ring-offset-2',
+        $editor?.isFocused && $editor?.isEditable && focusRing && 'ring-offset-background ring-2 ring-ring ring-offset-2',
 		// 'p-12 px-8  sm:px-12',
 		// sm:shadow-lg sm:border
 		className

@@ -414,7 +414,7 @@
 			<TabsContent class="overflow-y-auto" value="notes">
 				{@const note = data?.annotations?.find((a) => a.type === 'note')}
 				<div class="p-6 flex flex-col gap-4">
-					<div>
+					<div class="space-y-2">
 						<h3 class=" text-lg font-semibold leading-none tracking-tight">Page Note</h3>
 						<Editor
 							content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
@@ -446,7 +446,6 @@
 								});
 							}}
 							options={{ autofocus: false }}
-							--empty-placeholder="Add a page note..."
 						/>
 					</div>
 					<div class="flex items-center justify-between">

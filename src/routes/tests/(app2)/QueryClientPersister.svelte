@@ -14,7 +14,7 @@
 
 	const persister: Persister = {
 		async persistClient(client: PersistedClient) {
-            console.log('persisting client')
+			console.log('persisting client');
 			set('QUERY_PERSIST', client);
 		},
 		async restoreClient() {
@@ -25,16 +25,30 @@
 		}
 	};
 
+	// onMount(() => {
+	// 	client.mount();
+	// });
+	// onDestroy(() => {
+	// 	client.unmount();
+	// });
+
 	onMount(() => {
 		restoring = true;
-		const [unsubscribe, promise] = persistQueryClient({ queryClient: client, persister, dehydrateOptions: {
-            // shouldDehydrateQuery(query) {
-            //     query.queryKey[0] ===
-            // },
-        } });
+		const [unsubscribe, promise] = persistQueryClient({
+			queryClient: client,
+			persister,
+			dehydrateOptions: {
+				// shouldDehydrateQuery(query) {
+				//     query.queryKey[0] ===
+				// },
+			},
+
+		});
+        console.log({unsubscribe, promise})
 		promise
 			.then(() => {
 				client.mount();
+				console.log({ client });
 				// run paused mutations if you want
 			})
 			.finally(() => {

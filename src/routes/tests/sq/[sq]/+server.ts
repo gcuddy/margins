@@ -25,7 +25,7 @@ export const GET: RequestHandler = async (event) => {
 		console.log(`setting headers for ${event.url.toString()}`);
 		event.setHeaders(query.headers);
 	}
-	console.dir({ result }, { depth: null });
+	// console.dir({ result }, { depth: null });
 	console.timeEnd(`[sq] ${sq}`);
 	return json(result);
 };

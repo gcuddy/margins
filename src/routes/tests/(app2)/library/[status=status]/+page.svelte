@@ -50,6 +50,7 @@
 	import { QueryOutput, query as qquery } from '$lib/queries/query';
 	import EntryItem from '$components/entries/EntryItem.svelte';
 	import Scroller from '$components/Scroller.svelte';
+	import { createWindowVirtualizer } from '@tanstack/svelte-virtual';
 
 	$: filter_type = $page.url.searchParams.get('type');
 	export let data;
@@ -87,13 +88,14 @@
 			// 	search: $page.url.searchParams.get('search') ?? ''
 			// }),
 			getNextPageParam: (lastPage) => lastPage.nextCursor,
-			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null,
-
+			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null
 		}))
 	);
 
-    // <!-- probably not smart -->
-    $: if ($query.data) init_entries($query.data.pages.flatMap((page) => page.entries));
+	$: entries = $query.data?.pages.flatMap((page) => page.entries) ?? [];
+
+	// <!-- probably not smart -->
+	$: if ($query.data) init_entries($query.data.pages.flatMap((page) => page.entries));
 
 	$: console.log({ $query });
 
@@ -240,8 +242,19 @@
 
 	$: is_searching = $navigating?.to?.url.pathname === $page.url.pathname;
 
-    let contentRect: DOMRectReadOnly | null = null;
-    $: console.log({ contentRect });
+	const virtualizer = createWindowVirtualizer({
+		count: entries?.length || 0,
+		estimateSize: () => 96,
+		overscan: 5,
+        getItemKey: (index) => entries[index].id,
+	});
+
+    $: $virtualizer.setOptions({
+        count: entries?.length || 0,
+    })
+
+	let contentRect: DOMRectReadOnly | null = null;
+	$: console.log({ contentRect });
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
@@ -437,19 +450,28 @@
 </div>
 
 {#if $query.isLoading}
-	loading...
+	{#each new Array(10) as _}
+		<EntryItemSkeleton />
+	{/each}
 {:else}
-<div class="h-full shrink" bind:contentRect>
-    <Scroller items={$query.data?.pages.flatMap((p) => p.entries) ?? []}  key={"id"}>
-        <!--  -->
+	{@const entries = $query.data?.pages.flatMap((p) => p.entries) ?? []}
+	<div style:height="{$virtualizer.getTotalSize()}px" class="w-full relative">
+        {#each $virtualizer.getVirtualItems() as row (row.key)}
+        {@const entry = entries[row.index]}
+        <div style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)">
+            <EntryItem {entry} />
+        </div>
+        {/each}
+		<!-- <EntryList {entries} /> -->
+		<!-- <Scroller items={$query.data?.pages.flatMap((p) => p.entries) ?? []}  key={"id"}>
         <svelte:fragment slot="item" let:item={entry}>
-        <!-- <EntryItem {entry} /> -->
+        <EntryItem {entry} />
             <div>
                 {entry.title}
             </div>
         </svelte:fragment>
-    </Scroller>
-</div>
+    </Scroller> -->
+	</div>
 	<!-- {#each $query.data?.pages.flatMap((p) => p.entries) ?? [] as entry}
 	{/each} -->
 {/if}

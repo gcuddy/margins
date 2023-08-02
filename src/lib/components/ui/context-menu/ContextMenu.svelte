@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/tailwind';
 	import type { createContextMenu } from '@melt-ui/svelte';
-    import ContextMenuItem from './ContextMenuItem.svelte';
 
 	type ContextMenu = ReturnType<typeof createContextMenu>;
 	let className = '';
@@ -18,5 +17,5 @@
 	)}
 	melt={$menu}
 >
-	<slot {ContextMenuItem} />
+	<slot />
 </div>

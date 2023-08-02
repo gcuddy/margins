@@ -8,6 +8,7 @@ export async function load({ data }) {
           queries: {
             enabled: browser,
             staleTime: 1000 * 60 * 2, // 2 minutes,
+            gcTime: 1000 * 60 * 60 * 24, // 24 hours (for persistence)
           },
         },
       })

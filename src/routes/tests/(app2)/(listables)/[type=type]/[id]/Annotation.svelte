@@ -49,9 +49,11 @@
 	let pending_delete = false;
 
     let title = !!annotation.title;
+
+    let focused = false;
 </script>
 
-<Card class={pending_delete ? 'opacity-50' : ''}>
+<Card class=" transition-shadow {focused ? 'shadow-md' : ''} {pending_delete ? 'opacity-50' : ''}">
 	<CardHeader class="p-3">
 		<!--  -->
 		<div data-sidebar-annotation-id={annotation.id} class="flex items-center justify-between">
@@ -157,10 +159,13 @@
 		{/if}
 		{#if annotation.contentData}
 			<Editor
-				class="border-none p-1 sm:p-1"
+				class="border-none p-1 min-h-min"
+                focusRing={false}
 				content={annotation.contentData}
 				options={{ editable: editing && !pending }}
                 bind:this={editor}
+                onFocus={() => focused = true}
+                onBlur={() => focused = false}
 			/>
 			{#if editing}
 				<div class="flex justify-end gap-x-4">

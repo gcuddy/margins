@@ -90,7 +90,6 @@
 						$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
 						'relative',
 						'col-start-2',
-                        'h-[calc(100vh-4.5rem)]'
 						// 'px-4 py-6 lg:px-8'
 						// is_article ? ' col-span-5' : 'lg:col-span-4',
 						// is_settings && 'border-none lg:col-span-3',

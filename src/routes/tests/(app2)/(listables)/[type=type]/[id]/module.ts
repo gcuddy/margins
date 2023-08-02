@@ -1,7 +1,8 @@
-import type { PageLoad } from "./$types";
+import type { Type } from "$lib/types";
+import type { ComponentType } from "svelte";
 
 
-export function get_module(type: Parameters<PageLoad>[0]["data"]["type"]) {
+export function get_module(type: Type): Promise<{ default: ComponentType } | undefined> {
     switch (type) {
         case "movie":
             return import("./Movie.svelte");
