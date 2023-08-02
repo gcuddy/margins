@@ -23,6 +23,8 @@
 
 	export let view = 'List';
 
+    // TODO loading
+
 	// type EntryInList = Pick<
 	// 	Entry,
 	// 	| "id"
@@ -42,6 +44,7 @@
 	} = {};
 
 	export let entries: EntryInList[];
+    export let loading = false;
 	$: console.log({ entries });
 
 	export let endpoint: string | undefined = undefined;
@@ -125,6 +128,7 @@
 	import { writable } from 'svelte/store';
 	import NativeSelect from '$components/ui/NativeSelect.svelte';
 	import KanbanList from './KanbanList.svelte';
+	import EntryItemSkeleton from './EntryItemSkeleton.svelte';
 
 	const statuses = {
 		Backlog: HelpCircle,
@@ -278,6 +282,13 @@
 		idAttr: 'data-id',
 		initialId: active_id
 	}} -->
+{#if loading}
+    {#each Array(10) as _}
+        <EntryItemSkeleton />
+    {/each}
+{:else}
+
+
 
 {#if view === 'List'}
 	<ul
@@ -456,7 +467,7 @@
 {:else if view === 'Grid'}{:else if view === 'Kanban'}
 	<KanbanList {entries} />
 {/if}
-
+{/if}
 <!-- TODO: a11y -->
 
 {#if render_menu}

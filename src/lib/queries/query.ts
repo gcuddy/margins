@@ -1,13 +1,15 @@
 // lightweight home built query manager ala React Query
 
-import { type Readable, writable } from 'svelte/store';
+import { type Readable, writable, derived } from 'svelte/store';
 
 import type { Queries, Mutations } from '../../routes/tests/(app2)/queries.server';
 
-import type { RequestEvent } from '@sveltejs/kit';
+import type { Page, RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import type { Session, User } from 'lucia-auth';
 import { dev } from '$app/environment';
+import { page } from '$app/stores';
+import type { CreateInfiniteQueryOptions, CreateQueryOptions } from '@tanstack/svelte-query';
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
@@ -30,7 +32,7 @@ type KeysMatching<T, V> = { [K in keyof T]-?: T[K] extends V ? K : never }[keyof
 
 // Cursor Keys
 export type InfiniteQueries = {
-	[K in keyof Queries]: Parameters<Queries[K]['fn']>[0]['input'] extends { cursor: unknown }
+	[K in keyof Queries]: Parameters<Queries[K]['fn']>[0]['input'] extends { cursor?: any }
 		? K
 		: never;
 }[keyof Queries];
@@ -47,9 +49,122 @@ export type QueryInit = {
 	} | null;
 };
 
+// https://stackoverflow.com/questions/67605122/obtain-a-slice-of-a-typescript-parameters-tuple
+type ParametersExceptFirst<F> = F extends (arg0: any, ...rest: infer R) => any ? R : never;
+
+export function queryCaller(page: Readable<Record<string, string>>) {
+	let $page: Record<string, string>;
+	const unsubPage = page.subscribe((v) => ($page = v));
+	type Params = ParametersExceptFirst<typeof query>;
+
+	const store = derived(page, ($page) => {
+		return async function _query<T extends keyof Queries>(
+			fn: T,
+			input: Parameters<Queries[T]['fn']>[0]['input'] extends IsAny<
+				Parameters<Queries[T]['fn']>[0]['input']
+			>
+				? undefined
+				: Parameters<Queries[T]['fn']>[0]['input'],
+			options?: {
+				stale_time?: number;
+				cache?: boolean;
+				enabled?: boolean;
+			}
+		): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
+			return query($page, fn, input, options);
+		};
+	});
+	return store;
+
+	// return async function query<T extends keyof Queries>(...args) {};
+}
+
+// taken from https://github.com/vishalbalaji/trpc-svelte-query-adapter/blob/main/src/index.ts
+
+// getQueryKey
+type QueryType = 'query' | 'infinite' | 'any';
+
+type QueryKey = [string[], { input?: unknown; type?: Exclude<QueryType, 'any'> }?];
+
+function getArrayQueryKey(
+	queryKey: string | [string] | [string, ...unknown[]] | unknown[],
+	input: unknown,
+	type: QueryType
+): QueryKey {
+	const arrayPath = (
+		typeof queryKey === 'string' ? (queryKey === '' ? [] : queryKey.split('.')) : queryKey
+	) as [string];
+
+	if (!input && (!type || type === 'any'))
+		// for `utils.invalidate()` to match all queries (including vanilla react-query)
+		// we don't want nested array if path is empty, i.e. `[]` instead of `[[]]`
+		return arrayPath.length ? [arrayPath] : ([] as unknown as QueryKey);
+
+	return [
+		arrayPath,
+		{
+			...(typeof input !== 'undefined' && { input: input }),
+			...(type && type !== 'any' && { type: type })
+		}
+	];
+}
+
+type GetQueryType<T> = T extends InfiniteQueries ? 'infinite' | 'query' : 'query';
+
+type CursorType<T extends keyof Queries> = T extends InfiniteQueries
+	? Parameters<Queries[T]['fn']>[0]['input']['cursor']
+	: undefined;
+// : TType extends 'infinite'
+// 	? (
+//         init: Parameters<typeof query<T>>[0],
+//         input: Parameters<typeof query<T>>[2]
+//   ) => CreateInfiniteQueryOptions
+// : (
+//     init: Parameters<typeof query<T>>[0],
+//     input: Parameters<typeof query<T>>[2]
+// ) => CreateQueryOptions
+export function createQueryOption<T extends keyof Queries, TType extends GetQueryType<T>>(
+	fn: T,
+	type: TType = 'query' as TType
+) {
+	type Params = Parameters<typeof query<T>>;
+
+	type Input = Params[2];
+
+	// get array query
+
+    type TOutput = QueryOutput<T>
+
+	return function queryOption(
+		init: Params[0],
+		input: Params[2]
+	): TType extends 'infinite' ? CreateInfiniteQueryOptions<TOutput> : CreateQueryOptions<TOutput> {
+		if (type === 'infinite') {
+			// todo
+            //@ts-expect-error
+			return {
+				queryKey: getArrayQueryKey(fn, input, type),
+				queryFn: ({ pageParam }) =>
+					query(init, fn, {
+						...input,
+						cursor: pageParam
+					}),
+				defaultPageParam: <CursorType<T>>undefined,
+				getNextPageParam: (lastPage) => (lastPage as any).nextCursor
+			} satisfies CreateInfiniteQueryOptions;
+		}
+        //@ts-expect-error
+		return {
+			queryKey: getArrayQueryKey(fn, input, type),
+			queryFn: () => query(init, fn, input)
+		} satisfies CreateQueryOptions;
+	};
+}
+
 export async function query<T extends keyof Queries>(
 	// allow for a base to be passed in that could be unknown
 	base:
+		| any
 		| QueryInit
 		| {
 				[index: string]: unknown;
@@ -93,7 +208,7 @@ export async function query<T extends keyof Queries>(
 	}
 	if (options) {
 		if (options.cache) {
-            // TODO: stale time (wil require caching lookup time)
+			// TODO: stale time (wil require caching lookup time)
 			if (query_store_cache_lookup.has(url)) {
 				return query_store_cache_lookup.get(url) as Data;
 			}
@@ -182,37 +297,37 @@ export class Query {
 		this.userId = init.userId || null;
 	}
 
-	// tried to have this return query_store and disaster ensued
-	async query<T extends keyof Queries>(
-		fn: T,
-		input: Parameters<Queries[T]['fn']>[0]['input'] extends IsAny<
-			Parameters<Queries[T]['fn']>[0]['input']
-		>
-			? undefined
-			: Parameters<Queries[T]['fn']>[0]['input'],
-		opts?: Partial<{
-			fetcher: typeof fetch;
-			userId: string | null;
-			debounce: number;
-		}>
-	): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
-		console.log('running query', new Date());
-		const { debounce } = opts || {};
-		const { fetcher = fetch, userId = null } = this || {};
-		const data = stringify(input);
-		let url = this.url.origin + `/tests/sq/${fn}?input=${data}`;
-		if (userId) {
-			url += `&userId=${userId}`;
-		}
-		type Data = Awaited<ReturnType<Queries[T]['fn']>>;
-		// if (query_store_cache_lookup.has(url)) {
-		//     return query_store_cache_lookup.get(url) as Data;
-		// }
-		console.log({ url });
-		const final = (await fetcher(url).then((res) => res.json())) as Awaited<Data>;
-		query_store_cache_lookup.set(url, final);
-		return final;
-	}
+	// // tried to have this return query_store and disaster ensued
+	// async query<T extends keyof Queries>(
+	// 	fn: T,
+	// 	input: Parameters<Queries[T]['fn']>[0]['input'] extends IsAny<
+	// 		Parameters<Queries[T]['fn']>[0]['input']
+	// 	>
+	// 		? undefined
+	// 		: Parameters<Queries[T]['fn']>[0]['input'],
+	// 	opts?: Partial<{
+	// 		fetcher: typeof fetch;
+	// 		userId: string | null;
+	// 		debounce: number;
+	// 	}>
+	// ): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
+	// 	console.log('running query', new Date());
+	// 	const { debounce } = opts || {};
+	// 	const { fetcher = fetch, userId = null } = this || {};
+	// 	const data = stringify(input);
+	// 	let url = this.url.origin + `/tests/sq/${fn}?input=${data}`;
+	// 	if (userId) {
+	// 		url += `&userId=${userId}`;
+	// 	}
+	// 	type Data = Awaited<ReturnType<Queries[T]['fn']>>;
+	// 	// if (query_store_cache_lookup.has(url)) {
+	// 	//     return query_store_cache_lookup.get(url) as Data;
+	// 	// }
+	// 	console.log({ url });
+	// 	const final = (await fetcher(url).then((res) => res.json())) as Awaited<Data>;
+	// 	query_store_cache_lookup.set(url, final);
+	// 	return final;
+	// }
 }
 
 export function q(init: { url: URL; fetcher?: typeof fetch; userId?: string | null }) {

@@ -175,11 +175,11 @@ export async function get_library(
 		query = query.where('e.type', '=', filter.type);
 	}
 	const entries = await query.execute();
-	let next = null;
+	let nextCursor = null;
 	if (entries.length > take) {
 		const nextItem = entries.pop();
 		if (nextItem) {
-			next = {
+			nextCursor = {
 				updatedAt: nextItem.updatedAt,
 				sort_order: nextItem.sort_order
 			};
@@ -187,7 +187,7 @@ export async function get_library(
 	}
 	return {
 		entries,
-		next
+		nextCursor
 	};
 }
 

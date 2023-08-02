@@ -18,12 +18,12 @@ declare namespace App {
 
     interface PageData {
         // user?: import('$lib/user').RootUserData;
-        user?: import("$lib/trpc/router").RouterOutputs["user"]["getUser"] & {
-            stateIdToLocation: Map<number, import("@prisma/client").Location>;
-            stateIdToName: Map<number, string>;
-            states: import("$lib/trpc/router").RouterOutputs["user"]["getStates"];
-            subscriptions: import("$lib/trpc/router").RouterOutputs["subscriptions"]["list"];
-        };
+        // user?: import("$lib/trpc/router").RouterOutputs["user"]["getUser"] & {
+        //     stateIdToLocation: Map<number, import("@prisma/client").Location>;
+        //     stateIdToName: Map<number, string>;
+        //     states: import("$lib/trpc/router").RouterOutputs["user"]["getStates"];
+        //     subscriptions: import("$lib/trpc/router").RouterOutputs["subscriptions"]["list"];
+        // };
         user_data?: {
             tags?: Promise<{ id: number; name: string; }[]>;
         }

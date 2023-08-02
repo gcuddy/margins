@@ -29,8 +29,7 @@
 	import type { Snapshot } from './$types';
 	import LibraryTabs from './LibraryTabs.svelte';
 	import inView from '$lib/actions/inview';
-	import { useMenuBar } from '../../../MainNav.svelte';
-	import { invalidated, state } from '$lib/state/entries';
+	import { init_entries, invalidated, state } from '$lib/state/entries';
 	import { fade } from 'svelte/transition';
 	import { onDestroy } from 'svelte';
 	import { check_inert } from '$lib/utils';
@@ -45,17 +44,58 @@
 	import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
 	import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
 	import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
+	import { createInfiniteQuery, createQuery } from '@tanstack/svelte-query';
+	import { derived } from 'svelte/store';
+	import { libraryQuery } from './queries';
+	import { QueryOutput, query as qquery } from '$lib/queries/query';
+	import EntryItem from '$components/entries/EntryItem.svelte';
+	import Scroller from '$components/Scroller.svelte';
 
 	$: filter_type = $page.url.searchParams.get('type');
 	export let data;
 	let value = $page.url.searchParams.get('search') ?? '';
 
-	$: filtered_entries = data.entries;
+	$: filtered_entries = [];
 
 	// $: {
 	// 	const regexQuery = new RegExp(value, 'i');
 	// 	filtered_entries = data.entries?.filter((entry) => entry.title?.match(regexQuery));
 	// }
+
+	const query = createInfiniteQuery(
+		derived(page, ($page) => ({
+			queryKey: [
+				['get_library'],
+				{
+					input: {
+						status: data.Status,
+						type: data.type,
+						search: $page.url.searchParams.get('search') ?? ''
+					},
+					type: 'infinite'
+				}
+			],
+			queryFn: ({ queryKey, pageParam }) =>
+				qquery($page, 'get_library', {
+					status: data.Status,
+					type: data.type,
+					search: $page.url.searchParams.get('search') ?? ''
+				}),
+			// ...libraryQuery($page, {
+			// 	status: data.Status,
+			// 	type: data.type,
+			// 	search: $page.url.searchParams.get('search') ?? ''
+			// }),
+			getNextPageParam: (lastPage) => lastPage.nextCursor,
+			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null,
+
+		}))
+	);
+
+    // <!-- probably not smart -->
+    $: if ($query.data) init_entries($query.data.pages.flatMap((page) => page.entries));
+
+	$: console.log({ $query });
 
 	let can_restore = false;
 
@@ -66,33 +106,33 @@
 
 	let entryList: EntryList;
 
-	export const snapshot: Snapshot = {
-		capture: () => ({
-			data,
-			list: entryList?.capture()
-		}),
-		restore: (values) => {
-			if (!can_restore) return;
+	// export const snapshot: Snapshot = {
+	// 	capture: () => ({
+	// 		data,
+	// 		list: entryList?.capture()
+	// 	}),
+	// 	restore: (values) => {
+	// 		if (!can_restore) return;
 
-			// how can I 'sync' the newly fetched data with the old data?
-			// if the values exist in state, we should utilitize those isntead
+	// 		// how can I 'sync' the newly fetched data with the old data?
+	// 		// if the values exist in state, we should utilitize those isntead
 
-			// this only works if data is fresh fresh...
-			// data.entries = values.data.entries.map((entry) => {
-			// 	const state_entry = $state[entry.id]
-			// 	if (state_entry) {
-			// 		return state_entry;
-			// 	}
-			// 	return entry;
-			// });
-			data.entries = values.data.entries;
-			data.next = values.data.next;
+	// 		// this only works if data is fresh fresh...
+	// 		// data.entries = values.data.entries.map((entry) => {
+	// 		// 	const state_entry = $state[entry.id]
+	// 		// 	if (state_entry) {
+	// 		// 		return state_entry;
+	// 		// 	}
+	// 		// 	return entry;
+	// 		// });
+	// 		data.entries = values.data.entries;
+	// 		data.next = values.data.next;
 
-			if (values.list) {
-				entryList?.restore(values.list);
-			}
-		}
-	};
+	// 		if (values.list) {
+	// 			entryList?.restore(values.list);
+	// 		}
+	// 	}
+	// };
 
 	const { enhance: enhance_add_url } = superForm(data.urlForm, {
 		invalidateAll: false,
@@ -151,36 +191,36 @@
 	let loading = false;
 	let loading_more = false;
 
-	async function more() {
-		// could also pass in endpoint ala https://github.com/Rich-Harris/sveltesnaps/blob/main/src/routes/%5Baccount%5D/%2Bpage.svelte
-		// but this is fine for now
-		console.log('fetching more', {
-			loading_more,
-			next: data.next
-		});
+	// async function more() {
+	// 	// could also pass in endpoint ala https://github.com/Rich-Harris/sveltesnaps/blob/main/src/routes/%5Baccount%5D/%2Bpage.svelte
+	// 	// but this is fine for now
+	// 	console.log('fetching more', {
+	// 		loading_more,
+	// 		next: data.next
+	// 	});
 
-		if (loading_more || !data.next) return;
-		loading_more = true;
+	// 	if (loading_more || !data.next) return;
+	// 	loading_more = true;
 
-		const { updatedAt, sort_order } = data.next;
-		console.log({
-			updatedAt,
-			sort_order
-		});
-		const response = await fetch(
-			`/api/entries/library/${data.status}.json?after_sort=${sort_order}&after_updated=${updatedAt}`
-		);
-		const result = (await response.json()) as LibraryResponse;
+	// 	const { updatedAt, sort_order } = data.next;
+	// 	console.log({
+	// 		updatedAt,
+	// 		sort_order
+	// 	});
+	// 	const response = await fetch(
+	// 		`/api/entries/library/${data.status}.json?after_sort=${sort_order}&after_updated=${updatedAt}`
+	// 	);
+	// 	const result = (await response.json()) as LibraryResponse;
 
-		// mutate data object (!)
-		data.entries = [...data.entries, ...result.entries];
-		data.next = result.next;
+	// 	// mutate data object (!)
+	// 	data.entries = [...data.entries, ...result.entries];
+	// 	data.next = result.next;
 
-		loading_more = false;
-	}
-	$: {
-		console.log({ next: data.next });
-	}
+	// 	loading_more = false;
+	// }
+	// $: {
+	// 	console.log({ next: data.next });
+	// }
 
 	let form: HTMLFormElement;
 	const debounced_submit = debounce(() => {
@@ -189,39 +229,24 @@
 		}
 	}, 200);
 
-    const handle_filter_input = (e: Event) => {
-        const target = e.target as HTMLInputElement;
-        const value = target.value;
-        // optimistic update by filtering the entries in js first
-        // const regexQuery = new RegExp(value, 'i');
-        // filtered_entries = data.entries?.filter((entry) => entry.title?.match(regexQuery));
-        debounced_submit();
-    }
+	const handle_filter_input = (e: Event) => {
+		const target = e.target as HTMLInputElement;
+		const value = target.value;
+		// optimistic update by filtering the entries in js first
+		// const regexQuery = new RegExp(value, 'i');
+		// filtered_entries = data.entries?.filter((entry) => entry.title?.match(regexQuery));
+		debounced_submit();
+	};
 
 	$: is_searching = $navigating?.to?.url.pathname === $page.url.pathname;
 
-	const menu = useMenuBar();
-	$menu.html = 'Library';
-
-	onDestroy(() => {
-		$menu.html = '';
-		$menu.center = false;
-	});
+    let contentRect: DOMRectReadOnly | null = null;
+    $: console.log({ contentRect });
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
 
-<div
-	bind:this={container}
-	use:inView
-	on:exit={() => {
-		$menu.center = true;
-	}}
-	on:enter={() => {
-		$menu.center = false;
-	}}
-	class="flex items-center justify-between"
->
+<div bind:this={container} use:inView class="flex items-center justify-between">
 	<H1>{data.Status}</H1>
 	<div class="flex items-center gap-x-2">
 		<Dialog bind:isOpen={url_modal}>
@@ -278,7 +303,7 @@
 					Filter
 				{/if}
 			</PopoverTrigger>
-			<PopoverContent placement='bottom-start' class="w-[200px] p-0">
+			<PopoverContent placement="bottom-start" class="w-[200px] p-0">
 				<Command>
 					<CommandInput placeholder="Filter..." />
 					<CommandList>
@@ -375,17 +400,13 @@
 			</div>
 		{/if}
 		<DropdownMenu>
-			<DropdownMenuTrigger class={buttonVariants({variant: "secondary", size: 'sm'})}>
-					<ArrowDownUpIcon class="h-4 w-4 mr-2" />
-					Sort
+			<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+				<ArrowDownUpIcon class="h-4 w-4 mr-2" />
+				Sort
 			</DropdownMenuTrigger>
 			<DropdownMenuContent placement="bottom">
-				<DropdownMenuItem>
-					Name
-				</DropdownMenuItem>
-				<DropdownMenuItem>
-					Author
-				</DropdownMenuItem>
+				<DropdownMenuItem>Name</DropdownMenuItem>
+				<DropdownMenuItem>Author</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	</div>
@@ -414,35 +435,45 @@
 		{/if}
 	</form>
 </div>
-{#if loading}
-	<div class="flex flex-col">
-		<EntryItemSkeleton />
-		<EntryItemSkeleton />
-		<EntryItemSkeleton />
-		<EntryItemSkeleton />
-		<EntryItemSkeleton />
-	</div>
+
+{#if $query.isLoading}
+	loading...
 {:else}
-	<EntryList
-		bind:this={entryList}
-		class="mt-4"
-		status={data.status}
-		bulkForm={data.bulkForm}
-		on:move={(e) => {
-			library_tabs.move_entries(e.detail.entries, e.detail.status);
-			// mutate data object (!)
-			e.detail.entries.forEach((entry) => {
-				const index = data.entries.findIndex((e) => e.id === entry.id);
-				data.entries[index].status = e.detail.status;
-			});
-		}}
-		entries={filtered_entries?.filter((e) => e.status === data.Status)}
-		on:end={more}
-	/>
-	{#if data.next}
+<div class="h-full shrink" bind:contentRect>
+    <Scroller items={$query.data?.pages.flatMap((p) => p.entries) ?? []}  key={"id"}>
+        <!--  -->
+        <svelte:fragment slot="item" let:item={entry}>
+        <!-- <EntryItem {entry} /> -->
+            <div>
+                {entry.title}
+            </div>
+        </svelte:fragment>
+    </Scroller>
+</div>
+	<!-- {#each $query.data?.pages.flatMap((p) => p.entries) ?? [] as entry}
+	{/each} -->
+{/if}
+<!-- <EntryList
+	loading={$query.isLoading}
+	bind:this={entryList}
+	class="mt-4"
+	status={data.status}
+	bulkForm={data.bulkForm}
+	on:move={(e) => {
+		library_tabs.move_entries(e.detail.entries, e.detail.status);
+		// mutate data object (!)
+		e.detail.entries.forEach((entry) => {
+			// TODO
+			const index = data.entries.findIndex((e) => e.id === entry.id);
+			data.entries[index].status = e.detail.status;
+		});
+	}}
+	entries={$query.data?.pages.flatMap((p) => p.entries) ?? []}
+	on:end={() => $query.hasNextPage && !$query.isFetchingNextPage && $query.fetchNextPage()}
+/> -->
+<!-- {#if data.next}
 		<a
 			href="{$page.url.pathname}?after_sort={data.next.sort_order}&after_updated={data.next
 				.updatedAt}">next page</a
 		>
-	{/if}
-{/if}
+	{/if} -->

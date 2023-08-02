@@ -141,7 +141,7 @@
 
 	let anchor_el: HTMLAnchorElement;
 
-	$: data = $state[entry.id];
+	$: data = $state[entry.id] || {};
 
 	$: if (data?.status) $value = data.status;
 	$: attachment = data?.relations?.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');

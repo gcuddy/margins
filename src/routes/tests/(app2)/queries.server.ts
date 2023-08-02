@@ -14,17 +14,18 @@ import {
 	deleteAnnotation,
 	getNotebook,
 	getNotebookSchema,
+	get_notes_for_tag,
 	s_add_to_collection,
 	set_tags_on_entry,
 	tagsOnEntrySchema,
 	updateBookmark,
 	updateBookmarkSchema,
 	upsertAnnotation,
-    upsertAnnotationSchema
+	upsertAnnotationSchema
 } from '$lib/queries/server';
 import { sql } from 'kysely';
 import { z } from 'zod';
-import { fetchList, inputSchema } from './(listables)/library/fetch.server';
+import { fetchList, inputSchema } from './library/fetch.server';
 import { jsonArrayFrom } from 'kysely/helpers/mysql';
 import { books } from '$lib/api/gbook';
 import {
@@ -34,11 +35,11 @@ import {
 import { annotationSchema } from '$lib/annotation';
 import { type Condition, View } from './views/new/View';
 import spotify from '$lib/api/spotify';
-import { get_entry_details } from '$lib/server/queries';
+import { get_entry_details, get_library } from '$lib/server/queries';
 import { typeSchema } from '$lib/types';
 import { twitter } from '$lib/twitter';
 import type { Tweet } from '$lib/api/twitter';
-import { Status } from '@prisma/client';
+import { DocumentType, Status } from '@prisma/client';
 
 interface Query<I extends z.ZodTypeAny, Data> {
 	staleTime?: number;
@@ -78,7 +79,8 @@ export const mutations = {
 		schema: upsertAnnotationSchema.omit({
 			userId: true
 		}),
-		fn: async ({ ctx: { userId }, input }) => upsertAnnotation({ ...input, target: input.target as any, userId })
+		fn: async ({ ctx: { userId }, input }) =>
+			upsertAnnotation({ ...input, target: input.target as any, userId })
 	}),
 	deleteAnnotation: query({
 		schema: idSchema,
@@ -296,6 +298,31 @@ export const queries = {
 		},
 		headers: {
 			'cache-control': `s-maxage=1, stale-while-revalidate=${60 * 60 * 24}`
+		}
+	}),
+	get_library: query({
+		schema: z.object({
+			status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
+			search: z.string().optional(),
+			type: typeSchema.optional(),
+			cursor: z
+				.object({
+					sort_order: z.number(),
+					updatedAt: z.coerce.date()
+				})
+				.optional()
+		}),
+		fn: async ({ ctx, input }) => {
+			const { search, status, type, cursor } = input;
+			return get_library(
+				ctx.userId,
+				status,
+				{
+					search,
+					type
+				},
+				cursor
+			);
 		}
 	}),
 	get_entry: query({
@@ -628,6 +655,41 @@ export const queries = {
 					'in_reply_to_user_id'
 				]
 			})) as Tweet;
+		}
+	}),
+	get_notes_for_tag: query({
+		schema: z.object({ name: z.string().nonempty() }),
+		fn: async ({ input: { name }, ctx: { userId } }) => get_notes_for_tag({ name, userId })
+	}),
+	get_entries_for_tag: query({
+		schema: z.object({
+			name: z.string().nonempty()
+		}),
+		fn: async ({ input, ctx }) => {
+			let query = db
+				.selectFrom('TagOnEntry as toe')
+				.innerJoin('Entry as e', 'e.id', 'toe.entryId')
+				.innerJoin('Tag as t', (join) =>
+					join.onRef('t.id', '=', 'toe.tagId').on('t.name', '=', input.name)
+				)
+				.select(entrySelect)
+				.select(['t.id as tag_id'])
+				.where('toe.userId', '=', ctx.userId)
+				.orderBy('toe.id', 'desc')
+				.execute();
+			return query;
+		}
+	}),
+	get_tag_deets: query({
+		schema: z.object({ name: z.string().nonempty() }),
+		fn: async ({ input: { name }, ctx: { userId } }) => {
+			return db
+				.selectFrom('Tag')
+				.leftJoin('Favorite as pin', 'pin.tagId', 'Tag.id')
+				.where('Tag.name', '=', name)
+				.where('Tag.userId', '=', userId)
+				.select(['Tag.id', 'Tag.name', 'pin.id as pin_id'])
+				.executeTakeFirstOrThrow();
 		}
 	})
 } as const;

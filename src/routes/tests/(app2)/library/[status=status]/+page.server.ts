@@ -19,26 +19,15 @@ export const load = (async (event) => {
         // this shouldn't be the case given our param checker, bt just in case
         throw redirect(302, "/tests/library/now");
     }
+    const session = await locals.validate();
+    if (!session) {
+        throw error(401, "Unauthorized");
+    }
 
     event.depends("entries")
     // const userId = session.userId;
 
     const type = types.includes(url.searchParams.get("type") ?? '') ? url.searchParams.get("type") as Type : undefined;
-
-    // fetch via an API route for the sake of infinite scroll/pagination
-    const response = await fetch(
-        `/api/entries/library/${status.toLowerCase()}.json?after_sort=${url.searchParams.get('after_sort') ?? ''}&after_updated=${url.searchParams.get('after_updated') ?? ''}&search=${url.searchParams.get('search') ?? ''}&type=${type ?? ''}`,
-    )
-    if (!response.ok) {
-        console.error(response)
-        if (response.status === 401) {
-            throw redirect(302, handleLoginRedirect(event));
-        } else {
-            throw error(response.status, await response.text());
-        }
-    }
-    const { entries, next } = await response.json() as LibraryResponse;
-    console.log({ entries, next })
 
     return {
         status: status.toLocaleLowerCase() as keyof typeof statusLookup,
@@ -47,7 +36,8 @@ export const load = (async (event) => {
         urlForm: superValidate(urlSchema),
         bulkForm: superValidate(bulkEntriesSchema),
         // userId: session.userId,
-        entries,
-        next
+        // entries,
+        // next,
+        session
     };
 }) satisfies PageServerLoad

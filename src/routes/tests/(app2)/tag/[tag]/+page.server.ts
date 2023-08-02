@@ -14,38 +14,9 @@ export async function load({ locals, params, url, fetch }) {
 		throw error(401, 'Unauthorized');
 	}
 
-	// use api route for pagination
-	const [{ entries, nextCursor }, tag_deets] = await Promise.all([
-		fetch(
-			`/api/entries/tag/${params.tag}.json?cursor=${url.searchParams.get('cursor') ?? ''}`
-		).then(
-			(r) =>
-				r.json() as Promise<{
-					entries: (EntryInList & {
-						tag_id: number;
-					})[];
-					nextCursor: number | undefined;
-				}>
-		),
-		db
-			.selectFrom('Tag')
-			.leftJoin('Favorite as pin', 'pin.tagId', 'Tag.id')
-			.where('Tag.name', '=', tag)
-			.where('Tag.userId', '=', session.userId)
-			.select(['Tag.id', 'Tag.name', 'pin.id as pin_id'])
-			.executeTakeFirstOrThrow()
-	]);
-
 	return {
-		tag: tag_deets,
-		entries,
-		nextCursor,
 		session,
-		bulkForm: superValidate(bulkEntriesSchema),
-		notes: get_notes_for_tag({
-			name: tag,
-			userId: session.userId
-		})
+		bulkForm: superValidate(bulkEntriesSchema)
 	};
 }
 

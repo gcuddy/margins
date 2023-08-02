@@ -10,6 +10,12 @@
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
 	import { queryParam, ssp } from 'sveltekit-search-params';
+	import { createQuery } from '@tanstack/svelte-query';
+	import { query } from '$lib/queries/query';
+	import { tagDeets, tagEntries, tagNotes } from './queries';
+	import { derived } from 'svelte/store';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
 
 	export let data;
 	let entrylist: EntryList;
@@ -28,28 +34,49 @@
 			tab.set(value);
 		}
 	});
+
+	const tagDeetsQuery = createQuery(tagDeets($page, data.tag));
+	const entriesQuery = createQuery(
+		derived(page, ($page) => ({
+			...tagEntries($page, data.tag),
+			// enabled: $page.url.searchParams.get('tab') !== 'notes'
+		}))
+	);
+	const notesQuery = createQuery(
+		derived(page, ($page) => ({
+			...tagNotes($page, data.tag),
+			// enabled: $page.url.searchParams.get('tab') === 'notes'
+		}))
+	);
 </script>
 
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
-		<H1 class="flex items-baseline space-x-3">
-			<TagIcon />
-			<span>
-				{data.tag.name}
-			</span>
-		</H1>
-		<PinButton pin_id={data.tag.pin_id}>
-			<input type="hidden" name="tag_id" value={data.tag.id} />
-		</PinButton>
+		{#if $tagDeetsQuery.isLoading}
+			<Skeleton class="w-24 h-8" />
+		{:else if $tagDeetsQuery.isSuccess}
+			{@const tag = $tagDeetsQuery.data}
+
+			<H1 class="flex items-baseline space-x-3">
+				<TagIcon />
+				<span>
+					{tag.name}
+				</span>
+			</H1>
+			<PinButton pin_id={tag.pin_id}>
+				<input type="hidden" name="tag_id" value={tag.id} />
+			</PinButton>
+		{/if}
 	</div>
 	<div melt={$root}>
 		<TabsList>
 			<TabsTrigger class="gap-1.5" value="entries"
-				><span>Entries</span> <Muted>{data.entries.length}</Muted></TabsTrigger
+				><span>Entries</span>
+				<Muted>{$entriesQuery.data ? $entriesQuery.data.length : ''}</Muted></TabsTrigger
 			>
 			<TabsTrigger class="gap-1.5" value="notes"
 				><span>Notes</span>
-				<Muted>{data.notes.length}</Muted>
+				<Muted>{$notesQuery.data ? $notesQuery.data.length : ''}</Muted>
 				<!-- {#await data.lazy.notes then notes}<Muted>{notes.length}</Muted>{/await} -->
 			</TabsTrigger>
 		</TabsList>
@@ -57,21 +84,19 @@
 			<EntryList
 				class="mt-8"
 				bulkForm={data.bulkForm}
-				entries={data.entries}
+				loading={$entriesQuery.isLoading}
+				entries={$entriesQuery.data ?? []}
 				on:end={async () => {
-					if (loading || !data.nextCursor) return;
-					loading = true;
-
-					const response = await fetch(
-						`/api/entries/tag/${data.tag.name}?cursor=${data.nextCursor}`
-					);
-					const result = await response.json();
-
-					//@ts-ignore
-					data.entries = [...data.entries, ...result.entries];
-					data.nextCursor = result.nextCursor;
-
-					loading = false;
+					// if (loading || !data.nextCursor) return;
+					// loading = true;
+					// const response = await fetch(
+					// 	`/api/entries/tag/${data.tag.name}?cursor=${data.nextCursor}`
+					// );
+					// const result = await response.json();
+					// //@ts-ignore
+					// data.entries = [...data.entries, ...result.entries];
+					// data.nextCursor = result.nextCursor;
+					// loading = false;
 				}}
 			/></TabsContent
 		>
@@ -79,9 +104,13 @@
 			<!-- {#await data.lazy.notes}
 				loading...
 			{:then notes} -->
-			{#each data.notes as note}
-				<Annotation annotation={note} />
-			{/each}
+			{#if $notesQuery.isLoading}
+				<AnnotationSkeleton />
+			{:else if $notesQuery.isSuccess}
+				{#each $notesQuery.data as note}
+					<Annotation annotation={note} />
+				{/each}
+			{/if}
 			<!-- {/await} -->
 		</TabsContent>
 	</div>
