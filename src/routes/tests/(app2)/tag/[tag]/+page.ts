@@ -19,8 +19,8 @@ export const load = async (e) => {
 					queryFn: async () => query(e, 'get_entries_for_tag', { name })
 			  })
 	]);
-    return {
-        ...data,
-        tag: name
-    }
+	return {
+		...data,
+		tag: name
+	};
 };

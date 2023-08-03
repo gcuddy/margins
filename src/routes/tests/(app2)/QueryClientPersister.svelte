@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { get, set, del } from 'idb-keyval';
 
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, setContext } from 'svelte';
 	import type { QueryClient } from '@tanstack/query-core';
 	import { setQueryClientContext } from '@tanstack/svelte-query';
 	import { persistQueryClient } from '@tanstack/query-persist-client-core';
 	import type { PersistedClient, Persister } from '@tanstack/query-persist-client-core';
+	import { writable } from 'svelte/store';
 	export let client: QueryClient;
 
-	let restoring = false;
+	const restoring = writable(true);
+    setContext('isRestoring', restoring);
 
 	setQueryClientContext(client);
 
@@ -33,7 +35,7 @@
 	// });
 
 	onMount(() => {
-		restoring = true;
+		restoring.set(true)
 		const [unsubscribe, promise] = persistQueryClient({
 			queryClient: client,
 			persister,
@@ -52,7 +54,7 @@
 				// run paused mutations if you want
 			})
 			.finally(() => {
-				restoring = false;
+				restoring.set(false);
 			});
 		return () => {
 			unsubscribe();
@@ -61,4 +63,4 @@
 	});
 </script>
 
-<slot />
+<slot isRestoring={$restoring} />

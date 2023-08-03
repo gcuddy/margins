@@ -22,6 +22,13 @@ import { z } from 'zod';
 import { validate_form } from '$lib/utils/forms';
 import { relationSchema, update_relation } from '$lib/server/mutations';
 
+export async function load() {
+    const tagForm = await superValidate(tagSchema);
+    return {
+        tagForm
+    }
+}
+
 
 export const actions: Actions = {
 	updateBookmark: async (e) => {

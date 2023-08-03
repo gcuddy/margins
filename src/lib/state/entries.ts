@@ -38,6 +38,7 @@ export const stale_time = readable(2000);
 export function init_entries(entries: EntryState[]) {
 	update((lookup) => {
 		for (const entry of entries) {
+            if (!entry) continue;
 			if (!lookup[entry.id]) {
 				lookup[entry.id] = entry;
 			}

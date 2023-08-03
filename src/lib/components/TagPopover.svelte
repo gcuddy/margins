@@ -1,11 +1,5 @@
 <script lang="ts">
-	import {
-		ArrowUpCircle,
-		CheckCircle2,
-		Circle,
-		HelpCircle,
-		XCircle,
-	} from "lucide-svelte";
+	import { ArrowUpCircle, CheckCircle2, Circle, HelpCircle, XCircle } from 'lucide-svelte';
 
 	// LucideIco/n,
 	// import { cn } from $lib/utils/tailwind"
@@ -15,50 +9,53 @@
 		CommandGroup,
 		CommandInput,
 		CommandItem,
-		CommandList,
-	} from "$lib/components/ui/command";
-	import {
-		Popover,
-		PopoverContent,
-		PopoverTrigger,
-	} from "$lib/components/ui/popover";
-	import Button, { buttonVariants } from "./ui/Button.svelte";
-	import { page } from "$app/stores";
-	import type { Promiseable } from "$lib/utils/type-utils";
-	import type { Entry, Tag } from "@prisma/client";
-	import Checkbox from "./ui/Checkbox.svelte";
+		CommandList
+	} from '$lib/components/ui/command';
+	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
+	import Button, { buttonVariants } from './ui/Button.svelte';
+	import { page } from '$app/stores';
+	import type { Promiseable } from '$lib/utils/type-utils';
+	import type { Entry, Tag } from '@prisma/client';
+	import Checkbox from './ui/Checkbox.svelte';
 	// import { enhance } from "$app/forms";
-	import type { Validation } from "sveltekit-superforms";
-	import type { TagSchema } from "$lib/features/entries/forms";
-	import { superForm } from "sveltekit-superforms/client";
-	import { cn } from "$lib/utils/tailwind";
-	import { tick } from "svelte";
-	import Badge from "./ui/Badge.svelte";
+	import type { SuperValidated, Validation } from 'sveltekit-superforms';
+	import type { TagSchema } from '$lib/features/entries/forms';
+	import { superForm } from 'sveltekit-superforms/client';
+	import { cn } from '$lib/utils/tailwind';
+	import { tick } from 'svelte';
+	import Badge from './ui/Badge.svelte';
 
-	export let tags: Promiseable<{id: string; name: string;}[]> =
-		$page.data.user_data?.tags ?? [];
+	export let tags: Promiseable<{ id: number; name: string }[]> = $page.data.user_data?.tags ?? [];
 
-	export let entry: Pick<Entry, "id"> & {
+	export let entry: Pick<Entry, 'id'> & {
 		tags?: {
 			id: number;
 			name: string;
 		}[];
 	};
 
-	export let data: Validation<TagSchema>;
+	export let data: SuperValidated<TagSchema>;
 
 	const { form, enhance } = superForm(data, {
-		dataType: "json",
+		dataType: 'json',
 		onSubmit: (data) => {
-			console.log("submit", data);
-		},
+			console.log('submit', data);
+		}
 	});
+	form.set(
+		{
+			tags: entry.tags ?? []
+		},
+		{
+			taint: false
+		}
+	);
 
-	$: console.log({$form})
+	$: console.log({ $form });
 
 	export let action_prefix = `/tests/entry/${entry.id}`;
 
-	let value = "";
+	let value = '';
 
 	let formEl: HTMLFormElement;
 
@@ -91,28 +88,26 @@
 		<PopoverTrigger
 			class={cn(
 				buttonVariants({
-					variant: "outline",
+					variant: 'outline',
 					size: 'xs'
 				}),
-				"w-[100px]"
+				'w-[100px]'
 			)}
 		>
 			Add tag
 		</PopoverTrigger>
 		<PopoverContent
-		placement="left"
+			placement="left"
 			class="p-0"
 			on:open={(e) => {
-				value = "";
+				value = '';
 				if (!e.detail.open)
 					tick().then(() => {
 						// test for equality
-						if (
-							JSON.stringify($form.tags) === JSON.stringify(entry.tags ?? [])
-						) {
-							console.log("no change");
+						if (JSON.stringify($form.tags) === JSON.stringify(entry.tags ?? [])) {
+							console.log('no change');
 						} else {
-							console.log("change");
+							console.log('change');
 							formEl?.requestSubmit();
 						}
 					});
@@ -124,21 +119,21 @@
 				}}
 				multiple
 				on:add={async ({ detail }) => {
-					console.log("select", detail);
+					console.log('select', detail);
 					const tag = (await tags).find((t) => t.name === detail.value);
 					if (tag) {
 						$form.tags = [...$form.tags, tag];
 					} else {
-						console.warn("tag not found", detail.value);
+						console.warn('tag not found', detail.value);
 					}
 				}}
 				on:remove={async ({ detail }) => {
-					console.log("remove", detail);
+					console.log('remove', detail);
 					$form.tags = $form.tags.filter((t) => t.name !== detail.value);
 				}}
 				on:close={() => {
 					close(null);
-					value = "";
+					value = '';
 				}}
 				selected={$form.tags.map((tag) => tag.name)}
 			>
@@ -148,7 +143,7 @@
 						<button
 							on:click={() => {
 								close(null);
-								value = "";
+								value = '';
 							}}
 							formaction="{action_prefix}?/createTag&name={value}"
 							class="relative flex w-full cursor-default select-none items-center rounded-md bg-gray-100 px-2 py-1.5 text-sm font-medium outline-none dark:bg-gray-700"

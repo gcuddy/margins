@@ -25,7 +25,7 @@
 		DropdownMenuItem,
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
-	import { mutation } from '$lib/queries/query';
+	import { MutationInput, QueryInput, QueryOutput, mutation, qquery } from '$lib/queries/query';
 	import { state, update_entry } from '$lib/state/entries';
 	import mq from '$lib/stores/mq';
 	import { check_inert, check_inside_input, getHostname } from '$lib/utils';
@@ -48,7 +48,7 @@
 	import Annotation from './[id]/Annotation.svelte';
 	import NoteForm from './[id]/NoteForm.svelte';
 	import Input from '$components/ui/Input.svelte';
-	import { writable, type Writable } from 'svelte/store';
+	import { derived, writable, type Writable } from 'svelte/store';
 	import type { PDFDocumentProxy } from 'pdfjs-dist';
 	import type Pdf from './[id]/PDF.svelte';
 	import NoteModal from './[id]/NoteModal.svelte';
@@ -60,8 +60,18 @@
 	import { removeScroll } from '$lib/helpers';
 	import { backOut } from 'svelte/easing';
 	import Editor from '$components/ui/editor/Editor.svelte';
-	import { extractDataFromContentData, findNodes, isJSONContent } from '$components/ui/editor/utils';
+	import {
+		extractDataFromContentData,
+		findNodes,
+		isJSONContent
+	} from '$components/ui/editor/utils';
 	import { nanoid } from 'nanoid';
+	import { createMutation, createQuery } from '@tanstack/svelte-query';
+	import { createQueryOptions } from '$lib/queries/options';
+	import type { Type } from '$lib/types';
+	import { useEntry } from './[id]/query';
+	import { QueryFactory, queryFactory } from '$lib/queries/querykeys';
+	import { effect, typedDerived } from '@melt-ui/svelte/internal/helpers';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
@@ -100,6 +110,13 @@
 
 	export let width = $width_store || 360;
 
+	const saveNoteMutation = createMutation({
+		mutationFn: (data: MutationInput<'save_note'>) => mutation($page, 'save_note', data)
+		//    TODO: invalidate entries onsettled
+	});
+
+	$saveNoteMutation.variables;
+
 	// debounce width update and set store
 	// const debounced_set_width = debounce(() => {
 	// 	width_store.set(width);
@@ -109,8 +126,56 @@
 	// 	debounced_set_width();
 	// }
 
-	$: data = $page.data.entry?.id ? $state[$page.data.entry.id] : undefined;
-	$: outline = data?.outline;
+	// const query = useEntry(
+	// 	{
+	// 		id: +$page.params.id,
+	// 		type: $page.data.type as Type
+	// 	},
+	// 	{
+	// 		select: (data) => data?.entry,
+	// 		enabled: !!$page.data.entry?.id
+	// 	}
+	// );
+	const u = effect(page, ($page) => {});
+
+	// const query = createQuery(
+	// 	derived(page, ($page) => {
+	//         const filters = {
+	//             id: +$page.params.id,
+	//             type: $page.data.type as Type
+	//         }
+	// 		return {
+	// 			queryKey: ['entries', 'list', { filters }] as const,
+	// 			queryFn: ({ queryKey, meta }) => qquery(meta?.init, 'get_library', filters),
+	// 			select: (data) => data?.entry,
+	// 			enabled: !!$page.data.entry?.id,
+	// 		};
+	// 	})
+	// );
+	const query = createQuery(
+		derived(page, ($page) => ({
+			...queryFactory.entries.detail({
+				id: Number.isInteger(+$page.params.id) ? +$page.params.id : $page.params.id,
+				type: $page.params.type as Type
+			}),
+			enabled: !!$page.data.entry?.id,
+            // REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
+			select: (data: QueryOutput<"entry_by_id">) => data?.entry,
+		}))
+	);
+	// const query = createQuery(
+	// 	derived(page, ($page) => ({
+	// 		...queryFactory.entries.detail({
+	// 			id: Number.isInteger(+$page.params.id) ? +$page.params.id : $page.params.id,
+	// 			type: $page.params.type as Type
+	// 		}),
+	//         enabled: !!$page.data.entry?.id,
+	//         select: (data) => data?.entry
+	// 	}))
+	// );
+	$: console.log({ $query });
+	// $: data = $page.data.entry?.id ? $state[$page.data.entry.id] : undefined;
+	$: outline = [];
 
 	$: console.log({ $state });
 
@@ -306,7 +371,7 @@
 							entry={$page.data.entry}
 							/> -->
 								<Cluster>
-									{#each data?.collections ?? [] as collection}
+									{#each $query.data?.collections ?? [] as collection}
 										<Badge as="a" class="line-clamp-2" href="/tests/collection/{collection.id}"
 											>{collection.name}</Badge
 										>
@@ -328,10 +393,10 @@
 															{
 																loading: 'Adding to collection...',
 																success: () => {
-																	if (data?.id) {
-																		update_entry(data.id, {
+																	if ($query.data?.id) {
+																		update_entry($query.data.id, {
 																			collections: [
-																				...(data.collections ?? []),
+																				...($query.data.collections ?? []),
 																				{
 																					id: c.id,
 																					name: c.name
@@ -380,7 +445,7 @@
 					</Collapsible.Content>
 				</Collapsible.Root></TabsContent
 			>
-			{#if outline && $outline?.length}
+			{#if outline && outline?.length}
 				<Collapsible.Root bind:open={$open_sections.outline}>
 					<div class="p-6">
 						<Collapsible.Trigger
@@ -395,7 +460,7 @@
 						>
 						<Collapsible.Content transition>
 							<ol>
-								{#each $outline as outline}
+								{#each outline as outline}
 									<li>
 										<a
 											class:font-bold={outline.active}
@@ -412,41 +477,42 @@
 				</Collapsible.Root>
 			{/if}
 			<TabsContent class="overflow-y-auto" value="notes">
-				{@const note = data?.annotations?.find((a) => a.type === 'note')}
+				{@const note = $query.data?.annotations?.find((a) => a.type === 'note')}
 				<div class="p-6 flex flex-col gap-4">
 					<div class="space-y-2">
 						<h3 class=" text-lg font-semibold leading-none tracking-tight">Page Note</h3>
-						<Editor
-							content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
-							on:blur={({ detail: { editor } }) => {
+						{#key note?.contentData}
+							<Editor
+								content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
+								on:blur={({ detail: { editor } }) => {
+									// TODO: only do this if the content has changed
 
-                                // TODO: only do this if the content has changed
+									const contentData = editor.getJSON();
+									if (!$query.data) throw new Error('No data');
+									const id = note?.id ?? nanoid();
 
-								const contentData = editor.getJSON();
-								if (!data) throw new Error('No data');
-								const id = note?.id ?? nanoid();
+									// TODO: should filing away tags and relations happen in the editor, here, or on the server?
+									// It would look like this:
+									const { tags, links } = extractDataFromContentData(contentData);
 
-								// TODO: should filing away tags and relations happen in the editor, here, or on the server?
-								// It would look like this:
-								const { tags, links } = extractDataFromContentData(contentData);
-
-								mutation($page, 'save_note', {
-									contentData,
-									entryId: data.id,
-									type: 'note',
-									id,
-									tags,
-									relations: links.map((link) => ({ relatedEntryId: link.id }))
-								});
-								update_entry(data.id).annotation({
-									contentData,
-									entryId: data.id,
-									type: 'note',
-									id
-								});
-							}}
-							options={{ autofocus: false }}
-						/>
+									mutation($page, 'save_note', {
+										contentData,
+										entryId: $query.data.id,
+										type: 'note',
+										id,
+										tags,
+										relations: links.map((link) => ({ relatedEntryId: link.id }))
+									});
+									update_entry($query.data.id).annotation({
+										contentData,
+										entryId: $query.data.id,
+										type: 'note',
+										id
+									});
+								}}
+								options={{ autofocus: false }}
+							/>
+						{/key}
 					</div>
 					<div class="flex items-center justify-between">
 						<h3 class=" text-lg font-semibold leading-none tracking-tight">Annotations</h3>
@@ -473,8 +539,8 @@
 						</div>
 					</div>
 					<div class="grid gap-4">
-						{#if data?.annotations}
-							{#each data?.annotations
+						{#if $query.data?.annotations}
+							{#each $query.data?.annotations
 								.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
 								.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
 								<Annotation

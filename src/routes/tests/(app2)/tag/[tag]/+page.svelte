@@ -16,6 +16,8 @@
 	import { derived } from 'svelte/store';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
+	import EntryItemSkeleton from '$components/entries/EntryItemSkeleton.svelte';
+	import EntryItem from '$components/entries/EntryItem.svelte';
 
 	export let data;
 	let entrylist: EntryList;
@@ -38,13 +40,13 @@
 	const tagDeetsQuery = createQuery(tagDeets($page, data.tag));
 	const entriesQuery = createQuery(
 		derived(page, ($page) => ({
-			...tagEntries($page, data.tag),
+			...tagEntries($page, data.tag)
 			// enabled: $page.url.searchParams.get('tab') !== 'notes'
 		}))
 	);
 	const notesQuery = createQuery(
 		derived(page, ($page) => ({
-			...tagNotes($page, data.tag),
+			...tagNotes($page, data.tag)
 			// enabled: $page.url.searchParams.get('tab') === 'notes'
 		}))
 	);
@@ -81,7 +83,14 @@
 			</TabsTrigger>
 		</TabsList>
 		<TabsContent value="entries">
-			<EntryList
+			{#if $entriesQuery.isLoading}
+				<EntryItemSkeleton />
+			{:else if $entriesQuery.isSuccess}
+				{#each $entriesQuery.data as entry}
+					<EntryItem {entry} />
+				{/each}
+			{/if}
+			<!-- <EntryList
 				class="mt-8"
 				bulkForm={data.bulkForm}
 				loading={$entriesQuery.isLoading}
@@ -98,8 +107,8 @@
 					// data.nextCursor = result.nextCursor;
 					// loading = false;
 				}}
-			/></TabsContent
-		>
+			/> -->
+		</TabsContent>
 		<TabsContent value="notes">
 			<!-- {#await data.lazy.notes}
 				loading...

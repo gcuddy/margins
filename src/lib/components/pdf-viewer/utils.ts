@@ -135,6 +135,7 @@ export function roundToDivide(x: number, div: number) {
 type PdfState = {
 	opts: Writable<{
 		scale: number | 'page-fit' | 'page-width' | 'auto';
+        darkModeInvert: boolean;
 	}>;
 	pdf_viewer: PDFViewer | null;
 };
@@ -144,7 +145,8 @@ const MAX_SCALE = 2.3;
 function pdf_state() {
 	const { subscribe, set, update } = writable<PdfState>({
 		opts: persisted('pdf_options', {
-			scale: 'auto'
+			scale: 'auto',
+            darkModeInvert: true
 		}),
 		pdf_viewer: null
 	});

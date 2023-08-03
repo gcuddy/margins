@@ -86,7 +86,8 @@
 <svelte:window
 	on:keydown={(e) => {
 		// listen for command + j
-		if (e.metaKey && e.key === 'j') {
+		if (e.metaKey && e.key === 'k') {
+            e.preventDefault()
 			$state.isOpen = true;
 		}
 	}}

@@ -159,6 +159,7 @@
 		{/if}
 		{#if annotation.contentData}
 			<Editor
+                on:blur
 				class="border-none p-1 min-h-min"
                 focusRing={false}
 				content={annotation.contentData}

@@ -51,6 +51,10 @@
 	import EntryItem from '$components/entries/EntryItem.svelte';
 	import Scroller from '$components/Scroller.svelte';
 	import { createWindowVirtualizer } from '@tanstack/svelte-virtual';
+	import Intersector from '$components/Intersector.svelte';
+	import { dndzone, overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action';
+
+	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	$: filter_type = $page.url.searchParams.get('type');
 	export let data;
@@ -80,7 +84,8 @@
 				qquery($page, 'get_library', {
 					status: data.Status,
 					type: data.type,
-					search: $page.url.searchParams.get('search') ?? ''
+					search: $page.url.searchParams.get('search') ?? '',
+					cursor: pageParam
 				}),
 			// ...libraryQuery($page, {
 			// 	status: data.Status,
@@ -246,15 +251,31 @@
 		count: entries?.length || 0,
 		estimateSize: () => 96,
 		overscan: 5,
-        getItemKey: (index) => entries[index].id,
+		getItemKey: (index) => entries[index].id
 	});
 
-    $: $virtualizer.setOptions({
-        count: entries?.length || 0,
-    })
+	let items = $virtualizer?.getVirtualItems();
+    let dragging = false;
+
+	$: $virtualizer.setOptions({
+		count: entries?.length || 0
+	});
 
 	let contentRect: DOMRectReadOnly | null = null;
 	$: console.log({ contentRect });
+
+	$: {
+		const lastItem = $virtualizer.getVirtualItems().at(-1);
+		if (
+			lastItem &&
+			lastItem?.index >= entries?.length - 1 &&
+			$query.hasNextPage &&
+			!$query.isFetchingNextPage
+		) {
+			console.log('fetching next page');
+			$query.fetchNextPage();
+		}
+	}
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
@@ -455,13 +476,52 @@
 	{/each}
 {:else}
 	{@const entries = $query.data?.pages.flatMap((p) => p.entries) ?? []}
-	<div style:height="{$virtualizer.getTotalSize()}px" class="w-full relative">
-        {#each $virtualizer.getVirtualItems() as row (row.key)}
-        {@const entry = entries[row.index]}
-        <div style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)">
-            <EntryItem {entry} />
-        </div>
-        {/each}
+		<!-- use:dndzone={{
+			items: $virtualizer.getVirtualItems()
+		}} -->
+	<div
+		on:consider={(e) => {
+            dragging = true;
+			console.log({ e });
+            items = e.detail.items;
+			// scroll into viwe
+			const el = document.getElementById('dnd-action-dragged-el');
+			// check rect
+			const rect = el?.getBoundingClientRect();
+			console.log({ rect });
+			// get window height
+			const windowHeight = window.innerHeight;
+			// check if in view
+			if (rect?.top && rect?.bottom && (rect.top < 0 || rect.bottom > windowHeight)) {
+				// scroll into view
+				console.log('Not in view');
+				$virtualizer.scrollToOffset(document.scrollingElement?.scrollTop + rect.top - 100, {
+					behavior: 'smooth'
+				});
+			}
+			// el?.scrollIntoView({
+			//     behavior: 'smooth',
+			//     block: 'center',
+			//     inline: 'center'
+			// });
+		}}
+		style:height="{$virtualizer.getTotalSize()}px"
+		class="w-full relative"
+	>
+		{#each $virtualizer.getVirtualItems() as row (row.key)}
+			{@const entry = entries[row.index]}
+			<div
+				style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)"
+			>
+				<EntryItem {entry} />
+			</div>
+		{/each}
+		<!-- <Intersector
+			cb={() => {
+				console.log(`Intersect`, { $query });
+				$query.hasNextPage && !$query.isFetchingNextPage && $query.fetchNextPage();
+			}}
+		/> -->
 		<!-- <EntryList {entries} /> -->
 		<!-- <Scroller items={$query.data?.pages.flatMap((p) => p.entries) ?? []}  key={"id"}>
         <svelte:fragment slot="item" let:item={entry}>

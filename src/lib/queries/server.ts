@@ -596,14 +596,15 @@ export async function entry_by_id({
 	);
 
 	return {
-		tagForm,
-		updateBookmarkForm,
-		bookmarkForm,
-		annotationForm,
-		interactionForm,
+		// tagForm,
+		// updateBookmarkForm,
+		// bookmarkForm,
+		// annotationForm,
+		// interactionForm,
 		type,
 		// TODO: move these to endpoint to use in +page.ts with better cachings
-		entry: entry ? validate_entry_type(entry) : undefined,
+		// entry: entry ? validate_entry_type(entry) : undefined,
+        entry,
 		movie: type === 'movie' ? await tmdb.movie.details(+id) : null,
 		book: type === 'book' ? await books.get(id.toString()) : null,
 		tv: type === 'tv' ? await tmdb.tv.details(+id) : null,

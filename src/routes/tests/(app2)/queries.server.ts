@@ -46,7 +46,7 @@ import { DocumentType, Status } from '@prisma/client';
 interface Query<I extends z.ZodTypeAny, Data> {
 	staleTime?: number;
 	fn: (args: {
-		input: I extends z.ZodType<object> ? z.input<I> : undefined;
+		input: z.input<I>;
 		ctx: {
 			userId: string;
 		};

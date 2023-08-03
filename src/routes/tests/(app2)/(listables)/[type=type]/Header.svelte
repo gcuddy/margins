@@ -23,6 +23,7 @@
 	});
 
 	const pdf_state = getPdfStateContext();
+    $: opts = $pdf_state.opts
 
 	const navWidth = getContext('navWidth') as Writable<number>;
 
@@ -66,6 +67,12 @@
 				>
 					Auto
 				</button>
+
+                <button on:click={() => {
+                    $opts.darkModeInvert = !$opts.darkModeInvert
+                }}>
+                    dark mode
+                </button>
 			{/if}
 			<!--  -->
 		</div>

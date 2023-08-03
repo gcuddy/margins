@@ -3,9 +3,10 @@ import type { PageLoad } from './$types';
 import { get_module } from './module';
 import type { Type } from '$lib/types';
 import { entryQuery } from './query';
+import { queryFactory } from '$lib/queries/querykeys';
 
 export async function load(event) {
-	const { parent } = event;
+	const { parent, data } = event;
 	const { id, type: _type } = event.params;
 	const type = _type as Type;
 	// const module = await get_module(type);
@@ -17,7 +18,13 @@ export async function load(event) {
 
 	return {
 		// component: module.default,
-		...(await queryClient.ensureQueryData(entryQuery(event, { id, type }))),
+        ...data,
+		...(await queryClient.ensureQueryData({
+			...queryFactory.entries.detail({ id, type }),
+			meta: {
+				init: event
+			}
+		})),
 		component: get_module(type).then((module) => module?.default as ComponentType | undefined)
 	};
 }

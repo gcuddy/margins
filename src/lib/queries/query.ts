@@ -9,7 +9,12 @@ import { parse, stringify } from 'devalue';
 import type { Session, User } from 'lucia-auth';
 import { dev } from '$app/environment';
 import { page } from '$app/stores';
-import type { CreateInfiniteQueryOptions, CreateQueryOptions } from '@tanstack/svelte-query';
+import type {
+	CreateInfiniteQueryOptions,
+	CreateQueryOptions,
+	DefaultError
+} from '@tanstack/svelte-query';
+import { queryOptions } from './utils';
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
@@ -82,31 +87,47 @@ export function queryCaller(page: Readable<Record<string, string>>) {
 // taken from https://github.com/vishalbalaji/trpc-svelte-query-adapter/blob/main/src/index.ts
 
 // getQueryKey
-type QueryType = 'query' | 'infinite' | 'any';
+type QueryType = 'query' | 'infinite';
 
 type QueryKey = [string[], { input?: unknown; type?: Exclude<QueryType, 'any'> }?];
 
-function getArrayQueryKey(
-	queryKey: string | [string] | [string, ...unknown[]] | unknown[],
-	input: unknown,
-	type: QueryType
-): QueryKey {
-	const arrayPath = (
-		typeof queryKey === 'string' ? (queryKey === '' ? [] : queryKey.split('.')) : queryKey
-	) as [string];
+export type TypedQueryKey<T extends keyof Queries> = [
+	[T],
+	{ input: QueryInput<T>; type?: T extends InfiniteQueries ? QueryType : 'query' }
+];
 
-	if (!input && (!type || type === 'any'))
-		// for `utils.invalidate()` to match all queries (including vanilla react-query)
-		// we don't want nested array if path is empty, i.e. `[]` instead of `[[]]`
-		return arrayPath.length ? [arrayPath] : ([] as unknown as QueryKey);
 
+// TODO: allow input to be undefined
+export function getArrayQueryKey<T extends keyof Queries>(
+	queryKey: T,
+	input: QueryInput<T>,
+	type?: T extends InfiniteQueries ? QueryType : 'query'
+): TypedQueryKey<T> {
 	return [
-		arrayPath,
+		[queryKey],
 		{
-			...(typeof input !== 'undefined' && { input: input }),
-			...(type && type !== 'any' && { type: type })
+			input,
+			// ...(typeof input !== 'undefined' && { input: input }),
+			...(!type ? { type: 'query' } : { type: type })
 		}
 	];
+
+	// const arrayPath = (
+	// 	typeof queryKey === 'string' ? (queryKey === '' ? [] : queryKey.split('.')) : queryKey
+	// ) as [string];
+
+	// if (!input && (!type || type === 'any'))
+	// 	// for `utils.invalidate()` to match all queries (including vanilla react-query)
+	// 	// we don't want nested array if path is empty, i.e. `[]` instead of `[[]]`
+	// 	return arrayPath.length ? [arrayPath] : ([] as unknown as QueryKey);
+
+	// return [
+	// 	arrayPath,
+	// 	{
+	// 		...(typeof input !== 'undefined' && { input: input }),
+	// 		...(type && type !== 'any' && { type: type })
+	// 	}
+	// ];
 }
 
 type GetQueryType<T> = T extends InfiniteQueries ? 'infinite' | 'query' : 'query';
@@ -133,15 +154,11 @@ export function createQueryOption<T extends keyof Queries, TType extends GetQuer
 
 	// get array query
 
-    type TOutput = QueryOutput<T>
+	type TOutput = QueryOutput<T>;
 
-	return function queryOption(
-		init: Params[0],
-		input: Params[2]
-	): TType extends 'infinite' ? CreateInfiniteQueryOptions<TOutput> : CreateQueryOptions<TOutput> {
+	return function queryOption(init: Params[0], input: Params[2]) {
 		if (type === 'infinite') {
 			// todo
-            //@ts-expect-error
 			return {
 				queryKey: getArrayQueryKey(fn, input, type),
 				queryFn: ({ pageParam }) =>
@@ -153,12 +170,47 @@ export function createQueryOption<T extends keyof Queries, TType extends GetQuer
 				getNextPageParam: (lastPage) => (lastPage as any).nextCursor
 			} satisfies CreateInfiniteQueryOptions;
 		}
-        //@ts-expect-error
 		return {
 			queryKey: getArrayQueryKey(fn, input, type),
 			queryFn: () => query(init, fn, input)
 		} satisfies CreateQueryOptions;
 	};
+}
+
+type Params<T extends keyof Queries> = Parameters<Queries[T]['fn']>[0]['input'] extends IsAny<
+	Parameters<Queries[T]['fn']>[0]['input']
+>
+	? undefined
+	: Parameters<Queries[T]['fn']>[0]['input'];
+
+export function queryOpts<T extends keyof Queries>(
+	init: QueryInit,
+	fn: T,
+	params: Parameters<Queries[T]['fn']>[0]['input']
+): CreateQueryOptions<QueryOutput<T>, DefaultError, QueryOutput<T>, TypedQueryKey<T>>;
+export function queryOpts<T extends keyof Queries>(
+	fn: T,
+	params: Parameters<Queries[T]['fn']>[0]['input']
+): CreateQueryOptions<QueryOutput<T>, DefaultError, QueryOutput<T>, TypedQueryKey<T>>;
+export function queryOpts<T extends keyof Queries>(
+	initOrFn: T | QueryInit,
+	paramsOrFn: T | Parameters<Queries[T]['fn']>[0]['input'],
+	params?: Parameters<Queries[T]['fn']>[0]['input']
+): CreateQueryOptions<QueryOutput<T>, DefaultError, QueryOutput<T>, TypedQueryKey<T>> {
+	if (typeof initOrFn === 'string') {
+		const fn = initOrFn;
+		const params = paramsOrFn as Parameters<Queries[T]['fn']>[0]['input'];
+		return queryOptions({
+			queryKey: getArrayQueryKey(fn, params, 'query'),
+			queryFn: () => query({}, fn, params)
+		});
+	}
+	const init = initOrFn;
+	const fn = paramsOrFn as T;
+	return queryOptions({
+		queryKey: getArrayQueryKey(fn, params, 'query'),
+		queryFn: () => query(init, fn, params as Parameters<Queries[T]['fn']>[0]['input'])
+	});
 }
 
 export async function query<T extends keyof Queries>(
@@ -221,6 +273,8 @@ export async function query<T extends keyof Queries>(
 	}
 	return final;
 }
+
+export { query as qquery };
 
 export const isMutating = writable(false);
 

@@ -16,6 +16,7 @@
 	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
 	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
 	import QueryClientPersister from './QueryClientPersister.svelte';
+	import { browser } from '$app/environment';
 
 	// export let data;
 
@@ -56,7 +57,7 @@
 	const queryClient = data.queryClient;
 </script>
 
-<QueryClientPersister client={data.queryClient}>
+<QueryClientPersister client={data.queryClient} let:isRestoring>
 	{#if commander}
 		<svelte:component this={commander} />
 	{/if}
@@ -89,19 +90,23 @@
 						'flex h-full w-full flex-1 flex-col',
 						$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
 						'relative',
-						'col-start-2',
+						'col-start-2'
 						// 'px-4 py-6 lg:px-8'
 						// is_article ? ' col-span-5' : 'lg:col-span-4',
 						// is_settings && 'border-none lg:col-span-3',
 						// !is_article && 'sm:border-l'
 					)}
 				>
-					<slot />
+					{#if browser && isRestoring}
+						restoring...
+					{:else}
+						<slot />
+					{/if}
 				</main>
 			</div>
 		</div>
 		<!-- <AudioPlayer /> -->
 		<DropBox />
 	</GenericCommander>
-    <SvelteQueryDevtools buttonPosition="bottom-right" />
+	<SvelteQueryDevtools buttonPosition="bottom-right" />
 </QueryClientPersister>

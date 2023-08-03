@@ -41,8 +41,8 @@
 	let styles = ''; //allows component to recieve classes
 	export { styles as style };
 
-    const pdf_state = getPdfStateContext();
-    $: opts = $pdf_state.opts
+	const pdf_state = getPdfStateContext();
+	$: opts = $pdf_state.opts;
 
 	const MIN_SCALE = 0.5;
 	const MAX_SCALE = 2.3;
@@ -243,7 +243,7 @@
 				findController: pdf_find_controller,
 				l10n: pdfjs_viewer.NullL10n
 			});
-            $pdf_state.pdf_viewer = pdf_viewer;
+			$pdf_state.pdf_viewer = pdf_viewer;
 			pdf_link_service.setViewer(pdf_viewer);
 			return { pdf_viewer, pdf_link_service };
 		});
@@ -261,13 +261,13 @@
 					pdf_document = _pdf_document;
 					pdf_viewer.setDocument(pdf_document);
 					pdf_link_service.setDocument(pdf_document, null);
-                    // pdf_viewer.currentScaleValue = "page-width";
-                    console.log({pdf_viewer})
-                    // if (typeof $opts.scale === 'number') {
-                    //     pdf_viewer.currentScale = $opts.scale;
-                    // } else {
-                    //     pdf_viewer.currentScaleValue = $opts.scale;
-                    // }
+					// pdf_viewer.currentScaleValue = "page-width";
+					console.log({ pdf_viewer });
+					// if (typeof $opts.scale === 'number') {
+					//     pdf_viewer.currentScale = $opts.scale;
+					// } else {
+					//     pdf_viewer.currentScaleValue = $opts.scale;
+					// }
 					pdf_viewer.spreadMode = _spread_mode;
 				})
 				.catch(function (error) {
@@ -319,7 +319,12 @@
 	}
 </script>
 
-<div class={classname} style={styles} bind:this={component_container}>
+<div
+	class={classname}
+	style={styles}
+	bind:this={component_container}
+	data-dark-mode-invert={$opts.darkModeInvert}
+>
 	<div id="viewer-parent" class="w-full h-full">
 		{#if password_error === true}
 			<div class="spdfinner">
@@ -348,6 +353,14 @@
 </div>
 
 <style>
+	[data-dark-mode-invert='true'] :global(.canvasWrapper) {
+		filter: invert(1) hue-rotate(180deg);
+		mix-blend-mode: screen;
+	}
+	[data-dark-mode-invert='true'] :global(.page) {
+		background-color: transparent;
+	}
+
 	.spdfbanner {
 		position: absolute;
 		z-index: 10;
