@@ -5,7 +5,6 @@
 	import { state, update_entry } from '$lib/state/entries';
 	import { isStatus, statuses } from '$lib/status';
 	import { groupBy } from '$lib/utils';
-	import { createAvatar, createContextMenu } from '@melt-ui/svelte';
 	import Kanban from './Kanban.svelte';
 	import KanbanColumn from './KanbanColumn.svelte';
 	import StatusIcon from './StatusIcon.svelte';
@@ -42,7 +41,7 @@
 
 	$: console.log({ $state });
 
-	const { trigger, ...menu } = createContextMenu();
+	// const { trigger, ...menu } = createContextMenu();
 
 	// $: Object.entries(groupings).sort((a, b) => {
 	//     const a_index = order.indexOf(a[0]);

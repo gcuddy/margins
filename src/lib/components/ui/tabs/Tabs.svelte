@@ -6,10 +6,10 @@
 	import TabsContent from './TabsContent.svelte';
 	import TabsList from './TabsList.svelte';
 	import TabsTrigger from './TabsTrigger.svelte';
-	import type { CreateTabsProps } from '@melt-ui/svelte';
+	import { melt, type CreateTabsProps } from '@melt-ui/svelte';
 
 	type RootProvided = {
-		root: Tabs['root'];
+		root: Tabs['elements']["root"];
 	};
 	type NoRootProvided = {
 		root?: undefined;
@@ -24,13 +24,13 @@
 
     // Could alternatively allow passing in of entire createtabs() and then that gets passed into context
 	export let opts: CreateTabsProps | undefined = undefined;
-	export let root: Tabs['root'] = createTabsContext(opts).root;
+	export let root: Tabs['elements']["root"] = createTabsContext(opts).elements.root;
 
 
 	// Should allow root to passed in, or nothing but optionally opts and we handle it internally with context
 </script>
 
-<div melt={$root} class={cn(className)} {...$$restProps}>
+<div use:melt={$root} class={cn(className)} {...$$restProps}>
 	<slot {TabsContent} {TabsList} {TabsTrigger} />
 	<!--  -->
 </div>

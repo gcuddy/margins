@@ -5,20 +5,18 @@
 </script>
 
 <script lang="ts">
-	import { Tab } from '@rgossiaux/svelte-headlessui';
 	import { cn } from '$lib/utils/tailwind';
-	import type { HTMLAttributes, HTMLBaseAttributes } from 'svelte/elements';
-	import type { ComponentProps } from 'svelte';
-	import { VariantProps, cva } from 'class-variance-authority';
+	import type { HTMLAttributes } from 'svelte/elements';
+	import { cva } from 'class-variance-authority';
 	import { getTabsContext, type Tabs } from './utils';
-	import type { TabsTriggerProps } from '@melt-ui/svelte';
+	import { melt } from '@melt-ui/svelte';
 	import type { Maybe } from '$lib/utils/type-utils';
 	type $$Props = HTMLAttributes<HTMLButtonElement> & {
-		trigger?: Tabs['trigger'];
+		trigger?: Tabs['elements']['trigger'];
 		value: string;
 		disabled?: boolean;
 	};
-	export let trigger: Tabs['trigger'] = getTabsContext().trigger;
+	export let trigger: Tabs['elements']['trigger'] = getTabsContext().elements.trigger;
 	export let value: string;
 	export let disabled = false;
 	let className: Maybe<string> = '';
@@ -28,7 +26,7 @@
 <button
 	class={cn(tabTrigger(), className)}
 	{...$$restProps}
-	melt={$trigger({
+	use:melt={$trigger({
 		value,
 		disabled
 	})}

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/tailwind';
-	import type { createContextMenu } from '@melt-ui/svelte';
+	import { melt, type createContextMenu } from '@melt-ui/svelte';
 	import { ChevronRight } from 'lucide-svelte';
 	import type { HTMLBaseAttributes } from 'svelte/elements';
-	type SubTrigger = ReturnType<ReturnType<typeof createContextMenu>['createSubMenu']>['subTrigger'];
+	type SubTrigger = ReturnType<ReturnType<typeof createContextMenu>['builders']["createSubmenu"]>['elements']['subTrigger'];
 
 	let className: string | null | undefined = '';
 	export { className as class };
@@ -19,7 +19,7 @@
 </script>
 
 <div
-	melt={$subTrigger}
+	use:melt={$subTrigger}
 	class={cn(
 		'flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
 		inset && 'pl-8',

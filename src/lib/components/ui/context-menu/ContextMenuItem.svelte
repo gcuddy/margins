@@ -16,10 +16,7 @@
 
 <script lang="ts">
 	import { cn } from '$lib/utils/tailwind';
-	import type { createContextMenu } from '@melt-ui/svelte';
-	import type { ItemProps } from '@melt-ui/svelte/dist/builders/menu';
-	import { setContext } from 'svelte';
-	import { writable } from 'svelte/store';
+	import { melt, type createContextMenu } from '@melt-ui/svelte';
 	import { createContextMenuItemContext } from './utils';
 	import { cva } from 'class-variance-authority';
 	type C = ReturnType<typeof createContextMenu>;
@@ -27,7 +24,7 @@
 	let className = '';
 	export { className as class };
 
-	export let item: C['item'];
+	export let item: C['elements']['item'];
 
 	export let inset = false;
 	export let onSelect: ((e: Event) => void) | undefined = undefined;
@@ -38,8 +35,10 @@
 </script>
 
 <div
-	{...$item}
-	use:item={{ onSelect }}
+	use:melt={$item}
+    on:m-click={(e) => {
+        onSelect?.(e);
+    }}
 	class={cn(
 		contextMenuItem({
 			inset: $options.inset

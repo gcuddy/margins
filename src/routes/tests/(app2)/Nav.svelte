@@ -143,7 +143,7 @@
 		<div class="hidden truncate px-4 py-2 {in_article ? '2xl:inline' : 'lg:inline'}">
 			<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">Pins</h2>
 			<div class="flex flex-col space-y-1">
-				{#await user_data.pins}
+				<!-- {#await user_data.pins}
 					<Skeleton class="h-10 w-full" />
 					<Skeleton class="h-10 w-full" />
 				{:then pins}
@@ -186,7 +186,7 @@
 							>
 						{/if}
 					{/each}
-				{/await}
+				{/await} -->
 			</div>
 		</div>
 	{/if}

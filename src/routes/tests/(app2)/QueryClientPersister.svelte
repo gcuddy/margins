@@ -9,14 +9,16 @@
 	import { writable } from 'svelte/store';
 	export let client: QueryClient;
 
-	const restoring = writable(true);
-    setContext('isRestoring', restoring);
+	const restoring = writable(false);
+	setContext('isRestoring', restoring);
 
 	setQueryClientContext(client);
 
+	console.log({ client });
+
 	const persister: Persister = {
 		async persistClient(client: PersistedClient) {
-			console.log('persisting client');
+			console.log('persisting client', client);
 			set('QUERY_PERSIST', client);
 		},
 		async restoreClient() {
@@ -35,18 +37,12 @@
 	// });
 
 	onMount(() => {
-		restoring.set(true)
+		restoring.set(true);
 		const [unsubscribe, promise] = persistQueryClient({
 			queryClient: client,
-			persister,
-			dehydrateOptions: {
-				// shouldDehydrateQuery(query) {
-				//     query.queryKey[0] ===
-				// },
-			},
-
+			persister
 		});
-        console.log({unsubscribe, promise})
+		console.log({ unsubscribe, promise });
 		promise
 			.then(() => {
 				client.mount();

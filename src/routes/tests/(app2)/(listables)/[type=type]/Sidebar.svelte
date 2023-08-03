@@ -53,7 +53,7 @@
 	import type Pdf from './[id]/PDF.svelte';
 	import NoteModal from './[id]/NoteModal.svelte';
 	import { TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
-	import { createTabs } from '@melt-ui/svelte';
+	import { createTabs, melt } from '@melt-ui/svelte';
 	import { createTabsContext } from '$components/ui/tabs/utils';
 	import Sheet from '$components/ui/sheet/Sheet.svelte';
 	import scrollLock from '$lib/actions/scrollLock';
@@ -159,8 +159,8 @@
 				type: $page.params.type as Type
 			}),
 			enabled: !!$page.data.entry?.id,
-            // REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
-			select: (data: QueryOutput<"entry_by_id">) => data?.entry,
+			// REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
+			select: (data: QueryOutput<'entry_by_id'>) => data?.entry
 		}))
 	);
 	// const query = createQuery(
@@ -206,13 +206,15 @@
 
 	$: console.log({ currentTab });
 
-	const { root, list, trigger, content, value } = createTabsContext({
-		value: $currentTab ?? 'details'
+	const {
+		elements: { root, list, trigger, content }
+	} = createTabsContext({
+		value: currentTab
 	});
-	$: if ($value) {
-		currentTab.set($value);
-		console.log({ $value });
-	}
+	// $: if ($value) {
+	// 	currentTab.set($value);
+	// 	console.log({ $value });
+	// }
 
 	let cleanupRemoveScroll: ReturnType<typeof removeScroll> | undefined;
 
@@ -254,7 +256,7 @@
 	>
 		<aside
 			class="z-10 flex h-full flex-col overflow-x-hidden border-l border-r bg-card text-card-foreground max-lg:absolute max-lg:right-0 max-lg:top-0 max-sm:w-screen"
-			melt={$root}
+			use:melt={$root}
 		>
 			<!-- 2.5rem is size of sidebar toggle -->
 			<div

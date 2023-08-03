@@ -113,10 +113,10 @@
 	let dialog = createDialog();
 	// on initialization, set open state to dialog open
 	state.set({
-		open: dialog.open
+		open: dialog.states.open
 	});
 
-	$: close = dialog.close;
+	$: close = dialog.elements.close;
 </script>
 
 <Dialog {dialog} title={$state.title} description={$state.description}>
@@ -143,7 +143,7 @@
 						class={el.class}
 						on:click={() => {
 							el.onclick?.($state);
-                            dialog.open.set(false);
+                            dialog.states.open.set(false);
 						}}
 					>
 						{el.text}

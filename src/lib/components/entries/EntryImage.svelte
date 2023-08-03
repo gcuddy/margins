@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/tailwind';
 	import type { Maybe } from '$lib/utils/type-utils';
-	import { createAvatar } from '@melt-ui/svelte';
+	import { createAvatar, melt } from '@melt-ui/svelte';
 	import type { DocumentType } from '@prisma/client';
 	import EntryIcon from './EntryIcon.svelte';
 
@@ -10,7 +10,9 @@
 
 	export let type: DocumentType;
 
-	const { image, fallback } = createAvatar({
+	const {
+		elements: { image, fallback }
+	} = createAvatar({
 		src: src ?? ''
 	});
 
@@ -24,8 +26,8 @@
 		className
 	)}
 >
-	<img melt={$image} alt="Avatar" class="h-full w-full rounded-[inherit]" />
-	<span melt={$fallback}>
+	<img use:melt={$image} alt="Avatar" class="h-full w-full rounded-[inherit]" />
+	<span use:melt={$fallback}>
 		<EntryIcon {type} />
 	</span>
 </div>

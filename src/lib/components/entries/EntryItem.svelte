@@ -17,7 +17,7 @@
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { ago, now } from '$lib/utils/date';
 	import { getId, getType, get_image, make_link } from '$lib/utils/entries';
-	import { createContextMenu } from '@melt-ui/svelte';
+	import { createContextMenu, melt } from '@melt-ui/svelte';
 	import { VariantProps, cva } from 'class-variance-authority';
 	import clsx from 'clsx';
 	import {
@@ -127,11 +127,20 @@
 
 	$: dispatch('checked', checked);
 
-	const { trigger, menu, item, createSubMenu, createMenuRadioGroup, checkboxItem, open } =
-		createContextMenu();
+	const {
+		elements: { trigger, menu, item },
+		builders: { createSubmenu, createCheckboxItem, createMenuRadioGroup },
+		states: { open }
+	} = createContextMenu({
+        defaultOpen: false,
+    });
 
-	const { radioGroup, radioItem, isChecked, value } = createMenuRadioGroup({
-		value: entry.status
+	const {
+		elements: { radioGroup, radioItem },
+		helpers: { isChecked },
+		states: { value }
+	} = createMenuRadioGroup({
+		defaultValue: entry.status
 	});
 
 	let anchor_el: HTMLAnchorElement;
@@ -182,10 +191,10 @@
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
-<div class={entryItemVariants({ view })} melt={$trigger}>
+<div class={entryItemVariants({ view })} use:melt={$trigger}>
 	{#if view === 'list'}
 		<div
-			class="group/select relative h-16 w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
+			class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
 		>
 			{#if entry.image || entry.uri}
 				{@const src = entry.image?.startsWith('/')
@@ -202,12 +211,11 @@
 					}}
 					alt=""
 					class={clsx(
-						'relative h-16 w-16 shrink-0 overflow-hidden rounded-md object-cover',
+						'relative h-full w-full rounded-[inherit] object-cover',
 						checked && 'invisible'
 					)}
 				/>
 			{:else}
-				<!--  -->
 				<ImageSkeleton class="relative h-16 w-16 object-cover" />
 			{/if}
 			<div class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md">
@@ -290,7 +298,7 @@
 													{annotation.body}
 												</Clamp>
 											{:else if annotation.contentData}
-                                                {@html render_html(annotation.contentData)}
+												{@html render_html(annotation.contentData)}
 												<!-- <Editor
 													class="line-clamp-2"
 													content={annotation.contentData}
@@ -378,13 +386,17 @@
 </div>
 
 <!-- Context Menu -->
-<!-- <div class="z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2" melt={$menu}>
-	<div class="item" melt={$item}>Bump to top</div>
-	<div class="item" melt={$item}>Check for Updates...</div>
+<!-- <div class="z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2" use:melt={$menu}>
+	<div class="item" use:melt={$item}>Bump to top</div>
+	<div class="item" use:melt={$item}>Check for Updates...</div>
+</div> -->
+
+<!-- <div use:melt={$menu}>
+    <div class="item" use:melt={$item}>About Melt UI</div>
+    <div class="item" use:melt={$item}>Check for Updates...</div>
 </div> -->
 
 <svelte:component this={contextMenu} {menu}>
-	<!--  -->
 	<svelte:component
 		this={contextMenuItem}
 		onSelect={() => {
@@ -411,21 +423,20 @@
 		<span>Bump to top</span>
 	</svelte:component>
 	{#if $page.data.user_data}
-		<svelte:component this={contextMenuSubmenu} {createSubMenu} inset>
+		<svelte:component this={contextMenuSubmenu} {createSubmenu} inset>
 			<svelte:component this={contextMenuIcon} icon={TagIcon} />
 			<span>Tag</span>
 			<svelte:fragment slot="content">
-				<!-- TODO: use virtual list component? -->
 				{#await $page.data.user_data.tags}
 					Loading...
 				{:then tags}
 					{#each tags || [] as tag}
 						<svelte:component
 							this={contextMenuCheckboxItem}
-							{checkboxItem}
+							{createCheckboxItem}
 							useCheckbox
-							checked={!!entry.tags?.some((t) => t.id === tag.id)}
-							onSelect={() => {
+							defaultChecked={!!entry.tags?.some((t) => t.id === tag.id)}
+							onCheckedChange={({ next }) => {
 								// TODO: update tag
 								console.log('update tag');
 								// We set the state here so that the UI updates immediately
@@ -442,6 +453,7 @@
 								//     entries: [entry.id],
 								//     tags: [tag.id]
 								// })
+								return next;
 							}}
 						>
 							{tag.name}
@@ -451,22 +463,19 @@
 			</svelte:fragment>
 		</svelte:component>
 	{/if}
-	<svelte:component this={contextMenuSubmenu} {createSubMenu} inset>
+	<svelte:component this={contextMenuSubmenu} {createSubmenu} inset>
 		<svelte:component this={contextMenuIcon} icon={CircleDashedIcon} />
 		Status
 		<svelte:fragment slot="content">
-			<!-- TODO: Custom statuses -->
-			<div melt={$radioGroup}>
+			<div use:melt={$radioGroup}>
 				{#each statuses as status}
 					<div
-						{...$radioItem({
+						use:melt={$radioItem({
 							value: status
 						})}
-						use:radioItem={{
-							onSelect: () => {
-								// TODO: move entry, update status, etc.
-								move_entry(status);
-							}
+						on:m-click={() => {
+							// TODO: move entry, update status, etc.
+							move_entry(status);
 						}}
 						class={contextMenuItemClass({ inset: false })}
 					>
@@ -478,14 +487,13 @@
 						<div class="w-4 mr-2.5 flex items-center justify-center">
 							<svelte:component this={statusesWithIcons[status]} class="h-3.5 w-3.5" />
 						</div>
-						<!--  -->
 						<span class="grow inline-flex items-center truncate">{status}</span>
 					</div>
 				{/each}
 			</div>
 		</svelte:fragment>
 	</svelte:component>
-	<svelte:component this={contextMenuSubmenu} {createSubMenu} inset>
+	<svelte:component this={contextMenuSubmenu} {createSubmenu} inset>
 		<svelte:component this={contextMenuIcon} icon={BoxIcon} />
 		Collections
 		<svelte:fragment slot="content" let:open>
@@ -495,11 +503,11 @@
 				{#each collections || [] as collection}
 					{@const checked = !!data.collections?.some((c) => c.id === collection.id)}
 					<svelte:component
-                        this={contextMenuCheckboxItem}
-						{checkboxItem}
+						this={contextMenuCheckboxItem}
+						{createCheckboxItem}
 						useCheckbox
-						{checked}
-						onSelect={() => {
+						defaultChecked={checked}
+						onCheckedChange={({ next }) => {
 							// TODO: update tag
 							console.log('update collection');
 							if (!checked) {
@@ -518,7 +526,7 @@
 									? data.collections?.filter((c) => c.id !== collection.id)
 									: [...(data.collections || []), collection]
 							});
-
+							return next;
 							// We set the state here so that the UI updates immediately
 							// update_entry(entry.id, {
 							// 	tags: data.tags?.some((t) => t.id === tag.id)
