@@ -49,7 +49,7 @@
 	import Query from '$lib/commands/Query.svelte';
 	import { query } from '$lib/queries/query';
 	import { queryKeys } from '$lib/queries/keys';
-	import { darkThemes } from '$lib/features/settings/themes';
+	import { darkThemes, themes } from '$lib/features/settings/themes';
 	import { getContext } from 'svelte';
 	import { cmd_open } from '$lib/components/ui/command/stores';
 
@@ -254,8 +254,7 @@
 		{/if}
 		{#if $page === 'theme'}
 			<CommandGroup>
-				{#each ['Dark', 'Light', 'System', 'Synthwave'] as Theme}
-					{@const theme = Theme.toLowerCase()}
+				{#each themes as {theme, name}}
 					<CommandItem
 						onSelect={() => {
 							if (theme === 'system') {
@@ -280,7 +279,7 @@
 						}}
 					>
 						<Cog class="mr-2 h-4 w-4" />
-						<span>{Theme}</span>
+						<span>{name}</span>
 					</CommandItem>
 				{/each}
 			</CommandGroup>
