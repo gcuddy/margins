@@ -8,6 +8,7 @@
 	import { getContext } from 'svelte';
 	import { derived, writable, type Writable } from 'svelte/store';
 	import EntryOperations from './[id]/EntryOperations.svelte';
+	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
 
 	export let scrollingDown = (getContext('scrollingDown') as Writable<boolean>) || writable(false);
 
@@ -36,7 +37,7 @@
 {#if $scrollingDown}
 	<div
 		class="fixed flex items-center justify-between left-0 top-0 h-[--nav-height] bg-transparent {$rightSidebar
-			? 'w-[calc(100%-var(--right-sidebar-width))]'
+			? 'w-full md:w-[calc(100%-var(--right-sidebar-width))]'
 			: 'w-full'}"
 		on:mouseenter={() => ($scrollingDown = false)}
 	/>
@@ -46,8 +47,8 @@
 	class={cn(
 		'fixed flex items-center justify-between z-50 left-0 top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform',
 		$scrollingDown && '-translate-y-full',
-		$rightSidebar ? 'w-[calc(100%-var(--right-sidebar-width))]' : 'w-full pr-14', // pr-14 because button is w-10 r-4
-		$rightSidebar && $mq.max_md && 'opacity-0'
+		$rightSidebar ? 'w-full pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width))]' : 'w-full pr-14', // pr-14 because button is w-10 r-4
+		// $rightSidebar && $mq.max_md && 'opacity-0'
 	)}
 >
 	<div class="flex items-start justify-start w-full relative px-4">
@@ -85,14 +86,5 @@
 	</div>
 </div>
 <!-- Floating Sidebar button (can't put in right because want it to show ) -->
-<div
-	class={cn(
-		'fixed top-0 right-4 h-[--nav-height] flex items-center z-50 transition-transform',
-		$scrollingDown && !$rightSidebar && '-translate-y-full'
-	)}
->
-	<Button on:click={() => ($rightSidebar = !$rightSidebar)} variant="ghost" class="p-0 w-10">
-		<InfoIcon class="h-4 w-4" />
-	</Button>
-	<span class="sr-only">Toggle right sidebar</span>
-</div>
+
+<EntrySidebarButton open={rightSidebar} class="hidden md:flex" />

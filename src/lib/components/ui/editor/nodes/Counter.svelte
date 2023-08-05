@@ -26,7 +26,6 @@
 
 	import { createContextMenu } from '@melt-ui/svelte';
 
-	const { menu, item, trigger } = createContextMenu();
 </script>
 
 <NodeViewWrapper
@@ -35,7 +34,7 @@
 		ring: selected
 	})}
 >
-	<span {...$trigger} use:trigger>
+	<span>
 		<a
 			on:click|preventDefault
 			href="/tests/{node.attrs.type}/{node.attrs.id}"
@@ -60,8 +59,3 @@
 		</a>
 	</span>
 </NodeViewWrapper>
-<div {...$menu} use:menu>
-	<div {...$item} use:item>...</div>
-	<div {...$item} use:item>...</div>
-	<div {...$item} use:item>...</div>
-</div>

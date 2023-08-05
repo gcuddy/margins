@@ -234,6 +234,7 @@
 		"svelte-tiptap": "^1.1.2",
 		"tailwind-merge": "^1.13.2",
 		"tailwind-scrollbar": "^3.0.4",
+		"tailwind-variants": "^0.1.13",
 		"tippy.js": "^6.3.7",
 		"tiptap-markdown": "^0.8.1",
 		"trpc-svelte-query-adapter": "^2.1.0",

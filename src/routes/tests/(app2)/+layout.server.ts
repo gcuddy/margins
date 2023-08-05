@@ -2,6 +2,8 @@ import { createCachedValue } from '$lib/cache';
 import { db } from '$lib/db';
 import { jsonObjectFrom } from 'kysely/helpers/mysql';
 import type { LayoutServerLoad } from './$types';
+import {  urlSchema } from '$lib/schemas';
+import { superValidate } from 'sveltekit-superforms/server';
 
 function getTags(userId: string) {
 	console.time('getTags');
@@ -52,6 +54,7 @@ export const load = (async (event) => {
 			pins,
 			// normal user data
 			...user
-		}
+		},
+        urlForm: superValidate(urlSchema)
 	};
 }) satisfies LayoutServerLoad;

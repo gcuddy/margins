@@ -14,6 +14,10 @@
 		 * Html to display, instead of entry
 		 */
 		html?: string;
+
+		leftText?: string;
+
+		centerComponent?: ComponentType;
 	};
 
 	export function useMenuBar() {
@@ -68,7 +72,7 @@
 	import Avatar from '$lib/components/ui/avatar/Avatar.svelte';
 	import type { Entry } from '@prisma/client';
 	import { ArrowLeft, ChevronRightSquare, Flower } from 'lucide-svelte';
-	import { getContext, tick } from 'svelte';
+	import { ComponentType, getContext, tick } from 'svelte';
 	import { Writable, derived } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 	import { commanderState } from './Commander.svelte';
@@ -131,7 +135,9 @@
 			data-menu-bar-center
 			class="flex grow line-clamp-2 justify-center text-xs md:text-sm lg:text-base"
 		>
-			{#if $menu.center && $menu.entry?.title}
+			{#if $menu.centerComponent}
+				<svelte:component this={$menu.centerComponent} />
+			{:else if $menu.center && $menu.entry?.title}
 				<div transition:fly>
 					{$menu.entry?.title}
 				</div>

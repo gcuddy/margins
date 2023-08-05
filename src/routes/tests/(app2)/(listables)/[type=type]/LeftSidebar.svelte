@@ -27,7 +27,7 @@
 		'h-[--nav-height] flex items-center transition-transform transform fixed  left-0 top-0 z-[51] pl-4 w-full',
 		!show && 'w-min max-w-min border-b',
 		$scrollingDown && '-translate-y-full',
-		$rightSidebar && $mq.max_md && 'opacity-0'
+		// $rightSidebar && 'opacity-0'
 	)}
 >
 	<Button variant="ghost" as="a" href="/tests/library/backlog">

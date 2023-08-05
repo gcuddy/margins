@@ -21,7 +21,12 @@ export const load = (async (event) => {
     }
     const session = await locals.validate();
     if (!session) {
+        throw redirect(
+            302,
+            handleLoginRedirect(event)
+        )
         throw error(401, "Unauthorized");
+
     }
 
     event.depends("entries")

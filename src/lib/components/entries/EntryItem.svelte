@@ -396,7 +396,7 @@
     <div class="item" use:melt={$item}>Check for Updates...</div>
 </div> -->
 
-<svelte:component this={contextMenu} {menu}>
+<svelte:component this={contextMenu} {menu} class="w-52">
 	<svelte:component
 		this={contextMenuItem}
 		onSelect={() => {

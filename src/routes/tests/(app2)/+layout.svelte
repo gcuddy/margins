@@ -17,6 +17,7 @@
 	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
 	import QueryClientPersister from './QueryClientPersister.svelte';
 	import { browser } from '$app/environment';
+    import { AddButton } from '$components'
 
 	// export let data;
 
@@ -101,6 +102,10 @@
 						restoring...
 					{:else}
 						<slot />
+					{/if}
+					{#if !is_entry && data.urlForm}
+                    <AddButton urlForm={data.urlForm} />
+						<!--  -->
 					{/if}
 				</main>
 			</div>

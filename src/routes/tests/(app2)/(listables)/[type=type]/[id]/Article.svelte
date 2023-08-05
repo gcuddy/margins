@@ -349,6 +349,7 @@
 				});
 				$annotationCtx.set(annotation.id, ctx);
 			}
+            console.log({selector})
 		}
 
 		// scroll to latest interaction

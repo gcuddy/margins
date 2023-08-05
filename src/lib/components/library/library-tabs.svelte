@@ -65,11 +65,12 @@
 			draggable="false"
 			href={prefix + href}
 			class={tabTrigger({
-				selected,
 				class: `relative transition-colors`
 			})}
+            data-sveltekit-keepfocus
 			class:animate-scale-1={name === 'Archive' && _highlight_archive}
 			data-tab={name}
+            data-state={selected ? 'active' : undefined}
 		>
 			{name}
 			<div class="absolute inset-0 -top-4 z-10 flex items-center justify-center -space-x-[.9rem]">

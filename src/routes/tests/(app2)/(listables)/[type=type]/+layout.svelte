@@ -18,7 +18,7 @@
 	const jumping = writable(false);
 	setContext('jumping', jumping);
 
-	const rightSidebar = persisted('rightSidebar', false);
+	const rightSidebar = persisted('rightSidebar', true);
 	setContext('rightSidebar', rightSidebar);
 
 	const rightSidebarWidth = persisted('rightSidebarWidth', 360);
