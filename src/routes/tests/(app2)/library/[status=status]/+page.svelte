@@ -136,7 +136,9 @@
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
 			{@const entry = entries[row.index]}
 			<div
-				animate:flip
+				animate:flip={{
+                    duration: 200
+                }}
 				style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)"
 			>
 				<!-- on:move={() => {

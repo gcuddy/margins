@@ -83,8 +83,7 @@
 	// REVIEW should make a single generic type for state
 	async function update_entry(newData: Partial<LibraryResponse['entries'][number]>) {
 		// REVIEW can I get this from queryfactory?
-		// const queryKey = ['entries', 'list'] as const;
-		const queryKey = [['get_library']] as const;
+		const queryKey = ['entries', 'list'] as const;
 		await queryClient.cancelQueries({
 			queryKey
 		});
@@ -157,7 +156,7 @@
 			})
 			.finally(() => {
 				queryClient.invalidateQueries({
-                    queryKey: [['get_library']]
+                    queryKey: ['entries']
                 });
 			});
 
@@ -196,7 +195,8 @@
 
 	let anchor_el: HTMLAnchorElement;
 
-	$: data = $state[entry.id] || {};
+    // ignore this lol
+	$: data = entry;
 
 	$: if (data?.status) $value = data.status;
 	$: attachment = data?.relations?.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');
