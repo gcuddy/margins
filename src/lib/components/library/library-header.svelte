@@ -23,6 +23,7 @@
 	import { goto } from '$app/navigation';
 	import Input from '$components/ui/Input.svelte';
 	import Kbd from '$components/ui/KBD.svelte';
+	import Header from '$components/ui/Header.svelte';
 
 	let form: HTMLFormElement;
 	let filter: Input;
@@ -68,17 +69,18 @@
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
-
-<div class="z-10 mt-4 flex items-center justify-between gap-x-4">
-	<div class="flex items-end gap-x-4">
-		<H1 class="lg:text-[3em]">Library</H1>
+<!--  -->
+<Header>
+    <!-- class="flex flex-1 items-center justify-start gap-x-4" -->
+    <svelte:fragment slot="start">
+		<h1 class="font-extrabold tracking-tight text-3xl md:text-4xl">Library</h1>
 		<!-- <H1>{data.Status}</H1> -->
 		<LibraryTabs />
 
 		<Popover let:close>
 			<PopoverTrigger
 				class={cn(
-					!filter_type && buttonVariants({ variant: 'outline', size: 'sm' }),
+					!filter_type && buttonVariants({ variant: 'outline' }),
 					'border-dashed'
 				)}
 			>
@@ -160,10 +162,10 @@
 				</Button>
 			</div>
 		{/if}
-	</div>
-	<div class="flex items-end gap-x-4">
+	</svelte:fragment>
+	<svelte:fragment slot="end">
 		<DropdownMenu>
-			<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+			<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary' })}>
 				<ArrowDownUpIcon class="h-4 w-4 mr-2" />
 				Sort
 			</DropdownMenuTrigger>
@@ -174,7 +176,7 @@
 		</DropdownMenu>
 		<form
 			bind:this={form}
-			class="group hidden md:flex relative mt-4 max-w-xs"
+			class="group hidden md:flex relative"
 			data-sveltekit-keepfocus
 			data-sveltekit-replacestate
 		>
@@ -196,5 +198,5 @@
 				</div>
 			{/if}
 		</form>
-	</div>
-</div>
+	</svelte:fragment>
+</Header>

@@ -53,6 +53,7 @@
 	import { toast } from 'svelte-sonner';
 	import { derived, writable, type Writable } from 'svelte/store';
 	import Annotation from '$components/annotations/Annotation.svelte';
+	import { numberOrString } from '$lib/utils/misc';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
@@ -136,7 +137,7 @@
 	const query = createQuery(
 		derived(page, ($page) => ({
 			...queryFactory.entries.detail({
-				id: Number.isInteger(+$page.params.id) ? +$page.params.id : $page.params.id,
+				id: numberOrString($page.params.id),
 				type: $page.params.type as Type
 			}),
 			enabled: !!$page.data.entry?.id,
@@ -237,17 +238,17 @@
             </CardHeader>
             <Collapsible.Content transition>
                 <CardContent class="space-y-4">
-                    {#if $page.data.entry?.uri?.startsWith('http')}
+                    {#if $query.data?.uri?.startsWith('http')}
                         <div class="flex items-center space-x-4">
                             <Muted>URL</Muted>
                             <Muted class="truncate"
-                                ><a href={$page.data.entry.uri} target="_blank">{$page.data.entry.uri}</a
+                                ><a href={$query.data.uri} target="_blank">{$query.data.uri}</a
                                 ></Muted
                             >
                         </div>
                     {/if}
-                    {#if $page.data.entry?.uri?.startsWith('http')}
-                        {@const domain = getHostname($page.data.entry.uri)}
+                    {#if $query.data?.uri?.startsWith('http')}
+                        {@const domain = getHostname($query.data.uri)}
                         <div class="flex items-center space-x-4">
                             <Muted>Domain</Muted>
                             <Muted class="truncate"><a href="/tests/domain/{domain}">{domain}</a></Muted>
@@ -256,30 +257,30 @@
                     <div class="flex items-center space-x-4">
                         <Muted>Author</Muted>
 
-                        <Input variant="ghost" value={$page.data.entry?.author} />
+                        <Input variant="ghost" value={$query.data?.author} />
                         <Button
                             as="a"
-                            href="/tests/people/{$page.data.entry?.author}"
+                            href="/tests/people/{$query.data?.author}"
                             variant="ghost"
                             size="sm"
                         >
                             <Locate class="h-3 w-3" />
                         </Button>
                     </div>
-                    {#if $page.data.tagForm}
+                    {#if $page.data.tagForm && $query.data}
                         <div class="flex items-center space-x-4">
                             <Muted>Tags</Muted>
-                            <TagPopover data={$page.data.tagForm} entry={$page.data.entry} />
+                            <TagPopover data={$page.data.tagForm} entry={$query.data} />
                         </div>
                     {/if}
-                    {#if $page.data.updateBookmarkForm}
+                    {#if $page.data.updateBookmarkForm && $query.data}
                         <div class="flex items-center space-x-4">
                             <Muted>Status</Muted>
-                            <StatusPopover data={$page.data.updateBookmarkForm} entry={$page.data.entry} />
+                            <StatusPopover data={$page.data.updateBookmarkForm} entry={$query.data} />
                         </div>
                     {/if}
                     {#if $page.data.type === 'entry'}
-                        {#key $page.data.entry?.id}
+                        {#key $query.data?.id}
                             <TableOfContents active="font-bold" scrollParent="html" target="#article" />
                         {/key}
                     {/if}
@@ -294,8 +295,8 @@
                     entry={$page.data.entry}
                     /> -->
                         <Cluster>
-                            {@const relations = $page.data.entry?.relations?.concat(
-                                $page.data.entry.back_relations
+                            {@const relations = $query.data?.relations?.concat(
+                                $query.data.back_relations
                             )}
                             {#each relations ?? [] as relation}
                                 <Relation
@@ -329,7 +330,7 @@
                                                 commander_store.close();
                                                 toast.promise(
                                                     mutation($page, 'addToCollection', {
-                                                        entryId: $page.data.entry?.id,
+                                                        entryId: $query.data?.id,
                                                         collectionId: c.id
                                                     }),
                                                     {
@@ -359,7 +360,7 @@
                                                         name,
                                                         items: [
                                                             {
-                                                                entryId: $page.data.entry.id
+                                                                entryId: $query.data.id
                                                             }
                                                         ]
                                                     }).then(() => invalidate('entry')),
@@ -377,7 +378,7 @@
                                 size="sm"
                             >
                                 <PlusIcon class="mr-2 h-4 w-4" />
-                                {#if !$page.data.entry?.collections?.length}
+                                {#if !$query.data?.collections?.length}
                                     Add to collection
                                 {/if}
                             </Button>
@@ -470,7 +471,7 @@
                             <DropdownMenuGroup>
                                 <DropdownMenuItem
                                     on:click={() =>
-                                        triggerDownload($page.data.entry, $page.data.entry?.annotations)}
+                                        triggerDownload($query.data, $query.data?.annotations)}
                                 >
                                     <FileDown class="mr-2 h-4 w-4" />
                                     Export notes to markdown
@@ -489,7 +490,7 @@
                             on:click
                             {annotation}
                             data={$page.data.annotationForm}
-                            entry={$page.data.entry}
+                            entry={$query.data}
                         />
                     {/each}
                 {/if}

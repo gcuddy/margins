@@ -6,52 +6,45 @@
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
 	import { QueryOutput, query as qquery } from '$lib/queries/query';
 	import { init_entries, invalidated } from '$lib/state/entries';
-	import { createInfiniteQuery } from '@tanstack/svelte-query';
+	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { createWindowVirtualizer } from '@tanstack/svelte-virtual';
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action';
 	import { derived } from 'svelte/store';
 	import { useMenuBar } from '../../MainNav.svelte';
+	import { beforeNavigate } from '$app/navigation';
+	import { backContext, setBackContext } from '../../(listables)/[type=type]/[id]/store';
+	import { flip } from 'svelte/animate';
+	import { queryFactory } from '$lib/queries/querykeys';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
 
 	const query = createInfiniteQuery(
-		derived(page, ($page) => ({
-			queryKey: [
-				['get_library'],
-				{
-					input: {
-						status: data.Status,
-						type: data.type,
-						search: $page.url.searchParams.get('search') ?? ''
-					},
-					type: 'infinite'
-				}
-			],
-			queryFn: ({ queryKey, pageParam }) =>
-				qquery($page, 'get_library', {
-					status: data.Status,
-					type: data.type,
-					search: $page.url.searchParams.get('search') ?? '',
-					cursor: pageParam
-				}),
-			// ...libraryQuery($page, {
-			// 	status: data.Status,
-			// 	type: data.type,
-			// 	search: $page.url.searchParams.get('search') ?? ''
-			// }),
-			getNextPageParam: (lastPage) => lastPage.nextCursor,
-			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null
-		}))
+		derived(page, ($page) =>
+			queryFactory.entries.list({
+				status: data.Status,
+				type: data.type,
+				search: $page.url.searchParams.get('search') ?? undefined
+			})
+		)
 	);
 
-	$: entries = $query.data?.pages.flatMap((page) => page.entries) ?? [];
+	query.subscribe((q) => {
+		console.log(`[query change]`, q);
+	});
+
+	$: entries =
+		$query.data?.pages
+			.flatMap((page) => page.entries)
+			.filter((entry) => entry.status === data.Status) ?? [];
 
 	// <!-- probably not smart -->
 	$: if ($query.data) init_entries($query.data.pages.flatMap((page) => page.entries));
 
 	$: console.log({ $query });
+
+	const queryClient = useQueryClient();
 
 	let can_restore = false;
 
@@ -63,7 +56,7 @@
 	const virtualizer = createWindowVirtualizer({
 		count: entries?.length || 0,
 		estimateSize: () => 96,
-		overscan: 5,
+		overscan: 7,
 		getItemKey: (index) => entries[index]?.id
 	});
 
@@ -73,6 +66,12 @@
 	$: $virtualizer.setOptions({
 		count: entries?.length || 0
 	});
+
+	$: console.log({ $virtualizer });
+	$: {
+		console.log({ entries });
+		$virtualizer?.measure();
+	}
 
 	let contentRect: DOMRectReadOnly | null = null;
 	$: console.log({ contentRect });
@@ -91,26 +90,17 @@
 	}
 
 	const menu = useMenuBar();
+
+	beforeNavigate((nav) => setBackContext(nav, $page.url.pathname));
 </script>
 
-<div
-	class=""
-	use:inView
-	on:exit={() => {
-		$menu.centerComponent = LibraryHeader;
-	}}
-	on:enter={() => {
-		$menu.centerComponent = undefined;
-	}}
->
-	<LibraryHeader />
-</div>
+<LibraryHeader />
 {#if $query.isLoading}
 	{#each new Array(10) as _}
 		<EntryItemSkeleton />
 	{/each}
 {:else}
-	{@const entries = $query.data?.pages.flatMap((p) => p.entries) ?? []}
+	<!-- {@const entries = $query.data?.pages.flatMap((p) => p.entries) ?? []} -->
 	<!-- use:dndzone={{
 			items: $virtualizer.getVirtualItems()
 		}} -->
@@ -145,13 +135,27 @@
 	>
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
 			{@const entry = entries[row.index]}
-			{#if entry}
-				<div
-					style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)"
-				>
-					<EntryItem {entry} />
-				</div>
-			{/if}
+			<div
+				animate:flip
+				style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)"
+			>
+				<!-- on:move={() => {
+							console.log(`got move, updating query`);
+							const queryKey = [
+								['get_library'],
+								{
+									input: {
+										status: data.Status,
+										type: data.type,
+										search: $page.url.searchParams.get('search') ?? ''
+									},
+									type: 'infinite'
+								}
+							];
+							queryClient.setQueryData(queryKey, (data) => data);
+						}} -->
+				<EntryItem {entry} />
+			</div>
 		{/each}
 		<!-- <Intersector
 			cb={() => {

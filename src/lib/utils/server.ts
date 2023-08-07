@@ -42,6 +42,7 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
     const parsed = schema.safeParse(data);
     // console.log({ parsed })
     if (!parsed.success) {
+        console.log(`Error parsing data:`, data)
         throw error(400, "Data doesn't match schema");
     }
     return {

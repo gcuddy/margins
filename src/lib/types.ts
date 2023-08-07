@@ -1,3 +1,4 @@
+import type { ComponentProps, ComponentType, SvelteComponent } from "svelte";
 import { z } from "zod";
 
 export const types = [
@@ -41,4 +42,24 @@ export const statusLookup = {
     archive: "Archive"
 } as const;
 
+export type StoredComponent<T extends SvelteComponent> = {
+    component: ComponentType<T>;
+    props: ComponentProps<T>;
+}
 
+export type Command = {
+    id: string;
+    name: string;
+    subtitle?: string;
+    // icon: ComponentType | StoredComponent;
+}
+
+function createCommands() {
+
+}
+
+// desired api
+
+// const config = [{}]
+
+export type StoreValue<T> = T extends { subscribe(cb: (value: infer V) => void): void } ? V : never;

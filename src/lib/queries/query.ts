@@ -16,6 +16,8 @@ import type {
 } from '@tanstack/svelte-query';
 import { queryOptions } from './utils';
 
+export type { Queries };
+
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
 const query_store_cache_lookup = new Map<string, any>();

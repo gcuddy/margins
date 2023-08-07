@@ -306,13 +306,13 @@ export const queries = {
 		schema: z.object({
 			status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
 			search: z.string().optional(),
-			type: typeSchema.optional(),
+			type: typeSchema.nullish(),
 			cursor: z
 				.object({
 					sort_order: z.number(),
 					updatedAt: z.coerce.date()
 				})
-				.optional()
+				.nullish()
 		}),
 		fn: async ({ ctx, input }) => {
 			const { search, status, type, cursor } = input;

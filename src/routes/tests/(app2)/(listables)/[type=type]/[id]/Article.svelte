@@ -794,7 +794,7 @@
 			on:exit={() => {
 				$mainnav.center = true;
 			}}
-			class="text-4xl !mt-0 font-extrabold tracking-tight lg:text-5xl break-words hyphens-manual"
+			class="text-3xl md:text-4xl !mt-0 font-extrabold tracking-tight break-words hyphens-manual"
 		>
 			{data.entry?.title}
 		</h1>

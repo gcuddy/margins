@@ -10,6 +10,7 @@
 	import { ArrowLeft } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
+	import { backContext } from './[id]/store';
 
 	export let show = false;
 
@@ -30,7 +31,7 @@
 		// $rightSidebar && 'opacity-0'
 	)}
 >
-	<Button variant="ghost" as="a" href="/tests/library/backlog">
+	<Button variant="ghost" as="a" href={$backContext}>
 		<ArrowLeft />
 	</Button>
 </nav>

@@ -219,7 +219,7 @@
 	<slot name="top" />
 
 	{#if editor}
-		<BubbleMenu editor={$editor} />
+		<!-- <BubbleMenu editor={$editor} /> -->
 	{/if}
 
 	<EditorContent editor={$editor} />

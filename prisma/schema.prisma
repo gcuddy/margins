@@ -93,8 +93,10 @@ model Bookmark {
 
     bookmarked Boolean @default(true) // Is this actually in the user's library?
 
+
     // Custom Metadata (?) - should this be a separate model?
     title String?
+    author String?
 
     @@unique([uri, entryId, userId])
     @@unique([entryId, userId])

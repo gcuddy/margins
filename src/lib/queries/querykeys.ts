@@ -1,6 +1,12 @@
 import { createQueryKeyStore } from '@lukemorales/query-key-factory';
-import { qquery, type QueryInit, type QueryInput } from './query';
-import { createQuery, type CreateQueryOptions } from '@tanstack/svelte-query';
+import type {
+	CreateInfiniteQueryOptions,
+	CreateQueryOptions,
+	QueryClient,
+	QueryMeta,
+	createInfiniteQuery
+} from '@tanstack/svelte-query';
+import { qquery, type QueryInput, Queries, QueryOutput } from './query';
 
 export const queries = createQueryKeyStore({
 	entries: {
@@ -20,31 +26,64 @@ export const queries = createQueryKeyStore({
 //     });
 // }
 
+// very simplified bastardized version of this for our purposes...
+type QueryFnParams = {
+	meta: any;
+};
+
+type InfiniteQueryFnParams = {
+	meta: any;
+	pageParam: any;
+};
+
 export const queryFactory = {
 	entries: {
 		// list
-		list: (filters: QueryInput<'get_library'>) => {
-			return {
-				// Ideally entries, list would get inferred... but this will do for  now
-				queryKey: ['entries', 'list', { filters }] as const,
-				queryFn: ({ queryKey, meta }) => qquery(meta?.init, 'get_library', filters)
-			};
-		},
+		list: (filters?: QueryInput<'get_library'>) => ({
+			// Ideally entries, list would get inferred... but this will do for  now
+			queryKey: ['entries', 'list', filters ? { filters } : undefined] as const,
+			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) =>
+				qquery(
+					meta?.init,
+					'get_library',
+					filters ? { ...filters, cursor: pageParam } : { status: 'Backlog', cursor: pageParam }
+				),
+			getNextPageParam(lastPage) {
+				return (lastPage as QueryOutput<'get_library'>).nextCursor;
+			},
+			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null
+		}),
 		detail: (input: QueryInput<'entry_by_id'>) => ({
 			queryKey: ['entries', 'detail', { input }] as const,
-			queryFn: ({ queryKey, meta }) => qquery(meta?.init, 'entry_by_id', input)
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'entry_by_id', input)
 		})
 	}
 } satisfies TQueryFactory;
 
 export type QueryFactory = typeof queryFactory;
 
-
-type Q = Parameters<typeof createQuery>[0];
-
 type TQueryFactory = {
 	[key: string]: {
-		[subkey: string]: (...args: any[]) => CreateQueryOptions;
+		// TODO: make this use createinfinte when input extends { cursor }
+		[subkey: string]: (...args: any[]) => CreateQueryOptions | CreateInfiniteQueryOptions;
+		// [subkey: string]: QueryFn;
 	};
 };
 
+type QueryFn = <T extends {}>(
+	input: T
+) => T extends { cursor: any } ? CreateInfiniteQueryOptions : CreateQueryOptions;
+
+function createFn<TKey extends keyof Queries>(
+	input: TKey,
+	opts: QueryInput<TKey> extends { cursor: any } ? CreateInfiniteQueryOptions : CreateQueryOptions
+): QueryInput<TKey> extends { cursor: any } ? CreateInfiniteQueryOptions : CreateQueryOptions {
+	return (input: QueryInput<TKey>) => {};
+}
+
+createFn(
+	{ cursor: 1 },
+	{
+		initialData: []
+	}
+);

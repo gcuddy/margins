@@ -65,11 +65,11 @@
 	<Dialog />
 	<DialogStore />
 	<GenericCommander>
-		<div class="flex h-full grow flex-col gap-y-6">
+		<div class="flex h-full grow flex-col" 	style:--nav-height="4rem">
 			{#if !$is_entry}
-				<header class="container sticky top-0 z-40">
+				<!-- <header class="container sticky top-0 z-40">
 					<MainNav />
-				</header>
+				</header> -->
 			{/if}
 			<div class={cn('container grid grid-cols-[auto,1fr,auto]')}>
 				<!-- w-[200px] -->

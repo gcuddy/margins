@@ -93,6 +93,7 @@
 			console.log(value);
 			return value.next;
 		},
+
         // forceVisible: true
 	});
 </script>

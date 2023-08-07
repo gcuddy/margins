@@ -344,6 +344,33 @@ export async function set_tags_on_entry({
 	// return message(tagForm, 'Tags added');
 }
 
+// move elsewhere
+export const entryMetadataSchema = z.object({
+	id: z.number().int(),
+	title: z.string().optional(),
+	author: z.string().optional()
+});
+
+export async function update_metadata_on_entry({ input, ctx }: GetCtx<typeof entryMetadataSchema>) {
+	const { id, title, author } = input;
+	const { userId } = ctx;
+
+    await db.insertInto("Bookmark")
+        .values({
+            userId,
+            entryId: id,
+            title,
+            author,
+            updatedAt: new Date(),
+            // bookmarked: true,
+        })
+        .onDuplicateKeyUpdate({
+            title,
+            author,
+        })
+        .execute();
+}
+
 // TODO cursor pagination and ordering
 export async function get_notes_for_tag({ name, userId }: { name: string; userId: string }) {
 	let query = db
@@ -372,7 +399,7 @@ export async function entry_by_id({
 }: GetCtx<typeof entry_by_id_schema>) {
 	console.time('entry');
 
-	let podcast: ReturnType<typeof pindex['episodeById']> | null = null;
+	let podcast: Awaited<ReturnType<typeof pindex['episodeById']>> | null = null;
 
 	let query = db
 		.selectFrom('Entry')
@@ -528,7 +555,8 @@ export async function entry_by_id({
 			console.log({ podcastIndexId });
 			if (podcastIndexId) {
 				query = query.where('Entry.podcastIndexId', '=', +podcastIndexId);
-				podcast = pindex.episodeById(+podcastIndexId);
+				podcast = await pindex.episodeById(+podcastIndexId);
+				console.log({ podcast });
 				break;
 			}
 			break;
@@ -604,7 +632,7 @@ export async function entry_by_id({
 		type,
 		// TODO: move these to endpoint to use in +page.ts with better cachings
 		// entry: entry ? validate_entry_type(entry) : undefined,
-        entry,
+		entry,
 		movie: type === 'movie' ? await tmdb.movie.details(+id) : null,
 		book: type === 'book' ? await books.get(id.toString()) : null,
 		tv: type === 'tv' ? await tmdb.tv.details(+id) : null,

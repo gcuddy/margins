@@ -40,7 +40,13 @@
 		restoring.set(true);
 		const [unsubscribe, promise] = persistQueryClient({
 			queryClient: client,
-			persister
+			persister,
+            dehydrateOptions: {
+                shouldDehydrateQuery(query) {
+                    // console.log(`dehydrating`, { query });
+                    return false;
+                },
+            }
 		});
 		console.log({ unsubscribe, promise });
 		promise

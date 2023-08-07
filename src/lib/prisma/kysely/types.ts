@@ -238,6 +238,7 @@ export type Bookmark = {
 	review_timestamp: number | null;
 	bookmarked: Generated<number>;
 	title: string | null;
+	author: string | null;
 };
 export type Collection = {
 	id: Generated<number>;

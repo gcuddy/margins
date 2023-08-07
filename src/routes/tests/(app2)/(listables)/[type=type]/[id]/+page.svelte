@@ -23,6 +23,7 @@
 	import { queryOptions } from '$lib/queries/utils';
 	import type { Queries } from '../../../queries.server';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import { numberOrString } from '$lib/utils/misc';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
@@ -49,25 +50,29 @@
 	// 	type: data.type
 	// });
 	$: console.log({ $query });
+	// const query = createQuery(data.query);
 	const query = createQuery(
 		derived(page, ($page) => {
-			return queryFactory.entries.detail({
-				id: Number.isInteger(+$page.params.id) ? +$page.params.id : $page.params.id,
-				type: data.type
-			});
+			return {
+				...queryFactory.entries.detail({
+					id: numberOrString($page.params.id),
+					type: data.type
+				}),
+				// ...(!data.cache ? { refetchOnMount: false } : { initialData: data.cache })
+			};
 		})
 	);
 
 	afterNavigate(() => {
 		// push to recents
 		// save interaction
-		if (!data.entry) return;
-		if (data.entry.title) {
-			recents.add_entry(data.entry);
+		if (!$query.data?.entry) return;
+		if ($query.data.entry.title) {
+			recents.add_entry($query.data.entry);
 		}
-		if (data.entry.type !== 'article') return;
+		if ($query.data.entry.type !== 'article') return;
 		mutation($page, 'saveInteraction', {
-			entryId: data.entry.id,
+			entryId: $query.data.entry.id,
 			last_viewed: new Date(),
 			is_read: true
 		});
@@ -98,7 +103,7 @@
 
 <svelte:head>
 	<title>
-		{data.entry?.title} | {data.entry?.type}
+		{$query.data?.entry?.title} | {$query.data?.entry?.type}
 	</title>
 </svelte:head>
 
@@ -129,13 +134,15 @@
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >
-	{#if type === 'article'}
-		<svelte:component this={data.component} data={{ ...data, ...$query.data }}>
-			{@html $query.data?.entry?.html}
-		</svelte:component>
-	{:else}
-		<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
-		<svelte:component this={data.component} {data} />
+	{#if $query.isSuccess}
+		{#if type === 'article'}
+			<svelte:component this={data.component} data={$query.data}>
+				{@html $query.data?.entry?.html}
+			</svelte:component>
+		{:else}
+			<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
+			<svelte:component this={data.component} data={$query.data} />
+		{/if}
 	{/if}
 </div>
 

@@ -10,6 +10,7 @@
 	import { fly } from 'svelte/transition';
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
 
+	$: console.log({ $render });
 	const width_store =
 		(getContext('rightSidebarWidth') as Writable<number>) ?? persisted('sidebar__width', 360);
 

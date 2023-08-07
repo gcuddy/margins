@@ -15,6 +15,7 @@
 // const { entries, next } = await response.json() as LibraryResponse;
 // console.log({ entries, next })
 
+import { queryFactory } from '$lib/queries/querykeys';
 import { libraryQuery } from './queries';
 
 export async function load(evt) {
@@ -23,11 +24,11 @@ export async function load(evt) {
 	const { queryClient } = await parent();
 
 	await queryClient.prefetchInfiniteQuery(
-		libraryQuery(evt, {
+		queryFactory.entries.list({
 			status: evt.data.Status,
 			type: evt.data.type,
 			search: evt.url.searchParams.get('search') ?? ''
 		})
 	);
-    return evt.data;
+	return evt.data;
 }

@@ -11,8 +11,8 @@
 	import smoothload from '$lib/actions/smoothload';
 	import type { EntryInList } from '$lib/db/selects';
 	import { relations_icons } from '$lib/features/relations/icons';
-	import { mutation, query } from '$lib/queries/query';
-	import { state, update_entry } from '$lib/state/entries';
+	import { QueryOutput, mutation, query } from '$lib/queries/query';
+	import { state } from '$lib/state/entries';
 	import { Status, statuses, statusesWithIcons } from '$lib/status';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { ago, now } from '$lib/utils/date';
@@ -37,8 +37,14 @@
 	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
 	import { Muted, Small } from '../ui/typography';
 	import { render_html } from '$components/ui/editor/utils';
+	import { portal } from 'svelte-portal';
+	import { InfiniteData, useQueryClient } from '@tanstack/svelte-query';
+	import type { LibraryResponse } from '$lib/server/queries';
+	import { queryFactory } from '$lib/queries/querykeys';
 
-	const entryItemVariants = cva('flex grow relative data-[state=open]:bg-accent', {
+	const queryClient = useQueryClient();
+
+	const entryItemVariants = cva('flex grow relative data-[state=open]:bg-accent cursor-default', {
 		variants: {
 			view: {
 				list: 'items-center gap-x-4 px-2 py-4 data-[state=open]:bg-accent',
@@ -74,12 +80,52 @@
 
 	export let out_key: Status = 'Archive';
 
+	// REVIEW should make a single generic type for state
+	async function update_entry(newData: Partial<LibraryResponse['entries'][number]>) {
+		// REVIEW can I get this from queryfactory?
+		// const queryKey = ['entries', 'list'] as const;
+		const queryKey = [['get_library']] as const;
+		await queryClient.cancelQueries({
+			queryKey
+		});
+		const previousQueries = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
+			queryKey
+		});
+
+		console.log({ previousQueries });
+
+		// queryClient.getQueryCache().
+
+		queryClient.setQueriesData<InfiniteData<LibraryResponse>>({ queryKey }, (data) => {
+			if (!data) return data;
+			return {
+				...data,
+				pages: data.pages.map((p) => {
+					return {
+						...p,
+						entries: p.entries.map((oldEntry) => {
+							if (oldEntry.id === entry.id) {
+								return {
+									...oldEntry,
+									...newData
+								};
+							}
+							return oldEntry;
+						})
+					};
+				})
+			};
+		});
+
+		// queryClient.
+	}
+
 	export async function move_entry(status: Status) {
 		out_key = status;
 		const { status: old_status, sort_order: old_sort_order } = entry;
 		dispatch('move', { status, entries: [entry] });
 		// optimistic update
-		update_entry(entry.id, {
+		await update_entry({
 			status
 		});
 		mutation($page, 'update_status', {
@@ -108,6 +154,11 @@
 			})
 			.catch(() => {
 				// TODO: move back and display error message
+			})
+			.finally(() => {
+				queryClient.invalidateQueries({
+                    queryKey: [['get_library']]
+                });
 			});
 
 		// toast.promise(
@@ -132,8 +183,8 @@
 		builders: { createSubmenu, createCheckboxItem, createMenuRadioGroup },
 		states: { open }
 	} = createContextMenu({
-        defaultOpen: false,
-    });
+		defaultOpen: false
+	});
 
 	const {
 		elements: { radioGroup, radioItem },
@@ -191,7 +242,7 @@
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
-<div class={entryItemVariants({ view })} use:melt={$trigger}>
+<a bind:this={anchor_el} {href} class={entryItemVariants({ view })} use:melt={$trigger}>
 	{#if view === 'list'}
 		<div
 			class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
@@ -223,6 +274,7 @@
 					bind:checked
 					type="checkbox"
 					class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-input checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
+					on:click|stopPropagation
 					on:focus={() => {
 						anchor_el?.focus();
 					}}
@@ -232,8 +284,7 @@
 		<div class="flex flex-col">
 			<Muted class="text-xs">{entry.type}</Muted>
 			<div class="flex items-center gap-x-4">
-				<a
-					bind:this={anchor_el}
+				<div
 					on:focus|once={(e) => {
 						console.log('focused', e);
 						console.log({ href });
@@ -249,11 +300,10 @@
 					}}
 					data-id={entry.id}
 					class="line-clamp-2 font-semibold hover:underline focus:outline-none"
-					{href}
 					on:click
 				>
 					{entry.title}
-				</a>
+				</div>
 				<div class="hidden gap-x-2 sm:flex">
 					{#if data?.annotations && data.annotations.length > 0}
 						{@const total = data.num_annotations ? +data.num_annotations : data.annotations.length}
@@ -383,7 +433,7 @@
 		<!-- for now, we use a slot -->
 		<slot />
 	{/if}
-</div>
+</a>
 
 <!-- Context Menu -->
 <!-- <div class="z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2" use:melt={$menu}>
@@ -395,6 +445,11 @@
     <div class="item" use:melt={$item}>About Melt UI</div>
     <div class="item" use:melt={$item}>Check for Updates...</div>
 </div> -->
+
+<!-- Overlay -->
+<!-- {#if $open}
+	<div use:portal class="fixed inset-0 z-10" />
+{/if} -->
 
 <svelte:component this={contextMenu} {menu} class="w-52">
 	<svelte:component
@@ -440,7 +495,7 @@
 								// TODO: update tag
 								console.log('update tag');
 								// We set the state here so that the UI updates immediately
-								update_entry(entry.id, {
+								update_entry({
 									tags: data.tags?.some((t) => t.id === tag.id)
 										? data.tags?.filter((t) => t.id !== tag.id)
 										: [...(data.tags || []), tag]
@@ -521,7 +576,7 @@
 									entryId: entry.id
 								});
 							}
-							update_entry(entry.id, {
+							update_entry({
 								collections: data.collections?.some((c) => c.id === collection.id)
 									? data.collections?.filter((c) => c.id !== collection.id)
 									: [...(data.collections || []), collection]

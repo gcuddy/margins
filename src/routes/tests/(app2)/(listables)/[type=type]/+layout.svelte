@@ -24,17 +24,13 @@
 	const rightSidebarWidth = persisted('rightSidebarWidth', 360);
 	setContext('rightSidebarWidth', rightSidebarWidth);
 
-    createPdfStateContext();
+	createPdfStateContext();
 
-    const navWidth = writable(0);
-    setContext('navWidth', navWidth);
+	const navWidth = writable(0);
+	setContext('navWidth', navWidth);
 </script>
 
-<div
-	style:--nav-height="4rem"
-	style:--right-sidebar-width="{$rightSidebarWidth}px"
-	class="relative flex items-start grow"
->
+<div style:--right-sidebar-width="{$rightSidebarWidth}px" class="relative flex items-start grow">
 	<!-- Left sidebar -->
 	<!-- <div class="flex flex-col max-md:fixed md:sticky top-0 max-md:basis-0 "> -->
 	<LeftSidebar />
@@ -43,7 +39,5 @@
 		<Header {scrollingDown} />
 		<slot />
 	</div>
-	{#if $page.data.entry}
-		<Sidebar />
-	{/if}
+	<Sidebar />
 </div>
