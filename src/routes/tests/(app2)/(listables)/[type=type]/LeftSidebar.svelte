@@ -20,12 +20,16 @@
 
 	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }> | undefined | null;
 	$: if (borderBoxSize) $navWidth = $navWidth = borderBoxSize[borderBoxSize.length - 1]?.inlineSize;
+
+    const inArticle = getContext('inArticle') as Writable<boolean>;
+    const mainNavWidth = getContext('mainNavWidth') as Writable<number>;
 </script>
 
 <nav
 	bind:borderBoxSize
+    style:left={$inArticle ? 0 : $mainNavWidth + 'px'}
 	class={cn(
-		'h-[--nav-height] flex items-center transition-transform transform fixed  left-0 top-0 z-[51] pl-4 w-full',
+		'h-[--nav-height] flex items-center transition-transform transform fixed  top-0 z-[51] pl-4 w-full',
 		!show && 'w-min max-w-min border-b',
 		$scrollingDown && '-translate-y-full',
 		// $rightSidebar && 'opacity-0'

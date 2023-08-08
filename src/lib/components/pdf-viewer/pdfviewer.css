@@ -253,7 +253,6 @@
 	--dir-factor: -1;
 }
 
-.hidden,
 [hidden] {
 	display: none !important;
 }

@@ -27,10 +27,17 @@
 	import { writable, type Writable } from 'svelte/store';
 	import trackScroll from '$lib/actions/trackScroll';
 	import { getPdfStateContext } from './utils';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 
 	export let annotations: Pick<Annotation, 'id' | 'target'>[] = [];
 
-	pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+	// pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+    // set to public cdn
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+	let loading = true;
+    let _error: any;
 
 	export let url: string | URL; //url of pdf.
 	const INTERNAL_URL = url.toString();
@@ -269,9 +276,12 @@
 					//     pdf_viewer.currentScaleValue = $opts.scale;
 					// }
 					pdf_viewer.spreadMode = _spread_mode;
+					// loading = false;
 				})
 				.catch(function (error) {
+                    console.log({error})
 					password_error = true;
+                    _error = error;
 					password_message = error.message;
 				});
 			// onZoomOut = () => {
@@ -284,6 +294,7 @@
 				_spread_mode = (_spread_mode + 1) % 3;
 				pdf_viewer.spreadMode = _spread_mode;
 			};
+			loading = false;
 			return pdf_viewer;
 		};
 		const render = renderDocument();
@@ -319,6 +330,11 @@
 	}
 </script>
 
+{#if loading}
+	<div class="absolute h-full w-full z-10 px-6 py-[calc(var(--nav-height)+1rem)]">
+		<Skeleton class="p-4 h-full w-full" />
+	</div>
+{/if}
 <div
 	class={classname}
 	style={styles}
@@ -327,7 +343,8 @@
 >
 	<div id="viewer-parent" class="w-full h-full">
 		{#if password_error === true}
-			<div class="spdfinner">
+			<div class="spdfinner pt-[80px]">
+                {JSON.stringify(_error)}
 				<p>This document requires a password to open:</p>
 				<p>{password_message}</p>
 				<div>

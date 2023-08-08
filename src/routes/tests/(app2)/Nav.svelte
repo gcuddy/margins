@@ -13,9 +13,7 @@
 		Home,
 		Tag,
 		PinIcon,
-
 		BrainCircuit
-
 	} from 'lucide-svelte';
 	import type { LayoutData } from './$types';
 	import { Small } from '$lib/components/ui/typography';
@@ -23,6 +21,8 @@
 	import mq from '$lib/stores/mq';
 	import { useMenuBar } from './MainNav.svelte';
 	import ColResizer from '$lib/components/ColResizer.svelte';
+	import { getContext } from 'svelte';
+	import type { Writable } from 'svelte/store';
 
 	type Nav = {
 		label: string;
@@ -88,10 +88,10 @@
 		}
 	];
 
-	$: in_article =
-		$page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
+	const inArticle = getContext('inArticle') as Writable<boolean>;
 
-	$: collapsed = in_article ? !$mq['2xl'] : !$mq.lg;
+	$: collapsed = $inArticle ? !$mq['2xl'] : !$mq.lg;
+
 
 	export let user_data: LayoutData['user_data'];
 
@@ -100,50 +100,51 @@
 	export let width = 240;
 </script>
 
-{#if !in_article}
-<nav
-	style:--width='{width}px'
-	class="grid items-start gap-2 overflow-y-auto max-w-[--width] {$menu_bar.show
-		? 'opacity-100'
-		: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
->
-	<div class="px-4 py-2">
-		<div
-			class="space-y-1 transition-opacity {in_article
-				? 'focus-within:opacity-100 hover:opacity-100 max-2xl:opacity-20'
-				: ''}"
-		>
-			{#each nav as nav_item}
+{#if !$inArticle}
+<div style:width="{width}px"></div>
+	<nav
+		style:--width="{width}px"
+		class="grid items-start gap-2 overflow-y-auto fixed top-0 left-0 bottom-0 grow h-full border-r w-[--width] {$menu_bar.show
+			? 'opacity-100'
+			: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
+	>
+		<div class="px-4 py-2">
+			<div
+				class="space-y-1 transition-opacity {$inArticle
+					? 'focus-within:opacity-100 hover:opacity-100 max-2xl:opacity-20'
+					: ''}"
+			>
+				{#each nav as nav_item}
+					<Button
+						as="a"
+						href={nav_item.href}
+						size="sm"
+						class="flex w-full items-center justify-start space-x-2"
+						variant={nav_item.active($page.url.pathname) ? 'secondary' : 'ghost'}
+					>
+						<svelte:component
+							this={nav_item.icon}
+							class="h-6 w-6 {$inArticle ? '2xl:h-4 2xl:w-4' : 'lg:h-4 lg:w-4'}"
+						/>
+						<span class="hidden {$inArticle ? '2xl:inline' : 'lg:inline'}">{nav_item.label}</span>
+					</Button>
+				{/each}
 				<Button
 					as="a"
-					href={nav_item.href}
+					href="/tests/pins"
 					size="sm"
-					class="flex w-full items-center justify-start space-x-2"
-					variant={nav_item.active($page.url.pathname) ? 'secondary' : 'ghost'}
+					class="flex w-full items-center justify-start lg:hidden"
+					variant="ghost"
 				>
-					<svelte:component
-						this={nav_item.icon}
-						class="h-6 w-6 {in_article ? '2xl:h-4 2xl:w-4' : 'lg:h-4 lg:w-4'}"
-					/>
-					<span class="hidden {in_article ? '2xl:inline' : 'lg:inline'}">{nav_item.label}</span>
+					<PinIcon class="h-6 w-6" />
 				</Button>
-			{/each}
-			<Button
-				as="a"
-				href="/tests/pins"
-				size="sm"
-				class="flex w-full items-center justify-start lg:hidden"
-				variant="ghost"
-			>
-				<PinIcon class="h-6 w-6" />
-			</Button>
+			</div>
 		</div>
-	</div>
-	{#if user_data}
-		<div class="hidden truncate px-4 py-2 {in_article ? '2xl:inline' : 'lg:inline'}">
-			<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">Pins</h2>
-			<div class="flex flex-col space-y-1">
-				<!-- {#await user_data.pins}
+		{#if user_data}
+			<div class="hidden truncate px-4 py-2 {$inArticle ? '2xl:inline' : 'lg:inline'}">
+				<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">Pins</h2>
+				<div class="flex flex-col space-y-1">
+					<!-- {#await user_data.pins}
 					<Skeleton class="h-10 w-full" />
 					<Skeleton class="h-10 w-full" />
 				{:then pins}
@@ -187,16 +188,26 @@
 						{/if}
 					{/each}
 				{/await} -->
+				</div>
 			</div>
-		</div>
-	{/if}
-	<!-- <Button variant="ghost">Subscriptions</Button> -->
-</nav>
-<ColResizer bind:width max={500} class="absolute inset-y-0 w-2 cursor-col-resize z-40 -right-[3px]" />
+		{/if}
+		<!-- <Button variant="ghost">Subscriptions</Button> -->
+        <ColResizer
+            bind:width
+            min={220}
+            max={330}
+            class="absolute inset-y-0 w-2 cursor-col-resize z-[97] -right-[3px]"
+        />
+	</nav>
 {/if}
 {#if $audioPlayer.audio?.src}
-<!-- we subtract 8 to account for colresizer -->
-	<div style:--width="{width}px" class="mt-auto flex shrink-0 flex-col pb-2 max-w-[--width] {collapsed ? '' : 'mt-auto border-t'}">
+	<!-- we subtract 8 to account for colresizer -->
+	<div
+		style:--width="{width}px"
+		class="mt-auto flex shrink-0 flex-col pb-2 max-w-[--width] {collapsed
+			? ''
+			: 'mt-auto border-t'}"
+	>
 		<AudioPlayer {collapsed} />
 	</div>
 {/if}

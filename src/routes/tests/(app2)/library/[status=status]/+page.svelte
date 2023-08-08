@@ -15,6 +15,7 @@
 	import { backContext, setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import { flip } from 'svelte/animate';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import { checkedEntries, SelectActions } from '$components/entries/multi-select';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
@@ -91,6 +92,9 @@
 
 	const menu = useMenuBar();
 
+    let checkLookup: Record<number, boolean> = {};
+
+
     // use in any entrylist
 	beforeNavigate((nav) => setBackContext(nav, $page.url.toString()));
 </script>
@@ -157,7 +161,7 @@
 							];
 							queryClient.setQueryData(queryKey, (data) => data);
 						}} -->
-				<EntryItem {entry} />
+				<EntryItem bind:checked={$checkedEntries[entry.id]} {entry} />
 			</div>
 		{/each}
 		<!-- <Intersector
@@ -179,6 +183,8 @@
 	<!-- {#each $query.data?.pages.flatMap((p) => p.entries) ?? [] as entry}
 	{/each} -->
 {/if}
+
+<SelectActions />
 <!-- <EntryList
 	loading={$query.isLoading}
 	bind:this={entryList}

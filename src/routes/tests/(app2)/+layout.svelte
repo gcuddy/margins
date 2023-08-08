@@ -17,7 +17,7 @@
 	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
 	import QueryClientPersister from './QueryClientPersister.svelte';
 	import { browser } from '$app/environment';
-    import { AddButton } from '$components'
+	import { AddButton } from '$components';
 
 	// export let data;
 
@@ -51,11 +51,16 @@
 		commander = module.default;
 	});
 
-	export let sidebar_width = 240;
+	const navWidth = writable(240);
+    setContext('mainNavWidth', navWidth);
 
 	// queryclient
 
 	const queryClient = data.queryClient;
+
+    const inArticle = writable(false);
+    setContext('inArticle', inArticle);
+    $: $inArticle = $page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
 </script>
 
 <QueryClientPersister client={data.queryClient} let:isRestoring>
@@ -65,7 +70,7 @@
 	<Dialog />
 	<DialogStore />
 	<GenericCommander>
-		<div class="flex h-full grow flex-col" 	style:--nav-height="4rem">
+		<div class="flex h-full grow flex-col" style:--nav-height="4rem">
 			{#if !$is_entry}
 				<!-- <header class="container sticky top-0 z-40">
 					<MainNav />
@@ -73,19 +78,21 @@
 			{/if}
 			<div class={cn('grid grid-cols-[auto,1fr,auto]')}>
 				<!-- w-[200px] -->
-				<aside
-					class={cn(
-						'sticky top-20 hidden h-[calc(100vh-4.5rem)] flex-col self-start overflow-hidden sm:flex'
-						// isEntry && 'md:hidden',
-						// is_article && 'sm:hidden'
-					)}
-				>
-					{#if $page.url.pathname.startsWith('/tests/settings')}
-						<!-- todo -->
-					{:else}
-						<Nav bind:width={sidebar_width} user_data={data.user_data} />
-					{/if}
-				</aside>
+				<div>
+					<aside
+						class={cn(
+							'hidden h-full flex-col self-stretch grow overflow-hidden sm:flex'
+							// isEntry && 'md:hidden',
+							// is_article && 'sm:hidden'
+						)}
+					>
+						{#if $page.url.pathname.startsWith('/tests/settings')}
+							<!-- todo -->
+						{:else}
+							<Nav bind:width={$navWidth} user_data={data.user_data} />
+						{/if}
+					</aside>
+				</div>
 				<main
 					class={cn(
 						'flex h-full w-full flex-1 flex-col',
@@ -104,7 +111,7 @@
 						<slot />
 					{/if}
 					{#if !is_entry && data.urlForm}
-                    <AddButton urlForm={data.urlForm} />
+						<AddButton urlForm={data.urlForm} />
 						<!--  -->
 					{/if}
 				</main>

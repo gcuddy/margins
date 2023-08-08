@@ -30,28 +30,25 @@
 </script>
 
 <svelte:window on:keydown={on_keydown} />
+{#if $render}
+	<div
+		bind:this={container}
+		transition:fly={{ x: $width_store, duration: 300, opacity: 1 }}
+		class="fixed hidden md:block right-0 top-0 h-screen transition-transform duration-300 md:w-[--right-sidebar-width] border-l bg-background"
+	>
+		<EntrySidebar />
 
-{#if $mq.md}
-	{#if $render}
-		<div
-			bind:this={container}
-			transition:fly={{ x: $width_store, duration: 300, opacity: 1 }}
-			class="fixed right-0 top-0 h-screen transition-transform duration-300 md:w-[--right-sidebar-width] border-l bg-background hidden md:block"
-		>
-			<EntrySidebar />
-
-			<!-- Resizer -->
-			<ColResizer
-				min={300}
-				max={550}
-				direction="w"
-				class="absolute -left-1 bottom-0 top-0 z-50 w-2 cursor-col-resize after:absolute after:inset-y-0 after:left-0.5 after:w-0.5 "
-				bind:width={$width_store}
-			/>
-		</div>
-	{/if}
-{:else}
-	<EntryMobileSidebar defaultOpen={$render} let:open>
-		<EntrySidebar on:click={() => open.set(false)} />
-	</EntryMobileSidebar>
+		<!-- Resizer -->
+		<ColResizer
+			min={300}
+			max={550}
+			direction="w"
+			class="absolute -left-1 bottom-0 top-0 z-50 w-2 cursor-col-resize after:absolute after:inset-y-0 after:left-0.5 after:w-0.5 "
+			bind:width={$width_store}
+		/>
+	</div>
 {/if}
+<EntryMobileSidebar defaultOpen={$render} let:open>
+	<EntrySidebar on:click={() => open.set(false)} />
+</EntryMobileSidebar>
+{#if $mq.md}{:else}{/if}

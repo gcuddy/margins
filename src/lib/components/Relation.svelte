@@ -45,7 +45,7 @@
 </script>
 
 <HoverCard>
-	<Badge slot="trigger" class="min-w-0 max-w-[200px] xl:max-w-[224px]">
+	<Badge slot="trigger" variant="outline" class="min-w-0 max-w-[200px] xl:max-w-[224px]">
 		<svelte:component this={icons[type]} class="mr-2 h-4 w-4 shrink-0" />
 		<a href="/tests/{getType(entry.type)}/{getId(entry)}" class="truncate">{entry.title}</a>
 		<OptionsMenu

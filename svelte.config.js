@@ -34,6 +34,9 @@ const config = {
 	compilerOptions: {},
 	shadcn: {
 		componentPath: './src/lib/components/ui'
-	}
+	},
+    vitePlugin: {
+        inspector: true
+    }
 };
 export default config;

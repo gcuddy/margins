@@ -24,9 +24,13 @@
 	});
 
 	const pdf_state = getPdfStateContext();
-    $: opts = $pdf_state.opts
+	$: opts = $pdf_state.opts;
 
 	const navWidth = getContext('navWidth') as Writable<number>;
+
+	const mainNavWidth = getContext('mainNavWidth') as Writable<number>;
+        const inArticle = getContext('inArticle') as Writable<boolean>;
+
 
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
@@ -44,10 +48,14 @@
 {/if}
 
 <div
+    style:--main-nav-width={$inArticle ? `0px` : $mainNavWidth + 'px'}
+    style:left={$inArticle ? undefined : $mainNavWidth + 'px'}
 	class={cn(
 		'fixed flex items-center justify-between z-50 left-0 top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform',
 		$scrollingDown && '-translate-y-full',
-		$rightSidebar ? 'w-full pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width))]' : 'w-full pr-14', // pr-14 because button is w-10 r-4
+		$rightSidebar
+			? 'w-full pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
+			: 'w-full pr-14' // pr-14 because button is w-10 r-4
 		// $rightSidebar && $mq.max_md && 'opacity-0'
 	)}
 >
@@ -69,11 +77,13 @@
 					Auto
 				</button>
 
-                <button on:click={() => {
-                    $opts.darkModeInvert = !$opts.darkModeInvert
-                }}>
-                    dark mode
-                </button>
+				<button
+					on:click={() => {
+						$opts.darkModeInvert = !$opts.darkModeInvert;
+					}}
+				>
+					dark mode
+				</button>
 			{/if}
 			<!--  -->
 		</div>

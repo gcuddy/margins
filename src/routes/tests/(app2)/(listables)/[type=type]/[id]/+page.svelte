@@ -57,7 +57,7 @@
 				...queryFactory.entries.detail({
 					id: numberOrString($page.params.id),
 					type: data.type
-				}),
+				})
 				// ...(!data.cache ? { refetchOnMount: false } : { initialData: data.cache })
 			};
 		})
@@ -91,6 +91,7 @@
 	let current_list = true;
 
 	const rightSidebar = getContext('rightSidebar') as Writable<boolean>;
+
 
 	onMount(async () => {
 		// try to get component if it doesn't exist, for example we're mounting this component elsewhere
@@ -129,8 +130,8 @@
 <div
 	class={cn(
 		'grow transition-[width] duration-300',
-		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)] px-2', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
-		$rightSidebar ? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]' : 'w-full', // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
+		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)] sm:px-6 px-4', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
+		$rightSidebar ? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]' : 'w-full' // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
 
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}

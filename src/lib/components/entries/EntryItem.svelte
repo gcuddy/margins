@@ -47,7 +47,7 @@
 	const entryItemVariants = cva('flex grow relative data-[state=open]:bg-accent cursor-default', {
 		variants: {
 			view: {
-				list: 'items-center gap-x-4 px-2 py-4 data-[state=open]:bg-accent',
+				list: 'items-center gap-x-4 px-6 py-4 data-[state=open]:bg-accent',
 				kanban:
 					'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6'
 			}
@@ -133,6 +133,7 @@
 		})
 			.then(() => {
 				toast.success('Entry moved to ' + status, {
+                    // description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
 					action: old_status
 						? {
 								label: 'Undo',
@@ -148,7 +149,7 @@
 									});
 								}
 						  }
-						: undefined
+						: undefined,
 				});
 			})
 			.catch(() => {
@@ -276,7 +277,7 @@
 				<input
 					bind:checked
 					type="checkbox"
-					class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-input checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
+					class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
 					on:click|stopPropagation
 					on:focus={() => {
 						anchor_el?.focus();
@@ -450,9 +451,9 @@
 </div> -->
 
 <!-- Overlay -->
-<!-- {#if $open}
-	<div use:portal class="fixed inset-0 z-10" />
-{/if} -->
+{#if $open}
+	<div use:portal class="fixed inset-0" />
+{/if}
 
 <svelte:component this={contextMenu} {menu} class="w-52">
 	<svelte:component
