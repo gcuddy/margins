@@ -27,8 +27,7 @@ export async function load(evt) {
 		queryFactory.entries.list({
 			status: evt.data.Status,
 			type: evt.data.type,
-			search: evt.url.searchParams.get('search') ?? ''
-		})
+			search: evt.url.searchParams.get('search') ?? undefined })
 	);
 	return evt.data;
 }

@@ -91,7 +91,8 @@
 
 	const menu = useMenuBar();
 
-	beforeNavigate((nav) => setBackContext(nav, $page.url.pathname));
+    // use in any entrylist
+	beforeNavigate((nav) => setBackContext(nav, $page.url.toString()));
 </script>
 
 <LibraryHeader />

@@ -68,6 +68,7 @@
 				class: `relative transition-colors`
 			})}
             data-sveltekit-keepfocus
+            data-sveltekit-replacestate
 			class:animate-scale-1={name === 'Archive' && _highlight_archive}
 			data-tab={name}
             data-state={selected ? 'active' : undefined}

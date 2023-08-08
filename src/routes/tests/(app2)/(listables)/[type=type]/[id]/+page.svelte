@@ -129,8 +129,9 @@
 <div
 	class={cn(
 		'grow transition-[width] duration-300',
-		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)]', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
-		$rightSidebar ? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]' : 'w-full' // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
+		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)] px-2', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
+		$rightSidebar ? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]' : 'w-full', // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
+
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >

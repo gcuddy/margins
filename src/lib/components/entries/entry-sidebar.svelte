@@ -315,7 +315,7 @@
                     /> -->
                         <Cluster>
                             {#each $query.data?.collections ?? [] as collection}
-                                <Badge as="a" class="line-clamp-2" href="/tests/collection/{collection.id}"
+                                <Badge variant="secondary" as="a" class="line-clamp-2" href="/tests/collection/{collection.id}"
                                     >{collection.name}</Badge
                                 >
                             {/each}

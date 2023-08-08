@@ -71,7 +71,7 @@
 					<MainNav />
 				</header> -->
 			{/if}
-			<div class={cn('container grid grid-cols-[auto,1fr,auto]')}>
+			<div class={cn('grid grid-cols-[auto,1fr,auto]')}>
 				<!-- w-[200px] -->
 				<aside
 					class={cn(
