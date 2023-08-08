@@ -389,8 +389,32 @@
 
     ol[data-sonner-toaster] li.toast[data-sonner-toast] {
         /* @apply pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-border p-6 pr-8 shadow-lg; */
+        /* @apply max-h-screen p-4 md:max-w-[420px] */
+        @apply bg-background text-foreground border border-border shadow-lg p-6 pr-8 gap-x-4;
+
+        [data-title] {
+            @apply !font-semibold !text-sm;
+        }
+
+        button[data-button] {
+            @apply inline-flex h-8 shrink-0 items-center justify-center rounded-md bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+
+            border: 1px solid hsl(var(--border) / 1);
+        }
+
+        [data-close-button] {
+            /* @apply absolute right-2 top-2 rounded-md p-1 text-foreground/50 hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2; */
+        }
     }
 
+    ol[data-sonner-toaster] li.toast[data-sonner-toast][data-type="error"] {
+        @apply bg-destructive text-destructive-foreground;
+
+        button[data-button] {
+            @apply border-muted/40 hover:border-destructive/30 bg-destructive hover:text-destructive-foreground focus:ring-destructive;
+        }
+
+    }
     .toast[data-sonner-toast] {
         /* @apply group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg */
         [data-button] {

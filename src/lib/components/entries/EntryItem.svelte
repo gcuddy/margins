@@ -211,6 +211,9 @@
 		}).then(() => {
 			tag_state_dirty = false;
 			toast.success('Tags updated');
+            queryClient.invalidateQueries({
+                queryKey: ['entries']
+            });
 		});
 	}
 

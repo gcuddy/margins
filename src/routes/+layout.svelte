@@ -33,9 +33,10 @@
 		// }
 	}} -->
 <Toaster
-	toastOptions={{
-		class: 'toast',
-	}}
+    closeButton
+    toastOptions={{
+        class: 'toast'
+    }}
 />
 <!-- theme="system" -->
 
