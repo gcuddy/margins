@@ -18,7 +18,7 @@ export const actions: Actions = {
         console.log(e)
     }),
     update_status: async ({ locals, request, url }) => {
-        const sesh = await locals.validate();
+        const sesh = await locals.auth.validate();
         if (!sesh) return fail(401);
         // get ids
         const data = await request.formData();

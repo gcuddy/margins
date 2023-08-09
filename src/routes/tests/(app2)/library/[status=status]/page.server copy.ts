@@ -9,7 +9,7 @@ import { type Type, types, statusLookup } from '$lib/types';
 
 export const load = (async (event) => {
     const { locals, url } = event;
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) {
         throw redirect(302, handleLoginRedirect(event));
     }

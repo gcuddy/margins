@@ -1,5 +1,5 @@
 import { type RequestEvent, fail } from "@sveltejs/kit";
-import type { Session } from "lucia-auth";
+import type { Session } from 'lucia';
 import type { UnwrapEffects, Validation, ZodValidation } from "sveltekit-superforms";
 import { superValidate } from "sveltekit-superforms/server";
 import { type AnyZodObject, z } from "zod";

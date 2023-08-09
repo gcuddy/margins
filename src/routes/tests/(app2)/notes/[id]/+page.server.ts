@@ -7,7 +7,7 @@ import { annotations, entrySelect, genericWithEntry, withEntry } from '$lib/db/s
 import { jsonObjectFrom } from 'kysely/helpers/mysql';
 
 export const load = (async ({ locals, params }) => {
-	const session = await locals.validate();
+	const session = await locals.auth.validate();
 	// TODO: check if public
 	if (!session) throw error(401);
 	const { id } = params;
@@ -41,7 +41,7 @@ export const load = (async ({ locals, params }) => {
 
 export const actions: Actions = {
 	delete: async ({ locals, params }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) throw error(401);
 		await db
 			.updateTable('Annotation')
@@ -54,7 +54,7 @@ export const actions: Actions = {
 		throw redirect(303, '/tests/notes');
 	},
 	restore: async ({ locals, params }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) return fail(401);
 		await db
 			.updateTable('Annotation')

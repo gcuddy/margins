@@ -11,7 +11,7 @@ const bulk_actions = z.object({
 })
 
 export const load = (async ({ locals }) => {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw error(401);
 
     const notes = db.selectFrom("Annotation")

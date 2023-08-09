@@ -1,5 +1,5 @@
 import { type RequestEvent, fail, type ActionResult } from "@sveltejs/kit";
-import type { Session } from "lucia-auth";
+import type { Session } from 'lucia';
 import type { z } from "zod";
 
 export const post = async <TBody extends Record<string, string | number | boolean>>(action: string, body?: TBody) => {
@@ -37,7 +37,7 @@ export function validate_form<TSchema extends z.ZodTypeAny, TRequestEvent extend
         const form = await event.request.formData();
 
 
-        // TODO: this doesn't support scalar string arrays 
+        // TODO: this doesn't support scalar string arrays
         const data = Object.fromEntries(form.entries());
 
         const parsed = schema.safeParse(data);

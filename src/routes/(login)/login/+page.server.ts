@@ -10,7 +10,7 @@ const schema = z.object({
 });
 
 import type { PageServerLoad } from './$types';
-import { LuciaError } from 'lucia-auth';
+import { LuciaError } from 'lucia';
 
 export const actions = {
 	default: async (event) => {
@@ -25,9 +25,12 @@ export const actions = {
 		const { email, password } = form.data;
 		try {
 			const key = await auth.useKey('email', email, password);
-			const session = await auth.createSession(key.userId);
+			const session = await auth.createSession({
+                userId: key.userId,
+                attributes: {}
+            });
 			console.log({ session });
-			locals.setSession(session);
+			locals.auth.setSession(session);
 			const redirectTo = event.url.searchParams.get('redirectTo');
 			if (redirectTo) {
 				console.log({ redirectTo });
@@ -52,15 +55,14 @@ export const actions = {
 export const load: PageServerLoad = async (event) => {
 	const { locals } = event;
 	console.log(`login page load`);
-	const { session, user } = await locals.validateUser();
-	console.log({ session, user });
-	if (session && user) {
+	const session = await locals.auth.validate();
+	if (session) {
 		const redirectTo = event.url.searchParams.get('redirectTo');
 		if (redirectTo) {
 			console.log({ redirectTo });
 			throw redirect(302, `/${redirectTo.slice(1)}`);
 		} else {
-			throw redirect(302, `/u:${user.username}/inbox`);
+			throw redirect(302, `/tests/library/backlog`);
 		}
 	}
 	const form = await superValidate(event, schema);

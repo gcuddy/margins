@@ -7,7 +7,7 @@ import type { PageServerLoad } from "./$types";
 
 
 export const load = (async ({ locals }) => {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw error(401)
     console.time("collections")
     const collections = await db.selectFrom("Collection as c")

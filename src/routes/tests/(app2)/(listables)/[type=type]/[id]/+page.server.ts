@@ -33,7 +33,7 @@ export async function load() {
 export const actions: Actions = {
 	updateBookmark: async (e) => {
 		const { request, params, locals } = e;
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
@@ -61,7 +61,7 @@ export const actions: Actions = {
 		});
 	},
 	bookmark: async ({ request, params, locals }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
@@ -186,7 +186,7 @@ export const actions: Actions = {
 		// }
 	},
 	annotate: async ({ request, params, locals }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
@@ -198,7 +198,7 @@ export const actions: Actions = {
 		return message(annotationForm, 'Annotation saved');
 	},
 	deleteAnnotation: async ({ request, params, locals }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
@@ -215,7 +215,7 @@ export const actions: Actions = {
 		return { succcess: true };
 	},
 	tag: async ({ request, params, locals }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
@@ -331,7 +331,7 @@ export const actions: Actions = {
 	createTag: async ({ request, url, params, locals }) => {
 		console.log({ request, url, search: url.search });
 
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
@@ -380,7 +380,7 @@ export const actions: Actions = {
 		}
 	),
 	relation: async ({ locals, request, params }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) return fail(401);
 		const data = await request.formData();
 		const id = data.get('id');

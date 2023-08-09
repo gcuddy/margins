@@ -12,7 +12,7 @@ export const load = async (event) => {
     console.time("load");
     //  const books  = "test";
     // const {rows} = await c.execute("SELECT * FROM Entry WHERE type = 'book' limit 1;");
-    // const session = await locals.validate();
+    // const session = await locals.auth.validate();
     // console.log({ session })
     // if (!session) {
     //     return {

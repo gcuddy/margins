@@ -15,7 +15,7 @@ const addToCollection = bulk_actions.extend({
 
 export async function load({ locals }) {
     // get annotations
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw error(401);
     const notes = await db.selectFrom("Annotation")
         .selectAll()

@@ -3,7 +3,7 @@ import { getContext, setContext } from "svelte";
 import { query } from "./queries/query";
 import { page } from "$app/stores";
 import { type Readable, derived, get, writable, type Writable } from "svelte/store";
-import type { Session, User } from "lucia-auth";
+import type { Session, User } from 'lucia';
 import type { EntryInList } from "./db/selects";
 
 
@@ -56,7 +56,7 @@ function create_state_client() {
 }
 
 export function create_lists_state() {
-    // map of [list, list_id] -> entry_id[] 
+    // map of [list, list_id] -> entry_id[]
     const { update, subscribe } = writable(new Map<string[], number[]>());
 
     function init(lists: [string[], number[]][]) {

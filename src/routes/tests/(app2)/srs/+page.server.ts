@@ -13,7 +13,7 @@ export async function load() {
 
 export const actions: Actions = {
 	new: async ({ request, locals }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) return fail(401);
 		const data = await request.formData();
 		const body = data.get('body');

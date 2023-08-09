@@ -7,7 +7,7 @@ import { error, fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms/server';
 
 export async function load({ locals, params, url, fetch }) {
-	const session = await locals.validate();
+	const session = await locals.auth.validate();
 	const { tag } = params;
 
 	if (!session) {
@@ -22,7 +22,7 @@ export async function load({ locals, params, url, fetch }) {
 
 export const actions = {
 	pin: async ({ locals, request }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) return fail(401);
 
 		const data = await request.formData();

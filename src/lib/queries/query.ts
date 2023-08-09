@@ -6,7 +6,7 @@ import type { Queries, Mutations } from '../../routes/tests/(app2)/queries.serve
 
 import type { Page, RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import type { Session, User } from 'lucia-auth';
+import type { Session, User } from 'lucia';
 import { dev } from '$app/environment';
 import { page } from '$app/stores';
 import type {

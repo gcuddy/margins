@@ -2,7 +2,7 @@ import { createCachedValue } from '$lib/cache';
 import { db } from '$lib/db';
 import { jsonObjectFrom } from 'kysely/helpers/mysql';
 import type { LayoutServerLoad } from './$types';
-import {  urlSchema } from '$lib/schemas';
+import { urlSchema } from '$lib/schemas';
 import { superValidate } from 'sveltekit-superforms/server';
 
 function getTags(userId: string) {
@@ -18,12 +18,12 @@ function getTags(userId: string) {
 }
 
 export const load = (async (event) => {
-	const { user } = (await event.locals.validateUser()) as {
-		user: { username: string; userId: string; avatar: string | null; };
-	};
-	if (!user) {
+	const session = await event.locals.auth.validate();
+
+	if (!session) {
 		return {};
 	}
+	const { user } = session;
 
 	const pins = db
 		.selectFrom('Favorite as p')
@@ -55,6 +55,6 @@ export const load = (async (event) => {
 			// normal user data
 			...user
 		},
-        urlForm: superValidate(urlSchema)
+		urlForm: superValidate(urlSchema)
 	};
 }) satisfies LayoutServerLoad;

@@ -4,7 +4,7 @@ import { db } from '$lib/db';
 import { redirect } from '@sveltejs/kit';
 
 export const load = (async ({ locals, parent }) => {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw redirect(303, '/tests/login')
 
     const recents = db.selectFrom("EntryInteraction as i")

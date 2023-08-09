@@ -8,7 +8,7 @@ import { superValidate } from "sveltekit-superforms/server";
 
 
 export const load = async ({ locals, params }) => {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw error(401, "Not logged in")
     const view = await db.selectFrom("SmartList as v")
         .leftJoin("Favorite as pin", "pin.smartListId", "v.id")

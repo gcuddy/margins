@@ -1,7 +1,7 @@
 import type { IconName } from '$lib/icons';
 import type { ShortcutKey } from '$lib/types/keyboard';
 import type { Page } from '@sveltejs/kit';
-import type { User } from 'lucia-auth';
+import type { User } from 'lucia';
 export interface Command {
 	id: string;
 	name: string;

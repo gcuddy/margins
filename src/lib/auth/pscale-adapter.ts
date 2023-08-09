@@ -1,6 +1,6 @@
 // modeled off https://github.com/pilcrowOnPaper/lucia/tree/main/packages/adapter-kysely/src
 import type { Kysely, Selectable, ColumnType, Generated } from "kysely";
-import type { Adapter, AdapterFunction, KeySchema, SessionSchema } from "lucia-auth";
+import type { Adapter, AdapterFunction, KeySchema, SessionSchema } from 'lucia';
 
 type BigIntColumnType = ColumnType<bigint | number>;
 

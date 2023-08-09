@@ -16,7 +16,7 @@ export const load = (async ({ url, locals, cookies }) => {
     const obj = Object.fromEntries(new URLSearchParams(url.search));
     console.log({ obj })
 
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw error(401, "Not logged in")
 
     return {
@@ -52,7 +52,7 @@ export const actions: Actions = {
         console.timeEnd("delete")
     },
     save: async ({ cookies, request, locals }) => {
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) return fail(401)
         const view = new View(cookies.get("view"));
         const data = await request.formData();
@@ -71,7 +71,7 @@ export const actions: Actions = {
         }
     },
     preview: async ({ cookies, request, locals }) => {
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) return fail(401)
         const view = new View(cookies.get("view"));
 

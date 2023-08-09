@@ -9,7 +9,7 @@ import { redirect } from "@sveltejs/kit";
 export async function load({ params, locals, url }) {
     const { person } = params;
 
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
 
     if (!session) {
         throw redirect(302, handleLoginRedirect({ url }))

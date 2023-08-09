@@ -1,15 +1,24 @@
-import lucia from 'lucia-auth';
-import "lucia-auth/polyfill/node";
+import { lucia } from 'lucia';
+// import "lucia-auth/polyfill/node";
+import { planetscale } from "@lucia-auth/adapter-mysql";
 
 import { dev } from '$app/environment';
-import { sveltekit } from "lucia-auth/middleware";
+import { sveltekit } from "lucia/middleware";
 
 // import { db } from '$lib/db';
-import kysely from "$lib/auth/kysley-pscale-adapter";
-import { db } from "$lib/db";
+// import kysely from "$lib/auth/kysley-pscale-adapter";
+import { connect } from "@planetscale/database";
+import { db, config } from "$lib/db";
+
+const connection = connect(config);
+
 export const auth = lucia({
     // TODO: type error here?
-    adapter: kysely(db),
+    adapter: planetscale(connection, {
+        user: "auth_user",
+        key: "auth_key",
+		session: "auth_session"
+    }),
     // adapter: {
     //     user: kysely(db),
     //     session: redisSessionAdapter({
@@ -20,15 +29,20 @@ export const auth = lucia({
     // },
     env: dev ? 'DEV' : 'PROD',
     middleware: sveltekit(),
-    transformDatabaseUser: (userData) => {
+    sessionCookie: {
+        expires: false
+    },
+    getUserAttributes: (userData) => {
         return {
             email: userData.email,
             username: userData.username,
-            default_state_id: userData.default_state_id,
             userId: userData.id,
-            home_items: userData.home_items as string[],
+            // default_state_id: userData.default_state_id,
+            // home_items: userData.home_items as string[],
             avatar: userData.avatar
         };
     },
+
+    // TODO: sessioncookie, etc
 });
 export type Auth = typeof auth;

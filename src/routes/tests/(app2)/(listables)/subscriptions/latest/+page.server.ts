@@ -7,7 +7,7 @@ import { bulkEntriesSchema } from '$lib/schemas';
 
 
 export const load = async (event) => {
-    const session = await event.locals.validate();
+    const session = await event.locals.auth.validate();
     console.log("locals", event.locals)
     if (!session) {
         throw redirect(302, handleLoginRedirect(event))
@@ -26,7 +26,7 @@ export const load = async (event) => {
 export const actions = {
     fetchMore: async (event) => {
         // fetch more
-        const session = await event.locals.validate();
+        const session = await event.locals.auth.validate();
         if (!session) {
             throw redirect(307, "/login")
         }

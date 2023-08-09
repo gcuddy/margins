@@ -15,8 +15,9 @@ const collectionSchema = z.object({
 })
 
 export const load = (async ({ params, locals, depends }) => {
-    const { user } = await locals.validateUser();
-    if (!user) throw error(401)
+    const session = await locals.auth.validate();
+    if (!session) throw error(401);
+    const { user } = session;
     console.time("collection");
     depends("collection")
     const collection = await db.selectFrom("Collection as c")
@@ -84,7 +85,7 @@ export const actions: Actions = {
             .execute();
     }),
     pin: async ({ locals, request, params }) => {
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) return fail(401);
 
         const data = await request.formData();
@@ -113,7 +114,7 @@ export const actions: Actions = {
     add_section: async ({ locals, params, }) => {
         // todo
         console.log('hello')
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) return fail(401);
         const id = nanoid();
         await db.insertInto("CollectionItems")

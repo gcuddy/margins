@@ -5,7 +5,7 @@ import type {
     SessionSchema,
     SessionAdapter,
     AdapterFunction
-} from "lucia-auth";
+} from 'lucia';
 import { UPSTASH_QSTASH_TOKEN } from '$env/static/private';
 
 export const redis = new Redis({

@@ -182,8 +182,6 @@ export type AuthKey = {
 	id: string;
 	hashed_password: string | null;
 	user_id: string;
-	primary_key: Generated<number>;
-	expires: number | null;
 };
 export type AuthorizationKey = {
 	id: string;

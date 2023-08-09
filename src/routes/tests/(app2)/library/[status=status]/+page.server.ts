@@ -10,7 +10,7 @@ import type { LibraryResponse } from '$lib/server/queries';
 
 export const load = (async (event) => {
     const { locals, url, fetch } = event;
-    // const session = await locals.validate();
+    // const session = await locals.auth.validate();
     // if (!session) {
     //     throw redirect(302, handleLoginRedirect(event));
     // }
@@ -19,7 +19,7 @@ export const load = (async (event) => {
         // this shouldn't be the case given our param checker, bt just in case
         throw redirect(302, "/tests/library/now");
     }
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) {
         throw redirect(
             302,

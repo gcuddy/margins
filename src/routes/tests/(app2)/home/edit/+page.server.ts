@@ -7,8 +7,9 @@ import type { PageServerLoad } from "./$types";
 const schema = z.string().array()
 
 export const load = (async ({ locals }) => {
-    const { user } = await locals.validateUser();
-    if (!user) throw redirect(303, "/tests/login")
+    const session = await locals.auth.validate();
+    if (!session) throw redirect(303, "/tests/login")
+    const { user } = session;
     return {
         user
     }
@@ -16,7 +17,7 @@ export const load = (async ({ locals }) => {
 
 export const actions: Actions = {
     default: async ({ locals, request }) => {
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) return fail(401);
         const data = await request.formData();
         const ids = schema.parse(data.getAll("id"));

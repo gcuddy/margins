@@ -78,7 +78,7 @@ export const load = (async (e) => {
     console.log({ e })
     const type = e.url.searchParams.get("type");
 
-    const session = await e.locals.validate();
+    const session = await e.locals.auth.validate();
     if (!session) throw error(401, "Unauthorized");
     if (!type) {
         throw redirect(307, e.url.pathname + "?type=my");

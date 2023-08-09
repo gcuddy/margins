@@ -36,7 +36,7 @@ export const actions: Actions = {
         }
     },
     add_file: async (event) => {
-        const session = await event.locals.validate();
+        const session = await event.locals.auth.validate();
         if (!session) {
             return fail(401, {
                 message: "Not logged in",

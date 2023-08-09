@@ -33,59 +33,8 @@ const handleTheme = (async ({ event, resolve }) => {
 
 export const handle: Handle = sequence(
 	async ({ event, resolve }) => {
-		event.locals = auth.handleRequest(event);
+		event.locals.auth = auth.handleRequest(event);
 		return await resolve(event);
 	},
-	// createTRPCHandle({
-	// 	router: appRouter,
-	// 	createContext,
-	// 	responseMeta({ type, errors, paths }) {
-	// 		// see discussion https://github.com/icflorescu/trpc-sveltekit/issues/2
-	// 		// this example taken from trcrp website
-	// 		// assuming you have all your public routes with the keyword `public` in them
-	// 		const allPublic = paths && paths.every((path) => path.split(".").some((p) => p.startsWith("public")));
-	// 		// checking that no procedures errored
-	// 		const allOk = errors.length === 0;
-	// 		// checking we're doing a query request
-	// 		const isQuery = type === "query";
-	// 		const WILL_CACHE = allPublic && allOk && isQuery;
-	// 		if (WILL_CACHE) {
-	// 			console.log({ WILL_CACHE });
-	// 			// cache request for 1 day + revalidate once every 60 seconds
-	// 			const ONE_DAY_IN_SECONDS = 60 * 60 * 24;
-	// 			return {
-	// 				headers: {
-	// 					"cache-control": `s-maxage=1, stale-while-revalidate=${ONE_DAY_IN_SECONDS}`,
-	// 				},
-	// 			};
-	// 		} else if (allOk && isQuery) {
-	// 			// is this a good idea?
-	// 			return {
-	// 				//No!
-	// 				// headers: {
-	// 				// 	"cache-control": `max-age=0, s-maxage=86400`,
-	// 				// },
-	// 			};
-	// 			// // cache certain things
-	// 			// if (paths?.every((path) => path.includes("listForUserSubscriptions"))) {
-	// 			// 	console.log(`caching list for user subscriptions`);
-	// 			// 	// cache for 5 minutes, revalidate every second
-	// 			// 	// REVIEW: this won't work if something new is added, right?
-	// 			// 	return {
-	// 			// 		headers: {
-	// 			// 			"cache-control": `s-maxage=1, stale-while-revalidate=${60 * 5}`,
-	// 			// 		},
-	// 			// 	};
-	// 			// }
-	// 			// should we still cache here just no stale-while revalidate?
-	// 			// return {
-	// 			// 	headers: {
-	// 			// 		'cache-control': `s-maxage=1, stale-while-revalidate`,
-	// 			// 	}
-	// 			// }
-	// 		}
-	// 		return {};
-	// 	},
-	// }),
 	handleTheme
 );
