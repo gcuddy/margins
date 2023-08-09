@@ -1,17 +1,38 @@
 <script lang="ts">
+	import { fadeScale, flyAndScale } from '$lib/transitions';
 	import { cn } from '$lib/utils/tailwind';
 	import { createDialog, melt } from '@melt-ui/svelte';
 	import { X } from 'lucide-svelte';
+	import { nanoid } from 'nanoid/non-secure';
+	import { setContext } from 'svelte';
+	import { writable } from 'svelte/store';
 	import { fade, fly, scale } from 'svelte/transition';
+	import { dialogs } from './store';
 
-    export let defaultOpen = false;
-	export let dialog = createDialog();
-    let { elements: {
-        trigger, portalled, overlay, content, title, description, close
-    }, states: {
-        open,
-    } } = dialog;
-    if (defaultOpen) open.set(true);
+	export let defaultOpen = false;
+	export let id = nanoid();
+	export let dialog = createDialog({
+		defaultOpen,
+		onOpenChange: ({ curr, next }) => {
+			console.log('onOpenChange', curr, next);
+			if (next) dialogs.add(id);
+			return next;
+		}
+	});
+
+	$: console.log({ $dialogs });
+
+	const dialogContentEl = writable<HTMLElement | null>(null);
+	setContext('dialogContentEl', dialogContentEl);
+
+	/** Change this value to re-render */
+	export let rerender = 0;
+
+	export let showClose = false;
+	let {
+		elements: { trigger, portalled, overlay, content, title, description, close },
+		states: { open }
+	} = dialog;
 
 	let internal_title = '';
 	let internal_description = '';
@@ -27,14 +48,34 @@
 
 <div use:melt={$portalled}>
 	{#if $open}
-		<div in:fade={{duration: 150}} use:melt={$overlay} class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" />
+		<div
+			in:fade={{ duration: 150 }}
+			use:melt={$overlay}
+			class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+		/>
+		<!-- transition:fadeScale={{ duration: 150, baseScale: 0.95 }} -->
+		<!-- in:flyAndScale={{ duration: 200, y: 8, start: 0.95 }} -->
 		<div
 			class={cn(
 				// 'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg md:w-full',
-                "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg md:w-full sm:max-w-[425px]",
+				'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200  sm:rounded-lg md:w-full sm:max-w-[425px]',
+				// "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
 				className
 			)}
+			transition:scale={{
+				duration: 200,
+				opacity: 0,
+				// y: 9
+				start: 0.95
+			}}
+            on:introstart={() => {
+                dialogs.add(id);
+            }}
+			on:outroend={() => {
+				dialogs.remove(id);
+			}}
 			use:melt={$content}
+			bind:this={$dialogContentEl}
 		>
 			{#if $$slots.header || internal_title || internal_description || $$slots.title || $$slots.description}
 				<div class="flex flex-col space-y-1.5 text-center sm:text-left">
@@ -65,15 +106,16 @@
 				</div>
 			{/if}
 
-
-			<button
-				use:melt={$close}
-				aria-label="close"
-				class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-			>
-				<X class="h-4 w-4" />
-				<span class="sr-only">Close</span>
-			</button>
+			{#if showClose}
+				<button
+					use:melt={$close}
+					aria-label="close"
+					class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+				>
+					<X class="h-4 w-4" />
+					<span class="sr-only">Close</span>
+				</button>
+			{/if}
 		</div>
 	{/if}
 </div>

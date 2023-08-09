@@ -155,6 +155,7 @@
 		"@macfja/svelte-persistent-store": "^2.3.2",
 		"@melt-ui/svelte": "^0.33.0",
 		"@mozilla/readability": "^0.4.4",
+		"@neoconfetti/svelte": "^1.0.0",
 		"@noble/hashes": "^1.3.1",
 		"@planetscale/database": "^1.8.0",
 		"@prisma/client": "^5.0.0",

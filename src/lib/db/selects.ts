@@ -44,6 +44,7 @@ export function selectEntryInList() {
 }
 
 export type EntryInList = InferResult<ReturnType<typeof selectEntryInList>>[number] & {
+    podcastIndexId: number | null;
 	sort_order?: number;
 	progress?: number | null;
 	status?: Status;

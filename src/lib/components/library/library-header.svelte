@@ -75,7 +75,10 @@
     <svelte:fragment slot="start">
 		<h1 class="font-extrabold tracking-tight text-3xl md:text-4xl">Library</h1>
 		<!-- <H1>{data.Status}</H1> -->
-		<LibraryTabs />
+        <LibraryTabs />
+        <noscript>
+            <!-- hm -->
+        </noscript>
 
 		<Popover let:close>
 			<PopoverTrigger

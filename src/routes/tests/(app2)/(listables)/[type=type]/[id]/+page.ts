@@ -3,6 +3,7 @@ import type { Type } from '$lib/types';
 import type { ComponentType } from 'svelte';
 import { get_module } from './module';
 import { numberOrString } from '$lib/utils/misc';
+import { browser } from '$app/environment';
 
 export async function load(event) {
 	const { parent, data } = event;
@@ -29,17 +30,24 @@ export async function load(event) {
 	// }
 
 	console.dir({ query }, { depth: null });
-	const queryData = await queryClient.ensureQueryData({
-		...query,
-		meta: {
-			init: event
-		}
-	});
+    // if
+	// const queryData = await queryClient.ensureQueryData({
+	// 	...query,
+	// 	meta: {
+	// 		init: event
+	// 	}
+	// });
 	return {
 		// component: module.default,
 		...data,
 		// cache,
-		...queryData,
+		// ...queryData,
+        ...(/*browser ? {} : */await queryClient.ensureQueryData({
+            ...query,
+            meta: {
+                init: event
+            }
+        })),
 		type,
 		query,
 		component: get_module(type).then((module) => module?.default as ComponentType | undefined)

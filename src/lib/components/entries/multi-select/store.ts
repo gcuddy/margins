@@ -1,7 +1,28 @@
-import { derived, writable } from "svelte/store";
+import { derived, writable } from 'svelte/store';
 
-export const checkedEntries = writable<Record<string, boolean>>({});
+function checked_entry_store() {
+	const { subscribe, set, update } = writable<Record<string, boolean>>({});
 
-export const checkedEntryIds = derived(checkedEntries, $entries => {
-    return Object.keys($entries).filter(id => $entries[id]);
-})
+	return {
+		subscribe,
+		set,
+		update,
+		clear: () => set({})
+	};
+}
+
+export const checkedEntries = checked_entry_store();
+
+export const checkedEntryIds = (() => {
+	// const { subscribe } = derived(checkedEntries, ($entries) => {
+	// 	return Object.keys($entries)
+	// 		.filter((id) => $entries[id])
+	// 		.map((id) => parseInt(id, 10));
+	// });
+    const state = writable<number[]>([]);
+	return {
+		...state,
+		clear: () => state.set([])
+	};
+})();
+

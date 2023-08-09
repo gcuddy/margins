@@ -15,7 +15,9 @@
 	import { backContext, setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import { flip } from 'svelte/animate';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { checkedEntries, SelectActions } from '$components/entries/multi-select';
+	import { checkedEntries, checkedEntryIds, SelectActions } from '$components/entries/multi-select';
+	import { create_multi } from '$components/entries/multi-select/multi';
+	import type { Snapshot } from './$types.js';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
@@ -30,10 +32,6 @@
 			})
 		)
 	);
-
-	query.subscribe((q) => {
-		console.log(`[query change]`, q);
-	});
 
 	$: entries =
 		$query.data?.pages
@@ -57,7 +55,7 @@
 	const virtualizer = createWindowVirtualizer({
 		count: entries?.length || 0,
 		estimateSize: () => 96,
-		overscan: 7,
+		overscan: 10,
 		getItemKey: (index) => entries[index]?.id
 	});
 
@@ -92,12 +90,34 @@
 
 	const menu = useMenuBar();
 
-    let checkLookup: Record<number, boolean> = {};
+	let checkLookup: Record<number, boolean> = {};
 
+	const multi = create_multi({
+		items: entries?.map((e) => e.id) || [],
+        selected: checkedEntryIds
+	});
 
-    // use in any entrylist
+	const {
+		stores: { state }
+	} = multi;
+	$: console.log({ $state });
+
+    export const snapshot: Snapshot = {
+        capture: () => ({
+            highlighted: $state.highlighted,
+        }),
+        restore: (snapshot) => {
+            multi.helpers.setHighlighted(snapshot.highlighted);
+        }
+    }
+
+	$: multi.helpers.updateItems(entries.map((e) => e.id));
+
+	// use in any entrylist
 	beforeNavigate((nav) => setBackContext(nav, $page.url.toString()));
 </script>
+
+<svelte:window on:keydown={multi.events.keydown} />
 
 <LibraryHeader />
 {#if $query.isLoading}
@@ -137,13 +157,14 @@
 		}}
 		style:height="{$virtualizer.getTotalSize()}px"
 		class="w-full relative"
+		use:multi.elements.root
 	>
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
 			{@const entry = entries[row.index]}
 			<div
 				animate:flip={{
-                    duration: 200
-                }}
+					duration: 200
+				}}
 				style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)"
 			>
 				<!-- on:move={() => {
@@ -161,7 +182,8 @@
 							];
 							queryClient.setQueryData(queryKey, (data) => data);
 						}} -->
-				<EntryItem bind:checked={$checkedEntries[entry.id]} {entry} />
+				<!-- bind:checked={$checkedEntries[entry.id]}  -->
+				<EntryItem on:change={() => multi.helpers.toggleSelection(entry.id)} data-active={$state.highlighted === entry.id} data-id={entry.id} checked={$checkedEntryIds.includes(entry.id)} {entry} />
 			</div>
 		{/each}
 		<!-- <Intersector

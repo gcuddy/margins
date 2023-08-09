@@ -26,7 +26,8 @@ export const auth = lucia({
             username: userData.username,
             default_state_id: userData.default_state_id,
             userId: userData.id,
-            home_items: userData.home_items as string[]
+            home_items: userData.home_items as string[],
+            avatar: userData.avatar
         };
     },
 });

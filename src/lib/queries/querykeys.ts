@@ -56,6 +56,10 @@ export const queryFactory = {
 		detail: (input: QueryInput<'entry_by_id'>) => ({
 			queryKey: ['entries', 'detail', { input }] as const,
 			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'entry_by_id', input)
+		}),
+		search: (input: QueryInput<'search_titles'>) => ({
+			queryKey: ['entries', 'search', { input }] as const,
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'search_titles', input)
 		})
 	}
 } satisfies TQueryFactory;

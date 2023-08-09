@@ -19,7 +19,7 @@ function getTags(userId: string) {
 
 export const load = (async (event) => {
 	const { user } = (await event.locals.validateUser()) as {
-		user: { username: string; userId: string };
+		user: { username: string; userId: string; avatar: string | null; };
 	};
 	if (!user) {
 		return {};

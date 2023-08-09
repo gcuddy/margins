@@ -144,9 +144,9 @@ const MAX_SCALE = 2.3;
 
 function pdf_state() {
 	const { subscribe, set, update } = writable<PdfState>({
-		opts: persisted('pdf_options', {
+		opts: writable({
 			scale: 'auto',
-            darkModeInvert: true
+            darkModeInvert: false
 		}),
 		pdf_viewer: null
 	});

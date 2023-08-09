@@ -13,7 +13,8 @@
 		Home,
 		Tag,
 		PinIcon,
-		BrainCircuit
+		BrainCircuit,
+		FlowerIcon
 	} from 'lucide-svelte';
 	import type { LayoutData } from './$types';
 	import { Small } from '$lib/components/ui/typography';
@@ -92,7 +93,6 @@
 
 	$: collapsed = $inArticle ? !$mq['2xl'] : !$mq.lg;
 
-
 	export let user_data: LayoutData['user_data'];
 
 	const menu_bar = useMenuBar();
@@ -101,13 +101,22 @@
 </script>
 
 {#if !$inArticle}
-<div style:width="{width}px"></div>
+	<div style:width="{width}px" />
 	<nav
 		style:--width="{width}px"
-		class="grid items-start gap-2 overflow-y-auto fixed top-0 left-0 bottom-0 grow h-full border-r w-[--width] {$menu_bar.show
+		class="flex flex-col gap-2 overflow-y-auto fixed top-0 left-0 bottom-0 grow h-full border-r w-[--width] {$menu_bar.show
 			? 'opacity-100'
 			: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
 	>
+		<div class="px-4 py-2 h-[--nav-height] flex items-center">
+			<!-- <span class="flex text-muted-foreground items-center"><FlowerIcon class="h-6 w-6 mr-1" /> <span class="text-sm font-medium">Margins</span> </span> -->
+			{#if $page.data.user_data?.username}
+				<a href="/tests/settings" class="flex items-center gap-x-2">
+
+					{$page.data.user_data.username}
+				</a>
+			{/if}
+		</div>
 		<div class="px-4 py-2">
 			<div
 				class="space-y-1 transition-opacity {$inArticle
@@ -192,13 +201,14 @@
 			</div>
 		{/if}
 		<!-- <Button variant="ghost">Subscriptions</Button> -->
-        <ColResizer
-            bind:width
-            min={220}
-            max={330}
-            class="absolute inset-y-0 w-2 cursor-col-resize z-[97] -right-[3px]"
-        />
+		<ColResizer
+			bind:width
+			min={220}
+			max={330}
+			class="absolute inset-y-0 w-2 cursor-col-resize z-[97] -right-[3px]"
+		/>
 	</nav>
+	<button />
 {/if}
 {#if $audioPlayer.audio?.src}
 	<!-- we subtract 8 to account for colresizer -->

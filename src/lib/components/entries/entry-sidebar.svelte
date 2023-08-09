@@ -198,7 +198,7 @@
 
 </script>
 
-<aside class="flex flex-col h-full overflow-x-hidden" use:melt={$root}>
+<aside class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain" use:melt={$root}>
     <!-- 2.5rem is size of sidebar toggle -->
     <div
         class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height]"
@@ -419,7 +419,7 @@
             </div>
         </Collapsible.Root>
     {/if}
-    <TabsContent class="overflow-y-auto" value="notes">
+    <TabsContent class="overflow-y-auto overscroll-contain" value="notes">
         {@const note = $query.data?.annotations?.find((a) => a.type === 'note')}
         <div class="p-6 flex flex-col gap-4">
             <div class="space-y-2">

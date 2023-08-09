@@ -93,9 +93,8 @@ model Bookmark {
 
     bookmarked Boolean @default(true) // Is this actually in the user's library?
 
-
     // Custom Metadata (?) - should this be a separate model?
-    title String?
+    title  String?
     author String?
 
     @@unique([uri, entryId, userId])
@@ -723,6 +722,7 @@ model AuthUser {
     updatedAt          DateTime             @updatedAt
     email              String               @unique
     username           String               @unique @default("")
+    avatar             String?
     default_state_id   Int?                 @unique
     default_archive_id Int?
     home_items         Json?

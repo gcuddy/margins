@@ -41,10 +41,11 @@
 	import { InfiniteData, useQueryClient } from '@tanstack/svelte-query';
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import { cn } from '$lib/utils/tailwind';
 
 	const queryClient = useQueryClient();
 
-	const entryItemVariants = cva('flex grow relative data-[state=open]:bg-accent cursor-default', {
+	const entryItemVariants = cva('flex grow relative data-[state=open]:bg-accent cursor-default data-[active=true]:bg-accent focus-visible:outline-none', {
 		variants: {
 			view: {
 				list: 'items-center gap-x-4 px-6 py-4 data-[state=open]:bg-accent',
@@ -231,7 +232,7 @@
 		// import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
 		// import { contextMenuItem } from '$components/ui/context-menu/ContextMenuItem.svelte';
 		// import ContextSubMenu from '$components/ui/context-menu/ContextSubMenu.svelte';
-
+        console.log(`Mounting context menu for entry ${entry.id}`)
 		contextMenu = (await import('$components/ui/context-menu/ContextMenu.svelte')).default;
 		contextMenuItem = (await import('$components/ui/context-menu/ContextMenuItem.svelte')).default;
 		contextMenuCheckboxItem = (
@@ -246,9 +247,12 @@
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
-<a bind:this={anchor_el} {href} class={entryItemVariants({ view })} use:melt={$trigger}>
+<a bind:this={anchor_el} {href} class={
+    cn(entryItemVariants({ view }), checked && 'bg-primary/20 data-[active=true]:bg-primary/30')
+} use:melt={$trigger} {...$$restProps}>
 	{#if view === 'list'}
 		<div
+            on:click|stopPropagation
 			class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
 		>
 			{#if entry.image || entry.uri}
@@ -279,6 +283,7 @@
 					type="checkbox"
 					class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
 					on:click|stopPropagation
+                    on:change
 					on:focus={() => {
 						anchor_el?.focus();
 					}}

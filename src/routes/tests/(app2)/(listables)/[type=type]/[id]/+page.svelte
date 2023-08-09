@@ -18,12 +18,15 @@
 	import { getContext, onMount, setContext } from 'svelte';
 	import { get_module } from './module';
 	import { derived, writable } from 'svelte/store';
-	import { DefaultError, createQuery } from '@tanstack/svelte-query';
+	import { DefaultError, InfiniteData, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { entryQuery, useEntry } from './query';
 	import { queryOptions } from '$lib/queries/utils';
 	import type { Queries } from '../../../queries.server';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { numberOrString } from '$lib/utils/misc';
+	import type { LibraryResponse } from '$lib/server/queries';
+	import { getId } from '$lib/utils/entries';
+	import MediaHeader from './MediaHeader.svelte';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
@@ -51,17 +54,42 @@
 	// });
 	$: console.log({ $query });
 	// const query = createQuery(data.query);
+	const queryClient = useQueryClient();
 	const query = createQuery(
 		derived(page, ($page) => {
 			return {
 				...queryFactory.entries.detail({
 					id: numberOrString($page.params.id),
 					type: data.type
-				})
+				}),
+				placeholderData: () => {
+					console.time(`placeholderData`);
+					console.log({ queryClient });
+					const listData = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
+						queryKey: ['entries', 'list']
+					});
+
+					console.log({ listData });
+					const entry = listData
+						?.flatMap((list) => list[1])
+						?.flatMap((query) => query?.pages)
+						?.flatMap((page) => {
+							console.log({ page });
+							return page?.entries;
+						})
+						?.find((entry) => {
+							console.log({ entry, $page });
+							return getId(entry) === numberOrString($page.params.id);
+						}) as any;
+					console.timeEnd(`placeholderData`);
+					console.log({ entry });
+					return entry;
+				}
 				// ...(!data.cache ? { refetchOnMount: false } : { initialData: data.cache })
 			};
 		})
 	);
+	$: console.log({ $query });
 
 	afterNavigate(() => {
 		// push to recents
@@ -91,7 +119,6 @@
 	let current_list = true;
 
 	const rightSidebar = getContext('rightSidebar') as Writable<boolean>;
-
 
 	onMount(async () => {
 		// try to get component if it doesn't exist, for example we're mounting this component elsewhere
@@ -137,7 +164,11 @@
 	)}
 >
 	{#if $query.isSuccess}
-		{#if type === 'article'}
+		{#if $query.isPlaceholderData}
+			<!-- Placeholder Data: -->
+			<!-- <pre>{JSON.stringify($query.data, null, 2)}</pre> -->
+			<MediaHeader {...$query.data} />
+		{:else if type === 'article'}
 			<svelte:component this={data.component} data={$query.data}>
 				{@html $query.data?.entry?.html}
 			</svelte:component>

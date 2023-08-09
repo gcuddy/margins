@@ -285,7 +285,7 @@ export async function mutation<T extends keyof Mutations>(
 		url: URL;
 		fetcher?: typeof fetch;
 		userId?: string | null;
-	},
+	} | any,
 	fn: T,
 	input: Parameters<Mutations[T]['fn']>[0]['input'] extends IsAny<
 		Parameters<Mutations[T]['fn']>[0]['input']

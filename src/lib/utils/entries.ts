@@ -1,10 +1,17 @@
 import { S3_BUCKET_PREFIX } from "$lib/constants";
 import type { EntryInList } from "$lib/db/selects";
-import type { Entry } from "@prisma/client";
+import type { DocumentType, Entry } from "@prisma/client";
 
 const prefix = `/tests`
 
-export function getId(entry: Pick<Entry, "type" | "id" | "tmdbId" | "googleBooksId" | "spotifyId" | "podcastIndexId"> | EntryInList): string | number {
+export function getId(entry: {
+    type: DocumentType;
+    id: number;
+    tmdbId: number | null;
+    spotifyId: number | null;
+    googleBooksId: string | null;
+    podcastIndexId: number | null;
+}): string | number {
     if ((entry.type === "movie" || entry.type === "tv") && entry.tmdbId) {
         return entry.tmdbId;
     }

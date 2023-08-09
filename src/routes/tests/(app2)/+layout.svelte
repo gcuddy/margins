@@ -19,6 +19,8 @@
 	import { browser } from '$app/environment';
 	import { AddButton } from '$components';
 
+	import NewCommander from '../playground/command/+page.svelte';
+
 	// export let data;
 
 	// $: isEntry = $page.route.id?.includes("entry");
@@ -52,15 +54,16 @@
 	});
 
 	const navWidth = writable(240);
-    setContext('mainNavWidth', navWidth);
+	setContext('mainNavWidth', navWidth);
 
 	// queryclient
 
 	const queryClient = data.queryClient;
 
-    const inArticle = writable(false);
-    setContext('inArticle', inArticle);
-    $: $inArticle = $page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
+	const inArticle = writable(false);
+	setContext('inArticle', inArticle);
+	$: $inArticle =
+		$page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
 </script>
 
 <QueryClientPersister client={data.queryClient} let:isRestoring>
@@ -69,6 +72,7 @@
 	{/if}
 	<Dialog />
 	<DialogStore />
+	<NewCommander />
 	<GenericCommander>
 		<div class="flex h-full grow flex-col" style:--nav-height="4rem">
 			{#if !$is_entry}
@@ -107,9 +111,8 @@
 				>
 					{#if browser && isRestoring}
 						restoring...
-					{:else}
-						<slot />
-					{/if}
+					{:else}{/if}
+					<slot />
 					{#if !is_entry && data.urlForm}
 						<AddButton urlForm={data.urlForm} />
 						<!--  -->

@@ -25,6 +25,26 @@ declare namespace App {
 		// };
 		user_data?: {
 			tags?: Promise<{ id: number; name: string }[]>;
+			pins?: Promise<
+				{
+					view: {
+						id: number;
+						name: string;
+					} | null;
+					collection: {
+						id: number;
+						name: string;
+					} | null;
+					tag: {
+						id: number;
+						name: string;
+					} | null;
+					id: string;
+				}[]
+			>;
+            username: string;
+            userId: string;
+            avatar: string | null;
 		};
 		currentList?: import('$lib/stores/currentList').CurrentList;
 		current_entry_id?: import('svelte/store').Writable<number | null>;
@@ -49,6 +69,11 @@ declare namespace svelte.JSX {
 		onenter?: (event: CustomEvent) => void;
 		onexit?: (event: CustomEvent) => void;
 	}
+}
+
+declare module 'command-score' {
+	function score(command: string, input: string): number;
+	export = score;
 }
 
 // interface Meta {

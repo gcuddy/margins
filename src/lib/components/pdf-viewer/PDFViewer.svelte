@@ -270,6 +270,7 @@
 					pdf_link_service.setDocument(pdf_document, null);
 					// pdf_viewer.currentScaleValue = "page-width";
 					console.log({ pdf_viewer });
+                    pdf_viewer.currentScaleValue = 'auto';
 					// if (typeof $opts.scale === 'number') {
 					//     pdf_viewer.currentScale = $opts.scale;
 					// } else {

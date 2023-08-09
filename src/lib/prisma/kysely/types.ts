@@ -201,6 +201,7 @@ export type AuthUser = {
 	updatedAt: Timestamp;
 	email: string;
 	username: Generated<string>;
+	avatar: string | null;
 	default_state_id: number | null;
 	default_archive_id: number | null;
 	home_items: unknown | null;
