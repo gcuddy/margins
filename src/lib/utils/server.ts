@@ -11,7 +11,9 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
     const { url, locals } = req;
     let userId = url.searchParams.get("userId");
     if (!userId) {
+        console.time(`[auth] validating session`)
         const session = await locals.auth.validate();
+        console.timeEnd(`[auth] validating session`)
         if (!session) {
             throw error(401);
         }

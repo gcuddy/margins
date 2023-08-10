@@ -24,6 +24,7 @@
 	import ColResizer from '$lib/components/ColResizer.svelte';
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
+	import { createAvatar, melt } from '@melt-ui/svelte';
 
 	type Nav = {
 		label: string;
@@ -98,6 +99,12 @@
 	const menu_bar = useMenuBar();
 
 	export let width = 240;
+
+	const {
+		elements: { fallback, image }
+	} = createAvatar({
+		src: $page.data.user_data?.avatar ?? ''
+	});
 </script>
 
 {#if !$inArticle}
@@ -111,9 +118,23 @@
 		<div class="px-4 py-2 h-[--nav-height] flex items-center">
 			<!-- <span class="flex text-muted-foreground items-center"><FlowerIcon class="h-6 w-6 mr-1" /> <span class="text-sm font-medium">Margins</span> </span> -->
 			{#if $page.data.user_data?.username}
-				<a href="/tests/settings" class="flex items-center gap-x-2">
-
-					{$page.data.user_data.username}
+				<a href="/tests/settings" class="flex items-center gap-x-2 w-full">
+					<span class="relative flex h-5 w-5 shrink-0 overflow-hidden rounded-full">
+						<img
+							src={$page.data.user_data.avatar}
+							use:melt={$image}
+							alt="avatar"
+							class="aspect-square h-full w-full"
+						/>
+						<span
+							use:melt={$fallback}
+							class="flex h-full w-full items-center justify-center rounded-full bg-muted"
+						>
+							{$page.data.user_data.username[0].toUpperCase()}
+						</span>
+					</span>
+					<span class="text-sm font-medium">{$page.data.user_data.username}</span>
+					<!-- <Skeleton class="h-8 w-8 rounded-full border border-gray-200" /> -->
 				</a>
 			{/if}
 		</div>

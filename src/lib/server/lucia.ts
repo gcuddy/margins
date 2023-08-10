@@ -1,6 +1,7 @@
 import { lucia } from 'lucia';
 // import "lucia-auth/polyfill/node";
 import { planetscale } from "@lucia-auth/adapter-mysql";
+import { upstash } from "@lucia-auth/adapter-session-redis";
 
 import { dev } from '$app/environment';
 import { sveltekit } from "lucia/middleware";
@@ -9,16 +10,20 @@ import { sveltekit } from "lucia/middleware";
 // import kysely from "$lib/auth/kysley-pscale-adapter";
 import { connect } from "@planetscale/database";
 import { db, config } from "$lib/db";
+import { redis } from '$lib/redis';
 
 const connection = connect(config);
 
 export const auth = lucia({
     // TODO: type error here?
-    adapter: planetscale(connection, {
-        user: "auth_user",
-        key: "auth_key",
-		session: "auth_session"
-    }),
+    adapter: {
+        user: planetscale(connection, {
+            user: "auth_user",
+            key: "auth_key",
+            session: "auth_session"
+        }),
+        session: upstash(redis)
+    },
     // adapter: {
     //     user: kysely(db),
     //     session: redisSessionAdapter({
@@ -29,9 +34,9 @@ export const auth = lucia({
     // },
     env: dev ? 'DEV' : 'PROD',
     middleware: sveltekit(),
-    sessionCookie: {
-        expires: false
-    },
+    // sessionCookie: {
+    //     expires: false
+    // },
     getUserAttributes: (userData) => {
         return {
             email: userData.email,
@@ -42,6 +47,10 @@ export const auth = lucia({
             avatar: userData.avatar
         };
     },
+    experimental: {
+        debugMode: true
+    },
+
 
     // TODO: sessioncookie, etc
 });

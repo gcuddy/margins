@@ -20,7 +20,10 @@ declare global {
 const globalForKyseley = global as unknown as { db: Kysely<DB> };
 
 export const db = globalForKyseley.db || new Kysely<DB>({
-    dialect: new PlanetScaleDialect(config),
+    dialect: new PlanetScaleDialect({
+        ...config,
+        useSharedConnection: true
+    }),
     log: (event) => {
         if (!dev) return
         if (event.level === "query") {
