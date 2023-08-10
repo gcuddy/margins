@@ -6,7 +6,7 @@ import type { Actions } from './$types';
 
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			throw error(401, 'not authorized');
 		}
@@ -17,7 +17,7 @@ export const actions: Actions = {
 			data: {
 				css,
 				domain,
-				userId: session.userId,
+				userId: session.user.userId,
 			},
 		});
 		return {

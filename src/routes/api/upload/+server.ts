@@ -16,7 +16,7 @@ export const config: Config = {
 };
 
 export const POST: RequestHandler = async ({ request, locals, url }) => {
-	const session = await locals.validate();
+	const session = await locals.auth.validate();
 	if (!session) {
 		throw error(401, {
 			message: 'Not logged in'
@@ -90,7 +90,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 				uri: final_url,
 				image: thumbnail_url,
 				type: 'pdf',
-				owned_by_id: session.userId,
+				owned_by_id: session.user.userId,
 				pdf_fingerprint: await get_pdf_fingerprint(pdf)
 			})
 			.executeTakeFirstOrThrow();
@@ -106,7 +106,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 				type: 'Grouped',
 				id: nanoid(),
 				updatedAt: new Date(),
-				userId: session.userId
+				userId: session.user.userId
 			})
 			.execute();
 	}
@@ -122,7 +122,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	// const file = data.get("file") as Blob;
 	// const ext = file.type.split("/")[1];
 	// const id = nanoid();
-	// const Key = `assets/${session.userId}/${id}.${ext}`
+	// const Key = `assets/${session.user.userId}/${id}.${ext}`
 	// const buf = Buffer.from(await file.arrayBuffer());
 	// try {
 	//     const file = await uploadFile({

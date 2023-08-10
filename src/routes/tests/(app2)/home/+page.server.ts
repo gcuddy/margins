@@ -9,7 +9,7 @@ export const load = (async ({ locals, parent }) => {
 
     const recents = db.selectFrom("EntryInteraction as i")
         .innerJoin("Entry as e", "e.id", "i.entryId")
-        .where("i.userId", "=", session.userId)
+        .where("i.userId", "=", session.user.userId)
         .select([
             "e.id",
             "e.image",
@@ -30,7 +30,7 @@ export const load = (async ({ locals, parent }) => {
 
     const recently_saved = db.selectFrom("Bookmark as b")
         .innerJoin("Entry as e", "e.id", "b.entryId")
-        .where("b.userId", "=", session.userId)
+        .where("b.userId", "=", session.user.userId)
         .select([
             "e.id",
             "e.image",
@@ -50,7 +50,7 @@ export const load = (async ({ locals, parent }) => {
 
     const now = db.selectFrom("Bookmark as b")
         .innerJoin("Entry as e", "e.id", "b.entryId")
-        .where("b.userId", "=", session.userId)
+        .where("b.userId", "=", session.user.userId)
         .where("b.status", "=", "Now")
         .select([
             "e.id",

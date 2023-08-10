@@ -25,7 +25,7 @@ export const actions = {
             .values({
                 ...data,
                 id,
-                userId: session.userId,
+                userId: session.user.userId,
             })
             .onDuplicateKeyUpdate(data)
             .executeTakeFirst();

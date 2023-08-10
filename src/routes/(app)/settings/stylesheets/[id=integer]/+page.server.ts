@@ -6,7 +6,7 @@ import type { Actions } from './$types';
 
 export const actions: Actions = {
 	update: async ({ locals, request, params }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			throw error(401, 'Not authorized');
 		}

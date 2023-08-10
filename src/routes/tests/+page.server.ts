@@ -89,7 +89,7 @@ export const actions: Actions = {
                         relatedEntryId: via_entryid,
                         updatedAt: new Date(),
                         type: "SavedFrom",
-                        userId: session.userId,
+                        userId: session.user.userId,
                         id: nanoid()
                     })
                     .ignore()
@@ -101,10 +101,10 @@ export const actions: Actions = {
 
         // create bookmark
         const add_bookmark = async () => {
-            const sort_order = await getFirstBookmarkSort(session.userId)
+            const sort_order = await getFirstBookmarkSort(session.user.userId)
             await db.insertInto("Bookmark")
                 .values({
-                    userId: session.userId,
+                    userId: session.user.userId,
                     entryId,
                     updatedAt: new Date(),
                     sort_order,

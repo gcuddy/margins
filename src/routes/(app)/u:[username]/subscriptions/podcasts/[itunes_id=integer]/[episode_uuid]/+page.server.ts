@@ -4,7 +4,7 @@ import { db } from '$lib/db';
 import { getJsonFromRequest } from '$lib/utils';
 export const actions: Actions = {
 	default: async ({ request, params, locals }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		const { url, image, date, title } = await getJsonFromRequest(request);
 		// TODO: link to podcast better
 		console.log({ url, image, date, title });
@@ -14,7 +14,7 @@ export const actions: Actions = {
 				url,
 				user: {
 					connect: {
-						id: session.userId,
+						id: session.user.userId,
 					},
 				},
 				image,

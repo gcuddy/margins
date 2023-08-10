@@ -6,7 +6,7 @@ import { chosenIcon } from '$lib/types/icon';
 import type { Actions } from './$types';
 export const actions: Actions = {
 	default: async ({ locals, request, params }) => {
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) throw error(401);
 
 		try {
@@ -18,7 +18,7 @@ export const actions: Actions = {
 			const result = await db.collection.upsert({
 				where: {
 					userId_name: {
-						userId: session.userId,
+						userId: session.user.userId,
 						name,
 					},
 				},
@@ -26,7 +26,7 @@ export const actions: Actions = {
 					name,
 					description,
 					icon,
-					userId: session.userId,
+					userId: session.user.userId,
 				},
 				update: {
 					name,

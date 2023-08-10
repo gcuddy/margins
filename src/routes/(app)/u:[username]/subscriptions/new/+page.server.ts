@@ -25,7 +25,7 @@ export const actions: Actions = {
     },
     add: async ({ request, locals, fetch }) => {
         try {
-            const session = await locals.validate();
+            const session = await locals.auth.validate();
             if (!session) {
                 return error(401, "Not authorized");
             }
@@ -35,7 +35,7 @@ export const actions: Actions = {
             // now connect to db, find/create those feeds, update their entries, and add a subscription for the user
             const addedFeeds = await Promise.all(
                 parsed.feeds.map(async ({ url, title }) =>
-                    addSubscription({ feedUrl: url, title, userId: session.userId })
+                    addSubscription({ feedUrl: url, title, userId: session.user.userId })
                 )
             );
             return { added: addedFeeds.filter(Boolean), success: true };

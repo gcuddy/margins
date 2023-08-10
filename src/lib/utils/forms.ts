@@ -30,7 +30,7 @@ export function validate_form<TSchema extends z.ZodTypeAny, TRequestEvent extend
 }) => any): (event: TRequestEvent) => Promise<any> {
     //
     return async (event) => {
-        const session = await event.locals.validate();
+        const session = await event.locals.auth.validate();
         if (!session) {
             return fail(401)
         }

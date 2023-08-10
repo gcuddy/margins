@@ -24,7 +24,7 @@ export const load = (async ({ url, locals, cookies }) => {
         name: view.name,
         bulkForm: superValidate(bulkEntriesSchema),
         // include tags if there is a tag condition (for js-less users)
-        tags: view.conditions.some(condition => condition.type === "Tag") ? db.selectFrom("Tag").where("userId", "=", session.userId).select(["name", "id"]).orderBy("name", "asc").execute() : [],
+        tags: view.conditions.some(condition => condition.type === "Tag") ? db.selectFrom("Tag").where("userId", "=", session.user.userId).select(["name", "id"]).orderBy("name", "asc").execute() : [],
         condition_types: types
     }
 
@@ -61,7 +61,7 @@ export const actions: Actions = {
             .values({
                 conditions: json(view.conditions),
                 name: view.name,
-                userId: session.userId
+                userId: session.user.userId
             })
             .executeTakeFirst();
 
@@ -86,7 +86,7 @@ export const actions: Actions = {
                 entries: []
             }
         }
-        const { entries } = await View.preview(view.conditions, session.userId);
+        const { entries } = await View.preview(view.conditions, session.user.userId);
         console.log({ entries })
         return {
             entries

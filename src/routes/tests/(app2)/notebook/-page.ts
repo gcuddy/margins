@@ -12,14 +12,14 @@ export const load = (async ({ data, parent, url, fetch }) => {
 
     // const notebook = await queryClient.ensureQueryData({
     //     queryKey: ["notebook"],
-    //     queryFn: () => query({ url, fetcher: fetch, userId: session.userId }, "notebook", {}),
+    //     queryFn: () => query({ url, fetcher: fetch, userId: session.user.userId }, "notebook", {}),
     //     staleTime: 1000 * 60 * 2,
     // });
 
     // TODO: return this
     await queryClient.prefetchInfiniteQuery({
         queryKey: ["notebook"],
-        queryFn: () => query({ url, fetcher: fetch, userId: session.userId }, "notebook", {}),
+        queryFn: () => query({ url, fetcher: fetch, userId: session.user.userId }, "notebook", {}),
         staleTime: 1000 * 60 * 2,
         defaultPageParam: null
     })

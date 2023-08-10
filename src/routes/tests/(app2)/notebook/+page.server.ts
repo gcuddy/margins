@@ -11,7 +11,7 @@ export const load = (async ({ locals }) => {
     return {
         session,
         notes: getNotebook({
-            userId: session.userId,
+            userId: session.user.userId,
             // cursor
         })
     };

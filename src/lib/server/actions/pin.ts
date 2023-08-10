@@ -5,7 +5,7 @@ import { type Action, fail, type RequestEvent } from "@sveltejs/kit";
 import type { RequireAtLeastOne } from "type-fest";
 
 const pin = async ({ locals, request }: RequestEvent, insert: RequireAtLeastOne<Pick<Favorite, 'smartListId' | 'collectionId' | 'tagId'>>) => {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) return fail(401);
 
     const data = await request.formData();
@@ -15,7 +15,7 @@ const pin = async ({ locals, request }: RequestEvent, insert: RequireAtLeastOne<
     if (pin_id && typeof pin_id === "string") {
         await db.deleteFrom("Favorite")
             .where("id", "=", pin_id)
-            .where("userId", "=", session.userId)
+            .where("userId", "=", session.user.userId)
             .execute();
     }
     else {
@@ -24,7 +24,7 @@ const pin = async ({ locals, request }: RequestEvent, insert: RequireAtLeastOne<
         await db.insertInto("Favorite")
             .values({
                 id,
-                userId: session.userId,
+                userId: session.user.userId,
                 updatedAt: new Date(),
                 ...insert
             })

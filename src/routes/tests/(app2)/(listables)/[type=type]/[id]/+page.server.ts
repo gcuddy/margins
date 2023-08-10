@@ -50,7 +50,7 @@ export const actions: Actions = {
 		await db
 			.updateTable('Bookmark')
 			.where('entryId', '=', +params.id)
-			.where('userId', '=', session.userId)
+			.where('userId', '=', session.user.userId)
 			.set({
 				status
 			})
@@ -175,8 +175,8 @@ export const actions: Actions = {
 				.values({
 					updatedAt: new Date(),
 					entryId,
-					userId: session.userId,
-					sort_order: await getFirstBookmarkSort(session.userId)
+					userId: session.user.userId,
+					sort_order: await getFirstBookmarkSort(session.user.userId)
 				})
 				.execute();
 			return message(bookmarkForm, 'Bookmark created');
@@ -192,7 +192,7 @@ export const actions: Actions = {
 		}
 		const annotationForm = await superValidate(request, annotationSchema, { id: 'annotation' });
 		let annotation = annotationForm.data;
-		annotation.userId = session.userId;
+		annotation.userId = session.user.userId;
 		const id = await upsertAnnotation(annotation);
 		annotationForm.data.id = id;
 		return message(annotationForm, 'Annotation saved');
@@ -209,7 +209,7 @@ export const actions: Actions = {
 		}
 		await db
 			.deleteFrom('Annotation')
-			.where('userId', '=', session.userId)
+			.where('userId', '=', session.user.userId)
 			.where('id', '=', String(id))
 			.execute();
 		return { succcess: true };
@@ -246,14 +246,14 @@ export const actions: Actions = {
 		//     await db.insertInto("Tag")
 		//         .values(tagsToAdd.map(tag => ({
 		//             name: tag.name,
-		//             userId: session.userId,
+		//             userId: session.user.userId,
 		//         })))
 		//         .execute();
 
 		//     // get ids of new tags
 		//     const newTags = await db.selectFrom("Tag")
 		//         .select(["id"])
-		//         .where("userId", "=", session.userId)
+		//         .where("userId", "=", session.user.userId)
 		//         .where("name", "in", tagsToAdd.map(tag => tag.name))
 		//         .execute();
 
@@ -266,7 +266,7 @@ export const actions: Actions = {
 				tagIds.map((tagId) => ({
 					entryId: +params.id,
 					tagId,
-					userId: session.userId
+					userId: session.user.userId
 				}))
 			)
 			.ignore()
@@ -293,7 +293,7 @@ export const actions: Actions = {
 		//     await db.insertInto("Tag")
 		//         .values(tagsToAdd.map(tag => ({
 		//             name: tag.name,
-		//             userId: session.userId,
+		//             userId: session.user.userId,
 		//         })))
 		//         .execute();
 		// }
@@ -323,7 +323,7 @@ export const actions: Actions = {
 		// const tags = tagForm.data.tags.map(tag => ({
 		//     name: tag.name,
 		//     id: tag.id ?? nanoid(),
-		//     userId: session.userId,
+		//     userId: session.user.userId,
 		// }) as const)
 		// // await db.insertInto("Tag")
 		// //     .values(tags)
@@ -341,7 +341,7 @@ export const actions: Actions = {
 				.insertInto('Tag')
 				.values({
 					name,
-					userId: session.userId
+					userId: session.user.userId
 				})
 				.executeTakeFirstOrThrow();
 			const id = Number(q.insertId);
@@ -350,7 +350,7 @@ export const actions: Actions = {
 				.values({
 					entryId: +params.id,
 					tagId: id,
-					userId: session.userId
+					userId: session.user.userId
 				})
 				.execute();
 			// return message({ id, name }, "Tag created")
@@ -371,7 +371,7 @@ export const actions: Actions = {
 				.insertInto('EntryInteraction')
 				.values({
 					...form.data,
-					userId: session.userId,
+					userId: session.user.userId,
 					updatedAt: new Date()
 				})
 				.onDuplicateKeyUpdate(form.data)
@@ -408,7 +408,7 @@ export const actions: Actions = {
 				relatedEntryId,
 				type,
 				updatedAt: new Date(),
-				userId: session.userId,
+				userId: session.user.userId,
 				id: nanoid()
 			})
 			.onDuplicateKeyUpdate({

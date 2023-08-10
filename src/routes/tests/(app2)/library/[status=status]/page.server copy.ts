@@ -20,7 +20,7 @@ export const load = (async (event) => {
     }
 
     event.depends("entries")
-    const userId = session.userId;
+    const userId = session.user.userId;
 
     const type = types.includes(url.searchParams.get("type") ?? '') ? url.searchParams.get("type") as Type : undefined;
 
@@ -30,6 +30,6 @@ export const load = (async (event) => {
         type,
         urlForm: superValidate(urlSchema),
         bulkForm: superValidate(bulkEntriesSchema),
-        userId: session.userId
+        userId: session.user.userId
     };
 }) satisfies PageServerLoad

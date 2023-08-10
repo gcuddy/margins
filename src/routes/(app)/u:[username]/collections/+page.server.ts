@@ -7,14 +7,14 @@ import { getJsonFromRequest } from '$lib/utils';
 import type { Action, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, depends }) => {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) {
         throw redirect(302, '/');
     }
     depends('app:collections');
     const lists = await db.selectFrom("Collection")
         .selectAll()
-        .where("userId", "=", session.userId)
+        .where("userId", "=", session.user.userId)
         .execute();
     return {
         lists,

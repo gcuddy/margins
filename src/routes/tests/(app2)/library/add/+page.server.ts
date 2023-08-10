@@ -55,7 +55,7 @@ export const actions: Actions = {
                 data: buf
             }).promise;
             const thumb = await make_thumbnail(pdf);
-            const thumb_key = `user/${session.userId}/thumbnails/thumb_${nanoid()}.png`
+            const thumb_key = `user/${session.user.userId}/thumbnails/thumb_${nanoid()}.png`
             await uploadFile({
                 Body: thumb,
                 Key: thumb_key,
@@ -78,11 +78,11 @@ export const actions: Actions = {
             const id = Number(entry.insertId)
 
             // now create bookmark...
-            const sort_order = await getFirstBookmarkSort(session.userId)
+            const sort_order = await getFirstBookmarkSort(session.user.userId)
             await db.insertInto("Bookmark")
                 .values({
                     updatedAt: new Date(),
-                    userId: session.userId,
+                    userId: session.user.userId,
                     entryId: id,
                     sort_order,
                     status: "Backlog"

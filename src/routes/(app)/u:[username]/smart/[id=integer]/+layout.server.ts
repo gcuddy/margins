@@ -25,7 +25,7 @@ export const load: PageServerLoad = async (e) => {
 
 // export const actions: Actions = {
 // 	update: async ({ locals, request, params }) => {
-// 		const session = await locals.validate();
+// 		const session = await locals.auth.validate();
 // 		if (!session) throw error(401);
 // 		const id = +params.id;
 
@@ -46,7 +46,7 @@ export const load: PageServerLoad = async (e) => {
 // 				include: {
 // 					favorites: {
 // 						where: {
-// 							userId: session.userId,
+// 							userId: session.user.userId,
 // 						},
 // 					},
 // 				},

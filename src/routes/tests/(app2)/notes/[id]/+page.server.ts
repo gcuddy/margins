@@ -21,7 +21,7 @@ export const load = (async ({ locals, params }) => {
 		)
 		.select(annotations.with.references)
 		.where('id', '=', id)
-		.where('userId', '=', session.userId)
+		.where('userId', '=', session.user.userId)
 		// .where('type', '=', 'document')
 		.executeTakeFirstOrThrow();
 
@@ -46,7 +46,7 @@ export const actions: Actions = {
 		await db
 			.updateTable('Annotation')
 			.where('id', '=', params.id)
-			.where('userId', '=', session.userId)
+			.where('userId', '=', session.user.userId)
 			.set({
 				deleted: new Date()
 			})
@@ -59,7 +59,7 @@ export const actions: Actions = {
 		await db
 			.updateTable('Annotation')
 			.where('id', '=', params.id)
-			.where('userId', '=', session.userId)
+			.where('userId', '=', session.user.userId)
 			.set({
 				deleted: null
 			})

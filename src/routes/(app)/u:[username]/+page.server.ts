@@ -58,13 +58,13 @@ export const actions: Actions = {
     follow: async ({ locals, params }) => {
         //todo: explicit follows table in schema
         console.log(`follow ${params.username}`);
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) {
             throw error(401, 'Unauthorized');
         }
         const user = await db.user.update({
             where: {
-                id: session.userId,
+                id: session.user.userId,
             },
             data: {
                 following: {
@@ -81,13 +81,13 @@ export const actions: Actions = {
     },
     unfollow: async ({ locals, params }) => {
         console.log(`unfollow ${params.username}`);
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) {
             throw error(401, 'Unauthorized');
         }
         const user = await db.user.update({
             where: {
-                id: session.userId,
+                id: session.user.userId,
             },
             data: {
                 following: {
@@ -104,7 +104,7 @@ export const actions: Actions = {
     },
     signout: async ({ locals }) => {
         console.log('signing out')
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) return fail(401);
         await auth.invalidateSession(session.sessionId); // invalidate session
         locals.setSession(null); // remove cookie

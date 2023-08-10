@@ -19,7 +19,7 @@ export async function load({ params, locals, url }) {
         .innerJoin("Bookmark as b", "b.entryId", "Entry.id")
         .select(["Entry.title", "Entry.id"])
         .where("author", "=", person)
-        .where("b.userId", "=", session.userId)
+        .where("b.userId", "=", session.user.userId)
         .execute();
 
 

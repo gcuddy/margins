@@ -6,7 +6,7 @@ import { error, json } from "@sveltejs/kit";
 
 
 export async function GET({ locals, params, url }) {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw error(401, "Unauthorized");
 
     const cursor = url.searchParams.get("cursor") || undefined;
@@ -16,7 +16,7 @@ export async function GET({ locals, params, url }) {
         .innerJoin("Tag as t", (join) => join.onRef("t.id", "=", "toe.tagId").on("t.name", "=", params.name))
         .select(entrySelect)
         .select(['t.id as tag_id'])
-        .where("toe.userId", "=", session.userId)
+        .where("toe.userId", "=", session.user.userId)
         .orderBy("toe.id", "desc");
 
     if (cursor) {

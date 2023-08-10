@@ -81,7 +81,7 @@ export const actions: Actions = {
                 updatedAt: new Date()
             })
             .where("id", "=", +params.id)
-            .where("userId", "=", session.userId)
+            .where("userId", "=", session.user.userId)
             .execute();
     }),
     pin: async ({ locals, request, params }) => {
@@ -95,7 +95,7 @@ export const actions: Actions = {
         if (pin_id && typeof pin_id === "string") {
             await db.deleteFrom("Favorite")
                 .where("id", "=", pin_id)
-                .where("userId", "=", session.userId)
+                .where("userId", "=", session.user.userId)
                 .execute();
         }
         else {
@@ -104,7 +104,7 @@ export const actions: Actions = {
             await db.insertInto("Favorite")
                 .values({
                     id,
-                    userId: session.userId,
+                    userId: session.user.userId,
                     collectionId: +params.id,
                     updatedAt: new Date(),
                 })

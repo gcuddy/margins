@@ -21,7 +21,7 @@ export const load = (async ({ locals }) => {
                     .limit(5)
             ).as("items")
         ])
-        .where("userId", "=", session.userId)
+        .where("userId", "=", session.user.userId)
         .orderBy("c.createdAt", "desc")
         .execute();
     console.timeEnd("collections")
@@ -37,7 +37,7 @@ export const actions = {
         const { name } = form.data;
 
         const collection = await db.insertInto("Collection")
-            .values({ name, updatedAt: new Date(), userId: session.userId })
+            .values({ name, updatedAt: new Date(), userId: session.user.userId })
             .executeTakeFirst();
         const id = Number(collection.insertId);
 

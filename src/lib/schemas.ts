@@ -34,7 +34,7 @@ export function validateAuthedForm<TSchema extends ZodValidation<AnyZodObject>, 
 }) => any) {
     return async (event: TRequestEvent) => {
         // TODO: conditionally auth
-        const session = await event.locals.validate();
+        const session = await event.locals.auth.validate();
         console.log({ session })
         if (!session) {
             return fail(401);

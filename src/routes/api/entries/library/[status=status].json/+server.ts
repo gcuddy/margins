@@ -7,12 +7,12 @@ function is_type(type: string): type is Type {
 }
 
 export async function GET({ params, locals, url }) {
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) {
         throw error(401, "Unauthorized");
     }
 
-    const userId = session.userId;
+    const userId = session.user.userId;
     const status = statusLookup[params.status as keyof typeof statusLookup] ?? null;
     const after_sort = url.searchParams.get("after_sort");
     const after_updatedAt = url.searchParams.get("after_updated");

@@ -47,7 +47,7 @@ export const actions: Actions = {
 				entryId: entry_id ? +entry_id : null,
 				parentId: typeof parent_id === 'string' ? parent_id : null,
                 target: typeof target === 'string' ? json(JSON.parse(target)) : null,
-				userId: session.userId
+				userId: session.user.userId
 			})
 			.onDuplicateKeyUpdate({
 				body,

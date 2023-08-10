@@ -11,11 +11,11 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
     const { url, locals } = req;
     let userId = url.searchParams.get("userId");
     if (!userId) {
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) {
             throw error(401);
         }
-        userId = session.userId;
+        userId = session.user.userId;
     }
     if (!schema) {
         return {
@@ -64,11 +64,11 @@ export async function mutationctx<T extends z.ZodTypeAny>(req: RequestEvent, sch
     const { locals } = req;
     let { userId, input } = data;
     if (!userId) {
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) {
             throw error(401);
         }
-        userId = session.userId;
+        userId = session.user.userId;
     }
     if (!schema) {
         return {

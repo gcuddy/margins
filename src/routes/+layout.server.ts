@@ -1,4 +1,4 @@
-import { handleServerSession } from '@lucia-auth/sveltekit';
+// import { handleServerSession } from '@lucia-auth/sveltekit';
 
 import { S3_BUCKET_PREFIX } from '$env/static/private';
 
@@ -6,9 +6,8 @@ import type { LayoutServerLoad } from './$types.js';
 
 import type { Config } from '@sveltejs/adapter-vercel';
 
-
-export const load: LayoutServerLoad = handleServerSession(async (e) => {
-    return {
-        S3_BUCKET_PREFIX
-    }
-});
+export const load: LayoutServerLoad = async (e) => {
+	return {
+		S3_BUCKET_PREFIX
+	};
+};

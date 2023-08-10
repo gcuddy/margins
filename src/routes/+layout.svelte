@@ -3,11 +3,9 @@
 	import '$lib/styles/font.css';
 
 	import { page } from '$app/stores';
-	import { handleSession } from '@lucia-auth/sveltekit/client';
 
 	import { Toaster } from 'svelte-sonner';
 
-	handleSession(page);
 	$: console.log({ $page });
 
 	// fix bigint issue

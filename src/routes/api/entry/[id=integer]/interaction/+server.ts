@@ -9,7 +9,7 @@ const interactionSchema = z.object({
 
 export async function POST({ locals, request, params }) {
 
-    const session = await locals.validate();
+    const session = await locals.auth.validate();
     if (!session) throw error(401);
 
     const raw = await request.json();
@@ -24,7 +24,7 @@ export async function POST({ locals, request, params }) {
 
     await db.insertInto("EntryInteraction")
         .values({
-            userId: session.userId,
+            userId: session.user.userId,
             updatedAt: new Date(),
             entryId: Number(params.id),
             ...data

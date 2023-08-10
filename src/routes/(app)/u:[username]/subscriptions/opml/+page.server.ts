@@ -44,7 +44,7 @@ export const actions: Actions = {
         }
     },
     submitUrls: async ({ request, locals }) => {
-        const session = await locals.validate();
+        const session = await locals.auth.validate();
         if (!session) {
             return fail(401, {
                 message: "Not logged in",
@@ -64,13 +64,13 @@ export const actions: Actions = {
         });
         console.log({ toAdd });
         const addedFeeds = await Promise.all(
-            toAdd.map(async ({ url, title }) => addSubscription({ feedUrl: url, title, userId: session.userId }))
+            toAdd.map(async ({ url, title }) => addSubscription({ feedUrl: url, title, userId: session.user.userId }))
         );
         // Promise.all(
         // 	urls.map(async (url) =>
         // 		addFeed({
         // 			url,
-        // 			userId: session.userId,
+        // 			userId: session.user.userId,
         // 		})
         // 	)
         // );

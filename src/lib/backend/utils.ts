@@ -19,7 +19,7 @@ export async function upload_file_from_form({ request, locals, session: sesh }: 
     }
 }, params?: Omit<Parameters<typeof uploadFile>[0], "Body" | "Key">) {
 
-    const session = sesh ?? (await locals.validate());
+    const session = sesh ?? (await locals.auth.validate());
     if (!session) {
         throw new Error("Not logged in")
     }
@@ -31,7 +31,7 @@ export async function upload_file_from_form({ request, locals, session: sesh }: 
     }
     const ext = file.type.split("/")[1];
     const id = nanoid();
-    const Key = `assets/${session.userId}/${id}.${ext}`
+    const Key = `assets/${session.user.userId}/${id}.${ext}`
     const buf = Buffer.from(await file.arrayBuffer());
     const uploaded_file = await uploadFile({
         Body: buf,

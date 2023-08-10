@@ -39,7 +39,7 @@ export const actions = {
 			await db
 				.deleteFrom('Favorite')
 				.where('id', '=', pin_id)
-				.where('userId', '=', session.userId)
+				.where('userId', '=', session.user.userId)
 				.execute();
 		} else {
 			// insert
@@ -48,7 +48,7 @@ export const actions = {
 				.insertInto('Favorite')
 				.values({
 					id,
-					userId: session.userId,
+					userId: session.user.userId,
 					updatedAt: new Date(),
 					tagId: +tag_id
 				})

@@ -5,7 +5,7 @@ import type { Config } from '@sveltejs/adapter-vercel';
 
 
 export const load: LayoutServerLoad = async (event) => {
-    const session = await event.locals.validate();
+    const session = await event.locals.auth.validate();
     if (!session) {
         throw redirect(300, "/");
     }

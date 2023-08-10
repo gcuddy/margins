@@ -16,7 +16,7 @@ export const load = (async ({ locals }) => {
 
     const notes = db.selectFrom("Annotation")
         .selectAll()
-        .where("userId", "=", session.userId)
+        .where("userId", "=", session.user.userId)
         .where("type", "=", "document")
         .where("deleted", "is not", null)
         .orderBy("updatedAt", "desc")

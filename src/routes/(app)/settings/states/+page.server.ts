@@ -48,14 +48,14 @@ export const actions: Actions = {
 	makeDefault: async ({ locals, request }) => {
 		const data = await request.formData();
 		const id = data.get("id") as string;
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			throw error(401, "Unauthorized");
 		}
 		try {
 			await db.user.update({
 				where: {
-					id: session.userId,
+					id: session.user.userId,
 				},
 				data: {
 					default_state_id: Number(id),
@@ -72,7 +72,7 @@ export const actions: Actions = {
 	delete: async ({ request, locals }) => {
 		const data = await request.formData();
 		const id = data.get("id") as string;
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		if (!session) {
 			throw error(401, "Unauthorized");
 		}
@@ -80,7 +80,7 @@ export const actions: Actions = {
 			await db.state.delete({
 				where: {
 					id: +id,
-					userId: session.userId,
+					userId: session.user.userId,
 				},
 			});
 			return {

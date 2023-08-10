@@ -19,7 +19,7 @@ export async function load({ locals }) {
     if (!session) throw error(401);
     const notes = await db.selectFrom("Annotation")
         .selectAll()
-        .where("userId", "=", session.userId)
+        .where("userId", "=", session.user.userId)
         .where("type", "=", "document")
         .where("deleted", "is", null)
         .orderBy("createdAt", "desc")
@@ -39,7 +39,7 @@ export const actions = {
                 deleted: new Date()
             })
             .where("id", "in", form.data.ids)
-            .where("userId", "=", session.userId)
+            .where("userId", "=", session.user.userId)
             .execute();
     }),
     addToCollection: validateAuthedForm(addToCollection, async ({ form, session }) => {

@@ -8,7 +8,7 @@ export async function load({ locals, params }) {
 	}
 
 	// TODO: maybe fetch individually so that we can do infinite scroll for each column etc?
-	const { entries, next } = await get_library(session.userId, null);
+	const { entries, next } = await get_library(session.user.userId, null);
 
     return {
         entries,

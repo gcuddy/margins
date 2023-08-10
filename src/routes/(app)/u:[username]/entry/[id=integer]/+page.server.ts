@@ -83,7 +83,7 @@ export const actions: Actions = {
     },
     tag: async (evt) => {
         // set tag on item
-        const session = await evt.locals.validate();
+        const session = await evt.locals.auth.validate();
         if (!session) {
             throw error(401);
         }
@@ -101,7 +101,7 @@ export const actions: Actions = {
                 data: newTags.map(({ name }) => {
                     return {
                         name,
-                        userId: session.userId,
+                        userId: session.user.userId,
                     };
                 }),
             }),
@@ -115,7 +115,7 @@ export const actions: Actions = {
                             return {
                                 name_userId: {
                                     name,
-                                    userId: session.userId,
+                                    userId: session.user.userId,
                                 },
                             };
                         }),

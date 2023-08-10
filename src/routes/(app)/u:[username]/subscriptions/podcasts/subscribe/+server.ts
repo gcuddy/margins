@@ -17,7 +17,7 @@ const RssFeedModel = z.object({
 export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		console.log({ locals });
-		const session = await locals.validate();
+		const session = await locals.auth.validate();
 		// const { refresh_token } = locals.lucia;
 		const json = await getJsonFromRequest(request);
 		const data = RssFeedModel.parse(json);
@@ -69,7 +69,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				podcast: true,
 				users: {
 					connect: {
-						id: session.userId,
+						id: session.user.userId,
 					},
 				},
 			},

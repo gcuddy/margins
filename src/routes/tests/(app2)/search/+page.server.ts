@@ -143,7 +143,7 @@ export const load = (async (e) => {
         // maybe don't do this if we're caching....
         const bookmarks = db.selectFrom("Bookmark as b")
             .innerJoin("Entry as e", "e.id", "b.entryId")
-            .where("b.userId", "=", session.userId)
+            .where("b.userId", "=", session.user.userId)
             .where("e.googleBooksId", "in", adapted.map(a => a.id as string))
             .select(["e.googleBooksId", "b.status"])
             .execute();

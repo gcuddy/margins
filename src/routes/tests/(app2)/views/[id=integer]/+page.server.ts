@@ -12,7 +12,7 @@ export const load = async ({ locals, params }) => {
     if (!session) throw error(401, "Not logged in")
     const view = await db.selectFrom("SmartList as v")
         .leftJoin("Favorite as pin", "pin.smartListId", "v.id")
-        .where("v.userId", "=", session.userId)
+        .where("v.userId", "=", session.user.userId)
         .where("v.id", "=", +params.id)
         .select(["v.id", "v.name", "v.conditions", "pin.id as pin_id"])
         .executeTakeFirstOrThrow();
