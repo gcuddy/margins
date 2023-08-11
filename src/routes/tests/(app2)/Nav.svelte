@@ -199,7 +199,9 @@
 		</div>
 		<div class="px-4">
 			<div class="flex items-center">
-				<Button size="sm" variant="outline" class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0">
+				<Button on:click={() =>  {
+                    // open modal
+                }} size="sm" variant="outline" class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0">
 					<PlusCircle class="square-5 lg:square-4 shrink-0" />
 					<span class="hidden lg:inline">Add</span>
 					<!-- TODO: create dropdown menu for type, and add Modal -->
