@@ -17,12 +17,8 @@
 		FlowerIcon,
 		PlusCircle,
 		Loader,
-
 		ChevronDownIcon,
-
 		RssIcon
-
-
 	} from 'lucide-svelte';
 	import {
 		DropdownMenu,
@@ -38,13 +34,14 @@
 	import { useMenuBar } from './MainNav.svelte';
 	import ColResizer from '$lib/components/ColResizer.svelte';
 	import { getContext } from 'svelte';
-	import type { Writable } from 'svelte/store';
+	import { writable, type Writable } from 'svelte/store';
 	import { createAvatar, createDropdownMenu, melt } from '@melt-ui/svelte';
 	import { goto } from '$app/navigation';
 	import { fade } from 'svelte/transition';
 	import { useIsMutating } from '@tanstack/svelte-query';
 	import Separator from '$components/ui/Separator.svelte';
 	import { cn } from '$lib';
+	import AddUrlModal from '$components/modals/add-url-modal.svelte';
 
 	type Nav = {
 		label: string;
@@ -132,6 +129,8 @@
 	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }> | undefined | null;
 	const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
 	$: mobileNavWidth.set(borderBoxSize?.[0]?.inlineSize ?? 81);
+
+	export let showAddUrlModal = writable(false);
 </script>
 
 {#if !$inArticle}
@@ -199,29 +198,43 @@
 		</div>
 		<div class="px-4">
 			<div class="flex items-center">
-				<Button on:click={() =>  {
-                    // open modal
-                }} size="sm" variant="outline" class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0">
+				<Button
+					on:click={() => {
+						// open modal
+						showAddUrlModal.set(true);
+					}}
+					size="sm"
+					variant="outline"
+					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
+				>
 					<PlusCircle class="square-5 lg:square-4 shrink-0" />
 					<span class="hidden lg:inline">Add</span>
 					<!-- TODO: create dropdown menu for type, and add Modal -->
 				</Button>
 				<Separator class="h-9" orientation="vertical" />
-				<DropdownMenu positioning={{
-                    placement: "bottom-end"
-                }}>
+				<DropdownMenu
+					positioning={{
+						placement: 'bottom-end'
+					}}
+				>
 					<DropdownMenuTrigger let:trigger asChild>
-						<button class={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'px-2 shadow-none rounded-l-none border-l-0')} use:melt={trigger}>
+						<button
+							class={cn(
+								buttonVariants({ variant: 'outline', size: 'sm' }),
+								'px-2 shadow-none rounded-l-none border-l-0'
+							)}
+							use:melt={trigger}
+						>
 							<!--  -->
-                            <ChevronDownIcon class="h-4 w-4 text-secondary-foreground" />
+							<ChevronDownIcon class="h-4 w-4 text-secondary-foreground" />
 						</button>
 					</DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-56">
-                        <DropdownMenuItem>
-                            <RssIcon class="h-4 w-4 mr-2" />
-                            <span>Add Subscription</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
+					<DropdownMenuContent class="w-56">
+						<DropdownMenuItem>
+							<RssIcon class="h-4 w-4 mr-2" />
+							<span>Add Subscription</span>
+						</DropdownMenuItem>
+					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
 		</div>
@@ -325,3 +338,4 @@
 		<AudioPlayer {collapsed} />
 	</div>
 {/if}
+<AddUrlModal open={showAddUrlModal} />

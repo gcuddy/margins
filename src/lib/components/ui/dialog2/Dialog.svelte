@@ -11,13 +11,16 @@
 
 	export let defaultOpen = false;
 	export let id = nanoid();
+    let internalOpen = writable(false);
+    export { internalOpen as open};
 	export let dialog = createDialog({
 		defaultOpen,
 		onOpenChange: ({ curr, next }) => {
 			console.log('onOpenChange', curr, next);
 			if (next) dialogs.add(id);
 			return next;
-		}
+		},
+        open: internalOpen
 	});
 
 	$: console.log({ $dialogs });
@@ -38,6 +41,8 @@
 	let internal_description = '';
 	let className = '';
 	export { internal_title as title, internal_description as description, className as class };
+
+    const footerClass = 'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2';
 </script>
 
 <!-- Should the createdialog be passed in, instead? -->
@@ -98,10 +103,10 @@
 					</slot>
 				</div>
 			{/if}
-			<slot {open} />
+			<slot {open} close={$close} {footerClass} />
 
 			{#if $$slots.footer}
-				<div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+				<div class={footerClass}>
 					<slot close={$close} name="footer" {open} />
 				</div>
 			{/if}

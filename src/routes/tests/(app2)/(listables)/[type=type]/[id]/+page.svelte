@@ -171,12 +171,18 @@
 		<!-- <pre>{JSON.stringify($query.data, null, 2)}</pre> -->
 		<!-- <MediaHeader {...$query.data} /> -->
 		{#if type === 'article'}
-			<svelte:component this={data.component} data={$query.data}>
+			<svelte:component this={data.component} data={{
+                ...data,
+                ...$query.data
+            }}>
 				{@html $query.data?.entry?.html}
 			</svelte:component>
 		{:else}
 			<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
-			<svelte:component this={data.component} data={$query.data} />
+			<svelte:component this={data.component} data={{
+                ...data,
+                ...$query.data
+            }} />
 		{/if}
 	{/if}
 </div>
