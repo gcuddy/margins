@@ -65,6 +65,7 @@
 			filter.focus();
 		}
 		// let 1 2 and 3 move you to backlog, now, and archive
+        if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 		if (e.key === '1') {
 			e.preventDefault();
 			goto(`/tests/library/backlog`);

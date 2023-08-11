@@ -46,21 +46,18 @@
 
 	const queryClient = useQueryClient();
 
-	const entryItemVariants = cva(
-		'flex grow relative cursor-default focus-visible:outline-none',
-		{
-			variants: {
-				view: {
-					list: 'items-center gap-x-4 px-6 py-4',
-					kanban:
-						'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6'
-				}
-			},
-			defaultVariants: {
-				view: 'list'
+	const entryItemVariants = cva('flex grow relative cursor-default focus-visible:outline-none', {
+		variants: {
+			view: {
+				list: 'items-center gap-x-4 px-6 py-4',
+				kanban:
+					'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6'
 			}
+		},
+		defaultVariants: {
+			view: 'list'
 		}
-	);
+	});
 
 	export let view: VariantProps<typeof entryItemVariants>['view'] = 'list';
 
@@ -253,17 +250,22 @@
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
-<a bind:this={anchor_el} {href} use:melt={$trigger} {...$$restProps} class="data-[state=open]:bg-accent cursor-default data-[active=true]:bg-muted/25 focus-visible:outline-none">
+<a
+	bind:this={anchor_el}
+	{href}
+	use:melt={$trigger}
+	{...$$restProps}
+	class="data-[state=open]:bg-accent cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none overflow-hidden"
+>
 	<div
 		class={cn(
 			entryItemVariants({ view }),
-            'bg-[inherit]',
+			'bg-[inherit] group-data-[active=true]/container:ring-[0.5px] ring-inset',
 			checked && 'bg-primary/20 data-[active=true]:bg-primary/30'
 		)}
 	>
 		{#if view === 'list'}
 			<div
-				on:click|stopPropagation
 				class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
 			>
 				{#if entry.image || entry.uri}
@@ -305,22 +307,8 @@
 				<Muted class="text-xs">{entry.type}</Muted>
 				<div class="flex items-center gap-x-4">
 					<div
-						on:focus|once={(e) => {
-							console.log('focused', e);
-							console.log({ href });
-							preloadData(href);
-						}}
-						on:focus
-						on:keydown={(e) => {
-							if (e.key === 'x') {
-								e.preventDefault();
-								e.stopPropagation();
-								checked = !checked;
-							}
-						}}
 						data-id={entry.id}
 						class="line-clamp-2 font-semibold hover:underline focus:outline-none"
-						on:click
 					>
 						{entry.title}
 					</div>

@@ -63,29 +63,29 @@
 					id: numberOrString($page.params.id),
 					type: data.type
 				}),
-				placeholderData: () => {
-					console.time(`placeholderData`);
-					console.log({ queryClient });
-					const listData = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
-						queryKey: ['entries', 'list']
-					});
+				// placeholderData: () => {
+				// 	console.time(`placeholderData`);
+				// 	console.log({ queryClient });
+				// 	const listData = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
+				// 		queryKey: ['entries', 'list']
+				// 	});
 
-					console.log({ listData });
-					const entry = listData
-						?.flatMap((list) => list[1])
-						?.flatMap((query) => query?.pages)
-						?.flatMap((page) => {
-							console.log({ page });
-							return page?.entries;
-						})
-						?.find((entry) => {
-							console.log({ entry, $page });
-							return getId(entry) === numberOrString($page.params.id);
-						}) as any;
-					console.timeEnd(`placeholderData`);
-					console.log({ entry });
-					return entry;
-				}
+				// 	console.log({ listData });
+				// 	const entry = listData
+				// 		?.flatMap((list) => list[1])
+				// 		?.flatMap((query) => query?.pages)
+				// 		?.flatMap((page) => {
+				// 			console.log({ page });
+				// 			return page?.entries;
+				// 		})
+				// 		?.find((entry) => {
+				// 			console.log({ entry, $page });
+				// 			return getId(entry) === numberOrString($page.params.id);
+				// 		}) as any;
+				// 	console.timeEnd(`placeholderData`);
+				// 	console.log({ entry });
+				// 	return entry;
+				// }
 				// ...(!data.cache ? { refetchOnMount: false } : { initialData: data.cache })
 			};
 		})
