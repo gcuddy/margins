@@ -1,5 +1,5 @@
 import { GOOGLE_BOOKS_API_KEY, TMDB_API_KEY } from '$env/static/private';
-import { books } from '$lib/api/gbook';
+import { books, getGbookImage } from '$lib/api/gbook';
 import pindex from '$lib/api/pindex';
 import { redis } from '$lib/redis';
 import type { books_v1 } from '@googleapis/books';
@@ -66,7 +66,7 @@ function adaptBook(book: books_v1.Schema$Volume): GoodObject {
         isbn,
         title: info?.title,
         type: "book",
-        image: info?.imageLinks?.thumbnail,
+        image: getGbookImage(book),
         author: info?.authors?.join(", "),
         date: info?.publishedDate ? new Date(info.publishedDate).getFullYear().toString() : undefined,
     }
@@ -127,9 +127,9 @@ export const load = (async (e) => {
         };
     }
     if (type === "books") {
-        e.setHeaders({
-            'Cache-Control': "public, max-age=3600"
-        })
+        // e.setHeaders({
+        //     'Cache-Control': "public, max-age=3600"
+        // })
 
         const { items } = await books.search(q);
 
@@ -153,7 +153,8 @@ export const load = (async (e) => {
             results: adapted,
             type,
             q,
-            bookmarks
+            bookmarks,
+            items
         }
     }
     if (type === "my") {

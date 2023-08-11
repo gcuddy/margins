@@ -9,6 +9,10 @@ type State<T extends string | number> = {
 	pivot: T | null;
 };
 
+function modifier_keys_pressed(event: KeyboardEvent) {
+    return event.ctrlKey || event.metaKey || event.shiftKey || event.altKey;
+}
+
 // TODO data-id needs to be set on elements - can I do that in here?
 // TODO allow bringing own store
 export function create_multi<T extends string | number>({
@@ -141,6 +145,14 @@ export function create_multi<T extends string | number>({
 			keydown: (event: KeyboardEvent) => {
 				// todo
 				if (event.key === 'ArrowUp' || event.key === 'k') {
+                    // check if any modifier keys are pressed
+                    if (modifier_keys_pressed(event)) {
+                        return;
+                    }
+                    // check to make sure activelemeent is body or [data-id] inside root
+                    if (document.activeElement !== document.body && !document.activeElement?.closest('[data-id]')) {
+                        return;
+                    }
 					// selectAdjacent();
 					event.preventDefault();
 					state.update(($state) => {
@@ -159,6 +171,13 @@ export function create_multi<T extends string | number>({
 				}
 				if (event.key === 'ArrowDown' || event.key === 'j') {
 					// TODO shift
+                    if (modifier_keys_pressed(event)) {
+                        return;
+                    }
+                    // check to make sure activelemeent is body or [data-id] inside root
+                    if (document.activeElement !== document.body && !document.activeElement?.closest('[data-id]')) {
+                        return;
+                    }
 					event.preventDefault();
 					state.update(($state) => {
 						const index = $state.highlighted ? $state.items.indexOf($state.highlighted) : -1;

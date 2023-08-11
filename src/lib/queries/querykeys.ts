@@ -42,14 +42,18 @@ export const queryFactory = {
 		list: (filters?: QueryInput<'get_library'>) => ({
 			// Ideally entries, list would get inferred... but this will do for  now
 			queryKey: ['entries', 'list', filters ? { filters } : undefined] as const,
-			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) =>
-				qquery(
+			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) =>{
+                console.log({meta, pageParam})
+                console.log(`running queryFn for entries.list`)
+                return qquery(
 					meta?.init,
 					'get_library',
 					filters ? { ...filters, cursor: pageParam } : { status: 'Backlog', cursor: pageParam }
-				),
+				)
+            },
 			getNextPageParam(lastPage) {
-				return (lastPage as QueryOutput<'get_library'>).nextCursor;
+                console.log({lastPage})
+				return (lastPage as QueryOutput<'get_library'>)?.nextCursor;
 			},
 			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null
 		}),
@@ -60,7 +64,11 @@ export const queryFactory = {
 		search: (input: QueryInput<'search_titles'>) => ({
 			queryKey: ['entries', 'search', { input }] as const,
 			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'search_titles', input)
-		})
+		}),
+        count: (input: QueryInput<'count_library'>) => ({
+            queryKey: ['entries', 'count', { input }] as const,
+            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'count_library', input)
+        })
 	}
 } satisfies TQueryFactory;
 

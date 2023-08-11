@@ -54,7 +54,9 @@
 	});
 
 	const navWidth = writable(240);
+	const mobileNavWidth = writable(81);
 	setContext('mainNavWidth', navWidth);
+	setContext('mobileNavWidth', mobileNavWidth);
 
 	// queryclient
 
@@ -109,9 +111,6 @@
 						// !is_article && 'sm:border-l'
 					)}
 				>
-					{#if browser && isRestoring}
-						restoring...
-					{:else}{/if}
 					<slot />
 					{#if !is_entry && data.urlForm}
 						<AddButton urlForm={data.urlForm} />
@@ -123,5 +122,5 @@
 		<!-- <AudioPlayer /> -->
 		<DropBox />
 	</GenericCommander>
-	<SvelteQueryDevtools buttonPosition="bottom-right" />
+	<!-- <SvelteQueryDevtools buttonPosition="bottom-right" /> -->
 </QueryClientPersister>

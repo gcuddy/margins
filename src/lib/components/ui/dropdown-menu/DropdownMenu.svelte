@@ -27,9 +27,11 @@
 	const [popperRef, popperContent] = createPopperActions();
 	const state = writable<State>({ popperRef, popperContent });
 	setContext(context_name, state);
+    let className = '';
+    export { className as class};
 </script>
 
-<Menu let:open class="relative">
+<Menu let:open class={cn('relative', className)}>
 	<!-- <slot name="button">
 		<MenuButton use={[popperRef]}
 			><slot name="button-text">Open</slot></MenuButton

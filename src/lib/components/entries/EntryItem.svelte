@@ -42,25 +42,31 @@
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils/tailwind';
+	import Separator from '$components/ui/Separator.svelte';
 
 	const queryClient = useQueryClient();
 
-	const entryItemVariants = cva('flex grow relative data-[state=open]:bg-accent cursor-default data-[active=true]:bg-accent focus-visible:outline-none', {
-		variants: {
-			view: {
-				list: 'items-center gap-x-4 px-6 py-4 data-[state=open]:bg-accent',
-				kanban:
-					'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6'
+	const entryItemVariants = cva(
+		'flex grow relative cursor-default focus-visible:outline-none',
+		{
+			variants: {
+				view: {
+					list: 'items-center gap-x-4 px-6 py-4',
+					kanban:
+						'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6'
+				}
+			},
+			defaultVariants: {
+				view: 'list'
 			}
-		},
-		defaultVariants: {
-			view: 'list'
 		}
-	});
+	);
 
 	export let view: VariantProps<typeof entryItemVariants>['view'] = 'list';
 
 	export let entry: EntryInList;
+
+	export let border = true;
 
 	function getDomain(url: string) {
 		const domain = url.replace(/https?:\/\//, '').split('/')[0];
@@ -134,7 +140,7 @@
 		})
 			.then(() => {
 				toast.success('Entry moved to ' + status, {
-                    // description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
+					// description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
 					action: old_status
 						? {
 								label: 'Undo',
@@ -150,7 +156,7 @@
 									});
 								}
 						  }
-						: undefined,
+						: undefined
 				});
 			})
 			.catch(() => {
@@ -158,8 +164,8 @@
 			})
 			.finally(() => {
 				queryClient.invalidateQueries({
-                    queryKey: ['entries']
-                });
+					queryKey: ['entries']
+				});
 			});
 
 		// toast.promise(
@@ -197,7 +203,7 @@
 
 	let anchor_el: HTMLAnchorElement;
 
-    // ignore this lol
+	// ignore this lol
 	$: data = entry;
 
 	$: if (data?.status) $value = data.status;
@@ -213,9 +219,9 @@
 		}).then(() => {
 			tag_state_dirty = false;
 			toast.success('Tags updated');
-            queryClient.invalidateQueries({
-                queryKey: ['entries']
-            });
+			queryClient.invalidateQueries({
+				queryKey: ['entries']
+			});
 		});
 	}
 
@@ -232,7 +238,7 @@
 		// import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
 		// import { contextMenuItem } from '$components/ui/context-menu/ContextMenuItem.svelte';
 		// import ContextSubMenu from '$components/ui/context-menu/ContextSubMenu.svelte';
-        console.log(`Mounting context menu for entry ${entry.id}`)
+		console.log(`Mounting context menu for entry ${entry.id}`);
 		contextMenu = (await import('$components/ui/context-menu/ContextMenu.svelte')).default;
 		contextMenuItem = (await import('$components/ui/context-menu/ContextMenuItem.svelte')).default;
 		contextMenuCheckboxItem = (
@@ -247,200 +253,211 @@
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
-<a bind:this={anchor_el} {href} class={
-    cn(entryItemVariants({ view }), checked && 'bg-primary/20 data-[active=true]:bg-primary/30')
-} use:melt={$trigger} {...$$restProps}>
-	{#if view === 'list'}
-		<div
-            on:click|stopPropagation
-			class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
-		>
-			{#if entry.image || entry.uri}
-				{@const src = entry.image?.startsWith('/')
-					? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
-					: entry.image}
-				<img
-					use:smoothload
-					src={src ?? `https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
-					on:error={(e) => {
-						if (entry.uri) {
-							//@ts-ignore
-							e.target.src = `https://icon.horse/icon/${getDomain(entry.uri)}`;
-						}
-					}}
-					alt=""
-					class={clsx(
-						'relative h-full w-full rounded-[inherit] object-cover',
-						checked && 'invisible'
-					)}
-				/>
-			{:else}
-				<ImageSkeleton class="relative h-16 w-16 object-cover" />
-			{/if}
-			<div class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md">
-				<input
-					bind:checked
-					type="checkbox"
-					class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
-					on:click|stopPropagation
-                    on:change
-					on:focus={() => {
-						anchor_el?.focus();
-					}}
-				/>
-			</div>
-		</div>
-		<div class="flex flex-col">
-			<Muted class="text-xs">{entry.type}</Muted>
-			<div class="flex items-center gap-x-4">
-				<div
-					on:focus|once={(e) => {
-						console.log('focused', e);
-						console.log({ href });
-						preloadData(href);
-					}}
-					on:focus
-					on:keydown={(e) => {
-						if (e.key === 'x') {
-							e.preventDefault();
-							e.stopPropagation();
-							checked = !checked;
-						}
-					}}
-					data-id={entry.id}
-					class="line-clamp-2 font-semibold hover:underline focus:outline-none"
-					on:click
-				>
-					{entry.title}
+<a bind:this={anchor_el} {href} use:melt={$trigger} {...$$restProps} class="data-[state=open]:bg-accent cursor-default data-[active=true]:bg-muted/25 focus-visible:outline-none">
+	<div
+		class={cn(
+			entryItemVariants({ view }),
+            'bg-[inherit]',
+			checked && 'bg-primary/20 data-[active=true]:bg-primary/30'
+		)}
+	>
+		{#if view === 'list'}
+			<div
+				on:click|stopPropagation
+				class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
+			>
+				{#if entry.image || entry.uri}
+					{@const src = entry.image?.startsWith('/')
+						? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
+						: entry.image}
+					<img
+						use:smoothload
+						src={src ?? `https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
+						on:error={(e) => {
+							if (entry.uri) {
+								//@ts-ignore
+								e.target.src = `https://icon.horse/icon/${getDomain(entry.uri)}`;
+							}
+						}}
+						alt=""
+						class={clsx(
+							'relative h-full w-full rounded-[inherit] object-cover',
+							checked && 'invisible'
+						)}
+					/>
+				{:else}
+					<ImageSkeleton class="relative h-16 w-16 object-cover" />
+				{/if}
+				<div class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md">
+					<input
+						bind:checked
+						type="checkbox"
+						class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
+						on:click|stopPropagation
+						on:change
+						on:focus={() => {
+							anchor_el?.focus();
+						}}
+					/>
 				</div>
-				<div class="hidden gap-x-2 sm:flex">
-					{#if data?.annotations && data.annotations.length > 0}
-						{@const total = data.num_annotations ? +data.num_annotations : data.annotations.length}
-						{@const slice = 3}
-						{@const remaining = total - slice}
-						<HoverCard>
-							<Badge slot="trigger" variant="secondary">
-								<PencilIcon class="mr-1 h-3 w-3" />
-								{total}
-							</Badge>
-							<div slot="content" class="flex flex-col gap-2 bg-card text-card-foreground">
-								<span class="font-semibold tracking-tight">Notes</span>
-								{#each data.annotations.slice(0, slice) as annotation}
-									<div class="flex flex-col gap-1 rounded-lg border px-2 py-2 text-xs">
-										<div class="flex items-center gap-2 text-muted-foreground">
-											<span class="font-medium">
-												{annotation.username}
-											</span>
-											<time datetime={annotation.createdAt?.toString()}>
-												{ago(new Date(annotation.createdAt), $now)}
-											</time>
-										</div>
-										<div class="space-y-1 font-normal">
-											{#if annotation.target}
-												{@const text_quote = getTargetSelector(
-													annotation.target,
-													'TextQuoteSelector'
-												)}
-												{#if text_quote}
-													<Clamp clamp={2} class="border-l px-3 italic">
-														{text_quote.exact}
-													</Clamp>
-													<!-- <div class="line-clamp-2 border-l px-3 italic">
-													{text_quote.exact}
-												</div> -->
-												{:else}
-													{JSON.stringify(annotation.target)}
+			</div>
+			<div class="flex flex-col">
+				<Muted class="text-xs">{entry.type}</Muted>
+				<div class="flex items-center gap-x-4">
+					<div
+						on:focus|once={(e) => {
+							console.log('focused', e);
+							console.log({ href });
+							preloadData(href);
+						}}
+						on:focus
+						on:keydown={(e) => {
+							if (e.key === 'x') {
+								e.preventDefault();
+								e.stopPropagation();
+								checked = !checked;
+							}
+						}}
+						data-id={entry.id}
+						class="line-clamp-2 font-semibold hover:underline focus:outline-none"
+						on:click
+					>
+						{entry.title}
+					</div>
+					<div class="hidden gap-x-2 sm:flex">
+						{#if data?.annotations && data.annotations.length > 0}
+							{@const total = data.num_annotations
+								? +data.num_annotations
+								: data.annotations.length}
+							{@const slice = 3}
+							{@const remaining = total - slice}
+							<HoverCard>
+								<Badge slot="trigger" variant="secondary">
+									<PencilIcon class="mr-1 h-3 w-3" />
+									{total}
+								</Badge>
+								<div slot="content" class="flex flex-col gap-2 bg-card text-card-foreground">
+									<span class="font-semibold tracking-tight">Notes</span>
+									{#each data.annotations.slice(0, slice) as annotation}
+										<div class="flex flex-col gap-1 rounded-lg border px-2 py-2 text-xs">
+											<div class="flex items-center gap-2 text-muted-foreground">
+												<span class="font-medium">
+													{annotation.username}
+												</span>
+												<time datetime={annotation.createdAt?.toString()}>
+													{ago(new Date(annotation.createdAt), $now)}
+												</time>
+											</div>
+											<div class="space-y-1 font-normal">
+												{#if annotation.target}
+													{@const text_quote = getTargetSelector(
+														annotation.target,
+														'TextQuoteSelector'
+													)}
+													{#if text_quote}
+														<Clamp clamp={2} class="border-l px-3 italic">
+															{text_quote.exact}
+														</Clamp>
+														<!-- <div class="line-clamp-2 border-l px-3 italic">
+                                                        {text_quote.exact}
+                                                    </div> -->
+													{:else}
+														{JSON.stringify(annotation.target)}
+													{/if}
 												{/if}
-											{/if}
-											{#if annotation.body}
-												<Clamp clamp={2}>
-													{annotation.body}
-												</Clamp>
-											{:else if annotation.contentData}
-												{@html render_html(annotation.contentData)}
-												<!-- <Editor
-													class="line-clamp-2"
-													content={annotation.contentData}
-													options={{ editable: false }}
-												/> -->
-											{/if}
+												{#if annotation.body}
+													<Clamp clamp={2}>
+														{annotation.body}
+													</Clamp>
+												{:else if annotation.contentData}
+													{@html render_html(annotation.contentData)}
+													<!-- <Editor
+                                                        class="line-clamp-2"
+                                                        content={annotation.contentData}
+                                                        options={{ editable: false }}
+                                                    /> -->
+												{/if}
+											</div>
 										</div>
-									</div>
-								{/each}
-								{#if remaining > 0}
-									<div class="text-xs text-gray-500">
-										+{remaining} more
-									</div>
-								{/if}
-							</div>
-						</HoverCard>
-					{/if}
-					{#if attachment}
-						<Badge as="a" href="/tests/pdf/{attachment.entry.id}">
-							<FileTextIcon class="mr-1 h-3 w-3" />
-							<!-- {attachment.entry.title} -->
-							PDF ->
-						</Badge>
-					{/if}
-					{#if data?.relations?.length}
-						<HoverCard>
-							<Badge slot="trigger" variant="secondary">
-								<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
-								{data.relations.length}
+									{/each}
+									{#if remaining > 0}
+										<div class="text-xs text-gray-500">
+											+{remaining} more
+										</div>
+									{/if}
+								</div>
+							</HoverCard>
+						{/if}
+						{#if attachment}
+							<Badge as="a" href="/tests/pdf/{attachment.entry.id}">
+								<FileTextIcon class="mr-1 h-3 w-3" />
+								<!-- {attachment.entry.title} -->
+								PDF ->
 							</Badge>
-							<div slot="content" class="flex flex-col gap-2 bg-card text-card-foreground">
-								<span class="font-semibold tracking-tight">Relations</span>
-								{#each data.relations as relation}
-									<a
-										href={make_link(relation.entry)}
-										class="flex cursor-pointer items-center gap-3 text-xs"
-									>
-										<svelte:component
-											this={relations_icons[relation.type]}
-											class="h-3 w-3 shrink-0"
-										/>
-										<img
-											use:smoothload
-											src={get_image(relation.entry)}
-											class="aspect-square w-10 rounded-full object-cover"
-											alt=""
-										/>
-										<span class="font-semibold"> {relation.entry.title}</span>
-									</a>
-								{/each}
-							</div>
-						</HoverCard>
+						{/if}
+						{#if data?.relations?.length}
+							<HoverCard>
+								<Badge slot="trigger" variant="secondary">
+									<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
+									{data.relations.length}
+								</Badge>
+								<div slot="content" class="flex flex-col gap-2 bg-card text-card-foreground">
+									<span class="font-semibold tracking-tight">Relations</span>
+									{#each data.relations as relation}
+										<a
+											href={make_link(relation.entry)}
+											class="flex cursor-pointer items-center gap-3 text-xs"
+										>
+											<svelte:component
+												this={relations_icons[relation.type]}
+												class="h-3 w-3 shrink-0"
+											/>
+											<img
+												use:smoothload
+												src={get_image(relation.entry)}
+												class="aspect-square w-10 rounded-full object-cover"
+												alt=""
+											/>
+											<span class="font-semibold"> {relation.entry.title}</span>
+										</a>
+									{/each}
+								</div>
+							</HoverCard>
+						{/if}
+					</div>
+				</div>
+				<div class="flex">
+					{#if entry.author}
+						<Muted class="text-xs">{entry.author}</Muted>
 					{/if}
 				</div>
 			</div>
-			<div class="flex">
-				{#if entry.author}
-					<Muted class="text-xs">{entry.author}</Muted>
+			<div class="ml-auto hidden shrink-0 items-center gap-x-2 md:flex">
+				{#if data.tags}
+					{#each data.tags as tag (tag.id)}
+						<Badge class="text-xs" as="a" href="/tests/tag/{tag.name}" variant="outline"
+							>{tag.name}</Badge
+						>
+					{/each}
+				{/if}
+				{#if entry.wordCount}
+					<Small class="text-xs">
+						{entry.wordCount} words
+					</Small>
+				{/if}
+				{#if entry.progress}
+					<Small class="text-xs">
+						{Math.round(entry.progress * 100)}%
+					</Small>
 				{/if}
 			</div>
-		</div>
-		<div class="ml-auto hidden shrink-0 items-center gap-x-2 md:flex">
-			{#if data.tags}
-				{#each data.tags as tag (tag.id)}
-					<Badge class="text-xs" as="a" href="/tests/tag/{tag.name}" variant="outline"
-						>{tag.name}</Badge
-					>
-				{/each}
-			{/if}
-			{#if entry.wordCount}
-				<Small class="text-xs">
-					{entry.wordCount} words
-				</Small>
-			{/if}
-			{#if entry.progress}
-				<Small class="text-xs">
-					{Math.round(entry.progress * 100)}%
-				</Small>
-			{/if}
-		</div>
-	{:else if view === 'kanban'}
-		<!-- for now, we use a slot -->
-		<slot />
+		{:else if view === 'kanban'}
+			<!-- for now, we use a slot -->
+			<slot />
+		{/if}
+	</div>
+	{#if border}
+		<Separator class="w-full h-[0.5px] bg-border" />
 	{/if}
 </a>
 

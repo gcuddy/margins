@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import Button from '$lib/components/ui/Button.svelte';
+	import { navigating, page } from '$app/stores';
+	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
 	import {
 		BookMarked,
@@ -14,8 +14,23 @@
 		Tag,
 		PinIcon,
 		BrainCircuit,
-		FlowerIcon
+		FlowerIcon,
+		PlusCircle,
+		Loader,
+
+		ChevronDownIcon,
+
+		RssIcon
+
+
 	} from 'lucide-svelte';
+	import {
+		DropdownMenu,
+		DropdownMenuTrigger,
+		DropdownMenuContent,
+		DropdownMenuItem,
+		DropdownMenuSeparator
+	} from '$components/ui/dropdown-menu2';
 	import type { LayoutData } from './$types';
 	import { Small } from '$lib/components/ui/typography';
 	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
@@ -24,7 +39,12 @@
 	import ColResizer from '$lib/components/ColResizer.svelte';
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
-	import { createAvatar, melt } from '@melt-ui/svelte';
+	import { createAvatar, createDropdownMenu, melt } from '@melt-ui/svelte';
+	import { goto } from '$app/navigation';
+	import { fade } from 'svelte/transition';
+	import { useIsMutating } from '@tanstack/svelte-query';
+	import Separator from '$components/ui/Separator.svelte';
+	import { cn } from '$lib';
 
 	type Nav = {
 		label: string;
@@ -32,6 +52,9 @@
 		href: string;
 		active: (path: string) => boolean;
 	};
+
+	const isRestoring = getContext('isRestoring') as Writable<boolean>;
+	const isMutating = useIsMutating();
 
 	const nav: Nav[] = [
 		{
@@ -105,39 +128,102 @@
 	} = createAvatar({
 		src: $page.data.user_data?.avatar ?? ''
 	});
+
+	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }> | undefined | null;
+	const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
+	$: mobileNavWidth.set(borderBoxSize?.[0]?.inlineSize ?? 81);
 </script>
 
 {#if !$inArticle}
-	<div style:width="{width}px" />
-	<nav
+	<div
+		style:--mobile-nav-width="{$mobileNavWidth}px"
 		style:--width="{width}px"
-		class="flex flex-col gap-2 overflow-y-auto fixed top-0 left-0 bottom-0 grow h-full border-r w-[--width] {$menu_bar.show
+		class="w-[--mobile-nav-width] lg:w-[--width]"
+	/>
+	<nav
+		bind:borderBoxSize
+		style:--width="{width}px"
+		class="flex flex-col gap-2 overflow-y-auto fixed top-0 left-0 bottom-0 grow h-full border-r lg:w-[--width] {$menu_bar.show
 			? 'opacity-100'
 			: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
 	>
-		<div class="px-4 py-2 h-[--nav-height] flex items-center">
+		<div class="px-4 py-2 h-[--nav-height] flex items-center shrink-0 relative">
 			<!-- <span class="flex text-muted-foreground items-center"><FlowerIcon class="h-6 w-6 mr-1" /> <span class="text-sm font-medium">Margins</span> </span> -->
 			{#if $page.data.user_data?.username}
-				<a href="/tests/settings" class="flex items-center gap-x-2 w-full">
-					<span class="relative flex h-5 w-5 shrink-0 overflow-hidden rounded-full">
-						<img
-							src={$page.data.user_data.avatar}
-							use:melt={$image}
-							alt="avatar"
-							class="aspect-square h-full w-full"
-						/>
-						<span
-							use:melt={$fallback}
-							class="flex h-full w-full items-center justify-center rounded-full bg-muted"
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild let:trigger>
+						<a
+							use:melt={trigger}
+							href="/tests/settings"
+							on:click|preventDefault
+							class="flex items-center gap-x-2 w-fit data-[state=open]:bg-accent p-2 rounded"
 						>
-							{$page.data.user_data.username[0].toUpperCase()}
-						</span>
-					</span>
-					<span class="text-sm font-medium">{$page.data.user_data.username}</span>
-					<!-- <Skeleton class="h-8 w-8 rounded-full border border-gray-200" /> -->
-				</a>
+							<span
+								class="relative flex lg:square-5 square-8 shrink-0 overflow-hidden rounded-full"
+							>
+								<img
+									src={$page.data.user_data.avatar}
+									use:melt={$image}
+									alt="avatar"
+									class="aspect-square h-full w-full"
+								/>
+								<span
+									use:melt={$fallback}
+									class="flex h-full w-full items-center justify-center rounded-full bg-muted"
+								>
+									{$page.data.user_data.username[0].toUpperCase()}
+								</span>
+							</span>
+							<span class="text-sm font-medium hidden lg:inline"
+								>{$page.data.user_data.username}</span
+							>
+							<!-- <Skeleton class="h-8 w-8 rounded-full border border-gray-200" /> -->
+						</a>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent class="w-[250px] focus-visible:outline-none">
+						<DropdownMenuItem asChild let:className let:item>
+							<a class={className} use:melt={item} href="/tests/settings">Settings</a>
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem asChild let:className let:item>
+							<a class={className} use:melt={item} href="/testes/logout">Logout</a>
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			{/if}
+			{#if $isRestoring || $isMutating}
+				<span transition:fade={{ duration: 75 }} class="absolute my-auto right-4 hidden lg:flex">
+					<Loader class="h-4 w-4 animate-spin text-muted-foreground" />
+				</span>
 			{/if}
 		</div>
+		<div class="px-4">
+			<div class="flex items-center">
+				<Button size="sm" variant="outline" class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0">
+					<PlusCircle class="square-5 lg:square-4 shrink-0" />
+					<span class="hidden lg:inline">Add</span>
+					<!-- TODO: create dropdown menu for type, and add Modal -->
+				</Button>
+				<Separator class="h-9" orientation="vertical" />
+				<DropdownMenu positioning={{
+                    placement: "bottom-end"
+                }}>
+					<DropdownMenuTrigger let:trigger asChild>
+						<button class={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'px-2 shadow-none rounded-l-none border-l-0')} use:melt={trigger}>
+							<!--  -->
+                            <ChevronDownIcon class="h-4 w-4 text-secondary-foreground" />
+						</button>
+					</DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-56">
+                        <DropdownMenuItem>
+                            <RssIcon class="h-4 w-4 mr-2" />
+                            <span>Add Subscription</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+				</DropdownMenu>
+			</div>
+		</div>
+		<!-- TODO: Add Button here -->
 		<div class="px-4 py-2">
 			<div
 				class="space-y-1 transition-opacity {$inArticle
@@ -146,24 +232,19 @@
 			>
 				{#each nav as nav_item}
 					<Button
-						as="a"
 						href={nav_item.href}
 						size="sm"
-						class="flex w-full items-center justify-start space-x-2"
+						class="flex w-full items-center justify-center lg:justify-start space-x-2"
 						variant={nav_item.active($page.url.pathname) ? 'secondary' : 'ghost'}
 					>
-						<svelte:component
-							this={nav_item.icon}
-							class="h-6 w-6 {$inArticle ? '2xl:h-4 2xl:w-4' : 'lg:h-4 lg:w-4'}"
-						/>
+						<svelte:component this={nav_item.icon} class="square-5 lg:square-4" />
 						<span class="hidden {$inArticle ? '2xl:inline' : 'lg:inline'}">{nav_item.label}</span>
 					</Button>
 				{/each}
 				<Button
-					as="a"
 					href="/tests/pins"
 					size="sm"
-					class="flex w-full items-center justify-start lg:hidden"
+					class="flex w-full items-center justify-center lg:justify-start lg:hidden"
 					variant="ghost"
 				>
 					<PinIcon class="h-6 w-6" />

@@ -41,6 +41,8 @@ function get_annotations(eb: AliasedEb, userId: string) {
 	);
 }
 
+
+
 export async function get_library(
 	userId: string,
 	status: Status | null,
@@ -71,7 +73,7 @@ export async function get_library(
 			'e.podcastIndexId',
 			'b.updatedAt',
 			'e.wordCount',
-			'e.spotifyId',
+ 			'e.spotifyId',
 			'b.status',
 			'b.sort_order',
 			'i.progress',

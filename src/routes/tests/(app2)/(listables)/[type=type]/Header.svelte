@@ -29,8 +29,8 @@
 	const navWidth = getContext('navWidth') as Writable<number>;
 
 	const mainNavWidth = getContext('mainNavWidth') as Writable<number>;
-        const inArticle = getContext('inArticle') as Writable<boolean>;
-
+	const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
+	const inArticle = getContext('inArticle') as Writable<boolean>;
 
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
@@ -43,19 +43,22 @@
 		class="fixed flex items-center justify-between left-0 top-0 h-[--nav-height] bg-transparent {$rightSidebar
 			? 'w-full md:w-[calc(100%-var(--right-sidebar-width))]'
 			: 'w-full'}"
+		aria-hidden="true"
 		on:mouseenter={() => ($scrollingDown = false)}
 	/>
 {/if}
 
 <div
-    style:--main-nav-width={$inArticle ? `0px` : $mainNavWidth + 'px'}
-    style:left={$inArticle ? undefined : $mainNavWidth + 'px'}
+	style:--main-nav-width={$inArticle ? `0px` : $mainNavWidth + 'px'}
+    style:--mobile-nav-width={$inArticle ? `0px` : $mobileNavWidth + 'px'}
+	style:--left={$inArticle ? 0 : $mainNavWidth + 'px'}
+    style:--mobile-left={$inArticle ? 0 : $mobileNavWidth + 'px'}
 	class={cn(
-		'fixed flex items-center justify-between z-50 left-0 top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform',
+		'fixed flex items-center justify-between z-50 left-0 sm:left-[--mobile-left] lg:left-[--left] top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform w-full sm:w-[calc(100%-var(--mobile-nav-width))]',
 		$scrollingDown && '-translate-y-full',
 		$rightSidebar
-			? 'w-full pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
-			: 'w-full pr-14' // pr-14 because button is w-10 r-4
+			? 'pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
+			: 'pr-14' // pr-14 because button is w-10 r-4
 		// $rightSidebar && $mq.max_md && 'opacity-0'
 	)}
 >

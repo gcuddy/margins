@@ -12,7 +12,7 @@ import { nanoid } from '$lib/nanoid';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
 import { interactionSchema } from '$lib/schemas';
 import { typeSchema } from '$lib/types';
-import { RelationType } from '@prisma/client';
+import { DocumentType, RelationType, Status } from '@prisma/client';
 import { sql } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import { superValidate } from 'sveltekit-superforms/server';
@@ -355,20 +355,21 @@ export async function update_metadata_on_entry({ input, ctx }: GetCtx<typeof ent
 	const { id, title, author } = input;
 	const { userId } = ctx;
 
-    await db.insertInto("Bookmark")
-        .values({
-            userId,
-            entryId: id,
-            title,
-            author,
-            updatedAt: new Date(),
-            // bookmarked: true,
-        })
-        .onDuplicateKeyUpdate({
-            title,
-            author,
-        })
-        .execute();
+	await db
+		.insertInto('Bookmark')
+		.values({
+			userId,
+			entryId: id,
+			title,
+			author,
+			updatedAt: new Date()
+			// bookmarked: true,
+		})
+		.onDuplicateKeyUpdate({
+			title,
+			author
+		})
+		.execute();
 }
 
 // TODO cursor pagination and ordering
@@ -661,5 +662,41 @@ function validate_entry_type<TEntry extends { tweet?: unknown }>(
 	entry.tweet = tweet;
 	return entry as TEntry & {
 		tweet: Tweet | undefined;
+	};
+}
+
+
+// same type as get_library
+export const countLibrarySchema = z.object({
+	status: z.nativeEnum(Status).nullable(),
+	filter: z.object({
+		type: z.nativeEnum(DocumentType).optional(),
+		search: z.string().optional()
+	})
+});
+
+export async function count_library({input, ctx}: GetCtx<typeof countLibrarySchema>) {
+    const { userId } = ctx;
+    const { status, filter } = input;
+	let query = db
+		.selectFrom('Bookmark')
+		.innerJoin('Entry', 'Entry.id', 'Bookmark.entryId')
+		.where('Bookmark.userId', '=', userId)
+		.select(({ fn, ref }) => [fn.count('Entry.id').as('count')]);
+	if (status) {
+		query = query.where('Bookmark.status', '=', status);
+	}
+    if (filter) {
+        if (filter.type) {
+            query = query.where('Entry.type', '=', filter.type);
+        }
+        if (filter.search) {
+            query = query.where('Entry.title', 'like', `%${filter.search}%`);
+        }
+    }
+
+	const { count } = await query.executeTakeFirstOrThrow();
+	return {
+		count: count as number
 	};
 }

@@ -23,13 +23,15 @@
 
     const inArticle = getContext('inArticle') as Writable<boolean>;
     const mainNavWidth = getContext('mainNavWidth') as Writable<number>;
+    const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
 </script>
 
 <nav
 	bind:borderBoxSize
-    style:left={$inArticle ? 0 : $mainNavWidth + 'px'}
+    style:--left={$inArticle ? 0 : $mainNavWidth + 'px'}
+    style:--mobile-left={$inArticle ? 0 : $mobileNavWidth + 'px'}
 	class={cn(
-		'h-[--nav-height] flex items-center transition-transform transform fixed  top-0 z-[51] pl-4 w-full',
+		'h-[--nav-height] left-0 sm:left-[--mobile-left] lg:[--left] flex items-center transition-transform transform fixed  top-0 z-[51] pl-4 w-full',
 		!show && 'w-min max-w-min border-b',
 		$scrollingDown && '-translate-y-full',
 		// $rightSidebar && 'opacity-0'

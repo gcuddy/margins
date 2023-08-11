@@ -55,10 +55,10 @@ declare global {
 	namespace Lucia {
 		type Auth = import('$lib/server/lucia').Auth;
 		type DatabaseUserAttributes = {
-            username: string;
-            email: string;
-            avatar?: string | null;
-        };
+			username: string;
+			email: string;
+			avatar?: string | null;
+		};
 		type DatabaseSessionAttributes = {};
 	}
 }
@@ -75,10 +75,7 @@ declare namespace svelte.JSX {
 	}
 }
 
-declare module 'command-score' {
-	function score(command: string, input: string): number;
-	export = score;
-}
+
 
 // interface Meta {
 //     persist?: boolean;

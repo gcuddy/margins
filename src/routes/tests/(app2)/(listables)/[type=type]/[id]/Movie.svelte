@@ -12,6 +12,8 @@
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
+	import { createAvatar, melt } from '@melt-ui/svelte';
+	import { cn } from '$lib/utils';
 	type Movie = PageData['movie'];
 	export let data: PageData & {
 		movie: NonNullable<Movie>;
@@ -25,16 +27,43 @@
 	const promises = {
 		lists: () => fetch(`/api/tmdb/movie/${data.movie.id}/lists`).then((r) => r.json())as Promise<{ results: List[]}>
 	};
+
+    const {
+		elements: { image, fallback },
+		options,
+		states: { loadingStatus }
+	} = createAvatar({
+        src: `https://image.tmdb.org/t/p/w342/${data.movie.poster_path}`,
+    });
 </script>
 
 <div class="flex select-text flex-col gap-4">
 	<div class="flex gap-6 max-sm:flex-col sm:items-center">
-		<img
+        <div class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]">
+			<img
+				use:melt={$image}
+				class="aspect-auto w-[inherit] rounded-[inherit]"
+				alt="Movie poster for {data.movie.title}"
+			/>
+			<div
+				class={cn(
+					'w-[200px] h-[300px] bg-muted flex items-center justify-center text-muted-foreground',
+					$loadingStatus === 'loading' && 'animate-pulse'
+				)}
+				use:melt={$fallback}
+			>
+				<!--  -->
+				{#if $loadingStatus === 'error'}
+					{data.movie.title}
+				{/if}
+			</div>
+		</div>
+		<!-- <img
 			src="https://image.tmdb.org/t/p/w500/{data.movie.poster_path}"
 			alt=""
 			class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]"
 			use:smoothload
-		/>
+		/> -->
 		<div class="flex flex-col gap-2">
 			<Muted>Movie</Muted>
 			<H1>{data.movie.title}</H1>

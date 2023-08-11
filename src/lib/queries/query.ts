@@ -251,7 +251,7 @@ export async function query<T extends keyof Queries>(
 	let { fetcher, userId } = init;
 	console.log({ init, userId });
 	userId =
-		userId || init.data?.userId || init.data?.session?.userId || init.data?.user?.userId || null;
+		userId || init.data?.userId || init.data?.session?.user.userId || init.data?.user?.userId || null;
 	fetcher = init.fetch || fetcher || fetch;
 	console.log({ fetcher });
 	const data = stringify(input);

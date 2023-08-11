@@ -25,7 +25,8 @@
 	import { get_genre } from '$lib/features/books/utils';
 	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
-    let editor: Editor;
+	import { createAvatar, melt } from '@melt-ui/svelte';
+	let editor: Editor;
 
 	type Book = PageData['book'];
 	export let data: PageData & {
@@ -73,17 +74,40 @@
 	$: pdf = data.entry?.relations
 		?.concat(data.entry?.back_relations ?? [])
 		.find((r) => r.type === 'Grouped' && r.related_entry?.type === 'pdf');
+
+	const {
+		elements: { image, fallback },
+		options,
+		states: { loadingStatus }
+	} = createAvatar();
+
+	$: options.src.set(getGbookImage(book) ?? '');
 </script>
 
 <div class="flex select-text flex-col gap-4">
 	<div class="flex items-center gap-6">
 		<!-- src="https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg?default=false" -->
-		<img
-			class="aspect-auto max-w-[200px] rounded-md shadow-lg"
-			on:error={(e) => console.log(e)}
-			src={getGbookImage(book)}
-			alt=""
-		/>
+		<div class="aspect-auto max-w-[200px] rounded-md shadow-lg">
+			<img
+				use:melt={$image}
+				class="aspect-auto max-w-[200px] rounded-md shadow-lg"
+				on:error={(e) => console.log(e)}
+				src={getGbookImage(book)}
+				alt=""
+			/>
+			<div
+				class={cn(
+					'w-[128px] h-[196px] bg-muted flex items-center justify-center text-muted-foreground',
+					$loadingStatus === 'loading' && 'animate-pulse'
+				)}
+				use:melt={$fallback}
+			>
+				<!--  -->
+				{#if $loadingStatus === 'error'}
+					{book?.volumeInfo?.title}
+				{/if}
+			</div>
+		</div>
 		<div class="flex flex-col gap-2">
 			<Muted>Book</Muted>
 			<H1>{book.volumeInfo?.title}</H1>
@@ -189,15 +213,18 @@
 
 					<Editor blank bind:this={editor} />
 
-                    <svelte:fragment slot="footer" let:open>
-                        <button class={buttonVariants()} on:click={() => {
-                            if (!data.entry) return;
-                            editor.saveNoteToEntry(data.entry.id);
-                            open.set(false)
-                        }}>
-                            Save
-                        </button>
-                    </svelte:fragment>
+					<svelte:fragment slot="footer" let:open>
+						<button
+							class={buttonVariants()}
+							on:click={() => {
+								if (!data.entry) return;
+								editor.saveNoteToEntry(data.entry.id);
+								open.set(false);
+							}}
+						>
+							Save
+						</button>
+					</svelte:fragment>
 				</Dialog2>
 				{#each data.entry?.annotations ?? [] as annotation}
 					<Annotation

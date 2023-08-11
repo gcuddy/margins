@@ -149,6 +149,7 @@
 	"type": "module",
 	"dependencies": {
 		"@googleapis/youtube": "^10.0.0",
+		"@huntabyte/primitives": "^0.0.5",
 		"@lucia-auth/adapter-kysely": "^1.0.1",
 		"@lucia-auth/adapter-mysql": "^2.0.0",
 		"@lucia-auth/adapter-session-redis": "^2.0.0",

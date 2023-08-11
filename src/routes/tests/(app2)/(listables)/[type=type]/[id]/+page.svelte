@@ -27,6 +27,7 @@
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { getId } from '$lib/utils/entries';
 	import MediaHeader from './MediaHeader.svelte';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
@@ -163,12 +164,13 @@
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >
-	{#if $query.isSuccess}
-		{#if $query.isPlaceholderData}
-			<!-- Placeholder Data: -->
-			<!-- <pre>{JSON.stringify($query.data, null, 2)}</pre> -->
-			<MediaHeader {...$query.data} />
-		{:else if type === 'article'}
+	{#if $query.isPlaceholderData || $query.isLoading}
+		<Skeleton class="w-full h-[300px]" />
+	{:else if $query.isSuccess}
+		<!-- Placeholder Data: -->
+		<!-- <pre>{JSON.stringify($query.data, null, 2)}</pre> -->
+		<!-- <MediaHeader {...$query.data} /> -->
+		{#if type === 'article'}
 			<svelte:component this={data.component} data={$query.data}>
 				{@html $query.data?.entry?.html}
 			</svelte:component>

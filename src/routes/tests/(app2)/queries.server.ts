@@ -11,6 +11,8 @@ import {
 import { nanoid } from '$lib/nanoid';
 import {
 	add_to_collection,
+	countLibrarySchema,
+	count_library,
 	deleteAnnotation,
 	entry_by_id,
 	entry_by_id_schema,
@@ -697,6 +699,10 @@ export const queries = {
     entry_by_id: query({
         schema: entry_by_id_schema,
         fn: entry_by_id
+    }),
+    count_library: query({
+        schema: countLibrarySchema,
+        fn: count_library
     })
 } as const;
 
