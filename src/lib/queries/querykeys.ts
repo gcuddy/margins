@@ -93,9 +93,9 @@ function createFn<TKey extends keyof Queries>(
 	return (input: QueryInput<TKey>) => {};
 }
 
-createFn(
-	{ cursor: 1 },
-	{
-		initialData: []
-	}
-);
+// createFn(
+// 	{ cursor: 1 },
+// 	{
+// 		initialData: []
+// 	}
+// );

@@ -63,7 +63,7 @@
 	import EntryOperations from './EntryOperations.svelte';
 	import Tooltip from '$lib/components/ui/Tooltip.svelte';
 	import { getTargetSelector } from '$lib/utils/annotations';
-	import { mutation, query } from '$lib/queries/query';
+	import { MutationInput, QueryOutput, mutation, query } from '$lib/queries/query';
 	import { elementReady } from '$lib/utils/dom';
 	import inView from '$lib/actions/inview';
 	import type { MenuBar } from '../../../MainNav.svelte';
@@ -77,6 +77,9 @@
 	import { toast } from 'svelte-sonner';
 	import { draggable } from '@neodrag/svelte';
 	import { getHostname } from '$lib/utils';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { numberOrString } from '$lib/utils/misc';
+	import type { Type } from '$lib/types';
 
 	export let data: PageData;
 
@@ -111,6 +114,76 @@
 	};
 
 	const appearance = persisted('appearance', defaultOpts);
+
+	const queryClient = useQueryClient();
+
+	$: queryKey = [
+		'entries',
+		'detail',
+		{
+			input: {
+				id: numberOrString($page.params.id),
+				type: $page.data.type as Type
+			}
+		}
+	];
+
+	const annotateMutation = createMutation({
+		mutationFn: async (input: MutationInput<'save_note'>) => {
+			if (!data.entry) return;
+			mutation($page, 'save_note', {
+				entryId: data.entry.id,
+				...input
+			});
+		},
+		async onMutate(newData) {
+			await queryClient.cancelQueries({
+				queryKey: ['entries']
+			});
+
+			// Snapshot the previous value
+			const previousEntryData = queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
+
+			console.log({ previousEntryData });
+
+			// Optimistically update to the new value
+			queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
+				if (!old) return old;
+				if (!old.entry) return old;
+				console.log({ old });
+                // newData.
+				return {
+					...old,
+					entry: {
+						...old.entry,
+						type: 'article',
+						annotations: [
+							...(old.entry?.annotations || []),
+							{
+								...newData,
+                                createdAt: new Date().toISOString(),
+                                exact
+							} // -> todo create default annotation data
+						]
+					}
+				};
+			});
+
+			// Return a context object with the snapshotted value
+			return { previousEntryData };
+		},
+		onError: (err, newTodo, context) => {
+			toast.error('Failed to save annotation');
+			if (context) {
+				queryClient.setQueryData(queryKey, context.previousEntryData);
+			}
+		},
+		onSettled() {
+			queryClient.invalidateQueries({
+				queryKey: ['entries']
+			});
+		}
+	});
 
 	const selection = writable<Selection | null>(null);
 
@@ -189,13 +262,19 @@
 		| {
 				selector: TargetSchema['selector'];
 				els: Awaited<ReturnType<typeof highlightSelectorTarget>>;
+				start: number;
+				exact: string;
 		  }
 		| undefined
 	> => {
 		const range = $selection?.getRangeAt(0);
 		if (!range || range.collapsed) return;
-		const text_position_selector = describeTextPosition(range);
-		const text_quote_selector = await describeTextQuote(range);
+		if (!articleWrapper) return;
+		const text_position_selector = describeTextPosition(range, articleWrapper);
+		const { start } = text_position_selector;
+		const text_quote_selector = await describeTextQuote(range, articleWrapper);
+		const { exact } = text_quote_selector;
+		console.log({ text_position_selector, text_quote_selector });
 		$currentAnnotation.annotation = {
 			...$currentAnnotation.annotation,
 			id: $currentAnnotation.annotation?.id || nanoid(),
@@ -207,7 +286,9 @@
 		const els = await highlightSelectorTarget(text_quote_selector, attrs);
 		return {
 			selector: [text_quote_selector, text_position_selector],
-			els
+			els,
+			start,
+			exact
 		};
 	};
 
@@ -247,12 +328,16 @@
 		console.log('entry change!');
 		const annotations = data.entry?.annotations;
 		if (data.entry?.id) {
-			update_entry(data.entry.id, {
-				annotations
-			});
+			// update_entry(data.entry.id, {
+			// 	annotations
+			// });
 		}
 		// find ids in $annotationCtx that are not in annotations, and remove them
 		const existingIds = annotations.map((a) => a.id);
+		console.log({
+			annotations,
+			$annotationCtx
+		});
 		for (const [id, ctx] of $annotationCtx) {
 			console.log({ id, ctx, annotations });
 			if (!existingIds.includes(id)) {
@@ -265,25 +350,25 @@
 		}
 	}
 
-	function createMutation<T>(opts: { mutationFn: () => Promise<T> }) {
-		const store = writable({
-			mutate,
-			isPending: false
-		});
+	// function createMutation<T>(opts: { mutationFn: () => Promise<T> }) {
+	// 	const store = writable({
+	// 		mutate,
+	// 		isPending: false
+	// 	});
 
-		function mutate() {
-			store.update((s) => ({ ...s, isPending: true }));
-			const promise = opts.mutationFn();
-			promise.finally(() => {
-				store.update((s) => ({ ...s, isPending: false }));
-			});
-			return promise;
-		}
+	// 	function mutate() {
+	// 		store.update((s) => ({ ...s, isPending: true }));
+	// 		const promise = opts.mutationFn();
+	// 		promise.finally(() => {
+	// 			store.update((s) => ({ ...s, isPending: false }));
+	// 		});
+	// 		return promise;
+	// 	}
 
-		return {
-			subscribe: store.subscribe
-		};
-	}
+	// 	return {
+	// 		subscribe: store.subscribe
+	// 	};
+	// }
 
 	const saveProgressMutation = createMutation({
 		mutationFn: async () => {
@@ -349,7 +434,7 @@
 				});
 				$annotationCtx.set(annotation.id, ctx);
 			}
-            console.log({selector})
+			console.log({ selector });
 		}
 
 		// scroll to latest interaction
@@ -541,77 +626,35 @@
 			}}
 		>
 			<div class="flex justify-between space-x-2">
-				<AnnotationForm
-					class="contents"
-					data={data.annotationForm}
-					entry={data.entry}
-					footer={false}
-					opts={{
-						// onResult(event) {
-						// 	console.log({event})
-						// },
-						onUpdate: ({ form }) => {
-							console.log('ON UPDATED');
-							// queryClient.invalidateQueries({
-							// 	queryKey: ['notebook']
-							// });
-							if (form.valid) {
-								elementReady(`[data-sidebar-annotation-id=${form.data.id}]`).then((el) => {
-									console.log({ el });
-									if (el) {
-										// el.scrollIntoView({
-										// 	behavior: 'smooth',
-										// 	block: 'center'
-										// });
-									}
-								});
-							}
+				<Button
+					on:pointerdown={async (e) => {
+						if (!$selection) {
+							clearSelection();
 						}
+						const id = nanoid();
+						const info = await highlight({ id: `annotation-${id}` });
+
+						if (!info) {
+							e.preventDefault();
+							return;
+						}
+
+						$annotateMutation.mutate({
+							id,
+							target: {
+								source: '',
+								selector: info.selector
+							}
+						});
+						clearSelection();
 					}}
+					type="submit"
+					class="flex h-auto flex-col space-y-1"
+					variant="ghost"
 				>
-					<svelte:fragment slot="content" let:form let:el>
-						<Button
-							on:pointerdown={async (e) => {
-								if (!$selection) {
-									clearSelection();
-								}
-								const id = nanoid();
-								const info = await highlight({ id: `annotation-${id}` });
-								console.log({ info });
-								//TODO: determine first or last el based on screen position
-								if (!info) {
-									e.preventDefault();
-									return;
-								}
-								form.update((f) => ({
-									...f,
-									target: {
-										source: '',
-										selector: info.selector
-									},
-									id
-								}));
-								el.requestSubmit();
-								clearSelection();
-								elementReady(`[data-sidebar-annotation-id="${id}"]`).then((el) => {
-									console.log({ el });
-									if (el) {
-										// el.scrollIntoView({
-										// 	behavior: 'smooth',
-										// 	block: 'center'
-										// });
-									}
-								});
-							}}
-							type="submit"
-							class="flex h-auto flex-col space-y-1"
-							variant="ghost"
-						>
-							<Highlighter class="h-5 w-5" />
-							<Muted class="text-xs">Highlight</Muted>
-						</Button>
-					</svelte:fragment>
-				</AnnotationForm>
+					<Highlighter class="h-5 w-5" />
+					<Muted class="text-xs">Highlight</Muted>
+				</Button>
 				<Button
 					on:pointerdown={async (e) => {
 						// show annotation menu and grab annotation
@@ -798,12 +841,12 @@
 		>
 			{data.entry?.title}
 		</h1>
-        {#if data.entry?.author}
-		<Lead class="not-prose"
-			><a href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}"
-				>{data.entry?.author}</a
-			></Lead
-		>{/if}
+		{#if data.entry?.author}
+			<Lead class="not-prose"
+				><a href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}"
+					>{data.entry?.author}</a
+				></Lead
+			>{/if}
 		<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 		<Attachments {data} />
 	</header>

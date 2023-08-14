@@ -17,7 +17,7 @@
 	import { buttonVariants } from "./ui/Button.svelte";
 	import type { UpdateBookmarkSchema } from "$lib/features/entries/forms";
 	import { cn } from "$lib/utils/tailwind";
-	import type { Validation } from "sveltekit-superforms";
+	import type { SuperValidated, Validation } from "sveltekit-superforms";
 	import { superForm } from "sveltekit-superforms/client";
 	import toast from "svelte-french-toast";
 	import type { Message } from "$lib/types";
@@ -27,7 +27,7 @@
 	export let entry: Pick<Entry, "id"> & {
 		bookmark?: Pick<Bookmark, "id" | "status">;
 	};
-	export let data: Validation<UpdateBookmarkSchema, Message>;
+	export let data: SuperValidated<UpdateBookmarkSchema, Message>;
 	export let action_prefix = `/tests/entry/${entry.id}`;
 
 	const statuses = {
@@ -99,7 +99,7 @@
 				/>
 				<span>{$form.status}</span>
 			{:else}
-				+ Set Status
+				Save
 			{/if}
 		</PopoverTrigger>
 		<PopoverContent placement="left" class="p-0">
