@@ -13,6 +13,7 @@
 	import { mutation } from '$lib/queries/query';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { formatTimeDuration } from '$lib/utils/dates';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import MarkdownIt from 'markdown-it';
 	import { getContext, type ComponentProps } from 'svelte';
 	import type { Writable } from 'svelte/store';
@@ -29,6 +30,8 @@
 	> & {
 		username?: string | null;
 	};
+
+    const queryClient = useQueryClient();
 
 	interface $$Props extends Omit<ComponentProps<AnnotationForm>, 'annotation'> {
 		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData' | 'type'> & {
@@ -67,6 +70,9 @@
 							id: annotation.id
 						});
 						await invalidate('entry');
+                        await queryClient.invalidateQueries({
+                            queryKey: ["entries"]
+                        })
 						pending_delete = false;
 					}}
 				/>

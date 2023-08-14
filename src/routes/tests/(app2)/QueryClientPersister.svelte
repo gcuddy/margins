@@ -63,7 +63,6 @@
 						if (typeof filters !== 'object') return false;
 						const { type, search } = filters as { type?: string; search?: string };
 						if (type || search) return false;
-						console.log(`Dehydrating this query`, { query });
 						// TODO: get rid of meta
 
 						return true;

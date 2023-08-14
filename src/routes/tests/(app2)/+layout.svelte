@@ -122,5 +122,5 @@
 		<!-- <AudioPlayer /> -->
 		<DropBox />
 	</GenericCommander>
-	<!-- <SvelteQueryDevtools buttonPosition="bottom-right" /> -->
+	<SvelteQueryDevtools buttonPosition="bottom-right" />
 </QueryClientPersister>
