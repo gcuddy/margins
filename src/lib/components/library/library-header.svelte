@@ -15,10 +15,18 @@
 		CommandItem,
 		CommandList
 	} from '$components/ui/command';
-	import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
-	import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
-	import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
-	import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
+	import {
+		DropdownMenu,
+		DropdownMenuTrigger,
+		DropdownMenuContent,
+		DropdownMenuItem,
+		DropdownMenuRadioGroup,
+		DropdownMenuRadioItem
+	} from '$components/ui/dropdown-menu2';
+	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
+	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
+	// import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
+	// import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
 	import { page, navigating } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import Input from '$components/ui/Input.svelte';
@@ -27,6 +35,8 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import { derived } from 'svelte/store';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import type { LibrarySortType } from '$lib/server/queries';
+	import { LoaderIcon } from 'svelte-french-toast';
 
 	let form: HTMLFormElement;
 	let filter: Input;
@@ -38,7 +48,7 @@
 				status: $page.data.Status,
 				filter: {
 					type: $page.data.type,
-                    search: $page.url.searchParams.get('search') ?? undefined
+					search: $page.url.searchParams.get('search') ?? undefined
 				}
 			})
 		}))
@@ -65,7 +75,7 @@
 			filter.focus();
 		}
 		// let 1 2 and 3 move you to backlog, now, and archive
-        if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+		if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 		if (e.key === '1') {
 			e.preventDefault();
 			goto(`/tests/library/backlog`);
@@ -82,6 +92,28 @@
 
 	$: is_searching = $navigating?.to?.url.pathname === $page.url.pathname;
 	$: filter_type = $page.url.searchParams.get('type');
+
+	export let sort: NonNullable<LibrarySortType> = 'manual';
+	export let loading = false;
+
+	const sortTypes: { label: string; type: NonNullable<LibrarySortType> }[] = [
+		{
+			label: 'Manual',
+			type: 'manual'
+		},
+		{
+			label: 'Title',
+			type: 'title'
+		},
+		{
+			label: 'Author',
+			type: 'author'
+		},
+		{
+			label: 'Date Updated',
+			type: 'updatedAt'
+		}
+	];
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
@@ -174,7 +206,7 @@
 			</Popover>
 			{#if filter_type}
 				<div class="flex">
-					<Button as="a" href={$page.url.pathname} variant="ghost" size="sm">
+					<Button href={$page.url.pathname} variant="ghost" size="sm">
 						<span class="lg:inline hidden">Reset</span>
 						<XIcon class="lg:ml-2 h-4 w-4" />
 					</Button>
@@ -187,16 +219,29 @@
 		</div>
 	</div>
 	<div class="flex shrink justify-end items-center gap-2">
-		<DropdownMenu class="hidden md:block">
-			<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary' })}>
-				<ArrowDownUpIcon class="h-4 w-4 lg:mr-2" />
-				<span class="hidden lg:inline">Sort</span>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent placement="bottom">
-				<DropdownMenuItem>Name</DropdownMenuItem>
-				<DropdownMenuItem>Author</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
+        {#if loading}
+            <Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
+        {/if}
+		<div class="hidden md:block">
+			<DropdownMenu
+				positioning={{
+					placement: 'bottom'
+				}}
+			>
+				<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary' })}>
+					<ArrowDownUpIcon class="h-4 w-4 lg:mr-2" />
+					<span class="hidden lg:inline">Sort</span>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent>
+					<DropdownMenuRadioGroup bind:value={sort}>
+						{#each sortTypes as { label, type }}
+							<!-- TODO: Checkbox Item -->
+							<DropdownMenuRadioItem value={type}>{label}</DropdownMenuRadioItem>
+						{/each}
+					</DropdownMenuRadioGroup>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</div>
 		<form
 			bind:this={form}
 			class="group shrink hidden md:flex relative"

@@ -39,7 +39,7 @@ import {
 import { annotationSchema } from '$lib/annotation';
 import { type Condition, View } from './views/new/View';
 import spotify from '$lib/api/spotify';
-import { get_entry_details, get_library } from '$lib/server/queries';
+import { get_entry_details, get_library, get_library_schema } from '$lib/server/queries';
 import { typeSchema } from '$lib/types';
 import { twitter } from '$lib/twitter';
 import type { Tweet } from '$lib/api/twitter';
@@ -305,28 +305,13 @@ export const queries = {
 		}
 	}),
 	get_library: query({
-		schema: z.object({
-			status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
-			search: z.string().optional(),
-			type: typeSchema.nullish(),
-			cursor: z
-				.object({
-					sort_order: z.number(),
-					updatedAt: z.coerce.date()
-				})
-				.nullish()
-		}),
+		schema: get_library_schema,
 		fn: async ({ ctx, input }) => {
-			const { search, status, type, cursor } = input;
-			return get_library(
-				ctx.userId,
-				status,
-				{
-					search,
-					type
-				},
-				cursor
-			);
+            const { userId } = ctx;
+			return get_library({
+                userId,
+                ...input
+            });
 		}
 	}),
 	get_entry: query({

@@ -414,6 +414,7 @@ export async function entry_by_id({
 			'type',
 			'image',
 			'wordCount',
+            'summary',
 			'published',
 			'podcastIndexId',
 			'googleBooksId',

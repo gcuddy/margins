@@ -4,12 +4,13 @@ import { tmdb } from '$lib/api/tmdb';
 import { db } from '$lib/db';
 import { entrySelect } from '$lib/db/selects';
 import type { Bookmark, DB, Entry, Interaction } from '$lib/prisma/kysely/types';
-import type { Type } from '$lib/types';
-import type { Status } from '@prisma/client';
+import { typeSchema, type Type } from '$lib/types';
+import { Status } from '@prisma/client';
 import type { ExpressionBuilder } from 'kysely';
 import type { Nullable } from 'kysely/dist/cjs/util/type-utils';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import pindex from '$lib/api/pindex';
+import { z } from 'zod';
 
 type AliasedEb = ExpressionBuilder<
 	DB & Record<'b', Bookmark> & Record<'e', Entry> & Record<'i', Nullable<Interaction>>,
@@ -41,19 +42,64 @@ function get_annotations(eb: AliasedEb, userId: string) {
 	);
 }
 
+const defaultCursorSchema = z.object({
+	sort_order: z.number(),
+	updatedAt: z.coerce.date()
+});
+
+const entryListSortSchemas = z.union([
+	z.object({
+		sort: z.literal('manual').nullish(),
+		// order: z.nativeEnum(['asc', 'desc']),
+		cursor: defaultCursorSchema.nullish()
+	}),
+	z.object({
+		sort: z.literal('updatedAt'),
+		cursor: z.object({
+			updatedAt: z.coerce.date(),
+			id: z.number()
+		}).nullish()
+	}),
+	z.object({
+		// sort: z.nu
+		sort: z.literal('title'),
+		cursor: z.object({
+			title: z.string(),
+			id: z.number()
+		}).nullish()
+	}),
+	z.object({
+		sort: z.literal('author'),
+		cursor: z.object({
+			author: z.string(),
+			id: z.number()
+		}).nullish()
+	})
+]);
+
+export const get_library_schema = z
+	.object({
+		status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
+		search: z.string().optional(),
+		type: typeSchema.nullish()
+	})
+	.and(entryListSortSchemas);
+
+export type GetLibrarySchema = z.input<typeof get_library_schema>;
+
+export type LibrarySortType = GetLibrarySchema['sort'];
 
 
-export async function get_library(
-	userId: string,
-	status: Status | null,
-	filter: {
-		type?: Type;
-		search?: string;
-	} = {},
-	cursor?: { sort_order: number; updatedAt: Date }
-) {
+export async function get_library({
+	userId,
+	cursor,
+	status,
+	search,
+	sort,
+	type
+}: { userId: string } & z.input<typeof get_library_schema>) {
 	const take = 25;
-	console.log(`[get_library]`, { cursor, filter });
+	console.log(`[get_library]`, { cursor });
 	let query = db
 		.selectFrom('Bookmark as b')
 		.innerJoin('Entry as e', 'e.id', 'b.entryId')
@@ -73,7 +119,7 @@ export async function get_library(
 			'e.podcastIndexId',
 			'b.updatedAt',
 			'e.wordCount',
- 			'e.spotifyId',
+			'e.spotifyId',
 			'b.status',
 			'b.sort_order',
 			'i.progress',
@@ -159,32 +205,105 @@ export async function get_library(
 				.as('num_annotations')
 		])
 		.where('b.userId', '=', userId)
-		.orderBy('b.sort_order', 'asc')
-		.orderBy('b.updatedAt', 'desc')
+		// .orderBy('b.sort_order', 'asc')
+		// .orderBy('b.updatedAt', 'desc')
 		.limit(take + 1);
 	if (status) {
 		query = query.where('b.status', '=', status);
 	}
-	if (cursor) {
-		console.log(`adding cursor`);
-		query = query.where('b.sort_order', '>=', cursor.sort_order);
-		query = query.where('b.updatedAt', '<', cursor.updatedAt);
+	switch (sort) {
+		case null:
+		case undefined:
+		case 'manual': {
+			query = query.orderBy('b.sort_order', 'asc').orderBy('b.updatedAt', 'desc');
+			if (cursor) {
+				query = query
+					.where('b.sort_order', '>=', cursor.sort_order)
+					.where('b.updatedAt', '<', cursor.updatedAt);
+			}
+			break;
+		}
+		case 'updatedAt': {
+			query = query.orderBy('b.updatedAt', 'desc').orderBy('b.id', 'asc');
+			if (cursor) {
+				query = query.where((eb) =>
+					eb.or([
+						eb('b.updatedAt', '<', cursor.updatedAt),
+						eb('b.updatedAt', '=', cursor.updatedAt).and('e.id', '>', cursor.id)
+					])
+				);
+			}
+			break;
+		}
+		case 'title': {
+			query = query.orderBy('e.title', 'asc').orderBy('e.id', 'asc');
+			if (cursor) {
+				query = query.where((eb) =>
+					eb.or([
+						eb('e.title', '>', cursor.title),
+						eb('e.title', '=', cursor.title).and('e.id', '>', cursor.id)
+					])
+				);
+			}
+            break;
+		}
+        case "author": {
+            query = query.orderBy("e.author", "asc").orderBy("e.id", "asc");
+            if (cursor) {
+                query = query.where((eb) =>
+                    eb.or([
+                        eb("e.author", ">", cursor.author),
+                        eb("e.author", "=", cursor.author).and("e.id", ">", cursor.id)
+                    ])
+                )
+            }
+        }
 	}
-	if (filter.search) {
-		query = query.where('e.title', 'like', `%${filter.search}%`);
+	if (search) {
+		query = query.where('e.title', 'like', `%${search}%`);
 	}
-	if (filter.type) {
-		query = query.where('e.type', '=', filter.type);
+	if (type) {
+		query = query.where('e.type', '=', type);
 	}
 	const entries = await query.execute();
 	let nextCursor = null;
 	if (entries.length > take) {
 		const nextItem = entries.pop();
 		if (nextItem) {
-			nextCursor = {
-				updatedAt: nextItem.updatedAt,
-				sort_order: nextItem.sort_order
-			};
+            // go through sort options
+            console.log({sort})
+            switch (sort) {
+                case null:
+                case undefined:
+                case "manual": {
+                    nextCursor = {
+                        updatedAt: nextItem.updatedAt,
+                        sort_order: nextItem.sort_order
+                    }
+                    break;
+                }
+                // TODO continue here with cursors
+                case "author": {
+                    nextCursor = {
+                        author: nextItem.author,
+                        id: nextItem.id
+                    }
+                    break;
+                }
+                case "title": {
+                    nextCursor = {
+                        title: nextItem.title,
+                        id: nextItem.id,
+                    }
+                    break;
+                }
+                case "updatedAt": {
+                    nextCursor = {
+                        updatedAt: nextItem.updatedAt,
+                        id: nextItem.id
+                    }
+                }
+            }
 		}
 	}
 	return {

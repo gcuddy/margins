@@ -150,9 +150,9 @@
 			<!-- <span class="flex text-muted-foreground items-center"><FlowerIcon class="h-6 w-6 mr-1" /> <span class="text-sm font-medium">Margins</span> </span> -->
 			{#if $page.data.user_data?.username}
 				<DropdownMenu>
-					<DropdownMenuTrigger asChild let:trigger>
+					<DropdownMenuTrigger asChild let:builder>
 						<a
-							use:melt={trigger}
+							use:melt={builder}
 							href="/tests/settings"
 							on:click|preventDefault
 							class="flex items-center gap-x-2 w-fit data-[state=open]:bg-accent p-2 rounded"
@@ -176,16 +176,15 @@
 							<span class="text-sm font-medium hidden lg:inline"
 								>{$page.data.user_data.username}</span
 							>
-							<!-- <Skeleton class="h-8 w-8 rounded-full border border-gray-200" /> -->
 						</a>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-[250px] focus-visible:outline-none">
-						<DropdownMenuItem asChild let:className let:item>
-							<a class={className} use:melt={item} href="/tests/settings">Settings</a>
+						<DropdownMenuItem on:m-click={() => goto('/tests/settings')}>
+							<a class={"contents"} href="/tests/settings">Settings</a>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem asChild let:className let:item>
-							<a class={className} use:melt={item} href="/testes/logout">Logout</a>
+						<DropdownMenuItem on:m-click={() => goto('/tests/logout')}>
+							<a class={"contents"} href="/tests/logout">Logout</a>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
@@ -217,13 +216,13 @@
 						placement: 'bottom-end'
 					}}
 				>
-					<DropdownMenuTrigger let:trigger asChild>
+					<DropdownMenuTrigger let:builder asChild>
 						<button
 							class={cn(
 								buttonVariants({ variant: 'outline', size: 'sm' }),
 								'px-2 shadow-none rounded-l-none border-l-0'
 							)}
-							use:melt={trigger}
+							use:melt={builder}
 						>
 							<!--  -->
 							<ChevronDownIcon class="h-4 w-4 text-secondary-foreground" />

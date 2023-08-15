@@ -9,7 +9,7 @@
 	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { createWindowVirtualizer } from '@tanstack/svelte-virtual';
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action';
-	import { derived } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 	import { useMenuBar } from '../../MainNav.svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import { backContext, setBackContext } from '../../(listables)/[type=type]/[id]/store';
@@ -18,25 +18,34 @@
 	import { checkedEntries, checkedEntryIds, SelectActions } from '$components/entries/multi-select';
 	import { create_multi } from '$components/entries/multi-select/multi';
 	import type { Snapshot } from './$types.js';
+	import type { LibrarySortType } from '$lib/server/queries';
+	import { Loader2Icon } from 'lucide-svelte';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
+	const sort = writable<NonNullable<LibrarySortType>>('manual');
 
 	const query = createInfiniteQuery(
-		derived(page, ($page) =>
-			queryFactory.entries.list({
-				status: data.Status,
-				type: data.type,
-				search: $page.url.searchParams.get('search') ?? undefined
-			})
-		)
+		derived([page, sort], ([$page, $sort]) => {
+			console.log({ $page, $sort });
+			return queryFactory.entries.list({
+				status: $page.data.Status,
+				type: $page.data.type,
+				search: $page.url.searchParams.get('search') ?? undefined,
+				sort: $sort
+			});
+		})
 	);
 
 	$: entries =
 		$query.data?.pages
 			.flatMap((page) => page.entries)
-			.filter((entry) => entry.status === data.Status) ?? [];
+			.filter((entry) => {
+				console.log({ entry });
+				if (!entry) return false;
+				return entry.status === data.Status;
+			}) ?? [];
 
 	// <!-- probably not smart -->
 	$: if ($query.data) init_entries($query.data.pages.flatMap((page) => page.entries));
@@ -94,7 +103,7 @@
 
 	const multi = create_multi({
 		items: entries?.map((e) => e.id) || [],
-        selected: checkedEntryIds
+		selected: checkedEntryIds
 	});
 
 	const {
@@ -102,14 +111,14 @@
 	} = multi;
 	$: console.log({ $state });
 
-    export const snapshot: Snapshot = {
-        capture: () => ({
-            highlighted: $state.highlighted,
-        }),
-        restore: (snapshot) => {
-            multi.helpers.setHighlighted(snapshot.highlighted);
-        }
-    }
+	export const snapshot: Snapshot = {
+		capture: () => ({
+			highlighted: $state.highlighted
+		}),
+		restore: (snapshot) => {
+			multi.helpers.setHighlighted(snapshot.highlighted);
+		}
+	};
 
 	$: multi.helpers.updateItems(entries.map((e) => e.id));
 
@@ -119,7 +128,7 @@
 
 <svelte:window on:keydown={multi.events.keydown} />
 
-<LibraryHeader />
+<LibraryHeader loading={$query.isLoading} bind:sort={$sort} />
 {#if $query.isLoading}
 	{#each new Array(10) as _}
 		<EntryItemSkeleton />
@@ -183,9 +192,20 @@
 							queryClient.setQueryData(queryKey, (data) => data);
 						}} -->
 				<!-- bind:checked={$checkedEntries[entry.id]}  -->
-				<EntryItem on:change={() => multi.helpers.toggleSelection(entry.id)} data-active={$state.highlighted === entry.id} data-id={entry.id} checked={$checkedEntryIds.includes(entry.id)} {entry} />
+				<EntryItem
+					on:change={() => multi.helpers.toggleSelection(entry.id)}
+					data-active={$state.highlighted === entry.id}
+					data-id={entry.id}
+					checked={$checkedEntryIds.includes(entry.id)}
+					{entry}
+				/>
 			</div>
 		{/each}
+		{#if $query.isFetchingNextPage}
+			<div class="absolute bottom-0 left-0 right-0 flex justify-center items-center h-12">
+				<Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
+			</div>
+		{/if}
 		<!-- <Intersector
 			cb={() => {
 				console.log(`Intersect`, { $query });

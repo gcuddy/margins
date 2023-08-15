@@ -5,22 +5,21 @@
 	type $$Props = DropdownMenuPrimitive.ItemProps & {
 		inset?: boolean;
 	};
-	let className: string | undefined | null = undefined;
-	export { className as class };
-	export let inset: boolean | undefined = undefined;
+	type $$Events = DropdownMenuPrimitive.ItemEvents;
 
-    $: _class = cn(
-		"relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-		inset && "pl-8",
-		className
-	)
+	let className: $$Props["class"] = undefined;
+	export let inset: $$Props["inset"] = undefined;
+	export { className as class };
 </script>
 
 <DropdownMenuPrimitive.Item
-	class={_class}
+	class={cn(
+		"relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+		inset && "pl-8",
+		className
+	)}
 	{...$$restProps}
-    on:m-click
-    let:item
+	on:m-click
 >
-	<slot className={_class} {item} />
+	<slot />
 </DropdownMenuPrimitive.Item>

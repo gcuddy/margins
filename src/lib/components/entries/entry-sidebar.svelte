@@ -83,7 +83,6 @@
 
 	export let width = $width_store || 360;
 
-
 	const query = createQuery(
 		derived(page, ($page) => ({
 			...queryFactory.entries.detail({
@@ -92,7 +91,7 @@
 			}),
 			enabled: !!$page.data.entry?.id,
 			// REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
-			select: (data: QueryOutput<'entry_by_id'>) => data?.entry,
+			select: (data: QueryOutput<'entry_by_id'>) => data?.entry
 		}))
 	);
 	$: console.log(`entry-sidebar`, { $query });
@@ -203,8 +202,9 @@
 							<TagPopover data={$page.data.tagForm} entry={$query.data} />
 						</div>
 					{/if}
-                    Save
+					Save
 					{#if $page.data.updateBookmarkForm && $query.data}
+						y4e
 						<div class="flex items-center space-x-4">
 							<Muted>Status</Muted>
 							<StatusPopover data={$page.data.updateBookmarkForm} entry={$query.data} />

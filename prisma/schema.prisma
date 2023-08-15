@@ -97,6 +97,10 @@ model Bookmark {
     title  String?
     author String?
 
+    @@index([title])
+
+    @@index([sort_order, updatedAt])
+
     @@unique([uri, entryId, userId])
     @@unique([entryId, userId])
     @@index([entryId])
@@ -327,6 +331,8 @@ model Entry {
     @@index([id, published, createdAt])
     @@index([published])
     @@index([owned_by_id])
+    // @@index([id, title])
+    @@index([title(length:255)])
     @@fulltext([text, title, author])
     @@fulltext([title, author])
     @@fulltext([text])

@@ -1,31 +1,29 @@
 import { annotationSchema } from '$lib/annotation';
 import { books } from '$lib/api/gbook';
 import pindex from '$lib/api/pindex';
+import spotify from '$lib/api/spotify';
 import { tmdb } from '$lib/api/tmdb';
 import dayjs from '$lib/dayjs';
-import { db, json } from '$lib/db';
+import { db } from '$lib/db';
+import { getFirstBookmarkSort } from '$lib/db/selects';
 import { bookmarkSchema, tagSchema, updateBookmarkSchema } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import type { Entry } from '$lib/prisma/kysely/types';
+import { upsertAnnotation } from '$lib/queries/server';
 import { interactionSchema, validateAuthedForm } from '$lib/schemas';
-import type { Message, Type } from '$lib/types';
+import { relationSchema, update_relation } from '$lib/server/mutations';
+import type { Message } from '$lib/types';
+import { validate_form } from '$lib/utils/forms';
 import { fail } from '@sveltejs/kit';
 import type { Insertable } from 'kysely';
-import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import { message, superValidate } from 'sveltekit-superforms/server';
-import type { Actions, PageServerLoad } from './$types';
-import spotify from '$lib/api/spotify';
-import { getFirstBookmarkSort } from '$lib/db/selects';
-import { upsertAnnotation } from '$lib/queries/server';
-import { Tweet, tweet_types } from '$lib/api/twitter';
 import { z } from 'zod';
-import { validate_form } from '$lib/utils/forms';
-import { relationSchema, update_relation } from '$lib/server/mutations';
+import type { Actions } from './$types';
 
 export async function load() {
-    const tagForm = await superValidate(tagSchema);
     return {
-        tagForm
+        tagForm: superValidate(tagSchema),
+        bookmarkForm: superValidate(updateBookmarkSchema)
     }
 }
 

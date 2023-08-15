@@ -151,7 +151,7 @@
 				if (!old) return old;
 				if (!old.entry) return old;
 				console.log({ old });
-                // newData.
+				// newData.
 				return {
 					...old,
 					entry: {
@@ -161,8 +161,8 @@
 							...(old.entry?.annotations || []),
 							{
 								...newData,
-                                createdAt: new Date().toISOString(),
-                                exact
+								createdAt: new Date().toISOString(),
+								exact
 							} // -> todo create default annotation data
 						]
 					}
@@ -841,12 +841,22 @@
 		>
 			{data.entry?.title}
 		</h1>
+        {#if data.entry?.summary}
+            <Lead class="not-prose">
+                {data.entry.summary}
+            </Lead>
+        {/if}
 		{#if data.entry?.author}
-			<Lead class="not-prose"
+			<a
+				class="text-sm font-medium uppercase tracking-wider"
+				href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}">{data.entry?.author}</a
+			>
+			<!-- <Lead class="not-prose"
 				><a href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}"
 					>{data.entry?.author}</a
 				></Lead
-			>{/if}
+			> -->
+		{/if}
 		<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 		<Attachments {data} />
 	</header>
