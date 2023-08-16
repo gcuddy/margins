@@ -129,7 +129,9 @@
 				<!-- hm -->
 			</noscript>
 
-			<Popover let:close>
+			<Popover positioning={{
+                placement: "bottom-start"
+            }}>
 				<PopoverTrigger
 					class={cn(!filter_type && buttonVariants({ variant: 'outline' }), 'border-dashed')}
 				>
@@ -142,7 +144,7 @@
 						<span class="lg:inline hidden">Filter</span>
 					{/if}
 				</PopoverTrigger>
-				<PopoverContent placement="bottom-start" class="w-[200px] p-0">
+				<PopoverContent class="w-[200px] p-0">
 					<Command>
 						<CommandInput placeholder="Filter..." />
 						<CommandList>
@@ -161,7 +163,6 @@
 												noScroll: true,
 												invalidateAll: true
 											});
-											close(null);
 										}}
 									>
 										<div

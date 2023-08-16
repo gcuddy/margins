@@ -21,26 +21,51 @@
 	import type { FilterLibrarySchema, GetLibrarySchema, LibrarySortType } from '$lib/server/queries';
 	import { Loader2Icon } from 'lucide-svelte';
 	import { queryParam, ssp, queryParameters } from 'sveltekit-search-params';
+	import type { Type } from '$lib/types';
+	import { filterLibrarySchema } from '$lib/schemas/library';
+	import { defaultParseSearch, parseSearchWith } from '$lib/utils/search-params';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
 	const sort = writable<NonNullable<LibrarySortType>>('manual');
 	const params = queryParameters({
-		createdAt: ssp.object<NonNullable<FilterLibrarySchema['createdAt']>>()
+		createdAt: ssp.object<NonNullable<FilterLibrarySchema['createdAt']>>(),
+		type: {
+			encode: (v: Type) => v,
+			decode: (v) => v as Type | null
+		}
 	});
+
+    const createdAtRegex = /^(?<cmp>=|>|<)(?<date>\d{4}-\d{2}-\d{2})|(?<num>\d) (?<unit>day|week|month|year)$/;
+
+	function parseFilterFromSearchParams(): FilterLibrarySchema | undefined {
+        const rawObj =  defaultParseSearch($page.url.search);
+
+        const parsed = filterLibrarySchema.safeParse(rawObj)
+
+        if (parsed.success) {
+            return parsed.data
+        }
+	}
+
+
 	const query = createInfiniteQuery(
 		derived([page, sort, params], ([$page, $sort, $params]) => {
 			console.log({ $page, $sort });
+            const filter = parseFilterFromSearchParams()
 			return queryFactory.entries.list({
 				status: $page.data.Status,
 				type: $page.data.type,
 				search: $page.url.searchParams.get('search') ?? undefined,
 				sort: $sort,
-                // filter
-                filter: $params.createdAt ? {
-                    createdAt: $params.createdAt
-                } : undefined
+                filter
+				// filter
+				// filter: $params.createdAt
+				// 	? {
+				// 			createdAt: $params.createdAt
+				// 	  }
+				// 	: undefined
 			});
 		})
 	);

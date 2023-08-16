@@ -38,7 +38,14 @@
 	import { melt } from '@melt-ui/svelte';
 	import { effect } from '@melt-ui/svelte/internal/helpers';
 	import { createMutation, createQuery } from '@tanstack/svelte-query';
-	import { ChevronRightIcon, ChevronUpIcon, FileDown, Locate, MoreHorizontalIcon, PlusIcon } from 'lucide-svelte';
+	import {
+		ChevronRightIcon,
+		ChevronUpIcon,
+		FileDown,
+		Locate,
+		MoreHorizontalIcon,
+		PlusIcon
+	} from 'lucide-svelte';
 	import { nanoid } from 'nanoid';
 	import { getContext, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -49,6 +56,7 @@
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import { ago } from '$lib/utils/date';
 	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
+	import { defaultStringifySearch } from '$lib/utils/search-params';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
@@ -140,7 +148,6 @@
 	// }
 
 	type Timeline = { createdAt: Date }[];
-
 </script>
 
 <aside
@@ -195,13 +202,25 @@
 								? ago(new Date($query.data?.entry?.bookmark?.createdAt), new Date())
 								: 'Never'}
 						</Muted>
-                        {#if $query.data?.entry?.bookmark?.createdAt}
-                        <Button href="/tests/library/all?createdAt={JSON.stringify({
-                            equals: new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10),
-                        })}" variant="ghost" size="sm" class="p-2">
+						{#if $query.data?.entry?.bookmark?.createdAt}
+							<!-- <Button href="/tests/library/all?createdAt={encodeURIComponent(`=${new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10)}`)}" variant="ghost" size="sm" class="p-2">
                             <ChevronRightIcon class="h-3 w-3" />
-                        </Button>
-                        {/if}
+                        </Button> -->
+							<Button
+								href="/tests/library/all{defaultStringifySearch({
+									createdAt: {
+										equals: new Date($query.data?.entry?.bookmark?.createdAt)
+											.toISOString()
+											.slice(0, 10)
+									}
+								})}"
+								variant="ghost"
+								size="sm"
+								class="p-2"
+							>
+								<ChevronRightIcon class="h-3 w-3" />
+							</Button>
+						{/if}
 					</div>
 					{#if $query.data?.entry?.uri?.startsWith('http')}
 						<div class="sidebar-row">
@@ -501,7 +520,7 @@
 						<span>{ago(new Date(bookmark.createdAt), new Date())}</span> -->
 					</div>
 				</div>
-                <!-- TODO: group annotations by day, etc. -->
+				<!-- TODO: group annotations by day, etc. -->
 				<!-- <div class="flex gap-4 items-center">
 					<div />
 					<div class="flex flex-1 min-w-0 text-xs">
