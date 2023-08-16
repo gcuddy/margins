@@ -88,13 +88,12 @@
 		<PopoverTrigger
 			class={cn(
 				buttonVariants({
-					variant: 'outline',
-					size: 'xs'
+					variant: 'ghost',
+					size: 'sm'
 				}),
-				'w-[100px]'
 			)}
 		>
-			Add tag
+		    + Add tag
 		</PopoverTrigger>
 		<PopoverContent
 			placement="left"

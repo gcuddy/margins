@@ -18,22 +18,29 @@
 	import { checkedEntries, checkedEntryIds, SelectActions } from '$components/entries/multi-select';
 	import { create_multi } from '$components/entries/multi-select/multi';
 	import type { Snapshot } from './$types.js';
-	import type { LibrarySortType } from '$lib/server/queries';
+	import type { FilterLibrarySchema, GetLibrarySchema, LibrarySortType } from '$lib/server/queries';
 	import { Loader2Icon } from 'lucide-svelte';
+	import { queryParam, ssp, queryParameters } from 'sveltekit-search-params';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
 	const sort = writable<NonNullable<LibrarySortType>>('manual');
-
+	const params = queryParameters({
+		createdAt: ssp.object<NonNullable<FilterLibrarySchema['createdAt']>>()
+	});
 	const query = createInfiniteQuery(
-		derived([page, sort], ([$page, $sort]) => {
+		derived([page, sort, params], ([$page, $sort, $params]) => {
 			console.log({ $page, $sort });
 			return queryFactory.entries.list({
 				status: $page.data.Status,
 				type: $page.data.type,
 				search: $page.url.searchParams.get('search') ?? undefined,
-				sort: $sort
+				sort: $sort,
+                // filter
+                filter: $params.createdAt ? {
+                    createdAt: $params.createdAt
+                } : undefined
 			});
 		})
 	);
@@ -44,8 +51,11 @@
 			.filter((entry) => {
 				console.log({ entry });
 				if (!entry) return false;
+				if (!data.Status) return true;
 				return entry.status === data.Status;
 			}) ?? [];
+
+	$: console.log({ $params });
 
 	// <!-- probably not smart -->
 	$: if ($query.data) init_entries($query.data.pages.flatMap((page) => page.entries));

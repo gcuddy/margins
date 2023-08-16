@@ -1,6 +1,7 @@
 import { queryFactory } from '$lib/queries/querykeys';
+import type { PageLoad } from './$types';
 
-export async function load(event) {
+export const load = (async (event) => {
 	const { parent, data, url } = event;
 
 	const query = queryFactory.entries.list({
@@ -20,4 +21,4 @@ export async function load(event) {
 	});
 
 	return data;
-}
+}) satisfies PageLoad;

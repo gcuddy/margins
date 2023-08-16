@@ -239,6 +239,17 @@ export type Bookmark = {
 	title: string | null;
 	author: string | null;
 };
+export type BookmarkHistory = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	archivedAt: Timestamp | null;
+	archived: number | null;
+	fromStatus: Status | null;
+	toStatus: Status | null;
+	bookmarkId: number;
+	userId: string | null;
+};
 export type Collection = {
 	id: Generated<number>;
 	name: string;
@@ -647,6 +658,7 @@ export type DB = {
 	auth_user: AuthUser;
 	AuthorizationKey: AuthorizationKey;
 	Bookmark: Bookmark;
+	BookmarkHistory: BookmarkHistory;
 	Collection: Collection;
 	CollectionItems: CollectionItems;
 	ColorDescription: ColorDescription;

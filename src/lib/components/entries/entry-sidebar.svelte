@@ -14,7 +14,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import Input from '$components/ui/Input.svelte';
-	import Editor from '$components/ui/editor/Editor.svelte';
+	import Editor, { SaveStatus } from '$components/ui/editor/Editor.svelte';
 	import { extractDataFromContentData, isJSONContent } from '$components/ui/editor/utils';
 	import { TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
 	import { createTabsContext } from '$components/ui/tabs/utils';
@@ -38,13 +38,17 @@
 	import { melt } from '@melt-ui/svelte';
 	import { effect } from '@melt-ui/svelte/internal/helpers';
 	import { createMutation, createQuery } from '@tanstack/svelte-query';
-	import { ChevronUpIcon, FileDown, Locate, MoreHorizontalIcon, PlusIcon } from 'lucide-svelte';
+	import { ChevronRightIcon, ChevronUpIcon, FileDown, Locate, MoreHorizontalIcon, PlusIcon } from 'lucide-svelte';
 	import { nanoid } from 'nanoid';
 	import { getContext, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { derived, writable, type Writable } from 'svelte/store';
 	import Annotation from '$components/annotations/Annotation.svelte';
 	import { numberOrString } from '$lib/utils/misc';
+	import LibraryForm from '$components/ui/library/library-form.svelte';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { ago } from '$lib/utils/date';
+	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
@@ -91,7 +95,8 @@
 			}),
 			enabled: !!$page.data.entry?.id,
 			// REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
-			select: (data: QueryOutput<'entry_by_id'>) => data?.entry
+			// select: (data: QueryOutput<'entry_by_id'>) => data?.entry,
+			refetchOnMount: false
 		}))
 	);
 	$: console.log(`entry-sidebar`, { $query });
@@ -127,10 +132,15 @@
 	} = createTabsContext({
 		value: currentTab
 	});
+
+	const note_save_status = writable<SaveStatus>();
 	// $: if ($value) {
 	// 	currentTab.set($value);
 	// 	console.log({ $value });
 	// }
+
+	type Timeline = { createdAt: Date }[];
+
 </script>
 
 <aside
@@ -143,7 +153,12 @@
 	>
 		<TabsList class="grow">
 			<TabsTrigger class="grow" value="details">Details</TabsTrigger>
-			<TabsTrigger class="grow" value="notes">Notes</TabsTrigger>
+			<TabsTrigger class="grow" value="notes"
+				>Notes{$query.data?.entry?.annotations?.length
+					? `(${$query.data?.entry?.annotations?.length})`
+					: ''}</TabsTrigger
+			>
+			<TabsTrigger class="grow" value="timeline">Timeline</TabsTrigger>
 		</TabsList>
 	</div>
 	<TabsContent value="details">
@@ -173,60 +188,97 @@
 			</CardHeader>
 			<Collapsible.Content transition>
 				<CardContent class="space-y-4">
-					{#if $query.data?.uri?.startsWith('http')}
-						<div class="flex items-center space-x-4">
+					<div class="sidebar-row">
+						<Muted>Saved</Muted>
+						<Muted class="grow">
+							{$query.data?.entry?.bookmark?.createdAt
+								? ago(new Date($query.data?.entry?.bookmark?.createdAt), new Date())
+								: 'Never'}
+						</Muted>
+                        {#if $query.data?.entry?.bookmark?.createdAt}
+                        <Button href="/tests/library/all?createdAt={JSON.stringify({
+                            equals: new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10),
+                        })}" variant="ghost" size="sm" class="p-2">
+                            <ChevronRightIcon class="h-3 w-3" />
+                        </Button>
+                        {/if}
+					</div>
+					{#if $query.data?.entry?.uri?.startsWith('http')}
+						<div class="sidebar-row">
 							<Muted>URL</Muted>
 							<Muted class="truncate"
-								><a href={$query.data.uri} target="_blank">{$query.data.uri}</a></Muted
+								><a href={$query.data?.entry.uri} target="_blank">{$query.data?.entry.uri}</a
+								></Muted
 							>
 						</div>
 					{/if}
-					{#if $query.data?.uri?.startsWith('http')}
-						{@const domain = getHostname($query.data.uri)}
-						<div class="flex items-center space-x-4">
+					{#if $query.data?.entry?.uri?.startsWith('http')}
+						{@const domain = getHostname($query.data?.entry.uri)}
+						<div class="sidebar-row">
 							<Muted>Domain</Muted>
 							<Muted class="truncate"><a href="/tests/domain/{domain}">{domain}</a></Muted>
 						</div>
 					{/if}
-					<div class="flex items-center space-x-4">
+					<div class="sidebar-row">
 						<Muted>Author</Muted>
 
-						<Input variant="ghost" value={$query.data?.author} />
-						<Button as="a" href="/tests/people/{$query.data?.author}" variant="ghost" size="sm">
+						<Input variant="ghost" value={$query.data?.entry?.author} />
+						<Button
+							as="a"
+							href="/tests/people/{$query.data?.entry?.author}"
+							variant="ghost"
+							size="sm"
+						>
 							<Locate class="h-3 w-3" />
 						</Button>
 					</div>
-					{#if $page.data.tagForm && $query.data}
-						<div class="flex items-center space-x-4">
+					{#if $page.data.tagForm && $query.data?.entry}
+						<div class="sidebar-row">
 							<Muted>Tags</Muted>
-							<TagPopover data={$page.data.tagForm} entry={$query.data} />
+							<TagPopover data={$page.data.tagForm} entry={$query.data?.entry} />
 						</div>
 					{/if}
-					Save
-					{#if $page.data.updateBookmarkForm && $query.data}
-						y4e
-						<div class="flex items-center space-x-4">
+					<div class="sidebar-row">
+						<Muted>Status</Muted>
+						{#if $query.isLoading}
+							<Skeleton class="h-9 w-full grow" />
+						{:else if $query.isSuccess}
+							<LibraryForm
+								status={$query.data?.entry?.bookmark?.status}
+								type={$query.data.type}
+								entryId={$query.data?.entry?.id}
+								googleBooksId={$query.data.book?.id ?? undefined}
+								podcastIndexId={$query.data.podcast?.episode?.id ?? undefined}
+								spotifyId={$query.data.album?.id}
+								tmdbId={$query.data.movie?.id ?? $query.data.tv?.id}
+							/>
+						{/if}
+					</div>
+					{#if $page.data.updateBookmarkForm && $query.data?.entry}
+						<div class="sidebar-row">
 							<Muted>Status</Muted>
-							<StatusPopover data={$page.data.updateBookmarkForm} entry={$query.data} />
+							<StatusPopover data={$page.data.updateBookmarkForm} entry={$query.data?.entry} />
 						</div>
 					{/if}
 					{#if $page.data.type === 'entry'}
-						{#key $query.data?.id}
+						{#key $query.data?.entry?.id}
 							<TableOfContents active="font-bold" scrollParent="html" target="#article" />
 						{/key}
 					{/if}
-					<!-- <div class="flex items-center space-x-4">
+					<!-- <div class="sidebar-row">
                     <Muted>Snooze</Muted>
                     <input type="date" name="" id="" />
                 </div> -->
-					<div class="flex items-center space-x-4">
+					<div class="sidebar-row">
 						<Muted>Relations</Muted>
 						<!-- <StatusPopover
                     data={$page.data.updateBookmarkForm}
                     entry={$page.data.entry}
                     /> -->
 						<Cluster>
-							{@const relations = $query.data?.relations?.concat($query.data.back_relations)}
+							{@const relations = $query.data?.entry?.relations?.concat(
+								$query.data?.entry.back_relations
+							)}
 							{#each relations ?? [] as relation}
 								<Relation id={relation.id} type={relation.type} entry={relation.related_entry} />
 							{/each}
@@ -239,7 +291,7 @@
                     entry={$page.data.entry}
                     /> -->
 						<Cluster>
-							{#each $query.data?.collections ?? [] as collection}
+							{#each $query.data?.entry?.collections ?? [] as collection}
 								<Badge
 									variant="secondary"
 									as="a"
@@ -258,16 +310,16 @@
 												commander_store.close();
 												toast.promise(
 													mutation($page, 'addToCollection', {
-														entryId: $query.data?.id,
+														entryId: $query.data?.entry?.id,
 														collectionId: c.id
 													}),
 													{
 														loading: 'Adding to collection...',
 														success: () => {
-															if ($query.data?.id) {
-																update_entry($query.data.id, {
+															if ($query.data?.entry?.id) {
+																update_entry($query.data?.entry.id, {
 																	collections: [
-																		...($query.data.collections ?? []),
+																		...($query.data?.entry.collections ?? []),
 																		{
 																			id: c.id,
 																			name: c.name
@@ -288,7 +340,7 @@
 														name,
 														items: [
 															{
-																entryId: $query.data.id
+																entryId: $query.data?.entry.id
 															}
 														]
 													}).then(() => invalidate('entry')),
@@ -306,7 +358,7 @@
 								size="sm"
 							>
 								<PlusIcon class="mr-2 h-4 w-4" />
-								{#if !$query.data?.collections?.length}
+								{#if !$query.data?.entry?.collections?.length}
 									Add to collection
 								{/if}
 							</Button>
@@ -346,35 +398,41 @@
 		</Collapsible.Root>
 	{/if}
 	<TabsContent class="overflow-y-auto overscroll-contain" value="notes">
-		{@const note = $query.data?.annotations?.find((a) => a.type === 'note')}
+		{@const note = $query.data?.entry?.annotations?.find((a) => a.type === 'note')}
 		<div class="p-6 flex flex-col gap-4">
 			<div class="space-y-2">
 				<h3 class=" text-lg font-semibold leading-none tracking-tight">Page Note</h3>
 				{#key note?.contentData}
 					<Editor
 						content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
+						save_status={note_save_status}
+						showSaveStatus="auto"
 						on:blur={({ detail: { editor } }) => {
 							// TODO: only do this if the content has changed
 
 							const contentData = editor.getJSON();
-							if (!$query.data) throw new Error('No data');
+							if (!$query.data?.entry) throw new Error('No data');
 							const id = note?.id ?? nanoid();
 
 							// TODO: should filing away tags and relations happen in the editor, here, or on the server?
 							// It would look like this:
 							const { tags, links } = extractDataFromContentData(contentData);
 
+							note_save_status.set('Saving...');
+
 							mutation($page, 'save_note', {
 								contentData,
-								entryId: $query.data.id,
+								entryId: $query.data?.entry.id,
 								type: 'note',
 								id,
 								tags,
 								relations: links.map((link) => ({ relatedEntryId: link.id }))
+							}).then(() => {
+								note_save_status.set('Saved');
 							});
-							update_entry($query.data.id).annotation({
+							update_entry($query.data?.entry.id).annotation({
 								contentData,
-								entryId: $query.data.id,
+								entryId: $query.data?.entry.id,
 								type: 'note',
 								id
 							});
@@ -396,7 +454,8 @@
 						<DropdownMenuContent>
 							<DropdownMenuGroup>
 								<DropdownMenuItem
-									on:click={() => triggerDownload($query.data, $query.data?.annotations)}
+									on:click={() =>
+										triggerDownload($query.data?.entry, $query.data?.entry?.annotations)}
 								>
 									<FileDown class="mr-2 h-4 w-4" />
 									Export notes to markdown
@@ -407,19 +466,62 @@
 				</div>
 			</div>
 			<div class="grid gap-4">
-				{#if $query.data?.annotations}
-					{#each $query.data?.annotations
+				{#if $query.data?.entry?.annotations}
+					{#each $query.data?.entry?.annotations
 						.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
 						.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
 						<Annotation
 							on:click
 							{annotation}
 							data={$page.data.annotationForm}
-							entry={$query.data}
+							entry={$query.data?.entry}
 						/>
 					{/each}
 				{/if}
 			</div>
 		</div>
 	</TabsContent>
+	<TabsContent value="timeline">
+		<div class="p-6">
+			{#if $query.data?.entry?.bookmark}
+				{@const bookmark = $query.data.entry.bookmark}
+				<div class="flex gap-4 items-center">
+					<div>
+						<!--  -->
+						{#if bookmark.user}
+							<UserAvatar class="h-5 w-5" user={bookmark.user} />
+						{/if}
+					</div>
+					<div class="flex flex-1 min-w-0 text-xs">
+						<span
+							><b>{bookmark.user?.username}</b>{' '}saved the {$query.data.type}
+							{ago(new Date(bookmark.createdAt), new Date())}</span
+						>
+						<!-- <span class="font-semibold leading-none tracking-tighter">Saved</span>
+						<span>{ago(new Date(bookmark.createdAt), new Date())}</span> -->
+					</div>
+				</div>
+                <!-- TODO: group annotations by day, etc. -->
+				<!-- <div class="flex gap-4 items-center">
+					<div />
+					<div class="flex flex-1 min-w-0 text-xs">
+						<span
+							><b>{bookmark.user?.username}</b>{' '}saved the {$query.data.type}
+							{ago(new Date(bookmark.createdAt), new Date())}</span
+						>
+					</div>
+				</div> -->
+			{/if}
+		</div>
+	</TabsContent>
 </aside>
+
+<style lang="postcss">
+	.sidebar-row {
+		@apply flex min-h-[36px] items-center space-x-4;
+
+		> :global(*:first-child) {
+			@apply w-24 shrink-0;
+		}
+	}
+</style>

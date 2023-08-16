@@ -1,6 +1,6 @@
 <script lang="ts" context="module">
 	export type BaseCommandGroup = {
-		group: string;
+		group?: string;
 		disabled?: boolean;
 		loading?: boolean;
 		items: Command<any>[];
@@ -36,6 +36,7 @@
 	export type Command<T extends SvelteComponent> =
 		| {
 				name: string;
+				id?: string;
 				selected?: boolean;
 				description?: string | null;
 				kbd?: string;
@@ -52,7 +53,12 @@
 </script>
 
 <script lang="ts">
-	import { createCombobox, type ComboboxFilterFunction, melt } from '@melt-ui/svelte';
+	import {
+		createCombobox,
+		type ComboboxFilterFunction,
+		melt,
+		CreateComboboxProps
+	} from '@melt-ui/svelte';
 	import { effect, generateId, isElementDisabled } from '@melt-ui/svelte/internal/helpers';
 	import {
 		CalendarIcon,
@@ -100,6 +106,8 @@
 	export let onChange = (value: Command<any>) => {
 		open.set(false);
 	};
+
+	export let autofocus = true;
 	/** Applys dialog classes */
 	export let dialog = false;
 
@@ -172,6 +180,8 @@
 
 	const DEFAULT_PLACEHOLDER = 'Type a command or search…';
 	export let placeholder = DEFAULT_PLACEHOLDER;
+	export let defaultValue: CreateComboboxProps<Item>['defaultValue'] = undefined;
+	export let defaultId: string | undefined = undefined;
 	let currentPlaceholder = placeholder;
 
 	$stack.root;
@@ -341,56 +351,6 @@
 	} else {
 		flattenedItems = getFlattenedItems($stack.current);
 	}
-
-	// $: flattenedItems = $stack.current.flatMap((group, groupIndex) => {
-	// 	console.log({ group });
-	// 	if ('subscribe' in group) {
-	// 		// then it's a store
-	// 		const value = get(group);
-	// 	} else {
-	// 		// then it's a group
-	// 	}
-	// 	if (typeof group.items === 'function') {
-	// 		let unsub = inputValue.subscribe(($inputValue) => {
-	// 			console.log({ group });
-	// 			const g = $stack.current.find((g) => g.group === group.group);
-	// 			if (g && typeof group.items === 'function') {
-	// 				g.items = group.items($inputValue);
-	// 			}
-	// 		});
-	// 		currentCallbacks.push(unsub);
-	// 		return group.items($inputValue).map((item, index) => {
-	// 			const newItem = { ...item, group: group.group, index: i };
-	// 			i++;
-	// 			return newItem;
-	// 		});
-	// 	} else if (Array.isArray(group.items)) {
-	// 		return group.items.map((item, index) => {
-	// 			const newItem = { ...item, group: group.group, index: i };
-	// 			i++;
-	// 			return newItem;
-	// 		});
-	// 	} else {
-	// 		group.items;
-	// 		group_stores.set(group.group, group.items);
-	// 		const initialGroup = get(group.items);
-	// 		let unsub = group.items.subscribe(($items) => {
-	// 			const g = $stack.current.find((g) => g.group === group.group);
-	// 			const data = 'data' in $items ? $items.data : $items;
-	// 			if (g) {
-	// 				g.items = data;
-	// 			}
-	// 		});
-	// 		currentCallbacks.push(unsub);
-	// 		// on change, these items need to update as well
-	// 		const data = 'data' in initialGroup ? initialGroup.data : initialGroup;
-	// 		return data.map((item, index) => {
-	// 			const newItem = { ...item, group: group.group, index: i };
-	// 			i++;
-	// 			return newItem;
-	// 		});
-	// 	}
-	// });
 	// update items with flattened items, when necessary
 	$: updateItems(() => {
 		if (dev) {
@@ -411,6 +371,8 @@
 	// 	value.set(selected);
 	// }
 
+	$: console.log({ open });
+
 	const {
 		elements: { menu, input, item, label },
 		states: { filteredItems, value, inputValue },
@@ -423,14 +385,18 @@
 		forceVisible: true,
 		loop: false,
 		portal: container,
-
+		defaultValue,
 		// defaultOpen: true,
 		closeOnEscape: false,
 		closeOnOutsideClick: false,
 		onValueChange: (value) => {
 			console.log(`onValueChange`, { value });
+            if (changing) {
+                changing = false;
+                return value.next;
+            }
 			if (value.next?.action) {
-				console.log(`Running action`);
+				console.log(`Running action`, value.next);
 				value.next.action();
 				if (closeOnAction) open.set(false);
 			} else if (value.next?.addPage) {
@@ -445,11 +411,23 @@
 			}
 			if (value.next) if (value.next) onChange(value.next);
 			console.log({ value });
-			return value.curr;
+			return value.next;
 		}
 
 		// forceVisible: true
 	});
+
+	$: console.log({ $value });
+
+    let changing = false;
+
+    $: if (defaultId) {
+        const item = flattenedItems.find(item => item.id === defaultId);
+        if (item) {
+            changing = true;
+            value.set(item);
+        }
+    }
 
 	let inputEl: HTMLInputElement;
 
@@ -542,6 +520,7 @@
 	<div class="flex items-center border-b px-3">
 		<SearchIcon class="mr-2 {dialog ? 'square-5' : 'square-4'} shrink-0 opacity-50" />
 		<input
+			{autofocus}
 			use:melt={$input}
 			bind:this={inputEl}
 			bind:value={term}
@@ -584,12 +563,14 @@
 				{#each _filteredItems as { group, items }, index (index)}
 					{@const groupId = generateId()}
 					<div class="p-1 px-2 text-foreground">
-						<span
-							data-cmd-heading
-							class={cn('py-1.5 px-2 text-xs font-medium text-muted-foreground')}
-							aria-hidden="true"
-							id={groupId}>{group}</span
-						>
+						{#if group}
+							<span
+								data-cmd-heading
+								class={cn('py-1.5 px-2 text-xs font-medium text-muted-foreground')}
+								aria-hidden="true"
+								id={groupId}>{group}</span
+							>
+						{/if}
 						<div role="group" aria-labelledby={groupId} class={cn()}>
 							<!-- // dialog && 'px-2 ' -->
 							{#each items as command}

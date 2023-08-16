@@ -92,6 +92,7 @@ export async function mutationctx<T extends z.ZodTypeAny>(req: RequestEvent, sch
     }
     const parsed = schema.safeParse(input);
     if (!parsed.success) {
+        console.log(`Error parsing data:`, data)
         throw error(400, "Data doesn't match schema");
     }
     return {

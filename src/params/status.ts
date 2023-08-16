@@ -1,6 +1,6 @@
 import type { ParamMatcher } from '@sveltejs/kit';
 
-const statuses = ["backlog", "now", "archive"] as const;
+const statuses = ["backlog", "now", "archive", "all"] as const;
 
 export const match: ParamMatcher = (param) => {
     // We Match "All" as well, even though it's not an "official" Location

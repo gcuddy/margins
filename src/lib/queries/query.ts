@@ -304,7 +304,7 @@ export async function mutation<T extends keyof Mutations>(
 		url += `&userId=${userId}`;
 	}
 	type Data = Awaited<ReturnType<Mutations[T]['fn']>>;
-
+    console.log({url})
 	const final = (await fetcher(url, {
 		method: 'POST',
 		body: stringify({

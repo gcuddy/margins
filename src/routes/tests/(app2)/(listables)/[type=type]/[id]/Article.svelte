@@ -815,7 +815,7 @@
 	</div>
 {/if}
 
-<div class="prose prose-stone dark:prose-invert mx-auto">
+<div class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance">
 	<header class="flex flex-col gap-2 border-b not-prose space-y-3 pb-8">
 		{#if data.entry?.uri?.startsWith('http')}
 			<div class="flex items-center">
@@ -967,4 +967,5 @@
 	div :global(p) {
 		text-rendering: optimizeLegibility;
 	}
+
 </style>

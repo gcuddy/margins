@@ -14,11 +14,11 @@ export const load = (async (event) => {
     // if (!session) {
     //     throw redirect(302, handleLoginRedirect(event));
     // }
-    const status = statusLookup[event.params.status.toLowerCase() as keyof typeof statusLookup];
-    if (!status) {
-        // this shouldn't be the case given our param checker, bt just in case
-        throw redirect(302, "/tests/library/now");
-    }
+    const status = event.params.status.toLowerCase() === 'all' ? null : statusLookup[event.params.status.toLowerCase() as keyof typeof statusLookup];
+    // if (!status) {
+    //     // this shouldn't be the case given our param checker, bt just in case
+    //     throw redirect(302, "/tests/library/now");
+    // }
     const session = await locals.auth.validate();
     if (!session) {
         throw redirect(
@@ -35,7 +35,7 @@ export const load = (async (event) => {
     const type = types.includes(url.searchParams.get("type") ?? '') ? url.searchParams.get("type") as Type : undefined;
 
     return {
-        status: status.toLocaleLowerCase() as keyof typeof statusLookup,
+        status: status ? status.toLocaleLowerCase() as keyof typeof statusLookup : null,
         Status: status,
         type,
         urlForm: superValidate(urlSchema),

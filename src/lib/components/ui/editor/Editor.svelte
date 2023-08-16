@@ -34,6 +34,7 @@
 	let editor: Readable<Editor>;
 
 	export let save_status = writable<SaveStatus>(null);
+    $: console.log({$save_status})
 	export let onUpdate: EditorOptions['onUpdate'] | undefined = undefined;
     export let onFocus: EditorOptions['onFocus'] | undefined = undefined;
     export let onBlur: EditorOptions['onBlur'] | undefined = undefined;
@@ -210,7 +211,7 @@
 				badgeVariants({
 					variant: 'secondary'
 				}),
-				'absolute right-5 top-5 mb-5 text-muted-foreground font-normal'
+				'absolute right-2 top-2 mb-5 text-muted-foreground bg-secondary/60 font-normal'
 			)}
 		>
 			{showSaveStatus === 'auto' ? 'Changes saved' : $save_status}

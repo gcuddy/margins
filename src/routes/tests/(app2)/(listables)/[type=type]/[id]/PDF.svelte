@@ -52,7 +52,6 @@
 	import { post } from '$lib/utils/forms';
 	import { createPopperActions, type ContentAction } from 'svelte-popperjs';
 	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
-	import type { H } from 'drizzle-orm/column.d-aa4e525d';
 	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
 	import { clickOutside } from '$lib/actions/clickOutside';
 	import { forEach } from 'lodash';

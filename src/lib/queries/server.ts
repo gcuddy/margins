@@ -2,11 +2,12 @@ import { annotationSchema, type AnnotationSchema } from '$lib/annotation';
 import pindex from '$lib/api/pindex';
 import { Tweet, tweet_types } from '$lib/api/twitter';
 import { db, json } from '$lib/db';
-import { annotations, entrySelect, withEntry } from '$lib/db/selects';
+import { annotations, entrySelect, getFirstBookmarkSort, withEntry } from '$lib/db/selects';
 import {
 	bookmarkSchema,
 	tagSchema,
-	updateBookmarkSchema as form_updateBookmarkSchema
+	updateBookmarkSchema as form_updateBookmarkSchema,
+	librarySchema
 } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
@@ -20,9 +21,11 @@ import { z } from 'zod';
 import { tmdb } from '$lib/api/tmdb';
 import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
+import type { Insertable } from 'kysely';
+import type { Entry } from '$lib/prisma/kysely/types';
 
 type GetCtx<T extends z.ZodTypeAny> = {
-	input: z.infer<T>;
+	input: z.input<T>;
 	ctx: {
 		userId: string;
 	};
@@ -55,11 +58,16 @@ const id_or_entryid = z.union([z.object({ entryId: id_schema }), z.object({ id: 
 
 export const updateBookmarkSchema = id_or_entryid.and(
 	z.object({
-		data: BookmarkSchema.partial().omit({ id: true, userId: true })
+		data: BookmarkSchema.partial().omit({ id: true, userId: true }).extend({
+			// private: number (0 or 1)
+			private: z.number().int().optional(),
+			is_read: z.number().int().optional(),
+			bookmarked: z.number().int().optional()
+		})
 	})
 );
 
-export type UpdateBookmarkSchema = z.infer<typeof updateBookmarkSchema>;
+export type UpdateBookmarkSchema = z.input<typeof updateBookmarkSchema>;
 
 export async function updateBookmark(
 	variables: UpdateBookmarkSchema & {
@@ -414,7 +422,7 @@ export async function entry_by_id({
 			'type',
 			'image',
 			'wordCount',
-            'summary',
+			'summary',
 			'published',
 			'podcastIndexId',
 			'googleBooksId',
@@ -514,10 +522,21 @@ export async function entry_by_id({
 				).as('tags'),
 				jsonObjectFrom(
 					eb
-						.selectFrom('Bookmark')
-						.select(['id', 'status'])
-						.whereRef('Bookmark.entryId', '=', 'Entry.id')
-						.where('Bookmark.userId', '=', userId!)
+						.selectFrom('Bookmark as b')
+						.select(['b.id', 'b.status', 'b.createdAt'])
+						// .select(eb => [jsonObjectFrom(
+						//     eb.selectFrom('auth_user as u').select(['u.username', 'u.id']).whereRef('u.id', '=', 'b.userId')
+						// )]).as('user')
+						.select((eb) => [
+							jsonObjectFrom(
+								eb
+									.selectFrom('auth_user as u')
+									.select(['u.id', 'u.username', 'u.avatar'])
+									.whereRef('u.id', '=', 'b.userId')
+							).as('user')
+						])
+						.whereRef('b.entryId', '=', 'Entry.id')
+						.where('b.userId', '=', userId!)
 				).as('bookmark'),
 				jsonObjectFrom(
 					eb
@@ -606,7 +625,7 @@ export async function entry_by_id({
 			googleBooksId: type === 'book' ? id.toString() : undefined,
 			podcastIndexId:
 				type === 'podcast' && id.toString().startsWith('p')
-					? BigInt(id.toString().slice(1))
+					? Number(id.toString().slice(1))
 					: undefined,
 			spotifyId: type === 'album' ? id.toString() : undefined,
 			type
@@ -666,7 +685,6 @@ function validate_entry_type<TEntry extends { tweet?: unknown }>(
 	};
 }
 
-
 // same type as get_library
 export const countLibrarySchema = z.object({
 	status: z.nativeEnum(Status).nullable(),
@@ -676,9 +694,9 @@ export const countLibrarySchema = z.object({
 	})
 });
 
-export async function count_library({input, ctx}: GetCtx<typeof countLibrarySchema>) {
-    const { userId } = ctx;
-    const { status, filter } = input;
+export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySchema>) {
+	const { userId } = ctx;
+	const { status, filter } = input;
 	let query = db
 		.selectFrom('Bookmark')
 		.innerJoin('Entry', 'Entry.id', 'Bookmark.entryId')
@@ -687,17 +705,155 @@ export async function count_library({input, ctx}: GetCtx<typeof countLibrarySche
 	if (status) {
 		query = query.where('Bookmark.status', '=', status);
 	}
-    if (filter) {
-        if (filter.type) {
-            query = query.where('Entry.type', '=', filter.type);
-        }
-        if (filter.search) {
-            query = query.where('Entry.title', 'like', `%${filter.search}%`);
-        }
-    }
+	if (filter) {
+		if (filter.type) {
+			query = query.where('Entry.type', '=', filter.type);
+		}
+		if (filter.search) {
+			query = query.where('Entry.title', 'like', `%${filter.search}%`);
+		}
+	}
 
 	const { count } = await query.executeTakeFirstOrThrow();
 	return {
 		count: count as number
 	};
+}
+
+// const saveToLibrarySchema = z.object({
+//     id: z.number().int().or(z.string()),
+//     type: typeSchema,
+//     status: z.nativeEnum(Status).default("Backlog")
+// })
+
+export const saveToLibrarySchema = librarySchema.and(
+	z.object({
+		status: z.nativeEnum(Status).default('Backlog')
+	})
+);
+
+export type SaveToLibrarySchema = z.input<typeof saveToLibrarySchema>;
+
+/**
+ * Given an entry id (or spotify/gbooks/tmdb/etc id), saves it to the library
+ */
+export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrarySchema>) {
+	let { entryId, status, type } = input;
+	if (!entryId) {
+		// then we need to create the entry
+		let insertable: Insertable<Entry> = {
+			updatedAt: new Date()
+			// ...data
+		};
+
+		switch (input.type) {
+			case 'tv':
+			case 'movie': {
+				if (type === 'tv') {
+					const tv = await tmdb.tv.details(input.tmdbId);
+					insertable = {
+						...insertable,
+						title: tv.name,
+						text: tv.overview,
+						uri: `tmdb:tv:${tv.id}`,
+						tmdbId: tv.id,
+						author: tv.created_by?.map((val) => val.name).join(', '),
+						published: tv.first_air_date,
+						image: tmdb.media(tv.poster_path),
+						type: 'tv'
+					};
+				} else {
+					const movie = await tmdb.movie.details(input.tmdbId);
+					insertable = {
+						...insertable,
+						title: movie.title,
+						html: movie.overview,
+						uri: `tmdb:${movie.id}`,
+						tmdbId: movie.id,
+						author: movie.credits?.crew?.find((c) => c.job === 'Director')?.name,
+						published: movie.release_date,
+						image: tmdb.media(movie.poster_path),
+						type: 'movie'
+					};
+				}
+				break;
+			}
+			case 'book': {
+				const book = await books.get(input.googleBooksId);
+				console.log({ book });
+				let image = book.volumeInfo.imageLinks?.thumbnail;
+				if (image) {
+					const u = new URL(image);
+					u.searchParams.delete('edge');
+					image = u.toString();
+				}
+				insertable = {
+					...insertable,
+					title: book.volumeInfo.title,
+					html: book.volumeInfo.description,
+					uri: `isbn:${
+						book.volumeInfo.industryIdentifiers?.find((i) => i.type === 'ISBN_13')?.identifier
+					}`,
+					googleBooksId: book.id,
+					author: book.volumeInfo.authors?.join(', '),
+					published: book.volumeInfo.publishedDate,
+					image,
+					type: 'book',
+					publisher: book.volumeInfo.publisher,
+					pageCount: book.volumeInfo.pageCount
+				};
+				break;
+			}
+			case 'podcast': {
+				//todo
+				const { episode } = await pindex.episodeById(Number(input.podcastIndexId));
+				insertable = {
+					...insertable,
+					title: episode.title,
+					text: episode.description,
+					uri: episode.enclosureUrl,
+					podcastIndexId: episode.id,
+					published: new Date(episode.datePublished * 1000),
+					type: 'podcast',
+					image: episode.image || episode.feedImage
+				};
+				break;
+			}
+			case 'album': {
+				const album = await spotify.album(input.spotifyId);
+				insertable = {
+					...insertable,
+					title: album.name,
+					uri: `spotify:album:${album.id}`,
+					spotifyId: album.id,
+					image: album.images[0]?.url,
+					author: album.artists.map((a) => a.name).join(', '),
+					published: new Date(album.release_date),
+					type: 'album'
+				};
+			}
+			default: {
+				//
+			}
+		}
+
+		const entry = await db.insertInto('Entry').values(insertable).executeTakeFirstOrThrow();
+		entryId = Number(entry.insertId);
+	}
+
+	const sort_order = await getFirstBookmarkSort(ctx.userId);
+
+	await db
+		.insertInto('Bookmark')
+		.values({
+			updatedAt: new Date(),
+			userId: ctx.userId,
+			entryId,
+			sort_order,
+			status
+		})
+		.onDuplicateKeyUpdate({
+			status
+		})
+		.executeTakeFirst();
 }

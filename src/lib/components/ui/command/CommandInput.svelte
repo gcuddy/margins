@@ -1,16 +1,13 @@
 <script lang="ts">
-	import CommandInput from "$lib/components/ui/cmdk/Command.Input.svelte";
-	import { cn } from "$lib/utils/tailwind";
-	import { Search } from "lucide-svelte";
-	import type {
-		HTMLBaseAttributes,
-		HTMLInputAttributes,
-	} from "svelte/elements";
-	import type { ComponentProps } from "svelte";
+	import CommandInput from '$lib/components/ui/cmdk/Command.Input.svelte';
+	import { cn } from '$lib/utils/tailwind';
+	import { Search } from 'lucide-svelte';
+	import type { HTMLBaseAttributes, HTMLInputAttributes } from 'svelte/elements';
+	import type { ComponentProps } from 'svelte';
 
-	let className = "";
+	let className = '';
 	export { className as class };
-	export let value = "";
+	export let value = '';
 	interface $$Props extends HTMLInputAttributes, ComponentProps<CommandInput> {
 		class?: string;
 		value?: string;
@@ -22,7 +19,7 @@
 	<CommandInput
 		bind:value
 		class={cn(
-			"placeholder:text-foreground-muted flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
+			'placeholder:text-foreground-muted flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			className
 		)}
 		{...$$restProps}

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { onMount, tick } from "svelte";
-	import { useCommand, useState } from "./Command.Root.svelte";
-	import type { HTMLInputAttributes } from "svelte/elements";
-	import { afterNavigate } from "$app/navigation";
+	import { onMount, tick } from 'svelte';
+	import { useCommand, useState } from './Command.Root.svelte';
+	import type { HTMLInputAttributes } from 'svelte/elements';
+	import { afterNavigate } from '$app/navigation';
 
 	// TODO
 
@@ -17,10 +17,10 @@
 	const context = useCommand();
 	const state = useState();
 
-	export let value = "";
+	export let value = '';
 
 	let ref: HTMLElement;
-	$: value, state.setState("search", value);
+	$: value, state.setState('search', value);
 
 	async function focus() {
 		await tick();
@@ -36,6 +36,7 @@
 </script>
 
 <input
+	autofocus
 	data-sveltekit-keepfocus
 	bind:this={ref}
 	data-cmdk-input
