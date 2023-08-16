@@ -55,6 +55,29 @@ model State {
     @@index([userId])
 }
 
+model BookmarkHistory {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    archivedAt DateTime?
+    archived   Boolean?
+
+    fromStatus Status?
+    toStatus   Status?
+
+    // etc
+
+    bookmarkId Int
+    bookmark   Bookmark @relation(fields: [bookmarkId], references: [id])
+
+    userId String?
+    user   AuthUser? @relation(fields: [userId], references: [id])
+
+    @@index([userId])
+    @@index([bookmarkId])
+}
+
 model Bookmark {
     id               Int               @id @default(autoincrement())
     createdAt        DateTime          @default(now())
@@ -90,6 +113,7 @@ model Bookmark {
     interaction      Interaction?      @relation(fields: [interactionId], references: [id])
     favorite         Favorite?
     annotations      Annotation[]
+    history          BookmarkHistory[]
 
     bookmarked Boolean @default(true) // Is this actually in the user's library?
 
@@ -97,12 +121,10 @@ model Bookmark {
     title  String?
     author String?
 
-    @@index([title])
-
-    @@index([sort_order, updatedAt])
-
     @@unique([uri, entryId, userId])
     @@unique([entryId, userId])
+    @@index([title])
+    @@index([sort_order, updatedAt])
     @@index([entryId])
     @@index([uri, entryId])
     @@index([uri])
@@ -332,7 +354,7 @@ model Entry {
     @@index([published])
     @@index([owned_by_id])
     // @@index([id, title])
-    @@index([title(length:255)])
+    @@index([title(length: 255)])
     @@fulltext([text, title, author])
     @@fulltext([title, author])
     @@fulltext([text])
@@ -759,6 +781,7 @@ model AuthUser {
     relations          Relation[]
     AuthorizationKey   AuthorizationKey?
     TagOnEntry         TagOnEntry[]
+    bookmark_history   BookmarkHistory[]
 
     custom_entries Entry[]
 

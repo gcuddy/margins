@@ -20,6 +20,8 @@ import {
 	getNotebookSchema,
 	get_notes_for_tag,
 	s_add_to_collection,
+	saveToLibrarySchema,
+	save_to_library,
 	set_tags_on_entry,
 	tagsOnEntrySchema,
 	updateBookmark,
@@ -78,7 +80,12 @@ export const mutations = {
 	//             })
 	//             .execute();
 	//     }
-	// }),
+	// }),'sva
+    // TODO save_to_libray
+    save_to_library: query({
+        schema: saveToLibrarySchema,
+        fn: save_to_library
+    }),
 	save_note: query({
 		schema: upsertAnnotationSchema.omit({
 			userId: true
@@ -151,15 +158,26 @@ export const mutations = {
 		fn: async ({ input, ctx }) => {
 			const new_sort_order =
 				input.sort_order ?? (await getFirstBookmarkSort(ctx.userId, input.status));
-			await db
-				.updateTable('Bookmark')
-				.where('entryId', 'in', input.ids)
-				.where('userId', '=', ctx.userId)
-				.set({
-					status: input.status,
-					sort_order: new_sort_order
-				})
-				.execute();
+
+            await db.transaction().execute(async trx => {
+                await trx
+                    .updateTable('Bookmark')
+                    .where('entryId', 'in', input.ids)
+                    .where('userId', '=', ctx.userId)
+                    .set({
+                        status: input.status,
+                        sort_order: new_sort_order
+                    })
+                    .execute();
+
+                    // and add history item
+                // await trx.insertInto("BookmarkHistory")
+                //     .values({
+                //         fromStatus
+                //     })
+            })
+
+
 		}
 	}),
 	createCollection: query({
