@@ -61,7 +61,7 @@ export function createCommandStore(props?: CommandProps) {
 	const allItemIds = writable<Set<string>>(new Set()); // [...itemIds]
 	const idsToValueMap = writable<Map<string, string>>(new Map()); // id → value
 	const allGroupIds = writable<Map<string, Set<string>>>(new Map()); // groupId → [...itemIds]
-    const idsToCallbackMap = writable<Map<string, (e: Event) => void>>(new Map()); // id → callback
+    const idsToCallbackMap = writable<Map<string, () => void>>(new Map()); // id → callback
 
     const container = writable<HTMLElement | null>(null);
 
