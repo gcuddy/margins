@@ -7,5 +7,6 @@ import CommandGroup from './CommandGroup.svelte';
 import CommandEmpty from './CommandEmpty.svelte';
 import CommandSeparator from './CommandSeparator.svelte';
 import CommandShortcut from './CommandShortcut.svelte';
+import CommandLoading from './CommandLoading.svelte';
 
-export { Command, CommandItem, CommandInput, CommandItems, CommandList, CommandGroup, CommandEmpty, CommandSeparator, CommandShortcut };
+export { Command, CommandItem, CommandInput, CommandItems, CommandList, CommandGroup, CommandEmpty, CommandSeparator, CommandShortcut, CommandLoading };

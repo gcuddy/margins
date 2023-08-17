@@ -1,6 +1,6 @@
 import { isBrowser, isHTMLElement } from '$lib/helpers';
 // borrowing heavily from https://github.com/melt-ui/melt-ui/blob/develop/src/lib/builders/combobox/create.ts - hard dependency here
-import { generateId, getOptions, isElementDisabled, kbd } from '@melt-ui/svelte/internal/helpers';
+import { effect, generateId, getOptions, isElementDisabled, kbd } from '@melt-ui/svelte/internal/helpers';
 import { tick } from 'svelte';
 import { Writable, derived, get, writable } from 'svelte/store';
 
@@ -61,6 +61,9 @@ export function createCommandStore(props?: CommandProps) {
 	const allItemIds = writable<Set<string>>(new Set()); // [...itemIds]
 	const idsToValueMap = writable<Map<string, string>>(new Map()); // id → value
 	const allGroupIds = writable<Map<string, Set<string>>>(new Map()); // groupId → [...itemIds]
+    const idsToCallbackMap = writable<Map<string, (e: Event) => void>>(new Map()); // id → callback
+
+    const container = writable<HTMLElement | null>(null);
 
 	const filterFunction = props?.filterFunction ?? commandScore;
 
@@ -192,21 +195,45 @@ export function createCommandStore(props?: CommandProps) {
 	function selectItem(item: HTMLElement) {
 		const value = item.getAttribute('data-value');
 
-		selectedValue.update(($selectedValue) => {
-			if (!value) return $selectedValue;
-			if ($selectedValue.includes(value)) {
-				return $selectedValue.filter((v) => v !== value);
-			} else {
-				if (props?.multiple) {
-					return [...$selectedValue, value];
-				} else {
-					return [value];
-				}
-			}
-		});
+        console.log('selecting item', { value })
 
-		item.dispatchEvent(new Event(SELECT_EVENT_NAME));
+        const containsPages = item.getAttribute('data-contains-pages') !== null;
+
+        if (!containsPages) {
+            // Then update selected value
+            selectedValue.update(($selectedValue) => {
+                if (!value) return $selectedValue;
+                if ($selectedValue.includes(value)) {
+                    return $selectedValue.filter((v) => v !== value);
+                } else {
+                    if (props?.multiple) {
+                        return [...$selectedValue, value];
+                    } else {
+                        return [value];
+                    }
+                }
+            });
+        }
+
+        console.log({
+            selectedValue: get(selectedValue)
+        })
+
+        console.log('dispatching event to', item)
+
+        const callback = get(idsToCallbackMap).get(item.id);
+        if (callback) {
+            callback();
+        }
+
+
+		// item.dispatchEvent(new Event(SELECT_EVENT_NAME));
 	}
+
+    effect(selectedValue, (selectedValue) => {
+        console.log('selectedValue changed', { selectedValue })
+
+    })
 
 	function registerItem(id: string | string[], groupId?: string) {
 		allItemIds.update(($items) => {
@@ -297,6 +324,32 @@ export function createCommandStore(props?: CommandProps) {
 		};
 	}
 
+    function registerCallback(id: string | string[], callback: (e: Event) => void) {
+        idsToCallbackMap.update(($map) => {
+            if (Array.isArray(id)) {
+                for (const i of id) {
+                    $map.set(i, callback);
+                }
+                return $map;
+            }
+            $map.set(id, callback);
+            return $map;
+        });
+
+        return () => {
+            idsToCallbackMap.update(($map) => {
+                if (Array.isArray(id)) {
+                    for (const i of id) {
+                        $map.delete(i);
+                    }
+                    return $map;
+                }
+                $map.delete(id);
+                return $map;
+            });
+        }
+    }
+
 	return {
 		ids,
 		state: {
@@ -324,13 +377,17 @@ export function createCommandStore(props?: CommandProps) {
 					groupId
 				);
 			},
-			registerGroup
+			registerGroup,
+            registerCallback
 		},
 		actions: {
 			openMenu,
 			closeMenu: () => /*openStore.set(false)*/ {}, // we dont't actually want this, i think
 			reset,
 			selectItem
-		}
+		},
+        elements: {
+            container
+        }
 	};
 }

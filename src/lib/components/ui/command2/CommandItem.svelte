@@ -15,6 +15,7 @@
 		groupId?: string;
 		shouldRegister?: boolean;
 		alwaysShow?: boolean;
+        containsPages?: boolean;
 	};
 
 	export let disabled = false;
@@ -25,6 +26,7 @@
 	export let groupId = getContext('command_groupId') as string | undefined;
 	export let shouldRegister = true;
 	export let alwaysShow = false;
+    export let containsPages = false;
 
 	let className: $$Props['class'] = undefined;
 	export { className as class };
@@ -66,60 +68,68 @@
 
 	// TODO: add way to not close
 	function handleSelect(e: Event) {
+        console.log('handle select', e)
 		if (disabled) return;
 		onSelect(value);
-		if (
-			!e.defaultPrevented &&
-			(e instanceof MouseEvent || e instanceof PointerEvent) &&
-			// check to make sure we didn't click a checkbox
-			!(e.target instanceof HTMLInputElement && e.target.type === 'checkbox')
-		) {
-			actions.closeMenu();
-		}
+		// if (
+		// 	!e.defaultPrevented &&
+		// 	(e instanceof MouseEvent || e instanceof PointerEvent) &&
+		// 	// check to make sure we didn't click a checkbox
+		// 	!(e.target instanceof HTMLInputElement && e.target.type === 'checkbox')
+		// ) {
+		// 	actions.closeMenu();
+		// }
 	}
 
+
 	onMount(() => {
-		if (node) {
-			node.addEventListener(SELECT_EVENT_NAME, handleSelect);
+        if (node) {
+            node.addEventListener(SELECT_EVENT_NAME, handleSelect);
 			value = value || node.textContent?.trim()?.toLowerCase() || '';
 		}
 
 		let unmount = () => {};
 		if (shouldRegister) {
-			unmount = helpers.registerItem(id, groupId);
+            unmount = helpers.registerItem(id, groupId);
 			helpers.registerItemValue(id, value);
 		}
 
+        const unsubCallback = helpers.registerCallback(id, handleSelect)
 		return () => {
 			if (node) {
 				node.removeEventListener(SELECT_EVENT_NAME, handleSelect);
 			}
 			unmount();
+            unsubCallback();
 		};
 	});
 
 	$: render = alwaysShow || !$inputValue || $filtered.items.includes(id);
+    $: selected = $selectedValue.includes(value)
 </script>
 
 {#if render}
 	<button
 		class={cn(
 			!unstyled &&
-				'relative text-left flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+				'relative group text-left flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
 			className
 		)}
 		bind:this={node}
 		{id}
 		aria-disabled={disabled ? true : undefined}
 		data-disabled={disabled ? '' : undefined}
-		aria-selected={$selectedValue.includes(value)}
+		aria-selected={selected}
 		data-value={value}
 		role="option"
 		on:pointermove={handlePointerMove}
 		on:click={handleClick}
 		data-highlighted={$activeElement === node ? '' : undefined}
+        data-contains-pages={containsPages ? '' : undefined}
+        tabindex={-1}
+        data-command-item
 	>
 		<!--  -->
-		<slot />
+		<slot isSelected={selected} />
 	</button>
 {/if}

@@ -7,7 +7,9 @@ type Unstyled = {
 type HTMLDivAttributes = HTMLAttributes<HTMLDivElement>;
 type DivProps = HTMLDivAttributes & Unstyled;
 
-type InputProps = HTMLInputAttributes & Unstyled;
+type InputProps = HTMLInputAttributes & Unstyled & {
+    onKeydown?: (e: KeyboardEvent) => void;
+}
 
 type ElProps<T extends EventTarget> = HTMLAttributes<T> & Unstyled;
 

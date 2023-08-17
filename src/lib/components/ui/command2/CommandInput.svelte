@@ -18,6 +18,7 @@
 	let inputEl: HTMLInputElement;
 	let className: $$Props['class'] = undefined;
 	export let unstyled = false;
+    export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
 
 	const {
 		ids,
@@ -31,6 +32,10 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement }) {
+
+        onKeydown?.(e);
+        if (e.defaultPrevented) return;
+
 		/**
 		 * When the menu is closed...
 		 */
@@ -152,6 +157,7 @@
 <div class="flex items-center border-b px-3" data-command-input-wrapper>
     <Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
 	<input
+        data-command-input
 		aria-activedescendant={$activeElement?.id}
 		aria-autocomplete="list"
 		aria-controls={ids.menu}

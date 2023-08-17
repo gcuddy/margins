@@ -40,3 +40,17 @@ export type ValueOf<T> = T[keyof T];
 export type Maybe<T> = T | null | undefined;
 
 // Type to unwrap value from store
+
+
+export type StringsToObjWithKey<T extends string, TKey extends string> = {
+    [K in TKey]: T
+};
+
+
+type X = StringsToObjWithKey<'a' | 'b', 'name'>;
+
+
+export type GetValueFromObj<T extends { [key: string]: any }, TKey extends keyof T> = T[TKey];
+export type ExtractUnionType<T, K extends keyof any> = T extends { [key in K]: infer U } ? U : never;
+
+// I want to create

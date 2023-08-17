@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { decode, encode } from './qss';
+import { goto } from '$app/navigation';
 
 export function parseSearchWith(parser: (str: string) => any) {
 	return (searchStr: string): {} => {
@@ -25,8 +26,7 @@ export function parseSearchWith(parser: (str: string) => any) {
 	};
 }
 
-const isoRegex =/\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/
-
+const isoRegex = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
 
 export function stringifySearchWith(stringify: (search: any) => string) {
 	return (search: Record<string, any>) => {
@@ -56,15 +56,15 @@ export function stringifySearchWith(stringify: (search: any) => string) {
 export const defaultParseSearch = parseSearchWith(JSON.parse);
 export const defaultStringifySearch = stringifySearchWith((search: any) => {
 	return JSON.stringify(search, (key, value) => {
-        console.log('[stringify]', {key, value})
-        if (value instanceof Date) {
-            return value.toISOString().slice(0, 10);
-        }
-        if (typeof value === 'string' && isoRegex.test(value)) {
-            return new Date(value).toISOString().slice(0, 10);
-        }
-        return value;
-    });
+		console.log('[stringify]', { key, value });
+		if (value instanceof Date) {
+			return value.toISOString().slice(0, 10);
+		}
+		if (typeof value === 'string' && isoRegex.test(value)) {
+			return new Date(value).toISOString().slice(0, 10);
+		}
+		return value;
+	});
 });
 
 export function parseSearchWithSchema<TSchema extends z.ZodObject<any, any>>(
@@ -79,4 +79,19 @@ export function parseSearchWithSchema<TSchema extends z.ZodObject<any, any>>(
 	} else {
 		return {};
 	}
+}
+
+export function changeSearch(url: URL, data: Record<string, any>) {
+	const exisiting = defaultParseSearch(url.search);
+	const newSearch = defaultStringifySearch({
+		...exisiting,
+		...data
+	});
+	url.search = newSearch;
+	goto(url, {
+		keepFocus: true,
+		replaceState: true,
+		noScroll: true,
+		invalidateAll: true
+	});
 }

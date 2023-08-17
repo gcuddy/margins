@@ -1,12 +1,12 @@
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/db';
 export async function load({ locals }) {
-    console.time('loading cmd')
+	console.time('loading cmd');
 	const session = await locals.auth.validate();
 	if (!session) {
 		throw error(401, 'Unauthorized');
 	}
-	const entries = await db
+	const entries = db
 		.selectFrom('Bookmark as b')
 		.innerJoin('Entry as e', 'e.id', 'b.entryId')
 		.select([
@@ -22,14 +22,21 @@ export async function load({ locals }) {
 		])
 		.select((eb) => eb.fn.coalesce('b.author', 'e.author').as('author'))
 		.where('b.userId', '=', session.user.userId)
-        .where("e.title", "is not", null)
-        .$narrowType<{
-            title: string;
-        }>()
-        .execute();
+		.where('e.title', 'is not', null)
+		.$narrowType<{
+			title: string;
+		}>()
+		.execute();
 
-    console.timeEnd('loading cmd')
-    return {
-        entries
-    }
+	const tags = db
+		.selectFrom('Tag')
+		.select(['id', 'name'])
+		.where('userId', '=', session.user.userId)
+		.execute();
+
+	console.timeEnd('loading cmd');
+	return {
+		entries,
+		tags
+	};
 }

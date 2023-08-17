@@ -11,7 +11,17 @@
 		CommandShortcut
 	} from '$lib/components/ui/command2';
 
-	import { Calculator, Calendar, CreditCard, Settings, Smile, User } from 'lucide-svelte';
+	import {
+		Calculator,
+		Calendar,
+		CalendarPlusIcon,
+		ChevronsUpDown,
+		CreditCard,
+		FileIcon,
+		Settings,
+		Smile,
+		User
+	} from 'lucide-svelte';
 
 	export let data;
 
@@ -28,32 +38,102 @@
 	let value: string;
 	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import { writable } from 'svelte/store';
+	import { cn } from '$lib';
+	import { buttonVariants } from '$components/ui/Button.svelte';
+	import { melt } from '@melt-ui/svelte';
+	import { tick } from 'svelte';
+	import { isHTMLInputElement } from '@melt-ui/svelte/internal/helpers';
+	import { assertPagesType, createPages } from '$components/ui/command2/utils';
+	import { types } from '$lib/types';
+	import { statuses, statusesWithIcons } from '$lib/status';
+	import type { StringsToObjWithKey } from '$lib/utils/type-utils';
+
+	let open = false;
+	let buttonEl: HTMLButtonElement;
+	const closePopover = () => {
+		open = false;
+		// TODO this triggers it re-opening immediately
+		// if (buttonEl) {
+		//     tick().then(() => {
+		//         buttonEl.focus();
+		//     })
+		// }
+	};
+
+	// const page = createPages<'projects' | 'teams'>();
+
+	type Pages = 'projects' | 'teams';
+	const pages: StringsToObjWithKey<Pages, 'name'>[] = [];
+
+	// const filterPages = assertPagesType({
+	//     name: "types",
+	//     placeholder: ""
+	// })
+
+	const filterPages = [
+		{
+			name: 'types',
+			placeholder: 'Select a type…'
+		},
+		{
+			name: 'dates:created',
+			placeholder: 'Select a date…'
+		},
+		{
+			name: 'status',
+			placeholder: 'Select a status…'
+		}
+	] as const;
+
+	type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
+
+	const deepWriteable = <T>(obj: T): DeepWriteable<T> => {
+		return obj as DeepWriteable<T>;
+	};
+
+	const pagesData = deepWriteable(filterPages);
+
+    let tagValue = [];
+    let tagsOpen = false;
 </script>
 
-<Popover>
-	<PopoverTrigger>Combobox</PopoverTrigger>
-	<PopoverContent>
-		{value}
-		<Command bind:value>
-			<CommandInput />
-			<CommandList>
-				<CommandItems
-					items={data.entries}
-					itemToId={(item) => item.id.toString()}
-					itemToValue={(item) => item.title.toString()}
-					let:item
-					onSelect={(item) => console.log(item)}
-					class="flex"
-				>
-					<!-- <img class="square-8 rounded mr-2" src={item.image} alt={item.title} /> -->
-					<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
-					<span>{item.title}</span>
-				</CommandItems>
-			</CommandList>
-		</Command>
-	</PopoverContent>
-</Popover>
-<div class="preview max-w-xl mx-auto flex min-h-[350px] w-full justify-center p-10 items-start">
+<div
+	class="preview max-w-xl mx-auto flex flex-col gap-10 min-h-[350px] w-full justify-center p-10 items-start"
+>
+	<Popover bind:open>
+		<PopoverTrigger asChild let:builder>
+			<button
+				bind:this={buttonEl}
+				class={cn(buttonVariants({ variant: 'outline' }), 'w-[200px] justify-between')}
+				use:melt={builder}
+			>
+				<span class="truncate">{value ?? 'Select an entry'}</span>
+				<ChevronsUpDown class="h-4 w-4 ml-2 shrink-0 opacity-50" />
+			</button>
+		</PopoverTrigger>
+		<PopoverContent class="w-[200px] p-0">
+			<Command bind:value>
+				<CommandInput />
+				<CommandList>
+					<CommandGroup>
+						<CommandItems
+							items={data.entries}
+							itemToId={(item) => item.id.toString()}
+							itemToValue={(item) => item.title.toString()}
+							let:item
+							onSelect={closePopover}
+							class="flex"
+						>
+							<!-- <img class="square-8 rounded mr-2" src={item.image} alt={item.title} /> -->
+							<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
+							<span>{item.title}</span>
+						</CommandItems>
+					</CommandGroup>
+				</CommandList>
+			</Command>
+		</PopoverContent>
+	</Popover>
 	<Command class="rounded-lg border shadow-md">
 		<CommandInput placeholder="Type a command or search..." />
 		<CommandList>
@@ -92,4 +172,151 @@
 			</CommandGroup>
 		</CommandList>
 	</Command>
+
+	with pages:
+	<Command
+		let:page
+		let:pages
+		initialPages={pages}
+		class="rounded-lg border shadow-md"
+		bounce={true}
+	>
+		<CommandInput placeholder="Type a command or search..." onKeydown={pages.handlers.keydown} />
+		<CommandList>
+			<CommandGroup>
+				{#if !page}
+					<CommandItem
+						containsPages
+						onSelect={() => {
+							console.log('selecting');
+							pages.add({
+								name: 'projects'
+							});
+						}}
+					>
+						Search Projects…
+					</CommandItem>
+					<CommandItem
+						containsPages
+						onSelect={() => {
+							pages.add({
+								name: 'teams'
+							});
+						}}
+					>
+						Join a team…
+					</CommandItem>
+				{/if}
+				{#if page?.name === 'projects'}
+					<CommandItem>Project A</CommandItem>
+					<CommandItem>Project B</CommandItem>
+				{:else if page?.name === 'teams'}
+					<CommandItem>Team A</CommandItem>
+					<CommandItem>Team B</CommandItem>
+				{/if}
+			</CommandGroup>
+		</CommandList>
+	</Command>
+	Filter:
+	<Command let:page let:pages pages={pagesData} class="rounded-lg border shadow-md">
+		<CommandInput
+			placeholder={page?.placeholder ?? 'Type a command or search...'}
+			onKeydown={pages.handlers.keydown}
+		/>
+		<CommandList>
+			<CommandGroup>
+				{#if !page}
+					<CommandItem
+						containsPages
+						onSelect={() => {
+							console.log('selecting');
+							pages.add('types');
+						}}
+					>
+						<FileIcon class="mr-2 h-4 w-4 opacity-50" />
+						<span>Type</span>
+					</CommandItem>
+					<CommandItem
+						containsPages
+						onSelect={() => {
+							pages.add('dates:created');
+						}}
+					>
+						<CalendarPlusIcon class="mr-2 h-4 w-4 opacity-50" />
+						Saved Date
+					</CommandItem>
+					<CommandItem
+						containsPages
+						onSelect={() => {
+							pages.add('status');
+						}}
+					>
+						<CalendarPlusIcon class="mr-2 h-4 w-4 opacity-50" />
+						Status
+					</CommandItem>
+				{/if}
+				{#if page?.name === 'types'}
+					{#each types as type}
+						<CommandItem>
+							<EntryIcon
+								class="h-4 w-4 shrink-0 mr-2 opacity-50 group-data-[highlighted]:opacity-100 transition-opacity"
+								{type}
+							/>
+							<span>{type}</span>
+						</CommandItem>
+					{/each}
+				{:else if page?.name === 'dates:created'}
+					<CommandItem>1 Day</CommandItem>
+					<CommandItem>3 Days</CommandItem>
+					<CommandItem>1 Week</CommandItem>
+					<CommandItem>2 Weeks</CommandItem>
+					<CommandItem>1 Month</CommandItem>
+					<CommandItem>3 Months</CommandItem>
+					<CommandItem>6 Months</CommandItem>
+					<CommandItem>1 Year</CommandItem>
+					<!-- <CommandSeparator /> -->
+					<CommandItem>Custom…</CommandItem>
+					<CommandItem>Exact Date…</CommandItem>
+				{:else if page?.name === 'status'}
+					{#each statuses as status}
+						<CommandItem>
+							<svelte:component this={statusesWithIcons[status]} class="h-4 w-4 shrink-0 mr-2" />
+							<span>{status}</span>
+						</CommandItem>
+					{/each}
+				{/if}
+			</CommandGroup>
+		</CommandList>
+	</Command>
+
+	Multiple:
+
+
+    <Popover bind:open={tagsOpen}>
+		<PopoverTrigger asChild let:builder>
+			<button
+				bind:this={buttonEl}
+				class={cn(buttonVariants({ variant: 'outline' }), 'w-[200px] justify-between')}
+				use:melt={builder}
+			>
+				<span class="truncate">{'Select a tag'}</span>
+				<ChevronsUpDown class="h-4 w-4 ml-2 shrink-0 opacity-50" />
+			</button>
+		</PopoverTrigger>
+		<PopoverContent class="w-[200px] p-0">
+			<Command multiple bind:value={tagValue} class="rounded-lg border shadow-md">
+                <CommandInput />
+
+                <CommandList>
+                    <CommandGroup>
+                        {#each data.tags as tag}
+                            <CommandItem>
+                                <span>{tag.name}</span>
+                            </CommandItem>
+                        {/each}
+                    </CommandGroup>
+                </CommandList>
+            </Command>
+		</PopoverContent>
+	</Popover>
 </div>
