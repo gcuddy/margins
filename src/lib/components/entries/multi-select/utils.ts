@@ -12,5 +12,5 @@ export function getCheckedEntriesFromQueryCache(queryClient: QueryClient) {
 
 	const entries = cached.flatMap((page) => page[1]?.pages ?? []).flatMap(({ entries }) => entries);
 
-	return entries.filter((entry) => ids.includes(entry.id));
+	return entries.filter((entry) => ids.includes(entry?.id));
 }

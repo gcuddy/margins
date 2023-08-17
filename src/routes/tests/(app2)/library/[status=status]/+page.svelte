@@ -6,29 +6,59 @@
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
 	import { QueryOutput, query as qquery } from '$lib/queries/query';
 	import { init_entries, invalidated } from '$lib/state/entries';
-	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
+	import {
+		InfiniteData,
+		createInfiniteQuery,
+		keepPreviousData,
+		useQueryClient
+	} from '@tanstack/svelte-query';
 	import { createWindowVirtualizer } from '@tanstack/svelte-virtual';
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action';
 	import { derived, writable } from 'svelte/store';
 	import { useMenuBar } from '../../MainNav.svelte';
-	import { beforeNavigate } from '$app/navigation';
+	import { beforeNavigate, goto } from '$app/navigation';
 	import { backContext, setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import { flip } from 'svelte/animate';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { checkedEntries, checkedEntryIds, SelectActions } from '$components/entries/multi-select';
 	import { create_multi } from '$components/entries/multi-select/multi';
 	import type { Snapshot } from './$types.js';
-	import type { FilterLibrarySchema, GetLibrarySchema, LibrarySortType } from '$lib/server/queries';
 	import { Loader2Icon } from 'lucide-svelte';
 	import { queryParam, ssp, queryParameters } from 'sveltekit-search-params';
 	import type { Type } from '$lib/types';
-	import { filterLibrarySchema } from '$lib/schemas/library';
+	import {
+		filterLibrarySchema,
+		FilterLibrarySchema,
+		LibrarySortType,
+		GetLibrarySchema
+	} from '$lib/schemas/library';
 	import { defaultParseSearch, parseSearchWith } from '$lib/utils/search-params';
+	import { browser } from '$app/environment';
+	import type { LibraryResponse } from '$lib/server/queries';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
 	const sort = writable<NonNullable<LibrarySortType>>('manual');
+
+	$: if (browser && $sort && $sort !== 'manual') {
+		const url = $page.url;
+		url.searchParams.set('sort', $sort);
+		goto(url, {
+			keepFocus: true,
+			noScroll: true,
+			replaceState: true
+		});
+	} else if (browser) {
+		const url = $page.url;
+		url.searchParams.delete('sort');
+		goto(url, {
+			keepFocus: true,
+			noScroll: true,
+			replaceState: true
+		});
+	}
+
 	const params = queryParameters({
 		createdAt: ssp.object<NonNullable<FilterLibrarySchema['createdAt']>>(),
 		type: {
@@ -37,36 +67,56 @@
 		}
 	});
 
-    const createdAtRegex = /^(?<cmp>=|>|<)(?<date>\d{4}-\d{2}-\d{2})|(?<num>\d) (?<unit>day|week|month|year)$/;
+	const createdAtRegex =
+		/^(?<cmp>=|>|<)(?<date>\d{4}-\d{2}-\d{2})|(?<num>\d) (?<unit>day|week|month|year)$/;
 
 	function parseFilterFromSearchParams(): FilterLibrarySchema | undefined {
-        const rawObj =  defaultParseSearch($page.url.search);
+		const rawObj = defaultParseSearch($page.url.search);
 
-        const parsed = filterLibrarySchema.safeParse(rawObj)
+		const parsed = filterLibrarySchema.safeParse(rawObj);
 
-        if (parsed.success) {
-            return parsed.data
-        }
+		if (parsed.success) {
+			return parsed.data;
+		}
 	}
 
+	$: console.log({
+		params: defaultParseSearch($page.url.search)
+	});
 
 	const query = createInfiniteQuery(
 		derived([page, sort, params], ([$page, $sort, $params]) => {
 			console.log({ $page, $sort });
-            const filter = parseFilterFromSearchParams()
-			return queryFactory.entries.list({
-				status: $page.data.Status,
-				type: $page.data.type,
-				search: $page.url.searchParams.get('search') ?? undefined,
-				sort: $sort,
-                filter
-				// filter
-				// filter: $params.createdAt
-				// 	? {
-				// 			createdAt: $params.createdAt
-				// 	  }
-				// 	: undefined
-			});
+			const filter = parseFilterFromSearchParams();
+			const search = $page.url.searchParams.get('search') ?? undefined;
+			return {
+				...queryFactory.entries.list({
+					status: $page.data.Status,
+					search,
+					sort: $sort,
+					filter
+				}),
+				placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
+					console.log(`placeholder`, { data });
+					if (search && data) {
+						// perform search
+						const searchRegex = new RegExp(search, 'i');
+						return {
+							...data,
+							pages: data.pages.map((page) => ({
+								...page,
+								entries: page.entries.filter((entry) => {
+									const title = entry.title;
+									const author = entry.bookmark_author ?? entry.author;
+									if (!title && !author) return false;
+									return searchRegex.test(`${title} ${author}`);
+								})
+							}))
+						};
+					}
+					return data;
+				}
+			};
 		})
 	);
 
@@ -235,6 +285,8 @@
 					{entry}
 				/>
 			</div>
+		{:else}
+			<div class="py-16 text-center text-sm">No entries!</div>
 		{/each}
 		{#if $query.isFetchingNextPage}
 			<div class="absolute bottom-0 left-0 right-0 flex justify-center items-center h-12">

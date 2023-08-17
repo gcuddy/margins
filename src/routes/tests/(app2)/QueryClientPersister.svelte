@@ -55,6 +55,7 @@
 			persister,
 			dehydrateOptions: {
 				shouldDehydrateQuery(query) {
+                    const { queryKey } = query
 					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'list') {
 						// ['entries', 'list']
 						// filter on type === undefined  and search === undefined
@@ -70,6 +71,11 @@
 					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'detail') {
 						return true;
 					}
+
+                    if (queryKey[0] === "tags") {
+                        return true
+                    }
+
 					return false;
 				}
 			}

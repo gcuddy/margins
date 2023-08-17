@@ -1,10 +1,11 @@
 import { createQueryKeyStore } from '@lukemorales/query-key-factory';
-import type {
-	CreateInfiniteQueryOptions,
-	CreateQueryOptions,
-	QueryClient,
-	QueryMeta,
-	createInfiniteQuery
+import {
+    keepPreviousData,
+	type CreateInfiniteQueryOptions,
+	type CreateQueryOptions,
+	type QueryClient,
+	type QueryMeta,
+	type createInfiniteQuery
 } from '@tanstack/svelte-query';
 import { qquery, type QueryInput, Queries, QueryOutput } from './query';
 
@@ -39,16 +40,16 @@ type InfiniteQueryFnParams = {
 export const queryFactory = {
 	entries: {
 		// list
-		list: (filters?: QueryInput<'get_library'>) => ({
+		list: (input?: QueryInput<'get_library'>) => ({
 			// Ideally entries, list would get inferred... but this will do for  now
-			queryKey: ['entries', 'list', filters ? { filters } : undefined] as const,
+			queryKey: ['entries', 'list', input ? input : undefined] as const,
 			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) =>{
                 console.log({meta, pageParam})
                 console.log(`running queryFn for entries.list`)
                 return qquery(
 					meta?.init,
 					'get_library',
-					filters ? { ...filters, cursor: pageParam } : { status: 'Backlog', cursor: pageParam }
+					input ? { ...input, cursor: pageParam } : { status: 'Backlog', cursor: pageParam }
 				)
             },
 			getNextPageParam(lastPage) {
@@ -68,8 +69,21 @@ export const queryFactory = {
         count: (input: QueryInput<'count_library'>) => ({
             queryKey: ['entries', 'count', { input }] as const,
             queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'count_library', input)
+        }),
+        authors: () => ({
+            queryKey: ['entries', 'authors'] as const,
+            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'get_authors', {}),
+            staleTime: Infinity
         })
-	}
+	},
+    tags: {
+        list: () => ({
+            queryKey: ['tags', 'list'] as const,
+            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'tags', {}),
+            staleTime: Infinity,
+            placeholderData: keepPreviousData
+        })
+    }
 } satisfies TQueryFactory;
 
 export type QueryFactory = typeof queryFactory;

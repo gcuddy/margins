@@ -11,6 +11,11 @@ import type { Nullable } from 'kysely/dist/cjs/util/type-utils';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import pindex from '$lib/api/pindex';
 import { z } from 'zod';
+import {
+	filterLibrarySchema,
+	entryListSortSchemas,
+	get_library_schema
+} from '$lib/schemas/library';
 
 type AliasedEb = ExpressionBuilder<
 	DB & Record<'b', Bookmark> & Record<'e', Entry> & Record<'i', Nullable<Interaction>>,
@@ -42,77 +47,7 @@ function get_annotations(eb: AliasedEb, userId: string) {
 	);
 }
 
-const defaultCursorSchema = z.object({
-	sort_order: z.number(),
-	updatedAt: z.coerce.date()
-});
-
-const entryListSortSchemas = z.union([
-	z.object({
-		sort: z.literal('manual').nullish(),
-		// order: z.nativeEnum(['asc', 'desc']),
-		cursor: defaultCursorSchema.nullish()
-	}),
-	z.object({
-		sort: z.literal('updatedAt'),
-		cursor: z
-			.object({
-				updatedAt: z.coerce.date(),
-				id: z.number()
-			})
-			.nullish()
-	}),
-	z.object({
-		// sort: z.nu
-		sort: z.literal('title'),
-		cursor: z
-			.object({
-				title: z.string(),
-				id: z.number()
-			})
-			.nullish()
-	}),
-	z.object({
-		sort: z.literal('author'),
-		cursor: z
-			.object({
-				author: z.string(),
-				id: z.number()
-			})
-			.nullish()
-	})
-]);
-
-const relativeDatesSchema = z.object({
-	num: z.number().int().positive(),
-	unit: z.enum(['day', 'week', 'month', 'year'])
-});
-
-const gte = z.object({
-	gte: z.coerce.date().or(relativeDatesSchema)
-});
-
-const lte = z.object({
-	lte: z.coerce.date().or(relativeDatesSchema)
-});
-
-const equals = z.object({
-	equals: z.coerce.date()
-});
-
-export const filterLibrarySchema = z.object({
-	createdAt: z.union([gte, lte, equals]).optional()
-});
-export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
-
-export const get_library_schema = z
-	.object({
-		status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
-		search: z.string().optional(),
-		type: typeSchema.nullish(),
-		filter: filterLibrarySchema.optional()
-	})
-	.and(entryListSortSchemas);
+export { get_library_schema };
 
 export type GetLibrarySchema = z.input<typeof get_library_schema>;
 
@@ -124,7 +59,6 @@ export async function get_library({
 	status,
 	search,
 	sort,
-	type,
 	filter
 }: { userId: string } & z.input<typeof get_library_schema>) {
 	const take = 25;
@@ -151,6 +85,9 @@ export async function get_library({
 			'e.spotifyId',
 			'b.status',
 			'b.sort_order',
+			// hate how i've done this!
+			'b.title as bookmark_title',
+			'b.author as bookmark_author',
 			'i.progress',
 			'i.currentPage'
 		])
@@ -277,55 +214,70 @@ export async function get_library({
 			break;
 		}
 		case 'author': {
-			query = query.orderBy('e.author', 'asc').orderBy('e.id', 'asc');
+			query = query.orderBy(eb => eb.fn.coalesce('b.author', 'e.author')).orderBy('e.id', 'asc');
+            // query.orderBy(eb => eb.case()
+            //     .when(eb("b.author", "is", null))
+            //     .then(eb.ref("e.author"))
+            //     .else(eb.ref("b.author"))
+            //     .end()
+            // )
 			if (cursor) {
 				query = query.where((eb) =>
 					eb.or([
-						eb('e.author', '>', cursor.author),
-						eb('e.author', '=', cursor.author).and('e.id', '>', cursor.id)
+                        eb(eb.fn.coalesce("b.author", "e.author"), '>', cursor.author),
+						eb(eb.fn.coalesce("b.author", "e.author"), '=', cursor.author).and('e.id', '>', cursor.id)
 					])
 				);
 			}
 		}
 	}
+
 	if (search) {
-		query = query.where('e.title', 'like', `%${search}%`);
-	}
-	if (type) {
-		query = query.where('e.type', '=', type);
+		query = query.where(eb => eb.or([
+            eb('e.title', 'like', `%${search}%`),
+            eb(eb.fn.coalesce('b.author', 'e.title'), 'like', `%${search}%`),
+        ]))
 	}
 	if (filter) {
-		const { createdAt } = filter;
+		const { createdAt, type } = filter;
+		if (type) {
+			query = query.where('e.type', '=', type);
+		}
 		if (createdAt) {
-			if ('gte' in createdAt && createdAt.gte) {
-				if (createdAt.gte instanceof Date) {
-					query = query.where('e.createdAt', '>=', createdAt.gte);
-				} else {
+			const createdAts = Array.isArray(createdAt) ? createdAt : [createdAt];
+			for (const createdAt of createdAts) {
+				if ('gte' in createdAt && createdAt.gte) {
+					if (createdAt.gte instanceof Date) {
+						query = query.where('e.createdAt', '>=', createdAt.gte);
+					} else {
+						query = query.where(
+							'b.createdAt',
+							'<=',
+							sql`NOW() - INTERVAL ${sql.raw(createdAt.gte.num + ' ' + createdAt.gte.unit)}`
+						);
+						// interval
+					}
+				} else if ('lte' in createdAt && createdAt.lte) {
+					if (createdAt.lte instanceof Date) {
+						query = query.where('e.createdAt', '<=', createdAt.lte);
+					} else {
+						query = query.where(
+							'b.createdAt',
+							'>=',
+							sql`NOW() - INTERVAL ${sql.raw(
+								createdAt.lte.num.toString() + ' ' + createdAt.lte.unit
+							)}`
+						);
+					}
+				} else if ('equals' in createdAt && createdAt.equals) {
+					// use between start of day and end of day for equals
+					const date = new Date(createdAt.equals).toISOString().slice(0, 10);
 					query = query.where(
-						'b.createdAt',
-						'>=',
-						sql`NOW() - INTERVAL ${createdAt.gte.num} ${createdAt.gte.unit}`
-					);
-					// interval
-				}
-			} else if ('lte' in createdAt && createdAt.lte) {
-				if (createdAt.lte instanceof Date) {
-					query = query.where('e.createdAt', '<=', createdAt.lte);
-				} else {
-					query = query.where(
-						'b.createdAt',
-						'<=',
-						sql`NOW() - INTERVAL ${sql.raw(
-							createdAt.lte.num.toString() + ' ' + createdAt.lte.unit
-						)}`
+						sql`b.createdAt >= "${sql.raw(date)} 00:00:00"  AND b.createdAt <= "${sql.raw(
+							date
+						)} 23:59:59"`
 					);
 				}
-			} else if ('equals' in createdAt && createdAt.equals) {
-				// use between start of day and end of day for equals
-				const date = new Date(createdAt.equals).toISOString().slice(0, 10);
-				query = query.where(
-					sql`b.createdAt >= "${sql.raw(date)} 00:00:00"  AND b.createdAt <= "${sql.raw(date)} 23:59:59"`
-				);
 			}
 		}
 	}
@@ -349,7 +301,7 @@ export async function get_library({
 				// TODO continue here with cursors
 				case 'author': {
 					nextCursor = {
-						author: nextItem.author,
+						author: nextItem.bookmark_author ?? nextItem.author,
 						id: nextItem.id
 					};
 					break;
@@ -377,6 +329,8 @@ export async function get_library({
 }
 
 export type LibraryResponse = Awaited<ReturnType<typeof get_library>>;
+
+export type LibraryEntry = LibraryResponse['entries'][number];
 
 export async function get_entry_details(
 	id: string | number,

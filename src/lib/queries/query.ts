@@ -299,7 +299,8 @@ export async function mutation<T extends keyof Mutations>(
 ): Promise<Awaited<ReturnType<Mutations[T]['fn']>>> {
 	isMutating.set(true);
 	const { fetcher = fetch, userId = null } = base || {};
-	let url = base.url.origin + `/tests/sq/${fn}`;
+    console.log(`mutating`)
+	let url = base?.url?.origin + `/tests/sq/${fn}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}

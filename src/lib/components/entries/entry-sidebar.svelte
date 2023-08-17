@@ -57,6 +57,7 @@
 	import { ago } from '$lib/utils/date';
 	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
+	import EntryAuthorInput from './entry-author-input.svelte';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
@@ -225,7 +226,7 @@
 					{#if $query.data?.entry?.uri?.startsWith('http')}
 						<div class="sidebar-row">
 							<Muted>URL</Muted>
-							<Muted class="truncate"
+							<Muted class="truncate px-2"
 								><a href={$query.data?.entry.uri} target="_blank">{$query.data?.entry.uri}</a
 								></Muted
 							>
@@ -235,22 +236,23 @@
 						{@const domain = getHostname($query.data?.entry.uri)}
 						<div class="sidebar-row">
 							<Muted>Domain</Muted>
-							<Muted class="truncate"><a href="/tests/domain/{domain}">{domain}</a></Muted>
+							<Muted class="truncate px-2"><a href="/tests/domain/{domain}">{domain}</a></Muted>
 						</div>
 					{/if}
-					<div class="sidebar-row">
-						<Muted>Author</Muted>
+					{#if $query.data?.entry?.id}
+						<div class="sidebar-row">
+							<Muted>Author</Muted>
 
-						<Input variant="ghost" value={$query.data?.entry?.author} />
-						<Button
-							as="a"
-							href="/tests/people/{$query.data?.entry?.author}"
-							variant="ghost"
-							size="sm"
-						>
-							<Locate class="h-3 w-3" />
-						</Button>
-					</div>
+							<!-- <Input variant="ghost" value={$query.data?.entry?.author} /> -->
+							<EntryAuthorInput
+								author={$query.data?.entry?.bookmark?.author ?? $query.data?.entry?.author ?? ''}
+								entryId={$query.data?.entry?.id}
+							/>
+							<Button href="/tests/people/{$query.data?.entry?.author}" variant="ghost" size="sm">
+								<ChevronRightIcon class="h-3 w-3" />
+							</Button>
+						</div>
+					{/if}
 					{#if $page.data.tagForm && $query.data?.entry}
 						<div class="sidebar-row">
 							<Muted>Tags</Muted>
@@ -262,8 +264,9 @@
 						{#if $query.isLoading}
 							<Skeleton class="h-9 w-full grow" />
 						{:else if $query.isSuccess}
+							{@const status = $query.data?.entry?.bookmark?.status}
 							<LibraryForm
-								status={$query.data?.entry?.bookmark?.status}
+								{status}
 								type={$query.data.type}
 								entryId={$query.data?.entry?.id}
 								googleBooksId={$query.data.book?.id ?? undefined}
@@ -271,6 +274,11 @@
 								spotifyId={$query.data.album?.id}
 								tmdbId={$query.data.movie?.id ?? $query.data.tv?.id}
 							/>
+							{#if status}
+								<Button href="/tests/library/{status.toLowerCase()}" variant="ghost" size="sm">
+									<ChevronRightIcon class="h-3 w-3" />
+								</Button>
+							{/if}
 						{/if}
 					</div>
 					{#if $page.data.updateBookmarkForm && $query.data?.entry}
@@ -541,6 +549,10 @@
 
 		> :global(*:first-child) {
 			@apply w-24 shrink-0;
+		}
+
+		> :global(*:nth-child(2)) {
+			@apply px-2 grow;
 		}
 	}
 </style>

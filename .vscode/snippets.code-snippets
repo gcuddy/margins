@@ -32,4 +32,12 @@
 			"</script>"
 		],
 	},
+    "export className as class": {
+        "scope": "svelte,typescript",
+        "prefix": "classname",
+        "body": [
+            "let className: \\$\\$Props['class'] = undefined",
+            "export { className as class };",
+        ],
+    }
 }

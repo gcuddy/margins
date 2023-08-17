@@ -39,7 +39,7 @@
 	import { render_html } from '$components/ui/editor/utils';
 	import { portal } from 'svelte-portal';
 	import { InfiniteData, useQueryClient } from '@tanstack/svelte-query';
-	import type { LibraryResponse } from '$lib/server/queries';
+	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils/tailwind';
 	import Separator from '$components/ui/Separator.svelte';
@@ -61,7 +61,10 @@
 
 	export let view: VariantProps<typeof entryItemVariants>['view'] = 'list';
 
-	export let entry: EntryInList;
+	export let entry: LibraryEntry;
+
+    // Computed
+    $: author = entry.bookmark_author || entry.author;
 
 	export let border = true;
 
@@ -415,8 +418,8 @@
 					</div>
 				</div>
 				<div class="flex">
-					{#if entry.author}
-						<Muted class="text-xs">{entry.author}</Muted>
+					{#if author}
+						<Muted class="text-xs">{author}</Muted>
 					{/if}
 				</div>
 			</div>

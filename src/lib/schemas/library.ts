@@ -2,13 +2,12 @@ import { typeSchema } from '$lib/types';
 import { Status } from '@prisma/client';
 import { z } from 'zod';
 
-
 const defaultCursorSchema = z.object({
 	sort_order: z.number(),
 	updatedAt: z.coerce.date()
 });
 
-const entryListSortSchemas = z.union([
+export const entryListSortSchemas = z.union([
 	z.object({
 		sort: z.literal('manual').nullish(),
 		// order: z.nativeEnum(['asc', 'desc']),
@@ -61,10 +60,12 @@ const equals = z.object({
 	equals: z.coerce.date()
 });
 
-export const createdAtFilter = z.union([gte, lte, equals])
+export const createdAtFilter = z.union([gte, lte, equals]);
+export type CreatedAtFilter = z.infer<typeof createdAtFilter>;
 
 export const filterLibrarySchema = z.object({
-	createdAt: createdAtFilter.optional()
+	createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),
+	type: typeSchema.nullish()
 });
 export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
 
@@ -72,7 +73,6 @@ export const get_library_schema = z
 	.object({
 		status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
 		search: z.string().optional(),
-		type: typeSchema.nullish(),
 		filter: filterLibrarySchema.optional()
 	})
 	.and(entryListSortSchemas);

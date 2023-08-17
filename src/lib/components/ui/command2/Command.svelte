@@ -1,13 +1,35 @@
 <script lang="ts">
-	import Combobox from "$lib/components/helpers/Combobox.svelte";
-	import type { ComponentProps } from "svelte";
-    type T = $$Generic<Object>;
-    export let values: T[];
+	import { cn } from '$lib/utils';
+	import { ctx } from './ctx';
+	import type { RootProps } from './types';
 
-    interface $$Props extends ComponentProps<Combobox<any>> {}
+	export let value: string | undefined = undefined;
+	const {
+		state: { selectedValue }
+	} = ctx.set({
+		defaultSelectedValue: value ? [value] : []
+	});
 
+	$: value = $selectedValue[0];
+
+	type $$Props = RootProps;
+
+	export let asChild = false;
+	export let unstyled = false;
+	let className: $$Props['class'] = undefined;
+	export { className as class };
 </script>
 
-<Combobox {values}>
-    <!--  -->
-</Combobox>
+{#if asChild}
+	<slot />
+{:else}
+	<div
+		class={cn(
+			!unstyled &&
+				'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground',
+			className
+		)}
+	>
+		<slot />
+	</div>
+{/if}

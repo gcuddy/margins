@@ -132,6 +132,8 @@ model Bookmark {
     @@index([stateId])
     @@index([userId, stateId])
     @@index([interactionId, stateId, uri])
+
+    @@index([author])
 }
 
 model Task {

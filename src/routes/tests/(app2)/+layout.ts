@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { QueryClient, keepPreviousData } from '@tanstack/svelte-query';
 import { browser } from '$app/environment';
+import { toast } from 'svelte-sonner';
 
 export async function load({ data }) {
 	const queryClient = new QueryClient({
@@ -10,7 +11,13 @@ export async function load({ data }) {
 				staleTime: 1000 * 60 * 2, // 2 minutes,
 				gcTime: 1000 * 60 * 60 * 24, // 24 hours (for persistence)
                 // placeholderData: keepPreviousData // keep previous data while fetching new data (TODO REVIEW if this is what we want )
-			}
+                networkMode: "offlineFirst"
+			},
+            mutations: {
+                onError: (err) => {
+                    if (browser) toast.error(err.message)
+                }
+            }
 		}
 	});
 

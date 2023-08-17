@@ -18,6 +18,7 @@ import {
 	entry_by_id_schema,
 	getNotebook,
 	getNotebookSchema,
+	get_authors,
 	get_notes_for_tag,
 	s_add_to_collection,
 	saveToLibrarySchema,
@@ -138,11 +139,7 @@ export const mutations = {
 		}
 	}),
 	updateBookmark: query({
-		schema: updateBookmarkSchema.and(
-			z.object({
-				userId: z.string().optional()
-			})
-		),
+		schema: updateBookmarkSchema,
 		fn: async ({ input, ctx }) =>
 			updateBookmark({
 				...input,
@@ -706,6 +703,9 @@ export const queries = {
     count_library: query({
         schema: countLibrarySchema,
         fn: count_library
+    }),
+    get_authors: query({
+        fn: get_authors
     })
 } as const;
 

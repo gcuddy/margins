@@ -1,6 +1,8 @@
-import { InfiniteData, QueryClient, createMutation } from '@tanstack/svelte-query';
+import { InfiniteData, QueryClient, createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { MutationInput, mutation, QueryOutput } from '../query';
 import type { LibraryResponse } from '$lib/server/queries';
+import { get } from 'svelte/store';
+import { page } from '$app/stores';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
@@ -12,6 +14,24 @@ const mutateStatus = (queryClient: QueryClient) => {
         }
 	});
 };
+
+
+export function createSetTagsMutation() {
+    const queryClient = useQueryClient();
+    return createMutation({
+        mutationFn: (input: MutationInput<"set_tags_on_entry">) => {
+            return mutation(get(page), 'set_tags_on_entry', input)
+        },
+        onMutate(...args) {
+            console.log('mutating set tags', args)
+        },
+        onSuccess() {
+            queryClient.invalidateQueries({
+                queryKey: ["entries"]
+            })
+        }
+    })
+}
 
 // TODO: update entry state across al...
 

@@ -83,6 +83,8 @@
 
 	export let data: PageData;
 
+    $: author = data.entry?.bookmark?.author ?? data.entry?.author;
+
 	const mainnav: Writable<MenuBar> = getContext('mainnav');
 
 	let align = ['left', 'justify'] as const;
@@ -130,47 +132,49 @@
 
 	const annotateMutation = createMutation({
 		mutationFn: async (input: MutationInput<'save_note'>) => {
+            console.log({data, input})
 			if (!data.entry) return;
+            console.log("saving annotation")
 			mutation($page, 'save_note', {
 				entryId: data.entry.id,
 				...input
 			});
 		},
 		async onMutate(newData) {
-			await queryClient.cancelQueries({
-				queryKey: ['entries']
-			});
+			// await queryClient.cancelQueries({
+			// 	queryKey: ['entries']
+			// });
 
-			// Snapshot the previous value
-			const previousEntryData = queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
+			// // Snapshot the previous value
+			// const previousEntryData = queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
 
-			console.log({ previousEntryData });
+			// console.log({ previousEntryData });
 
-			// Optimistically update to the new value
-			queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
-				if (!old) return old;
-				if (!old.entry) return old;
-				console.log({ old });
-				// newData.
-				return {
-					...old,
-					entry: {
-						...old.entry,
-						type: 'article',
-						annotations: [
-							...(old.entry?.annotations || []),
-							{
-								...newData,
-								createdAt: new Date().toISOString(),
-								exact
-							} // -> todo create default annotation data
-						]
-					}
-				};
-			});
+			// // Optimistically update to the new value
+			// queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
+			// 	if (!old) return old;
+			// 	if (!old.entry) return old;
+			// 	console.log({ old });
+			// 	// newData.
+			// 	return {
+			// 		...old,
+			// 		entry: {
+			// 			...old.entry,
+			// 			type: 'article',
+			// 			annotations: [
+			// 				...(old.entry?.annotations || []),
+			// 				{
+			// 					...newData,
+			// 					createdAt: new Date().toISOString(),
+			// 					exact
+			// 				} // -> todo create default annotation data
+			// 			]
+			// 		}
+			// 	};
+			// });
 
-			// Return a context object with the snapshotted value
-			return { previousEntryData };
+			// // Return a context object with the snapshotted value
+			// return { previousEntryData };
 		},
 		onError: (err, newTodo, context) => {
 			toast.error('Failed to save annotation');
@@ -638,7 +642,7 @@
 							e.preventDefault();
 							return;
 						}
-
+                        console.log(`About to mutate...`)
 						$annotateMutation.mutate({
 							id,
 							target: {
@@ -846,10 +850,10 @@
                 {data.entry.summary}
             </Lead>
         {/if}
-		{#if data.entry?.author}
+		{#if author}
 			<a
 				class="text-sm font-medium uppercase tracking-wider"
-				href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}">{data.entry?.author}</a
+				href="/tests/people/{encodeURIComponent(author ?? '')}">{author}</a
 			>
 			<!-- <Lead class="not-prose"
 				><a href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}"

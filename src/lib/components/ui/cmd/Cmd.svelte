@@ -57,7 +57,8 @@
 		createCombobox,
 		type ComboboxFilterFunction,
 		melt,
-		CreateComboboxProps
+		CreateComboboxProps,
+		createPopover
 	} from '@melt-ui/svelte';
 	import { effect, generateId, isElementDisabled } from '@melt-ui/svelte/internal/helpers';
 	import {
@@ -117,7 +118,12 @@
 
 	export let closeOnAction = true;
 
+    let internalBounce = true;
+    export { internalBounce as bounce};
+
 	const dialogContentEl = getContext('dialogContentEl') as Writable<HTMLElement | null>;
+
+	const popover = getContext('Popover') as ReturnType<typeof createPopover> | null;
 
 	export let items: StoreOrVal<CommandGroup[]> = [
 		// dummy commands
@@ -187,7 +193,9 @@
 	$stack.root;
 
 	function bounce() {
-		const node = dialogContentEl ? $dialogContentEl : container;
+        if (!internalBounce) return;
+		const node = container?.closest('[data-melt-dialog-content]') ?? container?.closest('[data-melt-popover-content]') ?? container;
+        console.log({node})
 		if (node) {
 			const style = getComputedStyle(node);
 			const transform = style.transform === 'none' ? '' : style.transform;
@@ -391,10 +399,10 @@
 		closeOnOutsideClick: false,
 		onValueChange: (value) => {
 			console.log(`onValueChange`, { value });
-            if (changing) {
-                changing = false;
-                return value.next;
-            }
+			if (changing) {
+				changing = false;
+				return value.curr;
+			}
 			if (value.next?.action) {
 				console.log(`Running action`, value.next);
 				value.next.action();
@@ -411,7 +419,7 @@
 			}
 			if (value.next) if (value.next) onChange(value.next);
 			console.log({ value });
-			return value.next;
+			return value.curr;
 		}
 
 		// forceVisible: true
@@ -419,15 +427,15 @@
 
 	$: console.log({ $value });
 
-    let changing = false;
+	let changing = false;
 
-    $: if (defaultId) {
-        const item = flattenedItems.find(item => item.id === defaultId);
-        if (item) {
-            changing = true;
-            value.set(item);
-        }
-    }
+	$: if (defaultId) {
+		const item = flattenedItems.find((item) => item.id === defaultId);
+		if (item) {
+			changing = true;
+			value.set(item);
+		}
+	}
 
 	let inputEl: HTMLInputElement;
 
@@ -498,7 +506,7 @@
 <div
 	bind:this={container}
 	class={cn(
-		'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground transition-transform duration-100 ease',
+		'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground transition-transform duration-200 ease',
 		className
 	)}
 >

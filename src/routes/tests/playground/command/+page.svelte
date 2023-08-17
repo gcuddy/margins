@@ -6,7 +6,7 @@
 	import type Cmd from '$components/ui/cmd/Cmd.svelte';
 	import type { CommandGroup } from '$components/ui/cmd/Cmd.svelte';
 	import CmdDialog from '$components/ui/cmd/CmdDialog.svelte';
-	import { updateEntries } from '$lib/queries/mutations/index';
+	import { createSetTagsMutation, updateEntries } from '$lib/queries/mutations/index';
 	import { mutation, type QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { statuses, statusesWithIcons } from '$lib/status';
@@ -25,6 +25,7 @@
 		PartyPopperIcon,
 		Settings,
 		SmileIcon,
+		TagIcon,
 		User
 	} from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
@@ -59,6 +60,20 @@
 			placeholderData: keepPreviousData
 		}))
 	);
+
+	const tagsEnabled = writable(false);
+
+	const tagsQuery = createQuery(
+		derived(tagsEnabled, ($tagsEnabled) => ({
+			...queryFactory.tags.list(),
+			enabled: $tagsEnabled,
+			placeholderData: keepPreviousData,
+            staleTime: Infinity,
+            refetchOnMount: false,
+		}))
+	);
+
+    const setTagsMutation = createSetTagsMutation();
 
 	const queryClient = useQueryClient();
 	const items: CommandGroup[] = [
@@ -101,26 +116,31 @@
 													.catch(() => queryClient.setQueriesData({ queryKey }, previousQueries))
 													.then(() => {
 														checkedEntryIds.clear();
-														toast.success(`${$checkedEntryIds.length > 1 ? 'Entries' : 'Entry'} moved to ${status}`, {
-															// description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
-															action: selectedStatus
-																? {
-																		label: 'Undo',
-																		onClick: () => {
-                                                                            // TODO
-																			// dispatch('move', {
-																			// 	status: old_status,
-																			// 	entries: [entry]
-																			// });
-																			// mutation($page, 'update_status', {
-																			// 	ids: $checked,
-																			// 	status: old_status,
-																			// 	sort_order: old_sort_order
-																			// });
-																		}
-																  }
-																: undefined
-														});
+														toast.success(
+															`${
+																$checkedEntryIds.length > 1 ? 'Entries' : 'Entry'
+															} moved to ${status}`,
+															{
+																// description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
+																action: selectedStatus
+																	? {
+																			label: 'Undo',
+																			onClick: () => {
+																				// TODO
+																				// dispatch('move', {
+																				// 	status: old_status,
+																				// 	entries: [entry]
+																				// });
+																				// mutation($page, 'update_status', {
+																				// 	ids: $checked,
+																				// 	status: old_status,
+																				// 	sort_order: old_sort_order
+																				// });
+																			}
+																	  }
+																	: undefined
+															}
+														);
 													})
 													.finally(() => {
 														queryClient.invalidateQueries({
@@ -155,6 +175,54 @@
 								]
 							};
 						}
+					},
+					{
+						name: 'Tag…',
+						icon: TagIcon,
+						addPage() {
+							tagsEnabled.set(true);
+							return {
+								page: derived(tagsQuery, ($tagsQuery) => {
+                                    const entries = getCheckedEntriesFromQueryCache(queryClient);
+                                    console.log({entries});
+
+                                    const existingTags = entries.reduce((acc, entry) => {
+                                        entry.tags.forEach((tag) => {
+                                            if (!acc.includes(tag)) {
+                                                acc.push(tag);
+                                            }
+                                        });
+                                        return acc;
+                                    }, [] as {id: number, name: string}[]);
+									return [
+										{
+											loading: $tagsQuery.isLoading,
+											items:
+												$tagsQuery.data?.map((tag) => ({
+													name: tag.name,
+													terms: tag.name,
+													// action: () => goto(make_link(tag)),
+                                                    action: () => {
+                                                        const tags = existingTags.includes(tag) ? existingTags.filter((t) => t.id !== tag.id) : [...existingTags, tag];
+                                                        $setTagsMutation.mutate({
+                                                            entries: $checkedEntryIds,
+                                                            tags,
+                                                        });
+                                                    },
+													icon: TagIcon
+												})) ?? []
+										}
+									];
+								}),
+								destroy() {
+									tagsEnabled.set(false);
+								},
+								placeholder: 'Search tags…'
+							};
+						}
+						// addPage() {
+
+						// }
 					}
 				]
 			};
@@ -172,7 +240,7 @@
 								return [
 									{
 										group: $term ? 'Search' : 'Recents',
-                                        // loading: $entriesSearchQuery.isLoading,
+										// loading: $entriesSearchQuery.isLoading,
 										items: $term
 											? $entriesSearchQuery.data ?? []
 											: $recents.entries.map((e) => ({
@@ -249,7 +317,14 @@
 	// TODO make stack managed internally
 </script>
 
-<CmdDialog loading={$entriesSearchQuery.isLoading} showSelectActions bind:term={$term} bind:cmd {items} onChange={() => {}} />
+<CmdDialog
+	loading={$entriesSearchQuery.isLoading}
+	showSelectActions
+	bind:term={$term}
+	bind:cmd
+	{items}
+	onChange={() => {}}
+/>
 {#if _confetti}
 	{#key _confetti}
 		<div

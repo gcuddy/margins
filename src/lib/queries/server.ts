@@ -21,8 +21,9 @@ import { z } from 'zod';
 import { tmdb } from '$lib/api/tmdb';
 import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
-import type { Insertable } from 'kysely';
-import type { Entry } from '$lib/prisma/kysely/types';
+import type { Insertable, SelectQueryBuilder } from 'kysely';
+import type { Bookmark, DB, Entry } from '$lib/prisma/kysely/types';
+import type { FilterLibrarySchema } from '$lib/schemas/library';
 
 type GetCtx<T extends z.ZodTypeAny> = {
 	input: z.input<T>;
@@ -75,24 +76,37 @@ export async function updateBookmark(
 	}
 ) {
 	const { data, userId } = variables;
-	let bookmarks = db.updateTable('Bookmark').set(data).where('userId', '=', userId);
 	if ('id' in variables) {
+		let bookmarks = db.updateTable('Bookmark').set(data).where('userId', '=', userId);
 		const { id } = variables;
 		if (Array.isArray(id)) {
 			bookmarks = bookmarks.where('id', 'in', id);
 		} else {
 			bookmarks = bookmarks.where('id', '=', id);
 		}
+		return await bookmarks.execute();
 	} else {
 		const { entryId } = variables;
-		if (Array.isArray(entryId)) {
-			bookmarks = bookmarks.where('entryId', 'in', entryId);
-		} else {
-			bookmarks = bookmarks.where('entryId', '=', entryId);
-		}
+		const entryIds = Array.isArray(entryId) ? entryId : [entryId];
+		let bookmarks = db
+			.insertInto('Bookmark')
+			.values(
+				entryIds.map((entryId) => ({
+					updatedAt: new Date(),
+					userId,
+					entryId,
+					bookmarked: 0,
+					...data
+				}))
+			)
+			.onDuplicateKeyUpdate(data);
+		return await bookmarks.execute();
+		// if (Array.isArray(entryId)) {
+		// 	bookmarks = bookmarks.where('entryId', 'in', entryId);
+		// } else {
+		// 	bookmarks = bookmarks.where('entryId', '=', entryId);
+		// }
 	}
-
-	return await bookmarks.execute();
 }
 
 export const getNotebookSchema = z.object({
@@ -324,7 +338,7 @@ export async function set_tags_on_entry({
 	tags,
 	entries,
 	userId
-}: z.infer<typeof tagsOnEntrySchema> & { userId: string }) {
+}: z.input<typeof tagsOnEntrySchema> & { userId: string }) {
 	// First, delete all tags on entries
 	// await db.deleteFrom("TagOnEntry").where("entryId", "in", entries).execute();
 
@@ -523,7 +537,7 @@ export async function entry_by_id({
 				jsonObjectFrom(
 					eb
 						.selectFrom('Bookmark as b')
-						.select(['b.id', 'b.status', 'b.createdAt'])
+						.select(['b.id', 'b.status', 'b.createdAt', 'b.bookmarked', 'b.author', 'b.title'])
 						// .select(eb => [jsonObjectFrom(
 						//     eb.selectFrom('auth_user as u').select(['u.username', 'u.id']).whereRef('u.id', '=', 'b.userId')
 						// )]).as('user')
@@ -698,19 +712,19 @@ export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySc
 	const { userId } = ctx;
 	const { status, filter } = input;
 	let query = db
-		.selectFrom('Bookmark')
-		.innerJoin('Entry', 'Entry.id', 'Bookmark.entryId')
-		.where('Bookmark.userId', '=', userId)
-		.select(({ fn, ref }) => [fn.count('Entry.id').as('count')]);
+		.selectFrom('Bookmark as b')
+		.innerJoin('Entry as e', 'e.id', 'b.entryId')
+		.where('b.userId', '=', userId)
+		.select(({ fn, ref }) => [fn.count('e.id').as('count')]);
 	if (status) {
-		query = query.where('Bookmark.status', '=', status);
+		query = query.where('b.status', '=', status);
 	}
 	if (filter) {
 		if (filter.type) {
-			query = query.where('Entry.type', '=', filter.type);
+			query = query.where('e.type', '=', filter.type);
 		}
 		if (filter.search) {
-			query = query.where('Entry.title', 'like', `%${filter.search}%`);
+			query = query.where('e.title', 'like', `%${filter.search}%`);
 		}
 	}
 
@@ -718,6 +732,73 @@ export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySc
 	return {
 		count: count as number
 	};
+}
+
+function run_filters(
+	query: SelectQueryBuilder<
+		DB & {
+			b: Bookmark;
+		} & {
+			e: Entry;
+		},
+		'b' | 'e',
+		{}
+	>,
+	{
+		filter,
+		search
+	}: {
+		filter: FilterLibrarySchema;
+		search?: string;
+	}
+) {
+	if (search) {
+		query = query.where('e.title', 'like', `%${search}%`);
+	}
+	if (filter) {
+		const { createdAt, type } = filter;
+		if (type) {
+			query = query.where('e.type', '=', type);
+		}
+		if (createdAt) {
+			const createdAts = Array.isArray(createdAt) ? createdAt : [createdAt];
+			for (const createdAt of createdAts) {
+				if ('gte' in createdAt && createdAt.gte) {
+					if (createdAt.gte instanceof Date) {
+						query = query.where('e.createdAt', '>=', createdAt.gte);
+					} else {
+						query = query.where(
+							'b.createdAt',
+							'<=',
+							sql`NOW() - INTERVAL ${sql.raw(createdAt.gte.num + ' ' + createdAt.gte.unit)}`
+						);
+						// interval
+					}
+				} else if ('lte' in createdAt && createdAt.lte) {
+					if (createdAt.lte instanceof Date) {
+						query = query.where('e.createdAt', '<=', createdAt.lte);
+					} else {
+						query = query.where(
+							'b.createdAt',
+							'>=',
+							sql`NOW() - INTERVAL ${sql.raw(
+								createdAt.lte.num.toString() + ' ' + createdAt.lte.unit
+							)}`
+						);
+					}
+				} else if ('equals' in createdAt && createdAt.equals) {
+					// use between start of day and end of day for equals
+					const date = new Date(createdAt.equals).toISOString().slice(0, 10);
+					query = query.where(
+						sql`b.createdAt >= "${sql.raw(date)} 00:00:00"  AND b.createdAt <= "${sql.raw(
+							date
+						)} 23:59:59"`
+					);
+				}
+			}
+		}
+	}
+	return query;
 }
 
 // const saveToLibrarySchema = z.object({
@@ -856,4 +937,25 @@ export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrar
 			status
 		})
 		.executeTakeFirst();
+}
+
+// this should be rolled into one big "extras" query maybe
+export async function get_authors({
+	ctx: { userId }
+}: {
+	ctx: {
+		userId: string;
+	};
+}) {
+	const authors = await db
+		.selectFrom('Bookmark as b')
+		.distinct()
+		.innerJoin('Entry as e', 'e.id', 'b.entryId')
+		.where('b.userId', '=', userId)
+		.where('e.author', 'is not', null)
+		.select('e.author')
+		.$narrowType<{ author: string }>()
+		.execute();
+
+	return authors.map((a) => a.author);
 }

@@ -5,9 +5,10 @@
 	import { cn } from '$lib/utils/tailwind';
 	import Button, { buttonVariants } from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
-	import { ArrowDownUpIcon, Check, FilterIcon, Loader2Icon, XIcon } from 'lucide-svelte';
+	import { ArrowDownUpIcon, CalendarPlusIcon, Check, FileIcon, FilterIcon, Loader2Icon, XIcon, TagIcon } from 'lucide-svelte';
 	import { types } from '$lib/types';
 	import debounce from 'just-debounce-it';
+	import Filter from '$components/ui/filters/Filter.svelte';
 	import {
 		Command,
 		CommandInput,
@@ -33,10 +34,18 @@
 	import Kbd from '$components/ui/KBD.svelte';
 	import Header from '$components/ui/Header.svelte';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { derived } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import type { LibrarySortType } from '$lib/server/queries';
 	import { LoaderIcon } from 'svelte-french-toast';
+	import Cmd from '$components/ui/cmd/Cmd.svelte';
+	import { defaultParseSearch, defaultStringifySearch } from '$lib/utils/search-params';
+	import { filterLibrarySchema, type FilterLibrarySchema } from '$lib/schemas/library';
+	import FilterBadge from '$components/ui/filters/FilterBadge.svelte';
+	import { createParamsStore, createSearchParamsStore } from '$lib/stores/search-params';
+	import { tweened } from 'svelte/motion';
+	import { cubicInOut, cubicOut } from 'svelte/easing';
+	import { afterUpdate } from 'svelte';
 
 	let form: HTMLFormElement;
 	let filter: Input;
@@ -50,9 +59,33 @@
 					type: $page.data.type,
 					search: $page.url.searchParams.get('search') ?? undefined
 				}
-			})
+			}),
+			select: (data: { count: number }) => data.count
 		}))
 	);
+
+    const tagsQueryEnabled = writable(false)
+    const tagsQuery = createQuery(
+        derived(tagsQueryEnabled, $tagsQueryEnabled => ({
+            ...queryFactory.tags.list(),
+            enabled: $tagsQueryEnabled
+        }))
+    )
+
+    const count = tweened(0, {
+        duration: 200,
+    });
+
+    $: if ($entryCount.data) {
+        console.log('setting count')
+        const newCount = parseInt($entryCount.data, 10);
+        console.log({newCount})
+        count.set(newCount, {
+            duration: 200,
+
+        })
+        console.log({$count})
+    }
 
 	const debounced_submit = debounce(() => {
 		if (typeof HTMLFormElement.prototype.requestSubmit === 'function') {
@@ -96,6 +129,33 @@
 	export let sort: NonNullable<LibrarySortType> = 'manual';
 	export let loading = false;
 
+	// const filters = writable<FilterLibrarySchema>({});
+
+	const filters = derived(page, ($page) => {
+		const rawObj = defaultParseSearch($page.url.search);
+		const parsed = filterLibrarySchema.safeParse(rawObj);
+
+		if (parsed.success) {
+			return parsed.data;
+		} else {
+			return {};
+		}
+	});
+
+	// const filterStore = createParamsStore(filterLibrarySchema);
+
+	// $: console.log({ $filterStore });
+
+	const filterStore = createSearchParamsStore(filterLibrarySchema);
+
+	const hasFilters = derived(filters, ($filters) => {
+		return Object.keys($filters).length > 0;
+	});
+
+	// const searchStr = derived([filters, page], [$filters, $page] => {
+	//     // const
+	// })
+
 	const sortTypes: { label: string; type: NonNullable<LibrarySortType> }[] = [
 		{
 			label: 'Manual',
@@ -114,6 +174,7 @@
 			type: 'updatedAt'
 		}
 	];
+	const filterOpen = writable(false);
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
@@ -129,9 +190,12 @@
 				<!-- hm -->
 			</noscript>
 
-			<Popover positioning={{
-                placement: "bottom-start"
-            }}>
+			<Popover
+				bind:open={$filterOpen}
+				positioning={{
+					placement: 'bottom-start'
+				}}
+			>
 				<PopoverTrigger
 					class={cn(!filter_type && buttonVariants({ variant: 'outline' }), 'border-dashed')}
 				>
@@ -145,7 +209,116 @@
 					{/if}
 				</PopoverTrigger>
 				<PopoverContent class="w-[200px] p-0">
-					<Command>
+					<!-- open={filterOpen} -->
+					<!-- open={filterOpen} -->
+					<Cmd
+						bounce={false}
+						items={[
+							{
+								items: [
+									{
+										name: 'Type',
+                                        icon: FileIcon,
+                                        props: {
+                                            class: "opacity-40"
+                                        },
+										addPage() {
+											return [
+												{
+													items: types.map((type) => ({
+														name: type,
+														action() {
+															const selected = filter_type === type.toLowerCase();
+															filter_type = selected ? '' : type.toLowerCase();
+															// if ($filterStore.type) {
+															//     $filterStore.type = undefined
+															// } else {
+															//     $filterStore.type = type;
+															// }
+															const url = $page.url;
+															if (filter_type) url.searchParams.set('type', filter_type);
+															else url.searchParams.delete('type');
+															goto(url, {
+																keepFocus: true,
+																replaceState: true,
+																noScroll: true,
+																invalidateAll: true
+															});
+															filterOpen.set(false);
+														}
+													}))
+												}
+											];
+										}
+									},
+									{
+										name: 'Saved Date',
+                                        icon: CalendarPlusIcon,
+                                        props: {
+                                            class: "opacity-40"
+                                        },
+										addPage() {
+											return {
+												page: [
+													{
+														items: [
+															{
+																name: '1 week ago',
+																action() {
+																	const url = $page.url;
+																	const exisiting = defaultParseSearch($page.url.search);
+																	const newSearch = defaultStringifySearch({
+																		...exisiting,
+																		createdAt: {
+																			gte: {
+																				num: 1,
+																				unit: 'week'
+																			}
+																		}
+																	});
+																	url.search = newSearch;
+																	goto(url, {
+																		keepFocus: true,
+																		replaceState: true,
+																		noScroll: true,
+																		invalidateAll: true
+																	});
+																	filterOpen.set(false);
+																}
+															}
+														]
+													}
+												]
+											};
+										}
+									},
+                                    {
+                                        name: "Tag",
+                                        icon: TagIcon,
+                                        props: {
+                                            class: "opacity-40"
+                                        },
+                                        addPage() {
+                                            // TODO only show tags that are in current view
+                                            tagsQueryEnabled.set(true);
+                                            return {
+                                                page: [
+                                                    {
+                                                        // items:
+                                                        items: []
+                                                    }
+                                                ],
+                                                destroy() {
+                                                    tagsQueryEnabled.set(false);
+                                                }
+                                            }
+                                        }
+                                    }
+								]
+							}
+						]}
+					/>
+					<!-- <Command>
 						<CommandInput placeholder="Filter..." />
 						<CommandList>
 							<CommandGroup>
@@ -179,30 +352,10 @@
 											{type}
 										</span>
 									</CommandItem>
-									<!-- <Button
-									on:click={async () => {
-										filter_type = selected ? '' : type.toLowerCase();
-										const url = $page.url;
-										invalidated.set(true);
-										if (filter_type) url.searchParams.set('type', filter_type);
-										else url.searchParams.delete('type');
-										goto(url, {
-											keepFocus: true,
-											replaceState: true,
-											noScroll: true,
-											invalidateAll: true
-										});
-										close(null);
-									}}
-									variant={selected ? 'secondary' : 'outline'}
-									size="sm"
-								>
-									{type}
-								</Button> -->
 								{/each}
 							</CommandGroup>
 						</CommandList>
-					</Command>
+					</Command> -->
 				</PopoverContent>
 			</Popover>
 			{#if filter_type}
@@ -213,16 +366,15 @@
 					</Button>
 				</div>
 			{/if}
-			<!-- count -->
 			<span class="text-xs hidden xl:inline text-muted-foreground">
-				<span class="tabular-nums">{$entryCount.data ? $entryCount.data.count : '...'}</span> entries
+				<span class="tabular-nums">{Math.round($count)}</span> entries
 			</span>
 		</div>
 	</div>
 	<div class="flex shrink justify-end items-center gap-2">
-        {#if loading}
-            <Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
-        {/if}
+		{#if loading}
+			<Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
+		{/if}
 		<div class="hidden md:block">
 			<DropdownMenu
 				positioning={{
@@ -269,3 +421,17 @@
 		</form>
 	</div>
 </Header>
+{#if /*$hasFilters*/ false}
+	<Header class="static">
+		{#each Object.entries($filters) as [type, filter]}
+			<FilterBadge {type} {filter} />
+			<!-- <div class="flex items-center gap-2">
+                <span class="text-xs text-muted-foreground">{key}</span>
+                <span class="text-xs text-muted-foreground">{value}</span>
+            </div> -->
+		{/each}
+	</Header>
+{/if}
+
+<Filter />
+<!-- TODO: Show FIlter bar here -->
