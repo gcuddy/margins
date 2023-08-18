@@ -17,8 +17,6 @@ type AsChild = {
     asChild?: boolean;
 }
 
-type RootProps = HTMLDivAttributes & AsChild & Unstyled & {
-    value?: string;
-}
+type RootProps = HTMLDivAttributes & AsChild & Unstyled;
 
 export type { InputProps, DivProps, RootProps, AsChild, ElProps };

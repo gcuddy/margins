@@ -1,33 +1,31 @@
-import { isBrowser, isHTMLElement } from '$lib/helpers';
+import { concatenateValues, deepEqual, isBrowser, isHTMLElement } from '$lib/helpers';
 // borrowing heavily from https://github.com/melt-ui/melt-ui/blob/develop/src/lib/builders/combobox/create.ts - hard dependency here
-import { effect, generateId, getOptions, isElementDisabled, kbd } from '@melt-ui/svelte/internal/helpers';
+import {
+	effect,
+	generateId,
+	getOptions,
+	isElementDisabled,
+	kbd
+} from '@melt-ui/svelte/internal/helpers';
 import { tick } from 'svelte';
 import { Writable, derived, get, writable } from 'svelte/store';
 
 import commandScore from 'command-score';
 
-type SelectedValue =
-	| {
-			multiple?: false;
-			selectedValue?: Writable<string | null>;
-	  }
-	| {
-			multiple: true;
-			selectedValue?: Writable<string[]>;
-	  };
-
-export type CommandProps = {
+export type CommandProps<T> = {
 	open?: Writable<boolean>;
 	inputValue?: Writable<string>;
 	// activeValue?: Writable<string | null>;
 	defaultActiveValue?: string | null;
 	multiple?: boolean;
 	/**
-	 * The selected value(s) of the combobox. If `multiple` is `true`, this will be an array of strings. Otherwise, it will be an array with a single string.
+	 * The selected value(s) of the combobox. Can be anything.
 	 */
-	selectedValue?: Writable<string[]>;
-	defaultSelectedValue?: string[];
+	selectedValue?: Writable<T[]>;
+	valueToString?: (value: T) => string;
+	defaultSelectedValue?: T[];
 	filterFunction?: (item: string, inputValue: string) => number;
+	onClose?: () => void;
 };
 
 type Filtered = {
@@ -43,7 +41,7 @@ export { kbd };
 
 export const SELECT_EVENT_NAME = 'command-item-select';
 
-export function createCommandStore(props?: CommandProps) {
+export function createCommandStore<T>(props?: CommandProps<T>) {
 	const { open } = props ?? {};
 	const openStore = open ?? writable(false);
 	const activeElement = writable<HTMLElement | null>(null);
@@ -56,16 +54,56 @@ export function createCommandStore(props?: CommandProps) {
 		props?.defaultActiveValue ?? null
 	);
 	const inputValue = props?.inputValue ?? writable('');
-	const selectedValue = props?.selectedValue ?? writable<string[]>([]);
+	const selectedValue = props?.selectedValue ?? writable<T[]>([]);
+	// TODO: shuold we maintain selectedIds without deriving because of potentially expensive derived function?
 
 	const allItemIds = writable<Set<string>>(new Set()); // [...itemIds]
-	const idsToValueMap = writable<Map<string, string>>(new Map()); // id → value
+	const idsToValueMap = writable<Map<string, T>>(new Map()); // id → value
 	const allGroupIds = writable<Map<string, Set<string>>>(new Map()); // groupId → [...itemIds]
-    const idsToCallbackMap = writable<Map<string, () => void>>(new Map()); // id → callback
+	const idsToCallbackMap = writable<Map<string, () => void>>(new Map()); // id → callback
 
-    const container = writable<HTMLElement | null>(null);
+	// const valueToIdsMap = derived(idsToValueMap, ($idsToValueMap) => {
+	//     const map = new Map<T, string[]>();
+	//     for (const [id, value] of $idsToValueMap.entries()) {
+	//         const ids = map.get(value) ?? [];
+	//         ids.push(id);
+	//         map.set(value, ids);
+	//     }
+	//     return map;
+	// });
+
+	// const selectedIds = derived([selectedValue, valueToIdsMap], ([$selectedValue, $valueToIdsMap]) => {
+	//     const ids: string[] = [];
+	//     for (const value of $selectedValue) {
+	//         const _ids = $valueToIdsMap.get(value) ?? [];
+	//         ids.push(..._ids);
+	//     }
+	//     return ids;
+	// })
+
+	const selectedIds = derived(
+		[selectedValue, idsToValueMap],
+		([$selectedValue, $idsToValueMap]) => {
+			const ids: string[] = [];
+			for (const value of $selectedValue) {
+				const _ids = Array.from($idsToValueMap.entries())
+					.filter(([_, v]) => deepEqual(v, value))
+					.map(([id, _]) => id);
+				ids.push(..._ids);
+			}
+			return ids;
+		}
+	);
+
+	const container = writable<HTMLElement | null>(null);
 
 	const filterFunction = props?.filterFunction ?? commandScore;
+
+	const internalValueToString =
+		props?.valueToString ??
+		((v) => {
+			return concatenateValues(v);
+		});
 
 	const filtered = derived(
 		[allItemIds, allGroupIds, inputValue, idsToValueMap],
@@ -77,7 +115,7 @@ export function createCommandStore(props?: CommandProps) {
 				.filter((item) => {
 					const value = $idsToValueMap.get(item);
 					if (!value) return false;
-					const score = filterFunction(value, $inputValue);
+					const score = filterFunction(internalValueToString(value), $inputValue);
 					itemToScoreMap.set(item, score);
 					if (score > 0) {
 						return true;
@@ -193,47 +231,51 @@ export function createCommandStore(props?: CommandProps) {
 	}
 
 	function selectItem(item: HTMLElement) {
-		const value = item.getAttribute('data-value');
+		// const value = item.getAttribute('data-value');
 
-        console.log('selecting item', { value })
+		const $idsToValueMap = get(idsToValueMap);
+        console.log({$idsToValueMap})
+		const val = $idsToValueMap.get(item.id);
 
-        const containsPages = item.getAttribute('data-contains-pages') !== null;
+		const containsPages = item.getAttribute('data-contains-pages') !== null;
 
-        if (!containsPages) {
-            // Then update selected value
-            selectedValue.update(($selectedValue) => {
-                if (!value) return $selectedValue;
-                if ($selectedValue.includes(value)) {
-                    return $selectedValue.filter((v) => v !== value);
-                } else {
-                    if (props?.multiple) {
-                        return [...$selectedValue, value];
-                    } else {
-                        return [value];
-                    }
-                }
-            });
-        }
 
-        console.log({
-            selectedValue: get(selectedValue)
-        })
+        console.log({val})
 
-        console.log('dispatching event to', item)
+		if (!containsPages) {
+			// Then update selected value
+			selectedValue.update(($selectedValue) => {
+				if (!val) return $selectedValue;
+				if (!props?.multiple) {
+					return [val];
+				}
+				const idx = $selectedValue.findIndex((v) => deepEqual(v, val));
+				if (idx !== -1) {
+					// TODO: is thhis the best way to do this?
+					return $selectedValue.filter((_, i) => i !== idx);
+				} else {
+					if (props?.multiple) {
+						return [...$selectedValue, val];
+					} else {
+						return [val];
+					}
+				}
+			});
+		}
 
-        const callback = get(idsToCallbackMap).get(item.id);
-        if (callback) {
-            callback();
-        }
+		console.log({
+			selectedValue: get(selectedValue)
+		});
 
+		console.log('dispatching event to', item);
+
+		const callback = get(idsToCallbackMap).get(item.id);
+		if (callback) {
+			callback();
+		}
 
 		// item.dispatchEvent(new Event(SELECT_EVENT_NAME));
 	}
-
-    effect(selectedValue, (selectedValue) => {
-        console.log('selectedValue changed', { selectedValue })
-
-    })
 
 	function registerItem(id: string | string[], groupId?: string) {
 		allItemIds.update(($items) => {
@@ -285,11 +327,11 @@ export function createCommandStore(props?: CommandProps) {
 	function registerItemValue(
 		items: {
 			id: string;
-			value: string;
+			value: T;
 		}[]
 	): void;
-	function registerItemValue(id: string, value: string): void;
-	function registerItemValue(id: string | { id: string; value: string }[], value?: string) {
+	function registerItemValue(id: string, value: T): void;
+	function registerItemValue(id: string | { id: string; value: T }[], value?: T) {
 		if (Array.isArray(id)) {
 			idsToValueMap.update(($map) => {
 				for (const { id: i, value } of id) {
@@ -324,31 +366,31 @@ export function createCommandStore(props?: CommandProps) {
 		};
 	}
 
-    function registerCallback(id: string | string[], callback: (e: Event) => void) {
-        idsToCallbackMap.update(($map) => {
-            if (Array.isArray(id)) {
-                for (const i of id) {
-                    $map.set(i, callback);
-                }
-                return $map;
-            }
-            $map.set(id, callback);
-            return $map;
-        });
+	function registerCallback(id: string | string[], callback: () => void) {
+		idsToCallbackMap.update(($map) => {
+			if (Array.isArray(id)) {
+				for (const i of id) {
+					$map.set(i, callback);
+				}
+				return $map;
+			}
+			$map.set(id, callback);
+			return $map;
+		});
 
-        return () => {
-            idsToCallbackMap.update(($map) => {
-                if (Array.isArray(id)) {
-                    for (const i of id) {
-                        $map.delete(i);
-                    }
-                    return $map;
-                }
-                $map.delete(id);
-                return $map;
-            });
-        }
-    }
+		return () => {
+			idsToCallbackMap.update(($map) => {
+				if (Array.isArray(id)) {
+					for (const i of id) {
+						$map.delete(i);
+					}
+					return $map;
+				}
+				$map.delete(id);
+				return $map;
+			});
+		};
+	}
 
 	return {
 		ids,
@@ -358,7 +400,8 @@ export function createCommandStore(props?: CommandProps) {
 			activeElement,
 			activeValue,
 			selectedValue,
-			filtered
+			filtered,
+			selectedIds
 		},
 		helpers: {
 			registerItem,
@@ -366,7 +409,7 @@ export function createCommandStore(props?: CommandProps) {
 			registerItems: (
 				items: {
 					id: string;
-					value: string;
+					value: T;
 					// groupId?: string;
 				}[],
 				groupId?: string
@@ -378,16 +421,26 @@ export function createCommandStore(props?: CommandProps) {
 				);
 			},
 			registerGroup,
-            registerCallback
+			registerCallback,
+			isValueSelected: (value: T) => {
+				// TODO: should we pass in id instead here? But we keep track of selectedValue by value, not id
+				const $selectedValue = get(selectedValue);
+				return $selectedValue.some((v) => deepEqual(v, value));
+			}
 		},
 		actions: {
 			openMenu,
-			closeMenu: () => /*openStore.set(false)*/ {}, // we dont't actually want this, i think
+			closeMenu: () => {
+				/*openStore.set(false)*/
+				tick().then(() => {
+					props?.onClose?.();
+				});
+			},
 			reset,
 			selectItem
 		},
-        elements: {
-            container
-        }
+		elements: {
+			container
+		}
 	};
 }

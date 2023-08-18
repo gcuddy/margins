@@ -9,33 +9,47 @@
 		initialPages?: TPages[];
 		pages?: TPages[];
 		bounce?: boolean;
-    } & MultipleValue;
+		multiple?: boolean;
+		value?: T[];
+	} & CommandProps<T>;
 
-    type MultipleValue = {
-        multiple: true;
-        value?: string[];
-    } | {
-        multiple?: false;
-        value?: string;
-    }
+	// & MultipleValue;
 
-	export let value: $$Props["value"] = undefined;
+	// type MultipleValue =
+	// 	| {
+	// 			multiple: true;
+	// 			value?: string[];
+	// 	  }
+	// 	| {
+	// 			multiple?: false;
+	// 			value?: string;
+	// 	//   };
+
+	export let value: $$Props['value'] = undefined;
+	export let valueToString: $$Props['valueToString'] = undefined;
+	let _selectedValue: $$Props['selectedValue'] = undefined;
+	export { _selectedValue as selectedValue };
 	export let multiple: $$Props['multiple'] = false;
-
+	export let onClose: $$Props['onClose'] = undefined;
 	export let asChild = false;
 	export let unstyled = false;
 	let className: $$Props['class'] = undefined;
 	export { className as class };
 
+	type T = $$Generic;
+
 	const {
 		state: { selectedValue, inputValue },
 		elements: { container }
-	} = ctx.set({
-		defaultSelectedValue: value ? [value] : [],
-		multiple
+	} = ctx.set<T>({
+		defaultSelectedValue: value,
+		multiple,
+		valueToString,
+		selectedValue: _selectedValue,
+        onClose
 	});
 
-	$: value =  $selectedValue[0];
+	$: value = $selectedValue;
 	type TPages = $$Generic<PageType>;
 	export let initialPages: TPages[] | undefined = undefined;
 	let pagesData: TPages[] = [];
@@ -48,7 +62,7 @@
 		onPageChange: () => {
 			$inputValue = '';
 		},
-		playBounce: bounce
+		playBounce: bounce,
 	});
 </script>
 

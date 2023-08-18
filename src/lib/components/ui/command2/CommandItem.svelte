@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { isHTMLElement } from '$lib/helpers';
+
 	import { cn } from '$lib/utils';
 	import { generateId, isElementDisabled } from '@melt-ui/svelte/internal/helpers';
 	import { getContext, onMount } from 'svelte';
@@ -6,33 +8,37 @@
 	import { ctx } from './ctx';
 	import { SELECT_EVENT_NAME } from './store';
 
+	type T = $$Generic;
+
 	type $$Props = HTMLAttributes<HTMLDivElement> & {
-		value?: string;
-		onSelect?: (value: string) => void;
+		value?: T;
+		onSelect?: (value: T | undefined) => void;
 		disabled?: boolean;
 		unstyled?: boolean;
 		id?: string;
 		groupId?: string;
 		shouldRegister?: boolean;
 		alwaysShow?: boolean;
-        containsPages?: boolean;
+		containsPages?: boolean;
+        cancelClose?: string | HTMLElement | HTMLElement[];
 	};
 
 	export let disabled = false;
-	export let value = '';
-	export let onSelect = (value: string) => {};
+	export let value: T | undefined = undefined;
+	export let onSelect = (value: T | undefined) => {};
 	export let unstyled = false;
 	export let id = generateId();
 	export let groupId = getContext('command_groupId') as string | undefined;
 	export let shouldRegister = true;
 	export let alwaysShow = false;
-    export let containsPages = false;
+	export let containsPages = false;
+    export let cancelClose: $$Props["cancelClose"] = undefined;
 
 	let className: $$Props['class'] = undefined;
 	export { className as class };
 
 	const {
-		state: { selectedValue, activeValue, activeElement, inputValue, filtered },
+		state: { selectedValue, activeValue, activeElement, inputValue, filtered, selectedIds },
 		actions,
 		helpers
 	} = ctx.get();
@@ -63,12 +69,21 @@
 		}
 		// Otherwise, select the item and close the menu.
 		actions.selectItem(node);
+        if (cancelClose) {
+            console.log({cancelClose, target: e.target, current: e.currentTarget})
+            if (Array.isArray(cancelClose)) {
+                if (cancelClose.includes(e.target as HTMLElement)) return;
+            } else if (isHTMLElement(cancelClose)) {
+                if (cancelClose === e.target) return;
+            } else if (typeof cancelClose === 'string') {
+                if (e.target instanceof Element && e.target.closest(cancelClose)) return;
+            }
+        }
 		actions.closeMenu();
 	}
 
 	// TODO: add way to not close
-	function handleSelect(e: Event) {
-        console.log('handle select', e)
+	function handleSelect() {
 		if (disabled) return;
 		onSelect(value);
 		// if (
@@ -81,35 +96,35 @@
 		// }
 	}
 
-
 	onMount(() => {
-        if (node) {
-            node.addEventListener(SELECT_EVENT_NAME, handleSelect);
-			value = value || node.textContent?.trim()?.toLowerCase() || '';
+		if (node) {
+			node.addEventListener(SELECT_EVENT_NAME, handleSelect);
+			value = (value || node.textContent?.trim()?.toLowerCase() || '') as T | undefined;
 		}
 
 		let unmount = () => {};
 		if (shouldRegister) {
-            unmount = helpers.registerItem(id, groupId);
+			unmount = helpers.registerItem(id, groupId);
 			helpers.registerItemValue(id, value);
 		}
 
-        const unsubCallback = helpers.registerCallback(id, handleSelect)
+		const unsubCallback = helpers.registerCallback(id, handleSelect);
 		return () => {
 			if (node) {
 				node.removeEventListener(SELECT_EVENT_NAME, handleSelect);
 			}
 			unmount();
-            unsubCallback();
+			unsubCallback();
 		};
 	});
 
 	$: render = alwaysShow || !$inputValue || $filtered.items.includes(id);
-    $: selected = $selectedValue.includes(value)
+	$: selected = $selectedValue.includes(value);
 </script>
 
 {#if render}
-	<button
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<div
 		class={cn(
 			!unstyled &&
 				'relative group text-left flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
@@ -125,11 +140,11 @@
 		on:pointermove={handlePointerMove}
 		on:click={handleClick}
 		data-highlighted={$activeElement === node ? '' : undefined}
-        data-contains-pages={containsPages ? '' : undefined}
-        tabindex={-1}
-        data-command-item
+		data-contains-pages={containsPages ? '' : undefined}
+		tabindex={-1}
+		data-command-item
 	>
 		<!--  -->
 		<slot isSelected={selected} />
-	</button>
+	</div>
 {/if}

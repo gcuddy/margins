@@ -1,47 +1,34 @@
-<script lang="ts" context="module">
-	export const checkbox = cva(
-		'peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground'
-	);
-</script>
-
 <script lang="ts">
-	import { cn } from '$lib/utils/tailwind';
+	import { Checkbox as CheckboxPrimitive } from "@huntabyte/primitives";
+	import { Check, Minus } from "lucide-svelte";
+	import { cn } from "$lib/utils";
 
-	import { CreateCheckboxProps, createCheckbox } from '@melt-ui/svelte';
-	import { cva } from 'class-variance-authority';
-	import { CheckIcon } from 'lucide-svelte';
+	type $$Props = CheckboxPrimitive.Props;
+	type $$Events = CheckboxPrimitive.Events;
 
-	type $$Props = CreateCheckboxProps & {
-		class?: string;
-	};
-
-	let _checked: $$Props['checked'] = false;
-
-	export { _checked as checked };
-	export let disabled: $$Props['disabled'] = false;
-	export let name: $$Props['name'] = undefined;
-	export let required: $$Props['required'] = false;
-	export let value: $$Props['value'] = undefined;
-
-	let className = '';
+	let className: $$Props["class"] = undefined;
+	export let checked: $$Props["checked"] = false;
 	export { className as class };
-
-	const { root, input, isChecked, isIndeterminate, checked } = createCheckbox({
-		checked: _checked,
-		disabled,
-		name,
-		required,
-		value
-	});
-
-	$: _checked = $isChecked;
 </script>
 
-<button on:click melt={$root} class={cn(checkbox(), className)}>
-	{#if $isChecked}
-		<span class="flex items-center justify-center text-current">
-			<CheckIcon class="h-4 w-4" />
-		</span>
-	{/if}
-	<!-- <slot /> -->
-</button>
+<CheckboxPrimitive.Root
+	bind:checked
+	class={cn(
+		"peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+		className
+	)}
+	{...$$restProps}
+	on:m-click
+>
+	<CheckboxPrimitive.Indicator
+		class={cn("flex items-center justify-center text-current")}
+		let:isChecked
+		let:isIndeterminate
+	>
+		{#if isChecked}
+			<Check class="h-4 w-4" />
+		{:else if isIndeterminate}
+			<Minus class="h-4 w-4" />
+		{/if}
+	</CheckboxPrimitive.Indicator>
+</CheckboxPrimitive.Root>

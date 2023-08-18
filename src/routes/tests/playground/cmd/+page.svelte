@@ -35,7 +35,7 @@
 		'The History of The Hobbit'
 	];
 
-	let value: string;
+	let value: string[] = [];
 	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import { writable } from 'svelte/store';
@@ -48,8 +48,10 @@
 	import { types } from '$lib/types';
 	import { statuses, statusesWithIcons } from '$lib/status';
 	import type { StringsToObjWithKey } from '$lib/utils/type-utils';
+	import { Checkbox } from '$components/ui/checkbox';
 
 	let open = false;
+	$: console.log({ open });
 	let buttonEl: HTMLButtonElement;
 	const closePopover = () => {
 		open = false;
@@ -94,35 +96,61 @@
 
 	const pagesData = deepWriteable(filterPages);
 
-    let tagValue = [];
-    let tagsOpen = false;
+	let tagValue = [];
+	let tagsOpen = false;
+
+	const chosenTags = writable(data.tags.slice(0, 2));
+
+	function sortFunction(a: typeof data.tags[number], b: typeof data.tags[number]) {
+		const selected = $chosenTags.find((t) => t.id === a.id);
+		const selected2 = $chosenTags.find((t) => t.id === b.id);
+		if (selected && selected2) {
+			return 0;
+		} else if (selected) {
+			return -1;
+		} else if (selected2) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	let sortedTags = [...data.tags].sort(sortFunction);
+
+	$: if (!tagsOpen) {
+		sortedTags = [...data.tags].sort(sortFunction);
+	}
 </script>
 
 <div
 	class="preview max-w-xl mx-auto flex flex-col gap-10 min-h-[350px] w-full justify-center p-10 items-start"
 >
-	<Popover bind:open>
+	<Popover bind:open onOpenChange={(e) => {
+        console.log({e})
+    }}>
 		<PopoverTrigger asChild let:builder>
 			<button
 				bind:this={buttonEl}
 				class={cn(buttonVariants({ variant: 'outline' }), 'w-[200px] justify-between')}
 				use:melt={builder}
 			>
-				<span class="truncate">{value ?? 'Select an entry'}</span>
+				<span class="truncate">{value.length ? value[0] : 'Select an entry'}</span>
 				<ChevronsUpDown class="h-4 w-4 ml-2 shrink-0 opacity-50" />
 			</button>
 		</PopoverTrigger>
 		<PopoverContent class="w-[200px] p-0">
-			<Command bind:value>
+			<Command bind:value onClose={() => {
+                console.log("cloing")
+            }}>
 				<CommandInput />
 				<CommandList>
 					<CommandGroup>
+                        <!-- onSelect={closePopover} -->
 						<CommandItems
 							items={data.entries}
 							itemToId={(item) => item.id.toString()}
 							itemToValue={(item) => item.title.toString()}
 							let:item
-							onSelect={closePopover}
 							class="flex"
 						>
 							<!-- <img class="square-8 rounded mr-2" src={item.image} alt={item.title} /> -->
@@ -291,8 +319,8 @@
 
 	Multiple:
 
-
-    <Popover bind:open={tagsOpen}>
+	{$chosenTags.map((t) => t.name)}
+	<Popover bind:open={tagsOpen}>
 		<PopoverTrigger asChild let:builder>
 			<button
 				bind:this={buttonEl}
@@ -304,19 +332,27 @@
 			</button>
 		</PopoverTrigger>
 		<PopoverContent class="w-[200px] p-0">
-			<Command multiple bind:value={tagValue} class="rounded-lg border shadow-md">
-                <CommandInput />
-
-                <CommandList>
-                    <CommandGroup>
-                        {#each data.tags as tag}
-                            <CommandItem>
-                                <span>{tag.name}</span>
-                            </CommandItem>
-                        {/each}
-                    </CommandGroup>
-                </CommandList>
-            </Command>
+			<Command
+				onClose={() => {
+					tagsOpen = false;
+				}}
+				selectedValue={chosenTags}
+				valueToString={(tag) => tag.name}
+				multiple
+				class="rounded-lg border shadow-md"
+			>
+				<CommandInput />
+				<CommandList>
+					<CommandGroup>
+						{#each sortedTags as tag}
+							<CommandItem value={tag} cancelClose="[data-melt-checkbox]" let:isSelected>
+								<Checkbox class="mr-2" checked={isSelected} />
+								<span>{tag.name}</span>
+							</CommandItem>
+						{/each}
+					</CommandGroup>
+				</CommandList>
+			</Command>
 		</PopoverContent>
 	</Popover>
 </div>
