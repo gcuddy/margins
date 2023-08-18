@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Cluster from '$components/helpers/Cluster.svelte';
+	import Badge from '$components/ui/Badge.svelte';
 	import { Checkbox } from '$components/ui/checkbox';
 	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
 
@@ -15,9 +17,7 @@
 		CommandLoading
 	} from '$lib/components/ui/command2';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { styleToString } from '@melt-ui/svelte/internal/helpers';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { createVirtualizer } from '@tanstack/svelte-virtual';
 	import { writable } from 'svelte/store';
 
 	const query = createQuery({
@@ -28,7 +28,7 @@
 	export let selectedTags: { id: number; name: string }[] = [];
 	const selectedTagsStore = writable(selectedTags);
 
-    function sortFunction(a: typeof selectedTags[0], b: typeof selectedTags[0]) {
+	function sortFunction(a: typeof selectedTags[0], b: typeof selectedTags[0]) {
 		const selected = $selectedTagsStore.find((t) => t.id === a.id);
 		const selected2 = $selectedTagsStore.find((t) => t.id === b.id);
 		if (selected && selected2) {
@@ -48,71 +48,52 @@
 		sortedTags = [...($query.data ?? [])].sort(sortFunction);
 	}
 
-    let open = false;
-
-    let scroller = writable<HTMLElement | null>(null)
-
-    const virtualizer = createVirtualizer({
-        count: $query.data?.length ?? 0,
-        estimateSize: () => 32,
-        overscan: 10,
-        getScrollElement: () => $scroller,
-        debug: true,
-        onChange: (instance) => console.log({instance})
-    })
-
-    $: console.log({$virtualizer})
-
-    $: $virtualizer.setOptions({
-        count: $query.data?.length ?? 0,
-        getScrollElement: () => $scroller,
-    })
-
+	let open = false;
+    let wrapper: HTMLElement;
 </script>
 
-<Popover bind:open>
-	<PopoverTrigger>+ Tag</PopoverTrigger>
-	<PopoverContent class="p-0">
-		<Command
-			onClose={() => (open = false)}
-			selectedValue={selectedTagsStore}
-			comparisonFunction={(a, b) => {
-				return a.id === b.id;
-			}}
-			valueToString={(tag) => tag.name}
-			multiple
-		>
-			<!--  -->
-			<CommandInput placeholder="Add tag" />
-			<CommandList bind:el={$scroller}>
-					<div class="w-full relative" style:height="{$virtualizer.getTotalSize()}px">
-						{#if $query.isLoading}
-							<CommandLoading>Loading...</CommandLoading>
-						{:else if $query.isSuccess}
-							{#each $virtualizer.getVirtualItems() as row (row.key)}
-								{@const tag = sortedTags[row.index]}
-								{#if tag}
-									<div
-										style={styleToString({
-											position: 'absolute',
-											top: 0,
-											left: 0,
-											width: '100%',
-											height: `${row.size}px`,
-											transform: `translateY(${row.start}px)`
-										})}
-									>
-										<CommandItem value={tag} let:isSelected>
-											<Checkbox class="mr-2" checked={isSelected} />
-											{tag.name}
-										</CommandItem>
-									</div>
-								{/if}
-							{/each}
-						{/if}
-						<!--  -->
-					</div>
-			</CommandList>
-		</Command>
-	</PopoverContent>
-</Popover>
+<div bind:this={wrapper}>
+	<Cluster class="gap-2.5">
+		{#each $selectedTagsStore as tag}
+			<Badge variant="secondary">{tag.name}</Badge>
+		{/each}
+
+		<Popover bind:open portal={wrapper} positioning={{
+            placement: "left",
+            overlap: true,
+            strategy: "fixed"
+            // flip: false
+        }}>
+			<PopoverTrigger>+ Tag</PopoverTrigger>
+			<PopoverContent class="p-0">
+				<Command
+					onClose={() => (open = false)}
+					selectedValue={selectedTagsStore}
+					comparisonFunction={(a, b) => {
+						return a.id === b.id;
+					}}
+					valueToString={(tag) => tag.name}
+					multiple
+				>
+					<!--  -->
+					<CommandInput placeholder="Add tag" />
+					<CommandList>
+						<CommandGroup>
+							{#if $query.isLoading}
+								<CommandLoading>Loading...</CommandLoading>
+							{:else if $query.isSuccess}
+								{#each sortedTags.slice(0, 20) as tag}
+									<CommandItem value={tag} let:isSelected>
+										<Checkbox class="mr-2" checked={isSelected} />
+										{tag.name}
+									</CommandItem>
+								{/each}
+							{/if}
+							<!--  -->
+						</CommandGroup>
+					</CommandList>
+				</Command>
+			</PopoverContent>
+		</Popover>
+	</Cluster>
+</div>
