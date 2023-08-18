@@ -5,13 +5,30 @@
 	import type { RootProps } from './types';
 	import { createPages, type PageType } from './utils';
 
+	type SingleValue = {
+		multiple?: false;
+		value?: T;
+	};
+
+	type MultipleValue = {
+		multiple: true;
+		value?: T[];
+	};
+
+	type SingleOrMultipleValue = SingleValue | MultipleValue;
+
 	type $$Props = RootProps & {
 		initialPages?: TPages[];
 		pages?: TPages[];
 		bounce?: boolean;
-		multiple?: boolean;
-		value?: T[];
-	} & CommandProps<T>;
+		// multiple?: boolean;
+		// value?: T[];
+		/**
+		 * Prop to pass in a value that represents the generic type. Doesn't do anything beyond that.
+		 */
+		type?: T;
+	} & SingleOrMultipleValue &
+		Omit<CommandProps<T>, 'multiple'>;
 
 	// & MultipleValue;
 
@@ -33,23 +50,32 @@
 	export let onClose: $$Props['onClose'] = undefined;
 	export let asChild = false;
 	export let unstyled = false;
+	export let initialData: $$Props['initialData'] = undefined;
+	export let type: $$Props['type'] = undefined;
+	type;
 	let className: $$Props['class'] = undefined;
 	export { className as class };
 
 	type T = $$Generic;
 
 	const {
-		state: { selectedValue, inputValue },
+		state: { selectedValue, inputValue, filtered },
 		elements: { container }
 	} = ctx.set<T>({
-		defaultSelectedValue: value,
+		defaultSelectedValue:
+			value && multiple && Array.isArray(value)
+				? value
+				: !multiple && value && !Array.isArray(value)
+				? [value]
+				: undefined,
 		multiple,
 		valueToString,
 		selectedValue: _selectedValue,
-        onClose
+		onClose,
+		initialData
 	});
 
-	$: value = $selectedValue;
+	$: value = multiple ? $selectedValue : $selectedValue[0];
 	type TPages = $$Generic<PageType>;
 	export let initialPages: TPages[] | undefined = undefined;
 	let pagesData: TPages[] = [];
@@ -62,7 +88,7 @@
 		onPageChange: () => {
 			$inputValue = '';
 		},
-		playBounce: bounce,
+		playBounce: bounce
 	});
 </script>
 
@@ -78,6 +104,6 @@
 			className
 		)}
 	>
-		<slot page={$pageStore} pageName={$pageStore?.name} pages={pageStore} />
+		<slot filtered={$filtered} page={$pageStore} pageName={$pageStore?.name} pages={pageStore} />
 	</div>
 {/if}

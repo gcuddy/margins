@@ -35,7 +35,7 @@
 		'The History of The Hobbit'
 	];
 
-	let value: string[] = [];
+	let value: typeof data.entries[0];
 	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import { writable } from 'svelte/store';
@@ -125,35 +125,42 @@
 <div
 	class="preview max-w-xl mx-auto flex flex-col gap-10 min-h-[350px] w-full justify-center p-10 items-start"
 >
-	<Popover bind:open onOpenChange={(e) => {
-        console.log({e})
-    }}>
+	<Popover
+		bind:open
+		onOpenChange={(e) => {
+			console.log({ e });
+		}}
+	>
 		<PopoverTrigger asChild let:builder>
 			<button
 				bind:this={buttonEl}
 				class={cn(buttonVariants({ variant: 'outline' }), 'w-[200px] justify-between')}
 				use:melt={builder}
 			>
-				<span class="truncate">{value.length ? value[0] : 'Select an entry'}</span>
+				<span class="truncate">{value ? value.title : 'Select an entry'}</span>
 				<ChevronsUpDown class="h-4 w-4 ml-2 shrink-0 opacity-50" />
 			</button>
 		</PopoverTrigger>
 		<PopoverContent class="w-[200px] p-0">
-			<Command bind:value onClose={() => {
-                console.log("cloing")
-            }}>
+			<Command
+				let:filtered
+				onClose={closePopover}
+				type={data.entries[0]}
+				valueToString={(item) => item.title}
+				bind:value
+			>
 				<CommandInput />
 				<CommandList>
 					<CommandGroup>
-                        <!-- onSelect={closePopover} -->
-						<CommandItems
-							items={data.entries}
-							itemToId={(item) => item.id.toString()}
-							itemToValue={(item) => item.title.toString()}
-							let:item
-							class="flex"
-						>
-							<!-- <img class="square-8 rounded mr-2" src={item.image} alt={item.title} /> -->
+						<!-- {#each filtered.items as item, index (item.id)}
+							<CommandItem id={filtered.ids[index]} shouldRegister={false} value={item}>
+								<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
+								<span>{item.title}</span>
+							</CommandItem>
+						{/each} -->
+						<!-- onSelect={closePopover} -->
+
+						<CommandItems items={data.entries} itemToId={(item) => item.id.toString()} let:item>
 							<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
 							<span>{item.title}</span>
 						</CommandItems>
@@ -206,7 +213,7 @@
 		let:page
 		let:pages
 		initialPages={pages}
-		class="rounded-lg border shadow-md"
+		class="rounded-lg border shadow-md w-fit"
 		bounce={true}
 	>
 		<CommandInput placeholder="Type a command or search..." onKeydown={pages.handlers.keydown} />
@@ -236,7 +243,10 @@
 					</CommandItem>
 				{/if}
 				{#if page?.name === 'projects'}
-					<CommandItem>Project A</CommandItem>
+					<CommandItem
+						>Project A With A Really Long Title That Should be Truncated With Ellipsis At Some
+						Point, Maybe Now Or Maybe Later
+					</CommandItem>
 					<CommandItem>Project B</CommandItem>
 				{:else if page?.name === 'teams'}
 					<CommandItem>Team A</CommandItem>
@@ -345,7 +355,7 @@
 				<CommandList>
 					<CommandGroup>
 						{#each sortedTags as tag}
-							<CommandItem value={tag} cancelClose="[data-melt-checkbox]" let:isSelected>
+							<CommandItem value={tag} cancelClose="[data-melt-checkbox], svg" let:isSelected>
 								<Checkbox class="mr-2" checked={isSelected} />
 								<span>{tag.name}</span>
 							</CommandItem>

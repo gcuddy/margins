@@ -118,7 +118,7 @@
 		};
 	});
 
-	$: render = alwaysShow || !$inputValue || $filtered.items.includes(id);
+	$: render = alwaysShow || !$inputValue || $filtered.ids.includes(id);
 	$: selected = $selectedValue.includes(value);
 </script>
 

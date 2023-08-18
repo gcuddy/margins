@@ -19,6 +19,14 @@ export type CommandProps<T> = {
 	defaultActiveValue?: string | null;
 	multiple?: boolean;
 	/**
+	 * @experimental
+	 * If provided, the combobox will be populated with these items initially.
+	 * This is useful for when you want to pre-populate the combobox with items.
+	 * If you want to populate the combobox with items after it has been created, use the `registerItem` function.
+	 * However, these items won't get a group and are intended to be used with <CommandItem shouldRegister={false} and alwaysShow={true} />. One should then use the filtered items store as a slot prop to render the items.
+	 *  */
+	initialData?: T[];
+	/**
 	 * The selected value(s) of the combobox. Can be anything.
 	 */
 	selectedValue?: Writable<T[]>;
@@ -28,10 +36,11 @@ export type CommandProps<T> = {
 	onClose?: () => void;
 };
 
-type Filtered = {
+type Filtered<T> = {
 	count: number;
-	itemToScoreMap: Map<string, number>;
-	items: string[];
+	idToScoreMap: Map<string, number>;
+	ids: string[];
+	items: T[];
 	groups: Set<string>;
 };
 
@@ -105,47 +114,59 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			return concatenateValues(v);
 		});
 
+	// TODO: set this asynchronously with debouncing?
 	const filtered = derived(
 		[allItemIds, allGroupIds, inputValue, idsToValueMap],
 		([$items, $groups, $inputValue, $idsToValueMap]) => {
-			const itemToScoreMap = new Map<string, number>();
+			console.time('filtering');
+			const idToScoreMap = new Map<string, number>();
 			const groups = new Set<string>();
 			// TODO should we use element ids here?
-			const filteredItems = Array.from($items)
+			const filteredIds = Array.from($items)
 				.filter((item) => {
 					const value = $idsToValueMap.get(item);
 					if (!value) return false;
 					const score = filterFunction(internalValueToString(value), $inputValue);
-					itemToScoreMap.set(item, score);
+					idToScoreMap.set(item, score);
 					if (score > 0) {
 						return true;
 					}
 					return false;
 				})
 				.sort((a, b) => {
-					const aScore = itemToScoreMap.get(a) ?? 0;
-					const bScore = itemToScoreMap.get(b) ?? 0;
+					const aScore = idToScoreMap.get(a) ?? 0;
+					const bScore = idToScoreMap.get(b) ?? 0;
 					return bScore - aScore;
 				});
 
 			// Filter groups based on items
 			for (const [groupId, group] of $groups) {
 				for (const itemId of group) {
-					if (filteredItems.includes(itemId)) {
+					if (filteredIds.includes(itemId)) {
 						groups.add(groupId);
 						break;
 					}
 				}
 			}
 
-			ensureActiveItem(0);
+			const items = filteredIds.map((id) => $idsToValueMap.get(id)!);
 
+			ensureActiveItem(0);
+			console.log({
+				ids,
+				items,
+				groups,
+				$idsToValueMap,
+				$items
+			});
+			console.timeEnd('filtering');
 			return {
-				count: filteredItems.length,
-				itemToScoreMap,
-				items: filteredItems,
+				count: filteredIds.length,
+				idToScoreMap,
+				ids: filteredIds,
+				items,
 				groups
-			} as Filtered;
+			} as Filtered<T>;
 		}
 	);
 
@@ -183,6 +204,26 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	if (props?.defaultSelectedValue) {
 		selectedValue.set(props.defaultSelectedValue);
+	}
+
+	if (props?.initialData) {
+		const items = props.initialData;
+		console.time('initialData');
+		const ids = items.map((item) => {
+			const id = generateId();
+			idsToValueMap.update(($map) => {
+				$map.set(id, item);
+				return $map;
+			});
+			return id;
+		});
+		allItemIds.update(($items) => {
+			for (const id of ids) {
+				$items.add(id);
+			}
+			return $items;
+		});
+		console.timeEnd('initialData');
 	}
 
 	const ids = {
@@ -234,13 +275,12 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		// const value = item.getAttribute('data-value');
 
 		const $idsToValueMap = get(idsToValueMap);
-        console.log({$idsToValueMap})
+		console.log({ $idsToValueMap });
 		const val = $idsToValueMap.get(item.id);
 
 		const containsPages = item.getAttribute('data-contains-pages') !== null;
 
-
-        console.log({val})
+		console.log({ val });
 
 		if (!containsPages) {
 			// Then update selected value
@@ -278,6 +318,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	}
 
 	function registerItem(id: string | string[], groupId?: string) {
+		console.log(`Registering item`, { id, groupId });
 		allItemIds.update(($items) => {
 			if (Array.isArray(id)) {
 				for (const i of id) {
@@ -332,6 +373,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	): void;
 	function registerItemValue(id: string, value: T): void;
 	function registerItemValue(id: string | { id: string; value: T }[], value?: T) {
+		console.log(`Registering item value`, { id, value });
 		if (Array.isArray(id)) {
 			idsToValueMap.update(($map) => {
 				for (const { id: i, value } of id) {
@@ -441,6 +483,9 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		},
 		elements: {
 			container
+		},
+		options: {
+			multiple: props?.multiple ?? false
 		}
 	};
 }

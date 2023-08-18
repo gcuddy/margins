@@ -18,12 +18,13 @@
 	let inputEl: HTMLInputElement;
 	let className: $$Props['class'] = undefined;
 	export let unstyled = false;
-    export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
+	export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
 
 	const {
 		ids,
 		state: { open, inputValue, activeElement, selectedValue },
-		actions
+		actions,
+		options
 	} = ctx.get();
 
 	function handleClick(e: MouseEvent) {
@@ -31,10 +32,11 @@
 		actions.openMenu($open);
 	}
 
-	function handleKeydown(e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement }) {
+	let hasNavigated = false;
 
-        onKeydown?.(e);
-        if (e.defaultPrevented) return;
+	function handleKeydown(e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement }) {
+		onKeydown?.(e);
+		if (e.defaultPrevented) return;
 
 		/**
 		 * When the menu is closed...
@@ -94,6 +96,16 @@
 			}
 			actions.closeMenu();
 		}
+
+		// Pressing space after navigating when we're in multiple mode should toggle the item, but not close the menu
+		if (e.key === kbd.SPACE && hasNavigated) {
+			if ($activeElement && options.multiple) {
+				e.preventDefault();
+				actions.selectItem($activeElement);
+				return;
+			}
+		}
+
 		// Pressing Alt + Up should close the menu.
 		if (e.key === kbd.ARROW_UP && e.altKey) {
 			actions.closeMenu();
@@ -142,6 +154,8 @@
 				default:
 					return;
 			}
+			// Mark us as having navigated
+			hasNavigated = true;
 			// Highlight the new item and scroll it into view.
 			activeElement.set(nextItem);
 			nextItem.scrollIntoView({ block: 'nearest' });
@@ -149,15 +163,17 @@
 	}
 
 	function handleInput(e: Event) {
+		console.log('input', e);
+		hasNavigated = false;
 		if (!inputEl) return;
 		// TODO
 	}
 </script>
 
 <div class="flex items-center border-b px-3" data-command-input-wrapper>
-    <Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
+	<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
 	<input
-        data-command-input
+		data-command-input
 		aria-activedescendant={$activeElement?.id}
 		aria-autocomplete="list"
 		aria-controls={ids.menu}
