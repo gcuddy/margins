@@ -53,4 +53,4 @@ type X = StringsToObjWithKey<'a' | 'b', 'name'>;
 export type GetValueFromObj<T extends { [key: string]: any }, TKey extends keyof T> = T[TKey];
 export type ExtractUnionType<T, K extends keyof any> = T extends { [key in K]: infer U } ? U : never;
 
-// I want to create
+export 	type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };

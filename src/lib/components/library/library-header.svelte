@@ -5,7 +5,16 @@
 	import { cn } from '$lib/utils/tailwind';
 	import Button, { buttonVariants } from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
-	import { ArrowDownUpIcon, CalendarPlusIcon, Check, FileIcon, FilterIcon, Loader2Icon, XIcon, TagIcon } from 'lucide-svelte';
+	import {
+		ArrowDownUpIcon,
+		CalendarPlusIcon,
+		Check,
+		FileIcon,
+		FilterIcon,
+		Loader2Icon,
+		XIcon,
+		TagIcon
+	} from 'lucide-svelte';
 	import { types } from '$lib/types';
 	import debounce from 'just-debounce-it';
 	import Filter from '$components/ui/filters/Filter.svelte';
@@ -15,7 +24,7 @@
 		CommandGroup,
 		CommandItem,
 		CommandList
-	} from '$components/ui/command';
+	} from '$components/ui/command2';
 	import {
 		DropdownMenu,
 		DropdownMenuTrigger,
@@ -46,9 +55,10 @@
 	import { tweened } from 'svelte/motion';
 	import { cubicInOut, cubicOut } from 'svelte/easing';
 	import { afterUpdate } from 'svelte';
+	import { deepWriteable } from '$lib/helpers/object';
 
-	let form: HTMLFormElement;
 	let filter: Input;
+	let form: HTMLFormElement;
 	let value = $page.url.searchParams.get('search') ?? '';
 
 	const entryCount = createQuery(
@@ -64,28 +74,27 @@
 		}))
 	);
 
-    const tagsQueryEnabled = writable(false)
-    const tagsQuery = createQuery(
-        derived(tagsQueryEnabled, $tagsQueryEnabled => ({
-            ...queryFactory.tags.list(),
-            enabled: $tagsQueryEnabled
-        }))
-    )
+	const tagsQueryEnabled = writable(false);
+	const tagsQuery = createQuery(
+		derived(tagsQueryEnabled, ($tagsQueryEnabled) => ({
+			...queryFactory.tags.list(),
+			enabled: $tagsQueryEnabled
+		}))
+	);
 
-    const count = tweened(0, {
-        duration: 200,
-    });
+	const count = tweened(0, {
+		duration: 200
+	});
 
-    $: if ($entryCount.data) {
-        console.log('setting count')
-        const newCount = parseInt($entryCount.data, 10);
-        console.log({newCount})
-        count.set(newCount, {
-            duration: 200,
-
-        })
-        console.log({$count})
-    }
+	$: if ($entryCount.data) {
+		console.log('setting count');
+		const newCount = parseInt($entryCount.data, 10);
+		console.log({ newCount });
+		count.set(newCount, {
+			duration: 200
+		});
+		console.log({ $count });
+	}
 
 	const debounced_submit = debounce(() => {
 		if (typeof HTMLFormElement.prototype.requestSubmit === 'function') {
@@ -175,6 +184,13 @@
 		}
 	];
 	const filterOpen = writable(false);
+
+	const filterPages = [
+		{
+			name: 'Types',
+			placeholder: 'Filter by type...'
+		}
+	] as const;
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
@@ -209,9 +225,32 @@
 					{/if}
 				</PopoverTrigger>
 				<PopoverContent class="w-[200px] p-0">
+					<Command pages={deepWriteable(filterPages)} let:pages let:page>
+						<CommandInput onKeydown={pages.handlers.keydown} placeholder="Filter..." />
+						<CommandList>
+							<CommandGroup>
+								{#if !page}
+									<CommandItem
+										containsPages
+										onSelect={() => {
+											pages.add('Types');
+										}}
+									>
+										Type
+									</CommandItem>
+								{:else if page.name === 'Types'}
+									{#each types as type}
+										<CommandItem>
+											{type}
+										</CommandItem>
+									{/each}
+								{/if}
+							</CommandGroup>
+						</CommandList>
+					</Command>
 					<!-- open={filterOpen} -->
 					<!-- open={filterOpen} -->
-					<Cmd
+					<!-- <Cmd
 						bounce={false}
 						items={[
 							{
@@ -317,7 +356,7 @@
 								]
 							}
 						]}
-					/>
+					/> -->
 					<!-- <Command>
 						<CommandInput placeholder="Filter..." />
 						<CommandList>

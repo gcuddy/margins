@@ -1,4 +1,4 @@
-import type { ValueOf } from "$lib/utils/type-utils";
+import type { DeepWriteable, ValueOf } from "$lib/utils/type-utils";
 
 export function omit<T extends Record<string, unknown>, K extends keyof T>(
 	obj: T,
@@ -79,3 +79,8 @@ export function concatenateValues(obj: unknown): string {
         return '';
     }
 }
+
+
+export const deepWriteable = <T>(obj: T): DeepWriteable<T> => {
+    return obj as DeepWriteable<T>;
+};

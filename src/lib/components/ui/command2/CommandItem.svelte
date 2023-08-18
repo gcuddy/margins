@@ -20,7 +20,7 @@
 		shouldRegister?: boolean;
 		alwaysShow?: boolean;
 		containsPages?: boolean;
-        cancelClose?: string | HTMLElement | HTMLElement[];
+		cancelClose?: string | HTMLElement | HTMLElement[];
 	};
 
 	export let disabled = false;
@@ -32,7 +32,7 @@
 	export let shouldRegister = true;
 	export let alwaysShow = false;
 	export let containsPages = false;
-    export let cancelClose: $$Props["cancelClose"] = undefined;
+	export let cancelClose: $$Props['cancelClose'] = undefined;
 
 	let className: $$Props['class'] = undefined;
 	export { className as class };
@@ -69,16 +69,16 @@
 		}
 		// Otherwise, select the item and close the menu.
 		actions.selectItem(node);
-        if (cancelClose) {
-            console.log({cancelClose, target: e.target, current: e.currentTarget})
-            if (Array.isArray(cancelClose)) {
-                if (cancelClose.includes(e.target as HTMLElement)) return;
-            } else if (isHTMLElement(cancelClose)) {
-                if (cancelClose === e.target) return;
-            } else if (typeof cancelClose === 'string') {
-                if (e.target instanceof Element && e.target.closest(cancelClose)) return;
-            }
-        }
+		if (cancelClose) {
+			console.log({ cancelClose, target: e.target, current: e.currentTarget });
+			if (Array.isArray(cancelClose)) {
+				if (cancelClose.includes(e.target as HTMLElement)) return;
+			} else if (isHTMLElement(cancelClose)) {
+				if (cancelClose === e.target) return;
+			} else if (typeof cancelClose === 'string') {
+				if (e.target instanceof Element && e.target.closest(cancelClose)) return;
+			}
+		}
 		actions.closeMenu();
 	}
 
@@ -119,7 +119,8 @@
 	});
 
 	$: render = alwaysShow || !$inputValue || $filtered.ids.includes(id);
-	$: selected = $selectedValue.includes(value);
+	$: selected = /*$selectedValue.includes(value) ??*/ $selectedIds.includes(id);
+	$: console.log({ $selectedIds, id, inThere: $selectedIds.includes(id) });
 </script>
 
 {#if render}

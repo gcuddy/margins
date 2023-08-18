@@ -2,7 +2,8 @@
 	import { page } from '$app/stores';
 	import Relation from '$lib/components/Relation.svelte';
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
-	import TagPopover from '$lib/components/TagPopover.svelte';
+	// import TagPopover from '$lib/components/TagPopover.svelte';
+    import TagPopover from "$components/entries/tag-popover.svelte";
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { Collapsible } from 'radix-svelte';
@@ -256,7 +257,8 @@
 					{#if $page.data.tagForm && $query.data?.entry}
 						<div class="sidebar-row">
 							<Muted>Tags</Muted>
-							<TagPopover data={$page.data.tagForm} entry={$query.data?.entry} />
+							<!-- <TagPopover data={$page.data.tagForm} entry={$query.data?.entry} /> -->
+                            <TagPopover selectedTags={$query.data.entry.tags} />
 						</div>
 					{/if}
 					<div class="sidebar-row">

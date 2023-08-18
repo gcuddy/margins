@@ -31,9 +31,10 @@ export type CommandProps<T> = {
 	 */
 	selectedValue?: Writable<T[]>;
 	valueToString?: (value: T) => string;
-	defaultSelectedValue?: T[];
+	initialSelectedValue?: T[];
 	filterFunction?: (item: string, inputValue: string) => number;
-	onClose?: () => void;
+	onClose?: (selectedValue: T[]) => void;
+    comparisonFunction?: (a: T, b: T) => boolean;
 };
 
 type Filtered<T> = {
@@ -96,7 +97,12 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			const ids: string[] = [];
 			for (const value of $selectedValue) {
 				const _ids = Array.from($idsToValueMap.entries())
-					.filter(([_, v]) => deepEqual(v, value))
+					.filter(([_, v]) => {
+                        if (props?.comparisonFunction) {
+                            return props.comparisonFunction(v, value);
+                        }
+                        return deepEqual(v, value);
+                    })
 					.map(([id, _]) => id);
 				ids.push(..._ids);
 			}
@@ -202,8 +208,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	// TODO let this be changed
 	let shouldFilter = true;
 
-	if (props?.defaultSelectedValue) {
-		selectedValue.set(props.defaultSelectedValue);
+	if (props?.initialSelectedValue) {
+		selectedValue.set(props.initialSelectedValue);
 	}
 
 	if (props?.initialData) {
@@ -475,7 +481,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			closeMenu: () => {
 				/*openStore.set(false)*/
 				tick().then(() => {
-					props?.onClose?.();
+					props?.onClose?.(get(selectedValue));
 				});
 			},
 			reset,

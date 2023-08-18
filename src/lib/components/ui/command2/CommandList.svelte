@@ -5,9 +5,15 @@
 
 	const { ids } = ctx.get();
 
-	type $$Props = DivProps;
+	type $$Props = DivProps & {
+		el?: HTMLElement | null;
+	};
 	let className: $$Props['class'] = undefined;
+    export { className as class};
 	export let unstyled = false;
+
+	/** Read Only */
+	export let el: HTMLElement | null = null;
 
 	let borderBoxSize: { blockSize: number; inlineSize: number }[];
 
@@ -21,6 +27,7 @@
 	id={ids.menu}
 	class={cn(!unstyled && 'max-h-[300px] overflow-y-auto overflow-x-hidden', className)}
 	role="listbox"
+    bind:this={el}
 >
 	<div bind:borderBoxSize data-command-sizer>
 		<slot />

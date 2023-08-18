@@ -52,6 +52,7 @@
 	export let unstyled = false;
 	export let initialData: $$Props['initialData'] = undefined;
 	export let type: $$Props['type'] = undefined;
+    export let comparisonFunction: $$Props['comparisonFunction'] = undefined;
 	type;
 	let className: $$Props['class'] = undefined;
 	export { className as class };
@@ -62,7 +63,7 @@
 		state: { selectedValue, inputValue, filtered },
 		elements: { container }
 	} = ctx.set<T>({
-		defaultSelectedValue:
+		initialSelectedValue:
 			value && multiple && Array.isArray(value)
 				? value
 				: !multiple && value && !Array.isArray(value)
@@ -72,7 +73,8 @@
 		valueToString,
 		selectedValue: _selectedValue,
 		onClose,
-		initialData
+		initialData,
+        comparisonFunction
 	});
 
 	$: value = multiple ? $selectedValue : $selectedValue[0];

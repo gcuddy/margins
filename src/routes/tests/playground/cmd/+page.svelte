@@ -239,7 +239,7 @@
 							});
 						}}
 					>
-						Join a team…
+					z	Join a team…
 					</CommandItem>
 				{/if}
 				{#if page?.name === 'projects'}
