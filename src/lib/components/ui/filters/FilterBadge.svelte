@@ -25,6 +25,7 @@
 	import { Select as SelectPrimitive } from '@huntabyte/primitives';
 	import Type from './conditions/Type.svelte';
 	import Tags from './conditions/Tags.svelte';
+	import ReadingTime from './conditions/ReadingTime.svelte';
 
 	export let type: TFilterKey;
 	export let filter: FilterLibrarySchema[TFilterKey];
@@ -104,9 +105,16 @@
 		{/if}
 	{:else if type === 'tags' && filter}
 		{@const tags = getFilter('tags', filter)}
-    {#if tags}
+		{#if tags}
 			<div class="flex flex-wrap">
 				<Tags ids={tags.ids} />
+			</div>
+		{/if}
+	{:else if type === 'readingTime'}
+		{@const readingTime = getFilter('readingTime', filter)}
+		{#if readingTime}
+			<div class="flex flex-wrap">
+				<ReadingTime {readingTime} />
 			</div>
 		{/if}
 	{/if}

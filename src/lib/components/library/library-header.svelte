@@ -13,7 +13,8 @@
 		FilterIcon,
 		Loader2Icon,
 		XIcon,
-		TagIcon
+		TagIcon,
+		ClockIcon
 	} from 'lucide-svelte';
 	import { types } from '$lib/types';
 	import debounce from 'just-debounce-it';
@@ -66,6 +67,7 @@
 	import { createPageData, createPageItemList } from '$components/ui/command2/utils';
 	import { statusesWithIcons } from '$lib/status';
 	import { entryTypeIcon } from '$components/entries/icons';
+	import { isHTMLElement } from '$lib/helpers';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -148,6 +150,7 @@
 		}
 		// let 1 2 and 3 move you to backlog, now, and archive
 		if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+		if (e.target instanceof HTMLInputElement) return;
 		if (e.key === '1') {
 			e.preventDefault();
 			goto(`/tests/library/backlog`);
@@ -225,6 +228,11 @@
 			name: 'Tags',
 			placeholder: 'Filter by tag...',
 			icon: TagIcon
+		},
+		{
+			name: 'Reading Time',
+			placeholder: 'Filter by reading time...',
+			icon: ClockIcon
 		}
 	]);
 </script>
@@ -302,7 +310,7 @@
 											<CommandItem
 												onSelect={() => {
 													filterChange($page.url, (data) => {
-                                                        console.log({data})
+														console.log({ data });
 														if (data.tags?.ids?.includes(tag.id)) {
 															data.tags = {
 																...data.tags,
@@ -332,6 +340,21 @@
 											</CommandItem>
 										{/each}
 									{/if}
+								{:else if currentPage.name === 'Reading Time'}
+									{#each [{ name: '5 Minutes', time: 5 }, { name: '15 Minutes', time: 15 }, { name: '30 Minutes', time: 30 }, { name: '1 Hour', time: 60 }] as { name, time }}
+										<CommandItem
+											onSelect={() => {
+												filterChange($page.url, (data) => {
+													data.readingTime = {
+														max: time
+													};
+													return data;
+												});
+												filterOpen.set(false);
+											}}>{name}</CommandItem
+										>
+									{/each}
+									<!-- TODO: Custom -->
 								{/if}
 							</CommandGroup>
 						</CommandList>

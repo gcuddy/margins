@@ -120,12 +120,12 @@ export type Annotation = {
 	quote: string | null;
 	exact: string | null;
 	start: number | null;
-	srs: Generated<number>;
-	response: string | null;
 	due_timestamp: Timestamp | null;
-	last_reviewed_at: Timestamp | null;
 	interval_ms: number | null;
+	last_reviewed_at: Timestamp | null;
+	srs: Generated<number>;
 	srs_created_at: Timestamp | null;
+	response: string | null;
 };
 export type annotation_ref = {
 	referencerId: string;
@@ -199,10 +199,10 @@ export type AuthUser = {
 	updatedAt: Timestamp;
 	email: string;
 	username: Generated<string>;
-	avatar: string | null;
 	default_state_id: number | null;
 	default_archive_id: number | null;
 	home_items: unknown | null;
+	avatar: string | null;
 };
 export type Bookmark = {
 	id: Generated<number>;
@@ -371,8 +371,9 @@ export type Entry = {
 	publisher: string | null;
 	author_extra: unknown | null;
 	spotifyId: string | null;
-	pdf_fingerprint: string | null;
 	owned_by_id: string | null;
+	pdf_fingerprint: string | null;
+	estimatedReadingTime: number | null;
 };
 export type EntryData = {
 	id: Generated<number>;

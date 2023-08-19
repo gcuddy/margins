@@ -56,23 +56,17 @@ model State {
 }
 
 model BookmarkHistory {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
+    id         String    @id @default(cuid())
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
     archivedAt DateTime?
     archived   Boolean?
-
     fromStatus Status?
     toStatus   Status?
-
-    // etc
-
     bookmarkId Int
-    bookmark   Bookmark @relation(fields: [bookmarkId], references: [id])
-
-    userId String?
-    user   AuthUser? @relation(fields: [userId], references: [id])
+    userId     String?
+    bookmark   Bookmark  @relation(fields: [bookmarkId], references: [id])
+    user       AuthUser? @relation(fields: [userId], references: [id])
 
     @@index([userId])
     @@index([bookmarkId])
@@ -105,6 +99,9 @@ model Bookmark {
     sort_order       Int               @default(0)
     /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
     review_timestamp Int?
+    bookmarked       Boolean           @default(true)
+    title            String?
+    author           String?
     entry            Entry?            @relation(fields: [entryId], references: [id])
     user             AuthUser          @relation(fields: [userId], references: [id])
     state            State?            @relation(fields: [stateId], references: [id])
@@ -114,12 +111,6 @@ model Bookmark {
     favorite         Favorite?
     annotations      Annotation[]
     history          BookmarkHistory[]
-
-    bookmarked Boolean @default(true) // Is this actually in the user's library?
-
-    // Custom Metadata (?) - should this be a separate model?
-    title  String?
-    author String?
 
     @@unique([uri, entryId, userId])
     @@unique([entryId, userId])
@@ -132,7 +123,6 @@ model Bookmark {
     @@index([stateId])
     @@index([userId, stateId])
     @@index([interactionId, stateId, uri])
-
     @@index([author])
 }
 
@@ -191,6 +181,12 @@ model Annotation {
     quote            String?
     exact            String?                         @db.MediumText
     start            Int?
+    due_timestamp    DateTime?
+    interval_ms      BigInt?
+    last_reviewed_at DateTime?
+    srs              Boolean                         @default(false)
+    srs_created_at   DateTime?
+    response         String?                         @db.MediumText
     entry            Entry?                          @relation(fields: [entryId], references: [id])
     parent           Annotation?                     @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     children         Annotation[]                    @relation("references")
@@ -203,14 +199,6 @@ model Annotation {
     entry_references annotation_to_entry_reference[]
     referenced_by    annotation_ref[]                @relation("referencing")
     referencing      annotation_ref[]                @relation("referencer")
-
-    // srs stuff
-    srs              Boolean   @default(false)
-    response         String?   @db.MediumText // only for srs cards
-    due_timestamp    DateTime?
-    last_reviewed_at DateTime?
-    interval_ms      BigInt?
-    srs_created_at   DateTime?
 
     @@index([entryId])
     @@index([userId])
@@ -279,83 +267,82 @@ model person_to_entry {
 
 /// @zod.import(["import {recipeSchema, EntryExtendedSchema} from '../schemas'"])
 model Entry {
-    createdAt       DateTime                        @default(now())
-    author          String?
-    location        Entry_location?
-    title           String?                         @db.VarChar(2083)
-    type            DocumentType                    @default(article)
-    updatedAt       DateTime                        @updatedAt
-    id              Int                             @id @default(autoincrement())
-    uri             String?                         @unique @db.VarChar(500)
-    html            String?                         @db.LongText
-    text            String?                         @db.LongText
-    image           String?                         @db.VarChar(2083)
-    guid            String?
-    wordCount       Int?
-    siteName        String?
-    summary         String?                         @db.VarChar(255)
-    media           Json?
-    published       DateTime?
-    updated         DateTime?
-    feedId          Int?
+    createdAt            DateTime                        @default(now())
+    author               String?
+    location             Entry_location?
+    title                String?                         @db.VarChar(2083)
+    type                 DocumentType                    @default(article)
+    updatedAt            DateTime                        @updatedAt
+    id                   Int                             @id @default(autoincrement())
+    uri                  String?                         @unique @db.VarChar(500)
+    html                 String?                         @db.LongText
+    text                 String?                         @db.LongText
+    image                String?                         @db.VarChar(2083)
+    guid                 String?
+    wordCount            Int?
+    siteName             String?
+    summary              String?                         @db.VarChar(255)
+    media                Json?
+    published            DateTime?
+    updated              DateTime?
+    feedId               Int?
     /// Original represents original data (html, title) in case we've re-download and/or changes...?
-    original        Json?
+    original             Json?
     /// @zod.custom.use(recipeSchema)
-    recipe          Json?
-    podcastIndexId  BigInt?                         @unique
+    recipe               Json?
+    podcastIndexId       BigInt?                         @unique
     /// The duration of the entry, in seconds
-    duration        Int?
-    enclosureLength Int?
-    enclosureType   String?
-    enclosureUrl    String?                         @db.VarChar(2083)
-    googleBooksId   String?                         @unique
+    duration             Int?
+    enclosureLength      Int?
+    enclosureType        String?
+    enclosureUrl         String?                         @db.VarChar(2083)
+    googleBooksId        String?                         @unique
     /// The TMDB id, if it's a movie or TV show.
-    tmdbId          Int?                            @unique
+    tmdbId               Int?                            @unique
     /// @zod.custom.use(schemaOrgSchemas)
-    schemaOrg       Json?
+    schemaOrg            Json?
     /// Tmdb data - could also store this in "original"?
-    tmdbData        Json?
-    screenshot      String?
-    extended        Json?
+    tmdbData             Json?
+    screenshot           String?
+    extended             Json?
     /// Youtube ID, if it's a youtube video
-    youtubeId       String?                         @unique
-    pageCount       Int?                            @db.UnsignedSmallInt
-    genres          String?
-    language        String?                         @db.VarChar(100)
+    youtubeId            String?                         @unique
+    pageCount            Int?                            @db.UnsignedSmallInt
+    genres               String?
+    language             String?                         @db.VarChar(100)
     /// The publisher for books, company for plays, etc.
-    publisher       String?
-    author_extra    Json?
-    spotifyId       String?                         @unique
-    data            EntryData[]
-    person          person_to_entry[]
-    feed            Feed?                           @relation(fields: [feedId], references: [id])
-    relations       Relation[]                      @relation("originatingEntryRelation")
-    back_relations  Relation[]                      @relation("destinationEntryRelation")
-    interactions    Interaction[]
-    EntryMedia      EntryMedia[]
-    annotations     Annotation[]
-    bookmarks       Bookmark[]
-    tags            Tag[]
-    entrytags       EntryTag[]
-    context         Context[]
-    CollectionItems CollectionItems[]
-    favorites       Favorite[]
-    log             Log[]
-    TagOnEntry      TagOnEntry[]
-    referenced_by   annotation_to_entry_reference[]
-
-    pdf_fingerprint String? @unique
-
-    // An entry can be owned by a user, such as a PDF uploaded by them. In this case, they should have sole pemrmissions on it.
-    owned_by_id String?
-    owned_by    AuthUser? @relation(fields: [owned_by_id], references: [id])
+    publisher            String?
+    author_extra         Json?
+    spotifyId            String?                         @unique
+    owned_by_id          String?
+    pdf_fingerprint      String?                         @unique
+    estimatedReadingTime Int?
+    // For non-reading entries, the runtime (in minutes). For books, assume 2 mins per page.
+    runtime              Int?
+    data                 EntryData[]
+    person               person_to_entry[]
+    feed                 Feed?                           @relation(fields: [feedId], references: [id])
+    relations            Relation[]                      @relation("originatingEntryRelation")
+    back_relations       Relation[]                      @relation("destinationEntryRelation")
+    interactions         Interaction[]
+    EntryMedia           EntryMedia[]
+    annotations          Annotation[]
+    bookmarks            Bookmark[]
+    tags                 Tag[]
+    entrytags            EntryTag[]
+    context              Context[]
+    CollectionItems      CollectionItems[]
+    favorites            Favorite[]
+    log                  Log[]
+    TagOnEntry           TagOnEntry[]
+    referenced_by        annotation_to_entry_reference[]
+    owned_by             AuthUser?                       @relation(fields: [owned_by_id], references: [id])
 
     @@unique([uri, id])
     @@index([feedId])
     @@index([id, published, createdAt])
     @@index([published])
     @@index([owned_by_id])
-    // @@index([id, title])
     @@index([title(length: 255)])
     @@fulltext([text, title, author])
     @@fulltext([title, author])
@@ -367,8 +354,6 @@ model annotation_tag {
     annotationId String
     annotation   Annotation @relation(fields: [annotationId], references: [id])
     tag          Tag        @relation(fields: [tagId], references: [id])
-
-    // TODO: user relation?
 
     @@id([annotationId, tagId])
     @@index([tagId])
@@ -750,10 +735,10 @@ model AuthUser {
     updatedAt          DateTime             @updatedAt
     email              String               @unique
     username           String               @unique @default("")
-    avatar             String?
     default_state_id   Int?                 @unique
     default_archive_id Int?
     home_items         Json?
+    avatar             String?
     auth_session       AuthSession[]
     auth_key           AuthKey[]
     followedBy         AuthUser[]           @relation("UserFollows")
@@ -784,8 +769,7 @@ model AuthUser {
     AuthorizationKey   AuthorizationKey?
     TagOnEntry         TagOnEntry[]
     bookmark_history   BookmarkHistory[]
-
-    custom_entries Entry[]
+    custom_entries     Entry[]
 
     @@map("auth_user")
 }
@@ -950,8 +934,6 @@ enum AnnotationType {
     annotation
     reply
     document
-
-    // srs
     qa
 }
 

@@ -39,7 +39,7 @@
 				badgeVariants({
 					variant: 'outline'
 				}),
-				'rounded-none'
+				'rounded-none cursor-default hocus:bg-secondary focus:ring-0'
 			)}
 		>
 			<slot>

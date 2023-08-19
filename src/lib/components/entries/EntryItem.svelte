@@ -10,7 +10,7 @@
 	import { state } from '$lib/state/entries';
 	import { Status, statuses, statusesWithIcons } from '$lib/status';
 	import { getTargetSelector } from '$lib/utils/annotations';
-	import { ago, now } from '$lib/utils/date';
+	import { ago, formatDuration, now } from '$lib/utils/date';
 	import { getId, getType, get_image, make_link } from '$lib/utils/entries';
 	import { createContextMenu, melt } from '@melt-ui/svelte';
 	import { VariantProps, cva } from 'class-variance-authority';
@@ -21,8 +21,10 @@
 		CheckIcon,
 		CircleDashedIcon,
 		FileTextIcon,
+		Hourglass,
 		PencilIcon,
 		TagIcon,
+		TimerIcon,
 		TrendingUpIcon
 	} from 'lucide-svelte';
 	import { ComponentType, createEventDispatcher, onMount } from 'svelte';
@@ -227,8 +229,6 @@
 	}
 
 	export let contextMenuOpen = false;
-
-
 </script>
 
 <!-- out:send={{
@@ -414,16 +414,25 @@
 								>
 							{/each}
 						{/if}
-						{#if entry.wordCount}
-							<Small class="text-xs">
-								{entry.wordCount} words
-							</Small>
-						{/if}
-						{#if entry.progress}
-							<Small class="text-xs">
-								{Math.round(entry.progress * 100)}%
-							</Small>
-						{/if}
+						<div class="flex flex-col">
+							{#if entry.wordCount}
+								<!-- TODO: allow display changes -->
+								<!-- <Small class="text-xs">
+                                    {entry.wordCount} words
+                                </Small> -->
+							{/if}
+							{#if entry.estimatedReadingTime}
+								<Small class="text-xs text-muted-foreground items-center h-9 flex">
+									<TimerIcon class="h-3.5 w-3.5" />
+									{formatDuration(entry.estimatedReadingTime, "m")}
+								</Small>
+							{/if}
+							{#if entry.progress}
+								<Small class="text-xs">
+									{Math.round(entry.progress * 100)}%
+								</Small>
+							{/if}
+						</div>
 					</div>
 				{:else if view === 'kanban'}
 					<!-- for now, we use a slot -->
@@ -470,7 +479,13 @@
 				<ContextMenuIcon icon={TagIcon} />
 				<span>Tag</span>
 				<ContextMenu.SubContent class="w-48 p-0">
-					<TagCommand autofocus bind:selectedTags={entry.tags} shouldMutate entryId={[entry.id]} bind:open={contextMenuOpen} />
+					<TagCommand
+						autofocus
+						bind:selectedTags={entry.tags}
+						shouldMutate
+						entryId={[entry.id]}
+						bind:open={contextMenuOpen}
+					/>
 					<!-- {#await queryClient.ensureQueryData(queryFactory.tags.list()) then tags}
 						{#each tags || [] as tag}
 							<ContextMenu.CheckboxItem

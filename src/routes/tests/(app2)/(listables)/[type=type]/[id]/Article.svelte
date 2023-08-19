@@ -80,6 +80,8 @@
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { numberOrString } from '$lib/utils/misc';
 	import type { Type } from '$lib/types';
+    import throttle from 'just-throttle';
+
 
 	export let data: PageData;
 
@@ -354,44 +356,28 @@
 		}
 	}
 
-	// function createMutation<T>(opts: { mutationFn: () => Promise<T> }) {
-	// 	const store = writable({
-	// 		mutate,
-	// 		isPending: false
-	// 	});
 
-	// 	function mutate() {
-	// 		store.update((s) => ({ ...s, isPending: true }));
-	// 		const promise = opts.mutationFn();
-	// 		promise.finally(() => {
-	// 			store.update((s) => ({ ...s, isPending: false }));
-	// 		});
-	// 		return promise;
-	// 	}
-
-	// 	return {
-	// 		subscribe: store.subscribe
-	// 	};
-	// }
+    let lastSavedScrollProgress = data.entry?.interaction?.progress ?? 0;
 
 	const saveProgressMutation = createMutation({
 		mutationFn: async () => {
 			if (initializing) return;
 			console.log('mutating');
-			// mutation($page, 'saveInteraction', {
-			// 	entryId: data.entry!.id,
-			// 	id: data.entry?.interaction?.id,
-			// 	progress: $scroll
-			// })
-		}
+			return mutation($page, 'saveInteraction', {
+				entryId: data.entry!.id,
+				id: data.entry?.interaction?.id,
+				progress: $scroll
+			})
+		},
+        onMutate() {
+            lastSavedScrollProgress = $scroll;
+        },
 	});
 
 	beforeNavigate(() => {
 		$annotationCtx.clear();
 		// save progress
-		if ($saveProgressMutation.isPending) return;
-		if (cancel_save) cancel_save();
-		$saveProgressMutation.mutate();
+		saveProgress.flush();
 		$mainnav = {
 			show: true,
 			center: false,
@@ -488,17 +474,22 @@
 		};
 	}
 
-	const { debounce: debounced_save, cancel: cancel_save } = debounce(5000);
+	const saveProgress = throttle(() => {
+        if ($saveProgressMutation.isPending) return;
+        // don't save if last saved progress is within .005 of current progress
+        console.log({ lastSavedScrollProgress, $scroll });
+        if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
+        $saveProgressMutation.mutate();
+    }, 2000, {
+        leading: false
+    })
 
 	const scrolling = (getContext('scrolling') as Writable<boolean>) ?? writable(false);
 
 	let scroll = writable(0);
 
 	const uscroll = scroll.subscribe(() => {
-		debounced_save(() => {
-			if ($saveProgressMutation.isPending) return;
-			$saveProgressMutation.mutate();
-		});
+		saveProgress();
 	});
 
 	let lastScrollTop = 0;

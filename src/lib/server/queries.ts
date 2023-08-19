@@ -82,6 +82,7 @@ export async function get_library({
 			'e.podcastIndexId',
 			'b.updatedAt',
 			'e.wordCount',
+			'e.estimatedReadingTime',
 			'e.spotifyId',
 			'b.status',
 			'b.sort_order',
@@ -245,7 +246,7 @@ export async function get_library({
 		);
 	}
 	if (filter) {
-		const { createdAt, type, tags } = filter;
+		const { createdAt, type, tags, readingTime } = filter;
 		if (type) {
 			query = query.where('e.type', '=', type);
 		}
@@ -310,6 +311,15 @@ export async function get_library({
 						tags.ids.length
 					)
 				);
+			}
+		}
+		if (readingTime) {
+			const { min, max } = readingTime;
+			if (min) {
+				query = query.where('e.estimatedReadingTime', '>=', min);
+			}
+			if (max) {
+				query = query.where('e.estimatedReadingTime', '<=', max);
 			}
 		}
 	}

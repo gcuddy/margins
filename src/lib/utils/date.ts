@@ -60,3 +60,25 @@ export const now = readable(new Date(), (set) => {
         clearInterval(interval);
     };
 });
+
+
+/**
+ *
+ * @param duration @type{number}
+ * @param unit @type{"m" | "s" | "ms"}
+ */
+export const formatDuration = (duration: number, unit?: "m" | "s" | "ms") => {
+    // convert to ms
+    if (unit === "m") duration *= 60 * 1000
+    else if (unit === "s") duration *= 1000
+
+    const hours = Math.floor(duration / (60 * 60 * 1000));
+    const minutes = Math.floor(duration / (60 * 1000)) % 60;
+    const seconds = Math.floor(duration / 1000) % 60;
+
+    const parts = []
+    if (hours > 0) parts.push(`${hours}h`)
+    if (minutes > 0) parts.push(`${minutes}m`)
+    if (seconds > 0) parts.push(`${seconds}s`)
+    return parts.join(" ")
+}
