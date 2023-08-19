@@ -1,3 +1,4 @@
+import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
 import { defaultParseSearch, defaultStringifySearch } from '$lib/utils/search-params';
@@ -33,6 +34,7 @@ export function createParamsStore<TSchema extends z.ZodObject<any, any>>(
 	};
 
 	effect([store, page], ([$store, $page]) => {
+        if (!browser) return;
 		console.log({ $store });
 		const searchStr = defaultStringifySearch($store);
 		// if
@@ -106,11 +108,13 @@ export function createSearchParamsStore<TSchema extends z.ZodObject<any, any>>(
 			store.set(newData);
 			const newStr = defaultStringifySearch(newData);
 			const url = $page.url.pathname + newStr;
-			goto(url, {
-				keepFocus: true,
-				noScroll: true,
-				replaceState: true
-			});
+            if (browser) {
+                goto(url, {
+                    keepFocus: true,
+                    noScroll: true,
+                    replaceState: true
+                });
+            }
 		}
 	};
 }

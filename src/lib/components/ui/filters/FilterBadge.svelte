@@ -24,6 +24,7 @@
 	import { Select, SelectContent, SelectItem, SelectGroup } from '$components/ui/select';
 	import { Select as SelectPrimitive } from '@huntabyte/primitives';
 	import Type from './conditions/Type.svelte';
+	import Tags from './conditions/Tags.svelte';
 
 	export let type: TFilterKey;
 	export let filter: FilterLibrarySchema[TFilterKey];
@@ -100,6 +101,13 @@
 		{@const type = getFilter('type', filter)}
 		{#if type}
 			<Type {type} />
+		{/if}
+	{:else if type === 'tags' && filter}
+		{@const tags = getFilter('tags', filter)}
+    {#if tags}
+			<div class="flex flex-wrap">
+				<Tags ids={tags.ids} />
+			</div>
 		{/if}
 	{/if}
 </div>

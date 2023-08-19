@@ -38,7 +38,7 @@
 	import { Muted, Small } from '../ui/typography';
 	import { render_html } from '$components/ui/editor/utils';
 	import { portal } from 'svelte-portal';
-	import { InfiniteData, useQueryClient } from '@tanstack/svelte-query';
+	import { InfiniteData, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils/tailwind';
@@ -63,8 +63,8 @@
 
 	export let entry: LibraryEntry;
 
-    // Computed
-    $: author = entry.bookmark_author || entry.author;
+	// Computed
+	$: author = entry.bookmark_author || entry.author;
 
 	export let border = true;
 
@@ -86,6 +86,9 @@
 	$: tag_ids = entry.tags?.map((t) => t.id) || [];
 
 	export let out_key: Status = 'Archive';
+
+	// TODO: Review - is it bad to do createquery for every component in a list?
+	// const tagsQuery = createQuery(queryFactory.tags.list());
 
 	// REVIEW should make a single generic type for state
 	async function update_entry(newData: Partial<LibraryResponse['entries'][number]>) {
@@ -494,47 +497,44 @@
 		<svelte:component this={contextMenuIcon} icon={TrendingUpIcon} />
 		<span>Bump to top</span>
 	</svelte:component>
-	{#if $page.data.user_data}
-		<svelte:component this={contextMenuSubmenu} {createSubmenu} inset>
-			<svelte:component this={contextMenuIcon} icon={TagIcon} />
-			<span>Tag</span>
-			<svelte:fragment slot="content">
-				{#await $page.data.user_data.tags}
-					Loading...
-				{:then tags}
-					{#each tags || [] as tag}
-						<svelte:component
-							this={contextMenuCheckboxItem}
-							{createCheckboxItem}
-							useCheckbox
-							defaultChecked={!!entry.tags?.some((t) => t.id === tag.id)}
-							onCheckedChange={({ next }) => {
-								// TODO: update tag
-								console.log('update tag');
-								// We set the state here so that the UI updates immediately
-								update_entry({
-									tags: data.tags?.some((t) => t.id === tag.id)
-										? data.tags?.filter((t) => t.id !== tag.id)
-										: [...(data.tags || []), tag]
-								});
-								// We set tag_state_dirty to let the context menu know that when it closes, we should call the mutation on the server
-								// TODO or should it be debounced?
-								tag_state_dirty = true;
+	<svelte:component this={contextMenuSubmenu} {createSubmenu} inset>
+		<svelte:component this={contextMenuIcon} icon={TagIcon} />
+		<span>Tag</span>
+		<svelte:fragment slot="content">
+            <!-- REVIEW: is this more performant than createquery? -->
+			{#await queryClient.ensureQueryData(queryFactory.tags.list()) then tags}
+				{#each tags || [] as tag}
+					<svelte:component
+						this={contextMenuCheckboxItem}
+						{createCheckboxItem}
+						useCheckbox
+						defaultChecked={!!entry.tags?.some((t) => t.id === tag.id)}
+						onCheckedChange={({ next }) => {
+							// TODO: update tag
+							console.log('update tag');
+							// We set the state here so that the UI updates immediately
+							update_entry({
+								tags: data.tags?.some((t) => t.id === tag.id)
+									? data.tags?.filter((t) => t.id !== tag.id)
+									: [...(data.tags || []), tag]
+							});
+							// We set tag_state_dirty to let the context menu know that when it closes, we should call the mutation on the server
+							// TODO or should it be debounced?
+							tag_state_dirty = true;
 
-								// mutation($page, 'update_tags_on_entry', {
-								//     entries: [entry.id],
-								//     tags: [tag.id]
-								// })
-								return next;
-							}}
-						>
-							{tag.name}
-						</svelte:component>
-					{/each}
-				{/await}
-			</svelte:fragment>
-		</svelte:component>
-	{/if}
+							// mutation($page, 'update_tags_on_entry', {
+							//     entries: [entry.id],
+							//     tags: [tag.id]
+							// })
+							return next;
+						}}
+					>
+						{tag.name}
+					</svelte:component>
+				{/each}
+			{/await}
+		</svelte:fragment>
+	</svelte:component>
 	<svelte:component this={contextMenuSubmenu} {createSubmenu} inset>
 		<svelte:component this={contextMenuIcon} icon={CircleDashedIcon} />
 		Status

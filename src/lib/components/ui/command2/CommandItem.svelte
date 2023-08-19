@@ -120,7 +120,6 @@
 
 	$: render = alwaysShow || !$inputValue || $filtered.ids.includes(id);
 	$: selected = /*$selectedValue.includes(value) ??*/ $selectedIds.includes(id);
-	$: console.log({ $selectedIds, id, inThere: $selectedIds.includes(id) });
 </script>
 
 {#if render}

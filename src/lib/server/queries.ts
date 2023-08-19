@@ -214,18 +214,22 @@ export async function get_library({
 			break;
 		}
 		case 'author': {
-			query = query.orderBy(eb => eb.fn.coalesce('b.author', 'e.author')).orderBy('e.id', 'asc');
-            // query.orderBy(eb => eb.case()
-            //     .when(eb("b.author", "is", null))
-            //     .then(eb.ref("e.author"))
-            //     .else(eb.ref("b.author"))
-            //     .end()
-            // )
+			query = query.orderBy((eb) => eb.fn.coalesce('b.author', 'e.author')).orderBy('e.id', 'asc');
+			// query.orderBy(eb => eb.case()
+			//     .when(eb("b.author", "is", null))
+			//     .then(eb.ref("e.author"))
+			//     .else(eb.ref("b.author"))
+			//     .end()
+			// )
 			if (cursor) {
 				query = query.where((eb) =>
 					eb.or([
-                        eb(eb.fn.coalesce("b.author", "e.author"), '>', cursor.author),
-						eb(eb.fn.coalesce("b.author", "e.author"), '=', cursor.author).and('e.id', '>', cursor.id)
+						eb(eb.fn.coalesce('b.author', 'e.author'), '>', cursor.author),
+						eb(eb.fn.coalesce('b.author', 'e.author'), '=', cursor.author).and(
+							'e.id',
+							'>',
+							cursor.id
+						)
 					])
 				);
 			}
@@ -233,13 +237,15 @@ export async function get_library({
 	}
 
 	if (search) {
-		query = query.where(eb => eb.or([
-            eb('e.title', 'like', `%${search}%`),
-            eb(eb.fn.coalesce('b.author', 'e.title'), 'like', `%${search}%`),
-        ]))
+		query = query.where((eb) =>
+			eb.or([
+				eb('e.title', 'like', `%${search}%`),
+				eb(eb.fn.coalesce('b.author', 'e.title'), 'like', `%${search}%`)
+			])
+		);
 	}
 	if (filter) {
-		const { createdAt, type } = filter;
+		const { createdAt, type, tags } = filter;
 		if (type) {
 			query = query.where('e.type', '=', type);
 		}
@@ -278,6 +284,32 @@ export async function get_library({
 						)} 23:59:59"`
 					);
 				}
+			}
+		}
+		if (tags) {
+			if (!tags.type || tags.type === 'or') {
+				query = query.where((eb) =>
+					eb.exists(
+						eb
+							.selectFrom('TagOnEntry')
+							.select('TagOnEntry.id')
+							.whereRef('TagOnEntry.entryId', '=', 'e.id')
+							.where('TagOnEntry.tagId', 'in', tags.ids)
+					)
+				);
+			} else {
+				// and
+				query = query.where(({ eb, selectFrom }) =>
+					eb(
+						selectFrom('TagOnEntry')
+							.select(({ fn }) => fn.count('TagOnEntry.id').as('count'))
+							.distinct()
+							.whereRef('TagOnEntry.entryId', '=', 'e.id')
+							.where('TagOnEntry.tagId', 'in', tags.ids),
+						'=',
+						tags.ids.length
+					)
+				);
 			}
 		}
 	}

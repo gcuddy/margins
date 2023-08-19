@@ -464,7 +464,7 @@ export const queries = {
 	}),
 	tags: query({
 		fn: ({ ctx }) => {
-			return db.selectFrom('Tag').where('userId', '=', ctx.userId).select(['id', 'name']).execute();
+			return db.selectFrom('Tag').where('userId', '=', ctx.userId).select(['id', 'name']).orderBy("Tag.name", "asc").execute();
 		}
 	}),
 	collections: query({

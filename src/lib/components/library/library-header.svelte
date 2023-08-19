@@ -222,7 +222,7 @@
 			icon: FileIcon
 		},
 		{
-			name: 'Tag',
+			name: 'Tags',
 			placeholder: 'Filter by tag...',
 			icon: TagIcon
 		}
@@ -292,7 +292,7 @@
 											{type}
 										</CommandItem>
 									{/each}
-								{:else if currentPage.name === 'Tag'}
+								{:else if currentPage.name === 'Tags'}
 									{#if $tagsQuery.isLoading}
 										<CommandLoading>Loading...</CommandLoading>
 									{:else if $tagsQuery.isSuccess}
@@ -302,10 +302,16 @@
 											<CommandItem
 												onSelect={() => {
 													filterChange($page.url, (data) => {
-														if (data.tags?.includes(tag.id)) {
-															data.tags = data.tags.filter((t) => t !== tag.id);
+                                                        console.log({data})
+														if (data.tags?.ids?.includes(tag.id)) {
+															data.tags = {
+																...data.tags,
+																ids: data.tags.ids.filter((t) => t !== tag.id)
+															};
 														} else {
-															data.tags = [tag.id];
+															data.tags = {
+																ids: [...(data.tags?.ids ?? []), tag.id]
+															};
 														}
 														return data;
 													});
