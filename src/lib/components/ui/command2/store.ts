@@ -7,8 +7,9 @@ import {
 	isElementDisabled,
 	kbd
 } from '@melt-ui/svelte/internal/helpers';
-import { tick } from 'svelte';
-import { Writable, derived, get, writable } from 'svelte/store';
+import { afterUpdate, beforeUpdate, tick } from 'svelte';
+// import { Writable, get } from 'svelte/store';
+import { batch, derived, writable, get, Writable } from '@amadeus-it-group/tansu';
 
 import commandScore from 'command-score';
 
@@ -34,7 +35,7 @@ export type CommandProps<T> = {
 	initialSelectedValue?: T[];
 	filterFunction?: (item: string, inputValue: string) => number;
 	onClose?: (selectedValue: T[]) => void;
-    comparisonFunction?: (a: T, b: T) => boolean;
+	comparisonFunction?: (a: T, b: T) => boolean;
 };
 
 type Filtered<T> = {
@@ -98,11 +99,11 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			for (const value of $selectedValue) {
 				const _ids = Array.from($idsToValueMap.entries())
 					.filter(([_, v]) => {
-                        if (props?.comparisonFunction) {
-                            return props.comparisonFunction(v, value);
-                        }
-                        return deepEqual(v, value);
-                    })
+						if (props?.comparisonFunction) {
+							return props.comparisonFunction(v, value);
+						}
+						return deepEqual(v, value);
+					})
 					.map(([id, _]) => id);
 				ids.push(..._ids);
 			}
@@ -325,48 +326,53 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	function registerItem(id: string | string[], groupId?: string) {
 		console.log(`Registering item`, { id, groupId });
-		allItemIds.update(($items) => {
-			if (Array.isArray(id)) {
-				for (const i of id) {
-					$items.add(i);
-				}
-				return $items;
-			}
-			$items.add(id);
-			return $items;
-		});
-		if (groupId) {
-			allGroupIds.update(($groups) => {
-				const group = $groups.get(groupId) ?? new Set();
-				const ids = Array.isArray(id) ? id : [id];
-				for (const id of ids) {
-					group.add(id);
-				}
-				$groups.set(groupId, group);
-				return $groups;
-			});
-		}
-		return () => {
-			// REVIEW is this necessary?
+
+		registerQueue.push(() => {
 			allItemIds.update(($items) => {
 				if (Array.isArray(id)) {
 					for (const i of id) {
-						$items.delete(i);
+						$items.add(i);
 					}
 					return $items;
 				}
-				$items.delete(id);
+				$items.add(id);
 				return $items;
 			});
-			idsToValueMap.update(($map) => {
-				if (Array.isArray(id)) {
-					for (const i of id) {
-						$map.delete(i);
+			if (groupId) {
+				allGroupIds.update(($groups) => {
+					const group = $groups.get(groupId) ?? new Set();
+					const ids = Array.isArray(id) ? id : [id];
+					for (const id of ids) {
+						group.add(id);
 					}
+					$groups.set(groupId, group);
+					return $groups;
+				});
+			}
+		});
+		return () => {
+			// REVIEW is this necessary?
+			registerQueue.push(() => {
+				allItemIds.update(($items) => {
+					if (Array.isArray(id)) {
+						for (const i of id) {
+							$items.delete(i);
+						}
+						return $items;
+					}
+					$items.delete(id);
+					return $items;
+				});
+				idsToValueMap.update(($map) => {
+					if (Array.isArray(id)) {
+						for (const i of id) {
+							$map.delete(i);
+						}
+						return $map;
+					}
+					$map.delete(id);
 					return $map;
-				}
-				$map.delete(id);
-				return $map;
+				});
 			});
 		};
 	}
@@ -380,19 +386,21 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	function registerItemValue(id: string, value: T): void;
 	function registerItemValue(id: string | { id: string; value: T }[], value?: T) {
 		console.log(`Registering item value`, { id, value });
-		if (Array.isArray(id)) {
-			idsToValueMap.update(($map) => {
-				for (const { id: i, value } of id) {
-					$map.set(i, value);
-				}
-				return $map;
-			});
-		} else if (value) {
-			idsToValueMap.update(($map) => {
-				$map.set(id, value);
-				return $map;
-			});
-		}
+		registerQueue.push(() => {
+			if (Array.isArray(id)) {
+				idsToValueMap.update(($map) => {
+					for (const { id: i, value } of id) {
+						$map.set(i, value);
+					}
+					return $map;
+				});
+			} else if (value) {
+				idsToValueMap.update(($map) => {
+					$map.set(id, value);
+					return $map;
+				});
+			}
+		});
 	}
 
 	function registerGroup(id: string) {
@@ -413,6 +421,19 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			});
 		};
 	}
+
+	let registerQueue: (() => void)[] = [];
+	beforeUpdate(() => {
+		console.log(`beforeUpdate`, { registerQueue });
+        batch(() => {
+            console.log('batching')
+            for (const fn of registerQueue) {
+                console.log(`running fn`);
+                fn();
+            }
+        })
+		registerQueue = [];
+	});
 
 	function registerCallback(id: string | string[], callback: () => void) {
 		idsToCallbackMap.update(($map) => {

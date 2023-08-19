@@ -148,6 +148,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@amadeus-it-group/tansu": "^0.0.22",
 		"@googleapis/youtube": "^10.0.0",
 		"@huntabyte/primitives": "^0.0.19",
 		"@lucia-auth/adapter-kysely": "^1.0.1",

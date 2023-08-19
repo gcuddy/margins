@@ -9,7 +9,7 @@ export const Status = {
 	Now: 'Now',
 	Archive: 'Archive'
 } as const;
-export type Status = typeof Status[keyof typeof Status];
+export type Status = (typeof Status)[keyof typeof Status];
 export const Color = {
 	Yellow: 'Yellow',
 	Blue: 'Blue',
@@ -17,13 +17,13 @@ export const Color = {
 	Pink: 'Pink',
 	Purple: 'Purple'
 } as const;
-export type Color = typeof Color[keyof typeof Color];
+export type Color = (typeof Color)[keyof typeof Color];
 export const RelationType = {
 	Related: 'Related',
 	SavedFrom: 'SavedFrom',
 	Grouped: 'Grouped'
 } as const;
-export type RelationType = typeof RelationType[keyof typeof RelationType];
+export type RelationType = (typeof RelationType)[keyof typeof RelationType];
 export const AnnotationType = {
 	bookmark: 'bookmark',
 	note: 'note',
@@ -32,7 +32,7 @@ export const AnnotationType = {
 	document: 'document',
 	qa: 'qa'
 } as const;
-export type AnnotationType = typeof AnnotationType[keyof typeof AnnotationType];
+export type AnnotationType = (typeof AnnotationType)[keyof typeof AnnotationType];
 export const DocumentType = {
 	article: 'article',
 	podcast: 'podcast',
@@ -54,33 +54,33 @@ export const DocumentType = {
 	game: 'game',
 	board_game: 'board_game'
 } as const;
-export type DocumentType = typeof DocumentType[keyof typeof DocumentType];
+export type DocumentType = (typeof DocumentType)[keyof typeof DocumentType];
 export const CollectionItemType = {
 	Entry: 'Entry',
 	Annotation: 'Annotation',
 	Section: 'Section',
 	Collection: 'Collection'
 } as const;
-export type CollectionItemType = typeof CollectionItemType[keyof typeof CollectionItemType];
+export type CollectionItemType = (typeof CollectionItemType)[keyof typeof CollectionItemType];
 export const FavoriteType = {
 	FOLDER: 'FOLDER',
 	FAVORITE: 'FAVORITE'
 } as const;
-export type FavoriteType = typeof FavoriteType[keyof typeof FavoriteType];
+export type FavoriteType = (typeof FavoriteType)[keyof typeof FavoriteType];
 export const Entry_location = {
 	inbox: 'inbox',
 	soon: 'soon',
 	later: 'later',
 	archive: 'archive'
 } as const;
-export type Entry_location = typeof Entry_location[keyof typeof Entry_location];
+export type Entry_location = (typeof Entry_location)[keyof typeof Entry_location];
 export const State_type = {
 	inbox: 'inbox',
 	soon: 'soon',
 	later: 'later',
 	archive: 'archive'
 } as const;
-export type State_type = typeof State_type[keyof typeof State_type];
+export type State_type = (typeof State_type)[keyof typeof State_type];
 export type Annotation = {
 	id: string;
 	createdAt: Generated<Timestamp>;

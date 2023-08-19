@@ -96,26 +96,26 @@
 					sort: $sort,
 					filter
 				}),
-				placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
-					console.log(`placeholder`, { data });
-					if (search && data) {
-						// perform search
-						const searchRegex = new RegExp(search, 'i');
-						return {
-							...data,
-							pages: data.pages.map((page) => ({
-								...page,
-								entries: page.entries.filter((entry) => {
-									const title = entry.title;
-									const author = entry.bookmark_author ?? entry.author;
-									if (!title && !author) return false;
-									return searchRegex.test(`${title} ${author}`);
-								})
-							}))
-						};
-					}
-					return data;
-				}
+				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
+				// 	console.log(`placeholder`, { data });
+				// 	if (search && data) {
+				// 		// perform search
+				// 		const searchRegex = new RegExp(search, 'i');
+				// 		return {
+				// 			...data,
+				// 			pages: data.pages.map((page) => ({
+				// 				...page,
+				// 				entries: page.entries.filter((entry) => {
+				// 					const title = entry.title;
+				// 					const author = entry.bookmark_author ?? entry.author;
+				// 					if (!title && !author) return false;
+				// 					return searchRegex.test(`${title} ${author}`);
+				// 				})
+				// 			}))
+				// 		};
+				// 	}
+				// 	return data;
+				// }
 			};
 		})
 	);

@@ -37,17 +37,19 @@
 	$: console.log({ $filtered });
 </script>
 
-{#each $filtered.items.slice(0, 25) as item, index}
-	<CommandItem
-		id={$filtered.ids[index]}
-		class={className}
-		shouldRegister={false}
-		alwaysShow={true}
-		value={item}
-		{onSelect}
-	>
-		<slot {item} />
-	</CommandItem>
+{#each $filtered.items as item, index}
+	<div>
+		<CommandItem
+			id={$filtered.ids[index]}
+			class={className}
+			shouldRegister={false}
+			alwaysShow={true}
+			value={item}
+			{onSelect}
+		>
+			<slot {item} />
+		</CommandItem>
+	</div>
 {/each}
 
 <!-- {#each $filtered.items.filter((item) => item.startsWith(id)) as filteredItem}
