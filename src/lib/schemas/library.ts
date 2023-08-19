@@ -64,6 +64,7 @@ export const createdAtFilter = z.union([gte, lte, equals]);
 export type CreatedAtFilter = z.infer<typeof createdAtFilter>;
 
 export const logicalOperators = ['and', 'or'] as const;
+export type LogicalOperator = typeof logicalOperators[number];
 
 export const filterLibrarySchema = z.object({
 	createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),

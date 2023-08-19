@@ -51,7 +51,7 @@ export const tag = z.object({
 });
 
 export const tagSchema = z.object({
-	tags: z.array(tag).default([])
+	tags: z.array(tag)
 });
 
 export type TagSchema = typeof tagSchema;

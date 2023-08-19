@@ -20,6 +20,10 @@
 	export let unstyled = false;
 	export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
 
+    export const focus = () => {
+        inputEl?.focus();
+    }
+
 	const {
 		ids,
 		state: { open, inputValue, activeElement, selectedValue },

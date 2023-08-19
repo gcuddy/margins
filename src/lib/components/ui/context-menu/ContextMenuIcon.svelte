@@ -1,14 +1,11 @@
 <script lang="ts">
-	import { getContext, type ComponentType } from 'svelte';
-	import type { Writable } from 'svelte/store';
+	import type { ComponentType } from "svelte";
+
 
 	export let icon: ComponentType;
 
-    // Automatically set ContextMenuItem to inset
-    const options: Writable<{inset: boolean}> = getContext('ContextMenuItem__options');
-    $options.inset = true;
 </script>
 
-<span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+<span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center opacity-50 group-focus:opacity-100 group-data-[state='open']:opacity-100">
 	<svelte:component this={icon} class="w-4 h-4" />
 </span>

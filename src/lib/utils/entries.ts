@@ -8,7 +8,7 @@ export function getId(entry: {
     type: DocumentType;
     id: number;
     tmdbId: number | null;
-    spotifyId: number | null;
+    spotifyId: string | null;
     googleBooksId: string | null;
     podcastIndexId: number | null;
 }): string | number {

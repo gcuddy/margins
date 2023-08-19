@@ -4,7 +4,11 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import ConditionLayout from '../helpers/ConditionLayout.svelte';
 	import Select from '../helpers/Select.svelte';
-	import { logicalOperators, type FilterLibrarySchema } from '$lib/schemas/library';
+	import {
+		logicalOperators,
+		type FilterLibrarySchema,
+		LogicalOperator
+	} from '$lib/schemas/library';
 	import { ctx } from '../ctx';
 	import { writable } from 'svelte/store';
 	import { cn } from '$lib/utils';
@@ -25,6 +29,7 @@
 	import { Checkbox } from '$components/ui/checkbox';
 	import { onDestroy } from 'svelte';
 	import debounce from 'just-debounce-it';
+	import { includes } from 'lodash';
 
 	export let ids: number[];
 	export let type: NonNullable<NonNullable<FilterLibrarySchema['tags']>['type']> = 'and';
@@ -41,7 +46,6 @@
 	const chosenTags = writable<Tag[]>([]);
 
 	$: $chosenTags = $tag.data?.filter((tag) => ids.includes(tag.id)) ?? [];
-
 
 	const {
 		state: { filterStore }
@@ -69,19 +73,28 @@
 		sortedTags = [...($tag.data ?? [])].sort(sortFunction);
 	}
 
-    const debouncedSetData = debounce(() => {
-        filterStore.change((data) => {
-            if (!$chosenTags.length) {
-                delete data.tags;
-                return data;
-            }
-            data.tags = {
-                type,
-                ids: $chosenTags.map((tag) => tag.id)
-            };
-            return data;
-        });
-    }, 1000, true);
+	const debouncedSetData = debounce(
+		() => {
+			filterStore.change((data) => {
+				if (!$chosenTags.length) {
+					delete data.tags;
+					return data;
+				}
+				data.tags = {
+					type,
+					ids: $chosenTags.map((tag) => tag.id)
+				};
+				return data;
+			});
+		},
+		1000,
+		true
+	);
+
+	const logicalOperatorToDisplay: Record<LogicalOperator, string> = {
+		and: 'all of',
+		or: 'any of'
+	};
 </script>
 
 {#if $tag.data}
@@ -91,23 +104,29 @@
 	<ConditionLayout
 		name="Tags"
 		on:delete={() => {
-			filterStore.change(data => {
-			    delete data.tags;
-			    return data;
-			})
+			filterStore.change((data) => {
+				delete data.tags;
+				return data;
+			});
 		}}
 	>
 		<Select
-			value={type}
+			bind:value={type}
 			choices={logicalOperators.map((operator) => ({
-				name: operator,
+				name: logicalOperatorToDisplay[operator],
 				value: operator
 			}))}
 			onValueChange={(value) => {
-                type = value;
+				type = value;
 				debouncedSetData();
 			}}
-		/>
+		>
+			{#if $chosenTags.length === 1 && $chosenTags[0]}
+				include
+			{:else}
+				include {logicalOperatorToDisplay[type]}
+			{/if}
+		</Select>
 
 		<Popover bind:open={popoverOpen}>
 			<PopoverTrigger asChild let:builder>
@@ -136,7 +155,12 @@
 					<CommandList>
 						<CommandGroup>
 							{#each sortedTags as tag}
-								<CommandItem value={tag} cancelClose="[data-melt-checkbox], svg" let:isSelected onSelect={debouncedSetData}>
+								<CommandItem
+									value={tag}
+									cancelClose="[data-melt-checkbox], svg"
+									let:isSelected
+									onSelect={debouncedSetData}
+								>
 									<Checkbox class="mr-2" checked={isSelected} />
 									<span>{tag.name}</span>
 								</CommandItem>
