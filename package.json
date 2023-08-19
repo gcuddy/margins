@@ -193,7 +193,7 @@
 		"@unpic/svelte": "^0.0.28",
 		"@upstash/qstash": "^0.3.6",
 		"arktype": "^1.0.14-alpha",
-		"bits-ui": "^0.0.20",
+		"bits-ui": "^0.0.24",
 		"canvas": "^2.11.2",
 		"class-variance-authority": "^0.6.1",
 		"classnames": "^2.3.2",

@@ -32,7 +32,13 @@ function createAppearanceOptions() {
 
 	const appearance = persisted('appearance', defaultOpts);
 
-    return appearance;
+    return {
+        ...appearance,
+        consts: {
+            align,
+            fonts,
+        }
+    };
 }
 
 const APPEARANCE_NAME = Symbol('appearance');
