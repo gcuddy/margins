@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { H1 } from '$components/ui/typography';
 	import LibraryTabs from './library-tabs.svelte';
-	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover2';
+	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
 	import { cn } from '$lib/utils/tailwind';
 	import Button, { buttonVariants } from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';

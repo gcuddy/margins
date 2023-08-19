@@ -11,7 +11,7 @@
 		CommandItem,
 		CommandList
 	} from '$lib/components/ui/command';
-	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover2';
+	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
 	import Button, { buttonVariants } from './ui/Button.svelte';
 	import { page } from '$app/stores';
 	import type { Promiseable } from '$lib/utils/type-utils';

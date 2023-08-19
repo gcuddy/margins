@@ -24,7 +24,7 @@
 		CommandSeparator,
 		CommandShortcut
 	} from '$lib/components/ui/command2';
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
 	import { melt } from '@melt-ui/svelte';
 	import { Checkbox } from '$components/ui/checkbox';
 	import { onDestroy } from 'svelte';

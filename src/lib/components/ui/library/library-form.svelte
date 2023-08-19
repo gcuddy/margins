@@ -3,7 +3,7 @@
 	import type { Type } from '$lib/types';
 	import Button, { buttonVariants } from '../Button.svelte';
 
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
 	import { melt } from '@melt-ui/svelte';
 	import Cmd from '../cmd/Cmd.svelte';
 	import { writable } from 'svelte/store';

@@ -36,7 +36,7 @@
 	];
 
 	let value: typeof data.entries[0];
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import { writable } from 'svelte/store';
 	import { cn } from '$lib';

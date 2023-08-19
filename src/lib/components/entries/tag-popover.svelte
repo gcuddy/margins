@@ -2,7 +2,7 @@
 	import Cluster from '$components/helpers/Cluster.svelte';
 	import Badge from '$components/ui/Badge.svelte';
 	import { Checkbox } from '$components/ui/checkbox';
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover2';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
 
 	import {
 		Command,
