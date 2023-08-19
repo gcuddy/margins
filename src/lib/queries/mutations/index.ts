@@ -3,6 +3,7 @@ import { MutationInput, mutation, QueryOutput } from '../query';
 import type { LibraryResponse } from '$lib/server/queries';
 import { get } from 'svelte/store';
 import { page } from '$app/stores';
+import type { QueryFactory } from '../querykeys';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
@@ -16,6 +17,12 @@ const mutateStatus = (queryClient: QueryClient) => {
 };
 
 
+/**
+ * Bad name for it. These are queries that shouldn't usually be invalidated when a mutation on entries occurs.
+ */
+const ctxEntries = ["count", "authors"] satisfies (keyof QueryFactory["entries"])[]
+
+
 export function createSetTagsMutation() {
     const queryClient = useQueryClient();
     return createMutation({
@@ -27,7 +34,10 @@ export function createSetTagsMutation() {
         },
         onSuccess() {
             queryClient.invalidateQueries({
-                queryKey: ["entries"]
+                // queryKey: ["entries"],
+                predicate(query) {
+                    return query.queryKey[0] === "entries" && (!ctxEntries.includes(query.queryKey[1] as any))
+                }
             })
         }
     })

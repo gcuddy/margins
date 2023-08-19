@@ -13,6 +13,7 @@
 
 	export let heading: string | undefined = undefined;
 	export let value: string | undefined = undefined;
+    export let alwaysShow = false;
 
 	let className = '';
 	export { className as class };
@@ -38,7 +39,7 @@
 		};
 	});
 
-	$: render = !$inputValue || $filtered.groups.has(id);
+	$: render = alwaysShow || !$inputValue || $filtered.groups.has(id);
 </script>
 
 <div

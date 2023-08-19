@@ -258,7 +258,7 @@
 						<div class="sidebar-row">
 							<Muted>Tags</Muted>
 							<!-- <TagPopover data={$page.data.tagForm} entry={$query.data?.entry} /> -->
-                            <TagPopover selectedTags={$query.data.entry.tags} />
+                            <TagPopover entryId={[$query.data.entry.id]} selectedTags={$query.data.entry.tags} />
 						</div>
 					{/if}
 					<div class="sidebar-row">

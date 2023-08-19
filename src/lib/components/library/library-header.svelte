@@ -23,7 +23,9 @@
 		CommandInput,
 		CommandGroup,
 		CommandItem,
-		CommandList
+		CommandLoading,
+		CommandList,
+		CommandIcon
 	} from '$components/ui/command2';
 	import {
 		DropdownMenu,
@@ -38,7 +40,7 @@
 	// import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
 	// import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
 	import { page, navigating } from '$app/stores';
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import Input from '$components/ui/Input.svelte';
 	import Kbd from '$components/ui/KBD.svelte';
 	import Header from '$components/ui/Header.svelte';
@@ -48,14 +50,22 @@
 	import type { LibrarySortType } from '$lib/server/queries';
 	import { LoaderIcon } from 'svelte-french-toast';
 	import Cmd from '$components/ui/cmd/Cmd.svelte';
-	import { defaultParseSearch, defaultStringifySearch } from '$lib/utils/search-params';
+	import {
+		changeSearch,
+		createChangeSearch,
+		defaultParseSearch,
+		defaultStringifySearch
+	} from '$lib/utils/search-params';
 	import { filterLibrarySchema, type FilterLibrarySchema } from '$lib/schemas/library';
 	import FilterBadge from '$components/ui/filters/FilterBadge.svelte';
 	import { createParamsStore, createSearchParamsStore } from '$lib/stores/search-params';
 	import { tweened } from 'svelte/motion';
-	import { cubicInOut, cubicOut } from 'svelte/easing';
+	import { cubicInOut, cubicOut, quintIn } from 'svelte/easing';
 	import { afterUpdate } from 'svelte';
 	import { deepWriteable } from '$lib/helpers/object';
+	import { createPageData, createPageItemList } from '$components/ui/command2/utils';
+	import { statusesWithIcons } from '$lib/status';
+	import { entryTypeIcon } from '$components/entries/icons';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -74,27 +84,47 @@
 		}))
 	);
 
-	const tagsQueryEnabled = writable(false);
-	const tagsQuery = createQuery(
-		derived(tagsQueryEnabled, ($tagsQueryEnabled) => ({
-			...queryFactory.tags.list(),
-			enabled: $tagsQueryEnabled
-		}))
-	);
+	const tagsQuery = createQuery(queryFactory.tags.list());
+
+	const filterChange = createChangeSearch<FilterLibrarySchema>();
 
 	const count = tweened(0, {
 		duration: 200
 	});
 
-	$: if ($entryCount.data) {
-		console.log('setting count');
-		const newCount = parseInt($entryCount.data, 10);
-		console.log({ newCount });
+	export function setCount(newCount: number) {
 		count.set(newCount, {
 			duration: 200
 		});
-		console.log({ $count });
 	}
+
+	// afterNavigate(() => {
+	// 	if ($entryCount.data) {
+	// 		const newCount = parseInt($entryCount.data, 10);
+	// 		count.set(newCount, {
+	// 			duration: 200
+	// 		});
+	// 	}
+	// });
+
+	$: if ($entryCount.data) {
+		count.set($entryCount.data, {
+			duration: 500
+			// easing: quintIn
+		});
+	}
+
+	$: console.log({ $count });
+
+	// $: if ($entryCount.data) {
+	// 	console.log('setting count');
+	// 	const newCount = parseInt($entryCount.data, 10);
+	// 	console.log({ newCount });
+	// 	count.set(newCount, {
+	// 		duration: 200
+	// 	});
+	// 	console.log({ $count });
+	// }
 
 	const debounced_submit = debounce(() => {
 		if (typeof HTMLFormElement.prototype.requestSubmit === 'function') {
@@ -185,12 +215,18 @@
 	];
 	const filterOpen = writable(false);
 
-	const filterPages = [
+	const filterPageData = createPageData([
 		{
-			name: 'Types',
-			placeholder: 'Filter by type...'
+			name: 'Type',
+			placeholder: 'Filter by type...',
+			icon: FileIcon
+		},
+		{
+			name: 'Tag',
+			placeholder: 'Filter by tag...',
+			icon: TagIcon
 		}
-	] as const;
+	]);
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
@@ -225,25 +261,71 @@
 					{/if}
 				</PopoverTrigger>
 				<PopoverContent class="w-[200px] p-0">
-					<Command pages={deepWriteable(filterPages)} let:pages let:page>
+					<Command pages={filterPageData} let:pages let:page={currentPage} let:createPageItems>
 						<CommandInput onKeydown={pages.handlers.keydown} placeholder="Filter..." />
 						<CommandList>
 							<CommandGroup>
-								{#if !page}
-									<CommandItem
-										containsPages
-										onSelect={() => {
-											pages.add('Types');
-										}}
-									>
-										Type
-									</CommandItem>
-								{:else if page.name === 'Types'}
+								{#if !currentPage}
+									{@const filterTypes = createPageItems()}
+									{#each filterTypes as { addPage, icon, name }}
+										<CommandItem containsPages onSelect={addPage}>
+											<CommandIcon {icon} />
+											<span>{name}</span>
+										</CommandItem>
+									{/each}
+								{:else if currentPage.name === 'Type'}
 									{#each types as type}
-										<CommandItem>
+										<CommandItem
+											onSelect={() => {
+												filterChange($page.url, (data) => {
+													if (data.type) {
+														data.type = undefined;
+													} else {
+														data.type = type;
+													}
+													return data;
+												});
+												filterOpen.set(false);
+											}}
+										>
+											<CommandIcon icon={entryTypeIcon[type]} />
 											{type}
 										</CommandItem>
 									{/each}
+								{:else if currentPage.name === 'Tag'}
+									{#if $tagsQuery.isLoading}
+										<CommandLoading>Loading...</CommandLoading>
+									{:else if $tagsQuery.isSuccess}
+										<!-- TODO: Behavior of this section of Commands should mimic multiple... hm. Maybe can add a data-multiple attribute on the commanditem that the store can check for. -->
+										{#each $tagsQuery.data as tag}
+											<!-- TODO: virtualization -->
+											<CommandItem
+												onSelect={() => {
+													filterChange($page.url, (data) => {
+														if (data.tags?.includes(tag.id)) {
+															data.tags = data.tags.filter((t) => t !== tag.id);
+														} else {
+															data.tags = [tag.id];
+														}
+														return data;
+													});
+													filterOpen.set(false);
+													// filterChange($page.url, (data) => {
+													//     if (data.tags) {
+													//         data.tags = data.tags.filter((t) => t !== tag.name);
+													//     } else {
+													//         data.tags = [tag.name];
+													//     }
+													//     return data;
+													// });
+													// filterOpen.set(false);
+												}}
+											>
+												<CommandIcon icon={TagIcon} />
+												{tag.name}
+											</CommandItem>
+										{/each}
+									{/if}
 								{/if}
 							</CommandGroup>
 						</CommandList>

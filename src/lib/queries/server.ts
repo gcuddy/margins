@@ -730,7 +730,7 @@ export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySc
 
 	const { count } = await query.executeTakeFirstOrThrow();
 	return {
-		count: count as number
+		count: Number(count)
 	};
 }
 

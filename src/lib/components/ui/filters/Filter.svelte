@@ -7,6 +7,12 @@
 		state: { filterStore, hasFilters },
 		elements: { container }
 	} = ctx.set();
+
+	type Entries<T> = {
+		[K in keyof T]: [K, T[K]];
+	}[keyof T][];
+
+	$: filters = (Object.entries($filterStore) as Entries<typeof $filterStore>).filter(Boolean);
 </script>
 
 <!--
@@ -16,12 +22,8 @@
 {#if $hasFilters}
 	<Header class="static">
 		<div bind:this={$container}>
-			{#each Object.entries($filterStore) as [type, filter]}
+			{#each filters as [type, filter]}
 				<FilterBadge {type} {filter} />
-				<!-- <div class="flex items-center gap-2">
-                <span class="text-xs text-muted-foreground">{key}</span>
-                <span class="text-xs text-muted-foreground">{value}</span>
-            </div> -->
 			{/each}
 		</div>
 	</Header>

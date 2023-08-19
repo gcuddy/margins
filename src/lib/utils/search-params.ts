@@ -81,17 +81,37 @@ export function parseSearchWithSchema<TSchema extends z.ZodObject<any, any>>(
 	}
 }
 
-export function changeSearch(url: URL, data: Record<string, any>) {
-	const exisiting = defaultParseSearch(url.search);
-	const newSearch = defaultStringifySearch({
-		...exisiting,
-		...data
-	});
-	url.search = newSearch;
-	goto(url, {
+export function changeSearch<TData extends Record<string, any>>(
+	url: URL,
+	data:
+		| TData
+		| ((
+				search: Partial<TData> & {
+					[key: string]: unknown;
+				}
+		  ) => TData),
+	gotoOptions: Parameters<typeof goto>[1] = {
 		keepFocus: true,
 		replaceState: true,
 		noScroll: true,
 		invalidateAll: true
+	}
+) {
+	const exisiting = defaultParseSearch(url.search);
+	const newSearch = defaultStringifySearch({
+		...exisiting,
+		...(typeof data === 'function' ? data(exisiting) : data)
 	});
+	url.search = newSearch;
+	goto(url, gotoOptions);
+}
+
+/**
+ * Helper function to create a typed changeSearch function
+ * @returns A function that will change the search params of the current url
+ */
+export function createChangeSearch<TSchema extends Record<string, any>>() {
+	return (...args: Parameters<typeof changeSearch<TSchema>>) => {
+		changeSearch(...args);
+	};
 }

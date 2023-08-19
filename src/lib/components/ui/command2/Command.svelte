@@ -61,7 +61,7 @@
 
 	const {
 		state: { selectedValue, inputValue, filtered },
-		elements: { container }
+		elements: { container },
 	} = ctx.set<T>({
 		initialSelectedValue:
 			value && multiple && Array.isArray(value)
@@ -106,6 +106,6 @@
 			className
 		)}
 	>
-		<slot filtered={$filtered} page={$pageStore} pageName={$pageStore?.name} pages={pageStore} />
+		<slot createPageItems={pageStore.helpers.createItems} filtered={$filtered} page={$pageStore} pageName={$pageStore?.name} pages={pageStore} inputValue={$inputValue} />
 	</div>
 {/if}

@@ -7,10 +7,13 @@
 
 	type $$Props = DivProps & {
 		el?: HTMLElement | null;
+        animateHeight?: boolean;
 	};
 	let className: $$Props['class'] = undefined;
     export { className as class};
 	export let unstyled = false;
+
+    export let animateHeight = true;
 
 	/** Read Only */
 	export let el: HTMLElement | null = null;
@@ -25,7 +28,9 @@
 	style:--width="{width}px"
 	style:--height="{height}px"
 	id={ids.menu}
-	class={cn(!unstyled && 'max-h-[300px] overflow-y-auto overflow-x-hidden', className)}
+	class={cn(!unstyled && 'max-h-[300px] overflow-y-auto overflow-x-hidden overscroll-contain',
+    animateHeight && 'h-[min(300px,var(--height))] max-h-[400px] transition-[height] ease-in-out duration-100',
+    className)}
 	role="listbox"
     bind:this={el}
 >
@@ -35,13 +40,4 @@
 </div>
 
 <style>
-	[role='listbox'] {
-		height: min(300px, var(--height));
-		max-height: 400px;
-		overflow: auto;
-		-ms-scroll-chaining: none;
-		overscroll-behavior: contain;
-		transition: 0.1s ease;
-		transition-property: height;
-	}
 </style>

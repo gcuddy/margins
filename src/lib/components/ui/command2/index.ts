@@ -8,5 +8,18 @@ import CommandEmpty from './CommandEmpty.svelte';
 import CommandSeparator from './CommandSeparator.svelte';
 import CommandShortcut from './CommandShortcut.svelte';
 import CommandLoading from './CommandLoading.svelte';
+import CommandIcon from './CommandIcon.svelte';
 
-export { Command, CommandItem, CommandInput, CommandItems, CommandList, CommandGroup, CommandEmpty, CommandSeparator, CommandShortcut, CommandLoading };
+export {
+	Command,
+	CommandItem,
+	CommandInput,
+	CommandItems,
+	CommandList,
+	CommandGroup,
+	CommandEmpty,
+	CommandSeparator,
+	CommandShortcut,
+	CommandLoading,
+	CommandIcon
+};

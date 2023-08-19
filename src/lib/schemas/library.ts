@@ -65,7 +65,8 @@ export type CreatedAtFilter = z.infer<typeof createdAtFilter>;
 
 export const filterLibrarySchema = z.object({
 	createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),
-	type: typeSchema.nullish()
+	type: typeSchema.nullish(),
+	tags: z.number().int().positive().array().optional()
 });
 export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
 
