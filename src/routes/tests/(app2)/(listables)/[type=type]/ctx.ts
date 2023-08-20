@@ -1,5 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import { persisted } from 'svelte-local-storage-store';
+import { writable } from 'svelte/store';
+import { createArticleStore } from './[id]/store';
 
 function createAppearanceOptions() {
 	let align = ['left', 'justify'] as const;
@@ -51,4 +53,22 @@ export function setAppearanceContext() {
 
 export function getAppearanceContext() {
     return getContext<ReturnType<typeof setAppearanceContext>>(APPEARANCE_NAME);
+}
+
+
+
+
+
+const ARTICLE_NAME = Symbol('article');
+export function setArticleContext() {
+    // annotations, progress etc
+
+    const article = createArticleStore();
+    setContext(ARTICLE_NAME, article);
+
+    return article;
+}
+
+export function getArticleContext() {
+    return getContext<ReturnType<typeof setArticleContext>>(ARTICLE_NAME);
 }

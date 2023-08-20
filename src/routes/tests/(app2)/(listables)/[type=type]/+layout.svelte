@@ -7,7 +7,7 @@
 	import { writable } from 'svelte/store';
 	import { persisted } from 'svelte-local-storage-store';
 	import { createPdfStateContext } from '$components/pdf-viewer/utils';
-	import { setAppearanceContext } from './ctx';
+	import { setAppearanceContext, setArticleContext } from './ctx';
 	// export let data;
 
 	const is_entry = getContext('is_entry');
@@ -26,8 +26,8 @@
 	setContext('rightSidebarWidth', rightSidebarWidth);
 
 	createPdfStateContext();
-
     setAppearanceContext();
+    setArticleContext();
 
 	const navWidth = writable(0);
 	setContext('navWidth', navWidth);

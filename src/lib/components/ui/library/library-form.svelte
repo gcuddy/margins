@@ -11,6 +11,7 @@
 	import { mutation, type MutationInput } from '$lib/queries/query';
 	import type { SaveToLibrarySchema } from '$lib/queries/server';
 	import { page } from '$app/stores';
+    import * as Command from "$components/ui/command2"
 
 	/**
 	 * Should be entry id, google books id, spotify id, tmdbId, etc...
@@ -55,15 +56,6 @@
 		$saveMutation.mutate(opts);
 	}
 
-	const items = statuses.map((name) => ({
-		name,
-        id: name,
-		icon: statusesWithIcons[name],
-		action: () => {
-			status = name;
-			handleAction(name);
-		}
-	}));
 </script>
 
 <form>
@@ -79,17 +71,21 @@
 			</button>
 		</PopoverTrigger>
 		<PopoverContent class="w-[200px] p-0">
-			<Cmd
-                defaultId={status}
-				{open}
-				items={[
-					{
-						items
-					}
-				]}
-				closeOnAction={true}
-				placeholder="Status"
-			/>
+            <Command.Root onClose={() => open.set(false)} bind:value={status}>
+                <Command.Input autofocus placeholder="Status…"></Command.Input>
+                <Command.Group>
+                    <Command.List>
+                        {#each statuses as status}
+                            <Command.RadioItem value={status} onSelect={() => {
+                                handleAction(status);
+                            }}>
+                                <Command.Icon icon={statusesWithIcons[status]} />
+                                {status}
+                            </Command.RadioItem>
+                        {/each}
+                    </Command.List>
+                </Command.Group>
+            </Command.Root>
 		</PopoverContent>
 	</Popover>
 </form>

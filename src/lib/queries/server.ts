@@ -347,13 +347,34 @@ export async function set_tags_on_entry({
 		.filter((tag) => tag.id)
 		.map((tag) => tag.id)
 		.filter(Boolean);
+	console.log({ tagsToAdd, tagIds });
 	if (!tagIds.length) {
 		// then delete all existing tags on these entries
 		await db.deleteFrom('TagOnEntry').where('entryId', '=', entries).execute();
 	}
 
-	const values = entries.flatMap((entryId) => tagIds.map((tagId) => ({ entryId, tagId, userId })));
-	const q = await db.insertInto('TagOnEntry').values(values).ignore().execute();
+
+
+	if (tagsToAdd.length) {
+        console.log('inserting')
+		const insertData = await db
+			.insertInto('Tag')
+			.values(
+				tagsToAdd.map((tag) => ({
+					name: tag.name,
+					userId
+				}))
+			)
+            .ignore()
+			.execute();
+        console.log('inserted')
+		const newIds = insertData.map((row) => Number(row.insertId)).filter(Boolean);
+        tagIds.push(...newIds)
+	}
+
+    const values = entries.flatMap((entryId) => tagIds.map((tagId) => ({ entryId, tagId, userId })));
+
+    const q = await db.insertInto('TagOnEntry').values(values).ignore().execute();
 
 	// now delete tags that are no longer there
 	await db
@@ -951,12 +972,12 @@ export async function get_authors({
 		.innerJoin('Entry as e', 'e.id', 'b.entryId')
 		.where('b.userId', '=', userId)
 		// .where('e.author', 'is not', null)
-        // REVIEW: do we want to only grab bookmark author if both exist?
-		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), "is not", null))
-		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), "is not", null))
-        .where(sql`TRIM(COALESCE(b.author,e.author)) <> ''`)
-		.select(eb => eb.fn.coalesce('b.author', 'e.author').as('author'))
-        .orderBy('author', 'asc')
+		// REVIEW: do we want to only grab bookmark author if both exist?
+		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), 'is not', null))
+		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), 'is not', null))
+		.where(sql`TRIM(COALESCE(b.author,e.author)) <> ''`)
+		.select((eb) => eb.fn.coalesce('b.author', 'e.author').as('author'))
+		.orderBy('author', 'asc')
 		.distinct()
 		.$narrowType<{ author: string }>()
 		.execute();

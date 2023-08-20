@@ -9,6 +9,7 @@ import CommandSeparator from './CommandSeparator.svelte';
 import CommandShortcut from './CommandShortcut.svelte';
 import CommandLoading from './CommandLoading.svelte';
 import CommandIcon from './CommandIcon.svelte';
+import CommandRadioItem from './CommandRadioItem.svelte';
 
 export {
 	Command,
@@ -21,5 +22,19 @@ export {
 	CommandSeparator,
 	CommandShortcut,
 	CommandLoading,
-	CommandIcon
+	CommandIcon,
+    CommandRadioItem,
+    //
+    Command as Root,
+    CommandItem as Item,
+    CommandInput as Input,
+    CommandItems as Items,
+    CommandList as List,
+    CommandGroup as Group,
+    CommandEmpty as Empty,
+    CommandSeparator as Separator,
+    CommandShortcut as Shortcut,
+    CommandLoading as Loading,
+    CommandIcon as Icon,
+    CommandRadioItem as RadioItem
 };

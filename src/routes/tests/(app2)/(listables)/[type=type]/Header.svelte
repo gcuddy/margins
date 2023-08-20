@@ -10,6 +10,7 @@
 	import EntryOperations from './[id]/EntryOperations.svelte';
 	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
 	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
+	import { getArticleContext } from './ctx';
 
 	export let scrollingDown = (getContext('scrollingDown') as Writable<boolean>) || writable(false);
 
@@ -33,6 +34,10 @@
 	const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
 	const inArticle = getContext('inArticle') as Writable<boolean>;
 
+	const {
+		states: { progress }
+	} = getArticleContext();
+
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
 
@@ -51,9 +56,9 @@
 
 <div
 	style:--main-nav-width={$inArticle ? `0px` : $mainNavWidth + 'px'}
-    style:--mobile-nav-width={$inArticle ? `0px` : $mobileNavWidth + 'px'}
+	style:--mobile-nav-width={$inArticle ? `0px` : $mobileNavWidth + 'px'}
 	style:--left={$inArticle ? 0 : $mainNavWidth + 'px'}
-    style:--mobile-left={$inArticle ? 0 : $mobileNavWidth + 'px'}
+	style:--mobile-left={$inArticle ? 0 : $mobileNavWidth + 'px'}
 	class={cn(
 		'fixed flex items-center justify-between z-50 left-0 sm:left-[--mobile-left] lg:left-[--left] top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform w-full sm:w-[calc(100%-var(--mobile-nav-width))]',
 		$scrollingDown && '-translate-y-full',
@@ -94,10 +99,13 @@
 		<div class="center flex-1">
 			<!--  -->
 		</div>
-		<div class="right flex gap-x-4">
-            {#if $page.data?.entry?.type === "article"}
-                <ArticleAppearanceOptions />
-            {/if}
+		<div class="right flex gap-x-4 items-center">
+			{#if $page.data?.entry?.type === 'article'}
+				<span class="text-sm text-muted-foreground">
+					{Math.ceil($progress * 100)}%
+				</span>
+				<ArticleAppearanceOptions />
+			{/if}
 			<EntryOperations entry={$page.data.entry} data={$page.data.annotationForm} />
 		</div>
 	</div>

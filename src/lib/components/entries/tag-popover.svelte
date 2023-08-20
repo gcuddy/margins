@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Cluster from '$components/helpers/Cluster.svelte';
-	import Badge from '$components/ui/Badge.svelte';
+	import Badge, { badgeVariants } from '$components/ui/Badge.svelte';
 	import { Checkbox } from '$components/ui/checkbox';
 	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
 
@@ -75,7 +75,7 @@
 				// flip: false
 			}}
 		>
-			<PopoverTrigger>+ Tag</PopoverTrigger>
+			<PopoverTrigger class={badgeVariants({variant: "ghost"})}>+ Tag</PopoverTrigger>
 			<PopoverContent class="p-0">
 				<Command
 					onClose={() => {
@@ -85,6 +85,7 @@
 						});
 						open = false;
 					}}
+                    type={selectedTags[0]}
 					selectedValue={selectedTagsStore}
 					comparisonFunction={(a, b) => {
 						return a.id === b.id;
@@ -111,11 +112,9 @@
 								{/each}
 								{#if inputValue.length > 1 && sortedTags.every(({ name }) => name !== inputValue)}
 									<CommandItem
-										alwaysShow={true}
-										shouldRegister={false}
+										alwaysShow
 										id="shadow-new-tag"
 										value={{ name: inputValue }}
-										let:isSelected
 									>
 										<PlusIcon class="mr-2 opacity-50 h-4 w-4" />
 										<span class="inline-flex grow items-center">

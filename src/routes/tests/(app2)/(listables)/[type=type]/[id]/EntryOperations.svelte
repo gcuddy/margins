@@ -31,7 +31,10 @@
 		ListPlus,
 		LoaderIcon,
 		MoreHorizontal,
-		Paperclip
+		Paperclip,
+
+		Repeat
+
 	} from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -147,12 +150,21 @@
 			>
 			<DropdownMenuItem
 				on:click={() => {
+                    //
+				}}
+			>
+				<Repeat class="mr-2 h-4 w-4" />
+				<span>Convert to…</span></DropdownMenuItem
+			>
+			<DropdownMenuItem
+				on:click={() => {
 					const input = document.createElement('input');
 					input.type = 'file';
 					input.accept = 'pdf';
 					input.onchange = async (event) => {
 						if (input.files?.length) {
 							const file = input.files[0];
+                            if (!file) return;
                             return handle_pdf_upload(file);
 						}
 					};

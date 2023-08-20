@@ -11,6 +11,7 @@
 					destructive:
 						"bg-destructive hover:bg-secondary/80 border-transparent text-destructive-foreground",
 					outline: "text-foreground",
+                    ghost: "hocus:bg-accent hocus:text-accent-foreground border-transparent hocus:border"
 				},
 			},
 			defaultVariants: {

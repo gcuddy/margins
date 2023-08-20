@@ -37,8 +37,9 @@
 	import { persisted } from 'svelte-local-storage-store';
 	import type { PageData } from './$types';
 	import * as hovers from './annotation-hovers';
+    import { makeAnnotation } from "$lib/helpers"
 
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import { afterNavigate, beforeNavigate, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import type { Annotation, TargetSchema } from '$lib/annotation';
@@ -80,7 +81,8 @@
 	import { numberOrString } from '$lib/utils/misc';
 	import type { Type } from '$lib/types';
     import throttle from 'just-throttle';
-	import { getAppearanceContext } from '../ctx';
+    import debounce from "just-debounce-it";
+	import { getAppearanceContext, getArticleContext } from '../ctx';
 
 
 	export let data: PageData;
@@ -137,46 +139,40 @@
             console.log({data, input})
 			if (!data.entry) return;
             console.log("saving annotation")
-			mutation($page, 'save_note', {
+			return mutation($page, 'save_note', {
 				entryId: data.entry.id,
 				...input
 			});
 		},
 		async onMutate(newData) {
-			// await queryClient.cancelQueries({
-			// 	queryKey: ['entries']
-			// });
+			await queryClient.cancelQueries({
+				queryKey: ['entries']
+			});
 
-			// // Snapshot the previous value
-			// const previousEntryData = queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
+			// Snapshot the previous value
+			const previousEntryData = queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
 
-			// console.log({ previousEntryData });
+			console.log({ previousEntryData });
 
 			// // Optimistically update to the new value
-			// queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
-			// 	if (!old) return old;
-			// 	if (!old.entry) return old;
-			// 	console.log({ old });
-			// 	// newData.
-			// 	return {
-			// 		...old,
-			// 		entry: {
-			// 			...old.entry,
-			// 			type: 'article',
-			// 			annotations: [
-			// 				...(old.entry?.annotations || []),
-			// 				{
-			// 					...newData,
-			// 					createdAt: new Date().toISOString(),
-			// 					exact
-			// 				} // -> todo create default annotation data
-			// 			]
-			// 		}
-			// 	};
-			// });
+			const newQueryData = queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
+				if (!old) return old;
+				if (!old.entry) return old;
+				return {
+					...old,
+					entry: {
+						...old.entry,
+						annotations: [
+							...(old.entry?.annotations || []),
+							makeAnnotation(newData),
+						]
+					}
+				}
+			});
+            console.log({newQueryData})
 
 			// // Return a context object with the snapshotted value
-			// return { previousEntryData };
+			return { previousEntryData };
 		},
 		onError: (err, newTodo, context) => {
 			toast.error('Failed to save annotation');
@@ -369,9 +365,14 @@
 				progress: $scroll
 			})
 		},
-        onMutate() {
+        onMutate(vars) {
             lastSavedScrollProgress = $scroll;
         },
+        onSuccess() {
+            toast.success(`Saved progress: ${$scroll}`);
+            // if (dev) {
+            // }
+        }
 	});
 
 	beforeNavigate(() => {
@@ -461,32 +462,19 @@
 
 	popperRef(virtualEl);
 
-	function debounce(delay: number) {
-		let timeout: number | undefined = undefined;
-		return {
-			debounce: (fn: () => void) => {
-				if (timeout) clearTimeout(timeout);
-				timeout = setTimeout(fn, delay) as unknown as number;
-			},
-			cancel: () => {
-				if (timeout) clearTimeout(timeout);
-			}
-		};
-	}
-
-	const saveProgress = throttle(() => {
+	const saveProgress = debounce(() => {
         if ($saveProgressMutation.isPending) return;
         // don't save if last saved progress is within .005 of current progress
         console.log({ lastSavedScrollProgress, $scroll });
         if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
         $saveProgressMutation.mutate();
-    }, 2000, {
-        leading: false
-    })
+    }, 2000)
 
 	const scrolling = (getContext('scrolling') as Writable<boolean>) ?? writable(false);
 
-	let scroll = writable(0);
+    const { states: { progress }} = getArticleContext();
+
+	let scroll = progress;
 
 	const uscroll = scroll.subscribe(() => {
 		saveProgress();
@@ -515,14 +503,14 @@
 		lastScrollTop = scrollTop;
 	};
 
-	const { debounce: debouncedScroll } = debounce(100);
+	const debouncedScroll = debounce(() => {
+        scrolling.set(false);
+    }, 100);
 
 	function handleScroll(e: Event) {
 		scrolling.set(true);
 		requestAnimationFrame(setScrollOffset);
-		debouncedScroll(() => {
-			scrolling.set(false);
-		});
+		debouncedScroll()
 	}
 
 	const mouseDown = writable(false);

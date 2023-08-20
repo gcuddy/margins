@@ -9,3 +9,14 @@ export function setBackContext(navigation: BeforeNavigate, path: string) {
         backContext.set(path)
     }
 }
+
+export function createArticleStore() {
+
+
+
+    return {
+        states: {
+            progress: writable(0)
+        }
+    }
+}

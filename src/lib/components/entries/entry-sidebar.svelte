@@ -197,7 +197,7 @@
 			</CardHeader>
 			<Collapsible.Content transition>
 				<CardContent class="space-y-4">
-					<div class="sidebar-row">
+					<div class="sidebar-row group">
 						<Muted>Saved</Muted>
 						<Muted class="grow">
 							{$query.data?.entry?.bookmark?.createdAt
@@ -217,8 +217,8 @@
 									}
 								})}"
 								variant="ghost"
+                                class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity p-2"
 								size="sm"
-								class="p-2"
 							>
 								<ChevronRightIcon class="h-3 w-3" />
 							</Button>
@@ -235,16 +235,16 @@
 					{/if}
 					{#if $query.data?.entry?.uri?.startsWith('http')}
 						{@const domain = getHostname($query.data?.entry.uri)}
-						<div class="sidebar-row">
+						<div class="sidebar-row group">
 							<Muted>Domain</Muted>
 							<Muted class="truncate px-2"><a href="/tests/domain/{domain}">{domain}</a></Muted>
-                            <Button href="/tests/library/all?domain={domain}" variant="ghost" size="sm">
+                            <Button class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity" href="/tests/library/all?domain={domain}" variant="ghost" size="sm">
 								<ChevronRightIcon class="h-3 w-3" />
 							</Button>
 						</div>
 					{/if}
 					{#if $query.data?.entry?.id}
-						<div class="sidebar-row">
+						<div class="sidebar-row group">
 							<Muted>Author</Muted>
 
 							<!-- <Input variant="ghost" value={$query.data?.entry?.author} /> -->
@@ -252,7 +252,7 @@
 								author={$query.data?.entry?.bookmark?.author ?? $query.data?.entry?.author ?? ''}
 								entryId={$query.data?.entry?.id}
 							/>
-							<Button href="/tests/people/{$query.data?.entry?.author}" variant="ghost" size="sm">
+							<Button class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity" href="/tests/people/{$query.data?.entry?.author}" variant="ghost" size="sm">
 								<ChevronRightIcon class="h-3 w-3" />
 							</Button>
 						</div>
@@ -264,7 +264,7 @@
                             <TagPopover entryId={[$query.data.entry.id]} selectedTags={$query.data.entry.tags} />
 						</div>
 					{/if}
-					<div class="sidebar-row">
+					<div class="sidebar-row group">
 						<Muted>Status</Muted>
 						{#if $query.isLoading}
 							<Skeleton class="h-9 w-full grow" />
@@ -280,7 +280,7 @@
 								tmdbId={$query.data.movie?.id ?? $query.data.tv?.id}
 							/>
 							{#if status}
-								<Button href="/tests/library/{status.toLowerCase()}" variant="ghost" size="sm">
+								<Button class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity" href="/tests/library/{status.toLowerCase()}" variant="ghost" size="sm">
 									<ChevronRightIcon class="h-3 w-3" />
 								</Button>
 							{/if}

@@ -24,7 +24,7 @@ const spotifySchema = z.object({
 
 const entrySchema = z.object({
 	entryId: z.number().int(),
-	type: z.enum(['article', 'video', 'pdf', 'tweet'])
+	type: z.enum(['article', 'video', 'pdf', 'tweet', 'board_game'])
 });
 
 export const librarySchema = z
