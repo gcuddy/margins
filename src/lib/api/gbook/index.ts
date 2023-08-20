@@ -25,9 +25,10 @@ export const books = {
 		if (cached) {
 			console.log('cached', cached);
 			timeEnd('get book');
-			if (!dev) return cached as Book;
+			return cached as Book;
 		}
 		const response = await fetch(`${googleBooksApi}/${volumeId}?key=${GOOGLE_BOOKS_API_KEY}`);
+        console.log({response})
 		if (!response.ok) throw new Error(response.statusText);
 		const data = (await response.json()) as books_v1.Schema$Volume;
 		assertIsBook(data);

@@ -62,7 +62,7 @@
 <div bind:this={wrapper}>
 	<Cluster class="gap-2.5">
 		{#each $selectedTagsStore as tag}
-			<Badge variant="secondary">{tag.name}</Badge>
+			<Badge as="a" href="/tests/tag/{tag.name}" variant="secondary">{tag.name}</Badge>
 		{/each}
 
 		<Popover

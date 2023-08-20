@@ -4,6 +4,7 @@ import type { LibraryResponse } from '$lib/server/queries';
 import { get } from 'svelte/store';
 import { page } from '$app/stores';
 import type { QueryFactory } from '../querykeys';
+import { toast } from 'svelte-sonner';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
@@ -21,7 +22,7 @@ const ctxEntries = ['count', 'authors'] satisfies (keyof QueryFactory['entries']
 
 // TODO clean this up
 
-export function createSetTagsMutation(opts?: { optimistic?: boolean }) {
+export function createSetTagsMutation(opts?: { optimistic?: boolean, showToast?: boolean; }) {
 	const queryClient = useQueryClient();
 	return createMutation({
 		mutationFn: (input: MutationInput<'set_tags_on_entry'>) => {
@@ -72,6 +73,9 @@ export function createSetTagsMutation(opts?: { optimistic?: boolean }) {
 					return query.queryKey[0] === 'entries' && !ctxEntries.includes(query.queryKey[1] as any);
 				}
 			});
+            if (opts?.showToast) {
+                toast.success('Tags updated');
+            }
 		}
 	});
 }

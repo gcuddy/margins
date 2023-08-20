@@ -82,7 +82,7 @@
 	method="post"
 	action="{action_prefix}?/updateBookmark"
 >
-	<Popover let:close>
+	<Popover>
 		<PopoverTrigger
 			class={cn(
 				buttonVariants({
@@ -102,7 +102,7 @@
 				Save
 			{/if}
 		</PopoverTrigger>
-		<PopoverContent placement="left" class="p-0">
+		<PopoverContent class="p-0">
 			<Command>
 				<CommandInput bind:value placeholder="Change status" />
 				<CommandList class="scrollbar-none">

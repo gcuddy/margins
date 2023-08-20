@@ -286,7 +286,7 @@
 />
 
 {#if $query.isPending}
-	{#each new Array(10) as _}
+	{#each new Array(browser && innerHeight ? Math.ceil(innerHeight / 60) : 20) as _}
 		<EntryItemSkeleton />
 	{/each}
 {:else}

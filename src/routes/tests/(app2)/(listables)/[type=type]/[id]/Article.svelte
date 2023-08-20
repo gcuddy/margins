@@ -37,7 +37,7 @@
 	import { persisted } from 'svelte-local-storage-store';
 	import type { PageData } from './$types';
 	import * as hovers from './annotation-hovers';
-    import { makeAnnotation } from "$lib/helpers"
+	import { makeAnnotation } from '$lib/helpers';
 
 	import { browser, dev } from '$app/environment';
 	import { afterNavigate, beforeNavigate, invalidate } from '$app/navigation';
@@ -80,23 +80,22 @@
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { numberOrString } from '$lib/utils/misc';
 	import type { Type } from '$lib/types';
-    import throttle from 'just-throttle';
-    import debounce from "just-debounce-it";
+	import throttle from 'just-throttle';
+	import debounce from 'just-debounce-it';
 	import { getAppearanceContext, getArticleContext } from '../ctx';
-
 
 	export let data: PageData;
 
-    $: author = data.entry?.bookmark?.author ?? data.entry?.author;
+	$: author = data.entry?.bookmark?.author ?? data.entry?.author;
 
 	const mainnav: Writable<MenuBar> = getContext('mainnav');
 
 	let align = ['left', 'justify'] as const;
-	type Alignment = typeof align[number];
+	type Alignment = (typeof align)[number];
 	let alignment: Alignment = align[0];
 
 	let fonts = ['sans', 'newsreader', 'crimson'] as const;
-	type Font = typeof fonts[number];
+	type Font = (typeof fonts)[number];
 	let font: Font = fonts[0];
 
 	let fontSize = 16;
@@ -136,9 +135,9 @@
 
 	const annotateMutation = createMutation({
 		mutationFn: async (input: MutationInput<'save_note'>) => {
-            console.log({data, input})
+			console.log({ data, input });
 			if (!data.entry) return;
-            console.log("saving annotation")
+			console.log('saving annotation');
 			return mutation($page, 'save_note', {
 				entryId: data.entry.id,
 				...input
@@ -162,14 +161,11 @@
 					...old,
 					entry: {
 						...old.entry,
-						annotations: [
-							...(old.entry?.annotations || []),
-							makeAnnotation(newData),
-						]
+						annotations: [...(old.entry?.annotations || []), makeAnnotation(newData)]
 					}
-				}
+				};
 			});
-            console.log({newQueryData})
+			console.log({ newQueryData });
 
 			// // Return a context object with the snapshotted value
 			return { previousEntryData };
@@ -352,28 +348,27 @@
 		}
 	}
 
-
-    let lastSavedScrollProgress = data.entry?.interaction?.progress ?? 0;
+	let lastSavedScrollProgress = data.entry?.interaction?.progress ?? 0;
 
 	const saveProgressMutation = createMutation({
 		mutationFn: async () => {
 			if (initializing) return;
-            if (!shouldSaveProgress) return;
+			if (!shouldSaveProgress) return;
 			console.log('mutating');
 			return mutation($page, 'saveInteraction', {
 				entryId: data.entry!.id,
 				id: data.entry?.interaction?.id,
 				progress: $scroll
-			})
+			});
 		},
-        onMutate(vars) {
-            lastSavedScrollProgress = $scroll;
-        },
-        onSuccess() {
-            toast.success(`Saved progress: ${$scroll}`);
-            // if (dev) {
-            // }
-        }
+		onMutate(vars) {
+			lastSavedScrollProgress = $scroll;
+		},
+		onSuccess() {
+			toast.success(`Saved progress: ${$scroll}`);
+			// if (dev) {
+			// }
+		}
 	});
 
 	beforeNavigate(() => {
@@ -393,8 +388,8 @@
 
 	const jumping = getContext('jumping') as Writable<boolean>;
 
-    let shouldSaveProgress = true;
-    $: console.log({shouldSaveProgress})
+	let shouldSaveProgress = true;
+	$: console.log({ shouldSaveProgress });
 
 	// highlight stored annotations
 	afterNavigate(async () => {
@@ -403,17 +398,17 @@
 		$mainnav.entry = data.entry;
 		console.log('scrolling to', data.entry?.interaction?.progress);
 		if (data.entry?.interaction?.progress) {
-            shouldSaveProgress = false;
+			shouldSaveProgress = false;
 			console.log('scrolling to', data.entry?.interaction?.progress);
 			initializing = true;
 			$scroll = data.entry.interaction.progress;
-            // Wait a second before allowing scroll to save again
+			// Wait a second before allowing scroll to save again
 			document.documentElement.scrollTo({
-                top: $scroll * document.documentElement.scrollHeight
+				top: $scroll * document.documentElement.scrollHeight
 			});
-            setTimeout(() => {
-                shouldSaveProgress = true;
-            }, 2000)
+			setTimeout(() => {
+				shouldSaveProgress = true;
+			}, 2000);
 		}
 		const annotations = data.entry?.annotations;
 		if (!annotations) {
@@ -429,7 +424,7 @@
 			if (selector) {
 				const ctx = await highlightSelectorTarget(selector, {
 					'data-annotation-id': annotation.id,
-					'data-has-body': `${!!annotation.body}`,
+					'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
 					id: `annotation-${annotation.id}`
 				});
 				$annotationCtx.set(annotation.id, ctx);
@@ -472,24 +467,26 @@
 	popperRef(virtualEl);
 
 	const saveProgress = debounce(() => {
-        console.log({shouldSaveProgress, $saveProgressMutation})
-        if (!shouldSaveProgress) return;
-        if ($saveProgressMutation.isPending) return;
-        console.log('saving')
-        // don't save if last saved progress is within .005 of current progress
-        console.log({ lastSavedScrollProgress, $scroll });
-        if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
-        $saveProgressMutation.mutate();
-    }, 2000)
+		console.log({ shouldSaveProgress, $saveProgressMutation });
+		if (!shouldSaveProgress) return;
+		if ($saveProgressMutation.isPending) return;
+		console.log('saving');
+		// don't save if last saved progress is within .005 of current progress
+		console.log({ lastSavedScrollProgress, $scroll });
+		if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
+		$saveProgressMutation.mutate();
+	}, 5000);
 
 	const scrolling = (getContext('scrolling') as Writable<boolean>) ?? writable(false);
 
-    const { states: { progress }} = getArticleContext();
+	const {
+		states: { progress }
+	} = getArticleContext();
 
 	let scroll = progress;
 
 	const uscroll = scroll.subscribe(() => {
-        if (!shouldSaveProgress) return;
+		if (!shouldSaveProgress) return;
 		saveProgress();
 	});
 
@@ -517,13 +514,13 @@
 	};
 
 	const debouncedScroll = debounce(() => {
-        scrolling.set(false);
-    }, 100);
+		scrolling.set(false);
+	}, 100);
 
 	function handleScroll(e: Event) {
 		scrolling.set(true);
 		requestAnimationFrame(setScrollOffset);
-		debouncedScroll()
+		debouncedScroll();
 	}
 
 	const mouseDown = writable(false);
@@ -634,7 +631,7 @@
 							e.preventDefault();
 							return;
 						}
-                        console.log(`About to mutate...`)
+						console.log(`About to mutate...`);
 						$annotateMutation.mutate({
 							id,
 							target: {
@@ -724,29 +721,8 @@
 							$currentAnnotation.show = false;
 							if (!$currentAnnotation.highlight) return;
 							// optimistic update
-							update_entry(data.entry.id, {
-								annotations: [
-									...(data.entry.annotations ?? []),
-									{
-										id,
-										contentData,
-										// type: 'annotation',
-										target: {
-											source: '',
-											selector: $currentAnnotation.highlight?.selector
-										},
-										exact: null,
-										body: null,
-										username: $page.data.user_data?.username,
-										createdAt: new Date(),
-										entryId: data.entry.id,
-										start: null,
-										title: null
-									}
-								]
-							});
 							toast.promise(
-								mutation($page, 'save_note', {
+								$annotateMutation.mutateAsync({
 									entryId: data.entry.id,
 									id,
 									contentData,
@@ -755,7 +731,7 @@
 										source: '',
 										selector: $currentAnnotation.highlight?.selector
 									}
-								}).finally(() => invalidate('entry')),
+								}),
 								{
 									loading: 'Saving note...',
 									success: 'Note saved!',
@@ -837,11 +813,11 @@
 		>
 			{data.entry?.title}
 		</h1>
-        {#if data.entry?.summary}
-            <Lead class="not-prose">
-                {data.entry.summary}
-            </Lead>
-        {/if}
+		{#if data.entry?.summary}
+			<Lead class="not-prose">
+				{data.entry.summary}
+			</Lead>
+		{/if}
 		{#if author}
 			<a
 				class="text-sm font-medium uppercase tracking-wider"
@@ -894,5 +870,4 @@
 	div :global(p) {
 		text-rendering: optimizeLegibility;
 	}
-
 </style>

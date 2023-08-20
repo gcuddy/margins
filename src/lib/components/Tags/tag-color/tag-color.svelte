@@ -70,8 +70,7 @@
 			style:--color={color}
 		/>
 	</Popover.Trigger>
-	<Popover.Content class="p-0">
-        heeee
+	<Popover.Content class="p-0 w-fit">
 		<Command.Root bind:value={color} class="bg-inherit" onClose={() => {
             console.log('closing')
             tick().then(() => {

@@ -245,6 +245,8 @@
 			use:melt={builder}
 			{...$$restProps}
 			class="data-[state=open]:bg-accent cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none overflow-hidden"
+            data-sveltekit-preload-data="tap"
+            data-sveltekit-preload-code="viewport"
 		>
 			<div
 				class={cn(

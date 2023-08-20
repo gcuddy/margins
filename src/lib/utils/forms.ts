@@ -20,7 +20,12 @@ export const post = async <TBody extends Record<string, string | number | boolea
     if (!response.ok) {
         throw new Error(response.statusText)
     }
-    return await response.json() as ActionResult;
+    const result = await response.json() as ActionResult;
+    if (result.type === 'error') {
+        throw new Error(result.error)
+    } else {
+        return result;
+    }
 }
 
 

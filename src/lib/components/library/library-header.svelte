@@ -14,7 +14,10 @@
 		Loader2Icon,
 		XIcon,
 		TagIcon,
-		ClockIcon
+		ClockIcon,
+
+		GlobeIcon
+
 	} from 'lucide-svelte';
 	import { types } from '$lib/types';
 	import debounce from 'just-debounce-it';
@@ -250,7 +253,9 @@
 		},
 		{
 			name: 'Domain',
+            icon: GlobeIcon,
 			action: () => {
+                filterOpen.set(false);
 				filterDialogStore.open({
 					title: 'Filter by domain',
 					value: '',
@@ -260,7 +265,6 @@
 							data.domain = val;
 							return data;
 						});
-						filterOpen.set(false);
 					}
 				});
 			}

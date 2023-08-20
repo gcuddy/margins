@@ -11,9 +11,13 @@
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 	import type { AddUrlObj } from '$lib/schemas';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	let dragOver = false;
 	let dropping = false;
 	let draggedUrl = '';
+
+	const queryClient = useQueryClient();
+
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
 		dragOver = true;
@@ -52,11 +56,19 @@
 		});
 		toast.promise(promise, {
 			loading: 'Saving link',
-			success: 'Saved link',
+			success: (data) => {
+                queryClient.invalidateQueries({
+                    queryKey: ['entries']
+                });
+                if (data.type === 'success' && data.data) {
+                    return `Saved new link: ${data.data.title}`
+                }
+                return 'Saved link'
+            },
 			error: 'Failed to save link'
-		});
+		})
 		// invalidateAll();
-		// toast.success('Saved link');
+		// toast.success(`'Saved link');
 		// const article = await trpc($page).public.parse.query({url});
 		// const bookmark = await trpc($page).bookmarks.add.mutate({
 		// 	article,

@@ -98,7 +98,6 @@ export type TypedQueryKey<T extends keyof Queries> = [
 	{ input: QueryInput<T>; type?: T extends InfiniteQueries ? QueryType : 'query' }
 ];
 
-
 // TODO: allow input to be undefined
 export function getArrayQueryKey<T extends keyof Queries>(
 	queryKey: T,
@@ -251,7 +250,11 @@ export async function query<T extends keyof Queries>(
 	let { fetcher, userId } = init;
 	console.log({ init, userId });
 	userId =
-		userId || init.data?.userId || init.data?.session?.user.userId || init.data?.user?.userId || null;
+		userId ||
+		init.data?.userId ||
+		init.data?.session?.user.userId ||
+		init.data?.user?.userId ||
+		null;
 	fetcher = init.fetch || fetcher || fetch;
 	console.log({ fetcher });
 	const data = stringify(input);
@@ -268,10 +271,13 @@ export async function query<T extends keyof Queries>(
 			}
 		}
 	}
-	const final = (await fetcher(url).then((res) => res.json())) as Awaited<Data>;
-	console.dir({ final }, { depth: null });
+	const response = await fetcher(url)
+    if (!response.ok) {
+        throw new Error(response.statusText)
+    }
+    const final = (await response.json()) as Awaited<Data>;
 	if (options?.cache) {
-		query_store_cache_lookup.set(url, final as Awaited<Data>);
+		query_store_cache_lookup.set(url, final);
 	}
 	return final;
 }
@@ -281,11 +287,13 @@ export { query as qquery };
 export const isMutating = writable(false);
 
 export async function mutation<T extends keyof Mutations>(
-	base: {
-		url: URL;
-		fetcher?: typeof fetch;
-		userId?: string | null;
-	} | any,
+	base:
+		| {
+				url: URL;
+				fetcher?: typeof fetch;
+				userId?: string | null;
+		  }
+		| any,
 	fn: T,
 	input: Parameters<Mutations[T]['fn']>[0]['input'] extends IsAny<
 		Parameters<Mutations[T]['fn']>[0]['input']
@@ -299,37 +307,25 @@ export async function mutation<T extends keyof Mutations>(
 ): Promise<Awaited<ReturnType<Mutations[T]['fn']>>> {
 	isMutating.set(true);
 	const { fetcher = fetch, userId = null } = base || {};
-    console.log(`mutating`)
+	console.log(`mutating`);
 	let url = base?.url?.origin + `/tests/sq/${fn}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}
 	type Data = Awaited<ReturnType<Mutations[T]['fn']>>;
-    console.log({url})
-	const final = (await fetcher(url, {
+	console.log({ url });
+	const response: Response = await fetcher(url, {
 		method: 'POST',
 		body: stringify({
 			input,
 			userId
 		})
-	})
-		// TODO: should we use devalue on server / here?
-		// .then((text) => {
-		// 	if (!text || text === 'undefined') return undefined;
-		// 	console.log({ text });
-		// 	try {
-		// 		return JSON.parse(text);
-		// 		// parse(text); //??
-		// 	} catch (e) {
-		// 		dev && console.error(e);
-		// 		return undefined;
-		// 	}
-		// })
-		.then((res) => res.json())
-		.finally(() => {
-			isMutating.set(false);
-		})) as Awaited<Data>;
-
+	});
+	isMutating.set(false);
+	if (!response.ok) {
+		throw new Error(response.statusText);
+	}
+	const final = (await response.json()) as Awaited<Data>;
 	return final;
 }
 
