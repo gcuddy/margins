@@ -74,6 +74,11 @@ export const queryFactory = {
             queryKey: ['entries', 'authors'] as const,
             queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'get_authors', {}),
             staleTime: Infinity
+        }),
+        all: () => ({
+            queryKey: ['entries', 'all'] as const,
+            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'getAllEntries', {}),
+            staleTime: Infinity
         })
 	},
     tags: {

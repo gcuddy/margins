@@ -24,6 +24,12 @@ export type PageType = {
 	placeholder?: string;
 	subPages?: PageType[];
 	icon?: ComponentType;
+    action?: () => void;
+    // dialog?: {
+    //     type?: "text";
+    //     title?: string;
+    //     action?: () => void;
+    // };
 };
 
 // TODO add subpages etc
@@ -113,13 +119,26 @@ export function createPages<T extends PageType>(props?: CreatePagesProps<T>) {
 						name: page.name,
 						page: page.name,
 						icon: page.icon,
-						addPage: () => add(page)
+						addPage: () => {
+                            if (page.action) {
+                                page.action()
+                            } else {
+                                add(page)
+                            }
+                        }
 					})) as ItemPageWithFn<T>[];
 				} else if (items) {
 					const opts = createPageItemList(pages, items);
 					return opts.map((page) => ({
 						...page,
-						addPage: () => add(page as unknown as T)
+						addPage: () => {
+                            let _page = page as unknown as T;
+                            if (_page.action) {
+                                _page.action()
+                            } else {
+                                add(_page)
+                            }
+                        }
 					})) as ItemPageWithFn<T>[];
 				}
 				return [];

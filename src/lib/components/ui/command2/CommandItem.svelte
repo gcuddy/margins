@@ -96,6 +96,11 @@
 		// }
 	}
 
+	$: if (shouldRegister) {
+		console.log('should register', { value });
+		helpers.registerItemValue(id, value);
+	}
+
 	onMount(() => {
 		if (node) {
 			node.addEventListener(SELECT_EVENT_NAME, handleSelect);
@@ -105,7 +110,6 @@
 		let unmount = () => {};
 		if (shouldRegister) {
 			unmount = helpers.registerItem(id, groupId);
-			helpers.registerItemValue(id, value);
 		}
 
 		const unsubCallback = helpers.registerCallback(id, handleSelect);
@@ -120,6 +124,8 @@
 
 	$: render = alwaysShow || !$inputValue || $filtered.ids.includes(id);
 	$: selected = /*$selectedValue.includes(value) ??*/ $selectedIds.includes(id);
+
+
 </script>
 
 {#if render}

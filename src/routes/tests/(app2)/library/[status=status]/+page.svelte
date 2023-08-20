@@ -40,6 +40,7 @@
 
 	export let data;
 	const sort = writable<NonNullable<LibrarySortType>>('manual');
+    const dir = writable<'asc' | 'desc'>('asc');
 
 	$: if (browser && $sort && $sort !== 'manual') {
 		const url = $page.url;
@@ -85,7 +86,7 @@
 	});
 
 	const query = createInfiniteQuery(
-		derived([page, sort, params], ([$page, $sort, $params]) => {
+		derived([page, sort, dir], ([$page, $sort, $dir]) => {
 			console.log({ $page, $sort });
 			const filter = parseFilterFromSearchParams();
 			const search = $page.url.searchParams.get('search') ?? undefined;
@@ -94,6 +95,7 @@
 					status: $page.data.Status,
 					search,
 					sort: $sort,
+                    dir: $dir,
 					filter
 				}),
 				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
@@ -213,7 +215,7 @@
 
 <svelte:window on:keydown={multi.events.keydown} />
 
-<LibraryHeader loading={$query.isLoading} bind:sort={$sort} />
+<LibraryHeader loading={$query.isLoading} bind:sort={$sort} bind:dir={$dir} />
 {#if $query.isLoading}
 	{#each new Array(10) as _}
 		<EntryItemSkeleton />

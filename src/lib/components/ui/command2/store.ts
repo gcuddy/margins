@@ -44,6 +44,7 @@ type Filtered<T> = {
 	ids: string[];
 	items: T[];
 	groups: Set<string>;
+    highScore: number;
 };
 
 // prettier-ignore
@@ -128,13 +129,18 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			console.time('filtering');
 			const idToScoreMap = new Map<string, number>();
 			const groups = new Set<string>();
-			// TODO should we use element ids here?
+
+            let highScore = 0;
+
 			const filteredIds = Array.from($items)
 				.filter((item) => {
 					const value = $idsToValueMap.get(item);
 					if (!value) return false;
 					const score = filterFunction(internalValueToString(value), $inputValue);
 					idToScoreMap.set(item, score);
+                    if (score > highScore) {
+                        highScore = score;
+                    }
 					if (score > 0) {
 						return true;
 					}
@@ -172,7 +178,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 				idToScoreMap,
 				ids: filteredIds,
 				items,
-				groups
+				groups,
+                highScore
 			} as Filtered<T>;
 		}
 	);
@@ -423,7 +430,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	}
 
 	let registerQueue: (() => void)[] = [];
-	beforeUpdate(() => {
+	afterUpdate(() => {
+        console.time('registerQueue')
 		console.log(`beforeUpdate`, { registerQueue });
         batch(() => {
             console.log('batching')
@@ -433,6 +441,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
             }
         })
 		registerQueue = [];
+        console.timeEnd('registerQueue')
 	});
 
 	function registerCallback(id: string | string[], callback: () => void) {

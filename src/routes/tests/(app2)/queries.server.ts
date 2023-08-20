@@ -82,11 +82,11 @@ export const mutations = {
 	//             .execute();
 	//     }
 	// }),'sva
-    // TODO save_to_libray
-    save_to_library: query({
-        schema: saveToLibrarySchema,
-        fn: save_to_library
-    }),
+	// TODO save_to_libray
+	save_to_library: query({
+		schema: saveToLibrarySchema,
+		fn: save_to_library
+	}),
 	save_note: query({
 		schema: upsertAnnotationSchema.omit({
 			userId: true
@@ -156,25 +156,23 @@ export const mutations = {
 			const new_sort_order =
 				input.sort_order ?? (await getFirstBookmarkSort(ctx.userId, input.status));
 
-            await db.transaction().execute(async trx => {
-                await trx
-                    .updateTable('Bookmark')
-                    .where('entryId', 'in', input.ids)
-                    .where('userId', '=', ctx.userId)
-                    .set({
-                        status: input.status,
-                        sort_order: new_sort_order
-                    })
-                    .execute();
+			await db.transaction().execute(async (trx) => {
+				await trx
+					.updateTable('Bookmark')
+					.where('entryId', 'in', input.ids)
+					.where('userId', '=', ctx.userId)
+					.set({
+						status: input.status,
+						sort_order: new_sort_order
+					})
+					.execute();
 
-                    // and add history item
-                // await trx.insertInto("BookmarkHistory")
-                //     .values({
-                //         fromStatus
-                //     })
-            })
-
-
+				// and add history item
+				// await trx.insertInto("BookmarkHistory")
+				//     .values({
+				//         fromStatus
+				//     })
+			});
 		}
 	}),
 	createCollection: query({
@@ -322,11 +320,11 @@ export const queries = {
 	get_library: query({
 		schema: get_library_schema,
 		fn: async ({ ctx, input }) => {
-            const { userId } = ctx;
+			const { userId } = ctx;
 			return get_library({
-                userId,
-                ...input
-            });
+				userId,
+				...input
+			});
 		}
 	}),
 	get_entry: query({
@@ -464,7 +462,12 @@ export const queries = {
 	}),
 	tags: query({
 		fn: ({ ctx }) => {
-			return db.selectFrom('Tag').where('userId', '=', ctx.userId).select(['id', 'name']).orderBy("Tag.name", "asc").execute();
+			return db
+				.selectFrom('Tag')
+				.where('userId', '=', ctx.userId)
+				.select(['id', 'name'])
+				.orderBy('Tag.name', 'asc')
+				.execute();
 		}
 	}),
 	collections: query({
@@ -696,17 +699,38 @@ export const queries = {
 				.executeTakeFirstOrThrow();
 		}
 	}),
-    entry_by_id: query({
-        schema: entry_by_id_schema,
-        fn: entry_by_id
-    }),
-    count_library: query({
-        schema: countLibrarySchema,
-        fn: count_library
-    }),
-    get_authors: query({
-        fn: get_authors
-    })
+	entry_by_id: query({
+		schema: entry_by_id_schema,
+		fn: entry_by_id
+	}),
+	count_library: query({
+		schema: countLibrarySchema,
+		fn: count_library
+	}),
+	get_authors: query({
+		fn: get_authors
+	}),
+	getAllEntries: query({
+		fn: async ({ ctx }) => {
+			const entries = await db
+				.selectFrom('Bookmark as b')
+				.innerJoin('Entry as e', 'e.id', 'b.entryId')
+				.where('b.userId', '=', ctx.userId)
+				.select(entrySelect)
+				.select(['b.status'])
+				.select((eb) =>
+					eb
+						.case()
+						.when('e.uri', 'regexp', '^(http|https)://')
+						.then(sql`SUBSTRING_INDEX(SUBSTRING_INDEX(e.uri, '/', 3), '//', -1)`)
+						.else(sql`null`)
+						.end()
+						.as('domain')
+				)
+				.execute();
+            return entries;
+		}
+	})
 } as const;
 
 export type Queries = typeof queries;

@@ -260,7 +260,7 @@
 		if (
 			!ref ||
 			$state.search ||
-			// Explicitly false, because true | undefined is the default
+			// Explicitly false,    because true | undefined is the default
 			$propsRef.shouldFilter === false
 		) {
 			return;

@@ -59,6 +59,7 @@ export async function get_library({
 	status,
 	search,
 	sort,
+	dir,
 	filter
 }: { userId: string } & z.input<typeof get_library_schema>) {
 	const take = 25;
@@ -172,69 +173,88 @@ export async function get_library({
 				.as('num_annotations')
 		])
 		.where('b.userId', '=', userId)
-		// .orderBy('b.sort_order', 'asc')
-		// .orderBy('b.updatedAt', 'desc')
 		.limit(take + 1);
 	if (status) {
 		query = query.where('b.status', '=', status);
 	}
+	const order = dir === 'desc' ? 'desc' : 'asc';
+	const rorder = dir === 'desc' ? 'asc' : 'desc';
+	const up = order === 'asc';
+    console.log({order, rorder, up})
 	switch (sort) {
 		case null:
 		case undefined:
 		case 'manual': {
-			query = query.orderBy('b.sort_order', 'asc').orderBy('b.updatedAt', 'desc');
+			query = query.orderBy('b.sort_order', order).orderBy('e.id', order);
 			if (cursor) {
 				query = query
-					.where('b.sort_order', '>=', cursor.sort_order)
-					.where('b.updatedAt', '<', cursor.updatedAt);
+					.where(eb => eb.or([
+                        eb('b.sort_order', up ? '>' : '<', cursor.sort_order),
+                        eb('b.sort_order', '=', cursor.sort_order).and('e.id', up ? '>=' : '<=', cursor.id)
+                    ]))
 			}
 			break;
 		}
 		case 'updatedAt': {
-			query = query.orderBy('b.updatedAt', 'desc').orderBy('b.id', 'asc');
+			query = query.orderBy('b.updatedAt', order).orderBy('b.id', rorder);
 			if (cursor) {
 				query = query.where((eb) =>
 					eb.or([
-						eb('b.updatedAt', '<', cursor.updatedAt),
-						eb('b.updatedAt', '=', cursor.updatedAt).and('e.id', '>', cursor.id)
+						eb('b.updatedAt', up ? '>' : '<', cursor.updatedAt),
+						eb('b.updatedAt', '=', cursor.updatedAt).and('e.id', up ? '>=' : '<=', cursor.id)
 					])
 				);
 			}
 			break;
 		}
 		case 'title': {
-			query = query.orderBy('e.title', 'asc').orderBy('e.id', 'asc');
+			query = query.orderBy('e.title', order).orderBy('e.id', order);
 			if (cursor) {
 				query = query.where((eb) =>
 					eb.or([
-						eb('e.title', '>', cursor.title),
-						eb('e.title', '=', cursor.title).and('e.id', '>', cursor.id)
+						eb('e.title', up ? '>' : '<', cursor.title),
+						eb('e.title', '=', cursor.title).and('e.id', up ? '>=' : '<=', cursor.id)
 					])
 				);
 			}
 			break;
 		}
 		case 'author': {
-			query = query.orderBy((eb) => eb.fn.coalesce('b.author', 'e.author')).orderBy('e.id', 'asc');
-			// query.orderBy(eb => eb.case()
-			//     .when(eb("b.author", "is", null))
-			//     .then(eb.ref("e.author"))
-			//     .else(eb.ref("b.author"))
-			//     .end()
-			// )
+			query = query
+				.orderBy((eb) => eb.fn.coalesce('b.author', 'e.author'), order)
+				.orderBy('e.id', order);
 			if (cursor) {
 				query = query.where((eb) =>
 					eb.or([
-						eb(eb.fn.coalesce('b.author', 'e.author'), '>', cursor.author),
+						eb(eb.fn.coalesce('b.author', 'e.author'), up ? '>' : '<', cursor.author),
 						eb(eb.fn.coalesce('b.author', 'e.author'), '=', cursor.author).and(
 							'e.id',
-							'>',
+							up ? '>=' : '<=',
 							cursor.id
 						)
 					])
 				);
 			}
+            break;
 		}
+        case 'time' : {
+            // TODO: coalesce estimatedreadingtime and runtime
+            // TODO: we shuold probably not filter on a sort, but this is fine for now
+            query = query.where('e.estimatedReadingTime', 'is not', null)
+            query = query.orderBy('e.estimatedReadingTime', order).orderBy('e.id', order);
+            if (cursor) {
+                query = query.where((eb) =>
+                    eb.or([
+                        eb('e.estimatedReadingTime', up ? '>' : '<', cursor.time),
+                        eb('e.estimatedReadingTime', '=', cursor.time).and(
+                            'e.id',
+                            up ? '>=' : '<=',
+                            cursor.id
+                        )
+                    ])
+                );
+            }
+        }
 	}
 
 	if (search) {
@@ -246,7 +266,7 @@ export async function get_library({
 		);
 	}
 	if (filter) {
-		const { createdAt, type, tags, readingTime } = filter;
+		const { createdAt, type, tags, readingTime, domain } = filter;
 		if (type) {
 			query = query.where('e.type', '=', type);
 		}
@@ -322,6 +342,12 @@ export async function get_library({
 				query = query.where('e.estimatedReadingTime', '<=', max);
 			}
 		}
+		if (domain) {
+			query = query
+				.where('e.uri', 'is not', null)
+				.where('e.uri', 'regexp', '^(http|https)://')
+				.where(sql`SUBSTRING_INDEX(SUBSTRING_INDEX(e.uri, '/', 3), '//', -1) = ${domain}`);
+		}
 	}
 	const entries = await query.execute();
 	let nextCursor = null;
@@ -335,7 +361,7 @@ export async function get_library({
 				case undefined:
 				case 'manual': {
 					nextCursor = {
-						updatedAt: nextItem.updatedAt,
+						id: nextItem.id,
 						sort_order: nextItem.sort_order
 					};
 					break;
@@ -360,7 +386,15 @@ export async function get_library({
 						updatedAt: nextItem.updatedAt,
 						id: nextItem.id
 					};
+                    break;
 				}
+                case 'time': {
+                    nextCursor = {
+                        time: nextItem.estimatedReadingTime,
+                        id: nextItem.id
+                    }
+                    break;
+                }
 			}
 		}
 	}

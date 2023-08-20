@@ -2,26 +2,36 @@
 	import { getAppearanceContext } from '../ctx';
 
 	import * as Popover from '$components/ui/popover';
-	import * as Tooltip from '$components/ui/tooltip';
-	import { cn } from '$lib';
-	import Button from '$components/ui/Button.svelte';
+	import TooltipContent from '$components/ui/tooltip/TooltipContent.svelte';
+	import { Button } from '$components/ui/button';
 	import { Settings2 } from 'lucide-svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import NativeSelect from '$lib/components/ui/NativeSelect.svelte';
 	import Slider from '$lib/components/ui/Slider.svelte';
 	import Switch from '$lib/components/ui/Switch.svelte';
 	import { Muted } from '$components/ui/typography';
+	import { createTooltip } from '@melt-ui/svelte';
 
 	const appearance = getAppearanceContext();
+
+	const {
+		elements: { content, trigger },
+		states: { open }
+	} = createTooltip({
+		forceVisible: true
+		// positioning: {
+		//     offset: 8,
+		// }
+	});
 </script>
 
 <Popover.Root>
-	<Tooltip.Trigger asChild let:builder={tooltipBuilder}>
-		<Popover.Trigger asChild let:builder={popoverBuilder}>
+	<Popover.Trigger asChild let:builder={popoverBuilder}>
+		<Button builders={[$trigger, popoverBuilder]} class="w-10 rounded-full p-0" variant="outline">
 			<Settings2 class="h-4 w-4" />
 			<span class="sr-only">Open popover</span>
-		</Popover.Trigger>
-	</Tooltip.Trigger>
+		</Button>
+	</Popover.Trigger>
 	<Popover.Content class="max-w-sm space-y-4">
 		<div class="grid grid-cols-[auto,160px] items-center">
 			<Label class="flex" for="alignment">Auto-hide menu</Label>
@@ -67,3 +77,6 @@
 		</div>
 	</Popover.Content>
 </Popover.Root>
+{#if $open}
+	<TooltipContent builder={content}>Show appearance options</TooltipContent>
+{/if}

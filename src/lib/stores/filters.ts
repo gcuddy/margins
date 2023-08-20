@@ -17,3 +17,45 @@ function createFilterStore() {
         }
     }
 }
+
+type FilterDialogStoreProps = {
+    title?: string;
+    open: boolean;
+    type?: 'text';
+    action?: (value: string) => void;
+    value?: string;
+}
+
+export function createFilterDialogStore() {
+    const filterDialogStore = writable<FilterDialogStoreProps>({
+		open: false
+	});
+
+    return {
+        ...filterDialogStore,
+        reset: () => {
+            filterDialogStore.set({
+                open: false
+            });
+        },
+        open: (props: Omit<FilterDialogStoreProps, "open">) => {
+            filterDialogStore.set({
+                open: true,
+                ...props
+            });
+        },
+        action: (reset = true) => {
+            filterDialogStore.update((val) => {
+                console.log('action', {val})
+                if (val.action) {
+                    val.action(val.value ?? '');
+                }
+                return {
+                    ...(reset ? {} : val),
+                    open: false
+                }
+            })
+        }
+
+    }
+}

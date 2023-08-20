@@ -80,6 +80,7 @@
 	import { numberOrString } from '$lib/utils/misc';
 	import type { Type } from '$lib/types';
     import throttle from 'just-throttle';
+	import { getAppearanceContext } from '../ctx';
 
 
 	export let data: PageData;
@@ -116,7 +117,7 @@
 		focusMode: false
 	};
 
-	const appearance = persisted('appearance', defaultOpts);
+	const appearance = getAppearanceContext();
 
 	const queryClient = useQueryClient();
 

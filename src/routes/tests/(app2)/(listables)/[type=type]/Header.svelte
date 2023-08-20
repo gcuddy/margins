@@ -9,6 +9,7 @@
 	import { derived, writable, type Writable } from 'svelte/store';
 	import EntryOperations from './[id]/EntryOperations.svelte';
 	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
+	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
 
 	export let scrollingDown = (getContext('scrollingDown') as Writable<boolean>) || writable(false);
 
@@ -93,7 +94,10 @@
 		<div class="center flex-1">
 			<!--  -->
 		</div>
-		<div class="right">
+		<div class="right flex gap-x-4">
+            {#if $page.data?.entry?.type === "article"}
+                <ArticleAppearanceOptions />
+            {/if}
 			<EntryOperations entry={$page.data.entry} data={$page.data.annotationForm} />
 		</div>
 	</div>

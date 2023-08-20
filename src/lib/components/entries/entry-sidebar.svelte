@@ -238,6 +238,9 @@
 						<div class="sidebar-row">
 							<Muted>Domain</Muted>
 							<Muted class="truncate px-2"><a href="/tests/domain/{domain}">{domain}</a></Muted>
+                            <Button href="/tests/library/all?domain={domain}" variant="ghost" size="sm">
+								<ChevronRightIcon class="h-3 w-3" />
+							</Button>
 						</div>
 					{/if}
 					{#if $query.data?.entry?.id}
@@ -554,7 +557,7 @@
 		}
 
 		> :global(*:nth-child(2)) {
-			@apply px-2 grow;
+			@apply px-2;
 		}
 	}
 </style>

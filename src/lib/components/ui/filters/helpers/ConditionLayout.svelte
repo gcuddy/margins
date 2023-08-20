@@ -16,6 +16,8 @@
 		disabled?: boolean;
 	}[] = [];
 
+    export let type: string | undefined = undefined;
+
 	export let value: any | undefined = undefined;
 </script>
 
@@ -54,7 +56,12 @@
 
 	<slot />
 	{#if $$slots.value}
-		<Badge variant="outline" class="rounded-none border-x-0">
+		<Badge variant="outline" class={
+            cn(
+                "rounded-none border-x-0",
+                !$$slots.default && !choices.length && "border-l"
+            )
+        }>
 			<slot name="value" />
 		</Badge>
 	{/if}

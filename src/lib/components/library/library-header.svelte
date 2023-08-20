@@ -19,6 +19,8 @@
 	import { types } from '$lib/types';
 	import debounce from 'just-debounce-it';
 	import Filter from '$components/ui/filters/Filter.svelte';
+	import * as AlertDialog from '$components/ui/alert-dialog';
+
 	import {
 		Command,
 		CommandInput,
@@ -34,7 +36,8 @@
 		DropdownMenuContent,
 		DropdownMenuItem,
 		DropdownMenuRadioGroup,
-		DropdownMenuRadioItem
+		DropdownMenuRadioItem,
+        DropdownMenuSeparator
 	} from '$components/ui/dropdown-menu2';
 	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
 	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
@@ -68,6 +71,7 @@
 	import { statusesWithIcons } from '$lib/status';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import { isHTMLElement } from '$lib/helpers';
+	import { createFilterDialogStore } from '$lib/stores/filters';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -169,6 +173,7 @@
 	$: filter_type = $page.url.searchParams.get('type');
 
 	export let sort: NonNullable<LibrarySortType> = 'manual';
+	export let dir: 'asc' | 'desc' | undefined = 'asc';
 	export let loading = false;
 
 	// const filters = writable<FilterLibrarySchema>({});
@@ -198,6 +203,9 @@
 	//     // const
 	// })
 
+	const filterDialogStore = createFilterDialogStore();
+
+	// TODO: these should affect the url params
 	const sortTypes: { label: string; type: NonNullable<LibrarySortType> }[] = [
 		{
 			label: 'Manual',
@@ -214,6 +222,10 @@
 		{
 			label: 'Date Updated',
 			type: 'updatedAt'
+		},
+		{
+			label: 'Time',
+			type: 'time'
 		}
 	];
 	const filterOpen = writable(false);
@@ -233,6 +245,23 @@
 			name: 'Reading Time',
 			placeholder: 'Filter by reading time...',
 			icon: ClockIcon
+		},
+		{
+			name: 'Domain',
+			action: () => {
+				filterDialogStore.open({
+					title: 'Filter by domain',
+					value: '',
+					action(val) {
+						console.log(`Setting domain to ${val}`);
+						filterChange($page.url, (data) => {
+							data.domain = val;
+							return data;
+						});
+						filterOpen.set(false);
+					}
+				});
+			}
 		}
 	]);
 </script>
@@ -538,9 +567,13 @@
 				<DropdownMenuContent>
 					<DropdownMenuRadioGroup bind:value={sort}>
 						{#each sortTypes as { label, type }}
-							<!-- TODO: Checkbox Item -->
 							<DropdownMenuRadioItem value={type}>{label}</DropdownMenuRadioItem>
 						{/each}
+					</DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+					<DropdownMenuRadioGroup bind:value={dir}>
+						<DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
+						<DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
 					</DropdownMenuRadioGroup>
 				</DropdownMenuContent>
 			</DropdownMenu>
@@ -571,17 +604,25 @@
 		</form>
 	</div>
 </Header>
-{#if /*$hasFilters*/ false}
-	<Header class="static">
-		{#each Object.entries($filters) as [type, filter]}
-			<FilterBadge {type} {filter} />
-			<!-- <div class="flex items-center gap-2">
-                <span class="text-xs text-muted-foreground">{key}</span>
-                <span class="text-xs text-muted-foreground">{value}</span>
-            </div> -->
-		{/each}
-	</Header>
-{/if}
 
 <Filter />
-<!-- TODO: Show FIlter bar here -->
+<!-- TODO: Alert Dialog Should Go Inside Filter -->
+<AlertDialog.Root bind:open={$filterDialogStore.open}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>{$filterDialogStore.title}</AlertDialog.Title>
+		</AlertDialog.Header>
+		<form class="contents" on:submit|preventDefault>
+			<Input bind:value={$filterDialogStore.value} />
+			<AlertDialog.Footer>
+				<AlertDialog.Cancel on:m-click={filterDialogStore.reset}>Cancel</AlertDialog.Cancel>
+				<AlertDialog.Action
+					type="submit"
+					on:m-click={() => {
+						filterDialogStore.action();
+					}}>Continue</AlertDialog.Action
+				>
+			</AlertDialog.Footer>
+		</form>
+	</AlertDialog.Content>
+</AlertDialog.Root>

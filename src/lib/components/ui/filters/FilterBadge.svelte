@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { ctx } from './ctx';
+
 	import { goto } from '$app/navigation';
 
 	import { page } from '$app/stores';
@@ -26,6 +28,7 @@
 	import Type from './conditions/Type.svelte';
 	import Tags from './conditions/Tags.svelte';
 	import ReadingTime from './conditions/ReadingTime.svelte';
+	import ConditionLayout from './helpers/ConditionLayout.svelte';
 
 	export let type: TFilterKey;
 	export let filter: FilterLibrarySchema[TFilterKey];
@@ -40,6 +43,10 @@
 
 	const container = writable<HTMLElement | null>(null);
 	setContext('filterContainer', container);
+
+	const {
+		state: { filterStore }
+	} = ctx.get();
 </script>
 
 <!-- Here lies dragons... -->
@@ -117,5 +124,12 @@
 				<ReadingTime {readingTime} />
 			</div>
 		{/if}
+	{:else if type === 'domain'}
+		<!-- TODO: scope alert dialog into Filter so that we can set it from here with ctx -->
+		<ConditionLayout name="Domain" on:delete={() => filterStore.delete('domain')}>
+			<svelte:fragment slot="value">
+				{filter}
+			</svelte:fragment>
+		</ConditionLayout>
 	{/if}
 </div>

@@ -422,7 +422,7 @@ export async function entry_by_id({
 }: GetCtx<typeof entry_by_id_schema>) {
 	console.time('entry');
 
-	let podcast: Awaited<ReturnType<typeof pindex['episodeById']>> | null = null;
+	let podcast: Awaited<ReturnType<(typeof pindex)['episodeById']>> | null = null;
 
 	let query = db
 		.selectFrom('Entry')
@@ -872,9 +872,8 @@ export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrar
 					...insertable,
 					title: book.volumeInfo.title,
 					html: book.volumeInfo.description,
-					uri: `isbn:${
-						book.volumeInfo.industryIdentifiers?.find((i) => i.type === 'ISBN_13')?.identifier
-					}`,
+					uri: `isbn:${book.volumeInfo.industryIdentifiers?.find((i) => i.type === 'ISBN_13')
+						?.identifier}`,
 					googleBooksId: book.id,
 					author: book.volumeInfo.authors?.join(', '),
 					published: book.volumeInfo.publishedDate,
@@ -949,11 +948,16 @@ export async function get_authors({
 }) {
 	const authors = await db
 		.selectFrom('Bookmark as b')
-		.distinct()
 		.innerJoin('Entry as e', 'e.id', 'b.entryId')
 		.where('b.userId', '=', userId)
-		.where('e.author', 'is not', null)
-		.select('e.author')
+		// .where('e.author', 'is not', null)
+        // REVIEW: do we want to only grab bookmark author if both exist?
+		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), "is not", null))
+		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), "is not", null))
+        .where(sql`TRIM(COALESCE(b.author,e.author)) <> ''`)
+		.select(eb => eb.fn.coalesce('b.author', 'e.author').as('author'))
+        .orderBy('author', 'asc')
+		.distinct()
 		.$narrowType<{ author: string }>()
 		.execute();
 

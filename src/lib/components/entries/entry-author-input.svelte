@@ -4,132 +4,116 @@
 	import { mutation } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils';
-	import { createCombobox, melt } from '@melt-ui/svelte';
+	import { ComboboxFilterFunction, createCombobox, melt } from '@melt-ui/svelte';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
+
+	import {
+		Command,
+		CommandInput,
+		CommandItem,
+		CommandItems,
+		CommandList,
+		CommandGroup,
+		CommandEmpty,
+		CommandSeparator,
+		CommandShortcut,
+		CommandLoading
+	} from '$lib/components/ui/command2';
+	import Button from '$components/ui/button/button.svelte';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Circle, PlusIcon } from 'lucide-svelte';
+	import { tick } from 'svelte';
 
 	export let author: string;
 	export let entryId: number;
-    export let bookmarkId: number | undefined = undefined;
+	export let bookmarkId: number | undefined = undefined;
 
 	const authorsQuery = createQuery(queryFactory.entries.authors());
 
-    const queryClient = useQueryClient();
+	// put selected author at top of list, if it exists
+	$: sortedAuthors = $authorsQuery.data?.sort((a, b) => {
+		if (a === author) return -1;
+		if (b === author) return 1;
+		return 0;
+	});
+
+	const queryClient = useQueryClient();
 
 	const updateBookmark = createMutation({
-		mutationFn: (author: string) => {
+		mutationFn: () => {
 			return mutation($page, 'updateBookmark', {
 				entryId,
-                id: bookmarkId,
+				id: bookmarkId,
 				data: {
 					author
 				}
 			});
 		},
-        onSuccess: () => {
-            // invalidate everything to get new author
-            queryClient.invalidateQueries({
-                queryKey: [
-                    "entries"
-                ]
-            })
-        }
-	});
-
-	const {
-		elements: { input, item, menu },
-		helpers: { updateItems },
-		options,
-		states: { open, filteredItems, inputValue }
-	} = createCombobox<{
-		author: string;
-		shadow?: boolean;
-	}>({
-		items:
-			$authorsQuery.data?.map((author) => ({
-				author,
-				shadow: false
-			})) ?? [],
-		filterFunction: ({ author }, query) => {
-			return author.toLowerCase().includes(query.toLowerCase());
-		},
-        itemToString: ({ author }) => author,
-		defaultValue: { author },
-		onValueChange: ({ next }) => {
-			console.log({ next });
-			if (next) {
-				$updateBookmark.mutate(next.author);
-			}
-			return next;
+		onSuccess: () => {
+			// invalidate everything to get new author
+			queryClient.invalidateQueries({
+				queryKey: ['entries']
+			});
 		}
 	});
-
-	$: if ($authorsQuery.isSuccess)
-		updateItems(() => $authorsQuery.data?.map((author) => ({ author })) ?? []);
-
-	$: showAdd = $filteredItems.every(({ author }) => author !== $inputValue);
-
-	$: if (showAdd) {
-		// update items to put shadow item at front
-		updateItems((items) => {
-			// filter out old shadow item
-			const filtered = items.filter(({ shadow }) => !shadow);
-			// add new shadow item
-			return [{ author: $inputValue, shadow: true }, ...filtered];
-		});
-	} else {
-        // remove shadow item
-        updateItems((items) => items.filter(({ shadow }) => !shadow));
-    }
-
-	// $: if ($inputValue) {
-	//     updateItems((items) => {
-	//         if (items.every((author) => author !== $inputValue)) {
-	//             return [...items, $inputValue];
-	//         }
-	//         return items;
-	//     });
-	// }
+	let open = false;
 </script>
 
-<input type="text" use:melt={$input} class={cn(
-    inputVariants({ variant: 'ghost' }),
-    'px-2'
-)} />
-
-<ul class="z-10 flex max-h-[300px] flex-col overflow-hidden rounded-md" use:melt={$menu}>
-	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-	<div
-		class="flex max-h-full flex-col gap-2 overflow-y-auto bg-popover text-popover-foreground px-2 py-2"
-		tabindex="0"
-	>
-		{#if showAdd}
-			<li
-				class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50"
-				use:melt={$item({
-					index: 0,
-					item: {
-						author: $inputValue,
-						shadow: true
-					}
-				})}
-			>
-				<span>+ Add <span class="font-semibold">{$inputValue}</span></span>
-			</li>
-		{/if}
-		{#if $filteredItems.length !== 0}
-			{#each $filteredItems.filter(({shadow}) => !shadow) as filteredItem, index (index)}
-				<li
-					use:melt={$item({
-						index: showAdd ? index + 1 : index,
-						item: filteredItem
-					})}
-					class="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50"
-				>
-					<div>
-						<span>{filteredItem.author}</span>
-					</div>
-				</li>
-			{/each}
-		{/if}
-	</div>
-</ul>
+<Popover bind:open>
+	<PopoverTrigger asChild let:builder>
+		<Button variant="ghost" builders={[builder]} class="justify-start w-fit">
+			{author}
+		</Button>
+	</PopoverTrigger>
+	<PopoverContent class="p-0">
+		<Command
+			let:filtered
+			let:inputValue
+			bind:value={author}
+			onClose={() => {
+				tick().then(() => {
+					$updateBookmark.mutate();
+					open = false;
+				});
+			}}
+		>
+			<CommandInput placeholder="Author…" />
+			<CommandList>
+				<CommandGroup alwaysShow>
+					{#if $authorsQuery.isLoading}
+						<CommandLoading>
+							{#each [1, 2, 3] as _}
+								<Skeleton class="h-10 w-full" />
+							{/each}
+						</CommandLoading>
+					{:else if $authorsQuery.isError}
+						<CommandEmpty>
+							<span class="text-red-500">Error loading authors</span>
+						</CommandEmpty>
+					{:else if $authorsQuery.isSuccess}
+						{#if inputValue.length > 1 && $authorsQuery.data?.every((name) => name.toLowerCase() !== inputValue.toLowerCase())}
+							<CommandItem alwaysShow id="shadow-new-author" value={inputValue}>
+								<PlusIcon class="mr-2 opacity-50 h-4 w-4" />
+								<span class="inline-flex grow items-center">
+									<span>Set author: </span>
+									<span class="font-medium text-muted-foreground">"{inputValue}"</span>
+								</span>
+							</CommandItem>
+						{/if}
+						{#each $authorsQuery.data as author}
+							<CommandItem class="pl-8" value={author} let:isSelected>
+								<span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+									{#if isSelected}
+										<Circle class="h-2 w-2 fill-current" />
+									{/if}
+								</span>
+								<span>{author}</span>
+							</CommandItem>
+						{/each}
+					{/if}
+				</CommandGroup>
+			</CommandList>
+		</Command>
+	</PopoverContent>
+</Popover>
