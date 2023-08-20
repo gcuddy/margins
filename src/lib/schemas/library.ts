@@ -7,17 +7,24 @@ const defaultCursorSchema = z.object({
 	id: z.number()
 });
 
+// Only enabled if grouping is active. TODO make types more robust
+const groupingCursorSchema = z.object({
+	type: typeSchema.optional(),
+	tag: z.number().optional(),
+	domain: z.string().optional()
+});
+
 export const entryListSortSchemas = z
 	.union([
 		z.object({
 			sort: z.literal('manual').nullish(),
 			// order: z.nativeEnum(['asc', 'desc']),
-			cursor: defaultCursorSchema.nullish()
+			cursor: groupingCursorSchema.and(defaultCursorSchema).nullish()
 		}),
 		z.object({
 			sort: z.literal('updatedAt'),
-			cursor: z
-				.object({
+			cursor: groupingCursorSchema
+				.extend({
 					updatedAt: z.coerce.date(),
 					id: z.number()
 				})
@@ -26,8 +33,8 @@ export const entryListSortSchemas = z
 		z.object({
 			// sort: z.nu
 			sort: z.literal('title'),
-			cursor: z
-				.object({
+			cursor: groupingCursorSchema
+				.extend({
 					title: z.string(),
 					id: z.number()
 				})
@@ -35,8 +42,8 @@ export const entryListSortSchemas = z
 		}),
 		z.object({
 			sort: z.literal('author'),
-			cursor: z
-				.object({
+			cursor: groupingCursorSchema
+				.extend({
 					author: z.string(),
 					id: z.number()
 				})
@@ -44,8 +51,8 @@ export const entryListSortSchemas = z
 		}),
 		z.object({
 			sort: z.literal('time'),
-			cursor: z
-				.object({
+			cursor: groupingCursorSchema
+				.extend({
 					time: z.number().nullable(),
 					id: z.number()
 				})
@@ -103,11 +110,12 @@ export const get_library_schema = z
 		status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
 		search: z.string().optional(),
 		filter: filterLibrarySchema.optional(),
-        // Grouping is implemented as an additional sorting option, and then the UI completes it.  For instance, if we group by type, then we need all our types together (hence sorting). Additional layers of sorting will taker place "within" these groups. For no grouping, set to undefined.
-        grouping: z.enum(['type', 'tag', 'domain']).optional()
+		// Grouping is implemented as an additional sorting option, and then the UI completes it.  For instance, if we group by type, then we need all our types together (hence sorting). Additional layers of sorting will taker place "within" these groups. For no grouping, set to undefined.
+		grouping: z.enum(['none', 'type', 'tag', 'domain']).optional()
 	})
 	.and(entryListSortSchemas);
 
 export type GetLibrarySchema = z.input<typeof get_library_schema>;
 
 export type LibrarySortType = GetLibrarySchema['sort'];
+export type LibraryGroupType = GetLibrarySchema['grouping'];

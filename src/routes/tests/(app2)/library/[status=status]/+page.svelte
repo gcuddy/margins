@@ -12,7 +12,7 @@
 		keepPreviousData,
 		useQueryClient
 	} from '@tanstack/svelte-query';
-	import { createWindowVirtualizer } from '@tanstack/svelte-virtual';
+	import { createWindowVirtualizer, defaultRangeExtractor } from '@tanstack/svelte-virtual';
 	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action';
 	import { derived, writable } from 'svelte/store';
 	import { useMenuBar } from '../../MainNav.svelte';
@@ -30,7 +30,8 @@
 		filterLibrarySchema,
 		FilterLibrarySchema,
 		LibrarySortType,
-		GetLibrarySchema
+		GetLibrarySchema,
+		LibraryGroupType
 	} from '$lib/schemas/library';
 	import { defaultParseSearch, parseSearchWith } from '$lib/utils/search-params';
 	import { browser } from '$app/environment';
@@ -40,14 +41,18 @@
 		convertToGroupedArrayWithHeadings,
 		groupBy
 	} from '$lib/helpers';
+	import { cn } from '$lib/utils';
+	import type { ComponentType } from 'svelte';
+	import { entryTypeIcon } from '$components/entries/icons';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
 
-	let grouping: 'type' | null = null;
 	const sort = writable<NonNullable<LibrarySortType>>('manual');
 	const dir = writable<'asc' | 'desc'>('asc');
+	const grouping = writable<LibraryGroupType>('none');
+	const groupingEnabled = derived(grouping, ($grouping) => $grouping && $grouping !== 'none');
 
 	$: if (browser && $sort && $sort !== 'manual') {
 		const url = $page.url;
@@ -93,7 +98,7 @@
 	});
 
 	const query = createInfiniteQuery(
-		derived([page, sort, dir], ([$page, $sort, $dir]) => {
+		derived([page, sort, dir, grouping], ([$page, $sort, $dir, $grouping]) => {
 			console.log({ $page, $sort });
 			const filter = parseFilterFromSearchParams();
 			const search = $page.url.searchParams.get('search') ?? undefined;
@@ -104,6 +109,7 @@
 					sort: $sort,
 					dir: $dir,
 					filter,
+					grouping: $grouping === 'none' ? undefined : $grouping
 				})
 				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
 				// 	console.log(`placeholder`, { data });
@@ -146,22 +152,31 @@
 			count: number;
 			isHeading: true;
 			id: string;
+			icon?: ComponentType;
 		}
 	> = [];
-    $: console.log({groupedEntries})
+	$: console.log({ groupedEntries });
 	$: {
-		// attempt at grouping
-		console.time(`grouping`);
 		const grouped = groupBy(entries, (entry) => entry.type);
-		console.log({ grouped });
-		// convert to array
 		groupedEntries = convertToGroupedArrayWithHeadings(grouped, (heading) => ({
 			text: heading,
 			count: grouped.get(heading)?.length ?? 0,
-			id: heading
+			id: heading,
+			icon: entryTypeIcon[heading]
 		}));
-		console.timeEnd(`grouping`);
 	}
+
+	let activeHeaderIndex = 0;
+	const isActiveHeader = (index: number) => $groupingEnabled && activeHeaderIndex === index;
+
+	let headerIndexes: number[] = [];
+	$: headerIndexes = groupedEntries
+		.map((entry, index) => {
+			if (entry && 'isHeading' in entry && entry.isHeading) {
+				return index;
+			}
+		})
+		.filter((index) => index !== undefined) as number[];
 
 	$: console.log({ $params });
 
@@ -180,17 +195,34 @@
 	}
 
 	const virtualizer = createWindowVirtualizer({
-		count: grouping ? groupedEntries.length : entries?.length || 0,
-		estimateSize: () => 96,
+		count: $groupingEnabled ? groupedEntries.length : entries?.length || 0,
+		estimateSize: (index) => {
+			const entry = $groupingEnabled ? groupedEntries[index] : entries[index];
+			if (entry && 'isHeading' in entry && entry.isHeading) {
+				return 40;
+			}
+			return 96;
+		},
 		overscan: 10,
-		getItemKey: (index) => (grouping ? groupedEntries[index]!.id : entries[index]!.id)
+		getItemKey: (index) => ($groupingEnabled ? groupedEntries[index]!.id : entries[index]!.id),
+		rangeExtractor: (range) => {
+			if (!$groupingEnabled || !headerIndexes.length) return defaultRangeExtractor(range);
+
+			activeHeaderIndex = headerIndexes.findLast((index) => range.startIndex >= index) ?? 0;
+			console.log({ activeHeaderIndex });
+
+			const next = new Set([activeHeaderIndex, ...defaultRangeExtractor(range)]);
+			console.log({ next });
+
+			return [...next].sort((a, b) => a - b);
+		}
 	});
 
 	let items = $virtualizer?.getVirtualItems();
 	let dragging = false;
 
 	$: $virtualizer.setOptions({
-		count: grouping ? groupedEntries.length : entries?.length || 0
+		count: $groupingEnabled ? groupedEntries.length : entries?.length || 0
 	});
 
 	$: console.log({ $virtualizer });
@@ -246,18 +278,14 @@
 
 <svelte:window on:keydown={multi.events.keydown} />
 
-<LibraryHeader loading={$query.isLoading} bind:sort={$sort} bind:dir={$dir} />
-<button
-	on:click={() => {
-		if (grouping) {
-			grouping = null;
-		} else {
-			grouping = 'type';
-		}
-        $virtualizer.measure();
-	}}>toggle grouping</button
->
-{#if $query.isLoading}
+<LibraryHeader
+	loading={$query.isLoading}
+	bind:sort={$sort}
+	bind:dir={$dir}
+	bind:grouping={$grouping}
+/>
+
+{#if $query.isPending}
 	{#each new Array(10) as _}
 		<EntryItemSkeleton />
 	{/each}
@@ -297,16 +325,25 @@
 		use:multi.elements.root
 	>
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
-			{@const entry = grouping ? groupedEntries[row.index] : entries[row.index]}
+			{@const entry = $groupingEnabled ? groupedEntries[row.index] : entries[row.index]}
 			<div
 				animate:flip={{
 					duration: 200
 				}}
-				style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)"
+				class={cn(isActiveHeader(row.index) && 'bg-background z-[1]')}
+				style="position: {isActiveHeader(row.index) ? 'sticky' : 'absolute'}; top:{isActiveHeader(
+					row.index
+				)
+					? 'var(--nav-height)'
+					: '0'}; left: 0; width: 100%; height: {row.size}px;"
+				style:transform={isActiveHeader(row.index) ? undefined : `translateY(${row.start}px)`}
 			>
 				{#if entry && 'isHeading' in entry && entry.isHeading}
 					<!-- then we have a heading -->
-					<div class="h-12">{entry.text}</div>
+					<div class="h-full w-full flex items-center px-6 bg-secondary/75 gap-x-4">
+						<svelte:component this={entry.icon} class="h-4 w-4 text-muted-foreground" />
+						<span class="text-lg tracking-tighter font-medium">{entry.text}</span>
+					</div>
 				{:else if entry && !('isHeading' in entry)}
 					<EntryItem
 						on:change={() => multi.helpers.toggleSelection(entry.id)}
@@ -318,7 +355,11 @@
 				{/if}
 			</div>
 		{:else}
-			<div class="py-16 text-center text-sm">No entries!</div>
+			<div class="py-16 text-center text-sm bg-background">
+				No entries found
+
+				<!-- <pre>{JSON.stringify($query, null, 2)}</pre> -->
+			</div>
 		{/each}
 		{#if $query.isFetchingNextPage}
 			<div class="absolute bottom-0 left-0 right-0 flex justify-center items-center h-12">

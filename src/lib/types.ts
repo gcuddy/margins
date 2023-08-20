@@ -11,7 +11,8 @@ export const types = [
 	'tweet',
 	'video',
 	'album',
-	'pdf'
+	'pdf',
+    'board_game'
 ] as const;
 
 export type Type = typeof types[number];

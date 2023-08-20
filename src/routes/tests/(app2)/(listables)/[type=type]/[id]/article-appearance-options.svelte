@@ -27,7 +27,7 @@
 
 <Popover.Root>
 	<Popover.Trigger asChild let:builder={popoverBuilder}>
-		<Button builders={[$trigger, popoverBuilder]} class="w-10 rounded-full p-0" variant="outline">
+		<Button builders={[$trigger, popoverBuilder]} variant="outline">
 			<Settings2 class="h-4 w-4" />
 			<span class="sr-only">Open popover</span>
 		</Button>

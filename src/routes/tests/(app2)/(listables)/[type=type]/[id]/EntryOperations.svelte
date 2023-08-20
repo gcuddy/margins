@@ -81,7 +81,7 @@
 </script>
 
 <DropdownMenu>
-	<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary' })}>
+	<DropdownMenuTrigger class={buttonVariants({ variant: 'outline' })}>
 		<MoreHorizontal />
 	</DropdownMenuTrigger>
 	<DropdownMenuContent class="w-56">

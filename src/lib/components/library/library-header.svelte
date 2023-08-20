@@ -37,8 +37,9 @@
 		DropdownMenuItem,
 		DropdownMenuRadioGroup,
 		DropdownMenuRadioItem,
-        DropdownMenuSeparator
-	} from '$components/ui/dropdown-menu2';
+        DropdownMenuSeparator,
+        DropdownMenuLabel
+	} from '$components/ui/dropdown-menu';
 	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
 	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
 	// import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
@@ -60,7 +61,7 @@
 		defaultParseSearch,
 		defaultStringifySearch
 	} from '$lib/utils/search-params';
-	import { filterLibrarySchema, type FilterLibrarySchema } from '$lib/schemas/library';
+	import { filterLibrarySchema, LibraryGroupType, type FilterLibrarySchema } from '$lib/schemas/library';
 	import FilterBadge from '$components/ui/filters/FilterBadge.svelte';
 	import { createParamsStore, createSearchParamsStore } from '$lib/stores/search-params';
 	import { tweened } from 'svelte/motion';
@@ -174,6 +175,7 @@
 
 	export let sort: NonNullable<LibrarySortType> = 'manual';
 	export let dir: 'asc' | 'desc' | undefined = 'asc';
+    export let grouping: LibraryGroupType = undefined;
 	export let loading = false;
 
 	// const filters = writable<FilterLibrarySchema>({});
@@ -565,6 +567,7 @@
 					<span class="hidden lg:inline">Sort</span>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
+                    <DropdownMenuLabel>Sort</DropdownMenuLabel>
 					<DropdownMenuRadioGroup bind:value={sort}>
 						{#each sortTypes as { label, type }}
 							<DropdownMenuRadioItem value={type}>{label}</DropdownMenuRadioItem>
@@ -574,6 +577,12 @@
 					<DropdownMenuRadioGroup bind:value={dir}>
 						<DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
 						<DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
+					</DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Grouping</DropdownMenuLabel>
+					<DropdownMenuRadioGroup bind:value={grouping}>
+						<DropdownMenuRadioItem value="none">None</DropdownMenuRadioItem>
+						<DropdownMenuRadioItem value="type">Type</DropdownMenuRadioItem>
 					</DropdownMenuRadioGroup>
 				</DropdownMenuContent>
 			</DropdownMenu>

@@ -229,12 +229,15 @@
 	}
 
 	export let contextMenuOpen = false;
+    $: console.log({contextMenuOpen})
 </script>
 
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
-<ContextMenu.Root bind:open={contextMenuOpen}>
+<ContextMenu.Root  bind:open={contextMenuOpen} portal="body" positioning={{
+    // strategy: "fixed"
+}}>
 	<ContextMenu.Trigger asChild let:builder>
 		<a
 			bind:this={anchor_el}

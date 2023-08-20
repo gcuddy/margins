@@ -5,7 +5,7 @@ import { db } from '$lib/db';
 import { entrySelect } from '$lib/db/selects';
 import type { Bookmark, DB, Entry, Interaction } from '$lib/prisma/kysely/types';
 import { typeSchema, type Type } from '$lib/types';
-import { Status } from '@prisma/client';
+import { DocumentType, Status } from '@prisma/client';
 import { sql, type ExpressionBuilder } from 'kysely';
 import type { Nullable } from 'kysely/dist/cjs/util/type-utils';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
@@ -53,6 +53,30 @@ export type GetLibrarySchema = z.input<typeof get_library_schema>;
 
 export type LibrarySortType = GetLibrarySchema['sort'];
 
+
+// TODO: this is hard-coded in here, but ideally should come from the db...
+export const TypeToIndex: Record<DocumentType, number> = {
+	article: 1,
+	podcast: 2,
+	rss: 3,
+	pdf: 4,
+	epub: 5,
+	bookmark: 6,
+	image: 7,
+	video: 8,
+	tweet: 9,
+	audio: 10,
+	book: 11,
+	movie: 12,
+	tv: 13,
+	song: 14,
+	album: 15,
+	playlist: 16,
+	recipe: 17,
+	game: 18,
+	board_game: 19
+} as const;
+
 export async function get_library({
 	userId,
 	cursor,
@@ -61,7 +85,7 @@ export async function get_library({
 	sort,
 	dir,
 	filter,
-    grouping
+	grouping
 }: { userId: string } & z.input<typeof get_library_schema>) {
 	const take = 25;
 	console.log(`[get_library]`, { cursor });
@@ -179,35 +203,47 @@ export async function get_library({
 		query = query.where('b.status', '=', status);
 	}
 
-    // check for grouping. if that's there, we need to sort by that first, then by the sort
-    if (grouping) {
-        if (grouping === "domain") {
-        // TODO
-        } else if (grouping === "tag") {
-            // TODO
-        } else if (grouping === "type") {
-            query = query.orderBy("e.type");
-
-        } else {
-            grouping satisfies never
-        }
-    }
+	// check for grouping. if that's there, we need to sort by that first, then by the sort
+	if (grouping) {
+		if (grouping === 'domain') {
+			// TODO
+		} else if (grouping === 'tag') {
+			// TODO
+		} else if (grouping === 'type') {
+			query = query.orderBy('e.type');
+		} else {
+			grouping satisfies never;
+		}
+	}
 
 	const order = dir === 'desc' ? 'desc' : 'asc';
 	const rorder = dir === 'desc' ? 'asc' : 'desc';
 	const up = order === 'asc';
-    console.log({order, rorder, up})
+	console.log({ order, rorder, up });
 	switch (sort) {
 		case null:
 		case undefined:
 		case 'manual': {
 			query = query.orderBy('b.sort_order', order).orderBy('e.id', order);
 			if (cursor) {
-				query = query
-					.where(eb => eb.or([
-                        eb('b.sort_order', up ? '>' : '<', cursor.sort_order),
-                        eb('b.sort_order', '=', cursor.sort_order).and('e.id', up ? '>=' : '<=', cursor.id)
-                    ]))
+				query = query.where((eb) => {
+
+					const exp = eb.or([
+						eb('b.sort_order', up ? '>' : '<', cursor.sort_order),
+						eb('b.sort_order', '=', cursor.sort_order).and('e.id', up ? '>=' : '<=', cursor.id)
+					]);
+
+					if (grouping === 'type' && cursor.type) {
+						// return sql`e.type > ${type} or (b.sort_order > ${})`
+                        const typeIndex = TypeToIndex[cursor.type] as unknown as DocumentType;
+						return eb.or([eb('e.type', '>', typeIndex), eb('e.type', '=', typeIndex).and(exp)]);
+					} else if (grouping === 'tag' && cursor.tag) {
+						// TODO
+					} else if (grouping === 'domain' && cursor.domain) {
+						// TODO
+					}
+					return exp;
+				});
 			}
 			break;
 		}
@@ -251,26 +287,22 @@ export async function get_library({
 					])
 				);
 			}
-            break;
+			break;
 		}
-        case 'time' : {
-            // TODO: coalesce estimatedreadingtime and runtime
-            // TODO: we shuold probably not filter on a sort, but this is fine for now
-            query = query.where('e.estimatedReadingTime', 'is not', null)
-            query = query.orderBy('e.estimatedReadingTime', order).orderBy('e.id', order);
-            if (cursor) {
-                query = query.where((eb) =>
-                    eb.or([
-                        eb('e.estimatedReadingTime', up ? '>' : '<', cursor.time),
-                        eb('e.estimatedReadingTime', '=', cursor.time).and(
-                            'e.id',
-                            up ? '>=' : '<=',
-                            cursor.id
-                        )
-                    ])
-                );
-            }
-        }
+		case 'time': {
+			// TODO: coalesce estimatedreadingtime and runtime
+			// TODO: we shuold probably not filter on a sort, but this is fine for now
+			query = query.where('e.estimatedReadingTime', 'is not', null);
+			query = query.orderBy('e.estimatedReadingTime', order).orderBy('e.id', order);
+			if (cursor) {
+				query = query.where((eb) =>
+					eb.or([
+						eb('e.estimatedReadingTime', up ? '>' : '<', cursor.time),
+						eb('e.estimatedReadingTime', '=', cursor.time).and('e.id', up ? '>=' : '<=', cursor.id)
+					])
+				);
+			}
+		}
 	}
 
 	if (search) {
@@ -378,7 +410,8 @@ export async function get_library({
 				case 'manual': {
 					nextCursor = {
 						id: nextItem.id,
-						sort_order: nextItem.sort_order
+						sort_order: nextItem.sort_order,
+                        type: grouping === 'type' ? nextItem.type : undefined
 					};
 					break;
 				}
@@ -402,15 +435,15 @@ export async function get_library({
 						updatedAt: nextItem.updatedAt,
 						id: nextItem.id
 					};
-                    break;
+					break;
 				}
-                case 'time': {
-                    nextCursor = {
-                        time: nextItem.estimatedReadingTime,
-                        id: nextItem.id
-                    }
-                    break;
-                }
+				case 'time': {
+					nextCursor = {
+						time: nextItem.estimatedReadingTime,
+						id: nextItem.id
+					};
+					break;
+				}
 			}
 		}
 	}
