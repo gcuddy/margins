@@ -2,7 +2,20 @@ import { type RequestEvent, error } from "@sveltejs/kit";
 import { parse } from "devalue";
 import type { z } from "zod";
 
-export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema?: T): Promise<{
+
+export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, authed?: boolean): Promise<{
+    input: z.infer<T>;
+    ctx: {
+        userId: string;
+    };
+}>
+export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema?: T, authed?: boolean): Promise<{
+    input: z.infer<T>;
+    ctx: {
+        userId: string;
+    };
+}>
+export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schemaOrAuthed?: T | boolean, authed?: boolean): Promise<{
     input: z.infer<T>;
     ctx: {
         userId: string;
@@ -10,7 +23,9 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
 }> {
     const { url, locals } = req;
     let userId = url.searchParams.get("userId");
-    if (!userId) {
+    const schema = typeof schemaOrAuthed === "boolean" ? undefined : schemaOrAuthed;
+    const _authed = typeof schemaOrAuthed === "boolean" ? schemaOrAuthed : authed;
+    if (!userId && _authed !== false) {
         console.time(`[auth] validating session`)
         const session = await locals.auth.validate();
         console.timeEnd(`[auth] validating session`)
@@ -23,7 +38,7 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
         return {
             input: null,
             ctx: {
-                userId
+                userId: userId!
             }
         }
     }
@@ -34,7 +49,7 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
         return {
             input: null,
             ctx: {
-                userId
+                userId: userId!
             }
         }
         // throw error(400, "Missing input");
@@ -50,7 +65,7 @@ export async function queryctx<T extends z.ZodTypeAny>(req: RequestEvent, schema
     return {
         input: parsed.data as z.infer<T>,
         ctx: {
-            userId
+            userId: userId!
         }
     };
 }

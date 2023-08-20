@@ -7,10 +7,10 @@ const prefix = `/tests`
 export function getId(entry: {
     type: DocumentType;
     id: number;
-    tmdbId: number | null;
-    spotifyId: string | null;
-    googleBooksId: string | null;
-    podcastIndexId: number | null;
+    tmdbId?: number | null;
+    spotifyId?: string | null;
+    googleBooksId?: string | null;
+    podcastIndexId?: number | null;
 }): string | number {
     if ((entry.type === "movie" || entry.type === "tv") && entry.tmdbId) {
         return entry.tmdbId;

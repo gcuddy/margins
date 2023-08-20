@@ -610,6 +610,7 @@ export type Tag = {
 	updatedAt: Generated<Timestamp>;
 	viewOptions: unknown | null;
 	userId: string;
+	color: Generated<string>;
 };
 export type Tagging = {
 	id: Generated<number>;

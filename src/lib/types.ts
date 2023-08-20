@@ -12,12 +12,28 @@ export const types = [
 	'video',
 	'album',
 	'pdf',
-    'board_game'
+	'board_game'
 ] as const;
 
-export type Type = typeof types[number];
+export type Type = (typeof types)[number];
 
 export const typeSchema = z.enum(types);
+
+export const convertToTypes: {
+	label: string;
+	value: Type;
+}[] = [
+	{ label: 'Article', value: 'article' },
+	{ label: 'Book', value: 'book' },
+    { label: 'Movie', value: 'movie' },
+    // { label: 'Podcast', value: 'podcast' },
+    // { label: 'TV', value: 'tv' },
+    // { label: 'Tweet', value: 'tweet' },
+    // { label: 'Video', value: 'video' },
+    // { label: 'Album', value: 'album' },
+    // { label: 'PDF', value: 'pdf' },
+    // { label: 'Board Game', value: 'board_game' }
+];
 
 export type Message = { status: 'error' | 'success'; text: string };
 

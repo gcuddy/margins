@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
@@ -18,9 +18,12 @@
 		DropdownMenuContent,
 		DropdownMenuGroup,
 		DropdownMenuItem,
-		DropdownMenuTrigger
+		DropdownMenuTrigger,
+		DropdownMenuSubTrigger,
+		DropdownMenuSubContent,
+		DropdownMenuSub
 	} from '$lib/components/ui/dropdown-menu';
-	import { mutation } from '$lib/queries/query';
+	import { mutation, query } from '$lib/queries/query';
 	import { state, update_entry } from '$lib/state/entries';
 	import type { Entry } from '@prisma/client';
 	import {
@@ -32,16 +35,22 @@
 		LoaderIcon,
 		MoreHorizontal,
 		Paperclip,
-
 		Repeat
-
 	} from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import NoteForm from './NoteForm.svelte';
+	import { convertToTypes } from '$lib/types';
+	import { entryTypeIcon } from '$components/entries/icons';
+	import { createAlertDialogStore } from '$lib/stores/dialog';
+	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
+	import { getId } from '$lib/utils/entries';
 
 	export let data: ComponentProps<AnnotationForm>['data'];
-	export let entry: Pick<Entry, 'id' | 'type'>;
+	export let entry: Pick<
+		Entry,
+		'id' | 'type' | 'googleBooksId' | 'spotifyId' | 'tmdbId' | 'podcastIndexId'
+	>;
 
 	let show_note_form = false;
 	let show_reading_session = false;
@@ -65,22 +74,24 @@
 		} else if (file.size / 1024 / 1024 > 100) {
 			toast.error('File size too big (max 100MB).');
 		} else {
-            toast.promise(
-                fetch(`/api/upload?related_entry_id=${entry.id}`, {
-                    method: 'POST',
-                    body: file
-                }),
-                {
-                    loading: 'Uploading...',
-                    success: () => {
-                        invalidate('entry');
-                        return 'File uploaded'
-                    },
-                    error: 'Error uploading file'
-                }
-            )
-        }
+			toast.promise(
+				fetch(`/api/upload?related_entry_id=${entry.id}`, {
+					method: 'POST',
+					body: file
+				}),
+				{
+					loading: 'Uploading...',
+					success: () => {
+						invalidate('entry');
+						return 'File uploaded';
+					},
+					error: 'Error uploading file'
+				}
+			);
+		}
 	}
+
+	const dialogStore = createAlertDialogStore();
 </script>
 
 <DropdownMenu>
@@ -90,7 +101,7 @@
 	<DropdownMenuContent class="w-56">
 		<DropdownMenuGroup>
 			<DropdownMenuItem
-				on:click={() => {
+				on:m-click={() => {
 					show_note_form = true;
 				}}
 			>
@@ -102,7 +113,7 @@
 				<span>Snooze</span></DropdownMenuItem
 			>
 			{#if entry.type === 'book'}
-				<DropdownMenuItem on:click={() => (show_reading_session = true)}>
+				<DropdownMenuItem on:m-click={() => (show_reading_session = true)}>
 					<BookOpen class="mr-2 h-4 w-4" />
 					<span>Start reading session</span></DropdownMenuItem
 				>
@@ -110,7 +121,7 @@
 		</DropdownMenuGroup>
 		<DropdownMenuGroup>
 			<DropdownMenuItem
-				on:click={() => {
+				on:m-click={() => {
 					commander_store.open({
 						component: JumpToEntry,
 						placeholder: 'Add relation to...',
@@ -135,7 +146,7 @@
 				<span>Add Relation</span></DropdownMenuItem
 			>
 			<DropdownMenuItem
-				on:click={() => {
+				on:m-click={() => {
 					commander_store.open({
 						component: Collections,
 						placeholder: 'Add to collection...',
@@ -148,24 +159,61 @@
 				<ListPlus class="mr-2 h-4 w-4" />
 				<span>Add to Collection</span></DropdownMenuItem
 			>
+			<DropdownMenuSub>
+				<DropdownMenuSubTrigger>
+					<Repeat class="mr-2 h-4 w-4" />
+					<span>Convert to…</span>
+				</DropdownMenuSubTrigger>
+				<DropdownMenuSubContent>
+					{#each convertToTypes.filter((type) => entry.type !== type.value) as type}
+						<DropdownMenuItem
+							on:m-click={() => {
+								if (type.value === 'book') {
+									dialogStore.open({
+										title: 'Convert to book',
+										value: '',
+										description: 'Please enter ISBN',
+										action: async (value) => {
+											// update_entry(entry.id, { type: type.value });
+											// dialogStore.reset();
+											console.log({ value });
+											if (!value) return;
+											const book = await query($page, 'getBookByIsbn', value);
+											if (!book?.id) {
+												toast.error('Unable to find book with that ISBN');
+												return;
+											}
+											const data = await mutation($page, 'convertEntry', {
+												id: entry.id,
+												type: 'book',
+												googleBooksId: book.id
+											});
+                                            if (!data.id) {
+                                                toast.error('Failed to convert entry');
+                                                return;
+                                            }
+											await goto(`/tests/book/${getId(data)}`);
+										}
+									});
+								}
+							}}
+						>
+							<svelte:component this={entryTypeIcon[type.value]} class="mr-2 h-4 w-4" />
+							<span>{type.label}</span>
+						</DropdownMenuItem>
+					{/each}
+				</DropdownMenuSubContent>
+			</DropdownMenuSub>
 			<DropdownMenuItem
-				on:click={() => {
-                    //
-				}}
-			>
-				<Repeat class="mr-2 h-4 w-4" />
-				<span>Convert to…</span></DropdownMenuItem
-			>
-			<DropdownMenuItem
-				on:click={() => {
+				on:m-click={() => {
 					const input = document.createElement('input');
 					input.type = 'file';
 					input.accept = 'pdf';
 					input.onchange = async (event) => {
 						if (input.files?.length) {
 							const file = input.files[0];
-                            if (!file) return;
-                            return handle_pdf_upload(file);
+							if (!file) return;
+							return handle_pdf_upload(file);
 						}
 					};
 					input.click();
@@ -182,3 +230,7 @@
 </DropdownMenu>
 
 <NoteForm bind:isOpen={show_note_form} {data} {entry} />
+
+<!-- Dialog here -->
+
+<AlertDialogHelper store={dialogStore} />

@@ -44,7 +44,7 @@ type Filtered<T> = {
 	ids: string[];
 	items: T[];
 	groups: Set<string>;
-    highScore: number;
+	highScore: number;
 };
 
 // prettier-ignore
@@ -73,6 +73,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	const idsToValueMap = writable<Map<string, T>>(new Map()); // id → value
 	const allGroupIds = writable<Map<string, Set<string>>>(new Map()); // groupId → [...itemIds]
 	const idsToCallbackMap = writable<Map<string, () => void>>(new Map()); // id → callback
+	const idsToValueToStringFnMap = writable<Map<string, (value: T) => string>>(new Map()); // id → valueToString fn (each can optionally set their own)
 
 	// const valueToIdsMap = derived(idsToValueMap, ($idsToValueMap) => {
 	//     const map = new Map<T, string[]>();
@@ -124,23 +125,24 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	// TODO: set this asynchronously with debouncing?
 	const filtered = derived(
-		[allItemIds, allGroupIds, inputValue, idsToValueMap],
-		([$items, $groups, $inputValue, $idsToValueMap]) => {
+		[allItemIds, allGroupIds, inputValue, idsToValueMap, idsToValueToStringFnMap],
+		([$items, $groups, $inputValue, $idsToValueMap, $idsToValueToStringFnMap]) => {
 			console.time('filtering');
 			const idToScoreMap = new Map<string, number>();
 			const groups = new Set<string>();
 
-            let highScore = 0;
+			let highScore = 0;
 
 			const filteredIds = Array.from($items)
 				.filter((item) => {
 					const value = $idsToValueMap.get(item);
 					if (!value) return false;
-					const score = filterFunction(internalValueToString(value), $inputValue);
+                    const valueToStringFn = $idsToValueToStringFnMap.get(item) ?? internalValueToString;
+					const score = filterFunction(valueToStringFn(value), $inputValue);
 					idToScoreMap.set(item, score);
-                    if (score > highScore) {
-                        highScore = score;
-                    }
+					if (score > highScore) {
+						highScore = score;
+					}
 					if (score > 0) {
 						return true;
 					}
@@ -179,7 +181,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 				ids: filteredIds,
 				items,
 				groups,
-                highScore
+				highScore
 			} as Filtered<T>;
 		}
 	);
@@ -431,44 +433,58 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	let registerQueue: (() => void)[] = [];
 	afterUpdate(() => {
-        console.time('registerQueue')
-		console.log(`beforeUpdate`, { registerQueue });
-        batch(() => {
-            console.log('batching')
-            for (const fn of registerQueue) {
+        if (!registerQueue.length) return;
+		console.time('registerQueue');
+        console.log(`running registerQueue`, { registerQueue });
+		batch(() => {
+            console.log('batching');
+			for (const fn of registerQueue) {
                 console.log(`running fn`);
-                fn();
-            }
-        })
+				fn();
+			}
+		});
+        console.timeEnd('registerQueue');
 		registerQueue = [];
-        console.timeEnd('registerQueue')
 	});
 
 	function registerCallback(id: string | string[], callback: () => void) {
-		idsToCallbackMap.update(($map) => {
-			if (Array.isArray(id)) {
-				for (const i of id) {
-					$map.set(i, callback);
-				}
-				return $map;
-			}
-			$map.set(id, callback);
-			return $map;
-		});
+        registerQueue.push(() => {
+            idsToCallbackMap.update(($map) => {
+                if (Array.isArray(id)) {
+                    for (const i of id) {
+                        $map.set(i, callback);
+                    }
+                    return $map;
+                }
+                $map.set(id, callback);
+                return $map;
+            });
+        })
 
 		return () => {
-			idsToCallbackMap.update(($map) => {
-				if (Array.isArray(id)) {
-					for (const i of id) {
-						$map.delete(i);
-					}
-					return $map;
-				}
-				$map.delete(id);
-				return $map;
-			});
+            registerQueue.push(() => {
+                idsToCallbackMap.update(($map) => {
+                    if (Array.isArray(id)) {
+                        for (const i of id) {
+                            $map.delete(i);
+                        }
+                        return $map;
+                    }
+                    $map.delete(id);
+                    return $map;
+                });
+            })
 		};
 	}
+
+    function registerValueToString(id: string, callback: (value: any) => string) {
+        registerQueue.push(() => {
+            idsToValueToStringFnMap.update(($map) => {
+                $map.set(id, callback);
+                return $map;
+            });
+        })
+    }
 
 	return {
 		ids,
@@ -500,6 +516,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			},
 			registerGroup,
 			registerCallback,
+            registerValueToString,
 			isValueSelected: (value: T) => {
 				// TODO: should we pass in id instead here? But we keep track of selectedValue by value, not id
 				const $selectedValue = get(selectedValue);

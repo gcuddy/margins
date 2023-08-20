@@ -1,41 +1,28 @@
 <script lang="ts">
 	import PinButton from '$lib/components/PinButton.svelte';
-	import EntryList from '$lib/components/entries/EntryList.svelte';
 	import { H1, Muted } from '$lib/components/ui/typography';
 	import { TagIcon } from 'lucide-svelte';
 	import type { Snapshot } from './$types.js';
-	import { createTabsContext } from '$components/ui/tabs/utils';
-	import { TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
+	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
 	import Annotation from '$components/notebook/Annotation.svelte';
 	import { page } from '$app/stores';
-	import { browser } from '$app/environment';
 	import { queryParam, ssp } from 'sveltekit-search-params';
-	import { createQuery } from '@tanstack/svelte-query';
-	import { query } from '$lib/queries/query';
+	import { createMutation, createQuery } from '@tanstack/svelte-query';
 	import { tagDeets, tagEntries, tagNotes } from './queries';
 	import { derived } from 'svelte/store';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
 	import EntryItemSkeleton from '$components/entries/EntryItemSkeleton.svelte';
 	import EntryItem from '$components/entries/EntryItem.svelte';
+	import { TagColor } from '$components/tags/tag-color';
+	import { mutation } from '$lib/queries/query';
+	import type { UpdateTagInput } from '$lib/queries/server';
 
 	export let data;
-	let entrylist: EntryList;
-	export const snapshot: Snapshot = {
-		capture: () => entrylist?.capture(),
-		restore: (snapshot) => entrylist?.restore(snapshot)
-	};
 
 	let loading = false;
 
 	const tab = queryParam('tab', ssp.string(), { pushHistory: false });
-
-	const { root, value } = createTabsContext({
-		value: 'entries',
-		onChange: (value) => {
-			tab.set(value);
-		}
-	});
 
 	const tagDeetsQuery = createQuery(tagDeets($page, data.tag));
 	const entriesQuery = createQuery(
@@ -50,6 +37,18 @@
 			// enabled: $page.url.searchParams.get('tab') === 'notes'
 		}))
 	);
+
+	const updateTagMutation = createMutation({
+		mutationFn: (data: UpdateTagInput['data']) => {
+			if (!$tagDeetsQuery.isSuccess) {
+				return Promise.reject('Tag not found');
+			}
+			return mutation($page, 'updateTag', {
+				id: $tagDeetsQuery.data.id,
+				data
+			});
+		}
+	});
 </script>
 
 <div class="space-y-4">
@@ -59,8 +58,15 @@
 		{:else if $tagDeetsQuery.isSuccess}
 			{@const tag = $tagDeetsQuery.data}
 
-			<H1 class="flex items-baseline space-x-3">
+			<H1 class="flex items-center space-x-3">
 				<TagIcon />
+				<TagColor
+					color={tag.color}
+					on:change={({ detail: color }) => {
+                        console.log({color})
+						$updateTagMutation.mutate({ color });
+					}}
+				/>
 				<span>
 					{tag.name}
 				</span>
@@ -70,7 +76,7 @@
 			</PinButton>
 		{/if}
 	</div>
-	<div melt={$root}>
+	<Tabs>
 		<TabsList>
 			<TabsTrigger class="gap-1.5" value="entries"
 				><span>Entries</span>
@@ -90,24 +96,6 @@
 					<EntryItem {entry} />
 				{/each}
 			{/if}
-			<!-- <EntryList
-				class="mt-8"
-				bulkForm={data.bulkForm}
-				loading={$entriesQuery.isLoading}
-				entries={$entriesQuery.data ?? []}
-				on:end={async () => {
-					// if (loading || !data.nextCursor) return;
-					// loading = true;
-					// const response = await fetch(
-					// 	`/api/entries/tag/${data.tag.name}?cursor=${data.nextCursor}`
-					// );
-					// const result = await response.json();
-					// //@ts-ignore
-					// data.entries = [...data.entries, ...result.entries];
-					// data.nextCursor = result.nextCursor;
-					// loading = false;
-				}}
-			/> -->
 		</TabsContent>
 		<TabsContent value="notes">
 			<!-- {#await data.lazy.notes}
@@ -122,5 +110,5 @@
 			{/if}
 			<!-- {/await} -->
 		</TabsContent>
-	</div>
+	</Tabs>
 </div>

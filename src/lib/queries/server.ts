@@ -13,7 +13,7 @@ import { nanoid } from '$lib/nanoid';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
 import { interactionSchema } from '$lib/schemas';
 import { typeSchema } from '$lib/types';
-import { DocumentType, RelationType, Status } from '@prisma/client';
+import { DocumentType, RelationType, Status, Tag } from '@prisma/client';
 import { sql } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import { superValidate } from 'sveltekit-superforms/server';
@@ -23,6 +23,7 @@ import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
 import type { Insertable, SelectQueryBuilder } from 'kysely';
 import type { Bookmark, DB, Entry } from '$lib/prisma/kysely/types';
+import type { Entry as PrismaEntry } from '@prisma/client';
 import type { FilterLibrarySchema } from '$lib/schemas/library';
 
 type GetCtx<T extends z.ZodTypeAny> = {
@@ -31,6 +32,32 @@ type GetCtx<T extends z.ZodTypeAny> = {
 		userId: string;
 	};
 };
+
+export const mediaIdSchema = z.union([
+	z.object({
+		tmdbId: z.number().int(),
+		type: z.enum(['movie', 'tv'])
+	}),
+	z.object({
+		spotifyId: z.string(),
+		type: z.enum(['album'])
+	}),
+	z.object({
+		googleBooksId: z.string(),
+		type: z.enum(['book'])
+	}),
+	z.object({
+		podcastIndexId: z.number(),
+		type: z.enum(['podcast'])
+	})
+]);
+
+const entrySchema = z.object({
+	entryId: z.number().int(),
+	type: z.enum(['article', 'video', 'pdf', 'tweet', 'board_game'])
+});
+
+export const entryIdAndTypeSchema = z.union([mediaIdSchema, entrySchema]);
 
 export async function searchEntries(q: string) {
 	const entries = await db
@@ -353,10 +380,8 @@ export async function set_tags_on_entry({
 		await db.deleteFrom('TagOnEntry').where('entryId', '=', entries).execute();
 	}
 
-
-
 	if (tagsToAdd.length) {
-        console.log('inserting')
+		console.log('inserting');
 		const insertData = await db
 			.insertInto('Tag')
 			.values(
@@ -365,16 +390,16 @@ export async function set_tags_on_entry({
 					userId
 				}))
 			)
-            .ignore()
+			.ignore()
 			.execute();
-        console.log('inserted')
+		console.log('inserted');
 		const newIds = insertData.map((row) => Number(row.insertId)).filter(Boolean);
-        tagIds.push(...newIds)
+		tagIds.push(...newIds);
 	}
 
-    const values = entries.flatMap((entryId) => tagIds.map((tagId) => ({ entryId, tagId, userId })));
+	const values = entries.flatMap((entryId) => tagIds.map((tagId) => ({ entryId, tagId, userId })));
 
-    const q = await db.insertInto('TagOnEntry').values(values).ignore().execute();
+	const q = await db.insertInto('TagOnEntry').values(values).ignore().execute();
 
 	// now delete tags that are no longer there
 	await db
@@ -843,103 +868,8 @@ export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrar
 	let { entryId, status, type } = input;
 	if (!entryId) {
 		// then we need to create the entry
-		let insertable: Insertable<Entry> = {
-			updatedAt: new Date()
-			// ...data
-		};
-
-		switch (input.type) {
-			case 'tv':
-			case 'movie': {
-				if (type === 'tv') {
-					const tv = await tmdb.tv.details(input.tmdbId);
-					insertable = {
-						...insertable,
-						title: tv.name,
-						text: tv.overview,
-						uri: `tmdb:tv:${tv.id}`,
-						tmdbId: tv.id,
-						author: tv.created_by?.map((val) => val.name).join(', '),
-						published: tv.first_air_date,
-						image: tmdb.media(tv.poster_path),
-						type: 'tv'
-					};
-				} else {
-					const movie = await tmdb.movie.details(input.tmdbId);
-					insertable = {
-						...insertable,
-						title: movie.title,
-						html: movie.overview,
-						uri: `tmdb:${movie.id}`,
-						tmdbId: movie.id,
-						author: movie.credits?.crew?.find((c) => c.job === 'Director')?.name,
-						published: movie.release_date,
-						image: tmdb.media(movie.poster_path),
-						type: 'movie'
-					};
-				}
-				break;
-			}
-			case 'book': {
-				const book = await books.get(input.googleBooksId);
-				console.log({ book });
-				let image = book.volumeInfo.imageLinks?.thumbnail;
-				if (image) {
-					const u = new URL(image);
-					u.searchParams.delete('edge');
-					image = u.toString();
-				}
-				insertable = {
-					...insertable,
-					title: book.volumeInfo.title,
-					html: book.volumeInfo.description,
-					uri: `isbn:${book.volumeInfo.industryIdentifiers?.find((i) => i.type === 'ISBN_13')
-						?.identifier}`,
-					googleBooksId: book.id,
-					author: book.volumeInfo.authors?.join(', '),
-					published: book.volumeInfo.publishedDate,
-					image,
-					type: 'book',
-					publisher: book.volumeInfo.publisher,
-					pageCount: book.volumeInfo.pageCount
-				};
-				break;
-			}
-			case 'podcast': {
-				//todo
-				const { episode } = await pindex.episodeById(Number(input.podcastIndexId));
-				insertable = {
-					...insertable,
-					title: episode.title,
-					text: episode.description,
-					uri: episode.enclosureUrl,
-					podcastIndexId: episode.id,
-					published: new Date(episode.datePublished * 1000),
-					type: 'podcast',
-					image: episode.image || episode.feedImage
-				};
-				break;
-			}
-			case 'album': {
-				const album = await spotify.album(input.spotifyId);
-				insertable = {
-					...insertable,
-					title: album.name,
-					uri: `spotify:album:${album.id}`,
-					spotifyId: album.id,
-					image: album.images[0]?.url,
-					author: album.artists.map((a) => a.name).join(', '),
-					published: new Date(album.release_date),
-					type: 'album'
-				};
-			}
-			default: {
-				//
-			}
-		}
-
-		const entry = await db.insertInto('Entry').values(insertable).executeTakeFirstOrThrow();
-		entryId = Number(entry.insertId);
+		const { id } = await createEntry(input);
+		entryId = id;
 	}
 
 	const sort_order = await getFirstBookmarkSort(ctx.userId);
@@ -957,6 +887,136 @@ export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrar
 			status
 		})
 		.executeTakeFirst();
+}
+
+/**
+ * Function to get media info and save it as an entry.
+ * @param input Media ID Input
+ * @returns New Entry
+ */
+export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
+	// then we need to create the entry
+	let insertable: Insertable<Entry> = {
+		updatedAt: new Date()
+		// ...data
+	};
+
+	const { type } = input;
+
+	switch (input.type) {
+		case 'tv':
+		case 'movie': {
+			if (type === 'tv') {
+				const tv = await tmdb.tv.details(input.tmdbId);
+				insertable = {
+					...insertable,
+					title: tv.name,
+					text: tv.overview,
+					uri: `tmdb:tv:${tv.id}`,
+					tmdbId: tv.id,
+					author: tv.created_by?.map((val) => val.name).join(', '),
+					published: tv.first_air_date,
+					image: tmdb.media(tv.poster_path),
+					type: 'tv'
+				};
+			} else {
+				const movie = await tmdb.movie.details(input.tmdbId);
+				insertable = {
+					...insertable,
+					title: movie.title,
+					html: movie.overview,
+					uri: `tmdb:${movie.id}`,
+					tmdbId: movie.id,
+					author: movie.credits?.crew?.find((c) => c.job === 'Director')?.name,
+					published: movie.release_date,
+					image: tmdb.media(movie.poster_path),
+					type: 'movie'
+				};
+			}
+			break;
+		}
+		case 'book': {
+			const book = await books.get(input.googleBooksId);
+			console.log({ book });
+			let image = book.volumeInfo.imageLinks?.thumbnail;
+			if (image) {
+				const u = new URL(image);
+				u.searchParams.delete('edge');
+				image = u.toString();
+			}
+			insertable = {
+				...insertable,
+				title: book.volumeInfo.title,
+				html: book.volumeInfo.description,
+				uri: `isbn:${book.volumeInfo.industryIdentifiers?.find((i) => i.type === 'ISBN_13')
+					?.identifier}`,
+				googleBooksId: book.id,
+				author: book.volumeInfo.authors?.join(', '),
+				published: book.volumeInfo.publishedDate,
+				image,
+				type: 'book',
+				publisher: book.volumeInfo.publisher,
+				pageCount: book.volumeInfo.pageCount
+			};
+			break;
+		}
+		case 'podcast': {
+			//todo
+			const { episode } = await pindex.episodeById(Number(input.podcastIndexId));
+			insertable = {
+				...insertable,
+				title: episode.title,
+				text: episode.description,
+				uri: episode.enclosureUrl,
+				podcastIndexId: episode.id,
+				published: new Date(episode.datePublished * 1000),
+				type: 'podcast',
+				image: episode.image || episode.feedImage
+			};
+			break;
+		}
+		case 'album': {
+			const album = await spotify.album(input.spotifyId);
+			insertable = {
+				...insertable,
+				title: album.name,
+				uri: `spotify:album:${album.id}`,
+				spotifyId: album.id,
+				image: album.images[0]?.url,
+				author: album.artists.map((a) => a.name).join(', '),
+				published: new Date(album.release_date),
+				type: 'album'
+			};
+			break;
+		}
+		default: {
+			// TODO
+			input.type;
+		}
+	}
+
+	const entry = await db.insertInto('Entry').values(insertable).ignore().executeTakeFirstOrThrow();
+	const entryId = Number(entry.insertId);
+	if (entryId) {
+		return {
+			id: entryId,
+			type,
+			...insertable
+		};
+	} else {
+		let query = db.selectFrom('Entry as e').select(entrySelect);
+		if (type === 'tv' || type === 'movie') {
+			query = query.where('tmdbId', '=', input.tmdbId);
+		} else if (type === 'book') {
+			query = query.where('googleBooksId', '=', input.googleBooksId);
+		} else if (type === 'podcast') {
+			query = query.where('podcastIndexId', '=', input.podcastIndexId);
+		} else if (type === 'album') {
+			query = query.where('spotifyId', '=', input.spotifyId);
+		}
+		const entry = await query.executeTakeFirstOrThrow();
+		return entry;
+	}
 }
 
 // this should be rolled into one big "extras" query maybe
@@ -983,4 +1043,145 @@ export async function get_authors({
 		.execute();
 
 	return authors.map((a) => a.author);
+}
+
+export const updateTagSchema = z.object({
+	id: z.number(),
+	data: z
+		.object({
+			name: z.string(),
+			color: z.string()
+			// TODO description etc.
+		})
+		.partial()
+});
+
+export type UpdateTagInput = z.input<typeof updateTagSchema>;
+
+export async function updateTag({ input, ctx }: GetCtx<typeof updateTagSchema>) {
+	await db
+		.updateTable('Tag')
+		.set(input.data)
+		.where('id', '=', input.id)
+		.where('userId', '=', ctx.userId)
+		.execute();
+}
+
+export const convertToSchema = z
+	.object({
+		// The entry ID to convert
+		id: z.number()
+		// The type to convert to
+	})
+	.and(mediaIdSchema);
+
+export async function convertTo({ input, ctx }: GetCtx<typeof convertToSchema>) {
+	const { id, type } = input;
+	const { userId } = ctx;
+
+	// More to flesh out here...
+	// const entry = await db.selectFrom('Entry').where('id', '=', id).executeTakeFirstOrThrow();
+
+	let newEntry:
+		| {
+				id: number;
+				type: DocumentType;
+				spotifyId?: string | null;
+				tmdbId?: number | null;
+				googleBooksId?: string | null;
+				podcastIndexId?: number | null;
+		  }
+		| undefined = undefined;
+
+	if (type === 'book') {
+		// find book stuff
+		newEntry = await createEntry(input);
+	}
+
+	if (!newEntry) {
+		throw new Error("Couldn't convert");
+	}
+
+	// TODO: this transaction is unwieldly, and the delete part should be handled by qstash asynchronously
+	await db.transaction().execute(async (trx) => {
+		if (!newEntry) return;
+		console.time('convert transaction');
+		await trx
+			.updateTable('TagOnEntry')
+			.set({ entryId: newEntry.id })
+			.where('entryId', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+		// now relations
+		await trx
+			.updateTable('Relation')
+			.set({ entryId: newEntry.id })
+			.where('entryId', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+		// now annotations
+		await trx
+			.updateTable('Annotation')
+			.set({ entryId: newEntry.id })
+			.where('entryId', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+
+		await trx
+			.updateTable('EntryInteraction')
+			.set({ entryId: newEntry.id })
+			.where('entryId', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+
+		await trx
+			.updateTable('CollectionItems as ci')
+			// .innerJoin('Collection as c', 'c.id', 'ci.collectionId')
+			.set({ entryId: newEntry.id })
+			.where('entryId', '=', id)
+			// .where('c.userId', '=', userId)
+			.where(({ and, exists, selectFrom }) =>
+				and([
+					exists(
+						selectFrom('Collection as c')
+                            .select('c.id')
+							.whereRef('c.id', '=', 'ci.collectionId')
+							.where('c.userId', '=', userId)
+					)
+				])
+			)
+			.execute();
+
+		await trx
+			.updateTable('Favorite')
+			.set({ entryId: newEntry.id })
+			.where('entryId', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+
+		// delete old entry if no bookmarks
+		await trx
+			.selectFrom('Bookmark')
+			.where('entryId', '=', id)
+			.select('id')
+			.execute()
+			.then(async (rows) => {
+				if (!rows.length) {
+					await trx.deleteFrom('Entry').where('id', '=', id).execute();
+				}
+			});
+
+		// assign bookmark to new entry
+		const final = await trx
+			.updateTable('Bookmark')
+			.set({ entryId: newEntry.id })
+			.where('entryId', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+
+		console.timeEnd('convert transaction');
+		return final;
+	});
+
+	return newEntry;
 }

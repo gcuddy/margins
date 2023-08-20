@@ -11,6 +11,8 @@ import {
 import { nanoid } from '$lib/nanoid';
 import {
 	add_to_collection,
+	convertTo,
+	convertToSchema,
 	countLibrarySchema,
 	count_library,
 	deleteAnnotation,
@@ -27,6 +29,8 @@ import {
 	tagsOnEntrySchema,
 	updateBookmark,
 	updateBookmarkSchema,
+	updateTag,
+	updateTagSchema,
 	upsertAnnotation,
 	upsertAnnotationSchema
 } from '$lib/queries/server';
@@ -58,6 +62,8 @@ interface Query<I extends z.ZodTypeAny, Data> {
 	}) => Promise<Data>;
 	schema?: I;
 	headers?: Record<string, string>;
+	// defaults to TRUE
+	authorized?: boolean;
 }
 
 export const query = <I extends z.ZodTypeAny, Data>(args: Query<I, Data>) => args;
@@ -175,6 +181,10 @@ export const mutations = {
 			});
 		}
 	}),
+	updateTag: query({
+		schema: updateTagSchema,
+		fn: updateTag
+	}),
 	createCollection: query({
 		schema: z.object({
 			name: z.string(),
@@ -291,6 +301,10 @@ export const mutations = {
 		fn: async ({ input, ctx }) => {
 			return set_tags_on_entry({ ...input, userId: ctx.userId });
 		}
+	}),
+	convertEntry: query({
+		schema: convertToSchema,
+		fn: convertTo
 	})
 };
 
@@ -695,7 +709,7 @@ export const queries = {
 				.leftJoin('Favorite as pin', 'pin.tagId', 'Tag.id')
 				.where('Tag.name', '=', name)
 				.where('Tag.userId', '=', userId)
-				.select(['Tag.id', 'Tag.name', 'pin.id as pin_id'])
+				.select(['Tag.id', 'Tag.name', 'Tag.color', 'pin.id as pin_id'])
 				.executeTakeFirstOrThrow();
 		}
 	}),
@@ -728,7 +742,18 @@ export const queries = {
 						.as('domain')
 				)
 				.execute();
-            return entries;
+			return entries;
+		}
+	}),
+	getBookByIsbn: query({
+		schema: z.string(),
+		fn: async ({ input }) => {
+			const { items } = await books.search(`isbn:${input}`);
+			return items?.[0];
+		},
+		authorized: false,
+		headers: {
+			'cache-control': 's-maxage=1, stale-while-revalidate=86400'
 		}
 	})
 } as const;

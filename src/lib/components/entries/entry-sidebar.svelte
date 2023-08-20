@@ -3,7 +3,7 @@
 	import Relation from '$lib/components/Relation.svelte';
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
 	// import TagPopover from '$lib/components/TagPopover.svelte';
-    import TagPopover from "$components/entries/tag-popover.svelte";
+	import TagPopover from '$components/entries/tag-popover.svelte';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { Collapsible } from 'radix-svelte';
@@ -17,8 +17,7 @@
 	import Input from '$components/ui/Input.svelte';
 	import Editor, { SaveStatus } from '$components/ui/editor/Editor.svelte';
 	import { extractDataFromContentData, isJSONContent } from '$components/ui/editor/utils';
-	import { TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
-	import { createTabsContext } from '$components/ui/tabs/utils';
+	import { TabsContent, TabsList, TabsTrigger, Tabs } from '$components/ui/tabs';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
@@ -137,11 +136,6 @@
 
 	$: console.log({ currentTab });
 
-	const {
-		elements: { root, list, trigger, content }
-	} = createTabsContext({
-		value: currentTab
-	});
 
 	const note_save_status = writable<SaveStatus>();
 	// $: if ($value) {
@@ -154,38 +148,38 @@
 
 <aside
 	class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain"
-	use:melt={$root}
 >
 	<!-- 2.5rem is size of sidebar toggle -->
-	<div
-		class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height]"
-	>
-		<TabsList class="grow">
-			<TabsTrigger class="grow" value="details">Details</TabsTrigger>
-			<TabsTrigger class="grow" value="notes"
-				>Notes{$query.data?.entry?.annotations?.length
-					? `(${$query.data?.entry?.annotations?.length})`
-					: ''}</TabsTrigger
-			>
-			<TabsTrigger class="grow" value="timeline">Timeline</TabsTrigger>
-		</TabsList>
-	</div>
-	<TabsContent value="details">
-		<Collapsible.Root bind:open={$open_sections.details}>
-			<CardHeader class="">
-				<div class="flex items-center gap-x-2">
-					<Collapsible.Trigger
-						class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group -ml-2 transition')}
-					>
-						<CardTitle>
-							Details
-							<ChevronUpIcon
-								class="inline h-4 w-4 transition group-data-[state='open']:rotate-180"
-							/>
-						</CardTitle></Collapsible.Trigger
-					>
+	<Tabs bind:value={$currentTab}>
+		<div
+			class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height]"
+		>
+			<TabsList class="grow">
+				<TabsTrigger class="grow" value="details">Details</TabsTrigger>
+				<TabsTrigger class="grow" value="notes"
+					>Notes{$query.data?.entry?.annotations?.length
+						? `(${$query.data?.entry?.annotations?.length})`
+						: ''}</TabsTrigger
+				>
+				<TabsTrigger class="grow" value="timeline">Timeline</TabsTrigger>
+			</TabsList>
+		</div>
+		<TabsContent value="details">
+			<Collapsible.Root bind:open={$open_sections.details}>
+				<CardHeader class="">
+					<div class="flex items-center gap-x-2">
+						<Collapsible.Trigger
+							class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group -ml-2 transition')}
+						>
+							<CardTitle>
+								Details
+								<ChevronUpIcon
+									class="inline h-4 w-4 transition group-data-[state='open']:rotate-180"
+								/>
+							</CardTitle></Collapsible.Trigger
+						>
 
-					<!-- <Button
+						<!-- <Button
                     on:click={() => ($render = false)}
                     size="sm"
                     variant="ghost"
@@ -193,348 +187,368 @@
                 >
                     <XIcon class="h-4 w-4" />
                 </Button> -->
-				</div>
-			</CardHeader>
-			<Collapsible.Content transition>
-				<CardContent class="space-y-4">
-					<div class="sidebar-row group">
-						<Muted>Saved</Muted>
-						<Muted class="grow">
-							{$query.data?.entry?.bookmark?.createdAt
-								? ago(new Date($query.data?.entry?.bookmark?.createdAt), new Date())
-								: 'Never'}
-						</Muted>
-						{#if $query.data?.entry?.bookmark?.createdAt}
-							<!-- <Button href="/tests/library/all?createdAt={encodeURIComponent(`=${new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10)}`)}" variant="ghost" size="sm" class="p-2">
+					</div>
+				</CardHeader>
+				<Collapsible.Content transition>
+					<CardContent class="space-y-4">
+						<div class="sidebar-row group">
+							<Muted>Saved</Muted>
+							<Muted class="grow">
+								{$query.data?.entry?.bookmark?.createdAt
+									? ago(new Date($query.data?.entry?.bookmark?.createdAt), new Date())
+									: 'Never'}
+							</Muted>
+							{#if $query.data?.entry?.bookmark?.createdAt}
+								<!-- <Button href="/tests/library/all?createdAt={encodeURIComponent(`=${new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10)}`)}" variant="ghost" size="sm" class="p-2">
                             <ChevronRightIcon class="h-3 w-3" />
                         </Button> -->
-							<Button
-								href="/tests/library/all{defaultStringifySearch({
-									createdAt: {
-										equals: new Date($query.data?.entry?.bookmark?.createdAt)
-											.toISOString()
-											.slice(0, 10)
-									}
-								})}"
-								variant="ghost"
-                                class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity p-2"
-								size="sm"
-							>
-								<ChevronRightIcon class="h-3 w-3" />
-							</Button>
-						{/if}
-					</div>
-					{#if $query.data?.entry?.uri?.startsWith('http')}
-						<div class="sidebar-row">
-							<Muted>URL</Muted>
-							<Muted class="truncate px-2"
-								><a href={$query.data?.entry.uri} target="_blank">{$query.data?.entry.uri}</a
-								></Muted
-							>
-						</div>
-					{/if}
-					{#if $query.data?.entry?.uri?.startsWith('http')}
-						{@const domain = getHostname($query.data?.entry.uri)}
-						<div class="sidebar-row group">
-							<Muted>Domain</Muted>
-							<Muted class="truncate px-2"><a href="/tests/domain/{domain}">{domain}</a></Muted>
-                            <Button class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity" href="/tests/library/all?domain={domain}" variant="ghost" size="sm">
-								<ChevronRightIcon class="h-3 w-3" />
-							</Button>
-						</div>
-					{/if}
-					{#if $query.data?.entry?.id}
-						<div class="sidebar-row group">
-							<Muted>Author</Muted>
-
-							<!-- <Input variant="ghost" value={$query.data?.entry?.author} /> -->
-							<EntryAuthorInput
-								author={$query.data?.entry?.bookmark?.author ?? $query.data?.entry?.author ?? ''}
-								entryId={$query.data?.entry?.id}
-							/>
-							<Button class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity" href="/tests/people/{$query.data?.entry?.author}" variant="ghost" size="sm">
-								<ChevronRightIcon class="h-3 w-3" />
-							</Button>
-						</div>
-					{/if}
-					{#if $page.data.tagForm && $query.data?.entry}
-						<div class="sidebar-row">
-							<Muted>Tags</Muted>
-							<!-- <TagPopover data={$page.data.tagForm} entry={$query.data?.entry} /> -->
-                            <TagPopover entryId={[$query.data.entry.id]} selectedTags={$query.data.entry.tags} />
-						</div>
-					{/if}
-					<div class="sidebar-row group">
-						<Muted>Status</Muted>
-						{#if $query.isLoading}
-							<Skeleton class="h-9 w-full grow" />
-						{:else if $query.isSuccess}
-							{@const status = $query.data?.entry?.bookmark?.status}
-							<LibraryForm
-								{status}
-								type={$query.data.type}
-								entryId={$query.data?.entry?.id}
-								googleBooksId={$query.data.book?.id ?? undefined}
-								podcastIndexId={$query.data.podcast?.episode?.id ?? undefined}
-								spotifyId={$query.data.album?.id}
-								tmdbId={$query.data.movie?.id ?? $query.data.tv?.id}
-							/>
-							{#if status}
-								<Button class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity" href="/tests/library/{status.toLowerCase()}" variant="ghost" size="sm">
+								<Button
+									href="/tests/library/all{defaultStringifySearch({
+										createdAt: {
+											equals: new Date($query.data?.entry?.bookmark?.createdAt)
+												.toISOString()
+												.slice(0, 10)
+										}
+									})}"
+									variant="ghost"
+									class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity p-2"
+									size="sm"
+								>
 									<ChevronRightIcon class="h-3 w-3" />
 								</Button>
 							{/if}
-						{/if}
-					</div>
-					{#if $page.data.updateBookmarkForm && $query.data?.entry}
-						<div class="sidebar-row">
-							<Muted>Status</Muted>
-							<StatusPopover data={$page.data.updateBookmarkForm} entry={$query.data?.entry} />
 						</div>
-					{/if}
-					{#if $page.data.type === 'entry'}
-						{#key $query.data?.entry?.id}
-							<TableOfContents active="font-bold" scrollParent="html" target="#article" />
-						{/key}
-					{/if}
-					<!-- <div class="sidebar-row">
+						{#if $query.data?.entry?.uri?.startsWith('http')}
+							<div class="sidebar-row">
+								<Muted>URL</Muted>
+								<Muted class="truncate px-2"
+									><a href={$query.data?.entry.uri} target="_blank">{$query.data?.entry.uri}</a
+									></Muted
+								>
+							</div>
+						{/if}
+						{#if $query.data?.entry?.uri?.startsWith('http')}
+							{@const domain = getHostname($query.data?.entry.uri)}
+							<div class="sidebar-row group">
+								<Muted>Domain</Muted>
+								<Muted class="truncate px-2"><a href="/tests/domain/{domain}">{domain}</a></Muted>
+								<Button
+									class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
+									href="/tests/library/all?domain={domain}"
+									variant="ghost"
+									size="sm"
+								>
+									<ChevronRightIcon class="h-3 w-3" />
+								</Button>
+							</div>
+						{/if}
+						{#if $query.data?.entry?.id}
+							<div class="sidebar-row group">
+								<Muted>Author</Muted>
+
+								<!-- <Input variant="ghost" value={$query.data?.entry?.author} /> -->
+								<EntryAuthorInput
+									author={$query.data?.entry?.bookmark?.author ?? $query.data?.entry?.author ?? ''}
+									entryId={$query.data?.entry?.id}
+								/>
+								<Button
+									class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
+									href="/tests/people/{$query.data?.entry?.author}"
+									variant="ghost"
+									size="sm"
+								>
+									<ChevronRightIcon class="h-3 w-3" />
+								</Button>
+							</div>
+						{/if}
+						{#if $page.data.tagForm && $query.data?.entry}
+							<div class="sidebar-row">
+								<Muted>Tags</Muted>
+								<!-- <TagPopover data={$page.data.tagForm} entry={$query.data?.entry} /> -->
+								<TagPopover
+									entryId={[$query.data.entry.id]}
+									selectedTags={$query.data.entry.tags}
+								/>
+							</div>
+						{/if}
+						<div class="sidebar-row group">
+							<Muted>Status</Muted>
+							{#if $query.isLoading}
+								<Skeleton class="h-9 w-full grow" />
+							{:else if $query.isSuccess}
+								{@const status = $query.data?.entry?.bookmark?.status}
+								<LibraryForm
+									{status}
+									type={$query.data.type}
+									entryId={$query.data?.entry?.id}
+									googleBooksId={$query.data.book?.id ?? undefined}
+									podcastIndexId={$query.data.podcast?.episode?.id ?? undefined}
+									spotifyId={$query.data.album?.id}
+									tmdbId={$query.data.movie?.id ?? $query.data.tv?.id}
+								/>
+								{#if status}
+									<Button
+										class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
+										href="/tests/library/{status.toLowerCase()}"
+										variant="ghost"
+										size="sm"
+									>
+										<ChevronRightIcon class="h-3 w-3" />
+									</Button>
+								{/if}
+							{/if}
+						</div>
+						{#if $page.data.updateBookmarkForm && $query.data?.entry}
+							<div class="sidebar-row">
+								<Muted>Status</Muted>
+								<StatusPopover data={$page.data.updateBookmarkForm} entry={$query.data?.entry} />
+							</div>
+						{/if}
+						{#if $page.data.type === 'entry'}
+							{#key $query.data?.entry?.id}
+								<TableOfContents active="font-bold" scrollParent="html" target="#article" />
+							{/key}
+						{/if}
+						<!-- <div class="sidebar-row">
                     <Muted>Snooze</Muted>
                     <input type="date" name="" id="" />
                 </div> -->
-					<div class="sidebar-row">
-						<Muted>Relations</Muted>
-						<!-- <StatusPopover
+						<div class="sidebar-row">
+							<Muted>Relations</Muted>
+							<!-- <StatusPopover
                     data={$page.data.updateBookmarkForm}
                     entry={$page.data.entry}
                     /> -->
-						<Cluster>
-							{@const relations = $query.data?.entry?.relations?.concat(
-								$query.data?.entry.back_relations
-							)}
-							{#each relations ?? [] as relation}
-								<Relation id={relation.id} type={relation.type} entry={relation.related_entry} />
-							{/each}
-						</Cluster>
-					</div>
-					<div class="flex flex-row items-center space-x-4">
-						<Muted class="shrink-0">Collections</Muted>
-						<!-- <StatusPopover
+							<Cluster>
+								{@const relations = $query.data?.entry?.relations?.concat(
+									$query.data?.entry.back_relations
+								)}
+								{#each relations ?? [] as relation}
+									<Relation id={relation.id} type={relation.type} entry={relation.related_entry} />
+								{/each}
+							</Cluster>
+						</div>
+						<div class="flex flex-row items-center space-x-4">
+							<Muted class="shrink-0">Collections</Muted>
+							<!-- <StatusPopover
                     data={$page.data.updateBookmarkForm}
                     entry={$page.data.entry}
                     /> -->
-						<Cluster>
-							{#each $query.data?.entry?.collections ?? [] as collection}
-								<Badge
-									variant="secondary"
-									as="a"
-									class="line-clamp-2"
-									href="/tests/collection/{collection.id}">{collection.name}</Badge
-								>
-							{/each}
-							<Button
-								class="h-8 text-xs [&>svg]:text-muted-foreground"
-								on:click={() => {
-									commander_store.open({
-										component: Collections,
-										placeholder: 'Add to collection...',
-										props: {
-											onSelect: (c) => {
-												commander_store.close();
-												toast.promise(
-													mutation($page, 'addToCollection', {
-														entryId: $query.data?.entry?.id,
-														collectionId: c.id
-													}),
-													{
-														loading: 'Adding to collection...',
-														success: () => {
-															if ($query.data?.entry?.id) {
-																update_entry($query.data?.entry.id, {
-																	collections: [
-																		...($query.data?.entry.collections ?? []),
-																		{
-																			id: c.id,
-																			name: c.name
-																		}
-																	]
-																});
-															}
-															return 'Added to collection';
-														},
-														error: 'Failed to add to collection'
-													}
-												);
-											},
-											onFallback: (name) => {
-												commander_store.close();
-												toast.promise(
-													mutation($page, 'createCollection', {
-														name,
-														items: [
-															{
-																entryId: $query.data?.entry.id
-															}
-														]
-													}).then(() => invalidate('entry')),
-													{
-														loading: 'Creating collection...',
-														success: 'Created collection and added entry',
-														error: 'Failed to create collection'
-													}
-												);
+							<Cluster>
+								{#each $query.data?.entry?.collections ?? [] as collection}
+									<Badge
+										variant="secondary"
+										as="a"
+										class="line-clamp-2"
+										href="/tests/collection/{collection.id}">{collection.name}</Badge
+									>
+								{/each}
+								<Button
+									class="h-8 text-xs [&>svg]:text-muted-foreground"
+									on:click={() => {
+										commander_store.open({
+											component: Collections,
+											placeholder: 'Add to collection...',
+											props: {
+												onSelect: (c) => {
+													commander_store.close();
+													toast.promise(
+														mutation($page, 'addToCollection', {
+															entryId: $query.data?.entry?.id,
+															collectionId: c.id
+														}),
+														{
+															loading: 'Adding to collection...',
+															success: () => {
+																if ($query.data?.entry?.id) {
+																	update_entry($query.data?.entry.id, {
+																		collections: [
+																			...($query.data?.entry.collections ?? []),
+																			{
+																				id: c.id,
+																				name: c.name
+																			}
+																		]
+																	});
+																}
+																return 'Added to collection';
+															},
+															error: 'Failed to add to collection'
+														}
+													);
+												},
+												onFallback: (name) => {
+													commander_store.close();
+													toast.promise(
+														mutation($page, 'createCollection', {
+															name,
+															items: [
+																{
+																	entryId: $query.data?.entry.id
+																}
+															]
+														}).then(() => invalidate('entry')),
+														{
+															loading: 'Creating collection...',
+															success: 'Created collection and added entry',
+															error: 'Failed to create collection'
+														}
+													);
+												}
 											}
-										}
-									});
-								}}
-								variant="ghost"
-								size="sm"
-							>
-								<PlusIcon class="mr-2 h-4 w-4" />
-								{#if !$query.data?.entry?.collections?.length}
-									Add to collection
-								{/if}
-							</Button>
-						</Cluster>
-					</div>
-				</CardContent>
-			</Collapsible.Content>
-		</Collapsible.Root></TabsContent
-	>
-	{#if outline && outline?.length}
-		<Collapsible.Root bind:open={$open_sections.outline}>
-			<div class="p-6">
-				<Collapsible.Trigger
-					class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group -ml-2 transition')}
-				>
-					<CardTitle>
-						Outline
-						<ChevronUpIcon class="inline h-4 w-4 transition group-data-[state='open']:rotate-180" />
-					</CardTitle></Collapsible.Trigger
-				>
-				<Collapsible.Content transition>
-					<ol>
-						{#each outline as outline}
-							<li>
-								<a
-									class:font-bold={outline.active}
-									data-sveltekit-replacestate
-									data-sveltekit-noscroll
-									on:click={() => {}}
-									href="#page-{outline.pageNumber}">{outline.title}</a
+										});
+									}}
+									variant="ghost"
+									size="sm"
 								>
-							</li>
-						{/each}
-					</ol>
+									<PlusIcon class="mr-2 h-4 w-4" />
+									{#if !$query.data?.entry?.collections?.length}
+										Add to collection
+									{/if}
+								</Button>
+							</Cluster>
+						</div>
+					</CardContent>
 				</Collapsible.Content>
-			</div>
-		</Collapsible.Root>
-	{/if}
-	<TabsContent class="overflow-y-auto overscroll-contain" value="notes">
-		{@const note = $query.data?.entry?.annotations?.find((a) => a.type === 'note')}
-		<div class="p-6 flex flex-col gap-4">
-			<div class="space-y-2">
-				<h3 class=" text-lg font-semibold leading-none tracking-tight">Page Note</h3>
-				{#key note?.contentData}
-					<Editor
-						content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
-						save_status={note_save_status}
-						showSaveStatus="auto"
-						on:blur={({ detail: { editor } }) => {
-							// TODO: only do this if the content has changed
-
-							const contentData = editor.getJSON();
-							if (!$query.data?.entry) throw new Error('No data');
-							const id = note?.id ?? nanoid();
-
-							// TODO: should filing away tags and relations happen in the editor, here, or on the server?
-							// It would look like this:
-							const { tags, links } = extractDataFromContentData(contentData);
-
-							note_save_status.set('Saving...');
-
-							mutation($page, 'save_note', {
-								contentData,
-								entryId: $query.data?.entry.id,
-								type: 'note',
-								id,
-								tags,
-								relations: links.map((link) => ({ relatedEntryId: link.id }))
-							}).then(() => {
-								note_save_status.set('Saved');
-							});
-							update_entry($query.data?.entry.id).annotation({
-								contentData,
-								entryId: $query.data?.entry.id,
-								type: 'note',
-								id
-							});
-						}}
-						options={{ autofocus: false }}
-					/>
-				{/key}
-			</div>
-			<div class="flex items-center justify-between">
-				<h3 class=" text-lg font-semibold leading-none tracking-tight">Annotations</h3>
-				<div class="flex items-center gap-1">
-					<Button size="xs" variant="ghost" on:click={() => (show_note_form = true)}>
-						<PlusIcon class="h-4 w-4" />
-					</Button>
-					<DropdownMenu>
-						<DropdownMenuTrigger class={buttonVariants({ size: 'xs', variant: 'ghost' })}>
-							<MoreHorizontalIcon class="h-4 w-4" />
-						</DropdownMenuTrigger>
-						<DropdownMenuContent>
-							<DropdownMenuGroup>
-								<DropdownMenuItem
-									on:click={() =>
-										triggerDownload($query.data?.entry, $query.data?.entry?.annotations)}
-								>
-									<FileDown class="mr-2 h-4 w-4" />
-									Export notes to markdown
-								</DropdownMenuItem>
-							</DropdownMenuGroup>
-						</DropdownMenuContent>
-					</DropdownMenu>
+			</Collapsible.Root></TabsContent
+		>
+		{#if outline && outline?.length}
+			<Collapsible.Root bind:open={$open_sections.outline}>
+				<div class="p-6">
+					<Collapsible.Trigger
+						class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group -ml-2 transition')}
+					>
+						<CardTitle>
+							Outline
+							<ChevronUpIcon
+								class="inline h-4 w-4 transition group-data-[state='open']:rotate-180"
+							/>
+						</CardTitle></Collapsible.Trigger
+					>
+					<Collapsible.Content transition>
+						<ol>
+							{#each outline as outline}
+								<li>
+									<a
+										class:font-bold={outline.active}
+										data-sveltekit-replacestate
+										data-sveltekit-noscroll
+										on:click={() => {}}
+										href="#page-{outline.pageNumber}">{outline.title}</a
+									>
+								</li>
+							{/each}
+						</ol>
+					</Collapsible.Content>
 				</div>
-			</div>
-			<div class="grid gap-4">
-				{#if $query.data?.entry?.annotations}
-					{#each $query.data?.entry?.annotations
-						.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
-						.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
-						<Annotation
-							on:click
-							{annotation}
-							data={$page.data.annotationForm}
-							entry={$query.data?.entry}
+			</Collapsible.Root>
+		{/if}
+		<TabsContent class="overflow-y-auto overscroll-contain" value="notes">
+			{@const note = $query.data?.entry?.annotations?.find((a) => a.type === 'note')}
+			<div class="p-6 flex flex-col gap-4">
+				<div class="space-y-2">
+					<h3 class=" text-lg font-semibold leading-none tracking-tight">Page Note</h3>
+					{#key note?.contentData}
+						<Editor
+							content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
+							save_status={note_save_status}
+							showSaveStatus="auto"
+							on:blur={({ detail: { editor } }) => {
+								// TODO: only do this if the content has changed
+
+								const contentData = editor.getJSON();
+								if (!$query.data?.entry) throw new Error('No data');
+								const id = note?.id ?? nanoid();
+
+								// TODO: should filing away tags and relations happen in the editor, here, or on the server?
+								// It would look like this:
+								const { tags, links } = extractDataFromContentData(contentData);
+
+								note_save_status.set('Saving...');
+
+								mutation($page, 'save_note', {
+									contentData,
+									entryId: $query.data?.entry.id,
+									type: 'note',
+									id,
+									tags,
+									relations: links.map((link) => ({ relatedEntryId: link.id }))
+								}).then(() => {
+									note_save_status.set('Saved');
+								});
+								update_entry($query.data?.entry.id).annotation({
+									contentData,
+									entryId: $query.data?.entry.id,
+									type: 'note',
+									id
+								});
+							}}
+							options={{ autofocus: false }}
 						/>
-					{/each}
-				{/if}
-			</div>
-		</div>
-	</TabsContent>
-	<TabsContent value="timeline">
-		<div class="p-6">
-			{#if $query.data?.entry?.bookmark}
-				{@const bookmark = $query.data.entry.bookmark}
-				<div class="flex gap-4 items-center">
-					<div>
-						<!--  -->
-						{#if bookmark.user}
-							<UserAvatar class="h-5 w-5" user={bookmark.user} />
-						{/if}
-					</div>
-					<div class="flex flex-1 min-w-0 text-xs">
-						<span
-							><b>{bookmark.user?.username}</b>{' '}saved the {$query.data.type}
-							{ago(new Date(bookmark.createdAt), new Date())}</span
-						>
-						<!-- <span class="font-semibold leading-none tracking-tighter">Saved</span>
-						<span>{ago(new Date(bookmark.createdAt), new Date())}</span> -->
+					{/key}
+				</div>
+				<div class="flex items-center justify-between">
+					<h3 class=" text-lg font-semibold leading-none tracking-tight">Annotations</h3>
+					<div class="flex items-center gap-1">
+						<Button size="xs" variant="ghost" on:click={() => (show_note_form = true)}>
+							<PlusIcon class="h-4 w-4" />
+						</Button>
+						<DropdownMenu>
+							<DropdownMenuTrigger class={buttonVariants({ size: 'xs', variant: 'ghost' })}>
+								<MoreHorizontalIcon class="h-4 w-4" />
+							</DropdownMenuTrigger>
+							<DropdownMenuContent>
+								<DropdownMenuGroup>
+									<DropdownMenuItem
+										on:click={() =>
+											triggerDownload($query.data?.entry, $query.data?.entry?.annotations)}
+									>
+										<FileDown class="mr-2 h-4 w-4" />
+										Export notes to markdown
+									</DropdownMenuItem>
+								</DropdownMenuGroup>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</div>
-				<!-- TODO: group annotations by day, etc. -->
-				<!-- <div class="flex gap-4 items-center">
+				<div class="grid gap-4">
+					{#if $query.data?.entry?.annotations}
+						{#each $query.data?.entry?.annotations
+							.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
+							.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
+							<Annotation
+								on:click
+								{annotation}
+								data={$page.data.annotationForm}
+								entry={$query.data?.entry}
+							/>
+						{/each}
+					{/if}
+				</div>
+			</div>
+		</TabsContent>
+		<TabsContent value="timeline">
+			<div class="p-6">
+				{#if $query.data?.entry?.bookmark}
+					{@const bookmark = $query.data.entry.bookmark}
+					<div class="flex gap-4 items-center">
+						<div>
+							<!--  -->
+							{#if bookmark.user}
+								<UserAvatar class="h-5 w-5" user={bookmark.user} />
+							{/if}
+						</div>
+						<div class="flex flex-1 min-w-0 text-xs">
+							<span
+								><b>{bookmark.user?.username}</b>{' '}saved the {$query.data.type}
+								{ago(new Date(bookmark.createdAt), new Date())}</span
+							>
+							<!-- <span class="font-semibold leading-none tracking-tighter">Saved</span>
+						<span>{ago(new Date(bookmark.createdAt), new Date())}</span> -->
+						</div>
+					</div>
+					<!-- TODO: group annotations by day, etc. -->
+					<!-- <div class="flex gap-4 items-center">
 					<div />
 					<div class="flex flex-1 min-w-0 text-xs">
 						<span
@@ -543,9 +557,10 @@
 						>
 					</div>
 				</div> -->
-			{/if}
-		</div>
-	</TabsContent>
+				{/if}
+			</div>
+		</TabsContent>
+	</Tabs>
 </aside>
 
 <style lang="postcss">

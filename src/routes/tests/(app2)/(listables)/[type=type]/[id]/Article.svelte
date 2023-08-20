@@ -358,6 +358,7 @@
 	const saveProgressMutation = createMutation({
 		mutationFn: async () => {
 			if (initializing) return;
+            if (!shouldSaveProgress) return;
 			console.log('mutating');
 			return mutation($page, 'saveInteraction', {
 				entryId: data.entry!.id,
@@ -392,6 +393,9 @@
 
 	const jumping = getContext('jumping') as Writable<boolean>;
 
+    let shouldSaveProgress = true;
+    $: console.log({shouldSaveProgress})
+
 	// highlight stored annotations
 	afterNavigate(async () => {
 		if (data.type !== 'article') return;
@@ -399,12 +403,17 @@
 		$mainnav.entry = data.entry;
 		console.log('scrolling to', data.entry?.interaction?.progress);
 		if (data.entry?.interaction?.progress) {
+            shouldSaveProgress = false;
 			console.log('scrolling to', data.entry?.interaction?.progress);
 			initializing = true;
 			$scroll = data.entry.interaction.progress;
+            // Wait a second before allowing scroll to save again
 			document.documentElement.scrollTo({
-				top: $scroll * document.documentElement.scrollHeight
+                top: $scroll * document.documentElement.scrollHeight
 			});
+            setTimeout(() => {
+                shouldSaveProgress = true;
+            }, 2000)
 		}
 		const annotations = data.entry?.annotations;
 		if (!annotations) {
@@ -463,7 +472,10 @@
 	popperRef(virtualEl);
 
 	const saveProgress = debounce(() => {
+        console.log({shouldSaveProgress, $saveProgressMutation})
+        if (!shouldSaveProgress) return;
         if ($saveProgressMutation.isPending) return;
+        console.log('saving')
         // don't save if last saved progress is within .005 of current progress
         console.log({ lastSavedScrollProgress, $scroll });
         if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
@@ -477,6 +489,7 @@
 	let scroll = progress;
 
 	const uscroll = scroll.subscribe(() => {
+        if (!shouldSaveProgress) return;
 		saveProgress();
 	});
 

@@ -21,6 +21,7 @@
 		alwaysShow?: boolean;
 		containsPages?: boolean;
 		cancelClose?: string | HTMLElement | HTMLElement[];
+        valueToString?: (value: T) => string
 	};
 
 	export let disabled = false;
@@ -33,6 +34,7 @@
 	export let alwaysShow = false;
 	export let containsPages = false;
 	export let cancelClose: $$Props['cancelClose'] = undefined;
+    export let valueToString: $$Props['valueToString'] = undefined;
 
 	let className: $$Props['class'] = undefined;
 	export { className as class };
@@ -99,6 +101,7 @@
 	$: if (shouldRegister) {
 		console.log('should register', { value });
 		helpers.registerItemValue(id, value);
+        if (valueToString) helpers.registerValueToString(id, valueToString)
 	}
 
 	onMount(() => {

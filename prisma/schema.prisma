@@ -317,8 +317,6 @@ model Entry {
     owned_by_id          String?
     pdf_fingerprint      String?                         @unique
     estimatedReadingTime Int?
-    // For non-reading entries, the runtime (in minutes). For books, assume 2 mins per page.
-    runtime              Int?
     data                 EntryData[]
     person               person_to_entry[]
     feed                 Feed?                           @relation(fields: [feedId], references: [id])
@@ -655,6 +653,9 @@ model Tag {
     subscriptions  Subscription[]
     TagOnEntry     TagOnEntry[]
     annotation_tag annotation_tag[]
+    // The tag's color as a hex string. VarChar(9) to account for the # and possible alpha channel. Defaults to black.
+    color          String           @default("#000000") @db.VarChar(9)
+
 
     @@unique([name, userId])
     @@index([userId])
