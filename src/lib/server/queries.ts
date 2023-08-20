@@ -60,7 +60,8 @@ export async function get_library({
 	search,
 	sort,
 	dir,
-	filter
+	filter,
+    grouping
 }: { userId: string } & z.input<typeof get_library_schema>) {
 	const take = 25;
 	console.log(`[get_library]`, { cursor });
@@ -177,6 +178,21 @@ export async function get_library({
 	if (status) {
 		query = query.where('b.status', '=', status);
 	}
+
+    // check for grouping. if that's there, we need to sort by that first, then by the sort
+    if (grouping) {
+        if (grouping === "domain") {
+        // TODO
+        } else if (grouping === "tag") {
+            // TODO
+        } else if (grouping === "type") {
+            query = query.orderBy("e.type");
+
+        } else {
+            grouping satisfies never
+        }
+    }
+
 	const order = dir === 'desc' ? 'desc' : 'asc';
 	const rorder = dir === 'desc' ? 'asc' : 'desc';
 	const up = order === 'asc';

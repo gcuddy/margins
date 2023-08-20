@@ -102,7 +102,9 @@ export const get_library_schema = z
 	.object({
 		status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
 		search: z.string().optional(),
-		filter: filterLibrarySchema.optional()
+		filter: filterLibrarySchema.optional(),
+        // Grouping is implemented as an additional sorting option, and then the UI completes it.  For instance, if we group by type, then we need all our types together (hence sorting). Additional layers of sorting will taker place "within" these groups. For no grouping, set to undefined.
+        grouping: z.enum(['type', 'tag', 'domain']).optional()
 	})
 	.and(entryListSortSchemas);
 

@@ -35,12 +35,19 @@
 	import { defaultParseSearch, parseSearchWith } from '$lib/utils/search-params';
 	import { browser } from '$app/environment';
 	import type { LibraryResponse } from '$lib/server/queries';
+	import {
+		GroupedArrayWithHeadings,
+		convertToGroupedArrayWithHeadings,
+		groupBy
+	} from '$lib/helpers';
 
 	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
+
+	let grouping: 'type' | null = null;
 	const sort = writable<NonNullable<LibrarySortType>>('manual');
-    const dir = writable<'asc' | 'desc'>('asc');
+	const dir = writable<'asc' | 'desc'>('asc');
 
 	$: if (browser && $sort && $sort !== 'manual') {
 		const url = $page.url;
@@ -95,9 +102,9 @@
 					status: $page.data.Status,
 					search,
 					sort: $sort,
-                    dir: $dir,
-					filter
-				}),
+					dir: $dir,
+					filter,
+				})
 				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
 				// 	console.log(`placeholder`, { data });
 				// 	if (search && data) {
@@ -132,6 +139,30 @@
 				return entry.status === data.Status;
 			}) ?? [];
 
+	let groupedEntries: GroupedArrayWithHeadings<
+		LibraryResponse['entries'][0],
+		{
+			text: string;
+			count: number;
+			isHeading: true;
+			id: string;
+		}
+	> = [];
+    $: console.log({groupedEntries})
+	$: {
+		// attempt at grouping
+		console.time(`grouping`);
+		const grouped = groupBy(entries, (entry) => entry.type);
+		console.log({ grouped });
+		// convert to array
+		groupedEntries = convertToGroupedArrayWithHeadings(grouped, (heading) => ({
+			text: heading,
+			count: grouped.get(heading)?.length ?? 0,
+			id: heading
+		}));
+		console.timeEnd(`grouping`);
+	}
+
 	$: console.log({ $params });
 
 	// <!-- probably not smart -->
@@ -149,17 +180,17 @@
 	}
 
 	const virtualizer = createWindowVirtualizer({
-		count: entries?.length || 0,
+		count: grouping ? groupedEntries.length : entries?.length || 0,
 		estimateSize: () => 96,
 		overscan: 10,
-		getItemKey: (index) => entries[index]?.id
+		getItemKey: (index) => (grouping ? groupedEntries[index]!.id : entries[index]!.id)
 	});
 
 	let items = $virtualizer?.getVirtualItems();
 	let dragging = false;
 
 	$: $virtualizer.setOptions({
-		count: entries?.length || 0
+		count: grouping ? groupedEntries.length : entries?.length || 0
 	});
 
 	$: console.log({ $virtualizer });
@@ -216,6 +247,16 @@
 <svelte:window on:keydown={multi.events.keydown} />
 
 <LibraryHeader loading={$query.isLoading} bind:sort={$sort} bind:dir={$dir} />
+<button
+	on:click={() => {
+		if (grouping) {
+			grouping = null;
+		} else {
+			grouping = 'type';
+		}
+        $virtualizer.measure();
+	}}>toggle grouping</button
+>
 {#if $query.isLoading}
 	{#each new Array(10) as _}
 		<EntryItemSkeleton />
@@ -256,36 +297,25 @@
 		use:multi.elements.root
 	>
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
-			{@const entry = entries[row.index]}
+			{@const entry = grouping ? groupedEntries[row.index] : entries[row.index]}
 			<div
 				animate:flip={{
 					duration: 200
 				}}
 				style="position: absolute; top:0; left: 0; width: 100%; height: {row.size}px; transform: translateY({row.start}px)"
 			>
-				<!-- on:move={() => {
-							console.log(`got move, updating query`);
-							const queryKey = [
-								['get_library'],
-								{
-									input: {
-										status: data.Status,
-										type: data.type,
-										search: $page.url.searchParams.get('search') ?? ''
-									},
-									type: 'infinite'
-								}
-							];
-							queryClient.setQueryData(queryKey, (data) => data);
-						}} -->
-				<!-- bind:checked={$checkedEntries[entry.id]}  -->
-				<EntryItem
-					on:change={() => multi.helpers.toggleSelection(entry.id)}
-					data-active={$state.highlighted === entry.id}
-					data-id={entry.id}
-					checked={$checkedEntryIds.includes(entry.id)}
-					{entry}
-				/>
+				{#if entry && 'isHeading' in entry && entry.isHeading}
+					<!-- then we have a heading -->
+					<div class="h-12">{entry.text}</div>
+				{:else if entry && !('isHeading' in entry)}
+					<EntryItem
+						on:change={() => multi.helpers.toggleSelection(entry.id)}
+						data-active={$state.highlighted === entry.id}
+						data-id={entry.id}
+						checked={$checkedEntryIds.includes(entry.id)}
+						{entry}
+					/>
+				{/if}
 			</div>
 		{:else}
 			<div class="py-16 text-center text-sm">No entries!</div>
