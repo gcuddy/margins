@@ -726,7 +726,9 @@ export async function entry_by_id({
 }
 
 export type FullEntryDetail = Awaited<ReturnType<typeof entry_by_id>>;
-export type EntryAnnotation = NonNullable<NonNullable<FullEntryDetail['entry']>['annotations']>[number];
+export type EntryAnnotation = NonNullable<
+	NonNullable<FullEntryDetail['entry']>['annotations']
+>[number];
 
 function validate_entry_type<TEntry extends { tweet?: unknown }>(
 	entry: TEntry

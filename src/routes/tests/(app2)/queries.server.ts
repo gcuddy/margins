@@ -39,7 +39,7 @@ import {
 import { sql } from 'kysely';
 import { z } from 'zod';
 import { fetchList, inputSchema } from './library/fetch.server';
-import { jsonArrayFrom } from 'kysely/helpers/mysql';
+import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import { books } from '$lib/api/gbook';
 import {
 	fetchRss,
@@ -187,10 +187,10 @@ export const mutations = {
 		schema: updateTagSchema,
 		fn: updateTag
 	}),
-    createTag: query({
-        schema: createTagSchema,
-        fn: createTag
-    }),
+	createTag: query({
+		schema: createTagSchema,
+		fn: createTag
+	}),
 	createCollection: query({
 		schema: z.object({
 			name: z.string(),
@@ -760,6 +760,34 @@ export const queries = {
 		authorized: false,
 		headers: {
 			'cache-control': 's-maxage=1, stale-while-revalidate=86400'
+		}
+	}),
+	pins: query({
+		fn: async ({ ctx }) => {
+			// TODO: pagination?
+			const pins = await db
+				.selectFrom('Favorite as f')
+				.where('f.userId', '=', ctx.userId)
+				.select(['f.id', 'f.parentId', 'f.type', 'f.createdAt', 'f.updatedAt'])
+				.select((eb) => [
+					jsonObjectFrom(
+						eb
+							.selectFrom('SmartList as v')
+							.whereRef('v.id', '=', 'f.smartListId')
+							.select(['v.name', 'v.id'])
+					).as('view'),
+					jsonObjectFrom(
+						eb
+							.selectFrom('Collection as c')
+							.whereRef('c.id', '=', 'f.collectionId')
+							.select(['c.name', 'c.id'])
+					).as('collection'),
+					jsonObjectFrom(
+						eb.selectFrom('Tag as t').whereRef('t.id', '=', 'f.tagId').select(['t.name', 't.id', 't.color'])
+					).as('tag')
+				])
+				.execute();
+			return pins;
 		}
 	})
 } as const;

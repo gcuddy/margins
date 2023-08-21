@@ -38,10 +38,12 @@
 	import { createAvatar, createDropdownMenu, melt } from '@melt-ui/svelte';
 	import { goto } from '$app/navigation';
 	import { fade } from 'svelte/transition';
-	import { useIsMutating } from '@tanstack/svelte-query';
+	import { createQuery, useIsMutating } from '@tanstack/svelte-query';
 	import Separator from '$components/ui/Separator.svelte';
 	import { cn } from '$lib';
 	import AddUrlModal from '$components/modals/add-url-modal.svelte';
+	import { queryFactory } from '$lib/queries/querykeys';
+	import { TagColorPill } from '$components/tags/tag-color';
 
 	type Nav = {
 		label: string;
@@ -109,6 +111,8 @@
 			active: (url) => url.startsWith('/tests/search')
 		}
 	];
+
+	const pinsQuery = createQuery(queryFactory.pins.list());
 
 	const inArticle = getContext('inArticle') as Writable<boolean>;
 
@@ -180,11 +184,11 @@
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-[250px] focus-visible:outline-none">
 						<DropdownMenuItem on:m-click={() => goto('/tests/settings')}>
-							<a class={"contents"} href="/tests/settings">Settings</a>
+							<a class={'contents'} href="/tests/settings">Settings</a>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem on:m-click={() => goto('/tests/logout')}>
-							<a class={"contents"} href="/tests/logout">Logout</a>
+							<a class={'contents'} href="/tests/logout">Logout</a>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
@@ -269,50 +273,51 @@
 			<div class="hidden truncate px-4 py-2 {$inArticle ? '2xl:inline' : 'lg:inline'}">
 				<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">Pins</h2>
 				<div class="flex flex-col space-y-1">
-					<!-- {#await user_data.pins}
-					<Skeleton class="h-10 w-full" />
-					<Skeleton class="h-10 w-full" />
-				{:then pins}
-					{#each pins as pin}
-						{#if pin.view}
-							{@const href = `/tests/views/${pin.view.id}`}
-							<Button
-								as="a"
-								size="sm"
-								variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-								class="w-full justify-start font-normal"
-								{href}
-							>
-								<Layers class="mr-2 h-4 w-4 shrink-0" />
-								{pin.view.name}</Button
-							>
-						{:else if pin.collection}
-							{@const href = `/tests/collection/${pin.collection.id}`}
-							<Button
-								as="a"
-								size="sm"
-								variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-								class="w-full justify-start font-normal"
-								{href}
-							>
-								<Box class="mr-2 h-4 w-4 shrink-0" />
-								<span class="truncate"> {pin.collection.name}</span></Button
-							>
-						{:else if pin.tag}
-							{@const href = `/tests/tag/${pin.tag.name}`}
-							<Button
-								as="a"
-								size="sm"
-								variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-								class="w-full justify-start font-normal"
-								{href}
-							>
-								<Tag class="mr-2 h-4 w-4 shrink-0" />
-								<span class="truncate"> {pin.tag.name}</span></Button
-							>
-						{/if}
-					{/each}
-				{/await} -->
+					{#if $pinsQuery.isPending}
+						<Skeleton class="h-10 w-full" />
+						<Skeleton class="h-10 w-full" />
+					{:else if $pinsQuery.isSuccess}
+						{@const pins = $pinsQuery.data}
+						{#each pins as pin}
+							{#if pin.view}
+								{@const href = `/tests/views/${pin.view.id}`}
+								<Button
+									size="sm"
+									variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
+									class="w-full justify-start font-normal"
+									{href}
+								>
+									<Layers class="mr-2 h-4 w-4 shrink-0" />
+									{pin.view.name}</Button
+								>
+							{:else if pin.collection}
+								{@const href = `/tests/collection/${pin.collection.id}`}
+								<Button
+									size="sm"
+									variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
+									class="w-full justify-start font-normal"
+									{href}
+								>
+									<Box class="mr-2 h-4 w-4 shrink-0" />
+									<span class="truncate"> {pin.collection.name}</span></Button
+								>
+							{:else if pin.tag}
+								{@const href = `/tests/tag/${pin.tag.name}`}
+								<Button
+									size="sm"
+									variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
+									class="w-full justify-start font-normal"
+									{href}
+								>
+									<!-- <Tag class="mr-2 h-4 w-4 shrink-0" /> -->
+									<div class="h-4 w-4 mr-2 shrink-0 flex items-center justify-center">
+										<TagColorPill color={pin.tag.color} class="h-2 w-2" />
+									</div>
+									<span class="truncate"> {pin.tag.name}</span></Button
+								>
+							{/if}
+						{/each}
+					{/if}
 				</div>
 			</div>
 		{/if}

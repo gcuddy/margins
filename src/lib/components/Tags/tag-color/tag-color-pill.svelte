@@ -1,18 +1,19 @@
 <script lang="ts">
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { colors } from './constants';
-	import { builderActions, type Builder } from 'bits-ui';
+	import { colors } from '.';
 	import { cn } from '$lib/utils';
+	import { melt } from '@melt-ui/svelte';
+	import type { Builder } from 'bits-ui';
+	import type { HTMLAttributes } from 'svelte/elements';
 
 	type $$Props = HTMLAttributes<HTMLDivElement> & {
 		color: string;
-        builders?: Builder[];
+		builder?: Builder;
 	};
 
 	/**
 	 * Optional builder for @melt-ui
 	 */
-	export let builders: Builder[] = [];
+	export let builder: Builder | undefined = undefined;
 	/**
 	 * Hex code representation of color
 	 */
@@ -23,12 +24,12 @@
 	$: label = colors.find((c) => c.value === color)?.label;
 </script>
 
-{#if builders.length}
+{#if builder}
 	<div
-		use:builderActions={{ builders }}
+		use:melt={builder}
 		data-color={label}
 		class={cn(
-			"h-5 w-5 rounded-full focus:ring data-[state='open']:ring ring-offset-2 ring-[--color]",
+			"h-5 w-5 rounded-full focus:ring data-[state='open']:ring ring-offset-2 ring-[--color] ring-offset-background",
 			className
 		)}
 		style:--color={color}
@@ -37,7 +38,7 @@
 	<div
 		data-color={label}
 		class={cn(
-			"h-5 w-5 rounded-full focus:ring data-[state='open']:ring ring-offset-2 ring-[--color]",
+			"h-5 w-5 rounded-full focus:ring data-[state='open']:ring ring-offset-2 ring-[--color] ring-offset-background",
 			className
 		)}
 		style:--color={color}

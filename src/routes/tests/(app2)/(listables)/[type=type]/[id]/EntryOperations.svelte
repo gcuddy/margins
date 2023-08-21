@@ -91,6 +91,28 @@
 		}
 	}
 
+    function handle_epub_upload(file: File) {
+        if (!file.type.includes('epub')) {
+            toast.error('File must be an ePub');
+        } else if (file.size / 1024 / 1024 > 100) {
+            toast.error('File size too big (max 100MB).');
+        } else {
+            toast.promise(
+                fetch(`/api/epub`, {
+                    method: 'POST',
+                    body: file
+                }),
+                {
+                    loading: 'Uploading...',
+                    success: () => {
+                        return 'File parsed (check console)';
+                    },
+                    error: 'Error uploading file'
+                }
+            );
+        }
+    }
+
 	const dialogStore = createAlertDialogStore();
 </script>
 
@@ -159,51 +181,53 @@
 				<ListPlus class="mr-2 h-4 w-4" />
 				<span>Add to Collection</span></DropdownMenuItem
 			>
-			<DropdownMenuSub>
-				<DropdownMenuSubTrigger>
-					<Repeat class="mr-2 h-4 w-4" />
-					<span>Convert to…</span>
-				</DropdownMenuSubTrigger>
-				<DropdownMenuSubContent>
-					{#each convertToTypes.filter((type) => entry.type !== type.value) as type}
-						<DropdownMenuItem
-							on:m-click={() => {
-								if (type.value === 'book') {
-									dialogStore.open({
-										title: 'Convert to book',
-										value: '',
-										description: 'Please enter ISBN',
-										action: async (value) => {
-											// update_entry(entry.id, { type: type.value });
-											// dialogStore.reset();
-											console.log({ value });
-											if (!value) return;
-											const book = await query($page, 'getBookByIsbn', value);
-											if (!book?.id) {
-												toast.error('Unable to find book with that ISBN');
-												return;
+			{#if entry.type === 'article'}
+				<DropdownMenuSub>
+					<DropdownMenuSubTrigger>
+						<Repeat class="mr-2 h-4 w-4" />
+						<span>Convert to…</span>
+					</DropdownMenuSubTrigger>
+					<DropdownMenuSubContent>
+						{#each convertToTypes.filter((type) => entry.type !== type.value) as type}
+							<DropdownMenuItem
+								on:m-click={() => {
+									if (type.value === 'book') {
+										dialogStore.open({
+											title: 'Convert to book',
+											value: '',
+											description: 'Please enter ISBN',
+											action: async (value) => {
+												// update_entry(entry.id, { type: type.value });
+												// dialogStore.reset();
+												console.log({ value });
+												if (!value) return;
+												const book = await query($page, 'getBookByIsbn', value);
+												if (!book?.id) {
+													toast.error('Unable to find book with that ISBN');
+													return;
+												}
+												const data = await mutation($page, 'convertEntry', {
+													id: entry.id,
+													type: 'book',
+													googleBooksId: book.id
+												});
+												if (!data.id) {
+													toast.error('Failed to convert entry');
+													return;
+												}
+												await goto(`/tests/book/${getId(data)}`);
 											}
-											const data = await mutation($page, 'convertEntry', {
-												id: entry.id,
-												type: 'book',
-												googleBooksId: book.id
-											});
-                                            if (!data.id) {
-                                                toast.error('Failed to convert entry');
-                                                return;
-                                            }
-											await goto(`/tests/book/${getId(data)}`);
-										}
-									});
-								}
-							}}
-						>
-							<svelte:component this={entryTypeIcon[type.value]} class="mr-2 h-4 w-4" />
-							<span>{type.label}</span>
-						</DropdownMenuItem>
-					{/each}
-				</DropdownMenuSubContent>
-			</DropdownMenuSub>
+										});
+									}
+								}}
+							>
+								<svelte:component this={entryTypeIcon[type.value]} class="mr-2 h-4 w-4" />
+								<span>{type.label}</span>
+							</DropdownMenuItem>
+						{/each}
+					</DropdownMenuSubContent>
+				</DropdownMenuSub>
+			{/if}
 			<DropdownMenuItem
 				on:m-click={() => {
 					const input = document.createElement('input');
@@ -221,6 +245,24 @@
 			>
 				<Paperclip class="mr-2 h-4 w-4" />
 				<span>Attach PDF</span>
+			</DropdownMenuItem>
+			<DropdownMenuItem
+				on:m-click={() => {
+					const input = document.createElement('input');
+					input.type = 'file';
+					input.accept = 'epub';
+					input.onchange = async (event) => {
+						if (input.files?.length) {
+							const file = input.files[0];
+							if (!file) return;
+							return handle_epub_upload(file);
+						}
+					};
+					input.click();
+				}}
+			>
+				<Paperclip class="mr-2 h-4 w-4" />
+				<span>Attach ePub</span>
 			</DropdownMenuItem>
 		</DropdownMenuGroup>
 		<!-- <DropdownMenuItem>Billing</DropdownMenuItem>

@@ -61,7 +61,7 @@
 	type T = $$Generic;
 
 	const {
-		state: { selectedValue, inputValue, filtered },
+		state: { selectedValue, inputValue, filtered, shouldFilter: localShouldFilter },
 		elements: { container },
 	} = ctx.set<T>({
 		initialSelectedValue:
@@ -79,6 +79,8 @@
         shouldFilter
 	});
 
+    $: shouldFilter !== undefined && localShouldFilter.set(shouldFilter);
+
 	$: value = multiple ? $selectedValue : $selectedValue[0];
 	type TPages = $$Generic<PageType>;
 	export let initialPages: TPages[] | undefined = undefined;
@@ -92,7 +94,8 @@
 		onPageChange: () => {
 			$inputValue = '';
 		},
-		playBounce: bounce
+		playBounce: bounce,
+        shouldFilterStore: localShouldFilter
 	});
 </script>
 

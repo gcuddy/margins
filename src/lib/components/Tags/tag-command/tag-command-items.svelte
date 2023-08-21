@@ -86,7 +86,6 @@
 {:else if $tags.isSuccess}
 	{#each $shouldFilter ? sortedTags : filteredTags as tag (tag.id)}
 		<Command.Item
-			shouldRegister={false}
 			class="group"
 			value={tag}
 			let:isSelected

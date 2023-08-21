@@ -198,15 +198,17 @@
 				{@html render_html(annotation.contentData)}
 			</div> -->
 		{/if}
-		{#if annotation.tags.length}
-        <div class='flex gap-x-2 mt-2'>
-			{#each annotation.tags as tag}
-				<!-- <a href="/tests/tag/{tag.name}">
+		{#if annotation.tags?.length}
+			<div class="flex gap-x-2 mt-2">
+				{#each annotation.tags as tag}
+					<!-- <a href="/tests/tag/{tag.name}">
 					<span class="text-xs text-gray-400">{tag.name}</span>
 				</a> -->
-                <Badge as="a" href="/tests/tag/{tag.name}" class="font-normal" variant="secondary">{tag.name}</Badge>
-			{/each}
-        </div>
+					<Badge as="a" href="/tests/tag/{tag.name}" class="font-normal" variant="secondary"
+						>{tag.name}</Badge
+					>
+				{/each}
+			</div>
 		{/if}
 	</CardContent>
 	<!-- <CardFooter class="p-3">

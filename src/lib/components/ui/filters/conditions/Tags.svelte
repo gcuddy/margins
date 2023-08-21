@@ -30,6 +30,7 @@
 	import { onDestroy } from 'svelte';
 	import debounce from 'just-debounce-it';
 	import { includes } from 'lodash';
+	import { TagColorPill } from '$components/tags/tag-color';
 
 	export let ids: number[];
 	export let type: NonNullable<NonNullable<FilterLibrarySchema['tags']>['type']> = 'and';
@@ -41,7 +42,7 @@
 		// }
 	});
 
-	type Tag = { id: number; name: string };
+	type Tag = { id: number; name: string; color: string };
 
 	const chosenTags = writable<Tag[]>([]);
 
@@ -132,11 +133,16 @@
 			<PopoverTrigger asChild let:builder>
 				<div
 					use:melt={builder}
-					class={cn(badgeVariants({ variant: 'outline' }), 'rounded-none border-x-0')}
+					class={cn(badgeVariants({ variant: 'outline' }), 'rounded-none border-x-0 flex gap-x-2')}
 				>
 					{#if $chosenTags.length === 1 && $chosenTags[0]}
-						{$chosenTags[0].name}
-					{:else}
+						<TagColorPill class="h-2 w-2 mr-2" color={$chosenTags[0].color} /> {$chosenTags[0].name}
+					{:else if $chosenTags.length > 1}
+						<div class="flex items-center [&_:not(:first-child)]:-mx-1">
+							{#each $chosenTags as tag, index}
+								<TagColorPill class="h-2 w-2" color={tag.color} />
+							{/each}
+						</div>
 						{$chosenTags.length} tags
 					{/if}
 					<!--  -->

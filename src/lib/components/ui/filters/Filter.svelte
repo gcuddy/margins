@@ -20,8 +20,8 @@
  -->
 
 {#if $hasFilters}
-	<Header class="static">
-		<div bind:this={$container}>
+	<Header class="top-[--nav-height]">
+		<div class="flex gap-x-4" bind:this={$container}>
 			{#each filters as [type, filter]}
 				<FilterBadge {type} {filter} />
 			{/each}

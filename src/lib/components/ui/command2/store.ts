@@ -56,6 +56,17 @@ type Filtered<T> = {
 export const INTERACTION_KEYS = [kbd.ARROW_LEFT, kbd.ESCAPE, kbd.ARROW_RIGHT, kbd.SHIFT, kbd.CAPS_LOCK, kbd.CONTROL, kbd.ALT, kbd.META, kbd.ENTER, kbd.F1, kbd.F2, kbd.F3, kbd.F4, kbd.F5, kbd.F6, kbd.F7, kbd.F8, kbd.F9, kbd.F10, kbd.F11, kbd.F12];
 export { kbd };
 
+export function shouldFilterStore(defaultValue?: boolean) {
+    const store = writable(defaultValue ?? true);
+    return {
+        ...store,
+        reset: () => {
+            store.set(defaultValue ?? true);
+        },
+        defaultValue: defaultValue ?? true
+    }
+}
+
 export const SELECT_EVENT_NAME = 'command-item-select';
 
 export function createCommandStore<T>(props?: CommandProps<T>) {
@@ -103,7 +114,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	const filterFunction = props?.filterFunction ?? commandScore;
 
-    const shouldFilter = writable(props?.shouldFilter === false ? false : true)
+    const shouldFilter = shouldFilterStore(props?.shouldFilter === false ? false : true)
 
 	const internalValueToString =
 		props?.valueToString ??

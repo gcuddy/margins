@@ -7,7 +7,7 @@
 	import Annotation from '$components/notebook/Annotation.svelte';
 	import { page } from '$app/stores';
 	import { queryParam, ssp } from 'sveltekit-search-params';
-	import { createMutation, createQuery } from '@tanstack/svelte-query';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { tagDeets, tagEntries, tagNotes } from './queries';
 	import { derived } from 'svelte/store';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
@@ -39,6 +39,8 @@
 		}))
 	);
 
+	const queryClient = useQueryClient();
+
 	const updateTagMutation = createMutation({
 		mutationFn: (data: UpdateTagInput['data']) => {
 			if (!$tagDeetsQuery.isSuccess) {
@@ -47,6 +49,17 @@
 			return mutation($page, 'updateTag', {
 				id: $tagDeetsQuery.data.id,
 				data
+			});
+		},
+		onMutate() {
+			//  TODO optimsitically update pin color, if it exists
+		},
+		onSuccess() {
+			queryClient.invalidateQueries({
+				queryKey: ['tags']
+			});
+			queryClient.invalidateQueries({
+				queryKey: ['pins']
 			});
 		}
 	});

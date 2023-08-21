@@ -4,6 +4,7 @@
 	import Button from './ui/Button.svelte';
 	import { PinIcon } from 'lucide-svelte';
 	import { cn } from '$lib/utils/tailwind';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	export let pin_id: string | null;
 
@@ -12,6 +13,8 @@
 	$: pinned = !!pin_id;
 
 	export let action = '?/pin';
+
+	const queryClient = useQueryClient();
 </script>
 
 <form
@@ -19,6 +22,9 @@
 		pinned = !pinned;
 		return ({ update, result }) => {
 			// update();
+			queryClient.invalidateQueries({
+				queryKey: ['pins']
+			});
 			if (result.type === 'success') {
 				toast.success(pinned ? 'Pin added' : 'Pin removed', { duration: 2000 });
 			}

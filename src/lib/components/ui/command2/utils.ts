@@ -2,6 +2,7 @@ import type { ExtractUnionType } from '$lib/utils/type-utils';
 import { isHTMLInputElement } from '@melt-ui/svelte/internal/helpers';
 import type { ComponentType } from 'svelte';
 import { Writable, get, writable } from 'svelte/store';
+import type { shouldFilterStore } from './store';
 
 type BounceProps =
 	| {
@@ -17,6 +18,10 @@ type CreatePagesProps<T> = {
 	initialPages?: T[];
 	pages?: T[];
 	onPageChange?: (page: T | null) => void;
+    /**
+     * A store that will be set to true if the current page should be filtered. Can be passed in from the main Command ctx.
+     */
+    shouldFilterStore?: ReturnType<typeof shouldFilterStore>;
 } & BounceProps;
 
 export type PageType = {
@@ -25,6 +30,7 @@ export type PageType = {
 	subPages?: PageType[];
 	icon?: ComponentType;
     action?: () => void;
+    shouldFilter?: boolean;
     // dialog?: {
     //     type?: "text";
     //     title?: string;
@@ -34,7 +40,7 @@ export type PageType = {
 
 // TODO add subpages etc
 export function createPages<T extends PageType>(props?: CreatePagesProps<T>) {
-	const { initialPages, playBounce, container, onPageChange, pages: pagesData } = props ?? {};
+	const { initialPages, playBounce, container, onPageChange, pages: pagesData, shouldFilterStore } = props ?? {};
 
 	let pages: T[] = initialPages ?? [];
 	let placeholder = writable<string | null>(null);
@@ -60,6 +66,7 @@ export function createPages<T extends PageType>(props?: CreatePagesProps<T>) {
 		placeholder.set(page?.placeholder ?? null);
 		bounce();
 		onPageChange?.(page);
+        shouldFilterStore?.set(page?.shouldFilter ?? shouldFilterStore.defaultValue)
 	}
 
 	function back() {

@@ -78,6 +78,7 @@
 	import { entryTypeIcon } from '$components/entries/icons';
 	import { isHTMLElement } from '$lib/helpers';
 	import { createFilterDialogStore } from '$lib/stores/filters';
+	import { TagsCommandItems } from '$components/tags/tag-command';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -246,7 +247,8 @@
 		{
 			name: 'Tags',
 			placeholder: 'Filter by tag...',
-			icon: TagIcon
+			icon: TagIcon,
+            shouldFilter: false
 		},
 		{
 			name: 'Reading Time',
@@ -338,45 +340,25 @@
 										</CommandItem>
 									{/each}
 								{:else if currentPage.name === 'Tags'}
-									{#if $tagsQuery.isLoading}
-										<CommandLoading>Loading...</CommandLoading>
-									{:else if $tagsQuery.isSuccess}
-										<!-- TODO: Behavior of this section of Commands should mimic multiple... hm. Maybe can add a data-multiple attribute on the commanditem that the store can check for. -->
-										{#each $tagsQuery.data as tag}
-											<!-- TODO: virtualization -->
-											<CommandItem
-												onSelect={() => {
-													filterChange($page.url, (data) => {
-														console.log({ data });
-														if (data.tags?.ids?.includes(tag.id)) {
-															data.tags = {
-																...data.tags,
-																ids: data.tags.ids.filter((t) => t !== tag.id)
-															};
-														} else {
-															data.tags = {
-																ids: [...(data.tags?.ids ?? []), tag.id]
-															};
-														}
-														return data;
-													});
-													filterOpen.set(false);
-													// filterChange($page.url, (data) => {
-													//     if (data.tags) {
-													//         data.tags = data.tags.filter((t) => t !== tag.name);
-													//     } else {
-													//         data.tags = [tag.name];
-													//     }
-													//     return data;
-													// });
-													// filterOpen.set(false);
-												}}
-											>
-												<CommandIcon icon={TagIcon} />
-												{tag.name}
-											</CommandItem>
-										{/each}
-									{/if}
+									<TagsCommandItems
+										onSelect={(tag) => {
+											filterChange($page.url, (data) => {
+												console.log({ data });
+												if (data.tags?.ids?.includes(tag.id)) {
+													data.tags = {
+														...data.tags,
+														ids: data.tags.ids.filter((t) => t !== tag.id)
+													};
+												} else {
+													data.tags = {
+														ids: [...(data.tags?.ids ?? []), tag.id]
+													};
+												}
+												return data;
+											});
+											filterOpen.set(false);
+										}}
+									/>
 								{:else if currentPage.name === 'Reading Time'}
 									{#each [{ name: '5 Minutes', time: 5 }, { name: '15 Minutes', time: 15 }, { name: '30 Minutes', time: 30 }, { name: '1 Hour', time: 60 }] as { name, time }}
 										<CommandItem

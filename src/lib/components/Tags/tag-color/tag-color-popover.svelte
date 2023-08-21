@@ -5,10 +5,10 @@
 	import * as Command from '$components/ui/command2';
 	import * as Popover from '$components/ui/popover';
 	import { Popover as PopoverPrimitive } from 'bits-ui';
+	import { melt } from '@melt-ui/svelte';
 	import { createEventDispatcher, tick } from 'svelte';
-	import { colors, Pill } from '.';
-
-	// TODO: custom color
+	import { TagIcon } from 'lucide-svelte';
+	import { Pill, colors } from '.';
 
 	let open = false;
 	const dispatch = createEventDispatcher<{
@@ -19,7 +19,7 @@
 <!-- TODO: server action -->
 <Popover.Root bind:open>
 	<Popover.Trigger asChild let:builder>
-		<Pill builders={[builder]} {color} />
+		<Pill {color} {builder} />
 	</Popover.Trigger>
 	<Popover.Content class="p-0 w-fit">
 		<PopoverPrimitive.Arrow class="border-t border-l" />

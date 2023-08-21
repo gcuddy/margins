@@ -1,6 +1,6 @@
 import { createQueryKeyStore } from '@lukemorales/query-key-factory';
 import {
-    keepPreviousData,
+	keepPreviousData,
 	type CreateInfiniteQueryOptions,
 	type CreateQueryOptions,
 	type QueryClient,
@@ -39,26 +39,26 @@ type InfiniteQueryFnParams = {
 
 export const queryFactory = {
 	entries: {
-        all: () => ({
-            queryKey: ['entries'] as const,
-            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'getAllEntries', {}),
-            staleTime: Infinity
-        }),
+		all: () => ({
+			queryKey: ['entries'] as const,
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'getAllEntries', {}),
+			staleTime: Infinity
+		}),
 		// list
 		list: (input?: QueryInput<'get_library'>) => ({
 			// Ideally entries, list would get inferred... but this will do for  now
 			queryKey: ['entries', 'list', input ? input : undefined] as const,
-			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) =>{
-                console.log({meta, pageParam})
-                console.log(`running queryFn for entries.list`)
-                return qquery(
+			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) => {
+				console.log({ meta, pageParam });
+				console.log(`running queryFn for entries.list`);
+				return qquery(
 					meta?.init,
 					'get_library',
 					input ? { ...input, cursor: pageParam } : { status: 'Backlog', cursor: pageParam }
-				)
-            },
+				);
+			},
 			getNextPageParam(lastPage) {
-                console.log({lastPage})
+				console.log({ lastPage });
 				return (lastPage as QueryOutput<'get_library'>)?.nextCursor;
 			},
 			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null
@@ -71,24 +71,32 @@ export const queryFactory = {
 			queryKey: ['entries', 'search', { input }] as const,
 			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'search_titles', input)
 		}),
-        count: (input: QueryInput<'count_library'>) => ({
-            queryKey: ['entries', 'count', { input }] as const,
-            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'count_library', input)
-        }),
-        authors: () => ({
-            queryKey: ['entries', 'authors'] as const,
-            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'get_authors', {}),
-            staleTime: Infinity
-        }),
+		count: (input: QueryInput<'count_library'>) => ({
+			queryKey: ['entries', 'count', { input }] as const,
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'count_library', input)
+		}),
+		authors: () => ({
+			queryKey: ['entries', 'authors'] as const,
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'get_authors', {}),
+			staleTime: Infinity
+		})
 	},
-    tags: {
-        list: () => ({
-            queryKey: ['tags', 'list'] as const,
-            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'tags', {}),
-            staleTime: Infinity,
-            placeholderData: keepPreviousData
-        })
-    }
+	tags: {
+		list: () => ({
+			queryKey: ['tags', 'list'] as const,
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'tags', {}),
+			staleTime: Infinity,
+			placeholderData: keepPreviousData
+		})
+	},
+	pins: {
+		list: () => ({
+			queryKey: ['pins', 'list'] as const,
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'pins', {}),
+			// staleTime: Infinity, // stale until invalidated
+			placeholderData: keepPreviousData
+		})
+	}
 } satisfies TQueryFactory;
 
 export type QueryFactory = typeof queryFactory;
