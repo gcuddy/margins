@@ -294,12 +294,12 @@
 							/>
 						</div>
 					</div>
-					<div class="flex flex-col">
+					<div class="flex flex-col min-w-0">
 						<Muted class="text-xs">{entry.type}</Muted>
-						<div class="flex items-center gap-x-4">
+						<div class="flex items-center gap-x-4 min-w-0">
 							<div
 								data-id={entry.id}
-								class="line-clamp-2 font-semibold hover:underline focus:outline-none"
+								class="truncate font-semibold hover:underline focus:outline-none"
 							>
 								{entry.title}
 							</div>

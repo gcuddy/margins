@@ -4,12 +4,16 @@
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import { buttonVariants } from '$lib/components/ui/Button.svelte';
+    import { TagsCommand } from "$components/tags/tag-command"
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
 		DropdownMenuGroup,
 		DropdownMenuItem,
-		DropdownMenuTrigger
+		DropdownMenuTrigger,
+        DropdownMenuSubContent,
+        DropdownMenuSub,
+        DropdownMenuSubTrigger
 	} from '$lib/components/ui/dropdown-menu';
 	import { mutation } from '$lib/queries/query';
 	import type { Annotation } from '@prisma/client';
@@ -36,9 +40,11 @@
 	const dispatch = createEventDispatcher();
 
 	const commander = getCommanderContext();
+
+    export let open = false;
 </script>
 
-<DropdownMenu>
+<DropdownMenu bind:open>
 	<DropdownMenuTrigger class={className}>
 		<slot>
 			<MoreHorizontal class="h-4 w-4" /></slot
@@ -52,6 +58,15 @@
 			>
 		</DropdownMenuGroup>
 		<DropdownMenuGroup>
+            <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                    <ListPlus class="mr-2 h-4 w-4" />
+                    <span>Add tag</span></DropdownMenuSubTrigger
+                >
+                <DropdownMenuSubContent class="p-0">
+                    <TagsCommand bind:open annotationId={annotation.id} />
+                </DropdownMenuSubContent>
+            </DropdownMenuSub>
 			<DropdownMenuItem
 				on:click={() =>
 					commander.open({
@@ -71,10 +86,12 @@
 			>
 		</DropdownMenuGroup>
 		<DropdownMenuGroup>
-			<DropdownMenuItem on:click={() => {
-                //
-                goto(`/tests/notes/${annotation.id}`)
-            }}>
+			<DropdownMenuItem
+				on:click={() => {
+					//
+					goto(`/tests/notes/${annotation.id}`);
+				}}
+			>
 				<ArrowRightIcon class="mr-2 h-4 w-4" />
 				<span>Go to annotation</span></DropdownMenuItem
 			>

@@ -56,6 +56,7 @@
 	type;
 	let className: $$Props['class'] = undefined;
 	export { className as class };
+    export let shouldFilter: $$Props['shouldFilter'] = true;
 
 	type T = $$Generic;
 
@@ -74,7 +75,8 @@
 		selectedValue: _selectedValue,
 		onClose,
 		initialData,
-        comparisonFunction
+        comparisonFunction,
+        shouldFilter
 	});
 
 	$: value = multiple ? $selectedValue : $selectedValue[0];

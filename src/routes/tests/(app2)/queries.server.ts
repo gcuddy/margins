@@ -15,6 +15,8 @@ import {
 	convertToSchema,
 	countLibrarySchema,
 	count_library,
+	createTag,
+	createTagSchema,
 	deleteAnnotation,
 	entry_by_id,
 	entry_by_id_schema,
@@ -185,6 +187,10 @@ export const mutations = {
 		schema: updateTagSchema,
 		fn: updateTag
 	}),
+    createTag: query({
+        schema: createTagSchema,
+        fn: createTag
+    }),
 	createCollection: query({
 		schema: z.object({
 			name: z.string(),
@@ -479,7 +485,7 @@ export const queries = {
 			return db
 				.selectFrom('Tag')
 				.where('userId', '=', ctx.userId)
-				.select(['id', 'name'])
+				.select(['id', 'name', 'color'])
 				.orderBy('Tag.name', 'asc')
 				.execute();
 		}

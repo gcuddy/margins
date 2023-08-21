@@ -8,8 +8,8 @@ import {
 	kbd
 } from '@melt-ui/svelte/internal/helpers';
 import { afterUpdate, beforeUpdate, tick } from 'svelte';
-// import { Writable, get } from 'svelte/store';
-import { batch, derived, writable, get, Writable } from '@amadeus-it-group/tansu';
+import type { Writable } from 'svelte/store';
+import { batch, derived, writable, get } from '@amadeus-it-group/tansu';
 
 import commandScore from 'command-score';
 
@@ -34,8 +34,13 @@ export type CommandProps<T> = {
 	valueToString?: (value: T) => string;
 	initialSelectedValue?: T[];
 	filterFunction?: (item: string, inputValue: string) => number;
-	onClose?: (selectedValue: T[]) => void;
+	onClose?: (selectedValue: T[], activeElement: HTMLElement | null, inputValue: string) => void;
 	comparisonFunction?: (a: T, b: T) => boolean;
+	/**
+	 * Optionally set to `false` to turn off the automatic filtering and sorting.
+	 * If `false`, you must conditionally render valid items based on the search query yourself.
+	 */
+	shouldFilter?: boolean;
 };
 
 type Filtered<T> = {
@@ -75,25 +80,6 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	const idsToCallbackMap = writable<Map<string, () => void>>(new Map()); // id → callback
 	const idsToValueToStringFnMap = writable<Map<string, (value: T) => string>>(new Map()); // id → valueToString fn (each can optionally set their own)
 
-	// const valueToIdsMap = derived(idsToValueMap, ($idsToValueMap) => {
-	//     const map = new Map<T, string[]>();
-	//     for (const [id, value] of $idsToValueMap.entries()) {
-	//         const ids = map.get(value) ?? [];
-	//         ids.push(id);
-	//         map.set(value, ids);
-	//     }
-	//     return map;
-	// });
-
-	// const selectedIds = derived([selectedValue, valueToIdsMap], ([$selectedValue, $valueToIdsMap]) => {
-	//     const ids: string[] = [];
-	//     for (const value of $selectedValue) {
-	//         const _ids = $valueToIdsMap.get(value) ?? [];
-	//         ids.push(..._ids);
-	//     }
-	//     return ids;
-	// })
-
 	const selectedIds = derived(
 		[selectedValue, idsToValueMap],
 		([$selectedValue, $idsToValueMap]) => {
@@ -117,16 +103,27 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	const filterFunction = props?.filterFunction ?? commandScore;
 
+    const shouldFilter = writable(props?.shouldFilter === false ? false : true)
+
 	const internalValueToString =
 		props?.valueToString ??
 		((v) => {
 			return concatenateValues(v);
 		});
 
-	// TODO: set this asynchronously with debouncing?
 	const filtered = derived(
-		[allItemIds, allGroupIds, inputValue, idsToValueMap, idsToValueToStringFnMap],
-		([$items, $groups, $inputValue, $idsToValueMap, $idsToValueToStringFnMap]) => {
+		[allItemIds, allGroupIds, inputValue, idsToValueMap, idsToValueToStringFnMap, shouldFilter],
+		([$items, $groups, $inputValue, $idsToValueMap, $idsToValueToStringFnMap, $shouldFilter]) => {
+            if ($shouldFilter === false) {
+                return {
+                    count: $items.size,
+                    idToScoreMap: new Map(),
+                    ids: Array.from($items),
+                    items: Array.from($idsToValueMap.values()),
+                    groups: new Set(),
+                    highScore: 0
+                } as Filtered<T>;
+            }
 			console.time('filtering');
 			const idToScoreMap = new Map<string, number>();
 			const groups = new Set<string>();
@@ -137,7 +134,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 				.filter((item) => {
 					const value = $idsToValueMap.get(item);
 					if (!value) return false;
-                    const valueToStringFn = $idsToValueToStringFnMap.get(item) ?? internalValueToString;
+					const valueToStringFn = $idsToValueToStringFnMap.get(item) ?? internalValueToString;
 					const score = filterFunction(valueToStringFn(value), $inputValue);
 					idToScoreMap.set(item, score);
 					if (score > highScore) {
@@ -215,8 +212,6 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		}
 	}
 
-	// TODO let this be changed
-	let shouldFilter = true;
 
 	if (props?.initialSelectedValue) {
 		selectedValue.set(props.initialSelectedValue);
@@ -326,6 +321,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		console.log('dispatching event to', item);
 
 		const callback = get(idsToCallbackMap).get(item.id);
+        console.log({callback})
 		if (callback) {
 			callback();
 		}
@@ -433,58 +429,66 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	let registerQueue: (() => void)[] = [];
 	afterUpdate(() => {
-        if (!registerQueue.length) return;
+		if (!registerQueue.length) return;
 		console.time('registerQueue');
-        console.log(`running registerQueue`, { registerQueue });
+		console.log(`running registerQueue`, { registerQueue });
 		batch(() => {
-            console.log('batching');
+			console.log('batching');
 			for (const fn of registerQueue) {
-                console.log(`running fn`);
+				console.log(`running fn`);
 				fn();
 			}
 		});
-        console.timeEnd('registerQueue');
+		console.timeEnd('registerQueue');
 		registerQueue = [];
 	});
 
+    afterUpdate(() => {
+        // we should ensure first item is chosen when filtered inputvalue changes
+    });
+
+    effect([inputValue], ([$inputValue]) => {
+        ensureActiveItem(0);
+    })
+
 	function registerCallback(id: string | string[], callback: () => void) {
-        registerQueue.push(() => {
-            idsToCallbackMap.update(($map) => {
-                if (Array.isArray(id)) {
-                    for (const i of id) {
-                        $map.set(i, callback);
-                    }
-                    return $map;
-                }
-                $map.set(id, callback);
-                return $map;
-            });
-        })
+		registerQueue.push(() => {
+			idsToCallbackMap.update(($map) => {
+				if (Array.isArray(id)) {
+					for (const i of id) {
+						$map.set(i, callback);
+					}
+					return $map;
+				}
+				$map.set(id, callback);
+				return $map;
+			});
+		});
 
 		return () => {
-            registerQueue.push(() => {
-                idsToCallbackMap.update(($map) => {
-                    if (Array.isArray(id)) {
-                        for (const i of id) {
-                            $map.delete(i);
-                        }
-                        return $map;
-                    }
-                    $map.delete(id);
-                    return $map;
-                });
-            })
+			registerQueue.push(() => {
+				idsToCallbackMap.update(($map) => {
+					if (Array.isArray(id)) {
+						for (const i of id) {
+							$map.delete(i);
+						}
+						return $map;
+					}
+					$map.delete(id);
+					return $map;
+				});
+			});
 		};
 	}
 
-    function registerValueToString(id: string, callback: (value: any) => string) {
-        registerQueue.push(() => {
-            idsToValueToStringFnMap.update(($map) => {
-                $map.set(id, callback);
-                return $map;
-            });
-        })
-    }
+	function registerValueToString(id: string, callback: (value: any) => string) {
+		registerQueue.push(() => {
+			idsToValueToStringFnMap.update(($map) => {
+				$map.set(id, callback);
+				return $map;
+			});
+		});
+	}
 
 	return {
 		ids,
@@ -495,7 +499,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			activeValue,
 			selectedValue,
 			filtered,
-			selectedIds
+			selectedIds,
+            shouldFilter
 		},
 		helpers: {
 			registerItem,
@@ -516,7 +521,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			},
 			registerGroup,
 			registerCallback,
-            registerValueToString,
+			registerValueToString,
 			isValueSelected: (value: T) => {
 				// TODO: should we pass in id instead here? But we keep track of selectedValue by value, not id
 				const $selectedValue = get(selectedValue);
@@ -528,7 +533,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			closeMenu: () => {
 				/*openStore.set(false)*/
 				tick().then(() => {
-					props?.onClose?.(get(selectedValue));
+					props?.onClose?.(get(selectedValue), get(activeElement), get(inputValue));
 				});
 			},
 			reset,

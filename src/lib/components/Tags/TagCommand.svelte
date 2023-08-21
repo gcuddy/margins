@@ -54,7 +54,7 @@
 
 	const tags = createQuery(queryFactory.tags.list());
 
-	const selectedTagsStore = writable<Tag[]>(selectedTags);
+	const selectedTagsStore = writable(selectedTags);
 
     // update value
     $: selectedTags = $selectedTagsStore;

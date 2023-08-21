@@ -192,13 +192,8 @@ export const upsertAnnotationSchema = annotationSchema.extend({
 		})
 		.array()
 		.default([]),
-	tags: z
-		.object({
-			id: z.number(),
-			name: z.string()
-		})
-		.array()
-		.default([])
+	// The array of tags to add to this annotation
+	tags: z.number().array().default([])
 });
 
 export async function upsertAnnotation(data: z.input<typeof upsertAnnotationSchema>) {
@@ -252,18 +247,14 @@ export async function upsertAnnotation(data: z.input<typeof upsertAnnotationSche
 		}
 	}
 	if (tags?.length) {
-		// set tags on annotation
-		// TODO
-		// transaction - if one fails, all fail
 		await db.transaction().execute(async (trx) => {
 			await trx.deleteFrom('annotation_tag').where('annotationId', '=', id!).execute();
-
 			return await trx
 				.insertInto('annotation_tag')
 				.values(
 					tags.map((tag) => ({
 						annotationId: id!,
-						tagId: tag.id
+						tagId: tag
 					}))
 				)
 				.ignore()
@@ -510,6 +501,15 @@ export async function entry_by_id({
 							'Annotation.type',
 							'Annotation.parentId'
 						])
+						.select((eb) =>
+							jsonArrayFrom(
+								eb
+									.selectFrom('annotation_tag as at')
+									.innerJoin('Tag as t', 't.id', 'at.tagId')
+									.select(['t.id', 't.name', 't.color'])
+									.whereRef('at.annotationId', '=', 'Annotation.id')
+							).as('tags')
+						)
 						.whereRef('Annotation.entryId', '=', 'Entry.id')
 						.where('Annotation.userId', '=', userId!)
 						.where('Annotation.parentId', 'is', null)
@@ -724,6 +724,9 @@ export async function entry_by_id({
 		}
 	};
 }
+
+export type FullEntryDetail = Awaited<ReturnType<typeof entry_by_id>>;
+export type EntryAnnotation = NonNullable<NonNullable<FullEntryDetail['entry']>['annotations']>[number];
 
 function validate_entry_type<TEntry extends { tweet?: unknown }>(
 	entry: TEntry
@@ -1067,6 +1070,30 @@ export async function updateTag({ input, ctx }: GetCtx<typeof updateTagSchema>) 
 		.execute();
 }
 
+export const createTagSchema = z.object({
+	// The name of the tag
+	name: z.string(),
+	// The color of the tag. If none is provided, the default color will be used.
+	color: z.string().optional()
+});
+
+type CreateTagInput = z.input<typeof createTagSchema>;
+
+export async function createTag({ input, ctx }: GetCtx<typeof createTagSchema>) {
+	const tag = await db
+		.insertInto('Tag')
+		.values({
+			...input,
+			userId: ctx.userId
+		})
+		.ignore()
+		.executeTakeFirstOrThrow();
+
+	return {
+		id: Number(tag.insertId)
+	};
+}
+
 export const convertToSchema = z
 	.object({
 		// The entry ID to convert
@@ -1144,7 +1171,7 @@ export async function convertTo({ input, ctx }: GetCtx<typeof convertToSchema>) 
 				and([
 					exists(
 						selectFrom('Collection as c')
-                            .select('c.id')
+							.select('c.id')
 							.whereRef('c.id', '=', 'ci.collectionId')
 							.where('c.userId', '=', userId)
 					)

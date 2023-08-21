@@ -12,8 +12,6 @@ export function setBackContext(navigation: BeforeNavigate, path: string) {
 
 export function createArticleStore() {
 
-
-
     return {
         states: {
             progress: writable(0)

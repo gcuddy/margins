@@ -21,7 +21,7 @@
 		alwaysShow?: boolean;
 		containsPages?: boolean;
 		cancelClose?: string | HTMLElement | HTMLElement[];
-        valueToString?: (value: T) => string
+		valueToString?: (value: T) => string;
 	};
 
 	export let disabled = false;
@@ -34,13 +34,21 @@
 	export let alwaysShow = false;
 	export let containsPages = false;
 	export let cancelClose: $$Props['cancelClose'] = undefined;
-    export let valueToString: $$Props['valueToString'] = undefined;
+	export let valueToString: $$Props['valueToString'] = undefined;
 
 	let className: $$Props['class'] = undefined;
 	export { className as class };
 
 	const {
-		state: { selectedValue, activeValue, activeElement, inputValue, filtered, selectedIds },
+		state: {
+			selectedValue,
+			activeValue,
+			shouldFilter,
+			activeElement,
+			inputValue,
+			filtered,
+			selectedIds
+		},
 		actions,
 		helpers
 	} = ctx.get();
@@ -101,7 +109,7 @@
 	$: if (shouldRegister) {
 		console.log('should register', { value });
 		helpers.registerItemValue(id, value);
-        if (valueToString) helpers.registerValueToString(id, valueToString)
+		if (valueToString) helpers.registerValueToString(id, valueToString);
 	}
 
 	onMount(() => {
@@ -125,10 +133,10 @@
 		};
 	});
 
-	$: render = alwaysShow || !$inputValue || $filtered.ids.includes(id);
+	$: render =
+		alwaysShow ||
+		($shouldFilter === false ? true : !$inputValue ? true : $filtered.ids.includes(id));
 	$: selected = /*$selectedValue.includes(value) ??*/ $selectedIds.includes(id);
-
-
 </script>
 
 {#if render}

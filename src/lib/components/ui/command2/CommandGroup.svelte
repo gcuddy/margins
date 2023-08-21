@@ -6,18 +6,18 @@
 
 	const {
 		helpers,
-		state: { inputValue, filtered }
+		state: { inputValue, filtered, shouldFilter }
 	} = ctx.get();
 	const id = generateId();
 	const headingId = `${id}-heading`;
 
 	export let heading: string | undefined = undefined;
 	export let value: string | undefined = undefined;
-    export let alwaysShow = false;
+	export let alwaysShow = false;
 
 	let className = '';
 	export { className as class };
-    export let unstyled = false;
+	export let unstyled = false;
 
 	let containerEl: HTMLDivElement;
 	let headingEl: HTMLDivElement;
@@ -39,13 +39,15 @@
 		};
 	});
 
-	$: render = alwaysShow || !$inputValue || $filtered.groups.has(id);
+	$: render =
+		alwaysShow || ($shouldFilter === false ? true : !$inputValue ? true : $filtered.groups.has(id));
 </script>
 
 <div
 	bind:this={containerEl}
 	class={cn(
-		!unstyled && 'overflow-hidden p-1 text-foreground [&_[data-command-group-heading]]:px-2 [&_[data-command-group-heading]]:py-1.5 [&_[data-command-group-heading]]:text-xs [&_[data-command-group-heading]]:font-medium [&_[data-command-group-heading]]:text-muted-foreground',
+		!unstyled &&
+			'overflow-hidden p-1 text-foreground [&_[data-command-group-heading]]:px-2 [&_[data-command-group-heading]]:py-1.5 [&_[data-command-group-heading]]:text-xs [&_[data-command-group-heading]]:font-medium [&_[data-command-group-heading]]:text-muted-foreground',
 		className
 	)}
 	data-command-group

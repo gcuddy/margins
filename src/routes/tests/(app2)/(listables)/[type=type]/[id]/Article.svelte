@@ -470,6 +470,7 @@
 		console.log({ shouldSaveProgress, $saveProgressMutation });
 		if (!shouldSaveProgress) return;
 		if ($saveProgressMutation.isPending) return;
+        if (Number.isNaN($scroll)) return;
 		console.log('saving');
 		// don't save if last saved progress is within .005 of current progress
 		console.log({ lastSavedScrollProgress, $scroll });
@@ -506,7 +507,10 @@
 		// TODO This shuoldn't be set if the document is loading (and we scroll to position)
 		const scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 		const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-		$scroll = scrollTop / height;
+		const scrollToSet = scrollTop / height;
+        if (!Number.isNaN(scrollToSet)) {
+            $scroll = scrollToSet;
+        }
 
 		// set scrolling direction
 		scrollingDown.set(scrollTop > lastScrollTop);

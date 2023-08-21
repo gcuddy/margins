@@ -1,5 +1,5 @@
 import { InfiniteData, QueryClient, createMutation, useQueryClient } from '@tanstack/svelte-query';
-import { MutationInput, mutation, QueryOutput } from '../query';
+import { MutationInput, mutation, QueryOutput, mutate } from '../query';
 import type { LibraryResponse } from '$lib/server/queries';
 import { get } from 'svelte/store';
 import { page } from '$app/stores';
@@ -22,17 +22,48 @@ const ctxEntries = ['count', 'authors'] satisfies (keyof QueryFactory['entries']
 
 // TODO clean this up
 
-export function createSetTagsMutation(opts?: { optimistic?: boolean, showToast?: boolean; }) {
+export function createTagMutation() {
+	const queryClient = useQueryClient();
+
+	return createMutation({
+		mutationFn: (input: MutationInput<'createTag'>) => mutate('createTag', input),
+		// onMutate(variables) {
+		//     queryClient.cancelQueries('tags');
+		//     const previousTags = queryClient.getQueryData('tags');
+		//     queryClient.setQueryData('tags', (old: any) => {
+		//         return [...old, variables];
+		//     });
+		//     return { previousTags };
+		// },
+		onSuccess() {
+			queryClient.invalidateQueries({ queryKey: ['tags'] });
+		}
+	});
+}
+
+export function updateAnnotationMutation() {
+    const queryClient = useQueryClient();
+    return createMutation({
+        mutationFn: (input: MutationInput<"save_note">) => mutate("save_note", input),
+        onMutate(variables) {
+            console.log(`onMutate variables for updateAnnotationMutation`, variables)
+        },
+        onSuccess() {
+            queryClient.invalidateQueries({queryKey: ['annotations']})
+            queryClient.invalidateQueries({queryKey: ['entries', 'list']})
+            queryClient.invalidateQueries({queryKey: ['entries', 'detail']})
+        }
+    })
+}
+
+export function createSetTagsMutation(opts?: { optimistic?: boolean; showToast?: boolean }) {
 	const queryClient = useQueryClient();
 	return createMutation({
 		mutationFn: (input: MutationInput<'set_tags_on_entry'>) => {
 			return mutation(get(page), 'set_tags_on_entry', input);
 		},
-		onMutate: async ({
-            entries,
-            tags
-        }) => {
-            if (!opts?.optimistic) return;
+		onMutate: async ({ entries, tags }) => {
+			if (!opts?.optimistic) return;
 			const queryKey = ['entries', 'list'] as const;
 			await queryClient.cancelQueries({
 				queryKey
@@ -43,7 +74,7 @@ export function createSetTagsMutation(opts?: { optimistic?: boolean, showToast?:
 
 			console.log({ previousQueries });
 
-            const tagsToUpdate = (tags?.filter(tag => tag.id) ?? []) as { id: number; name: string }[];
+			const tagsToUpdate = (tags?.filter((tag) => tag.id) ?? []) as { id: number; name: string }[];
 
 			queryClient.setQueriesData<InfiniteData<LibraryResponse>>({ queryKey }, (data) => {
 				if (!data) return data;
@@ -73,9 +104,9 @@ export function createSetTagsMutation(opts?: { optimistic?: boolean, showToast?:
 					return query.queryKey[0] === 'entries' && !ctxEntries.includes(query.queryKey[1] as any);
 				}
 			});
-            if (opts?.showToast) {
-                toast.success('Tags updated');
-            }
+			if (opts?.showToast) {
+				toast.success('Tags updated');
+			}
 		}
 	});
 }

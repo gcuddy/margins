@@ -15,9 +15,7 @@
 		XIcon,
 		TagIcon,
 		ClockIcon,
-
 		GlobeIcon
-
 	} from 'lucide-svelte';
 	import { types } from '$lib/types';
 	import debounce from 'just-debounce-it';
@@ -40,8 +38,8 @@
 		DropdownMenuItem,
 		DropdownMenuRadioGroup,
 		DropdownMenuRadioItem,
-        DropdownMenuSeparator,
-        DropdownMenuLabel
+		DropdownMenuSeparator,
+		DropdownMenuLabel
 	} from '$components/ui/dropdown-menu';
 	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
 	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
@@ -64,7 +62,11 @@
 		defaultParseSearch,
 		defaultStringifySearch
 	} from '$lib/utils/search-params';
-	import { filterLibrarySchema, LibraryGroupType, type FilterLibrarySchema } from '$lib/schemas/library';
+	import {
+		filterLibrarySchema,
+		LibraryGroupType,
+		type FilterLibrarySchema
+	} from '$lib/schemas/library';
 	import FilterBadge from '$components/ui/filters/FilterBadge.svelte';
 	import { createParamsStore, createSearchParamsStore } from '$lib/stores/search-params';
 	import { tweened } from 'svelte/motion';
@@ -178,7 +180,7 @@
 
 	export let sort: NonNullable<LibrarySortType> = 'manual';
 	export let dir: 'asc' | 'desc' | undefined = 'asc';
-    export let grouping: LibraryGroupType = undefined;
+	export let grouping: LibraryGroupType = undefined;
 	export let loading = false;
 
 	// const filters = writable<FilterLibrarySchema>({});
@@ -253,9 +255,9 @@
 		},
 		{
 			name: 'Domain',
-            icon: GlobeIcon,
+			icon: GlobeIcon,
 			action: () => {
-                filterOpen.set(false);
+				filterOpen.set(false);
 				filterDialogStore.open({
 					title: 'Filter by domain',
 					value: '',
@@ -571,19 +573,19 @@
 					<span class="hidden lg:inline">Sort</span>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
-                    <DropdownMenuLabel>Sort</DropdownMenuLabel>
+					<DropdownMenuLabel>Sort</DropdownMenuLabel>
 					<DropdownMenuRadioGroup bind:value={sort}>
 						{#each sortTypes as { label, type }}
 							<DropdownMenuRadioItem value={type}>{label}</DropdownMenuRadioItem>
 						{/each}
 					</DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
+					<DropdownMenuSeparator />
 					<DropdownMenuRadioGroup bind:value={dir}>
 						<DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
 						<DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
 					</DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Grouping</DropdownMenuLabel>
+					<DropdownMenuSeparator />
+					<DropdownMenuLabel>Grouping</DropdownMenuLabel>
 					<DropdownMenuRadioGroup bind:value={grouping}>
 						<DropdownMenuRadioItem value="none">None</DropdownMenuRadioItem>
 						<DropdownMenuRadioItem value="type">Type</DropdownMenuRadioItem>
@@ -620,22 +622,24 @@
 
 <Filter />
 <!-- TODO: Alert Dialog Should Go Inside Filter -->
-<AlertDialog.Root bind:open={$filterDialogStore.open}>
-	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>{$filterDialogStore.title}</AlertDialog.Title>
-		</AlertDialog.Header>
-		<form class="contents" on:submit|preventDefault>
-			<Input bind:value={$filterDialogStore.value} />
-			<AlertDialog.Footer>
-				<AlertDialog.Cancel on:m-click={filterDialogStore.reset}>Cancel</AlertDialog.Cancel>
-				<AlertDialog.Action
-					type="submit"
-					on:m-click={() => {
-						filterDialogStore.action();
-					}}>Continue</AlertDialog.Action
-				>
-			</AlertDialog.Footer>
-		</form>
-	</AlertDialog.Content>
-</AlertDialog.Root>
+{#if $filterDialogStore.open}
+	<AlertDialog.Root bind:open={$filterDialogStore.open}>
+		<AlertDialog.Content>
+			<AlertDialog.Header>
+				<AlertDialog.Title>{$filterDialogStore.title}</AlertDialog.Title>
+			</AlertDialog.Header>
+			<form class="contents" on:submit|preventDefault>
+				<Input bind:value={$filterDialogStore.value} />
+				<AlertDialog.Footer>
+					<AlertDialog.Cancel on:m-click={filterDialogStore.reset}>Cancel</AlertDialog.Cancel>
+					<AlertDialog.Action
+						type="submit"
+						on:m-click={() => {
+							filterDialogStore.action();
+						}}>Continue</AlertDialog.Action
+					>
+				</AlertDialog.Footer>
+			</form>
+		</AlertDialog.Content>
+	</AlertDialog.Root>
+{/if}

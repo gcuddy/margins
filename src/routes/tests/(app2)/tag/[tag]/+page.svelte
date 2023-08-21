@@ -14,9 +14,10 @@
 	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
 	import EntryItemSkeleton from '$components/entries/EntryItemSkeleton.svelte';
 	import EntryItem from '$components/entries/EntryItem.svelte';
-	import { TagColor } from '$components/tags/tag-color';
+	import { TagColorPopover } from '$components/tags/tag-color';
 	import { mutation } from '$lib/queries/query';
 	import type { UpdateTagInput } from '$lib/queries/server';
+	import Header from '$components/ui/Header.svelte';
 
 	export let data;
 
@@ -51,32 +52,34 @@
 	});
 </script>
 
-<div class="space-y-4">
+<Header>
 	<div class="flex items-center justify-between">
 		{#if $tagDeetsQuery.isLoading}
 			<Skeleton class="w-24 h-8" />
 		{:else if $tagDeetsQuery.isSuccess}
 			{@const tag = $tagDeetsQuery.data}
 
-			<H1 class="flex items-center space-x-3">
-				<TagIcon />
-				<TagColor
+			<div class="flex items-center space-x-3">
+				<!-- <TagIcon /> -->
+				<TagColorPopover
 					color={tag.color}
 					on:change={({ detail: color }) => {
-                        console.log({color})
+						console.log({ color });
 						$updateTagMutation.mutate({ color });
 					}}
 				/>
-				<span>
+				<span class="text-2xl font-bold tracking-tighter">
 					{tag.name}
 				</span>
-			</H1>
+			</div>
 			<PinButton pin_id={tag.pin_id}>
 				<input type="hidden" name="tag_id" value={tag.id} />
 			</PinButton>
 		{/if}
 	</div>
-	<Tabs>
+</Header>
+<Tabs>
+	<Header class="h-auto static py-2">
 		<TabsList>
 			<TabsTrigger class="gap-1.5" value="entries"
 				><span>Entries</span>
@@ -88,27 +91,27 @@
 				<!-- {#await data.lazy.notes then notes}<Muted>{notes.length}</Muted>{/await} -->
 			</TabsTrigger>
 		</TabsList>
-		<TabsContent value="entries">
-			{#if $entriesQuery.isLoading}
-				<EntryItemSkeleton />
-			{:else if $entriesQuery.isSuccess}
-				{#each $entriesQuery.data as entry}
-					<EntryItem {entry} />
-				{/each}
-			{/if}
-		</TabsContent>
-		<TabsContent value="notes">
-			<!-- {#await data.lazy.notes}
+	</Header>
+	<TabsContent value="entries">
+		{#if $entriesQuery.isLoading}
+			<EntryItemSkeleton />
+		{:else if $entriesQuery.isSuccess}
+			{#each $entriesQuery.data as entry}
+				<EntryItem {entry} />
+			{/each}
+		{/if}
+	</TabsContent>
+	<TabsContent value="notes">
+		<!-- {#await data.lazy.notes}
 				loading...
 			{:then notes} -->
-			{#if $notesQuery.isLoading}
-				<AnnotationSkeleton />
-			{:else if $notesQuery.isSuccess}
-				{#each $notesQuery.data as note}
-					<Annotation annotation={note} />
-				{/each}
-			{/if}
-			<!-- {/await} -->
-		</TabsContent>
-	</Tabs>
-</div>
+		{#if $notesQuery.isLoading}
+			<AnnotationSkeleton />
+		{:else if $notesQuery.isSuccess}
+			{#each $notesQuery.data as note}
+				<Annotation annotation={note} />
+			{/each}
+		{/if}
+		<!-- {/await} -->
+	</TabsContent>
+</Tabs>

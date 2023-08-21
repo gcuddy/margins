@@ -1,11 +1,10 @@
 import { page } from '$app/stores';
 import type { QueryOutput } from '$lib/queries/query';
+import type { EntryAnnotation } from '$lib/queries/server';
 import { getTargetSelector } from '$lib/utils/annotations';
 import type { Annotation } from '@prisma/client';
 import { nanoid } from 'nanoid/non-secure';
 import { get } from 'svelte/store';
-
-export type EntryAnnotation = NonNullable<NonNullable<QueryOutput<"entry_by_id">["entry"]>["annotations"]>[number]
 
 export function makeAnnotation(annotation: Partial<EntryAnnotation>): EntryAnnotation {
     const $page = get(page)
@@ -22,6 +21,7 @@ export function makeAnnotation(annotation: Partial<EntryAnnotation>): EntryAnnot
         target: annotation.target || null,
         parentId: annotation.parentId || null,
         contentData: annotation.contentData || null,
+        tags: [],
 		...annotation
 	};
 }

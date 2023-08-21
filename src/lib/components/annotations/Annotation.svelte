@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
+	import Badge from '$components/ui/Badge.svelte';
 	import Button from '$components/ui/Button.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import type { TargetSchema } from '$lib/annotation';
@@ -10,33 +11,29 @@
 	import InputText from '$lib/components/ui/forms/InputText.svelte';
 	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
 	import type { Annotation } from '$lib/prisma/kysely/types';
-	import { mutation } from '$lib/queries/query';
+	import { QueryOutput, mutation } from '$lib/queries/query';
+	import type { EntryAnnotation } from '$lib/queries/server';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { formatTimeDuration } from '$lib/utils/dates';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import MarkdownIt from 'markdown-it';
 	import { getContext, type ComponentProps } from 'svelte';
 	import type { Writable } from 'svelte/store';
-    const md = new MarkdownIt();
-    const jumping = getContext('jumping') as Writable<boolean>;
+	const md = new MarkdownIt();
+	const jumping = getContext('jumping') as Writable<boolean>;
 
-    let editor: Editor;
+	let editor: Editor;
 
-    let pending = false;
+	let pending = false;
 
-	export let annotation: Pick<
-		Annotation,
-		'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData' | 'type'
-	> & {
-		username?: string | null;
-	};
+	export let annotation: EntryAnnotation;
 
-    const queryClient = useQueryClient();
+	$: console.log({ annotation });
+
+	const queryClient = useQueryClient();
 
 	interface $$Props extends Omit<ComponentProps<AnnotationForm>, 'annotation'> {
-		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData' | 'type'> & {
-			username?: string | null;
-		};
+		annotation: EntryAnnotation;
 	}
 
 	// hacky way to get types to work with svelte
@@ -45,9 +42,9 @@
 	let editing = false;
 	let pending_delete = false;
 
-    let title = !!annotation.title;
+	let title = !!annotation.title;
 
-    let focused = false;
+	let focused = false;
 </script>
 
 <Card class=" transition-shadow {focused ? 'shadow-md' : ''} {pending_delete ? 'opacity-50' : ''}">
@@ -70,9 +67,9 @@
 							id: annotation.id
 						});
 						await invalidate('entry');
-                        await queryClient.invalidateQueries({
-                            queryKey: ["entries"]
-                        })
+						await queryClient.invalidateQueries({
+							queryKey: ['entries']
+						});
 						pending_delete = false;
 					}}
 				/>
@@ -88,9 +85,13 @@
 			{@const selector = getTargetSelector(annotation.target, 'TextQuoteSelector')}
 			{@const fragment_selector = getTargetSelector(annotation.target, 'FragmentSelector')}
 			{#if selector}
-				<a on:click on:click={() => {
-                    jumping.set(true)
-                }} href="#annotation-{annotation.id}">
+				<a
+					on:click
+					on:click={() => {
+						jumping.set(true);
+					}}
+					href="#annotation-{annotation.id}"
+				>
 					<Blockquote class="mt-0 line-clamp-4 text-sm">
 						{@html selector.exact}
 					</Blockquote>
@@ -100,7 +101,7 @@
 				<span>
 					<Small>
 						{@const value = fragment_selector.value.split('=')[1]}
-						{formatTimeDuration(+value, 's')}
+						{formatTimeDuration(+(value ?? '0'), 's')}
 					</Small>
 				</span>
 			{/if}
@@ -159,34 +160,36 @@
 		{/if}
 		{#if annotation.contentData}
 			<Editor
-                on:blur
+				on:blur
 				class="border-none p-1 min-h-min"
-                focusRing={false}
+				focusRing={false}
 				content={annotation.contentData}
 				options={{ editable: editing && !pending }}
-                bind:this={editor}
-                onFocus={() => focused = true}
-                onBlur={() => focused = false}
+				bind:this={editor}
+				onFocus={() => (focused = true)}
+				onBlur={() => (focused = false)}
 			/>
 			{#if editing}
 				<div class="flex justify-end gap-x-4">
-					<Button disabled={pending} variant="ghost" on:click={() => (editing = false)}>Cancel</Button>
+					<Button disabled={pending} variant="ghost" on:click={() => (editing = false)}
+						>Cancel</Button
+					>
 					<Button
-                        disabled={pending}
+						disabled={pending}
 						variant="secondary"
 						on:click={() => {
-                            pending = true;
-                            const contentData = editor.getJSON();
-                            mutation($page, 'save_note', {
-                                id: annotation.id,
-                                contentData,
-                                type: annotation.type,
-                                entryId: annotation.entryId ?? undefined,
-                            }).then(() => {
-                                pending = false;
-                                editing = false;
-                                invalidateAll();
-                            })
+							pending = true;
+							const contentData = editor.getJSON();
+							mutation($page, 'save_note', {
+								id: annotation.id,
+								contentData,
+								type: annotation.type,
+								entryId: annotation.entryId ?? undefined
+							}).then(() => {
+								pending = false;
+								editing = false;
+								invalidateAll();
+							});
 						}}>Save</Button
 					>
 				</div>
@@ -194,6 +197,16 @@
 			<!-- <div class="prose prose-sm prose-stone dark:prose-invert">
 				{@html render_html(annotation.contentData)}
 			</div> -->
+		{/if}
+		{#if annotation.tags.length}
+        <div class='flex gap-x-2 mt-2'>
+			{#each annotation.tags as tag}
+				<!-- <a href="/tests/tag/{tag.name}">
+					<span class="text-xs text-gray-400">{tag.name}</span>
+				</a> -->
+                <Badge as="a" href="/tests/tag/{tag.name}" class="font-normal" variant="secondary">{tag.name}</Badge>
+			{/each}
+        </div>
 		{/if}
 	</CardContent>
 	<!-- <CardFooter class="p-3">

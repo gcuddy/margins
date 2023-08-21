@@ -10,6 +10,8 @@ import CommandShortcut from './CommandShortcut.svelte';
 import CommandLoading from './CommandLoading.svelte';
 import CommandIcon from './CommandIcon.svelte';
 import CommandRadioItem from './CommandRadioItem.svelte';
+//
+import { ctx } from './ctx';
 
 export {
 	Command,
@@ -36,5 +38,7 @@ export {
     CommandShortcut as Shortcut,
     CommandLoading as Loading,
     CommandIcon as Icon,
-    CommandRadioItem as RadioItem
+    CommandRadioItem as RadioItem,
+    //
+    ctx
 };

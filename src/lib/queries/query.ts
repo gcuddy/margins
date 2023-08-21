@@ -9,6 +9,7 @@ import { parse, stringify } from 'devalue';
 import type { Session, User } from 'lucia';
 import { dev } from '$app/environment';
 import { page } from '$app/stores';
+import { get } from 'svelte/store';
 import type {
 	CreateInfiniteQueryOptions,
 	CreateQueryOptions,
@@ -271,11 +272,11 @@ export async function query<T extends keyof Queries>(
 			}
 		}
 	}
-	const response = await fetcher(url)
-    if (!response.ok) {
-        throw new Error(response.statusText)
-    }
-    const final = (await response.json()) as Awaited<Data>;
+	const response = await fetcher(url);
+	if (!response.ok) {
+		throw new Error(response.statusText);
+	}
+	const final = (await response.json()) as Awaited<Data>;
 	if (options?.cache) {
 		query_store_cache_lookup.set(url, final);
 	}
@@ -285,6 +286,25 @@ export async function query<T extends keyof Queries>(
 export { query as qquery };
 
 export const isMutating = writable(false);
+
+
+/**
+ * Helper function to run a mutation
+ * @param fn Mutation operation to run
+ * @param input Input to pass to mutation
+ * @returns Data returned from mutation
+ */
+export async function mutate<T extends keyof Mutations>(
+	fn: T,
+	input: Parameters<Mutations[T]['fn']>[0]['input'] extends IsAny<
+		Parameters<Mutations[T]['fn']>[0]['input']
+	>
+		? undefined
+		: Parameters<Mutations[T]['fn']>[0]['input']
+): Promise<Awaited<ReturnType<Mutations[T]['fn']>>> {
+	const $page = get(page);
+    return mutation($page, fn, input);
+}
 
 export async function mutation<T extends keyof Mutations>(
 	base:

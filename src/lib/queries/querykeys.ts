@@ -39,6 +39,11 @@ type InfiniteQueryFnParams = {
 
 export const queryFactory = {
 	entries: {
+        all: () => ({
+            queryKey: ['entries'] as const,
+            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'getAllEntries', {}),
+            staleTime: Infinity
+        }),
 		// list
 		list: (input?: QueryInput<'get_library'>) => ({
 			// Ideally entries, list would get inferred... but this will do for  now
@@ -75,11 +80,6 @@ export const queryFactory = {
             queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'get_authors', {}),
             staleTime: Infinity
         }),
-        all: () => ({
-            queryKey: ['entries', 'all'] as const,
-            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'getAllEntries', {}),
-            staleTime: Infinity
-        })
 	},
     tags: {
         list: () => ({
