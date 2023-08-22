@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { cn } from '$lib/utils/tailwind';
-	import autosize from '$lib/actions/autosize';
+	import autosizeAction from '$lib/actions/autosize';
 	import type { HTMLTextareaAttributes } from 'svelte/elements';
 	import { Writable, writable } from 'svelte/store';
 	import { tick } from 'svelte';
 	import { VariantProps, cva } from 'class-variance-authority';
+	import { noop } from '$lib/helpers';
 	let className = '';
 	export let value: string | null | undefined = '';
 
@@ -22,7 +23,11 @@
 	export let onInput: $$Props['onInput'] = undefined;
     export let onBlur: $$Props['onBlur'] = undefined;
 
+
+    export let autosize = false;
 	$: console.log({ value });
+
+    $: action = autosize ? autosizeAction : noop;
 
 	export const focus = () => {
 		console.log('received focus request');
@@ -51,7 +56,7 @@
 <textarea
 	bind:value
 	bind:this={el}
-	use:autosize
+	use:action
 	class={cn(
 		textareaVariants({
 			variant,

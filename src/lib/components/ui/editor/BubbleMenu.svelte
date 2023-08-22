@@ -47,6 +47,9 @@
 	import { writable } from 'svelte/store';
 	import ColorSelector from './ColorSelector.svelte';
 
+
+    export let isFocused = false;
+
 	const items: BubbleMenuItem[] = [
 		{
 			name: 'bold',
@@ -83,7 +86,13 @@
 
 <BubbleMenu {editor} {shouldShow}>
 	<div
-		class="flex w-fit divide-x divide-stone-200 rounded border border-stone-200 bg-white shadow-xl"
+        on:focusin={() => {
+            isFocused = true
+        }}
+        on:focusout={() => {
+            isFocused = false
+        }}
+		class="flex w-fit divide-x divide-stone-200 rounded border border-stone-200 bg-white shadow-xl focus-within:bg-yellow-500"
 	>
 		<NodeSelector {editor} open={node_selector_is_open} />
 		<LinkSelector {editor} open={link_selector_is_open}  />

@@ -102,12 +102,14 @@ export type Annotation = {
 	sortOrder: Generated<number>;
 	bookmarkId: number | null;
 	editedAt: Timestamp | null;
-	color: Generated<Color>;
+	highlight_color: Generated<Color>;
+	color: string | null;
 	contentData: unknown | null;
 	/**
 	 * Optional title, used for longer notes unassociated with an entryo
 	 */
 	title: string | null;
+	icon: string | null;
 	/**
 	 * chosenIcon used for documents only?
 	 * @zod.custom.use(chosenIcon)

@@ -70,7 +70,7 @@ export const defaultStringifySearch = stringifySearchWith((search: any) => {
 export function parseSearchWithSchema<TSchema extends z.ZodObject<any, any>>(
 	search: string,
 	schema: TSchema
-): z.infer<TSchema> {
+): Partial<z.infer<TSchema>> {
 	const rawObj = defaultParseSearch(search);
 	const parsed = schema.safeParse(rawObj);
 

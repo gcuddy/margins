@@ -25,6 +25,7 @@
 	export let selectedTags: Tag[] = [];
 	export let shouldMutate = true;
 	export let autofocus = true;
+    export let multiple = true;
 	let className = '';
 	export { className as class };
 
@@ -56,6 +57,7 @@
 </script>
 
 <Command.Root
+    {multiple}
 	class={className}
 	selectedValue={selectedTagsStore}
 	shouldFilter={false}

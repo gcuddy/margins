@@ -173,6 +173,11 @@
 	// 	hydrated = true;
 	// }
 
+    $: if (!hydrated && content !== undefined) {
+        $editor?.commands.setContent(content);
+        hydrated = true;
+    }
+
 	let just_saved = false;
 	$: if (save_status && $save_status === 'Saved') {
 		just_saved = true;
@@ -180,6 +185,8 @@
 			just_saved = false;
 		}, 3000);
 	}
+
+    let bubbleMenuFocused = false;
 </script>
 
 <!-- min-h-[500px] -->
@@ -187,23 +194,30 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
+    data-editor
+    data-focused={$editor?.isFocused}
 	on:click={(e) => {
         if (e.target instanceof HTMLAnchorElement) return;
 		if (!readonly) $editor?.setEditable(true);
 		$editor?.chain().focus().run();
 	}}
+    on:focus|self={() => {
+        if (readonly) return;
+        $editor?.setEditable(true);
+        $editor?.chain().focus().run();
+    }}
 	class={cn(
 		// ' w-full max-w-screen-lg sm:mb-[calc(2    0vh)] sm:rounded-lg p-6 ',
 		'relative ',
 		/* shadcn textarea */ 'min-h-[80px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-        $editor?.isFocused && $editor?.isEditable && focusRing && 'ring-offset-background ring-2 ring-ring ring-offset-2',
+        (($editor?.isFocused && $editor?.isEditable) || bubbleMenuFocused) && focusRing && 'ring-offset-background ring-2 ring-ring ring-offset-2',
 		// 'p-12 px-8  sm:px-12',
 		// sm:shadow-lg sm:border
 		className
 	)}
+    tabindex={(readonly || $editor?.isFocused) ? -1 : 0}
 	data-size={size}
 >
-	<!--  -->
 	{#if showSaveStatus === true || (showSaveStatus === 'auto' && $save_status === 'Saved' && just_saved)}
 		<div
 			transition:fade={{ duration: 150 }}
@@ -220,7 +234,7 @@
 	<slot name="top" />
 
 	{#if editor}
-		<!-- <BubbleMenu editor={$editor} /> -->
+		<BubbleMenu bind:isFocused={bubbleMenuFocused} editor={$editor} />
 	{/if}
 
 	<EditorContent editor={$editor} />
@@ -228,6 +242,7 @@
 
 <!-- TODO: make not global -->
 <style global>
+
 
 	.ProseMirror .is-editor-empty:first-child::before {
         @apply text-muted-foreground;
@@ -237,7 +252,8 @@
 		pointer-events: none;
 		height: 0;
 	}
-	.ProseMirror .is-empty::before {
+
+	.ProseMirror.ProseMirror-focused .is-empty::before {
         @apply text-muted-foreground;
 		content: attr(data-placeholder);
 		float: left;

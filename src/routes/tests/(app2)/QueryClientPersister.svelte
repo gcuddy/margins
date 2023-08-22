@@ -71,8 +71,14 @@
 					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'detail') {
 						return true;
 					}
+					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'all') {
+						return true;
+					}
 
                     if (queryKey[0] === "tags") {
+                        return true
+                    }
+                    if (queryKey[0] === "pins") {
                         return true
                     }
 

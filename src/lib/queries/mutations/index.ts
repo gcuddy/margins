@@ -41,7 +41,7 @@ export function createTagMutation() {
 	});
 }
 
-export function updateAnnotationMutation() {
+export function updateAnnotationMutation(opts?: { showToast?: boolean }) {
     const queryClient = useQueryClient();
     return createMutation({
         mutationFn: (input: MutationInput<"save_note">) => mutate("save_note", input),
@@ -49,6 +49,9 @@ export function updateAnnotationMutation() {
             console.log(`onMutate variables for updateAnnotationMutation`, variables)
         },
         onSuccess() {
+            if (opts?.showToast) {
+                toast.success("Note updated")
+            }
             queryClient.invalidateQueries({queryKey: ['annotations']})
             queryClient.invalidateQueries({queryKey: ['entries', 'list']})
             queryClient.invalidateQueries({queryKey: ['entries', 'detail']})

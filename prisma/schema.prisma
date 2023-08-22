@@ -169,10 +169,13 @@ model Annotation {
     sortOrder        Float                           @default(0)
     bookmarkId       Int?
     editedAt         DateTime?
-    color            Color                           @default(Yellow)
+    highlight_color  Color                           @default(Yellow)
+    // The annotation's color as a hex string. VarChar(9) to account for the # and possible alpha channel. Defaults to black.
+    color            String?                         @db.VarChar(9)
     contentData      Json?
     /// Optional title, used for longer notes unassociated with an entryo
     title            String?
+    icon             String?
     /// chosenIcon used for documents only?
     /// @zod.custom.use(chosenIcon)
     chosenIcon       Json?
@@ -656,9 +659,9 @@ model Tag {
     // The tag's color as a hex string. VarChar(9) to account for the # and possible alpha channel. Defaults to black.
     color          String           @default("#000000") @db.VarChar(9)
 
-
     @@unique([name, userId])
     @@index([userId])
+    @@index([name])
 }
 
 model EntryTag {

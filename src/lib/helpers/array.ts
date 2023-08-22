@@ -45,3 +45,13 @@ export function convertToGroupedArrayWithHeadings<T, H, HObj extends {}>(
 
 	return groupedArrayWithHeadings;
 }
+
+export function chunk<T>(array: T[], size: number): T[][] {
+    const chunked_arr = [];
+    let index = 0;
+    while (index < array.length) {
+        chunked_arr.push(array.slice(index, size + index));
+        index += size;
+    }
+    return chunked_arr;
+}

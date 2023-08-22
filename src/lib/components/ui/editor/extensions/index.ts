@@ -2,7 +2,7 @@ import StarterKit from '@tiptap/starter-kit';
 import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import TiptapLink from '@tiptap/extension-link';
 import TiptapImage from '@tiptap/extension-image';
-import Placeholder from '@tiptap/extension-placeholder';
+import Placeholder, { PlaceholderOptions } from '@tiptap/extension-placeholder';
 import TiptapUnderline from '@tiptap/extension-underline';
 import TextStyle from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
@@ -28,7 +28,9 @@ import Flashcard from '../nodes/flashcard';
 import Tag from './tags';
 
 export type TiptapExtensionProps = {
-	placeholder?: string;
+	placeholder?: string | (Partial<PlaceholderOptions> & {
+        nonFocusedPlaceholder?: string;
+    });
 };
 
 export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, context?: any) => {
@@ -117,13 +119,18 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 			}
 		}),
 		Placeholder.configure({
-			placeholder: ({ node }) => {
+			placeholder: ({ node, editor }) => {
 				if (node.type.name === 'heading') {
 					return `Heading ${node.attrs.level}`;
 				}
-				return props.placeholder ?? "Press '/' for commands...";
+                if (!editor.isFocused && props.placeholder?.nonFocusedPlaceholder) {
+                    return props.placeholder.nonFocusedPlaceholder;
+                }
+				return typeof props.placeholder === 'string' ? props.placeholder : "Press '/' for commands...";
 			},
-			includeChildren: true
+			includeChildren: true,
+            showOnlyWhenEditable: false,
+            ...(typeof props.placeholder === 'object' ? props.placeholder : {})
 		}),
 		SlashCommand,
 		BookmarkCommand,
@@ -131,7 +138,6 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		TiptapUnderline,
 		TextStyle,
 		Color,
-
 		Highlight.configure({
 			multicolor: true
 		}),

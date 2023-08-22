@@ -201,6 +201,7 @@
 		</div>
 		<div class="px-4">
 			<div class="flex items-center">
+                <!-- TODO: on small sizes, these should switch — the button should trigger the dropdown -->
 				<Button
 					on:click={() => {
 						// open modal
@@ -214,7 +215,7 @@
 					<span class="hidden lg:inline">Add</span>
 					<!-- TODO: create dropdown menu for type, and add Modal -->
 				</Button>
-				<Separator class="h-9" orientation="vertical" />
+				<Separator class="h-9 hidden lg:flex" orientation="vertical" />
 				<DropdownMenu
 					positioning={{
 						placement: 'bottom-end'
@@ -224,7 +225,7 @@
 						<button
 							class={cn(
 								buttonVariants({ variant: 'outline', size: 'sm' }),
-								'px-2 shadow-none rounded-l-none border-l-0'
+								'px-2 shadow-none rounded-l-none border-l-0 hidden lg:flex'
 							)}
 							use:melt={builder}
 						>

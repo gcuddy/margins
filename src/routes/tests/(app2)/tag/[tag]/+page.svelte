@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PinButton from '$lib/components/PinButton.svelte';
 	import { H1, Muted } from '$lib/components/ui/typography';
-	import { TagIcon } from 'lucide-svelte';
+	import { PlusCircle, TagIcon } from 'lucide-svelte';
 	import type { Snapshot } from './$types.js';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
 	import Annotation from '$components/notebook/Annotation.svelte';
@@ -18,6 +18,7 @@
 	import { mutation } from '$lib/queries/query';
 	import type { UpdateTagInput } from '$lib/queries/server';
 	import Header from '$components/ui/Header.svelte';
+	import Button from '$components/ui/Button.svelte';
 
 	export let data;
 
@@ -123,6 +124,14 @@
 		{:else if $notesQuery.isSuccess}
 			{#each $notesQuery.data as note}
 				<Annotation annotation={note} />
+			{:else}
+				<div class="p-10 flex items-center justify-center flex-col gap-4">
+                    <span>No notes for this tag.</span>
+                    <Button variant="secondary" href="/tests/notes/new?tags={$tagDeetsQuery.data?.id ?? ''}">
+                        <PlusCircle class="mr-2 h-4 w-4" />
+                        New note for this tag
+                    </Button>
+                </div>
 			{/each}
 		{/if}
 		<!-- {/await} -->

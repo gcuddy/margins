@@ -8,6 +8,7 @@
 	import type { PageData } from './$types';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
 	import Intersector from '$lib/components/Intersector.svelte';
+	import Header from '$components/ui/Header.svelte';
 
 	export let data: PageData;
 
@@ -23,8 +24,9 @@
 	// });
 </script>
 
-<H1>Annotations</H1>
-
+<Header>
+	<H1>Annotations</H1>
+</Header>
 {#each data.notes.notes as annotation (annotation.id)}
 	<Annotation {annotation} />
 {/each}
