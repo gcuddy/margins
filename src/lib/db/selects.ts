@@ -158,7 +158,9 @@ export const annotations = {
 		'a.type',
 		'a.exact',
 		'a.updatedAt',
-		'a.contentData'
+		'a.contentData',
+        'a.icon',
+        'a.color'
 	] as const,
 	with: {
 		references: (eb: AliasedAEb) => {

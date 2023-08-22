@@ -13,7 +13,7 @@ import { nanoid } from '$lib/nanoid';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
 import { interactionSchema } from '$lib/schemas';
 import { typeSchema } from '$lib/types';
-import { DocumentType, RelationType, Status, Tag } from '@prisma/client';
+import { AnnotationType, DocumentType, RelationType, Status, Tag } from '@prisma/client';
 import { sql } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import { superValidate } from 'sveltekit-superforms/server';
@@ -1213,4 +1213,47 @@ export async function convertTo({ input, ctx }: GetCtx<typeof convertToSchema>) 
 	});
 
 	return newEntry;
+}
+
+export const notesInputSchema = z
+	.object({
+		filter: z.object({
+			type: z.nativeEnum(AnnotationType)
+		}),
+		includeArchived: z.boolean().optional(),
+		// Number of notes to return. Defaults to 50.
+		take: z.number().default(50)
+	})
+	.deepPartial();
+
+export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
+	const { filter, includeArchived } = input;
+
+	const take = input.take || 50;
+
+    // TODO: should we filter out replies?
+
+	let query = db
+		.selectFrom('Annotation as a')
+        .select(annotations.select).select(withEntry)
+		// this should always be on there - right?
+		.where('a.userId', '=', ctx.userId)
+		.orderBy('a.createdAt', 'desc')
+		.limit(take);
+
+	if (filter) {
+		if (filter.type) {
+			query = query.where('a.type', '=', filter.type);
+		}
+	}
+
+	if (!includeArchived) {
+		query = query.where('a.deleted', 'is', null);
+	}
+
+
+    return {
+        notes: await query.execute(),
+        // todo: nextCursor
+    }
 }

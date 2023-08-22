@@ -24,6 +24,8 @@ import {
 	getNotebookSchema,
 	get_authors,
 	get_notes_for_tag,
+	notes,
+	notesInputSchema,
 	s_add_to_collection,
 	saveToLibrarySchema,
 	save_to_library,
@@ -762,6 +764,10 @@ export const queries = {
 			'cache-control': 's-maxage=1, stale-while-revalidate=86400'
 		}
 	}),
+    notes: query({
+        schema: notesInputSchema,
+        fn: notes
+    }),
 	pins: query({
 		fn: async ({ ctx }) => {
 			// TODO: pagination?

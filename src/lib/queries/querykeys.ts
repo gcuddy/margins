@@ -89,6 +89,12 @@ export const queryFactory = {
 			placeholderData: keepPreviousData
 		})
 	},
+    notes: {
+        list: (input?: QueryInput<"notes">) => ({
+            queryKey: ["notes", "list", input] as const,
+            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, "notes", {}),
+        })
+    },
 	pins: {
 		list: () => ({
 			queryKey: ['pins', 'list'] as const,

@@ -1,60 +1,42 @@
 <script lang="ts">
 	import { H1 } from '$lib/components/ui/typography';
 
-	import { page } from '$app/stores';
 	import Annotation from '$lib/components/notebook/Annotation.svelte';
-	import { query } from '$lib/queries/query';
-	import { createInfiniteQuery } from '@tanstack/svelte-query';
 	import type { PageData } from './$types';
-	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
-	import Intersector from '$lib/components/Intersector.svelte';
 	import Header from '$components/ui/Header.svelte';
+	import * as Tabs from '$components/ui/tabs';
+	import { createQuery } from '@tanstack/svelte-query';
+	import { queryFactory } from '$lib/queries/querykeys';
 
 	export let data: PageData;
 
-	// const notebook = createInfiniteQuery({
-	// 	queryKey: ['notebook'],
-	// 	queryFn: ({ pageParam }) => query($page, 'notebook', { cursor: pageParam ?? undefined }),
-	// 	staleTime: 1000 * 60 * 2,
-	// 	defaultPageParam: <Date | null>null,
-	// 	getNextPageParam: (lastpage) => {
-	// 		console.log({ lastpage });
-	// 		return (lastpage as any).nextCursor ?? undefined;
-	// 	}
-	// });
+
+    const notesQuery = createQuery(queryFactory.notes.list({
+        filter: {
+            type: "note"
+        }
+    }))
 </script>
 
 <Header>
 	<H1>Annotations</H1>
 </Header>
-{#each data.notes.notes as annotation (annotation.id)}
-	<Annotation {annotation} />
-{/each}
-<!-- <div class="grid-cols mt-4 grid gap-4 md:grid-cols-2">
-	{#if $notebook.isLoading}
-		<Skeleton class="h-36 w-full" />
-		<Skeleton class="h-36 w-full" />
-		<Skeleton class="h-36 w-full" />
-		<Skeleton class="h-36 w-full" />
-	{:else if $notebook.isError}
-		<p>{$notebook.error.message}</p>
-	{:else if $notebook.isSuccess}
-		{#each $notebook.data.pages as page}
-			{#each page.notes as annotation (annotation.id)}
-				<Annotation {annotation} />
-			{/each}
+
+<Tabs.Root>
+	<Tabs.List>
+		<Tabs.Trigger value="notes">Notes</Tabs.Trigger>
+		<Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
+	</Tabs.List>
+	<Tabs.Content value="notes">
+		{#if $notesQuery.isPending}
+            loading..
+        {:else if $notesQuery.isSuccess}
+            <pre>{JSON.stringify($notesQuery.data, null, 2)}</pre>
+        {/if}
+	</Tabs.Content>
+	<Tabs.Content value="annotations">
+		{#each data.notes.notes as annotation (annotation.id)}
+			<Annotation {annotation} />
 		{/each}
-		{#if $notebook.isFetchingNextPage}
-			{#each Array(10) as _}
-				<Skeleton class="h-36 w-full" />
-			{/each}
-		{/if}
-		<Intersector
-			cb={() => {
-				if ($notebook.hasNextPage && !$notebook.isFetchingNextPage) {
-					$notebook.fetchNextPage();
-				}
-			}}
-		/>
-	{/if}
-</div> -->
+	</Tabs.Content>
+</Tabs.Root>
