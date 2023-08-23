@@ -26,18 +26,17 @@
 	"Script lang='ts'": {
 		"scope": "svelte",
 		"prefix": "s-script",
-		"body": [
-			"<script lang='ts'>",
-			"$0",
-			"</script>"
-		],
+		"body": ["<script lang='ts'>", "$0", "</script>"]
 	},
-    "export className as class": {
-        "scope": "svelte,typescript",
-        "prefix": "classname",
-        "body": [
-            "let className: \\$\\$Props['class'] = undefined",
-            "export { className as class };",
-        ],
-    },
+	"export className as class": {
+		"scope": "svelte,typescript",
+		"prefix": "classname",
+		"body": ["let className: \\$\\$Props['class'] = undefined", "export { className as class };"]
+	},
+	"Query Data, Loading, Error": {
+		"scope": "svelte",
+		"prefix": "s-query",
+		// I want it to look liks this {#if $query.data}(TAB){:else if $query.isError}(TAB){:else}(TAB){/if} where $query is also a placeholder that changes in the two places
+		"body": ["{#if $1.data}", "\t$3", "{:else if $1.isError}", "\t$4", "{:else}", "\t$5", "{/if}"]
+	}
 }

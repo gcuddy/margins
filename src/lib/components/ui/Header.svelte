@@ -8,11 +8,11 @@
 
 <div
 	class={cn(
-		'flex max-w-full shrink-0 items-center px-6 border-b sticky max-sm:flex-wrap top-0 bg-background gap-x-4 z-10 h-[--nav-height]',
+		'flex max-w-full shrink-0 items-center justify-between px-6 border-b sticky max-sm:flex-wrap top-0 bg-background gap-x-4 z-10 h-[--nav-height]',
 		className
 	)}
 >
-<slot />
+	<slot />
 	{#if $$slots.start}
 		<div class="flex items-center gap-3 flex-1 min-w-0">
 			<slot name="start" />
@@ -33,5 +33,4 @@
 	{/if}
 
 	<!--  -->
-
 </div>

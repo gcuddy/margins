@@ -9,16 +9,21 @@
 	import Table from './Table.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { derived } from 'svelte/store';
+	import { Button } from '$components/ui/button';
+	import { PlusIcon } from 'lucide-svelte';
 
 	export let data: PageData;
 
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 	const notesQuery = createQuery(
-		queryFactory.notes.list({
-			filter: {
-				type: 'document'
-			}
-		}, queryClient)
+		queryFactory.notes.list(
+			{
+				filter: {
+					type: 'document'
+				}
+			},
+			queryClient
+		)
 	);
 
 	$: console.log({ $notesQuery });
@@ -28,6 +33,12 @@
 
 <Header>
 	<H1>Annotations</H1>
+	<svelte:fragment slot="end">
+		<Button href="/tests/notes/new" size="sm" variant="secondary">
+			<PlusIcon class="w-4 h-4 mr-2" />
+			New Note
+		</Button>
+	</svelte:fragment>
 </Header>
 
 <Tabs.Root>

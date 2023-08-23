@@ -23,8 +23,17 @@
 		showToast: true
 	});
 
+	let hasBeenUpdate = false;
+
 	export let title: string | null | undefined = '';
-	export let contentData: JSONContent | undefined = [];
+	export let contentData: JSONContent | undefined = {
+		type: 'doc',
+		content: [
+			{
+				type: 'paragraph'
+			}
+		]
+	};
 	export let autofocus = false;
 
 	let lastSavedContentData = contentData;
@@ -51,6 +60,8 @@
 
 	export let tags =
 		tagIds.map((tag) => $tagsQuery.data?.find((t) => t.id === tag)).filter(Boolean) ?? [];
+
+	let lastSavedTags = [...tags];
 
 	onMount(() => {
 		if (textarea && autofocus) {
@@ -93,17 +104,26 @@
 				class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent text-5xl font-bold focus:outline-none py-3 placeholder:text-muted-foreground/50"
 			/>
 			<!-- should I do a fancy tool bar component here with that melt-ui component? https://www.melt-ui.com/docs/builders/toolbar -->
-			<div class="pt-3 pb-6 px-3 flex flex-wrap items-center gap-1.5">
+			<div class="pt-3 pb-6 flex flex-wrap items-center gap-1.5 text-muted-foreground text-sm">
 				<span>
 					Created on {formatDate(createdAt)} by {user}
 				</span>
 				{#if updatedAt}
-                {updatedAt}
 					<span>last edited: {ago(new Date(updatedAt), $now)}</span>
 				{/if}
 				<!-- <span> This is a toolbar with the created date and by who, tags, last edited time. </span> -->
 				{#if $tagsQuery.data}
-					<TagsCommandPopover bind:selectedTags={tags} let:builder>
+					<TagsCommandPopover
+						bind:selectedTags={tags}
+						let:builder
+						onOpenChange={() => {
+							if (deepEqual(tags, lastSavedTags)) return;
+							$mutation.mutate({
+								tags: tags.map((t) => t.id)
+							});
+							lastSavedTags = [...tags];
+						}}
+					>
 						<div class="flex gap-1 flex-wrap" use:melt={builder}>
 							{#each tags as tag}
 								<!-- as="a" href="/tests/tag/{tag.name}" to decide: should tehse be links or trigger popover? -->
@@ -111,6 +131,8 @@
 									<TagColorPill invertDefault class="h-2 w-2 mr-1.5" color={tag.color} />
 									{tag.name}
 								</Badge>
+							{:else}
+								+ Tag
 							{/each}
 						</div>
 					</TagsCommandPopover>
@@ -118,18 +140,26 @@
 			</div>
 		</div>
 		<Editor
+			onUpdate={(e) => {
+				if (hasBeenUpdate) return;
+				hasBeenUpdate = true;
+				// $mutation.mutate({
+				//     contentData: detail.editor.getJSON()
+				// })
+			}}
 			on:blur={({ detail }) => {
+				if (!hasBeenUpdate) return;
 				const { editor } = detail;
 				contentData = editor.getJSON();
 				console.time('deepEqual');
 				const equal = deepEqual(contentData, lastSavedContentData);
 				lastSavedContentData = contentData;
-				console.log({ equal });
+				console.log({ equal, contentData, lastSavedContentData });
 				console.timeEnd('deepEqual');
 				if (equal) return;
 				$mutation.mutate({
 					contentData,
-					title,
+					title: title || 'Untitled note',
 					type: 'document',
 					tags: tags.map((t) => t.id),
 					color,
