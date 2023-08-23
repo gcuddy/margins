@@ -65,11 +65,11 @@
 	import { colors, hexCodeRegexWithoutHash, hexCharacters } from '$lib/colors';
 	import { cn } from '$lib/utils';
 
-	export let activeIcon: string = "File";
-    export let variant: ComponentProps<Button>["variant"] = "outline";
+	export let activeIcon: string = 'File';
+	export let variant: ComponentProps<Button>['variant'] = 'outline';
 	let className = '';
 	export { className as class };
-    export let iconClass = "";
+	export let iconClass = '';
 	export let icons: {
 		name: string;
 		component: ComponentType;
@@ -358,7 +358,6 @@
 	let showHexCodeEntry = false;
 	let open = false;
 
-
 	let rowToLastColumnFocused = new Map<number, number>();
 	rowToLastColumnFocused.set(0, 0);
 
@@ -456,7 +455,7 @@
 			<svelte:component
 				this={icons.find((icon) => icon.name === activeIcon)?.component}
 				data-color-hex={activeColor}
-				class={cn("h-8 w-8 shrink-0 opacity-75 text-[--color]", iconClass)}
+				class={cn('h-8 w-8 shrink-0 opacity-75 text-[--color]', iconClass)}
 				style="--color:{activeColor}"
 			/>
 			<span class="sr-only">Icon Picker</span>
@@ -566,8 +565,8 @@
 								class="items-center p-1.5 inline-flex justify-center rounded font-medium w-7 data-[active=true]:bg-accent group"
 							>
 								<svelte:component
-                                    data-color-hex={activeColor}
 									this={icon.component}
+									data-color-hex={activeColor}
 									class="h-5 w-5 opacity-75 text-[--icon-color] group-hover:opacity-100 group-data-[active=true]:opacity-100 transition shrink-0"
 								/>
 								<span class="sr-only">{icon.name}</span>
@@ -593,8 +592,7 @@
 	}
 
 	@media (prefers-color-scheme: dark) {
-		[data-color-hex='#000000'],
-		[data-color-hex='#000'] {
+		:global([data-color-hex='#000000'], [data-color-hex='#000']) {
 			color: #ffffff;
 		}
 	}

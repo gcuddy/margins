@@ -91,19 +91,47 @@ export const queryFactory = {
 		})
 	},
 	notes: {
-		list: (input?: QueryInput<'notes'>) => ({
+		list: (input?: QueryInput<'notes'>, queryClient?: QueryClient) => ({
 			queryKey: ['notes', 'list', input] as const,
-			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'notes', { ...input })
+			queryFn: async ({ meta }: QueryFnParams) => {
+                const data = await qquery(meta?.init, 'notes', { ...input });
+                // "push" approach to seeding cache. TODO look at perf impact
+                // see https://tkdodo.eu/blog/seeding-the-query-cache#push-approach
+                if (queryClient) {
+                    console.log('pushing notes detail cache from list')
+                    console.time('push notes')
+                    data.notes.forEach(note => {
+                        // should match query key below
+                        queryClient.setQueryData(['notes', 'detail', { id: note.id}], note)
+                    })
+                    console.timeEnd('push notes')
+                }
+
+                return data;
+            }
 		}),
 		detail: (input: QueryInput<'note'>) => {
 			const queryClient = useQueryClient();
 			return {
-				queryKey: ['notes', input] as const,
+				queryKey: ['notes', 'detail', input] as const,
 				queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'note', input),
-				initialData: () => {
-					const queryData = queryClient.getQueryData(['notes', 'list']);
-					console.log({ queryData });
-				}
+                // Failed "Pull" approach  - tricky to use getqueriesdata and then also get the date from the query
+				// initialData: () => {
+				// 	const queries = queryClient.getQueriesData({
+				// 		queryKey: ['notes', 'list']
+				// 	}) as [string[], QueryOutput<'notes'>][];
+				// 	for (const [key, data] of queries) {
+				// 		console.log({ key, data });
+				// 		const state = queryClient.getQueryState(key);
+				// 		console.log({ state });
+				// 	}
+				// 	const notes = queries.flatMap(([key, data]) => data.notes);
+				// 	const note = notes.find((n) => n.id === input.id);
+				// 	if (note) {
+				// 		console.log('found initial data');
+				// 	}
+				// 	return note;
+				// }
 			};
 		}
 	},
@@ -130,4 +158,3 @@ type TQueryFactory = {
 type QueryFn = <T extends {}>(
 	input: T
 ) => T extends { cursor: any } ? CreateInfiniteQueryOptions : CreateQueryOptions;
-

@@ -21,10 +21,11 @@ import { z } from 'zod';
 import { tmdb } from '$lib/api/tmdb';
 import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
-import type { Insertable, SelectQueryBuilder } from 'kysely';
-import type { Bookmark, DB, Entry } from '$lib/prisma/kysely/types';
+import type { ExpressionBuilder, Insertable, SelectQueryBuilder } from 'kysely';
+import type { Bookmark, DB, Entry, Annotation } from '$lib/prisma/kysely/types';
 import type { Entry as PrismaEntry } from '@prisma/client';
 import type { FilterLibrarySchema } from '$lib/schemas/library';
+import type { JSONContent } from '@tiptap/core';
 
 type GetCtx<T extends z.ZodTypeAny> = {
 	input: z.input<T>;
@@ -1226,6 +1227,7 @@ export const notesInputSchema = z
 	})
 	.deepPartial();
 
+
 export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	const { filter, includeArchived } = input;
 
@@ -1236,6 +1238,9 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	let query = db
 		.selectFrom('Annotation as a')
 		.select(annotations.select)
+        .$narrowType<{
+            contentData: JSONContent;
+        }>()
 		.select(withEntry)
 		.select((eb) =>
 			jsonArrayFrom(
@@ -1276,6 +1281,9 @@ export async function note({ input, ctx }: GetCtx<typeof idSchema>): Promise<Not
 	let query = db
 		.selectFrom('Annotation as a')
 		.select(annotations.select)
+        .$narrowType<{
+            contentData: JSONContent;
+        }>()
 		.select(withEntry)
 		.select((eb) =>
 			jsonArrayFrom(
@@ -1286,9 +1294,9 @@ export async function note({ input, ctx }: GetCtx<typeof idSchema>): Promise<Not
 					.whereRef('at.annotationId', '=', 'a.id')
 			).as('tags')
 		)
-        .where('a.id', '=', id)
+		.where('a.id', '=', id)
 		.where('a.userId', '=', ctx.userId)
-        .executeTakeFirstOrThrow();
+		.executeTakeFirstOrThrow();
 
-    return query;
+	return query;
 }

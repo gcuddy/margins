@@ -41,23 +41,27 @@ export function createTagMutation() {
 	});
 }
 
-export function updateAnnotationMutation(opts?: { showToast?: boolean, onSuccess?: () => void }) {
-    const queryClient = useQueryClient();
-    return createMutation({
-        mutationFn: (input: MutationInput<"save_note">) => mutate("save_note", input),
-        onMutate(variables) {
-            console.log(`onMutate variables for updateAnnotationMutation`, variables)
-        },
-        onSuccess() {
-            if (opts?.showToast) {
-                toast.success("Note updated")
-            }
-            queryClient.invalidateQueries({queryKey: ['annotations']})
-            queryClient.invalidateQueries({queryKey: ['entries', 'list']})
-            queryClient.invalidateQueries({queryKey: ['entries', 'detail']})
-            opts?.onSuccess?.()
-        }
-    })
+export function updateAnnotationMutation(opts?: {
+	input?: Partial<MutationInput<'save_note'>>;
+	showToast?: boolean;
+	onSuccess?: () => void;
+}) {
+	const queryClient = useQueryClient();
+	return createMutation({
+		mutationFn: (input: MutationInput<'save_note'>) => mutate('save_note', {...opts?.input, ...input}),
+		onMutate(variables) {
+			console.log(`onMutate variables for updateAnnotationMutation`, variables);
+		},
+		onSuccess() {
+			if (opts?.showToast) {
+				toast.success('Note updated');
+			}
+			queryClient.invalidateQueries({ queryKey: ['annotations'] });
+			queryClient.invalidateQueries({ queryKey: ['entries', 'list'] });
+			queryClient.invalidateQueries({ queryKey: ['entries', 'detail'] });
+			opts?.onSuccess?.();
+		}
+	});
 }
 
 export function createSetTagsMutation(opts?: { optimistic?: boolean; showToast?: boolean }) {

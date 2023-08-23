@@ -5,19 +5,20 @@
 	import type { PageData } from './$types';
 	import Header from '$components/ui/Header.svelte';
 	import * as Tabs from '$components/ui/tabs';
-	import { createQuery } from '@tanstack/svelte-query';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import Table from './Table.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { derived } from 'svelte/store';
 
 	export let data: PageData;
 
+    const queryClient = useQueryClient();
 	const notesQuery = createQuery(
 		queryFactory.notes.list({
 			filter: {
 				type: 'document'
 			}
-		})
+		}, queryClient)
 	);
 
 	$: console.log({ $notesQuery });
@@ -42,8 +43,8 @@
 		{/if}
 	</Tabs.Content>
 	<Tabs.Content value="annotations">
-		{#each data.notes.notes as annotation (annotation.id)}
+		<!-- {#each data.notes.notes as annotation (annotation.id)}
 			<Annotation {annotation} />
-		{/each}
+		{/each} -->
 	</Tabs.Content>
 </Tabs.Root>

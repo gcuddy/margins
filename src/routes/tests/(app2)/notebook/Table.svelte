@@ -85,18 +85,20 @@
 									{@const color = row.original.color ?? '#000'}
 									{@const icon = row.original.icon ?? 'File'}
 									<div class="flex items-center">
-										<IconPicker
+										<!-- <IconPicker
 											variant="ghost"
 											class="h-auto w-auto grow-0 shrink-0 basis-auto p-1.5"
 											iconClass="h-4 w-4"
 											activeColor={color}
 											activeIcon={icon}
-										/>
-										<Render of={cell.render()} />
-                                        {#each row.original.tags as tag (tag.id)}
-                                            {tag.name}
-                                        {/each}
-                                        <!-- {row.original.} -->
+										/> -->
+										<a href="/tests/note/{row.original.id}">
+											<Render of={cell.render()} />
+										</a>
+										{#each row.original.tags as tag (tag.id)}
+											{tag.name}
+										{/each}
+										<!-- {row.original.} -->
 									</div>
 								{:else}
 									<Render of={cell.render()} />

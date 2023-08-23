@@ -10,9 +10,9 @@ export const load = (async ({ locals }) => {
 
     return {
         session,
-        notes: getNotebook({
-            userId: session.user.userId,
-            // cursor
-        })
+        // notes: getNotebook({
+        //     userId: session.user.userId,
+        //     // cursor
+        // })
     };
 }) satisfies PageServerLoad;
