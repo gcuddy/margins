@@ -3,7 +3,7 @@
 	import * as Popover from '$components/ui/popover';
 	import { melt } from '@melt-ui/svelte';
 	import { CheckIcon, FileIcon, HashIcon } from 'lucide-svelte';
-	import type { ComponentProps, ComponentType } from 'svelte';
+	import { createEventDispatcher, type ComponentProps, type ComponentType } from 'svelte';
 	import {
 		BookMarked,
 		Layers,
@@ -358,12 +358,20 @@
 	let showHexCodeEntry = false;
 	let open = false;
 
+	const dispatch = createEventDispatcher<{
+		select: {
+			icon: string;
+			color: string;
+		};
+	}>();
+
 	let rowToLastColumnFocused = new Map<number, number>();
 	rowToLastColumnFocused.set(0, 0);
 
 	function selectIcon(icon: string) {
 		activeIcon = icon;
 		open = false;
+		dispatch('select', { icon: activeIcon, color: activeColor });
 	}
 
 	function handleKeydown(e: KeyboardEvent) {

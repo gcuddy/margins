@@ -9,7 +9,7 @@
 	import autosize from '$lib/actions/autosize';
 	import { nanoid } from '$lib/nanoid';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { formatDate } from '$lib/utils/date';
+	import { ago, formatDate, now } from '$lib/utils/date';
 	import { melt } from '@melt-ui/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
 	import type { JSONContent } from '@tiptap/core';
@@ -18,10 +18,11 @@
 	import { deepEqual } from '$lib/helpers';
 
 	export let id = nanoid();
-	const mutation = updateAnnotationMutation({
+	$: mutation = updateAnnotationMutation({
 		input: { id },
 		showToast: true
 	});
+
 	export let title: string | null | undefined = '';
 	export let contentData: JSONContent | undefined = [];
 	export let autofocus = false;
@@ -36,7 +37,8 @@
 
 	// TODO: use svelte snapshot to keep note in sessino storage
 
-	let createdAt = new Date();
+	export let createdAt = new Date();
+	export let updatedAt: Date | string | undefined = undefined;
 
 	const tagsQuery = createQuery(queryFactory.tags.list());
 
@@ -71,7 +73,17 @@
 				class="h-auto resize-none border-none text-xl font-semibold"
 				placeholder="Untitled"
 			/> -->
-			<IconPicker bind:activeColor={color} bind:activeIcon={icon} />
+			<IconPicker
+				on:select={({ detail }) => {
+					const { icon, color } = detail;
+					$mutation.mutate({
+						icon,
+						color
+					});
+				}}
+				bind:activeColor={color}
+				bind:activeIcon={icon}
+			/>
 			<textarea
 				bind:this={textarea}
 				bind:value={title}
@@ -85,7 +97,10 @@
 				<span>
 					Created on {formatDate(createdAt)} by {user}
 				</span>
-				<span>last edited: now</span>
+				{#if updatedAt}
+                {updatedAt}
+					<span>last edited: {ago(new Date(updatedAt), $now)}</span>
+				{/if}
 				<!-- <span> This is a toolbar with the created date and by who, tags, last edited time. </span> -->
 				{#if $tagsQuery.data}
 					<TagsCommandPopover bind:selectedTags={tags} let:builder>
@@ -113,7 +128,6 @@
 				console.timeEnd('deepEqual');
 				if (equal) return;
 				$mutation.mutate({
-					id,
 					contentData,
 					title,
 					type: 'document',

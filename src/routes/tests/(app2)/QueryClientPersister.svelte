@@ -19,6 +19,8 @@
 
 	const persister: Persister = {
 		async persistClient(client: PersistedClient) {
+            // TODO: this is slow
+            // can we batch so it doesn't happen on every query?
             if (dev) console.time('persistClient')
 			// remove init meta from queries (it's not needed and probably not serializable)
 			client.clientState.queries.forEach((query) => {

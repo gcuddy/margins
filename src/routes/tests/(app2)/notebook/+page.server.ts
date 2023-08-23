@@ -6,7 +6,7 @@ import { getNotebook } from "$lib/queries/server";
 
 export const load = (async ({ locals }) => {
     const session = await locals.auth.validate();
-    if (!session) throw redirect(303, '/tests/login');
+    if (!session) throw redirect(303, '//login');
 
     return {
         session,

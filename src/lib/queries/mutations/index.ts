@@ -41,26 +41,30 @@ export function createTagMutation() {
 	});
 }
 
-export function updateAnnotationMutation(opts?: {
-	input?: Partial<MutationInput<'save_note'>>;
+export function updateAnnotationMutation<TDefaultData extends Partial<MutationInput<'save_note'>>>(opts?: {
+	input?: TDefaultData;
 	showToast?: boolean;
 	onSuccess?: () => void;
 }) {
 	const queryClient = useQueryClient();
 	return createMutation({
-		mutationFn: (input: MutationInput<'save_note'>) => mutate('save_note', {...opts?.input, ...input}),
+		mutationFn: (input: Omit<MutationInput<'save_note'>, keyof TDefaultData>) => mutate('save_note', {...opts?.input, ...input}),
 		onMutate(variables) {
 			console.log(`onMutate variables for updateAnnotationMutation`, variables);
 		},
-		onSuccess() {
+		onSuccess(data, variables) {
+            const mergedVariables = {...opts?.input, ...variables};
 			if (opts?.showToast) {
 				toast.success('Note updated');
 			}
-			queryClient.invalidateQueries({ queryKey: ['annotations'] });
-			queryClient.invalidateQueries({ queryKey: ['entries', 'list'] });
-			queryClient.invalidateQueries({ queryKey: ['entries', 'detail'] });
+            // only invalidate entries if we have an entryId
+            if ("entryId" in mergedVariables && mergedVariables?.entryId) {
+                queryClient.invalidateQueries({ queryKey: ['entries', 'list'] });
+                queryClient.invalidateQueries({ queryKey: ['entries', 'detail'] });
+            }
+			queryClient.invalidateQueries({ queryKey: ['notes'] });
 			opts?.onSuccess?.();
-		}
+		},
 	});
 }
 

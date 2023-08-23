@@ -5,7 +5,7 @@ import { redirect } from '@sveltejs/kit';
 
 export const load = (async ({ locals, parent }) => {
     const session = await locals.auth.validate();
-    if (!session) throw redirect(303, '/tests/login')
+    if (!session) throw redirect(303, '//login')
 
     const recents = db.selectFrom("EntryInteraction as i")
         .innerJoin("Entry as e", "e.id", "i.entryId")

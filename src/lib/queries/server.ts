@@ -216,6 +216,7 @@ export async function upsertAnnotation(data: z.input<typeof upsertAnnotationSche
 		})
 		.onDuplicateKeyUpdate({
 			...annotation,
+            updatedAt: new Date(),
 			private: annotation.private ? 1 : 0,
 			target: annotation.target ? json(annotation.target) : undefined,
 			contentData: annotation.contentData ? json(annotation.contentData) : undefined
