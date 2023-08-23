@@ -41,7 +41,7 @@ export function createTagMutation() {
 	});
 }
 
-export function updateAnnotationMutation(opts?: { showToast?: boolean }) {
+export function updateAnnotationMutation(opts?: { showToast?: boolean, onSuccess?: () => void }) {
     const queryClient = useQueryClient();
     return createMutation({
         mutationFn: (input: MutationInput<"save_note">) => mutate("save_note", input),
@@ -55,6 +55,7 @@ export function updateAnnotationMutation(opts?: { showToast?: boolean }) {
             queryClient.invalidateQueries({queryKey: ['annotations']})
             queryClient.invalidateQueries({queryKey: ['entries', 'list']})
             queryClient.invalidateQueries({queryKey: ['entries', 'detail']})
+            opts?.onSuccess?.()
         }
     })
 }

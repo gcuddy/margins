@@ -1,6 +1,6 @@
 import { db } from "$lib/db"
 import { nanoid } from "$lib/nanoid";
-import { validateAuthedForm } from "$lib/schemas.js";
+import { validateAuthedForm } from "$lib/schemas";
 import { error } from "@sveltejs/kit";
 import { superValidate } from "sveltekit-superforms/server";
 import { z } from "zod";

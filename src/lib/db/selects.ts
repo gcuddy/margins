@@ -158,6 +158,7 @@ export const annotations = {
 		'a.type',
 		'a.exact',
 		'a.updatedAt',
+        'a.createdAt',
 		'a.contentData',
         'a.icon',
         'a.color'

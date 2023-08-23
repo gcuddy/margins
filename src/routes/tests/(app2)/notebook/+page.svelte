@@ -6,16 +6,23 @@
 	import Header from '$components/ui/Header.svelte';
 	import * as Tabs from '$components/ui/tabs';
 	import { createQuery } from '@tanstack/svelte-query';
+	import Table from './Table.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import { derived } from 'svelte/store';
 
 	export let data: PageData;
 
+	const notesQuery = createQuery(
+		queryFactory.notes.list({
+			filter: {
+				type: 'document'
+			}
+		})
+	);
 
-    const notesQuery = createQuery(queryFactory.notes.list({
-        filter: {
-            type: "note"
-        }
-    }))
+	$: console.log({ $notesQuery });
+
+	const notesStore = derived(notesQuery, ($notesQuery) => $notesQuery.data?.notes ?? []);
 </script>
 
 <Header>
@@ -29,10 +36,10 @@
 	</Tabs.List>
 	<Tabs.Content value="notes">
 		{#if $notesQuery.isPending}
-            loading..
-        {:else if $notesQuery.isSuccess}
-            <pre>{JSON.stringify($notesQuery.data, null, 2)}</pre>
-        {/if}
+			loading..
+		{:else if $notesQuery.isSuccess}
+			<Table notes={notesStore} />
+		{/if}
 	</Tabs.Content>
 	<Tabs.Content value="annotations">
 		{#each data.notes.notes as annotation (annotation.id)}

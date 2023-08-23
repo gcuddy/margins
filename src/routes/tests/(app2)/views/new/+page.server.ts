@@ -1,5 +1,5 @@
 import { db, json } from "$lib/db";
-import { bulkEntriesSchema } from "$lib/schemas.js";
+import { bulkEntriesSchema } from "$lib/schemas";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { superValidate } from "sveltekit-superforms/server";
 import { type Condition, View, types } from "./View.js";

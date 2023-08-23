@@ -24,6 +24,7 @@ import {
 	getNotebookSchema,
 	get_authors,
 	get_notes_for_tag,
+	note,
 	notes,
 	notesInputSchema,
 	s_add_to_collection,
@@ -38,6 +39,7 @@ import {
 	upsertAnnotation,
 	upsertAnnotationSchema
 } from '$lib/queries/server';
+import { idSchema } from '$lib/schemas';
 import { sql } from 'kysely';
 import { z } from 'zod';
 import { fetchList, inputSchema } from './library/fetch.server';
@@ -72,9 +74,6 @@ interface Query<I extends z.ZodTypeAny, Data> {
 
 export const query = <I extends z.ZodTypeAny, Data>(args: Query<I, Data>) => args;
 
-export const idSchema = z.object({
-	id: z.string()
-});
 
 export const mutations = {
 	// tag_entry: query({
@@ -764,6 +763,10 @@ export const queries = {
 			'cache-control': 's-maxage=1, stale-while-revalidate=86400'
 		}
 	}),
+    note: query({
+        schema: idSchema,
+        fn: note
+    }),
     notes: query({
         schema: notesInputSchema,
         fn: notes

@@ -1,4 +1,4 @@
-import { bulkEntriesSchema, validateAuthedForm } from "$lib/schemas.js"
+import { bulkEntriesSchema, validateAuthedForm } from "$lib/schemas"
 import { fail, redirect } from "@sveltejs/kit"
 import { z } from "zod";
 

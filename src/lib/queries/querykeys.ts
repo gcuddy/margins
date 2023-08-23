@@ -5,7 +5,8 @@ import {
 	type CreateQueryOptions,
 	type QueryClient,
 	type QueryMeta,
-	type createInfiniteQuery
+	type createInfiniteQuery,
+	useQueryClient
 } from '@tanstack/svelte-query';
 import { qquery, type QueryInput, Queries, QueryOutput } from './query';
 
@@ -89,12 +90,23 @@ export const queryFactory = {
 			placeholderData: keepPreviousData
 		})
 	},
-    notes: {
-        list: (input?: QueryInput<"notes">) => ({
-            queryKey: ["notes", "list", input] as const,
-            queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, "notes", {}),
-        })
-    },
+	notes: {
+		list: (input?: QueryInput<'notes'>) => ({
+			queryKey: ['notes', 'list', input] as const,
+			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'notes', { ...input })
+		}),
+		detail: (input: QueryInput<'note'>) => {
+			const queryClient = useQueryClient();
+			return {
+				queryKey: ['notes', input] as const,
+				queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'note', input),
+				initialData: () => {
+					const queryData = queryClient.getQueryData(['notes', 'list']);
+					console.log({ queryData });
+				}
+			};
+		}
+	},
 	pins: {
 		list: () => ({
 			queryKey: ['pins', 'list'] as const,
@@ -119,16 +131,3 @@ type QueryFn = <T extends {}>(
 	input: T
 ) => T extends { cursor: any } ? CreateInfiniteQueryOptions : CreateQueryOptions;
 
-function createFn<TKey extends keyof Queries>(
-	input: TKey,
-	opts: QueryInput<TKey> extends { cursor: any } ? CreateInfiniteQueryOptions : CreateQueryOptions
-): QueryInput<TKey> extends { cursor: any } ? CreateInfiniteQueryOptions : CreateQueryOptions {
-	return (input: QueryInput<TKey>) => {};
-}
-
-// createFn(
-// 	{ cursor: 1 },
-// 	{
-// 		initialData: []
-// 	}
-// );

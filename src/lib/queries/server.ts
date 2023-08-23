@@ -11,7 +11,7 @@ import {
 } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
-import { interactionSchema } from '$lib/schemas';
+import { interactionSchema, idSchema } from '$lib/schemas';
 import { typeSchema } from '$lib/types';
 import { AnnotationType, DocumentType, RelationType, Status, Tag } from '@prisma/client';
 import { sql } from 'kysely';
@@ -1231,11 +1231,21 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 
 	const take = input.take || 50;
 
-    // TODO: should we filter out replies?
+	// TODO: should we filter out replies?
 
 	let query = db
 		.selectFrom('Annotation as a')
-        .select(annotations.select).select(withEntry)
+		.select(annotations.select)
+		.select(withEntry)
+		.select((eb) =>
+			jsonArrayFrom(
+				eb
+					.selectFrom('annotation_tag as at')
+					.innerJoin('Tag as t', 't.id', 'at.tagId')
+					.select(['t.id', 't.name', 't.color'])
+					.whereRef('at.annotationId', '=', 'a.id')
+			).as('tags')
+		)
 		// this should always be on there - right?
 		.where('a.userId', '=', ctx.userId)
 		.orderBy('a.createdAt', 'desc')
@@ -1251,9 +1261,34 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 		query = query.where('a.deleted', 'is', null);
 	}
 
+	return {
+		notes: await query.execute()
+		// todo: nextCursor
+	};
+}
 
-    return {
-        notes: await query.execute(),
-        // todo: nextCursor
-    }
+export type Notes = Awaited<ReturnType<typeof notes>>['notes'];
+export type Note = Notes[number];
+
+export async function note({ input, ctx }: GetCtx<typeof idSchema>): Promise<Note> {
+	const { id } = input;
+
+	let query = db
+		.selectFrom('Annotation as a')
+		.select(annotations.select)
+		.select(withEntry)
+		.select((eb) =>
+			jsonArrayFrom(
+				eb
+					.selectFrom('annotation_tag as at')
+					.innerJoin('Tag as t', 't.id', 'at.tagId')
+					.select(['t.id', 't.name', 't.color'])
+					.whereRef('at.annotationId', '=', 'a.id')
+			).as('tags')
+		)
+        .where('a.id', '=', id)
+		.where('a.userId', '=', ctx.userId)
+        .executeTakeFirstOrThrow();
+
+    return query;
 }

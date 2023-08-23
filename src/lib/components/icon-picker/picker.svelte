@@ -3,7 +3,7 @@
 	import * as Popover from '$components/ui/popover';
 	import { melt } from '@melt-ui/svelte';
 	import { CheckIcon, FileIcon, HashIcon } from 'lucide-svelte';
-	import type { ComponentType } from 'svelte';
+	import type { ComponentProps, ComponentType } from 'svelte';
 	import {
 		BookMarked,
 		Layers,
@@ -66,8 +66,10 @@
 	import { cn } from '$lib/utils';
 
 	export let activeIcon: string = "File";
+    export let variant: ComponentProps<Button>["variant"] = "outline";
 	let className = '';
 	export { className as class };
+    export let iconClass = "";
 	export let icons: {
 		name: string;
 		component: ComponentType;
@@ -356,6 +358,7 @@
 	let showHexCodeEntry = false;
 	let open = false;
 
+
 	let rowToLastColumnFocused = new Map<number, number>();
 	rowToLastColumnFocused.set(0, 0);
 
@@ -449,11 +452,11 @@
 	}}
 >
 	<Popover.Trigger asChild let:builder>
-		<Button variant="outline" builders={[builder]} class={cn('h-12 w-12', className)}>
+		<Button {variant} builders={[builder]} class={cn('h-12 w-12', className)}>
 			<svelte:component
 				this={icons.find((icon) => icon.name === activeIcon)?.component}
 				data-color-hex={activeColor}
-				class="h-8 w-8 shrink-0 opacity-75 text-[--color]"
+				class={cn("h-8 w-8 shrink-0 opacity-75 text-[--color]", iconClass)}
 				style="--color:{activeColor}"
 			/>
 			<span class="sr-only">Icon Picker</span>

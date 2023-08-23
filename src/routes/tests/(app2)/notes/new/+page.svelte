@@ -25,26 +25,30 @@
 
 	let editor: Editor;
 
+    let saved = false;
+
 	const mutation = updateAnnotationMutation({
-		showToast: true
+		showToast: true,
+        onSuccess: () => {
+            saved = true;
+        }
 	});
 
 	let title = '';
 	let textarea: HTMLTextAreaElement;
-	let user = data.user_data?.username;
+	let user = data .user_data?.username;
 
 	let contentData: JSONContent;
 
 	export const snapshot: Snapshot = {
 		capture: () => {
-			console.log('snapshot capturing', { title, contentData });
+            if (saved) return;
 			return {
 				title,
 				contentData
 			};
 		},
 		restore: (snapshot) => {
-			console.log({ snapshot });
 			title = snapshot.title;
 			contentData = snapshot.contentData;
 		}
@@ -133,7 +137,7 @@
 					id,
 					contentData,
 					title,
-					type: 'note',
+					type: 'document',
 					tags: selectedTags.map((t) => t.id),
 					color,
 					icon

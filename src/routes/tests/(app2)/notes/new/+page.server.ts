@@ -1,5 +1,5 @@
 import { annotationSchema } from "$lib/annotation"
-import { validateAuthedForm } from "$lib/schemas.js"
+import { validateAuthedForm } from "$lib/schemas"
 import { superValidate } from "sveltekit-superforms/server"
 import { z } from "zod";
 import { db } from "$lib/db"
