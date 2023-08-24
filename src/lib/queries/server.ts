@@ -21,7 +21,7 @@ import { z } from 'zod';
 import { tmdb } from '$lib/api/tmdb';
 import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
-import type { ExpressionBuilder, Insertable, SelectQueryBuilder } from 'kysely';
+import type { ExpressionBuilder, Insertable, UpdateObject, SelectQueryBuilder } from 'kysely';
 import type { Bookmark, DB, Entry, Annotation } from '$lib/prisma/kysely/types';
 import type { Entry as PrismaEntry } from '@prisma/client';
 import type { FilterLibrarySchema } from '$lib/schemas/library';
@@ -185,64 +185,83 @@ export async function deleteAnnotation(userId: string, id: string) {
 	await db.deleteFrom('Annotation').where('userId', '=', userId).where('id', '=', id).execute();
 }
 
-export const upsertAnnotationSchema = annotationSchema.extend({
-	relations: z
-		.object({
-			relatedEntryId: z.number().int(),
-			type: z.nativeEnum(RelationType).default('Related')
-		})
-		.array()
-		.default([]),
-	// The array of tags to add to this annotation
-	tags: z.number().array().default([])
-});
+export const upsertAnnotationSchema = annotationSchema
+	.extend({
+		relations: z
+			.object({
+				relatedEntryId: z.number().int(),
+				type: z.nativeEnum(RelationType).default('Related')
+			})
+			.array()
+			.default([]),
+		// The array of tags to add to this annotation
+		tags: z.number().array().default([]),
+		id: annotationSchema.shape.id.or(z.array(z.string()))
+	})
+	.omit({
+		userId: true
+	});
 
-export async function upsertAnnotation(data: z.input<typeof upsertAnnotationSchema>) {
+export async function upsertAnnotation({
+	input: data,
+	ctx
+}: GetCtx<typeof upsertAnnotationSchema>) {
+	const { userId } = ctx;
 	const { id: _id, relations, tags, ...annotation } = data;
-	let id = _id;
-	if (!id) {
-		id = nanoid();
+	let ids: string[] = [];
+	if (!_id) {
+		ids = [nanoid()];
+	} else {
+		ids = Array.isArray(_id) ? _id : [_id];
 	}
-	console.log({ id, annotation });
+	console.log({ ids, annotation });
 	await db
 		.insertInto('Annotation')
-		.values({
-			id,
-			updatedAt: new Date(),
-			...annotation,
-			private: annotation.private ? 1 : 0,
-			target: annotation.target ? json(annotation.target) : undefined,
-			contentData: annotation.contentData ? json(annotation.contentData) : undefined
-		})
+		.values(
+			ids.map((id) => ({
+				id,
+				updatedAt: new Date(),
+				...annotation,
+				private: annotation.private ? 1 : 0,
+				target: annotation.target ? json(annotation.target) : undefined,
+				contentData: annotation.contentData ? json(annotation.contentData) : undefined,
+				userId
+			}))
+		)
 		.onDuplicateKeyUpdate({
 			...annotation,
-            updatedAt: new Date(),
+			updatedAt: new Date(),
 			private: annotation.private ? 1 : 0,
 			target: annotation.target ? json(annotation.target) : undefined,
-			contentData: annotation.contentData ? json(annotation.contentData) : undefined
+			contentData: annotation.contentData ? json(annotation.contentData) : undefined,
+			userId
 		})
 		.execute();
 
 	if (relations?.length) {
-		const { entryId } = await db
+		const annotations = await db
 			.selectFrom('Annotation')
-			.where('id', '=', id)
+			.where('id', 'in', ids)
 			.select(['entryId'])
-			.executeTakeFirstOrThrow();
+			.execute();
+
+		const entryIds = annotations.map((a) => a.entryId).filter(Boolean);
 		// add relations
 		// TODO: remove relations that were present but not in the annotation anymore?
-		if (entryId) {
+		if (entryIds.length) {
 			await db
 				.insertInto('Relation')
 				.values(
-					relations.map((relation) => ({
-						entryId,
-						relatedEntryId: relation.relatedEntryId,
-						id: nanoid(),
-						updatedAt: new Date(),
-						userId: data.userId,
-						type: relation.type
-					}))
+					entryIds.flatMap((entryId) =>
+						relations.map((relation) => ({
+							entryId,
+							relatedEntryId: relation.relatedEntryId,
+							id: nanoid(),
+							updatedAt: new Date(),
+							userId,
+							type: relation.type
+						}))
+					)
 				)
 				.ignore()
 				.execute();
@@ -250,22 +269,95 @@ export async function upsertAnnotation(data: z.input<typeof upsertAnnotationSche
 	}
 	if (tags?.length) {
 		await db.transaction().execute(async (trx) => {
-			await trx.deleteFrom('annotation_tag').where('annotationId', '=', id!).execute();
+			await trx.deleteFrom('annotation_tag').where('annotationId', 'in', ids).execute();
 			return await trx
 				.insertInto('annotation_tag')
 				.values(
-					tags.map((tag) => ({
-						annotationId: id!,
-						tagId: tag
-					}))
+					ids.flatMap((id) =>
+						tags.map((tag) => ({
+							annotationId: id,
+							tagId: tag
+						}))
+					)
 				)
 				.ignore()
 				.execute();
 		});
 	}
 	return {
-		id
+		id: ids.length === 1 ? ids[0] : ids
 	};
+}
+
+const noteUpdateInput = z.object({
+	id: z.string(),
+	input: upsertAnnotationSchema.omit({ id: true })
+});
+
+const noteUpdateInputSchema = noteUpdateInput.or(z.array(noteUpdateInput));
+
+// function values<T>(expr: Expression<T>) {
+// 	return sql<T>`VALUES(${expr})`;
+// }
+
+// Another attempt at the above, this one allows bulk setting
+export async function updateNote({ input, ctx }: GetCtx<typeof noteUpdateInputSchema>) {
+	// TODO: this is a mess full of half-baked ideas. It's currently (obviously) not in use.
+	const { userId } = ctx;
+	const updates = Array.isArray(input) ? input : [input];
+	// const ids = data.map((d) => d.id);
+
+	// await db
+	// 	.insertInto('Annotation')
+	// 	.values(
+	// 		data.map((item) => ({
+	// 			...item.input,
+	// 			updatedAt: new Date(),
+	// 			private: item.input.private ? 1 : 0,
+	// 			target: item.input.target ? json(item.input.target) : undefined,
+	// 			contentData: item.input.contentData ? json(item.input.contentData) : undefined,
+	// 			id: item.id,
+	// 			userId
+	// 		}))
+	// 	)
+	// 	.onDuplicateKeyUpdate({
+	// 		contentData: values(ref('contentData'))
+	// 	});
+
+	let query = db.updateTable('Annotation');
+
+	const updatable: UpdateObject<DB, 'Annotation', 'Annotation'> = {};
+
+	let _case = '';
+	for (const update of updates) {
+		// _case = _case.when("id", "=", update.id).then(update.input);
+		let str = sql``;
+		for (let key in update.input) {
+			let _key = key as keyof typeof update.input;
+			let str = sql`WHEN id = ${update.id} THEN ${update.input[_key]}`;
+		}
+	}
+
+	query = query.set((eb) => {
+		for (const update of updates) {
+			const { input, id } = update;
+			// remove tags and relations for now
+			const { tags, relations, ...data } = input;
+			Object.keys(input).map((col) => {
+				eb.case('id')
+					.when(id)
+					.then(data[col as keyof typeof data]);
+			});
+		}
+		let _case = eb.case();
+		for (const update of updates) {
+			_case = _case.when('id', '=', update.id).then(update.input);
+		}
+		sql;
+		return {
+			title: eb.case('id').when('id123').then('New Title').else(eb.ref('title')).end()
+		};
+	});
 }
 
 export const s_add_to_collection = z
@@ -1228,6 +1320,34 @@ export const notesInputSchema = z
 	})
 	.deepPartial();
 
+function noteTags(
+	eb: ExpressionBuilder<
+		DB & {
+			a: Annotation;
+		},
+		'a'
+	>
+) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom('annotation_tag as at')
+			.innerJoin('Tag as t', 't.id', 'at.tagId')
+			.select(['t.id', 't.name', 't.color'])
+			.whereRef('at.annotationId', '=', 'a.id')
+	).as('tags');
+}
+function notePin(
+	eb: ExpressionBuilder<
+		DB & {
+			a: Annotation;
+		},
+		'a'
+	>
+) {
+	return jsonObjectFrom(
+		eb.selectFrom('Favorite as pin').select(['pin.id']).whereRef('pin.annotationId', '=', 'a.id')
+	).as('pin');
+}
 
 export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	const { filter, includeArchived } = input;
@@ -1239,19 +1359,12 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	let query = db
 		.selectFrom('Annotation as a')
 		.select(annotations.select)
-        .$narrowType<{
-            contentData: JSONContent;
-        }>()
+		.$narrowType<{
+			contentData: JSONContent;
+		}>()
 		.select(withEntry)
-		.select((eb) =>
-			jsonArrayFrom(
-				eb
-					.selectFrom('annotation_tag as at')
-					.innerJoin('Tag as t', 't.id', 'at.tagId')
-					.select(['t.id', 't.name', 't.color'])
-					.whereRef('at.annotationId', '=', 'a.id')
-			).as('tags')
-		)
+		.select((eb) => noteTags(eb))
+		.select((eb) => notePin(eb))
 		// this should always be on there - right?
 		.where('a.userId', '=', ctx.userId)
 		.orderBy('a.createdAt', 'desc')
@@ -1282,22 +1395,84 @@ export async function note({ input, ctx }: GetCtx<typeof idSchema>): Promise<Not
 	let query = db
 		.selectFrom('Annotation as a')
 		.select(annotations.select)
-        .$narrowType<{
-            contentData: JSONContent;
-        }>()
+		.$narrowType<{
+			contentData: JSONContent;
+		}>()
 		.select(withEntry)
-		.select((eb) =>
-			jsonArrayFrom(
-				eb
-					.selectFrom('annotation_tag as at')
-					.innerJoin('Tag as t', 't.id', 'at.tagId')
-					.select(['t.id', 't.name', 't.color'])
-					.whereRef('at.annotationId', '=', 'a.id')
-			).as('tags')
-		)
+		.select((eb) => noteTags(eb))
+		.select((eb) => notePin(eb))
 		.where('a.id', '=', id)
 		.where('a.userId', '=', ctx.userId)
 		.executeTakeFirstOrThrow();
 
 	return query;
 }
+
+const _createFavoriteSchema = z
+	.object({
+		annotationId: z.string(),
+		collectionId: z.number(),
+		entryId: z.number(),
+		feedId: z.number(),
+		tagId: z.number(),
+		smartListId: z.number(),
+		//
+		folderName: z.string(),
+		sortOrder: z.number(),
+		parentId: z.string(),
+		//
+		id: z.string()
+	})
+	.partial();
+
+export const createFavoriteSchema = _createFavoriteSchema.or(z.array(_createFavoriteSchema));
+
+// Technically "upsert"
+export async function createFavorite({ input, ctx }: GetCtx<typeof createFavoriteSchema>) {
+	const { userId } = ctx;
+	const dataToInsert = (Array.isArray(input) ? input : [input]).map((item) => {
+		const id = item.id || nanoid();
+		return {
+			...item,
+			id,
+			updatedAt: new Date(),
+			userId
+		};
+	});
+
+	const result = await db.insertInto('Favorite').values(dataToInsert).execute();
+
+	const ids = dataToInsert.map((item) => item.id);
+	return {
+		id: ids.length === 1 ? ids[0] : ids
+	};
+}
+
+export const updateFavoriteSchema = z.object({
+	id: z.string(),
+	data: z
+		.object({
+			folderName: z.string(),
+			parentId: z.string(),
+			sortOrder: z.number()
+		})
+		.partial()
+});
+
+export async function updateFavorite({ input, ctx }: GetCtx<typeof updateFavoriteSchema>) {
+	const { userId } = ctx;
+	const { id, data } = input;
+	await db
+		.updateTable('Favorite')
+		.set(data)
+		.where('id', '=', id)
+		.where('userId', '=', userId)
+		.execute();
+}
+
+// .onDuplicateKeyUpdate({
+//     updatedAt: new Date(),
+//     folderName: input.folderName,
+//     sortOrder: input.sortOrder,
+//     parentId: input.parentId
+// })

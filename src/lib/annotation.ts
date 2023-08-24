@@ -78,8 +78,9 @@ export const annotationSchema = z.object({
 	target: TargetSchema.nullish(),
 	entryId: z.number().nullish(),
 	contentData: z.any().nullish(),
-    color: z.string().nullish(), // Hex code for the color of the annotation
-    icon: z.string().nullish(), // Emoji as :emoji: or icon name with CamelCase (first letter capitalized)
+	color: z.string().nullish(), // Hex code for the color of the annotation
+	icon: z.string().nullish(), // Emoji as :emoji: or icon name with CamelCase (first letter capitalized)
+	deleted: z.coerce.date().nullish()
 	// tags: z.string().array(),
 	// entry: z
 	//     .object({

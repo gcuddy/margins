@@ -19,13 +19,14 @@
 
 	export let id = nanoid();
 	$: mutation = updateAnnotationMutation({
-		input: { id },
+		input: { id, type: "document" },
 		showToast: true
 	});
 
 	let hasBeenUpdate = false;
 
 	export let title: string | null | undefined = '';
+    let lastSavedTitle = title;
 	export let contentData: JSONContent | undefined = {
 		type: 'doc',
 		content: [
@@ -98,6 +99,13 @@
 			<textarea
 				bind:this={textarea}
 				bind:value={title}
+                on:blur={() => {
+                    if (title === lastSavedTitle) return;
+                    $mutation.mutate({
+                        title
+                    });
+                    lastSavedTitle = title;
+                }}
 				placeholder="Untitled note"
 				use:autosize
 				rows={1}
@@ -159,11 +167,6 @@
 				if (equal) return;
 				$mutation.mutate({
 					contentData,
-					title: title || 'Untitled note',
-					type: 'document',
-					tags: tags.map((t) => t.id),
-					color,
-					icon
 				});
 			}}
 			class="grow sm:min-h-[50vh]"

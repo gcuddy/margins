@@ -165,7 +165,7 @@ model Annotation {
     parentId         String?
     /// The "soft delete" time. Deletions are cleared after 30 days.
     deleted          DateTime?
-    userId           String                          @default("")
+    userId           String                          @default("") // TODO: remove this
     sortOrder        Float                           @default(0)
     bookmarkId       Int?
     editedAt         DateTime?
@@ -803,7 +803,7 @@ model Favorite {
     updatedAt    DateTime     @updatedAt
     userId       String
     deleted      DateTime?
-    tagId        Int?         @unique
+    tagId        Int?         @unique // TODO: remove these unique
     smartListId  Int?
     annotationId String?      @unique
     bookmarkId   Int?         @unique

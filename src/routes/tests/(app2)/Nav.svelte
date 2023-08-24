@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { navigating, page } from '$app/stores';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import { buttonVariants, Button } from '$lib/components/ui/button';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
 	import {
 		BookMarked,
@@ -44,6 +44,9 @@
 	import AddUrlModal from '$components/modals/add-url-modal.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { TagColorPill } from '$components/tags/tag-color';
+	import { Icon } from '$components/icon-picker';
+	import { flip } from 'svelte/animate';
+	import Pins from '$components/pins/pins.svelte';
 
 	type Nav = {
 		label: string;
@@ -201,7 +204,7 @@
 		</div>
 		<div class="px-4">
 			<div class="flex items-center">
-                <!-- TODO: on small sizes, these should switch — the button should trigger the dropdown -->
+				<!-- TODO: on small sizes, these should switch — the button should trigger the dropdown -->
 				<Button
 					on:click={() => {
 						// open modal
@@ -279,45 +282,7 @@
 						<Skeleton class="h-10 w-full" />
 					{:else if $pinsQuery.isSuccess}
 						{@const pins = $pinsQuery.data}
-						{#each pins as pin}
-							{#if pin.view}
-								{@const href = `/tests/views/${pin.view.id}`}
-								<Button
-									size="sm"
-									variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-									class="w-full justify-start font-normal"
-									{href}
-								>
-									<Layers class="mr-2 h-4 w-4 shrink-0" />
-									{pin.view.name}</Button
-								>
-							{:else if pin.collection}
-								{@const href = `/tests/collection/${pin.collection.id}`}
-								<Button
-									size="sm"
-									variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-									class="w-full justify-start font-normal"
-									{href}
-								>
-									<Box class="mr-2 h-4 w-4 shrink-0" />
-									<span class="truncate"> {pin.collection.name}</span></Button
-								>
-							{:else if pin.tag}
-								{@const href = `/tests/tag/${pin.tag.name}`}
-								<Button
-									size="sm"
-									variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-									class="w-full justify-start font-normal"
-									{href}
-								>
-									<!-- <Tag class="mr-2 h-4 w-4 shrink-0" /> -->
-									<div class="h-4 w-4 mr-2 shrink-0 flex items-center justify-center">
-										<TagColorPill color={pin.tag.color} class="h-2 w-2" />
-									</div>
-									<span class="truncate"> {pin.tag.name}</span></Button
-								>
-							{/if}
-						{/each}
+						<Pins {pins} />
 					{/if}
 				</div>
 			</div>

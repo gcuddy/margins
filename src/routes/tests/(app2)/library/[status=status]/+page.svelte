@@ -45,7 +45,6 @@
 	import type { ComponentType } from 'svelte';
 	import { entryTypeIcon } from '$components/entries/icons';
 
-	overrideItemIdKeyNameBeforeInitialisingDndZones('key');
 
 	export let data;
 

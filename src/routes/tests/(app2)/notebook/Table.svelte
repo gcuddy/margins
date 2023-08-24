@@ -11,7 +11,7 @@
 		addHiddenColumns,
 		addColumnOrder
 	} from 'svelte-headless-table/plugins';
-	import type { Readable } from 'svelte/store';
+	import { derived, type Readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
 	import { IconPicker } from '$components/icon-picker';
 	import Badge from '$components/ui/Badge.svelte';
@@ -20,13 +20,47 @@
 	import { cn } from '$lib';
 	import BulkActions from './bulk-actions.svelte';
 	import { Button } from '$components/ui/button';
-	import { ArchiveIcon, CommandIcon, PinIcon } from 'lucide-svelte';
+	import { ArchiveIcon, ChevronDownIcon, ChevronUpIcon, CommandIcon, PinIcon } from 'lucide-svelte';
+	import {
+		initCreatePinMutation,
+		initDeletePinMutation,
+		updateAnnotationMutation
+	} from '$lib/queries/mutations/index';
+	import commandScore from 'command-score';
+
+	const mutation = updateAnnotationMutation();
+
+	const createPinMutation = initCreatePinMutation({
+		invalidate: [['notes']]
+	});
+	const deletePinMutation = initDeletePinMutation({
+		invalidate: [['notes']]
+	});
+
+	const pinMutating = derived(
+		[createPinMutation, deletePinMutation],
+		([$createPin, $deletePin]) => {
+			return $createPin.isPending || $deletePin.isPending;
+		}
+	);
 
 	const table = createTable(notes, {
 		sort: addSortBy({
-			disableMultiSort: true
+			disableMultiSort: true,
+			initialSortKeys: [
+				{
+					id: 'createdAt',
+					order: 'desc'
+				}
+			]
 		}),
-		select: addSelectedRows()
+		select: addSelectedRows(),
+		filter: addTableFilter({
+			fn: ({ value, filterValue }) => {
+				const score = commandScore(value, filterValue);
+				return score > 0.05;
+			}
+		})
 	});
 
 	const columns = table.createColumns([
@@ -48,6 +82,9 @@
 			plugins: {
 				sort: {
 					disable: true
+				},
+				filter: {
+					exclude: true
 				}
 			}
 		}),
@@ -57,22 +94,54 @@
 		}),
 		table.column({
 			header: 'Updated',
-			accessor: 'updatedAt'
+			accessor: 'updatedAt',
+			plugins: {
+				filter: {
+					exclude: true
+				}
+			}
 		}),
 		table.column({
 			header: 'Created',
-			accessor: 'createdAt'
+			accessor: 'createdAt',
+			plugins: {
+				filter: {
+					exclude: true
+				}
+			}
 		})
 	]);
 
 	const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } =
 		table.createViewModel(columns);
 
-	const { sortKeys } = pluginStates.sort;
-
+	const { sortKeys, preSortedRows } = pluginStates.sort;
 	const { selectedDataIds, allRowsSelected, someRowsSelected } = pluginStates.select;
+    const { filterValue } = pluginStates.filter;
+
+	const selectedData = derived([selectedDataIds, rows], ([ids, rows]) => {
+		const relevantRows = rows.filter((row) => ids[row.id]);
+		return relevantRows
+			.map((row) => {
+				if (row.isData()) return row.original;
+			})
+			.filter(Boolean);
+	});
+
+	const allSelectedPinned = derived(selectedData, ($selectedData) => {
+		// If all selected data.pin is truthy, return true
+		// If all selected data.pin is falsy, return false
+		// If some selected data.pin is truthy, return "indeterminate"
+		const pins = $selectedData.map((data) => data.pin);
+		if (pins.every(Boolean)) return true;
+		if (pins.every((pin) => !pin)) return false;
+		return 'indeterminate' as const;
+	});
 </script>
 
+<div class="mb-4 flex items-center gap-4">
+    <Input
+</div>
 <Table.Root {...$tableAttrs}>
 	<Table.Header>
 		{#each $headerRows as headerRow (headerRow.id)}
@@ -81,12 +150,17 @@
 					{#each headerRow.cells as cell (cell.id)}
 						<Subscribe cellAttrs={cell.attrs()} let:cellAttrs props={cell.props()} let:props>
 							<Table.Head {...cellAttrs} class={cn('[&:has([role=checkbox])]:pl-3')}>
-								<button on:click={props.sort.toggle}>
+								{@const isSorted = $sortKeys.some((sortKey) => sortKey.id === cell.id)}
+								<button
+									data-sorted={isSorted}
+									class="flex items-center gap-1 data-[sorted=true]:text-foreground"
+									on:click={props.sort.toggle}
+								>
 									<Render of={cell.render()} />
 									{#if props.sort.order === 'asc'}
-										down
+										<ChevronUpIcon class="h-4 w-4" />
 									{:else if props.sort.order === 'desc'}
-										up
+										<ChevronDownIcon class="h-4 w-4" />
 									{/if}
 								</button>
 							</Table.Head>
@@ -140,13 +214,55 @@
 </Table.Root>
 
 <BulkActions length={Object.keys($selectedDataIds).length}>
-	<Button variant="secondary" size="sm">
+	<Button
+		variant="secondary"
+		size="sm"
+		on:click={() => {
+			// TODO: confirm
+			console.log({ $selectedDataIds, $rows });
+			const rowsToUpdate = $rows.filter((row) => $selectedDataIds[row.id]);
+			console.log({ rowsToUpdate });
+			const ids = rowsToUpdate
+				.map((row) => {
+					if (row.isData()) {
+						return row.original.id;
+					}
+				})
+				.filter(Boolean);
+			$mutation.mutate({
+				id: ids,
+				deleted: new Date()
+			});
+			selectedDataIds.clear();
+		}}
+	>
 		<ArchiveIcon class="h-4 w-4 mr-2 text-muted-foreground" /> Archive</Button
 	>
-	<Button variant="secondary" size="sm">
-		<PinIcon class="h-4 w-4 mr-2 text-muted-foreground" />
-		Pin</Button
-	>
+	{#if $allSelectedPinned !== 'indeterminate' && !$pinMutating}
+		<Button
+			variant="secondary"
+			size="sm"
+			on:click={() => {
+				if ($allSelectedPinned) {
+					// TODO: delete
+					$deletePinMutation.mutate({
+						// ideally data.pin.id should be inferred as nonnullable here
+						id: $selectedData.map((data) => data.pin?.id ?? '')
+					});
+				} else {
+					$createPinMutation.mutate(
+						$selectedData.map((data) => ({
+							annotationId: data.id
+						}))
+					);
+				}
+				selectedDataIds.clear();
+			}}
+		>
+			<PinIcon class="h-4 w-4 mr-2 text-muted-foreground" />
+			{$allSelectedPinned ? 'Remove from Pins' : 'Pin'}
+		</Button>
+	{/if}
 	<Button variant="secondary" size="sm">
 		<CommandIcon class="h-4 w-4 mr-2 text-muted-foreground" />
 		More...</Button

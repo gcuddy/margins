@@ -1,4 +1,4 @@
-import { InfiniteData, QueryClient, createMutation, useQueryClient } from '@tanstack/svelte-query';
+import { InfiniteData, QueryClient, QueryKey, createMutation, useQueryClient } from '@tanstack/svelte-query';
 import { MutationInput, mutation, QueryOutput, mutate } from '../query';
 import type { LibraryResponse } from '$lib/server/queries';
 import { get } from 'svelte/store';
@@ -41,30 +41,29 @@ export function createTagMutation() {
 	});
 }
 
-export function updateAnnotationMutation<TDefaultData extends Partial<MutationInput<'save_note'>>>(opts?: {
-	input?: TDefaultData;
-	showToast?: boolean;
-	onSuccess?: () => void;
-}) {
+export function updateAnnotationMutation<
+	TDefaultData extends Partial<MutationInput<'save_note'>>
+>(opts?: { input?: TDefaultData; showToast?: boolean; onSuccess?: () => void }) {
 	const queryClient = useQueryClient();
 	return createMutation({
-		mutationFn: (input: Omit<MutationInput<'save_note'>, keyof TDefaultData>) => mutate('save_note', {...opts?.input, ...input}),
+		mutationFn: (input: MutationInput<'save_note'>) =>
+			mutate('save_note', { ...opts?.input, ...input }),
 		onMutate(variables) {
 			console.log(`onMutate variables for updateAnnotationMutation`, variables);
 		},
 		onSuccess(data, variables) {
-            const mergedVariables = {...opts?.input, ...variables};
+			const mergedVariables = { ...opts?.input, ...variables };
 			if (opts?.showToast) {
 				toast.success('Note updated');
 			}
-            // only invalidate entries if we have an entryId
-            if ("entryId" in mergedVariables && mergedVariables?.entryId) {
-                queryClient.invalidateQueries({ queryKey: ['entries', 'list'] });
-                queryClient.invalidateQueries({ queryKey: ['entries', 'detail'] });
-            }
+			// only invalidate entries if we have an entryId
+			if ('entryId' in mergedVariables && mergedVariables?.entryId) {
+				queryClient.invalidateQueries({ queryKey: ['entries', 'list'] });
+				queryClient.invalidateQueries({ queryKey: ['entries', 'detail'] });
+			}
 			queryClient.invalidateQueries({ queryKey: ['notes'] });
 			opts?.onSuccess?.();
-		},
+		}
 	});
 }
 
@@ -119,6 +118,45 @@ export function createSetTagsMutation(opts?: { optimistic?: boolean; showToast?:
 			if (opts?.showToast) {
 				toast.success('Tags updated');
 			}
+		}
+	});
+}
+
+function invalidateQueryKeys(queryClient: QueryClient, queryKeys: QueryKey[]) {
+    console.log("invalidating query keys", queryKeys)
+    queryKeys.forEach((queryKey) => {
+        queryClient.invalidateQueries({ queryKey });
+    });
+}
+
+function invalidatePins(queryClient: QueryClient) {
+	queryClient.invalidateQueries({ queryKey: ['pins'] });
+}
+
+type Invalidate = Array<QueryKey>;
+
+export function initCreatePinMutation(opts?: { invalidate?: Invalidate }) {
+	const queryClient = useQueryClient();
+	return createMutation({
+		mutationFn: (input: MutationInput<'createFavorite'>) => mutate('createFavorite', input),
+		onSuccess() {
+			// TODO: set pin cache
+			//for now..
+			invalidatePins(queryClient);
+            if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
+		}
+	});
+}
+
+export function initDeletePinMutation(opts?: { invalidate?: Invalidate }) {
+	const queryClient = useQueryClient();
+	return createMutation({
+		mutationFn: (input: MutationInput<'deleteFavorite'>) => mutate('deleteFavorite', input),
+		onSuccess() {
+			// TODO: set pin cache
+			//for now..
+			invalidatePins(queryClient);
+            if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
 		}
 	});
 }

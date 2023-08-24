@@ -15,6 +15,8 @@ import {
 	convertToSchema,
 	countLibrarySchema,
 	count_library,
+	createFavorite,
+	createFavoriteSchema,
 	createTag,
 	createTagSchema,
 	deleteAnnotation,
@@ -34,12 +36,14 @@ import {
 	tagsOnEntrySchema,
 	updateBookmark,
 	updateBookmarkSchema,
+	updateFavorite,
+	updateFavoriteSchema,
 	updateTag,
 	updateTagSchema,
 	upsertAnnotation,
 	upsertAnnotationSchema
 } from '$lib/queries/server';
-import { idSchema } from '$lib/schemas';
+import { idSchema, idOptionalArraySchema } from '$lib/schemas';
 import { sql } from 'kysely';
 import { z } from 'zod';
 import { fetchList, inputSchema } from './library/fetch.server';
@@ -74,7 +78,6 @@ interface Query<I extends z.ZodTypeAny, Data> {
 
 export const query = <I extends z.ZodTypeAny, Data>(args: Query<I, Data>) => args;
 
-
 export const mutations = {
 	// tag_entry: query({
 	//     schema: z.object({
@@ -97,11 +100,8 @@ export const mutations = {
 		fn: save_to_library
 	}),
 	save_note: query({
-		schema: upsertAnnotationSchema.omit({
-			userId: true
-		}),
-		fn: async ({ ctx: { userId }, input }) =>
-			upsertAnnotation({ ...input, target: input.target as any, userId })
+		schema: upsertAnnotationSchema,
+		fn: upsertAnnotation
 	}),
 	deleteAnnotation: query({
 		schema: idSchema,
@@ -312,8 +312,28 @@ export const mutations = {
 	convertEntry: query({
 		schema: convertToSchema,
 		fn: convertTo
-	})
-};
+	}),
+	createFavorite: query({
+		schema: createFavoriteSchema,
+		fn: createFavorite
+	}),
+	deleteFavorite: query({
+		schema: idOptionalArraySchema,
+		fn: async ({ input, ctx }) => {
+			let query = db.deleteFrom('Favorite').where('userId', '=', ctx.userId);
+			if (Array.isArray(input.id)) {
+				query = query.where('id', 'in', input.id);
+			} else {
+				query = query.where('id', '=', input.id);
+			}
+			await query.execute();
+		}
+	}),
+    updateFavorite: query({
+        schema: updateFavoriteSchema,
+        fn: updateFavorite
+    })
+} as const;
 
 const qSchema = z.object({
 	q: z.string().nonempty()
@@ -763,21 +783,21 @@ export const queries = {
 			'cache-control': 's-maxage=1, stale-while-revalidate=86400'
 		}
 	}),
-    note: query({
-        schema: idSchema,
-        fn: note
-    }),
-    notes: query({
-        schema: notesInputSchema,
-        fn: notes
-    }),
+	note: query({
+		schema: idSchema,
+		fn: note
+	}),
+	notes: query({
+		schema: notesInputSchema,
+		fn: notes
+	}),
 	pins: query({
 		fn: async ({ ctx }) => {
 			// TODO: pagination?
 			const pins = await db
 				.selectFrom('Favorite as f')
 				.where('f.userId', '=', ctx.userId)
-				.select(['f.id', 'f.parentId', 'f.type', 'f.createdAt', 'f.updatedAt'])
+				.select(['f.id', 'f.parentId', 'f.type', 'f.createdAt', 'f.updatedAt', 'f.sortOrder'])
 				.select((eb) => [
 					jsonObjectFrom(
 						eb
@@ -792,9 +812,21 @@ export const queries = {
 							.select(['c.name', 'c.id'])
 					).as('collection'),
 					jsonObjectFrom(
-						eb.selectFrom('Tag as t').whereRef('t.id', '=', 'f.tagId').select(['t.name', 't.id', 't.color'])
-					).as('tag')
+						eb
+							.selectFrom('Tag as t')
+							.whereRef('t.id', '=', 'f.tagId')
+							.select(['t.name', 't.id', 't.color'])
+					).as('tag'),
+					jsonObjectFrom(
+						eb
+							.selectFrom('Annotation as a')
+							.whereRef('a.id', '=', 'f.annotationId')
+							// TODO: grabn more info?
+							.select(['a.title', 'a.color', 'a.icon', 'a.id'])
+					).as('note')
 				])
+				.orderBy('f.sortOrder', 'asc')
+				.orderBy('f.createdAt', 'desc')
 				.execute();
 			return pins;
 		}
