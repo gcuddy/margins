@@ -62,7 +62,7 @@ export const queryFactory = {
 				console.log({ lastPage });
 				return (lastPage as QueryOutput<'get_library'>)?.nextCursor;
 			},
-			defaultPageParam: <QueryOutput<'get_library'>['nextCursor']>null
+			initialPageParam: <QueryOutput<'get_library'>['nextCursor']>null
 		}),
 		detail: (input: QueryInput<'entry_by_id'>) => ({
 			queryKey: ['entries', 'detail', { input }] as const,
@@ -112,7 +112,7 @@ export const queryFactory = {
             getNextPageParam(lastPage) {
 				return (lastPage as QueryOutput<'notes'>)?.nextCursor;
 			},
-			defaultPageParam: <QueryOutput<'notes'>['nextCursor']>undefined
+			initialPageParam: <QueryOutput<'notes'>['nextCursor']>undefined
 		}),
 		detail: (input: QueryInput<'note'>) => {
 			// const queryClient = useQueryClient();

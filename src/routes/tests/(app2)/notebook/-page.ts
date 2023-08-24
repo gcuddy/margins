@@ -21,7 +21,7 @@ export const load = (async ({ data, parent, url, fetch }) => {
         queryKey: ["notebook"],
         queryFn: () => query({ url, fetcher: fetch, userId: session.user.userId }, "notebook", {}),
         staleTime: 1000 * 60 * 2,
-        defaultPageParam: null
+        initialPageParam: null
     })
 
     // return {

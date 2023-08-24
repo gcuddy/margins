@@ -143,7 +143,7 @@
 	// 		const data = await response.json();
 	// 		return data;
 	// 	},
-	// 	defaultPageParam: undefined,
+	// 	initialPageParam: undefined,
 	// 	getNextPageParam: (lastPage) => lastPage.nextCursor
 	// 	// meta: $page
 	// });

@@ -5,7 +5,7 @@
 	import type { ViewOptions } from '$lib/types/schemas/View';
 	import AnnotationCount from './AnnotationCount.svelte';
 	import LocationPill from './LocationPill.svelte';
-	import Tag from './Tags/Tag.svelte';
+	import Tag from './tags/Tag.svelte';
 
 	export let item: ExtendedBookmark;
 	export let viewOptions: Partial<ViewOptions>;

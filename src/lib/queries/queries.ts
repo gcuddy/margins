@@ -15,7 +15,7 @@ import type { Queries, QueriesWithCursorInput } from "@/routes/tests/(app2)/quer
 //     queryFn: fetch_list,
 //     staleTime: 5 * 1000,
 //     getNextPageParam: (lastPage) => lastPage.nextCursor,
-//     defaultPageParam: undefined,
+//     initialPageParam: undefined,
 // })
 
 
@@ -40,7 +40,7 @@ export const useLibraryOptions = (status: Status, search?: string) => infiniteQu
     ...queryKeys.entries.library(status, search ? { search } : {}),
     queryFn: fetch_library,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    defaultPageParam: undefined,
+    initialPageParam: undefined,
 });
 
 
@@ -53,7 +53,7 @@ export const tagDetailOptions = (name: string) => {
         queryKey: queryKeys.tags.detail(name).queryKey,
         queryFn: (ctx) => query(ctx.meta as Meta, "entries_by_tag", { name: ctx.queryKey[2], cursor: ctx.pageParam }),
         getnextPageParam: (lastPage) => lastPage.nextCursor,
-        defaultPageParam: undefined,
+        initialPageParam: undefined,
     }
     )
 }
@@ -62,7 +62,7 @@ export function useLibrary(status: Status) {
         ...queryKeys.entries.library(status),
         queryFn: fetch_library,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
-        defaultPageParam: undefined,
+        initialPageParam: undefined,
     })
 }
 

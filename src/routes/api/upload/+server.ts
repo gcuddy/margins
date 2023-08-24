@@ -1,4 +1,4 @@
-import { error, json } from '@sveltejs/kit';
+    import { error, json } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { uploadFile } from '$lib/backend/s3.server';
 import { nanoid } from '$lib/nanoid';

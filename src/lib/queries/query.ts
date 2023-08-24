@@ -168,7 +168,7 @@ export function createQueryOption<T extends keyof Queries, TType extends GetQuer
 						...input,
 						cursor: pageParam
 					}),
-				defaultPageParam: <CursorType<T>>undefined,
+				initialPageParam: <CursorType<T>>undefined,
 				getNextPageParam: (lastPage) => (lastPage as any).nextCursor
 			} satisfies CreateInfiniteQueryOptions;
 		}

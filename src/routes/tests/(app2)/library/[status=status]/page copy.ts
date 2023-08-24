@@ -58,7 +58,7 @@ export const load = (async (e) => {
     // queryClient.prefetchInfiniteQuery(
     //     {
     //         ...queryKeys.entries.library(e.data.Status),
-    //         defaultPageParam: undefined,
+    //         initialPageParam: undefined,
     //         getNextPageParam: lastPage => lastPage.nextCursor
     //     }
     // )
@@ -66,12 +66,12 @@ export const load = (async (e) => {
         ...e.data,
         // query: loadInfiniteQuery(queryClient, {
         //     ...opts,
-        //     defaultPageParam: <ListInput["cursor"]>undefined,
+        //     initialPageParam: <ListInput["cursor"]>undefined,
         //     getNextPageParam: lastPage => lastPage.nextCursor
         // }),
         // query_opts: server_infinite_query(queryClient, {
         //     ...opts,
-        //     defaultPageParam: <ListInput["cursor"]>undefined,
+        //     initialPageParam: <ListInput["cursor"]>undefined,
         //     getNextPageParam: lastPage => lastPage.nextCursor
         // })
     }

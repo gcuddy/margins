@@ -11,7 +11,7 @@ export const load = (async (e) => {
         ...e.data,
         query: loadInfiniteQuery(queryClient, {
             ...opts,
-            defaultPageParam: undefined,
+            initialPageParam: undefined,
             getNextPageParam: lastPage => lastPage.nextCursor
         }),
         search

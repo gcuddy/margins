@@ -8,7 +8,7 @@ export const load = (async (e) => {
     return {
         query: loadInfiniteQuery(queryClient, {
             ...opts,
-            defaultPageParam: undefined,
+            initialPageParam: undefined,
             getNextPageParam: (lastPage) => lastPage?.nextCursor
         }),
         ...e.data,

@@ -3,7 +3,7 @@
 	import type { Article, Tag } from "@prisma/client";
 	import Combobox from "./helpers/Combobox.svelte";
 	import { getNthValueOfSet } from "$lib/utils";
-	import TagComponent, { type TagVariant } from "./Tags/Tag.svelte";
+	import TagComponent, { type TagVariant } from "./tags/Tag.svelte";
 	import Icon from "./helpers/Icon.svelte";
 	import type { ExtendedBookmark } from "$lib/bookmark";
 	import { notifications } from "$lib/stores/notifications";
