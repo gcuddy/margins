@@ -71,11 +71,11 @@ export function create_multi<T extends string | number>({
 		});
 	}
 
-	function setHighlighted(item: T | null) {
+	function setHighlighted(item: T | null, scrollIntoView = true) {
         if (item) {
             const next_el = (root ?? document)?.querySelector(`[data-id="${item}"]`);
-            if (next_el instanceof HTMLElement) {
-                next_el.scrollIntoView({ block: 'nearest' });
+            if (next_el instanceof HTMLElement ) {
+                if (scrollIntoView) next_el.scrollIntoView({ block: 'nearest' });
                 next_el.focus();
             }
         }
@@ -303,7 +303,7 @@ export function create_multi<T extends string | number>({
 					const id = item.getAttribute(attribute_name);
 					const isNumber = typeof id === 'string' && !isNaN(Number(id));
 					if (id) {
-						setHighlighted((isNumber ? Number(id) : id) as T);
+						setHighlighted((isNumber ? Number(id) : id) as T, false);
 					}
 				}
 			}

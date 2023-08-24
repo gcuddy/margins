@@ -5,30 +5,50 @@
 	import type { PageData } from './$types';
 	import Header from '$components/ui/Header.svelte';
 	import * as Tabs from '$components/ui/tabs';
-	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createInfiniteQuery, keepPreviousData, useQueryClient } from '@tanstack/svelte-query';
 	import Table from './Table.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { derived } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 	import { Button } from '$components/ui/button';
 	import { PlusIcon } from 'lucide-svelte';
+	import Intersector from '$components/Intersector.svelte';
+	import type { NotesInput } from '$lib/queries/server';
 
 	export let data: PageData;
 
 	const queryClient = useQueryClient();
-	const notesQuery = createQuery(
-		queryFactory.notes.list(
-			{
-				filter: {
-					type: 'document'
-				}
-			},
-			queryClient
-		)
+	const input = writable<Omit<NotesInput, 'cursor'>>({});
+
+	const notesQuery = createInfiniteQuery(
+		derived(input, ($input) => ({
+			...queryFactory.notes.list(
+				{
+					filter: {
+						type: 'document'
+					}
+					// ...$input
+				},
+				queryClient
+			),
+			placeholderData: keepPreviousData
+		}))
 	);
 
 	$: console.log({ $notesQuery });
 
-	const notesStore = derived(notesQuery, ($notesQuery) => $notesQuery.data?.notes ?? []);
+	const notesStore = derived(
+		notesQuery,
+		($notesQuery) =>
+			$notesQuery.data?.pages
+				.flatMap((page) => page.notes)
+				.filter((note) => {
+					// match input best we can
+					if (!$input.includeArchived) {
+						if (!!note.deleted) return false;
+					}
+					return true;
+				}) ?? []
+	);
 </script>
 
 <Header>
@@ -50,8 +70,33 @@
 		{#if $notesQuery.isPending}
 			loading..
 		{:else if $notesQuery.isSuccess}
-			<Table notes={notesStore} />
+			<Table
+				{input}
+				notes={notesStore}
+				onSort={({ orderBy, dir }) => {
+					// make sure all pages are fetched
+					// $input = {
+					// 	...$input,
+					// 	orderBy,
+					// 	dir
+					// };
+				}}
+				onEnd={() => {
+					console.log('end');
+					if ($notesQuery.hasNextPage && !$notesQuery.isFetchingNextPage) {
+						// $notesQuery.fetchNextPage();
+					}
+				}}
+			/>
 		{/if}
+		<Intersector
+			cb={() => {
+				// if ($notesQuery.hasNextPage && !$notesQuery.isFetchingNextPage) {
+				//     console.log('fetching next page')
+				// 	$notesQuery.fetchNextPage();
+				// }
+			}}
+		/>
 	</Tabs.Content>
 	<Tabs.Content value="annotations">
 		<!-- {#each data.notes.notes as annotation (annotation.id)}

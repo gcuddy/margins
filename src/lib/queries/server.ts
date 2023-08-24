@@ -1321,7 +1321,7 @@ export const notesInputOrderAndCursorSchema = z.union([
 		cursor: z.object({
 			title: z.string().nullable(),
 			createdAt: z.coerce.date()
-		})
+		}).optional()
 	})
 ]);
 
@@ -1336,6 +1336,8 @@ export const notesInputSchema = z
 	})
 	.deepPartial()
 	.and(notesInputOrderAndCursorSchema);
+
+export type NotesInput = z.input<typeof notesInputSchema>;
 
 function noteTags(
 	eb: ExpressionBuilder<
@@ -1369,7 +1371,7 @@ function notePin(
 export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	const { filter, includeArchived, cursor, dir, orderBy } = input;
 
-	const take = input.take || 10;
+	const take = input.take || 50;
 
 	// TODO: should we filter out replies?
 
@@ -1452,6 +1454,7 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	};
 }
 
+export type NotesResponse = Awaited<ReturnType<typeof notes>>;
 export type Notes = Awaited<ReturnType<typeof notes>>['notes'];
 export type Note = Notes[number];
 

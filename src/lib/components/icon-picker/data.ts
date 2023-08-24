@@ -54,7 +54,16 @@ import {
     Trees,
     Activity,
     Atom,
-    FileIcon
+    FileIcon,
+    //
+    CalendarDays,
+    Banknote,
+    Brush,
+    Unplug,
+    LeafyGreen,
+    HandMetal,
+    Container,
+    Construction,
 } from 'lucide-svelte';
 import type { ComponentType } from 'svelte';
 
@@ -285,5 +294,37 @@ export const icons: {
     {
         name: 'Atom',
         component: Atom
+    },
+    {
+        name: 'CalendarDays',
+        component: CalendarDays
+    },
+    {
+        name: 'Banknote',
+        component: Banknote
+    },
+    {
+        name: 'Brush',
+        component: Brush
+    },
+    {
+        name: 'Unplug',
+        component: Unplug
+    },
+    {
+        name: 'LeafyGreen',
+        component: LeafyGreen
+    },
+    {
+        name: 'HandMetal',
+        component: HandMetal
+    },
+    {
+        name: 'Container',
+        component: Container
+    },
+    {
+        name: 'Construction',
+        component: Construction
     }
 ];

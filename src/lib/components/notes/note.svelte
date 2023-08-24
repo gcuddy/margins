@@ -40,7 +40,7 @@
 	let lastSavedContentData = contentData;
 	console.log({ contentData, lastSavedContentData });
 
-	export let color = '#000000';
+	export let color: string  = '#000000';
 	export let icon = 'File';
 	let textarea: HTMLTextAreaElement;
 	let user = $page.data.user_data?.username;

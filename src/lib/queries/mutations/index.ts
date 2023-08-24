@@ -1,10 +1,18 @@
-import { InfiniteData, QueryClient, QueryKey, createMutation, useQueryClient } from '@tanstack/svelte-query';
+import {
+	InfiniteData,
+	QueryClient,
+	QueryKey,
+	createMutation,
+	useQueryClient
+} from '@tanstack/svelte-query';
 import { MutationInput, mutation, QueryOutput, mutate } from '../query';
 import type { LibraryResponse } from '$lib/server/queries';
 import { get } from 'svelte/store';
 import { page } from '$app/stores';
 import type { QueryFactory } from '../querykeys';
 import { toast } from 'svelte-sonner';
+import type { Note, NotesResponse } from '../server';
+import { omit } from '$lib/helpers';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
@@ -48,8 +56,58 @@ export function updateAnnotationMutation<
 	return createMutation({
 		mutationFn: (input: MutationInput<'save_note'>) =>
 			mutate('save_note', { ...opts?.input, ...input }),
-		onMutate(variables) {
+		async onMutate(variables) {
 			console.log(`onMutate variables for updateAnnotationMutation`, variables);
+
+			// setting optimistically isn't too hard, since we just have two main query key scopes to consider (list and detail)
+			// Remember 4 Steps: 1) Cancel 2) Snapshot 3) Optimsitically update 4) Return Context with Previous and New Item
+
+			await queryClient.cancelQueries({
+				queryKey: ['notes']
+			});
+
+			// Since detail->id is seeded by list, this should be fine
+			const previousNote = queryClient.getQueryData<Note>(['notes', 'detail', variables.id]);
+
+			if (variables.id) {
+				// TODO: get tags and relations too
+
+                const ids = Array.isArray(variables.id) ? variables.id : [variables.id];
+                for (const id of ids) {
+                    queryClient.setQueryData<Note>(['notes', 'detail', id], (old) => {
+                        if (!old) return old;
+                        if (!id) return old;
+                        return {
+                            ...old,
+                            ...omit(variables, 'id', 'tags', 'relations') //TODO: why can't i get these too
+                        };
+                    });
+                }
+				queryClient.setQueriesData<InfiniteData<NotesResponse>>(
+					{ queryKey: ['notes', 'list'] },
+					(data) => {
+						if (!data) return data;
+						return {
+							...data,
+							pages: data.pages.map((page) => ({
+								...page,
+								notes: page.notes.map((note) => {
+									if (ids.includes(note.id)) {
+										return {
+											...note,
+											...omit(variables, 'id', 'tags', 'relations')
+										};
+									}
+									return note;
+								})
+							}))
+						};
+					}
+				);
+			}
+			return {
+				previousNote
+			};
 		},
 		onSuccess(data, variables) {
 			const mergedVariables = { ...opts?.input, ...variables };
@@ -123,10 +181,10 @@ export function createSetTagsMutation(opts?: { optimistic?: boolean; showToast?:
 }
 
 function invalidateQueryKeys(queryClient: QueryClient, queryKeys: QueryKey[]) {
-    console.log("invalidating query keys", queryKeys)
-    queryKeys.forEach((queryKey) => {
-        queryClient.invalidateQueries({ queryKey });
-    });
+	console.log('invalidating query keys', queryKeys);
+	queryKeys.forEach((queryKey) => {
+		queryClient.invalidateQueries({ queryKey });
+	});
 }
 
 function invalidatePins(queryClient: QueryClient) {
@@ -143,7 +201,7 @@ export function initCreatePinMutation(opts?: { invalidate?: Invalidate }) {
 			// TODO: set pin cache
 			//for now..
 			invalidatePins(queryClient);
-            if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
+			if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
 		}
 	});
 }
@@ -156,7 +214,7 @@ export function initDeletePinMutation(opts?: { invalidate?: Invalidate }) {
 			// TODO: set pin cache
 			//for now..
 			invalidatePins(queryClient);
-            if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
+			if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
 		}
 	});
 }

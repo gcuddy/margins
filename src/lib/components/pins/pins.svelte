@@ -8,6 +8,8 @@
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { Icon } from '$components/icon-picker';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { make_link } from '$lib/utils/entries';
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	export let pins: QueryOutput<'pins'>;
 
 	const queryClient = useQueryClient();
@@ -117,6 +119,17 @@
                                         </div> -->
 					<Icon class="h-4 w-4 mr-2" icon={pin.note.icon} color={pin.note.color} />
 					<span class="truncate"> {pin.note.title ?? 'Untitled'}</span>
+				</Button>
+			{:else if pin.entry}
+				{@const href = make_link(pin.entry)}
+				<Button
+					size="sm"
+					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
+					class="w-full justify-start font-normal"
+					{href}
+				>
+                    <EntryIcon class="h-4 w-4 mr-2" type={pin.entry.type} />
+					<span class="truncate"> {pin.entry.title ?? 'Untitled'}</span>
 				</Button>
 			{/if}
 		</div>

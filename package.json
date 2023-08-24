@@ -24,6 +24,7 @@
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.369.0",
+		"@faker-js/faker": "^8.0.2",
 		"@formkit/auto-animate": "^1.0.0-beta.6",
 		"@googleapis/books": "^1.0.0",
 		"@medv/finder": "^3.1.0",

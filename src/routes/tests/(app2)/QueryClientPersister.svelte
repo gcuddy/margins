@@ -77,6 +77,7 @@
 	}
 
 	const trySave = async (persistedClient: PersistedClient): Promise<Error | undefined> => {
+		console.log(`attempting save`);
 		try {
 			persistedClient.clientState.queries.forEach((query) => {
 				if (query.meta?.init) {
@@ -103,6 +104,7 @@
 						let errorCount = 0;
 						while (error && client) {
 							errorCount++;
+							console.log({ errorCount });
 							if (client) {
 								error = await trySave(client);
 							}
@@ -113,10 +115,20 @@
 					}
 				),
 				restoreClient: async () => {
-					const client = await get<PersistedClient>(key);
-					return client;
+                    console.log(`restoring client`);
+                    const client = await get<PersistedClient>(key);
+                    console.log({ client });
+                    return client;
+					return {
+						clientState: {
+							queries: [],
+							mutations: []
+						},
+						buster: 'buster',
+						timestamp: 123
+					} satisfies PersistedClient;
 				},
-                removeClient: async () => del(key)
+				removeClient: async () => del(key)
 			},
 			dehydrateOptions: {
 				shouldDehydrateQuery(query) {
@@ -146,9 +158,9 @@
 					if (queryKey[0] === 'pins') {
 						return true;
 					}
-                    if (queryKey[0] === 'notes') {
-                        return true;
-                    }
+					if (queryKey[0] === 'notes') {
+						return true;
+					}
 
 					return false;
 				}

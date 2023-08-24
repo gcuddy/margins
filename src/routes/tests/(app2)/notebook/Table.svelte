@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { createTable, Subscribe, Render, createRender } from 'svelte-headless-table';
-	import type { Note } from '$lib/queries/server';
-	export let notes: Readable<Note[]>;
+	import type { Note, NotesInput } from '$lib/queries/server';
 
 	import {
 		addSortBy,
@@ -11,7 +10,7 @@
 		addHiddenColumns,
 		addColumnOrder
 	} from 'svelte-headless-table/plugins';
-	import { derived, type Readable } from 'svelte/store';
+	import { derived, Writable, type Readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
 	import { Input } from '$components/ui/input';
 	import { IconPicker } from '$components/icon-picker';
@@ -21,7 +20,14 @@
 	import { cn } from '$lib';
 	import BulkActions from './bulk-actions.svelte';
 	import { Button } from '$components/ui/button';
-	import { ArchiveIcon, ChevronDownIcon, ChevronUpIcon, CommandIcon, PinIcon } from 'lucide-svelte';
+	import {
+		ArchiveIcon,
+		ChevronDownIcon,
+		ChevronUpIcon,
+		CommandIcon,
+		PinIcon,
+		SearchIcon
+	} from 'lucide-svelte';
 	import {
 		initCreatePinMutation,
 		initDeletePinMutation,
@@ -32,7 +38,19 @@
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
 	import type { Snapshot } from '../../../$types';
 	import { page } from '$app/stores';
-	import { tick } from 'svelte';
+	import { createEventDispatcher, tick } from 'svelte';
+	import { createWindowVirtualizer, createVirtualizer } from '@tanstack/svelte-virtual';
+	export let notes: Readable<Note[]>;
+
+	export let input: Writable<NotesInput>;
+
+	export let loading = false;
+
+	type Sort = {
+		orderBy: NotesInput['orderBy'];
+		dir: NotesInput['dir'];
+	};
+	export let onSort: ((sort: Sort) => void) | undefined = undefined;
 
 	const mutation = updateAnnotationMutation();
 
@@ -122,7 +140,7 @@
 		table.createViewModel(columns);
 
 	const { sortKeys, preSortedRows } = pluginStates.sort;
-	const { selectedDataIds, allRowsSelected, someRowsSelected } = pluginStates.select;
+	const { selectedDataIds, allRowsSelected, someRowsSelected, getRowState } = pluginStates.select;
 	const { filterValue } = pluginStates.filter;
 
 	const selectedData = derived([selectedDataIds, rows], ([ids, rows]) => {
@@ -152,6 +170,9 @@
 			if (row?.isData()) {
 				goto(`/tests/note/${row.original.id}`);
 			}
+		},
+		onSelect(item) {
+			selectedDataIds.toggle(item);
 		}
 	});
 
@@ -189,6 +210,34 @@
 			$filterValue = parsed._filterValue;
 		}
 	});
+	let tbody: HTMLTableSectionElement;
+
+	const virtualizer = createWindowVirtualizer({
+		// getScrollElement: () => tbody ?? null,
+		count: $rows.length,
+		estimateSize: () => 60,
+		overscan: 20,
+		getItemKey: (index) => $rows[index]?.id ?? index
+	});
+
+	$: ({ measure } = $virtualizer);
+
+	$: $virtualizer.setOptions({
+		count: $rows.length
+		// getScrollElement: () => tbody ?? null
+	});
+
+	const paddingTop = derived(virtualizer, ($virtualizer) => {
+		const items = $virtualizer.getVirtualItems();
+		return items.length > 0 ? items?.[0]?.start || 0 : 0;
+	});
+	const paddingBottom = derived(virtualizer, ($virtualizer) => {
+		const virtualRows = $virtualizer.getVirtualItems();
+		const totalSize = $virtualizer.getTotalSize();
+		return virtualRows.length > 0
+			? totalSize - (virtualRows?.[virtualRows.length - 1]?.end || 0)
+			: 0;
+	});
 
 	const {
 		stores: { state }
@@ -199,6 +248,30 @@
 	$: multi.helpers.updateItems($rows.map((note) => note.id));
 
 	let inputEl: HTMLInputElement;
+
+	const getRow = (index: number) => {
+		const row = $rows[index];
+		if (!row) {
+			throw new Error(`Row at index ${index} does not exist`);
+		}
+		return row;
+	};
+
+	export let onEnd = () => {};
+	// $: {
+	// 	const lastItem = $virtualizer.getVirtualItems().at(-1);
+	// 	console.log({ lastItem, $notes });
+	// 	if (lastItem && lastItem?.index >= $notes.length - 1) {
+	// 		// console.log('fetching next page');
+	// 		onEnd();
+	// 	}
+	// }
+
+	$: {
+		$notes;
+		console.log('measure');
+		measure();
+	}
 </script>
 
 <svelte:window
@@ -206,11 +279,10 @@
 		if (e.key === 'ArrowUp' && $state.highlighted) {
 			const firstRow = $rows[0];
 			if (firstRow?.id === $state.highlighted) {
-                // put focus on input element
-                inputEl?.focus();
-				inputEl.setSelectionRange(1000, 1000)
-				tick().then(() => {
-				});
+				// put focus on input element
+				inputEl?.focus();
+				inputEl.setSelectionRange(1000, 1000);
+				tick().then(() => {});
 				multi.helpers.setHighlighted(null);
 				return;
 			}
@@ -220,25 +292,30 @@
 />
 
 <div class="mb-4 flex items-center gap-4">
-	<Input
-		bind:el={inputEl}
-		class="max-w-sm text-sm"
-		placeholder="Filter..."
-		type="text"
-		on:focus={() => {
-			multi.helpers.setHighlighted(null);
-		}}
-		on:keydown={(e) => {
-			if (e.key === 'ArrowDown') {
-				if (e.target instanceof HTMLInputElement) {
-					e.target.blur();
+	<div class="relative">
+		<Input
+			bind:el={inputEl}
+			class="max-w-sm text-sm pl-7"
+			placeholder="Filter..."
+			type="text"
+			on:focus={() => {
+				multi.helpers.setHighlighted(null);
+			}}
+			on:keydown={(e) => {
+				if (e.key === 'ArrowDown') {
+					if (e.target instanceof HTMLInputElement) {
+						e.target.blur();
+					}
+				} else if (e.key === 'ArrowUp') {
+					e.stopPropagation();
 				}
-			} else if (e.key === 'ArrowUp') {
-				e.stopPropagation();
-			}
-		}}
-		bind:value={$filterValue}
-	/>
+			}}
+			bind:value={$filterValue}
+		/>
+		<SearchIcon
+			class="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50 peer-focus:opacity-100 transition-opacity"
+		/>
+	</div>
 </div>
 <Table.Root {...$tableAttrs}>
 	<Table.Header>
@@ -252,7 +329,22 @@
 								<button
 									data-sorted={isSorted}
 									class="flex items-center gap-1 data-[sorted=true]:text-foreground"
-									on:click={props.sort.toggle}
+									on:click={(e) => {
+										props.sort.toggle(e);
+										$virtualizer.measure();
+										props.sort.order;
+										onSort?.({
+											dir: props.sort.order,
+											orderBy:
+												cell.id === 'title'
+													? 'name'
+													: cell.id === 'createdAt'
+													? 'createdAt'
+													: cell.id === 'updatedAt'
+													? 'updatedAt'
+													: undefined
+										});
+									}}
 								>
 									<Render of={cell.render()} />
 									{#if props.sort.order === 'asc'}
@@ -268,8 +360,14 @@
 			</Subscribe>
 		{/each}
 	</Table.Header>
-	<Table.Body {...$tableBodyAttrs}>
-		{#each $rows as row (row.id)}
+	<Table.Body bind:el={tbody} {...$tableBodyAttrs}>
+		{#if $paddingTop}
+			<tr>
+				<td style:height="{$paddingTop}px" />
+			</tr>
+		{/if}
+		{#each $virtualizer.getVirtualItems() as item (item.key)}
+			{@const row = getRow(item.index)}
 			<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
 				{@const highlighted = $state.highlighted === row.id}
 				<Table.Row
@@ -278,6 +376,7 @@
 					data-id={row.id}
 					data-state={$selectedDataIds[row.id] && 'selected'}
 					data-highlighted={highlighted}
+					class="duration-100 data-[state=selected]:data-[highlighted=true]:bg-accent data-[highlighted=true]:ring-1 ring-inset"
 				>
 					{#each row.cells as cell (cell.id)}
 						<Subscribe attrs={cell.attrs()} let:attrs>
@@ -315,6 +414,11 @@
 				</Table.Row>
 			</Subscribe>
 		{/each}
+		{#if $paddingBottom}
+			<tr>
+				<td style:height="{$paddingBottom}px" />
+			</tr>
+		{/if}
 	</Table.Body>
 </Table.Root>
 

@@ -63,6 +63,7 @@
 					id: numberOrString($page.params.id),
 					type: data.type
 				}),
+                placeholderData: undefined,
 				// placeholderData: () => {
 				// 	console.time(`placeholderData`);
 				// 	console.log({ queryClient });
@@ -90,7 +91,7 @@
 			};
 		})
 	);
-	$: console.log({ $query });
+	$: console.log({ $query, data });
 
 	afterNavigate(() => {
 		// push to recents
@@ -179,10 +180,11 @@
 			</svelte:component>
 		{:else}
 			<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
-			<svelte:component this={data.component} data={{
+            <!-- data={{
                 ...data,
                 ...$query.data
-            }} />
+            }} -->
+			<svelte:component this={data.component} {data} />
 		{/if}
 	{/if}
 </div>

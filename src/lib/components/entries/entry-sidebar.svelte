@@ -54,7 +54,7 @@
 	import { numberOrString } from '$lib/utils/misc';
 	import LibraryForm from '$components/ui/library/library-form.svelte';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
-	import { ago } from '$lib/utils/date';
+	import { ago, now } from '$lib/utils/date';
 	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import EntryAuthorInput from './entry-author-input.svelte';
@@ -136,7 +136,6 @@
 
 	$: console.log({ currentTab });
 
-
 	const note_save_status = writable<SaveStatus>();
 	// $: if ($value) {
 	// 	currentTab.set($value);
@@ -146,9 +145,7 @@
 	type Timeline = { createdAt: Date }[];
 </script>
 
-<aside
-	class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain"
->
+<aside class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain">
 	<!-- 2.5rem is size of sidebar toggle -->
 	<Tabs bind:value={$currentTab}>
 		<div
@@ -195,7 +192,7 @@
 							<Muted>Saved</Muted>
 							<Muted class="grow">
 								{$query.data?.entry?.bookmark?.createdAt
-									? ago(new Date($query.data?.entry?.bookmark?.createdAt), new Date())
+									? ago(new Date($query.data?.entry?.bookmark?.createdAt), $now)
 									: 'Never'}
 							</Muted>
 							{#if $query.data?.entry?.bookmark?.createdAt}

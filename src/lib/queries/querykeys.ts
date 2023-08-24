@@ -93,8 +93,8 @@ export const queryFactory = {
 	notes: {
 		list: (input?: QueryInput<'notes'>, queryClient?: QueryClient) => ({
 			queryKey: ['notes', 'list', input] as const,
-			queryFn: async ({ meta }: QueryFnParams) => {
-                const data = await qquery(meta?.init, 'notes', { ...input });
+			queryFn: async ({ meta, pageParam }: InfiniteQueryFnParams) => {
+                const data = await qquery(meta?.init, 'notes', { ...input, cursor: pageParam });
                 // "push" approach to seeding cache. TODO look at perf impact
                 // see https://tkdodo.eu/blog/seeding-the-query-cache#push-approach
                 if (queryClient) {
@@ -108,10 +108,14 @@ export const queryFactory = {
                 }
 
                 return data;
-            }
+            },
+            getNextPageParam(lastPage) {
+				return (lastPage as QueryOutput<'notes'>)?.nextCursor;
+			},
+			defaultPageParam: <QueryOutput<'notes'>['nextCursor']>undefined
 		}),
 		detail: (input: QueryInput<'note'>) => {
-			const queryClient = useQueryClient();
+			// const queryClient = useQueryClient();
 			return {
 				queryKey: ['notes', 'detail', input] as const,
 				queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'note', input),

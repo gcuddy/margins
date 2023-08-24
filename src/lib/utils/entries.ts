@@ -4,14 +4,16 @@ import type { DocumentType, Entry } from "@prisma/client";
 
 const prefix = `/tests`
 
-export function getId(entry: {
+type SlimEntry = {
     type: DocumentType;
     id: number;
     tmdbId?: number | null;
     spotifyId?: string | null;
     googleBooksId?: string | null;
     podcastIndexId?: number | null;
-}): string | number {
+}
+
+export function getId(entry: SlimEntry): string | number {
     if ((entry.type === "movie" || entry.type === "tv") && entry.tmdbId) {
         return entry.tmdbId;
     }
@@ -32,7 +34,7 @@ export function getType(type: Entry["type"]) {
     return type
 }
 
-export function make_link(entry: EntryInList, subpath = "") {
+export function make_link(entry: SlimEntry, subpath = "") {
     return `${prefix}/${getType(entry.type)}/${getId(entry)}${subpath ? '#' + subpath : ''}`
 }
 

@@ -823,7 +823,14 @@ export const queries = {
 							.whereRef('a.id', '=', 'f.annotationId')
 							// TODO: grabn more info?
 							.select(['a.title', 'a.color', 'a.icon', 'a.id'])
-					).as('note')
+					).as('note'),
+					jsonObjectFrom(
+						eb
+							.selectFrom('Entry as e')
+							.whereRef('e.id', '=', 'f.entryId')
+							// TODO: grabn more info?
+							.select(entrySelect)
+					).as('entry'),
 				])
 				.orderBy('f.sortOrder', 'asc')
 				.orderBy('f.createdAt', 'desc')

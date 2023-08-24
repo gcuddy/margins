@@ -8,7 +8,7 @@ export async function load({ data }) {
 		defaultOptions: {
 			queries: {
 				enabled: browser,
-				staleTime: 1000 * 60 * 2, // 2 minutes,
+				staleTime: 1000 * 60 * 60, // 1 hour,
 				gcTime: 1000 * 60 * 60 * 24, // 24 hours (for persistence)
                 // placeholderData: keepPreviousData // keep previous data while fetching new data (TODO REVIEW if this is what we want )
                 networkMode: "offlineFirst"
