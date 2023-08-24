@@ -1309,6 +1309,22 @@ export async function convertTo({ input, ctx }: GetCtx<typeof convertToSchema>) 
 	return newEntry;
 }
 
+export const notesInputOrderAndCursorSchema = z.union([
+	z.object({
+		orderBy: z.enum(['updatedAt', 'createdAt']).default('createdAt'),
+		dir: z.enum(['asc', 'desc']).default('desc'),
+		cursor: z.coerce.date().optional()
+	}),
+	z.object({
+		orderBy: z.literal('name'),
+		dir: z.enum(['asc', 'desc']).default('asc'),
+		cursor: z.object({
+			title: z.string().nullable(),
+			createdAt: z.coerce.date()
+		})
+	})
+]);
+
 export const notesInputSchema = z
 	.object({
 		filter: z.object({
@@ -1318,7 +1334,8 @@ export const notesInputSchema = z
 		// Number of notes to return. Defaults to 50.
 		take: z.number().default(50)
 	})
-	.deepPartial();
+	.deepPartial()
+	.and(notesInputOrderAndCursorSchema);
 
 function noteTags(
 	eb: ExpressionBuilder<
@@ -1350,9 +1367,9 @@ function notePin(
 }
 
 export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
-	const { filter, includeArchived } = input;
+	const { filter, includeArchived, cursor, dir, orderBy } = input;
 
-	const take = input.take || 50;
+	const take = input.take || 10;
 
 	// TODO: should we filter out replies?
 
@@ -1367,8 +1384,39 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 		.select((eb) => notePin(eb))
 		// this should always be on there - right?
 		.where('a.userId', '=', ctx.userId)
-		.orderBy('a.createdAt', 'desc')
-		.limit(take);
+        // Get 1 more to get cursor
+		.limit(take + 1);
+
+	if (orderBy === 'createdAt' || !orderBy) {
+		const _dir = dir || 'desc';
+		query = query.orderBy('a.createdAt', _dir);
+		if (cursor) {
+			query = query.where('a.createdAt', _dir === 'desc' ? '<' : '>', cursor);
+		}
+	} else if (orderBy === 'updatedAt') {
+		const _dir = dir || 'desc';
+		query = query.orderBy('a.updatedAt', _dir);
+		if (cursor) {
+			query = query.where('a.updatedAt', _dir === 'desc' ? '<' : '>', cursor);
+		}
+	} else if (orderBy === 'name') {
+		const _dir = dir || 'asc';
+		query = query.orderBy('a.title', _dir).orderBy('a.createdAt', _dir);
+		if (cursor) {
+			query = query.where((eb) =>
+				eb.or([
+					eb('a.title', _dir === 'asc' ? '>' : '<', cursor.title),
+					eb('a.title', '=', cursor.title).and(
+						'a.createdAt',
+						_dir === 'asc' ? '>' : '<',
+						cursor.createdAt
+					)
+				])
+			);
+		}
+	} else {
+		orderBy satisfies never;
+	}
 
 	if (filter) {
 		if (filter.type) {
@@ -1379,9 +1427,27 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	if (!includeArchived) {
 		query = query.where('a.deleted', 'is', null);
 	}
+    const notes = await query.execute()
+    let nextCursor: typeof cursor | undefined = undefined;
+    if (notes.length > take) {
+        const nextItem = notes.pop();
+        if (nextItem) {
+            if (orderBy === 'createdAt' || orderBy === 'updatedAt') {
+                nextCursor = nextItem[orderBy];
+            } else if (orderBy === 'name') {
+                nextCursor = {
+                    title: nextItem.title,
+                    createdAt: nextItem.createdAt
+                }
+            } else {
+                // orderBy satisfies never;
+            }
+        }
 
+    }
 	return {
-		notes: await query.execute()
+        notes,
+        nextCursor
 		// todo: nextCursor
 	};
 }

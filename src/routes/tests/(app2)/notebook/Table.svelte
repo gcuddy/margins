@@ -13,6 +13,7 @@
 	} from 'svelte-headless-table/plugins';
 	import { derived, type Readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
+	import { Input } from '$components/ui/input';
 	import { IconPicker } from '$components/icon-picker';
 	import Badge from '$components/ui/Badge.svelte';
 	import { TagColorPill } from '$components/tags/tag-color';
@@ -27,6 +28,11 @@
 		updateAnnotationMutation
 	} from '$lib/queries/mutations/index';
 	import commandScore from 'command-score';
+	import { create_multi } from '$components/entries/multi-select/multi';
+	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
+	import type { Snapshot } from '../../../$types';
+	import { page } from '$app/stores';
+	import { tick } from 'svelte';
 
 	const mutation = updateAnnotationMutation();
 
@@ -117,7 +123,7 @@
 
 	const { sortKeys, preSortedRows } = pluginStates.sort;
 	const { selectedDataIds, allRowsSelected, someRowsSelected } = pluginStates.select;
-    const { filterValue } = pluginStates.filter;
+	const { filterValue } = pluginStates.filter;
 
 	const selectedData = derived([selectedDataIds, rows], ([ids, rows]) => {
 		const relevantRows = rows.filter((row) => ids[row.id]);
@@ -137,10 +143,102 @@
 		if (pins.every((pin) => !pin)) return false;
 		return 'indeterminate' as const;
 	});
+
+	const multi = create_multi({
+		items: $notes.map((note) => note.id),
+		allowedSelector: 'input',
+		onEnter(item) {
+			const row = $rows.find((row) => row.id === item);
+			if (row?.isData()) {
+				goto(`/tests/note/${row.original.id}`);
+			}
+		}
+	});
+
+	export const snapshot: Snapshot = {
+		capture: () => ({
+			highlighted: $state.highlighted,
+			_filterValue: $filterValue
+		}),
+		restore: ({ highlighted, _filterValue }) => {
+			console.log(`restoring`, { highlighted, _filterValue });
+			multi.helpers.setHighlighted(highlighted);
+			$filterValue = _filterValue;
+		}
+	};
+
+	type EphemeralState = {
+		highlighted: string | null;
+		_filterValue: string;
+	};
+
+	// my own capture and restore
+	beforeNavigate(() => {
+		const data: EphemeralState = {
+			highlighted: $state.highlighted,
+			_filterValue: $filterValue
+		};
+		sessionStorage.setItem($page.url.toString(), JSON.stringify(data));
+	});
+	afterNavigate(() => {
+		const data = sessionStorage.getItem($page.url.toString());
+		if (!data) return;
+		const parsed = JSON.parse(data) as EphemeralState;
+		if (parsed) {
+			multi.helpers.setHighlighted(parsed.highlighted);
+			$filterValue = parsed._filterValue;
+		}
+	});
+
+	const {
+		stores: { state }
+	} = multi;
+
+	$: console.log({ $state });
+
+	$: multi.helpers.updateItems($rows.map((note) => note.id));
+
+	let inputEl: HTMLInputElement;
 </script>
 
+<svelte:window
+	on:keydown={(e) => {
+		if (e.key === 'ArrowUp' && $state.highlighted) {
+			const firstRow = $rows[0];
+			if (firstRow?.id === $state.highlighted) {
+                // put focus on input element
+                inputEl?.focus();
+				inputEl.setSelectionRange(1000, 1000)
+				tick().then(() => {
+				});
+				multi.helpers.setHighlighted(null);
+				return;
+			}
+		}
+		multi.events.keydown(e);
+	}}
+/>
+
 <div class="mb-4 flex items-center gap-4">
-    <Input
+	<Input
+		bind:el={inputEl}
+		class="max-w-sm text-sm"
+		placeholder="Filter..."
+		type="text"
+		on:focus={() => {
+			multi.helpers.setHighlighted(null);
+		}}
+		on:keydown={(e) => {
+			if (e.key === 'ArrowDown') {
+				if (e.target instanceof HTMLInputElement) {
+					e.target.blur();
+				}
+			} else if (e.key === 'ArrowUp') {
+				e.stopPropagation();
+			}
+		}}
+		bind:value={$filterValue}
+	/>
 </div>
 <Table.Root {...$tableAttrs}>
 	<Table.Header>
@@ -173,7 +271,14 @@
 	<Table.Body {...$tableBodyAttrs}>
 		{#each $rows as row (row.id)}
 			<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-				<Table.Row {...rowAttrs}>
+				{@const highlighted = $state.highlighted === row.id}
+				<Table.Row
+					on:mouseover={multi.events.mouseover}
+					{...rowAttrs}
+					data-id={row.id}
+					data-state={$selectedDataIds[row.id] && 'selected'}
+					data-highlighted={highlighted}
+				>
 					{#each row.cells as cell (cell.id)}
 						<Subscribe attrs={cell.attrs()} let:attrs>
 							<Table.Cell {...attrs} class="[&:has([role=checkbox])]:pl-3">

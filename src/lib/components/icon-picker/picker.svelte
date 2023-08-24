@@ -147,7 +147,7 @@
 	} else {
 	}
 
-	$: if (!activeColor.startsWith('#')) {
+	$: if (!activeColor?.startsWith('#')) {
 		activeColor = `#${activeColor}`;
 	}
 
