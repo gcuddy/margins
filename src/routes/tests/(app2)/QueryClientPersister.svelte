@@ -9,7 +9,9 @@
 	import { writable } from 'svelte/store';
 	import { dev } from '$app/environment';
 	import { noop } from '$lib/helpers';
+	import { CustomPersister } from '$lib/queries/persister';
 	export let client: QueryClient;
+	import * as devalue from 'devalue';
 
 	const restoring = writable(false);
 	setContext('isRestoring', restoring);
@@ -18,7 +20,7 @@
 
 	console.log({ client });
 
-	const key = 'QUERY_PERSIST';
+	const key = 'QUERY_OFFILNE';
 
 	interface AsyncThrottleOptions {
 		interval?: number;
@@ -42,6 +44,7 @@
 				const args = currentArgs;
 				currentArgs = null;
 				try {
+					console.log(`Running throttled fn with args`, { args });
 					running = true;
 					await func(...args);
 				} catch (error) {
@@ -79,12 +82,12 @@
 	const trySave = async (persistedClient: PersistedClient): Promise<Error | undefined> => {
 		console.log(`attempting save`);
 		try {
-			persistedClient.clientState.queries.forEach((query) => {
-				if (query.meta?.init) {
-					delete query.meta.init;
-				}
-			});
-			await set(key, persistedClient);
+			// persistedClient.clientState.queries.forEach((query) => {
+			// 	if (query.meta?.init) {
+			// 		delete query.meta.init;
+			// 	}
+			// });
+			await set(key, devalue.stringify(persistedClient));
 			return;
 		} catch (error) {
 			return error as Error;
@@ -115,10 +118,13 @@
 					}
 				),
 				restoreClient: async () => {
-                    console.log(`restoring client`);
-                    const client = await get<PersistedClient>(key);
-                    console.log({ client });
-                    return client;
+					console.log(`restoring client`);
+					const clientStr = await get(key);
+					console.log({ client });
+					if (!clientStr) {
+						return;
+					}
+					return devalue.parse(clientStr) as PersistedClient;
 					return {
 						clientState: {
 							queries: [],
@@ -130,6 +136,7 @@
 				},
 				removeClient: async () => del(key)
 			},
+			// persister: new CustomPersister({}),
 			dehydrateOptions: {
 				shouldDehydrateQuery(query) {
 					const { queryKey } = query;

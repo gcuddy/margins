@@ -202,7 +202,7 @@
 			}
 			return 96;
 		},
-		overscan: 10,
+		overscan: 7,
 		getItemKey: (index) => ($groupingEnabled ? groupedEntries[index]!.id : entries[index]!.id),
 		rangeExtractor: (range) => {
 			if (!$groupingEnabled || !headerIndexes.length) return defaultRangeExtractor(range);
