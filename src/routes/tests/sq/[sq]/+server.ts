@@ -20,7 +20,9 @@ export const GET: RequestHandler = async (event) => {
 	console.time(`[sq] ${sq}`);
 	console.log(`running sq ${sq}`, new Date());
 	const params = await queryctx(event, query.schema, query.authorized);
+    console.time(`[sq - fn] ${sq}`)
 	const result = await query.fn(params);
+    console.timeEnd(`[sq - fn] ${sq}`)
 	if (query.headers) {
 		console.log(`setting headers for ${event.url.toString()}`);
 		event.setHeaders(query.headers);

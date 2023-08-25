@@ -11,7 +11,7 @@
 	import { getContext, type ComponentProps } from 'svelte';
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import Input from '$lib/components/ui/Input.svelte';
-	import InputText from '$lib/components/ui/forms/InputText.svelte';
+	import InputText from '$lib/components/ui/form/InputText.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { mutation } from '$lib/queries/query';

@@ -1,7 +1,7 @@
 import { db } from '$lib/db';
 import type { EntryInList } from '$lib/db/selects';
 import { nanoid } from '$lib/nanoid';
-import { get_notes_for_tag } from '$lib/queries/server';
+import { get_notes_for_tag, updateTagSchema } from '$lib/queries/server';
 import { bulkEntriesSchema } from '$lib/schemas';
 import { error, fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms/server';
@@ -14,9 +14,11 @@ export async function load({ locals, params, url, fetch }) {
 		throw error(401, 'Unauthorized');
 	}
 
+
 	return {
 		session,
-		bulkForm: superValidate(bulkEntriesSchema)
+		bulkForm: superValidate(bulkEntriesSchema),
+        // updateTagForm: superValidate(updateTagSchema)
 	};
 }
 
@@ -54,5 +56,8 @@ export const actions = {
 				})
 				.execute();
 		}
-	}
+	},
+    updateTag: async () => {
+
+    }
 };

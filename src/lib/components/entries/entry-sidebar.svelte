@@ -191,9 +191,16 @@
 						<div class="sidebar-row group">
 							<Muted>Saved</Muted>
 							<Muted class="grow">
-								{$query.data?.entry?.bookmark?.createdAt
-									? ago(new Date($query.data?.entry?.bookmark?.createdAt), $now)
-									: 'Never'}
+								{#if $query.data?.entry?.bookmark?.createdAt}
+									{@const datetime = new Date(
+										$query.data?.entry?.bookmark?.createdAt
+									)?.toISOString()}
+									<time {datetime}>
+										{ago(new Date(datetime), $now)}
+									</time>
+								{:else}
+									<span>Never</span>
+								{/if}
 							</Muted>
 							{#if $query.data?.entry?.bookmark?.createdAt}
 								<!-- <Button href="/tests/library/all?createdAt={encodeURIComponent(`=${new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10)}`)}" variant="ghost" size="sm" class="p-2">
@@ -538,7 +545,9 @@
 						<div class="flex flex-1 min-w-0 text-xs">
 							<span
 								><b>{bookmark.user?.username}</b>{' '}saved the {$query.data.type}
-								{ago(new Date(bookmark.createdAt), new Date())}</span
+								<time datetime={bookmark.createdAt}
+									>{ago(new Date(bookmark.createdAt), new Date())}</time
+								></span
 							>
 							<!-- <span class="font-semibold leading-none tracking-tighter">Saved</span>
 						<span>{ago(new Date(bookmark.createdAt), new Date())}</span> -->

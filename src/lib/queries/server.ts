@@ -21,18 +21,33 @@ import { z } from 'zod';
 import { tmdb } from '$lib/api/tmdb';
 import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
-import type { ExpressionBuilder, Insertable, UpdateObject, SelectQueryBuilder } from 'kysely';
-import type { Bookmark, DB, Entry, Annotation } from '$lib/prisma/kysely/types';
+import type {
+	ExpressionBuilder,
+	Insertable,
+	UpdateObject,
+	SelectQueryBuilder,
+	SelectArg,
+	SelectExpression,
+	InferResult
+} from 'kysely';
+import type { Bookmark, DB, Entry, Annotation, Favorite } from '$lib/prisma/kysely/types';
 import type { Entry as PrismaEntry } from '@prisma/client';
 import type { FilterLibrarySchema } from '$lib/schemas/library';
 import type { JSONContent } from '@tiptap/core';
+import type { SetOptional } from 'type-fest';
+import { noteFilterSchema } from '$lib/schemas/inputs';
+import { applyFilter } from '$lib/db/utils/comparators';
+import { generateSearchNotePhrase } from '$lib/db/queries/note';
 
-type GetCtx<T extends z.ZodTypeAny> = {
-	input: z.input<T>;
+type Ctx = {
 	ctx: {
 		userId: string;
 	};
 };
+
+type GetCtx<T extends z.ZodTypeAny> = {
+	input: z.input<T>;
+} & Ctx;
 
 export const mediaIdSchema = z.union([
 	z.object({
@@ -295,70 +310,6 @@ const noteUpdateInput = z.object({
 });
 
 const noteUpdateInputSchema = noteUpdateInput.or(z.array(noteUpdateInput));
-
-// function values<T>(expr: Expression<T>) {
-// 	return sql<T>`VALUES(${expr})`;
-// }
-
-// Another attempt at the above, this one allows bulk setting
-export async function updateNote({ input, ctx }: GetCtx<typeof noteUpdateInputSchema>) {
-	// TODO: this is a mess full of half-baked ideas. It's currently (obviously) not in use.
-	const { userId } = ctx;
-	const updates = Array.isArray(input) ? input : [input];
-	// const ids = data.map((d) => d.id);
-
-	// await db
-	// 	.insertInto('Annotation')
-	// 	.values(
-	// 		data.map((item) => ({
-	// 			...item.input,
-	// 			updatedAt: new Date(),
-	// 			private: item.input.private ? 1 : 0,
-	// 			target: item.input.target ? json(item.input.target) : undefined,
-	// 			contentData: item.input.contentData ? json(item.input.contentData) : undefined,
-	// 			id: item.id,
-	// 			userId
-	// 		}))
-	// 	)
-	// 	.onDuplicateKeyUpdate({
-	// 		contentData: values(ref('contentData'))
-	// 	});
-
-	let query = db.updateTable('Annotation');
-
-	const updatable: UpdateObject<DB, 'Annotation', 'Annotation'> = {};
-
-	let _case = '';
-	for (const update of updates) {
-		// _case = _case.when("id", "=", update.id).then(update.input);
-		let str = sql``;
-		for (let key in update.input) {
-			let _key = key as keyof typeof update.input;
-			let str = sql`WHEN id = ${update.id} THEN ${update.input[_key]}`;
-		}
-	}
-
-	query = query.set((eb) => {
-		for (const update of updates) {
-			const { input, id } = update;
-			// remove tags and relations for now
-			const { tags, relations, ...data } = input;
-			Object.keys(input).map((col) => {
-				eb.case('id')
-					.when(id)
-					.then(data[col as keyof typeof data]);
-			});
-		}
-		let _case = eb.case();
-		for (const update of updates) {
-			_case = _case.when('id', '=', update.id).then(update.input);
-		}
-		sql;
-		return {
-			title: eb.case('id').when('id123').then('New Title').else(eb.ref('title')).end()
-		};
-	});
-}
 
 export const s_add_to_collection = z
 	.object({
@@ -1318,18 +1269,18 @@ export const notesInputOrderAndCursorSchema = z.union([
 	z.object({
 		orderBy: z.literal('name'),
 		dir: z.enum(['asc', 'desc']).default('asc'),
-		cursor: z.object({
-			title: z.string().nullable(),
-			createdAt: z.coerce.date()
-		}).optional()
+		cursor: z
+			.object({
+				title: z.string().nullable(),
+				createdAt: z.coerce.date()
+			})
+			.optional()
 	})
 ]);
 
 export const notesInputSchema = z
 	.object({
-		filter: z.object({
-			type: z.nativeEnum(AnnotationType)
-		}),
+		filter: noteFilterSchema.optional(),
 		includeArchived: z.boolean().optional(),
 		// Number of notes to return. Defaults to 50.
 		take: z.number().default(50)
@@ -1386,7 +1337,7 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 		.select((eb) => notePin(eb))
 		// this should always be on there - right?
 		.where('a.userId', '=', ctx.userId)
-        // Get 1 more to get cursor
+		// Get 1 more to get cursor
 		.limit(take + 1);
 
 	if (orderBy === 'createdAt' || !orderBy) {
@@ -1421,35 +1372,37 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	}
 
 	if (filter) {
-		if (filter.type) {
-			query = query.where('a.type', '=', filter.type);
+		const { content, ...restFilter } = filter;
+		query = query.where((eb) => applyFilter(eb, restFilter));
+		if (content) {
+			query = query.where('a.contentData', 'is not', null);
+			query = query.where(generateSearchNotePhrase(content, 'a'));
 		}
 	}
 
 	if (!includeArchived) {
 		query = query.where('a.deleted', 'is', null);
 	}
-    const notes = await query.execute()
-    let nextCursor: typeof cursor | undefined = undefined;
-    if (notes.length > take) {
-        const nextItem = notes.pop();
-        if (nextItem) {
-            if (orderBy === 'createdAt' || orderBy === 'updatedAt') {
-                nextCursor = nextItem[orderBy];
-            } else if (orderBy === 'name') {
-                nextCursor = {
-                    title: nextItem.title,
-                    createdAt: nextItem.createdAt
-                }
-            } else {
-                // orderBy satisfies never;
-            }
-        }
-
-    }
+	const notes = await query.execute();
+	let nextCursor: typeof cursor | undefined = undefined;
+	if (notes.length > take) {
+		const nextItem = notes.pop();
+		if (nextItem) {
+			if (orderBy === 'createdAt' || orderBy === 'updatedAt') {
+				nextCursor = nextItem[orderBy];
+			} else if (orderBy === 'name') {
+				nextCursor = {
+					title: nextItem.title,
+					createdAt: nextItem.createdAt
+				};
+			} else {
+				// orderBy satisfies never;
+			}
+		}
+	}
 	return {
-        notes,
-        nextCursor
+		notes,
+		nextCursor
 		// todo: nextCursor
 	};
 }
@@ -1479,16 +1432,16 @@ export async function note({ input, ctx }: GetCtx<typeof idSchema>): Promise<Not
 
 const _createFavoriteSchema = z
 	.object({
-		annotationId: z.string(),
-		collectionId: z.number(),
-		entryId: z.number(),
-		feedId: z.number(),
-		tagId: z.number(),
-		smartListId: z.number(),
+		annotationId: z.string().nullish(),
+		collectionId: z.number().nullish(),
+		entryId: z.number().nullish(),
+		feedId: z.number().nullish(),
+		tagId: z.number().nullish(),
+		smartListId: z.number().nullish(),
 		//
-		folderName: z.string(),
-		sortOrder: z.number(),
-		parentId: z.string(),
+		folderName: z.string().nullish(),
+		sortOrder: z.number().nullish(),
+		parentId: z.string().nullish(),
 		//
 		id: z.string()
 	})
@@ -1505,8 +1458,9 @@ export async function createFavorite({ input, ctx }: GetCtx<typeof createFavorit
 			...item,
 			id,
 			updatedAt: new Date(),
+			type: item.folderName ? 'FOLDER' : 'FAVORITE',
 			userId
-		};
+		} as const;
 	});
 
 	const result = await db.insertInto('Favorite').values(dataToInsert).execute();
@@ -1521,9 +1475,9 @@ export const updateFavoriteSchema = z.object({
 	id: z.string(),
 	data: z
 		.object({
-			folderName: z.string(),
-			parentId: z.string(),
-			sortOrder: z.number()
+			folderName: z.string().nullish(),
+			parentId: z.string().nullish(),
+			sortOrder: z.number().nullish()
 		})
 		.partial()
 });
@@ -1545,3 +1499,135 @@ export async function updateFavorite({ input, ctx }: GetCtx<typeof updateFavorit
 //     sortOrder: input.sortOrder,
 //     parentId: input.parentId
 // })
+
+export const favoriteSelect = [
+	'f.id',
+	'f.parentId',
+	'f.type',
+	'f.createdAt',
+	'f.updatedAt',
+	'f.folderName',
+	'f.sortOrder'
+] as const satisfies SelectArg<
+	DB & { f: Favorite },
+	'f',
+	SelectExpression<DB & { f: Favorite }, 'f'>
+>;
+
+const favorite2Select = () =>
+	[
+		'f.id',
+		'f.parentId',
+		'f.type',
+		'f.createdAt',
+		'f.updatedAt',
+		'f.folderName',
+		'f.sortOrder'
+	] as const satisfies SelectArg<
+		DB & { f: Favorite },
+		'f',
+		SelectExpression<DB & { f: Favorite }, 'f'>
+	>;
+
+function fSelect<const TAlias extends string>(alias: TAlias) {
+	return [
+		`${alias}.id`,
+		`${alias}.parentId`,
+		`${alias}.type`,
+		`${alias}.createdAt`,
+		`${alias}.updatedAt`,
+		`${alias}.folderName`,
+		`${alias}.sortOrder`
+	] as const;
+}
+
+export function favoriteContent(
+	eb: ExpressionBuilder<
+		DB & {
+			f: Favorite;
+		},
+		'f'
+	>,
+	alias = 'f'
+) {
+	// REVIEW - have to use as any here to allow use of alias. Shouldn't effect overall type-safety of output.
+	return [
+		jsonObjectFrom(
+			eb
+				.selectFrom('SmartList as v')
+				.whereRef('v.id', '=', `${alias}.smartListId` as any)
+				.select(['v.name', 'v.id'])
+		).as('view'),
+		jsonObjectFrom(
+			eb
+				.selectFrom('Collection as c')
+				.whereRef('c.id', '=', `${alias}.collectionId` as any)
+				.select(['c.name', 'c.id'])
+		).as('collection'),
+		jsonObjectFrom(
+			eb
+				.selectFrom('Tag as t')
+				.whereRef('t.id', '=', `${alias}.tagId` as any)
+				.select(['t.name', 't.id', 't.color'])
+		).as('tag'),
+		jsonObjectFrom(
+			eb
+				.selectFrom('Annotation as a')
+				.whereRef('a.id', '=', `${alias}.annotationId` as any)
+				// TODO: grabn more info?
+				.select(['a.title', 'a.color', 'a.icon', 'a.id'])
+		).as('note'),
+		jsonObjectFrom(
+			eb
+				.selectFrom('Entry as e')
+				.whereRef('e.id', '=', `${alias}.entryId` as any)
+				// TODO: grabn more info?
+				.select(entrySelect)
+		).as('entry')
+	];
+}
+
+function favoriteChildren(
+	eb: ExpressionBuilder<
+		DB & {
+			f: Favorite;
+		},
+		'f'
+	>,
+	alias = 'f'
+) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom('Favorite as f2')
+			.whereRef('f2.parentId', '=', `${alias}.id` as any)
+			.select(fSelect('f2'))
+			.select((eb) => favoriteContent(eb, 'f2'))
+	).as('children');
+}
+
+function compilePinsQuery(userId: string) {
+	return (
+		db
+			.selectFrom('Favorite as f')
+			.where('f.userId', '=', userId)
+			.where('f.parentId', 'is', null)
+			.select(favoriteSelect)
+			.select(favoriteContent)
+			.select(favoriteChildren)
+
+			// .select(eb =>)
+			.orderBy('f.sortOrder', 'asc')
+			.orderBy('f.createdAt', 'desc')
+			.compile()
+	);
+}
+
+type RawPin = InferResult<ReturnType<typeof compilePinsQuery>>[number];
+
+export async function pins({ ctx }: Ctx) {
+	const pins = await db.executeQuery(compilePinsQuery(ctx.userId));
+	return pins.rows as SetOptional<RawPin, 'children'>[];
+}
+
+export type Pins = Awaited<ReturnType<typeof pins>>;
+export type Pin = Pins[number];

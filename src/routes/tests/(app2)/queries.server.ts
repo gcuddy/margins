@@ -29,6 +29,7 @@ import {
 	note,
 	notes,
 	notesInputSchema,
+	pins,
 	s_add_to_collection,
 	saveToLibrarySchema,
 	save_to_library,
@@ -61,6 +62,8 @@ import { typeSchema } from '$lib/types';
 import { twitter } from '$lib/twitter';
 import type { Tweet } from '$lib/api/twitter';
 import { DocumentType, Status } from '@prisma/client';
+import { collections } from '$lib/db/queries/collections';
+import { collectionsInputSchema } from '$lib/schemas/inputs';
 
 interface Query<I extends z.ZodTypeAny, Data> {
 	staleTime?: number;
@@ -512,15 +515,16 @@ export const queries = {
 		}
 	}),
 	collections: query({
-		staleTime: 1000,
-		fn: ({ ctx }) => {
-			return db
-				.selectFrom('Collection')
-				.where('userId', '=', ctx.userId)
-				.orderBy('name', 'asc')
-				.selectAll()
-				.execute();
-		}
+		// fn: ({ ctx }) => {
+		// 	return db
+		// 		.selectFrom('Collection')
+		// 		.where('userId', '=', ctx.userId)
+		// 		.orderBy('name', 'asc')
+		// 		.selectAll()
+		// 		.execute();
+		// }
+        fn: collections,
+        schema: collectionsInputSchema
 	}),
 	search: query({
 		staleTime: 1000,
@@ -792,51 +796,7 @@ export const queries = {
 		fn: notes
 	}),
 	pins: query({
-		fn: async ({ ctx }) => {
-			// TODO: pagination?
-			const pins = await db
-				.selectFrom('Favorite as f')
-				.where('f.userId', '=', ctx.userId)
-				.select(['f.id', 'f.parentId', 'f.type', 'f.createdAt', 'f.updatedAt', 'f.sortOrder'])
-				.select((eb) => [
-					jsonObjectFrom(
-						eb
-							.selectFrom('SmartList as v')
-							.whereRef('v.id', '=', 'f.smartListId')
-							.select(['v.name', 'v.id'])
-					).as('view'),
-					jsonObjectFrom(
-						eb
-							.selectFrom('Collection as c')
-							.whereRef('c.id', '=', 'f.collectionId')
-							.select(['c.name', 'c.id'])
-					).as('collection'),
-					jsonObjectFrom(
-						eb
-							.selectFrom('Tag as t')
-							.whereRef('t.id', '=', 'f.tagId')
-							.select(['t.name', 't.id', 't.color'])
-					).as('tag'),
-					jsonObjectFrom(
-						eb
-							.selectFrom('Annotation as a')
-							.whereRef('a.id', '=', 'f.annotationId')
-							// TODO: grabn more info?
-							.select(['a.title', 'a.color', 'a.icon', 'a.id'])
-					).as('note'),
-					jsonObjectFrom(
-						eb
-							.selectFrom('Entry as e')
-							.whereRef('e.id', '=', 'f.entryId')
-							// TODO: grabn more info?
-							.select(entrySelect)
-					).as('entry'),
-				])
-				.orderBy('f.sortOrder', 'asc')
-				.orderBy('f.createdAt', 'desc')
-				.execute();
-			return pins;
-		}
+		fn: pins
 	})
 } as const;
 

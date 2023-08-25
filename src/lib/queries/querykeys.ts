@@ -94,22 +94,22 @@ export const queryFactory = {
 		list: (input?: QueryInput<'notes'>, queryClient?: QueryClient) => ({
 			queryKey: ['notes', 'list', input] as const,
 			queryFn: async ({ meta, pageParam }: InfiniteQueryFnParams) => {
-                const data = await qquery(meta?.init, 'notes', { ...input, cursor: pageParam });
-                // "push" approach to seeding cache. TODO look at perf impact
-                // see https://tkdodo.eu/blog/seeding-the-query-cache#push-approach
-                if (queryClient) {
-                    console.log('pushing notes detail cache from list')
-                    console.time('push notes')
-                    data.notes.forEach(note => {
-                        // should match query key below
-                        queryClient.setQueryData(['notes', 'detail', { id: note.id}], note)
-                    })
-                    console.timeEnd('push notes')
-                }
+				const data = await qquery(meta?.init, 'notes', { ...input, cursor: pageParam });
+				// "push" approach to seeding cache. TODO look at perf impact
+				// see https://tkdodo.eu/blog/seeding-the-query-cache#push-approach
+				if (queryClient) {
+					console.log('pushing notes detail cache from list');
+					console.time('push notes');
+					data.notes.forEach((note) => {
+						// should match query key below
+						queryClient.setQueryData(['notes', 'detail', { id: note.id }], note);
+					});
+					console.timeEnd('push notes');
+				}
 
-                return data;
-            },
-            getNextPageParam(lastPage) {
+				return data;
+			},
+			getNextPageParam(lastPage) {
 				return (lastPage as QueryOutput<'notes'>)?.nextCursor;
 			},
 			initialPageParam: <QueryOutput<'notes'>['nextCursor']>undefined
@@ -118,8 +118,8 @@ export const queryFactory = {
 			// const queryClient = useQueryClient();
 			return {
 				queryKey: ['notes', 'detail', input] as const,
-				queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'note', input),
-                // Failed "Pull" approach  - tricky to use getqueriesdata and then also get the date from the query
+				queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'note', input)
+				// Failed "Pull" approach  - tricky to use getqueriesdata and then also get the date from the query
 				// initialData: () => {
 				// 	const queries = queryClient.getQueriesData({
 				// 		queryKey: ['notes', 'list']
@@ -145,6 +145,19 @@ export const queryFactory = {
 			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'pins', {}),
 			// staleTime: Infinity, // stale until invalidated
 			placeholderData: keepPreviousData
+		})
+	},
+	collections: {
+		list: (input?: QueryInput<'collections'>) => ({
+			queryKey: ['collections', 'list'] as const,
+			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) =>
+				qquery(meta?.init, 'collections', { ...input, cursor: pageParam }),
+			staleTime: input ? 1000 * 60 * 5 : Infinity,
+			placeholderData: keepPreviousData,
+			getNextPageParam(lastPage) {
+				return (lastPage as QueryOutput<'collections'>)?.nextCursor;
+			},
+			initialPageParam: <QueryOutput<'collections'>['nextCursor']>null
 		})
 	}
 } satisfies TQueryFactory;

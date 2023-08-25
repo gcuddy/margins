@@ -21,6 +21,6 @@
 	<Skeleton class="h-full" />
 {:else if $query.isSuccess}
 	{#key data.id}
-		<Note {...$query.data} color={$query.data.color ?? ''} icon={$query.data.color ?? ''} />
+		<Note {...$query.data} color={$query.data.color ?? ''} icon={$query.data.icon ?? ''} />
 	{/key}
 {/if}

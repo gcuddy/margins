@@ -18,7 +18,9 @@
 		PlusCircle,
 		Loader,
 		ChevronDownIcon,
-		RssIcon
+		RssIcon,
+		FolderMinus,
+		FolderPlus
 	} from 'lucide-svelte';
 	import {
 		DropdownMenu,
@@ -47,6 +49,8 @@
 	import { Icon } from '$components/icon-picker';
 	import { flip } from 'svelte/animate';
 	import Pins from '$components/pins/pins.svelte';
+
+	let pinsComponent: Pins;
 
 	type Nav = {
 		label: string;
@@ -149,7 +153,7 @@
 	<nav
 		bind:borderBoxSize
 		style:--width="{width}px"
-		class="flex flex-col gap-2 overflow-y-auto fixed top-0 left-0 bottom-0 grow h-full border-r lg:w-[--width] {$menu_bar.show
+		class="flex flex-col gap-2 overflow-y-auto overscroll-contain fixed top-0 left-0 bottom-0 grow h-full border-r lg:w-[--width] {$menu_bar.show
 			? 'opacity-100'
 			: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
 	>
@@ -177,7 +181,7 @@
 									use:melt={$fallback}
 									class="flex h-full w-full items-center justify-center rounded-full bg-muted"
 								>
-									{$page.data.user_data.username[0].toUpperCase()}
+									{$page.data.user_data.username[0]?.toUpperCase()}
 								</span>
 							</span>
 							<span class="text-sm font-medium hidden lg:inline"
@@ -274,15 +278,22 @@
 			</div>
 		</div>
 		{#if user_data}
-			<div class="hidden truncate px-4 py-2 {$inArticle ? '2xl:inline' : 'lg:inline'}">
-				<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">Pins</h2>
+			<div class="hidden px-4 py-2 {$inArticle ? '2xl:inline' : 'lg:inline'}">
+				<div class="flex group items-center">
+					<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">Pins</h2>
+					<button on:click={pinsComponent.addFolder} class="ml-auto rounded p-2 group/icon hover:bg-accent hover:text-accent-foreground">
+						<FolderPlus
+							class="h-4 w-4 opacity-0 group-hover:opacity-70 group-hover/icon:opacity-100 transition-opacity"
+						/>
+					</button>
+				</div>
 				<div class="flex flex-col space-y-1">
 					{#if $pinsQuery.isPending}
 						<Skeleton class="h-10 w-full" />
 						<Skeleton class="h-10 w-full" />
 					{:else if $pinsQuery.isSuccess}
 						{@const pins = $pinsQuery.data}
-						<Pins {pins} />
+						<Pins bind:this={pinsComponent} root {pins} />
 					{/if}
 				</div>
 			</div>

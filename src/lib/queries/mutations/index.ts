@@ -206,7 +206,7 @@ export function initCreatePinMutation(opts?: { invalidate?: Invalidate }) {
 	});
 }
 
-export function initDeletePinMutation(opts?: { invalidate?: Invalidate }) {
+export function initDeletePinMutation(opts?: { invalidate?: Invalidate, onSuccess?: () => void }) {
 	const queryClient = useQueryClient();
 	return createMutation({
 		mutationFn: (input: MutationInput<'deleteFavorite'>) => mutate('deleteFavorite', input),

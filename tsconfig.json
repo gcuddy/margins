@@ -12,7 +12,8 @@
 		"strict": true,
 		"preserveValueImports": false,
 		"types": [
-			"@types/wicg-file-system-access"
+			"@types/wicg-file-system-access",
+            "vite-plugin-pwa/info"
 		]
 	}
 }

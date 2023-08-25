@@ -19,14 +19,14 @@
 
 	export let id = nanoid();
 	$: mutation = updateAnnotationMutation({
-		input: { id, type: "document" },
+		input: { id, type: 'document' },
 		showToast: true
 	});
 
 	let hasBeenUpdate = false;
 
 	export let title: string | null | undefined = '';
-    let lastSavedTitle = title;
+	let lastSavedTitle = title;
 	export let contentData: JSONContent | undefined = {
 		type: 'doc',
 		content: [
@@ -40,8 +40,10 @@
 	let lastSavedContentData = contentData;
 	console.log({ contentData, lastSavedContentData });
 
-	export let color: string  = '#000000';
+	export let color: string = '#000000';
 	export let icon = 'File';
+
+	$: console.log({ color, icon });
 	let textarea: HTMLTextAreaElement;
 	let user = $page.data.user_data?.username;
 
@@ -76,7 +78,7 @@
 <Header>Notes -> {title || 'Untitled note'}</Header>
 <div class="flex grow">
 	<div
-		class="flex flex-col relative shrink-0 max-w-3xl mx-auto justify-stretch items-stretch w-full px-2 py-9"
+		class="flex flex-col relative shrink-0 max-w-4xl mx-auto justify-stretch items-stretch w-full px-2 py-9"
 	>
 		<div class="flex flex-col grow-0 px-3">
 			<!-- <Textarea
@@ -99,13 +101,13 @@
 			<textarea
 				bind:this={textarea}
 				bind:value={title}
-                on:blur={() => {
-                    if (title === lastSavedTitle) return;
-                    $mutation.mutate({
-                        title
-                    });
-                    lastSavedTitle = title;
-                }}
+				on:blur={() => {
+					if (title === lastSavedTitle) return;
+					$mutation.mutate({
+						title
+					});
+					lastSavedTitle = title;
+				}}
 				placeholder="Untitled note"
 				use:autosize
 				rows={1}
@@ -166,7 +168,7 @@
 				console.timeEnd('deepEqual');
 				if (equal) return;
 				$mutation.mutate({
-					contentData,
+					contentData
 				});
 			}}
 			class="grow sm:min-h-[50vh]"

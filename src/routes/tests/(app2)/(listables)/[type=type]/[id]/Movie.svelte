@@ -4,7 +4,6 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import { Dialog, DialogContent, DialogHeader, DialogTitle } from '$lib/components/ui/dialog';
-	import DialogTrigger from '$lib/components/ui/dialog/DialogTrigger.svelte';
 	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
 	import { isUpcoming } from '$lib/utils/date';
 	import type { List } from "$lib/api/tmdb"

@@ -8,7 +8,7 @@
 	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
 	import AnnotationOperations from '$lib/components/AnnotationOperations.svelte';
 	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
-	import InputText from '$lib/components/ui/forms/InputText.svelte';
+	import InputText from '$lib/components/ui/form/InputText.svelte';
 	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
 	import type { Annotation } from '$lib/prisma/kysely/types';
 	import { QueryOutput, mutation } from '$lib/queries/query';

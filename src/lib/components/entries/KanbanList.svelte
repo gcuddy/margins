@@ -147,9 +147,9 @@
 </div>
 
 <style>
-	:global(#dnd-action-dragged-el > div) {
+	/* :global(#dnd-action-dragged-el > div) {
 		@apply rotate-1 shadow-xl;
-	}
+	} */
 	/* .item::after {
 		content: '';
 		border-radius: 5px;

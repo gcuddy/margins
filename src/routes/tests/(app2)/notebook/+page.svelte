@@ -24,7 +24,7 @@
 			...queryFactory.notes.list(
 				{
 					filter: {
-						type: 'document'
+						type: 'document',
 					}
 					// ...$input
 				},

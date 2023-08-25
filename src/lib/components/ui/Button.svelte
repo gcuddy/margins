@@ -1,6 +1,7 @@
 <script lang="ts" context="module">
 	export const buttonVariants = cva(
-		'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background [&>svg]:text-muted-foreground',
+		'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background',
+        // [&>svg]:text-muted-foreground[&>svg]:text-muted-foreground
 		{
 			variants: {
 				variant: {
@@ -45,6 +46,8 @@
 	export let text: string | undefined = undefined;
 	export let onClick: MouseEvent | undefined = undefined;
 
+    export let as: "a" | "button" | "div" = "button";
+
 	let className: string | undefined | null = '';
 	export { className as class };
 
@@ -63,14 +66,21 @@
 	interface ButtonElement extends Props, HTMLButtonAttributes {
 		type?: HTMLButtonAttributes['type'];
 		href?: never;
+        as?: "button" | undefined;
 	}
 
-	type $$Props = AnchorElement | ButtonElement;
+    interface GenericElement extends Props, HTMLButtonAttributes {
+        type?: never;
+        href?: never;
+        as: "div";
+    }
+
+	type $$Props = AnchorElement | ButtonElement | GenericElement;
 </script>
 
 <svelte:element
-	this={href ? 'a' : 'button'}
-	type={href ? undefined : type}
+	this={href ? 'a' : as}
+	type={as === "button" ? type : undefined}
 	{href}
 	class={cn(buttonVariants({ variant, size, className }))}
 	role="button"

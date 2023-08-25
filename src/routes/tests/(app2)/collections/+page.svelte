@@ -1,5 +1,5 @@
 <script>
-	import Button from '$lib/components/ui/Button.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import Input from '$lib/components/ui/Input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import {
@@ -8,14 +8,38 @@
 		DialogHeader,
 		DialogTitle,
 		DialogDescription,
-		DialogFooter
+		DialogFooter,
+		DialogTrigger
 	} from '$lib/components/ui/dialog';
 	import { H1 } from '$lib/components/ui/typography';
 	import { name } from '$lib/icons';
 	import { Loader2, PlusCircle } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { superForm } from 'sveltekit-superforms/client';
+	import { createInfiniteQuery } from '@tanstack/svelte-query';
+	import { queryFactory } from '$lib/queries/querykeys';
 	export let data;
+
+	const query = createInfiniteQuery(
+		queryFactory.collections.list({
+			filter: {
+				or: [
+					{
+						name: {
+							contains: 'china'
+						}
+					},
+					{
+						name: {
+							contains: 'CHCC'
+						}
+					}
+				]
+			}
+		})
+	);
+
+	$: console.log({ $query });
 
 	const { enhance, form, constraints, errors, delayed, submitting } = superForm(data.form, {
 		onUpdated: (data) => {
@@ -27,7 +51,7 @@
 
 	let new_collection_modal = false;
 
-	let filter_value = "";
+	let filter_value = '';
 	$: filtered_collections = data.collections.filter((collection) => {
 		return collection.name.toLowerCase().includes(filter_value.toLowerCase());
 	});
@@ -36,13 +60,13 @@
 <div class="flex items-center justify-between">
 	<H1>Collections</H1>
 
-	<Dialog bind:isOpen={new_collection_modal}>
-		<svelte:fragment slot="trigger">
-			<Button>
+	<Dialog bind:open={new_collection_modal}>
+		<DialogTrigger asChild let:builder>
+			<Button builders={[builder]}>
 				<PlusCircle class="mr-2 h-4 w-4" />
 				New Collection</Button
 			>
-		</svelte:fragment>
+		</DialogTrigger>
 		<DialogContent>
 			<form use:enhance class="contents" method="post">
 				<DialogHeader>

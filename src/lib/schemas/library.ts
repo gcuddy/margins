@@ -1,6 +1,7 @@
 import { typeSchema } from '$lib/types';
 import { Status } from '@prisma/client';
 import { z } from 'zod';
+import { tagSchema } from './objects/tag';
 
 const defaultCursorSchema = z.object({
 	sort_order: z.number(),
@@ -88,6 +89,9 @@ export type CreatedAtFilter = z.infer<typeof createdAtFilter>;
 export const logicalOperators = ['and', 'or'] as const;
 export type LogicalOperator = (typeof logicalOperators)[number];
 
+// tag schema
+const entryTagFilter = tagSchema.partial();
+
 export const filterLibrarySchema = z
 	.object({
 		createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),
@@ -100,7 +104,7 @@ export const filterLibrarySchema = z
 			min: z.number().int().positive().optional(),
 			max: z.number().int().positive().optional()
 		}),
-		domain: z.string().optional()
+		domain: z.string().optional(),
 	})
 	.partial();
 export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
