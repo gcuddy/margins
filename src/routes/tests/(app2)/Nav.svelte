@@ -280,7 +280,7 @@
 		{#if user_data}
 			<div class="hidden px-4 py-2 {$inArticle ? '2xl:inline' : 'lg:inline'}">
 				<div class="flex group items-center">
-					<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">Pins</h2>
+					<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight"><a href="/tests/pins">Pins</a></h2>
 					<button on:click={pinsComponent.addFolder} class="ml-auto rounded p-2 group/icon hover:bg-accent hover:text-accent-foreground">
 						<FolderPlus
 							class="h-4 w-4 opacity-0 group-hover:opacity-70 group-hover/icon:opacity-100 transition-opacity"

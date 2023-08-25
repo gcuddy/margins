@@ -4,13 +4,16 @@
 	import Button from '$components/ui/Button.svelte';
 	import mq from '$lib/stores/mq';
 	import { cn } from '$lib/utils/tailwind';
-	import { InfoIcon } from 'lucide-svelte';
+	import { InfoIcon, PinIcon } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { derived, writable, type Writable } from 'svelte/store';
 	import EntryOperations from './[id]/EntryOperations.svelte';
 	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
 	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
 	import { getArticleContext } from './ctx';
+	import { queryFactory } from '$lib/queries/querykeys';
+	import { createQuery } from '@tanstack/svelte-query';
+	import { initCreatePinMutation, initDeletePinMutation } from '$lib/queries/mutations';
 
 	export let scrollingDown = (getContext('scrollingDown') as Writable<boolean>) || writable(false);
 
@@ -33,6 +36,14 @@
 	const mainNavWidth = getContext('mainNavWidth') as Writable<number>;
 	const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
 	const inArticle = getContext('inArticle') as Writable<boolean>;
+
+	const pins = createQuery(queryFactory.pins.list());
+	const pin = derived(pins, ($pins) => {
+		return $pins.data?.find((pin) => pin.entry?.id === $page.data.entry.id);
+	});
+    const topSortOrder = derived(pins, $pins => $pins[0]?.sortOrder ?? 0)
+	const createPin = initCreatePinMutation();
+	const deletePin = initDeletePinMutation();
 
 	const {
 		states: { progress }
@@ -100,6 +111,31 @@
 			<!--  -->
 		</div>
 		<div class="right flex gap-x-4 items-center">
+			<Button
+				variant="ghost"
+				class="group"
+				on:click={() => {
+					// todo: make this a form
+					if ($pin) {
+						$deletePin.mutate({
+							id: $pin.id
+						});
+					} else {
+						$createPin.mutate({
+							entryId: $page.data.entry.id,
+                            sortOrder: $topSortOrder - 1
+						});
+					}
+				}}
+			>
+				<PinIcon
+					class={cn(
+						'h-4 w-4 transition-transform group-hover:rotate-6',
+						$pin && 'fill-accent-foreground'
+					)}
+				/>
+				<span class="sr-only">{$pin ? 'Remove pin' : 'Pin'}</span>
+			</Button>
 			{#if $page.data?.entry?.type === 'article'}
 				<span class="text-sm text-muted-foreground">
 					{Math.ceil($progress * 100)}%
