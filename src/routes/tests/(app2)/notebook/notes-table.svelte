@@ -7,6 +7,7 @@
 		addPagination,
 		addTableFilter,
 		addSelectedRows,
+		addGroupBy,
 		addHiddenColumns,
 		addColumnOrder
 	} from 'svelte-headless-table/plugins';
@@ -38,7 +39,7 @@
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
 	import type { Snapshot } from '../../../$types';
 	import { page } from '$app/stores';
-	import { afterUpdate, createEventDispatcher, tick } from 'svelte';
+	import { createEventDispatcher, tick } from 'svelte';
 	import { createWindowVirtualizer, createVirtualizer } from '@tanstack/svelte-virtual';
 	export let notes: Readable<Note[]>;
 
@@ -84,7 +85,8 @@
 				const score = commandScore(value, filterValue);
 				return score > 0.05;
 			}
-		})
+		}),
+		group: addGroupBy()
 	});
 
 	const columns = table.createColumns([
@@ -113,8 +115,18 @@
 			}
 		}),
 		table.column({
-			header: 'Name',
-			accessor: 'title'
+			header: 'Entry',
+			accessor: 'entry',
+			cell: ({ row }) => {
+				if (row.isData()) {
+					return row.original.entry?.title ?? 'No entry';
+				}
+				return 'No entry';
+			}
+		}),
+		table.column({
+			header: 'Quote',
+			accessor: 'exact'
 		}),
 		table.column({
 			header: 'Updated',
@@ -266,10 +278,6 @@
 	// 		onEnd();
 	// 	}
 	// }
-    // afterUpdate(() => {
-    //     console.log('after update')
-    //     measure();
-    // })
 
 	// $: {
 	// 	$notes;

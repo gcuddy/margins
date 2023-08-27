@@ -7,6 +7,7 @@
 	import * as Tabs from '$components/ui/tabs';
 	import { createInfiniteQuery, keepPreviousData, useQueryClient } from '@tanstack/svelte-query';
 	import Table from './Table.svelte';
+	import NotesTable from './notes-table.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { derived, writable } from 'svelte/store';
 	import { Button } from '$components/ui/button';
@@ -14,17 +15,23 @@
 	import Intersector from '$components/Intersector.svelte';
 	import type { NotesInput } from '$lib/queries/server';
 
+	let table: Table;
+	let notesTable: NotesTable;
+
 	export let data: PageData;
 
 	const queryClient = useQueryClient();
 	const input = writable<Omit<NotesInput, 'cursor'>>({});
 
+	const value = writable<'notes' | 'annotations'>('notes');
+
 	const notesQuery = createInfiniteQuery(
-		derived(input, ($input) => ({
+		derived([input, value], ([$input, $value]) => ({
 			...queryFactory.notes.list(
 				{
 					filter: {
-						type: 'document',
+						type: $value === 'notes' ? 'document' : undefined,
+						or: $value === 'annotations' ? [{ type: 'annotation' }, { type: 'note' }] : undefined
 					}
 					// ...$input
 				},
@@ -52,7 +59,7 @@
 </script>
 
 <Header>
-	<H1>Annotations</H1>
+	<h2 class="text-3xl font-bold tracking-tight">Annotations</h2>
 	<svelte:fragment slot="end">
 		<Button href="/tests/notes/new" size="sm" variant="secondary">
 			<PlusIcon class="w-4 h-4 mr-2" />
@@ -61,7 +68,16 @@
 	</svelte:fragment>
 </Header>
 
-<Tabs.Root>
+<Tabs.Root
+	bind:value={$value}
+	onValueChange={(val) => {
+		if (val === 'annotations') {
+			notesTable?.measure();
+		} else {
+			table?.measure();
+		}
+	}}
+>
 	<Tabs.List>
 		<Tabs.Trigger value="notes">Notes</Tabs.Trigger>
 		<Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
@@ -71,6 +87,7 @@
 			loading..
 		{:else if $notesQuery.isSuccess}
 			<Table
+				bind:this={table}
 				{input}
 				notes={notesStore}
 				onSort={({ orderBy, dir }) => {
@@ -102,5 +119,15 @@
 		<!-- {#each data.notes.notes as annotation (annotation.id)}
 			<Annotation {annotation} />
 		{/each} -->
+		<NotesTable bind:this={notesTable} {input} notes={notesStore} />
+		<Intersector
+			cb={() => {
+				console.log('end intersecting');
+				if ($notesQuery.hasNextPage && !$notesQuery.isFetchingNextPage) {
+					console.log('fetching next page');
+					$notesQuery.fetchNextPage();
+				}
+			}}
+		/>
 	</Tabs.Content>
 </Tabs.Root>

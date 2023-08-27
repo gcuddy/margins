@@ -1,11 +1,15 @@
 <script lang="ts" context="module">
+	// mapping of id -> info
 	export type AnnotationCtx = Writable<
 		Map<
 			string,
 			{
-				highlightElements: HTMLElement[];
-				removeHighlights: () => void;
-			}[]
+				selector: TargetSchema['selector'];
+				els: {
+					highlightElements: HTMLElement[];
+					removeHighlights: () => void;
+				}[];
+			}
 		>
 	>;
 
@@ -28,20 +32,20 @@
 </script>
 
 <script lang="ts">
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import Label from '$lib/components/ui/Label.svelte';
-	import NativeSelect from '$lib/components/ui/NativeSelect.svelte';
-	import Slider from '$lib/components/ui/Slider.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { isAnnotation, makeAnnotation } from '$lib/helpers';
 	import { cn } from '$lib/utils/tailwind';
-	import { AlignLeft, DeleteIcon, EditIcon, Highlighter, Settings2 } from 'lucide-svelte';
-	import { persisted } from 'svelte-local-storage-store';
+	import { DeleteIcon, EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
 	import type { PageData } from './$types';
-	import * as hovers from './annotation-hovers';
-	import { makeAnnotation } from '$lib/helpers';
 
-	import { browser, dev } from '$app/environment';
-	import { afterNavigate, beforeNavigate, invalidate } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import { enhance } from '$app/forms';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import drag_context from '$lib/actions/drag-context';
+	import focusTrap from '$lib/actions/focus-trap';
+	import inView from '$lib/actions/inview';
 	import type { Annotation, TargetSchema } from '$lib/annotation';
 	import {
 		createTextQuoteSelectorMatcher,
@@ -50,39 +54,41 @@
 	} from '$lib/annotator';
 	import { highlightText } from '$lib/annotator/highlighter';
 	import type { TextQuoteSelector } from '$lib/annotator/types';
-	import mq from '$lib/stores/mq';
-	import { getContext, onDestroy, onMount, tick } from 'svelte';
-	import { Writable, derived, writable } from 'svelte/store';
-	import { createPopperActions } from 'svelte-popperjs';
-	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
 	import { popoverVariants } from '$lib/components/ui/popover/PopoverContent.svelte';
-	import { scale } from 'svelte/transition';
-	import { H1, Lead, Muted } from '$lib/components/ui/typography';
+	import { Lead, Muted } from '$lib/components/ui/typography';
 	import { nanoid } from '$lib/nanoid';
-	import BookmarkForm from './BookmarkForm.svelte';
-	import EntryOperations from './EntryOperations.svelte';
-	import Tooltip from '$lib/components/ui/Tooltip.svelte';
-	import { getTargetSelector } from '$lib/utils/annotations';
-	import { MutationInput, QueryOutput, mutation, query } from '$lib/queries/query';
-	import { elementReady } from '$lib/utils/dom';
-	import inView from '$lib/actions/inview';
-	import type { MenuBar } from '../../../MainNav.svelte';
-	import Switch from '$lib/components/ui/Switch.svelte';
-	import { enhance } from '$app/forms';
-	import image_tools from './images';
-	import drag_context from '$lib/actions/drag-context';
-	import { update_entry } from '$lib/state/entries';
-	import Attachments from './Attachments.svelte';
-	import Editor from '$components/ui/editor/Editor.svelte';
-	import { toast } from 'svelte-sonner';
-	import { draggable } from '@neodrag/svelte';
-	import { getHostname } from '$lib/utils';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import { numberOrString } from '$lib/utils/misc';
+	import { MutationInput, QueryOutput, mutation } from '$lib/queries/query';
+	import mq from '$lib/stores/mq';
 	import type { Type } from '$lib/types';
-	import throttle from 'just-throttle';
+	import { getHostname } from '$lib/utils';
+	import { getTargetSelector } from '$lib/utils/annotations';
+	import { numberOrString } from '$lib/utils/misc';
+	import { createFocusTrap, useEscapeKeydown, usePortal } from '@melt-ui/svelte/internal/actions';
+	import { draggable } from '@neodrag/svelte';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
+	import { getContext, onDestroy, onMount, tick } from 'svelte';
+	import { createPopperActions } from 'svelte-popperjs';
+	import { toast } from 'svelte-sonner';
+	import { Writable, derived, writable } from 'svelte/store';
+	import { scale } from 'svelte/transition';
+	import type { MenuBar } from '../../../MainNav.svelte';
 	import { getAppearanceContext, getArticleContext } from '../ctx';
+	import Attachments from './Attachments.svelte';
+	import image_tools from './images';
+	import { createAnnotationStore } from '$lib/stores/annotations';
+
+	const {
+		annotations,
+		updateAnnotationMutation,
+		activeAnnotation,
+		activeAnnotationId,
+		showEditAnnotation
+	} = createAnnotationStore();
+
+	$: console.log({ $annotations });
+
+	$: console.log({ $activeAnnotationId });
 
 	export let data: PageData;
 
@@ -157,11 +163,42 @@
 			const newQueryData = queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
 				if (!old) return old;
 				if (!old.entry) return old;
+
+				const ids = Array.isArray(newData.id) ? newData.id : [newData.id];
+
+				const newAnnotations = ids.map((id) => {
+					const { tags, ...rest } = newData;
+					// TODO: tags
+					return makeAnnotation({
+						// @ts-expect-error TODO: why is ts complaining about this?
+						id: id as string,
+						...rest
+					});
+				});
+
+				const oldIds = old.entry?.annotations?.map((a) => a.id) ?? [];
+				const annotationsToAdd = newAnnotations.filter((a) => !oldIds.includes(a.id));
+
+				console.log({ oldIds, annotationsToAdd, old: old.entry?.annotations, newAnnotations });
+
+				const updatedAnnotations = (old.entry?.annotations || [])
+					.map((annotation) => {
+						if (ids.includes(annotation.id)) {
+							return {
+								...annotation,
+								...newAnnotations.find((a) => a.id === annotation.id)
+							};
+						}
+						return annotation;
+					})
+					.concat(annotationsToAdd);
+
+				console.log({ updatedAnnotations });
 				return {
 					...old,
 					entry: {
 						...old.entry,
-						annotations: [...(old.entry?.annotations || []), makeAnnotation(newData)]
+						annotations: [...updatedAnnotations]
 					}
 				};
 			});
@@ -247,7 +284,7 @@
 				}
 			}
 		],
-		placement: 'right',
+		placement: 'bottom',
 		strategy: 'fixed'
 	});
 
@@ -262,6 +299,7 @@
 				els: Awaited<ReturnType<typeof highlightSelectorTarget>>;
 				start: number;
 				exact: string;
+				id: string;
 		  }
 		| undefined
 	> => {
@@ -273,20 +311,27 @@
 		const text_quote_selector = await describeTextQuote(range, articleWrapper);
 		const { exact } = text_quote_selector;
 		console.log({ text_position_selector, text_quote_selector });
+		const id = $activeAnnotationId || nanoid();
 		$currentAnnotation.annotation = {
 			...$currentAnnotation.annotation,
-			id: $currentAnnotation.annotation?.id || nanoid(),
+			id,
 			target: {
 				selector: [text_quote_selector, text_position_selector],
 				source: ''
 			}
 		};
-		const els = await highlightSelectorTarget(text_quote_selector, attrs);
+		const els = await highlightSelectorTarget(text_quote_selector, {
+			'data-annotation-id': id,
+			'data-has-body': 'false',
+			id: `annotation-${id}`,
+			...attrs
+		});
 		return {
 			selector: [text_quote_selector, text_position_selector],
 			els,
 			start,
-			exact
+			exact,
+			id
 		};
 	};
 
@@ -324,27 +369,20 @@
 
 	$: if (data.entry?.annotations) {
 		console.log('entry change!');
-		const annotations = data.entry?.annotations;
+		const _annotations = data.entry?.annotations;
 		if (data.entry?.id) {
-			// update_entry(data.entry.id, {
-			// 	annotations
-			// });
-		}
-		// find ids in $annotationCtx that are not in annotations, and remove them
-		const existingIds = annotations.map((a) => a.id);
-		console.log({
-			annotations,
-			$annotationCtx
-		});
-		for (const [id, ctx] of $annotationCtx) {
-			console.log({ id, ctx, annotations });
-			if (!existingIds.includes(id)) {
-				console.log('deleting');
-				for (const item of ctx) {
-					item.removeHighlights();
-				}
-				$annotationCtx.delete(id);
-			}
+			const existingIds = _annotations.map((a) => a.id);
+			annotations.sync(existingIds);
+			// for (const [id, ctx] of $annotationCtx) {
+			// 	console.log({ id, ctx, annotations });
+			// 	if (!existingIds.includes(id)) {
+			// 		console.log('deleting');
+			// 		for (const item of ctx) {
+			// 			item.removeHighlights();
+			// 		}
+			// 		$annotationCtx.delete(id);
+			// 	}
+			// }
 		}
 	}
 
@@ -365,7 +403,7 @@
 			lastSavedScrollProgress = $scroll;
 		},
 		onSuccess() {
-			toast.success(`Saved progress: ${$scroll}`);
+			// toast.success(`Saved progress: ${$scroll}`);
 			// if (dev) {
 			// }
 		}
@@ -373,6 +411,7 @@
 
 	beforeNavigate(() => {
 		$annotationCtx.clear();
+		annotations.reset();
 		// save progress
 		saveProgress.flush();
 		$mainnav = {
@@ -410,24 +449,30 @@
 				shouldSaveProgress = true;
 			}, 2000);
 		}
-		const annotations = data.entry?.annotations;
-		if (!annotations) {
+		const _annotations = data.entry?.annotations;
+		if (!_annotations) {
 			// wait for scroll
 			setTimeout(() => {
 				doneInitializing();
 			}, 250);
 			return;
 		}
-		for (const annotation of annotations) {
+		console.log(`Setting up annotations`, { _annotations });
+		for (const annotation of _annotations) {
 			let target = annotation.target as TargetSchema;
 			const selector = getTargetSelector(target, 'TextQuoteSelector');
 			if (selector) {
-				const ctx = await highlightSelectorTarget(selector, {
+				const els = await highlightSelectorTarget(selector, {
 					'data-annotation-id': annotation.id,
 					'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
 					id: `annotation-${annotation.id}`
 				});
-				$annotationCtx.set(annotation.id, ctx);
+				$annotationCtx.set(annotation.id, els);
+				$annotations[annotation.id] = {
+					...annotation,
+					target,
+					els
+				};
 			}
 			console.log({ selector });
 		}
@@ -446,7 +491,7 @@
 			if (el) {
 				el.scrollIntoView();
 				// now show currentAnnotation
-				const annotation = annotations.find((a) => a.id === id);
+				const annotation = _annotations.find((a) => a.id === id);
 				tick().then(() => {
 					console.log({ annotation });
 					if (annotation) {
@@ -466,17 +511,21 @@
 
 	popperRef(virtualEl);
 
-	const saveProgress = debounce(() => {
-		console.log({ shouldSaveProgress, $saveProgressMutation });
-		if (!shouldSaveProgress) return;
-		if ($saveProgressMutation.isPending) return;
-        if (Number.isNaN($scroll)) return;
-		console.log('saving');
-		// don't save if last saved progress is within .005 of current progress
-		console.log({ lastSavedScrollProgress, $scroll });
-		if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
-		$saveProgressMutation.mutate();
-	}, 5000);
+	const saveProgress = debounce(
+		() => {
+			console.log({ shouldSaveProgress, $saveProgressMutation });
+			if (!shouldSaveProgress) return;
+			if ($saveProgressMutation.isPending) return;
+			if (Number.isNaN($scroll)) return;
+			console.log('saving');
+			// don't save if last saved progress is within .005 of current progress
+			console.log({ lastSavedScrollProgress, $scroll });
+			if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
+			$saveProgressMutation.mutate();
+		},
+		5000,
+		false
+	);
 
 	const scrolling = (getContext('scrolling') as Writable<boolean>) ?? writable(false);
 
@@ -508,9 +557,9 @@
 		const scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 		const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
 		const scrollToSet = scrollTop / height;
-        if (!Number.isNaN(scrollToSet)) {
-            $scroll = scrollToSet;
-        }
+		if (!Number.isNaN(scrollToSet)) {
+			$scroll = scrollToSet;
+		}
 
 		// set scrolling direction
 		scrollingDown.set(scrollTop > lastScrollTop);
@@ -559,49 +608,109 @@
 
 	const hover_context = new Map();
 	hover_context.set('annotation_ctx', annotationCtx);
-	hovers.setup({
-		context: hover_context
-	});
-
-	const isAnnotation = (
-		el: HTMLElement
-	): el is HTMLElement & {
-		dataset: {
-			annotationId: string;
-		};
-	} => !!el.dataset.annotationId || !!el.closest('[data-annotation-id]');
+	// hovers.setup({
+	// 	context: hover_context
+	// });
 
 	const [editMenuRef, editMenuContent] = createPopperActions();
 	let showEditMenu = false;
 	function handlePointerDown(e: PointerEvent) {
-		const target = e.target as HTMLElement;
-		console.log({ target, isAnnotation: isAnnotation(target) });
+		const target = e.target;
 		if (!isAnnotation(target)) {
+			activeAnnotationId.set(null);
 			showEditMenu = false;
 			return;
 		}
+		const annotationEl = target.closest('[data-annotation-id]');
+		if (!annotationEl) return;
+		if (!(annotationEl instanceof HTMLElement)) return;
+		const id = annotationEl.dataset.annotationId;
+		if (!id) return;
+		activeAnnotationId.set(id);
+		$currentAnnotation.annotation = {
+			id
+		};
 		editMenuRef(target);
+		annotationRef(target);
+		// usePopper()
 		showEditMenu = true;
 	}
 
 	const hover_entry: boolean = getContext('hover_entry');
+
+	let annotationEditMenuEl: HTMLElement;
+
+	const { useFocusTrap } = createFocusTrap({
+		immediate: true,
+		escapeDeactivates: false,
+		allowOutsideClick: false,
+		returnFocusOnDeactivate: false,
+		initialFocus: () => annotationEditMenuEl
+	});
 </script>
 
-{#if showEditMenu && !scrolling}
-	<div use:editMenuContent class="z-10 select-none">
+{#if showEditMenu}
+	<div
+		use:editMenuContent
+		use:usePortal
+		use:focusTrap={{
+			immediate: true,
+			escapeDeactivates: false,
+			allowOutsideClick: false,
+			returnFocusOnDeactivate: false,
+			initialFocus: () => annotationEditMenuEl
+		}}
+		use:useEscapeKeydown={{
+			handler: (e) => {
+				console.log({ e });
+				showEditMenu = false;
+			}
+		}}
+		class="z-10 select-none"
+	>
 		<div
 			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
-			in:scale={{
+			transition:scale={{
 				start: 0.9
 			}}
+			tabindex="-1"
+			bind:this={annotationEditMenuEl}
 		>
 			<div class="flex justify-between space-x-2">
-				<Button class="flex h-auto flex-col space-y-1" variant="ghost">
+				<Button
+					class="flex h-auto flex-col space-y-1"
+					variant="ghost"
+					on:click={() => {
+						showEditMenu = false;
+						activeAnnotation.show();
+					}}
+				>
 					<EditIcon class="h-5 w-5" />
 					<Muted class="text-xs">Edit</Muted>
 				</Button>
-				<Button class="flex h-auto flex-col space-y-1" variant="ghost">
-					<DeleteIcon class="h-5 w-5" />
+				<Button
+					on:click={() => {
+						if ($activeAnnotationId) {
+							activeAnnotation.remove();
+							$annotateMutation.mutate({
+								deleted: new Date(),
+								id: $activeAnnotationId
+							});
+							toast('Deleted annotation', {
+								action: {
+									label: 'Undo',
+									onClick: annotations.restore
+								},
+								duration: 7000
+							});
+						}
+						activeAnnotationId.set(null);
+						showEditMenu = false;
+					}}
+					class="flex h-auto flex-col space-y-1"
+					variant="ghost"
+				>
+					<EraserIcon class="h-5 w-5" />
 					<Muted class="text-xs">Delete</Muted>
 				</Button>
 			</div>
@@ -629,7 +738,7 @@
 							clearSelection();
 						}
 						const id = nanoid();
-						const info = await highlight({ id: `annotation-${id}` });
+						const info = await highlight({ 'data-annotation-id': `${id}`, id: `annotation-${id}` });
 
 						if (!info) {
 							e.preventDefault();
@@ -642,6 +751,14 @@
 								source: '',
 								selector: info.selector
 							}
+						});
+						annotations.add(id, {
+							id,
+							target: {
+								source: '',
+								selector: info.selector
+							},
+							els: info.els
 						});
 						clearSelection();
 					}}
@@ -659,13 +776,19 @@
 						const highlight_info = await highlight();
 						clearSelection();
 						if (highlight_info) {
-							const { els } = highlight_info;
-							const el = els[0].highlightElements[0];
-							temporaryAnnotationHighlight = highlight_info;
-							annotationRef(el);
+							const { els, id, selector } = highlight_info;
+							const el = els[0]?.highlightElements[0];
+							if (el) annotationRef(el);
+							annotations.addTemp(id, {
+								id,
+								target: {
+									source: '',
+									selector
+								},
+								els
+							});
 							tick().then(() => {
-								$currentAnnotation.show = true;
-								$currentAnnotation.highlight = highlight_info;
+								$showEditAnnotation = true;
 							});
 						}
 					}}
@@ -680,8 +803,21 @@
 	</div>
 {/if}
 
-{#if $currentAnnotation.show && data.entry}
-	<div use:annotationContent class="z-10">
+{#if $showEditAnnotation && data.entry}
+	<div
+		use:annotationContent
+		use:usePortal
+		use:focusTrap={{
+			immediate: true,
+			escapeDeactivates: true,
+			allowOutsideClick: true,
+			returnFocusOnDeactivate: false
+		}}
+		use:useEscapeKeydown={{
+			handler: activeAnnotation.hide
+		}}
+		class="z-10"
+	>
 		<!-- use:draggable -->
 		<div
 			in:scale={{
@@ -689,52 +825,63 @@
 				start: 0.9
 			}}
 			use:draggable
-			class={cn(popoverVariants(), 'flex flex-col gap-y-4')}
+			class={cn(popoverVariants(), 'flex flex-col gap-y-4 w-80 max-w-xs')}
 		>
 			<Editor
-				id={$currentAnnotation.annotation?.id}
-				content={$currentAnnotation.annotation?.contentData ?? undefined}
+				id={$activeAnnotationId ?? undefined}
+				content={$activeAnnotation?.contentData ?? undefined}
 				blank
+				focusRing={false}
 				class="sm:shadow-none shadow-none border-none sm:px-4 px-4 py-6"
 				bind:this={activeEditor}
+				options={{
+					autofocus: 'end'
+				}}
 			/>
 			<div class="flex justify-end gap-3">
 				<Button
 					on:click={() => {
-						$currentAnnotation.show = false;
-						temporaryAnnotationHighlight?.els.forEach((h) => {
-							h.removeHighlights();
-						});
-						temporaryAnnotationHighlight = undefined;
-						currentAnnotation.set({
-							show: false
-						});
+						activeAnnotation.hide();
+						if (annotations.hasTemp()) annotations.removeTemp();
+						activeAnnotationId.set(null);
 					}}
+					size="sm"
 					variant="secondary"
 				>
 					Cancel
 				</Button>
 				<Button
+					size="sm"
 					on:click={() => {
 						activeEditor.save((contentData) => {
+							console.log({ contentData, $annotations });
 							// TODO here
 							if (!data.entry?.id) return;
-							console.log({ $currentAnnotation });
-							const id = $currentAnnotation.annotation?.id ?? nanoid();
-
-							$currentAnnotation.show = false;
-							if (!$currentAnnotation.highlight) return;
+							console.log({ $activeAnnotationId });
+							const id = $activeAnnotationId ?? nanoid();
+							activeAnnotation.hide();
+							if (!$activeAnnotation) return;
 							// optimistic update
+							if (annotations.hasTemp()) annotations.saveTemp();
+							$annotations[id]?.els.forEach((el) => {
+								el.highlightElements.forEach((el) => {
+									el.setAttribute('data-has-body', 'true');
+								});
+							});
+                            if (id) {
+                                // update
+                                $annotations[id] = {
+                                    ...$annotations[id],
+                                    contentData
+                                };
+                            }
 							toast.promise(
 								$annotateMutation.mutateAsync({
 									entryId: data.entry.id,
 									id,
 									contentData,
 									type: 'annotation',
-									target: {
-										source: '',
-										selector: $currentAnnotation.highlight?.selector
-									}
+									target: $activeAnnotation.target
 								}),
 								{
 									loading: 'Saving note...',
@@ -742,51 +889,13 @@
 									error: 'Failed to save note'
 								}
 							);
-							$currentAnnotation.annotation = undefined;
+							activeAnnotationId.set(null);
 						});
 					}}
 				>
 					Save
 				</Button>
 			</div>
-			<!-- <AnnotationForm
-				draggable
-				autofocus
-				class={popoverVariants()}
-				annotation={$currentAnnotation.annotation}
-				entry={data.entry}
-				on:cancel={() => {
-					$currentAnnotation.show = false;
-					temporaryAnnotationHighlight?.els.forEach((h) => {
-						h.removeHighlights();
-					});
-					temporaryAnnotationHighlight = undefined;
-					currentAnnotation.set({
-						show: false
-					});
-				}}
-				on:save={(e) => {
-					currentAnnotation.set({
-						show: false
-					});
-					console.log({ e });
-					if (e.detail) {
-						console.log(e.detail);
-						const selector = `[data-sidebar-annotation-id="${e.detail.form?.data.id}"]`;
-						console.log({ selector });
-						elementReady(selector).then((el) => {
-							console.log({ el });
-							if (el) {
-								el.scrollIntoView({
-									behavior: 'smooth',
-									block: 'center'
-								});
-							}
-						});
-					}
-				}}
-				data={data.annotationForm}
-			/> -->
 		</div>
 	</div>
 {/if}
@@ -873,5 +982,9 @@
 <style>
 	div :global(p) {
 		text-rendering: optimizeLegibility;
+	}
+
+	.prose :global(mark[data-annotation-id]) {
+		@apply cursor-pointer;
 	}
 </style>

@@ -1,4 +1,4 @@
-import { annotationSchema, type AnnotationSchema } from '$lib/annotation';
+import { annotationSchema, TargetSchema, type AnnotationSchema } from '$lib/annotation';
 import pindex from '$lib/api/pindex';
 import { Tweet, tweet_types } from '$lib/api/twitter';
 import { db, json } from '$lib/db';
@@ -558,6 +558,11 @@ export async function entry_by_id({
 						.whereRef('Annotation.entryId', '=', 'Entry.id')
 						.where('Annotation.userId', '=', userId!)
 						.where('Annotation.parentId', 'is', null)
+                        .where("Annotation.deleted", "is", null)
+                        .$narrowType<{
+                            target: TargetSchema | null;
+                            contentData: JSONContent | null;
+                        }>()
 						.orderBy('Annotation.start', 'asc')
 						.orderBy('Annotation.createdAt', 'asc')
 						.limit(100)
@@ -769,6 +774,7 @@ export async function entry_by_id({
 		}
 	};
 }
+
 
 export type FullEntryDetail = Awaited<ReturnType<typeof entry_by_id>>;
 export type EntryAnnotation = NonNullable<

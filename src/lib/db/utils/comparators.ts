@@ -20,6 +20,9 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
     console.log(`applying filter`, {filter})
 	const expressions = Object.entries(filter)
 		.map(([field, comparator]) => {
+            console.log({field, comparator})
+            // If comparator is undefined, we don't want to apply a filter
+            if (!comparator) return;
 			if (field === 'and' || field === 'or') {
 				const subFilters = filter[field] ?? [];
 				// TODO: map over and add and/or eb clauses

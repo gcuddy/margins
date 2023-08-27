@@ -51,7 +51,7 @@
 	variant="ghost"
 	class={cn(
 		'w-full justify-start font-normal group',
-		renaming && 'focus-within:ring-1 ring-ring && hover:bg-inherit',
+		renaming && 'focus-within:ring-1 ring-ring ring-inset hover:bg-inherit',
 		size !== 'sm' && 'text-base'
 	)}
 >
@@ -64,7 +64,7 @@
 		<input
 			bind:this={inputEl}
 			bind:value={pin.folderName}
-			class="appearance-none w-full focus:outline-none"
+			class="appearance-none w-full focus:outline-none bg-transparent"
 			type="text"
 			on:blur={(e) => {
 				// console.log(pin.folderName, { previousName })

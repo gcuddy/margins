@@ -16,6 +16,8 @@ import {
 	entryListSortSchemas,
 	get_library_schema
 } from '$lib/schemas/library';
+import type { TargetSchema } from '$lib/annotation';
+import type { JSONContent } from '@tiptap/core';
 
 type AliasedEb = ExpressionBuilder<
 	DB & Record<'b', Bookmark> & Record<'e', Entry> & Record<'i', Nullable<Interaction>>,
@@ -504,6 +506,10 @@ export async function get_entry_details(
 						])
 						.whereRef('Annotation.entryId', '=', 'Entry.id')
 						.where('Annotation.userId', '=', userId!)
+                        .$narrowType<{
+                            target: TargetSchema | null;
+                            contentData: JSONContent | null;
+                        }>()
 						.orderBy('Annotation.start', 'asc')
 						.orderBy('Annotation.createdAt', 'asc')
 						.limit(100)
@@ -655,12 +661,13 @@ export async function get_entry_details(
 	// const [entry, ]
 
 	const entry = await query.executeTakeFirst();
-
 	return {
 		movie: type === 'movie' ? tmdb.movie.details(+id) : null,
 		book: type === 'book' ? books.get(id.toString()) : null,
 		tv: type === 'tv' ? tmdb.tv.details(+id) : null,
 		album: type === 'album' ? spotify.album(id.toString()) : null,
-		entry: query.executeTakeFirst()
+		entry
 	};
 }
+
+export type EntryDetails = Awaited<ReturnType<typeof get_entry_details>>;

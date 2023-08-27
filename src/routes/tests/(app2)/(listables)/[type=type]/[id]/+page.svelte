@@ -32,6 +32,7 @@
 
 	export let data: PageData;
 
+
 	$: ({ type } = data);
 	const currentList = getCurrentListContext();
 	$: currentIndex = $currentList.entries.findIndex((e) => e.id === data.entry?.id);

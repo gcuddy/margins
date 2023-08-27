@@ -17,7 +17,7 @@
 	import { formatTimeDuration } from '$lib/utils/dates';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import MarkdownIt from 'markdown-it';
-	import { getContext, type ComponentProps } from 'svelte';
+	import { getContext, type ComponentProps, afterUpdate } from 'svelte';
 	import type { Writable } from 'svelte/store';
 	const md = new MarkdownIt();
 	const jumping = getContext('jumping') as Writable<boolean>;
@@ -43,6 +43,14 @@
 	let pending_delete = false;
 
 	let title = !!annotation.title;
+
+	let lastContentData = annotation.contentData;
+	afterUpdate(() => {
+		if (lastContentData !== annotation.contentData && annotation.contentData) {
+			editor.setContent(annotation.contentData);
+			lastContentData = annotation.contentData;
+		}
+	});
 
 	let focused = false;
 </script>

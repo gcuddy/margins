@@ -22,6 +22,8 @@
 	})[];
 
 	export let size: 'default' | 'sm' | 'lg' = 'sm';
+    export let type: string | undefined = undefined;
+
 
 	const queryClient = useQueryClient();
 
@@ -85,7 +87,8 @@
 	class={className}
 	use:dndzone={{
 		items: pins,
-		flipDurationMs: 200
+		flipDurationMs: 200,
+        type
 	}}
 	on:consider={(e) => {
 		pins = e.detail.items;

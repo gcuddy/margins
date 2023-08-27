@@ -1,22 +1,20 @@
 <script lang="ts">
-	import Command from "$lib/components/ui/command/Command.svelte";
-	import { Dialog, DialogContent } from "$lib/components/ui/dialog";
-	import type { ComponentProps } from "svelte";
+	import Command from '$lib/components/ui/command/Command.svelte';
+	import { Dialog, DialogContent } from '$lib/components/ui/dialog';
+	import type { ComponentProps } from 'svelte';
 	export let isOpen = false;
-	export let onKeydown: ComponentProps<Command>["onKeydown"] = undefined;
-	export let shouldFilter: ComponentProps<Command>["shouldFilter"] = undefined;
+	export let onKeydown: ComponentProps<Command>['onKeydown'] = undefined;
+	export let shouldFilter: ComponentProps<Command>['shouldFilter'] = undefined;
 	interface $$Props extends ComponentProps<Dialog> {
 		isOpen?: boolean;
-		onKeydown?: ComponentProps<Command>["onKeydown"];
-		shouldFilter?: ComponentProps<Command>["shouldFilter"];
-		filter?: ComponentProps<Command>["filter"];	
+		onKeydown?: ComponentProps<Command>['onKeydown'];
+		shouldFilter?: ComponentProps<Command>['shouldFilter'];
+		filter?: ComponentProps<Command>['filter'];
 	}
 </script>
 
-<Dialog bind:isOpen {...$$restProps}>
-	<DialogContent
-		class="overflow-hidden p-0 shadow-2xl [&_[dialog-overlay]]:bg-red-100"
-	>
+<Dialog bind:open={isOpen} {...$$restProps}>
+	<DialogContent class="overflow-hidden p-0 shadow-2xl [&_[dialog-overlay]]:bg-red-100">
 		<!-- s -->
 		<Command
 			on:close

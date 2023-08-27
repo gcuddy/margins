@@ -178,6 +178,10 @@
         hydrated = true;
     }
 
+    export const setContent = (content: string | JSONContent) => {
+        $editor?.commands?.setContent(content);
+    }
+
 	let just_saved = false;
 	$: if (save_status && $save_status === 'Saved') {
 		just_saved = true;
@@ -209,7 +213,8 @@
 	class={cn(
 		// ' w-full max-w-screen-lg sm:mb-[calc(2    0vh)] sm:rounded-lg p-6 ',
 		'relative ',
-		/* shadcn textarea */ 'min-h-[80px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background ring-ring ring-offset-2 focus-within:ring-2',
+		/* shadcn textarea */ 'min-h-[80px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background ring-ring ring-offset-2',
+        focusRing && 'focus-within:ring-2',
         (($editor?.isFocused && $editor?.isEditable) || bubbleMenuFocused) && focusRing && 'ring-2',
 		// 'p-12 px-8  sm:px-12',
 		// sm:shadow-lg sm:border

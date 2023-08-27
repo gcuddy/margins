@@ -229,15 +229,19 @@
 	}
 
 	export let contextMenuOpen = false;
-    $: console.log({contextMenuOpen})
+	$: console.log({ contextMenuOpen });
 </script>
 
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
 		}} -->
-<ContextMenu.Root  bind:open={contextMenuOpen} portal="body" positioning={{
-    // strategy: "fixed"
-}}>
+<ContextMenu.Root
+	bind:open={contextMenuOpen}
+	portal="body"
+	positioning={{
+		// strategy: "fixed"
+	}}
+>
 	<ContextMenu.Trigger asChild let:builder>
 		<a
 			bind:this={anchor_el}
@@ -245,8 +249,7 @@
 			use:melt={builder}
 			{...$$restProps}
 			class="data-[state=open]:bg-accent cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none overflow-hidden"
-            data-sveltekit-preload-data="tap"
-            data-sveltekit-preload-code="viewport"
+			data-sveltekit-preload-data="tap"
 		>
 			<div
 				class={cn(
@@ -429,7 +432,7 @@
 							{#if entry.estimatedReadingTime}
 								<Small class="text-xs text-muted-foreground items-center h-9 flex">
 									<TimerIcon class="h-3.5 w-3.5" />
-									{formatDuration(entry.estimatedReadingTime, "m")}
+									{formatDuration(entry.estimatedReadingTime, 'm')}
 								</Small>
 							{/if}
 							{#if entry.progress}
