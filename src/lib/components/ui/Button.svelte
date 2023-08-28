@@ -29,19 +29,19 @@
 </script>
 
 <script lang="ts">
-	import { noop } from '$lib/helpers';
-
-	import { cn } from '$lib/utils/tailwind';
 	import { cva, type VariantProps } from 'class-variance-authority';
 	import type { Action } from 'svelte/action';
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
+
+	import { noop } from '$lib/helpers';
+	import { cn } from '$lib/utils/tailwind';
 
 	export let href: HTMLAnchorAttributes['href'] = undefined;
 	export let type: HTMLButtonAttributes['type'] = undefined;
 
 	export let variant: VariantProps<typeof buttonVariants>['variant'] = 'default';
 	export let size: VariantProps<typeof buttonVariants>['size'] = 'default';
-	export let action: Action<HTMLElement> = noop;
+	export let action: Action = noop;
 	export let ref: HTMLElement | undefined = undefined;
 	export let text: string | undefined = undefined;
 	export let onClick: MouseEvent | undefined = undefined;
@@ -55,25 +55,25 @@
 		class?: string | null;
 		variant?: VariantProps<typeof buttonVariants>['variant'];
 		size?: VariantProps<typeof buttonVariants>['size'];
-		action?: Action<HTMLElement> | (() => void);
+		action?: Action | (() => void);
 	};
 
-	interface AnchorElement extends Props, HTMLAnchorAttributes {
+	type AnchorElement = {
 		href?: HTMLAnchorAttributes['href'];
 		type?: never;
-	}
+	} & Props & HTMLAnchorAttributes
 
-	interface ButtonElement extends Props, HTMLButtonAttributes {
+	type ButtonElement = {
 		type?: HTMLButtonAttributes['type'];
 		href?: never;
         as?: "button" | undefined;
-	}
+	} & Props & HTMLButtonAttributes
 
-    interface GenericElement extends Props, HTMLButtonAttributes {
+    type GenericElement = {
         type?: never;
         href?: never;
         as: "div";
-    }
+    } & Props & HTMLButtonAttributes
 
 	type $$Props = AnchorElement | ButtonElement | GenericElement;
 </script>

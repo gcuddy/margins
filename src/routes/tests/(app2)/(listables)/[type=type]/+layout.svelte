@@ -14,9 +14,6 @@
 	import Sidebar from './Sidebar.svelte';
 	// export let data;
 
-	const scrollingDown = writable(false);
-	setContext('scrollingDown', scrollingDown);
-
 	/** A store to track whether or not we're jumping to a new point (i.e. when an annotation is clicked and we're scrolling to it.)*/
 	const jumping = writable(false);
 	setContext('jumping', jumping);
@@ -37,7 +34,7 @@
 	<LeftSidebar />
 	<!-- </div> -->
 	<div id="entry-wrapper" class="flex grow flex-col overflow-x-hidden h-full">
-		<Header {scrollingDown} />
+		<Header />
 		<slot />
 	</div>
 	<Sidebar />

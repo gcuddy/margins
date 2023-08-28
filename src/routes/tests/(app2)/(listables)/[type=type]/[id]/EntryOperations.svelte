@@ -40,6 +40,7 @@
 		DropdownMenuSubTrigger,
 		DropdownMenuTrigger	} from '$lib/components/ui/dropdown-menu';
 	import { mutation, query } from '$lib/queries/query';
+	import type { LibraryEntry } from '$lib/server/queries';
 	import { state, update_entry } from '$lib/state/entries';
 	import { createAlertDialogStore } from '$lib/stores/dialog';
 	import { convertToTypes } from '$lib/types';
@@ -49,7 +50,7 @@
 
 	export let data: ComponentProps<AnnotationForm>['data'];
 	export let entry: Pick<
-		Entry,
+		LibraryEntry,
 		'id' | 'type' | 'googleBooksId' | 'spotifyId' | 'tmdbId' | 'podcastIndexId'
 	>;
 

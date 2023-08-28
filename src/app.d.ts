@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/consistent-type-imports */
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 /// <reference types="@sveltejs/kit" />
 
 declare global {
@@ -6,17 +8,11 @@ declare global {
 			auth: import('lucia').AuthRequest;
 		}
 		interface PageData {
-			// user?: import('$lib/user').RootUserData;
-			// user?: import("$lib/trpc/router").RouterOutputs["user"]["getUser"] & {
-			//     stateIdToLocation: Map<number, import("@prisma/client").Location>;
-			//     stateIdToName: Map<number, string>;
-			//     states: import("$lib/trpc/router").RouterOutputs["user"]["getStates"];
-			//     subscriptions: import("$lib/trpc/router").RouterOutputs["subscriptions"]["list"];
-			// };
+			entry?: import('$lib/queries/server').EntryDetail;
 			user_data?: {
-				tags?: Promise<{ id: number; name: string }[]>;
+				tags?: Promise<Array<{ id: number; name: string }>>;
 				pins?: Promise<
-					{
+					Array<{
 						view: {
 							id: number;
 							name: string;
@@ -30,7 +26,7 @@ declare global {
 							name: string;
 						} | null;
 						id: string;
-					}[]
+					}>
 				>;
 				username: string;
 				userId: string;
@@ -59,18 +55,8 @@ declare global {
 			email: string;
 			avatar?: string | null;
 		};
-		type DatabaseSessionAttributes = {};
+		type DatabaseSessionAttributes = object;
 	}
 }
 
-
-// interface Meta {
-//     persist?: boolean;
-//     init?: any;
-// }
-
-// declare module '@tanstack/svelte-query' {
-// 	interface QueryMeta extends Meta {}
-// }
-// THIS IS IMPORTANT!!!
 export {};

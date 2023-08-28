@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
-	import { InfoIcon, PinIcon } from 'lucide-svelte';
+	import { PinIcon } from 'lucide-svelte';
 	import { getContext } from 'svelte';
-	import { derived, type Writable, writable } from 'svelte/store';
+	import { derived, type Writable } from 'svelte/store';
 
 	import { page } from '$app/stores';
 	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
@@ -13,39 +13,32 @@
 		initDeletePinMutation,
 	} from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import mq from '$lib/stores/mq';
 	import { cn } from '$lib/utils/tailwind';
 
 	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
 	import EntryOperations from './[id]/EntryOperations.svelte';
 	import { getArticleContext, getEntryContext } from './ctx';
 
-	export let scrollingDown = getContext('scrollingDown') || writable(false);
-
-	$: hide = $scrollingDown;
-
-	$: console.log({ $scrollingDown });
+	const { scrollingDown } = getEntryContext();
 
 	const { rightSidebar } = getEntryContext();
-
-	const jumping = getContext('jumping');
-
-	const shouldHide = derived([scrollingDown, mq], ([$scrollingDown, $mq]) => {
-		return $scrollingDown || ($mq.max_md && $rightSidebar);
-	});
 
 	const pdf_state = getPdfStateContext();
 	const { navWidth } = getEntryContext();
 	$: opts = $pdf_state.opts;
 
-
-	const mainNavWidth = getContext('mainNavWidth');
-	const mobileNavWidth = getContext('mobileNavWidth');
-	const inArticle = getContext('inArticle');
+	const mainNavWidth: Writable<number> = getContext('mainNavWidth');
+	const mobileNavWidth: Writable<number> = getContext('mobileNavWidth');
+	const inArticle: Writable<boolean> = getContext('inArticle');
 
 	const pins = createQuery(queryFactory.pins.list());
 	const pin = derived(pins, ($pins) => {
-		return $pins.data?.find((pin) => pin.entry?.id === $page.data.entry?.id);
+		return $pins.data?.find((pin) => {
+			if ($page.data.entry) {
+				return pin.entry?.id === $page.data.entry.id;
+			}
+			return false;
+		});
 	});
 	const topSortOrder = derived(
 		pins,
@@ -61,8 +54,6 @@
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
 
-<!--  -->
-<!-- TODO: Hidden Header for showing on hover -->
 
 {#if $scrollingDown}
 	<div
@@ -75,17 +66,16 @@
 {/if}
 
 <div
-	style:--main-nav-width={$inArticle ? `0px` : $mainNavWidth + 'px'}
-	style:--mobile-nav-width={$inArticle ? `0px` : $mobileNavWidth + 'px'}
-	style:--left={$inArticle ? 0 : $mainNavWidth + 'px'}
-	style:--mobile-left={$inArticle ? 0 : $mobileNavWidth + 'px'}
+	style:--main-nav-width={$inArticle ? `0px` : `${$mainNavWidth}px`}
+	style:--mobile-nav-width={$inArticle ? `0px` : `${$mobileNavWidth}px`}
+	style:--left={$inArticle ? 0 : `${$mainNavWidth}px`}
+	style:--mobile-left={$inArticle ? 0 : `${$mobileNavWidth}px`}
 	class={cn(
 		'fixed flex items-center justify-between z-50 left-0 sm:left-[--mobile-left] lg:left-[--left] top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform w-full sm:w-[calc(100%-var(--mobile-nav-width))]',
 		$scrollingDown && '-translate-y-full',
 		$rightSidebar
 			? 'pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
 			: 'pr-14', // pr-14 because button is w-10 r-4
-		// $rightSidebar && $mq.max_md && 'opacity-0'
 	)}
 >
 	<div class="flex items-start justify-start w-full relative px-4">
@@ -100,7 +90,6 @@
 					on:click={() => {
 						if (!$pdf_state.pdf_viewer) return;
 						$pdf_state.pdf_viewer.currentScaleValue = 'auto';
-						console.log($pdf_state);
 					}}
 				>
 					Auto
@@ -132,7 +121,7 @@
 							});
 						} else {
 							$createPin.mutate({
-								entryId: $page.data.entry.id,
+								entryId: $page.data.entry?.id,
 								sortOrder: $topSortOrder - 1,
 							});
 						}
@@ -153,10 +142,12 @@
 				</span>
 				<ArticleAppearanceOptions />
 			{/if}
-			<EntryOperations
-				entry={$page.data.entry}
-				data={$page.data.annotationForm}
-			/>
+			{#if $page.data.entry}
+				<EntryOperations
+					entry={$page.data.entry}
+					data={$page.data.annotationForm}
+				/>
+			{/if}
 		</div>
 	</div>
 </div>

@@ -1,20 +1,4 @@
-import { annotationSchema, type TargetSchema } from '$lib/annotation';
-import { books } from '$lib/api/gbook';
-import pindex from '$lib/api/pindex';
-import spotify from '$lib/api/spotify';
-import { tmdb } from '$lib/api/tmdb';
-import { tweet_types, type Tweet } from '$lib/api/twitter';
-import { db, json } from '$lib/db';
-import { generateSearchNotePhrase } from '$lib/db/queries/note';
-import { annotations, entrySelect, getFirstBookmarkSort, withEntry } from '$lib/db/selects';
-import { applyFilter } from '$lib/db/utils/comparators';
-import { librarySchema, tagSchema } from '$lib/features/entries/forms';
-import { nanoid } from '$lib/nanoid';
-import type { Annotation, DB, Entry, Favorite } from '$lib/prisma/kysely/types';
-import { BookmarkSchema } from '$lib/prisma/zod-prisma';
-import { type idSchema } from '$lib/schemas';
-import { noteFilterSchema } from '$lib/schemas/inputs';
-import { typeSchema } from '$lib/types';
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { DocumentType, RelationType, Status } from '@prisma/client';
 import type { JSONContent } from '@tiptap/core';
 import type {
@@ -30,7 +14,25 @@ import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import type { SetOptional } from 'type-fest';
 import { z } from 'zod';
 
-interface Ctx {
+import { annotationSchema, type TargetSchema } from '$lib/annotation';
+import { books } from '$lib/api/gbook';
+import pindex from '$lib/api/pindex';
+import spotify from '$lib/api/spotify';
+import { tmdb } from '$lib/api/tmdb';
+import { type Tweet,tweet_types } from '$lib/api/twitter';
+import { db, json } from '$lib/db';
+import { generateSearchNotePhrase } from '$lib/db/queries/note';
+import { annotations, entrySelect, getFirstBookmarkSort, withEntry } from '$lib/db/selects';
+import { applyFilter } from '$lib/db/utils/comparators';
+import { librarySchema, tagSchema } from '$lib/features/entries/forms';
+import { nanoid } from '$lib/nanoid';
+import type { Annotation, DB, Entry, Favorite } from '$lib/prisma/kysely/types';
+import { BookmarkSchema } from '$lib/prisma/zod-prisma';
+import { type idSchema } from '$lib/schemas';
+import { noteFilterSchema } from '$lib/schemas/inputs';
+import { typeSchema } from '$lib/types';
+
+type Ctx = {
 	ctx: {
 		userId: string;
 	};
@@ -493,7 +495,6 @@ export async function entry_by_id({
 	input: { id, type, season },
 	ctx: { userId }
 }: GetCtx<typeof entry_by_id_schema>) {
-	console.time('entry');
 
 	let podcast: Awaited<ReturnType<(typeof pindex)['episodeById']>> | null = null;
 

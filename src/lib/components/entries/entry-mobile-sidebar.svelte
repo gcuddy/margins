@@ -1,17 +1,20 @@
 <script lang="ts">
 	import { createDialog, melt } from '@melt-ui/svelte';
+	import { XIcon } from 'lucide-svelte';
 	import { writable } from 'svelte/store';
 	import { fade, fly } from 'svelte/transition';
-	import EntrySidebarButton from './entry-sidebar-button.svelte';
-	import { XIcon } from 'lucide-svelte';
-	import { buttonVariants } from '$components/ui/Button.svelte';
+
+	import { buttonVariants } from '$components/ui/button';
 	import { cn } from '$lib/utils/tailwind';
+
+	import EntrySidebarButton from './entry-sidebar-button.svelte';
 
 	export let open = writable(false);
 	export let defaultOpen = false;
 	const {
-		elements: { trigger, overlay, content, close, portalled }
+		elements: { overlay, content, close, portalled }
 	} = createDialog({ open, defaultOpen });
+
 </script>
 
 <EntrySidebarButton class="md:hidden" {open} />

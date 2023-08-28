@@ -22,6 +22,8 @@ module.exports = {
 		'import/first': 2,
 		'import/newline-after-import': 2,
         'import/no-default-export': 2,
+        'prefer-template': 'error',
+
 
 		/**
 		 * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
@@ -48,8 +50,10 @@ module.exports = {
 		'@typescript-eslint/switch-exhaustiveness-check': 'error',
 		'@typescript-eslint/array-type': ['error', { default: 'generic' }],
 		'@typescript-eslint/consistent-type-definitions': ['error', "type"],
-		'@typescript-eslint/explicit-function-return-type': 1,
+        // TODO: eventually enable this, but for now it's too much work. However, highly encourage annotating functions with return types.
+		// '@typescript-eslint/explicit-function-return-type': 1,
 		'@typescript-eslint/prefer-ts-expect-error': 'error',
+        '@typescript-eslint/ban-types': 'error',
 		'@typescript-eslint/ban-ts-comment': [
 			'error',
 			{

@@ -9,7 +9,6 @@
 
 	import Button from '$components/ui/Button.svelte';
 	import { make_portal } from '$lib/actions/utils';
-	import mq from '$lib/stores/mq';
 	import { cn } from '$lib/utils/tailwind';
 
 	import { backContext } from './[id]/store';
@@ -17,22 +16,30 @@
 
 	export let show = false;
 
-	const scrollingDown = getContext('scrollingDown') ;
+	const { scrollingDown } = getEntryContext();
 
-    const { navWidth } = getEntryContext();
+	const { navWidth } = getEntryContext();
 
-	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }> | undefined | null;
-	$: if (borderBoxSize) $navWidth = $navWidth = borderBoxSize[borderBoxSize.length - 1]?.inlineSize;
+	let borderBoxSize:
+		| Array<{ blockSize: number; inlineSize: number }>
+		| undefined
+		| null;
+	$: if (borderBoxSize) {
+		const newWidth = borderBoxSize[borderBoxSize.length - 1]?.inlineSize;
+		if (newWidth) {
+			$navWidth = newWidth;
+		}
+	}
 
-    const inArticle = getContext('inArticle') ;
-    const mainNavWidth = getContext('mainNavWidth') ;
-    const mobileNavWidth = getContext('mobileNavWidth') ;
+	const inArticle: Writable<boolean> = getContext('inArticle');
+	const mainNavWidth: Writable<number> = getContext('mainNavWidth');
+	const mobileNavWidth: Writable<number> = getContext('mobileNavWidth');
 </script>
 
 <nav
 	bind:borderBoxSize
-    style:--left={$inArticle ? 0 : $mainNavWidth + 'px'}
-    style:--mobile-left={$inArticle ? 0 : $mobileNavWidth + 'px'}
+	style:--left={$inArticle ? 0 : `${$mainNavWidth}px`}
+	style:--mobile-left={$inArticle ? 0 : `${$mobileNavWidth}px`}
 	class={cn(
 		'h-[--nav-height] left-0 sm:left-[--mobile-left] lg:[--left] flex items-center transition-transform transform fixed  top-0 z-[51] pl-4 w-full',
 		!show && 'w-min max-w-min border-b',
@@ -40,7 +47,7 @@
 		// $rightSidebar && 'opacity-0'
 	)}
 >
-	<Button variant="ghost" as="a" href={$backContext}>
+	<Button variant="ghost" href={$backContext}>
 		<ArrowLeft />
 	</Button>
 </nav>

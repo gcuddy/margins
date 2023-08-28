@@ -1,20 +1,24 @@
-import type { BeforeNavigate } from "@sveltejs/kit";
-import { writable } from "svelte/store";
+import type { BeforeNavigate } from '@sveltejs/kit';
+import { type Writable, writable } from 'svelte/store';
 
-export const backContext = writable(`/tests/library/backlog`)
+export const backContext = writable(`/tests/library/backlog`);
 
-
-export function setBackContext(navigation: BeforeNavigate, path: string) {
-    if (navigation?.to?.route?.id?.endsWith(`[type=type]/[id]`)) {
-        backContext.set(path)
-    }
+export function setBackContext(navigation: BeforeNavigate, path: string): void {
+	if (navigation.to?.route.id?.endsWith(`[type=type]/[id]`)) {
+		backContext.set(path);
+	}
 }
 
-export function createArticleStore() {
+export type ArticleStore = {
+	states: {
+		progress: Writable<number>;
+	};
+};
 
-    return {
-        states: {
-            progress: writable(0)
-        }
-    }
+export function createArticleStore(): ArticleStore {
+	return {
+		states: {
+			progress: writable(0),
+		},
+	};
 }

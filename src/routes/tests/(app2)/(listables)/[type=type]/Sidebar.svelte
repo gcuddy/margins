@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { writable } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 
 	import ColResizer from '$components/ColResizer.svelte';
 	import EntryMobileSidebar from '$components/entries/entry-mobile-sidebar.svelte';
 	import EntrySidebar from '$components/entries/entry-sidebar.svelte';
-	import mq from '$lib/stores/mq';
 	import { check_inert, check_inside_input } from '$lib/utils';
 
 	import { getEntryContext } from './ctx';
@@ -14,19 +14,18 @@
 
 	const width_store = rightSidebarWidth;
 
-	export let width = $width_store || 360;
-
-	let container: HTMLElement;
+	let container: HTMLElement | null = null;
 
 	function on_keydown(e: KeyboardEvent) {
 		if (container && check_inert(container)) return;
-		console.log({ e });
 		if (e.target instanceof Element && check_inside_input(e.target)) return;
 		if (e.key === 'i' && e.metaKey) {
 			e.preventDefault();
 			$render = !$render;
 		}
 	}
+
+	const mobileSidebarOpen = writable(false);
 </script>
 
 <svelte:window on:keydown={on_keydown} />
@@ -48,7 +47,10 @@
 		/>
 	</div>
 {/if}
-<EntryMobileSidebar defaultOpen={$render} let:open>
-	<EntrySidebar on:click={() => open.set(false)} />
+<EntryMobileSidebar open={mobileSidebarOpen} defaultOpen={$render}>
+	<EntrySidebar
+		on:click={() => {
+			mobileSidebarOpen.set(false);
+		}}
+	/>
 </EntryMobileSidebar>
-{#if $mq.md}{:else}{/if}

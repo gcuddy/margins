@@ -1,9 +1,11 @@
+import type { ComponentType } from 'svelte';
+
+import { browser } from '$app/environment';
 import { queryFactory } from '$lib/queries/querykeys';
 import type { Type } from '$lib/types';
-import type { ComponentType } from 'svelte';
-import { get_module } from './module';
 import { numberOrString } from '$lib/utils/misc';
-import { browser } from '$app/environment';
+
+import { get_module } from './module';
 
 export async function load(event) {
 	const { parent, data } = event;
@@ -50,7 +52,7 @@ export async function load(event) {
         })),
 		type,
 		query,
-		component: get_module(type).then((module) => module?.default as ComponentType | undefined)
+		component: get_module(type).then((module) => module?.default )
 	};
 }
 

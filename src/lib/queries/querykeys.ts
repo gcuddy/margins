@@ -1,41 +1,26 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { createQueryKeyStore } from '@lukemorales/query-key-factory';
 import {
-	keepPreviousData,
+	type createInfiniteQuery,
 	type CreateInfiniteQueryOptions,
 	type CreateQueryOptions,
+	keepPreviousData,
 	type QueryClient,
 	type QueryMeta,
-	type createInfiniteQuery,
 	useQueryClient
 } from '@tanstack/svelte-query';
-import { qquery, type QueryInput, Queries, QueryOutput } from './query';
 
-export const queries = createQueryKeyStore({
-	entries: {
-		// list, detail
-		// or should this be "library"?
-		list: (filters: QueryInput<'get_library'>) => ({
-			queryKey: [{ filters }],
-			queryFn: ({ queryKey, meta }) => {}
-		})
-	}
-});
+import { qquery, Queries, type QueryInput, type QueryOutput } from './query';
 
-// function createQueryOptions<TFn extends keyof Queries>(fn: TFn, input: QueryInput<TFn>) {
-//     return queryOptions<QueryOutput<TFn>, DefaultError, QueryOutput<TFn>, TypedQueryKey<TFn>>({
-//         queryKey: getArrayQueryKey(fn, input),
-//         queryFn: ({ queryKey, meta }) => qquery($page, queryKey[0][0], queryKey[1].input)
-//     });
-// }
 
-// very simplified bastardized version of this for our purposes...
+type Meta = Record<string, unknown> | undefined;
 type QueryFnParams = {
-	meta: any;
+	meta: Meta;
 };
 
 type InfiniteQueryFnParams = {
-	meta: any;
-	pageParam: any;
+	meta: Meta;
+	pageParam: unknown;
 };
 
 export const queryFactory = {
@@ -50,8 +35,6 @@ export const queryFactory = {
 			// Ideally entries, list would get inferred... but this will do for  now
 			queryKey: ['entries', 'list', input ? input : undefined] as const,
 			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) => {
-				console.log({ meta, pageParam });
-				console.log(`running queryFn for entries.list`);
 				return qquery(
 					meta?.init,
 					'get_library',
@@ -59,10 +42,9 @@ export const queryFactory = {
 				);
 			},
 			getNextPageParam(lastPage) {
-				console.log({ lastPage });
-				return (lastPage as QueryOutput<'get_library'>)?.nextCursor;
+				return (lastPage as QueryOutput<'get_library'>).nextCursor;
 			},
-			initialPageParam: <QueryOutput<'get_library'>['nextCursor']>null
+			initialPageParam: null as QueryOutput<'get_library'>['nextCursor']
 		}),
 		detail: (input: QueryInput<'entry_by_id'>) => ({
 			queryKey: ['entries', 'detail', { input }] as const,
@@ -110,9 +92,9 @@ export const queryFactory = {
 				return data;
 			},
 			getNextPageParam(lastPage) {
-				return (lastPage as QueryOutput<'notes'>)?.nextCursor;
+				return (lastPage as QueryOutput<'notes'>).nextCursor;
 			},
-			initialPageParam: <QueryOutput<'notes'>['nextCursor']>undefined
+			initialPageParam: undefined as QueryOutput<'notes'>['nextCursor']
 		}),
 		detail: (input: QueryInput<'note'>) => {
 			// const queryClient = useQueryClient();
@@ -155,9 +137,9 @@ export const queryFactory = {
 			staleTime: input ? 1000 * 60 * 5 : Infinity,
 			placeholderData: keepPreviousData,
 			getNextPageParam(lastPage) {
-				return (lastPage as QueryOutput<'collections'>)?.nextCursor;
+				return (lastPage as QueryOutput<'collections'>).nextCursor;
 			},
-			initialPageParam: <QueryOutput<'collections'>['nextCursor']>null
+			initialPageParam: null as QueryOutput<'collections'>['nextCursor']
 		})
 	},
     links: {
@@ -169,13 +151,7 @@ export const queryFactory = {
 
 export type QueryFactory = typeof queryFactory;
 
-type TQueryFactory = {
-	[key: string]: {
-		// TODO: make this use createinfinte when input extends { cursor }
-		[subkey: string]: (...args: any[]) => CreateQueryOptions | CreateInfiniteQueryOptions;
-		// [subkey: string]: QueryFn;
-	};
-};
+type TQueryFactory = Record<string, Record<string, (...args: Array<any>) => CreateQueryOptions | CreateInfiniteQueryOptions>>;
 
 type QueryFn = <T extends {}>(
 	input: T
