@@ -1,27 +1,25 @@
 <script lang="ts">
-	import { getAppearanceContext } from '../ctx';
+	import { createTooltip } from '@melt-ui/svelte';
+	import { Settings2 } from 'lucide-svelte';
 
+	import { Button } from '$components/ui/button';
 	import * as Popover from '$components/ui/popover';
 	import TooltipContent from '$components/ui/tooltip/TooltipContent.svelte';
-	import { Button } from '$components/ui/button';
-	import { Settings2 } from 'lucide-svelte';
+	import { Muted } from '$components/ui/typography';
 	import Label from '$lib/components/ui/Label.svelte';
 	import NativeSelect from '$lib/components/ui/NativeSelect.svelte';
 	import Slider from '$lib/components/ui/Slider.svelte';
 	import Switch from '$lib/components/ui/Switch.svelte';
-	import { Muted } from '$components/ui/typography';
-	import { createTooltip } from '@melt-ui/svelte';
+
+	import { getAppearanceContext } from '../ctx';
 
 	const appearance = getAppearanceContext();
 
 	const {
 		elements: { content, trigger },
-		states: { open }
+		states: { open },
 	} = createTooltip({
-		forceVisible: true
-		// positioning: {
-		//     offset: 8,
-		// }
+		forceVisible: true,
 	});
 </script>
 
@@ -66,14 +64,25 @@
 				<Label for="font-size">Font size</Label>
 				<Muted class="text-xs">{$appearance.fontSize}</Muted>
 			</div>
-			<Slider id="font-size" min={14} max={24} bind:value={$appearance.fontSize} />
+			<Slider
+				id="font-size"
+				min={14}
+				max={24}
+				bind:value={$appearance.fontSize}
+			/>
 		</div>
 		<div class="grid grid-cols-[auto,160px] items-center">
 			<div class="flex flex-col">
 				<Label for="leading">Line height</Label>
 				<Muted class="text-xs">{$appearance.lineHeight}</Muted>
 			</div>
-			<Slider id="leading" min={1} max={2} step={0.25} bind:value={$appearance.lineHeight} />
+			<Slider
+				id="leading"
+				min={1}
+				max={2}
+				step={0.25}
+				bind:value={$appearance.lineHeight}
+			/>
 		</div>
 	</Popover.Content>
 </Popover.Root>

@@ -1,11 +1,12 @@
 import { cubicOut } from 'svelte/easing';
 import type { TransitionConfig } from 'svelte/transition';
-type FlyAndScaleParams = {
+
+interface FlyAndScaleParams {
 	y?: number;
 	x?: number;
 	start?: number;
 	duration?: number;
-};
+}
 
 export const flyAndScale = (
 	node: Element,

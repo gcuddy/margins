@@ -21,6 +21,7 @@ module.exports = {
 		'import/no-duplicates': 2,
 		'import/first': 2,
 		'import/newline-after-import': 2,
+        'import/no-default-export': 2,
 
 		/**
 		 * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
@@ -46,6 +47,23 @@ module.exports = {
 		],
 		'@typescript-eslint/switch-exhaustiveness-check': 'error',
 		'@typescript-eslint/array-type': ['error', { default: 'generic' }],
+		'@typescript-eslint/consistent-type-definitions': 'error',
+		'@typescript-eslint/explicit-function-return-type': 1,
+		'@typescript-eslint/prefer-ts-expect-error': 'error',
+		'@typescript-eslint/ban-ts-comment': [
+			'error',
+			{
+				'ts-expect-error': 'allow-with-description',
+			},
+		],
+		'@typescript-eslint/naming-convention': [
+			'error',
+			{
+				selector: 'typeParameter',
+				format: ['PascalCase'],
+				custom: { regex: '^T[A-Z]', match: true },
+			},
+		],
 
 		'svelte/no-target-blank': 'error',
 		'svelte/no-immutable-reactive-statements': 'error',
@@ -58,7 +76,9 @@ module.exports = {
 		sourceType: 'module',
 		ecmaVersion: 'latest',
 		extraFileExtensions: ['.svelte'],
-		project: './tsconfig.json',
+		// project: './tsconfig.json',
+		project: true,
+		tsconfigRootDir: __dirname,
 	},
 	ignorePatterns: ['*.cjs'],
 	// overrides: [
