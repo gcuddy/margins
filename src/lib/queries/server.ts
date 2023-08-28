@@ -1,49 +1,40 @@
-import { annotationSchema, TargetSchema, type AnnotationSchema } from '$lib/annotation';
-import pindex from '$lib/api/pindex';
-import { Tweet, tweet_types } from '$lib/api/twitter';
-import { db, json } from '$lib/db';
-import { annotations, entrySelect, getFirstBookmarkSort, withEntry } from '$lib/db/selects';
-import {
-	bookmarkSchema,
-	tagSchema,
-	updateBookmarkSchema as form_updateBookmarkSchema,
-	librarySchema
-} from '$lib/features/entries/forms';
-import { nanoid } from '$lib/nanoid';
-import { BookmarkSchema } from '$lib/prisma/zod-prisma';
-import { interactionSchema, idSchema } from '$lib/schemas';
-import { typeSchema } from '$lib/types';
-import { AnnotationType, DocumentType, RelationType, Status, Tag } from '@prisma/client';
-import { sql } from 'kysely';
-import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
-import { superValidate } from 'sveltekit-superforms/server';
-import { z } from 'zod';
-import { tmdb } from '$lib/api/tmdb';
+import { annotationSchema, type TargetSchema } from '$lib/annotation';
 import { books } from '$lib/api/gbook';
+import pindex from '$lib/api/pindex';
 import spotify from '$lib/api/spotify';
+import { tmdb } from '$lib/api/tmdb';
+import { tweet_types, type Tweet } from '$lib/api/twitter';
+import { db, json } from '$lib/db';
+import { generateSearchNotePhrase } from '$lib/db/queries/note';
+import { annotations, entrySelect, getFirstBookmarkSort, withEntry } from '$lib/db/selects';
+import { applyFilter } from '$lib/db/utils/comparators';
+import { librarySchema, tagSchema } from '$lib/features/entries/forms';
+import { nanoid } from '$lib/nanoid';
+import type { Annotation, DB, Entry, Favorite } from '$lib/prisma/kysely/types';
+import { BookmarkSchema } from '$lib/prisma/zod-prisma';
+import { type idSchema } from '$lib/schemas';
+import { noteFilterSchema } from '$lib/schemas/inputs';
+import { typeSchema } from '$lib/types';
+import { DocumentType, RelationType, Status } from '@prisma/client';
+import type { JSONContent } from '@tiptap/core';
 import type {
 	ExpressionBuilder,
+	InferResult,
 	Insertable,
-	UpdateObject,
-	SelectQueryBuilder,
+	ReferenceExpression,
 	SelectArg,
-	SelectExpression,
-	InferResult
+	SelectExpression
 } from 'kysely';
-import type { Bookmark, DB, Entry, Annotation, Favorite } from '$lib/prisma/kysely/types';
-import type { Entry as PrismaEntry } from '@prisma/client';
-import type { FilterLibrarySchema } from '$lib/schemas/library';
-import type { JSONContent } from '@tiptap/core';
+import { sql } from 'kysely';
+import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import type { SetOptional } from 'type-fest';
-import { noteFilterSchema } from '$lib/schemas/inputs';
-import { applyFilter } from '$lib/db/utils/comparators';
-import { generateSearchNotePhrase } from '$lib/db/queries/note';
+import { z } from 'zod';
 
-type Ctx = {
+interface Ctx {
 	ctx: {
 		userId: string;
 	};
-};
+}
 
 type GetCtx<T extends z.ZodTypeAny> = {
 	input: z.input<T>;
@@ -131,7 +122,7 @@ export async function updateBookmark(
 	} else {
 		const { entryId } = variables;
 		const entryIds = Array.isArray(entryId) ? entryId : [entryId];
-		let bookmarks = db
+		const bookmarks = db
 			.insertInto('Bookmark')
 			.values(
 				entryIds.map((entryId) => ({
@@ -223,7 +214,7 @@ export async function upsertAnnotation({
 }: GetCtx<typeof upsertAnnotationSchema>) {
 	const { userId } = ctx;
 	const { id: _id, relations, tags, ...annotation } = data;
-	let ids: string[] = [];
+	let ids: Array<string> = [];
 	if (!_id) {
 		ids = [nanoid()];
 	} else {
@@ -318,7 +309,7 @@ export const s_add_to_collection = z
 		annotationId: z.string().or(z.string().array()).optional()
 	})
 	.refine(
-		(data) => data.entryId || data.annotationId,
+		(data) => data.entryId ?? data.annotationId,
 		'Must provide either entryId or annotationId'
 	);
 
@@ -478,7 +469,7 @@ export async function update_metadata_on_entry({ input, ctx }: GetCtx<typeof ent
 
 // TODO cursor pagination and ordering
 export async function get_notes_for_tag({ name, userId }: { name: string; userId: string }) {
-	let query = db
+	const query = db
 		.selectFrom('annotation_tag as at')
 		.innerJoin('Annotation as a', 'a.id', 'at.annotationId')
 		.innerJoin('Tag as t', (join) => join.onRef('t.id', '=', 'at.tagId').on('t.name', '=', name))
@@ -556,13 +547,13 @@ export async function entry_by_id({
 							).as('tags')
 						)
 						.whereRef('Annotation.entryId', '=', 'Entry.id')
-						.where('Annotation.userId', '=', userId!)
+						.where('Annotation.userId', '=', userId)
 						.where('Annotation.parentId', 'is', null)
-                        .where("Annotation.deleted", "is", null)
-                        .$narrowType<{
-                            target: TargetSchema | null;
-                            contentData: JSONContent | null;
-                        }>()
+						.where('Annotation.deleted', 'is', null)
+						.$narrowType<{
+							target: TargetSchema | null;
+							contentData: JSONContent | null;
+						}>()
 						.orderBy('Annotation.start', 'asc')
 						.orderBy('Annotation.createdAt', 'asc')
 						.limit(100)
@@ -573,7 +564,7 @@ export async function entry_by_id({
 						.select(['c.id', 'c.name'])
 						.innerJoin('CollectionItems as ci', 'ci.collectionId', 'c.id')
 						.whereRef('ci.entryId', '=', 'Entry.id')
-						.where('c.userId', '=', userId!)
+						.where('c.userId', '=', userId)
 				).as('collections'),
 				jsonArrayFrom(
 					eb
@@ -596,7 +587,7 @@ export async function entry_by_id({
 							).as('related_entry')
 						)
 						.whereRef('r.entryId', '=', 'Entry.id')
-						.where('r.userId', '=', userId!)
+						.where('r.userId', '=', userId)
 				).as('relations'),
 				// todo: compare these?
 				jsonArrayFrom(
@@ -620,7 +611,7 @@ export async function entry_by_id({
 							).as('related_entry')
 						)
 						.whereRef('r.relatedEntryId', '=', 'Entry.id')
-						.where('r.userId', '=', userId!)
+						.where('r.userId', '=', userId)
 				).as('back_relations'),
 				jsonArrayFrom(
 					eb
@@ -628,7 +619,7 @@ export async function entry_by_id({
 						.innerJoin('Tag as t', 't.id', 'toe.tagId')
 						.select(['t.id', 't.name'])
 						.whereRef('toe.entryId', '=', 'Entry.id')
-						.where('toe.userId', '=', userId!)
+						.where('toe.userId', '=', userId)
 				).as('tags'),
 				jsonObjectFrom(
 					eb
@@ -646,7 +637,7 @@ export async function entry_by_id({
 							).as('user')
 						])
 						.whereRef('b.entryId', '=', 'Entry.id')
-						.where('b.userId', '=', userId!)
+						.where('b.userId', '=', userId)
 				).as('bookmark'),
 				jsonObjectFrom(
 					eb
@@ -661,7 +652,7 @@ export async function entry_by_id({
 							'i.note'
 						])
 						.whereRef('i.entryId', '=', 'Entry.id')
-						.where('i.userId', '=', userId!)
+						.where('i.userId', '=', userId)
 						.limit(1)
 				).as('interaction')
 			])
@@ -683,11 +674,9 @@ export async function entry_by_id({
 			// if id starts with p, this indicates it's a pointer to the podcastindexid
 			// else, it's a podcast saved without a podcastindexid (i.e. a private podcast or something of the sort)
 			const podcastIndexId = id.toString().startsWith('p') ? id.toString().slice(1) : undefined;
-			console.log({ podcastIndexId });
 			if (podcastIndexId) {
 				query = query.where('Entry.podcastIndexId', '=', +podcastIndexId);
 				podcast = await pindex.episodeById(+podcastIndexId);
-				console.log({ podcast });
 				break;
 			}
 			break;
@@ -703,56 +692,6 @@ export async function entry_by_id({
 	}
 
 	const entry = await query.executeTakeFirst();
-
-	console.timeEnd('entry');
-
-	const tagForm = superValidate(
-		{
-			tags: entry?.tags
-		},
-		tagSchema,
-		{ id: 'tag' }
-	);
-
-	const updateBookmarkForm = superValidate(entry?.bookmark, form_updateBookmarkSchema, {
-		id: 'update'
-	});
-
-	const annotationForm = superValidate(
-		{
-			entryId: entry?.id,
-			userId
-		},
-		annotationSchema,
-		{ id: 'annotation' }
-	);
-
-	const bookmarkForm = superValidate(
-		{
-			id: entry?.bookmark?.id,
-			entryId: entry?.id,
-			tmdbId: type === 'movie' || type === 'tv' ? +id : undefined,
-			googleBooksId: type === 'book' ? id.toString() : undefined,
-			podcastIndexId:
-				type === 'podcast' && id.toString().startsWith('p')
-					? Number(id.toString().slice(1))
-					: undefined,
-			spotifyId: type === 'album' ? id.toString() : undefined,
-			type
-		},
-		bookmarkSchema,
-		{ id: 'bookmark' }
-	);
-
-	// TODO: multiple interactions support
-	const interactionForm = superValidate(
-		{
-			...entry?.interaction,
-			entryId: entry?.id
-		},
-		interactionSchema,
-		{ id: 'interaction' }
-	);
 
 	return {
 		// tagForm,
@@ -775,10 +714,9 @@ export async function entry_by_id({
 	};
 }
 
-
 export type FullEntryDetail = Awaited<ReturnType<typeof entry_by_id>>;
-export type EntryDetail = NonNullable<FullEntryDetail["entry"]>;
-export type EntryInteraction = NonNullable<EntryDetail["interaction"]>;
+export type EntryDetail = NonNullable<FullEntryDetail['entry']>;
+export type EntryInteraction = NonNullable<EntryDetail['interaction']>;
 export type EntryAnnotation = NonNullable<
 	NonNullable<FullEntryDetail['entry']>['annotations']
 >[number];
@@ -790,11 +728,10 @@ function validate_entry_type<TEntry extends { tweet?: unknown }>(
 } {
 	let tweet: Tweet | undefined = undefined;
 	if (entry.tweet) {
-		const { data, problems } = tweet_types.tweet(entry?.tweet);
+		const { data, problems } = tweet_types.tweet(entry.tweet);
 		if (data) {
 			tweet = data;
 		} else {
-			console.log({ problems });
 		}
 	}
 	entry.tweet = tweet;
@@ -823,13 +760,11 @@ export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySc
 	if (status) {
 		query = query.where('b.status', '=', status);
 	}
-	if (filter) {
-		if (filter.type) {
-			query = query.where('e.type', '=', filter.type);
-		}
-		if (filter.search) {
-			query = query.where('e.title', 'like', `%${filter.search}%`);
-		}
+	if (filter.type) {
+		query = query.where('e.type', '=', filter.type);
+	}
+	if (filter.search) {
+		query = query.where('e.title', 'like', `%${filter.search}%`);
 	}
 
 	const { count } = await query.executeTakeFirstOrThrow();
@@ -837,79 +772,6 @@ export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySc
 		count: Number(count)
 	};
 }
-
-function run_filters(
-	query: SelectQueryBuilder<
-		DB & {
-			b: Bookmark;
-		} & {
-			e: Entry;
-		},
-		'b' | 'e',
-		{}
-	>,
-	{
-		filter,
-		search
-	}: {
-		filter: FilterLibrarySchema;
-		search?: string;
-	}
-) {
-	if (search) {
-		query = query.where('e.title', 'like', `%${search}%`);
-	}
-	if (filter) {
-		const { createdAt, type } = filter;
-		if (type) {
-			query = query.where('e.type', '=', type);
-		}
-		if (createdAt) {
-			const createdAts = Array.isArray(createdAt) ? createdAt : [createdAt];
-			for (const createdAt of createdAts) {
-				if ('gte' in createdAt && createdAt.gte) {
-					if (createdAt.gte instanceof Date) {
-						query = query.where('e.createdAt', '>=', createdAt.gte);
-					} else {
-						query = query.where(
-							'b.createdAt',
-							'<=',
-							sql`NOW() - INTERVAL ${sql.raw(createdAt.gte.num + ' ' + createdAt.gte.unit)}`
-						);
-						// interval
-					}
-				} else if ('lte' in createdAt && createdAt.lte) {
-					if (createdAt.lte instanceof Date) {
-						query = query.where('e.createdAt', '<=', createdAt.lte);
-					} else {
-						query = query.where(
-							'b.createdAt',
-							'>=',
-							sql`NOW() - INTERVAL ${sql.raw(
-								createdAt.lte.num.toString() + ' ' + createdAt.lte.unit
-							)}`
-						);
-					}
-				} else if ('equals' in createdAt && createdAt.equals) {
-					// use between start of day and end of day for equals
-					const date = new Date(createdAt.equals).toISOString().slice(0, 10);
-					query = query.where(
-						sql`b.createdAt >= "${sql.raw(date)} 00:00:00"  AND b.createdAt <= "${sql.raw(
-							date
-						)} 23:59:59"`
-					);
-				}
-			}
-		}
-	}
-	return query;
-}
-
-// const saveToLibrarySchema = z.object({
-//     id: z.number().int().or(z.string()),
-//     type: typeSchema,
-//     status: z.nativeEnum(Status).default("Backlog")
-// })
 
 export const saveToLibrarySchema = librarySchema.and(
 	z.object({
@@ -972,7 +834,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 					text: tv.overview,
 					uri: `tmdb:tv:${tv.id}`,
 					tmdbId: tv.id,
-					author: tv.created_by?.map((val) => val.name).join(', '),
+					author: tv.created_by.map((val) => val.name).join(', '),
 					published: tv.first_air_date,
 					image: tmdb.media(tv.poster_path),
 					type: 'tv'
@@ -985,7 +847,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 					html: movie.overview,
 					uri: `tmdb:${movie.id}`,
 					tmdbId: movie.id,
-					author: movie.credits?.crew?.find((c) => c.job === 'Director')?.name,
+					author: movie.credits.crew.find((c) => c.job === 'Director')?.name,
 					published: movie.release_date,
 					image: tmdb.media(movie.poster_path),
 					type: 'movie'
@@ -1349,19 +1211,19 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 		.limit(take + 1);
 
 	if (orderBy === 'createdAt' || !orderBy) {
-		const _dir = dir || 'desc';
+		const _dir = dir ?? 'desc';
 		query = query.orderBy('a.createdAt', _dir);
 		if (cursor) {
 			query = query.where('a.createdAt', _dir === 'desc' ? '<' : '>', cursor);
 		}
 	} else if (orderBy === 'updatedAt') {
-		const _dir = dir || 'desc';
+		const _dir = dir ?? 'desc';
 		query = query.orderBy('a.updatedAt', _dir);
 		if (cursor) {
 			query = query.where('a.updatedAt', _dir === 'desc' ? '<' : '>', cursor);
 		}
 	} else if (orderBy === 'name') {
-		const _dir = dir || 'asc';
+		const _dir = dir ?? 'asc';
 		query = query.orderBy('a.title', _dir).orderBy('a.createdAt', _dir);
 		if (cursor) {
 			query = query.where((eb) =>
@@ -1422,7 +1284,7 @@ export type Note = Notes[number];
 export async function note({ input, ctx }: GetCtx<typeof idSchema>): Promise<Note> {
 	const { id } = input;
 
-	let query = db
+	const query = db
 		.selectFrom('Annotation as a')
 		.select(annotations.select)
 		.$narrowType<{
@@ -1461,7 +1323,7 @@ export const createFavoriteSchema = _createFavoriteSchema.or(z.array(_createFavo
 export async function createFavorite({ input, ctx }: GetCtx<typeof createFavoriteSchema>) {
 	const { userId } = ctx;
 	const dataToInsert = (Array.isArray(input) ? input : [input]).map((item) => {
-		const id = item.id || nanoid();
+		const id = item.id ?? nanoid();
 		return {
 			...item,
 			id,
@@ -1607,7 +1469,11 @@ function favoriteChildren(
 	return jsonArrayFrom(
 		eb
 			.selectFrom('Favorite as f2')
-			.whereRef('f2.parentId', '=', `${alias}.id` as any)
+			.whereRef(
+				'f2.parentId',
+				'=',
+				`${alias}.id` as ReferenceExpression<DB & { f: Favorite } & { f2: Favorite }, 'f' | 'f2'>
+			)
 			.select(fSelect('f2'))
 			.select((eb) => favoriteContent(eb, 'f2'))
 	).as('children');
@@ -1634,7 +1500,7 @@ type RawPin = InferResult<ReturnType<typeof compilePinsQuery>>[number];
 
 export async function pins({ ctx }: Ctx) {
 	const pins = await db.executeQuery(compilePinsQuery(ctx.userId));
-	return pins.rows as SetOptional<RawPin, 'children'>[];
+	return pins.rows as Array<SetOptional<RawPin, 'children'>>;
 }
 
 export type Pins = Awaited<ReturnType<typeof pins>>;

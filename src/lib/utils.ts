@@ -5,19 +5,14 @@ import dayjs from 'dayjs';
 // import { z } from "zod";
 
 import { browser } from '$app/environment';
-import { goto, invalidateAll } from '$app/navigation';
 import { notifications, type INotification } from '$lib/stores/notifications';
 
 import type { DebounceSettings } from 'lodash';
 import debounce from 'lodash/debounce';
 import { syncStore } from './stores/sync';
 import { user } from './stores/user';
-import type { ArticleInList, DomMeta } from './types';
-import type { AnnotationSchema } from './types/schemas/Annotations';
-import type { FavoriteSchema } from './types/schemas/Favorite';
-import type { AddToListSchema } from './types/schemas/List';
+import type { ArticleInList } from './types';
 import type { ViewOptions } from './types/schemas/View';
-import type { RssFeedItemModel } from './types/schemas/rssfeeditem';
 // import getCssSelector from 'css-selector-generator';
 
 export function post(endpoint, data) {
@@ -26,8 +21,8 @@ export function post(endpoint, data) {
 		// credentials: 'include',
 		body: JSON.stringify(data || {}),
 		headers: {
-			'Content-Type': 'application/json'
-		}
+			'Content-Type': 'application/json',
+		},
 	}).then((r) => r.json());
 }
 export function put(endpoint: string, data: any) {
@@ -37,23 +32,27 @@ export function put(endpoint: string, data: any) {
 		body: JSON.stringify(data || {}),
 		headers: {
 			'Content-Type': 'application/json',
-			Accept: 'application/json'
-		}
+			Accept: 'application/json',
+		},
 	}).then((r) => r.json());
 }
-export function patch(endpoint: string, data: any, notification?: string | INotification) {
+export function patch(
+	endpoint: string,
+	data: any,
+	notification?: string | INotification,
+) {
 	return fetch(endpoint, {
 		method: 'PATCH',
 		// credentials: 'include',
 		body: JSON.stringify(data || {}),
 		headers: {
-			'Content-Type': 'application/json'
-		}
+			'Content-Type': 'application/json',
+		},
 	}).then((r) => {
 		if (notification && typeof notification === 'string') {
 			notifications.notify({
 				message: notification,
-				type: 'success'
+				type: 'success',
 			});
 		} else if (notification && typeof notification !== 'string') {
 			notifications.notify(notification);
@@ -62,7 +61,10 @@ export function patch(endpoint: string, data: any, notification?: string | INoti
 	});
 }
 
-export function bulkEditArticles(ids: number[], data: Prisma.ArticleUpdateInput) {
+export function bulkEditArticles(
+	ids: Array<number>,
+	data: Prisma.ArticleUpdateInput,
+) {
 	return patch('/api/bulk', { ids, data }).then((res) => {
 		console.log({ res });
 		return res;
@@ -87,14 +89,23 @@ export function getSelectionHtml() {
 }
 export async function processSelection(root?: HTMLElement): {
 	html: string;
-	nonTextNodes: Selector[];
-	selectors: Selector[];
+	nonTextNodes: Array<Selector>;
+	selectors: Array<Selector>;
 } {
 	let html = '';
-	const nonTextNodes: Selector[] = [];
-	const selectors: Selector[] = [];
+	const nonTextNodes: Array<Selector> = [];
+	const selectors: Array<Selector> = [];
 	let range: Range;
-	const nonTextTags = ['img', 'video', 'audio', 'iframe', 'object', 'embed', 'canvas', 'svg'];
+	const nonTextTags = [
+		'img',
+		'video',
+		'audio',
+		'iframe',
+		'object',
+		'embed',
+		'canvas',
+		'svg',
+	];
 	if (typeof window.getSelection != 'undefined') {
 		const sel = window.getSelection();
 		if (sel) {
@@ -115,13 +126,17 @@ export async function processSelection(root?: HTMLElement): {
 			const nonTextEls = container.querySelectorAll(nonTextTags.join(','));
 			if (nonTextEls.length) {
 				nonTextEls.forEach((el) => {
-					const elementList = (root || document).getElementsByTagName(el.tagName);
-					const index = Array.from(elementList).findIndex((e) => e.isEqualNode(el));
+					const elementList = (root || document).getElementsByTagName(
+						el.tagName,
+					);
+					const index = Array.from(elementList).findIndex((e) =>
+						e.isEqualNode(el),
+					);
 					nonTextNodes.push({
 						$node: elementList[index],
 						tagName: el.tagName,
 						index,
-						selector: finder(elementList[index])
+						selector: finder(elementList[index]),
 					});
 				});
 			}
@@ -130,7 +145,12 @@ export async function processSelection(root?: HTMLElement): {
 	return { html, nonTextNodes, range, selectors };
 }
 
-export function replaceRange(s: string, start: number, end: number, substitute: string) {
+export function replaceRange(
+	s: string,
+	start: number,
+	end: number,
+	substitute: string,
+) {
 	return s.substring(0, start) + substitute + s.substring(end);
 }
 
@@ -157,7 +177,9 @@ export function parseBracketNotatin(str: string) {
 
 // this is a naive regex that only gets the last instance of eg key[1][value], won't work with multiple nesting
 const keyRegex = /^(.*?)\[(\d)\]\[(.*?)\]/;
-export async function getJsonFromRequest(request: Request): Promise<Record<string, any>> {
+export async function getJsonFromRequest(
+	request: Request,
+): Promise<Record<string, any>> {
 	const contentType = request.headers.get('content-type');
 	console.log({ contentType });
 	if (contentType?.includes('application/json')) {
@@ -169,13 +191,13 @@ export async function getJsonFromRequest(request: Request): Promise<Record<strin
 	) {
 		console.log('requesting form data');
 		const formData = await request.formData();
-		const data: Record<string, string | Blob | (string | Blob)[]> = {};
+		const data: Record<string, string | Blob | Array<string | Blob>> = {};
 
 		formData.forEach((val, key, p) => {
 			if (!val) return;
 			console.log({ val, key, p });
 			if (Array.isArray(data[key])) {
-				data[key] = [...(data[key] as (string | Blob)[]), val];
+				data[key] = [...(data[key] as Array<string | Blob>), val];
 			} else if (data[key] && !Array.isArray(data[key])) {
 				const oldVal = data[key] as string | Blob;
 				data[key] = [oldVal, val];
@@ -184,7 +206,10 @@ export async function getJsonFromRequest(request: Request): Promise<Record<strin
 				if (!data[keyWithoutBrackets]) {
 					data[keyWithoutBrackets] = [val];
 				} else {
-					data[keyWithoutBrackets] = [...(data[keyWithoutBrackets] as (string | Blob)[]), val];
+					data[keyWithoutBrackets] = [
+						...(data[keyWithoutBrackets] as Array<string | Blob>),
+						val,
+					];
 				}
 			} else if (keyRegex.test(key)) {
 				const [, keyWithoutBrackets, idx, nestedKey] = keyRegex.exec(key);
@@ -194,7 +219,7 @@ export async function getJsonFromRequest(request: Request): Promise<Record<strin
 				} else {
 					data[keyWithoutBrackets][Number(idx)] = {
 						...data[keyWithoutBrackets][Number(idx)],
-						[nestedKey]: val
+						[nestedKey]: val,
 					};
 				}
 			} else {
@@ -229,7 +254,8 @@ export function getPathname(url: string) {
 	}
 }
 
-const getSimplifiedLink = (link: string) => getHostname(link) + getPathname(link);
+const getSimplifiedLink = (link: string) =>
+	getHostname(link) + getPathname(link);
 
 export function getNthValueOfSet<T>(set: Set<T>, n: number): T | undefined {
 	const values = [...set];
@@ -238,7 +264,11 @@ export function getNthValueOfSet<T>(set: Set<T>, n: number): T | undefined {
 
 // note: this isn't foolproof, but it works for our simple needs
 export function isTouchDevice() {
-	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+	return (
+		'ontouchstart' in window ||
+		navigator.maxTouchPoints > 0 ||
+		navigator.msMaxTouchPoints > 0
+	);
 }
 
 export async function deleteFavorite(data: { id: number }) {
@@ -246,9 +276,9 @@ export async function deleteFavorite(data: { id: number }) {
 	const res = await fetch('/api/favorites.json', {
 		method: 'DELETE',
 		headers: {
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(data)
+		body: JSON.stringify(data),
 	});
 	user.updateData('favorites');
 
@@ -256,7 +286,10 @@ export async function deleteFavorite(data: { id: number }) {
 	return res;
 }
 
-export function sortArticles<T>(articles: ArticleInList[], opts: ViewOptions) {
+export function sortArticles<T>(
+	articles: Array<ArticleInList>,
+	opts: ViewOptions,
+) {
 	const sortBy = opts.sort;
 	return [...articles].sort((a, b) => {
 		switch (sortBy) {
@@ -284,12 +317,16 @@ export function sortArticles<T>(articles: ArticleInList[], opts: ViewOptions) {
 	});
 }
 
-export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+export function notEmpty<TValue>(
+	value: TValue | null | undefined,
+): value is TValue {
 	if (value === null || value === undefined) return false;
 	return true;
 }
 
-export const isEntry = (item: Pick<Partial<Entry>, 'author'> | Annotation): item is Entry => {
+export const isEntry = (
+	item: Pick<Partial<Entry>, 'author'> | Annotation,
+): item is Entry => {
 	return (item as Entry).author !== undefined;
 };
 
@@ -305,9 +342,12 @@ export const validUrl = (text: string) => {
 
 type KeySelector<T> = (item: T) => string;
 
-export function groupBy<T>(array: Iterable<T>, keySelector: KeySelector<T>): Record<string, T[]> {
+export function groupBy<T>(
+	array: Iterable<T>,
+	keySelector: KeySelector<T>,
+): Record<string, Array<T>> {
 	return Array.from(array).reduce(
-		(acc: Record<string, T[]>, item: T) => {
+		(acc: Record<string, Array<T>>, item: T) => {
 			const key = keySelector(item);
 			if (key in acc) {
 				// found key, push new item into existing array
@@ -318,7 +358,7 @@ export function groupBy<T>(array: Iterable<T>, keySelector: KeySelector<T>): Rec
 			}
 			return acc;
 		},
-		{} // start with empty object
+		{}, // start with empty object
 	);
 }
 
@@ -331,11 +371,9 @@ export const trytm = async <T>(promise: Promise<T>) => {
 	}
 };
 
-export function asyncDebounce<F extends (...args: unknown[]) => Promise<unknown>>(
-	func: F,
-	wait?: number,
-	options?: DebounceSettings
-) {
+export function asyncDebounce<
+	F extends (...args: Array<unknown>) => Promise<unknown>,
+>(func: F, wait?: number, options?: DebounceSettings) {
 	const debounced = debounce(
 		(resolve, reject, args: Parameters<F>) => {
 			func(...args)
@@ -345,7 +383,7 @@ export function asyncDebounce<F extends (...args: unknown[]) => Promise<unknown>
 				.catch(reject);
 		},
 		wait,
-		options
+		options,
 	);
 	return (...args: Parameters<F>): ReturnType<F> =>
 		new Promise((resolve, reject) => {
@@ -369,4 +407,5 @@ import { cn } from './utils/tailwind';
 
 export { cn };
 
-export * from "./utils/transition"
+    export * from './utils/transition';
+

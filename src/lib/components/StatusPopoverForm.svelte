@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { CheckCircle2, Circle, HelpCircle } from "lucide-svelte";
 	import {
 		Command,
 		CommandEmpty,
@@ -13,16 +12,16 @@
 		PopoverContent,
 		PopoverTrigger,
 	} from "$lib/components/ui/popover";
-	import type { Bookmark, Entry } from "@prisma/client";
-	import { buttonVariants } from "./ui/Button.svelte";
 	import type { UpdateBookmarkSchema } from "$lib/features/entries/forms";
-	import { cn } from "$lib/utils/tailwind";
-	import type { SuperValidated, Validation } from "sveltekit-superforms";
-	import { superForm } from "sveltekit-superforms/client";
-	import toast from "svelte-french-toast";
-	import type { Message } from "$lib/types";
-	import { queryKeys } from "$lib/queries/keys";
 	import { invalidated, update_entry } from "$lib/state/entries";
+	import type { Message } from "$lib/types";
+	import { cn } from "$lib/utils/tailwind";
+	import type { Bookmark, Entry } from "@prisma/client";
+	import { CheckCircle2, Circle, HelpCircle } from "lucide-svelte";
+	import toast from "svelte-french-toast";
+	import type { SuperValidated } from "sveltekit-superforms";
+	import { superForm } from "sveltekit-superforms/client";
+	import { buttonVariants } from "./ui/Button.svelte";
 
 	export let entry: Pick<Entry, "id"> & {
 		bookmark?: Pick<Bookmark, "id" | "status">;
@@ -113,7 +112,6 @@
 								value={status}
 								onSelect={(value) => {
 									handleSelect(value);
-									close(null);
 								}}
 							>
 								<svelte:component

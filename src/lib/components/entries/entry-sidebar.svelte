@@ -2,12 +2,12 @@
 	import { page } from '$app/stores';
 	import Relation from '$lib/components/Relation.svelte';
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
-	// import TagPopover from '$lib/components/TagPopover.svelte';
+// import TagPopover from '$lib/components/TagPopover.svelte';
 	import TagPopover from '$components/entries/tag-popover.svelte';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
-	import { Collapsible } from 'radix-svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { Collapsible } from 'radix-svelte';
 
 	import { CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Muted } from '$lib/components/ui/typography';
@@ -15,10 +15,22 @@
 	import { persisted } from 'svelte-local-storage-store';
 
 	import { afterNavigate, invalidate } from '$app/navigation';
+	import Annotation from '$components/annotations/Annotation.svelte';
 	import Input from '$components/ui/Input.svelte';
+	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
 	import Editor, { SaveStatus } from '$components/ui/editor/Editor.svelte';
-	import { extractDataFromContentData, isJSONContent } from '$components/ui/editor/utils';
-	import { TabsContent, TabsList, TabsTrigger, Tabs } from '$components/ui/tabs';
+	import {
+		extractDataFromContentData,
+		isJSONContent,
+	} from '$components/ui/editor/utils';
+	import LibraryForm from '$components/ui/library/library-form.svelte';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import {
+		Tabs,
+		TabsContent,
+		TabsList,
+		TabsTrigger,
+	} from '$components/ui/tabs';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
@@ -27,50 +39,45 @@
 		DropdownMenuContent,
 		DropdownMenuGroup,
 		DropdownMenuItem,
-		DropdownMenuTrigger
+		DropdownMenuTrigger,
 	} from '$lib/components/ui/dropdown-menu';
-	import { MutationInput, QueryOutput, mutation } from '$lib/queries/query';
+	import { isBrowser } from '$lib/helpers';
+	import { mutation } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { state, update_entry } from '$lib/state/entries';
 	import type { Type } from '$lib/types';
 	import { check_inert, check_inside_input, getHostname } from '$lib/utils';
 	import { triggerDownload } from '$lib/utils/annotations';
+	import { ago, now } from '$lib/utils/date';
+	import { make_link } from '$lib/utils/entries';
+	import { numberOrString } from '$lib/utils/misc';
+	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
-	import { melt } from '@melt-ui/svelte';
-	import { effect } from '@melt-ui/svelte/internal/helpers';
-	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
 		ChevronRightIcon,
 		ChevronUpIcon,
 		FileDown,
 		FileText,
 		Link2,
-		Locate,
 		MoreHorizontalIcon,
-		PlusIcon
+		PlusIcon,
 	} from 'lucide-svelte';
 	import { nanoid } from 'nanoid';
 	import { getContext, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { derived, writable, type Writable } from 'svelte/store';
-	import Annotation from '$components/annotations/Annotation.svelte';
-	import { numberOrString } from '$lib/utils/misc';
-	import LibraryForm from '$components/ui/library/library-form.svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
-	import { ago, now } from '$lib/utils/date';
-	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
-	import { defaultStringifySearch } from '$lib/utils/search-params';
-	import EntryAuthorInput from './entry-author-input.svelte';
-	import { make_link } from '$lib/utils/entries';
 	import EntryIcon from './EntryIcon.svelte';
-	import { isBrowser } from '$lib/helpers';
+	import EntryAuthorInput from './entry-author-input.svelte';
 	import { saveUrl } from './utils';
 
 	// const render = persisted('sidebar', false);
-	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
+	export let render: Writable<boolean> =
+		getContext('rightSidebar') ?? writable(false);
 
 	let flash = false;
-	let prev_annotation_count: number = $page.data.entry?.annotations?.length ?? 0;
+	let prev_annotation_count: number =
+		$page.data.entry?.annotations?.length ?? 0;
 
 	const entriesQuery = createQuery(queryFactory.entries.all());
 
@@ -99,25 +106,29 @@
 
 	let show_note_form = false;
 
-	const jumping = (getContext('jumping') as Writable<boolean>) ?? writable(false);
+	const jumping =
+		(getContext('jumping') as Writable<boolean>) ?? writable(false);
 
 	// REVIEW should we be debouncing this?
 	const width_store =
-		(getContext('rightSidebarWidth') as Writable<number>) ?? persisted('sidebar__width', 360);
+		(getContext('rightSidebarWidth') as Writable<number>) ??
+		persisted('sidebar__width', 360);
 
 	export let width = $width_store || 360;
 
 	const query = createQuery(
 		derived(page, ($page) => ({
-			...queryFactory.entries.detail({
-				id: numberOrString($page.params.id),
-				type: $page.params.type as Type
-			}),
+			...(typeof $page.params.id === 'string'
+				? queryFactory.entries.detail({
+						id: numberOrString($page.params.id),
+						type: $page.params.type as Type,
+				  })
+				: {}),
 			enabled: !!$page.data.entry?.id,
 			// REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
 			// select: (data: QueryOutput<'entry_by_id'>) => data?.entry,
-			refetchOnMount: false
-		}))
+			refetchOnMount: false,
+		})),
 	);
 	$: console.log(`entry-sidebar`, { $query });
 	$: outline = [];
@@ -139,7 +150,7 @@
 	const open_sections = persisted('sidebar_open_sections', {
 		details: true,
 		notes: true,
-		outline: true
+		outline: true,
 	});
 
 	// "details" | "notes"
@@ -170,7 +181,9 @@
 		const _links = doc.querySelectorAll('a');
 		const linksArray = Array.from(_links);
 		const linksWithHref = linksArray.filter((link) => link.href);
-		const linksWithHrefAndText = linksWithHref.filter((link) => link.textContent);
+		const linksWithHrefAndText = linksWithHref.filter(
+			(link) => link.textContent,
+		);
 		const linksWithHrefAndTextArray = Array.from(linksWithHrefAndText);
 		const uri = $query.data?.entry?.uri;
 		// TODO: get selector to be able to jump to place in article
@@ -180,7 +193,7 @@
 					// TODO: normalize url, search in db for existing entry, if exists, link to it, otherwise, link to new entry
 					return {
 						href: link.href,
-						text: link.textContent
+						text: link.textContent,
 					};
 				}
 			})
@@ -205,7 +218,9 @@
 	type Timeline = { createdAt: Date }[];
 </script>
 
-<aside class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain">
+<aside
+	class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain"
+>
 	<!-- 2.5rem is size of sidebar toggle -->
 	<Tabs bind:value={$currentTab}>
 		<div
@@ -227,7 +242,10 @@
 				<CardHeader class="">
 					<div class="flex items-center gap-x-2">
 						<Collapsible.Trigger
-							class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group -ml-2 transition')}
+							class={cn(
+								buttonVariants({ variant: 'ghost', size: 'sm' }),
+								'group -ml-2 transition',
+							)}
 						>
 							<CardTitle>
 								Details
@@ -254,7 +272,7 @@
 							<Muted class="grow">
 								{#if $query.data?.entry?.bookmark?.createdAt}
 									{@const datetime = new Date(
-										$query.data?.entry?.bookmark?.createdAt
+										$query.data?.entry?.bookmark?.createdAt,
 									)?.toISOString()}
 									<time {datetime}>
 										{ago(new Date(datetime), $now)}
@@ -272,8 +290,8 @@
 										createdAt: {
 											equals: new Date($query.data?.entry?.bookmark?.createdAt)
 												.toISOString()
-												.slice(0, 10)
-										}
+												.slice(0, 10),
+										},
 									})}"
 									variant="ghost"
 									class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity p-2"
@@ -287,7 +305,8 @@
 							<div class="sidebar-row">
 								<Muted>URL</Muted>
 								<Muted class="truncate px-2"
-									><a href={$query.data?.entry.uri} target="_blank">{$query.data?.entry.uri}</a
+									><a href={$query.data?.entry.uri} target="_blank"
+										>{$query.data?.entry.uri}</a
 									></Muted
 								>
 							</div>
@@ -296,7 +315,9 @@
 							{@const domain = getHostname($query.data?.entry.uri)}
 							<div class="sidebar-row group">
 								<Muted>Domain</Muted>
-								<Muted class="truncate px-2"><a href="/tests/domain/{domain}">{domain}</a></Muted>
+								<Muted class="truncate px-2"
+									><a href="/tests/domain/{domain}">{domain}</a></Muted
+								>
 								<Button
 									class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
 									href="/tests/library/all?domain={domain}"
@@ -313,7 +334,9 @@
 
 								<!-- <Input variant="ghost" value={$query.data?.entry?.author} /> -->
 								<EntryAuthorInput
-									author={$query.data?.entry?.bookmark?.author ?? $query.data?.entry?.author ?? ''}
+									author={$query.data?.entry?.bookmark?.author ??
+										$query.data?.entry?.author ??
+										''}
 									entryId={$query.data?.entry?.id}
 								/>
 								<Button
@@ -366,12 +389,19 @@
 						{#if $page.data.updateBookmarkForm && $query.data?.entry}
 							<div class="sidebar-row">
 								<Muted>Status</Muted>
-								<StatusPopover data={$page.data.updateBookmarkForm} entry={$query.data?.entry} />
+								<StatusPopover
+									data={$page.data.updateBookmarkForm}
+									entry={$query.data?.entry}
+								/>
 							</div>
 						{/if}
 						{#if $page.data.type === 'entry'}
 							{#key $query.data?.entry?.id}
-								<TableOfContents active="font-bold" scrollParent="html" target="#article" />
+								<TableOfContents
+									active="font-bold"
+									scrollParent="html"
+									target="#article"
+								/>
 							{/key}
 						{/if}
 						<!-- <div class="sidebar-row">
@@ -386,10 +416,14 @@
                     /> -->
 							<Cluster>
 								{@const relations = $query.data?.entry?.relations?.concat(
-									$query.data?.entry.back_relations
+									$query.data?.entry.back_relations,
 								)}
 								{#each relations ?? [] as relation}
-									<Relation id={relation.id} type={relation.type} entry={relation.related_entry} />
+									<Relation
+										id={relation.id}
+										type={relation.type}
+										entry={relation.related_entry}
+									/>
 								{/each}
 							</Cluster>
 						</div>
@@ -405,7 +439,8 @@
 										variant="secondary"
 										as="a"
 										class="line-clamp-2"
-										href="/tests/collection/{collection.id}">{collection.name}</Badge
+										href="/tests/collection/{collection.id}"
+										>{collection.name}</Badge
 									>
 								{/each}
 								<Button
@@ -420,7 +455,7 @@
 													toast.promise(
 														mutation($page, 'addToCollection', {
 															entryId: $query.data?.entry?.id,
-															collectionId: c.id
+															collectionId: c.id,
 														}),
 														{
 															loading: 'Adding to collection...',
@@ -431,15 +466,15 @@
 																			...($query.data?.entry.collections ?? []),
 																			{
 																				id: c.id,
-																				name: c.name
-																			}
-																		]
+																				name: c.name,
+																			},
+																		],
 																	});
 																}
 																return 'Added to collection';
 															},
-															error: 'Failed to add to collection'
-														}
+															error: 'Failed to add to collection',
+														},
 													);
 												},
 												onFallback: (name) => {
@@ -449,18 +484,18 @@
 															name,
 															items: [
 																{
-																	entryId: $query.data?.entry.id
-																}
-															]
+																	entryId: $query.data?.entry.id,
+																},
+															],
 														}).then(() => invalidate('entry')),
 														{
 															loading: 'Creating collection...',
 															success: 'Created collection and added entry',
-															error: 'Failed to create collection'
-														}
+															error: 'Failed to create collection',
+														},
 													);
-												}
-											}
+												},
+											},
 										});
 									}}
 									variant="ghost"
@@ -481,7 +516,10 @@
 			<Collapsible.Root bind:open={$open_sections.outline}>
 				<div class="p-6">
 					<Collapsible.Trigger
-						class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'group -ml-2 transition')}
+						class={cn(
+							buttonVariants({ variant: 'ghost', size: 'sm' }),
+							'group -ml-2 transition',
+						)}
 					>
 						<CardTitle>
 							Outline
@@ -509,13 +547,19 @@
 			</Collapsible.Root>
 		{/if}
 		<TabsContent class="overflow-y-auto overscroll-contain" value="notes">
-			{@const note = $query.data?.entry?.annotations?.find((a) => a.type === 'note')}
+			{@const note = $query.data?.entry?.annotations?.find(
+				(a) => a.type === 'note',
+			)}
 			<div class="p-6 flex flex-col gap-4">
 				<div class="space-y-2">
-					<h3 class=" text-lg font-semibold leading-none tracking-tight">Page Note</h3>
+					<h3 class=" text-lg font-semibold leading-none tracking-tight">
+						Page Note
+					</h3>
 					{#key note?.contentData}
 						<Editor
-							content={note && isJSONContent(note?.contentData) ? note.contentData : undefined}
+							content={note && isJSONContent(note?.contentData)
+								? note.contentData
+								: undefined}
 							save_status={note_save_status}
 							showSaveStatus="auto"
 							on:blur={({ detail: { editor } }) => {
@@ -537,7 +581,7 @@
 									type: 'note',
 									id,
 									tags,
-									relations: links.map((link) => ({ relatedEntryId: link.id }))
+									relations: links.map((link) => ({ relatedEntryId: link.id })),
 								}).then(() => {
 									note_save_status.set('Saved');
 								});
@@ -545,7 +589,7 @@
 									contentData,
 									entryId: $query.data?.entry.id,
 									type: 'note',
-									id
+									id,
 								});
 							}}
 							options={{ autofocus: false }}
@@ -553,20 +597,31 @@
 					{/key}
 				</div>
 				<div class="flex items-center justify-between">
-					<h3 class=" text-lg font-semibold leading-none tracking-tight">Annotations</h3>
+					<h3 class=" text-lg font-semibold leading-none tracking-tight">
+						Annotations
+					</h3>
 					<div class="flex items-center gap-1">
-						<Button size="xs" variant="ghost" on:click={() => (show_note_form = true)}>
+						<Button
+							size="sm"
+							variant="ghost"
+							on:click={() => (show_note_form = true)}
+						>
 							<PlusIcon class="h-4 w-4" />
 						</Button>
 						<DropdownMenu>
-							<DropdownMenuTrigger class={buttonVariants({ size: 'xs', variant: 'ghost' })}>
+							<DropdownMenuTrigger
+								class={buttonVariants({ size: 'sm', variant: 'ghost' })}
+							>
 								<MoreHorizontalIcon class="h-4 w-4" />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
 								<DropdownMenuGroup>
 									<DropdownMenuItem
 										on:click={() =>
-											triggerDownload($query.data?.entry, $query.data?.entry?.annotations)}
+											triggerDownload(
+												$query.data?.entry,
+												$query.data?.entry?.annotations,
+											)}
 									>
 										<FileDown class="mr-2 h-4 w-4" />
 										Export notes to markdown
@@ -596,7 +651,10 @@
 			<div class="p-6">
 				{#if $query.data?.entry?.bookmark}
 					{@const bookmark = $query.data.entry.bookmark}
-					{@const via = $query.data.entry.relations?.find((r) => r.type === 'SavedFrom')}
+					{@const via = $query.data.entry.relations?.find(
+						(r) => r.type === 'SavedFrom',
+					)}
+					{@const createdAt = new Date(bookmark.createdAt)}
 					<div class="flex gap-4 items-center">
 						<div>
 							<!--  -->
@@ -606,12 +664,15 @@
 						</div>
 						<div class="flex flex-1 min-w-0 text-xs">
 							<span
-								><b>{bookmark.user?.username}</b>{' '}saved the {$query.data.type}
-								<time datetime={bookmark.createdAt}
-									>{ago(new Date(bookmark.createdAt), new Date())}</time
+								><b>{bookmark.user?.username}</b>{' '}saved the {$query.data
+									.type}
+								<time datetime={createdAt.toString()}
+									>{ago(createdAt, $now)}</time
 								>
 								{#if via && via.related_entry}
-									via <a href={make_link(via.related_entry)}>{via.related_entry?.title}</a>
+									via <a href={make_link(via.related_entry)}
+										>{via.related_entry?.title}</a
+									>
 								{/if}
 							</span>
 							<!-- <span class="font-semibold leading-none tracking-tighter">Saved</span>
@@ -652,7 +713,7 @@
 										saveUrl(link.href, $query.data?.entry?.id, () => {
 											linksFetching[link.href] = false;
 											queryClient.invalidateQueries({
-												queryKey: ['entries']
+												queryKey: ['entries'],
 											});
 										});
 									}}
@@ -670,7 +731,7 @@
 										<EntryIcon
 											class={cn(
 												'h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100',
-												!entry && 'group-hover:opacity-0'
+												!entry && 'group-hover:opacity-0',
 											)}
 											type={entry.type}
 										/>
@@ -687,13 +748,13 @@
 							</Tooltip.Trigger>
 
 							<Tooltip.Content>
-                                {#if entry}
-                                    <p>Link already saved</p>
-                                {:else if link.href.endsWith('pdf')}
-                                    <p>Save PDF</p>
-                                {:else}
-                                    <p>Save Link</p>
-                                {/if}
+								{#if entry}
+									<p>Link already saved</p>
+								{:else if link.href.endsWith('pdf')}
+									<p>Save PDF</p>
+								{:else}
+									<p>Save Link</p>
+								{/if}
 							</Tooltip.Content>
 						</Tooltip.Root>
 
@@ -716,7 +777,9 @@
 								}}
 								class="basis-1/2 line-clamp-2 cursor-pointer">{link.text}</span
 							>
-							<a href={link.href} class="truncate text-muted-foreground">{link.href}</a>
+							<a href={link.href} class="truncate text-muted-foreground"
+								>{link.href}</a
+							>
 						</div>
 					</li>
 				{/each}
