@@ -1,9 +1,9 @@
 import { onMount } from "svelte";
-import { createPopperActions } from "svelte-popperjs";
 import { derived, writable } from "svelte/store";
+import { createPopperActions } from "svelte-popperjs";
 
 /**
- * 
+ *
  * @returns {{selection: import('svelte/store').Writable<Selection | null>, virtualEl: import('svelte/store').Readable<{getBoundingClientRect: () => DOMRect}>, popperContent: import('svelte-popperjs').ContentAction<any>, mouse_down: import('svelte/store').Writable<boolean>}}
  */
 export function setup() {
@@ -14,7 +14,7 @@ export function setup() {
 	const selection = writable(null);
 
 	const virtualEl = derived(selection, ($selection) => {
-		if (!$selection || !$selection.rangeCount || $selection.isCollapsed)
+		if (!$selection?.rangeCount || $selection.isCollapsed)
 			return {
 				getBoundingClientRect: () =>
 					/** @type {DOMRect} */({
@@ -61,12 +61,12 @@ export function setup() {
 
 	onMount(() => {
 		document.addEventListener('selectionchange', handle_select);
-		document.addEventListener('mousedown', () => mouse_down.set(true));
-		document.addEventListener('mouseup', () => mouse_down.set(false));
+		document.addEventListener('mousedown', () => { mouse_down.set(true); });
+		document.addEventListener('mouseup', () => { mouse_down.set(false); });
 		return () => {
 			document.removeEventListener('selectionchange', handle_select);
-			document.removeEventListener('mousedown', () => mouse_down.set(true));
-			document.removeEventListener('mouseup', () => mouse_down.set(false));
+			document.removeEventListener('mousedown', () => { mouse_down.set(true); });
+			document.removeEventListener('mouseup', () => { mouse_down.set(false); });
 		}
 	});
 

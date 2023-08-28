@@ -67,13 +67,14 @@
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
 
+	import { getEntryContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/ctx';
 	import EntryAuthorInput from './entry-author-input.svelte';
 	import EntryIcon from './EntryIcon.svelte';
 	import { saveUrl } from './utils';
 
 	// const render = persisted('sidebar', false);
-	export let render: Writable<boolean> =
-		getContext('rightSidebar') ?? writable(false);
+    const { rightSidebar, rightSidebarWidth } = getEntryContext()
+	export let render = rightSidebar;
 
 	let flash = false;
 	let prev_annotation_count: number =
@@ -110,9 +111,7 @@
 		(getContext('jumping') ) ?? writable(false);
 
 	// REVIEW should we be debouncing this?
-	const width_store =
-		(getContext('rightSidebarWidth') ) ??
-		persisted('sidebar__width', 360);
+	const width_store = rightSidebarWidth;
 
 	export let width = $width_store || 360;
 

@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { persisted } from 'svelte-local-storage-store';
+	import { fly } from 'svelte/transition';
+
 	import ColResizer from '$components/ColResizer.svelte';
 	import EntryMobileSidebar from '$components/entries/entry-mobile-sidebar.svelte';
 	import EntrySidebar from '$components/entries/entry-sidebar.svelte';
 	import mq from '$lib/stores/mq';
 	import { check_inert, check_inside_input } from '$lib/utils';
-	import { getContext } from 'svelte';
-	import { writable, type Writable } from 'svelte/store';
-	import { fly } from 'svelte/transition';
-	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
 
-	$: console.log({ $render });
-	const width_store =
-		(getContext('rightSidebarWidth') as Writable<number>) ?? persisted('sidebar__width', 360);
+	import { getEntryContext } from './ctx';
+
+	const { rightSidebar, rightSidebarWidth } = getEntryContext();
+	export let render = rightSidebar;
+
+	const width_store = rightSidebarWidth;
 
 	export let width = $width_store || 360;
 

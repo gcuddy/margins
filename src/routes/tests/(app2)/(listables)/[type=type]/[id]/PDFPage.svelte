@@ -1,13 +1,15 @@
 <script lang="ts">
-	import inView from '$lib/actions/inview';
+	import type { PageViewport, PDFPageProxy, RenderTask } from 'pdfjs-dist';
 	import {
-		renderTextLayer,
 		PixelsPerInch,
 		RenderingCancelledException,
+		renderTextLayer,
 		setLayerDimensions
 	} from 'pdfjs-dist';
-	import type { PDFPageProxy, PageViewport, RenderTask } from 'pdfjs-dist';
 	import { createEventDispatcher, onMount, tick } from 'svelte';
+
+	import inView from '$lib/actions/inview';
+	import type { TargetSchema } from '$lib/annotation';
 	import {
 		createTextPositionSelectorMatcher,
 		createTextQuoteSelectorMatcher,
@@ -16,8 +18,6 @@
 	} from '$lib/annotator';
 	import { highlightText } from '$lib/annotator/highlighter';
 	import type { TextPositionSelector, TextQuoteSelector } from '$lib/annotator/types';
-
-	import type { TargetSchema } from '$lib/annotation';
 	import { getTargetSelector } from '$lib/utils/annotations';
 
 	export let page: PDFPageProxy;
@@ -308,7 +308,7 @@
 			// annotationEditorLayerNode =
 			// 	(keepAnnotationEditorLayer && this.annotationEditorLayer?.div) || null,
 			// xfaLayerNode = (keepXfaLayer && this.xfaLayer?.div) || null,
-			textLayerNode = (keepTextLayer && textLayer?.getContainer()) || null;
+			textLayerNode = (keepTextLayer && textLayer.getContainer()) || null;
 		for (let i = childNodes.length - 1; i >= 0; i--) {
 			const node = childNodes[i];
 			switch (node) {
@@ -363,34 +363,37 @@
 	let old_scale = scale;
 	let canvas: HTMLCanvasElement;
 	let in_view = false;
-	import type { PageData } from './$types';
-	import Highlight from '../../../../../(app)/u:[username]/notebook/_Highlight.svelte';
+	import type { RenderParameters } from 'pdfjs-dist/types/src/display/api';
+
+	import { get_pdf_context } from '$components/pdf-viewer/api';
+	import { getRenderingQueueContext } from '$components/pdf-viewer/rendering-queue';
 	import TextLayer from '$components/pdf-viewer/TextLayer.svelte';
 	import {
-		OutputScale,
-		RenderingState,
-		RenderingStates,
 		approximateFraction,
+		OutputScale,
+		type RenderingState,
+		RenderingStates,
 		roundToDivide
 	} from '$components/pdf-viewer/utils';
-	import { getRenderingQueueContext } from '$components/pdf-viewer/rendering-queue';
-	import type { RenderParameters } from 'pdfjs-dist/types/src/display/api';
-	import { get_pdf_context } from '$components/pdf-viewer/api';
+
+	import type Highlight from '../../../../../(app)/u:[username]/notebook/_Highlight.svelte';
+	import type { PageData } from './$types';
+
 	export let annotations: NonNullable<NonNullable<PageData['entry']>['annotations']>;
 
 	let textLayer: TextLayer;
 	type Highlight = {
-		highlightElements: {
+		highlightElements: Array<{
 			element: HTMLElement;
 			x?: number;
 			y?: number;
 			rect?: DOMRect;
-		}[];
+		}>;
 		pageNumber: number;
 		id: string;
 		removeHighlights: () => void;
 	};
-	export let highlights: Highlight[] = [];
+	export let highlights: Array<Highlight> = [];
 
 	let viewport: PageViewport;
 
@@ -420,8 +423,8 @@
 
 	export const pageNumber = () => page.pageNumber;
 	export const getViewport = () => viewport;
-	export const getWidth = () => viewport?.width || 0;
-	export const getScale = () => viewport?.scale || scale;
+	export const getWidth = () => viewport.width || 0;
+	export const getScale = () => viewport.scale || scale;
 
 	let renderTask: RenderTask | null = null;
 	let text_layer: HTMLElement;
@@ -633,7 +636,7 @@
 	}
 
 	export function addHighlight(
-		highlight: Omit<Highlight, 'highlightElements'> & { highlightElements: HTMLElement[] }
+		highlight: Omit<Highlight, 'highlightElements'> & { highlightElements: Array<HTMLElement> }
 	) {
 		highlights = [
 			...highlights,
@@ -688,8 +691,8 @@
 		}
 	}
 
-	$: pdfAnnotations = page?.getAnnotations().then((annotations) => {
-		if (annotations?.length) console.log({ annotations });
+	$: pdfAnnotations = page.getAnnotations().then((annotations) => {
+		if (annotations.length) console.log({ annotations });
 	});
 
 	let wrapper: HTMLDivElement | undefined = undefined;
@@ -713,7 +716,7 @@
 	};
 
 	$: console.log({ viewport });
-	$: ({ pageHeight, pageWidth } = (viewport?.rawDims || { pageHeight: 0, pageWidth: 0 }) as {
+	$: ({ pageHeight, pageWidth } = (viewport.rawDims || { pageHeight: 0, pageWidth: 0 }) as {
 		pageHeight: number;
 		pageWidth: number;
 	});
@@ -868,7 +871,7 @@
 			});
 		// drawPage();
 	}}
-	on:progress={(e) => console.log('progress', { e })}
+	on:progress={(e) => { console.log('progress', { e }); }}
 	id="container"
 	class="relative my-0 mx-auto"
 	data-page-number={page.pageNumber}

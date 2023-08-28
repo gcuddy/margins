@@ -47,7 +47,7 @@ module.exports = {
 		],
 		'@typescript-eslint/switch-exhaustiveness-check': 'error',
 		'@typescript-eslint/array-type': ['error', { default: 'generic' }],
-		'@typescript-eslint/consistent-type-definitions': 'error',
+		'@typescript-eslint/consistent-type-definitions': ['error', "type"],
 		'@typescript-eslint/explicit-function-return-type': 1,
 		'@typescript-eslint/prefer-ts-expect-error': 'error',
 		'@typescript-eslint/ban-ts-comment': [

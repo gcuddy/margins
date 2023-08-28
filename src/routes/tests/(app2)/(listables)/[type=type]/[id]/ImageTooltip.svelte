@@ -1,8 +1,9 @@
 <script lang="ts">
-	import Button from '$lib/components/ui/Button.svelte';
 	import { MoreHorizontal } from 'lucide-svelte';
-	import type { ContentAction } from 'svelte-popperjs';
 	import { fade } from 'svelte/transition';
+	import type { ContentAction } from 'svelte-popperjs';
+
+	import Button from '$lib/components/ui/Button.svelte';
 
 	export let popperContent: ContentAction<any>;
 </script>

@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { draggable } from '@neodrag/svelte';
+	import type { JSONContent } from '@tiptap/core';
+	import { scale } from 'svelte/transition';
+
 	import { page } from '$app/stores';
 	import Button from '$components/ui/Button.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import { mutation } from '$lib/queries/query';
-	import { draggable } from '@neodrag/svelte';
-	import type { JSONContent } from '@tiptap/core';
-	import { scale } from 'svelte/transition';
 
 	export let annotation_id: string | undefined = undefined;
 	export let content: JSONContent | undefined = undefined;

@@ -1,11 +1,12 @@
 <script lang="ts">
-	import Button from '$lib/components/ui/Button.svelte';
-	import type { BookmarkSchema } from '$lib/features/entries/forms';
-	import { queryKeys } from '$lib/queries/keys';
 	import { LoaderIcon } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { Validation } from 'sveltekit-superforms/index';
+
+	import Button from '$lib/components/ui/Button.svelte';
+	import type { BookmarkSchema } from '$lib/features/entries/forms';
+	import { queryKeys } from '$lib/queries/keys';
 
 	export let data: Validation<BookmarkSchema>;
 	$: ({ form, enhance, submitting, delayed } = superForm(data, {

@@ -1,10 +1,12 @@
 <script lang="ts">
-	import Muted from '$lib/components/ui/typography/Muted.svelte';
 	import MagicString from 'magic-string';
-	import dayjs from '$lib/dayjs';
-	import type { PageData } from './$types';
-	import Card from '$lib/components/ui/Card.svelte';
 	import { onMount } from 'svelte';
+
+	import Card from '$lib/components/ui/Card.svelte';
+	import Muted from '$lib/components/ui/typography/Muted.svelte';
+	import dayjs from '$lib/dayjs';
+
+	import type { PageData } from './$types';
 
 	type Tweet = NonNullable<NonNullable<PageData['entry']>['tweet']>;
 

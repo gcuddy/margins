@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { Writable, derived } from 'svelte/store';
-	import * as selections from './selection';
-	import { scale } from 'svelte/transition';
-	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
-	import { page } from '$app/stores';
-	import Button from '$lib/components/ui/Button.svelte';
 	import { EditIcon, Highlighter } from 'lucide-svelte';
-	import { Muted } from '$lib/components/ui/typography';
 	import { createEventDispatcher } from 'svelte';
+	import { derived,type Writable } from 'svelte/store';
+	import { scale } from 'svelte/transition';
+
+	import { page } from '$app/stores';
 	import type { Annotation } from '$lib/annotation';
+	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { Muted } from '$lib/components/ui/typography';
+
+	import * as selections from './selection';
 	// import { elementReady } from '$lib/utils/dom';
 
 	const { selection, popperContent, mouse_down } = selections.setup();
@@ -26,7 +28,7 @@
 	}>();
 
 	const show_tooltip = derived(selection, ($selection) => {
-		if (!$selection || !$selection.rangeCount || $selection.isCollapsed) return false;
+		if (!$selection?.rangeCount || $selection.isCollapsed) return false;
 		const range = $selection.getRangeAt(0);
 		const parent = range.commonAncestorContainer.parentElement;
 		if (!parent) return false;

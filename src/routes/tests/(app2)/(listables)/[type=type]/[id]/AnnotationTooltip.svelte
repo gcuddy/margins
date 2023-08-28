@@ -1,26 +1,31 @@
 <script lang="ts">
+	// import { useQueryClient } from '@tanstack/svelte-query';
+	import { EditIcon, TrashIcon } from 'lucide-svelte';
+	import { type ComponentProps,createEventDispatcher } from 'svelte';
+	import { fly } from 'svelte/transition';
+	import type { ContentAction } from 'svelte-popperjs';
+	import { portal } from 'svelte-portal';
+
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
+	import { page } from '$app/stores';
 	import Button from '$lib/components/ui/Button.svelte';
 	import TooltipContent from '$lib/components/ui/TooltipContent.svelte';
 	import { Muted } from '$lib/components/ui/typography';
-	// import { useQueryClient } from '@tanstack/svelte-query';
-	import { EditIcon, TrashIcon } from 'lucide-svelte';
-	import { createEventDispatcher, type ComponentProps } from 'svelte';
-	import type { ContentAction } from 'svelte-popperjs';
-	import { fly } from 'svelte/transition';
+
 	import FloatingAnnotation from './FloatingAnnotation.svelte';
-	import { portal } from 'svelte-portal';
-	import { page } from '$app/stores';
-	interface $$Props extends ComponentProps<TooltipContent<any>> {
+
+	type $$Props = {
 		popperContent: ContentAction<any>;
 		id: string;
-	}
+	} & ComponentProps<TooltipContent>
 	export let popperContent: ContentAction<any>;
 
-	import type { PageData } from './$types';
 	import type { JSONContent } from '@tiptap/core';
+
 	import { clickOutside } from '$lib/actions/clickOutside';
+
+	import type { PageData } from './$types';
 
 	export let id: string;
 	// const queryClient = useQueryClient();

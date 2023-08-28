@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import PdfViewer from '$components/pdf-viewer/PDFViewer.svelte';
+
 	import type { PageData } from './$types';
+
 	export let data: PageData;
 
 	const pdf_path = data.entry?.uri?.startsWith('http')

@@ -1,31 +1,33 @@
 <script lang="ts">
+	import { createAvatar, melt } from '@melt-ui/svelte';
+	import { ExternalLink, PlusCircle } from 'lucide-svelte';
+
 	import { page } from '$app/stores';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import Dialog2 from '$lib/components/ui/dialog2/Dialog.svelte';
 	import {
 		Dialog,
-		DialogTrigger,
-		DialogTitle,
 		DialogContent,
-		DialogHeader
-	} from '$lib/components/ui/dialog';
-	import { Tabs, TabsList, TabsContent, TabsTrigger } from '$lib/components/ui/tabs';
+		DialogHeader,
+		DialogTitle,
+		DialogTrigger	} from '$lib/components/ui/dialog';
+	import Dialog2 from '$lib/components/ui/dialog2/Dialog.svelte';
+	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
 	import { tabContent } from '$lib/components/ui/tabs/TabsContent.svelte';
 	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
+	import { get_genre } from '$lib/features/books/utils';
 	import { cn } from '$lib/utils/tailwind';
-	import { ExternalLink, PlusCircle } from 'lucide-svelte';
+
 	import type { PageData } from './$types';
 	import Annotation from './Annotation.svelte';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
 	import Interaction from './Interaction.svelte';
 	import InteractionForm from './InteractionForm.svelte';
-	import { get_genre } from '$lib/features/books/utils';
-	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
-	import Editor from '$components/ui/editor/Editor.svelte';
-	import { createAvatar, melt } from '@melt-ui/svelte';
+
 	let editor: Editor;
 
 	type Book = PageData['book'];
@@ -91,7 +93,7 @@
 			<img
 				use:melt={$image}
 				class="aspect-auto max-w-[200px] rounded-md shadow-lg"
-				on:error={(e) => console.log(e)}
+				on:error={(e) => { console.log(e); }}
 				src={getGbookImage(book)}
 				alt=""
 			/>

@@ -12,6 +12,7 @@
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
+
 	type Podcast = PageData['podcast'];
 	export let data: PageData & {
 		podcast: NonNullable<Podcast>;

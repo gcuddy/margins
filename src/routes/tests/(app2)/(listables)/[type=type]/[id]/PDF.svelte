@@ -1,15 +1,8 @@
 <script lang="ts">
-	import type { TargetSchema } from '$lib/annotation';
-	import {
-		createTextPositionSelectorMatcher,
-		createTextQuoteSelectorMatcher,
-		describeTextPosition,
-		describeTextQuote
-	} from '$lib/annotator';
-	import { highlightText } from '$lib/annotator/highlighter';
-	import type { TextPositionSelector, TextQuoteSelector } from '$lib/annotator/types';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import { nanoid } from '$lib/nanoid';
+	import { draggable } from '@neodrag/svelte';
+	import debounce from 'just-debounce-it';
+	import { forEach } from 'lodash';
+	import throttle from 'lodash/throttle';
 	import {
 		ChevronLeftIcon,
 		ChevronRightIcon,
@@ -20,22 +13,47 @@
 		ZoomOutIcon
 	} from 'lucide-svelte';
 	import {
-		GlobalWorkerOptions,
-		PDFDocumentProxy,
 		getDocument,
-		renderTextLayer,
-		version,
-		PageViewport,
+		GlobalWorkerOptions,
+		type PageViewport,
+		type PDFDocumentProxy,
 		PDFWorker,
-		PixelsPerInch
-	} from 'pdfjs-dist';
-	import { ComponentProps, getContext, onDestroy, onMount, tick } from 'svelte';
-	import type { PageData } from './$types';
-	import Selection from './Selection.svelte';
-	import { getTargetSelector } from '$lib/utils/annotations';
-	import { useMenuBar } from '../../../MainNav.svelte';
-	import debounce from 'just-debounce-it';
+		PixelsPerInch,
+		renderTextLayer,
+		version	} from 'pdfjs-dist';
+	import type { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
+	import { type ComponentProps, getContext, onDestroy, onMount, tick } from 'svelte';
+	import { get, Writable, writable } from 'svelte/store';
+	import { type ContentAction,createPopperActions } from 'svelte-popperjs';
+	import { toast } from 'svelte-sonner';
+
 	import { browser } from '$app/environment';
+	import { goto, invalidate, invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { pdf_context } from '$components/pdf-viewer/api';
+	import { createRenderQueueContext } from '$components/pdf-viewer/rendering-queue';
+	import Scroller from '$components/Scroller.svelte';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import Input from '$components/ui/Input.svelte';
+	import VirtualList from '$components/ui/internal/VirtualList.svelte';
+	import NativeSelect from '$components/ui/NativeSelect.svelte';
+	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
+	import { clickOutside } from '$lib/actions/clickOutside';
+	import resize from '$lib/actions/resize';
+	import type { TargetSchema } from '$lib/annotation';
+	import {
+		createTextPositionSelectorMatcher,
+		createTextQuoteSelectorMatcher,
+		describeTextPosition,
+		describeTextQuote
+	} from '$lib/annotator';
+	import { highlightText } from '$lib/annotator/highlighter';
+	import type { TextPositionSelector, TextQuoteSelector } from '$lib/annotator/types';
+	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
+	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
+	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -44,37 +62,20 @@
 		DropdownMenuSeparator,
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
-	import { build_toc, get_pdf_text } from '$lib/utils/pdf';
-	import { toast } from 'svelte-sonner';
-	import { useCommanderContext } from '../../../Commander.svelte';
-	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
-	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import { post } from '$lib/utils/forms';
-	import { createPopperActions, type ContentAction } from 'svelte-popperjs';
-	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
-	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
-	import { clickOutside } from '$lib/actions/clickOutside';
-	import { forEach } from 'lodash';
-	import { draggable } from '@neodrag/svelte';
-	import { page } from '$app/stores';
-	import Editor from '$components/ui/editor/Editor.svelte';
+	import { nanoid } from '$lib/nanoid';
 	import { mutation } from '$lib/queries/query';
-	import { goto, invalidate, invalidateAll } from '$app/navigation';
 	import { update_entry } from '$lib/state/entries';
-	import { Writable, get, writable } from 'svelte/store';
-	import Input from '$components/ui/Input.svelte';
-	import { leftSidebarPortal } from '../LeftSidebar.svelte';
-	import VirtualList from '$components/ui/internal/VirtualList.svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { getTargetSelector } from '$lib/utils/annotations';
+	import { post } from '$lib/utils/forms';
+	import { build_toc, get_pdf_text } from '$lib/utils/pdf';
 	import { cn } from '$lib/utils/tailwind';
-	import type { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
+
+	import { useCommanderContext } from '../../../Commander.svelte';
+	import { useMenuBar } from '../../../MainNav.svelte';
+	import { leftSidebarPortal } from '../LeftSidebar.svelte';
+	import type { PageData } from './$types';
 	import PdfPage from './PDFPage.svelte';
-	import resize from '$lib/actions/resize';
-	import throttle from 'lodash/throttle';
-	import Scroller from '$components/Scroller.svelte';
-	import NativeSelect from '$components/ui/NativeSelect.svelte';
-	import { createRenderQueueContext } from '$components/pdf-viewer/rendering-queue';
-	import { pdf_context } from '$components/pdf-viewer/api';
+	import Selection from './Selection.svelte';
 
 	export let data: PageData;
 
@@ -97,11 +98,11 @@
 	let viewport: PageViewport;
 	let container: HTMLElement;
 
-	let pdfPages: PdfPage[] = [];
-	let pdfPageElements: HTMLDivElement[] = [];
-	let pdfPageHighlights: NonNullable<ComponentProps<PdfPage>['highlights']>[] = [];
+	let pdfPages: Array<PdfPage> = [];
+	let pdfPageElements: Array<HTMLDivElement> = [];
+	let pdfPageHighlights: Array<NonNullable<ComponentProps<PdfPage>['highlights']>> = [];
 
-	let thumbnails: number[] = [];
+	let thumbnails: Array<number> = [];
 	let thumbnail_map = new Map<number, string>();
 
 	let outline_container_height = 0;
@@ -109,12 +110,12 @@
 	let leftSidebarScrollTop = 0;
 	let frame: number;
 
-	let pages: PDFPageProxy[] = [];
+	let pages: Array<PDFPageProxy> = [];
 
-	let labels: string[] = [];
+	let labels: Array<string> = [];
 
 	function poll() {
-		if (leftSidebar?.scrollTop !== leftSidebarScrollTop) {
+		if (leftSidebar.scrollTop !== leftSidebarScrollTop) {
 			leftSidebarScrollTop = leftSidebar.scrollTop;
 		}
 
@@ -147,11 +148,11 @@
 	}
 
 	const toc = writable<
-		{
+		Array<{
 			title: string;
 			pageNumber: number;
 			active: boolean;
-		}[]
+		}>
 	>([]);
 
 	// function handleResize() {
@@ -228,7 +229,7 @@
 	}
 
 	async function loadPDF() {
-		if (!data?.entry?.uri) return;
+		if (!data.entry?.uri) return;
 		const pdf_path = data.entry.uri.startsWith('http')
 			? data.entry.uri
 			: data.S3_BUCKET_PREFIX + data.entry.uri;
@@ -325,7 +326,7 @@
 
 	onMount(async () => {
 		// await import??
-		if (!data?.entry?.uri) return;
+		if (!data.entry?.uri) return;
 
 		const pdf_path = data.entry.uri.startsWith('http')
 			? data.entry.uri
@@ -350,8 +351,8 @@
 
 		console.log({ wrapper, viewport });
 		// scale = wrapper?.offsetWidth / viewport.width;
-		wrapperHeight = wrapper?.offsetHeight || 0;
-		wrapperWidth = wrapper?.offsetWidth || 0;
+		wrapperHeight = wrapper.offsetHeight || 0;
+		wrapperWidth = wrapper.offsetWidth || 0;
 		console.log({ scale });
 
         Promise.all([firstPagePromise]).then(([firstPdfPage]) => {
@@ -485,7 +486,7 @@
 		if (!opts?.noScrollThumbnails) {
 			const outline = document.querySelector(`[data-thumbnail-page="${currentPage}"]`);
 			if (!outline) {
-				leftSidebar?.scrollTo({
+				leftSidebar.scrollTo({
 					top: 136 * (currentPage - 1) - outline_container_height / 3
 				});
 			}
@@ -517,16 +518,16 @@
 	// x={rect.left - wrapper_rect.left}
 	// y={highlightElement.parentElement?.offsetTop}
 
-	let highlights: {
-		highlightElements: {
+	let highlights: Array<{
+		highlightElements: Array<{
 			element: HTMLElement;
 			x?: number;
 			y?: number;
 			rect?: DOMRect;
-		}[];
+		}>;
 		pageNumber: number;
 		id: string;
-	}[] = [];
+	}> = [];
 
 	const calculate_h = (h: HTMLElement) => {
 		const rect = h.getBoundingClientRect();
@@ -572,7 +573,7 @@
 				highlightElements: h.flatMap((h) => h.highlightElements),
 				id,
 				pageNumber: page_num,
-				removeHighlights: () => h.map((h) => h.removeHighlights())
+				removeHighlights: () => h.map((h) => { h.removeHighlights(); })
 			});
 			// pdfPageHighlights[target.page_num - 1] = [
 			//     ...pdfPageHighlights[target.page_num],
@@ -648,14 +649,14 @@
 	});
 
 	let scroller: HTMLElement;
-	let virtualScroller: Scroller<any>;
+	let virtualScroller: Scroller;
 
 	const scrollBounds = {
 		scrollTop: 0,
 		clientHeight: 0,
 		didReachBottom: false,
 		isBottomVisible() {
-			return this.scrollTop + this.clientHeight >= (scroller?.scrollHeight || 0);
+			return this.scrollTop + this.clientHeight >= (scroller.scrollHeight || 0);
 		}
 	};
 
@@ -677,14 +678,14 @@
 			return elementBottom > top;
 		});
 
-		const visible: {
+		const visible: Array<{
 			el: HTMLElement;
 			pageNum: number;
 			x: number;
 			y: number;
 			percent: number;
 			widthPercent: number;
-		}[] = [];
+		}> = [];
 		// now start looping thru elements
 		// if element is in view, add it to the list
 		// if element is not in view, stop
@@ -767,7 +768,7 @@
 	}
 
 	function update_thumbnail_scroll() {
-		virtualScroller?.scrollTo(currentPage - 1, {
+		virtualScroller.scrollTo(currentPage - 1, {
 			height: 136
 		});
 	}
@@ -825,7 +826,7 @@ on:resize={handle_resize}
 
 		if (!data.entry) return;
 
-		if (data?.entry) {
+		if (data.entry) {
 			data.entry.annotations = [
 				...(data.entry.annotations || []),
 				{
@@ -883,7 +884,7 @@ on:resize={handle_resize}
 		class="z-50"
 		use:clickOutside={() => {
 			edit_note = false;
-			edit_target?.h.forEach((h) => h.removeHighlights());
+			edit_target?.h.forEach((h) => { h.removeHighlights(); });
 		}}
 		use:annotationContent
 	>

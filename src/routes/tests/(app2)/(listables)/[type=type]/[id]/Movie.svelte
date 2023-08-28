@@ -1,18 +1,20 @@
 <script lang="ts">
+	import { createAvatar, melt } from '@melt-ui/svelte';
+
 	import smoothload from '$lib/actions/smoothload';
+	import type { List } from "$lib/api/tmdb"
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import { Dialog, DialogContent, DialogHeader, DialogTitle } from '$lib/components/ui/dialog';
 	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
+	import { cn } from '$lib/utils';
 	import { isUpcoming } from '$lib/utils/date';
-	import type { List } from "$lib/api/tmdb"
 
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
-	import { createAvatar, melt } from '@melt-ui/svelte';
-	import { cn } from '$lib/utils';
+
 	type Movie = PageData['movie'];
 	export let data: PageData & {
 		movie: NonNullable<Movie>;
@@ -24,7 +26,7 @@
 	$: upcoming = isUpcoming(new Date(data.movie.release_date));
 
 	const promises = {
-		lists: () => fetch(`/api/tmdb/movie/${data.movie.id}/lists`).then((r) => r.json())as Promise<{ results: List[]}>
+		lists: () => fetch(`/api/tmdb/movie/${data.movie.id}/lists`).then((r) => r.json())as Promise<{ results: Array<List>}>
 	};
 
     const {

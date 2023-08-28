@@ -1,12 +1,14 @@
 <script lang="ts">
+	import { ExternalLinkIcon } from 'lucide-svelte';
+
 	import smoothload from '$lib/actions/smoothload';
 	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
-	import { ExternalLinkIcon } from 'lucide-svelte';
+	import { formatDuration } from '$lib/utils/dates';
 
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
-	import { formatDuration } from '$lib/utils/dates';
+
 	type Album = PageData['album'];
 	export let data: PageData & {
 		album: NonNullable<Album>;

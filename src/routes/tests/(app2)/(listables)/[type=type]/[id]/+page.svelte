@@ -1,41 +1,49 @@
 <script lang="ts">
-	import { getCurrentListContext } from '$lib/stores/currentList';
-	import type { PageData } from './$types';
+	import {
+		createQuery,
+		type DefaultError,
+		InfiniteData,
+		useQueryClient,
+	} from '@tanstack/svelte-query';
+	import { getContext, onMount, setContext } from 'svelte';
+	import { derived, writable } from 'svelte/store';
 
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import {
-		QueryInput,
-		QueryOutput,
-		TypedQueryKey,
 		getArrayQueryKey,
 		mutation,
-		qquery
+		qquery,
+		type QueryInput,
+		type QueryOutput,
+		type TypedQueryKey,
 	} from '$lib/queries/query';
-	import { recents } from '$lib/stores/recents';
-	import { cn } from '$lib/utils/tailwind';
-	import { update_entry } from '$lib/state/entries';
-	import { getContext, onMount, setContext } from 'svelte';
-	import { get_module } from './module';
-	import { derived, writable } from 'svelte/store';
-	import { DefaultError, InfiniteData, createQuery, useQueryClient } from '@tanstack/svelte-query';
-	import { entryQuery, useEntry } from './query';
-	import { queryOptions } from '$lib/queries/utils';
-	import type { Queries } from '../../../queries.server';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { numberOrString } from '$lib/utils/misc';
+	import { queryOptions } from '$lib/queries/utils';
 	import type { LibraryResponse } from '$lib/server/queries';
+	import { update_entry } from '$lib/state/entries';
+	import { getCurrentListContext } from '$lib/stores/currentList';
+	import { recents } from '$lib/stores/recents';
 	import { getId } from '$lib/utils/entries';
+	import { numberOrString } from '$lib/utils/misc';
+	import { cn } from '$lib/utils/tailwind';
+
+	import type { Queries } from '../../../queries.server';
+	import { getEntryContext } from '../ctx';
+	import type { PageData } from './$types';
 	import MediaHeader from './MediaHeader.svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { get_module } from './module';
+	import { entryQuery, useEntry } from './query';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
 
-
 	$: ({ type } = data);
 	const currentList = getCurrentListContext();
-	$: currentIndex = $currentList.entries.findIndex((e) => e.id === data.entry?.id);
+	$: currentIndex = $currentList.entries.findIndex(
+		(e) => e.id === data.entry?.id,
+	);
 	$: nextId = $currentList.entries[currentIndex + 1]?.id;
 	$: prevId = $currentList.entries[currentIndex - 1]?.id;
 
@@ -43,10 +51,19 @@
 
 	// desired api: queryOpts("fn", { id: $page.params.id, type: data.type })
 
-	function createQueryOptions<TFn extends keyof Queries>(fn: TFn, input: QueryInput<TFn>) {
-		return queryOptions<QueryOutput<TFn>, DefaultError, QueryOutput<TFn>, TypedQueryKey<TFn>>({
+	function createQueryOptions<TFn extends keyof Queries>(
+		fn: TFn,
+		input: QueryInput<TFn>,
+	) {
+		return queryOptions<
+			QueryOutput<TFn>,
+			DefaultError,
+			QueryOutput<TFn>,
+			TypedQueryKey<TFn>
+		>({
 			queryKey: getArrayQueryKey(fn, input),
-			queryFn: ({ queryKey }) => qquery($page, queryKey[0][0], queryKey[1].input)
+			queryFn: ({ queryKey }) =>
+				qquery($page, queryKey[0][0], queryKey[1].input),
 		});
 	}
 
@@ -62,9 +79,9 @@
 			return {
 				...queryFactory.entries.detail({
 					id: numberOrString($page.params.id),
-					type: data.type
+					type: data.type,
 				}),
-                placeholderData: undefined,
+				placeholderData: undefined,
 				// placeholderData: () => {
 				// 	console.time(`placeholderData`);
 				// 	console.log({ queryClient });
@@ -90,7 +107,7 @@
 				// }
 				// ...(!data.cache ? { refetchOnMount: false } : { initialData: data.cache })
 			};
-		})
+		}),
 	);
 	$: console.log({ $query, data });
 
@@ -105,7 +122,7 @@
 		mutation($page, 'saveInteraction', {
 			entryId: $query.data.entry.id,
 			last_viewed: new Date(),
-			is_read: true
+			is_read: true,
 		});
 	});
 
@@ -121,7 +138,7 @@
 	// todo
 	let current_list = true;
 
-	const rightSidebar = getContext('rightSidebar') as Writable<boolean>;
+	const { rightSidebar } = getEntryContext();
 
 	onMount(async () => {
 		// try to get component if it doesn't exist, for example we're mounting this component elsewhere
@@ -161,7 +178,9 @@
 	class={cn(
 		'grow transition-[width] duration-300',
 		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)] sm:px-6 px-4', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
-		$rightSidebar ? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]' : 'w-full' // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
+		$rightSidebar
+			? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]'
+			: 'w-full', // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
 
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
@@ -173,15 +192,18 @@
 		<!-- <pre>{JSON.stringify($query.data, null, 2)}</pre> -->
 		<!-- <MediaHeader {...$query.data} /> -->
 		{#if type === 'article'}
-			<svelte:component this={data.component} data={{
-                ...data,
-                ...$query.data
-            }}>
-				{@html $query.data?.entry?.html}
+			<svelte:component
+				this={data.component}
+				data={{
+					...data,
+					...$query.data,
+				}}
+			>
+				{@html $query.data.entry?.html}
 			</svelte:component>
 		{:else}
 			<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
-            <!-- data={{
+			<!-- data={{
                 ...data,
                 ...$query.data
             }} -->
@@ -190,7 +212,7 @@
 	{/if}
 </div>
 
-{#if data.entry && data.entry.title}
+{#if data.entry?.title}
 	<!-- <Mentions
 		entry={{
 			id: data.entry.id,

@@ -1,4 +1,10 @@
 <script lang="ts">
+	import { LoaderIcon } from 'lucide-svelte';
+	import type { ComponentProps } from 'svelte';
+	import { toast } from 'svelte-sonner';
+
+	import { page } from '$app/stores';
+	import Button from '$components/ui/Button.svelte';
 	import {
 		Dialog,
 		DialogContent,
@@ -6,15 +12,9 @@
 		DialogHeader,
 		DialogTitle
 	} from '$components/ui/dialog';
-
-	import { state, update_entry } from '$lib/state/entries';
-	import type { ComponentProps } from 'svelte';
-	import Button from '$components/ui/Button.svelte';
-	import { LoaderIcon } from 'lucide-svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import { mutation } from '$lib/queries/query';
-	import { page } from '$app/stores';
-	import { toast } from 'svelte-sonner';
+	import { state, update_entry } from '$lib/state/entries';
 
 	export let isOpen = false;
 	export let entry: { id: number };

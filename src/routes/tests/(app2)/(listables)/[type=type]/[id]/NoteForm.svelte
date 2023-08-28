@@ -1,4 +1,9 @@
 <script lang="ts">
+	import { LoaderIcon } from 'lucide-svelte';
+	import type { ComponentProps } from 'svelte';
+
+    import AnnotationForm from '$components/AnnotationForm.svelte';
+	import Button from '$components/ui/Button.svelte';
     import {
 		Dialog,
 		DialogContent,
@@ -6,12 +11,7 @@
 		DialogHeader,
 		DialogTitle
 	} from '$components/ui/dialog';
-    import AnnotationForm from '$components/AnnotationForm.svelte';
-
 	import { state, update_entry } from '$lib/state/entries';
-	import type { ComponentProps } from 'svelte';
-	import Button from '$components/ui/Button.svelte';
-	import { LoaderIcon } from 'lucide-svelte';
 
     export let isOpen = false;
 

@@ -1,29 +1,31 @@
 <script lang="ts">
+	import MarkdownIt from 'markdown-it';
+
 	import type { TargetSchema } from '$lib/annotation';
 	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
 	import AnnotationOperations from '$lib/components/AnnotationOperations.svelte';
-	import MarkdownIt from 'markdown-it';
 
 	const md = new MarkdownIt();
-	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
-	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
-	import type { Annotation } from '$lib/prisma/kysely/types';
-	import { getContext, type ComponentProps } from 'svelte';
-	import { invalidate, invalidateAll } from '$app/navigation';
-	import Input from '$lib/components/ui/Input.svelte';
-	import InputText from '$lib/components/ui/form/InputText.svelte';
-	import Label from '$lib/components/ui/Label.svelte';
-	import { getTargetSelector } from '$lib/utils/annotations';
-	import { mutation } from '$lib/queries/query';
-	import { page } from '$app/stores';
-	import { formatTimeDuration } from '$lib/utils/dates';
-	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
-	import { render_html } from '$components/ui/editor/utils';
-	import Editor from '$components/ui/editor/Editor.svelte';
-	import Button from '$components/ui/Button.svelte';
+	import { type ComponentProps,getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
 
-    const jumping = getContext('jumping') as Writable<boolean>;
+	import { invalidate, invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
+	import Button from '$components/ui/Button.svelte';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import { render_html } from '$components/ui/editor/utils';
+	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
+	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
+	import InputText from '$lib/components/ui/form/InputText.svelte';
+	import Input from '$lib/components/ui/Input.svelte';
+	import Label from '$lib/components/ui/Label.svelte';
+	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
+	import type { Annotation } from '$lib/prisma/kysely/types';
+	import { mutation } from '$lib/queries/query';
+	import { getTargetSelector } from '$lib/utils/annotations';
+	import { formatTimeDuration } from '$lib/utils/dates';
+
+    const jumping = getContext('jumping') ;
 
     let editor: Editor;
 
@@ -36,11 +38,11 @@
 		username?: string | null;
 	};
 
-	interface $$Props extends Omit<ComponentProps<AnnotationForm>, 'annotation'> {
+	type $$Props = {
 		annotation: Pick<Annotation, 'id' | 'body' | 'target' | 'entryId' | 'title' | 'contentData' | 'type'> & {
 			username?: string | null;
 		};
-	}
+	} & Omit<ComponentProps<AnnotationForm>, 'annotation'>
 
 	// hacky way to get types to work with svelte
 	const isTarget = (data: unknown): data is TargetSchema => !!data;

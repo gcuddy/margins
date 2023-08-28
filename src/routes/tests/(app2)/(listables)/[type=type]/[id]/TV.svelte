@@ -16,6 +16,7 @@
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
+
 	type TV = PageData['tv'];
 	export let data: PageData & {
 		tv: NonNullable<TV>;

@@ -1,8 +1,9 @@
 <script lang="ts">
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
-	import { Muted, H1, Lead } from '$components/ui/typography';
-	import { getYear } from '$lib/utils/date';
 	import { createAvatar, melt } from '@melt-ui/svelte';
+
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { H1, Lead,Muted } from '$components/ui/typography';
+	import { getYear } from '$lib/utils/date';
 
 	export let image = '';
 	export let type = '';
@@ -18,7 +19,7 @@
 </script>
 
 <div class="flex items-center gap-6">
-	<div class={'aspect-auto max-w-[200px] rounded-md shadow-lg'}>
+	<div class="aspect-auto max-w-[200px] rounded-md shadow-lg">
 		<img use:melt={$img} alt="Avatar" class="h-full w-full rounded-[inherit]" />
 		<span use:melt={$fallback}>
 			<Skeleton class="h-full w-full rounded-[inherit]" />

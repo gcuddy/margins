@@ -3,15 +3,17 @@
 </script>
 
 <script lang="ts">
-	import { page } from '$app/stores';
-	import Editor from '$components/ui/editor/Editor.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
-	import type Youtube from '$lib/components/Youtube.svelte';
-	import player_store from '$lib/stores/player';
 	import { PlayCircleIcon } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
 	import { readable, writable } from 'svelte/store';
 	import type { YouTubePlayer } from 'youtube-player/dist/types';
+
+	import { page } from '$app/stores';
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Youtube from '$lib/components/Youtube.svelte';
+	import player_store from '$lib/stores/player';
+
 	export let player: YouTubePlayer | undefined = undefined;
 
 	const play_state = writable<'playing' | 'paused' | 'ended' | 'buffering' | 'cued' | 'unstarted'>(
@@ -41,7 +43,7 @@
 
 	let loaded = false;
 
-	let Youtube: ComponentType<Youtube> | undefined = undefined;
+	let Youtube: ComponentType | undefined = undefined;
 
 	async function loadYoutube() {
 		loaded = true;

@@ -1,26 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import Relation from '$lib/components/Relation.svelte';
-	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
-	import TagPopover from '$lib/components/TagPopover.svelte';
-	import Cluster from '$lib/components/helpers/Cluster.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
-	import {
-		Card,
-		CardContent,
-		CardHeader,
-		CardDescription,
-		CardSkeleton,
-		CardFooter,
-		CardTitle
-	} from '$lib/components/ui/card';
-	import { H3, Muted } from '$lib/components/ui/typography';
 	import { TableOfContents } from '@skeletonlabs/skeleton';
-	import { persisted } from 'svelte-local-storage-store';
-
-	import Annotation from './[id]/Annotation.svelte';
-	import { fade, fly } from 'svelte/transition';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
 		ArrowUpRightFromCircle,
 		FileDown,
@@ -30,12 +9,29 @@
 		XIcon
 	} from 'lucide-svelte';
 	import { onMount } from 'svelte';
-	import Tooltip from '$lib/components/ui/Tooltip.svelte';
-	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
-	import Collections from '$lib/commands/Collections.svelte';
-	import { mutation } from '$lib/queries/query';
+	import { fade, fly } from 'svelte/transition';
+	import { persisted } from 'svelte-local-storage-store';
 	import { toast } from 'svelte-sonner';
+
 	import { invalidate } from '$app/navigation';
+	import { page } from '$app/stores';
+	import Collections from '$lib/commands/Collections.svelte';
+	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
+	import Cluster from '$lib/components/helpers/Cluster.svelte';
+	import Relation from '$lib/components/Relation.svelte';
+	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
+	import TagPopover from '$lib/components/TagPopover.svelte';
+	import Badge from '$lib/components/ui/Badge.svelte';
+	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardSkeleton,
+		CardTitle
+	} from '$lib/components/ui/card';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -43,9 +39,14 @@
 		DropdownMenuItem,
 		DropdownMenuTrigger
 	} from '$lib/components/ui/dropdown-menu';
-	import { triggerDownload } from '$lib/utils/annotations';
-	import mq from '$lib/stores/mq';
+	import Tooltip from '$lib/components/ui/Tooltip.svelte';
+	import { H3, Muted } from '$lib/components/ui/typography';
+	import { mutation } from '$lib/queries/query';
 	import { state } from '$lib/state/entries';
+	import mq from '$lib/stores/mq';
+	import { triggerDownload } from '$lib/utils/annotations';
+
+	import Annotation from './[id]/Annotation.svelte';
 
 	const render = persisted('sidebar', false);
 	let flash = false;
@@ -229,7 +230,7 @@ $: console.log({$state})
 										<DropdownMenuGroup>
 											<DropdownMenuItem
 												on:click={() =>
-													triggerDownload($page.data.entry, $page.data.entry?.annotations)}
+													{ triggerDownload($page.data.entry, $page.data.entry?.annotations); }}
 											>
 												<FileDown class="mr-2 h-4 w-4" />
 												Export notes to markdown

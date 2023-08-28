@@ -1,11 +1,14 @@
 <script lang="ts">
-	import { getContext, setContext } from 'svelte';
+	import { setContext } from 'svelte';
 	import { writable } from 'svelte/store';
-	import { persisted } from 'svelte-local-storage-store';
 
 	import { createPdfStateContext } from '$components/pdf-viewer/utils';
 
-	import { setAppearanceContext, setArticleContext } from './ctx';
+	import {
+		setAppearanceContext,
+		setArticleContext,
+		setEntryContext,
+	} from './ctx';
 	import Header from './Header.svelte';
 	import LeftSidebar from './LeftSidebar.svelte';
 	import Sidebar from './Sidebar.svelte';
@@ -18,21 +21,17 @@
 	const jumping = writable(false);
 	setContext('jumping', jumping);
 
-	const rightSidebar = persisted('rightSidebar', true);
-	setContext('rightSidebar', rightSidebar);
-
-	const rightSidebarWidth = persisted('rightSidebarWidth', 360);
-	setContext('rightSidebarWidth', rightSidebarWidth);
-
 	createPdfStateContext();
-    setAppearanceContext();
-    setArticleContext();
+	setAppearanceContext();
+	setArticleContext();
 
-	const navWidth = writable(0);
-	setContext('navWidth', navWidth);
+	const {  rightSidebarWidth } = setEntryContext();
 </script>
 
-<div style:--right-sidebar-width="{$rightSidebarWidth}px" class="relative flex items-start grow">
+<div
+	style:--right-sidebar-width="{$rightSidebarWidth}px"
+	class="relative flex items-start grow"
+>
 	<!-- Left sidebar -->
 	<!-- <div class="flex flex-col max-md:fixed md:sticky top-0 max-md:basis-0 "> -->
 	<LeftSidebar />

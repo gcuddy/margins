@@ -3,27 +3,30 @@
 </script>
 
 <script lang="ts">
+	import { ArrowLeft } from 'lucide-svelte';
+	import { getContext } from 'svelte';
+	import type { Writable } from 'svelte/store';
+
 	import Button from '$components/ui/Button.svelte';
 	import { make_portal } from '$lib/actions/utils';
 	import mq from '$lib/stores/mq';
 	import { cn } from '$lib/utils/tailwind';
-	import { ArrowLeft } from 'lucide-svelte';
-	import { getContext } from 'svelte';
-	import type { Writable } from 'svelte/store';
+
 	import { backContext } from './[id]/store';
+	import { getEntryContext } from './ctx';
 
 	export let show = false;
 
-	const scrollingDown = getContext('scrollingDown') as Writable<boolean>;
-	const rightSidebar = getContext('rightSidebar') as Writable<boolean>;
-	const navWidth = getContext('navWidth') as Writable<number>;
+	const scrollingDown = getContext('scrollingDown') ;
+
+    const { navWidth } = getEntryContext();
 
 	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }> | undefined | null;
 	$: if (borderBoxSize) $navWidth = $navWidth = borderBoxSize[borderBoxSize.length - 1]?.inlineSize;
 
-    const inArticle = getContext('inArticle') as Writable<boolean>;
-    const mainNavWidth = getContext('mainNavWidth') as Writable<number>;
-    const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
+    const inArticle = getContext('inArticle') ;
+    const mainNavWidth = getContext('mainNavWidth') ;
+    const mobileNavWidth = getContext('mobileNavWidth') ;
 </script>
 
 <nav

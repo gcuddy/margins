@@ -1,6 +1,23 @@
 <script lang="ts">
+	import type { Entry } from '@prisma/client';
+	import {
+		ArrowLeftRight,
+		BookOpen,
+		Clock,
+		Edit,
+		ListPlus,
+		LoaderIcon,
+		MoreHorizontal,
+		Paperclip,
+		Repeat
+	} from 'lucide-svelte';
+	import type { ComponentProps } from 'svelte';
+	import { toast } from 'svelte-sonner';
+
 	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { entryTypeIcon } from '$components/entries/icons';
+	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -18,33 +35,17 @@
 		DropdownMenuContent,
 		DropdownMenuGroup,
 		DropdownMenuItem,
-		DropdownMenuTrigger,
-		DropdownMenuSubTrigger,
+		DropdownMenuSub,
 		DropdownMenuSubContent,
-		DropdownMenuSub
-	} from '$lib/components/ui/dropdown-menu';
+		DropdownMenuSubTrigger,
+		DropdownMenuTrigger	} from '$lib/components/ui/dropdown-menu';
 	import { mutation, query } from '$lib/queries/query';
 	import { state, update_entry } from '$lib/state/entries';
-	import type { Entry } from '@prisma/client';
-	import {
-		ArrowLeftRight,
-		BookOpen,
-		Clock,
-		Edit,
-		ListPlus,
-		LoaderIcon,
-		MoreHorizontal,
-		Paperclip,
-		Repeat
-	} from 'lucide-svelte';
-	import type { ComponentProps } from 'svelte';
-	import { toast } from 'svelte-sonner';
-	import NoteForm from './NoteForm.svelte';
-	import { convertToTypes } from '$lib/types';
-	import { entryTypeIcon } from '$components/entries/icons';
 	import { createAlertDialogStore } from '$lib/stores/dialog';
-	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
+	import { convertToTypes } from '$lib/types';
 	import { getId } from '$lib/utils/entries';
+
+	import NoteForm from './NoteForm.svelte';
 
 	export let data: ComponentProps<AnnotationForm>['data'];
 	export let entry: Pick<
@@ -237,7 +238,7 @@
 						if (input.files?.length) {
 							const file = input.files[0];
 							if (!file) return;
-							return handle_pdf_upload(file);
+							handle_pdf_upload(file); return;
 						}
 					};
 					input.click();
@@ -255,7 +256,7 @@
 						if (input.files?.length) {
 							const file = input.files[0];
 							if (!file) return;
-							return handle_epub_upload(file);
+							handle_epub_upload(file); return;
 						}
 					};
 					input.click();

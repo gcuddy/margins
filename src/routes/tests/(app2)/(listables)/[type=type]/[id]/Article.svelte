@@ -5,21 +5,26 @@
 			string,
 			{
 				selector: TargetSchema['selector'];
-				els: {
-					highlightElements: HTMLElement[];
+				els: Array<{
+					highlightElements: Array<HTMLElement>;
 					removeHighlights: () => void;
-				}[];
+				}>;
 			}
 		>
 	>;
 </script>
 
 <script lang="ts">
-	import Button from '$lib/components/ui/Button.svelte';
-	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
-	import { cn } from '$lib/utils/tailwind';
+	import { createFocusTrap, useEscapeKeydown, usePortal } from '@melt-ui/svelte/internal/actions';
+	import { draggable } from '@neodrag/svelte';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import debounce from 'just-debounce-it';
 	import { DeleteIcon, EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
-	import type { PageData } from './$types';
+	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
+	import { derived, type Writable, writable } from 'svelte/store';
+	import { scale } from 'svelte/transition';
+	import { createPopperActions } from 'svelte-popperjs';
+	import { toast } from 'svelte-sonner';
 
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
@@ -37,30 +42,26 @@
 	} from '$lib/annotator';
 	import { highlightText } from '$lib/annotator/highlighter';
 	import type { TextQuoteSelector } from '$lib/annotator/types';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { popoverVariants } from '$lib/components/ui/popover/PopoverContent.svelte';
 	import { Lead, Muted } from '$lib/components/ui/typography';
+	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
 	import { nanoid } from '$lib/nanoid';
-	import { MutationInput, QueryOutput, mutation } from '$lib/queries/query';
+	import { mutation,type MutationInput, type QueryOutput } from '$lib/queries/query';
+	import type { FullEntryDetail } from '$lib/queries/server';
+	import { createAnnotationStore } from '$lib/stores/annotations';
 	import mq from '$lib/stores/mq';
 	import type { Type } from '$lib/types';
 	import { getHostname } from '$lib/utils';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { numberOrString } from '$lib/utils/misc';
-	import { createFocusTrap, useEscapeKeydown, usePortal } from '@melt-ui/svelte/internal/actions';
-	import { draggable } from '@neodrag/svelte';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import debounce from 'just-debounce-it';
-	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
-	import { createPopperActions } from 'svelte-popperjs';
-	import { toast } from 'svelte-sonner';
-	import { Writable, derived, writable } from 'svelte/store';
-	import { scale } from 'svelte/transition';
+	import { cn } from '$lib/utils/tailwind';
+
 	import type { MenuBar } from '../../../MainNav.svelte';
 	import { getAppearanceContext, getArticleContext } from '../ctx';
+	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
 	import image_tools from './images';
-	import { createAnnotationStore } from '$lib/stores/annotations';
-	import type { FullEntryDetail } from '$lib/queries/server';
 
 	const {
 		annotations,
@@ -155,17 +156,17 @@
 					// TODO: tags
 					return makeAnnotation({
 						// @ts-expect-error TODO: why is ts complaining about this?
-						id: id as string,
+						id: id!,
 						...rest
 					});
 				});
 
-				const oldIds = old.entry?.annotations?.map((a) => a.id) ?? [];
+				const oldIds = old.entry.annotations?.map((a) => a.id) ?? [];
 				const annotationsToAdd = newAnnotations.filter((a) => !oldIds.includes(a.id));
 
-				console.log({ oldIds, annotationsToAdd, old: old.entry?.annotations, newAnnotations });
+				console.log({ oldIds, annotationsToAdd, old: old.entry.annotations, newAnnotations });
 
-				const updatedAnnotations = (old.entry?.annotations || [])
+				const updatedAnnotations = (old.entry.annotations || [])
 					.map((annotation) => {
 						if (ids.includes(annotation.id)) {
 							return {
@@ -207,7 +208,7 @@
 	const selection = writable<Selection | null>(null);
 
 	const showAnnotationTooltip = derived(selection, ($selection) => {
-		if (!$selection || !$selection.rangeCount || $selection.isCollapsed) return false;
+		if (!$selection?.rangeCount || $selection.isCollapsed) return false;
 		const range = $selection.getRangeAt(0);
 		const parent = range.commonAncestorContainer.parentElement;
 		if (!parent) return false;
@@ -222,7 +223,7 @@
 	});
 
 	const virtualEl = derived(selection, ($selection) => {
-		if (!$selection || !$selection.rangeCount || $selection.isCollapsed)
+		if (!$selection?.rangeCount || $selection.isCollapsed)
 			return {
 				getBoundingClientRect: () =>
 					({
@@ -441,7 +442,7 @@
 	let initializing = false;
 	const doneInitializing = () => tick().then(() => (initializing = false));
 
-	const jumping = getContext('jumping') as Writable<boolean>;
+	const jumping = getContext('jumping') ;
 
 	let shouldSaveProgress = true;
 	$: console.log({ shouldSaveProgress });
@@ -583,7 +584,7 @@
 		false
 	);
 
-	const scrolling = (getContext('scrolling') as Writable<boolean>) ?? writable(false);
+	const scrolling = (getContext('scrolling') ) ?? writable(false);
 
 	const {
 		states: { progress }
@@ -639,8 +640,8 @@
 		if (browser) {
 			document.addEventListener('selectionchange', handleSelect);
 			document.addEventListener('scroll', handleScroll, { passive: true });
-			document.addEventListener('mousedown', () => mouseDown.set(true));
-			document.addEventListener('mouseup', () => mouseDown.set(false));
+			document.addEventListener('mousedown', () => { mouseDown.set(true); });
+			document.addEventListener('mouseup', () => { mouseDown.set(false); });
 		}
 	});
 
@@ -648,8 +649,8 @@
 		if (browser) {
 			document.removeEventListener('selectionchange', handleSelect);
 			document.removeEventListener('scroll', handleScroll);
-			document.removeEventListener('mousedown', () => mouseDown.set(true));
-			document.removeEventListener('mouseup', () => mouseDown.set(false));
+			document.removeEventListener('mousedown', () => { mouseDown.set(true); });
+			document.removeEventListener('mouseup', () => { mouseDown.set(false); });
 		}
 		uscroll();
 		uScrollingDown();

@@ -1,33 +1,32 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
-	import Button from '$lib/components/ui/Button.svelte';
-	import { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
-	import Label from '$lib/components/ui/Label.svelte';
-	import Progress from '$lib/components/ui/Progress.svelte';
-	import {
-		Card,
-		CardHeader,
-		CardTitle,
-		CardContent,
-		CardFooter,
-		CardDescription
-	} from '$lib/components/ui/card';
-	import {
-		DropdownMenu,
-		DropdownMenuTrigger,
-		DropdownMenuContent,
-		DropdownMenuItem
-	} from '$lib/components/ui/dropdown-menu';
-	import { mutation } from '$lib/queries/query';
-	import type { InteractionSchema } from '$lib/schemas';
-	import { formatDate } from '$lib/utils/date';
-	import { cn } from '$lib/utils/tailwind';
 	import type { Entry, Interaction } from '@prisma/client';
 	import { CheckCircle, MoreHorizontal } from 'lucide-svelte';
 	import { superForm } from 'sveltekit-superforms/client';
 	import type { Validation } from 'sveltekit-superforms/index';
+
+	import { invalidate } from '$app/navigation';
+	import { page } from '$app/stores';
+	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+		import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardTitle	} from '$lib/components/ui/card';
+	import {
+		DropdownMenu,
+		DropdownMenuContent,
+		DropdownMenuItem,
+		DropdownMenuTrigger	} from '$lib/components/ui/dropdown-menu';
+	import Input from '$lib/components/ui/Input.svelte';
+	import Label from '$lib/components/ui/Label.svelte';
+	import Progress from '$lib/components/ui/Progress.svelte';
+	import { mutation } from '$lib/queries/query';
+	import type { InteractionSchema } from '$lib/schemas';
+	import { formatDate } from '$lib/utils/date';
+	import { cn } from '$lib/utils/tailwind';
+
 	export let interaction: Pick<
 		Interaction,
 		'id' | 'title' | 'date_started' | 'note' | 'currentPage' | 'date_finished'
