@@ -68,7 +68,7 @@ import { collectionsInputSchema } from '$lib/schemas/inputs';
 interface Query<I extends z.ZodTypeAny, Data> {
 	staleTime?: number;
 	fn: (args: {
-		input: z.input<I>;
+		input: z.infer<I>;
 		ctx: {
 			userId: string;
 		};
@@ -295,7 +295,7 @@ export const mutations = {
 			last_viewed: z.date().optional()
 		}),
 		fn: async ({ input, ctx }) => {
-			await db
+			const result = await db
 				.insertInto('EntryInteraction')
 				.values({
 					...input,
@@ -303,7 +303,10 @@ export const mutations = {
 					updatedAt: new Date()
 				})
 				.onDuplicateKeyUpdate(input)
-				.execute();
+				.executeTakeFirst();
+            return {
+                id: Number(result.insertId)
+            }
 		}
 	}),
 	set_tags_on_entry: query({

@@ -5,5 +5,7 @@ export * from './platform';
 export * from './scroll'
 export * from "./store";
 export * from "./array";
-export * from "./annotation"
 export * from "./style";
+
+export * from "./annotation"
+export * from "./interaction"

@@ -27,6 +27,8 @@
 			resolveAddUrlPromise = resolve;
 		});
 
+        dispatch('submit');
+
 		toast.promise(addUrlPromise, {
 			loading: 'Adding URL...',
 			success: 'URL added!',

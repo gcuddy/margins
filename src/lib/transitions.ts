@@ -2,7 +2,7 @@ import type { TransitionConfig } from 'svelte/transition';
 
 export function fadeScale(
 	node: Element,
-	{ delay = 0, duration = 200, easing = (x) => x, baseScale = 0 }
+	{ delay = 0, duration = 200, easing = (x: number) => x, baseScale = 0 }
 ): TransitionConfig {
 	const o = +getComputedStyle(node).opacity;
 	const m = getComputedStyle(node).transform.match(/scale\(([0-9.]+)\)/);
@@ -40,7 +40,6 @@ export function gentleFly(
 	};
 }
 
-
 import { crossfade } from 'svelte/transition';
 import { cubicOut } from 'svelte/easing';
 import { styleToString } from '@melt-ui/svelte/internal/helpers';
@@ -50,7 +49,6 @@ export const [send, receive] = crossfade({
 	duration: 500,
 	easing: cubicOut
 });
-
 
 const scaleConversion = (valueA: number, scaleA: [number, number], scaleB: [number, number]) => {
 	const [minA, maxA] = scaleA;
@@ -80,9 +78,9 @@ export const flyAndScale = (node: HTMLElement, options: FlyAndScaleOptions): Tra
 
 			return styleToString({
 				transform: `${transform} translate3d(0, ${y}px, 0) scale(${scale})`,
-				opacity: t,
+				opacity: t
 			});
 		},
-		easing: cubicOut,
+		easing: cubicOut
 	};
 };

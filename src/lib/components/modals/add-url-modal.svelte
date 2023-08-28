@@ -15,8 +15,7 @@
 
 <Dialog showClose {open} {title} {description} let:footerClass>
 	<AddUrlForm
-		on:done={(e) => {
-            console.log('done', e)
+		on:submit={(e) => {
 			open.set(false);
 		}}
 	>

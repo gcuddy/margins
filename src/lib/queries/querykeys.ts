@@ -159,7 +159,12 @@ export const queryFactory = {
 			},
 			initialPageParam: <QueryOutput<'collections'>['nextCursor']>null
 		})
-	}
+	},
+    links: {
+        href: (href: string) => ({
+            queryKey: ['links', href] as const,
+        })
+    }
 } satisfies TQueryFactory;
 
 export type QueryFactory = typeof queryFactory;

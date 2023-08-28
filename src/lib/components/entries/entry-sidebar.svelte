@@ -7,20 +7,21 @@
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { Collapsible } from 'radix-svelte';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	import { CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Muted } from '$lib/components/ui/typography';
 	import { TableOfContents } from '@skeletonlabs/skeleton';
 	import { persisted } from 'svelte-local-storage-store';
 
-	import { invalidate } from '$app/navigation';
+	import { afterNavigate, invalidate } from '$app/navigation';
 	import Input from '$components/ui/Input.svelte';
 	import Editor, { SaveStatus } from '$components/ui/editor/Editor.svelte';
 	import { extractDataFromContentData, isJSONContent } from '$components/ui/editor/utils';
 	import { TabsContent, TabsList, TabsTrigger, Tabs } from '$components/ui/tabs';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -37,11 +38,13 @@
 	import { cn } from '$lib/utils/tailwind';
 	import { melt } from '@melt-ui/svelte';
 	import { effect } from '@melt-ui/svelte/internal/helpers';
-	import { createMutation, createQuery } from '@tanstack/svelte-query';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
 		ChevronRightIcon,
 		ChevronUpIcon,
 		FileDown,
+		FileText,
+		Link2,
 		Locate,
 		MoreHorizontalIcon,
 		PlusIcon
@@ -58,12 +61,20 @@
 	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import EntryAuthorInput from './entry-author-input.svelte';
+	import { make_link } from '$lib/utils/entries';
+	import EntryIcon from './EntryIcon.svelte';
+	import { isBrowser } from '$lib/helpers';
+	import { saveUrl } from './utils';
 
 	// const render = persisted('sidebar', false);
 	export let render: Writable<boolean> = getContext('rightSidebar') ?? writable(false);
 
 	let flash = false;
 	let prev_annotation_count: number = $page.data.entry?.annotations?.length ?? 0;
+
+	const entriesQuery = createQuery(queryFactory.entries.all());
+
+	const queryClient = useQueryClient();
 
 	onMount(() => {
 		let unsubscriber = page.subscribe((val) => {
@@ -142,6 +153,55 @@
 	// 	console.log({ $value });
 	// }
 
+	const links = writable<
+		{
+			href: string;
+			text: string;
+		}[]
+	>([]);
+
+	let linkFilterValue = '';
+
+	function generateLinks(content: string) {
+		// parser
+		if (!isBrowser) return;
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(content, 'text/html');
+		const _links = doc.querySelectorAll('a');
+		const linksArray = Array.from(_links);
+		const linksWithHref = linksArray.filter((link) => link.href);
+		const linksWithHrefAndText = linksWithHref.filter((link) => link.textContent);
+		const linksWithHrefAndTextArray = Array.from(linksWithHrefAndText);
+		const uri = $query.data?.entry?.uri;
+		// TODO: get selector to be able to jump to place in article
+		$links = linksWithHrefAndTextArray
+			.map((link) => {
+				if (link.textContent) {
+					// TODO: normalize url, search in db for existing entry, if exists, link to it, otherwise, link to new entry
+					return {
+						href: link.href,
+						text: link.textContent
+					};
+				}
+			})
+			.filter(Boolean)
+			.filter((link) => {
+				// make sure link is not same as current entry
+				if (!uri) return true;
+				const url = new URL(uri);
+				const linkUrl = new URL(link.href);
+				return url.pathname !== linkUrl.pathname;
+			});
+	}
+
+	const linksFetching: Record<string, boolean> = {};
+
+	$: if ($query.data?.entry?.html) generateLinks($query.data?.entry?.html);
+
+	afterNavigate(() => {
+		// generateLinks();
+	});
+
 	type Timeline = { createdAt: Date }[];
 </script>
 
@@ -149,7 +209,7 @@
 	<!-- 2.5rem is size of sidebar toggle -->
 	<Tabs bind:value={$currentTab}>
 		<div
-			class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height]"
+			class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height] sticky top-0 bg-background"
 		>
 			<TabsList class="grow">
 				<TabsTrigger class="grow" value="details">Details</TabsTrigger>
@@ -159,6 +219,7 @@
 						: ''}</TabsTrigger
 				>
 				<TabsTrigger class="grow" value="timeline">Timeline</TabsTrigger>
+				<TabsTrigger class="grow" value="links">Links</TabsTrigger>
 			</TabsList>
 		</div>
 		<TabsContent value="details">
@@ -535,6 +596,7 @@
 			<div class="p-6">
 				{#if $query.data?.entry?.bookmark}
 					{@const bookmark = $query.data.entry.bookmark}
+					{@const via = $query.data.entry.relations?.find((r) => r.type === 'SavedFrom')}
 					<div class="flex gap-4 items-center">
 						<div>
 							<!--  -->
@@ -547,8 +609,11 @@
 								><b>{bookmark.user?.username}</b>{' '}saved the {$query.data.type}
 								<time datetime={bookmark.createdAt}
 									>{ago(new Date(bookmark.createdAt), new Date())}</time
-								></span
-							>
+								>
+								{#if via && via.related_entry}
+									via <a href={make_link(via.related_entry)}>{via.related_entry?.title}</a>
+								{/if}
+							</span>
 							<!-- <span class="font-semibold leading-none tracking-tighter">Saved</span>
 						<span>{ago(new Date(bookmark.createdAt), new Date())}</span> -->
 						</div>
@@ -565,6 +630,97 @@
 				</div> -->
 				{/if}
 			</div>
+		</TabsContent>
+		<TabsContent value="links">
+			<ul class="px-6 flex flex-col gap-y-2 text-sm">
+				<Input bind:value={linkFilterValue} />
+				{#each $links.filter((link) => {
+					if (!linkFilterValue) return true;
+					const term = link.text + ' ' + link.href;
+					return term.toLowerCase().includes(linkFilterValue.toLowerCase());
+				}) as link}
+					{@const entry = $entriesQuery.data?.find((e) => e.uri === link.href)}
+					<li class="flex items-center">
+						<!-- TODO: else if entry exists show icon -->
+						<Tooltip.Root>
+							<Tooltip.Trigger asChild let:builder>
+								<Button
+									builders={[builder]}
+									on:click={() => {
+										if (entry) return;
+										linksFetching[link.href] = true;
+										saveUrl(link.href, $query.data?.entry?.id, () => {
+											linksFetching[link.href] = false;
+											queryClient.invalidateQueries({
+												queryKey: ['entries']
+											});
+										});
+									}}
+									disabled={!!entry ?? linksFetching[link.href]}
+									variant="ghost"
+									size="sm"
+									class="flex items-center relative w-6 shrink-0 justify-center mr-2 group"
+								>
+									{#if !entry}
+										<PlusIcon
+											class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-0 group-hover:opacity-100"
+										/>
+									{/if}
+									{#if entry}
+										<EntryIcon
+											class={cn(
+												'h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100',
+												!entry && 'group-hover:opacity-0'
+											)}
+											type={entry.type}
+										/>
+									{:else if link.href.endsWith('pdf')}
+										<FileText
+											class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
+										/>
+									{:else}
+										<Link2
+											class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
+										/>
+									{/if}
+								</Button>
+							</Tooltip.Trigger>
+
+							<Tooltip.Content>
+                                {#if entry}
+                                    <p>Link already saved</p>
+                                {:else if link.href.endsWith('pdf')}
+                                    <p>Save PDF</p>
+                                {:else}
+                                    <p>Save Link</p>
+                                {/if}
+							</Tooltip.Content>
+						</Tooltip.Root>
+
+						<div class="flex flex-col min-w-0">
+							<span
+								on:click|preventDefault|stopPropagation={() => {
+									const el = document.querySelector(`a[href="${link.href}"]`);
+									if (el) {
+										el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+										el.classList.add('bg-primary');
+										el.classList.add('text-primary-foreground');
+										el.classList.add('rounded');
+										setTimeout(() => {
+											el.classList.remove('bg-primary');
+											el.classList.remove('text-primary-foreground');
+											el.classList.remove('rounded');
+										}, 1000);
+									}
+								}}
+								class="basis-1/2 line-clamp-2 cursor-pointer">{link.text}</span
+							>
+							<a href={link.href} class="truncate text-muted-foreground">{link.href}</a>
+						</div>
+					</li>
+				{/each}
+			</ul>
 		</TabsContent>
 	</Tabs>
 </aside>

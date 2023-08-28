@@ -777,6 +777,8 @@ export async function entry_by_id({
 
 
 export type FullEntryDetail = Awaited<ReturnType<typeof entry_by_id>>;
+export type EntryDetail = NonNullable<FullEntryDetail["entry"]>;
+export type EntryInteraction = NonNullable<EntryDetail["interaction"]>;
 export type EntryAnnotation = NonNullable<
 	NonNullable<FullEntryDetail['entry']>['annotations']
 >[number];

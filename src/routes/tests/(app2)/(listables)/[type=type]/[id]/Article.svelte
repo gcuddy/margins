@@ -12,28 +12,11 @@
 			}
 		>
 	>;
-
-	// export this so that we can access it elsewhere............ (TODO probably should extract it to another component)
-	export const currentAnnotation = writable<{
-		show: boolean;
-		highlight?:
-			| {
-					selector: TargetSchema['selector'];
-					els: {
-						highlightElements: HTMLElement[];
-						removeHighlights: () => void;
-					}[];
-			  }
-			| undefined;
-		annotation?: Partial<Annotation>;
-	}>({
-		show: false
-	});
 </script>
 
 <script lang="ts">
 	import Button from '$lib/components/ui/Button.svelte';
-	import { isAnnotation, makeAnnotation } from '$lib/helpers';
+	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
 	import { cn } from '$lib/utils/tailwind';
 	import { DeleteIcon, EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
 	import type { PageData } from './$types';
@@ -67,7 +50,7 @@
 	import { draggable } from '@neodrag/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
-	import { getContext, onDestroy, onMount, tick } from 'svelte';
+	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { toast } from 'svelte-sonner';
 	import { Writable, derived, writable } from 'svelte/store';
@@ -77,6 +60,7 @@
 	import Attachments from './Attachments.svelte';
 	import image_tools from './images';
 	import { createAnnotationStore } from '$lib/stores/annotations';
+	import type { FullEntryDetail } from '$lib/queries/server';
 
 	const {
 		annotations,
@@ -312,14 +296,6 @@
 		const { exact } = text_quote_selector;
 		console.log({ text_position_selector, text_quote_selector });
 		const id = $activeAnnotationId || nanoid();
-		$currentAnnotation.annotation = {
-			...$currentAnnotation.annotation,
-			id,
-			target: {
-				selector: [text_quote_selector, text_position_selector],
-				source: ''
-			}
-		};
 		const els = await highlightSelectorTarget(text_quote_selector, {
 			'data-annotation-id': id,
 			'data-has-body': 'false',
@@ -399,13 +375,53 @@
 				progress: $scroll
 			});
 		},
-		onMutate(vars) {
+		onMutate() {
 			lastSavedScrollProgress = $scroll;
+			//  set query data (and invalidate?);
+			if (data.entry?.interaction?.id) {
+				const id = data.entry?.interaction?.id;
+				queryClient.setQueryData<FullEntryDetail>(queryKey, (old) => {
+					if (!old) return old;
+					if (!old.entry) return old;
+					return {
+						...old,
+						entry: {
+							...old.entry,
+							interaction: makeInteraction({
+								id,
+								progress: lastSavedScrollProgress
+							})
+						}
+					};
+				});
+			}
+			return {
+				lastSavedScrollProgress
+			};
 		},
-		onSuccess() {
-			// toast.success(`Saved progress: ${$scroll}`);
-			// if (dev) {
-			// }
+		onSuccess(returnedData, _, context) {
+			const id = data.entry?.interaction?.id ?? returnedData?.id;
+			if (id) {
+				{
+					queryClient.setQueryData<FullEntryDetail>(queryKey, (old) => {
+						if (!old) return old;
+						if (!old.entry) return old;
+						return {
+							...old,
+							entry: {
+								...old.entry,
+								interaction: makeInteraction({
+									id,
+									progress: context?.lastSavedScrollProgress ?? $scroll
+								})
+							}
+						};
+					});
+				}
+			}
+			queryClient.invalidateQueries({
+				queryKey: ['entries']
+			});
 		}
 	});
 
@@ -430,20 +446,63 @@
 	let shouldSaveProgress = true;
 	$: console.log({ shouldSaveProgress });
 
+	async function ensureHighlights() {
+		console.log('ensure highlights', { $annotations, annotations: data.entry?.annotations });
+		// for (const [id, annotation] of Object.entries($annotations)) {
+		if (!data.entry?.annotations) return;
+		for (const annotation of data.entry?.annotations) {
+			const { id } = annotation;
+            let target = annotation.target as TargetSchema;
+			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
+			console.log({ el });
+			if (!el) {
+				const selector = getTargetSelector(annotation.target, 'TextQuoteSelector');
+				if (selector) {
+					const els = await highlightSelectorTarget(selector, {
+						'data-annotation-id': id,
+						'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
+						id: `annotation-${annotation.id}`
+					});
+					$annotations[id] = {
+						...annotation,
+                        target,
+						els
+					};
+				}
+			}
+		}
+	}
+
+	afterUpdate(() => {
+		console.log('after update');
+		if (initializing) return;
+		// TODO throttle this:
+		ensureHighlights();
+	});
+
 	// highlight stored annotations
 	afterNavigate(async () => {
 		if (data.type !== 'article') return;
 		if (!articleWrapper) return;
 		$mainnav.entry = data.entry;
+		console.log({ data });
 		console.log('scrolling to', data.entry?.interaction?.progress);
 		if (data.entry?.interaction?.progress) {
 			shouldSaveProgress = false;
 			console.log('scrolling to', data.entry?.interaction?.progress);
 			initializing = true;
 			$scroll = data.entry.interaction.progress;
+			const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+			console.log({
+				$scroll,
+				height,
+				top: $scroll * height
+			});
 			// Wait a second before allowing scroll to save again
-			document.documentElement.scrollTo({
-				top: $scroll * document.documentElement.scrollHeight
+			tick().then(() => {
+				document.documentElement.scrollTo({
+					top: $scroll * height
+				});
 			});
 			setTimeout(() => {
 				shouldSaveProgress = true;
@@ -490,14 +549,11 @@
 			console.log({ el });
 			if (el) {
 				el.scrollIntoView();
-				// now show currentAnnotation
 				const annotation = _annotations.find((a) => a.id === id);
 				tick().then(() => {
 					console.log({ annotation });
 					if (annotation) {
 						annotationRef(el);
-						$currentAnnotation.show = true;
-						$currentAnnotation.annotation = annotation;
 					}
 					$jumping = false;
 				});
@@ -557,6 +613,7 @@
 		const scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 		const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
 		const scrollToSet = scrollTop / height;
+		console.log({ scrollTop, height, scrollToSet });
 		if (!Number.isNaN(scrollToSet)) {
 			$scroll = scrollToSet;
 		}
@@ -600,8 +657,6 @@
 
 	let temporaryAnnotationHighlight: Awaited<ReturnType<typeof highlight>> | undefined = undefined;
 
-	$: console.log({ $currentAnnotation });
-
 	let activeEditor: Editor;
 
 	export let options_el: HTMLElement;
@@ -612,7 +667,16 @@
 	// 	context: hover_context
 	// });
 
-	const [editMenuRef, editMenuContent] = createPopperActions();
+	const [editMenuRef, editMenuContent] = createPopperActions({
+		modifiers: [
+			{
+				name: 'offset',
+				options: {
+					offset: [0, 4]
+				}
+			}
+		]
+	});
 	let showEditMenu = false;
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target;
@@ -627,9 +691,6 @@
 		const id = annotationEl.dataset.annotationId;
 		if (!id) return;
 		activeAnnotationId.set(id);
-		$currentAnnotation.annotation = {
-			id
-		};
 		editMenuRef(target);
 		annotationRef(target);
 		// usePopper()
@@ -827,6 +888,7 @@
 			use:draggable
 			class={cn(popoverVariants(), 'flex flex-col gap-y-4 w-80 max-w-xs')}
 		>
+			<pre>{$activeAnnotationId}</pre>
 			<Editor
 				id={$activeAnnotationId ?? undefined}
 				content={$activeAnnotation?.contentData ?? undefined}
@@ -868,13 +930,13 @@
 									el.setAttribute('data-has-body', 'true');
 								});
 							});
-                            if (id) {
-                                // update
-                                $annotations[id] = {
-                                    ...$annotations[id],
-                                    contentData
-                                };
-                            }
+							if (id) {
+								// update
+								$annotations[id] = {
+									...$annotations[id],
+									contentData
+								};
+							}
 							toast.promise(
 								$annotateMutation.mutateAsync({
 									entryId: data.entry.id,
@@ -900,7 +962,7 @@
 	</div>
 {/if}
 
-<div class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance">
+<div class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors">
 	<header class="flex flex-col gap-2 border-b not-prose space-y-3 pb-8">
 		{#if data.entry?.uri?.startsWith('http')}
 			<div class="flex items-center">
