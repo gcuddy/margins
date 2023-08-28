@@ -7,7 +7,7 @@
 			component: ComponentType | null;
 			onSelect?: (item: any) => void;
 			props?: Record<string, any>;
-			items?: any[] | any[][];
+			items?: Array<any> | Array<Array<any>>;
 			/** only relevant if items passed in, renders html string */
 			render?: (item: any) => string;
 		}>({
@@ -116,7 +116,7 @@
 			close,
 			addToCollection,
 			open_items: <TItem>(
-				items: TItem[],
+				items: Array<TItem>,
 				{
 					onSelect,
 					render,
@@ -141,7 +141,7 @@
 		};
 	}
 
-	export const getCommanderContext = () => {
+	export const getCommanderContext = (): ReturnType<typeof commanderStore> => {
 		const context = getContext('cmdk_commander');
 		if (!context) {
 			throw new Error('Commander context not found');
@@ -151,6 +151,18 @@
 </script>
 
 <script lang="ts">
+	import type { Page } from '@sveltejs/kit';
+	import {
+		type ComponentProps,
+		type ComponentType,
+		getContext,
+		setContext,
+		type SvelteComponent	} from 'svelte';
+	import { writable } from 'svelte/store';
+	import { toast } from 'svelte-sonner';
+
+	import { invalidate } from '$app/navigation';
+	import { page as page_store } from '$app/stores';
 	import Scroller from '$lib/components/Scroller.svelte';
 	import {
 		CommandDialog,
@@ -161,24 +173,13 @@
 		CommandList
 	} from '$lib/components/ui/command';
 	import { cmd_open } from '$lib/components/ui/command/stores';
-	import {
-		type ComponentProps,
-		type ComponentType,
-		type SvelteComponent,
-		getContext,
-		setContext
-	} from 'svelte';
-	import { writable } from 'svelte/store';
-	import Collections from './Collections.svelte';
-	import { toast } from 'svelte-sonner';
 	import { mutation } from '$lib/queries/query';
-	import type { Page } from '@sveltejs/kit';
 	import { update_entry } from '$lib/state/entries';
-	import { invalidate } from '$app/navigation';
-	import { page as page_store } from '$app/stores';
+
+	import Collections from './Collections.svelte';
 
 	const search = writable('');
-	const pages = writable<string[]>([]);
+	const pages = writable<Array<string>>([]);
 
 	export let placeholder = 'Type a command or search...';
 

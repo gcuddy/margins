@@ -1,16 +1,15 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import { getContext, setContext } from 'svelte';
-	import Sidebar from './Sidebar.svelte';
-	import LeftSidebar from './LeftSidebar.svelte';
-	import Header from './Header.svelte';
 	import { writable } from 'svelte/store';
 	import { persisted } from 'svelte-local-storage-store';
-	import { createPdfStateContext } from '$components/pdf-viewer/utils';
-	import { setAppearanceContext, setArticleContext } from './ctx';
-	// export let data;
 
-	const is_entry = getContext('is_entry');
+	import { createPdfStateContext } from '$components/pdf-viewer/utils';
+
+	import { setAppearanceContext, setArticleContext } from './ctx';
+	import Header from './Header.svelte';
+	import LeftSidebar from './LeftSidebar.svelte';
+	import Sidebar from './Sidebar.svelte';
+	// export let data;
 
 	const scrollingDown = writable(false);
 	setContext('scrollingDown', scrollingDown);

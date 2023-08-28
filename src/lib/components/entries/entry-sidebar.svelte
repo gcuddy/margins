@@ -1,28 +1,34 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import Relation from '$lib/components/Relation.svelte';
-	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
-// import TagPopover from '$lib/components/TagPopover.svelte';
-	import TagPopover from '$components/entries/tag-popover.svelte';
-	import Cluster from '$lib/components/helpers/Cluster.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
-	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { Collapsible } from 'radix-svelte';
-
-	import { CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { Muted } from '$lib/components/ui/typography';
 	import { TableOfContents } from '@skeletonlabs/skeleton';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import {
+		ChevronRightIcon,
+		ChevronUpIcon,
+		FileDown,
+		FileText,
+		Link2,
+		MoreHorizontalIcon,
+		PlusIcon,
+	} from 'lucide-svelte';
+	import { nanoid } from 'nanoid';
+	import { Collapsible } from 'radix-svelte';
+	import { getContext, onMount } from 'svelte';
+	import { derived, type Writable,writable } from 'svelte/store';
 	import { persisted } from 'svelte-local-storage-store';
+	import { toast } from 'svelte-sonner';
 
 	import { afterNavigate, invalidate } from '$app/navigation';
+	import { page } from '$app/stores';
 	import Annotation from '$components/annotations/Annotation.svelte';
-	import Input from '$components/ui/Input.svelte';
+// import TagPopover from '$lib/components/TagPopover.svelte';
+	import TagPopover from '$components/entries/tag-popover.svelte';
 	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
-	import Editor, { SaveStatus } from '$components/ui/editor/Editor.svelte';
+	import Editor, { type SaveStatus } from '$components/ui/editor/Editor.svelte';
 	import {
 		extractDataFromContentData,
 		isJSONContent,
 	} from '$components/ui/editor/utils';
+	import Input from '$components/ui/Input.svelte';
 	import LibraryForm from '$components/ui/library/library-form.svelte';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import {
@@ -33,7 +39,12 @@
 	} from '$components/ui/tabs';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
+	import Cluster from '$lib/components/helpers/Cluster.svelte';
+	import Relation from '$lib/components/Relation.svelte';
+	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
+	import Badge from '$lib/components/ui/Badge.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import { CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -41,6 +52,8 @@
 		DropdownMenuItem,
 		DropdownMenuTrigger,
 	} from '$lib/components/ui/dropdown-menu';
+	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { Muted } from '$lib/components/ui/typography';
 	import { isBrowser } from '$lib/helpers';
 	import { mutation } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
@@ -53,22 +66,9 @@
 	import { numberOrString } from '$lib/utils/misc';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
-	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
-	import {
-		ChevronRightIcon,
-		ChevronUpIcon,
-		FileDown,
-		FileText,
-		Link2,
-		MoreHorizontalIcon,
-		PlusIcon,
-	} from 'lucide-svelte';
-	import { nanoid } from 'nanoid';
-	import { getContext, onMount } from 'svelte';
-	import { toast } from 'svelte-sonner';
-	import { derived, writable, type Writable } from 'svelte/store';
-	import EntryIcon from './EntryIcon.svelte';
+
 	import EntryAuthorInput from './entry-author-input.svelte';
+	import EntryIcon from './EntryIcon.svelte';
 	import { saveUrl } from './utils';
 
 	// const render = persisted('sidebar', false);
@@ -107,11 +107,11 @@
 	let show_note_form = false;
 
 	const jumping =
-		(getContext('jumping') as Writable<boolean>) ?? writable(false);
+		(getContext('jumping') ) ?? writable(false);
 
 	// REVIEW should we be debouncing this?
 	const width_store =
-		(getContext('rightSidebarWidth') as Writable<number>) ??
+		(getContext('rightSidebarWidth') ) ??
 		persisted('sidebar__width', 360);
 
 	export let width = $width_store || 360;
@@ -165,10 +165,10 @@
 	// }
 
 	const links = writable<
-		{
+		Array<{
 			href: string;
 			text: string;
-		}[]
+		}>
 	>([]);
 
 	let linkFilterValue = '';
@@ -209,13 +209,13 @@
 
 	const linksFetching: Record<string, boolean> = {};
 
-	$: if ($query.data?.entry?.html) generateLinks($query.data?.entry?.html);
+	$: if ($query.data?.entry?.html) generateLinks($query.data.entry.html);
 
 	afterNavigate(() => {
 		// generateLinks();
 	});
 
-	type Timeline = { createdAt: Date }[];
+	type Timeline = Array<{ createdAt: Date }>;
 </script>
 
 <aside
@@ -230,7 +230,7 @@
 				<TabsTrigger class="grow" value="details">Details</TabsTrigger>
 				<TabsTrigger class="grow" value="notes"
 					>Notes{$query.data?.entry?.annotations?.length
-						? `(${$query.data?.entry?.annotations?.length})`
+						? `(${$query.data.entry.annotations.length})`
 						: ''}</TabsTrigger
 				>
 				<TabsTrigger class="grow" value="timeline">Timeline</TabsTrigger>
@@ -272,8 +272,8 @@
 							<Muted class="grow">
 								{#if $query.data?.entry?.bookmark?.createdAt}
 									{@const datetime = new Date(
-										$query.data?.entry?.bookmark?.createdAt,
-									)?.toISOString()}
+										$query.data.entry.bookmark.createdAt,
+									).toISOString()}
 									<time {datetime}>
 										{ago(new Date(datetime), $now)}
 									</time>
@@ -288,7 +288,7 @@
 								<Button
 									href="/tests/library/all{defaultStringifySearch({
 										createdAt: {
-											equals: new Date($query.data?.entry?.bookmark?.createdAt)
+											equals: new Date($query.data.entry.bookmark.createdAt)
 												.toISOString()
 												.slice(0, 10),
 										},
@@ -305,14 +305,14 @@
 							<div class="sidebar-row">
 								<Muted>URL</Muted>
 								<Muted class="truncate px-2"
-									><a href={$query.data?.entry.uri} target="_blank"
-										>{$query.data?.entry.uri}</a
+									><a href={$query.data.entry.uri} target="_blank"
+										>{$query.data.entry.uri}</a
 									></Muted
 								>
 							</div>
 						{/if}
 						{#if $query.data?.entry?.uri?.startsWith('http')}
-							{@const domain = getHostname($query.data?.entry.uri)}
+							{@const domain = getHostname($query.data.entry.uri)}
 							<div class="sidebar-row group">
 								<Muted>Domain</Muted>
 								<Muted class="truncate px-2"
@@ -334,14 +334,14 @@
 
 								<!-- <Input variant="ghost" value={$query.data?.entry?.author} /> -->
 								<EntryAuthorInput
-									author={$query.data?.entry?.bookmark?.author ??
-										$query.data?.entry?.author ??
+									author={$query.data.entry.bookmark?.author ??
+										$query.data.entry.author ??
 										''}
-									entryId={$query.data?.entry?.id}
+									entryId={$query.data.entry.id}
 								/>
 								<Button
 									class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
-									href="/tests/people/{$query.data?.entry?.author}"
+									href="/tests/people/{$query.data.entry.author}"
 									variant="ghost"
 									size="sm"
 								>
@@ -364,13 +364,13 @@
 							{#if $query.isLoading}
 								<Skeleton class="h-9 w-full grow" />
 							{:else if $query.isSuccess}
-								{@const status = $query.data?.entry?.bookmark?.status}
+								{@const status = $query.data.entry?.bookmark?.status}
 								<LibraryForm
 									{status}
 									type={$query.data.type}
-									entryId={$query.data?.entry?.id}
+									entryId={$query.data.entry?.id}
 									googleBooksId={$query.data.book?.id ?? undefined}
-									podcastIndexId={$query.data.podcast?.episode?.id ?? undefined}
+									podcastIndexId={$query.data.podcast?.episode.id ?? undefined}
 									spotifyId={$query.data.album?.id}
 									tmdbId={$query.data.movie?.id ?? $query.data.tv?.id}
 								/>
@@ -391,7 +391,7 @@
 								<Muted>Status</Muted>
 								<StatusPopover
 									data={$page.data.updateBookmarkForm}
-									entry={$query.data?.entry}
+									entry={$query.data.entry}
 								/>
 							</div>
 						{/if}
@@ -416,7 +416,7 @@
                     /> -->
 							<Cluster>
 								{@const relations = $query.data?.entry?.relations?.concat(
-									$query.data?.entry.back_relations,
+									$query.data.entry.back_relations,
 								)}
 								{#each relations ?? [] as relation}
 									<Relation
@@ -461,9 +461,9 @@
 															loading: 'Adding to collection...',
 															success: () => {
 																if ($query.data?.entry?.id) {
-																	update_entry($query.data?.entry.id, {
+																	update_entry($query.data.entry.id, {
 																		collections: [
-																			...($query.data?.entry.collections ?? []),
+																			...($query.data.entry.collections ?? []),
 																			{
 																				id: c.id,
 																				name: c.name,
@@ -512,7 +512,7 @@
 				</Collapsible.Content>
 			</Collapsible.Root></TabsContent
 		>
-		{#if outline && outline?.length}
+		{#if outline && outline.length}
 			<Collapsible.Root bind:open={$open_sections.outline}>
 				<div class="p-6">
 					<Collapsible.Trigger
@@ -557,7 +557,7 @@
 					</h3>
 					{#key note?.contentData}
 						<Editor
-							content={note && isJSONContent(note?.contentData)
+							content={note && isJSONContent(note.contentData)
 								? note.contentData
 								: undefined}
 							save_status={note_save_status}
@@ -577,7 +577,7 @@
 
 								mutation($page, 'save_note', {
 									contentData,
-									entryId: $query.data?.entry.id,
+									entryId: $query.data.entry.id,
 									type: 'note',
 									id,
 									tags,
@@ -585,9 +585,9 @@
 								}).then(() => {
 									note_save_status.set('Saved');
 								});
-								update_entry($query.data?.entry.id).annotation({
+								update_entry($query.data.entry.id).annotation({
 									contentData,
-									entryId: $query.data?.entry.id,
+									entryId: $query.data.entry.id,
 									type: 'note',
 									id,
 								});
@@ -618,10 +618,10 @@
 								<DropdownMenuGroup>
 									<DropdownMenuItem
 										on:click={() =>
-											triggerDownload(
+											{ triggerDownload(
 												$query.data?.entry,
 												$query.data?.entry?.annotations,
-											)}
+											); }}
 									>
 										<FileDown class="mr-2 h-4 w-4" />
 										Export notes to markdown
@@ -633,7 +633,7 @@
 				</div>
 				<div class="grid gap-4">
 					{#if $query.data?.entry?.annotations}
-						{#each $query.data?.entry?.annotations
+						{#each $query.data.entry.annotations
 							.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
 							.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
 							<Annotation
@@ -669,9 +669,9 @@
 								<time datetime={createdAt.toString()}
 									>{ago(createdAt, $now)}</time
 								>
-								{#if via && via.related_entry}
+								{#if via?.related_entry}
 									via <a href={make_link(via.related_entry)}
-										>{via.related_entry?.title}</a
+										>{via.related_entry.title}</a
 									>
 								{/if}
 							</span>
