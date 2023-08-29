@@ -112,6 +112,12 @@ model Bookmark {
     annotations      Annotation[]
     history          BookmarkHistory[]
 
+    // or should attachments be stored on Entry?
+    attachments Attachment[]
+
+    // Optional field to attach a PDF to the bookmark
+    pdf_url String? @db.VarChar(2083)
+
     @@unique([uri, entryId, userId])
     @@unique([entryId, userId])
     @@index([title])
@@ -128,6 +134,27 @@ model Bookmark {
 
 model Task {
     id Int @id @default(autoincrement())
+}
+
+model Attachment {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    url   String
+    title String
+    size  Int?
+    type  String?
+
+    userId String
+    user   AuthUser @relation(fields: [userId], references: [id])
+
+    bookmarkId Int?
+    bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
+
+    @@unique([bookmarkId, userId, url])
+    @@index([userId])
+    @@index([bookmarkId])
 }
 
 /// Describes a user-defined relationship between entries. (Just entries, right?)
@@ -780,6 +807,7 @@ model AuthUser {
     TagOnEntry         TagOnEntry[]
     bookmark_history   BookmarkHistory[]
     custom_entries     Entry[]
+    attachments        Attachment[]
 
     @@map("auth_user")
 }

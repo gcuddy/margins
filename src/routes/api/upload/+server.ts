@@ -1,33 +1,33 @@
-    import { error, json } from '@sveltejs/kit';
-import { db } from '$lib/db';
+import type { Config } from '@sveltejs/adapter-vercel';
+import { error, json } from '@sveltejs/kit';
+import pdfjs from 'pdfjs-dist/legacy/build/pdf';
+
 import { uploadFile } from '$lib/backend/s3.server';
+import { S3_BUCKET_PREFIX } from '$lib/constants';
+import { db } from '$lib/db';
 import { nanoid } from '$lib/nanoid';
+import { get_pdf_fingerprint, make_thumbnail, parse_pdf } from '$lib/utils/pdf';
 
 import type { RequestHandler } from './$types';
-import { S3_BUCKET_PREFIX } from '$lib/constants';
-import pdfjs from 'pdfjs-dist/legacy/build/pdf';
-import type { Config } from '@sveltejs/adapter-vercel';
-import { get_pdf_fingerprint, make_thumbnail, parse_pdf } from '$lib/utils/pdf';
 
 // todo: make run on edge
 
 export const config: Config = {
-	runtime: 'nodejs18.x'
+	runtime: 'nodejs18.x',
 };
 
 export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const session = await locals.auth.validate();
 	if (!session) {
 		throw error(401, {
-			message: 'Not logged in'
+			message: 'Not logged in',
 		});
 	}
-	console.log('file upload request');
 
-	const file = request.body;
+    const file = request.body;
 	if (!file) {
 		throw error(500, {
-			message: 'No body'
+			message: 'No body',
 		});
 	}
 
@@ -38,7 +38,9 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	// todo: unique id
 
 	// construct final filename based on content-type if not provided
-	const final_name = file_name.includes(file_type) ? file_name : `${file_name}${file_type}`;
+	const final_name = file_name.includes(file_type)
+		? file_name
+		: `${file_name}${file_type}`;
 
 	const Key = `assets/uploads/${final_name}`;
 
@@ -47,7 +49,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const blob = await uploadFile({
 		Key,
 		Body: Buffer.from(array_buffer),
-		ContentType: content_type
+		ContentType: content_type,
 	});
 
 	const final_url = S3_BUCKET_PREFIX + Key;
@@ -60,7 +62,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	if (content_type === 'application/pdf' && related_entry_id) {
 		// get thumbnail and shit?
 		const pdf = await pdfjs.getDocument({
-			data: array_buffer
+			data: array_buffer,
 		}).promise;
 
 		const thumbnail = await make_thumbnail(pdf);
@@ -72,7 +74,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 		await uploadFile({
 			Key: thumb_key,
 			Body: thumbnail,
-			ContentType: 'image/png'
+			ContentType: 'image/png',
 		});
 
 		// add an entry for this - get the owner id
@@ -91,7 +93,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 				image: thumbnail_url,
 				type: 'pdf',
 				owned_by_id: session.user.userId,
-				pdf_fingerprint: await get_pdf_fingerprint(pdf)
+				pdf_fingerprint: await get_pdf_fingerprint(pdf),
 			})
 			.executeTakeFirstOrThrow();
 
@@ -106,7 +108,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 				type: 'Grouped',
 				id: nanoid(),
 				updatedAt: new Date(),
-				userId: session.user.userId
+				userId: session.user.userId,
 			})
 			.execute();
 	}
@@ -114,7 +116,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	return json({
 		url: final_url,
 		thumbnail_url,
-        title
+		title,
 	});
 
 	// old version via formdata

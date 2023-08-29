@@ -6,6 +6,6 @@ export type Ctx = {
 	};
 };
 
-export type GetCtx<T extends z.ZodTypeAny> = {
-	input: z.infer<T>;
+export type GetCtx<TSchema extends z.ZodTypeAny> = {
+	input: z.infer<TSchema>;
 } & Ctx;

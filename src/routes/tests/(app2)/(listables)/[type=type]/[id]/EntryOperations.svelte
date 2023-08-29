@@ -125,7 +125,7 @@
 	<DropdownMenuContent class="w-56">
 		<DropdownMenuGroup>
 			<DropdownMenuItem
-				on:m-click={() => {
+				on:click={() => {
 					show_note_form = true;
 				}}
 			>
@@ -137,7 +137,7 @@
 				<span>Snooze</span></DropdownMenuItem
 			>
 			{#if entry.type === 'book'}
-				<DropdownMenuItem on:m-click={() => (show_reading_session = true)}>
+				<DropdownMenuItem on:click={() => (show_reading_session = true)}>
 					<BookOpen class="mr-2 h-4 w-4" />
 					<span>Start reading session</span></DropdownMenuItem
 				>
@@ -145,7 +145,7 @@
 		</DropdownMenuGroup>
 		<DropdownMenuGroup>
 			<DropdownMenuItem
-				on:m-click={() => {
+				on:click={() => {
 					commander_store.open({
 						component: JumpToEntry,
 						placeholder: 'Add relation to...',
@@ -170,7 +170,7 @@
 				<span>Add Relation</span></DropdownMenuItem
 			>
 			<DropdownMenuItem
-				on:m-click={() => {
+				on:click={() => {
 					commander_store.open({
 						component: Collections,
 						placeholder: 'Add to collection...',
@@ -192,7 +192,7 @@
 					<DropdownMenuSubContent>
 						{#each convertToTypes.filter((type) => entry.type !== type.value) as type}
 							<DropdownMenuItem
-								on:m-click={() => {
+								on:click={() => {
 									if (type.value === 'book') {
 										dialogStore.open({
 											title: 'Convert to book',
@@ -231,7 +231,7 @@
 				</DropdownMenuSub>
 			{/if}
 			<DropdownMenuItem
-				on:m-click={() => {
+				on:click={() => {
 					const input = document.createElement('input');
 					input.type = 'file';
 					input.accept = 'pdf';
@@ -249,7 +249,7 @@
 				<span>Attach PDF</span>
 			</DropdownMenuItem>
 			<DropdownMenuItem
-				on:m-click={() => {
+				on:click={() => {
 					const input = document.createElement('input');
 					input.type = 'file';
 					input.accept = 'epub';

@@ -15,15 +15,22 @@ module.exports = {
 		'import',
 		'simple-import-sort',
 		'unused-imports',
+		'sort-keys-fix',
+		'typescript-sort-keys',
 	],
 	rules: {
 		'import/order': 0, // turn off in favor of eslint-plugin-simple-import-sort
 		'import/no-duplicates': 2,
 		'import/first': 2,
 		'import/newline-after-import': 2,
-        'import/no-default-export': 2,
-        'prefer-template': 'error',
+		'import/no-default-export': 2,
+		'prefer-template': 'error',
 
+		'no-throw-literal': 0,
+		'@typescript-eslint/no-throw-literal': 0,
+		'sort-keys-fix/sort-keys-fix': 2,
+		'typescript-sort-keys/interface': 2,
+		'typescript-sort-keys/string-enum': 2,
 
 		/**
 		 * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
@@ -40,11 +47,16 @@ module.exports = {
 				fixStyle: 'inline-type-imports',
 			},
 		],
-        "@typescript-eslint/no-unused-vars": "off",
-        "unused-imports/no-unused-imports": "error",
-        "unused-imports/no-unused-vars": [
-			"warn",
-			{ "vars": "all", "varsIgnorePattern": "^_", "args": "after-used", "argsIgnorePattern": "^_" }
+		'@typescript-eslint/no-unused-vars': 'off',
+		'unused-imports/no-unused-imports': 'error',
+		'unused-imports/no-unused-vars': [
+			'warn',
+			{
+				vars: 'all',
+				varsIgnorePattern: '^_',
+				args: 'after-used',
+				argsIgnorePattern: '^_',
+			},
 		],
 		// '@typescript-eslint/no-unused-vars': [
 		// 	'warn',
@@ -55,11 +67,11 @@ module.exports = {
 		// ],
 		'@typescript-eslint/switch-exhaustiveness-check': 'error',
 		'@typescript-eslint/array-type': ['error', { default: 'generic' }],
-		'@typescript-eslint/consistent-type-definitions': ['error', "type"],
-        // TODO: eventually enable this, but for now it's too much work. However, highly encourage annotating functions with return types.
+		'@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+		// TODO: eventually enable this, but for now it's too much work. However, highly encourage annotating functions with return types.
 		// '@typescript-eslint/explicit-function-return-type': 1,
 		'@typescript-eslint/prefer-ts-expect-error': 'error',
-        '@typescript-eslint/ban-types': 'error',
+		'@typescript-eslint/ban-types': 'error',
 		'@typescript-eslint/ban-ts-comment': [
 			'error',
 			{
@@ -113,11 +125,11 @@ module.exports = {
 				parser: '@typescript-eslint/parser',
 			},
 		},
-        {
-            files: ["src/routes/**/+page*.ts"],
-            rules: {
-                "@typescript-eslint/unbound-method": "off"
-            }
-        }
+		{
+			files: ['src/routes/**/+page*.ts'],
+			rules: {
+				'@typescript-eslint/unbound-method': 'off',
+			},
+		},
 	],
 };

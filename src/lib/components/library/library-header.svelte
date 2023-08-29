@@ -1,95 +1,79 @@
 <script lang="ts">
-	import { H1 } from '$components/ui/typography';
-	import LibraryTabs from './library-tabs.svelte';
+	import { createQuery } from '@tanstack/svelte-query';
+	import debounce from 'just-debounce-it';
+	import {
+		ArrowDownUpIcon,
+		BookIcon,
+		ClockIcon,
+		FileIcon,
+		FilterIcon,
+		GlobeIcon,
+		Loader2Icon,
+		TagIcon,
+		XIcon,
+	} from 'lucide-svelte';
+	import { tweened } from 'svelte/motion';
+	import { derived, writable } from 'svelte/store';
+
+import { goto } from '$app/navigation';
+	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
+	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
+	// import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
+	// import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
+	import { navigating,page } from '$app/stores';
+	import { entryTypeIcon } from '$components/entries/icons';
+	import { TagsCommandItems } from '$components/tags/tag-command';
+	import * as AlertDialog from '$components/ui/alert-dialog';
+	import Badge from '$components/ui/Badge.svelte';
+	import Button, { buttonVariants } from '$components/ui/Button.svelte';
+	import {
+		Command,
+		CommandGroup,
+		CommandIcon,
+		CommandInput,
+		CommandItem,
+		CommandList,
+	} from '$components/ui/command2';
+	import {
+		createPageData,
+	} from '$components/ui/command2/utils';
+	import {
+		DropdownMenu,
+		DropdownMenuContent,
+		DropdownMenuLabel,
+		DropdownMenuRadioGroup,
+		DropdownMenuRadioItem,
+		DropdownMenuSeparator,
+		DropdownMenuTrigger,
+	} from '$components/ui/dropdown-menu';
+	import Filter from '$components/ui/filters/Filter.svelte';
+	import Header from '$components/ui/Header.svelte';
+	import Input from '$components/ui/Input.svelte';
+	import Kbd from '$components/ui/KBD.svelte';
 	import {
 		Popover,
 		PopoverContent,
 		PopoverTrigger,
 	} from '$lib/components/ui/popover';
-	import { cn } from '$lib/utils/tailwind';
-	import Button, { buttonVariants } from '$components/ui/Button.svelte';
-	import Badge from '$components/ui/Badge.svelte';
-	import {
-		ArrowDownUpIcon,
-		CalendarPlusIcon,
-		Check,
-		FileIcon,
-		FilterIcon,
-		Loader2Icon,
-		XIcon,
-		TagIcon,
-		ClockIcon,
-		GlobeIcon,
-		BookIcon,
-	} from 'lucide-svelte';
-	import { types } from '$lib/types';
-	import debounce from 'just-debounce-it';
-	import Filter from '$components/ui/filters/Filter.svelte';
-	import * as AlertDialog from '$components/ui/alert-dialog';
-
-	import {
-		Command,
-		CommandInput,
-		CommandGroup,
-		CommandItem,
-		CommandLoading,
-		CommandList,
-		CommandIcon,
-	} from '$components/ui/command2';
-	import {
-		DropdownMenu,
-		DropdownMenuTrigger,
-		DropdownMenuContent,
-		DropdownMenuItem,
-		DropdownMenuRadioGroup,
-		DropdownMenuRadioItem,
-		DropdownMenuSeparator,
-		DropdownMenuLabel,
-	} from '$components/ui/dropdown-menu';
-	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
-	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
-	// import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
-	// import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
-	import { page, navigating } from '$app/stores';
-	import { afterNavigate, goto } from '$app/navigation';
-	import Input from '$components/ui/Input.svelte';
-	import Kbd from '$components/ui/KBD.svelte';
-	import Header from '$components/ui/Header.svelte';
-	import { createQuery } from '@tanstack/svelte-query';
-	import { derived, writable } from 'svelte/store';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import type { LibrarySortType } from '$lib/server/queries';
-	import { LoaderIcon } from 'svelte-french-toast';
-	import Cmd from '$components/ui/cmd/Cmd.svelte';
 	import {
-		changeSearch,
-		createChangeSearch,
-		defaultParseSearch,
-		defaultStringifySearch,
-	} from '$lib/utils/search-params';
-	import {
-		filterLibrarySchema,
-		LibraryGroupType,
 		type FilterLibrarySchema,
+		filterLibrarySchema,
+		type LibraryGroupType,
 	} from '$lib/schemas/library';
-	import FilterBadge from '$components/ui/filters/FilterBadge.svelte';
+	import type { LibrarySortType } from '$lib/server/queries';
+	import { createFilterDialogStore } from '$lib/stores/filters';
 	import {
-		createParamsStore,
 		createSearchParamsStore,
 	} from '$lib/stores/search-params';
-	import { tweened } from 'svelte/motion';
-	import { cubicInOut, cubicOut, quintIn } from 'svelte/easing';
-	import { afterUpdate } from 'svelte';
-	import { deepWriteable } from '$lib/helpers/object';
+	import { types } from '$lib/types';
 	import {
-		createPageData,
-		createPageItemList,
-	} from '$components/ui/command2/utils';
-	import { statusesWithIcons } from '$lib/status';
-	import { entryTypeIcon } from '$components/entries/icons';
-	import { isHTMLElement } from '$lib/helpers';
-	import { createFilterDialogStore } from '$lib/stores/filters';
-	import { TagsCommandItems } from '$components/tags/tag-command';
+		createChangeSearch,
+		defaultParseSearch,
+	} from '$lib/utils/search-params';
+	import { cn } from '$lib/utils/tailwind';
+
+	import LibraryTabs from './library-tabs.svelte';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -225,7 +209,7 @@
 	const filterDialogStore = createFilterDialogStore();
 
 	// TODO: these should affect the url params
-	const sortTypes: { label: string; type: NonNullable<LibrarySortType> }[] = [
+	const sortTypes: Array<{ label: string; type: NonNullable<LibrarySortType> }> = [
 		{
 			label: 'Manual',
 			type: 'manual',
@@ -377,7 +361,7 @@
 										onSelect={(tag) => {
 											filterChange($page.url, (data) => {
 												console.log({ data });
-												if (data.tags?.ids?.includes(tag.id)) {
+												if (data.tags?.ids.includes(tag.id)) {
 													data.tags = {
 														...data.tags,
 														ids: data.tags.ids.filter((t) => t !== tag.id),

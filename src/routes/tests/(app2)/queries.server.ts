@@ -1,20 +1,29 @@
+import { Status } from '@prisma/client';
+import { sql } from 'kysely';
+import { jsonArrayFrom } from 'kysely/helpers/mysql';
+import { z } from 'zod';
+
+import { books } from '$lib/api/gbook';
+import spotify from '$lib/api/spotify';
 import { tmdb } from '$lib/api/tmdb';
+import type { Tweet } from '$lib/api/twitter';
 import { db } from '$lib/db';
+import { collections } from '$lib/db/queries/collections';
 import {
-	annotationWithEntry,
 	annotations,
+	annotationWithEntry,
 	entrySelect,
 	feed,
 	getFirstBookmarkSort,
-	withEntry
+	withEntry,
 } from '$lib/db/selects';
 import { nanoid } from '$lib/nanoid';
 import {
 	add_to_collection,
 	convertTo,
 	convertToSchema,
-	countLibrarySchema,
 	count_library,
+	countLibrarySchema,
 	createFavorite,
 	createFavoriteSchema,
 	createTag,
@@ -22,17 +31,17 @@ import {
 	deleteAnnotation,
 	entry_by_id,
 	entry_by_id_schema,
-	getNotebook,
-	getNotebookSchema,
 	get_authors,
 	get_notes_for_tag,
+	getNotebook,
+	getNotebookSchema,
 	note,
 	notes,
 	notesInputSchema,
 	pins,
 	s_add_to_collection,
-	saveToLibrarySchema,
 	save_to_library,
+	saveToLibrarySchema,
 	set_tags_on_entry,
 	tagsOnEntrySchema,
 	updateBookmark,
@@ -42,94 +51,81 @@ import {
 	updateTag,
 	updateTagSchema,
 	upsertAnnotation,
-	upsertAnnotationSchema
+	upsertAnnotationSchema,
 } from '$lib/queries/server';
-import { idSchema, idOptionalArraySchema } from '$lib/schemas';
-import { sql } from 'kysely';
-import { z } from 'zod';
-import { fetchList, inputSchema } from './library/fetch.server';
-import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
-import { books } from '$lib/api/gbook';
+import { idOptionalArraySchema, idSchema } from '$lib/schemas';
+import { collectionsInputSchema } from '$lib/schemas/inputs';
+import {
+	get_entry_details,
+	get_library,
+	get_library_schema,
+} from '$lib/server/queries';
+import { twitter } from '$lib/twitter';
+import { typeSchema } from '$lib/types';
+
 import {
 	fetchRss,
-	inputSchema as rssInputSchema
+	inputSchema as rssInputSchema,
 } from './(listables)/subscriptions/latest/fetch.server';
-import { annotationSchema } from '$lib/annotation';
+import { fetchList, inputSchema } from './library/fetch.server';
 import { type Condition, View } from './views/new/View';
-import spotify from '$lib/api/spotify';
-import { get_entry_details, get_library, get_library_schema } from '$lib/server/queries';
-import { typeSchema } from '$lib/types';
-import { twitter } from '$lib/twitter';
-import type { Tweet } from '$lib/api/twitter';
-import { DocumentType, Status } from '@prisma/client';
-import { collections } from '$lib/db/queries/collections';
-import { collectionsInputSchema } from '$lib/schemas/inputs';
 
-interface Query<I extends z.ZodTypeAny, Data> {
+type Query<TSchema extends z.ZodTypeAny, TData> = {
 	staleTime?: number;
 	fn: (args: {
-		input: z.infer<I>;
+		input: z.infer<TSchema>;
 		ctx: {
 			userId: string;
 		};
-	}) => Promise<Data>;
-	schema?: I;
+	}) => Promise<TData>;
+	schema?: TSchema;
 	headers?: Record<string, string>;
 	// defaults to TRUE
 	authorized?: boolean;
-}
+};
 
-export const query = <I extends z.ZodTypeAny, Data>(args: Query<I, Data>) => args;
+export const query = <TSchema extends z.ZodTypeAny, TData>(
+	args: Query<TSchema, TData>,
+) => args;
 
 export const mutations = {
-	// tag_entry: query({
-	//     schema: z.object({
-	//         entry_id: z.number().int(),
-	//         tag_id: z.number().int()
-	//     }),
-	//     fn: async ({ input: { entry_id, tag_id }, ctx: { userId } }) => {
-	//         await db.insertInto("EntryTag")
-	//             .values({
-	//                 entryId: entry_id,
-	//                 tagId: tag_id,
-	//                 userId
-	//             })
-	//             .execute();
-	//     }
-	// }),'sva
-	// TODO save_to_libray
 	save_to_library: query({
 		schema: saveToLibrarySchema,
-		fn: save_to_library
+		fn: save_to_library,
 	}),
 	save_note: query({
 		schema: upsertAnnotationSchema,
-		fn: upsertAnnotation
+		fn: upsertAnnotation,
 	}),
 	deleteAnnotation: query({
 		schema: idSchema,
-		fn: async ({ ctx: { userId }, input: { id } }) => deleteAnnotation(userId, id)
+		fn: async ({ ctx: { userId }, input: { id } }) =>
+			deleteAnnotation(userId, id),
 	}),
 	update_note: query({
 		schema: z.object({
 			id: z.string(),
 			body: z.string().optional(),
 			reponse: z.string().optional(),
-			contentData: z.any().optional()
+			contentData: z.any().optional(),
 		}),
 		fn: async ({ ctx: { userId }, input }) => {
 			const { id, ...rest } = input;
-			await db.updateTable('Annotation as a').where('a.id', '=', id).set(rest).execute();
-		}
+			await db
+				.updateTable('Annotation as a')
+				.where('a.id', '=', id)
+				.set(rest)
+				.execute();
+		},
 	}),
 	updateBookmarkSortOrder: query({
 		schema: z.object({
 			data: z.array(
 				z.object({
 					id: z.number().int(),
-					sort_order: z.number().int()
-				})
-			)
+					sort_order: z.number().int(),
+				}),
+			),
 		}),
 		fn: async ({ input, ctx }) => {
 			// id refers to *entryId*, which is a bit confusing
@@ -137,7 +133,7 @@ export const mutations = {
 				entryId: d.id,
 				sort_order: d.sort_order,
 				userId: ctx.userId,
-				updatedAt: new Date()
+				updatedAt: new Date(),
 			}));
 			console.dir({ data }, { depth: null });
 			// we're updating but using the on duplicate key update "hack"
@@ -145,28 +141,29 @@ export const mutations = {
 				.insertInto('Bookmark')
 				.values(data)
 				.onDuplicateKeyUpdate({
-					sort_order: sql`VALUES(sort_order)`
+					sort_order: sql`VALUES(sort_order)`,
 				})
 				.execute();
-		}
+		},
 	}),
 	updateBookmark: query({
 		schema: updateBookmarkSchema,
 		fn: async ({ input, ctx }) =>
 			updateBookmark({
 				...input,
-				userId: ctx.userId
-			})
+				userId: ctx.userId,
+			}),
 	}),
 	update_status: query({
 		schema: z.object({
 			status: z.nativeEnum(Status),
 			ids: z.array(z.number().int()),
-			sort_order: z.number().int().optional()
+			sort_order: z.number().int().optional(),
 		}),
 		fn: async ({ input, ctx }) => {
 			const new_sort_order =
-				input.sort_order ?? (await getFirstBookmarkSort(ctx.userId, input.status));
+				input.sort_order ??
+				(await getFirstBookmarkSort(ctx.userId, input.status));
 
 			await db.transaction().execute(async (trx) => {
 				await trx
@@ -175,7 +172,7 @@ export const mutations = {
 					.where('userId', '=', ctx.userId)
 					.set({
 						status: input.status,
-						sort_order: new_sort_order
+						sort_order: new_sort_order,
 					})
 					.execute();
 
@@ -185,15 +182,15 @@ export const mutations = {
 				//         fromStatus
 				//     })
 			});
-		}
+		},
 	}),
 	updateTag: query({
 		schema: updateTagSchema,
-		fn: updateTag
+		fn: updateTag,
 	}),
 	createTag: query({
 		schema: createTagSchema,
-		fn: createTag
+		fn: createTag,
 	}),
 	createCollection: query({
 		schema: z.object({
@@ -202,10 +199,10 @@ export const mutations = {
 				.array(
 					z.object({
 						entryId: z.number().int().optional(),
-						annotationId: z.string().optional()
-					})
+						annotationId: z.string().optional(),
+					}),
 				)
-				.optional()
+				.optional(),
 		}),
 		fn: async ({ ctx, input }) => {
 			const result = await db
@@ -213,7 +210,7 @@ export const mutations = {
 				.values({
 					name: input.name,
 					userId: ctx.userId,
-					updatedAt: new Date()
+					updatedAt: new Date(),
 				})
 				.executeTakeFirst();
 			const id = Number(result.insertId);
@@ -226,17 +223,18 @@ export const mutations = {
 							entryId: i.entryId,
 							annotationId: i.annotationId,
 							updatedAt: new Date(),
-							id: nanoid()
-						}))
+							id: nanoid(),
+						})),
 					)
 					.execute();
 			}
 			return { id };
-		}
+		},
 	}),
 	addToCollection: query({
 		schema: s_add_to_collection,
-		fn: async ({ input, ctx: { userId } }) => add_to_collection({ ...input, userId })
+		fn: async ({ input, ctx: { userId } }) =>
+			add_to_collection({ ...input, userId }),
 	}),
 	removeEntryFromCollection: query({
 		fn: async ({ input, ctx: { userId } }) => {
@@ -248,14 +246,14 @@ export const mutations = {
 		},
 		schema: z.object({
 			collectionId: z.number().int(),
-			entryId: z.number().int()
-		})
+			entryId: z.number().int(),
+		}),
 	}),
 	addRelation: query({
 		schema: z.object({
 			entryId: z.number().int(),
 			relatedEntryId: z.number().int(),
-			type: z.enum(['Related', 'SavedFrom']).default('Related').optional()
+			type: z.enum(['Related', 'SavedFrom']).default('Related').optional(),
 		}),
 		fn: async ({ input, ctx }) => {
 			return await db
@@ -266,14 +264,14 @@ export const mutations = {
 					type: input.type,
 					id: nanoid(),
 					updatedAt: new Date(),
-					userId: ctx.userId
+					userId: ctx.userId,
 				})
 				.execute();
-		}
+		},
 	}),
 	deleteInteraction: query({
 		schema: z.object({
-			id: z.number().int()
+			id: z.number().int(),
 		}),
 		fn: async ({ input, ctx }) => {
 			await db
@@ -281,7 +279,7 @@ export const mutations = {
 				.where('id', '=', input.id)
 				.where('userId', '=', ctx.userId)
 				.execute();
-		}
+		},
 	}),
 	saveInteraction: query({
 		schema: z.object({
@@ -292,7 +290,7 @@ export const mutations = {
 				.boolean()
 				.transform((b) => +b)
 				.optional(),
-			last_viewed: z.date().optional()
+			last_viewed: z.date().optional(),
 		}),
 		fn: async ({ input, ctx }) => {
 			const result = await db
@@ -300,28 +298,28 @@ export const mutations = {
 				.values({
 					...input,
 					userId: ctx.userId,
-					updatedAt: new Date()
+					updatedAt: new Date(),
 				})
 				.onDuplicateKeyUpdate(input)
 				.executeTakeFirst();
-            return {
-                id: Number(result.insertId)
-            }
-		}
+			return {
+				id: Number(result.insertId),
+			};
+		},
 	}),
 	set_tags_on_entry: query({
 		schema: tagsOnEntrySchema,
 		fn: async ({ input, ctx }) => {
 			return set_tags_on_entry({ ...input, userId: ctx.userId });
-		}
+		},
 	}),
 	convertEntry: query({
 		schema: convertToSchema,
-		fn: convertTo
+		fn: convertTo,
 	}),
 	createFavorite: query({
 		schema: createFavoriteSchema,
-		fn: createFavorite
+		fn: createFavorite,
 	}),
 	deleteFavorite: query({
 		schema: idOptionalArraySchema,
@@ -333,22 +331,22 @@ export const mutations = {
 				query = query.where('id', '=', input.id);
 			}
 			await query.execute();
-		}
+		},
 	}),
-    updateFavorite: query({
-        schema: updateFavoriteSchema,
-        fn: updateFavorite
-    })
+	updateFavorite: query({
+		schema: updateFavoriteSchema,
+		fn: updateFavorite,
+	}),
 } as const;
 
 const qSchema = z.object({
-	q: z.string().nonempty()
+	q: z.string().nonempty(),
 });
 
 export const queries = {
 	get_entry_deets: query({
 		schema: z.object({
-			id: z.number().int()
+			id: z.number().int(),
 		}),
 		fn: async ({ input: { id } }) => {
 			//
@@ -361,8 +359,8 @@ export const queries = {
 			return entry;
 		},
 		headers: {
-			'cache-control': `s-maxage=1, stale-while-revalidate=${60 * 60 * 24}`
-		}
+			'cache-control': `s-maxage=1, stale-while-revalidate=${60 * 60 * 24}`,
+		},
 	}),
 	get_library: query({
 		schema: get_library_schema,
@@ -370,41 +368,45 @@ export const queries = {
 			const { userId } = ctx;
 			return get_library({
 				userId,
-				...input
+				...input,
 			});
-		}
+		},
 	}),
 	get_entry: query({
 		schema: z.object({
 			id: z.number().int(),
-			type: typeSchema
+			type: typeSchema,
 		}),
 		fn: async ({ input, ctx }) => {
 			return get_entry_details(input.id, {
 				userId: ctx.userId,
 				type: input.type,
-				use_entry_id: true
+				use_entry_id: true,
 			});
-		}
+		},
 	}),
 	view_entries: query({
 		schema: z.object({
 			conditions: z.any().array(),
-			cursor: z.coerce.date().nullish()
+			cursor: z.coerce.date().nullish(),
 		}),
 		fn: async ({ input, ctx }) => {
-			return await View.preview(input.conditions as Condition[], ctx.userId, input.cursor);
-		}
+			return await View.preview(
+				input.conditions as Array<Condition>,
+				ctx.userId,
+				input.cursor,
+			);
+		},
 	}),
 
 	get_annotation: query({
 		schema: z.object({
-			id: z.string()
+			id: z.string(),
 		}),
 		fn: async ({ input }) => {
 			const query = annotationWithEntry().where('a.id', '=', input.id);
 			return await query.executeTakeFirstOrThrow();
-		}
+		},
 	}),
 
 	list_subscriptions: query({
@@ -413,14 +415,21 @@ export const queries = {
 				.selectFrom('Subscription as s')
 				.innerJoin('Feed as f', 'f.id', 's.feedId')
 				.where('userId', '=', ctx.userId)
-				.select(['s.id', 's.title', 'feedId', 's.updatedAt', 'f.feedUrl', 'f.imageUrl'])
+				.select([
+					's.id',
+					's.title',
+					'feedId',
+					's.updatedAt',
+					'f.feedUrl',
+					'f.imageUrl',
+				])
 				.execute();
-		}
+		},
 	}),
 	entriesByFeedId: query({
 		schema: z.object({
 			id: z.number().int(),
-			cursor: z.date().optional()
+			cursor: z.date().optional(),
 		}),
 		fn: async ({ input }) => {
 			return await db
@@ -431,12 +440,12 @@ export const queries = {
 				.select(['s.title', 's.feedId', 'f.imageUrl', 'f.feedUrl'])
 				.select((eb) => feed.withEntries(eb, 25, input.cursor))
 				.executeTakeFirstOrThrow();
-		}
+		},
 	}),
 	findOrCreateEntry: query({
 		schema: z
 			.object({
-				tmdbId: z.number()
+				tmdbId: z.number(),
 			})
 			.partial(),
 		fn: async ({ input }) => {
@@ -457,32 +466,32 @@ export const queries = {
 						html: movie.overview,
 						uri: `tmdb:${movie.id}`,
 						tmdbId: movie.id,
-						author: movie.credits?.crew?.find((c) => c.job === 'Director')?.name,
+						author: movie.credits.crew.find((c) => c.job === 'Director')?.name,
 						published: movie.release_date,
 						image: tmdb.media(movie.poster_path),
 						type: 'movie',
-						updatedAt: new Date()
+						updatedAt: new Date(),
 					})
 					.executeTakeFirst();
 				if (new_entry.insertId) {
 					return {
-						id: Number(new_entry.insertId)
+						id: Number(new_entry.insertId),
 					};
 				}
 			}
-		}
+		},
 	}),
 	entries_by_tag: query({
 		schema: z.object({
 			name: z.string(),
-			cursor: z.coerce.number().optional()
+			cursor: z.coerce.number().optional(),
 		}),
 		fn: async ({ input, ctx }) => {
 			let query = db
 				.selectFrom('TagOnEntry as toe')
 				.innerJoin('Entry as e', 'e.id', 'toe.entryId')
 				.innerJoin('Tag as t', (join) =>
-					join.onRef('t.id', '=', 'toe.tagId').on('t.name', '=', input.name)
+					join.onRef('t.id', '=', 'toe.tagId').on('t.name', '=', input.name),
 				)
 				.select(entrySelect)
 				.select(['t.id as tag_id'])
@@ -503,9 +512,9 @@ export const queries = {
 			}
 			return {
 				entries,
-				nextCursor
+				nextCursor,
 			};
-		}
+		},
 	}),
 	tags: query({
 		fn: ({ ctx }) => {
@@ -515,7 +524,7 @@ export const queries = {
 				.select(['id', 'name', 'color'])
 				.orderBy('Tag.name', 'asc')
 				.execute();
-		}
+		},
 	}),
 	collections: query({
 		// fn: ({ ctx }) => {
@@ -526,8 +535,8 @@ export const queries = {
 		// 		.selectAll()
 		// 		.execute();
 		// }
-        fn: collections,
-        schema: collectionsInputSchema
+		fn: collections,
+		schema: collectionsInputSchema,
 	}),
 	search: query({
 		staleTime: 1000,
@@ -535,7 +544,7 @@ export const queries = {
 			return await db
 				.selectFrom('Entry as e')
 				.innerJoin('Bookmark as b', (join) =>
-					join.onRef('e.id', '=', 'b.entryId').on('b.userId', '=', ctx.userId)
+					join.onRef('e.id', '=', 'b.entryId').on('b.userId', '=', ctx.userId),
 				)
 				.where(sql`MATCH(title,author) AGAINST (${input.q})`)
 				.select([
@@ -550,13 +559,13 @@ export const queries = {
 					'e.podcastIndexId',
 					'e.spotifyId',
 					'e.uri',
-					'e.wordCount'
+					'e.wordCount',
 				])
 				.limit(10)
 				// .orderBy("createdAt", "desc")
 				.execute();
 		},
-		schema: qSchema
+		schema: qSchema,
 	}),
 	search_titles: query({
 		fn: async ({ input, ctx }) => {
@@ -565,10 +574,10 @@ export const queries = {
 			return await db
 				.selectFrom('Entry as e')
 				.innerJoin('Bookmark as b', (join) =>
-					join.onRef('e.id', '=', 'b.entryId').on('b.userId', '=', ctx.userId)
+					join.onRef('e.id', '=', 'b.entryId').on('b.userId', '=', ctx.userId),
 				)
 				.where(
-					sql`MATCH(e.title,e.author) AGAINST (${match_q} IN BOOLEAN MODE) and (e.title like ${like_q} or e.author like ${like_q})`
+					sql`MATCH(e.title,e.author) AGAINST (${match_q} IN BOOLEAN MODE) and (e.title like ${like_q} or e.author like ${like_q})`,
 				)
 				.select([
 					'e.id',
@@ -582,22 +591,23 @@ export const queries = {
 					'e.podcastIndexId',
 					'e.spotifyId',
 					'e.uri',
-					'e.wordCount'
+					'e.wordCount',
 				])
 				.limit(25)
 				// .orderBy("createdAt", "desc")
 				.execute();
 		},
-		schema: qSchema
+		schema: qSchema,
 	}),
 	notebook: query({
 		schema: getNotebookSchema,
-		fn: ({ input: { cursor }, ctx: { userId } }) => getNotebook({ cursor, userId })
+		fn: ({ input: { cursor }, ctx: { userId } }) =>
+			getNotebook({ cursor, userId }),
 	}),
 	note_mentions: query({
 		schema: z.object({
 			title: z.string().nonempty(),
-			id: z.number().int()
+			id: z.number().int(),
 		}),
 		fn: async ({ ctx, input: { title, id } }) => {
 			const references = db
@@ -609,11 +619,11 @@ export const queries = {
 							.innerJoin('Entry as e', 'r.entryId', 'e.id')
 							.innerJoin('Annotation as a', 'r.annotationId', 'a.id')
 							.where('e.id', '=', id)
-							.select(annotations.select)
+							.select(annotations.select),
 						// .select(eb => [
 						//     withEntry(eb)
 						// ])
-					).as('references')
+					).as('references'),
 				)
 				.select((eb) =>
 					jsonArrayFrom(
@@ -624,11 +634,11 @@ export const queries = {
 							.select((eb) => [withEntry(eb)])
 							.where('a.userId', '=', ctx.userId)
 							.limit(10)
-							.orderBy('a.createdAt', 'desc')
-					).as('mentions')
+							.orderBy('a.createdAt', 'desc'),
+					).as('mentions'),
 				);
 			return await references.executeTakeFirst();
-		}
+		},
 	}),
 	searchNotes: query({
 		schema: qSchema,
@@ -643,14 +653,14 @@ export const queries = {
 				.orderBy('a.createdAt', 'desc')
 				.execute();
 			return notes;
-		}
+		},
 	}),
 	searchBooks: query({
 		schema: qSchema,
 		fn: async ({ input }) => {
 			const { items } = await books.search(input.q);
 			return items ?? [];
-		}
+		},
 	}),
 	searchMovies: query({
 		schema: qSchema,
@@ -658,35 +668,35 @@ export const queries = {
 			// TODO Caching
 			const { results } = await tmdb.search(input.q);
 			return results;
-		}
+		},
 	}),
 	searchMusic: query({
 		schema: qSchema,
 		fn: async ({ input }) => {
 			const { albums } = await spotify.search(input.q);
 			return albums.items;
-		}
+		},
 	}),
 	fetch_list: query({
 		schema: inputSchema.omit({
-			userId: true
+			userId: true,
 		}),
 		fn: async ({ ctx, input }) => {
 			return fetchList({
 				...input,
-				userId: ctx.userId
+				userId: ctx.userId,
 			});
-		}
+		},
 	}),
 	rss: query({
 		schema: rssInputSchema.omit({
-			userId: true
+			userId: true,
 		}),
-		fn: async ({ ctx: { userId }, input }) => fetchRss({ ...input, userId })
+		fn: async ({ ctx: { userId }, input }) => fetchRss({ ...input, userId }),
 	}),
 	get_tweet: query({
 		schema: z.object({
-			id: z.string()
+			id: z.string(),
 		}),
 		fn: async ({ input: { id } }) => {
 			return (await twitter.singleTweet(id, {
@@ -696,9 +706,16 @@ export const queries = {
 					'in_reply_to_user_id',
 					'referenced_tweets.id',
 					'referenced_tweets.id.author_id',
-					'entities.mentions.username'
+					'entities.mentions.username',
 				],
-				'media.fields': ['url', 'preview_image_url', 'type', 'alt_text', 'duration_ms', 'variants'],
+				'media.fields': [
+					'url',
+					'preview_image_url',
+					'type',
+					'alt_text',
+					'duration_ms',
+					'variants',
+				],
 				'user.fields': ['name', 'username', 'profile_image_url'],
 				'tweet.fields': [
 					'created_at',
@@ -707,25 +724,26 @@ export const queries = {
 					'entities',
 					'public_metrics',
 					'referenced_tweets',
-					'in_reply_to_user_id'
-				]
+					'in_reply_to_user_id',
+				],
 			})) as Tweet;
-		}
+		},
 	}),
 	get_notes_for_tag: query({
 		schema: z.object({ name: z.string().nonempty() }),
-		fn: async ({ input: { name }, ctx: { userId } }) => get_notes_for_tag({ name, userId })
+		fn: async ({ input: { name }, ctx: { userId } }) =>
+			get_notes_for_tag({ name, userId }),
 	}),
 	get_entries_for_tag: query({
 		schema: z.object({
-			name: z.string().nonempty()
+			name: z.string().nonempty(),
 		}),
 		fn: async ({ input, ctx }) => {
-			let query = db
+			const query = db
 				.selectFrom('TagOnEntry as toe')
 				.innerJoin('Entry as e', 'e.id', 'toe.entryId')
 				.innerJoin('Tag as t', (join) =>
-					join.onRef('t.id', '=', 'toe.tagId').on('t.name', '=', input.name)
+					join.onRef('t.id', '=', 'toe.tagId').on('t.name', '=', input.name),
 				)
 				.select(entrySelect)
 				.select(['t.id as tag_id'])
@@ -733,7 +751,7 @@ export const queries = {
 				.orderBy('toe.id', 'desc')
 				.execute();
 			return query;
-		}
+		},
 	}),
 	get_tag_deets: query({
 		schema: z.object({ name: z.string().nonempty() }),
@@ -745,18 +763,18 @@ export const queries = {
 				.where('Tag.userId', '=', userId)
 				.select(['Tag.id', 'Tag.name', 'Tag.color', 'pin.id as pin_id'])
 				.executeTakeFirstOrThrow();
-		}
+		},
 	}),
 	entry_by_id: query({
 		schema: entry_by_id_schema,
-		fn: entry_by_id
+		fn: entry_by_id,
 	}),
 	count_library: query({
 		schema: countLibrarySchema,
-		fn: count_library
+		fn: count_library,
 	}),
 	get_authors: query({
-		fn: get_authors
+		fn: get_authors,
 	}),
 	getAllEntries: query({
 		fn: async ({ ctx }) => {
@@ -770,14 +788,16 @@ export const queries = {
 					eb
 						.case()
 						.when('e.uri', 'regexp', '^(http|https)://')
-						.then(sql`SUBSTRING_INDEX(SUBSTRING_INDEX(e.uri, '/', 3), '//', -1)`)
+						.then(
+							sql`SUBSTRING_INDEX(SUBSTRING_INDEX(e.uri, '/', 3), '//', -1)`,
+						)
 						.else(sql`null`)
 						.end()
-						.as('domain')
+						.as('domain'),
 				)
 				.execute();
 			return entries;
-		}
+		},
 	}),
 	getBookByIsbn: query({
 		schema: z.string(),
@@ -787,25 +807,25 @@ export const queries = {
 		},
 		authorized: false,
 		headers: {
-			'cache-control': 's-maxage=1, stale-while-revalidate=86400'
-		}
+			'cache-control': 's-maxage=1, stale-while-revalidate=86400',
+		},
 	}),
 	note: query({
 		schema: idSchema,
-		fn: note
+		fn: note,
 	}),
 	notes: query({
 		schema: notesInputSchema,
-		fn: notes
+		fn: notes,
 	}),
 	pins: query({
-		fn: pins
-	})
+		fn: pins,
+	}),
 } as const;
 
 export type Queries = typeof queries;
 export type Mutations = typeof mutations;
 
-export const query_keys = Object.keys(queries) as (keyof typeof queries)[];
+export const query_keys = Object.keys(queries) as Array<keyof typeof queries>;
 
 //usage $sq.tags // returns tags

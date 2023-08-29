@@ -188,6 +188,17 @@ export type Article = {
 	userId: string;
 	favoriteId: number | null;
 };
+export type Attachment = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	url: string;
+	title: string;
+	size: number | null;
+	type: string | null;
+	userId: string;
+	bookmarkId: number | null;
+};
 export type AuthKey = {
 	id: string;
 	hashed_password: string | null;
@@ -248,6 +259,7 @@ export type Bookmark = {
 	bookmarked: Generated<number>;
 	title: string | null;
 	author: string | null;
+	pdf_url: string | null;
 };
 export type BookmarkHistory = {
 	id: string;
@@ -666,6 +678,7 @@ export type DB = {
 	annotation_tag: annotation_tag;
 	annotation_to_entry_reference: annotation_to_entry_reference;
 	Article: Article;
+	Attachment: Attachment;
 	auth_key: AuthKey;
 	auth_session: AuthSession;
 	auth_user: AuthUser;
