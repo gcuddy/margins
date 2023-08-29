@@ -1,6 +1,7 @@
-import { types } from '$lib/types';
-import { BookmarkSchema } from '$lib/prisma/zod-prisma';
 import { z } from 'zod';
+
+import { BookmarkSchema } from '$lib/prisma/zod-prisma';
+import { types } from '$lib/types';
 
 const movieOrTvSchema = z.object({
 	tmdbId: z.number(),

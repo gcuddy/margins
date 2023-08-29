@@ -1,7 +1,8 @@
+import type { books_v1 } from '@googleapis/books';
+
 import { dev } from '$app/environment';
 import { GOOGLE_BOOKS_API_KEY } from '$env/static/private';
 import { redis } from '$lib/redis';
-import type { books_v1 } from '@googleapis/books';
 
 export * from "./utils";
 
@@ -15,8 +16,8 @@ function assertIsBook(book: books_v1.Schema$Volume): asserts book is Book {
 	if (!book.volumeInfo) throw new Error('Invalid book');
 }
 
-const time = (msg: string) => dev && console.time(`[gbook] ${msg}`);
-const timeEnd = (msg: string) => dev && console.timeEnd(`[gbook] ${msg}`);
+const time = (msg: string) => { dev && console.time(`[gbook] ${msg}`); };
+const timeEnd = (msg: string) => { dev && console.timeEnd(`[gbook] ${msg}`); };
 
 export const books = {
 	get: async (volumeId: string) => {
@@ -33,6 +34,7 @@ export const books = {
 		const data = (await response.json()) as books_v1.Schema$Volume;
 		assertIsBook(data);
 		await redis.set(`gbook:${volumeId}`, data, { ex: 60 * 60 * 24 * 7 });
+        // TODO: Update Entry in MySQL / qstash to send to mysql
 		timeEnd('get book');
 		return data;
 	},

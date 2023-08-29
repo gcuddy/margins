@@ -2,7 +2,7 @@
 	import { ExternalLinkIcon } from 'lucide-svelte';
 
 	import smoothload from '$lib/actions/smoothload';
-	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
+	import { H1, Lead, Muted } from '$lib/components/ui/typography';
 	import { formatDuration } from '$lib/utils/dates';
 
 	import type { PageData } from './$types';

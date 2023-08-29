@@ -13,14 +13,14 @@
 	import { nanoid } from 'nanoid';
 	import { Collapsible } from 'radix-svelte';
 	import { getContext, onMount } from 'svelte';
-	import { derived, type Writable,writable } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 	import { persisted } from 'svelte-local-storage-store';
 	import { toast } from 'svelte-sonner';
 
 	import { afterNavigate, invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Annotation from '$components/annotations/Annotation.svelte';
-// import TagPopover from '$lib/components/TagPopover.svelte';
+	// import TagPopover from '$lib/components/TagPopover.svelte';
 	import TagPopover from '$components/entries/tag-popover.svelte';
 	import UserAvatar from '$components/ui/avatar/UserAvatar.svelte';
 	import Editor, { type SaveStatus } from '$components/ui/editor/Editor.svelte';
@@ -73,7 +73,7 @@
 	import { saveUrl } from './utils';
 
 	// const render = persisted('sidebar', false);
-    const { rightSidebar, rightSidebarWidth } = getEntryContext()
+	const { rightSidebar, rightSidebarWidth } = getEntryContext();
 	export let render = rightSidebar;
 
 	let flash = false;
@@ -107,8 +107,7 @@
 
 	let show_note_form = false;
 
-	const jumping =
-		(getContext('jumping') ) ?? writable(false);
+	const jumping = getContext('jumping') ?? writable(false);
 
 	// REVIEW should we be debouncing this?
 	const width_store = rightSidebarWidth;
@@ -170,6 +169,26 @@
 		}>
 	>([]);
 
+	const linksQuery = createQuery(
+		derived(links, ($links) => ({
+			...queryFactory.links.href($links.map((l) => l.href)),
+			enabled: $currentTab === 'links',
+		})),
+	);
+
+	const linksWithData = derived(
+		[links, linksQuery],
+		([$links, $linksQuery]) => {
+			return $links.map((link) => {
+				const data = $linksQuery.data?.find((e) => e.href === link.href);
+				return {
+					...link,
+					data,
+				};
+			});
+		},
+	);
+
 	let linkFilterValue = '';
 
 	function generateLinks(content: string) {
@@ -203,7 +222,8 @@
 				const url = new URL(uri);
 				const linkUrl = new URL(link.href);
 				return url.pathname !== linkUrl.pathname;
-			});
+			})
+			.filter((link) => link.href.startsWith('http'));
 	}
 
 	const linksFetching: Record<string, boolean> = {};
@@ -233,7 +253,9 @@
 						: ''}</TabsTrigger
 				>
 				<TabsTrigger class="grow" value="timeline">Timeline</TabsTrigger>
-				<TabsTrigger class="grow" value="links">Links</TabsTrigger>
+				{#if $query.data?.entry?.type === 'article'}
+					<TabsTrigger class="grow" value="links">Links</TabsTrigger>
+				{/if}
 			</TabsList>
 		</div>
 		<TabsContent value="details">
@@ -304,8 +326,10 @@
 							<div class="sidebar-row">
 								<Muted>URL</Muted>
 								<Muted class="truncate px-2"
-									><a href={$query.data.entry.uri} target="_blank"
-										>{$query.data.entry.uri}</a
+									><a
+										href={$query.data.entry.uri}
+										target="_blank"
+										rel="noopener noreferrer">{$query.data.entry.uri}</a
 									></Muted
 								>
 							</div>
@@ -616,11 +640,12 @@
 							<DropdownMenuContent>
 								<DropdownMenuGroup>
 									<DropdownMenuItem
-										on:click={() =>
-											{ triggerDownload(
+										on:click={() => {
+											triggerDownload(
 												$query.data?.entry,
 												$query.data?.entry?.annotations,
-											); }}
+											);
+										}}
 									>
 										<FileDown class="mr-2 h-4 w-4" />
 										Export notes to markdown
@@ -691,99 +716,106 @@
 				{/if}
 			</div>
 		</TabsContent>
-		<TabsContent value="links">
-			<ul class="px-6 flex flex-col gap-y-2 text-sm">
-				<Input bind:value={linkFilterValue} />
-				{#each $links.filter((link) => {
-					if (!linkFilterValue) return true;
-					const term = link.text + ' ' + link.href;
-					return term.toLowerCase().includes(linkFilterValue.toLowerCase());
-				}) as link}
-					{@const entry = $entriesQuery.data?.find((e) => e.uri === link.href)}
-					<li class="flex items-center">
-						<!-- TODO: else if entry exists show icon -->
-						<Tooltip.Root>
-							<Tooltip.Trigger asChild let:builder>
-								<Button
-									builders={[builder]}
-									on:click={() => {
-										if (entry) return;
-										linksFetching[link.href] = true;
-										saveUrl(link.href, $query.data?.entry?.id, () => {
-											linksFetching[link.href] = false;
-											queryClient.invalidateQueries({
-												queryKey: ['entries'],
+		{#if $query.data?.entry?.type === 'article'}
+			<TabsContent value="links">
+				<ul class="px-6 flex flex-col gap-y-2 text-sm">
+					<Input bind:value={linkFilterValue} />
+					{#each $linksWithData.filter((link) => {
+						if (!linkFilterValue) return true;
+						const term = `${link.text} ${link.data?.title ?? ''} ${link.href}`;
+						return term.toLowerCase().includes(linkFilterValue.toLowerCase());
+					}) as link}
+						{@const entry = $entriesQuery.data?.find(
+							(e) => e.uri === link.href,
+						)}
+						<li class="flex items-center">
+							<!-- TODO: else if entry exists show icon -->
+							<Tooltip.Root>
+								<Tooltip.Trigger asChild let:builder>
+									<Button
+										builders={[builder]}
+										on:click={() => {
+											if (entry) return;
+											linksFetching[link.href] = true;
+											saveUrl(link.href, $query.data?.entry?.id, () => {
+												linksFetching[link.href] = false;
+												void queryClient.invalidateQueries({
+													queryKey: ['entries'],
+												});
 											});
-										});
-									}}
-									disabled={!!entry ?? linksFetching[link.href]}
-									variant="ghost"
-									size="sm"
-									class="flex items-center relative w-6 shrink-0 justify-center mr-2 group"
-								>
-									{#if !entry}
-										<PlusIcon
-											class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-0 group-hover:opacity-100"
-										/>
-									{/if}
+										}}
+										disabled={!!entry || linksFetching[link.href]}
+										variant="ghost"
+										size="sm"
+										class="flex items-center relative w-6 shrink-0 justify-center mr-2 group"
+									>
+										{#if !entry}
+											<PlusIcon
+												class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-0 group-hover:opacity-100"
+											/>
+										{/if}
+										{#if entry}
+											<EntryIcon
+												class={cn(
+													'h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100',
+												)}
+												type={entry.type}
+											/>
+										{:else if link.href.endsWith('pdf')}
+											<FileText
+												class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
+											/>
+										{:else}
+											<Link2
+												class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
+											/>
+										{/if}
+									</Button>
+								</Tooltip.Trigger>
+
+								<Tooltip.Content>
 									{#if entry}
-										<EntryIcon
-											class={cn(
-												'h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100',
-												!entry && 'group-hover:opacity-0',
-											)}
-											type={entry.type}
-										/>
+										<p>Link already saved</p>
 									{:else if link.href.endsWith('pdf')}
-										<FileText
-											class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
-										/>
+										<p>Save PDF</p>
 									{:else}
-										<Link2
-											class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
-										/>
+										<p>Save Link</p>
 									{/if}
-								</Button>
-							</Tooltip.Trigger>
+								</Tooltip.Content>
+							</Tooltip.Root>
 
-							<Tooltip.Content>
-								{#if entry}
-									<p>Link already saved</p>
-								{:else if link.href.endsWith('pdf')}
-									<p>Save PDF</p>
-								{:else}
-									<p>Save Link</p>
-								{/if}
-							</Tooltip.Content>
-						</Tooltip.Root>
+							<div class="flex flex-col min-w-0">
+								<button
+									on:click|preventDefault|stopPropagation={() => {
+										const el = document.querySelector(`a[href="${link.href}"]`);
+										if (el) {
+											el.scrollIntoView({
+												behavior: 'smooth',
+												block: 'center',
+											});
 
-						<div class="flex flex-col min-w-0">
-							<span
-								on:click|preventDefault|stopPropagation={() => {
-									const el = document.querySelector(`a[href="${link.href}"]`);
-									if (el) {
-										el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-										el.classList.add('bg-primary');
-										el.classList.add('text-primary-foreground');
-										el.classList.add('rounded');
-										setTimeout(() => {
-											el.classList.remove('bg-primary');
-											el.classList.remove('text-primary-foreground');
-											el.classList.remove('rounded');
-										}, 1000);
-									}
-								}}
-								class="basis-1/2 line-clamp-2 cursor-pointer">{link.text}</span
-							>
-							<a href={link.href} class="truncate text-muted-foreground"
-								>{link.href}</a
-							>
-						</div>
-					</li>
-				{/each}
-			</ul>
-		</TabsContent>
+											el.classList.add('bg-primary');
+											el.classList.add('text-primary-foreground');
+											el.classList.add('rounded');
+											setTimeout(() => {
+												el.classList.remove('bg-primary');
+												el.classList.remove('text-primary-foreground');
+												el.classList.remove('rounded');
+											}, 1000);
+										}
+									}}
+									class="basis-1/2 line-clamp-2 cursor-pointer text-left"
+									>{link.data?.title ?? link.text}</button
+								>
+								<a href={link.href} class="truncate text-muted-foreground"
+									>{link.href}</a
+								>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			</TabsContent>
+		{/if}
 	</Tabs>
 </aside>
 

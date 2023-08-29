@@ -1,18 +1,18 @@
 import { typeSchema } from '$lib/types';
-import { Status } from '@prisma/client';
+import { BookGenre, Status } from '@prisma/client';
 import { z } from 'zod';
 import { tagSchema } from './objects/tag';
 
 const defaultCursorSchema = z.object({
 	sort_order: z.number(),
-	id: z.number()
+	id: z.number(),
 });
 
 // Only enabled if grouping is active. TODO make types more robust
 const groupingCursorSchema = z.object({
 	type: typeSchema.optional(),
 	tag: z.number().optional(),
-	domain: z.string().optional()
+	domain: z.string().optional(),
 });
 
 export const entryListSortSchemas = z
@@ -20,16 +20,16 @@ export const entryListSortSchemas = z
 		z.object({
 			sort: z.literal('manual').nullish(),
 			// order: z.nativeEnum(['asc', 'desc']),
-			cursor: groupingCursorSchema.and(defaultCursorSchema).nullish()
+			cursor: groupingCursorSchema.and(defaultCursorSchema).nullish(),
 		}),
 		z.object({
 			sort: z.literal('updatedAt'),
 			cursor: groupingCursorSchema
 				.extend({
 					updatedAt: z.coerce.date(),
-					id: z.number()
+					id: z.number(),
 				})
-				.nullish()
+				.nullish(),
 		}),
 		z.object({
 			// sort: z.nu
@@ -37,50 +37,50 @@ export const entryListSortSchemas = z
 			cursor: groupingCursorSchema
 				.extend({
 					title: z.string(),
-					id: z.number()
+					id: z.number(),
 				})
-				.nullish()
+				.nullish(),
 		}),
 		z.object({
 			sort: z.literal('author'),
 			cursor: groupingCursorSchema
 				.extend({
 					author: z.string(),
-					id: z.number()
+					id: z.number(),
 				})
-				.nullish()
+				.nullish(),
 		}),
 		z.object({
 			sort: z.literal('time'),
 			cursor: groupingCursorSchema
 				.extend({
 					time: z.number().nullable(),
-					id: z.number()
+					id: z.number(),
 				})
-				.nullish()
-		})
+				.nullish(),
+		}),
 	])
 	.and(
 		z.object({
-			dir: z.enum(['asc', 'desc']).optional()
-		})
+			dir: z.enum(['asc', 'desc']).optional(),
+		}),
 	);
 
 const relativeDatesSchema = z.object({
 	num: z.number().int().positive(),
-	unit: z.enum(['day', 'week', 'month', 'year'])
+	unit: z.enum(['day', 'week', 'month', 'year']),
 });
 
 const gte = z.object({
-	gte: z.coerce.date().or(relativeDatesSchema)
+	gte: z.coerce.date().or(relativeDatesSchema),
 });
 
 const lte = z.object({
-	lte: z.coerce.date().or(relativeDatesSchema)
+	lte: z.coerce.date().or(relativeDatesSchema),
 });
 
 const equals = z.object({
-	equals: z.coerce.date()
+	equals: z.coerce.date(),
 });
 
 export const createdAtFilter = z.union([gte, lte, equals]);
@@ -98,13 +98,14 @@ export const filterLibrarySchema = z
 		type: typeSchema.nullish(),
 		tags: z.object({
 			ids: z.number().int().positive().array(),
-			type: z.enum(logicalOperators).optional()
+			type: z.enum(logicalOperators).optional(),
 		}),
 		readingTime: z.object({
 			min: z.number().int().positive().optional(),
-			max: z.number().int().positive().optional()
+			max: z.number().int().positive().optional(),
 		}),
 		domain: z.string().optional(),
+        book_genre: z.enum(["Fiction", "NonFiction"]).optional(),
 	})
 	.partial();
 export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
@@ -115,7 +116,7 @@ export const get_library_schema = z
 		search: z.string().optional(),
 		filter: filterLibrarySchema.optional(),
 		// Grouping is implemented as an additional sorting option, and then the UI completes it.  For instance, if we group by type, then we need all our types together (hence sorting). Additional layers of sorting will taker place "within" these groups. For no grouping, set to undefined.
-		grouping: z.enum(['none', 'type', 'tag', 'domain']).optional()
+		grouping: z.enum(['none', 'type', 'tag', 'domain']).optional(),
 	})
 	.and(entryListSortSchemas);
 

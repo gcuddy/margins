@@ -268,6 +268,11 @@ model person_to_entry {
     @@index([entryId])
 }
 
+enum BookGenre {
+    Fiction
+    NonFiction
+}
+
 /// @zod.import(["import {recipeSchema, EntryExtendedSchema} from '../schemas'"])
 model Entry {
     createdAt            DateTime                        @default(now())
@@ -312,6 +317,7 @@ model Entry {
     youtubeId            String?                         @unique
     pageCount            Int?                            @db.UnsignedSmallInt
     genres               String?
+    book_genre           BookGenre?
     language             String?                         @db.VarChar(100)
     /// The publisher for books, company for plays, etc.
     publisher            String?

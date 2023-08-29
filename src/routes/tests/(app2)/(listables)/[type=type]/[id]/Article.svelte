@@ -19,7 +19,7 @@
 	import { draggable } from '@neodrag/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
-	import { DeleteIcon, EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
+	import { EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
 	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
 	import { derived, type Writable, writable } from 'svelte/store';
 	import { scale } from 'svelte/transition';
@@ -34,7 +34,7 @@
 	import drag_context from '$lib/actions/drag-context';
 	import focusTrap from '$lib/actions/focus-trap';
 	import inView from '$lib/actions/inview';
-	import type { Annotation, TargetSchema } from '$lib/annotation';
+	import type { TargetSchema } from '$lib/annotation';
 	import {
 		createTextQuoteSelectorMatcher,
 		describeTextPosition,
@@ -61,7 +61,6 @@
 	import { getAppearanceContext, getArticleContext } from '../ctx';
 	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
-	import image_tools from './images';
 
 	const {
 		annotations,
@@ -346,8 +345,8 @@
 
 	$: if (data.entry?.annotations) {
 		console.log('entry change!');
-		const _annotations = data.entry?.annotations;
-		if (data.entry?.id) {
+		const _annotations = data.entry.annotations;
+		if (data.entry.id) {
 			const existingIds = _annotations.map((a) => a.id);
 			annotations.sync(existingIds);
 			// for (const [id, ctx] of $annotationCtx) {
@@ -380,7 +379,7 @@
 			lastSavedScrollProgress = $scroll;
 			//  set query data (and invalidate?);
 			if (data.entry?.interaction?.id) {
-				const id = data.entry?.interaction?.id;
+				const id = data.entry.interaction.id;
 				queryClient.setQueryData<FullEntryDetail>(queryKey, (old) => {
 					if (!old) return old;
 					if (!old.entry) return old;
@@ -451,9 +450,9 @@
 		console.log('ensure highlights', { $annotations, annotations: data.entry?.annotations });
 		// for (const [id, annotation] of Object.entries($annotations)) {
 		if (!data.entry?.annotations) return;
-		for (const annotation of data.entry?.annotations) {
+		for (const annotation of data.entry.annotations) {
 			const { id } = annotation;
-            let target = annotation.target as TargetSchema;
+            let target = annotation.target!;
 			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
 			console.log({ el });
 			if (!el) {
@@ -490,7 +489,7 @@
 		console.log('scrolling to', data.entry?.interaction?.progress);
 		if (data.entry?.interaction?.progress) {
 			shouldSaveProgress = false;
-			console.log('scrolling to', data.entry?.interaction?.progress);
+			console.log('scrolling to', data.entry.interaction.progress);
 			initializing = true;
 			$scroll = data.entry.interaction.progress;
 			const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -519,7 +518,7 @@
 		}
 		console.log(`Setting up annotations`, { _annotations });
 		for (const annotation of _annotations) {
-			let target = annotation.target as TargetSchema;
+			let target = annotation.target!;
 			const selector = getTargetSelector(target, 'TextQuoteSelector');
 			if (selector) {
 				const els = await highlightSelectorTarget(selector, {
@@ -667,6 +666,23 @@
 	// hovers.setup({
 	// 	context: hover_context
 	// });
+
+    let showImageMenu = false;
+    let imagePortal: HTMLElement | undefined = undefined;
+    function handleMouseMove(e: MouseEvent) {
+        if (e.target instanceof HTMLImageElement || e.target?.closest('[data-image-menu]')) {
+            // TODO
+            showImageMenu = true;
+            const container = e.target.parentElement;
+            if (container) {
+                imagePortal = container;
+                container.style.position = 'relative';
+            }
+        } else {
+            showImageMenu = false;
+            imagePortal = undefined;
+        }
+    }
 
 	const [editMenuRef, editMenuContent] = createPopperActions({
 		modifiers: [
@@ -968,11 +984,11 @@
 		{#if data.entry?.uri?.startsWith('http')}
 			<div class="flex items-center">
 				<img
-					src={`https://icons.duckduckgo.com/ip3/${getHostname(data.entry?.uri)}.ico`}
+					src={`https://icons.duckduckgo.com/ip3/${getHostname(data.entry.uri)}.ico`}
 					class="w-4 h-4 rounded mr-2"
 				/>
 				<Muted class="text-xs font-medium uppercase tracking-wider"
-					>{getHostname(data.entry?.uri).replace('www.', '')}</Muted
+					>{getHostname(data.entry.uri).replace('www.', '')}</Muted
 				>
 			</div>{/if}
 		<h1
@@ -1009,11 +1025,13 @@
 		<Attachments {data} />
 	</header>
 
+	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<div
 		bind:this={articleWrapper}
 		id="article"
 		class="select-text"
 		on:pointerdown={handlePointerDown}
+        on:mousemove={handleMouseMove}
 		use:drag_context={{
 			'context/id': data.entry?.id.toString() ?? '',
 			'context/url': data.entry?.uri ?? ''
@@ -1029,7 +1047,6 @@
 				'text-[length:var(--font-size)]',
 				'leading-[--line-height]'
 			)}
-			use:image_tools
 		>
 			{@html data.entry?.html}
 		</div>
@@ -1041,6 +1058,12 @@
 		</form>
 	{/if}
 </div>
+
+{#if showImageMenu}
+<div data-image-menu class="absolute top-0 right-0" use:usePortal={imagePortal}>
+    <Button>Image Menu</Button>
+</div>
+{/if}
 
 <style>
 	div :global(p) {

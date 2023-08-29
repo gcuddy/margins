@@ -1,16 +1,18 @@
-import { GOOGLE_BOOKS_API_KEY, TMDB_API_KEY } from '$env/static/private';
-import { books, getGbookImage } from '$lib/api/gbook';
-import pindex from '$lib/api/pindex';
-import { redis } from '$lib/redis';
 import type { books_v1 } from '@googleapis/books';
 import { error, redirect } from '@sveltejs/kit';
-import type { Movie, Search, TV, Person } from 'tmdb-ts';
-import { db } from '$lib/db';
 import { sql } from 'kysely';
-import { getId } from '$lib/utils/entries';
-import type { PageServerLoad } from './$types';
+import type { Movie, Person,Search, TV } from 'tmdb-ts';
+
+import { TMDB_API_KEY } from '$env/static/private';
+import { books, getGbookImage } from '$lib/api/gbook';
+import pindex from '$lib/api/pindex';
 import spotify from '$lib/api/spotify';
+import { db } from '$lib/db';
 import { annotations } from '$lib/db/selects';
+import { redis } from '$lib/redis';
+import { getId } from '$lib/utils/entries';
+
+import type { PageServerLoad } from './$types';
 
 type GoodObject = {
     id: string | number;
@@ -81,7 +83,7 @@ export const load = (async (e) => {
     const session = await e.locals.auth.validate();
     if (!session) throw error(401, "Unauthorized");
     if (!type) {
-        throw redirect(307, e.url.pathname + "?type=my");
+        throw redirect(307, `${e.url.pathname  }?type=my`);
     }
     const q = e.url.searchParams.get("q");
     console.log({ q })
@@ -97,7 +99,7 @@ export const load = (async (e) => {
         console.log("cache hit")
         console.timeEnd("search")
         return {
-            results: cached as GoodObject[],
+            results: cached as Array<GoodObject>,
             type,
             q
         }
@@ -116,7 +118,7 @@ export const load = (async (e) => {
         }
         const multi = await response.json() as MultiSearch;
         console.log({ multi })
-        const results = (multi.results.filter(r => r.media_type !== "person") as (MoviePlusType | TvPlusType)[]).map(adaptTmdb)
+        const results = (multi.results.filter(r => r.media_type !== "person") as Array<MoviePlusType | TvPlusType>).map(adaptTmdb)
         await redis.set(`search:${type}:${q}`, results, {
             ex: 60 * 60 * 24
         });
@@ -162,7 +164,8 @@ export const load = (async (e) => {
 
         console.time("entry search")
         const entries = await db.selectFrom("Entry")
-            .where(sql`MATCH(title,author,text) AGAINST (${q})`)
+            .select(sql<number>`match(title,author) against (${q})`.as('title_score'))
+            .select(sql<number>`match(text) against (${q})`.as('text_score'))
             .select([
                 "id",
                 "title",
@@ -176,8 +179,10 @@ export const load = (async (e) => {
                 "uri",
                 "spotifyId"
             ])
-            .limit(10)
+            .where(sql`MATCH(title,author,text) AGAINST (${q})`)
+            .orderBy(sql`(title_score*13)+(text_score)`, 'desc')
             .orderBy("createdAt", "desc")
+            .limit(10)
             .execute();
 
         console.timeEnd("entry search")

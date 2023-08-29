@@ -1,115 +1,40 @@
 <script lang="ts">
 	import {
 		createQuery,
-		type DefaultError,
-		InfiniteData,
-		useQueryClient,
 	} from '@tanstack/svelte-query';
-	import { getContext, onMount, setContext } from 'svelte';
+	import { onMount, setContext } from 'svelte';
 	import { derived, writable } from 'svelte/store';
 
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
-	import {
-		getArrayQueryKey,
-		mutation,
-		qquery,
-		type QueryInput,
-		type QueryOutput,
-		type TypedQueryKey,
-	} from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { queryOptions } from '$lib/queries/utils';
-	import type { LibraryResponse } from '$lib/server/queries';
-	import { update_entry } from '$lib/state/entries';
-	import { getCurrentListContext } from '$lib/stores/currentList';
 	import { recents } from '$lib/stores/recents';
-	import { getId } from '$lib/utils/entries';
 	import { numberOrString } from '$lib/utils/misc';
 	import { cn } from '$lib/utils/tailwind';
 
-	import type { Queries } from '../../../queries.server';
 	import { getEntryContext } from '../ctx';
 	import type { PageData } from './$types';
-	import MediaHeader from './MediaHeader.svelte';
 	import { get_module } from './module';
-	import { entryQuery, useEntry } from './query';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
 
 	$: ({ type } = data);
-	const currentList = getCurrentListContext();
-	$: currentIndex = $currentList.entries.findIndex(
-		(e) => e.id === data.entry?.id,
-	);
-	$: nextId = $currentList.entries[currentIndex + 1]?.id;
-	$: prevId = $currentList.entries[currentIndex - 1]?.id;
 
-	$: ({ hasMore } = currentList);
-
-	// desired api: queryOpts("fn", { id: $page.params.id, type: data.type })
-
-	function createQueryOptions<TFn extends keyof Queries>(
-		fn: TFn,
-		input: QueryInput<TFn>,
-	) {
-		return queryOptions<
-			QueryOutput<TFn>,
-			DefaultError,
-			QueryOutput<TFn>,
-			TypedQueryKey<TFn>
-		>({
-			queryKey: getArrayQueryKey(fn, input),
-			queryFn: ({ queryKey }) =>
-				qquery($page, queryKey[0][0], queryKey[1].input),
-		});
-	}
-
-	// const query = useEntry({
-	// 	id: +$page.params.id,
-	// 	type: data.type
-	// });
-	$: console.log({ $query });
-	// const query = createQuery(data.query);
-	const queryClient = useQueryClient();
 	const query = createQuery(
 		derived(page, ($page) => {
 			return {
-				...queryFactory.entries.detail({
-					id: numberOrString($page.params.id),
-					type: data.type,
-				}),
+				...(typeof $page.params.id === 'string'
+					? queryFactory.entries.detail({
+							id: numberOrString($page.params.id),
+							type: data.type,
+					  })
+					: {}),
 				placeholderData: undefined,
-				// placeholderData: () => {
-				// 	console.time(`placeholderData`);
-				// 	console.log({ queryClient });
-				// 	const listData = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
-				// 		queryKey: ['entries', 'list']
-				// 	});
-
-				// 	console.log({ listData });
-				// 	const entry = listData
-				// 		?.flatMap((list) => list[1])
-				// 		?.flatMap((query) => query?.pages)
-				// 		?.flatMap((page) => {
-				// 			console.log({ page });
-				// 			return page?.entries;
-				// 		})
-				// 		?.find((entry) => {
-				// 			console.log({ entry, $page });
-				// 			return getId(entry) === numberOrString($page.params.id);
-				// 		}) as any;
-				// 	console.timeEnd(`placeholderData`);
-				// 	console.log({ entry });
-				// 	return entry;
-				// }
-				// ...(!data.cache ? { refetchOnMount: false } : { initialData: data.cache })
 			};
 		}),
 	);
-	$: console.log({ $query, data });
 
 	afterNavigate(() => {
 		// push to recents
@@ -119,24 +44,22 @@
 			recents.add_entry($query.data.entry);
 		}
 		if ($query.data.entry.type !== 'article') return;
-		mutation($page, 'saveInteraction', {
-			entryId: $query.data.entry.id,
-			last_viewed: new Date(),
-			is_read: true,
-		});
+		// void mutation($page, 'saveInteraction', {
+		// 	entryId: $query.data.entry.id,
+		// 	last_viewed: new Date(),
+		// 	is_read: 1,
+		// })
 	});
 
-	sync();
-
+	// sync();
+//
 	setContext('pdf', writable(null));
 
-	function sync() {
-		if (!$query.data?.entry) return;
-		update_entry($query.data.entry.id, $query.data.entry);
-	}
+	// function sync() {
+	// 	if (!$query.data?.entry) return;
+	// 	update_entry($query.data.entry.id, $query.data.entry);
+	// }
 
-	// todo
-	let current_list = true;
 
 	const { rightSidebar } = getEntryContext();
 
@@ -155,25 +78,6 @@
 	</title>
 </svelte:head>
 
-<!-- lil arrows -->
-{#if prevId || nextId}
-	<div class="fixed right-4 top-4 flex flex-col">
-		{#if prevId}
-			<a href="/tests/entry/{prevId}">prev</a>
-		{/if}
-
-		{#if nextId}
-			<a href="/tests/entry/{nextId}">next</a>
-		{/if}
-		{#if $hasMore && !nextId}
-			<button on:click={currentList.fetch}> fetch more </button>
-			{#if $currentList.loading}
-				<span>loading...</span>
-			{/if}
-		{/if}
-	</div>
-{/if}
-
 <div
 	class={cn(
 		'grow transition-[width] duration-300',
@@ -188,9 +92,6 @@
 	{#if $query.isPlaceholderData || $query.isLoading}
 		<Skeleton class="w-full h-[300px]" />
 	{:else if $query.isSuccess}
-		<!-- Placeholder Data: -->
-		<!-- <pre>{JSON.stringify($query.data, null, 2)}</pre> -->
-		<!-- <MediaHeader {...$query.data} /> -->
 		{#if type === 'article'}
 			<svelte:component
 				this={data.component}
@@ -199,14 +100,10 @@
 					...$query.data,
 				}}
 			>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags-->
 				{@html $query.data.entry?.html}
 			</svelte:component>
 		{:else}
-			<!-- if ['movie', 'book', 'podcast', 'tv', 'album', 'video'].includes(data.type) -->
-			<!-- data={{
-                ...data,
-                ...$query.data
-            }} -->
 			<svelte:component this={data.component} {data} />
 		{/if}
 	{/if}
@@ -220,6 +117,3 @@
 		}}
 	/> -->
 {/if}
-
-<style lang="postcss">
-</style>

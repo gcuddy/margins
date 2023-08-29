@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { createQueryKeyStore } from '@lukemorales/query-key-factory';
 import {
-	type createInfiniteQuery,
 	type CreateInfiniteQueryOptions,
 	type CreateQueryOptions,
 	keepPreviousData,
-	type QueryClient,
-	type QueryMeta,
-	useQueryClient
+	type QueryClient
 } from '@tanstack/svelte-query';
+import { get } from 'svelte/store';
 
-import { qquery, Queries, type QueryInput, type QueryOutput } from './query';
+import { page } from '$app/stores';
+
+import { qquery, type QueryInput, type QueryOutput } from './query';
 
 
 type Meta = Record<string, unknown> | undefined;
@@ -143,8 +142,25 @@ export const queryFactory = {
 		})
 	},
     links: {
-        href: (href: string) => ({
-            queryKey: ['links', href] as const,
+        href: (hrefs: Array<string>) => ({
+            queryKey: ['links', hrefs] as const,
+            queryFn: async () => {
+                const $page = get(page);
+                const res = await fetch(`${$page.url.origin}/api/links`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(hrefs)
+                });
+                if (!res.ok) {
+                    throw new Error("Failed to fetch link metadata");
+                }
+                const data = await res.json();
+                return data as Array<{title: string, href: string;}>
+            },
+            staleTime: Infinity,
+            placeholderData: keepPreviousData
         })
     }
 } satisfies TQueryFactory;

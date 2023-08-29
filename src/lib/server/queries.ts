@@ -316,7 +316,7 @@ export async function get_library({
 		);
 	}
 	if (filter) {
-		const { createdAt, type, tags, readingTime, domain } = filter;
+		const { createdAt, type, tags, readingTime, domain, book_genre } = filter;
 		if (type) {
 			query = query.where('e.type', '=', type);
 		}
@@ -398,6 +398,9 @@ export async function get_library({
 				.where('e.uri', 'regexp', '^(http|https)://')
 				.where(sql`SUBSTRING_INDEX(SUBSTRING_INDEX(e.uri, '/', 3), '//', -1) = ${domain}`);
 		}
+        if (book_genre) {
+            query = query.where('e.book_genre', '=', book_genre)
+        }
 	}
 	const entries = await query.execute();
 	let nextCursor = null;

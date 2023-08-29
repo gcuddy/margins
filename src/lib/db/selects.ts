@@ -1,25 +1,21 @@
-import { db } from '$lib/db';
-import type {
-	Annotation,
-	Collection,
-	CollectionItems,
-	DB,
-	Entry,
-	Feed
-} from '$lib/prisma/kysely/types';
 import type { RelationType, Status } from '@prisma/client';
 import type {
 	ExpressionBuilder,
 	InferResult,
-	Kysely,
-	OrderByExpression,
 	RawBuilder,
 	ReferenceExpression,
 	SelectArg,
-	SelectExpression,
-	SelectQueryBuilder
+	SelectExpression
 } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
+
+import { db } from '$lib/db';
+import type {
+	Annotation,
+	DB,
+	Entry,
+	Feed
+} from '$lib/prisma/kysely/types';
 
 type S = SelectExpression<DB & Record<'e', Entry>, 'e'>;
 
@@ -36,30 +32,32 @@ export const entrySelect = [
 	'e.podcastIndexId',
 	'e.spotifyId',
 	'e.wordCount'
-] as const satisfies Readonly<S[]>;
+] as const satisfies Readonly<Array<S>>;
 
 export function selectEntryInList() {
 	const a = db.selectFrom('Entry as e').select(entrySelect);
 	return a;
 }
 
+export type ListEntry = InferResult<ReturnType<typeof selectEntryInList>>[number];
+
 export type EntryInList = InferResult<ReturnType<typeof selectEntryInList>>[number] & {
     podcastIndexId: number | null;
 	sort_order?: number;
 	progress?: number | null;
 	status?: Status;
-	tags?: { id: number; name: string }[];
-	annotations?: AnnotationsInEntry[];
+	tags?: Array<{ id: number; name: string }>;
+	annotations?: Array<AnnotationsInEntry>;
 	num_annotations?: `${number}` | number;
-	relations?: {
+	relations?: Array<{
 		id: string;
 		type: RelationType;
 		entry?: EntryInList;
-	}[];
-	collections?: {
+	}>;
+	collections?: Array<{
 		id: number;
 		name: string;
-	}[];
+	}>;
 };
 
 export const collectionItem = {

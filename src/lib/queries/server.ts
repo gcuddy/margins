@@ -7,7 +7,7 @@ import type {
 	Insertable,
 	ReferenceExpression,
 	SelectArg,
-	SelectExpression
+	SelectExpression,
 } from 'kysely';
 import { sql } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
@@ -19,16 +19,21 @@ import { books } from '$lib/api/gbook';
 import pindex from '$lib/api/pindex';
 import spotify from '$lib/api/spotify';
 import { tmdb } from '$lib/api/tmdb';
-import { type Tweet,tweet_types } from '$lib/api/twitter';
+import { type Tweet, tweet_types } from '$lib/api/twitter';
 import { db, json } from '$lib/db';
 import { generateSearchNotePhrase } from '$lib/db/queries/note';
-import { annotations, entrySelect, getFirstBookmarkSort, withEntry } from '$lib/db/selects';
+import {
+	annotations,
+	entrySelect,
+	getFirstBookmarkSort,
+	withEntry,
+} from '$lib/db/selects';
 import { applyFilter } from '$lib/db/utils/comparators';
 import { librarySchema, tagSchema } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import type { Annotation, DB, Entry, Favorite } from '$lib/prisma/kysely/types';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
-import { type idSchema } from '$lib/schemas';
+import type {  idSchema } from '$lib/schemas';
 import { noteFilterSchema } from '$lib/schemas/inputs';
 import { typeSchema } from '$lib/types';
 
@@ -36,7 +41,7 @@ type Ctx = {
 	ctx: {
 		userId: string;
 	};
-}
+};
 
 type GetCtx<T extends z.ZodTypeAny> = {
 	input: z.input<T>;
@@ -45,25 +50,25 @@ type GetCtx<T extends z.ZodTypeAny> = {
 export const mediaIdSchema = z.union([
 	z.object({
 		tmdbId: z.number().int(),
-		type: z.enum(['movie', 'tv'])
+		type: z.enum(['movie', 'tv']),
 	}),
 	z.object({
 		spotifyId: z.string(),
-		type: z.enum(['album'])
+		type: z.enum(['album']),
 	}),
 	z.object({
 		googleBooksId: z.string(),
-		type: z.enum(['book'])
+		type: z.enum(['book']),
 	}),
 	z.object({
 		podcastIndexId: z.number(),
-		type: z.enum(['podcast'])
-	})
+		type: z.enum(['podcast']),
+	}),
 ]);
 
 const entrySchema = z.object({
 	entryId: z.number().int(),
-	type: z.enum(['article', 'video', 'pdf', 'tweet', 'board_game'])
+	type: z.enum(['article', 'video', 'pdf', 'tweet', 'board_game']),
 });
 
 export const entryIdAndTypeSchema = z.union([mediaIdSchema, entrySchema]);
@@ -81,7 +86,7 @@ export async function searchEntries(q: string) {
 			'author',
 			'googleBooksId',
 			'tmdbId',
-			'podcastIndexId'
+			'podcastIndexId',
 		])
 		.limit(10)
 		.orderBy('createdAt', 'desc')
@@ -91,7 +96,10 @@ export async function searchEntries(q: string) {
 
 const id_schema = z.coerce.number().or(z.coerce.number().array());
 
-const id_or_entryid = z.union([z.object({ entryId: id_schema }), z.object({ id: id_schema })]);
+const id_or_entryid = z.union([
+	z.object({ entryId: id_schema }),
+	z.object({ id: id_schema }),
+]);
 
 export const updateBookmarkSchema = id_or_entryid.and(
 	z.object({
@@ -99,9 +107,9 @@ export const updateBookmarkSchema = id_or_entryid.and(
 			// private: number (0 or 1)
 			private: z.number().int().optional(),
 			is_read: z.number().int().optional(),
-			bookmarked: z.number().int().optional()
-		})
-	})
+			bookmarked: z.number().int().optional(),
+		}),
+	}),
 );
 
 export type UpdateBookmarkSchema = z.input<typeof updateBookmarkSchema>;
@@ -109,11 +117,14 @@ export type UpdateBookmarkSchema = z.input<typeof updateBookmarkSchema>;
 export async function updateBookmark(
 	variables: UpdateBookmarkSchema & {
 		userId: string;
-	}
+	},
 ) {
 	const { data, userId } = variables;
 	if ('id' in variables) {
-		let bookmarks = db.updateTable('Bookmark').set(data).where('userId', '=', userId);
+		let bookmarks = db
+			.updateTable('Bookmark')
+			.set(data)
+			.where('userId', '=', userId);
 		const { id } = variables;
 		if (Array.isArray(id)) {
 			bookmarks = bookmarks.where('id', 'in', id);
@@ -132,8 +143,8 @@ export async function updateBookmark(
 					userId,
 					entryId,
 					bookmarked: 0,
-					...data
-				}))
+					...data,
+				})),
 			)
 			.onDuplicateKeyUpdate(data);
 		return await bookmarks.execute();
@@ -146,12 +157,15 @@ export async function updateBookmark(
 }
 
 export const getNotebookSchema = z.object({
-	cursor: z.coerce.date().optional()
+	cursor: z.coerce.date().optional(),
 });
 
 export type GetNotebookSchema = z.infer<typeof getNotebookSchema>;
 
-export async function getNotebook({ userId, cursor }: GetNotebookSchema & { userId: string }) {
+export async function getNotebook({
+	userId,
+	cursor,
+}: GetNotebookSchema & { userId: string }) {
 	console.time('notebook');
 	const take = 25;
 	let query = db
@@ -160,7 +174,9 @@ export async function getNotebook({ userId, cursor }: GetNotebookSchema & { user
 		.select(annotations.select)
 		.select(withEntry)
 		.where('userId', '=', userId)
-		.where(({ or, cmpr }) => or([cmpr('a.type', '=', 'annotation'), cmpr('a.type', '=', 'note')]))
+		.where(({ or, cmpr }) =>
+			or([cmpr('a.type', '=', 'annotation'), cmpr('a.type', '=', 'note')]),
+		)
 		.where('deleted', 'is', null)
 		.orderBy('a.updatedAt', 'desc')
 		.limit(take + 1);
@@ -184,13 +200,21 @@ export async function getNotebook({ userId, cursor }: GetNotebookSchema & { user
 
 export function getTags(userId: string) {
 	console.time('getTags');
-	const tags = db.selectFrom('Tag').select(['id', 'name']).where('userId', '=', userId).execute();
+	const tags = db
+		.selectFrom('Tag')
+		.select(['id', 'name'])
+		.where('userId', '=', userId)
+		.execute();
 	console.timeEnd('getTags');
 	return tags;
 }
 
 export async function deleteAnnotation(userId: string, id: string) {
-	await db.deleteFrom('Annotation').where('userId', '=', userId).where('id', '=', id).execute();
+	await db
+		.deleteFrom('Annotation')
+		.where('userId', '=', userId)
+		.where('id', '=', id)
+		.execute();
 }
 
 export const upsertAnnotationSchema = annotationSchema
@@ -198,21 +222,21 @@ export const upsertAnnotationSchema = annotationSchema
 		relations: z
 			.object({
 				relatedEntryId: z.number().int(),
-				type: z.nativeEnum(RelationType).default('Related')
+				type: z.nativeEnum(RelationType).default('Related'),
 			})
 			.array()
 			.default([]),
 		// The array of tags to add to this annotation
 		tags: z.number().array().default([]),
-		id: annotationSchema.shape.id.or(z.array(z.string()))
+		id: annotationSchema.shape.id.or(z.array(z.string())),
 	})
 	.omit({
-		userId: true
+		userId: true,
 	});
 
 export async function upsertAnnotation({
 	input: data,
-	ctx
+	ctx,
 }: GetCtx<typeof upsertAnnotationSchema>) {
 	const { userId } = ctx;
 	const { id: _id, relations, tags, ...annotation } = data;
@@ -232,17 +256,21 @@ export async function upsertAnnotation({
 				...annotation,
 				private: annotation.private ? 1 : 0,
 				target: annotation.target ? json(annotation.target) : undefined,
-				contentData: annotation.contentData ? json(annotation.contentData) : undefined,
-				userId
-			}))
+				contentData: annotation.contentData
+					? json(annotation.contentData)
+					: undefined,
+				userId,
+			})),
 		)
 		.onDuplicateKeyUpdate({
 			...annotation,
 			updatedAt: new Date(),
 			private: annotation.private ? 1 : 0,
 			target: annotation.target ? json(annotation.target) : undefined,
-			contentData: annotation.contentData ? json(annotation.contentData) : undefined,
-			userId
+			contentData: annotation.contentData
+				? json(annotation.contentData)
+				: undefined,
+			userId,
 		})
 		.execute();
 
@@ -267,9 +295,9 @@ export async function upsertAnnotation({
 							id: nanoid(),
 							updatedAt: new Date(),
 							userId,
-							type: relation.type
-						}))
-					)
+							type: relation.type,
+						})),
+					),
 				)
 				.ignore()
 				.execute();
@@ -277,29 +305,32 @@ export async function upsertAnnotation({
 	}
 	if (tags?.length) {
 		await db.transaction().execute(async (trx) => {
-			await trx.deleteFrom('annotation_tag').where('annotationId', 'in', ids).execute();
+			await trx
+				.deleteFrom('annotation_tag')
+				.where('annotationId', 'in', ids)
+				.execute();
 			return await trx
 				.insertInto('annotation_tag')
 				.values(
 					ids.flatMap((id) =>
 						tags.map((tag) => ({
 							annotationId: id,
-							tagId: tag
-						}))
-					)
+							tagId: tag,
+						})),
+					),
 				)
 				.ignore()
 				.execute();
 		});
 	}
 	return {
-		id: ids.length === 1 ? ids[0] : ids
+		id: ids.length === 1 ? ids[0] : ids,
 	};
 }
 
 const noteUpdateInput = z.object({
 	id: z.string(),
-	input: upsertAnnotationSchema.omit({ id: true })
+	input: upsertAnnotationSchema.omit({ id: true }),
 });
 
 const noteUpdateInputSchema = noteUpdateInput.or(z.array(noteUpdateInput));
@@ -308,17 +339,17 @@ export const s_add_to_collection = z
 	.object({
 		entryId: z.number().int().or(z.number().int().array()).optional(),
 		collectionId: z.number().int(),
-		annotationId: z.string().or(z.string().array()).optional()
+		annotationId: z.string().or(z.string().array()).optional(),
 	})
 	.refine(
 		(data) => data.entryId ?? data.annotationId,
-		'Must provide either entryId or annotationId'
+		'Must provide either entryId or annotationId',
 	);
 
 export async function add_to_collection(
 	input: z.infer<typeof s_add_to_collection> & {
 		userId: string;
-	}
+	},
 ) {
 	if (Array.isArray(input.annotationId)) {
 		return await db
@@ -328,8 +359,8 @@ export async function add_to_collection(
 					collectionId: input.collectionId,
 					annotationId: id,
 					id: nanoid(),
-					updatedAt: new Date()
-				}))
+					updatedAt: new Date(),
+				})),
 			)
 			.execute();
 	} else if (Array.isArray(input.entryId)) {
@@ -340,8 +371,8 @@ export async function add_to_collection(
 					collectionId: input.collectionId,
 					entryId: id,
 					id: nanoid(),
-					updatedAt: new Date()
-				}))
+					updatedAt: new Date(),
+				})),
 			)
 			.execute();
 	} else {
@@ -352,7 +383,7 @@ export async function add_to_collection(
 				annotationId: input.annotationId,
 				collectionId: input.collectionId,
 				id: nanoid(),
-				updatedAt: new Date()
+				updatedAt: new Date(),
 			})
 			.execute();
 	}
@@ -361,21 +392,21 @@ export async function add_to_collection(
 // MUTATIONS
 
 const entries_schema = z.object({
-	entries: z.array(z.number().int())
+	entries: z.array(z.number().int()),
 });
 
 export const tagsOnEntrySchema = tagSchema.and(entries_schema);
 
 export const collectionsOnEntrySchema = z
 	.object({
-		collections: z.array(z.number().int())
+		collections: z.array(z.number().int()),
 	})
 	.and(entries_schema);
 
 export async function set_collections_on_entry({
 	collections,
 	entries,
-	userId
+	userId,
 }: z.infer<typeof collectionsOnEntrySchema> & { userId: string }) {
 	// first, delete any existing collections on these entries
 	// TODO
@@ -393,7 +424,7 @@ export async function set_collections_on_entry({
 export async function set_tags_on_entry({
 	tags,
 	entries,
-	userId
+	userId,
 }: z.input<typeof tagsOnEntrySchema> & { userId: string }) {
 	// First, delete all tags on entries
 	// await db.deleteFrom("TagOnEntry").where("entryId", "in", entries).execute();
@@ -416,17 +447,21 @@ export async function set_tags_on_entry({
 			.values(
 				tagsToAdd.map((tag) => ({
 					name: tag.name,
-					userId
-				}))
+					userId,
+				})),
 			)
 			.ignore()
 			.execute();
 		console.log('inserted');
-		const newIds = insertData.map((row) => Number(row.insertId)).filter(Boolean);
+		const newIds = insertData
+			.map((row) => Number(row.insertId))
+			.filter(Boolean);
 		tagIds.push(...newIds);
 	}
 
-	const values = entries.flatMap((entryId) => tagIds.map((tagId) => ({ entryId, tagId, userId })));
+	const values = entries.flatMap((entryId) =>
+		tagIds.map((tagId) => ({ entryId, tagId, userId })),
+	);
 
 	const q = await db.insertInto('TagOnEntry').values(values).ignore().execute();
 
@@ -445,10 +480,13 @@ export async function set_tags_on_entry({
 export const entryMetadataSchema = z.object({
 	id: z.number().int(),
 	title: z.string().optional(),
-	author: z.string().optional()
+	author: z.string().optional(),
 });
 
-export async function update_metadata_on_entry({ input, ctx }: GetCtx<typeof entryMetadataSchema>) {
+export async function update_metadata_on_entry({
+	input,
+	ctx,
+}: GetCtx<typeof entryMetadataSchema>) {
 	const { id, title, author } = input;
 	const { userId } = ctx;
 
@@ -459,22 +497,30 @@ export async function update_metadata_on_entry({ input, ctx }: GetCtx<typeof ent
 			entryId: id,
 			title,
 			author,
-			updatedAt: new Date()
+			updatedAt: new Date(),
 			// bookmarked: true,
 		})
 		.onDuplicateKeyUpdate({
 			title,
-			author
+			author,
 		})
 		.execute();
 }
 
 // TODO cursor pagination and ordering
-export async function get_notes_for_tag({ name, userId }: { name: string; userId: string }) {
+export async function get_notes_for_tag({
+	name,
+	userId,
+}: {
+	name: string;
+	userId: string;
+}) {
 	const query = db
 		.selectFrom('annotation_tag as at')
 		.innerJoin('Annotation as a', 'a.id', 'at.annotationId')
-		.innerJoin('Tag as t', (join) => join.onRef('t.id', '=', 'at.tagId').on('t.name', '=', name))
+		.innerJoin('Tag as t', (join) =>
+			join.onRef('t.id', '=', 'at.tagId').on('t.name', '=', name),
+		)
 		.select(annotations.select)
 		.select('t.id as tag_id')
 		.where('a.userId', '=', userId)
@@ -488,15 +534,15 @@ export const entry_by_id_schema = z.object({
 	id: z.number().int().or(z.string()),
 	type: typeSchema,
 	/** TV Season, only relevant if type === "tv" */
-	season: z.number().int().optional()
+	season: z.number().int().optional(),
 });
 
 export async function entry_by_id({
 	input: { id, type, season },
-	ctx: { userId }
+	ctx: { userId },
 }: GetCtx<typeof entry_by_id_schema>) {
-
-	let podcast: Awaited<ReturnType<(typeof pindex)['episodeById']>> | null = null;
+	let podcast: Awaited<ReturnType<(typeof pindex)['episodeById']>> | null =
+		null;
 
 	let query = db
 		.selectFrom('Entry')
@@ -516,7 +562,7 @@ export async function entry_by_id({
 			'googleBooksId',
 			'tmdbId',
 			'spotifyId',
-			'youtubeId'
+			'youtubeId',
 		])
 		.$if(!!userId, (q) =>
 			q.select((eb) => [
@@ -536,7 +582,7 @@ export async function entry_by_id({
 							'Annotation.createdAt',
 							'Annotation.exact',
 							'Annotation.type',
-							'Annotation.parentId'
+							'Annotation.parentId',
 						])
 						.select((eb) =>
 							jsonArrayFrom(
@@ -544,8 +590,8 @@ export async function entry_by_id({
 									.selectFrom('annotation_tag as at')
 									.innerJoin('Tag as t', 't.id', 'at.tagId')
 									.select(['t.id', 't.name', 't.color'])
-									.whereRef('at.annotationId', '=', 'Annotation.id')
-							).as('tags')
+									.whereRef('at.annotationId', '=', 'Annotation.id'),
+							).as('tags'),
 						)
 						.whereRef('Annotation.entryId', '=', 'Entry.id')
 						.where('Annotation.userId', '=', userId)
@@ -557,7 +603,7 @@ export async function entry_by_id({
 						}>()
 						.orderBy('Annotation.start', 'asc')
 						.orderBy('Annotation.createdAt', 'asc')
-						.limit(100)
+						.limit(100),
 				).as('annotations'),
 				jsonArrayFrom(
 					eb
@@ -565,7 +611,7 @@ export async function entry_by_id({
 						.select(['c.id', 'c.name'])
 						.innerJoin('CollectionItems as ci', 'ci.collectionId', 'c.id')
 						.whereRef('ci.entryId', '=', 'Entry.id')
-						.where('c.userId', '=', userId)
+						.where('c.userId', '=', userId),
 				).as('collections'),
 				jsonArrayFrom(
 					eb
@@ -583,12 +629,12 @@ export async function entry_by_id({
 										'e.spotifyId',
 										'e.tmdbId',
 										'e.googleBooksId',
-										'e.podcastIndexId'
-									])
-							).as('related_entry')
+										'e.podcastIndexId',
+									]),
+							).as('related_entry'),
 						)
 						.whereRef('r.entryId', '=', 'Entry.id')
-						.where('r.userId', '=', userId)
+						.where('r.userId', '=', userId),
 				).as('relations'),
 				// todo: compare these?
 				jsonArrayFrom(
@@ -607,12 +653,12 @@ export async function entry_by_id({
 										'e.spotifyId',
 										'e.tmdbId',
 										'e.googleBooksId',
-										'e.podcastIndexId'
-									])
-							).as('related_entry')
+										'e.podcastIndexId',
+									]),
+							).as('related_entry'),
 						)
 						.whereRef('r.relatedEntryId', '=', 'Entry.id')
-						.where('r.userId', '=', userId)
+						.where('r.userId', '=', userId),
 				).as('back_relations'),
 				jsonArrayFrom(
 					eb
@@ -620,12 +666,19 @@ export async function entry_by_id({
 						.innerJoin('Tag as t', 't.id', 'toe.tagId')
 						.select(['t.id', 't.name'])
 						.whereRef('toe.entryId', '=', 'Entry.id')
-						.where('toe.userId', '=', userId)
+						.where('toe.userId', '=', userId),
 				).as('tags'),
 				jsonObjectFrom(
 					eb
 						.selectFrom('Bookmark as b')
-						.select(['b.id', 'b.status', 'b.createdAt', 'b.bookmarked', 'b.author', 'b.title'])
+						.select([
+							'b.id',
+							'b.status',
+							'b.createdAt',
+							'b.bookmarked',
+							'b.author',
+							'b.title',
+						])
 						// .select(eb => [jsonObjectFrom(
 						//     eb.selectFrom('auth_user as u').select(['u.username', 'u.id']).whereRef('u.id', '=', 'b.userId')
 						// )]).as('user')
@@ -634,11 +687,11 @@ export async function entry_by_id({
 								eb
 									.selectFrom('auth_user as u')
 									.select(['u.id', 'u.username', 'u.avatar'])
-									.whereRef('u.id', '=', 'b.userId')
-							).as('user')
+									.whereRef('u.id', '=', 'b.userId'),
+							).as('user'),
 						])
 						.whereRef('b.entryId', '=', 'Entry.id')
-						.where('b.userId', '=', userId)
+						.where('b.userId', '=', userId),
 				).as('bookmark'),
 				jsonObjectFrom(
 					eb
@@ -650,21 +703,25 @@ export async function entry_by_id({
 							'i.date_started',
 							'i.date_finished',
 							'i.title',
-							'i.note'
+							'i.note',
 						])
 						.whereRef('i.entryId', '=', 'Entry.id')
 						.where('i.userId', '=', userId)
-						.limit(1)
-				).as('interaction')
-			])
+						.limit(1),
+				).as('interaction'),
+			]),
 		)
 		.$if(type === 'tweet', (qb) => qb.select(['Entry.original as tweet']));
 	switch (type) {
 		case 'movie':
-			query = query.where('Entry.tmdbId', '=', +id).where('Entry.type', '=', 'movie');
+			query = query
+				.where('Entry.tmdbId', '=', +id)
+				.where('Entry.type', '=', 'movie');
 			break;
 		case 'tv':
-			query = query.where('Entry.tmdbId', '=', +id).where('Entry.type', '=', 'tv');
+			query = query
+				.where('Entry.tmdbId', '=', +id)
+				.where('Entry.type', '=', 'tv');
 			break;
 		case 'book':
 			query = query
@@ -674,7 +731,9 @@ export async function entry_by_id({
 		case 'podcast': {
 			// if id starts with p, this indicates it's a pointer to the podcastindexid
 			// else, it's a podcast saved without a podcastindexid (i.e. a private podcast or something of the sort)
-			const podcastIndexId = id.toString().startsWith('p') ? id.toString().slice(1) : undefined;
+			const podcastIndexId = id.toString().startsWith('p')
+				? id.toString().slice(1)
+				: undefined;
 			if (podcastIndexId) {
 				query = query.where('Entry.podcastIndexId', '=', +podcastIndexId);
 				podcast = await pindex.episodeById(+podcastIndexId);
@@ -710,8 +769,11 @@ export async function entry_by_id({
 		album: type === 'album' ? await spotify.album(id.toString()) : null,
 		podcast,
 		extras: {
-			season: type === 'tv' && typeof season === 'number' ? await tmdb.tv.season(+id, season) : null
-		}
+			season:
+				type === 'tv' && typeof season === 'number'
+					? await tmdb.tv.season(+id, season)
+					: null,
+		},
 	};
 }
 
@@ -723,7 +785,7 @@ export type EntryAnnotation = NonNullable<
 >[number];
 
 function validate_entry_type<TEntry extends { tweet?: unknown }>(
-	entry: TEntry
+	entry: TEntry,
 ): TEntry & {
 	tweet: Tweet | undefined;
 } {
@@ -746,11 +808,14 @@ export const countLibrarySchema = z.object({
 	status: z.nativeEnum(Status).nullable(),
 	filter: z.object({
 		type: z.nativeEnum(DocumentType).optional(),
-		search: z.string().optional()
-	})
+		search: z.string().optional(),
+	}),
 });
 
-export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySchema>) {
+export async function count_library({
+	input,
+	ctx,
+}: GetCtx<typeof countLibrarySchema>) {
 	const { userId } = ctx;
 	const { status, filter } = input;
 	let query = db
@@ -770,14 +835,14 @@ export async function count_library({ input, ctx }: GetCtx<typeof countLibrarySc
 
 	const { count } = await query.executeTakeFirstOrThrow();
 	return {
-		count: Number(count)
+		count: Number(count),
 	};
 }
 
 export const saveToLibrarySchema = librarySchema.and(
 	z.object({
-		status: z.nativeEnum(Status).default('Backlog')
-	})
+		status: z.nativeEnum(Status).default('Backlog'),
+	}),
 );
 
 export type SaveToLibrarySchema = z.input<typeof saveToLibrarySchema>;
@@ -785,7 +850,10 @@ export type SaveToLibrarySchema = z.input<typeof saveToLibrarySchema>;
 /**
  * Given an entry id (or spotify/gbooks/tmdb/etc id), saves it to the library
  */
-export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrarySchema>) {
+export async function save_to_library({
+	input,
+	ctx,
+}: GetCtx<typeof saveToLibrarySchema>) {
 	let { entryId, status, type } = input;
 	if (!entryId) {
 		// then we need to create the entry
@@ -802,10 +870,10 @@ export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrar
 			userId: ctx.userId,
 			entryId,
 			sort_order,
-			status
+			status,
 		})
 		.onDuplicateKeyUpdate({
-			status
+			status,
 		})
 		.executeTakeFirst();
 }
@@ -818,7 +886,7 @@ export async function save_to_library({ input, ctx }: GetCtx<typeof saveToLibrar
 export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 	// then we need to create the entry
 	let insertable: Insertable<Entry> = {
-		updatedAt: new Date()
+		updatedAt: new Date(),
 		// ...data
 	};
 
@@ -838,7 +906,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 					author: tv.created_by.map((val) => val.name).join(', '),
 					published: tv.first_air_date,
 					image: tmdb.media(tv.poster_path),
-					type: 'tv'
+					type: 'tv',
 				};
 			} else {
 				const movie = await tmdb.movie.details(input.tmdbId);
@@ -851,7 +919,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 					author: movie.credits.crew.find((c) => c.job === 'Director')?.name,
 					published: movie.release_date,
 					image: tmdb.media(movie.poster_path),
-					type: 'movie'
+					type: 'movie',
 				};
 			}
 			break;
@@ -865,25 +933,33 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 				u.searchParams.delete('edge');
 				image = u.toString();
 			}
+			const fiction = book.volumeInfo.categories?.some((category) =>
+				category.startsWith('Fiction'),
+			);
 			insertable = {
 				...insertable,
 				title: book.volumeInfo.title,
 				html: book.volumeInfo.description,
-				uri: `isbn:${book.volumeInfo.industryIdentifiers?.find((i) => i.type === 'ISBN_13')
-					?.identifier}`,
+				uri: `isbn:${book.volumeInfo.industryIdentifiers?.find(
+					(i) => i.type === 'ISBN_13',
+				)?.identifier}`,
 				googleBooksId: book.id,
 				author: book.volumeInfo.authors?.join(', '),
 				published: book.volumeInfo.publishedDate,
 				image,
 				type: 'book',
 				publisher: book.volumeInfo.publisher,
-				pageCount: book.volumeInfo.pageCount
+				pageCount: book.volumeInfo.pageCount,
+				genres: book.volumeInfo.categories?.join(', '),
+				book_genre: fiction ? 'Fiction' : 'NonFiction',
 			};
 			break;
 		}
 		case 'podcast': {
 			//todo
-			const { episode } = await pindex.episodeById(Number(input.podcastIndexId));
+			const { episode } = await pindex.episodeById(
+				Number(input.podcastIndexId),
+			);
 			insertable = {
 				...insertable,
 				title: episode.title,
@@ -892,7 +968,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 				podcastIndexId: episode.id,
 				published: new Date(episode.datePublished * 1000),
 				type: 'podcast',
-				image: episode.image || episode.feedImage
+				image: episode.image || episode.feedImage,
 			};
 			break;
 		}
@@ -906,7 +982,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 				image: album.images[0]?.url,
 				author: album.artists.map((a) => a.name).join(', '),
 				published: new Date(album.release_date),
-				type: 'album'
+				type: 'album',
 			};
 			break;
 		}
@@ -916,13 +992,17 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 		}
 	}
 
-	const entry = await db.insertInto('Entry').values(insertable).ignore().executeTakeFirstOrThrow();
+	const entry = await db
+		.insertInto('Entry')
+		.values(insertable)
+		.ignore()
+		.executeTakeFirstOrThrow();
 	const entryId = Number(entry.insertId);
 	if (entryId) {
 		return {
 			id: entryId,
 			type,
-			...insertable
+			...insertable,
 		};
 	} else {
 		let query = db.selectFrom('Entry as e').select(entrySelect);
@@ -942,7 +1022,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 
 // this should be rolled into one big "extras" query maybe
 export async function get_authors({
-	ctx: { userId }
+	ctx: { userId },
 }: {
 	ctx: {
 		userId: string;
@@ -954,8 +1034,12 @@ export async function get_authors({
 		.where('b.userId', '=', userId)
 		// .where('e.author', 'is not', null)
 		// REVIEW: do we want to only grab bookmark author if both exist?
-		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), 'is not', null))
-		.where(({ eb, fn }) => eb(fn.coalesce('b.author', 'e.author'), 'is not', null))
+		.where(({ eb, fn }) =>
+			eb(fn.coalesce('b.author', 'e.author'), 'is not', null),
+		)
+		.where(({ eb, fn }) =>
+			eb(fn.coalesce('b.author', 'e.author'), 'is not', null),
+		)
 		.where(sql`TRIM(COALESCE(b.author,e.author)) <> ''`)
 		.select((eb) => eb.fn.coalesce('b.author', 'e.author').as('author'))
 		.orderBy('author', 'asc')
@@ -971,15 +1055,18 @@ export const updateTagSchema = z.object({
 	data: z
 		.object({
 			name: z.string(),
-			color: z.string()
+			color: z.string(),
 			// TODO description etc.
 		})
-		.partial()
+		.partial(),
 });
 
 export type UpdateTagInput = z.input<typeof updateTagSchema>;
 
-export async function updateTag({ input, ctx }: GetCtx<typeof updateTagSchema>) {
+export async function updateTag({
+	input,
+	ctx,
+}: GetCtx<typeof updateTagSchema>) {
 	await db
 		.updateTable('Tag')
 		.set(input.data)
@@ -992,35 +1079,41 @@ export const createTagSchema = z.object({
 	// The name of the tag
 	name: z.string(),
 	// The color of the tag. If none is provided, the default color will be used.
-	color: z.string().optional()
+	color: z.string().optional(),
 });
 
 type CreateTagInput = z.input<typeof createTagSchema>;
 
-export async function createTag({ input, ctx }: GetCtx<typeof createTagSchema>) {
+export async function createTag({
+	input,
+	ctx,
+}: GetCtx<typeof createTagSchema>) {
 	const tag = await db
 		.insertInto('Tag')
 		.values({
 			...input,
-			userId: ctx.userId
+			userId: ctx.userId,
 		})
 		.ignore()
 		.executeTakeFirstOrThrow();
 
 	return {
-		id: Number(tag.insertId)
+		id: Number(tag.insertId),
 	};
 }
 
 export const convertToSchema = z
 	.object({
 		// The entry ID to convert
-		id: z.number()
+		id: z.number(),
 		// The type to convert to
 	})
 	.and(mediaIdSchema);
 
-export async function convertTo({ input, ctx }: GetCtx<typeof convertToSchema>) {
+export async function convertTo({
+	input,
+	ctx,
+}: GetCtx<typeof convertToSchema>) {
 	const { id, type } = input;
 	const { userId } = ctx;
 
@@ -1091,9 +1184,9 @@ export async function convertTo({ input, ctx }: GetCtx<typeof convertToSchema>) 
 						selectFrom('Collection as c')
 							.select('c.id')
 							.whereRef('c.id', '=', 'ci.collectionId')
-							.where('c.userId', '=', userId)
-					)
-				])
+							.where('c.userId', '=', userId),
+					),
+				]),
 			)
 			.execute();
 
@@ -1135,7 +1228,7 @@ export const notesInputOrderAndCursorSchema = z.union([
 	z.object({
 		orderBy: z.enum(['updatedAt', 'createdAt']).default('createdAt'),
 		dir: z.enum(['asc', 'desc']).default('desc'),
-		cursor: z.coerce.date().optional()
+		cursor: z.coerce.date().optional(),
 	}),
 	z.object({
 		orderBy: z.literal('name'),
@@ -1143,10 +1236,10 @@ export const notesInputOrderAndCursorSchema = z.union([
 		cursor: z
 			.object({
 				title: z.string().nullable(),
-				createdAt: z.coerce.date()
+				createdAt: z.coerce.date(),
 			})
-			.optional()
-	})
+			.optional(),
+	}),
 ]);
 
 export const notesInputSchema = z
@@ -1154,7 +1247,7 @@ export const notesInputSchema = z
 		filter: noteFilterSchema.optional(),
 		includeArchived: z.boolean().optional(),
 		// Number of notes to return. Defaults to 50.
-		take: z.number().default(50)
+		take: z.number().default(50),
 	})
 	.deepPartial()
 	.and(notesInputOrderAndCursorSchema);
@@ -1167,14 +1260,14 @@ function noteTags(
 			a: Annotation;
 		},
 		'a'
-	>
+	>,
 ) {
 	return jsonArrayFrom(
 		eb
 			.selectFrom('annotation_tag as at')
 			.innerJoin('Tag as t', 't.id', 'at.tagId')
 			.select(['t.id', 't.name', 't.color'])
-			.whereRef('at.annotationId', '=', 'a.id')
+			.whereRef('at.annotationId', '=', 'a.id'),
 	).as('tags');
 }
 function notePin(
@@ -1183,10 +1276,13 @@ function notePin(
 			a: Annotation;
 		},
 		'a'
-	>
+	>,
 ) {
 	return jsonObjectFrom(
-		eb.selectFrom('Favorite as pin').select(['pin.id']).whereRef('pin.annotationId', '=', 'a.id')
+		eb
+			.selectFrom('Favorite as pin')
+			.select(['pin.id'])
+			.whereRef('pin.annotationId', '=', 'a.id'),
 	).as('pin');
 }
 
@@ -1233,9 +1329,9 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 					eb('a.title', '=', cursor.title).and(
 						'a.createdAt',
 						_dir === 'asc' ? '>' : '<',
-						cursor.createdAt
-					)
-				])
+						cursor.createdAt,
+					),
+				]),
 			);
 		}
 	} else {
@@ -1264,7 +1360,7 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 			} else if (orderBy === 'name') {
 				nextCursor = {
 					title: nextItem.title,
-					createdAt: nextItem.createdAt
+					createdAt: nextItem.createdAt,
 				};
 			} else {
 				// orderBy satisfies never;
@@ -1273,7 +1369,7 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 	}
 	return {
 		notes,
-		nextCursor
+		nextCursor,
 		// todo: nextCursor
 	};
 }
@@ -1282,7 +1378,10 @@ export type NotesResponse = Awaited<ReturnType<typeof notes>>;
 export type Notes = Awaited<ReturnType<typeof notes>>['notes'];
 export type Note = Notes[number];
 
-export async function note({ input, ctx }: GetCtx<typeof idSchema>): Promise<Note> {
+export async function note({
+	input,
+	ctx,
+}: GetCtx<typeof idSchema>): Promise<Note> {
 	const { id } = input;
 
 	const query = db
@@ -1314,14 +1413,19 @@ const _createFavoriteSchema = z
 		sortOrder: z.number().nullish(),
 		parentId: z.string().nullish(),
 		//
-		id: z.string()
+		id: z.string(),
 	})
 	.partial();
 
-export const createFavoriteSchema = _createFavoriteSchema.or(z.array(_createFavoriteSchema));
+export const createFavoriteSchema = _createFavoriteSchema.or(
+	z.array(_createFavoriteSchema),
+);
 
 // Technically "upsert"
-export async function createFavorite({ input, ctx }: GetCtx<typeof createFavoriteSchema>) {
+export async function createFavorite({
+	input,
+	ctx,
+}: GetCtx<typeof createFavoriteSchema>) {
 	const { userId } = ctx;
 	const dataToInsert = (Array.isArray(input) ? input : [input]).map((item) => {
 		const id = item.id ?? nanoid();
@@ -1330,7 +1434,7 @@ export async function createFavorite({ input, ctx }: GetCtx<typeof createFavorit
 			id,
 			updatedAt: new Date(),
 			type: item.folderName ? 'FOLDER' : 'FAVORITE',
-			userId
+			userId,
 		} as const;
 	});
 
@@ -1338,7 +1442,7 @@ export async function createFavorite({ input, ctx }: GetCtx<typeof createFavorit
 
 	const ids = dataToInsert.map((item) => item.id);
 	return {
-		id: ids.length === 1 ? ids[0] : ids
+		id: ids.length === 1 ? ids[0] : ids,
 	};
 }
 
@@ -1348,12 +1452,15 @@ export const updateFavoriteSchema = z.object({
 		.object({
 			folderName: z.string().nullish(),
 			parentId: z.string().nullish(),
-			sortOrder: z.number().nullish()
+			sortOrder: z.number().nullish(),
 		})
-		.partial()
+		.partial(),
 });
 
-export async function updateFavorite({ input, ctx }: GetCtx<typeof updateFavoriteSchema>) {
+export async function updateFavorite({
+	input,
+	ctx,
+}: GetCtx<typeof updateFavoriteSchema>) {
 	const { userId } = ctx;
 	const { id, data } = input;
 	await db
@@ -1378,7 +1485,7 @@ export const favoriteSelect = [
 	'f.createdAt',
 	'f.updatedAt',
 	'f.folderName',
-	'f.sortOrder'
+	'f.sortOrder',
 ] as const satisfies SelectArg<
 	DB & { f: Favorite },
 	'f',
@@ -1393,7 +1500,7 @@ const favorite2Select = () =>
 		'f.createdAt',
 		'f.updatedAt',
 		'f.folderName',
-		'f.sortOrder'
+		'f.sortOrder',
 	] as const satisfies SelectArg<
 		DB & { f: Favorite },
 		'f',
@@ -1408,7 +1515,7 @@ function fSelect<const TAlias extends string>(alias: TAlias) {
 		`${alias}.createdAt`,
 		`${alias}.updatedAt`,
 		`${alias}.folderName`,
-		`${alias}.sortOrder`
+		`${alias}.sortOrder`,
 	] as const;
 }
 
@@ -1419,7 +1526,7 @@ export function favoriteContent(
 		},
 		'f'
 	>,
-	alias = 'f'
+	alias = 'f',
 ) {
 	// REVIEW - have to use as any here to allow use of alias. Shouldn't effect overall type-safety of output.
 	return [
@@ -1427,34 +1534,34 @@ export function favoriteContent(
 			eb
 				.selectFrom('SmartList as v')
 				.whereRef('v.id', '=', `${alias}.smartListId` as any)
-				.select(['v.name', 'v.id'])
+				.select(['v.name', 'v.id']),
 		).as('view'),
 		jsonObjectFrom(
 			eb
 				.selectFrom('Collection as c')
 				.whereRef('c.id', '=', `${alias}.collectionId` as any)
-				.select(['c.name', 'c.id'])
+				.select(['c.name', 'c.id']),
 		).as('collection'),
 		jsonObjectFrom(
 			eb
 				.selectFrom('Tag as t')
 				.whereRef('t.id', '=', `${alias}.tagId` as any)
-				.select(['t.name', 't.id', 't.color'])
+				.select(['t.name', 't.id', 't.color']),
 		).as('tag'),
 		jsonObjectFrom(
 			eb
 				.selectFrom('Annotation as a')
 				.whereRef('a.id', '=', `${alias}.annotationId` as any)
 				// TODO: grabn more info?
-				.select(['a.title', 'a.color', 'a.icon', 'a.id'])
+				.select(['a.title', 'a.color', 'a.icon', 'a.id']),
 		).as('note'),
 		jsonObjectFrom(
 			eb
 				.selectFrom('Entry as e')
 				.whereRef('e.id', '=', `${alias}.entryId` as any)
 				// TODO: grabn more info?
-				.select(entrySelect)
-		).as('entry')
+				.select(entrySelect),
+		).as('entry'),
 	];
 }
 
@@ -1465,7 +1572,7 @@ function favoriteChildren(
 		},
 		'f'
 	>,
-	alias = 'f'
+	alias = 'f',
 ) {
 	return jsonArrayFrom(
 		eb
@@ -1473,10 +1580,13 @@ function favoriteChildren(
 			.whereRef(
 				'f2.parentId',
 				'=',
-				`${alias}.id` as ReferenceExpression<DB & { f: Favorite } & { f2: Favorite }, 'f' | 'f2'>
+				`${alias}.id` as ReferenceExpression<
+					DB & { f: Favorite } & { f2: Favorite },
+					'f' | 'f2'
+				>,
 			)
 			.select(fSelect('f2'))
-			.select((eb) => favoriteContent(eb, 'f2'))
+			.select((eb) => favoriteContent(eb, 'f2')),
 	).as('children');
 }
 

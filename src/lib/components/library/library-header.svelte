@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { H1 } from '$components/ui/typography';
 	import LibraryTabs from './library-tabs.svelte';
-	import { Popover, PopoverContent, PopoverTrigger } from '$lib/components/ui/popover';
+	import {
+		Popover,
+		PopoverContent,
+		PopoverTrigger,
+	} from '$lib/components/ui/popover';
 	import { cn } from '$lib/utils/tailwind';
 	import Button, { buttonVariants } from '$components/ui/Button.svelte';
 	import Badge from '$components/ui/Badge.svelte';
@@ -15,7 +19,8 @@
 		XIcon,
 		TagIcon,
 		ClockIcon,
-		GlobeIcon
+		GlobeIcon,
+		BookIcon,
 	} from 'lucide-svelte';
 	import { types } from '$lib/types';
 	import debounce from 'just-debounce-it';
@@ -29,7 +34,7 @@
 		CommandItem,
 		CommandLoading,
 		CommandList,
-		CommandIcon
+		CommandIcon,
 	} from '$components/ui/command2';
 	import {
 		DropdownMenu,
@@ -39,7 +44,7 @@
 		DropdownMenuRadioGroup,
 		DropdownMenuRadioItem,
 		DropdownMenuSeparator,
-		DropdownMenuLabel
+		DropdownMenuLabel,
 	} from '$components/ui/dropdown-menu';
 	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
 	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
@@ -60,20 +65,26 @@
 		changeSearch,
 		createChangeSearch,
 		defaultParseSearch,
-		defaultStringifySearch
+		defaultStringifySearch,
 	} from '$lib/utils/search-params';
 	import {
 		filterLibrarySchema,
 		LibraryGroupType,
-		type FilterLibrarySchema
+		type FilterLibrarySchema,
 	} from '$lib/schemas/library';
 	import FilterBadge from '$components/ui/filters/FilterBadge.svelte';
-	import { createParamsStore, createSearchParamsStore } from '$lib/stores/search-params';
+	import {
+		createParamsStore,
+		createSearchParamsStore,
+	} from '$lib/stores/search-params';
 	import { tweened } from 'svelte/motion';
 	import { cubicInOut, cubicOut, quintIn } from 'svelte/easing';
 	import { afterUpdate } from 'svelte';
 	import { deepWriteable } from '$lib/helpers/object';
-	import { createPageData, createPageItemList } from '$components/ui/command2/utils';
+	import {
+		createPageData,
+		createPageItemList,
+	} from '$components/ui/command2/utils';
 	import { statusesWithIcons } from '$lib/status';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import { isHTMLElement } from '$lib/helpers';
@@ -90,11 +101,11 @@
 				status: $page.data.Status,
 				filter: {
 					type: $page.data.type,
-					search: $page.url.searchParams.get('search') ?? undefined
-				}
+					search: $page.url.searchParams.get('search') ?? undefined,
+				},
 			}),
-			select: (data: { count: number }) => data.count
-		}))
+			select: (data: { count: number }) => data.count,
+		})),
 	);
 
 	const tagsQuery = createQuery(queryFactory.tags.list());
@@ -102,12 +113,12 @@
 	const filterChange = createChangeSearch<FilterLibrarySchema>();
 
 	const count = tweened(0, {
-		duration: 200
+		duration: 200,
 	});
 
 	export function setCount(newCount: number) {
 		count.set(newCount, {
-			duration: 200
+			duration: 200,
 		});
 	}
 
@@ -122,7 +133,7 @@
 
 	$: if ($entryCount.data) {
 		count.set($entryCount.data, {
-			duration: 500
+			duration: 500,
 			// easing: quintIn
 		});
 	}
@@ -217,24 +228,24 @@
 	const sortTypes: { label: string; type: NonNullable<LibrarySortType> }[] = [
 		{
 			label: 'Manual',
-			type: 'manual'
+			type: 'manual',
 		},
 		{
 			label: 'Title',
-			type: 'title'
+			type: 'title',
 		},
 		{
 			label: 'Author',
-			type: 'author'
+			type: 'author',
 		},
 		{
 			label: 'Date Updated',
-			type: 'updatedAt'
+			type: 'updatedAt',
 		},
 		{
 			label: 'Time',
-			type: 'time'
-		}
+			type: 'time',
+		},
 	];
 	const filterOpen = writable(false);
 
@@ -242,18 +253,18 @@
 		{
 			name: 'Type',
 			placeholder: 'Filter by type...',
-			icon: FileIcon
+			icon: FileIcon,
 		},
 		{
 			name: 'Tags',
 			placeholder: 'Filter by tag...',
 			icon: TagIcon,
-            shouldFilter: false
+			shouldFilter: false,
 		},
 		{
 			name: 'Reading Time',
 			placeholder: 'Filter by reading time...',
-			icon: ClockIcon
+			icon: ClockIcon,
 		},
 		{
 			name: 'Domain',
@@ -269,19 +280,30 @@
 							data.domain = val;
 							return data;
 						});
-					}
+					},
 				});
-			}
-		}
+			},
+		},
+		{
+			name: 'Book Genre',
+			icon: BookIcon,
+			placeholder: 'Choose genre…',
+		},
 	]);
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
 <!--  -->
-<Header class="max-sm:static max-sm:flex-col max-sm:h-max max-sm:items-start max-sm:py-2">
+<Header
+	class="max-sm:static max-sm:flex-col max-sm:h-max max-sm:items-start max-sm:py-2"
+>
 	<!-- class="flex flex-1 items-center justify-start gap-x-4" -->
-	<div class="flex items-center gap-3 flex-1 min-w-0 max-sm:flex-col max-sm:items-start">
-		<h1 class="font-extrabold tracking-tight text-2xl sm:text-3xl md:text-4xl">Library</h1>
+	<div
+		class="flex items-center gap-3 flex-1 min-w-0 max-sm:flex-col max-sm:items-start"
+	>
+		<h1 class="font-extrabold tracking-tight text-2xl sm:text-3xl md:text-4xl">
+			Library
+		</h1>
 		<!-- <H1>{data.Status}</H1> -->
 		<div class="flex items-center gap-3 flex-1 min-w-0">
 			<LibraryTabs />
@@ -292,11 +314,14 @@
 			<Popover
 				bind:open={$filterOpen}
 				positioning={{
-					placement: 'bottom-start'
+					placement: 'bottom-start',
 				}}
 			>
 				<PopoverTrigger
-					class={cn(!filter_type && buttonVariants({ variant: 'outline' }), 'border-dashed')}
+					class={cn(
+						!filter_type && buttonVariants({ variant: 'outline' }),
+						'border-dashed',
+					)}
 				>
 					{#if filter_type}
 						<Badge variant="secondary" class="">
@@ -308,8 +333,16 @@
 					{/if}
 				</PopoverTrigger>
 				<PopoverContent class="w-[200px] p-0">
-					<Command pages={filterPageData} let:pages let:page={currentPage} let:createPageItems>
-						<CommandInput onKeydown={pages.handlers.keydown} placeholder="Filter..." />
+					<Command
+						pages={filterPageData}
+						let:pages
+						let:page={currentPage}
+						let:createPageItems
+					>
+						<CommandInput
+							onKeydown={pages.handlers.keydown}
+							placeholder="Filter..."
+						/>
 						<CommandList>
 							<CommandGroup>
 								{#if !currentPage}
@@ -347,11 +380,11 @@
 												if (data.tags?.ids?.includes(tag.id)) {
 													data.tags = {
 														...data.tags,
-														ids: data.tags.ids.filter((t) => t !== tag.id)
+														ids: data.tags.ids.filter((t) => t !== tag.id),
 													};
 												} else {
 													data.tags = {
-														ids: [...(data.tags?.ids ?? []), tag.id]
+														ids: [...(data.tags?.ids ?? []), tag.id],
 													};
 												}
 												return data;
@@ -365,7 +398,7 @@
 											onSelect={() => {
 												filterChange($page.url, (data) => {
 													data.readingTime = {
-														max: time
+														max: time,
 													};
 													return data;
 												});
@@ -374,6 +407,25 @@
 										>
 									{/each}
 									<!-- TODO: Custom -->
+								{:else if currentPage.name === 'Book Genre'}
+									<CommandItem
+										onSelect={() => {
+											filterChange($page.url, (data) => {
+												data.book_genre = 'Fiction';
+												return data;
+											});
+											filterOpen.set(false);
+										}}>Fiction</CommandItem
+									>
+									<CommandItem
+										onSelect={() => {
+											filterChange($page.url, (data) => {
+												data.book_genre = 'NonFiction';
+												return data;
+											});
+											filterOpen.set(false);
+										}}>NonFiction</CommandItem
+									>
 								{/if}
 							</CommandGroup>
 						</CommandList>
@@ -547,7 +599,7 @@
 		<div class="hidden md:block">
 			<DropdownMenu
 				positioning={{
-					placement: 'bottom'
+					placement: 'bottom',
 				}}
 			>
 				<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary' })}>
@@ -558,13 +610,16 @@
 					<DropdownMenuLabel>Sort</DropdownMenuLabel>
 					<DropdownMenuRadioGroup bind:value={sort}>
 						{#each sortTypes as { label, type }}
-							<DropdownMenuRadioItem value={type}>{label}</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem value={type}>{label}</DropdownMenuRadioItem
+							>
 						{/each}
 					</DropdownMenuRadioGroup>
 					<DropdownMenuSeparator />
 					<DropdownMenuRadioGroup bind:value={dir}>
 						<DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
-						<DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
+						<DropdownMenuRadioItem value="desc"
+							>Descending</DropdownMenuRadioItem
+						>
 					</DropdownMenuRadioGroup>
 					<DropdownMenuSeparator />
 					<DropdownMenuLabel>Grouping</DropdownMenuLabel>
@@ -590,7 +645,10 @@
 				name="search"
 				class="shrink w-fit"
 			/>
-			<Kbd class="absolute bottom-0 right-1.5 top-0 my-auto group-focus-within:hidden">/</Kbd>
+			<Kbd
+				class="absolute bottom-0 right-1.5 top-0 my-auto group-focus-within:hidden"
+				>/</Kbd
+			>
 			{#if is_searching}
 				<div
 					class="absolute bottom-0 right-1.5 top-0 my-auto flex flex-col items-center justify-center"
@@ -613,7 +671,9 @@
 			<form class="contents" on:submit|preventDefault>
 				<Input bind:value={$filterDialogStore.value} />
 				<AlertDialog.Footer>
-					<AlertDialog.Cancel on:m-click={filterDialogStore.reset}>Cancel</AlertDialog.Cancel>
+					<AlertDialog.Cancel on:m-click={filterDialogStore.reset}
+						>Cancel</AlertDialog.Cancel
+					>
 					<AlertDialog.Action
 						type="submit"
 						on:m-click={() => {

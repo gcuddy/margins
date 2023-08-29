@@ -84,9 +84,9 @@
 
 	function parseFilterFromSearchParams(): FilterLibrarySchema | undefined {
 		const rawObj = defaultParseSearch($page.url.search);
-
+        console.log({rawObj})
 		const parsed = filterLibrarySchema.safeParse(rawObj);
-
+        console.log({parsed})
 		if (parsed.success) {
 			return parsed.data;
 		}
