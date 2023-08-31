@@ -19,81 +19,61 @@ module.exports = {
 		'typescript-sort-keys',
 	],
 	rules: {
-		'import/order': 0, // turn off in favor of eslint-plugin-simple-import-sort
-		'import/no-duplicates': 2,
-		'import/first': 2,
-		'import/newline-after-import': 2,
-		'import/no-default-export': 2,
-		'prefer-template': 'error',
-
-		'no-throw-literal': 0,
-		'@typescript-eslint/no-throw-literal': 0,
-		'sort-keys-fix/sort-keys-fix': 2,
-		'typescript-sort-keys/interface': 2,
-		'typescript-sort-keys/string-enum': 2,
-
-		/**
-		 * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
-		 */
-		'sort-imports': 0, // we use eslint-plugin-import instead
-		'simple-import-sort/imports': 2,
-		'simple-import-sort/exports': 2,
-
-		'no-console': 'warn',
-		'@typescript-eslint/consistent-type-imports': [
-			'warn',
-			{
-				prefer: 'type-imports',
-				fixStyle: 'inline-type-imports',
-			},
-		],
-		'@typescript-eslint/no-unused-vars': 'off',
-		'unused-imports/no-unused-imports': 'error',
-		'unused-imports/no-unused-vars': [
-			'warn',
-			{
-				vars: 'all',
-				varsIgnorePattern: '^_',
-				args: 'after-used',
-				argsIgnorePattern: '^_',
-			},
-		],
-		// '@typescript-eslint/no-unused-vars': [
-		// 	'warn',
-		// 	{
-		// 		argsIgnorePattern: '^_',
-		// 		varsIgnorePattern: '^_',
-		// 	},
-		// ],
-		'@typescript-eslint/switch-exhaustiveness-check': 'error',
-		'@typescript-eslint/array-type': ['error', { default: 'generic' }],
-		'@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-		// TODO: eventually enable this, but for now it's too much work. However, highly encourage annotating functions with return types.
-		// '@typescript-eslint/explicit-function-return-type': 1,
-		'@typescript-eslint/prefer-ts-expect-error': 'error',
-		'@typescript-eslint/ban-types': 'error',
-		'@typescript-eslint/ban-ts-comment': [
-			'error',
-			{
-				'ts-expect-error': 'allow-with-description',
-			},
-		],
-		'@typescript-eslint/naming-convention': [
-			'error',
-			{
-				selector: 'typeParameter',
-				format: ['PascalCase'],
-				custom: { regex: '^T[A-Z]', match: true },
-			},
-		],
-
-		'svelte/no-target-blank': 'error',
-		'svelte/no-immutable-reactive-statements': 'error',
-		'svelte/no-trailing-spaces': 'error',
-		'svelte/prefer-style-directive': 'error',
-		'svelte/no-reactive-literals': 'error',
-		'svelte/no-useless-mustaches': 'error',
-	},
+        '@typescript-eslint/array-type': ['error', {
+            default: 'generic'
+        }],
+        '@typescript-eslint/ban-ts-comment': ['error', {
+            'ts-expect-error': 'allow-with-description'
+        }],
+        '@typescript-eslint/ban-types': 'error',
+        '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+        '@typescript-eslint/consistent-type-imports': ['warn', {
+            fixStyle: 'inline-type-imports',
+            prefer: 'type-imports'
+        }],
+        '@typescript-eslint/naming-convention': ['error', {
+            custom: {
+                match: true,
+                regex: '^T[A-Z]'
+            },
+            format: ['PascalCase'],
+            selector: 'typeParameter'
+        }],
+        '@typescript-eslint/no-throw-literal': 0,
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/prefer-ts-expect-error': 'error',
+        '@typescript-eslint/switch-exhaustiveness-check': 'error',
+        'import/first': 2,
+        'import/newline-after-import': 2,
+        'import/no-default-export': 2,
+        // turn off in favor of eslint-plugin-simple-import-sort
+        'import/no-duplicates': 2,
+        'import/order': 0,
+        'no-console': 'warn',
+        'no-throw-literal': 0,
+        "no-unused-vars": 0,
+        'prefer-template': 'error',
+        'simple-import-sort/exports': 2,
+        // we use eslint-plugin-import instead
+        'simple-import-sort/imports': 2,
+        'sort-imports': 0,
+        'sort-keys-fix/sort-keys-fix': 2,
+        'svelte/no-immutable-reactive-statements': 'error',
+        'svelte/no-reactive-literals': 'error',
+        'svelte/no-target-blank': 'error',
+        'svelte/no-trailing-spaces': 'error',
+        'svelte/no-useless-mustaches': 'error',
+        'svelte/prefer-style-directive': 'error',
+        'typescript-sort-keys/interface': 2,
+        'typescript-sort-keys/string-enum': 2,
+        'unused-imports/no-unused-imports': 'error',
+        'unused-imports/no-unused-vars': ['warn', {
+            args: 'after-used',
+            argsIgnorePattern: '^_',
+            vars: 'all',
+            varsIgnorePattern: '^_'
+        }]
+    },
 	parserOptions: {
 		sourceType: 'module',
 		ecmaVersion: 'latest',

@@ -3,7 +3,7 @@ import {
 	QueryClient,
 	QueryKey,
 	createMutation,
-	useQueryClient
+	useQueryClient,
 } from '@tanstack/svelte-query';
 import { MutationInput, mutation, QueryOutput, mutate } from '../query';
 import type { LibraryResponse } from '$lib/server/queries';
@@ -13,20 +13,25 @@ import type { QueryFactory } from '../querykeys';
 import { toast } from 'svelte-sonner';
 import type { Note, NotesResponse } from '../server';
 import { omit } from '$lib/helpers';
+import type { BookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
 const mutateStatus = (queryClient: QueryClient) => {
 	createMutation({
-		mutationFn: (input: MutationInput<'update_status'>) => mutation({}, 'update_status', input),
-		onMutate(variables) {}
+		mutationFn: (input: MutationInput<'update_status'>) =>
+			mutation({}, 'update_status', input),
+		onMutate(variables) {},
 	});
 };
 
 /**
  * Bad name for it. These are queries that shouldn't usually be invalidated when a mutation on entries occurs.
  */
-const ctxEntries = ['count', 'authors'] satisfies (keyof QueryFactory['entries'])[];
+const ctxEntries = [
+	'count',
+	'authors',
+] satisfies (keyof QueryFactory['entries'])[];
 
 // TODO clean this up
 
@@ -34,7 +39,8 @@ export function createTagMutation() {
 	const queryClient = useQueryClient();
 
 	return createMutation({
-		mutationFn: (input: MutationInput<'createTag'>) => mutate('createTag', input),
+		mutationFn: (input: MutationInput<'createTag'>) =>
+			mutate('createTag', input),
 		// onMutate(variables) {
 		//     queryClient.cancelQueries('tags');
 		//     const previousTags = queryClient.getQueryData('tags');
@@ -45,13 +51,17 @@ export function createTagMutation() {
 		// },
 		onSuccess() {
 			queryClient.invalidateQueries({ queryKey: ['tags'] });
-		}
+		},
 	});
 }
 
 export function updateAnnotationMutation<
-	TDefaultData extends Partial<MutationInput<'save_note'>>
->(opts?: { input?: TDefaultData; showToast?: boolean; onSuccess?: () => void }) {
+	TDefaultData extends Partial<MutationInput<'save_note'>>,
+>(opts?: {
+	input?: TDefaultData;
+	showToast?: boolean;
+	onSuccess?: () => void;
+}) {
 	const queryClient = useQueryClient();
 	return createMutation({
 		mutationFn: (input: MutationInput<'save_note'>) =>
@@ -63,26 +73,30 @@ export function updateAnnotationMutation<
 			// Remember 4 Steps: 1) Cancel 2) Snapshot 3) Optimsitically update 4) Return Context with Previous and New Item
 
 			await queryClient.cancelQueries({
-				queryKey: ['notes']
+				queryKey: ['notes'],
 			});
 
 			// Since detail->id is seeded by list, this should be fine
-			const previousNote = queryClient.getQueryData<Note>(['notes', 'detail', variables.id]);
+			const previousNote = queryClient.getQueryData<Note>([
+				'notes',
+				'detail',
+				variables.id,
+			]);
 
 			if (variables.id) {
 				// TODO: get tags and relations too
 
-                const ids = Array.isArray(variables.id) ? variables.id : [variables.id];
-                for (const id of ids) {
-                    queryClient.setQueryData<Note>(['notes', 'detail', id], (old) => {
-                        if (!old) return old;
-                        if (!id) return old;
-                        return {
-                            ...old,
-                            ...omit(variables, 'id', 'tags', 'relations') //TODO: why can't i get these too
-                        };
-                    });
-                }
+				const ids = Array.isArray(variables.id) ? variables.id : [variables.id];
+				for (const id of ids) {
+					queryClient.setQueryData<Note>(['notes', 'detail', id], (old) => {
+						if (!old) return old;
+						if (!id) return old;
+						return {
+							...old,
+							...omit(variables, 'id', 'tags', 'relations'), //TODO: why can't i get these too
+						};
+					});
+				}
 				queryClient.setQueriesData<InfiniteData<NotesResponse>>(
 					{ queryKey: ['notes', 'list'] },
 					(data) => {
@@ -95,18 +109,18 @@ export function updateAnnotationMutation<
 									if (ids.includes(note.id)) {
 										return {
 											...note,
-											...omit(variables, 'id', 'tags', 'relations')
+											...omit(variables, 'id', 'tags', 'relations'),
 										};
 									}
 									return note;
-								})
-							}))
+								}),
+							})),
 						};
-					}
+					},
 				);
 			}
 			return {
-				previousNote
+				previousNote,
 			};
 		},
 		onSuccess(data, variables) {
@@ -121,13 +135,14 @@ export function updateAnnotationMutation<
 			}
 			queryClient.invalidateQueries({ queryKey: ['notes'] });
 			opts?.onSuccess?.();
-		}
+		},
 	});
 }
 
-
-
-export function createSetTagsMutation(opts?: { optimistic?: boolean; showToast?: boolean }) {
+export function createSetTagsMutation(opts?: {
+	optimistic?: boolean;
+	showToast?: boolean;
+}) {
 	const queryClient = useQueryClient();
 	return createMutation({
 		mutationFn: (input: MutationInput<'set_tags_on_entry'>) => {
@@ -137,48 +152,59 @@ export function createSetTagsMutation(opts?: { optimistic?: boolean; showToast?:
 			if (!opts?.optimistic) return;
 			const queryKey = ['entries', 'list'] as const;
 			await queryClient.cancelQueries({
-				queryKey
+				queryKey,
 			});
-			const previousQueries = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
-				queryKey
+			const previousQueries = queryClient.getQueriesData<
+				InfiniteData<LibraryResponse>
+			>({
+				queryKey,
 			});
 
 			console.log({ previousQueries });
 
-			const tagsToUpdate = (tags?.filter((tag) => tag.id) ?? []) as { id: number; name: string }[];
+			const tagsToUpdate = (tags?.filter((tag) => tag.id) ?? []) as {
+				id: number;
+				name: string;
+			}[];
 
-			queryClient.setQueriesData<InfiniteData<LibraryResponse>>({ queryKey }, (data) => {
-				if (!data) return data;
-				return {
-					...data,
-					pages: data.pages.map((p) => {
-						return {
-							...p,
-							entries: p.entries.map((oldEntry) => {
-								if (entries.includes(oldEntry.id)) {
-									return {
-										...oldEntry,
-										tags: tagsToUpdate ?? []
-									};
-								}
-								return oldEntry;
-							})
-						};
-					})
-				};
-			});
+			queryClient.setQueriesData<InfiniteData<LibraryResponse>>(
+				{ queryKey },
+				(data) => {
+					if (!data) return data;
+					return {
+						...data,
+						pages: data.pages.map((p) => {
+							return {
+								...p,
+								entries: p.entries.map((oldEntry) => {
+									if (entries.includes(oldEntry.id)) {
+										return {
+											...oldEntry,
+											tags: tagsToUpdate ?? [],
+										};
+									}
+									return oldEntry;
+								}),
+							};
+						}),
+					};
+				},
+			);
 		},
 		onSuccess() {
 			queryClient.invalidateQueries({
 				// queryKey: ["entries"],
 				predicate(query) {
-					return query.queryKey[0] === 'entries' && !ctxEntries.includes(query.queryKey[1] as any);
-				}
+					return (
+						query.queryKey[0] === 'entries' &&
+						!ctxEntries.includes(query.queryKey[1] as any)
+					);
+				},
 			});
 			if (opts?.showToast) {
 				toast.success('Tags updated');
 			}
-		}
+		},
 	});
 }
 
@@ -198,26 +224,41 @@ type Invalidate = Array<QueryKey>;
 export function initCreatePinMutation(opts?: { invalidate?: Invalidate }) {
 	const queryClient = useQueryClient();
 	return createMutation({
-		mutationFn: (input: MutationInput<'createFavorite'>) => mutate('createFavorite', input),
+		mutationFn: (input: MutationInput<'createFavorite'>) =>
+			mutate('createFavorite', input),
 		onSuccess() {
 			// TODO: set pin cache
 			//for now..
 			invalidatePins(queryClient);
 			if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
-		}
+		},
 	});
 }
 
-export function initDeletePinMutation(opts?: { invalidate?: Invalidate, onSuccess?: () => void }) {
+export function initDeletePinMutation(opts?: {
+	invalidate?: Invalidate;
+	onSuccess?: () => void;
+}) {
 	const queryClient = useQueryClient();
 	return createMutation({
-		mutationFn: (input: MutationInput<'deleteFavorite'>) => mutate('deleteFavorite', input),
+		mutationFn: (input: MutationInput<'deleteFavorite'>) =>
+			mutate('deleteFavorite', input),
 		onSuccess() {
 			// TODO: set pin cache
 			//for now..
 			invalidatePins(queryClient);
 			if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
-		}
+		},
+	});
+}
+
+export function initBookmarkCreateMutation() {
+	const queryClient = useQueryClient();
+	return createMutation({
+		mutationFn: (input: BookmarkCreateInput) => mutate('bookmarkCreate', input),
+		onSuccess() {
+			void queryClient.invalidateQueries({ queryKey: ['entries'] });
+		},
 	});
 }
 
@@ -246,111 +287,121 @@ type EntryOutputs =
 async function update_entries(
 	queryClient: QueryClient,
 	ids: number[],
-	newData: Partial<LibraryResponse['entries'][number]>
+	newData: Partial<LibraryResponse['entries'][number]>,
 ) {
 	const queryKey = ['entries'] as const;
 
 	// cancel current queries
 	await queryClient.cancelQueries({
-		queryKey
+		queryKey,
 	});
 
-	const previousQueries = queryClient.getQueriesData<EntryOutputs>({ queryKey });
+	const previousQueries = queryClient.getQueriesData<EntryOutputs>({
+		queryKey,
+	});
 
 	// optimistically update
-	queryClient.setQueriesData<EntryOutputs>({ queryKey }, (old: EntryOutputs | undefined) => {
-		if (!old) return old;
+	queryClient.setQueriesData<EntryOutputs>(
+		{ queryKey },
+		(old: EntryOutputs | undefined) => {
+			if (!old) return old;
 
-		// check for infinite data
-		if ('pages' in old) {
-			old;
-			return {
-				...old,
-				pages: old.pages.map((page) => ({
-					...page,
-					entries: page.entries.map((entry) => {
-						if (ids.includes(entry.id)) {
-							return {
-								...entry,
-								...newData
-							};
-						}
-						return entry;
-					})
-				}))
-			};
-		}
+			// check for infinite data
+			if ('pages' in old) {
+				old;
+				return {
+					...old,
+					pages: old.pages.map((page) => ({
+						...page,
+						entries: page.entries.map((entry) => {
+							if (ids.includes(entry.id)) {
+								return {
+									...entry,
+									...newData,
+								};
+							}
+							return entry;
+						}),
+					})),
+				};
+			}
 
-		if (Array.isArray(old)) {
-			return old.map((entry) => {
-				if (ids.includes(entry.id)) {
-					return {
-						...entry,
-						...newData
-					};
-				}
-				return entry;
-			});
-		}
+			if (Array.isArray(old)) {
+				return old.map((entry) => {
+					if (ids.includes(entry.id)) {
+						return {
+							...entry,
+							...newData,
+						};
+					}
+					return entry;
+				});
+			}
 
-		return old;
+			return old;
 
-		// TODO: update individual entry by id, but types don't match
+			// TODO: update individual entry by id, but types don't match
 
-		// return {
-		//     ...old,
-		//     ...newData
-		// }
+			// return {
+			//     ...old,
+			//     ...newData
+			// }
 
-		return old;
-	});
+			return old;
+		},
+	);
 }
 
 // REVIEW should make a single generic type for state
 export async function updateEntries(
 	queryClient: QueryClient,
 	ids: number[],
-	newData: Partial<LibraryResponse['entries'][number]>
+	newData: Partial<LibraryResponse['entries'][number]>,
 ) {
 	// REVIEW can I get this from queryfactory?
 	const queryKey = ['entries', 'list'] as const;
 	await queryClient.cancelQueries({
-		queryKey
+		queryKey,
 	});
-	const previousQueries = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
-		queryKey
+	const previousQueries = queryClient.getQueriesData<
+		InfiniteData<LibraryResponse>
+	>({
+		queryKey,
 	});
 
 	console.log({ previousQueries });
 
 	// queryClient.getQueryCache().
 
-	queryClient.setQueriesData<InfiniteData<LibraryResponse>>({ queryKey }, (data) => {
-		if (!data) return data;
-		return {
-			...data,
-			pages: data.pages.map((p) => {
-				return {
-					...p,
-					entries: p.entries.map((oldEntry) => {
-						if (ids.includes(oldEntry.id)) {
-							return {
-								...oldEntry,
-								...newData
-							};
-						}
-						return oldEntry;
-					})
-				};
-			})
-		};
-	});
+	queryClient.setQueriesData<InfiniteData<LibraryResponse>>(
+		{ queryKey },
+		(data) => {
+			if (!data) return data;
+			return {
+				...data,
+				pages: data.pages.map((p) => {
+					return {
+						...p,
+						entries: p.entries.map((oldEntry) => {
+							if (ids.includes(oldEntry.id)) {
+								return {
+									...oldEntry,
+									...newData,
+								};
+							}
+							return oldEntry;
+						}),
+					};
+				}),
+			};
+		},
+	);
 
 	// TODO return previous Queries
 
 	return {
 		queryKey,
-		previousQueries
+		previousQueries,
 	};
 
 	// queryClient.

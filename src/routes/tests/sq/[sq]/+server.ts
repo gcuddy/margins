@@ -1,8 +1,10 @@
 // RSS Router
 
-import { mutationctx, queryctx } from '$lib/utils/server';
 import { error, json } from '@sveltejs/kit';
-import { queries, mutations } from '../../(app2)/queries.server';
+
+import { mutationctx, queryctx } from '$lib/utils/server';
+
+import { mutations,queries } from '../../(app2)/queries.server';
 import type { RequestHandler } from './$types';
 
 // Generalize this
@@ -44,8 +46,7 @@ export const POST: RequestHandler = async (event) => {
 	const mutation = mutations[sq as keyof typeof mutations];
 	const params = await mutationctx(event, mutation.schema);
 
-    // TODO: fix this error (but it works)
-    // @ts-expect-errors
+    //@ts-expect-error - TODO this is some bug with the type system we currently have
     const result = await mutation.fn(params);
     console.dir({result}, {depth: null})
 	return json(result || {});

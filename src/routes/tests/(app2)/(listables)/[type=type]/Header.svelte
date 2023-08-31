@@ -32,10 +32,13 @@
 	const inArticle: Writable<boolean> = getContext('inArticle');
 
 	const pins = createQuery(queryFactory.pins.list());
-	const pin = derived(pins, ($pins) => {
+	const pin = derived([pins, page], ([$pins, $page]) => {
 		return $pins.data?.find((pin) => {
 			if ($page.data.entry) {
-				return pin.entry?.id === $page.data.entry.id;
+				const isPinned = pin.entry?.id === $page.data.entry.id;
+                if (isPinned) return isPinned;
+                // check children
+                return pin.children?.find(child => child.entry?.id === $page.data.entry?.id)
 			}
 			return false;
 		});

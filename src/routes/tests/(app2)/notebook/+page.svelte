@@ -59,9 +59,9 @@
 </script>
 
 <Header>
-	<h2 class="text-3xl font-bold tracking-tight">Annotations</h2>
+	<h2 class="text-xl font-bold tracking-tight">Annotations</h2>
 	<svelte:fragment slot="end">
-		<Button href="/tests/notes/new" size="sm" variant="secondary">
+		<Button href="/tests/notes/new" size="sm" variant="outline">
 			<PlusIcon class="w-4 h-4 mr-2" />
 			New Note
 		</Button>

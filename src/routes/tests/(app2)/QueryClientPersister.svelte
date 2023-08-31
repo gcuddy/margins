@@ -55,6 +55,7 @@
 						return true;
 					}
 					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'all') {
+                        console.log('persisting entries/all')
 						return true;
 					}
 

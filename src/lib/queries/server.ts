@@ -33,7 +33,7 @@ import { librarySchema, tagSchema } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import type { Annotation, DB, Entry, Favorite } from '$lib/prisma/kysely/types';
 import { BookmarkSchema } from '$lib/prisma/zod-prisma';
-import type {  idSchema } from '$lib/schemas';
+import type { idSchema } from '$lib/schemas';
 import { noteFilterSchema } from '$lib/schemas/inputs';
 import { typeSchema } from '$lib/types';
 
@@ -103,12 +103,14 @@ const id_or_entryid = z.union([
 
 export const updateBookmarkSchema = id_or_entryid.and(
 	z.object({
-		data: BookmarkSchema.partial().omit({ id: true, userId: true }).extend({
-			// private: number (0 or 1)
-			private: z.number().int().optional(),
-			is_read: z.number().int().optional(),
-			bookmarked: z.number().int().optional(),
-		}),
+		data: BookmarkSchema.partial()
+			.omit({ id: true, userId: true, data: true, context: true })
+			.extend({
+				bookmarked: z.number().int().optional(),
+				is_read: z.number().int().optional(),
+				// private: number (0 or 1)
+				private: z.number().int().optional(),
+			}),
 	}),
 );
 
@@ -140,8 +142,8 @@ export async function updateBookmark(
 			.values(
 				entryIds.map((entryId) => ({
 					updatedAt: new Date(),
-					userId,
 					entryId,
+					userId,
 					bookmarked: 0,
 					...data,
 				})),
@@ -195,7 +197,7 @@ export async function getNotebook({
 	}
 
 	console.timeEnd('notebook');
-	return { notes, nextCursor };
+	return { nextCursor, notes };
 }
 
 export function getTags(userId: string) {
@@ -226,9 +228,10 @@ export const upsertAnnotationSchema = annotationSchema
 			})
 			.array()
 			.default([]),
+
+		id: annotationSchema.shape.id.or(z.array(z.string())),
 		// The array of tags to add to this annotation
 		tags: z.number().array().default([]),
-		id: annotationSchema.shape.id.or(z.array(z.string())),
 	})
 	.omit({
 		userId: true,
@@ -246,7 +249,7 @@ export async function upsertAnnotation({
 	} else {
 		ids = Array.isArray(_id) ? _id : [_id];
 	}
-	console.log({ ids, annotation });
+	console.log({ annotation, ids });
 	await db
 		.insertInto('Annotation')
 		.values(
@@ -255,21 +258,21 @@ export async function upsertAnnotation({
 				updatedAt: new Date(),
 				...annotation,
 				private: annotation.private ? 1 : 0,
-				target: annotation.target ? json(annotation.target) : undefined,
 				contentData: annotation.contentData
 					? json(annotation.contentData)
 					: undefined,
+				target: annotation.target ? json(annotation.target) : undefined,
 				userId,
 			})),
 		)
 		.onDuplicateKeyUpdate({
 			...annotation,
-			updatedAt: new Date(),
 			private: annotation.private ? 1 : 0,
-			target: annotation.target ? json(annotation.target) : undefined,
+			updatedAt: new Date(),
 			contentData: annotation.contentData
 				? json(annotation.contentData)
 				: undefined,
+			target: annotation.target ? json(annotation.target) : undefined,
 			userId,
 		})
 		.execute();
@@ -291,11 +294,11 @@ export async function upsertAnnotation({
 					entryIds.flatMap((entryId) =>
 						relations.map((relation) => ({
 							entryId,
-							relatedEntryId: relation.relatedEntryId,
 							id: nanoid(),
+							relatedEntryId: relation.relatedEntryId,
 							updatedAt: new Date(),
-							userId,
 							type: relation.type,
+							userId,
 						})),
 					),
 				)
@@ -337,8 +340,8 @@ const noteUpdateInputSchema = noteUpdateInput.or(z.array(noteUpdateInput));
 
 export const s_add_to_collection = z
 	.object({
-		entryId: z.number().int().or(z.number().int().array()).optional(),
 		collectionId: z.number().int(),
+		entryId: z.number().int().or(z.number().int().array()).optional(),
 		annotationId: z.string().or(z.string().array()).optional(),
 	})
 	.refine(
@@ -356,8 +359,8 @@ export async function add_to_collection(
 			.insertInto('CollectionItems')
 			.values(
 				input.annotationId.map((id) => ({
-					collectionId: input.collectionId,
 					annotationId: id,
+					collectionId: input.collectionId,
 					id: nanoid(),
 					updatedAt: new Date(),
 				})),
@@ -379,8 +382,8 @@ export async function add_to_collection(
 		return await db
 			.insertInto('CollectionItems')
 			.values({
-				entryId: input.entryId,
 				annotationId: input.annotationId,
+				entryId: input.entryId,
 				collectionId: input.collectionId,
 				id: nanoid(),
 				updatedAt: new Date(),
@@ -434,7 +437,7 @@ export async function set_tags_on_entry({
 		.filter((tag) => tag.id)
 		.map((tag) => tag.id)
 		.filter(Boolean);
-	console.log({ tagsToAdd, tagIds });
+	console.log({ tagIds, tagsToAdd });
 	if (!tagIds.length) {
 		// then delete all existing tags on these entries
 		await db.deleteFrom('TagOnEntry').where('entryId', '=', entries).execute();
@@ -479,8 +482,8 @@ export async function set_tags_on_entry({
 // move elsewhere
 export const entryMetadataSchema = z.object({
 	id: z.number().int(),
-	title: z.string().optional(),
 	author: z.string().optional(),
+	title: z.string().optional(),
 });
 
 export async function update_metadata_on_entry({
@@ -493,16 +496,16 @@ export async function update_metadata_on_entry({
 	await db
 		.insertInto('Bookmark')
 		.values({
-			userId,
 			entryId: id,
-			title,
+			userId,
 			author,
+			title,
 			updatedAt: new Date(),
 			// bookmarked: true,
 		})
 		.onDuplicateKeyUpdate({
-			title,
 			author,
+			title,
 		})
 		.execute();
 }
@@ -532,9 +535,10 @@ export async function get_notes_for_tag({
 
 export const entry_by_id_schema = z.object({
 	id: z.number().int().or(z.string()),
-	type: typeSchema,
 	/** TV Season, only relevant if type === "tv" */
 	season: z.number().int().optional(),
+
+	type: typeSchema,
 });
 
 export async function entry_by_id({
@@ -754,26 +758,27 @@ export async function entry_by_id({
 	const entry = await query.executeTakeFirst();
 
 	return {
+		// TODO: move these to endpoint to use in +page.ts with better cachings
+		// entry: entry ? validate_entry_type(entry) : undefined,
+		entry,
+
 		// tagForm,
 		// updateBookmarkForm,
 		// bookmarkForm,
 		// annotationForm,
 		// interactionForm,
 		type,
-		// TODO: move these to endpoint to use in +page.ts with better cachings
-		// entry: entry ? validate_entry_type(entry) : undefined,
-		entry,
-		movie: type === 'movie' ? await tmdb.movie.details(+id) : null,
 		book: type === 'book' ? await books.get(id.toString()) : null,
-		tv: type === 'tv' ? await tmdb.tv.details(+id) : null,
+		movie: type === 'movie' ? await tmdb.movie.details(+id) : null,
 		album: type === 'album' ? await spotify.album(id.toString()) : null,
-		podcast,
+		tv: type === 'tv' ? await tmdb.tv.details(+id) : null,
 		extras: {
 			season:
 				type === 'tv' && typeof season === 'number'
 					? await tmdb.tv.season(+id, season)
 					: null,
 		},
+		podcast,
 	};
 }
 
@@ -805,11 +810,11 @@ function validate_entry_type<TEntry extends { tweet?: unknown }>(
 
 // same type as get_library
 export const countLibrarySchema = z.object({
-	status: z.nativeEnum(Status).nullable(),
 	filter: z.object({
 		type: z.nativeEnum(DocumentType).optional(),
 		search: z.string().optional(),
 	}),
+	status: z.nativeEnum(Status).nullable(),
 });
 
 export async function count_library({
@@ -866,11 +871,11 @@ export async function save_to_library({
 	await db
 		.insertInto('Bookmark')
 		.values({
-			updatedAt: new Date(),
-			userId: ctx.userId,
 			entryId,
 			sort_order,
 			status,
+			updatedAt: new Date(),
+			userId: ctx.userId,
 		})
 		.onDuplicateKeyUpdate({
 			status,
@@ -899,26 +904,26 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 				const tv = await tmdb.tv.details(input.tmdbId);
 				insertable = {
 					...insertable,
-					title: tv.name,
 					text: tv.overview,
-					uri: `tmdb:tv:${tv.id}`,
+					title: tv.name,
 					tmdbId: tv.id,
+					uri: `tmdb:tv:${tv.id}`,
 					author: tv.created_by.map((val) => val.name).join(', '),
-					published: tv.first_air_date,
 					image: tmdb.media(tv.poster_path),
+					published: tv.first_air_date,
 					type: 'tv',
 				};
 			} else {
 				const movie = await tmdb.movie.details(input.tmdbId);
 				insertable = {
 					...insertable,
-					title: movie.title,
 					html: movie.overview,
-					uri: `tmdb:${movie.id}`,
+					title: movie.title,
 					tmdbId: movie.id,
+					uri: `tmdb:${movie.id}`,
 					author: movie.credits.crew.find((c) => c.job === 'Director')?.name,
-					published: movie.release_date,
 					image: tmdb.media(movie.poster_path),
+					published: movie.release_date,
 					type: 'movie',
 				};
 			}
@@ -938,19 +943,19 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 			);
 			insertable = {
 				...insertable,
-				title: book.volumeInfo.title,
 				html: book.volumeInfo.description,
+				title: book.volumeInfo.title,
+				googleBooksId: book.id,
 				uri: `isbn:${book.volumeInfo.industryIdentifiers?.find(
 					(i) => i.type === 'ISBN_13',
 				)?.identifier}`,
-				googleBooksId: book.id,
 				author: book.volumeInfo.authors?.join(', '),
-				published: book.volumeInfo.publishedDate,
 				image,
-				type: 'book',
+				published: book.volumeInfo.publishedDate,
 				publisher: book.volumeInfo.publisher,
-				pageCount: book.volumeInfo.pageCount,
+				type: 'book',
 				genres: book.volumeInfo.categories?.join(', '),
+				pageCount: book.volumeInfo.pageCount,
 				book_genre: fiction ? 'Fiction' : 'NonFiction',
 			};
 			break;
@@ -962,13 +967,13 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 			);
 			insertable = {
 				...insertable,
-				title: episode.title,
 				text: episode.description,
-				uri: episode.enclosureUrl,
+				title: episode.title,
 				podcastIndexId: episode.id,
+				uri: episode.enclosureUrl,
 				published: new Date(episode.datePublished * 1000),
-				type: 'podcast',
 				image: episode.image || episode.feedImage,
+				type: 'podcast',
 			};
 			break;
 		}
@@ -977,10 +982,10 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 			insertable = {
 				...insertable,
 				title: album.name,
-				uri: `spotify:album:${album.id}`,
 				spotifyId: album.id,
-				image: album.images[0]?.url,
+				uri: `spotify:album:${album.id}`,
 				author: album.artists.map((a) => a.name).join(', '),
+				image: album.images[0]?.url,
 				published: new Date(album.release_date),
 				type: 'album',
 			};
@@ -1051,7 +1056,6 @@ export async function get_authors({
 }
 
 export const updateTagSchema = z.object({
-	id: z.number(),
 	data: z
 		.object({
 			name: z.string(),
@@ -1059,6 +1063,7 @@ export const updateTagSchema = z.object({
 			// TODO description etc.
 		})
 		.partial(),
+	id: z.number(),
 });
 
 export type UpdateTagInput = z.input<typeof updateTagSchema>;
@@ -1076,10 +1081,11 @@ export async function updateTag({
 }
 
 export const createTagSchema = z.object({
-	// The name of the tag
-	name: z.string(),
 	// The color of the tag. If none is provided, the default color will be used.
 	color: z.string().optional(),
+
+	// The name of the tag
+	name: z.string(),
 });
 
 type CreateTagInput = z.input<typeof createTagSchema>;
@@ -1226,17 +1232,17 @@ export async function convertTo({
 
 export const notesInputOrderAndCursorSchema = z.union([
 	z.object({
-		orderBy: z.enum(['updatedAt', 'createdAt']).default('createdAt'),
 		dir: z.enum(['asc', 'desc']).default('desc'),
+		orderBy: z.enum(['updatedAt', 'createdAt']).default('createdAt'),
 		cursor: z.coerce.date().optional(),
 	}),
 	z.object({
-		orderBy: z.literal('name'),
 		dir: z.enum(['asc', 'desc']).default('asc'),
+		orderBy: z.literal('name'),
 		cursor: z
 			.object({
-				title: z.string().nullable(),
 				createdAt: z.coerce.date(),
+				title: z.string().nullable(),
 			})
 			.optional(),
 	}),
@@ -1359,8 +1365,8 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 				nextCursor = nextItem[orderBy];
 			} else if (orderBy === 'name') {
 				nextCursor = {
-					title: nextItem.title,
 					createdAt: nextItem.createdAt,
+					title: nextItem.title,
 				};
 			} else {
 				// orderBy satisfies never;
@@ -1368,8 +1374,8 @@ export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
 		}
 	}
 	return {
-		notes,
 		nextCursor,
+		notes,
 		// todo: nextCursor
 	};
 }
@@ -1406,12 +1412,12 @@ const _createFavoriteSchema = z
 		collectionId: z.number().nullish(),
 		entryId: z.number().nullish(),
 		feedId: z.number().nullish(),
-		tagId: z.number().nullish(),
 		smartListId: z.number().nullish(),
+		tagId: z.number().nullish(),
 		//
 		folderName: z.string().nullish(),
-		sortOrder: z.number().nullish(),
 		parentId: z.string().nullish(),
+		sortOrder: z.number().nullish(),
 		//
 		id: z.string(),
 	})
@@ -1432,8 +1438,8 @@ export async function createFavorite({
 		return {
 			...item,
 			id,
-			updatedAt: new Date(),
 			type: item.folderName ? 'FOLDER' : 'FAVORITE',
+			updatedAt: new Date(),
 			userId,
 		} as const;
 	});
@@ -1447,7 +1453,6 @@ export async function createFavorite({
 }
 
 export const updateFavoriteSchema = z.object({
-	id: z.string(),
 	data: z
 		.object({
 			folderName: z.string().nullish(),
@@ -1455,6 +1460,7 @@ export const updateFavoriteSchema = z.object({
 			sortOrder: z.number().nullish(),
 		})
 		.partial(),
+	id: z.string(),
 });
 
 export async function updateFavorite({
@@ -1616,6 +1622,3 @@ export async function pins({ ctx }: Ctx) {
 
 export type Pins = Awaited<ReturnType<typeof pins>>;
 export type Pin = Pins[number];
-
-
-

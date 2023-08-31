@@ -2,23 +2,27 @@
 	import { createAvatar, melt } from '@melt-ui/svelte';
 
 	import smoothload from '$lib/actions/smoothload';
-	import type { List } from "$lib/api/tmdb"
+	import type { List } from '$lib/api/tmdb';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import { Dialog, DialogContent, DialogHeader, DialogTitle } from '$lib/components/ui/dialog';
+	import Button from '$lib/components/ui/Button.svelte';
+	import {
+		Dialog,
+		DialogContent,
+		DialogHeader,
+		DialogTitle,
+	} from '$lib/components/ui/dialog';
 	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
+	import type { FullEntryDetail } from '$lib/queries/server';
 	import { cn } from '$lib/utils';
 	import { isUpcoming } from '$lib/utils/date';
 
-	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
 
-	type Movie = PageData['movie'];
-	export let data: PageData & {
-		movie: NonNullable<Movie>;
-	};
+	export let data: FullEntryDetail & {
+        movie: NonNullable<FullEntryDetail['movie']>;
+    }
 
 	$: director = data.movie.credits.crew.find((c) => c.job === 'Director');
 	$: writers = data.movie.credits.crew.filter((c) => c.job === 'Screenplay');
@@ -26,21 +30,24 @@
 	$: upcoming = isUpcoming(new Date(data.movie.release_date));
 
 	const promises = {
-		lists: () => fetch(`/api/tmdb/movie/${data.movie.id}/lists`).then((r) => r.json())as Promise<{ results: Array<List>}>
+		lists: () =>
+			fetch(`/api/tmdb/movie/${data.movie.id}/lists`).then((r) =>
+				r.json(),
+			) as Promise<{ results: Array<List> }>,
 	};
 
-    const {
+	$: ({
 		elements: { image, fallback },
 		options,
-		states: { loadingStatus }
+		states: { loadingStatus },
 	} = createAvatar({
-        src: `https://image.tmdb.org/t/p/w342/${data.movie.poster_path}`,
-    });
+		src: `https://image.tmdb.org/t/p/w342/${data.movie.poster_path}`,
+	}));
 </script>
 
 <div class="flex select-text flex-col gap-4">
 	<div class="flex gap-6 max-sm:flex-col sm:items-center">
-        <div class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]">
+		<div class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]">
 			<img
 				use:melt={$image}
 				class="aspect-auto w-[inherit] rounded-[inherit]"
@@ -49,7 +56,7 @@
 			<div
 				class={cn(
 					'w-[200px] h-[300px] bg-muted flex items-center justify-center text-muted-foreground',
-					$loadingStatus === 'loading' && 'animate-pulse'
+					$loadingStatus === 'loading' && 'animate-pulse',
 				)}
 				use:melt={$fallback}
 			>
@@ -71,7 +78,7 @@
 			<Lead>
 				{#if director}
 					<a href="/tests/people/t{director.id}">{director.name}</a>{/if} — {new Date(
-					data.movie.release_date
+					data.movie.release_date,
 				).getFullYear()}
 			</Lead>
 			<Lead class="text-base">
@@ -90,8 +97,10 @@
 				{/if}
 			</div>
 			<div class="flex items-center gap-x-2">
-				<Badge variant="outline" as="a" href="https://imdb.com/title/{data.movie.imdb_id}"
-					>IMDB</Badge
+				<Badge
+					variant="outline"
+					as="a"
+					href="https://imdb.com/title/{data.movie.imdb_id}">IMDB</Badge
 				>
 			</div>
 		</div>
@@ -136,7 +145,7 @@
 
 {#if data.movie.videos.results.length}
 	{@const trailer = data.movie.videos.results.find(
-		(v) => v.type === 'Trailer' && v.site === 'YouTube'
+		(v) => v.type === 'Trailer' && v.site === 'YouTube',
 	)}
 	{#if trailer}
 		<Dialog>
@@ -166,21 +175,21 @@
 			<DialogTitle>Lists</DialogTitle>
 		</DialogHeader>
 		<div class="flex flex-col overflow-y-auto">
-		{#await promises.lists()}
-			loading
-		{:then {results: lists}}
-			{#each lists.sort((a,b) => a.favorite_count - b.favorite_count) as list}
-				<div class="flex items-center gap-2">
-					<a href="/tests/lists/t{list.id}">{list.name}</a>
-					{#if list.description}
-						<Muted>{list.description}</Muted>
-					{/if}
-				</div>
-			{/each}
-		{:catch error}
-			{error.message}
-		{/await}
-	</div>
+			{#await promises.lists()}
+				loading
+			{:then { results: lists }}
+				{#each lists.sort((a, b) => a.favorite_count - b.favorite_count) as list}
+					<div class="flex items-center gap-2">
+						<a href="/tests/lists/t{list.id}">{list.name}</a>
+						{#if list.description}
+							<Muted>{list.description}</Muted>
+						{/if}
+					</div>
+				{/each}
+			{:catch error}
+				{error.message}
+			{/await}
+		</div>
 	</DialogContent>
 </Dialog>
 <H3>Cast</H3>
@@ -192,5 +201,17 @@
 			>{name}</span
 		> -->
 	{/each}
+</Cluster>
+
+<H3>Related Films</H3>
+<Cluster class="max-w-prose gap-1">
+    <pre>
+        {JSON.stringify(data.movie, null, 2)}
+    </pre>
+    <!-- {#each data.movie. as movie}
+        <a href="/tests/movies/t{movie.id}">
+            <Badge variant="secondary">{movie.title}</Badge>
+        </a> -->
+    <!-- {/each} -->
 </Cluster>
 <dl />

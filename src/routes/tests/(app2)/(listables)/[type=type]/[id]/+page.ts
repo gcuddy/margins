@@ -30,8 +30,8 @@ export const load = (async (event) => {
                 init: event
             }
         })),
-		type,
+		component: get_module(type).then((module) => module?.default ),
 		query,
-		component: get_module(type).then((module) => module?.default )
+		type
 	};
 }) satisfies PageLoad

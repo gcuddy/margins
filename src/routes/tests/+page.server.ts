@@ -1,52 +1,29 @@
-import type parse from '$lib/parse';
-import { add_url_schema, urlSchema, validateAuthedForm } from '$lib/schemas';
-import { type Actions, fail, redirect } from '@sveltejs/kit';
-import { db, json } from '$lib/db';
-import { normalizeUrl } from '$lib/feeds/utils';
-import { entrySelect, getFirstBookmarkSort } from '$lib/db/selects';
-import { allowedThemes } from '$lib/features/settings/themes';
-import { nanoid } from '$lib/nanoid';
-import { dev } from '$app/environment';
 import type { DocumentType } from '@prisma/client';
+import { type Actions, fail, redirect } from '@sveltejs/kit';
+
+import { dev } from '$app/environment';
+import { db, json } from '$lib/db';
+import { getFirstBookmarkSort } from '$lib/db/selects';
+import { allowedThemes } from '$lib/features/settings/themes';
+import { normalizeUrl } from '$lib/feeds/utils';
+import { nanoid } from '$lib/nanoid';
+import type parse from '$lib/parse';
+import { add_url_schema, validateAuthedForm } from '$lib/schemas';
 
 const themes = allowedThemes;
 
 type AddUrlReturnedData = {
+	googleBooksId?: string | null;
 	id: number;
-	type: DocumentType;
+	podcastIndexId?: number | null;
 	spotifyId?: string | null;
 	tmdbId?: number | null;
-	googleBooksId?: string | null;
-	podcastIndexId?: number | null;
+	type: DocumentType;
 } & {
 	new: boolean;
 };
 
 export const actions: Actions = {
-	// This action is called when the user clicks the theme button
-	setTheme: async ({ url, cookies, request }) => {
-		const theme = url.searchParams.get('theme') ?? String((await request.formData()).get('theme'));
-		const redirectTo = url.searchParams.get('redirectTo');
-
-		console.log({ theme, redirectTo });
-
-		if (!theme || !themes.includes(theme)) {
-			return fail(400);
-		}
-
-		console.log('theme');
-
-		if (theme) {
-			cookies.set('theme', theme, {
-				path: '/',
-				maxAge: 60 * 60 * 24 * 365,
-				secure: dev ? false : true
-			});
-		}
-		if (redirectTo) {
-			throw redirect(303, redirectTo ?? '/');
-		}
-	},
 	addUrl: validateAuthedForm(add_url_schema, async ({ form, fetch, session }) => {
 		const { url, status, via_entryid, via_url } = form.data;
 		// check if url is isbn
@@ -85,8 +62,8 @@ export const actions: Actions = {
 					updatedAt: new Date(),
 					// ...data,
 					...rest,
-					podcastIndexId: rest.podcastIndexId ? Number(rest.podcastIndexId) : null,
 					original: rest.original ? json(rest.original) : null,
+					podcastIndexId: rest.podcastIndexId ? Number(rest.podcastIndexId) : null,
 					uri
 				})
 				.ignore()
@@ -94,13 +71,13 @@ export const actions: Actions = {
 			console.log({ entry });
 			entryId = Number(entry.insertId);
             entryToReturn = {
+                googleBooksId: rest.googleBooksId,
                 id: entryId,
-                type: rest.type!,
+                new: true,
+                podcastIndexId: rest.podcastIndexId ? Number(rest.podcastIndexId) : null,
                 spotifyId: null,
                 tmdbId: rest.tmdbId,
-                googleBooksId: rest.googleBooksId,
-                podcastIndexId: rest.podcastIndexId ? Number(rest.podcastIndexId) : null,
-                new: true
+                type: rest.type!
             };
 		}
 		if (!entryId) {
@@ -117,11 +94,11 @@ export const actions: Actions = {
 					.insertInto('Relation')
 					.values({
 						entryId,
+						id: nanoid(),
 						relatedEntryId: via_entryid,
-						updatedAt: new Date(),
 						type: 'SavedFrom',
-						userId: session.user.userId,
-						id: nanoid()
+						updatedAt: new Date(),
+						userId: session.user.userId
 					})
 					.ignore()
 					.execute();
@@ -136,11 +113,11 @@ export const actions: Actions = {
 			await db
 				.insertInto('Bookmark')
 				.values({
-					userId: session.user.userId,
 					entryId,
-					updatedAt: new Date(),
 					sort_order,
-					status
+					status,
+					updatedAt: new Date(),
+					userId: session.user.userId
 				})
 				.ignore()
 				.execute();
@@ -152,5 +129,29 @@ export const actions: Actions = {
         return entryToReturn;
 
 		// throw redirect(303, '/tests/library/backlog');
-	})
+	}),
+	// This action is called when the user clicks the theme button
+setTheme: async ({ url, cookies, request }) => {
+		const theme = url.searchParams.get('theme') ?? String((await request.formData()).get('theme'));
+		const redirectTo = url.searchParams.get('redirectTo');
+
+		console.log({ redirectTo, theme });
+
+		if (!theme || !themes.includes(theme)) {
+			return fail(400);
+		}
+
+		console.log('theme');
+
+		if (theme) {
+			cookies.set('theme', theme, {
+				maxAge: 60 * 60 * 24 * 365,
+				path: '/',
+				secure: dev ? false : true
+			});
+		}
+		if (redirectTo) {
+			throw redirect(303, redirectTo ?? '/');
+		}
+	}
 };

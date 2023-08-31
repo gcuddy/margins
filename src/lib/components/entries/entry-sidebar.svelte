@@ -359,7 +359,7 @@
 								<EntryAuthorInput
 									author={$query.data.entry.bookmark?.author ??
 										$query.data.entry.author ??
-										''}
+										'No author'}
 									entryId={$query.data.entry.id}
 								/>
 								<Button

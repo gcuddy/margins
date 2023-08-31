@@ -1,20 +1,22 @@
 // lightweight home built query manager ala React Query
 
-import { type Readable, writable, derived } from 'svelte/store';
-
-import type { Queries, Mutations } from '../../routes/tests/(app2)/queries.server';
-
-import type { Page, RequestEvent } from '@sveltejs/kit';
-import { parse, stringify } from 'devalue';
-import type { Session, User } from 'lucia';
-import { dev } from '$app/environment';
-import { page } from '$app/stores';
-import { get } from 'svelte/store';
 import type {
 	CreateInfiniteQueryOptions,
 	CreateQueryOptions,
-	DefaultError
+	DefaultError,
 } from '@tanstack/svelte-query';
+import { stringify } from 'devalue';
+import type { Session, User } from 'lucia';
+import { derived, type Readable, writable } from 'svelte/store';
+import { get } from 'svelte/store';
+import type { z } from 'zod';
+
+import { page } from '$app/stores';
+
+import type {
+	Mutations,
+	Queries,
+} from '../../routes/tests/(app2)/queries.server';
 import { queryOptions } from './utils';
 
 export type { Queries };
@@ -28,7 +30,9 @@ export type QueryInput<TKey extends keyof Queries> = Parameters<
 >[0]['input'] extends IsAny<Parameters<Queries[TKey]['fn']>[0]['input']>
 	? undefined
 	: Parameters<Queries[TKey]['fn']>[0]['input'];
-export type QueryOutput<TKey extends keyof Queries> = Awaited<ReturnType<Queries[TKey]['fn']>>;
+export type QueryOutput<TKey extends keyof Queries> = Awaited<
+	ReturnType<Queries[TKey]['fn']>
+>;
 export type MutationInput<TKey extends keyof Mutations> = Parameters<
 	Mutations[TKey]['fn']
 >[0]['input'] extends IsAny<Parameters<Mutations[TKey]['fn']>[0]['input']>
@@ -36,29 +40,35 @@ export type MutationInput<TKey extends keyof Mutations> = Parameters<
 	: Parameters<Mutations[TKey]['fn']>[0]['input'];
 
 // https://stackoverflow.com/questions/62185345/use-keyof-to-extract-a-string-literal-union-of-only-keys-that-have-values-of-a-s
-type KeysMatching<T, V> = { [K in keyof T]-?: T[K] extends V ? K : never }[keyof T];
+type KeysMatching<T, V> = {
+	[K in keyof T]-?: T[K] extends V ? K : never;
+}[keyof T];
 
 // Cursor Keys
 export type InfiniteQueries = {
-	[K in keyof Queries]: Parameters<Queries[K]['fn']>[0]['input'] extends { cursor?: any }
+	[K in keyof Queries]: Parameters<Queries[K]['fn']>[0]['input'] extends {
+		cursor?: any;
+	}
 		? K
 		: never;
 }[keyof Queries];
 
 export type QueryInit = {
-	url?: URL;
-	fetcher?: typeof fetch;
-	userId?: string | null;
-	fetch?: typeof globalThis.fetch;
 	data?: {
-		userId?: string | null;
 		session?: Session | null;
 		user?: User | null;
+		userId?: string | null;
 	} | null;
+	fetch?: typeof globalThis.fetch;
+	fetcher?: typeof fetch;
+	url?: URL;
+	userId?: string | null;
 };
 
 // https://stackoverflow.com/questions/67605122/obtain-a-slice-of-a-typescript-parameters-tuple
-type ParametersExceptFirst<F> = F extends (arg0: any, ...rest: infer R) => any ? R : never;
+type ParametersExceptFirst<F> = F extends (arg0: any, ...rest: infer R) => any
+	? R
+	: never;
 
 export function queryCaller(page: Readable<Record<string, string>>) {
 	let $page: Record<string, string>;
@@ -74,10 +84,10 @@ export function queryCaller(page: Readable<Record<string, string>>) {
 				? undefined
 				: Parameters<Queries[T]['fn']>[0]['input'],
 			options?: {
-				stale_time?: number;
 				cache?: boolean;
 				enabled?: boolean;
-			}
+				stale_time?: number;
+			},
 		): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
 			return query($page, fn, input, options);
 		};
@@ -92,26 +102,32 @@ export function queryCaller(page: Readable<Record<string, string>>) {
 // getQueryKey
 type QueryType = 'query' | 'infinite';
 
-type QueryKey = [string[], { input?: unknown; type?: Exclude<QueryType, 'any'> }?];
+type QueryKey = [
+	Array<string>,
+	{ input?: unknown; type?: Exclude<QueryType, 'any'> }?,
+];
 
 export type TypedQueryKey<T extends keyof Queries> = [
 	[T],
-	{ input: QueryInput<T>; type?: T extends InfiniteQueries ? QueryType : 'query' }
+	{
+		input: QueryInput<T>;
+		type?: T extends InfiniteQueries ? QueryType : 'query';
+	},
 ];
 
 // TODO: allow input to be undefined
 export function getArrayQueryKey<T extends keyof Queries>(
 	queryKey: T,
 	input: QueryInput<T>,
-	type?: T extends InfiniteQueries ? QueryType : 'query'
+	type?: T extends InfiniteQueries ? QueryType : 'query',
 ): TypedQueryKey<T> {
 	return [
 		[queryKey],
 		{
 			input,
 			// ...(typeof input !== 'undefined' && { input: input }),
-			...(!type ? { type: 'query' } : { type: type })
-		}
+			...(!type ? { type: 'query' } : { type: type }),
+		},
 	];
 
 	// const arrayPath = (
@@ -132,7 +148,9 @@ export function getArrayQueryKey<T extends keyof Queries>(
 	// ];
 }
 
-type GetQueryType<T> = T extends InfiniteQueries ? 'infinite' | 'query' : 'query';
+type GetQueryType<T> = T extends InfiniteQueries
+	? 'infinite' | 'query'
+	: 'query';
 
 type CursorType<T extends keyof Queries> = T extends InfiniteQueries
 	? Parameters<Queries[T]['fn']>[0]['input']['cursor']
@@ -146,10 +164,10 @@ type CursorType<T extends keyof Queries> = T extends InfiniteQueries
 //     init: Parameters<typeof query<T>>[0],
 //     input: Parameters<typeof query<T>>[2]
 // ) => CreateQueryOptions
-export function createQueryOption<T extends keyof Queries, TType extends GetQueryType<T>>(
-	fn: T,
-	type: TType = 'query' as TType
-) {
+export function createQueryOption<
+	T extends keyof Queries,
+	TType extends GetQueryType<T>,
+>(fn: T, type: TType = 'query' as TType) {
 	type Params = Parameters<typeof query<T>>;
 
 	type Input = Params[2];
@@ -162,67 +180,77 @@ export function createQueryOption<T extends keyof Queries, TType extends GetQuer
 		if (type === 'infinite') {
 			// todo
 			return {
-				queryKey: getArrayQueryKey(fn, input, type),
+				getNextPageParam: (lastPage) => (lastPage as any).nextCursor,
+				initialPageParam: undefined as CursorType<T>,
 				queryFn: ({ pageParam }) =>
 					query(init, fn, {
 						...input,
-						cursor: pageParam
+						cursor: pageParam,
 					}),
-				initialPageParam: <CursorType<T>>undefined,
-				getNextPageParam: (lastPage) => (lastPage as any).nextCursor
+				queryKey: getArrayQueryKey(fn, input, type),
 			} satisfies CreateInfiniteQueryOptions;
 		}
 		return {
+			queryFn: () => query(init, fn, input),
 			queryKey: getArrayQueryKey(fn, input, type),
-			queryFn: () => query(init, fn, input)
 		} satisfies CreateQueryOptions;
 	};
 }
 
-type Params<T extends keyof Queries> = Parameters<Queries[T]['fn']>[0]['input'] extends IsAny<
-	Parameters<Queries[T]['fn']>[0]['input']
->
+type Params<T extends keyof Queries> = Parameters<
+	Queries[T]['fn']
+>[0]['input'] extends IsAny<Parameters<Queries[T]['fn']>[0]['input']>
 	? undefined
 	: Parameters<Queries[T]['fn']>[0]['input'];
 
 export function queryOpts<T extends keyof Queries>(
 	init: QueryInit,
 	fn: T,
-	params: Parameters<Queries[T]['fn']>[0]['input']
-): CreateQueryOptions<QueryOutput<T>, DefaultError, QueryOutput<T>, TypedQueryKey<T>>;
+	params: Parameters<Queries[T]['fn']>[0]['input'],
+): CreateQueryOptions<
+	QueryOutput<T>,
+	DefaultError,
+	QueryOutput<T>,
+	TypedQueryKey<T>
+>;
 export function queryOpts<T extends keyof Queries>(
 	fn: T,
-	params: Parameters<Queries[T]['fn']>[0]['input']
-): CreateQueryOptions<QueryOutput<T>, DefaultError, QueryOutput<T>, TypedQueryKey<T>>;
+	params: Parameters<Queries[T]['fn']>[0]['input'],
+): CreateQueryOptions<
+	QueryOutput<T>,
+	DefaultError,
+	QueryOutput<T>,
+	TypedQueryKey<T>
+>;
 export function queryOpts<T extends keyof Queries>(
 	initOrFn: T | QueryInit,
 	paramsOrFn: T | Parameters<Queries[T]['fn']>[0]['input'],
-	params?: Parameters<Queries[T]['fn']>[0]['input']
-): CreateQueryOptions<QueryOutput<T>, DefaultError, QueryOutput<T>, TypedQueryKey<T>> {
+	params?: Parameters<Queries[T]['fn']>[0]['input'],
+): CreateQueryOptions<
+	QueryOutput<T>,
+	DefaultError,
+	QueryOutput<T>,
+	TypedQueryKey<T>
+> {
 	if (typeof initOrFn === 'string') {
 		const fn = initOrFn;
 		const params = paramsOrFn as Parameters<Queries[T]['fn']>[0]['input'];
 		return queryOptions({
+			queryFn: () => query({}, fn, params),
 			queryKey: getArrayQueryKey(fn, params, 'query'),
-			queryFn: () => query({}, fn, params)
 		});
 	}
 	const init = initOrFn;
 	const fn = paramsOrFn as T;
 	return queryOptions({
+		queryFn: () => query(init, fn, params),
 		queryKey: getArrayQueryKey(fn, params, 'query'),
-		queryFn: () => query(init, fn, params as Parameters<Queries[T]['fn']>[0]['input'])
 	});
 }
 
 export async function query<T extends keyof Queries>(
 	// allow for a base to be passed in that could be unknown
-	base:
-		| any
-		| QueryInit
-		| {
-				[index: string]: unknown;
-		  },
+	base: any | QueryInit | Record<string, unknown>,
 	fn: T,
 	input: Parameters<Queries[T]['fn']>[0]['input'] extends IsAny<
 		Parameters<Queries[T]['fn']>[0]['input']
@@ -230,10 +258,10 @@ export async function query<T extends keyof Queries>(
 		? undefined
 		: Parameters<Queries[T]['fn']>[0]['input'],
 	options?: {
-		stale_time?: number;
 		cache?: boolean;
 		enabled?: boolean;
-	}
+		stale_time?: number;
+	},
 ): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
 	if (options) {
 		if (options.stale_time) {
@@ -260,7 +288,9 @@ export async function query<T extends keyof Queries>(
 	console.log({ fetcher });
 	const data = stringify(input);
 	console.log({ data });
-	let url: string = (init.url?.origin ?? '') + `/tests/sq/${fn}?input=${encodeURIComponent(data)}`;
+	let url = `${
+		init.url?.origin ?? ''
+	}/tests/sq/${fn}?input=${encodeURIComponent(data)}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}
@@ -287,59 +317,54 @@ export { query as qquery };
 
 export const isMutating = writable(false);
 
-
 /**
  * Helper function to run a mutation
  * @param fn Mutation operation to run
  * @param input Input to pass to mutation
  * @returns Data returned from mutation
  */
-export async function mutate<T extends keyof Mutations>(
-	fn: T,
-	input: Parameters<Mutations[T]['fn']>[0]['input'] extends IsAny<
-		Parameters<Mutations[T]['fn']>[0]['input']
-	>
+export async function mutate<TMutation extends keyof Mutations>(
+	fn: TMutation,
+	input: Mutations[TMutation]['schema'] extends z.ZodTypeAny
 		? undefined
-		: Parameters<Mutations[T]['fn']>[0]['input']
-): Promise<Awaited<ReturnType<Mutations[T]['fn']>>> {
+		: z.input<NonNullable<Mutations[TMutation]['schema']>>,
+): Promise<Awaited<ReturnType<Mutations[TMutation]['fn']>>> {
 	const $page = get(page);
-    return mutation($page, fn, input);
+	return mutation($page, fn, input);
 }
 
 export async function mutation<T extends keyof Mutations>(
 	base:
 		| {
-				url: URL;
 				fetcher?: typeof fetch;
+				url: URL;
 				userId?: string | null;
 		  }
 		| any,
 	fn: T,
-	input: Parameters<Mutations[T]['fn']>[0]['input'] extends IsAny<
-		Parameters<Mutations[T]['fn']>[0]['input']
-	>
+	input: Mutations[T]['schema'] extends z.ZodTypeAny
 		? undefined
-		: Parameters<Mutations[T]['fn']>[0]['input'],
+		: z.input<NonNullable<Mutations[T]['schema']>>,
 	opts?: Partial<{
 		fetcher: typeof fetch;
 		userId: string | null;
-	}>
+	}>,
 ): Promise<Awaited<ReturnType<Mutations[T]['fn']>>> {
 	isMutating.set(true);
 	const { fetcher = fetch, userId = null } = base || {};
 	console.log(`mutating`);
-	let url = base?.url?.origin + `/tests/sq/${fn}`;
+	let url = `${base?.url?.origin}/tests/sq/${fn}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}
 	type Data = Awaited<ReturnType<Mutations[T]['fn']>>;
 	console.log({ url });
 	const response: Response = await fetcher(url, {
-		method: 'POST',
 		body: stringify({
 			input,
-			userId
-		})
+			userId,
+		}),
+		method: 'POST',
 	});
 	isMutating.set(false);
 	if (!response.ok) {
@@ -364,7 +389,11 @@ export class Query {
 	private fetcher: typeof fetch;
 	private userId: string | null;
 
-	constructor(init: { url: URL; fetcher?: typeof fetch; userId?: string | null }) {
+	constructor(init: {
+		fetcher?: typeof fetch;
+		url: URL;
+		userId?: string | null;
+	}) {
 		this.url = init.url;
 		this.fetcher = init.fetcher || fetch;
 		this.userId = init.userId || null;
@@ -403,7 +432,11 @@ export class Query {
 	// }
 }
 
-export function q(init: { url: URL; fetcher?: typeof fetch; userId?: string | null }) {
+export function q(init: {
+	fetcher?: typeof fetch;
+	url: URL;
+	userId?: string | null;
+}) {
 	const query = new Query(init);
 
 	console.log({ query });
@@ -436,7 +469,7 @@ export function query_store<T>(opts: {
 		loading: boolean;
 	}>({
 		data: null,
-		loading: true
+		loading: true,
 	});
 
 	async function get() {
@@ -450,42 +483,49 @@ export function query_store<T>(opts: {
 	function subscribe() {
 		return store.subscribe((new_value) => {
 			// if stale time, run get
-			if (data_updated_timestamp === null || Date.now() - data_updated_timestamp > opts.staleTime) {
+			if (
+				data_updated_timestamp === null ||
+				Date.now() - data_updated_timestamp > opts.staleTime
+			) {
 				// get()
 			}
 		});
 	}
 
 	return {
-		subscribe
+		subscribe,
 	};
 }
 
 export const sq = (
 	init: {
-		url: URL;
 		fetcher?: typeof fetch;
+		url: URL;
 		userId?: string | null;
 	},
 	ctx?: {
 		userId?: string | null;
-	}
+	},
 ) => {
 	return {
 		query: async function query<T extends keyof Queries>(
 			fn: T,
-			input: Parameters<Queries[T]['fn']>[0]['input']
+			input: Parameters<Queries[T]['fn']>[0]['input'],
 		): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
 			const { fetcher = fetch, userId = null } = init || {};
 			const data = stringify(input);
-			let url = init.fetcher ? '' : init.url.origin + `/tests/sq/${fn}?input=${data}`;
+			let url = init.fetcher
+				? ''
+				: `${init.url.origin}/tests/sq/${fn}?input=${data}`;
 			if (userId) {
 				url += `&userId=${userId}`;
 			}
 			type Data = Awaited<ReturnType<Queries[T]['fn']>>;
-			const final = (await fetcher(url).then((res) => res.json())) as Awaited<Data>;
+			const final = (await fetcher(url).then((res) =>
+				res.json(),
+			)) as Awaited<Data>;
 			return final;
-		}
+		},
 	};
 };
 

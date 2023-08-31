@@ -266,6 +266,20 @@
 				<Paperclip class="mr-2 h-4 w-4" />
 				<span>Attach ePub</span>
 			</DropdownMenuItem>
+			<DropdownMenuItem
+				on:click={() => {
+					dialogStore.open({
+                        action(value) {
+                            console.log({value})
+                        },
+                        description: "Please enter URL",
+                        title: 'Attach URL',
+                    })
+				}}
+			>
+				<Paperclip class="mr-2 h-4 w-4" />
+				<span>Attach URL…</span>
+			</DropdownMenuItem>
 		</DropdownMenuGroup>
 		<!-- <DropdownMenuItem>Billing</DropdownMenuItem>
 		<DropdownMenuItem>Team</DropdownMenuItem>

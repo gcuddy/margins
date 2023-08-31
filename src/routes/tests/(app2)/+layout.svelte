@@ -1,32 +1,32 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import MainNav, { MenuBar } from './MainNav.svelte';
-	import { cn } from '$lib/utils/tailwind';
-	import { ComponentType, onMount, setContext } from 'svelte';
-	import type Commander from './Commander.svelte';
-	import Nav from './Nav.svelte';
-	import { Readable, Writable, writable } from 'svelte/store';
-	import type { LayoutData } from './$types';
-	import GenericCommander from '$lib/commands/GenericCommander.svelte';
-	import AudioPlayer from '$lib/components/AudioPlayer.svelte';
-	import DropBox from '$lib/components/DragHelper/DropBox.svelte';
-	import { QueryClientProvider } from '@tanstack/svelte-query';
 	import 'katex/dist/katex.min.css';
+
 	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
-	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
-	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
-	import QueryClientPersister from './QueryClientPersister.svelte';
-	import { browser } from '$app/environment';
+	import { type ComponentType, onMount, setContext } from 'svelte';
+	import { writable } from 'svelte/store';
+
+	import { page } from '$app/stores';
 	import { AddButton } from '$components';
+	import GenericCommander from '$lib/commands/GenericCommander.svelte';
+	import DropBox from '$lib/components/DragHelper/DropBox.svelte';
+	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
+	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
+	import { cn } from '$lib/utils/tailwind';
 
 	import NewCommander from '../playground/command/+page.svelte';
+	import type { LayoutData } from './$types';
+	import ClipboardHandler from './ClipboardHandler.svelte';
+	import type { MenuBar } from './MainNav.svelte';
+	import Nav from './Nav.svelte';
+	import QueryClientPersister from './QueryClientPersister.svelte';
 
 	// export let data;
 
 	// $: isEntry = $page.route.id?.includes("entry");
 	let isEntry = false;
 	$: is_article =
-		$page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
+		$page.url.pathname.startsWith('/tests/article') ||
+		$page.url.pathname.startsWith('/tests/pdf');
 	$: is_settings = $page.url.pathname.startsWith('/tests/settings');
 
 	// Right now this is hardcoded...
@@ -41,13 +41,13 @@
 
 	const menu = writable<MenuBar>({
 		center: false,
+		entry: undefined,
 		show: true,
-		entry: undefined
 	});
 	setContext('mainnav', menu);
 
 	// lazy load components?
-	let commander: ComponentType<Commander> | undefined = undefined;
+	let commander: ComponentType | undefined = undefined;
 	onMount(async () => {
 		let module = await import('./Commander.svelte');
 		commander = module.default;
@@ -60,15 +60,15 @@
 
 	// queryclient
 
-	const queryClient = data.queryClient;
-
 	const inArticle = writable(false);
 	setContext('inArticle', inArticle);
 	$: $inArticle =
-		$page.url.pathname.startsWith('/tests/article') || $page.url.pathname.startsWith('/tests/pdf');
+		$page.url.pathname.startsWith('/tests/article') ||
+		$page.url.pathname.startsWith('/tests/pdf');
 </script>
 
 <QueryClientPersister client={data.queryClient} let:isRestoring>
+    <ClipboardHandler />
 	{#if commander}
 		<svelte:component this={commander} />
 	{/if}
@@ -87,7 +87,7 @@
 				<div>
 					<aside
 						class={cn(
-							'hidden h-full flex-col self-stretch grow overflow-hidden sm:flex'
+							'hidden h-full flex-col self-stretch grow overflow-hidden sm:flex',
 							// isEntry && 'md:hidden',
 							// is_article && 'sm:hidden'
 						)}
@@ -104,7 +104,7 @@
 						'flex h-full w-full flex-1 flex-col',
 						$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
 						'relative',
-						'col-start-2'
+						'col-start-2',
 						// 'px-4 py-6 lg:px-8'
 						// is_article ? ' col-span-5' : 'lg:col-span-4',
 						// is_settings && 'border-none lg:col-span-3',
