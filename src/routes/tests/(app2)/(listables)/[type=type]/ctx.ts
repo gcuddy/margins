@@ -91,9 +91,9 @@ export function setEntryContext(): EntryContext {
     const scrollingDown = writable(false);
 
 	const state = {
+		navWidth,
 		rightSidebar,
 		rightSidebarWidth,
-		navWidth,
         scrollingDown
 	};
 

@@ -9,28 +9,28 @@
 	export const VALUE_ATTR = `data-value`;
 
 	type State = {
-		search: string;
-		value: string;
 		active_id: string;
-		selected: string | string[];
 		filtered: {
 			count: number;
-			items: Map<string, number>;
 			groups: Set<string>;
+			items: Map<string, number>;
 		};
+		search: string;
+		selected: string | Array<string>;
+		value: string;
 	};
 
 	type Context = {
-		value: (id: string, value: string) => void;
-		item: (id: string, groupId: string) => () => void;
-		group: (id: string) => () => void;
 		filter: () => boolean;
+		group: (id: string) => () => void;
+		inputId: string;
+		item: (id: string, groupId: string) => () => void;
 		label: string;
+		labelId: string;
 		// Ids
 		listId: string;
-		labelId: string;
-		inputId: string;
 		multiple: boolean;
+		value: (id: string, value: string) => void;
 	};
 
 	export function useCommand() {
@@ -46,17 +46,21 @@
 	}
 
 	type StateStore = Writable<State> & {
-		setState: <K extends keyof State>(key: K, value: State[K], opts?: any) => void;
-		toggle: (value: string) => void;
 		close: () => void;
+		setState: <TKey extends keyof State>(
+			key: TKey,
+			value: State[TKey],
+			opts?: unknown,
+		) => void;
+		toggle: (value: string) => void;
 	};
 
 	export function useState() {
-		const context = getContext<StateStore>(`cmdk_state`);
+		const context = getContext(`cmdk_state`);
 		if (!context) {
 			throw new Error(`Command must be used within a CommandProvider`);
 		}
-		return context;
+		return context as StateStore;
 	}
 
 	function setStateContext(context: StateStore) {
@@ -65,12 +69,12 @@
 </script>
 
 <script lang="ts">
-	import { useId } from '$lib/hooks/use-id';
-	// @ts-ignore
 	import commandScore from 'command-score';
 	import { createEventDispatcher, getContext, setContext, tick } from 'svelte';
 	import type { HTMLBaseAttributes } from 'svelte/elements';
-	import { writable, type Readable, type Writable } from 'svelte/store';
+	import { type Readable, type Writable, writable } from 'svelte/store';
+
+	import { useId } from '$lib/hooks/use-id';
 
 	let ref: HTMLElement | undefined = undefined;
 
@@ -79,11 +83,22 @@
 
 	function createStateStore(): StateStore {
 		const store = writable<State>({
+			active_id: '',
+
+			filtered: {
+				/** The count of all visible items. */
+				count: 0,
+
+				/** Set of groups with at least one visible item. */
+				groups: new Set(),
+
+				/** Map from visible item id to its search score. */
+				items: new Map(),
+			},
+
 			/** Value of the search query. */
 			search: '',
-			active_id: '',
-			/** Currently active item value. */
-			value: '',
+
 			/** Currently selected item */
 			selected: multiple
 				? selected && Array.isArray(selected)
@@ -92,18 +107,13 @@
 					? [selected]
 					: []
 				: selected || '',
-			filtered: {
-				/** The count of all visible items. */
-				count: 0,
-				/** Map from visible item id to its search score. */
-				items: new Map(),
-				/** Set of groups with at least one visible item. */
-				groups: new Set()
-			}
+			/** Currently active item value. */
+			value: '',
 		});
 
 		return {
 			...store,
+			close: () => dispatch('close'),
 			setState: (key, value, opts) => {
 				store.update((state) => {
 					if (Object.is(state[key], value)) return state;
@@ -126,7 +136,9 @@
 				} else if (key === 'value') {
 					// opts is a boolean referring to whether it should NOT be scrolled into view
 					if (!opts) {
-						tick().then(() => scrollSelectedIntoView());
+						tick().then(() => {
+							scrollSelectedIntoView();
+						});
 					}
 				}
 			},
@@ -153,7 +165,6 @@
 					return state;
 				});
 			},
-			close: () => dispatch('close')
 		};
 	}
 
@@ -162,16 +173,11 @@
 	const ids = writable<Map<string, string>>(new Map()); // id → value
 	const listeners = writable<Set<() => void>>(new Set()); // [...rerenders]
 
-	interface CommandProps extends HTMLBaseAttributes {
+	type CommandProps = {
 		/**
-		 * Accessible label for this command menu. Not shown visibly.
+		 *  Optionally provide a function to be called when the menu is empty.
 		 */
-		label?: string;
-		/**
-		 * Optionally set to `false` to turn off the automatic filtering and sorting.
-		 * If `false`, you must conditionally render valid items based on the search query yourself.
-		 */
-		shouldFilter?: boolean;
+		emptyAction?: () => void;
 		/**
 		 * Custom filter function for whether each command menu item should matches the given search query.
 		 * It should return a number between 0 and 1, with 1 being the best match and 0 being hidden entirely.
@@ -179,36 +185,41 @@
 		 */
 		filter?: (value: string, search: string) => number;
 		/**
-		 * Optional controlled state of the selected command menu item.
+		 * Accessible label for this command menu. Not shown visibly.
 		 */
-		value?: string;
-		/**
-		 * Event htandler called when the selected item of the menu changes.
-		 */
-		onValueChange?: (value: string) => void;
+		label?: string;
 		/**
 		 * Optionally set to `true` to turn on looping around when using the arrow keys.
 		 */
 		loop?: boolean;
 		/**
-		 *  Event handler called when the user presses a key.
-		 */
-		onKeydown?: (event: KeyboardEvent) => void;
-		/**
 		 *  Optionally set to `true` to allow multiple items to be selected.
 		 */
 		multiple?: boolean;
 		/**
+		 *  Event handler called when the user presses a key.
+		 */
+		onKeydown?: (event: KeyboardEvent) => void;
+		/**
+		 * Event htandler called when the selected item of the menu changes.
+		 */
+		onValueChange?: (value: string) => void;
+		/**
 		 *  Optionally provide previously selected items.
 		 */
-		selected?: string | string[];
+		selected?: string | Array<string>;
 		/**
-		 *  Optionally provide a function to be called when the menu is empty.
+		 * Optionally set to `false` to turn off the automatic filtering and sorting.
+		 * If `false`, you must conditionally render valid items based on the search query yourself.
 		 */
-		emptyAction?: () => void;
-	}
+		shouldFilter?: boolean;
+		/**
+		 * Optional controlled state of the selected command menu item.
+		 */
+		value?: string;
+	} & HTMLBaseAttributes;
 
-	interface $$Props extends CommandProps {}
+	type $$Props = {} & CommandProps;
 	export let label = '';
 	export let shouldFilter = true;
 	export let filter: $$Props['filter'] = undefined;
@@ -222,8 +233,8 @@
 
 	// dispatcher for close event
 	const dispatch = createEventDispatcher<{
-		close: void;
 		add: { value: string };
+		close: void;
 		remove: { value: string };
 	}>();
 
@@ -269,7 +280,7 @@
 		const scores = $state.filtered.items;
 
 		// Sort the groups
-		const groups: [string, number][] = [];
+		const groups: Array<[string, number]> = [];
 		$state.filtered.groups.forEach((value) => {
 			const items = $allGroups.get(value);
 
@@ -286,7 +297,7 @@
 		// Sort items within groups to bottom
 		// Sort items outside of groups
 		// Sort groups to bottom (pushes all non-grouped items to the top)
-		const list = ref?.querySelector(LIST_SELECTOR);
+		const list = ref.querySelector(LIST_SELECTOR);
 
 		// Sort the items
 		getValidItems()
@@ -302,13 +313,15 @@
 				if (group && item) {
 					item.parentElement;
 					group.appendChild(
-						item?.parentElement && item.parentElement === group
+						item.parentElement && item.parentElement === group
 							? item
-							: item.closest(`${GROUP_ITEMS_SELECTOR} > *`)!
+							: item.closest(`${GROUP_ITEMS_SELECTOR} > *`)!,
 					);
 				} else {
 					list?.appendChild(
-						item.parentElement === list ? item : item.closest(`${GROUP_ITEMS_SELECTOR} > *`)!
+						item.parentElement === list
+							? item
+							: item.closest(`${GROUP_ITEMS_SELECTOR} > *`)!,
 					);
 				}
 			});
@@ -316,7 +329,9 @@
 		groups
 			.sort((a, b) => b[1] - a[1])
 			.forEach((group) => {
-				const element = ref?.querySelector(`${GROUP_SELECTOR}[${VALUE_ATTR}="${group[0]}"]`);
+				const element = ref?.querySelector(
+					`${GROUP_SELECTOR}[${VALUE_ATTR}="${group[0]}"]`,
+				);
 				element?.parentElement?.appendChild(element);
 			});
 	}
@@ -396,10 +411,9 @@
 	const inputId = useId().toString();
 
 	const context = writable<Context>({
-		listId,
-		labelId,
-		inputId,
-		multiple,
+		filter: () => {
+			return $propsRef.shouldFilter !== false;
+		},
 		group: (id) => {
 			if (!$allGroups.has(id)) {
 				$allGroups.set(id, new Set());
@@ -409,19 +423,8 @@
 				$allGroups.delete(id);
 			};
 		},
-		filter: () => {
-			return $propsRef.shouldFilter !== false;
-		},
-		label,
-		value: (id, value) => {
-			if (value !== $ids.get(id)) {
-				$ids.set(id, value);
-				$state.filtered.items.set(id, score(value));
-				sort();
-			}
-		},
+		inputId,
 		// Track item lifecycle (mount, unmount)
-
 		item: (id, groupId) => {
 			console.time('item');
 			$allItems.add(id);
@@ -463,7 +466,23 @@
 				});
 				console.timeEnd('item remove');
 			};
-		}
+		},
+
+		label,
+
+		labelId,
+
+		listId,
+
+		multiple,
+
+		value: (id, value) => {
+			if (value !== $ids.get(id)) {
+				$ids.set(id, value);
+				$state.filtered.items.set(id, score(value));
+				sort();
+			}
+		},
 	});
 
 	setCommandContext(context);
@@ -471,21 +490,21 @@
 	const useScheduleLayoutEffect = () => {};
 
 	const propsRef = writable<CommandProps>({
-		label,
-		shouldFilter,
 		filter,
-		value,
+		label,
+		loop,
 		onValueChange,
-		loop
+		shouldFilter,
+		value,
 	});
 
 	$: $propsRef = {
-		label,
-		shouldFilter,
 		filter,
-		value,
+		label,
+		loop,
 		onValueChange,
-		loop
+		shouldFilter,
+		value,
 	};
 
 	$: console.log({ $propsRef });
@@ -530,12 +549,12 @@
 		const selected = getSelectedItem();
 		const items = getValidItems();
 		const index = items.findIndex((item) => item === selected);
-		console.log(`updateSelectedByChange`, { selected, items, index, change });
+		console.log(`updateSelectedByChange`, { change, index, items, selected });
 
 		// Get item at this index
 		let newSelected = items[index + change];
 
-		if ($propsRef?.loop) {
+		if ($propsRef.loop) {
 			newSelected =
 				index + change < 0
 					? items[items.length - 1]
@@ -572,7 +591,9 @@
 		}
 	}
 
-	const last = () => updateSelectedToIndex(getValidItems().length - 1);
+	const last = () => {
+		updateSelectedToIndex(getValidItems().length - 1);
+	};
 
 	const next = (e: KeyboardEvent) => {
 		console.log('next', e);
@@ -686,7 +707,12 @@
 		}
 	}}
 >
-	<label class="sr-only" data-cmdk-label for={$context.inputId} id={$context.labelId}>
+	<label
+		class="sr-only"
+		data-cmdk-label
+		for={$context.inputId}
+		id={$context.labelId}
+	>
 		{label}
 	</label>
 	<slot selected={$state.selected} />

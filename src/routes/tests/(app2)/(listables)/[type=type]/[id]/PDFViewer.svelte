@@ -7,7 +7,7 @@
 	export let data: PageData;
 
 	const pdf_path = data.entry?.uri?.startsWith('http')
-		? data.entry?.uri
+		? data.entry.uri
 		: $page.data.S3_BUCKET_PREFIX + data.entry?.uri;
 </script>
 

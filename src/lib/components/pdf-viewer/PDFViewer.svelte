@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { getContext, onMount, tick } from 'svelte';
-	import * as pdfjs from 'pdfjs-dist';
-	import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 	// import downloadsvg from './images/toolbarDownload.svg?url';
 	// import printsvg from './images/toolbarPrint.svg?url';
 	// import zoominsvg from './images/toolbarZoomIn.svg?url';
@@ -9,35 +6,41 @@
 	// import spreadsvg from './images/toolbarPageView.svg?url';
 	// import gapsvg from './images/toolbarPageGap.svg?url';
 	import './pdfviewer.css';
-	import { ZoomInIcon } from 'lucide-svelte';
+
+	import type { Annotation } from '@prisma/client';
 	import { nanoid } from 'nanoid';
+	import type { PDFDocumentProxy } from 'pdfjs-dist';
+	import * as pdfjs from 'pdfjs-dist';
+	import { onMount, tick } from 'svelte';
+
+import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import trackScroll from '$lib/actions/trackScroll';
+	import type { TargetSchema } from '$lib/annotation';
 	import {
 		createTextPositionSelectorMatcher,
 		createTextQuoteSelectorMatcher,
 		describeTextPosition,
-		describeTextQuote
+		describeTextQuote,
 	} from '$lib/annotator';
-	import type { TargetSchema } from '$lib/annotation';
-	import type { PDFDocumentProxy } from 'pdfjs-dist';
-	import type { TextPositionSelector, TextQuoteSelector } from '$lib/annotator/types';
 	import { highlightText } from '$lib/annotator/highlighter';
+	import type {
+		TextPositionSelector,
+		TextQuoteSelector,
+	} from '$lib/annotator/types';
 	import { getTargetSelector } from '$lib/utils/annotations';
-	import Button from '$components/Button.svelte';
-	import type { Annotation } from '@prisma/client';
-	import { writable, type Writable } from 'svelte/store';
-	import trackScroll from '$lib/actions/trackScroll';
-	import { getPdfStateContext } from './utils';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 
-	export let annotations: Pick<Annotation, 'id' | 'target'>[] = [];
+	import { getEntryContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/ctx';
+	import { getPdfStateContext } from './utils';
+
+	export let annotations: Array<Pick<Annotation, 'id' | 'target'>> = [];
 
 	// pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-    // set to public cdn
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+	// set to public cdn
+	pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 	let loading = true;
-    let _error: any;
+	let _error: any;
 
 	export let url: string | URL; //url of pdf.
 	const INTERNAL_URL = url.toString();
@@ -54,13 +57,12 @@
 	const MIN_SCALE = 0.5;
 	const MAX_SCALE = 2.3;
 
-	export let scrollingDown = (getContext('scrollingDown') as Writable<boolean>) ?? writable(false);
-	$: console.log({ $scrollingDown });
+	export let { scrollingDown } = getEntryContext();
 
 	enum SpreadModes { //init display modes.
 		'NONE',
 		'ODD',
-		'EVEN'
+		'EVEN',
 	}
 	export let display_mode = '';
 	let _spread_mode = SpreadModes.NONE;
@@ -84,7 +86,7 @@
 
 	async function highlightSelectorTarget(
 		selector: TextQuoteSelector | TextPositionSelector,
-		attrs?: Record<string, string>
+		attrs?: Record<string, string>,
 	) {
 		console.log(`highlightSelectorTarget`, { selector });
 		let matches: AsyncGenerator<Range, void, void>;
@@ -112,17 +114,18 @@
 
 		const page_num = Number(
 			//@ts-expect-errors
-			range.startContainer.parentElement?.closest(`[data-page-number]`)?.dataset?.pageNumber || 0
+			range.startContainer.parentElement?.closest(`[data-page-number]`)?.dataset
+				?.pageNumber || 0,
 		);
 		const target: TargetSchema = {
-			source: `pdf:${pdf_document.fingerprints[0]}`,
 			page_num,
-			selector: [text_quote_selector, text_position_selector]
+			selector: [text_quote_selector, text_position_selector],
+			source: `pdf:${pdf_document.fingerprints[0]}`,
 		};
 
 		const id = nanoid();
 		const h = await highlightSelectorTarget(text_quote_selector, {
-			'data-annotation-id': id
+			'data-annotation-id': id,
 		});
 
 		// TODO: calculate x,y,w,h of highlight and store it in the annotation
@@ -159,7 +162,7 @@
 
 		return {
 			...target,
-			h
+			h,
 		};
 	}
 
@@ -170,21 +173,23 @@
 			const page_num = (annotation.target as TargetSchema).page_num;
 			const text_quote_selector = getTargetSelector(
 				annotation.target as TargetSchema,
-				'TextQuoteSelector'
+				'TextQuoteSelector',
 			);
 			const text_position_selector = getTargetSelector(
 				annotation.target as TargetSchema,
-				'TextPositionSelector'
+				'TextPositionSelector',
 			);
 			// const page_selector = getTargetSelector(annotation.target as TargetSchema, 'BookSelector');
 			if (!text_quote_selector || !page_num) continue;
 			if (page_num !== pageNum) continue;
 
 			// check if the annotation element already exists
-			const existing = container.querySelector(`[data-annotation-id="${annotation.id}"]`);
+			const existing = container.querySelector(
+				`[data-annotation-id="${annotation.id}"]`,
+			);
 			if (existing) continue;
 			const h = await highlightSelectorTarget(text_quote_selector, {
-				'data-annotation-id': annotation.id
+				'data-annotation-id': annotation.id,
 			});
 		}
 	}
@@ -221,47 +226,67 @@
 	};
 
 	onMount(() => {
-		if (['static', 'initial'].includes(getComputedStyle(component_container).position)) {
-			console.warn('PdfViewer sizing only works when it is positioned (not static).');
+		if (
+			['static', 'initial'].includes(
+				getComputedStyle(component_container).position,
+			)
+		) {
+			console.warn(
+				'PdfViewer sizing only works when it is positioned (not static).',
+			);
 		}
-		const init_promise = import('pdfjs-dist/web/pdf_viewer.js').then((pdfjs_viewer) => {
-			const event_bus = new pdfjs_viewer.EventBus();
+		const init_promise = import('pdfjs-dist/web/pdf_viewer.js').then(
+			(pdfjs_viewer) => {
+				const event_bus = new pdfjs_viewer.EventBus();
+				$pdf_state.event_bus = event_bus;
 
-			// (Optionally) enable hyperlinks within PDF files.
-			const pdf_link_service = new pdfjs_viewer.PDFLinkService({
-				eventBus: event_bus
-			});
+				// (Optionally) enable hyperlinks within PDF files.
+				const pdf_link_service = new pdfjs_viewer.PDFLinkService({
+					eventBus: event_bus,
+				});
 
-			event_bus.on('pagerendered', ({ pageNumber }: { pageNumber: number }) => {
-				render_annotations(pageNumber);
-				// can use this to render SVG highlights (we use our annotator to highlight textlayer, and then attach svgs to those elements)
-				// console.log(`pagerendered`, e);
-			});
+				$pdf_state.pdf_link_service = pdf_link_service;
 
-			// (Optionally) enable find controller.
-			const pdf_find_controller = new pdfjs_viewer.PDFFindController({
-				eventBus: event_bus,
-				linkService: pdf_link_service
-			});
-			const pdf_viewer = new pdfjs_viewer.PDFViewer({
-				container,
-				eventBus: event_bus,
-				linkService: pdf_link_service,
-				findController: pdf_find_controller,
-				l10n: pdfjs_viewer.NullL10n
-			});
-			$pdf_state.pdf_viewer = pdf_viewer;
-			pdf_link_service.setViewer(pdf_viewer);
-			return { pdf_viewer, pdf_link_service };
-		});
+				event_bus.on(
+					'pagerendered',
+					({ pageNumber }: { pageNumber: number }) => {
+                        console.log(`pagerendered`)
+						// render_annotations(pageNumber);
+						// can use this to render SVG highlights (we use our annotator to highlight textlayer, and then attach svgs to those elements)
+						// console.log(`pagerendered`, e);
+					},
+				);
+
+				// (Optionally) enable find controller.
+				const pdf_find_controller = new pdfjs_viewer.PDFFindController({
+                    eventBus: event_bus,
+					linkService: pdf_link_service,
+				});
+				const pdf_viewer = new pdfjs_viewer.PDFViewer({
+                    container,
+					eventBus: event_bus,
+					findController: pdf_find_controller,
+					l10n: pdfjs_viewer.NullL10n,
+					linkService: pdf_link_service,
+				});
+				$pdf_state.pdf_viewer = pdf_viewer;
+				pdf_link_service.setViewer(pdf_viewer);
+
+                event_bus.on("pagechanging", () => {
+                    console.log("pagechanging", pdf_viewer)
+                    $pdf_state.pageNumber = pdf_viewer.currentPageNumber;
+                })
+				return { pdf_link_service, pdf_viewer };
+			},
+		);
 
 		const renderDocument = async () => {
 			const { pdf_viewer, pdf_link_service } = await init_promise;
 			// Loading document.
 			const loading_task = pdfjs.getDocument({
-				url,
+				isEvalSupported: false,
 				password,
-				isEvalSupported: false
+				url,
 			});
 			loading_task.promise
 				.then((_pdf_document) => {
@@ -270,7 +295,7 @@
 					pdf_link_service.setDocument(pdf_document, null);
 					// pdf_viewer.currentScaleValue = "page-width";
 					console.log({ pdf_viewer });
-                    pdf_viewer.currentScaleValue = 'auto';
+					pdf_viewer.currentScaleValue = 'auto';
 					// if (typeof $opts.scale === 'number') {
 					//     pdf_viewer.currentScale = $opts.scale;
 					// } else {
@@ -280,9 +305,9 @@
 					// loading = false;
 				})
 				.catch(function (error) {
-                    console.log({error})
+					console.log({ error });
 					password_error = true;
-                    _error = error;
+					_error = error;
 					password_message = error.message;
 				});
 			// onZoomOut = () => {
@@ -332,7 +357,9 @@
 </script>
 
 {#if loading}
-	<div class="absolute h-full w-full z-10 px-6 py-[calc(var(--nav-height)+1rem)]">
+	<div
+		class="absolute h-full w-full z-10 px-6 py-[calc(var(--nav-height)+1rem)]"
+	>
 		<Skeleton class="p-4 h-full w-full" />
 	</div>
 {/if}
@@ -343,14 +370,16 @@
 	data-dark-mode-invert={$opts.darkModeInvert}
 >
 	<div id="viewer-parent" class="w-full h-full">
-		{#if password_error === true}
+		{#if password_error}
 			<div class="spdfinner pt-[80px]">
-                {JSON.stringify(_error)}
+				{JSON.stringify(_error)}
 				<p>This document requires a password to open:</p>
 				<p>{password_message}</p>
 				<div>
 					<input type="password" bind:value={password} />
-					<button on:click={onPasswordSubmit} class="password-button"> Submit </button>
+					<button on:click={onPasswordSubmit} class="password-button">
+						Submit
+					</button>
 				</div>
 			</div>
 		{:else}
@@ -358,7 +387,7 @@
 				<div
 					id="viewerContainer"
 					use:trackScroll={{
-						scrollingDown
+						scrollingDown,
 					}}
 					class="pt-[80px]"
 					bind:this={container}

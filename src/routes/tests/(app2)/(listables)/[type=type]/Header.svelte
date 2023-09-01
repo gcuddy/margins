@@ -1,13 +1,15 @@
 <script lang="ts">
+	import { isHTMLInputElement } from '@melt-ui/svelte/internal/helpers';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { PinIcon } from 'lucide-svelte';
+	import { PinIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { derived, type Writable } from 'svelte/store';
 
 	import { page } from '$app/stores';
 	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
 	import { getPdfStateContext } from '$components/pdf-viewer/utils';
-	import Button from '$components/ui/Button.svelte';
+	import { Button } from '$components/ui/button';
+	import Input from '$components/ui/input/input.svelte';
 	import {
 		initCreatePinMutation,
 		initDeletePinMutation,
@@ -36,9 +38,11 @@
 		return $pins.data?.find((pin) => {
 			if ($page.data.entry) {
 				const isPinned = pin.entry?.id === $page.data.entry.id;
-                if (isPinned) return isPinned;
-                // check children
-                return pin.children?.find(child => child.entry?.id === $page.data.entry?.id)
+				if (isPinned) return isPinned;
+				// check children
+				return pin.children?.find(
+					(child) => child.entry?.id === $page.data.entry?.id,
+				);
 			}
 			return false;
 		});
@@ -54,9 +58,14 @@
 		states: { progress },
 	} = getArticleContext();
 
+    function handlePageInputChange(e: Event) {
+        if (!isHTMLInputElement(e.target)) return;
+        $pdf_state.pdf_link_service?.goToPage(Number(e.target.value));
+        e.target.blur();
+    }
+
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
-
 
 {#if $scrollingDown}
 	<div
@@ -82,12 +91,20 @@
 	)}
 >
 	<div class="flex items-start justify-start w-full relative px-4">
-		<div class="left" style:padding-left="{$navWidth}px">
+		<div class="left flex" style:padding-left="{$navWidth}px">
 			{#if $page.data.entry?.type === 'pdf'}
-				{$pdf_state.pdf_viewer?.currentScaleValue}
-
-				<button on:click={pdf_state.zoomIn}> Zoom in </button>
-				<button on:click={pdf_state.zoomOut}> Zoom Out </button>
+				<Button variant="ghost" size="icon" on:click={pdf_state.zoomIn}>
+					<ZoomInIcon class="h-4 w-4" /> <span class="sr-only">Zoom in</span>
+				</Button>
+				<Button variant="ghost" size="icon" on:click={pdf_state.zoomOut}>
+					<ZoomOutIcon class="h-4 w-4" /> <span class="sr-only">Zoom out</span>
+				</Button>
+				<Input
+					type="number"
+					class="w-min appearance-none text-xs tabular-nums m-0"
+                    on:change={handlePageInputChange}
+                    value={$pdf_state.pageNumber}
+				/>
 
 				<button
 					on:click={() => {
@@ -157,3 +174,4 @@
 <!-- Floating Sidebar button (can't put in right because want it to show ) -->
 
 <EntrySidebarButton open={rightSidebar} class="hidden md:flex" />
+

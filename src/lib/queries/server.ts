@@ -602,8 +602,8 @@ export async function entry_by_id({
 						.where('Annotation.parentId', 'is', null)
 						.where('Annotation.deleted', 'is', null)
 						.$narrowType<{
-							target: TargetSchema | null;
 							contentData: JSONContent | null;
+							target: TargetSchema | null;
 						}>()
 						.orderBy('Annotation.start', 'asc')
 						.orderBy('Annotation.createdAt', 'asc')
@@ -758,27 +758,19 @@ export async function entry_by_id({
 	const entry = await query.executeTakeFirst();
 
 	return {
-		// TODO: move these to endpoint to use in +page.ts with better cachings
-		// entry: entry ? validate_entry_type(entry) : undefined,
-		entry,
-
-		// tagForm,
-		// updateBookmarkForm,
-		// bookmarkForm,
-		// annotationForm,
-		// interactionForm,
-		type,
-		book: type === 'book' ? await books.get(id.toString()) : null,
-		movie: type === 'movie' ? await tmdb.movie.details(+id) : null,
 		album: type === 'album' ? await spotify.album(id.toString()) : null,
-		tv: type === 'tv' ? await tmdb.tv.details(+id) : null,
+		book: type === 'book' ? await books.get(id.toString()) : null,
+		entry,
 		extras: {
 			season:
 				type === 'tv' && typeof season === 'number'
 					? await tmdb.tv.season(+id, season)
 					: null,
 		},
+		movie: type === 'movie' ? await tmdb.movie.details(+id) : null,
 		podcast,
+		tv: type === 'tv' ? await tmdb.tv.details(+id) : null,
+		type,
 	};
 }
 

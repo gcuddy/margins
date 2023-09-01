@@ -1,7 +1,8 @@
 <script lang="ts">
 	import * as AlertDialog from '$components/ui/alert-dialog';
-	import type { createAlertDialogStore } from '$lib/stores/dialog';
 	import { Input } from '$components/ui/input';
+	import type { createAlertDialogStore } from '$lib/stores/dialog';
+
 	export let store: ReturnType<typeof createAlertDialogStore>;
 
 	$: console.log({ $store });

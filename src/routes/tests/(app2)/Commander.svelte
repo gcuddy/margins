@@ -1,10 +1,10 @@
 <script lang="ts" context="module">
 	type State = {
 		isOpen: boolean;
-		search: string;
-		pages: string[];
-		shouldFilter: boolean;
+		pages: Array<string>;
 		placeholder: string;
+		search: string;
+		shouldFilter: boolean;
 	};
 
 	export function useCommanderContext() {
@@ -18,15 +18,27 @@
 	// bad idea?
 	const state = writable<State>({
 		isOpen: false,
-		search: '',
 		pages: [],
-		shouldFilter: true,
-		placeholder: 'Type a command or search...'
+		placeholder: 'Type a command or search...',
+		search: '',
+		shouldFilter: true
 	});
 	export { state as commanderState };
 </script>
 
 <script lang="ts">
+	import { ArrowRight, Cog, CreditCard, Search, Settings } from 'lucide-svelte';
+	import { getContext } from 'svelte';
+	import { derived, type Writable, writable } from 'svelte/store';
+
+	import { goto } from '$app/navigation';
+	import { page as spage } from '$app/stores';
+	import Annotations from '$lib/commands/Annotations.svelte';
+	import Collections from '$lib/commands/Collections.svelte';
+	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
+	import Media from '$lib/commands/Media.svelte';
+	import Query from '$lib/commands/Query.svelte';
+	import { cmd_open } from '$lib/components/ui/command/stores';
 	import {
 		CommandDialog,
 		CommandEmpty,
@@ -36,22 +48,10 @@
 		CommandList,
 		CommandSeparator,
 		CommandShortcut
-	} from '$lib/components/ui/command';
-	import { ArrowRight, Cog, CreditCard, Search, Settings } from 'lucide-svelte';
-	import { Writable, derived, writable } from 'svelte/store';
-
-	import { goto } from '$app/navigation';
-	import { page as spage } from '$app/stores';
-	import Annotations from '$lib/commands/Annotations.svelte';
-	import Collections from '$lib/commands/Collections.svelte';
-	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import Media from '$lib/commands/Media.svelte';
-	import Query from '$lib/commands/Query.svelte';
-	import { query } from '$lib/queries/query';
-	import { queryKeys } from '$lib/queries/keys';
+	} from '$lib/components/ui/command2';
 	import { darkThemes, themes } from '$lib/features/settings/themes';
-	import { getContext } from 'svelte';
-	import { cmd_open } from '$lib/components/ui/command/stores';
+	import { queryKeys } from '$lib/queries/keys';
+	import { query } from '$lib/queries/query';
 
 	;
 
@@ -98,7 +98,7 @@
 <!-- class="rounded-lg border border-gray-100  shadow-md  dark:border-gray-800" -->
 <CommandDialog
 	shouldFilter={$state.shouldFilter}
-	bind:isOpen={$state.isOpen}
+	bind:open={$state.isOpen}
 	onKeydown={(e) => {
 		if (e.key === 'Escape' || (e.key === 'Backspace' && !$state.search)) {
 			e.preventDefault();
@@ -268,9 +268,9 @@
 								document.documentElement.classList.remove('dark');
 							}
 						console.log('fetching')
-							fetch(`/tests?/setTheme&theme=${theme}&redirectTo=` + $spage.url.pathname, {
-								method: 'POST',
-								body: new FormData()
+							fetch(`/tests?/setTheme&theme=${theme}&redirectTo=${  $spage.url.pathname}`, {
+								body: new FormData(),
+								method: 'POST'
 							}).then(() => {
 								console.log('fetched')
 								$state.isOpen = false;
@@ -330,8 +330,8 @@
 		{#if $page === 'open-tag'}
 			<Query
 				opts={{
-					queryKey: ['tags'],
-					queryFn: () => query($spage, 'tags', {})
+					queryFn: () => query($spage, 'tags', {}),
+					queryKey: ['tags']
 				}}
 				value={(item) => item.name}
 				display={(item) => item.name}

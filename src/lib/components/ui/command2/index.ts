@@ -1,44 +1,47 @@
 import Command from './Command.svelte';
-import CommandItem from './CommandItem.svelte';
+import CommandDialog from './CommandDialog.svelte';
+import CommandEmpty from './CommandEmpty.svelte';
+import CommandGroup from './CommandGroup.svelte';
+import CommandIcon from './CommandIcon.svelte';
 import CommandInput from './CommandInput.svelte';
+import CommandItem from './CommandItem.svelte';
 import CommandItems from './CommandItems.svelte';
 import CommandList from './CommandList.svelte';
-import CommandGroup from './CommandGroup.svelte';
-import CommandEmpty from './CommandEmpty.svelte';
+import CommandLoading from './CommandLoading.svelte';
+import CommandRadioItem from './CommandRadioItem.svelte';
 import CommandSeparator from './CommandSeparator.svelte';
 import CommandShortcut from './CommandShortcut.svelte';
-import CommandLoading from './CommandLoading.svelte';
-import CommandIcon from './CommandIcon.svelte';
-import CommandRadioItem from './CommandRadioItem.svelte';
 //
 import { ctx } from './ctx';
 
 export {
 	Command,
-	CommandItem,
+    ctx as commandCtx,
+    CommandDialog,
+	CommandEmpty,
+	CommandGroup,
+	CommandIcon,
 	CommandInput,
+	CommandItem,
 	CommandItems,
 	CommandList,
-	CommandGroup,
-	CommandEmpty,
+	CommandLoading,
+    CommandRadioItem,
 	CommandSeparator,
 	CommandShortcut,
-	CommandLoading,
-	CommandIcon,
-    CommandRadioItem,
     //
-    Command as Root,
-    CommandItem as Item,
+    ctx,
+    CommandDialog as Dialog,
+    CommandEmpty as Empty,
+    CommandGroup as Group,
+    CommandIcon as Icon,
     CommandInput as Input,
+    CommandItem as Item,
     CommandItems as Items,
     CommandList as List,
-    CommandGroup as Group,
-    CommandEmpty as Empty,
-    CommandSeparator as Separator,
-    CommandShortcut as Shortcut,
     CommandLoading as Loading,
-    CommandIcon as Icon,
     CommandRadioItem as RadioItem,
     //
-    ctx
-};
+    Command as Root,
+    CommandSeparator as Separator,
+    CommandShortcut as Shortcut};

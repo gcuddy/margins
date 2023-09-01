@@ -18,6 +18,7 @@
 	import { page } from '$app/stores';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
+    import * as Dialog from '$lib/components/ui/dialog';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -47,6 +48,7 @@
 	import { getId } from '$lib/utils/entries';
 
 	import NoteForm from './NoteForm.svelte';
+	import { initAttachmentCreateMutation } from '$lib/queries/mutations';
 
 	export let data: ComponentProps<AnnotationForm>['data'];
 	export let entry: Pick<
@@ -58,6 +60,8 @@
 	let show_reading_session = false;
 
 	const commander_store = getCommanderContext();
+
+    const attachmentCreateMutation = initAttachmentCreateMutation();
 
 	function handleCollectionSelect(collection: { id: number }) {
 		commander_store.close();
@@ -235,7 +239,7 @@
 					const input = document.createElement('input');
 					input.type = 'file';
 					input.accept = 'pdf';
-					input.onchange = async (event) => {
+					input.onchange = () => {
 						if (input.files?.length) {
 							const file = input.files[0];
 							if (!file) return;
@@ -253,7 +257,7 @@
 					const input = document.createElement('input');
 					input.type = 'file';
 					input.accept = 'epub';
-					input.onchange = async (event) => {
+					input.onchange = () => {
 						if (input.files?.length) {
 							const file = input.files[0];
 							if (!file) return;
@@ -270,7 +274,10 @@
 				on:click={() => {
 					dialogStore.open({
                         action(value) {
-                            console.log({value})
+                            if (!value) return;
+                            // $attachmentCreateMutation.mutate({
+                            //     url: value
+                            // });
                         },
                         description: "Please enter URL",
                         title: 'Attach URL',
@@ -292,3 +299,9 @@
 <!-- Dialog here -->
 
 <AlertDialogHelper store={dialogStore} />
+
+<!-- <Dialog.Root>
+    <Dialog.Content>
+        <input type
+    </Dialog.Content>
+</Dialog.Root> -->

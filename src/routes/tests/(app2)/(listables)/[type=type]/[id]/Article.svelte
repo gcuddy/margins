@@ -1,21 +1,9 @@
-<script lang="ts" context="module">
-	// mapping of id -> info
-	export type AnnotationCtx = Writable<
-		Map<
-			string,
-			{
-				selector: TargetSchema['selector'];
-				els: Array<{
-					highlightElements: Array<HTMLElement>;
-					removeHighlights: () => void;
-				}>;
-			}
-		>
-	>;
-</script>
-
 <script lang="ts">
-	import { createFocusTrap, useEscapeKeydown, usePortal } from '@melt-ui/svelte/internal/actions';
+	import {
+		createFocusTrap,
+		useEscapeKeydown,
+		usePortal,
+	} from '@melt-ui/svelte/internal/actions';
 	import { draggable } from '@neodrag/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
@@ -33,12 +21,11 @@
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import drag_context from '$lib/actions/drag-context';
 	import focusTrap from '$lib/actions/focus-trap';
-	import inView from '$lib/actions/inview';
 	import type { TargetSchema } from '$lib/annotation';
 	import {
 		createTextQuoteSelectorMatcher,
 		describeTextPosition,
-		describeTextQuote
+		describeTextQuote,
 	} from '$lib/annotator';
 	import { highlightText } from '$lib/annotator/highlighter';
 	import type { TextQuoteSelector } from '$lib/annotator/types';
@@ -47,7 +34,11 @@
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
 	import { nanoid } from '$lib/nanoid';
-	import { mutation,type MutationInput, type QueryOutput } from '$lib/queries/query';
+	import {
+		mutation,
+		type MutationInput,
+		type QueryOutput,
+	} from '$lib/queries/query';
 	import type { FullEntryDetail } from '$lib/queries/server';
 	import { createAnnotationStore } from '$lib/stores/annotations';
 	import mq from '$lib/stores/mq';
@@ -64,15 +55,10 @@
 
 	const {
 		annotations,
-		updateAnnotationMutation,
 		activeAnnotation,
 		activeAnnotationId,
-		showEditAnnotation
+		showEditAnnotation,
 	} = createAnnotationStore();
-
-	$: console.log({ $annotations });
-
-	$: console.log({ $activeAnnotationId });
 
 	export let data: PageData;
 
@@ -93,19 +79,19 @@
 
 	type Opts = {
 		alignment: Alignment;
+		autoHide: boolean;
+		focusMode: boolean;
 		font: Font;
 		fontSize: number;
 		lineHeight: number;
-		autoHide: boolean;
-		focusMode: boolean;
 	};
 	const defaultOpts: Opts = {
 		alignment,
+		autoHide: true,
+		focusMode: false,
 		font,
 		fontSize,
 		lineHeight,
-		autoHide: true,
-		focusMode: false
 	};
 
 	const appearance = getAppearanceContext();
@@ -118,9 +104,9 @@
 		{
 			input: {
 				id: numberOrString($page.params.id),
-				type: $page.data.type as Type
-			}
-		}
+				type: $page.data.type as Type,
+			},
+		},
 	];
 
 	const annotateMutation = createMutation({
@@ -130,66 +116,8 @@
 			console.log('saving annotation');
 			return mutation($page, 'save_note', {
 				entryId: data.entry.id,
-				...input
+				...input,
 			});
-		},
-		async onMutate(newData) {
-			await queryClient.cancelQueries({
-				queryKey: ['entries']
-			});
-
-			// Snapshot the previous value
-			const previousEntryData = queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
-
-			console.log({ previousEntryData });
-
-			// // Optimistically update to the new value
-			const newQueryData = queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
-				if (!old) return old;
-				if (!old.entry) return old;
-
-				const ids = Array.isArray(newData.id) ? newData.id : [newData.id];
-
-				const newAnnotations = ids.map((id) => {
-					const { tags, ...rest } = newData;
-					// TODO: tags
-					return makeAnnotation({
-						// @ts-expect-error TODO: why is ts complaining about this?
-						id: id!,
-						...rest
-					});
-				});
-
-				const oldIds = old.entry.annotations?.map((a) => a.id) ?? [];
-				const annotationsToAdd = newAnnotations.filter((a) => !oldIds.includes(a.id));
-
-				console.log({ oldIds, annotationsToAdd, old: old.entry.annotations, newAnnotations });
-
-				const updatedAnnotations = (old.entry.annotations || [])
-					.map((annotation) => {
-						if (ids.includes(annotation.id)) {
-							return {
-								...annotation,
-								...newAnnotations.find((a) => a.id === annotation.id)
-							};
-						}
-						return annotation;
-					})
-					.concat(annotationsToAdd);
-
-				console.log({ updatedAnnotations });
-				return {
-					...old,
-					entry: {
-						...old.entry,
-						annotations: [...updatedAnnotations]
-					}
-				};
-			});
-			console.log({ newQueryData });
-
-			// // Return a context object with the snapshotted value
-			return { previousEntryData };
 		},
 		onError: (err, newTodo, context) => {
 			toast.error('Failed to save annotation');
@@ -197,11 +125,80 @@
 				queryClient.setQueryData(queryKey, context.previousEntryData);
 			}
 		},
+		async onMutate(newData) {
+			await queryClient.cancelQueries({
+				queryKey: ['entries'],
+			});
+
+			// Snapshot the previous value
+			const previousEntryData =
+				queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
+
+			console.log({ previousEntryData });
+
+			// // Optimistically update to the new value
+			const newQueryData = queryClient.setQueryData<QueryOutput<'entry_by_id'>>(
+				queryKey,
+				(old) => {
+					if (!old) return old;
+					if (!old.entry) return old;
+
+					const ids = Array.isArray(newData.id) ? newData.id : [newData.id];
+
+					const newAnnotations = ids.map((id) => {
+						const { tags, ...rest } = newData;
+						// TODO: tags
+						return makeAnnotation({
+							// @ts-expect-error TODO: why is ts complaining about this?
+							id: id!,
+							...rest,
+						});
+					});
+
+					const oldIds = old.entry.annotations?.map((a) => a.id) ?? [];
+					const annotationsToAdd = newAnnotations.filter(
+						(a) => !oldIds.includes(a.id),
+					);
+
+					console.log({
+						annotationsToAdd,
+						newAnnotations,
+						old: old.entry.annotations,
+						oldIds,
+					});
+
+					const updatedAnnotations = (old.entry.annotations || [])
+						.map((annotation) => {
+							if (ids.includes(annotation.id)) {
+								return {
+									...annotation,
+									...newAnnotations.find((a) => a.id === annotation.id),
+								};
+							}
+							return annotation;
+						})
+						.concat(annotationsToAdd);
+
+					console.log({ updatedAnnotations });
+					return {
+						...old,
+						entry: {
+							...old.entry,
+							annotations: [...updatedAnnotations],
+						},
+					};
+				},
+			);
+			console.log({ newQueryData });
+
+			// // Return a context object with the snapshotted value
+			return { previousEntryData };
+		},
 		onSettled() {
 			queryClient.invalidateQueries({
-				queryKey: ['entries']
+				queryKey: ['entries'],
 			});
-		}
+		},
 	});
 
 	const selection = writable<Selection | null>(null);
@@ -226,17 +223,17 @@
 			return {
 				getBoundingClientRect: () =>
 					({
-						top: 0,
-						left: 0,
-						width: 0,
-						height: 0,
 						bottom: 0,
-						right: 0
-					} as DOMRect)
+						height: 0,
+						left: 0,
+						right: 0,
+						top: 0,
+						width: 0,
+					} as DOMRect),
 			};
 		const range = $selection.getRangeAt(0);
 		return {
-			getBoundingClientRect: () => range.getBoundingClientRect()
+			getBoundingClientRect: () => range.getBoundingClientRect(),
 		};
 	});
 
@@ -248,42 +245,42 @@
 		requestAnimationFrame(fn);
 	}
 	const [popperRef, popperContent] = createPopperActions({
-		strategy: 'fixed',
-		placement: $mq.desktop ? 'top' : 'bottom',
 		modifiers: [
 			{
 				name: 'offset',
 				options: {
-					offset: [0, 12]
-				}
-			}
-		]
+					offset: [0, 12],
+				},
+			},
+		],
+		placement: $mq.desktop ? 'top' : 'bottom',
+		strategy: 'fixed',
 	});
 	const [annotationRef, annotationContent] = createPopperActions({
 		modifiers: [
 			{
 				name: 'offset',
 				options: {
-					offset: [0, 12]
-				}
-			}
+					offset: [0, 12],
+				},
+			},
 		],
 		placement: 'bottom',
-		strategy: 'fixed'
+		strategy: 'fixed',
 	});
 
 	let articleWrapper: HTMLElement | undefined = undefined;
 
 	const clearSelection = () => window.getSelection()?.removeAllRanges();
 	const highlight = async (
-		attrs?: Record<string, string>
+		attrs?: Record<string, string>,
 	): Promise<
 		| {
-				selector: TargetSchema['selector'];
 				els: Awaited<ReturnType<typeof highlightSelectorTarget>>;
-				start: number;
 				exact: string;
 				id: string;
+				selector: TargetSchema['selector'];
+				start: number;
 		  }
 		| undefined
 	> => {
@@ -300,22 +297,24 @@
 			'data-annotation-id': id,
 			'data-has-body': 'false',
 			id: `annotation-${id}`,
-			...attrs
+			...attrs,
 		});
 		return {
-			selector: [text_quote_selector, text_position_selector],
 			els,
-			start,
 			exact,
-			id
+			id,
+			selector: [text_quote_selector, text_position_selector],
+			start,
 		};
 	};
 
 	async function highlightSelectorTarget(
 		textQuoteSelector: TextQuoteSelector,
-		attrs?: Record<string, string>
+		attrs?: Record<string, string>,
 	) {
-		const matches = createTextQuoteSelectorMatcher(textQuoteSelector)(articleWrapper!);
+		const matches = createTextQuoteSelectorMatcher(textQuoteSelector)(
+			articleWrapper!,
+		);
 
 		// Modifying the DOM while searching can mess up; see issue #112.
 		// Therefore, we first collect all matches before highlighting them.
@@ -329,7 +328,7 @@
 	}
 
 	const annotationCtx = writable(
-		new Map<string, Awaited<ReturnType<typeof highlightSelectorTarget>>>()
+		new Map<string, Awaited<ReturnType<typeof highlightSelectorTarget>>>(),
 	);
 
 	export function deleteAnnotation(id: string) {
@@ -368,11 +367,12 @@
 		mutationFn: async () => {
 			if (initializing) return;
 			if (!shouldSaveProgress) return;
+			if (!data.entry) return;
 			console.log('mutating');
 			return mutation($page, 'saveInteraction', {
-				entryId: data.entry!.id,
-				id: data.entry?.interaction?.id,
-				progress: $scroll
+				entryId: data.entry.id,
+				id: data.entry.interaction?.id,
+				progress: $scroll,
 			});
 		},
 		onMutate() {
@@ -389,14 +389,14 @@
 							...old.entry,
 							interaction: makeInteraction({
 								id,
-								progress: lastSavedScrollProgress
-							})
-						}
+								progress: lastSavedScrollProgress,
+							}),
+						},
 					};
 				});
 			}
 			return {
-				lastSavedScrollProgress
+				lastSavedScrollProgress,
 			};
 		},
 		onSuccess(returnedData, _, context) {
@@ -412,17 +412,17 @@
 								...old.entry,
 								interaction: makeInteraction({
 									id,
-									progress: context?.lastSavedScrollProgress ?? $scroll
-								})
-							}
+									progress: context?.lastSavedScrollProgress ?? $scroll,
+								}),
+							},
 						};
 					});
 				}
 			}
 			queryClient.invalidateQueries({
-				queryKey: ['entries']
+				queryKey: ['entries'],
 			});
-		}
+		},
 	});
 
 	beforeNavigate(() => {
@@ -431,9 +431,9 @@
 		// save progress
 		saveProgress.flush();
 		$mainnav = {
-			show: true,
 			center: false,
-			entry: undefined
+			entry: undefined,
+			show: true,
 		};
 	});
 
@@ -441,32 +441,38 @@
 	let initializing = false;
 	const doneInitializing = () => tick().then(() => (initializing = false));
 
-	const jumping = getContext('jumping') ;
+	const jumping = getContext('jumping');
 
 	let shouldSaveProgress = true;
 	$: console.log({ shouldSaveProgress });
 
 	async function ensureHighlights() {
-		console.log('ensure highlights', { $annotations, annotations: data.entry?.annotations });
+		console.log('ensure highlights', {
+			$annotations,
+			annotations: data.entry?.annotations,
+		});
 		// for (const [id, annotation] of Object.entries($annotations)) {
 		if (!data.entry?.annotations) return;
 		for (const annotation of data.entry.annotations) {
 			const { id } = annotation;
-            let target = annotation.target!;
+			let target = annotation.target!;
 			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
 			console.log({ el });
 			if (!el) {
-				const selector = getTargetSelector(annotation.target, 'TextQuoteSelector');
+				const selector = getTargetSelector(
+					annotation.target,
+					'TextQuoteSelector',
+				);
 				if (selector) {
 					const els = await highlightSelectorTarget(selector, {
 						'data-annotation-id': id,
 						'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
-						id: `annotation-${annotation.id}`
+						id: `annotation-${annotation.id}`,
 					});
 					$annotations[id] = {
 						...annotation,
-                        target,
-						els
+						els,
+						target,
 					};
 				}
 			}
@@ -492,16 +498,18 @@
 			console.log('scrolling to', data.entry.interaction.progress);
 			initializing = true;
 			$scroll = data.entry.interaction.progress;
-			const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+			const height =
+				document.documentElement.scrollHeight -
+				document.documentElement.clientHeight;
 			console.log({
 				$scroll,
 				height,
-				top: $scroll * height
+				top: $scroll * height,
 			});
 			// Wait a second before allowing scroll to save again
 			tick().then(() => {
 				document.documentElement.scrollTo({
-					top: $scroll * height
+					top: $scroll * height,
 				});
 			});
 			setTimeout(() => {
@@ -524,13 +532,13 @@
 				const els = await highlightSelectorTarget(selector, {
 					'data-annotation-id': annotation.id,
 					'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
-					id: `annotation-${annotation.id}`
+					id: `annotation-${annotation.id}`,
 				});
 				$annotationCtx.set(annotation.id, els);
 				$annotations[annotation.id] = {
 					...annotation,
+					els,
 					target,
-					els
 				};
 			}
 			console.log({ selector });
@@ -569,24 +577,24 @@
 
 	const saveProgress = debounce(
 		() => {
-			console.log({ shouldSaveProgress, $saveProgressMutation });
+			console.log({ $saveProgressMutation, shouldSaveProgress });
 			if (!shouldSaveProgress) return;
 			if ($saveProgressMutation.isPending) return;
 			if (Number.isNaN($scroll)) return;
 			console.log('saving');
 			// don't save if last saved progress is within .005 of current progress
-			console.log({ lastSavedScrollProgress, $scroll });
+			console.log({ $scroll, lastSavedScrollProgress });
 			if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
 			$saveProgressMutation.mutate();
 		},
 		5000,
-		false
+		false,
 	);
 
-	const scrolling = (getContext('scrolling') ) ?? writable(false);
+	const scrolling = getContext('scrolling') ?? writable(false);
 
 	const {
-		states: { progress }
+		states: { progress },
 	} = getArticleContext();
 
 	let scroll = progress;
@@ -597,11 +605,14 @@
 	});
 
 	let lastScrollTop = 0;
-	export let scrollingDown: Writable<boolean> = getContext('scrollingDown') || writable(false);
+	export let scrollingDown: Writable<boolean> =
+		getContext('scrollingDown') || writable(false);
 
 	const uScrollingDown = scrollingDown.subscribe((down) => {
-		console.log({ down, $appearance, lastScrollTop });
-		down && $appearance.autoHide ? ($mainnav.show = false) : ($mainnav.show = true);
+		console.log({ $appearance, down, lastScrollTop });
+		down && $appearance.autoHide
+			? ($mainnav.show = false)
+			: ($mainnav.show = true);
 	});
 
 	const setScrollOffset = () => {
@@ -610,10 +621,13 @@
 		// set how far the user has scrolled
 		// TODO await tick?
 		// TODO This shuoldn't be set if the document is loading (and we scroll to position)
-		const scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
-		const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+		const scrollTop =
+			document.body.scrollTop || document.documentElement.scrollTop;
+		const height =
+			document.documentElement.scrollHeight -
+			document.documentElement.clientHeight;
 		const scrollToSet = scrollTop / height;
-		console.log({ scrollTop, height, scrollToSet });
+		console.log({ height, scrollToSet, scrollTop });
 		if (!Number.isNaN(scrollToSet)) {
 			$scroll = scrollToSet;
 		}
@@ -639,8 +653,12 @@
 		if (browser) {
 			document.addEventListener('selectionchange', handleSelect);
 			document.addEventListener('scroll', handleScroll, { passive: true });
-			document.addEventListener('mousedown', () => { mouseDown.set(true); });
-			document.addEventListener('mouseup', () => { mouseDown.set(false); });
+			document.addEventListener('mousedown', () => {
+				mouseDown.set(true);
+			});
+			document.addEventListener('mouseup', () => {
+				mouseDown.set(false);
+			});
 		}
 	});
 
@@ -648,14 +666,20 @@
 		if (browser) {
 			document.removeEventListener('selectionchange', handleSelect);
 			document.removeEventListener('scroll', handleScroll);
-			document.removeEventListener('mousedown', () => { mouseDown.set(true); });
-			document.removeEventListener('mouseup', () => { mouseDown.set(false); });
+			document.removeEventListener('mousedown', () => {
+				mouseDown.set(true);
+			});
+			document.removeEventListener('mouseup', () => {
+				mouseDown.set(false);
+			});
 		}
 		uscroll();
 		uScrollingDown();
 	});
 
-	let temporaryAnnotationHighlight: Awaited<ReturnType<typeof highlight>> | undefined = undefined;
+	let temporaryAnnotationHighlight:
+		| Awaited<ReturnType<typeof highlight>>
+		| undefined = undefined;
 
 	let activeEditor: Editor;
 
@@ -667,32 +691,35 @@
 	// 	context: hover_context
 	// });
 
-    let showImageMenu = false;
-    let imagePortal: HTMLElement | undefined = undefined;
-    function handleMouseMove(e: MouseEvent) {
-        if (e.target instanceof HTMLImageElement || e.target?.closest('[data-image-menu]')) {
-            // TODO
-            showImageMenu = true;
-            const container = e.target.parentElement;
-            if (container) {
-                imagePortal = container;
-                container.style.position = 'relative';
-            }
-        } else {
-            showImageMenu = false;
-            imagePortal = undefined;
-        }
-    }
+	let showImageMenu = false;
+	let imagePortal: HTMLElement | undefined = undefined;
+	function handleMouseMove(e: MouseEvent) {
+		if (
+			e.target instanceof HTMLImageElement ||
+			e.target?.closest('[data-image-menu]')
+		) {
+			// TODO
+			showImageMenu = true;
+			const container = e.target.parentElement;
+			if (container) {
+				imagePortal = container;
+				container.style.position = 'relative';
+			}
+		} else {
+			showImageMenu = false;
+			imagePortal = undefined;
+		}
+	}
 
 	const [editMenuRef, editMenuContent] = createPopperActions({
 		modifiers: [
 			{
 				name: 'offset',
 				options: {
-					offset: [0, 4]
-				}
-			}
-		]
+					offset: [0, 4],
+				},
+			},
+		],
 	});
 	let showEditMenu = false;
 	function handlePointerDown(e: PointerEvent) {
@@ -719,11 +746,11 @@
 	let annotationEditMenuEl: HTMLElement;
 
 	const { useFocusTrap } = createFocusTrap({
-		immediate: true,
-		escapeDeactivates: false,
 		allowOutsideClick: false,
+		escapeDeactivates: false,
+		immediate: true,
+		initialFocus: () => annotationEditMenuEl,
 		returnFocusOnDeactivate: false,
-		initialFocus: () => annotationEditMenuEl
 	});
 </script>
 
@@ -732,24 +759,24 @@
 		use:editMenuContent
 		use:usePortal
 		use:focusTrap={{
-			immediate: true,
-			escapeDeactivates: false,
 			allowOutsideClick: false,
+			escapeDeactivates: false,
+			immediate: true,
+			initialFocus: () => annotationEditMenuEl,
 			returnFocusOnDeactivate: false,
-			initialFocus: () => annotationEditMenuEl
 		}}
 		use:useEscapeKeydown={{
 			handler: (e) => {
 				console.log({ e });
 				showEditMenu = false;
-			}
+			},
 		}}
 		class="z-10 select-none"
 	>
 		<div
 			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
 			transition:scale={{
-				start: 0.9
+				start: 0.9,
 			}}
 			tabindex="-1"
 			bind:this={annotationEditMenuEl}
@@ -772,14 +799,14 @@
 							activeAnnotation.remove();
 							$annotateMutation.mutate({
 								deleted: new Date(),
-								id: $activeAnnotationId
+								id: $activeAnnotationId,
 							});
 							toast('Deleted annotation', {
 								action: {
 									label: 'Undo',
-									onClick: annotations.restore
+									onClick: annotations.restore,
 								},
-								duration: 7000
+								duration: 7000,
 							});
 						}
 						activeAnnotationId.set(null);
@@ -800,13 +827,15 @@
 	<!-- Note: should this be popover? Using some classes from shadcn/ui/hover card -->
 	<div
 		use:popperContent
-		class="{$mouseDown ? 'pointer-events-none' : 'pointer-events-auto-'} z-10 select-none"
+		class="{$mouseDown
+			? 'pointer-events-none'
+			: 'pointer-events-auto-'} z-10 select-none"
 	>
 		<div
 			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
 			in:scale={{
 				delay: 50,
-				start: 0.9
+				start: 0.9,
 			}}
 		>
 			<div class="flex justify-between space-x-2">
@@ -816,7 +845,10 @@
 							clearSelection();
 						}
 						const id = nanoid();
-						const info = await highlight({ 'data-annotation-id': `${id}`, id: `annotation-${id}` });
+						const info = await highlight({
+							'data-annotation-id': `${id}`,
+							id: `annotation-${id}`,
+						});
 
 						if (!info) {
 							e.preventDefault();
@@ -826,17 +858,17 @@
 						$annotateMutation.mutate({
 							id,
 							target: {
+								selector: info.selector,
 								source: '',
-								selector: info.selector
-							}
+							},
 						});
 						annotations.add(id, {
+							els: info.els,
 							id,
 							target: {
+								selector: info.selector,
 								source: '',
-								selector: info.selector
 							},
-							els: info.els
 						});
 						clearSelection();
 					}}
@@ -858,12 +890,12 @@
 							const el = els[0]?.highlightElements[0];
 							if (el) annotationRef(el);
 							annotations.addTemp(id, {
+								els,
 								id,
 								target: {
+									selector,
 									source: '',
-									selector
 								},
-								els
 							});
 							tick().then(() => {
 								$showEditAnnotation = true;
@@ -886,13 +918,13 @@
 		use:annotationContent
 		use:usePortal
 		use:focusTrap={{
-			immediate: true,
-			escapeDeactivates: true,
 			allowOutsideClick: true,
-			returnFocusOnDeactivate: false
+			escapeDeactivates: true,
+			immediate: true,
+			returnFocusOnDeactivate: false,
 		}}
 		use:useEscapeKeydown={{
-			handler: activeAnnotation.hide
+			handler: activeAnnotation.hide,
 		}}
 		class="z-10"
 	>
@@ -900,7 +932,7 @@
 		<div
 			in:scale={{
 				duration: 200,
-				start: 0.9
+				start: 0.9,
 			}}
 			use:draggable
 			class={cn(popoverVariants(), 'flex flex-col gap-y-4 w-80 max-w-xs')}
@@ -914,7 +946,7 @@
 				class="sm:shadow-none shadow-none border-none sm:px-4 px-4 py-6"
 				bind:this={activeEditor}
 				options={{
-					autofocus: 'end'
+					autofocus: 'end',
 				}}
 			/>
 			<div class="flex justify-end gap-3">
@@ -933,7 +965,7 @@
 					size="sm"
 					on:click={() => {
 						activeEditor.save((contentData) => {
-							console.log({ contentData, $annotations });
+							console.log({ $annotations, contentData });
 							// TODO here
 							if (!data.entry?.id) return;
 							console.log({ $activeAnnotationId });
@@ -951,22 +983,22 @@
 								// update
 								$annotations[id] = {
 									...$annotations[id],
-									contentData
+									contentData,
 								};
 							}
 							toast.promise(
 								$annotateMutation.mutateAsync({
+									contentData,
 									entryId: data.entry.id,
 									id,
-									contentData,
+									target: $activeAnnotation.target,
 									type: 'annotation',
-									target: $activeAnnotation.target
 								}),
 								{
+									error: 'Failed to save note',
 									loading: 'Saving note...',
 									success: 'Note saved!',
-									error: 'Failed to save note'
-								}
+								},
 							);
 							activeAnnotationId.set(null);
 						});
@@ -979,28 +1011,24 @@
 	</div>
 {/if}
 
-<div class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors">
+<div
+	class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors"
+>
 	<header class="flex flex-col gap-2 border-b not-prose space-y-3 pb-8">
 		{#if data.entry?.uri?.startsWith('http')}
 			<div class="flex items-center">
 				<img
-					src={`https://icons.duckduckgo.com/ip3/${getHostname(data.entry.uri)}.ico`}
+					src={`https://icons.duckduckgo.com/ip3/${getHostname(
+						data.entry.uri,
+					)}.ico`}
 					class="w-4 h-4 rounded mr-2"
+                    alt=""
 				/>
 				<Muted class="text-xs font-medium uppercase tracking-wider"
 					>{getHostname(data.entry.uri).replace('www.', '')}</Muted
 				>
 			</div>{/if}
 		<h1
-			use:inView={{
-				top: 56
-			}}
-			on:enter={() => {
-				$mainnav.center = false;
-			}}
-			on:exit={() => {
-				$mainnav.center = true;
-			}}
 			class="text-3xl md:text-4xl !mt-0 font-extrabold tracking-tight break-words hyphens-manual"
 		>
 			{data.entry?.title}
@@ -1031,10 +1059,10 @@
 		id="article"
 		class="select-text"
 		on:pointerdown={handlePointerDown}
-        on:mousemove={handleMouseMove}
+		on:mousemove={handleMouseMove}
 		use:drag_context={{
 			'context/id': data.entry?.id.toString() ?? '',
-			'context/url': data.entry?.uri ?? ''
+			'context/url': data.entry?.uri ?? '',
 		}}
 	>
 		<div
@@ -1045,9 +1073,10 @@
 				$appearance.font === 'newsreader' && 'font-newsreader',
 				$appearance.font === 'crimson' && 'font-crimson',
 				'text-[length:var(--font-size)]',
-				'leading-[--line-height]'
+				'leading-[--line-height]',
 			)}
 		>
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			{@html data.entry?.html}
 		</div>
 	</div>
@@ -1060,9 +1089,13 @@
 </div>
 
 {#if showImageMenu}
-<div data-image-menu class="absolute top-0 right-0" use:usePortal={imagePortal}>
-    <Button>Image Menu</Button>
-</div>
+	<div
+		data-image-menu
+		class="absolute top-0 right-0"
+		use:usePortal={imagePortal}
+	>
+		<Button>Image Menu</Button>
+	</div>
 {/if}
 
 <style>

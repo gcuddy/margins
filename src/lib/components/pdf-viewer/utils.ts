@@ -1,4 +1,4 @@
-import type { PDFViewer } from 'pdfjs-dist/web/pdf_viewer';
+import type { EventBus, PDFLinkService, PDFViewer } from 'pdfjs-dist/web/pdf_viewer';
 import { getContext, setContext } from 'svelte';
 import { persisted } from 'svelte-local-storage-store';
 import { Writable, get, writable } from 'svelte/store';
@@ -20,9 +20,10 @@ export const RenderingStates = {
 	INITIAL: 0,
 	RUNNING: 1,
 	PAUSED: 2,
-	FINISHED: 3
+	FINISHED: 3,
 } as const;
-export type RenderingState = typeof RenderingStates[keyof typeof RenderingStates];
+export type RenderingState =
+	(typeof RenderingStates)[keyof typeof RenderingStates];
 
 /**
  * Scale factors for the canvas, necessary with HiDPI displays.
@@ -133,44 +134,58 @@ export function roundToDivide(x: number, div: number) {
 }
 
 type PdfState = {
+	event_bus: EventBus | null;
 	opts: Writable<{
+		darkModeInvert: boolean;
 		scale: number | 'page-fit' | 'page-width' | 'auto';
-        darkModeInvert: boolean;
 	}>;
+    pageNumber: number;
+    pdf_link_service: PDFLinkService | null;
 	pdf_viewer: PDFViewer | null;
+
 };
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 2.3;
 
 function pdf_state() {
 	const { subscribe, set, update } = writable<PdfState>({
+		event_bus: null,
 		opts: writable({
+			darkModeInvert: false,
 			scale: 'auto',
-            darkModeInvert: false
 		}),
-		pdf_viewer: null
+        pageNumber: 1,
+        pdf_link_service: null,
+		pdf_viewer: null,
 	});
 
-    function zoom(dir: "in" | "out") {
-        update((state) => {
-            if (!state.pdf_viewer) return state;
-            // if (typeof state.scale !== 'number') return state;
-            if (state.pdf_viewer.currentScale <= MAX_SCALE) {
-                const scale = dir === "in" ? state.pdf_viewer.currentScale + 0.1 : state.pdf_viewer.currentScale - 0.1;
-                state.pdf_viewer.currentScale = scale;
-                // set opts
-                state.opts.update((opts) => ({ ...opts, scale }));
-            }
-            return state;
-        });
-    }
+	function zoom(dir: 'in' | 'out') {
+		update((state) => {
+			if (!state.pdf_viewer) return state;
+			// if (typeof state.scale !== 'number') return state;
+			if (state.pdf_viewer.currentScale <= MAX_SCALE) {
+				const scale =
+					dir === 'in'
+						? state.pdf_viewer.currentScale + 0.1
+						: state.pdf_viewer.currentScale - 0.1;
+				state.pdf_viewer.currentScale = scale;
+				// set opts
+				state.opts.update((opts) => ({ ...opts, scale }));
+			}
+			return state;
+		});
+	}
 
 	return {
-		subscribe,
 		set,
+		subscribe,
 		update,
-		zoomIn: () => zoom("in"),
-        zoomOut: () => zoom("out"),
+		zoomIn: () => {
+			zoom('in');
+		},
+		zoomOut: () => {
+			zoom('out');
+		},
 	};
 }
 

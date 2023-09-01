@@ -15,12 +15,12 @@ export async function attachmentCreate({
 	await db
 		.insertInto('Attachment')
 		.values({
-			id,
-			url,
-			title,
 			bookmarkId,
-			userId,
+			id,
+			title,
 			updatedAt: new Date(),
+			url,
+			userId,
 		})
 		.onDuplicateKeyUpdate({
 			title,

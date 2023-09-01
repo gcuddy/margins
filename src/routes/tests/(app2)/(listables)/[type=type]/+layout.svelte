@@ -27,7 +27,7 @@
 
 <div
 	style:--right-sidebar-width="{$rightSidebarWidth}px"
-	class="relative flex items-start grow"
+	class="relative flex items-start grow overflow-hidden"
 >
 	<!-- Left sidebar -->
 	<!-- <div class="flex flex-col max-md:fixed md:sticky top-0 max-md:basis-0 "> -->

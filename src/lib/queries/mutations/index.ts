@@ -262,6 +262,17 @@ export function initBookmarkCreateMutation() {
 	});
 }
 
+export function initAttachmentCreateMutation() {
+    const queryClient = useQueryClient();
+    return createMutation({
+        mutationFn: (input: MutationInput<'attachmentCreate'>) =>
+            mutate('attachmentCreate', input),
+        onSuccess() {
+            void queryClient.invalidateQueries({ queryKey: ['entries'] });
+        },
+    });
+}
+
 // TODO: update entry state across al...
 
 //
