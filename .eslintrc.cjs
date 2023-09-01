@@ -1,3 +1,4 @@
+// Influenced by: https://github.com/cpojer/eslint-config/
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
 	root: true,
@@ -5,75 +6,141 @@ module.exports = {
 		'eslint:recommended',
 		'plugin:@typescript-eslint/strict-type-checked',
 		'plugin:@typescript-eslint/stylistic-type-checked',
+		'plugin:import/errors',
+		'plugin:import/typescript',
 		'plugin:svelte/recommended',
 		// 'plugin:tailwindcss/recommended',
-		'prettier',
+		// 'prettier',
 	],
 	parser: '@typescript-eslint/parser',
 	plugins: [
 		'@typescript-eslint',
 		'import',
 		'simple-import-sort',
-		'unused-imports',
+		// 'unused-imports',
+		'sort-destructure-keys',
 		'sort-keys-fix',
 		'typescript-sort-keys',
+		'unicorn',
 	],
 	rules: {
-        '@typescript-eslint/array-type': ['error', {
-            default: 'generic'
-        }],
-        '@typescript-eslint/ban-ts-comment': ['error', {
-            'ts-expect-error': 'allow-with-description'
-        }],
-        '@typescript-eslint/ban-types': 'error',
-        '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-        '@typescript-eslint/consistent-type-imports': ['warn', {
-            fixStyle: 'inline-type-imports',
-            prefer: 'type-imports'
-        }],
-        '@typescript-eslint/naming-convention': ['error', {
-            custom: {
-                match: true,
-                regex: '^T[A-Z]'
-            },
-            format: ['PascalCase'],
-            selector: 'typeParameter'
-        }],
-        '@typescript-eslint/no-throw-literal': 0,
-        '@typescript-eslint/no-unused-vars': 'off',
-        '@typescript-eslint/prefer-ts-expect-error': 'error',
-        '@typescript-eslint/switch-exhaustiveness-check': 'error',
-        'import/first': 2,
-        'import/newline-after-import': 2,
-        'import/no-default-export': 2,
-        // turn off in favor of eslint-plugin-simple-import-sort
-        'import/no-duplicates': 2,
-        'import/order': 0,
-        'no-console': 'warn',
-        'no-throw-literal': 0,
-        "no-unused-vars": 0,
-        'prefer-template': 'error',
-        'simple-import-sort/exports': 2,
-        // we use eslint-plugin-import instead
-        'simple-import-sort/imports': 2,
-        'sort-imports': 0,
-        'sort-keys-fix/sort-keys-fix': 2,
-        'svelte/no-immutable-reactive-statements': 'error',
-        'svelte/no-reactive-literals': 'error',
-        'svelte/no-target-blank': 'error',
-        'svelte/no-trailing-spaces': 'error',
-        'svelte/no-useless-mustaches': 'error',
-        'svelte/prefer-style-directive': 'error',
-        'typescript-sort-keys/interface': 2,
-        'typescript-sort-keys/string-enum': 2,
-        'unused-imports/no-unused-imports': 'error',
-        'unused-imports/no-unused-vars': ['warn', {
-            args: 'after-used',
-            argsIgnorePattern: '^_',
-            vars: 'all',
-            varsIgnorePattern: '^_'
-        }]
-    },
+		'@typescript-eslint/array-type': [
+			'error',
+			{
+				default: 'generic',
+			},
+		],
+		'@typescript-eslint/ban-ts-comment': [
+			'error',
+			{
+				'ts-expect-error': 'allow-with-description',
+			},
+		],
+		'@typescript-eslint/ban-types': 'error',
+		'@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+		'@typescript-eslint/no-dynamic-delete': 0,
+		'@typescript-eslint/naming-convention': [
+			'error',
+			{
+				custom: {
+					match: true,
+					regex: '^T[A-Z]',
+				},
+				format: ['PascalCase'],
+				selector: 'typeParameter',
+			},
+		],
+
+		'@typescript-eslint/no-non-null-assertion': 0,
+		'@typescript-eslint/no-throw-literal': 0,
+		'@typescript-eslint/no-unused-vars': 0,
+		'@typescript-eslint/prefer-ts-expect-error': 'error',
+		'array-bracket-spacing': [2, 'never'],
+		'arrow-parens': [2, 'always'],
+		'arrow-spacing': 2,
+		'brace-style': [
+			2,
+			'1tbs',
+			{
+				allowSingleLine: true,
+			},
+		],
+		curly: 2,
+		'eol-last': 2,
+		// `import/default` and `import/namespace` are slow.
+		'import/default': 0,
+		'import/named': 0,
+		'import/namespace': 0,
+		'import/no-duplicates': 2,
+		'import/no-extraneous-dependencies': 2,
+		'import/no-named-as-default-member': 0,
+		'import/no-namespace': 2,
+		'import/order': 0,
+		'no-console': 2,
+		'no-const-assign': 2,
+		'no-extra-parens': [2, 'functions'],
+		'no-irregular-whitespace': 2,
+		'no-throw-literal': 0,
+		'no-unused-expressions': 2,
+		'no-unused-labels': 2,
+		'no-unused-vars': 0,
+		'no-var': 2,
+		'object-curly-spacing': 0,
+		'object-shorthand': 2,
+		'prefer-arrow-callback': [2, { allowNamedFunctions: true }],
+		'prefer-const': 2,
+		'prefer-template': 'error',
+		'simple-import-sort/exports': 2,
+		'simple-import-sort/imports': 2,
+		'sort-imports': 0,
+		'sort-destructure-keys/sort-destructure-keys': 2,
+		'sort-keys-fix/sort-keys-fix': 2,
+		'space-before-blocks': 2,
+		'space-before-function-paren': [
+			2,
+			{ anonymous: 'never', asyncArrow: 'always', named: 'never' },
+		],
+		'svelte/no-immutable-reactive-statements': 'error',
+		'svelte/no-reactive-literals': 'error',
+		'svelte/no-target-blank': 'error',
+		'svelte/no-trailing-spaces': 'error',
+		'svelte/no-useless-mustaches': 'error',
+		'svelte/prefer-style-directive': 'error',
+		'typescript-sort-keys/interface': 2,
+		'typescript-sort-keys/string-enum': 2,
+        'unicorn/better-regex': 2,
+        'unicorn/catch-error-name': 2,
+        'unicorn/consistent-function-scoping': 2,
+        'unicorn/no-abusive-eslint-disable': 2,
+        'unicorn/no-hex-escape': 2,
+        'unicorn/no-typeof-undefined': 2,
+        'unicorn/no-useless-promise-resolve-reject': 2,
+        'unicorn/no-useless-spread': 2,
+        'unicorn/numeric-separators-style': 2,
+        'unicorn/prefer-array-flat-map': 2,
+        'unicorn/prefer-array-index-of': 2,
+        'unicorn/prefer-array-some': 2,
+        'unicorn/prefer-at': 2,
+        'unicorn/prefer-dom-node-append': 2,
+        'unicorn/prefer-native-coercion-functions': 2,
+        'unicorn/prefer-node-protocol': 2,
+        'unicorn/prefer-number-properties': 2,
+        'unicorn/prefer-optional-catch-binding': 2,
+        'unicorn/prefer-set-size': 2,
+        'unicorn/prefer-string-replace-all': 2,
+        'unicorn/prefer-string-slice': 2,
+        'unicorn/prefer-ternary': 2,
+        'unicorn/prefer-top-level-await': 2,
+        'unicorn/text-encoding-identifier-case': 2,
+
+		// 'unused-imports/no-unused-imports': 'error',
+		// 'unused-imports/no-unused-vars': ['warn', {
+		//     args: 'after-used',
+		//     argsIgnorePattern: '^_',
+		//     vars: 'all',
+		//     varsIgnorePattern: '^_'
+		// }]
+	},
 	parserOptions: {
 		sourceType: 'module',
 		ecmaVersion: 'latest',
@@ -94,7 +161,7 @@ module.exports = {
 	// ],
 	env: {
 		browser: true,
-		es2017: true,
+		es2021: true,
 		node: true,
 	},
 	overrides: [
@@ -103,6 +170,14 @@ module.exports = {
 			parser: 'svelte-eslint-parser',
 			parserOptions: {
 				parser: '@typescript-eslint/parser',
+			},
+			rules: {
+				// 'unused-imports/no-unused-vars': ['warn', {
+				//     args: 'after-used',
+				//     argsIgnorePattern: '^_',
+				//     vars: 'all',
+				//     varsIgnorePattern: '(^_)|(^\\$\\$)'
+				// }]
 			},
 		},
 		{
