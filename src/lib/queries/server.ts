@@ -104,7 +104,7 @@ const id_or_entryid = z.union([
 export const updateBookmarkSchema = id_or_entryid.and(
 	z.object({
 		data: BookmarkSchema.partial()
-			.omit({ id: true, userId: true, data: true, context: true })
+			.omit({ context: true, data: true, id: true, userId: true })
 			.extend({
 				bookmarked: z.number().int().optional(),
 				is_read: z.number().int().optional(),
@@ -128,11 +128,7 @@ export async function updateBookmark(
 			.set(data)
 			.where('userId', '=', userId);
 		const { id } = variables;
-		if (Array.isArray(id)) {
-			bookmarks = bookmarks.where('id', 'in', id);
-		} else {
-			bookmarks = bookmarks.where('id', '=', id);
-		}
+		bookmarks = Array.isArray(id) ? bookmarks.where('id', 'in', id) : bookmarks.where('id', '=', id);
 		return await bookmarks.execute();
 	} else {
 		const { entryId } = variables;
@@ -141,10 +137,10 @@ export async function updateBookmark(
 			.insertInto('Bookmark')
 			.values(
 				entryIds.map((entryId) => ({
-					updatedAt: new Date(),
-					entryId,
-					userId,
 					bookmarked: 0,
+					entryId,
+					updatedAt: new Date(),
+					userId,
 					...data,
 				})),
 			)
@@ -165,8 +161,8 @@ export const getNotebookSchema = z.object({
 export type GetNotebookSchema = z.infer<typeof getNotebookSchema>;
 
 export async function getNotebook({
-	userId,
 	cursor,
+	userId,
 }: GetNotebookSchema & { userId: string }) {
 	console.time('notebook');
 	const take = 25;
@@ -176,7 +172,7 @@ export async function getNotebook({
 		.select(annotations.select)
 		.select(withEntry)
 		.where('userId', '=', userId)
-		.where(({ or, cmpr }) =>
+		.where(({ cmpr, or }) =>
 			or([cmpr('a.type', '=', 'annotation'), cmpr('a.type', '=', 'note')]),
 		)
 		.where('deleted', 'is', null)
@@ -221,6 +217,7 @@ export async function deleteAnnotation(userId: string, id: string) {
 
 export const upsertAnnotationSchema = annotationSchema
 	.extend({
+		id: annotationSchema.shape.id.or(z.array(z.string())),
 		relations: z
 			.object({
 				relatedEntryId: z.number().int(),
@@ -228,8 +225,6 @@ export const upsertAnnotationSchema = annotationSchema
 			})
 			.array()
 			.default([]),
-
-		id: annotationSchema.shape.id.or(z.array(z.string())),
 		// The array of tags to add to this annotation
 		tags: z.number().array().default([]),
 	})
@@ -238,8 +233,8 @@ export const upsertAnnotationSchema = annotationSchema
 	});
 
 export async function upsertAnnotation({
-	input: data,
 	ctx,
+	input: data,
 }: GetCtx<typeof upsertAnnotationSchema>) {
 	const { userId } = ctx;
 	const { id: _id, relations, tags, ...annotation } = data;
@@ -249,7 +244,6 @@ export async function upsertAnnotation({
 	} else {
 		ids = Array.isArray(_id) ? _id : [_id];
 	}
-	console.log({ annotation, ids });
 	await db
 		.insertInto('Annotation')
 		.values(
@@ -257,22 +251,22 @@ export async function upsertAnnotation({
 				id,
 				updatedAt: new Date(),
 				...annotation,
-				private: annotation.private ? 1 : 0,
 				contentData: annotation.contentData
 					? json(annotation.contentData)
 					: undefined,
+				private: annotation.private ? 1 : 0,
 				target: annotation.target ? json(annotation.target) : undefined,
 				userId,
 			})),
 		)
 		.onDuplicateKeyUpdate({
 			...annotation,
-			private: annotation.private ? 1 : 0,
-			updatedAt: new Date(),
 			contentData: annotation.contentData
 				? json(annotation.contentData)
 				: undefined,
+			private: annotation.private ? 1 : 0,
 			target: annotation.target ? json(annotation.target) : undefined,
+			updatedAt: new Date(),
 			userId,
 		})
 		.execute();
@@ -296,8 +290,8 @@ export async function upsertAnnotation({
 							entryId,
 							id: nanoid(),
 							relatedEntryId: relation.relatedEntryId,
-							updatedAt: new Date(),
 							type: relation.type,
+							updatedAt: new Date(),
 							userId,
 						})),
 					),
@@ -340,9 +334,9 @@ const noteUpdateInputSchema = noteUpdateInput.or(z.array(noteUpdateInput));
 
 export const s_add_to_collection = z
 	.object({
+		annotationId: z.string().or(z.string().array()).optional(),
 		collectionId: z.number().int(),
 		entryId: z.number().int().or(z.number().int().array()).optional(),
-		annotationId: z.string().or(z.string().array()).optional(),
 	})
 	.refine(
 		(data) => data.entryId ?? data.annotationId,
@@ -383,8 +377,8 @@ export async function add_to_collection(
 			.insertInto('CollectionItems')
 			.values({
 				annotationId: input.annotationId,
-				entryId: input.entryId,
 				collectionId: input.collectionId,
+				entryId: input.entryId,
 				id: nanoid(),
 				updatedAt: new Date(),
 			})
@@ -425,8 +419,8 @@ export async function set_collections_on_entry({
 }
 
 export async function set_tags_on_entry({
-	tags,
 	entries,
+	tags,
 	userId,
 }: z.input<typeof tagsOnEntrySchema> & { userId: string }) {
 	// First, delete all tags on entries
@@ -481,26 +475,26 @@ export async function set_tags_on_entry({
 
 // move elsewhere
 export const entryMetadataSchema = z.object({
-	id: z.number().int(),
 	author: z.string().optional(),
+	id: z.number().int(),
 	title: z.string().optional(),
 });
 
 export async function update_metadata_on_entry({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof entryMetadataSchema>) {
-	const { id, title, author } = input;
+	const { author, id, title } = input;
 	const { userId } = ctx;
 
 	await db
 		.insertInto('Bookmark')
 		.values({
-			entryId: id,
-			userId,
 			author,
+			entryId: id,
 			title,
 			updatedAt: new Date(),
+			userId,
 			// bookmarked: true,
 		})
 		.onDuplicateKeyUpdate({
@@ -542,8 +536,8 @@ export const entry_by_id_schema = z.object({
 });
 
 export async function entry_by_id({
-	input: { id, type, season },
 	ctx: { userId },
+	input: { id, season, type },
 }: GetCtx<typeof entry_by_id_schema>) {
 	let podcast: Awaited<ReturnType<(typeof pindex)['episodeById']>> | null =
 		null;
@@ -803,18 +797,18 @@ function validate_entry_type<TEntry extends { tweet?: unknown }>(
 // same type as get_library
 export const countLibrarySchema = z.object({
 	filter: z.object({
-		type: z.nativeEnum(DocumentType).optional(),
 		search: z.string().optional(),
+		type: z.nativeEnum(DocumentType).optional(),
 	}),
 	status: z.nativeEnum(Status).nullable(),
 });
 
 export async function count_library({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof countLibrarySchema>) {
 	const { userId } = ctx;
-	const { status, filter } = input;
+	const { filter, status } = input;
 	let query = db
 		.selectFrom('Bookmark as b')
 		.innerJoin('Entry as e', 'e.id', 'b.entryId')
@@ -848,8 +842,8 @@ export type SaveToLibrarySchema = z.input<typeof saveToLibrarySchema>;
  * Given an entry id (or spotify/gbooks/tmdb/etc id), saves it to the library
  */
 export async function save_to_library({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof saveToLibrarySchema>) {
 	let { entryId, status, type } = input;
 	if (!entryId) {
@@ -896,27 +890,27 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 				const tv = await tmdb.tv.details(input.tmdbId);
 				insertable = {
 					...insertable,
-					text: tv.overview,
-					title: tv.name,
-					tmdbId: tv.id,
-					uri: `tmdb:tv:${tv.id}`,
 					author: tv.created_by.map((val) => val.name).join(', '),
 					image: tmdb.media(tv.poster_path),
 					published: tv.first_air_date,
+					text: tv.overview,
+					title: tv.name,
+					tmdbId: tv.id,
 					type: 'tv',
+					uri: `tmdb:tv:${tv.id}`,
 				};
 			} else {
 				const movie = await tmdb.movie.details(input.tmdbId);
 				insertable = {
 					...insertable,
-					html: movie.overview,
-					title: movie.title,
-					tmdbId: movie.id,
-					uri: `tmdb:${movie.id}`,
 					author: movie.credits.crew.find((c) => c.job === 'Director')?.name,
+					html: movie.overview,
 					image: tmdb.media(movie.poster_path),
 					published: movie.release_date,
+					title: movie.title,
+					tmdbId: movie.id,
 					type: 'movie',
+					uri: `tmdb:${movie.id}`,
 				};
 			}
 			break;
@@ -935,20 +929,20 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 			);
 			insertable = {
 				...insertable,
-				html: book.volumeInfo.description,
-				title: book.volumeInfo.title,
+				author: book.volumeInfo.authors?.join(', '),
+				book_genre: fiction ? 'Fiction' : 'NonFiction',
+				genres: book.volumeInfo.categories?.join(', '),
 				googleBooksId: book.id,
+				html: book.volumeInfo.description,
+				image,
+				pageCount: book.volumeInfo.pageCount,
+				published: book.volumeInfo.publishedDate,
+				publisher: book.volumeInfo.publisher,
+				title: book.volumeInfo.title,
+				type: 'book',
 				uri: `isbn:${book.volumeInfo.industryIdentifiers?.find(
 					(i) => i.type === 'ISBN_13',
 				)?.identifier}`,
-				author: book.volumeInfo.authors?.join(', '),
-				image,
-				published: book.volumeInfo.publishedDate,
-				publisher: book.volumeInfo.publisher,
-				type: 'book',
-				genres: book.volumeInfo.categories?.join(', '),
-				pageCount: book.volumeInfo.pageCount,
-				book_genre: fiction ? 'Fiction' : 'NonFiction',
 			};
 			break;
 		}
@@ -959,13 +953,13 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 			);
 			insertable = {
 				...insertable,
+				image: episode.image || episode.feedImage,
+				podcastIndexId: episode.id,
+				published: new Date(episode.datePublished * 1000),
 				text: episode.description,
 				title: episode.title,
-				podcastIndexId: episode.id,
-				uri: episode.enclosureUrl,
-				published: new Date(episode.datePublished * 1000),
-				image: episode.image || episode.feedImage,
 				type: 'podcast',
+				uri: episode.enclosureUrl,
 			};
 			break;
 		}
@@ -973,13 +967,13 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 			const album = await spotify.album(input.spotifyId);
 			insertable = {
 				...insertable,
-				title: album.name,
-				spotifyId: album.id,
-				uri: `spotify:album:${album.id}`,
 				author: album.artists.map((a) => a.name).join(', '),
 				image: album.images[0]?.url,
 				published: new Date(album.release_date),
+				spotifyId: album.id,
+				title: album.name,
 				type: 'album',
+				uri: `spotify:album:${album.id}`,
 			};
 			break;
 		}
@@ -1050,8 +1044,8 @@ export async function get_authors({
 export const updateTagSchema = z.object({
 	data: z
 		.object({
-			name: z.string(),
 			color: z.string(),
+			name: z.string(),
 			// TODO description etc.
 		})
 		.partial(),
@@ -1061,8 +1055,8 @@ export const updateTagSchema = z.object({
 export type UpdateTagInput = z.input<typeof updateTagSchema>;
 
 export async function updateTag({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof updateTagSchema>) {
 	await db
 		.updateTable('Tag')
@@ -1083,8 +1077,8 @@ export const createTagSchema = z.object({
 type CreateTagInput = z.input<typeof createTagSchema>;
 
 export async function createTag({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof createTagSchema>) {
 	const tag = await db
 		.insertInto('Tag')
@@ -1109,8 +1103,8 @@ export const convertToSchema = z
 	.and(mediaIdSchema);
 
 export async function convertTo({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof convertToSchema>) {
 	const { id, type } = input;
 	const { userId } = ctx;
@@ -1120,12 +1114,12 @@ export async function convertTo({
 
 	let newEntry:
 		| {
+				googleBooksId?: string | null;
 				id: number;
-				type: DocumentType;
+				podcastIndexId?: number | null;
 				spotifyId?: string | null;
 				tmdbId?: number | null;
-				googleBooksId?: string | null;
-				podcastIndexId?: number | null;
+				type: DocumentType;
 		  }
 		| undefined = undefined;
 
@@ -1140,7 +1134,7 @@ export async function convertTo({
 
 	// TODO: this transaction is unwieldly, and the delete part should be handled by qstash asynchronously
 	await db.transaction().execute(async (trx) => {
-		if (!newEntry) return;
+		if (!newEntry) {return;}
 		console.time('convert transaction');
 		await trx
 			.updateTable('TagOnEntry')
@@ -1224,19 +1218,19 @@ export async function convertTo({
 
 export const notesInputOrderAndCursorSchema = z.union([
 	z.object({
+		cursor: z.coerce.date().optional(),
 		dir: z.enum(['asc', 'desc']).default('desc'),
 		orderBy: z.enum(['updatedAt', 'createdAt']).default('createdAt'),
-		cursor: z.coerce.date().optional(),
 	}),
 	z.object({
-		dir: z.enum(['asc', 'desc']).default('asc'),
-		orderBy: z.literal('name'),
 		cursor: z
 			.object({
 				createdAt: z.coerce.date(),
 				title: z.string().nullable(),
 			})
 			.optional(),
+		dir: z.enum(['asc', 'desc']).default('asc'),
+		orderBy: z.literal('name'),
 	}),
 ]);
 
@@ -1284,8 +1278,8 @@ function notePin(
 	).as('pin');
 }
 
-export async function notes({ input, ctx }: GetCtx<typeof notesInputSchema>) {
-	const { filter, includeArchived, cursor, dir, orderBy } = input;
+export async function notes({ ctx, input }: GetCtx<typeof notesInputSchema>) {
+	const { cursor, dir, filter, includeArchived, orderBy } = input;
 
 	const take = input.take || 50;
 
@@ -1377,8 +1371,8 @@ export type Notes = Awaited<ReturnType<typeof notes>>['notes'];
 export type Note = Notes[number];
 
 export async function note({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof idSchema>): Promise<Note> {
 	const { id } = input;
 
@@ -1404,14 +1398,20 @@ const _createFavoriteSchema = z
 		collectionId: z.number().nullish(),
 		entryId: z.number().nullish(),
 		feedId: z.number().nullish(),
-		smartListId: z.number().nullish(),
+		//
+folderName: z.string().nullish(),
+
+//
+id: z.string(),
+
+
+parentId: z.string().nullish(),
+
+smartListId: z.number().nullish(),
+
+sortOrder: z.number().nullish(),
+
 		tagId: z.number().nullish(),
-		//
-		folderName: z.string().nullish(),
-		parentId: z.string().nullish(),
-		sortOrder: z.number().nullish(),
-		//
-		id: z.string(),
 	})
 	.partial();
 
@@ -1421,8 +1421,8 @@ export const createFavoriteSchema = _createFavoriteSchema.or(
 
 // Technically "upsert"
 export async function createFavorite({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof createFavoriteSchema>) {
 	const { userId } = ctx;
 	const dataToInsert = (Array.isArray(input) ? input : [input]).map((item) => {
@@ -1456,11 +1456,11 @@ export const updateFavoriteSchema = z.object({
 });
 
 export async function updateFavorite({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof updateFavoriteSchema>) {
 	const { userId } = ctx;
-	const { id, data } = input;
+	const { data, id } = input;
 	await db
 		.updateTable('Favorite')
 		.set(data)

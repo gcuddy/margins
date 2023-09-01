@@ -1,11 +1,11 @@
-import type { TargetSchema } from '$lib/annotation';
+import { useQueryClient } from '@tanstack/svelte-query';
 import type { JSONContent } from '@tiptap/core';
 import { derived, get, writable } from 'svelte/store';
-import type { Annotation } from '@prisma/client';
+import { toast } from 'svelte-sonner';
+
+import type { TargetSchema } from '$lib/annotation';
 import { updateAnnotationMutation } from '$lib/queries/mutations';
 import { mutate } from '$lib/queries/query';
-import { toast } from 'svelte-sonner';
-import { useQueryClient } from '@tanstack/svelte-query';
 
 // Annotations should look like this:
 export type Annotations = Record<string, AnnotationInfo>;
@@ -14,15 +14,15 @@ export type Annotations = Record<string, AnnotationInfo>;
 
 // Partial of our Annotation Schema with Els
 type AnnotationInfo = {
-	id: string;
-	temporary?: boolean;
-	target: TargetSchema;
 	body?: string | null;
 	contentData?: JSONContent | null;
-	els: {
-		highlightElements: HTMLElement[];
+	els: Array<{
+		highlightElements: Array<HTMLElement>;
 		removeHighlights: () => void;
-	}[];
+	}>;
+	id: string;
+	target: TargetSchema;
+	temporary?: boolean;
 	// TODO: add more info here
 };
 // & Partial<Annotation>;
@@ -53,41 +53,41 @@ export function createAnnotationStore() {
 	}
 
 	const activeAnnotationId = {
-		subscribe: _activeAnnotationId.subscribe,
+		clear,
+		hide,
 		set: (id: string | null) => {
 			_activeAnnotationId.set(id);
 		},
-		clear,
 		show,
-		hide
+		subscribe: _activeAnnotationId.subscribe
 	};
 
 	const _activeAnnotation = derived(
 		[store, _activeAnnotationId],
 		([$store, $activeAnnotationId]) => {
-			if (!$activeAnnotationId) return null;
+			if (!$activeAnnotationId) {return null;}
 			return $store[$activeAnnotationId] ?? null;
 		}
 	);
 
 	const activeAnnotation = {
 		..._activeAnnotation,
-		show,
-		hide,
 		clear,
+		hide,
 		remove: () => {
 			const annotation = get(_activeAnnotation);
 			lastDeletedAnnotation = annotation;
-			if (!annotation?.id) return;
+			if (!annotation?.id) {return;}
 			remove(annotation.id);
-		}
+		},
+		show
 	};
 
 	function remove(id: string) {
 		store.update((annotations) => {
 			const annotation = annotations[id];
 			if (annotation) {
-				annotation.els.forEach((el) => el.removeHighlights());
+				annotation.els.forEach((el) => { el.removeHighlights(); });
 			}
 			delete annotations[id];
 			return annotations;
@@ -98,12 +98,12 @@ export function createAnnotationStore() {
 	 * Given a set of annotation IDs, delete all annotations that are not in the set
 	 * @param ids Annotaton IDs to sync
 	 */
-	function sync(ids: string[]) {
+	function sync(ids: Array<string>) {
 		store.update((annotations) => {
 			const toRemove = Object.keys(annotations).filter((id) => !ids.includes(id));
 			toRemove.forEach((id) => {
 				const annotation = annotations[id];
-				annotation?.els.forEach((el) => el.removeHighlights());
+				annotation?.els.forEach((el) => { el.removeHighlights(); });
 				delete annotations[id];
 			});
 			return annotations;
@@ -148,9 +148,9 @@ export function createAnnotationStore() {
      */
     function saveTemp() {
         store.update((annotations) => {
-            if (!tempId) return annotations;
+            if (!tempId) {return annotations;}
             const annotation = annotations[tempId];
-            if (!annotation) return annotations;
+            if (!annotation) {return annotations;}
             annotation.temporary = false;
             return annotations;
         });
@@ -165,43 +165,42 @@ export function createAnnotationStore() {
     }
 
 	return {
-		activeAnnotationId,
 		activeAnnotation,
-		showEditAnnotation,
+		activeAnnotationId,
 		annotations: {
 			...store,
-			remove,
-			sync,
-			reset,
 			add,
-            addTemp,
-            saveTemp,
+			addTemp,
+			hasTemp: () => !!tempId,
+			remove,
             removeTemp,
-            hasTemp: () => !!tempId,
-			restore: () => {
+            reset,
+            restore: () => {
 				if (lastDeletedAnnotation) {
-					console.log({ lastDeletedAnnotation });
 					add(lastDeletedAnnotation.id, lastDeletedAnnotation);
 					toast.promise(
 						mutate('save_note', {
-							id: lastDeletedAnnotation.id,
-							deleted: null
+							deleted: null,
+							id: lastDeletedAnnotation.id
 						}),
 						{
+							error: () => 'Error restoring note',
+							loading: 'Restoring note...',
 							success: () => {
-								queryClient.invalidateQueries({
+								void queryClient.invalidateQueries({
 									queryKey: ['notes', 'detail']
 								});
 								lastDeletedAnnotation = null;
 								return 'Note restored';
-							},
-							error: () => 'Error restoring note',
-							loading: 'Restoring note...'
+							}
 						}
 					);
 				}
-			}
+			},
+            saveTemp,
+			sync
 		},
+		showEditAnnotation,
 		updateMutation
 	};
 }

@@ -3,22 +3,24 @@
 </script>
 
 <script lang="ts">
+	import type { Editor as TEditor,EditorOptions, JSONContent } from '@tiptap/core';
+	import type { Transaction } from '@tiptap/pm/state';
+	import debounce from 'just-debounce-it';
 	import { createEventDispatcher, onMount, setContext } from 'svelte';
-	import type { EditorOptions, JSONContent, Editor as TEditor } from '@tiptap/core';
+	import { type Readable,writable } from 'svelte/store';
+	import { fade } from 'svelte/transition';
+	import { persisted } from 'svelte-local-storage-store';
+	import { toast } from 'svelte-sonner';
 	import { createEditor, Editor, EditorContent } from 'svelte-tiptap';
-	import { writable, type Readable } from 'svelte/store';
+
+	import { page } from '$app/stores';
+	import { mutation,MutationInput } from '$lib/queries/query';
+	import { cn } from '$lib/utils/tailwind';
+
+	import { badgeVariants } from '../Badge.svelte';
+	import BubbleMenu from './BubbleMenu.svelte';
 	import { generate_tiptap_extensions, TiptapExtensionProps } from './extensions';
 	import { TiptapEditorProps } from './props';
-	import BubbleMenu from './BubbleMenu.svelte';
-	import debounce from 'just-debounce-it';
-	import { persisted } from 'svelte-local-storage-store';
-	import { cn } from '$lib/utils/tailwind';
-	import { toast } from 'svelte-sonner';
-	import { MutationInput, mutation } from '$lib/queries/query';
-	import { page } from '$app/stores';
-	import { fade } from 'svelte/transition';
-	import { badgeVariants } from '../Badge.svelte';
-	import type { Transaction } from '@tiptap/pm/state';
 	import { save_srs_nodes } from './utils';
 
 	export let id: string | number | undefined = undefined;
@@ -59,12 +61,12 @@
 	// const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
 	const dispatch = createEventDispatcher<{
-		save: JSONContent;
 		blur: {
 			editor: TEditor;
 			event: FocusEvent;
 			transaction: Transaction;
 		};
+		save: JSONContent;
 	}>();
 
 	const debounced_update = debounce(async ({ editor }: { editor: TEditor }) => {
@@ -79,7 +81,7 @@
 	}, 750);
 
 	export const save = (cb: (json: JSONContent) => void) => {
-		if (!editor) return;
+		if (!editor) {return;}
 		const json = $editor.getJSON();
 		cb(json);
 	};
@@ -96,8 +98,8 @@
 	export const saveNoteToEntry = (
 		entry: number | { id: number },
 		opts?: {
-			onSuccess?: () => void;
 			hideToast?: boolean;
+			onSuccess?: () => void;
 		}
 	) => {
 		const contentData = $editor.getJSON();
@@ -106,17 +108,17 @@
 		if (!opts?.hideToast) {
 			toast.promise(
 				mutation($page, 'save_note', {
-					type: 'note',
 					contentData,
-					entryId
+					entryId,
+					type: 'note'
 				}),
 				{
+					error: 'Failed to save.',
 					loading: 'Saving...',
 					success: ({ id }) => {
-						if (opts?.onSuccess) opts.onSuccess();
+						if (opts?.onSuccess) {opts.onSuccess();}
 						return 'Saved!';
-					},
-					error: 'Failed to save.'
+					}
 				}
 			);
 		}
@@ -129,21 +131,21 @@
 
 	onMount(() => {
 		editor = createEditor({
-			extensions: generate_tiptap_extensions(extensions, context),
+			autofocus: 'start',
+			content,
+			editable: false,
 			editorProps: TiptapEditorProps,
-			onUpdate: (e) => {
+			extensions: generate_tiptap_extensions(extensions, context),
+            onUpdate: (e) => {
 				// TODO
 				$save_status = 'Unsaved';
 				// const selection = e.editor.state.selection;
 				onUpdate?.(e);
 				// debounced_update(e);
 			},
-			content,
-			autofocus: 'start',
-            editable: false,
 			...options
 		});
-		if (content) hydrated = true;
+		if (content) {hydrated = true;}
 		$editor.on('blur', (e) => {
 			// TODO check if bubble menu is open
             e.editor.setEditable(false);
@@ -174,12 +176,12 @@
 	// }
 
     $: if (!hydrated && content !== undefined) {
-        $editor?.commands.setContent(content);
+        $editor.commands.setContent(content);
         hydrated = true;
     }
 
     export const setContent = (content: string | JSONContent) => {
-        $editor?.commands?.setContent(content);
+        $editor.commands.setContent(content);
     }
 
 	let just_saved = false;
@@ -199,28 +201,28 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
     data-editor
-    data-focused={$editor?.isFocused}
+    data-focused={$editor.isFocused}
 	on:click={(e) => {
-        if (e.target instanceof HTMLAnchorElement) return;
-		if (!readonly) $editor?.setEditable(true);
-		$editor?.chain().focus().run();
+        if (e.target instanceof HTMLAnchorElement) {return;}
+		if (!readonly) {$editor.setEditable(true);}
+		$editor.chain().focus().run();
 	}}
     on:focus|self={() => {
-        if (readonly) return;
-        $editor?.setEditable(true);
-        $editor?.chain().focus().run();
+        if (readonly) {return;}
+        $editor.setEditable(true);
+        $editor.chain().focus().run();
     }}
 	class={cn(
 		// ' w-full max-w-screen-lg sm:mb-[calc(2    0vh)] sm:rounded-lg p-6 ',
 		'relative ',
 		/* shadcn textarea */ 'min-h-[80px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background ring-ring ring-offset-2',
         focusRing && 'focus-within:ring-2',
-        (($editor?.isFocused && $editor?.isEditable) || bubbleMenuFocused) && focusRing && 'ring-2',
+        (($editor.isFocused && $editor.isEditable) || bubbleMenuFocused) && focusRing && 'ring-2',
 		// 'p-12 px-8  sm:px-12',
 		// sm:shadow-lg sm:border
 		className
 	)}
-    tabindex={(readonly || $editor?.isFocused) ? -1 : 0}
+    tabindex={(readonly || $editor.isFocused) ? -1 : 0}
 	data-size={size}
 >
 	{#if showSaveStatus === true || (showSaveStatus === 'auto' && $save_status === 'Saved' && just_saved)}

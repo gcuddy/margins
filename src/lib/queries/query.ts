@@ -33,11 +33,10 @@ export type QueryInput<TKey extends keyof Queries> = Parameters<
 export type QueryOutput<TKey extends keyof Queries> = Awaited<
 	ReturnType<Queries[TKey]['fn']>
 >;
-export type MutationInput<TKey extends keyof Mutations> = Parameters<
-	Mutations[TKey]['fn']
->[0]['input'] extends IsAny<Parameters<Mutations[TKey]['fn']>[0]['input']>
-	? undefined
-	: Parameters<Mutations[TKey]['fn']>[0]['input'];
+export type MutationInput<TKey extends keyof Mutations> =
+	Mutations[TKey]['schema'] extends z.ZodTypeAny
+		? undefined
+		: z.input<NonNullable<Mutations[TKey]['schema']>>;
 
 // https://stackoverflow.com/questions/62185345/use-keyof-to-extract-a-string-literal-union-of-only-keys-that-have-values-of-a-s
 type KeysMatching<T, V> = {

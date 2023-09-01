@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		createFocusTrap,
 		useEscapeKeydown,
 		usePortal,
 	} from '@melt-ui/svelte/internal/actions';
@@ -30,7 +29,6 @@
 	import { highlightText } from '$lib/annotator/highlighter';
 	import type { TextQuoteSelector } from '$lib/annotator/types';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { popoverVariants } from '$lib/components/ui/popover/PopoverContent.svelte';
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
 	import { nanoid } from '$lib/nanoid';
@@ -49,50 +47,24 @@
 	import { cn } from '$lib/utils/tailwind';
 
 	import type { MenuBar } from '../../../MainNav.svelte';
-	import { getAppearanceContext, getArticleContext } from '../ctx';
+	import {
+		getAppearanceContext,
+		getArticleContext,
+		getEntryContext,
+	} from '../ctx';
 	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
 
 	const {
-		annotations,
 		activeAnnotation,
 		activeAnnotationId,
+		annotations,
 		showEditAnnotation,
 	} = createAnnotationStore();
 
 	export let data: PageData;
 
-	$: author = data.entry?.bookmark?.author ?? data.entry?.author;
-
 	const mainnav: Writable<MenuBar> = getContext('mainnav');
-
-	let align = ['left', 'justify'] as const;
-	type Alignment = (typeof align)[number];
-	let alignment: Alignment = align[0];
-
-	let fonts = ['sans', 'newsreader', 'crimson'] as const;
-	type Font = (typeof fonts)[number];
-	let font: Font = fonts[0];
-
-	let fontSize = 16;
-	let lineHeight = 1.75;
-
-	type Opts = {
-		alignment: Alignment;
-		autoHide: boolean;
-		focusMode: boolean;
-		font: Font;
-		fontSize: number;
-		lineHeight: number;
-	};
-	const defaultOpts: Opts = {
-		alignment,
-		autoHide: true,
-		focusMode: false,
-		font,
-		fontSize,
-		lineHeight,
-	};
 
 	const appearance = getAppearanceContext();
 
@@ -103,17 +75,19 @@
 		'detail',
 		{
 			input: {
-				id: numberOrString($page.params.id),
+				id: numberOrString($page.params.id ?? ''),
 				type: $page.data.type as Type,
 			},
 		},
 	];
 
+    $: author = data.entry?.author;
+
 	const annotateMutation = createMutation({
 		mutationFn: async (input: MutationInput<'save_note'>) => {
-			console.log({ data, input });
-			if (!data.entry) return;
-			console.log('saving annotation');
+			if (!data.entry) {
+				return;
+			}
 			return mutation($page, 'save_note', {
 				entryId: data.entry.id,
 				...input,
@@ -122,6 +96,7 @@
 		onError: (err, newTodo, context) => {
 			toast.error('Failed to save annotation');
 			if (context) {
+				// @ts-expect-error - TODO: why is ts complaining about this?
 				queryClient.setQueryData(queryKey, context.previousEntryData);
 			}
 		},
@@ -134,68 +109,58 @@
 			const previousEntryData =
 				queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
 
-			console.log({ previousEntryData });
-
 			// // Optimistically update to the new value
-			const newQueryData = queryClient.setQueryData<QueryOutput<'entry_by_id'>>(
-				queryKey,
-				(old) => {
-					if (!old) return old;
-					if (!old.entry) return old;
+			queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
+				if (!old) {
+					return old;
+				}
+				if (!old.entry) {
+					return old;
+				}
 
-					const ids = Array.isArray(newData.id) ? newData.id : [newData.id];
+				const ids = Array.isArray(newData.id) ? newData.id : [newData.id];
 
-					const newAnnotations = ids.map((id) => {
-						const { tags, ...rest } = newData;
-						// TODO: tags
-						return makeAnnotation({
-							// @ts-expect-error TODO: why is ts complaining about this?
-							id: id!,
-							...rest,
-						});
+				const newAnnotations = ids.map((id) => {
+					const { tags, ...rest } = newData;
+					// TODO: tags
+					return makeAnnotation({
+						// @ts-expect-error TODO: why is ts complaining about this?
+						id: id!,
+						...rest,
 					});
+				});
 
-					const oldIds = old.entry.annotations?.map((a) => a.id) ?? [];
-					const annotationsToAdd = newAnnotations.filter(
-						(a) => !oldIds.includes(a.id),
-					);
+				const oldIds = old.entry.annotations?.map((a) => a.id) ?? [];
+				const annotationsToAdd = newAnnotations.filter(
+					(a) => !oldIds.includes(a.id),
+				);
 
-					console.log({
-						annotationsToAdd,
-						newAnnotations,
-						old: old.entry.annotations,
-						oldIds,
-					});
+				const updatedAnnotations = (old.entry.annotations ?? [])
+					.map((annotation) => {
+						if (ids.includes(annotation.id)) {
+							return {
+								...annotation,
+								...newAnnotations.find((a) => a.id === annotation.id),
+							};
+						}
+						return annotation;
+					})
+					.concat(annotationsToAdd);
 
-					const updatedAnnotations = (old.entry.annotations || [])
-						.map((annotation) => {
-							if (ids.includes(annotation.id)) {
-								return {
-									...annotation,
-									...newAnnotations.find((a) => a.id === annotation.id),
-								};
-							}
-							return annotation;
-						})
-						.concat(annotationsToAdd);
-
-					console.log({ updatedAnnotations });
-					return {
-						...old,
-						entry: {
-							...old.entry,
-							annotations: [...updatedAnnotations],
-						},
-					};
-				},
-			);
-			console.log({ newQueryData });
+				return {
+					...old,
+					entry: {
+						...old.entry,
+						annotations: [...updatedAnnotations],
+					},
+				};
+			});
 
 			// // Return a context object with the snapshotted value
 			return { previousEntryData };
 		},
-		onSettled() {
-			queryClient.invalidateQueries({
+		onSettled(data, error, variables, context) {
+			void queryClient.invalidateQueries({
 				queryKey: ['entries'],
 			});
 		},
@@ -204,22 +169,29 @@
 	const selection = writable<Selection | null>(null);
 
 	const showAnnotationTooltip = derived(selection, ($selection) => {
-		if (!$selection?.rangeCount || $selection.isCollapsed) return false;
+		if (!$selection?.rangeCount || $selection.isCollapsed) {
+			return false;
+		}
 		const range = $selection.getRangeAt(0);
 		const parent = range.commonAncestorContainer.parentElement;
-		if (!parent) return false;
-		if (!parent.closest('#article')) return false;
-		if (
-			range.startContainer.parentElement?.closest('[data-annotation-id]') ||
-			range.endContainer.parentElement?.closest('[data-annotation-id]')
-		)
+		if (!parent) {
 			return false;
+		}
+		if (!parent.closest('#article')) {
+			return false;
+		}
+		if (
+			range.startContainer.parentElement?.closest('[data-annotation-id]') ??
+			range.endContainer.parentElement?.closest('[data-annotation-id]')
+		) {
+			return false;
+		}
 		const text = range.toString();
 		return text.length > 0;
 	});
 
 	const virtualEl = derived(selection, ($selection) => {
-		if (!$selection?.rangeCount || $selection.isCollapsed)
+		if (!$selection?.rangeCount || $selection.isCollapsed) {
 			return {
 				getBoundingClientRect: () =>
 					({
@@ -231,19 +203,23 @@
 						width: 0,
 					} as DOMRect),
 			};
+		}
 		const range = $selection.getRangeAt(0);
 		return {
 			getBoundingClientRect: () => range.getBoundingClientRect(),
 		};
 	});
 
+	const setSelectionFn = () => {
+		selection.set(window.getSelection());
+	};
 	function handleSelect(e: Event) {
-		if (data.type !== 'article') return;
-		const fn = () => {
-			selection.set(window.getSelection());
-		};
-		requestAnimationFrame(fn);
+		if (data.type !== 'article') {
+			return;
+		}
+		requestAnimationFrame(setSelectionFn);
 	}
+
 	const [popperRef, popperContent] = createPopperActions({
 		modifiers: [
 			{
@@ -285,14 +261,17 @@
 		| undefined
 	> => {
 		const range = $selection?.getRangeAt(0);
-		if (!range || range.collapsed) return;
-		if (!articleWrapper) return;
+		if (!range || range.collapsed) {
+			return;
+		}
+		if (!articleWrapper) {
+			return;
+		}
 		const text_position_selector = describeTextPosition(range, articleWrapper);
 		const { start } = text_position_selector;
 		const text_quote_selector = await describeTextQuote(range, articleWrapper);
 		const { exact } = text_quote_selector;
-		console.log({ text_position_selector, text_quote_selector });
-		const id = $activeAnnotationId || nanoid();
+		const id = $activeAnnotationId ?? nanoid();
 		const els = await highlightSelectorTarget(text_quote_selector, {
 			'data-annotation-id': id,
 			'data-has-body': 'false',
@@ -319,7 +298,9 @@
 		// Modifying the DOM while searching can mess up; see issue #112.
 		// Therefore, we first collect all matches before highlighting them.
 		const matchList = [];
-		for await (const match of matches) matchList.push(match);
+		for await (const match of matches) {
+			matchList.push(match);
+		}
 
 		return matchList.map((match) => highlightText(match, 'mark', attrs));
 		// for (const match of matchList) {
@@ -332,7 +313,6 @@
 	);
 
 	export function deleteAnnotation(id: string) {
-		console.log('DELETING ANNOTATION');
 		const ctx = $annotationCtx.get(id);
 		if (ctx) {
 			for (const item of ctx) {
@@ -343,15 +323,12 @@
 	}
 
 	$: if (data.entry?.annotations) {
-		console.log('entry change!');
 		const _annotations = data.entry.annotations;
 		if (data.entry.id) {
 			const existingIds = _annotations.map((a) => a.id);
 			annotations.sync(existingIds);
 			// for (const [id, ctx] of $annotationCtx) {
-			// 	console.log({ id, ctx, annotations });
 			// 	if (!existingIds.includes(id)) {
-			// 		console.log('deleting');
 			// 		for (const item of ctx) {
 			// 			item.removeHighlights();
 			// 		}
@@ -365,10 +342,15 @@
 
 	const saveProgressMutation = createMutation({
 		mutationFn: async () => {
-			if (initializing) return;
-			if (!shouldSaveProgress) return;
-			if (!data.entry) return;
-			console.log('mutating');
+			if (initializing) {
+				return;
+			}
+			if (!shouldSaveProgress) {
+				return;
+			}
+			if (!data.entry) {
+				return;
+			}
 			return mutation($page, 'saveInteraction', {
 				entryId: data.entry.id,
 				id: data.entry.interaction?.id,
@@ -381,8 +363,12 @@
 			if (data.entry?.interaction?.id) {
 				const id = data.entry.interaction.id;
 				queryClient.setQueryData<FullEntryDetail>(queryKey, (old) => {
-					if (!old) return old;
-					if (!old.entry) return old;
+					if (!old) {
+						return old;
+					}
+					if (!old.entry) {
+						return old;
+					}
 					return {
 						...old,
 						entry: {
@@ -404,8 +390,12 @@
 			if (id) {
 				{
 					queryClient.setQueryData<FullEntryDetail>(queryKey, (old) => {
-						if (!old) return old;
-						if (!old.entry) return old;
+						if (!old) {
+							return old;
+						}
+						if (!old.entry) {
+							return old;
+						}
 						return {
 							...old,
 							entry: {
@@ -419,7 +409,7 @@
 					});
 				}
 			}
-			queryClient.invalidateQueries({
+			void queryClient.invalidateQueries({
 				queryKey: ['entries'],
 			});
 		},
@@ -439,25 +429,19 @@
 
 	/** Variable to track when we're initializing an article. */
 	let initializing = false;
-	const doneInitializing = () => tick().then(() => (initializing = false));
-
-	const jumping = getContext('jumping');
+	const doneInitializing = () => (initializing = false);
 
 	let shouldSaveProgress = true;
-	$: console.log({ shouldSaveProgress });
 
 	async function ensureHighlights() {
-		console.log('ensure highlights', {
-			$annotations,
-			annotations: data.entry?.annotations,
-		});
 		// for (const [id, annotation] of Object.entries($annotations)) {
-		if (!data.entry?.annotations) return;
+		if (!data.entry?.annotations) {
+			return;
+		}
 		for (const annotation of data.entry.annotations) {
 			const { id } = annotation;
-			let target = annotation.target!;
+			const target = annotation.target!;
 			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
-			console.log({ el });
 			if (!el) {
 				const selector = getTargetSelector(
 					annotation.target,
@@ -480,37 +464,31 @@
 	}
 
 	afterUpdate(() => {
-		console.log('after update');
-		if (initializing) return;
+		if (initializing) {
+			return;
+		}
 		// TODO throttle this:
-		ensureHighlights();
+		void ensureHighlights();
 	});
 
-	// highlight stored annotations
-	afterNavigate(async () => {
-		if (data.type !== 'article') return;
-		if (!articleWrapper) return;
-		$mainnav.entry = data.entry;
-		console.log({ data });
-		console.log('scrolling to', data.entry?.interaction?.progress);
+	async function setup() {
+		if (data.type !== 'article') {
+			return;
+		}
+		if (!articleWrapper) {
+			return;
+		}
 		if (data.entry?.interaction?.progress) {
 			shouldSaveProgress = false;
-			console.log('scrolling to', data.entry.interaction.progress);
 			initializing = true;
 			$scroll = data.entry.interaction.progress;
 			const height =
 				document.documentElement.scrollHeight -
 				document.documentElement.clientHeight;
-			console.log({
-				$scroll,
-				height,
-				top: $scroll * height,
-			});
 			// Wait a second before allowing scroll to save again
-			tick().then(() => {
-				document.documentElement.scrollTo({
-					top: $scroll * height,
-				});
+			await tick();
+			document.documentElement.scrollTo({
+				top: $scroll * height,
 			});
 			setTimeout(() => {
 				shouldSaveProgress = true;
@@ -524,9 +502,8 @@
 			}, 250);
 			return;
 		}
-		console.log(`Setting up annotations`, { _annotations });
 		for (const annotation of _annotations) {
-			let target = annotation.target!;
+			const target = annotation.target!;
 			const selector = getTargetSelector(target, 'TextQuoteSelector');
 			if (selector) {
 				const els = await highlightSelectorTarget(selector, {
@@ -541,82 +518,78 @@
 					target,
 				};
 			}
-			console.log({ selector });
 		}
 
 		// scroll to latest interaction
 
 		// detect hash
-		const els = document.querySelector('[data-annotation-id]');
-		console.log({ els });
 		if ($page.url.hash.startsWith('#annotation-')) {
 			// then scroll to it
 			const id = $page.url.hash.replace('#annotation-', '');
 			// window.location.hash = '';
 			const el = document.getElementById(`annotation-${id}`);
-			console.log({ el });
 			if (el) {
 				el.scrollIntoView();
 				const annotation = _annotations.find((a) => a.id === id);
-				tick().then(() => {
-					console.log({ annotation });
-					if (annotation) {
-						annotationRef(el);
-					}
-					$jumping = false;
-				});
+				await tick();
+				if (annotation) {
+					annotationRef(el);
+				}
 			}
 		}
 		// wait for scroll
 		setTimeout(() => {
 			doneInitializing();
 		}, 250);
+	}
+
+	// highlight stored annotations
+	afterNavigate(() => {
+		void setup();
 	});
 
 	popperRef(virtualEl);
 
 	const saveProgress = debounce(
 		() => {
-			console.log({ $saveProgressMutation, shouldSaveProgress });
-			if (!shouldSaveProgress) return;
-			if ($saveProgressMutation.isPending) return;
-			if (Number.isNaN($scroll)) return;
-			console.log('saving');
+			if (!shouldSaveProgress) {
+				return;
+			}
+			if ($saveProgressMutation.isPending) {
+				return;
+			}
+			if (Number.isNaN($scroll)) {
+				return;
+			}
 			// don't save if last saved progress is within .005 of current progress
-			console.log({ $scroll, lastSavedScrollProgress });
-			if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) return;
+			if (Math.abs(lastSavedScrollProgress - $scroll) < 0.005) {
+				return;
+			}
 			$saveProgressMutation.mutate();
 		},
 		5000,
 		false,
 	);
 
-	const scrolling = getContext('scrolling') ?? writable(false);
+	const scrolling = writable(false);
 
 	const {
 		states: { progress },
 	} = getArticleContext();
 
-	let scroll = progress;
+	const scroll = progress;
 
 	const uscroll = scroll.subscribe(() => {
-		if (!shouldSaveProgress) return;
+		if (!shouldSaveProgress) {
+			return;
+		}
 		saveProgress();
 	});
 
 	let lastScrollTop = 0;
-	export let scrollingDown: Writable<boolean> =
-		getContext('scrollingDown') || writable(false);
-
-	const uScrollingDown = scrollingDown.subscribe((down) => {
-		console.log({ $appearance, down, lastScrollTop });
-		down && $appearance.autoHide
-			? ($mainnav.show = false)
-			: ($mainnav.show = true);
-	});
+	const { scrollingDown } = getEntryContext();
 
 	const setScrollOffset = () => {
-		// console.log({ initializing });
 		// if (initializing) return;
 		// set how far the user has scrolled
 		// TODO await tick?
@@ -627,7 +600,6 @@
 			document.documentElement.scrollHeight -
 			document.documentElement.clientHeight;
 		const scrollToSet = scrollTop / height;
-		console.log({ height, scrollToSet, scrollTop });
 		if (!Number.isNaN(scrollToSet)) {
 			$scroll = scrollToSet;
 		}
@@ -674,29 +646,64 @@
 			});
 		}
 		uscroll();
-		uScrollingDown();
 	});
 
-	let temporaryAnnotationHighlight:
-		| Awaited<ReturnType<typeof highlight>>
-		| undefined = undefined;
+	let activeEditor: Editor | null = null;
 
-	let activeEditor: Editor;
-
-	export let options_el: HTMLElement;
-
-	const hover_context = new Map();
-	hover_context.set('annotation_ctx', annotationCtx);
-	// hovers.setup({
-	// 	context: hover_context
-	// });
+	function handleSaveAnnotation() {
+		if (!activeEditor) {
+			return;
+		}
+		const contentData = activeEditor.getJSON();
+		if (!data.entry?.id) {
+			return;
+		}
+		const id = $activeAnnotationId ?? nanoid();
+		activeAnnotation.hide();
+		if (!$activeAnnotation) {
+			return;
+		}
+		// optimistic update
+		if (annotations.hasTemp()) {
+			annotations.saveTemp();
+		}
+		$annotations[id]?.els.forEach((el) => {
+			el.highlightElements.forEach((el) => {
+				el.setAttribute('data-has-body', 'true');
+			});
+		});
+		if (id) {
+			// update
+			$annotations[id] = {
+                ...$annotations[id],
+                ...$activeAnnotation,
+				contentData,
+				id,
+			};
+		}
+		toast.promise(
+			$annotateMutation.mutateAsync({
+				contentData,
+				entryId: data.entry.id,
+				id,
+				target: $activeAnnotation.target,
+				type: 'annotation',
+			}),
+			{
+				error: 'Failed to save note',
+				loading: 'Saving note...',
+				success: 'Note saved!',
+			},
+		);
+		activeAnnotationId.set(null);
+	}
 
 	let showImageMenu = false;
 	let imagePortal: HTMLElement | undefined = undefined;
 	function handleMouseMove(e: MouseEvent) {
 		if (
 			e.target instanceof HTMLImageElement ||
-			e.target?.closest('[data-image-menu]')
+			(e.target instanceof Element && e.target.closest('[data-image-menu]'))
 		) {
 			// TODO
 			showImageMenu = true;
@@ -730,10 +737,16 @@
 			return;
 		}
 		const annotationEl = target.closest('[data-annotation-id]');
-		if (!annotationEl) return;
-		if (!(annotationEl instanceof HTMLElement)) return;
+		if (!annotationEl) {
+			return;
+		}
+		if (!(annotationEl instanceof HTMLElement)) {
+			return;
+		}
 		const id = annotationEl.dataset.annotationId;
-		if (!id) return;
+		if (!id) {
+			return;
+		}
 		activeAnnotationId.set(id);
 		editMenuRef(target);
 		annotationRef(target);
@@ -741,17 +754,7 @@
 		showEditMenu = true;
 	}
 
-	const hover_entry: boolean = getContext('hover_entry');
-
 	let annotationEditMenuEl: HTMLElement;
-
-	const { useFocusTrap } = createFocusTrap({
-		allowOutsideClick: false,
-		escapeDeactivates: false,
-		immediate: true,
-		initialFocus: () => annotationEditMenuEl,
-		returnFocusOnDeactivate: false,
-	});
 </script>
 
 {#if showEditMenu}
@@ -767,7 +770,6 @@
 		}}
 		use:useEscapeKeydown={{
 			handler: (e) => {
-				console.log({ e });
 				showEditMenu = false;
 			},
 		}}
@@ -854,7 +856,6 @@
 							e.preventDefault();
 							return;
 						}
-						console.log(`About to mutate...`);
 						$annotateMutation.mutate({
 							id,
 							target: {
@@ -888,7 +889,9 @@
 						if (highlight_info) {
 							const { els, id, selector } = highlight_info;
 							const el = els[0]?.highlightElements[0];
-							if (el) annotationRef(el);
+							if (el) {
+								annotationRef(el);
+							}
 							annotations.addTemp(id, {
 								els,
 								id,
@@ -897,9 +900,8 @@
 									source: '',
 								},
 							});
-							tick().then(() => {
-								$showEditAnnotation = true;
-							});
+							await tick();
+							$showEditAnnotation = true;
 						}
 					}}
 					variant="ghost"
@@ -935,7 +937,10 @@
 				start: 0.9,
 			}}
 			use:draggable
-			class={cn(popoverVariants(), 'flex flex-col gap-y-4 w-80 max-w-xs')}
+			class={cn(
+				'z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none',
+				'flex flex-col gap-y-4 w-80 max-w-xs',
+			)}
 		>
 			<pre>{$activeAnnotationId}</pre>
 			<Editor
@@ -953,7 +958,9 @@
 				<Button
 					on:click={() => {
 						activeAnnotation.hide();
-						if (annotations.hasTemp()) annotations.removeTemp();
+						if (annotations.hasTemp()) {
+							annotations.removeTemp();
+						}
 						activeAnnotationId.set(null);
 					}}
 					size="sm"
@@ -964,44 +971,7 @@
 				<Button
 					size="sm"
 					on:click={() => {
-						activeEditor.save((contentData) => {
-							console.log({ $annotations, contentData });
-							// TODO here
-							if (!data.entry?.id) return;
-							console.log({ $activeAnnotationId });
-							const id = $activeAnnotationId ?? nanoid();
-							activeAnnotation.hide();
-							if (!$activeAnnotation) return;
-							// optimistic update
-							if (annotations.hasTemp()) annotations.saveTemp();
-							$annotations[id]?.els.forEach((el) => {
-								el.highlightElements.forEach((el) => {
-									el.setAttribute('data-has-body', 'true');
-								});
-							});
-							if (id) {
-								// update
-								$annotations[id] = {
-									...$annotations[id],
-									contentData,
-								};
-							}
-							toast.promise(
-								$annotateMutation.mutateAsync({
-									contentData,
-									entryId: data.entry.id,
-									id,
-									target: $activeAnnotation.target,
-									type: 'annotation',
-								}),
-								{
-									error: 'Failed to save note',
-									loading: 'Saving note...',
-									success: 'Note saved!',
-								},
-							);
-							activeAnnotationId.set(null);
-						});
+						handleSaveAnnotation();
 					}}
 				>
 					Save
@@ -1022,7 +992,7 @@
 						data.entry.uri,
 					)}.ico`}
 					class="w-4 h-4 rounded mr-2"
-                    alt=""
+					alt=""
 				/>
 				<Muted class="text-xs font-medium uppercase tracking-wider"
 					>{getHostname(data.entry.uri).replace('www.', '')}</Muted
@@ -1041,13 +1011,8 @@
 		{#if author}
 			<a
 				class="text-sm font-medium uppercase tracking-wider"
-				href="/tests/people/{encodeURIComponent(author ?? '')}">{author}</a
+				href="/tests/people/{encodeURIComponent(author)}">{author}</a
 			>
-			<!-- <Lead class="not-prose"
-				><a href="/tests/people/{encodeURIComponent(data.entry?.author ?? '')}"
-					>{data.entry?.author}</a
-				></Lead
-			> -->
 		{/if}
 		<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 		<Attachments {data} />

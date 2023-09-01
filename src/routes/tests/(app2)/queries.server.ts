@@ -94,7 +94,7 @@ export const query = <TSchema extends z.ZodTypeAny, TData>(
 
 export const mutations = {
 	addRelation: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			return await db
 				.insertInto('Relation')
 				.values({
@@ -114,7 +114,7 @@ export const mutations = {
 		}),
 	}),
 	addToCollection: query({
-		fn: async ({ input, ctx: { userId } }) =>
+		fn: async ({ ctx: { userId }, input }) =>
 			add_to_collection({ ...input, userId }),
 		schema: s_add_to_collection,
 	}),
@@ -183,19 +183,15 @@ export const mutations = {
 		schema: idSchema,
 	}),
 	deleteFavorite: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			let query = db.deleteFrom('Favorite').where('userId', '=', ctx.userId);
-			if (Array.isArray(input.id)) {
-				query = query.where('id', 'in', input.id);
-			} else {
-				query = query.where('id', '=', input.id);
-			}
+			query = Array.isArray(input.id) ? query.where('id', 'in', input.id) : query.where('id', '=', input.id);
 			await query.execute();
 		},
 		schema: idOptionalArraySchema,
 	}),
     deleteInteraction: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			await db
 				.deleteFrom('EntryInteraction')
 				.where('id', '=', input.id)
@@ -207,7 +203,7 @@ export const mutations = {
 		}),
 	}),
     removeEntryFromCollection: query({
-		fn: async ({ input, ctx: { userId } }) => {
+		fn: async ({ ctx: { userId }, input }) => {
 			await db
 				.deleteFrom('CollectionItems')
 				.where('collectionId', '=', input.collectionId)
@@ -220,7 +216,7 @@ export const mutations = {
 		}),
 	}),
 	saveInteraction: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			const result = await db
 				.insertInto('EntryInteraction')
 				.values({
@@ -254,13 +250,13 @@ export const mutations = {
 		schema: saveToLibrarySchema,
 	}),
     set_tags_on_entry: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			return set_tags_on_entry({ ...input, userId: ctx.userId });
 		},
 		schema: tagsOnEntrySchema,
 	}),
 	updateBookmark: query({
-		fn: async ({ input, ctx }) =>
+		fn: async ({ ctx, input }) =>
 			updateBookmark({
 				...input,
 				userId: ctx.userId,
@@ -268,7 +264,7 @@ export const mutations = {
 		schema: updateBookmarkSchema,
 	}),
 	updateBookmarkSortOrder: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			// id refers to *entryId*, which is a bit confusing
 			const data = input.data.map((d) => ({
 				entryId: d.id,
@@ -320,7 +316,7 @@ export const mutations = {
 		}),
 	}),
     update_status: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			const new_sort_order =
 				input.sort_order ??
 				(await getFirstBookmarkSort(ctx.userId, input.status));
@@ -389,7 +385,7 @@ export const queries = {
 		}),
 	}),
 	entries_by_tag: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			let query = db
 				.selectFrom('TagOnEntry as toe')
 				.innerJoin('Entry as e', 'e.id', 'toe.entryId')
@@ -526,7 +522,7 @@ export const queries = {
 		fn: get_authors,
 	}),
 	get_entries_for_tag: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			const query = db
 				.selectFrom('TagOnEntry as toe')
 				.innerJoin('Entry as e', 'e.id', 'toe.entryId')
@@ -545,7 +541,7 @@ export const queries = {
 		}),
 	}),
 	get_entry: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			return get_entry_details(input.id, {
 				type: input.type,
 				use_entry_id: true,
@@ -586,12 +582,12 @@ export const queries = {
 		schema: get_library_schema,
 	}),
 	get_notes_for_tag: query({
-		fn: async ({ input: { name }, ctx: { userId } }) =>
+		fn: async ({ ctx: { userId }, input: { name } }) =>
 			get_notes_for_tag({ name, userId }),
 		schema: z.object({ name: z.string().nonempty() }),
 	}),
 	get_tag_deets: query({
-		fn: async ({ input: { name }, ctx: { userId } }) => {
+		fn: async ({ ctx: { userId }, input: { name } }) => {
 			return db
 				.selectFrom('Tag')
 				.leftJoin('Favorite as pin', 'pin.tagId', 'Tag.id')
@@ -659,7 +655,7 @@ export const queries = {
 		schema: idSchema,
 	}),
 	note_mentions: query({
-		fn: async ({ ctx, input: { title, id } }) => {
+		fn: async ({ ctx, input: { id, title } }) => {
 			const references = db
 				.selectFrom('Annotation')
 				.select((eb) =>
@@ -695,7 +691,7 @@ export const queries = {
 		}),
 	}),
 	notebook: query({
-		fn: ({ input: { cursor }, ctx: { userId } }) =>
+		fn: ({ ctx: { userId }, input: { cursor } }) =>
 			getNotebook({ cursor, userId }),
 		schema: getNotebookSchema,
 	}),
@@ -713,7 +709,7 @@ export const queries = {
 		}),
 	}),
 	search: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			return await db
 				.selectFrom('Entry as e')
 				.innerJoin('Bookmark as b', (join) =>
@@ -764,7 +760,7 @@ export const queries = {
 		schema: qSchema,
 	}),
 	searchNotes: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			const notes = await db
 				.selectFrom('Annotation as a')
 				.where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${input.q})`)
@@ -779,7 +775,7 @@ export const queries = {
 		schema: qSchema,
 	}),
 	search_titles: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			const match_q = `${input.q}*`;
 			const like_q = `%${input.q}%`;
 			return await db
@@ -821,7 +817,7 @@ export const queries = {
 		},
 	}),
 	view_entries: query({
-		fn: async ({ input, ctx }) => {
+		fn: async ({ ctx, input }) => {
 			return await View.preview(
 				input.conditions as Array<Condition>,
 				ctx.userId,
