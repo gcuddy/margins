@@ -13,7 +13,7 @@
 	import * as pdfjs from 'pdfjs-dist';
 	import { onMount, tick } from 'svelte';
 
-import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import trackScroll from '$lib/actions/trackScroll';
 	import type { TargetSchema } from '$lib/annotation';
 	import {
@@ -106,7 +106,7 @@ import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 		return matchList.map((match) => highlightText(match, 'mark', attrs));
 	}
 
-	async function highlight() {
+	export async function highlight() {
 		const range = window.getSelection()?.getRangeAt(0);
 		if (!range || range.collapsed) return;
 		const text_quote_selector = await describeTextQuote(range, container);
@@ -250,7 +250,7 @@ import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 				event_bus.on(
 					'pagerendered',
 					({ pageNumber }: { pageNumber: number }) => {
-                        console.log(`pagerendered`)
+						console.log(`pagerendered`);
 						// render_annotations(pageNumber);
 						// can use this to render SVG highlights (we use our annotator to highlight textlayer, and then attach svgs to those elements)
 						// console.log(`pagerendered`, e);
@@ -259,11 +259,11 @@ import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 
 				// (Optionally) enable find controller.
 				const pdf_find_controller = new pdfjs_viewer.PDFFindController({
-                    eventBus: event_bus,
+					eventBus: event_bus,
 					linkService: pdf_link_service,
 				});
 				const pdf_viewer = new pdfjs_viewer.PDFViewer({
-                    container,
+					container,
 					eventBus: event_bus,
 					findController: pdf_find_controller,
 					l10n: pdfjs_viewer.NullL10n,
@@ -272,10 +272,10 @@ import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 				$pdf_state.pdf_viewer = pdf_viewer;
 				pdf_link_service.setViewer(pdf_viewer);
 
-                event_bus.on("pagechanging", () => {
-                    console.log("pagechanging", pdf_viewer)
-                    $pdf_state.pageNumber = pdf_viewer.currentPageNumber;
-                })
+				event_bus.on('pagechanging', () => {
+					console.log('pagechanging', pdf_viewer);
+					$pdf_state.pageNumber = pdf_viewer.currentPageNumber;
+				});
 				return { pdf_link_service, pdf_viewer };
 			},
 		);
@@ -399,7 +399,7 @@ import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	[data-dark-mode-invert='true'] :global(.canvasWrapper) {
 		filter: invert(1) hue-rotate(180deg);
 		mix-blend-mode: screen;

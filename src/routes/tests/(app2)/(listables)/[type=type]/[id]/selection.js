@@ -1,80 +1,92 @@
-import { onMount } from "svelte";
-import { derived, writable } from "svelte/store";
-import { createPopperActions } from "svelte-popperjs";
+import { onMount } from 'svelte';
+import { derived, writable } from 'svelte/store';
+import { createPopperActions } from 'svelte-popperjs';
 
 /**
  *
- * @returns {{selection: import('svelte/store').Writable<Selection | null>, virtualEl: import('svelte/store').Readable<{getBoundingClientRect: () => DOMRect}>, popperContent: import('svelte-popperjs').ContentAction<any>, mouse_down: import('svelte/store').Writable<boolean>}}
+ * @returns {{selection: import('svelte/store').Writable<Selection | null>, virtualEl: import('svelte/store').Readable<{getBoundingClientRect: () => DOMRect}>, popperContent: import('svelte-popperjs').ContentAction<any>, show: import('svelte/store').Readable<boolean>}}
  */
 export function setup() {
-
 	/**
 	 * @type {import('svelte/store').Writable<Selection | null>}
 	 */
 	const selection = writable(null);
 
 	const virtualEl = derived(selection, ($selection) => {
-		if (!$selection?.rangeCount || $selection.isCollapsed)
+		if (!$selection?.rangeCount || $selection.isCollapsed) {
 			return {
 				getBoundingClientRect: () =>
-					/** @type {DOMRect} */({
-					top: 0,
-					left: 0,
-					width: 0,
-					height: 0,
-					bottom: 0,
-					right: 0
-				})
+					/** @type {DOMRect} */ ({
+						bottom: 0,
+						height: 0,
+						left: 0,
+						right: 0,
+						top: 0,
+						width: 0,
+					}),
 			};
+		}
 		const range = $selection.getRangeAt(0);
 		return {
-			getBoundingClientRect: () => range.getBoundingClientRect()
+			getBoundingClientRect: () => range.getBoundingClientRect(),
 		};
-	})
+	});
 
-	const handle_select = () => {
-		console.log('handle_select');
-		const fn = () => {
-			selection.set(window.getSelection());
-		};
-		requestAnimationFrame(fn)
+	const setSelectionFn = () => {
+		selection.set(window.getSelection());
+	};
+	const handleSelect = () => {
+		requestAnimationFrame(setSelectionFn);
 	};
 
 	const [popperRef, popperContent] = createPopperActions({
-		strategy: 'fixed',
-		placement: 'top',
 		modifiers: [
 			{
 				name: 'offset',
 				options: {
-					offset: [0, 12]
-				}
-			}
-		]
-	})
+					offset: [0, 12],
+				},
+			},
+		],
+		placement: 'top',
+		strategy: 'fixed',
+	});
 
-	popperRef(virtualEl)
+	popperRef(virtualEl);
 
-
-	const mouse_down = writable(false);
-
+	const show = derived(selection, ($selection) => {
+		if (!$selection?.rangeCount || $selection.isCollapsed) {
+			return false;
+		}
+		const range = $selection.getRangeAt(0);
+		const parent = range.commonAncestorContainer.parentElement;
+		if (!parent) {
+			return false;
+		}
+		if (!parent.closest('#article, #viewer')) {
+			return false;
+		}
+		if (
+			range.startContainer.parentElement?.closest('[data-annotation-id]') ??
+			range.endContainer.parentElement?.closest('[data-annotation-id]')
+		) {
+			return false;
+		}
+		const text = range.toString();
+		return text.length > 0;
+	});
 
 	onMount(() => {
-		document.addEventListener('selectionchange', handle_select);
-		document.addEventListener('mousedown', () => { mouse_down.set(true); });
-		document.addEventListener('mouseup', () => { mouse_down.set(false); });
+		document.addEventListener('selectionchange', handleSelect);
 		return () => {
-			document.removeEventListener('selectionchange', handle_select);
-			document.removeEventListener('mousedown', () => { mouse_down.set(true); });
-			document.removeEventListener('mouseup', () => { mouse_down.set(false); });
-		}
+			document.removeEventListener('selectionchange', handleSelect);
+		};
 	});
 
 	return {
-		selection,
-		virtualEl,
 		popperContent,
-		mouse_down
-	}
-
+		selection,
+		show,
+        virtualEl
+	};
 }

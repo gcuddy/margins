@@ -1,6 +1,6 @@
 <div />
 
-<style>
+<style lang="postcss">
 	div {
 		display: flex;
 		flex-shrink: initial;

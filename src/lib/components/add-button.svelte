@@ -11,7 +11,7 @@
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { toast } from 'svelte-sonner';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import Kbd from '$lib/components/ui/KBD.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import { Plus } from 'lucide-svelte';

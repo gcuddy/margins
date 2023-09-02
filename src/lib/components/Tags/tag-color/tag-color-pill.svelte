@@ -1,13 +1,15 @@
 <script lang="ts">
-	import { colors } from '.';
-	import { cn } from '$lib/utils';
 	import { melt } from '@melt-ui/svelte';
 	import type { Builder } from 'bits-ui';
 	import type { HTMLAttributes } from 'svelte/elements';
 
+	import { cn } from '$lib/utils';
+
+	import { colors } from '.';
+
 	type $$Props = HTMLAttributes<HTMLDivElement> & {
-		color: string;
 		builder?: Builder;
+		color: string;
         invertDefault?: boolean;
 	};
 
@@ -53,7 +55,7 @@
 	/>
 {/if}
 
-<style>
+<style lang="postcss">
 	[data-color] {
 		background-color: var(--color);
 	}

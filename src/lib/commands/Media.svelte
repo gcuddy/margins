@@ -1,17 +1,17 @@
 <script lang="ts">
+	import { createEventDispatcher, onDestroy } from 'svelte';
+
+	import type { Queries } from '@/routes/tests/(app2)/queries.server';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import CommandLoading from '$lib/components/ui/cmdk/Command.Loading.svelte';
 	import { useState } from '$lib/components/ui/cmdk/Command.Root.svelte';
 	import { CommandGroup, CommandItem } from '$lib/components/ui/command';
-	import CommandLoading from '$lib/components/ui/cmdk/Command.Loading.svelte';
-
 	import { Muted, Small } from '$lib/components/ui/typography';
-	import { QueryOutput, q } from '$lib/queries/query';
-	import { getId, getType } from '$lib/utils/entries';
-	import { createEventDispatcher, onDestroy } from 'svelte';
-	import type { Queries } from '@/routes/tests/(app2)/queries.server';
-	import type { KeysThatBeginWith } from '$lib/utils/type-utils';
+	import { q, type QueryOutput } from '$lib/queries/query';
 	import { getYear } from '$lib/utils/date';
+	import { getId, getType } from '$lib/utils/entries';
+	import type { KeysThatBeginWith } from '$lib/utils/type-utils';
 
 	const commander_state = useState();
 
@@ -28,9 +28,11 @@
 
 	const client = q($page);
 
-	let promise: Promise<QueryOutput<'searchMovies'>> = new Promise(() => {});
+	let promise = new Promise<QueryOutput<'searchMovies'>>(() => {});
 
-	export let onSelect: (item: QueryOutput<'searchMovies'>[number]) => void = (item) => {
+	export let onSelect: (item: QueryOutput<'searchMovies'>[number]) => void = (
+		item,
+	) => {
 		if (item.media_type === 'movie') {
 			goto(`/tests/movie/${item.id}`);
 		} else if (item.media_type === 'tv') {
@@ -51,7 +53,9 @@
 		}, 300);
 	};
 
-	$: if (value) debounce(value);
+	$: if (value) {
+		debounce(value);
+	}
 
 	onDestroy(() => {
 		unsubscribeState();
@@ -71,14 +75,19 @@
 			>
 				{#if item.media_type === 'movie'}
 					<div class="flex flex-col">
-						<span><span class="font-medium">{item.title}</span> ({getYear(item.release_date)})</span
+						<span
+							><span class="font-medium">{item.title}</span> ({getYear(
+								item.release_date,
+							)})</span
 						>
 						<Muted class="text-xs">{item.media_type}</Muted>
 					</div>
 				{:else if item.media_type === 'tv'}
 					<div class="flex flex-col">
 						<span
-							><span class="font-medium">{item.name}</span> ({getYear(item.first_air_date)})</span
+							><span class="font-medium">{item.name}</span> ({getYear(
+								item.first_air_date,
+							)})</span
 						>
 						<Muted class="text-xs">{item.media_type}</Muted>
 					</div>

@@ -67,7 +67,7 @@
 	{/each}
 </div>
 
-<style>
+<style lang="postcss">
 	.spacer {
 		width: 100%;
 

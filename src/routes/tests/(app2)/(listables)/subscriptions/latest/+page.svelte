@@ -3,7 +3,7 @@
 	import Intersector from '$lib/components/Intersector.svelte';
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
 	import EntryList from '$lib/components/entries/EntryList.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import type { Snapshot } from './$types.js';
 
 	export let data;

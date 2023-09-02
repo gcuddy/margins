@@ -165,7 +165,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	.book-cover {
 		background: linear-gradient(
 			to right,

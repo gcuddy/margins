@@ -15,7 +15,7 @@
 	style="--color:{color}"
 />
 
-<style>
+<style lang="postcss">
 	[data-color-hex] {
 		color: var(--color);
 	}

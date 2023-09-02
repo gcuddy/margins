@@ -79,7 +79,7 @@
 	{/if}
 </div>
 
-<style>
+<style lang="postcss">
 	.wrapper {
 		position: relative;
 		width: var(--size);

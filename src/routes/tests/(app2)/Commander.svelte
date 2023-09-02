@@ -344,7 +344,7 @@
 	</CommandList>
 </CommandDialog>
 
-<style>
+<style lang="postcss">
 	/* :global([data-cmdk-list]) {
 		height: min(300px, var(--cmdk-list-height));
 		max-height: 400px;

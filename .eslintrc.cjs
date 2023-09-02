@@ -38,6 +38,10 @@ module.exports = {
 		],
 		'@typescript-eslint/ban-types': 'error',
 		'@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+		'@typescript-eslint/consistent-type-imports': [
+			'error',
+			{ fixStyle: 'inline-type-imports' },
+		],
 		'@typescript-eslint/no-dynamic-delete': 0,
 		'@typescript-eslint/naming-convention': [
 			'error',
@@ -50,7 +54,7 @@ module.exports = {
 				selector: 'typeParameter',
 			},
 		],
-
+		'@typescript-eslint/no-namespace': 0,
 		'@typescript-eslint/no-non-null-assertion': 0,
 		'@typescript-eslint/no-throw-literal': 0,
 		'@typescript-eslint/no-unused-vars': 0,
@@ -74,14 +78,14 @@ module.exports = {
 		'import/no-duplicates': 2,
 		'import/no-extraneous-dependencies': 2,
 		'import/no-named-as-default-member': 0,
-		'import/no-namespace': 2,
-        'import/no-unresolved': 0,
+		'import/no-namespace': 0,
+		'import/no-unresolved': 0,
 		'import/order': 0,
 		'no-console': 2,
 		'no-const-assign': 2,
 		'no-extra-parens': [2, 'functions'],
 		'no-irregular-whitespace': 2,
-        'no-mixed-spaces-and-tabs': 0,
+		'no-mixed-spaces-and-tabs': 0,
 		'no-throw-literal': 0,
 		'no-unused-expressions': 2,
 		'no-unused-labels': 2,
@@ -174,9 +178,9 @@ module.exports = {
 				parser: '@typescript-eslint/parser',
 			},
 			rules: {
-                // these cause issues with svelte rn
+				// these cause issues with svelte rn
 				'@typescript-eslint/no-unsafe-assignment': 0,
-                '@typescript-eslint/no-unsafe-call': 0,
+				'@typescript-eslint/no-unsafe-call': 0,
 			},
 		},
 		{

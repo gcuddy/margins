@@ -2,7 +2,7 @@
 	<slot />
 </div>
 
-<style>
+<style lang="postcss">
 	div {
 		border: 3px solid yellow;
 		border-radius: 10px;

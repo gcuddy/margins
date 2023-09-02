@@ -18,7 +18,7 @@
 	</svelte:element>
 </div>
 
-<style>
+<style lang="postcss">
 	select {
 		position: absolute;
 		top: 0;

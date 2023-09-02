@@ -13,7 +13,6 @@
 	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
 	import { cn } from '$lib/utils/tailwind';
 
-	import NewCommander from '../playground/command/+page.svelte';
 	import type { LayoutData } from './$types';
 	import ClipboardHandler from './ClipboardHandler.svelte';
 	import type { MenuBar } from './MainNav.svelte';
@@ -74,7 +73,6 @@
 	{/if}
 	<Dialog />
 	<DialogStore />
-	<NewCommander />
 	<GenericCommander>
 		<div class="flex h-full grow flex-col" style:--nav-height="4rem">
 			{#if !$is_entry}

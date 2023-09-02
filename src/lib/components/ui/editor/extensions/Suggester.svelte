@@ -129,7 +129,7 @@
 	</div>
 {/if}
 
-<style>
+<style lang="postcss">
 	:global(.bookmark-suggester.is-empty::after) {
 		content: 'Search for a bookmark…';
 		@apply text-muted-foreground;

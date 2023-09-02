@@ -77,7 +77,7 @@
 	<div>Size</div>
 </div>
 
-<style>
+<style lang="postcss">
 	.html-layer,
 	.svg-layer {
 		contain: layout style size;

@@ -6,6 +6,7 @@
 	import { draggable } from '@neodrag/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
+    import throttle from 'just-throttle';
 	import { EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
 	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
 	import { derived, type Writable, writable } from 'svelte/store';
@@ -463,12 +464,14 @@
 		}
 	}
 
+    const throttledEnsureHighlights = throttle(ensureHighlights, 500);
+
 	afterUpdate(() => {
 		if (initializing) {
 			return;
 		}
 		// TODO throttle this:
-		void ensureHighlights();
+		void throttledEnsureHighlights();
 	});
 
 	async function setup() {
@@ -502,23 +505,7 @@
 			}, 250);
 			return;
 		}
-		for (const annotation of _annotations) {
-			const target = annotation.target!;
-			const selector = getTargetSelector(target, 'TextQuoteSelector');
-			if (selector) {
-				const els = await highlightSelectorTarget(selector, {
-					'data-annotation-id': annotation.id,
-					'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
-					id: `annotation-${annotation.id}`,
-				});
-				$annotationCtx.set(annotation.id, els);
-				$annotations[annotation.id] = {
-					...annotation,
-					els,
-					target,
-				};
-			}
-		}
+		void throttledEnsureHighlights();
 
 		// scroll to latest interaction
 
@@ -834,7 +821,7 @@
 			: 'pointer-events-auto-'} z-10 select-none"
 	>
 		<div
-			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
+			class="z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
 			in:scale={{
 				delay: 50,
 				start: 0.9,
@@ -1063,7 +1050,7 @@
 	</div>
 {/if}
 
-<style>
+<style lang="postcss">
 	div :global(p) {
 		text-rendering: optimizeLegibility;
 	}

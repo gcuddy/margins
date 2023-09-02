@@ -23,7 +23,7 @@
 	</a>
 </li>
 
-<style>
+<style lang="postcss">
 	.active {
 		background-color: var(--bg-elevation-hover);
 	}

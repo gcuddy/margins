@@ -1,7 +1,7 @@
 <script>
 	import { enhance } from '$app/forms';
 	import Button from '$lib/components/ui/Button.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import { H1 } from '$lib/components/ui/typography';
 
     export let data;

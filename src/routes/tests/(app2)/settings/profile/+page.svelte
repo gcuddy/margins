@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Button from '$components/ui/Button.svelte';
-	import Input from '$components/ui/Input.svelte';
+	import Input from '$components/ui/input/input.svelte';
 	import Label from '$components/ui/Label.svelte';
 	import { createAvatar, melt } from '@melt-ui/svelte';
 

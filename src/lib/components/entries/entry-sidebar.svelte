@@ -28,7 +28,7 @@
 		extractDataFromContentData,
 		isJSONContent,
 	} from '$components/ui/editor/utils';
-	import Input from '$components/ui/Input.svelte';
+	import Input from '$components/ui/input/input.svelte';
 	import LibraryForm from '$components/ui/library/library-form.svelte';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import {

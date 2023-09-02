@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Input from "$lib/components/ui/Input.svelte";
+	import Input from "$lib/components/ui/input/input.svelte";
 	import { createQuery, keepPreviousData } from "@tanstack/svelte-query";
 	import { writable } from "svelte/store";
 
@@ -29,7 +29,7 @@
         // WEIRD HACK: need this to trigger reactivity
         query=query;
     }
-    
+
 </script>
 
 <Input type="text" on:input={update} />

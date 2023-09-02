@@ -3,59 +3,56 @@
 	import { derived, writable } from 'svelte/store';
 
 	type Audio = {
-		src: string;
-		title: string;
 		artist: string;
 		/** *entry* id that we can use to update interaction */
 		entry_id?: number;
+		image?: string;
 		interaction_id?: number;
 		/** slug ala /:type/:id */
 		slug?: string;
-		image?: string;
+		src: string;
+		title: string;
 	};
 
 	type State = {
-		paused: boolean;
 		currentTime: number;
 		duration: number;
-		playbackRate: number;
-		loading: boolean;
 		loaded: boolean;
+		loading: boolean;
+		paused: boolean;
+		playbackRate: number;
 		progress: number;
 	};
 
 	type API = {
+		clear: () => void;
 		load: (audio: Audio, progress?: number | null) => void;
 		toggle: () => void;
-		clear: () => void;
 	};
 
 	type Store = {
-		state: State;
 		audio: Audio | null;
+		state: State;
 	};
 
 	const default_state: Store = {
+		audio: null,
 		state: {
-			playbackRate: 1,
 			currentTime: 0,
 			duration: 0,
 			loaded: false,
 			loading: false,
 			paused: true,
+			playbackRate: 1,
 			progress: 0
-		},
-		audio: null
+		}
 	};
 
 	let onload: ((state: State) => Partial<State>) | null = null;
 
 	function createPodcastStore() {
-		const { subscribe, set, update } = writable<Store>(default_state);
+		const { set, subscribe, update } = writable<Store>(default_state);
 		return {
-			subscribe,
-			set,
-			update,
 			clear: () => {
 				set(default_state);
 			},
@@ -81,48 +78,15 @@
 						audio,
 						state: {
 							...store.state,
-							loading: true,
-							loaded: false
+							loaded: false,
+							loading: true
 						}
 					};
 				});
-				if (!play) return;
+				if (!play) {return;}
 				tick().then(() => {
 					console.log({ audio_el });
-					audio_el?.play();
-				});
-			},
-			skipForward: () => {
-				update((store) => {
-					if (!store.audio) return store;
-					const duration = store.state.duration;
-					const currentTime = store.state.currentTime;
-					const newTime = currentTime + 30;
-					if (newTime > duration) {
-						audio_el.currentTime = duration;
-					} else {
-						audio_el.currentTime = newTime;
-					}
-					return store;
-				});
-			},
-			skipBackward: () => {
-				update((store) => {
-					if (!store.audio) return store;
-					const currentTime = store.state.currentTime;
-					const newTime = currentTime - 30;
-					if (newTime < 0) {
-						audio_el.currentTime = 0;
-					} else {
-						audio_el.currentTime = newTime;
-					}
-					return store;
-				});
-			},
-			toggle: () => {
-				update((store) => {
-					store.state.paused = !store.state.paused;
-					return store;
+					audio_el.play();
 				});
 			},
 			pause: () => {
@@ -136,7 +100,35 @@
 					store.state.paused = false;
 					return store;
 				});
-			}
+			},
+			set,
+			skipBackward: () => {
+				update((store) => {
+					if (!store.audio) {return store;}
+					const currentTime = store.state.currentTime;
+					const newTime = currentTime - 30;
+					audio_el.currentTime = newTime < 0 ? 0 : newTime;
+					return store;
+				});
+			},
+			skipForward: () => {
+				update((store) => {
+					if (!store.audio) {return store;}
+					const duration = store.state.duration;
+					const currentTime = store.state.currentTime;
+					const newTime = currentTime + 30;
+					audio_el.currentTime = newTime > duration ? duration : newTime;
+					return store;
+				});
+			},
+			subscribe,
+			toggle: () => {
+				update((store) => {
+					store.state.paused = !store.state.paused;
+					return store;
+				});
+			},
+			update
 		};
 	}
 	export const audioPlayer = createPodcastStore();
@@ -144,6 +136,8 @@
 </script>
 
 <script lang="ts">
+	import { createMutation } from '@tanstack/svelte-query';
+	import throttle from 'lodash/throttle';
 	import {
 		MoreHorizontalIcon,
 		PauseIcon,
@@ -152,14 +146,16 @@
 		SkipForwardIcon,
 		XIcon
 	} from 'lucide-svelte';
-	import Button, { buttonVariants } from './ui/Button.svelte';
-	import Slider from './ui/Slider.svelte';
+
+	import { page } from '$app/stores';
+	import { mutation } from '$lib/queries/query';
+	import { create_mutation } from '$lib/state/query-state';
+	import player from '$lib/stores/player';
 	import { formatTimeDuration } from '$lib/utils/dates';
 	import { cn } from '$lib/utils/tailwind';
-	import { createMutation } from '@tanstack/svelte-query';
-	import { page } from '$app/stores';
-	import { MutationInput, mutation } from '$lib/queries/query';
-	import throttle from 'lodash/throttle';
+
+	import AnnotationForm from './AnnotationForm.svelte';
+	import Button, { buttonVariants } from './ui/Button.svelte';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -167,11 +163,9 @@
 		DropdownMenuTrigger
 	} from './ui/dropdown-menu';
 	import { dialog_store } from './ui/singletons/Dialog.svelte';
-	import Textarea from './ui/Textarea.svelte';
-	import AnnotationForm from './AnnotationForm.svelte';
 	import { useTimeStampNote } from './ui/singletons/dialogs';
-	import { create_mutation } from '$lib/state/query-state';
-	import player from '$lib/stores/player';
+	import Slider from './ui/Slider.svelte';
+	import Textarea from './ui/Textarea.svelte';
 
 	const timestamp = derived(audioPlayer, ($audioPlayer) =>
 		$audioPlayer.state.currentTime ? Math.floor($audioPlayer.state.currentTime) : 0
@@ -197,11 +191,11 @@
 	const save = throttle(
 		() => {
 			console.log('saving', $audioPlayer);
-			if (!$audioPlayer.audio?.entry_id) return;
+			if (!$audioPlayer.audio?.entry_id) {return;}
 			// REVIEW: does this cause bugs if the audio src changes?
 			$saveInteraction.mutate({
 				entryId: $audioPlayer.audio.entry_id,
-				id: $audioPlayer.audio?.interaction_id,
+				id: $audioPlayer.audio.interaction_id,
 				progress: $timestamp / $audioPlayer.state.duration
 			});
 		},
@@ -215,11 +209,11 @@
 	const unsubscribe_timestamp = timestamp.subscribe(($timestamp) => {
 		// save progress
 		console.log($timestamp);
-		if ($timestamp === 0) return;
-		if (!$audioPlayer.audio?.entry_id) return;
-		if ($audioPlayer.state.duration === 0) return;
+		if ($timestamp === 0) {return;}
+		if (!$audioPlayer.audio?.entry_id) {return;}
+		if ($audioPlayer.state.duration === 0) {return;}
 		console.log({ $saveInteraction });
-		if ($saveInteraction.isPending) return;
+		if ($saveInteraction.isPending) {return;}
 		save();
 	});
 
@@ -233,13 +227,13 @@
 		player.set({
 			// REVIEW: should we set the store, or the value of the store?
 			player: audioPlayer,
-			type: "audio",
-			timestamp: $audioPlayer.state.currentTime
+			timestamp: $audioPlayer.state.currentTime,
+			type: "audio"
 		})
 	}
 </script>
 
-{#if $audioPlayer?.audio?.src}
+{#if $audioPlayer.audio?.src}
 	<!-- <button on:click={save}> Save Progress </button> -->
 	<!-- bind:paused={$audioPlayer.state.paused}
 			bind:currentTime={$audioPlayer.state.currentTime}
@@ -261,8 +255,8 @@
 				/>
 				<div class="flex min-w-0 flex-col">
 					<svelte:element
-						this={$audioPlayer.audio?.slug ? 'a' : 'span'}
-						href={$audioPlayer.audio?.slug}
+						this={$audioPlayer.audio.slug ? 'a' : 'span'}
+						href={$audioPlayer.audio.slug}
 						class="line-clamp-2 text-sm/4 font-medium"
 					>
 						{$audioPlayer.audio.title}
@@ -314,19 +308,19 @@
 							<DropdownMenuItem
 								on:click={() => {
 									useTimeStampNote($timestamp, (body) => {
-										if (!$audioPlayer.audio?.entry_id) return;
+										if (!$audioPlayer.audio?.entry_id) {return;}
 										mutation($page, 'save_note', {
-											entryId: $audioPlayer.audio.entry_id,
 											body,
-											type: 'annotation',
+											entryId: $audioPlayer.audio.entry_id,
 											target: {
-												source: $audioPlayer.audio.src,
 												selector: {
-													type: 'FragmentSelector',
 													conformsTo: 'http://www.w3.org/TR/media-frags/',
+													type: 'FragmentSelector',
 													value: `t=${$timestamp}`
-												}
-											}
+												},
+												source: $audioPlayer.audio.src
+											},
+											type: 'annotation'
 										});
 									});
 								}}>Take note</DropdownMenuItem
@@ -363,7 +357,7 @@
 		</div>
 	{/if}
 	<audio
-		src={$audioPlayer?.audio.src}
+		src={$audioPlayer.audio.src}
 		bind:paused={$audioPlayer.state.paused}
 		bind:currentTime={$audioPlayer.state.currentTime}
 		bind:duration={$audioPlayer.state.duration}

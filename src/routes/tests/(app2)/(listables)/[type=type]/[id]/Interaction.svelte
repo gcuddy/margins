@@ -19,7 +19,7 @@
 		DropdownMenuContent,
 		DropdownMenuItem,
 		DropdownMenuTrigger	} from '$lib/components/ui/dropdown-menu';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import Progress from '$lib/components/ui/Progress.svelte';
 	import { mutation } from '$lib/queries/query';

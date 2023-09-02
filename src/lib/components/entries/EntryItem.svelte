@@ -1,19 +1,7 @@
 <script lang="ts">
-	import { preloadData } from '$app/navigation';
-	import { page } from '$app/stores';
-	import Clamp from '$components/Clamp.svelte';
-	import * as ContextMenu from '$components/ui/context-menu';
-	import smoothload from '$lib/actions/smoothload';
-	import type { EntryInList } from '$lib/db/selects';
-	import { relations_icons } from '$lib/features/relations/icons';
-	import { QueryOutput, mutation, query } from '$lib/queries/query';
-	import { state } from '$lib/state/entries';
-	import { Status, statuses, statusesWithIcons } from '$lib/status';
-	import { getTargetSelector } from '$lib/utils/annotations';
-	import { ago, formatDuration, now } from '$lib/utils/date';
-	import { getId, getType, get_image, make_link } from '$lib/utils/entries';
 	import { createContextMenu, melt } from '@melt-ui/svelte';
-	import { VariantProps, cva } from 'class-variance-authority';
+	import { createQuery, InfiniteData, useQueryClient } from '@tanstack/svelte-query';
+	import { cva,VariantProps } from 'class-variance-authority';
 	import clsx from 'clsx';
 	import {
 		ArrowLeftRightIcon,
@@ -28,34 +16,47 @@
 		TrendingUpIcon
 	} from 'lucide-svelte';
 	import { ComponentType, createEventDispatcher, onMount } from 'svelte';
+	import { portal } from 'svelte-portal';
 	import { toast } from 'svelte-sonner';
+
+	import { preloadData } from '$app/navigation';
+	import { page } from '$app/stores';
+	import Clamp from '$components/Clamp.svelte';
+	import TagCommand from '$components/tags/TagCommand.svelte';
+	import * as ContextMenu from '$components/ui/context-menu';
+	import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
+	import { render_html } from '$components/ui/editor/utils';
+	import Separator from '$components/ui/Separator.svelte';
+	import smoothload from '$lib/actions/smoothload';
+	import type { EntryInList } from '$lib/db/selects';
+	import { relations_icons } from '$lib/features/relations/icons';
+	import { mutation, query,QueryOutput } from '$lib/queries/query';
+	import { queryFactory } from '$lib/queries/querykeys';
+	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
+	import { state } from '$lib/state/entries';
+	import { Status, statuses, statusesWithIcons } from '$lib/status';
+	import { getTargetSelector } from '$lib/utils/annotations';
+	import { ago, formatDuration, now } from '$lib/utils/date';
+	import { get_image, getId, getType, make_link } from '$lib/utils/entries';
+	import { cn } from '$lib/utils/tailwind';
+
 	import Badge from '../ui/Badge.svelte';
 	import HoverCard from '../ui/hover-card/HoverCard.svelte';
 	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
 	import { Muted, Small } from '../ui/typography';
-	import { render_html } from '$components/ui/editor/utils';
-	import { portal } from 'svelte-portal';
-	import { InfiniteData, createQuery, useQueryClient } from '@tanstack/svelte-query';
-	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
-	import { queryFactory } from '$lib/queries/querykeys';
-	import { cn } from '$lib/utils/tailwind';
-	import Separator from '$components/ui/Separator.svelte';
-	import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
-	import { Status } from '@prisma/client';
-	import TagCommand from '$components/tags/TagCommand.svelte';
 
 	const queryClient = useQueryClient();
 
 	const entryItemVariants = cva('flex grow relative cursor-default focus-visible:outline-none', {
-		variants: {
-			view: {
-				list: 'items-center gap-x-4 px-6 py-4',
-				kanban:
-					'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6'
-			}
-		},
 		defaultVariants: {
 			view: 'list'
+		},
+		variants: {
+			view: {
+				kanban:
+					'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6',
+				list: 'items-center gap-x-4 px-6 py-4'
+			}
 		}
 	});
 
@@ -75,15 +76,15 @@
 
 	const dispatch = createEventDispatcher<{
 		checked: boolean;
-		move: { status: Status; entries: EntryInList[] };
-		reorder: { position: number; entry: EntryInList };
+		move: { entries: Array<EntryInList>, status: Status; };
+		reorder: { entry: EntryInList, position: number; };
 	}>();
 
 	export let checked = false;
 
 	$: href = `/tests/${getType(entry.type)}/${getId(entry)}`;
 
-	$: tag_ids = entry.tags?.map((t) => t.id) || [];
+	$: tag_ids = entry.tags.map((t) => t.id) || [];
 
 	export let out_key: Status = 'Archive';
 
@@ -106,7 +107,7 @@
 		// queryClient.getQueryCache().
 
 		queryClient.setQueriesData<InfiniteData<LibraryResponse>>({ queryKey }, (data) => {
-			if (!data) return data;
+			if (!data) {return data;}
 			return {
 				...data,
 				pages: data.pages.map((p) => {
@@ -131,8 +132,8 @@
 
 	export async function move_entry(status: Status) {
 		out_key = status;
-		const { status: old_status, sort_order: old_sort_order } = entry;
-		dispatch('move', { status, entries: [entry] });
+		const { sort_order: old_sort_order, status: old_status } = entry;
+		dispatch('move', { entries: [entry], status });
 		// optimistic update
 		await update_entry({
 			status
@@ -142,20 +143,20 @@
 			status
 		})
 			.then(() => {
-				toast.success('Entry moved to ' + status, {
+				toast.success(`Entry moved to ${  status}`, {
 					// description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
 					action: old_status
 						? {
 								label: 'Undo',
 								onClick: () => {
 									dispatch('move', {
-										status: old_status,
-										entries: [entry]
+										entries: [entry],
+										status: old_status
 									});
 									mutation($page, 'update_status', {
 										ids: [entry.id],
-										status: old_status,
-										sort_order: old_sort_order
+										sort_order: old_sort_order,
+										status: old_status
 									});
 								}
 						  }
@@ -189,8 +190,8 @@
 	$: dispatch('checked', checked);
 
 	const {
-		elements: { trigger, menu, item },
-		builders: { createSubmenu, createCheckboxItem, createMenuRadioGroup },
+		builders: { createCheckboxItem, createMenuRadioGroup, createSubmenu },
+		elements: { item, menu, trigger },
 		states: { open }
 	} = createContextMenu({
 		defaultOpen: false
@@ -209,8 +210,8 @@
 	// ignore this lol
 	$: data = entry;
 
-	$: if (data?.status) $value = data.status;
-	$: attachment = data?.relations?.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');
+	$: if (data.status) {$value = data.status;}
+	$: attachment = data.relations.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');
 
 	let tag_state_dirty = false;
 
@@ -271,7 +272,7 @@
 								src={src ?? `https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
 								on:error={(e) => {
 									if (entry.uri) {
-										//@ts-ignore
+										//@ts-expect-error
 										e.target.src = `https://icon.horse/icon/${getDomain(entry.uri)}`;
 									}
 								}}
@@ -292,7 +293,7 @@
 								on:click|stopPropagation
 								on:change
 								on:focus={() => {
-									anchor_el?.focus();
+									anchor_el.focus();
 								}}
 							/>
 						</div>
@@ -307,7 +308,7 @@
 								{entry.title}
 							</div>
 							<div class="hidden gap-x-2 sm:flex">
-								{#if data?.annotations && data.annotations.length > 0}
+								{#if data.annotations && data.annotations.length > 0}
 									{@const total = data.num_annotations
 										? +data.num_annotations
 										: data.annotations.length}
@@ -326,7 +327,7 @@
 														<span class="font-medium">
 															{annotation.username}
 														</span>
-														<time datetime={annotation.createdAt?.toString()}>
+														<time datetime={annotation.createdAt.toString()}>
 															{ago(new Date(annotation.createdAt), $now)}
 														</time>
 													</div>
@@ -377,7 +378,7 @@
 										PDF ->
 									</Badge>
 								{/if}
-								{#if data?.relations?.length}
+								{#if data.relations.length}
 									<HoverCard>
 										<Badge slot="trigger" variant="secondary">
 											<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
@@ -464,8 +465,8 @@
 				// TODO: dispatch and bump to top
 				console.log('bump to top');
 				dispatch('reorder', {
-					position: 0,
-					entry
+					entry,
+					position: 0
 				});
 				// REVIEW should this post logic be abstracted to the parent entryList (which is what controls drag-and-drop)?
 				// update_status automatically sets sort_order to top if not passed in

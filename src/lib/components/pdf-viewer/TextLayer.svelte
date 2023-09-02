@@ -182,7 +182,7 @@
 	<!--  -->
 </div>
 
-<style>
+<style lang="postcss">
 	.text-layer {
 		position: absolute;
 		text-align: initial;

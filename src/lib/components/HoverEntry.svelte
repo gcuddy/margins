@@ -39,7 +39,7 @@
 {/if}
 
 
-<style>
+<style lang="postcss">
     .hover-entry :global(*) {
         font-size: .9em !important;
     }

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Label from '$components/ui/Label.svelte';
-	import Input from '$components/ui/Input.svelte';
+	import Input from '$components/ui/input/input.svelte';
 	import Dialog from '$components/ui/dialog2/Dialog.svelte';
 	import { enhance } from '$app/forms';
 	import Button from '$components/ui/Button.svelte';

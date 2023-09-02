@@ -3,7 +3,7 @@
 	import { page } from '$app/stores';
 	import ItemArtwork from '$lib/components/ItemArtwork.svelte';
 	import Annotation from '$lib/components/notebook/Annotation.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';

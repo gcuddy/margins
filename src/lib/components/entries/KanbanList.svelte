@@ -146,7 +146,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	/* :global(#dnd-action-dragged-el > div) {
 		@apply rotate-1 shadow-xl;
 	} */

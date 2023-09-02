@@ -346,7 +346,7 @@
 	</div>
 </KeyboardNav>
 
-<style>
+<style lang="postcss">
 	ul {
 		padding: 0;
 		width: 100%;

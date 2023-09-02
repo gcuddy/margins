@@ -44,7 +44,7 @@
 	</div>
 {/if}
 
-<style>
+<style lang="postcss">
 	div {
 		position: absolute;
 	}

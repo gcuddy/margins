@@ -19,7 +19,7 @@
 	import { cn } from "$lib/utils/tailwind";
 	import type { Subscription } from "@prisma/client";
 	import { ListPlus, MoreHorizontal, RefreshCwIcon, Tag } from "lucide-svelte";
-	import Input from "$lib/components/ui/Input.svelte";
+	import Input from "$lib/components/ui/input/input.svelte";
 	import type { RouterOutputs } from "$lib/trpc/router";
 	import Button from "$lib/components/ui/Button.svelte";
 	import { trpc } from "$lib/trpc/client";

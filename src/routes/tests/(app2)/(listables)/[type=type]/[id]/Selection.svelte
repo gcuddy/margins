@@ -1,87 +1,70 @@
 <script lang="ts">
+	import { usePortal } from '@melt-ui/svelte/internal/actions';
 	import { EditIcon, Highlighter } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
-	import { derived,type Writable } from 'svelte/store';
+	import { writable } from 'svelte/store';
 	import { scale } from 'svelte/transition';
 
-	import { page } from '$app/stores';
-	import type { Annotation } from '$lib/annotation';
-	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
-	import { Muted } from '$lib/components/ui/typography';
+	import { Button } from '$components/ui/button';
+	import { Muted } from '$components/ui/typography';
 
-	import * as selections from './selection';
-	// import { elementReady } from '$lib/utils/dom';
+	import { setup } from './selection';
 
-	const { selection, popperContent, mouse_down } = selections.setup();
+	const mouseDown = writable(false);
+	const { popperContent, show } = setup();
 
-	type AnnotationEvent = {
-		form: Writable<Annotation>;
-		el: HTMLFormElement;
-	};
-
-	const dispatch = createEventDispatcher<{
-		highlight: AnnotationEvent;
-		annotate: {
-            popperContent: typeof popperContent;
-        };
-	}>();
-
-	const show_tooltip = derived(selection, ($selection) => {
-		if (!$selection?.rangeCount || $selection.isCollapsed) return false;
-		const range = $selection.getRangeAt(0);
-		const parent = range.commonAncestorContainer.parentElement;
-		if (!parent) return false;
-		if (!parent.closest('#article')) return false;
-		if (
-			range.startContainer.parentElement?.closest('[data-annotation-id]') ||
-			range.endContainer.parentElement?.closest('[data-annotation-id]')
-		)
-			return false;
-		const text = range.toString();
-		return text.length > 0;
-	});
+	const dispatch = createEventDispatcher();
 </script>
 
-{#if $show_tooltip}
-	<div
-		use:popperContent
-		class="{$mouse_down ? 'pointer-events-none' : 'pointer-events-auto-'} z-10 select-none"
-	>
+<svelte:document
+	on:mousedown={(e) => {
+		if (
+			e.target instanceof HTMLElement &&
+			e.target.closest('[data-annotation-popover]')
+		) {
+			return;
+		}
+		mouseDown.set(true);
+	}}
+	on:mouseup={() => {
+		mouseDown.set(false);
+	}}
+/>
+
+{#if $show}
+	<div data-annotation-popover use:popperContent use:usePortal>
 		<div
-			class=" z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
+			class="z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
 			in:scale={{
 				delay: 50,
-				start: 0.9
+				start: 0.9,
 			}}
 		>
+			<!-- TODO: replace buttons + text with icons + tooltips, and replace highlight button with a color (indicating current highlight color) -->
 			<div class="flex justify-between space-x-2">
-				<AnnotationForm
-					class="contents"
-					data={$page.data.annotationForm}
-					entry={$page.data.entry}
-					footer={false}
-				>
-					<svelte:fragment slot="content" let:form let:el>
-						<Button
-							on:pointerdown={() => dispatch('highlight', { form, el })}
-							type="submit"
-							class="flex h-auto flex-col space-y-1"
-							variant="ghost"
-						>
-							<Highlighter class="h-5 w-5" />
-							<Muted class="text-xs">Highlight</Muted>
-						</Button>
-					</svelte:fragment>
-				</AnnotationForm>
-				<Button
-					on:pointerdown={() => dispatch('annotate', { popperContent })}
-					variant="ghost"
-					class="flex h-auto flex-col space-y-1"
-				>
-					<EditIcon class="h-5 w-5" />
-					<Muted class="text-xs">Note</Muted>
-				</Button>
+				<slot name="buttons">
+					<Button
+						on:click={() => {
+							dispatch('highlight');
+						}}
+						type="submit"
+						class="flex h-auto flex-col space-y-1"
+						variant="ghost"
+					>
+						<Highlighter class="h-5 w-5" />
+						<Muted class="text-xs">Highlight</Muted>
+					</Button>
+					<Button
+						on:click={() => {
+							dispatch('annotate');
+						}}
+						variant="ghost"
+						class="flex h-auto flex-col space-y-1"
+					>
+						<EditIcon class="h-5 w-5" />
+						<Muted class="text-xs">Annotate</Muted>
+					</Button>
+				</slot>
 			</div>
 		</div>
 	</div>

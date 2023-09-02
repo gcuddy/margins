@@ -32,7 +32,7 @@
 	</slot>
 </div>
 
-<style>
+<style lang="postcss">
     div {
         position: relative;
     }

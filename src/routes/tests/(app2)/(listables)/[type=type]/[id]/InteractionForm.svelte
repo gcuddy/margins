@@ -4,7 +4,7 @@
 	import type { Validation } from "sveltekit-superforms/index";
 
 	import Button from "$lib/components/ui/Button.svelte";
-	import Input from "$lib/components/ui/Input.svelte";
+	import Input from "$lib/components/ui/input/input.svelte";
 	import Label from "$lib/components/ui/Label.svelte";
 	import type { InteractionSchema } from "$lib/schemas";
 

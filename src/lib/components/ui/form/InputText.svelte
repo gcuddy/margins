@@ -36,7 +36,7 @@
 />
 {#if $errors}<span class="invalid">{$errors}</span>{/if}
 
-<style>
+<style lang="postcss">
 	.invalid {
 		color: orangered;
 	}

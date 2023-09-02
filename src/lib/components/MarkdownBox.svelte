@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Input, { inputVariants } from './ui/Input.svelte';
+	import Input, { inputVariants } from './ui/input/input.svelte';
 	import { cn } from '$lib/utils/tailwind';
 	import { ComponentProps, tick } from 'svelte';
 	import { md } from '$lib/markdown';

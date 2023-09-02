@@ -203,7 +203,7 @@
 	<H3>Cast</H3>
 	<!-- <Cluster class="max-w-prose gap-1"> -->
 		<div class="max-w-prose">
-            {#each data.movie.credits.cast.slice(0, 20) as { name, character, id } (id)}
+            {#each data.movie.credits.cast.slice(0, 20) as { character, id, name } (id)}
                 <a class="hover:text-primary  tracking-tight transition-colors font-bold mr-1" href="/tests/people/t{id}">{name} ({character})</a>
                 <!-- <Badge variant="secondary">{name}</Badge> -->
                 <!-- <span

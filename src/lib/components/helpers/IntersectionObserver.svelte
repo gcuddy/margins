@@ -56,7 +56,7 @@ export { c as class};
 	<slot {intersecting} />
 </div>
 
-<style>
+<style lang="postcss">
 	div {
 		/* width: 100%;
 		height: 100%; */

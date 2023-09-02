@@ -218,7 +218,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	:global(.neodrag-dragging) div {
 		opacity: 0.95;
 		cursor: grabbing !important;

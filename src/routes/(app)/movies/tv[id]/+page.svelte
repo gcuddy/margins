@@ -184,7 +184,7 @@
 	<p>Error...</p>
 {/if}
 
-<style>
+<style lang="postcss">
 	/* .meta::before {
 		content: "";
 		position: absolute;

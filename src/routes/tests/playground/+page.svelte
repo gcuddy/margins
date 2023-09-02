@@ -22,7 +22,7 @@
 		DropdownMenuItem,
 		DropdownMenuTrigger,
 	} from "$lib/components/ui/dropdown-menu";
-	import Input from "$lib/components/ui/Input.svelte";
+	import Input from "$lib/components/ui/input/input.svelte";
 	import Label from "$lib/components/ui/Label.svelte";
 	import Separator from "$lib/components/ui/Separator.svelte";
 	import Switch from "$lib/components/ui/Switch.svelte";

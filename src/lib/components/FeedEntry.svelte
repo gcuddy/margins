@@ -9,7 +9,7 @@
 	import Muted from "./atoms/Muted.svelte";
 	import SmallPlus from "./atoms/SmallPlus.svelte";
 	import GenericInput from "./GenericInput.svelte";
-	import Input from "$lib/components/ui/Input.svelte";
+	import Input from "$lib/components/ui/input/input.svelte";
 	import Icon from "./helpers/Icon.svelte";
 	import Label from "$lib/components/ui/Label.svelte";
 	import { Muted } from "$lib/components/ui/typography";

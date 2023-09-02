@@ -35,7 +35,7 @@
 	{/if}
 </NodeViewWrapper>
 
-<style>
+<style lang="postcss">
 	div :global(img) {
 		margin: 0;
 	}

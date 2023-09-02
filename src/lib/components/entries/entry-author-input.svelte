@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { inputVariants } from '$components/ui/Input.svelte';
+	import { inputVariants } from '$components/ui/input/input.svelte';
 	import { mutation } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils';

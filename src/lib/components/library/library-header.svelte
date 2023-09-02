@@ -48,7 +48,7 @@ import { goto } from '$app/navigation';
 	} from '$components/ui/dropdown-menu';
 	import Filter from '$components/ui/filters/Filter.svelte';
 	import Header from '$components/ui/Header.svelte';
-	import Input from '$components/ui/Input.svelte';
+	import Input from '$components/ui/input/input.svelte';
 	import Kbd from '$components/ui/KBD.svelte';
 	import {
 		Popover,

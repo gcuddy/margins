@@ -34,7 +34,7 @@
 	import { createRenderQueueContext } from '$components/pdf-viewer/rendering-queue';
 	import Scroller from '$components/Scroller.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
-	import Input from '$components/ui/Input.svelte';
+	import Input from '$components/ui/input/input.svelte';
 	import VirtualList from '$components/ui/internal/VirtualList.svelte';
 	import NativeSelect from '$components/ui/NativeSelect.svelte';
 	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
@@ -1316,7 +1316,7 @@ on:resize={handle_resize}
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	#text-layer {
 		position: absolute;
 		left: 0;

@@ -12,10 +12,10 @@
 	// };
 
 	type Element = ButtonElement & {
-		/** What to render the element as. Defaults to "button" */
-		// as?: string;
-		text?: string;
 		class?: string;
+		/** What to render the element as. Defaults to "button" */
+// as?: string;
+		text?: string;
 		// onclick?: (state: State) => void;
 	};
 
@@ -23,46 +23,46 @@
 		| string
 		| {
 				component: ComponentType;
-				props?: Record<string, any>;
 				events?: Record<string, any>;
+				props?: Record<string, any>;
 		  };
 
 	export type State = {
-		open: Writable<boolean>;
 		content?: StringOrComponent;
-		title?: string;
 		description?: string;
-		footer?: StringOrComponent | Element[];
+		footer?: StringOrComponent | Array<Element>;
+		open: Writable<boolean>;
+		title?: string;
 	};
 
 	function dialog_store() {
 		// let { trigger, portal, overlay, content, title, description, close, open } = dialog;
 
-		const { subscribe, set, update } = writable<State>({
+		const { set, subscribe, update } = writable<State>({
 			open: writable(false)
 		});
 
 		const open = <TComponent extends SvelteComponent, TFooterComponent extends SvelteComponent>({
 			content,
-			title,
 			description,
-			footer
+			footer,
+			title
 		}: {
-			title?: string;
-			description?: string;
 			content:
 				| string
 				| {
 						component: ComponentType<TComponent>;
 						props?: ComponentProps<TComponent>;
 				  };
+			description?: string;
 			footer?:
 				| string
 				| {
 						component: ComponentType<TFooterComponent>;
 						props?: ComponentProps<TFooterComponent>;
 				  }
-				| Element[];
+				| Array<Element>;
+			title?: string;
 		}) => {
 			update((state) => {
 				console.log({ state });
@@ -70,9 +70,9 @@
 				return {
 					...state,
 					content,
-					title,
 					description,
-					footer
+					footer,
+					title
 				};
 			});
 		};
@@ -88,11 +88,11 @@
 		};
 
 		return {
-			subscribe,
-			set,
-			update,
+			close,
 			open,
-			close
+			set,
+			subscribe,
+			update
 		};
 	}
 
@@ -101,16 +101,16 @@
 </script>
 
 <script lang="ts">
+	import { createDialog } from '@melt-ui/svelte';
 	import type { ComponentType } from 'svelte';
+	import { type Writable, writable } from 'svelte/store';
+
 	// accept title, description
 	// content (can be html or svelte component or store component with props)
 	// allow footer to be passed in: svelte component or store component with props, or button(s) with onclick prop
-
 	import Dialog from './Dialog.svelte';
-	import { Writable, writable } from 'svelte/store';
-	import { createDialog } from '@melt-ui/svelte';
 
-	let dialog = createDialog();
+	const dialog = createDialog();
 	// on initialization, set open state to dialog open
 	state.set({
 		open: dialog.states.open

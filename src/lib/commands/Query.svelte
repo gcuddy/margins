@@ -31,10 +31,10 @@
 
 	export let icon: ComponentType | undefined = undefined;
 	export let iconClass = 'w-4 h-4 mr-2';
-	
+
 	// TODO: make  opts into a reactive store instead
 	$: query = createQuery(opts);
-	
+
 	export let value: (item: TOutput[number]) => string;
 	export let display = (item: TOutput[number]) => item.toString();
 	export let image: ((item: TOutput[number]) => string) | undefined = undefined;

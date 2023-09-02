@@ -17,7 +17,7 @@
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
 	import InputText from '$lib/components/ui/form/InputText.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
 	import type { Annotation } from '$lib/prisma/kysely/types';

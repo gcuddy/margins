@@ -1,6 +1,6 @@
 <script>
 	import { Button } from '$lib/components/ui/button';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import {
 		Dialog,

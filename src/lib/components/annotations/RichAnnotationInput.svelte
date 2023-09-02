@@ -147,5 +147,5 @@
 	</slot>
 </div>
 
-<style>
+<style lang="postcss">
 </style>

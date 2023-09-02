@@ -10,7 +10,7 @@
 	import EntryItem from '$lib/components/entries/EntryItem.svelte';
 	import Annotation from '$lib/components/notebook/Annotation.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import Separator from '$lib/components/ui/Separator.svelte';
 	import Textarea from '$lib/components/ui/Textarea.svelte';
 	import {

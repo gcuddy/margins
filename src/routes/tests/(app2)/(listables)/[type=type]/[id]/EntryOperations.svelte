@@ -18,7 +18,6 @@
 	import { page } from '$app/stores';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
-    import * as Dialog from '$lib/components/ui/dialog';
 	import Collections from '$lib/commands/Collections.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -40,6 +39,7 @@
 		DropdownMenuSubContent,
 		DropdownMenuSubTrigger,
 		DropdownMenuTrigger	} from '$lib/components/ui/dropdown-menu';
+	import { initAttachmentCreateMutation } from '$lib/queries/mutations';
 	import { mutation, query } from '$lib/queries/query';
 	import type { LibraryEntry } from '$lib/server/queries';
 	import { state, update_entry } from '$lib/state/entries';
@@ -48,7 +48,6 @@
 	import { getId } from '$lib/utils/entries';
 
 	import NoteForm from './NoteForm.svelte';
-	import { initAttachmentCreateMutation } from '$lib/queries/mutations';
 
 	export let data: ComponentProps<AnnotationForm>['data'];
 	export let entry: Pick<
@@ -66,8 +65,8 @@
 	function handleCollectionSelect(collection: { id: number }) {
 		commander_store.close();
 		mutation($page, 'addToCollection', {
-			entryId: entry.id,
-			collectionId: collection.id
+			collectionId: collection.id,
+			entryId: entry.id
 		}).then(() => {
 			toast.success('Added to collection');
 			invalidate('entry');
@@ -82,16 +81,16 @@
 		} else {
 			toast.promise(
 				fetch(`/api/upload?related_entry_id=${entry.id}`, {
-					method: 'POST',
-					body: file
+					body: file,
+					method: 'POST'
 				}),
 				{
+					error: 'Error uploading file',
 					loading: 'Uploading...',
 					success: () => {
 						invalidate('entry');
 						return 'File uploaded';
-					},
-					error: 'Error uploading file'
+					}
 				}
 			);
 		}
@@ -105,15 +104,15 @@
         } else {
             toast.promise(
                 fetch(`/api/epub`, {
-                    method: 'POST',
-                    body: file
+                    body: file,
+                    method: 'POST'
                 }),
                 {
+                    error: 'Error uploading file',
                     loading: 'Uploading...',
                     success: () => {
                         return 'File parsed (check console)';
-                    },
-                    error: 'Error uploading file'
+                    }
                 }
             );
         }
@@ -153,7 +152,6 @@
 					commander_store.open({
 						component: JumpToEntry,
 						placeholder: 'Add relation to...',
-						shouldFilter: false,
 						props: {
 							onSelect(chosen_entry) {
 								console.log({ entry });
@@ -166,7 +164,8 @@
 									invalidate('entry');
 								});
 							}
-						}
+						},
+						shouldFilter: false
 					});
 				}}
 			>
@@ -199,30 +198,30 @@
 								on:click={() => {
 									if (type.value === 'book') {
 										dialogStore.open({
-											title: 'Convert to book',
-											value: '',
-											description: 'Please enter ISBN',
 											action: async (value) => {
 												// update_entry(entry.id, { type: type.value });
 												// dialogStore.reset();
 												console.log({ value });
-												if (!value) return;
+												if (!value) {return;}
 												const book = await query($page, 'getBookByIsbn', value);
 												if (!book?.id) {
 													toast.error('Unable to find book with that ISBN');
 													return;
 												}
 												const data = await mutation($page, 'convertEntry', {
+													googleBooksId: book.id,
 													id: entry.id,
-													type: 'book',
-													googleBooksId: book.id
+													type: 'book'
 												});
 												if (!data.id) {
 													toast.error('Failed to convert entry');
 													return;
 												}
 												await goto(`/tests/book/${getId(data)}`);
-											}
+											},
+											description: 'Please enter ISBN',
+											title: 'Convert to book',
+											value: ''
 										});
 									}
 								}}
@@ -242,7 +241,7 @@
 					input.onchange = () => {
 						if (input.files?.length) {
 							const file = input.files[0];
-							if (!file) return;
+							if (!file) {return;}
 							handle_pdf_upload(file); return;
 						}
 					};
@@ -260,7 +259,7 @@
 					input.onchange = () => {
 						if (input.files?.length) {
 							const file = input.files[0];
-							if (!file) return;
+							if (!file) {return;}
 							handle_epub_upload(file); return;
 						}
 					};
@@ -274,7 +273,7 @@
 				on:click={() => {
 					dialogStore.open({
                         action(value) {
-                            if (!value) return;
+                            if (!value) {return;}
                             // $attachmentCreateMutation.mutate({
                             //     url: value
                             // });

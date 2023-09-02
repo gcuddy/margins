@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Textarea from '$components/ui/Textarea.svelte';
-	import Input from '$components/ui/Input.svelte';
+	import Input from '$components/ui/input/input.svelte';
 	import Button from '$components/ui/Button.svelte';
 	import {
 		Dialog,

@@ -134,7 +134,7 @@
 	</svg>
 </div>
 
-<style>
+<style lang="postcss">
 	.CircularProgressbar {
 		width: 100%;
 		vertical-align: middle;

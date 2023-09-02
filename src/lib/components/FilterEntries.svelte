@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { SearchIcon } from "lucide-svelte";
-	import Input from "./ui/Input.svelte";
+	import Input from "./ui/input/input.svelte";
 
 
 </script>

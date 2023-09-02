@@ -24,7 +24,7 @@
 	</p> -->
 </article>
 
-<style>
+<style lang="postcss">
 	article h1 {
 		font-family: "Warbler Variable Web";
 		font-size: 48pt;

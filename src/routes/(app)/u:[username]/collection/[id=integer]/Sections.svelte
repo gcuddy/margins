@@ -91,7 +91,7 @@
 	{/each}
 </div>
 
-<style>
+<style lang="postcss">
 	div.grid {
 		display: grid;
 		grid-gap: 1rem;

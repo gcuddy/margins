@@ -935,7 +935,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	/* #text-layer :global(::selection) {
 		@apply bg-ring/20;
 	} */

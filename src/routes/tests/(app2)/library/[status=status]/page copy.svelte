@@ -15,7 +15,7 @@
 	import { FilterIcon, Plus } from 'lucide-svelte';
 	import LibraryTabs from './LibraryTabs.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import { superForm } from 'sveltekit-superforms/client';
 	import { toast } from 'svelte-sonner';
 	import { goto, invalidate, invalidateAll } from '$app/navigation';

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import Input from "$lib/components/ui/Input.svelte";
+	import Input from "$lib/components/ui/input/input.svelte";
 	import { QueryOutput, q } from "$lib/queries/query";
 	import { Loader2 } from "lucide-svelte";
 	import Annotation from "../../(listables)/[type=type]/[id]/Annotation.svelte";

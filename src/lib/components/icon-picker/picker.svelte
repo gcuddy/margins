@@ -1,15 +1,17 @@
 <script lang="ts">
-	import { Button } from '$components/ui/button';
-	import * as Popover from '$components/ui/popover';
 	import { melt } from '@melt-ui/svelte';
 	import { CheckIcon, FileIcon, HashIcon, SearchIcon } from 'lucide-svelte';
-	import { createEventDispatcher, type ComponentProps, type ComponentType } from 'svelte';
+	import { type ComponentProps, type ComponentType,createEventDispatcher } from 'svelte';
+
+	import { Button } from '$components/ui/button';
+	import * as Popover from '$components/ui/popover';
+	import { colors, hexCharacters,hexCodeRegexWithoutHash } from '$lib/colors';
 	import { chunk, styleToString } from '$lib/helpers';
-	import { colors, hexCodeRegexWithoutHash, hexCharacters } from '$lib/colors';
 	import { cn } from '$lib/utils';
+
 	import { icons as _icons } from './data';
 
-	export let activeIcon: string = 'File';
+	export let activeIcon = 'File';
 	export let variant: ComponentProps<Button>['variant'] = 'outline';
 	let className = '';
 	export { className as class };
@@ -76,18 +78,18 @@
 
 	const dispatch = createEventDispatcher<{
 		select: {
-			icon: string;
 			color: string;
+			icon: string;
 		};
 	}>();
 
-	let rowToLastColumnFocused = new Map<number, number>();
+	const rowToLastColumnFocused = new Map<number, number>();
 	rowToLastColumnFocused.set(0, 0);
 
 	function selectIcon(icon: string) {
 		activeIcon = icon;
 		open = false;
-		dispatch('select', { icon: activeIcon, color: activeColor });
+		dispatch('select', { color: activeColor, icon: activeIcon });
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -106,17 +108,17 @@
 			// if (lastColumnFocused !== undefined) {
 			//     activeColumn = lastColumnFocused;
 			// }
-			console.log({ activeRow, activeColumn });
+			console.log({ activeColumn, activeRow });
 			console.log({ rowToLastColumnFocused });
 		}
 		if (e.key === 'ArrowDown') {
-			console.log({ activeRow, activeColumn, icons });
+			console.log({ activeColumn, activeRow, icons });
 			activeRow = Math.min(activeRow + 1, filteredIcons.length - 1);
 			const rowIcons = filteredIcons[activeRow];
 			if (rowIcons) {
 				activeColumn = Math.min(activeColumn, rowIcons.length - 1);
 			}
-			console.log({ activeRow, activeColumn });
+			console.log({ activeColumn, activeRow });
 		} else if (e.key === 'ArrowUp') {
 			const oldRowLength = filteredIcons[activeRow]?.length;
 			activeRow = Math.max(activeRow - 1, 0);
@@ -142,12 +144,12 @@
 	}
 
 	$: if (showHexCodeEntry) {
-		hexInput?.focus();
-		hexInput?.setSelectionRange(1, activeColor.length);
+		hexInput.focus();
+		hexInput.setSelectionRange(1, activeColor.length);
 	} else {
 	}
 
-	$: if (!activeColor?.startsWith('#')) {
+	$: if (!activeColor.startsWith('#')) {
 		activeColor = `#${activeColor}`;
 	}
 
@@ -156,7 +158,7 @@
 			activeColor = activeColor.slice(0, 9);
 		}
 		if (!hexCodeRegexWithoutHash.test(activeColor)) {
-			activeColor = '#' + activeColor.replace(/[^0-9a-fA-F]/gi, '');
+			activeColor = `#${  activeColor.replaceAll(/[^\da-f]/gi, '')}`;
 			//    activeColor = activeColor.replace()
 		}
 	}
@@ -284,7 +286,7 @@
 								data-active={activeRow === rowIndex && activeColumn === columnIndex}
 								data-row={rowIndex}
 								data-column={columnIndex}
-								on:click={() => selectIcon(icon.name)}
+								on:click={() => { selectIcon(icon.name); }}
 								class="items-center p-1.5 inline-flex justify-center rounded font-medium w-7 data-[active=true]:bg-accent group"
 							>
 								<svelte:component
@@ -302,7 +304,7 @@
 	</Popover.Content>
 </Popover.Root>
 
-<style>
+<style lang="postcss">
 	[data-color-hex] {
 		color: var(--color);
 	}

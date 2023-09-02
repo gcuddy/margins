@@ -39,7 +39,7 @@
 />
 <slot />
 
-<style>
+<style lang="postcss">
 	img {
 		opacity: 0;
 		transition: opacity 100ms ease-out;

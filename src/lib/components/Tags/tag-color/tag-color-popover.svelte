@@ -49,7 +49,7 @@
 	</Popover.Content>
 </Popover.Root>
 
-<style>
+<style lang="postcss">
 	[data-color] {
 		background-color: var(--color);
 	}
