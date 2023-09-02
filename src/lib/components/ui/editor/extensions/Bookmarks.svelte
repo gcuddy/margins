@@ -1,12 +1,13 @@
 <script lang="ts">
-	import EntryIcon from '$components/entries/EntryIcon.svelte';
-	import type { QueryOutput } from '$lib/queries/query';
 	import type { SuggestionProps } from '@tiptap/suggestion';
 	import { Loader2 } from 'lucide-svelte';
-	import { onMount, type ComponentType, tick } from 'svelte';
-	import { createPopperActions, type ContentAction } from 'svelte-popperjs';
-	import { Writable, writable } from 'svelte/store';
+	import { type ComponentType, onMount, tick } from 'svelte';
+	import { type Writable, writable } from 'svelte/store';
 	import { fade, scale } from 'svelte/transition';
+	import { type ContentAction,createPopperActions } from 'svelte-popperjs';
+
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import type { QueryOutput } from '$lib/queries/query';
 
 	type $$Props = {
 		items: QueryOutput<'search'>;
@@ -21,31 +22,31 @@
 	export let clientRect: $$Props['clientRect'] = undefined;
 
 	const [ref, content] = createPopperActions({
-		strategy: 'fixed',
-		placement: 'bottom-start'
+		placement: 'bottom-start',
+		strategy: 'fixed'
 	});
 
 	ref({
 		getBoundingClientRect: () => {
-			let rect = clientRect && clientRect();
-			if (rect) return rect;
+			const rect = clientRect?.();
+			if (rect) {return rect;}
 			return {
-				top: 0,
+				bottom: 0,
+				height: 0,
 				left: 0,
 				right: 0,
-				bottom: 0,
+				toJSON: () => {},
+				top: 0,
 				width: 0,
-				height: 0,
 				x: 0,
-				y: 0,
-				toJSON: () => {}
+				y: 0
 			};
 		}
 	});
 
 	let commandListContainer: HTMLDivElement;
 
-	let selectedIndex = writable(0);
+	const selectedIndex = writable(0);
 
 	const selectItem = (index: number) => {
 		const item = items[index];
@@ -139,7 +140,7 @@
 						class={`flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm text-popover-foreground hover:bg-accent ${
 							index === $selectedIndex ? 'bg-accent text-accent-foreground' : ''
 						}`}
-						on:click={() => selectItem(index)}
+						on:click={() => { selectItem(index); }}
 					>
 						<div
 							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-background"

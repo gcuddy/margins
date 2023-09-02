@@ -1,49 +1,43 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { beforeNavigate, goto } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
+	import { entryTypeIcon } from '$components/entries/icons';
+	import { SelectActions, checkedEntryIds } from '$components/entries/multi-select';
+	import { create_multi } from '$components/entries/multi-select/multi';
 	import LibraryHeader from '$components/library/library-header.svelte';
-	import inView from '$lib/actions/inview';
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
-	import { QueryOutput, query as qquery } from '$lib/queries/query';
-	import { init_entries, invalidated } from '$lib/state/entries';
 	import {
-		InfiniteData,
+		convertToGroupedArrayWithHeadings,
+		groupBy,
+		type GroupedArrayWithHeadings
+	} from '$lib/helpers';
+	import { queryFactory } from '$lib/queries/querykeys';
+	import {
+		filterLibrarySchema,
+		type FilterLibrarySchema,
+		type LibraryGroupType,
+		type LibrarySortType
+	} from '$lib/schemas/library';
+	import type { LibraryResponse } from '$lib/server/queries';
+	import { init_entries, invalidated } from '$lib/state/entries';
+	import type { Type } from '$lib/types';
+	import { cn } from '$lib/utils';
+	import { defaultParseSearch } from '$lib/utils/search-params';
+	import {
 		createInfiniteQuery,
-		keepPreviousData,
 		useQueryClient
 	} from '@tanstack/svelte-query';
 	import { createWindowVirtualizer, defaultRangeExtractor } from '@tanstack/svelte-virtual';
-	import { overrideItemIdKeyNameBeforeInitialisingDndZones } from 'svelte-dnd-action';
-	import { derived, writable } from 'svelte/store';
-	import { useMenuBar } from '../../MainNav.svelte';
-	import { beforeNavigate, goto } from '$app/navigation';
-	import { backContext, setBackContext } from '../../(listables)/[type=type]/[id]/store';
-	import { flip } from 'svelte/animate';
-	import { queryFactory } from '$lib/queries/querykeys';
-	import { checkedEntries, checkedEntryIds, SelectActions } from '$components/entries/multi-select';
-	import { create_multi } from '$components/entries/multi-select/multi';
-	import type { Snapshot } from './$types.js';
 	import { Loader2Icon } from 'lucide-svelte';
-	import { queryParam, ssp, queryParameters } from 'sveltekit-search-params';
-	import type { Type } from '$lib/types';
-	import {
-		filterLibrarySchema,
-		FilterLibrarySchema,
-		LibrarySortType,
-		GetLibrarySchema,
-		LibraryGroupType
-	} from '$lib/schemas/library';
-	import { defaultParseSearch, parseSearchWith } from '$lib/utils/search-params';
-	import { browser } from '$app/environment';
-	import type { LibraryResponse } from '$lib/server/queries';
-	import {
-		GroupedArrayWithHeadings,
-		convertToGroupedArrayWithHeadings,
-		groupBy
-	} from '$lib/helpers';
-	import { cn } from '$lib/utils';
 	import type { ComponentType } from 'svelte';
-	import { entryTypeIcon } from '$components/entries/icons';
+	import { flip } from 'svelte/animate';
+	import { derived, writable } from 'svelte/store';
+	import { queryParameters, ssp } from 'sveltekit-search-params';
+	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
+	import { useMenuBar } from '../../MainNav.svelte';
+	import type { Snapshot } from './$types.js';
 
 
 	export let data;

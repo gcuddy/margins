@@ -1,15 +1,12 @@
 <script lang="ts" context="module">
 	export type MenuBar = {
-		/** Entry to display title of and use for EntryOperations */
-		entry?: Pick<Entry, 'id' | 'title'>;
 		/**
 		 * Whether or not to show the center slot
 		 */
 		center: boolean;
-		/**
-		 * Whether or not to show the menu bar
-		 */
-		show: boolean;
+		centerComponent?: ComponentType;
+		/** Entry to display title of and use for EntryOperations */
+		entry?: Pick<Entry, 'id' | 'title'>;
 		/**
 		 * Html to display, instead of entry
 		 */
@@ -17,7 +14,10 @@
 
 		leftText?: string;
 
-		centerComponent?: ComponentType;
+		/**
+		 * Whether or not to show the menu bar
+		 */
+		show: boolean;
 	};
 
 	export function useMenuBar() {
@@ -31,24 +31,24 @@
 	export function menu_portal(
 		el: HTMLElement,
 		params: {
-			placement: 'left' | 'center' | 'right';
 			hideArrow?: boolean;
+			placement: 'left' | 'center' | 'right';
 		}
 	) {
 		let targetEl: HTMLElement | null = null;
 
 		async function update() {
-			targetEl = document.querySelector(`[data-menu-bar-${params.placement}]`) as HTMLElement;
+			targetEl = document.querySelector(`[data-menu-bar-${params.placement}]`)!;
 			if (!targetEl) {
 				// Try with a tick first
 				await tick();
-				targetEl = document.querySelector(`[data-menu-bar-${params.placement}]`) as HTMLElement;
+				targetEl = document.querySelector(`[data-menu-bar-${params.placement}]`)!;
 			}
 			if (!targetEl) {
 				throw new Error('Target element not found');
 			}
 
-			targetEl.appendChild(el);
+			targetEl.append(el);
 			el.hidden = false;
 		}
 		function destroy() {
@@ -60,21 +60,23 @@
 		update();
 
 		return {
-			update,
-			destroy
+			destroy,
+			update
 		};
 	}
 </script>
 
 <script lang="ts">
-	import { navigating, page } from '$app/stores';
-	import Button from '$lib/components/ui/Button.svelte';
-	import Avatar from '$lib/components/ui/avatar/Avatar.svelte';
 	import type { Entry } from '@prisma/client';
 	import { ArrowLeft, ChevronRightSquare, Flower } from 'lucide-svelte';
-	import { ComponentType, getContext, tick } from 'svelte';
-	import { Writable, derived } from 'svelte/store';
+	import { type ComponentType, getContext, tick } from 'svelte';
+	import { derived,type Writable } from 'svelte/store';
 	import { fly } from 'svelte/transition';
+
+	import { navigating, page } from '$app/stores';
+	import Avatar from '$lib/components/ui/avatar/Avatar.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+
 	import { commanderState } from './Commander.svelte';
 	import LoadingIndicator from './LoadingIndicator.svelte';
 
@@ -139,7 +141,7 @@
 				<svelte:component this={$menu.centerComponent} />
 			{:else if $menu.center && $menu.entry?.title}
 				<div transition:fly>
-					{$menu.entry?.title}
+					{$menu.entry.title}
 				</div>
 			{:else if $menu.center && $menu.html}
 				<div transition:fly>

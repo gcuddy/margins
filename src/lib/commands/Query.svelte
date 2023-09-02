@@ -1,4 +1,11 @@
 <script lang="ts">
+	import {
+		createQuery,
+		type CreateQueryOptions,
+		type QueryKey,
+		useQueryClient	} from '@tanstack/svelte-query';
+	import { Box } from 'lucide-svelte';
+	import { type ComponentType, createEventDispatcher } from 'svelte';
 	import { writable } from 'svelte/store';
 
 	import { page } from '$app/stores';
@@ -7,15 +14,6 @@
 	import CommandItem from '$lib/components/ui/command/CommandItem.svelte';
 	import type { FieldPath } from '$lib/queries/keys';
 	import type { QueryOutput } from '$lib/queries/query';
-	import {
-		createQuery,
-		useQueryClient,
-		QueryKey,
-		CreateQueryOptions,
-		DefinedCreateQueryResult
-	} from '@tanstack/svelte-query';
-	import { Box } from 'lucide-svelte';
-	import { ComponentType, createEventDispatcher } from 'svelte';
 
 	const queryClient = useQueryClient();
 

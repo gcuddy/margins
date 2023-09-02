@@ -1,25 +1,22 @@
 <script lang="ts">
 	import { createContextMenu, melt } from '@melt-ui/svelte';
-	import { createQuery, InfiniteData, useQueryClient } from '@tanstack/svelte-query';
-	import { cva,VariantProps } from 'class-variance-authority';
+	import { useQueryClient, type InfiniteData } from '@tanstack/svelte-query';
+	import { cva, type VariantProps } from 'class-variance-authority';
 	import clsx from 'clsx';
 	import {
 		ArrowLeftRightIcon,
 		BoxIcon,
-		CheckIcon,
 		CircleDashedIcon,
 		FileTextIcon,
-		Hourglass,
 		PencilIcon,
 		TagIcon,
 		TimerIcon,
 		TrendingUpIcon
 	} from 'lucide-svelte';
-	import { ComponentType, createEventDispatcher, onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
 	import { portal } from 'svelte-portal';
 	import { toast } from 'svelte-sonner';
 
-	import { preloadData } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Clamp from '$components/Clamp.svelte';
 	import TagCommand from '$components/tags/TagCommand.svelte';
@@ -30,11 +27,9 @@
 	import smoothload from '$lib/actions/smoothload';
 	import type { EntryInList } from '$lib/db/selects';
 	import { relations_icons } from '$lib/features/relations/icons';
-	import { mutation, query,QueryOutput } from '$lib/queries/query';
-	import { queryFactory } from '$lib/queries/querykeys';
+	import { mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
-	import { state } from '$lib/state/entries';
-	import { Status, statuses, statusesWithIcons } from '$lib/status';
+	import { statuses, statusesWithIcons, type Status } from '$lib/status';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { ago, formatDuration, now } from '$lib/utils/date';
 	import { get_image, getId, getType, make_link } from '$lib/utils/entries';

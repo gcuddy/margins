@@ -1,9 +1,9 @@
 <script lang="ts" context="module">
 	export type BaseCommandGroup = {
-		group?: string;
 		disabled?: boolean;
+		group?: string;
+		items: Array<Command<any>>;
 		loading?: boolean;
-		items: Command<any>[];
 	};
 	export type CommandGroup = StoreOrVal<BaseCommandGroup>;
 
@@ -25,24 +25,24 @@
 		| {
 				action?: never;
 				addPage: () =>
-					| StoreOrVal<CommandGroup[]>
+					| StoreOrVal<Array<CommandGroup>>
 					| {
-							page: StoreOrVal<CommandGroup[]>;
-							placeholder?: string;
 							destroy?: () => void;
+							page: StoreOrVal<Array<CommandGroup>>;
+							placeholder?: string;
 					  };
 		  };
 
 	export type Command<T extends SvelteComponent> =
 		| {
-				name: string;
-				id?: string;
-				selected?: boolean;
 				description?: string | null;
+				id?: string;
+				img?: string | null;
 				kbd?: string;
+				name: string;
+				selected?: boolean;
 				/** Additional terms to filter by. Will be added to name when filtering. */
 				terms?: string | null;
-				img?: string | null;
 				// action?: () => void;
 		  } & ActionOrPage &
 				Component<T>;
@@ -54,49 +54,44 @@
 
 <script lang="ts">
 	import {
-		createCombobox,
 		type ComboboxFilterFunction,
-		melt,
-		CreateComboboxProps,
-		createPopover
-	} from '@melt-ui/svelte';
+		createCombobox,
+		type CreateComboboxProps,
+		createPopover,
+		melt	} from '@melt-ui/svelte';
 	import { effect, generateId, isElementDisabled } from '@melt-ui/svelte/internal/helpers';
+	import type { StoreOrVal } from '@tanstack/svelte-query';
+	import commandScore from 'command-score';
 	import {
 		CalendarIcon,
 		Check,
-		ChevronDown,
-		ChevronUp,
-		PartyPopperIcon,
-		SearchIcon,
-		Store
+		SearchIcon
 	} from 'lucide-svelte';
 	import {
-		ComponentProps,
-		ComponentType,
-		SvelteComponent,
+		type ComponentProps,
+		type ComponentType,
 		createEventDispatcher,
 		getContext,
 		onDestroy,
+		type SvelteComponent,
 		tick
 	} from 'svelte';
-	import { fly, slide } from 'svelte/transition';
+	import { get, type Readable, writable } from 'svelte/store';
 
-	import commandScore from 'command-score';
-	import { omit } from '$lib/helpers';
-	import { Readable, Writable, get, writable } from 'svelte/store';
-	import { cn } from '$lib/utils/tailwind';
 	import { dev } from '$app/environment';
-	import { createStack } from '$lib/stores/undo';
-	import type { StoreOrVal } from '@tanstack/svelte-query';
 	import { checkedEntryIds } from '$components/entries/multi-select';
+	import { omit } from '$lib/helpers';
+	import { createStack } from '$lib/stores/undo';
+	import { cn } from '$lib/utils/tailwind';
+
 	import Badge from '../Badge.svelte';
 
 	const dispatch = createEventDispatcher();
 
-	interface Book {
+	type Book = {
 		author: string;
-		title: string;
 		disabled: boolean;
+		title: string;
 	}
 
 	// TODO: allow commands to be passed in also without group
@@ -121,18 +116,18 @@
     let internalBounce = true;
     export { internalBounce as bounce};
 
-	const dialogContentEl = getContext('dialogContentEl') as Writable<HTMLElement | null>;
+	const dialogContentEl = getContext('dialogContentEl') ;
 
-	const popover = getContext('Popover') as ReturnType<typeof createPopover> | null;
+	const popover = getContext('Popover') ;
 
-	export let items: StoreOrVal<CommandGroup[]> = [
+	export let items: StoreOrVal<Array<CommandGroup>> = [
 		// dummy commands
 		{
 			group: 'File',
 			items: [
 				{
-					name: 'New',
-					icon: CalendarIcon
+					icon: CalendarIcon,
+					name: 'New'
 				},
 				{
 					name: 'Open'
@@ -193,7 +188,7 @@
 	$stack.root;
 
 	function bounce() {
-        if (!internalBounce) return;
+        if (!internalBounce) {return;}
 		const node = container?.closest('[data-melt-dialog-content]') ?? container?.closest('[data-melt-popover-content]') ?? container;
         console.log({node})
 		if (node) {
@@ -202,7 +197,7 @@
 			node.classList.add(`scale-[0.96]`);
 			// node.style.transform = `${transform} scale(0.96)`;
 			setTimeout(() => {
-				if (node) node.classList.remove(`scale-[0.96]`);
+				if (node) {node.classList.remove(`scale-[0.96]`);}
 			}, 100);
 		}
 	}
@@ -210,7 +205,7 @@
 	function reset() {
 		bounce();
 		term = '';
-		currentCallbacks.forEach((cb) => cb());
+		currentCallbacks.forEach((cb) => { cb(); });
 		currentCallbacks = [];
 		currentOnRemove?.();
 		currentOnRemove = undefined;
@@ -224,7 +219,7 @@
 	let currentOnRemove: (() => void) | undefined = undefined;
 
 	export function addPage(
-		page: StoreOrVal<CommandGroup[]>,
+		page: StoreOrVal<Array<CommandGroup>>,
 		opts?: {
 			onRemove?: () => void;
 			placeholder?: string;
@@ -239,7 +234,7 @@
 
 	export function back() {
 		console.log(`back`, { $stack });
-		if (!$stack.previous) return;
+		if (!$stack.previous) {return;}
 		stack.undo();
 		// bounce();
 		reset();
@@ -256,7 +251,7 @@
 	// we re-implement select item to prevent list being reset
 	function selectItem(node: HTMLElement) {
 		if (node.dataset.index) {
-			const index = parseInt(node.dataset.index, 10);
+			const index = Number.parseInt(node.dataset.index, 10);
 			const $item = $filteredItems[index];
 			value.set($item);
 		}
@@ -267,13 +262,13 @@
 		inputValue
 	) => {
 		const value_map = scores.get(inputValue) ?? new WeakMap();
-		const term = item.name + (item.terms ? ' ' + item.terms : '');
+		const term = item.name + (item.terms ? ` ${  item.terms}` : '');
 		// TODO: boost title matches higher than terms matches (modify commandScore myself)
 		const score = commandScore(term, inputValue);
 		value_map.set(item, score);
 		scores.set(inputValue, value_map);
 		console.log({ scores });
-		console.log({ score, item, inputValue });
+		console.log({ inputValue, item, score });
 		// TODO: sort by score (but keep group order)
 		return score > 0;
 		const normalize = (str: string) => str.normalize().toLowerCase();
@@ -285,21 +280,21 @@
 
 	type Item = Command<any> & { group: string; index: number };
 
-	let i = 0;
-	let flattenedItems: Item[] = [];
+	const i = 0;
+	let flattenedItems: Array<Item> = [];
 
-	let currentCallbacks: (() => void)[] = [];
+	let currentCallbacks: Array<() => void> = [];
 
-	const group_stores = new Map<string, Readable<Command<any>[] | { data: Command<any>[] }>>();
+	const group_stores = new Map<string, Readable<Array<Command<any>> | { data: Array<Command<any>> }>>();
 
 	$stack.current;
 
 	export let loading = false;
 
-	function getFlattenedItems(items: StoreOrVal<CommandGroup[]>): Item[] {
+	function getFlattenedItems(items: StoreOrVal<Array<CommandGroup>>): Array<Item> {
 		console.log(`getFlattenedItems`);
 		let i = 0;
-		let value: CommandGroup[];
+		let value: Array<CommandGroup>;
 		if ('subscribe' in items) {
 			// then it's a store
 			value = get(items);
@@ -352,7 +347,7 @@
 	$: console.log({ flattenedItems });
 
 	$: if ('subscribe' in $stack.current) {
-		let unsub = $stack.current.subscribe((items) => {
+		const unsub = $stack.current.subscribe((items) => {
 			flattenedItems = getFlattenedItems(items);
 		});
 		currentCallbacks.push(unsub);
@@ -382,21 +377,27 @@
 	$: console.log({ open });
 
 	const {
-		elements: { menu, input, item, label },
-		states: { filteredItems, value, inputValue },
-		helpers: { isSelected, updateItems }
+		elements: { input, item, label, menu },
+		helpers: { isSelected, updateItems },
+		states: { filteredItems, inputValue, value }
 	} = createCombobox({
-		filterFunction,
-		items: flattenedItems,
-		itemToString: (item) => item.name,
-		open,
-		forceVisible: true,
-		loop: false,
-		portal: container,
-		defaultValue,
 		// defaultOpen: true,
-		closeOnEscape: false,
-		closeOnOutsideClick: false,
+closeOnEscape: false,
+
+closeOnOutsideClick: false,
+
+defaultValue,
+
+filterFunction,
+
+forceVisible: true,
+
+itemToString: (item) => item.name,
+
+items: flattenedItems,
+
+loop: false,
+
 		onValueChange: (value) => {
 			console.log(`onValueChange`, { value });
 			if (changing) {
@@ -406,7 +407,7 @@
 			if (value.next?.action) {
 				console.log(`Running action`, value.next);
 				value.next.action();
-				if (closeOnAction) open.set(false);
+				if (closeOnAction) {open.set(false);}
 			} else if (value.next?.addPage) {
 				const page = value.next.addPage();
 				if ('page' in page) {
@@ -417,10 +418,12 @@
 					addPage(page);
 				}
 			}
-			if (value.next) if (value.next) onChange(value.next);
+			if (value.next) {if (value.next) {onChange(value.next);}}
 			console.log({ value });
 			return value.curr;
-		}
+		},
+		open,
+		portal: container
 
 		// forceVisible: true
 	});
@@ -444,7 +447,7 @@
 			const highlighted = container?.querySelector('[data-highlighted]');
 			if (!highlighted) {
 				// simulate press down (to highlight first item - this is an ugly hack)
-				inputEl?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+				inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
 				// const first = container?.querySelector('[data-melt-combobox-item]');
 				// if (first) {
 				// 	first.setAttribute('data-highlighted', '');
@@ -462,14 +465,14 @@
 
 	type CommandChunk = {
 		group: string;
-		items: Item[];
+		items: Array<Item>;
 	};
 
-	function chunk_commands(commands: Item[], sort = true): CommandChunk[] {
-		let group_map = new Map<string, CommandChunk['items']>();
+	function chunk_commands(commands: Array<Item>, sort = true): Array<CommandChunk> {
+		const group_map = new Map<string, CommandChunk['items']>();
 		if (sort && value_map) {
 			commands.sort((a, b) => {
-				if (!value_map) return 0;
+				if (!value_map) {return 0;}
 				const a_score = value_map.get(a) ?? 0;
 				const b_score = value_map.get(b) ?? 0;
 				return b_score - a_score;
@@ -498,7 +501,7 @@
 	export { className as class };
 
 	onDestroy(() => {
-		currentCallbacks.forEach((cb) => cb());
+		currentCallbacks.forEach((cb) => { cb(); });
 	});
 </script>
 
@@ -586,7 +589,7 @@
 									on:m-click={(e) => {
 										e.detail.cancel();
 										const node = e.currentTarget;
-										if (!(node instanceof HTMLElement)) return;
+										if (!(node instanceof HTMLElement)) {return;}
 										if (isElementDisabled(node)) {
 											e.preventDefault();
 											return;

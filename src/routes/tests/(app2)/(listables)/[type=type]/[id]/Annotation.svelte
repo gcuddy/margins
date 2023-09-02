@@ -1,24 +1,15 @@
 <script lang="ts">
-	import MarkdownIt from 'markdown-it';
-
-	import type { TargetSchema } from '$lib/annotation';
-	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
-	import AnnotationOperations from '$lib/components/AnnotationOperations.svelte';
-
-	const md = new MarkdownIt();
 	import { type ComponentProps,getContext } from 'svelte';
-	import type { Writable } from 'svelte/store';
 
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Button from '$components/ui/Button.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
-	import { render_html } from '$components/ui/editor/utils';
-	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
+	import type { TargetSchema } from '$lib/annotation';
+	import AnnotationForm from '$lib/components/AnnotationForm.svelte';
+	import AnnotationOperations from '$lib/components/AnnotationOperations.svelte';
 	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
 	import InputText from '$lib/components/ui/form/InputText.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Label from '$lib/components/ui/Label.svelte';
 	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
 	import type { Annotation } from '$lib/prisma/kysely/types';
 	import { mutation } from '$lib/queries/query';
@@ -50,7 +41,7 @@
 	let editing = false;
 	let pending_delete = false;
 
-    let title = !!annotation.title;
+    const title = !!annotation.title;
 
     let focused = false;
 </script>
@@ -114,8 +105,8 @@
 			{#if editing}
 				<AnnotationForm
 					annotation={{
-						id: annotation.id,
 						body: annotation.body,
+						id: annotation.id,
 						target: isTarget(annotation.target) ? annotation.target : undefined,
 						title: annotation.title ?? undefined
 					}}
@@ -180,10 +171,10 @@
                             pending = true;
                             const contentData = editor.getJSON();
                             mutation($page, 'save_note', {
-                                id: annotation.id,
                                 contentData,
-                                type: annotation.type,
                                 entryId: annotation.entryId ?? undefined,
+                                id: annotation.id,
+                                type: annotation.type,
                             }).then(() => {
                                 pending = false;
                                 editing = false;

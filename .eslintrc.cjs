@@ -54,6 +54,10 @@ module.exports = {
 				selector: 'typeParameter',
 			},
 		],
+        // these 2 rules cause huge performance issues for us rn
+        '@typescript-eslint/no-misused-promises': 0,
+        '@typescript-eslint/no-floating-promises': 0,
+        // ^^
 		'@typescript-eslint/no-namespace': 0,
 		'@typescript-eslint/no-non-null-assertion': 0,
 		'@typescript-eslint/no-throw-literal': 0,

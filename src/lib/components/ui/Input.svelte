@@ -4,9 +4,9 @@
 		{
 			variants: {
 				variant: {
-					naked: 'bg-transparent border-none',
+					default: '',
 					ghost: 'border-none transition bg-transparent hover:ring-1 hover:ring-ring focus-visible:ring-0 focus-visible:bg-input',
-					default: ''
+					naked: 'bg-transparent border-none'
 				}
 			}
 		}
@@ -14,22 +14,22 @@
 </script>
 
 <script lang="ts">
+	import { cva, type VariantProps } from 'class-variance-authority';
 	import type { HTMLInputAttributes } from 'svelte/elements';
 
 	import { cn } from '$lib/utils/tailwind';
-	import { cva, VariantProps } from 'class-variance-authority';
 
 	export let value: $$Props['value'] = undefined;
 	export let ref: HTMLInputElement | undefined = undefined;
 	let className = '';
 	export { className as class };
 	export let variant: $$Props['variant'] = 'default';
-	interface $$Props extends HTMLInputAttributes, VariantProps<typeof inputVariants> {
-		ref?: HTMLInputElement;
-		value?: string | number | null | undefined;
+	type $$Props = {
 		class?: string;
-        onBlur?: (e: FocusEvent) => void;
-	}
+		onBlur?: (e: FocusEvent) => void;
+		ref?: HTMLInputElement;
+        value?: string | number | null | undefined;
+	} & HTMLInputAttributes & VariantProps<typeof inputVariants>
 
     export let onBlur: $$Props['onBlur'] = undefined;
 
@@ -43,8 +43,8 @@
 	bind:value
 	class={cn(
 		inputVariants({
-			variant,
-			class: className
+			class: className,
+			variant
 		})
 	)}
 	on:focus

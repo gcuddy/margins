@@ -1,5 +1,5 @@
 <script lang='ts'>
-	import toast_, { ToastOptions } from 'svelte-french-toast';
+	import toast_, { type ToastOptions } from 'svelte-french-toast';
 
 	export let toast: ToastOptions;
 
@@ -9,5 +9,5 @@
 
 <span>
 	Custom and <b>bold</b>
-	<button on:click={() => toast_.dismiss(toast.id)}>Dismiss</button>
+	<button on:click={() => { toast_.dismiss(toast.id); }}>Dismiss</button>
 </span>

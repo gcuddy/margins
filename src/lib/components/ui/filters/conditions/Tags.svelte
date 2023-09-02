@@ -1,38 +1,33 @@
 <script lang="ts">
-	import Badge, { badgeVariants } from '$components/ui/Badge.svelte';
-	import { queryFactory } from '$lib/queries/querykeys';
+	import { melt } from '@melt-ui/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
-	import ConditionLayout from '../helpers/ConditionLayout.svelte';
-	import Select from '../helpers/Select.svelte';
+	import debounce from 'just-debounce-it';
+	import { writable } from 'svelte/store';
+
+	import { TagColorPill } from '$components/tags/tag-color';
+	import { badgeVariants } from '$components/ui/Badge.svelte';
+	import { Checkbox } from '$components/ui/checkbox';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
+	import {
+		Command,
+		CommandGroup,
+		CommandInput,
+		CommandItem,
+		CommandList
+	} from '$lib/components/ui/command2';
+	import { queryFactory } from '$lib/queries/querykeys';
 	import {
 		logicalOperators,
 		type FilterLibrarySchema,
-		LogicalOperator
+		type LogicalOperator
 	} from '$lib/schemas/library';
-	import { ctx } from '../ctx';
-	import { writable } from 'svelte/store';
 	import { cn } from '$lib/utils';
 
-	import {
-		Command,
-		CommandInput,
-		CommandItem,
-		CommandItems,
-		CommandList,
-		CommandGroup,
-		CommandEmpty,
-		CommandSeparator,
-		CommandShortcut
-	} from '$lib/components/ui/command2';
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
-	import { melt } from '@melt-ui/svelte';
-	import { Checkbox } from '$components/ui/checkbox';
-	import { onDestroy } from 'svelte';
-	import debounce from 'just-debounce-it';
-	import { includes } from 'lodash';
-	import { TagColorPill } from '$components/tags/tag-color';
+	import { ctx } from '../ctx';
+	import ConditionLayout from '../helpers/ConditionLayout.svelte';
+	import Select from '../helpers/Select.svelte';
 
-	export let ids: number[];
+	export let ids: Array<number>;
 	export let type: NonNullable<NonNullable<FilterLibrarySchema['tags']>['type']> = 'and';
 
 	const tag = createQuery({
@@ -42,9 +37,9 @@
 		// }
 	});
 
-	type Tag = { id: number; name: string; color: string };
+	type Tag = { color: string, id: number; name: string; };
 
-	const chosenTags = writable<Tag[]>([]);
+	const chosenTags = writable<Array<Tag>>([]);
 
 	$: $chosenTags = $tag.data?.filter((tag) => ids.includes(tag.id)) ?? [];
 
@@ -82,8 +77,8 @@
 					return data;
 				}
 				data.tags = {
-					type,
-					ids: $chosenTags.map((tag) => tag.id)
+					ids: $chosenTags.map((tag) => tag.id),
+					type
 				};
 				return data;
 			});

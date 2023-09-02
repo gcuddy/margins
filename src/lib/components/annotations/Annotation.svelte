@@ -1,4 +1,9 @@
 <script lang="ts">
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import MarkdownIt from 'markdown-it';
+	import { afterUpdate, type ComponentProps,getContext } from 'svelte';
+	import type { Writable } from 'svelte/store';
+
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Badge from '$components/ui/Badge.svelte';
@@ -10,17 +15,12 @@
 	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
 	import InputText from '$lib/components/ui/form/InputText.svelte';
 	import { Blockquote, Muted, Small } from '$lib/components/ui/typography';
-	import type { Annotation } from '$lib/prisma/kysely/types';
-	import { QueryOutput, mutation } from '$lib/queries/query';
+	import { mutation } from '$lib/queries/query';
 	import type { EntryAnnotation } from '$lib/queries/server';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { formatTimeDuration } from '$lib/utils/dates';
-	import { useQueryClient } from '@tanstack/svelte-query';
-	import MarkdownIt from 'markdown-it';
-	import { getContext, type ComponentProps, afterUpdate } from 'svelte';
-	import type { Writable } from 'svelte/store';
 	const md = new MarkdownIt();
-	const jumping = getContext('jumping') as Writable<boolean>;
+	const jumping = getContext('jumping') ;
 
 	let editor: Editor;
 
@@ -32,9 +32,9 @@
 
 	const queryClient = useQueryClient();
 
-	interface $$Props extends Omit<ComponentProps<AnnotationForm>, 'annotation'> {
+	type $$Props = {
 		annotation: EntryAnnotation;
-	}
+	} & Omit<ComponentProps<AnnotationForm>, 'annotation'>
 
 	// hacky way to get types to work with svelte
 	const isTarget = (data: unknown): data is TargetSchema => !!data;
@@ -42,7 +42,7 @@
 	let editing = false;
 	let pending_delete = false;
 
-	let title = !!annotation.title;
+	const title = !!annotation.title;
 
 	let lastContentData = annotation.contentData;
 	afterUpdate(() => {
@@ -121,8 +121,8 @@
 			{#if editing}
 				<AnnotationForm
 					annotation={{
-						id: annotation.id,
 						body: annotation.body,
+						id: annotation.id,
 						target: isTarget(annotation.target) ? annotation.target : undefined,
 						title: annotation.title ?? undefined
 					}}
@@ -189,10 +189,10 @@
 							pending = true;
 							const contentData = editor.getJSON();
 							mutation($page, 'save_note', {
-								id: annotation.id,
 								contentData,
-								type: annotation.type,
-								entryId: annotation.entryId ?? undefined
+								entryId: annotation.entryId ?? undefined,
+								id: annotation.id,
+								type: annotation.type
 							}).then(() => {
 								pending = false;
 								editing = false;
@@ -206,7 +206,7 @@
 				{@html render_html(annotation.contentData)}
 			</div> -->
 		{/if}
-		{#if annotation.tags?.length}
+		{#if annotation.tags.length}
 			<div class="flex gap-x-2 mt-2">
 				{#each annotation.tags as tag}
 					<!-- <a href="/tests/tag/{tag.name}">

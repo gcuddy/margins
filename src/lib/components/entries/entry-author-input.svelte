@@ -1,29 +1,23 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { inputVariants } from '$components/ui/input/input.svelte';
-	import { mutation } from '$lib/queries/query';
-	import { queryFactory } from '$lib/queries/querykeys';
-	import { cn } from '$lib/utils';
-	import { ComboboxFilterFunction, createCombobox, melt } from '@melt-ui/svelte';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
-
-	import {
-		Command,
-		CommandInput,
-		CommandItem,
-		CommandItems,
-		CommandList,
-		CommandGroup,
-		CommandEmpty,
-		CommandSeparator,
-		CommandShortcut,
-		CommandLoading
-	} from '$lib/components/ui/command2';
-	import Button from '$components/ui/button/button.svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import { Circle, PlusIcon } from 'lucide-svelte';
 	import { tick } from 'svelte';
+
+	import { page } from '$app/stores';
+	import Button from '$components/ui/button/button.svelte';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import {
+		Command,
+		CommandEmpty,
+		CommandGroup,
+		CommandInput,
+		CommandItem,
+		CommandList,
+		CommandLoading
+	} from '$lib/components/ui/command2';
+	import { mutation } from '$lib/queries/query';
+	import { queryFactory } from '$lib/queries/querykeys';
 
 	export let author: string;
 	export let entryId: number;
@@ -33,8 +27,8 @@
 
 	// put selected author at top of list, if it exists
 	$: sortedAuthors = $authorsQuery.data?.sort((a, b) => {
-		if (a === author) return -1;
-		if (b === author) return 1;
+		if (a === author) {return -1;}
+		if (b === author) {return 1;}
 		return 0;
 	});
 
@@ -43,11 +37,11 @@
 	const updateBookmark = createMutation({
 		mutationFn: () => {
 			return mutation($page, 'updateBookmark', {
-				entryId,
-				id: bookmarkId,
 				data: {
 					author
-				}
+				},
+				entryId,
+				id: bookmarkId
 			});
 		},
 		onSuccess: () => {
@@ -92,7 +86,7 @@
 							<span class="text-red-500">Error loading authors</span>
 						</CommandEmpty>
 					{:else if $authorsQuery.isSuccess}
-						{#if inputValue.length > 1 && $authorsQuery.data?.every((name) => name.toLowerCase() !== inputValue.toLowerCase())}
+						{#if inputValue.length > 1 && $authorsQuery.data.every((name) => name.toLowerCase() !== inputValue.toLowerCase())}
 							<CommandItem alwaysShow id="shadow-new-author" value={inputValue}>
 								<PlusIcon class="mr-2 opacity-50 h-4 w-4" />
 								<span class="inline-flex grow items-center">

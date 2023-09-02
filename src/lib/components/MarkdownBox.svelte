@@ -1,8 +1,10 @@
 <script lang="ts">
-	import Input, { inputVariants } from './ui/input/input.svelte';
-	import { cn } from '$lib/utils/tailwind';
-	import { ComponentProps, tick } from 'svelte';
+	import { type ComponentProps, tick } from 'svelte';
+
 	import { md } from '$lib/markdown';
+	import { cn } from '$lib/utils/tailwind';
+
+	import Input from './ui/input/input.svelte';
 	import Textarea from './ui/Textarea.svelte';
 
 	type TAs = $$Generic<'input' | 'textarea'>;
@@ -14,17 +16,17 @@
     export let editable = true;
 
 	type $$Props = {
-		as?: TAs;
-		value?: string;
 		active?: boolean;
+		as?: TAs;
+		editable?: boolean;
 		placeholder?: string;
-        editable?: boolean;
+        value?: string;
 	} & ComponentProps<TAs extends 'input' ? Input : Textarea>;
 	let input: HTMLInputElement;
 
 	function handle_click(e: Event) {
         console.log({e, editable})
-        if (!editable) return;
+        if (!editable) {return;}
 		console.log({ e });
 		active = true;
 	}
@@ -33,7 +35,7 @@
 
 	$: if (active) {
 		tick().then(() => {
-			input?.focus();
+			input.focus();
 		});
 	}
 </script>
@@ -54,7 +56,7 @@
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 	<div
 		class={cn(
-			inputVariants({ variant: 'naked' }),
+			'border-none',
 			'leading-tight items-center cursor-text not-prose h-auto',
             $$props.class
 		)}

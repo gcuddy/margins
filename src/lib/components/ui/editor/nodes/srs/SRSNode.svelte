@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { Editor, NodeViewProps } from '@tiptap/core';
-	import { NodeViewWrapper } from 'svelte-tiptap';
-	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
-	import { cn } from '$lib/utils/tailwind';
 	import { getContext, onMount } from 'svelte';
-	import { currentAnnotation } from '../../../../../../routes/tests/(app2)/(listables)/[type=type]/[id]/Article.svelte';
+	import { NodeViewWrapper } from 'svelte-tiptap';
+
 	import { notes } from '$lib/state/annotations';
+	import { cn } from '$lib/utils/tailwind';
+
 	import TEditor from '../../Editor.svelte';
 
 	export let node: NodeViewProps['node'];
@@ -16,11 +16,10 @@
 	$: editable = editor.isEditable && selected;
 
 	const context = getContext('editor_context');
-	$: console.log({ node });
 
 	let prompt = node.attrs.prompt;
 	let response = node.attrs.response;
-	let id = node.attrs.id;
+	const id = node.attrs.id;
 	let active = false;
 	$: if (selected) {
 		active = true;
@@ -28,9 +27,9 @@
 
 	$: if (prompt !== node.attrs.prompt || response !== node.attrs.response || id !== node.attrs.id) {
 		updateAttributes({
+			id,
 			prompt,
-			response,
-			id
+			response
 		});
 
 		if (id) {

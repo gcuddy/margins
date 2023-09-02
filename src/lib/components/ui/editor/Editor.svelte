@@ -17,17 +17,17 @@
 	import { fade } from 'svelte/transition';
 	import { persisted } from 'svelte-local-storage-store';
 	import { toast } from 'svelte-sonner';
-	import { createEditor, Editor, EditorContent } from 'svelte-tiptap';
+	import { createEditor, type Editor, EditorContent } from 'svelte-tiptap';
 
 	import { page } from '$app/stores';
-	import { mutation, MutationInput } from '$lib/queries/query';
+	import { mutation, type MutationInput } from '$lib/queries/query';
 	import { cn } from '$lib/utils/tailwind';
 
 	import { badgeVariants } from '../Badge.svelte';
 	import BubbleMenu from './BubbleMenu.svelte';
 	import {
 		generate_tiptap_extensions,
-		TiptapExtensionProps,
+		type TiptapExtensionProps,
 	} from './extensions';
 	import { TiptapEditorProps } from './props';
 	import { save_srs_nodes } from './utils';
