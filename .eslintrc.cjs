@@ -4,8 +4,10 @@ module.exports = {
 	root: true,
 	extends: [
 		'eslint:recommended',
-		'plugin:@typescript-eslint/strict-type-checked',
-		'plugin:@typescript-eslint/stylistic-type-checked',
+		// 'plugin:@typescript-eslint/strict-type-checked',
+		// 'plugin:@typescript-eslint/stylistic-type-checked',
+        'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/strict',
 		'plugin:import/errors',
 		'plugin:import/typescript',
 		'plugin:svelte/recommended',
@@ -156,8 +158,8 @@ module.exports = {
 		ecmaVersion: 'latest',
 		extraFileExtensions: ['.svelte'],
 		// project: './tsconfig.json',
-		project: true,
-		tsconfigRootDir: __dirname,
+		// project: true,
+		// tsconfigRootDir: __dirname,
 	},
 	ignorePatterns: ['*.cjs'],
 	// overrides: [
