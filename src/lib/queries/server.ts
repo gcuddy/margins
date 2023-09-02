@@ -620,15 +620,7 @@ export async function entry_by_id({
 								eb
 									.selectFrom('Entry as e')
 									.whereRef('e.id', '=', 'r.relatedEntryId')
-									.select([
-										'e.title',
-										'e.id',
-										'e.type',
-										'e.spotifyId',
-										'e.tmdbId',
-										'e.googleBooksId',
-										'e.podcastIndexId',
-									]),
+									.select(entrySelect),
 							).as('related_entry'),
 						)
 						.whereRef('r.entryId', '=', 'Entry.id')
@@ -644,15 +636,7 @@ export async function entry_by_id({
 								eb
 									.selectFrom('Entry as e')
 									.whereRef('e.id', '=', 'r.entryId')
-									.select([
-										'e.title',
-										'e.id',
-										'e.type',
-										'e.spotifyId',
-										'e.tmdbId',
-										'e.googleBooksId',
-										'e.podcastIndexId',
-									]),
+									.select(entrySelect),
 							).as('related_entry'),
 						)
 						.whereRef('r.relatedEntryId', '=', 'Entry.id')

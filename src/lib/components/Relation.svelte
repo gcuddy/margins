@@ -1,41 +1,39 @@
 <script lang="ts">
-	import type { Entry, Relation } from '@prisma/client';
-	import Badge from './ui/Badge.svelte';
-	import type { ComponentType } from 'svelte';
+	import type { Relation } from '@prisma/client';
 	import {
 		ArrowLeft,
 		ArrowLeftRight,
 		ArrowRightLeft,
-		Edit3Icon,
 		GroupIcon,
 		MoreHorizontalIcon,
 		TrashIcon
 	} from 'lucide-svelte';
-	import { getId, getType } from '$lib/utils/entries';
-	import { enhance } from '$app/forms';
-	import OptionsMenu from './ui/dropdown-menu/OptionsMenu.svelte';
-	import { dialog_store } from './ui/singletons/Dialog.svelte';
-	import NativeSelect from './ui/NativeSelect.svelte';
-	import Button from './ui/Button.svelte';
-	import { post } from '$lib/utils/forms';
+	import type { ComponentType } from 'svelte';
+
 	import { invalidate } from '$app/navigation';
-	import HoverCard from './ui/hover-card/HoverCard.svelte';
-	import HoverEntry from './HoverEntry.svelte';
 	import { page } from '$app/stores';
+	import type { ListEntry } from '$lib/db/selects';
+	import { getId, getType } from '$lib/utils/entries';
+	import { post } from '$lib/utils/forms';
+
+	import HoverEntry from './HoverEntry.svelte';
+	import Badge from './ui/Badge.svelte';
+	import Button from './ui/Button.svelte';
+	import OptionsMenu from './ui/dropdown-menu/OptionsMenu.svelte';
+	import HoverCard from './ui/hover-card/HoverCard.svelte';
+	import NativeSelect from './ui/NativeSelect.svelte';
+	import { dialog_store } from './ui/singletons/Dialog.svelte';
 
 	const icons: Record<Relation['type'], ComponentType> = {
+		Grouped: GroupIcon,
 		Related: ArrowRightLeft,
-		SavedFrom: ArrowLeft,
-		Grouped: GroupIcon
+		SavedFrom: ArrowLeft
 	};
 
 	export let type: Relation['type'];
 	export let id: Relation['id'];
-	export let entry: Pick<
-		Entry,
-		'type' | 'id' | 'tmdbId' | 'googleBooksId' | 'spotifyId' | 'podcastIndexId' | 'title'
-	>;
-	let original_type = type;
+	export let entry: ListEntry;
+	const original_type = type;
 
 	const on_type_change = (e: Event) => {
 		const target = e.target as HTMLSelectElement;
@@ -56,22 +54,20 @@
 			items={[
 				[
 					{
-						text: 'Edit type',
+						icon: ArrowLeftRight,
 						onSelect: () =>
 							dialog_store.open({
-								title: 'Edit type',
 								content: {
 									component: NativeSelect,
 									props: {
-										options: ['Grouped', 'Related', 'SavedFrom'],
 										onChange: on_type_change,
+										options: ['Grouped', 'Related', 'SavedFrom'],
 										value: type
 									}
 								},
 								footer: {
 									component: Button,
 									props: {
-										text: 'Save',
 										onClick: () => {
 											console.log('save');
 											post(`/tests/entry/${entry.id}?/update_relation`, { id, type }).then(
@@ -82,19 +78,20 @@
 												}
 											);
 											dialog_store.close();
-										}
+										},
+										text: 'Save'
 									}
-								}
+								},
+								title: 'Edit type'
 							}),
-						icon: ArrowLeftRight
+						text: 'Edit type'
 					},
 					{
-						text: 'Delete',
+						icon: TrashIcon,
 						onSelect: () => {
-							console.log('delete');
 							post(`/tests/entry/${entry.id}?/relation`, { id }).then(() => invalidate('entry'));
 						},
-						icon: TrashIcon
+						text: 'Delete'
 					}
 				]
 			]}
