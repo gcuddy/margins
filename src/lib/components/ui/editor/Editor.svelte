@@ -99,7 +99,6 @@
 
 	export const saveNote = async (note: MutationInput<'save_note'>) => {
 		const contentData = $editor.getJSON();
-		console.log({ contentData });
 		return mutation($page, 'save_note', {
 			...note,
 			contentData,
@@ -167,7 +166,6 @@
 			save_srs_nodes(e.editor.getJSON());
 			onBlur?.(e);
 			dispatch('blur', e);
-			console.log({ e });
 		});
 		$editor.on('focus', (e) => {
 			e.editor.setEditable(true);
@@ -190,7 +188,7 @@
 	// 	hydrated = true;
 	// }
 
-	$: if (!hydrated && content !== undefined) {
+	$: if (!hydrated && content !== undefined && $editor) {
 		$editor.commands.setContent(content);
 		hydrated = true;
 	}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createContextMenu, melt } from '@melt-ui/svelte';
-	import { useQueryClient, type InfiniteData } from '@tanstack/svelte-query';
+	import { type InfiniteData,useQueryClient } from '@tanstack/svelte-query';
 	import { cva, type VariantProps } from 'class-variance-authority';
 	import clsx from 'clsx';
 	import {
@@ -29,7 +29,7 @@
 	import { relations_icons } from '$lib/features/relations/icons';
 	import { mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
-	import { statuses, statusesWithIcons, type Status } from '$lib/status';
+	import { type Status,statuses, statusesWithIcons } from '$lib/status';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { ago, formatDuration, now } from '$lib/utils/date';
 	import { get_image, getId, getType, make_link } from '$lib/utils/entries';

@@ -1,32 +1,11 @@
 <script lang="ts">
+	import { BookMarked, ChevronDown, FilmIcon, Library, PencilIcon, Plus } from 'lucide-svelte';
+	import MarkdownIt from 'markdown-it';
+	import { superForm } from 'sveltekit-superforms/client';
+
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import rover from '$lib/actions/rover';
-	import Annotations from '$lib/commands/Annotations.svelte';
-	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
-	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import Media from '$lib/commands/Media.svelte';
-	import PinButton from '$lib/components/PinButton.svelte';
-	import EntryItem from '$lib/components/entries/EntryItem.svelte';
-	import Annotation from '$lib/components/notebook/Annotation.svelte';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Separator from '$lib/components/ui/Separator.svelte';
-	import Textarea from '$lib/components/ui/Textarea.svelte';
-	import {
-		DropdownMenu,
-		DropdownMenuContent,
-		DropdownMenuGroup,
-		DropdownMenuItem,
-		DropdownMenuSeparator,
-		DropdownMenuTrigger
-	} from '$lib/components/ui/dropdown-menu';
-	import { H1 } from '$lib/components/ui/typography';
-	import { mutation, query } from '$lib/queries/query';
-	import { cn } from '$lib/utils/tailwind';
-	import { BookMarked, ChevronDown, FilmIcon, Library, PencilIcon, Plus } from 'lucide-svelte';
-	import { superForm } from 'sveltekit-superforms/client';
-	import MarkdownIt from 'markdown-it';
+	import Tweet from '$components/Tweet.svelte';
 	import {
 		Card,
 		CardContent,
@@ -36,9 +15,31 @@
 		CardSkeleton,
 		CardTitle
 	} from '$components/ui/card';
-	import { getId, make_link } from '$lib/utils/entries';
-	import Tweet from '$components/Tweet.svelte';
 	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
+	import rover from '$lib/actions/rover';
+	import Annotations from '$lib/commands/Annotations.svelte';
+	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
+	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
+	import Media from '$lib/commands/Media.svelte';
+	import EntryItem from '$lib/components/entries/EntryItem.svelte';
+	import Annotation from '$lib/components/notebook/Annotation.svelte';
+	import PinButton from '$lib/components/PinButton.svelte';
+	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import {
+		DropdownMenu,
+		DropdownMenuContent,
+		DropdownMenuGroup,
+		DropdownMenuItem,
+		DropdownMenuSeparator,
+		DropdownMenuTrigger
+	} from '$lib/components/ui/dropdown-menu';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import Separator from '$lib/components/ui/Separator.svelte';
+	import Textarea from '$lib/components/ui/Textarea.svelte';
+	import { H1 } from '$lib/components/ui/typography';
+	import { mutation, query } from '$lib/queries/query';
+	import { getId, make_link } from '$lib/utils/entries';
+	import { cn } from '$lib/utils/tailwind';
 
 	const md = new MarkdownIt();
 
@@ -47,14 +48,12 @@
 	$: ({ pin_id } = data.collection);
 	const commander = getCommanderContext();
 
-	const { form, enhance } = superForm(data.form, {
+	const { enhance, form } = superForm(data.form, {
 		dataType: 'json'
 	});
 	let form_el: HTMLFormElement;
 	let editing = false;
 
-	$: if (!editing && $form.name !== data.collection.name) {
-	}
 
 	function addEntry() {
 		commander.open({
@@ -82,8 +81,8 @@
 				onSelect: async (a) => {
 					commander.close();
 					await mutation($page, 'addToCollection', {
-						collectionId: data.collection.id,
-						annotationId: [a.id]
+						annotationId: [a.id],
+						collectionId: data.collection.id
 					});
 					// awaitinvalidate('entry');
 					await invalidate('collection');
@@ -102,7 +101,7 @@
 					const entry = await query($page, 'findOrCreateEntry', {
 						tmdbId: a.id
 					});
-					if (!entry) return;
+					if (!entry) {return;}
 					await mutation($page, 'addToCollection', {
 						collectionId: data.collection.id,
 						entryId: entry.id
@@ -214,10 +213,10 @@
 				<OptionsMenu variant="ghost" size="xs" items={[
 					[
 						{
-							text: "Add note",
 							onSelect: () => {
 								//todo
-							}
+							},
+							text: "Add note"
 						}
 					]
 				]} />

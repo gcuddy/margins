@@ -32,7 +32,6 @@
 		TabsList,
 		TabsTrigger,
 	} from '$components/ui/tabs';
-	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Relation from '$lib/components/Relation.svelte';
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
@@ -422,7 +421,6 @@
 							on:blur={({ detail: { editor } }) => {
 								// TODO: only do this if the content has changed
 
-								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 								const contentData = editor.getJSON();
 								if (!$query.data?.entry) {
 									throw new Error('No data');
@@ -440,7 +438,7 @@
 									entryId: $query.data.entry.id,
 									id,
 									relations: links.map((link) => ({ relatedEntryId: link.id })),
-									tags,
+									tags: tags.map((tag) => tag.id),
 									type: 'note',
 								}).then(() => {
 									note_save_status.set('Saved');
@@ -461,13 +459,6 @@
 						Annotations
 					</h3>
 					<div class="flex items-center gap-1">
-						<Button
-							size="sm"
-							variant="ghost"
-							on:click={() => (show_note_form = true)}
-						>
-							<PlusIcon class="h-4 w-4" />
-						</Button>
 						<DropdownMenu>
 							<DropdownMenuTrigger
 								class={buttonVariants({ size: 'sm', variant: 'ghost' })}
@@ -478,10 +469,12 @@
 								<DropdownMenuGroup>
 									<DropdownMenuItem
 										on:click={() => {
-											triggerDownload(
-												$query.data?.entry,
-												$query.data?.entry?.annotations,
-											);
+											if ($query.data?.entry) {
+												triggerDownload(
+													$query.data.entry,
+													$query.data.entry?.annotations ?? [],
+												);
+											}
 										}}
 									>
 										<FileDown class="mr-2 h-4 w-4" />

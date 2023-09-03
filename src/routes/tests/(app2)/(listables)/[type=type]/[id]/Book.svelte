@@ -205,7 +205,7 @@
 				{/if}
 			{/if}
 			{#if tab_param === 'notes'}
-				<Dialog2>
+				<!-- <Dialog2>
 					<svelte:fragment slot="trigger" let:trigger>
 						<button class={buttonVariants()} melt={trigger}>
 							<PlusCircle class="mr-2 h-4 w-4" />
@@ -236,7 +236,7 @@
 						}}
 						{annotation}
 					/>
-				{/each}
+				{/each} -->
 			{/if}
 		</div>
 		<!-- <Tabs defaultIndex={1}>

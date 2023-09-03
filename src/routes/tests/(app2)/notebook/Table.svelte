@@ -1,25 +1,6 @@
 <script lang="ts">
-	import { createTable, Subscribe, Render, createRender } from 'svelte-headless-table';
-	import type { Note, NotesInput } from '$lib/queries/server';
-
-	import {
-		addSortBy,
-		addPagination,
-		addTableFilter,
-		addSelectedRows,
-		addHiddenColumns,
-		addColumnOrder
-	} from 'svelte-headless-table/plugins';
-	import { derived, Writable, type Readable } from 'svelte/store';
-	import * as Table from '$lib/components/ui/table';
-	import { Input } from '$components/ui/input';
-	import { IconPicker } from '$components/icon-picker';
-	import Badge from '$components/ui/Badge.svelte';
-	import { TagColorPill } from '$components/tags/tag-color';
-	import DataTableCheckbox from './data-table-checkbox.svelte';
-	import { cn } from '$lib';
-	import BulkActions from './bulk-actions.svelte';
-	import { Button } from '$components/ui/button';
+	import { createVirtualizer,createWindowVirtualizer } from '@tanstack/svelte-virtual';
+	import commandScore from 'command-score';
 	import {
 		ArchiveIcon,
 		ChevronDownIcon,
@@ -28,27 +9,46 @@
 		PinIcon,
 		SearchIcon
 	} from 'lucide-svelte';
+	import { afterUpdate, createEventDispatcher, tick } from 'svelte';
+	import { derived, type Readable,type Writable } from 'svelte/store';
+	import { createRender,createTable, Render, Subscribe } from 'svelte-headless-table';
+	import {
+		addColumnOrder,
+		addHiddenColumns,
+		addPagination,
+		addSelectedRows,
+		addSortBy,
+		addTableFilter	} from 'svelte-headless-table/plugins';
+
+	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { create_multi } from '$components/entries/multi-select/multi';
+	import { IconPicker } from '$components/icon-picker';
+	import { TagColorPill } from '$components/tags/tag-color';
+	import Badge from '$components/ui/Badge.svelte';
+	import { Button } from '$components/ui/button';
+	import { Input } from '$components/ui/input';
+	import { cn } from '$lib';
+	import * as Table from '$lib/components/ui/table';
 	import {
 		initCreatePinMutation,
 		initDeletePinMutation,
 		updateAnnotationMutation
 	} from '$lib/queries/mutations/index';
-	import commandScore from 'command-score';
-	import { create_multi } from '$components/entries/multi-select/multi';
-	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
+	import type { Note, NotesInput } from '$lib/queries/server';
+
 	import type { Snapshot } from '../../../$types';
-	import { page } from '$app/stores';
-	import { afterUpdate, createEventDispatcher, tick } from 'svelte';
-	import { createWindowVirtualizer, createVirtualizer } from '@tanstack/svelte-virtual';
-	export let notes: Readable<Note[]>;
+	import BulkActions from './bulk-actions.svelte';
+	import DataTableCheckbox from './data-table-checkbox.svelte';
+	export let notes: Readable<Array<Note>>;
 
 	export let input: Writable<NotesInput>;
 
 	export let loading = false;
 
 	type Sort = {
-		orderBy: NotesInput['orderBy'];
 		dir: NotesInput['dir'];
+		orderBy: NotesInput['orderBy'];
 	};
 	export let onSort: ((sort: Sort) => void) | undefined = undefined;
 
@@ -69,6 +69,13 @@
 	);
 
 	const table = createTable(notes, {
+		filter: addTableFilter({
+			fn: ({ filterValue, value }) => {
+				const score = commandScore(value, filterValue);
+				return score > 0.05;
+			}
+		}),
+		select: addSelectedRows(),
 		sort: addSortBy({
 			disableMultiSort: true,
 			initialSortKeys: [
@@ -77,25 +84,12 @@
 					order: 'desc'
 				}
 			]
-		}),
-		select: addSelectedRows(),
-		filter: addTableFilter({
-			fn: ({ value, filterValue }) => {
-				const score = commandScore(value, filterValue);
-				return score > 0.05;
-			}
 		})
 	});
 
 	const columns = table.createColumns([
 		table.column({
 			accessor: 'id',
-			header: (_, { pluginStates }) => {
-				const { allRowsSelected } = pluginStates.select;
-				return createRender(DataTableCheckbox, {
-					checked: allRowsSelected
-				});
-			},
 			cell: ({ row }, { pluginStates }) => {
 				const { getRowState } = pluginStates.select;
 				const { isSelected } = getRowState(row);
@@ -103,22 +97,28 @@
 					checked: isSelected
 				});
 			},
+			header: (_, { pluginStates }) => {
+				const { allRowsSelected } = pluginStates.select;
+				return createRender(DataTableCheckbox, {
+					checked: allRowsSelected
+				});
+			},
 			plugins: {
+				filter: {
+					exclude: true
+				},
 				sort: {
 					disable: true
-				},
-				filter: {
-					exclude: true
 				}
 			}
 		}),
 		table.column({
-			header: 'Name',
-			accessor: 'title'
+			accessor: 'title',
+			header: 'Name'
 		}),
 		table.column({
-			header: 'Updated',
 			accessor: 'updatedAt',
+			header: 'Updated',
 			plugins: {
 				filter: {
 					exclude: true
@@ -126,8 +126,8 @@
 			}
 		}),
 		table.column({
-			header: 'Created',
 			accessor: 'createdAt',
+			header: 'Created',
 			plugins: {
 				filter: {
 					exclude: true
@@ -136,18 +136,18 @@
 		})
 	]);
 
-	const { headerRows, rows, tableAttrs, tableBodyAttrs, pluginStates } =
+	const { headerRows, pluginStates, rows, tableAttrs, tableBodyAttrs } =
 		table.createViewModel(columns);
 
-	const { sortKeys, preSortedRows } = pluginStates.sort;
-	const { selectedDataIds, allRowsSelected, someRowsSelected, getRowState } = pluginStates.select;
+	const { preSortedRows, sortKeys } = pluginStates.sort;
+	const { allRowsSelected, getRowState, selectedDataIds, someRowsSelected } = pluginStates.select;
 	const { filterValue } = pluginStates.filter;
 
 	const selectedData = derived([selectedDataIds, rows], ([ids, rows]) => {
 		const relevantRows = rows.filter((row) => ids[row.id]);
 		return relevantRows
 			.map((row) => {
-				if (row.isData()) return row.original;
+				if (row.isData()) {return row.original;}
 			})
 			.filter(Boolean);
 	});
@@ -157,14 +157,14 @@
 		// If all selected data.pin is falsy, return false
 		// If some selected data.pin is truthy, return "indeterminate"
 		const pins = $selectedData.map((data) => data.pin);
-		if (pins.every(Boolean)) return true;
-		if (pins.every((pin) => !pin)) return false;
+		if (pins.every(Boolean)) {return true;}
+		if (pins.every((pin) => !pin)) {return false;}
 		return 'indeterminate' as const;
 	});
 
 	const multi = create_multi({
-		items: $notes.map((note) => note.id),
 		allowedSelector: 'input',
+		items: $notes.map((note) => note.id),
 		onEnter(item) {
 			const row = $rows.find((row) => row.id === item);
 			if (row?.isData()) {
@@ -178,32 +178,32 @@
 
 	export const snapshot: Snapshot = {
 		capture: () => ({
-			highlighted: $state.highlighted,
-			_filterValue: $filterValue
+			_filterValue: $filterValue,
+			highlighted: $state.highlighted
 		}),
-		restore: ({ highlighted, _filterValue }) => {
-			console.log(`restoring`, { highlighted, _filterValue });
+		restore: ({ _filterValue, highlighted }) => {
+			console.log(`restoring`, { _filterValue, highlighted });
 			multi.helpers.setHighlighted(highlighted);
 			$filterValue = _filterValue;
 		}
 	};
 
 	type EphemeralState = {
-		highlighted: string | null;
 		_filterValue: string;
+		highlighted: string | null;
 	};
 
 	// my own capture and restore
 	beforeNavigate(() => {
 		const data: EphemeralState = {
-			highlighted: $state.highlighted,
-			_filterValue: $filterValue
+			_filterValue: $filterValue,
+			highlighted: $state.highlighted
 		};
 		sessionStorage.setItem($page.url.toString(), JSON.stringify(data));
 	});
 	afterNavigate(() => {
 		const data = sessionStorage.getItem($page.url.toString());
-		if (!data) return;
+		if (!data) {return;}
 		const parsed = JSON.parse(data) as EphemeralState;
 		if (parsed) {
 			multi.helpers.setHighlighted(parsed.highlighted);
@@ -216,8 +216,8 @@
 		// getScrollElement: () => tbody ?? null,
 		count: $rows.length,
 		estimateSize: () => 60,
-		overscan: 20,
-		getItemKey: (index) => $rows[index]?.id ?? index
+		getItemKey: (index) => $rows[index]?.id ?? index,
+		overscan: 20
 	});
 
 	export const measure = () => $virtualizer?.measure();
@@ -432,7 +432,7 @@
 		size="sm"
 		on:click={() => {
 			// TODO: confirm
-			console.log({ $selectedDataIds, $rows });
+			console.log({ $rows, $selectedDataIds });
 			const rowsToUpdate = $rows.filter((row) => $selectedDataIds[row.id]);
 			console.log({ rowsToUpdate });
 			const ids = rowsToUpdate
@@ -443,8 +443,8 @@
 				})
 				.filter(Boolean);
 			$mutation.mutate({
-				id: ids,
-				deleted: new Date()
+				deleted: new Date(),
+				id: ids
 			});
 			selectedDataIds.clear();
 		}}

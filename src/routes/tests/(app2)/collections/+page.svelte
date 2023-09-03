@@ -1,53 +1,40 @@
 <script>
-	import { Button } from '$lib/components/ui/button';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Label from '$lib/components/ui/Label.svelte';
-	import {
-		Dialog,
-		DialogContent,
-		DialogHeader,
-		DialogTitle,
-		DialogDescription,
-		DialogFooter,
-		DialogTrigger
-	} from '$lib/components/ui/dialog';
-	import { H1 } from '$lib/components/ui/typography';
-	import { name } from '$lib/icons';
+	import { createInfiniteQuery } from '@tanstack/svelte-query';
 	import { Loader2, PlusCircle } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { superForm } from 'sveltekit-superforms/client';
-	import { createInfiniteQuery } from '@tanstack/svelte-query';
+
+	import Header from '$components/ui/Header.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import {
+		Dialog,
+		DialogContent,
+		DialogDescription,
+		DialogFooter,
+		DialogHeader,
+		DialogTitle,
+		DialogTrigger,
+	} from '$lib/components/ui/dialog';
+	import Input from '$lib/components/ui/input/input.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import Label from '$components/ui/Label.svelte';
+	import Separator from '$components/ui/Separator.svelte';
 	export let data;
 
 	const query = createInfiniteQuery(
-		queryFactory.collections.list({
-			filter: {
-				or: [
-					{
-						name: {
-							contains: 'china'
-						}
-					},
-					{
-						name: {
-							contains: 'CHCC'
-						}
-					}
-				]
-			}
-		})
+		queryFactory.collections.list(),
 	);
 
-	$: console.log({ $query });
-
-	const { enhance, form, constraints, errors, delayed, submitting } = superForm(data.form, {
-		onUpdated: (data) => {
-			toast.success('Collection created!');
-			new_collection_modal = false;
+	const { constraints, delayed, enhance, errors, form, submitting } = superForm(
+		data.form,
+		{
+			onUpdated: (data) => {
+				toast.success('Collection created!');
+				new_collection_modal = false;
+			},
+			resetForm: true,
 		},
-		resetForm: true
-	});
+	);
 
 	let new_collection_modal = false;
 
@@ -57,55 +44,59 @@
 	});
 </script>
 
-<div class="flex items-center justify-between">
-	<H1>Collections</H1>
-
-	<Dialog bind:open={new_collection_modal}>
-		<DialogTrigger asChild let:builder>
-			<Button builders={[builder]}>
-				<PlusCircle class="mr-2 h-4 w-4" />
-				New Collection</Button
-			>
-		</DialogTrigger>
-		<DialogContent>
-			<form use:enhance class="contents" method="post">
-				<DialogHeader>
-					<DialogTitle>New Collection</DialogTitle>
-					<DialogDescription>Enter a name for your new collection</DialogDescription>
-				</DialogHeader>
-				<div class="flex items-center gap-4">
-					<Label for="collection-name">Name</Label>
-					<Input
-						name="name"
-						bind:value={$form.name}
-						id="collection-name"
-						placeholder="Collection Name"
-						autocomplete="off"
-						{...$constraints.name}
-					/>
-					{#if $errors.name}
-						<div class="text-sm text-red-500">{$errors.name}</div>
-					{/if}
-				</div>
-				<DialogFooter>
-					<Button disabled={$submitting}>
-						{#if $delayed}
-							<Loader2 class="mr-2 h-4 w-4" />
+<Header>
+	<span class="text-xl tracking-tight font-bold">Collections</span>
+	<svelte:fragment slot="end">
+		<Dialog bind:open={new_collection_modal}>
+			<DialogTrigger asChild let:builder>
+				<Button variant="outline" size='sm' builders={[builder]}>
+					<PlusCircle class="mr-2 h-4 w-4" />
+					New Collection</Button
+				>
+			</DialogTrigger>
+			<DialogContent>
+				<form use:enhance class="contents" method="post">
+					<DialogHeader>
+						<DialogTitle>New Collection</DialogTitle>
+						<DialogDescription
+							>Enter a name for your new collection</DialogDescription
+						>
+					</DialogHeader>
+					<div class="flex items-center gap-4">
+						<Label for="collection-name">Name</Label>
+						<Input
+							name="name"
+							bind:value={$form.name}
+							id="collection-name"
+							placeholder="Collection Name"
+							autocomplete="off"
+							{...$constraints.name}
+						/>
+						{#if $errors.name}
+							<div class="text-sm text-red-500">{$errors.name}</div>
 						{/if}
-						Save
-					</Button>
-				</DialogFooter>
-			</form>
-		</DialogContent>
-	</Dialog>
-</div>
-<div class="mt-4 flex flex-col space-y-4">
+					</div>
+					<DialogFooter>
+						<Button disabled={$submitting}>
+							{#if $delayed}
+								<Loader2 class="mr-2 h-4 w-4" />
+							{/if}
+							Save
+						</Button>
+					</DialogFooter>
+				</form>
+			</DialogContent>
+		</Dialog>
+	</svelte:fragment>
+</Header>
+
+<div class="mt-4 flex flex-col">
 	<div class="max-w-sm">
 		<Input bind:value={filter_value} placeholder="Filter…" type="text" />
 	</div>
-	{#each filtered_collections as { id, name, items }}
+	{#each filtered_collections as { id, items, name }}
 		<a
-			class="flex items-center gap-x-4 text-xl font-semibold tracking-tighter"
+			class="flex items-center gap-x-4 text-xl font-semibold tracking-tighter px-6 py-4"
 			href="/tests/collection/{id}"
 		>
 			<div class="relative">
@@ -116,7 +107,9 @@
 						alt=""
 					/>
 				{:else}
-					<div class="relative z-10 aspect-square w-16 rounded-md bg-muted shadow" />
+					<div
+						class="relative z-10 aspect-square w-16 rounded-md bg-muted shadow"
+					/>
 				{/if}
 				{#if items[1]?.image}
 					<!-- show behind above image -->
@@ -137,5 +130,6 @@
 			</div>
 			{name}</a
 		>
+        <Separator class="w-full h-[0.5px] bg-border" />
 	{/each}
 </div>
