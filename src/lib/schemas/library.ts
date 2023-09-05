@@ -1,63 +1,66 @@
-import { typeSchema } from '$lib/types';
 import { BookGenre, Status } from '@prisma/client';
 import { z } from 'zod';
+
+import { typeSchema } from '$lib/types';
+
 import { tagSchema } from './objects/tag';
 
 const defaultCursorSchema = z.object({
-	sort_order: z.number(),
 	id: z.number(),
+	sort_order: z.number(),
 });
 
 // Only enabled if grouping is active. TODO make types more robust
 const groupingCursorSchema = z.object({
-	type: typeSchema.optional(),
-	tag: z.number().optional(),
 	domain: z.string().optional(),
+	tag: z.number().optional(),
+	type: typeSchema.optional(),
 });
 
 export const entryListSortSchemas = z
 	.union([
 		z.object({
-			sort: z.literal('manual').nullish(),
 			// order: z.nativeEnum(['asc', 'desc']),
 			cursor: groupingCursorSchema.and(defaultCursorSchema).nullish(),
+
+			sort: z.literal('manual').nullish(),
 		}),
 		z.object({
-			sort: z.literal('updatedAt'),
 			cursor: groupingCursorSchema
 				.extend({
-					updatedAt: z.coerce.date(),
 					id: z.number(),
+					updatedAt: z.coerce.date(),
 				})
 				.nullish(),
+			sort: z.literal('updatedAt'),
 		}),
 		z.object({
+			cursor: groupingCursorSchema
+				.extend({
+					id: z.number(),
+					title: z.string(),
+				})
+				.nullish(),
 			// sort: z.nu
 			sort: z.literal('title'),
-			cursor: groupingCursorSchema
-				.extend({
-					title: z.string(),
-					id: z.number(),
-				})
-				.nullish(),
 		}),
 		z.object({
-			sort: z.literal('author'),
 			cursor: groupingCursorSchema
 				.extend({
 					author: z.string(),
 					id: z.number(),
 				})
 				.nullish(),
+			sort: z.literal('author'),
 		}),
 		z.object({
-			sort: z.literal('time'),
 			cursor: groupingCursorSchema
 				.extend({
-					time: z.number().nullable(),
 					id: z.number(),
+					time: z.number().nullable(),
 				})
 				.nullish(),
+			sort: z.literal('time'),
 		}),
 	])
 	.and(
@@ -94,29 +97,33 @@ const entryTagFilter = tagSchema.partial();
 
 export const filterLibrarySchema = z
 	.object({
+		book_genre: z.enum(['Fiction', 'NonFiction']).optional(),
 		createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),
-		type: typeSchema.nullish(),
+		domain: z.string().optional(),
+		readingTime: z.object({
+			max: z.number().int().positive().optional(),
+			min: z.number().int().positive().optional(),
+		}),
 		tags: z.object({
 			ids: z.number().int().positive().array(),
 			type: z.enum(logicalOperators).optional(),
 		}),
-		readingTime: z.object({
-			min: z.number().int().positive().optional(),
-			max: z.number().int().positive().optional(),
-		}),
-		domain: z.string().optional(),
-        book_genre: z.enum(["Fiction", "NonFiction"]).optional(),
+		type: typeSchema.nullish(),
 	})
 	.partial();
 export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
 
 export const get_library_schema = z
 	.object({
-		status: z.nativeEnum(Status).nullable(), // TODO: allow custom states
-		search: z.string().optional(),
 		filter: filterLibrarySchema.optional(),
+
 		// Grouping is implemented as an additional sorting option, and then the UI completes it.  For instance, if we group by type, then we need all our types together (hence sorting). Additional layers of sorting will taker place "within" these groups. For no grouping, set to undefined.
 		grouping: z.enum(['none', 'type', 'tag', 'domain']).optional(),
+
+		// TODO: allow custom states
+		search: z.string().optional(),
+
+		status: z.nativeEnum(Status).nullable(),
 	})
 	.and(entryListSortSchemas);
 

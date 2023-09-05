@@ -168,6 +168,7 @@
 </script>
 
 <aside
+    id="entry-sidebar"
 	class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain"
 >
 	<!-- 2.5rem is size of sidebar toggle -->

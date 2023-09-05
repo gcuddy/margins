@@ -6,7 +6,7 @@
 	import { draggable } from '@neodrag/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
-    import throttle from 'just-throttle';
+	import throttle from 'just-throttle';
 	import { EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
 	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
 	import { derived, type Writable, writable } from 'svelte/store';
@@ -19,6 +19,8 @@
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Editor from '$components/ui/editor/Editor.svelte';
+	import Kbd from '$components/ui/KBD.svelte';
+	import * as Tooltip from '$components/ui/tooltip';
 	import drag_context from '$lib/actions/drag-context';
 	import focusTrap from '$lib/actions/focus-trap';
 	import type { TargetSchema } from '$lib/annotation';
@@ -82,7 +84,7 @@
 		},
 	];
 
-    $: author = data.entry?.author;
+	$: author = data.entry?.author;
 
 	const annotateMutation = createMutation({
 		mutationFn: async (input: MutationInput<'save_note'>) => {
@@ -157,6 +159,20 @@
 				};
 			});
 
+			if ($rightSidebar) {
+				await tick();
+				const sidebarEl = document.getElementById('entry-sidebar');
+				if (sidebarEl) {
+					const annotationEl = sidebarEl.querySelector(
+						`[data-sidebar-annotation-id="${newData.id}"]`,
+					);
+					if (annotationEl) {
+						annotationEl.scrollIntoView();
+					}
+				}
+				// scroll to new annotation
+			}
+
 			// // Return a context object with the snapshotted value
 			return { previousEntryData };
 		},
@@ -229,10 +245,21 @@
 					offset: [0, 12],
 				},
 			},
+			{
+				name: 'flip',
+				options: {
+					fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+					padding: {
+						bottom: 0,
+						top: 64,
+					},
+				},
+			},
 		],
 		placement: $mq.desktop ? 'top' : 'bottom',
-		strategy: 'fixed',
+		strategy: 'absolute',
 	});
+
 	const [annotationRef, annotationContent] = createPopperActions({
 		modifiers: [
 			{
@@ -242,7 +269,7 @@
 				},
 			},
 		],
-		placement: 'bottom',
+		placement: 'right',
 		strategy: 'fixed',
 	});
 
@@ -464,7 +491,7 @@
 		}
 	}
 
-    const throttledEnsureHighlights = throttle(ensureHighlights, 500);
+	const throttledEnsureHighlights = throttle(ensureHighlights, 500);
 
 	afterUpdate(() => {
 		if (initializing) {
@@ -574,7 +601,7 @@
 	});
 
 	let lastScrollTop = 0;
-	const { scrollingDown } = getEntryContext();
+	const { rightSidebar, scrollingDown } = getEntryContext();
 
 	const setScrollOffset = () => {
 		// if (initializing) return;
@@ -662,8 +689,8 @@
 		if (id) {
 			// update
 			$annotations[id] = {
-                ...$annotations[id],
-                ...$activeAnnotation,
+				...$annotations[id],
+				...$activeAnnotation,
 				contentData,
 				id,
 			};
@@ -742,7 +769,36 @@
 	}
 
 	let annotationEditMenuEl: HTMLElement;
+
+	const shouldShowAnnotationTooltip = derived(
+		[showAnnotationTooltip, scrolling],
+		([$showAnnotationTooltip, $scrolling]) => {
+			return $showAnnotationTooltip && !$scrolling && data.entry;
+		},
+	);
+
+	function handleKeydown(event: KeyboardEvent) {
+		if ($shouldShowAnnotationTooltip) {
+			// then listen for the "h" and "a" keys to highlight or annotate, respectively
+			if (event.key === 'h') {
+				// highlight
+				const button = document.getElementById('highlight-button');
+				if (button && button instanceof HTMLButtonElement) {
+					button.click();
+				}
+			}
+			if (event.key === 'a') {
+				// annotate
+				const button = document.getElementById('annotate-button');
+				if (button && button instanceof HTMLButtonElement) {
+					button.click();
+				}
+			}
+		}
+	}
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 {#if showEditMenu}
 	<div
@@ -812,7 +868,7 @@
 	</div>
 {/if}
 
-{#if $showAnnotationTooltip && $selection && !$scrolling && data.entry}
+{#if $shouldShowAnnotationTooltip}
 	<!-- Note: should this be popover? Using some classes from shadcn/ui/hover card -->
 	<div
 		use:popperContent
@@ -828,75 +884,95 @@
 			}}
 		>
 			<div class="flex justify-between space-x-2">
-				<Button
-					on:pointerdown={async (e) => {
-						if (!$selection) {
-							clearSelection();
-						}
-						const id = nanoid();
-						const info = await highlight({
-							'data-annotation-id': `${id}`,
-							id: `annotation-${id}`,
-						});
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						<Button
+							id="highlight-button"
+							on:click={async (e) => {
+								if (!$selection) {
+									clearSelection();
+								}
+								const id = nanoid();
+								const info = await highlight({
+									'data-annotation-id': `${id}`,
+									id: `annotation-${id}`,
+								});
 
-						if (!info) {
-							e.preventDefault();
-							return;
-						}
-						$annotateMutation.mutate({
-							id,
-							target: {
-								selector: info.selector,
-								source: '',
-							},
-						});
-						annotations.add(id, {
-							els: info.els,
-							id,
-							target: {
-								selector: info.selector,
-								source: '',
-							},
-						});
-						clearSelection();
-					}}
-					type="submit"
-					class="flex h-auto flex-col space-y-1"
-					variant="ghost"
-				>
-					<Highlighter class="h-5 w-5" />
-					<Muted class="text-xs">Highlight</Muted>
-				</Button>
-				<Button
-					on:pointerdown={async (e) => {
-						// show annotation menu and grab annotation
-						// clearSelection();
-						const highlight_info = await highlight();
-						clearSelection();
-						if (highlight_info) {
-							const { els, id, selector } = highlight_info;
-							const el = els[0]?.highlightElements[0];
-							if (el) {
-								annotationRef(el);
-							}
-							annotations.addTemp(id, {
-								els,
-								id,
-								target: {
-									selector,
-									source: '',
-								},
-							});
-							await tick();
-							$showEditAnnotation = true;
-						}
-					}}
-					variant="ghost"
-					class="flex h-auto flex-col space-y-1"
-				>
-					<EditIcon class="h-5 w-5" />
-					<Muted class="text-xs">Annotate</Muted>
-				</Button>
+								if (!info) {
+									e.preventDefault();
+									return;
+								}
+								$annotateMutation.mutate({
+									id,
+									target: {
+										selector: info.selector,
+										source: '',
+									},
+								});
+								annotations.add(id, {
+									els: info.els,
+									id,
+									target: {
+										selector: info.selector,
+										source: '',
+									},
+								});
+								clearSelection();
+							}}
+							type="submit"
+							class="flex h-auto flex-col space-y-1"
+							variant="ghost"
+						>
+							<Highlighter class="h-5 w-5" />
+							<Muted class="text-xs">Highlight</Muted>
+						</Button>
+					</Tooltip.Trigger>
+
+					<Tooltip.Content class="flex items-center gap-2">
+						<span>Highlight this passage</span>
+						<Kbd>h</Kbd>
+					</Tooltip.Content>
+				</Tooltip.Root>
+
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						<Button
+							id="annotate-button"
+							on:click={async (e) => {
+								// show annotation menu and grab annotation
+								// clearSelection();
+								const highlight_info = await highlight();
+								clearSelection();
+								if (highlight_info) {
+									const { els, id, selector } = highlight_info;
+									const el = els[0]?.highlightElements[0];
+									if (el) {
+										annotationRef(el);
+									}
+									annotations.addTemp(id, {
+										els,
+										id,
+										target: {
+											selector,
+											source: '',
+										},
+									});
+									await tick();
+									$showEditAnnotation = true;
+								}
+							}}
+							variant="ghost"
+							class="flex h-auto flex-col space-y-1"
+						>
+							<EditIcon class="h-5 w-5" />
+							<Muted class="text-xs">Annotate</Muted>
+						</Button>
+					</Tooltip.Trigger>
+					<Tooltip.Content>
+						<span>Annotate this passage</span>
+						<Kbd>a</Kbd>
+					</Tooltip.Content>
+				</Tooltip.Root>
 			</div>
 		</div>
 	</div>
@@ -929,7 +1005,6 @@
 				'flex flex-col gap-y-4 w-80 max-w-xs',
 			)}
 		>
-			<pre>{$activeAnnotationId}</pre>
 			<Editor
 				id={$activeAnnotationId ?? undefined}
 				content={$activeAnnotation?.contentData ?? undefined}

@@ -1,21 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
-	import Collections from '$lib/commands/Collections.svelte';
-	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
-	import { buttonVariants } from '$lib/components/ui/Button.svelte';
-    import { TagsCommand } from "$components/tags/tag-command"
-	import {
-		DropdownMenu,
-		DropdownMenuContent,
-		DropdownMenuGroup,
-		DropdownMenuItem,
-		DropdownMenuTrigger,
-        DropdownMenuSubContent,
-        DropdownMenuSub,
-        DropdownMenuSubTrigger
-	} from '$lib/components/ui/dropdown-menu';
-	import { mutation } from '$lib/queries/query';
 	import type { Annotation } from '@prisma/client';
 	import {
 		ArrowRightIcon,
@@ -27,14 +10,29 @@
 	} from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+    import { TagsCommand } from "$components/tags/tag-command"
+	import Collections from '$lib/commands/Collections.svelte';
+	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
+	import { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import {
+		DropdownMenu,
+		DropdownMenuContent,
+		DropdownMenuGroup,
+		DropdownMenuItem,
+        DropdownMenuSub,
+        DropdownMenuSubContent,
+        DropdownMenuSubTrigger,
+		DropdownMenuTrigger	} from '$lib/components/ui/dropdown-menu';
+	import { mutation } from '$lib/queries/query';
+
 	// export let data: ComponentProps<AnnotationForm>["data"];
 	// export let entry: Pick<Entry, "id">;
 
 	export let annotation: Pick<Annotation, 'id'>;
 
-	let show_note_form = false;
-
-	let className = buttonVariants({ variant: 'ghost', size: 'sm' });
+	let className = buttonVariants({ size: 'sm', variant: 'ghost' });
 	export { className as class };
 
 	const dispatch = createEventDispatcher();
@@ -74,8 +72,8 @@
 						props: {
 							onSelect: (collection) => {
 								mutation($page, 'addToCollection', {
-									collectionId: collection.id,
-									annotationId: [annotation.id]
+									annotationId: [annotation.id],
+									collectionId: collection.id
 								});
 							}
 						}

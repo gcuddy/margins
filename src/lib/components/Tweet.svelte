@@ -3,7 +3,7 @@
 	import MagicString from 'magic-string';
 	import dayjs from '$lib/dayjs';
 	import type { Tweet } from '$lib/api/twitter';
-	import Card from '$lib/components/ui/Card.svelte';
+	import { Card } from '$lib/components/ui/card';
 	import { onMount } from 'svelte';
 	import { create_query } from '$lib/state/query-state';
 	import { query } from '$lib/queries/query';

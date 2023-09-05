@@ -1,31 +1,33 @@
 <script lang="ts">
-	import TagCommandItems from './tag-command-items.svelte';
+	import { type ComponentProps, createEventDispatcher, onMount } from 'svelte';
+	import { writable } from 'svelte/store';
+
 	import * as Command from '$components/ui/command2';
 	import {
 		createSetTagsMutation,
+		createTagMutation,
 		updateAnnotationMutation,
-		createTagMutation
 	} from '$lib/queries/mutations/index';
-	import { onMount, type ComponentProps, createEventDispatcher } from 'svelte';
-	import { writable } from 'svelte/store';
 
-	type Tag = { id: number; name: string; color: string };
+	import TagCommandItems from './tag-command-items.svelte';
+
+	type Tag = { color: string; id: number; name: string };
 	type OurProps = {
-		entryId?: number | number[];
 		annotationId?: string;
+		autofocus?: boolean;
+		entryId?: number | Array<number>;
 		open?: boolean;
 		shouldMutate?: boolean;
-		autofocus?: boolean;
 	};
 	type $$Props = ComponentProps<TagCommandItems> & OurProps;
 
 	export let annotationId: $$Props['annotationId'] = undefined;
 	export let entryId: $$Props['entryId'] = undefined;
 	export let open = false;
-	export let selectedTags: Tag[] = [];
+	export let selectedTags: Array<Tag> = [];
 	export let shouldMutate = true;
 	export let autofocus = true;
-    export let multiple = true;
+	export let multiple = true;
 	let className = '';
 	export { className as class };
 
@@ -33,19 +35,19 @@
 	const entryMutation = createSetTagsMutation();
 	const annotationMutation = updateAnnotationMutation();
 	const tagMutation = createTagMutation();
-    const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher();
 
 	let commandInput: Command.Input;
 
 	function handleSelect(tag: Tag) {
-		if (selectedTags.some((t) => t.id === tag.id)) {
-			selectedTags = selectedTags.filter((t) => t.id !== tag.id);
-		} else {
-			selectedTags = [...selectedTags, tag];
-		}
+		selectedTags = selectedTags.some((t) => t.id === tag.id)
+			? selectedTags.filter((t) => t.id !== tag.id)
+			: [...selectedTags, tag];
 	}
 
-	$: selectedTags !== undefined && selectedTagsStore.set(selectedTags);
+	$: if (selectedTags !== undefined) {
+		selectedTagsStore.set(selectedTags);
+	}
 
 	onMount(() => {
 		if (autofocus) {
@@ -57,7 +59,7 @@
 </script>
 
 <Command.Root
-    {multiple}
+	{multiple}
 	class={className}
 	selectedValue={selectedTagsStore}
 	shouldFilter={false}
@@ -65,29 +67,28 @@
 		if (shouldMutate) {
 			if (el?.id === 'shadow-new-tag') {
 				const { id } = await $tagMutation.mutateAsync({
-					name: val
+					name: val,
 					// todo: random color
 				});
-				selectedTags = [...selectedTags, { id, name: val, color: '#000' }];
-				console.log({ selectedTags });
+				selectedTags = [...selectedTags, { color: '#000', id, name: val }];
 			}
 			if (entryId) {
 				// do
 				$entryMutation.mutate({
 					entries: Array.isArray(entryId) ? entryId : [entryId],
-					tags: selectedTags
+					tags: selectedTags,
 				});
 			}
 			if (annotationId) {
 				// mutate
 				$annotationMutation.mutate({
 					id: annotationId,
-					tags: selectedTags.map((tag) => tag.id)
+					tags: selectedTags.map((tag) => tag.id),
 				});
 			}
 		}
 		open = false;
-        dispatch('close');
+		dispatch('close');
 	}}
 >
 	<Command.Input bind:this={commandInput} autofocus placeholder="Add tags…" />

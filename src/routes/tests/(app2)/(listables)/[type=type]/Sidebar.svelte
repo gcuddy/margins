@@ -17,8 +17,8 @@
 	let container: HTMLElement | null = null;
 
 	function on_keydown(e: KeyboardEvent) {
-		if (container && check_inert(container)) return;
-		if (e.target instanceof Element && check_inside_input(e.target)) return;
+		if (container && check_inert(container)) {return;}
+		if (e.target instanceof Element && check_inside_input(e.target)) {return;}
 		if (e.key === 'i' && e.metaKey) {
 			e.preventDefault();
 			$render = !$render;
@@ -32,7 +32,7 @@
 {#if $render}
 	<div
 		bind:this={container}
-		transition:fly={{ x: $width_store, duration: 300, opacity: 1 }}
+		transition:fly={{ duration: 300, opacity: 1, x: $width_store }}
 		class="fixed hidden md:block right-0 top-0 h-screen transition-transform duration-300 md:w-[--right-sidebar-width] border-l bg-background"
 	>
 		<EntrySidebar />

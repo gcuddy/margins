@@ -17,19 +17,19 @@ const lineHeight = 1.75;
 
 type AppearanceOpts = {
 	alignment: Alignment;
+	autoHide: boolean;
+	focusMode: boolean;
 	font: Font;
 	fontSize: number;
 	lineHeight: number;
-	autoHide: boolean;
-	focusMode: boolean;
 };
 const defaultOpts: AppearanceOpts = {
 	alignment,
+	autoHide: true,
+	focusMode: false,
 	font,
 	fontSize,
 	lineHeight,
-	autoHide: true,
-	focusMode: false,
 };
 
 type AppearanceContext = Writable<AppearanceOpts> & {
@@ -76,9 +76,9 @@ export function getArticleContext(): ArticleStore {
 }
 
 type EntryContext = {
+	navWidth: Writable<number>;
 	rightSidebar: Writable<boolean>;
 	rightSidebarWidth: Writable<number>;
-	navWidth: Writable<number>;
     scrollingDown: Writable<boolean>;
 };
 

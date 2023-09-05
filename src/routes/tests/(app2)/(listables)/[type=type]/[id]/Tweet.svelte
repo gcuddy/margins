@@ -2,7 +2,7 @@
 	import MagicString from 'magic-string';
 	import { onMount } from 'svelte';
 
-	import Card from '$lib/components/ui/Card.svelte';
+	import { Card } from '$lib/components/ui/card';
 	import Muted from '$lib/components/ui/typography/Muted.svelte';
 	import dayjs from '$lib/dayjs';
 

@@ -58,6 +58,7 @@
 	export let view: VariantProps<typeof entryItemVariants>['view'] = 'list';
 
 	export let entry: LibraryEntry;
+    console.log({entry})
 
 	// Computed
 	$: author = entry.bookmark_author || entry.author;
@@ -79,7 +80,7 @@
 
 	$: href = `/tests/${getType(entry.type)}/${getId(entry)}`;
 
-	$: tag_ids = entry.tags.map((t) => t.id) || [];
+	// $: tag_ids = entry.tags.map((t) => t.id) || [];
 
 	export let out_key: Status = 'Archive';
 
@@ -203,7 +204,7 @@
 	let anchor_el: HTMLAnchorElement;
 
 	// ignore this lol
-	$: data = entry;
+	let data = entry;
 
 	$: if (data.status) {$value = data.status;}
 	$: attachment = data.relations.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');

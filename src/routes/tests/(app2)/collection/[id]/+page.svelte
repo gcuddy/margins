@@ -1,20 +1,11 @@
 <script lang="ts">
-	import { BookMarked, ChevronDown, FilmIcon, Library, PencilIcon, Plus } from 'lucide-svelte';
+	import { BookMarked, ChevronDown, ChevronRightIcon, FilmIcon, Library, PencilIcon, Plus } from 'lucide-svelte';
 	import MarkdownIt from 'markdown-it';
 	import { superForm } from 'sveltekit-superforms/client';
 
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Tweet from '$components/Tweet.svelte';
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardFooter,
-		CardHeader,
-		CardSkeleton,
-		CardTitle
-	} from '$components/ui/card';
 	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
 	import rover from '$lib/actions/rover';
 	import Annotations from '$lib/commands/Annotations.svelte';
@@ -40,6 +31,7 @@
 	import { mutation, query } from '$lib/queries/query';
 	import { getId, make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
+	import Header from '$components/ui/Header.svelte';
 
 	const md = new MarkdownIt();
 
@@ -113,6 +105,10 @@
 		});
 	}
 </script>
+
+<Header>
+    <span class="flex items-center gap-2 font-medium tracking-tight">Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" /> {data.collection.name}</span>
+</Header>
 
 <div class="flex items-center justify-between">
 	<div class="flex items-center gap-x-2">
