@@ -9,7 +9,7 @@
 		FIRST_LAST_KEYS,
 		getOptions,
 		isElementDisabled,
-		next
+		next,
 	} from '@melt-ui/svelte/internal/helpers';
 	import { Search } from 'lucide-svelte';
 
@@ -20,15 +20,15 @@
 	export let unstyled = false;
 	export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
 
-    export const focus = () => {
-        inputEl?.focus();
-    }
+	export const focus = () => {
+		inputEl?.focus();
+	};
 
 	const {
 		ids,
 		state: { open, inputValue, activeElement, selectedValue },
 		actions,
-		options
+		options,
 	} = ctx.get();
 
 	function handleClick(e: MouseEvent) {
@@ -38,7 +38,9 @@
 
 	let hasNavigated = false;
 
-	function handleKeydown(e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement }) {
+	function handleKeydown(
+		e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement },
+	) {
 		onKeydown?.(e);
 		if (e.defaultPrevented) return;
 
@@ -70,8 +72,11 @@
 				if (!isHTMLElement(menuEl)) return;
 
 				const enabledItems = Array.from(
-					menuEl.querySelectorAll(`[data-command-item]:not([data-disabled])`)
+					menuEl.querySelectorAll(
+						`[data-command-item]:not([data-disabled]):not([data-hidden])`,
+					),
 				).filter((item): item is HTMLElement => isHTMLElement(item));
+				console.log({ enabledItems });
 				if (!enabledItems.length) return;
 
 				if (e.key === kbd.ARROW_DOWN) {
@@ -93,8 +98,6 @@
 		}
 		// Pressing enter with a highlighted item should select it.
 		if (e.key === kbd.ENTER) {
-			console.log('enter pressed');
-			console.log({ $activeElement });
 			if ($activeElement) {
 				actions.selectItem($activeElement);
 			}
@@ -125,9 +128,13 @@
 			const itemElements = getOptions(menuElement);
 			if (!itemElements.length) return;
 			// Disabled items can't be highlighted. Skip them.
-			const candidateNodes = itemElements.filter((opt) => !isElementDisabled(opt));
+			const candidateNodes = itemElements.filter(
+				(opt) => !isElementDisabled(opt) && opt.dataset.hidden === undefined,
+			);
 			// Get the index of the currently highlighted item.
-			const currentIndex = $activeElement ? candidateNodes.indexOf($activeElement) : -1;
+			const currentIndex = $activeElement
+				? candidateNodes.indexOf($activeElement)
+				: -1;
 			// Find the next menu item to highlight.
 			// const $loop = get(loop);
 			// const $scrollAlignment = get(scrollAlignment);
@@ -139,7 +146,9 @@
 					] as HTMLElement;
 					break;
 				case kbd.ARROW_UP:
-					nextItem = candidateNodes[Math.max(currentIndex - 1, 0)] as HTMLElement;
+					nextItem = candidateNodes[
+						Math.max(currentIndex - 1, 0)
+					] as HTMLElement;
 					break;
 				case kbd.PAGE_DOWN:
 					nextItem = candidateNodes[
@@ -147,7 +156,9 @@
 					] as HTMLElement;
 					break;
 				case kbd.PAGE_UP:
-					nextItem = candidateNodes[Math.max(currentIndex - 10, 0)] as HTMLElement;
+					nextItem = candidateNodes[
+						Math.max(currentIndex - 10, 0)
+					] as HTMLElement;
 					break;
 				case kbd.HOME:
 					nextItem = candidateNodes[0] as HTMLElement;
@@ -167,7 +178,6 @@
 	}
 
 	function handleInput(e: Event) {
-		console.log('input', e);
 		hasNavigated = false;
 		if (!inputEl) return;
 		// TODO
@@ -187,7 +197,7 @@
 		class={cn(
 			!unstyled &&
 				'flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
-			className
+			className,
 		)}
 		id={ids.input}
 		role="combobox"

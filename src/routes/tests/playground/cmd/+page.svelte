@@ -1,17 +1,5 @@
 <script lang="ts">
 	import {
-		Command,
-		CommandInput,
-		CommandItem,
-		CommandItems,
-		CommandList,
-		CommandGroup,
-		CommandEmpty,
-		CommandSeparator,
-		CommandShortcut
-	} from '$lib/components/ui/command2';
-
-	import {
 		Calculator,
 		Calendar,
 		CalendarPlusIcon,
@@ -22,6 +10,18 @@
 		Smile,
 		User
 	} from 'lucide-svelte';
+
+	import {
+		Command,
+		CommandEmpty,
+		CommandGroup,
+		CommandInput,
+		CommandItem,
+		CommandItems,
+		CommandList,
+		CommandSeparator,
+		CommandShortcut
+	} from '$lib/components/ui/command2';
 
 	export let data;
 
@@ -36,19 +36,20 @@
 	];
 
 	let value: typeof data.entries[0];
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
-	import EntryIcon from '$components/entries/EntryIcon.svelte';
-	import { writable } from 'svelte/store';
-	import { cn } from '$lib';
-	import { buttonVariants } from '$components/ui/Button.svelte';
 	import { melt } from '@melt-ui/svelte';
-	import { tick } from 'svelte';
 	import { isHTMLInputElement } from '@melt-ui/svelte/internal/helpers';
+	import { tick } from 'svelte';
+	import { writable } from 'svelte/store';
+
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import { buttonVariants } from '$components/ui/Button.svelte';
+	import Checkbox from '$components/ui/Checkbox.svelte';
 	import { assertPagesType, createPages } from '$components/ui/command2/utils';
-	import { types } from '$lib/types';
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
+	import { cn } from '$lib';
 	import { statuses, statusesWithIcons } from '$lib/status';
+	import { types } from '$lib/types';
 	import type { StringsToObjWithKey } from '$lib/utils/type-utils';
-	import { Checkbox } from '$components/ui/checkbox';
 
 	let open = false;
 	$: console.log({ open });
@@ -66,7 +67,7 @@
 	// const page = createPages<'projects' | 'teams'>();
 
 	type Pages = 'projects' | 'teams';
-	const pages: StringsToObjWithKey<Pages, 'name'>[] = [];
+	const pages: Array<StringsToObjWithKey<Pages, 'name'>> = [];
 
 	// const filterPages = assertPagesType({
 	//     name: "types",
@@ -96,7 +97,7 @@
 
 	const pagesData = deepWriteable(filterPages);
 
-	let tagValue = [];
+	const tagValue = [];
 	let tagsOpen = false;
 
 	const chosenTags = writable(data.tags.slice(0, 2));
@@ -145,13 +146,11 @@
 			<Command
 				let:filtered
 				onClose={closePopover}
-				type={data.entries[0]}
-				valueToString={(item) => item.title}
 				bind:value
 			>
 				<CommandInput />
 				<CommandList>
-					<CommandGroup>
+					<!-- <CommandGroup> -->
 						<!-- {#each filtered.items as item, index (item.id)}
 							<CommandItem id={filtered.ids[index]} shouldRegister={false} value={item}>
 								<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
@@ -159,12 +158,17 @@
 							</CommandItem>
 						{/each} -->
 						<!-- onSelect={closePopover} -->
-
-						<CommandItems items={data.entries} itemToId={(item) => item.id.toString()} let:item>
+                            {#each new Array(1000) as entry, i}
+                                <CommandItem value={entry}>
+                                    <!-- <EntryIcon class="h-4 w-4 shrink-0 mr-2" type="album" /> -->
+                                    <span>{i}</span>
+                                </CommandItem>
+                            {/each}
+						<!-- <CommandItems items={data.entries} itemToId={(item) => item.id.toString()} let:item>
 							<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
 							<span>{item.title}</span>
-						</CommandItems>
-					</CommandGroup>
+						</CommandItems> -->
+					<!-- </CommandGroup> -->
 				</CommandList>
 			</Command>
 		</PopoverContent>
@@ -337,7 +341,7 @@
 				class={cn(buttonVariants({ variant: 'outline' }), 'w-[200px] justify-between')}
 				use:melt={builder}
 			>
-				<span class="truncate">{'Select a tag'}</span>
+				<span class="truncate">Select a tag</span>
 				<ChevronsUpDown class="h-4 w-4 ml-2 shrink-0 opacity-50" />
 			</button>
 		</PopoverTrigger>
@@ -356,7 +360,8 @@
 					<CommandGroup>
 						{#each sortedTags as tag}
 							<CommandItem value={tag} cancelClose="[data-melt-checkbox], svg" let:isSelected>
-								<Checkbox class="mr-2" checked={isSelected} />
+								<!-- <Checkbox class="mr-2" checked={isSelected} /> -->
+                                <Checkbox />
 								<span>{tag.name}</span>
 							</CommandItem>
 						{/each}

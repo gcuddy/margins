@@ -1,46 +1,41 @@
 <script lang="ts">
-	import { onMount, setContext } from 'svelte';
-	import { ctx } from './ctx';
 	import { generateId } from '@melt-ui/svelte/internal/helpers';
+	import { setContext, tick } from 'svelte';
+
+	import { getOptions } from '$lib/helpers';
 	import { cn } from '$lib/utils';
 
+	import { ctx } from './ctx';
+
 	const {
-		helpers,
-		state: { inputValue, filtered, shouldFilter }
+		state: { inputValue }
 	} = ctx.get();
 	const id = generateId();
 	const headingId = `${id}-heading`;
 
 	export let heading: string | undefined = undefined;
-	export let value: string | undefined = undefined;
-	export let alwaysShow = false;
 
 	let className = '';
 	export { className as class };
 	export let unstyled = false;
 
 	let containerEl: HTMLDivElement;
-	let headingEl: HTMLDivElement;
 
 	// set groupId in context for children
 	setContext('command_groupId', id);
 
-	onMount(() => {
-		const unMount = helpers.registerGroup(id);
+    let hidden = false;
 
-		const computedValue = value || heading ? heading : headingEl?.textContent?.trim().toLowerCase();
-		if (computedValue) {
-			helpers.registerItemValue(id, computedValue);
-			containerEl?.setAttribute('data-value', computedValue);
-		}
-
-		return () => {
-			unMount();
-		};
-	});
-
-	$: render =
-		alwaysShow || ($shouldFilter === false ? true : !$inputValue ? true : $filtered.groups.has(id));
+    $: if ($inputValue) {
+        // eslint-disable-next-line unicorn/prefer-top-level-await
+        tick().then(() => {
+            const options = getOptions(containerEl);
+            const allHidden = options.every((option) => option.hidden);
+            hidden = allHidden;
+        })
+    } else {
+        hidden = false;
+    }
 </script>
 
 <div
@@ -53,10 +48,10 @@
 	data-command-group
 	{id}
 	role="presentation"
-	hidden={render ? undefined : true}
+	hidden={hidden}
 >
 	{#if heading || $$slots.heading}
-		<div bind:this={headingEl} data-command-group-heading aria-hidden id={headingId}>
+		<div data-command-group-heading aria-hidden id={headingId}>
 			{#if heading}
 				{heading}
 			{:else}
