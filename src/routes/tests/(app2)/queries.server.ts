@@ -806,6 +806,7 @@ export const queries = {
 		},
 		schema: qSchema,
 	}),
+    tag: query(),
 	tags: query({
 		fn: ({ ctx }) => {
 			return db

@@ -346,7 +346,7 @@ model Entry {
     genres               String?
     book_genre           BookGenre?
     language             String?                         @db.VarChar(100)
-    /// The publisher for books, company for plays, etc.
+    /// The publisher for books, label for music, production company for movies/tv, company for plays, etc.
     publisher            String?
     author_extra         Json?
     spotifyId            String?                         @unique

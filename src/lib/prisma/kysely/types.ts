@@ -389,7 +389,7 @@ export type Entry = {
 	book_genre: BookGenre | null;
 	language: string | null;
 	/**
-	 * The publisher for books, company for plays, etc.
+	 * The publisher for books, label for music, production company for movies/tv, company for plays, etc.
 	 */
 	publisher: string | null;
 	author_extra: unknown | null;

@@ -25,7 +25,7 @@
 	import { render_html } from '$components/ui/editor/utils';
 	import Separator from '$components/ui/Separator.svelte';
 	import smoothload from '$lib/actions/smoothload';
-	import type { EntryInList } from '$lib/db/selects';
+	import type { EntryInList, ListEntry } from '$lib/db/selects';
 	import { relations_icons } from '$lib/features/relations/icons';
 	import { mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
@@ -57,11 +57,10 @@
 
 	export let view: VariantProps<typeof entryItemVariants>['view'] = 'list';
 
-	export let entry: LibraryEntry;
-    console.log({entry})
+	export let entry: LibraryEntry | ListEntry;
 
 	// Computed
-	$: author = entry.bookmark_author || entry.author;
+	$: author = "bookmark_author" in entry ? entry.bookmark_author || entry.author : entry.author;
 
 	export let border = true;
 
@@ -97,8 +96,6 @@
 		const previousQueries = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
 			queryKey
 		});
-
-		console.log({ previousQueries });
 
 		// queryClient.getQueryCache().
 

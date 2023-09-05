@@ -25,6 +25,7 @@
 	import { page } from '$app/stores';
 	import { create_multi } from '$components/entries/multi-select/multi';
 	import { IconPicker } from '$components/icon-picker';
+	import Link from '$components/Link.svelte';
 	import { TagColorPill } from '$components/tags/tag-color';
 	import Badge from '$components/ui/Badge.svelte';
 	import { Button } from '$components/ui/button';
@@ -37,6 +38,7 @@
 		updateAnnotationMutation
 	} from '$lib/queries/mutations/index';
 	import type { Note, NotesInput } from '$lib/queries/server';
+	import { make_link } from '$lib/utils/entries';
 
 	import type { Snapshot } from '../../../$types';
 	import BulkActions from './bulk-actions.svelte';
@@ -118,6 +120,12 @@
 			accessor: 'entry',
 			cell: ({ row }) => {
 				if (row.isData()) {
+                    if (row.original.entry?.title) {
+                        return createRender(Link, {
+                            href: make_link(row.original.entry),
+                            text: row.original.entry.title
+                        })
+                    }
 					return row.original.entry?.title ?? 'No entry';
 				}
 				return 'No entry';

@@ -1,32 +1,38 @@
 <script lang="ts">
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { H1 } from '$lib/components/ui/typography';
-	import { LogOut, Palette, User } from 'lucide-svelte';
+	import { FolderSync, LogOut, Palette, User } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
 
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { H1 } from '$lib/components/ui/typography';
+
 	type Nav = {
-		name: string;
-		icon: ComponentType;
 		href: string;
+		icon: ComponentType;
+		name: string;
 	};
-	const nav: Nav[][] = [
+	const nav: Array<Array<Nav>> = [
 		[
 			{
-				name: 'Profile',
+				href: '/tests/settings/profile',
 				icon: User,
-				href: '/tests/settings/profile'
+				name: 'Profile'
 			},
 			{
-				name: 'Appearance',
+				href: '/tests/settings/appearance',
 				icon: Palette,
-				href: '/tests/settings/appearance'
+				name: 'Appearance'
+			},
+			{
+				href: '/tests/settings/vault',
+				icon: FolderSync,
+				name: 'External notes'
 			},
 		],
 		[
 			{
-				name: 'Log out',
+				href: '/tests/settings/logout',
 				icon: LogOut,
-				href: '/tests/settings/logout'
+				name: 'Log out'
 			}
 		]
 	];
@@ -35,7 +41,7 @@
 <div class="space-y-4">
 	{#each nav as section}
 		<div class="flex flex-col overflow-hidden rounded-md border bg-secondary">
-			{#each section as { name, icon, href }}
+			{#each section as { href, icon, name }}
 				<a
 					{href}
 					class="flex h-12 w-full items-center gap-x-4 p-4 text-lg font-medium tracking-tight hover:bg-border"

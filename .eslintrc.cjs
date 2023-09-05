@@ -173,7 +173,7 @@ module.exports = {
 	// ],
 	env: {
 		browser: true,
-		es2021: true,
+		es2024: true,
 		node: true,
 	},
 	overrides: [

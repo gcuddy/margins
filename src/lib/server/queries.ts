@@ -57,8 +57,10 @@ export type LibrarySortType = GetLibrarySchema['sort'];
 
 
 // TODO: this is hard-coded in here, but ideally should come from the db...
+
+/* eslint-disable sort-keys-fix/sort-keys-fix */
 export const TypeToIndex: Record<DocumentType, number> = {
-	article: 1,
+    article: 1,
 	podcast: 2,
 	rss: 3,
 	pdf: 4,
@@ -78,19 +80,19 @@ export const TypeToIndex: Record<DocumentType, number> = {
 	game: 18,
 	board_game: 19
 } as const;
+/* eslint-enable sort-keys-fix/sort-keys-fix */
 
 export async function get_library({
-	userId,
 	cursor,
-	status,
-	search,
-	sort,
 	dir,
 	filter,
-	grouping
+	grouping,
+	search,
+	sort,
+	status,
+	userId
 }: { userId: string } & z.input<typeof get_library_schema>) {
 	const take = 25;
-	console.log(`[get_library]`, { cursor });
 	let query = db
 		.selectFrom('Bookmark as b')
 		.innerJoin('Entry as e', 'e.id', 'b.entryId')

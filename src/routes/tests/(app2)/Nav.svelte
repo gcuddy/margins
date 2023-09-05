@@ -1,121 +1,124 @@
 <script lang="ts">
-	import { navigating, page } from '$app/stores';
-	import { buttonVariants, Button } from '$lib/components/ui/button';
-	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
+	import { createAvatar, createDropdownMenu, melt } from '@melt-ui/svelte';
+	import { createQuery, useIsMutating } from '@tanstack/svelte-query';
 	import {
 		BookMarked,
-		Layers,
 		Box,
-		Library,
-		Rss,
-		SearchIcon,
-		TreePine,
-		Home,
-		Tag,
-		PinIcon,
 		BrainCircuit,
-		FlowerIcon,
-		PlusCircle,
-		Loader,
 		ChevronDownIcon,
-		RssIcon,
+		FlowerIcon,
 		FolderMinus,
-		FolderPlus
-	} from 'lucide-svelte';
+		FolderPlus,
+		FolderSync,
+		Home,
+		Layers,
+		Library,
+		Loader,
+		PinIcon,
+		PlusCircle,
+		Rss,
+		RssIcon,
+		SearchIcon,
+		Tag,
+		TreePine	} from 'lucide-svelte';
+	import { getContext } from 'svelte';
+	import { flip } from 'svelte/animate';
+	import { type Writable,writable } from 'svelte/store';
+	import { fade } from 'svelte/transition';
+
+	import { goto } from '$app/navigation';
+	import { navigating, page } from '$app/stores';
+	import { Icon } from '$components/icon-picker';
+	import AddUrlModal from '$components/modals/add-url-modal.svelte';
+	import Pins from '$components/pins/pins.svelte';
+	import { TagColorPill } from '$components/tags/tag-color';
 	import {
 		DropdownMenu,
-		DropdownMenuTrigger,
 		DropdownMenuContent,
 		DropdownMenuItem,
-		DropdownMenuSeparator
-	} from '$components/ui/dropdown-menu2';
-	import type { LayoutData } from './$types';
-	import { Small } from '$lib/components/ui/typography';
-	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
-	import mq from '$lib/stores/mq';
-	import { useMenuBar } from './MainNav.svelte';
-	import ColResizer from '$lib/components/ColResizer.svelte';
-	import { getContext } from 'svelte';
-	import { writable, type Writable } from 'svelte/store';
-	import { createAvatar, createDropdownMenu, melt } from '@melt-ui/svelte';
-	import { goto } from '$app/navigation';
-	import { fade } from 'svelte/transition';
-	import { createQuery, useIsMutating } from '@tanstack/svelte-query';
+		DropdownMenuSeparator,
+		DropdownMenuTrigger	} from '$components/ui/dropdown-menu2';
 	import Separator from '$components/ui/Separator.svelte';
 	import { cn } from '$lib';
-	import AddUrlModal from '$components/modals/add-url-modal.svelte';
+	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
+	import ColResizer from '$lib/components/ColResizer.svelte';
+	import { Button,buttonVariants } from '$lib/components/ui/button';
+	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
+	import { Small } from '$lib/components/ui/typography';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { TagColorPill } from '$components/tags/tag-color';
-	import { Icon } from '$components/icon-picker';
-	import { flip } from 'svelte/animate';
-	import Pins from '$components/pins/pins.svelte';
+	import mq from '$lib/stores/mq';
+
+	import type { LayoutData } from './$types';
+	import { useMenuBar } from './MainNav.svelte';
+	import {  localFileNames } from '$lib/features/garden/store';
+	import { persisted } from 'svelte-local-storage-store';
 
 	let pinsComponent: Pins;
 
 	type Nav = {
-		label: string;
-		icon: import('svelte').ComponentType;
-		href: string;
 		active: (path: string) => boolean;
+		href: string;
+		icon: import('svelte').ComponentType;
+		label: string;
 	};
 
 	const isRestoring = getContext('isRestoring') as Writable<boolean>;
 	const isMutating = useIsMutating();
 
-	const nav: Nav[] = [
+	const nav: Array<Nav> = [
 		{
-			label: 'Home',
+			active: (url) => url.startsWith('/tests/home'),
 			href: '/tests/home',
 			icon: Home,
-			active: (url) => url.startsWith('/tests/home')
+			label: 'Home'
 		},
 		{
-			label: 'Library',
+			active: (url) => url.startsWith('/tests/library'),
 			href: '/tests/library/backlog',
 			icon: Library,
-			active: (url) => url.startsWith('/tests/library')
+			label: 'Library'
 		},
 		{
-			label: 'Subscriptions',
+			active: (url) => url.startsWith('/tests/subscriptions'),
 			href: '/tests/subscriptions',
 			icon: Rss,
-			active: (url) => url.startsWith('/tests/subscriptions')
+			label: 'Subscriptions'
 		},
 		{
-			label: 'Collections',
+			active: (path) => path === '/tests/collections',
 			href: '/tests/collections',
 			icon: Box,
-			active: (path) => path === '/tests/collections'
+			label: 'Collections'
 		},
 		{
-			label: 'Evergreens',
+			active: (url) => url.startsWith('/tests/notes'),
 			href: '/tests/notes',
 			icon: TreePine,
-			active: (url) => url.startsWith('/tests/notes')
+			label: 'Evergreens'
 		},
 		{
-			label: 'Notebook',
+			active: (url) => url.startsWith('/tests/notebook'),
 			href: '/tests/notebook',
 			icon: BookMarked,
-			active: (url) => url.startsWith('/tests/notebook')
+			label: 'Notebook'
 		},
 		{
-			label: 'Views',
+			active: (url) => url === '/tests/views',
 			href: '/tests/views',
 			icon: Layers,
-			active: (url) => url === '/tests/views'
+			label: 'Views'
 		},
 		{
-			label: 'Memory Palace',
+			active: (url) => url === '/tests/views',
 			href: '/tests/srs',
 			icon: BrainCircuit,
-			active: (url) => url === '/tests/views'
+			label: 'Memory Palace'
 		},
 		{
-			label: 'Search',
+			active: (url) => url.startsWith('/tests/search'),
 			href: '/tests/search',
 			icon: SearchIcon,
-			active: (url) => url.startsWith('/tests/search')
+			label: 'Search'
 		}
 	];
 
@@ -142,6 +145,8 @@
 	$: mobileNavWidth.set(borderBoxSize?.[0]?.inlineSize ?? 81);
 
 	export let showAddUrlModal = writable(false);
+
+    const gardenEnabled = persisted('gardenEnabled', false);
 </script>
 
 {#if !$inArticle}
@@ -191,11 +196,11 @@
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-[250px] focus-visible:outline-none">
 						<DropdownMenuItem on:m-click={() => goto('/tests/settings')}>
-							<a class={'contents'} href="/tests/settings">Settings</a>
+							<a class="contents" href="/tests/settings">Settings</a>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem on:m-click={() => goto('/tests/logout')}>
-							<a class={'contents'} href="/tests/logout">Logout</a>
+							<a class="contents" href="/tests/logout">Logout</a>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
@@ -231,7 +236,7 @@
 					<DropdownMenuTrigger let:builder asChild>
 						<button
 							class={cn(
-								buttonVariants({ variant: 'outline', size: 'sm' }),
+								buttonVariants({ size: 'sm', variant: 'outline' }),
 								'px-2 shadow-none rounded-l-none border-l-0 hidden lg:flex'
 							)}
 							use:melt={builder}
@@ -267,13 +272,25 @@
 						<span class="hidden {$inArticle ? '2xl:inline' : 'lg:inline'}">{nav_item.label}</span>
 					</Button>
 				{/each}
+                {#if $gardenEnabled}
+                     <!-- content here -->
+                     <Button
+                         href="/tests/external"
+                         size="sm"
+                         class="flex w-full items-center justify-center lg:justify-start space-x-2"
+                         variant="ghost"
+                     >
+                         <FolderSync class="h-5 w-5" />
+                         <span>External Garden</span>
+                     </Button>
+                {/if}
 				<Button
 					href="/tests/pins"
 					size="sm"
 					class="flex w-full items-center justify-center lg:justify-start lg:hidden"
 					variant="ghost"
 				>
-					<PinIcon class="h-6 w-6" />
+                <PinIcon class="h-6 w-6" />
 				</Button>
 			</div>
 		</div>

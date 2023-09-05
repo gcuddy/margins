@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    import "./editor.css"
+	import './editor.css';
 
 	import type {
 		Editor as TEditor,
@@ -11,6 +11,7 @@
 		JSONContent,
 	} from '@tiptap/core';
 	import type { Transaction } from '@tiptap/pm/state';
+    import * as idb from "idb-keyval";
 	import debounce from 'just-debounce-it';
 	import { createEventDispatcher, onMount, setContext } from 'svelte';
 	import { type Readable, writable } from 'svelte/store';
@@ -164,6 +165,11 @@
 			// TODO check if bubble menu is open
 			e.editor.setEditable(false);
 			save_srs_nodes(e.editor.getJSON());
+            if (id) {
+                idb.set(`note_markdown:${id}`, e.editor?.storage.markdown.getMarkdown())
+            }
+            // TODO we should actually just save this to our db... for now using indexeddb
+
 			onBlur?.(e);
 			dispatch('blur', e);
 		});
