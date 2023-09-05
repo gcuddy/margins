@@ -187,6 +187,7 @@ module.exports = {
 				// these cause issues with svelte rn
 				'@typescript-eslint/no-unsafe-assignment': 0,
 				'@typescript-eslint/no-unsafe-call': 0,
+                'no-undef': 0,
 			},
 		},
 		{
