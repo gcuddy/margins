@@ -32,8 +32,8 @@ import { applyFilter } from '$lib/db/utils/comparators';
 import { librarySchema, tagSchema } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import type { Annotation, DB, Entry, Favorite } from '$lib/prisma/kysely/types';
-import { BookmarkSchema } from '$lib/prisma/zod-prisma';
 import type { idSchema } from '$lib/schemas';
+import { BookmarkSchema } from '$lib/schemas/bookmark';
 import { noteFilterSchema } from '$lib/schemas/inputs';
 import { typeSchema } from '$lib/types';
 

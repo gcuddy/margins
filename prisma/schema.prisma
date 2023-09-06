@@ -3,11 +3,6 @@ generator client {
     previewFeatures = ["extendedWhereUnique", "fullTextIndex", "fullTextSearch"]
 }
 
-generator zod {
-    provider = "zod-prisma-types"
-    output   = "../src/lib/prisma/zod-prisma"
-}
-
 generator kysely {
     provider = "prisma-kysely"
     output   = "../src/lib/prisma/kysely"

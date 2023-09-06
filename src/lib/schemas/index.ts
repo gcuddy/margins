@@ -11,4 +11,5 @@ export const idOptionalArraySchema = z.object({
     id: z.union([z.string(), z.array(z.string())])
 });
 
+export * from './bookmark';
 export * from "./form";
