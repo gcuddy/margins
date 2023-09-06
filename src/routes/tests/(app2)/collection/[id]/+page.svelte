@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createMutation } from '@tanstack/svelte-query';
 	import {
 		BookMarked,
 		ChevronDown,
@@ -9,21 +10,18 @@
 		Plus,
 	} from 'lucide-svelte';
 	import MarkdownIt from 'markdown-it';
+	import { onMount, tick } from 'svelte';
+	import { flip } from 'svelte/animate';
+	import { dndzone } from 'svelte-dnd-action';
 	import { superForm } from 'sveltekit-superforms/client';
 
-	import { invalidate, invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import Tweet from '$components/Tweet.svelte';
 	import * as Command from '$components/ui/command2';
-	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
+	import { createCommandDialogStore } from '$components/ui/command2/utils';
 	import Header from '$components/ui/Header.svelte';
-	import rover from '$lib/actions/rover';
+	import { Entries, Movies } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
-	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
-	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import Media from '$lib/commands/Media.svelte';
-	import EntryItem from '$lib/components/entries/EntryItem.svelte';
-	import Annotation from '$lib/components/notebook/Annotation.svelte';
 	import PinButton from '$lib/components/PinButton.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
@@ -38,16 +36,22 @@
 	import Separator from '$lib/components/ui/Separator.svelte';
 	import Textarea from '$lib/components/ui/Textarea.svelte';
 	import { H1 } from '$lib/components/ui/typography';
-	import { mutation, query } from '$lib/queries/query';
-	import { getId, make_link } from '$lib/utils/entries';
+	import {
+		mutate,
+		mutation,
+		type MutationInput,
+		query,
+	} from '$lib/queries/query';
 	import { cn } from '$lib/utils/tailwind';
+
+	import CollectionItem from './collection-item.svelte';
 
 	const md = new MarkdownIt();
 
 	export let data;
 
 	$: ({ pin_id } = data.collection);
-	const commander = getCommanderContext();
+	const commander = createCommandDialogStore();
 
 	const { enhance, form } = superForm(data.form, {
 		dataType: 'json',
@@ -55,22 +59,37 @@
 	let form_el: HTMLFormElement;
 	let editing = false;
 
+	const updateCollectionItemsPositionsMutation = createMutation({
+		mutationFn: (input: MutationInput<'updateCollectionItemsPosition'>) =>
+			mutate('updateCollectionItemsPosition', input),
+	});
+
+	const addToCollectionMutation = createMutation({
+		mutationFn: async (
+			input: Omit<MutationInput<'addToCollection'>, 'collectionId'>,
+		) => {
+			return mutation($page, 'addToCollection', {
+				collectionId: data.collection.id,
+				...input,
+			});
+		},
+		onSuccess() {
+			invalidate('collection');
+		},
+	});
+
 	function addEntry() {
 		commander.open({
-			component: JumpToEntry,
+			component: Entries,
 			placeholder: 'Search for an entry...',
 			props: {
-				onSelect: async (e) => {
-					commander.close();
-					await mutation($page, 'addToCollection', {
-						collectionId: data.collection.id,
-						entryId: e.id,
+				onSelect: async (entry) => {
+					$addToCollectionMutation.mutate({
+						entryId: entry.id,
 					});
-					// awaitinvalidate('entry');
-					await invalidate('collection');
+					commander.close();
 				},
 			},
-			shouldFilter: false,
 		});
 	}
 	function addNote() {
@@ -80,21 +99,42 @@
 			props: {
 				onSelect: async (a) => {
 					commander.close();
-					await mutation($page, 'addToCollection', {
-						annotationId: [a.id],
-						collectionId: data.collection.id,
+					$addToCollectionMutation.mutate({
+						annotationId: a.id,
 					});
 					// awaitinvalidate('entry');
 					await invalidate('collection');
 				},
 			},
-			shouldFilter: false,
 		});
 	}
-	function addMedia(type = 'movie') {
+	// function addMedia(type = 'movie') {
+	// 	commander.open({
+	// 		component: Media,
+	// 		placeholder: `Search for a ${type}...`,
+	// 		props: {
+	// 			onSelect: async (a) => {
+	// 				commander.close();
+	// 				const entry = await query($page, 'findOrCreateEntry', {
+	// 					tmdbId: a.id,
+	// 				});
+	// 				if (!entry) {
+	// 					return;
+	// 				}
+	// 				await mutation($page, 'addToCollection', {
+	// 					collectionId: data.collection.id,
+	// 					entryId: entry.id,
+	// 				});
+	// 				await invalidate('collection');
+	// 			},
+	// 		},
+	// 		shouldFilter: false,
+	// 	});
+	// }
+	function addMovie() {
 		commander.open({
-			component: Media,
-			placeholder: `Search for a ${type}...`,
+			component: Movies,
+			placeholder: `Search for a movie...`,
 			props: {
 				onSelect: async (a) => {
 					commander.close();
@@ -104,18 +144,25 @@
 					if (!entry) {
 						return;
 					}
-					await mutation($page, 'addToCollection', {
-						collectionId: data.collection.id,
+					$addToCollectionMutation.mutate({
 						entryId: entry.id,
 					});
 					await invalidate('collection');
 				},
 			},
-			shouldFilter: false,
 		});
 	}
 
-    let addEntryCommandDialog = false;
+	let loaded = false;
+
+	onMount(() => {
+		tick().then(() => {
+			setTimeout(() => {
+				// wait a second, then set loaded to true (this will enable transitions)
+				loaded = true;
+			}, 900);
+		});
+	});
 </script>
 
 <Header>
@@ -168,7 +215,6 @@
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
-					offset={-5}
 					placement="bottom-end"
 					class="w-[200px]"
 				>
@@ -182,8 +228,8 @@
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator />
 					<DropdownMenuGroup>
-						<DropdownMenuItem on:click={() => addMedia('movie')}>
-							<FilmIcon class="mr-2 h-4 w-4" /> Movie & TV
+						<DropdownMenuItem on:click={addMovie}>
+							<FilmIcon class="mr-2 h-4 w-4" /> Movie
 						</DropdownMenuItem>
 					</DropdownMenuGroup>
 				</DropdownMenuContent>
@@ -203,7 +249,6 @@
 		>
 			<Textarea
 				on:blur={(e) => {
-					console.log({ e });
 					form_el.requestSubmit();
 				}}
 				bind:value={$form.description}
@@ -217,6 +262,7 @@
 		</form>
 	{:else if $form.description}
 		<div class="prose prose-sm prose-stone dark:prose-invert">
+			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 			{@html md.render($form.description)}
 		</div>
 	{/if}
@@ -228,95 +274,91 @@
 
 <!-- {JSON.stringify(data.collection.items)} -->
 <!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
-<div class="mt-8 flex flex-wrap gap-4">
-	{#key data.collection}
-		{#each data.collection.items as item, i}
+<div
+	class="mt-8 flex flex-wrap gap-4"
+	use:dndzone={{
+		dragDisabled: !data.collection.items.length,
+		flipDurationMs: 200,
+		items: data.collection.items,
+        morphDisabled: true,
+		type: 'collection-items',
+	}}
+	on:consider={(e) => {
+		data.collection.items = e.detail.items;
+	}}
+	on:finalize={(e) => {
+        data.collection.items = e.detail.items;
+        // Now deal with updating positions
+        const { info } = e.detail;
+        const { id } = info;
+        // find the item that was dragged
+        const idx = data.collection.items.findIndex((i) => i.id === id);
+        if (idx ===  -1) {
+            return;
+        }
+        const moved = data.collection.items[idx];
+        if (!moved) {
+            return;
+        }
+        // Get new position
+        if (idx === 0) {
+            const newPosition = (data.collection.items[1]?.position ?? 0) - 100;
+            moved.position = newPosition;
+            $updateCollectionItemsPositionsMutation.mutate([{
+                collectionId: data.collection.id,
+                id,
+                position: newPosition,
+            }]);
+        } else if (idx === data.collection.items.length - 1) {
+            const newPosition = (data.collection.items[idx - 1]?.position ?? 0) + 100;
+            moved.position = newPosition;
+            $updateCollectionItemsPositionsMutation.mutate([{
+                collectionId: data.collection.id,
+                id,
+                position: newPosition,
+            }]);
+        } else {
+            // see if we can slot between the two items
+            const prevPosition = (data.collection.items[idx - 1]?.position ?? 0);
+            const nextPosition = (data.collection.items[idx + 1]?.position ?? 0);
+            if (nextPosition - prevPosition > 1) {
+                const newPosition = Math.round(
+                    (prevPosition + nextPosition) / 2
+                )
+                moved.position = newPosition;
+                $updateCollectionItemsPositionsMutation.mutate([{
+                    collectionId: data.collection.id,
+                    id,
+                    position: newPosition,
+                }]);
+            } else {
+                // TODO: handle case where we can't slot between the two items
+            }
+
+        }
+	}}
+>
+	{#each data.collection.items as item (item.id)}
+		<div animate:flip={{ duration: 200 }}>
 			{#if item.type === 'Section'}
 				Section
 			{/if}
-			<div class="w-48 space-y-3">
-				<OptionsMenu
-					variant="ghost"
-					size="xs"
-					items={[
-						[
-							{
-								onSelect: () => {
-									//todo
-								},
-								text: 'Add note',
-							},
-						],
-					]}
-				/>
-				{#if item.entry?.type === 'tweet'}
-					{@const id = item.entry?.uri?.split('/').pop()}
-					{#if id}
-						<Tweet {id} />
-					{/if}
-				{:else if item.entry}
-					<div class="overflow-hidden rounded-md">
-						<img
-							class="aspect-square h-48 w-48 object-cover"
-							alt=""
-							src={item.entry?.image}
-						/>
-					</div>
-					<a href={make_link(item.entry)} class="text-sm font-medium">
-						{item.entry?.title}
-					</a>
-				{:else if item.annotation}
-					<div class="overflow-hidden rounded-md text-sm">
-						{item.annotation.body}
-					</div>
-					<a href="" class="text-sm font-medium">
-						{item.annotation.title}
-					</a>
-				{/if}
-			</div>
-			<!-- <Card class='w-72 space-y-3'>
-				<CardContent class='overflow-hidden rounded-md'>
-				</CardContent>
-				<CardFooter class='shrink-0'>
-					{item.entry?.title}
-				</CardFooter>
-			</Card> -->
-			<!-- <div class="group grid grid-cols-1 grid-rows-5 h-72 w-72  overflow-hidden gap-y-4 p-4">
-				{#if item.entry}
-				<img class="row-span-5 object-contain" src={item.entry.image} />
-					<div class="p-3 text-xs">
-						{item.entry.title}
-					</div>
-				{:else if item.annotation}
-					{#if item.annotation.type === 'annotation'}
-						<Annotation annotation={item.annotation} />
-					{:else}
-						<a href="/tests/notes/{item.annotation.id}">{item.annotation.title}</a>
-					{/if}
-				{:else}
-					{JSON.stringify(item)}
-				{/if}
-			</div> -->
-		{:else}
-			<div class="p-8 flex flex-col gap-2 items-center justify-center w-full">
-				<span class="text-muted-foreground">No items yet</span>
-				<Button on:click={() => {
-                    addEntryCommandDialog = true;
-                }} variant="secondary" size="sm">
-					<Plus class="mr-2 h-4 w-4" />
-					Add item
-				</Button>
-			</div>
-		{/each}
-	{/key}
+			<CollectionItem shouldTransition={loaded} {item} />
+		</div>
+	{:else}
+		<div class="p-8 flex flex-col gap-2 items-center justify-center w-full">
+			<span class="text-muted-foreground">No items yet</span>
+			<Button on:click={addEntry} variant="secondary" size="sm">
+				<Plus class="mr-2 h-4 w-4" />
+				Add item
+			</Button>
+		</div>
+	{/each}
 </div>
 
-<Command.Dialog bind:open={addEntryCommandDialog}>
-	<Command.Input />
+<Command.Dialog bind:open={$commander.open}>
+	<Command.Input placeholder={$commander.placeholder} />
 	<Command.List>
-		<JumpToEntry onSelect={() => {
-            // TODO: add to entry
-            addEntryCommandDialog = false;
-        }} />
+		<svelte:component this={$commander.component} {...$commander.props} />
 	</Command.List>
 </Command.Dialog>

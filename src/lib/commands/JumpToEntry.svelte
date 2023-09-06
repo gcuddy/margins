@@ -5,29 +5,31 @@
 	import { derived } from 'svelte/store';
 
 	import { goto } from '$app/navigation';
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import {
 		commandCtx,
 		CommandGroup,
 		CommandItem,
 	} from '$components/ui/command2';
 	import { Muted } from '$lib/components/ui/typography';
-	import type { EntryInList } from '$lib/db/selects';
+	import type { ListEntry } from '$lib/db/selects';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { getId } from '$lib/utils/entries';
-	import EntryIcon from '$components/entries/EntryIcon.svelte';
 
 	const entriesQuery = createQuery(queryFactory.entries.all());
 
 	const {
-		state: { inputValue, shouldFilter, selectedValue },
 		options: { multiple },
+		state: { inputValue, selectedValue, shouldFilter },
 	} = commandCtx.get();
+
+	$: console.log({ $inputValue });
 
 	shouldFilter.set(false);
 
 	export let isOpen = false;
 
-	export let onSelect: (entry: EntryInList) => void = (entry) => {
+	export let onSelect: (entry: ListEntry) => void = (entry) => {
 		void goto(`/tests/${entry.type}/${getId(entry)}`);
 		isOpen = false;
 	};
@@ -37,11 +39,11 @@
 	const entries = derived(
 		[entriesQuery, inputValue],
 		([$entriesQuery, $value]) => {
-            console.time('entries')
+			console.time('entries');
 			const entries = $entriesQuery.data ?? [];
 			console.log({ entries });
 			if (!$value || $value.length < 2) {
-                console.timeEnd('entries')
+				console.timeEnd('entries');
 				return entries;
 			}
 
@@ -55,7 +57,7 @@
 			const sorted = scored.sort((a, b) => b.score - a.score);
 
 			const filtered = sorted.filter((entry) => entry.score > 0);
-            console.timeEnd('entries')
+			console.timeEnd('entries');
 			return filtered;
 		},
 	);
@@ -80,12 +82,20 @@
 					class="mr-4 aspect-square h-10 w-10 shrink-0 rounded-md object-cover"
 					alt=""
 				/> -->
-                <EntryIcon class="mr-4 h-4 w-4" type={entry.type} />
-				<div class="flex flex-col">
-					<span class="line-clamp-2 text-sm font-medium leading-tight"
-						>{entry.title}</span
-					>
-					<Muted class="text-xs">{entry.type}</Muted>
+				<EntryIcon class="mr-4 h-4 w-4 shrink-0" type={entry.type} />
+				<div class="flex justify-between items-center grow">
+					<div class="flex flex-col">
+						<span class="line-clamp-2 text-sm">{entry.title}</span>
+						<Muted class="text-xs">{entry.author}</Muted>
+					</div>
+					<div class="flex flex-col text-right">
+						<span class="text-xs text-muted-foreground">{entry.status}</span>
+						{#if entry.progress}
+							<span class="text-xs tabular-nums text-muted-foreground"
+								>{Math.round(entry.progress * 100)}%</span
+							>
+						{/if}
+					</div>
 				</div>
 			</CommandItem>
 		{:else}

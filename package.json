@@ -212,6 +212,8 @@
 		"date-picker-svelte": "^2.6.0",
 		"drizzle-orm": "^0.27.2",
 		"epubjs": "^0.3.93",
+		"fast-average-color": "^9.4.0",
+		"fast-average-color-node": "^2.6.0",
 		"focus-trap": "^7.5.2",
 		"highlight.js": "^11.8.0",
 		"highlight.run": "^7.3.6",

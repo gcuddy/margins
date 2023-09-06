@@ -1,66 +1,60 @@
 <script lang="ts">
+	import { createQuery } from '@tanstack/svelte-query';
+	import { createEventDispatcher, onDestroy } from 'svelte';
+	import { derived } from 'svelte/store';
+
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import {
+		commandCtx,
+		CommandGroup,
+		CommandItem,
+	} from '$components/ui/command2';
 	import smoothload from '$lib/actions/smoothload';
 	import { useState } from '$lib/components/ui/cmdk/Command.Root.svelte';
-	import { CommandEmpty, CommandGroup } from '$lib/components/ui/command';
-	import CommandItem from '$lib/components/ui/command/CommandItem.svelte';
 	import { Muted, Small } from '$lib/components/ui/typography';
 	import type { EntryInList } from '$lib/db/selects';
-	import { type QueryOutput, q } from '$lib/queries/query';
+	import { q, type QueryOutput } from '$lib/queries/query';
+	import { queryFactory } from '$lib/queries/querykeys';
 	import { getId, getType } from '$lib/utils/entries';
-	import { createEventDispatcher, onDestroy } from 'svelte';
 
-	const commander_state = useState();
+	const {
+		// options: { multiple },
+		state: { inputValue, shouldFilter },
+	} = commandCtx.get();
 
-	$: console.log({ $commander_state });
-	$: console.log({ $$props });
-	let value = '';
+	shouldFilter.set(false);
 
-	export let isOpen = false;
+	const query = createQuery(
+		derived(inputValue, ($value) => ({
+			...queryFactory.notes.search({
+				q: $value,
+			}),
+		})),
+	);
 
-	const unsubscribeState = commander_state.subscribe((state) => {
-		value = state.search;
-	});
-
-	const client = q($page);
-
-	let promise: Promise<QueryOutput<'searchNotes'>> = new Promise(() => {});
-
-	export let onSelect: (note: QueryOutput<'searchNotes'>[number]) => void = (note) => {
+	export let onSelect: (note: QueryOutput<'searchNotes'>[number]) => void = (
+		note,
+	) => {
 		if (note.type === 'document') {
-			goto(`/tests/${note.type}/${note.id}`);
+			goto(`/tests/note/${note.id}`);
 		} else if (note.entry) {
-			goto(`/tests/${getType(note.entry.type)}/${getId(note.entry)}#annotation-${note.id}`);
+			goto(
+				`/tests/${getType(note.entry.type)}/${getId(note.entry)}#annotation-${
+					note.id
+				}`,
+			);
 		}
-		isOpen = false;
 	};
-
-	const dispatch = createEventDispatcher();
-
-	let timer: number;
-	const debounce = (value: string) => {
-		clearTimeout(timer);
-		timer = window.setTimeout(() => {
-			promise = client.query('searchNotes', {
-				q: value
-			});
-		}, 300);
-	};
-
-	$: if (value) debounce(value);
-
-	onDestroy(() => {
-		unsubscribeState();
-	});
 </script>
 
-<CommandEmpty>No results</CommandEmpty>
 <CommandGroup>
-	{#await value ? promise : [] then notes}
-		{#each notes as note}
+	{#if $query.isPending}
+		Loading...
+	{:else if $query.data}
+		{#each $query.data as note}
 			<CommandItem
-				value={note.id.toString()}
+				value={note}
 				onSelect={() => {
 					onSelect(note);
 				}}
@@ -112,5 +106,5 @@
 				</div>
 			</CommandItem>
 		{/each}
-	{/await}
+	{/if}
 </CommandGroup>

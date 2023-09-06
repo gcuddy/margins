@@ -134,6 +134,7 @@ export const annotations = {
 		'a.userId',
 		'a.deleted',
 		'a.target',
+		'a.contentData',
 		'a.type',
 		'a.exact',
 		'e.title as entry_title',
@@ -144,7 +145,7 @@ export const annotations = {
 		'e.author as entry_author',
 		'e.podcastIndexId',
 		'e.googleBooksId',
-		'e.tmdbId'
+		'e.tmdbId',
 	] as const,
 	select: [
 		'a.id',
@@ -156,10 +157,10 @@ export const annotations = {
 		'a.type',
 		'a.exact',
 		'a.updatedAt',
-        'a.createdAt',
+		'a.createdAt',
 		'a.contentData',
-        'a.icon',
-        'a.color'
+		'a.icon',
+		'a.color',
 	] as const,
 	with: {
 		references: (eb: AliasedAEb) => {
@@ -168,7 +169,7 @@ export const annotations = {
 					.selectFrom('annotation_to_entry_reference as r')
 					.innerJoin('Entry as e', 'r.entryId', 'e.id')
 					.select(entrySelect)
-					.whereRef('r.annotationId', '=', 'a.id')
+					.whereRef('r.annotationId', '=', 'a.id'),
 			).as('references');
 		},
 		tags: (eb: AliasedAEb) =>
@@ -177,20 +178,23 @@ export const annotations = {
 					.selectFrom('annotation_tag as at')
 					.innerJoin('Tag as t', 'at.annotationId', 'a.id')
 					.select(['t.id', 't.name'])
-					.whereRef('at.annotationId', '=', 'a.id')
+					.whereRef('at.annotationId', '=', 'a.id'),
 			).as('tags'),
 		username: <T extends string>(eb: AliasedAEb, as: T) =>
 			jsonObjectFrom(
-				eb.selectFrom('user as u').select('username').whereRef('a.userId', '=', 'u.id')
+				eb
+					.selectFrom('user as u')
+					.select('username')
+					.whereRef('a.userId', '=', 'u.id'),
 			).as(as),
 		parent: (eb: AliasedAEb) =>
 			jsonObjectFrom(
 				eb
 					.selectFrom('Annotation as parent')
 					.whereRef('parent.id', '=', 'a.parentId')
-					.select(annotations.select)
-			).as('parent')
-	}
+					.select(annotations.select),
+			).as('parent'),
+	},
 };
 
 export function contextual_annotation(eb: AliasedAEb) {

@@ -77,16 +77,16 @@ import { goto } from '$app/navigation';
 
 	let filter: Input;
 	let form: HTMLFormElement;
-	let value = $page.url.searchParams.get('search') ?? '';
+	const value = $page.url.searchParams.get('search') ?? '';
 
 	const entryCount = createQuery(
 		derived(page, ($page) => ({
 			...queryFactory.entries.count({
-				status: $page.data.Status,
 				filter: {
-					type: $page.data.type,
 					search: $page.url.searchParams.get('search') ?? undefined,
+					type: $page.data.type,
 				},
+				status: $page.data.Status,
 			}),
 			select: (data: { count: number }) => data.count,
 		})),
@@ -155,8 +155,8 @@ import { goto } from '$app/navigation';
 			filter.focus();
 		}
 		// let 1 2 and 3 move you to backlog, now, and archive
-		if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-		if (e.target instanceof HTMLInputElement) return;
+		if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {return;}
+		if (e.target instanceof HTMLInputElement) {return;}
 		if (e.key === '1') {
 			e.preventDefault();
 			goto(`/tests/library/backlog`);
@@ -185,11 +185,7 @@ import { goto } from '$app/navigation';
 		const rawObj = defaultParseSearch($page.url.search);
 		const parsed = filterLibrarySchema.safeParse(rawObj);
 
-		if (parsed.success) {
-			return parsed.data;
-		} else {
-			return {};
-		}
+		return parsed.success ? parsed.data : {};
 	});
 
 	// const filterStore = createParamsStore(filterLibrarySchema);
@@ -235,42 +231,41 @@ import { goto } from '$app/navigation';
 
 	const filterPageData = createPageData([
 		{
+			icon: FileIcon,
 			name: 'Type',
 			placeholder: 'Filter by type...',
-			icon: FileIcon,
 		},
 		{
+			icon: TagIcon,
 			name: 'Tags',
 			placeholder: 'Filter by tag...',
-			icon: TagIcon,
 			shouldFilter: false,
 		},
 		{
+			icon: ClockIcon,
 			name: 'Reading Time',
 			placeholder: 'Filter by reading time...',
-			icon: ClockIcon,
 		},
 		{
-			name: 'Domain',
-			icon: GlobeIcon,
 			action: () => {
 				filterOpen.set(false);
 				filterDialogStore.open({
-					title: 'Filter by domain',
-					value: '',
 					action(val) {
-						console.log(`Setting domain to ${val}`);
 						filterChange($page.url, (data) => {
 							data.domain = val;
 							return data;
 						});
 					},
+					title: 'Filter by domain',
+					value: '',
 				});
 			},
+			icon: GlobeIcon,
+			name: 'Domain',
 		},
 		{
-			name: 'Book Genre',
 			icon: BookIcon,
+			name: 'Book Genre',
 			placeholder: 'Choose genre…',
 		},
 	]);
@@ -342,11 +337,7 @@ import { goto } from '$app/navigation';
 										<CommandItem
 											onSelect={() => {
 												filterChange($page.url, (data) => {
-													if (data.type) {
-														data.type = undefined;
-													} else {
-														data.type = type;
-													}
+													data.type = data.type ? undefined : type;
 													return data;
 												});
 												filterOpen.set(false);
@@ -361,16 +352,12 @@ import { goto } from '$app/navigation';
 										onSelect={(tag) => {
 											filterChange($page.url, (data) => {
 												console.log({ data });
-												if (data.tags?.ids.includes(tag.id)) {
-													data.tags = {
+												data.tags = data.tags?.ids.includes(tag.id) ? {
 														...data.tags,
 														ids: data.tags.ids.filter((t) => t !== tag.id),
-													};
-												} else {
-													data.tags = {
+													} : {
 														ids: [...(data.tags?.ids ?? []), tag.id],
 													};
-												}
 												return data;
 											});
 											filterOpen.set(false);

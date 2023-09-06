@@ -1,25 +1,28 @@
-import { db } from '$lib/db';
 import { error, fail } from '@sveltejs/kit';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
-import type { Actions, PageServerLoad } from './$types';
-import pin from '$lib/server/actions/pin';
-import { nanoid } from '$lib/nanoid';
-import { annotations } from '$lib/db/selects';
-import { z } from 'zod';
 import { superValidate } from 'sveltekit-superforms/server';
-import { validateAuthedForm } from '$lib/schemas';
+import { z } from 'zod';
+
+import { db } from '$lib/db';
+import { annotations } from '$lib/db/selects';
+import { nanoid } from '$lib/nanoid';
 import { selectEntryFromLibrary } from '$lib/queries/entry';
+import { validateAuthedForm } from '$lib/schemas';
+import pin from '$lib/server/actions/pin';
+
+import type { Actions, PageServerLoad } from './$types';
 
 const collectionSchema = z.object({
-	name: z.string(),
 	description: z.string().nullish(),
+	name: z.string(),
 });
 
-export const load = (async ({ params, locals, depends }) => {
+export const load = (async ({ depends, locals, params }) => {
 	const session = await locals.auth.validate();
-	if (!session) throw error(401);
+	if (!session) {
+		throw error(401);
+	}
 	const { user } = session;
-	console.time('collection');
 	depends('collection');
 	const collection = await db
 		.selectFrom('Collection as c')
@@ -29,7 +32,16 @@ export const load = (async ({ params, locals, depends }) => {
 			jsonArrayFrom(
 				eb
 					.selectFrom('CollectionItems as ci')
-					.select(['ci.id', 'ci.entryId', 'ci.note', 'ci.type'])
+					.select([
+						'ci.id',
+						'ci.entryId',
+						'ci.annotationId',
+						'ci.note',
+						'ci.type',
+						'ci.collectionId',
+						'ci.width',
+						'ci.position',
+					])
 					.select((eb) => [
 						jsonObjectFrom(
 							eb
@@ -47,28 +59,30 @@ export const load = (async ({ params, locals, depends }) => {
 									'e.spotifyId',
 									'e.podcastIndexId',
 									'e.wordCount',
+									// 'e.html',
 								])
-                                // .select(eb => selectEntryFromLibrary(eb, user.userId).as('entry2'))
+								// .select(eb => selectEntryFromLibrary(eb, user.userId).as('entry2'))
 								.whereRef('e.id', '=', 'ci.entryId'),
 						).as('entry'),
 						jsonObjectFrom(
 							eb
 								.selectFrom('Annotation as a')
-								.innerJoin('Entry as e', 'a.entryId', 'e.id')
+								.leftJoin('Entry as e', 'a.entryId', 'e.id')
 								.select(annotations.notebook_select)
 								.whereRef('a.id', '=', 'ci.annotationId'),
 						).as('annotation'),
 						// collectionItem.withAnnotation(eb).as("annotation")
 					])
 					.whereRef('ci.collectionId', '=', 'c.id')
-					.where(({ or, cmpr }) =>
+					.where(({ cmpr, or }) =>
 						or([
 							cmpr('ci.entryId', 'is not', null),
 							cmpr('ci.annotationId', 'is not', null),
 							// cmpr('ci.type', '=', 'Section')
 						]),
 					)
-					.orderBy('ci.position'),
+					.orderBy('ci.position')
+					.orderBy('ci.createdAt'),
 			).as('items'),
 		])
 		.where('c.userId', '=', user.userId)
@@ -83,15 +97,34 @@ export const load = (async ({ params, locals, depends }) => {
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
+	add_section: async ({ locals, params }) => {
+		// todo
+		console.log('hello');
+		const session = await locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		const id = nanoid();
+		await db
+			.insertInto('CollectionItems')
+			.values({
+				collectionId: +params.id,
+				id,
+				position: 0,
+				type: 'Section',
+				updatedAt: new Date(),
+			})
+			.execute();
+	},
 	edit: validateAuthedForm(
 		collectionSchema,
 		async ({ form, params, session }) => {
-			const { name, description } = form.data;
+			const { description, name } = form.data;
 			await db
 				.updateTable('Collection')
 				.set({
-					name,
 					description,
+					name,
 					updatedAt: new Date(),
 				})
 				.where('id', '=', +params.id)
@@ -99,9 +132,11 @@ export const actions: Actions = {
 				.execute();
 		},
 	),
-	pin: async ({ locals, request, params }) => {
+	pin: async ({ locals, params, request }) => {
 		const session = await locals.auth.validate();
-		if (!session) return fail(401);
+		if (!session) {
+			return fail(401);
+		}
 
 		const data = await request.formData();
 
@@ -119,29 +154,12 @@ export const actions: Actions = {
 			await db
 				.insertInto('Favorite')
 				.values({
-					id,
-					userId: session.user.userId,
 					collectionId: +params.id,
+					id,
 					updatedAt: new Date(),
+					userId: session.user.userId,
 				})
 				.execute();
 		}
-	},
-	add_section: async ({ locals, params }) => {
-		// todo
-		console.log('hello');
-		const session = await locals.auth.validate();
-		if (!session) return fail(401);
-		const id = nanoid();
-		await db
-			.insertInto('CollectionItems')
-			.values({
-				id,
-				collectionId: +params.id,
-				position: 0,
-				type: 'Section',
-				updatedAt: new Date(),
-			})
-			.execute();
 	},
 };

@@ -1,23 +1,25 @@
 <script lang="ts">
+	import { createQuery } from '@tanstack/svelte-query';
+	import commandScore from 'command-score';
+	import { PlusIcon } from 'lucide-svelte';
+
 	import { Checkbox } from '$components/ui/checkbox';
 	import * as Command from '$components/ui/command2';
-	import { queryFactory } from '$lib/queries/querykeys';
 	import type { QueryOutput } from '$lib/queries/query';
+	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils';
-	import commandScore from 'command-score';
-	import { createQuery } from '@tanstack/svelte-query';
-	import { PlusIcon } from 'lucide-svelte';
+
 	import { TagColorPill } from '../tag-color';
 
 	type Tag = QueryOutput<'tags'>[number];
 	type $$Props = {
-		selectedTags?: Tag[];
+		onCreate?: (name: string) => void;
 		onSelect?: (tag: Tag) => void;
-        onCreate?: (name: string) => void;
+        selectedTags?: Array<Tag>;
 		showCreate?: boolean;
 	};
 
-	export let selectedTags: Tag[] = [];
+	export let selectedTags: Array<Tag> = [];
 	export let onSelect: (tag: Tag) => void = () => {};
     export let onCreate: $$Props["onCreate"] = undefined;
 	export let showCreate = true;
@@ -27,17 +29,11 @@
 		state: { inputValue, shouldFilter }
 	} = Command.ctx.get();
 
-	$: console.log({ $shouldFilter });
-
 	// id -> number
 	const scores = new Map<number, number>();
 
 	const getId = (tag: Tag) => {
-		if (typeof tag === 'number') {
-			return tag;
-		} else {
-			return tag.id;
-		}
+		return typeof tag === 'number' ? tag : tag.id;
 	};
 
 	function sortFunction(a: Tag, b: Tag) {
@@ -67,7 +63,7 @@
 
 	$: filteredTags = [...sortedTags]
 		.filter((tag) => {
-			if ($shouldFilter) return true;
+			if ($shouldFilter) {return true;}
 			const score = commandScore(tag.name, $inputValue);
 			scores.set(tag.id, score);
 			if (score > 0) {
@@ -76,7 +72,7 @@
 			return false;
 		})
 		.sort((a, b) => {
-			if ($shouldFilter) return 0;
+			if ($shouldFilter) {return 0;}
 			return (scores.get(getId(b)) ?? 0) - (scores.get(getId(a)) ?? 0);
 		});
 </script>

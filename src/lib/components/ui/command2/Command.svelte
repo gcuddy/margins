@@ -4,46 +4,10 @@
 	import { cn } from '$lib/utils';
 
 	import { ctx } from './ctx';
-	import type { CommandProps } from './store';
-	import type { RootProps } from './types';
+	import type { RootCommandProps } from './types';
 	import { createPages, type PageType } from './utils';
 
-	type SingleValue = {
-		multiple?: false;
-		value?: T;
-	};
-
-	type MultipleValue = {
-		multiple: true;
-		value?: Array<T>;
-	};
-
-	type SingleOrMultipleValue = SingleValue | MultipleValue;
-
-	type $$Props = RootProps & {
-		bounce?: boolean;
-		initialPages?: Array<TPages>;
-		pages?: Array<TPages>;
-		// multiple?: boolean;
-		// value?: T[];
-		/**
-		 * Prop to pass in a value that represents the generic type. Doesn't do anything beyond that.
-		 */
-		type?: T;
-	} & SingleOrMultipleValue &
-		Omit<CommandProps<T>, 'multiple'>;
-
-	// & MultipleValue;
-
-	// type MultipleValue =
-	// 	| {
-	// 			multiple: true;
-	// 			value?: string[];
-	// 	  }
-	// 	| {
-	// 			multiple?: false;
-	// 			value?: string;
-	// 	//   };
+	type $$Props = RootCommandProps<T, TPages>;
 
 	export let value: $$Props['value'] = undefined;
 	export let valueToString: $$Props['valueToString'] = undefined;
@@ -55,20 +19,24 @@
 	export let unstyled = false;
 	export let initialData: $$Props['initialData'] = undefined;
 	export let inputValue = writable('');
+	// eslint-disable-next-line svelte/valid-compile
 	export let type: $$Props['type'] = undefined;
 	export let comparisonFunction: $$Props['comparisonFunction'] = undefined;
 	let className: $$Props['class'] = undefined;
 	export { className as class };
 	export let shouldFilter: $$Props['shouldFilter'] = true;
+	export let container: $$Props['container'] = writable<HTMLElement | null>(
+		null,
+	);
 
 	type T = $$Generic;
 
 	const {
-		elements: { container },
-		state: { filtered, selectedValue, shouldFilter: localShouldFilter },
 		measurements: { tweenedHeight },
+		state: { filtered, selectedValue, shouldFilter: localShouldFilter },
 	} = ctx.set<T>({
 		comparisonFunction,
+		container,
 		initialData,
 		initialSelectedValue:
 			value && multiple && Array.isArray(value)
@@ -84,8 +52,11 @@
 		valueToString,
 	});
 
-	$: shouldFilter !== undefined && localShouldFilter.set(shouldFilter);
+	$: if (shouldFilter !== undefined) {
+		localShouldFilter.set(shouldFilter);
+	}
 
+	// TODO
 	$: value = multiple ? $selectedValue : $selectedValue[0];
 	type TPages = $$Generic<PageType>;
 	export let initialPages: Array<TPages> | undefined = undefined;
@@ -108,6 +79,7 @@
 	<slot />
 {:else}
 	<div
+		data-command-root
 		style:--height="{$tweenedHeight}px"
 		bind:this={$container}
 		class={cn(

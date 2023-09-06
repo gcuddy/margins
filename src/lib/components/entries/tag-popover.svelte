@@ -121,7 +121,7 @@
 										{tag.name}
 									</CommandItem>
 								{/each}
-								<!-- {#if inputValue.length > 1 && sortedTags.every(({ name }) => name !== inputValue)}
+								{#if inputValue.length > 1 && sortedTags.every(({ name }) => name !== inputValue)}
 									<CommandItem id="shadow-new-tag" value={{ name: inputValue }}>
 										<PlusIcon class="mr-2 opacity-50 h-4 w-4" />
 										<span class="inline-flex grow items-center">
@@ -131,7 +131,7 @@
 											>
 										</span>
 									</CommandItem>
-								{/if} -->
+								{/if}
 							{/if}
 							<!--  -->
 						</CommandGroup>

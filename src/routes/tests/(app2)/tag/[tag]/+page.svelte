@@ -1,88 +1,102 @@
 <script lang="ts">
-	import PinButton from '$lib/components/PinButton.svelte';
-	import { H1, Muted } from '$lib/components/ui/typography';
-	import { MoreHorizontal, PlusCircle, TagIcon } from 'lucide-svelte';
-	import type { Snapshot } from './$types.js';
-	import * as Dropdown from '$components/ui/dropdown-menu';
-	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$components/ui/tabs';
-	import Annotation from '$components/notebook/Annotation.svelte';
-	import { page } from '$app/stores';
-	import { queryParam, ssp } from 'sveltekit-search-params';
-	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
-	import { tagDeets, tagEntries, tagNotes } from './queries';
+	import {
+		createInfiniteQuery,
+		createMutation,
+		createQuery,
+		useQueryClient,
+	} from '@tanstack/svelte-query';
+	import { MoreHorizontal, PlusCircle } from 'lucide-svelte';
 	import { derived } from 'svelte/store';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
-	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
-	import EntryItemSkeleton from '$components/entries/EntryItemSkeleton.svelte';
+
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
+	import EntryItemSkeleton from '$components/entries/EntryItemSkeleton.svelte';
+	import Annotation from '$components/notebook/Annotation.svelte';
+	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
 	import { TagColorPopover } from '$components/tags/tag-color';
-	import { mutation } from '$lib/queries/query';
-	import type { UpdateTagInput } from '$lib/queries/server';
-	import Header from '$components/ui/Header.svelte';
 	import Button from '$components/ui/Button.svelte';
 	import * as Dialog from '$components/ui/dialog';
-	import * as Form from '$components/ui/form';
+	import * as Dropdown from '$components/ui/dropdown-menu';
+	import Header from '$components/ui/Header.svelte';
 	import { Input } from '$components/ui/input';
 	import Label from '$components/ui/Label.svelte';
-	import { superForm } from 'sveltekit-superforms/client';
-	import { goto } from '$app/navigation';
+	import {
+		Tabs,
+		TabsContent,
+		TabsList,
+		TabsTrigger,
+	} from '$components/ui/tabs';
+	import PinButton from '$lib/components/PinButton.svelte';
+	import { Muted } from '$lib/components/ui/typography';
+	import { mutation } from '$lib/queries/query';
+	import type { UpdateTagInput } from '$lib/queries/server';
+
+	import { tagEntries, tagNotes } from './queries';
 
 	export let data;
 
-	let loading = false;
-
-	const tab = queryParam('tab', ssp.string(), { pushHistory: false });
+	$: ({ tagDetails: tag } = data);
 
 	// TODO: form
 	// const form = superForm(data.updateTagForm, {
 	//     dataType: "json"
 	// });
 
-	const tagDeetsQuery = createQuery(tagDeets($page, data.tag));
-	const entriesQuery = createQuery(
+	const entriesQuery = createInfiniteQuery(
 		derived(page, ($page) => ({
-			...tagEntries($page, data.tag)
+			...data.entriesQueryOpts(data.tagDetails.id),
 			// enabled: $page.url.searchParams.get('tab') !== 'notes'
-		}))
+		})),
 	);
+
+	const entries = derived(entriesQuery, ($query) => {
+		if (!$query.data) {
+			return [];
+		}
+		return $query.data.pages.flatMap((page) => page.entries);
+	});
+
 	const notesQuery = createQuery(
 		derived(page, ($page) => ({
-			...tagNotes($page, data.tag)
+			...tagNotes($page, data.tag),
 			// enabled: $page.url.searchParams.get('tab') === 'notes'
-		}))
+		})),
 	);
 
 	const queryClient = useQueryClient();
 
 	const updateTagMutation = createMutation({
 		mutationFn: (data: UpdateTagInput['data']) => {
-			if (!$tagDeetsQuery.isSuccess) {
-				return Promise.reject('Tag not found');
-			}
 			return mutation($page, 'updateTag', {
-				id: $tagDeetsQuery.data.id,
-				data
+				data,
+				id: tag.id,
 			});
 		},
-		onMutate({ name, color }) {
-			queryClient.setQueryData<{ name: string; color: string }>(['tag', data.tag], (data) => {
-				if (!data) return;
-				return {
-					...data,
-					name: name ?? data.name,
-					color: color ?? data.color
-				};
-			});
+		onMutate({ color, name }) {
+			queryClient.setQueryData<{ color: string; name: string }>(
+				['tag', data.tag],
+				(data) => {
+					if (!data) {
+						return;
+					}
+					return {
+						...data,
+						color: color ?? data.color,
+						name: name ?? data.name,
+					};
+				},
+			);
 			//  TODO optimsitically update pin color, if it exists
 		},
 		onSuccess() {
 			queryClient.invalidateQueries({
-				queryKey: ['tags']
+				queryKey: ['tags'],
 			});
 			queryClient.invalidateQueries({
-				queryKey: ['pins']
+				queryKey: ['pins'],
 			});
-		}
+		},
 	});
 
 	let showRename = false;
@@ -90,51 +104,44 @@
 
 <Header>
 	<div class="flex items-center justify-between">
-		{#if $tagDeetsQuery.isLoading}
-			<Skeleton class="w-24 h-8" />
-		{:else if $tagDeetsQuery.isSuccess}
-			{@const tag = $tagDeetsQuery.data}
-
-			<div class="flex items-center space-x-3">
-				<!-- <TagIcon /> -->
-				<TagColorPopover
-					color={tag.color}
-					on:change={({ detail: color }) => {
-						console.log({ color });
-						$updateTagMutation.mutate({ color });
-					}}
-				/>
-				<span class="text-2xl font-bold tracking-tighter">
-					{tag.name}
-				</span>
-				<Dropdown.Root>
-					<Dropdown.Trigger>
-						<MoreHorizontal class="h-6 w-6" />
-					</Dropdown.Trigger>
-					<Dropdown.Content>
-						<Dropdown.Item
-							on:m-click={() => {
-								showRename = true;
-								// todo updateTag tagUpdate
-								// Dialog to rename? Or just make it editable?
-							}}
-						>
-							Rename
-						</Dropdown.Item>
-						<Dropdown.Item
-							on:m-click={() => {
-								// todo deleteTag / tagDelete
-							}}
-						>
-							Delete
-						</Dropdown.Item>
-					</Dropdown.Content>
-				</Dropdown.Root>
-			</div>
-			<PinButton pin_id={tag.pin_id}>
-				<input type="hidden" name="tag_id" value={tag.id} />
-			</PinButton>
-		{/if}
+		<div class="flex items-center space-x-3">
+			<!-- <TagIcon /> -->
+			<TagColorPopover
+				color={tag.color}
+				on:change={({ detail: color }) => {
+					$updateTagMutation.mutate({ color });
+				}}
+			/>
+			<span class="text-2xl font-bold tracking-tighter">
+				{tag.name}
+			</span>
+			<Dropdown.Root>
+				<Dropdown.Trigger>
+					<MoreHorizontal class="h-6 w-6" />
+				</Dropdown.Trigger>
+				<Dropdown.Content>
+					<Dropdown.Item
+						on:click={() => {
+							showRename = true;
+							// todo updateTag tagUpdate
+							// Dialog to rename? Or just make it editable?
+						}}
+					>
+						Rename
+					</Dropdown.Item>
+					<Dropdown.Item
+						on:click={() => {
+							// todo deleteTag / tagDelete
+						}}
+					>
+						Delete
+					</Dropdown.Item>
+				</Dropdown.Content>
+			</Dropdown.Root>
+		</div>
+		<PinButton pin_id={tag.pin_id}>
+			<input type="hidden" name="tag_id" value={tag.id} />
+		</PinButton>
 	</div>
 </Header>
 <Tabs>
@@ -142,7 +149,7 @@
 		<TabsList>
 			<TabsTrigger class="gap-1.5" value="entries"
 				><span>Entries</span>
-				<Muted>{$entriesQuery.data ? $entriesQuery.data.length : ''}</Muted></TabsTrigger
+				<Muted>{$entries ? $entries.length : ''}</Muted></TabsTrigger
 			>
 			<TabsTrigger class="gap-1.5" value="notes"
 				><span>Notes</span>
@@ -155,9 +162,10 @@
 		{#if $entriesQuery.isLoading}
 			<EntryItemSkeleton />
 		{:else if $entriesQuery.isSuccess}
-			{#each $entriesQuery.data as entry}
+			{#each $entries as entry}
 				<EntryItem {entry} />
 			{/each}
+			<!-- TODO: virtualize (using existing component) and infinite scroll (see [status]/+page.svelte) -->
 		{/if}
 	</TabsContent>
 	<TabsContent value="notes">
@@ -172,7 +180,7 @@
 			{:else}
 				<div class="p-10 flex items-center justify-center flex-col gap-4">
 					<span>No notes for this tag.</span>
-					<Button variant="secondary" href="/tests/notes/new?tags={$tagDeetsQuery.data?.id ?? ''}">
+					<Button variant="secondary" href="/tests/notes/new?tags={tag.id}">
 						<PlusCircle class="mr-2 h-4 w-4" />
 						New note for this tag
 					</Button>
@@ -191,15 +199,17 @@
 		<form
 			class="contents"
 			on:submit|preventDefault={(e) => {
-				if (!(e.target instanceof HTMLFormElement)) return;
+				if (!(e.target instanceof HTMLFormElement)) {
+					return;
+				}
 				const data = new FormData(e.target);
 				const name = data.get('tag-name');
 				if (typeof name === 'string') {
 					$updateTagMutation.mutateAsync({ name }).then(() => {
-                        goto(`/tests/tag/${name}`);
-                    })
+						goto(`/tests/tag/${name}`);
+					});
 				}
-                showRename = false;
+				showRename = false;
 			}}
 		>
 			<Label for="tag-name">Tag Name</Label>
@@ -208,7 +218,7 @@
 				type="text"
 				autocomplete="off"
 				name="tag-name"
-				value={$tagDeetsQuery.data?.name}
+				value={tag.name}
 			/>
 			<Dialog.Footer>
 				<Button type="submit">Save Changes</Button>

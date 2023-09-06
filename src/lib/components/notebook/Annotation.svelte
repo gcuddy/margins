@@ -1,24 +1,26 @@
 <script lang="ts">
+	import { MoreHorizontal } from 'lucide-svelte';
+	import MarkdownIt from 'markdown-it';
+	import { toast } from 'svelte-sonner';
+
+	import Editor from '$components/ui/editor/Editor.svelte';
+	import { render_html } from '$components/ui/editor/utils';
 	import type { TargetSchema } from '$lib/annotation';
 	import Avatar from '$lib/components/ui/avatar/Avatar.svelte';
 	import { H1, Muted, Small } from '$lib/components/ui/typography';
 	import type { AnnotationNotebook, AnnotationWithEntry } from '$lib/db/selects';
 	import { getHostname } from '$lib/utils';
+	import { generateTextFragmentLink, getTargetSelector } from '$lib/utils/annotations';
 	import { getId, getType } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
-	import MarkdownIt from 'markdown-it';
+
+	import { buttonVariants } from '../ui/Button.svelte';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
 		DropdownMenuItem,
 		DropdownMenuTrigger
 	} from '../ui/dropdown-menu';
-	import { MoreHorizontal } from 'lucide-svelte';
-	import { buttonVariants } from '../ui/Button.svelte';
-	import { generateTextFragmentLink, getTargetSelector } from '$lib/utils/annotations';
-	import { toast } from 'svelte-sonner';
-	import { render_html } from '$components/ui/editor/utils';
-	import Editor from '$components/ui/editor/Editor.svelte';
 
 	const md = new MarkdownIt();
 	let className = '';
@@ -40,9 +42,9 @@
 		: `/tests/notes/${annotation.id}`;
 
 	function copyLinkToHighlight(annotation: AnnotationWithTarget) {
-		if (!annotation.entry?.uri) return;
+		if (!annotation.entry?.uri) {return;}
 		const selector = getTargetSelector(annotation.target, 'TextQuoteSelector');
-		if (!selector) return;
+		if (!selector) {return;}
 		console.log({ annotation });
 		const link = generateTextFragmentLink(annotation.entry.uri, selector);
 		if (link) {
@@ -76,7 +78,7 @@
 				{annotation.entry_type}
 			</Muted> -->
 				<DropdownMenu>
-					<DropdownMenuTrigger class={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+					<DropdownMenuTrigger class={buttonVariants({ size: 'sm', variant: 'ghost' })}>
 						<MoreHorizontal class="h-4 w-4 text-secondary-foreground" />
 					</DropdownMenuTrigger>
 					<DropdownMenuContent>

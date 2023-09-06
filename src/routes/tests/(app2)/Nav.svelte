@@ -277,7 +277,7 @@
                      <Button
                          href="/tests/external"
                          size="sm"
-                         class="flex w-full items-center justify-center lg:justify-start space-x-2"
+                         class="flex w-full hidden items-center justify-center lg:justify-start space-x-2"
                          variant="ghost"
                      >
                          <FolderSync class="h-5 w-5" />

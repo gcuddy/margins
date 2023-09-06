@@ -202,6 +202,7 @@
 
 	// ignore this lol
 	let data = entry;
+    $: data = entry;
 
 	$: if (data.status) {$value = data.status;}
 	$: attachment = data.relations.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');

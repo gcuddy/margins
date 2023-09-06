@@ -59,6 +59,7 @@ import { idOptionalArraySchema, idSchema } from '$lib/schemas';
 import { collectionsInputSchema } from '$lib/schemas/inputs';
 import { attachmentCreateInput } from '$lib/schemas/inputs/attachment.schema';
 import { bookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
+import { collectionItemUpdateInputSchema } from '$lib/schemas/inputs/collection.schema';
 import {
 	get_entry_details,
 	get_library,
@@ -118,15 +119,15 @@ export const mutations = {
 			add_to_collection({ ...input, userId }),
 		schema: s_add_to_collection,
 	}),
-    attachmentCreate: query({
-        fn: attachmentCreate,
-        schema: attachmentCreateInput,
-    }),
-    bookmarkCreate: query({
-        fn: bookmarkCreate,
-        schema: bookmarkCreateInput
-    }),
-    convertEntry: query({
+	attachmentCreate: query({
+		fn: attachmentCreate,
+		schema: attachmentCreateInput,
+	}),
+	bookmarkCreate: query({
+		fn: bookmarkCreate,
+		schema: bookmarkCreateInput,
+	}),
+	convertEntry: query({
 		fn: convertTo,
 		schema: convertToSchema,
 	}),
@@ -169,7 +170,7 @@ export const mutations = {
 			name: z.string(),
 		}),
 	}),
-    createFavorite: query({
+	createFavorite: query({
 		fn: createFavorite,
 		schema: createFavoriteSchema,
 	}),
@@ -185,12 +186,14 @@ export const mutations = {
 	deleteFavorite: query({
 		fn: async ({ ctx, input }) => {
 			let query = db.deleteFrom('Favorite').where('userId', '=', ctx.userId);
-			query = Array.isArray(input.id) ? query.where('id', 'in', input.id) : query.where('id', '=', input.id);
+			query = Array.isArray(input.id)
+				? query.where('id', 'in', input.id)
+				: query.where('id', '=', input.id);
 			await query.execute();
 		},
 		schema: idOptionalArraySchema,
 	}),
-    deleteInteraction: query({
+	deleteInteraction: query({
 		fn: async ({ ctx, input }) => {
 			await db
 				.deleteFrom('EntryInteraction')
@@ -202,18 +205,27 @@ export const mutations = {
 			id: z.number().int(),
 		}),
 	}),
-    removeEntryFromCollection: query({
+	removeFromCollection: query({
 		fn: async ({ ctx: { userId }, input }) => {
-			await db
+			const query = db
 				.deleteFrom('CollectionItems')
-				.where('collectionId', '=', input.collectionId)
-				.where('entryId', '=', input.entryId)
-				.execute();
+				.where('collectionId', '=', input.collectionId);
+			if (input.entryId) {
+				await query.where('entryId', '=', input.entryId).execute();
+			} else if (input.annotationId) {
+				await query.where('annotationId', '=', input.annotationId).execute();
+			}
 		},
-		schema: z.object({
-			collectionId: z.number().int(),
-			entryId: z.number().int(),
-		}),
+		schema: z
+			.object({
+				annotationId: z.string().optional(),
+				collectionId: z.number().int(),
+				entryId: z.number().int().optional(),
+			})
+			.refine(
+				(v) => v.entryId || v.annotationId,
+				'Must provide either entryId or annotationId',
+			),
 	}),
 	saveInteraction: query({
 		fn: async ({ ctx, input }) => {
@@ -249,7 +261,7 @@ export const mutations = {
 		fn: save_to_library,
 		schema: saveToLibrarySchema,
 	}),
-    set_tags_on_entry: query({
+	set_tags_on_entry: query({
 		fn: async ({ ctx, input }) => {
 			return set_tags_on_entry({ ...input, userId: ctx.userId });
 		},
@@ -291,6 +303,42 @@ export const mutations = {
 			),
 		}),
 	}),
+	updateCollectionItem: query({
+		fn: async ({ ctx, input }) => {
+			const { data, id } = input;
+			await db
+				.updateTable('CollectionItems')
+				.where('id', '=', id)
+				.set(data)
+				.execute();
+		},
+		schema: collectionItemUpdateInputSchema,
+	}),
+	updateCollectionItemsPosition: query({
+		fn: async ({ ctx, input }) => {
+			await db
+				.insertInto('CollectionItems')
+				.values(
+					input.map((item) => ({
+						collectionId: item.collectionId,
+						id: item.id,
+						position: item.position,
+						updatedAt: new Date(),
+					})),
+				)
+				.onDuplicateKeyUpdate({
+					position: sql`VALUES(position)`,
+				})
+				.execute();
+		},
+		schema: z.array(
+			z.object({
+				collectionId: z.number(),
+				id: z.string(),
+				position: z.number(),
+			}),
+		),
+	}),
 	updateFavorite: query({
 		fn: updateFavorite,
 		schema: updateFavoriteSchema,
@@ -315,7 +363,7 @@ export const mutations = {
 			reponse: z.string().optional(),
 		}),
 	}),
-    update_status: query({
+	update_status: query({
 		fn: async ({ ctx, input }) => {
 			const new_sort_order =
 				input.sort_order ??
@@ -480,9 +528,12 @@ export const queries = {
 			const entries = await db
 				.selectFrom('Bookmark as b')
 				.innerJoin('Entry as e', 'e.id', 'b.entryId')
+				.leftJoin('EntryInteraction as i', (join) =>
+					join.onRef('e.id', '=', 'i.entryId').on('i.userId', '=', ctx.userId),
+				)
 				.where('b.userId', '=', ctx.userId)
 				.select(entrySelect)
-				.select(['b.status'])
+				.select(['b.status', 'i.progress'])
 				.select((eb) =>
 					eb
 						.case()
@@ -747,7 +798,7 @@ export const queries = {
 	searchMovies: query({
 		fn: async ({ input }) => {
 			// TODO Caching
-			const { results } = await tmdb.search(input.q);
+			const { results } = await tmdb.movie.search(input.q);
 			return results;
 		},
 		schema: qSchema,
@@ -806,7 +857,7 @@ export const queries = {
 		},
 		schema: qSchema,
 	}),
-    tag: query(),
+	tag: query(),
 	tags: query({
 		fn: ({ ctx }) => {
 			return db

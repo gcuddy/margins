@@ -128,7 +128,9 @@ export async function updateBookmark(
 			.set(data)
 			.where('userId', '=', userId);
 		const { id } = variables;
-		bookmarks = Array.isArray(id) ? bookmarks.where('id', 'in', id) : bookmarks.where('id', '=', id);
+		bookmarks = Array.isArray(id)
+			? bookmarks.where('id', 'in', id)
+			: bookmarks.where('id', '=', id);
 		return await bookmarks.execute();
 	} else {
 		const { entryId } = variables;
@@ -371,6 +373,7 @@ export async function add_to_collection(
 					updatedAt: new Date(),
 				})),
 			)
+			.ignore()
 			.execute();
 	} else {
 		return await db
@@ -380,8 +383,10 @@ export async function add_to_collection(
 				collectionId: input.collectionId,
 				entryId: input.entryId,
 				id: nanoid(),
+				type: input.annotationId ? 'Annotation' : 'Entry',
 				updatedAt: new Date(),
 			})
+			.ignore()
 			.execute();
 	}
 }
@@ -460,9 +465,9 @@ export async function set_tags_on_entry({
 		tagIds.map((tagId) => ({ entryId, tagId, userId })),
 	);
 
-    if (!values.length) {
-			return;
-		}
+	if (!values.length) {
+		return;
+	}
 
 	const q = await db.insertInto('TagOnEntry').values(values).ignore().execute();
 
@@ -1122,7 +1127,9 @@ export async function convertTo({
 
 	// TODO: this transaction is unwieldly, and the delete part should be handled by qstash asynchronously
 	await db.transaction().execute(async (trx) => {
-		if (!newEntry) {return;}
+		if (!newEntry) {
+			return;
+		}
 		console.time('convert transaction');
 		await trx
 			.updateTable('TagOnEntry')
@@ -1387,17 +1394,16 @@ const _createFavoriteSchema = z
 		entryId: z.number().nullish(),
 		feedId: z.number().nullish(),
 		//
-folderName: z.string().nullish(),
+		folderName: z.string().nullish(),
 
-//
-id: z.string(),
+		//
+		id: z.string(),
 
+		parentId: z.string().nullish(),
 
-parentId: z.string().nullish(),
+		smartListId: z.number().nullish(),
 
-smartListId: z.number().nullish(),
-
-sortOrder: z.number().nullish(),
+		sortOrder: z.number().nullish(),
 
 		tagId: z.number().nullish(),
 	})

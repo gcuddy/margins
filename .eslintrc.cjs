@@ -6,8 +6,8 @@ module.exports = {
 		'eslint:recommended',
 		// 'plugin:@typescript-eslint/strict-type-checked',
 		// 'plugin:@typescript-eslint/stylistic-type-checked',
-        'plugin:@typescript-eslint/recommended',
-        'plugin:@typescript-eslint/strict',
+		'plugin:@typescript-eslint/recommended',
+		'plugin:@typescript-eslint/strict',
 		'plugin:import/errors',
 		'plugin:import/typescript',
 		'plugin:svelte/recommended',
@@ -45,21 +45,21 @@ module.exports = {
 			{ fixStyle: 'inline-type-imports' },
 		],
 		'@typescript-eslint/no-dynamic-delete': 0,
-		'@typescript-eslint/naming-convention': [
-			'error',
-			{
-				custom: {
-					match: true,
-					regex: '^T[A-Z]',
-				},
-				format: ['PascalCase'],
-				selector: 'typeParameter',
-			},
-		],
-        // these 2 rules cause huge performance issues for us rn
-        '@typescript-eslint/no-misused-promises': 0,
-        '@typescript-eslint/no-floating-promises': 0,
-        // ^^
+		// '@typescript-eslint/naming-convention': [
+		// 	'error',
+		// 	{
+		// 		custom: {
+		// 			match: true,
+		// 			regex: '^T[A-Z]',
+		// 		},
+		// 		format: ['PascalCase'],
+		// 		selector: 'typeParameter',
+		// 	},
+		// ],
+		// these 2 rules cause huge performance issues for us rn
+		'@typescript-eslint/no-misused-promises': 0,
+		'@typescript-eslint/no-floating-promises': 0,
+		// ^^
 		'@typescript-eslint/no-namespace': 0,
 		'@typescript-eslint/no-non-null-assertion': 0,
 		'@typescript-eslint/no-throw-literal': 0,
@@ -187,7 +187,7 @@ module.exports = {
 				// these cause issues with svelte rn
 				'@typescript-eslint/no-unsafe-assignment': 0,
 				'@typescript-eslint/no-unsafe-call': 0,
-                'no-undef': 0,
+				'no-undef': 0,
 			},
 		},
 		{

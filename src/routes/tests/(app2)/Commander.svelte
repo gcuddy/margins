@@ -21,7 +21,7 @@
 		pages: [],
 		placeholder: 'Type a command or search...',
 		search: '',
-		shouldFilter: true
+		shouldFilter: true,
 	});
 	export { state as commanderState };
 </script>
@@ -33,6 +33,7 @@
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
+	import { Tags } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -47,21 +48,41 @@
 		CommandItem,
 		CommandList,
 		CommandSeparator,
-		CommandShortcut
+		CommandShortcut,
 	} from '$lib/components/ui/command2';
 	import { darkThemes, themes } from '$lib/features/settings/themes';
 	import { queryKeys } from '$lib/queries/keys';
-	import { query } from '$lib/queries/query';
 
-	;
+	const page = derived(state, ($state) => $state.pages.at(-1));
 
+	export function bounce(container: HTMLElement) {
+		// check if  container is in a dialog - if so, we have to bounce that instead
+		const dialogEl = container.closest('[data-melt-dialog-content]');
+		const el = dialogEl ?? container;
+		el.classList.add(`scale-[0.96]`);
+		setTimeout(() => {
+			if (el) {
+				el.classList.remove(`scale-[0.96]`);
+			}
+		}, 200);
+	}
 
-	const page = derived(state, ($state) => $state.pages[$state.pages.length - 1]);
-	$: $page, ($state.search = '');
+	$: {
+		// Whenever a page changes...
+		// eslint-disable-next-line no-unused-expressions
+		$page;
+		inputValue.set('');
+		if ($container && $page) {
+			console.log(`bouncing`);
+			bounce($container);
+		}
+	}
 
 	$: if (!$state.isOpen) {
-		$state.pages = [];
-		$state.search = '';
+		setTimeout(() => {
+			$state.pages = [];
+			inputValue.set('');
+		}, 250);
 	}
 
 	export const open = () => {
@@ -70,24 +91,22 @@
 
 	state.subscribe((state) => {
 		cmd_open.set(state.isOpen);
-	})
-
+	});
 
 	$: if (!$page) {
 		$state.shouldFilter = true;
 		$state.placeholder = 'Type a command or search...';
 	}
 
-	$: console.log({
-		$state
-	})
+	const inputValue = writable('');
+	const container = writable<HTMLElement | null>(null);
 </script>
 
 <svelte:window
 	on:keydown={(e) => {
 		// listen for command + j
 		if (e.metaKey && e.key === 'k') {
-            e.preventDefault()
+			e.preventDefault();
 			$state.isOpen = true;
 		}
 	}}
@@ -99,14 +118,11 @@
 <CommandDialog
 	shouldFilter={$state.shouldFilter}
 	bind:open={$state.isOpen}
-	onKeydown={(e) => {
-		if (e.key === 'Escape' || (e.key === 'Backspace' && !$state.search)) {
-			e.preventDefault();
-			$state.pages = $state.pages.slice(0, -1);
-		}
-	}}
+	{inputValue}
+	bounce
+	{container}
 >
-	<CommandInput bind:value={$state.search} placeholder={$state.placeholder} />
+	<CommandInput placeholder={$state.placeholder} />
 	<CommandList class="scrollbar-hide">
 		{#if !$page}
 			<CommandEmpty>No results found.</CommandEmpty>
@@ -123,7 +139,7 @@
 				<CommandItem
 					onSelect={() => {
 						$state.pages = [...$state.pages, 'open-collection'];
-					$state.shouldFilter = false;
+						$state.shouldFilter = false;
 					}}
 				>
 					<ArrowRight class="mr-2 h-4 w-4" />
@@ -235,7 +251,9 @@
 				</CommandItem>
 			</CommandGroup>
 			<CommandGroup heading="Settings">
-				<CommandItem onSelect={() => ($state.pages = [...$state.pages, 'theme'])}>
+				<CommandItem
+					onSelect={() => ($state.pages = [...$state.pages, 'theme'])}
+				>
 					<Cog class="mr-2 h-4 w-4" />
 					<span>Change theme</span>
 					<!-- <CommandShortcut>⌘P</CommandShortcut> -->
@@ -254,7 +272,7 @@
 		{/if}
 		{#if $page === 'theme'}
 			<CommandGroup>
-				{#each themes as {theme, name}}
+				{#each themes as { name, theme }}
 					<CommandItem
 						onSelect={() => {
 							if (theme === 'system') {
@@ -267,12 +285,15 @@
 							} else {
 								document.documentElement.classList.remove('dark');
 							}
-						console.log('fetching')
-							fetch(`/tests?/setTheme&theme=${theme}&redirectTo=${  $spage.url.pathname}`, {
-								body: new FormData(),
-								method: 'POST'
-							}).then(() => {
-								console.log('fetched')
+							console.log('fetching');
+							fetch(
+								`/tests?/setTheme&theme=${theme}&redirectTo=${$spage.url.pathname}`,
+								{
+									body: new FormData(),
+									method: 'POST',
+								},
+							).then(() => {
+								console.log('fetched');
 								$state.isOpen = false;
 							});
 							$state.isOpen = false;
@@ -305,7 +326,7 @@
 			<Query
 				opts={{
 					...queryKeys.search.books($spage, $state.search),
-					enabled: !!$state.search
+					enabled: !!$state.search,
 				}}
 				display={(b) => b.volumeInfo?.title ?? ''}
 				value={(b) =>
@@ -328,18 +349,7 @@
 			/>
 		{/if}
 		{#if $page === 'open-tag'}
-			<Query
-				opts={{
-					queryFn: () => query($spage, 'tags', {}),
-					queryKey: ['tags']
-				}}
-				value={(item) => item.name}
-				display={(item) => item.name}
-				onSelect={(item) => {
-					$state.isOpen = false;
-					goto(`/tests/tag/${item.name}`);
-				}}
-			/>
+			<Tags preload bind:isOpen={$state.isOpen} />
 		{/if}
 	</CommandList>
 </CommandDialog>

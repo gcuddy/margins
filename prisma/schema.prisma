@@ -560,6 +560,7 @@ model CollectionItems {
     annotation   Annotation?        @relation(fields: [annotationId], references: [id])
     bookmark     Bookmark?          @relation(fields: [bookmarkId], references: [id])
     entry        Entry?             @relation(fields: [entryId], references: [id])
+    width        String?
 
     @@unique([collectionId, annotationId])
     @@unique([collectionId, entryId])

@@ -24,6 +24,7 @@ import { cubicOut } from 'svelte/easing';
 
 export type CommandProps<T> = {
 	comparisonFunction?: (a: T, b: T) => boolean;
+	container?: Writable<HTMLElement | null>;
 	// activeValue?: Writable<string | null>;
 	defaultActiveValue?: string | null;
 	/**
@@ -140,7 +141,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	const comparisonFunction = props?.comparisonFunction ?? deepEqual;
 
-	const container = writable<HTMLElement | null>(null);
+	const container = props?.container ?? writable<HTMLElement | null>(null);
 
 	const valueToScoreMap = new Map<T, number>();
 

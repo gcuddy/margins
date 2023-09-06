@@ -303,6 +303,7 @@ export type CollectionItems = {
 	 * This applies to sections only
 	 */
 	title: string | null;
+	width: string | null;
 };
 export type ColorDescription = {
 	userId: string;

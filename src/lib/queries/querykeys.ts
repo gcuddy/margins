@@ -163,6 +163,12 @@ export const queryFactory = {
 			},
 			queryKey: ['notes', 'list', input] as const,
 		}),
+		search: (input: QueryInput<'searchNotes'>) => ({
+			placeholderData: keepPreviousData,
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'searchNotes', input),
+			queryKey: ['notes', 'search', { input }] as const,
+		}),
 	},
 	pins: {
 		list: () => ({
@@ -172,6 +178,14 @@ export const queryFactory = {
 			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'pins', {}),
 
 			queryKey: ['pins', 'list'] as const,
+		}),
+	},
+	search: {
+		movies: (input: QueryInput<'searchMovies'>) => ({
+			placeholderData: keepPreviousData,
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'searchMovies', input),
+			queryKey: ['search', 'movies', { input }] as const,
 		}),
 	},
 	tags: {
