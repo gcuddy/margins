@@ -1,19 +1,26 @@
 import {
-	InfiniteData,
-	QueryClient,
-	QueryKey,
 	createMutation,
+	type InfiniteData,
+	type QueryClient,
+	type QueryKey,
 	useQueryClient,
 } from '@tanstack/svelte-query';
-import { MutationInput, mutation, QueryOutput, mutate } from '../query';
-import type { LibraryResponse } from '$lib/server/queries';
 import { get } from 'svelte/store';
-import { page } from '$app/stores';
-import type { QueryFactory } from '../querykeys';
 import { toast } from 'svelte-sonner';
-import type { Note, NotesResponse } from '../server';
+
+import { page } from '$app/stores';
 import { omit } from '$lib/helpers';
 import type { BookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
+import type { LibraryResponse } from '$lib/server/queries';
+
+import {
+	mutate,
+	mutation,
+	type MutationInput,
+	type QueryOutput,
+} from '../query';
+import type { QueryFactory } from '../querykeys';
+import type { Note, NotesResponse } from '../server';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
@@ -28,10 +35,26 @@ const mutateStatus = (queryClient: QueryClient) => {
 /**
  * Bad name for it. These are queries that shouldn't usually be invalidated when a mutation on entries occurs.
  */
-const ctxEntries = [
-	'count',
-	'authors',
-] satisfies (keyof QueryFactory['entries'])[];
+const ctxEntries = ['count', 'authors', 'all'] satisfies Array<
+	keyof QueryFactory['entries']
+>;
+
+type CtxEntry = (typeof ctxEntries)[number];
+
+export const invalidateEntries = (queryClient: QueryClient, all = false) => {
+	queryClient.invalidateQueries({
+		// queryKey: ["entries"],
+		predicate(query) {
+			if (all) {
+				return query.queryKey[0] === 'entries';
+			}
+			return (
+				query.queryKey[0] === 'entries' &&
+				!ctxEntries.includes(query.queryKey[1] as CtxEntry)
+			);
+		},
+	});
+};
 
 // TODO clean this up
 
@@ -59,8 +82,8 @@ export function updateAnnotationMutation<
 	TDefaultData extends Partial<MutationInput<'save_note'>>,
 >(opts?: {
 	input?: TDefaultData;
-	showToast?: boolean;
 	onSuccess?: () => void;
+	showToast?: boolean;
 }) {
 	const queryClient = useQueryClient();
 	return createMutation({
@@ -89,8 +112,12 @@ export function updateAnnotationMutation<
 				const ids = Array.isArray(variables.id) ? variables.id : [variables.id];
 				for (const id of ids) {
 					queryClient.setQueryData<Note>(['notes', 'detail', id], (old) => {
-						if (!old) return old;
-						if (!id) return old;
+						if (!old) {
+							return old;
+						}
+						if (!id) {
+							return old;
+						}
 						return {
 							...old,
 							...omit(variables, 'id', 'tags', 'relations'), //TODO: why can't i get these too
@@ -100,7 +127,9 @@ export function updateAnnotationMutation<
 				queryClient.setQueriesData<InfiniteData<NotesResponse>>(
 					{ queryKey: ['notes', 'list'] },
 					(data) => {
-						if (!data) return data;
+						if (!data) {
+							return data;
+						}
 						return {
 							...data,
 							pages: data.pages.map((page) => ({
@@ -149,7 +178,9 @@ export function createSetTagsMutation(opts?: {
 			return mutation(get(page), 'set_tags_on_entry', input);
 		},
 		onMutate: async ({ entries, tags }) => {
-			if (!opts?.optimistic) return;
+			if (!opts?.optimistic) {
+				return;
+			}
 			const queryKey = ['entries', 'list'] as const;
 			await queryClient.cancelQueries({
 				queryKey,
@@ -162,15 +193,17 @@ export function createSetTagsMutation(opts?: {
 
 			console.log({ previousQueries });
 
-			const tagsToUpdate = (tags?.filter((tag) => tag.id) ?? []) as {
+			const tagsToUpdate = (tags?.filter((tag) => tag.id) ?? []) as Array<{
 				id: number;
 				name: string;
-			}[];
+			}>;
 
 			queryClient.setQueriesData<InfiniteData<LibraryResponse>>(
 				{ queryKey },
 				(data) => {
-					if (!data) return data;
+					if (!data) {
+						return data;
+					}
 					return {
 						...data,
 						pages: data.pages.map((p) => {
@@ -197,7 +230,7 @@ export function createSetTagsMutation(opts?: {
 				predicate(query) {
 					return (
 						query.queryKey[0] === 'entries' &&
-						!ctxEntries.includes(query.queryKey[1] as any)
+						!ctxEntries.includes(query.queryKey[1])
 					);
 				},
 			});
@@ -208,7 +241,10 @@ export function createSetTagsMutation(opts?: {
 	});
 }
 
-function invalidateQueryKeys(queryClient: QueryClient, queryKeys: QueryKey[]) {
+function invalidateQueryKeys(
+	queryClient: QueryClient,
+	queryKeys: Array<QueryKey>,
+) {
 	console.log('invalidating query keys', queryKeys);
 	queryKeys.forEach((queryKey) => {
 		queryClient.invalidateQueries({ queryKey });
@@ -230,7 +266,9 @@ export function initCreatePinMutation(opts?: { invalidate?: Invalidate }) {
 			// TODO: set pin cache
 			//for now..
 			invalidatePins(queryClient);
-			if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
+			if (opts?.invalidate) {
+				invalidateQueryKeys(queryClient, opts.invalidate);
+			}
 		},
 	});
 }
@@ -247,7 +285,9 @@ export function initDeletePinMutation(opts?: {
 			// TODO: set pin cache
 			//for now..
 			invalidatePins(queryClient);
-			if (opts?.invalidate) invalidateQueryKeys(queryClient, opts.invalidate);
+			if (opts?.invalidate) {
+				invalidateQueryKeys(queryClient, opts.invalidate);
+			}
 		},
 	});
 }
@@ -263,14 +303,14 @@ export function initBookmarkCreateMutation() {
 }
 
 export function initAttachmentCreateMutation() {
-    const queryClient = useQueryClient();
-    return createMutation({
-        mutationFn: (input: MutationInput<'attachmentCreate'>) =>
-            mutate('attachmentCreate', input),
-        onSuccess() {
-            void queryClient.invalidateQueries({ queryKey: ['entries'] });
-        },
-    });
+	const queryClient = useQueryClient();
+	return createMutation({
+		mutationFn: (input: MutationInput<'attachmentCreate'>) =>
+			mutate('attachmentCreate', input),
+		onSuccess() {
+			void queryClient.invalidateQueries({ queryKey: ['entries'] });
+		},
+	});
 }
 
 // TODO: update entry state across al...
@@ -297,7 +337,7 @@ type EntryOutputs =
  */
 async function update_entries(
 	queryClient: QueryClient,
-	ids: number[],
+	ids: Array<number>,
 	newData: Partial<LibraryResponse['entries'][number]>,
 ) {
 	const queryKey = ['entries'] as const;
@@ -315,7 +355,9 @@ async function update_entries(
 	queryClient.setQueriesData<EntryOutputs>(
 		{ queryKey },
 		(old: EntryOutputs | undefined) => {
-			if (!old) return old;
+			if (!old) {
+				return old;
+			}
 
 			// check for infinite data
 			if ('pages' in old) {
@@ -366,7 +408,7 @@ async function update_entries(
 // REVIEW should make a single generic type for state
 export async function updateEntries(
 	queryClient: QueryClient,
-	ids: number[],
+	ids: Array<number>,
 	newData: Partial<LibraryResponse['entries'][number]>,
 ) {
 	// REVIEW can I get this from queryfactory?
@@ -387,7 +429,9 @@ export async function updateEntries(
 	queryClient.setQueriesData<InfiniteData<LibraryResponse>>(
 		{ queryKey },
 		(data) => {
-			if (!data) return data;
+			if (!data) {
+				return data;
+			}
 			return {
 				...data,
 				pages: data.pages.map((p) => {
@@ -411,8 +455,8 @@ export async function updateEntries(
 	// TODO return previous Queries
 
 	return {
-		queryKey,
 		previousQueries,
+		queryKey,
 	};
 
 	// queryClient.

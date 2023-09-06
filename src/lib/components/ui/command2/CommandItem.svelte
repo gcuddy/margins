@@ -52,7 +52,7 @@
 	const {
 		actions,
 		helpers,
-		options: { filterFunction },
+		options: { filterFunction, comparisonFunction },
 		state: {
 			activeElement,
 			activeValue,
@@ -108,6 +108,7 @@
 		actions.closeMenu();
 	}
 
+
 	let hidden = false;
 	$: if ($shouldFilter === false) {
 		hidden = false;
@@ -118,25 +119,25 @@
 			filterFunction({
 				input: $inputValue,
 				itemValue: value,
-			})  === 0;
+			}) === 0;
 	}
 
 	// false : !$inputValue ? false : !$filtered.ids.includes(id);
-	$: selected = $selectedValue.some((sv) => deepEqual(sv, value));
+	$: selected = $selectedValue.some((sv) => comparisonFunction(sv.value, value));
 
-    function registerEvent(node: HTMLElement) {
-        node.addEventListener(SELECT_EVENT_NAME, () => {
-            onSelect(value);
-        })
+	function registerEvent(node: HTMLElement) {
+		node.addEventListener(SELECT_EVENT_NAME, () => {
+			onSelect(value);
+		});
 
-        return {
-            destroy() {
-                node.removeEventListener(SELECT_EVENT_NAME, () => {
-                    onSelect(value);
-                })
-            }
-        }
-    }
+		return {
+			destroy() {
+				node.removeEventListener(SELECT_EVENT_NAME, () => {
+					onSelect(value);
+				});
+			},
+		};
+	}
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -145,18 +146,18 @@
 		!unstyled &&
 			'relative group text-left flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
 		className,
-        hidden && 'hidden'
+		hidden && 'hidden',
 	)}
 	bind:this={node}
 	{id}
-    use:registerEvent
+	use:registerEvent
 	data-value={JSON.stringify(value)}
 	data-label={label}
 	data-disabled={disabled ? '' : undefined}
 	aria-disabled={disabled ? true : undefined}
 	aria-selected={selected}
-	hidden={hidden}
-    data-hidden={hidden ? '' : undefined}
+	{hidden}
+	data-hidden={hidden ? '' : undefined}
 	role="option"
 	on:pointermove={handlePointerMove}
 	on:click={handleClick}

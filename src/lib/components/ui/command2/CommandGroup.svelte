@@ -8,7 +8,7 @@
 	import { ctx } from './ctx';
 
 	const {
-		state: { inputValue }
+		state: { inputValue, shouldFilter }
 	} = ctx.get();
 	const id = generateId();
 	const headingId = `${id}-heading`;
@@ -26,7 +26,7 @@
 
     let hidden = false;
 
-    $: if ($inputValue) {
+    $: if ($inputValue && $shouldFilter !== false) {
         // eslint-disable-next-line unicorn/prefer-top-level-await
         tick().then(() => {
             const options = getOptions(containerEl);

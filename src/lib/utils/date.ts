@@ -19,9 +19,7 @@ export const getYear = (date: string | number | Date) => {
 };
 
 export function ago(a: Date, b: Date) {
-	console.log(`ago`, a, b);
 	const ms = b.getTime() - a.getTime();
-	console.log(`ago`, { ms });
 	if (ms < 10 * 1000) {
 		return 'a few seconds ago';
 	}

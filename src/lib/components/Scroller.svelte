@@ -2,23 +2,23 @@
 	import { createEventDispatcher, onMount, tick } from 'svelte';
 	type T = $$Generic;
 
-	export let items: T[];
+	export let items: Array<T>;
 
 	type Key = T extends {} ? keyof T : undefined;
 	export let key: Key = undefined as Key;
 
 	export function capture() {
 		const scroll = scroller.scrollTop;
-		return { a, b, top, bottom, heights, scroll };
+		return { a, b, bottom, heights, scroll, top };
 	}
 
 	export async function restore(state: {
 		a: number;
 		b: number;
-		top: number;
 		bottom: number;
-		heights: number[];
+		heights: Array<number>;
 		scroll: number;
+		top: number;
 	}) {
 		a = state.a;
 		b = state.b;
@@ -42,12 +42,12 @@
 	let offset = 0;
 	let top = 0;
 	let bottom = 0;
-	let heights: number[] = [];
+	let heights: Array<number> = [];
 
 	$: console.log({ items });
 
 	$: average = heights.reduce((a, b) => a + b, 0) / heights.length;
-    $: console.log({a, b, offset, top, bottom, heights, average})
+    $: console.log({a, average, b, bottom, heights, offset, top})
 
 	export function scrollTo(index: number, opts?: {
         height?: number;
@@ -60,10 +60,9 @@
 				el &&
 				el.getBoundingClientRect().top >= 0 &&
 				el.getBoundingClientRect().bottom <= scroller.getBoundingClientRect().bottom
-			)
-				return;
+			) {return;}
 			const height = opts?.height ?? heights[index] ?? average;
-            console.log('scrolling to', {index, height, offset, a, b, total: index * height})
+            console.log('scrolling to', {a, b, height, index, offset, total: index * height})
 			scroller.scrollTo(0, (height * index) - offset);
 		});
 	}
@@ -133,7 +132,7 @@
 	<div
 		bind:this={scroller}
 		class="w-full h-full overflow-y-scroll"
-		style="overflow-anchor: none"
+		style:overflow-anchor="none"
 		on:scroll={handle_scroll}
 	>
 		<slot name="header" />

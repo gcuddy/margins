@@ -1,4 +1,4 @@
-import { batch, derived, get, writable } from '@amadeus-it-group/tansu';
+// import { batch, derived, get, writable } from '@amadeus-it-group/tansu';
 // borrowing heavily from https://github.com/melt-ui/melt-ui/blob/develop/src/lib/builders/combobox/create.ts - hard dependency here
 import {
 	effect,
@@ -9,7 +9,9 @@ import {
 } from '@melt-ui/svelte/internal/helpers';
 import commandScore from 'command-score';
 import { afterUpdate, beforeUpdate, tick } from 'svelte';
+import { tweened } from 'svelte/motion';
 import type { Writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 
 import {
 	concatenateValues,
@@ -18,6 +20,7 @@ import {
 	isHTMLElement,
 	toString,
 } from '$lib/helpers';
+import { cubicOut } from 'svelte/easing';
 
 export type CommandProps<T> = {
 	comparisonFunction?: (a: T, b: T) => boolean;
@@ -27,7 +30,6 @@ export type CommandProps<T> = {
 	 * Filter function that takes in a string and inputValue and shuold return a number. If the number is greater than 0, the item will be included in the filtered list.
 	 */
 	filterFunction?: (arg: { input: string; itemValue: T }) => number;
-	onSelect?: (value: T) => void;
 	/**
 	 * @experimental
 	 * If provided, the combobox will be populated with these items initially.
@@ -44,11 +46,12 @@ export type CommandProps<T> = {
 		activeElement: HTMLElement | null,
 		inputValue: string,
 	) => void;
+	onSelect?: (value: T) => void;
 	open?: Writable<boolean>;
 	/**
 	 * The selected value(s) of the combobox. Can be anything.
 	 */
-	selectedValue?: Writable<Array<T>>;
+	selectedValue?: Writable<Array<ComboboxOption<T>>>;
 	/**
 	 * Optionally set to `false` to turn off the automatic filtering and sorting.
 	 * If `false`, you must conditionally render valid items based on the search query yourself.
@@ -64,6 +67,12 @@ type Filtered<T> = {
 	idToScoreMap: Map<string, number>;
 	ids: Array<string>;
 	items: Array<T>;
+};
+
+export type ComboboxOption<TValue> = {
+	disabled?: boolean;
+	label?: string;
+	value: TValue;
 };
 
 // prettier-ignore
@@ -98,7 +107,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		props?.defaultActiveValue ?? null,
 	);
 	const inputValue = props?.inputValue ?? writable('');
-	const selectedValue = props?.selectedValue ?? writable<Array<T>>([]);
+	const selectedValue =
+		props?.selectedValue ?? writable<Array<ComboboxOption<T>>>([]);
 	// TODO: shuold we maintain selectedIds without deriving because of potentially expensive derived function?
 
 	const allItemIds = writable<Set<string>>(new Set()); // [...itemIds]
@@ -117,7 +127,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 				const _ids = Array.from($idsToValueMap.entries())
 					.filter(([_, v]) => {
 						if (props?.comparisonFunction) {
-							return props.comparisonFunction(v, value);
+							return props.comparisonFunction(v, value.value);
 						}
 						return deepEqual(v, value);
 					})
@@ -128,13 +138,31 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		},
 	);
 
+	const comparisonFunction = props?.comparisonFunction ?? deepEqual;
+
 	const container = writable<HTMLElement | null>(null);
 
-	const filterFunction =
+	const valueToScoreMap = new Map<T, number>();
+
+	const localFilterFunction =
 		props?.filterFunction ??
 		(({ input, itemValue }) => {
 			return commandScore(toString(itemValue), input);
 		});
+
+	const filterFunction = (...args: Parameters<typeof localFilterFunction>) => {
+		const score = localFilterFunction(...args);
+		valueToScoreMap.set(args[0].itemValue, score);
+		return score;
+	};
+
+	const sortedValues = derived(inputValue, ($inputValue) => {
+		const values = Array.from(valueToScoreMap.entries())
+			.filter(([_, score]) => score > 0)
+			.sort((a, b) => b[1] - a[1])
+			.map(([value]) => value);
+		return values;
+	});
 
 	const shouldFilter = shouldFilterStore(
 		props?.shouldFilter === false ? false : true,
@@ -317,6 +345,19 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	// 		open: openStore
 	// 	}
 	// });
+
+	function getOptionProps(el: HTMLElement): ComboboxOption<T> {
+		const value = el.getAttribute('data-value');
+		const label = el.getAttribute('data-label');
+		const disabled = el.hasAttribute('data-disabled');
+
+		return {
+			disabled: disabled ? true : false,
+			label: label ?? el.textContent ?? undefined,
+			value: value ? (JSON.parse(value) as T) : (value as T),
+		};
+	}
+
 	function openMenu(currentOpenState = false) {
 		if (!currentOpenState) {
 			openStore.set(true);
@@ -355,38 +396,30 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	function selectItem(item: HTMLElement) {
 		// const value = item.getAttribute('data-value');
 
-		const $idsToValueMap = get(idsToValueMap);
-		console.log({ $idsToValueMap });
-		const val = $idsToValueMap.get(item.id);
+		const selectedItem = getOptionProps(item);
 
 		const containsPages = item.getAttribute('data-contains-pages') !== null;
 
-		console.log({ val });
-
 		if (!containsPages) {
 			// Then update selected value
-			selectedValue.update(($selectedValue) => {
-				if (!val) {
-					return $selectedValue;
+			selectedValue.update((value) => {
+				if (!selectedItem || !selectedItem.value) {
+					return value;
 				}
 				if (!props?.multiple) {
-					return [val];
+					return [selectedItem];
 				}
-				const idx = $selectedValue.findIndex((v) => deepEqual(v, val));
+				const idx = value.findIndex((v) =>
+					comparisonFunction(v.value, selectedItem.value),
+				);
 				if (idx !== -1) {
 					// TODO: is thhis the best way to do this?
-					return $selectedValue.filter((_, i) => i !== idx);
+					return value.filter((_, i) => i !== idx);
 				} else {
-					return props?.multiple ? [...$selectedValue, val] : [val];
+					return props?.multiple ? [...value, selectedItem] : [selectedItem];
 				}
 			});
 		}
-
-		console.log({
-			selectedValue: get(selectedValue),
-		});
-
-		console.log('dispatching event to', item);
 
 		// const callback = get(idsToCallbackMap).get(item.id);
 		// console.log({ callback });
@@ -498,23 +531,23 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		};
 	}
 
-	let registerQueue: Array<() => void> = [];
-	afterUpdate(() => {
-		if (!registerQueue.length) {
-			return;
-		}
-		console.time('registerQueue');
-		console.log(`running registerQueue`, { registerQueue });
-		batch(() => {
-			console.log('batching');
-			for (const fn of registerQueue) {
-				console.log(`running fn`);
-				fn();
-			}
-		});
-		console.timeEnd('registerQueue');
-		registerQueue = [];
-	});
+	const registerQueue: Array<() => void> = [];
+	// afterUpdate(() => {
+	// 	if (!registerQueue.length) {
+	// 		return;
+	// 	}
+	// 	console.time('registerQueue');
+	// 	console.log(`running registerQueue`, { registerQueue });
+	// 	batch(() => {
+	// 		console.log('batching');
+	// 		for (const fn of registerQueue) {
+	// 			console.log(`running fn`);
+	// 			fn();
+	// 		}
+	// 	});
+	// 	console.timeEnd('registerQueue');
+	// 	registerQueue = [];
+	// });
 
 	afterUpdate(() => {
 		// we should ensure first item is chosen when filtered inputvalue changes
@@ -522,6 +555,22 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	effect([inputValue], ([$inputValue]) => {
 		ensureActiveItem(0);
+	});
+
+	const inputHeight = writable(48);
+	const listHeight = writable(300);
+	const tweenedHeight = tweened(348, {
+		duration: 100,
+		easing: cubicOut,
+	});
+	const MAX_HEIGHT = 348;
+	effect([inputHeight, listHeight], ([$inputHeight, $listHeight]) => {
+		const height = $inputHeight + $listHeight;
+		if (height > MAX_HEIGHT) {
+			tweenedHeight.set(MAX_HEIGHT);
+		} else {
+			tweenedHeight.set(height);
+		}
 	});
 
 	function registerCallback(id: string | Array<string>, callback: () => void) {
@@ -586,7 +635,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			isValueSelected: (value: T) => {
 				// TODO: should we pass in id instead here? But we keep track of selectedValue by value, not id
 				const $selectedValue = get(selectedValue);
-				return $selectedValue.some((v) => deepEqual(v, value));
+				return $selectedValue.some((v) => comparisonFunction(v.value, value));
 			},
 			registerCallback,
 			registerGroup,
@@ -609,7 +658,13 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			registerValueToString,
 		},
 		ids,
+		measurements: {
+			inputHeight,
+			listHeight,
+			tweenedHeight,
+		},
 		options: {
+			comparisonFunction,
 			filterFunction,
 			multiple: props?.multiple ?? false,
 		},
@@ -622,6 +677,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			selectedIds,
 			selectedValue,
 			shouldFilter,
+			sortedValues,
 		},
 	};
 }

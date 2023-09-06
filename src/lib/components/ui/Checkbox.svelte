@@ -1,14 +1,14 @@
 <script lang="ts">
 	export let checked = false;
-	import type { HTMLInputAttributes } from "svelte/elements";
-	let className = "";
+	import type { HTMLInputAttributes } from 'svelte/elements';
+	let className = '';
 	export { className as class };
-	interface $$Props extends HTMLInputAttributes {
+	type $$Props = {
 		checked?: boolean;
 		class?: string;
-	}
+	} & HTMLInputAttributes;
 
-	import { cn } from "$lib/utils/tailwind";
+	import { cn } from '$lib/utils/tailwind';
 </script>
 
 <input
@@ -18,8 +18,8 @@
 	on:change
 	{...$$restProps}
 	class={cn(
-		"peer h-4 w-4 shrink-0 rounded-[4px] border border-input ring-offset-background checked:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-		className
+		'peer h-4 w-4 shrink-0 rounded-[4px] border border-input ring-offset-background checked:border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 checked:bg-secondary appearance-none',
+		className,
 	)}
 />
 

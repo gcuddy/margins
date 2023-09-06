@@ -1,12 +1,22 @@
 <script lang="ts">
-	import { BookMarked, ChevronDown, ChevronRightIcon, FilmIcon, Library, PencilIcon, Plus } from 'lucide-svelte';
+	import {
+		BookMarked,
+		ChevronDown,
+		ChevronRightIcon,
+		FilmIcon,
+		Library,
+		PencilIcon,
+		Plus,
+	} from 'lucide-svelte';
 	import MarkdownIt from 'markdown-it';
 	import { superForm } from 'sveltekit-superforms/client';
 
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Tweet from '$components/Tweet.svelte';
+	import * as Command from '$components/ui/command2';
 	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
+	import Header from '$components/ui/Header.svelte';
 	import rover from '$lib/actions/rover';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
@@ -22,7 +32,7 @@
 		DropdownMenuGroup,
 		DropdownMenuItem,
 		DropdownMenuSeparator,
-		DropdownMenuTrigger
+		DropdownMenuTrigger,
 	} from '$lib/components/ui/dropdown-menu';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Separator from '$lib/components/ui/Separator.svelte';
@@ -31,7 +41,6 @@
 	import { mutation, query } from '$lib/queries/query';
 	import { getId, make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
-	import Header from '$components/ui/Header.svelte';
 
 	const md = new MarkdownIt();
 
@@ -41,11 +50,10 @@
 	const commander = getCommanderContext();
 
 	const { enhance, form } = superForm(data.form, {
-		dataType: 'json'
+		dataType: 'json',
 	});
 	let form_el: HTMLFormElement;
 	let editing = false;
-
 
 	function addEntry() {
 		commander.open({
@@ -56,13 +64,13 @@
 					commander.close();
 					await mutation($page, 'addToCollection', {
 						collectionId: data.collection.id,
-						entryId: e.id
+						entryId: e.id,
 					});
 					// awaitinvalidate('entry');
 					await invalidate('collection');
-				}
+				},
 			},
-			shouldFilter: false
+			shouldFilter: false,
 		});
 	}
 	function addNote() {
@@ -74,13 +82,13 @@
 					commander.close();
 					await mutation($page, 'addToCollection', {
 						annotationId: [a.id],
-						collectionId: data.collection.id
+						collectionId: data.collection.id,
 					});
 					// awaitinvalidate('entry');
 					await invalidate('collection');
-				}
+				},
 			},
-			shouldFilter: false
+			shouldFilter: false,
 		});
 	}
 	function addMedia(type = 'movie') {
@@ -91,23 +99,30 @@
 				onSelect: async (a) => {
 					commander.close();
 					const entry = await query($page, 'findOrCreateEntry', {
-						tmdbId: a.id
+						tmdbId: a.id,
 					});
-					if (!entry) {return;}
+					if (!entry) {
+						return;
+					}
 					await mutation($page, 'addToCollection', {
 						collectionId: data.collection.id,
-						entryId: entry.id
+						entryId: entry.id,
 					});
 					await invalidate('collection');
-				}
+				},
 			},
-			shouldFilter: false
+			shouldFilter: false,
 		});
 	}
+
+    let addEntryCommandDialog = false;
 </script>
 
 <Header>
-    <span class="flex items-center gap-2 font-medium tracking-tight">Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" /> {data.collection.name}</span>
+	<span class="flex items-center gap-2 font-medium tracking-tight"
+		>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
+		{data.collection.name}</span
+	>
 </Header>
 
 <div class="flex items-center justify-between">
@@ -123,13 +138,17 @@
 					class="h-auto text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
 					bind:value={$form.name}
 				/>
-				<Button on:click={() => (editing = false)} variant="secondary">Save</Button>
+				<Button on:click={() => (editing = false)} variant="secondary"
+					>Save</Button
+				>
 			</form>
 		{/if}
 	</div>
 
 	<div class="flex items-center gap-x-2">
-		<div class="flex items-center space-x-1 rounded-md bg-secondary text-secondary-foreground">
+		<div
+			class="flex items-center space-x-1 rounded-md bg-secondary text-secondary-foreground"
+		>
 			<Button variant="secondary" on:click={addEntry}>
 				<Plus class="mr-2 h-4 w-4" />
 				Add
@@ -139,16 +158,20 @@
 				<DropdownMenuTrigger
 					class={cn(
 						buttonVariants({
-							variant: 'secondary'
+							variant: 'secondary',
 						}),
-						'px-2'
+						'px-2',
 					)}
 				>
 					<Button variant="secondary" class="px-2">
 						<ChevronDown class="h-4 w-4 text-secondary-foreground" />
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent xoffset={-5} placement="bottom-end" class="w-[200px]">
+				<DropdownMenuContent
+					offset={-5}
+					placement="bottom-end"
+					class="w-[200px]"
+				>
 					<DropdownMenuGroup>
 						<DropdownMenuItem on:click={addEntry}>
 							<Library class="mr-2 h-4 w-4" /> Entry
@@ -171,7 +194,13 @@
 </div>
 <div class="mt-4">
 	{#if editing}
-		<form bind:this={form_el} use:enhance method="post" action="?/edit" class="contents">
+		<form
+			bind:this={form_el}
+			use:enhance
+			method="post"
+			action="?/edit"
+			class="contents"
+		>
 			<Textarea
 				on:blur={(e) => {
 					console.log({ e });
@@ -199,23 +228,27 @@
 
 <!-- {JSON.stringify(data.collection.items)} -->
 <!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
-<div use:rover class="mt-8 flex flex-wrap gap-4">
+<div class="mt-8 flex flex-wrap gap-4">
 	{#key data.collection}
 		{#each data.collection.items as item, i}
 			{#if item.type === 'Section'}
 				Section
 			{/if}
 			<div class="w-48 space-y-3">
-				<OptionsMenu variant="ghost" size="xs" items={[
-					[
-						{
-							onSelect: () => {
-								//todo
+				<OptionsMenu
+					variant="ghost"
+					size="xs"
+					items={[
+						[
+							{
+								onSelect: () => {
+									//todo
+								},
+								text: 'Add note',
 							},
-							text: "Add note"
-						}
-					]
-				]} />
+						],
+					]}
+				/>
 				{#if item.entry?.type === 'tweet'}
 					{@const id = item.entry?.uri?.split('/').pop()}
 					{#if id}
@@ -223,7 +256,11 @@
 					{/if}
 				{:else if item.entry}
 					<div class="overflow-hidden rounded-md">
-						<img class="aspect-square h-48 w-48 object-cover" alt="" src={item.entry?.image} />
+						<img
+							class="aspect-square h-48 w-48 object-cover"
+							alt=""
+							src={item.entry?.image}
+						/>
 					</div>
 					<a href={make_link(item.entry)} class="text-sm font-medium">
 						{item.entry?.title}
@@ -260,7 +297,26 @@
 					{JSON.stringify(item)}
 				{/if}
 			</div> -->
+		{:else}
+			<div class="p-8 flex flex-col gap-2 items-center justify-center w-full">
+				<span class="text-muted-foreground">No items yet</span>
+				<Button on:click={() => {
+                    addEntryCommandDialog = true;
+                }} variant="secondary" size="sm">
+					<Plus class="mr-2 h-4 w-4" />
+					Add item
+				</Button>
+			</div>
 		{/each}
 	{/key}
 </div>
-<!-- {JSON.stringify(data.collection)} -->
+
+<Command.Dialog bind:open={addEntryCommandDialog}>
+	<Command.Input />
+	<Command.List>
+		<JumpToEntry onSelect={() => {
+            // TODO: add to entry
+            addEntryCommandDialog = false;
+        }} />
+	</Command.List>
+</Command.Dialog>

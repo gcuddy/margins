@@ -460,6 +460,10 @@ export async function set_tags_on_entry({
 		tagIds.map((tagId) => ({ entryId, tagId, userId })),
 	);
 
+    if (!values.length) {
+			return;
+		}
+
 	const q = await db.insertInto('TagOnEntry').values(values).ignore().execute();
 
 	// now delete tags that are no longer there

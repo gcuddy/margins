@@ -1,14 +1,15 @@
-import { CommandProps, createCommandStore } from './store';
 import { getContext, setContext } from 'svelte';
+
+import { type CommandProps, createCommandStore } from './store';
 
 const NAME = Symbol('command');
 export const ctx = {
-	set: <T>(props?: CommandProps<T>) => {
+	get: <TValue = unknown>() => {
+		return getContext<ReturnType<typeof createCommandStore<TValue>>>(NAME);
+	},
+	set: <TValue>(props?: CommandProps<TValue>) => {
 		const store = createCommandStore(props);
 		setContext(NAME, store);
 		return store;
 	},
-	get: <T = unknown>() => {
-		return getContext<ReturnType<typeof createCommandStore<T>>>(NAME);
-	}
 };

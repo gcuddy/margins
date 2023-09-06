@@ -57,6 +57,7 @@
 	} from '../ctx';
 	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
+	import { invalidateEntries } from '$lib/queries/mutations';
 
 	const {
 		activeAnnotation,
@@ -437,9 +438,10 @@
 					});
 				}
 			}
-			void queryClient.invalidateQueries({
-				queryKey: ['entries'],
-			});
+			// void queryClient.invalidateQueries({
+			// 	queryKey: ['entries'],
+			// });
+            invalidateEntries(queryClient)
 		},
 	});
 

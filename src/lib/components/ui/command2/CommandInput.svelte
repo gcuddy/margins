@@ -1,10 +1,4 @@
 <script lang="ts">
-	import { cn } from '$lib/utils';
-	import { tick } from 'svelte';
-	import { ctx } from './ctx';
-	import { INTERACTION_KEYS, kbd } from './store';
-	import type { InputProps } from './types';
-	import { isHTMLElement } from '$lib/helpers';
 	import {
 		FIRST_LAST_KEYS,
 		getOptions,
@@ -12,11 +6,19 @@
 		next,
 	} from '@melt-ui/svelte/internal/helpers';
 	import { Search } from 'lucide-svelte';
+	import { onMount, tick } from 'svelte';
+
+	import { isHTMLElement } from '$lib/helpers';
+	import { cn } from '$lib/utils';
+
+	import { ctx } from './ctx';
+	import { INTERACTION_KEYS, kbd } from './store';
+	import type { InputProps } from './types';
 
 	type $$Props = InputProps;
 
 	let inputEl: HTMLInputElement;
-	let className: $$Props['class'] = undefined;
+	const className: $$Props['class'] = undefined;
 	export let unstyled = false;
 	export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
 
@@ -25,14 +27,17 @@
 	};
 
 	const {
-		ids,
-		state: { open, inputValue, activeElement, selectedValue },
 		actions,
+		ids,
+		measurements: { inputHeight },
 		options,
+		state: { activeElement, inputValue, open, selectedValue },
 	} = ctx.get();
 
 	function handleClick(e: MouseEvent) {
-		if ($open) return;
+		if ($open) {
+			return;
+		}
 		actions.openMenu($open);
 	}
 
@@ -42,7 +47,9 @@
 		e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement },
 	) {
 		onKeydown?.(e);
-		if (e.defaultPrevented) return;
+		if (e.defaultPrevented) {
+			return;
+		}
 
 		/**
 		 * When the menu is closed...
@@ -66,10 +73,14 @@
 			actions.openMenu($open);
 
 			tick().then(() => {
-				if ($selectedValue[0]) return;
+				if ($selectedValue[0]) {
+					return;
+				}
 
 				const menuEl = document.getElementById(ids.menu);
-				if (!isHTMLElement(menuEl)) return;
+				if (!isHTMLElement(menuEl)) {
+					return;
+				}
 
 				const enabledItems = Array.from(
 					menuEl.querySelectorAll(
@@ -77,7 +88,9 @@
 					),
 				).filter((item): item is HTMLElement => isHTMLElement(item));
 				console.log({ enabledItems });
-				if (!enabledItems.length) return;
+				if (!enabledItems.length) {
+					return;
+				}
 
 				if (e.key === kbd.ARROW_DOWN) {
 					activeElement.set(enabledItems[0] ?? null);
@@ -93,7 +106,12 @@
 		// Pressing `esc` should close the menu.
 		if (e.key === kbd.TAB || e.key === kbd.ESCAPE) {
 			actions.closeMenu();
-			actions.reset();
+            setTimeout(() => {
+                actions.reset();
+
+            }, 250);
+			// tick().then(() => {
+			// });
 			return;
 		}
 		// Pressing enter with a highlighted item should select it.
@@ -124,9 +142,13 @@
 
 			// Get all the menu items.
 			const menuElement = document.getElementById(ids.menu);
-			if (!isHTMLElement(menuElement)) return;
+			if (!isHTMLElement(menuElement)) {
+				return;
+			}
 			const itemElements = getOptions(menuElement);
-			if (!itemElements.length) return;
+			if (!itemElements.length) {
+				return;
+			}
 			// Disabled items can't be highlighted. Skip them.
 			const candidateNodes = itemElements.filter(
 				(opt) => !isElementDisabled(opt) && opt.dataset.hidden === undefined,
@@ -179,12 +201,32 @@
 
 	function handleInput(e: Event) {
 		hasNavigated = false;
-		if (!inputEl) return;
+		if (!inputEl) {
+			return;
+		}
 		// TODO
 	}
+
+	let containerEl: HTMLDivElement;
+	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }>;
+
+	$: if (borderBoxSize?.[0]?.blockSize) {
+		$inputHeight = borderBoxSize?.[0]?.blockSize;
+	}
+	// onMount(() => {
+	// 	if (containerEl) {
+	// 		const {  } = containerEl.getBoundingClientRect();
+	// 		$inputHeight = containerHeight;
+	// 	}
+	// });
 </script>
 
-<div class="flex items-center border-b px-3" data-command-input-wrapper>
+<div
+	bind:this={containerEl}
+	bind:borderBoxSize
+	class="flex items-center border-b px-3"
+	data-command-input-wrapper
+>
 	<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
 	<input
 		data-command-input

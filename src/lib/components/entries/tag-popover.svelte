@@ -1,43 +1,50 @@
 <script lang="ts">
+	import { createQuery } from '@tanstack/svelte-query';
+	import { PlusIcon } from 'lucide-svelte';
+	import { writable } from 'svelte/store';
+
 	import Cluster from '$components/helpers/Cluster.svelte';
 	import Badge, { badgeVariants } from '$components/ui/Badge.svelte';
-	import { Checkbox } from '$components/ui/checkbox';
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
-
+	import Checkbox  from '$components/ui/Checkbox.svelte';
+	import {
+		Popover,
+		PopoverContent,
+		PopoverTrigger,
+	} from '$components/ui/popover';
 	import {
 		Command,
+		CommandGroup,
 		CommandInput,
 		CommandItem,
-		CommandItems,
 		CommandList,
-		CommandGroup,
-		CommandEmpty,
-		CommandSeparator,
-		CommandShortcut,
 		CommandLoading
 	} from '$lib/components/ui/command2';
 	import { createSetTagsMutation } from '$lib/queries/mutations/index';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils';
-	import { createQuery } from '@tanstack/svelte-query';
-	import { PlusIcon } from 'lucide-svelte';
-	import { writable } from 'svelte/store';
 
 	const query = createQuery({
-		...queryFactory.tags.list()
+		...queryFactory.tags.list(),
 		// enabled: false,
 	});
 
 	const mutation = createSetTagsMutation();
 
 	// TODO: allow creation of tags given tmdb/spotify/googlebooks/podcastindex
-	export let entryId: number[];
-	export let selectedTags: { id: number; name: string }[] = [];
-	const selectedTagsStore = writable(selectedTags);
+	export let entryId: Array<number>;
+	export let selectedTags: Array<{ id: number; name: string }> = [];
+	const selectedTagsStore = writable(
+		selectedTags.map((t) => ({
+			value: t,
+		})),
+	);
 
-	function sortFunction(a: typeof selectedTags[0], b: typeof selectedTags[0]) {
-		const selected = $selectedTagsStore.find((t) => t.id === a.id);
-		const selected2 = $selectedTagsStore.find((t) => t.id === b.id);
+	function sortFunction(
+		a: (typeof selectedTags)[0],
+		b: (typeof selectedTags)[0],
+	) {
+		const selected = $selectedTagsStore.find((t) => t.value.id === a.id);
+		const selected2 = $selectedTagsStore.find((t) => t.value.id === b.id);
 		if (selected && selected2) {
 			return 0;
 		} else if (selected) {
@@ -61,68 +68,70 @@
 
 <div bind:this={wrapper}>
 	<Cluster class="gap-2.5">
-		{#each $selectedTagsStore as tag}
-			<Badge as="a" href="/tests/tag/{tag.name}" variant="secondary">{tag.name}</Badge>
+		{#each $selectedTagsStore as { value: { name } }}
+			<Badge as="a" href="/tests/tag/{name}" variant="secondary">{name}</Badge>
 		{/each}
 
 		<Popover
 			bind:open
 			portal={wrapper}
 			positioning={{
-				placement: 'left',
 				overlap: true,
-				strategy: 'fixed'
+				placement: 'left',
+				strategy: 'fixed',
 				// flip: false
 			}}
 		>
-			<PopoverTrigger class={badgeVariants({variant: "ghost"})}>+ Tag</PopoverTrigger>
+			<PopoverTrigger class={badgeVariants({ variant: 'ghost' })}
+				>+ Tag</PopoverTrigger
+			>
 			<PopoverContent class="p-0">
 				<Command
 					onClose={() => {
 						$mutation.mutate({
 							entries: entryId,
-							tags: $selectedTagsStore
+							tags: $selectedTagsStore.map((t) => t.value),
 						});
 						open = false;
 					}}
-                    type={selectedTags[0]}
+					type={selectedTags[0]}
 					selectedValue={selectedTagsStore}
 					comparisonFunction={(a, b) => {
 						return a.id === b.id;
 					}}
-					valueToString={(tag) => tag.name}
 					multiple
 					let:inputValue
 				>
 					<!--  -->
 					<CommandInput placeholder="Add tag" />
 					<CommandList animateHeight={false}>
-						<CommandGroup alwaysShow>
+						<CommandGroup>
 							{#if $query.isLoading}
 								<CommandLoading>Loading...</CommandLoading>
 							{:else if $query.isSuccess}
 								{#each sortedTags as tag}
 									<CommandItem class="group" value={tag} let:isSelected>
-										<Checkbox class={cn(
-                                            "mr-2 opacity-0 cursor-default group-data-[highlighted]:opacity-100",
-                                            isSelected && 'opacity-100'
-                                        )} checked={isSelected} />
+										<Checkbox
+											class={cn(
+												'mr-2 opacity-0 cursor-default group-data-[highlighted]:opacity-100',
+												isSelected && 'opacity-100',
+											)}
+											checked={isSelected}
+										/>
 										{tag.name}
 									</CommandItem>
 								{/each}
-								{#if inputValue.length > 1 && sortedTags.every(({ name }) => name !== inputValue)}
-									<CommandItem
-										alwaysShow
-										id="shadow-new-tag"
-										value={{ name: inputValue }}
-									>
+								<!-- {#if inputValue.length > 1 && sortedTags.every(({ name }) => name !== inputValue)}
+									<CommandItem id="shadow-new-tag" value={{ name: inputValue }}>
 										<PlusIcon class="mr-2 opacity-50 h-4 w-4" />
 										<span class="inline-flex grow items-center">
 											<span>New tag: </span>
-											<span class="font-medium text-muted-foreground">"{inputValue}"</span>
+											<span class="font-medium text-muted-foreground"
+												>"{inputValue}"</span
+											>
 										</span>
 									</CommandItem>
-								{/if}
+								{/if} -->
 							{/if}
 							<!--  -->
 						</CommandGroup>

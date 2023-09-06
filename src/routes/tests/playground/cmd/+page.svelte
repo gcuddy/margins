@@ -8,7 +8,7 @@
 		FileIcon,
 		Settings,
 		Smile,
-		User
+		User,
 	} from 'lucide-svelte';
 
 	import {
@@ -20,7 +20,7 @@
 		CommandItems,
 		CommandList,
 		CommandSeparator,
-		CommandShortcut
+		CommandShortcut,
 	} from '$lib/components/ui/command2';
 
 	export let data;
@@ -32,10 +32,10 @@
 		'The Children of Húrin',
 		'Unfinished Tales',
 		'The History of Middle-earth',
-		'The History of The Hobbit'
+		'The History of The Hobbit',
 	];
 
-	let value: typeof data.entries[0];
+	let value: (typeof data.entries)[0];
 	import { melt } from '@melt-ui/svelte';
 	import { isHTMLInputElement } from '@melt-ui/svelte/internal/helpers';
 	import { tick } from 'svelte';
@@ -45,7 +45,11 @@
 	import { buttonVariants } from '$components/ui/Button.svelte';
 	import Checkbox from '$components/ui/Checkbox.svelte';
 	import { assertPagesType, createPages } from '$components/ui/command2/utils';
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
+	import {
+		Popover,
+		PopoverContent,
+		PopoverTrigger,
+	} from '$components/ui/popover';
 	import { cn } from '$lib';
 	import { statuses, statusesWithIcons } from '$lib/status';
 	import { types } from '$lib/types';
@@ -77,16 +81,16 @@
 	const filterPages = [
 		{
 			name: 'types',
-			placeholder: 'Select a type…'
+			placeholder: 'Select a type…',
 		},
 		{
 			name: 'dates:created',
-			placeholder: 'Select a date…'
+			placeholder: 'Select a date…',
 		},
 		{
 			name: 'status',
-			placeholder: 'Select a status…'
-		}
+			placeholder: 'Select a status…',
+		},
 	] as const;
 
 	type DeepWriteable<T> = { -readonly [P in keyof T]: DeepWriteable<T[P]> };
@@ -100,11 +104,18 @@
 	const tagValue = [];
 	let tagsOpen = false;
 
-	const chosenTags = writable(data.tags.slice(0, 2));
+	const chosenTags = writable(
+		data.tags.slice(0, 2).map((t) => ({
+			value: t,
+		})),
+	);
 
-	function sortFunction(a: typeof data.tags[number], b: typeof data.tags[number]) {
-		const selected = $chosenTags.find((t) => t.id === a.id);
-		const selected2 = $chosenTags.find((t) => t.id === b.id);
+	function sortFunction(
+		a: (typeof data.tags)[number],
+		b: (typeof data.tags)[number],
+	) {
+		const selected = $chosenTags.find((t) => t.value.id === a.id);
+		const selected2 = $chosenTags.find((t) => t.value.id === b.id);
 		if (selected && selected2) {
 			return 0;
 		} else if (selected) {
@@ -135,7 +146,10 @@
 		<PopoverTrigger asChild let:builder>
 			<button
 				bind:this={buttonEl}
-				class={cn(buttonVariants({ variant: 'outline' }), 'w-[200px] justify-between')}
+				class={cn(
+					buttonVariants({ variant: 'outline' }),
+					'w-[200px] justify-between',
+				)}
 				use:melt={builder}
 			>
 				<span class="truncate">{value ? value.title : 'Select an entry'}</span>
@@ -143,28 +157,24 @@
 			</button>
 		</PopoverTrigger>
 		<PopoverContent class="w-[200px] p-0">
-			<Command
-				let:filtered
-				onClose={closePopover}
-				bind:value
-			>
+			<Command let:filtered onClose={closePopover} bind:value>
 				<CommandInput />
 				<CommandList>
 					<!-- <CommandGroup> -->
-						<!-- {#each filtered.items as item, index (item.id)}
+					<!-- {#each filtered.items as item, index (item.id)}
 							<CommandItem id={filtered.ids[index]} shouldRegister={false} value={item}>
 								<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
 								<span>{item.title}</span>
 							</CommandItem>
 						{/each} -->
-						<!-- onSelect={closePopover} -->
-                            {#each new Array(1000) as entry, i}
-                                <CommandItem value={entry}>
-                                    <!-- <EntryIcon class="h-4 w-4 shrink-0 mr-2" type="album" /> -->
-                                    <span>{i}</span>
-                                </CommandItem>
-                            {/each}
-						<!-- <CommandItems items={data.entries} itemToId={(item) => item.id.toString()} let:item>
+					<!-- onSelect={closePopover} -->
+					{#each new Array(1000) as entry, i}
+						<CommandItem value={entry}>
+							<!-- <EntryIcon class="h-4 w-4 shrink-0 mr-2" type="album" /> -->
+							<span>{i}</span>
+						</CommandItem>
+					{/each}
+					<!-- <CommandItems items={data.entries} itemToId={(item) => item.id.toString()} let:item>
 							<EntryIcon class="h-4 w-4 shrink-0 mr-2" type={item.type} />
 							<span>{item.title}</span>
 						</CommandItems> -->
@@ -220,7 +230,10 @@
 		class="rounded-lg border shadow-md w-fit"
 		bounce={true}
 	>
-		<CommandInput placeholder="Type a command or search..." onKeydown={pages.handlers.keydown} />
+		<CommandInput
+			placeholder="Type a command or search..."
+			onKeydown={pages.handlers.keydown}
+		/>
 		<CommandList>
 			<CommandGroup>
 				{#if !page}
@@ -229,7 +242,7 @@
 						onSelect={() => {
 							console.log('selecting');
 							pages.add({
-								name: 'projects'
+								name: 'projects',
 							});
 						}}
 					>
@@ -239,17 +252,17 @@
 						containsPages
 						onSelect={() => {
 							pages.add({
-								name: 'teams'
+								name: 'teams',
 							});
 						}}
 					>
-					z	Join a team…
+						z Join a team…
 					</CommandItem>
 				{/if}
 				{#if page?.name === 'projects'}
 					<CommandItem
-						>Project A With A Really Long Title That Should be Truncated With Ellipsis At Some
-						Point, Maybe Now Or Maybe Later
+						>Project A With A Really Long Title That Should be Truncated With
+						Ellipsis At Some Point, Maybe Now Or Maybe Later
 					</CommandItem>
 					<CommandItem>Project B</CommandItem>
 				{:else if page?.name === 'teams'}
@@ -260,7 +273,12 @@
 		</CommandList>
 	</Command>
 	Filter:
-	<Command let:page let:pages pages={pagesData} class="rounded-lg border shadow-md">
+	<Command
+		let:page
+		let:pages
+		pages={pagesData}
+		class="rounded-lg border shadow-md"
+	>
 		<CommandInput
 			placeholder={page?.placeholder ?? 'Type a command or search...'}
 			onKeydown={pages.handlers.keydown}
@@ -322,7 +340,10 @@
 				{:else if page?.name === 'status'}
 					{#each statuses as status}
 						<CommandItem>
-							<svelte:component this={statusesWithIcons[status]} class="h-4 w-4 shrink-0 mr-2" />
+							<svelte:component
+								this={statusesWithIcons[status]}
+								class="h-4 w-4 shrink-0 mr-2"
+							/>
 							<span>{status}</span>
 						</CommandItem>
 					{/each}
@@ -333,12 +354,15 @@
 
 	Multiple:
 
-	{$chosenTags.map((t) => t.name)}
-	<Popover bind:open={tagsOpen}>
+	{$chosenTags.map((t) => t.value.name)}
+	<Popover bind:open={tagsOpen} positioning={{placement: "right"}}>
 		<PopoverTrigger asChild let:builder>
 			<button
 				bind:this={buttonEl}
-				class={cn(buttonVariants({ variant: 'outline' }), 'w-[200px] justify-between')}
+				class={cn(
+					buttonVariants({ variant: 'outline' }),
+					'w-[200px] justify-between',
+				)}
 				use:melt={builder}
 			>
 				<span class="truncate">Select a tag</span>
@@ -351,7 +375,6 @@
 					tagsOpen = false;
 				}}
 				selectedValue={chosenTags}
-				valueToString={(tag) => tag.name}
 				multiple
 				class="rounded-lg border shadow-md"
 			>
@@ -359,9 +382,13 @@
 				<CommandList>
 					<CommandGroup>
 						{#each sortedTags as tag}
-							<CommandItem value={tag} cancelClose="[data-melt-checkbox], svg" let:isSelected>
+							<CommandItem
+								value={tag}
+								cancelClose="[data-melt-checkbox], svg"
+								let:isSelected
+							>
 								<!-- <Checkbox class="mr-2" checked={isSelected} /> -->
-                                <Checkbox />
+								<Checkbox checked={isSelected} />
 								<span>{tag.name}</span>
 							</CommandItem>
 						{/each}

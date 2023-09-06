@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { writable } from 'svelte/store';
+
 	import { cn } from '$lib/utils';
+
 	import { ctx } from './ctx';
 	import type { CommandProps } from './store';
 	import type { RootProps } from './types';
@@ -12,15 +15,15 @@
 
 	type MultipleValue = {
 		multiple: true;
-		value?: T[];
+		value?: Array<T>;
 	};
 
 	type SingleOrMultipleValue = SingleValue | MultipleValue;
 
 	type $$Props = RootProps & {
-		initialPages?: TPages[];
-		pages?: TPages[];
 		bounce?: boolean;
+		initialPages?: Array<TPages>;
+		pages?: Array<TPages>;
 		// multiple?: boolean;
 		// value?: T[];
 		/**
@@ -51,51 +54,53 @@
 	export let asChild = false;
 	export let unstyled = false;
 	export let initialData: $$Props['initialData'] = undefined;
+	export let inputValue = writable('');
 	export let type: $$Props['type'] = undefined;
-    export let comparisonFunction: $$Props['comparisonFunction'] = undefined;
-	type;
+	export let comparisonFunction: $$Props['comparisonFunction'] = undefined;
 	let className: $$Props['class'] = undefined;
 	export { className as class };
-    export let shouldFilter: $$Props['shouldFilter'] = true;
+	export let shouldFilter: $$Props['shouldFilter'] = true;
 
 	type T = $$Generic;
 
 	const {
-		state: { selectedValue, inputValue, filtered, shouldFilter: localShouldFilter },
 		elements: { container },
+		state: { filtered, selectedValue, shouldFilter: localShouldFilter },
+		measurements: { tweenedHeight },
 	} = ctx.set<T>({
+		comparisonFunction,
+		initialData,
 		initialSelectedValue:
 			value && multiple && Array.isArray(value)
 				? value
 				: !multiple && value && !Array.isArray(value)
 				? [value]
 				: undefined,
+		inputValue,
 		multiple,
-		valueToString,
-		selectedValue: _selectedValue,
 		onClose,
-		initialData,
-        comparisonFunction,
-        shouldFilter
+		selectedValue: _selectedValue,
+		shouldFilter,
+		valueToString,
 	});
 
-    $: shouldFilter !== undefined && localShouldFilter.set(shouldFilter);
+	$: shouldFilter !== undefined && localShouldFilter.set(shouldFilter);
 
 	$: value = multiple ? $selectedValue : $selectedValue[0];
 	type TPages = $$Generic<PageType>;
-	export let initialPages: TPages[] | undefined = undefined;
-	let pagesData: TPages[] = [];
+	export let initialPages: Array<TPages> | undefined = undefined;
+	let pagesData: Array<TPages> = [];
 	export { pagesData as pages };
 	export let bounce = false;
 	export let pageStore = createPages({
-		initialPages: initialPages,
-		pages: pagesData,
 		container,
+		initialPages,
 		onPageChange: () => {
 			$inputValue = '';
 		},
+		pages: pagesData,
 		playBounce: bounce,
-        shouldFilterStore: localShouldFilter
+		shouldFilterStore: localShouldFilter,
 	});
 </script>
 
@@ -103,14 +108,22 @@
 	<slot />
 {:else}
 	<div
+		style:--height="{$tweenedHeight}px"
 		bind:this={$container}
 		class={cn(
 			!unstyled &&
-				'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground',
+				'flex h-[--height] w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground will-change-transform trasnform-[0]',
 			bounce && 'transition-transform',
-			className
+			className,
 		)}
 	>
-		<slot createPageItems={pageStore.helpers.createItems} filtered={$filtered} page={$pageStore} pageName={$pageStore?.name} pages={pageStore} inputValue={$inputValue} />
+		<slot
+			createPageItems={pageStore.helpers.createItems}
+			filtered={$filtered}
+			page={$pageStore}
+			pageName={$pageStore?.name}
+			pages={pageStore}
+			inputValue={$inputValue}
+		/>
 	</div>
 {/if}
