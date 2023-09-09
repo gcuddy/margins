@@ -181,6 +181,12 @@ export const queryFactory = {
 		}),
 	},
 	search: {
+		books: (input: QueryInput<'searchBooks'>) => ({
+			placeholderData: keepPreviousData,
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'searchBooks', input),
+			queryKey: ['search', 'books', { input }] as const,
+		}),
 		movies: (input: QueryInput<'searchMovies'>) => ({
 			placeholderData: keepPreviousData,
 			queryFn: ({ meta }: QueryFnParams) =>

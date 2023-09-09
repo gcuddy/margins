@@ -23,7 +23,7 @@ type CreatePagesProps<T> = {
 	/**
 	 * A store that will be set to true if the current page should be filtered. Can be passed in from the main Command ctx.
 	 */
-	shouldFilterStore?: ReturnType<typeof shouldFilterStore>;
+	shouldFilterStore?: Writable<boolean>;
 } & BounceProps;
 
 export type PageType = {

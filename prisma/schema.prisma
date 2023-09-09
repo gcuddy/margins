@@ -763,19 +763,19 @@ model AuthKey {
 }
 
 model AuthUser {
-    id                 String               @id @unique @default(cuid())
-    createdAt          DateTime             @default(now())
-    updatedAt          DateTime             @updatedAt
-    email              String               @unique
-    username           String               @unique @default("")
-    default_state_id   Int?                 @unique
+    id                 String             @id @unique @default(cuid())
+    createdAt          DateTime           @default(now())
+    updatedAt          DateTime           @updatedAt
+    email              String             @unique
+    username           String             @unique @default("")
+    default_state_id   Int?               @unique
     default_archive_id Int?
     home_items         Json?
     avatar             String?
     auth_session       AuthSession[]
     auth_key           AuthKey[]
-    followedBy         AuthUser[]           @relation("UserFollows")
-    following          AuthUser[]           @relation("UserFollows")
+    followedBy         AuthUser[]         @relation("UserFollows")
+    following          AuthUser[]         @relation("UserFollows")
     interactions       Interaction[]
     favorites          Favorite[]
     articles           Article[]
@@ -784,8 +784,8 @@ model AuthUser {
     subscriptions      Subscription[]
     documentData       EntryData[]
     stylesheets        Stylesheet[]
-    states             State[]              @relation("user")
-    default_state      State?               @relation("default_state", fields: [default_state_id], references: [id])
+    states             State[]            @relation("user")
+    default_state      State?             @relation("default_state", fields: [default_state_id], references: [id])
     taggings           Tagging[]
     tags               Tag[]
     bookmarks          Bookmark[]
@@ -793,10 +793,10 @@ model AuthUser {
     context            Context[]
     context_nodes      ContextNode[]
     color_descriptions ColorDescription[]
-    invitationCodes    InvitationCode[]     @relation("owner")
-    invitationCode     InvitationCode?      @relation("user")
+    invitationCodes    InvitationCode[]   @relation("owner")
+    invitationCode     InvitationCode?    @relation("user")
     views              SmartList[]
-    TwitterIntegration TwitterIntegration[]
+    integrations       Integration[]
     Log                Log[]
     relations          Relation[]
     AuthorizationKey   AuthorizationKey?
@@ -892,18 +892,22 @@ model Stylesheet {
     @@index([userId])
 }
 
-model TwitterIntegration {
-    id           Int      @id @default(autoincrement())
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
-    userId       String   @unique
-    accessToken  String?
-    refreshToken String?
-    expiresIn    Int
-    twitterId    String
-    user         AuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Integration {
+    id           Int       @id @default(autoincrement())
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+    userId       String
+    serviceName  String    @db.VarChar(255)
+    accessToken  String?   @db.VarChar(255)
+    refreshToken String?   @db.VarChar(255)
+    timestamp    DateTime?
+    username     String?
+    expiresIn    Int?
+    user         AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+    @@unique([userId, serviceName])
     @@index([userId])
+    @@index([serviceName])
 }
 
 model AnnotationToTag {

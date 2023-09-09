@@ -24,10 +24,13 @@
 	export let comparisonFunction: $$Props['comparisonFunction'] = undefined;
 	let className: $$Props['class'] = undefined;
 	export { className as class };
-	export let shouldFilter: $$Props['shouldFilter'] = true;
+	export let defaultShouldFilter: $$Props['defaultShouldFilter'] = true;
+	export let shouldFilter: $$Props['shouldFilter'] = undefined;
 	export let container: $$Props['container'] = writable<HTMLElement | null>(
 		null,
 	);
+	export let commandPages: $$Props['commandPages'] = undefined;
+    export let filterFunction: $$Props['filterFunction'] = undefined;
 
 	type T = $$Generic;
 
@@ -35,8 +38,11 @@
 		measurements: { tweenedHeight },
 		state: { filtered, selectedValue, shouldFilter: localShouldFilter },
 	} = ctx.set<T>({
+		commandPages,
 		comparisonFunction,
 		container,
+		defaultShouldFilter,
+        filterFunction,
 		initialData,
 		initialSelectedValue:
 			value && multiple && Array.isArray(value)
@@ -52,12 +58,13 @@
 		valueToString,
 	});
 
-	$: if (shouldFilter !== undefined) {
-		localShouldFilter.set(shouldFilter);
-	}
-
 	// TODO
-	$: value = multiple ? $selectedValue : $selectedValue[0];
+	$: if (multiple) {
+		value = $selectedValue.map((v) => v.value);
+	} else if (!multiple && $selectedValue[0]?.value) {
+		console.log({ $selectedValue });
+		value = $selectedValue[0].value;
+	}
 	type TPages = $$Generic<PageType>;
 	export let initialPages: Array<TPages> | undefined = undefined;
 	let pagesData: Array<TPages> = [];

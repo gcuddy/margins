@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 	import commandScore from 'command-score';
+	import debounce from 'just-debounce-it';
 	import { createEventDispatcher } from 'svelte';
 	import { derived } from 'svelte/store';
 
-	import { goto } from '$app/navigation';
+	import { goto, preloadData } from '$app/navigation';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import {
 		commandCtx,
@@ -14,16 +15,15 @@
 	import { Muted } from '$lib/components/ui/typography';
 	import type { ListEntry } from '$lib/db/selects';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { getId } from '$lib/utils/entries';
+	import { getId, make_link } from '$lib/utils/entries';
 
 	const entriesQuery = createQuery(queryFactory.entries.all());
 
 	const {
 		options: { multiple },
-		state: { inputValue, selectedValue, shouldFilter },
-	} = commandCtx.get();
+		state: { activeOptionProps, activeValue, inputValue, selectedValue, shouldFilter },
+    } = commandCtx.get<ListEntry>();
 
-	$: console.log({ $inputValue });
 
 	shouldFilter.set(false);
 
@@ -33,6 +33,9 @@
 		void goto(`/tests/${entry.type}/${getId(entry)}`);
 		isOpen = false;
 	};
+
+    export let preload = false;
+    export let preloadDelay = 400;
 
 	const dispatch = createEventDispatcher();
 
@@ -61,6 +64,18 @@
 			return filtered;
 		},
 	);
+
+
+	const debouncedPreload = debounce((url: string) => {
+        console.log('preloading', url)
+		preloadData(url);
+	}, preloadDelay);
+
+	$: if ($activeOptionProps?.value && preload) {
+        console.log({$activeOptionProps, preload})
+        const link = make_link($activeOptionProps.value);
+		debouncedPreload(link);
+	}
 </script>
 
 <!-- <CommandLoading>Loading...</CommandLoading> -->
@@ -71,7 +86,8 @@
 	{:else}
 		{#each $entries.slice(0, 10) as entry (entry.id)}
 			<CommandItem
-				value="{entry.title} {entry.author}"
+				label="{entry.title} {entry.author}"
+                value={entry}
 				onSelect={() => {
 					dispatch('select', entry);
 					onSelect(entry);

@@ -1,7 +1,7 @@
 <script lang='ts'>
 	import { Circle } from "lucide-svelte";
-
 	import type { ComponentProps } from "svelte";
+
 	import CommandItem from "./CommandItem.svelte";
 
     type T = $$Generic;

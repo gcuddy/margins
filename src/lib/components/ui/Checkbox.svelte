@@ -18,7 +18,7 @@
 	on:change
 	{...$$restProps}
 	class={cn(
-		'peer h-4 w-4 shrink-0 rounded-[4px] border border-input ring-offset-background checked:border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 checked:bg-secondary appearance-none',
+		'peer h-4 w-4 shrink-0 rounded-[4px] border border-input ring-offset-background checked:border focus-visible:outline-none focus-visible:ring-2 cursor-pointer focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 checked:bg-secondary appearance-none',
 		className,
 	)}
 />

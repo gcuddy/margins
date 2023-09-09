@@ -1,5 +1,9 @@
 <script lang="ts">
+	import { tweened } from 'svelte/motion';
+	import { writable } from 'svelte/store';
+
 	import { Command } from '$components/ui/command2';
+	import { cn } from '$lib/utils';
 
 	import { Dialog, DialogContent } from '../dialog';
 	import type { PageType, RootCommandProps } from './types';
@@ -10,15 +14,33 @@
 		open?: boolean;
 	};
 	export let open: boolean = false;
-	export let shouldFilter = false;
+	export let defaultShouldFilter = true;
+	export let shouldFilter = writable(true);
 	export let filterFunction: $$Props['filterFunction'] = undefined;
 	export let comparisonFunction: $$Props['comparisonFunction'] = undefined;
+
+	const scale = tweened(1, {
+		duration: 100,
+	});
+
+	export function playBounce() {
+		scale.set(0.98);
+		setTimeout(() => {
+			scale.set(1);
+		}, 100);
+	}
 </script>
 
-<Dialog bind:open>
-	<DialogContent class="overflow-hidden p-0 shadow-lg -translate-y-[33vh]">
+<Dialog bind:open >
+	<DialogContent
+		style="--tw-scale-x: {$scale}; --tw-scale-y: {$scale};"
+		class={cn(
+			'overflow-hidden p-0 shadow-lg -translate-y-[33vh] will-change-transform origin-center',
+		)}
+	>
 		<Command
-			bind:shouldFilter
+            {defaultShouldFilter}
+            {shouldFilter}
 			{filterFunction}
 			{comparisonFunction}
 			{...$$restProps}

@@ -493,6 +493,18 @@ export type Feed = {
 	 */
 	itunes_id: string | null;
 };
+export type Integration = {
+	id: Generated<number>;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	userId: string;
+	serviceName: string;
+	accessToken: string | null;
+	refreshToken: string | null;
+	timestamp: Timestamp | null;
+	username: string | null;
+	expiresIn: number | null;
+};
 export type Interaction = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
@@ -652,16 +664,6 @@ export type TagOnEntry = {
 export type Task = {
 	id: Generated<number>;
 };
-export type TwitterIntegration = {
-	id: Generated<number>;
-	createdAt: Generated<Timestamp>;
-	updatedAt: Timestamp;
-	userId: string;
-	accessToken: string | null;
-	refreshToken: string | null;
-	expiresIn: number;
-	twitterId: string;
-};
 export type UserEntry = {
 	id: Generated<number>;
 };
@@ -698,6 +700,7 @@ export type DB = {
 	EntryTag: EntryTag;
 	Favorite: Favorite;
 	Feed: Feed;
+	Integration: Integration;
 	InvitationCode: InvitationCode;
 	Log: Log;
 	Person: Person;
@@ -711,6 +714,5 @@ export type DB = {
 	Taggings: Tagging;
 	TagOnEntry: TagOnEntry;
 	Task: Task;
-	TwitterIntegration: TwitterIntegration;
 	UserEntry: UserEntry;
 };

@@ -123,7 +123,9 @@
 	}
 
 	// false : !$inputValue ? false : !$filtered.ids.includes(id);
-	$: selected = $selectedValue.some((sv) => comparisonFunction(sv.value, value));
+	$: selected = $selectedValue.some((sv) => {
+        return comparisonFunction(sv.value, value)
+    });
 
 	function registerEvent(node: HTMLElement) {
 		node.addEventListener(SELECT_EVENT_NAME, () => {

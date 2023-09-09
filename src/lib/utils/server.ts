@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-import { error,type RequestEvent } from '@sveltejs/kit';
+import { error, type RequestEvent } from '@sveltejs/kit';
 import { parse } from 'devalue';
 import { z } from 'zod';
 
 export async function queryctx<T extends z.ZodTypeAny>(
 	req: RequestEvent,
-	authed?: boolean
+	authed?: boolean,
 ): Promise<{
 	ctx: {
 		userId: string;
@@ -15,7 +15,7 @@ export async function queryctx<T extends z.ZodTypeAny>(
 export async function queryctx<T extends z.ZodTypeAny>(
 	req: RequestEvent,
 	schema?: T,
-	authed?: boolean
+	authed?: boolean,
 ): Promise<{
 	ctx: {
 		userId: string;
@@ -25,16 +25,18 @@ export async function queryctx<T extends z.ZodTypeAny>(
 export async function queryctx<T extends z.ZodTypeAny>(
 	req: RequestEvent,
 	schemaOrAuthed?: T | boolean,
-	authed?: boolean
+	authed?: boolean,
 ): Promise<{
 	ctx: {
+		event: RequestEvent;
 		userId: string;
 	};
 	input: z.infer<T>;
 }> {
 	const { url, locals } = req;
 	let userId = url.searchParams.get('userId');
-	const schema = typeof schemaOrAuthed === 'boolean' ? undefined : schemaOrAuthed;
+	const schema =
+		typeof schemaOrAuthed === 'boolean' ? undefined : schemaOrAuthed;
 	const _authed = typeof schemaOrAuthed === 'boolean' ? schemaOrAuthed : authed;
 	if (!userId && _authed !== false) {
 		console.time(`[auth] validating session`);
@@ -48,9 +50,10 @@ export async function queryctx<T extends z.ZodTypeAny>(
 	if (!schema) {
 		return {
 			ctx: {
-				userId: userId!
+				event: req,
+				userId: userId!,
 			},
-			input: null
+			input: null,
 		};
 	}
 	const input = url.searchParams.get('input');
@@ -59,9 +62,10 @@ export async function queryctx<T extends z.ZodTypeAny>(
 		console.warn('Provided schema but missing input');
 		return {
 			ctx: {
-				userId: userId!
+				event: req,
+				userId: userId!,
 			},
-			input: null
+			input: null,
 		};
 		// throw error(400, "Missing input");
 	}
@@ -75,32 +79,33 @@ export async function queryctx<T extends z.ZodTypeAny>(
 	}
 	return {
 		ctx: {
-			userId: userId!
+			event: req,
+			userId: userId!,
 		},
-		input: parsed.data as z.infer<T>
+		input: parsed.data as z.infer<T>,
 	};
 }
 
 const mutationInput = z.object({
-    input: z.unknown(),
-    userId: z.string().nullish(),
-})
+	input: z.unknown(),
+	userId: z.string().nullish(),
+});
 
 export async function mutationctx<TSchema extends z.ZodTypeAny>(
 	req: RequestEvent,
-	schema?: TSchema
+	schema?: TSchema,
 ): Promise<{
 	ctx: {
-        event: RequestEvent
+		event: RequestEvent;
 		userId: string;
-	},
+	};
 	input: z.infer<TSchema>;
 }> {
 	const raw = await req.request.text();
 	const data = mutationInput.parse(parse(raw));
 	const { locals } = req;
 	let { userId } = data;
-    const { input } = data;
+	const { input } = data;
 	if (!userId) {
 		const session = await locals.auth.validate();
 		if (!session) {
@@ -111,20 +116,20 @@ export async function mutationctx<TSchema extends z.ZodTypeAny>(
 	if (!schema) {
 		return {
 			ctx: {
-                event: req,
+				event: req,
 				userId,
 			},
-			input: null
+			input: null,
 		};
 	}
 	if (!input) {
 		console.warn('Provided schema but missing input');
 		return {
 			ctx: {
-                event: req,
-				userId
+				event: req,
+				userId,
 			},
-			input: null
+			input: null,
 		};
 		// throw error(400, "Missing input");
 	}
@@ -136,10 +141,10 @@ export async function mutationctx<TSchema extends z.ZodTypeAny>(
 	}
 	return {
 		ctx: {
-            event: req,
-			userId
+			event: req,
+			userId,
 		},
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		input: parsed.data
+		input: parsed.data,
 	};
 }

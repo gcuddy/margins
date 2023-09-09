@@ -33,7 +33,7 @@
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
-	import { Tags } from '$lib/commands';
+	import { Tags, Books } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -54,27 +54,36 @@
 	import { queryKeys } from '$lib/queries/keys';
 
 	const page = derived(state, ($state) => $state.pages.at(-1));
+	const pages = derived(state, ($state) => $state.pages);
 
-	export function bounce(container: HTMLElement) {
-		// check if  container is in a dialog - if so, we have to bounce that instead
-		const dialogEl = container.closest('[data-melt-dialog-content]');
-		const el = dialogEl ?? container;
-		el.classList.add(`scale-[0.96]`);
-		setTimeout(() => {
-			if (el) {
-				el.classList.remove(`scale-[0.96]`);
-			}
-		}, 200);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let commandDialog: CommandDialog<unknown, any>;
+
+	// $: {
+	// 	// Whenever a page changes...
+	// 	// eslint-disable-next-line no-unused-expressions
+	// 	$page;
+	// 	inputValue.set('');
+	// 	if ($page) {
+	// 	}
+	// }
+
+	const shouldFilter = writable(true);
+
+	function transitionPage() {
+		commandDialog.playBounce();
+		inputValue.set('');
 	}
 
-	$: {
-		// Whenever a page changes...
-		// eslint-disable-next-line no-unused-expressions
-		$page;
-		inputValue.set('');
-		if ($container && $page) {
-			console.log(`bouncing`);
-			bounce($container);
+	function addPage(page: string) {
+		$state.pages = [...$state.pages, page];
+		transitionPage();
+	}
+	function back() {
+		$state.pages = $state.pages.slice(0, -1);
+		transitionPage();
+		if ($state.pages.length === 0) {
+			$shouldFilter = true;
 		}
 	}
 
@@ -95,8 +104,11 @@
 
 	$: if (!$page) {
 		$state.shouldFilter = true;
+		$shouldFilter = true;
 		$state.placeholder = 'Type a command or search...';
 	}
+
+	$: console.log({ $shouldFilter });
 
 	const inputValue = writable('');
 	const container = writable<HTMLElement | null>(null);
@@ -116,21 +128,29 @@
 
 <!-- class="rounded-lg border border-gray-100  shadow-md  dark:border-gray-800" -->
 <CommandDialog
-	shouldFilter={$state.shouldFilter}
+	bind:this={commandDialog}
+	{shouldFilter}
 	bind:open={$state.isOpen}
 	{inputValue}
-	bounce
 	{container}
+	commandPages={pages}
 >
-	<CommandInput placeholder={$state.placeholder} />
+	<CommandInput
+		onKeydown={(e) => {
+			if (e.key === 'Escape' || (e.key === 'Backspace' && !$inputValue)) {
+				e.preventDefault();
+				back();
+			}
+		}}
+		placeholder={$state.placeholder}
+	/>
 	<CommandList class="scrollbar-hide">
 		{#if !$page}
 			<CommandEmpty>No results found.</CommandEmpty>
 			<CommandGroup heading="Navigation">
 				<CommandItem
 					onSelect={() => {
-						$state.pages = [...$state.pages, 'open-item'];
-						$state.shouldFilter = false;
+						addPage('open-item');
 					}}
 				>
 					<ArrowRight class="mr-2 h-4 w-4" />
@@ -138,7 +158,7 @@
 				</CommandItem>
 				<CommandItem
 					onSelect={() => {
-						$state.pages = [...$state.pages, 'open-collection'];
+						addPage('open-collection')
 						$state.shouldFilter = false;
 					}}
 				>
@@ -159,8 +179,7 @@
 				<CommandItem
 					value="open jump go to tag"
 					onSelect={() => {
-						$state.pages = [...$state.pages, 'open-tag'];
-						$state.shouldFilter = true;
+						addPage('open-tag');
 						$state.placeholder = 'Open tag...';
 					}}
 				>
@@ -228,10 +247,8 @@
 				<CommandItem
 					value="search books"
 					onSelect={() => {
-						// goto(`/tests/search`);
-						// isOpen = false;
-						$state.pages = [...$state.pages, 'search-books'];
-						$state.shouldFilter = false;
+						addPage('search-books')
+                        $state.placeholder = 'Search books...';
 					}}
 				>
 					<Search class="mr-2 h-4 w-4" />
@@ -306,7 +323,7 @@
 			</CommandGroup>
 		{/if}
 		{#if $page === 'open-item'}
-			<JumpToEntry bind:isOpen={$state.isOpen} />
+			<JumpToEntry preload bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'open-collection'}
 			<Collections
@@ -323,15 +340,7 @@
 			<Media type="searchMovies" />
 		{/if}
 		{#if $page === 'search-books'}
-			<Query
-				opts={{
-					...queryKeys.search.books($spage, $state.search),
-					enabled: !!$state.search,
-				}}
-				display={(b) => b.volumeInfo?.title ?? ''}
-				value={(b) =>
-					`${b.volumeInfo?.title} ${b.volumeInfo?.authors} ${b.volumeInfo?.publishedDate}`}
-			/>
+			<Books bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'search-music'}
 			<Query

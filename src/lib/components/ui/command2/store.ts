@@ -8,10 +8,11 @@ import {
 	kbd,
 } from '@melt-ui/svelte/internal/helpers';
 import commandScore from 'command-score';
-import { afterUpdate, beforeUpdate, tick } from 'svelte';
+import { afterUpdate, beforeUpdate, onMount, tick } from 'svelte';
+import { cubicOut } from 'svelte/easing';
 import { tweened } from 'svelte/motion';
-import type { Writable } from 'svelte/store';
-import { derived, get, writable } from 'svelte/store';
+import type { Readable, Writable } from 'svelte/store';
+import { derived, get, readable, writable } from 'svelte/store';
 
 import {
 	concatenateValues,
@@ -20,13 +21,21 @@ import {
 	isHTMLElement,
 	toString,
 } from '$lib/helpers';
-import { cubicOut } from 'svelte/easing';
 
 export type CommandProps<T> = {
+	/**
+	 * When pages changes, we will ensure active item. For more complex page management, see createPages.
+	 */
+	commandPages?: Readable<Array<string>>;
 	comparisonFunction?: (a: T, b: T) => boolean;
 	container?: Writable<HTMLElement | null>;
 	// activeValue?: Writable<string | null>;
 	defaultActiveValue?: string | null;
+	/**
+	 * Optionally set to `false` to turn off the automatic filtering and sorting.
+	 * If `false`, you must conditionally render valid items based on the search query yourself.
+	 */
+	defaultShouldFilter?: boolean;
 	/**
 	 * Filter function that takes in a string and inputValue and shuold return a number. If the number is greater than 0, the item will be included in the filtered list.
 	 */
@@ -53,11 +62,7 @@ export type CommandProps<T> = {
 	 * The selected value(s) of the combobox. Can be anything.
 	 */
 	selectedValue?: Writable<Array<ComboboxOption<T>>>;
-	/**
-	 * Optionally set to `false` to turn off the automatic filtering and sorting.
-	 * If `false`, you must conditionally render valid items based on the search query yourself.
-	 */
-	shouldFilter?: boolean;
+	shouldFilter?: Writable<boolean>;
 	valueToString?: (value: T) => string;
 };
 
@@ -88,6 +93,9 @@ export function shouldFilterStore(defaultValue?: boolean) {
 		reset: () => {
 			store.set(defaultValue ?? true);
 		},
+		set: (value: boolean) => {
+			store.set(value);
+		},
 	};
 }
 
@@ -107,6 +115,12 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		},
 		props?.defaultActiveValue ?? null,
 	);
+	const activeOptionProps = derived(activeElement, ($el) => {
+		if (!$el) {
+			return null;
+		}
+		return getOptionProps($el);
+	});
 	const inputValue = props?.inputValue ?? writable('');
 	const selectedValue =
 		props?.selectedValue ?? writable<Array<ComboboxOption<T>>>([]);
@@ -165,9 +179,9 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		return values;
 	});
 
-	const shouldFilter = shouldFilterStore(
-		props?.shouldFilter === false ? false : true,
-	);
+	const shouldFilter =
+		props?.shouldFilter ??
+		shouldFilterStore(props?.defaultShouldFilter === false ? false : true);
 
 	const internalValueToString =
 		props?.valueToString ??
@@ -307,7 +321,11 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	}
 
 	if (props?.initialSelectedValue) {
-		selectedValue.set(props.initialSelectedValue);
+		const fakeSv = props.initialSelectedValue?.map((v) => ({
+			label: '',
+			value: v,
+		}));
+		selectedValue.set(fakeSv);
 	}
 
 	if (props?.initialData) {
@@ -360,6 +378,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	}
 
 	function openMenu(currentOpenState = false) {
+		console.log('open menu');
 		if (!currentOpenState) {
 			openStore.set(true);
 		}
@@ -379,12 +398,17 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 				return;
 			}
 			const selectedItem = menuElement.querySelector('[aria-selected=true]');
+			console.log({ selectedItem });
 			if (!isHTMLElement(selectedItem)) {
 				return;
 			}
 			activeElement.set(selectedItem);
 		});
 	}
+
+	onMount(() => {
+		openMenu();
+	});
 
 	function reset() {
 		// TODO: determine how we want to hanndle thiis - should inputvalue be reset, or sohuld it retian selected value?
@@ -554,7 +578,9 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		// we should ensure first item is chosen when filtered inputvalue changes
 	});
 
-	effect([inputValue], ([$inputValue]) => {
+	const pages = props?.commandPages ?? readable<Array<string>>([]);
+
+	effect([inputValue, pages], ([$inputValue, $pages]) => {
 		ensureActiveItem(0);
 	});
 
@@ -671,6 +697,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		},
 		state: {
 			activeElement,
+			activeOptionProps,
 			activeValue,
 			filtered: writable({}),
 			inputValue,

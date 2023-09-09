@@ -7,12 +7,16 @@ import { applyFilter, generateComparatorClause } from '../utils/comparators';
 
 // TODO figure out if schemas should be colocated or in their own folder
 
-export async function collections({ ctx, input }: GetCtx<typeof collectionsInputSchema>) {
+export async function collections({
+	ctx,
+	input,
+}: GetCtx<typeof collectionsInputSchema>) {
 	const take = 50;
 	let query = db
 		.selectFrom('Collection')
 		.where('userId', '=', ctx.userId)
 		.orderBy('updatedAt', 'asc')
+		.orderBy('createdAt', 'asc')
 		.limit(take + 1)
 		.selectAll();
 	if (input.filter) {
@@ -25,6 +29,15 @@ export async function collections({ ctx, input }: GetCtx<typeof collectionsInput
 			console.timeEnd(`applying filter`);
 			return f;
 		});
+	}
+	if (input.cursor) {
+		const cursor = input.cursor;
+		query = query.where((eb) =>
+			eb.or([
+				eb('updatedAt', '>', cursor),
+				eb.and([eb('updatedAt', '=', cursor), eb('createdAt', '>', cursor)]),
+			]),
+		);
 	}
 
 	let nextCursor: typeof input.cursor = null;
@@ -39,6 +52,6 @@ export async function collections({ ctx, input }: GetCtx<typeof collectionsInput
 	return {
 		collections,
 		nextCursor,
-		hasNextPage
+		hasNextPage,
 	};
 }

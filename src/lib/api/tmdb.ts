@@ -15,6 +15,7 @@ import type {
 
 import { browser } from '$app/environment';
 import { TMDB_API_KEY } from '$env/static/private';
+import { objectValuesToString } from '$lib/helpers';
 
 type Season = TSeason & {
 	episodes: Array<{
@@ -36,7 +37,7 @@ type Movie = TMovie & {
 	runtime: number;
 };
 
-type MovieDetails = Movie & {
+export type MovieDetails = Movie & {
 	credits: Credits;
 	images: Images & {
 		backdrops: Array<{
@@ -49,7 +50,7 @@ type MovieDetails = Movie & {
 			width: number;
 		}>;
 	};
-    recommendations: Recommendations;
+	recommendations: Recommendations;
 	videos: Videos;
 };
 
@@ -133,9 +134,14 @@ export const tmdb = {
 
 			return data;
 		},
-		search: async (q: string) => {
+		search: async (q: string, opts: { year?: number } = {}) => {
 			validateApiKey(TMDB_API_KEY);
-			const url = `${base}/search/movie?api_key=${TMDB_API_KEY}&query=${q}`;
+			const params = new URLSearchParams({
+				api_key: TMDB_API_KEY,
+				query: q,
+				...(opts ? objectValuesToString(opts) : {}),
+			});
+			const url = `${base}/search/movie?${params}`;
 
 			if (cache.has(url)) {
 				return cache.get(url) as Search<Movie>;
@@ -149,9 +155,7 @@ export const tmdb = {
 
 			const data = (await response.json()) as Search<Movie>;
 
-			if (browser) {
-				cache.set(url, data);
-			}
+			cache.set(url, data);
 
 			return data;
 		},

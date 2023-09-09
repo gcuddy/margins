@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { FolderSync, LogOut, Palette, User } from 'lucide-svelte';
+	import { FolderSync, LogOut, Palette, User, Workflow } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
 
-	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
-	import { H1 } from '$lib/components/ui/typography';
 
 	type Nav = {
 		href: string;
@@ -15,26 +13,31 @@
 			{
 				href: '/tests/settings/profile',
 				icon: User,
-				name: 'Profile'
+				name: 'Profile',
 			},
 			{
 				href: '/tests/settings/appearance',
 				icon: Palette,
-				name: 'Appearance'
+				name: 'Appearance',
+			},
+			{
+				href: '/tests/settings/integrations',
+				icon: Workflow,
+				name: 'Integrations',
 			},
 			{
 				href: '/tests/settings/vault',
 				icon: FolderSync,
-				name: 'External notes'
+				name: 'External notes',
 			},
 		],
 		[
 			{
 				href: '/tests/settings/logout',
 				icon: LogOut,
-				name: 'Log out'
-			}
-		]
+				name: 'Log out',
+			},
+		],
 	];
 </script>
 

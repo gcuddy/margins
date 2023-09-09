@@ -1,4 +1,5 @@
 import { Status } from '@prisma/client';
+import type { RequestEvent } from '@sveltejs/kit';
 import { sql } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/mysql';
 import { z } from 'zod';
@@ -9,6 +10,7 @@ import { tmdb } from '$lib/api/tmdb';
 import type { Tweet } from '$lib/api/twitter';
 import { db } from '$lib/db';
 import { collections } from '$lib/db/queries/collections';
+import { importMovies, importMoviesInput } from '$lib/db/queries/integration';
 import {
 	annotations,
 	annotationWithEntry,
@@ -80,6 +82,7 @@ type Query<TSchema extends z.ZodTypeAny, TData> = {
 	authorized?: boolean;
 	fn: (args: {
 		ctx: {
+			event: RequestEvent;
 			userId: string;
 		};
 		input: z.infer<TSchema>;
@@ -204,6 +207,10 @@ export const mutations = {
 		schema: z.object({
 			id: z.number().int(),
 		}),
+	}),
+	importMovies: query({
+		fn: importMovies,
+		schema: importMoviesInput,
 	}),
 	removeFromCollection: query({
 		fn: async ({ ctx: { userId }, input }) => {
