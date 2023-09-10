@@ -276,10 +276,8 @@ export type Collection = {
 	id: Generated<number>;
 	name: string;
 	private: Generated<number>;
-	/**
-	 * @zod.custom.use(chosenIcon)
-	 */
-	icon: unknown | null;
+	icon: string | null;
+	color: string | null;
 	userId: string;
 	description: string | null;
 	createdAt: Generated<Timestamp>;

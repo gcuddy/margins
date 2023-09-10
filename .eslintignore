@@ -12,3 +12,6 @@ svelte.config.js
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+
+# Generated files
+/src/lib/prisma/kysely/types.ts

@@ -519,8 +519,8 @@ model Collection {
     id          Int               @id @default(autoincrement())
     name        String
     private     Boolean           @default(true)
-    /// @zod.custom.use(chosenIcon)
-    icon        Json?
+    icon        String?
+    color       String?           @db.VarChar(9)
     userId      String
     description String?
     createdAt   DateTime          @default(now())

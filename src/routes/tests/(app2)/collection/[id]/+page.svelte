@@ -14,6 +14,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { IconPicker } from '$components/icon-picker';
 	import { Button } from '$components/ui/button';
 	import * as Command from '$components/ui/command2';
 	import { createCommandDialogStore } from '$components/ui/command2/utils';
@@ -207,22 +208,35 @@
 </Header>
 
 <div class="flex gap-2 flex-col max-w-prose mx-auto">
-	<textarea
-		bind:value={data.collection.name}
-		on:blur={() => {
-			if (data.collection.name === lastSavedTitle) {
-				return;
-			}
-			$collectionUpdateMutation.mutate({
-				name: data.collection.name,
-			});
-			lastSavedTitle = data.collection.name;
-		}}
-		placeholder="Untitled note"
-		use:autosize
-		rows={1}
-		class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/75 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
-	/>
+	<div class="flex pt-3 flex-col">
+		<IconPicker
+			bind:activeIcon={data.collection.icon}
+			bind:activeColor={data.collection.color}
+			on:select={({ detail }) => {
+				const { color, icon } = detail;
+				$collectionUpdateMutation.mutate({
+					color,
+					icon,
+				});
+			}}
+		/>
+		<textarea
+			bind:value={data.collection.name}
+			on:blur={() => {
+				if (data.collection.name === lastSavedTitle) {
+					return;
+				}
+				$collectionUpdateMutation.mutate({
+					name: data.collection.name,
+				});
+				lastSavedTitle = data.collection.name;
+			}}
+			placeholder="Untitled note"
+			use:autosize
+			rows={1}
+			class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/75 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
+		/>
+	</div>
 	<!-- TODO: should we render markdown here? -->
 	<textarea
 		class="placeholder:text-muted-foreground/75 transition text-muted-foreground focus-visible:text-foreground w-full h-auto resize-none apearance-none focus:outline-none"

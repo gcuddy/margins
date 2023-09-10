@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { melt } from '@melt-ui/svelte';
-	import { CheckIcon, FileIcon, HashIcon, SearchIcon } from 'lucide-svelte';
-	import { type ComponentProps, type ComponentType,createEventDispatcher } from 'svelte';
+	import { CheckIcon, HashIcon, SearchIcon } from 'lucide-svelte';
+	import { type ComponentProps, createEventDispatcher } from 'svelte';
 
 	import { Button } from '$components/ui/button';
 	import * as Popover from '$components/ui/popover';
-	import { colors, hexCharacters,hexCodeRegexWithoutHash } from '$lib/colors';
+	import { colors, hexCodeRegexWithoutHash } from '$lib/colors';
 	import { chunk, styleToString } from '$lib/helpers';
 	import { cn } from '$lib/utils';
 
@@ -25,47 +24,47 @@
 			}
 			return true;
 		}),
-		8 // (w-72 / width of icons)
+		8, // (w-72 / width of icons)
 	);
 
 	// TODO: should these match with tag color?
 	const iconColors = [
 		{
 			label: 'Light Gray',
-			value: '#c7bcbc'
+			value: '#c7bcbc',
 		},
 		{
 			label: 'Dark Gray',
-			value: '#333333'
+			value: '#333333',
 		},
 		{
 			label: 'Stone Red',
-			value: '#A93226'
+			value: '#A93226',
 		},
 		{
 			label: 'Blue',
-			value: '#3b82f6'
+			value: '#3b82f6',
 		},
 		{
 			label: 'Mint Green',
-			value: '#2EC4B6'
+			value: '#2EC4B6',
 		},
 		{
 			label: 'Lavender',
-			value: '#D3B8FF'
+			value: '#D3B8FF',
 		},
 		{
 			label: 'Cherry Red',
-			value: '#E63946'
+			value: '#E63946',
 		},
 		{
 			label: 'Leafy Green',
-			value: '#6EE7B7'
+			value: '#6EE7B7',
 		},
 		{
 			label: 'Sunny Yellow',
-			value: '#FFD166'
-		}
+			value: '#FFD166',
+		},
 	] as const;
 
 	let hexInput: HTMLInputElement;
@@ -104,21 +103,13 @@
 			)
 		) {
 			return;
-			// const lastColumnFocused = rowToLastColumnFocused.get(activeRow);
-			// if (lastColumnFocused !== undefined) {
-			//     activeColumn = lastColumnFocused;
-			// }
-			console.log({ activeColumn, activeRow });
-			console.log({ rowToLastColumnFocused });
 		}
 		if (e.key === 'ArrowDown') {
-			console.log({ activeColumn, activeRow, icons });
 			activeRow = Math.min(activeRow + 1, filteredIcons.length - 1);
 			const rowIcons = filteredIcons[activeRow];
 			if (rowIcons) {
 				activeColumn = Math.min(activeColumn, rowIcons.length - 1);
 			}
-			console.log({ activeColumn, activeRow });
 		} else if (e.key === 'ArrowUp') {
 			const oldRowLength = filteredIcons[activeRow]?.length;
 			activeRow = Math.max(activeRow - 1, 0);
@@ -146,7 +137,6 @@
 	$: if (showHexCodeEntry) {
 		hexInput.focus();
 		hexInput.setSelectionRange(1, activeColor.length);
-	} else {
 	}
 
 	$: if (!activeColor.startsWith('#')) {
@@ -158,7 +148,7 @@
 			activeColor = activeColor.slice(0, 9);
 		}
 		if (!hexCodeRegexWithoutHash.test(activeColor)) {
-			activeColor = `#${  activeColor.replaceAll(/[^\da-f]/gi, '')}`;
+			activeColor = `#${activeColor.replaceAll(/[^\da-f]/gi, '')}`;
 			//    activeColor = activeColor.replace()
 		}
 	}
@@ -167,7 +157,7 @@
 <Popover.Root
 	bind:open
 	positioning={{
-		placement: 'bottom-start'
+		placement: 'bottom-start',
 	}}
 	onOpenChange={() => {
 		searchValue = '';
@@ -210,7 +200,7 @@
 				<div
 					class={cn(
 						'-translate-y-10 absolute grow w-full text-sm text-muted-foreground font-mono transition',
-						showHexCodeEntry && 'translate-y-0'
+						showHexCodeEntry && 'translate-y-0',
 					)}
 				>
 					<input
@@ -219,7 +209,7 @@
 						placeholder="Hex"
 						class={cn(
 							"-translate-y-10 absolute grow w-full transition before:content-['#'] pr-7",
-							showHexCodeEntry && 'translate-y-0'
+							showHexCodeEntry && 'translate-y-0',
 						)}
 						type="text"
 					/>
@@ -234,7 +224,7 @@
 							style:--color={color.value}
 							class={cn(
 								'w-6 h-6 rounded-full transition flex items-center justify-center shrink-0 bg-[--color] focus:ring-1 focus-visible:shadow-md shadow-[--color] focus:ring-offset-2 ring-[--color] ring-offset-background focus-visible:outline-none appearance-none',
-								showHexCodeEntry && 'translate-y-10'
+								showHexCodeEntry && 'translate-y-10',
 							)}
 						>
 							<!--  -->
@@ -250,31 +240,37 @@
 					size="sm"
 					class={cn(
 						'items-center justify-center h-[26px] w-[26px] shrink-0 relative transition-all rounded-sm',
-						showHexCodeEntry && 'rounded-full overflow-hidden'
+						showHexCodeEntry && 'rounded-full overflow-hidden',
 					)}
 				>
 					<span class="sr-only"> Enter Hex Code </span>
-					<HashIcon class="h-3 w-3 text-muted-foreground absolute inset-0 mx-auto my-auto" />
+					<HashIcon
+						class="h-3 w-3 text-muted-foreground absolute inset-0 mx-auto my-auto"
+					/>
 					<div
 						class={cn(
 							'absolute inset-px rounded-full transition-all',
-							showHexCodeEntry ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+							showHexCodeEntry ? 'opacity-100 scale-100' : 'opacity-0 scale-50',
 						)}
 						style={styleToString({
 							background: `conic-gradient(${iconColors
 								.slice(1, 7)
 								.map((color) => color.value)
-								.join(', ')})`
+								.join(', ')})`,
 						})}
 					/>
 				</Button>
 			</div>
-			<div class="px-1 order-3" data-active-color={activeColor} style:--icon-color={activeColor}>
+			<div
+				class="px-1 order-3"
+				data-active-color={activeColor}
+				style:--icon-color={activeColor}
+			>
 				<!-- TODO: accessibility on this -->
 				{#each filteredIcons as row, rowIndex}
 					<div
 						class={cn(
-							'flex gap-1.5'
+							'flex gap-1.5',
 							// full row length should be 8
 							// row.length === 8 && "justify-between"
 						)}
@@ -283,10 +279,13 @@
 						{#each row as icon, columnIndex}
 							<button
 								tabindex={-1}
-								data-active={activeRow === rowIndex && activeColumn === columnIndex}
+								data-active={activeRow === rowIndex &&
+									activeColumn === columnIndex}
 								data-row={rowIndex}
 								data-column={columnIndex}
-								on:click={() => { selectIcon(icon.name); }}
+								on:click={() => {
+									selectIcon(icon.name);
+								}}
 								class="items-center p-1.5 inline-flex justify-center rounded font-medium w-7 data-[active=true]:bg-accent group"
 							>
 								<svelte:component
