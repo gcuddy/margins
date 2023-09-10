@@ -9,7 +9,7 @@
 		"test": "playwright test",
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "prettier --check --plugin-search-dir=. . && eslint .",
+		"lint": "prettier --check --plugin-search-dir=. . && eslint --cache .",
 		"format": "prettier --write --plugin-search-dir=. .",
 		"add-extractor": "node tasks/add-extractor.js",
 		"postinstall": "prisma generate",
@@ -18,7 +18,8 @@
 		"story:build": "histoire build",
 		"story:preview": "histoire preview",
 		"tailwind:generate": "node ./scripts/post-build.js",
-		"commit": "cz"
+		"commit": "cz",
+		"release": "standard-version --no-verify"
 	},
 	"prisma": {
 		"seed": "ts-node prisma/seed.ts"
@@ -122,6 +123,7 @@
 		"rss-parser": "^3.13.0",
 		"slugify": "^1.6.6",
 		"spotify-web-api-node": "^5.0.2",
+		"standard-version": "^9.5.0",
 		"string-strip-html": "^13.4.1",
 		"svelte": "^4.0.5",
 		"svelte-awesome-color-picker": "^2.4.6",
