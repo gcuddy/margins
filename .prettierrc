@@ -4,12 +4,27 @@
 	"trailingComma": "all",
 	"printWidth": 80,
     "semi": true,
+    "pluginSearchDirs": ["."],
+	"plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
 	"overrides": [
 		{
-			"files": ["*.svelte"],
+			"files": "*.svelte",
 			"options": {
-				"bracketSameLine": false
+				"parser": "svelte"
+			}
+		},
+		{
+			"files": "*.md",
+			"options": {
+				"parser": "markdown",
+				"printWidth": 100,
+				"proseWrap": "always",
+				"tabWidth": 2,
+				"useTabs": true,
+				"semi": false,
+				"trailingComma": "none",
+				"bracketSameLine": true
 			}
 		}
-    ]
+	]
 }
