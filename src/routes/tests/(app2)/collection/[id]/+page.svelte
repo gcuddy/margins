@@ -207,7 +207,7 @@
 	</svelte:fragment>
 </Header>
 
-<div class="flex gap-2 flex-col max-w-prose mx-auto">
+<div class="flex gap-2 flex-col max-w-prose mx-auto w-full px-2 md:px-0">
 	<div class="flex pt-3 flex-col">
 		<IconPicker
 			bind:activeIcon={data.collection.icon}
