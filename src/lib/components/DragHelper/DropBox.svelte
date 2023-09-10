@@ -1,20 +1,15 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import dragging from '$lib/stores/dragging';
-	import { notifications } from '$lib/stores/notifications';
-	import { syncStore } from '$lib/stores/sync';
-	import { trpc } from '$lib/trpc/client';
-	import { fade, fly } from 'svelte/transition';
-	import Icon from '../helpers/Icon.svelte';
-	import { BookPlus } from 'lucide-svelte';
-	import { post } from '$lib/utils/forms';
-	import { invalidateAll } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
-	import type { AddUrlObj } from '$lib/schemas';
 	import { useQueryClient } from '@tanstack/svelte-query';
+	import { BookPlus } from 'lucide-svelte';
+	import { fade, fly } from 'svelte/transition';
+	import { toast } from 'svelte-sonner';
+
+	import type { AddUrlObj } from '$lib/schemas';
+	import dragging from '$lib/stores/dragging';
+	import { syncStore } from '$lib/stores/sync';
+	import { post } from '$lib/utils/forms';
+
 	let dragOver = false;
-	let dropping = false;
-	let draggedUrl = '';
 
 	const queryClient = useQueryClient();
 
@@ -27,46 +22,44 @@
 		dragOver = false;
 	}
 	function handleDrop(e: DragEvent) {
-		dropping = true;
 		e.preventDefault();
 		dragOver = false;
-		console.log(e);
 		const url = e.dataTransfer?.getData('text/uri-list');
-		console.log({ url });
 		if (url) {
 			const syncId = syncStore.addItem();
 			const context_url = e.dataTransfer?.getData('context/url');
 			const context_entryid = e.dataTransfer?.getData('context/id');
 			submitLink(url, {
+				entryId: context_entryid ? +context_entryid : undefined,
 				url: context_url,
-				entryId: context_entryid ? +context_entryid : undefined
 			}).then(() => syncStore.removeItem(syncId));
 		}
 		$dragging = false;
-		dropping = false;
 	}
-	async function submitLink(url: string, context: { url?: string; entryId?: number }) {
+	async function submitLink(
+		url: string,
+		context: { entryId?: number; url?: string },
+	) {
 		// todo: only want context if it comes from this page - figure out how to do that
 		// i guess i need to add drag handlers to every link (and image?) on the page, which seems... annoying
-		console.log({ context });
 		const promise = post<AddUrlObj>('/tests?/addUrl', {
-			url,
 			status: 'Backlog',
-			via_entryid: context.entryId
+			url,
+			via_entryid: context.entryId,
 		});
 		toast.promise(promise, {
+			error: 'Failed to save link',
 			loading: 'Saving link',
 			success: (data) => {
-                queryClient.invalidateQueries({
-                    queryKey: ['entries']
-                });
-                if (data.type === 'success' && data.data) {
-                    return `Saved new link: ${data.data.title}`
-                }
-                return 'Saved link'
-            },
-			error: 'Failed to save link'
-		})
+				queryClient.invalidateQueries({
+					queryKey: ['entries'],
+				});
+				if (data.type === 'success' && data.data) {
+					return `Saved new link: ${data.data.title}`;
+				}
+				return 'Saved link';
+			},
+		});
 		// invalidateAll();
 		// toast.success(`'Saved link');
 		// const article = await trpc($page).public.parse.query({url});
@@ -84,6 +77,7 @@
 
 {#if $dragging}
 	<div class="fixed bottom-5 left-5 z-50 sm:bottom-9 sm:left-9">
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div
 			in:fly|global={{ duration: 250, x: -100 }}
 			out:fade|global={{ duration: 250 }}
