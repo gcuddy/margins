@@ -17,13 +17,17 @@
 		"story:dev": "histoire dev",
 		"story:build": "histoire build",
 		"story:preview": "histoire preview",
-		"tailwind:generate": "node ./scripts/post-build.js"
+		"tailwind:generate": "node ./scripts/post-build.js",
+		"commit": "cz"
 	},
 	"prisma": {
 		"seed": "ts-node prisma/seed.ts"
 	},
 	"devDependencies": {
 		"@aws-sdk/client-s3": "^3.369.0",
+		"@commitlint/cli": "^17.7.1",
+		"@commitlint/config-conventional": "^17.7.0",
+		"@commitlint/cz-commitlint": "^17.7.1",
 		"@faker-js/faker": "^8.0.2",
 		"@formkit/auto-animate": "^1.0.0-beta.6",
 		"@googleapis/books": "^1.0.0",
@@ -89,8 +93,11 @@
 		"fast-xml-parser": "^4.2.5",
 		"histoire": "^0.16.2",
 		"html-entities": "^2.4.0",
+		"husky": "^8.0.3",
 		"idb": "^7.1.1",
+		"inquirer": "^9.2.11",
 		"ioredis": "^5.3.2",
+		"lint-staged": "^14.0.1",
 		"lodash": "^4.17.21",
 		"lodash.camelcase": "^4.3.0",
 		"lodash.clonedeep": "^4.5.0",
