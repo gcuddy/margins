@@ -56,7 +56,7 @@ export async function collections({
 }
 
 export const collectionUpdateInputSchema = z.object({
-	description: z.string(),
+	description: z.string().nullable(),
 	name: z.string(),
 	private: z.number(),
 	// TODO: icon and color

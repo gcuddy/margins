@@ -8,12 +8,10 @@
 		Library,
 		Plus,
 	} from 'lucide-svelte';
-	import MarkdownIt from 'markdown-it';
 	import { onMount, tick } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import { dndzone } from 'svelte-dnd-action';
 	import { toast } from 'svelte-sonner';
-	import { superForm } from 'sveltekit-superforms/client';
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -33,8 +31,6 @@
 		DropdownMenuSeparator,
 		DropdownMenuTrigger,
 	} from '$lib/components/ui/dropdown-menu';
-	import Input from '$lib/components/ui/input/input.svelte';
-	import Textarea from '$lib/components/ui/Textarea.svelte';
 	import { nanoid } from '$lib/nanoid';
 	import {
 		mutate,
@@ -46,8 +42,6 @@
 
 	import CollectionItem from './collection-item.svelte';
 	import CollectionItemCard from './collection-item-card.svelte';
-
-	const md = new MarkdownIt();
 
 	const collectionUpdateMutation = createMutation({
 		mutationFn: (input: MutationInput<'collectionUpdate'>['data']) =>
@@ -78,15 +72,10 @@
 	export let data;
 
 	let lastSavedTitle = data.collection.name;
+	let lastSavedDescription = data.collection.description;
 
 	$: ({ pin_id } = data.collection);
 	const commander = createCommandDialogStore();
-
-	const { enhance, form } = superForm(data.form, {
-		dataType: 'json',
-	});
-	let form_el: HTMLFormElement;
-	let editing = false;
 
 	const updateCollectionItemsPositionsMutation = createMutation({
 		mutationFn: (input: MutationInput<'updateCollectionItemsPosition'>) =>
@@ -229,64 +218,39 @@
 	</svelte:fragment>
 </Header>
 
-<div class="flex items-center gap-x-2 max-w-prose mx-auto">
-	{#if !editing}
-		<textarea
-			bind:value={data.collection.name}
-			on:blur={() => {
-				if (data.collection.name === lastSavedTitle) {
-					return;
-				}
-				$collectionUpdateMutation.mutate({
-					name: data.collection.name,
-				});
-				lastSavedTitle = data.collection.name;
-			}}
-			placeholder="Untitled note"
-			use:autosize
-			rows={1}
-			class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/50 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
-		/>
-	{:else}
-		<form method="post" use:enhance action="?/edit">
-			<Input
-				class="h-auto text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
-				bind:value={$form.name}
-			/>
-			<Button on:click={() => (editing = false)} variant="secondary"
-				>Save</Button
-			>
-		</form>
-	{/if}
-</div>
-<div class="mt-4">
-	{#if editing}
-		<form
-			bind:this={form_el}
-			use:enhance
-			method="post"
-			action="?/edit"
-			class="contents"
-		>
-			<Textarea
-				on:blur={(e) => {
-					form_el.requestSubmit();
-				}}
-				bind:value={$form.description}
-				placeholder="Description"
-				rows={4}
-				class="mt-2 h-auto max-w-prose"
-			/>
-			<noscript>
-				<Button type="submit">Save</Button>
-			</noscript>
-		</form>
-	{:else if $form.description}
-		<div class="prose prose-sm prose-stone dark:prose-invert">
-			<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-			{@html md.render($form.description)}
-		</div>
-	{/if}
+<div class="flex gap-2 flex-col max-w-prose mx-auto">
+	<textarea
+		bind:value={data.collection.name}
+		on:blur={() => {
+			if (data.collection.name === lastSavedTitle) {
+				return;
+			}
+			$collectionUpdateMutation.mutate({
+				name: data.collection.name,
+			});
+			lastSavedTitle = data.collection.name;
+		}}
+		placeholder="Untitled note"
+		use:autosize
+		rows={1}
+		class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/75 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
+	/>
+	<!-- TODO: should we render markdown here? -->
+	<textarea
+		class="placeholder:text-muted-foreground/75 transition text-muted-foreground focus-visible:text-foreground w-full h-auto resize-none apearance-none focus:outline-none"
+		placeholder="Notes"
+		rows={1}
+		bind:value={data.collection.description}
+		on:blur={() => {
+			if (data.collection.description === lastSavedDescription) {
+				return;
+			}
+			$collectionUpdateMutation.mutate({
+				description: data.collection.description,
+			});
+			lastSavedDescription = data.collection.description;
+		}}
+	/>
 </div>
 
 <!-- <form action="?/add_section" method="post">
