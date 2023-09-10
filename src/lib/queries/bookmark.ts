@@ -27,45 +27,46 @@ export async function bookmarkCreate({
 		userId,
 	} = ctx;
 	const { collection, relatedEntryId, status, url } = input;
+	let { entryId } = input;
 
-	if (!isValidUrl(url)) {
+	if (url && !isValidUrl(url)) {
 		// TODO: handle this case with ISBN, etc.
 		throw new Error('Invalid URL');
 	}
 
-	const existingEntry = await db
-		.selectFrom('Entry as e')
-		.select(entrySelect)
-		.where('uri', '=', url)
-		.executeTakeFirst();
-
-	let entryId: number | undefined = existingEntry?.id;
-
-	if (!existingEntry) {
-		const res = await fetch(`/api/parse/${encodeURIComponent(url)}`);
-		if (!res.ok) {
-			throw new Error(res.statusText);
-		}
-
-		const { url: _url, ...rest } = (await res.json()) as Awaited<
-			ReturnType<typeof parse>
-		>;
-
-		const { insertId } = await db
-			.insertInto('Entry')
-			.values({
-				updatedAt: new Date(),
-				...rest,
-				original: rest.original ? json(rest.original) : null,
-				podcastIndexId: rest.podcastIndexId
-					? Number(rest.podcastIndexId)
-					: null,
-				uri: url,
-			})
-			.ignore()
+	if (!entryId && url) {
+		const existingEntry = await db
+			.selectFrom('Entry as e')
+			.select(entrySelect)
+			.where('uri', '=', url)
 			.executeTakeFirst();
 
-		entryId = Number(insertId);
+		if (!existingEntry && url) {
+			const res = await fetch(`/api/parse/${encodeURIComponent(url)}`);
+			if (!res.ok) {
+				throw new Error(res.statusText);
+			}
+
+			const { url: _url, ...rest } = (await res.json()) as Awaited<
+				ReturnType<typeof parse>
+			>;
+
+			const { insertId } = await db
+				.insertInto('Entry')
+				.values({
+					updatedAt: new Date(),
+					...rest,
+					original: rest.original ? json(rest.original) : null,
+					podcastIndexId: rest.podcastIndexId
+						? Number(rest.podcastIndexId)
+						: null,
+					uri: url,
+				})
+				.ignore()
+				.executeTakeFirst();
+
+			entryId = Number(insertId);
+		}
 	}
 
 	if (!entryId) {
@@ -155,14 +156,13 @@ export function createCompiledInsertBookmarkQuery(
 
 	return _db
 		.insertInto('Bookmark')
-		.columns(columns)
+		.columns([...columns, 'sort_order'])
 		.expression((eb) =>
 			eb
 				.selectFrom('Bookmark')
 				.select(({ ref }) => [
 					...columns.map((c) => sql`${_insertable[c]}`.as(c)),
 					sql`min(${ref('sort_order')}) - 100`.as('sort_order'),
-					sql`${new Date()}`.as('updatedAt'),
 				]),
 		)
 		.compile();

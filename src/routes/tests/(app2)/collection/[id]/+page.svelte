@@ -8,7 +8,6 @@
 		Library,
 		Plus,
 	} from 'lucide-svelte';
-	import { onMount, tick } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import { dndzone } from 'svelte-dnd-action';
 	import { toast } from 'svelte-sonner';
@@ -170,17 +169,6 @@
 			},
 		});
 	}
-
-	let loaded = false;
-
-	onMount(() => {
-		tick().then(() => {
-			setTimeout(() => {
-				// wait a second, then set loaded to true (this will enable transitions)
-				loaded = true;
-			}, 900);
-		});
-	});
 </script>
 
 <Header>
@@ -364,7 +352,7 @@
 				{#if item.type === 'Section'}
 					Section
 				{/if}
-				<CollectionItem shouldTransition={loaded} {item} />
+				<CollectionItem {item} />
 			{/if}
 		</div>
 	{:else}

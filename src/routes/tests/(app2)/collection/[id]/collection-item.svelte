@@ -1,20 +1,28 @@
 <script lang="ts">
-	import { createMutation } from '@tanstack/svelte-query';
+	import { createMutation, createQuery } from '@tanstack/svelte-query';
 	import {
 		MoreHorizontalIcon,
 		PaintbrushIcon,
+		PlusCircle,
 		XCircleIcon,
 	} from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
+	import { derived } from 'svelte/store';
 
 	import { invalidate } from '$app/navigation';
 	import { Button } from '$components/ui/button';
 	import * as Dialog from '$components/ui/dialog';
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
+	import { initBookmarkCreateMutation } from '$lib/queries/mutations';
 	import { mutate, type MutationInput } from '$lib/queries/query';
+	import { queryFactory } from '$lib/queries/querykeys';
 
 	import type { PageData } from './$types';
 	import CollectionItemCard from './collection-item-card.svelte';
+
+	export let item: PageData['collection']['items'][number];
+
+	const bookmarkCreateMutation = initBookmarkCreateMutation();
 
 	const removeFromCollectionMutation = createMutation({
 		mutationFn: async (
@@ -37,17 +45,23 @@
 			}),
 	});
 
-	export let item: PageData['collection']['items'][number];
+	const entriesQuery = createQuery(queryFactory.entries.all());
+
+	const inLibrary = derived(entriesQuery, ($entriesQuery) => {
+		if (!$entriesQuery.data) {
+			return false;
+		}
+
+		return $entriesQuery.data.some((entry) => entry.id === item.entry?.id);
+	});
 
 	let customizeDialogOpen = false;
 
 	let width =
 		(item.width as ComponentProps<CollectionItemCard>['width']) ?? 'default';
-
-	export let shouldTransition = false;
 </script>
 
-<CollectionItemCard bind:width {item} {shouldTransition}>
+<CollectionItemCard bind:width {item}>
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger asChild let:builder>
 			<Button
@@ -69,10 +83,7 @@
 				>
 					<PaintbrushIcon class="h-4 w-4 mr-2" />
 					Customize style
-				</DropdownMenu.Item></DropdownMenu.Group
-			>
-			<DropdownMenu.Separator />
-			<DropdownMenu.Group>
+				</DropdownMenu.Item>
 				{#if item.entry?.id || item.annotation?.id}
 					{@const entryId = item.entry?.id}
 					{@const annotationId = item.annotation?.id}
@@ -89,6 +100,24 @@
 					</DropdownMenu.Item>
 				{/if}
 			</DropdownMenu.Group>
+			{#if !$inLibrary}
+				<DropdownMenu.Separator />
+				<DropdownMenu.Group>
+					{#if !$inLibrary && item.entry?.id}
+						{@const entryId = item.entry?.id}
+						<DropdownMenu.Item
+							on:click={() => {
+								$bookmarkCreateMutation.mutate({
+									entryId,
+								});
+							}}
+						>
+							<PlusCircle class="h-4 w-4 mr-2" />
+							Save to library
+						</DropdownMenu.Item>
+					{/if}
+				</DropdownMenu.Group>
+			{/if}
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
 </CollectionItemCard>
@@ -114,7 +143,7 @@
 			<Dialog.Title>Customize card</Dialog.Title>
 		</Dialog.Header>
 		<div class="flex divide-x">
-			<CollectionItemCard shouldTransition={false} {width} {item} />
+			<CollectionItemCard {width} {item} />
 			<div>
 				<!-- TODO: colors -->
 				<!-- TODO: font -->

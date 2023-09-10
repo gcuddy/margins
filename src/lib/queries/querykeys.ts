@@ -18,7 +18,9 @@ type QueryFnParams = {
 
 type InfiniteQueryFnParams = {
 	meta: Meta;
-	pageParam: unknown;
+	// TODO: fix types for queryFactory
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	pageParam: any;
 };
 
 export const queryFactory = {
@@ -36,6 +38,7 @@ export const queryFactory = {
 		}),
 	},
 	entries: {
+		/** Gets all the entries in the current user's library. */
 		all: () => ({
 			queryFn: ({ meta }: QueryFnParams) =>
 				qquery(meta?.init, 'getAllEntries', {}),
@@ -141,14 +144,14 @@ export const queryFactory = {
 			initialPageParam: undefined as QueryOutput<'notes'>['nextCursor'],
 			queryFn: async ({ meta, pageParam }: InfiniteQueryFnParams) => {
 				const data = await qquery(meta?.init, 'notes', {
+					dir: 'desc',
+					orderBy: 'createdAt',
 					...input,
 					cursor: pageParam,
 				});
 				// "push" approach to seeding cache. TODO look at perf impact
 				// see https://tkdodo.eu/blog/seeding-the-query-cache#push-approach
 				if (queryClient) {
-					console.log('pushing notes detail cache from list');
-					console.time('push notes');
 					data.notes.forEach((note) => {
 						// should match query key below
 						queryClient.setQueryData(
@@ -156,7 +159,6 @@ export const queryFactory = {
 							note,
 						);
 					});
-					console.timeEnd('push notes');
 				}
 
 				return data;
@@ -210,12 +212,7 @@ type TQueryFactory = Record<
 	string,
 	Record<
 		string,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(...args: Array<any>) => CreateQueryOptions | CreateInfiniteQueryOptions
 	>
 >;
-
-type QueryFn = <T extends {}>(
-	input: T,
-) => T extends { cursor: any }
-	? CreateInfiniteQueryOptions
-	: CreateQueryOptions;

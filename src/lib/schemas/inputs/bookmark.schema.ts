@@ -3,14 +3,34 @@ import { z } from 'zod';
 
 import { collectionItemSchema } from './collection.schema';
 
-export const bookmarkCreateInput = z.object({
-	// The collection ID to add the entry to, if any
-	collection: collectionItemSchema.optional(),
-	relatedEntryId: z.number().int().optional(),
-	// If null, don't add to library
-	status: z.nativeEnum(Status).nullable().default('Backlog'),
+const urlInput = z.object({
+	entryId: z.undefined(),
 	url: z.string(),
 });
+
+const entryIdInput = z.object({
+	entryId: z.number().int(),
+	url: z.undefined(),
+});
+
+const urlOrEntryIdInput = z
+	.union([urlInput, entryIdInput])
+	.refine(
+		(input) => input.entryId || input.url,
+		'Either entryId or url must be provided',
+	);
+
+export const bookmarkCreateInput = z
+	.object({
+		// The collection ID to add the entry to, if any
+		collection: collectionItemSchema.optional(),
+		entryId: z.number().int().optional(),
+		relatedEntryId: z.number().int().optional(),
+		// If null, don't add to library
+		status: z.nativeEnum(Status).nullable().default('Backlog'),
+		url: z.string().optional(),
+	})
+	.and(urlOrEntryIdInput);
 
 export type BookmarkCreateInput = z.input<typeof bookmarkCreateInput>;
 
