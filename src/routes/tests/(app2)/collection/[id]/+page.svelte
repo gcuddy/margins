@@ -6,7 +6,6 @@
 		ChevronRightIcon,
 		FilmIcon,
 		Library,
-		PencilIcon,
 		Plus,
 	} from 'lucide-svelte';
 	import MarkdownIt from 'markdown-it';
@@ -18,13 +17,14 @@
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { Button } from '$components/ui/button';
 	import * as Command from '$components/ui/command2';
 	import { createCommandDialogStore } from '$components/ui/command2/utils';
 	import Header from '$components/ui/Header.svelte';
+	import autosize from '$lib/actions/autosize';
 	import { Entries, Movies } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import PinButton from '$lib/components/PinButton.svelte';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -34,9 +34,7 @@
 		DropdownMenuTrigger,
 	} from '$lib/components/ui/dropdown-menu';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import Separator from '$lib/components/ui/Separator.svelte';
 	import Textarea from '$lib/components/ui/Textarea.svelte';
-	import { H1 } from '$lib/components/ui/typography';
 	import { nanoid } from '$lib/nanoid';
 	import {
 		mutate,
@@ -45,12 +43,19 @@
 		query,
 	} from '$lib/queries/query';
 	import { isValidUrl } from '$lib/utils';
-	import { cn } from '$lib/utils/tailwind';
 
 	import CollectionItem from './collection-item.svelte';
 	import CollectionItemCard from './collection-item-card.svelte';
 
 	const md = new MarkdownIt();
+
+	const collectionUpdateMutation = createMutation({
+		mutationFn: (input: MutationInput<'collectionUpdate'>['data']) =>
+			mutate('collectionUpdate', {
+				data: input,
+				id: data.collection.id,
+			}),
+	});
 
 	const bookmarkCreateMutation = createMutation({
 		mutationFn: (input: MutationInput<'bookmarkCreate'>) =>
@@ -71,6 +76,8 @@
 	});
 
 	export let data;
+
+	let lastSavedTitle = data.collection.name;
 
 	$: ({ pin_id } = data.collection);
 	const commander = createCommandDialogStore();
@@ -192,70 +199,65 @@
 		>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
 		{data.collection.name}</span
 	>
+	<svelte:fragment slot="end">
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild let:builder>
+				<Button builders={[builder]} variant="outline" size="sm" class="px-2">
+					<Plus class="mr-2 h-4 w-4" />
+					Add to collection
+					<ChevronDown class="ml-2 h-4 w-4 text-secondary-foreground" />
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent class="w-[200px]">
+				<DropdownMenuGroup>
+					<DropdownMenuItem on:click={addEntry}>
+						<Library class="mr-2 h-4 w-4" /> Library
+					</DropdownMenuItem>
+					<DropdownMenuItem on:click={addNote}>
+						<BookMarked class="mr-2 h-4 w-4" /> Note
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
+				<DropdownMenuSeparator />
+				<DropdownMenuGroup>
+					<DropdownMenuItem on:click={addMovie}>
+						<FilmIcon class="mr-2 h-4 w-4" /> Movie
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
+		<PinButton {pin_id} />
+	</svelte:fragment>
 </Header>
 
-<div class="flex items-center justify-between">
-	<div class="flex items-center gap-x-2">
-		{#if !editing}
-			<H1>{data.collection.name}</H1>
-			<Button on:click={() => (editing = !editing)} variant="secondary">
-				<PencilIcon class="mr-2 h-4 w-4" /> Edit
-			</Button>
-		{:else}
-			<form method="post" use:enhance action="?/edit">
-				<Input
-					class="h-auto text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
-					bind:value={$form.name}
-				/>
-				<Button on:click={() => (editing = false)} variant="secondary"
-					>Save</Button
-				>
-			</form>
-		{/if}
-	</div>
-
-	<div class="flex items-center gap-x-2">
-		<div
-			class="flex items-center space-x-1 rounded-md bg-secondary text-secondary-foreground"
-		>
-			<Button variant="secondary" on:click={addEntry}>
-				<Plus class="mr-2 h-4 w-4" />
-				Add
-			</Button>
-			<Separator orientation="vertical" class="h-[20px]" />
-			<DropdownMenu>
-				<DropdownMenuTrigger
-					class={cn(
-						buttonVariants({
-							variant: 'secondary',
-						}),
-						'px-2',
-					)}
-				>
-					<Button variant="secondary" class="px-2">
-						<ChevronDown class="h-4 w-4 text-secondary-foreground" />
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent class="w-[200px]">
-					<DropdownMenuGroup>
-						<DropdownMenuItem on:click={addEntry}>
-							<Library class="mr-2 h-4 w-4" /> Entry
-						</DropdownMenuItem>
-						<DropdownMenuItem on:click={addNote}>
-							<BookMarked class="mr-2 h-4 w-4" /> Note
-						</DropdownMenuItem>
-					</DropdownMenuGroup>
-					<DropdownMenuSeparator />
-					<DropdownMenuGroup>
-						<DropdownMenuItem on:click={addMovie}>
-							<FilmIcon class="mr-2 h-4 w-4" /> Movie
-						</DropdownMenuItem>
-					</DropdownMenuGroup>
-				</DropdownMenuContent>
-			</DropdownMenu>
-		</div>
-		<PinButton {pin_id} />
-	</div>
+<div class="flex items-center gap-x-2 max-w-prose mx-auto">
+	{#if !editing}
+		<textarea
+			bind:value={data.collection.name}
+			on:blur={() => {
+				if (data.collection.name === lastSavedTitle) {
+					return;
+				}
+				$collectionUpdateMutation.mutate({
+					name: data.collection.name,
+				});
+				lastSavedTitle = data.collection.name;
+			}}
+			placeholder="Untitled note"
+			use:autosize
+			rows={1}
+			class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/50 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
+		/>
+	{:else}
+		<form method="post" use:enhance action="?/edit">
+			<Input
+				class="h-auto text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
+				bind:value={$form.name}
+			/>
+			<Button on:click={() => (editing = false)} variant="secondary"
+				>Save</Button
+			>
+		</form>
+	{/if}
 </div>
 <div class="mt-4">
 	{#if editing}
@@ -287,9 +289,9 @@
 	{/if}
 </div>
 
-<form action="?/add_section" method="post">
+<!-- <form action="?/add_section" method="post">
 	<Button>Add section</Button>
-</form>
+</form> -->
 
 <svelte:document
 	on:paste={async (e) => {
@@ -324,7 +326,7 @@
 <!-- {JSON.stringify(data.collection.items)} -->
 <!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
 <div
-	class="mt-8 flex flex-wrap gap-4"
+	class="mt-8 flex flex-wrap gap-4 container mx-auto px-2 sm:px-4"
 	use:dndzone={{
 		dragDisabled: !data.collection.items.length,
 		flipDurationMs: 200,

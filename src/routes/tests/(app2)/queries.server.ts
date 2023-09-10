@@ -9,7 +9,11 @@ import spotify from '$lib/api/spotify';
 import { tmdb } from '$lib/api/tmdb';
 import type { Tweet } from '$lib/api/twitter';
 import { db } from '$lib/db';
-import { collections } from '$lib/db/queries/collections';
+import {
+	collections,
+	collectionUpdate,
+	collectionUpdateSchema,
+} from '$lib/db/queries/collections';
 import { importMovies, importMoviesInput } from '$lib/db/queries/integration';
 import {
 	annotations,
@@ -129,6 +133,10 @@ export const mutations = {
 	bookmarkCreate: query({
 		fn: bookmarkCreate,
 		schema: bookmarkCreateInput,
+	}),
+	collectionUpdate: query({
+		fn: collectionUpdate,
+		schema: collectionUpdateSchema,
 	}),
 	convertEntry: query({
 		fn: convertTo,
@@ -291,7 +299,6 @@ export const mutations = {
 				updatedAt: new Date(),
 				userId: ctx.userId,
 			}));
-			console.dir({ data }, { depth: null });
 			// we're updating but using the on duplicate key update "hack"
 			await db
 				.insertInto('Bookmark')
