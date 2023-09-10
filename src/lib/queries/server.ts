@@ -139,7 +139,7 @@ export async function updateBookmark(
 			.insertInto('Bookmark')
 			.values(
 				entryIds.map((entryId) => ({
-					bookmarked: 0,
+					// bookmarked: 0,
 					entryId,
 					updatedAt: new Date(),
 					userId,

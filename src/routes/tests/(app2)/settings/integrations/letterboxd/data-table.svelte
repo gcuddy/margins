@@ -15,6 +15,10 @@
 
 	import type { LetterboxdItem } from './+page.server';
 	import DataImage from './data-image.svelte';
+	import { enhance } from '$app/forms';
+	import { toast } from 'svelte-sonner';
+	import { Loader2 } from 'lucide-svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	const table = createTable(readable(films), {
 		select: addSelectedRows(),
@@ -80,20 +84,38 @@
 	const { selectedDataIds } = pluginStates.select;
 
 	$: selectedLength = Object.keys($selectedDataIds).length;
+
+	let pending = false;
+	const queryClient = useQueryClient();
 </script>
 
-<form>
+<form
+	action="?/saveMovies"
+	method="post"
+	use:enhance={() => {
+		pending = true;
+		return ({ result, update }) => {
+			pending = false;
+            update();
+			if (result.type === 'success') {
+				toast.success('Movies imported');
+			}
+			queryClient.invalidateQueries({
+				queryKey: ['entries'],
+			});
+		};
+	}}
+>
 	<div class="flex justify-between items-center mb-2">
 		<div class="flex-1 text-sm text-muted-foreground">
 			{selectedLength} of
 			{$rows.length} rows selected.
 		</div>
-		<Button
-			on:click={() => {
-				// TODO - make this a form?
-			}}
-			disabled={!selectedLength}>Import {selectedLength} movies</Button
-		>
+		<Button disabled={pending} type="submit"
+			>Import {selectedLength} movies {#if pending}<Loader2
+					class="ml-2 h-4 w-4 animate-spin"
+				/>{/if}
+		</Button>
 	</div>
 	<div class="rounded-md border">
 		<Table.Root {...$tableAttrs}>

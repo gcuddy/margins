@@ -2,20 +2,17 @@ import type { RelationType, Status } from '@prisma/client';
 import type {
 	ExpressionBuilder,
 	InferResult,
+	Kysely,
 	RawBuilder,
 	ReferenceExpression,
 	SelectArg,
-	SelectExpression
+	SelectExpression,
+	Transaction,
 } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 
 import { db } from '$lib/db';
-import type {
-	Annotation,
-	DB,
-	Entry,
-	Feed
-} from '$lib/prisma/kysely/types';
+import type { Annotation, DB, Entry, Feed } from '$lib/prisma/kysely/types';
 
 type S = SelectExpression<DB & Record<'e', Entry>, 'e'>;
 
@@ -31,7 +28,7 @@ export const entrySelect = [
 	'e.googleBooksId',
 	'e.podcastIndexId',
 	'e.spotifyId',
-	'e.wordCount'
+	'e.wordCount',
 ] as const satisfies Readonly<Array<S>>;
 
 export function selectEntryInList() {
@@ -39,10 +36,14 @@ export function selectEntryInList() {
 	return a;
 }
 
-export type ListEntry = InferResult<ReturnType<typeof selectEntryInList>>[number];
+export type ListEntry = InferResult<
+	ReturnType<typeof selectEntryInList>
+>[number];
 
-export type EntryInList = InferResult<ReturnType<typeof selectEntryInList>>[number] & {
-    podcastIndexId: number | null;
+export type EntryInList = InferResult<
+	ReturnType<typeof selectEntryInList>
+>[number] & {
+	podcastIndexId: number | null;
 	sort_order?: number;
 	progress?: number | null;
 	status?: Status;
@@ -62,7 +63,7 @@ export type EntryInList = InferResult<ReturnType<typeof selectEntryInList>>[numb
 
 export const collectionItem = {
 	withAnnotation: (
-		eb: ExpressionBuilder<DB, 'CollectionItems'>
+		eb: ExpressionBuilder<DB, 'CollectionItems'>,
 	): RawBuilder<{
 		id: string;
 		body: string | null;
@@ -72,11 +73,10 @@ export const collectionItem = {
 			eb
 				.selectFrom('Annotation as a')
 				.select(['a.id', 'a.body', 'a.contentData'])
-				.whereRef('a.id', '=', 'CollectionItems.annotationId')
+				.whereRef('a.id', '=', 'CollectionItems.annotationId'),
 		);
-	}
+	},
 };
-
 
 export const entry = {
 	withAnnotations: [
@@ -90,8 +90,8 @@ export const entry = {
 		'Annotation.title',
 		'Annotation.exact',
 		'Annotation.createdAt',
-		'Annotation.type'
-	] as const
+		'Annotation.type',
+	] as const,
 };
 
 function selectEntryAnnotations(): SelectArg<
@@ -111,18 +111,20 @@ function selectEntryAnnotations(): SelectArg<
 		'Annotation.createdAt',
 		'Annotation.exact',
 		'Annotation.type',
-        "Annotation.parentId",
+		'Annotation.parentId',
 	];
 }
 
-function entryAnnotations(eb: ExpressionBuilder<DB, "Entry">) {
+function entryAnnotations(eb: ExpressionBuilder<DB, 'Entry'>) {
 	return eb
 		.selectFrom('Annotation')
 		.leftJoin('auth_user', 'Annotation.userId', 'auth_user.id')
 		.select(entry.withAnnotations);
 }
 
-export type AnnotationsInEntry = InferResult<ReturnType<typeof entryAnnotations>>[number];
+export type AnnotationsInEntry = InferResult<
+	ReturnType<typeof entryAnnotations>
+>[number];
 
 type AliasedAEb = ExpressionBuilder<DB & Record<'a', Annotation>, 'a'>;
 
@@ -198,11 +200,19 @@ export const annotations = {
 };
 
 export function contextual_annotation(eb: AliasedAEb) {
-	return [annotations.with.tags(eb), annotations.with.username(eb, 'creator'), withEntry(eb)];
+	return [
+		annotations.with.tags(eb),
+		annotations.with.username(eb, 'creator'),
+		withEntry(eb),
+	];
 }
 
 export const feed = {
-	withEntries: (eb: ExpressionBuilder<DB & Record<'f', Feed>, 'f'>, limit = 25, after?: Date) => {
+	withEntries: (
+		eb: ExpressionBuilder<DB & Record<'f', Feed>, 'f'>,
+		limit = 25,
+		after?: Date,
+	) => {
 		let query = eb
 			.selectFrom('Entry as e')
 			.select(entrySelect)
@@ -213,31 +223,41 @@ export const feed = {
 			query = query.where('e.published', '<', after);
 		}
 		return jsonArrayFrom(query).as('entries');
-	}
+	},
 };
 
-export function withEntry(eb: ExpressionBuilder<DB & Record<'a', Annotation>, 'a'>) {
+export function withEntry(
+	eb: ExpressionBuilder<DB & Record<'a', Annotation>, 'a'>,
+) {
 	return jsonObjectFrom(
-		eb.selectFrom('Entry as e').select(entrySelect).whereRef('e.id', '=', 'a.entryId')
+		eb
+			.selectFrom('Entry as e')
+			.select(entrySelect)
+			.whereRef('e.id', '=', 'a.entryId'),
 	).as('entry');
 }
 
 export function genericWithEntry<
 	EB extends ExpressionBuilder<DB, keyof DB>,
-	Alias extends string | void = void
+	Alias extends string | void = void,
 >(eb: EB, ref: ReferenceExpression<DB, keyof DB>) {
 	return jsonObjectFrom(
-		eb.selectFrom('Entry as e').select(entrySelect).whereRef('e.id', '=', ref)
+		eb.selectFrom('Entry as e').select(entrySelect).whereRef('e.id', '=', ref),
 	).as('entry');
 }
 
 // private just for type inference
 export function annotationWithEntry() {
-	const a = db.selectFrom('Annotation as a').select(annotations.select).select(withEntry);
+	const a = db
+		.selectFrom('Annotation as a')
+		.select(annotations.select)
+		.select(withEntry);
 	return a;
 }
 
-export type AnnotationWithEntry = InferResult<ReturnType<typeof annotationWithEntry>>[number];
+export type AnnotationWithEntry = InferResult<
+	ReturnType<typeof annotationWithEntry>
+>[number];
 
 // extract type
 function annotationNotebookSelect() {
@@ -248,10 +268,16 @@ function annotationNotebookSelect() {
 	return a;
 }
 
-export type AnnotationNotebook = InferResult<ReturnType<typeof annotationNotebookSelect>>[number];
+export type AnnotationNotebook = InferResult<
+	ReturnType<typeof annotationNotebookSelect>
+>[number];
 
-export async function getFirstBookmarkSort(userId: string, status?: Status) {
-	let query = db
+export async function getFirstBookmarkSort(
+	userId: string,
+	status?: Status,
+	_db: Kysely<DB> | Transaction<DB> = db,
+) {
+	let query = _db
 		.selectFrom('Bookmark')
 		.select((eb) => eb.fn.min('sort_order').as('sort_order'))
 		.where('userId', '=', userId);

@@ -1,51 +1,59 @@
 <script lang="ts">
+	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
+	import {
+		createWindowVirtualizer,
+		defaultRangeExtractor,
+	} from '@tanstack/svelte-virtual';
+	import { Loader2Icon } from 'lucide-svelte';
+	import type { ComponentType } from 'svelte';
+	import { flip } from 'svelte/animate';
+	import { derived, writable } from 'svelte/store';
+	import { queryParameters, ssp } from 'sveltekit-search-params';
+
 	import { browser } from '$app/environment';
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
 	import { entryTypeIcon } from '$components/entries/icons';
-	import { SelectActions, checkedEntryIds } from '$components/entries/multi-select';
+	import { checkedEntryIds } from '$components/entries/multi-select';
 	import { create_multi } from '$components/entries/multi-select/multi';
 	import LibraryHeader from '$components/library/library-header.svelte';
+	import BulkActions from '$components/ui/bulk-actions.svelte';
+	import { Button } from '$components/ui/button';
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
 	import {
 		convertToGroupedArrayWithHeadings,
 		groupBy,
-		type GroupedArrayWithHeadings
+		type GroupedArrayWithHeadings,
 	} from '$lib/helpers';
+	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import {
-		filterLibrarySchema,
 		type FilterLibrarySchema,
+		filterLibrarySchema,
 		type LibraryGroupType,
-		type LibrarySortType
+		type LibrarySortType,
 	} from '$lib/schemas/library';
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { init_entries, invalidated } from '$lib/state/entries';
 	import type { Type } from '$lib/types';
 	import { cn } from '$lib/utils';
 	import { defaultParseSearch } from '$lib/utils/search-params';
-	import {
-		createInfiniteQuery,
-		useQueryClient
-	} from '@tanstack/svelte-query';
-	import { createWindowVirtualizer, defaultRangeExtractor } from '@tanstack/svelte-virtual';
-	import { Loader2Icon } from 'lucide-svelte';
-	import type { ComponentType } from 'svelte';
-	import { flip } from 'svelte/animate';
-	import { derived, writable } from 'svelte/store';
-	import { queryParameters, ssp } from 'sveltekit-search-params';
+
 	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import { useMenuBar } from '../../MainNav.svelte';
 	import type { Snapshot } from './$types.js';
-
+	import { statuses } from '$lib/status';
 
 	export let data;
 
 	const sort = writable<NonNullable<LibrarySortType>>('manual');
 	const dir = writable<'asc' | 'desc'>('asc');
 	const grouping = writable<LibraryGroupType>('none');
-	const groupingEnabled = derived(grouping, ($grouping) => $grouping && $grouping !== 'none');
+	const groupingEnabled = derived(
+		grouping,
+		($grouping) => $grouping && $grouping !== 'none',
+	);
 
 	$: if (browser && $sort && $sort !== 'manual') {
 		const url = $page.url;
@@ -53,7 +61,7 @@
 		goto(url, {
 			keepFocus: true,
 			noScroll: true,
-			replaceState: true
+			replaceState: true,
 		});
 	} else if (browser) {
 		const url = $page.url;
@@ -61,33 +69,35 @@
 		goto(url, {
 			keepFocus: true,
 			noScroll: true,
-			replaceState: true
+			replaceState: true,
 		});
 	}
 
 	const params = queryParameters({
 		createdAt: ssp.object<NonNullable<FilterLibrarySchema['createdAt']>>(),
 		type: {
+			decode: (v) => v as Type | null,
 			encode: (v: Type) => v,
-			decode: (v) => v as Type | null
-		}
+		},
 	});
 
+	const updateBookmarkMutation = initUpdateBookmarkMutation();
+
 	const createdAtRegex =
-		/^(?<cmp>=|>|<)(?<date>\d{4}-\d{2}-\d{2})|(?<num>\d) (?<unit>day|week|month|year)$/;
+		/^(?<cmp>[<=>])(?<date>\d{4}-\d{2}-\d{2})|(?<num>\d) (?<unit>day|week|month|year)$/;
 
 	function parseFilterFromSearchParams(): FilterLibrarySchema | undefined {
 		const rawObj = defaultParseSearch($page.url.search);
-        console.log({rawObj})
+		console.log({ rawObj });
 		const parsed = filterLibrarySchema.safeParse(rawObj);
-        console.log({parsed})
+		console.log({ parsed });
 		if (parsed.success) {
 			return parsed.data;
 		}
 	}
 
 	$: console.log({
-		params: defaultParseSearch($page.url.search)
+		params: defaultParseSearch($page.url.search),
 	});
 
 	const query = createInfiniteQuery(
@@ -97,13 +107,13 @@
 			const search = $page.url.searchParams.get('search') ?? undefined;
 			return {
 				...queryFactory.entries.list({
-					status: $page.data.Status,
-					search,
-					sort: $sort,
 					dir: $dir,
 					filter,
-					grouping: $grouping === 'none' ? undefined : $grouping
-				})
+					grouping: $grouping === 'none' ? undefined : $grouping,
+					search,
+					sort: $sort,
+					status: $page.data.Status,
+				}),
 				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
 				// 	console.log(`placeholder`, { data });
 				// 	if (search && data) {
@@ -125,56 +135,65 @@
 				// 	return data;
 				// }
 			};
-		})
+		}),
 	);
 
-	$: entries =
-		$query.data?.pages
-			.flatMap((page) => page.entries)
-			.filter((entry) => {
-				console.log({ entry });
-				if (!entry) return false;
-				if (!data.Status) return true;
-				return entry.status === data.Status;
-			}) ?? [];
+	const entries = derived(query, ($query) => {
+		return (
+			$query.data?.pages
+				.flatMap((page) => page.entries)
+				.filter((entry) => {
+					if (!entry) {
+						return false;
+					}
+					if (!data.Status) {
+						return true;
+					}
+					return entry.status === data.Status;
+				}) ?? []
+		);
+	});
 
 	let groupedEntries: GroupedArrayWithHeadings<
 		LibraryResponse['entries'][0],
 		{
-			text: string;
 			count: number;
-			isHeading: true;
-			id: string;
 			icon?: ComponentType;
+			id: string;
+			isHeading: true;
+			text: string;
 		}
 	> = [];
 	$: console.log({ groupedEntries });
 	$: {
-		const grouped = groupBy(entries, (entry) => entry.type);
+		const grouped = groupBy($entries, (entry) => entry.type);
 		groupedEntries = convertToGroupedArrayWithHeadings(grouped, (heading) => ({
-			text: heading,
 			count: grouped.get(heading)?.length ?? 0,
+			icon: entryTypeIcon[heading],
 			id: heading,
-			icon: entryTypeIcon[heading]
+			text: heading,
 		}));
 	}
 
 	let activeHeaderIndex = 0;
-	const isActiveHeader = (index: number) => $groupingEnabled && activeHeaderIndex === index;
+	const isActiveHeader = (index: number) =>
+		$groupingEnabled && activeHeaderIndex === index;
 
-	let headerIndexes: number[] = [];
+	let headerIndexes: Array<number> = [];
 	$: headerIndexes = groupedEntries
 		.map((entry, index) => {
 			if (entry && 'isHeading' in entry && entry.isHeading) {
 				return index;
 			}
 		})
-		.filter((index) => index !== undefined) as number[];
+		.filter((index) => index !== undefined) as Array<number>;
 
 	$: console.log({ $params });
 
 	// <!-- probably not smart -->
-	$: if ($query.data) init_entries($query.data.pages.flatMap((page) => page.entries));
+	$: if ($query.data) {
+		init_entries($query.data.pages.flatMap((page) => page.entries));
+	}
 
 	$: console.log({ $query });
 
@@ -188,50 +207,57 @@
 	}
 
 	const virtualizer = createWindowVirtualizer({
-		count: $groupingEnabled ? groupedEntries.length : entries?.length || 0,
+		count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
 		estimateSize: (index) => {
-			const entry = $groupingEnabled ? groupedEntries[index] : entries[index];
+			const entry = $groupingEnabled ? groupedEntries[index] : $entries[index];
 			if (entry && 'isHeading' in entry && entry.isHeading) {
 				return 40;
 			}
 			return 96;
 		},
+		getItemKey: (index) =>
+			$groupingEnabled ? groupedEntries[index]!.id : $entries[index]!.id,
 		overscan: 7,
-		getItemKey: (index) => ($groupingEnabled ? groupedEntries[index]!.id : entries[index]!.id),
 		rangeExtractor: (range) => {
-			if (!$groupingEnabled || !headerIndexes.length) return defaultRangeExtractor(range);
+			if (!$groupingEnabled || !headerIndexes.length) {
+				return defaultRangeExtractor(range);
+			}
 
-			activeHeaderIndex = headerIndexes.findLast((index) => range.startIndex >= index) ?? 0;
+			activeHeaderIndex =
+				headerIndexes.findLast((index) => range.startIndex >= index) ?? 0;
 			console.log({ activeHeaderIndex });
 
-			const next = new Set([activeHeaderIndex, ...defaultRangeExtractor(range)]);
+			const next = new Set([
+				activeHeaderIndex,
+				...defaultRangeExtractor(range),
+			]);
 			console.log({ next });
 
 			return [...next].sort((a, b) => a - b);
-		}
+		},
 	});
 
 	let items = $virtualizer?.getVirtualItems();
 	let dragging = false;
 
 	$: $virtualizer.setOptions({
-		count: $groupingEnabled ? groupedEntries.length : entries?.length || 0
+		count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
 	});
 
 	$: console.log({ $virtualizer });
 	$: {
-		console.log({ entries });
+		console.log({ $entries });
 		$virtualizer?.measure();
 	}
 
-	let contentRect: DOMRectReadOnly | null = null;
+	const contentRect: DOMRectReadOnly | null = null;
 	$: console.log({ contentRect });
 
 	$: {
 		const lastItem = $virtualizer.getVirtualItems().at(-1);
 		if (
 			lastItem &&
-			lastItem?.index >= entries?.length - 1 &&
+			lastItem?.index >= $entries?.length - 1 &&
 			$query.hasNextPage &&
 			!$query.isFetchingNextPage
 		) {
@@ -242,31 +268,38 @@
 
 	const menu = useMenuBar();
 
-	let checkLookup: Record<number, boolean> = {};
+	const checkLookup: Record<number, boolean> = {};
 
 	const multi = create_multi({
-		items: entries?.map((e) => e.id) || [],
-		selected: checkedEntryIds
+		items: $entries?.map((e) => e.id) || [],
+		selected: checkedEntryIds,
 	});
 
 	const {
-		stores: { state }
+		stores: { state },
 	} = multi;
 	$: console.log({ $state });
 
 	export const snapshot: Snapshot = {
 		capture: () => ({
-			highlighted: $state.highlighted
+			highlighted: $state.highlighted,
 		}),
 		restore: (snapshot) => {
 			multi.helpers.setHighlighted(snapshot.highlighted);
-		}
+		},
 	};
 
-	$: multi.helpers.updateItems(entries.map((e) => e.id));
+	$: multi.helpers.updateItems($entries.map((e) => e.id));
 
 	// use in any entrylist
 	beforeNavigate((nav) => setBackContext(nav, $page.url.toString()));
+
+	const checkedEntries = derived(
+		[checkedEntryIds, entries],
+		([$checkedEntryIds, $entries]) => {
+			return $entries.filter((entry) => $checkedEntryIds.includes(entry.id));
+		},
+	);
 </script>
 
 <svelte:window on:keydown={multi.events.keydown} />
@@ -300,12 +333,19 @@
 			// get window height
 			const windowHeight = window.innerHeight;
 			// check if in view
-			if (rect?.top && rect?.bottom && (rect.top < 0 || rect.bottom > windowHeight)) {
+			if (
+				rect?.top &&
+				rect?.bottom &&
+				(rect.top < 0 || rect.bottom > windowHeight)
+			) {
 				// scroll into view
 				console.log('Not in view');
-				$virtualizer.scrollToOffset(document.scrollingElement?.scrollTop + rect.top - 100, {
-					behavior: 'smooth'
-				});
+				$virtualizer.scrollToOffset(
+					document.scrollingElement?.scrollTop + rect.top - 100,
+					{
+						behavior: 'smooth',
+					},
+				);
 			}
 			// el?.scrollIntoView({
 			//     behavior: 'smooth',
@@ -318,24 +358,35 @@
 		use:multi.elements.root
 	>
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
-			{@const entry = $groupingEnabled ? groupedEntries[row.index] : entries[row.index]}
+			{@const entry = $groupingEnabled
+				? groupedEntries[row.index]
+				: $entries[row.index]}
 			<div
 				animate:flip={{
-					duration: 200
+					duration: 200,
 				}}
 				class={cn(isActiveHeader(row.index) && 'bg-background z-[1]')}
-				style="position: {isActiveHeader(row.index) ? 'sticky' : 'absolute'}; top:{isActiveHeader(
-					row.index
-				)
-					? 'var(--nav-height)'
-					: '0'}; left: 0; width: 100%; height: {row.size}px;"
-				style:transform={isActiveHeader(row.index) ? undefined : `translateY(${row.start}px)`}
+				style:position={isActiveHeader(row.index) ? 'sticky' : 'absolute'}
+				style:left="0"
+				style:width="100%"
+				style:height="{row.size}px"
+				style:top={isActiveHeader(row.index) ? 'var(--nav-height)' : '0'}
+				style:transform={isActiveHeader(row.index)
+					? undefined
+					: `translateY(${row.start}px)`}
 			>
 				{#if entry && 'isHeading' in entry && entry.isHeading}
 					<!-- then we have a heading -->
-					<div class="h-full w-full flex items-center px-6 bg-secondary/75 gap-x-4">
-						<svelte:component this={entry.icon} class="h-4 w-4 text-muted-foreground" />
-						<span class="text-lg tracking-tighter font-medium">{entry.text}</span>
+					<div
+						class="h-full w-full flex items-center px-6 bg-secondary/75 gap-x-4"
+					>
+						<svelte:component
+							this={entry.icon}
+							class="h-4 w-4 text-muted-foreground"
+						/>
+						<span class="text-lg tracking-tighter font-medium"
+							>{entry.text}</span
+						>
 					</div>
 				{:else if entry && !('isHeading' in entry)}
 					<EntryItem
@@ -355,7 +406,9 @@
 			</div>
 		{/each}
 		{#if $query.isFetchingNextPage}
-			<div class="absolute bottom-0 left-0 right-0 flex justify-center items-center h-12">
+			<div
+				class="absolute bottom-0 left-0 right-0 flex justify-center items-center h-12"
+			>
 				<Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
 			</div>
 		{/if}
@@ -379,7 +432,23 @@
 	{/each} -->
 {/if}
 
-<SelectActions />
+<BulkActions length={$checkedEntryIds.length}>
+	{#each statuses as status}
+		{#if $checkedEntries.every((entry) => entry.status !== status)}
+			<Button
+				on:click={() => {
+					$updateBookmarkMutation.mutate({
+						data: {
+							status,
+						},
+						entryId: $checkedEntryIds,
+					});
+					multi.helpers.deselectAll();
+				}}>Move to {status}</Button
+			>
+		{/if}
+	{/each}
+</BulkActions>
 <!-- <EntryList
 	loading={$query.isLoading}
 	bind:this={entryList}

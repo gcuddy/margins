@@ -302,6 +302,17 @@ export function initBookmarkCreateMutation() {
 	});
 }
 
+export function initUpdateBookmarkMutation() {
+	const queryClient = useQueryClient();
+	return createMutation({
+		mutationFn: (input: MutationInput<'updateBookmark'>) =>
+			mutate('updateBookmark', input),
+		onSuccess() {
+			invalidateEntries(queryClient);
+		},
+	});
+}
+
 export function initAttachmentCreateMutation() {
 	const queryClient = useQueryClient();
 	return createMutation({

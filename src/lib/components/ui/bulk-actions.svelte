@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
-	import { writable, type Writable } from 'svelte/store';
-	import Button from '$components/ui/Button.svelte';
+	import { type Writable, writable } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 
-	const navWidth = (getContext('mainNavWidth') as Writable<number>) ?? writable(0);
+	import Button from '$components/ui/Button.svelte';
+
+	const navWidth =
+		(getContext('mainNavWidth') as Writable<number>) ?? writable(0);
 
 	export let length = 0;
 </script>
@@ -16,7 +18,7 @@
 	>
 		<!--  -->
 		<div
-			in:fly|global={{ y: 20, duration: 300 }}
+			in:fly|global={{ duration: 300, y: 20 }}
 			class="bg-popover text-popover-foreground border p-4 shadow-md rounded-sm pointer-events-auto gap-4 flex justify-center items-center"
 		>
 			<span>
@@ -25,7 +27,9 @@
 
 			<div class="flex gap-4">
 				<slot>
-					<Button variant="secondary" class="border border-border">Do something…</Button>
+					<Button variant="secondary" class="border border-border"
+						>Do something…</Button
+					>
 				</slot>
 			</div>
 		</div>

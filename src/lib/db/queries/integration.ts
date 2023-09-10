@@ -7,6 +7,10 @@ import queue from '$lib/helpers/async/queue';
 
 import type { GetCtx } from '../types';
 import { movieInsert } from '../utils/inserts';
+import { sql, type Insertable } from 'kysely';
+import type { Bookmark, DB } from '$lib/prisma/kysely/types';
+import { createCompiledInsertBookmarkQuery } from '$lib/queries/bookmark';
+import { getFirstBookmarkSort } from '../selects';
 
 export const movieImportSchema = z.object({
 	title: z.string(),
@@ -46,8 +50,6 @@ export async function importMovies({
 
 	await q.close();
 
-	console.log({ movies });
-
 	await db.transaction().execute(async (trx) => {
 		await trx
 			.insertInto('Entry')
@@ -69,16 +71,20 @@ export async function importMovies({
 			.execute();
 		const entryIds = entries.map((e) => e.id);
 
+		const sort_order = await getFirstBookmarkSort(ctx.userId, undefined, trx);
+
 		return await trx
 			.insertInto('Bookmark')
 			.values(
 				entryIds.map((entryId) => ({
 					entryId,
+					sort_order,
 					status: input.status,
 					updatedAt: new Date(),
 					userId: ctx.userId,
 				})),
 			)
+			.ignore()
 			.execute();
 	});
 

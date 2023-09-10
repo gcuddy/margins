@@ -1,12 +1,13 @@
-import { dialogs } from '$components/ui/dialog2/store';
-import { Writable, get, writable } from 'svelte/store';
+import { get, type Writable, writable } from 'svelte/store';
 import type { RequireAtLeastOne } from 'type-fest';
+
+import { dialogs } from '$components/ui/dialog2/store';
 
 type State<T extends string | number> = {
 	highlighted: T | null;
-	items: T[];
-	selected: Writable<T[]>;
+	items: Array<T>;
 	pivot: T | null;
+	selected: Writable<Array<T>>;
 };
 
 function modifier_keys_pressed(event: KeyboardEvent) {
@@ -33,27 +34,27 @@ type AdditionalProps<T extends string | number> = {
 // TODO data-id needs to be set on elements - can I do that in here?
 // TODO allow bringing own store
 export function create_multi<T extends string | number>({
-	items,
-	highlighted,
-	pivot,
-	selected,
-	attribute,
 	allowedSelector,
-    onEnter,
-    onSelect
+	attribute,
+	highlighted,
+	items,
+	onEnter,
+	onSelect,
+    pivot,
+    selected
 }: RequireAtLeastOne<Partial<State<T>>, 'items'> & AdditionalProps<T>) {
 	let root: HTMLElement | null = null;
 	const selectedStore = selected ?? writable([]);
 	const state = writable<State<T>>({
 		highlighted: highlighted ?? null,
 		items,
-		selected: selectedStore,
-		pivot: pivot ?? null
+		pivot: pivot ?? null,
+		selected: selectedStore
 	});
 
 	const attribute_name = attribute ?? 'data-id';
 
-	function listIncludesAndIsNotEmpty(items: T[], key: T) {
+	function listIncludesAndIsNotEmpty(items: Array<T>, key: T) {
 		return items.length > 0 && items.includes(key);
 	}
 
@@ -65,8 +66,8 @@ export function create_multi<T extends string | number>({
 			$state.selected.set([item]);
 			return {
 				...$state,
-				pivot: item,
-				highlighted: item
+				highlighted: item,
+				pivot: item
 			};
 		});
 	}
@@ -75,7 +76,7 @@ export function create_multi<T extends string | number>({
         if (item) {
             const next_el = (root ?? document)?.querySelector(`[data-id="${item}"]`);
             if (next_el instanceof HTMLElement ) {
-                if (scrollIntoView) next_el.scrollIntoView({ block: 'nearest' });
+                if (scrollIntoView) {next_el.scrollIntoView({ block: 'nearest' });}
                 next_el.focus();
             }
         }
@@ -117,8 +118,8 @@ export function create_multi<T extends string | number>({
 			// 	: [...$state.selected, item];
 			return {
 				...$state,
-				pivot: item,
-				highlighted: item
+				highlighted: item,
+				pivot: item
 			};
 		});
 	}
@@ -154,8 +155,8 @@ export function create_multi<T extends string | number>({
 
 			return {
 				...$state,
-				pivot: item,
-				highlighted: item
+				highlighted: item,
+				pivot: item
 			};
 		});
 	}
@@ -166,7 +167,7 @@ export function create_multi<T extends string | number>({
 		console.log({ attribute_name });
 		const attrCheck = !document.activeElement?.closest(`[${attribute_name}]`);
 		// const allowedCheck = !document.activeElement?.matches(allowed);
-		console.log({ bodyCheck, attrCheck });
+		console.log({ attrCheck, bodyCheck });
 		if (document.activeElement === document.body) {
 			return true;
 		}
@@ -189,9 +190,18 @@ export function create_multi<T extends string | number>({
 		elements: {
 			root: (node: HTMLElement) => {
 				root = node;
-			}
+			},
 		},
 		events: {
+			click: (event: MouseEvent) => {
+				if (event.shiftKey) {
+					// selectAdjacent();
+				}
+				if (event.ctrlKey || event.metaKey) {
+					// toggleSelection();
+				}
+				// select();
+			},
 			keydown: (event: KeyboardEvent) => {
 				// todo
 				console.log({ event });
@@ -207,28 +217,32 @@ export function create_multi<T extends string | number>({
 					// selectAdjacent();
 					event.preventDefault();
 					state.update(($state) => {
-                        let index = $state.highlighted ? $state.items.indexOf($state.highlighted) : -1;
-                        let next: T | null = null;
-                        let nextEl: HTMLElement | null = null;
-                        let loops = 0;
-                        while (!nextEl && index < $state.items.length) {
-                            next = $state.items[Math.max(0, index - 1)] ?? null;
-                            nextEl = (root ?? document)?.querySelector(`[data-id="${next}"]`) ?? null;
-                            console.log({next, nextEl})
-                            index++;
-                            loops++;
-                            if (loops > 100) {
-                                console.warn('infinite loop')
-                                break;
-                            }
-                        }
+						let index = $state.highlighted
+							? $state.items.indexOf($state.highlighted)
+							: -1;
+						let next: T | null = null;
+						let nextEl: HTMLElement | null = null;
+						let loops = 0;
+						while (!nextEl && index < $state.items.length) {
+							next = $state.items[Math.max(0, index - 1)] ?? null;
+							nextEl =
+								(root ?? document)?.querySelector(`[data-id="${next}"]`) ??
+								null;
+							console.log({ next, nextEl });
+							index++;
+							loops++;
+							if (loops > 100) {
+								console.warn('infinite loop');
+								break;
+							}
+						}
 						if (nextEl instanceof HTMLElement) {
 							nextEl.scrollIntoView({ block: 'nearest' });
 							nextEl.focus();
 						}
 						return {
 							...$state,
-							highlighted: next
+							highlighted: next,
 						};
 					});
 				}
@@ -243,58 +257,55 @@ export function create_multi<T extends string | number>({
 					}
 					event.preventDefault();
 					state.update(($state) => {
-						let index = $state.highlighted ? $state.items.indexOf($state.highlighted) : -1;
-                        let next: T | null = null;
-                        let nextEl: HTMLElement | null = null;
-                        let loops = 0;
-                        while (!nextEl && index < $state.items.length) {
-                            next = $state.items[Math.min($state.items.length - 1, index + 1)] ?? null;
-                            nextEl = (root ?? document)?.querySelector(`[data-id="${next}"]`) ?? null;
-                            console.log({next, nextEl})
-                            index++;
-                            loops++;
-                            if (loops > 100) {
-                                console.warn('infinite loop')
-                                break;
-                            }
-                        }
+						let index = $state.highlighted
+							? $state.items.indexOf($state.highlighted)
+							: -1;
+						let next: T | null = null;
+						let nextEl: HTMLElement | null = null;
+						let loops = 0;
+						while (!nextEl && index < $state.items.length) {
+							next =
+								$state.items[Math.min($state.items.length - 1, index + 1)] ??
+								null;
+							nextEl =
+								(root ?? document)?.querySelector(`[data-id="${next}"]`) ??
+								null;
+							console.log({ next, nextEl });
+							index++;
+							loops++;
+							if (loops > 100) {
+								console.warn('infinite loop');
+								break;
+							}
+						}
 						if (nextEl instanceof HTMLElement) {
 							nextEl.scrollIntoView({ block: 'nearest' });
 							nextEl.focus();
 						}
 						return {
 							...$state,
-							highlighted: next
+							highlighted: next,
 						};
 					});
 					// selectAdjacent();
 				}
 				if (event.key === 'x') {
-                    if (onSelect) {
-                        onSelect(get(state).highlighted!, toggleSelection);
-                    } else {
-                        toggleSelection();
-                    }
+					if (onSelect) {
+						onSelect(get(state).highlighted!, toggleSelection);
+					} else {
+						toggleSelection();
+					}
 					// toggleSelection();
 				}
-                if (event.key === 'Enter') {
-                    onEnter?.(get(state).highlighted!);
-                }
+				if (event.key === 'Enter') {
+					onEnter?.(get(state).highlighted!);
+				}
 				if (event.key === 'Escape') {
 					const dialogs_present = get(dialogs).length > 0;
-					if (dialogs_present) return;
+					if (dialogs_present) {return;}
 					event.preventDefault();
 					deselectAll();
 				}
-			},
-			click: (event: MouseEvent) => {
-				if (event.shiftKey) {
-					// selectAdjacent();
-				}
-				if (event.ctrlKey || event.metaKey) {
-					// toggleSelection();
-				}
-				// select();
 			},
 			mouseover: (event: Event) => {
 				const target = event.target as HTMLElement;
@@ -306,28 +317,29 @@ export function create_multi<T extends string | number>({
 						setHighlighted((isNumber ? Number(id) : id) as T, false);
 					}
 				}
-			}
-		},
-		stores: {
-			state,
-			selected: selectedStore
+			},
 		},
 		helpers: {
-			updateItems: (items: T[]) => {
-				console.log('updateItems', items);
-				state.update(($state) => {
-					return {
-						...$state,
-						items
-					};
-				});
-			},
+			deselectAll,
 			isSelected: (item: T) => {
 				const selected = get(selectedStore);
 				return selected.includes(item);
 			},
+			setHighlighted,
 			toggleSelection,
-			setHighlighted
-		}
+			updateItems: (items: Array<T>) => {
+				console.log('updateItems', items);
+				state.update(($state) => {
+					return {
+						...$state,
+						items,
+					};
+				});
+			},
+		},
+		stores: {
+			selected: selectedStore,
+			state,
+		},
 	};
 }

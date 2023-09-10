@@ -41,7 +41,7 @@
 	import { make_link } from '$lib/utils/entries';
 
 	import type { Snapshot } from '../../../$types';
-	import BulkActions from './bulk-actions.svelte';
+	import BulkActions from '$components/ui/bulk-actions.svelte';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 	export let notes: Readable<Array<Note>>;
 

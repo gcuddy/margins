@@ -1,9 +1,12 @@
 // TODO node?
 import { fail } from '@sveltejs/kit';
 import { XMLParser } from 'fast-xml-parser';
+import { decode } from 'html-entities';
 import { parse } from 'node-html-parser';
+import { z } from 'zod';
 
 import type { Actions } from './$types';
+import { importMovies } from '$lib/db/queries/integration';
 
 export const load = () => {
 	return {
@@ -44,6 +47,8 @@ function getImage(description: string) {
 	};
 }
 
+const strings = z.string().array();
+
 export const actions: Actions = {
 	importFeed: async ({ request }) => {
 		const formData = await request.formData();
@@ -67,11 +72,11 @@ export const actions: Actions = {
 		const mappedFilms: Array<LetterboxdItem> = films.map(
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(film: { [x: string]: any; description: any; link: any }) => ({
-				description: film.description,
+				description: decode(film.description),
 				image: getImage(film.description),
 				link: film.link,
 				rating: film['letterboxd:memberRating'],
-				title: film['letterboxd:filmTitle'],
+				title: decode(film['letterboxd:filmTitle']),
 				watchedDate: film['letterboxd:watchedDate']
 					? new Date(film['letterboxd:watchedDate'])
 					: null,
@@ -82,7 +87,8 @@ export const actions: Actions = {
 			films: mappedFilms,
 		};
 	},
-	async saveMovies({ locals, request }) {
+	async saveMovies(event) {
+		const { request, locals } = event;
 		// TODO: find movies in tmdb by title and year, see if we can save them
 		const session = await locals.auth.validate();
 		if (!session) {
@@ -92,5 +98,37 @@ export const actions: Actions = {
 		}
 
 		const formData = await request.formData();
+
+		const ids = strings.safeParse(formData.getAll('id'));
+		if (!ids.success) {
+			return fail(400, {
+				message: 'Invalid ids',
+			});
+		}
+
+		// map ids to title, year. The year is divided off by a final "-"
+		const movies = ids.data
+			.map((id) => {
+				const [title, year] = id.split('-');
+				if (!title || !year) {
+					return null;
+				}
+				return {
+					title,
+					year: +year,
+				};
+			})
+			.filter(Boolean);
+
+		await importMovies({
+			ctx: {
+				event,
+				userId: session.user.userId,
+			},
+			input: {
+				movies,
+				status: 'Backlog',
+			},
+		});
 	},
 };

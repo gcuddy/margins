@@ -1,4 +1,4 @@
-import { sql } from 'kysely';
+import { type Insertable, sql } from 'kysely';
 import isUrl from 'validator/lib/isURL';
 
 import { db, json } from '$lib/db';
@@ -6,17 +6,18 @@ import { entrySelect } from '$lib/db/selects';
 import type { GetCtx } from '$lib/db/types';
 import { nanoid } from '$lib/nanoid';
 import type parse from '$lib/parse';
+import type { Bookmark, DB } from '$lib/prisma/kysely/types';
 import type { bookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
 
 export async function bookmarkCreate({
-	input,
 	ctx,
+	input,
 }: GetCtx<typeof bookmarkCreateInput>) {
 	const {
-		userId,
 		event: { fetch },
+		userId,
 	} = ctx;
-	const { url, relatedEntryId, status } = input;
+	const { relatedEntryId, status, url } = input;
 
 	if (!isUrl(url)) {
 		// TODO: handle this case with ISBN, etc.
@@ -95,7 +96,9 @@ export async function bookmarkCreate({
 		// 	}))
 		// 	.execute();
 
-		if (!relatedEntryId) return;
+		if (!relatedEntryId) {
+			return;
+		}
 		await trx
 			.insertInto('Relation')
 			.values({
@@ -109,4 +112,31 @@ export async function bookmarkCreate({
 	});
 
 	// TODO: Return payload
+}
+
+/**
+ * Create a compiled query for inserting a bookmark, and sorts it to the top of the list.
+ * @param insertable
+ * @returns
+ */
+export function createCompiledInsertBookmarkQuery(
+	insertable: Insertable<Bookmark>,
+) {
+	const columns = Object.keys(insertable) as ReadonlyArray<
+		keyof DB['Bookmark']
+	>;
+
+	return db
+		.insertInto('Bookmark')
+		.columns(columns)
+		.expression((eb) =>
+			eb
+				.selectFrom('Bookmark')
+				.select(({ ref }) => [
+					...columns.map((c) => sql`${insertable[c]}`.as(c)),
+					sql`min(${ref('sort_order')}) - 100`.as('sort_order'),
+					sql`${new Date()}`.as('updatedAt'),
+				]),
+		)
+		.compile();
 }
