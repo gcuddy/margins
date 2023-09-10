@@ -1,148 +1,64 @@
-// import { finder } from '@medv/finder';
-
-import type { Annotation, Entry, Prisma } from '@prisma/client';
-import dayjs from 'dayjs';
-// import { z } from "zod";
-
-import { browser } from '$app/environment';
-import { notifications, type INotification } from '$lib/stores/notifications';
-
+import type { Annotation, Entry } from '@prisma/client';
 import type { DebounceSettings } from 'lodash';
 import debounce from 'lodash/debounce';
+
+import { browser } from '$app/environment';
+
 import { syncStore } from './stores/sync';
 import { user } from './stores/user';
-import type { ArticleInList } from './types';
-import type { ViewOptions } from './types/schemas/View';
-// import getCssSelector from 'css-selector-generator';
 
-export function post(endpoint, data) {
+export async function post(endpoint: string, data: unknown) {
 	return fetch(endpoint, {
+		// credentials: 'include',
+		body: JSON.stringify(data || {}),
+
+		headers: {
+			'Content-Type': 'application/json',
+		},
 		method: 'POST',
-		// credentials: 'include',
-		body: JSON.stringify(data || {}),
-		headers: {
-			'Content-Type': 'application/json',
-		},
 	}).then((r) => r.json());
-}
-export function put(endpoint: string, data: any) {
-	return fetch(endpoint, {
-		method: 'PUT',
-		// credentials: 'include',
-		body: JSON.stringify(data || {}),
-		headers: {
-			'Content-Type': 'application/json',
-			Accept: 'application/json',
-		},
-	}).then((r) => r.json());
-}
-export function patch(
-	endpoint: string,
-	data: any,
-	notification?: string | INotification,
-) {
-	return fetch(endpoint, {
-		method: 'PATCH',
-		// credentials: 'include',
-		body: JSON.stringify(data || {}),
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	}).then((r) => {
-		if (notification && typeof notification === 'string') {
-			notifications.notify({
-				message: notification,
-				type: 'success',
-			});
-		} else if (notification && typeof notification !== 'string') {
-			notifications.notify(notification);
-		}
-		return r;
-	});
 }
 
-export function bulkEditArticles(
-	ids: Array<number>,
-	data: Prisma.ArticleUpdateInput,
-) {
-	return patch('/api/bulk', { ids, data }).then((res) => {
-		console.log({ res });
-		return res;
-	});
+export async function put(endpoint: string, data: unknown) {
+	return fetch(endpoint, {
+		// credentials: 'include',
+		body: JSON.stringify(data || {}),
+
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json',
+		},
+		method: 'PUT',
+	}).then((r) => r.json());
+}
+
+export async function patch(endpoint: string, data: unknown) {
+	return fetch(endpoint, {
+		// credentials: 'include',
+		body: JSON.stringify(data || {}),
+
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		method: 'PATCH',
+	}).then((r) => r.json());
 }
 
 export function getSelectionHtml() {
 	let html = '';
 	if (browser) {
-		if (typeof window.getSelection != 'undefined') {
+		if (window.getSelection !== undefined) {
 			const sel = window.getSelection();
 			if (sel?.rangeCount) {
 				const container = document.createElement('div');
 				for (let i = 0, len = sel.rangeCount; i < len; ++i) {
-					container.appendChild(sel.getRangeAt(i).cloneContents());
+					container.append(sel.getRangeAt(i).cloneContents());
 				}
 				html = container.innerHTML;
 			}
 		}
 		return html;
 	}
-}
-export async function processSelection(root?: HTMLElement): {
-	html: string;
-	nonTextNodes: Array<Selector>;
-	selectors: Array<Selector>;
-} {
-	let html = '';
-	const nonTextNodes: Array<Selector> = [];
-	const selectors: Array<Selector> = [];
-	let range: Range;
-	const nonTextTags = [
-		'img',
-		'video',
-		'audio',
-		'iframe',
-		'object',
-		'embed',
-		'canvas',
-		'svg',
-	];
-	if (typeof window.getSelection != 'undefined') {
-		const sel = window.getSelection();
-		if (sel) {
-			// const rawSelectors = await describeCurrentSelection(sel, root);
-			// if (rawSelectors) selectors.push(...rawSelectors);
-		}
-		const startEl = sel?.anchorNode?.parentElement;
-		console.log({ root });
-		const cssSelector = '';
-		console.log({ cssSelector });
-		if (sel?.rangeCount) {
-			range = sel.getRangeAt(0);
-			const textQuote = await describeTextQuote(range, root);
-			console.log({ textQuote });
-			const container = document.createElement('div');
-			container.appendChild(range.cloneContents());
-			html = container.innerHTML;
-			const nonTextEls = container.querySelectorAll(nonTextTags.join(','));
-			if (nonTextEls.length) {
-				nonTextEls.forEach((el) => {
-					const elementList = (root || document).getElementsByTagName(
-						el.tagName,
-					);
-					const index = Array.from(elementList).findIndex((e) =>
-						e.isEqualNode(el),
-					);
-					nonTextNodes.push({
-						$node: elementList[index],
-						tagName: el.tagName,
-						index,
-						selector: finder(elementList[index]),
-					});
-				});
-			}
-		}
-	}
-	return { html, nonTextNodes, range, selectors };
 }
 
 export function replaceRange(
@@ -151,96 +67,93 @@ export function replaceRange(
 	end: number,
 	substitute: string,
 ) {
-	return s.substring(0, start) + substitute + s.substring(end);
+	return (
+		s.slice(0, Math.max(0, start)) + substitute + s.slice(Math.max(0, end))
+	);
 }
 
 export function formDataToJson(formData: FormData): Record<string, unknown> {
 	const data: Record<string, unknown> = {};
-	console.log({ formData });
 	for (const key in formData) {
 		if (formData.has(key)) {
 			data[key] = formData.get(key);
 		}
 	}
-	console.log({ data });
 	return data;
 }
 
 export function parseBracketNotatin(str: string) {
-	const regex = /\[(.*?)\]/g;
+	const regex = /\[(.*?)]/g;
 	const matches = str.match(regex);
 	if (matches) {
-		return matches.map((m) => m.replace(/\[|\]/g, ''));
+		return matches.map((m) => m.replaceAll('[]', ''));
 	}
 	return [];
 }
 
 // this is a naive regex that only gets the last instance of eg key[1][value], won't work with multiple nesting
-const keyRegex = /^(.*?)\[(\d)\]\[(.*?)\]/;
-export async function getJsonFromRequest(
-	request: Request,
-): Promise<Record<string, any>> {
-	const contentType = request.headers.get('content-type');
-	console.log({ contentType });
-	if (contentType?.includes('application/json')) {
-		console.log('json');
-		return await request.json();
-	} else if (
-		contentType?.includes('multipart/form-data') ||
-		contentType?.includes('application/x-www-form-urlencoded')
-	) {
-		console.log('requesting form data');
-		const formData = await request.formData();
-		const data: Record<string, string | Blob | Array<string | Blob>> = {};
+// const keyRegex = /^(.*?)\[(\d)]\[(.*?)]/;
+// export async function getJsonFromRequest(
+// 	request: Request,
+// ): Promise<Record<string, any>> {
+// 	const contentType = request.headers.get('content-type');
+// 	console.log({ contentType });
+// 	if (contentType?.includes('application/json')) {
+// 		console.log('json');
+// 		return await request.json();
+// 	} else if (
+// 		contentType?.includes('multipart/form-data') ||
+// 		contentType?.includes('application/x-www-form-urlencoded')
+// 	) {
+// 		console.log('requesting form data');
+// 		const formData = await request.formData();
+// 		const data: Record<string, string | Blob | Array<string | Blob>> = {};
 
-		formData.forEach((val, key, p) => {
-			if (!val) return;
-			console.log({ val, key, p });
-			if (Array.isArray(data[key])) {
-				data[key] = [...(data[key] as Array<string | Blob>), val];
-			} else if (data[key] && !Array.isArray(data[key])) {
-				const oldVal = data[key] as string | Blob;
-				data[key] = [oldVal, val];
-			} else if (key.includes('[]')) {
-				const keyWithoutBrackets = key.replace('[]', '');
-				if (!data[keyWithoutBrackets]) {
-					data[keyWithoutBrackets] = [val];
-				} else {
-					data[keyWithoutBrackets] = [
-						...(data[keyWithoutBrackets] as Array<string | Blob>),
-						val,
-					];
-				}
-			} else if (keyRegex.test(key)) {
-				const [, keyWithoutBrackets, idx, nestedKey] = keyRegex.exec(key);
-				if (!data[keyWithoutBrackets]) {
-					data[keyWithoutBrackets] = [];
-					data[keyWithoutBrackets][Number(idx)] = { [nestedKey]: val };
-				} else {
-					data[keyWithoutBrackets][Number(idx)] = {
-						...data[keyWithoutBrackets][Number(idx)],
-						[nestedKey]: val,
-					};
-				}
-			} else {
-				data[key] = val;
-			}
-		});
-		console.log({ data });
-		return data;
-		// return formDataToJson(await request.formData());
-	} else {
-		const text = await request.text();
-		return text;
-		// return qs.parse(text);
-	}
-}
+// 		formData.forEach((val, key, p) => {
+// 			if (!val) {
+// 				return;
+// 			}
+// 			console.log({ key, p, val });
+// 			if (Array.isArray(data[key])) {
+// 				data[key] = [...(data[key] as Array<string | Blob>), val];
+// 			} else if (data[key] && !Array.isArray(data[key])) {
+// 				const oldVal = data[key] as string | Blob;
+// 				data[key] = [oldVal, val];
+// 			} else if (key.includes('[]')) {
+// 				const keyWithoutBrackets = key.replace('[]', '');
+// 				data[keyWithoutBrackets] = !data[keyWithoutBrackets]
+// 					? [val]
+// 					: [...(data[keyWithoutBrackets] as Array<string | Blob>), val];
+// 			} else if (keyRegex.test(key)) {
+// 				const [, keyWithoutBrackets, idx, nestedKey] = keyRegex.exec(key);
+// 				if (!data[keyWithoutBrackets]) {
+// 					data[keyWithoutBrackets] = [];
+// 					data[keyWithoutBrackets][Number(idx)] = { [nestedKey]: val };
+// 				} else {
+// 					data[keyWithoutBrackets][Number(idx)] = {
+// 						...data[keyWithoutBrackets][Number(idx)],
+// 						[nestedKey]: val,
+// 					};
+// 				}
+// 			} else {
+// 				data[key] = val;
+// 			}
+// 		});
+// 		console.log({ data });
+// 		return data;
+// 		// return formDataToJson(await request.formData());
+// 	} else {
+// 		const text = await request.text();
+// 		return text;
+// 		// return qs.parse(text);
+// 	}
+// }
 
 export function getHostname(url: string) {
 	try {
 		const u = new URL(url).hostname;
 		return u;
-	} catch (e) {
+	} catch {
 		return '';
 	}
 }
@@ -249,13 +162,10 @@ export function getPathname(url: string) {
 	try {
 		const u = new URL(url);
 		return u.pathname;
-	} catch (e) {
+	} catch {
 		return '';
 	}
 }
-
-const getSimplifiedLink = (link: string) =>
-	getHostname(link) + getPathname(link);
 
 export function getNthValueOfSet<T>(set: Set<T>, n: number): T | undefined {
 	const values = [...set];
@@ -264,21 +174,17 @@ export function getNthValueOfSet<T>(set: Set<T>, n: number): T | undefined {
 
 // note: this isn't foolproof, but it works for our simple needs
 export function isTouchDevice() {
-	return (
-		'ontouchstart' in window ||
-		navigator.maxTouchPoints > 0 ||
-		navigator.msMaxTouchPoints > 0
-	);
+	return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
 export async function deleteFavorite(data: { id: number }) {
 	const id = syncStore.addItem();
 	const res = await fetch('/api/favorites.json', {
-		method: 'DELETE',
+		body: JSON.stringify(data),
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(data),
+		method: 'DELETE',
 	});
 	user.updateData('favorites');
 
@@ -286,41 +192,12 @@ export async function deleteFavorite(data: { id: number }) {
 	return res;
 }
 
-export function sortArticles<T>(
-	articles: Array<ArticleInList>,
-	opts: ViewOptions,
-) {
-	const sortBy = opts.sort;
-	return [...articles].sort((a, b) => {
-		switch (sortBy) {
-			case 'title':
-				return a.title.localeCompare(b.title);
-			case 'date': {
-				return dayjs(a.date).isBefore(dayjs(b.date)) ? 1 : -1;
-			}
-			case 'author': {
-				return a.author.localeCompare(b.author);
-			}
-			case 'createdAt': {
-				console.log({ a, b });
-				return dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1;
-			}
-			case 'updatedAt': {
-				return dayjs(a.updatedAt).isBefore(dayjs(b.updatedAt)) ? 1 : -1;
-			}
-			case 'manual': {
-				return b.position - a.position;
-			}
-			default:
-				return 0;
-		}
-	});
-}
-
 export function notEmpty<TValue>(
 	value: TValue | null | undefined,
 ): value is TValue {
-	if (value === null || value === undefined) return false;
+	if (value === null || value === undefined) {
+		return false;
+	}
 	return true;
 }
 
@@ -330,7 +207,7 @@ export const isEntry = (
 	return (item as Entry).author !== undefined;
 };
 
-export const validUrl = (text: string) => {
+export const isValidUrl = (text: string) => {
 	// console.log({ text })
 	try {
 		const u = new URL(text);
@@ -351,7 +228,7 @@ export function groupBy<T>(
 			const key = keySelector(item);
 			if (key in acc) {
 				// found key, push new item into existing array
-				acc[key].push(item);
+				acc[key]?.push(item);
 			} else {
 				// did not find key, create new array
 				acc[key] = [item];
@@ -372,6 +249,7 @@ export const trytm = async <T>(promise: Promise<T>) => {
 };
 
 export function asyncDebounce<
+	// eslint-disable-next-line space-before-function-paren
 	F extends (...args: Array<unknown>) => Promise<unknown>,
 >(func: F, wait?: number, options?: DebounceSettings) {
 	const debounced = debounce(
@@ -407,5 +285,4 @@ import { cn } from './utils/tailwind';
 
 export { cn };
 
-    export * from './utils/transition';
-
+export * from './utils/transition';
