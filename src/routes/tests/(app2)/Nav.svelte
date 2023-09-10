@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { createAvatar, createDropdownMenu, melt } from '@melt-ui/svelte';
+	import { createAvatar, melt } from '@melt-ui/svelte';
 	import { createQuery, useIsMutating } from '@tanstack/svelte-query';
 	import {
 		BookMarked,
 		Box,
 		BrainCircuit,
 		ChevronDownIcon,
-		FlowerIcon,
-		FolderMinus,
 		FolderPlus,
 		FolderSync,
 		Home,
@@ -19,46 +17,42 @@
 		Rss,
 		RssIcon,
 		SearchIcon,
-		Tag,
-		TreePine	} from 'lucide-svelte';
-	import { getContext } from 'svelte';
-	import { flip } from 'svelte/animate';
-	import { type Writable,writable } from 'svelte/store';
+		TreePine,
+	} from 'lucide-svelte';
+	import { type ComponentType, getContext } from 'svelte';
+	import { type Writable, writable } from 'svelte/store';
 	import { fade } from 'svelte/transition';
+	import { persisted } from 'svelte-local-storage-store';
 
 	import { goto } from '$app/navigation';
-	import { navigating, page } from '$app/stores';
-	import { Icon } from '$components/icon-picker';
+	import { page } from '$app/stores';
 	import AddUrlModal from '$components/modals/add-url-modal.svelte';
 	import Pins from '$components/pins/pins.svelte';
-	import { TagColorPill } from '$components/tags/tag-color';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
 		DropdownMenuItem,
 		DropdownMenuSeparator,
-		DropdownMenuTrigger	} from '$components/ui/dropdown-menu2';
+		DropdownMenuTrigger,
+	} from '$components/ui/dropdown-menu2';
 	import Separator from '$components/ui/Separator.svelte';
 	import { cn } from '$lib';
 	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import ColResizer from '$lib/components/ColResizer.svelte';
-	import { Button,buttonVariants } from '$lib/components/ui/button';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
-	import { Small } from '$lib/components/ui/typography';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import mq from '$lib/stores/mq';
 
 	import type { LayoutData } from './$types';
 	import { useMenuBar } from './MainNav.svelte';
-	import {  localFileNames } from '$lib/features/garden/store';
-	import { persisted } from 'svelte-local-storage-store';
 
 	let pinsComponent: Pins;
 
 	type Nav = {
 		active: (path: string) => boolean;
 		href: string;
-		icon: import('svelte').ComponentType;
+		icon: ComponentType;
 		label: string;
 	};
 
@@ -70,56 +64,56 @@
 			active: (url) => url.startsWith('/tests/home'),
 			href: '/tests/home',
 			icon: Home,
-			label: 'Home'
+			label: 'Home',
 		},
 		{
 			active: (url) => url.startsWith('/tests/library'),
 			href: '/tests/library/backlog',
 			icon: Library,
-			label: 'Library'
+			label: 'Library',
 		},
 		{
 			active: (url) => url.startsWith('/tests/subscriptions'),
 			href: '/tests/subscriptions',
 			icon: Rss,
-			label: 'Subscriptions'
+			label: 'Subscriptions',
 		},
 		{
 			active: (path) => path === '/tests/collections',
 			href: '/tests/collections',
 			icon: Box,
-			label: 'Collections'
+			label: 'Collections',
 		},
 		{
 			active: (url) => url.startsWith('/tests/notes'),
 			href: '/tests/notes',
 			icon: TreePine,
-			label: 'Evergreens'
+			label: 'Evergreens',
 		},
 		{
 			active: (url) => url.startsWith('/tests/notebook'),
 			href: '/tests/notebook',
 			icon: BookMarked,
-			label: 'Notebook'
+			label: 'Notebook',
 		},
 		{
 			active: (url) => url === '/tests/views',
 			href: '/tests/views',
 			icon: Layers,
-			label: 'Views'
+			label: 'Views',
 		},
 		{
 			active: (url) => url === '/tests/views',
 			href: '/tests/srs',
 			icon: BrainCircuit,
-			label: 'Memory Palace'
+			label: 'Memory Palace',
 		},
 		{
 			active: (url) => url.startsWith('/tests/search'),
 			href: '/tests/search',
 			icon: SearchIcon,
-			label: 'Search'
-		}
+			label: 'Search',
+		},
 	];
 
 	const pinsQuery = createQuery(queryFactory.pins.list());
@@ -135,18 +129,21 @@
 	export let width = 240;
 
 	const {
-		elements: { fallback, image }
+		elements: { fallback, image },
 	} = createAvatar({
-		src: $page.data.user_data?.avatar ?? ''
+		src: $page.data.user_data?.avatar ?? '',
 	});
 
-	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }> | undefined | null;
+	let borderBoxSize:
+		| Array<{ blockSize: number; inlineSize: number }>
+		| undefined
+		| null;
 	const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
 	$: mobileNavWidth.set(borderBoxSize?.[0]?.inlineSize ?? 81);
 
 	export let showAddUrlModal = writable(false);
 
-    const gardenEnabled = persisted('gardenEnabled', false);
+	const gardenEnabled = persisted('gardenEnabled', false);
 </script>
 
 {#if !$inArticle}
@@ -195,18 +192,21 @@
 						</a>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-[250px] focus-visible:outline-none">
-						<DropdownMenuItem on:m-click={() => goto('/tests/settings')}>
+						<DropdownMenuItem on:click={() => goto('/tests/settings')}>
 							<a class="contents" href="/tests/settings">Settings</a>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem on:m-click={() => goto('/tests/logout')}>
+						<DropdownMenuItem on:click={() => goto('/tests/logout')}>
 							<a class="contents" href="/tests/logout">Logout</a>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			{/if}
 			{#if $isRestoring || $isMutating}
-				<span transition:fade={{ duration: 75 }} class="absolute my-auto right-4 hidden lg:flex">
+				<span
+					transition:fade={{ duration: 75 }}
+					class="absolute my-auto right-4 hidden lg:flex"
+				>
 					<Loader class="h-4 w-4 animate-spin text-muted-foreground" />
 				</span>
 			{/if}
@@ -230,14 +230,14 @@
 				<Separator class="h-9 hidden lg:flex" orientation="vertical" />
 				<DropdownMenu
 					positioning={{
-						placement: 'bottom-end'
+						placement: 'bottom-end',
 					}}
 				>
 					<DropdownMenuTrigger let:builder asChild>
 						<button
 							class={cn(
 								buttonVariants({ size: 'sm', variant: 'outline' }),
-								'px-2 shadow-none rounded-l-none border-l-0 hidden lg:flex'
+								'px-2 shadow-none rounded-l-none border-l-0 hidden lg:flex',
 							)}
 							use:melt={builder}
 						>
@@ -266,39 +266,51 @@
 						href={nav_item.href}
 						size="sm"
 						class="flex w-full items-center justify-center lg:justify-start space-x-2"
-						variant={nav_item.active($page.url.pathname) ? 'secondary' : 'ghost'}
+						variant={nav_item.active($page.url.pathname)
+							? 'secondary'
+							: 'ghost'}
 					>
-						<svelte:component this={nav_item.icon} class="square-5 lg:square-4" />
-						<span class="hidden {$inArticle ? '2xl:inline' : 'lg:inline'}">{nav_item.label}</span>
+						<svelte:component
+							this={nav_item.icon}
+							class="square-5 lg:square-4"
+						/>
+						<span class="hidden {$inArticle ? '2xl:inline' : 'lg:inline'}"
+							>{nav_item.label}</span
+						>
 					</Button>
 				{/each}
-                {#if $gardenEnabled}
-                     <!-- content here -->
-                     <Button
-                         href="/tests/external"
-                         size="sm"
-                         class="flex w-full hidden items-center justify-center lg:justify-start space-x-2"
-                         variant="ghost"
-                     >
-                         <FolderSync class="h-5 w-5" />
-                         <span>External Garden</span>
-                     </Button>
-                {/if}
+				{#if $gardenEnabled}
+					<!-- content here -->
+					<Button
+						href="/tests/external"
+						size="sm"
+						class="flex w-full hidden items-center justify-center lg:justify-start space-x-2"
+						variant="ghost"
+					>
+						<FolderSync class="h-5 w-5" />
+						<span>External Garden</span>
+					</Button>
+				{/if}
 				<Button
 					href="/tests/pins"
 					size="sm"
 					class="flex w-full items-center justify-center lg:justify-start lg:hidden"
 					variant="ghost"
 				>
-                <PinIcon class="h-6 w-6" />
+					<PinIcon class="h-6 w-6" />
 				</Button>
 			</div>
 		</div>
 		{#if user_data}
 			<div class="hidden px-4 py-2 {$inArticle ? '2xl:inline' : 'lg:inline'}">
 				<div class="flex group items-center">
-					<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight"><a href="/tests/pins">Pins</a></h2>
-					<button on:click={pinsComponent.addFolder} class="ml-auto rounded p-2 group/icon hover:bg-accent hover:text-accent-foreground">
+					<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">
+						<a href="/tests/pins">Pins</a>
+					</h2>
+					<button
+						on:click={pinsComponent.addFolder}
+						class="ml-auto rounded p-2 group/icon hover:bg-accent hover:text-accent-foreground"
+					>
 						<FolderPlus
 							class="h-4 w-4 opacity-0 group-hover:opacity-70 group-hover/icon:opacity-100 transition-opacity"
 						/>
