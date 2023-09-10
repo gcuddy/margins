@@ -89,7 +89,6 @@ export const load = (async ({ depends, locals, params }) => {
 		.where('c.id', '=', +params.id)
 		.executeTakeFirstOrThrow();
 	// Todo: make nested json objects type nullable
-	console.timeEnd('collection');
 	return {
 		collection,
 		form: superValidate(collection, collectionSchema),
@@ -99,7 +98,6 @@ export const load = (async ({ depends, locals, params }) => {
 export const actions: Actions = {
 	add_section: async ({ locals, params }) => {
 		// todo
-		console.log('hello');
 		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
