@@ -1,4 +1,11 @@
-import { type Insertable, sql } from 'kysely';
+import {
+	type CompiledQuery,
+	type Insertable,
+	type InsertResult,
+	type Kysely,
+	sql,
+	type Transaction,
+} from 'kysely';
 
 import { db, json } from '$lib/db';
 import { entrySelect } from '$lib/db/selects';
@@ -9,6 +16,8 @@ import type { Bookmark, DB } from '$lib/prisma/kysely/types';
 import type { bookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
 import { isValidUrl } from '$lib/utils';
 
+// TODO: this function combies logic of bookmark/entry, and maybe should be split up
+
 export async function bookmarkCreate({
 	ctx,
 	input,
@@ -17,7 +26,7 @@ export async function bookmarkCreate({
 		event: { fetch },
 		userId,
 	} = ctx;
-	const { relatedEntryId, status, url } = input;
+	const { collection, relatedEntryId, status, url } = input;
 
 	if (!isValidUrl(url)) {
 		// TODO: handle this case with ISBN, etc.
@@ -68,33 +77,28 @@ export async function bookmarkCreate({
 			throw new Error('entryId is undefined');
 		}
 		const _entryId = entryId;
-		await trx
-			.insertInto('Bookmark')
-			.columns(['entryId', 'sort_order', 'updatedAt', 'userId'])
-			.expression((eb) =>
-				eb
-					.selectFrom('Bookmark')
-					.select(({ ref }) => [
-						sql`${_entryId}`.as('entryId'),
-						sql`min(${ref('sort_order')}) - 100`.as('sort_order'),
-						sql`${new Date()}`.as('updatedAt'),
-						sql`${userId}`.as('userId'),
-					]),
-			)
-			.execute();
-		// await trx
-		// 	.insertInto('Bookmark')
-		// 	.values(({ selectNoFrom }) => ({
-		// 		entryId,
-		// 		sort_order: selectNoFrom(({ ref }) =>
-		// 			sql<number>`min(${ref('sort_order')}) - 100`.as('sort_order'),
-		// 		)
-		// 			.where('Bookmark.status', '=', status)
-		// 			.where('Bookmark.userId', '=', userId),
-		// 		updatedAt: new Date(),
-		// 		userId,
-		// 	}))
-		// 	.execute();
+
+		if (status) {
+			const q = createCompiledInsertBookmarkQuery(trx, {
+				entryId: _entryId,
+				status,
+				updatedAt: new Date(),
+				userId,
+			});
+			await trx.executeQuery(q);
+		}
+
+		if (collection) {
+			await trx
+				.insertInto('CollectionItems')
+				.values({
+					collectionId: collection.collectionId,
+					entryId: _entryId,
+					id: collection.id ?? nanoid(),
+					updatedAt: new Date(),
+				})
+				.execute();
+		}
 
 		if (!relatedEntryId) {
 			return;
@@ -119,21 +123,44 @@ export async function bookmarkCreate({
  * @param insertable
  * @returns
  */
+
+export function createCompiledInsertBookmarkQuery(
+	dbOrTrx: Kysely<DB> | Transaction<DB>,
+	insertable: Insertable<Bookmark>,
+): CompiledQuery<InsertResult>;
+
 export function createCompiledInsertBookmarkQuery(
 	insertable: Insertable<Bookmark>,
-) {
-	const columns = Object.keys(insertable) as ReadonlyArray<
+): CompiledQuery<InsertResult>;
+
+export function createCompiledInsertBookmarkQuery(
+	dbOrTrxOrInsertable: Kysely<DB> | Transaction<DB> | Insertable<Bookmark>,
+	insertable?: Insertable<Bookmark>,
+): CompiledQuery<InsertResult> {
+	let _insertable: Insertable<Bookmark>;
+	let _db: Kysely<DB> | Transaction<DB>;
+	if (
+		'selectFrom' in dbOrTrxOrInsertable &&
+		typeof dbOrTrxOrInsertable.selectFrom === 'function'
+	) {
+		_db = dbOrTrxOrInsertable;
+		_insertable = insertable!;
+	} else {
+		_db = db;
+		_insertable = dbOrTrxOrInsertable as Insertable<Bookmark>;
+	}
+	const columns = Object.keys(_insertable) as ReadonlyArray<
 		keyof DB['Bookmark']
 	>;
 
-	return db
+	return _db
 		.insertInto('Bookmark')
 		.columns(columns)
 		.expression((eb) =>
 			eb
 				.selectFrom('Bookmark')
 				.select(({ ref }) => [
-					...columns.map((c) => sql`${insertable[c]}`.as(c)),
+					...columns.map((c) => sql`${_insertable[c]}`.as(c)),
 					sql`min(${ref('sort_order')}) - 100`.as('sort_order'),
 					sql`${new Date()}`.as('updatedAt'),
 				]),

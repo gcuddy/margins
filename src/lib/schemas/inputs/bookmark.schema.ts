@@ -1,9 +1,14 @@
 import { Status } from '@prisma/client';
 import { z } from 'zod';
 
+import { collectionItemSchema } from './collection.schema';
+
 export const bookmarkCreateInput = z.object({
+	// The collection ID to add the entry to, if any
+	collection: collectionItemSchema.optional(),
 	relatedEntryId: z.number().int().optional(),
-	status: z.nativeEnum(Status).default('Backlog'),
+	// If null, don't add to library
+	status: z.nativeEnum(Status).nullable().default('Backlog'),
 	url: z.string(),
 });
 

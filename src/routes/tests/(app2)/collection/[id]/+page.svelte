@@ -13,6 +13,7 @@
 	import { onMount, tick } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import { dndzone } from 'svelte-dnd-action';
+	import { toast } from 'svelte-sonner';
 	import { superForm } from 'sveltekit-superforms/client';
 
 	import { invalidate } from '$app/navigation';
@@ -36,17 +37,38 @@
 	import Separator from '$lib/components/ui/Separator.svelte';
 	import Textarea from '$lib/components/ui/Textarea.svelte';
 	import { H1 } from '$lib/components/ui/typography';
+	import { nanoid } from '$lib/nanoid';
 	import {
 		mutate,
 		mutation,
 		type MutationInput,
 		query,
 	} from '$lib/queries/query';
+	import { isValidUrl } from '$lib/utils';
 	import { cn } from '$lib/utils/tailwind';
 
 	import CollectionItem from './collection-item.svelte';
+	import CollectionItemCard from './collection-item-card.svelte';
 
 	const md = new MarkdownIt();
+
+	const bookmarkCreateMutation = createMutation({
+		mutationFn: (input: MutationInput<'bookmarkCreate'>) =>
+			mutate('bookmarkCreate', input),
+		onMutate(variables) {
+			if (variables.collection?.collectionId === data.collection.id) {
+				data.collection.items.push({
+					id: variables.collection.id ?? nanoid(),
+					//@ts-expect-error - we're using this to show a loading state
+					pending: true,
+				});
+				data.collection.items = data.collection.items;
+			}
+		},
+		onSuccess() {
+			invalidate('collection');
+		},
+	});
 
 	export let data;
 
@@ -214,10 +236,7 @@
 						<ChevronDown class="h-4 w-4 text-secondary-foreground" />
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent
-					placement="bottom-end"
-					class="w-[200px]"
-				>
+				<DropdownMenuContent class="w-[200px]">
 					<DropdownMenuGroup>
 						<DropdownMenuItem on:click={addEntry}>
 							<Library class="mr-2 h-4 w-4" /> Entry
@@ -272,6 +291,36 @@
 	<Button>Add section</Button>
 </form>
 
+<svelte:document
+	on:paste={async (e) => {
+		const a = document.activeElement;
+		if (a instanceof HTMLTextAreaElement || a instanceof HTMLInputElement) {
+			return;
+		}
+		// REVIEW: is this how I want to go about this? or should it be scoped more somehow?
+		e.preventDefault();
+		const paste = e.clipboardData?.getData('text');
+		if (paste && isValidUrl(paste)) {
+			toast.promise(
+				$bookmarkCreateMutation.mutateAsync({
+					collection: {
+						collectionId: data.collection.id,
+						id: nanoid(),
+					},
+					status: null,
+					url: paste,
+				}),
+				{
+					error: 'Failed to add link to collection',
+					loading: 'Adding link to collection…',
+					success: 'Link added to collection',
+				},
+			);
+		}
+		// TODO: interactive toast with setting option for allowing paste or disabling paste
+	}}
+/>
+
 <!-- {JSON.stringify(data.collection.items)} -->
 <!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
 <div
@@ -280,70 +329,77 @@
 		dragDisabled: !data.collection.items.length,
 		flipDurationMs: 200,
 		items: data.collection.items,
-        morphDisabled: true,
+		morphDisabled: true,
 		type: 'collection-items',
 	}}
 	on:consider={(e) => {
 		data.collection.items = e.detail.items;
 	}}
 	on:finalize={(e) => {
-        data.collection.items = e.detail.items;
-        // Now deal with updating positions
-        const { info } = e.detail;
-        const { id } = info;
-        // find the item that was dragged
-        const idx = data.collection.items.findIndex((i) => i.id === id);
-        if (idx ===  -1) {
-            return;
-        }
-        const moved = data.collection.items[idx];
-        if (!moved) {
-            return;
-        }
-        // Get new position
-        if (idx === 0) {
-            const newPosition = (data.collection.items[1]?.position ?? 0) - 100;
-            moved.position = newPosition;
-            $updateCollectionItemsPositionsMutation.mutate([{
-                collectionId: data.collection.id,
-                id,
-                position: newPosition,
-            }]);
-        } else if (idx === data.collection.items.length - 1) {
-            const newPosition = (data.collection.items[idx - 1]?.position ?? 0) + 100;
-            moved.position = newPosition;
-            $updateCollectionItemsPositionsMutation.mutate([{
-                collectionId: data.collection.id,
-                id,
-                position: newPosition,
-            }]);
-        } else {
-            // see if we can slot between the two items
-            const prevPosition = (data.collection.items[idx - 1]?.position ?? 0);
-            const nextPosition = (data.collection.items[idx + 1]?.position ?? 0);
-            if (nextPosition - prevPosition > 1) {
-                const newPosition = Math.round(
-                    (prevPosition + nextPosition) / 2
-                )
-                moved.position = newPosition;
-                $updateCollectionItemsPositionsMutation.mutate([{
-                    collectionId: data.collection.id,
-                    id,
-                    position: newPosition,
-                }]);
-            } else {
-                // TODO: handle case where we can't slot between the two items
-            }
-
-        }
+		data.collection.items = e.detail.items;
+		// Now deal with updating positions
+		const { info } = e.detail;
+		const { id } = info;
+		// find the item that was dragged
+		const idx = data.collection.items.findIndex((i) => i.id === id);
+		if (idx === -1) {
+			return;
+		}
+		const moved = data.collection.items[idx];
+		if (!moved) {
+			return;
+		}
+		// Get new position
+		if (idx === 0) {
+			const newPosition = (data.collection.items[1]?.position ?? 0) - 100;
+			moved.position = newPosition;
+			$updateCollectionItemsPositionsMutation.mutate([
+				{
+					collectionId: data.collection.id,
+					id,
+					position: newPosition,
+				},
+			]);
+		} else if (idx === data.collection.items.length - 1) {
+			const newPosition = (data.collection.items[idx - 1]?.position ?? 0) + 100;
+			moved.position = newPosition;
+			$updateCollectionItemsPositionsMutation.mutate([
+				{
+					collectionId: data.collection.id,
+					id,
+					position: newPosition,
+				},
+			]);
+		} else {
+			// see if we can slot between the two items
+			const prevPosition = data.collection.items[idx - 1]?.position ?? 0;
+			const nextPosition = data.collection.items[idx + 1]?.position ?? 0;
+			if (nextPosition - prevPosition > 1) {
+				const newPosition = Math.round((prevPosition + nextPosition) / 2);
+				moved.position = newPosition;
+				$updateCollectionItemsPositionsMutation.mutate([
+					{
+						collectionId: data.collection.id,
+						id,
+						position: newPosition,
+					},
+				]);
+			} else {
+				// TODO: handle case where we can't slot between the two items
+			}
+		}
 	}}
 >
 	{#each data.collection.items as item (item.id)}
 		<div animate:flip={{ duration: 200 }}>
-			{#if item.type === 'Section'}
-				Section
+			{#if 'pending' in item && item.pending}
+				<CollectionItemCard loading />
+			{:else}
+				{#if item.type === 'Section'}
+					Section
+				{/if}
+				<CollectionItem shouldTransition={loaded} {item} />
 			{/if}
-			<CollectionItem shouldTransition={loaded} {item} />
 		</div>
 	{:else}
 		<div class="p-8 flex flex-col gap-2 items-center justify-center w-full">
