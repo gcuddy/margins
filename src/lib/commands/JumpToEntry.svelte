@@ -21,9 +21,14 @@
 
 	const {
 		options: { multiple },
-		state: { activeOptionProps, activeValue, inputValue, selectedValue, shouldFilter },
-    } = commandCtx.get<ListEntry>();
-
+		state: {
+			activeOptionProps,
+			activeValue,
+			inputValue,
+			selectedValue,
+			shouldFilter,
+		},
+	} = commandCtx.get<ListEntry>();
 
 	shouldFilter.set(false);
 
@@ -34,19 +39,16 @@
 		isOpen = false;
 	};
 
-    export let preload = false;
-    export let preloadDelay = 400;
+	export let preload = false;
+	export let preloadDelay = 400;
 
 	const dispatch = createEventDispatcher();
 
 	const entries = derived(
 		[entriesQuery, inputValue],
 		([$entriesQuery, $value]) => {
-			console.time('entries');
 			const entries = $entriesQuery.data ?? [];
-			console.log({ entries });
-			if (!$value || $value.length < 2) {
-				console.timeEnd('entries');
+			if (!$value) {
 				return entries;
 			}
 
@@ -60,20 +62,16 @@
 			const sorted = scored.sort((a, b) => b.score - a.score);
 
 			const filtered = sorted.filter((entry) => entry.score > 0);
-			console.timeEnd('entries');
 			return filtered;
 		},
 	);
 
-
 	const debouncedPreload = debounce((url: string) => {
-        console.log('preloading', url)
 		preloadData(url);
 	}, preloadDelay);
 
 	$: if ($activeOptionProps?.value && preload) {
-        console.log({$activeOptionProps, preload})
-        const link = make_link($activeOptionProps.value);
+		const link = make_link($activeOptionProps.value);
 		debouncedPreload(link);
 	}
 </script>
@@ -87,7 +85,7 @@
 		{#each $entries.slice(0, 10) as entry (entry.id)}
 			<CommandItem
 				label="{entry.title} {entry.author}"
-                value={entry}
+				value={entry}
 				onSelect={() => {
 					dispatch('select', entry);
 					onSelect(entry);
