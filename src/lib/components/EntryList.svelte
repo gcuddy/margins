@@ -46,7 +46,7 @@
 	import { syncStore } from "$lib/stores/sync";
 	import { trpc } from "$lib/trpc/client";
 	import type { ViewOptions } from "$lib/types/schemas/View";
-	import { validUrl } from "$lib/utils";
+	import { isValidUrl } from "$lib/utils";
 	import { formatDuration } from "$lib/utils/dates";
 	import { Bookmark, DocumentType, Entry, Interaction } from "@prisma/client";
 	import dayjs from "dayjs";
@@ -285,12 +285,12 @@
 		dragging.set(false);
 	}
 	async function handleDrop(e: DragEvent) {
-		dragging.set(false); 
+		dragging.set(false);
 		console.log("drop", e);
 		const url = e.dataTransfer?.getData("text/uri-list");
 		console.log({ url });
 		if (!url) return;
-		if (!validUrl(url)) return;
+		if (!isValidUrl(url)) return;
 		const n = notifications.notify({ message: "Adding url..." });
 		const parsed = await trpc().public.parse.query({ url });
 		console.log({ parsed });
@@ -344,7 +344,7 @@
 		// REVIEW: is this how I want to go about this? or should it be scoped more somehow?
 		e.preventDefault();
 		let paste = e.clipboardData?.getData("text");
-		if (paste && validUrl(paste)) {
+		if (paste && isValidUrl(paste)) {
 			console.log(`got a url!`, paste);
 			const n = notifications.notify({
 				title: `Saving url…`,

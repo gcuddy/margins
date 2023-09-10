@@ -50,7 +50,7 @@
 	import { derived, Readable, writable, Writable } from "svelte/store";
 	import { match } from "ts-pattern";
 	import { getContext, onDestroy, onMount, tick } from "svelte";
-	import { validUrl } from "$lib/utils";
+	import { isValidUrl } from "$lib/utils";
 	import { trpc } from "$lib/trpc/client";
 	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
 	import { syncStore } from "$lib/stores/sync";
@@ -252,7 +252,7 @@
 		// REVIEW: is this how I want to go about this? or should it be scoped more somehow?
 		e.preventDefault();
 		let paste = e.clipboardData?.getData("text");
-		if (paste && validUrl(paste)) {
+		if (paste && isValidUrl(paste)) {
 			console.log(`got a url!`, paste);
 			const s = syncStore.add();
 			const article = await trpc($page).public.parse.query({url: paste});
