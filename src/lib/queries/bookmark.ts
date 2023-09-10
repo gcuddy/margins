@@ -1,5 +1,4 @@
 import { type Insertable, sql } from 'kysely';
-import isUrl from 'validator/lib/isURL';
 
 import { db, json } from '$lib/db';
 import { entrySelect } from '$lib/db/selects';
@@ -8,6 +7,7 @@ import { nanoid } from '$lib/nanoid';
 import type parse from '$lib/parse';
 import type { Bookmark, DB } from '$lib/prisma/kysely/types';
 import type { bookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
+import { isValidUrl } from '$lib/utils';
 
 export async function bookmarkCreate({
 	ctx,
@@ -19,7 +19,7 @@ export async function bookmarkCreate({
 	} = ctx;
 	const { relatedEntryId, status, url } = input;
 
-	if (!isUrl(url)) {
+	if (!isValidUrl(url)) {
 		// TODO: handle this case with ISBN, etc.
 		throw new Error('Invalid URL');
 	}

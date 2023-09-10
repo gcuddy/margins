@@ -2,11 +2,10 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import { derived } from 'svelte/store';
 	import { toast } from 'svelte-sonner';
-	import isUrl from 'validator/lib/isURL';
 
 	import { initBookmarkCreateMutation } from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { getHostname } from '$lib/utils';
+	import { getHostname, isValidUrl } from '$lib/utils';
 
 	// TODO: list entries query to check if url there
 
@@ -28,10 +27,10 @@
 			try {
 				const text = await navigator.clipboard.readText();
 				if (
-					isUrl(text) &&
+					isValidUrl(text) &&
 					!$entryUrls.includes(text) &&
 					!ignoredUrls.includes(text) &&
-                    !urlsToExistingNotificationsMap.has(text)
+					!urlsToExistingNotificationsMap.has(text)
 				) {
 					const toastId = toast(
 						`URL detected in clipboard — add to your library?`,
@@ -54,18 +53,18 @@
 							description: getHostname(text),
 							descriptionClass: 'text-sm truncate !text-muted-foreground',
 							duration: 1000 * 10,
-                            onAutoClose: () => {
-                                urlsToExistingNotificationsMap.delete(text);
-                            },
+							onAutoClose: () => {
+								urlsToExistingNotificationsMap.delete(text);
+							},
 							onDismiss: () => {
 								ignoredUrls.push(text);
-                                urlsToExistingNotificationsMap.delete(text);
+								urlsToExistingNotificationsMap.delete(text);
 							},
 						},
 					);
 					urlsToExistingNotificationsMap.set(text, toastId);
 				}
-			} catch (err) {
+			} catch {
 				// console.error('Failed to read clipboard contents: ', err);
 			}
 		}
