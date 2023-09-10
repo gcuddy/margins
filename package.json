@@ -73,6 +73,7 @@
 		"aws-sdk": "^2.1414.0",
 		"codejar": "^3.7.0",
 		"command-score": "^0.1.2",
+		"commitizen": "^4.3.0",
 		"css": "^3.0.0",
 		"dayjs": "^1.11.9",
 		"devalue": "^4.3.2",
