@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# npx format && npx lint && git add .
-pnpm exec lint-staged
+# npx format && npx `lint` && git add .
+npx lint-staged
