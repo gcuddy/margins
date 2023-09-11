@@ -1,29 +1,34 @@
 <script lang="ts">
-	import PinFolder from './pin-folder.svelte';
-	import { mutate, type MutationInput, type QueryOutput } from '$lib/queries/query';
-	import { dndzone, setDebugMode, TRIGGERS } from 'svelte-dnd-action';
-	import { flip } from 'svelte/animate';
-	import Button from '$components/ui/Button.svelte';
-	import { page } from '$app/stores';
-	import { Layers, Box, Folder, XIcon } from 'lucide-svelte';
-	import { TagColorPill } from '$components/tags/tag-color';
-	import { Icon } from '$components/icon-picker';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import { make_link } from '$lib/utils/entries';
-	import EntryIcon from '$components/entries/EntryIcon.svelte';
-	import { nanoid } from '$lib/nanoid';
+	import { Box, Layers, XIcon } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { flip } from 'svelte/animate';
+	import { dndzone } from 'svelte-dnd-action';
+
+	import { page } from '$app/stores';
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import { Icon } from '$components/icon-picker';
+	import { TagColorPill } from '$components/tags/tag-color';
+	import Button from '$components/ui/Button.svelte';
+	import { nanoid } from '$lib/nanoid';
+	import {
+		initCreatePinMutation,
+		initDeletePinMutation,
+	} from '$lib/queries/mutations';
+	import { mutate, type MutationInput } from '$lib/queries/query';
 	import type { Pin } from '$lib/queries/server';
-	import { initCreatePinMutation, initDeletePinMutation } from '$lib/queries/mutations';
-	import { slide } from 'svelte/transition';
 	import { cn } from '$lib/utils';
-	export let pins: (Pin & {
-		pending?: boolean;
-	})[];
+	import { make_link } from '$lib/utils/entries';
+
+	import PinFolder from './pin-folder.svelte';
+	export let pins: Array<
+		Pin & {
+			pending?: boolean;
+		}
+	>;
 
 	export let size: 'default' | 'sm' | 'lg' = 'sm';
-    export let type: string | undefined = undefined;
-
+	export let type: string | undefined = undefined;
 
 	const queryClient = useQueryClient();
 
@@ -31,11 +36,12 @@
 	export { className as class };
 
 	const updatePinMutation = createMutation({
-		mutationFn: (input: MutationInput<'updateFavorite'>) => mutate('updateFavorite', input),
+		mutationFn: (input: MutationInput<'updateFavorite'>) =>
+			mutate('updateFavorite', input),
 		onSuccess: () =>
 			queryClient.invalidateQueries({
-				queryKey: ['pins']
-			})
+				queryKey: ['pins'],
+			}),
 	});
 
 	const deletePinMutation = initDeletePinMutation();
@@ -43,52 +49,49 @@
 	const createPinMutation = initCreatePinMutation();
 
 	function updateQueryData() {
-		console.log(`updating query data`);
-		queryClient.setQueryData<Pin[]>(['pins', 'list'], (data) => {
-			console.log({ data });
-			if (!data) return data;
+		queryClient.setQueryData<Array<Pin>>(['pins', 'list'], (data) => {
+			if (!data) {
+				return data;
+			}
 			return pins;
 		});
 	}
 
 	export let root = false;
 	export let parentId: string | null = null;
-	export let show = true;
 
-	let foldersOpen: Record<string, boolean> = {};
+	const foldersOpen: Record<string, boolean> = {};
 
 	const dispatch = createEventDispatcher();
-
-	let lastIndex: number | null = null;
 
 	export const addFolder = () =>
 		(pins = [
 			{
-				id: nanoid(),
-				sortOrder: (pins[0]?.sortOrder ?? 1) - 1,
-				type: 'FOLDER',
-				updatedAt: new Date(),
+				children: [],
+				collection: null,
 				createdAt: new Date(),
 				entry: null,
-				view: null,
-				collection: null,
-				tag: null,
+				folderName: '',
+				id: nanoid(),
 				note: null,
 				parentId: null,
-				folderName: '',
-				children: [],
-				pending: true
+				pending: true,
+				sortOrder: (pins[0]?.sortOrder ?? 1) - 1,
+				tag: null,
+				type: 'FOLDER',
+				updatedAt: new Date(),
+				view: null,
 			},
-			...pins
+			...pins,
 		]);
 </script>
 
 <div
 	class={className}
 	use:dndzone={{
-		items: pins,
 		flipDurationMs: 200,
-        type
+		items: pins,
+		type,
 	}}
 	on:consider={(e) => {
 		pins = e.detail.items;
@@ -103,14 +106,15 @@
 				if (pin) {
 					foldersOpen[pin.id] = true;
 				}
-			} else if (index < pins.length - 1 && pins[index + 1]?.type === 'FOLDER') {
-				console.log('open folder');
+			} else if (
+				index < pins.length - 1 &&
+				pins[index + 1]?.type === 'FOLDER'
+			) {
 				const pin = pins[index + 1];
 				if (pin) {
 					foldersOpen[pin.id] = true;
 				}
 			}
-			lastIndex = index;
 		}
 	}}
 	on:finalize={(e) => {
@@ -123,38 +127,43 @@
 		} else if (index === pins.length - 1) {
 			newSortOrder = (pins[index - 1]?.sortOrder ?? 0) + 1;
 		} else {
-			newSortOrder = ((pins[index - 1]?.sortOrder ?? 0) + (pins[index + 1]?.sortOrder ?? 0)) / 2;
+			newSortOrder =
+				((pins[index - 1]?.sortOrder ?? 0) +
+					(pins[index + 1]?.sortOrder ?? 0)) /
+				2;
 		}
 
 		const pin = pins[index];
 
-		console.log({ pin });
+		// console.log({ pin });
 
 		// Should not be the case
-		if (!pin) return;
+		if (!pin) {
+			return;
+		}
 
 		pin.sortOrder = newSortOrder;
 		pin.parentId = parentId;
 		pins = pins;
-		console.log({ id, index, pin, newSortOrder, root, parentId });
+		// console.log({ id, index, newSortOrder, parentId, pin, root });
 
 		if (root) {
 			updateQueryData();
 			$updatePinMutation.mutate({
-				id: pin.id,
 				data: {
+					parentId,
 					sortOrder: newSortOrder,
-					parentId
-				}
+				},
+				id: pin.id,
 			});
 		} else {
 			dispatch('update');
 			$updatePinMutation.mutate({
-				id: pin.id,
 				data: {
+					parentId,
 					sortOrder: newSortOrder,
-					parentId
-				}
+				},
+				id: pin.id,
 			});
 		}
 	}}
@@ -162,37 +171,38 @@
 	{#each pins as pin (pin.id)}
 		<div
 			animate:flip={{
-				duration: 200
+				duration: 200,
 			}}
 		>
 			{#if pin.type === 'FOLDER'}
 				<PinFolder
 					{size}
-					disableMutations={$deletePinMutation.isPending || $createPinMutation.isPending}
+					disableMutations={$deletePinMutation.isPending ||
+						$createPinMutation.isPending}
 					on:delete={() => {
 						$deletePinMutation.mutate({
-							id: pin.id
+							id: pin.id,
 						});
 					}}
 					onBlur={(pin) => {
-						console.log({ pin });
+						// console.log({ pin });
 						if (pin.pending && !pin.folderName) {
 							pins = pins.filter((p) => p.id !== pin.id);
 							return;
 						} else if (pin.pending) {
 							// create folder
-							console.log({ pin });
+							// console.log({ pin });
 							$createPinMutation.mutate({
-								id: pin.id,
 								folderName: pin.folderName,
-								sortOrder: pin.sortOrder
+								id: pin.id,
+								sortOrder: pin.sortOrder,
 							});
 						} else {
 							$updatePinMutation.mutate({
-								id: pin.id,
 								data: {
-									folderName: pin.folderName
-								}
+									folderName: pin.folderName,
+								},
+								id: pin.id,
 							});
 						}
 						pin.pending = false;
@@ -211,10 +221,16 @@
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-					class={cn('w-full justify-start font-normal', size !== 'sm' && 'text-base')}
+					class={cn(
+						'w-full justify-start font-normal',
+						size !== 'sm' && 'text-base',
+					)}
 					{href}
 					on:click={(e) => {
-						if (e.target instanceof HTMLButtonElement && e.target !== e.currentTarget) {
+						if (
+							e.target instanceof HTMLButtonElement &&
+							e.target !== e.currentTarget
+						) {
 							e.preventDefault();
 						}
 					}}
@@ -222,14 +238,16 @@
 					<Layers class="mr-2 h-4 w-4 shrink-0" />
 					<span class="truncate grow">{pin.view.name}</span>
 					<button
-                        on:click={() => {{
-                            $deletePinMutation.mutate({
-                                id: pin.id
-                            })
-                        }}}
+						on:click={() => {
+							{
+								$deletePinMutation.mutate({
+									id: pin.id,
+								});
+							}
+						}}
 						class={cn(
 							'opacity-0 group-hover:opacity-100 transition-opacity',
-							size !== 'sm' && 'opacity-50'
+							size !== 'sm' && 'opacity-50',
 						)}
 					>
 						<XIcon class="h-3 w-3 shrink-0 ml-auto" />
@@ -240,10 +258,16 @@
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-					class={cn('w-full justify-start font-normal group', size !== 'sm' && 'text-base')}
+					class={cn(
+						'w-full justify-start font-normal group',
+						size !== 'sm' && 'text-base',
+					)}
 					{href}
 					on:click={(e) => {
-						if (e.target instanceof HTMLButtonElement && e.target !== e.currentTarget) {
+						if (
+							e.target instanceof HTMLButtonElement &&
+							e.target !== e.currentTarget
+						) {
 							e.preventDefault();
 						}
 					}}
@@ -251,14 +275,16 @@
 					<Box class="mr-2 h-4 w-4 shrink-0" />
 					<span class="truncate grow"> {pin.collection.name}</span>
 					<button
-                        on:click={() => {{
-                            $deletePinMutation.mutate({
-                                id: pin.id
-                            })
-                        }}}
+						on:click={() => {
+							{
+								$deletePinMutation.mutate({
+									id: pin.id,
+								});
+							}
+						}}
 						class={cn(
 							'opacity-0 group-hover:opacity-100 transition-opacity',
-							size !== 'sm' && 'opacity-50'
+							size !== 'sm' && 'opacity-50',
 						)}
 					>
 						<XIcon class="h-3 w-3 shrink-0 ml-auto" />
@@ -269,10 +295,16 @@
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-					class={cn('w-full justify-start font-normal group', size !== 'sm' && 'text-base')}
+					class={cn(
+						'w-full justify-start font-normal group',
+						size !== 'sm' && 'text-base',
+					)}
 					{href}
 					on:click={(e) => {
-						if (e.target instanceof HTMLButtonElement && e.target !== e.currentTarget) {
+						if (
+							e.target instanceof HTMLButtonElement &&
+							e.target !== e.currentTarget
+						) {
 							e.preventDefault();
 						}
 					}}
@@ -283,14 +315,16 @@
 					</div>
 					<span class="truncate grow"> {pin.tag.name}</span>
 					<button
-                        on:click={() => {{
-                            $deletePinMutation.mutate({
-                                id: pin.id
-                            })
-                        }}}
+						on:click={() => {
+							{
+								$deletePinMutation.mutate({
+									id: pin.id,
+								});
+							}
+						}}
 						class={cn(
 							'opacity-0 group-hover:opacity-100 transition-opacity',
-							size !== 'sm' && 'opacity-50'
+							size !== 'sm' && 'opacity-50',
 						)}
 					>
 						<XIcon class="h-3 w-3 shrink-0 ml-auto" />
@@ -301,10 +335,16 @@
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-					class={cn('w-full justify-start font-normal group', size !== 'sm' && 'text-base')}
+					class={cn(
+						'w-full justify-start font-normal group',
+						size !== 'sm' && 'text-base',
+					)}
 					{href}
 					on:click={(e) => {
-						if (e.target instanceof HTMLButtonElement && e.target !== e.currentTarget) {
+						if (
+							e.target instanceof HTMLButtonElement &&
+							e.target !== e.currentTarget
+						) {
 							e.preventDefault();
 						}
 					}}
@@ -313,17 +353,23 @@
 					<!-- <div class="h-4 w-4 mr-2 shrink-0 flex items-center justify-center">
                                             <TagColorPill color={pin.tag.color} class="h-2 w-2" />
                                         </div> -->
-					<Icon class="h-4 w-4 mr-2" icon={pin.note.icon} color={pin.note.color} />
+					<Icon
+						class="h-4 w-4 mr-2"
+						icon={pin.note.icon}
+						color={pin.note.color}
+					/>
 					<span class="truncate grow"> {pin.note.title ?? 'Untitled'}</span>
 					<button
-                                        on:click={() => {{
-                                            $deletePinMutation.mutate({
-                                                id: pin.id
-                                            })
-                                        }}}
+						on:click={() => {
+							{
+								$deletePinMutation.mutate({
+									id: pin.id,
+								});
+							}
+						}}
 						class={cn(
 							'opacity-0 group-hover:opacity-100 transition-opacity',
-							size !== 'sm' && 'opacity-50'
+							size !== 'sm' && 'opacity-50',
 						)}
 					>
 						<XIcon class="h-3 w-3 shrink-0 ml-auto" />
@@ -334,25 +380,35 @@
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
-					class={cn('w-full justify-start font-normal group', size !== 'sm' && 'text-base')}
+					class={cn(
+						'w-full justify-start font-normal group',
+						size !== 'sm' && 'text-base',
+					)}
 					{href}
 					on:click={(e) => {
-						if (e.target instanceof HTMLButtonElement && e.target !== e.currentTarget) {
+						if (
+							e.target instanceof HTMLButtonElement &&
+							e.target !== e.currentTarget
+						) {
 							e.preventDefault();
 						}
 					}}
 				>
 					<EntryIcon class="h-4 w-4 mr-2 shrink-0" type={pin.entry.type} />
-					<span class="truncate grow"> {pin.entry.title ?? 'Untitled'}</span>
+					<span class="truncate grow">
+						{pin.entry.bookmarkTitle ?? pin.entry.title ?? 'Untitled'}</span
+					>
 					<button
-                        on:click={() => {{
-                            $deletePinMutation.mutate({
-                                id: pin.id
-                            })
-                        }}}
+						on:click={() => {
+							{
+								$deletePinMutation.mutate({
+									id: pin.id,
+								});
+							}
+						}}
 						class={cn(
 							'opacity-0 group-hover:opacity-100 transition-opacity',
-							size !== 'sm' && 'opacity-50'
+							size !== 'sm' && 'opacity-50',
 						)}
 					>
 						<XIcon class="h-3 w-3 shrink-0 ml-auto" />

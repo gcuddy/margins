@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { createContextMenu, melt } from '@melt-ui/svelte';
-	import { type InfiniteData,useQueryClient } from '@tanstack/svelte-query';
+	import { melt } from '@melt-ui/svelte';
+	import { type InfiniteData, useQueryClient } from '@tanstack/svelte-query';
 	import { cva, type VariantProps } from 'class-variance-authority';
 	import clsx from 'clsx';
 	import {
@@ -11,7 +11,7 @@
 		PencilIcon,
 		TagIcon,
 		TimerIcon,
-		TrendingUpIcon
+		TrendingUpIcon,
 	} from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { portal } from 'svelte-portal';
@@ -25,11 +25,11 @@
 	import { render_html } from '$components/ui/editor/utils';
 	import Separator from '$components/ui/Separator.svelte';
 	import smoothload from '$lib/actions/smoothload';
-	import type { EntryInList, ListEntry } from '$lib/db/selects';
+	import type { ListEntry } from '$lib/db/selects';
 	import { relations_icons } from '$lib/features/relations/icons';
 	import { mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
-	import { type Status,statuses, statusesWithIcons } from '$lib/status';
+	import { type Status, statuses, statusesWithIcons } from '$lib/status';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { ago, formatDuration, now } from '$lib/utils/date';
 	import { get_image, getId, getType, make_link } from '$lib/utils/entries';
@@ -42,25 +42,29 @@
 
 	const queryClient = useQueryClient();
 
-	const entryItemVariants = cva('flex grow relative cursor-default focus-visible:outline-none', {
-		defaultVariants: {
-			view: 'list'
+	const entryItemVariants = cva(
+		'flex grow relative cursor-default focus-visible:outline-none',
+		{
+			defaultVariants: {
+				view: 'list',
+			},
+			variants: {
+				view: {
+					kanban:
+						'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6',
+					list: 'items-center gap-x-4 px-6 py-4',
+				},
+			},
 		},
-		variants: {
-			view: {
-				kanban:
-					'item rounded-lg border bg-card text-card-foreground shadow-sm w-[350px] flex-col p-6',
-				list: 'items-center gap-x-4 px-6 py-4'
-			}
-		}
-	});
+	);
 
 	export let view: VariantProps<typeof entryItemVariants>['view'] = 'list';
 
-	export let entry: LibraryEntry | ListEntry;
+	export let entry: LibraryEntry;
 
 	// Computed
-	$: author = "bookmark_author" in entry ? entry.bookmark_author || entry.author : entry.author;
+	$: author = entry.bookmark_author || entry.author;
+	$: title = entry.bookmark_title || entry.title;
 
 	export let border = true;
 
@@ -71,8 +75,8 @@
 
 	const dispatch = createEventDispatcher<{
 		checked: boolean;
-		move: { entries: Array<EntryInList>, status: Status; };
-		reorder: { entry: EntryInList, position: number; };
+		move: { entries: Array<ListEntry>; status: Status };
+		reorder: { entry: ListEntry; position: number };
 	}>();
 
 	export let checked = false;
@@ -87,56 +91,63 @@
 	// const tagsQuery = createQuery(queryFactory.tags.list());
 
 	// REVIEW should make a single generic type for state
-	async function update_entry(newData: Partial<LibraryResponse['entries'][number]>) {
+	async function update_entry(
+		newData: Partial<LibraryResponse['entries'][number]>,
+	) {
 		// REVIEW can I get this from queryfactory?
 		const queryKey = ['entries', 'list'] as const;
 		await queryClient.cancelQueries({
-			queryKey
-		});
-		const previousQueries = queryClient.getQueriesData<InfiniteData<LibraryResponse>>({
-			queryKey
+			queryKey,
 		});
 
 		// queryClient.getQueryCache().
 
-		queryClient.setQueriesData<InfiniteData<LibraryResponse>>({ queryKey }, (data) => {
-			if (!data) {return data;}
-			return {
-				...data,
-				pages: data.pages.map((p) => {
-					return {
-						...p,
-						entries: p.entries.map((oldEntry) => {
-							if (oldEntry.id === entry.id) {
-								return {
-									...oldEntry,
-									...newData
-								};
-							}
-							return oldEntry;
-						})
-					};
-				})
-			};
-		});
+		queryClient.setQueriesData<InfiniteData<LibraryResponse>>(
+			{ queryKey },
+			(data) => {
+				if (!data) {
+					return data;
+				}
+				return {
+					...data,
+					pages: data.pages.map((p) => {
+						return {
+							...p,
+							entries: p.entries.map((oldEntry) => {
+								if (oldEntry.id === entry.id) {
+									return {
+										...oldEntry,
+										...newData,
+									};
+								}
+								return oldEntry;
+							}),
+						};
+					}),
+				};
+			},
+		);
 
 		// queryClient.
 	}
 
 	export async function move_entry(status: Status) {
 		out_key = status;
+		if (!('sort_order' in entry)) {
+			return;
+		}
 		const { sort_order: old_sort_order, status: old_status } = entry;
 		dispatch('move', { entries: [entry], status });
 		// optimistic update
 		await update_entry({
-			status
+			status,
 		});
 		mutation($page, 'update_status', {
 			ids: [entry.id],
-			status
+			status,
 		})
 			.then(() => {
-				toast.success(`Entry moved to ${  status}`, {
+				toast.success(`Entry moved to ${status}`, {
 					// description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
 					action: old_status
 						? {
@@ -144,16 +155,16 @@
 								onClick: () => {
 									dispatch('move', {
 										entries: [entry],
-										status: old_status
+										status: old_status,
 									});
 									mutation($page, 'update_status', {
 										ids: [entry.id],
 										sort_order: old_sort_order,
-										status: old_status
+										status: old_status,
 									});
-								}
+								},
 						  }
-						: undefined
+						: undefined,
 				});
 			})
 			.catch(() => {
@@ -161,7 +172,7 @@
 			})
 			.finally(() => {
 				queryClient.invalidateQueries({
-					queryKey: ['entries']
+					queryKey: ['entries'],
 				});
 			});
 
@@ -182,49 +193,40 @@
 
 	$: dispatch('checked', checked);
 
-	const {
-		builders: { createCheckboxItem, createMenuRadioGroup, createSubmenu },
-		elements: { item, menu, trigger },
-		states: { open }
-	} = createContextMenu({
-		defaultOpen: false
-	});
-
-	const {
-		elements: { radioGroup, radioItem },
-		helpers: { isChecked },
-		states: { value }
-	} = createMenuRadioGroup({
-		defaultValue: entry.status
-	});
-
 	let anchor_el: HTMLAnchorElement;
 
 	// ignore this lol
 	let data = entry;
-    $: data = entry;
+	$: data = entry;
 
-	$: if (data.status) {$value = data.status;}
-	$: attachment = data.relations.find((r) => r.type === 'Grouped' && r.entry?.type === 'pdf');
+	$: attachment = data.relations.find(
+		(r) => r.type === 'Grouped' && r.entry?.type === 'pdf',
+	);
 
 	let tag_state_dirty = false;
 
-	$: if (!$open && tag_state_dirty) {
-		console.log(`updating tags on entry ${entry.id}`, data.tags);
-		mutation($page, 'set_tags_on_entry', {
-			entries: [entry.id],
-			tags: data.tags ?? []
-		}).then(() => {
+	async function setTags() {
+		if ('tags' in data) {
+			await mutation($page, 'set_tags_on_entry', {
+				entries: [entry.id],
+				tags: data.tags ?? [],
+			});
 			tag_state_dirty = false;
 			toast.success('Tags updated');
 			queryClient.invalidateQueries({
-				queryKey: ['entries']
+				queryKey: ['entries'],
 			});
-		});
+		}
+	}
+
+	$: if (!contextMenuOpen && tag_state_dirty) {
+		if ('tags' in data) {
+			// eslint-disable-next-line unicorn/prefer-top-level-await
+			setTags();
+		}
 	}
 
 	export let contextMenuOpen = false;
-	$: console.log({ contextMenuOpen });
 </script>
 
 <!-- out:send={{
@@ -250,7 +252,7 @@
 				class={cn(
 					entryItemVariants({ view }),
 					'bg-[inherit] group-data-[active=true]/container:ring-[0.5px] ring-inset',
-					checked && 'bg-primary/20 data-[active=true]:bg-primary/30'
+					checked && 'bg-primary/20 data-[active=true]:bg-primary/30',
 				)}
 			>
 				{#if view === 'list'}
@@ -263,23 +265,28 @@
 								: entry.image}
 							<img
 								use:smoothload
-								src={src ?? `https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
+								src={src ??
+									`https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
 								on:error={(e) => {
 									if (entry.uri) {
-										//@ts-expect-error
-										e.target.src = `https://icon.horse/icon/${getDomain(entry.uri)}`;
+										//@ts-expect-error - TODO: fix to avatar
+										e.target.src = `https://icon.horse/icon/${getDomain(
+											entry.uri,
+										)}`;
 									}
 								}}
 								alt=""
 								class={clsx(
 									'relative h-full w-full rounded-[inherit] object-cover',
-									checked && 'invisible'
+									checked && 'invisible',
 								)}
 							/>
 						{:else}
 							<ImageSkeleton class="relative h-16 w-16 object-cover" />
 						{/if}
-						<div class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md">
+						<div
+							class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md"
+						>
 							<input
 								bind:checked
 								type="checkbox"
@@ -299,12 +306,12 @@
 								data-id={entry.id}
 								class="truncate font-semibold hover:underline focus:outline-none"
 							>
-								{entry.title}
+								{title}
 							</div>
 							<div class="hidden gap-x-2 sm:flex">
 								{#if data.annotations && data.annotations.length > 0}
 									{@const total = data.num_annotations
-										? +data.num_annotations
+										? Number(data.num_annotations)
 										: data.annotations.length}
 									{@const slice = 3}
 									{@const remaining = total - slice}
@@ -313,11 +320,18 @@
 											<PencilIcon class="mr-1 h-3 w-3" />
 											{total}
 										</Badge>
-										<div slot="content" class="flex flex-col gap-2 bg-card text-card-foreground">
+										<div
+											slot="content"
+											class="flex flex-col gap-2 bg-card text-card-foreground"
+										>
 											<span class="font-semibold tracking-tight">Notes</span>
 											{#each data.annotations.slice(0, slice) as annotation}
-												<div class="flex flex-col gap-1 rounded-lg border px-2 py-2 text-xs">
-													<div class="flex items-center gap-2 text-muted-foreground">
+												<div
+													class="flex flex-col gap-1 rounded-lg border px-2 py-2 text-xs"
+												>
+													<div
+														class="flex items-center gap-2 text-muted-foreground"
+													>
 														<span class="font-medium">
 															{annotation.username}
 														</span>
@@ -329,7 +343,7 @@
 														{#if annotation.target}
 															{@const text_quote = getTargetSelector(
 																annotation.target,
-																'TextQuoteSelector'
+																'TextQuoteSelector',
 															)}
 															{#if text_quote}
 																<Clamp clamp={2} class="border-l px-3 italic">
@@ -347,6 +361,7 @@
 																{annotation.body}
 															</Clamp>
 														{:else if annotation.contentData}
+															<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 															{@html render_html(annotation.contentData)}
 															<!-- <Editor
                                                         class="line-clamp-2"
@@ -365,7 +380,7 @@
 										</div>
 									</HoverCard>
 								{/if}
-								{#if attachment}
+								{#if attachment?.entry}
 									<Badge as="a" href="/tests/pdf/{attachment.entry.id}">
 										<FileTextIcon class="mr-1 h-3 w-3" />
 										<!-- {attachment.entry.title} -->
@@ -378,25 +393,33 @@
 											<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
 											{data.relations.length}
 										</Badge>
-										<div slot="content" class="flex flex-col gap-2 bg-card text-card-foreground">
-											<span class="font-semibold tracking-tight">Relations</span>
+										<div
+											slot="content"
+											class="flex flex-col gap-2 bg-card text-card-foreground"
+										>
+											<span class="font-semibold tracking-tight">Relations</span
+											>
 											{#each data.relations as relation}
-												<a
-													href={make_link(relation.entry)}
-													class="flex cursor-pointer items-center gap-3 text-xs"
-												>
-													<svelte:component
-														this={relations_icons[relation.type]}
-														class="h-3 w-3 shrink-0"
-													/>
-													<img
-														use:smoothload
-														src={get_image(relation.entry)}
-														class="aspect-square w-10 rounded-full object-cover"
-														alt=""
-													/>
-													<span class="font-semibold"> {relation.entry.title}</span>
-												</a>
+												{#if relation.entry}
+													<a
+														href={make_link(relation.entry)}
+														class="flex cursor-pointer items-center gap-3 text-xs"
+													>
+														<svelte:component
+															this={relations_icons[relation.type]}
+															class="h-3 w-3 shrink-0"
+														/>
+														<img
+															use:smoothload
+															src={get_image(relation.entry)}
+															class="aspect-square w-10 rounded-full object-cover"
+															alt=""
+														/>
+														<span class="font-semibold">
+															{relation.entry.title}</span
+														>
+													</a>
+												{/if}
 											{/each}
 										</div>
 									</HoverCard>
@@ -412,8 +435,11 @@
 					<div class="ml-auto hidden shrink-0 items-center gap-x-2 md:flex">
 						{#if data.tags}
 							{#each data.tags as tag (tag.id)}
-								<Badge class="text-xs" as="a" href="/tests/tag/{tag.name}" variant="outline"
-									>{tag.name}</Badge
+								<Badge
+									class="text-xs"
+									as="a"
+									href="/tests/tag/{tag.name}"
+									variant="outline">{tag.name}</Badge
 								>
 							{/each}
 						{/if}
@@ -425,7 +451,9 @@
                                 </Small> -->
 							{/if}
 							{#if entry.estimatedReadingTime}
-								<Small class="text-xs text-muted-foreground items-center h-9 flex">
+								<Small
+									class="text-xs text-muted-foreground items-center h-9 flex"
+								>
 									<TimerIcon class="h-3.5 w-3.5" />
 									{formatDuration(entry.estimatedReadingTime, 'm')}
 								</Small>
@@ -455,12 +483,12 @@
 
 	<ContextMenu.Content class="w-52">
 		<ContextMenu.Item
-			on:m-click={() => {
+			on:click={() => {
 				// TODO: dispatch and bump to top
-				console.log('bump to top');
+				// console.log('bump to top');
 				dispatch('reorder', {
 					entry,
-					position: 0
+					position: 0,
 				});
 				// REVIEW should this post logic be abstracted to the parent entryList (which is what controls drag-and-drop)?
 				// update_status automatically sets sort_order to top if not passed in
@@ -469,7 +497,7 @@
 				}
 				mutation($page, 'update_status', {
 					ids: [entry.id],
-					status: entry.status
+					status: entry.status,
 				});
 			}}
 			inset
@@ -522,15 +550,20 @@
 					{#each statuses as status}
 						<ContextMenu.RadioItem
 							value={status}
-							on:m-click={() => {
+							on:click={() => {
 								// TODO: move entry, update status, etc.
 								move_entry(status);
 							}}
 						>
 							<div class="w-4 mr-2.5 flex items-center justify-center">
-								<svelte:component this={statusesWithIcons[status]} class="h-3.5 w-3.5" />
+								<svelte:component
+									this={statusesWithIcons[status]}
+									class="h-3.5 w-3.5"
+								/>
 							</div>
-							<span class="grow inline-flex items-center truncate">{status}</span>
+							<span class="grow inline-flex items-center truncate"
+								>{status}</span
+							>
 						</ContextMenu.RadioItem>
 					{/each}
 				</ContextMenu.RadioGroup>

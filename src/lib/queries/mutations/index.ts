@@ -90,7 +90,7 @@ export function updateAnnotationMutation<
 		mutationFn: (input: MutationInput<'save_note'>) =>
 			mutate('save_note', { ...opts?.input, ...input }),
 		async onMutate(variables) {
-			console.log(`onMutate variables for updateAnnotationMutation`, variables);
+			// console.log(`onMutate variables for updateAnnotationMutation`, variables);
 
 			// setting optimistically isn't too hard, since we just have two main query key scopes to consider (list and detail)
 			// Remember 4 Steps: 1) Cancel 2) Snapshot 3) Optimsitically update 4) Return Context with Previous and New Item
@@ -185,13 +185,13 @@ export function createSetTagsMutation(opts?: {
 			await queryClient.cancelQueries({
 				queryKey,
 			});
-			const previousQueries = queryClient.getQueriesData<
-				InfiniteData<LibraryResponse>
-			>({
-				queryKey,
-			});
+			// const previousQueries = queryClient.getQueriesData<
+			// 	InfiniteData<LibraryResponse>
+			// >({
+			// 	queryKey,
+			// });
 
-			console.log({ previousQueries });
+			// console.log({ previousQueries });
 
 			const tagsToUpdate = (tags?.filter((tag) => tag.id) ?? []) as Array<{
 				id: number;
@@ -230,7 +230,7 @@ export function createSetTagsMutation(opts?: {
 				predicate(query) {
 					return (
 						query.queryKey[0] === 'entries' &&
-						!ctxEntries.includes(query.queryKey[1])
+						!ctxEntries.includes(query.queryKey[1] as CtxEntry)
 					);
 				},
 			});
@@ -245,7 +245,7 @@ function invalidateQueryKeys(
 	queryClient: QueryClient,
 	queryKeys: Array<QueryKey>,
 ) {
-	console.log('invalidating query keys', queryKeys);
+	// console.log('invalidating query keys', queryKeys);
 	queryKeys.forEach((queryKey) => {
 		queryClient.invalidateQueries({ queryKey });
 	});
@@ -302,7 +302,10 @@ export function initBookmarkCreateMutation() {
 	});
 }
 
-export function initUpdateBookmarkMutation() {
+export function initUpdateBookmarkMutation(opts?: {
+	/** Whether or not to invalidate the entire "entries" scope */
+	invalidateAllEntries?: boolean;
+}) {
 	const queryClient = useQueryClient();
 	return createMutation({
 		mutationFn: (input: MutationInput<'updateBookmark'>) =>
@@ -372,7 +375,6 @@ async function update_entries(
 
 			// check for infinite data
 			if ('pages' in old) {
-				old;
 				return {
 					...old,
 					pages: old.pages.map((page) => ({
@@ -433,7 +435,7 @@ export async function updateEntries(
 		queryKey,
 	});
 
-	console.log({ previousQueries });
+	// console.log({ previousQueries });
 
 	// queryClient.getQueryCache().
 

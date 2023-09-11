@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { DocumentType, RelationType, Status } from '@prisma/client';
 import type { JSONContent } from '@tiptap/core';
@@ -172,7 +173,7 @@ export async function getNotebook({
 		.selectFrom('Annotation as a')
 		.innerJoin('Entry as e', 'a.entryId', 'e.id')
 		.select(annotations.select)
-		.select(withEntry)
+		// .select(withEntry)
 		.where('userId', '=', userId)
 		.where(({ cmpr, or }) =>
 			or([cmpr('a.type', '=', 'annotation'), cmpr('a.type', '=', 'note')]),
@@ -778,7 +779,6 @@ function validate_entry_type<TEntry extends { tweet?: unknown }>(
 		const { data, problems } = tweet_types.tweet(entry.tweet);
 		if (data) {
 			tweet = data;
-		} else {
 		}
 	}
 	entry.tweet = tweet;
@@ -838,7 +838,8 @@ export async function save_to_library({
 	ctx,
 	input,
 }: GetCtx<typeof saveToLibrarySchema>) {
-	let { entryId, status, type } = input;
+	const { status, type } = input;
+	let { entryId } = input;
 	if (!entryId) {
 		// then we need to create the entry
 		const { id } = await createEntry(input);
@@ -972,7 +973,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 		}
 		default: {
 			// TODO
-			input.type;
+			// input.type;
 		}
 	}
 
@@ -1330,7 +1331,11 @@ export async function notes({ ctx, input }: GetCtx<typeof notesInputSchema>) {
 		query = query.where((eb) => applyFilter(eb, restFilter));
 		if (content) {
 			query = query.where('a.contentData', 'is not', null);
-			query = query.where(generateSearchNotePhrase(content, 'a'));
+			query = query.where(
+				sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(a.contentData, '$**.text'))) LIKE '%${sql.raw(
+					content,
+				)}%'`,
+			);
 		}
 	}
 
@@ -1525,24 +1530,28 @@ export function favoriteContent(
 		jsonObjectFrom(
 			eb
 				.selectFrom('SmartList as v')
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				.whereRef('v.id', '=', `${alias}.smartListId` as any)
 				.select(['v.name', 'v.id']),
 		).as('view'),
 		jsonObjectFrom(
 			eb
 				.selectFrom('Collection as c')
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				.whereRef('c.id', '=', `${alias}.collectionId` as any)
 				.select(['c.name', 'c.id']),
 		).as('collection'),
 		jsonObjectFrom(
 			eb
 				.selectFrom('Tag as t')
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				.whereRef('t.id', '=', `${alias}.tagId` as any)
 				.select(['t.name', 't.id', 't.color']),
 		).as('tag'),
 		jsonObjectFrom(
 			eb
 				.selectFrom('Annotation as a')
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				.whereRef('a.id', '=', `${alias}.annotationId` as any)
 				// TODO: grabn more info?
 				.select(['a.title', 'a.color', 'a.icon', 'a.id']),
@@ -1550,9 +1559,12 @@ export function favoriteContent(
 		jsonObjectFrom(
 			eb
 				.selectFrom('Entry as e')
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				.whereRef('e.id', '=', `${alias}.entryId` as any)
+				.leftJoin('Bookmark as b', 'b.entryId', 'e.id')
 				// TODO: grabn more info?
-				.select(entrySelect),
+				.select(entrySelect)
+				.select('b.title as bookmarkTitle'),
 		).as('entry'),
 	];
 }

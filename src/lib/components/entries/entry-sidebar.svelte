@@ -32,6 +32,7 @@
 		TabsList,
 		TabsTrigger,
 	} from '$components/ui/tabs';
+	import autosize from '$lib/actions/autosize';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Relation from '$lib/components/Relation.svelte';
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
@@ -48,6 +49,7 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Muted } from '$lib/components/ui/typography';
 	import { isBrowser } from '$lib/helpers';
+	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
 	import { mutation } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { update_entry } from '$lib/state/entries';
@@ -67,6 +69,26 @@
 
 	const entriesQuery = createQuery(queryFactory.entries.all());
 
+	const updateBookmark = initUpdateBookmarkMutation();
+
+	function handleTitleBlur(e: FocusEvent) {
+		const target = e.target as HTMLTextAreaElement;
+		const title = target.value;
+		if (!$query.data?.entry) {
+			throw new Error('No data');
+		}
+		if (title === $derivedTitle) {
+			return;
+		}
+		$updateBookmark.mutate({
+			data: {
+				title,
+			},
+			entryId: $query.data.entry.id,
+			id: $query.data.entry.bookmark?.id,
+		});
+	}
+
 	const queryClient = useQueryClient();
 
 	const query = createQuery(
@@ -83,6 +105,15 @@
 			refetchOnMount: false,
 		})),
 	);
+
+	const derivedTitle = derived(query, ($query) => {
+		if (!$query.data?.entry) {
+			return null;
+		}
+		return (
+			$query.data.entry.bookmark?.title ?? $query.data.entry.title ?? 'Untitled'
+		);
+	});
 
 	const currentTab = persisted('sidebar_current_tab', 'details');
 
@@ -168,7 +199,7 @@
 </script>
 
 <aside
-    id="entry-sidebar"
+	id="entry-sidebar"
 	class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain"
 >
 	<!-- 2.5rem is size of sidebar toggle -->
@@ -191,7 +222,22 @@
 		<TabsContent value="details">
 			<CardHeader class="">
 				<div class="flex items-center gap-x-2">
-					<CardTitle>
+					{#if $query.data}
+						<!-- TODO: reset button -->
+						<textarea
+							on:blur={handleTitleBlur}
+							rows={1}
+							use:autosize
+							class="text-lg h-auto font-semibold leading-tight tracking-tight w-full resize-none bg-transparent focus:outline-none"
+							value={$derivedTitle}
+						></textarea>
+					{:else if $query.isError}
+						<Skeleton class="h-9 w-full grow" />
+					{:else}
+						<Skeleton class="h-9 w-full grow" />
+					{/if}
+
+					<!-- <CardTitle>
 						{#if $query.data}
 							{$query.data.entry?.bookmark?.title ??
 								$query.data.entry?.title ??
@@ -201,7 +247,7 @@
 						{:else}
 							<Skeleton class="h-9 w-full grow" />
 						{/if}
-					</CardTitle>
+					</CardTitle> -->
 				</div>
 			</CardHeader>
 			<CardContent class="space-y-4">
