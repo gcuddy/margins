@@ -6,7 +6,6 @@
 	import { writable } from 'svelte/store';
 
 	import { page } from '$app/stores';
-	import { AddButton } from '$components';
 	import GenericCommander from '$lib/commands/GenericCommander.svelte';
 	import DropBox from '$lib/components/DragHelper/DropBox.svelte';
 	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
@@ -21,17 +20,11 @@
 
 	// export let data;
 
-	// $: isEntry = $page.route.id?.includes("entry");
-	let isEntry = false;
-	$: is_article =
-		$page.url.pathname.startsWith('/tests/article') ||
-		$page.url.pathname.startsWith('/tests/pdf');
-	$: is_settings = $page.url.pathname.startsWith('/tests/settings');
-
 	// Right now this is hardcoded...
 
 	const is_entry = writable(false);
 	setContext('is_entry', is_entry);
+	// eslint-disable-next-line no-unused-expressions
 	$: $page.route.id?.startsWith(`/tests/(app2)/(listables)/[type=type]/[id]`)
 		? is_entry.set(true)
 		: is_entry.set(false);
@@ -48,7 +41,7 @@
 	// lazy load components?
 	let commander: ComponentType | undefined = undefined;
 	onMount(async () => {
-		let module = await import('./Commander.svelte');
+		const module = await import('./Commander.svelte');
 		commander = module.default;
 	});
 
@@ -67,7 +60,7 @@
 </script>
 
 <QueryClientPersister client={data.queryClient} let:isRestoring>
-    <ClipboardHandler />
+	<ClipboardHandler />
 	{#if commander}
 		<svelte:component this={commander} />
 	{/if}
@@ -80,7 +73,7 @@
 					<MainNav />
 				</header> -->
 			{/if}
-			<div class={cn('grid grid-cols-[auto,1fr,auto]')}>
+			<div class={cn('grid grid-cols-[auto,1fr,auto] grow')}>
 				<!-- w-[200px] -->
 				<div>
 					<aside
@@ -110,10 +103,9 @@
 					)}
 				>
 					<slot />
-					{#if !is_entry && data.urlForm}
+					<!-- {#if !is_entry && data.urlForm}
 						<AddButton urlForm={data.urlForm} />
-						<!--  -->
-					{/if}
+					{/if} -->
 				</main>
 			</div>
 		</div>

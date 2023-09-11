@@ -1,6 +1,13 @@
 <script lang="ts">
+	import type { HTMLAttributes } from 'svelte/elements';
+
 	import { cn } from '$lib/utils/tailwind';
-	let className = '';
+
+	type $$Props = HTMLAttributes<HTMLDivElement> & {
+		title?: string;
+	};
+
+	let className: $$Props['class'] = undefined;
 	export { className as class };
 
 	export let title = '';
@@ -9,8 +16,9 @@
 <div
 	class={cn(
 		'flex max-w-full shrink-0 items-center justify-between px-6 border-b sticky max-sm:flex-wrap top-0 bg-background gap-x-4 z-10 h-[--nav-height]',
-		className
+		className,
 	)}
+	{...$$restProps}
 >
 	<slot />
 	{#if $$slots.start}
@@ -20,7 +28,9 @@
 	{/if}
 	{#if title || $$slots.title}
 		<slot name="title">
-			<h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">{title}</h1>
+			<h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">
+				{title}
+			</h1>
 		</slot>
 	{/if}
 

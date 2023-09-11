@@ -8,6 +8,7 @@
 		Library,
 		PaletteIcon,
 		Plus,
+		XIcon,
 	} from 'lucide-svelte';
 	import { flip } from 'svelte/animate';
 	import { dndzone } from 'svelte-dnd-action';
@@ -44,7 +45,7 @@
 		type MutationInput,
 		query,
 	} from '$lib/queries/query';
-	import { isValidUrl } from '$lib/utils';
+	import { cn, isValidUrl } from '$lib/utils';
 
 	import CollectionItem from './collection-item.svelte';
 	import CollectionItemCard from './collection-item-card.svelte';
@@ -52,8 +53,7 @@
 	export let data;
 
 	$: hsl = hexToHsl(data.collection.bgColor);
-
-	// let font: 'sans' | 'serif' | 'mono' = 'sans';
+	$: hslString = `${hsl[0]}deg ${hsl[1]}% ${hsl[2]}%`;
 
 	const fonts = [
 		{
@@ -80,6 +80,7 @@
 			: font?.value === 'serif'
 			? 'font-serif'
 			: 'font-mono';
+
 	const collectionUpdateMutation = createMutation({
 		mutationFn: (input: MutationInput<'collectionUpdate'>['data']) =>
 			mutate('collectionUpdate', {
@@ -209,7 +210,14 @@
 	}
 </script>
 
-<Header>
+<Header
+	style={data.collection.bgColor
+		? styleToString({
+				background: `hsl(${hslString} / 0.5)`,
+				'border-color': `hsl(${hslString} / 0.75)`,
+		  })
+		: undefined}
+>
 	<svelte:fragment slot="start">
 		<span class="flex items-center gap-2 font-medium tracking-tight"
 			>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
@@ -242,7 +250,7 @@
 					builders={[builder]}
 					variant="ghost"
 					size="icon"
-					class="h-9 w-9"
+					class="h-9 w-9 hover:bg-accent/90"
 				>
 					<PaletteIcon class="h-4 w-4" />
 					<span class="sr-only">Customize</span>
@@ -252,19 +260,33 @@
 				<div class="flex flex-col gap-4">
 					<div class="flex items-center justify-between">
 						<Label for="collection-bg-color">Background color</Label>
-						<input
-							bind:value={data.collection.bgColor}
-							id="collection-bg-color"
-							class=""
-							type="color"
-						/>
+						<div class="flex gap-0.5 items-center">
+							{#if data.collection.bgColor}
+								<Button
+									on:click={() => {
+										data.collection.bgColor = null;
+									}}
+									variant="ghost"
+									size="icon"
+									class="h-6 w-6"
+								>
+									<XIcon class="h-3 w-3" />
+								</Button>
+							{/if}
+							<input
+								bind:value={data.collection.bgColor}
+								id="collection-bg-color"
+								class=""
+								type="color"
+							/>
+						</div>
 					</div>
 					<div class="flex items-center justify-between">
 						<Label for="collection-font">Font</Label>
 						<!--  -->
 						<Select.Root bind:selected={font}>
 							<Select.Trigger class="w-[180px]">
-								<Select.Value placeholder="Select a fruit" />
+								<Select.Value class={fontClass} placeholder="Select a  font" />
 							</Select.Trigger>
 							<Select.Content>
 								<Select.Item value="sans" class="font-sans text-xl"
@@ -287,7 +309,12 @@
 	<svelte:fragment slot="end">
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild let:builder>
-				<Button builders={[builder]} variant="outline" size="sm" class="px-2">
+				<Button
+					builders={[builder]}
+					variant="outline"
+					size="sm"
+					class="px-2 bg-background/75"
+				>
 					<Plus class="mr-2 h-4 w-4" />
 					Add to collection
 					<ChevronDown class="ml-2 h-4 w-4 text-secondary-foreground" />
@@ -343,13 +370,12 @@
 	}}
 />
 <div
-	style:--bg-color={data.collection.bgColor
-		? `${hsl[0]}deg ${hsl[1]}% ${hsl[2]}%`
-		: undefined}
+	style:--bg-color={data.collection.bgColor ? hslString : undefined}
 	style={styleToString({
 		'background-color':
 			'hsl(var(--bg-color, var(--background)) / var(--tw-bg-opacity))',
 	})}
+	class="grow h-full"
 >
 	<div class="flex gap-2 flex-col max-w-prose mx-auto w-full px-2 md:px-0">
 		<div class="flex pt-3 flex-col">
