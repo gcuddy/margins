@@ -21,6 +21,8 @@
 	import CollectionItemCard from './collection-item-card.svelte';
 
 	export let item: PageData['collection']['items'][number];
+	let className: string | undefined = undefined;
+	export { className as class };
 
 	const bookmarkCreateMutation = initBookmarkCreateMutation();
 
@@ -61,7 +63,7 @@
 		(item.width as ComponentProps<CollectionItemCard>['width']) ?? 'default';
 </script>
 
-<CollectionItemCard bind:width {item}>
+<CollectionItemCard class={className} bind:width {item}>
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger asChild let:builder>
 			<Button

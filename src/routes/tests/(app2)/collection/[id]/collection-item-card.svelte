@@ -23,6 +23,7 @@
 	type State = Loading | Loaded;
 
 	type $$Props = State & {
+		class?: string;
 		width?: 'default' | 'wide';
 	};
 
@@ -31,14 +32,17 @@
 	// TODO: GET AVERAGE COLOR...
 
 	export let width: 'default' | 'wide' = 'default';
+	let className: $$Props['class'] = undefined;
+	export { className as class };
 
 	export let loading = false;
 </script>
 
 <Card.Root
 	class={cn(
-		'w-52 h-72 overflow-auto flex flex-col p-4 gap-4 relative group max-w-full transition-[width]',
+		'w-52 h-72 overflow-auto flex flex-col p-4 gap-4 relative group max-w-full transition-[width] bg-card/50',
 		width === 'wide' && 'w-[432px] lg:w-[432px] md:w-[653px] flex-row p-0',
+		className,
 	)}
 >
 	{#if loading}

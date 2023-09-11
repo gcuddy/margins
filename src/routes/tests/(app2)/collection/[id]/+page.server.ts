@@ -28,7 +28,14 @@ export const load = (async ({ depends, locals, params }) => {
 	const collection = await db
 		.selectFrom('Collection as c')
 		.leftJoin('Favorite as p', 'p.collectionId', 'c.id')
-		.select(['c.id', 'c.name', 'p.id as pin_id', 'c.description'])
+		.select([
+			'c.id',
+			'c.name',
+			'p.id as pin_id',
+			'c.description',
+			'c.bgColor',
+			'c.font',
+		])
 		// If there's no icon, default to "Box"
 		.select((eb) => [
 			eb.fn.coalesce('c.icon', sql<string>`"Box"`).as('icon'),

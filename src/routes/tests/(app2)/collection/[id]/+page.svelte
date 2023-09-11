@@ -6,6 +6,7 @@
 		ChevronRightIcon,
 		FilmIcon,
 		Library,
+		PaletteIcon,
 		Plus,
 	} from 'lucide-svelte';
 	import { flip } from 'svelte/animate';
@@ -19,6 +20,9 @@
 	import * as Command from '$components/ui/command2';
 	import { createCommandDialogStore } from '$components/ui/command2/utils';
 	import Header from '$components/ui/Header.svelte';
+	import Label from '$components/ui/Label.svelte';
+	import * as Popover from '$components/ui/popover';
+	import * as Select from '$components/ui/select';
 	import autosize from '$lib/actions/autosize';
 	import { Entries, Movies } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
@@ -31,6 +35,8 @@
 		DropdownMenuSeparator,
 		DropdownMenuTrigger,
 	} from '$lib/components/ui/dropdown-menu';
+	import { styleToString } from '$lib/helpers';
+	import { hexToHsl } from '$lib/helpers/color';
 	import { nanoid } from '$lib/nanoid';
 	import {
 		mutate,
@@ -43,6 +49,37 @@
 	import CollectionItem from './collection-item.svelte';
 	import CollectionItemCard from './collection-item-card.svelte';
 
+	export let data;
+
+	$: hsl = hexToHsl(data.collection.bgColor);
+
+	// let font: 'sans' | 'serif' | 'mono' = 'sans';
+
+	const fonts = [
+		{
+			label: 'Sans',
+			value: 'sans',
+		},
+		{
+			label: 'Serif',
+			value: 'serif',
+		},
+		{
+			label: 'Mono',
+			value: 'mono',
+		},
+	];
+
+	let font = data.collection.font
+		? fonts.find((f) => f.value === data.collection.font)
+		: fonts[0];
+
+	$: fontClass =
+		font?.value === 'sans'
+			? 'font-sans'
+			: font?.value === 'serif'
+			? 'font-serif'
+			: 'font-mono';
 	const collectionUpdateMutation = createMutation({
 		mutationFn: (input: MutationInput<'collectionUpdate'>['data']) =>
 			mutate('collectionUpdate', {
@@ -69,10 +106,10 @@
 		},
 	});
 
-	export let data;
-
 	let lastSavedTitle = data.collection.name;
 	let lastSavedDescription = data.collection.description;
+	let lastSavedBgColor = data.collection.bgColor;
+	let lastSavedFont = font;
 
 	$: ({ pin_id } = data.collection);
 	const commander = createCommandDialogStore();
@@ -173,10 +210,80 @@
 </script>
 
 <Header>
-	<span class="flex items-center gap-2 font-medium tracking-tight"
-		>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
-		{data.collection.name}</span
-	>
+	<svelte:fragment slot="start">
+		<span class="flex items-center gap-2 font-medium tracking-tight"
+			>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
+			{data.collection.name}</span
+		>
+		<Popover.Root
+			onOpenChange={(open) => {
+				if (open === false) {
+					// if closing, then save
+					if (
+						data.collection.bgColor === lastSavedBgColor &&
+						font === lastSavedFont
+					) {
+						return;
+					}
+					$collectionUpdateMutation.mutate({
+						bgColor: data.collection.bgColor,
+						font: font?.value,
+					});
+					lastSavedBgColor = data.collection.bgColor;
+					lastSavedFont = font;
+					if (font?.value) {
+						data.collection.font = font?.value;
+					}
+				}
+			}}
+		>
+			<Popover.Trigger let:builder asChild>
+				<Button
+					builders={[builder]}
+					variant="ghost"
+					size="icon"
+					class="h-9 w-9"
+				>
+					<PaletteIcon class="h-4 w-4" />
+					<span class="sr-only">Customize</span>
+				</Button>
+			</Popover.Trigger>
+			<Popover.Content>
+				<div class="flex flex-col gap-4">
+					<div class="flex items-center justify-between">
+						<Label for="collection-bg-color">Background color</Label>
+						<input
+							bind:value={data.collection.bgColor}
+							id="collection-bg-color"
+							class=""
+							type="color"
+						/>
+					</div>
+					<div class="flex items-center justify-between">
+						<Label for="collection-font">Font</Label>
+						<!--  -->
+						<Select.Root bind:selected={font}>
+							<Select.Trigger class="w-[180px]">
+								<Select.Value placeholder="Select a fruit" />
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="sans" class="font-sans text-xl"
+									>Sans</Select.Item
+								>
+								<Select.Item value="serif" class="font-serif text-xl"
+									>Serif</Select.Item
+								>
+								<Select.Item value="mono" class="font-mono text-xl"
+									>Mono</Select.Item
+								>
+								<!-- TODO: slab serif, heavy sans (or allow customizing font weight, font tracking) -->
+							</Select.Content>
+						</Select.Root>
+					</div>
+				</div>
+			</Popover.Content>
+		</Popover.Root>
+	</svelte:fragment>
 	<svelte:fragment slot="end">
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild let:builder>
@@ -206,59 +313,6 @@
 		<PinButton {pin_id} />
 	</svelte:fragment>
 </Header>
-
-<div class="flex gap-2 flex-col max-w-prose mx-auto w-full px-2 md:px-0">
-	<div class="flex pt-3 flex-col">
-		<IconPicker
-			bind:activeIcon={data.collection.icon}
-			bind:activeColor={data.collection.color}
-			on:select={({ detail }) => {
-				const { color, icon } = detail;
-				$collectionUpdateMutation.mutate({
-					color,
-					icon,
-				});
-			}}
-		/>
-		<textarea
-			bind:value={data.collection.name}
-			on:blur={() => {
-				if (data.collection.name === lastSavedTitle) {
-					return;
-				}
-				$collectionUpdateMutation.mutate({
-					name: data.collection.name,
-				});
-				lastSavedTitle = data.collection.name;
-			}}
-			placeholder="Untitled note"
-			use:autosize
-			rows={1}
-			class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/75 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl"
-		/>
-	</div>
-	<!-- TODO: should we render markdown here? -->
-	<textarea
-		class="placeholder:text-muted-foreground/75 transition text-muted-foreground focus-visible:text-foreground w-full h-auto resize-none apearance-none focus:outline-none"
-		placeholder="Notes"
-		rows={1}
-		bind:value={data.collection.description}
-		on:blur={() => {
-			if (data.collection.description === lastSavedDescription) {
-				return;
-			}
-			$collectionUpdateMutation.mutate({
-				description: data.collection.description,
-			});
-			lastSavedDescription = data.collection.description;
-		}}
-	/>
-</div>
-
-<!-- <form action="?/add_section" method="post">
-	<Button>Add section</Button>
-</form> -->
-
 <svelte:document
 	on:paste={async (e) => {
 		const a = document.activeElement;
@@ -288,62 +342,111 @@
 		// TODO: interactive toast with setting option for allowing paste or disabling paste
 	}}
 />
-
-<!-- {JSON.stringify(data.collection.items)} -->
-<!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
 <div
-	class="mt-8 flex flex-wrap gap-4 container mx-auto px-2 sm:px-4"
-	use:dndzone={{
-		dragDisabled: !data.collection.items.length,
-		flipDurationMs: 200,
-		items: data.collection.items,
-		morphDisabled: true,
-		type: 'collection-items',
-	}}
-	on:consider={(e) => {
-		data.collection.items = e.detail.items;
-	}}
-	on:finalize={(e) => {
-		data.collection.items = e.detail.items;
-		// Now deal with updating positions
-		const { info } = e.detail;
-		const { id } = info;
-		// find the item that was dragged
-		const idx = data.collection.items.findIndex((i) => i.id === id);
-		if (idx === -1) {
-			return;
-		}
-		const moved = data.collection.items[idx];
-		if (!moved) {
-			return;
-		}
-		// Get new position
-		if (idx === 0) {
-			const newPosition = (data.collection.items[1]?.position ?? 0) - 100;
-			moved.position = newPosition;
-			$updateCollectionItemsPositionsMutation.mutate([
-				{
-					collectionId: data.collection.id,
-					id,
-					position: newPosition,
-				},
-			]);
-		} else if (idx === data.collection.items.length - 1) {
-			const newPosition = (data.collection.items[idx - 1]?.position ?? 0) + 100;
-			moved.position = newPosition;
-			$updateCollectionItemsPositionsMutation.mutate([
-				{
-					collectionId: data.collection.id,
-					id,
-					position: newPosition,
-				},
-			]);
-		} else {
-			// see if we can slot between the two items
-			const prevPosition = data.collection.items[idx - 1]?.position ?? 0;
-			const nextPosition = data.collection.items[idx + 1]?.position ?? 0;
-			if (nextPosition - prevPosition > 1) {
-				const newPosition = Math.round((prevPosition + nextPosition) / 2);
+	style:--bg-color={data.collection.bgColor
+		? `${hsl[0]}deg ${hsl[1]}% ${hsl[2]}%`
+		: undefined}
+	style={styleToString({
+		'background-color':
+			'hsl(var(--bg-color, var(--background)) / var(--tw-bg-opacity))',
+	})}
+>
+	<div class="flex gap-2 flex-col max-w-prose mx-auto w-full px-2 md:px-0">
+		<div class="flex pt-3 flex-col">
+			<IconPicker
+				class="bg-background/50"
+				bind:activeIcon={data.collection.icon}
+				bind:activeColor={data.collection.color}
+				on:select={({ detail }) => {
+					const { color, icon } = detail;
+					$collectionUpdateMutation.mutate({
+						color,
+						icon,
+					});
+				}}
+			/>
+			<!-- TODO: get accessible color combo and tweak till it is using colord -->
+			<textarea
+				bind:value={data.collection.name}
+				on:blur={() => {
+					if (data.collection.name === lastSavedTitle) {
+						return;
+					}
+					$collectionUpdateMutation.mutate({
+						name: data.collection.name,
+					});
+					lastSavedTitle = data.collection.name;
+				}}
+				placeholder="Untitled note"
+				use:autosize
+				rows={1}
+				class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/75 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl {fontClass}"
+			/>
+		</div>
+		<!-- TODO: should we render markdown here? -->
+		<textarea
+			class="placeholder:text-muted-foreground/75 bg-transparent transition text-muted-foreground focus-visible:text-foreground w-full h-auto resize-none apearance-none focus:outline-none {fontClass}"
+			placeholder="Notes"
+			rows={1}
+			bind:value={data.collection.description}
+			on:blur={() => {
+				if (data.collection.description === lastSavedDescription) {
+					return;
+				}
+				$collectionUpdateMutation.mutate({
+					description: data.collection.description,
+				});
+				lastSavedDescription = data.collection.description;
+			}}
+		/>
+	</div>
+
+	<!-- <form action="?/add_section" method="post">
+	<Button>Add section</Button>
+</form> -->
+
+	<!-- {JSON.stringify(data.collection.items)} -->
+	<!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
+	<div
+		class="mt-8 flex flex-wrap gap-4 container mx-auto px-2 sm:px-4"
+		use:dndzone={{
+			dragDisabled: !data.collection.items.length,
+			flipDurationMs: 200,
+			items: data.collection.items,
+			morphDisabled: true,
+			type: 'collection-items',
+		}}
+		on:consider={(e) => {
+			data.collection.items = e.detail.items;
+		}}
+		on:finalize={(e) => {
+			data.collection.items = e.detail.items;
+			// Now deal with updating positions
+			const { info } = e.detail;
+			const { id } = info;
+			// find the item that was dragged
+			const idx = data.collection.items.findIndex((i) => i.id === id);
+			if (idx === -1) {
+				return;
+			}
+			const moved = data.collection.items[idx];
+			if (!moved) {
+				return;
+			}
+			// Get new position
+			if (idx === 0) {
+				const newPosition = (data.collection.items[1]?.position ?? 0) - 100;
+				moved.position = newPosition;
+				$updateCollectionItemsPositionsMutation.mutate([
+					{
+						collectionId: data.collection.id,
+						id,
+						position: newPosition,
+					},
+				]);
+			} else if (idx === data.collection.items.length - 1) {
+				const newPosition =
+					(data.collection.items[idx - 1]?.position ?? 0) + 100;
 				moved.position = newPosition;
 				$updateCollectionItemsPositionsMutation.mutate([
 					{
@@ -353,31 +456,46 @@
 					},
 				]);
 			} else {
-				// TODO: handle case where we can't slot between the two items
+				// see if we can slot between the two items
+				const prevPosition = data.collection.items[idx - 1]?.position ?? 0;
+				const nextPosition = data.collection.items[idx + 1]?.position ?? 0;
+				if (nextPosition - prevPosition > 1) {
+					const newPosition = Math.round((prevPosition + nextPosition) / 2);
+					moved.position = newPosition;
+					$updateCollectionItemsPositionsMutation.mutate([
+						{
+							collectionId: data.collection.id,
+							id,
+							position: newPosition,
+						},
+					]);
+				} else {
+					// TODO: handle case where we can't slot between the two items
+				}
 			}
-		}
-	}}
->
-	{#each data.collection.items as item (item.id)}
-		<div animate:flip={{ duration: 200 }}>
-			{#if 'pending' in item && item.pending}
-				<CollectionItemCard loading />
-			{:else}
-				{#if item.type === 'Section'}
-					Section
+		}}
+	>
+		{#each data.collection.items as item (item.id)}
+			<div animate:flip={{ duration: 200 }}>
+				{#if 'pending' in item && item.pending}
+					<CollectionItemCard loading />
+				{:else}
+					{#if item.type === 'Section'}
+						Section
+					{/if}
+					<CollectionItem class={fontClass} {item} />
 				{/if}
-				<CollectionItem {item} />
-			{/if}
-		</div>
-	{:else}
-		<div class="p-8 flex flex-col gap-2 items-center justify-center w-full">
-			<span class="text-muted-foreground">No items yet</span>
-			<Button on:click={addEntry} variant="secondary" size="sm">
-				<Plus class="mr-2 h-4 w-4" />
-				Add item
-			</Button>
-		</div>
-	{/each}
+			</div>
+		{:else}
+			<div class="p-8 flex flex-col gap-2 items-center justify-center w-full">
+				<span class="text-muted-foreground">No items yet</span>
+				<Button on:click={addEntry} variant="secondary" size="sm">
+					<Plus class="mr-2 h-4 w-4" />
+					Add item
+				</Button>
+			</div>
+		{/each}
+	</div>
 </div>
 
 <Command.Dialog bind:open={$commander.open}>

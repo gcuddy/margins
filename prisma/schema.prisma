@@ -521,6 +521,8 @@ model Collection {
     private     Boolean           @default(true)
     icon        String?
     color       String?           @db.VarChar(9)
+    bgColor     String?           @db.VarChar(9)
+    font        String?           @db.VarChar(255)
     userId      String
     description String?
     createdAt   DateTime          @default(now())

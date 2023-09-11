@@ -1,19 +1,37 @@
 <script lang="ts">
-	import { Select as SelectPrimitive } from "@huntabyte/primitives";
-	import { cn } from "$lib/utils";
+	import { Select as SelectPrimitive } from 'bits-ui';
+	import { scale } from 'svelte/transition';
+
+	import { cn, flyAndScale } from '$lib/utils';
 
 	type $$Props = SelectPrimitive.ContentProps;
+	type $$Events = SelectPrimitive.ContentEvents;
+	export let inTransition: $$Props['inTransition'] = flyAndScale;
+	export let inTransitionConfig: $$Props['inTransitionConfig'] = undefined;
+	export let outTransition: $$Props['outTransition'] = scale;
+	export let outTransitionConfig: $$Props['outTransitionConfig'] = {
+		duration: 50,
+		opacity: 0,
+		start: 0.95,
+	};
 
-	let className: $$Props["class"] = undefined;
+	let className: $$Props['class'] = undefined;
 	export { className as class };
 </script>
 
 <SelectPrimitive.Content
+	{inTransition}
+	{inTransitionConfig}
+	{outTransition}
+	{outTransitionConfig}
 	class={cn(
-		"relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-80 translate-y-1 outline-none",
-		className
+		'relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md outline-none',
+		className,
 	)}
 	{...$$restProps}
+	on:keydown
 >
-	<slot />
+	<div class="w-full p-1">
+		<slot />
+	</div>
 </SelectPrimitive.Content>

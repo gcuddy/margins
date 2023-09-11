@@ -278,6 +278,8 @@ export type Collection = {
 	private: Generated<number>;
 	icon: string | null;
 	color: string | null;
+	bgColor: string | null;
+	font: string | null;
 	userId: string;
 	description: string | null;
 	createdAt: Generated<Timestamp>;
