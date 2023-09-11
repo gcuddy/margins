@@ -219,93 +219,97 @@
 		: undefined}
 >
 	<svelte:fragment slot="start">
-		<span class="flex items-center gap-2 font-medium tracking-tight"
+		<span
+			class="sm:text-base text-sm flex items-center gap-2 font-medium tracking-tight truncate"
 			>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
-			{data.collection.name}</span
-		>
-		<Popover.Root
-			onOpenChange={(open) => {
-				if (open === false) {
-					// if closing, then save
-					if (
-						data.collection.bgColor === lastSavedBgColor &&
-						font === lastSavedFont
-					) {
-						return;
+			<span class="truncate">{data.collection.name}</span>
+			<Popover.Root
+				onOpenChange={(open) => {
+					if (open === false) {
+						// if closing, then save
+						if (
+							data.collection.bgColor === lastSavedBgColor &&
+							font === lastSavedFont
+						) {
+							return;
+						}
+						$collectionUpdateMutation.mutate({
+							bgColor: data.collection.bgColor,
+							font: font?.value,
+						});
+						lastSavedBgColor = data.collection.bgColor;
+						lastSavedFont = font;
+						if (font?.value) {
+							data.collection.font = font?.value;
+						}
 					}
-					$collectionUpdateMutation.mutate({
-						bgColor: data.collection.bgColor,
-						font: font?.value,
-					});
-					lastSavedBgColor = data.collection.bgColor;
-					lastSavedFont = font;
-					if (font?.value) {
-						data.collection.font = font?.value;
-					}
-				}
-			}}
-		>
-			<Popover.Trigger let:builder asChild>
-				<Button
-					builders={[builder]}
-					variant="ghost"
-					size="icon"
-					class="h-9 w-9 hover:bg-accent/90"
-				>
-					<PaletteIcon class="h-4 w-4" />
-					<span class="sr-only">Customize</span>
-				</Button>
-			</Popover.Trigger>
-			<Popover.Content>
-				<div class="flex flex-col gap-4">
-					<div class="flex items-center justify-between">
-						<Label for="collection-bg-color">Background color</Label>
-						<div class="flex gap-0.5 items-center">
-							{#if data.collection.bgColor}
-								<Button
-									on:click={() => {
-										data.collection.bgColor = null;
-									}}
-									variant="ghost"
-									size="icon"
-									class="h-6 w-6"
-								>
-									<XIcon class="h-3 w-3" />
-								</Button>
-							{/if}
-							<input
-								bind:value={data.collection.bgColor}
-								id="collection-bg-color"
-								class=""
-								type="color"
-							/>
+				}}
+			>
+				<Popover.Trigger let:builder asChild>
+					<Button
+						builders={[builder]}
+						variant="ghost"
+						size="icon"
+						class="h-9 w-9 hover:bg-accent/90"
+					>
+						<PaletteIcon class="h-4 w-4" />
+						<span class="sr-only">Customize</span>
+					</Button>
+				</Popover.Trigger>
+				<Popover.Content>
+					<div class="flex flex-col gap-4">
+						<div class="flex items-center justify-between">
+							<Label for="collection-bg-color">Background color</Label>
+							<div class="flex gap-0.5 items-center">
+								{#if data.collection.bgColor}
+									<Button
+										on:click={() => {
+											data.collection.bgColor = null;
+										}}
+										variant="ghost"
+										size="icon"
+										class="h-6 w-6"
+									>
+										<XIcon class="h-3 w-3" />
+									</Button>
+								{/if}
+								<input
+									bind:value={data.collection.bgColor}
+									id="collection-bg-color"
+									class=""
+									type="color"
+								/>
+							</div>
+						</div>
+						<div class="flex items-center justify-between">
+							<Label for="collection-font">Font</Label>
+							<!--  -->
+							<Select.Root bind:selected={font}>
+								<Select.Trigger class="w-[180px]">
+									<Select.Value
+										class={fontClass}
+										placeholder="Select a  font"
+									/>
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Item value="sans" class="font-sans text-xl"
+										>Sans</Select.Item
+									>
+									<Select.Item value="serif" class="font-serif text-xl"
+										>Serif</Select.Item
+									>
+									<Select.Item value="mono" class="font-mono text-xl"
+										>Mono</Select.Item
+									>
+									<!-- TODO: slab serif, heavy sans (or allow customizing font weight, font tracking) -->
+								</Select.Content>
+							</Select.Root>
 						</div>
 					</div>
-					<div class="flex items-center justify-between">
-						<Label for="collection-font">Font</Label>
-						<!--  -->
-						<Select.Root bind:selected={font}>
-							<Select.Trigger class="w-[180px]">
-								<Select.Value class={fontClass} placeholder="Select a  font" />
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="sans" class="font-sans text-xl"
-									>Sans</Select.Item
-								>
-								<Select.Item value="serif" class="font-serif text-xl"
-									>Serif</Select.Item
-								>
-								<Select.Item value="mono" class="font-mono text-xl"
-									>Mono</Select.Item
-								>
-								<!-- TODO: slab serif, heavy sans (or allow customizing font weight, font tracking) -->
-							</Select.Content>
-						</Select.Root>
-					</div>
-				</div>
-			</Popover.Content>
-		</Popover.Root>
-	</svelte:fragment>
+				</Popover.Content>
+			</Popover.Root>
+		</span></svelte:fragment
+	>
 	<svelte:fragment slot="end">
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild let:builder>
@@ -313,11 +317,11 @@
 					builders={[builder]}
 					variant="outline"
 					size="sm"
-					class="px-2 bg-background/75"
+					class="px-2 bg-background/75 flex gap-2"
 				>
-					<Plus class="mr-2 h-4 w-4" />
-					Add to collection
-					<ChevronDown class="ml-2 h-4 w-4 text-secondary-foreground" />
+					<Plus class="h-4 w-4" />
+					<span class="max-sm:hidden">Add to collection</span>
+					<ChevronDown class="h-4 w-4 text-secondary-foreground" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent class="w-[200px]">
