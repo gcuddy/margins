@@ -1,22 +1,30 @@
 <script lang="ts">
 	import { createMutation } from '@tanstack/svelte-query';
 	import {
+		ArchiveRestore,
 		BookMarked,
 		ChevronDown,
 		ChevronRightIcon,
 		FilmIcon,
 		Library,
+		LinkIcon,
+		LockIcon,
+		MoreHorizontalIcon,
 		PaletteIcon,
 		Plus,
+		TrashIcon,
+		UnlockIcon,
 		XIcon,
 	} from 'lucide-svelte';
 	import { flip } from 'svelte/animate';
 	import { dndzone } from 'svelte-dnd-action';
 	import { toast } from 'svelte-sonner';
 
+	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { IconPicker } from '$components/icon-picker';
+	import * as AlertDialog from '$components/ui/alert-dialog';
 	import { Button } from '$components/ui/button';
 	import * as Command from '$components/ui/command2';
 	import { createCommandDialogStore } from '$components/ui/command2/utils';
@@ -45,7 +53,7 @@
 		type MutationInput,
 		query,
 	} from '$lib/queries/query';
-	import { cn, isValidUrl } from '$lib/utils';
+	import { isValidUrl } from '$lib/utils';
 
 	import CollectionItem from './collection-item.svelte';
 	import CollectionItemCard from './collection-item-card.svelte';
@@ -208,6 +216,8 @@
 			},
 		});
 	}
+
+	let isDeleteAlertOpen = false;
 </script>
 
 <Header
@@ -223,91 +233,155 @@
 			class="sm:text-base text-sm flex items-center gap-2 font-medium tracking-tight truncate"
 			>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
 			<span class="truncate">{data.collection.name}</span>
-			<Popover.Root
-				onOpenChange={(open) => {
-					if (open === false) {
-						// if closing, then save
-						if (
-							data.collection.bgColor === lastSavedBgColor &&
-							font === lastSavedFont
-						) {
-							return;
+			<div class="flex gap-0.5">
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild let:builder>
+						<Button
+							variant="ghost"
+							size="icon"
+							class="h-9 w-9 hover:bg-accent/90"
+							builders={[builder]}
+						>
+							<MoreHorizontalIcon class="h-4 w-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent class="w-52">
+						<DropdownMenuGroup>
+							<DropdownMenuItem
+								on:click={async () => {
+									$collectionUpdateMutation.mutate({
+										private: data.collection.private ? 0 : 1,
+									});
+									invalidate('collection');
+								}}
+							>
+								<svelte:component
+									this={data.collection.private ? UnlockIcon : LockIcon}
+									class="mr-2 h-4 w-4"
+								/> Make collection {data.collection.private
+									? 'public'
+									: 'private'}</DropdownMenuItem
+							>
+							{#if !data.collection.private}
+								<DropdownMenuItem>
+									<LinkIcon class="mr-2 h-4 w-4" />
+									Copy public link</DropdownMenuItem
+								>
+							{/if}
+						</DropdownMenuGroup>
+						<DropdownMenuSeparator />
+						<DropdownMenuGroup>
+							{#if data.collection.deleted}
+								<DropdownMenuItem
+									on:click={async () => {
+										$collectionUpdateMutation.mutate({
+											deleted: null,
+										});
+										await invalidate('collection');
+									}}
+								>
+									<ArchiveRestore class="mr-2 h-4 w-4" />
+									Restore</DropdownMenuItem
+								>
+							{:else}
+								<DropdownMenuItem
+									on:click={() => {
+										isDeleteAlertOpen = true;
+									}}
+								>
+									<TrashIcon class="mr-2 h-4 w-4" />
+									Delete</DropdownMenuItem
+								>
+							{/if}
+						</DropdownMenuGroup>
+					</DropdownMenuContent>
+				</DropdownMenu>
+				<Popover.Root
+					onOpenChange={(open) => {
+						if (open === false) {
+							// if closing, then save
+							if (
+								data.collection.bgColor === lastSavedBgColor &&
+								font === lastSavedFont
+							) {
+								return;
+							}
+							$collectionUpdateMutation.mutate({
+								bgColor: data.collection.bgColor,
+								font: font?.value,
+							});
+							lastSavedBgColor = data.collection.bgColor;
+							lastSavedFont = font;
+							if (font?.value) {
+								data.collection.font = font?.value;
+							}
 						}
-						$collectionUpdateMutation.mutate({
-							bgColor: data.collection.bgColor,
-							font: font?.value,
-						});
-						lastSavedBgColor = data.collection.bgColor;
-						lastSavedFont = font;
-						if (font?.value) {
-							data.collection.font = font?.value;
-						}
-					}
-				}}
-			>
-				<Popover.Trigger let:builder asChild>
-					<Button
-						builders={[builder]}
-						variant="ghost"
-						size="icon"
-						class="h-9 w-9 hover:bg-accent/90"
-					>
-						<PaletteIcon class="h-4 w-4" />
-						<span class="sr-only">Customize</span>
-					</Button>
-				</Popover.Trigger>
-				<Popover.Content>
-					<div class="flex flex-col gap-4">
-						<div class="flex items-center justify-between">
-							<Label for="collection-bg-color">Background color</Label>
-							<div class="flex gap-0.5 items-center">
-								{#if data.collection.bgColor}
-									<Button
-										on:click={() => {
-											data.collection.bgColor = null;
-										}}
-										variant="ghost"
-										size="icon"
-										class="h-6 w-6"
-									>
-										<XIcon class="h-3 w-3" />
-									</Button>
-								{/if}
-								<input
-									bind:value={data.collection.bgColor}
-									id="collection-bg-color"
-									class=""
-									type="color"
-								/>
+					}}
+				>
+					<Popover.Trigger let:builder asChild>
+						<Button
+							builders={[builder]}
+							variant="ghost"
+							size="icon"
+							class="h-9 w-9 hover:bg-accent/90"
+						>
+							<PaletteIcon class="h-4 w-4" />
+							<span class="sr-only">Customize</span>
+						</Button>
+					</Popover.Trigger>
+					<Popover.Content>
+						<div class="flex flex-col gap-4">
+							<div class="flex items-center justify-between">
+								<Label for="collection-bg-color">Background color</Label>
+								<div class="flex gap-0.5 items-center">
+									{#if data.collection.bgColor}
+										<Button
+											on:click={() => {
+												data.collection.bgColor = null;
+											}}
+											variant="ghost"
+											size="icon"
+											class="h-6 w-6"
+										>
+											<XIcon class="h-3 w-3" />
+										</Button>
+									{/if}
+									<input
+										bind:value={data.collection.bgColor}
+										id="collection-bg-color"
+										class=""
+										type="color"
+									/>
+								</div>
+							</div>
+							<div class="flex items-center justify-between">
+								<Label for="collection-font">Font</Label>
+								<!--  -->
+								<Select.Root bind:selected={font}>
+									<Select.Trigger class="w-[180px]">
+										<Select.Value
+											class={fontClass}
+											placeholder="Select a  font"
+										/>
+									</Select.Trigger>
+									<Select.Content>
+										<Select.Item value="sans" class="font-sans text-xl"
+											>Sans</Select.Item
+										>
+										<Select.Item value="serif" class="font-serif text-xl"
+											>Serif</Select.Item
+										>
+										<Select.Item value="mono" class="font-mono text-xl"
+											>Mono</Select.Item
+										>
+										<!-- TODO: slab serif, heavy sans (or allow customizing font weight, font tracking) -->
+									</Select.Content>
+								</Select.Root>
 							</div>
 						</div>
-						<div class="flex items-center justify-between">
-							<Label for="collection-font">Font</Label>
-							<!--  -->
-							<Select.Root bind:selected={font}>
-								<Select.Trigger class="w-[180px]">
-									<Select.Value
-										class={fontClass}
-										placeholder="Select a  font"
-									/>
-								</Select.Trigger>
-								<Select.Content>
-									<Select.Item value="sans" class="font-sans text-xl"
-										>Sans</Select.Item
-									>
-									<Select.Item value="serif" class="font-serif text-xl"
-										>Serif</Select.Item
-									>
-									<Select.Item value="mono" class="font-mono text-xl"
-										>Mono</Select.Item
-									>
-									<!-- TODO: slab serif, heavy sans (or allow customizing font weight, font tracking) -->
-								</Select.Content>
-							</Select.Root>
-						</div>
-					</div>
-				</Popover.Content>
-			</Popover.Root>
+					</Popover.Content>
+				</Popover.Root>
+			</div>
 		</span></svelte:fragment
 	>
 	<svelte:fragment slot="end">
@@ -344,6 +418,13 @@
 		<PinButton {pin_id} />
 	</svelte:fragment>
 </Header>
+
+{#if data.collection.deleted}
+	<Header>
+		<span class="text-muted-foreground">This collection has been deleted</span>
+	</Header>
+{/if}
+<!-- {data.collection.deleted} -->
 <svelte:document
 	on:paste={async (e) => {
 		const a = document.activeElement;
@@ -534,3 +615,22 @@
 		<svelte:component this={$commander.component} {...$commander.props} />
 	</Command.List>
 </Command.Dialog>
+
+<AlertDialog.Root bind:open={isDeleteAlertOpen}>
+	<AlertDialog.Content>
+		<form use:enhance action="?/delete" method="post" class="contents">
+			<AlertDialog.Header>
+				<AlertDialog.Title>
+					Are you sure you'd like to delete this collection?
+				</AlertDialog.Title>
+				<AlertDialog.Description>
+					Deleted collections can be restored within 30 days.
+				</AlertDialog.Description>
+			</AlertDialog.Header>
+			<AlertDialog.Footer>
+				<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+				<AlertDialog.Action type="submit">Delete</AlertDialog.Action>
+			</AlertDialog.Footer>
+		</form>
+	</AlertDialog.Content>
+</AlertDialog.Root>

@@ -58,11 +58,12 @@ export async function collections({
 export const collectionUpdateInputSchema = z.object({
 	bgColor: z.string().nullable(),
 	color: z.string().nullable(),
+	deleted: z.coerce.date().nullable(),
 	description: z.string().nullable(),
 	font: z.string().nullable(),
 	icon: z.string().nullable(),
 	name: z.string(),
-	private: z.number(),
+	private: z.coerce.number(),
 	// TODO: icon and color
 });
 

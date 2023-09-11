@@ -280,6 +280,7 @@ export type Collection = {
 	color: string | null;
 	bgColor: string | null;
 	font: string | null;
+	deleted: Timestamp | null;
 	userId: string;
 	description: string | null;
 	createdAt: Generated<Timestamp>;

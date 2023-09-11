@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { sql } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import { superValidate } from 'sveltekit-superforms/server';
@@ -7,9 +7,7 @@ import { z } from 'zod';
 import { db } from '$lib/db';
 import { annotations } from '$lib/db/selects';
 import { nanoid } from '$lib/nanoid';
-import { selectEntryFromLibrary } from '$lib/queries/entry';
 import { validateAuthedForm } from '$lib/schemas';
-import pin from '$lib/server/actions/pin';
 
 import type { Actions, PageServerLoad } from './$types';
 
@@ -35,6 +33,8 @@ export const load = (async ({ depends, locals, params }) => {
 			'c.description',
 			'c.bgColor',
 			'c.font',
+			'c.private',
+			'c.deleted',
 		])
 		// If there's no icon, default to "Box"
 		.select((eb) => [
@@ -126,6 +126,22 @@ export const actions: Actions = {
 				updatedAt: new Date(),
 			})
 			.execute();
+	},
+	delete: async ({ locals, params }) => {
+		const session = await locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		await db
+			.updateTable('Collection')
+			.set({
+				deleted: new Date(),
+				updatedAt: new Date(),
+			})
+			.where('id', '=', +params.id)
+			.where('userId', '=', session.user.userId)
+			.execute();
+		throw redirect(303, `/tests/collections`);
 	},
 	edit: validateAuthedForm(
 		collectionSchema,

@@ -523,6 +523,7 @@ model Collection {
     color       String?           @db.VarChar(9)
     bgColor     String?           @db.VarChar(9)
     font        String?           @db.VarChar(255)
+    deleted     DateTime?
     userId      String
     description String?
     createdAt   DateTime          @default(now())
