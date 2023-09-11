@@ -8,6 +8,7 @@
 		Link2,
 		MoreHorizontalIcon,
 		PlusIcon,
+		RotateCcwIcon,
 	} from 'lucide-svelte';
 	import { nanoid } from 'nanoid';
 	import { derived, writable } from 'svelte/store';
@@ -38,7 +39,7 @@
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
-	import { CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { CardContent, CardHeader } from '$lib/components/ui/card';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -113,6 +114,13 @@
 		return (
 			$query.data.entry.bookmark?.title ?? $query.data.entry.title ?? 'Untitled'
 		);
+	});
+
+	const hasCustomTitle = derived(query, ($query) => {
+		if (!$query.data?.entry?.bookmark?.title) {
+			return false;
+		}
+		return $query.data.entry.bookmark.title !== $query.data.entry.title;
 	});
 
 	const currentTab = persisted('sidebar_current_tab', 'details');
@@ -231,6 +239,36 @@
 							class="text-lg h-auto font-semibold leading-tight tracking-tight w-full resize-none bg-transparent focus:outline-none"
 							value={$derivedTitle}
 						></textarea>
+						{#if $hasCustomTitle}
+							<Tooltip.Root>
+								<Tooltip.Trigger asChild let:builder>
+									<Button
+										builders={[builder]}
+										on:click={() => {
+											if (!$query.data?.entry) {
+												return;
+											}
+											$updateBookmark.mutate({
+												data: {
+													title: null,
+												},
+												entryId: $query.data?.entry?.id,
+												id: $query.data?.entry?.bookmark?.id,
+											});
+										}}
+										variant="ghost"
+										size="icon"
+										class="h-8 w-8"
+									>
+										<RotateCcwIcon class="h-4 w-4 text-muted-foreground" />
+										<span class="sr-only">Reset to initial title</span>
+									</Button>
+								</Tooltip.Trigger>
+								<Tooltip.Content>
+									<p>Reset to initial title</p>
+								</Tooltip.Content>
+							</Tooltip.Root>
+						{/if}
 					{:else if $query.isError}
 						<Skeleton class="h-9 w-full grow" />
 					{:else}
