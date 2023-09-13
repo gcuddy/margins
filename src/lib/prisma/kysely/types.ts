@@ -89,6 +89,15 @@ export const State_type = {
 	archive: 'archive',
 } as const;
 export type State_type = (typeof State_type)[keyof typeof State_type];
+export const ViewType = {
+	All: 'All',
+	Backlog: 'Backlog',
+	Now: 'Now',
+	Archive: 'Archive',
+	Collection: 'Collection',
+	CustomView: 'CustomView',
+} as const;
+export type ViewType = (typeof ViewType)[keyof typeof ViewType];
 export type Annotation = {
 	id: string;
 	createdAt: Generated<Timestamp>;
@@ -110,14 +119,12 @@ export type Annotation = {
 	sortOrder: Generated<number>;
 	bookmarkId: number | null;
 	editedAt: Timestamp | null;
-	highlight_color: Generated<Color>;
 	color: string | null;
 	contentData: unknown | null;
 	/**
 	 * Optional title, used for longer notes unassociated with an entryo
 	 */
 	title: string | null;
-	icon: string | null;
 	/**
 	 * chosenIcon used for documents only?
 	 * @zod.custom.use(chosenIcon)
@@ -136,6 +143,8 @@ export type Annotation = {
 	srs: Generated<number>;
 	srs_created_at: Timestamp | null;
 	response: string | null;
+	icon: string | null;
+	highlight_color: Generated<Color>;
 };
 export type annotation_ref = {
 	referencerId: string;
@@ -193,11 +202,11 @@ export type Attachment = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	url: string;
-	title: string;
 	size: number | null;
 	type: string | null;
 	userId: string;
 	bookmarkId: number | null;
+	title: string;
 };
 export type AuthKey = {
 	id: string;
@@ -277,16 +286,16 @@ export type Collection = {
 	name: string;
 	private: Generated<number>;
 	icon: string | null;
-	color: string | null;
-	bgColor: string | null;
-	font: string | null;
-	deleted: Timestamp | null;
 	userId: string;
 	description: string | null;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	contentData: unknown | null;
 	viewOptions: unknown | null;
+	color: string | null;
+	bgColor: string | null;
+	font: string | null;
+	deleted: Timestamp | null;
 };
 export type CollectionItems = {
 	id: string;
@@ -388,7 +397,6 @@ export type Entry = {
 	youtubeId: string | null;
 	pageCount: number | null;
 	genres: string | null;
-	book_genre: BookGenre | null;
 	language: string | null;
 	/**
 	 * The publisher for books, label for music, production company for movies/tv, company for plays, etc.
@@ -399,6 +407,7 @@ export type Entry = {
 	owned_by_id: string | null;
 	pdf_fingerprint: string | null;
 	estimatedReadingTime: number | null;
+	book_genre: BookGenre | null;
 };
 export type EntryData = {
 	id: Generated<number>;
@@ -502,9 +511,9 @@ export type Integration = {
 	serviceName: string;
 	accessToken: string | null;
 	refreshToken: string | null;
+	expiresIn: number | null;
 	timestamp: Timestamp | null;
 	username: string | null;
-	expiresIn: number | null;
 };
 export type Interaction = {
 	id: Generated<number>;
@@ -672,6 +681,16 @@ export type UserFollows = {
 	A: string;
 	B: string;
 };
+export type ViewPreferences = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Generated<Timestamp | null>;
+	viewType: ViewType;
+	userId: string;
+	collectionId: number | null;
+	customViewId: number | null;
+	preferences: unknown | null;
+};
 export type DB = {
 	_AnnotationToTag: AnnotationToTag;
 	_EntryToTag: EntryToTag;
@@ -716,4 +735,5 @@ export type DB = {
 	TagOnEntry: TagOnEntry;
 	Task: Task;
 	UserEntry: UserEntry;
+	ViewPreferences: ViewPreferences;
 };

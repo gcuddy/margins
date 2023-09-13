@@ -15,12 +15,12 @@
 	import { tweened } from 'svelte/motion';
 	import { derived, writable } from 'svelte/store';
 
-import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	// import DropdownMenu from '$components/ui/dropdown-menu/DropdownMenu.svelte';
 	// import DropdownMenuTrigger from '$components/ui/dropdown-menu/DropdownMenuTrigger.svelte';
 	// import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
 	// import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
-	import { navigating,page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import { TagsCommandItems } from '$components/tags/tag-command';
 	import * as AlertDialog from '$components/ui/alert-dialog';
@@ -34,9 +34,7 @@ import { goto } from '$app/navigation';
 		CommandItem,
 		CommandList,
 	} from '$components/ui/command2';
-	import {
-		createPageData,
-	} from '$components/ui/command2/utils';
+	import { createPageData } from '$components/ui/command2/utils';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -51,6 +49,10 @@ import { goto } from '$app/navigation';
 	import Input from '$components/ui/input/input.svelte';
 	import Kbd from '$components/ui/KBD.svelte';
 	import {
+		defaultViewPreferences,
+		ViewPreferences,
+	} from '$components/view-preferences';
+	import {
 		Popover,
 		PopoverContent,
 		PopoverTrigger,
@@ -63,9 +65,7 @@ import { goto } from '$app/navigation';
 	} from '$lib/schemas/library';
 	import type { LibrarySortType } from '$lib/server/queries';
 	import { createFilterDialogStore } from '$lib/stores/filters';
-	import {
-		createSearchParamsStore,
-	} from '$lib/stores/search-params';
+	import { createSearchParamsStore } from '$lib/stores/search-params';
 	import { types } from '$lib/types';
 	import {
 		createChangeSearch,
@@ -122,8 +122,6 @@ import { goto } from '$app/navigation';
 		});
 	}
 
-	$: console.log({ $count });
-
 	// $: if ($entryCount.data) {
 	// 	console.log('setting count');
 	// 	const newCount = parseInt($entryCount.data, 10);
@@ -155,8 +153,12 @@ import { goto } from '$app/navigation';
 			filter.focus();
 		}
 		// let 1 2 and 3 move you to backlog, now, and archive
-		if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {return;}
-		if (e.target instanceof HTMLInputElement) {return;}
+		if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {
+			return;
+		}
+		if (e.target instanceof HTMLInputElement) {
+			return;
+		}
 		if (e.key === '1') {
 			e.preventDefault();
 			goto(`/tests/library/backlog`);
@@ -205,7 +207,10 @@ import { goto } from '$app/navigation';
 	const filterDialogStore = createFilterDialogStore();
 
 	// TODO: these should affect the url params
-	const sortTypes: Array<{ label: string; type: NonNullable<LibrarySortType> }> = [
+	const sortTypes: Array<{
+		label: string;
+		type: NonNullable<LibrarySortType>;
+	}> = [
 		{
 			label: 'Manual',
 			type: 'manual',
@@ -221,6 +226,10 @@ import { goto } from '$app/navigation';
 		{
 			label: 'Date Updated',
 			type: 'updatedAt',
+		},
+		{
+			label: 'Date Saved',
+			type: 'createdAt',
 		},
 		{
 			label: 'Time',
@@ -269,6 +278,9 @@ import { goto } from '$app/navigation';
 			placeholder: 'Choose genre…',
 		},
 	]);
+
+	export let viewPreferences = defaultViewPreferences;
+	export let viewPreferencesId: string;
 </script>
 
 <svelte:window on:keydown={handle_keydown} />
@@ -351,13 +363,15 @@ import { goto } from '$app/navigation';
 									<TagsCommandItems
 										onSelect={(tag) => {
 											filterChange($page.url, (data) => {
-												console.log({ data });
-												data.tags = data.tags?.ids.includes(tag.id) ? {
-														...data.tags,
-														ids: data.tags.ids.filter((t) => t !== tag.id),
-													} : {
-														ids: [...(data.tags?.ids ?? []), tag.id],
-													};
+												// console.log({ data });
+												data.tags = data.tags?.ids.includes(tag.id)
+													? {
+															...data.tags,
+															ids: data.tags.ids.filter((t) => t !== tag.id),
+													  }
+													: {
+															ids: [...(data.tags?.ids ?? []), tag.id],
+													  };
 												return data;
 											});
 											filterOpen.set(false);
@@ -567,6 +581,7 @@ import { goto } from '$app/navigation';
 		{#if loading}
 			<Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
 		{/if}
+		<ViewPreferences bind:viewPreferences id={viewPreferencesId} />
 		<div class="hidden md:block">
 			<DropdownMenu
 				positioning={{

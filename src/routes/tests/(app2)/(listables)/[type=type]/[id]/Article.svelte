@@ -35,6 +35,7 @@
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
 	import { nanoid } from '$lib/nanoid';
+	import { invalidateEntries } from '$lib/queries/mutations';
 	import {
 		mutation,
 		type MutationInput,
@@ -57,7 +58,6 @@
 	} from '../ctx';
 	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
-	import { invalidateEntries } from '$lib/queries/mutations';
 
 	const {
 		activeAnnotation,
@@ -219,7 +219,7 @@
 						right: 0,
 						top: 0,
 						width: 0,
-					} as DOMRect),
+					}) as DOMRect,
 			};
 		}
 		const range = $selection.getRangeAt(0);
@@ -441,7 +441,7 @@
 			// void queryClient.invalidateQueries({
 			// 	queryKey: ['entries'],
 			// });
-            invalidateEntries(queryClient)
+			invalidateEntries(queryClient);
 		},
 	});
 
@@ -798,6 +798,8 @@
 			}
 		}
 	}
+
+	let editorEl: HTMLElement | undefined = undefined;
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -988,6 +990,7 @@
 			allowOutsideClick: true,
 			escapeDeactivates: true,
 			immediate: true,
+			initialFocus: () => editorEl,
 			returnFocusOnDeactivate: false,
 		}}
 		use:useEscapeKeydown={{
@@ -1008,6 +1011,9 @@
 			)}
 		>
 			<Editor
+				bind:el={editorEl}
+				alwaysTabbable
+				autofocus
 				id={$activeAnnotationId ?? undefined}
 				content={$activeAnnotation?.contentData ?? undefined}
 				blank

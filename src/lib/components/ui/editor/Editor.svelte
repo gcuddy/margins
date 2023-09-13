@@ -11,7 +11,7 @@
 		JSONContent,
 	} from '@tiptap/core';
 	import type { Transaction } from '@tiptap/pm/state';
-    import * as idb from "idb-keyval";
+	import * as idb from 'idb-keyval';
 	import debounce from 'just-debounce-it';
 	import { createEventDispatcher, onMount, setContext } from 'svelte';
 	import { type Readable, writable } from 'svelte/store';
@@ -39,6 +39,10 @@
 	export let options: Partial<EditorOptions> = {};
 	export let readonly = false;
 	export let focusRing = true;
+	export let autofocus = false;
+	export let el: HTMLElement | undefined = undefined;
+	/** If set to true, the tabindex will always be 0. */
+	export let alwaysTabbable = false;
 
 	let className = '';
 	export { className as class };
@@ -46,7 +50,6 @@
 	let editor: Readable<Editor>;
 
 	export let save_status = writable<SaveStatus>(null);
-	$: console.log({ $save_status });
 	export let onUpdate: EditorOptions['onUpdate'] | undefined = undefined;
 	export let onFocus: EditorOptions['onFocus'] | undefined = undefined;
 	export let onBlur: EditorOptions['onBlur'] | undefined = undefined;
@@ -67,7 +70,7 @@
 	export let extensions: TiptapExtensionProps | undefined = undefined;
 
 	export let content: string | JSONContent | undefined = undefined;
-	export let blank = false;
+	// export let blank = false;
 	// const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
 	const dispatch = createEventDispatcher<{
@@ -158,6 +161,9 @@
 			},
 			...options,
 		});
+		if (autofocus) {
+			$editor.commands.focus();
+		}
 		if (content) {
 			hydrated = true;
 		}
@@ -165,10 +171,13 @@
 			// TODO check if bubble menu is open
 			e.editor.setEditable(false);
 			save_srs_nodes(e.editor.getJSON());
-            if (id) {
-                idb.set(`note_markdown:${id}`, e.editor?.storage.markdown.getMarkdown())
-            }
-            // TODO we should actually just save this to our db... for now using indexeddb
+			if (id) {
+				idb.set(
+					`note_markdown:${id}`,
+					e.editor?.storage.markdown.getMarkdown(),
+				);
+			}
+			// TODO we should actually just save this to our db... for now using indexeddb
 
 			onBlur?.(e);
 			dispatch('blur', e);
@@ -221,6 +230,7 @@
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 	<div
 		data-editor
+		bind:this={el}
 		data-focused={$editor.isFocused}
 		on:click={(e) => {
 			if (e.target instanceof HTMLAnchorElement) {
@@ -250,7 +260,7 @@
 			// sm:shadow-lg sm:border
 			className,
 		)}
-		tabindex={readonly || $editor.isFocused ? -1 : 0}
+		tabindex={(readonly || $editor.isFocused) && !alwaysTabbable ? -1 : 0}
 		data-size={size}
 	>
 		{#if showSaveStatus === true || (showSaveStatus === 'auto' && $save_status === 'Saved' && just_saved)}

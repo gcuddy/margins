@@ -281,6 +281,18 @@ export function check_inside_input(el = document.activeElement) {
 	return el?.closest('input, textarea, [contenteditable]') !== null;
 }
 
+export function normalizeCamelCase(str: string, capitalize = true) {
+	const words = str.split(/(?=[A-Z])/);
+	// make all words first letter lowercase
+	const lowercased = words.map(
+		(word) => word.charAt(0).toLowerCase() + word.slice(1),
+	);
+	const normalized = lowercased.join(' ');
+	return capitalize
+		? normalized.charAt(0).toUpperCase() + normalized.slice(1)
+		: normalized;
+}
+
 import { cn } from './utils/tailwind';
 
 export { cn };

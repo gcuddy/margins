@@ -1,12 +1,41 @@
 import { readable } from 'svelte/store';
 
-export function formatDate(input: string | number | Date): string {
-	const date = new Date(input);
-	return date.toLocaleDateString('en-US', {
+export function formatDate(
+	input: string | number | Date,
+	opts: Intl.DateTimeFormatOptions & {
+		/** If set to true, will not print the year if it's within this calendar year. Defaults to true. */
+		preferShortest?: boolean;
+	} = {
 		day: 'numeric',
-		month: 'long',
-		year: 'numeric',
-	});
+		month: 'short',
+		preferShortest: true,
+		year: '2-digit',
+	},
+): string {
+	const date = new Date(input);
+	const { preferShortest, ...options } = opts;
+
+	if (preferShortest) {
+		// if Today, just return the time
+		const now = new Date();
+
+		if (
+			date.getDate() === now.getDate() &&
+			date.getMonth() === now.getMonth() &&
+			date.getFullYear() === now.getFullYear()
+		) {
+			return date.toLocaleTimeString('en-US', {
+				hour: 'numeric',
+				minute: 'numeric',
+			});
+		}
+
+		if (date.getFullYear() === now.getFullYear()) {
+			delete options.year;
+		}
+	}
+
+	return date.toLocaleDateString('en-US', options);
 }
 
 export const isUpcoming = (date: Date) => {
@@ -88,7 +117,11 @@ export const now = readable(new Date(), (set) => {
  * @param duration @type{number}
  * @param unit @type{"m" | "s" | "ms"}
  */
-export const formatDuration = (duration: number, unit?: 'm' | 's' | 'ms') => {
+export const formatDuration = (
+	duration: number,
+	unit?: 'm' | 's' | 'ms',
+	showSeconds = false,
+) => {
 	// convert to ms
 	if (unit === 'm') {
 		duration *= 60 * 1000;
@@ -107,7 +140,7 @@ export const formatDuration = (duration: number, unit?: 'm' | 's' | 'ms') => {
 	if (minutes > 0) {
 		parts.push(`${minutes}m`);
 	}
-	if (seconds > 0) {
+	if (showSeconds && seconds > 0) {
 		parts.push(`${seconds}s`);
 	}
 	return parts.join(' ');

@@ -3,7 +3,7 @@ import type { z } from 'zod';
 
 export type Ctx = {
 	ctx: {
-        event: RequestEvent;
+		event?: RequestEvent;
 		userId: string;
 	};
 };

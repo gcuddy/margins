@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createInfiniteQuery } from '@tanstack/svelte-query';
 	import {
 		createWindowVirtualizer,
 		defaultRangeExtractor,
@@ -8,11 +8,10 @@
 	import type { ComponentType } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import { derived, writable } from 'svelte/store';
-	import { queryParameters, ssp } from 'sveltekit-search-params';
 
 	import { browser } from '$app/environment';
 	import { beforeNavigate, goto } from '$app/navigation';
-	import { navigating, page } from '$app/stores';
+	import { page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import { checkedEntryIds } from '$components/entries/multi-select';
@@ -20,6 +19,7 @@
 	import LibraryHeader from '$components/library/library-header.svelte';
 	import BulkActions from '$components/ui/bulk-actions.svelte';
 	import { Button } from '$components/ui/button';
+	import { defaultViewPreferences } from '$components/view-preferences/view-preferences.schema';
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
 	import {
 		convertToGroupedArrayWithHeadings,
@@ -35,15 +35,12 @@
 		type LibrarySortType,
 	} from '$lib/schemas/library';
 	import type { LibraryResponse } from '$lib/server/queries';
-	import { init_entries, invalidated } from '$lib/state/entries';
-	import type { Type } from '$lib/types';
+	import { statuses } from '$lib/status';
 	import { cn } from '$lib/utils';
 	import { defaultParseSearch } from '$lib/utils/search-params';
 
 	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
-	import { useMenuBar } from '../../MainNav.svelte';
 	import type { Snapshot } from './$types.js';
-	import { statuses } from '$lib/status';
 
 	export let data;
 
@@ -73,36 +70,20 @@
 		});
 	}
 
-	const params = queryParameters({
-		createdAt: ssp.object<NonNullable<FilterLibrarySchema['createdAt']>>(),
-		type: {
-			decode: (v) => v as Type | null,
-			encode: (v: Type) => v,
-		},
-	});
-
 	const updateBookmarkMutation = initUpdateBookmarkMutation();
-
-	const createdAtRegex =
-		/^(?<cmp>[<=>])(?<date>\d{4}-\d{2}-\d{2})|(?<num>\d) (?<unit>day|week|month|year)$/;
 
 	function parseFilterFromSearchParams(): FilterLibrarySchema | undefined {
 		const rawObj = defaultParseSearch($page.url.search);
-		console.log({ rawObj });
+		// console.log({ rawObj });
 		const parsed = filterLibrarySchema.safeParse(rawObj);
-		console.log({ parsed });
+		// console.log({ parsed });
 		if (parsed.success) {
 			return parsed.data;
 		}
 	}
 
-	$: console.log({
-		params: defaultParseSearch($page.url.search),
-	});
-
 	const query = createInfiniteQuery(
 		derived([page, sort, dir, grouping], ([$page, $sort, $dir, $grouping]) => {
-			console.log({ $page, $sort });
 			const filter = parseFilterFromSearchParams();
 			const search = $page.url.searchParams.get('search') ?? undefined;
 			return {
@@ -164,7 +145,6 @@
 			text: string;
 		}
 	> = [];
-	$: console.log({ groupedEntries });
 	$: {
 		const grouped = groupBy($entries, (entry) => entry.type);
 		groupedEntries = convertToGroupedArrayWithHeadings(grouped, (heading) => ({
@@ -188,22 +168,9 @@
 		})
 		.filter((index) => index !== undefined) as Array<number>;
 
-	$: console.log({ $params });
-
 	// <!-- probably not smart -->
 	$: if ($query.data) {
-		init_entries($query.data.pages.flatMap((page) => page.entries));
-	}
-
-	$: console.log({ $query });
-
-	const queryClient = useQueryClient();
-
-	let can_restore = false;
-
-	$: if ($navigating) {
-		console.log({ $invalidated });
-		can_restore = $navigating.type === 'popstate' && !$invalidated;
+		// init_entries($query.data.pages.flatMap((page) => page.entries));
 	}
 
 	const virtualizer = createWindowVirtualizer({
@@ -225,33 +192,25 @@
 
 			activeHeaderIndex =
 				headerIndexes.findLast((index) => range.startIndex >= index) ?? 0;
-			console.log({ activeHeaderIndex });
+			// console.log({ activeHeaderIndex });
 
 			const next = new Set([
 				activeHeaderIndex,
 				...defaultRangeExtractor(range),
 			]);
-			console.log({ next });
+			// console.log({ next });
 
 			return [...next].sort((a, b) => a - b);
 		},
 	});
 
-	let items = $virtualizer?.getVirtualItems();
-	let dragging = false;
-
 	$: $virtualizer.setOptions({
 		count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
 	});
 
-	$: console.log({ $virtualizer });
 	$: {
-		console.log({ $entries });
 		$virtualizer?.measure();
 	}
-
-	const contentRect: DOMRectReadOnly | null = null;
-	$: console.log({ contentRect });
 
 	$: {
 		const lastItem = $virtualizer.getVirtualItems().at(-1);
@@ -261,14 +220,9 @@
 			$query.hasNextPage &&
 			!$query.isFetchingNextPage
 		) {
-			console.log('fetching next page');
 			$query.fetchNextPage();
 		}
 	}
-
-	const menu = useMenuBar();
-
-	const checkLookup: Record<number, boolean> = {};
 
 	const multi = create_multi({
 		items: $entries?.map((e) => e.id) || [],
@@ -278,7 +232,7 @@
 	const {
 		stores: { state },
 	} = multi;
-	$: console.log({ $state });
+	// $: console.log({ $state });
 
 	export const snapshot: Snapshot = {
 		capture: () => ({
@@ -300,6 +254,9 @@
 			return $entries.filter((entry) => $checkedEntryIds.includes(entry.id));
 		},
 	);
+
+	$: viewPreferences =
+		data.viewPreferences.preferences ?? defaultViewPreferences;
 </script>
 
 <svelte:window on:keydown={multi.events.keydown} />
@@ -309,6 +266,8 @@
 	bind:sort={$sort}
 	bind:dir={$dir}
 	bind:grouping={$grouping}
+	bind:viewPreferences
+	viewPreferencesId={data.viewPreferences.id}
 />
 
 {#if $query.isPending}
@@ -322,14 +281,14 @@
 		}} -->
 	<div
 		on:consider={(e) => {
-			dragging = true;
-			console.log({ e });
-			items = e.detail.items;
+			// dragging = true;
+			// console.log({ e });
+			// items = e.detail.items;
 			// scroll into viwe
 			const el = document.getElementById('dnd-action-dragged-el');
 			// check rect
 			const rect = el?.getBoundingClientRect();
-			console.log({ rect });
+			// console.log({ rect });
 			// get window height
 			const windowHeight = window.innerHeight;
 			// check if in view
@@ -339,13 +298,15 @@
 				(rect.top < 0 || rect.bottom > windowHeight)
 			) {
 				// scroll into view
-				console.log('Not in view');
-				$virtualizer.scrollToOffset(
-					document.scrollingElement?.scrollTop + rect.top - 100,
-					{
-						behavior: 'smooth',
-					},
-				);
+				// console.log('Not in view');
+				if (document.scrollingElement?.scrollTop) {
+					$virtualizer.scrollToOffset(
+						document.scrollingElement?.scrollTop + rect.top - 100,
+						{
+							behavior: 'smooth',
+						},
+					);
+				}
 			}
 			// el?.scrollIntoView({
 			//     behavior: 'smooth',
@@ -390,6 +351,7 @@
 					</div>
 				{:else if entry && !('isHeading' in entry)}
 					<EntryItem
+						{viewPreferences}
 						on:change={() => multi.helpers.toggleSelection(entry.id)}
 						data-active={$state.highlighted === entry.id}
 						data-id={entry.id}

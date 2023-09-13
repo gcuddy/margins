@@ -1,4 +1,4 @@
-import { BookGenre, Status } from '@prisma/client';
+import { BookGenre, DocumentType, Status } from '@prisma/client';
 import { z } from 'zod';
 
 import { typeSchema } from '$lib/types';
@@ -14,7 +14,7 @@ const defaultCursorSchema = z.object({
 const groupingCursorSchema = z.object({
 	domain: z.string().optional(),
 	tag: z.number().optional(),
-	type: typeSchema.optional(),
+	type: z.nativeEnum(DocumentType).optional(),
 });
 
 export const entryListSortSchemas = z
@@ -37,8 +37,17 @@ export const entryListSortSchemas = z
 		z.object({
 			cursor: groupingCursorSchema
 				.extend({
+					createdAt: z.coerce.date(),
 					id: z.number(),
-					title: z.string(),
+				})
+				.nullish(),
+			sort: z.literal('createdAt'),
+		}),
+		z.object({
+			cursor: groupingCursorSchema
+				.extend({
+					id: z.number(),
+					title: z.string().nullable(),
 				})
 				.nullish(),
 			// sort: z.nu
@@ -47,7 +56,7 @@ export const entryListSortSchemas = z
 		z.object({
 			cursor: groupingCursorSchema
 				.extend({
-					author: z.string(),
+					author: z.string().nullable(),
 					id: z.number(),
 				})
 				.nullish(),

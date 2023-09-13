@@ -97,6 +97,7 @@ model Bookmark {
     bookmarked       Boolean           @default(true)
     title            String?
     author           String?
+    pdf_url          String?           @db.VarChar(2083)
     entry            Entry?            @relation(fields: [entryId], references: [id])
     user             AuthUser          @relation(fields: [userId], references: [id])
     state            State?            @relation(fields: [stateId], references: [id])
@@ -106,12 +107,7 @@ model Bookmark {
     favorite         Favorite?
     annotations      Annotation[]
     history          BookmarkHistory[]
-
-    // or should attachments be stored on Entry?
-    attachments Attachment[]
-
-    // Optional field to attach a PDF to the bookmark
-    pdf_url String? @db.VarChar(2083)
+    attachments      Attachment[]
 
     @@unique([uri, entryId, userId])
     @@unique([entryId, userId])
@@ -132,19 +128,16 @@ model Task {
 }
 
 model Attachment {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    url   String
-    title String
-    size  Int?
-    type  String?
-
-    userId String
-    user   AuthUser @relation(fields: [userId], references: [id])
-
+    id         String    @id @default(cuid())
+    createdAt  DateTime  @default(now())
+    updatedAt  DateTime  @updatedAt
+    url        String
+    size       Int?
+    type       String?
+    userId     String
     bookmarkId Int?
+    title      String
+    user       AuthUser  @relation(fields: [userId], references: [id])
     bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
 
     @@unique([bookmarkId, userId, url])
@@ -187,17 +180,14 @@ model Annotation {
     parentId         String?
     /// The "soft delete" time. Deletions are cleared after 30 days.
     deleted          DateTime?
-    userId           String                          @default("") // TODO: remove this
+    userId           String                          @default("")
     sortOrder        Float                           @default(0)
     bookmarkId       Int?
     editedAt         DateTime?
-    highlight_color  Color                           @default(Yellow)
-    // The annotation's color as a hex string. VarChar(9) to account for the # and possible alpha channel. Defaults to black.
     color            String?                         @db.VarChar(9)
     contentData      Json?
     /// Optional title, used for longer notes unassociated with an entryo
     title            String?
-    icon             String?
     /// chosenIcon used for documents only?
     /// @zod.custom.use(chosenIcon)
     chosenIcon       Json?
@@ -212,6 +202,8 @@ model Annotation {
     srs              Boolean                         @default(false)
     srs_created_at   DateTime?
     response         String?                         @db.MediumText
+    icon             String?
+    highlight_color  Color                           @default(Yellow)
     entry            Entry?                          @relation(fields: [entryId], references: [id])
     parent           Annotation?                     @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     children         Annotation[]                    @relation("references")
@@ -290,11 +282,6 @@ model person_to_entry {
     @@index([entryId])
 }
 
-enum BookGenre {
-    Fiction
-    NonFiction
-}
-
 /// @zod.import(["import {recipeSchema, EntryExtendedSchema} from '../schemas'"])
 model Entry {
     createdAt            DateTime                        @default(now())
@@ -339,7 +326,6 @@ model Entry {
     youtubeId            String?                         @unique
     pageCount            Int?                            @db.UnsignedSmallInt
     genres               String?
-    book_genre           BookGenre?
     language             String?                         @db.VarChar(100)
     /// The publisher for books, label for music, production company for movies/tv, company for plays, etc.
     publisher            String?
@@ -348,6 +334,7 @@ model Entry {
     owned_by_id          String?
     pdf_fingerprint      String?                         @unique
     estimatedReadingTime Int?
+    book_genre           BookGenre?
     data                 EntryData[]
     person               person_to_entry[]
     feed                 Feed?                           @relation(fields: [feedId], references: [id])
@@ -516,23 +503,24 @@ model Context {
 
 /// @zod.import(["import { chosenIcon } from '../schemas'", "import { ViewOptionsSchema } from '../zod-utils'"])
 model Collection {
-    id          Int               @id @default(autoincrement())
-    name        String
-    private     Boolean           @default(true)
-    icon        String?
-    color       String?           @db.VarChar(9)
-    bgColor     String?           @db.VarChar(9)
-    font        String?           @db.VarChar(255)
-    deleted     DateTime?
-    userId      String
-    description String?
-    createdAt   DateTime          @default(now())
-    updatedAt   DateTime          @updatedAt
-    contentData Json?
-    viewOptions Json?
-    user        AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
-    items       CollectionItems[]
-    favorites   Favorite[]
+    id              Int               @id @default(autoincrement())
+    name            String
+    private         Boolean           @default(true)
+    icon            String?
+    userId          String
+    description     String?
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @updatedAt
+    contentData     Json?
+    viewOptions     Json?
+    color           String?           @db.VarChar(9)
+    bgColor         String?           @db.VarChar(9)
+    font            String?           @db.VarChar(255)
+    deleted         DateTime?
+    user            AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    items           CollectionItems[]
+    favorites       Favorite[]
+    ViewPreferences ViewPreferences[]
 
     @@unique([userId, name])
     @@index([userId])
@@ -552,13 +540,13 @@ model CollectionItems {
     type         CollectionItemType @default(Entry)
     /// This applies to sections only
     title        String?
+    width        String?
     collection   Collection         @relation(fields: [collectionId], references: [id])
     children     CollectionItems[]  @relation("parent")
     parent       CollectionItems?   @relation("parent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
     annotation   Annotation?        @relation(fields: [annotationId], references: [id])
     bookmark     Bookmark?          @relation(fields: [bookmarkId], references: [id])
     entry        Entry?             @relation(fields: [entryId], references: [id])
-    width        String?
 
     @@unique([collectionId, annotationId])
     @@unique([collectionId, entryId])
@@ -679,6 +667,7 @@ model Tag {
     updatedAt      DateTime         @default(now()) @updatedAt
     viewOptions    Json?
     userId         String
+    color          String           @default("#000000") @db.VarChar(9)
     favorite       Favorite?
     user           AuthUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
     taggings       Tagging[]
@@ -688,8 +677,6 @@ model Tag {
     subscriptions  Subscription[]
     TagOnEntry     TagOnEntry[]
     annotation_tag annotation_tag[]
-    // The tag's color as a hex string. VarChar(9) to account for the # and possible alpha channel. Defaults to black.
-    color          String           @default("#000000") @db.VarChar(9)
 
     @@unique([name, userId])
     @@index([userId])
@@ -736,20 +723,21 @@ model Tagging {
 
 /// @zod.import(["import { chosenIcon } from '../schemas'"])
 model SmartList {
-    id          Int        @id @default(autoincrement())
-    name        String
-    filter      Json?
-    viewOptions Json?
-    conditions  Json?
+    id              Int               @id @default(autoincrement())
+    name            String
+    filter          Json?
+    viewOptions     Json?
+    conditions      Json?
     /// @zod.custom.use(chosenIcon)
-    icon        Json?
-    createdAt   DateTime   @default(now())
-    description String?
-    private     Boolean    @default(true)
-    updatedAt   DateTime   @default(now()) @updatedAt
-    userId      String     @default("")
-    favorites   Favorite[]
-    user        AuthUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    icon            Json?
+    createdAt       DateTime          @default(now())
+    description     String?
+    private         Boolean           @default(true)
+    updatedAt       DateTime          @default(now()) @updatedAt
+    userId          String            @default("")
+    favorites       Favorite[]
+    user            AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    ViewPreferences ViewPreferences[]
 
     @@unique([userId, name])
     @@index([userId])
@@ -807,6 +795,7 @@ model AuthUser {
     bookmark_history   BookmarkHistory[]
     custom_entries     Entry[]
     attachments        Attachment[]
+    ViewPreferences    ViewPreferences[]
 
     @@map("auth_user")
 }
@@ -836,7 +825,7 @@ model Favorite {
     updatedAt    DateTime     @updatedAt
     userId       String
     deleted      DateTime?
-    tagId        Int?         @unique // TODO: remove these unique
+    tagId        Int?         @unique
     smartListId  Int?
     annotationId String?      @unique
     bookmarkId   Int?         @unique
@@ -903,9 +892,9 @@ model Integration {
     serviceName  String    @db.VarChar(255)
     accessToken  String?   @db.VarChar(255)
     refreshToken String?   @db.VarChar(255)
+    expiresIn    Int?
     timestamp    DateTime?
     username     String?
-    expiresIn    Int?
     user         AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([userId, serviceName])
@@ -947,6 +936,29 @@ model UserFollows {
     @@unique([A, B], map: "_UserFollows_AB_unique")
     @@index([B], map: "_UserFollows_B_index")
     @@map("_UserFollows")
+}
+
+model ViewPreferences {
+    id           String      @id @default(cuid())
+    createdAt    DateTime    @default(now())
+    updatedAt    DateTime?   @default(now()) @updatedAt
+    viewType     ViewType
+    userId       String
+    collectionId Int?
+    customViewId Int?
+    preferences  Json?
+    user         AuthUser    @relation(fields: [userId], references: [id])
+    collection   Collection? @relation(fields: [collectionId], references: [id])
+    customView   SmartList?  @relation(fields: [customViewId], references: [id])
+
+    @@index([userId])
+    @@index([collectionId])
+    @@index([customViewId])
+}
+
+enum BookGenre {
+    Fiction
+    NonFiction
 }
 
 enum Status {
@@ -1024,4 +1036,13 @@ enum State_type {
     soon
     later
     archive
+}
+
+enum ViewType {
+    All
+    Backlog
+    Now
+    Archive
+    Collection
+    CustomView
 }

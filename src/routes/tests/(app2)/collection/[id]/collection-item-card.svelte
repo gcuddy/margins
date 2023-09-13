@@ -40,7 +40,7 @@
 
 <Card.Root
 	class={cn(
-		'w-52 h-72 overflow-auto flex flex-col p-4 gap-4 relative group max-w-full transition-[width] bg-card/50',
+		'w-56 h-80 overflow-auto flex flex-col p-4 gap-4 relative group max-w-full transition-[width] bg-card/50',
 		width === 'wide' && 'w-[432px] lg:w-[432px] md:w-[653px] flex-row p-0',
 		className,
 	)}
@@ -64,7 +64,7 @@
 					<a
 						href={make_link(item.entry)}
 						class={cn(
-							'text-base font-bold tracking-tight line-clamp-1',
+							'text-base font-bold tracking-tight line-clamp-2',
 							item.entry.type === 'article' && 'line-clamp-2',
 						)}
 					>

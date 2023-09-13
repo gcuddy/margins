@@ -16,6 +16,12 @@ import {
 } from '$lib/db/queries/collections';
 import { importMovies, importMoviesInput } from '$lib/db/queries/integration';
 import {
+	viewPreferencesCreate,
+	viewPreferencesCreateInput,
+	viewPreferencesUpdate,
+	viewPreferencesUpdateInput,
+} from '$lib/db/queries/view-preferences';
+import {
 	annotations,
 	annotationWithEntry,
 	entrySelect,
@@ -406,6 +412,14 @@ export const mutations = {
 			sort_order: z.number().int().optional(),
 			status: z.nativeEnum(Status),
 		}),
+	}),
+	viewPreferencesCreate: query({
+		fn: viewPreferencesCreate,
+		schema: viewPreferencesCreateInput,
+	}),
+	viewPreferencesUpdate: query({
+		fn: viewPreferencesUpdate,
+		schema: viewPreferencesUpdateInput,
 	}),
 } as const;
 

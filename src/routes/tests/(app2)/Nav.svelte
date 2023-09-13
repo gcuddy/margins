@@ -257,7 +257,7 @@
 		<!-- TODO: Add Button here -->
 		<div class="px-4 py-2">
 			<div
-				class="space-y-1 transition-opacity {$inArticle
+				class="space-y-2 lg:space-y-1 transition-opacity {$inArticle
 					? 'focus-within:opacity-100 hover:opacity-100 max-2xl:opacity-20'
 					: ''}"
 			>
@@ -272,7 +272,7 @@
 					>
 						<svelte:component
 							this={nav_item.icon}
-							class="square-5 lg:square-4"
+							class="square-6 lg:square-4"
 						/>
 						<span class="hidden {$inArticle ? '2xl:inline' : 'lg:inline'}"
 							>{nav_item.label}</span

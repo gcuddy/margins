@@ -33,7 +33,7 @@
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
-	import { Tags, Books } from '$lib/commands';
+	import { Books, Movies, Tags } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -108,7 +108,7 @@
 		$state.placeholder = 'Type a command or search...';
 	}
 
-	$: console.log({ $shouldFilter });
+	// $: console.log({ $shouldFilter });
 
 	const inputValue = writable('');
 	const container = writable<HTMLElement | null>(null);
@@ -158,7 +158,7 @@
 				</CommandItem>
 				<CommandItem
 					onSelect={() => {
-						addPage('open-collection')
+						addPage('open-collection');
 						$state.shouldFilter = false;
 					}}
 				>
@@ -247,8 +247,8 @@
 				<CommandItem
 					value="search books"
 					onSelect={() => {
-						addPage('search-books')
-                        $state.placeholder = 'Search books...';
+						addPage('search-books');
+						$state.placeholder = 'Search books...';
 					}}
 				>
 					<Search class="mr-2 h-4 w-4" />
@@ -302,7 +302,7 @@
 							} else {
 								document.documentElement.classList.remove('dark');
 							}
-							console.log('fetching');
+							// console.log('fetching');
 							fetch(
 								`/tests?/setTheme&theme=${theme}&redirectTo=${$spage.url.pathname}`,
 								{
@@ -310,7 +310,7 @@
 									method: 'POST',
 								},
 							).then(() => {
-								console.log('fetched');
+								// console.log('fetched');
 								$state.isOpen = false;
 							});
 							$state.isOpen = false;
@@ -337,7 +337,7 @@
 			<Annotations bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'search-movies'}
-			<Media type="searchMovies" />
+			<Movies />
 		{/if}
 		{#if $page === 'search-books'}
 			<Books bind:isOpen={$state.isOpen} />

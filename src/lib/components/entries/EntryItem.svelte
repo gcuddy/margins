@@ -19,19 +19,24 @@
 
 	import { page } from '$app/stores';
 	import Clamp from '$components/Clamp.svelte';
+	import { TagColorPill } from '$components/tags/tag-color';
 	import TagCommand from '$components/tags/TagCommand.svelte';
 	import * as ContextMenu from '$components/ui/context-menu';
 	import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
 	import { render_html } from '$components/ui/editor/utils';
 	import Separator from '$components/ui/Separator.svelte';
+	import * as Tooltip from '$components/ui/tooltip';
+	import { defaultViewPreferences } from '$components/view-preferences';
 	import smoothload from '$lib/actions/smoothload';
+	import { Progress } from '$lib/components/ui/progress';
 	import type { ListEntry } from '$lib/db/selects';
 	import { relations_icons } from '$lib/features/relations/icons';
 	import { mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
 	import { type Status, statuses, statusesWithIcons } from '$lib/status';
+	import { getHostname, normalizeCamelCase } from '$lib/utils';
 	import { getTargetSelector } from '$lib/utils/annotations';
-	import { ago, formatDuration, now } from '$lib/utils/date';
+	import { ago, formatDate, formatDuration, now } from '$lib/utils/date';
 	import { get_image, getId, getType, make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
 
@@ -39,6 +44,8 @@
 	import HoverCard from '../ui/hover-card/HoverCard.svelte';
 	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
 	import { Muted, Small } from '../ui/typography';
+	import EntryIcon from './EntryIcon.svelte';
+	import StatusIcon from './StatusIcon.svelte';
 
 	const queryClient = useQueryClient();
 
@@ -61,6 +68,8 @@
 	export let view: VariantProps<typeof entryItemVariants>['view'] = 'list';
 
 	export let entry: LibraryEntry;
+
+	export let viewPreferences = defaultViewPreferences;
 
 	// Computed
 	$: author = entry.bookmark_author || entry.author;
@@ -245,7 +254,7 @@
 			{href}
 			use:melt={builder}
 			{...$$restProps}
-			class="data-[state=open]:bg-accent cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none overflow-hidden"
+			class="data-[state=open]:bg-accent flex flex-col h-full cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none overflow-hidden"
 			data-sveltekit-preload-data="tap"
 		>
 			<div
@@ -256,52 +265,105 @@
 				)}
 			>
 				{#if view === 'list'}
-					<div
-						class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
-					>
-						{#if entry.image || entry.uri}
-							{@const src = entry.image?.startsWith('/')
-								? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
-								: entry.image}
-							<img
-								use:smoothload
-								src={src ??
-									`https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
-								on:error={(e) => {
-									if (entry.uri) {
-										//@ts-expect-error - TODO: fix to avatar
-										e.target.src = `https://icon.horse/icon/${getDomain(
-											entry.uri,
-										)}`;
-									}
-								}}
-								alt=""
-								class={clsx(
-									'relative h-full w-full rounded-[inherit] object-cover',
-									checked && 'invisible',
-								)}
-							/>
-						{:else}
-							<ImageSkeleton class="relative h-16 w-16 object-cover" />
-						{/if}
-						<div
-							class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md"
-						>
-							<input
-								bind:checked
-								type="checkbox"
-								class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
-								on:click|stopPropagation
-								on:change
-								on:focus={() => {
-									anchor_el.focus();
-								}}
-							/>
-						</div>
-					</div>
-					<div class="flex flex-col min-w-0">
-						<Muted class="text-xs">{entry.type}</Muted>
-						<div class="flex items-center gap-x-4 min-w-0">
+					{#if viewPreferences.image}
+						<Tooltip.Root openDelay={checked ? 1000 : 300}>
+							<Tooltip.Trigger asChild let:builder>
+								<div
+									use:melt={builder}
+									class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
+								>
+									{#if entry.image || entry.uri}
+										{@const src = entry.image?.startsWith('/')
+											? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
+											: entry.image}
+										<img
+											use:smoothload
+											src={src ??
+												`https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
+											on:error={(e) => {
+												if (entry.uri) {
+													//@ts-expect-error - TODO: fix to avatar
+													e.target.src = `https://icon.horse/icon/${getDomain(
+														entry.uri,
+													)}`;
+												}
+											}}
+											alt=""
+											class={clsx(
+												'relative h-full w-full rounded-md object-cover',
+												checked && 'invisible',
+											)}
+										/>
+									{:else}
+										<ImageSkeleton class="relative h-16 w-16 object-cover" />
+									{/if}
+									{#if entry.progress}
+										<div
+											class="absolute rounded-md w-full h-full inset-0 overflow-hidden"
+										>
+											<Progress
+												class="absolute rounded-none bottom-0 w-full h-2 bg-secondary/90"
+												value={entry.progress}
+												max={1}
+											/>
+										</div>
+									{/if}
+									{#if viewPreferences.type}
+										<!-- TODO: option to display as icon or text -->
+										<Tooltip.Root>
+											<Tooltip.Trigger asChild let:builder>
+												<div
+													use:melt={builder}
+													class="absolute -left-2 transition-opacity duration-75 -top-2 rounded-full border bg-popover p-1 group-hover/select:opacity-0 {checked
+														? 'opacity-0'
+														: ''}"
+												>
+													<EntryIcon
+														class="h-3 w-3 text-accent-foreground"
+														type={entry.type}
+													/>
+													<span class="sr-only">{entry.type}</span>
+												</div>
+											</Tooltip.Trigger>
+											<Tooltip.Content>
+												<span class="text-xs text-muted-foreground"
+													>{entry.type}</span
+												>
+											</Tooltip.Content>
+										</Tooltip.Root>
+									{/if}
+									<div
+										class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md"
+									>
+										<input
+											bind:checked
+											type="checkbox"
+											class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
+											on:click|stopPropagation
+											on:change
+											on:focus={() => {
+												anchor_el.focus();
+											}}
+										/>
+									</div>
+								</div>
+							</Tooltip.Trigger>
+							<Tooltip.Content>
+								<p>
+									Progress: {entry.progress
+										? `${Math.round(entry.progress * 100)}%`
+										: 'Unstarted'}
+								</p>
+							</Tooltip.Content>
+						</Tooltip.Root>
+					{/if}
+
+					<div class="flex flex-col min-w-0 gap-0.5">
+						<!-- <Muted class="text-xs">{entry.type}</Muted> -->
+						<div class="flex items-center gap-x-2 min-w-0">
+							{#if viewPreferences.status}
+								<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
+							{/if}
 							<div
 								data-id={entry.id}
 								class="truncate font-semibold hover:underline focus:outline-none"
@@ -309,7 +371,7 @@
 								{title}
 							</div>
 							<div class="hidden gap-x-2 sm:flex">
-								{#if data.annotations && data.annotations.length > 0}
+								{#if viewPreferences.annotations && data.annotations && data.annotations.length > 0}
 									{@const total = data.num_annotations
 										? Number(data.num_annotations)
 										: data.annotations.length}
@@ -380,90 +442,183 @@
 										</div>
 									</HoverCard>
 								{/if}
-								{#if attachment?.entry}
+								{#if viewPreferences.attachment && attachment?.entry}
 									<Badge as="a" href="/tests/pdf/{attachment.entry.id}">
 										<FileTextIcon class="mr-1 h-3 w-3" />
 										<!-- {attachment.entry.title} -->
 										PDF ->
 									</Badge>
 								{/if}
-								{#if data.relations.length}
-									<HoverCard>
-										<Badge slot="trigger" variant="secondary">
-											<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
-											{data.relations.length}
-										</Badge>
-										<div
-											slot="content"
-											class="flex flex-col gap-2 bg-card text-card-foreground"
-										>
-											<span class="font-semibold tracking-tight">Relations</span
-											>
-											{#each data.relations as relation}
-												{#if relation.entry}
-													<a
-														href={make_link(relation.entry)}
-														class="flex cursor-pointer items-center gap-3 text-xs"
-													>
-														<svelte:component
-															this={relations_icons[relation.type]}
-															class="h-3 w-3 shrink-0"
-														/>
-														<img
-															use:smoothload
-															src={get_image(relation.entry)}
-															class="aspect-square w-10 rounded-full object-cover"
-															alt=""
-														/>
-														<span class="font-semibold">
-															{relation.entry.title}</span
-														>
-													</a>
-												{/if}
-											{/each}
-										</div>
-									</HoverCard>
-								{/if}
 							</div>
 						</div>
-						<div class="flex">
-							{#if author}
-								<Muted class="text-xs">{author}</Muted>
+						{#if (viewPreferences.description && entry.summary) || (viewPreferences.date && entry.published)}
+							<!-- <div class="py-px"></div> -->
+							<div class="flex items-center gap-1">
+								{#if viewPreferences.date && entry.published}
+									<Muted
+										class="text-xs text-muted-foreground/80 tabular-nums shrink-0"
+										>{formatDate(
+											entry.published,
+											entry.type === 'article' || entry.type === 'podcast'
+												? {
+														day: 'numeric',
+														month: 'short',
+														year: '2-digit',
+												  }
+												: {
+														year: 'numeric',
+												  },
+										)}</Muted
+									>
+								{/if}
+								{#if viewPreferences.type}
+									{#if viewPreferences.date && entry.published}
+										<span class="text-muted-foreground/80 text-xs">·</span>
+									{/if}
+									<span class="text-xs text-muted-foreground/80">
+										{normalizeCamelCase(entry.type)}
+									</span>
+								{/if}
+								{#if viewPreferences.description && entry.summary}
+									{#if (viewPreferences.date && entry.published) || viewPreferences.type}
+										<span class="text-muted-foreground/80 text-xs">·</span>
+									{/if}
+									<span class="truncate text-xs text-muted-foreground">
+										{entry.summary}
+									</span>
+								{/if}
+							</div>
+							<!-- <div class="py-px"></div> -->
+						{/if}
+						<div class="flex gap-1 items-center">
+							<!-- TODO: find more sustainable solution for displayiing dot -->
+							{#if viewPreferences.url && entry.uri}
+								{#if entry.uri?.startsWith('http')}
+									{@const hostname = getHostname(entry.uri)}
+									<div class="flex items-center gap-1 truncate">
+										<img
+											src="https://icons.duckduckgo.com/ip3/{hostname}.ico"
+											class="w-3 h-3 rounded"
+											alt=""
+										/>
+										<Muted class="text-xs truncate"
+											>{hostname.replace('www.', '')}</Muted
+										>
+									</div>{/if}
+							{/if}
+							{#if viewPreferences.author && author}
+								{#if viewPreferences.url && entry.uri && entry.uri?.startsWith('http')}
+									<span class="text-muted-foreground text-xs">·</span>
+								{/if}
+
+								<Muted class="text-xs truncate">{author}</Muted>
+							{/if}
+							{#if viewPreferences.time && entry.estimatedReadingTime}
+								{#if (viewPreferences.url && entry.uri && entry.uri?.startsWith('http')) || (viewPreferences.author && author)}
+									<span class="text-muted-foreground text-xs">·</span>
+								{/if}
+								<span class="text-muted-foreground text-xs tabular-nums">
+									{#if entry.progress}
+										{formatDuration(
+											entry.estimatedReadingTime * (1 - entry.progress),
+											'm',
+										)} left
+									{:else}
+										{formatDuration(entry.estimatedReadingTime, 'm')}
+									{/if}
+								</span>
+								<!-- <span
+									class="text-xs text-muted-foreground tabular-nums items-center h-9 flex"
+								>
+									<TimerIcon class="h-3.5 w-3.5" />
+									{#if entry.progress}
+										{formatDuration(
+											entry.estimatedReadingTime * (1 - entry.progress),
+											'm',
+										)} left
+									{:else}
+										{formatDuration(entry.estimatedReadingTime, 'm')}
+									{/if}
+								</span> -->
 							{/if}
 						</div>
 					</div>
-					<div class="ml-auto hidden shrink-0 items-center gap-x-2 md:flex">
-						{#if data.tags}
+					<div class="ml-auto hidden shrink-0 items-center gap-x-1 md:flex">
+						{#if data.tags && viewPreferences.tags}
 							{#each data.tags as tag (tag.id)}
 								<Badge
 									class="text-xs"
 									as="a"
 									href="/tests/tag/{tag.name}"
-									variant="outline">{tag.name}</Badge
+									variant="outline"
+								>
+									<TagColorPill class="mr-1 h-2 w-2" color={tag.color} />
+									{tag.name}</Badge
 								>
 							{/each}
 						{/if}
-						<div class="flex flex-col">
-							{#if entry.wordCount}
-								<!-- TODO: allow display changes -->
-								<!-- <Small class="text-xs">
-                                    {entry.wordCount} words
-                                </Small> -->
-							{/if}
-							{#if entry.estimatedReadingTime}
-								<Small
-									class="text-xs text-muted-foreground items-center h-9 flex"
+						{#if viewPreferences.relations && data.relations.length}
+							<HoverCard>
+								<Badge slot="trigger" variant="outline">
+									<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
+									{data.relations.length}
+								</Badge>
+								<div
+									slot="content"
+									class="flex flex-col gap-2 bg-card text-card-foreground"
 								>
-									<TimerIcon class="h-3.5 w-3.5" />
-									{formatDuration(entry.estimatedReadingTime, 'm')}
-								</Small>
-							{/if}
-							{#if entry.progress}
-								<Small class="text-xs">
-									{Math.round(entry.progress * 100)}%
-								</Small>
-							{/if}
-						</div>
+									<span class="font-semibold tracking-tight">Relations</span>
+									{#each data.relations as relation}
+										{#if relation.entry}
+											<a
+												href={make_link(relation.entry)}
+												class="flex cursor-pointer items-center gap-3 text-xs"
+											>
+												<svelte:component
+													this={relations_icons[relation.type]}
+													class="h-3 w-3 shrink-0"
+												/>
+												<img
+													use:smoothload
+													src={get_image(relation.entry)}
+													class="aspect-square w-10 rounded-full object-cover"
+													alt=""
+												/>
+												<span class="font-semibold">
+													{relation.entry.title}</span
+												>
+											</a>
+										{/if}
+									{/each}
+								</div>
+							</HoverCard>
+						{/if}
+						{#if viewPreferences.savedAt && entry.savedAt}
+							<div class="flex items-end flex-col shrink-0 min-w-[56px]">
+								<Tooltip.Root>
+									<Tooltip.Trigger asChild let:builder>
+										<time
+											use:melt={builder}
+											datetime={new Date(entry.savedAt).toISOString()}
+											class="text-xs tabular-nums text-muted-foreground"
+										>
+											{formatDate(entry.savedAt)}
+										</time>
+									</Tooltip.Trigger>
+									<Tooltip.Content>
+										<p class="text-xs">
+											Saved {formatDate(entry.savedAt, {
+												day: 'numeric',
+												hour: 'numeric',
+												minute: 'numeric',
+												month: 'long',
+												year: 'numeric',
+											})}
+										</p>
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</div>
+						{/if}
 					</div>
 				{:else if view === 'kanban'}
 					<!-- for now, we use a slot -->

@@ -1,14 +1,19 @@
-import { db } from '$lib/db';
-import type { Comparator, StringComparator } from '$lib/schemas/inputs/comparators';
-import type { Expression, ExpressionBuilder, ReferenceExpression, SqlBool } from 'kysely';
+import type {
+	Expression,
+	ExpressionBuilder,
+	ReferenceExpression,
+	SqlBool,
+} from 'kysely';
+
+import type { Comparator } from '$lib/schemas/inputs/comparators';
 
 type BaseInputFilter<T> = {
 	[K in keyof T]?: Comparator; // T[K] extends StringComparator ? T[K] : InputFilter<T[K]>
 };
 
 type InputFilter<T> = BaseInputFilter<T> & {
-	and?: InputFilter<T>[];
-	or?: InputFilter<T>[];
+	and?: Array<InputFilter<T>>;
+	or?: Array<InputFilter<T>>;
 };
 
 // gotta do something to generate and/or, something
@@ -17,20 +22,21 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
 	filter: InputFilter<DB[TB]>,
 	// andor: 'and' | 'or' = 'and'
 ) {
-    console.log(`applying filter`, {filter})
+	// console.log(`applying filter`, { filter });
 	const expressions = Object.entries(filter)
 		.map(([field, comparator]) => {
-            console.log({field, comparator})
-            // If comparator is undefined, we don't want to apply a filter
-            if (!comparator) return;
+			// console.log({ comparator, field });
+			// If comparator is undefined, we don't want to apply a filter
+			if (!comparator) {
+				return;
+			}
 			if (field === 'and' || field === 'or') {
 				const subFilters = filter[field] ?? [];
 				// TODO: map over and add and/or eb clauses
-				const exprs: Expression<SqlBool>[] = [];
+				const exprs: Array<Expression<SqlBool>> = [];
 				for (const subFilter of subFilters) {
 					exprs.push(applyFilter(eb, subFilter));
 				}
-                console.log({exprs})
 				if (field === 'and') {
 					return eb.and(exprs);
 				}
@@ -39,6 +45,7 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
 				// TODO: avoid this cast - the object.entries gives me an array, tho?
 				const comparator = filter[field as keyof DB[TB]];
 				if (comparator) {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					return generateComparatorClause(eb, field as any, comparator);
 				}
 			}
@@ -51,7 +58,7 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
 export function generateComparatorClause<DB, TB extends keyof DB>(
 	eb: ExpressionBuilder<DB, TB>,
 	field: ReferenceExpression<DB, TB>,
-	comparator: Comparator // TODO: this could be any comparator, not just string
+	comparator: Comparator, // TODO: this could be any comparator, not just string
 ) {
 	if (typeof comparator === 'string') {
 		return eb(field, '=', `${comparator}`);
@@ -59,8 +66,8 @@ export function generateComparatorClause<DB, TB extends keyof DB>(
 
 	const {
 		eq,
-		neq,
 		in: _in,
+		neq,
 		nin,
 		// contains,
 		// ncontains,
@@ -97,7 +104,7 @@ export function generateComparatorClause<DB, TB extends keyof DB>(
 
 	if ('contains' in rest) {
 		// Then we have a string comparator
-		const { contains, ncontains, startsWith, nstartsWith } = rest;
+		const { contains, ncontains, nstartsWith, startsWith } = rest;
 
 		if (contains) {
 			return eb(field, 'like', `%${contains}%`);
@@ -117,7 +124,7 @@ export function generateComparatorClause<DB, TB extends keyof DB>(
 	}
 
 	if ('gte' in rest) {
-		const { gte, gt, lte, lt } = rest;
+		const { gt, gte, lt, lte } = rest;
 
 		if (gte) {
 			return eb(field, '>=', gte);

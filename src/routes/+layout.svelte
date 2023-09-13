@@ -1,78 +1,56 @@
 <script lang="ts">
 	import '../app.postcss';
 	import '$lib/styles/font.css';
+
+	import { onMount } from 'svelte';
+	import { Toaster } from 'svelte-sonner';
 	import { pwaInfo } from 'virtual:pwa-info';
 
-	import { page } from '$app/stores';
-
-	import { Toaster } from 'svelte-sonner';
-	import { onMount } from 'svelte';
-
-	$: console.log({ $page });
-
 	// fix bigint issue
-	BigInt.prototype.toJSON = function () {
-		return this.toString();
-	};
+	//  this is to fix an issue with BigInt and Kysely
+	// BigInt.prototype.toJSON = function () {
+	// 	return this.toString();
+	// };
 
 	onMount(async () => {
 		if (pwaInfo) {
+			// @ts-expect-error - importing virtual pwa here, need to figure out how to fix types
 			const { registerSW } = await import('virtual:pwa-register');
 			registerSW({
 				immediate: true,
-				onRegistered(r) {
+				// onRegisterError(error) {
+				// 	console.log('SW registration error', error);
+				// },
+				onRegistered(r: { update: () => void }) {
+					// eslint-disable-next-line no-unused-expressions
 					r &&
 						setInterval(() => {
-							console.log('Checking for sw update');
+							// console.log('Checking for sw update');
 							r.update();
-						}, 20000);
+						}, 20_000);
+					// eslint-disable-next-line no-console
 					console.log(`SW Registered: ${r}`);
 				},
-				onRegisterError(error) {
-					console.log('SW registration error', error);
-				}
 			});
 		}
 	});
 
+	// eslint-disable-next-line svelte/no-immutable-reactive-statements
 	$: webManifest = pwaInfo ? pwaInfo.webManifest.linkTag : '';
 </script>
 
 <svelte:head>
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	{@html webManifest}
 	<title>Margins</title>
 </svelte:head>
 
 <slot />
-<!-- TODO: customize -->
-<!-- position="bottom-center"
-	toastOptions={{
-		// style:
-		// 	'border-width:1px; background-color: hsl(var(--background)); color: hsl(var(--foreground));',
-		// className: '!shadow-lg !rounded-md !p-6 !pr-8 !text-sm',
-		// iconTheme: {
-		// 	primary: 'hsl(var(--primary))',
-		// 	secondary: 'hsl(var(--secondary))'
-		// }
-	}} -->
+
 <Toaster
+	richColors
 	closeButton
 	toastOptions={{
-		class: 'toast'
+		class: 'toast',
 	}}
 />
-
-<!-- theme="system" -->
-
-<style lang="postcss">
-	/* :global(body > div) {
-		height: 100%;
-	} */
-	/* nav {
-		position: sticky;
-		top: 0;
-	} */
-	:global(html) {
-		@apply dark:bg-gray-800;
-	}
-</style>

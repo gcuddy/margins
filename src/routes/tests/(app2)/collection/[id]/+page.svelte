@@ -6,6 +6,7 @@
 		ChevronDown,
 		ChevronRightIcon,
 		FilmIcon,
+		Globe2Icon,
 		Library,
 		LinkIcon,
 		LockIcon,
@@ -13,7 +14,7 @@
 		PaletteIcon,
 		Plus,
 		TrashIcon,
-		UnlockIcon,
+		// UnlockIcon,
 		XIcon,
 	} from 'lucide-svelte';
 	import { flip } from 'svelte/animate';
@@ -221,6 +222,7 @@
 </script>
 
 <Header
+	class="relative"
 	style={data.collection.bgColor
 		? styleToString({
 				background: `hsl(${hslString} / 0.5)`,
@@ -249,21 +251,32 @@
 						<DropdownMenuGroup>
 							<DropdownMenuItem
 								on:click={async () => {
-									$collectionUpdateMutation.mutate({
+									await $collectionUpdateMutation.mutateAsync({
 										private: data.collection.private ? 0 : 1,
 									});
-									invalidate('collection');
+									data.collection.private = data.collection.private ? 0 : 1;
 								}}
 							>
 								<svelte:component
-									this={data.collection.private ? UnlockIcon : LockIcon}
+									this={data.collection.private ? Globe2Icon : LockIcon}
 									class="mr-2 h-4 w-4"
 								/> Make collection {data.collection.private
 									? 'public'
 									: 'private'}</DropdownMenuItem
 							>
 							{#if !data.collection.private}
-								<DropdownMenuItem>
+								<DropdownMenuItem
+									on:click={() => {
+										// TODO: clear cruft
+										navigator.clipboard.writeText(
+											$page.url.origin + $page.url.pathname,
+										);
+										toast('Collection URL copied to clipboard', {
+											description:
+												'Anyone with the link can view this collection',
+										});
+									}}
+								>
 									<LinkIcon class="mr-2 h-4 w-4" />
 									Copy public link</DropdownMenuItem
 								>
