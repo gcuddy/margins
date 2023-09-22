@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import EntryList from '$lib/components/entries/EntryList.svelte';
+	// import EntryList from '$lib/components/entries/EntryList.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { Card, CardContent, CardFooter,CardHeader, CardTitle } from '$lib/components/ui/card';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import NativeSelect from '$lib/components/ui/NativeSelect.svelte';
-	import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '$lib/components/ui/card';
 	import { Lead } from '$lib/components/ui/typography';
 	import H1 from '$lib/components/ui/typography/H1.svelte';
 	import { number_operand_lookup, number_operands, types } from '$lib/types';
+
 	import type { Condition } from './View';
 
 	export let data;
@@ -21,7 +22,7 @@
 	// 	type: "Book" | "Movie";
 	// };
 
-	let conditions: Condition[] = [];
+	const conditions: Array<Condition> = [];
 
 	let submitting = false;
 </script>
@@ -146,5 +147,5 @@
 	</form>
 </Card>
 {#if form?.entries}
-	<EntryList class="mt-6" bulkForm={data.bulkForm} entries={form.entries} />
+	<!-- <EntryList class="mt-6" bulkForm={data.bulkForm} entries={form.entries} /> -->
 {/if}

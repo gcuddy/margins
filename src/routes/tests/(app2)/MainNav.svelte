@@ -74,7 +74,7 @@
 	import { fly } from 'svelte/transition';
 
 	import { navigating, page } from '$app/stores';
-	import Avatar from '$lib/components/ui/avatar/Avatar.svelte';
+	// import Avatar from '$components/ui/avatar/avatar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	import { commanderState } from './Commander.svelte';
@@ -172,9 +172,9 @@
 				</Button>
 				{#if $page.data.user_data}
 					<a href="/tests/settings" class=" flex items-center space-x-2">
-						<Avatar>
+						<!-- <Avatar>
 							<span>{$page.data.user_data.username.slice(0, 2)}</span>
-						</Avatar>
+						</Avatar> -->
 					</a>
 				{/if}
 			</div>

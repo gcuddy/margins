@@ -45,6 +45,8 @@ module.exports = {
 			{ fixStyle: 'inline-type-imports' },
 		],
 		'@typescript-eslint/no-dynamic-delete': 0,
+		// For our purposes, don't mind this.
+		'@typescript-eslint/no-explicit-any': 0,
 		// '@typescript-eslint/naming-convention': [
 		// 	'error',
 		// 	{

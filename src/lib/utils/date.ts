@@ -1,5 +1,12 @@
 import { readable } from 'svelte/store';
 
+export function normalizeTimezone(isoString: string | Date) {
+	if (typeof isoString === 'string') {
+		return isoString.replace(/00$/, 'Z');
+	}
+	return isoString.toISOString().replace(/00$/, 'Z');
+}
+
 export function formatDate(
 	input: string | number | Date,
 	opts: Intl.DateTimeFormatOptions & {

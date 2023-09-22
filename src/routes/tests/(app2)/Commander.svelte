@@ -237,8 +237,8 @@
 					onSelect={() => {
 						// goto(`/tests/search`);
 						// isOpen = false;
-						$state.pages = [...$state.pages, 'search-movies'];
-						$state.shouldFilter = false;
+                        addPage('search-movies');
+						$state.placeholder = 'Open tag...';
 					}}
 				>
 					<Search class="mr-2 h-4 w-4" />
@@ -337,7 +337,7 @@
 			<Annotations bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'search-movies'}
-			<Movies />
+			<Movies bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'search-books'}
 			<Books bind:isOpen={$state.isOpen} />

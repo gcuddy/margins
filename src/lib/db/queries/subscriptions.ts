@@ -1,0 +1,429 @@
+// websocket version would be cool
+
+import { z } from 'zod';
+
+import pindex from '$lib/api/pindex';
+import { db, values } from '$lib/db';
+
+import { entrySelect } from '../selects';
+import type { GetCtx } from '../types';
+import type { Insertable } from 'kysely';
+import type { Entry, Feed } from '$lib/prisma/kysely/types';
+import { get_library } from '$lib/server/queries';
+import { XMLParser } from 'fast-xml-parser';
+import type { FeedAddFormSchema } from '$components/subscriptions/subscription-entry.schema';
+
+const xmlParser = new XMLParser({
+	attributeNamePrefix: '',
+	ignoreAttributes: false,
+});
+
+export const subscriptionInputSchema = z.object({
+	/** Feed Id */
+	feedId: z.number(),
+});
+
+function removeTagsFromHtml(html: string) {
+	return html.replaceAll(/(<([^>]+)>)/gi, '');
+}
+
+type FeedType = 'json' | 'rss' | 'atom';
+
+async function getFeedData(res: Response): Promise<{
+	data: any;
+	type: FeedType;
+}> {
+	const contentType = res.headers.get('content-type');
+	if (contentType?.includes('application/json')) {
+		const json = await res.json();
+		return {
+			data: json,
+			type: 'json',
+		};
+	}
+	// then it's xml
+	const text = await res.text();
+	const parsed = xmlParser.parse(text);
+
+	if ('feed' in parsed) {
+		return {
+			data: parsed.feed,
+			type: 'atom',
+		};
+	} else if ('rss' in parsed) {
+		return {
+			data: parsed.rss,
+			type: 'rss',
+		};
+	} else {
+		throw new Error('Unknown feed type');
+	}
+}
+
+function parseJsonFeedItems(
+	json: any,
+	feedId: number,
+): Array<Insertable<Entry>> {
+	return json.items.map((item: any) => {
+		return {
+			author: item.authors?.map((a: any) => a.name).join(', '),
+			feedId,
+			guid: item.id,
+			html: item.content_html,
+			published: new Date(item.date_published),
+			text: item.content_text || removeTagsFromHtml(item.content_html),
+			title: item.title,
+			updatedAt: new Date(),
+			uri: item.url,
+		} satisfies Insertable<Entry>;
+	});
+}
+
+function getAtomLink(links: any, rel = 'alternate') {
+	if (!links) {
+		return null;
+	}
+	if (Array.isArray(links)) {
+		return (links as Array<any>).find((link: any) => link.rel === rel)
+			?.href as string;
+	} else if (typeof links === 'object') {
+		return links.href as string;
+	}
+}
+function parseAtomFeedItems(
+	feed: any,
+	feedId: number,
+): Array<Insertable<Entry>> {
+	const alternateLink = getAtomLink(feed.link);
+	const relatedLink = getAtomLink(feed.link, 'related');
+	return feed.entry.map((entry: any) => {
+		const content = getText(entry.content);
+		return {
+			author: entry.author?.name,
+			feedId,
+			guid: entry.id,
+			html:
+				alternateLink && relatedLink
+					? `<i>Link: <a href='${alternateLink}'>${alternateLink}</a>
+            ${content}`
+					: content,
+			published: new Date(entry.published),
+			summary: removeTagsFromHtml(getText(entry.summary)).slice(0, 255),
+			text: removeTagsFromHtml(content),
+			title: getText(entry.title),
+			updatedAt: new Date(),
+			uri:
+				(alternateLink && relatedLink ? relatedLink : alternateLink) ||
+				entry.id,
+		} satisfies Insertable<Entry>;
+	});
+}
+
+function getText(...nodes: Array<unknown>): string {
+	for (const node of nodes) {
+		if (typeof node === 'string') {
+			return node;
+		}
+		if (typeof node === 'object' && node && '#text' in node) {
+			return getText(node['#text']);
+		}
+	}
+	return '';
+}
+
+function parseRssFeedItems(rss: any, feedId: number): Array<Insertable<Entry>> {
+	return rss.channel.item.map((item: any) => {
+		const html = item['content:encoded'] || item.description;
+		return {
+			author: getText(item['dc:creator'], item.author, item['itunes:author']),
+			duration: null,
+			enclosureLength: null,
+			enclosureType: null,
+			enclosureUrl: item.enclosure?.url,
+			feedId,
+			guid: getText(item.guid),
+			html,
+			image: item.image?.url,
+			podcastIndexId: null,
+			published: item.pubDate
+				? new Date(item.pubDate)
+				: item.isoDate
+				? new Date(item.isoDate)
+				: null,
+			summary: removeTagsFromHtml(item.description.slice(0, 255)),
+			text: removeTagsFromHtml(html),
+			title: item.title,
+			type: 'article',
+			updatedAt: new Date(),
+			uri: item.link || item.enclosure?.url,
+		} as Insertable<Entry>;
+	});
+}
+
+function parseRssFeedInfo(rss: any, feedUrl?: string) {
+	return {
+		description: rss.channel.description,
+		feedUrl: feedUrl ?? rss.channel.link,
+		guid: rss.channel.link,
+		imageUrl: rss.channel.image?.url,
+		title: rss.channel.title,
+		updatedAt: new Date(),
+	} satisfies Insertable<Feed>;
+}
+
+function parseAtomFeedInfo(feed: any, feedUrl: string) {
+	return {
+		feedUrl,
+		imageUrl: feed.logo || feed.icon,
+		title: getText(feed.title),
+		updatedAt: new Date(),
+	} satisfies Insertable<Feed>;
+}
+
+function parseJsonFeedInfo(json: any, feedUrl: string) {
+	return {
+		feedUrl,
+		imageUrl: json.icon || json.favicon,
+		title: json.title,
+		updatedAt: new Date(),
+	} satisfies Insertable<Feed>;
+}
+
+export async function getFeedInfo(data: any, type: FeedType, feedUrl: string) {
+	if (type === 'json') {
+		return parseJsonFeedInfo(data, feedUrl);
+	} else if (type === 'atom') {
+		return parseAtomFeedInfo(data, feedUrl);
+	} else {
+		return parseRssFeedInfo(data, feedUrl);
+	}
+}
+
+export async function getLatestFeedItems(
+	data: any,
+	type: FeedType,
+	feedId: number,
+): Promise<Array<Insertable<Entry>>> {
+	if (type === 'json') {
+		return parseJsonFeedItems(data, feedId);
+	} else if (type === 'atom') {
+		return parseAtomFeedItems(data, feedId);
+	} else {
+		return parseRssFeedItems(data, feedId);
+	}
+}
+
+async function updateLatestFeedItems(
+	...args: Parameters<typeof getLatestFeedItems>
+) {
+	const items = await getLatestFeedItems(...args);
+	const feedId = args[2];
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto('Entry')
+			.values(items)
+			.onDuplicateKeyUpdate(({ ref }) => ({
+				author: values(ref('author')),
+				duration: values(ref('duration')),
+				enclosureUrl: values(ref('enclosureUrl')),
+				feedId,
+				guid: values(ref('guid')),
+				html: values(ref('html')),
+				image: values(ref('image')),
+				podcastIndexId: values(ref('podcastIndexId')),
+				published: values(ref('published')),
+				summary: values(ref('summary')),
+				text: values(ref('text')),
+				title: values(ref('title')),
+				type: values(ref('type')),
+				updatedAt: new Date(),
+				uri: values(ref('uri')),
+			}))
+			.execute();
+
+		return await trx
+			.updateTable('Feed')
+			.set({ lastParsed: new Date() })
+			.where('id', '=', feedId)
+			.execute();
+	});
+}
+
+// get subscription. If it hasn't been updated in last 10 minutes, schedules check for new episodes.
+// Also see Cron Job, which checks all subscriptions every 30 minutes.
+export async function subscription({
+	ctx,
+	input,
+}: GetCtx<typeof subscriptionInputSchema>) {
+	// eslint-disable-next-line no-console
+	console.time('subscription');
+	const feed = await db
+		.selectFrom('Feed')
+		.where('id', '=', input.feedId)
+		.selectAll()
+		.executeTakeFirstOrThrow();
+
+	const needsRefetching =
+		!feed.lastParsed ||
+		(feed.lastParsed &&
+			feed.lastParsed < new Date(Date.now() - 10 * 60 * 1000));
+	// console.log({ needsRefetching });
+	// if it's a podcast, use podcastindex to check
+	// TODO: this should get moved to qstash messaging and use redis
+	if (needsRefetching && feed.podcast && feed.podcastIndexId) {
+		// eslint-disable-next-line no-console
+		console.log(
+			`Needs refetching: Fetching ${feed.podcastIndexId} from podcastindex`,
+		);
+		const episodes = await pindex
+			.episodesByFeedId(feed.podcastIndexId)
+			.then((p) => p.items);
+
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.insertInto('Entry')
+				.values(
+					episodes.map((episode) => ({
+						duration: episode.duration,
+						enclosureLength: episode.enclosureLength,
+						enclosureType: episode.enclosureType,
+						enclosureUrl: episode.enclosureUrl,
+						feedId: feed.id,
+						guid: feed.guid,
+						image: episode.image || episode.feedImage,
+						podcastIndexId: episode.id,
+						published: new Date(episode.datePublished * 1000),
+						summary: removeTagsFromHtml(episode.description.slice(0, 200)),
+						text: episode.description,
+						title: episode.title,
+						type: 'podcast',
+						updatedAt: new Date(),
+						uri: episode.enclosureUrl,
+					})),
+				)
+				// TODO: Review this - do we actually *not* want it to update on conflict, as to not overwrite things?
+				.onDuplicateKeyUpdate(({ ref }) => ({
+					duration: values(ref('duration')),
+					enclosureLength: values(ref('enclosureLength')),
+					enclosureType: values(ref('enclosureType')),
+					enclosureUrl: values(ref('enclosureUrl')),
+					feedId: values(ref('feedId')),
+					guid: values(ref('guid')),
+					image: values(ref('image')),
+					podcastIndexId: values(ref('podcastIndexId')),
+					published: values(ref('published')),
+					summary: values(ref('summary')),
+					text: values(ref('text')),
+					title: values(ref('title')),
+					type: 'podcast',
+					updatedAt: new Date(),
+					uri: values(ref('uri')),
+				}))
+				.execute();
+			return await trx
+				.updateTable('Feed')
+				.set({ lastParsed: new Date() })
+				.where('id', '=', feed.id)
+				.execute();
+		});
+	} else if (needsRefetching && feed.feedUrl) {
+		// get feed items
+		const res = await fetch(feed.feedUrl);
+		const { data, type } = await getFeedData(res);
+		const items = await getLatestFeedItems(data, type, feed.id);
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.insertInto('Entry')
+				.values(items)
+				.onDuplicateKeyUpdate(({ ref }) => ({
+					author: values(ref('author')),
+					duration: values(ref('duration')),
+					enclosureUrl: values(ref('enclosureUrl')),
+					feedId: feed.id,
+					guid: values(ref('guid')),
+					html: values(ref('html')),
+					image: values(ref('image')),
+					podcastIndexId: values(ref('podcastIndexId')),
+					published: values(ref('published')),
+					summary: values(ref('summary')),
+					text: values(ref('text')),
+					title: values(ref('title')),
+					type: values(ref('type')),
+					updatedAt: new Date(),
+					uri: values(ref('uri')),
+				}))
+				.execute();
+
+			return await trx
+				.updateTable('Feed')
+				.set({ lastParsed: new Date() })
+				.where('id', '=', feed.id)
+				.execute();
+		});
+	}
+
+	// TODO: use get_library but make get_library get_entries
+	// const entries = await db
+	// 	.selectFrom('Entry as e')
+	// 	.where('feedId', '=', input.feedId)
+	// 	.select(entrySelect)
+	// 	.select('e.updatedAt')
+	// 	.select('e.guid')
+	// 	.orderBy('published', 'desc')
+	// 	.execute();
+
+	// const { entries, nextCursor } = await get_library({
+	// 	dir: 'desc',
+	// 	filter: {
+	// 		feed: {
+	// 			eq: input.feedId,
+	// 		},
+	// 	},
+	// 	library: false,
+	// 	sort: 'published',
+	// 	status: null,
+	// 	userId: ctx.userId,
+	// });
+	// eslint-disable-next-line no-console
+	console.timeEnd('subscription');
+	return {
+		// entries,
+		feed,
+		// nextCursor,
+	};
+
+	// TODO: schedule a job to parse this feed
+}
+
+export async function subscriptionCreate({
+	ctx,
+	input,
+}: GetCtx<FeedAddFormSchema>) {
+	// get feed info
+	for (const feed of input) {
+		const res = await fetch(feed.url);
+		const { data, type } = await getFeedData(res);
+		const feedInfo = await getFeedInfo(data, type, feed.url);
+		await db.insertInto('Feed').values(feedInfo).ignore().execute();
+		const _feed = await db
+			.selectFrom('Feed')
+			.where('feedUrl', '=', feedInfo.feedUrl)
+			.select('id')
+			.executeTakeFirstOrThrow();
+
+		await db
+			.insertInto('Subscription')
+			.values({
+				feedId: _feed.id,
+				title: feed.title,
+				updatedAt: new Date(),
+				userId: ctx.userId,
+			})
+			.onDuplicateKeyUpdate({
+				title: feed.title,
+				updatedAt: new Date(),
+			})
+			.execute();
+		await updateLatestFeedItems(data, type, _feed.id);
+	}
+}

@@ -50,21 +50,40 @@ model State {
     @@index([userId])
 }
 
-model BookmarkHistory {
-    id         String    @id @default(cuid())
-    createdAt  DateTime  @default(now())
-    updatedAt  DateTime  @updatedAt
-    archivedAt DateTime?
-    archived   Boolean?
-    fromStatus Status?
-    toStatus   Status?
-    bookmarkId Int
-    userId     String?
-    bookmark   Bookmark  @relation(fields: [bookmarkId], references: [id])
+model EntryHistory {
+    id           String    @id @default(cuid())
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+    archivedAt   DateTime?
+    archived     Boolean?
+    fromStatus   Status?
+    toStatus     Status?
+    fromProgress Float?
+    toProgress   Float?
+    seen         Boolean?
+    finished     Boolean?
+    bookmarked   Boolean?
+    toTitle      String?   @db.VarChar(2083)
+    toAuthor     String?
+    userId       String?
+
+    entryId Int
+    entry   Entry @relation(fields: [entryId], references: [id])
+
+    // @deprecated
+    bookmarkId Int?
+    bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
     user       AuthUser? @relation(fields: [userId], references: [id])
+
+    addedTagIds   Json? // Int[] - enforce this json schema
+    removedTagIds Json? // Int[] - enforce this json schema (REVIEW: should we use another table? the point is to be lightweight...)
+
+    addedCollectionIds   Json? // Int[] - enforce this json schema
+    removedCollectionIds Json? // Int[] - enforce this json schema (REVIEW: should we use another table? the point is to be lightweight...)
 
     @@index([userId])
     @@index([bookmarkId])
+    @@index([entryId])
 }
 
 model Bookmark {
@@ -106,7 +125,7 @@ model Bookmark {
     interaction      Interaction?      @relation(fields: [interactionId], references: [id])
     favorite         Favorite?
     annotations      Annotation[]
-    history          BookmarkHistory[]
+    history          EntryHistory[]
     attachments      Attachment[]
 
     @@unique([uri, entryId, userId])
@@ -353,8 +372,11 @@ model Entry {
     TagOnEntry           TagOnEntry[]
     referenced_by        annotation_to_entry_reference[]
     owned_by             AuthUser?                       @relation(fields: [owned_by_id], references: [id])
+    EntryHistory         EntryHistory[]
 
     @@unique([uri, id])
+    // TODO:
+    // @@unique([feedId, guid])
     @@index([feedId])
     @@index([id, published, createdAt])
     @@index([published])
@@ -614,7 +636,8 @@ model Interaction {
     updatedAt        DateTime  @updatedAt
     is_read          Boolean?  @default(false)
     progress         Float?    @default(0)
-    finished         Boolean?  @default(false)
+    finished         DateTime?
+    seen             Boolean?  @default(false)
     userId           String
     last_viewed      DateTime  @default(now())
     last_annotated   DateTime  @default(now())
@@ -625,8 +648,7 @@ model Interaction {
     epsiodes_watched Json?
     /// Optionally, a title for the interaction
     title            String?
-    date_finished    DateTime?
-    date_started     DateTime?
+    started          DateTime?
     note             String?
     rating           Int?
     entry            Entry     @relation(fields: [entryId], references: [id])
@@ -792,7 +814,7 @@ model AuthUser {
     relations          Relation[]
     AuthorizationKey   AuthorizationKey?
     TagOnEntry         TagOnEntry[]
-    bookmark_history   BookmarkHistory[]
+    entry_history      EntryHistory[]
     custom_entries     Entry[]
     attachments        Attachment[]
     ViewPreferences    ViewPreferences[]

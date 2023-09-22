@@ -8,9 +8,10 @@
 
 	// fix bigint issue
 	//  this is to fix an issue with BigInt and Kysely
-	// BigInt.prototype.toJSON = function () {
-	// 	return this.toString();
-	// };
+	// prettier-ignore
+	BigInt.prototype.toJSON = function() {
+		return this.toString();
+	};
 
 	onMount(async () => {
 		if (pwaInfo) {

@@ -28,16 +28,18 @@
 	import { page } from '$app/stores';
 	import AddUrlModal from '$components/modals/add-url-modal.svelte';
 	import Pins from '$components/pins/pins.svelte';
+	import SubscriptionEntry from '$components/subscriptions/subscription-entry.svelte';
+	import * as Dialog from '$components/ui/dialog';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
 		DropdownMenuItem,
 		DropdownMenuSeparator,
 		DropdownMenuTrigger,
-	} from '$components/ui/dropdown-menu2';
+	} from '$components/ui/dropdown-menu';
 	import Separator from '$components/ui/Separator.svelte';
 	import { cn } from '$lib';
-	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
+	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import ColResizer from '$lib/components/ColResizer.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
@@ -142,7 +144,7 @@
 	$: mobileNavWidth.set(borderBoxSize?.[0]?.inlineSize ?? 81);
 
 	export let showAddUrlModal = writable(false);
-
+	let showAddSubscriptionModal = false;
 	const gardenEnabled = persisted('gardenEnabled', false);
 </script>
 
@@ -155,6 +157,7 @@
 	<nav
 		bind:borderBoxSize
 		style:--width="{width}px"
+		style:padding-bottom="{$audioPlayer.height}px"
 		class="flex flex-col gap-2 overflow-y-auto overscroll-contain fixed top-0 left-0 bottom-0 grow h-full border-r lg:w-[--width] {$menu_bar.show
 			? 'opacity-100'
 			: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
@@ -246,7 +249,9 @@
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-56">
-						<DropdownMenuItem>
+						<DropdownMenuItem on:click={() => {
+                            showAddSubscriptionModal = true;
+                        }}>
 							<RssIcon class="h-4 w-4 mr-2" />
 							<span>Add Subscription</span>
 						</DropdownMenuItem>
@@ -337,8 +342,8 @@
 	</nav>
 	<button />
 {/if}
-{#if $audioPlayer.audio?.src}
-	<!-- we subtract 8 to account for colresizer -->
+<!-- we subtract 8 to account for colresizer -->
+<!-- {#if $audioPlayer.audio?.src}
 	<div
 		style:--width="{width}px"
 		class="mt-auto flex shrink-0 flex-col pb-2 max-w-[--width] {collapsed
@@ -347,5 +352,19 @@
 	>
 		<AudioPlayer {collapsed} />
 	</div>
-{/if}
+{/if} -->
 <AddUrlModal open={showAddUrlModal} />
+
+<Dialog.Root bind:open={showAddSubscriptionModal}>
+	<Dialog.Content>
+        <Dialog.Header>
+            <Dialog.Title>
+                Add Feed
+            </Dialog.Title>
+        </Dialog.Header>
+		<SubscriptionEntry
+            form={$page.form}
+			searchForm={$page.data.feedSearchForm}
+		/>
+	</Dialog.Content>
+</Dialog.Root>

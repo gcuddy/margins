@@ -105,14 +105,14 @@ export const bulkEntriesSchema = z.object({
 export type BulkEntries = typeof bulkEntriesSchema;
 
 export const interactionSchema = z.object({
-    entryId: z.number(),
-    date_started: z.coerce.date().nullish(),
-    date_finished: z.coerce.date().nullish(),
-    id: z.number().optional(),
-    title: z.string().min(1).max(100).nullish(),
-    note: z.string().min(1).max(255).nullish(),
-    currentPage: z.coerce.number().int().nullish(),
-    progress: z.coerce.number().min(0).max(1).nullish(),
-})
+	entryId: z.number(),
+	started: z.coerce.date().nullish(),
+	finished: z.coerce.date().nullish(),
+	id: z.number().optional(),
+	title: z.string().min(1).max(100).nullish(),
+	note: z.string().min(1).max(255).nullish(),
+	currentPage: z.coerce.number().int().nullish(),
+	progress: z.coerce.number().min(0).max(1).nullish(),
+});
 
 export type InteractionSchema = typeof interactionSchema;

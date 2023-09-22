@@ -16,7 +16,7 @@ export const config: Config = {
 	runtime: 'nodejs18.x',
 };
 
-export const POST: RequestHandler = async ({ request, locals, url }) => {
+export const POST: RequestHandler = async ({ locals, request, url }) => {
 	const session = await locals.auth.validate();
 	if (!session) {
 		throw error(401, {
@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 		});
 	}
 
-    const file = request.body;
+	const file = request.body;
 	if (!file) {
 		throw error(500, {
 			message: 'No body',
@@ -47,9 +47,9 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	const array_buffer = await request.arrayBuffer();
 
 	const blob = await uploadFile({
-		Key,
 		Body: Buffer.from(array_buffer),
 		ContentType: content_type,
+		Key,
 	});
 
 	const final_url = S3_BUCKET_PREFIX + Key;
@@ -65,35 +65,35 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 			data: array_buffer,
 		}).promise;
 
-		const thumbnail = await make_thumbnail(pdf);
+		// const thumbnail = await make_thumbnail(pdf);
 
-		const thumb_key = `/thumbnails/thumb_${nanoid()}.png`;
+		// const thumb_key = `/thumbnails/thumb_${nanoid()}.png`;
 
-		thumbnail_url = S3_BUCKET_PREFIX + thumb_key;
+		// thumbnail_url = S3_BUCKET_PREFIX + thumb_key;
 
-		await uploadFile({
-			Key: thumb_key,
-			Body: thumbnail,
-			ContentType: 'image/png',
-		});
+		// await uploadFile({
+		// 	Body: thumbnail,
+		// 	ContentType: 'image/png',
+		// 	Key: thumb_key,
+		// });
 
 		// add an entry for this - get the owner id
 
-		const { title: pdf_title, author, text } = await parse_pdf(pdf);
+		const { author, text, title: pdf_title } = await parse_pdf(pdf);
 
 		title = pdf_title;
 		const entry = await db
 			.insertInto('Entry')
 			.values({
-				updatedAt: new Date(),
 				author,
-				title: title || file_name,
-				text,
-				uri: final_url,
 				image: thumbnail_url,
-				type: 'pdf',
 				owned_by_id: session.user.userId,
 				pdf_fingerprint: await get_pdf_fingerprint(pdf),
+				text,
+				title: title || file_name,
+				type: 'pdf',
+				updatedAt: new Date(),
+				uri: final_url,
 			})
 			.executeTakeFirstOrThrow();
 
@@ -103,10 +103,10 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 		await db
 			.insertInto('Relation')
 			.values({
-				relatedEntryId: +related_entry_id,
 				entryId: pdf_entry_id,
-				type: 'Grouped',
 				id: nanoid(),
+				relatedEntryId: +related_entry_id,
+				type: 'Grouped',
 				updatedAt: new Date(),
 				userId: session.user.userId,
 			})
@@ -114,9 +114,9 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 	}
 
 	return json({
-		url: final_url,
 		thumbnail_url,
 		title,
+		url: final_url,
 	});
 
 	// old version via formdata

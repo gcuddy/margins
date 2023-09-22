@@ -623,6 +623,23 @@ export async function entry_by_id({
 				).as('collections'),
 				jsonArrayFrom(
 					eb
+						.selectFrom('EntryHistory as h')
+						.innerJoin('auth_user as hu', 'hu.id', 'h.userId')
+						.select([
+							'h.id',
+							'h.createdAt',
+							'h.toStatus',
+							'h.finished',
+							'h.userId',
+							'hu.username',
+							'hu.avatar',
+						])
+						.orderBy('h.createdAt', 'asc')
+						.whereRef('h.entryId', '=', 'Entry.id')
+						.where('h.userId', '=', userId),
+				).as('history'),
+				jsonArrayFrom(
+					eb
 						.selectFrom('Relation as r')
 						.select(['r.type', 'r.id'])
 						.select((eb) =>
@@ -692,8 +709,8 @@ export async function entry_by_id({
 							'i.id',
 							'i.currentPage',
 							'i.progress',
-							'i.date_started',
-							'i.date_finished',
+							'i.started',
+							'i.finished',
 							'i.title',
 							'i.note',
 						])
@@ -744,6 +761,8 @@ export async function entry_by_id({
 	}
 
 	const entry = await query.executeTakeFirst();
+
+	console.dir({ entry }, { depth: null });
 
 	return {
 		album: type === 'album' ? await spotify.album(id.toString()) : null,
@@ -825,6 +844,7 @@ export async function count_library({
 
 export const saveToLibrarySchema = librarySchema.and(
 	z.object({
+		historyId: z.string().optional(),
 		status: z.nativeEnum(Status).default('Backlog'),
 	}),
 );
@@ -848,19 +868,38 @@ export async function save_to_library({
 
 	const sort_order = await getFirstBookmarkSort(ctx.userId);
 
-	await db
-		.insertInto('Bookmark')
-		.values({
-			entryId,
-			sort_order,
-			status,
-			updatedAt: new Date(),
-			userId: ctx.userId,
-		})
-		.onDuplicateKeyUpdate({
-			status,
-		})
-		.executeTakeFirst();
+	// save bookmark history
+
+	await db.transaction().execute(async (trx) => {
+		const bookmark = await trx
+			.insertInto('Bookmark')
+			.values({
+				entryId,
+				sort_order,
+				status,
+				updatedAt: new Date(),
+				userId: ctx.userId,
+			})
+			.onDuplicateKeyUpdate({
+				status,
+			})
+			.executeTakeFirst();
+
+		// save bookmark history (tho maybe this should be entry hsitory?)
+		return await trx
+			.insertInto('EntryHistory')
+			.values({
+				entryId: entryId!,
+				id: input.historyId ?? nanoid(),
+				toStatus: status ?? 'Backlog',
+				updatedAt: new Date(),
+				userId: ctx.userId,
+			})
+			.onDuplicateKeyUpdate({
+				toStatus: status ?? 'Backlog',
+			})
+			.execute();
+	});
 }
 
 /**
@@ -1590,7 +1629,9 @@ function favoriteChildren(
 				>,
 			)
 			.select(fSelect('f2'))
-			.select((eb) => favoriteContent(eb, 'f2')),
+			.select((eb) => favoriteContent(eb, 'f2'))
+			.orderBy('f2.sortOrder', 'asc')
+			.orderBy('f2.createdAt', 'desc'),
 	).as('children');
 }
 

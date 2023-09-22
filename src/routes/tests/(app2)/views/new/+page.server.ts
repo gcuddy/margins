@@ -14,19 +14,27 @@ export const load = (async ({ url, locals, cookies }) => {
 
     // object from searchparams
     const obj = Object.fromEntries(new URLSearchParams(url.search));
-    console.log({ obj })
+    console.log({ obj, view });
 
     const session = await locals.auth.validate();
     if (!session) throw error(401, "Not logged in")
 
     return {
-        conditions: view.conditions,
-        name: view.name,
-        bulkForm: superValidate(bulkEntriesSchema),
-        // include tags if there is a tag condition (for js-less users)
-        tags: view.conditions.some(condition => condition.type === "Tag") ? db.selectFrom("Tag").where("userId", "=", session.user.userId).select(["name", "id"]).orderBy("name", "asc").execute() : [],
-        condition_types: types
-    }
+			conditions: view.conditions,
+			name: view.name,
+			bulkForm: superValidate(bulkEntriesSchema),
+			// include tags if there is a tag condition (for js-less users)
+			tags: view.conditions.some((condition) => condition.type === 'Tag')
+				? db
+						.selectFrom('Tag')
+						.where('userId', '=', session.user.userId)
+						.select(['name', 'id'])
+						.orderBy('name', 'asc')
+						.execute()
+				: [],
+			condition_types: types,
+			// view,
+		};
 
 }) satisfies PageServerLoad;
 

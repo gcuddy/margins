@@ -1,19 +1,36 @@
 <script lang="ts">
 	import { createAvatar, melt } from '@melt-ui/svelte';
-	import { ExternalLink, PlusCircle } from 'lucide-svelte';
+	import {
+		BookOpenCheckIcon,
+		BookOpenIcon,
+		BookPlusIcon,
+		CheckIcon,
+		ChevronDown,
+		ExternalLink,
+		PlusCircle,
+		PlusIcon,
+	} from 'lucide-svelte';
 
 	import { page } from '$app/stores';
-	import Editor from '$components/ui/editor/Editor.svelte';
+	import { Button } from '$components/ui/button';
+	import * as DropdownMenu from '$components/ui/dropdown-menu';
+	import type Editor from '$components/ui/editor/Editor.svelte';
+	import Separator from '$components/ui/Separator.svelte';
 	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
 		Dialog,
 		DialogContent,
 		DialogHeader,
 		DialogTitle,
-		DialogTrigger	} from '$lib/components/ui/dialog';
+		DialogTrigger,
+	} from '$lib/components/ui/dialog';
 	import Dialog2 from '$lib/components/ui/dialog2/Dialog.svelte';
-	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs';
+	import {
+		Tabs,
+		TabsContent,
+		TabsList,
+		TabsTrigger,
+	} from '$lib/components/ui/tabs';
 	import { tabContent } from '$lib/components/ui/tabs/TabsContent.svelte';
 	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
@@ -38,7 +55,9 @@
 
 	const strip_gbook_curl = (url: string) => {};
 
-	$: isbn = book.volumeInfo?.industryIdentifiers?.find((i) => i.type === 'ISBN_13')?.identifier;
+	$: isbn = book.volumeInfo?.industryIdentifiers?.find(
+		(i) => i.type === 'ISBN_13',
+	)?.identifier;
 
 	$: author = book.volumeInfo?.authors?.join(', ');
 
@@ -52,9 +71,13 @@
 
 	function getGbookImage(book: NonNullable<Book>) {
 		const { volumeInfo } = book;
-		if (!volumeInfo) return '';
+		if (!volumeInfo) {
+			return '';
+		}
 		const { imageLinks } = volumeInfo;
-		if (!imageLinks) return;
+		if (!imageLinks) {
+			return;
+		}
 		const { extraLarge, large, medium, small, thumbnail } = imageLinks;
 		// try thumbnail first, setting zoom to 0 and removing curl
 		// if that fails, try small, medium, large, extraLarge
@@ -78,9 +101,9 @@
 		.find((r) => r.type === 'Grouped' && r.related_entry?.type === 'pdf');
 
 	const {
-		elements: { image, fallback },
+		elements: { fallback, image },
 		options,
-		states: { loadingStatus }
+		states: { loadingStatus },
 	} = createAvatar();
 
 	$: options.src.set(getGbookImage(book) ?? '');
@@ -93,14 +116,16 @@
 			<img
 				use:melt={$image}
 				class="aspect-auto max-w-[200px] rounded-md shadow-lg"
-				on:error={(e) => { console.log(e); }}
+				on:error={(e) => {
+					console.log(e);
+				}}
 				src={getGbookImage(book)}
 				alt=""
 			/>
 			<div
 				class={cn(
 					'w-[128px] h-[196px] bg-muted flex items-center justify-center text-muted-foreground',
-					$loadingStatus === 'loading' && 'animate-pulse'
+					$loadingStatus === 'loading' && 'animate-pulse',
 				)}
 				use:melt={$fallback}
 			>
@@ -113,9 +138,12 @@
 		<div class="flex flex-col gap-2">
 			<Muted>Book</Muted>
 			<H1>{book.volumeInfo?.title}</H1>
-			<Lead>
+			{#if book.volumeInfo?.subtitle}
+				<Lead>{book.volumeInfo?.subtitle}</Lead>
+			{/if}
+			<span>
 				{author} — {year}
-			</Lead>
+			</span>
 			<Lead class="text-base">
 				isbn: {isbn}
 			</Lead>
@@ -143,7 +171,43 @@
 					<!-- content here -->
 					<Button as="a" href="/tests/pdf/{pdf.related_entry.id}">Read</Button>
 				{/if}
-				<BookmarkForm data={data.bookmarkForm} />
+				<!-- <BookmarkForm data={data.bookmarkForm} /> -->
+				<div class="flex items-center">
+					<Button size="sm" variant="default" class="rounded-r-none border-r-0">
+						{#if !data.entry?.bookmark}
+							<BookPlusIcon class="mr-2 h-4 w-4" />
+							Want to read
+						{:else if !data.entry.interaction}
+							<BookOpenIcon class="mr-2 h-4 w-4" />
+							Update Progress
+                        {:else}
+                        {data.entry.interaction}
+						{/if}
+					</Button>
+					<Separator orientation="vertical" />
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger let:builder asChild>
+							<Button
+								size="sm"
+								variant="default"
+								class="border-l-0 rounded-l-none"
+								builders={[builder]}
+							>
+								<ChevronDown class="h-4 w-4" />
+							</Button>
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content class="w-56">
+							<DropdownMenu.Item>
+								<BookOpenIcon class="mr-2 h-4 w-4" />
+								Mark as currently reading
+							</DropdownMenu.Item>
+							<DropdownMenu.Item>
+								<BookOpenCheckIcon class="mr-2 h-4 w-4" />
+								Mark as read
+							</DropdownMenu.Item>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				</div>
 				{#if data.entry}
 					<EntryOperations data={data.annotationForm} entry={data.entry} />
 				{/if}

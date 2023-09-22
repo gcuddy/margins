@@ -2,6 +2,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import { derived } from 'svelte/store';
 
+	import { goto } from '$app/navigation';
 	import {
 		commandCtx,
 		CommandGroup,
@@ -26,9 +27,14 @@
 		})),
 	);
 
+    export let isOpen = false;
+
 	shouldFilter.set(false);
 
-	export let onSelect: (movie: QueryOutput<"searchMovies">[number]) => void = (movie) => {};
+	export let onSelect: (movie: QueryOutput<"searchMovies">[number]) => void = (movie) => {
+        goto(`/tests/movie/${movie.id}`)
+        isOpen = false;
+    };
 
 </script>
 

@@ -6,9 +6,13 @@
 	import {
 		ArrowLeftRightIcon,
 		BoxIcon,
+		CheckCircle,
+		CheckCircle2,
 		CircleDashedIcon,
 		FileTextIcon,
 		PencilIcon,
+		PlayCircleIcon,
+		PlayIcon,
 		TagIcon,
 		TimerIcon,
 		TrendingUpIcon,
@@ -17,10 +21,13 @@
 	import { portal } from 'svelte-portal';
 	import { toast } from 'svelte-sonner';
 
+	import { preloadData } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { audioPlayer } from '$components/AudioPlayer.svelte';
 	import Clamp from '$components/Clamp.svelte';
 	import { TagColorPill } from '$components/tags/tag-color';
 	import TagCommand from '$components/tags/TagCommand.svelte';
+	import { Button } from '$components/ui/button';
 	import * as ContextMenu from '$components/ui/context-menu';
 	import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
 	import { render_html } from '$components/ui/editor/utils';
@@ -31,6 +38,7 @@
 	import { Progress } from '$lib/components/ui/progress';
 	import type { ListEntry } from '$lib/db/selects';
 	import { relations_icons } from '$lib/features/relations/icons';
+	import { isBrowser } from '$lib/helpers';
 	import { mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
 	import { type Status, statuses, statusesWithIcons } from '$lib/status';
@@ -75,7 +83,7 @@
 	$: author = entry.bookmark_author || entry.author;
 	$: title = entry.bookmark_title || entry.title;
 
-	export let border = true;
+	// export let border = true;
 
 	function getDomain(url: string) {
 		const domain = url.replace(/https?:\/\//, '').split('/')[0];
@@ -168,7 +176,7 @@
 									});
 									mutation($page, 'update_status', {
 										ids: [entry.id],
-										sort_order: old_sort_order,
+										sort_order: old_sort_order ?? 0,
 										status: old_status,
 									});
 								},
@@ -236,7 +244,16 @@
 	}
 
 	export let contextMenuOpen = false;
+
+    $: if (contextMenuOpen && isBrowser) {
+        document?.body?.classList.add('overflow-hidden');
+    } else if (isBrowser) {
+        document?.body?.classList.remove('overflow-hidden');
+    }
+
 </script>
+
+<svelte:document />
 
 <!-- out:send={{
 			key: `${out_key.toLowerCase()}-${entry.id}`,
@@ -244,9 +261,7 @@
 <ContextMenu.Root
 	bind:open={contextMenuOpen}
 	portal="body"
-	positioning={{
-		// strategy: "fixed"
-	}}
+	preventScroll={false}
 >
 	<ContextMenu.Trigger asChild let:builder>
 		<a
@@ -254,8 +269,12 @@
 			{href}
 			use:melt={builder}
 			{...$$restProps}
-			class="data-[state=open]:bg-accent flex flex-col h-full cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none overflow-hidden"
-			data-sveltekit-preload-data="tap"
+			class="data-[state=open]:bg-accent flex flex-col h-full cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none"
+			data-sveltekit-preload-data="hover"
+            on:focus|once={() => {
+                // console.log('preloading')
+                preloadData(href);
+            }}
 		>
 			<div
 				class={cn(
@@ -290,27 +309,35 @@
 											}}
 											alt=""
 											class={clsx(
-												'relative h-full w-full rounded-md object-cover',
+												'relative h-full w-full rounded-md object-cover border',
 												checked && 'invisible',
 											)}
 										/>
 									{:else}
 										<ImageSkeleton class="relative h-16 w-16 object-cover" />
 									{/if}
-									{#if entry.progress}
-										<div
-											class="absolute rounded-md w-full h-full inset-0 overflow-hidden"
-										>
-											<Progress
-												class="absolute rounded-none bottom-0 w-full h-2 bg-secondary/90"
-												value={entry.progress}
-												max={1}
-											/>
-										</div>
+									{#if viewPreferences.progress && entry.progress}
+										{#if entry.progress === 1 || entry.finished}
+                                        <div class="absolute -bottom-1 -right-1">
+                                            <CheckCircle2
+                                                class="h-5 w-5 fill-primary text-primary-foreground"
+                                            />
+                                        </div>
+										{:else}
+                                            <div
+												class="absolute rounded-md w-full h-full inset-0 overflow-hidden"
+											>
+												<Progress
+													class="absolute rounded-none bottom-0 w-full h-2 bg-secondary/90"
+													value={entry.progress}
+													max={1}
+												/>
+											</div>
+										{/if}
 									{/if}
 									{#if viewPreferences.type}
 										<!-- TODO: option to display as icon or text -->
-										<Tooltip.Root>
+										<!-- <Tooltip.Root>
 											<Tooltip.Trigger asChild let:builder>
 												<div
 													use:melt={builder}
@@ -330,7 +357,7 @@
 													>{entry.type}</span
 												>
 											</Tooltip.Content>
-										</Tooltip.Root>
+										</Tooltip.Root> -->
 									{/if}
 									<div
 										class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md"
@@ -361,9 +388,12 @@
 					<div class="flex flex-col min-w-0 gap-0.5">
 						<!-- <Muted class="text-xs">{entry.type}</Muted> -->
 						<div class="flex items-center gap-x-2 min-w-0">
-							{#if viewPreferences.status}
+							{#if viewPreferences.status && entry.status}
 								<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
 							{/if}
+                            {#if viewPreferences.seen && !entry.seen}
+                                <div class="h-3 w-3 rounded-full bg-primary"></div>
+                            {/if}
 							<div
 								data-id={entry.id}
 								class="truncate font-semibold hover:underline focus:outline-none"
@@ -490,44 +520,74 @@
 							</div>
 							<!-- <div class="py-px"></div> -->
 						{/if}
-						<div class="flex gap-1 items-center">
-							<!-- TODO: find more sustainable solution for displayiing dot -->
-							{#if viewPreferences.url && entry.uri}
-								{#if entry.uri?.startsWith('http')}
-									{@const hostname = getHostname(entry.uri)}
-									<div class="flex items-center gap-1 truncate">
-										<img
-											src="https://icons.duckduckgo.com/ip3/{hostname}.ico"
-											class="w-3 h-3 rounded"
-											alt=""
-										/>
-										<Muted class="text-xs truncate"
-											>{hostname.replace('www.', '')}</Muted
-										>
-									</div>{/if}
-							{/if}
-							{#if viewPreferences.author && author}
-								{#if viewPreferences.url && entry.uri && entry.uri?.startsWith('http')}
-									<span class="text-muted-foreground text-xs">·</span>
+						{#if entry.type === 'podcast'}
+							<!-- Play Buttn -->
+							<div class="flex">
+								<Button
+									size="icon"
+									class="h-8 w-8 rounded-full"
+									variant="outline"
+                                    on:click={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        audioPlayer.load({
+                                            artist: entry.author,
+                                            entry_id: entry.id,
+                                            image: entry.image,
+                                            interaction_id: entry.interaction?.id,
+                                            src: entry.uri,
+                                            title: entry.title,
+                                        }, entry.progress, {
+                                            onProgressUpdate(progress) {
+                                                entry.progress = progress;
+                                            }
+                                        })
+                                    }}
+								>
+									<PlayIcon
+										class="fill-accent text-accent-foreground w-6 h-6"
+									/>
+								</Button>
+							</div>
+						{:else}
+							<div class="flex gap-1 items-center">
+								<!-- TODO: find more sustainable solution for displayiing dot -->
+								{#if viewPreferences.url && entry.uri}
+									{#if entry.uri?.startsWith('http')}
+										{@const hostname = getHostname(entry.uri)}
+										<div class="flex items-center gap-1 truncate">
+											<img
+												src="https://icons.duckduckgo.com/ip3/{hostname}.ico"
+												class="w-3 h-3 rounded"
+												alt=""
+											/>
+											<Muted class="text-xs truncate"
+												>{hostname.replace('www.', '')}</Muted
+											>
+										</div>{/if}
 								{/if}
-
-								<Muted class="text-xs truncate">{author}</Muted>
-							{/if}
-							{#if viewPreferences.time && entry.estimatedReadingTime}
-								{#if (viewPreferences.url && entry.uri && entry.uri?.startsWith('http')) || (viewPreferences.author && author)}
-									<span class="text-muted-foreground text-xs">·</span>
-								{/if}
-								<span class="text-muted-foreground text-xs tabular-nums">
-									{#if entry.progress}
-										{formatDuration(
-											entry.estimatedReadingTime * (1 - entry.progress),
-											'm',
-										)} left
-									{:else}
-										{formatDuration(entry.estimatedReadingTime, 'm')}
+								{#if viewPreferences.author && author}
+									{#if viewPreferences.url && entry.uri && entry.uri?.startsWith('http')}
+										<span class="text-muted-foreground text-xs">·</span>
 									{/if}
-								</span>
-								<!-- <span
+
+									<Muted class="text-xs truncate">{author}</Muted>
+								{/if}
+								{#if viewPreferences.time && entry.estimatedReadingTime}
+									{#if (viewPreferences.url && entry.uri && entry.uri?.startsWith('http')) || (viewPreferences.author && author)}
+										<span class="text-muted-foreground text-xs">·</span>
+									{/if}
+									<span class="text-muted-foreground text-xs tabular-nums">
+										{#if entry.progress}
+											{formatDuration(
+												entry.estimatedReadingTime * (1 - entry.progress),
+												'm',
+											)} left
+										{:else}
+											{formatDuration(entry.estimatedReadingTime, 'm')}
+										{/if}
+									</span>
+									<!-- <span
 									class="text-xs text-muted-foreground tabular-nums items-center h-9 flex"
 								>
 									<TimerIcon class="h-3.5 w-3.5" />
@@ -540,8 +600,9 @@
 										{formatDuration(entry.estimatedReadingTime, 'm')}
 									{/if}
 								</span> -->
-							{/if}
-						</div>
+								{/if}
+							</div>
+						{/if}
 					</div>
 					<div class="ml-auto hidden shrink-0 items-center gap-x-1 md:flex">
 						{#if data.tags && viewPreferences.tags}
@@ -625,9 +686,9 @@
 					<slot />
 				{/if}
 			</div>
-			{#if border}
-				<Separator class="w-full h-[0.5px] bg-border" />
-			{/if}
+            <Separator class="w-full h-[0.5px] bg-border" />
+			<!-- {#if border}
+			{/if} -->
 		</a>
 	</ContextMenu.Trigger>
 

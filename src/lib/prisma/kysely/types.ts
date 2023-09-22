@@ -270,17 +270,6 @@ export type Bookmark = {
 	author: string | null;
 	pdf_url: string | null;
 };
-export type BookmarkHistory = {
-	id: string;
-	createdAt: Generated<Timestamp>;
-	updatedAt: Timestamp;
-	archivedAt: Timestamp | null;
-	archived: number | null;
-	fromStatus: Status | null;
-	toStatus: Status | null;
-	bookmarkId: number;
-	userId: string | null;
-};
 export type Collection = {
 	id: Generated<number>;
 	name: string;
@@ -425,6 +414,29 @@ export type EntryData = {
 	entryId: number;
 	custom: unknown | null;
 };
+export type EntryHistory = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	archivedAt: Timestamp | null;
+	archived: number | null;
+	fromStatus: Status | null;
+	toStatus: Status | null;
+	fromProgress: number | null;
+	toProgress: number | null;
+	seen: number | null;
+	finished: number | null;
+	bookmarked: number | null;
+	toTitle: string | null;
+	toAuthor: string | null;
+	userId: string | null;
+	entryId: number;
+	bookmarkId: number | null;
+	addedTagIds: unknown | null;
+	removedTagIds: unknown | null;
+	addedCollectionIds: unknown | null;
+	removedCollectionIds: unknown | null;
+};
 export type EntryMedia = {
 	id: Generated<number>;
 	url: string | null;
@@ -521,7 +533,8 @@ export type Interaction = {
 	updatedAt: Timestamp;
 	is_read: Generated<number | null>;
 	progress: Generated<number | null>;
-	finished: Generated<number | null>;
+	finished: Timestamp | null;
+	seen: Generated<number | null>;
 	userId: string;
 	last_viewed: Generated<Timestamp>;
 	last_annotated: Generated<Timestamp>;
@@ -536,8 +549,7 @@ export type Interaction = {
 	 * Optionally, a title for the interaction
 	 */
 	title: string | null;
-	date_finished: Timestamp | null;
-	date_started: Timestamp | null;
+	started: Timestamp | null;
 	note: string | null;
 	rating: number | null;
 };
@@ -707,7 +719,6 @@ export type DB = {
 	auth_user: AuthUser;
 	AuthorizationKey: AuthorizationKey;
 	Bookmark: Bookmark;
-	BookmarkHistory: BookmarkHistory;
 	Collection: Collection;
 	CollectionItems: CollectionItems;
 	ColorDescription: ColorDescription;
@@ -715,6 +726,7 @@ export type DB = {
 	ContextNode: ContextNode;
 	Entry: Entry;
 	EntryData: EntryData;
+	EntryHistory: EntryHistory;
 	EntryInteraction: Interaction;
 	EntryMedia: EntryMedia;
 	EntryTag: EntryTag;

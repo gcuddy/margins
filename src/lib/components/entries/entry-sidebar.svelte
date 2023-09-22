@@ -57,7 +57,7 @@
 	import type { Type } from '$lib/types';
 	import { getHostname } from '$lib/utils';
 	import { triggerDownload } from '$lib/utils/annotations';
-	import { ago, now } from '$lib/utils/date';
+	import { normalizeTimezone, ago, formatDate, now } from '$lib/utils/date';
 	import { numberOrString } from '$lib/utils/misc';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
@@ -65,6 +65,9 @@
 	import EntryAuthorInput from './entry-author-input.svelte';
 	import EntryIcon from './EntryIcon.svelte';
 	import { saveUrl } from './utils';
+	import Separator from '$components/ui/Separator.svelte';
+	import History from './history.svelte';
+	import { audioPlayer } from '$components/AudioPlayer.svelte';
 
 	// const render = persisted('sidebar', false);
 
@@ -197,6 +200,29 @@
 
 	const linksFetching: Record<string, boolean> = {};
 
+    const todayHistory = derived(query, ($query) => {
+        if (!$query.data?.entry?.history) {
+            return [];
+        }
+        const today = new Date();
+        return $query.data.entry.history.filter((h) => {
+            const historyDate = new Date(normalizeTimezone(h.createdAt));
+            return (
+                historyDate.getDate() === today.getDate() &&
+                historyDate.getMonth() === today.getMonth() &&
+                historyDate.getFullYear() === today.getFullYear()
+            );
+        });
+    });
+
+    const todayStatusHistoryId = derived(todayHistory, ($todayHistory) => {
+        if (!$todayHistory.length) {
+            return undefined;
+        }
+        const statusHistory = $todayHistory.find((h) => h.toStatus);
+        return statusHistory?.id;
+    });
+
 	$: if ($query.data?.entry?.html) {
 		generateLinks($query.data.entry.html);
 	}
@@ -208,7 +234,8 @@
 
 <aside
 	id="entry-sidebar"
-	class="flex flex-col h-full overflow-x-hidden overflow-y-auto overscroll-y-contain"
+    style:--audio-player-height="{$audioPlayer.height}px"
+	class="flex flex-col h-full md:h-[calc(100%-var(--audio-player-height))] overflow-x-hidden overflow-y-auto overscroll-y-contain"
 >
 	<!-- 2.5rem is size of sidebar toggle -->
 	<Tabs bind:value={$currentTab}>
@@ -314,8 +341,12 @@
 					<Muted>Saved</Muted>
 					<Muted class="grow">
 						{#if $query.data?.entry?.bookmark?.createdAt}
+							<!-- we have to do this because of how the date gets transformed with our json selector in mysqle -->
 							{@const datetime = new Date(
-								$query.data.entry.bookmark.createdAt,
+								String($query.data.entry.bookmark.createdAt).replace(
+									/00$/,
+									'Z',
+								),
 							).toISOString()}
 							<time {datetime}>
 								{ago(new Date(datetime), $now)}
@@ -393,6 +424,7 @@
 							{status}
 							type={$query.data.type}
 							entryId={$query.data.entry?.id}
+                            historyId={$todayStatusHistoryId}
 							googleBooksId={$query.data.book?.id ?? undefined}
 							podcastIndexId={$query.data.podcast?.episode.id ?? undefined}
 							spotifyId={$query.data.album?.id}
@@ -484,6 +516,28 @@
 						</Button>
 					</Cluster>
 				</div>
+				<!-- now a  -->
+				{#if $query.data?.entry?.history}
+					<Separator />
+					<h3 class="tracking-tight text-base font-medium">Timeline</h3>
+					<!-- <pre>
+                        {JSON.stringify($query.data.entry.history, null, 2)}
+                    </pre> -->
+                    <History entry={$query.data.entry} />
+					<!-- {#if $query.data?.entry?.interaction}
+						{@const interaction = $query.data.entry?.interaction}
+						{#if interaction.finished}
+							Logged on <time datetime={interaction.finished}
+								>{formatDate(
+									new Date(normalizeTimezone(interaction.finished)),
+									{
+										preferShortest: false,
+									},
+								)}</time
+							>
+						{/if}
+					{/if} -->
+				{/if}
 			</CardContent>
 		</TabsContent>
 

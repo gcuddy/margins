@@ -83,6 +83,8 @@ export const queryFactory = {
 			},
 			// Ideally entries, list would get inferred... but this will do for  now
 			queryKey: ['entries', 'list', input ? input : undefined] as const,
+
+			staleTime: 1000 * 5, // 5 seconds
 		}),
 		search: (input: QueryInput<'search_titles'>) => ({
 			queryFn: ({ meta }: QueryFnParams) =>

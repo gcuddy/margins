@@ -8,6 +8,9 @@ export const stringComparatorSchema = z.object({
 	neq: z.string().optional(),
 	nin: z.array(z.string()).optional(),
 	nstartsWith: z.string().optional(),
+	/** Search ONLY works with full-text search fields. Will throw error otherwise. */
+	search: z.string().optional(),
+
 	startsWith: z.string().optional(),
 });
 // .or(z.string()); // if given a string, we use it for contains?

@@ -8,6 +8,7 @@ import {
 	type ViewPreferences,
 } from '$components/view-preferences/view-preferences.schema';
 import { db, json } from '$lib/db';
+import { library } from '$lib/db/queries/library';
 import { viewPreferencesCreate } from '$lib/db/queries/view-preferences';
 import { nanoid } from '$lib/nanoid';
 import { bulkEntriesSchema, urlSchema } from '$lib/schemas';
@@ -51,6 +52,7 @@ async function getOrCreateViewPreferences(
 		})
 		.execute();
 	console.timeEnd('viewPreferences');
+
 	return {
 		id,
 		preferences,
@@ -85,6 +87,21 @@ export const load = (async (event) => {
 	const type = types.includes(url.searchParams.get('type') ?? '')
 		? (url.searchParams.get('type') as Type)
 		: undefined;
+
+	// TODO: REMOVE THIS TESTING TESTING
+	// const lib = await library({
+	// 	filter: {
+	// 		bookmark: {
+	// 			status: 'Backlog',
+	// 		},
+	// 		title: {
+	// 			contains: 'capital',
+	// 		},
+	// 	},
+	// 	userId: session.user.userId,
+	// });
+
+	// console.log({ lib });
 
 	return {
 		Status: status,

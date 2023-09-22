@@ -238,7 +238,7 @@
 					<Layers class="mr-2 h-4 w-4 shrink-0" />
 					<span class="truncate grow">{pin.view.name}</span>
 					<button
-						on:click={() => {
+						on:click|stopPropagation|preventDefault={() => {
 							{
 								$deletePinMutation.mutate({
 									id: pin.id,
@@ -275,7 +275,7 @@
 					<Box class="mr-2 h-4 w-4 shrink-0" />
 					<span class="truncate grow"> {pin.collection.name}</span>
 					<button
-						on:click={() => {
+						on:click|stopPropagation|preventDefault={() => {
 							{
 								$deletePinMutation.mutate({
 									id: pin.id,

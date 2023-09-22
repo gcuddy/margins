@@ -5,13 +5,13 @@ export const makeInteraction = (
 ): EntryInteraction => {
 	const { id, ...restInteraction } = interaction;
 	return {
+		currentPage: null,
+		finished: null,
 		id,
-		title: null,
 		note: null,
 		progress: 0,
-		currentPage: null,
-		date_finished: null,
-		date_started: null,
-		...restInteraction
+		started: null,
+		title: null,
+		...restInteraction,
 	};
 };

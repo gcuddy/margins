@@ -6,7 +6,7 @@
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import { render_html } from '$components/ui/editor/utils';
 	import type { TargetSchema } from '$lib/annotation';
-	import Avatar from '$lib/components/ui/avatar/Avatar.svelte';
+	// import Avatar from '$components/ui/avatar/avatar.svelte';
 	import { H1, Muted, Small } from '$lib/components/ui/typography';
 	import type { AnnotationNotebook, AnnotationWithEntry } from '$lib/db/selects';
 	import { getHostname } from '$lib/utils';
@@ -45,7 +45,7 @@
 		if (!annotation.entry?.uri) {return;}
 		const selector = getTargetSelector(annotation.target, 'TextQuoteSelector');
 		if (!selector) {return;}
-		console.log({ annotation });
+		// console.log({ annotation });
 		const link = generateTextFragmentLink(annotation.entry.uri, selector);
 		if (link) {
 			navigator.clipboard.writeText(link);
@@ -60,14 +60,14 @@
 	<!--  -->
 	<a {href} class="flex items-center gap-x-3">
 		{#if annotation.entry?.id}
-			<Avatar
+			<!-- <Avatar
 				src={annotation.entry?.image ||
 					(annotation.entry.uri
 						? `https://icon.horse/icon/${getHostname(annotation.entry.uri)}`
 						: undefined)}
 			>
 				{annotation.entry.title?.match(/[A-z]/)?.[0]}
-			</Avatar>
+			</Avatar> -->
 
 			<div class="flex grow justify-between gap-x-1">
 				<div class="flex flex-col">

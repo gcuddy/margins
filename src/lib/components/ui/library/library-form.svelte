@@ -1,17 +1,18 @@
 <script lang="ts">
-	import { statuses, type Status, statusesWithIcons } from '$lib/status';
-	import type { Type } from '$lib/types';
-	import Button, { buttonVariants } from '../Button.svelte';
-
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
 	import { melt } from '@melt-ui/svelte';
-	import Cmd from '../cmd/Cmd.svelte';
-	import { writable } from 'svelte/store';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
-	import { mutation, type MutationInput } from '$lib/queries/query';
-	import type { SaveToLibrarySchema } from '$lib/queries/server';
+	import { writable } from 'svelte/store';
+
 	import { page } from '$app/stores';
     import * as Command from "$components/ui/command2"
+	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
+	import { mutation, type MutationInput } from '$lib/queries/query';
+	import type { SaveToLibrarySchema } from '$lib/queries/server';
+	import { type Status, statuses, statusesWithIcons } from '$lib/status';
+	import type { Type } from '$lib/types';
+
+	import Button, { buttonVariants } from '../Button.svelte';
+	import Cmd from '../cmd/Cmd.svelte';
 
 	/**
 	 * Should be entry id, google books id, spotify id, tmdbId, etc...
@@ -25,6 +26,7 @@
 	export let googleBooksId: string | undefined = undefined;
 	export let podcastIndexId: number | undefined = undefined;
 	export let tmdbId: number | undefined = undefined;
+    export let historyId: string | undefined = undefined;
 
 	const open = writable(false);
 
@@ -45,13 +47,14 @@
 
 	function handleAction(status: Status) {
 		const opts = {
-			type,
-			status,
 			entryId,
-			spotifyId,
 			googleBooksId,
+            historyId,
 			podcastIndexId,
-			tmdbId
+			spotifyId,
+			status,
+			tmdbId,
+			type
 		} as SaveToLibrarySchema;
 		$saveMutation.mutate(opts);
 	}
@@ -61,7 +64,7 @@
 <form>
 	<Popover forceVisible={true} bind:open={$open}>
 		<PopoverTrigger let:builder asChild>
-			<button use:melt={builder} class={buttonVariants({ variant: 'ghost', size: 'sm' })}>
+			<button use:melt={builder} class={buttonVariants({ size: 'sm', variant: 'ghost' })}>
 				{#if status}
 					<svelte:component this={statusesWithIcons[status]} class="w-4 h-4 mr-2" />
 					{status}

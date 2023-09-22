@@ -19,19 +19,23 @@ export const load = (async (event) => {
 
 	const query = queryFactory.entries.detail({ id: numberOrString(id), type });
 
+    console.log({ query });
+		const queryData = await queryClient.ensureQueryData({
+			...query,
+			meta: {
+				init: event,
+			},
+		});
+
+		console.log({ queryData });
 	return {
 		// component: module.default,
 		...data,
 		// cache,
 		// ...queryData,
-        ...(/*browser ? {} : */await queryClient.ensureQueryData({
-            ...query,
-            meta: {
-                init: event
-            }
-        })),
-		component: get_module(type).then((module) => module?.default ),
+		...queryData,
+		component: get_module(type).then((module) => module?.default),
 		query,
-		type
+		type,
 	};
 }) satisfies PageLoad

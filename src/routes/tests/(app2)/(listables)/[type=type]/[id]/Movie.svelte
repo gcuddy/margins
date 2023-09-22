@@ -20,10 +20,17 @@
 
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
+	import { enhance } from '$app/forms';
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import { EyeIcon, ListPlus, PlusCircle } from 'lucide-svelte';
+	import { mutate } from '$lib/queries/query';
+	import { toast } from 'svelte-sonner';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;
 	};
+
+	const queryClient = useQueryClient();
 
 	$: director = data.movie.credits.crew.find((c) => c.job === 'Director');
 	$: writers = data.movie.credits.crew.filter((c) => c.job === 'Screenplay');
@@ -50,13 +57,13 @@
 	$: console.log({ posterTooltips });
 </script>
 
-<div class="overflow-hidden">
+<div class="">
 	<div class="flex select-text flex-col gap-4">
 		<div class="flex gap-6 max-sm:flex-col sm:items-center">
 			<div class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]">
 				<img
 					use:melt={$image}
-					class="aspect-auto w-[inherit] rounded-[inherit]"
+					class="aspect-auto w-[inherit] rounded-[inherit] border"
 					alt="Movie poster for {data.movie.title}"
 				/>
 				<div
@@ -99,7 +106,62 @@
 					>
 				{/if}
 				<div class="flex items-center gap-2">
-					<BookmarkForm data={data.bookmarkForm} />
+					<!-- <BookmarkForm data={data.bookmarkForm} /> -->
+					<!-- <pre>{JSON.stringify(data.entry?.interaction, null, 2)}</pre> -->
+					{#if !data.entry?.bookmark}
+						<Button
+							on:click={async () => {
+								try {
+									await mutate('save_to_library', {
+										entryId: data.entry?.id,
+										status: 'Backlog',
+										tmdbId: data.movie.id,
+										type: 'movie',
+									});
+									toast.success('Saved movie to Backlog');
+								} catch (error) {
+									if (error instanceof Error) {
+										toast.error(error.message);
+									}
+								} finally {
+									queryClient.invalidateQueries({
+										queryKey: ['entries'],
+									});
+								}
+							}}
+							variant="secondary"
+						>
+							<PlusCircle class="w-4 h-4 mr-2" />
+							To Watch</Button
+						>
+					{/if}
+					<form
+						method="post"
+						action="?/markFinished"
+						use:enhance={() => {
+							return () => {
+								queryClient.invalidateQueries({
+									queryKey: ['entries'],
+								});
+							};
+						}}
+					>
+						<input type="hidden" name="entryId" value={data.entry?.id} />
+						<Button
+							variant="secondary"
+							name="finished"
+							value={new Date().toISOString()}
+						>
+							<EyeIcon class="w-4 h-4 mr-2" />
+							Watch</Button
+						>
+					</form>
+					<!-- <Button
+							variant="secondary"
+						>
+							<ListPlus class="w-4 h-4 mr-2" />
+							Add to collection...</Button
+						> -->
 					{#if data.entry}
 						<EntryOperations data={data.annotationForm} entry={data.entry} />
 					{/if}
@@ -202,16 +264,19 @@
 	</Dialog>
 	<H3>Cast</H3>
 	<!-- <Cluster class="max-w-prose gap-1"> -->
-		<div class="max-w-prose">
-            {#each data.movie.credits.cast.slice(0, 20) as { character, id, name } (id)}
-                <a class="hover:text-primary  tracking-tight transition-colors font-bold mr-1" href="/tests/people/t{id}">{name} ({character})</a>
-                <!-- <Badge variant="secondary">{name}</Badge> -->
-                <!-- <span
+	<div class="max-w-prose">
+		{#each data.movie.credits.cast.slice(0, 20) as { character, id, name } (id)}
+			<a
+				class="hover:text-primary tracking-tight transition-colors font-bold mr-1"
+				href="/tests/people/t{id}">{name} ({character})</a
+			>
+			<!-- <Badge variant="secondary">{name}</Badge> -->
+			<!-- <span
                             class="rounded-lg bg-slate-900 px-2 py-1 text-xs text-slate-50 dark:bg-slate-800 dark:text-slate-100"
                             >{name}</span
                         > -->
-            {/each}
-        </div>
+		{/each}
+	</div>
 	<!-- </Cluster> -->
 
 	<H3>Related Films</H3>
@@ -219,9 +284,9 @@
 		<div
 			class="flex overflow-x-auto max-w-prose gap-2 py-4"
 			on:scroll={() => {
-                Object.keys(posterTooltips).forEach((key) => {
-                    posterTooltips[+key] = false;
-                });
+				Object.keys(posterTooltips).forEach((key) => {
+					posterTooltips[+key] = false;
+				});
 			}}
 		>
 			{#each data.movie.recommendations.results as recommendation (recommendation.id)}

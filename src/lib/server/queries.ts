@@ -25,6 +25,7 @@ import {
 	get_library_schema,
 } from '$lib/schemas/library';
 import type { Type } from '$lib/types';
+import { generateComparatorClause } from '$lib/db/utils/comparators';
 
 type AliasedEb = ExpressionBuilder<
 	DB &
@@ -96,21 +97,24 @@ export async function get_library({
 	dir,
 	filter,
 	grouping,
+	library,
 	search,
 	sort,
 	status,
 	userId,
-}: { userId: string } & z.input<typeof get_library_schema>) {
+}: { userId: string } & z.infer<typeof get_library_schema>) {
 	const take = 25;
 	let query = db
-		.selectFrom('Bookmark as b')
-		.innerJoin('Entry as e', 'e.id', 'b.entryId')
+		.selectFrom('Entry as e')
+		.leftJoin('Bookmark as b', (join) =>
+			join.onRef('b.entryId', '=', 'e.id').on('b.userId', '=', userId),
+		)
+		.leftJoin('Feed as f', 'f.id', 'e.feedId')
 		.leftJoin('EntryInteraction as i', (j) =>
 			j.onRef('i.entryId', '=', 'e.id').on('i.userId', '=', userId),
 		)
 		.select([
 			'e.id',
-			'e.image',
 			'e.type',
 			'e.summary',
 			'e.title',
@@ -121,6 +125,7 @@ export async function get_library({
 			'e.podcastIndexId',
 			'e.published',
 			'b.updatedAt',
+			// 'e.html',
 			'e.wordCount',
 			'e.estimatedReadingTime',
 			'e.spotifyId',
@@ -132,8 +137,11 @@ export async function get_library({
 			// TODO: make this an actual property that gets computed when the bookmark is *saved* (since technically a bookmark can not be in the library)
 			'b.createdAt as savedAt',
 			'i.progress',
+			'i.finished',
+			'i.seen',
 			'i.currentPage',
 		])
+		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
 		.select((eb) => [
 			jsonArrayFrom(
 				eb
@@ -220,10 +228,14 @@ export async function get_library({
 				.select((eb) => eb.fn.count('Annotation.id').as('n'))
 				.as('num_annotations'),
 		])
-		.where('b.userId', '=', userId)
 		.limit(take + 1);
 	if (status) {
 		query = query.where('b.status', '=', status);
+	}
+
+	if (library) {
+		// TODO: b.bookmarked should be a date!
+		query = query.where('b.userId', '=', userId).where('b.bookmarked', '=', 1);
 	}
 
 	// check for grouping. if that's there, we need to sort by that first, then by the sort
@@ -278,7 +290,7 @@ export async function get_library({
 			break;
 		}
 		case 'updatedAt': {
-			query = query.orderBy('b.updatedAt', order).orderBy('b.id', rorder);
+			query = query.orderBy('b.updatedAt', order).orderBy('e.id', rorder);
 			if (cursor) {
 				query = query.where((eb) =>
 					eb.or([
@@ -294,7 +306,7 @@ export async function get_library({
 			break;
 		}
 		case 'createdAt': {
-			query = query.orderBy('b.createdAt', order).orderBy('b.id', rorder);
+			query = query.orderBy('b.createdAt', order).orderBy('e.id', rorder);
 			if (cursor) {
 				query = query.where((eb) =>
 					eb.or([
@@ -368,6 +380,22 @@ export async function get_library({
 			}
 			break;
 		}
+		case 'published': {
+			query = query.orderBy('e.published', order).orderBy('e.id', 'asc');
+			if (cursor) {
+				query = query.where((eb) =>
+					eb.or([
+						eb('e.published', up ? '>' : '<', cursor.published),
+						eb('e.published', '=', cursor.published).and(
+							'e.id',
+							'>',
+							cursor.id,
+						),
+					]),
+				);
+			}
+			break;
+		}
 	}
 
 	if (search) {
@@ -379,7 +407,17 @@ export async function get_library({
 		);
 	}
 	if (filter) {
-		const { book_genre, createdAt, domain, readingTime, tags, type } = filter;
+		const {
+			book_genre,
+			createdAt,
+			domain,
+			feed,
+			readingTime,
+			tags,
+			type,
+			..._rest
+		} = filter;
+		// TODO: put this into a functino for exhaustiveness check
 		if (type) {
 			query = query.where('e.type', '=', type);
 		}
@@ -462,6 +500,11 @@ export async function get_library({
 		}
 		if (book_genre) {
 			query = query.where('e.book_genre', '=', book_genre);
+		}
+		if (feed) {
+			query = query.where((eb) =>
+				generateComparatorClause(eb, 'e.feedId', feed),
+			);
 		}
 	}
 	const entries = await query.execute();
@@ -618,8 +661,8 @@ export async function get_entry_details(
 							'i.id',
 							'i.currentPage',
 							'i.progress',
-							'i.date_started',
-							'i.date_finished',
+							'i.started',
+							'i.finished',
 							'i.title',
 							'i.note',
 						])

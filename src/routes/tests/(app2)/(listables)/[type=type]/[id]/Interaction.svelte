@@ -29,7 +29,7 @@
 
 	export let interaction: Pick<
 		Interaction,
-		'id' | 'title' | 'date_started' | 'note' | 'currentPage' | 'date_finished'
+		'id' | 'title' | 'started' | 'note' | 'currentPage' | 'finished'
 	>;
 
 	export let data: Validation<InteractionSchema>;
@@ -80,12 +80,12 @@
 		<form action="?/interaction" method="post" class="contents" use:enhance>
 			<input type="hidden" name="entryId" value={$form.entryId} />
 			<input type="hidden" name="id" value={$form.id} />
-			{#if interaction.date_started}
+			{#if interaction.started}
 				<Label>Date Started</Label>
-				{formatDate(interaction.date_started)}
+				{formatDate(interaction.started)}
 			{/if}
-			{#if interaction.date_finished}
-				Date Finished: {formatDate(interaction.date_finished)}
+			{#if interaction.finished}
+				Date Finished: {formatDate(interaction.finished)}
 			{:else if total_pages}
 				<!-- Todo: non-relative -->
 				<!-- <SuperDebug data={$form} /> -->
@@ -114,15 +114,15 @@
 			{/if}
 		</form>
 	</CardContent>
-	{#if !interaction.date_finished}
+	{#if !interaction.finished}
 		<CardFooter class="justify-end">
 			<form action="?/interaction" class="contents" method="post" use:enhance>
 				<input type="hidden" name="entryId" value={$form.entryId} />
 				<input type="hidden" name="id" value={$form.id} />
-				<input type="hidden" name="date_finished" value={new Date().toISOString()} />
+				<input type="hidden" name="finished" value={new Date().toISOString()} />
 				<Button
 					on:click={() => {
-						$form.date_finished = new Date();
+						$form.finished = new Date();
 						$form.progress = 1;
 					}}
 					disabled={$submitting}

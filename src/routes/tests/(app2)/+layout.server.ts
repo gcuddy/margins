@@ -4,6 +4,10 @@ import { jsonObjectFrom } from 'kysely/helpers/mysql';
 import type { LayoutServerLoad } from './$types';
 import { urlSchema } from '$lib/schemas';
 import { superValidate } from 'sveltekit-superforms/server';
+import {
+	feedAddFormSchema,
+	feedSearchFormSchema,
+} from '$components/subscriptions/subscription-entry.schema';
 
 function getTags(userId: string) {
 	console.time('getTags');
@@ -18,11 +22,16 @@ function getTags(userId: string) {
 }
 
 export const load = (async (event) => {
-
 	const session = await event.locals.auth.validate();
-    return {
-        user_data: session?.user
-    }
+
+	const feedSearchForm = superValidate(feedSearchFormSchema);
+	// const feedAddForm = superValidate(feedAddFormSchema);
+
+	return {
+		// feedAddForm,
+		feedSearchForm,
+		user_data: session?.user,
+	};
 
 	// if (!session) {
 	// 	return {};

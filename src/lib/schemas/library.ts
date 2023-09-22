@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { typeSchema } from '$lib/types';
 
 import { tagSchema } from './objects/tag';
+import { idComparatorSchema } from './inputs/comparators';
 
 const defaultCursorSchema = z.object({
 	id: z.number(),
@@ -71,6 +72,15 @@ export const entryListSortSchemas = z
 				.nullish(),
 			sort: z.literal('time'),
 		}),
+		z.object({
+			cursor: groupingCursorSchema
+				.extend({
+					id: z.number(),
+					published: z.coerce.date().nullable(),
+				})
+				.nullish(),
+			sort: z.literal('published'),
+		}),
 	])
 	.and(
 		z.object({
@@ -109,6 +119,7 @@ export const filterLibrarySchema = z
 		book_genre: z.enum(['Fiction', 'NonFiction']).optional(),
 		createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),
 		domain: z.string().optional(),
+		feed: idComparatorSchema.optional(),
 		readingTime: z.object({
 			max: z.number().int().positive().optional(),
 			min: z.number().int().positive().optional(),
@@ -128,6 +139,9 @@ export const get_library_schema = z
 
 		// Grouping is implemented as an additional sorting option, and then the UI completes it.  For instance, if we group by type, then we need all our types together (hence sorting). Additional layers of sorting will taker place "within" these groups. For no grouping, set to undefined.
 		grouping: z.enum(['none', 'type', 'tag', 'domain']).optional(),
+
+		/** Whether or not to use user's library. */
+		library: z.boolean().default(true),
 
 		// TODO: allow custom states
 		search: z.string().optional(),

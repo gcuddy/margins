@@ -7,11 +7,11 @@ import type {
 
 import type { Comparator } from '$lib/schemas/inputs/comparators';
 
-type BaseInputFilter<T> = {
-	[K in keyof T]?: Comparator; // T[K] extends StringComparator ? T[K] : InputFilter<T[K]>
+export type BaseInputFilter<T> = {
+	[K in keyof T]: Comparator; // T[K] extends StringComparator ? T[K] : InputFilter<T[K]>
 };
 
-type InputFilter<T> = BaseInputFilter<T> & {
+type InputFilter<T> = Partial<BaseInputFilter<T>> & {
 	and?: Array<InputFilter<T>>;
 	or?: Array<InputFilter<T>>;
 };
@@ -22,7 +22,7 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
 	filter: InputFilter<DB[TB]>,
 	// andor: 'and' | 'or' = 'and'
 ) {
-	// console.log(`applying filter`, { filter });
+	console.log(`applying filter`, { filter });
 	const expressions = Object.entries(filter)
 		.map(([field, comparator]) => {
 			// console.log({ comparator, field });
@@ -30,6 +30,7 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
 			if (!comparator) {
 				return;
 			}
+			console.log({ field, comparator });
 			if (field === 'and' || field === 'or') {
 				const subFilters = filter[field] ?? [];
 				// TODO: map over and add and/or eb clauses
@@ -143,5 +144,6 @@ export function generateComparatorClause<DB, TB extends keyof DB>(
 		}
 	}
 
+	console.log({ rest });
 	throw new Error('Unreachable');
 }

@@ -587,7 +587,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 	const inputHeight = writable(48);
 	const listHeight = writable(300);
 	const tweenedHeight = tweened(348, {
-		duration: 100,
+		duration: 75,
 		easing: cubicOut,
 	});
 	const MAX_HEIGHT = 348;

@@ -1,13 +1,13 @@
 import { derived, writable } from 'svelte/store';
 
 function checked_entry_store() {
-	const { subscribe, set, update } = writable<Record<string, boolean>>({});
+	const { set, subscribe, update } = writable<Record<string, boolean>>({});
 
 	return {
-		subscribe,
+		clear: () => set({}),
 		set,
+		subscribe,
 		update,
-		clear: () => set({})
 	};
 }
 
@@ -19,10 +19,10 @@ export const checkedEntryIds = (() => {
 	// 		.filter((id) => $entries[id])
 	// 		.map((id) => parseInt(id, 10));
 	// });
-    const state = writable<number[]>([]);
+	const state = writable<Array<number>>([]);
 	return {
 		...state,
-		clear: () => state.set([])
+		clear: () => state.set([]),
 	};
 })();
 

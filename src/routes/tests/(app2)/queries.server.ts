@@ -86,6 +86,15 @@ import {
 } from './(listables)/subscriptions/latest/fetch.server';
 import { fetchList, inputSchema } from './library/fetch.server';
 import { type Condition, View } from './views/new/View';
+import { booleanNumberSchema } from '$lib/schemas/inputs/helpers';
+import {
+	saveInteraction,
+	saveInteractionSchema,
+} from '$lib/db/queries/interaction';
+import {
+	subscription,
+	subscriptionInputSchema,
+} from '$lib/db/queries/subscriptions';
 
 type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -249,30 +258,8 @@ export const mutations = {
 			),
 	}),
 	saveInteraction: query({
-		fn: async ({ ctx, input }) => {
-			const result = await db
-				.insertInto('EntryInteraction')
-				.values({
-					...input,
-					updatedAt: new Date(),
-					userId: ctx.userId,
-				})
-				.onDuplicateKeyUpdate(input)
-				.executeTakeFirst();
-			return {
-				id: Number(result.insertId),
-			};
-		},
-		schema: z.object({
-			entryId: z.number().int(),
-			id: z.number().int().optional(),
-			is_read: z.coerce
-				.boolean()
-				.transform((b) => +b)
-				.optional(),
-			last_viewed: z.date().optional(),
-			progress: z.number().min(0).max(1).nullish(),
-		}),
+		fn: saveInteraction,
+		schema: saveInteractionSchema,
 	}),
 	save_note: query({
 		fn: upsertAnnotation,
@@ -493,6 +480,25 @@ export const queries = {
 		schema: z.object({
 			cursor: z.coerce.number().optional(),
 			name: z.string(),
+		}),
+	}),
+
+	entryContent: query({
+		// TODO: maybe should be authorized, if it has owner?
+		authorized: false,
+		fn: async ({ input }) => {
+			const entry = await db
+				.selectFrom('Entry')
+				.where('id', '=', input.id)
+				.select(['html'])
+				.executeTakeFirstOrThrow();
+			return entry;
+		},
+		headers: {
+			'cache-control': `s-maxage=1, stale-while-revalidate=${60 * 60 * 24}`,
+		},
+		schema: z.object({
+			id: z.number().int(),
 		}),
 	}),
 
@@ -884,6 +890,10 @@ export const queries = {
 				.execute();
 		},
 		schema: qSchema,
+	}),
+	subscription: query({
+		fn: subscription,
+		schema: subscriptionInputSchema,
 	}),
 	// tag: query(),
 	tags: query({

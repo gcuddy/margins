@@ -22,76 +22,78 @@
 
 	onMount(() => {
 		console.log(`Mounting/restoring query client`);
-		restoring.set(true);
-		const [unsubscribe, promise] = persistQueryClient({
-			queryClient: client,
-			persister: createAsyncStoragePersister({
-				storage: {
-					getItem: async (key: string) => {
-						const val = await getItem<string | undefined>(key);
-						return val ?? null;
-					},
-					setItem,
-					removeItem
-				}
-			}),
-			// persister: new CustomPersister({}),
-			dehydrateOptions: {
-				shouldDehydrateQuery(query) {
-					const { queryKey } = query;
-					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'list') {
-						// ['entries', 'list']
-						// filter on type === undefined  and search === undefined
-						const filters = query.queryKey[2];
-						if (!filters) return false;
-						if (typeof filters !== 'object') return false;
-						const { type, search } = filters as { type?: string; search?: string };
-						if (type || search) return false;
-						// TODO: get rid of meta
+		// restoring.set(true);
+		// const [unsubscribe, promise] = persistQueryClient({
+		// 	queryClient: client,
+		// 	persister: createAsyncStoragePersister({
+		// 		storage: {
+		// 			getItem: async (key: string) => {
+		// 				const val = await getItem<string | undefined>(key);
+		// 				return val ?? null;
+		// 			},
+		// 			setItem,
+		// 			removeItem
+		// 		}
+		// 	}),
+		// 	// persister: new CustomPersister({}),
+		// 	dehydrateOptions: {
+		// 		shouldDehydrateQuery(query) {
+		// 			const { queryKey } = query;
+		// 			if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'list') {
+		// 				// ['entries', 'list']
+		// 				// filter on type === undefined  and search === undefined
+		// 				const filters = query.queryKey[2];
+		// 				if (!filters) return false;
+		// 				if (typeof filters !== 'object') return false;
+		// 				const { type, search } = filters as { type?: string; search?: string };
+		// 				if (type || search) return false;
+		// 				// TODO: get rid of meta
 
-						return true;
-					}
-					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'detail') {
-						return true;
-					}
-					if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'all') {
-                        console.log('persisting entries/all')
-						return true;
-					}
+		// 				return true;
+		// 			}
+		// 			if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'detail') {
+		// 				return true;
+		// 			}
+		// 			if (query.queryKey[0] === 'entries' && query.queryKey[1] === 'all') {
+        //                 console.log('persisting entries/all')
+		// 				return true;
+		// 			}
 
-					if (queryKey[0] === 'tags') {
-						return true;
-					}
-					if (queryKey[0] === 'pins') {
-						return true;
-					}
-					if (queryKey[0] === 'notes') {
-						return true;
-					}
+		// 			if (queryKey[0] === 'tags') {
+		// 				return true;
+		// 			}
+		// 			if (queryKey[0] === 'pins') {
+		// 				return true;
+		// 			}
+		// 			if (queryKey[0] === 'notes') {
+		// 				return true;
+		// 			}
 
-					return false;
-				}
-			}
-			// hydrateOptions: {
-			//     defaultOptions: {
-			//         queries: {
+		// 			return false;
+		// 		}
+		// 	}
+		// 	// hydrateOptions: {
+		// 	//     defaultOptions: {
+		// 	//         queries: {
 
-			//         }
-			//     }
-			// }
-		});
-		console.log({ unsubscribe, promise });
-		promise
-			.then(() => {
-				client.mount();
-				// run paused mutations if you want
-			})
-			.finally(() => {
-				console.log(`Done restoring query client`);
-				restoring.set(false);
-			});
+		// 	//         }
+		// 	//     }
+		// 	// }
+		// });
+		// console.log({ unsubscribe, promise });
+        client.mount();
+
+		// promise
+		// 	.then(() => {
+		// 		client.mount();
+		// 		// run paused mutations if you want
+		// 	})
+		// 	.finally(() => {
+		// 		console.log(`Done restoring query client`);
+		// 		restoring.set(false);
+		// 	});
 		return () => {
-			unsubscribe();
+			// unsubscribe();
 			client.unmount();
 		};
 	});

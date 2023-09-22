@@ -1,3 +1,8 @@
+import { fail } from '@sveltejs/kit';
+import type { Insertable } from 'kysely';
+import { message, superValidate } from 'sveltekit-superforms/server';
+import { z } from 'zod';
+
 import { annotationSchema } from '$lib/annotation';
 import { books } from '$lib/api/gbook';
 import pindex from '$lib/api/pindex';
@@ -5,8 +10,16 @@ import spotify from '$lib/api/spotify';
 import { tmdb } from '$lib/api/tmdb';
 import dayjs from '$lib/dayjs';
 import { db } from '$lib/db';
+import {
+	saveInteraction,
+	saveInteractionSchema,
+} from '$lib/db/queries/interaction';
 import { getFirstBookmarkSort } from '$lib/db/selects';
-import { bookmarkSchema, tagSchema, updateBookmarkSchema } from '$lib/features/entries/forms';
+import {
+	bookmarkSchema,
+	tagSchema,
+	updateBookmarkSchema,
+} from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import type { Entry } from '$lib/prisma/kysely/types';
 import { upsertAnnotation } from '$lib/queries/server';
@@ -14,58 +27,41 @@ import { interactionSchema, validateAuthedForm } from '$lib/schemas';
 import { relationSchema, update_relation } from '$lib/server/mutations';
 import type { Message } from '$lib/types';
 import { validate_form } from '$lib/utils/forms';
-import { fail } from '@sveltejs/kit';
-import type { Insertable } from 'kysely';
-import { message, superValidate } from 'sveltekit-superforms/server';
-import { z } from 'zod';
+
 import type { Actions } from './$types';
 
 export async function load() {
-    return {
-        tagForm: superValidate(tagSchema),
-        bookmarkForm: superValidate(updateBookmarkSchema)
-    }
+	return {
+		bookmarkForm: superValidate(updateBookmarkSchema),
+		tagForm: superValidate(tagSchema),
+	};
 }
 
-
 export const actions: Actions = {
-	updateBookmark: async (e) => {
-		const { request, params, locals } = e;
+	annotate: async ({ locals, params, request }) => {
 		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
-		const form = await superValidate<typeof updateBookmarkSchema, Message>(
-			request,
-			updateBookmarkSchema,
-			{ id: 'update' }
-		);
-		console.log({ form });
-		if (!form.valid) {
-			return fail(400, { update: form });
-		}
-		const { status } = form.data;
-		await db
-			.updateTable('Bookmark')
-			.where('entryId', '=', +params.id)
-			.where('userId', '=', session.user.userId)
-			.set({
-				status
-			})
-			.execute();
-		return message(form, {
-			status: 'success',
-			text: status ? `Status updated to ${status}` : undefined
+		const annotationForm = await superValidate(request, annotationSchema, {
+			id: 'annotation',
 		});
+		const annotation = annotationForm.data;
+		annotation.userId = session.user.userId;
+		const id = await upsertAnnotation(annotation);
+		annotationForm.data.id = id;
+		return message(annotationForm, 'Annotation saved');
 	},
-	bookmark: async ({ request, params, locals }) => {
+	bookmark: async ({ locals, params, request }) => {
 		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
 		let { type } = params;
 		type = type.toLowerCase();
-		const bookmarkForm = await superValidate(request, bookmarkSchema, { id: 'bookmark' });
+		const bookmarkForm = await superValidate(request, bookmarkSchema, {
+			id: 'bookmark',
+		});
 
 		let entryId = type === 'entry' ? +params.id : bookmarkForm.data.entryId;
 
@@ -76,7 +72,7 @@ export const actions: Actions = {
 
 			let insertable: Insertable<Entry> = {
 				updatedAt: new Date(),
-				...data
+				...data,
 			};
 
 			if ((type === 'movie' || type === 'tv') && data.tmdbId) {
@@ -84,27 +80,28 @@ export const actions: Actions = {
 					const tv = await tmdb.tv.details(data.tmdbId);
 					insertable = {
 						...insertable,
-						title: tv.name,
-						text: tv.overview,
-						uri: `tmdb:tv:${tv.id}`,
-						tmdbId: tv.id,
 						author: tv.created_by?.map((val) => val.name).join(', '),
-						published: tv.first_air_date,
 						image: tmdb.media(tv.poster_path),
-						type: 'tv'
+						published: tv.first_air_date,
+						text: tv.overview,
+						title: tv.name,
+						tmdbId: tv.id,
+						type: 'tv',
+						uri: `tmdb:tv:${tv.id}`,
 					};
 				} else {
 					const movie = await tmdb.movie.details(data.tmdbId);
 					insertable = {
 						...insertable,
-						title: movie.title,
+						author: movie.credits?.crew?.find((c) => c.job === 'Director')
+							?.name,
 						html: movie.overview,
-						uri: `tmdb:${movie.id}`,
-						tmdbId: movie.id,
-						author: movie.credits?.crew?.find((c) => c.job === 'Director')?.name,
-						published: movie.release_date,
 						image: tmdb.media(movie.poster_path),
-						type: 'movie'
+						published: movie.release_date,
+						title: movie.title,
+						tmdbId: movie.id,
+						type: 'movie',
+						uri: `tmdb:${movie.id}`,
 					};
 				}
 			} else if (type === 'book' && data.googleBooksId) {
@@ -119,62 +116,70 @@ export const actions: Actions = {
 
 				insertable = {
 					...insertable,
-					title: book.volumeInfo.title,
-					html: book.volumeInfo.description,
-					uri: `isbn:${
-						book.volumeInfo.industryIdentifiers?.find((i) => i.type === 'ISBN_13')?.identifier
-					}`,
-					googleBooksId: book.id,
 					author: book.volumeInfo.authors?.join(', '),
-					published: dayjs(book.volumeInfo.publishedDate).toDate(),
+					googleBooksId: book.id,
+					html: book.volumeInfo.description,
 					image,
-					type: 'book',
+					pageCount: book.volumeInfo.pageCount,
+					published: dayjs(book.volumeInfo.publishedDate).toDate(),
 					publisher: book.volumeInfo.publisher,
-					pageCount: book.volumeInfo.pageCount
+					title: book.volumeInfo.title,
+					type: 'book',
+					uri: `isbn:${book.volumeInfo.industryIdentifiers?.find(
+						(i) => i.type === 'ISBN_13',
+					)?.identifier}`,
 				};
 			} else if (type === 'podcast' && data.podcastIndexId) {
 				//todo
-				const { episode } = await pindex.episodeById(Number(data.podcastIndexId));
+				const { episode } = await pindex.episodeById(
+					Number(data.podcastIndexId),
+				);
 				insertable = {
 					...insertable,
-					title: episode.title,
-					text: episode.description,
-					uri: episode.enclosureUrl,
+					image: episode.image || episode.feedImage,
 					podcastIndexId: BigInt(episode.id),
 					published: new Date(episode.datePublished * 1000),
+					text: episode.description,
+					title: episode.title,
 					type: 'podcast',
-					image: episode.image || episode.feedImage
+					uri: episode.enclosureUrl,
 				};
 			} else if (type === 'album' && data.spotifyId) {
 				const album = await spotify.album(data.spotifyId);
 				insertable = {
 					...insertable,
-					title: album.name,
-					uri: `spotify:album:${album.id}`,
-					spotifyId: album.id,
-					image: album.images[0].url,
 					author: album.artists.map((a) => a.name).join(', '),
+					image: album.images[0].url,
 					published: new Date(album.release_date),
-					type: 'album'
+					spotifyId: album.id,
+					title: album.name,
+					type: 'album',
+					uri: `spotify:album:${album.id}`,
 				};
 			}
-			const entry = await db.insertInto('Entry').values(insertable).executeTakeFirst();
+			const entry = await db
+				.insertInto('Entry')
+				.values(insertable)
+				.executeTakeFirst();
 			entryId = Number(entry.insertId);
 		}
 		console.log({ bookmarkForm });
 		if (bookmarkForm.data.id) {
 			// then delete
-			await db.deleteFrom('Bookmark').where('id', '=', bookmarkForm.data.id).execute();
+			await db
+				.deleteFrom('Bookmark')
+				.where('id', '=', bookmarkForm.data.id)
+				.execute();
 			return message(bookmarkForm, 'Bookmark deleted');
 		} else {
 			// then create
 			await db
 				.insertInto('Bookmark')
 				.values({
-					updatedAt: new Date(),
 					entryId,
+					sort_order: await getFirstBookmarkSort(session.user.userId),
+					updatedAt: new Date(),
 					userId: session.user.userId,
-					sort_order: await getFirstBookmarkSort(session.user.userId)
 				})
 				.execute();
 			return message(bookmarkForm, 'Bookmark created');
@@ -183,19 +188,39 @@ export const actions: Actions = {
 		//     bookmarkForm
 		// }
 	},
-	annotate: async ({ request, params, locals }) => {
+	createTag: async ({ locals, params, request, url }) => {
+		console.log({ request, search: url.search, url });
+
 		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
-		const annotationForm = await superValidate(request, annotationSchema, { id: 'annotation' });
-		let annotation = annotationForm.data;
-		annotation.userId = session.user.userId;
-		const id = await upsertAnnotation(annotation);
-		annotationForm.data.id = id;
-		return message(annotationForm, 'Annotation saved');
+		const name = url.searchParams.get('name');
+		if (name) {
+			const q = await db
+				.insertInto('Tag')
+				.values({
+					name,
+					userId: session.user.userId,
+				})
+				.executeTakeFirstOrThrow();
+			const id = Number(q.insertId);
+			await db
+				.insertInto('TagOnEntry')
+				.values({
+					entryId: +params.id,
+					tagId: id,
+					userId: session.user.userId,
+				})
+				.execute();
+			// return message({ id, name }, "Tag created")
+			// return {
+			//     id,
+			//     name,
+			// }
+		}
 	},
-	deleteAnnotation: async ({ request, params, locals }) => {
+	deleteAnnotation: async ({ locals, params, request }) => {
 		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
@@ -212,7 +237,144 @@ export const actions: Actions = {
 			.execute();
 		return { succcess: true };
 	},
-	tag: async ({ request, params, locals }) => {
+	interaction: validateAuthedForm(
+		interactionSchema,
+		{
+			id: 'interaction',
+		},
+		async ({ form, session }) => {
+			console.log({ form });
+			await db
+				.insertInto('EntryInteraction')
+				.values({
+					...form.data,
+					updatedAt: new Date(),
+					userId: session.user.userId,
+				})
+				.onDuplicateKeyUpdate(form.data)
+				.execute();
+			return { interactionForm: form };
+		},
+	),
+	/**
+	 * Marks entry as finished and moves bookmark to "Archive".
+	 */
+	markFinished: async (event) => {
+		const session = await event.locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		const formData = await event.request.formData();
+		// TODO: if not an entry yet, create it
+		const entryId = formData.get('entryId');
+		const historyId = formData.get('historyId') as string | undefined;
+		if (typeof entryId !== 'string') {
+			return fail(400);
+		}
+		await db
+			.insertInto('EntryInteraction')
+			.values({
+				entryId: +entryId,
+				finished: new Date(),
+				progress: 1,
+				seen: 1,
+				updatedAt: new Date(),
+				userId: session.user.userId,
+			})
+			.onDuplicateKeyUpdate({
+				finished: new Date(),
+				progress: 1,
+				seen: 1,
+				updatedAt: new Date(),
+			})
+			.execute();
+		// TODO: should edit this if one exists on same day
+		// TODO: should entryhistory just be intryinteraction?
+		await db
+			.insertInto('EntryHistory')
+			.values({
+				createdAt: new Date(),
+				entryId: +entryId,
+				finished: 1,
+				id: historyId ?? nanoid(),
+				updatedAt: new Date(),
+				userId: session.user.userId,
+			})
+			.execute();
+		await db
+			.insertInto('Bookmark')
+			.values({
+				entryId: +entryId,
+				status: 'Archive',
+				updatedAt: new Date(),
+				userId: session.user.userId,
+			})
+			.onDuplicateKeyUpdate({
+				status: 'Archive',
+				updatedAt: new Date(),
+			})
+			.execute();
+	},
+	relation: async ({ locals, params, request }) => {
+		const session = await locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		const data = await request.formData();
+		const id = data.get('id');
+		if (id) {
+			// delete
+			await db.deleteFrom('Relation').where('id', '=', String(id)).execute();
+			return;
+		}
+		const entryId = +params.id;
+		const parsed = relation_schema.safeParse(Object.fromEntries(data));
+		console.dir(
+			{
+				parsed,
+			},
+			{
+				depth: null,
+			},
+		);
+		if (!parsed.success) {
+			return fail(400, parsed.error.flatten().fieldErrors);
+		}
+		const { relatedEntryId, type } = parsed.data;
+		await db
+			.insertInto('Relation')
+			.values({
+				entryId,
+				id: nanoid(),
+				relatedEntryId,
+				type,
+				updatedAt: new Date(),
+				userId: session.user.userId,
+			})
+			.onDuplicateKeyUpdate({
+				type,
+				updatedAt: new Date(),
+			})
+			.execute();
+	},
+	saveInteraction: async (event) => {
+		const session = await event.locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		const formData = Object.fromEntries(await event.request.formData());
+		const parsed = saveInteractionSchema.safeParse(formData);
+		if (!parsed.success) {
+			const errors = parsed.error.flatten().fieldErrors;
+			console.dir({ errors }, { depth: null });
+			return fail(400, errors);
+		}
+		await saveInteraction({
+			ctx: { event, userId: session.user.userId },
+			input: parsed.data,
+		});
+	},
+	tag: async ({ locals, params, request }) => {
 		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
@@ -221,8 +383,8 @@ export const actions: Actions = {
 		console.dir(
 			{ tagForm },
 			{
-				depth: null
-			}
+				depth: null,
+			},
 		);
 		if (!tagForm.valid) {
 			return fail(400, { tagForm });
@@ -234,10 +396,13 @@ export const actions: Actions = {
 			.filter((tag) => tag.id)
 			.map((tag) => tag.id)
 			.filter(Boolean);
-		console.log({ tagsToAdd, existingTagIds: tagIds });
+		console.log({ existingTagIds: tagIds, tagsToAdd });
 		if (!tagIds.length) {
 			// then delete all existing tags on this entry
-			await db.deleteFrom('TagOnEntry').where('entryId', '=', +params.id).execute();
+			await db
+				.deleteFrom('TagOnEntry')
+				.where('entryId', '=', +params.id)
+				.execute();
 			return message(tagForm, 'Tags updated');
 		}
 		// if (tagsToAdd.length) {
@@ -264,8 +429,8 @@ export const actions: Actions = {
 				tagIds.map((tagId) => ({
 					entryId: +params.id,
 					tagId,
-					userId: session.user.userId
-				}))
+					userId: session.user.userId,
+				})),
 			)
 			.ignore()
 			.execute();
@@ -326,101 +491,44 @@ export const actions: Actions = {
 		// // await db.insertInto("Tag")
 		// //     .values(tags)
 	},
-	createTag: async ({ request, url, params, locals }) => {
-		console.log({ request, url, search: url.search });
-
+	updateBookmark: async (e) => {
+		const { locals, params, request } = e;
 		const session = await locals.auth.validate();
 		if (!session) {
 			return fail(401);
 		}
-		const name = url.searchParams.get('name');
-		if (name) {
-			const q = await db
-				.insertInto('Tag')
-				.values({
-					name,
-					userId: session.user.userId
-				})
-				.executeTakeFirstOrThrow();
-			const id = Number(q.insertId);
-			await db
-				.insertInto('TagOnEntry')
-				.values({
-					entryId: +params.id,
-					tagId: id,
-					userId: session.user.userId
-				})
-				.execute();
-			// return message({ id, name }, "Tag created")
-			// return {
-			//     id,
-			//     name,
-			// }
-		}
-	},
-	interaction: validateAuthedForm(
-		interactionSchema,
-		{
-			id: 'interaction'
-		},
-		async ({ form, session }) => {
-			console.log({ form });
-			await db
-				.insertInto('EntryInteraction')
-				.values({
-					...form.data,
-					userId: session.user.userId,
-					updatedAt: new Date()
-				})
-				.onDuplicateKeyUpdate(form.data)
-				.execute();
-			return { interactionForm: form };
-		}
-	),
-	relation: async ({ locals, request, params }) => {
-		const session = await locals.auth.validate();
-		if (!session) return fail(401);
-		const data = await request.formData();
-		const id = data.get('id');
-		if (id) {
-			// delete
-			await db.deleteFrom('Relation').where('id', '=', String(id)).execute();
-			return;
-		}
-		const entryId = +params.id;
-		const parsed = relation_schema.safeParse(Object.fromEntries(data));
-		console.dir(
-			{
-				parsed
-			},
-			{
-				depth: null
-			}
+		const form = await superValidate<typeof updateBookmarkSchema, Message>(
+			request,
+			updateBookmarkSchema,
+			{ id: 'update' },
 		);
-		if (!parsed.success) return fail(400, parsed.error.flatten().fieldErrors);
-		const { relatedEntryId, type } = parsed.data;
+		console.log({ form });
+		if (!form.valid) {
+			return fail(400, { update: form });
+		}
+		const { status } = form.data;
 		await db
-			.insertInto('Relation')
-			.values({
-				entryId,
-				relatedEntryId,
-				type,
-				updatedAt: new Date(),
-				userId: session.user.userId,
-				id: nanoid()
-			})
-			.onDuplicateKeyUpdate({
-				updatedAt: new Date(),
-				type
+			.updateTable('Bookmark')
+			.where('entryId', '=', +params.id)
+			.where('userId', '=', session.user.userId)
+			.set({
+				status,
 			})
 			.execute();
+		return message(form, {
+			status: 'success',
+			text: status ? `Status updated to ${status}` : undefined,
+		});
 	},
 	update_relation: validate_form(relationSchema, async ({ data }) => {
 		await update_relation(data);
-	})
+	}),
 };
 
 const relation_schema = z.object({
 	relatedEntryId: z.coerce.number().int(),
-	type: z.enum(['Related', 'SavedFrom', 'Grouped']).default('Related').optional()
+	type: z
+		.enum(['Related', 'SavedFrom', 'Grouped'])
+		.default('Related')
+		.optional(),
 });

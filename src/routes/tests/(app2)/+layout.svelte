@@ -11,6 +11,7 @@
 	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
 	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
 	import { cn } from '$lib/utils/tailwind';
+	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 
 	import type { LayoutData } from './$types';
 	import ClipboardHandler from './ClipboardHandler.svelte';
@@ -101,6 +102,7 @@
 						// is_settings && 'border-none lg:col-span-3',
 						// !is_article && 'sm:border-l'
 					)}
+                    style:padding-bottom="{$audioPlayer.height}px"
 				>
 					<slot />
 					<!-- {#if !is_entry && data.urlForm}
@@ -111,6 +113,13 @@
 		</div>
 		<!-- <AudioPlayer /> -->
 		<DropBox />
+        <AudioPlayer />
+			<!-- <div
+				class="mt-auto flex shrink-0 flex-col pb-2 max-w-[--width] {collapsed
+					? ''
+					: 'mt-auto border-t'}"
+			>
+			</div> -->
 	</GenericCommander>
 	<SvelteQueryDevtools buttonPosition="bottom-right" />
 </QueryClientPersister>

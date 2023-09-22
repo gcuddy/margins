@@ -122,7 +122,7 @@
 </script>
 
 <DropdownMenu>
-	<DropdownMenuTrigger class={buttonVariants({ variant: 'outline' })}>
+	<DropdownMenuTrigger class={buttonVariants({ variant: 'ghost' })}>
 		<MoreHorizontal />
 	</DropdownMenuTrigger>
 	<DropdownMenuContent class="w-56">

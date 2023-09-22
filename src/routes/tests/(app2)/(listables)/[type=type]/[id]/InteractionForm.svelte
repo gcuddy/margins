@@ -31,9 +31,9 @@
 	<!-- date started -->
 	<Label for="date">Date started</Label>
 	<input
-		bind:value={$form.date_started}
+		bind:value={$form.started}
 		type="date"
-		name="date_started"
+		name="started"
 		id="date"
 	/>
 

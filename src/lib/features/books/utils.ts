@@ -25,7 +25,8 @@ export function setZoomLevel(url?: string, zoom: 0 | 1 | 2 | 3 | 4 | 5 = 0) {
 
 
 export function get_genre(book: Book) {
-	if (!book.volumeInfo?.categories) return;
+    console.log({ book });
+		if (!book.volumeInfo?.categories) return 'Non-fiction';
 	if (book.volumeInfo?.categories?.some((c) => c.startsWith("Fiction /"))) {
 		return "Fiction";
 	} else {

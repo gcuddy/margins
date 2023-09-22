@@ -1,6 +1,9 @@
 <script lang="ts">
 	import {
+		createMutation,
 		createQuery,
+		type InfiniteData,
+		useQueryClient,
 	} from '@tanstack/svelte-query';
 	import { onMount, setContext } from 'svelte';
 	import { derived, writable } from 'svelte/store';
@@ -8,6 +11,11 @@
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import {
+		mutate,
+		type MutationInput,
+		type QueryOutput,
+	} from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { recents } from '$lib/stores/recents';
 	import { numberOrString } from '$lib/utils/misc';
@@ -36,14 +44,73 @@
 		}),
 	);
 
+	// Mark as seen mutation
+
+	const queryClient = useQueryClient();
+
+	const saveInteractionMutation = createMutation({
+		mutationFn: (data: MutationInput<'saveInteraction'>) => {
+			return mutate('saveInteraction', data);
+		},
+		onMutate(variables) {
+			// TODO: try to set query data
+			queryClient.setQueriesData<InfiniteData<QueryOutput<'get_library'>>>(
+				{
+					queryKey: ['entries', 'list'],
+				},
+				(old) => {
+					if (!old) {
+						return old;
+					}
+					const newData = {
+						...old,
+						pages: old.pages.map((page) => {
+							return {
+								...page,
+								entries: page.entries.map((entry) => {
+									if (entry.id === variables.entryId) {
+										return {
+											...entry,
+											seen: 1,
+										};
+									}
+									return entry;
+								}),
+							};
+						}),
+					};
+					console.log({ newData });
+					return newData;
+				},
+			);
+		},
+	});
+
 	afterNavigate(() => {
 		// push to recents
 		// save interaction
-		if (!$query.data?.entry) return;
+		const entryId = data.entry?.id;
+		const interactionId = data.entry?.interaction?.id;
+		if (entryId || interactionId) {
+			// if (!data.entry?.seen) {
+			$saveInteractionMutation.mutate({
+				entryId,
+				id: interactionId,
+				seen: true,
+			});
+			// data.entry.seen = true
+			// }
+		}
+		if (!$query.data?.entry) {
+			return;
+		}
 		if ($query.data.entry.title) {
 			recents.add_entry($query.data.entry);
 		}
-		if ($query.data.entry.type !== 'article') return;
+		if ($query.data.entry.type !== 'article') {
+			return;
+		}
+
 		// void mutation($page, 'saveInteraction', {
 		// 	entryId: $query.data.entry.id,
 		// 	last_viewed: new Date(),
@@ -52,14 +119,13 @@
 	});
 
 	// sync();
-//
+	//
 	setContext('pdf', writable(null));
 
 	// function sync() {
 	// 	if (!$query.data?.entry) return;
 	// 	update_entry($query.data.entry.id, $query.data.entry);
 	// }
-
 
 	const { rightSidebar } = getEntryContext();
 
@@ -69,6 +135,11 @@
 			const module = await get_module(data.type);
 			data.component = module?.default;
 		}
+	});
+
+	$: console.log(`Here's the data that's getting passed:`, {
+		...data,
+		...$query.data,
 	});
 </script>
 
@@ -97,14 +168,20 @@
 				this={data.component}
 				data={{
 					...data,
-					...$query.data,
+					// ...$query.data,
 				}}
 			>
 				<!-- eslint-disable-next-line svelte/no-at-html-tags-->
 				{@html $query.data.entry?.html}
 			</svelte:component>
 		{:else}
-			<svelte:component this={data.component} {data} />
+			<svelte:component
+				this={data.component}
+				data={{
+					...data,
+					...$query.data,
+				}}
+			/>
 		{/if}
 	{/if}
 </div>

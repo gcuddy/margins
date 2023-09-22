@@ -1,15 +1,38 @@
-import { Prisma } from '@prisma/client';
+export type FeedMeta = {
+	author?: string;
+	categories?: Array<string>;
+	description?: string;
+	explicit?: boolean;
+	imageURL?: string;
+	language?: string;
+	link?: string;
+	owner?: Owner;
+	subtitle?: string;
+	summary?: string;
+	title?: string;
+};
 
-export const subscriptionApiSelect = Prisma.validator<Prisma.SubscriptionSelect>()({
-	id: true,
-	feedId: true,
-	title: true,
-	createdAt: true,
-	// TODO: extended json_feed
-	feed: {
-		select: {
-			feedUrl: true,
-			link: true,
-		},
-	},
-});
+export type Owner = {
+	email?: string;
+	name?: string;
+};
+
+export type PodcastEpisode = {
+	blocked: boolean | undefined;
+	description: string;
+	duration: number;
+	enclosure: {
+		length: string;
+		type: string;
+		url: string;
+	};
+	explicit: boolean;
+	imageURL: string | undefined;
+	language: string | undefined;
+	link: string | undefined;
+	order: number | undefined;
+	pubDate: string;
+	subtitle: string;
+	summary: string;
+	title: string;
+};
