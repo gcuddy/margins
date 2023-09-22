@@ -33,11 +33,11 @@ const defaultOpts: AppearanceOpts = {
 };
 
 type AppearanceContext = Writable<AppearanceOpts> & {
-    consts: {
-        align: typeof align;
-        fonts: typeof fonts;
-    }
-}
+	consts: {
+		align: typeof align;
+		fonts: typeof fonts;
+	};
+};
 
 function createAppearanceOptions(): AppearanceContext {
 	const appearance = persisted('appearance', defaultOpts);
@@ -76,25 +76,28 @@ export function getArticleContext(): ArticleStore {
 }
 
 type EntryContext = {
+	isSetProgressModalOpen: Writable<boolean>;
 	navWidth: Writable<number>;
 	rightSidebar: Writable<boolean>;
 	rightSidebarWidth: Writable<number>;
-    scrollingDown: Writable<boolean>;
+	scrollingDown: Writable<boolean>;
 };
 
 const ENTRY_CONTEXT_NAME = Symbol('entry');
 
 export function setEntryContext(): EntryContext {
+	const isSetProgressModalOpen = writable(false);
 	const rightSidebar = persisted('rightSidebar', true);
 	const rightSidebarWidth = persisted('rightSidebarWidth', 360);
 	const navWidth = writable(0);
-    const scrollingDown = writable(false);
+	const scrollingDown = writable(false);
 
 	const state = {
+		isSetProgressModalOpen,
 		navWidth,
 		rightSidebar,
 		rightSidebarWidth,
-        scrollingDown
+		scrollingDown,
 	};
 
 	setContext(ENTRY_CONTEXT_NAME, state);

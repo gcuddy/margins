@@ -24,6 +24,7 @@
 	import { getEntryContext } from '../ctx';
 	import type { PageData } from './$types';
 	import { get_module } from './module';
+	import ProgressForm from './ProgressForm.svelte';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
@@ -71,6 +72,7 @@
 									if (entry.id === variables.entryId) {
 										return {
 											...entry,
+											...variables,
 											seen: 1,
 										};
 									}
@@ -79,10 +81,14 @@
 							};
 						}),
 					};
-					console.log({ newData });
+					// console.log({ newData });
 					return newData;
 				},
 			);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries(queryFactory.entries.list());
+			queryClient.invalidateQueries(data.query);
 		},
 	});
 
@@ -92,13 +98,13 @@
 		const entryId = data.entry?.id;
 		const interactionId = data.entry?.interaction?.id;
 		if (entryId || interactionId) {
-			// if (!data.entry?.seen) {
+			// if (!data.entry?.) {
 			$saveInteractionMutation.mutate({
 				entryId,
 				id: interactionId,
 				seen: true,
 			});
-			// data.entry.seen = true
+			// data.entry.seen = true;
 			// }
 		}
 		if (!$query.data?.entry) {
@@ -127,7 +133,7 @@
 	// 	update_entry($query.data.entry.id, $query.data.entry);
 	// }
 
-	const { rightSidebar } = getEntryContext();
+	const { isSetProgressModalOpen, rightSidebar } = getEntryContext();
 
 	onMount(async () => {
 		// try to get component if it doesn't exist, for example we're mounting this component elsewhere
@@ -137,10 +143,10 @@
 		}
 	});
 
-	$: console.log(`Here's the data that's getting passed:`, {
-		...data,
-		...$query.data,
-	});
+	// $: console.log(`Here's the data that's getting passed:`, {
+	// 	...data,
+	// 	...$query.data,
+	// });
 </script>
 
 <svelte:head>
@@ -194,3 +200,19 @@
 		}}
 	/> -->
 {/if}
+
+<!-- Modals -->
+<ProgressForm
+	bind:isOpen={$isSetProgressModalOpen}
+	progress={$query.data?.entry?.interaction?.progress ?? 0}
+	on:save={({ detail }) => {
+		const { progress } = detail;
+		const entryId = data.entry?.id;
+		const interactionId = data.entry?.interaction?.id;
+		$saveInteractionMutation.mutate({
+			entryId,
+			id: interactionId,
+			progress,
+		});
+	}}
+/>

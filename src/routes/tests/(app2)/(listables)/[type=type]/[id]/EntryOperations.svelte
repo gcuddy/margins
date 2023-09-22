@@ -1,15 +1,15 @@
 <script lang="ts">
-	import type { Entry } from '@prisma/client';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import {
 		ArrowLeftRight,
 		BookOpen,
+		CircleDashed,
 		Clock,
 		Edit,
 		ListPlus,
-		LoaderIcon,
 		MoreHorizontal,
 		Paperclip,
-		Repeat
+		Repeat,
 	} from 'lucide-svelte';
 	import type { ComponentProps } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -22,14 +22,7 @@
 	import { getCommanderContext } from '$lib/commands/GenericCommander.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
 	import type AnnotationForm from '$lib/components/AnnotationForm.svelte';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
-	import {
-		Dialog,
-		DialogContent,
-		DialogFooter,
-		DialogHeader,
-		DialogTitle
-	} from '$lib/components/ui/dialog';
+	import { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import {
 		DropdownMenu,
 		DropdownMenuContent,
@@ -38,15 +31,16 @@
 		DropdownMenuSub,
 		DropdownMenuSubContent,
 		DropdownMenuSubTrigger,
-		DropdownMenuTrigger	} from '$lib/components/ui/dropdown-menu';
-	import { initAttachmentCreateMutation } from '$lib/queries/mutations';
+		DropdownMenuTrigger,
+	} from '$lib/components/ui/dropdown-menu';
+	import { invalidateEntries } from '$lib/queries/mutations';
 	import { mutation, query } from '$lib/queries/query';
 	import type { LibraryEntry } from '$lib/server/queries';
-	import { state, update_entry } from '$lib/state/entries';
 	import { createAlertDialogStore } from '$lib/stores/dialog';
 	import { convertToTypes } from '$lib/types';
 	import { getId } from '$lib/utils/entries';
 
+	import { getEntryContext } from '../ctx';
 	import NoteForm from './NoteForm.svelte';
 
 	export let data: ComponentProps<AnnotationForm>['data'];
@@ -56,20 +50,21 @@
 	>;
 
 	let show_note_form = false;
-	let show_reading_session = false;
 
 	const commander_store = getCommanderContext();
+	const queryClient = useQueryClient();
 
-    const attachmentCreateMutation = initAttachmentCreateMutation();
+	// const attachmentCreateMutation = initAttachmentCreateMutation();
 
 	function handleCollectionSelect(collection: { id: number }) {
 		commander_store.close();
 		mutation($page, 'addToCollection', {
 			collectionId: collection.id,
-			entryId: entry.id
+			entryId: entry.id,
 		}).then(() => {
 			toast.success('Added to collection');
 			invalidate('entry');
+			invalidateEntries(queryClient);
 		});
 	}
 
@@ -82,7 +77,7 @@
 			toast.promise(
 				fetch(`/api/upload?related_entry_id=${entry.id}`, {
 					body: file,
-					method: 'POST'
+					method: 'POST',
 				}),
 				{
 					error: 'Error uploading file',
@@ -90,33 +85,35 @@
 					success: () => {
 						invalidate('entry');
 						return 'File uploaded';
-					}
-				}
+					},
+				},
 			);
 		}
 	}
 
-    function handle_epub_upload(file: File) {
-        if (!file.type.includes('epub')) {
-            toast.error('File must be an ePub');
-        } else if (file.size / 1024 / 1024 > 100) {
-            toast.error('File size too big (max 100MB).');
-        } else {
-            toast.promise(
-                fetch(`/api/epub`, {
-                    body: file,
-                    method: 'POST'
-                }),
-                {
-                    error: 'Error uploading file',
-                    loading: 'Uploading...',
-                    success: () => {
-                        return 'File parsed (check console)';
-                    }
-                }
-            );
-        }
-    }
+	function handle_epub_upload(file: File) {
+		if (!file.type.includes('epub')) {
+			toast.error('File must be an ePub');
+		} else if (file.size / 1024 / 1024 > 100) {
+			toast.error('File size too big (max 100MB).');
+		} else {
+			toast.promise(
+				fetch(`/api/epub`, {
+					body: file,
+					method: 'POST',
+				}),
+				{
+					error: 'Error uploading file',
+					loading: 'Uploading...',
+					success: () => {
+						return 'File parsed (check console)';
+					},
+				},
+			);
+		}
+	}
+
+	const { isSetProgressModalOpen } = getEntryContext();
 
 	const dialogStore = createAlertDialogStore();
 </script>
@@ -140,7 +137,7 @@
 				<span>Snooze</span></DropdownMenuItem
 			>
 			{#if entry.type === 'book'}
-				<DropdownMenuItem on:click={() => (show_reading_session = true)}>
+				<DropdownMenuItem>
 					<BookOpen class="mr-2 h-4 w-4" />
 					<span>Start reading session</span></DropdownMenuItem
 				>
@@ -154,18 +151,18 @@
 						placeholder: 'Add relation to...',
 						props: {
 							onSelect(chosen_entry) {
-								console.log({ entry });
+								// console.log({ entry });
 								commander_store.close();
 								mutation($page, 'addRelation', {
 									entryId: entry.id,
-									relatedEntryId: chosen_entry.id
+									relatedEntryId: chosen_entry.id,
 								}).then(() => {
 									toast.success('Added to collection');
 									invalidate('entry');
 								});
-							}
+							},
 						},
-						shouldFilter: false
+						shouldFilter: false,
 					});
 				}}
 			>
@@ -178,8 +175,8 @@
 						component: Collections,
 						placeholder: 'Add to collection...',
 						props: {
-							onSelect: handleCollectionSelect
-						}
+							onSelect: handleCollectionSelect,
+						},
 					});
 				}}
 			>
@@ -201,8 +198,10 @@
 											action: async (value) => {
 												// update_entry(entry.id, { type: type.value });
 												// dialogStore.reset();
-												console.log({ value });
-												if (!value) {return;}
+												// console.log({ value });
+												if (!value) {
+													return;
+												}
 												const book = await query($page, 'getBookByIsbn', value);
 												if (!book?.id) {
 													toast.error('Unable to find book with that ISBN');
@@ -211,7 +210,7 @@
 												const data = await mutation($page, 'convertEntry', {
 													googleBooksId: book.id,
 													id: entry.id,
-													type: 'book'
+													type: 'book',
 												});
 												if (!data.id) {
 													toast.error('Failed to convert entry');
@@ -221,12 +220,15 @@
 											},
 											description: 'Please enter ISBN',
 											title: 'Convert to book',
-											value: ''
+											value: '',
 										});
 									}
 								}}
 							>
-								<svelte:component this={entryTypeIcon[type.value]} class="mr-2 h-4 w-4" />
+								<svelte:component
+									this={entryTypeIcon[type.value]}
+									class="mr-2 h-4 w-4"
+								/>
 								<span>{type.label}</span>
 							</DropdownMenuItem>
 						{/each}
@@ -241,8 +243,11 @@
 					input.onchange = () => {
 						if (input.files?.length) {
 							const file = input.files[0];
-							if (!file) {return;}
-							handle_pdf_upload(file); return;
+							if (!file) {
+								return;
+							}
+							handle_pdf_upload(file);
+							return;
 						}
 					};
 					input.click();
@@ -259,8 +264,11 @@
 					input.onchange = () => {
 						if (input.files?.length) {
 							const file = input.files[0];
-							if (!file) {return;}
-							handle_epub_upload(file); return;
+							if (!file) {
+								return;
+							}
+							handle_epub_upload(file);
+							return;
 						}
 					};
 					input.click();
@@ -272,19 +280,29 @@
 			<DropdownMenuItem
 				on:click={() => {
 					dialogStore.open({
-                        action(value) {
-                            if (!value) {return;}
-                            // $attachmentCreateMutation.mutate({
-                            //     url: value
-                            // });
-                        },
-                        description: "Please enter URL",
-                        title: 'Attach URL',
-                    })
+						action(value) {
+							if (!value) {
+								return;
+							}
+							// $attachmentCreateMutation.mutate({
+							//     url: value
+							// });
+						},
+						description: 'Please enter URL',
+						title: 'Attach URL',
+					});
 				}}
 			>
 				<Paperclip class="mr-2 h-4 w-4" />
 				<span>Attach URL…</span>
+			</DropdownMenuItem>
+			<DropdownMenuItem
+				on:click={() => {
+					isSetProgressModalOpen.set(true);
+				}}
+			>
+				<CircleDashed class="mr-2 h-4 w-4" />
+				<span>Set Progress</span>
 			</DropdownMenuItem>
 		</DropdownMenuGroup>
 		<!-- <DropdownMenuItem>Billing</DropdownMenuItem>
