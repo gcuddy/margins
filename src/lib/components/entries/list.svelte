@@ -29,6 +29,10 @@
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { type Status, statuses } from '$lib/status';
 	import { cn } from '$lib/utils';
+	import { currentEntryList } from './store';
+	import { beforeNavigate } from '$app/navigation';
+	import { setBackContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/[id]/store';
+	import { page } from '$app/stores';
 
 	export let opts: Readable<QueryInput<'get_library'>>;
 
@@ -63,6 +67,8 @@
 				}) ?? []
 		);
 	});
+
+    $: currentEntryList.set($entries)
 
 	let groupedEntries: GroupedArrayWithHeadings<
 		LibraryResponse['entries'][0],
@@ -173,7 +179,7 @@
 	$: multi.helpers.updateItems($entries.map((e) => e.id));
 
 	// use in any entrylist
-	// beforeNavigate((nav) => setBackContext(nav, $page.url.toString()));
+	beforeNavigate((nav) => setBackContext(nav, $page.url.toString()));
 
 	const checkedEntries = derived(
 		[checkedEntryIds, entries],

@@ -198,6 +198,13 @@ export const queryFactory = {
 			queryKey: ['search', 'movies', { input }] as const,
 		}),
 	},
+	subscriptions: {
+		all: () => ({
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'list_subscriptions', {}),
+			queryKey: ['subscriptions'],
+		}),
+	},
 	tags: {
 		list: () => ({
 			placeholderData: keepPreviousData,

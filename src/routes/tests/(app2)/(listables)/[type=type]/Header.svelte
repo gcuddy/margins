@@ -38,7 +38,7 @@
 		return $pins.data?.find((pin) => {
 			if ($page.data.entry) {
 				const isPinned = pin.entry?.id === $page.data.entry.id;
-				if (isPinned) return isPinned;
+				if (isPinned) {return isPinned;}
 				// check children
 				return pin.children?.find(
 					(child) => child.entry?.id === $page.data.entry?.id,
@@ -59,7 +59,7 @@
 	} = getArticleContext();
 
     function handlePageInputChange(e: Event) {
-        if (!isHTMLInputElement(e.target)) return;
+        if (!isHTMLInputElement(e.target)) {return;}
         $pdf_state.pdf_link_service?.goToPage(Number(e.target.value));
         e.target.blur();
     }
@@ -108,7 +108,7 @@
 
 				<button
 					on:click={() => {
-						if (!$pdf_state.pdf_viewer) return;
+						if (!$pdf_state.pdf_viewer) {return;}
 						$pdf_state.pdf_viewer.currentScaleValue = 'auto';
 					}}
 				>

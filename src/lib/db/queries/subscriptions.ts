@@ -98,24 +98,25 @@ function parseAtomFeedItems(
 	const relatedLink = getAtomLink(feed.link, 'related');
 	return feed.entry.map((entry: any) => {
 		const content = getText(entry.content);
-		return {
-			author: entry.author?.name,
-			feedId,
-			guid: entry.id,
-			html:
-				alternateLink && relatedLink
-					? `<i>Link: <a href='${alternateLink}'>${alternateLink}</a>
+        const published = entry.published || entry.updated;
+				return {
+					author: entry.author?.name,
+					feedId,
+					guid: entry.id,
+					html:
+						alternateLink && relatedLink
+							? `<i>Link: <a href='${alternateLink}'>${alternateLink}</a>
             ${content}`
-					: content,
-			published: new Date(entry.published),
-			summary: removeTagsFromHtml(getText(entry.summary)).slice(0, 255),
-			text: removeTagsFromHtml(content),
-			title: getText(entry.title),
-			updatedAt: new Date(),
-			uri:
-				(alternateLink && relatedLink ? relatedLink : alternateLink) ||
-				entry.id,
-		} satisfies Insertable<Entry>;
+							: content,
+					published: published ? new Date(published) : null,
+					summary: removeTagsFromHtml(getText(entry.summary)).slice(0, 255),
+					text: removeTagsFromHtml(content),
+					title: getText(entry.title),
+					updatedAt: new Date(),
+					uri:
+						(alternateLink && relatedLink ? relatedLink : alternateLink) ||
+						entry.id,
+				} satisfies Insertable<Entry>;
 	});
 }
 

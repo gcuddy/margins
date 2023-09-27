@@ -7,7 +7,9 @@
 	} from '@tanstack/svelte-query';
 	import { MoreHorizontal, PlusCircle } from 'lucide-svelte';
 	import { derived } from 'svelte/store';
+	import { toast } from 'svelte-sonner';
 
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
@@ -15,6 +17,7 @@
 	import Annotation from '$components/notebook/Annotation.svelte';
 	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
 	import { TagColorPopover } from '$components/tags/tag-color';
+	import * as AlertDialog from '$components/ui/alert-dialog';
 	import Button from '$components/ui/Button.svelte';
 	import * as Dialog from '$components/ui/dialog';
 	import * as Dropdown from '$components/ui/dropdown-menu';
@@ -100,6 +103,7 @@
 	});
 
 	let showRename = false;
+	let showDelete = false;
 </script>
 
 <Header>
@@ -129,9 +133,10 @@
 					>
 						Rename
 					</Dropdown.Item>
+					<!-- TODO: only show if we actually have no tags... -->
 					<Dropdown.Item
 						on:click={() => {
-							// todo deleteTag / tagDelete
+							showDelete = true;
 						}}
 					>
 						Delete
@@ -245,3 +250,32 @@
 		</Form.Root> -->
 	</Dialog.Content>
 </Dialog.Root>
+
+<AlertDialog.Root bind:open={showDelete}>
+	<AlertDialog.Content>
+		<form
+			class="contents"
+			method="post"
+			action="?/delete"
+			use:enhance={() => {
+				return async ({ result, update }) => {
+					await update();
+					if (result.type === 'success' || result.type === 'redirect') {
+						toast.success('Tag deleted');
+					}
+				};
+			}}
+		>
+			<AlertDialog.Header>
+				<AlertDialog.Title>Delete Tag</AlertDialog.Title>
+				<AlertDialog.Description>
+					Are you sure you want to delete this tag?
+				</AlertDialog.Description>
+			</AlertDialog.Header>
+			<AlertDialog.Footer>
+				<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+				<AlertDialog.Action type="submit">Delete</AlertDialog.Action>
+			</AlertDialog.Footer>
+		</form>
+	</AlertDialog.Content>
+</AlertDialog.Root>

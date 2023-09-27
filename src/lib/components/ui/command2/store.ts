@@ -586,12 +586,13 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	const inputHeight = writable(48);
 	const listHeight = writable(300);
-	const tweenedHeight = tweened(348, {
+	const tweenedHeight = tweened(150, {
 		duration: 75,
 		easing: cubicOut,
 	});
 	const MAX_HEIGHT = 348;
 	effect([inputHeight, listHeight], ([$inputHeight, $listHeight]) => {
+		console.log({ $inputHeight, $listHeight });
 		const height = $inputHeight + $listHeight;
 		if (height > MAX_HEIGHT) {
 			tweenedHeight.set(MAX_HEIGHT);

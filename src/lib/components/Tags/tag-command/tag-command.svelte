@@ -31,7 +31,7 @@
 	let className = '';
 	export { className as class };
 
-	const selectedTagsStore = writable(selectedTags);
+	const selectedTagsStore = writable(selectedTags.map((value) => ({value})));
 	const entryMutation = createSetTagsMutation();
 	const annotationMutation = updateAnnotationMutation();
 	const tagMutation = createTagMutation();
@@ -45,9 +45,9 @@
 			: [...selectedTags, tag];
 	}
 
-	$: if (selectedTags !== undefined) {
-		selectedTagsStore.set(selectedTags);
-	}
+	// $: if (selectedTags !== undefined) {
+	// 	selectedTagsStore.set(selectedTags);
+	// }
 
 	onMount(() => {
 		if (autofocus) {
@@ -62,7 +62,7 @@
 	{multiple}
 	class={className}
 	selectedValue={selectedTagsStore}
-	shouldFilter={false}
+	shouldFilter={writable(false)}
 	onClose={async (tag, el, val) => {
 		if (shouldMutate) {
 			if (el?.id === 'shadow-new-tag') {

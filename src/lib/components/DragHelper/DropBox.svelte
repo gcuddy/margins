@@ -8,6 +8,7 @@
 	import dragging from '$lib/stores/dragging';
 	import { syncStore } from '$lib/stores/sync';
 	import { post } from '$lib/utils/forms';
+	import { queryFactory } from '$lib/queries/querykeys';
 
 	let dragOver = false;
 
@@ -51,9 +52,7 @@
 			error: 'Failed to save link',
 			loading: 'Saving link',
 			success: (data) => {
-				queryClient.invalidateQueries({
-					queryKey: ['entries'],
-				});
+				queryClient.invalidateQueries(queryFactory.entries.list());
 				if (data.type === 'success' && data.data) {
 					return `Saved new link: ${data.data.title}`;
 				}

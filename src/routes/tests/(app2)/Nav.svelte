@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createAvatar, melt } from '@melt-ui/svelte';
-	import { createQuery, useIsMutating } from '@tanstack/svelte-query';
+	import { createQuery, useIsMutating, useIsFetching } from '@tanstack/svelte-query';
 	import {
 		BookMarked,
 		Box,
@@ -25,7 +25,7 @@
 	import { persisted } from 'svelte-local-storage-store';
 
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import AddUrlModal from '$components/modals/add-url-modal.svelte';
 	import Pins from '$components/pins/pins.svelte';
 	import SubscriptionEntry from '$components/subscriptions/subscription-entry.svelte';
@@ -60,6 +60,7 @@
 
 	const isRestoring = getContext('isRestoring') as Writable<boolean>;
 	const isMutating = useIsMutating();
+    const isFetching = useIsFetching();
 
 	const nav: Array<Nav> = [
 		{
@@ -205,7 +206,7 @@
 					</DropdownMenuContent>
 				</DropdownMenu>
 			{/if}
-			{#if $isRestoring || $isMutating}
+			{#if $isRestoring || $isMutating || $isFetching || $navigating}
 				<span
 					transition:fade={{ duration: 75 }}
 					class="absolute my-auto right-4 hidden lg:flex"

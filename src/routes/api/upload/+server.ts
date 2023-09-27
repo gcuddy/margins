@@ -59,7 +59,7 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 	const related_entry_id = url.searchParams.get('related_entry_id');
 	let title: string | undefined = undefined;
 	// TODO: pdf magic
-	if (content_type === 'application/pdf' && related_entry_id) {
+	if (content_type === 'application/pdf') {
 		// get thumbnail and shit?
 		const pdf = await pdfjs.getDocument({
 			data: array_buffer,
@@ -100,17 +100,19 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 		const pdf_entry_id = Number(entry.insertId);
 
 		// add groupng relation
-		await db
-			.insertInto('Relation')
-			.values({
-				entryId: pdf_entry_id,
-				id: nanoid(),
-				relatedEntryId: +related_entry_id,
-				type: 'Grouped',
-				updatedAt: new Date(),
-				userId: session.user.userId,
-			})
-			.execute();
+		if (related_entry_id) {
+			await db
+				.insertInto('Relation')
+				.values({
+					entryId: pdf_entry_id,
+					id: nanoid(),
+					relatedEntryId: +related_entry_id,
+					type: 'Grouped',
+					updatedAt: new Date(),
+					userId: session.user.userId,
+				})
+				.execute();
+		}
 	}
 
 	return json({

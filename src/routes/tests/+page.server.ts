@@ -64,7 +64,7 @@ export const actions: Actions = {
 					...rest,
 					original: rest.original ? json(rest.original) : null,
 					podcastIndexId: rest.podcastIndexId ? Number(rest.podcastIndexId) : null,
-					uri
+					uri: rest.type === "pdf" ? rest.uri ?? _url : uri,
 				})
 				.ignore()
 				.executeTakeFirst();

@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms/server';
 
 import { db } from '$lib/db';
@@ -32,6 +32,21 @@ export async function load({ fetch, locals, params, url }) {
 }
 
 export const actions = {
+	delete: async (event) => {
+		// delete tag...
+		const session = await event.locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		const { userId } = session.user;
+		await db
+			.deleteFrom('Tag')
+			.where('name', '=', event.params.tag)
+			.where('userId', '=', userId)
+			.execute();
+		throw redirect(301, '/tests/library/backlog');
+		// TODO: add message
+	},
 	pin: async ({ locals, request }) => {
 		const session = await locals.auth.validate();
 		if (!session) {

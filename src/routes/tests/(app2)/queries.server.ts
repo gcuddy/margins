@@ -731,6 +731,7 @@ export const queries = {
 					's.updatedAt',
 					'f.feedUrl',
 					'f.imageUrl',
+					'f.link',
 				])
 				.execute();
 		},

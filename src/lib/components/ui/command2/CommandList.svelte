@@ -29,7 +29,7 @@
 	$: width = borderBoxSize?.[0]?.inlineSize;
 	$: height = borderBoxSize?.[0]?.blockSize;
 
-	$: if (height) {
+	$: if (height !== undefined) {
 		$listHeight = height;
 	}
 

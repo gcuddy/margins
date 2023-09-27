@@ -133,29 +133,10 @@
 	const links = writable<
 		Array<{
 			href: string;
-			text: string;
+			html: string;
+			textContent: string;
 		}>
 	>([]);
-
-	const linksQuery = createQuery(
-		derived(links, ($links) => ({
-			...queryFactory.links.href($links.map((l) => l.href)),
-			enabled: $currentTab === 'links',
-		})),
-	);
-
-	const linksWithData = derived(
-		[links, linksQuery],
-		([$links, $linksQuery]) => {
-			return $links.map((link) => {
-				const data = $linksQuery.data?.find((e) => e.href === link.href);
-				return {
-					...link,
-					data,
-				};
-			});
-		},
-	);
 
 	let linkFilterValue = '';
 
@@ -179,9 +160,11 @@
 			.map((link) => {
 				if (link.textContent) {
 					// TODO: normalize url, search in db for existing entry, if exists, link to it, otherwise, link to new entry
+                    const nextText = link.nextSibling?.textContent ?? '';
 					return {
 						href: link.href,
-						text: link.textContent,
+						html: `<b>${link.textContent}</b> ${nextText.slice(0, 50).trim()}`,
+                        textContent: link.textContent,
 					};
 				}
 			})
@@ -644,11 +627,11 @@
 			<TabsContent value="links">
 				<ul class="px-6 flex flex-col gap-y-2 text-sm">
 					<Input bind:value={linkFilterValue} />
-					{#each $linksWithData.filter((link) => {
+					{#each $links.filter((link) => {
 						if (!linkFilterValue) {
 							return true;
 						}
-						const term = `${link.text} ${link.data?.title ?? ''} ${link.href}`;
+						const term = `${link.textContent} ${link.href}`;
 						return term.toLowerCase().includes(linkFilterValue.toLowerCase());
 					}) as link}
 						{@const entry = $entriesQuery.data?.find(
@@ -732,10 +715,12 @@
 											}, 1000);
 										}
 									}}
-									class="basis-1/2 line-clamp-2 cursor-pointer text-left"
-									>{link.data?.title ?? link.text}</button
+									class="basis-1/2 truncate cursor-pointer text-left"
+									>
+                                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                                    {@html link.html}</button
 								>
-								<a href={link.href} class="truncate text-muted-foreground"
+								<a target="_blank" rel="noopener noreferrer" href={link.href} class="truncate text-muted-foreground"
 									>{link.href}</a
 								>
 							</div>

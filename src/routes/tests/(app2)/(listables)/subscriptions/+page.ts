@@ -1,22 +1,22 @@
 import { createQuery } from '@tanstack/svelte-query';
-import type { PageLoad } from './$types';
-import { query } from '$lib/queries/query';
-import { loadQuery } from '$lib/queries/utils';
+
 import { queryKeys } from '$lib/queries/keys';
+import { query } from '$lib/queries/query';
+import { queryFactory } from '$lib/queries/querykeys';
+import { loadQuery } from '$lib/queries/utils';
 
+import type { PageLoad } from './$types';
 
-export const load = (async ({ url, fetch, parent }) => {
+export const load = (async (event) => {
+	const { queryClient } = await event.parent();
 
-    const { queryClient } = await parent();
-    // const subscriptions = await queryClient.ensureQueryData({
-    //     queryKey: ['subscriptions', 'list'],
-    //     queryFn: () => query({
-    //         url,
-    //         fetch
-    //     }, "list_subscriptions", {}),
-    //     staleTime: 1000 * 60 * 2
-    // })
-    return {
-        query: loadQuery(queryClient, queryKeys.subscriptions.list({ url, fetch }))
-    };
+	await queryClient.prefetchQuery({
+		...queryFactory.subscriptions.all(),
+		meta: {
+			init: event,
+		},
+	});
+	return {
+		// query: loadQuery(queryClient, queryKeys.subscriptions.list({ fetch, url })),
+	};
 }) satisfies PageLoad;

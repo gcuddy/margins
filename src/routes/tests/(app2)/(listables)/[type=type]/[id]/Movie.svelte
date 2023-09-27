@@ -201,7 +201,7 @@
 			</div>
 			<!-- images -->
 			<div>
-				{#each data.movie.images.backdrops.slice(0, 1) as image}
+				{#each data.movie.images.backdrops.slice(0, 3) as image}
 					<img
 						src="https://image.tmdb.org/t/p/w500/{image.file_path}"
 						alt=""
@@ -299,11 +299,11 @@
 							data-movie-thumbnail
 							href="/tests/movie/{recommendation.id}"
 							use:melt={builder}
-							class=" w-24 h-auto object-cover shrink-0 block rounded"
+							class=" w-24 h-auto object-cover shrink-0 block rounded shadow"
 						>
 							<img
 								src="https://image.tmdb.org/t/p/w154/{recommendation.poster_path}"
-								class="shrink-0 block rounded"
+								class="shrink-0 block rounded border"
 								alt="Poster for {recommendation.title}"
 							/>
 							<span class="sr-only">{recommendation.title}</span>

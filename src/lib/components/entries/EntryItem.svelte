@@ -21,16 +21,18 @@
 	import { portal } from 'svelte-portal';
 	import { toast } from 'svelte-sonner';
 
-	import { preloadData } from '$app/navigation';
+	import { goto, preloadData } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { audioPlayer } from '$components/AudioPlayer.svelte';
 	import Clamp from '$components/Clamp.svelte';
 	import { TagColorPill } from '$components/tags/tag-color';
 	import TagCommand from '$components/tags/TagCommand.svelte';
 	import { Button } from '$components/ui/button';
+	import * as Command from '$components/ui/command2';
 	import * as ContextMenu from '$components/ui/context-menu';
 	import ContextMenuIcon from '$components/ui/context-menu/ContextMenuIcon.svelte';
 	import { render_html } from '$components/ui/editor/utils';
+	import * as Popover from '$components/ui/popover';
 	import Separator from '$components/ui/Separator.svelte';
 	import * as Tooltip from '$components/ui/tooltip';
 	import { defaultViewPreferences } from '$components/view-preferences';
@@ -245,12 +247,11 @@
 
 	export let contextMenuOpen = false;
 
-    $: if (contextMenuOpen && isBrowser) {
-        document?.body?.classList.add('overflow-hidden');
-    } else if (isBrowser) {
-        document?.body?.classList.remove('overflow-hidden');
-    }
-
+	$: if (contextMenuOpen && isBrowser) {
+		document?.body?.classList.add('overflow-hidden');
+	} else if (isBrowser) {
+		document?.body?.classList.remove('overflow-hidden');
+	}
 </script>
 
 <svelte:document />
@@ -271,10 +272,10 @@
 			{...$$restProps}
 			class="data-[state=open]:bg-accent flex flex-col h-full cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none"
 			data-sveltekit-preload-data="hover"
-            on:focus|once={() => {
-                // console.log('preloading')
-                preloadData(href);
-            }}
+			on:focus|once={() => {
+				// console.log('preloading')
+				preloadData(href);
+			}}
 		>
 			<div
 				class={cn(
@@ -318,13 +319,13 @@
 									{/if}
 									{#if viewPreferences.progress && entry.progress}
 										{#if entry.progress === 1 || entry.finished}
-                                        <div class="absolute -bottom-1 -right-1">
-                                            <CheckCircle2
-                                                class="h-5 w-5 fill-primary text-primary-foreground"
-                                            />
-                                        </div>
+											<div class="absolute -bottom-1 -right-1">
+												<CheckCircle2
+													class="h-5 w-5 fill-primary text-primary-foreground"
+												/>
+											</div>
 										{:else}
-                                            <div
+											<div
 												class="absolute rounded-md w-full h-full inset-0 overflow-hidden"
 											>
 												<Progress
@@ -391,9 +392,9 @@
 							{#if viewPreferences.status && entry.status}
 								<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
 							{/if}
-                            {#if viewPreferences.seen && !entry.seen}
-                                <div class="h-3 w-3 rounded-full bg-primary"></div>
-                            {/if}
+							{#if viewPreferences.seen && !entry.seen}
+								<div class="h-3 w-3 rounded-full bg-primary"></div>
+							{/if}
 							<div
 								data-id={entry.id}
 								class="truncate font-semibold hover:underline focus:outline-none"
@@ -527,22 +528,26 @@
 									size="icon"
 									class="h-8 w-8 rounded-full"
 									variant="outline"
-                                    on:click={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        audioPlayer.load({
-                                            artist: entry.author,
-                                            entry_id: entry.id,
-                                            image: entry.image,
-                                            interaction_id: entry.interaction?.id,
-                                            src: entry.uri,
-                                            title: entry.title,
-                                        }, entry.progress, {
-                                            onProgressUpdate(progress) {
-                                                entry.progress = progress;
-                                            }
-                                        })
-                                    }}
+									on:click={(e) => {
+										e.stopPropagation();
+										e.preventDefault();
+										audioPlayer.load(
+											{
+												artist: entry.author,
+												entry_id: entry.id,
+												image: entry.image,
+												interaction_id: entry.interaction?.id,
+												src: entry.uri,
+												title: entry.title,
+											},
+											entry.progress,
+											{
+												onProgressUpdate(progress) {
+													entry.progress = progress;
+												},
+											},
+										);
+									}}
 								>
 									<PlayIcon
 										class="fill-accent text-accent-foreground w-6 h-6"
@@ -604,19 +609,67 @@
 							</div>
 						{/if}
 					</div>
-					<div class="ml-auto hidden shrink-0 items-center gap-x-1 md:flex">
+					<div class="ml-auto hidden shrink-0 items-center gap-x-1 sm:flex">
 						{#if data.tags && viewPreferences.tags}
-							{#each data.tags as tag (tag.id)}
-								<Badge
-									class="text-xs"
-									as="a"
-									href="/tests/tag/{tag.name}"
-									variant="outline"
-								>
-									<TagColorPill class="mr-1 h-2 w-2" color={tag.color} />
-									{tag.name}</Badge
-								>
-							{/each}
+							{#if data.tags.length > 1}
+								<!-- eslint-disable-next-line svelte/valid-compile -->
+								<div on:click|stopPropagation|preventDefault class="md:hidden">
+									<Popover.Root positioning={{
+                                        placement: 'bottom-start',
+                                        strategy: 'fixed',
+                                    }} portal="body" >
+										<Popover.Trigger asChild let:builder>
+											<div use:melt={builder}>
+												<Badge class="text-xs" variant="outline">
+													<div class="flex -space-x-1">
+														{#each data.tags.slice(0, 3) as { color }}
+															<TagColorPill
+																class="h-2 w-2 border border-background"
+																{color}
+															/>
+														{/each}
+													</div>
+													{data.tags.length} tags
+												</Badge>
+											</div>
+										</Popover.Trigger>
+										<Popover.Content class="w-fit p-0">
+											<Command.Root>
+												<Command.Input></Command.Input>
+												<Command.List>
+													<Command.Group>
+														{#each data.tags as {color, id, name} (id)}
+															<Command.Item onSelect={() => {
+                                                                goto(`/tests/tag/${name}`);
+                                                            }}>
+																<TagColorPill class="h-2 w-2 mr-2" {color} />
+																{name}
+															</Command.Item>
+														{/each}
+													</Command.Group>
+												</Command.List>
+											</Command.Root>
+										</Popover.Content>
+									</Popover.Root>
+								</div>
+							{/if}
+							<div
+								class="{data.tags.length === 1
+									? ''
+									: 'hidden'} md:flex gap-x-1 items-center shrink-0"
+							>
+								{#each data.tags as tag (tag.id)}
+									<Badge
+										class="text-xs"
+										as="a"
+										href="/tests/tag/{tag.name}"
+										variant="outline"
+									>
+										<TagColorPill class="mr-1 h-2 w-2" color={tag.color} />
+										{tag.name}</Badge
+									>
+								{/each}
+							</div>
 						{/if}
 						{#if viewPreferences.relations && data.relations.length}
 							<HoverCard>
@@ -686,7 +739,7 @@
 					<slot />
 				{/if}
 			</div>
-            <Separator class="w-full h-[0.5px] bg-border" />
+			<Separator class="w-full h-[0.5px] bg-border" />
 			<!-- {#if border}
 			{/if} -->
 		</a>

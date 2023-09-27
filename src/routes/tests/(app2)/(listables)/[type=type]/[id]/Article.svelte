@@ -403,6 +403,7 @@
 						entry: {
 							...old.entry,
 							interaction: makeInteraction({
+                                ...old.entry.interaction,
 								id,
 								progress: lastSavedScrollProgress,
 							}),
@@ -1131,6 +1132,12 @@
 	>
 		<Button>Image Menu</Button>
 	</div>
+{/if}
+
+{#if $scroll < lastSavedScrollProgress}
+    <div class="fixed bottom-0 right-0">
+        scroll to latest position
+    </div>
 {/if}
 
 <style lang="postcss">

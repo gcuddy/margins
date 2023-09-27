@@ -114,6 +114,7 @@ module.exports = {
 			2,
 			{ anonymous: 'never', asyncArrow: 'always', named: 'never' },
 		],
+		'svelte/no-at-html-tags': 0,
 		'svelte/no-immutable-reactive-statements': 'error',
 		'svelte/no-reactive-literals': 'error',
 		'svelte/no-target-blank': 'error',

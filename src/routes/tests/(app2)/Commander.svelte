@@ -33,7 +33,7 @@
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
-	import { Books, Movies, Tags } from '$lib/commands';
+	import { Books, Movies, Subscriptions,Tags } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -164,6 +164,15 @@
 				>
 					<ArrowRight class="mr-2 h-4 w-4" />
 					<span>Open Collection</span>
+				</CommandItem>
+				<CommandItem
+					onSelect={() => {
+						addPage('open-subscription');
+						$state.shouldFilter = false;
+					}}
+				>
+					<ArrowRight class="mr-2 h-4 w-4" />
+					<span>Open Subscription</span>
 				</CommandItem>
 				<CommandItem
 					value="open jump go to note annotation"
@@ -332,6 +341,9 @@
 					goto(`/tests/collection/${c.id}`);
 				}}
 			/>
+		{/if}
+		{#if $page === 'open-subscription'}
+			<Subscriptions bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'open-note'}
 			<Annotations bind:isOpen={$state.isOpen} />
