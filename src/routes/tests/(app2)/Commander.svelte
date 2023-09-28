@@ -238,6 +238,16 @@
 					<ArrowRight class="mr-2 h-4 w-4" />
 					<span>Go to SRS</span>
 				</CommandItem>
+				<CommandItem
+					value="go to notes notebook"
+					onSelect={() => {
+						goto(`/tests/notebook`);
+						$state.isOpen = false;
+					}}
+				>
+					<ArrowRight class="mr-2 h-4 w-4" />
+					<span>Go to Notebook</span>
+				</CommandItem>
 			</CommandGroup>
 			<CommandSeparator />
 			<CommandGroup heading="Search">

@@ -12,6 +12,15 @@ export const load = (async (event) => {
 	});
 
 	const { queryClient } = await parent();
+
+	const viewPreferences = await queryClient.ensureQueryData({
+		...queryFactory.viewPreferences.getOrCreate({
+			viewType: data.Status ?? 'All',
+		}),
+		meta: {
+			init: event,
+		},
+	});
 	// await queryClient.prefetchInfiniteQuery({
 	// 	// ...,
 	// 	...query,
@@ -21,5 +30,8 @@ export const load = (async (event) => {
 	// 	// meta:
 	// });
 
-	return data;
+	return {
+		...data,
+		viewPreferences,
+	};
 }) satisfies PageLoad;

@@ -16,9 +16,12 @@
 
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
+	import AddAnnotationModal from '$components/annotations/add-annotation-modal.svelte';
 	import Annotation from '$components/annotations/Annotation.svelte';
+	import { audioPlayer } from '$components/AudioPlayer.svelte';
 	// import TagPopover from '$lib/components/TagPopover.svelte';
 	import TagPopover from '$components/entries/tag-popover.svelte';
+	import * as Dialog from '$components/ui/dialog';
 	import Editor, { type SaveStatus } from '$components/ui/editor/Editor.svelte';
 	import {
 		extractDataFromContentData,
@@ -26,6 +29,7 @@
 	} from '$components/ui/editor/utils';
 	import Input from '$components/ui/input/input.svelte';
 	import LibraryForm from '$components/ui/library/library-form.svelte';
+	import Separator from '$components/ui/Separator.svelte';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import {
 		Tabs,
@@ -57,17 +61,15 @@
 	import type { Type } from '$lib/types';
 	import { getHostname } from '$lib/utils';
 	import { triggerDownload } from '$lib/utils/annotations';
-	import { normalizeTimezone, ago, formatDate, now } from '$lib/utils/date';
+	import { ago, formatDate, normalizeTimezone, now } from '$lib/utils/date';
 	import { numberOrString } from '$lib/utils/misc';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
 
 	import EntryAuthorInput from './entry-author-input.svelte';
 	import EntryIcon from './EntryIcon.svelte';
-	import { saveUrl } from './utils';
-	import Separator from '$components/ui/Separator.svelte';
 	import History from './history.svelte';
-	import { audioPlayer } from '$components/AudioPlayer.svelte';
+	import { saveUrl } from './utils';
 
 	// const render = persisted('sidebar', false);
 
@@ -160,11 +162,11 @@
 			.map((link) => {
 				if (link.textContent) {
 					// TODO: normalize url, search in db for existing entry, if exists, link to it, otherwise, link to new entry
-                    const nextText = link.nextSibling?.textContent ?? '';
+					const nextText = link.nextSibling?.textContent ?? '';
 					return {
 						href: link.href,
 						html: `<b>${link.textContent}</b> ${nextText.slice(0, 50).trim()}`,
-                        textContent: link.textContent,
+						textContent: link.textContent,
 					};
 				}
 			})
@@ -183,28 +185,28 @@
 
 	const linksFetching: Record<string, boolean> = {};
 
-    const todayHistory = derived(query, ($query) => {
-        if (!$query.data?.entry?.history) {
-            return [];
-        }
-        const today = new Date();
-        return $query.data.entry.history.filter((h) => {
-            const historyDate = new Date(normalizeTimezone(h.createdAt));
-            return (
-                historyDate.getDate() === today.getDate() &&
-                historyDate.getMonth() === today.getMonth() &&
-                historyDate.getFullYear() === today.getFullYear()
-            );
-        });
-    });
+	const todayHistory = derived(query, ($query) => {
+		if (!$query.data?.entry?.history) {
+			return [];
+		}
+		const today = new Date();
+		return $query.data.entry.history.filter((h) => {
+			const historyDate = new Date(normalizeTimezone(h.createdAt));
+			return (
+				historyDate.getDate() === today.getDate() &&
+				historyDate.getMonth() === today.getMonth() &&
+				historyDate.getFullYear() === today.getFullYear()
+			);
+		});
+	});
 
-    const todayStatusHistoryId = derived(todayHistory, ($todayHistory) => {
-        if (!$todayHistory.length) {
-            return undefined;
-        }
-        const statusHistory = $todayHistory.find((h) => h.toStatus);
-        return statusHistory?.id;
-    });
+	const todayStatusHistoryId = derived(todayHistory, ($todayHistory) => {
+		if (!$todayHistory.length) {
+			return undefined;
+		}
+		const statusHistory = $todayHistory.find((h) => h.toStatus);
+		return statusHistory?.id;
+	});
 
 	$: if ($query.data?.entry?.html) {
 		generateLinks($query.data.entry.html);
@@ -213,11 +215,13 @@
 	afterNavigate(() => {
 		// generateLinks();
 	});
+
+	let isAddAnnotationModalOpen = false;
 </script>
 
 <aside
 	id="entry-sidebar"
-    style:--audio-player-height="{$audioPlayer.height}px"
+	style:--audio-player-height="{$audioPlayer.height}px"
 	class="flex flex-col h-full md:h-[calc(100%-var(--audio-player-height))] overflow-x-hidden overflow-y-auto overscroll-y-contain"
 >
 	<!-- 2.5rem is size of sidebar toggle -->
@@ -407,7 +411,7 @@
 							{status}
 							type={$query.data.type}
 							entryId={$query.data.entry?.id}
-                            historyId={$todayStatusHistoryId}
+							historyId={$todayStatusHistoryId}
 							googleBooksId={$query.data.book?.id ?? undefined}
 							podcastIndexId={$query.data.podcast?.episode.id ?? undefined}
 							spotifyId={$query.data.album?.id}
@@ -506,7 +510,7 @@
 					<!-- <pre>
                         {JSON.stringify($query.data.entry.history, null, 2)}
                     </pre> -->
-                    <History entry={$query.data.entry} />
+					<History entry={$query.data.entry} />
 					<!-- {#if $query.data?.entry?.interaction}
 						{@const interaction = $query.data.entry?.interaction}
 						{#if interaction.finished}
@@ -620,6 +624,20 @@
 							/>
 						{/each}
 					{/if}
+					<div class="flex justify-center">
+						{#if $query.data?.entry?.type === 'movie'}
+							<Button
+								on:click={() => {
+									isAddAnnotationModalOpen = true;
+								}}
+								size="sm"
+								variant="ghost"
+							>
+								<PlusIcon class="h-4 w-4" />
+								Add annotation</Button
+							>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</TabsContent>
@@ -716,12 +734,15 @@
 										}
 									}}
 									class="basis-1/2 truncate cursor-pointer text-left"
-									>
-                                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                                    {@html link.html}</button
 								>
-								<a target="_blank" rel="noopener noreferrer" href={link.href} class="truncate text-muted-foreground"
-									>{link.href}</a
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html link.html}</button
+								>
+								<a
+									target="_blank"
+									rel="noopener noreferrer"
+									href={link.href}
+									class="truncate text-muted-foreground">{link.href}</a
 								>
 							</div>
 						</li>
@@ -731,6 +752,16 @@
 		{/if}
 	</Tabs>
 </aside>
+
+<Dialog.Root bind:open={isAddAnnotationModalOpen}>
+	<Dialog.Content>
+        <Dialog.Header>
+            <Dialog.Title>Add Annotation</Dialog.Title>
+            <Dialog.Description>Add an annotation to this movie</Dialog.Description>
+        </Dialog.Header>
+		<AddAnnotationModal />
+	</Dialog.Content>
+</Dialog.Root>
 
 <style lang="postcss">
 	.sidebar-row {

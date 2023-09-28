@@ -14,20 +14,19 @@ export const load = (async (event) => {
 
 	const parentData = await parent();
 
-    const queryClient = parentData.queryClient as QueryClient;
-
+	const queryClient = parentData.queryClient as QueryClient;
 
 	const query = queryFactory.entries.detail({ id: numberOrString(id), type });
 
-    console.log({ query });
-		const queryData = await queryClient.ensureQueryData({
-			...query,
-			meta: {
-				init: event,
-			},
-		});
+	console.log({ query });
+	const queryData = await queryClient.ensureQueryData({
+		...query,
+		meta: {
+			init: event,
+		},
+	});
 
-		console.log({ queryData });
+	console.log({ queryData });
 	return {
 		// component: module.default,
 		...data,
@@ -38,4 +37,4 @@ export const load = (async (event) => {
 		query,
 		type,
 	};
-}) satisfies PageLoad
+}) satisfies PageLoad;

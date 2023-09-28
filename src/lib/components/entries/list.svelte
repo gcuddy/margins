@@ -30,7 +30,7 @@
 	import { type Status, statuses } from '$lib/status';
 	import { cn } from '$lib/utils';
 	import { currentEntryList } from './store';
-	import { beforeNavigate } from '$app/navigation';
+	import { beforeNavigate, onNavigate } from '$app/navigation';
 	import { setBackContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/[id]/store';
 	import { page } from '$app/stores';
 
@@ -187,6 +187,19 @@
 			return $entries.filter((entry) => $checkedEntryIds.includes(entry.id));
 		},
 	);
+
+    onNavigate((navigation) => {
+		if (!document.startViewTransition) {
+			return;
+		}
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <svelte:window on:keydown={multi.events.keydown} />

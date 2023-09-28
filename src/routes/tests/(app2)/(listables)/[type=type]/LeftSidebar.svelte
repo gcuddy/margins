@@ -3,7 +3,13 @@
 </script>
 
 <script lang="ts">
-	import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-svelte';
+	import {
+		ArrowLeft,
+		ChevronDown,
+		ChevronUp,
+		PanelLeftCloseIcon,
+		PanelLeftOpenIcon,
+	} from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
 
@@ -48,7 +54,7 @@
 	const inArticle: Writable<boolean> = getContext('inArticle');
 	const mainNavWidth: Writable<number> = getContext('mainNavWidth');
 	const mobileNavWidth: Writable<number> = getContext('mobileNavWidth');
-
+	let showLeftSidebar = false;
 </script>
 
 <nav
@@ -65,6 +71,16 @@
 	<Button variant="ghost" href={$backContext}>
 		<ArrowLeft />
 	</Button>
+	{#if $page.data.type === 'article'}
+		<Button variant="ghost" on:click={() => {
+            showLeftSidebar = !showLeftSidebar;
+        }}>
+			<svelte:component
+				this={showLeftSidebar ? PanelLeftCloseIcon : PanelLeftOpenIcon}
+                class="h-5 w-5"
+			/>
+		</Button>
+	{/if}
 	{#if currentIndex > -1 && $currentEntryList.length}
 		<Button
 			on:mouseover={() => {
@@ -107,8 +123,7 @@
 		</div>
 	{/if}
 </nav>
-{$page.data.entry?.type}
-{#if $page.data.type === 'article'}
+{#if $page.data.type === 'article' && showLeftSidebar}
 	<aside class="fixed w-72 left-0 top-0 bottom-0 pt-20" data-left-sidebar>
 		<Toc />
 	</aside>

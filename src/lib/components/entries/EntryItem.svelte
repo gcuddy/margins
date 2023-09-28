@@ -297,6 +297,7 @@
 											? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
 											: entry.image}
 										<img
+                                            style:view-transition-name='artwork-{getId(entry)}'
 											use:smoothload
 											src={src ??
 												`https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}

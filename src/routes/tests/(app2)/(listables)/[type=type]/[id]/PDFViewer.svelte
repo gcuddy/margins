@@ -7,7 +7,7 @@
 
 	export let data: PageData;
 
-	const pdf_path = data.entry?.uri?.startsWith('http')
+	$: pdf_path = data.entry?.uri?.startsWith('http')
 		? data.entry.uri
 		: ($page.data.S3_BUCKET_PREFIX ?? '') + data.entry?.uri;
 
@@ -21,6 +21,7 @@
 />
 <div class="h-screen relative">
 	<PdfViewer
+		annotations={data.entry?.annotations ?? []}
 		bind:this={pdfViewer}
 		style="
     position: absolute;

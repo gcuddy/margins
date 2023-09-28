@@ -1,4 +1,4 @@
-import { Status } from '@prisma/client';
+import { Status, ViewType } from '@prisma/client';
 import type { RequestEvent } from '@sveltejs/kit';
 import { sql } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/mysql';
@@ -18,6 +18,7 @@ import { importMovies, importMoviesInput } from '$lib/db/queries/integration';
 import {
 	viewPreferencesCreate,
 	viewPreferencesCreateInput,
+	viewPreferencesGetOrCreate,
 	viewPreferencesUpdate,
 	viewPreferencesUpdateInput,
 } from '$lib/db/queries/view-preferences';
@@ -906,6 +907,14 @@ export const queries = {
 				.orderBy('Tag.name', 'asc')
 				.execute();
 		},
+	}),
+	viewPreferencesGetOrCreate: query({
+		fn: ({ ctx, input }) => {
+			return viewPreferencesGetOrCreate(ctx.userId, input.viewType);
+		},
+		schema: z.object({
+			viewType: z.nativeEnum(ViewType),
+		}),
 	}),
 	view_entries: query({
 		fn: async ({ ctx, input }) => {

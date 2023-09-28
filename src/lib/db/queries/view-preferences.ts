@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import {
 	defaultViewPreferences,
+	type ViewPreferences as ViewPreferencesType,
 	ViewPreferencesSchema,
 } from '$components/view-preferences/view-preferences.schema';
 import { db, json } from '$lib/db';
@@ -80,4 +81,44 @@ export async function viewPreferencesUpdate({
 			preferences: json(preferences),
 		})
 		.execute();
+}
+
+export async function viewPreferencesGetOrCreate(
+	userId: string,
+	viewType: ViewPreferences['viewType'],
+): Promise<{
+	id: string;
+	preferences: ViewPreferencesType;
+}> {
+	// console.time('viewPreferences');
+
+	const viewPreferences = await db
+		.selectFrom('ViewPreferences')
+		.where('userId', '=', userId)
+		.where('viewType', '=', viewType)
+		.select(['preferences', 'id'])
+		.$narrowType<{ preferences: ViewPreferencesType }>()
+		.executeTakeFirst();
+	if (viewPreferences) {
+		// console.timeEnd('viewPreferences');
+		return viewPreferences;
+	}
+	// if it doesn't exist, create one
+	const id = nanoid();
+	const preferences = defaultViewPreferences;
+	await db
+		.insertInto('ViewPreferences')
+		.values({
+			id,
+			preferences: json(preferences),
+			userId,
+			viewType,
+		})
+		.execute();
+	// console.timeEnd('viewPreferences');
+
+	return {
+		id,
+		preferences,
+	};
 }

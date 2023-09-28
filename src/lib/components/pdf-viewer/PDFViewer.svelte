@@ -8,11 +8,14 @@
 	import './pdfviewer.css';
 
 	import type { Annotation } from '@prisma/client';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { nanoid } from 'nanoid';
 	import type { PDFDocumentProxy } from 'pdfjs-dist';
 	import * as pdfjs from 'pdfjs-dist';
-	import { onMount, tick } from 'svelte';
+	import { afterUpdate, onMount, tick } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
+	import { page } from '$app/stores';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import trackScroll from '$lib/actions/trackScroll';
 	import type { TargetSchema } from '$lib/annotation';
@@ -27,12 +30,28 @@
 		TextPositionSelector,
 		TextQuoteSelector,
 	} from '$lib/annotator/types';
+	import { makeAnnotation } from '$lib/helpers';
+	import {
+		mutate,
+		type MutationInput,
+		type QueryOutput,
+	} from '$lib/queries/query';
+	import type { EntryAnnotation } from '$lib/queries/server';
+	import type { Type } from '$lib/types';
 	import { getTargetSelector } from '$lib/utils/annotations';
+	import { numberOrString } from '$lib/utils/misc';
 
 	import { getEntryContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/ctx';
 	import { getPdfStateContext } from './utils';
+	import { sleep } from '@melt-ui/svelte/internal/helpers';
+	import throttle from 'just-throttle';
 
-	export let annotations: Array<Pick<Annotation, 'id' | 'target'>> = [];
+	export let annotations: Array<EntryAnnotation> = [];
+
+	const annotationMap = new Map<
+		string,
+		Awaited<ReturnType<typeof highlightSelectorTarget>>
+	>();
 
 	// pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -45,6 +64,123 @@
 	export let url: string | URL; //url of pdf.
 	const INTERNAL_URL = url.toString();
 
+	// TODO: probably move this out of this component?
+
+	export const { rightSidebar, scrollingDown } = getEntryContext();
+
+	// TODO: this should be in context
+	$: queryKey = [
+		'entries',
+		'detail',
+		{
+			input: {
+				id: numberOrString($page.params.id ?? ''),
+				type: $page.data.type as Type,
+			},
+		},
+	];
+
+	const queryClient = useQueryClient();
+	const annotateMutation = createMutation({
+		mutationFn: async (input: MutationInput<'save_note'>) => {
+			const { data } = $page;
+			if (!data.entry) {
+				return;
+			}
+			return mutate('save_note', {
+				entryId: data.entry.id,
+				...input,
+			});
+		},
+		onError: (err, newTodo, context) => {
+			toast.error('Failed to save annotation');
+			if (context) {
+				// @ts-expect-error - TODO: why is ts complaining about this?
+				queryClient.setQueryData(queryKey, context.previousEntryData);
+			}
+		},
+		async onMutate(newData) {
+			await queryClient.cancelQueries({
+				queryKey: ['entries'],
+			});
+
+			// Snapshot the previous value
+			const previousEntryData =
+				queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
+
+			// // Optimistically update to the new value
+			queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
+				if (!old) {
+					return old;
+				}
+				if (!old.entry) {
+					return old;
+				}
+
+				const ids = Array.isArray(newData.id) ? newData.id : [newData.id];
+
+				const newAnnotations = ids.map((id) => {
+					const { tags, ...rest } = newData;
+					// TODO: tags
+					return makeAnnotation({
+						// @ts-expect-error TODO: why is ts complaining about this?
+						id: id!,
+						...rest,
+					});
+				});
+
+				const oldIds = old.entry.annotations?.map((a) => a.id) ?? [];
+				const annotationsToAdd = newAnnotations.filter(
+					(a) => !oldIds.includes(a.id),
+				);
+
+				const updatedAnnotations = (old.entry.annotations ?? [])
+					.map((annotation) => {
+						if (ids.includes(annotation.id)) {
+							return {
+								...annotation,
+								...newAnnotations.find((a) => a.id === annotation.id),
+							};
+						}
+						return annotation;
+					})
+					.concat(annotationsToAdd);
+
+				annotations = updatedAnnotations;
+
+				return {
+					...old,
+					entry: {
+						...old.entry,
+						annotations: [...updatedAnnotations],
+					},
+				};
+			});
+
+			if ($rightSidebar) {
+				await tick();
+				const sidebarEl = document.getElementById('entry-sidebar');
+				if (sidebarEl) {
+					const annotationEl = sidebarEl.querySelector(
+						`[data-sidebar-annotation-id="${newData.id}"]`,
+					);
+					if (annotationEl) {
+						annotationEl.scrollIntoView();
+					}
+				}
+				// scroll to new annotation
+			}
+
+			// // Return a context object with the snapshotted value
+			return { previousEntryData };
+		},
+		onSettled(data, error, variables, context) {
+			void queryClient.invalidateQueries({
+				queryKey: ['entries'],
+			});
+		},
+	});
+
 	let classname = ''; //allows component to recieve classes
 	export { classname as class };
 
@@ -56,8 +192,6 @@
 
 	const MIN_SCALE = 0.5;
 	const MAX_SCALE = 2.3;
-
-	export let { scrollingDown } = getEntryContext();
 
 	enum SpreadModes { //init display modes.
 		'NONE',
@@ -101,19 +235,24 @@
 		// Modifying the DOM while searching can mess up; see issue #112.
 		// Therefore, we first collect all matches before highlighting them.
 		const matchList = [];
-		for await (const match of matches) matchList.push(match);
+		for await (const match of matches) {
+			matchList.push(match);
+		}
+
+		console.log({ matchList });
 
 		return matchList.map((match) => highlightText(match, 'mark', attrs));
 	}
 
 	export async function highlight() {
 		const range = window.getSelection()?.getRangeAt(0);
-		if (!range || range.collapsed) return;
+		if (!range || range.collapsed) {
+			return;
+		}
 		const text_quote_selector = await describeTextQuote(range, container);
 		const text_position_selector = describeTextPosition(range, container);
 
 		const page_num = Number(
-			//@ts-expect-errors
 			range.startContainer.parentElement?.closest(`[data-page-number]`)?.dataset
 				?.pageNumber || 0,
 		);
@@ -128,7 +267,14 @@
 			'data-annotation-id': id,
 		});
 
+		annotationMap.set(id, h);
+
 		// TODO: calculate x,y,w,h of highlight and store it in the annotation
+
+		$annotateMutation.mutate({
+			id,
+			target,
+		});
 
 		console.log({ h });
 
@@ -168,8 +314,12 @@
 
 	async function render_annotations(pageNum: number) {
 		await tick();
+		await sleep(1000);
+		console.log(`render_annotations`, { pageNum, annotations });
 		for (const annotation of annotations) {
-			if (!annotation.target) continue;
+			if (!annotation.target) {
+				continue;
+			}
 			const page_num = (annotation.target as TargetSchema).page_num;
 			const text_quote_selector = getTargetSelector(
 				annotation.target as TargetSchema,
@@ -180,27 +330,108 @@
 				'TextPositionSelector',
 			);
 			// const page_selector = getTargetSelector(annotation.target as TargetSchema, 'BookSelector');
-			if (!text_quote_selector || !page_num) continue;
-			if (page_num !== pageNum) continue;
+			if (!text_quote_selector || !page_num) {
+				continue;
+			}
+			if (page_num !== pageNum) {
+				continue;
+			}
 
 			// check if the annotation element already exists
 			const existing = container.querySelector(
 				`[data-annotation-id="${annotation.id}"]`,
 			);
-			if (existing) continue;
+			console.log({ existing });
+			if (existing) {
+				continue;
+			}
+
+			console.log({ text_quote_selector });
 			const h = await highlightSelectorTarget(text_quote_selector, {
 				'data-annotation-id': annotation.id,
 			});
+			annotationMap.set(annotation.id, h);
+			console.log({ h });
 		}
 	}
 
+	function getLoadedPages() {
+		const activePages = container.querySelectorAll(
+			`[data-page-number][data-loaded="true"]`,
+		);
+
+		return Array.from(activePages)
+			.map((el) => el instanceof HTMLElement && Number(el.dataset.pageNumber))
+			.filter(Boolean);
+	}
+
+	async function ensureHighlights() {
+		// for (const [id, annotation] of Object.entries($annotations)) {
+		if (!annotations) {
+			return;
+		}
+
+		const activePages = getLoadedPages();
+		for (const annotation of annotations) {
+			const { id } = annotation;
+			const target = annotation.target!;
+			const { page_num } = target;
+			if (!page_num || !activePages.includes(page_num)) {
+				continue;
+			}
+			const el = container?.querySelector(`[data-annotation-id="${id}"]`);
+			if (!el) {
+				const selector = getTargetSelector(
+					annotation.target,
+					'TextQuoteSelector',
+				);
+				if (selector) {
+					const h = await highlightSelectorTarget(selector, {
+						'data-annotation-id': id,
+						'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
+						id: `annotation-${annotation.id}`,
+					});
+					annotationMap.set(annotation.id, h);
+				}
+			}
+		}
+
+		// remove old ones
+		const els = container?.querySelectorAll(`[data-annotation-id]`);
+		if (els) {
+			for (const el of els) {
+				if (!(el instanceof HTMLElement)) {
+					continue;
+				}
+				const id = el.dataset.annotationId;
+				if (!id) {
+					continue;
+				}
+				const annotation = annotations.find((a) => a.id === id);
+				if (!annotation) {
+					const h = annotationMap.get(id);
+					if (h) {
+						h.map((h) => h.removeHighlights());
+					}
+				}
+			}
+		}
+	}
+
+	const throttledEnsureHighlights = throttle(ensureHighlights, 500);
+
+	afterUpdate(() => {
+		console.log('afterUpdate');
+		throttledEnsureHighlights();
+	});
+
 	const printPdf = (url: string) => {
 		const iframe = document.createElement('iframe');
-		document.body.appendChild(iframe);
+		document.body.append(iframe);
 
 		iframe.style.display = 'none';
 		iframe.onload = function () {
-			setTimeout(function () {
+			setTimeout(() => {
 				iframe.focus();
 				iframe.contentWindow?.print();
 			}, 1);
@@ -250,8 +481,8 @@
 				event_bus.on(
 					'pagerendered',
 					({ pageNumber }: { pageNumber: number }) => {
-						console.log(`pagerendered`);
-						// render_annotations(pageNumber);
+						console.log(`pagerendered`, { pageNumber });
+						render_annotations(pageNumber);
 						// can use this to render SVG highlights (we use our annotator to highlight textlayer, and then attach svgs to those elements)
 						// console.log(`pagerendered`, e);
 					},
@@ -281,7 +512,7 @@
 		);
 
 		const renderDocument = async () => {
-			const { pdf_viewer, pdf_link_service } = await init_promise;
+			const { pdf_link_service, pdf_viewer } = await init_promise;
 			// Loading document.
 			const loading_task = pdfjs.getDocument({
 				isEvalSupported: false,
@@ -304,7 +535,7 @@
 					pdf_viewer.spreadMode = _spread_mode;
 					// loading = false;
 				})
-				.catch(function (error) {
+				.catch((error) => {
 					console.log({ error });
 					password_error = true;
 					_error = error;
@@ -346,7 +577,7 @@
 		// Use a.download if available. This increases the likelihood that
 		// the file is downloaded instead of opened by another PDF plugin.
 		if ('download' in a) {
-			a.download = url.substring(url.lastIndexOf('/') + 1);
+			a.download = url.slice(Math.max(0, url.lastIndexOf('/') + 1));
 		}
 		// <a> must be in the document for recent Firefox versions,
 		// otherwise .click() is ignored.
@@ -354,7 +585,21 @@
 		a.click();
 		a.remove();
 	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		// zoom in and out: shift + +/-
+		if (e.shiftKey && e.key === '+') {
+			e.preventDefault();
+			pdf_state.zoomIn();
+		} else if (e.shiftKey && e.key === '_') {
+			e.preventDefault();
+			pdf_state.zoomOut();
+		}
+	}
 </script>
+
+<!-- keyboard shortcuts -->
+<svelte:window on:keydown={handleKeydown} />
 
 {#if loading}
 	<div

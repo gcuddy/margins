@@ -26,7 +26,6 @@ const trackScroll = (
 
 		// set scrolling direction
 		scrollingDown.set(scrollTop > lastScrollTop);
-		console.log(`Set scroll offset`, { scrollTop, height, lastScrollTop });
 		lastScrollTop = scrollTop;
 	};
 

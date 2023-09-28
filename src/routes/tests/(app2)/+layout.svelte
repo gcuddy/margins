@@ -18,6 +18,7 @@
 	import type { MenuBar } from './MainNav.svelte';
 	import Nav from './Nav.svelte';
 	import QueryClientPersister from './QueryClientPersister.svelte';
+	import ViewTransitions from '$components/ViewTransitions.svelte';
 
 	// export let data;
 
@@ -61,65 +62,68 @@
 </script>
 
 <QueryClientPersister client={data.queryClient} let:isRestoring>
-	<ClipboardHandler />
-	{#if commander}
-		<svelte:component this={commander} />
-	{/if}
-	<Dialog />
-	<DialogStore />
-	<GenericCommander>
-		<div class="flex h-full grow flex-col" style:--nav-height="4rem">
-			{#if !$is_entry}
-				<!-- <header class="container sticky top-0 z-40">
+    <ViewTransitions>
+		<ClipboardHandler />
+		{#if commander}
+			<svelte:component this={commander} />
+		{/if}
+		<Dialog />
+		<DialogStore />
+		<GenericCommander>
+			<div class="flex h-full grow flex-col" style:--nav-height="4rem">
+				{#if !$is_entry}
+					<!-- <header class="container sticky top-0 z-40">
 					<MainNav />
 				</header> -->
-			{/if}
-			<div class={cn('grid grid-cols-[auto,1fr,auto] grow')}>
-				<!-- w-[200px] -->
-				<div>
-					<aside
+				{/if}
+				<div class={cn('grid grid-cols-[auto,1fr,auto] grow')}>
+					<!-- w-[200px] -->
+					<div>
+						<aside
+							class={cn(
+								'hidden h-full flex-col self-stretch grow overflow-hidden sm:flex',
+								// isEntry && 'md:hidden',
+								// is_article && 'sm:hidden'
+							)}
+						>
+							{#if $page.url.pathname.startsWith('/tests/settings')}
+								<!-- todo -->
+							{:else}
+								<Nav bind:width={$navWidth} user_data={data.user_data} />
+							{/if}
+						</aside>
+					</div>
+					<main
 						class={cn(
-							'hidden h-full flex-col self-stretch grow overflow-hidden sm:flex',
-							// isEntry && 'md:hidden',
-							// is_article && 'sm:hidden'
+							'flex h-full w-full flex-1 flex-col',
+							$page.url.pathname.startsWith('/tests/home') &&
+								'overflow-x-hidden',
+							'relative',
+							'col-start-2',
+							// 'px-4 py-6 lg:px-8'
+							// is_article ? ' col-span-5' : 'lg:col-span-4',
+							// is_settings && 'border-none lg:col-span-3',
+							// !is_article && 'sm:border-l'
 						)}
+						style:padding-bottom="{$audioPlayer.height}px"
 					>
-						{#if $page.url.pathname.startsWith('/tests/settings')}
-							<!-- todo -->
-						{:else}
-							<Nav bind:width={$navWidth} user_data={data.user_data} />
-						{/if}
-					</aside>
-				</div>
-				<main
-					class={cn(
-						'flex h-full w-full flex-1 flex-col',
-						$page.url.pathname.startsWith('/tests/home') && 'overflow-x-hidden',
-						'relative',
-						'col-start-2',
-						// 'px-4 py-6 lg:px-8'
-						// is_article ? ' col-span-5' : 'lg:col-span-4',
-						// is_settings && 'border-none lg:col-span-3',
-						// !is_article && 'sm:border-l'
-					)}
-                    style:padding-bottom="{$audioPlayer.height}px"
-				>
-					<slot />
-					<!-- {#if !is_entry && data.urlForm}
+						<slot />
+						<!-- {#if !is_entry && data.urlForm}
 						<AddButton urlForm={data.urlForm} />
 					{/if} -->
-				</main>
+					</main>
+				</div>
 			</div>
-		</div>
-		<!-- <AudioPlayer /> -->
-		<DropBox />
-        <AudioPlayer />
+			<!-- <AudioPlayer /> -->
+			<DropBox />
+			<AudioPlayer />
 			<!-- <div
 				class="mt-auto flex shrink-0 flex-col pb-2 max-w-[--width] {collapsed
 					? ''
 					: 'mt-auto border-t'}"
 			>
 			</div> -->
-	</GenericCommander>
-	<SvelteQueryDevtools buttonPosition="bottom-right" />
-</QueryClientPersister>
+		</GenericCommander>
+    </ViewTransitions>
+		<SvelteQueryDevtools buttonPosition="bottom-right" />
+	</QueryClientPersister>

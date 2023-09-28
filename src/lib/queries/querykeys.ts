@@ -213,6 +213,13 @@ export const queryFactory = {
 			staleTime: Number.POSITIVE_INFINITY,
 		}),
 	},
+	viewPreferences: {
+		getOrCreate: (input: QueryInput<'viewPreferencesGetOrCreate'>) => ({
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'viewPreferencesGetOrCreate', input),
+			queryKey: ['viewPreferences', { input }] as const,
+		}),
+	},
 } satisfies TQueryFactory;
 
 export type QueryFactory = typeof queryFactory;

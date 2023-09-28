@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { createInfiniteQuery, keepPreviousData } from '@tanstack/svelte-query';
+	import {
+		createInfiniteQuery,
+		keepPreviousData,
+	} from '@tanstack/svelte-query';
 	import {
 		createWindowVirtualizer,
 		defaultRangeExtractor,
@@ -95,7 +98,7 @@
 					sort: $sort,
 					status: $page.data.Status,
 				}),
-                placeholderData: keepPreviousData,
+				placeholderData: keepPreviousData,
 				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
 				// 	console.log(`placeholder`, { data });
 				// 	if (search && data) {
@@ -210,10 +213,10 @@
 	});
 
 	$: {
-        // when entries changes...
-        $entries;
+		// when entries changes...
+		$entries;
 		$virtualizer?.measure();
-        console.log('measure')
+		console.log('measure');
 	}
 
 	$: {
@@ -261,6 +264,7 @@
 
 	$: viewPreferences =
 		data.viewPreferences.preferences ?? defaultViewPreferences;
+
 </script>
 
 <svelte:window on:keydown={multi.events.keydown} />

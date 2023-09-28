@@ -3,21 +3,29 @@ import type { books_v1 } from '@googleapis/books';
 import { dev } from '$app/environment';
 import { GOOGLE_BOOKS_API_KEY } from '$env/static/private';
 import { redis } from '$lib/redis';
+import { findHighestQualityBookCover } from '../book-cover';
 
-export * from "./utils";
+export * from './utils';
 
 const googleBooksApi = 'https://www.googleapis.com/books/v1/volumes';
 
 export type Book = books_v1.Schema$Volume & {
+	image?: string;
 	volumeInfo: NonNullable<books_v1.Schema$Volume['volumeInfo']>;
 };
 
 function assertIsBook(book: books_v1.Schema$Volume): asserts book is Book {
-	if (!book.volumeInfo) throw new Error('Invalid book');
+	if (!book.volumeInfo) {
+		throw new Error('Invalid book');
+	}
 }
 
-const time = (msg: string) => { dev && console.time(`[gbook] ${msg}`); };
-const timeEnd = (msg: string) => { dev && console.timeEnd(`[gbook] ${msg}`); };
+const time = (msg: string) => {
+	dev && console.time(`[gbook] ${msg}`);
+};
+const timeEnd = (msg: string) => {
+	dev && console.timeEnd(`[gbook] ${msg}`);
+};
 
 export const books = {
 	get: async (volumeId: string) => {
@@ -26,21 +34,44 @@ export const books = {
 		if (cached) {
 			console.log('cached', cached);
 			timeEnd('get book');
-			return cached as Book;
+			if (!dev) {
+				return cached as Book;
+			}
 		}
-		const response = await fetch(`${googleBooksApi}/${volumeId}?key=${GOOGLE_BOOKS_API_KEY}`);
-        console.log({response})
-		if (!response.ok) throw new Error(response.statusText);
+		const response = await fetch(
+			`${googleBooksApi}/${volumeId}?key=${GOOGLE_BOOKS_API_KEY}`,
+		);
+		// console.log({ response });
+		if (!response.ok) {
+			throw new Error(response.statusText);
+		}
 		const data = (await response.json()) as books_v1.Schema$Volume;
+		if (!data.volumeInfo) {
+			throw new Error('Invalid book');
+		}
+		let image: string | undefined = undefined;
+		if (data.volumeInfo) {
+			const { volumeInfo } = data;
+			image =
+				(await findHighestQualityBookCover({
+					...data,
+					volumeInfo,
+				})) ?? undefined;
+			console.log({ image });
+		}
 		assertIsBook(data);
-		await redis.set(`gbook:${volumeId}`, data, { ex: 60 * 60 * 24 * 7 });
-        // TODO: Update Entry in MySQL / qstash to send to mysql
+		const finalData = {
+			...data,
+			image,
+		};
+		await redis.set(`gbook:${volumeId}`, finalData, { ex: 60 * 60 * 24 * 7 });
+		// TODO: Update Entry in MySQL / qstash to send to mysql
 		timeEnd('get book');
-		return data;
+		return finalData;
 	},
 	search: async (q: string, cache = true) => {
 		time('search books');
-		if (cache) {
+		if (cache && !dev) {
 			const cached = await redis.get(`gbook:search:${q}`);
 			if (cached) {
 				console.log('cached', cached);
@@ -51,12 +82,17 @@ export const books = {
 		const url = new URL(googleBooksApi);
 		url.searchParams.set('q', q);
 		url.searchParams.set('key', GOOGLE_BOOKS_API_KEY);
+		url.searchParams.set('maxResults', '40');
+		url.searchParams.set('printType', 'books');
+		url.searchParams.set('orderBy', 'relevance');
 		const response = await fetch(url.toString(), {
 			headers: {
-				'Content-Type': 'application/json'
-			}
+				'Content-Type': 'application/json',
+			},
 		});
-		if (!response.ok) throw new Error(response.statusText);
+		if (!response.ok) {
+			throw new Error(response.statusText);
+		}
 		const results = (await response.json()) as books_v1.Schema$Volumes;
 		console.log({ url: url.toString() });
 		console.log({ results });
@@ -78,5 +114,5 @@ export const books = {
 		}
 
 		return results;
-	}
+	},
 };

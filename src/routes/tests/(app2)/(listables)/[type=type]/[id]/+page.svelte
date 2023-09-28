@@ -40,7 +40,7 @@
 							type: data.type,
 					  })
 					: {}),
-				placeholderData: undefined,
+				// placeholderData: undefined,
 			};
 		}),
 	);

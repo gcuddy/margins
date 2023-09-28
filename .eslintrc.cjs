@@ -89,7 +89,7 @@ module.exports = {
 		'import/no-namespace': 0,
 		'import/no-unresolved': 0,
 		'import/order': 0,
-		'no-console': 2,
+		'no-console': 1,
 		'no-const-assign': 2,
 		'no-extra-parens': [2, 'functions'],
 		'no-irregular-whitespace': 2,

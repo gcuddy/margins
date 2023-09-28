@@ -21,14 +21,49 @@
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
 	import { enhance } from '$app/forms';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { EyeIcon, ListPlus, PlusCircle } from 'lucide-svelte';
 	import { mutate } from '$lib/queries/query';
 	import { toast } from 'svelte-sonner';
+	import { styleToString } from '$lib/helpers';
+	import type { FastAverageColorResult } from 'fast-average-color';
+	import { derived } from 'svelte/store';
+	import { onNavigate } from '$app/navigation';
+	import { fade } from 'svelte/transition';
+	import { navigating } from '$app/stores';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;
 	};
+
+    $: console.log({
+        movie: data.movie
+    })
+	$: backdrop = data.movie.images.backdrops[0]
+		? `https://image.tmdb.org/t/p/original/${data.movie.images.backdrops[0]?.file_path}`
+		: null;
+
+	$: colorQuery = createQuery({
+		enabled: !!backdrop,
+		queryFn: async () => {
+			const response = await fetch(
+				`/api/color?uri=${encodeURIComponent(backdrop!)}`,
+			);
+			if (!response.ok) {
+				throw new Error('Network response was not ok');
+			}
+			return response.json() as Promise<FastAverageColorResult>;
+		},
+		queryKey: ['imageColor', backdrop],
+	});
+
+	$: colorHex = derived(colorQuery, ($colorQuery) => {
+		return $colorQuery.data?.hex;
+	});
+
+	$: backdropIsDark = derived(colorQuery, ($colorQuery) => {
+		return $colorQuery.data?.isDark;
+	});
 
 	const queryClient = useQueryClient();
 
@@ -55,15 +90,45 @@
 	let posterTooltips: Record<number, boolean> = {};
 
 	$: console.log({ posterTooltips });
+
+	let backdropLoaded = false;
 </script>
 
 <div class="">
 	<div class="flex select-text flex-col gap-4">
-		<div class="flex gap-6 max-sm:flex-col sm:items-center">
-			<div class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]">
+		<div
+			class={cn(
+				'flex gap-6 max-sm:flex-col sm:items-center relative rounded-md overflow-hidden noise',
+				backdropIsDark && 'dark',
+			)}
+			style:--backdropColor={$colorHex}
+		>
+			<!-- style={styleToString({
+            'background-image':`url(https://image.tmdb.org/t/p/original/${data.movie.images.backdrops[0].file_path})`,
+            'background-repeat': 'no-repeat',
+            'background-size': 'cover',
+        })} -->
+			{#if backdrop && $colorQuery.isSuccess}
+				<img
+					alt=""
+					src={backdrop}
+					class="absolute inset-0 opacity-75 blur-sm z-[-1] rounded-md max-h-[300px] w-full object-cover animate-in fade-in-0"
+					in:fade
+					on:load={() => {
+						backdropLoaded = true;
+					}}
+				/>
+				<!-- style:clip-path="polygon(9% 0, 100% 0%, 100% 100%, 86% 100%, 13% 55%)" -->
+				<div class="absolute inset-0 z-[-1] rounded-full" />
+			{/if}
+			<div
+				class="aspect-auto rounded-md shadow-background sm:w-[150px] md:w-[200px]"
+				style:view-transition-name="artwork-{data.movie.id}"
+				style:--tw-shadow-color={$colorHex}
+			>
 				<img
 					use:melt={$image}
-					class="aspect-auto w-[inherit] rounded-[inherit] border"
+					class="aspect-auto w-[inherit] rounded-[inherit] border border-stone-500"
 					alt="Movie poster for {data.movie.title}"
 				/>
 				<div
@@ -85,16 +150,17 @@
                 class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]"
                 use:smoothload
             /> -->
-			<div class="flex flex-col gap-2">
-				<Muted>Movie</Muted>
-				<H1>{data.movie.title}</H1>
-				<Lead>
+			<div class="flex flex-col gap-2 rounded p-1">
+				<Muted class="text-foreground">Movie</Muted>
+				<H1 class="drop-shadow-sm text-foreground">{data.movie.title}</H1>
+                <!-- <img alt="{data.movie.title}" src="https://image.tmdb.org/t/p/w500/{data.movie.images.logos.find((l) => l.iso_639_1 === 'en')?.file_path}" /> -->
+				<Lead class="drop-shadow-xl text-foreground">
 					{#if director}
 						<a href="/tests/people/t{director.id}">{director.name}</a>{/if} — {new Date(
 						data.movie.release_date,
 					).getFullYear()}
 				</Lead>
-				<Lead class="text-base">
+				<Lead class="text-base drop-shadow-xl text-foreground">
 					Screenplay:
 					{#each writers as writer}
 						<a href="/tests/people/t{writer.id}">{writer.name}</a>{' '}
@@ -200,7 +266,7 @@
 				{@html data.movie.overview}
 			</div>
 			<!-- images -->
-			<div>
+			<!-- <div>
 				{#each data.movie.images.backdrops.slice(0, 3) as image}
 					<img
 						src="https://image.tmdb.org/t/p/w500/{image.file_path}"
@@ -209,7 +275,7 @@
 						use:smoothload
 					/>
 				{/each}
-			</div>
+			</div> -->
 		</div>
 	</div>
 
@@ -318,3 +384,10 @@
 	</div>
 	<dl />
 </div>
+
+<style>
+.noise {
+    background-image: url("data:image/svg+xml,%3C!-- svg: first layer --%3E%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+</style>
+```
