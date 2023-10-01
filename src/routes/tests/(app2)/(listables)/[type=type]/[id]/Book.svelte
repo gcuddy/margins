@@ -1,66 +1,35 @@
 <script lang="ts">
 	import { createAvatar, melt } from '@melt-ui/svelte';
-	import { createQuery, keepPreviousData } from '@tanstack/svelte-query';
+	import { createQuery } from '@tanstack/svelte-query';
 	import ISO6391 from 'iso-639-1';
 	import {
 		BookOpenCheckIcon,
 		BookOpenIcon,
 		BookPlusIcon,
-		CheckIcon,
 		ChevronDown,
-		ExternalLink,
-		PlusCircle,
-		PlusIcon,
+		ExternalLink
 	} from 'lucide-svelte';
 	import { derived, writable } from 'svelte/store';
 
-	import { onNavigate } from '$app/navigation';
-	import { navigating, page } from '$app/stores';
 	import Clamp from '$components/Clamp.svelte';
 	import { Button } from '$components/ui/button';
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
 	import type Editor from '$components/ui/editor/Editor.svelte';
 	import Separator from '$components/ui/Separator.svelte';
-	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
-	import * as Collapsible from '$lib/components/ui/collapsible';
-	import {
-		Dialog,
-		DialogContent,
-		DialogHeader,
-		DialogTitle,
-		DialogTrigger,
-	} from '$lib/components/ui/dialog';
-	import Dialog2 from '$lib/components/ui/dialog2/Dialog.svelte';
-	import {
-		Tabs,
-		TabsContent,
-		TabsList,
-		TabsTrigger,
-	} from '$lib/components/ui/tabs';
-	import { tabContent } from '$lib/components/ui/tabs/TabsContent.svelte';
-	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
-	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
 	import {
 		deDupeGoogleBooksList,
 		get_category,
-		get_genre,
-		getCategoryIcon,
+		getCategoryIcon
 	} from '$lib/features/books/utils';
-	import { styleToString } from '$lib/helpers';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { receive, send } from '$lib/transitions';
 	import { cn } from '$lib/utils/tailwind';
 
-	import type { PageData } from './$types';
-	import Annotation from './Annotation.svelte';
-	import BookmarkForm from './BookmarkForm.svelte';
-	import EntryOperations from './EntryOperations.svelte';
-	import Interaction from './Interaction.svelte';
-	import InteractionForm from './InteractionForm.svelte';
-	import { onMount } from 'svelte';
 	import type { FastAverageColorResult } from 'fast-average-color';
+	import type { PageData } from './$types';
+	import EntryOperations from './EntryOperations.svelte';
 
 	let editor: Editor;
 
@@ -80,11 +49,14 @@
 
 	// TODO: should we do this or not?
 	const imageColorQuery = createQuery(
-		derived(bookStore, (boopk) => {
+		derived(bookStore, (book) => {
+            const queryKey = ['imageColor', book.id] as const;
+            console.log({imageColorQueryKey: queryKey})
 			return {
 				enabled: !!book,
                 // placeholderData: keepPreviousData,
 				queryFn: async () => {
+                    console.log(`Running imageColorQuery`)
 					if (!book) {
 						return null;
 					}
@@ -96,8 +68,7 @@
 					}
 					return response.json() as Promise<FastAverageColorResult>;
 				},
-				queryKey: ['imageColor', getGbookImage(book)],
-				staleTime: 1000 * 60 * 60 * 24,
+				queryKey,
 			};
 		}),
 	);
@@ -433,72 +404,73 @@
 				{/if}
 			</dl>
 		{/if}
-		<div class="flex flex-col">
-			<h2 class="text-lg font-bold tracking-tight font-serif my-2">
-				More Books by {firstAuthor}
-			</h2>
-			{#if $otherBooksByAuthorQuery.data}
-				{@const books = $otherBooksByAuthorQuery.data ?? []}
-				<div class="flex gap-6 overflow-auto py-6">
-					{#each deDupeGoogleBooksList(books.filter((b) => b.volumeInfo && b.id !== book.id && b.volumeInfo.authors?.join('') === firstAuthor && b.volumeInfo.title !== book.volumeInfo.title)).slice(0, 20) as otherBook}
-						{#if otherBook.volumeInfo}
-							<a
-								href="/tests/book/{otherBook.id}"
-								class="flex flex-col min-w-0 w-20 gap-2 shrink-0"
-							>
-								{#if otherBook.volumeInfo.imageLinks}
-									<div
-										class="relative w-20 h-[121px] shadow-lg"
-										style:view-transition-name="artwork-{otherBook.id}"
-									>
-										<img
-											in:receive={{
-												key: `booko-${otherBook.id}-image`,
-											}}
-											out:send={{
-												key: `book-${otherBook.id}-image`,
-											}}
-											src={getGbookImage({
-												...otherBook,
-												volumeInfo: otherBook.volumeInfo,
-											})}
-											class="absolute w-20 h-[121px] object-cover"
-											alt=""
-										/>
-										<div class="absolute inset-0 book-cover-overlay"></div>
-									</div>
-								{:else}
-									<div
-										class="relative w-full h-[121px] bg-gray-200 flex flex-col items-center justify-center"
-									>
-										<span class="text-gray-400 text-sm text-center font-bold"
-											>No Image Available</span
-										>
-									</div>
-								{/if}
-								<div class="min-w-0 flex flex-col">
-									<span class="truncate text-sm font-semibold"
-										>{otherBook.volumeInfo.title}</span
-									>
-									<span class="truncate text-xs text-muted-foreground"
-										>{otherBook.volumeInfo.authors}</span
-									>
-								</div>
-							</a>
-						{/if}
-						<!-- <img src={getGbookImage(book)} alt="" /> -->
-					{/each}
-				</div>
-			{:else if $otherBooksByAuthorQuery.isError}
-				<!-- empty -->
-			{:else}
-				<div class="flex gap-6">
-					{#each Array.from({ length: 8 }) as _}
-						<Skeleton class="w-20 h-32" />
-					{/each}
-				</div>
-			{/if}
-		</div>
+        <div class="flex flex-col max-w-prose">
+            <h2 class="text-lg font-bold tracking-tight font-serif my-2">
+                More Books by {firstAuthor}
+            </h2>
+            {#if $otherBooksByAuthorQuery.data}
+                {@const books = $otherBooksByAuthorQuery.data ?? []}
+                <div class="flex gap-6 overflow-auto py-6 snap-x snap-mandatory">
+                    {#each deDupeGoogleBooksList(books.filter((b) => b.volumeInfo && b.id !== book.id && b.volumeInfo.authors?.join('') === firstAuthor && b.volumeInfo.title !== book.volumeInfo.title)).slice(0, 20) as otherBook}
+                        {#if otherBook.volumeInfo}
+                            <a
+                                href="/tests/book/{otherBook.id}"
+                                class="flex flex-col min-w-0 w-20 gap-2 shrink-0 snap-start"
+                            >
+                                {#if otherBook.volumeInfo.imageLinks}
+                                    <div
+                                        class="relative w-20 h-[121px] shadow-lg"
+                                        style:view-transition-name="artwork-{otherBook.id}"
+                                    >
+                                        <img
+                                            in:receive={{
+                                                key: `booko-${otherBook.id}-image`,
+                                            }}
+                                            out:send={{
+                                                key: `book-${otherBook.id}-image`,
+                                            }}
+                                            src={getGbookImage({
+                                                ...otherBook,
+                                                volumeInfo: otherBook.volumeInfo,
+                                            })}
+                                            class="absolute w-20 h-[121px] object-cover"
+                                            alt=""
+                                        />
+                                        <div class="absolute inset-0 book-cover-overlay"></div>
+                                    </div>
+                                {:else}
+                                    <div
+                                        class="relative w-full h-[121px] bg-gray-200 flex flex-col items-center justify-center"
+                                    >
+                                        <span class="text-gray-400 text-sm text-center font-bold"
+                                            >No Image Available</span
+                                        >
+                                    </div>
+                                {/if}
+                                <div class="min-w-0 flex flex-col">
+                                    <span class="truncate text-sm font-semibold"
+                                        >{otherBook.volumeInfo.title}</span
+                                    >
+                                    <span class="truncate text-xs text-muted-foreground"
+                                        >{otherBook.volumeInfo.authors}</span
+                                    >
+                                </div>
+                            </a>
+                        {/if}
+                        <!-- <img src={getGbookImage(book)} alt="" /> -->
+                    {/each}
+                </div>
+            {:else if $otherBooksByAuthorQuery.isError}
+                <!-- empty -->
+            {:else}
+                <div class="flex gap-6">
+                    {#each Array.from({ length: 8 }) as _}
+                        <Skeleton class="w-20 h-32" />
+                    {/each}
+                </div>
+            {/if}
+        </div>
+
 	</div>
 
 	<!-- TODO: Other Books In Series -->

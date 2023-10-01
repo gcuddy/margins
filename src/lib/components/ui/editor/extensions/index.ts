@@ -39,39 +39,41 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		StarterKit.configure({
 			bulletList: {
 				HTMLAttributes: {
-					class: 'list-disc list-outside leading-3 -mt-2'
-				}
+					class: 'list-disc list-outside leading-3 -mt-2',
+				},
 			},
 			orderedList: {
 				HTMLAttributes: {
-					class: 'list-decimal list-outside leading-3 -mt-2'
-				}
+					class: 'list-decimal list-outside leading-3 -mt-2',
+				},
 			},
 			listItem: {
 				HTMLAttributes: {
-					class: 'leading-normal -mb-2'
-				}
+					class: 'leading-normal -mb-2',
+				},
 			},
 			blockquote: {
 				HTMLAttributes: {
-					class: 'border-l-4 border'
-				}
+					class: 'border-l-4 border',
+				},
 			},
 			codeBlock: {
 				HTMLAttributes: {
-					class: 'rounded-sm bg-stone-100 p-5 font-mono font-medium text-stone-800'
-				}
+					class:
+						'rounded-sm bg-stone-100 p-5 font-mono font-medium text-stone-800',
+				},
 			},
 			code: {
 				HTMLAttributes: {
-					class: 'rounded-md bg-stone-200 px-1.5 py-1 font-mono font-medium text-black',
-					spellcheck: 'false'
-				}
+					class:
+						'rounded-md bg-stone-200 px-1.5 py-1 font-mono font-medium text-black',
+					spellcheck: 'false',
+				},
 			},
 			horizontalRule: false,
 			dropcursor: {
 				color: '#DBEAFE',
-				width: 4
+				width: 4,
 			},
 			gapcursor: false,
 		}),
@@ -90,47 +92,46 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 
 							tr.insert(start - 1, this.type.create(attributes)).delete(
 								tr.mapping.map(start),
-								tr.mapping.map(end)
+								tr.mapping.map(end),
 							);
-						}
-					})
+						},
+					}),
 				];
-			}
+			},
 		}).configure({
 			HTMLAttributes: {
-				class: 'mt-4 mb-6 border-t border-stone-300'
-			}
+				class: 'mt-4 mb-6 border-t border-stone-300',
+			},
 		}),
 		TiptapLink.configure({
 			HTMLAttributes: {
-
 				class:
-
 					'text-stone-400 underline underline-offset-[3px] hover:text-stone-600 transition-colors cursor-pointer',
 
 				// target: null // opens in current tab
-
-			}
+			},
 		}),
 		TiptapImage.configure({
 			allowBase64: true,
 			HTMLAttributes: {
-				class: 'rounded-lg border border-stone-200'
-			}
+				class: 'rounded-lg border',
+			},
 		}),
 		Placeholder.configure({
 			placeholder: ({ node, editor }) => {
 				if (node.type.name === 'heading') {
 					return `Heading ${node.attrs.level}`;
 				}
-                if (!editor.isFocused && props.placeholder?.nonFocusedPlaceholder) {
-                    return props.placeholder.nonFocusedPlaceholder;
-                }
-				return typeof props.placeholder === 'string' ? props.placeholder : "Press '/' for commands...";
+				if (!editor.isFocused && props.placeholder?.nonFocusedPlaceholder) {
+					return props.placeholder.nonFocusedPlaceholder;
+				}
+				return typeof props.placeholder === 'string'
+					? props.placeholder
+					: "Press '/' for commands...";
 			},
 			includeChildren: true,
-            showOnlyWhenEditable: false,
-            ...(typeof props.placeholder === 'object' ? props.placeholder : {})
+			showOnlyWhenEditable: false,
+			...(typeof props.placeholder === 'object' ? props.placeholder : {}),
 		}),
 		SlashCommand,
 		BookmarkCommand,
@@ -139,22 +140,22 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		TextStyle,
 		Color,
 		Highlight.configure({
-			multicolor: true
+			multicolor: true,
 		}),
 		TaskList.configure({
 			HTMLAttributes: {
-				class: 'not-prose pl-2'
-			}
+				class: 'not-prose pl-2',
+			},
 		}),
 		TaskItem.configure({
 			HTMLAttributes: {
-				class: 'flex items-start my-4'
+				class: 'flex items-start my-4',
 			},
-			nested: true
+			nested: true,
 		}),
 		Markdown.configure({
 			linkify: true,
-			transformCopiedText: true
+			transformCopiedText: true,
 		}),
 		SvelteCounterExtension,
 		AnnotationExtension,
@@ -164,7 +165,7 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		SRSNode,
 		Mathematics,
 		Flashcard,
-		Tag
+		Tag,
 	];
 	return TiptapExtensions;
 };

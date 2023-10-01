@@ -9,7 +9,7 @@ import { get } from 'svelte/store';
 import { toast } from 'svelte-sonner';
 
 import { page } from '$app/stores';
-import { omit } from '$lib/helpers';
+import { makeAnnotation, omit } from '$lib/helpers';
 import type { BookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
 import type { LibraryResponse } from '$lib/server/queries';
 
@@ -474,3 +474,106 @@ export async function updateEntries(
 
 	// queryClient.
 }
+
+const createAnnotateMutation = () => {
+	const queryClient = useQueryClient();
+	const annotateMutation = createMutation({
+		mutationFn: async (input: MutationInput<'save_note'>) => {
+			const { data } = get(page);
+			if (!data.entry) {
+				return;
+			}
+			return mutate('save_note', {
+				entryId: data.entry.id,
+				...input,
+			});
+		},
+		onError: (err, newTodo, context) => {
+			toast.error('Failed to save annotation');
+			if (context) {
+				// @ts-expect-error - TODO: why is ts complaining about this?
+				queryClient.setQueryData(queryKey, context.previousEntryData);
+			}
+		},
+		async onMutate(newData) {
+			await queryClient.cancelQueries({
+				queryKey: ['entries'],
+			});
+
+			// Snapshot the previous value
+			const previousEntryData =
+				queryClient.getQueryData<QueryOutput<'entry_by_id'>>(queryKey);
+
+			// // Optimistically update to the new value
+			queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
+				if (!old) {
+					return old;
+				}
+				if (!old.entry) {
+					return old;
+				}
+
+				const ids = Array.isArray(newData.id) ? newData.id : [newData.id];
+
+				const newAnnotations = ids.map((id) => {
+					const { tags, ...rest } = newData;
+					// TODO: tags
+					return makeAnnotation({
+						id: id!,
+						...rest,
+					});
+				});
+
+				const oldIds = old.entry.annotations?.map((a) => a.id) ?? [];
+				const annotationsToAdd = newAnnotations.filter(
+					(a) => !oldIds.includes(a.id),
+				);
+
+				const updatedAnnotations = (old.entry.annotations ?? [])
+					.map((annotation) => {
+						if (ids.includes(annotation.id)) {
+							return {
+								...annotation,
+								...newAnnotations.find((a) => a.id === annotation.id),
+							};
+						}
+						return annotation;
+					})
+					.concat(annotationsToAdd);
+
+				annotations = updatedAnnotations;
+
+				return {
+					...old,
+					entry: {
+						...old.entry,
+						annotations: [...updatedAnnotations],
+					},
+				};
+			});
+
+			if ($rightSidebar) {
+				await tick();
+				const sidebarEl = document.getElementById('entry-sidebar');
+				if (sidebarEl) {
+					const annotationEl = sidebarEl.querySelector(
+						`[data-sidebar-annotation-id="${newData.id}"]`,
+					);
+					if (annotationEl) {
+						annotationEl.scrollIntoView();
+					}
+				}
+				// scroll to new annotation
+			}
+
+			// // Return a context object with the snapshotted value
+			return { previousEntryData };
+		},
+		onSettled(data, error, variables, context) {
+			void queryClient.invalidateQueries({
+				queryKey: ['entries'],
+			});
+		},
+	});
+	return annotateMutation;
+};

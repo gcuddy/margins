@@ -43,6 +43,7 @@
 	export let el: HTMLElement | undefined = undefined;
 	/** If set to true, the tabindex will always be 0. */
 	export let alwaysTabbable = false;
+    export let showEditor = true;
 
 	let className = '';
 	export { className as class };
@@ -223,8 +224,7 @@
 	let bubbleMenuFocused = false;
 </script>
 
-<!-- min-h-[500px] -->
-{#if editor}
+{#if showEditor && editor && $editor}
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->

@@ -106,10 +106,10 @@
 				{:else if fragment_selector}
 					<!-- TODO: click to jump to timestamp -->
 					<span>
-						<Small>
+						<Badge variant="secondary">
 							{@const value = fragment_selector.value.split('=')[1]}
 							{formatTimeDuration(+(value ?? '0'), 's')}
-						</Small>
+						</Badge>
 					</span>
 				{/if}
 			{/if}

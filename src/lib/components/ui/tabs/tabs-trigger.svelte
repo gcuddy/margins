@@ -4,6 +4,8 @@
 	import { receive, send } from '$lib/transitions';
 	import { getContext } from 'svelte';
 	import type { createTabs } from '@melt-ui/svelte';
+	import mq from '$lib/stores/mq';
+	import { derived } from 'svelte/store';
 
 	type $$Props = TabsPrimitive.TriggerProps;
 	type $$Events = TabsPrimitive.TriggerEvents;
@@ -17,6 +19,8 @@
 	} = getContext('Tabs') as ReturnType<typeof createTabs>;
 
 	$: selected = $stateValue === value;
+
+    const duration = derived(mq, ($mq) => $mq.reducedMotion ? 0 : 200);
 </script>
 
 <TabsPrimitive.Trigger
@@ -27,16 +31,16 @@
 	)}
 	{value}
 	{...$$restProps}
-	on:m-click
+	on:click
 >
 	{#if selected}
 		<div
 			out:send={{
-                duration: 200,
+                duration: $duration,
 				key: 'indicator',
 			}}
 			in:receive={{
-                duration: 200,
+                duration: $duration,
 				key: 'indicator',
 			}}
 			class="absolute inset-0 bg-background shadow-sm rounded-sm z-0"

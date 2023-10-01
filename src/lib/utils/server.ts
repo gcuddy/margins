@@ -107,11 +107,15 @@ export async function mutationctx<TSchema extends z.ZodTypeAny>(
 	let { userId } = data;
 	const { input } = data;
 	if (!userId) {
-		const session = await locals.auth.validate();
-		if (!session) {
+		try {
+			const session = await locals.auth.validate();
+			if (!session) {
+				throw error(401);
+			}
+			userId = session.user.userId;
+		} catch (e) {
 			throw error(401);
 		}
-		userId = session.user.userId;
 	}
 	if (!schema) {
 		return {

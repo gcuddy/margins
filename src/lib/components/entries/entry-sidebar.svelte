@@ -16,7 +16,7 @@
 
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import AddAnnotationModal from '$components/annotations/add-annotation-modal.svelte';
+	import AddAnnotationModal from '$components/annotations/add-annotation-input/add-annotation-modal.svelte';
 	import Annotation from '$components/annotations/Annotation.svelte';
 	import { audioPlayer } from '$components/AudioPlayer.svelte';
 	// import TagPopover from '$lib/components/TagPopover.svelte';
@@ -70,6 +70,8 @@
 	import EntryIcon from './EntryIcon.svelte';
 	import History from './history.svelte';
 	import { saveUrl } from './utils';
+	import { fade, scale } from 'svelte/transition';
+	import { fadeScale, gentleFly } from '$lib/transitions';
 
 	// const render = persisted('sidebar', false);
 
@@ -753,15 +755,12 @@
 	</Tabs>
 </aside>
 
-<Dialog.Root bind:open={isAddAnnotationModalOpen}>
-	<Dialog.Content>
-        <Dialog.Header>
-            <Dialog.Title>Add Annotation</Dialog.Title>
-            <Dialog.Description>Add an annotation to this movie</Dialog.Description>
-        </Dialog.Header>
-		<AddAnnotationModal />
-	</Dialog.Content>
-</Dialog.Root>
+{#if $query.data?.entry}
+	<AddAnnotationModal
+		entryId={$query.data?.entry?.id}
+		bind:open={isAddAnnotationModalOpen}
+	/>
+{/if}
 
 <style lang="postcss">
 	.sidebar-row {

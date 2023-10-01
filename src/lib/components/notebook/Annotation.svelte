@@ -97,8 +97,8 @@
 		{/if}
 	</a>
 	{#if annotation.exact}
-		<p class="break-words px-2 text-base/5 sm:px-6">
-			<span class="rounded bg-yellow-400/25 px-0.5 dark:bg-yellow-300/80 dark:text-background">
+		<p class="break-words px-2 text-base/6 sm:px-6">
+			<span class="rounded bg-yellow-400/25 px-1 py-0.5 dark:bg-yellow-300/80 dark:text-background">
 				{annotation.exact}
 			</span>
 		</p>
