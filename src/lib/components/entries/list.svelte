@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { createInfiniteQuery } from '@tanstack/svelte-query';
+	import { effect } from '@melt-ui/svelte/internal/helpers';
+	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
 		createWindowVirtualizer,
 		defaultRangeExtractor,
@@ -10,6 +11,8 @@
 	import { derived, type Readable } from 'svelte/store';
 
 	import { browser } from '$app/environment';
+	import { beforeNavigate, onNavigate } from '$app/navigation';
+	import { page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import { checkedEntryIds } from '$components/entries/multi-select';
@@ -29,10 +32,9 @@
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { type Status, statuses } from '$lib/status';
 	import { cn } from '$lib/utils';
-	import { currentEntryList } from './store';
-	import { beforeNavigate, onNavigate } from '$app/navigation';
+
 	import { setBackContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/[id]/store';
-	import { page } from '$app/stores';
+	import { currentEntryList } from './store';
 
 	export let opts: Readable<QueryInput<'get_library'>>;
 
@@ -48,8 +50,10 @@
 
 	const updateBookmarkMutation = initUpdateBookmarkMutation();
 
+    const queryClient = useQueryClient();
+
 	const query = createInfiniteQuery(
-		derived(opts, ($opts) => queryFactory.entries.list($opts)),
+		derived(opts, ($opts) => queryFactory.entries.list($opts, queryClient)),
 	);
 
 	const entries = derived(query, ($query) => {
@@ -63,12 +67,16 @@
 					if (!status) {
 						return true;
 					}
+                    if (!entry.id) {
+                        return false;
+                    }
 					return entry.status === status;
 				}) ?? []
 		);
 	});
 
-    $: currentEntryList.set($entries)
+
+	$: currentEntryList.set($entries);
 
 	let groupedEntries: GroupedArrayWithHeadings<
 		LibraryResponse['entries'][0],
@@ -139,9 +147,20 @@
 		},
 	});
 
-	$: $virtualizer.setOptions({
-		count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
+	effect(entries, ($entries) => {
+        console.log(`effect`, $entries)
+        const count = $groupingEnabled ? groupedEntries.length : $entries?.length || 0;
+        console.log({count})
+		$virtualizer.setOptions({
+			count,
+		});
 	});
+
+	// $: $virtualizer.setOptions({
+	// 	count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
+	// });
+
+	$: console.log({ $virtualizer });
 
 	$: {
 		$virtualizer?.measure();
@@ -158,6 +177,11 @@
 			$query.fetchNextPage();
 		}
 	}
+
+	const items = derived(virtualizer, ($virtualizer) =>
+		$virtualizer.getVirtualItems(),
+	);
+	$: console.log({ $items });
 
 	const multi = create_multi({
 		items: $entries?.map((e) => e.id) || [],
@@ -188,7 +212,7 @@
 		},
 	);
 
-    onNavigate((navigation) => {
+	onNavigate((navigation) => {
 		if (!document.startViewTransition) {
 			return;
 		}
@@ -244,7 +268,7 @@
 		style:height="{$virtualizer.getTotalSize()}px"
 		class="w-full relative"
 		use:multi.elements.root
-        data-sveltekit-preload-code="viewport"
+		data-sveltekit-preload-code="viewport"
 	>
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
 			{@const entry = $groupingEnabled
@@ -323,7 +347,11 @@
 {/if}
 
 <BulkActions length={$checkedEntryIds.length}>
-	<slot name="actions" checkedEntries={$checkedEntries} clear={checkedEntryIds.clear}>
+	<slot
+		name="actions"
+		checkedEntries={$checkedEntries}
+		clear={checkedEntryIds.clear}
+	>
 		{#each statuses as status}
 			{#if $checkedEntries.every((entry) => entry.status !== status)}
 				<Button

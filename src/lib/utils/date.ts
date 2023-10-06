@@ -1,4 +1,5 @@
 import { readable } from 'svelte/store';
+import type { ConditionalPick } from 'type-fest';
 
 export function normalizeTimezone(isoString: string | Date) {
 	if (typeof isoString === 'string') {
@@ -152,3 +153,23 @@ export const formatDuration = (
 	}
 	return parts.join(' ');
 };
+
+type SortOrder = 'asc' | 'desc';
+
+export function sortByDate<T>(
+	arr: Array<T>,
+	dateKey: keyof T extends string | number | Date ? keyof T : never,
+	sortOrder: SortOrder = 'asc',
+): Array<T> {
+	const sortedArray = [...arr].sort((a, b) => {
+		const dateA = new Date(a[dateKey] as any);
+		const dateB = new Date(b[dateKey] as any);
+
+		return sortOrder === 'asc'
+			? dateA.getTime() - dateB.getTime()
+			: dateB.getTime() - dateA.getTime();
+	});
+
+	return sortedArray;
+}
+

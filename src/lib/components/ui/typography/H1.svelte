@@ -8,7 +8,7 @@
 
 <h1
 	class={cn(
-		"scroll-m-20 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl",
+		"scroll-m-20 font-extrabold tracking-tight text-4xl lg:text-5xl",
 		className
 	)}
 >

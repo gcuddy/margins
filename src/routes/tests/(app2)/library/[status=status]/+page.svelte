@@ -2,6 +2,7 @@
 	import {
 		createInfiniteQuery,
 		keepPreviousData,
+		useQueryClient,
 	} from '@tanstack/svelte-query';
 	import {
 		createWindowVirtualizer,
@@ -40,10 +41,11 @@
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { statuses } from '$lib/status';
 	import { cn } from '$lib/utils';
-	import { defaultParseSearch } from '$lib/utils/search-params';
+	import { defaultParseSearch, defaultStringifySearch } from '$lib/utils/search-params';
 
 	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import type { Snapshot } from './$types.js';
+	import LibraryTabs from '$components/library/library-tabs.svelte';
 
 	export let data;
 
@@ -77,27 +79,31 @@
 
 	function parseFilterFromSearchParams(): FilterLibrarySchema | undefined {
 		const rawObj = defaultParseSearch($page.url.search);
-		// console.log({ rawObj });
+		console.log({ rawObj });
 		const parsed = filterLibrarySchema.safeParse(rawObj);
-		// console.log({ parsed });
+		console.log({ parsed });
 		if (parsed.success) {
 			return parsed.data;
 		}
 	}
 
+    const filter = derived(page, $page => parseFilterFromSearchParams());
+
+    const queryClient = useQueryClient();
+
 	const query = createInfiniteQuery(
-		derived([page, sort, dir, grouping], ([$page, $sort, $dir, $grouping]) => {
-			const filter = parseFilterFromSearchParams();
+		derived([page, sort, dir, grouping, filter], ([$page, $sort, $dir, $grouping, $filter]) => {
 			const search = $page.url.searchParams.get('search') ?? undefined;
 			return {
 				...queryFactory.entries.list({
 					dir: $dir,
-					filter,
+					filter: $filter,
 					grouping: $grouping === 'none' ? undefined : $grouping,
+                    library: true,
 					search,
 					sort: $sort,
 					status: $page.data.Status,
-				}),
+				}, queryClient),
 				placeholderData: keepPreviousData,
 				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
 				// 	console.log(`placeholder`, { data });
@@ -275,8 +281,16 @@
 	bind:dir={$dir}
 	bind:grouping={$grouping}
 	bind:viewPreferences
+    saveViewUrl="/tests/views/explore/library{defaultStringifySearch({
+        ...$filter,
+        status: $page.data.Status
+    })}"
 	viewPreferencesId={data.viewPreferences.id}
-/>
+>
+    <svelte:fragment slot="buttons">
+        <LibraryTabs />
+    </svelte:fragment>
+</LibraryHeader>
 
 {#if $query.isPending}
 	{#each new Array(browser && innerHeight ? Math.ceil(innerHeight / 60) : 20) as _}

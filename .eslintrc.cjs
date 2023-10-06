@@ -68,7 +68,7 @@ module.exports = {
 		'@typescript-eslint/no-unused-vars': 0,
 		'@typescript-eslint/prefer-ts-expect-error': 'error',
 		'array-bracket-spacing': [2, 'never'],
-		'arrow-parens': [2, 'always'],
+		// 'arrow-parens': [2, 'always'],
 		'arrow-spacing': 2,
 		'brace-style': [
 			2,

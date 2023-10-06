@@ -9,7 +9,7 @@
 		<H1>Views</H1>
 		<Lead>Views allow you to see stuff you've saved in different ways.</Lead>
 	</div>
-	<Button as="a" href="/tests/views/new">New view</Button>
+	<Button href="/tests/views/explore/library">New view</Button>
 </div>
 {#each data.views as view}
 	<div>

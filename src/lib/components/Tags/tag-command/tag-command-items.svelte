@@ -10,24 +10,29 @@
 	import { cn } from '$lib/utils';
 
 	import { TagColorPill } from '../tag-color';
+	import { derived } from 'svelte/store';
 
 	type Tag = QueryOutput<'tags'>[number];
 	type $$Props = {
 		onCreate?: (name: string) => void;
 		onSelect?: (tag: Tag) => void;
-        selectedTags?: Array<Tag>;
+		selectedTags?: Array<Tag>;
 		showCreate?: boolean;
 	};
 
 	export let selectedTags: Array<Tag> = [];
 	export let onSelect: (tag: Tag) => void = () => {};
-    export let onCreate: $$Props["onCreate"] = undefined;
+	export let onCreate: $$Props['onCreate'] = undefined;
 	export let showCreate = true;
 
 	const tags = createQuery(queryFactory.tags.list());
+
+	$: console.log({ $tags });
 	const {
-		state: { inputValue, shouldFilter }
+		state: { inputValue, shouldFilter },
 	} = Command.ctx.get();
+
+	$: console.log({ $shouldFilter, $inputValue });
 
 	// id -> number
 	const scores = new Map<number, number>();
@@ -55,32 +60,48 @@
 		}
 	}
 
-	let sortedTags = [...($tags.data ?? [])].sort(sortFunction);
+	// let sortedTags = [...($tags.data ?? [])].sort(sortFunction);
 
-	$: if (!open) {
-		sortedTags = [...($tags.data ?? [])].sort(sortFunction);
-	}
+	// $: if (!open) {
+	// 	sortedTags = [...($tags.data ?? [])].sort(sortFunction);
+	// }
 
-	$: filteredTags = [...sortedTags]
-		.filter((tag) => {
-			if ($shouldFilter) {return true;}
-			const score = commandScore(tag.name, $inputValue);
-			scores.set(tag.id, score);
-			if (score > 0) {
-				return true;
+	const tagsData = derived(
+		[tags, inputValue, shouldFilter],
+		([$tags, $inputValue, $shouldFilter]) => {
+			const sortedTags = [...($tags.data ?? [])].sort(sortFunction);
+
+			if ($shouldFilter) {
+				return sortedTags;
 			}
-			return false;
-		})
-		.sort((a, b) => {
-			if ($shouldFilter) {return 0;}
-			return (scores.get(getId(b)) ?? 0) - (scores.get(getId(a)) ?? 0);
-		});
+
+			const filteredTags = sortedTags
+				.filter((tag) => {
+					if ($shouldFilter) {
+						return true;
+					}
+					const score = commandScore(tag.name, $inputValue);
+					scores.set(tag.id, score);
+					if (score > 0) {
+						return true;
+					}
+					return false;
+				})
+				.sort((a, b) => {
+					if ($shouldFilter) {
+						return 0;
+					}
+					return (scores.get(getId(b)) ?? 0) - (scores.get(getId(a)) ?? 0);
+				});
+			return filteredTags;
+		},
+	);
 </script>
 
 {#if $tags.isLoading}
 	<Command.Loading>Loading...</Command.Loading>
 {:else if $tags.isSuccess}
-	{#each $shouldFilter ? sortedTags : filteredTags as tag (tag.id)}
+	{#each $tagsData as tag (tag.id)}
 		<Command.Item
 			class="group"
 			value={tag}
@@ -90,15 +111,15 @@
 			<Checkbox
 				class={cn(
 					'mr-2 opacity-0 cursor-default group-data-[highlighted]:opacity-100',
-					isSelected && 'opacity-100'
+					isSelected && 'opacity-100',
 				)}
 				checked={isSelected}
 			/>
-            <TagColorPill color={tag.color} class="h-2 w-2 mr-2" />
+			<TagColorPill color={tag.color} class="h-2 w-2 mr-2" />
 			<span> {tag.name}</span>
 		</Command.Item>
 	{/each}
-	{#if showCreate && $inputValue.length > 1 && sortedTags.every(({ name }) => name !== $inputValue)}
+	{#if showCreate && $inputValue.length > 1 && $tagsData.every(({ name }) => name !== $inputValue)}
 		<Command.Item
 			alwaysShow={true}
 			shouldRegister={false}
@@ -106,7 +127,7 @@
 			value={{ name: $inputValue }}
 			let:isSelected
 			onSelect={() => {
-                onCreate?.($inputValue)
+				onCreate?.($inputValue);
 			}}
 		>
 			<PlusIcon class="mr-2 opacity-50 h-4 w-4" />

@@ -31,7 +31,6 @@ export async function openLibraryCoverLookup(isbn: string) {
 	return response.url;
 }
 
-// TO BE RUN IN DOM
 export async function findHighestQualityBookCover(book: Book) {
 	// start with google book, cross compare with itunes and openlibrary
 

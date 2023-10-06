@@ -25,12 +25,14 @@ export type IsAny<T> = 0 extends 1 & T ? true : false;
 
 const query_store_cache_lookup = new Map<string, any>();
 
-export type QueryInput<TKey extends keyof Queries> = Parameters<
+type QueryKeys = keyof Queries;
+
+export type QueryInput<TKey extends QueryKeys> = Parameters<
 	Queries[TKey]['fn']
 >[0]['input'] extends IsAny<Parameters<Queries[TKey]['fn']>[0]['input']>
 	? undefined
 	: Parameters<Queries[TKey]['fn']>[0]['input'];
-export type QueryOutput<TKey extends keyof Queries> = Awaited<
+export type QueryOutput<TKey extends QueryKeys> = Awaited<
 	ReturnType<Queries[TKey]['fn']>
 >;
 export type MutationInput<TKey extends keyof Mutations> =
@@ -45,12 +47,12 @@ type KeysMatching<T, V> = {
 
 // Cursor Keys
 export type InfiniteQueries = {
-	[K in keyof Queries]: Parameters<Queries[K]['fn']>[0]['input'] extends {
+	[K in QueryKeys]: Parameters<Queries[K]['fn']>[0]['input'] extends {
 		cursor?: any;
 	}
 		? K
 		: never;
-}[keyof Queries];
+}[QueryKeys];
 
 export type QueryInit = {
 	data?: {

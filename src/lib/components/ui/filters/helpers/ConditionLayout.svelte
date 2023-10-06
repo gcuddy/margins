@@ -21,7 +21,7 @@
 	export let value: any | undefined = undefined;
 </script>
 
-<div class="flex">
+<div class="flex h-6">
 	<Badge variant="outline" class="rounded-r-none border-r-0">{name}</Badge>
 	{#if choices.length}
 		<Select

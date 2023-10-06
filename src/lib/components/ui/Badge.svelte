@@ -24,21 +24,25 @@
 <script lang="ts">
 	import { cn } from "$lib/utils/tailwind";
 	import { cva, type VariantProps } from "class-variance-authority";
-	import type { HTMLBaseAttributes } from "svelte/elements";
+	import type { HTMLAnchorAttributes, HTMLBaseAttributes } from "svelte/elements";
 
-	// Allow for some anchor attributes to be passed to the button
-	interface Attributes extends HTMLBaseAttributes {
-		href?: string | undefined | null;
-	}
+    type Variants = VariantProps<typeof badgeVariants>;
 
-	interface $$Props extends Attributes, VariantProps<typeof badgeVariants> {
-		class?: string;
-		as?: string;
-	}
+    type As = {
+        as?: string;
+    }
+
+    interface AnchorElement extends HTMLAnchorAttributes, Variants, As {
+        href?: HTMLAnchorAttributes["href"];
+    }
+
+    interface BaseElement extends HTMLBaseAttributes, Variants, As {}
+
+	type $$Props = AnchorElement | BaseElement;
 
 	export let as = "div";
 	export let variant: $$Props["variant"] = "default";
-	let c = "";
+	let c: string | null | undefined = "";
 	export { c as class };
 </script>
 

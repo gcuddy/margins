@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { decode, encode } from './qss';
 import { goto } from '$app/navigation';
+import { objectKeys, replaceEqualDeep } from '$lib/helpers';
 
 export function parseSearchWith(parser: (str: string) => any) {
 	return (searchStr: string): {} => {
@@ -26,21 +27,25 @@ export function parseSearchWith(parser: (str: string) => any) {
 	};
 }
 
-const isoRegex = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
+const isoRegex =
+	/\d{4}-[01]\d-[0-3]\dT[0-2](?:\d:[0-5]){2}\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
 
-export function stringifySearchWith(stringify: (search: any) => string) {
-	return (search: Record<string, any>) => {
+export function stringifySearchWith<TSearch = Record<string, any>>(
+	stringify: (search: any) => string,
+) {
+	return (search: TSearch) => {
 		search = { ...search };
 
 		if (search) {
-			Object.keys(search).forEach((key) => {
+			objectKeys(search).forEach((key) => {
 				const val = search[key];
-				if (typeof val === 'undefined' || val === undefined) {
+				if (val === undefined) {
 					delete search[key];
 				} else if (val && typeof val === 'object' && val !== null) {
 					try {
+						//@ts-expect-error - this is fine
 						search[key] = stringify(val);
-					} catch (err) {
+					} catch {
 						// silent
 					}
 				}
@@ -69,7 +74,7 @@ export const defaultStringifySearch = stringifySearchWith((search: any) => {
 
 export function parseSearchWithSchema<TSchema extends z.ZodObject<any, any>>(
 	search: string,
-	schema: TSchema
+	schema: TSchema,
 ): Partial<z.infer<TSchema>> {
 	const rawObj = defaultParseSearch(search);
 	const parsed = schema.safeParse(rawObj);
@@ -88,22 +93,33 @@ export function changeSearch<TData extends Record<string, any>>(
 		| ((
 				search: Partial<TData> & {
 					[key: string]: unknown;
-				}
+				},
 		  ) => TData),
 	gotoOptions: Parameters<typeof goto>[1] = {
 		keepFocus: true,
 		replaceState: true,
 		noScroll: true,
-		invalidateAll: true
-	}
+		invalidateAll: true,
+	},
 ) {
-	const exisiting = defaultParseSearch(url.search);
-	const newSearch = defaultStringifySearch({
-		...exisiting,
-		...(typeof data === 'function' ? data(exisiting) : data)
-	});
-	url.search = newSearch;
-	goto(url, gotoOptions);
+	const previous = defaultParseSearch(url.search);
+	const next = typeof data === 'function' ? data(previous) : data;
+
+	const search = replaceEqualDeep(previous, next);
+	const searchStr = defaultStringifySearch(search);
+	// console.log(typeof data === 'function' ? data(previous) : data);
+	// const newSearch = defaultStringifySearch({
+	// 	...previous,
+	// 	...(typeof data === 'function' ? data(previous) : data),
+	// });
+
+	console.log({ url, searchStr, search, previous, next });
+	if (url.search === searchStr) {
+		return;
+	}
+	url.search = searchStr;
+	console.log(`[changeSearch] navigating to ${url.toString()}`);
+	goto(url.toString(), gotoOptions);
 }
 
 /**

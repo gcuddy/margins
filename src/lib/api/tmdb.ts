@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 // import { cacheMovieIds } from '$lib/redis';
 import type {
 	Credits,
+	DetailedCollection,
 	Images,
 	Movie as TMovie,
 	Person,
@@ -38,19 +39,53 @@ type Movie = TMovie & {
 };
 
 export type MovieDetails = Movie & {
+	belongs_to_collection: {
+		backdrop_path: string;
+		id: number;
+		name: string;
+		poster_path: string;
+	};
+	budget: number;
 	credits: Credits;
-	images: Images & {
-		backdrops: Array<{
-			aspect_ratio: number;
-			file_path: string;
-			height: number;
-			iso_639_1: string;
-			vote_average: number;
-			vote_count: number;
-			width: number;
+	genres: Array<{
+		id: number;
+		name: string;
+	}>;
+	keywords?: {
+		keywords: Array<{
+			id: number;
+			name: string;
 		}>;
 	};
+	// images: Images & {
+	// 	backdrops: Array<{
+	// 		aspect_ratio: number;
+	// 		file_path: string;
+	// 		height: number;
+	// 		iso_639_1: string;
+	// 		vote_average: number;
+	// 		vote_count: number;
+	// 		width: number;
+	// 	}>;
+	// };
+	production_companies: Array<{
+		id: number;
+		logo_path: string | null;
+		name: string;
+		origin_country: string;
+	}>;
+	production_countries: Array<{
+		iso_3166_1: string;
+		name: string;
+	}>;
 	recommendations: Recommendations;
+	// TODO
+	// release_dates: {
+	// 	results: Array<ReleaseDateResult>;
+	// };
+	revenue: number;
+	status: string;
+	tagline: string;
 	videos: Videos;
 };
 
@@ -107,13 +142,28 @@ function validateApiKey(key: unknown): asserts key is string {
 }
 
 export const tmdb = {
+	collection: async (id: number) => {
+		validateApiKey(TMDB_API_KEY);
+
+		const url = `${base}/collection/${id}?api_key=${TMDB_API_KEY}`;
+
+		const response = await fetch(url);
+
+		if (!response.ok) {
+			throw error(response.status);
+		}
+
+		return (await response.json()) as DetailedCollection;
+	},
 	media: (path: string, size: `w${number}` | 'original' = 'w500') =>
 		`${media_base}/${size}${path}`,
 
 	movie: {
 		details: async (id: number) => {
+			// TODO: store in redis cache with slimmed down version
 			validateApiKey(TMDB_API_KEY);
-			const url = `${base}/movie/${id}?api_key=${TMDB_API_KEY}&append_to_response=credits,images,videos,recommendations`;
+			// TODO: release dates
+			const url = `${base}/movie/${id}?api_key=${TMDB_API_KEY}&append_to_response=credits,videos,recommendations,keywords`;
 
 			if (cache.has(url)) {
 				console.log('(map) cache hit');

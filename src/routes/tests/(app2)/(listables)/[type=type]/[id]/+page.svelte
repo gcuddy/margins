@@ -60,9 +60,12 @@
 					queryKey: ['entries', 'list'],
 				},
 				(old) => {
+                    console.log(`setquerydata`, { old } )
 					if (!old) {
 						return old;
 					}
+                    console.log({variables})
+                    // const { finished, is_read, last_viewed, progress, seen } = variables;
 					const newData = {
 						...old,
 						pages: old.pages.map((page) => {
@@ -72,8 +75,8 @@
 									if (entry.id === variables.entryId) {
 										return {
 											...entry,
-											...variables,
-											seen: 1,
+											// ...variables,
+											seen: +variables.seen,
 										};
 									}
 									return entry;
@@ -174,7 +177,7 @@
 				this={data.component}
 				data={{
 					...data,
-					// ...$query.data,
+					...$query.data,
 				}}
 			>
 				<!-- eslint-disable-next-line svelte/no-at-html-tags-->

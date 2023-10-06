@@ -31,7 +31,7 @@
 	"export className as class": {
 		"scope": "svelte,typescript",
 		"prefix": "classname",
-		"body": ["let className: \\$\\$Props['class'] = undefined", "export { className as class };"]
+		"body": ["let className: string | null | undefined = undefined", "export { className as class };"]
 	},
 	"Query Data, Loading, Error": {
 		"scope": "svelte",

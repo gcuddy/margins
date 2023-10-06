@@ -5,7 +5,7 @@
 	import { type ComponentType, onMount, setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 
-	import { page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import GenericCommander from '$lib/commands/GenericCommander.svelte';
 	import DropBox from '$lib/components/DragHelper/DropBox.svelte';
 	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
@@ -19,6 +19,8 @@
 	import Nav from './Nav.svelte';
 	import QueryClientPersister from './QueryClientPersister.svelte';
 	import ViewTransitions from '$components/ViewTransitions.svelte';
+
+    $: console.log({$navigating});
 
 	// export let data;
 

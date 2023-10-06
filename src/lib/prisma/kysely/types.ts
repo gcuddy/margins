@@ -4,6 +4,13 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 	: ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export const EntryFilterType = {
+	Library: 'Library',
+	Subscriptions: 'Subscriptions',
+	All: 'All',
+} as const;
+export type EntryFilterType =
+	(typeof EntryFilterType)[keyof typeof EntryFilterType];
 export const BookGenre = {
 	Fiction: 'Fiction',
 	NonFiction: 'NonFiction',
@@ -604,6 +611,8 @@ export type SmartList = {
 	id: Generated<number>;
 	name: string;
 	filter: unknown | null;
+	filterData: unknown | null;
+	entryFilterType: Generated<EntryFilterType>;
 	viewOptions: unknown | null;
 	conditions: unknown | null;
 	/**

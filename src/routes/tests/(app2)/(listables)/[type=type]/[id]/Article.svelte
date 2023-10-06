@@ -465,10 +465,12 @@
 	let shouldSaveProgress = true;
 
 	async function ensureHighlights() {
+        console.log('ensureHighlights running')
 		// for (const [id, annotation] of Object.entries($annotations)) {
 		if (!data.entry?.annotations) {
 			return;
 		}
+        console.time('ensureHighlights')
 		for (const annotation of data.entry.annotations) {
 			const { id } = annotation;
 			const target = annotation.target!;
@@ -492,9 +494,10 @@
 				}
 			}
 		}
+        console.timeEnd('ensureHighlights')
 	}
 
-	const throttledEnsureHighlights = throttle(ensureHighlights, 500);
+	const throttledEnsureHighlights = throttle(ensureHighlights, 1000);
 
 	afterUpdate(() => {
 		if (initializing) {

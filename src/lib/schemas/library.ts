@@ -4,7 +4,13 @@ import { z } from 'zod';
 import { typeSchema } from '$lib/types';
 
 import { tagSchema } from './objects/tag';
-import { idComparatorSchema } from './inputs/comparators';
+import {
+	createArrayComparatorSchema,
+	dateComparatorSchema,
+	idComparatorSchema,
+	stringComparatorSchema,
+} from './inputs/comparators';
+import { defaultParseSearch } from '$lib/utils/search-params';
 
 const defaultCursorSchema = z.object({
 	id: z.number(),
@@ -116,22 +122,52 @@ const entryTagFilter = tagSchema.partial();
 
 export const filterLibrarySchema = z
 	.object({
+		author: z.string().or(createArrayComparatorSchema(z.string())),
 		book_genre: z.enum(['Fiction', 'NonFiction']).optional(),
 		createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),
 		domain: z.string().optional(),
 		feed: idComparatorSchema.optional(),
+		published: dateComparatorSchema,
 		readingTime: z.object({
 			max: z.number().int().positive().optional(),
 			min: z.number().int().positive().optional(),
 		}),
+		status: z
+			.nativeEnum(Status)
+			.or(createArrayComparatorSchema(z.nativeEnum(Status)))
+			.optional(),
 		tags: z.object({
 			ids: z.number().int().positive().array(),
 			type: z.enum(logicalOperators).optional(),
 		}),
+		title: stringComparatorSchema,
 		type: typeSchema.nullish(),
 	})
 	.partial();
 export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
+
+/**
+ * A Filter Library identity function for strong types.
+ */
+export function filterLibrary(input: FilterLibrarySchema) {
+	return input;
+}
+
+/**
+ * A helper function to parse the search params into a FilterLibrarySchema.
+ */
+
+export function parseFilterFromSearchParams(
+	search: string,
+): FilterLibrarySchema | undefined {
+	const rawObj = defaultParseSearch(search);
+	// console.log({ rawObj });
+	const parsed = filterLibrarySchema.safeParse(rawObj);
+	// console.log({ parsed });
+	if (parsed.success) {
+		return parsed.data;
+	}
+}
 
 export const get_library_schema = z
 	.object({

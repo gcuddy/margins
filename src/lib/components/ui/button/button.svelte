@@ -1,15 +1,10 @@
 <script lang="ts">
 	import { Button as ButtonPrimitive } from "bits-ui";
-
 	import { cn } from "$lib/utils";
+	import { buttonVariants, type Props, type Events } from ".";
 
-	import { buttonVariants, type Size, type Variant } from ".";
-
-	type $$Props = ButtonPrimitive.Props & {
-		size?: Size;
-		variant?: Variant;
-	};
-	type $$Events = ButtonPrimitive.Events;
+	type $$Props = Props;
+	type $$Events = Events;
 
 	let className: $$Props["class"] = undefined;
 	export let variant: $$Props["variant"] = "default";
@@ -20,7 +15,7 @@
 
 <ButtonPrimitive.Root
 	{builders}
-	class={cn(buttonVariants({ className, size, variant }))}
+	class={cn(buttonVariants({ variant, size, className }))}
 	{...$$restProps}
 	on:click
 	on:keydown

@@ -18,6 +18,7 @@
 	import type { EntryAnnotation } from '$lib/queries/server';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { formatTimeDuration } from '$lib/utils/dates';
+	import Clamp from '$components/Clamp.svelte';
 	const md = new MarkdownIt();
 
 	let editor: Editor;
@@ -99,9 +100,9 @@
 				)}
 				{#if selector}
 					<a on:click href="#annotation-{annotation.id}">
-						<Blockquote class="mt-0 line-clamp-4 text-sm">
+						<Clamp class="border-l-2 pl-6 italic text-sm" as="blockquote" clamp={4}>
 							{@html selector.exact}
-						</Blockquote>
+						</Clamp>
 					</a>
 				{:else if fragment_selector}
 					<!-- TODO: click to jump to timestamp -->

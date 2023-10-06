@@ -16,6 +16,7 @@
 	import type { ListEntry } from '$lib/db/selects';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { getId, make_link } from '$lib/utils/entries';
+	import { recents } from '$lib/stores/recents';
 
 	const entriesQuery = createQuery(queryFactory.entries.all());
 
@@ -44,12 +45,15 @@
 
 	const dispatch = createEventDispatcher();
 
+    // sort Recents to top
+
 	const entries = derived(
-		[entriesQuery, inputValue],
-		([$entriesQuery, $value]) => {
+		[entriesQuery, inputValue, recents],
+		([$entriesQuery, $value, $recents]) => {
 			const entries = $entriesQuery.data ?? [];
 			if (!$value) {
-				return entries;
+                // Show recents...
+				return $recents.entries;
 			}
 
 			const scored = entries.map((entry) => ({

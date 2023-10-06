@@ -25,7 +25,10 @@ import {
 	get_library_schema,
 } from '$lib/schemas/library';
 import type { Type } from '$lib/types';
-import { generateComparatorClause } from '$lib/db/utils/comparators';
+import {
+	applyFilter,
+	generateComparatorClause,
+} from '$lib/db/utils/comparators';
 
 type AliasedEb = ExpressionBuilder<
 	DB &
@@ -408,12 +411,16 @@ export async function get_library({
 	}
 	if (filter) {
 		const {
+			author,
 			book_genre,
 			createdAt,
 			domain,
 			feed,
+			published,
 			readingTime,
+			status,
 			tags,
+			title,
 			type,
 			..._rest
 		} = filter;
@@ -504,6 +511,33 @@ export async function get_library({
 		if (feed) {
 			query = query.where((eb) =>
 				generateComparatorClause(eb, 'e.feedId', feed),
+			);
+		}
+		if (published) {
+			query = query.where((eb) => applyFilter(eb, { published }));
+		}
+		if (title) {
+			query = query.where((eb) =>
+				generateComparatorClause(
+					eb,
+					eb.fn.coalesce('b.title', 'e.title'),
+					title,
+				),
+			);
+			// query = query.where((eb) => applyFilter(eb, { title }));
+		}
+		if (status) {
+			query = query.where((eb) =>
+				generateComparatorClause(eb, 'b.status', status),
+			);
+		}
+		if (author) {
+			query = query.where((eb) =>
+				generateComparatorClause(
+					eb,
+					eb.fn.coalesce('b.author', 'e.author'),
+					author,
+				),
 			);
 		}
 	}

@@ -16,6 +16,14 @@ import {
 } from '$lib/db/queries/collections';
 import { importMovies, importMoviesInput } from '$lib/db/queries/integration';
 import {
+	saveInteraction,
+	saveInteractionSchema,
+} from '$lib/db/queries/interaction';
+import {
+	subscription,
+	subscriptionInputSchema,
+} from '$lib/db/queries/subscriptions';
+import {
 	viewPreferencesCreate,
 	viewPreferencesCreateInput,
 	viewPreferencesGetOrCreate,
@@ -73,6 +81,7 @@ import { collectionsInputSchema } from '$lib/schemas/inputs';
 import { attachmentCreateInput } from '$lib/schemas/inputs/attachment.schema';
 import { bookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
 import { collectionItemUpdateInputSchema } from '$lib/schemas/inputs/collection.schema';
+import { booleanNumberSchema } from '$lib/schemas/inputs/helpers';
 import {
 	get_entry_details,
 	get_library,
@@ -87,15 +96,7 @@ import {
 } from './(listables)/subscriptions/latest/fetch.server';
 import { fetchList, inputSchema } from './library/fetch.server';
 import { type Condition, View } from './views/new/View';
-import { booleanNumberSchema } from '$lib/schemas/inputs/helpers';
-import {
-	saveInteraction,
-	saveInteractionSchema,
-} from '$lib/db/queries/interaction';
-import {
-	subscription,
-	subscriptionInputSchema,
-} from '$lib/db/queries/subscriptions';
+import { customViewCreate } from '$lib/db/queries/custom-view';
 
 type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -112,6 +113,7 @@ type Query<TSchema extends z.ZodTypeAny, TData> = {
 	staleTime?: number;
 };
 
+// TODO: rename this to "procedure"
 export const query = <TSchema extends z.ZodTypeAny, TData>(
 	args: Query<TSchema, TData>,
 ) => args;
@@ -205,6 +207,7 @@ export const mutations = {
 		fn: createTag,
 		schema: createTagSchema,
 	}),
+	customViewCreate,
 	deleteAnnotation: query({
 		fn: async ({ ctx: { userId }, input: { id } }) =>
 			deleteAnnotation(userId, id),
@@ -726,16 +729,39 @@ export const queries = {
 				.innerJoin('Feed as f', 'f.id', 's.feedId')
 				.where('userId', '=', ctx.userId)
 				.select([
-					's.id',
+					'f.id',
+					// TODO: because of legacy doing this, but not great
+					'f.id as feedId',
 					's.title',
-					'feedId',
+					's.id as subscriptionId',
+					'f.lastParsed',
+					'f.podcastIndexId',
+					// 'f.podcast',
 					's.updatedAt',
 					'f.feedUrl',
 					'f.imageUrl',
 					'f.link',
+					'f.guid',
 				])
+				// .select([
+				// 	's.id',
+				// 	's.title',
+				// 	'feedId',
+				// 	's.updatedAt',
+				// 	'f.feedUrl',
+				// 	'f.imageUrl',
+				// 	'f.link',
+				// ])
 				.execute();
 		},
+	}),
+	movieCollection: query({
+		authorized: false,
+		fn: async ({ input }) => await tmdb.collection(input),
+		headers: {
+			'cache-control': 's-maxage=1, stale-while-revalidate=86400',
+		},
+		schema: z.number().int(),
 	}),
 	note: query({
 		fn: note,

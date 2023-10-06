@@ -1,14 +1,17 @@
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
 import { page } from '$app/stores';
-import { defaultParseSearch, defaultStringifySearch } from '$lib/utils/search-params';
+import {
+	defaultParseSearch,
+	defaultStringifySearch,
+} from '$lib/utils/search-params';
 import { effect } from '@melt-ui/svelte/internal/helpers';
 import { getContext, setContext } from 'svelte';
 import { get, Updater, writable, type Writable } from 'svelte/store';
 import type { z } from 'zod';
 
 export function createParamsStore<TSchema extends z.ZodObject<any, any>>(
-	schema: TSchema
+	schema: TSchema,
 ): Writable<z.infer<TSchema>> {
 	const store = writable<z.infer<TSchema>>({});
 
@@ -44,24 +47,27 @@ export function createParamsStore<TSchema extends z.ZodObject<any, any>>(
 			goto(url, {
 				keepFocus: true,
 				noScroll: true,
-				replaceState: true
+				replaceState: true,
 			});
 		}
 	});
 
 	return {
 		...store,
-		subscribe
+		subscribe,
 	};
 }
 
-type SearchParamsStore<TSchema extends z.ZodObject<any, any>> = Writable<z.infer<TSchema>> & {
+type SearchParamsStore<TSchema extends z.ZodObject<any, any>> = Writable<
+	z.infer<TSchema>
+> & {
 	change: (cb: (data: z.infer<TSchema>) => z.infer<TSchema>) => void;
 	delete: (key: keyof TSchema) => void;
+	reset: () => void;
 };
 
 export function createSearchParamsStore<TSchema extends z.ZodObject<any, any>>(
-	schema: TSchema
+	schema: TSchema,
 ): SearchParamsStore<TSchema> {
 	const store = writable<z.infer<TSchema>>({});
 
@@ -112,7 +118,7 @@ export function createSearchParamsStore<TSchema extends z.ZodObject<any, any>>(
 			goto(url, {
 				keepFocus: true,
 				noScroll: true,
-				replaceState: true
+				replaceState: true,
 			});
 		}
 	};
@@ -121,22 +127,30 @@ export function createSearchParamsStore<TSchema extends z.ZodObject<any, any>>(
 		subscribe,
 		change,
 		delete: (key) => {
-            change(data => {
-                delete data[key];
-                return data;
-            })
-        }
+			change((data) => {
+				delete data[key];
+				return data;
+			});
+		},
+		reset: () => {
+			change(() => ({}));
+		},
 	};
 }
 
 const CONTEXT_NAME = 'searchParamsStore';
 
-export function setSearchParamsStoreContext<TSchema extends z.ZodObject<any, any>>(
-	store: ReturnType<typeof createSearchParamsStore<TSchema>>
-) {
+export function setSearchParamsStoreContext<
+	TSchema extends z.ZodObject<any, any>,
+>(store: ReturnType<typeof createSearchParamsStore<TSchema>>) {
 	setContext(CONTEXT_NAME, store);
 }
 
-export function createSearchParamsStoreContextGetter<TSchema extends z.ZodObject<any, any>>() {
-	return () => getContext<ReturnType<typeof createSearchParamsStore<TSchema>>>(CONTEXT_NAME);
+export function createSearchParamsStoreContextGetter<
+	TSchema extends z.ZodObject<any, any>,
+>() {
+	return () =>
+		getContext<ReturnType<typeof createSearchParamsStore<TSchema>>>(
+			CONTEXT_NAME,
+		);
 }

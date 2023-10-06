@@ -1,11 +1,13 @@
 import type {
 	Expression,
 	ExpressionBuilder,
+	ExpressionWrapper,
 	ReferenceExpression,
 	SqlBool,
 } from 'kysely';
 
 import type { Comparator } from '$lib/schemas/inputs/comparators';
+import { objectKeys } from '$lib/helpers';
 
 export type BaseInputFilter<T> = {
 	[K in keyof T]: Comparator; // T[K] extends StringComparator ? T[K] : InputFilter<T[K]>
@@ -45,7 +47,11 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
 			} else if (field) {
 				// TODO: avoid this cast - the object.entries gives me an array, tho?
 				const comparator = filter[field as keyof DB[TB]];
+				console.log({ comparator });
 				if (comparator) {
+					objectKeys(comparator).forEach((key) => {
+						const x = { [key]: comparator[key as any] };
+					});
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					return generateComparatorClause(eb, field as any, comparator);
 				}
@@ -62,8 +68,10 @@ export function generateComparatorClause<DB, TB extends keyof DB>(
 	comparator: Comparator, // TODO: this could be any comparator, not just string
 ) {
 	if (typeof comparator === 'string') {
-		return eb(field, '=', `${comparator}`);
+		return eb(field, '=', comparator);
 	}
+
+	console.log(`Generating comparator clause`, { comparator });
 
 	const {
 		eq,
@@ -87,62 +95,71 @@ export function generateComparatorClause<DB, TB extends keyof DB>(
 	//     } else if... (should be exhaustive)
 	// }
 
+	const exprs: Array<ExpressionWrapper<DB, TB, SqlBool>> = [];
+
 	if (eq) {
-		return eb(field, '=', eq);
+		exprs.push(eb(field, '=', eq));
 	}
 
 	if (neq) {
-		return eb(field, '!=', neq);
+		exprs.push(eb(field, '!=', neq));
 	}
 
 	if (_in) {
-		return eb(field, 'in', _in);
+		exprs.push(eb(field, 'in', _in));
 	}
 
 	if (nin) {
-		return eb(field, 'not in', nin);
+		exprs.push(eb(field, 'not in', nin));
 	}
 
-	if ('contains' in rest) {
+	if (
+		'contains' in rest ||
+		'ncontains' in rest ||
+		'startsWith' in rest ||
+		'nstartsWith' in rest
+	) {
 		// Then we have a string comparator
 		const { contains, ncontains, nstartsWith, startsWith } = rest;
 
 		if (contains) {
-			return eb(field, 'like', `%${contains}%`);
+			exprs.push(eb(field, 'like', `%${contains}%`));
 		}
 
 		if (ncontains) {
-			return eb(field, 'not like', `%${ncontains}%`);
+			exprs.push(eb(field, 'not like', `%${ncontains}%`));
 		}
 
 		if (startsWith) {
-			return eb(field, 'like', `${startsWith}%`);
+			exprs.push(eb(field, 'like', `${startsWith}%`));
 		}
 
 		if (nstartsWith) {
-			return eb(field, 'not like', `${nstartsWith}%`);
+			exprs.push(eb(field, 'not like', `${nstartsWith}%`));
 		}
 	}
 
-	if ('gte' in rest) {
+	if ('gte' in rest || 'gt' in rest || 'lte' in rest || 'lt' in rest) {
 		const { gt, gte, lt, lte } = rest;
 
 		if (gte) {
-			return eb(field, '>=', gte);
+			exprs.push(eb(field, '>=', gte));
 		}
 
 		if (gt) {
-			return eb(field, '>', gt);
+			exprs.push(eb(field, '>', gt));
 		}
 
 		if (lte) {
-			return eb(field, '<=', lte);
+			exprs.push(eb(field, '<=', lte));
 		}
 
 		if (lt) {
-			return eb(field, '<', lt);
+			exprs.push(eb(field, '<', lt));
 		}
 	}
+
+	return eb.and(exprs);
 
 	console.log({ rest });
 	throw new Error('Unreachable');

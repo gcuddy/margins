@@ -63,8 +63,20 @@ async function getFeedData(res: Response): Promise<{
 function parseJsonFeedItems(
 	json: any,
 	feedId: number,
+	since?: Date,
 ): Array<Insertable<Entry>> {
-	return json.items.map((item: any) => {
+	const items = json.items.filter((item: any) => {
+		if (!since) {
+			return true;
+		}
+		const lastUpdated = item.date_modified || item.date_updated;
+		if (!lastUpdated) {
+			return true;
+		}
+		const lastUpdateDate = new Date(lastUpdated);
+		return lastUpdateDate > since;
+	});
+	return items.map((item: any) => {
 		return {
 			author: item.authors?.map((a: any) => a.name).join(', '),
 			feedId,
@@ -93,30 +105,50 @@ function getAtomLink(links: any, rel = 'alternate') {
 function parseAtomFeedItems(
 	feed: any,
 	feedId: number,
+	since?: Date,
 ): Array<Insertable<Entry>> {
+	if (since && feed.updated) {
+		const updated = new Date(feed.updated);
+		if (since > updated) {
+			return [];
+		}
+	}
+
 	const alternateLink = getAtomLink(feed.link);
 	const relatedLink = getAtomLink(feed.link, 'related');
-	return feed.entry.map((entry: any) => {
+
+	const entries = feed.entry.filter((entry: any) => {
+		if (!since) {
+			return true;
+		}
+		const updated = entry.updated || entry.published;
+		if (!updated) {
+			return true;
+		}
+		const updatedDate = new Date(updated);
+		return updatedDate > since;
+	});
+	return entries.map((entry: any) => {
 		const content = getText(entry.content);
-        const published = entry.published || entry.updated;
-				return {
-					author: entry.author?.name,
-					feedId,
-					guid: entry.id,
-					html:
-						alternateLink && relatedLink
-							? `<i>Link: <a href='${alternateLink}'>${alternateLink}</a>
+		const published = entry.published || entry.updated;
+		return {
+			author: entry.author?.name,
+			feedId,
+			guid: entry.id,
+			html:
+				alternateLink && relatedLink
+					? `<i>Link: <a href='${alternateLink}'>${alternateLink}</a>
             ${content}`
-							: content,
-					published: published ? new Date(published) : null,
-					summary: removeTagsFromHtml(getText(entry.summary)).slice(0, 255),
-					text: removeTagsFromHtml(content),
-					title: getText(entry.title),
-					updatedAt: new Date(),
-					uri:
-						(alternateLink && relatedLink ? relatedLink : alternateLink) ||
-						entry.id,
-				} satisfies Insertable<Entry>;
+					: content,
+			published: published ? new Date(published) : null,
+			summary: removeTagsFromHtml(getText(entry.summary)).slice(0, 255),
+			text: removeTagsFromHtml(content),
+			title: getText(entry.title),
+			updatedAt: new Date(),
+			uri:
+				(alternateLink && relatedLink ? relatedLink : alternateLink) ||
+				entry.id,
+		} satisfies Insertable<Entry>;
 	});
 }
 
@@ -132,8 +164,63 @@ function getText(...nodes: Array<unknown>): string {
 	return '';
 }
 
-function parseRssFeedItems(rss: any, feedId: number): Array<Insertable<Entry>> {
-	return rss.channel.item.map((item: any) => {
+// TODO
+type RssFeed = {
+	channel: {
+		description: string;
+		image: {
+			url: string;
+		};
+		item: Array<{
+			'content:encoded': string;
+			description: string;
+			enclosure: {
+				url: string;
+			};
+			guid: string;
+			image: {
+				url: string;
+			};
+			link: string;
+			pubDate: string;
+			'itunes:author': string;
+			title: string;
+		}>;
+		lastBuildDate: string;
+		link: string;
+	};
+};
+
+function parseRssFeedItems(
+	rss: any,
+	feedId: number,
+	since?: Date,
+): Array<Insertable<Entry>> {
+	console.log('parsing rss since', since);
+	// check last build date, if it exists. If it's older than since, return empty array
+	if (since && rss.channel.lastBuildDate) {
+		const lastBuildDate = new Date(rss.channel.lastBuildDate);
+		if (since > lastBuildDate) {
+			console.log('since is greater than last build date');
+			return [];
+		}
+	}
+
+	// filter out items that are older than since
+	const items = rss.channel.item.filter((item: any) => {
+		if (!since) {
+			return true;
+		}
+		if (!item.pubDate) {
+			return true;
+		}
+		const pubDate = new Date(item.pubDate);
+		return pubDate > since;
+	});
+
+	console.log('new items to map over:', items.length);
+
+	return items.map((item: any) => {
 		const html = item['content:encoded'] || item.description;
 		return {
 			author: getText(item['dc:creator'], item.author, item['itunes:author']),
@@ -204,13 +291,14 @@ export async function getLatestFeedItems(
 	data: any,
 	type: FeedType,
 	feedId: number,
+	since?: Date,
 ): Promise<Array<Insertable<Entry>>> {
 	if (type === 'json') {
-		return parseJsonFeedItems(data, feedId);
+		return parseJsonFeedItems(data, feedId, since);
 	} else if (type === 'atom') {
-		return parseAtomFeedItems(data, feedId);
+		return parseAtomFeedItems(data, feedId, since);
 	} else {
-		return parseRssFeedItems(data, feedId);
+		return parseRssFeedItems(data, feedId, since);
 	}
 }
 
@@ -259,19 +347,40 @@ export async function subscription({
 	// eslint-disable-next-line no-console
 	console.time('subscription');
 	const feed = await db
-		.selectFrom('Feed')
-		.where('id', '=', input.feedId)
-		.selectAll()
+		.selectFrom('Feed as f')
+		.where('f.id', '=', input.feedId)
+		.innerJoin('Subscription as s', (join) =>
+			join.onRef('f.id', '=', 's.feedId').on('s.userId', '=', ctx.userId),
+		)
+		.select([
+			'f.id',
+			'f.id as feedId',
+			's.title',
+			's.id as subscriptionId',
+			'f.lastParsed',
+			'f.podcastIndexId',
+			// 'f.podcast',
+			's.updatedAt',
+			'f.feedUrl',
+			'f.imageUrl',
+			'f.link',
+			'f.guid',
+			// 'f.lastParsed',
+			// 'f.podcast',
+			// 'f.podcastIndexId',
+			// 'f.guid'
+		])
 		.executeTakeFirstOrThrow();
 
 	const needsRefetching =
+		true ||
 		!feed.lastParsed ||
 		(feed.lastParsed &&
 			feed.lastParsed < new Date(Date.now() - 10 * 60 * 1000));
 	// console.log({ needsRefetching });
 	// if it's a podcast, use podcastindex to check
 	// TODO: this should get moved to qstash messaging and use redis
-	if (needsRefetching && feed.podcast && feed.podcastIndexId) {
+	if (needsRefetching && feed.podcastIndexId) {
 		// eslint-disable-next-line no-console
 		console.log(
 			`Needs refetching: Fetching ${feed.podcastIndexId} from podcastindex`,
@@ -331,36 +440,46 @@ export async function subscription({
 		// get feed items
 		const res = await fetch(feed.feedUrl);
 		const { data, type } = await getFeedData(res);
-		const items = await getLatestFeedItems(data, type, feed.id);
-		await db.transaction().execute(async (trx) => {
-			await trx
-				.insertInto('Entry')
-				.values(items)
-				.onDuplicateKeyUpdate(({ ref }) => ({
-					author: values(ref('author')),
-					duration: values(ref('duration')),
-					enclosureUrl: values(ref('enclosureUrl')),
-					feedId: feed.id,
-					guid: values(ref('guid')),
-					html: values(ref('html')),
-					image: values(ref('image')),
-					podcastIndexId: values(ref('podcastIndexId')),
-					published: values(ref('published')),
-					summary: values(ref('summary')),
-					text: values(ref('text')),
-					title: values(ref('title')),
-					type: values(ref('type')),
-					updatedAt: new Date(),
-					uri: values(ref('uri')),
-				}))
-				.execute();
+		const items = await getLatestFeedItems(
+			data,
+			type,
+			feed.id,
+			feed.lastParsed ? new Date(feed.lastParsed) : undefined,
+		);
+		console.log({ items });
+		if (items.length) {
+			await db.transaction().execute(async (trx) => {
+				await trx
+					.insertInto('Entry')
+					.values(items)
+					// .ignore()
+					// hm
+					.onDuplicateKeyUpdate(({ ref }) => ({
+						author: values(ref('author')),
+						duration: values(ref('duration')),
+						enclosureUrl: values(ref('enclosureUrl')),
+						feedId: feed.id,
+						guid: values(ref('guid')),
+						html: values(ref('html')),
+						image: values(ref('image')),
+						podcastIndexId: values(ref('podcastIndexId')),
+						published: values(ref('published')),
+						summary: values(ref('summary')),
+						text: values(ref('text')),
+						title: values(ref('title')),
+						type: values(ref('type')),
+						updatedAt: new Date(),
+						uri: values(ref('uri')),
+					}))
+					.execute();
 
-			return await trx
-				.updateTable('Feed')
-				.set({ lastParsed: new Date() })
-				.where('id', '=', feed.id)
-				.execute();
-		});
+				return await trx
+					.updateTable('Feed')
+					.set({ lastParsed: new Date() })
+					.where('id', '=', feed.id)
+					.execute();
+			});
+		}
 	}
 
 	// TODO: use get_library but make get_library get_entries

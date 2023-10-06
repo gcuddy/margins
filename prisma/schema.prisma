@@ -743,11 +743,19 @@ model Tagging {
     @@map("Taggings")
 }
 
+enum EntryFilterType {
+    Library
+    Subscriptions
+    All
+}
+
 /// @zod.import(["import { chosenIcon } from '../schemas'"])
 model SmartList {
     id              Int               @id @default(autoincrement())
     name            String
     filter          Json?
+    filterData      Json?
+    entryFilterType EntryFilterType   @default(Library)
     viewOptions     Json?
     conditions      Json?
     /// @zod.custom.use(chosenIcon)

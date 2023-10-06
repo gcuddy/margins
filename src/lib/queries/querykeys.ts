@@ -10,6 +10,7 @@ import { get } from 'svelte/store';
 import { page } from '$app/stores';
 
 import { qquery, type QueryInput, type QueryOutput } from './query';
+import type { RequireAtLeastOne } from 'type-fest';
 
 type Meta = Record<string, unknown> | undefined;
 type QueryFnParams = {
@@ -22,6 +23,43 @@ type InfiniteQueryFnParams = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	pageParam: any;
 };
+
+type SimplifiedQuery<TData> = {
+	queryFn: (params: QueryFnParams) => Promise<TData>;
+	queryKey: Array<string>;
+};
+
+export function getQueryContext(queryClient: QueryClient) {
+	// expects passed in opts from queryFactory
+	// TODO: this isn't a perfect solution because doesn't respect 4 types of query
+	function getData<TData, TOpts extends SimplifiedQuery<TData>>(opts: TOpts) {
+		const { queryKey } = opts;
+		return queryClient.getQueryData<Awaited<ReturnType<TOpts['queryFn']>>>(
+			queryKey,
+		);
+	}
+
+	return {
+		getData,
+	};
+}
+
+function addAuthorsToQueryClient(queryClient: QueryClient, _authors: string[]) {
+	const authors = queryClient.getQueryData<QueryOutput<'get_authors'>>([
+		'entries',
+		'authors',
+	]);
+	// if authors is undefined, it hasn't been fetched yet... so don't worry about it
+	if (authors) {
+		for (const author of _authors) {
+			if (!authors.includes(author)) {
+				console.log('adding author', author);
+				authors.push(author);
+			}
+		}
+		queryClient.setQueryData(['entries', 'authors'], authors);
+	}
+}
 
 export const queryFactory = {
 	collections: {
@@ -59,27 +97,46 @@ export const queryFactory = {
 			queryKey: ['entries', 'count', { input }] as const,
 		}),
 
-		detail: (input: QueryInput<'entry_by_id'>) => ({
-			queryFn: ({ meta }: QueryFnParams) =>
-				qquery(meta?.init, 'entry_by_id', input),
+		detail: (input: QueryInput<'entry_by_id'>, queryClient?: QueryClient) => ({
+			queryFn: async ({ meta }: QueryFnParams) => {
+				const entry = await qquery(meta?.init, 'entry_by_id', input);
+				if (queryClient) {
+					if (entry.author) {
+						addAuthorsToQueryClient(queryClient, [entry.author]);
+					}
+				}
+				return entry;
+			},
 			queryKey: ['entries', 'detail', { input }] as const,
 		}),
 		// list
-		list: (input?: QueryInput<'get_library'>) => ({
+		list: (input?: QueryInput<'get_library'>, queryClient?: QueryClient) => ({
 			getNextPageParam(lastPage) {
 				return (lastPage as QueryOutput<'get_library'>).nextCursor;
 			},
 
 			initialPageParam: null as QueryOutput<'get_library'>['nextCursor'],
 
-			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) => {
-				return qquery(
+			queryFn: async ({ meta, pageParam }: InfiniteQueryFnParams) => {
+				const entries = await qquery(
 					meta?.init,
 					'get_library',
 					input
 						? { ...input, cursor: pageParam }
 						: { cursor: pageParam, status: 'Backlog' },
 				);
+
+				// push authors to authors list (this will automatically update the authors query when this changes)
+				if (queryClient) {
+					addAuthorsToQueryClient(
+						queryClient,
+						entries.entries
+							.map((e) => e.bookmark_author || e.author)
+							.filter(Boolean),
+					);
+				}
+
+				return entries;
 			},
 			// Ideally entries, list would get inferred... but this will do for  now
 			queryKey: ['entries', 'list', input ? input : undefined] as const,
@@ -203,6 +260,11 @@ export const queryFactory = {
 			queryFn: ({ meta }: QueryFnParams) =>
 				qquery(meta?.init, 'list_subscriptions', {}),
 			queryKey: ['subscriptions'],
+		}),
+		detail: (input: QueryInput<'subscription'>) => ({
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'subscription', input),
+			queryKey: ['subscription', input.feedId],
 		}),
 	},
 	tags: {

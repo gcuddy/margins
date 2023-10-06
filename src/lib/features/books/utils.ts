@@ -3,6 +3,7 @@ import {
 	BotIcon,
 	BrainIcon,
 	FilmIcon,
+	LightbulbIcon,
 	SpeechIcon,
 	SwordIcon,
 	Users2Icon,
@@ -71,6 +72,7 @@ function find_first<TString extends string>(
 
 export function get_category(book: Book) {
 	const genre = get_genre(book);
+	console.log({ book, genre });
 	const categories = book.volumeInfo?.categories;
 	if (genre === 'Fiction' && categories) {
 		if (categories.some((c) => c.includes('Fantasy'))) {
@@ -84,6 +86,8 @@ export function get_category(book: Book) {
 		if (categories.some((c) => c.includes('Thriller'))) {
 			return 'Thriller';
 		}
+		return 'Fiction & Literature';
+	} else if (genre === 'Fiction') {
 		return 'Fiction & Literature';
 	} else if (categories) {
 		const polsoc = find_first(
@@ -101,6 +105,9 @@ export function get_category(book: Book) {
 		// }
 		if (categories.some((c) => c.includes('Philosophy'))) {
 			return 'Philosophy';
+		}
+		if (categories.some((c) => c.startsWith('Psychology'))) {
+			return 'Psychology';
 		}
 		if (categories.some((c) => c.startsWith('History'))) {
 			return 'History';
@@ -130,9 +137,8 @@ export function get_category(book: Book) {
 		if (categories.some((c) => c.includes('Health & Fitness'))) {
 			return 'Health';
 		}
-	} else {
-		return 'Non-fiction';
 	}
+	return 'Non-fiction';
 }
 
 export function getGbookImage(book: Book) {
@@ -172,6 +178,8 @@ export function getCategoryIcon(category: ReturnType<typeof get_category>) {
 		case 'Politics':
 			return SpeechIcon;
 		case 'Philosophy':
+			return LightbulbIcon;
+		case 'Psychology':
 			return BrainIcon;
 		case 'History':
 			return '📜';

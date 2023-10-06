@@ -297,7 +297,7 @@
 											? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
 											: entry.image}
 										<img
-                                            style:view-transition-name='artwork-{getId(entry)}'
+											style:view-transition-name="artwork-{getId(entry)}"
 											use:smoothload
 											src={src ??
 												`https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
@@ -364,10 +364,14 @@
 									<div
 										class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md"
 									>
+										<!-- ring-primary if in library, ring-ring otherwise -->
 										<input
 											bind:checked
 											type="checkbox"
-											class="relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset group-hover/select:ring-ring checked:group-hover/select:bg-opacity-80"
+											class={cn(
+												'relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset checked:group-hover/select:bg-opacity-80',
+												entry.status ? 'ring-primary' : 'ring-ring',
+											)}
 											on:click|stopPropagation
 											on:change
 											on:focus={() => {
@@ -615,10 +619,13 @@
 							{#if data.tags.length > 1}
 								<!-- eslint-disable-next-line svelte/valid-compile -->
 								<div on:click|stopPropagation|preventDefault class="md:hidden">
-									<Popover.Root positioning={{
-                                        placement: 'bottom-start',
-                                        strategy: 'fixed',
-                                    }} portal="body" >
+									<Popover.Root
+										positioning={{
+											placement: 'bottom-start',
+											strategy: 'fixed',
+										}}
+										portal="body"
+									>
 										<Popover.Trigger asChild let:builder>
 											<div use:melt={builder}>
 												<Badge class="text-xs" variant="outline">
@@ -639,10 +646,12 @@
 												<Command.Input></Command.Input>
 												<Command.List>
 													<Command.Group>
-														{#each data.tags as {color, id, name} (id)}
-															<Command.Item onSelect={() => {
-                                                                goto(`/tests/tag/${name}`);
-                                                            }}>
+														{#each data.tags as { color, id, name } (id)}
+															<Command.Item
+																onSelect={() => {
+																	goto(`/tests/tag/${name}`);
+																}}
+															>
 																<TagColorPill class="h-2 w-2 mr-2" {color} />
 																{name}
 															</Command.Item>
@@ -693,8 +702,8 @@
 													this={relations_icons[relation.type]}
 													class="h-3 w-3 shrink-0"
 												/>
+                                                <!-- use:smoothload -->
 												<img
-													use:smoothload
 													src={get_image(relation.entry)}
 													class="aspect-square w-10 rounded-full object-cover"
 													alt=""

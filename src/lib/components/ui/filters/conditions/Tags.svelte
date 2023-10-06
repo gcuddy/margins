@@ -7,51 +7,64 @@
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { badgeVariants } from '$components/ui/Badge.svelte';
 	import { Checkbox } from '$components/ui/checkbox';
-	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
+	import {
+		Popover,
+		PopoverContent,
+		PopoverTrigger,
+	} from '$components/ui/popover';
 	import {
 		Command,
 		CommandGroup,
 		CommandInput,
 		CommandItem,
-		CommandList
+		CommandList,
 	} from '$lib/components/ui/command2';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import {
 		logicalOperators,
 		type FilterLibrarySchema,
-		type LogicalOperator
+		type LogicalOperator,
 	} from '$lib/schemas/library';
 	import { cn } from '$lib/utils';
 
 	import { ctx } from '../ctx';
 	import ConditionLayout from '../helpers/ConditionLayout.svelte';
 	import Select from '../helpers/Select.svelte';
+	import type { ComboboxOption } from '$components/ui/command2/store';
+	import { comparatorToDisplay } from '$lib/schemas/inputs/comparators';
 
 	export let ids: Array<number>;
-	export let type: NonNullable<NonNullable<FilterLibrarySchema['tags']>['type']> = 'and';
+	export let type: NonNullable<
+		NonNullable<FilterLibrarySchema['tags']>['type']
+	> = 'and';
 
 	const tag = createQuery({
-		...queryFactory.tags.list()
+		...queryFactory.tags.list(),
 		// select: (data) => {
 		// 	return data.filter((tag) => ids.includes(tag.id));
 		// }
 	});
 
-	type Tag = { color: string, id: number; name: string; };
+	type Tag = { color: string; id: number; name: string };
 
-	const chosenTags = writable<Array<Tag>>([]);
+	const chosenTags = writable<Array<ComboboxOption<Tag>>>([]);
 
-	$: $chosenTags = $tag.data?.filter((tag) => ids.includes(tag.id)) ?? [];
+	$: $chosenTags = ($tag.data?.filter((tag) => ids.includes(tag.id)) ?? []).map(
+		(tag) => ({
+			label: tag.name,
+			value: tag,
+		}),
+	);
 
 	const {
-		state: { filterStore }
+		state: { filterStore },
 	} = ctx.get();
 
 	export let popoverOpen = false;
 
 	function sortFunction(a: Tag, b: Tag) {
-		const selected = $chosenTags.find((t) => t.id === a.id);
-		const selected2 = $chosenTags.find((t) => t.id === b.id);
+		const selected = $chosenTags.find((t) => t.value.id === a.id);
+		const selected2 = $chosenTags.find((t) => t.value.id === b.id);
 		if (selected && selected2) {
 			return 0;
 		} else if (selected) {
@@ -77,19 +90,19 @@
 					return data;
 				}
 				data.tags = {
-					ids: $chosenTags.map((tag) => tag.id),
-					type
+					ids: $chosenTags.map((tag) => tag.value.id),
+					type,
 				};
 				return data;
 			});
 		},
 		1000,
-		true
+		true,
 	);
 
 	const logicalOperatorToDisplay: Record<LogicalOperator, string> = {
 		and: 'all of',
-		or: 'any of'
+		or: 'any of',
 	};
 </script>
 
@@ -110,7 +123,7 @@
 			bind:value={type}
 			choices={logicalOperators.map((operator) => ({
 				name: logicalOperatorToDisplay[operator],
-				value: operator
+				value: operator,
 			}))}
 			onValueChange={(value) => {
 				type = value;
@@ -120,7 +133,7 @@
 			{#if $chosenTags.length === 1 && $chosenTags[0]}
 				include
 			{:else}
-				include {logicalOperatorToDisplay[type]}
+				include {type}
 			{/if}
 		</Select>
 
@@ -128,14 +141,18 @@
 			<PopoverTrigger asChild let:builder>
 				<div
 					use:melt={builder}
-					class={cn(badgeVariants({ variant: 'outline' }), 'rounded-none border-x-0 flex gap-x-2')}
+					class={cn(
+						badgeVariants({ variant: 'outline' }),
+						'rounded-none border-x-0 flex gap-x-2',
+					)}
 				>
 					{#if $chosenTags.length === 1 && $chosenTags[0]}
-						<TagColorPill class="h-2 w-2 mr-2" color={$chosenTags[0].color} /> {$chosenTags[0].name}
+						<TagColorPill class="h-2 w-2 mr-2" color={$chosenTags[0].value.color} />
+						{$chosenTags[0].value.name}
 					{:else if $chosenTags.length > 1}
 						<div class="flex items-center [&_:not(:first-child)]:-mx-1">
-							{#each $chosenTags as tag, index}
-								<TagColorPill class="h-2 w-2" color={tag.color} />
+							{#each $chosenTags as tag}
+								<TagColorPill class="h-2 w-2" color={tag.value.color} />
 							{/each}
 						</div>
 						{$chosenTags.length} tags
