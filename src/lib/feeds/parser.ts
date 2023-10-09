@@ -21,6 +21,8 @@ import {
 	normalizeUrl,
 	resolveUrl,
 } from './utils';
+import { assertsJsonFeed } from '$lib/helpers/feeds';
+import type { FeedType } from '$lib/db/queries/subscriptions';
 
 export type Feed = {
 	favicon?: string;
@@ -46,6 +48,7 @@ export async function findFeed(feedUrl: string): Promise<{
 	feeds: Array<{
 		title: string;
 		url: string;
+		type?: FeedType;
 	}>;
 	input: string;
 }> {
@@ -94,13 +97,19 @@ export async function findFeed(feedUrl: string): Promise<{
 			try {
 				console.log({ body });
 				const parsed = JSON.parse(body);
-				const { feed_url, icon, title } = parsed;
+				assertsJsonFeed(parsed);
+				const { icon, title } = parsed;
+				const location = response.headers.get('location');
 				return {
 					favicon: icon || `https://icon.horse/icon/?uri=${feedUrl}`,
 					feeds: [
 						{
 							title,
-							url: feed_url,
+							// We use url instead of parsed.feed_url, because sometimes people don't update their feed_url...
+							// In practice, if we got the data from this url, it means it's the right url
+							// We use response.url since we want to use the final url (after redirects)
+							url: response.url,
+							type: 'json',
 						},
 					],
 					input: feedUrl,

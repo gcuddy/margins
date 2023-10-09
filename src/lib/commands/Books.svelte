@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
-	import { derived } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 
 	import { goto, preloadData } from '$app/navigation';
 	import {
@@ -11,14 +11,22 @@
 	} from '$components/ui/command2';
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import { effect } from '$lib/helpers';
 
 	const {
 		state: { activeValue, inputValue, shouldFilter },
 	} = commandCtx.get();
 
+	const debouncedInputValue = writable($inputValue);
+
+	const debouncedFn = debounce((val: string) => {
+		debouncedInputValue.set(val);
+	}, 400);
+
+	effect(inputValue, ($inputValue) => debouncedFn($inputValue));
 	// TODO: debouncing
 	const query = createQuery(
-		derived([inputValue], ([$value]) => ({
+		derived([debouncedInputValue], ([$value]) => ({
 			...queryFactory.search.books({ q: $value }),
 			enabled: $value.length > 1,
 		})),
@@ -77,7 +85,7 @@
 							<!-- Year -->
 							{#if book.volumeInfo?.publishedDate}
 								<span class="text-muted-foreground">
-                                    ({book.volumeInfo?.publishedDate.slice(0, 4)})
+									({book.volumeInfo?.publishedDate.slice(0, 4)})
 									<!-- ({new Date(book.volumeInfo?.publishedDate).getYear()}) -->
 								</span>
 							{/if}

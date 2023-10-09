@@ -14,6 +14,7 @@
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import debounce from 'just-debounce-it';
+	import Checkbox from '$components/ui/checkbox/checkbox.svelte';
 
 	const query = createQuery(queryFactory.tags.list());
 
@@ -32,6 +33,8 @@
 
 	export let preload = false;
 	export let preloadDelay = 200;
+
+	export let multiple = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -73,6 +76,9 @@
 					onSelect(tag);
 				}}
 			>
+				{#if multiple}
+					<Checkbox class="mr-4 opacity-0 duration-75 transition-opacity group-data-[highlighted]:opacity-100" />
+				{/if}
 				<TagColorPill class="mr-4 h-2.5 w-2.5" color={tag.color} />
 				<span>{tag.name}</span>
 			</CommandItem>

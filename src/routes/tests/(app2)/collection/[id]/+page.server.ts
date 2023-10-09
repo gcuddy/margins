@@ -35,6 +35,7 @@ export const load = (async ({ depends, locals, params }) => {
 			'c.font',
 			'c.private',
 			'c.deleted',
+			'c.defaultItemWidth',
 		])
 		// If there's no icon, default to "Box"
 		.select((eb) => [

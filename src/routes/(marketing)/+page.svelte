@@ -1,6 +1,5 @@
 <script>
 	import Button from '$lib/components/ui/Button.svelte';
-	import Accordion from '$lib/components/ui/accordion/Accordion.svelte';
 	import { H1, H2, H3, Lead, Small, Muted } from '$lib/components/ui/typography';
 	import { Image } from '@unpic/svelte';
 	import { Armchair, Edit3, Glasses, Layers, Rss, Zap } from 'lucide-svelte';
@@ -97,13 +96,4 @@
 </section>
 <section class="container grid justify-center gap-6 py-8 md:py-12 lg:py-24">
 	<H2>Frequently Asked Questions</H2>
-	<Accordion
-		items={[
-			{
-				value: 'margins',
-				heading: 'What is Margins?',
-				content: 'Cool'
-			}
-		]}
-	/>
 </section>

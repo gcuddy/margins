@@ -7,7 +7,7 @@ import type {
 } from 'kysely';
 
 import type { Comparator } from '$lib/schemas/inputs/comparators';
-import { objectKeys } from '$lib/helpers';
+import { ObjectEntry, objectEntries, objectKeys } from '$lib/helpers';
 
 export type BaseInputFilter<T> = {
 	[K in keyof T]: Comparator; // T[K] extends StringComparator ? T[K] : InputFilter<T[K]>
@@ -17,6 +17,17 @@ type InputFilter<T> = Partial<BaseInputFilter<T>> & {
 	and?: Array<InputFilter<T>>;
 	or?: Array<InputFilter<T>>;
 };
+
+type BaseCustomFilter<T extends {}> = {
+	[K in keyof T]: T[K];
+};
+
+type CustomFilter<T extends {}> = Partial<T> & {
+	and?: Array<CustomFilter<T>>;
+	or?: Array<CustomFilter<T>>;
+};
+
+
 
 // gotta do something to generate and/or, something
 export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
@@ -54,6 +65,68 @@ export function applyFilter<DB, TB extends keyof DB, TModel = DB[TB]>(
 					});
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					return generateComparatorClause(eb, field as any, comparator);
+				}
+			}
+		})
+		.filter(Boolean);
+	return eb.and(expressions);
+	// return eb.or(expressions);
+}
+export function applyFilterWith<DB, TB extends keyof DB, TFilterObj extends {}>(
+	eb: ExpressionBuilder<DB, TB>,
+	filter: CustomFilter<TFilterObj>,
+	cb: <TKey extends keyof TFilterObj>(
+		eb: ExpressionBuilder<DB, TB>,
+		// filter: {
+		// 	[K in Exclude<keyof TObj, undefined>]: TObj[K];
+		// },
+		// value: BaseCustomFilter<TObj>[keyof BaseCustomFilter<TObj>],
+		...args: ObjectEntry<TFilterObj>
+		// key: TKey,
+		// value: TFilterObj[TKey],
+	) => Expression<SqlBool>,
+) {
+	console.log(`applying filter`, { filter });
+
+	const nonUndefinedKeys = objectKeys(filter).filter(
+		(key) => filter[key] !== undefined,
+	);
+	const exprs = nonUndefinedKeys.map((key) => {
+		const value = filter[key];
+		if (value) {
+			return cb(eb, key, value);
+		}
+	});
+	const expressions = objectEntries(filter)
+		.map(([field, comparator]) => {
+			// console.log({ comparator, field });
+			// If comparator is undefined, we don't want to apply a filter
+			if (!comparator) {
+				return;
+			}
+			console.log({ field, comparator });
+			if (field === 'and' || field === 'or') {
+				const subFilters = filter[field === 'and' ? 'and' : 'or'];
+				// TODO: map over and add and/or eb clauses
+				const exprs: Array<Expression<SqlBool>> = [];
+				if (subFilters) {
+					for (const subFilter of subFilters) {
+						exprs.push(applyFilterWith(eb, subFilter, cb));
+					}
+				}
+				if (field === 'and') {
+					return eb.and(exprs);
+				}
+				return eb.or(exprs);
+			} else if (field) {
+				if (field === 'and' || field === 'or') {
+					return;
+				}
+				if (comparator) {
+					const value = filter[field];
+					if (value) {
+						return cb(eb, field, comparator);
+					}
 				}
 			}
 		})

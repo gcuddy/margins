@@ -2,8 +2,8 @@ import type { QueryClient } from "@tanstack/svelte-query";
 
 import { commandPaletteStore } from "$lib/components/CommandPalette/store";
 import { notifications } from "$lib/stores/notifications";
-import { trpc, trpc } from "$lib/trpc/client";
-import type { RouterOutputs } from "$lib/trpc/router";
+
+
 
 type Collection = RouterOutputs["collections"]["addItem"]
 

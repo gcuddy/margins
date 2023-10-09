@@ -3,10 +3,14 @@
 	import { cn } from '$lib';
 	import {
 		BookIcon,
+		CircleIcon,
 		ClockIcon,
 		FileIcon,
 		FilterIcon,
 		GlobeIcon,
+		PaletteIcon,
+		RssIcon,
+		StarIcon,
 		TagIcon,
 		TypeIcon,
 		UserIcon,
@@ -27,7 +31,10 @@
 	import { types } from '$lib/types';
 	import { createPageData } from '../command2/utils';
 	import { ctx } from './ctx';
-	import Authors from '$lib/commands/Authors.svelte';
+	import { statusesWithIcons } from '$lib/status';
+	import { objectEntries } from '$lib/helpers';
+	import { Authors, Rating, Subscriptions } from '$lib/commands';
+	import { colors } from '$components/tags/tag-color';
 
 	const filterPageData = createPageData([
 		{
@@ -94,9 +101,33 @@
 			name: 'Book Genre',
 			placeholder: 'Choose genre…',
 		},
+		// TODO: don't show if in status already
+		{
+			name: 'Status',
+			icon: CircleIcon,
+			placeholder: 'Filter by status…',
+		},
+		// TODO: don't show if in feed alrea
+		{
+			name: 'Subscription',
+			icon: RssIcon,
+			placeholder: 'Filter by feed…',
+		},
+		{
+			name: 'Tag Color',
+			icon: PaletteIcon,
+			placeholder: 'Filter by tag color...',
+		},
+		{
+			name: 'Rating',
+			icon: StarIcon,
+			placeholder: 'Filter by rating...',
+		},
 	]);
 
 	export let open = false;
+
+	$: console.log({ open, $openStore });
 
 	$: if (open !== undefined) {
 		openStore.set(open);
@@ -106,7 +137,7 @@
 	export { className as class };
 
 	const {
-		helpers: { filterChange },
+		helpers: { filterChange, navigateSearch },
 		state: { dialogStore, open: openStore },
 	} = ctx.get();
 
@@ -115,7 +146,7 @@
 </script>
 
 <Popover.Root
-	bind:open={$openStore}
+	bind:open
 	positioning={{
 		placement: 'bottom-start',
 	}}
@@ -249,11 +280,90 @@
 					{:else if currentPage.name === 'Author'}
 						<Authors
 							onSelect={(author) => {
-                                console.log({author})
+								console.log({ author });
 								filterChange($page.url, (data) => ({
-                                    ...data,
-                                    author
-                                }));
+									...data,
+									author,
+								}));
+								open = false;
+							}}
+						/>
+					{:else if currentPage.name === 'Status'}
+						{#each objectEntries(statusesWithIcons) as [name, icon]}
+							<CommandItem
+								value={name}
+								onSelect={(status) => {
+									if (status) {
+										navigateSearch((data) => ({
+											...data,
+											status,
+										}));
+									}
+									open = false;
+								}}
+							>
+								<CommandIcon {icon} />
+								{name}
+							</CommandItem>
+						{/each}
+					{:else if currentPage.name === 'Subscription'}
+						<!-- subscriptions -->
+						<Subscriptions
+							onSelect={(subscription) => {
+								if (subscription) {
+									navigateSearch((data) => ({
+										...data,
+										feed: {
+											in: [subscription.feedId],
+										},
+									}));
+								}
+								open = false;
+							}}
+						/>
+					{:else if currentPage.name === 'Tag Color'}
+						{#each colors as { value, label }}
+							<CommandItem
+								value={label}
+								onSelect={(color) => {
+									if (color) {
+										const hex = colors.find(
+											({ label }) => label === color,
+										)?.value;
+										if (hex) {
+											navigateSearch((data) => ({
+												...data,
+												tagColor: {
+													in: [hex],
+												},
+											}));
+										}
+									}
+								}}
+							>
+								<div
+									class="h-5 w-5 rounded-full"
+									style:background-color={value}
+								/>
+								<span class="ml-2">{label}</span>
+							</CommandItem>
+						{/each}
+					{:else if currentPage.name === 'Rating'}
+						<Rating
+							onSelect={(val) => {
+								if (val === 'unrated') {
+									navigateSearch((data) => ({
+										...data,
+										rating: 'unrated',
+									}));
+								} else if (val) {
+									navigateSearch((data) => ({
+										...data,
+										rating: {
+											gte: val,
+										},
+									}));
+								}
 							}}
 						/>
 					{/if}

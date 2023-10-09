@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { statusesWithIcons, type Status } from '$lib/status';
-	export let status: Status | undefined;
+	export let status: Status | undefined | null;
 	let className = '';
 	export { className as class };
 </script>

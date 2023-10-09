@@ -431,7 +431,7 @@
 	// $: selected_values = selectedCondition?.values?.(selected_input?.value) || [];
 	// $: selected_values.map;
 
-	import { trpc } from "$lib/trpc/client";
+
 	import type { Placement } from "@popperjs/core";
 	import type { Page } from "@sveltejs/kit";
 	import { createQuery } from "@tanstack/svelte-query";

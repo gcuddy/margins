@@ -112,7 +112,7 @@
 			dir: 'desc',
 			filter: {
 				feed: {
-					eq: +data.id,
+					in: [+data.id],
 				},
 				...filterData,
 			},

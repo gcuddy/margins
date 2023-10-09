@@ -20,7 +20,8 @@
 	$: filteredIcons = chunk(
 		icons.filter((icon) => {
 			if (searchValue) {
-				return icon.name.toLowerCase().includes(searchValue.toLowerCase());
+                const term = `${icon.name.toLowerCase()}${icon.keywords ? icon.keywords.toLowerCase() : ''}`
+				return term.toLowerCase().includes(searchValue.toLowerCase());
 			}
 			return true;
 		}),

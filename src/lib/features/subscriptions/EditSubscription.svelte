@@ -3,7 +3,7 @@
 	import Button from "$lib/components/Button.svelte";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import TagInputCombobox from "$lib/components/TagInputCombobox.svelte";
-	import { trpc } from "$lib/trpc/client";
+
 	import type { Subscription } from "@prisma/client";
 	export let subscription: Subscription & {
         tags: {

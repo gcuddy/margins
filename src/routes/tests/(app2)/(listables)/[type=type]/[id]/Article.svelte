@@ -16,7 +16,7 @@
 
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
-	import { afterNavigate, beforeNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import Kbd from '$components/ui/KBD.svelte';
@@ -58,6 +58,9 @@
 	} from '../ctx';
 	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
+	import type { RequireAtLeastOne } from 'type-fest';
+	import { currentEntryList } from '$components/entries/store';
+	import { make_link } from '$lib/utils/entries';
 
 	const {
 		activeAnnotation,
@@ -86,6 +89,25 @@
 	];
 
 	$: author = data.entry?.author;
+
+	$: currentIndex = $currentEntryList.findIndex(
+		(entry) => entry.id === data.entry?.id,
+	);
+	$: next = $currentEntryList[currentIndex + 1];
+	$: next_link = next ? make_link(next) : null;
+
+	type Entry = QueryOutput<'entry_by_id'>;
+
+	function modifyEntry(
+		cb: (entry: RequireAtLeastOne<Entry, 'entry'>) => Entry,
+	) {
+		queryClient.setQueryData<QueryOutput<'entry_by_id'>>(queryKey, (old) => {
+			if (!old) {
+				return old;
+			}
+			return cb(old);
+		});
+	}
 
 	const annotateMutation = createMutation({
 		mutationFn: async (input: MutationInput<'save_note'>) => {
@@ -403,7 +425,7 @@
 						entry: {
 							...old.entry,
 							interaction: makeInteraction({
-                                ...old.entry.interaction,
+								...old.entry.interaction,
 								id,
 								progress: lastSavedScrollProgress,
 							}),
@@ -439,10 +461,10 @@
 					});
 				}
 			}
-			// void queryClient.invalidateQueries({
-			// 	queryKey: ['entries'],
-			// });
-			invalidateEntries(queryClient);
+			void queryClient.invalidateQueries({
+				queryKey: ['entries', 'list'],
+			});
+			// invalidateEntries(queryClient);
 		},
 	});
 
@@ -465,12 +487,12 @@
 	let shouldSaveProgress = true;
 
 	async function ensureHighlights() {
-        console.log('ensureHighlights running')
+		console.log('ensureHighlights running');
 		// for (const [id, annotation] of Object.entries($annotations)) {
 		if (!data.entry?.annotations) {
 			return;
 		}
-        console.time('ensureHighlights')
+		console.time('ensureHighlights');
 		for (const annotation of data.entry.annotations) {
 			const { id } = annotation;
 			const target = annotation.target!;
@@ -494,7 +516,7 @@
 				}
 			}
 		}
-        console.timeEnd('ensureHighlights')
+		console.timeEnd('ensureHighlights');
 	}
 
 	const throttledEnsureHighlights = throttle(ensureHighlights, 1000);
@@ -1120,9 +1142,41 @@
 		</div>
 	</div>
 	{#if data.entry?.bookmark?.status !== 'Archive'}
-		<form action="?/updateBookmark" method="post" use:enhance>
+		<form
+			action="?/updateBookmark"
+			method="post"
+			use:enhance={() => {
+				modifyEntry((_entry) => ({
+					...data,
+					entry: {
+						...data.entry,
+						bookmark: {
+							...data.entry?.bookmark,
+							status: 'Archive',
+						},
+					},
+				}));
+				return async ({ update, result }) => {
+					console.log({ result });
+					if (result.type === 'success') {
+						// invalidate entries list
+						queryClient.invalidateQueries({
+							queryKey: ['entries', 'list'],
+						});
+						if (next_link) {
+							goto(next_link);
+						}
+					} else {
+						update();
+					}
+				};
+			}}
+		>
 			<input type="hidden" name="status" value="Archive" />
-			<Button>Archive</Button>
+			<Button on:mouseover={() => {
+                preloadData(next_link)
+            }}>Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button
+			>
 		</form>
 	{/if}
 </div>
@@ -1138,9 +1192,7 @@
 {/if}
 
 {#if $scroll < lastSavedScrollProgress}
-    <div class="fixed bottom-0 right-0">
-        scroll to latest position
-    </div>
+	<div class="fixed bottom-0 right-0">scroll to latest position</div>
 {/if}
 
 <style lang="postcss">

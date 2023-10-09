@@ -2,7 +2,7 @@
 	import { page } from "$app/stores";
 	import dayjs from "$lib/dayjs";
 	import { modals } from "$lib/stores/modals";
-	import { trpc } from "$lib/trpc/client";
+
 	import RichAnnotationInput from "./RichAnnotationInput.svelte";
 
 	export let timestamp: number | undefined = undefined;

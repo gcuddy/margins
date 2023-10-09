@@ -9,7 +9,7 @@
 		DropdownMenuShortcut,
 	} from "$lib/components/ui/dropdown-menu";
 	import { addEntriesToCollection } from "$lib/features/collections/stores";
-	import { trpc } from "$lib/trpc/client";
+
 	import { cn } from "$lib/utils/tailwind";
 	import type { Entry } from "@prisma/client";
 	import { ListPlus, MoreVertical, RefreshCwIcon, Tag } from "lucide-svelte";

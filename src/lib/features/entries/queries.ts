@@ -4,8 +4,8 @@ import type { TRPCClientInit } from "trpc-sveltekit";
 
 import { commandPaletteStore } from "$lib/components/CommandPalette/store";
 import { showCommandPalette } from "$lib/stores/commands";
-import { trpc } from "$lib/trpc/client";
-import type { RouterInputs } from "$lib/trpc/router";
+
+
 
 import EntryListItem__SvelteComponent_ from "./EntryListItem.svelte";
 

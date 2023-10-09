@@ -72,6 +72,8 @@
 	import { saveUrl } from './utils';
 	import { fade, scale } from 'svelte/transition';
 	import { fadeScale, gentleFly } from '$lib/transitions';
+	import OtherAlbumsList from '$components/music/other-albums-list.svelte';
+	import { Icon } from '$components/icon-picker';
 
 	// const render = persisted('sidebar', false);
 
@@ -238,9 +240,9 @@
 						? `(${$query.data.entry.annotations.length})`
 						: ''}</TabsTrigger
 				>
-				{#if $query.data?.entry?.type === 'article'}
-					<TabsTrigger class="grow" value="links">Links</TabsTrigger>
-				{/if}
+				<!-- {#if $query.data?.entry?.type === 'article'} -->
+				<TabsTrigger class="grow" value="links">Links</TabsTrigger>
+				<!-- {/if} -->
 			</TabsList>
 		</div>
 		<TabsContent value="details">
@@ -483,11 +485,17 @@
 					<Cluster>
 						{#each $query.data?.entry?.collections ?? [] as collection}
 							<Badge
-								variant="secondary"
+								variant="ghost"
 								as="a"
-								class="line-clamp-2"
+								class="line-clamp-2 rounded"
 								href="/tests/collection/{collection.id}"
-								>{collection.name}</Badge
+							>
+								<Icon
+									class="mr-2 h-4 w-4"
+									color={collection.color}
+									icon={collection.icon}
+								/>
+								{collection.name}</Badge
 							>
 						{/each}
 						<Button
@@ -643,9 +651,10 @@
 				</div>
 			</div>
 		</TabsContent>
-		{#if $query.data?.entry?.type === 'article'}
-			<TabsContent value="links">
-				<ul class="px-6 flex flex-col gap-y-2 text-sm">
+		<!-- {#if $query.data?.entry?.type === 'article'} -->
+		<TabsContent value="links">
+			<ul class="px-6 flex flex-col gap-y-3 text-sm">
+				{#if $query.data?.entry?.type === 'article'}
 					<Input bind:value={linkFilterValue} />
 					{#each $links.filter((link) => {
 						if (!linkFilterValue) {
@@ -749,9 +758,21 @@
 							</div>
 						</li>
 					{/each}
-				</ul>
-			</TabsContent>
-		{/if}
+				{:else if $query.data?.album}
+					<!-- TODO: albums by this artist -->
+					{#if $query.data.album.artists[0]?.id}
+						<h3>Other albums by {$query.data.album.artists[0].name}</h3>
+						{#key $query.data.album.id}
+							<OtherAlbumsList
+								filterOutIds={[$query.data.album.id]}
+								spotifyArtistId={$query.data.album.artists[0].id}
+							/>
+						{/key}
+					{/if}
+				{/if}
+			</ul>
+		</TabsContent>
+		<!-- {/if} -->
 	</Tabs>
 </aside>
 

@@ -9,8 +9,8 @@
 	import type { ContextualAnnotation } from "$lib/prisma/selects/annotations";
 	import { modals } from "$lib/stores/modals";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
-	import { trpc, trpc } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
+
 	import { TextQuoteTarget } from "$lib/types/schemas/Annotations";
 	import {
 		Disclosure,

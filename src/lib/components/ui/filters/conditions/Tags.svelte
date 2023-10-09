@@ -38,6 +38,10 @@
 		NonNullable<FilterLibrarySchema['tags']>['type']
 	> = 'and';
 
+	if (type === undefined) {
+		type = 'or';
+	}
+
 	const tag = createQuery({
 		...queryFactory.tags.list(),
 		// select: (data) => {
@@ -57,6 +61,7 @@
 	);
 
 	const {
+		helpers: { navigateSearch },
 		state: { filterStore },
 	} = ctx.get();
 
@@ -120,20 +125,30 @@
 		}}
 	>
 		<Select
-			bind:value={type}
+			selected={{
+				value: type,
+			}}
 			choices={logicalOperators.map((operator) => ({
-				name: logicalOperatorToDisplay[operator],
+				label: `include ${logicalOperatorToDisplay[operator]}`,
 				value: operator,
 			}))}
-			onValueChange={(value) => {
+			onSelectedChange={({value}) => {
+                console.log({value})
 				type = value;
-				debouncedSetData();
+				navigateSearch((data) => {
+                    console.log({data});
+                    data.tags = {
+                        ids: $chosenTags.map((tag) => tag.value.id),
+                        type,
+                    };
+                    return data;
+                });
 			}}
 		>
 			{#if $chosenTags.length === 1 && $chosenTags[0]}
 				include
 			{:else}
-				include {type}
+				include {logicalOperatorToDisplay[type || 'or']}
 			{/if}
 		</Select>
 
@@ -147,12 +162,18 @@
 					)}
 				>
 					{#if $chosenTags.length === 1 && $chosenTags[0]}
-						<TagColorPill class="h-2 w-2 mr-2" color={$chosenTags[0].value.color} />
+						<TagColorPill
+							class="h-2 w-2 mr-2"
+							color={$chosenTags[0].value.color}
+						/>
 						{$chosenTags[0].value.name}
 					{:else if $chosenTags.length > 1}
-						<div class="flex items-center [&_:not(:first-child)]:-mx-1">
-							{#each $chosenTags as tag}
-								<TagColorPill class="h-2 w-2" color={tag.value.color} />
+						<div class="flex items-center -space-x-1">
+							{#each $chosenTags.slice(0, 3) as tag}
+								<TagColorPill
+									class="h-3 w-3 border border-background"
+									color={tag.value.color}
+								/>
 							{/each}
 						</div>
 						{$chosenTags.length} tags

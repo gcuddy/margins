@@ -8,8 +8,8 @@
 	import Button from "$lib/components/Button.svelte";
 	import dayjs from "$lib/dayjs";
 	import { configuration } from "$lib/features/movies/tmdb";
-	import { trpc } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
+
 	import type { Prisma } from "@prisma/client";
 	import { createQuery } from "@tanstack/svelte-query";
 

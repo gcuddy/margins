@@ -10,6 +10,7 @@
 	import * as AlertDialog from '$components/ui/alert-dialog';
 	import { Input } from '../input';
 	import FilterButton from './filter-button.svelte';
+	import { flip } from 'svelte/animate';
 
 	const {
 		elements: { container },
@@ -19,7 +20,7 @@
 	export let alwaysShow = false;
 	export let showSaveView = true;
 
-    export let saveViewUrl: string | undefined = undefined;
+	export let saveViewUrl: string | undefined = undefined;
 </script>
 
 <!--
@@ -28,11 +29,10 @@
 
 {#if $hasFilters || alwaysShow}
 	<Header class="top-[--nav-height]">
-		<div class="flex gap-x-4 items-center" bind:this={$container}>
-            <slot name="start">
-            </slot>
+		<div class="flex gap-x-2 items-center" bind:this={$container}>
+			<slot name="start" />
 			{#each $filters as [type, filter]}
-				<FilterBadge {type} {filter} />
+					<FilterBadge {type} {filter} />
 			{/each}
 			<slot>
 				{#if $hasFilters}
@@ -50,7 +50,8 @@
 			<slot name="end">
 				{#if showSaveView && $hasFilters}
 					<Button
-						href={saveViewUrl || `/tests/views/explore/library${$page.url.search}`}
+						href={saveViewUrl ||
+							`/tests/views/explore/library${$page.url.search}`}
 						size="sm"
 						variant="outline"
 						class="text-xs"

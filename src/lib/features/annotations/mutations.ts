@@ -1,7 +1,7 @@
 import type { TRPCClientInit } from "trpc-sveltekit";
 
-import { trpc } from "$lib/trpc/client";
-import type { RouterInputs } from "$lib/trpc/router";
+
+
 
 export const createAnnotationMutation = (init?: TRPCClientInit) => ({
     mutationFn: (input: RouterInputs["annotations"]["create"]) => trpc(init).annotations.create.mutate(input)
@@ -13,8 +13,8 @@ export const updateAnnotationMutation = (init?: TRPCClientInit) => ({
 import { getContext } from "svelte";
 
 import { nanoid } from "$lib/nanoid";
-import type { trpc } from "$lib/trpc/client";
-import type { RouterOutputs } from "$lib/trpc/router";
+
+
 
 export const SaveAnnotationMutationKey = "saveAnnotationMutation" as const;
 

@@ -17,7 +17,7 @@
 	import toast from "svelte-french-toast";
 	import { goto } from "$app/navigation";
 	import { Loader2 } from "lucide-svelte";
-	import { trpc } from "$lib/trpc/client";
+
 	export let form: ActionData | undefined = undefined;
 	export let close = () => {};
 

@@ -1,56 +1,69 @@
 <script lang="ts">
+	import type { ComponentType } from 'svelte';
 	import type { OnChangeFn } from '@huntabyte/primitives/dist/internal';
 
 	import { badgeVariants } from '$components/ui/Badge.svelte';
-	import { Select, SelectContent, SelectGroup, SelectItem } from '$components/ui/select';
+	import {
+		Select,
+		SelectContent,
+		SelectGroup,
+		SelectItem,
+		SelectValue,
+	} from '$components/ui/select';
 	import { cn } from '$lib/utils';
 	import { Select as SelectPrimitive } from '@huntabyte/primitives';
-	import { melt } from '@melt-ui/svelte';
+	import { type SelectOption, melt } from '@melt-ui/svelte';
 	import { ctx } from '../ctx';
 
-	const c= ctx.get();
-    $: console.log({c});
+	const c = ctx.get();
+	$: console.log({ c });
 
-    type T = $$Generic
+	type T = $$Generic;
 
-	export let value: T | undefined = undefined;
+	export let selected: SelectOption<T> | undefined = undefined;
 
-	export let choices: {
-		name: string;
-		value: string;
-		disabled?: boolean;
-	}[] = [];
+	export let choices: Array<SelectOption<T> & { icon?: ComponentType }> = [];
 
-    export let onValueChange: OnChangeFn<T> | undefined = undefined;
+	export let onSelectedChange: OnChangeFn<SelectOption<T>> | undefined =
+		undefined;
 </script>
 
 <!-- portal={$container} -->
 <Select
 	positioning={{
-		placement: 'bottom-start'
+		placement: 'bottom-start',
 	}}
-	bind:value
-    {onValueChange}
+	bind:selected
+	onSelectedChange={(val) => {
+		// @ts-expect-error (fine)
+		onSelectedChange?.(val);
+	}}
 >
 	<SelectPrimitive.Trigger let:builder asChild>
 		<div
 			use:melt={builder}
 			class={cn(
 				badgeVariants({
-					variant: 'outline'
+					variant: 'outline',
 				}),
-				'rounded-none cursor-default hocus:bg-secondary focus:ring-0'
+				'rounded-none cursor-default hocus:bg-secondary focus:ring-0',
 			)}
 		>
 			<slot>
-				{value ?? 'Select'}
+				<!-- {selected?.label ?? 'Select'} -->
+				<SelectValue />
 			</slot>
 		</div>
 	</SelectPrimitive.Trigger>
 	<SelectContent>
 		<SelectGroup>
-			{#each choices as { value, name, disabled }}
-				<SelectItem {disabled} {value}>{name}</SelectItem>
+			{#each choices as { value, label, icon }}
+				<SelectItem {label} {value}>
+					{#if icon}
+						<svelte:component this={icon} class="h-4 w-4 mr-2" />
+					{/if}
+					{label}</SelectItem
+				>
 			{/each}
 		</SelectGroup>
 	</SelectContent>

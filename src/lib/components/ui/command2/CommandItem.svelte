@@ -22,6 +22,7 @@
 		id?: string;
 		label?: string;
 		onSelect?: (value: T | undefined) => void;
+        selected?: boolean;
 		unstyled?: boolean;
 		value?: T;
 	};
@@ -123,9 +124,11 @@
 	}
 
 	// false : !$inputValue ? false : !$filtered.ids.includes(id);
-	$: selected = $selectedValue.some((sv) => {
+    export let selected: boolean | undefined = undefined;
+	$: _selected = $selectedValue.some((sv) => {
         return comparisonFunction(sv.value, value)
     });
+    $: computedSelected = selected !== undefined ? selected : _selected;
 
 	function registerEvent(node: HTMLElement) {
 		node.addEventListener(SELECT_EVENT_NAME, () => {
@@ -157,7 +160,7 @@
 	data-label={label}
 	data-disabled={disabled ? '' : undefined}
 	aria-disabled={disabled ? true : undefined}
-	aria-selected={selected}
+	aria-selected={computedSelected}
 	{hidden}
 	data-hidden={hidden ? '' : undefined}
 	role="option"
@@ -169,5 +172,5 @@
 	data-command-item
 >
 	<!--  -->
-	<slot isSelected={selected} />
+	<slot isSelected={computedSelected} />
 </div>

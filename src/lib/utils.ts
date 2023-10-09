@@ -293,8 +293,35 @@ export function normalizeCamelCase(str: string, capitalize = true) {
 		: normalized;
 }
 
+export function capitalize(str: string) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 import { cn } from './utils/tailwind';
 
 export { cn };
 
 export * from './utils/transition';
+
+export function findClosestImage<
+	TObj extends { height: number; width: number },
+>(images: Array<TObj>, size: number) {
+	let closestImage = images[0];
+	if (!closestImage) return null;
+	let closestDistance =
+		Math.abs(closestImage.height - size) + Math.abs(closestImage.width - size);
+
+	for (let i = 1; i < images.length; i++) {
+		const image = images[i];
+		if (image) {
+			const distance =
+				Math.abs(image.height - size) + Math.abs(image.width - size);
+			if (distance < closestDistance) {
+				closestImage = image;
+				closestDistance = distance;
+			}
+		}
+	}
+
+	return closestImage;
+}

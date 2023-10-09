@@ -3,6 +3,7 @@
 	import * as Card from '$components/ui/card';
 	import { render_html } from '$components/ui/editor/utils';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import type { CollectionItemWidth } from '$lib/schemas/inputs/collection.schema';
 	import { make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
 
@@ -24,14 +25,15 @@
 
 	type $$Props = State & {
 		class?: string;
-		width?: 'default' | 'wide';
+		width?: CollectionItemWidth;
 	};
 
 	export let item: $$Props['item'] = undefined;
 
 	// TODO: GET AVERAGE COLOR...
 
-	export let width: 'default' | 'wide' = 'default';
+	export let width: CollectionItemWidth = 'default';
+
 	let className: $$Props['class'] = undefined;
 	export { className as class };
 
@@ -42,6 +44,8 @@
 	class={cn(
 		'w-56 h-80 overflow-auto flex flex-col p-4 gap-4 relative group max-w-full transition-[width] bg-card/50',
 		width === 'wide' && 'w-[432px] lg:w-[432px] md:w-[653px] flex-row p-0',
+		width === 'poster' && 'p-0 w-40 lg:h-60 max-lg:w-36 max-lg:max-h-56 h-auto  items-center justify-center',
+        width === "poster" && item?.entry?.type === "album" && "rounded",
 		className,
 	)}
 >
@@ -114,6 +118,18 @@
 					alt=""
 					src={item.entry?.image}
 				/>
+			{:else if width === 'poster'}
+				<a class="contents" href={make_link(item.entry)}>
+					<img
+						class={cn(
+							'w-full h-full object-cover',
+							// item.entry?.type === 'movie' && 'w-40 h-48',
+							// item.entry?.type === 'article' && 'w-40 h-32',
+						)}
+						alt=""
+						src={item.entry?.image}
+					/>
+				</a>
 			{/if}
 		{:else if item.annotation}
 			<div class="overflow-hidden rounded-md text-sm">

@@ -8,7 +8,7 @@ import { z } from "zod";
 import { page } from "$app/stores";
 import type { EntryWithBookmark } from "$lib/entry.server";
 import type { IconName } from "$lib/icons";
-import { trpc } from "$lib/trpc/client";
+
 
 export const filterTerm = writable("");
 
@@ -532,7 +532,7 @@ export const createQueryFilterStore = <T extends Record<PropertyKey, any>>(
 	...keys: StringKeys<T>[]
 ) => {
 
-// Take in 
+// Take in
 
 	const items = writable(data);
 	const searchTerm = writable("");

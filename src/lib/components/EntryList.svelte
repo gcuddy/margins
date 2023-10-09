@@ -44,7 +44,7 @@
 	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
 	import { selectedIds, selectedItems } from "$lib/stores/selectedItems";
 	import { syncStore } from "$lib/stores/sync";
-	import { trpc } from "$lib/trpc/client";
+
 	import type { ViewOptions } from "$lib/types/schemas/View";
 	import { isValidUrl } from "$lib/utils";
 	import { formatDuration } from "$lib/utils/dates";
@@ -68,7 +68,7 @@
 	import SavedPillWrapper from "./SavedPillWrapper.svelte";
 	import { slide } from "svelte/transition";
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
-	import type { RouterInputs } from "$lib/trpc/router";
+
 	import { longpress } from "$lib/actions/longpress";
 	import ImageLoader from "./ui/images/ImageLoader.svelte";
 	import { flip } from "svelte/animate";

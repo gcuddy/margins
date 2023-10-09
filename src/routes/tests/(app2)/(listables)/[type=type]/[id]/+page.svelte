@@ -91,7 +91,7 @@
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries(queryFactory.entries.list());
-			queryClient.invalidateQueries(data.query);
+			// queryClient.invalidateQueries(data.query);
 		},
 	});
 

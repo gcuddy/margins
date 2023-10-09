@@ -5,6 +5,7 @@ import { z } from 'zod';
 import pindex from '$lib/api/pindex';
 import { db, values } from '$lib/db';
 
+import type JSONFeed from '@json-feed-types/1_1';
 import { entrySelect } from '../selects';
 import type { GetCtx } from '../types';
 import type { Insertable } from 'kysely';
@@ -12,6 +13,7 @@ import type { Entry, Feed } from '$lib/prisma/kysely/types';
 import { get_library } from '$lib/server/queries';
 import { XMLParser } from 'fast-xml-parser';
 import type { FeedAddFormSchema } from '$components/subscriptions/subscription-entry.schema';
+import { isJsonFeed } from '$lib/helpers/feeds';
 
 const xmlParser = new XMLParser({
 	attributeNamePrefix: '',
@@ -27,19 +29,27 @@ function removeTagsFromHtml(html: string) {
 	return html.replaceAll(/(<([^>]+)>)/gi, '');
 }
 
-type FeedType = 'json' | 'rss' | 'atom';
+export type FeedType = 'json' | 'rss' | 'atom';
 
-async function getFeedData(res: Response): Promise<{
-	data: any;
-	type: FeedType;
-}> {
+async function getFeedData(res: Response): Promise<
+	| {
+			data: any;
+			type: 'rss' | 'atom';
+	  }
+	| {
+			data: JSONFeed;
+			type: 'json';
+	  }
+> {
 	const contentType = res.headers.get('content-type');
 	if (contentType?.includes('application/json')) {
 		const json = await res.json();
-		return {
-			data: json,
-			type: 'json',
-		};
+		if (isJsonFeed(json)) {
+			return {
+				data: json,
+				type: 'json',
+			};
+		}
 	}
 	// then it's xml
 	const text = await res.text();
@@ -56,16 +66,25 @@ async function getFeedData(res: Response): Promise<{
 			type: 'rss',
 		};
 	} else {
+		// try parsing raw as json and see if it has jsonfeed in it, possible that it's a jsonfeed with a different content-type
+		const json = JSON.parse(text);
+		if (isJsonFeed(json)) {
+			return {
+				data: json,
+				type: 'json',
+			};
+		}
+		// If we're here, we don't know what the feed is
 		throw new Error('Unknown feed type');
 	}
 }
 
 function parseJsonFeedItems(
-	json: any,
+	json: JSONFeed,
 	feedId: number,
 	since?: Date,
 ): Array<Insertable<Entry>> {
-	const items = json.items.filter((item: any) => {
+	const items = json.items.filter((item) => {
 		if (!since) {
 			return true;
 		}
@@ -373,7 +392,6 @@ export async function subscription({
 		.executeTakeFirstOrThrow();
 
 	const needsRefetching =
-		true ||
 		!feed.lastParsed ||
 		(feed.lastParsed &&
 			feed.lastParsed < new Date(Date.now() - 10 * 60 * 1000));

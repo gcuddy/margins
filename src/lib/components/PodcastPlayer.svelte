@@ -115,7 +115,7 @@
 	import Icon from "./helpers/Icon.svelte";
 	import Progress from "./helpers/Progress.svelte";
 	import { createMutation, createQuery } from "@tanstack/svelte-query";
-	import { trpc } from "$lib/trpc/client";
+
 	import { page } from "$app/stores";
 	import { draggable } from "@neodrag/svelte";
 	import { modals } from "$lib/stores/modals";

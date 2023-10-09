@@ -27,13 +27,20 @@
 </script>
 
 <script lang="ts">
-	import { ArrowRight, Cog, CreditCard, Search, Settings } from 'lucide-svelte';
+	import {
+		ArrowRight,
+		Cog,
+		CreditCard,
+		Search,
+		Settings,
+		TagIcon,
+	} from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { derived, type Writable, writable } from 'svelte/store';
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
-	import { Books, Movies, Subscriptions,Tags } from '$lib/commands';
+	import { Books, Movies, Subscriptions, Tags } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -52,6 +59,9 @@
 	} from '$lib/components/ui/command2';
 	import { darkThemes, themes } from '$lib/features/settings/themes';
 	import { queryKeys } from '$lib/queries/keys';
+	import { checkedEntryIds } from '$components/entries/multi-select';
+	import { Badge } from '$components/ui/badge';
+	import { createSetTagsMutation } from '$lib/queries/mutations';
 
 	const page = derived(state, ($state) => $state.pages.at(-1));
 	const pages = derived(state, ($state) => $state.pages);
@@ -112,6 +122,8 @@
 
 	const inputValue = writable('');
 	const container = writable<HTMLElement | null>(null);
+
+    const setTagsMutation = createSetTagsMutation();
 </script>
 
 <svelte:window
@@ -135,6 +147,11 @@
 	{container}
 	commandPages={pages}
 >
+	<!-- {#if $checkedEntryIds.length}
+		<div class="text-xs text-muted-foreground px-3 pt-3">
+			<Badge class="text-xs" variant="secondary">{$checkedEntryIds.length} entries</Badge>
+		</div>
+	{/if} -->
 	<CommandInput
 		onKeydown={(e) => {
 			if (e.key === 'Escape' || (e.key === 'Backspace' && !$inputValue)) {
@@ -147,6 +164,21 @@
 	<CommandList class="scrollbar-hide">
 		{#if !$page}
 			<CommandEmpty>No results found.</CommandEmpty>
+			{#if $spage.data.entry || $checkedEntryIds.length}
+				{@const ids = $spage.data.entry?.id
+					? [$spage.data.entry.id]
+					: $checkedEntryIds}
+				<CommandGroup heading="Actions">
+					<CommandItem
+						onSelect={() => {
+							addPage('action:tag-item');
+						}}
+					>
+						<TagIcon class="mr-2 h-4 w-4" />
+						Tag</CommandItem
+					>
+				</CommandGroup>
+			{/if}
 			<CommandGroup heading="Navigation">
 				<CommandItem
 					onSelect={() => {
@@ -256,7 +288,7 @@
 					onSelect={() => {
 						// goto(`/tests/search`);
 						// isOpen = false;
-                        addPage('search-movies');
+						addPage('search-movies');
 						$state.placeholder = 'Open tag...';
 					}}
 				>
@@ -381,6 +413,16 @@
 		{/if}
 		{#if $page === 'open-tag'}
 			<Tags preload bind:isOpen={$state.isOpen} />
+		{/if}
+		{#if $page === 'action:tag-item'}
+			<Tags onSelect={(tags) => {
+                const entries = $spage.data.entry?.id ? [$spage.data.entry.id] : $checkedEntryIds;
+                // TODO
+                $setTagsMutation.mutate({
+                    entries,
+                    tags
+                })
+            }} multiple bind:isOpen={$state.isOpen} />
 		{/if}
 	</CommandList>
 </CommandDialog>

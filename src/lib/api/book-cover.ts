@@ -1,4 +1,5 @@
 import { getGbookImage } from '$lib/features/books/utils';
+import { redis } from '$lib/redis';
 import type { Book } from './gbook';
 
 export async function itunesCoverLookup(isbn: string) {
@@ -47,6 +48,12 @@ export async function findHighestQualityBookCover(book: Book) {
 		return gbook_image;
 	}
 
+	const cached = await redis.get(`bookcover:${isbn}`);
+	if (cached) {
+		console.log(`Found cached book cover`);
+		return cached as string;
+	}
+
 	console.log({ gbook_image });
 
 	const [itunes, openlibrary] = await Promise.all([
@@ -54,5 +61,11 @@ export async function findHighestQualityBookCover(book: Book) {
 		openLibraryCoverLookup(isbn),
 	]);
 
-	return itunes || openlibrary || gbook_image || '';
+	const cover = itunes || openlibrary || gbook_image || '';
+
+	await redis.set(`bookcover:${isbn}`, cover, {
+		ex: 60 * 60 * 24 * 7,
+	});
+
+	return cover;
 }

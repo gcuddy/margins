@@ -6,8 +6,8 @@
 	import toast from "svelte-french-toast";
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
-	import { trpc, trpc } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
+
 	import type { Location } from "$lib/types/schemas/Locations";
 	import { getUser } from "@lucia-auth/sveltekit/client";
 	import type { State } from "@prisma/client";

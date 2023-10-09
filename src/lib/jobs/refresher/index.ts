@@ -10,7 +10,7 @@ import parse from "node-html-parser";
 import { db } from "$lib/db";
 import { parseEntry } from "$lib/feeds/parser";
 import { resolveUrl } from "$lib/feeds/utils";
-import { getEpisodes } from "$lib/trpc/routes/podcasts";
+
 import dayjs from "$lib/dayjs";
 const xmlMimeTypes = ['application/rss+xml', 'application/atom+xml', 'text/xml', 'application/xml'];
 export const isXml = (type: string) => xmlMimeTypes.some((t) => type.trim().includes(t));

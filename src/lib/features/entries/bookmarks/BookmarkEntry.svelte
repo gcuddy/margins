@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import Icon from "$lib/components/helpers/Icon.svelte";
-	import { trpc } from "$lib/trpc/client";
+
 
 	export let entry: {
 		screenshot: string | null;

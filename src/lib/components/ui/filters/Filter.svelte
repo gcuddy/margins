@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as AlertDialog from '$components/ui/alert-dialog';
+	import { checkIfKeyboardShortcutsAllowed } from '$lib/stores/keyboard';
 	import { Input } from '../input';
 	import { ctx } from './ctx';
 
@@ -18,6 +19,7 @@
 
 <svelte:window on:keydown={(event) => {
     if (!allowKeyboardShortcut) return;
+    if (!checkIfKeyboardShortcutsAllowed()) return;
     if (event.key === 'f') {
         $open = true;
     }

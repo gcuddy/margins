@@ -35,11 +35,11 @@ declare global {
 			currentList?: import('$lib/stores/currentList').CurrentList;
 			current_entry_id?: import('svelte/store').Writable<number | null>;
 			// tags?: import("@prisma/client").Tag[];
-			// subscriptions?: import("$lib/trpc/router").RouterOutputs["user"]["data"]["subscriptions"];
+
 			// states?: import("@prisma/client").State[];
 			filterMap?: import('$lib/stores/filter').FilterMapStore;
 			queryClient?: import('@tanstack/svelte-query').QueryClient;
-			favorites?: import('$lib/trpc/router').RouterOutputs['favorites']['list'];
+
 			location?: import('@prisma/client').Location;
 			S3_BUCKET_PREFIX?: string;
 		}

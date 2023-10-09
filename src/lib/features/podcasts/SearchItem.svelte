@@ -4,7 +4,7 @@
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import { notifications } from "$lib/stores/notifications";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
 	import {
 		podcastSearchQuery,
 		queryKeys,

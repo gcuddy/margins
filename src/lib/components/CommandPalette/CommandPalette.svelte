@@ -18,7 +18,7 @@
 	import { selectedItems } from "$lib/stores/selectedItems";
 	import { syncStore } from "$lib/stores/sync";
 	import { fadeScale } from "$lib/transitions";
-	import { trpc, trpc } from "$lib/trpc/client";
+
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import {
 		listPodcastsQuery,
@@ -49,7 +49,7 @@
 	} from "$lib/features/entries/queries";
 	import type { Entry } from "@prisma/client";
 	import EntryListItem from "$lib/features/entries/EntryListItem.svelte";
-	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
+
 	import { searchBookQuery } from "$lib/features/books/queries";
 	import RichAnnotationInput from "../annotations/RichAnnotationInput.svelte";
 	import { useSaveAnnotation } from "$lib/features/annotations/mutations";

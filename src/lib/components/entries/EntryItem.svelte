@@ -51,11 +51,12 @@
 	import { cn } from '$lib/utils/tailwind';
 
 	import Badge from '../ui/Badge.svelte';
-	import HoverCard from '../ui/hover-card/HoverCard.svelte';
+	import * as HoverCard from '../ui/hover-card';
 	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
 	import { Muted, Small } from '../ui/typography';
 	import EntryIcon from './EntryIcon.svelte';
 	import StatusIcon from './StatusIcon.svelte';
+	import StarRating from '$components/ui/star-rating/star-rating.svelte';
 
 	const queryClient = useQueryClient();
 
@@ -252,6 +253,8 @@
 	} else if (isBrowser) {
 		document?.body?.classList.remove('overflow-hidden');
 	}
+
+	let mousemove_timeout: ReturnType<typeof setTimeout>;
 </script>
 
 <svelte:document />
@@ -271,7 +274,7 @@
 			use:melt={builder}
 			{...$$restProps}
 			class="data-[state=open]:bg-accent flex flex-col h-full cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none"
-			data-sveltekit-preload-data="hover"
+			data-sveltekit-preload-data="tap"
 			on:focus|once={() => {
 				// console.log('preloading')
 				preloadData(href);
@@ -369,8 +372,8 @@
 											bind:checked
 											type="checkbox"
 											class={cn(
-												'relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-8 group-hover/select:ring-inset checked:group-hover/select:bg-opacity-80',
-												entry.status ? 'ring-primary' : 'ring-ring',
+												'relative h-full w-full cursor-pointer appearance-none before:absolute before:inset-2 before:rounded-md checked:bg-primary checked:text-primary-foreground checked:!ring-0 group-hover/select:ring-4 group-hover/select:ring-inset checked:group-hover/select:bg-opacity-80',
+												entry.status ? 'ring-blue-400' : 'ring-ring',
 											)}
 											on:click|stopPropagation
 											on:change
@@ -401,11 +404,20 @@
 								<div class="h-3 w-3 rounded-full bg-primary"></div>
 							{/if}
 							<div
+								on:mousemove={() => {
+									mousemove_timeout = setTimeout(() => {
+										preloadData(href);
+									}, 40);
+								}}
+								on:mouseleave={() => {
+									clearTimeout(mousemove_timeout);
+								}}
 								data-id={entry.id}
 								class="truncate font-semibold hover:underline focus:outline-none"
 							>
 								{title}
 							</div>
+
 							<div class="hidden gap-x-2 sm:flex">
 								{#if viewPreferences.annotations && data.annotations && data.annotations.length > 0}
 									{@const total = data.num_annotations
@@ -413,70 +425,75 @@
 										: data.annotations.length}
 									{@const slice = 3}
 									{@const remaining = total - slice}
-									<HoverCard>
-										<Badge slot="trigger" variant="secondary">
-											<PencilIcon class="mr-1 h-3 w-3" />
-											{total}
-										</Badge>
-										<div
-											slot="content"
-											class="flex flex-col gap-2 bg-card text-card-foreground"
-										>
-											<span class="font-semibold tracking-tight">Notes</span>
-											{#each data.annotations.slice(0, slice) as annotation}
-												<div
-													class="flex flex-col gap-1 rounded-lg border px-2 py-2 text-xs"
-												>
+									<HoverCard.Root>
+										<HoverCard.Trigger asChild let:builder>
+											<div use:melt={builder}>
+												<Badge variant="secondary">
+													<PencilIcon class="mr-1 h-3 w-3" />
+													{total}
+												</Badge>
+											</div>
+										</HoverCard.Trigger>
+										<HoverCard.Content>
+											<div
+												class="flex flex-col gap-2 bg-card text-card-foreground"
+											>
+												<span class="font-semibold tracking-tight">Notes</span>
+												{#each data.annotations.slice(0, slice) as annotation}
 													<div
-														class="flex items-center gap-2 text-muted-foreground"
+														class="flex flex-col gap-1 rounded-lg border px-2 py-2 text-xs"
 													>
-														<span class="font-medium">
-															{annotation.username}
-														</span>
-														<time datetime={annotation.createdAt.toString()}>
-															{ago(new Date(annotation.createdAt), $now)}
-														</time>
-													</div>
-													<div class="space-y-1 font-normal">
-														{#if annotation.target}
-															{@const text_quote = getTargetSelector(
-																annotation.target,
-																'TextQuoteSelector',
-															)}
-															{#if text_quote}
-																<Clamp clamp={2} class="border-l px-3 italic">
-																	{text_quote.exact}
-																</Clamp>
-																<!-- <div class="line-clamp-2 border-l px-3 italic">
+														<div
+															class="flex items-center gap-2 text-muted-foreground"
+														>
+															<span class="font-medium">
+																{annotation.username}
+															</span>
+															<time datetime={annotation.createdAt.toString()}>
+																{ago(new Date(annotation.createdAt), $now)}
+															</time>
+														</div>
+														<div class="space-y-1 font-normal">
+															{#if annotation.target}
+																{@const text_quote = getTargetSelector(
+																	annotation.target,
+																	'TextQuoteSelector',
+																)}
+																{#if text_quote}
+																	<Clamp clamp={2} class="border-l px-3 italic">
+																		{text_quote.exact}
+																	</Clamp>
+																	<!-- <div class="line-clamp-2 border-l px-3 italic">
                                                         {text_quote.exact}
                                                     </div> -->
-															{:else}
-																{JSON.stringify(annotation.target)}
+																{:else}
+																	{JSON.stringify(annotation.target)}
+																{/if}
 															{/if}
-														{/if}
-														{#if annotation.body}
-															<Clamp clamp={2}>
-																{annotation.body}
-															</Clamp>
-														{:else if annotation.contentData}
-															<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-															{@html render_html(annotation.contentData)}
-															<!-- <Editor
+															{#if annotation.body}
+																<Clamp clamp={2}>
+																	{annotation.body}
+																</Clamp>
+															{:else if annotation.contentData}
+																<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+																{@html render_html(annotation.contentData)}
+																<!-- <Editor
                                                         class="line-clamp-2"
                                                         content={annotation.contentData}
                                                         options={{ editable: false }}
                                                     /> -->
-														{/if}
+															{/if}
+														</div>
 													</div>
-												</div>
-											{/each}
-											{#if remaining > 0}
-												<div class="text-xs text-gray-500">
-													+{remaining} more
-												</div>
-											{/if}
-										</div>
-									</HoverCard>
+												{/each}
+												{#if remaining > 0}
+													<div class="text-xs text-gray-500">
+														+{remaining} more
+													</div>
+												{/if}
+											</div>
+										</HoverCard.Content>
+									</HoverCard.Root>
 								{/if}
 								{#if viewPreferences.attachment && attachment?.entry}
 									<Badge as="a" href="/tests/pdf/{attachment.entry.id}">
@@ -614,7 +631,7 @@
 							</div>
 						{/if}
 					</div>
-					<div class="ml-auto hidden shrink-0 items-center gap-x-1 sm:flex">
+					<div class="ml-auto hidden shrink-0 items-center gap-x-2 sm:flex">
 						{#if data.tags && viewPreferences.tags}
 							{#if data.tags.length > 1}
 								<!-- eslint-disable-next-line svelte/valid-compile -->
@@ -682,40 +699,49 @@
 							</div>
 						{/if}
 						{#if viewPreferences.relations && data.relations.length}
-							<HoverCard>
-								<Badge slot="trigger" variant="outline">
-									<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
-									{data.relations.length}
-								</Badge>
-								<div
-									slot="content"
-									class="flex flex-col gap-2 bg-card text-card-foreground"
-								>
-									<span class="font-semibold tracking-tight">Relations</span>
-									{#each data.relations as relation}
-										{#if relation.entry}
-											<a
-												href={make_link(relation.entry)}
-												class="flex cursor-pointer items-center gap-3 text-xs"
-											>
-												<svelte:component
-													this={relations_icons[relation.type]}
-													class="h-3 w-3 shrink-0"
-												/>
-                                                <!-- use:smoothload -->
-												<img
-													src={get_image(relation.entry)}
-													class="aspect-square w-10 rounded-full object-cover"
-													alt=""
-												/>
-												<span class="font-semibold">
-													{relation.entry.title}</span
+							<HoverCard.Root>
+								<HoverCard.Trigger asChild let:builder>
+									<div use:melt={builder}>
+										<Badge variant="outline">
+											<ArrowLeftRightIcon class="mr-1 h-3 w-3" />
+											{data.relations.length}
+										</Badge>
+									</div>
+								</HoverCard.Trigger>
+								<HoverCard.Content>
+									<div class="flex flex-col gap-2 bg-card text-card-foreground">
+										<span class="font-semibold tracking-tight">Relations</span>
+										{#each data.relations as relation}
+											{#if relation.entry}
+												<a
+													href={make_link(relation.entry)}
+													class="flex cursor-pointer items-center gap-3 text-xs"
 												>
-											</a>
-										{/if}
-									{/each}
-								</div>
-							</HoverCard>
+													<svelte:component
+														this={relations_icons[relation.type]}
+														class="h-3 w-3 shrink-0"
+													/>
+													<!-- use:smoothload -->
+													<img
+														src={get_image(relation.entry)}
+														class="aspect-square w-10 rounded-full object-cover"
+														alt=""
+													/>
+													<span class="font-semibold">
+														{relation.entry.title}</span
+													>
+												</a>
+											{/if}
+										{/each}
+									</div>
+								</HoverCard.Content>
+							</HoverCard.Root>
+						{/if}
+						{#if viewPreferences.rating && entry.rating}
+							<div>
+								<StarRating disabled class="h-3 w-3" rating={entry.rating} />
+								<!-- {entry.rating} -->
+							</div>
 						{/if}
 						{#if viewPreferences.savedAt && entry.savedAt}
 							<div class="flex items-end flex-col shrink-0 min-w-[56px]">

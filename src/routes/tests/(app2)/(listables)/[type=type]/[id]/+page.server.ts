@@ -22,13 +22,14 @@ import {
 } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import type { Entry } from '$lib/prisma/kysely/types';
-import { upsertAnnotation } from '$lib/queries/server';
+import { createEntry, upsertAnnotation } from '$lib/queries/server';
 import { interactionSchema, validateAuthedForm } from '$lib/schemas';
 import { relationSchema, update_relation } from '$lib/server/mutations';
 import type { Message } from '$lib/types';
 import { validate_form } from '$lib/utils/forms';
 
 import type { Actions } from './$types';
+import { getIdKeyName } from '$lib/utils/entries';
 
 export async function load() {
 	return {
@@ -314,6 +315,54 @@ export const actions: Actions = {
 				updatedAt: new Date(),
 			})
 			.execute();
+	},
+	rate: async (event) => {
+		const session = await event.locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		const formData = await event.request.formData();
+		const rating = formData.get('rating');
+		// const bookmarkId = formData.get('bookmarkId');
+		let entryId = formData.get('entryId') as string | undefined;
+		// TODO: if no entryid, create one given type and id
+		console.log(event.params);
+		let created = false;
+		if (!entryId) {
+			const key = getIdKeyName(event.params.type);
+			const e = await createEntry({
+				[key]: event.params.id,
+				type: event.params.type,
+			});
+			console.log({ key });
+			entryId = e.id;
+			created = true;
+		}
+		console.log({ rating, entryId });
+		if (
+			typeof rating !== 'string' ||
+			// typeof bookmarkId !== 'string' ||
+			!entryId
+		) {
+			return fail(400);
+		}
+		await db
+			.insertInto('Bookmark')
+			.values({
+				// bookmarked: 1,
+				entryId: +entryId,
+				// id: +bookmarkId,
+				rating: +rating,
+				status: 'Archive',
+				updatedAt: new Date(),
+				userId: session.user.userId,
+			})
+			.onDuplicateKeyUpdate({
+				rating: +rating,
+				updatedAt: new Date(),
+			})
+			.execute();
+		return { created };
 	},
 	relation: async ({ locals, params, request }) => {
 		const session = await locals.auth.validate();

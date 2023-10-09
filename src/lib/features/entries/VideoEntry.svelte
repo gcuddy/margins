@@ -6,7 +6,7 @@
 	// import Youtube from "$lib/components/Youtube.svelte";
 	import dayjs from "$lib/dayjs";
 	import { getContainerRefContext } from "$lib/features/entries/context";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import debounce from "lodash/debounce";
 	import { nanoid } from "$lib/nanoid";

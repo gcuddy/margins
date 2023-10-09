@@ -58,3 +58,21 @@ export function get_image(entry: { image?: string | null; uri?: string | null })
 		return `https://icon.horse/icon/${get_domain(entry.uri ?? '')}`;
 	}
 }
+
+
+// see mediaIdSchema
+export function getIdKeyName(type: Entry["type"], idAsEntryId?: boolean) {
+    switch (type) {
+        case "album":
+            return "spotifyId";
+        case "book":
+            return "googleBooksId";
+        case "movie":
+        case "tv":
+            return "tmdbId";
+        case "podcast":
+            return "podcastIndexId";
+        default:
+            return idAsEntryId ? "entryId" : "id";
+    }
+}

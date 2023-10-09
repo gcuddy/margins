@@ -50,6 +50,8 @@
 	import { filterLibrary } from '$lib/schemas/library';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import MovieCarousel from '$components/movies/movie-carousel.svelte';
+	import StarRating from '$components/ui/star-rating/star-rating.svelte';
+	import StarRatingForm from '$components/ui/star-rating/star-rating-form.svelte';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;
@@ -193,7 +195,13 @@
                 use:smoothload
             /> -->
 			<div class="flex flex-col gap-2 rounded p-1">
-				<Muted class="text-foreground">Movie</Muted>
+				<a
+					href="/tests/library/all{defaultStringifySearch(
+						filterLibrary({
+							type: 'movie',
+						}),
+					)}"><Muted class="text-foreground">Movie</Muted></a
+				>
 				<div class="flex items-baseline gap-x-2">
 					<H1 class=" text-foreground">{data.movie.title}</H1>
 					<a
@@ -237,6 +245,12 @@
 						<a href="/tests/people/t{writer.id}">{writer.name}</a>{' '}
 					{/each}
 				</Lead> -->
+				{#key data.movie.id}
+					<StarRatingForm
+						entryId={data.entry?.id}
+						rating={data.entry?.bookmark?.rating ?? 0}
+					/>
+				{/key}
 				<div class="flex items-center gap-2">
 					<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 					<!-- <pre>{JSON.stringify(data.entry?.interaction, null, 2)}</pre> -->
@@ -512,7 +526,9 @@
 								<div class="grid grid-cols-2 text-sm">
 									<dt class="font-medium">Keywords</dt>
 									<dd>
-										{data.movie.keywords?.keywords.map((genre) => genre.name).join(', ')}
+										{data.movie.keywords?.keywords
+											.map((genre) => genre.name)
+											.join(', ')}
 									</dd>
 								</div>
 							{/if}

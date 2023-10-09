@@ -51,7 +51,7 @@
 	import { match } from "ts-pattern";
 	import { getContext, onDestroy, onMount, tick } from "svelte";
 	import { isValidUrl } from "$lib/utils";
-	import { trpc } from "$lib/trpc/client";
+
 	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
 	import { syncStore } from "$lib/stores/sync";
 	import Button from "./Button.svelte";

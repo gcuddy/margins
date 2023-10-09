@@ -39,6 +39,11 @@ export function getQueryContext(queryClient: QueryClient) {
 		);
 	}
 
+	// function setData() {
+	//     //
+	//     queryClient.setQueryData()
+	// }
+
 	return {
 		getData,
 	};
@@ -71,7 +76,7 @@ export const queryFactory = {
 			placeholderData: keepPreviousData,
 			queryFn: ({ meta, pageParam }: InfiniteQueryFnParams) =>
 				qquery(meta?.init, 'collections', { ...input, cursor: pageParam }),
-			queryKey: ['collections', 'list'] as const,
+			queryKey: ['collections', 'list', input] as const,
 			staleTime: input ? 1000 * 60 * 5 : Number.POSITIVE_INFINITY,
 		}),
 	},
@@ -99,10 +104,11 @@ export const queryFactory = {
 
 		detail: (input: QueryInput<'entry_by_id'>, queryClient?: QueryClient) => ({
 			queryFn: async ({ meta }: QueryFnParams) => {
+				console.log(`Fetching entry_by_id`, { input, meta });
 				const entry = await qquery(meta?.init, 'entry_by_id', input);
 				if (queryClient) {
-					if (entry.author) {
-						addAuthorsToQueryClient(queryClient, [entry.author]);
+					if (entry.entry?.author) {
+						addAuthorsToQueryClient(queryClient, [entry.entry?.author]);
 					}
 				}
 				return entry;
@@ -140,6 +146,8 @@ export const queryFactory = {
 			},
 			// Ideally entries, list would get inferred... but this will do for  now
 			queryKey: ['entries', 'list', input ? input : undefined] as const,
+
+			placeholderData: keepPreviousData,
 
 			// staleTime: 1000 * 5, // 5 seconds
 		}),

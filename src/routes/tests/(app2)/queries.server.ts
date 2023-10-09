@@ -419,6 +419,16 @@ const qSchema = z.object({
 });
 
 export const queries = {
+	artistAlbums: query({
+		authorized: false,
+		fn: ({ input }) => spotify.artist.albums(input.id),
+		headers: {
+			'cache-control': 's-maxage=1, stale-while-revalidate=86400',
+		},
+		schema: z.object({
+			id: z.string(),
+		}),
+	}),
 	collections: query({
 		// fn: ({ ctx }) => {
 		// 	return db
@@ -571,7 +581,7 @@ export const queries = {
 				)
 				.where('b.userId', '=', ctx.userId)
 				.select(entrySelect)
-				.select(['b.status', 'i.progress'])
+				.select(['b.status', 'i.progress', 'b.bookmarked'])
 				.select((eb) =>
 					eb
 						.case()

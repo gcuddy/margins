@@ -107,9 +107,11 @@ model Bookmark {
     source           String?
     dueDate          DateTime?
     snoozedUntil     DateTime?
+    seen             Boolean           @default(false)
+    rating           Int?              @db.TinyInt
     /// The original url of the bookmark, if it's different than the entry's url
     originalUrl      String?
-    status           Status            @default(Backlog)
+    status           Status?            @default(Backlog)
     sort_order       Int               @default(0)
     /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
     review_timestamp Int?
@@ -525,24 +527,25 @@ model Context {
 
 /// @zod.import(["import { chosenIcon } from '../schemas'", "import { ViewOptionsSchema } from '../zod-utils'"])
 model Collection {
-    id              Int               @id @default(autoincrement())
-    name            String
-    private         Boolean           @default(true)
-    icon            String?
-    userId          String
-    description     String?
-    createdAt       DateTime          @default(now())
-    updatedAt       DateTime          @updatedAt
-    contentData     Json?
-    viewOptions     Json?
-    color           String?           @db.VarChar(9)
-    bgColor         String?           @db.VarChar(9)
-    font            String?           @db.VarChar(255)
-    deleted         DateTime?
-    user            AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
-    items           CollectionItems[]
-    favorites       Favorite[]
-    ViewPreferences ViewPreferences[]
+    id               Int               @id @default(autoincrement())
+    name             String
+    private          Boolean           @default(true)
+    icon             String?
+    userId           String
+    description      String?
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    contentData      Json?
+    viewOptions      Json?
+    color            String?           @db.VarChar(9)
+    bgColor          String?           @db.VarChar(9)
+    font             String?           @db.VarChar(255)
+    deleted          DateTime?
+    defaultItemWidth String?           @db.VarChar(255)
+    user             AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    items            CollectionItems[]
+    favorites        Favorite[]
+    ViewPreferences  ViewPreferences[]
 
     @@unique([userId, name])
     @@index([userId])
@@ -703,6 +706,7 @@ model Tag {
     @@unique([name, userId])
     @@index([userId])
     @@index([name])
+    @@index([color])
 }
 
 model EntryTag {

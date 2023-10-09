@@ -42,7 +42,7 @@
 	id={ids.menu}
 	class={cn(
 		!unstyled &&
-			'max-h-[300px] overflow-y-auto overflow-x-hidden overscroll-contain',
+			'max-h-[300px] overflow-y-auto border-t overflow-x-hidden overscroll-contain',
 		// animateHeight &&
 		// 	'h-[min(300px,var(--height))] max-h-[400px] transition-[height] ease-in-out duration-100',
 		// className,

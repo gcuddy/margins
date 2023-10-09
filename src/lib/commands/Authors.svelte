@@ -32,7 +32,7 @@
         const authors = $query.data ?? [];
 
         if (!$value || $value.length < 1) {
-            return authors;
+            return [...authors].sort();
         }
 
         const scored = authors.map((author) => ({

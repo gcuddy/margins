@@ -1,8 +1,8 @@
 import type { CreateMutationOptions, CreateQueryOptions } from "@tanstack/svelte-query"
 import type { TRPCClientInit } from "trpc-sveltekit"
 
-import { trpc } from "$lib/trpc/client"
-import type { RouterInputs } from "$lib/trpc/router"
+
+
 
 export const annotationQueryKeys = {
     annotations: ['annotations'] as const,

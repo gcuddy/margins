@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
-	import { derived } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 
 	import { goto } from '$app/navigation';
 	import {
@@ -12,39 +12,52 @@
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { getYear } from '$lib/utils/date';
+	import debounce from 'just-debounce-it';
+	import { effect } from '$lib/helpers';
 
 	const {
 		// options: { multiple },
 		state: { inputValue, shouldFilter },
 	} = commandCtx.get();
 
+	const debouncedInputValue = writable($inputValue);
+
+	const debouncedFn = debounce((val: string) => {
+		debouncedInputValue.set(val);
+	}, 200);
+
+	effect(inputValue, ($inputValue) => debouncedFn($inputValue));
+
 	const query = createQuery(
-		derived(inputValue, ($value) => ({
+		derived(debouncedInputValue, ($value) => ({
 			...queryFactory.search.movies({
 				q: $value,
 			}),
-            enabled: $value.length > 1,
+			enabled: $value.length > 1,
 		})),
 	);
 
-    export let isOpen = false;
+	createQuery({});
+
+	export let isOpen = false;
 
 	shouldFilter.set(false);
 
-	export let onSelect: (movie: QueryOutput<"searchMovies">[number]) => void = (movie) => {
-        goto(`/tests/movie/${movie.id}`)
-        isOpen = false;
-    };
-
+	export let onSelect: (movie: QueryOutput<'searchMovies'>[number]) => void = (
+		movie,
+	) => {
+		goto(`/tests/movie/${movie.id}`);
+		isOpen = false;
+	};
 </script>
 
 <CommandGroup>
-	{#if $query.isPending}
+	{#if $query.isLoading}
 		Loading...
-	{:else if $query.data}
+	{:else if $query.data && $inputValue}
 		{#each $query.data as movie (movie.id)}
 			<CommandItem
-				value="{movie.title}"
+				value={movie.title}
 				onSelect={() => {
 					onSelect(movie);
 				}}

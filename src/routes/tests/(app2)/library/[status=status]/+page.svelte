@@ -283,7 +283,7 @@
 	bind:viewPreferences
     saveViewUrl="/tests/views/explore/library{defaultStringifySearch({
         ...$filter,
-        status: $page.data.Status
+        status: $page.data.Status ? $page.data.Status : undefined
     })}"
 	viewPreferencesId={data.viewPreferences.id}
 >

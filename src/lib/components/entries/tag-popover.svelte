@@ -5,7 +5,7 @@
 
 	import Cluster from '$components/helpers/Cluster.svelte';
 	import Badge, { badgeVariants } from '$components/ui/Badge.svelte';
-	import Checkbox  from '$components/ui/Checkbox.svelte';
+	import Checkbox from '$components/ui/Checkbox.svelte';
 	import {
 		Popover,
 		PopoverContent,
@@ -17,11 +17,12 @@
 		CommandInput,
 		CommandItem,
 		CommandList,
-		CommandLoading
+		CommandLoading,
 	} from '$lib/components/ui/command2';
 	import { createSetTagsMutation } from '$lib/queries/mutations/index';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils';
+	import { TagColorPill } from '$components/tags/tag-color';
 
 	const query = createQuery({
 		...queryFactory.tags.list(),
@@ -32,7 +33,8 @@
 
 	// TODO: allow creation of tags given tmdb/spotify/googlebooks/podcastindex
 	export let entryId: Array<number>;
-	export let selectedTags: Array<{ id: number; name: string }> = [];
+	export let selectedTags: Array<{ id: number; name: string; color: string }> =
+		[];
 	const selectedTagsStore = writable(
 		selectedTags.map((t) => ({
 			value: t,
@@ -68,8 +70,11 @@
 
 <div bind:this={wrapper}>
 	<Cluster class="gap-2.5">
-		{#each $selectedTagsStore as { value: { name } }}
-			<Badge as="a" href="/tests/tag/{name}" variant="secondary">{name}</Badge>
+		{#each $selectedTagsStore as { value: { name, color } }}
+			<Badge as="a" href="/tests/tag/{name}" variant="outline">
+				<TagColorPill class="h-2 w-2 mr-1.5" color={color ?? '#000000'} />
+				{name}</Badge
+			>
 		{/each}
 
 		<Popover

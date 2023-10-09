@@ -576,6 +576,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	afterUpdate(() => {
 		// we should ensure first item is chosen when filtered inputvalue changes
+        console.log(`after update - ensuring active item`);
+				ensureActiveItem();
 	});
 
 	const pages = props?.commandPages ?? readable<Array<string>>([]);

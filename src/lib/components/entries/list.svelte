@@ -154,6 +154,7 @@
 		$virtualizer.setOptions({
 			count,
 		});
+        $virtualizer?.measure();
 	});
 
 	// $: $virtualizer.setOptions({

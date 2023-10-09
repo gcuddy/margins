@@ -1,7 +1,7 @@
 import type { Config } from '@sveltejs/adapter-vercel';
 import { config as pconfig, db } from "$lib/db"
 import { sql } from "kysely"
-import { createCaller } from '$lib/trpc/router';
+
 export const config: Config = {
     runtime: "edge",
     //   external: ["twitter-api-v2"]

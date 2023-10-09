@@ -37,6 +37,8 @@ import type { idSchema } from '$lib/schemas';
 import { BookmarkSchema } from '$lib/schemas/bookmark';
 import { noteFilterSchema } from '$lib/schemas/inputs';
 import { typeSchema } from '$lib/types';
+import { collectionItemWidthSchema } from '$lib/schemas/inputs/collection.schema';
+import { findHighestQualityBookCover } from '$lib/api/book-cover';
 
 type Ctx = {
 	ctx: {
@@ -50,7 +52,7 @@ type GetCtx<T extends z.ZodTypeAny> = {
 
 export const mediaIdSchema = z.union([
 	z.object({
-		tmdbId: z.number().int(),
+		tmdbId: z.coerce.number().int(),
 		type: z.enum(['movie', 'tv']),
 	}),
 	z.object({
@@ -62,13 +64,13 @@ export const mediaIdSchema = z.union([
 		type: z.enum(['book']),
 	}),
 	z.object({
-		podcastIndexId: z.number(),
+		podcastIndexId: z.coerce.number(),
 		type: z.enum(['podcast']),
 	}),
 ]);
 
 const entrySchema = z.object({
-	entryId: z.number().int(),
+	entryId: z.coerce.number().int(),
 	type: z.enum(['article', 'video', 'pdf', 'tweet', 'board_game']),
 });
 
@@ -340,6 +342,7 @@ export const s_add_to_collection = z
 		annotationId: z.string().or(z.string().array()).optional(),
 		collectionId: z.number().int(),
 		entryId: z.number().int().or(z.number().int().array()).optional(),
+		width: collectionItemWidthSchema.nullable(),
 	})
 	.refine(
 		(data) => data.entryId ?? data.annotationId,
@@ -351,6 +354,7 @@ export async function add_to_collection(
 		userId: string;
 	},
 ) {
+	const { width } = input;
 	if (Array.isArray(input.annotationId)) {
 		return await db
 			.insertInto('CollectionItems')
@@ -360,6 +364,7 @@ export async function add_to_collection(
 					collectionId: input.collectionId,
 					id: nanoid(),
 					updatedAt: new Date(),
+					width,
 				})),
 			)
 			.execute();
@@ -372,6 +377,7 @@ export async function add_to_collection(
 					entryId: id,
 					id: nanoid(),
 					updatedAt: new Date(),
+					width,
 				})),
 			)
 			.ignore()
@@ -386,6 +392,7 @@ export async function add_to_collection(
 				id: nanoid(),
 				type: input.annotationId ? 'Annotation' : 'Entry',
 				updatedAt: new Date(),
+				width,
 			})
 			.ignore()
 			.execute();
@@ -616,7 +623,7 @@ export async function entry_by_id({
 				jsonArrayFrom(
 					eb
 						.selectFrom('Collection as c')
-						.select(['c.id', 'c.name'])
+						.select(['c.id', 'c.name', 'c.color', 'c.icon'])
 						.innerJoin('CollectionItems as ci', 'ci.collectionId', 'c.id')
 						.whereRef('ci.entryId', '=', 'Entry.id')
 						.where('c.userId', '=', userId),
@@ -673,7 +680,7 @@ export async function entry_by_id({
 					eb
 						.selectFrom('TagOnEntry as toe')
 						.innerJoin('Tag as t', 't.id', 'toe.tagId')
-						.select(['t.id', 't.name'])
+						.select(['t.id', 't.name', 't.color'])
 						.whereRef('toe.entryId', '=', 'Entry.id')
 						.where('toe.userId', '=', userId),
 				).as('tags'),
@@ -687,6 +694,7 @@ export async function entry_by_id({
 							'b.bookmarked',
 							'b.author',
 							'b.title',
+							'b.rating',
 						])
 						// .select(eb => [jsonObjectFrom(
 						//     eb.selectFrom('auth_user as u').select(['u.username', 'u.id']).whereRef('u.id', '=', 'b.userId')
@@ -845,6 +853,7 @@ export async function count_library({
 export const saveToLibrarySchema = librarySchema.and(
 	z.object({
 		historyId: z.string().optional(),
+		seen: z.coerce.number().optional(),
 		status: z.nativeEnum(Status).default('Backlog'),
 	}),
 );
@@ -951,7 +960,8 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 		case 'book': {
 			const book = await books.get(input.googleBooksId);
 			console.log({ book });
-			let image = book.volumeInfo.imageLinks?.thumbnail;
+			let image = await findHighestQualityBookCover(book);
+			console.log({ image });
 			if (image) {
 				const u = new URL(image);
 				u.searchParams.delete('edge');
@@ -997,6 +1007,7 @@ export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
 			break;
 		}
 		case 'album': {
+			console.log(`Fetching album ${input.spotifyId}`);
 			const album = await spotify.album(input.spotifyId);
 			insertable = {
 				...insertable,

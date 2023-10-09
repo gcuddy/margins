@@ -1,7 +1,7 @@
 <script lang="ts">
 	import dayjs from "$lib/dayjs";
 	import { createRelativeDateStore } from "$lib/stores/relativeDate";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
 	import Muted from "./atoms/Muted.svelte";
 	import Icon from "./helpers/Icon.svelte";
 	import { genHtml } from "./TipTap.svelte";

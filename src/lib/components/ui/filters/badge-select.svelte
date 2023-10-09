@@ -1,5 +1,9 @@
 <script lang="ts">
-	import {  melt } from '@melt-ui/svelte';
+	import { omit } from '$lib/helpers';
+
+	import type { ComponentType } from 'svelte';
+
+	import { melt } from '@melt-ui/svelte';
 	import { Select as SelectPrimitive } from 'bits-ui';
 	import type { OnChangeFn } from 'bits-ui/dist/internal';
 
@@ -20,26 +24,26 @@
 
 	type T = $$Generic;
 
-    type SelectOption = { label?: string; value: T }
+	type SelectOption = { label?: string; value: T };
 
-	export let choices: Array<{
-		disabled?: boolean;
-	} & SelectOption> = [];
+	export let choices: Array<
+		{
+			disabled?: boolean;
+			icon?: ComponentType;
+		} & SelectOption
+	> = [];
 
 	export let selected: SelectOption | undefined = choices[0];
 
-	export let onSelectedChange: OnChangeFn<
-		SelectOption | undefined
-	> = (value) => {
-		if (value) {
-			onSelectedChange(value);
-		}
-	};
+	export let onSelectedChange: OnChangeFn<SelectOption> | undefined = undefined;
 
-    // forgive me for this terrible hack
-    function handleOnSelectedChange(val: any) {
-        onSelectedChange(val);
-    }
+	// forgive me for this terrible hack
+	function handleOnSelectedChange(val: any) {
+		console.log({ val });
+		if (val) {
+			onSelectedChange?.(val);
+		}
+	}
 
 	const {
 		elements: { container },
@@ -47,10 +51,12 @@
 </script>
 
 <!-- TODO: fix type error -->
+<!-- portal={$container} -->
 <Select
-	portal={$container}
+	portal="body"
 	positioning={{
 		placement: 'bottom-start',
+		strategy: 'fixed',
 	}}
 	{selected}
 	onSelectedChange={handleOnSelectedChange}
@@ -72,7 +78,15 @@
 	<SelectContent>
 		<SelectGroup>
 			{#each choices as choice}
-				<SelectItem {...choice}>{choice.label}</SelectItem>
+				<SelectItem {...omit(choice, 'icon')}>
+					{#if choice.icon}
+						<svelte:component
+							this={choice.icon}
+							class="h-4 w-4 mr-1 text-muted-foreground"
+						/>
+					{/if}
+					{choice.label}</SelectItem
+				>
 			{/each}
 		</SelectGroup>
 	</SelectContent>

@@ -35,6 +35,81 @@ type ImageObject = {
 	width: number;
 };
 
+// taken from:
+// https://github.com/spotify/spotify-web-api-ts-sdk/blob/main/src/types.ts
+
+export interface Copyright {
+    text: string
+    type: string
+}
+
+export interface ExternalIds {
+    upc: string
+}
+
+export interface ExternalUrls {
+    spotify: string
+}
+
+export interface Image {
+    url: string;
+    height: number;
+    width: number;
+}
+
+export interface Restrictions {
+    reason: string
+}
+
+
+export interface SimplifiedArtist {
+    external_urls: ExternalUrls
+    href: string
+    id: string
+    name: string
+    type: string
+    uri: string
+}
+
+export interface Followers {
+    href: string | null
+    total: number
+}
+
+export interface Artist extends SimplifiedArtist {
+    followers: Followers
+    genres: string[]
+    images: Image[]
+    popularity: number
+}
+
+interface AlbumBase {
+    album_type: string
+    available_markets: string[]
+    copyrights: Copyright[]
+    external_ids: ExternalIds
+    external_urls: ExternalUrls
+    genres: string[]
+    href: string
+    id: string
+    images: Image[]
+    label: string
+    name: string
+    popularity: number
+    release_date: string
+    release_date_precision: string
+    restrictions?: Restrictions
+    total_tracks: number
+    type: string
+    uri: string
+}
+
+
+export interface SimplifiedAlbum extends AlbumBase {
+    album_group: string
+    artists: SimplifiedArtist[]
+}
+
 type AlbumObject = {
 	album_type: string;
 	artists: Array<ArtistObject>;
@@ -72,6 +147,41 @@ type AlbumObject = {
 	type: string;
 	uri: string;
 };
+
+export interface Album extends AlbumBase {
+	artists: Artist[];
+	tracks: PagingObject<SimplifiedTrack>;
+}
+
+export interface LinkedFrom {
+	external_urls: ExternalUrls;
+	href: string;
+	id: string;
+	type: string;
+	uri: string;
+}
+
+export interface SimplifiedTrack {
+	artists: SimplifiedArtist[];
+	available_markets: string[];
+	disc_number: number;
+	duration_ms: number;
+	episode: boolean;
+	explicit: boolean;
+	external_urls: ExternalUrls;
+	href: string;
+	id: string;
+	is_local: boolean;
+	name: string;
+	preview_url: string | null;
+	track: boolean;
+	track_number: number;
+	type: string;
+	uri: string;
+	is_playable?: boolean;
+	linked_from?: LinkedFrom;
+	restrictions?: Restrictions;
+}
 
 type AlbumSearchResponse = {
 	albums: PagingObject<AlbumObject>;
@@ -117,7 +227,7 @@ const spotify = {
 	album: async (id: string) => {
 		const cached = await redis.get(`spotify-album:${id}`);
 		if (cached) {
-			return cached as AlbumObject;
+			return cached as Album;
 		}
 		const token = await getSpotifyToken();
 		const response = await fetch(`https://api.spotify.com/v1/albums/${id}`, {
@@ -126,13 +236,39 @@ const spotify = {
 			},
 		});
 		if (!response.ok) {
+			console.log({ response });
 			throw new Error('Failed to get spotify album');
 		}
 		const data = await response.json();
 		await redis.set(`spotify-album:${id}`, data, {
 			ex: 60 * 60 * 24,
 		});
-		return data as AlbumObject;
+		return data as Album;
+	},
+	artist: {
+		albums: async (id: string) => {
+			const cached = await redis.get(`spotify-artist-albums:${id}`);
+			if (cached) {
+				return cached as PagingObject<SimplifiedAlbum>;
+			}
+			const token = await getSpotifyToken();
+			const response = await fetch(
+				`https://api.spotify.com/v1/artists/${id}/albums`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				},
+			);
+			if (!response.ok) {
+				throw new Error('Failed to get spotify artist albums');
+			}
+			const data = await response.json();
+			await redis.set(`spotify-artist-albums:${id}`, data, {
+				ex: 60 * 60 * 24,
+			});
+			return data as PagingObject<SimplifiedAlbum>;
+		},
 	},
 	search: async (query: string) => {
 		// check cache

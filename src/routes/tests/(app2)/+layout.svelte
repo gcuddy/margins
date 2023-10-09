@@ -20,7 +20,7 @@
 	import QueryClientPersister from './QueryClientPersister.svelte';
 	import ViewTransitions from '$components/ViewTransitions.svelte';
 
-    $: console.log({$navigating});
+    $: console.log({$navigating, $page});
 
 	// export let data;
 

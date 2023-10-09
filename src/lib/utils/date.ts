@@ -129,6 +129,7 @@ export const formatDuration = (
 	duration: number,
 	unit?: 'm' | 's' | 'ms',
 	showSeconds = false,
+	format: 'long' | 'short' | ':' = 'short',
 ) => {
 	// convert to ms
 	if (unit === 'm') {
@@ -143,17 +144,28 @@ export const formatDuration = (
 
 	const parts = [];
 	if (hours > 0) {
-		parts.push(`${hours}h`);
+		parts.push(
+			`${hours}${format === 'long' ? ' hours' : format === 'short' ? 'h' : ''}`,
+		);
 	}
 	if (minutes > 0) {
-		parts.push(`${minutes}m`);
+		parts.push(
+			`${minutes}${
+				format === 'long' ? ' minutes' : format === 'short' ? 'm' : ''
+			}`,
+		);
 	}
-	if (showSeconds && seconds > 0) {
-		parts.push(`${seconds}s`);
+	if (showSeconds || seconds > 0) {
+		parts.push(
+			`${seconds}${
+				format === 'long' ? ' seconds' : format === 'short' ? 's' : ''
+			}`,
+		);
 	}
-	return parts.join(' ');
-};
 
+	const separator = format === ':' ? ':' : ' ';
+	return parts.map((part) => part.padStart(2, '0')).join(separator);
+};
 type SortOrder = 'asc' | 'desc';
 
 export function sortByDate<T>(
@@ -172,4 +184,3 @@ export function sortByDate<T>(
 
 	return sortedArray;
 }
-

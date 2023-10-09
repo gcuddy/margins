@@ -42,11 +42,11 @@
 </script>
 
 {#if showFeeds && form && 'feeds' in form && form?.feeds && form.feeds?.feeds.length}
-<button on:click={() => {
+<!-- <button on:click={() => {
     showFeeds = false;
 }}>
     go back
-</button>
+</button> -->
 	<form
 		action="/tests/subscriptions?/add"
 		method="post"

@@ -58,6 +58,7 @@ export async function collections({
 export const collectionUpdateInputSchema = z.object({
 	bgColor: z.string().nullable(),
 	color: z.string().nullable(),
+	defaultItemWidth: z.string().nullable(),
 	deleted: z.coerce.date().nullable(),
 	description: z.string().nullable(),
 	font: z.string().nullable(),

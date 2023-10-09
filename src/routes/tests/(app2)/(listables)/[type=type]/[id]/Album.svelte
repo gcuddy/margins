@@ -3,28 +3,41 @@
 
 	import smoothload from '$lib/actions/smoothload';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
-	import { formatDuration } from '$lib/utils/dates';
+	import { formatDate, formatDuration } from '$lib/utils/date';
 
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
 	import EntryOperations from './EntryOperations.svelte';
-
+	import * as Table from '$components/ui/table';
+	import StarRating from '$components/ui/star-rating/star-rating.svelte';
+	import { enhance } from '$app/forms';
+	import { findClosestImage } from '$lib/utils';
+	import StarRatingForm from '$components/ui/star-rating/star-rating-form.svelte';
 	type Album = PageData['album'];
 	export let data: PageData & {
 		album: NonNullable<Album>;
 	};
 
+	$: console.log({ data });
+
 	$: ({ album } = data);
+
+    $: img = findClosestImage(album.images, 600);
 </script>
 
 <div class="flex select-text flex-col gap-4">
 	<div class="flex gap-6 max-sm:flex-col sm:items-center">
+        {#if img}
 		<img
-			src={album.images[0].url}
+			style="view-transition-name:album-artwork-{album.id}"
+			src={img.url}
 			alt=""
-			class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]"
+			class="aspect-auto shadow-lg sm:w-[150px] md:w-[200px]"
 			use:smoothload
 		/>
+        {:else}
+        <!-- TODO -->
+        {/if}
 		<div class="flex flex-col gap-2">
 			<Muted>Album</Muted>
 			<H1>{album.name}</H1>
@@ -45,7 +58,8 @@
 				</a>
 			</Muted>
 			<div class="flex items-center gap-2">
-				<BookmarkForm data={data.bookmarkForm} />
+                <StarRatingForm rating={data.entry?.bookmark?.rating ?? 0} entryId={data.entry?.id}/>
+				<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 				{#if data.entry}
 					<EntryOperations data={data.annotationForm} entry={data.entry} />
 				{/if}
@@ -66,7 +80,10 @@
 			<dt class="text-xs uppercase"><Muted>Duration</Muted></dt>
 			<dd>
 				<Muted>
-					{@const duration = album.tracks.items.reduce((acc, cur) => acc + cur.duration_ms, 0)}
+					{@const duration = album.tracks.items.reduce(
+						(acc, cur) => acc + cur.duration_ms,
+						0,
+					)}
 					{formatDuration(duration, 'ms')}
 				</Muted>
 			</dd>
@@ -89,9 +106,71 @@
 		</div>
 	</dl>
 
+	<div>
+		<Table.Root>
+			<!-- <Table.Caption>Tracklist</Table.Caption> -->
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>#</Table.Head>
+					<Table.Head>Name</Table.Head>
+					<Table.Head>Artist</Table.Head>
+					<Table.Head>Duration</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each album.tracks.items as track, i}
+					<Table.Row>
+						<Table.Cell>{track.track_number}</Table.Cell>
+						<Table.Cell>
+							<a
+								target="_blank"
+								rel="noreferrer"
+								href={track.external_urls?.spotify}>{track.name}</a
+							>
+						</Table.Cell>
+						<Table.Cell>
+							{#each track.artists as artist, i}
+								<a
+									target="_blank"
+									rel="noreferrer"
+									class="text-muted-foreground hover:underline"
+									href={artist.external_urls.spotify}>{artist.name}</a
+								>{#if i !== track.artists.length - 1}{', '}{/if}
+							{/each}
+						</Table.Cell>
+						<Table.Cell
+							>{formatDuration(track.duration_ms, 'ms', true, ':')}</Table.Cell
+						>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</div>
+
 	<div class="prose prose-stone space-y-4 dark:prose-invert">
 		<div>
-			{album.total_tracks}
+			<!-- <pre>
+                {JSON.stringify(album, null, 2)}
+            </pre> -->
 		</div>
 	</div>
+
+	<!-- METADATA / COPYRIGHT -->
+	<footer class="text-xs text-muted-foreground flex flex-col gap-1">
+		<time datetime={album.release_date}
+			>{formatDate(album.release_date, {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+			})}</time
+		>
+		{#each album.copyrights as { text, type }}
+            <!-- {type} -->
+			<span>{type === "P" ? '℗' : '©'} {text.replace(
+                /(℗|©)/g,
+                ''
+            )}</span>
+		{/each}
+		<span class="mt-3">Data provided by Spotify.</span>
+	</footer>
 </div>

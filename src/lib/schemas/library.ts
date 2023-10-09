@@ -8,6 +8,7 @@ import {
 	createArrayComparatorSchema,
 	dateComparatorSchema,
 	idComparatorSchema,
+	intComparatorSchema,
 	stringComparatorSchema,
 } from './inputs/comparators';
 import { defaultParseSearch } from '$lib/utils/search-params';
@@ -120,14 +121,17 @@ export type LogicalOperator = (typeof logicalOperators)[number];
 // tag schema
 const entryTagFilter = tagSchema.partial();
 
-export const filterLibrarySchema = z
+const baseFilterLibrarySchema = z
 	.object({
+		// For top level - if any is true, then we do or...
+		any: z.boolean().optional(),
 		author: z.string().or(createArrayComparatorSchema(z.string())),
 		book_genre: z.enum(['Fiction', 'NonFiction']).optional(),
 		createdAt: createdAtFilter.or(createdAtFilter.array()).optional(),
 		domain: z.string().optional(),
-		feed: idComparatorSchema.optional(),
+		feed: createArrayComparatorSchema(z.number(), true).optional(),
 		published: dateComparatorSchema,
+		rating: z.literal('unrated').or(intComparatorSchema).optional(),
 		readingTime: z.object({
 			max: z.number().int().positive().optional(),
 			min: z.number().int().positive().optional(),
@@ -136,18 +140,32 @@ export const filterLibrarySchema = z
 			.nativeEnum(Status)
 			.or(createArrayComparatorSchema(z.nativeEnum(Status)))
 			.optional(),
+		tagColor: createArrayComparatorSchema(z.string()).optional(),
 		tags: z.object({
 			ids: z.number().int().positive().array(),
 			type: z.enum(logicalOperators).optional(),
 		}),
 		title: stringComparatorSchema,
-		type: typeSchema.nullish(),
+		type: typeSchema.nullish().or(createArrayComparatorSchema(typeSchema)),
 	})
 	.partial();
-export type FilterLibrarySchema = z.input<typeof filterLibrarySchema>;
+
+export type FilterLibrarySchema = z.input<typeof baseFilterLibrarySchema> & {
+	and?: Array<FilterLibrarySchema>;
+	or?: Array<FilterLibrarySchema>;
+};
+
+export const filterLibrarySchema: z.ZodType<FilterLibrarySchema> =
+	baseFilterLibrarySchema
+		.extend({
+			and: z.lazy(() => filterLibrarySchema.array()),
+			or: z.lazy(() => filterLibrarySchema.array()),
+		})
+		.partial();
 
 /**
  * A Filter Library identity function for strong types.
+ * Can be used e.g. to pass into defaultStringifySearch.
  */
 export function filterLibrary(input: FilterLibrarySchema) {
 	return input;
@@ -161,7 +179,7 @@ export function parseFilterFromSearchParams(
 	search: string,
 ): FilterLibrarySchema | undefined {
 	const rawObj = defaultParseSearch(search);
-	// console.log({ rawObj });
+	console.log({ rawObj });
 	const parsed = filterLibrarySchema.safeParse(rawObj);
 	// console.log({ parsed });
 	if (parsed.success) {

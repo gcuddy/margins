@@ -262,11 +262,13 @@ export type Bookmark = {
 	source: string | null;
 	dueDate: Timestamp | null;
 	snoozedUntil: Timestamp | null;
+	seen: Generated<number>;
+	rating: number | null;
 	/**
 	 * The original url of the bookmark, if it's different than the entry's url
 	 */
 	originalUrl: string | null;
-	status: Generated<Status>;
+	status: Generated<Status | null>;
 	sort_order: Generated<number>;
 	/**
 	 * The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
@@ -292,6 +294,7 @@ export type Collection = {
 	bgColor: string | null;
 	font: string | null;
 	deleted: Timestamp | null;
+	defaultItemWidth: string | null;
 };
 export type CollectionItems = {
 	id: string;

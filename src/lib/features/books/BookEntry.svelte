@@ -9,8 +9,8 @@
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import dayjs from "$lib/dayjs";
 	import { stripGoogleBookCurl } from "$lib/features/books/utils";
-	import { trpc, trpc } from "$lib/trpc/client";
-	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
+
+
 	import {
 		createMutation,
 		createQuery,

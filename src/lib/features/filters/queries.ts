@@ -2,7 +2,7 @@ import type { Prisma } from "@prisma/client";
 import type { QueryOptions } from "@tanstack/svelte-query";
 import type { TRPCClientInit } from "trpc-sveltekit";
 
-import { trpc } from "$lib/trpc/client";
+
 
 export const queryKeys = {
 	filter: ["filter"] as const,

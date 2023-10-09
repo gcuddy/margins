@@ -15,8 +15,8 @@
 	import type { HTMLAnchorAttributes } from "svelte/elements";
 	import { Image } from "@unpic/svelte";
 	import { icons } from "./utils";
-	import type { RouterOutputs } from "$lib/trpc/router";
-	import { trpc } from "$lib/trpc/client";
+
+
 	import LoadingSpinner from "$lib/components/LoadingSpinner.svelte";
 
 	const client = trpc($page);

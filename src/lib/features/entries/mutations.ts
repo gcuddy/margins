@@ -1,8 +1,8 @@
 import { getContext } from "svelte";
 
-import type { trpc } from "$lib/trpc/client";
+
 import type { CreateMutationOptions } from "@tanstack/svelte-query";
-import type { RouterOutputs } from "$lib/trpc/router";
+
 
 export const UpdateBookmarkMutationKey = 'UpdateBookmarkMutation';
 

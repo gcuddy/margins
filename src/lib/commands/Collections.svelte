@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
-	import { Box } from 'lucide-svelte';
+	import { Box, BoxIcon } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { derived } from 'svelte/store';
 
@@ -8,17 +8,19 @@
 	import {
 		commandCtx,
 		CommandGroup,
+		CommandIcon,
 		CommandItem,
 	} from '$lib/components/ui/command2';
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
+	import { icons } from '$components/icon-picker/data';
 
 	const query = createInfiniteQuery(queryFactory.collections.list());
 
-    // fetch all pages
-    $: if ($query.hasNextPage && !$query.isFetchingNextPage) {
-        $query.fetchNextPage();
-    }
+	// fetch all pages
+	$: if ($query.hasNextPage && !$query.isFetchingNextPage) {
+		$query.fetchNextPage();
+	}
 
 	const {
 		state: { inputValue },
@@ -62,7 +64,15 @@
 				}}
 				value={`${collection.name} ${collection.id}`}
 			>
-				<Box class="mr-2 h-4 w-4" />
+				<!-- <Box class="mr-2 h-4 w-4" /> -->
+				<svelte:component
+					this={icons.find((icon) => icon.name === collection.icon)
+						?.component ?? BoxIcon}
+					data-color-hex={collection.color}
+					class="mr-2 h-4 w-4"
+					style="--color:{collection.color}"
+				/>
+				<!-- <CommandIcon /> -->
 				<span>{collection.name}</span>
 			</CommandItem>
 		{:else}

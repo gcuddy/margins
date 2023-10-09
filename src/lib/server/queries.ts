@@ -1,6 +1,6 @@
 import type { DocumentType, Status } from '@prisma/client';
 import type { JSONContent } from '@tiptap/core';
-import { type ExpressionBuilder, sql } from 'kysely';
+import { type ExpressionBuilder, type SqlBool, sql, Expression } from 'kysely';
 import type { Nullable } from 'kysely/dist/cjs/util/type-utils';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/mysql';
 import type { z } from 'zod';
@@ -20,6 +20,7 @@ import type {
 	Interaction,
 } from '$lib/prisma/kysely/types';
 import {
+	FilterLibrarySchema,
 	entryListSortSchemas,
 	filterLibrarySchema,
 	get_library_schema,
@@ -27,8 +28,10 @@ import {
 import type { Type } from '$lib/types';
 import {
 	applyFilter,
+	applyFilterWith,
 	generateComparatorClause,
 } from '$lib/db/utils/comparators';
+import { objectEntries } from '$lib/helpers';
 
 type AliasedEb = ExpressionBuilder<
 	DB &
@@ -116,6 +119,10 @@ export async function get_library({
 		.leftJoin('EntryInteraction as i', (j) =>
 			j.onRef('i.entryId', '=', 'e.id').on('i.userId', '=', userId),
 		)
+		// .leftJoin('TagOnEntry as toe', (j) =>
+		// 	j.onRef('toe.entryId', '=', 'e.id').on('toe.userId', '=', userId),
+		// )
+		// .leftJoin('Tag as t', 't.id', 'toe.tagId')
 		.select([
 			'e.id',
 			'e.type',
@@ -141,8 +148,10 @@ export async function get_library({
 			'b.createdAt as savedAt',
 			'i.progress',
 			'i.finished',
-			'i.seen',
+			// 'i.seen',
+			'b.seen',
 			'i.currentPage',
+			'b.rating',
 		])
 		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
 		.select((eb) => [
@@ -179,6 +188,7 @@ export async function get_library({
 					.where('i.userId', '=', userId),
 			).as('interaction'),
 			jsonArrayFrom(
+				// eb.selectNoFrom(['t.id', 't.name', 't.color']),
 				eb
 					.selectFrom('Tag')
 					.select(['Tag.id', 'Tag.name', 'Tag.color'])
@@ -419,126 +429,231 @@ export async function get_library({
 			published,
 			readingTime,
 			status,
+			tagColor,
 			tags,
 			title,
 			type,
 			..._rest
 		} = filter;
-		// TODO: put this into a functino for exhaustiveness check
-		if (type) {
-			query = query.where('e.type', '=', type);
-		}
-		if (createdAt) {
-			const createdAts = Array.isArray(createdAt) ? createdAt : [createdAt];
-			for (const createdAt of createdAts) {
-				if ('gte' in createdAt && createdAt.gte) {
-					query =
-						createdAt.gte instanceof Date
-							? query.where('e.createdAt', '>=', createdAt.gte)
-							: query.where(
-									'b.createdAt',
-									'<=',
-									sql`NOW() - INTERVAL ${sql.raw(
-										`${createdAt.gte.num} ${createdAt.gte.unit}`,
-									)}`,
-							  );
-				} else if ('lte' in createdAt && createdAt.lte) {
-					query =
-						createdAt.lte instanceof Date
-							? query.where('e.createdAt', '<=', createdAt.lte)
-							: query.where(
-									'b.createdAt',
-									'>=',
-									sql`NOW() - INTERVAL ${sql.raw(
-										`${createdAt.lte.num.toString()} ${createdAt.lte.unit}`,
-									)}`,
-							  );
-				} else if ('equals' in createdAt && createdAt.equals) {
-					// use between start of day and end of day for equals
-					const date = new Date(createdAt.equals).toISOString().slice(0, 10);
-					query = query.where(
-						sql`b.createdAt >= "${sql.raw(
-							date,
-						)} 00:00:00"  AND b.createdAt <= "${sql.raw(date)} 23:59:59"`,
-					);
-				}
-			}
-		}
-		if (tags) {
-			query =
-				!tags.type || tags.type === 'or'
-					? query.where((eb) =>
-							eb.exists(
-								eb
-									.selectFrom('TagOnEntry')
-									.select('TagOnEntry.id')
-									.whereRef('TagOnEntry.entryId', '=', 'e.id')
-									.where('TagOnEntry.tagId', 'in', tags.ids),
-							),
-					  )
-					: query.where(({ eb, selectFrom }) =>
-							eb(
-								selectFrom('TagOnEntry')
-									.select(({ fn }) => fn.count('TagOnEntry.id').as('count'))
-									.distinct()
-									.whereRef('TagOnEntry.entryId', '=', 'e.id')
-									.where('TagOnEntry.tagId', 'in', tags.ids),
-								'=',
-								tags.ids.length,
-							),
-					  );
-		}
-		if (readingTime) {
-			const { max, min } = readingTime;
-			if (min) {
-				query = query.where('e.estimatedReadingTime', '>=', min);
-			}
-			if (max) {
-				query = query.where('e.estimatedReadingTime', '<=', max);
-			}
-		}
-		if (domain) {
-			query = query
-				.where('e.uri', 'is not', null)
-				.where('e.uri', 'regexp', '^(http|https)://')
-				.where(
-					sql`SUBSTRING_INDEX(SUBSTRING_INDEX(e.uri, '/', 3), '//', -1) = ${domain}`,
+
+		query = query.where((_eb) => {
+			console.time('buildFilters');
+			function buildFilters(eb: typeof _eb, filter: FilterLibrarySchema) {
+				console.log('buildFilters', { filter });
+				// TODO: duplicating logic from compartors -> applyWith, but can't figure out another way for now
+				const exprs = objectEntries(filter)
+					.map(([key, value]) => {
+						// Skip if value is not truthy
+						if (!value) {
+							return;
+						}
+						// handle recursion
+						if (key === 'and' || key === 'or') {
+							const subExprs: Array<Expression<SqlBool>> = [];
+							console.log({ key, value });
+							for (let i = 0; i < value.length; i++) {
+								const subFilter = value[i];
+								if (subFilter) {
+									subExprs.push(buildFilters(eb, subFilter));
+								}
+							}
+							return key === 'and' ? eb.and(subExprs) : eb.or(subExprs);
+						}
+
+						// Now handle all other cases...
+
+						if (key === 'type') {
+							if (typeof value === 'string') {
+								return eb('e.type', '=', value);
+							} else {
+								return generateComparatorClause(eb, 'e.type', value);
+							}
+						} else if (key === 'createdAt') {
+							const createdAts = Array.isArray(value) ? value : [value];
+							const subExprs: Array<Expression<SqlBool>> = [];
+							for (const createdAt of createdAts) {
+								if ('gte' in createdAt && createdAt.gte) {
+									subExprs.push(
+										createdAt.gte instanceof Date
+											? eb('e.createdAt', '>=', createdAt.gte)
+											: eb(
+													'b.createdAt',
+													'<=',
+													sql`NOW() - INTERVAL ${sql.raw(
+														`${createdAt.gte.num} ${createdAt.gte.unit}`,
+													)}`,
+											  ),
+									);
+								} else if ('lte' in createdAt && createdAt.lte) {
+									subExprs.push(
+										createdAt.lte instanceof Date
+											? eb('e.createdAt', '<=', createdAt.lte)
+											: eb(
+													'b.createdAt',
+													'>=',
+													sql`NOW() - INTERVAL ${sql.raw(
+														`${createdAt.lte.num.toString()} ${
+															createdAt.lte.unit
+														}`,
+													)}`,
+											  ),
+									);
+								} else if ('equals' in createdAt && createdAt.equals) {
+									// use between start of day and end of day for equals
+									const date = new Date(createdAt.equals)
+										.toISOString()
+										.slice(0, 10);
+									subExprs.push(
+										sql`b.createdAt >= "${sql.raw(
+											date,
+										)} 00:00:00"  AND b.createdAt <= "${sql.raw(
+											date,
+										)} 23:59:59"`,
+									);
+								}
+							}
+							return eb.and(subExprs);
+						} else if (key === 'tags') {
+							// eb("")
+							const tags = value;
+
+							// TODO: examine if there's a better way to do this. (maybe left join on initial select...)
+							return !tags.type || tags.type === 'or'
+								? eb.exists(
+										eb
+											.selectFrom('TagOnEntry')
+											.select('TagOnEntry.id')
+											.whereRef('TagOnEntry.entryId', '=', 'e.id')
+											.where('TagOnEntry.tagId', 'in', tags.ids),
+								  )
+								: eb(
+										eb
+											.selectFrom('TagOnEntry')
+											.select(({ fn }) => fn.count('TagOnEntry.id').as('count'))
+											.distinct()
+											.whereRef('TagOnEntry.entryId', '=', 'e.id')
+											.where('TagOnEntry.tagId', 'in', tags.ids),
+										'=',
+										tags.ids.length,
+								  );
+
+							// query =
+							// 	!tags.type || tags.type === 'or'
+							// 		? query.where((eb) =>
+							// 				eb.exists(
+							// 					eb
+							// 						.selectFrom('TagOnEntry')
+							// 						.select('TagOnEntry.id')
+							// 						.whereRef('TagOnEntry.entryId', '=', 'e.id')
+							// 						.where('TagOnEntry.tagId', 'in', tags.ids),
+							// 				),
+							// 		  )
+							// 		: query.where(({ eb, selectFrom }) =>
+							// 				eb(
+							// 					selectFrom('TagOnEntry')
+							// 						.select(({ fn }) =>
+							// 							fn.count('TagOnEntry.id').as('count'),
+							// 						)
+							// 						.distinct()
+							// 						.whereRef('TagOnEntry.entryId', '=', 'e.id')
+							// 						.where('TagOnEntry.tagId', 'in', tags.ids),
+							// 					'=',
+							// 					tags.ids.length,
+							// 				),
+							// 		  );
+						} else if (key === 'readingTime') {
+							const { max, min } = value;
+							// TODO coalesce with wordCount
+							if (min) {
+								return eb('e.estimatedReadingTime', '>=', min);
+							}
+							if (max) {
+								return eb('e.estimatedReadingTime', '<=', max);
+							}
+						} else if (key === 'domain') {
+							return eb.and([
+								eb('e.uri', 'is not', null),
+								eb('e.uri', 'regexp', '^(http|https)://'),
+								sql`SUBSTRING_INDEX(SUBSTRING_INDEX(e.uri, '/', 3), '//', -1) = ${domain}`,
+							]);
+						} else if (key === 'book_genre') {
+							return eb('e.book_genre', '=', value);
+						} else if (key === 'feed') {
+							return generateComparatorClause(eb, 'e.feedId', value);
+						} else if (key === 'published') {
+							return generateComparatorClause(eb, 'e.published', value);
+						} else if (key === 'title') {
+							return generateComparatorClause(
+								eb,
+								eb.fn.coalesce('b.title', 'e.title'),
+								value,
+							);
+						} else if (key === 'status') {
+							return generateComparatorClause(eb, 'b.status', value);
+						} else if (key === 'author') {
+							return generateComparatorClause(
+								eb,
+								eb.fn.coalesce('b.author', 'e.author'),
+								value,
+							);
+						} else if (key === 'tagColor') {
+							// return generateComparatorClause(eb, 't.color', value)
+							// doing this again... hm.
+							const { in: _in, nin } = value;
+							const x = eb
+								.selectFrom('TagOnEntry')
+								.innerJoin('Tag', 'Tag.id', 'TagOnEntry.tagId')
+								.select('TagOnEntry.id')
+								.whereRef('TagOnEntry.entryId', '=', 'e.id')
+								.where('TagOnEntry.userId', '=', userId);
+
+							if (_in) {
+								return eb.exists(x.where('Tag.color', 'in', _in));
+							}
+
+							if (nin) {
+								return eb.not(eb.exists(x.where('Tag.color', 'in', nin)));
+							}
+
+							//             eb
+							// .selectFrom('Tag')
+							// .select(['Tag.id', 'Tag.name', 'Tag.color'])
+							// .innerJoin('TagOnEntry as et', 'et.tagId', 'Tag.id')
+							// .whereRef('et.entryId', '=', 'e.id')
+						} else if (key === 'rating') {
+							return generateComparatorClause(eb, 'b.rating', value);
+						} else if (key === 'any') {
+							// Do nothing (see below)
+						} else {
+							key satisfies never;
+						}
+					})
+					.filter(Boolean);
+
+				console.log(`stitchjing together ${exprs.length} expressions`, {
+					exprs,
+				});
+				console.log(
+					exprs.forEach((e) =>
+						console.log(e.toOperationNode().kind.toString()),
+					),
 				);
-		}
-		if (book_genre) {
-			query = query.where('e.book_genre', '=', book_genre);
-		}
-		if (feed) {
-			query = query.where((eb) =>
-				generateComparatorClause(eb, 'e.feedId', feed),
-			);
-		}
-		if (published) {
-			query = query.where((eb) => applyFilter(eb, { published }));
-		}
-		if (title) {
-			query = query.where((eb) =>
-				generateComparatorClause(
-					eb,
-					eb.fn.coalesce('b.title', 'e.title'),
-					title,
-				),
-			);
-			// query = query.where((eb) => applyFilter(eb, { title }));
-		}
-		if (status) {
-			query = query.where((eb) =>
-				generateComparatorClause(eb, 'b.status', status),
-			);
-		}
-		if (author) {
-			query = query.where((eb) =>
-				generateComparatorClause(
-					eb,
-					eb.fn.coalesce('b.author', 'e.author'),
-					author,
-				),
-			);
+				console.log(filter);
+				// TOP-LEVEL: we check if any is true, which will make it an OR
+				// TODO: this might be a problematic way of doing things...
+				if (filter.any) {
+					return eb.or(exprs);
+				}
+				return eb.and(exprs);
+			}
+
+			const f = buildFilters(_eb, filter);
+			console.timeEnd('buildFilters');
+			return f;
+		});
+		// TODO: put this into a functino for exhaustiveness check
+		if (tagColor) {
+			// TODO:
 		}
 	}
 	const entries = await query.execute();

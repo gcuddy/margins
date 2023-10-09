@@ -13,6 +13,7 @@
 		MoreHorizontalIcon,
 		PaletteIcon,
 		Plus,
+		RulerIcon,
 		TrashIcon,
 		// UnlockIcon,
 		XIcon,
@@ -44,6 +45,11 @@
 		DropdownMenuItem,
 		DropdownMenuSeparator,
 		DropdownMenuTrigger,
+		DropdownMenuSub,
+		DropdownMenuSubContent,
+		DropdownMenuSubTrigger,
+		DropdownMenuRadioGroup,
+		DropdownMenuRadioItem,
 	} from '$lib/components/ui/dropdown-menu';
 	import { styleToString } from '$lib/helpers';
 	import { hexToHsl } from '$lib/helpers/color';
@@ -54,10 +60,14 @@
 		type MutationInput,
 		query,
 	} from '$lib/queries/query';
-	import { isValidUrl } from '$lib/utils';
+	import { capitalize, isValidUrl } from '$lib/utils';
 
 	import CollectionItem from './collection-item.svelte';
 	import CollectionItemCard from './collection-item-card.svelte';
+	import {
+		collectionItemWidthIcons,
+		collectionItemWidths,
+	} from '$lib/schemas/inputs/collection.schema';
 
 	export let data;
 
@@ -151,6 +161,7 @@
 				onSelect: async (entry) => {
 					$addToCollectionMutation.mutate({
 						entryId: entry.id,
+						width: data.collection.defaultItemWidth,
 					});
 					commander.close();
 				},
@@ -166,6 +177,7 @@
 					commander.close();
 					$addToCollectionMutation.mutate({
 						annotationId: a.id,
+						width: data.collection.defaultItemWidth,
 					});
 					// awaitinvalidate('entry');
 					await invalidate('collection');
@@ -211,6 +223,7 @@
 					}
 					$addToCollectionMutation.mutate({
 						entryId: entry.id,
+						width: data.collection.defaultItemWidth,
 					});
 					await invalidate('collection');
 				},
@@ -249,6 +262,33 @@
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-52">
 						<DropdownMenuGroup>
+							<DropdownMenuSub>
+								<DropdownMenuSubTrigger>
+									<RulerIcon class="mr-2 h-4 w-4" />
+									Default item width
+								</DropdownMenuSubTrigger>
+								<DropdownMenuSubContent>
+									<DropdownMenuRadioGroup value={data.collection.defaultItemWidth ?? undefined}>
+										{#each collectionItemWidths as width}
+											<DropdownMenuRadioItem
+												value={width}
+												on:click={() => {
+													$collectionUpdateMutation.mutate({
+														defaultItemWidth: width,
+													});
+													data.collection.defaultItemWidth = width;
+												}}
+											>
+												<svelte:component
+													this={collectionItemWidthIcons[width]}
+													class="mr-2 h-4 w-4"
+												/>
+												{capitalize(width)}
+											</DropdownMenuRadioItem>
+										{/each}
+									</DropdownMenuRadioGroup>
+								</DropdownMenuSubContent>
+							</DropdownMenuSub>
 							<DropdownMenuItem
 								on:click={async () => {
 									await $collectionUpdateMutation.mutateAsync({
@@ -512,6 +552,7 @@
 			class="placeholder:text-muted-foreground/75 bg-transparent transition text-muted-foreground focus-visible:text-foreground w-full h-auto resize-none apearance-none focus:outline-none {fontClass}"
 			placeholder="Notes"
 			rows={1}
+			use:autosize
 			bind:value={data.collection.description}
 			on:blur={() => {
 				if (data.collection.description === lastSavedDescription) {
@@ -600,7 +641,10 @@
 		}}
 	>
 		{#each data.collection.items as item (item.id)}
-			<div animate:flip={{ duration: 200 }}>
+			<div
+				class="flex flex-col items-center justify-center shrink mr-auto"
+				animate:flip={{ duration: 200 }}
+			>
 				{#if 'pending' in item && item.pending}
 					<CollectionItemCard loading />
 				{:else}

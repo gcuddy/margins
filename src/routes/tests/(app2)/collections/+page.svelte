@@ -21,9 +21,21 @@
 	import Separator from '$components/ui/Separator.svelte';
 	export let data;
 
-	const query = createInfiniteQuery(
-		queryFactory.collections.list(),
-	);
+	// const query = createInfiniteQuery(
+	// 	queryFactory.collections.list({
+    //         filter: {
+    //             or: [
+    //                 {
+    //                     name: {
+    //                         contains: 'test',
+    //                     },
+    //                 }
+    //             ]
+    //         }
+    //     }),
+	// );
+
+    // $: console.log({$query})
 
 	const { constraints, delayed, enhance, errors, form, submitting } = superForm(
 		data.form,

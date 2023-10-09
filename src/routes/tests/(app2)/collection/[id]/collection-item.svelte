@@ -19,6 +19,11 @@
 
 	import type { PageData } from './$types';
 	import CollectionItemCard from './collection-item-card.svelte';
+	import {
+		type CollectionItemWidth,
+		collectionItemWidths,
+	} from '$lib/schemas/inputs/collection.schema';
+	import { capitalize, cn } from '$lib/utils';
 
 	export let item: PageData['collection']['items'][number];
 	let className: string | undefined = undefined;
@@ -57,13 +62,19 @@
 		return $entriesQuery.data.some((entry) => entry.id === item.entry?.id);
 	});
 
+
+
 	let customizeDialogOpen = false;
 
-	let width =
-		(item.width as ComponentProps<CollectionItemCard>['width']) ?? 'default';
+	let width = (item.width as CollectionItemWidth) ?? 'default';
+	// let style = 'default';
 </script>
 
-<CollectionItemCard class={className} bind:width {item}>
+<CollectionItemCard class={cn(
+    "hover:ring-2",
+    $inLibrary ? 'ring-blue-400 hover:ring' : 'ring-ring',
+    className
+)} bind:width {item}>
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger asChild let:builder>
 			<Button
@@ -152,9 +163,17 @@
 				<!-- TODO: width, and add note -->
 				Size:
 				<select bind:value={width}>
-					<option value="default">Default</option>
-					<option value="wide">Wide</option>
+					{#each collectionItemWidths as width}
+						<option value={width}>{capitalize(width)}</option>
+					{/each}
 				</select>
+				<!-- <div>
+                    Style:
+                    <select bind:value={style}>
+                        <option value="default">Default</option>
+                        <option value="full">Poster</option>
+                    </select>
+                </div> -->
 			</div>
 		</div>
 	</Dialog.Content>

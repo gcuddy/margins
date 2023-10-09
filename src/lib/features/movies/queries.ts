@@ -1,4 +1,4 @@
-import { trpc } from "$lib/trpc/client";
+
 import type { CreateQueryOptions } from "@tanstack/svelte-query";
 import type { TRPCClientInit } from "trpc-sveltekit";
 

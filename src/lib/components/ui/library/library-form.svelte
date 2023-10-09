@@ -51,6 +51,7 @@
 			googleBooksId,
             historyId,
 			podcastIndexId,
+            seen: 1,
 			spotifyId,
 			status,
 			tmdbId,
