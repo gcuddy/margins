@@ -6,6 +6,7 @@
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
 	import Tabs from '$lib/components/ui/tabs2/Tabs.svelte';
 	import { H1 } from '$lib/components/ui/typography';
+	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
 	import { cn } from '$lib/utils/tailwind';
 	import { PlusIcon } from 'lucide-svelte';
 
@@ -19,8 +20,10 @@
     <!-- <span slot="start">Subscriptions</span> -->
 
     <svelte:fragment slot="end">
-        <Button variant="secondary" size="sm">
-            <PlusIcon class="w-4 h-4 mr-2" />
+        <Button on:click={() => {
+            showAddSubscriptionModal.set(true);
+        }} variant="outline" size="sm">
+            <PlusIcon class="w-4 h-4 mr-1" />
             Add subscription
         </Button>
     </svelte:fragment>

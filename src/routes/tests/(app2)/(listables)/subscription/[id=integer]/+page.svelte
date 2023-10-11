@@ -6,7 +6,7 @@
 		type InfiniteData,
 		useQueryClient,
 	} from '@tanstack/svelte-query';
-	import { CopyIcon, MoreHorizontalIcon } from 'lucide-svelte';
+	import { CircleIcon, CopyIcon, MoreHorizontalIcon } from 'lucide-svelte';
 	import { derived, writable } from 'svelte/store';
 
 	import { page } from '$app/stores';
@@ -31,6 +31,8 @@
 
 	import type { Snapshot } from './$types';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
+	import StatusIcon from '$components/entries/StatusIcon.svelte';
+	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
 
 	export let data;
 
@@ -50,14 +52,14 @@
 				if (subscriptions) {
 					const subscription = subscriptions.find((d) => d.feedId === +data.id);
 					console.log({ subscription });
-                    if (subscription) {
-                        return {
-                            feed: subscription
-                        }
-                    }
+					if (subscription) {
+						return {
+							feed: subscription,
+						};
+					}
 					// return subscription;
 				}
-                return undefined;
+				return undefined;
 			},
 		})),
 	);
@@ -105,9 +107,11 @@
 		},
 	});
 
+    const updateBookmarkMutation = initUpdateBookmarkMutation();
+
 	const entryQueryOpts = derived(page, ($page) => {
 		const filterData = parseFilterFromSearchParams($page.url.search);
-        // const { feed, ...rest } = filterData;
+		// const { feed, ...rest } = filterData;
 		return {
 			dir: 'desc',
 			filter: {
@@ -130,7 +134,11 @@
 	};
 </script>
 
-<LibraryHeader saveViewUrl="/tests/views/explore/all{defaultStringifySearch($entryQueryOpts.filter)}">
+<LibraryHeader
+	saveViewUrl="/tests/views/explore/all{defaultStringifySearch(
+		$entryQueryOpts.filter,
+	)}"
+>
 	<span slot="title">
 		{#if $query.data}
 			{$query.data?.feed.title}
@@ -177,15 +185,39 @@
 	<!-- <H1>{$query.data.feed.title}</H1> -->
 	<List opts={entryQueryOpts}>
 		<svelte:fragment slot="actions" let:checkedEntries let:clear>
+			{#if !checkedEntries.every((e) => e.bookmarked)}
+				<Button
+					variant="outline"
+					size="sm"
+					on:click={() => {
+						$updateBookmarkMutation.mutate({
+                            data: {
+                                bookmarked: 1,
+                                status: 'Backlog',
+                            },
+							entryId: checkedEntries.map((e) => e.id),
+						});
+						clear();
+					}}
+				>
+					<StatusIcon status="Backlog" class="w-3.5 h-3.5 mr-2" />
+					Save to backlog</Button
+				>
+			{/if}
 			{#if checkedEntries.some((e) => !e.seen)}
 				<Button
+					variant="outline"
+					size="sm"
 					on:click={() => {
 						$saveInteractionMutation.mutate({
 							entryId: checkedEntries.map((e) => e.id),
 							seen: true,
 						});
 						clear();
-					}}>Mark as seen</Button
+					}}
+				>
+					<CircleIcon class="w-3.5 h-3.5 mr-2" />
+					Mark as seen</Button
 				>
 			{/if}
 		</svelte:fragment>

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from "bits-ui";
-
 	import { cn } from "$lib/utils";
 
 	type $$Props = DropdownMenuPrimitive.ItemProps & {
@@ -19,7 +18,6 @@
 		inset && "pl-8",
 		className
 	)}
-	{...$$restProps}
 	on:click
 	on:keydown
 	on:focusin
@@ -27,6 +25,7 @@
 	on:pointerdown
 	on:pointerleave
 	on:pointermove
+	{...$$restProps}
 >
 	<slot />
 </DropdownMenuPrimitive.Item>

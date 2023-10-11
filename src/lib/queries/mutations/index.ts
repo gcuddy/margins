@@ -311,7 +311,7 @@ export function initUpdateBookmarkMutation(opts?: {
 		mutationFn: (input: MutationInput<'updateBookmark'>) =>
 			mutate('updateBookmark', input),
 		onSuccess() {
-			invalidateEntries(queryClient);
+			invalidateEntries(queryClient, opts?.invalidateAllEntries);
 		},
 	});
 }

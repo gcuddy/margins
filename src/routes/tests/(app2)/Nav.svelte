@@ -48,6 +48,7 @@
 
 	import type { LayoutData } from './$types';
 	import { useMenuBar } from './MainNav.svelte';
+	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
 
 	let pinsComponent: Pins;
 
@@ -145,7 +146,6 @@
 	$: mobileNavWidth.set(borderBoxSize?.[0]?.inlineSize ?? 81);
 
 	export let showAddUrlModal = writable(false);
-	let showAddSubscriptionModal = false;
 	const gardenEnabled = persisted('gardenEnabled', false);
 </script>
 
@@ -251,7 +251,7 @@
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-56">
 						<DropdownMenuItem on:click={() => {
-                            showAddSubscriptionModal = true;
+                            $showAddSubscriptionModal = true;
                         }}>
 							<RssIcon class="h-4 w-4 mr-2" />
 							<span>Add Subscription</span>
@@ -356,7 +356,7 @@
 {/if} -->
 <AddUrlModal open={showAddUrlModal} />
 
-<Dialog.Root bind:open={showAddSubscriptionModal}>
+<Dialog.Root bind:open={$showAddSubscriptionModal}>
 	<Dialog.Content>
         <Dialog.Header>
             <Dialog.Title>

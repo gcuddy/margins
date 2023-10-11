@@ -152,6 +152,7 @@ export async function get_library({
 			'b.seen',
 			'i.currentPage',
 			'b.rating',
+			'b.bookmarked',
 		])
 		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
 		.select((eb) => [

@@ -47,7 +47,7 @@ function parseMediaGroup(mediaGroup: any) {
 	}
 
 	const mediaTitle = mediaGroup['media:title'];
-	const description = mediaGroup['media:description'];
+	const text = mediaGroup['media:description'];
 	const mediaThumbnail = mediaGroup['media:thumbnail'];
 
 	const image = mediaThumbnail?.url;
@@ -61,11 +61,11 @@ function parseMediaGroup(mediaGroup: any) {
 	return {
 		enclosureUrl: url,
 		image,
-		description,
+		text,
 		title: mediaTitle,
 		type: type as 'audio' | 'video' | undefined,
 		youtubeId,
-	};
+	} satisfies Partial<Insertable<Entry>>;
 }
 
 async function getFeedData(res: Response): Promise<

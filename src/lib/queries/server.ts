@@ -127,6 +127,8 @@ export async function updateBookmark(
 	},
 ) {
 	const { data, userId } = variables;
+
+
 	if ('id' in variables) {
 		let bookmarks = db
 			.updateTable('Bookmark')
@@ -140,6 +142,11 @@ export async function updateBookmark(
 	} else {
 		const { entryId } = variables;
 		const entryIds = Array.isArray(entryId) ? entryId : [entryId];
+		let sortOrder: number | undefined = undefined;
+		if (data.bookmarked) {
+			// if setting to bookmarked, then get sort for adding to bookmarks
+			sortOrder = await getFirstBookmarkSort(userId, data.status);
+		}
 		const bookmarks = db
 			.insertInto('Bookmark')
 			.values(
@@ -148,6 +155,7 @@ export async function updateBookmark(
 					entryId,
 					updatedAt: new Date(),
 					userId,
+					sortOrder,
 					...data,
 				})),
 			)

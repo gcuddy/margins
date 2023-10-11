@@ -788,6 +788,7 @@ export const queries = {
 				// 	'f.imageUrl',
 				// 	'f.link',
 				// ])
+				.orderBy('s.title asc')
 				.execute();
 		},
 	}),
