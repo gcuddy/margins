@@ -3,14 +3,12 @@
 	import { cn } from "$lib/utils";
 	import type { HTMLAttributes } from "svelte/elements";
 
-	type $$Props = HTMLAttributes<HTMLSpanElement>;
+	type $$Props = HTMLAttributes<HTMLParagraphElement>;
 	let className: string | undefined | null = undefined;
 	export { className as class };
 </script>
 
-<FormPrimitive.Description
-	class={cn("text-sm text-muted-foreground", className)}
+<FormPrimitive.Validation
+	class={cn("text-sm font-medium text-destructive", className)}
 	{...$$restProps}
->
-	<slot />
-</FormPrimitive.Description>
+/>

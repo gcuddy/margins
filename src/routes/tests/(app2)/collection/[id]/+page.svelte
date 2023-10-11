@@ -3,6 +3,7 @@
 	import {
 		ArchiveRestore,
 		BookMarked,
+        BookIcon,
 		ChevronDown,
 		ChevronRightIcon,
 		FilmIcon,
@@ -35,7 +36,7 @@
 	import * as Popover from '$components/ui/popover';
 	import * as Select from '$components/ui/select';
 	import autosize from '$lib/actions/autosize';
-	import { Entries, Movies } from '$lib/commands';
+	import { Entries, Movies, Books } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import PinButton from '$lib/components/PinButton.svelte';
 	import {
@@ -216,7 +217,35 @@
 				onSelect: async (a) => {
 					commander.close();
 					const entry = await query($page, 'findOrCreateEntry', {
-						tmdbId: a.id,
+						id: a.id,
+                        type: "movie"
+					});
+					if (!entry) {
+						return;
+					}
+					$addToCollectionMutation.mutate({
+						entryId: entry.id,
+						width: data.collection.defaultItemWidth,
+					});
+					await invalidate('collection');
+				},
+			},
+		});
+	}
+
+	function addBook() {
+		commander.open({
+			component: Books,
+			placeholder: `Search for a book...`,
+			props: {
+				onSelect: async (book) => {
+					commander.close();
+                    if (!book.id) {
+                        return;
+                    }
+					const entry = await query($page, 'findOrCreateEntry', {
+                        id: book.id,
+                        type: "book"
 					});
 					if (!entry) {
 						return;
@@ -465,6 +494,9 @@
 					<DropdownMenuItem on:click={addMovie}>
 						<FilmIcon class="mr-2 h-4 w-4" /> Movie
 					</DropdownMenuItem>
+					<DropdownMenuItem on:click={addBook}>
+						<BookIcon class="mr-2 h-4 w-4" /> Book
+					</DropdownMenuItem>
 				</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>
@@ -573,7 +605,7 @@
 	<!-- {JSON.stringify(data.collection.items)} -->
 	<!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
 	<div
-		class="mt-8 flex flex-wrap gap-4 container mx-auto px-2 sm:px-4"
+		class="mt-8 flex flex-wrap gap-4 container mx-auto px-2 sm:px-4 items-end justify-start md:justify-center"
 		use:dndzone={{
 			dragDisabled: !data.collection.items.length,
 			flipDurationMs: 200,
@@ -642,7 +674,7 @@
 	>
 		{#each data.collection.items as item (item.id)}
 			<div
-				class="flex flex-col items-center justify-center shrink mr-auto"
+				class="flex flex-col items-center justify-center shrink"
 				animate:flip={{ duration: 200 }}
 			>
 				{#if 'pending' in item && item.pending}

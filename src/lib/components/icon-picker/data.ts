@@ -72,6 +72,9 @@ import {
 	RollerCoaster,
 	Projector,
 	Video,
+	CarFront,
+	CarTaxiFront,
+	TruckIcon,
 } from 'lucide-svelte';
 import type { ComponentType } from 'svelte';
 
@@ -367,5 +370,23 @@ export const icons: {
 	{
 		name: 'Video',
 		component: Video,
+	},
+	// Vehicles
+	{
+		name: 'Car',
+		component: CarFront,
+	},
+	{
+		name: 'Taxi',
+		keywords: 'Car taxi cab',
+		component: CarTaxiFront,
+	},
+	{
+		name: 'Car',
+		component: CarFront,
+	},
+	{
+		name: 'Truck',
+		component: TruckIcon,
 	},
 ];

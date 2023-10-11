@@ -1,21 +1,14 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from "svelte/elements";
-
 	import { cn } from "$lib/utils";
-
 	import type { InputEvents } from ".";
 
-	type $$Props = HTMLInputAttributes & {
-        el?: HTMLInputElement;
-    }
+	type $$Props = HTMLInputAttributes;
 	type $$Events = InputEvents;
 
 	let className: $$Props["class"] = undefined;
 	export let value: $$Props["value"] = undefined;
 	export { className as class };
-
-    export let el: HTMLInputElement | undefined = undefined;
-
 </script>
 
 <input
@@ -24,7 +17,6 @@
 		className
 	)}
 	bind:value
-    bind:this={el}
 	on:blur
 	on:change
 	on:click

@@ -1,14 +1,21 @@
 <script lang="ts">
-	import Label from "$lib/components/ui/Label.svelte";
+	import type { Label as LabelPrimitive } from "bits-ui";
+	import { getFormField } from "formsnap";
 	import { cn } from "$lib/utils";
-	import { getContext } from "svelte";
-	import type { FormFieldCtx } from ".";
-	let className: string | undefined | null = undefined;
+	import { Label } from "$lib/components/ui/label";
+
+	type $$Props = LabelPrimitive.Props;
+
+	let className: $$Props["class"] = undefined;
 	export { className as class };
 
-	const { formItemId, errors } = getContext<FormFieldCtx>("FormField");
+	const { errors, ids } = getFormField();
 </script>
 
-<Label class={cn($errors && "text-destructive", className)} for={formItemId}>
+<Label
+	for={ids.input}
+	class={cn($errors && "text-destructive", className)}
+	{...$$restProps}
+>
 	<slot />
 </Label>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { TextPositionSelector as ITextPositionSelector } from './annotator/types';
 import { AnnotationType } from '@prisma/client';
+import { jsonSchema } from './schemas/types';
 const TimestampSelectorSchema = z.object({
 	// source: z.string()   ,
 	// selector: z.object({
@@ -77,10 +78,10 @@ export const annotationSchema = z.object({
 	title: z.string().nullish(),
 	target: TargetSchema.nullish(),
 	entryId: z.number().nullish(),
-	contentData: z.any().nullish(),
+	contentData: jsonSchema.nullish(),
 	color: z.string().nullish(), // Hex code for the color of the annotation
 	icon: z.string().nullish(), // Emoji as :emoji: or icon name with CamelCase (first letter capitalized)
-	deleted: z.coerce.date().nullish()
+	deleted: z.coerce.date().nullish(),
 	// tags: z.string().array(),
 	// entry: z
 	//     .object({

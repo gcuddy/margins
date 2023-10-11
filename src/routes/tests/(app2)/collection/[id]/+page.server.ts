@@ -10,6 +10,7 @@ import { nanoid } from '$lib/nanoid';
 import { validateAuthedForm } from '$lib/schemas';
 
 import type { Actions, PageServerLoad } from './$types';
+import type { CollectionItemWidth } from '$lib/schemas/inputs/collection.schema';
 
 const collectionSchema = z.object({
 	description: z.string().nullish(),
@@ -37,6 +38,9 @@ export const load = (async ({ depends, locals, params }) => {
 			'c.deleted',
 			'c.defaultItemWidth',
 		])
+		.$narrowType<{
+			defaultItemWidth: CollectionItemWidth | null;
+		}>()
 		// If there's no icon, default to "Box"
 		.select((eb) => [
 			eb.fn.coalesce('c.icon', sql<string>`"Box"`).as('icon'),

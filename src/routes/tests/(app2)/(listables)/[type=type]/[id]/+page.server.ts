@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Insertable } from 'kysely';
 import { message, superValidate } from 'sveltekit-superforms/server';
 import { z } from 'zod';
@@ -31,10 +31,15 @@ import { validate_form } from '$lib/utils/forms';
 import type { Actions } from './$types';
 import { getIdKeyName } from '$lib/utils/entries';
 
-export async function load() {
+export async function load({ locals }) {
+	const session = await locals.auth.validate();
+	if (!session) {
+		throw redirect(302, '/login');
+	}
 	return {
 		bookmarkForm: superValidate(updateBookmarkSchema),
 		tagForm: superValidate(tagSchema),
+		session,
 	};
 }
 

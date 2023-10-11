@@ -11,7 +11,7 @@
 	import { page } from '$app/stores';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import Youtube from '$lib/components/Youtube.svelte';
+	// import Youtube from '$lib/components/Youtube.svelte';
 	import player_store from '$lib/stores/player';
 
 	export let player: YouTubePlayer | undefined = undefined;

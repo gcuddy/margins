@@ -2,6 +2,7 @@ import type { DocumentType, Entry } from '@prisma/client';
 
 import { S3_BUCKET_PREFIX } from '$lib/constants';
 import type { EntryInList } from '$lib/db/selects';
+import type { MediaIdSchema } from '$lib/queries/server';
 
 const prefix = `/tests`;
 
@@ -48,7 +49,10 @@ function get_domain(url: string) {
 	return domain;
 }
 
-export function get_image(entry: { image?: string | null; uri?: string | null }) {
+export function get_image(entry: {
+	image?: string | null;
+	uri?: string | null;
+}) {
 	console.log(entry.image);
 	if (entry.image) {
 		return entry.image?.startsWith('/')
@@ -59,20 +63,73 @@ export function get_image(entry: { image?: string | null; uri?: string | null })
 	}
 }
 
+export const mediaTypes = ['album', 'book', 'movie', 'tv', 'podcast'] as const;
+export type MediaType = (typeof mediaTypes)[number];
+
+export function isMediaType(type: unknown): type is MediaType {
+	return mediaTypes.includes(type as any);
+}
 
 // see mediaIdSchema
-export function getIdKeyName(type: Entry["type"], idAsEntryId?: boolean) {
-    switch (type) {
-        case "album":
-            return "spotifyId";
-        case "book":
-            return "googleBooksId";
-        case "movie":
-        case "tv":
-            return "tmdbId";
-        case "podcast":
-            return "podcastIndexId";
-        default:
-            return idAsEntryId ? "entryId" : "id";
-    }
+export function getIdKeyName<TNoEntry extends boolean = false>(
+	type: Entry['type'],
+	opts?: {
+		idAsEntryId?: boolean;
+		throwErrorIfNotMedia?: TNoEntry;
+	},
+): TNoEntry extends true
+	? 'spotifyId' | 'googleBooksId' | 'tmdbId' | 'podcastIndexId'
+	:
+			| 'spotifyId'
+			| 'googleBooksId'
+			| 'tmdbId'
+			| 'podcastIndexId'
+			| 'id'
+			| 'entryId' {
+	const { idAsEntryId = false, throwErrorIfNotMedia = false } = opts ?? {};
+	switch (type) {
+		case 'album':
+			return 'spotifyId';
+		case 'book':
+			return 'googleBooksId';
+		case 'movie':
+		case 'tv':
+			return 'tmdbId';
+		case 'podcast':
+			return 'podcastIndexId';
+		default:
+			if (throwErrorIfNotMedia) {
+				throw new Error(`Cannot get id key name for entry type ${type}`);
+			}
+			return idAsEntryId ? 'entryId' : ('id' as any);
+	}
+}
+
+export function makeMediaSchema(
+	id: string | number,
+	type: MediaType,
+): MediaIdSchema {
+	if (type === 'podcast') {
+		return {
+			podcastIndexId: Number(id),
+			type,
+		};
+	} else if (type === 'album') {
+		return {
+			spotifyId: String(id),
+			type,
+		};
+	} else if (type === 'book') {
+		return {
+			googleBooksId: String(id),
+			type,
+		};
+	} else if (type === 'movie' || type === 'tv') {
+		return {
+			tmdbId: Number(id),
+			type,
+		};
+	} else {
+		throw new Error(`Invalid media type ${type}`);
+	}
 }

@@ -69,6 +69,8 @@ export const mediaIdSchema = z.union([
 	}),
 ]);
 
+export type MediaIdSchema = z.infer<typeof mediaIdSchema>;
+
 const entrySchema = z.object({
 	entryId: z.coerce.number().int(),
 	type: z.enum(['article', 'video', 'pdf', 'tweet', 'board_game']),
@@ -223,6 +225,7 @@ export async function deleteAnnotation(userId: string, id: string) {
 export const upsertAnnotationSchema = annotationSchema
 	.extend({
 		id: annotationSchema.shape.id.or(z.array(z.string())),
+		media: mediaIdSchema.optional(),
 		relations: z
 			.object({
 				relatedEntryId: z.number().int(),
@@ -237,12 +240,18 @@ export const upsertAnnotationSchema = annotationSchema
 		userId: true,
 	});
 
+export type UpsertAnnotationInput = z.input<typeof upsertAnnotationSchema>;
+
 export async function upsertAnnotation({
 	ctx,
 	input: data,
 }: GetCtx<typeof upsertAnnotationSchema>) {
 	const { userId } = ctx;
-	const { id: _id, relations, tags, ...annotation } = data;
+	let { id: _id, relations, tags, media, ...annotation } = data;
+	if (media) {
+		const entry = await createEntry(media);
+		annotation.entryId = entry.id;
+	}
 	let ids: Array<string> = [];
 	if (!_id) {
 		ids = [nanoid()];
@@ -1386,6 +1395,7 @@ export async function notes({ ctx, input }: GetCtx<typeof notesInputSchema>) {
 					content,
 				)}%'`,
 			);
+			// OR - title, body, exact?
 		}
 	}
 

@@ -14,7 +14,7 @@
 	import { effect } from '$lib/helpers';
 
 	const {
-		state: { activeValue, inputValue, shouldFilter },
+		state: { activeValue, inputValue, loading, shouldFilter },
 	} = commandCtx.get();
 
 	const debouncedInputValue = writable($inputValue);
@@ -31,6 +31,10 @@
 			enabled: $value.length > 1,
 		})),
 	);
+
+    $: $loading = $inputValue ?  $query.isPending || $query.isFetching : false;
+
+    // $: console.log({$query})
 
 	shouldFilter.set(false);
 

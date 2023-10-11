@@ -70,10 +70,16 @@
 	import EntryIcon from './EntryIcon.svelte';
 	import History from './history.svelte';
 	import { saveUrl } from './utils';
-	import { fade, scale } from 'svelte/transition';
+	import { fade, fly, scale } from 'svelte/transition';
 	import { fadeScale, gentleFly } from '$lib/transitions';
 	import OtherAlbumsList from '$components/music/other-albums-list.svelte';
 	import { Icon } from '$components/icon-picker';
+	import AnnotationForm from '$components/annotations/annotation-form.svelte';
+	import {
+		getIdKeyName,
+		isMediaType,
+		makeMediaSchema,
+	} from '$lib/utils/entries';
 
 	// const render = persisted('sidebar', false);
 
@@ -221,6 +227,7 @@
 	});
 
 	let isAddAnnotationModalOpen = false;
+	let isAddingPageNote = false;
 </script>
 
 <aside
@@ -313,8 +320,8 @@
 
 						<!-- <Input variant="ghost" value={$query.data?.entry?.author} /> -->
 						<EntryAuthorInput
-							author={$query.data.entry.bookmark?.author ??
-								$query.data.entry.author ??
+							author={$query.data.entry.bookmark?.author ||
+								$query.data.entry.author ||
 								'No author'}
 							entryId={$query.data.entry.id}
 						/>
@@ -543,9 +550,9 @@
 				(a) => a.type === 'note',
 			)}
 			<div class="p-6 flex flex-col gap-4">
-				<div class="space-y-2">
+				<div class="space-y-2 flex flex-col">
 					<h3 class=" text-lg font-semibold leading-none tracking-tight">
-						Page Note
+						Page Notes
 					</h3>
 					{#each pageNotes ?? [] as note}
 						<Editor
@@ -589,6 +596,39 @@
 							options={{ autofocus: false }}
 						/>
 					{/each}
+					{#if isAddingPageNote}
+						<div transition:fly={{ duration: 200, y: -10 }}>
+							<AnnotationForm
+								autofocus
+								media={isMediaType($page.params.type) && $page.params.id
+									? makeMediaSchema($page.params.id, $page.params.type)
+									: undefined}
+								entryId={$query.data?.entry?.id}
+								on:cancel={() => {
+									isAddingPageNote = false;
+								}}
+								on:save={() => {
+									isAddingPageNote = false;
+								}}
+							/>
+						</div>
+					{:else}
+						<div
+							in:fade={{ delay: 300 }}
+							class="flex items-center justify-center"
+						>
+							<Button
+								on:click={() => {
+									isAddingPageNote = true;
+								}}
+								size="sm"
+								variant="ghost"
+							>
+								<PlusIcon class="h-4 w-4" />
+								Add page note</Button
+							>
+						</div>
+					{/if}
 				</div>
 				<div class="flex items-center justify-between">
 					<h3 class=" text-lg font-semibold leading-none tracking-tight">

@@ -1,41 +1,82 @@
-import Root from "./form.svelte";
-import Description from "./form-description.svelte";
-import Field from "./form-field.svelte";
+import { Form as FormPrimitive, getFormField } from "formsnap";
+import * as RadioGroupComp from "$lib/components/ui/radio-group";
+import * as SelectComp from "$lib/components/ui/select";
+import type { Writable } from "svelte/store";
 import Item from "./form-item.svelte";
+import Input from "./form-input.svelte";
+import Textarea from "./form-textarea.svelte";
+import Description from "./form-description.svelte";
 import Label from "./form-label.svelte";
-import Message from "./form-message.svelte";
+import Validation from "./form-validation.svelte";
+import Checkbox from "./form-checkbox.svelte";
+import Switch from "./form-switch.svelte";
+import NativeSelect from "./form-native-select.svelte";
+import RadioGroup from "./form-radio-group.svelte";
+import Select from "./form-select.svelte";
+import SelectTrigger from "./form-select-trigger.svelte";
+import Button from "./form-button.svelte";
 
-import type { Readable, Writable } from "svelte/store";
-import type { AnyZodObject } from "zod";
-import type { InputConstraints } from "sveltekit-superforms";
+const Root = FormPrimitive.Root;
+const Field = FormPrimitive.Field;
+const RadioItem = RadioGroupComp.Item;
+const NativeRadio = FormPrimitive.Radio;
+const SelectContent = SelectComp.Content;
+const SelectLabel = SelectComp.Label;
+const SelectGroup = SelectComp.Group;
+const SelectItem = SelectComp.Item;
+const SelectSeparator = SelectComp.Separator;
 
-export type FieldStore<T extends AnyZodObject> = Readable<{
-	name: string;
-	value: unknown;
-	errors: string[];
-	constraints: InputConstraints<T>;
-}>;
-
-export type FormFieldCtx = {
-	name: string;
-	formItemId: string;
-	formDescriptionId: string;
-	formMessageId: string;
-	errors: Writable<string[] | undefined>;
+export type TextareaGetFormField = Omit<
+	ReturnType<typeof getFormField>,
+	"value"
+> & {
+	value: Writable<string>;
 };
 
 export {
 	Root,
-	Description,
 	Field,
 	Item,
+	Input,
 	Label,
-	Message,
+	Button,
+	Switch,
+	Select,
+	Checkbox,
+	Textarea,
+	Validation,
+	RadioGroup,
+	RadioItem,
+	Description,
+	SelectContent,
+	SelectLabel,
+	SelectGroup,
+	SelectItem,
+	SelectSeparator,
+	SelectTrigger,
+	NativeSelect,
+	NativeRadio,
 	//
 	Root as Form,
-	Description as FormDescription,
 	Field as FormField,
 	Item as FormItem,
+	Input as FormInput,
+	Textarea as FormTextarea,
+	Description as FormDescription,
 	Label as FormLabel,
-	Message as FormMessage
+	Validation as FormValidation,
+	NativeSelect as FormNativeSelect,
+	NativeRadio as FormNativeRadio,
+	Checkbox as FormCheckbox,
+	Switch as FormSwitch,
+	RadioGroup as FormRadioGroup,
+	RadioItem as FormRadioItem,
+	Select as FormSelect,
+	SelectContent as FormSelectContent,
+	SelectLabel as FormSelectLabel,
+	SelectGroup as FormSelectGroup,
+	SelectItem as FormSelectItem,
+	SelectSeparator as FormSelectSeparator,
+	SelectTrigger as FormSelectTrigger,
+	Button as FormButton
 };

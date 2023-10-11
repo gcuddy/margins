@@ -84,6 +84,7 @@
 					loading: 'Uploading...',
 					success: () => {
 						invalidate('entry');
+                        invalidateEntries(queryClient);
 						return 'File uploaded';
 					},
 				},

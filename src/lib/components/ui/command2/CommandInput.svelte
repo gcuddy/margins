@@ -5,7 +5,7 @@
 		isElementDisabled,
 		next,
 	} from '@melt-ui/svelte/internal/helpers';
-	import { Search } from 'lucide-svelte';
+	import { Loader2, Search } from 'lucide-svelte';
 	import { onMount, tick } from 'svelte';
 
 	import { isHTMLElement } from '$lib/helpers';
@@ -31,7 +31,7 @@
 		ids,
 		measurements: { inputHeight },
 		options,
-		state: { activeElement, inputValue, open, selectedValue },
+		state: { activeElement, inputValue, loading, open, selectedValue },
 	} = ctx.get();
 
 	function handleClick(e: MouseEvent) {
@@ -207,7 +207,7 @@
 		// TODO
 	}
 
-	let containerEl: HTMLDivElement;
+	// let containerEl: HTMLDivElement;
 	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }>;
 
 	$: if (borderBoxSize?.[0]?.blockSize) {
@@ -221,13 +221,17 @@
 	// });
 </script>
 
+<!-- bind:this={containerEl} -->
 <div
-	bind:this={containerEl}
 	bind:borderBoxSize
 	class="flex items-center px-3"
 	data-command-input-wrapper
 >
+    {#if $loading}
+        <Loader2 class="mr-2 h-4 w-4 shrink-0 opacity-50 animate-spin" />
+    {:else}
 	<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
+    {/if}
 	<input
 		data-command-input
 		aria-activedescendant={$activeElement?.id}

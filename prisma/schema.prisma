@@ -111,7 +111,7 @@ model Bookmark {
     rating           Int?              @db.TinyInt
     /// The original url of the bookmark, if it's different than the entry's url
     originalUrl      String?
-    status           Status?            @default(Backlog)
+    status           Status?           @default(Backlog)
     sort_order       Int               @default(0)
     /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
     review_timestamp Int?
@@ -549,6 +549,15 @@ model Collection {
 
     @@unique([userId, name])
     @@index([userId])
+}
+
+model Image {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    url       String
+    width     Int?     @db.SmallInt
+    height    Int?     @db.SmallInt
 }
 
 model CollectionItems {

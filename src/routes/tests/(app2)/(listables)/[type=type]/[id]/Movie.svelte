@@ -166,13 +166,13 @@
 				<div class="absolute inset-0 z-[-1] rounded-full" /> -->
 			<!-- {/if} -->
 			<div
-				class="aspect-auto rounded-md shadow-background sm:w-[150px] md:w-[200px]"
+				class="aspect-auto rounded-md shadow-background shrink-0 sm:w-[150px] md:w-[200px]"
 				style:view-transition-name="artwork-{data.movie.id}"
 			>
 				<!-- style:--tw-shadow-color={$colorHex} -->
 				<img
 					use:melt={$image}
-					class="aspect-auto w-[inherit] rounded-[inherit] border"
+					class="aspect-auto w-[inherit] rounded-[inherit] border shrink-0"
 					alt="Movie poster for {data.movie.title}"
 				/>
 				<div

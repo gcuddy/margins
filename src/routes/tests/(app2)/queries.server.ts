@@ -47,6 +47,7 @@ import {
 	convertToSchema,
 	count_library,
 	countLibrarySchema,
+	createEntry,
 	createFavorite,
 	createFavoriteSchema,
 	createTag,
@@ -534,16 +535,17 @@ export const queries = {
 	}),
 	findOrCreateEntry: query({
 		fn: async ({ input }) => {
-			if (input.tmdbId) {
+			if (input.type === 'movie') {
+				const tmdbId = input.id;
 				const entry = await db
 					.selectFrom('Entry')
-					.where('tmdbId', '=', input.tmdbId)
+					.where('tmdbId', '=', tmdbId)
 					.select(['id'])
 					.executeTakeFirst();
 				if (entry) {
 					return entry;
 				}
-				const movie = await tmdb.movie.details(input.tmdbId);
+				const movie = await tmdb.movie.details(tmdbId);
 				const new_entry = await db
 					.insertInto('Entry')
 					.values({
@@ -563,13 +565,37 @@ export const queries = {
 						id: Number(new_entry.insertId),
 					};
 				}
+			} else if (input.type === 'book') {
+				const entry = await db
+					.selectFrom('Entry')
+					.where('googleBooksId', '=', input.id)
+					.select(['id'])
+					.executeTakeFirst();
+
+				if (entry) {
+					return entry;
+				}
+
+				const newEntry = await createEntry({
+					type: 'book',
+					googleBooksId: input.id,
+				});
+
+				return {
+					id: newEntry.id,
+				};
 			}
 		},
-		schema: z
-			.object({
-				tmdbId: z.number(),
-			})
-			.partial(),
+		schema: z.union([
+			z.object({
+				id: z.number().int(),
+				type: z.literal('movie'),
+			}),
+			z.object({
+				id: z.string(),
+				type: z.literal('book'),
+			}),
+		]),
 	}),
 	getAllEntries: query({
 		fn: async ({ ctx }) => {
@@ -883,6 +909,7 @@ export const queries = {
 		schema: qSchema,
 	}),
 	searchNotes: query({
+		// TODO: this is a bit of a mess
 		fn: async ({ ctx, input }) => {
 			const notes = await db
 				.selectFrom('Annotation as a')

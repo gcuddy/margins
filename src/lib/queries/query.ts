@@ -304,7 +304,10 @@ export async function query<T extends keyof Queries>(
 		}
 	}
 	const response = await fetcher(url);
+	console.log({ response });
+	console.log(response.ok);
 	if (!response.ok) {
+		console.log(response.status);
 		throw new Error(response.statusText);
 	}
 	const final = (await response.json()) as Awaited<Data>;
@@ -359,7 +362,7 @@ export async function mutation<T extends keyof Mutations>(
 		url += `&userId=${userId}`;
 	}
 	type Data = Awaited<ReturnType<Mutations[T]['fn']>>;
-	console.log({ url });
+	console.log({ url, input, userId });
 	const response: Response = await fetcher(url, {
 		body: stringify({
 			input,

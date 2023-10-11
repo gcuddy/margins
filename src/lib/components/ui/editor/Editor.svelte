@@ -13,7 +13,7 @@
 	import type { Transaction } from '@tiptap/pm/state';
 	import * as idb from 'idb-keyval';
 	import debounce from 'just-debounce-it';
-	import { createEventDispatcher, onMount, setContext } from 'svelte';
+	import { createEventDispatcher, onMount, setContext, tick } from 'svelte';
 	import { type Readable, writable } from 'svelte/store';
 	import { fade } from 'svelte/transition';
 	import { persisted } from 'svelte-local-storage-store';
@@ -43,7 +43,7 @@
 	export let el: HTMLElement | undefined = undefined;
 	/** If set to true, the tabindex will always be 0. */
 	export let alwaysTabbable = false;
-    export let showEditor = true;
+	export let showEditor = true;
 
 	let className = '';
 	export { className as class };
@@ -150,7 +150,7 @@
 		editor = createEditor({
 			autofocus: 'start',
 			content,
-			editable: false,
+			editable: autofocus ? true : false,
 			editorProps: TiptapEditorProps,
 			extensions: generate_tiptap_extensions(extensions, context),
 			onUpdate: (e) => {
@@ -163,7 +163,14 @@
 			...options,
 		});
 		if (autofocus) {
-			$editor.commands.focus();
+			// console.log({ autofocus, $editor });
+			// setTimeout(() => {
+			// 	console.log(`focus`);
+			// 	$editor.commands.focus();
+			// }, 2000);
+			// tick().then(() =>{
+			//     $editor.commands.focus();
+			// })
 		}
 		if (content) {
 			hydrated = true;

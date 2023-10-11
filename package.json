@@ -143,7 +143,7 @@
 		"svelte-virtualized-auto-sizer": "^1.0.0",
 		"svelte-youtube-embed": "^0.2.1",
 		"sveltekit-search-params": "^1.0.14",
-		"sveltekit-superforms": "^1.6.1",
+		"sveltekit-superforms": "^1.8.0",
 		"tailwind-gradient-mask-image": "^1.0.0",
 		"tailwind-scrollbar-hide": "^1.1.7",
 		"tailwindcss": "^0.0.0-insiders.4f404ff",
@@ -162,7 +162,7 @@
 		"uuid": "^9.0.0",
 		"uuid-by-string": "^4.0.0",
 		"vite": "^4.4.3",
-		"zod": "^3.21.4"
+		"zod": "^3.22.4"
 	},
 	"type": "module",
 	"dependencies": {
@@ -227,7 +227,7 @@
 		"fast-average-color": "^9.4.0",
 		"fast-average-color-node": "^2.6.0",
 		"focus-trap": "^7.5.2",
-		"formsnap": "^0.1.2",
+		"formsnap": "^0.1.4",
 		"highlight.js": "^11.8.0",
 		"highlight.run": "^7.3.6",
 		"idb-keyval": "^6.2.1",

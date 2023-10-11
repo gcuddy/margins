@@ -50,6 +50,8 @@ export type CommandProps<T> = {
 	initialData?: Array<T>;
 	initialSelectedValue?: Array<T>;
 	inputValue?: Writable<string>;
+	// A writable store that tells the component whether to change out the search icon for a loading spinner.
+	loading?: Writable<boolean>;
 	multiple?: boolean;
 	onClose?: (
 		selectedValue: Array<T>,
@@ -576,8 +578,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 
 	afterUpdate(() => {
 		// we should ensure first item is chosen when filtered inputvalue changes
-        console.log(`after update - ensuring active item`);
-				ensureActiveItem();
+		console.log(`after update - ensuring active item`);
+		ensureActiveItem();
 	});
 
 	const pages = props?.commandPages ?? readable<Array<string>>([]);
@@ -704,6 +706,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			activeValue,
 			filtered: writable({}),
 			inputValue,
+			loading: props?.loading ?? writable(false),
 			open: openStore,
 			selectedIds,
 			selectedValue,

@@ -14,6 +14,7 @@ import { get_library } from '$lib/server/queries';
 import { XMLParser } from 'fast-xml-parser';
 import type { FeedAddFormSchema } from '$components/subscriptions/subscription-entry.schema';
 import { isJsonFeed } from '$lib/helpers/feeds';
+import { youtubeRegex } from '$lib/parse';
 
 const xmlParser = new XMLParser({
 	attributeNamePrefix: '',
@@ -30,6 +31,42 @@ function removeTagsFromHtml(html: string) {
 }
 
 export type FeedType = 'json' | 'rss' | 'atom';
+
+function parseMediaGroup(mediaGroup: any) {
+	// https://www.rssboard.org/media-rss#media-group
+	if (!mediaGroup) {
+		return {};
+	}
+	const mediaContent = mediaGroup['media:content'];
+	const url = mediaContent.url;
+
+	let youtubeId: string | null = null;
+	if (typeof url === 'string' && url.includes('youtube.com')) {
+		const match = url.match(youtubeRegex);
+		youtubeId = match?.groups?.id ?? null;
+	}
+
+	const mediaTitle = mediaGroup['media:title'];
+	const description = mediaGroup['media:description'];
+	const mediaThumbnail = mediaGroup['media:thumbnail'];
+
+	const image = mediaThumbnail?.url;
+
+	const type =
+		youtubeId || mediaContent?.type?.includes('video')
+			? 'video'
+			: mediaContent?.type?.includes('audio')
+			? 'audio'
+			: undefined;
+	return {
+		enclosureUrl: url,
+		image,
+		description,
+		title: mediaTitle,
+		type: type as 'audio' | 'video' | undefined,
+		youtubeId,
+	};
+}
 
 async function getFeedData(res: Response): Promise<
 	| {
@@ -88,7 +125,7 @@ function parseJsonFeedItems(
 		if (!since) {
 			return true;
 		}
-		const lastUpdated = item.date_modified || item.date_updated;
+		const lastUpdated = item.date_modified || (item as any).date_updated;
 		if (!lastUpdated) {
 			return true;
 		}
@@ -150,6 +187,10 @@ function parseAtomFeedItems(
 	return entries.map((entry: any) => {
 		const content = getText(entry.content);
 		const published = entry.published || entry.updated;
+
+		const alternateLink = getAtomLink(entry.link);
+		const relatedLink = getAtomLink(entry.link, 'related');
+
 		return {
 			author: entry.author?.name,
 			feedId,
@@ -167,6 +208,8 @@ function parseAtomFeedItems(
 			uri:
 				(alternateLink && relatedLink ? relatedLink : alternateLink) ||
 				entry.id,
+			youtubeId: entry['yt:videoId'],
+			...parseMediaGroup(entry['media:group']),
 		} satisfies Insertable<Entry>;
 	});
 }
@@ -263,6 +306,8 @@ function parseRssFeedItems(
 			type: 'article',
 			updatedAt: new Date(),
 			uri: item.link || item.enclosure?.url,
+			youtubeId: item['yt:videoId'],
+			...parseMediaGroup(item['media:group']),
 		} as Insertable<Entry>;
 	});
 }
@@ -287,7 +332,7 @@ function parseAtomFeedInfo(feed: any, feedUrl: string) {
 	} satisfies Insertable<Feed>;
 }
 
-function parseJsonFeedInfo(json: any, feedUrl: string) {
+function parseJsonFeedInfo(json: JSONFeed, feedUrl: string) {
 	return {
 		feedUrl,
 		imageUrl: json.icon || json.favicon,
@@ -307,6 +352,7 @@ export async function getFeedInfo(data: any, type: FeedType, feedUrl: string) {
 }
 
 export async function getLatestFeedItems(
+	// TODO: better type here
 	data: any,
 	type: FeedType,
 	feedId: number,
@@ -330,22 +376,25 @@ async function updateLatestFeedItems(
 		await trx
 			.insertInto('Entry')
 			.values(items)
+			// TODO: Review if this should happen or not...
+			// What if the entry url already exists, independent of the feed? We probably shouldn't update the HTML in that case...
+			// Same with author, etc. *Unless* the feed content is better...?
 			.onDuplicateKeyUpdate(({ ref }) => ({
-				author: values(ref('author')),
+				// author: values(ref('author')),
 				duration: values(ref('duration')),
 				enclosureUrl: values(ref('enclosureUrl')),
 				feedId,
 				guid: values(ref('guid')),
-				html: values(ref('html')),
+				// html: values(ref('html')),
 				image: values(ref('image')),
 				podcastIndexId: values(ref('podcastIndexId')),
-				published: values(ref('published')),
-				summary: values(ref('summary')),
-				text: values(ref('text')),
-				title: values(ref('title')),
-				type: values(ref('type')),
+				// published: values(ref('published')),
+				// summary: values(ref('summary')),
+				// text: values(ref('text')),
+				// title: values(ref('title')),
+				// type: values(ref('type')),
 				updatedAt: new Date(),
-				uri: values(ref('uri')),
+				// uri: values(ref('uri')),
 			}))
 			.execute();
 

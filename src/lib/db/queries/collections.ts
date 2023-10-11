@@ -5,6 +5,7 @@ import type { collectionsInputSchema } from '$lib/schemas/inputs';
 
 import type { GetCtx } from '../types';
 import { applyFilter } from '../utils/comparators';
+import { collectionItemWidthSchema } from '$lib/schemas/inputs/collection.schema';
 
 // TODO figure out if schemas should be colocated or in their own folder
 
@@ -58,7 +59,7 @@ export async function collections({
 export const collectionUpdateInputSchema = z.object({
 	bgColor: z.string().nullable(),
 	color: z.string().nullable(),
-	defaultItemWidth: z.string().nullable(),
+	defaultItemWidth: collectionItemWidthSchema.nullable(),
 	deleted: z.coerce.date().nullable(),
 	description: z.string().nullable(),
 	font: z.string().nullable(),

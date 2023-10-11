@@ -57,11 +57,12 @@
 		CommandSeparator,
 		CommandShortcut,
 	} from '$lib/components/ui/command2';
-	import { darkThemes, themes } from '$lib/features/settings/themes';
+	import { darkThemes, themes, updateTheme } from '$lib/features/settings/themes';
 	import { queryKeys } from '$lib/queries/keys';
 	import { checkedEntryIds } from '$components/entries/multi-select';
 	import { Badge } from '$components/ui/badge';
 	import { createSetTagsMutation } from '$lib/queries/mutations';
+	import { objectEntries } from '$lib/helpers';
 
 	const page = derived(state, ($state) => $state.pages.at(-1));
 	const pages = derived(state, ($state) => $state.pages);
@@ -209,8 +210,7 @@
 				<CommandItem
 					value="open jump go to note annotation"
 					onSelect={() => {
-						$state.pages = [...$state.pages, 'open-note'];
-						$state.shouldFilter = false;
+                        addPage('open-note');
 						$state.placeholder = 'Open note...';
 					}}
 				>
@@ -320,7 +320,10 @@
 			</CommandGroup>
 			<CommandGroup heading="Settings">
 				<CommandItem
-					onSelect={() => ($state.pages = [...$state.pages, 'theme'])}
+					onSelect={() => {
+                        addPage('theme')
+                        $state.placeholder = "Change theme..."
+                    }}
 				>
 					<Cog class="mr-2 h-4 w-4" />
 					<span>Change theme</span>
@@ -340,19 +343,10 @@
 		{/if}
 		{#if $page === 'theme'}
 			<CommandGroup>
-				{#each themes as { name, theme }}
+				{#each objectEntries(themes) as [name, theme]}
 					<CommandItem
 						onSelect={() => {
-							if (theme === 'system') {
-								document.documentElement.removeAttribute('data-theme');
-							} else {
-								document.documentElement.setAttribute('data-theme', theme);
-							}
-							if (darkThemes.includes(theme)) {
-								document.documentElement.classList.add('dark');
-							} else {
-								document.documentElement.classList.remove('dark');
-							}
+							updateTheme(theme);
 							// console.log('fetching');
 							fetch(
 								`/tests?/setTheme&theme=${theme}&redirectTo=${$spage.url.pathname}`,

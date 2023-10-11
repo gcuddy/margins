@@ -33,7 +33,7 @@ const googleBooksRegexes = [
 
 const amazonBooksRegex = /https?:\/\/www\.amazon\.com\/.*\/dp\/(?<id>.*)/;
 
-const youtubeRegex =
+export const youtubeRegex =
 	/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)(?<id>[^"&?/\s]{11})/;
 
 // zod?
