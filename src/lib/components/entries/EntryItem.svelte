@@ -512,7 +512,7 @@
 										class="text-xs text-muted-foreground/80 tabular-nums shrink-0"
 										>{formatDate(
 											entry.published,
-											entry.type === 'article' || entry.type === 'podcast'
+											entry.type === 'article' || entry.type === 'podcast' || entry.type === "video"
 												? {
 														day: 'numeric',
 														month: 'short',

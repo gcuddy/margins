@@ -15,7 +15,7 @@
 	export let entryId: number | undefined = undefined;
 
 	export let type: UpsertAnnotationInput['type'] = 'note';
-    export let media: UpsertAnnotationInput["media"] = undefined;
+	export let media: UpsertAnnotationInput['media'] = undefined;
 
 	const dispatch = createEventDispatcher();
 	const queryClient = useQueryClient();
@@ -29,7 +29,7 @@
 			queryClient.invalidateQueries({
 				queryKey: ['notes'],
 			});
-            dispatch('save', { content });
+			dispatch('save', { content });
 		},
 	});
 
@@ -38,14 +38,13 @@
 	}
 
 	function save() {
-        $mutation.mutate({
-            id: annotationId,
+		$mutation.mutate({
+			id: annotationId,
 			entryId: entryId,
 			contentData: content,
-            media,
-            type
+			media,
+			type,
 		});
-
 	}
 
 	// function maximize() {
@@ -63,13 +62,19 @@
 >
 	<!-- Header -->
 	<!-- TODO -->
-	<!-- <div class="flex absolute top-3 z-10 right-4">
+	{#if $$slots.header}
+		<div class="flex justify-end">
+			<slot name="header">
+				<!-- <div class="flex absolute top-3 z-10 right-4">
 		<Button on:click={maximize} size="icon" class="h-6 w-6" variant="ghost">
 			<Maximize2 class="h-3 w-3" />
 		</Button>
 	</div> -->
+			</slot>
+		</div>
+	{/if}
 
-    <!-- store data in entryId -->
+	<!-- store data in entryId -->
 	<Editor
 		onUpdate={(e) => {
 			content = e.editor.getJSON();

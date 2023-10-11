@@ -3,12 +3,14 @@
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
 		ChevronRightIcon,
+		CrosshairIcon,
 		FileDown,
 		FileText,
 		Link2,
 		MoreHorizontalIcon,
 		PlusIcon,
 		RotateCcwIcon,
+		XIcon,
 	} from 'lucide-svelte';
 	import { nanoid } from 'nanoid';
 	import { derived, writable } from 'svelte/store';
@@ -61,7 +63,13 @@
 	import type { Type } from '$lib/types';
 	import { getHostname } from '$lib/utils';
 	import { triggerDownload } from '$lib/utils/annotations';
-	import { ago, formatDate, normalizeTimezone, now } from '$lib/utils/date';
+	import {
+		ago,
+		formatDate,
+		formatDuration,
+		normalizeTimezone,
+		now,
+	} from '$lib/utils/date';
 	import { numberOrString } from '$lib/utils/misc';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
@@ -80,6 +88,9 @@
 		isMediaType,
 		makeMediaSchema,
 	} from '$lib/utils/entries';
+	import player from '$lib/stores/player';
+	import { TimestampInput } from '$components/ui/timestamp';
+	import { iframeNode } from '$components/ui/editor/nodes/iframes';
 
 	// const render = persisted('sidebar', false);
 
@@ -228,6 +239,7 @@
 
 	let isAddAnnotationModalOpen = false;
 	let isAddingPageNote = false;
+	let isAddingAnnotation = false;
 </script>
 
 <aside
@@ -674,20 +686,99 @@
 							/>
 						{/each}
 					{/if}
-					<div class="flex justify-center">
-						{#if $query.data?.entry?.type === 'movie'}
-							<Button
-								on:click={() => {
-									isAddAnnotationModalOpen = true;
+					{#if isAddingAnnotation}
+						<div transition:fly={{ duration: 200, y: 10 }}>
+							<AnnotationForm
+								autofocus
+								on:cancel={() => {
+									isAddingAnnotation = false;
 								}}
-								size="sm"
-								variant="ghost"
 							>
-								<PlusIcon class="h-4 w-4" />
-								Add annotation</Button
-							>
-						{/if}
-					</div>
+								<svelte:fragment slot="header">
+									{#if $player?.type === 'youtube'}
+										{@const player = $player.player}
+										{#await player.getCurrentTime()}
+											...
+										{:then timestamp}
+											<TimestampInput
+												duration={formatDuration(
+													Math.floor(Number(timestamp)),
+													's',
+													true,
+													':',
+												)}
+												let:updateDuration
+												let:currentTimestamp
+												showReset={false}
+											>
+												<button
+													on:click={() => {
+														player.getCurrentTime().then((time) => {
+															updateDuration(
+																formatDuration(
+																	Math.floor(time),
+																	's',
+																	true,
+																	':',
+																),
+															);
+														});
+													}}
+												>
+													{#if currentTimestamp}
+														<CrosshairIcon
+															class="h-4 w-4 text-muted-foreground"
+														/>
+														<span class="sr-only"> Set timestamp </span>
+													{:else}
+														<Button variant="ghost" size="sm">
+															Set timestamp
+														</Button>
+													{/if}
+												</button>
+												{#if currentTimestamp}
+													<button
+														on:click={() => {
+															updateDuration('');
+														}}
+													>
+														<XIcon class="h-4 w-4 text-muted-foreground" />
+														<span class="sr-only"> Clear timestamp </span>
+													</button>
+												{/if}
+											</TimestampInput>
+										{/await}
+									{/if}
+								</svelte:fragment>
+							</AnnotationForm>
+						</div>
+					{:else}
+						<div in:fade={{ delay: 250 }} class="flex justify-center">
+							{#if $query.data?.entry?.type === 'movie'}
+								<Button
+									on:click={() => {
+										isAddAnnotationModalOpen = true;
+									}}
+									size="sm"
+									variant="ghost"
+								>
+									<PlusIcon class="h-4 w-4" />
+									Add annotation</Button
+								>
+							{:else if $query.data?.entry?.type !== 'article'}
+								<Button
+									on:click={() => {
+										isAddingAnnotation = true;
+									}}
+									size="sm"
+									variant="ghost"
+								>
+									<PlusIcon class="h-4 w-4" />
+									Add annotation</Button
+								>
+							{/if}
+						</div>
+					{/if}
 				</div>
 			</div>
 		</TabsContent>
