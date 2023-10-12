@@ -231,7 +231,7 @@
 	}
 
 	export const setContent = (content: string | JSONContent) => {
-		$editor.commands.setContent(content);
+		$editor?.commands.setContent(content);
 	};
 
 	let just_saved = false;

@@ -394,11 +394,13 @@
 				{/if}
 			</div>
 		{:else}
-			<div class="py-16 text-center text-sm bg-background">
-				No entries found
+			{#if $query.data.pages.length === 0}
+				<div class="py-16 text-center text-sm bg-background">
+					No entries found
 
-				<!-- <pre>{JSON.stringify($query, null, 2)}</pre> -->
-			</div>
+					<!-- <pre>{JSON.stringify($query, null, 2)}</pre> -->
+				</div>
+			{/if}
 		{/each}
 		{#if $query.isFetchingNextPage}
 			<div

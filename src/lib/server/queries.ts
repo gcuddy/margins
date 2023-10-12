@@ -149,10 +149,11 @@ export async function get_library({
 			'i.progress',
 			'i.finished',
 			// 'i.seen',
-			'b.seen',
+			'b.seen_at as seen',
 			'i.currentPage',
 			'b.rating',
-			'b.bookmarked',
+			'b.bookmarked_at',
+			'b.id as bookmark_id',
 		])
 		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
 		.select((eb) => [
@@ -249,7 +250,9 @@ export async function get_library({
 
 	if (library) {
 		// TODO: b.bookmarked should be a date!
-		query = query.where('b.userId', '=', userId).where('b.bookmarked', '=', 1);
+		query = query
+			.where('b.userId', '=', userId)
+			.where('b.bookmarked_at', 'is not', null);
 	}
 
 	// check for grouping. if that's there, we need to sort by that first, then by the sort
@@ -658,9 +661,13 @@ export async function get_library({
 		}
 	}
 	const entries = await query.execute();
+
 	let nextCursor: GetLibrarySchema['cursor'] = null;
 	if (entries.length > take) {
 		const nextItem = entries.pop();
+		console.log({
+			nextItem,
+		});
 		if (nextItem) {
 			nextCursor = getCursor({
 				grouping,

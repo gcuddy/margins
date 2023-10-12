@@ -50,7 +50,7 @@
 	import { get_image, getId, getType, make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
 
-	import { Badge } from '$components/ui/badge'
+	import { Badge } from '$components/ui/badge';
 	import * as HoverCard from '../ui/hover-card';
 	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
 	import { Muted, Small } from '../ui/typography';
@@ -299,9 +299,9 @@
 										{@const src = entry.image?.startsWith('/')
 											? $page.data.S3_BUCKET_PREFIX + entry.image.slice(1)
 											: entry.image}
+										<!-- use:smoothload -->
 										<img
 											style:view-transition-name="artwork-{getId(entry)}"
-											use:smoothload
 											src={src ??
 												`https://icon.horse/icon/${getDomain(entry.uri ?? '')}`}
 											on:error={(e) => {
@@ -512,7 +512,9 @@
 										class="text-xs text-muted-foreground/80 tabular-nums shrink-0"
 										>{formatDate(
 											entry.published,
-											entry.type === 'article' || entry.type === 'podcast' || entry.type === "video"
+											entry.type === 'article' ||
+												entry.type === 'podcast' ||
+												entry.type === 'video'
 												? {
 														day: 'numeric',
 														month: 'short',

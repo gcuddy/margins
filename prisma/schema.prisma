@@ -51,35 +51,30 @@ model State {
 }
 
 model EntryHistory {
-    id           String    @id @default(cuid())
-    createdAt    DateTime  @default(now())
-    updatedAt    DateTime  @updatedAt
-    archivedAt   DateTime?
-    archived     Boolean?
-    fromStatus   Status?
-    toStatus     Status?
-    fromProgress Float?
-    toProgress   Float?
-    seen         Boolean?
-    finished     Boolean?
-    bookmarked   Boolean?
-    toTitle      String?   @db.VarChar(2083)
-    toAuthor     String?
-    userId       String?
-
-    entryId Int
-    entry   Entry @relation(fields: [entryId], references: [id])
-
-    // @deprecated
-    bookmarkId Int?
-    bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
-    user       AuthUser? @relation(fields: [userId], references: [id])
-
-    addedTagIds   Json? // Int[] - enforce this json schema
-    removedTagIds Json? // Int[] - enforce this json schema (REVIEW: should we use another table? the point is to be lightweight...)
-
-    addedCollectionIds   Json? // Int[] - enforce this json schema
-    removedCollectionIds Json? // Int[] - enforce this json schema (REVIEW: should we use another table? the point is to be lightweight...)
+    id                   String    @id @default(cuid())
+    createdAt            DateTime  @default(now())
+    updatedAt            DateTime  @updatedAt
+    archivedAt           DateTime?
+    archived             Boolean?
+    fromStatus           Status?
+    toStatus             Status?
+    fromProgress         Float?
+    toProgress           Float?
+    seen                 Boolean?
+    finished             Boolean?
+    bookmarked           Boolean?
+    toTitle              String?   @db.VarChar(2083)
+    toAuthor             String?
+    userId               String?
+    entryId              Int
+    bookmarkId           Int?
+    addedTagIds          Json?
+    removedTagIds        Json?
+    addedCollectionIds   Json?
+    removedCollectionIds Json?
+    entry                Entry     @relation(fields: [entryId], references: [id])
+    bookmark             Bookmark? @relation(fields: [bookmarkId], references: [id])
+    user                 AuthUser? @relation(fields: [userId], references: [id])
 
     @@index([userId])
     @@index([bookmarkId])
@@ -107,18 +102,18 @@ model Bookmark {
     source           String?
     dueDate          DateTime?
     snoozedUntil     DateTime?
-    seen             Boolean           @default(false)
-    rating           Int?              @db.TinyInt
     /// The original url of the bookmark, if it's different than the entry's url
     originalUrl      String?
     status           Status?           @default(Backlog)
     sort_order       Int               @default(0)
     /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
     review_timestamp Int?
-    bookmarked       Boolean           @default(true)
+    bookmarked_at    DateTime?         @db.Timestamp(0)
     title            String?
     author           String?
     pdf_url          String?           @db.VarChar(2083)
+    rating           Int?              @db.TinyInt
+    seen_at          DateTime?         @db.Timestamp(0)
     entry            Entry?            @relation(fields: [entryId], references: [id])
     user             AuthUser          @relation(fields: [userId], references: [id])
     state            State?            @relation(fields: [stateId], references: [id])
@@ -377,8 +372,6 @@ model Entry {
     EntryHistory         EntryHistory[]
 
     @@unique([uri, id])
-    // TODO:
-    // @@unique([feedId, guid])
     @@index([feedId])
     @@index([id, published, createdAt])
     @@index([published])
@@ -648,8 +641,6 @@ model Interaction {
     updatedAt        DateTime  @updatedAt
     is_read          Boolean?  @default(false)
     progress         Float?    @default(0)
-    finished         DateTime?
-    seen             Boolean?  @default(false)
     userId           String
     last_viewed      DateTime  @default(now())
     last_annotated   DateTime  @default(now())
@@ -660,9 +651,11 @@ model Interaction {
     epsiodes_watched Json?
     /// Optionally, a title for the interaction
     title            String?
-    started          DateTime?
     note             String?
     rating           Int?
+    seen             Boolean?  @default(false)
+    finished         DateTime?
+    started          DateTime?
     entry            Entry     @relation(fields: [entryId], references: [id])
     user             AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
     bookmark         Bookmark?
@@ -756,19 +749,11 @@ model Tagging {
     @@map("Taggings")
 }
 
-enum EntryFilterType {
-    Library
-    Subscriptions
-    All
-}
-
 /// @zod.import(["import { chosenIcon } from '../schemas'"])
 model SmartList {
     id              Int               @id @default(autoincrement())
     name            String
     filter          Json?
-    filterData      Json?
-    entryFilterType EntryFilterType   @default(Library)
     viewOptions     Json?
     conditions      Json?
     /// @zod.custom.use(chosenIcon)
@@ -778,6 +763,8 @@ model SmartList {
     private         Boolean           @default(true)
     updatedAt       DateTime          @default(now()) @updatedAt
     userId          String            @default("")
+    entryFilterType EntryFilterType   @default(Library)
+    filterData      Json?
     favorites       Favorite[]
     user            AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
     ViewPreferences ViewPreferences[]
@@ -997,6 +984,12 @@ model ViewPreferences {
     @@index([userId])
     @@index([collectionId])
     @@index([customViewId])
+}
+
+enum EntryFilterType {
+    Library
+    Subscriptions
+    All
 }
 
 enum BookGenre {

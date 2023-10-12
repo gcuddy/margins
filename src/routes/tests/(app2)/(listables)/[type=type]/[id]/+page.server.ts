@@ -296,17 +296,17 @@ export const actions: Actions = {
 			.execute();
 		// TODO: should edit this if one exists on same day
 		// TODO: should entryhistory just be intryinteraction?
-		await db
-			.insertInto('EntryHistory')
-			.values({
-				createdAt: new Date(),
-				entryId: +entryId,
-				finished: 1,
-				id: historyId ?? nanoid(),
-				updatedAt: new Date(),
-				userId: session.user.userId,
-			})
-			.execute();
+		// await db
+		// 	.insertInto('EntryHistory')
+		// 	.values({
+		// 		createdAt: new Date(),
+		// 		entryId: +entryId,
+		// 		finished: 1,
+		// 		id: historyId ?? nanoid(),
+		// 		updatedAt: new Date(),
+		// 		userId: session.user.userId,
+		// 	})
+		// 	.execute();
 		await db
 			.insertInto('Bookmark')
 			.values({

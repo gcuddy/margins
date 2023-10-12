@@ -319,6 +319,20 @@ export async function query<T extends keyof Queries>(
 
 export { query as qquery };
 
+/**
+ * Helper function to run a query
+ * @param fn Query operation to run
+ * @param params Input to pass to query
+ * @returns Data returned from query
+ */
+export async function q<T extends keyof Queries>(
+	fn: T,
+	params: Parameters<Queries[T]['fn']>[0]['input'],
+): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
+	const $page = get(page);
+	return query($page, fn, params);
+}
+
 export const isMutating = writable(false);
 
 /**
@@ -435,19 +449,6 @@ export class Query {
 	// 	return final;
 	// }
 }
-
-export function q(init: {
-	fetcher?: typeof fetch;
-	url: URL;
-	userId?: string | null;
-}) {
-	const query = new Query(init);
-
-	console.log({ query });
-
-	return query;
-}
-
 export function query_store<T>(opts: {
 	fn: () => Promise<T>;
 	// fn: Fn

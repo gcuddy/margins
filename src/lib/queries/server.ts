@@ -130,9 +130,12 @@ export async function updateBookmark(
 ) {
 	const { data, userId } = variables;
 
+	const { bookmarked_at, ...dataToUpdate } = data;
+
 	if ('id' in variables) {
 		let bookmarks = db
 			.updateTable('Bookmark')
+            // here we use data, since we assume it was set specifically for a reason...
 			.set(data)
 			.where('userId', '=', userId);
 		const { id } = variables;
@@ -160,7 +163,7 @@ export async function updateBookmark(
 					...data,
 				})),
 			)
-			.onDuplicateKeyUpdate(data);
+			.onDuplicateKeyUpdate(dataToUpdate);
 		return await bookmarks.execute();
 		// if (Array.isArray(entryId)) {
 		// 	bookmarks = bookmarks.where('entryId', 'in', entryId);
@@ -683,23 +686,23 @@ export async function entry_by_id({
 						.whereRef('ci.entryId', '=', 'Entry.id')
 						.where('c.userId', '=', userId),
 				).as('collections'),
-				jsonArrayFrom(
-					eb
-						.selectFrom('EntryHistory as h')
-						.innerJoin('auth_user as hu', 'hu.id', 'h.userId')
-						.select([
-							'h.id',
-							'h.createdAt',
-							'h.toStatus',
-							'h.finished',
-							'h.userId',
-							'hu.username',
-							'hu.avatar',
-						])
-						.orderBy('h.createdAt', 'asc')
-						.whereRef('h.entryId', '=', 'Entry.id')
-						.where('h.userId', '=', userId),
-				).as('history'),
+				// jsonArrayFrom(
+				// 	eb
+				// 		.selectFrom('EntryHistory as h')
+				// 		.innerJoin('auth_user as hu', 'hu.id', 'h.userId')
+				// 		.select([
+				// 			'h.id',
+				// 			'h.createdAt',
+				// 			'h.toStatus',
+				// 			'h.finished',
+				// 			'h.userId',
+				// 			'hu.username',
+				// 			'hu.avatar',
+				// 		])
+				// 		.orderBy('h.createdAt', 'asc')
+				// 		.whereRef('h.entryId', '=', 'Entry.id')
+				// 		.where('h.userId', '=', userId),
+				// ).as('history'),
 				jsonArrayFrom(
 					eb
 						.selectFrom('Relation as r')
@@ -746,10 +749,11 @@ export async function entry_by_id({
 							'b.id',
 							'b.status',
 							'b.createdAt',
-							'b.bookmarked',
+							'b.bookmarked_at',
 							'b.author',
 							'b.title',
 							'b.rating',
+							'b.seen_at',
 						])
 						// .select(eb => [jsonObjectFrom(
 						//     eb.selectFrom('auth_user as u').select(['u.username', 'u.id']).whereRef('u.id', '=', 'b.userId')
@@ -950,19 +954,20 @@ export async function save_to_library({
 			.executeTakeFirst();
 
 		// save bookmark history (tho maybe this should be entry hsitory?)
-		return await trx
-			.insertInto('EntryHistory')
-			.values({
-				entryId: entryId!,
-				id: input.historyId ?? nanoid(),
-				toStatus: status ?? 'Backlog',
-				updatedAt: new Date(),
-				userId: ctx.userId,
-			})
-			.onDuplicateKeyUpdate({
-				toStatus: status ?? 'Backlog',
-			})
-			.execute();
+		return;
+		// await trx
+		// 	.insertInto('EntryHistory')
+		// 	.values({
+		// 		entryId: entryId!,
+		// 		id: input.historyId ?? nanoid(),
+		// 		toStatus: status ?? 'Backlog',
+		// 		updatedAt: new Date(),
+		// 		userId: ctx.userId,
+		// 	})
+		// 	.onDuplicateKeyUpdate({
+		// 		toStatus: status ?? 'Backlog',
+		// 	})
+		// 	.execute();
 	});
 }
 

@@ -26,6 +26,10 @@
 	import { get_module } from './module';
 	import ProgressForm from './ProgressForm.svelte';
 	import { entryDetailsQuery } from './query';
+	import {
+		initUpdateBookmarkMutation,
+		setGetLibraryData,
+	} from '$lib/queries/mutations';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
@@ -38,45 +42,66 @@
 
 	const queryClient = useQueryClient();
 
+	const markAsSeenMutation = createMutation({
+		mutationFn: (input: MutationInput<'updateBookmark'>) =>
+			mutate('updateBookmark', input),
+		onMutate(variables) {
+			const {
+				data: { seen_at },
+			} = variables;
+			if (!seen_at || !('id' in variables && variables.id)) return;
+			// edit entries->list and entries-> details with this data
+			setGetLibraryData(queryClient, (entry) => {
+				if (entry.bookmark_id === variables.id) {
+					return {
+						...entry,
+						seen: new Date(seen_at),
+					};
+				}
+				return entry;
+			});
+		},
+	});
+
 	const saveInteractionMutation = createMutation({
 		mutationFn: (data: MutationInput<'saveInteraction'>) => {
 			return mutate('saveInteraction', data);
 		},
 		onMutate(variables) {
 			// TODO: try to set query data
-			queryClient.setQueriesData<InfiniteData<QueryOutput<'get_library'>>>(
-				{
-					queryKey: ['entries', 'list'],
-				},
-				(old) => {
-                    console.log(`setquerydata`, { old } )
-					if (!old) {
-						return old;
-					}
-                    console.log({variables})
-                    // const { finished, is_read, last_viewed, progress, seen } = variables;
-					const newData = {
-						...old,
-						pages: old.pages.map((page) => {
-							return {
-								...page,
-								entries: page.entries.map((entry) => {
-									if (entry.id === variables.entryId) {
-										return {
-											...entry,
-											// ...variables,
-											seen: +variables.seen,
-										};
-									}
-									return entry;
-								}),
-							};
-						}),
-					};
-					// console.log({ newData });
-					return newData;
-				},
-			);
+			// queryClient.setQueriesData<InfiniteData<QueryOutput<'get_library'>>>(
+			// 	{
+			// 		queryKey: ['entries', 'list'],
+			// 	},
+			// 	(old) => {
+			//         console.log(`setquerydata`, { old } )
+			// 		if (!old) {
+			// 			return old;
+			// 		}
+			//         console.log({variables})
+			//         // const { finished, is_read, last_viewed, progress, seen } = variables;
+			// 		const newData = {
+			// 			...old,
+			// 			pages: old.pages.map((page) => {
+			// 				return {
+			// 					...page,
+			// 					entries: page.entries.map((entry) => {
+			// 						if (entry.id === variables.entryId) {
+			// 							return {
+			// 								...entry,
+			// 								// ...variables,
+			// 								seen: +variables.seen,
+			// 							};
+			// 						}
+			// 						return entry;
+			// 					}),
+			// 				};
+			// 			}),
+			// 		};
+			// 		// console.log({ newData });
+			// 		return newData;
+			// 	},
+			// );
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries(queryFactory.entries.list());
@@ -89,12 +114,15 @@
 		// save interaction
 		const entryId = data.entry?.id;
 		const interactionId = data.entry?.interaction?.id;
-		if (entryId || interactionId) {
+		const bookmarkId = data.entry?.bookmark?.id;
+		if (bookmarkId) {
 			// if (!data.entry?.) {
-			$saveInteractionMutation.mutate({
-				entryId,
-				id: interactionId,
-				seen: true,
+			// mark as seen
+			$markAsSeenMutation.mutate({
+				id: bookmarkId,
+				data: {
+					seen_at: new Date(),
+				},
 			});
 			// data.entry.seen = true;
 			// }
@@ -163,8 +191,8 @@
 	{:else if $query.data}
 		{#if type === 'article'}
 			<svelte:component
-            {query}
 				this={data.component}
+				{query}
 				data={{
 					...data,
 					...$query.data,
@@ -174,12 +202,11 @@
 				{@html $query.data.entry?.html}
 			</svelte:component>
 		{:else}
-            <!-- <pre> -->
-                <!-- {JSON.stringify($query.data, null, 2)}
+			<!-- <pre> -->
+			<!-- {JSON.stringify($query.data, null, 2)}
                 </pre> -->
 			<svelte:component
 				this={data.component}
-
 				data={{
 					...data,
 					// ...$query.data,

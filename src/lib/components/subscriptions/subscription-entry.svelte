@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Form } from 'formsnap';
+	import * as Form from '$components/ui/form';
 	import { onDestroy } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { SuperValidated } from 'sveltekit-superforms';
@@ -16,6 +16,8 @@
 		type FeedSearchFormSchema,
 		feedSearchFormSchema,
 	} from './subscription-entry.schema';
+	import { ChevronLeft } from 'radix-icons-svelte';
+	import { Loader2 } from 'lucide-svelte';
 
 	export let searchForm: SuperValidated<FeedSearchFormSchema>;
 
@@ -35,14 +37,26 @@
 		toast('No feeds found!');
 	}
 
-    onDestroy(() => {
-        form = undefined;
-        showFeeds = false;
-    })
+	onDestroy(() => {
+		form = undefined;
+		showFeeds = false;
+	});
 </script>
 
 {#if showFeeds && form && 'feeds' in form && form?.feeds && form.feeds?.feeds.length}
-<!-- <button on:click={() => {
+	<div>
+		<Button
+			on:click={() => {
+				showFeeds = false;
+			}}
+			variant="ghost"
+			size="sm"
+		>
+			<ChevronLeft class="h-4 w-4 mr-1" />
+			Go back
+		</Button>
+	</div>
+	<!-- <button on:click={() => {
     showFeeds = false;
 }}>
     go back
@@ -68,11 +82,7 @@
 								/>
 							</div>
 						{:else}
-							<input
-								type="hidden"
-								name="{index}-url"
-								value={feed.url}
-							/>
+							<input type="hidden" name="{index}-url" value={feed.url} />
 						{/if}
 						<div
 							class="{form.feeds.feeds.length > 1
@@ -109,16 +119,25 @@
 		form={searchForm}
 		schema={feedSearchFormSchema}
 		let:config
-		debug
+		let:submitting
+		class="space-y-8"
 	>
 		<Form.Field {config} name="url">
-			<Form.Label>URL</Form.Label>
-			<Form.Input />
-			<Form.Description>
-				Enter a URL to search for a feed to subscribe to.
-			</Form.Description>
-			<Form.Validation />
+			<div class="space-y-2">
+				<Form.Label>URL</Form.Label>
+				<Form.Input />
+				<Form.Description>Enter a URL to subscribe to.</Form.Description>
+				<Form.Validation />
+			</div>
 		</Form.Field>
-		<Button type="submit">Search</Button>
+		<div
+			class="flex justify-end sm:flex-row sm:justify-end sm:space-x-2 flex-col-reverse"
+		>
+			<Form.Button disabled={submitting}
+				>Find feed{#if submitting}
+					<Loader2 class="animate-spin ml-2 h-4 w-4" />
+				{/if}</Form.Button
+			>
+		</div>
 	</Form.Root>
 {/if}

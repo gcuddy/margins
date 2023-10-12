@@ -224,6 +224,7 @@
 						showAddUrlModal.set(true);
 					}}
 					variant="outline"
+                    size="sm"
 					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
 				>
 					<PlusCircle class="square-5 lg:square-4 shrink-0" />

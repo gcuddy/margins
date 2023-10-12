@@ -31,7 +31,7 @@
 	} from '$lib/annotator';
 	import { highlightText } from '$lib/annotator/highlighter';
 	import type { TextQuoteSelector } from '$lib/annotator/types';
-	import Button from '$lib/components/ui/Button.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
 	import { nanoid } from '$lib/nanoid';
@@ -86,7 +86,7 @@
 			if (!annotation) {
 				return null;
 			}
-			return annotation
+			return annotation;
 		},
 	);
 
@@ -1114,7 +1114,9 @@
 				alwaysTabbable
 				autofocus
 				id={$activeAnnotationId ?? undefined}
-				content={$activeAnnotationFromQuery?.contentData ?? $activeAnnotation?.contentData ?? undefined}
+				content={$activeAnnotationFromQuery?.contentData ??
+					$activeAnnotation?.contentData ??
+					undefined}
 				blank
 				focusRing={false}
 				class="sm:shadow-none shadow-none border-none sm:px-4 px-4 py-6"
@@ -1216,6 +1218,7 @@
 	</div>
 	{#if data.entry?.bookmark?.status !== 'Archive'}
 		<form
+			class="mb-9 flex justify-center"
 			action="?/updateBookmark"
 			method="post"
 			use:enhance={() => {
@@ -1247,6 +1250,8 @@
 		>
 			<input type="hidden" name="status" value="Archive" />
 			<Button
+				variant="outline"
+				size="lg"
 				on:mouseover={() => {
 					preloadData(next_link);
 				}}>Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button

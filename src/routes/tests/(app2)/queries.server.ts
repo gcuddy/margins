@@ -607,7 +607,7 @@ export const queries = {
 				)
 				.where('b.userId', '=', ctx.userId)
 				.select(entrySelect)
-				.select(['b.status', 'i.progress', 'b.bookmarked'])
+				.select(['b.status', 'i.progress', 'b.bookmarked_at'])
 				.select((eb) =>
 					eb
 						.case()
@@ -956,6 +956,51 @@ export const queries = {
 				.execute();
 		},
 		schema: qSchema,
+	}),
+	similarEntries: query({
+		fn: async ({ ctx, input }) => {
+			// TODO: massage this a bit, try out different ways of doing it. also could do a search for url if provided.
+
+			const entries = await db
+				.selectFrom('Entry as e')
+				.leftJoin('Bookmark as b', (join) =>
+					join.onRef('b.entryId', '=', 'e.id').on('b.userId', '=', ctx.userId),
+				)
+				.leftJoin('Subscription as s', (join) =>
+					join
+						.onRef('s.feedId', '=', 'e.feedId')
+						.on('s.userId', '=', ctx.userId),
+				)
+				.select(entrySelect)
+				.select(
+					sql<number>`MATCH (e.title, e.author, text) AGAINST ('>("${sql.raw(
+						input.title,
+					)}") <(${sql.raw(input.title)}) ("${sql.raw(
+						input.author ?? '',
+					)}")' IN BOOLEAN MODE)`.as('score'),
+				)
+				.where(
+					sql`MATCH (e.title, e.author, text) AGAINST ('"${sql.raw(
+						input.title,
+					)}" <(${sql.raw(input.title)}) "${sql.raw(
+						input.author ?? '',
+					)}"' IN BOOLEAN MODE)`,
+				)
+				// where bookmarked, or subscription exists
+				.where((eb) =>
+					eb.or([eb('b.id', 'is not', null), eb('s.id', 'is not', null)]),
+				)
+				.having(sql`score > 0.5`)
+				// look for where in library or subscriptions
+				.limit(25)
+				.execute();
+
+			return entries;
+		},
+		schema: z.object({
+			title: z.string(),
+			author: z.string().nullish(),
+		}),
 	}),
 	subscription: query({
 		fn: subscription,

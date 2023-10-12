@@ -5,7 +5,7 @@ export type BookmarkCreateInput = z.input<typeof bookmarkCreateInput>;
 
 export const BookmarkSchema = z.object({
 	author: z.string().nullable(),
-	bookmarked: z.boolean(),
+	bookmarked_at: z.coerce.date(),
 	context: z.any().optional(),
 	createdAt: z.coerce.date(),
 	data: z.any().optional(),
@@ -34,6 +34,8 @@ export const BookmarkSchema = z.object({
 	 * The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
 	 */
 	review_timestamp: z.number().int().nullable(),
+
+	seen_at: z.coerce.date().nullable(),
 
 	screenshot: z.string().nullable(),
 

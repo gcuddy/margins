@@ -36,7 +36,7 @@ export type BookmarkCreateInput = z.input<typeof bookmarkCreateInput>;
 
 export const BookmarkSchema = z.object({
 	author: z.string().nullable(),
-	bookmarked: z.boolean(),
+	bookmarked_at: z.coerce.date(),
 	context: z.any().optional(),
 	createdAt: z.coerce.date(),
 	data: z.any().optional(),

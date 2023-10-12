@@ -266,8 +266,6 @@ export type Bookmark = {
 	source: string | null;
 	dueDate: Timestamp | null;
 	snoozedUntil: Timestamp | null;
-	seen: Generated<number>;
-	rating: number | null;
 	/**
 	 * The original url of the bookmark, if it's different than the entry's url
 	 */
@@ -278,10 +276,12 @@ export type Bookmark = {
 	 * The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
 	 */
 	review_timestamp: number | null;
-	bookmarked: Generated<number>;
+	bookmarked_at: Timestamp | null;
 	title: string | null;
 	author: string | null;
 	pdf_url: string | null;
+	rating: number | null;
+	seen_at: Timestamp | null;
 };
 export type Collection = {
 	id: Generated<number>;
@@ -559,8 +559,6 @@ export type Interaction = {
 	updatedAt: Timestamp;
 	is_read: Generated<number | null>;
 	progress: Generated<number | null>;
-	finished: Timestamp | null;
-	seen: Generated<number | null>;
 	userId: string;
 	last_viewed: Generated<Timestamp>;
 	last_annotated: Generated<Timestamp>;
@@ -575,9 +573,11 @@ export type Interaction = {
 	 * Optionally, a title for the interaction
 	 */
 	title: string | null;
-	started: Timestamp | null;
 	note: string | null;
 	rating: number | null;
+	seen: Generated<number | null>;
+	finished: Timestamp | null;
+	started: Timestamp | null;
 };
 export type InvitationCode = {
 	code: string;
@@ -630,8 +630,6 @@ export type SmartList = {
 	id: Generated<number>;
 	name: string;
 	filter: unknown | null;
-	filterData: unknown | null;
-	entryFilterType: Generated<EntryFilterType>;
 	viewOptions: unknown | null;
 	conditions: unknown | null;
 	/**
@@ -643,6 +641,8 @@ export type SmartList = {
 	private: Generated<number>;
 	updatedAt: Generated<Timestamp>;
 	userId: Generated<string>;
+	entryFilterType: Generated<EntryFilterType>;
+	filterData: unknown | null;
 };
 export type State = {
 	id: Generated<number>;

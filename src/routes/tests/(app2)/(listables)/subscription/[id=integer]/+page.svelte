@@ -182,14 +182,14 @@
 	<!-- <H1>{$query.data.feed.title}</H1> -->
 	<List opts={entryQueryOpts}>
 		<svelte:fragment slot="actions" let:checkedEntries let:clear>
-			{#if !checkedEntries.every((e) => e.bookmarked)}
+			{#if !checkedEntries.every((e) => e.bookmarked_at)}
 				<Button
 					variant="outline"
 					size="sm"
 					on:click={() => {
 						$updateBookmarkMutation.mutate({
                             data: {
-                                bookmarked: 1,
+                                bookmarked_at: new Date(),
                                 status: 'Backlog',
                             },
 							entryId: checkedEntries.map((e) => e.id),

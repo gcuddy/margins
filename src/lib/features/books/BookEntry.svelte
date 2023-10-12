@@ -107,7 +107,7 @@
 		? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`
 		: "";
 
-	$: bookmarked = !!entry?.bookmark;
+	$: bookmarked = !!entry?.bookmark_at;
 
 	$: image = openLibraryImage || googleBooksimage;
 

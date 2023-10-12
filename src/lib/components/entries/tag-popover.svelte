@@ -42,6 +42,16 @@
 		})),
 	);
 
+    $: if (selectedTags !== undefined) {
+        selectedTagsStore.set(
+            selectedTags.map((t) => ({
+                value: t,
+            })),
+        );
+    }
+
+
+
 	function sortFunction(
 		a: (typeof selectedTags)[0],
 		b: (typeof selectedTags)[0],

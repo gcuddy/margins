@@ -4,7 +4,8 @@
 	import { scale } from "svelte/transition";
 
 	type $$Props = SelectPrimitive.ContentProps;
-	type $$Events = SelectPrimitive.ContentEvents;
+
+	let className: $$Props["class"] = undefined;
 	export let inTransition: $$Props["inTransition"] = flyAndScale;
 	export let inTransitionConfig: $$Props["inTransitionConfig"] = undefined;
 	export let outTransition: $$Props["outTransition"] = scale;
@@ -13,8 +14,6 @@
 		opacity: 0,
 		duration: 50
 	};
-
-	let className: $$Props["class"] = undefined;
 	export { className as class };
 </script>
 
@@ -24,11 +23,10 @@
 	{outTransition}
 	{outTransitionConfig}
 	class={cn(
-		"relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md outline-none",
+		"relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md focus:outline-none",
 		className
 	)}
 	{...$$restProps}
-	on:keydown
 >
 	<div class="w-full p-1">
 		<slot />

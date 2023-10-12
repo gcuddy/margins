@@ -44,7 +44,7 @@
 				duration: 0,
 			});
 		}
-		console.log({ is_clamped });
+		console.log(`is_clamped`, is_clamped);
 	}
 
 	$: max_height = is_clamped
@@ -64,7 +64,6 @@
 <svelte:element
 	this={as}
 	bind:this={el}
-	style:--height={is_clamped ? undefined : `${$clamped_height}px`}
 	style:--line-clamp={clamp}
 	class:clamped={!show_more}
 	style:--line-height={lineHeight}

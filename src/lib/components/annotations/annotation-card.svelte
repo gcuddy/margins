@@ -58,6 +58,7 @@
     $: console.log({annotation})
 
     $: if (annotation.contentData && editor) {
+        console.log('setting content to contentData', annotation.contentData)
         editor.setContent(annotation.contentData)
     }
 </script>

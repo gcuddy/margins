@@ -11,7 +11,7 @@ import { toast } from 'svelte-sonner';
 import { page } from '$app/stores';
 import { makeAnnotation, omit } from '$lib/helpers';
 import type { BookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
-import type { LibraryResponse } from '$lib/server/queries';
+import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
 
 import {
 	mutate,
@@ -76,6 +76,32 @@ export function createTagMutation() {
 			queryClient.invalidateQueries({ queryKey: ['tags'] });
 		},
 	});
+}
+
+export function setGetLibraryData(
+	queryClient: QueryClient,
+	mapFn: (entry: LibraryEntry) => LibraryEntry,
+) {
+	queryClient.setQueriesData<InfiniteData<LibraryResponse>>(
+		{ queryKey: ['entries', 'list'] },
+		(old) => {
+			if (!old) return old;
+
+			const newData = {
+				...old,
+				pages: old.pages.map((page) => {
+					return {
+						...page,
+						entries: page.entries.map((entry) => {
+							return mapFn(entry);
+						}),
+					};
+				}),
+			};
+
+			return newData;
+		},
+	);
 }
 
 export function updateAnnotationMutation<
@@ -307,6 +333,7 @@ export function initBookmarkCreateMutation() {
 }
 
 export function initUpdateBookmarkMutation(opts?: {
+	invalidate?: boolean;
 	/** Whether or not to invalidate the entire "entries" scope */
 	invalidateAllEntries?: boolean;
 }) {
@@ -315,7 +342,9 @@ export function initUpdateBookmarkMutation(opts?: {
 		mutationFn: (input: MutationInput<'updateBookmark'>) =>
 			mutate('updateBookmark', input),
 		onSuccess() {
-			invalidateEntries(queryClient, opts?.invalidateAllEntries);
+			if (opts?.invalidate !== false) {
+				invalidateEntries(queryClient, opts?.invalidateAllEntries);
+			}
 		},
 	});
 }

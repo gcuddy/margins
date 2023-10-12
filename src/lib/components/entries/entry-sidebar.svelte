@@ -79,7 +79,7 @@
 
 	import EntryAuthorInput from './entry-author-input.svelte';
 	import EntryIcon from './EntryIcon.svelte';
-	import History from './history.svelte';
+	// import History from './history.svelte';
 	import { saveUrl } from './utils';
 	import { fade, fly, scale, slide } from 'svelte/transition';
 	import { fadeScale, gentleFly } from '$lib/transitions';
@@ -98,6 +98,7 @@
 	import { CaretRight } from 'radix-icons-svelte';
 	import { flip } from 'svelte/animate';
 	import { filterLibrary } from '$lib/schemas/library';
+	import SimilarEntries from './similar-entries.svelte';
 
 	// const render = persisted('sidebar', false);
 
@@ -213,28 +214,28 @@
 
 	const linksFetching: Record<string, boolean> = {};
 
-	const todayHistory = derived(query, ($query) => {
-		if (!$query.data?.entry?.history) {
-			return [];
-		}
-		const today = new Date();
-		return $query.data.entry.history.filter((h) => {
-			const historyDate = new Date(normalizeTimezone(h.createdAt));
-			return (
-				historyDate.getDate() === today.getDate() &&
-				historyDate.getMonth() === today.getMonth() &&
-				historyDate.getFullYear() === today.getFullYear()
-			);
-		});
-	});
+	// const todayHistory = derived(query, ($query) => {
+	// 	if (!$query.data?.entry?.history) {
+	// 		return [];
+	// 	}
+	// 	const today = new Date();
+	// 	return $query.data.entry.history.filter((h) => {
+	// 		const historyDate = new Date(normalizeTimezone(h.createdAt));
+	// 		return (
+	// 			historyDate.getDate() === today.getDate() &&
+	// 			historyDate.getMonth() === today.getMonth() &&
+	// 			historyDate.getFullYear() === today.getFullYear()
+	// 		);
+	// 	});
+	// });
 
-	const todayStatusHistoryId = derived(todayHistory, ($todayHistory) => {
-		if (!$todayHistory.length) {
-			return undefined;
-		}
-		const statusHistory = $todayHistory.find((h) => h.toStatus);
-		return statusHistory?.id;
-	});
+	// const todayStatusHistoryId = derived(todayHistory, ($todayHistory) => {
+	// 	if (!$todayHistory.length) {
+	// 		return undefined;
+	// 	}
+	// 	const statusHistory = $todayHistory.find((h) => h.toStatus);
+	// 	return statusHistory?.id;
+	// });
 
 	$: if ($query.data?.entry?.html) {
 		generateLinks($query.data.entry.html);
@@ -249,6 +250,9 @@
 	let isAddingAnnotation = false;
 	let isPageNotesPanelOpen = true;
 	let isAnnotationsPanelOpen = true;
+
+	// these are types we'll show similar entries. we don't want to show similar entries for all types
+	const similarEntriesTypes = ['article', 'movie', 'podcast'] as const;
 </script>
 
 <aside
@@ -448,11 +452,11 @@
 						<Skeleton class="h-9 w-full grow" />
 					{:else if $query.isSuccess}
 						{@const status = $query.data.entry?.bookmark?.status}
+						<!-- historyId={$todayStatusHistoryId} -->
 						<LibraryForm
 							{status}
 							type={$query.data.type}
 							entryId={$query.data.entry?.id}
-							historyId={$todayStatusHistoryId}
 							googleBooksId={$query.data.book?.id ?? undefined}
 							podcastIndexId={$query.data.podcast?.episode.id ?? undefined}
 							spotifyId={$query.data.album?.id}
@@ -522,7 +526,7 @@
 					<Cluster>
 						{#each $query.data?.entry?.collections ?? [] as collection}
 							<Badge
-								variant="ghost"
+								variant="secondary"
 								as="a"
 								class="line-clamp-2 rounded"
 								href="/tests/collection/{collection.id}"
@@ -551,27 +555,11 @@
 					</Cluster>
 				</div>
 				<!-- now a  -->
-				{#if $query.data?.entry?.history}
+				<!-- {#if $query.data?.entry?.history}
 					<Separator />
 					<h3 class="tracking-tight text-base font-medium">Timeline</h3>
-					<!-- <pre>
-                        {JSON.stringify($query.data.entry.history, null, 2)}
-                    </pre> -->
 					<History entry={$query.data.entry} />
-					<!-- {#if $query.data?.entry?.interaction}
-						{@const interaction = $query.data.entry?.interaction}
-						{#if interaction.finished}
-							Logged on <time datetime={interaction.finished}
-								>{formatDate(
-									new Date(normalizeTimezone(interaction.finished)),
-									{
-										preferShortest: false,
-									},
-								)}</time
-							>
-						{/if}
-					{/if} -->
-				{/if}
+				{/if} -->
 			</CardContent>
 		</TabsContent>
 
@@ -841,6 +829,31 @@
 		</TabsContent>
 		<!-- {#if $query.data?.entry?.type === 'article'} -->
 		<TabsContent value="links">
+			<!-- other entries -->
+			{#if $query.data?.entry?.type && similarEntriesTypes.includes($query.data?.entry?.type)}
+				<Collapsible.Root open class="px-6 space-y-4">
+					<Collapsible.Trigger asChild let:builder>
+						<Button variant="ghost" builders={[builder]} class="group">
+							<span class="font-medium text-base">Similar entries</span>
+							<CaretRight
+								class="h-4 w-4 ml-2 group-data-[state=open]:rotate-90"
+							/>
+						</Button>
+					</Collapsible.Trigger>
+					<Collapsible.Content>
+						{#if $query.data?.entry?.title}
+							<SimilarEntries
+								enabled={$currentTab === 'links'}
+								title={$query.data.entry.title}
+								author={$query.data.entry.author}
+							/>
+						{/if}
+					</Collapsible.Content>
+				</Collapsible.Root>
+			{/if}
+			<!-- <Collapsible.Root>
+                <Collapsible.Trigger></Collapsible.Trigger>
+            </Collapsible.Root> -->
 			<ul class="px-6 flex flex-col gap-y-3 text-sm">
 				{#if $query.data?.entry?.type === 'article'}
 					<Input bind:value={linkFilterValue} />
