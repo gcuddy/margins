@@ -14,7 +14,6 @@ import { twitter } from './twitter';
 import type { Tweet } from './api/twitter';
 import { isbn_regex } from './schemas';
 type VideoListResponse = youtube_v3.Schema$VideoListResponse;
-import pdfjs from "pdfjs-dist/legacy/build/pdf"
 import { nanoid } from 'nanoid';
 import { parse_pdf } from './utils/pdf';
 
@@ -267,42 +266,35 @@ export default async function (
 		console.log({ response });
 		if (response.headers.get('content-type')?.includes('text/html')) {
 			htmlToParse = await response.text();
-		} else if (
-			response.headers.get('content-type')?.includes('application/pdf')
-		) {
+		} else if (response.headers.get('content-type')?.includes('application/pdf')) {
+			// Upload File
+			const arrayBuffer = await response.arrayBuffer();
 
-            // Upload File
-            const arrayBuffer = await response.arrayBuffer();
+			// const pdf = await pdfjs.getDocument({
+			//     data: arrayBuffer
+			// }).promise
 
-            const pdf = await pdfjs.getDocument({
-                data: arrayBuffer
-            }).promise
+			// TODO: hash via url?
 
-            // TODO: hash via url?
+			const Key = `assets/pdfs/${nanoid()}.pdf`;
 
-            const Key = `assets/pdfs/${nanoid()}.pdf`;
+			await uploadFile({
+				Key,
+				Body: Buffer.from(arrayBuffer),
+				ContentType: 'application/pdf',
+			});
 
-            await uploadFile({
-                Key,
-                Body: Buffer.from(arrayBuffer),
-                ContentType: "application/pdf"
-            });
+			// now parse
 
-            // now parse
+			// const { author, text, title } = await parse_pdf(pdf, true);
 
-            const { author, text, title } = await parse_pdf(pdf, true);
+			// now return the data to get inserted...
 
-            console.log({author, text, title})
-
-            // now return the data to get inserted...
-
-            return {
-                title: title ?? url,
-                author,
-                text,
-                type: "pdf",
-                uri: Key,
-            }
+			return {
+				title: url,
+				type: 'pdf',
+				uri: Key,
+			};
 			// const blob = await response.blob();
 			// const file = new File([blob], 'file.pdf');
 		} else if (response.headers.get('content-type')?.includes('image')) {

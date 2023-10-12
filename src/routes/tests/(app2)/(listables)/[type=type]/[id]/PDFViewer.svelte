@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import PdfViewer from '$components/pdf-viewer/PDFViewer.svelte';
+	import type PdfViewer from '$components/pdf-viewer/PDFViewer.svelte';
+	import { onMount, type ComponentType } from 'svelte';
 
 	import type { PageData } from './$types';
 	import Selection from './Selection.svelte';
@@ -12,6 +13,12 @@
 		: ($page.data.S3_BUCKET_PREFIX ?? '') + data.entry?.uri;
 
 	let pdfViewer: PdfViewer;
+
+    let PdfViewer: ComponentType<PdfViewer> | undefined = undefined;
+
+    onMount(async () => {
+        PdfViewer = (await import('$components/pdf-viewer/PDFViewer.svelte')).default;
+    })
 </script>
 
 <Selection
@@ -20,7 +27,8 @@
 	}}
 />
 <div class="h-screen relative">
-	<PdfViewer
+	<svelte:component
+        this={PdfViewer}
 		annotations={data.entry?.annotations ?? []}
 		bind:this={pdfViewer}
 		style="

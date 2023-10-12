@@ -1,12 +1,12 @@
 import type { Config } from '@sveltejs/adapter-vercel';
 import { error, json } from '@sveltejs/kit';
-import pdfjs from 'pdfjs-dist/legacy/build/pdf';
+// import pdfjs from 'pdfjs-dist/legacy/build/pdf';
 
 import { uploadFile } from '$lib/backend/s3.server';
 import { S3_BUCKET_PREFIX } from '$lib/constants';
 import { db } from '$lib/db';
 import { nanoid } from '$lib/nanoid';
-import { get_pdf_fingerprint, make_thumbnail, parse_pdf } from '$lib/utils/pdf';
+// import { get_pdf_fingerprint, make_thumbnail, parse_pdf } from '$lib/utils/pdf';
 
 import type { RequestHandler } from './$types';
 
@@ -61,35 +61,35 @@ export const POST: RequestHandler = async ({ locals, request, url }) => {
 	// TODO: pdf magic
 	if (content_type === 'application/pdf') {
 		// get thumbnail and shit?
-		const pdf = await pdfjs.getDocument({
-			data: array_buffer,
-		}).promise;
+		// const pdf = await pdfjs.getDocument({
+		// 	data: array_buffer,
+		// }).promise;
 
-		// const thumbnail = await make_thumbnail(pdf);
+		// // const thumbnail = await make_thumbnail(pdf);
 
-		// const thumb_key = `/thumbnails/thumb_${nanoid()}.png`;
+		// // const thumb_key = `/thumbnails/thumb_${nanoid()}.png`;
 
-		// thumbnail_url = S3_BUCKET_PREFIX + thumb_key;
+		// // thumbnail_url = S3_BUCKET_PREFIX + thumb_key;
 
-		// await uploadFile({
-		// 	Body: thumbnail,
-		// 	ContentType: 'image/png',
-		// 	Key: thumb_key,
-		// });
+		// // await uploadFile({
+		// // 	Body: thumbnail,
+		// // 	ContentType: 'image/png',
+		// // 	Key: thumb_key,
+		// // });
 
-		// add an entry for this - get the owner id
+		// // add an entry for this - get the owner id
 
-		const { author, text, title: pdf_title } = await parse_pdf(pdf);
+		// const { author, text, title: pdf_title } = await parse_pdf(pdf);
 
-		title = pdf_title;
+		// title = pdf_title;
 		const entry = await db
 			.insertInto('Entry')
 			.values({
-				author,
+				// author,
 				image: thumbnail_url,
 				owned_by_id: session.user.userId,
-				pdf_fingerprint: await get_pdf_fingerprint(pdf),
-				text,
+				// pdf_fingerprint: await get_pdf_fingerprint(pdf),
+				// text,
 				title: title || file_name,
 				type: 'pdf',
 				updatedAt: new Date(),
