@@ -3,7 +3,7 @@
 	import { writable } from 'svelte/store';
 	import type { C } from './utils';
 	import { CheckIcon } from 'lucide-svelte';
-	import Checkbox from '../checkbox/Checkbox.svelte';
+	import Checkbox from '../checkbox/checkbox.svelte';
 	import type { _CheckboxItemProps } from '@melt-ui/svelte/dist/builders/menu';
 	import { melt } from '@melt-ui/svelte';
 	export let createCheckboxItem: C['builders']['createCheckboxItem'];
