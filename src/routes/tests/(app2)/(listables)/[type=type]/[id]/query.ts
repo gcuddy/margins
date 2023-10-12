@@ -24,17 +24,12 @@ const query = queryOptions({
 
 export const entryDetailsQuery = (type: Type) => {
 	return createQuery(
-		derived(page, ($page) => {
-			return {
-				...(typeof $page.params.id === 'string'
-					? queryFactory.entries.detail({
-							id: numberOrString($page.params.id),
-							type: type,
-					  })
-					: {}),
-				// placeholderData: undefined,
-			};
-		}),
+		derived(page, ($page) =>
+			queryFactory.entries.detail({
+				id: $page.data.id,
+				type: $page.data.type,
+			}),
+		),
 	);
 };
 

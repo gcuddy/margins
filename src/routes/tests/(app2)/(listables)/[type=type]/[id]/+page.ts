@@ -16,7 +16,9 @@ export const load = (async (event) => {
 
 	const queryClient = parentData.queryClient as QueryClient;
 
-	const query = queryFactory.entries.detail({ id: numberOrString(id), type });
+    const _id = numberOrString(id);
+
+		const query = queryFactory.entries.detail({ id: _id, type });
 
 	console.log({ query });
 	const queryData = await queryClient.ensureQueryData({
@@ -35,6 +37,8 @@ export const load = (async (event) => {
 		...queryData,
 		component: get_module(type).then((module) => module?.default),
 		query,
+		//
+		id: _id,
 		type,
 	};
 }) satisfies PageLoad;

@@ -20,7 +20,7 @@
 		{ href: '/library/archive', name: 'Archive' },
 	] as const;
 
-    const defaultValue = tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
+    $: defaultValue = tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
     console.log({defaultValue})
 
 	const archiving_entries: Array<EntryInList> = [];
