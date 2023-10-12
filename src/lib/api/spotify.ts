@@ -253,7 +253,7 @@ const spotify = {
 			}
 			const token = await getSpotifyToken();
 			const response = await fetch(
-				`https://api.spotify.com/v1/artists/${id}/albums`,
+				`https://api.spotify.com/v1/artists/${id}/albums?include_groups=album`,
 				{
 					headers: {
 						Authorization: `Bearer ${token}`,
