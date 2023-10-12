@@ -16,7 +16,7 @@
 	import { derived, writable } from 'svelte/store';
 	import { persisted } from 'svelte-local-storage-store';
 	import * as Collapsible from '$components/ui/collapsible';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import AddAnnotationModal from '$components/annotations/add-annotation-input/add-annotation-modal.svelte';
 	import Annotation from '$components/annotations/Annotation.svelte';
@@ -71,7 +71,10 @@
 		now,
 	} from '$lib/utils/date';
 	import { numberOrString } from '$lib/utils/misc';
-	import { defaultStringifySearch } from '$lib/utils/search-params';
+	import {
+		changeSearch,
+		defaultStringifySearch,
+	} from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
 
 	import EntryAuthorInput from './entry-author-input.svelte';
@@ -94,6 +97,7 @@
 	import AnnotationCard from '$components/annotations/annotation-card.svelte';
 	import { CaretRight } from 'radix-icons-svelte';
 	import { flip } from 'svelte/animate';
+	import { filterLibrary } from '$lib/schemas/library';
 
 	// const render = persisted('sidebar', false);
 
@@ -332,6 +336,8 @@
 			</CardHeader>
 			<CardContent class="space-y-4">
 				{#if $query.data?.entry?.id}
+					{@const author =
+						$query.data.entry.bookmark?.author || $query.data.entry.author}
 					<div class="sidebar-row group">
 						<Muted>Author</Muted>
 
@@ -342,14 +348,21 @@
 								'No author'}
 							entryId={$query.data.entry.id}
 						/>
-						<Button
-							class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
-							href="/tests/people/{$query.data.entry.author}"
-							variant="ghost"
-							size="sm"
-						>
-							<ChevronRightIcon class="h-3 w-3" />
-						</Button>
+
+						{#if author}
+							<Button
+								class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
+								variant="ghost"
+								size="sm"
+								on:click={() => {
+									changeSearch($page.url, {
+										author,
+									});
+								}}
+							>
+								<ChevronRightIcon class="h-3 w-3" />
+							</Button>
+						{/if}
 					</div>
 				{/if}
 				<div class="sidebar-row group">
@@ -583,7 +596,7 @@
 					</Collapsible.Trigger>
 					<Collapsible.Content class="flex flex-col gap-4">
 						{#each pageNotes ?? [] as note (note.id)}
-							<div animate:flip transition:slide={{duration: 150}}>
+							<div animate:flip transition:slide={{ duration: 150 }}>
 								<AnnotationCard annotation={note} />
 							</div>
 							<!-- <Editor
@@ -652,7 +665,7 @@
 									on:click={() => {
 										isAddingPageNote = true;
 									}}
-                                    class="text-muted-foreground"
+									class="text-muted-foreground"
 									size="sm"
 									variant="ghost"
 								>
@@ -680,42 +693,41 @@
 								</Button>
 							</div>
 						</Collapsible.Trigger>
-                        <div class="flex items-center gap-1">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger
-										class={buttonVariants({ size: 'sm', variant: 'ghost' })}
-									>
-										<MoreHorizontalIcon class="h-4 w-4" />
-									</DropdownMenuTrigger>
-									<DropdownMenuContent>
-										<DropdownMenuGroup>
-											<DropdownMenuItem
-												on:click={() => {
-													if ($query.data?.entry) {
-														triggerDownload(
-															$query.data.entry,
-															$query.data.entry?.annotations ?? [],
-														);
-													}
-												}}
-											>
-												<FileDown class="mr-2 h-4 w-4" />
-												Export notes to markdown
-											</DropdownMenuItem>
-										</DropdownMenuGroup>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div>
-
+						<div class="flex items-center gap-1">
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									class={buttonVariants({ size: 'sm', variant: 'ghost' })}
+								>
+									<MoreHorizontalIcon class="h-4 w-4" />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent>
+									<DropdownMenuGroup>
+										<DropdownMenuItem
+											on:click={() => {
+												if ($query.data?.entry) {
+													triggerDownload(
+														$query.data.entry,
+														$query.data.entry?.annotations ?? [],
+													);
+												}
+											}}
+										>
+											<FileDown class="mr-2 h-4 w-4" />
+											Export notes to markdown
+										</DropdownMenuItem>
+									</DropdownMenuGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</div>
 					</div>
 					<Collapsible.Content class="grid gap-4">
 						{#if $query.data?.entry?.annotations}
 							{#each $query.data.entry.annotations
 								.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
-								.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
-                                <AnnotationCard
-                                    {annotation}
-                                />
+								.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation (annotation.id)}
+								<div animate:flip transition:slide={{ duration: 150 }}>
+									<AnnotationCard {annotation} />
+								</div>
 								<!-- <Annotation
 									on:click
 									{annotation}
@@ -799,6 +811,7 @@
 										}}
 										size="sm"
 										variant="ghost"
+										class="text-muted-foreground"
 									>
 										<PlusIcon class="h-4 w-4" />
 										Add annotation</Button
@@ -810,6 +823,7 @@
 										}}
 										size="sm"
 										variant="ghost"
+										class="text-muted-foreground"
 									>
 										<PlusIcon class="h-4 w-4" />
 										Add annotation</Button

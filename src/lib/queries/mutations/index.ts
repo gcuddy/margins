@@ -233,7 +233,7 @@ export function createSetTagsMutation(opts?: {
 				// queryKey: ["entries"],
 				predicate(query) {
 					return (
-						query.queryKey[0] === 'entries' &&
+						query.queryKey?.[0] === 'entries' &&
 						!ctxEntries.includes(query.queryKey[1] as CtxEntry)
 					);
 				},

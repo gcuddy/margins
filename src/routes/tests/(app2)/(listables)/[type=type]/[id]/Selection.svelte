@@ -17,7 +17,30 @@
 	const { popperContent, show } = setup();
 
 	const dispatch = createEventDispatcher();
+
+    function handleKeydown(event: KeyboardEvent) {
+		if ($show) {
+			// then listen for the "h" and "a" keys to highlight or annotate, respectively
+			if (event.key === 'h') {
+				// highlight
+				const button = document.getElementById('highlight-button');
+				if (button && button instanceof HTMLButtonElement) {
+					button.click();
+				}
+			}
+			if (event.key === 'a') {
+				// annotate
+				const button = document.getElementById('annotate-button');
+				if (button && button instanceof HTMLButtonElement) {
+					button.click();
+				}
+			}
+		}
+	}
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
+
 
 <svelte:document
 	on:mousedown={(e) => {
@@ -49,6 +72,7 @@
 					<Tooltip.Root>
 						<Tooltip.Trigger asChild let:builder>
 							<Button
+                                id="highlight-button"
 								builders={[builder]}
 								on:click={() => {
 									dispatch('highlight');
@@ -69,6 +93,7 @@
 					<Tooltip.Root>
 						<Tooltip.Trigger asChild let:builder>
 							<Button
+                                id="annotate-button"
 								builders={[builder]}
 								on:click={() => {
 									dispatch('annotate');

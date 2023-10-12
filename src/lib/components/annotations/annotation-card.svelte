@@ -54,6 +54,12 @@
 		},
 		invalidateEntries: true,
 	});
+
+    $: console.log({annotation})
+
+    $: if (annotation.contentData && editor) {
+        editor.setContent(annotation.contentData)
+    }
 </script>
 
 <!-- Compare with Card component, AnnotationForm component - it's pretty similar, but some subtle differences. But should we instead use that as our base? -->
@@ -132,7 +138,7 @@
 								>
 									<ArrowRight class="h-4 w-4 mr-2" /> Go to annotation
 								</DropdownMenu.Item>
-                                <!-- TODO -->
+								<!-- TODO -->
 								<!-- <DropdownMenu.Item
 									on:click={async () => {
 										// Copy to clipboard
@@ -182,11 +188,11 @@
 			{#if selector}
 				<a on:click href="#annotation-{annotation.id}">
 					<Clamp
-                        on:click={(e) => {
-                            e.preventDefault();
-                            // e.stopPropagation();
-                            // e.stopImmediatePropagation();
-                        }}
+						on:click={(e) => {
+							e.preventDefault();
+							// e.stopPropagation();
+							// e.stopImmediatePropagation();
+						}}
 						class="border-l-2 pl-6 italic text-sm hover:border-l-primary"
 						as="blockquote"
 						clamp={4}
@@ -210,6 +216,8 @@
 		<div>
 			{#if isEditing}
 				<!-- bind:this={editor} -->
+                <!-- This is inefficient - would love to be more selective -->
+                {#key annotation.contentData}
 				<Editor
 					bind:this={editor}
 					bind:tainted
@@ -222,6 +230,7 @@
 					focusRing={false}
 					content={annotation.contentData}
 				/>
+                {/key}
 				<!--  -->
 				<!-- alwaysEditable
 					readonly={!isEditing} -->
@@ -231,6 +240,7 @@
 					{@html render_html(annotation.contentData)}
 				</div> -->
 				<Editor
+                    hideIfEmpty
 					readonly
 					bind:this={editor}
 					class="border-0 p-0 min-h-min"

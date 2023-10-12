@@ -41,11 +41,15 @@
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { statuses } from '$lib/status';
 	import { cn } from '$lib/utils';
-	import { defaultParseSearch, defaultStringifySearch } from '$lib/utils/search-params';
+	import {
+		defaultParseSearch,
+		defaultStringifySearch,
+	} from '$lib/utils/search-params';
 
 	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import type { Snapshot } from './$types.js';
 	import LibraryTabs from '$components/library/library-tabs.svelte';
+	import Header from '$components/ui/Header.svelte';
 
 	export let data;
 
@@ -87,46 +91,52 @@
 		}
 	}
 
-    const filter = derived(page, $page => parseFilterFromSearchParams());
+	const filter = derived(page, ($page) => parseFilterFromSearchParams());
 
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
 	const query = createInfiniteQuery(
-		derived([page, sort, dir, grouping, filter], ([$page, $sort, $dir, $grouping, $filter]) => {
-			const search = $page.url.searchParams.get('search') ?? undefined;
-			return {
-				...queryFactory.entries.list({
-					dir: $dir,
-					filter: $filter,
-					grouping: $grouping === 'none' ? undefined : $grouping,
-                    library: true,
-					search,
-					sort: $sort,
-					status: $page.data.Status,
-				}, queryClient),
-				placeholderData: keepPreviousData,
-				// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
-				// 	console.log(`placeholder`, { data });
-				// 	if (search && data) {
-				// 		// perform search
-				// 		const searchRegex = new RegExp(search, 'i');
-				// 		return {
-				// 			...data,
-				// 			pages: data.pages.map((page) => ({
-				// 				...page,
-				// 				entries: page.entries.filter((entry) => {
-				// 					const title = entry.title;
-				// 					const author = entry.bookmark_author ?? entry.author;
-				// 					if (!title && !author) return false;
-				// 					return searchRegex.test(`${title} ${author}`);
-				// 				})
-				// 			}))
-				// 		};
-				// 	}
-				// 	return data;
-				// }
-			};
-		}),
+		derived(
+			[page, sort, dir, grouping, filter],
+			([$page, $sort, $dir, $grouping, $filter]) => {
+				const search = $page.url.searchParams.get('search') ?? undefined;
+				return {
+					...queryFactory.entries.list(
+						{
+							dir: $dir,
+							filter: $filter,
+							grouping: $grouping === 'none' ? undefined : $grouping,
+							library: true,
+							search,
+							sort: $sort,
+							status: $page.data.Status,
+						},
+						queryClient,
+					),
+					placeholderData: keepPreviousData,
+					// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
+					// 	console.log(`placeholder`, { data });
+					// 	if (search && data) {
+					// 		// perform search
+					// 		const searchRegex = new RegExp(search, 'i');
+					// 		return {
+					// 			...data,
+					// 			pages: data.pages.map((page) => ({
+					// 				...page,
+					// 				entries: page.entries.filter((entry) => {
+					// 					const title = entry.title;
+					// 					const author = entry.bookmark_author ?? entry.author;
+					// 					if (!title && !author) return false;
+					// 					return searchRegex.test(`${title} ${author}`);
+					// 				})
+					// 			}))
+					// 		};
+					// 	}
+					// 	return data;
+					// }
+				};
+			},
+		),
 	);
 
 	const entries = derived(query, ($query) => {
@@ -270,7 +280,6 @@
 
 	$: viewPreferences =
 		data.viewPreferences.preferences ?? defaultViewPreferences;
-
 </script>
 
 <svelte:window on:keydown={multi.events.keydown} />
@@ -281,22 +290,24 @@
 	bind:dir={$dir}
 	bind:grouping={$grouping}
 	bind:viewPreferences
-    saveViewUrl="/tests/views/explore/library{defaultStringifySearch({
-        ...$filter,
-        status: $page.data.Status ? $page.data.Status : undefined
-    })}"
+	saveViewUrl="/tests/views/explore/library{defaultStringifySearch({
+		...$filter,
+		status: $page.data.Status ? $page.data.Status : undefined,
+	})}"
 	viewPreferencesId={data.viewPreferences.id}
 >
-    <svelte:fragment slot="buttons">
-        <LibraryTabs />
-    </svelte:fragment>
+	<svelte:fragment slot="buttons">
+		<LibraryTabs />
+	</svelte:fragment>
 </LibraryHeader>
+<!-- <Header>
+</Header> -->
 
 {#if $query.isPending}
 	{#each new Array(browser && innerHeight ? Math.ceil(innerHeight / 60) : 20) as _}
 		<EntryItemSkeleton />
 	{/each}
-{:else}
+{:else if $query.data}
 	<!-- {@const entries = $query.data?.pages.flatMap((p) => p.entries) ?? []} -->
 	<!-- use:dndzone={{
 			items: $virtualizer.getVirtualItems()

@@ -283,13 +283,20 @@ export async function upsertAnnotation({
 				.parse(raw_relationNodes.map((node) => node.attrs));
 			console.dir({ relationNodes }, { depth: null });
 
-			const relationsToAdd = relationNodes.map(
-				(node) =>
-					({
-						relatedEntryId: node.id,
-						type: 'Related',
-					}) satisfies Relation,
-			);
+			const relationsToAdd = relationNodes
+				.map(
+					(n) =>
+						n.entryId ??
+						(typeof n.id === 'number' ? (n.id as number) : undefined),
+				)
+				.filter(Boolean)
+				.map(
+					(id) =>
+						({
+							relatedEntryId: id,
+							type: 'Related',
+						}) satisfies Relation,
+				);
 
 			relations = [...(relations ?? []), ...relationsToAdd];
 		} catch (e) {

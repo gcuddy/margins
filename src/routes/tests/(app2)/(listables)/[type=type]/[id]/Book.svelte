@@ -38,6 +38,7 @@
 		book: NonNullable<Book>;
 	};
 	$: ({ book } = data);
+    $: console.log({book})
 
 	const strip_gbook_curl = (url: string) => {};
 

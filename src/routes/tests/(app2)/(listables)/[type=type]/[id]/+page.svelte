@@ -25,25 +25,14 @@
 	import type { PageData } from './$types';
 	import { get_module } from './module';
 	import ProgressForm from './ProgressForm.svelte';
+	import { entryDetailsQuery } from './query';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
 
 	$: ({ type } = data);
 
-	const query = createQuery(
-		derived(page, ($page) => {
-			return {
-				...(typeof $page.params.id === 'string'
-					? queryFactory.entries.detail({
-							id: numberOrString($page.params.id),
-							type: data.type,
-					  })
-					: {}),
-				// placeholderData: undefined,
-			};
-		}),
-	);
+	const query = entryDetailsQuery(data.type);
 
 	// Mark as seen mutation
 
@@ -171,9 +160,10 @@
 >
 	{#if $query.isPlaceholderData || $query.isLoading}
 		<Skeleton class="w-full h-[300px]" />
-	{:else if $query.isSuccess}
+	{:else if $query.data}
 		{#if type === 'article'}
 			<svelte:component
+            {query}
 				this={data.component}
 				data={{
 					...data,
@@ -184,11 +174,15 @@
 				{@html $query.data.entry?.html}
 			</svelte:component>
 		{:else}
+            <!-- <pre> -->
+                <!-- {JSON.stringify($query.data, null, 2)}
+                </pre> -->
 			<svelte:component
 				this={data.component}
+
 				data={{
 					...data,
-					...$query.data,
+					// ...$query.data,
 				}}
 			/>
 		{/if}

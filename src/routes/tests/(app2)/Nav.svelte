@@ -223,7 +223,6 @@
 						// open modal
 						showAddUrlModal.set(true);
 					}}
-					size="sm"
 					variant="outline"
 					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
 				>
@@ -270,7 +269,6 @@
 				{#each nav as nav_item}
 					<Button
 						href={nav_item.href}
-						size="sm"
 						class="flex w-full items-center justify-center lg:justify-start space-x-2"
 						variant={nav_item.active($page.url.pathname)
 							? 'secondary'

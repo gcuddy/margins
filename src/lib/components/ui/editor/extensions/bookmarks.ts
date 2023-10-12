@@ -23,7 +23,7 @@ import { createPopperActions } from "svelte-popperjs";
 import { page } from "$app/stores";
 import { get, writable } from "svelte/store";
 import { PluginKey } from "@tiptap/pm/state";
-import { getId } from "$lib/utils/entries";
+import { getId, isMediaType } from '$lib/utils/entries';
 import { recents } from "$lib/stores/recents";
 
 
@@ -64,28 +64,33 @@ const Command = Extension.create({
                         range.to += 1
                     }
 
+                    console.log({ props });
+
                     editor
-                        .chain()
-                        .focus()
-                        .insertContentAt(range, [
-                            // {
-                            //     type: this.name,
-                            //     attrs: props,
-                            // },
-                            // {
-                            //     type: 'text',
-                            //     text: props.title,
-                            // },
-                            {
-                                type: "svelteCounterComponent",
-                                attrs: {
-                                    title: props.title,
-                                    type: props.type,
-                                    id: props.id /*getId(props)*/
-                                }
-                            }
-                        ])
-                        .run()
+											.chain()
+											.focus()
+											.insertContentAt(range, [
+												// {
+												//     type: this.name,
+												//     attrs: props,
+												// },
+												// {
+												//     type: 'text',
+												//     text: props.title,
+												// },
+												{
+													type: 'svelteCounterComponent',
+													attrs: {
+														title: props.title,
+														type: props.type,
+														id: getId(props),
+														entryId: isMediaType(props.type)
+															? props.id
+															: undefined,
+													},
+												},
+											])
+											.run();
 
                     window.getSelection()?.collapseToEnd()
 

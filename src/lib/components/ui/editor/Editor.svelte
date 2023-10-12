@@ -46,6 +46,7 @@
 	/** If set to true, the tabindex will always be 0. */
 	export let alwaysTabbable = false;
 	export let showEditor = true;
+    export let hideIfEmpty = false;
 
     export let tainted = false;
 
@@ -225,7 +226,7 @@
 	// }
 
 	$: if (!hydrated && content !== undefined && $editor) {
-		// $editor.commands.setContent(content);
+		$editor.commands.setContent(content);
 		hydrated = true;
 	}
 
@@ -251,9 +252,12 @@
     export const setEditable = (editable: boolean) => {
         $editor.setEditable(editable);
     }
+
+    $: derivedHideIfEmpty = hideIfEmpty && readonly && $editor && $editor.isEmpty;
+
 </script>
 
-{#if showEditor && editor && $editor}
+{#if showEditor && editor && $editor && !derivedHideIfEmpty}
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->

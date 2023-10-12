@@ -22,18 +22,7 @@
 	// import DropdownMenuContent from '$components/ui/dropdown-menu/DropdownMenuContent.svelte';
 	// import DropdownMenuItem from '$components/ui/dropdown-menu/DropdownMenuItem.svelte';
 	import { navigating, page } from '$app/stores';
-	import { entryTypeIcon } from '$components/entries/icons';
-	import { TagsCommandItems } from '$components/tags/tag-command';
-	import { Badge } from '$components/ui/badge'
-	import Button, { buttonVariants } from '$components/ui/Button.svelte';
-	import {
-		Command,
-		CommandGroup,
-		CommandIcon,
-		CommandInput,
-		CommandItem,
-		CommandList,
-	} from '$components/ui/command2';
+	import { Button } from '$components/ui/button';
 	import { createPageData } from '$components/ui/command2/utils';
 	import {
 		DropdownMenu,
@@ -52,28 +41,18 @@
 		defaultViewPreferences,
 		ViewPreferences,
 	} from '$components/view-preferences';
-	import {
-		Popover,
-		PopoverContent,
-		PopoverTrigger,
-	} from '$lib/components/ui/popover';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import {
-		type FilterLibrarySchema,
 		filterLibrarySchema,
+		type FilterLibrarySchema,
 		type LibraryGroupType,
 	} from '$lib/schemas/library';
 	import type { LibrarySortType } from '$lib/server/queries';
 	import { createFilterDialogStore } from '$lib/stores/filters';
-	import { createSearchParamsStore } from '$lib/stores/search-params';
-	import { types } from '$lib/types';
 	import {
 		createChangeSearch,
 		defaultParseSearch,
 	} from '$lib/utils/search-params';
-	import { cn } from '$lib/utils/tailwind';
-
-	import LibraryTabs from './library-tabs.svelte';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -200,7 +179,7 @@
 
 	const filterDialogStore = createFilterDialogStore();
 
-    export let saveViewUrl: string | undefined = undefined;
+	export let saveViewUrl: string | undefined = undefined;
 
 	// TODO: these should affect the url params
 	const sortTypes: Array<{
@@ -310,11 +289,7 @@
 			class="flex items-center gap-3 flex-1 min-w-0 max-sm:flex-col max-sm:items-start"
 		>
 			<slot name="title">
-				<h1
-					class="font-extrabold tracking-tight text-2xl sm:text-3xl md:text-4xl"
-				>
-					Library
-				</h1>
+				<h1 class="font-bold text-base">Library</h1>
 			</slot>
 			<!-- <H1>{data.Status}</H1> -->
 			<div class="flex items-center gap-3 flex-1 min-w-0">
@@ -363,9 +338,11 @@
 						placement: 'bottom',
 					}}
 				>
-					<DropdownMenuTrigger class={buttonVariants({ variant: 'secondary' })}>
-						<ArrowDownUpIcon class="h-4 w-4 lg:mr-2" />
-						<span class="hidden lg:inline">Sort</span>
+					<DropdownMenuTrigger asChild let:builder>
+						<Button builders={[builder]} variant="outline" size="sm">
+							<ArrowDownUpIcon class="h-4 w-4 lg:mr-2" />
+							<span class="hidden lg:inline">Sort</span>
+						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent>
 						<DropdownMenuLabel>Sort</DropdownMenuLabel>

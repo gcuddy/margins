@@ -7,8 +7,11 @@
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
 	import { bg } from '$lib/data/styles';
 	import type { EntryInList } from '$lib/db/selects';
+	import * as Tabs from '$components/ui/tabs';
 	import { receive, send } from '$lib/transitions';
 	import { cn } from '$lib/utils';
+	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 
 	const prefix = '/tests';
 	const tabs = [
@@ -16,6 +19,9 @@
 		{ href: '/library/now', name: 'Now' },
 		{ href: '/library/archive', name: 'Archive' },
 	] as const;
+
+    const defaultValue = tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
+    console.log({defaultValue})
 
 	const archiving_entries: Array<EntryInList> = [];
 
@@ -33,7 +39,7 @@
 
 	let _highlight_archive = false;
 
-    $: pathname = $page.url.pathname;
+	$: pathname = $page.url.pathname;
 
 	function highlight_archive() {
 		const archive = document.querySelector('[data-tab="Archive"]');
@@ -62,8 +68,28 @@
 	</TabsList>
 </Tabs> -->
 
+<Tabs.Root
+    value={defaultValue}
+	onValueChange={(val) => {
+        console.log('value change')
+		const tab = tabs.find((t) => t.name === val);
+		if (tab && browser) {
+			goto(prefix + tab.href, {
+                keepFocus: true,
+                invalidateAll: false,
+                noScroll: true
+            });
+		}
+	}}
+>
+	<Tabs.List>
+		{#each tabs as tab}
+			<Tabs.Trigger value={tab.name}>{tab.name}</Tabs.Trigger>
+		{/each}
+	</Tabs.List>
+</Tabs.Root>
+<!--
 <div class={tabList}>
-	<!--  -->
 	{#each tabs as { href, name }}
 		{@const selected = $page.url.pathname === prefix + href}
 		<a
@@ -78,27 +104,29 @@
 			)}
 			data-sveltekit-keepfocus
 			data-sveltekit-replacestate
-            on:click={() => {
-                pathname = prefix + href;
-            }}
+			on:click={() => {
+				pathname = prefix + href;
+			}}
 			class:animate-scale-1={name === 'Archive' && _highlight_archive}
 			data-tab={name}
 			data-state={selected ? 'active' : undefined}
 		>
 			{#if selected}
-            <!-- two ways to do this: crossfade or view transition -->
-				<div out:send={{
-                    key: 'indicator'
-                }} in:receive={{
-                    key: 'indicator'
-                }} class="absolute inset-0 bg-background shadow rounded-md"></div>
+				<div
+					out:send={{
+						key: 'indicator',
+					}}
+					in:receive={{
+						key: 'indicator',
+					}}
+					class="absolute inset-0 bg-background shadow rounded-md"
+				></div>
 			{/if}
 			<span class="z-[1]">{name}</span>
 			<div
 				class="absolute inset-0 -top-4 z-10 flex items-center justify-center -space-x-[.9rem]"
 			>
 				{#each moving_entries[name] as entry, i (entry.id)}
-					<!-- on:introend={highlight_archive} -->
 					<img
 						on:introend={() => {
 							console.log('running introend');
@@ -126,4 +154,4 @@
 			</div>
 		</a>
 	{/each}
-</div>
+</div> -->

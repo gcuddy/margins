@@ -3,36 +3,33 @@
 	import {
 		createMutation,
 		createQuery,
-		type InfiniteData,
 		useQueryClient,
+		type InfiniteData,
 	} from '@tanstack/svelte-query';
 	import { CircleIcon, CopyIcon, MoreHorizontalIcon } from 'lucide-svelte';
-	import { derived, writable } from 'svelte/store';
+	import { derived } from 'svelte/store';
 
 	import { page } from '$app/stores';
-	import EntryItem from '$components/entries/EntryItem.svelte';
 	import List from '$components/entries/list.svelte';
 	import LibraryHeader from '$components/library/library-header.svelte';
 	import { Button } from '$components/ui/button';
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
-	import Header from '$components/ui/Header.svelte';
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
 	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
-	import { H1 } from '$lib/components/ui/typography';
 	import {
 		mutate,
-		type MutationInput,
 		qquery,
+		type MutationInput,
 		type QueryInput,
 		type QueryOutput,
 	} from '$lib/queries/query';
+	import { getQueryContext, queryFactory } from '$lib/queries/querykeys';
 	import { parseFilterFromSearchParams } from '$lib/schemas/library';
-	import { queryFactory, getQueryContext } from '$lib/queries/querykeys';
 
-	import type { Snapshot } from './$types';
-	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import StatusIcon from '$components/entries/StatusIcon.svelte';
 	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
+	import { defaultStringifySearch } from '$lib/utils/search-params';
+	import type { Snapshot } from './$types';
 
 	export let data;
 

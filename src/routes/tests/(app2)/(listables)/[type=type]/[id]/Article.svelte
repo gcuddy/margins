@@ -62,6 +62,7 @@
 	import { currentEntryList } from '$components/entries/store';
 	import { make_link } from '$lib/utils/entries';
 	import Selection from './Selection.svelte';
+	import type { entryDetailsQuery } from './query';
 
 	const {
 		activeAnnotation,
@@ -71,6 +72,23 @@
 	} = createAnnotationStore();
 
 	export let data: PageData;
+	export let query: ReturnType<typeof entryDetailsQuery>;
+
+	const activeAnnotationFromQuery = derived(
+		[query, activeAnnotationId],
+		([$query, $activeAnnotationId]) => {
+			if (!$query.data?.entry?.annotations) {
+				return null;
+			}
+			const annotation = $query.data.entry.annotations.find(
+				(a) => a.id === $activeAnnotationId,
+			);
+			if (!annotation) {
+				return null;
+			}
+			return annotation
+		},
+	);
 
 	const mainnav: Writable<MenuBar> = getContext('mainnav');
 
@@ -201,9 +219,7 @@
 			return { previousEntryData };
 		},
 		onSettled(data, error, variables, context) {
-			void queryClient.invalidateQueries({
-				queryKey: ['entries'],
-			});
+			void invalidateEntries(queryClient);
 		},
 	});
 
@@ -375,6 +391,7 @@
 	}
 
 	$: if (data.entry?.annotations) {
+		console.log(`annotations change`, data.entry.annotations);
 		const _annotations = data.entry.annotations;
 		if (data.entry.id) {
 			const existingIds = _annotations.map((a) => a.id);
@@ -1097,7 +1114,7 @@
 				alwaysTabbable
 				autofocus
 				id={$activeAnnotationId ?? undefined}
-				content={$activeAnnotation?.contentData ?? undefined}
+				content={$activeAnnotationFromQuery?.contentData ?? $activeAnnotation?.contentData ?? undefined}
 				blank
 				focusRing={false}
 				class="sm:shadow-none shadow-none border-none sm:px-4 px-4 py-6"

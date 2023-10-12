@@ -32,7 +32,7 @@
 		<div class="flex gap-x-2 items-center" bind:this={$container}>
 			<slot name="start" />
 			{#each $filters as [type, filter]}
-					<FilterBadge {type} {filter} />
+				<FilterBadge {type} {filter} />
 			{/each}
 			<slot>
 				{#if $hasFilters}
@@ -64,27 +64,24 @@
 		</svelte:fragment>
 	</Header>
 {/if}
-
-{#if $dialogStore.open}
-	<AlertDialog.Root bind:open={$dialogStore.open}>
-		<AlertDialog.Content>
-			<AlertDialog.Header>
-				<AlertDialog.Title>{$dialogStore.title}</AlertDialog.Title>
-			</AlertDialog.Header>
-			<form class="contents" on:submit|preventDefault>
-				<Input bind:value={$dialogStore.value} />
-				<AlertDialog.Footer>
-					<AlertDialog.Cancel on:click={dialogStore.reset}
-						>Cancel</AlertDialog.Cancel
-					>
-					<AlertDialog.Action
-						type="submit"
-						on:click={() => {
-							dialogStore.action();
-						}}>Continue</AlertDialog.Action
-					>
-				</AlertDialog.Footer>
-			</form>
-		</AlertDialog.Content>
-	</AlertDialog.Root>
-{/if}
+<!--
+<AlertDialog.Root bind:open={$dialogStore.open}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>{$dialogStore.title}</AlertDialog.Title>
+		</AlertDialog.Header>
+		<form class="contents" on:submit|preventDefault>
+            heelloooo
+			<Input bind:value={$dialogStore.value} />
+			<AlertDialog.Footer>
+				<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+				<AlertDialog.Action
+					type="submit"
+					on:click={() => {
+						dialogStore.action();
+					}}>Continue</AlertDialog.Action
+				>
+			</AlertDialog.Footer>
+		</form>
+	</AlertDialog.Content>
+</AlertDialog.Root> -->
