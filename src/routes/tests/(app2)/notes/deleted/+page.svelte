@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/Button.svelte';
-	import { popoverVariants } from '$lib/components/ui/popover/PopoverContent.svelte';
+	import { popoverVariants } from '$lib/components/ui/popover';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
 	import { cn } from '$lib/utils/tailwind.js';
 	import { RefreshCw, Trash2Icon } from 'lucide-svelte';

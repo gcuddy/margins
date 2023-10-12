@@ -13,7 +13,7 @@
 	import { flip } from 'svelte/animate';
 	import { fly, scale } from 'svelte/transition';
 	import Checkbox from '../ui/Checkbox.svelte';
-	import { popoverVariants } from '../ui/popover/PopoverContent.svelte';
+	import { popoverVariants } from '../ui/popover';
 	import { cn } from '$lib/utils/tailwind';
 	import { Portal } from '@rgossiaux/svelte-headlessui';
 	import EntryItem from './EntryItem.svelte';

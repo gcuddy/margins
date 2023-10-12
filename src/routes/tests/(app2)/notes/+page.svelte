@@ -10,7 +10,7 @@
 		DropdownMenuContent,
 		DropdownMenuItem
 	} from '$lib/components/ui/dropdown-menu';
-	import { popoverVariants } from '$lib/components/ui/popover/PopoverContent.svelte';
+	import { popoverVariants } from '$lib/components/ui/popover';
 	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
