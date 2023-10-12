@@ -5,7 +5,6 @@
 	import { Badge } from '$components/ui/badge'
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import { Dialog, DialogContent } from '$lib/components/ui/dialog';
-	import DialogTrigger from '$lib/components/ui/dialog/DialogTrigger.svelte';
 	import { tabContent } from '$lib/components/ui/tabs/TabsContent.svelte';
 	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';

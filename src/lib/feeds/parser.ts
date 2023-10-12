@@ -10,7 +10,6 @@ import { jsonFeedSchema } from '$lib/types/schemas/feeds';
 import { getHostname } from '$lib/utils';
 import { stripEmptyTags } from '$lib/utils/sanitize';
 
-import { subscriptionApiSelect } from './types';
 import {
 	getLink,
 	getText,
@@ -405,7 +404,6 @@ export const addSubscription = async ({
 				title,
 				userId,
 			},
-			select: subscriptionApiSelect,
 		});
 	}
 };

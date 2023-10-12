@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { fly } from 'svelte/transition';
-	import Card from '../Card.svelte';
+	import SrsCard from '../srs-card.svelte';
 
 	export let data;
 
@@ -24,7 +24,7 @@
 {#if data.notes_to_review.length && !completed}
 	{#key data.notes_to_review.length}
 		<div>
-			<Card
+			<SrsCard
 				note={data.notes_to_review[0]}
 				on:done={({ detail }) => {
 					if (detail.type === 'Forgotten') {

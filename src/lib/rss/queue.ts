@@ -2,12 +2,10 @@
 
 import type { Redis } from "@upstash/redis";
 import { config, db } from "$lib/db"
-import { getFeedText } from "$lib/rss/utils";
-import Parser from 'rss-parser';
+import { getFeedText } from '$lib/rss/utils';
 import { connect } from "@planetscale/database";
 import { adaptEntryFromItem } from "./entries";
 
-const parser = new Parser();
 
 const conn = connect(config);
 
@@ -40,7 +38,7 @@ export async function processFeed(redis: Redis, { feedUrl, id: feedId }: { feedU
         console.log(`Attempting to process feed ${feedUrl}. Last processed item: `, lastProcessedItem)
         const text = await getFeedText(feedUrl);
         // now parse feed text
-        const feed = await parser.parseString(text);
+        const feed = {};
         // console.log(feed)
 
 

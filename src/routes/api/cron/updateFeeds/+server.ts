@@ -8,7 +8,7 @@ import {
 } from '$env/static/private';
 import { z } from 'zod';
 import { getFeedText } from '$lib/rss/utils';
-import Parser from 'rss-parser';
+// import Parser from 'rss-parser';
 import type { Config } from '@sveltejs/adapter-vercel';
 import { db } from '$lib/db';
 import { sql } from 'kysely';
@@ -30,7 +30,6 @@ const feedSchema = z.object({
 const schema = z.object({
 	feeds: z.array(feedSchema),
 });
-const parser = new Parser();
 
 function getUnixTime(dateString: string | Date | number): number {
 	const date = new Date(dateString);
@@ -54,7 +53,7 @@ async function processFeed({
 		if (!feedUrl) return;
 		const text = await getFeedText(feedUrl);
 		// now parse feed text
-		const feed = await parser.parseString(text);
+		const feed = await {};
 		// console.log(feed)
 
 		// get items after lastParsed

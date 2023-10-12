@@ -40,7 +40,6 @@ declare global {
 			filterMap?: import('$lib/stores/filter').FilterMapStore;
 			queryClient?: import('@tanstack/svelte-query').QueryClient;
 
-			location?: import('@prisma/client').Location;
 			S3_BUCKET_PREFIX?: string;
 		}
 	}

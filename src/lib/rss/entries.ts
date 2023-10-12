@@ -1,6 +1,6 @@
 import { normalizeUrl } from "$lib/feeds/utils";
 import type { Feed } from "@prisma/client";
-import type Parser from "rss-parser";
+// import type Parser from "rss-parser";
 
 type Item = {
     [key: string]: any;

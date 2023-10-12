@@ -421,7 +421,7 @@
 <script lang="ts">
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import type { IconName } from "$lib/icons";
-	import { DocumentType, Location, Prisma } from "@prisma/client";
+	import { DocumentType, Prisma } from "@prisma/client";
 	import { ComponentProps, getContext, SvelteComponent } from "svelte";
 	import { writable } from "svelte/store";
 	import type { Entries } from "type-fest";

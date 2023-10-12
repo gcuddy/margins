@@ -5,7 +5,6 @@
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import { Dialog, DialogContent } from '$lib/components/ui/dialog';
-	import DialogTrigger from '$lib/components/ui/dialog/DialogTrigger.svelte';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
 	import { isUpcoming } from '$lib/utils/date';
 
