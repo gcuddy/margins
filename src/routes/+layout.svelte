@@ -2,7 +2,6 @@
 	import '../app.postcss';
 	import '$lib/styles/font.css';
 
-	import { onMount } from 'svelte';
 	import { Toaster } from 'svelte-sonner';
 	// import { pwaInfo } from 'virtual:pwa-info';
 
@@ -42,7 +41,6 @@
 
 <svelte:head>
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-	{@html webManifest}
 	<title>Margins</title>
 </svelte:head>
 
