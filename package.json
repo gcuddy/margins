@@ -206,7 +206,6 @@
 		"@upstash/qstash": "^2.1.8",
 		"arktype": "^1.0.14-alpha",
 		"bits-ui": "^0.5.7",
-		"canvas": "^2.11.2",
 		"class-variance-authority": "^0.6.1",
 		"classnames": "^2.3.2",
 		"clsx": "^1.2.1",
