@@ -468,6 +468,10 @@ export type EntryToTag = {
 	A: number;
 	B: number;
 };
+export type EntryToTag = {
+	A: number;
+	B: number;
+};
 export type Favorite = {
 	id: string;
 	createdAt: Generated<Timestamp>;
@@ -524,6 +528,14 @@ export type Feed = {
 	 * Deprecated
 	 */
 	itunes_id: string | null;
+};
+export type Image = {
+	id: Generated<number>;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	url: string;
+	width: number | null;
+	height: number | null;
 };
 export type Integration = {
 	id: Generated<number>;
@@ -673,6 +685,10 @@ export type SubscriptionToTag = {
 	A: number;
 	B: number;
 };
+export type SubscriptionToTag = {
+	A: number;
+	B: number;
+};
 export type Tag = {
 	id: Generated<number>;
 	name: string;
@@ -705,6 +721,10 @@ export type UserFollows = {
 	A: string;
 	B: string;
 };
+export type UserFollows = {
+	A: string;
+	B: string;
+};
 export type ViewPreferences = {
 	id: string;
 	createdAt: Generated<Timestamp>;
@@ -717,8 +737,12 @@ export type ViewPreferences = {
 };
 export type DB = {
 	_AnnotationToTag: AnnotationToTag;
+	_AnnotationToTag: AnnotationToTag;
+	_EntryToTag: EntryToTag;
 	_EntryToTag: EntryToTag;
 	_SubscriptionToTag: SubscriptionToTag;
+	_SubscriptionToTag: SubscriptionToTag;
+	_UserFollows: UserFollows;
 	_UserFollows: UserFollows;
 	Annotation: Annotation;
 	annotation_ref: annotation_ref;
@@ -744,6 +768,7 @@ export type DB = {
 	EntryTag: EntryTag;
 	Favorite: Favorite;
 	Feed: Feed;
+	Image: Image;
 	Integration: Integration;
 	InvitationCode: InvitationCode;
 	Log: Log;
