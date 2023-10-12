@@ -39,7 +39,7 @@
 	import Kbd from '$lib/components/ui/KBD.svelte';
 	import { cn } from '$lib/utils/tailwind';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import { tick } from 'svelte';
 
 	export let data;

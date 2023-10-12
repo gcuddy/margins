@@ -82,6 +82,7 @@ export function updateAnnotationMutation<
 	TDefaultData extends Partial<MutationInput<'save_note'>>,
 >(opts?: {
 	input?: TDefaultData;
+	invalidateEntries?: boolean;
 	onSuccess?: () => void;
 	showToast?: boolean;
 }) {
@@ -158,7 +159,10 @@ export function updateAnnotationMutation<
 				toast.success('Note updated');
 			}
 			// only invalidate entries if we have an entryId
-			if ('entryId' in mergedVariables && mergedVariables?.entryId) {
+			if (
+				('entryId' in mergedVariables && mergedVariables?.entryId) ||
+				opts?.invalidateEntries
+			) {
 				queryClient.invalidateQueries({ queryKey: ['entries', 'list'] });
 				queryClient.invalidateQueries({ queryKey: ['entries', 'detail'] });
 			}

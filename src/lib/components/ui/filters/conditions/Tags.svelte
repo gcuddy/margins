@@ -5,7 +5,7 @@
 	import { writable } from 'svelte/store';
 
 	import { TagColorPill } from '$components/tags/tag-color';
-	import { badgeVariants } from '$components/ui/Badge.svelte';
+	import { badgeVariants } from '$components/ui/badge';
 	import { Checkbox } from '$components/ui/checkbox';
 	import {
 		Popover,

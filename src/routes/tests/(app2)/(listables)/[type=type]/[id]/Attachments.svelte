@@ -1,6 +1,6 @@
 <script lang="ts">
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
-	import Badge from '$components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 
 	import type { PageData } from './$types';
 

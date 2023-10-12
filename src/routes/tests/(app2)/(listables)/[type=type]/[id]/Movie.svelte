@@ -4,7 +4,7 @@
 	import smoothload from '$lib/actions/smoothload';
 	import type { List } from '$lib/api/tmdb';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import { Button } from '$lib/components/ui/button';
 	import ISO6391 from 'iso-639-1';
 	import { iso31661 } from 'iso-3166';

@@ -24,7 +24,7 @@
 	import { navigating, page } from '$app/stores';
 	import { entryTypeIcon } from '$components/entries/icons';
 	import { TagsCommandItems } from '$components/tags/tag-command';
-	import Badge from '$components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Button, { buttonVariants } from '$components/ui/Button.svelte';
 	import {
 		Command,

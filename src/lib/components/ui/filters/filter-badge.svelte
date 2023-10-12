@@ -37,7 +37,7 @@
 	import * as Command from '$components/ui/command2';
 	import { Authors, Rating } from '$lib/commands';
 
-	import Badge, { badgeVariants } from '../Badge.svelte';
+	import {  Badge,  badgeVariants } from '$components/ui/badge';
 	import CreatedAt from './conditions/CreatedAt.svelte';
 	import { ctx } from './ctx';
 

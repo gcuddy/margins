@@ -2,7 +2,7 @@
 	import type { ComponentType } from 'svelte';
 	import type { OnChangeFn } from '@huntabyte/primitives/dist/internal';
 
-	import { badgeVariants } from '$components/ui/Badge.svelte';
+	import { badgeVariants } from '$components/ui/badge';
 	import {
 		Select,
 		SelectContent,

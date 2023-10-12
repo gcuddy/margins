@@ -9,6 +9,7 @@
 		Editor as TEditor,
 		EditorOptions,
 		JSONContent,
+		FocusPosition,
 	} from '@tiptap/core';
 	import type { Transaction } from '@tiptap/pm/state';
 	import * as idb from 'idb-keyval';
@@ -24,7 +25,7 @@
 	import { mutation, type MutationInput } from '$lib/queries/query';
 	import { cn } from '$lib/utils/tailwind';
 
-	import { badgeVariants } from '../Badge.svelte';
+	import { badgeVariants } from '../badge';
 	import BubbleMenu from './BubbleMenu.svelte';
 	import {
 		generate_tiptap_extensions,
@@ -38,12 +39,15 @@
 	export let context: unknown | undefined = undefined;
 	export let options: Partial<EditorOptions> = {};
 	export let readonly = false;
+    export let alwaysEditable = false;
 	export let focusRing = true;
 	export let autofocus = false;
 	export let el: HTMLElement | undefined = undefined;
 	/** If set to true, the tabindex will always be 0. */
 	export let alwaysTabbable = false;
 	export let showEditor = true;
+
+    export let tainted = false;
 
 	let className = '';
 	export { className as class };
@@ -70,7 +74,7 @@
 
 	export let extensions: TiptapExtensionProps | undefined = undefined;
 
-	export let content: string | JSONContent | undefined = undefined;
+	export let content: string | JSONContent | undefined | null = undefined;
 	// export let blank = false;
 	// const content_store = persisted<any>('editor__content' + (id ?? ''), content);
 
@@ -102,6 +106,7 @@
 		cb(json);
 	};
 
+    export const isEmpty = () => $editor.isEmpty
 	export const saveNote = async (note: MutationInput<'save_note'>) => {
 		const contentData = $editor.getJSON();
 		return mutation($page, 'save_note', {
@@ -147,8 +152,9 @@
 	};
 
 	onMount(() => {
+        tainted = false;
 		editor = createEditor({
-			autofocus: 'start',
+			autofocus: autofocus ? 'start' : undefined,
 			content,
 			editable: autofocus ? true : false,
 			editorProps: TiptapEditorProps,
@@ -156,6 +162,8 @@
 			onUpdate: (e) => {
 				// TODO
 				$save_status = 'Unsaved';
+                console.log('updating', { e})
+                tainted = true;
 				// const selection = e.editor.state.selection;
 				onUpdate?.(e);
 				// debounced_update(e);
@@ -176,8 +184,12 @@
 			hydrated = true;
 		}
 		$editor.on('blur', (e) => {
+            console.log('blur', {e, alwaysEditable})
 			// TODO check if bubble menu is open
-			e.editor.setEditable(false);
+            if (!alwaysEditable) {
+                console.log('setting editable to false')
+                e.editor.setEditable(false);
+            }
 			save_srs_nodes(e.editor.getJSON());
 			if (id) {
 				idb.set(
@@ -191,6 +203,7 @@
 			dispatch('blur', e);
 		});
 		$editor.on('focus', (e) => {
+            console.log('focus', e)
 			e.editor.setEditable(true);
 			onFocus?.(e);
 		});
@@ -212,7 +225,7 @@
 	// }
 
 	$: if (!hydrated && content !== undefined && $editor) {
-		$editor.commands.setContent(content);
+		// $editor.commands.setContent(content);
 		hydrated = true;
 	}
 
@@ -229,6 +242,15 @@
 	}
 
 	let bubbleMenuFocused = false;
+
+    export const focus = (position?: FocusPosition) => {
+        console.log()
+        $editor.setEditable(true);
+        $editor.chain().focus(position).run();
+    }
+    export const setEditable = (editable: boolean) => {
+        $editor.setEditable(editable);
+    }
 </script>
 
 {#if showEditor && editor && $editor}
@@ -258,7 +280,7 @@
 		class={cn(
 			// ' w-full max-w-screen-lg sm:mb-[calc(2    0vh)] sm:rounded-lg p-6 ',
 			'relative ',
-			/* shadcn textarea */ 'min-h-[80px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background ring-ring ring-offset-2',
+			/* shadcn textarea */ 'min-h-[64px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background ring-ring ring-offset-2',
 			focusRing && 'focus-within:ring-2',
 			(($editor.isFocused && $editor.isEditable) || bubbleMenuFocused) &&
 				focusRing &&

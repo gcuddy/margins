@@ -4,7 +4,8 @@
 	import { writable } from 'svelte/store';
 
 	import Cluster from '$components/helpers/Cluster.svelte';
-	import Badge, { badgeVariants } from '$components/ui/Badge.svelte';
+	import { Badge, badgeVariants } from '$components/ui/badge';
+	import { Button } from '$components/ui/button';
 	import Checkbox from '$components/ui/Checkbox.svelte';
 	import {
 		Popover,
@@ -87,9 +88,9 @@
 				// flip: false
 			}}
 		>
-			<PopoverTrigger class={badgeVariants({ variant: 'ghost' })}
-				>+ Tag</PopoverTrigger
-			>
+			<PopoverTrigger asChild let:builder>
+				<Button builders={[builder]} variant="ghost">+ Tag</Button>
+			</PopoverTrigger>
 			<PopoverContent class="p-0">
 				<Command
 					onClose={() => {

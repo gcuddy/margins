@@ -23,7 +23,7 @@
 	import { superForm } from 'sveltekit-superforms/client';
 	import { cn } from '$lib/utils/tailwind';
 	import { tick } from 'svelte';
-	import Badge from './ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 
 	export let tags: Promiseable<{ id: number; name: string }[]> = $page.data.user_data?.tags ?? [];
 

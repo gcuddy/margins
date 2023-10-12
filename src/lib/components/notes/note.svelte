@@ -3,7 +3,7 @@
 	import { IconPicker } from '$components/icon-picker';
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { TagsCommandPopover } from '$components/tags/tag-command';
-	import Badge from '$components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Header from '$components/ui/Header.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import autosize from '$lib/actions/autosize';

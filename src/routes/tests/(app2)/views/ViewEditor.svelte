@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Badge from '$lib/components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Button from '$lib/components/ui/Button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';

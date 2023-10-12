@@ -22,8 +22,23 @@
 		}
 	});
 
+	let lineHeight = 20;
+
+	// estimate max height based on clamp
+	let maxHeight = lineHeight * clamp;
+
+	let actualMaxHeight = 100;
+
 	$: if (el) {
 		is_clamped = el.scrollHeight > el.clientHeight;
+		lineHeight = parseInt(getComputedStyle(el).lineHeight);
+		actualMaxHeight = el.scrollHeight;
+		console.log({
+			lineHeight,
+			actualMaxHeight,
+			scrollHeight: el.scrollHeight,
+			clientHeight: el.clientHeight,
+		});
 		if (is_clamped) {
 			clamped_height.set(el.clientHeight, {
 				duration: 0,
@@ -32,6 +47,11 @@
 		console.log({ is_clamped });
 	}
 
+	$: max_height = is_clamped
+		? `${lineHeight * clamp}px`
+		: `${actualMaxHeight}px`;
+	$: console.log({ max_height, actualMaxHeight });
+
 	let className: string | undefined | null = null;
 
 	export { className as class };
@@ -39,20 +59,27 @@
 	export let as = 'div';
 </script>
 
+<!-- style:max-height="{height}px" -->
+
 <svelte:element
 	this={as}
 	bind:this={el}
-    style:--height={is_clamped ? undefined: `${$clamped_height}px`}
+	style:--height={is_clamped ? undefined : `${$clamped_height}px`}
 	style:--line-clamp={clamp}
-	class:clamp={!show_more}
-	class={cn('relative', className)}
+	class:clamped={!show_more}
+	style:--line-height={lineHeight}
+	class={cn('clamp relative transition-[max-height]', className)}
+	style:max-height={!show_more
+		? `${lineHeight * clamp}px`
+		: `${actualMaxHeight}px`}
 >
 	<slot {is_clamped} />
 	<slot name="button">
 		{#if is_clamped}
 			<button
-				class="clamp-toggle px-1 font-medium bg-popover/90 absolute bottom-0 right-0"
+				class="clamp-toggle px-1 font-medium absolute bottom-0 right-0 w-36 bg-gradient-to-l from-card text-right underline hover:text-primary"
 				on:click={() => (show_more = !show_more)}
+                on:click
 			>
 				{show_more ? 'Less' : 'More'}
 			</button>
@@ -65,9 +92,14 @@
 		position: relative;
 	}
 	.clamp {
+		transition-property: max-height, border-color;
+		transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+		transition-duration: 150ms;
+	}
+	.clamped {
 		overflow: hidden;
-		display: -webkit-box;
+		/* display: -webkit-box;
 		-webkit-box-orient: vertical;
-		-webkit-line-clamp: var(--line-clamp);
+		-webkit-line-clamp: var(--line-clamp); */
 	}
 </style>

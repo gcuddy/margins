@@ -84,7 +84,7 @@
 	import { createStack } from '$lib/stores/undo';
 	import { cn } from '$lib/utils/tailwind';
 
-	import Badge from '../Badge.svelte';
+	import {Badge} from '../badge';
 
 	const dispatch = createEventDispatcher();
 

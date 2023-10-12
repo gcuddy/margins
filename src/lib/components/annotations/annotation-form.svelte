@@ -2,11 +2,13 @@
 	import { Button } from '$components/ui/button';
 	import * as Dialog from '$components/ui/dialog';
 	import Editor from '$components/ui/editor/Editor.svelte';
+	import { updateAnnotationMutation } from '$lib/queries/mutations';
 	import { type MutationInput, mutate } from '$lib/queries/query';
 	import type { UpsertAnnotationInput } from '$lib/queries/server';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import type { JSONContent } from '@tiptap/core';
 	import { createEventDispatcher } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	export let autofocus = false;
 	// export let showMaximize = true;
@@ -17,27 +19,37 @@
 	export let type: UpsertAnnotationInput['type'] = 'note';
 	export let media: UpsertAnnotationInput['media'] = undefined;
 
+
 	const dispatch = createEventDispatcher();
 	const queryClient = useQueryClient();
-	const mutation = createMutation({
-		mutationFn: (input: MutationInput<'save_note'>) =>
-			mutate('save_note', input),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ['entries'],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ['notes'],
-			});
-			dispatch('save', { content });
-		},
-	});
+	const mutation = updateAnnotationMutation({
+        onSuccess: () => {
+            dispatch('save', { content })
+        }
+    })
+	// const mutation = createMutation({
+	// 	mutationFn: (input: MutationInput<'save_note'>) =>
+	// 		mutate('save_note', input),
+	// 	onSuccess: () => {
+	// 		queryClient.invalidateQueries({
+	// 			queryKey: ['entries'],
+	// 		});
+	// 		queryClient.invalidateQueries({
+	// 			queryKey: ['notes'],
+	// 		});
+	// 		dispatch('save', { content });
+	// 	},
+	// });
 
 	function cancel() {
 		dispatch('cancel');
 	}
 
 	function save() {
+        if (editor.isEmpty()) {
+            toast('No content to save');
+            return;
+        }
 		$mutation.mutate({
 			id: annotationId,
 			entryId: entryId,
@@ -53,12 +65,13 @@
 	// }
 
 	let content: JSONContent;
+    let editor: Editor;
 
 	let isDialogOpen = false;
 </script>
 
 <div
-	class="border flex flex-col relative rounded-md py-3 px-4 bg-card focus-within:shadow-md border-input shadow transition"
+	class="border flex flex-col gap-2 relative rounded-md py-3 px-4 bg-card focus-within:shadow-md border-input shadow-sm transition"
 >
 	<!-- Header -->
 	<!-- TODO -->
@@ -76,6 +89,7 @@
 
 	<!-- store data in entryId -->
 	<Editor
+        bind:this={editor}
 		onUpdate={(e) => {
 			content = e.editor.getJSON();
 		}}
@@ -86,7 +100,7 @@
 	<!-- Footer -->
 	<div class="flex justify-end gap-2">
 		<Button variant="ghost" size="sm" on:click={cancel}>Cancel</Button>
-		<Button variant="secondary" size="sm" on:click={save}>Save</Button>
+		<Button variant="secondary" size="sm" class="dark:border-stone-200" on:click={save}>Save</Button>
 	</div>
 </div>
 

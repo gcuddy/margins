@@ -19,8 +19,10 @@
 	import Nav from './Nav.svelte';
 	import QueryClientPersister from './QueryClientPersister.svelte';
 	import ViewTransitions from '$components/ViewTransitions.svelte';
+	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
+	import alertDialogStore from '$lib/stores/alert-dialog';
 
-    $: console.log({$navigating, $page});
+	$: console.log({ $navigating, $page });
 
 	// export let data;
 
@@ -64,7 +66,7 @@
 </script>
 
 <QueryClientPersister client={data.queryClient} let:isRestoring>
-    <ViewTransitions>
+	<ViewTransitions>
 		<ClipboardHandler />
 		{#if commander}
 			<svelte:component this={commander} />
@@ -126,6 +128,7 @@
 			>
 			</div> -->
 		</GenericCommander>
-    </ViewTransitions>
-		<SvelteQueryDevtools buttonPosition="bottom-right" />
-	</QueryClientPersister>
+		<AlertDialogHelper store={alertDialogStore} />
+	</ViewTransitions>
+	<SvelteQueryDevtools buttonPosition="bottom-right" />
+</QueryClientPersister>

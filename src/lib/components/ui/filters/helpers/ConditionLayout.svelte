@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Badge, { badgeVariants } from '$components/ui/Badge.svelte';
+	import { Badge, badgeVariants } from '$components/ui/badge';
 	import { cn } from '$lib/utils';
 	import { createEventDispatcher, getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';

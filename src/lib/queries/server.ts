@@ -39,6 +39,8 @@ import { noteFilterSchema } from '$lib/schemas/inputs';
 import { typeSchema } from '$lib/types';
 import { collectionItemWidthSchema } from '$lib/schemas/inputs/collection.schema';
 import { findHighestQualityBookCover } from '$lib/api/book-cover';
+import { findNodes } from '$components/ui/editor/utils';
+import { entryNodeSchema } from '$components/ui/editor/extensions/schemas';
 
 type Ctx = {
 	ctx: {
@@ -127,7 +129,6 @@ export async function updateBookmark(
 	},
 ) {
 	const { data, userId } = variables;
-
 
 	if ('id' in variables) {
 		let bookmarks = db
@@ -230,17 +231,18 @@ export async function deleteAnnotation(userId: string, id: string) {
 		.execute();
 }
 
+export const relationSchema = z.object({
+	relatedEntryId: z.number().int(),
+	type: z.nativeEnum(RelationType).default('Related'),
+});
+
+type Relation = z.infer<typeof relationSchema>;
+
 export const upsertAnnotationSchema = annotationSchema
 	.extend({
 		id: annotationSchema.shape.id.or(z.array(z.string())),
 		media: mediaIdSchema.optional(),
-		relations: z
-			.object({
-				relatedEntryId: z.number().int(),
-				type: z.nativeEnum(RelationType).default('Related'),
-			})
-			.array()
-			.default([]),
+		relations: relationSchema.array().default([]),
 		// The array of tags to add to this annotation
 		tags: z.number().array().default([]),
 	})
@@ -265,6 +267,35 @@ export async function upsertAnnotation({
 		ids = [nanoid()];
 	} else {
 		ids = Array.isArray(_id) ? _id : [_id];
+	}
+	const { contentData } = annotation;
+	if (contentData) {
+		// find relations
+		// bear with me on that sveltecountercomponent thing...
+		try {
+			const raw_relationNodes = findNodes(
+				contentData as JSONContent,
+				'svelteCounterComponent',
+			);
+			console.log({ raw_relationNodes });
+			const relationNodes = entryNodeSchema
+				.array()
+				.parse(raw_relationNodes.map((node) => node.attrs));
+			console.dir({ relationNodes }, { depth: null });
+
+			const relationsToAdd = relationNodes.map(
+				(node) =>
+					({
+						relatedEntryId: node.id,
+						type: 'Related',
+					}) satisfies Relation,
+			);
+
+			relations = [...(relations ?? []), ...relationsToAdd];
+		} catch (e) {
+			console.error(e);
+			// empty
+		}
 	}
 	await db
 		.insertInto('Annotation')
@@ -308,7 +339,7 @@ export async function upsertAnnotation({
 				.insertInto('Relation')
 				.values(
 					entryIds.flatMap((entryId) =>
-						relations.map((relation) => ({
+						(relations ?? []).map((relation) => ({
 							entryId,
 							id: nanoid(),
 							relatedEntryId: relation.relatedEntryId,

@@ -11,7 +11,7 @@
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
 	import type { EntryInList } from '$lib/db/selects';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Small from '$lib/components/ui/typography/Small.svelte';
 
 	export let data: Validation<NoteSchema>;

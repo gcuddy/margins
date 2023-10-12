@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import smoothload from '$lib/actions/smoothload';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
 	import { Dialog, DialogContent } from '$lib/components/ui/dialog';
 	import DialogTrigger from '$lib/components/ui/dialog/DialogTrigger.svelte';

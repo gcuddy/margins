@@ -47,6 +47,16 @@ export function setup() {
 					offset: [0, 12],
 				},
 			},
+			{
+				name: 'flip',
+				options: {
+					fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+					padding: {
+						bottom: 0,
+						top: 64,
+					},
+				},
+			},
 		],
 		placement: 'top',
 		strategy: 'fixed',
@@ -87,6 +97,6 @@ export function setup() {
 		popperContent,
 		selection,
 		show,
-        virtualEl
+		virtualEl,
 	};
 }

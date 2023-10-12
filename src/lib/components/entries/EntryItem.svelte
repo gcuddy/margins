@@ -50,7 +50,7 @@
 	import { get_image, getId, getType, make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
 
-	import Badge from '../ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import * as HoverCard from '../ui/hover-card';
 	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
 	import { Muted, Small } from '../ui/typography';

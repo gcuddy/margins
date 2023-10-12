@@ -15,7 +15,7 @@
 	import { nanoid } from 'nanoid';
 	import { derived, writable } from 'svelte/store';
 	import { persisted } from 'svelte-local-storage-store';
-
+	import * as Collapsible from '$components/ui/collapsible';
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import AddAnnotationModal from '$components/annotations/add-annotation-input/add-annotation-modal.svelte';
@@ -43,7 +43,7 @@
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Relation from '$lib/components/Relation.svelte';
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { CardContent, CardHeader } from '$lib/components/ui/card';
 	import {
@@ -78,7 +78,7 @@
 	import EntryIcon from './EntryIcon.svelte';
 	import History from './history.svelte';
 	import { saveUrl } from './utils';
-	import { fade, fly, scale } from 'svelte/transition';
+	import { fade, fly, scale, slide } from 'svelte/transition';
 	import { fadeScale, gentleFly } from '$lib/transitions';
 	import OtherAlbumsList from '$components/music/other-albums-list.svelte';
 	import { Icon } from '$components/icon-picker';
@@ -91,6 +91,9 @@
 	import player from '$lib/stores/player';
 	import { TimestampInput } from '$components/ui/timestamp';
 	import { iframeNode } from '$components/ui/editor/nodes/iframes';
+	import AnnotationCard from '$components/annotations/annotation-card.svelte';
+	import { CaretRight } from 'radix-icons-svelte';
+	import { flip } from 'svelte/animate';
 
 	// const render = persisted('sidebar', false);
 
@@ -240,6 +243,8 @@
 	let isAddAnnotationModalOpen = false;
 	let isAddingPageNote = false;
 	let isAddingAnnotation = false;
+	let isPageNotesPanelOpen = true;
+	let isAnnotationsPanelOpen = true;
 </script>
 
 <aside
@@ -562,12 +567,26 @@
 				(a) => a.type === 'note',
 			)}
 			<div class="p-6 flex flex-col gap-4">
-				<div class="space-y-2 flex flex-col">
-					<h3 class=" text-lg font-semibold leading-none tracking-tight">
-						Page Notes
-					</h3>
-					{#each pageNotes ?? [] as note}
-						<Editor
+				<Collapsible.Root
+					bind:open={isPageNotesPanelOpen}
+					class="space-y-2 flex flex-col"
+				>
+					<Collapsible.Trigger asChild let:builder>
+						<div>
+							<Button builders={[builder]} variant="ghost">
+								<span class="font-medium text-base">Page Notes</span>
+								<CaretRight
+									class="h-4 w-4 ml-2 {isPageNotesPanelOpen ? 'rotate-90' : ''}"
+								/>
+							</Button>
+						</div>
+					</Collapsible.Trigger>
+					<Collapsible.Content class="flex flex-col gap-4">
+						{#each pageNotes ?? [] as note (note.id)}
+							<div animate:flip transition:slide={{duration: 150}}>
+								<AnnotationCard annotation={note} />
+							</div>
+							<!-- <Editor
 							content={note && isJSONContent(note.contentData)
 								? note.contentData
 								: undefined}
@@ -606,180 +625,204 @@
 								});
 							}}
 							options={{ autofocus: false }}
-						/>
-					{/each}
-					{#if isAddingPageNote}
-						<div transition:fly={{ duration: 200, y: -10 }}>
-							<AnnotationForm
-								autofocus
-								media={isMediaType($page.params.type) && $page.params.id
-									? makeMediaSchema($page.params.id, $page.params.type)
-									: undefined}
-								entryId={$query.data?.entry?.id}
-								on:cancel={() => {
-									isAddingPageNote = false;
-								}}
-								on:save={() => {
-									isAddingPageNote = false;
-								}}
-							/>
-						</div>
-					{:else}
-						<div
-							in:fade={{ delay: 300 }}
-							class="flex items-center justify-center"
-						>
-							<Button
-								on:click={() => {
-									isAddingPageNote = true;
-								}}
-								size="sm"
-								variant="ghost"
-							>
-								<PlusIcon class="h-4 w-4" />
-								Add page note</Button
-							>
-						</div>
-					{/if}
-				</div>
-				<div class="flex items-center justify-between">
-					<h3 class=" text-lg font-semibold leading-none tracking-tight">
-						Annotations
-					</h3>
-					<div class="flex items-center gap-1">
-						<DropdownMenu>
-							<DropdownMenuTrigger
-								class={buttonVariants({ size: 'sm', variant: 'ghost' })}
-							>
-								<MoreHorizontalIcon class="h-4 w-4" />
-							</DropdownMenuTrigger>
-							<DropdownMenuContent>
-								<DropdownMenuGroup>
-									<DropdownMenuItem
-										on:click={() => {
-											if ($query.data?.entry) {
-												triggerDownload(
-													$query.data.entry,
-													$query.data.entry?.annotations ?? [],
-												);
-											}
-										}}
-									>
-										<FileDown class="mr-2 h-4 w-4" />
-										Export notes to markdown
-									</DropdownMenuItem>
-								</DropdownMenuGroup>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</div>
-				</div>
-				<div class="grid gap-4">
-					{#if $query.data?.entry?.annotations}
-						{#each $query.data.entry.annotations
-							.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
-							.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
-							<Annotation
-								on:click
-								{annotation}
-								data={$page.data.annotationForm}
-								entry={$query.data?.entry}
-							/>
+						/> -->
 						{/each}
-					{/if}
-					{#if isAddingAnnotation}
-						<div transition:fly={{ duration: 200, y: 10 }}>
-							<AnnotationForm
-								autofocus
-								on:cancel={() => {
-									isAddingAnnotation = false;
-								}}
+						{#if isAddingPageNote}
+							<div transition:fly={{ duration: 200, y: -10 }}>
+								<AnnotationForm
+									autofocus
+									media={isMediaType($page.params.type) && $page.params.id
+										? makeMediaSchema($page.params.id, $page.params.type)
+										: undefined}
+									entryId={$query.data?.entry?.id}
+									on:cancel={() => {
+										isAddingPageNote = false;
+									}}
+									on:save={() => {
+										isAddingPageNote = false;
+									}}
+								/>
+							</div>
+						{:else}
+							<div
+								in:fade={{ delay: 300 }}
+								class="flex items-center justify-center"
 							>
-								<svelte:fragment slot="header">
-									{#if $player?.type === 'youtube'}
-										{@const player = $player.player}
-										{#await player.getCurrentTime()}
-											...
-										{:then timestamp}
-											<TimestampInput
-												duration={formatDuration(
-													Math.floor(Number(timestamp)),
-													's',
-													true,
-													':',
-												)}
-												let:updateDuration
-												let:currentTimestamp
-												showReset={false}
+								<Button
+									on:click={() => {
+										isAddingPageNote = true;
+									}}
+                                    class="text-muted-foreground"
+									size="sm"
+									variant="ghost"
+								>
+									<PlusIcon class="h-4 w-4" />
+									Add page note</Button
+								>
+							</div>
+						{/if}
+					</Collapsible.Content>
+				</Collapsible.Root>
+				<Collapsible.Root
+					bind:open={isAnnotationsPanelOpen}
+					class="flex flex-col space-y-2"
+				>
+					<div class="flex items-center justify-between">
+						<Collapsible.Trigger asChild let:builder>
+							<div>
+								<Button builders={[builder]} variant="ghost">
+									<span class="font-medium text-base">Annotations</span>
+									<CaretRight
+										class="h-4 w-4 ml-2 {isAnnotationsPanelOpen
+											? 'rotate-90'
+											: ''}"
+									/>
+								</Button>
+							</div>
+						</Collapsible.Trigger>
+                        <div class="flex items-center gap-1">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger
+										class={buttonVariants({ size: 'sm', variant: 'ghost' })}
+									>
+										<MoreHorizontalIcon class="h-4 w-4" />
+									</DropdownMenuTrigger>
+									<DropdownMenuContent>
+										<DropdownMenuGroup>
+											<DropdownMenuItem
+												on:click={() => {
+													if ($query.data?.entry) {
+														triggerDownload(
+															$query.data.entry,
+															$query.data.entry?.annotations ?? [],
+														);
+													}
+												}}
 											>
-												<button
-													on:click={() => {
-														player.getCurrentTime().then((time) => {
-															updateDuration(
-																formatDuration(
-																	Math.floor(time),
-																	's',
-																	true,
-																	':',
-																),
-															);
-														});
-													}}
+												<FileDown class="mr-2 h-4 w-4" />
+												Export notes to markdown
+											</DropdownMenuItem>
+										</DropdownMenuGroup>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+
+					</div>
+					<Collapsible.Content class="grid gap-4">
+						{#if $query.data?.entry?.annotations}
+							{#each $query.data.entry.annotations
+								.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
+								.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation}
+                                <AnnotationCard
+                                    {annotation}
+                                />
+								<!-- <Annotation
+									on:click
+									{annotation}
+									data={$page.data.annotationForm}
+									entry={$query.data?.entry}
+								/> -->
+							{/each}
+						{/if}
+						{#if isAddingAnnotation}
+							<div transition:fly={{ duration: 200, y: 10 }}>
+								<AnnotationForm
+									autofocus
+									on:cancel={() => {
+										isAddingAnnotation = false;
+									}}
+								>
+									<svelte:fragment slot="header">
+										{#if $player?.type === 'youtube'}
+											{@const player = $player.player}
+											{#await player.getCurrentTime()}
+												...
+											{:then timestamp}
+												<TimestampInput
+													duration={formatDuration(
+														Math.floor(Number(timestamp)),
+														's',
+														true,
+														':',
+													)}
+													let:updateDuration
+													let:currentTimestamp
+													showReset={false}
 												>
-													{#if currentTimestamp}
-														<CrosshairIcon
-															class="h-4 w-4 text-muted-foreground"
-														/>
-														<span class="sr-only"> Set timestamp </span>
-													{:else}
-														<Button variant="ghost" size="sm">
-															Set timestamp
-														</Button>
-													{/if}
-												</button>
-												{#if currentTimestamp}
 													<button
 														on:click={() => {
-															updateDuration('');
+															player.getCurrentTime().then((time) => {
+																updateDuration(
+																	formatDuration(
+																		Math.floor(time),
+																		's',
+																		true,
+																		':',
+																	),
+																);
+															});
 														}}
 													>
-														<XIcon class="h-4 w-4 text-muted-foreground" />
-														<span class="sr-only"> Clear timestamp </span>
+														{#if currentTimestamp}
+															<CrosshairIcon
+																class="h-4 w-4 text-muted-foreground"
+															/>
+															<span class="sr-only"> Set timestamp </span>
+														{:else}
+															<Button variant="ghost" size="sm">
+																Set timestamp
+															</Button>
+														{/if}
 													</button>
-												{/if}
-											</TimestampInput>
-										{/await}
-									{/if}
-								</svelte:fragment>
-							</AnnotationForm>
-						</div>
-					{:else}
-						<div in:fade={{ delay: 250 }} class="flex justify-center">
-							{#if $query.data?.entry?.type === 'movie'}
-								<Button
-									on:click={() => {
-										isAddAnnotationModalOpen = true;
-									}}
-									size="sm"
-									variant="ghost"
-								>
-									<PlusIcon class="h-4 w-4" />
-									Add annotation</Button
-								>
-							{:else if $query.data?.entry?.type !== 'article'}
-								<Button
-									on:click={() => {
-										isAddingAnnotation = true;
-									}}
-									size="sm"
-									variant="ghost"
-								>
-									<PlusIcon class="h-4 w-4" />
-									Add annotation</Button
-								>
-							{/if}
-						</div>
-					{/if}
-				</div>
+													{#if currentTimestamp}
+														<button
+															on:click={() => {
+																updateDuration('');
+															}}
+														>
+															<XIcon class="h-4 w-4 text-muted-foreground" />
+															<span class="sr-only"> Clear timestamp </span>
+														</button>
+													{/if}
+												</TimestampInput>
+											{/await}
+										{/if}
+									</svelte:fragment>
+								</AnnotationForm>
+							</div>
+						{:else}
+							<div in:fade={{ delay: 250 }} class="flex justify-center">
+								{#if $query.data?.entry?.type === 'movie'}
+									<Button
+										on:click={() => {
+											isAddAnnotationModalOpen = true;
+										}}
+										size="sm"
+										variant="ghost"
+									>
+										<PlusIcon class="h-4 w-4" />
+										Add annotation</Button
+									>
+								{:else if $query.data?.entry?.type !== 'article'}
+									<Button
+										on:click={() => {
+											isAddingAnnotation = true;
+										}}
+										size="sm"
+										variant="ghost"
+									>
+										<PlusIcon class="h-4 w-4" />
+										Add annotation</Button
+									>
+								{:else if !$query.data?.entry?.annotations?.length}
+									<div class="py-2 text-center text-sm text-muted-foreground">
+										No annotations yet.
+									</div>
+								{/if}
+							</div>
+						{/if}
+					</Collapsible.Content>
+				</Collapsible.Root>
 			</div>
 		</TabsContent>
 		<!-- {#if $query.data?.entry?.type === 'article'} -->

@@ -17,7 +17,7 @@
 	import { post } from '$lib/utils/forms';
 
 	import HoverEntry from './HoverEntry.svelte';
-	import Badge from './ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Button from './ui/Button.svelte';
 	import OptionsMenu from './ui/dropdown-menu/OptionsMenu.svelte';
 	import * as HoverCard from './ui/hover-card';

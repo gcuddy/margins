@@ -5,10 +5,13 @@
 	import { writable } from 'svelte/store';
 	import { scale } from 'svelte/transition';
 
+	import * as Tooltip from '$components/ui/tooltip';
+
 	import { Button } from '$components/ui/button';
 	import { Muted } from '$components/ui/typography';
 
 	import { setup } from './selection';
+	import Kbd from '$components/ui/KBD.svelte';
 
 	const mouseDown = writable(false);
 	const { popperContent, show } = setup();
@@ -43,27 +46,45 @@
 			<!-- TODO: replace buttons + text with icons + tooltips, and replace highlight button with a color (indicating current highlight color) -->
 			<div class="flex justify-between space-x-2">
 				<slot name="buttons">
-					<Button
-						on:click={() => {
-							dispatch('highlight');
-						}}
-						type="submit"
-						class="flex h-auto flex-col space-y-1"
-						variant="ghost"
-					>
-						<Highlighter class="h-5 w-5" />
-						<Muted class="text-xs">Highlight</Muted>
-					</Button>
-					<Button
-						on:click={() => {
-							dispatch('annotate');
-						}}
-						variant="ghost"
-						class="flex h-auto flex-col space-y-1"
-					>
-						<EditIcon class="h-5 w-5" />
-						<Muted class="text-xs">Annotate</Muted>
-					</Button>
+					<Tooltip.Root>
+						<Tooltip.Trigger asChild let:builder>
+							<Button
+								builders={[builder]}
+								on:click={() => {
+									dispatch('highlight');
+								}}
+								type="submit"
+								class="flex h-auto flex-col space-y-1"
+								variant="ghost"
+							>
+								<Highlighter class="h-5 w-5" />
+								<Muted class="text-xs sr-only">Highlight</Muted>
+							</Button>
+						</Tooltip.Trigger>
+						<Tooltip.Content>
+							<span>Highlight this passage</span>
+							<Kbd>h</Kbd>
+						</Tooltip.Content>
+					</Tooltip.Root>
+					<Tooltip.Root>
+						<Tooltip.Trigger asChild let:builder>
+							<Button
+								builders={[builder]}
+								on:click={() => {
+									dispatch('annotate');
+								}}
+								variant="ghost"
+								class="flex h-auto flex-col space-y-1"
+							>
+								<EditIcon class="h-5 w-5" />
+								<Muted class="text-xs sr-only">Annotate</Muted>
+							</Button></Tooltip.Trigger
+						>
+						<Tooltip.Content>
+							<span>Annotate this passage</span>
+							<Kbd>a</Kbd>
+						</Tooltip.Content>
+					</Tooltip.Root>
 				</slot>
 			</div>
 		</div>

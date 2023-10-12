@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	// import EntryList from '$lib/components/entries/EntryList.svelte';
-	import Badge from '$lib/components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Button from '$lib/components/ui/Button.svelte';
 	import { Card, CardContent, CardFooter,CardHeader, CardTitle } from '$lib/components/ui/card';
 	import Input from '$lib/components/ui/input/input.svelte';

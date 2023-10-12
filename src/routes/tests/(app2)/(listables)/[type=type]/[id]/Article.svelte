@@ -61,6 +61,7 @@
 	import type { RequireAtLeastOne } from 'type-fest';
 	import { currentEntryList } from '$components/entries/store';
 	import { make_link } from '$lib/utils/entries';
+	import Selection from './Selection.svelte';
 
 	const {
 		activeAnnotation,
@@ -898,8 +899,8 @@
 	</div>
 {/if}
 
-{#if $shouldShowAnnotationTooltip}
-	<!-- Note: should this be popover? Using some classes from shadcn/ui/hover card -->
+<!-- Note: should this be popover? Using some classes from shadcn/ui/hover card -->
+<!-- {#if $shouldShowAnnotationTooltip}
 	<div
 		use:popperContent
 		class="{$mouseDown
@@ -1006,7 +1007,62 @@
 			</div>
 		</div>
 	</div>
-{/if}
+{/if} -->
+
+<Selection
+	on:highlight={async () => {
+		if (!$selection) {
+			clearSelection();
+		}
+		const id = nanoid();
+		const info = await highlight({
+			'data-annotation-id': `${id}`,
+			id: `annotation-${id}`,
+		});
+
+		if (!info) {
+			e.preventDefault();
+			return;
+		}
+		$annotateMutation.mutate({
+			id,
+			target: {
+				selector: info.selector,
+				source: '',
+			},
+		});
+		annotations.add(id, {
+			els: info.els,
+			id,
+			target: {
+				selector: info.selector,
+				source: '',
+			},
+		});
+		clearSelection();
+	}}
+	on:annotate={async () => {
+		const highlight_info = await highlight();
+		clearSelection();
+		if (highlight_info) {
+			const { els, id, selector } = highlight_info;
+			const el = els[0]?.highlightElements[0];
+			if (el) {
+				annotationRef(el);
+			}
+			annotations.addTemp(id, {
+				els,
+				id,
+				target: {
+					selector,
+					source: '',
+				},
+			});
+			await tick();
+			$showEditAnnotation = true;
+		}
+	}}
+/>
 
 {#if $showEditAnnotation && data.entry}
 	<div
@@ -1078,7 +1134,7 @@
 {/if}
 
 <div
-	class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors hover:prose-a:text-accent"
+	class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors"
 >
 	<header class="flex flex-col gap-2 border-b not-prose space-y-3 pb-8">
 		{#if data.entry?.uri?.startsWith('http')}
@@ -1173,9 +1229,10 @@
 			}}
 		>
 			<input type="hidden" name="status" value="Archive" />
-			<Button on:mouseover={() => {
-                preloadData(next_link)
-            }}>Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button
+			<Button
+				on:mouseover={() => {
+					preloadData(next_link);
+				}}>Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button
 			>
 		</form>
 	{/if}

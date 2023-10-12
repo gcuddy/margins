@@ -5,7 +5,7 @@
 
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import Badge from '$components/ui/Badge.svelte';
+	import { Badge } from '$components/ui/badge'
 	import Button from '$components/ui/Button.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import type { TargetSchema } from '$lib/annotation';
