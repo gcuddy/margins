@@ -7,25 +7,22 @@ import sequence from 'svelte-sequential-preprocessor'
 const config = {
 	// Consult https://github.com/sveltejs/svelte-preprocess
 	// for more information about preprocessors
-	preprocess: sequence([
-		vitePreprocess(),
-        preprocessMeltUI()
-	]),
+	preprocess: sequence([vitePreprocess(), preprocessMeltUI()]),
 	kit: {
 		adapter: vercel({
-			runtime: 'edge'
+			runtime: 'nodejs18.x',
 		}),
 		alias: {
 			$components: 'src/lib/components',
-			'$components/*': 'src/lib/components/*'
-		}
+			'$components/*': 'src/lib/components/*',
+		},
 	},
 	compilerOptions: {},
 	shadcn: {
-		componentPath: './src/lib/components/ui'
+		componentPath: './src/lib/components/ui',
 	},
-    vitePlugin: {
-        inspector: true
-    }
+	vitePlugin: {
+		inspector: true,
+	},
 };
 export default config;

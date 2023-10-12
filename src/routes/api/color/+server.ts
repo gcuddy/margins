@@ -12,6 +12,7 @@ import { redis } from '$lib/redis';
 
 import type { RequestHandler } from './$types';
 
+
 export const GET: RequestHandler = async ({
 	params,
 	request,
