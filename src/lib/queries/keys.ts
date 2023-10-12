@@ -2,8 +2,8 @@ import { createQueryKeyStore, type inferQueryKeyStore } from "@lukemorales/query
 import { type QueryInit, query } from "./query";
 import type { Bookmark } from "@prisma/client";
 import type { Type } from "$lib/types";
-import type { ListInput } from "@/routes/tests/(app2)/(listables)/library/fetch.server";
-import type { Condition } from "@/routes/tests/(app2)/views/new/View";
+// import type { ListInput } from "@/routes/tests/(app2)/(listables)/library/fetch.server";
+// import type { Condition } from "@/routes/tests/(app2)/views/new/View";
 
 export const queryKeys = createQueryKeyStore({
     entries: {

@@ -2,9 +2,9 @@ import type { Status } from "@prisma/client";
 import { queryOptions, infiniteQueryOptions, type Meta } from "./utils";
 import { type QueryFunctionContext, createInfiniteQuery, type QueryKey } from "@tanstack/svelte-query";
 import { MutationInput, type QueryInput, query, InfiniteQueries } from "./query";
-import type { ListInput } from "@/routes/tests/(app2)/(listables)/library/fetch.server";
+// import type { ListInput } from "@/routes/tests/(app2)/(listables)/library/fetch.server";
 import { type QueryKeys, queryKeys } from "./keys";
-import type { Queries, QueriesWithCursorInput } from "@/routes/tests/(app2)/queries.server";
+// import type { Queries, QueriesWithCursorInput } from "@/routes/tests/(app2)/queries.server";
 
 // const keys = { list: (status: Status) => ['library', status] as const,
 // }
