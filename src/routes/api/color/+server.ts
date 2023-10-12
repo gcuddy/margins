@@ -6,7 +6,6 @@ export const config: Config = {
 
 import { error, json } from '@sveltejs/kit';
 import { colord } from 'colord';
-import { getAverageColor } from 'fast-average-color-node';
 
 import { redis } from '$lib/redis';
 
@@ -42,7 +41,11 @@ export const GET: RequestHandler = async ({
 		return json(cached);
 	}
 
-	const color = await getAverageColor(uri);
+
+
+	const color = {
+		hex: '#000000',
+	};
 
 	let adjusted = color.hex;
 

@@ -49,32 +49,32 @@
     }
 
 	// TODO: should we do this or not?
-	const imageColorQuery = createQuery(
-		derived(bookStore, (book) => {
-            const queryKey = ['imageColor', book.id] as const;
-            console.log({imageColorQueryKey: queryKey})
-			return {
-				enabled: !!book,
-                // placeholderData: keepPreviousData,
-				queryFn: async () => {
-                    console.log(`Running imageColorQuery`)
-					if (!book) {
-						return null;
-					}
-					const response = await fetch(
-						`/api/color?uri=${encodeURIComponent(getGbookImage(book))}`,
-					);
-					if (!response.ok) {
-						throw new Error('Network response was not ok');
-					}
-					return response.json() as Promise<FastAverageColorResult>;
-				},
-				queryKey,
-			};
-		}),
-	);
+	// const imageColorQuery = createQuery(
+	// 	derived(bookStore, (book) => {
+    //         const queryKey = ['imageColor', book.id] as const;
+    //         console.log({imageColorQueryKey: queryKey})
+	// 		return {
+	// 			enabled: !!book,
+    //             // placeholderData: keepPreviousData,
+	// 			queryFn: async () => {
+    //                 console.log(`Running imageColorQuery`)
+	// 				if (!book) {
+	// 					return null;
+	// 				}
+	// 				const response = await fetch(
+	// 					`/api/color?uri=${encodeURIComponent(getGbookImage(book))}`,
+	// 				);
+	// 				if (!response.ok) {
+	// 					throw new Error('Network response was not ok');
+	// 				}
+	// 				return response.json() as Promise<FastAverageColorResult>;
+	// 			},
+	// 			queryKey,
+	// 		};
+	// 	}),
+	// );
 
-    $: console.log({$imageColorQuery})
+    // $: console.log({$imageColorQuery})
 
 	$: firstAuthor = book.volumeInfo?.authors?.[0];
 
@@ -88,13 +88,13 @@
 
 	$: console.log({ $otherBooksByAuthorQuery });
 
-	const boxShadowColor = derived(imageColorQuery, (result) => {
-        console.log({ result });
-		if (!result.data) {
-			return null;
-		}
-		return result.data.hex;
-	});
+	// const boxShadowColor = derived(imageColorQuery, (result) => {
+    //     console.log({ result });
+	// 	if (!result.data) {
+	// 		return null;
+	// 	}
+	// 	return result.data.hex;
+	// });
 
 	$: isbn = book.volumeInfo?.industryIdentifiers?.find(
 		(i) => i.type === 'ISBN_13',
@@ -170,9 +170,9 @@
 	<div class="flex select-text flex-col gap-4">
 		<div class="flex items-center gap-6">
 			<!-- src="https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg?default=false" -->
+            <!-- style:--tw-shadow-color= -->
 			<div
-				class="aspect-auto max-w-[200px] shadow-lg shadow-stone-900 relative"
-				style:--tw-shadow-color={$boxShadowColor}
+				class="aspect-auto max-w-[200px] shadow-lg relative"
 				style:view-transition-name="artwork-{book.id}"
 			>
 				<img

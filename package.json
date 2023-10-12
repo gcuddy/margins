@@ -211,6 +211,7 @@
     "clsx": "^1.2.1",
     "color": "^4.2.3",
     "colord": "^2.9.3",
+    "colorthief": "^2.4.0",
     "compromise": "^14.9.0",
     "country-flag-icons": "^1.5.7",
     "csstype": "^3.1.2",
@@ -218,8 +219,6 @@
     "dequal": "^2.0.3",
     "drizzle-orm": "^0.27.2",
     "epubjs": "^0.3.93",
-    "fast-average-color": "^9.4.0",
-    "fast-average-color-node": "^2.6.0",
     "focus-trap": "^7.5.2",
     "formsnap": "^0.1.4",
     "highlight.js": "^11.8.0",
@@ -254,7 +253,6 @@
     "remark-parse": "^10.0.2",
     "remark-rehype": "^10.1.0",
     "shade-generator": "^1.2.7",
-    "sharp": "^0.32.6",
     "svelte-autosize": "^1.1.0",
     "svelte-french-toast": "^1.1.0",
     "svelte-hero-icons": "^5.0.0",
@@ -272,5 +270,8 @@
     "validator": "^13.11.0",
     "vite-plugin-pwa": "^0.16.4",
     "youtube-player": "^5.6.0"
+  },
+  "overrides": {
+    "canvas": "../_EXCLUDED_"
   }
 }
