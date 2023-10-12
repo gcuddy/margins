@@ -242,7 +242,7 @@
 		"marked": "^5.1.1",
 		"mime-types": "^2.1.35",
 		"mysql2": "^3.5.1",
-		"pdfjs-dist": "^3.8.162",
+		"pdfjs-dist": "^3.11.174",
 		"prisma-kysely": "^1.5.0",
 		"puppeteer-core": "20.8",
 		"puppeteer-extra": "^3.3.6",
