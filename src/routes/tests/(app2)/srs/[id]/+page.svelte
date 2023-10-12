@@ -1,10 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import Button from '$components/ui/Button.svelte';
-	import { md } from '$lib/markdown';
-	import { CheckCircle2Icon, CircleSlashIcon, EyeIcon } from 'lucide-svelte';
-	import { fly } from 'svelte/transition';
-	import Card from '../Card.svelte';
+	import SrsCard from '../srs-card.svelte';
 
     export let data;
 
@@ -17,7 +12,7 @@
 </script>
 
 
-<Card note={data.note} />
+<SrsCard note={data.note} />
 
 <!-- <div>
 {@html md.render(data.note.body ?? '')}
