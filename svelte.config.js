@@ -10,7 +10,7 @@ const config = {
 	preprocess: sequence([vitePreprocess(), preprocessMeltUI()]),
 	kit: {
 		adapter: vercel({
-			runtime: 'nodejs18.x',
+			runtime: 'edge',
 		}),
 		alias: {
 			$components: 'src/lib/components',
