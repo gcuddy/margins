@@ -171,6 +171,10 @@ export type AnnotationToTag = {
 	A: string;
 	B: number;
 };
+export type AnnotationToTag = {
+	A: string;
+	B: number;
+};
 export type Article = {
 	id: Generated<number>;
 	title: string;
