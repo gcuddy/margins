@@ -11,6 +11,7 @@ const config = {
 	kit: {
 		adapter: vercel({
 			runtime: 'edge',
+			split: true,
 		}),
 		alias: {
 			$components: 'src/lib/components',
