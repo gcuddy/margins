@@ -2,6 +2,7 @@
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import { cn } from "$lib/utils";
 	import type { TextareaEvents } from ".";
+	import autosize from "$lib/actions/autosize";
 
 	type $$Props = HTMLTextareaAttributes;
 	type $$Events = TextareaEvents;
@@ -29,5 +30,6 @@
 	on:mouseleave
 	on:paste
 	on:input
+    use:autosize
 	{...$$restProps}
 />

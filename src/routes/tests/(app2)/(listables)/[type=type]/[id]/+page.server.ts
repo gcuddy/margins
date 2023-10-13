@@ -30,6 +30,7 @@ import { validate_form } from '$lib/utils/forms';
 
 import type { Actions } from './$types';
 import { getIdKeyName } from '$lib/utils/entries';
+import { interactionLogInputSchema } from '$components/entries/interaction-form/schema';
 
 export async function load({ locals }) {
 	const session = await locals.auth.validate();
@@ -38,6 +39,7 @@ export async function load({ locals }) {
 	}
 	return {
 		bookmarkForm: superValidate(updateBookmarkSchema),
+		logInteractionForm: superValidate(interactionLogInputSchema),
 		tagForm: superValidate(tagSchema),
 		session,
 	};
@@ -262,6 +264,43 @@ export const actions: Actions = {
 			return { interactionForm: form };
 		},
 	),
+	logInteraction: async (event) => {
+		const form = await superValidate(event, interactionLogInputSchema);
+		const session = await event.locals.auth.validate();
+		if (!form.valid) {
+			return fail(400, { form });
+		}
+		if (!session) {
+			return fail(401, { form });
+		}
+
+		const { entryId, ...data } = form.data;
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.insertInto('EntryInteraction')
+				.values({
+					// ...form.data,
+					...data,
+					entryId,
+					updatedAt: new Date(),
+					userId: session.user.userId,
+				})
+				.execute();
+
+			// Update Bookmark
+			return await trx
+				.updateTable('Bookmark')
+				.where('entryId', '=', entryId)
+				.where('userId', '=', session.user.userId)
+				.set({
+					rating: data.rating,
+					status: 'Archive',
+					updatedAt: new Date(),
+				})
+				.execute();
+		});
+		return { form };
+	},
 	/**
 	 * Marks entry as finished and moves bookmark to "Archive".
 	 */

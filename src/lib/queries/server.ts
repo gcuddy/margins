@@ -135,7 +135,7 @@ export async function updateBookmark(
 	if ('id' in variables) {
 		let bookmarks = db
 			.updateTable('Bookmark')
-            // here we use data, since we assume it was set specifically for a reason...
+			// here we use data, since we assume it was set specifically for a reason...
 			.set(data)
 			.where('userId', '=', userId);
 		const { id } = variables;
@@ -769,7 +769,7 @@ export async function entry_by_id({
 						.whereRef('b.entryId', '=', 'Entry.id')
 						.where('b.userId', '=', userId),
 				).as('bookmark'),
-				jsonObjectFrom(
+				jsonArrayFrom(
 					eb
 						.selectFrom('EntryInteraction as i')
 						.select([
@@ -780,11 +780,13 @@ export async function entry_by_id({
 							'i.finished',
 							'i.title',
 							'i.note',
+							'i.rating',
+							'i.revisit',
 						])
 						.whereRef('i.entryId', '=', 'Entry.id')
-						.where('i.userId', '=', userId)
-						.limit(1),
-				).as('interaction'),
+						.orderBy('i.createdAt', 'desc')
+						.where('i.userId', '=', userId),
+				).as('interactions'),
 			]),
 		)
 		.$if(type === 'tweet', (qb) => qb.select(['Entry.original as tweet']));
@@ -850,7 +852,8 @@ export async function entry_by_id({
 
 export type FullEntryDetail = Awaited<ReturnType<typeof entry_by_id>>;
 export type EntryDetail = NonNullable<FullEntryDetail['entry']>;
-export type EntryInteraction = NonNullable<EntryDetail['interaction']>;
+export type EntryInteractions = NonNullable<EntryDetail['interactions']>;
+export type EntryInteraction = EntryInteractions[number];
 export type EntryAnnotation = NonNullable<
 	NonNullable<FullEntryDetail['entry']>['annotations']
 >[number];

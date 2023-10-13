@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
+	import { getFormField } from 'formsnap';
 	import { StarIcon, XIcon } from 'lucide-svelte';
+	import { writable, type Writable } from 'svelte/store';
 
 	export let rating = 0;
 
@@ -11,23 +13,72 @@
 	let className: string | null | undefined = undefined;
 	export { className as class };
 
-	$: console.log({ hovering });
+    export let preventDefault = false;
+    export let form = false;
+
+    let valueStore = writable(0);
+
+    if (form) {
+        const { value } = getFormField();
+        valueStore = value as Writable<number>;
+        if (valueStore && $valueStore) {
+            rating = $valueStore;
+        }
+    }
 
 	$: highestHovering = Math.max(...hovering);
 
 	function handleRating(value: number) {
+		console.log({ value });
 		rating = value;
+        if (valueStore) {
+            valueStore.set(value);
+        }
 	}
+
+	let activeValue = 1;
+    let container: HTMLElement;
+
+
 </script>
 
-<div role="group" class="flex items-center group" aria-label="Rating">
+<div bind:this={container} role="group" class="flex items-center group" aria-label="Rating">
 	{#each [1, 2, 3, 4, 5] as value}
 		<button
 			{disabled}
 			name="rating"
 			{value}
-			on:click={() => handleRating(value)}
-			on:keydown={(e) => e.key === 'Enter' && handleRating(value)}
+            data-star-value={value}
+			on:click={(e) => {
+                if (preventDefault) {
+                    e.preventDefault();
+                }
+                handleRating(value);
+            }}
+			on:keydown={(e) => {
+				if (e.key === 'Enter') {
+					handleRating(value);
+                    return;
+				}
+                if (e.key === 'ArrowLeft') {
+                    const prevValue = Math.max(1, value - 1);
+                    const prev = container.querySelector(`[data-star-value="${prevValue}"]`);
+                    if (prev && prev instanceof HTMLElement) {
+                        prev.focus();
+                    }
+                    // activeValue = Math.max(1, value - 1);
+                    return;
+                }
+                if (e.key === 'ArrowRight') {
+                    const nextValue = Math.min(5, value + 1);
+                    const next = container.querySelector(`[data-star-value="${nextValue}"]`);
+                    if (next && next instanceof HTMLElement) {
+                        next.focus();
+                    }
+                    // activeValue = Math.min(5, value + 1);
+                    return;
+                }
+			}}
 			on:mouseover={() => {
 				hovering = [...hovering, value];
 			}}
@@ -35,16 +86,18 @@
 				hovering = hovering.filter((v) => v !== value);
 			}}
 			on:focus={() => {
+                activeValue = value;
 				hovering = [...hovering, value];
 			}}
 			on:blur={() => {
 				hovering = hovering.filter((v) => v !== value);
 			}}
-			tabindex="0"
+			tabindex={activeValue === value ? 0 : -1}
 			role="button"
-			aria-label={`Rate ${value} ${rating === value ? 'stars' : 'half star'}`}
+			aria-label={`Rate ${value} stars`}
 		>
 			<!-- {rating >= value - 0.5 ? '★' : '☆'} -->
+			<!-- <input type="hidden" name="rating" value={value} /> -->
 			<StarIcon
 				class={cn(
 					'w-5 h-5',

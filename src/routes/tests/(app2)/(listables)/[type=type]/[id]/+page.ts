@@ -6,6 +6,7 @@ import { numberOrString } from '$lib/utils/misc';
 
 import type { PageLoad } from './$types';
 import { get_module } from './module';
+import { writable } from 'svelte/store';
 
 export const load = (async (event) => {
 	const { parent, data } = event;
@@ -16,9 +17,9 @@ export const load = (async (event) => {
 
 	const queryClient = parentData.queryClient as QueryClient;
 
-    const _id = numberOrString(id);
+	const _id = numberOrString(id);
 
-		const query = queryFactory.entries.detail({ id: _id, type });
+	const query = queryFactory.entries.detail({ id: _id, type });
 
 	console.log({ query });
 	const queryData = await queryClient.ensureQueryData({
@@ -36,7 +37,8 @@ export const load = (async (event) => {
 		// ...queryData,
 		...queryData,
 		component: get_module(type).then((module) => module?.default),
-		query,
+		query: writable(query),
+		queryKey: writable(query.queryKey),
 		//
 		id: _id,
 		type,

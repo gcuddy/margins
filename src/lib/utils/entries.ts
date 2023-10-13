@@ -3,14 +3,18 @@ import type { DocumentType, Entry } from '@prisma/client';
 import { S3_BUCKET_PREFIX } from '$lib/constants';
 import type { EntryInList } from '$lib/db/selects';
 import type { MediaIdSchema } from '$lib/queries/server';
+import { formatDate } from './date';
 
 const prefix = `/tests`;
 
 export type SlimEntry = {
 	googleBooksId?: string | null;
 	id: number;
+	image?: string | null;
 	podcastIndexId?: number | null;
+	published: Date | null;
 	spotifyId?: string | null;
+	title: string | null;
 	tmdbId?: number | null;
 	type: DocumentType;
 };
@@ -131,5 +135,41 @@ export function makeMediaSchema(
 		};
 	} else {
 		throw new Error(`Invalid media type ${type}`);
+	}
+}
+
+export function formatEntryPublished(
+	entry: SlimEntry & { published: Date | null },
+) {
+	if (!entry.published) {
+		return '';
+	}
+	return formatDate(
+		entry.published,
+		entry.type === 'article' ||
+			entry.type === 'podcast' ||
+			entry.type === 'video'
+			? {
+					day: 'numeric',
+					month: 'short',
+					year: '2-digit',
+			  }
+			: {
+					year: 'numeric',
+			  },
+	);
+}
+
+export function getRevisitLanguage(type: Entry['type']) {
+	if (type === 'album' || type === 'podcast') {
+		return 'Re-listen';
+	} else if (type === 'book' || type === 'article') {
+		return 'Re-read';
+	} else if (type === 'movie' || type === 'tv' || type === 'video') {
+		return 'Re-watch';
+	} else if (type === 'board_game' || type === 'game') {
+		return 'Re-play';
+	} else {
+		return 'Re-visit';
 	}
 }

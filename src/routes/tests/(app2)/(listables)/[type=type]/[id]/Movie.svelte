@@ -4,7 +4,7 @@
 	import smoothload from '$lib/actions/smoothload';
 	import type { List } from '$lib/api/tmdb';
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
-	import { Badge } from '$components/ui/badge'
+	import { Badge } from '$components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import ISO6391 from 'iso-639-1';
 	import { iso31661 } from 'iso-3166';
@@ -52,6 +52,7 @@
 	import MovieCarousel from '$components/movies/movie-carousel.svelte';
 	import StarRating from '$components/ui/star-rating/star-rating.svelte';
 	import StarRatingForm from '$components/ui/star-rating/star-rating-form.svelte';
+	import LogInteractionDialog from '$components/entries/interaction-form/log-interaction-dialog.svelte';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;
@@ -302,6 +303,27 @@
 							Watch</Button
 						>
 					</form>
+					{#if data.entry && $page.data.logInteractionForm}
+						<LogInteractionDialog
+							entry={data.entry}
+							data={{
+								rating: data.entry?.bookmark?.rating ?? 0,
+							}}
+						>
+							<!-- form={$page.data.logInteractionForm} -->
+							<svelte:fragment slot="trigger" let:builder>
+								<Button
+									builders={[builder]}
+									variant="secondary"
+									name="finished"
+									value={new Date().toISOString()}
+								>
+									<EyeIcon class="w-4 h-4 mr-2" />
+									Watch</Button
+								>
+							</svelte:fragment>
+						</LogInteractionDialog>
+					{/if}
 					<!-- <Button
 							variant="secondary"
 						>

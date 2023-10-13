@@ -420,7 +420,7 @@
 		}
 	}
 
-	let lastSavedScrollProgress = data.entry?.interaction?.progress ?? 0;
+	let lastSavedScrollProgress = data.entry?.interactions?.[0]?.progress ?? 0;
 
 	const saveProgressMutation = createMutation({
 		mutationFn: async () => {
@@ -435,15 +435,15 @@
 			}
 			return mutation($page, 'saveInteraction', {
 				entryId: data.entry.id,
-				id: data.entry.interaction?.id,
+				id: data.entry.interactions?.[0]?.id,
 				progress: $scroll,
 			});
 		},
 		onMutate() {
 			lastSavedScrollProgress = $scroll;
 			//  set query data (and invalidate?);
-			if (data.entry?.interaction?.id) {
-				const id = data.entry.interaction.id;
+			if (data.entry?.interactions?.[0]?.id) {
+				const id = data.entry.interactions[0].id;
 				queryClient.setQueryData<FullEntryDetail>(queryKey, (old) => {
 					if (!old) {
 						return old;
@@ -455,11 +455,11 @@
 						...old,
 						entry: {
 							...old.entry,
-							interaction: makeInteraction({
-								...old.entry.interaction,
+							interactions: [makeInteraction({
+								...(old.entry.interactions?.[0] ?? []),
 								id,
 								progress: lastSavedScrollProgress,
-							}),
+							}), ...(old.entry.interactions ?? []).slice(1)],
 						},
 					};
 				});
@@ -469,7 +469,7 @@
 			};
 		},
 		onSuccess(returnedData, _, context) {
-			const id = data.entry?.interaction?.id ?? returnedData?.id;
+			const id = data.entry?.interactions?.[0]?.id ?? returnedData?.id;
 			if (id) {
 				{
 					queryClient.setQueryData<FullEntryDetail>(queryKey, (old) => {
@@ -483,10 +483,11 @@
 							...old,
 							entry: {
 								...old.entry,
-								interaction: makeInteraction({
-									id,
-									progress: context?.lastSavedScrollProgress ?? $scroll,
-								}),
+								interaction:  [makeInteraction({
+								...(old.entry.interactions?.[0] ?? []),
+								id,
+								progress: lastSavedScrollProgress,
+							}), ...(old.entry.interactions ?? []).slice(1)],
 							},
 						};
 					});
@@ -572,10 +573,10 @@
 		if (!articleWrapper) {
 			return;
 		}
-		if (data.entry?.interaction?.progress) {
+		if (data.entry?.interactions?.[0]?.progress) {
 			shouldSaveProgress = false;
 			initializing = true;
-			$scroll = data.entry.interaction.progress;
+			$scroll = data.entry.interactions?.[0]?.progress;
 			const height =
 				document.documentElement.scrollHeight -
 				document.documentElement.clientHeight;

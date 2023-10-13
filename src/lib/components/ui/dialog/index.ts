@@ -10,6 +10,7 @@ import Header from "./dialog-header.svelte";
 import Overlay from "./dialog-overlay.svelte";
 import Content from "./dialog-content.svelte";
 import Description from "./dialog-description.svelte";
+import Close from './dialog-close.svelte';
 
 export {
 	Root,
@@ -21,6 +22,7 @@ export {
 	Overlay,
 	Content,
 	Description,
+	Close,
 	//
 	Root as Dialog,
 	Title as DialogTitle,
@@ -30,5 +32,6 @@ export {
 	Trigger as DialogTrigger,
 	Overlay as DialogOverlay,
 	Content as DialogContent,
-	Description as DialogDescription
+	Description as DialogDescription,
+	Close as DialogClose,
 };

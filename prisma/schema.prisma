@@ -654,13 +654,15 @@ model Interaction {
     note             String?
     rating           Int?
     seen             Boolean?  @default(false)
-    finished         DateTime?
-    started          DateTime?
+    finished         DateTime? @db.Timestamp(0)
+    started          DateTime? @db.Timestamp(0)
+    // Whether or not this interaction is a revisit. E.g. a re-read, a re-watch, etc.
+    revisit          Boolean?  @default(false)
     entry            Entry     @relation(fields: [entryId], references: [id])
     user             AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
     bookmark         Bookmark?
 
-    @@unique([userId, entryId])
+    // @@unique([userId, entryId])
     @@index([entryId])
     @@index([userId])
     @@map("EntryInteraction")

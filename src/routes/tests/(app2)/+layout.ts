@@ -16,7 +16,7 @@ export async function load({ data }) {
 					}
 				},
 				onSuccess: (opts) => {
-					queryClient.invalidateQueries();
+					// queryClient.invalidateQueries();
 				},
 			},
 			queries: {

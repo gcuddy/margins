@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 /// <reference types="@sveltejs/kit" />
 
+
 declare global {
 	namespace App {
 		interface Locals {
@@ -41,6 +42,11 @@ declare global {
 			queryClient?: import('@tanstack/svelte-query').QueryClient;
 
 			S3_BUCKET_PREFIX?: string;
+
+			// FORMS
+			logInteractionForm?: import('sveltekit-superforms').SuperValidated<
+				import('$components/entries/interaction-form/schema').InteractionLogInputSchema
+			>;
 		}
 	}
 }

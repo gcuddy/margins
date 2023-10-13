@@ -578,6 +578,7 @@ export type Interaction = {
 	seen: Generated<number | null>;
 	finished: Timestamp | null;
 	started: Timestamp | null;
+	revisit: Generated<number | null>;
 };
 export type InvitationCode = {
 	code: string;

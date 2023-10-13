@@ -36,7 +36,7 @@
 
 	$: ({ type } = data);
 
-	const query = entryDetailsQuery(data.type);
+	const query = createQuery(derived(data.query, ($query) => $query));
 
 	// Mark as seen mutation
 
@@ -167,6 +167,11 @@
 	// 	...data,
 	// 	...$query.data,
 	// });
+
+	$: console.log({
+		data,
+		$query,
+	});
 </script>
 
 <svelte:head>
@@ -186,7 +191,7 @@
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >
-	{#if $query.isPlaceholderData || $query.isLoading}
+	{#if $query.isPlaceholderData || $query.isLoading || $query.isFetching || $query.isPending}
 		<Skeleton class="w-full h-[300px]" />
 	{:else if $query.data}
 		{#if type === 'article'}
@@ -203,15 +208,20 @@
 			</svelte:component>
 		{:else}
 			<!-- <pre> -->
-			<!-- {JSON.stringify($query.data, null, 2)}
-                </pre> -->
+
+			<!-- {JSON.stringify($query.data, null, 2)} -->
+			<!-- </pre> -->
 			<svelte:component
 				this={data.component}
 				data={{
+					...$query.data,
 					...data,
-					// ...$query.data,
 				}}
 			/>
+			<!-- data={{
+					...data,
+					// ...$query.data,
+				}} -->
 		{/if}
 	{/if}
 </div>
