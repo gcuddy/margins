@@ -21,7 +21,9 @@
 				<Input bind:value={$store.value} />
 			{/if}
 			<AlertDialog.Footer>
-				<AlertDialog.Cancel on:click={store.reset}>Cancel</AlertDialog.Cancel>
+				<AlertDialog.Cancel on:click={() => {
+                    $store.cancel?.();
+                }}>Cancel</AlertDialog.Cancel>
 				<AlertDialog.Action
 					type="submit"
 					on:click={({ detail }) => {

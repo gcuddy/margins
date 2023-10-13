@@ -143,6 +143,8 @@ import type { JSONContent } from '@tiptap/core';
 import { generate_tiptap_extensions } from './extensions';
 import { TiptapEditorProps } from './props';
 import type { DocumentType } from '@prisma/client';
+import { dequal } from 'dequal';
+import { startingContentData } from './constants';
 
 export function render_html(doc: JSONContent) {
 	return generateHTML(doc, generate_tiptap_extensions());
@@ -187,14 +189,27 @@ export function isJSONContent(content: unknown): content is JSONContent {
 }
 
 export function extractDataFromContentData(contentData: JSONContent) {
-	const tags = findNodes<NodeType<{ id: number; name: string }>>(contentData, 'tag');
-	// lol need to change that name...
-	const links = findNodes<NodeType<{ title: string; id: number; type: DocumentType }>>(
+	const tags = findNodes<NodeType<{ id: number; name: string }>>(
 		contentData,
-		'svelteCounterComponent'
+		'tag',
 	);
+	// lol need to change that name...
+	const links = findNodes<
+		NodeType<{ title: string; id: number; type: DocumentType }>
+	>(contentData, 'svelteCounterComponent');
 	return {
 		tags: tags.map((tag) => tag.attrs),
-		links: links.map((link) => link.attrs)
+		links: links.map((link) => link.attrs),
 	};
+}
+
+export function isBlankJsonContent(content: JSONContent) {
+	console.log('testing isblankjsoncontent', content, startingContentData);
+	if (content.content?.length === 0) {
+		return true;
+	}
+	if (dequal(content, startingContentData)) {
+		return true;
+	}
+	return false;
 }

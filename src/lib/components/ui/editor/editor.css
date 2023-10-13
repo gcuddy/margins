@@ -2,19 +2,18 @@
     @apply text-muted-foreground;
     content: attr(data-placeholder);
     float: left;
-    color: #adb5bd;
     pointer-events: none;
     height: 0;
 }
 
-.ProseMirror.ProseMirror-focused .is-empty::before {
+/* .ProseMirror.ProseMirror-focused .is-empty::before {
     @apply text-muted-foreground;
     content: attr(data-placeholder);
     float: left;
     color: #adb5bd;
     pointer-events: none;
     height: 0;
-}
+} */
 
 .ProseMirror iframe {
     min-height: 600px;

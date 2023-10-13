@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type ComponentProps, createEventDispatcher, onMount } from 'svelte';
+	import { type ComponentProps, createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import { writable } from 'svelte/store';
 
 	import * as Command from '$components/ui/command2';
@@ -49,6 +49,10 @@
 	// 	selectedTagsStore.set(selectedTags);
 	// }
 
+    $: console.log({$selectedTagsStore});
+
+    let mutating = false;
+
 	onMount(() => {
 		if (autofocus) {
 			setTimeout(() => {
@@ -56,6 +60,7 @@
 			}, 400);
 		}
 	});
+
 </script>
 
 <Command.Root

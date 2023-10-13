@@ -33,22 +33,29 @@
 	} from './extensions';
 	import { TiptapEditorProps } from './props';
 	import { save_srs_nodes } from './utils';
+	import { dequal } from 'dequal';
 
 	export let id: string | number | undefined = undefined;
 
 	export let context: unknown | undefined = undefined;
 	export let options: Partial<EditorOptions> = {};
 	export let readonly = false;
-    export let alwaysEditable = false;
+	export let alwaysEditable = false;
 	export let focusRing = true;
 	export let autofocus = false;
 	export let el: HTMLElement | undefined = undefined;
 	/** If set to true, the tabindex will always be 0. */
 	export let alwaysTabbable = false;
 	export let showEditor = true;
-    export let hideIfEmpty = false;
+	export let hideIfEmpty = false;
 
-    export let tainted = false;
+	// read-only bindings
+	export let empty = true;
+	export let tainted = false;
+
+	$: if ($editor?.isEmpty !== undefined) {
+		empty = $editor.isEmpty;
+	}
 
 	let className = '';
 	export { className as class };
@@ -107,7 +114,7 @@
 		cb(json);
 	};
 
-    export const isEmpty = () => $editor.isEmpty
+	export const isEmpty = () => $editor.isEmpty;
 	export const saveNote = async (note: MutationInput<'save_note'>) => {
 		const contentData = $editor.getJSON();
 		return mutation($page, 'save_note', {
@@ -153,24 +160,16 @@
 	};
 
 	onMount(() => {
-        tainted = false;
+		tainted = false;
 		editor = createEditor({
 			autofocus: autofocus ? 'start' : undefined,
 			content,
 			editable: autofocus ? true : false,
 			editorProps: TiptapEditorProps,
 			extensions: generate_tiptap_extensions(extensions, context),
-			onUpdate: (e) => {
-				// TODO
-				$save_status = 'Unsaved';
-                console.log('updating', { e})
-                tainted = true;
-				// const selection = e.editor.state.selection;
-				onUpdate?.(e);
-				// debounced_update(e);
-			},
 			...options,
 		});
+		const originalContent = $editor.getJSON();
 		if (autofocus) {
 			// console.log({ autofocus, $editor });
 			// setTimeout(() => {
@@ -184,13 +183,32 @@
 		if (content) {
 			hydrated = true;
 		}
-		$editor.on('blur', (e) => {
-            console.log('blur', {e, alwaysEditable})
-			// TODO check if bubble menu is open
-            if (!alwaysEditable) {
-                console.log('setting editable to false')
-                e.editor.setEditable(false);
+		$editor.on('update', (e) => {
+			// TODO
+			$save_status = 'Unsaved';
+			console.log('updating', { e });
+            // TODO: performance issue?
+            // check equality of json
+            if (dequal(originalContent, e.editor.getJSON())) {
+                console.log('content is equal')
+                $save_status = 'Saved';
+                tainted = false;
+            } else {
+                console.log('content is not equal')
+                $save_status = 'Unsaved';
+                tainted = true;
             }
+			// const selection = e.editor.state.selection;
+			onUpdate?.(e);
+			// debounced_update(e);
+		});
+		$editor.on('blur', (e) => {
+			console.log('blur', { e, alwaysEditable });
+			// TODO check if bubble menu is open
+			if (!alwaysEditable) {
+				console.log('setting editable to false');
+				e.editor.setEditable(false);
+			}
 			save_srs_nodes(e.editor.getJSON());
 			if (id) {
 				idb.set(
@@ -204,7 +222,7 @@
 			dispatch('blur', e);
 		});
 		$editor.on('focus', (e) => {
-            console.log('focus', e)
+			console.log('focus', e);
 			e.editor.setEditable(true);
 			onFocus?.(e);
 		});
@@ -244,17 +262,16 @@
 
 	let bubbleMenuFocused = false;
 
-    export const focus = (position?: FocusPosition) => {
-        console.log()
-        $editor.setEditable(true);
-        $editor.chain().focus(position).run();
-    }
-    export const setEditable = (editable: boolean) => {
-        $editor.setEditable(editable);
-    }
+	export const focus = (position?: FocusPosition) => {
+		console.log();
+		$editor.setEditable(true);
+		$editor.chain().focus(position).run();
+	};
+	export const setEditable = (editable: boolean) => {
+		$editor.setEditable(editable);
+	};
 
-    $: derivedHideIfEmpty = hideIfEmpty && readonly && $editor && $editor.isEmpty;
-
+	$: derivedHideIfEmpty = hideIfEmpty && readonly && $editor && $editor.isEmpty;
 </script>
 
 {#if showEditor && editor && $editor && !derivedHideIfEmpty}
@@ -263,6 +280,7 @@
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 	<div
 		data-editor
+		data-editor-empty={$editor.isEmpty}
 		bind:this={el}
 		data-focused={$editor.isFocused}
 		on:click={(e) => {

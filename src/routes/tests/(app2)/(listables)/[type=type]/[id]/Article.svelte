@@ -14,6 +14,8 @@
 	import { createPopperActions } from 'svelte-popperjs';
 	import { toast } from 'svelte-sonner';
 
+	import EditAnnotationInline from '$components/annotations/edit-annotation-inline.svelte';
+
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
@@ -33,7 +35,12 @@
 	import type { TextQuoteSelector } from '$lib/annotator/types';
 	import { Button } from '$lib/components/ui/button';
 	import { Lead, Muted } from '$lib/components/ui/typography';
-	import { isAnnotation, makeAnnotation, makeInteraction } from '$lib/helpers';
+	import {
+		coalesceObjects,
+		isAnnotation,
+		makeAnnotation,
+		makeInteraction,
+	} from '$lib/helpers';
 	import { nanoid } from '$lib/nanoid';
 	import { invalidateEntries } from '$lib/queries/mutations';
 	import {
@@ -63,6 +70,9 @@
 	import { make_link } from '$lib/utils/entries';
 	import Selection from './Selection.svelte';
 	import type { entryDetailsQuery } from './query';
+	import type { JSONContent } from '@tiptap/core';
+	import { startingContentData } from '$components/ui/editor/constants';
+	import { isBlankJsonContent } from '$components/ui/editor/utils';
 
 	const {
 		activeAnnotation,
@@ -89,6 +99,8 @@
 			return annotation;
 		},
 	);
+
+	$: console.log({ $activeAnnotationId, $activeAnnotationFromQuery });
 
 	const mainnav: Writable<MenuBar> = getContext('mainnav');
 
@@ -309,8 +321,9 @@
 				},
 			},
 		],
-		placement: 'right',
-		strategy: 'fixed',
+		placement: 'bottom',
+		// // placement: 'right',
+		// strategy: 'fixed',
 	});
 
 	let articleWrapper: HTMLElement | undefined = undefined;
@@ -521,9 +534,14 @@
 					'TextQuoteSelector',
 				);
 				if (selector) {
+					console.log('ensurehighlights - annotation', { annotation });
+					const body =
+						!!annotation.body ||
+						!isBlankJsonContent(coalesceObjects(annotation.contentData) ?? {});
+					console.log('ensurehighligts, body', body);
 					const els = await highlightSelectorTarget(selector, {
 						'data-annotation-id': id,
-						'data-has-body': `${!!(annotation.body ?? annotation.contentData)}`,
+						'data-has-body': body ? 'true' : 'false',
 						id: `annotation-${annotation.id}`,
 					});
 					$annotations[id] = {
@@ -710,11 +728,7 @@
 
 	let activeEditor: Editor | null = null;
 
-	function handleSaveAnnotation() {
-		if (!activeEditor) {
-			return;
-		}
-		const contentData = activeEditor.getJSON();
+	function handleSaveAnnotation(contentData: JSONContent) {
 		if (!data.entry?.id) {
 			return;
 		}
@@ -808,6 +822,7 @@
 			return;
 		}
 		activeAnnotationId.set(id);
+		console.log({ $activeAnnotationId });
 		editMenuRef(target);
 		annotationRef(target);
 		// usePopper()
@@ -823,30 +838,8 @@
 		},
 	);
 
-	function handleKeydown(event: KeyboardEvent) {
-		if ($shouldShowAnnotationTooltip) {
-			// then listen for the "h" and "a" keys to highlight or annotate, respectively
-			if (event.key === 'h') {
-				// highlight
-				const button = document.getElementById('highlight-button');
-				if (button && button instanceof HTMLButtonElement) {
-					button.click();
-				}
-			}
-			if (event.key === 'a') {
-				// annotate
-				const button = document.getElementById('annotate-button');
-				if (button && button instanceof HTMLButtonElement) {
-					button.click();
-				}
-			}
-		}
-	}
-
 	let editorEl: HTMLElement | undefined = undefined;
 </script>
-
-<svelte:window on:keydown={handleKeydown} />
 
 {#if showEditMenu}
 	<div
@@ -916,118 +909,8 @@
 	</div>
 {/if}
 
-<!-- Note: should this be popover? Using some classes from shadcn/ui/hover card -->
-<!-- {#if $shouldShowAnnotationTooltip}
-	<div
-		use:popperContent
-		class="{$mouseDown
-			? 'pointer-events-none'
-			: 'pointer-events-auto-'} z-10 select-none"
-	>
-		<div
-			class="z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
-			in:scale={{
-				delay: 50,
-				start: 0.9,
-			}}
-		>
-			<div class="flex justify-between space-x-2">
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						<Button
-							id="highlight-button"
-							on:click={async (e) => {
-								if (!$selection) {
-									clearSelection();
-								}
-								const id = nanoid();
-								const info = await highlight({
-									'data-annotation-id': `${id}`,
-									id: `annotation-${id}`,
-								});
-
-								if (!info) {
-									e.preventDefault();
-									return;
-								}
-								$annotateMutation.mutate({
-									id,
-									target: {
-										selector: info.selector,
-										source: '',
-									},
-								});
-								annotations.add(id, {
-									els: info.els,
-									id,
-									target: {
-										selector: info.selector,
-										source: '',
-									},
-								});
-								clearSelection();
-							}}
-							type="submit"
-							class="flex h-auto flex-col space-y-1"
-							variant="ghost"
-						>
-							<Highlighter class="h-5 w-5" />
-							<Muted class="text-xs">Highlight</Muted>
-						</Button>
-					</Tooltip.Trigger>
-
-					<Tooltip.Content class="flex items-center gap-2">
-						<span>Highlight this passage</span>
-						<Kbd>h</Kbd>
-					</Tooltip.Content>
-				</Tooltip.Root>
-
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						<Button
-							id="annotate-button"
-							on:click={async (e) => {
-								// show annotation menu and grab annotation
-								// clearSelection();
-								const highlight_info = await highlight();
-								clearSelection();
-								if (highlight_info) {
-									const { els, id, selector } = highlight_info;
-									const el = els[0]?.highlightElements[0];
-									if (el) {
-										annotationRef(el);
-									}
-									annotations.addTemp(id, {
-										els,
-										id,
-										target: {
-											selector,
-											source: '',
-										},
-									});
-									await tick();
-									$showEditAnnotation = true;
-								}
-							}}
-							variant="ghost"
-							class="flex h-auto flex-col space-y-1"
-						>
-							<EditIcon class="h-5 w-5" />
-							<Muted class="text-xs">Annotate</Muted>
-						</Button>
-					</Tooltip.Trigger>
-					<Tooltip.Content>
-						<span>Annotate this passage</span>
-						<Kbd>a</Kbd>
-					</Tooltip.Content>
-				</Tooltip.Root>
-			</div>
-		</div>
-	</div>
-{/if} -->
-
 <Selection
-	on:highlight={async () => {
+	on:highlight={async (e) => {
 		if (!$selection) {
 			clearSelection();
 		}
@@ -1081,76 +964,32 @@
 	}}
 />
 
-{#if $showEditAnnotation && data.entry}
-	<div
-		use:annotationContent
-		use:usePortal
-		use:focusTrap={{
-			allowOutsideClick: true,
-			escapeDeactivates: true,
-			immediate: true,
-			initialFocus: () => editorEl,
-			returnFocusOnDeactivate: false,
-		}}
-		use:useEscapeKeydown={{
-			handler: activeAnnotation.hide,
-		}}
-		class="z-10"
-	>
-		<!-- use:draggable -->
-		<div
-			in:scale={{
-				duration: 200,
-				start: 0.9,
-			}}
-			use:draggable
-			class={cn(
-				'z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none',
-				'flex flex-col gap-y-4 w-80 max-w-xs',
-			)}
-		>
-			<Editor
-				bind:el={editorEl}
-				alwaysTabbable
-				autofocus
-				id={$activeAnnotationId ?? undefined}
-				content={$activeAnnotationFromQuery?.contentData ??
-					$activeAnnotation?.contentData ??
-					undefined}
-				blank
-				focusRing={false}
-				class="sm:shadow-none shadow-none border-none sm:px-4 px-4 py-6"
-				bind:this={activeEditor}
-				options={{
-					autofocus: 'end',
-				}}
-			/>
-			<div class="flex justify-end gap-3">
-				<Button
-					on:click={() => {
-						activeAnnotation.hide();
-						if (annotations.hasTemp()) {
-							annotations.removeTemp();
-						}
-						activeAnnotationId.set(null);
-					}}
-					size="sm"
-					variant="secondary"
-				>
-					Cancel
-				</Button>
-				<Button
-					size="sm"
-					on:click={() => {
-						handleSaveAnnotation();
-					}}
-				>
-					Save
-				</Button>
-			</div>
-		</div>
-	</div>
-{/if}
+<EditAnnotationInline
+	contentAction={annotationContent}
+	show={$showEditAnnotation && !!data.entry}
+	contentData={$activeAnnotationFromQuery?.contentData ?? undefined}
+	on:cancel={() => {
+		activeAnnotation.hide();
+		if (annotations.hasTemp()) {
+			annotations.removeTemp();
+		}
+		activeAnnotationId.set(null);
+	}}
+	on:save={(e) => {
+		handleSaveAnnotation(e.detail.contentData);
+	}}
+/>
+
+
+<div class="fixed top-0">
+	{JSON.stringify(
+		coalesceObjects(
+			$activeAnnotationFromQuery?.contentData ??
+				$activeAnnotation?.contentData ??
+				startingContentData,
+		) ?? {},
+	)}
+</div>
 
 <div
 	class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors"

@@ -584,7 +584,7 @@
 					</Collapsible.Trigger>
 					<Collapsible.Content class="flex flex-col gap-4">
 						{#each pageNotes ?? [] as note (note.id)}
-							<div animate:flip transition:slide={{ duration: 150 }}>
+							<div animate:flip={{duration: 200}} transition:slide={{ duration: 150 }}>
 								<AnnotationCard annotation={note} />
 							</div>
 							<!-- <Editor
@@ -713,7 +713,7 @@
 							{#each $query.data.entry.annotations
 								.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
 								.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation (annotation.id)}
-								<div animate:flip transition:slide={{ duration: 150 }}>
+								<div animate:flip={{duration: 200}} transition:slide={{ duration: 150 }}>
 									<AnnotationCard {annotation} />
 								</div>
 								<!-- <Annotation

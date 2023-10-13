@@ -3,38 +3,41 @@ import { writable } from 'svelte/store';
 type Dialog = {
 	open: boolean;
 	title?: string;
-    description?: string;
+	description?: string;
 };
 
 type AlertDialog<TData extends {}, TValue = string> = TData &
 	Dialog & {
 		action?: (value?: TValue) => void;
+		cancel?: () => void;
 		value?: TValue;
 	};
 
 /**
  * A helper function to help re-use a single <Dialog /> component.
  */
-export function createAlertDialogStore<TData extends {}>(defaultData?: AlertDialog<TData>) {
+export function createAlertDialogStore<TData extends {}>(
+	defaultData?: AlertDialog<TData>,
+) {
 	const store = writable({ open: false, ...defaultData });
 
 	return {
 		...store,
 		reset: () => {
 			store.set({
-				open: false
+				open: false,
 			} as AlertDialog<TData>);
 		},
 		open: (data: Omit<AlertDialog<TData>, 'open'>) => {
 			store.set({
 				...data,
-				open: true
+				open: true,
 			});
 		},
 		close: () => {
 			store.update((val) => ({
 				...val,
-				open: false
+				open: false,
 			}));
 		},
 		action: (reset = true) => {
@@ -44,9 +47,9 @@ export function createAlertDialogStore<TData extends {}>(defaultData?: AlertDial
 				}
 				return {
 					...(reset ? {} : val),
-					open: false
+					open: false,
 				} as AlertDialog<TData>;
 			});
-		}
+		},
 	};
 }

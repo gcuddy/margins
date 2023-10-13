@@ -299,3 +299,10 @@ export function replaceEqualDeep<T>(prev: any, _next: T): T {
 
 	return next;
 }
+
+export function coalesceObjects<T extends Record<string, unknown> | null>(
+	...objects: Array<T>
+): T | null {
+	console.log('coalesceObjects', objects);
+	return objects.find((obj) => obj && Object.keys(obj).length > 0) || null;
+}

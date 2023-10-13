@@ -14,6 +14,7 @@
 		Trash,
 	} from 'radix-icons-svelte';
 	import { tick } from 'svelte';
+    import * as Popover from "$components/ui/popover"
 	// import { render_html } from '$components/ui/editor/utils';
 	import { sleep } from '@melt-ui/svelte/internal/helpers';
 	import { page } from '$app/stores';
@@ -33,6 +34,8 @@
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import Clamp from '$components/Clamp.svelte';
 	import { Badge } from '$components/ui/badge';
+	import { slide } from 'svelte/transition';
+	import { melt } from '@melt-ui/svelte';
 
 	let editor: Editor;
 	let tainted = false;
@@ -61,6 +64,8 @@
         console.log('setting content to contentData', annotation.contentData)
         editor.setContent(annotation.contentData)
     }
+
+    let menuOpen = false;
 </script>
 
 <!-- Compare with Card component, AnnotationForm component - it's pretty similar, but some subtle differences. But should we instead use that as our base? -->
@@ -83,6 +88,7 @@
 			{#if !isEditing}
 				<div class="flex">
 					<DropdownMenu.Root
+                        bind:open={menuOpen}
 						positioning={{
 							placement: 'bottom-end',
 						}}
@@ -125,7 +131,7 @@
 										<TagIcon class="h-4 w-4 mr-2" /> Add tag
 									</DropdownMenu.SubTrigger>
 									<DropdownMenu.SubContent class="p-0">
-										<TagsCommand annotationId={annotation.id} />
+										<TagsCommand bind:open={menuOpen} annotationId={annotation.id} />
 									</DropdownMenu.SubContent>
 								</DropdownMenu.Sub>
 							</DropdownMenu.Group>
@@ -295,7 +301,24 @@
 				</Button>
 			</div>
 		{/if}
+        {#if annotation.tags}
+        <Popover.Root>
+            <Popover.Trigger asChild let:builder>
+                <div use:melt={builder} class="flex items-center gap-1" transition:slide={{duration: 150}}>
+                    {#each annotation.tags as tag (annotation.id) }
+                        <Badge variant="secondary" class="mr-1">
+                            {tag.name}
+                        </Badge>
+                    {/each}
+                </div>
+            </Popover.Trigger>
+            <Popover.Content class="p-0">
+                <TagsCommand selectedTags={annotation.tags} annotationId={annotation.id} />
+            </Popover.Content>
+        </Popover.Root>
+        {/if}
 	</div>
+    <!-- {JSON.stringify(annotation)} -->
 	<!-- <button on:click={() => (isEditing = !isEditing)}> done </button> -->
 	<!-- TODO: reply -->
 </div>

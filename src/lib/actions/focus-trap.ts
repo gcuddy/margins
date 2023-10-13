@@ -10,6 +10,11 @@ export type FocusTrapConfig = FocusTrapOptions & {
 	 * Immediately activate the trap
 	 */
 	immediate?: boolean;
+
+	/**
+	 * If true, the trap will be paused.
+	 */
+	paused?: boolean;
 };
 
 /**
@@ -41,6 +46,12 @@ const focusTrap = (node: HTMLElement, config: FocusTrapConfig) => {
 				trap.activate();
 			} else if (params.immediate === false) {
 				trap.deactivate();
+			}
+			console.log('paused', params.paused);
+			if (params.paused) {
+				trap.pause();
+			} else if (params.paused === false) {
+				trap.unpause();
 			}
 		},
 	};

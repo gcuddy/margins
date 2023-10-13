@@ -16,6 +16,9 @@
 	const mouseDown = writable(false);
 	const { popperContent, show } = setup();
 
+    const openDelay = 20;
+    const closeDelay = 20;
+
 	const dispatch = createEventDispatcher();
 
     function handleKeydown(event: KeyboardEvent) {
@@ -69,7 +72,7 @@
 			<!-- TODO: replace buttons + text with icons + tooltips, and replace highlight button with a color (indicating current highlight color) -->
 			<div class="flex justify-between space-x-2">
 				<slot name="buttons">
-					<Tooltip.Root>
+					<Tooltip.Root {openDelay} {closeDelay}>
 						<Tooltip.Trigger asChild let:builder>
 							<Button
                                 id="highlight-button"
@@ -90,7 +93,7 @@
 							<Kbd>h</Kbd>
 						</Tooltip.Content>
 					</Tooltip.Root>
-					<Tooltip.Root>
+					<Tooltip.Root {openDelay} {closeDelay} >
 						<Tooltip.Trigger asChild let:builder>
 							<Button
                                 id="annotate-button"

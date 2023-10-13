@@ -122,7 +122,11 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 				if (node.type.name === 'heading') {
 					return `Heading ${node.attrs.level}`;
 				}
-				if (!editor.isFocused && props.placeholder?.nonFocusedPlaceholder) {
+				if (
+					!editor.isFocused &&
+					typeof props.placeholder === 'object' &&
+					props.placeholder?.nonFocusedPlaceholder
+				) {
 					return props.placeholder.nonFocusedPlaceholder;
 				}
 				return typeof props.placeholder === 'string'
