@@ -2,10 +2,10 @@
 	"name": "margins",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "bunx --bun vite dev",
-		"build": "bunx --bun vite build",
+		"dev": "vite dev",
+		"build": "vite build",
 		"package": "svelte-kit package",
-		"preview": "bunx --bun vite preview",
+		"preview": "vite preview",
 		"test": "playwright test",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

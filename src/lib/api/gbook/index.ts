@@ -71,7 +71,7 @@ export const books = {
 	},
 	search: async (q: string, cache = true) => {
 		time('search books');
-		if (cache && !dev) {
+		if (cache) {
 			const cached = await redis.get(`gbook:search:${q}`);
 			if (cached) {
 				console.log('cached', cached);
