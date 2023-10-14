@@ -186,6 +186,7 @@
 		"@tiptap/extension-color": "next",
 		"@tiptap/extension-floating-menu": "next",
 		"@tiptap/extension-highlight": "next",
+		"@tiptap/extension-horizontal-rule": "^2.1.12",
 		"@tiptap/extension-image": "next",
 		"@tiptap/extension-link": "next",
 		"@tiptap/extension-mention": "next",
