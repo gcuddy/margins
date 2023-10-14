@@ -36,6 +36,7 @@
 	export let isOpen = false;
 
 	export let onSelect: (entry: ListEntry) => void = (entry) => {
+        console.log('onSelect', entry)
 		void goto(`/tests/${entry.type}/${getId(entry)}`);
 		isOpen = false;
 	};
@@ -82,10 +83,10 @@
 		preloadData(url);
 	}, preloadDelay);
 
-	$: if ($activeOptionProps?.value && preload) {
-		const link = make_link($activeOptionProps.value);
-		debouncedPreload(link);
-	}
+	// $: if ($activeOptionProps?.value && preload) {
+	// 	const link = make_link($activeOptionProps.value);
+	// 	debouncedPreload(link);
+	// }
 </script>
 
 <!-- <CommandLoading>Loading...</CommandLoading> -->
