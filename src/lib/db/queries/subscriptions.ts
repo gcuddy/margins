@@ -14,8 +14,8 @@ import { get_library } from '$lib/server/queries';
 import { XMLParser } from 'fast-xml-parser';
 import type { FeedAddFormSchema } from '$components/subscriptions/subscription-entry.schema';
 import { isJsonFeed } from '$lib/helpers/feeds';
-import { youtubeRegex } from '$lib/parse';
-
+export const youtubeRegex =
+	/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)(?<id>[^"&?/\s]{11})/;
 const xmlParser = new XMLParser({
 	attributeNamePrefix: '',
 	ignoreAttributes: false,
