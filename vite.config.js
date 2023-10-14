@@ -9,12 +9,12 @@ const config = {
 		// 	registerType: 'autoUpdate',
 		// }),
 	],
-	resolve: {
-		alias: {
-			'.prisma/client/index-browser':
-				'./node_modules/.prisma/client/index-browser.js',
-		},
-	},
+	// resolve: {
+	// 	alias: {
+	// 		'.prisma/client/index-browser':
+	// 			'./node_modules/.prisma/client/index-browser.js',
+	// 	},
+	// },
 };
 
 export default config;
