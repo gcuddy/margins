@@ -337,7 +337,7 @@
 					Publisher description
 				</h2>
 			</div>
-			<Clamp clamp={6}>
+			<Clamp fromClass="from-background" clamp={6}>
 				{@html book.volumeInfo?.description}
 			</Clamp>
 
