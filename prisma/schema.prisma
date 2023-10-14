@@ -9,6 +9,10 @@ generator kysely {
     fileName = "types.ts"
 }
 
+generator zod {
+    provider = "zod-prisma-types"
+}
+
 datasource db {
     provider     = "mysql"
     url          = env("DATABASE_URL")

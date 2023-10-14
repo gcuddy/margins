@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { DocumentType, RelationType, Status } from '@prisma/client';
+import { DocumentType, RelationType, Status } from '$lib/types/enums';
 import type { JSONContent } from '@tiptap/core';
 import type {
 	ExpressionBuilder,

@@ -1,5 +1,5 @@
 import { types } from '$lib/types';
-import { Status } from '@prisma/client';
+import { Status } from '$lib/types/enums';
 import { z } from 'zod';
 
 // TODO: cover all types

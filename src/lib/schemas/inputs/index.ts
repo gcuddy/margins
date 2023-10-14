@@ -1,4 +1,4 @@
-import { AnnotationType } from '@prisma/client';
+import { AnnotationType } from '$lib/types/enums';
 import { z } from 'zod';
 
 import {

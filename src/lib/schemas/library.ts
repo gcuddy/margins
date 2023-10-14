@@ -1,4 +1,4 @@
-import { BookGenre, DocumentType, Status } from '@prisma/client';
+import { DocumentType, Status } from '$lib/types/enums';
 import { z } from 'zod';
 
 import { typeSchema } from '$lib/types';

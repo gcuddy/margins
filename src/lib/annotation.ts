@@ -1,7 +1,16 @@
 import { z } from 'zod';
 import type { TextPositionSelector as ITextPositionSelector } from './annotator/types';
-import { AnnotationType } from '@prisma/client';
 import { jsonSchema } from './schemas/types';
+
+export const AnnotationType = {
+	bookmark: 'bookmark',
+	note: 'note',
+	annotation: 'annotation',
+	reply: 'reply',
+	document: 'document',
+	qa: 'qa',
+} as const;
+
 const TimestampSelectorSchema = z.object({
 	// source: z.string()   ,
 	// selector: z.object({

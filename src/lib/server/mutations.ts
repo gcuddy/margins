@@ -1,5 +1,5 @@
 import { db } from '$lib/db'
-import { RelationType } from '@prisma/client';
+import { RelationType } from '$lib/types/enums';
 import { z } from 'zod';
 
 export const relationSchema = z.object({

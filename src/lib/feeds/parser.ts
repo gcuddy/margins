@@ -1,4 +1,5 @@
-import { DocumentType, Prisma } from '@prisma/client';
+import { DocumentType } from '$lib/types/enums';
+import type { Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 import { XMLParser } from 'fast-xml-parser';
 import parse from 'node-html-parser';
@@ -212,7 +213,7 @@ const createFeedAndEntries = ({
 	title: string;
 }) => {
 	// i think it's preferred to filter out entries first, but otherwise we can still use skipduplicates
-	return Prisma.validator<Prisma.FeedCreateInput>()({
+	return {
 		entries: {
 			createMany: {
 				data: entries,
@@ -224,7 +225,7 @@ const createFeedAndEntries = ({
 		link,
 		podcast,
 		title,
-	});
+	};
 };
 function hmsToSecondsOnly(str: string) {
 	const p = str.split(':');

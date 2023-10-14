@@ -1,6 +1,5 @@
-import { DocumentType } from '@prisma/client';
+import { DocumentType } from '$lib/types/enums';
 import { z } from 'zod';
-
 
 export const entryNodeSchema = z.object({
 	entryId: z.number().optional(),

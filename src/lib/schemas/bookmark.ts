@@ -1,4 +1,4 @@
-import { Status } from '@prisma/client';
+import { Status } from '$lib/types/enums';
 import { z } from 'zod';
 
 export type BookmarkCreateInput = z.input<typeof bookmarkCreateInput>;

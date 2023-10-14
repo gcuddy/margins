@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { jsonSchema } from '../types';
-import { EntryFilterType } from '@prisma/client';
+import { EntryFilterType } from '$lib/types/enums';
 
 export const customViewCreateInputSchema = z
 	.object({
