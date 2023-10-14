@@ -164,7 +164,7 @@ export async function updateBookmark(
 				})),
 			)
 			.onDuplicateKeyUpdate(dataToUpdate);
-		return await bookmarks.execute();
+		await bookmarks.execute();
 		// if (Array.isArray(entryId)) {
 		// 	bookmarks = bookmarks.where('entryId', 'in', entryId);
 		// } else {
