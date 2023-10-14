@@ -889,7 +889,7 @@
 <style lang="postcss">
 	.menu {
 		@apply z-10 flex max-h-[300px] min-w-[220px] flex-col shadow-lg shadow-neutral-900/30;
-		@apply rounded-md bg-white p-1 lg:max-h-none;
+		@apply rounded-md bg-white p-1 lg:max-h-0;
 		@apply ring-0 !important;
 	}
 </style>
