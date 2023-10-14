@@ -80,6 +80,9 @@ dependencies:
   '@tiptap/extension-highlight':
     specifier: next
     version: 2.2.0-rc.4(@tiptap/core@2.2.0-rc.4)
+  '@tiptap/extension-horizontal-rule':
+    specifier: ^2.1.12
+    version: 2.1.12(@tiptap/core@2.2.0-rc.4)(@tiptap/pm@2.2.0-rc.4)
   '@tiptap/extension-image':
     specifier: next
     version: 2.2.0-rc.4(@tiptap/core@2.2.0-rc.4)
@@ -4904,6 +4907,16 @@ packages:
 
   /@tiptap/extension-history@2.2.0-rc.4(@tiptap/core@2.2.0-rc.4)(@tiptap/pm@2.2.0-rc.4):
     resolution: {integrity: sha512-OX8aa3hs/8j3MhLZJu2pTXariyDepSpaSxEEZi/h01GLWbw+YxwnSTGg+iJckH3Mh2mUqk4BTD4wxeuIbPgkBA==}
+    peerDependencies:
+      '@tiptap/core': ^2.0.0
+      '@tiptap/pm': ^2.0.0
+    dependencies:
+      '@tiptap/core': 2.2.0-rc.4(@tiptap/pm@2.2.0-rc.4)
+      '@tiptap/pm': 2.2.0-rc.4
+    dev: false
+
+  /@tiptap/extension-horizontal-rule@2.1.12(@tiptap/core@2.2.0-rc.4)(@tiptap/pm@2.2.0-rc.4):
+    resolution: {integrity: sha512-RRuoK4KxrXRrZNAjJW5rpaxjiP0FJIaqpi7nFbAua2oHXgsCsG8qbW2Y0WkbIoS8AJsvLZ3fNGsQ8gpdliuq3A==}
     peerDependencies:
       '@tiptap/core': ^2.0.0
       '@tiptap/pm': ^2.0.0
