@@ -14,6 +14,8 @@
 		duration: 200,
 	});
 
+    export let fromClass ="from-card";
+
 	onMount(async () => {
 		if (el) {
 			await tick();
@@ -76,7 +78,7 @@
 	<slot name="button">
 		{#if is_clamped}
 			<button
-				class="clamp-toggle px-1 font-medium absolute bottom-0 right-0 w-36 bg-gradient-to-l from-card text-right underline hover:text-primary"
+				class="clamp-toggle px-1 font-medium absolute bottom-0 right-0 w-36 bg-gradient-to-l {fromClass} text-right underline hover:text-primary"
 				on:click={() => (show_more = !show_more)}
                 on:click
 			>

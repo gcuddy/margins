@@ -8,10 +8,15 @@ import type { PageLoad } from './$types';
 import { get_module } from './module';
 import { writable } from 'svelte/store';
 
+import { superValidate } from 'sveltekit-superforms/client';
+import { interactionLogInputSchema } from '$components/entries/interaction-form/schema';
+
 export const load = (async (event) => {
 	const { parent, data } = event;
 	const { id, type: _type } = event.params;
 	const type = _type as Type;
+
+	event.depends('entry');
 
 	const parentData = await parent();
 
@@ -22,22 +27,32 @@ export const load = (async (event) => {
 	const query = queryFactory.entries.detail({ id: _id, type });
 
 	console.log({ query });
+
 	const queryData = await queryClient.ensureQueryData({
 		...query,
-		meta: {
-			init: event,
-		},
+		meta: { init: event },
 	});
 
-	console.log({ queryData });
+	const logInteractionForm = superValidate(
+		{
+			entryId: id,
+			type: type,
+			revisit: !!queryData?.entry?.interactions?.length,
+			rating: queryData?.entry?.bookmark?.rating ?? undefined,
+		},
+		interactionLogInputSchema,
+	);
 	return {
 		// component: module.default,
 		...data,
+		...queryData,
+		queryData,
 		// cache,
 		// ...queryData,
-		...queryData,
+		// ...queryData,
 		component: get_module(type).then((module) => module?.default),
-		query: writable(query),
+		logInteractionForm,
+		query,
 		queryKey: writable(query.queryKey),
 		//
 		id: _id,

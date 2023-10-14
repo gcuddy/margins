@@ -66,7 +66,15 @@
 			const sorted = scored.sort((a, b) => b.score - a.score);
 
 			const filtered = sorted.filter((entry) => entry.score > 0);
-			return filtered;
+
+            // ensure no duplicate ids
+            const ids = new Set();
+            const deduped = filtered.filter((entry) => {
+                if (ids.has(entry.id)) return false;
+                ids.add(entry.id);
+                return true;
+            });
+            return deduped;
 		},
 	);
 

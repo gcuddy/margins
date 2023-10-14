@@ -2,7 +2,7 @@ import type { ComponentProps, ComponentType, SvelteComponent } from 'svelte';
 import { z } from 'zod';
 
 export const types = [
-	// "entry",
+	// 'entry',
 	'movie',
 	'book',
 	'article',
@@ -12,7 +12,7 @@ export const types = [
 	'video',
 	'album',
 	'pdf',
-	'board_game'
+	'board_game',
 ] as const;
 
 export type Type = (typeof types)[number];

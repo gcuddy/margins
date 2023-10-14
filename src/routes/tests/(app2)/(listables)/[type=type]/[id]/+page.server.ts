@@ -22,24 +22,37 @@ import {
 } from '$lib/features/entries/forms';
 import { nanoid } from '$lib/nanoid';
 import type { Entry } from '$lib/prisma/kysely/types';
-import { createEntry, upsertAnnotation } from '$lib/queries/server';
+import {
+	SaveToLibrarySchema,
+	createEntry,
+	save_to_library,
+	upsertAnnotation,
+} from '$lib/queries/server';
 import { interactionSchema, validateAuthedForm } from '$lib/schemas';
 import { relationSchema, update_relation } from '$lib/server/mutations';
-import type { Message } from '$lib/types';
+import type { Message, Type } from '$lib/types';
 import { validate_form } from '$lib/utils/forms';
 
 import type { Actions } from './$types';
-import { getIdKeyName } from '$lib/utils/entries';
+import { getIdKeyName, isMediaType, makeMediaSchema } from '$lib/utils/entries';
 import { interactionLogInputSchema } from '$components/entries/interaction-form/schema';
+import { saveToLibrarySchema } from '$lib/schemas/inputs/entry.schema';
 
-export async function load({ locals }) {
+export async function load(event) {
+	const { locals, params } = event;
 	const session = await locals.auth.validate();
 	if (!session) {
 		throw redirect(302, '/login');
 	}
+	const { id, type: _type } = params;
+	const type = _type as Type;
+	const entry = {
+		entryId: id,
+		type,
+	};
 	return {
 		bookmarkForm: superValidate(updateBookmarkSchema),
-		logInteractionForm: superValidate(interactionLogInputSchema),
+		saveToLibraryForm: superValidate(entry, saveToLibrarySchema),
 		tagForm: superValidate(tagSchema),
 		session,
 	};
@@ -265,7 +278,8 @@ export const actions: Actions = {
 		},
 	),
 	logInteraction: async (event) => {
-		const form = await superValidate(event, interactionLogInputSchema);
+		const formData = await event.request.formData();
+		const form = await superValidate(formData, interactionLogInputSchema);
 		const session = await event.locals.auth.validate();
 		if (!form.valid) {
 			return fail(400, { form });
@@ -274,13 +288,26 @@ export const actions: Actions = {
 			return fail(401, { form });
 		}
 
-		const { entryId, ...data } = form.data;
+		console.dir({ form }, { depth: null });
+
+		const _entryId = formData.get('_entryId');
+		console.log({ _entryId });
+		// _entryId is used to override entryId in form (for when entry already exists in media
+		let entryId = _entryId
+			? +_entryId
+			: isMediaType(form.data.type)
+			? (await createEntry(makeMediaSchema(form.data.entryId, form.data.type)))
+					.id
+			: Number(form.data.entryId);
+
+		const { entryId: _, type: _type, revisit, ...data } = form.data;
 		await db.transaction().execute(async (trx) => {
 			await trx
 				.insertInto('EntryInteraction')
 				.values({
 					// ...form.data,
 					...data,
+					revisit: revisit ? +revisit : undefined,
 					entryId,
 					updatedAt: new Date(),
 					userId: session.user.userId,
@@ -289,16 +316,76 @@ export const actions: Actions = {
 
 			// Update Bookmark
 			return await trx
-				.updateTable('Bookmark')
-				.where('entryId', '=', entryId)
-				.where('userId', '=', session.user.userId)
-				.set({
+				.insertInto('Bookmark')
+				.values({
+					bookmarked_at: new Date(),
+					rating: data.rating,
+					status: 'Archive',
+					updatedAt: new Date(),
+					entryId,
+					userId: session.user.userId,
+				})
+				.onDuplicateKeyUpdate({
 					rating: data.rating,
 					status: 'Archive',
 					updatedAt: new Date(),
 				})
 				.execute();
 		});
+		return { form };
+	},
+	markAsCurrentlyReading: async (event) => {
+		const formData = await event.request.formData();
+		const form = await superValidate(formData, interactionLogInputSchema);
+		const session = await event.locals.auth.validate();
+		if (!session) {
+			return fail(401);
+		}
+		if (!form.valid) {
+			return fail(400, { form });
+		}
+
+		const _entryId = formData.get('_entryId');
+
+		const { entryId: _, revisit, ...data } = form.data;
+
+		let entryId = _entryId
+			? +_entryId
+			: isMediaType(form.data.type)
+			? (await createEntry(makeMediaSchema(form.data.entryId, form.data.type)))
+					.id
+			: Number(form.data.entryId);
+
+		// Make/update interaction, set bookmark status to now
+
+		// TODO: should this be a transaction?
+
+		await db
+			.insertInto('EntryInteraction')
+			.values({
+				...data,
+				entryId,
+				revisit: revisit ? +revisit : undefined,
+				updatedAt: new Date(),
+				userId: session.user.userId,
+			})
+			.execute();
+
+		await db
+			.insertInto('Bookmark')
+			.values({
+				bookmarked_at: new Date(),
+				entryId,
+				status: 'Now',
+				updatedAt: new Date(),
+				userId: session.user.userId,
+			})
+			.onDuplicateKeyUpdate({
+				status: 'Now',
+				updatedAt: new Date(),
+			})
+			.execute();
+
 		return { form };
 	},
 	/**
@@ -450,6 +537,7 @@ export const actions: Actions = {
 			})
 			.execute();
 	},
+
 	saveInteraction: async (event) => {
 		const session = await event.locals.auth.validate();
 		if (!session) {
@@ -466,6 +554,52 @@ export const actions: Actions = {
 			ctx: { event, userId: session.user.userId },
 			input: parsed.data,
 		});
+	},
+	saveToLibrary: async (event) => {
+		const session = await event.locals.auth.validate();
+		const formData = await event.request.formData();
+		const form = await superValidate(formData, saveToLibrarySchema);
+		console.dir({ form }, { depth: null });
+		if (!form.valid) {
+			return fail(400, { form });
+		}
+		if (!session) {
+			return fail(401, { form });
+		}
+
+		if (form.data.bookmarkId && form.data.bookmarked_at) {
+			// then remove bookmarked flag
+			await db
+				.updateTable('Bookmark')
+				.where('id', '=', form.data.bookmarkId)
+				.set({
+					bookmarked_at: null,
+					status: null,
+					updatedAt: new Date(),
+				})
+				.execute();
+			return {
+				form,
+			};
+		}
+
+		let input: SaveToLibrarySchema = isMediaType(form.data.type)
+			? makeMediaSchema(form.data.entryId, form.data.type)
+			: {
+					entryId: form.data.entryId as number,
+					type: form.data.type,
+			  };
+
+		save_to_library({
+			ctx: {
+				userId: session.user.userId,
+			},
+			input: {
+				...input,
+				status: form.data.status,
+			},
+		});
+		return { form };
 	},
 	tag: async ({ locals, params, request }) => {
 		const session = await locals.auth.validate();

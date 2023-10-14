@@ -782,6 +782,7 @@ export async function entry_by_id({
 							'i.note',
 							'i.rating',
 							'i.revisit',
+							'i.createdAt',
 						])
 						.whereRef('i.entryId', '=', 'Entry.id')
 						.orderBy('i.createdAt', 'desc')
@@ -941,37 +942,42 @@ export async function save_to_library({
 
 	// save bookmark history
 
-	await db.transaction().execute(async (trx) => {
-		const bookmark = await trx
-			.insertInto('Bookmark')
-			.values({
-				entryId,
-				sort_order,
-				status,
-				updatedAt: new Date(),
-				userId: ctx.userId,
-			})
-			.onDuplicateKeyUpdate({
-				status,
-			})
-			.executeTakeFirst();
-
-		// save bookmark history (tho maybe this should be entry hsitory?)
-		return;
-		// await trx
-		// 	.insertInto('EntryHistory')
-		// 	.values({
-		// 		entryId: entryId!,
-		// 		id: input.historyId ?? nanoid(),
-		// 		toStatus: status ?? 'Backlog',
-		// 		updatedAt: new Date(),
-		// 		userId: ctx.userId,
-		// 	})
-		// 	.onDuplicateKeyUpdate({
-		// 		toStatus: status ?? 'Backlog',
-		// 	})
-		// 	.execute();
+	let query = db.insertInto('Bookmark').values({
+		bookmarked_at: new Date(),
+		entryId,
+		sort_order,
+		status,
+		updatedAt: new Date(),
+		userId: ctx.userId,
 	});
+	if (status) {
+		query = query.onDuplicateKeyUpdate({
+			bookmarked_at: new Date(),
+			status,
+		});
+	} else {
+		query = query.ignore();
+	}
+	await query.executeTakeFirst();
+	// await db.transaction().execute(async (trx) => {
+	// 	const bookmark =
+
+	// 	// save bookmark history (tho maybe this should be entry hsitory?)
+	// 	return;
+	// 	// await trx
+	// 	// 	.insertInto('EntryHistory')
+	// 	// 	.values({
+	// 	// 		entryId: entryId!,
+	// 	// 		id: input.historyId ?? nanoid(),
+	// 	// 		toStatus: status ?? 'Backlog',
+	// 	// 		updatedAt: new Date(),
+	// 	// 		userId: ctx.userId,
+	// 	// 	})
+	// 	// 	.onDuplicateKeyUpdate({
+	// 	// 		toStatus: status ?? 'Backlog',
+	// 	// 	})
+	// 	// 	.execute();
+	// });
 }
 
 /**

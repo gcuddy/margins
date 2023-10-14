@@ -9,7 +9,7 @@ const prefix = `/tests`;
 
 export type SlimEntry = {
 	googleBooksId?: string | null;
-	id: number;
+	id?: number;
 	image?: string | null;
 	podcastIndexId?: number | null;
 	published: Date | null;
@@ -19,7 +19,12 @@ export type SlimEntry = {
 	type: DocumentType;
 };
 
-export function getId(entry: SlimEntry): string | number {
+export type SlimmerEntry = Pick<
+	SlimEntry,
+	'type' | 'tmdbId' | 'googleBooksId' | 'spotifyId' | 'podcastIndexId' | 'id'
+>;
+
+export function getId(entry: SlimmerEntry): string | number {
 	if ((entry.type === 'movie' || entry.type === 'tv') && entry.tmdbId) {
 		return entry.tmdbId;
 	}
@@ -32,7 +37,10 @@ export function getId(entry: SlimEntry): string | number {
 	if (/*entry.type === "podcast" && */ entry.podcastIndexId) {
 		return `p${Number(entry.podcastIndexId).toString()}`;
 	}
-	return entry.id;
+	if (entry.id) {
+		return entry.id;
+	}
+	throw new Error(`Cannot get id for entry ${entry}`);
 }
 
 export function getType(type: Entry['type']) {
@@ -42,7 +50,7 @@ export function getType(type: Entry['type']) {
 	return type;
 }
 
-export function make_link(entry: SlimEntry, subpath = '') {
+export function make_link(entry: SlimmerEntry, subpath = '') {
 	return `${prefix}/${getType(entry.type)}/${getId(entry)}${
 		subpath ? `#${subpath}` : ''
 	}`;
@@ -75,21 +83,20 @@ export function isMediaType(type: unknown): type is MediaType {
 }
 
 // see mediaIdSchema
-export function getIdKeyName<TNoEntry extends boolean = false>(
-	type: Entry['type'],
+export function getIdKeyName<
+	TNoEntry extends boolean = false,
+	TIdAsEntryId extends boolean = false,
+>(
+	type: string,
 	opts?: {
-		idAsEntryId?: boolean;
+		idAsEntryId?: TIdAsEntryId;
 		throwErrorIfNotMedia?: TNoEntry;
 	},
 ): TNoEntry extends true
 	? 'spotifyId' | 'googleBooksId' | 'tmdbId' | 'podcastIndexId'
-	:
-			| 'spotifyId'
-			| 'googleBooksId'
-			| 'tmdbId'
-			| 'podcastIndexId'
-			| 'id'
-			| 'entryId' {
+	: TIdAsEntryId extends true
+	? 'spotifyId' | 'googleBooksId' | 'tmdbId' | 'podcastIndexId' | 'entryId'
+	: 'spotifyId' | 'googleBooksId' | 'tmdbId' | 'podcastIndexId' | 'id' {
 	const { idAsEntryId = false, throwErrorIfNotMedia = false } = opts ?? {};
 	switch (type) {
 		case 'album':
@@ -139,7 +146,7 @@ export function makeMediaSchema(
 }
 
 export function formatEntryPublished(
-	entry: SlimEntry & { published: Date | null },
+	entry: Pick<SlimEntry, 'published' | 'type'>,
 ) {
 	if (!entry.published) {
 		return '';
@@ -160,16 +167,30 @@ export function formatEntryPublished(
 	);
 }
 
-export function getRevisitLanguage(type: Entry['type']) {
+export function getRevisitLanguage(type?: Entry['type'], pastTense = false) {
 	if (type === 'album' || type === 'podcast') {
-		return 'Re-listen';
+		return pastTense ? 'Re-listened' : 'Re-listen';
 	} else if (type === 'book' || type === 'article') {
-		return 'Re-read';
+		return pastTense ? 'Re-read' : 'Re-read';
 	} else if (type === 'movie' || type === 'tv' || type === 'video') {
-		return 'Re-watch';
+		return pastTense ? 'Re-watched' : 'Re-watch';
 	} else if (type === 'board_game' || type === 'game') {
-		return 'Re-play';
+		return pastTense ? 'Re-played' : 'Re-play';
 	} else {
-		return 'Re-visit';
+		return pastTense ? 'Re-visited' : 'Re-visit';
+	}
+}
+
+export function getConsumedLanguage(type?: Entry['type'], pastTense = false) {
+	if (type === 'album' || type === 'podcast') {
+		return pastTense ? 'Listened' : 'Listen';
+	} else if (type === 'book' || type === 'article') {
+		return pastTense ? 'Read' : 'Read';
+	} else if (type === 'movie' || type === 'tv' || type === 'video') {
+		return pastTense ? 'Watched' : 'Watch';
+	} else if (type === 'board_game' || type === 'game') {
+		return pastTense ? 'Played' : 'Play';
+	} else {
+		return pastTense ? 'Visited' : 'Visit';
 	}
 }

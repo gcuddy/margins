@@ -116,9 +116,9 @@ export async function get_library({
 			join.onRef('b.entryId', '=', 'e.id').on('b.userId', '=', userId),
 		)
 		.leftJoin('Feed as f', 'f.id', 'e.feedId')
-		.leftJoin('EntryInteraction as i', (j) =>
-			j.onRef('i.entryId', '=', 'e.id').on('i.userId', '=', userId),
-		)
+		// .leftJoin('EntryInteraction as i', (j) =>
+		// 	j.onRef('i.entryId', '=', 'e.id').on('i.userId', '=', userId),
+		// )
 		// .leftJoin('TagOnEntry as toe', (j) =>
 		// 	j.onRef('toe.entryId', '=', 'e.id').on('toe.userId', '=', userId),
 		// )
@@ -146,16 +146,18 @@ export async function get_library({
 			'b.author as bookmark_author',
 			// TODO: make this an actual property that gets computed when the bookmark is *saved* (since technically a bookmark can not be in the library)
 			'b.createdAt as savedAt',
-			'i.progress',
-			'i.finished',
+			// TODO: figure out a way to re-implement these
+			// 'i.progress',
+			// 'i.finished',
+			// 'i.currentPage',
 			// 'i.seen',
 			'b.seen_at as seen',
-			'i.currentPage',
 			'b.rating',
 			'b.bookmarked_at',
 			'b.id as bookmark_id',
 		])
 		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
+		.distinct()
 		.select((eb) => [
 			jsonArrayFrom(
 				eb
@@ -182,13 +184,13 @@ export async function get_library({
 					// TODO: add count column to get all
 					.limit(10),
 			).as('annotations'),
-			jsonObjectFrom(
+			jsonArrayFrom(
 				eb
 					.selectFrom('EntryInteraction as i')
 					.select(['i.progress'])
 					.whereRef('i.entryId', '=', 'e.id')
 					.where('i.userId', '=', userId),
-			).as('interaction'),
+			).as('interactions'),
 			jsonArrayFrom(
 				// eb.selectNoFrom(['t.id', 't.name', 't.color']),
 				eb

@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 /// <reference types="@sveltejs/kit" />
 
-
 declare global {
 	namespace App {
 		interface Locals {
@@ -46,6 +45,9 @@ declare global {
 			// FORMS
 			logInteractionForm?: import('sveltekit-superforms').SuperValidated<
 				import('$components/entries/interaction-form/schema').InteractionLogInputSchema
+			>;
+			saveToLibraryForm?: import('sveltekit-superforms').SuperValidated<
+				import('$lib/schemas/inputs/entry.schema').SaveToLibrarySchema
 			>;
 		}
 	}

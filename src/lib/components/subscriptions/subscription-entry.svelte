@@ -16,7 +16,7 @@
 		type FeedSearchFormSchema,
 		feedSearchFormSchema,
 	} from './subscription-entry.schema';
-	import { ChevronLeft } from 'radix-icons-svelte';
+	import { ChevronLeft, ArrowRight } from 'radix-icons-svelte';
 	import { Loader2 } from 'lucide-svelte';
 
 	export let searchForm: SuperValidated<FeedSearchFormSchema>;
@@ -64,9 +64,9 @@
 	<form
 		action="/tests/subscriptions?/add"
 		method="post"
-		class="flex flex-col gap-y-4 px-3"
+		class="flex flex-col gap-y-4 px-3 min-w-0"
 	>
-		<fieldset class="space-y-4">
+		<fieldset class="space-y-4 min-w-0">
 			<legend><Muted>Feeds</Muted></legend>
 			{#each form.feeds.feeds as feed, index}
 				{@const id = `feed-${index}`}
@@ -99,7 +99,7 @@
 						</div>
 					</div>
 					<div class="col-span-full flex justify-end pr-2">
-						<Label class="row-start-2" for="feed-checkbox-{index}">
+						<Label class="row-start-2 truncate" for="feed-checkbox-{index}">
 							<Muted class="text-xs">{feed.url}</Muted>
 						</Label>
 					</div>
@@ -133,9 +133,12 @@
 		<div
 			class="flex justify-end sm:flex-row sm:justify-end sm:space-x-2 flex-col-reverse"
 		>
+        <!-- {submitting} -->
 			<Form.Button disabled={submitting}
 				>Find feed{#if submitting}
 					<Loader2 class="animate-spin ml-2 h-4 w-4" />
+				{:else}
+					<ArrowRight class="ml-2 h-4 w-4" />
 				{/if}</Form.Button
 			>
 		</div>

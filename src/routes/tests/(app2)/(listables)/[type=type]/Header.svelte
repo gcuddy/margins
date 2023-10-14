@@ -20,6 +20,8 @@
 	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
 	import EntryOperations from './[id]/EntryOperations.svelte';
 	import { getArticleContext, getEntryContext } from './ctx';
+	import { ActivityLog } from 'radix-icons-svelte';
+	import { make_link } from '$lib/utils/entries';
 
 	const { scrollingDown } = getEntryContext();
 
@@ -38,7 +40,9 @@
 		return $pins.data?.find((pin) => {
 			if ($page.data.entry) {
 				const isPinned = pin.entry?.id === $page.data.entry.id;
-				if (isPinned) {return isPinned;}
+				if (isPinned) {
+					return isPinned;
+				}
 				// check children
 				return pin.children?.find(
 					(child) => child.entry?.id === $page.data.entry?.id,
@@ -58,11 +62,13 @@
 		states: { progress },
 	} = getArticleContext();
 
-    function handlePageInputChange(e: Event) {
-        if (!isHTMLInputElement(e.target)) {return;}
-        $pdf_state.pdf_link_service?.goToPage(Number(e.target.value));
-        e.target.blur();
-    }
+	function handlePageInputChange(e: Event) {
+		if (!isHTMLInputElement(e.target)) {
+			return;
+		}
+		$pdf_state.pdf_link_service?.goToPage(Number(e.target.value));
+		e.target.blur();
+	}
 
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
@@ -102,13 +108,15 @@
 				<Input
 					type="number"
 					class="w-min appearance-none text-xs tabular-nums m-0"
-                    on:change={handlePageInputChange}
-                    value={$pdf_state.pageNumber}
+					on:change={handlePageInputChange}
+					value={$pdf_state.pageNumber}
 				/>
 
 				<button
 					on:click={() => {
-						if (!$pdf_state.pdf_viewer) {return;}
+						if (!$pdf_state.pdf_viewer) {
+							return;
+						}
 						$pdf_state.pdf_viewer.currentScaleValue = 'auto';
 					}}
 				>
@@ -130,6 +138,9 @@
 		</div>
 		<div class="right flex gap-x-4 items-center">
 			{#if $page.data.entry}
+				<Button href="{make_link($page.data.entry)}/activity" variant="ghost" size="icon">
+					<ActivityLog />
+				</Button>
 				<Button
 					variant="ghost"
 					class="group"
@@ -174,4 +185,3 @@
 <!-- Floating Sidebar button (can't put in right because want it to show ) -->
 
 <EntrySidebarButton open={rightSidebar} class="hidden md:flex" />
-

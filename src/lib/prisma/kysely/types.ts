@@ -276,7 +276,7 @@ export type Bookmark = {
 	 * The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
 	 */
 	review_timestamp: number | null;
-	bookmarked_at: Timestamp | null;
+	bookmarked_at: Generated<Timestamp | null>;
 	title: string | null;
 	author: string | null;
 	pdf_url: string | null;
@@ -579,6 +579,7 @@ export type Interaction = {
 	finished: Timestamp | null;
 	started: Timestamp | null;
 	revisit: Generated<number | null>;
+	private: Generated<number>;
 };
 export type InvitationCode = {
 	code: string;

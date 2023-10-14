@@ -148,13 +148,13 @@ export const formatDuration = (
 			`${hours}${format === 'long' ? ' hours' : format === 'short' ? 'h' : ''}`,
 		);
 	}
-	if (minutes > 0) {
-		parts.push(
-			`${minutes}${
-				format === 'long' ? ' minutes' : format === 'short' ? 'm' : ''
-			}`,
-		);
-	}
+	// if (minutes > 0) {
+	parts.push(
+		`${minutes}${
+			format === 'long' ? ' minutes' : format === 'short' ? 'm' : ''
+		}`,
+	);
+	// }
 	if (showSeconds || seconds > 0) {
 		parts.push(
 			`${seconds}${

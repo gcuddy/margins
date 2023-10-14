@@ -982,16 +982,6 @@
 />
 
 
-<div class="fixed top-0">
-	{JSON.stringify(
-		coalesceObjects(
-			$activeAnnotationFromQuery?.contentData ??
-				$activeAnnotation?.contentData ??
-				startingContentData,
-		) ?? {},
-	)}
-</div>
-
 <div
 	class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors"
 >

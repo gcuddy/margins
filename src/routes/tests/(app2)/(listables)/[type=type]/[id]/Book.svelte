@@ -7,7 +7,7 @@
 		BookOpenIcon,
 		BookPlusIcon,
 		ChevronDown,
-		ExternalLink
+		ExternalLink,
 	} from 'lucide-svelte';
 	import { derived, writable } from 'svelte/store';
 
@@ -21,7 +21,7 @@
 	import {
 		deDupeGoogleBooksList,
 		get_category,
-		getCategoryIcon
+		getCategoryIcon,
 	} from '$lib/features/books/utils';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { receive, send } from '$lib/transitions';
@@ -30,6 +30,8 @@
 	import type { FastAverageColorResult } from 'fast-average-color';
 	import type { PageData } from './$types';
 	import EntryOperations from './EntryOperations.svelte';
+	import { sortByDate } from '$lib/utils/date';
+	import UpdateProgressButton from '$components/books/buttons/update-progress-button.svelte';
 
 	let editor: Editor;
 
@@ -38,26 +40,26 @@
 		book: NonNullable<Book>;
 	};
 	$: ({ book } = data);
-    $: console.log({book})
+	$: console.log({ book });
 
 	const strip_gbook_curl = (url: string) => {};
 
-    const bookStore = writable(data.book);
+	const bookStore = writable(data.book);
 
-    $: if (book !== undefined) {
-        bookStore.set(book);
-    }
+	$: if (book !== undefined) {
+		bookStore.set(book);
+	}
 
 	// TODO: should we do this or not?
 	// const imageColorQuery = createQuery(
 	// 	derived(bookStore, (book) => {
-    //         const queryKey = ['imageColor', book.id] as const;
-    //         console.log({imageColorQueryKey: queryKey})
+	//         const queryKey = ['imageColor', book.id] as const;
+	//         console.log({imageColorQueryKey: queryKey})
 	// 		return {
 	// 			enabled: !!book,
-    //             // placeholderData: keepPreviousData,
+	//             // placeholderData: keepPreviousData,
 	// 			queryFn: async () => {
-    //                 console.log(`Running imageColorQuery`)
+	//                 console.log(`Running imageColorQuery`)
 	// 				if (!book) {
 	// 					return null;
 	// 				}
@@ -74,7 +76,7 @@
 	// 	}),
 	// );
 
-    // $: console.log({$imageColorQuery})
+	// $: console.log({$imageColorQuery})
 
 	$: firstAuthor = book.volumeInfo?.authors?.[0];
 
@@ -89,7 +91,7 @@
 	$: console.log({ $otherBooksByAuthorQuery });
 
 	// const boxShadowColor = derived(imageColorQuery, (result) => {
-    //     console.log({ result });
+	//     console.log({ result });
 	// 	if (!result.data) {
 	// 		return null;
 	// 	}
@@ -164,13 +166,25 @@
 	let category: ReturnType<typeof get_category> = undefined;
 	$: category = get_category(book);
 	$: categoryIcon = getCategoryIcon(category);
+
+	$: sortedInteractions = sortByDate(
+		data.entry?.interactions ?? [],
+		'createdAt',
+		'desc',
+	);
+
+	$: mostRecentUnfinishedInteraction = sortedInteractions.find(
+		(i) => !i.finished,
+	);
+	$: allFinished =
+		sortedInteractions.length && sortedInteractions.every((i) => i.finished);
 </script>
 
 <div class="">
 	<div class="flex select-text flex-col gap-4">
 		<div class="flex items-center gap-6">
 			<!-- src="https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg?default=false" -->
-            <!-- style:--tw-shadow-color= -->
+			<!-- style:--tw-shadow-color= -->
 			<div
 				class="aspect-auto max-w-[200px] shadow-lg relative"
 				style:view-transition-name="artwork-{book.id}"
@@ -237,7 +251,40 @@
 					{/if}
 					<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 					<div class="flex items-center">
-						<Button
+						{#if mostRecentUnfinishedInteraction}
+							<Button
+								size="sm"
+								variant="default"
+								class="rounded-r-none border-r-0"
+							>
+								<BookOpenIcon class="mr-2 h-4 w-4" />
+								Update Progress
+							</Button>
+							<UpdateProgressButton
+								form={data.logInteractionForm}
+								entry={data.entry}
+								partialProgress
+							/>
+						{:else if (data.entry?.bookmark?.bookmarked_at && !data.entry?.interactions?.length) || allFinished}
+							<Button
+								size="sm"
+								variant="default"
+								class="rounded-r-none border-r-0"
+							>
+								<BookOpenIcon class="mr-2 h-4 w-4" />
+								Mark as currently {allFinished ? 're-reading' : 'reading'}
+							</Button>
+						{:else}
+							<Button
+								size="sm"
+								variant="default"
+								class="rounded-r-none border-r-0"
+							>
+								<BookOpenIcon class="mr-2 h-4 w-4" />
+								Want to read
+							</Button>
+						{/if}
+						<!-- <Button
 							size="sm"
 							variant="default"
 							class="rounded-r-none border-r-0"
@@ -251,7 +298,7 @@
 							{:else}
 								{data.entry.interaction}
 							{/if}
-						</Button>
+						</Button> -->
 						<Separator orientation="vertical" />
 						<DropdownMenu.Root>
 							<DropdownMenu.Trigger let:builder asChild>
@@ -405,73 +452,72 @@
 				{/if}
 			</dl>
 		{/if}
-        <div class="flex flex-col max-w-prose">
-            <h2 class="text-lg font-bold tracking-tight font-serif my-2">
-                More Books by {firstAuthor}
-            </h2>
-            {#if $otherBooksByAuthorQuery.data}
-                {@const books = $otherBooksByAuthorQuery.data ?? []}
-                <div class="flex gap-6 overflow-auto py-6 snap-x snap-mandatory">
-                    {#each deDupeGoogleBooksList(books.filter((b) => b.volumeInfo && b.id !== book.id && b.volumeInfo.authors?.join('') === firstAuthor && b.volumeInfo.title !== book.volumeInfo.title)).slice(0, 20) as otherBook}
-                        {#if otherBook.volumeInfo}
-                            <a
-                                href="/tests/book/{otherBook.id}"
-                                class="flex flex-col min-w-0 w-20 gap-2 shrink-0 snap-start"
-                            >
-                                {#if otherBook.volumeInfo.imageLinks}
-                                    <div
-                                        class="relative w-20 h-[121px] shadow-lg"
-                                        style:view-transition-name="artwork-{otherBook.id}"
-                                    >
-                                        <img
-                                            in:receive={{
-                                                key: `booko-${otherBook.id}-image`,
-                                            }}
-                                            out:send={{
-                                                key: `book-${otherBook.id}-image`,
-                                            }}
-                                            src={getGbookImage({
-                                                ...otherBook,
-                                                volumeInfo: otherBook.volumeInfo,
-                                            })}
-                                            class="absolute w-20 h-[121px] object-cover"
-                                            alt=""
-                                        />
-                                        <div class="absolute inset-0 book-cover-overlay"></div>
-                                    </div>
-                                {:else}
-                                    <div
-                                        class="relative w-full h-[121px] bg-gray-200 flex flex-col items-center justify-center"
-                                    >
-                                        <span class="text-gray-400 text-sm text-center font-bold"
-                                            >No Image Available</span
-                                        >
-                                    </div>
-                                {/if}
-                                <div class="min-w-0 flex flex-col">
-                                    <span class="truncate text-sm font-semibold"
-                                        >{otherBook.volumeInfo.title}</span
-                                    >
-                                    <span class="truncate text-xs text-muted-foreground"
-                                        >{otherBook.volumeInfo.authors}</span
-                                    >
-                                </div>
-                            </a>
-                        {/if}
-                        <!-- <img src={getGbookImage(book)} alt="" /> -->
-                    {/each}
-                </div>
-            {:else if $otherBooksByAuthorQuery.isError}
-                <!-- empty -->
-            {:else}
-                <div class="flex gap-6">
-                    {#each Array.from({ length: 8 }) as _}
-                        <Skeleton class="w-20 h-32" />
-                    {/each}
-                </div>
-            {/if}
-        </div>
-
+		<div class="flex flex-col max-w-prose">
+			<h2 class="text-lg font-bold tracking-tight font-serif my-2">
+				More Books by {firstAuthor}
+			</h2>
+			{#if $otherBooksByAuthorQuery.data}
+				{@const books = $otherBooksByAuthorQuery.data ?? []}
+				<div class="flex gap-6 overflow-auto py-6 snap-x snap-mandatory">
+					{#each deDupeGoogleBooksList(books.filter((b) => b.volumeInfo && b.id !== book.id && b.volumeInfo.authors?.join('') === firstAuthor && b.volumeInfo.title !== book.volumeInfo.title)).slice(0, 20) as otherBook}
+						{#if otherBook.volumeInfo}
+							<a
+								href="/tests/book/{otherBook.id}"
+								class="flex flex-col min-w-0 w-20 gap-2 shrink-0 snap-start"
+							>
+								{#if otherBook.volumeInfo.imageLinks}
+									<div
+										class="relative w-20 h-[121px] shadow-lg"
+										style:view-transition-name="artwork-{otherBook.id}"
+									>
+										<img
+											in:receive={{
+												key: `booko-${otherBook.id}-image`,
+											}}
+											out:send={{
+												key: `book-${otherBook.id}-image`,
+											}}
+											src={getGbookImage({
+												...otherBook,
+												volumeInfo: otherBook.volumeInfo,
+											})}
+											class="absolute w-20 h-[121px] object-cover"
+											alt=""
+										/>
+										<div class="absolute inset-0 book-cover-overlay"></div>
+									</div>
+								{:else}
+									<div
+										class="relative w-full h-[121px] bg-gray-200 flex flex-col items-center justify-center"
+									>
+										<span class="text-gray-400 text-sm text-center font-bold"
+											>No Image Available</span
+										>
+									</div>
+								{/if}
+								<div class="min-w-0 flex flex-col">
+									<span class="truncate text-sm font-semibold"
+										>{otherBook.volumeInfo.title}</span
+									>
+									<span class="truncate text-xs text-muted-foreground"
+										>{otherBook.volumeInfo.authors}</span
+									>
+								</div>
+							</a>
+						{/if}
+						<!-- <img src={getGbookImage(book)} alt="" /> -->
+					{/each}
+				</div>
+			{:else if $otherBooksByAuthorQuery.isError}
+				<!-- empty -->
+			{:else}
+				<div class="flex gap-6">
+					{#each Array.from({ length: 8 }) as _}
+						<Skeleton class="w-20 h-32" />
+					{/each}
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	<!-- TODO: Other Books In Series -->

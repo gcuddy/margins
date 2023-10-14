@@ -134,7 +134,7 @@
 						type: $page.params.type as Type,
 				  })
 				: {}),
-			enabled: !!$page.data.entry?.id,
+			// enabled: !!$page.data.entry?.id,
 			// REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
 			// select: (data: QueryOutput<'entry_by_id'>) => data?.entry,
 			refetchOnMount: false,

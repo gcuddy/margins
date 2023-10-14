@@ -34,9 +34,15 @@
 
 	export let data: PageData;
 
-	$: ({ type } = data);
+	$: ({ type, queryKey } = data);
 
-	const query = createQuery(derived(data.query, ($query) => $query));
+	$: query = createQuery({
+        ...queryFactory.entries.detail({
+            type,
+            id: data.id
+        }),
+        initialData: data.queryData
+    });
 
 	// Mark as seen mutation
 
@@ -62,6 +68,8 @@
 			});
 		},
 	});
+
+
 
 	const saveInteractionMutation = createMutation({
 		mutationFn: (data: MutationInput<'saveInteraction'>) => {
@@ -191,7 +199,7 @@
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >
-	{#if $query.isPlaceholderData || $query.isLoading || $query.isFetching || $query.isPending}
+	{#if $query.isPlaceholderData || $query.isLoading}
 		<Skeleton class="w-full h-[300px]" />
 	{:else if $query.data}
 		{#if type === 'article'}
@@ -200,7 +208,7 @@
 				{query}
 				data={{
 					...data,
-					...$query.data,
+					// ...$query.data,
 				}}
 			>
 				<!-- eslint-disable-next-line svelte/no-at-html-tags-->
@@ -214,8 +222,8 @@
 			<svelte:component
 				this={data.component}
 				data={{
-					...$query.data,
 					...data,
+					...$query.data,
 				}}
 			/>
 			<!-- data={{

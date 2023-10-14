@@ -1,28 +1,20 @@
 <script lang="ts">
 	import { Button } from '$components/ui/button';
 	import * as Dialog from '$lib/components/ui/alert-dialog';
+	import type { ComponentProps, ComponentType } from 'svelte';
 	import LogInteractionForm from './log-interaction-form.svelte';
-	import {
-		interactionLogInputSchema,
-		type InteractionLogInput,
-	} from './schema';
-	import { superValidateSync } from 'sveltekit-superforms/server';
-	import type { SlimEntry } from '$lib/utils/entries';
+
+	type $$Props = ComponentProps<LogInteractionForm> & {
+		open?: boolean;
+        icon?: ComponentType | undefined | null;
+	};
 
 	export let open = false;
-	export let entry: SlimEntry;
-
-	export let data: Omit<InteractionLogInput, 'entryId'> = {};
-
-	$: form = superValidateSync(
-		{
-			entryId: entry.id,
-			...data,
-		},
-		interactionLogInputSchema,
-	);
-    $: console.log({ form });
+	export let entry: $$Props['entry'] = undefined;
+	export let form: $$Props['form'];
 	export let showTrigger = true;
+
+    export let icon: $$Props["icon"] = undefined;
 </script>
 
 <!-- TODO: allow close on escape if not tainted -->
@@ -30,39 +22,40 @@
 	{#if showTrigger || $$slots.trigger}
 		<Dialog.Trigger asChild let:builder>
 			<slot name="trigger" {builder}>
-				<Button builders={[builder]} variant="outline">Log</Button>
+				<Button builders={[builder]} variant="outline">
+                    <svelte:component this={icon} class="w-4 h-4 mr-2" />
+                    Log</Button>
 			</slot>
 		</Dialog.Trigger>
 	{/if}
 	<Dialog.Content>
-		<Dialog.Title>Log {entry.type}</Dialog.Title>
-		{#key form}
-			<LogInteractionForm
-				{entry}
-				{form}
-				on:updated={() => {
-					open = false;
-				}}
-			>
-				<svelte:fragment slot="footer" let:tainted>
-					<Dialog.Cancel
-						on:click={(e) => {
-							if (tainted) {
-								if (
-									// could maybe do another alert dialog here instead, but this is fine for now
-									!confirm(
-										`Are you sure you want to cancel? You have unsaved changes.`,
-									)
-								) {
-									e.preventDefault();
-								}
+		<Dialog.Title>Log {entry ? entry.type : ""}</Dialog.Title>
+		<LogInteractionForm
+			{entry}
+			{form}
+            {...$$restProps}
+			on:updated={() => {
+				open = false;
+			}}
+		>
+			<svelte:fragment slot="footer" let:tainted>
+				<Dialog.Cancel
+					on:click={(e) => {
+						if (tainted) {
+							if (
+								// could maybe do another alert dialog here instead, but this is fine for now
+								!confirm(
+									`Are you sure you want to cancel? You have unsaved changes.`,
+								)
+							) {
+								e.preventDefault();
 							}
-						}}
-					>
-						Cancel
-					</Dialog.Cancel>
-				</svelte:fragment>
-			</LogInteractionForm>
-		{/key}
+						}
+					}}
+				>
+					Cancel
+				</Dialog.Cancel>
+			</svelte:fragment>
+		</LogInteractionForm>
 	</Dialog.Content>
 </Dialog.Root>

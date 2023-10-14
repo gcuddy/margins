@@ -206,7 +206,7 @@
 					</DropdownMenuContent>
 				</DropdownMenu>
 			{/if}
-			{#if $isRestoring || $isMutating || $isFetching || $navigating}
+			{#if $isRestoring || $isMutating}
 				<span
 					transition:fade={{ duration: 75 }}
 					class="absolute my-auto right-4 hidden lg:flex"

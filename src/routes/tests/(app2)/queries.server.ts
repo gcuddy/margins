@@ -606,8 +606,12 @@ export const queries = {
 					join.onRef('e.id', '=', 'i.entryId').on('i.userId', '=', ctx.userId),
 				)
 				.where('b.userId', '=', ctx.userId)
-				.select(entrySelect)
+				.select(entrySelect.filter((s) => s !== 'e.title' && s !== 'e.author'))
 				.select(['b.status', 'i.progress', 'b.bookmarked_at'])
+				.select((eb) => [
+					eb.fn.coalesce('b.title', 'e.title').as('title'),
+					eb.fn.coalesce('b.author', 'e.author').as('author'),
+				])
 				.select((eb) =>
 					eb
 						.case()
@@ -619,6 +623,7 @@ export const queries = {
 						.end()
 						.as('domain'),
 				)
+				.orderBy('title asc')
 				.execute();
 			return entries;
 		},

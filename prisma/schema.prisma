@@ -108,7 +108,7 @@ model Bookmark {
     sort_order       Int               @default(0)
     /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
     review_timestamp Int?
-    bookmarked_at    DateTime?         @db.Timestamp(0)
+    bookmarked_at    DateTime?         @default(now()) @db.Timestamp(0)
     title            String?
     author           String?
     pdf_url          String?           @db.VarChar(2083)
@@ -658,6 +658,7 @@ model Interaction {
     started          DateTime? @db.Timestamp(0)
     // Whether or not this interaction is a revisit. E.g. a re-read, a re-watch, etc.
     revisit          Boolean?  @default(false)
+    private          Boolean   @default(true)
     entry            Entry     @relation(fields: [entryId], references: [id])
     user             AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
     bookmark         Bookmark?

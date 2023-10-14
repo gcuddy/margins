@@ -52,6 +52,7 @@
 	import MovieCarousel from '$components/movies/movie-carousel.svelte';
 	import StarRating from '$components/ui/star-rating/star-rating.svelte';
 	import StarRatingForm from '$components/ui/star-rating/star-rating-form.svelte';
+	import LogInteractionForm from '$components/entries/interaction-form/log-interaction-form.svelte';
 	import LogInteractionDialog from '$components/entries/interaction-form/log-interaction-dialog.svelte';
 
 	export let data: FullEntryDetail & {
@@ -276,7 +277,7 @@
 									});
 								}
 							}}
-							variant="secondary"
+							variant="outline"
 						>
 							<PlusCircle class="w-4 h-4 mr-2" />
 							To Watch</Button
@@ -295,7 +296,7 @@
 					>
 						<input type="hidden" name="entryId" value={data.entry?.id} />
 						<Button
-							variant="secondary"
+							variant="outline"
 							name="finished"
 							value={new Date().toISOString()}
 						>
@@ -303,27 +304,6 @@
 							Watch</Button
 						>
 					</form>
-					{#if data.entry && $page.data.logInteractionForm}
-						<LogInteractionDialog
-							entry={data.entry}
-							data={{
-								rating: data.entry?.bookmark?.rating ?? 0,
-							}}
-						>
-							<!-- form={$page.data.logInteractionForm} -->
-							<svelte:fragment slot="trigger" let:builder>
-								<Button
-									builders={[builder]}
-									variant="secondary"
-									name="finished"
-									value={new Date().toISOString()}
-								>
-									<EyeIcon class="w-4 h-4 mr-2" />
-									Watch</Button
-								>
-							</svelte:fragment>
-						</LogInteractionDialog>
-					{/if}
 					<!-- <Button
 							variant="secondary"
 						>
@@ -334,6 +314,31 @@
 						<EntryOperations data={data.annotationForm} entry={data.entry} />
 					{/if}
 				</div>
+                {#if $page.data.logInteractionForm}
+						<LogInteractionDialog
+							entry={{
+                                title: data.movie.title,
+                                type: 'movie',
+                                published: new Date(data.movie.release_date),
+                                image: `https://image.tmdb.org/t/p/w500/${data.movie.poster_path}`,
+                                tmdbId: data.movie.id,
+                            }}
+                            entryId={data.entry?.id}
+							form={$page.data.logInteractionForm}
+						>
+							<svelte:fragment slot="trigger" let:builder>
+								<Button
+									builders={[builder]}
+									variant="ghost"
+									name="finished"
+									value={new Date().toISOString()}
+								>
+									<!-- <EyeIcon class="w-4 h-4 mr-2" /> -->
+									Log</Button
+								>
+							</svelte:fragment>
+						</LogInteractionDialog>
+					{/if}
 			</div>
 		</div>
 		<div class="prose prose-stone space-y-4 dark:prose-invert mt-6">
