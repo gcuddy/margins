@@ -45,7 +45,7 @@ dependencies:
     specifier: ^1.8.0
     version: 1.11.0
   '@prisma/client':
-    specifier: ^5.0.0
+    specifier: ^5.4.2
     version: 5.4.2(prisma@5.4.2)
   '@skeletonlabs/skeleton':
     specifier: ^1.9.0
@@ -255,7 +255,7 @@ dependencies:
     specifier: latest
     version: 3.11.174
   prisma-kysely:
-    specifier: ^1.5.0
+    specifier: ^1.7.1
     version: 1.7.1
   puppeteer-core:
     specifier: '20.8'
@@ -338,6 +338,9 @@ dependencies:
   youtube-player:
     specifier: ^5.6.0
     version: 5.6.0
+  zod-prisma-types:
+    specifier: ^2.7.13
+    version: 2.7.13
 
 devDependencies:
   '@aws-sdk/client-s3':
@@ -605,7 +608,7 @@ devDependencies:
     specifier: ^0.4.0
     version: 0.4.1(prettier-plugin-svelte@3.0.3)(prettier@3.0.3)
   prisma:
-    specifier: ^5.0.0
+    specifier: ^5.4.2
     version: 5.4.2
   prismjs:
     specifier: ^1.29.0
@@ -3662,6 +3665,16 @@ packages:
       - supports-color
     dev: false
 
+  /@prisma/debug@5.4.2:
+    resolution: {integrity: sha512-YRRi7beaX/sAQs0WQ/Y0LndfWynyodJKO0qF0Vj/KQ8aynmllpL7Hahdm4MVEy6eDPeoX7FWu/otkHRGKWmKSQ==}
+    dependencies:
+      '@types/debug': 4.1.9
+      debug: 4.3.4
+      strip-ansi: 6.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@prisma/engines-version@5.4.1-2.ac9d7041ed77bcc8a8dbd2ab6616b39013829574:
     resolution: {integrity: sha512-wvupDL4AA1vf4TQNANg7kR7y98ITqPsk6aacfBxZKtrJKRIsWjURHkZCGcQliHdqCiW/hGreO6d6ZuSv9MhdAA==}
     dev: false
@@ -3705,6 +3718,17 @@ packages:
     dependencies:
       '@prisma/debug': 5.3.1
       '@types/cross-spawn': 6.0.2
+      cross-spawn: 7.0.3
+      kleur: 4.1.5
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@prisma/generator-helper@5.4.2:
+    resolution: {integrity: sha512-UC2W3ZUs87jbdEOCmsQfCyGeuLA0oosAKgS+0vTCoZWnKUPGvMNxMqNPL08rpXTc1vwUFvl09R76ZVC3Zm7PHw==}
+    dependencies:
+      '@prisma/debug': 5.4.2
+      '@types/cross-spawn': 6.0.3
       cross-spawn: 7.0.3
       kleur: 4.1.5
     transitivePeerDependencies:
@@ -5245,6 +5269,12 @@ packages:
       '@types/node': 20.8.6
     dev: false
 
+  /@types/cross-spawn@6.0.3:
+    resolution: {integrity: sha512-BDAkU7WHHRHnvBf5z89lcvACsvkz/n7Tv+HyD/uW76O29HoH1Tk/W6iQrepaZVbisvlEek4ygwT8IW7ow9XLAA==}
+    dependencies:
+      '@types/node': 20.8.6
+    dev: false
+
   /@types/css@0.0.33:
     resolution: {integrity: sha512-qjeDgh86R0LIeEM588q65yatc8Yyo/VvSIYFqq8JOIHDolhGNX0rz7k/OuxqDpnpqlefoHj8X4Ai/6hT9IWtKQ==}
     dev: false
@@ -6682,6 +6712,10 @@ packages:
   /cluster-key-slot@1.1.2:
     resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
     engines: {node: '>=0.10.0'}
+
+  /code-block-writer@12.0.0:
+    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
+    dev: false
 
   /code-red@1.0.4:
     resolution: {integrity: sha512-7qJWqItLA8/VPVlKJlFXU+NBlo/qyfs39aJcuMT/2ere32ZqvF5OSxgdM5xOfJJ7O429gg2HM47y8v9P+9wrNw==}
@@ -15824,6 +15858,18 @@ packages:
       archiver-utils: 3.0.4
       compress-commons: 4.1.2
       readable-stream: 3.6.2
+    dev: false
+
+  /zod-prisma-types@2.7.13:
+    resolution: {integrity: sha512-HuGrm333z/7yDnJ2ZCXTJmkTREzRpOSj5koNCNQkaqm/RxbQfv2HqAMeX9DX7KeEvMiYBb6alggSNo3Z/wXbJQ==}
+    hasBin: true
+    dependencies:
+      '@prisma/generator-helper': 5.4.2
+      code-block-writer: 12.0.0
+      lodash: 4.17.21
+      zod: 3.22.4
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /zod@3.22.4:
