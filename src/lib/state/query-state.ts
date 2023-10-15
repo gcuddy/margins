@@ -1,6 +1,6 @@
 import { getContext, setContext } from "svelte";
 import { derived, get, writable } from "svelte/store";
-import type { Mutations } from "../../routes/tests/(app2)/queries.server";
+import type { Mutations } from '../../routes/queries.server';
 import { page } from "$app/stores";
 import { type MutationInput, mutation } from "$lib/queries/query";
 

@@ -53,7 +53,7 @@
 
 	$: console.log({ $form });
 
-	export let action_prefix = `/tests/entry/${entry.id}`;
+	export let action_prefix = `/entry/${entry.id}`;
 
 	let value = '';
 
@@ -80,7 +80,7 @@
 	<!-- <p class="text-sm text-slate-500 dark:text-slate-400">Status</p> -->
 	{#each entry.tags ?? [] as tag, i}
 		<!-- {#each $form.tags as tag, i} -->
-		<Badge variant="outline" as="a" href="/tests/tag/{tag.name}">
+		<Badge variant="outline" as="a" href="/tag/{tag.name}">
 			{tag.name}
 		</Badge>
 	{/each}

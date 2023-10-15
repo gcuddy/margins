@@ -17,7 +17,7 @@
 >
 	<span>
 		<a
-			href="/tests/{node.attrs.type}/{node.attrs.id}"
+			href="/{node.attrs.type}/{node.attrs.id}"
 			class="max-w-[30ch] space-x-1 bg-cyan-500/20"
 		>
 			<EntryIcon

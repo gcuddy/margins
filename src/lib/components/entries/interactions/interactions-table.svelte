@@ -86,13 +86,13 @@
 				</Table.Cell>
 				<Table.Cell
 					>{#if interaction.note}
-						<a href="/tests/a/{interaction.id}">
+						<a href="/a/{interaction.id}">
 							<TextAlignLeft />
 						</a>
 					{/if}</Table.Cell
 				>
                 <Table.Cell>
-                    <a href="/tests/a/{interaction.id}/edit">
+                    <a href="/a/{interaction.id}/edit">
                         <Pencil1 />
                     </a>
                 </Table.Cell>

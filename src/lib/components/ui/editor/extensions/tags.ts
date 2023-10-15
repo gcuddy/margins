@@ -141,14 +141,14 @@ const Command = Node.create<TagOptions>({
 		return [
 			'a',
 			mergeAttributes(
-				{ 'data-type': this.name, href: `/tests/tag/${node.attrs.name}` },
+				{ 'data-type': this.name, href: `/tag/${node.attrs.name}` },
 				this.options.HTMLAttributes,
-				HTMLAttributes
+				HTMLAttributes,
 			),
 			this.options.renderLabel({
 				options: this.options,
-				node
-			})
+				node,
+			}),
 		];
 	},
 

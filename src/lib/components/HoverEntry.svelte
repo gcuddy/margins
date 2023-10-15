@@ -3,7 +3,7 @@
 	import { query } from '$lib/queries/query';
 	import { create_query } from '$lib/state/query-state';
 	import Skeleton from './ui/skeleton/Skeleton.svelte';
-	import Entry from '../../routes/tests/(app2)/(listables)/[type=type]/[id]/+page.svelte';
+	import Entry from '../../routes/(app2)/(listables)/[type=type]/[id]/+page.svelte';
 	import { setContext } from 'svelte';
 	import type { Type } from '$lib/types';
 

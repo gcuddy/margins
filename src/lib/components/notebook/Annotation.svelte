@@ -36,10 +36,10 @@
 	}
 
 	$: href = annotation.entry?.id
-		? `/tests/${getType(annotation.entry.type)}/${getId(annotation.entry)}#annotation-${
+		? `/${getType(annotation.entry.type)}/${getId(annotation.entry)}#annotation-${
 				annotation.id
 		  }`
-		: `/tests/notes/${annotation.id}`;
+		: `/notes/${annotation.id}`;
 
 	function copyLinkToHighlight(annotation: AnnotationWithTarget) {
 		if (!annotation.entry?.uri) {return;}

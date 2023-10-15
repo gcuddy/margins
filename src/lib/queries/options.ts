@@ -7,7 +7,7 @@ import {
 } from '$lib/queries/query';
 import { UndefinedInitialDataOptions, queryOptions } from '$lib/queries/utils';
 import type { CreateQueryOptions, DefaultError } from '@tanstack/svelte-query';
-import type { Queries } from '../../routes/tests/(app2)/queries.server';
+import type { Queries } from '../../routes/queries.server';
 import type { Page } from '@sveltejs/kit';
 
 // export function createQueryOptions<TFn extends keyof Queries>(

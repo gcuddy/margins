@@ -21,7 +21,7 @@
 	import { ListPlus, MoreHorizontal, RefreshCwIcon, Tag } from "lucide-svelte";
 	import Input from "$lib/components/ui/input/input.svelte";
 
-	import Button from "$lib/components/ui/Button.svelte";
+	import { Button } from '$lib/components/ui/button';
 
 	import { page } from "$app/stores";
 	import { invalidateAll } from "$app/navigation";

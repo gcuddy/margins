@@ -5,7 +5,7 @@
 	import { notifications } from "$lib/stores/notifications";
 	import type { ActionData } from "../../routes/(app)/u:[username]/(view)/subscriptions/new/$types";
 	import Checkbox from "$lib/components/ui/Checkbox.svelte";
-	import Button from "$lib/components/ui/Button.svelte";
+	import { Button } from '$lib/components/ui/button';
 	import Muted from "./atoms/Muted.svelte";
 	import SmallPlus from "./atoms/SmallPlus.svelte";
 	import GenericInput from "./GenericInput.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-	
+
 	import { invalidateAll } from '$app/navigation';
 	import type { Annotation, AnnotationSchema } from '$lib/annotation';
 	import type { Entry } from '@prisma/client';
@@ -9,7 +9,7 @@
 	import type { UnwrapEffects, Validation } from 'sveltekit-superforms/index';
 	import Button from './ui/Button.svelte';
 	import Textarea from './ui/Textarea.svelte';
-	import { draggable } from "@neodrag/svelte" 
+	import { draggable } from "@neodrag/svelte"
 
 	const dispatch = createEventDispatcher<{
 		cancel: undefined;
@@ -34,7 +34,7 @@
 	export { _draggable as draggable };
 
 
-	
+
 	let el: HTMLFormElement;
 
 	$: console.log({ data });
@@ -85,7 +85,7 @@
 	disabled: !_draggable,
 	cancel: 'button, textarea',
 	bounds: 'body' // #entry-wrapper is a bit too constraining
-}} class={c} action="/tests/entry/{entry.id}?/annotate" method="post" use:enhance bind:this={el}>
+}} class={c} action="/entry/{entry.id}?/annotate" method="post" use:enhance bind:this={el}>
 	<slot form={superFrm} name="header">
 		{#if header}
 			<div>{@html header}</div>

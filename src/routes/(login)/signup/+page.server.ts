@@ -110,6 +110,6 @@ export const actions: Actions = {
 				},
 			);
 		}
-		throw redirect(303, '/tests/library/backlog');
+		throw redirect(303, '/library/backlog');
 	},
 };

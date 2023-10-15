@@ -48,7 +48,7 @@
 		<div use:melt={builder}>
 			<Badge variant="outline" class="min-w-0 max-w-[200px] xl:max-w-[224px]">
 				<svelte:component this={icons[type]} class="mr-2 h-4 w-4 shrink-0" />
-				<a href="/tests/{getType(entry.type)}/{getId(entry)}" class="truncate"
+				<a href="/{getType(entry.type)}/{getId(entry)}" class="truncate"
 					>{entry.title}</a
 				>
 				<OptionsMenu
@@ -75,7 +75,7 @@
 											props: {
 												onClick: () => {
 													console.log('save');
-													post(`/tests/entry/${entry.id}?/update_relation`, {
+													post(`/entry/${entry.id}?/update_relation`, {
 														id,
 														type,
 													}).then((result) => {
@@ -95,7 +95,7 @@
 							{
 								icon: TrashIcon,
 								onSelect: () => {
-									post(`/tests/entry/${entry.id}?/relation`, { id }).then(() =>
+									post(`/entry/${entry.id}?/relation`, { id }).then(() =>
 										invalidate('entry'),
 									);
 								},
@@ -106,7 +106,7 @@
 				>
 					<MoreHorizontalIcon slot="trigger" class="h-4 w-4" />
 				</OptionsMenu>
-				<!-- <form use:enhance method="post" action="/tests/entry/{entry.id}?/relation">
+				<!-- <form use:enhance method="post" action="/entry/{entry.id}?/relation">
             <input type="hidden" name="id" value={id} />
             <button> x </button>
         </form> -->

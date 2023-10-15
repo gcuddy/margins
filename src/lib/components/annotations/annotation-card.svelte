@@ -120,7 +120,7 @@
 									on:click={async () => {
 										// Copy to clipboard
 										navigator.clipboard.writeText(
-											`${$page.url.origin}/tests/note/${annotation.id}`,
+											`${$page.url.origin}/note/${annotation.id}`,
 										);
 									}}
 								>
@@ -140,7 +140,7 @@
 								<DropdownMenu.Item
 									on:click={async () => {
 										// Copy to clipboard
-										goto(`${$page.url.origin}/tests/note/${annotation.id}`);
+										goto(`${$page.url.origin}/note/${annotation.id}`);
 									}}
 								>
 									<ArrowRight class="h-4 w-4 mr-2" /> Go to annotation
@@ -149,7 +149,7 @@
 								<!-- <DropdownMenu.Item
 									on:click={async () => {
 										// Copy to clipboard
-										goto(`${$page.url.origin}/tests/note/${annotation.id}`);
+										goto(`${$page.url.origin}/note/${annotation.id}`);
 									}}
 								>
 									<ArrowRight class="h-4 w-4 mr-2" /> Add to collection

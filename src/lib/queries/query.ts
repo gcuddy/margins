@@ -13,10 +13,7 @@ import type { z } from 'zod';
 
 import { page } from '$app/stores';
 
-import type {
-	Mutations,
-	Queries,
-} from '../../routes/tests/(app2)/queries.server';
+import type { Mutations, Queries } from '../../routes/queries.server';
 import { queryOptions } from './utils';
 
 export type { Queries };
@@ -289,9 +286,9 @@ export async function query<T extends keyof Queries>(
 	console.log({ fetcher });
 	const data = stringify(input);
 	console.log({ data });
-	let url = `${
-		init.url?.origin ?? ''
-	}/tests/sq/${fn}?input=${encodeURIComponent(data)}`;
+	let url = `${init.url?.origin ?? ''}/sq/${fn}?input=${encodeURIComponent(
+		data,
+	)}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}
@@ -371,7 +368,7 @@ export async function mutation<T extends keyof Mutations>(
 	isMutating.set(true);
 	const { fetcher = fetch, userId = null } = base || {};
 	console.log(`mutating`);
-	let url = `${base?.url?.origin}/tests/sq/${fn}`;
+	let url = `${base?.url?.origin}/sq/${fn}`;
 	if (userId) {
 		url += `&userId=${userId}`;
 	}
@@ -435,7 +432,7 @@ export class Query {
 	// 	const { debounce } = opts || {};
 	// 	const { fetcher = fetch, userId = null } = this || {};
 	// 	const data = stringify(input);
-	// 	let url = this.url.origin + `/tests/sq/${fn}?input=${data}`;
+	// 	let url = this.url.origin + `/sq/${fn}?input=${data}`;
 	// 	if (userId) {
 	// 		url += `&userId=${userId}`;
 	// 	}
@@ -519,9 +516,7 @@ export const sq = (
 		): Promise<Awaited<ReturnType<Queries[T]['fn']>>> {
 			const { fetcher = fetch, userId = null } = init || {};
 			const data = stringify(input);
-			let url = init.fetcher
-				? ''
-				: `${init.url.origin}/tests/sq/${fn}?input=${data}`;
+			let url = init.fetcher ? '' : `${init.url.origin}/sq/${fn}?input=${data}`;
 			if (userId) {
 				url += `&userId=${userId}`;
 			}

@@ -41,7 +41,7 @@
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { numberOrString } from '$lib/utils/misc';
 
-	import { getEntryContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/ctx';
+	import { getEntryContext } from '../../../routes/(app2)/(listables)/[type=type]/ctx';
 	import { getPdfStateContext } from './utils';
 	import { sleep } from '@melt-ui/svelte/internal/helpers';
 	import throttle from 'just-throttle';

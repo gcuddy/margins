@@ -388,11 +388,11 @@
 						{/if}
 					</Muted>
 					{#if $query.data?.entry?.bookmark?.createdAt}
-						<!-- <Button href="/tests/library/all?createdAt={encodeURIComponent(`=${new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10)}`)}" variant="ghost" size="sm" class="p-2">
+						<!-- <Button href="/library/all?createdAt={encodeURIComponent(`=${new Date($query.data?.entry?.bookmark?.createdAt).toISOString().slice(0,10)}`)}" variant="ghost" size="sm" class="p-2">
                             <ChevronRightIcon class="h-3 w-3" />
                         </Button> -->
 						<Button
-							href="/tests/library/all{defaultStringifySearch({
+							href="/library/all{defaultStringifySearch({
 								createdAt: {
 									equals: new Date($query.data.entry.bookmark.createdAt)
 										.toISOString()
@@ -424,11 +424,11 @@
 					<div class="sidebar-row group">
 						<Muted>Domain</Muted>
 						<Muted class="truncate px-2"
-							><a href="/tests/domain/{domain}">{domain}</a></Muted
+							><a href="/domain/{domain}">{domain}</a></Muted
 						>
 						<Button
 							class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
-							href="/tests/library/all?domain={domain}"
+							href="/library/all?domain={domain}"
 							variant="ghost"
 							size="sm"
 						>
@@ -465,7 +465,7 @@
 						{#if status}
 							<Button
 								class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
-								href="/tests/library/{status.toLowerCase()}"
+								href="/library/{status.toLowerCase()}"
 								variant="ghost"
 								size="sm"
 							>
@@ -529,7 +529,7 @@
 								variant="secondary"
 								as="a"
 								class="line-clamp-2 rounded"
-								href="/tests/collection/{collection.id}"
+								href="/collection/{collection.id}"
 							>
 								<Icon
 									class="mr-2 h-4 w-4"

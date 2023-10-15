@@ -19,7 +19,7 @@
 </script>
 
 <form
-	action="/tests?/addUrl"
+	action="/s?/addUrl"
 	method="post"
 	use:enhance={({}) => {
         pending = true;

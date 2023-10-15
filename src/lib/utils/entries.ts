@@ -5,7 +5,7 @@ import type { EntryInList } from '$lib/db/selects';
 import type { MediaIdSchema } from '$lib/queries/server';
 import { formatDate } from './date';
 
-const prefix = `/tests`;
+const prefix = ``;
 
 export type SlimEntry = {
 	googleBooksId?: string | null;

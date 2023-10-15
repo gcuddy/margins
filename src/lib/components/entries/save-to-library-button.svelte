@@ -37,7 +37,7 @@
 		resetForm: false,
 	}}
 	{form}
-	action="/tests/{form.data.type}/{form.data.entryId}?/saveToLibrary"
+	action="/{form.data.type}/{form.data.entryId}?/saveToLibrary"
 	schema={saveToLibrarySchema}
 >
 		<input type="hidden" name="entryId" value={form.data.entryId} />

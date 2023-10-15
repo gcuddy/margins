@@ -34,7 +34,7 @@
 	export let onSelect: (subscription: Subscription) => void = (
 		subscription,
 	) => {
-		void goto(`/tests/subscription/${subscription.feedId}`);
+		void goto(`/subscription/${subscription.feedId}`);
 		isOpen = false;
 	};
 
@@ -93,7 +93,7 @@
 	}, preloadDelay);
 
 	$: if ($activeValue && preload) {
-		debouncedPreload(`/tests/subscription/${$activeValue}`);
+		debouncedPreload(`/subscription/${$activeValue}`);
 	}
 </script>
 

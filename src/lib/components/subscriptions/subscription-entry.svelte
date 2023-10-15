@@ -11,7 +11,7 @@
 	import Label from '$components/ui/Label.svelte';
 	import { Muted } from '$components/ui/typography';
 
-	import type { ActionData } from '../../../routes/tests/(app2)/(listables)/subscriptions/$types';
+	import type { ActionData } from '../../../routes/(app2)/(listables)/subscriptions/$types';
 	import {
 		type FeedSearchFormSchema,
 		feedSearchFormSchema,
@@ -62,7 +62,7 @@
     go back
 </button> -->
 	<form
-		action="/tests/subscriptions?/add"
+		action="/subscriptions?/add"
 		method="post"
 		class="flex flex-col gap-y-4 px-3 min-w-0"
 	>
@@ -115,7 +115,7 @@
 {:else}
 	<Form.Root
 		method="post"
-		action="/tests/subscriptions?/search"
+		action="/subscriptions?/search"
 		form={searchForm}
 		schema={feedSearchFormSchema}
 		let:config

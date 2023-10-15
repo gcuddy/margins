@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onDestroy } from 'svelte';
 
-	import type { Queries } from '@/routes/tests/(app2)/queries.server';
+	import type { Queries } from '@/routes/queries.server';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import CommandLoading from '$lib/components/ui/cmdk/Command.Loading.svelte';
@@ -34,11 +34,11 @@
 		item,
 	) => {
 		if (item.media_type === 'movie') {
-			goto(`/tests/movie/${item.id}`);
+			goto(`/movie/${item.id}`);
 		} else if (item.media_type === 'tv') {
-			goto(`/tests/tv/${item.id}`);
+			goto(`/tv/${item.id}`);
 		} else if (item.media_type === 'person') {
-			goto(`/tests/people/t${item.id}`);
+			goto(`/people/t${item.id}`);
 		}
 		isOpen = false;
 	};

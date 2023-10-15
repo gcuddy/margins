@@ -82,7 +82,7 @@
 <div bind:this={wrapper}>
 	<Cluster class="gap-2.5">
 		{#each $selectedTagsStore as { value: { name, color } }}
-			<Badge as="a" href="/tests/tag/{name}" variant="outline">
+			<Badge as="a" href="/tag/{name}" variant="outline">
 				<TagColorPill class="h-2 w-2 mr-1.5" color={color ?? '#000000'} />
 				{name}</Badge
 			>

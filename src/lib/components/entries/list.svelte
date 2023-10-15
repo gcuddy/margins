@@ -33,7 +33,7 @@
 	import { type Status, statuses } from '$lib/status';
 	import { cn } from '$lib/utils';
 
-	import { setBackContext } from '../../../routes/tests/(app2)/(listables)/[type=type]/[id]/store';
+	import { setBackContext } from '../../../routes/(app2)/(listables)/[type=type]/[id]/store';
 	import { currentEntryList } from './store';
 
 	export let opts: Readable<QueryInput<'get_library'>>;

@@ -59,7 +59,7 @@
 }} bind:selectedTags={tags} let:builder>
 	<div class="flex gap-1 flex-wrap w-fit" use:melt={builder}>
 		{#each tags as tag}
-			<!-- as="a" href="/tests/tag/{tag.name}" to decide: should tehse be links or trigger popover? -->
+			<!-- as="a" href="/tag/{tag.name}" to decide: should tehse be links or trigger popover? -->
 			<Badge>
 				<TagColorPill invertDefault class="h-2 w-2 mr-1.5" color={tag.color} />
 				{tag.name}

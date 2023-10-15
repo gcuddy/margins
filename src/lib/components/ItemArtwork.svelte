@@ -27,7 +27,7 @@
 </script>
 
 <a
-	href="/tests/{item.type === 'rss' ? 'article' : item.type}/{item.id}{item.type === 'article'
+	href="/{item.type === 'rss' ? 'article' : item.type}/{item.id}{item.type === 'article'
 		? '#:~:text=' + q
 		: ''}"
 	class={cn('space-y-3', className)}

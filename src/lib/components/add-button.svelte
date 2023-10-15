@@ -57,7 +57,7 @@
 	<div class="flex items-center gap-x-2">
 		<Dialog bind:isOpen={url_modal}>
 			<svelte:fragment slot="trigger">
-				<form on:submit|preventDefault action="/tests/library/add">
+				<form on:submit|preventDefault action="/library/add">
 					<Button size="sm" class="relative">
 						<Plus class="mr-2 h-4 w-4" />
 						<span class="sr-only">Add URL</span>
@@ -65,7 +65,7 @@
 				</form>
 			</svelte:fragment>
 			<DialogContent>
-				<form action="/tests?/addUrl" method="post" use:enhance_add_url>
+				<form action="/s?/addUrl" method="post" use:enhance_add_url>
 					<DialogHeader>
 						<DialogTitle>Add URL</DialogTitle>
 						<DialogDescription>Copy and paste the URL or ISBN to add.</DialogDescription>

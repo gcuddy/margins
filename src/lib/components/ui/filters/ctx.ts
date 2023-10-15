@@ -12,8 +12,11 @@ import { page } from '$app/stores';
 
 const NAME = Symbol('filterStore');
 
-export function set() {
-	const filterStore = createSearchParamsStore(filterLibrarySchema);
+export function set(opts?: { initialValue?: FilterLibrarySchema }) {
+	const filterStore = createSearchParamsStore(
+		filterLibrarySchema,
+		opts?.initialValue,
+	);
 	const dialogStore = createFilterDialogStore();
 
 	const filterChange = createChangeSearch<FilterLibrarySchema>();
@@ -36,9 +39,11 @@ export function set() {
 			dialogStore,
 			filterStore,
 			filters: derived(filterStore, ($filterStore) => {
+				if (!$filterStore) return [];
 				return objectEntries($filterStore).filter(Boolean);
 			}),
 			hasFilters: derived(filterStore, ($filterStore) => {
+				if (!$filterStore) return false;
 				return Object.keys($filterStore).length > 0;
 			}),
 			open: writable(false),

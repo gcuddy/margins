@@ -52,7 +52,7 @@
 	}) as album}
 		{@const image = findClosestImage(album.images, 48)}
 		<svelte:element this={as}>
-			<a href="/tests/album/{album.id}" class="flex gap-2">
+			<a href="/album/{album.id}" class="flex gap-2">
 				{#if image}
 					<img
 						style="view-transition-name:album-artwork-{album.id}"

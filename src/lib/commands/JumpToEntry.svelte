@@ -37,7 +37,7 @@
 
 	export let onSelect: (entry: ListEntry) => void = (entry) => {
         console.log('onSelect', entry)
-		void goto(`/tests/${entry.type}/${getId(entry)}`);
+		void goto(`/${entry.type}/${getId(entry)}`);
 		isOpen = false;
 	};
 

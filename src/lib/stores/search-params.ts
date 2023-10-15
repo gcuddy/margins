@@ -58,7 +58,7 @@ export function createParamsStore<TSchema extends z.ZodObject<any, any>>(
 	};
 }
 
-type SearchParamsStore<TSchema extends z.ZodObject<any, any>> = Writable<
+type SearchParamsStore<TSchema extends z.ZodTypeAny> = Writable<
 	z.infer<TSchema>
 > & {
 	change: (cb: (data: z.infer<TSchema>) => z.infer<TSchema>) => void;
@@ -66,12 +66,20 @@ type SearchParamsStore<TSchema extends z.ZodObject<any, any>> = Writable<
 	reset: () => void;
 };
 
-export function createSearchParamsStore<TSchema extends z.ZodObject<any, any>>(
+export function createSearchParamsStore<TSchema extends z.ZodTypeAny>(
 	schema: TSchema,
+	initialValue?: z.infer<TSchema>,
 ): SearchParamsStore<TSchema> {
-	const store = writable<z.infer<TSchema>>({});
+	const store = writable<z.infer<TSchema>>(initialValue);
+
+	// let usedInitialValue = false;
 
 	const unsubPage = page.subscribe(($page) => {
+		// if (!usedInitialValue) {
+		// 	usedInitialValue = true;
+		// 	return;
+		// }
+		console.log(`[createSearchParamsStore] page changed`);
 		const rawObj = defaultParseSearch($page.url.search);
 		if (!schema) {
 			return store.set(rawObj);

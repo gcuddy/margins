@@ -46,7 +46,7 @@
 	export let onSelect: (movie: QueryOutput<'searchMovies'>[number]) => void = (
 		movie,
 	) => {
-		goto(`/tests/movie/${movie.id}`);
+		goto(`/movie/${movie.id}`);
 		isOpen = false;
 	};
 </script>

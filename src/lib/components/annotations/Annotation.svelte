@@ -213,12 +213,12 @@
 			{#if annotation.tags.length}
 				<div class="flex gap-x-2 mt-2">
 					{#each annotation.tags as tag}
-						<!-- <a href="/tests/tag/{tag.name}">
+						<!-- <a href="/tag/{tag.name}">
 					<span class="text-xs text-gray-400">{tag.name}</span>
 				</a> -->
 						<Badge
 							as="a"
-							href="/tests/tag/{tag.name}"
+							href="/tag/{tag.name}"
 							class="font-normal"
 							variant="secondary">{tag.name}</Badge
 						>

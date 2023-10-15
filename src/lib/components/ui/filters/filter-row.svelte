@@ -51,7 +51,7 @@
 				{#if showSaveView && $hasFilters}
 					<Button
 						href={saveViewUrl ||
-							`/tests/views/explore/library${$page.url.search}`}
+							`/views/explore/library${$page.url.search}`}
 						size="sm"
 						variant="outline"
 						class="text-xs"

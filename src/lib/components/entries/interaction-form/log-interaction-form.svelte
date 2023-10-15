@@ -42,7 +42,7 @@
 	<SlimEntryDisplay {entry} />
 {/if}
 <Form.Root
-	action="/tests/{form.data.type}/{form.data.entryId}?/logInteraction"
+	action="/{form.data.type}/{form.data.entryId}?/logInteraction"
 	method="post"
 	{form}
 	schema={interactionLogInputSchema}

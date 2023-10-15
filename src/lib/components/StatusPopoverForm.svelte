@@ -29,7 +29,7 @@
 		bookmark?: Pick<Bookmark, "id" | "status"> | null;
 	};
 	export let data: SuperValidated<UpdateBookmarkSchema, Message>;
-	export let action_prefix = `/tests/entry/${entry.id}`;
+	export let action_prefix = `/entry/${entry.id}`;
 
 	const statuses = {
 		Archive: CheckCircle2,

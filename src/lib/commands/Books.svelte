@@ -43,7 +43,7 @@
 	export let onSelect: (tag: QueryOutput<'searchBooks'>[number]) => void = (
 		book,
 	) => {
-		void goto(`/tests/book/${book.id}`);
+		void goto(`/book/${book.id}`);
 		isOpen = false;
 	};
 
@@ -55,7 +55,7 @@
 	}, preloadDelay);
 
 	$: if ($activeValue && preload) {
-		debouncedPreload(`/tests/book/${$activeValue}`);
+		debouncedPreload(`/book/${$activeValue}`);
 	}
 </script>
 

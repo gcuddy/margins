@@ -43,7 +43,7 @@
 	) {
 		// todo: only want context if it comes from this page - figure out how to do that
 		// i guess i need to add drag handlers to every link (and image?) on the page, which seems... annoying
-		const promise = post<AddUrlObj>('/tests?/addUrl', {
+		const promise = post<AddUrlObj>('/s?/addUrl', {
 			status: 'Backlog',
 			url,
 			via_entryid: context.entryId,

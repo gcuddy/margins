@@ -44,7 +44,7 @@
 <form
 	class="contents"
 	method="post"
-	action="/tests/srs?/new"
+	action="/srs?/new"
 	bind:this={form}
 	on:blur={() => {
 		console.log(`Form blur`);

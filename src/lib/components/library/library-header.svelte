@@ -140,15 +140,15 @@
 		}
 		if (e.key === '1') {
 			e.preventDefault();
-			goto(`/tests/library/backlog`);
+			goto(`/library/backlog`);
 		}
 		if (e.key === '2') {
 			e.preventDefault();
-			goto(`/tests/library/now`);
+			goto(`/library/now`);
 		}
 		if (e.key === '3') {
 			e.preventDefault();
-			goto(`/tests/library/archive`);
+			goto(`/library/archive`);
 		}
 	}
 

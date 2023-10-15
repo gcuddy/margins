@@ -40,7 +40,7 @@ export const GET: RequestHandler = async ({ fetch, locals, request, url }) => {
 			expires_in: number;
 			refresh_token: string;
 		};
-		const u = `/tests/settings/integrations?spotify_access_token=${access_token}&spotify_refresh_token=${refresh_token}&spotify_expires_in=${expires_in}`;
+		const u = `/settings/integrations?spotify_access_token=${access_token}&spotify_refresh_token=${refresh_token}&spotify_expires_in=${expires_in}`;
 
 		// add these as integration
 		await db

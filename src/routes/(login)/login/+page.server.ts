@@ -23,7 +23,7 @@ export const load: PageServerLoad = async (event) => {
 				throw redirect(302, `/${redirectTo.slice(1)}`);
 			}
 		}
-		throw redirect(302, `/tests/library/backlog`);
+		throw redirect(302, `/library/backlog`);
 	}
 	const form = await superValidate<typeof loginUserSchema, Message>(
 		event,

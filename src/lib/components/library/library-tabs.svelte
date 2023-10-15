@@ -13,7 +13,7 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 
-	const prefix = '/tests';
+	const prefix = '';
 	const tabs = [
 		{ href: '/library/backlog', name: 'Backlog' },
 		{ href: '/library/now', name: 'Now' },

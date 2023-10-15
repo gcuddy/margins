@@ -37,10 +37,10 @@
 		note,
 	) => {
 		if (note.type === 'document') {
-			goto(`/tests/note/${note.id}`);
+			goto(`/note/${note.id}`);
 		} else if (note.entry) {
 			goto(
-				`/tests/${getType(note.entry.type)}/${getId(note.entry)}#annotation-${
+				`/${getType(note.entry.type)}/${getId(note.entry)}#annotation-${
 					note.id
 				}`,
 			);

@@ -101,7 +101,7 @@
 
 	export let checked = false;
 
-	$: href = `/tests/${getType(entry.type)}/${getId(entry)}`;
+	$: href = `/${getType(entry.type)}/${getId(entry)}`;
 
 	// $: tag_ids = entry.tags.map((t) => t.id) || [];
 
@@ -168,7 +168,7 @@
 		})
 			.then(() => {
 				toast.success(`Entry moved to ${status}`, {
-					// description: `<a href='/tests/library/${status.toLowerCase()}'>View ${status} entries</a>`,
+					// description: `<a href='/library/${status.toLowerCase()}'>View ${status} entries</a>`,
 					action: old_status
 						? {
 								label: 'Undo',
@@ -496,7 +496,7 @@
 									</HoverCard.Root>
 								{/if}
 								{#if viewPreferences.attachment && attachment?.entry}
-									<Badge as="a" href="/tests/pdf/{attachment.entry.id}">
+									<Badge as="a" href="/pdf/{attachment.entry.id}">
 										<FileTextIcon class="mr-1 h-3 w-3" />
 										<!-- {attachment.entry.title} -->
 										PDF ->
@@ -668,7 +668,7 @@
 														{#each data.tags as { color, id, name } (id)}
 															<Command.Item
 																onSelect={() => {
-																	goto(`/tests/tag/${name}`);
+																	goto(`/tag/${name}`);
 																}}
 															>
 																<TagColorPill class="h-2 w-2 mr-2" {color} />
@@ -691,7 +691,7 @@
 									<Badge
 										class="text-xs"
 										as="a"
-										href="/tests/tag/{tag.name}"
+										href="/tag/{tag.name}"
 										variant="outline"
 									>
 										<TagColorPill class="mr-1 h-2 w-2" color={tag.color} />

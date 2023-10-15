@@ -87,7 +87,7 @@
 			<DropdownMenuItem
 				on:click={() => {
 					//
-					goto(`/tests/notes/${annotation.id}`);
+					goto(`/notes/${annotation.id}`);
 				}}
 			>
 				<ArrowRightIcon class="mr-2 h-4 w-4" />

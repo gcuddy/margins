@@ -4,7 +4,7 @@
 	import { createEventDispatcher } from 'svelte';
 
 	import smoothload from '$lib/actions/smoothload';
-	import Button from '$lib/components/ui/Button.svelte';
+	import { Button } from '$lib/components/ui/button';
 
 	import type { Entry, Status } from '@prisma/client';
 	import type { EntryInList } from '$lib/db/selects';
@@ -486,7 +486,7 @@
 					<Button>Relate</Button>
 					<div class="flex items-center gap-2">
 						<form
-							action="/tests/library/?/update_status"
+							action="/library/?/update_status"
 							use:enhance={() => {
 								// parent component handles state mngmt, we'll just check for errors
 								return ({ result }) => {
@@ -504,7 +504,7 @@
 								<input type="hidden" name="id" value={id} />
 							{/each}
 							{#each statusKeys as _status}
-								{@const formaction = `/tests/library/?/update_status&status=${_status}`}
+								{@const formaction = `/library/?/update_status&status=${_status}`}
 								{#if status !== _status.toLowerCase()}
 									<Button
 										id="move-to-{_status.toLowerCase()}"

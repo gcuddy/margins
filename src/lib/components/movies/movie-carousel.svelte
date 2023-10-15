@@ -12,7 +12,7 @@
 		{#each movies as movie (movie.id)}
 			<a
 				data-movie-thumbnail
-				href="/tests/movie/{movie.id}"
+				href="/movie/{movie.id}"
 				class="flex flex-col min-w-0 w-24 h-auto gap-2 object-cover shrink-0 rounded"
 			>
 				<img

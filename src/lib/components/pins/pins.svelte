@@ -217,7 +217,7 @@
 					{pin.folderName}
 				</Button> -->
 			{:else if pin.view}
-				{@const href = `/tests/views/${pin.view.id}`}
+				{@const href = `/views/${pin.view.id}`}
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
@@ -254,7 +254,7 @@
 					</button>
 				</Button>
 			{:else if pin.collection}
-				{@const href = `/tests/collection/${pin.collection.id}`}
+				{@const href = `/collection/${pin.collection.id}`}
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
@@ -291,7 +291,7 @@
 					</button>
 				</Button>
 			{:else if pin.tag}
-				{@const href = `/tests/tag/${pin.tag.name}`}
+				{@const href = `/tag/${pin.tag.name}`}
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
@@ -331,7 +331,7 @@
 					</button>
 				</Button>
 			{:else if pin.note}
-				{@const href = `/tests/note/${pin.note.id}`}
+				{@const href = `/note/${pin.note.id}`}
 				<Button
 					{size}
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
