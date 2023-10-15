@@ -282,11 +282,11 @@
 <!--  -->
 <Filter.Root let:hasFilters let:reset>
 	<Header
-		class="max-sm:static max-sm:flex-col max-sm:h-max max-sm:items-start max-sm:py-2"
+		class=" "
 	>
 		<!-- class="flex flex-1 items-center justify-start gap-x-4" -->
 		<div
-			class="flex items-center gap-3 flex-1 min-w-0 max-sm:flex-col max-sm:items-start"
+			class="flex items-center gap-3 flex-1 min-w-0"
 		>
 			<slot name="title">
 				<h1 class="font-bold text-base">Library</h1>

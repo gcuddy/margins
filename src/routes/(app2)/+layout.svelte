@@ -21,6 +21,7 @@
 	import ViewTransitions from '$components/ViewTransitions.svelte';
 	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
 	import alertDialogStore from '$lib/stores/alert-dialog';
+	import MobileNav from './mobile-nav.svelte';
 
 	$: console.log({ $navigating, $page });
 
@@ -80,7 +81,7 @@
 					<MainNav />
 				</header> -->
 				{/if}
-				<div class={cn('grid grid-cols-[auto,1fr,auto] grow')}>
+				<div class={cn('sm:grid grid-cols-[auto,1fr,auto] grow')}>
 					<!-- w-[200px] -->
 					<div>
 						<aside
@@ -96,6 +97,7 @@
 								<Nav bind:width={$navWidth} user_data={data.user_data} />
 							{/if}
 						</aside>
+                        <MobileNav />
 					</div>
 					<main
 						class={cn(

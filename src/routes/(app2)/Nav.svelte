@@ -1,3 +1,69 @@
+<script lang="ts" context="module">
+	type Nav = {
+		active: (path: string) => boolean;
+		href: string;
+		icon: ComponentType;
+		label: string;
+	};
+
+	export const nav: Array<Nav> = [
+		{
+			active: (url) => url.startsWith('/home'),
+			href: '/home',
+			icon: Home,
+			label: 'Home',
+		},
+		{
+			active: (url) => url.startsWith('/library'),
+			href: '/library/backlog',
+			icon: Library,
+			label: 'Library',
+		},
+		{
+			active: (url) => url.startsWith('/subscriptions'),
+			href: '/subscriptions',
+			icon: Rss,
+			label: 'Subscriptions',
+		},
+		{
+			active: (path) => path === '/collections',
+			href: '/collections',
+			icon: Box,
+			label: 'Collections',
+		},
+		// {
+		// 	active: (url) => url.startsWith('/notes'),
+		// 	href: '/notes',
+		// 	icon: TreePine,
+		// 	label: 'Evergreens',
+		// },
+		{
+			active: (url) => url.startsWith('/notebook'),
+			href: '/notebook',
+			icon: BookMarked,
+			label: 'Notebook',
+		},
+		{
+			active: (url) => url === '/views',
+			href: '/views',
+			icon: Layers,
+			label: 'Views',
+		},
+		// {
+		// 	active: (url) => url === '/views',
+		// 	href: '/srs',
+		// 	icon: BrainCircuit,
+		// 	label: 'Memory Palace',
+		// },
+		{
+			active: (url) => url.startsWith('/search'),
+			href: '/search',
+			icon: SearchIcon,
+			label: 'Search',
+		},
+	];
+</script>
+
 <script lang="ts">
 	import { createAvatar, melt } from '@melt-ui/svelte';
 	import {
@@ -58,75 +124,11 @@
 
 	let pinsComponent: Pins;
 
-	type Nav = {
-		active: (path: string) => boolean;
-		href: string;
-		icon: ComponentType;
-		label: string;
-	};
-
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
 	const isRestoring = getContext('isRestoring') as Writable<boolean>;
 	const isMutating = useIsMutating();
 	const isFetching = useIsFetching();
-
-	const nav: Array<Nav> = [
-		{
-			active: (url) => url.startsWith('/home'),
-			href: '/home',
-			icon: Home,
-			label: 'Home',
-		},
-		{
-			active: (url) => url.startsWith('/library'),
-			href: '/library/backlog',
-			icon: Library,
-			label: 'Library',
-		},
-		{
-			active: (url) => url.startsWith('/subscriptions'),
-			href: '/subscriptions',
-			icon: Rss,
-			label: 'Subscriptions',
-		},
-		{
-			active: (path) => path === '/collections',
-			href: '/collections',
-			icon: Box,
-			label: 'Collections',
-		},
-		// {
-		// 	active: (url) => url.startsWith('/notes'),
-		// 	href: '/notes',
-		// 	icon: TreePine,
-		// 	label: 'Evergreens',
-		// },
-		{
-			active: (url) => url.startsWith('/notebook'),
-			href: '/notebook',
-			icon: BookMarked,
-			label: 'Notebook',
-		},
-		{
-			active: (url) => url === '/views',
-			href: '/views',
-			icon: Layers,
-			label: 'Views',
-		},
-		// {
-		// 	active: (url) => url === '/views',
-		// 	href: '/srs',
-		// 	icon: BrainCircuit,
-		// 	label: 'Memory Palace',
-		// },
-		{
-			active: (url) => url.startsWith('/search'),
-			href: '/search',
-			icon: SearchIcon,
-			label: 'Search',
-		},
-	];
 
 	const pinsQuery = createQuery(queryFactory.pins.list());
 
@@ -210,10 +212,12 @@
 							<a class="contents" href="/settings">Settings</a>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem on:click={() => {
-                            queryClient.clear();
-                            post('/s?/logout')
-                        }}>
+						<DropdownMenuItem
+							on:click={() => {
+								queryClient.clear();
+								post('/s?/logout');
+							}}
+						>
 							Logout
 						</DropdownMenuItem>
 					</DropdownMenuContent>
@@ -244,7 +248,7 @@
 					<span class="hidden lg:inline">Add</span>
 					<!-- TODO: create dropdown menu for type, and add Modal -->
 				</Button>
-                <!-- h-8 is same height as buttons -->
+				<!-- h-8 is same height as buttons -->
 				<Separator class="h-8 hidden lg:flex" orientation="vertical" />
 				<DropdownMenu
 					positioning={{

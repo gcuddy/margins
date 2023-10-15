@@ -4,17 +4,19 @@
 	import { fly } from 'svelte/transition';
 
 	import Button from '$components/ui/Button.svelte';
+	import { cn } from '$lib/utils';
 
 	const navWidth =
 		(getContext('mainNavWidth') as Writable<number>) ?? writable(0);
 
 	export let length = 0;
+    export let styled = true;
 </script>
 
 {#if length}
 	<div
-		style:left="{$navWidth}px"
-		class="fixed bottom-5 right-0 pointer-events-none z-10 flex justify-center"
+		style:--left="{$navWidth}px"
+		class={cn(styled && "fixed bottom-5 left-[--left] right-0 pointer-events-none z-10 flex justify-center")}
 	>
 		<!--  -->
 		<div
