@@ -1,99 +1,145 @@
 <script>
-	import Button from '$lib/components/ui/Button.svelte';
-	import { H1, H2, H3, Lead, Small, Muted } from '$lib/components/ui/typography';
-	import { Image } from '@unpic/svelte';
-	import { Armchair, Edit3, Glasses, Layers, Rss, Zap } from 'lucide-svelte';
+	import { buttonVariants } from '$components/ui/button';
+	import { cn } from '$lib';
+	import {
+		H2,
+		Lead
+	} from '$lib/components/ui/typography';
+	import {
+		Armchair,
+		ChevronRight,
+		Edit3,
+		Glasses,
+		Layers,
+		Rss,
+		Zap,
+	} from 'lucide-svelte';
 </script>
 
-<section
-	class="container grid items-center justify-center gap-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:pb-24 lg:pt-16"
->
-	<img
-		width={500}
-		height={500}
-		class="mx-auto animate-in fade-in slide-in-from-top-2 duration-1000"
-		src="/images/screenshot.jpg"
-	/>
+<section class="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
 	<div
-		class="item-start mx-auto flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-1000 lg:w-[52rem]"
+		class="container flex max-w-[64rem] flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-top-4 duration-1000"
 	>
-		<H1 class="">
+		<!-- Link here to announcing open beta -->
+		<h1
+			class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter font-bold"
+		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
 			Margins is the app for saving, consuming, and annotating
 			<em>anything</em>.
-		</H1>
-		<Lead>Discover the best way to organize your information inputs.</Lead>
+		</h1>
+		<p
+			class="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8"
+		>
+			A powerful research app for slightly insane infovores.
+		</p>
+        <div class="space-x-4">
+            <a href="/signup" class={cn(buttonVariants({ size: 'lg' }))}>
+                Get Margins <ChevronRight class="w-4 h-4 ml-1" />
+            </a>
+        </div>
 	</div>
-	<div class="flex gap-4">
-		<Button size="lg" as="a" href="/signup">Get Margins</Button>
-	</div>
+	<!-- TODO: join waitlist -->
 </section>
-<section class="container grid justify-center gap-6 py-8 md:py-12 lg:py-24">
-	<H2 class="md:text-4xl">What can Margins do for you?</H2>
-	<Lead>Quite a lot, actually.</Lead>
-	<ul class="grid justify-center gap-4 sm:grid-cols-2 md:max-w-[56rem] md:grid-cols-3">
-		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
-			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
+<section class="container space-y-6 bg-stone-50 py-8 dark:bg-transparent md:py-12 lg:py-24">
+    <div class="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
+        <h2 class="tracking-tight font-semibold text-3xl leading-[1.1] sm:text-3xl md:text-6xl">Features</h2>
+        <p class="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
+            What can Margins do for you? Quite a lot…
+        </p>
+    </div>
+	<ul
+		class="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3"
+	>
+		<li
+			class="relative overflow-hidden rounded-lg border bg-background p-2"
+		>
+			<div
+				class="flex h-[180px] flex-col justify-between rounded-md p-6"
+			>
 				<Glasses class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
-					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Read Later</h3>
-					<span class="text-sm text-gray-200"
+					<h3 class="font-bold">Read Later</h3>
+					<span class="text-sm text-muted-foreground"
 						>Articles, PDFs, videos, websites, documents and more.</span
 					>
 				</div>
-			</li>
-		</div>
-		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
-			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
+			</div>
+		</li>
+		<li
+			class="relative overflow-hidden rounded-lg border bg-background p-2"
+		>
+			<div
+				class="flex h-[180px] flex-col justify-between rounded-md p-6"
+			>
 				<Rss class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
-					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Subscriptions</h3>
-					<span class="text-sm text-gray-200"
+					<h3 class="font-bold">Subscriptions</h3>
+					<span class="text-sm text-muted-foreground"
 						>Podcasts, RSS, emails, and anything you can throw at it.</span
 					>
 				</div>
-			</li>
-		</div>
-		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
-			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
+			</div>
+		</li>
+        <li
+			class="relative overflow-hidden rounded-lg border bg-background p-2"
+		>
+			<div
+				class="flex h-[180px] flex-col justify-between rounded-md p-6"
+			>
 				<Edit3 class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
-					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Annotate</h3>
-					<span class="text-sm text-gray-200">Highlight, annotate, and share documents.</span>
+					<h3 class="font-bold">Annotate</h3>
+					<span class="text-sm text-muted-foreground"
+						>Highlight, annotate, and share documents.</span
+					>
 				</div>
-			</li>
-		</div>
-		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
-			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
+			</div>
+		</li>
+        <li
+			class="relative overflow-hidden rounded-lg border bg-background p-2"
+		>
+			<div
+				class="flex h-[180px] flex-col justify-between rounded-md p-6"
+			>
 				<Layers class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
-					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Organize</h3>
-					<span class="text-sm text-gray-200"
+					<h3 class="font-bold">Organize</h3>
+					<span class="text-sm text-muted-foreground"
 						>Organize bookmarks into easily shareable collections and views.</span
 					>
 				</div>
-			</li>
-		</div>
-		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
-			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
+			</div>
+		</li>
+        <li
+			class="relative overflow-hidden rounded-lg border bg-background p-2"
+		>
+			<div
+				class="flex h-[180px] flex-col justify-between rounded-md p-6"
+			>
 				<Armchair class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
-					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Any Media</h3>
-					<span class="text-sm text-gray-200">Track books, movies, TV, games, and more.</span>
+					<h3 class="font-bold">Any Media</h3>
+					<span class="text-sm text-muted-foreground"
+						>Track books, movies, TV, games, and more.</span
+					>
 				</div>
-			</li>
-		</div>
-		<div class="relative overflow-hidden rounded-lg border border-gray-200 bg-white p-2 shadow-2xl">
-			<li class="flex h-[180px] flex-col justify-between rounded-md bg-black p-6 text-gray-200">
+			</div>
+		</li>
+        <li
+			class="relative overflow-hidden rounded-lg border bg-background p-2"
+		>
+			<div
+				class="flex h-[180px] flex-col justify-between rounded-md p-6"
+			>
 				<Zap class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
-					<h3 class="text-lg font-bold text-gray-100 md:text-xl">Integrate</h3>
-					<span class="text-sm text-gray-200">Integrate, export and share your notes.</span>
+					<h3 class="font-bold">Integrate</h3>
+					<span class="text-sm text-muted-foreground"
+						>Integrate, export and share your notes.</span
+					>
 				</div>
-			</li>
-		</div>
+			</div>
+		</li>
 	</ul>
-</section>
-<section class="container grid justify-center gap-6 py-8 md:py-12 lg:py-24">
-	<H2>Frequently Asked Questions</H2>
 </section>

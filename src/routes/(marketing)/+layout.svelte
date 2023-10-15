@@ -4,10 +4,10 @@
 </script>
 
 <div class="flex min-h-screen select-text flex-col">
-	<header class="container sticky top-0 z-40">
+	<header class="container z-40">
 		<nav>
 			<ul class=" mx-auto flex items-center justify-end space-x-4 p-4">
-				<li><Button as="a" href="/login">Login</Button></li>
+				<li><Button variant="secondary" href="/login">Login</Button></li>
 				<!-- <li>
 					<Button
 						as="a"
