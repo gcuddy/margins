@@ -1,18 +1,33 @@
 <script lang="ts">
-	import Button from '$lib/components/ui/Button.svelte';
-	import { H1, Lead } from '$lib/components/ui/typography';
+	import Header from '$components/ui/Header.svelte';
+	import { Button } from '$lib/components/ui/button';
 	export let data;
+	import { Layers, Plus } from 'radix-icons-svelte';
 </script>
 
-<div class="flex items-center justify-between">
+<Header title="Views">
+	<svelte:fragment slot="end">
+		<Button size="sm" variant="outline" href="/tests/views/explore/library">
+			<Plus class="mr-1" />
+			New view</Button
+		>
+	</svelte:fragment>
+</Header>
+<!-- <div class="flex items-center justify-between">
 	<div>
-		<H1>Views</H1>
 		<Lead>Views allow you to see stuff you've saved in different ways.</Lead>
 	</div>
-	<Button href="/tests/views/explore/library">New view</Button>
+</div> -->
+<div class="flex flex-col">
+	{#each data.views as view}
+		<a class="block h-16" href="/tests/views/{view.id}">
+			<div class="flex h-full items-center gap-4 border-b py-3 px-6 lg:px-9">
+				<span>
+					<!-- TODO: ICON -->
+					<Layers />
+				</span>
+				<span class="grow">{view.name}</span>
+			</div>
+		</a>
+	{/each}
 </div>
-{#each data.views as view}
-	<div>
-		<a href="/tests/views/{view.id}">{view.name}</a>
-	</div>
-{/each}

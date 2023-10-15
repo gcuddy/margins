@@ -96,12 +96,12 @@
 			icon: Box,
 			label: 'Collections',
 		},
-		{
-			active: (url) => url.startsWith('/tests/notes'),
-			href: '/tests/notes',
-			icon: TreePine,
-			label: 'Evergreens',
-		},
+		// {
+		// 	active: (url) => url.startsWith('/tests/notes'),
+		// 	href: '/tests/notes',
+		// 	icon: TreePine,
+		// 	label: 'Evergreens',
+		// },
 		{
 			active: (url) => url.startsWith('/tests/notebook'),
 			href: '/tests/notebook',
@@ -114,12 +114,12 @@
 			icon: Layers,
 			label: 'Views',
 		},
-		{
-			active: (url) => url === '/tests/views',
-			href: '/tests/srs',
-			icon: BrainCircuit,
-			label: 'Memory Palace',
-		},
+		// {
+		// 	active: (url) => url === '/tests/views',
+		// 	href: '/tests/srs',
+		// 	icon: BrainCircuit,
+		// 	label: 'Memory Palace',
+		// },
 		{
 			active: (url) => url.startsWith('/tests/search'),
 			href: '/tests/search',

@@ -8,7 +8,7 @@ import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
 import { tmdb } from '$lib/api/tmdb';
 import type { Tweet } from '$lib/api/twitter';
-import { db } from '$lib/db';
+import { db, json } from '$lib/db';
 import {
 	collections,
 	collectionUpdate,
@@ -98,6 +98,7 @@ import {
 import { fetchList, inputSchema } from './library/fetch.server';
 import { type Condition, View } from './views/new/View';
 import { customViewCreate } from '$lib/db/queries/custom-view';
+import { jsonSchema } from '$lib/schemas/types';
 
 type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -403,6 +404,35 @@ export const mutations = {
 			ids: z.array(z.number().int()),
 			sort_order: z.number().int().optional(),
 			status: z.nativeEnum(Status),
+		}),
+	}),
+	viewUpsert: query({
+		// TODO: upgrade this
+		fn: async ({ ctx, input }) => {
+			const view = await db
+				.insertInto('SmartList')
+				.values({
+					filterData: json(input.filterData),
+					id: input.id,
+					name: input.name,
+					userId: ctx.userId,
+					updatedAt: new Date(),
+				})
+				.onDuplicateKeyUpdate({
+					filterData: json(input.filterData),
+					name: input.name,
+					updatedAt: new Date(),
+				})
+				.executeTakeFirst();
+
+			return {
+				id: input.id ?? Number(view.insertId),
+			};
+		},
+		schema: z.object({
+			filterData: jsonSchema,
+			id: z.number().optional(),
+			name: z.string(),
 		}),
 	}),
 	viewPreferencesCreate: query({
