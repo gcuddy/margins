@@ -9,7 +9,7 @@ dependencies:
     specifier: ^0.0.22
     version: 0.0.22
   '@googleapis/youtube':
-    specifier: ^10.0.0
+    specifier: ^10.1.0
     version: 10.1.0
   '@huntabyte/primitives':
     specifier: ^0.0.19
@@ -18,17 +18,17 @@ dependencies:
     specifier: ^1.0.1
     version: 1.0.1(lucia-auth@1.8.0)
   '@lucia-auth/adapter-mysql':
-    specifier: ^2.0.0
-    version: 2.1.0(@planetscale/database@1.11.0)(lucia@2.7.1)(mysql2@3.6.1)
+    specifier: ^2.1.0
+    version: 2.1.0(@planetscale/database@1.11.0)(lucia@2.7.1)(mysql2@3.6.2)
   '@lucia-auth/adapter-session-redis':
-    specifier: ^2.0.0
+    specifier: ^2.1.1
     version: 2.1.1(@upstash/redis@1.23.3)(ioredis@5.3.2)(lucia@2.7.1)
   '@lukemorales/query-key-factory':
     specifier: ^1.3.2
     version: 1.3.2(@tanstack/query-core@4.36.1)(@tanstack/react-query@4.36.1)
   '@macfja/svelte-persistent-store':
-    specifier: ^2.3.2
-    version: 2.4.0(svelte@4.2.1)
+    specifier: ^2.4.1
+    version: 2.4.1(svelte@4.2.1)
   '@melt-ui/svelte':
     specifier: ^0.54.1
     version: 0.54.1(svelte@4.2.1)
@@ -39,29 +39,29 @@ dependencies:
     specifier: ^1.0.0
     version: 1.0.0
   '@noble/hashes':
-    specifier: ^1.3.1
+    specifier: ^1.3.2
     version: 1.3.2
   '@planetscale/database':
-    specifier: ^1.8.0
+    specifier: ^1.11.0
     version: 1.11.0
   '@prisma/client':
     specifier: ^5.4.2
     version: 5.4.2(prisma@5.4.2)
   '@skeletonlabs/skeleton':
-    specifier: ^1.9.0
+    specifier: ^1.12.0
     version: 1.12.0(svelte@4.2.1)
   '@tanstack/query-async-storage-persister':
-    specifier: ^5.0.0-beta.35
+    specifier: 5.0.0-rc.12
     version: 5.0.0-rc.12
   '@tanstack/query-persist-client-core':
-    specifier: ^5.0.0-beta.35
+    specifier: 5.0.0-rc.12
     version: 5.0.0-rc.12
   '@tanstack/svelte-query':
-    specifier: ^5.0.0-beta.35
+    specifier: 5.0.0-rc.12
     version: 5.0.0-rc.12(svelte@4.2.1)
   '@tanstack/svelte-query-devtools':
-    specifier: ^5.0.0-beta.35
-    version: 5.0.0-rc.13(@tanstack/svelte-query@5.0.0-rc.12)(svelte@4.2.1)
+    specifier: 5.0.0-rc.14
+    version: 5.0.0-rc.14(@tanstack/svelte-query@5.0.0-rc.12)(svelte@4.2.1)
   '@tiptap-pro/extension-mathematics':
     specifier: latest
     version: 2.3.3(@tiptap/core@2.2.0-rc.4)(@tiptap/pm@2.2.0-rc.4)(katex@0.16.9)
@@ -132,7 +132,7 @@ dependencies:
     specifier: ^12.2.3
     version: 12.2.3
   '@types/marked':
-    specifier: ^5.0.0
+    specifier: ^5.0.2
     version: 5.0.2
   '@unpic/svelte':
     specifier: ^0.0.28
@@ -141,7 +141,7 @@ dependencies:
     specifier: ^2.1.8
     version: 2.1.8
   arktype:
-    specifier: ^1.0.14-alpha
+    specifier: 1.0.14-alpha
     version: 1.0.14-alpha
   bits-ui:
     specifier: ^0.5.7
@@ -165,7 +165,7 @@ dependencies:
     specifier: ^2.4.0
     version: 2.4.0
   compromise:
-    specifier: ^14.9.0
+    specifier: ^14.10.0
     version: 14.10.0
   country-flag-icons:
     specifier: ^1.5.7
@@ -174,28 +174,28 @@ dependencies:
     specifier: ^3.1.2
     version: 3.1.2
   date-picker-svelte:
-    specifier: ^2.6.0
+    specifier: ^2.8.0
     version: 2.8.0(svelte@4.2.1)
   dequal:
     specifier: ^2.0.3
     version: 2.0.3
   drizzle-orm:
     specifier: ^0.27.2
-    version: 0.27.2(@planetscale/database@1.11.0)(kysely@0.26.3)(mysql2@3.6.1)
+    version: 0.27.2(@planetscale/database@1.11.0)(kysely@0.26.3)(mysql2@3.6.2)
   epubjs:
     specifier: ^0.3.93
     version: 0.3.93
   focus-trap:
-    specifier: ^7.5.2
+    specifier: ^7.5.4
     version: 7.5.4
   formsnap:
     specifier: ^0.2.0
     version: 0.2.0(svelte@4.2.1)(sveltekit-superforms@1.8.0)(zod@3.22.4)
   highlight.js:
-    specifier: ^11.8.0
+    specifier: ^11.9.0
     version: 11.9.0
   highlight.run:
-    specifier: ^7.3.6
+    specifier: ^7.6.0
     version: 7.6.0
   idb-keyval:
     specifier: ^6.2.1
@@ -216,7 +216,7 @@ dependencies:
     specifier: ^4.2.0
     version: 4.2.0
   katex:
-    specifier: ^0.16.8
+    specifier: ^0.16.9
     version: 0.16.9
   kysely:
     specifier: ^0.26.3
@@ -231,26 +231,26 @@ dependencies:
     specifier: ^4.6.0
     version: 4.6.0
   lucia:
-    specifier: ^2.4.0
+    specifier: ^2.7.1
     version: 2.7.1
   lucide-svelte:
     specifier: ^0.284.0
     version: 0.284.0(svelte@4.2.1)
   magic-string:
-    specifier: ^0.30.1
+    specifier: ^0.30.5
     version: 0.30.5
   markdown-it:
-    specifier: ^13.0.1
+    specifier: ^13.0.2
     version: 13.0.2
   marked:
-    specifier: ^5.1.1
+    specifier: ^5.1.2
     version: 5.1.2
   mime-types:
     specifier: ^2.1.35
     version: 2.1.35
   mysql2:
-    specifier: ^3.5.1
-    version: 3.6.1
+    specifier: ^3.6.2
+    version: 3.6.2
   pdfjs-dist:
     specifier: latest
     version: 3.11.174
@@ -258,7 +258,7 @@ dependencies:
     specifier: ^1.7.1
     version: 1.7.1
   puppeteer-core:
-    specifier: '20.8'
+    specifier: ~20.8.3
     version: 20.8.3(typescript@5.2.2)
   puppeteer-extra:
     specifier: ^3.3.6
@@ -273,7 +273,7 @@ dependencies:
     specifier: ^1.2.1
     version: 1.2.1
   rehype-stringify:
-    specifier: ^9.0.3
+    specifier: ^9.0.4
     version: 9.0.4
   remark:
     specifier: ^14.0.3
@@ -291,7 +291,7 @@ dependencies:
     specifier: ^1.1.0
     version: 1.1.0
   svelte-french-toast:
-    specifier: ^1.1.0
+    specifier: ^1.2.0
     version: 1.2.0(svelte@4.2.1)
   svelte-hero-icons:
     specifier: ^5.0.0
@@ -300,7 +300,7 @@ dependencies:
     specifier: ^0.5.0
     version: 0.5.0(svelte@4.2.1)
   svelte-sonner:
-    specifier: ^0.1.2
+    specifier: ^0.1.4
     version: 0.1.4(svelte@4.2.1)
   svelte-tiptap:
     specifier: latest
@@ -309,13 +309,13 @@ dependencies:
     specifier: ^3.1.0
     version: 3.1.0(svelte@4.2.1)
   tailwind-merge:
-    specifier: ^1.13.2
+    specifier: ^1.14.0
     version: 1.14.0
   tailwind-scrollbar:
-    specifier: ^3.0.4
+    specifier: ^3.0.5
     version: 3.0.5(tailwindcss@0.0.0-insiders.44fb67b)
   tailwind-variants:
-    specifier: ^0.1.13
+    specifier: ^0.1.14
     version: 0.1.14(tailwindcss@0.0.0-insiders.44fb67b)
   tippy.js:
     specifier: ^6.3.7
@@ -333,7 +333,7 @@ dependencies:
     specifier: ^13.11.0
     version: 13.11.0
   vite-plugin-pwa:
-    specifier: ^0.16.4
+    specifier: ^0.16.5
     version: 0.16.5(vite@4.4.11)(workbox-build@7.0.0)(workbox-window@7.0.0)
   youtube-player:
     specifier: ^5.6.0
@@ -344,16 +344,16 @@ dependencies:
 
 devDependencies:
   '@aws-sdk/client-s3':
-    specifier: ^3.369.0
+    specifier: ^3.428.0
     version: 3.428.0
   '@faker-js/faker':
-    specifier: ^8.0.2
-    version: 8.1.0
+    specifier: ^8.2.0
+    version: 8.2.0
   '@formkit/auto-animate':
-    specifier: ^1.0.0-beta.6
+    specifier: 1.0.0-pre-alpha.3
     version: 1.0.0-pre-alpha.3(react@18.2.0)
   '@googleapis/books':
-    specifier: ^1.0.0
+    specifier: ^1.0.5
     version: 1.0.5
   '@json-feed-types/1_1':
     specifier: ^1.0.2
@@ -368,7 +368,7 @@ devDependencies:
     specifier: ^2.0.3
     version: 2.0.3
   '@playwright/test':
-    specifier: ^1.36.0
+    specifier: ^1.39.0
     version: 1.39.0
   '@popperjs/core':
     specifier: ^2.11.8
@@ -392,28 +392,28 @@ devDependencies:
     specifier: ^1.25.2
     version: 1.25.2(svelte@4.2.1)(vite@4.4.11)
   '@tailwindcss/forms':
-    specifier: ^0.5.3
+    specifier: ^0.5.6
     version: 0.5.6(tailwindcss@0.0.0-insiders.44fb67b)
   '@tailwindcss/line-clamp':
     specifier: ^0.4.4
     version: 0.4.4(tailwindcss@0.0.0-insiders.44fb67b)
   '@tailwindcss/typography':
-    specifier: ^0.0.0-insiders.2cca6ca
+    specifier: 0.0.0-insiders.fda8ce5
     version: 0.0.0-insiders.fda8ce5(tailwindcss@0.0.0-insiders.44fb67b)
   '@tanstack/eslint-plugin-query':
-    specifier: ^5.0.0-beta.20
+    specifier: 5.0.0-rc.5
     version: 5.0.0-rc.5(eslint@8.51.0)(typescript@5.2.2)
   '@tanstack/svelte-virtual':
-    specifier: ^3.0.0-beta.54
+    specifier: 3.0.0-beta.65
     version: 3.0.0-beta.65(svelte@4.2.1)
   '@total-typescript/ts-reset':
     specifier: ^0.4.2
     version: 0.4.2
   '@trpc/client':
-    specifier: ^10.34.0
+    specifier: ^10.40.0
     version: 10.40.0(@trpc/server@10.40.0)
   '@trpc/server':
-    specifier: ^10.34.0
+    specifier: ^10.40.0
     version: 10.40.0
   '@twitter-api-v2/plugin-token-refresher':
     specifier: ^1.0.0
@@ -422,10 +422,10 @@ devDependencies:
     specifier: ^4.0.1
     version: 4.0.1
   '@types/color':
-    specifier: ^3.0.3
+    specifier: ^3.0.4
     version: 3.0.4
   '@types/lodash':
-    specifier: ^4.14.195
+    specifier: ^4.14.199
     version: 4.14.199
   '@types/lodash.clonedeep':
     specifier: ^4.5.7
@@ -440,43 +440,43 @@ devDependencies:
     specifier: ^4.5.6
     version: 4.5.6
   '@types/prismjs':
-    specifier: ^1.26.0
+    specifier: ^1.26.1
     version: 1.26.1
   '@types/spotify-web-api-node':
-    specifier: ^5.0.7
+    specifier: ^5.0.8
     version: 5.0.8
   '@types/uuid':
-    specifier: ^9.0.2
+    specifier: ^9.0.5
     version: 9.0.5
   '@types/validator':
-    specifier: ^13.11.1
+    specifier: ^13.11.3
     version: 13.11.3
   '@types/wicg-file-system-access':
-    specifier: ^2020.9.6
+    specifier: ^2020.9.8
     version: 2020.9.8
   '@types/youtube-player':
-    specifier: ^5.5.7
+    specifier: ^5.5.8
     version: 5.5.8
   '@typescript-eslint/eslint-plugin':
-    specifier: ^6.4.1
+    specifier: ^6.7.5
     version: 6.7.5(@typescript-eslint/parser@6.7.5)(eslint@8.51.0)(typescript@5.2.2)
   '@typescript-eslint/parser':
-    specifier: ^6.4.1
+    specifier: ^6.7.5
     version: 6.7.5(eslint@8.51.0)(typescript@5.2.2)
   '@upstash/redis':
-    specifier: ^1.22.0
+    specifier: ^1.23.3
     version: 1.23.3
   '@vite-pwa/sveltekit':
-    specifier: ^0.2.5
+    specifier: ^0.2.7
     version: 0.2.7(@sveltejs/kit@1.25.2)(vite-plugin-pwa@0.16.5)
   autoprefixer:
-    specifier: ^10.4.14
+    specifier: ^10.4.16
     version: 10.4.16(postcss@8.4.31)
   autosize:
     specifier: ^6.0.1
     version: 6.0.1
   aws-sdk:
-    specifier: ^2.1414.0
+    specifier: ^2.1473.0
     version: 2.1473.0
   codejar:
     specifier: ^3.7.0
@@ -491,22 +491,22 @@ devDependencies:
     specifier: ^3.0.0
     version: 3.0.0
   dayjs:
-    specifier: ^1.11.9
+    specifier: ^1.11.10
     version: 1.11.10
   devalue:
     specifier: ^4.3.2
     version: 4.3.2
   dompurify:
-    specifier: ^3.0.5
+    specifier: ^3.0.6
     version: 3.0.6
   drizzle-kit:
-    specifier: ^0.19.5
+    specifier: ^0.19.13
     version: 0.19.13
   eslint:
-    specifier: ^8.48.0
+    specifier: ^8.51.0
     version: 8.51.0
   eslint-config-prettier:
-    specifier: ^8.8.0
+    specifier: ^8.10.0
     version: 8.10.0(eslint@8.51.0)
   eslint-plugin-import:
     specifier: ^2.28.1
@@ -521,7 +521,7 @@ devDependencies:
     specifier: ^1.1.2
     version: 1.1.2
   eslint-plugin-svelte:
-    specifier: ^2.33.0
+    specifier: ^2.34.0
     version: 2.34.0(eslint@8.51.0)(svelte@4.2.1)(ts-node@10.9.1)
   eslint-plugin-tailwindcss:
     specifier: ^3.13.0
@@ -539,10 +539,10 @@ devDependencies:
     specifier: ^1.12.0
     version: 1.12.0
   fast-xml-parser:
-    specifier: ^4.2.5
+    specifier: ^4.3.2
     version: 4.3.2
   histoire:
-    specifier: ^0.16.2
+    specifier: ^0.16.5
     version: 0.16.5(@types/node@20.8.6)(vite@4.4.11)
   html-entities:
     specifier: ^2.4.0
@@ -578,10 +578,10 @@ devDependencies:
     specifier: ^4.0.2
     version: 4.0.2
   node-fetch:
-    specifier: ^3.3.1
+    specifier: ^3.3.2
     version: 3.3.2
   node-html-parser:
-    specifier: ^6.1.5
+    specifier: ^6.1.10
     version: 6.1.10
   normalize-url:
     specifier: ^8.0.0
@@ -590,7 +590,7 @@ devDependencies:
     specifier: ^5.8.5
     version: 5.8.5
   postcss:
-    specifier: ^8.4.25
+    specifier: ^8.4.31
     version: 8.4.31
   postcss-load-config:
     specifier: ^4.0.1
@@ -599,13 +599,13 @@ devDependencies:
     specifier: ^6.0.1
     version: 6.0.1(postcss@8.4.31)
   prettier:
-    specifier: ^3.0.2
+    specifier: ^3.0.3
     version: 3.0.3
   prettier-plugin-svelte:
     specifier: ^3.0.3
     version: 3.0.3(prettier@3.0.3)(svelte@4.2.1)
   prettier-plugin-tailwindcss:
-    specifier: ^0.4.0
+    specifier: ^0.4.1
     version: 0.4.1(prettier-plugin-svelte@3.0.3)(prettier@3.0.3)
   prisma:
     specifier: ^5.4.2
@@ -626,29 +626,29 @@ devDependencies:
     specifier: ^9.5.0
     version: 9.5.0
   string-strip-html:
-    specifier: ^13.4.1
+    specifier: ^13.4.3
     version: 13.4.3
   svelte:
-    specifier: ^4.0.5
+    specifier: ^4.2.1
     version: 4.2.1
   svelte-awesome-color-picker:
-    specifier: ^2.4.6
+    specifier: ^2.4.7
     version: 2.4.7
   svelte-check:
-    specifier: ^3.4.6
+    specifier: ^3.5.2
     version: 3.5.2(@babel/core@7.23.2)(postcss-load-config@4.0.1)(postcss@8.4.31)(svelte@4.2.1)
   svelte-confetti:
-    specifier: ^1.2.4
+    specifier: ^1.3.1
     version: 1.3.1(svelte@4.2.1)
   svelte-dnd-action:
-    specifier: ^0.9.26
+    specifier: ^0.9.31
     version: 0.9.31(svelte@4.2.1)
   svelte-eslint-parser:
-    specifier: ^0.33.0
+    specifier: ^0.33.1
     version: 0.33.1(svelte@4.2.1)
   svelte-headless-table:
-    specifier: ^0.17.5
-    version: 0.17.5(svelte@4.2.1)
+    specifier: ^0.17.7
+    version: 0.17.7(svelte@4.2.1)
   svelte-infinite-loading:
     specifier: ^1.3.8
     version: 1.3.8
@@ -677,7 +677,7 @@ devDependencies:
     specifier: ^0.2.1
     version: 0.2.1(@sveltejs/kit@1.25.2)
   sveltekit-search-params:
-    specifier: ^1.0.14
+    specifier: ^1.0.15
     version: 1.0.15(@sveltejs/kit@1.25.2)(svelte@4.2.1)
   sveltekit-superforms:
     specifier: ^1.8.0
@@ -692,13 +692,13 @@ devDependencies:
     specifier: 0.0.0-insiders.44fb67b
     version: 0.0.0-insiders.44fb67b(ts-node@10.9.1)
   tailwindcss-animate:
-    specifier: ^1.0.6
+    specifier: ^1.0.7
     version: 1.0.7(tailwindcss@0.0.0-insiders.44fb67b)
   tmdb-ts:
     specifier: ^1.4.0
     version: 1.4.0
   trpc-sveltekit:
-    specifier: ^3.5.16
+    specifier: ^3.5.21
     version: 3.5.21(@sveltejs/adapter-node@1.3.1)(@trpc/client@10.40.0)(@trpc/server@10.40.0)(ws@8.14.2)
   ts-md5:
     specifier: ^1.3.1
@@ -707,28 +707,28 @@ devDependencies:
     specifier: ^10.9.1
     version: 10.9.1(@types/node@20.8.6)(typescript@5.2.2)
   ts-pattern:
-    specifier: ^5.0.1
+    specifier: ^5.0.5
     version: 5.0.5
   ts-to-zod:
     specifier: ^3.1.3
     version: 3.1.3
   tslib:
-    specifier: ^2.6.0
+    specifier: ^2.6.2
     version: 2.6.2
   twitter-api-v2:
-    specifier: ^1.15.0
+    specifier: ^1.15.2
     version: 1.15.2
   type-fest:
-    specifier: ^3.13.0
+    specifier: ^3.13.1
     version: 3.13.1
   typescript:
-    specifier: ^5.1.6
+    specifier: ^5.2.2
     version: 5.2.2
   typewind:
-    specifier: ^0.1.3
+    specifier: ^0.1.4
     version: 0.1.4(postcss@8.4.31)(ts-node@10.9.1)(typescript@5.2.2)
   uuid:
-    specifier: ^9.0.0
+    specifier: ^9.0.1
     version: 9.0.1
   uuid-by-string:
     specifier: ^4.0.0
@@ -3056,8 +3056,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@faker-js/faker@8.1.0:
-    resolution: {integrity: sha512-38DT60rumHfBYynif3lmtxMqMqmsOQIxQgEuPZxCk2yUYN0eqWpTACgxi0VpidvsJB8CRxCpvP7B3anK85FjtQ==}
+  /@faker-js/faker@8.2.0:
+    resolution: {integrity: sha512-VacmzZqVxdWdf9y64lDOMZNDMM/FQdtM9IsaOPKOm2suYwEatb8VkdHqOzXcDnZbk7YDE2BmsJmy/2Hmkn563g==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0, npm: '>=6.14.13'}
     dev: true
 
@@ -3288,7 +3288,7 @@ packages:
       lucia-auth: 1.8.0
     dev: false
 
-  /@lucia-auth/adapter-mysql@2.1.0(@planetscale/database@1.11.0)(lucia@2.7.1)(mysql2@3.6.1):
+  /@lucia-auth/adapter-mysql@2.1.0(@planetscale/database@1.11.0)(lucia@2.7.1)(mysql2@3.6.2):
     resolution: {integrity: sha512-LkqsJHQS9KuMs+cTJQJnaqb6obqMyJfblyyLM0Ogoimzikb5orbkWI0C8eY3Supr60bgP4PYuQxYZm8xxera0Q==}
     peerDependencies:
       '@planetscale/database': ^1.0.0
@@ -3302,7 +3302,7 @@ packages:
     dependencies:
       '@planetscale/database': 1.11.0
       lucia: 2.7.1
-      mysql2: 3.6.1
+      mysql2: 3.6.2
     dev: false
 
   /@lucia-auth/adapter-session-redis@2.1.1(@upstash/redis@1.23.3)(ioredis@5.3.2)(lucia@2.7.1):
@@ -3340,8 +3340,8 @@ packages:
     resolution: {integrity: sha512-kqEg3Zu5/g3ivdeb+jP4rBVVdmtKXVsRwH+x9KdM2Y7d2mKLq54g+YLSgTQ4KwJvWmyHFvRq0ouX5Dr4H1Hw3Q==}
     dev: false
 
-  /@macfja/svelte-persistent-store@2.4.0(svelte@4.2.1):
-    resolution: {integrity: sha512-01aumH+i4iIrr8GyGtRvKlgz58llvUpys3CTva1Hf4RR5/PmshRUSkl8q3vyT4beCf4lxDHnFxEq//QJyJFVbw==}
+  /@macfja/svelte-persistent-store@2.4.1(svelte@4.2.1):
+    resolution: {integrity: sha512-VlGtRCJcASmFeVRXm4rbncoM+llnbeJ8C0bzimhARCGi6zKxGncRFLeUVwtjcDW5uNfiJJUK8mzEhXBxeP8fbg==}
     peerDependencies:
       svelte: ^3.0 || ^4.0
     dependencies:
@@ -3932,8 +3932,8 @@ packages:
       '@rollup/pluginutils': 3.1.0(rollup@2.79.1)
       rollup: 2.79.1
 
-  /@rollup/plugin-commonjs@25.0.5(rollup@3.29.4):
-    resolution: {integrity: sha512-xY8r/A9oisSeSuLCTfhssyDjo9Vp/eDiRLXkg1MXCcEEgEjPmLU+ZyDB20OOD0NlyDa/8SGbK5uIggF5XTx77w==}
+  /@rollup/plugin-commonjs@25.0.7(rollup@3.29.4):
+    resolution: {integrity: sha512-nEvcR+LRjEjsaSsc4x3XZfCCvZIaSMenZu/OiwOKGN2UhQpAYI7ru7czFvyWbErlpoGjnSX3D5Ch5FcMA3kRWQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       rollup: ^2.68.0||^3.0.0||^4.0.0
@@ -3946,7 +3946,7 @@ packages:
       estree-walker: 2.0.2
       glob: 8.1.0
       is-reference: 1.2.1
-      magic-string: 0.27.0
+      magic-string: 0.30.5
       rollup: 3.29.4
     dev: true
 
@@ -4520,7 +4520,7 @@ packages:
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
     dependencies:
-      '@rollup/plugin-commonjs': 25.0.5(rollup@3.29.4)
+      '@rollup/plugin-commonjs': 25.0.7(rollup@3.29.4)
       '@rollup/plugin-json': 6.0.1(rollup@3.29.4)
       '@rollup/plugin-node-resolve': 15.2.3(rollup@3.29.4)
       '@sveltejs/kit': 1.25.2(svelte@4.2.1)(vite@4.4.11)
@@ -4741,8 +4741,8 @@ packages:
     resolution: {integrity: sha512-gEgRIkFMjxhu+rbomSxAYTA+aPaPrLffJwFCpfd/AqJ8PTlnredJnFfFskCbR6oZo/1XEuDORFW9c6b4gOnEKQ==}
     dev: false
 
-  /@tanstack/query-devtools@5.0.0-rc.13:
-    resolution: {integrity: sha512-O88UIStZ98xoFPhgl3C71l7ycM4s/n5lKjlwFcYb8bdqbZyymw4cnNJO3l/YZrT+9Qa6JcLBm1gMXB3s51OUvQ==}
+  /@tanstack/query-devtools@5.0.0-rc.14:
+    resolution: {integrity: sha512-aR2A10rxTr/A5xo5i7INUBZ9xwZ7fu8MRHh+Ddu0n6M4KbDAFL9ZNtnUBFnnusFFlKEgKjZ8490fnb77hNGjjA==}
     dev: false
 
   /@tanstack/query-persist-client-core@5.0.0-rc.12:
@@ -4768,13 +4768,13 @@ packages:
       use-sync-external-store: 1.2.0(react@18.2.0)
     dev: false
 
-  /@tanstack/svelte-query-devtools@5.0.0-rc.13(@tanstack/svelte-query@5.0.0-rc.12)(svelte@4.2.1):
-    resolution: {integrity: sha512-1MJOCpxqvfdRwnyPM8l1XBio3/YLrx4HGxhI5gKuNXKBXCuIQsKRga3jdsqpGtNuoBzNUN/fwg+lXLw5S+jORQ==}
+  /@tanstack/svelte-query-devtools@5.0.0-rc.14(@tanstack/svelte-query@5.0.0-rc.12)(svelte@4.2.1):
+    resolution: {integrity: sha512-UM49PGiMKZ9Z15hGL/UPlY2L5Katm9bRdBnmvtHvZbmbUJopeOSokkZlpfx9QE4v74vT3Q0KJ4rZwnXtgAG1aA==}
     peerDependencies:
       '@tanstack/svelte-query': ^5.0.0-rc.12
       svelte: '>=3 <5'
     dependencies:
-      '@tanstack/query-devtools': 5.0.0-rc.13
+      '@tanstack/query-devtools': 5.0.0-rc.14
       '@tanstack/svelte-query': 5.0.0-rc.12(svelte@4.2.1)
       esm-env: 1.0.0
       svelte: 4.2.1
@@ -5744,7 +5744,7 @@ packages:
     resolution: {integrity: sha512-p8PQ6fE1ljhnrHmP5iQiqZAVf3ljFoC4/i8f2usLQ75Emq1cCiDHvW8u/J/U/N0zCLewxxA1g1W5bGJ7+5iKyQ==}
     dependencies:
       crypto-js: 4.1.1
-      jose: 4.15.3
+      jose: 4.15.4
     dev: false
 
   /@upstash/redis@1.23.3:
@@ -7654,7 +7654,7 @@ packages:
       - supports-color
     dev: true
 
-  /drizzle-orm@0.27.2(@planetscale/database@1.11.0)(kysely@0.26.3)(mysql2@3.6.1):
+  /drizzle-orm@0.27.2(@planetscale/database@1.11.0)(kysely@0.26.3)(mysql2@3.6.2):
     resolution: {integrity: sha512-ZvBvceff+JlgP7FxHKe0zOU9CkZ4RcOtibumIrqfYzDGuOeF0YUY0F9iMqYpRM7pxnLRfC+oO7rWOUH3T5oFQA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
@@ -7718,7 +7718,7 @@ packages:
     dependencies:
       '@planetscale/database': 1.11.0
       kysely: 0.26.3
-      mysql2: 3.6.1
+      mysql2: 3.6.2
     dev: false
 
   /eastasianwidth@0.2.0:
@@ -7842,7 +7842,7 @@ packages:
       is-string: 1.0.7
       is-typed-array: 1.1.12
       is-weakref: 1.0.2
-      object-inspect: 1.12.3
+      object-inspect: 1.13.0
       object-keys: 1.1.1
       object.assign: 4.1.4
       regexp.prototype.flags: 1.5.1
@@ -10131,8 +10131,8 @@ packages:
     engines: {node: '>= 0.6.0'}
     dev: true
 
-  /jose@4.15.3:
-    resolution: {integrity: sha512-RZJdL9Qjd1sqNdyiVteRGV/bnWtik/+PJh1JP4kT6+x1QQMn+7ryueRys5BEueuayvSVY8CWGCisCDazeRLTuw==}
+  /jose@4.15.4:
+    resolution: {integrity: sha512-W+oqK4H+r5sITxfxpSU+MMdr/YSWGvgZMQDIsNoBDGGy4i7GBPTtvFKibQzW06n3U3TqHjhvBJsirShsEJ6eeQ==}
     dev: false
 
   /joycon@3.1.1:
@@ -11431,8 +11431,8 @@ packages:
     resolution: {integrity: sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==}
     dev: true
 
-  /mysql2@3.6.1:
-    resolution: {integrity: sha512-O7FXjLtNkjcMBpLURwkXIhyVbX9i4lq4nNRCykPNOXfceq94kJ0miagmTEGCZieuO8JtwtXaZ41U6KT4eF9y3g==}
+  /mysql2@3.6.2:
+    resolution: {integrity: sha512-m5erE6bMoWfPXW1D5UrVwlT8PowAoSX69KcZzPuARQ3wY1RJ52NW9PdvdPo076XiSIkQ5IBTis7hxdlrQTlyug==}
     engines: {node: '>= 8.0'}
     dependencies:
       denque: 2.1.0
@@ -11686,8 +11686,8 @@ packages:
     resolution: {integrity: sha512-RSn9F68PjH9HqtltsSnqYC1XXoWe9Bju5+213R98cNGttag9q9yAOTzdbsqvIa7aNm5WffBZFpWYr2aWrklWAw==}
     engines: {node: '>= 6'}
 
-  /object-inspect@1.12.3:
-    resolution: {integrity: sha512-geUvdk7c+eizMNUDkRpW1wJwgfOiOeHbxBR/hLXK1aT6zmVSO0jsQcs7fj6MGw89jC/cjGfLcNOrtMYtGqm81g==}
+  /object-inspect@1.13.0:
+    resolution: {integrity: sha512-HQ4J+ic8hKrgIt3mqk6cVOVrW2ozL4KdvHlqpBv9vDYWx9ysAgENAdvy4FoGF+KFdhR7nQTNm5J0ctAeOwn+3g==}
 
   /object-keys@1.1.1:
     resolution: {integrity: sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==}
@@ -13397,7 +13397,7 @@ packages:
     dependencies:
       call-bind: 1.0.2
       get-intrinsic: 1.2.1
-      object-inspect: 1.12.3
+      object-inspect: 1.13.0
 
   /signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
@@ -13996,8 +13996,8 @@ packages:
       svelte-writable-derived: 3.1.0(svelte@4.2.1)
     dev: false
 
-  /svelte-headless-table@0.17.5(svelte@4.2.1):
-    resolution: {integrity: sha512-euomCYluojyFKZ53StEghOKScwsmWhgNH6PX0b/ofriDfBpWC1ksEGKAfDSHiKdyQcikRWm2ITwd0BOZ3459Cw==}
+  /svelte-headless-table@0.17.7(svelte@4.2.1):
+    resolution: {integrity: sha512-GRQEM0c4pXfFs6W+LGbsvrBbDqBaMxxibsWq8Q8o4ve4dTHIC9WsbuKMP3jRHl+iC9jd4K/TXJfLJHtLzuKSQA==}
     peerDependencies:
       svelte: ^3 || ^4
     dependencies:
