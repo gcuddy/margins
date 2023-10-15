@@ -229,7 +229,7 @@
 			{/if}
 		</div>
 		<div class="px-4">
-			<div class="flex items-center">
+			<div class="flex items-center flex-1">
 				<!-- TODO: on small sizes, these should switch — the button should trigger the dropdown -->
 				<Button
 					on:click={() => {
@@ -244,7 +244,8 @@
 					<span class="hidden lg:inline">Add</span>
 					<!-- TODO: create dropdown menu for type, and add Modal -->
 				</Button>
-				<Separator class="h-9 hidden lg:flex" orientation="vertical" />
+                <!-- h-8 is same height as buttons -->
+				<Separator class="h-8 hidden lg:flex" orientation="vertical" />
 				<DropdownMenu
 					positioning={{
 						placement: 'bottom-end',
