@@ -1,83 +1,112 @@
-import { type Actions, fail } from '@sveltejs/kit';
+import { type Actions, fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 
 import { auth } from '$lib/server/lucia';
 import { createDefaultStates } from '$lib/user';
+import { message, setError, superValidate } from 'sveltekit-superforms/server';
+import { createUserSchema, loginUserSchema } from '../schema';
+import { db } from '$lib/db';
+import { generateLuciaPasswordHash, generateRandomString } from 'lucia/utils';
+import { trytm } from '$lib/utils';
+import { createKeyId } from 'lucia';
+import type { Message } from '$lib/types/forms';
 
-const createUserSchema = z.object({
-	email: z
-		.string({
-			required_error: 'Email is required'
-		})
-		.email({
-			message: 'Email is invalid'
-		}),
-	password: z
-		.string({
-			required_error: 'Password is required'
-		})
-		.min(6, {
-			message: 'Password must be at least 6 characters'
-		})
-		.max(8, {
-			message: 'Password must be at most 8 characters'
-		}),
-	username: z
-		.string({
-			required_error: 'Username is required'
-		})
-		.min(3, {
-			message: 'Username must be at least 3 characters'
-		})
-		.max(20, {
-			message: 'Username must be at most 20 characters'
-		})
-});
+export async function load() {
+	const form = await superValidate<typeof createUserSchema, Message>(
+		createUserSchema,
+	);
+
+	return {
+		form,
+	};
+}
 
 export const actions: Actions = {
-	default: async ({ request, locals }) => {
-		const formData = Object.fromEntries(await request.formData());
+	default: async (event) => {
+		const { request, locals } = event;
+		const form = await superValidate<typeof createUserSchema, Message>(
+			event,
+			createUserSchema,
+		);
+		if (!form.valid) {
+			return fail(400, { form });
+		}
 		try {
 			// Create a new user by using email
-			const result = createUserSchema.safeParse(formData);
-			if (!result.success) {
-				const { fieldErrors: errors } = result.error.flatten();
-				const { password, ...rest } = formData;
-				return fail(400, {
-					...rest,
-					errors
-				});
+
+			const { email, password, username, inviteCode } = form.data;
+			// TODO: Oauth
+
+			// validate invite code
+			const code = await db
+				.selectFrom('InvitationCode')
+				.where('used', '=', 0)
+				.where('code', '=', inviteCode)
+				.select(['code'])
+				.executeTakeFirst();
+
+			if (!code) {
+				return setError(form, 'inviteCode', 'Invalid invite code');
 			}
-			const { email, password, username } = result.data;
-			const user = await auth.createUser({
-				key: {
-					providerId: 'email',
-					providerUserId: email,
-					password
-				},
-				attributes: {
-					username,
-					email
-				}
+
+			// TODO: oauth
+
+			const userId = generateRandomString(15);
+			// we know if this transaction fails, it's an error with username/email duplicate... right?
+			await db.transaction().execute(async (trx) => {
+				// we handle creation ourselves instead of with lucia provided auth...
+				await trx
+					.insertInto('auth_user')
+					.values({
+						email,
+						id: userId,
+						updatedAt: new Date(),
+						username,
+					})
+					.execute();
+
+				await trx
+					.insertInto('auth_key')
+					.values({
+						id: createKeyId('email', email),
+						user_id: userId,
+						hashed_password: await generateLuciaPasswordHash(password),
+					})
+					.execute();
+
+				return await trx
+					.updateTable('InvitationCode')
+					.set({
+						used: 1,
+						usedById: userId,
+					})
+					.where('code', '=', inviteCode)
+					.execute();
 			});
-			// const user = await auth.createUser('email', email, {
-			//     password,
-			//     attributes: {
-			//         email,
-			//         username,
-			//     },
-			// });
-			// await createDefaultStates(user.userId);
+
 			const session = await auth.createSession({
-				userId: user.userId,
-				attributes: {}
+				userId,
+				attributes: {},
 			});
 			locals.auth.setSession(session);
+
+			// we got here! let's redirect now
+
+			throw redirect(303, '/tests/library/backlog');
 		} catch (e) {
 			console.log({ e });
-			return fail(400, {
-				message: 'Email/username already in use'
-			});
+			// There was an error creating the user — almost definitely a duplicate email/username
+			// TODO: we should check to make sure it was actually duplicate
+			return message(
+				form,
+				{
+					status: 'error',
+					text: 'Email or username is already in use.',
+				},
+				{
+					status: 400,
+				},
+			);
 		}
-	}
+	},
 };

@@ -1,72 +1,59 @@
 <script lang="ts">
-	import { navigating, page } from '$app/stores';
-	import Muted from '$lib/components/atoms/Muted.svelte';
-	import Icon from '$lib/components/helpers/Icon.svelte';
-	import { superForm } from 'sveltekit-superforms/client';
-
+	import * as Form from '$components/ui/form';
 	import {
 		Card,
 		CardContent,
 		CardDescription,
 		CardFooter,
 		CardHeader,
-		CardTitle
+		CardTitle,
 	} from '$components/ui/card';
-	import Button from '$components/ui/Button.svelte';
-	import Input from '$components/ui/input/input.svelte';
-	import Label from '$components/ui/Label.svelte';
+	import { loginUserSchema } from '../schema';
+	import { page } from '$app/stores';
 
-	// export let form: { message?: string };
 	export let data;
-	const { form, errors, constraints, enhance } = superForm(data.form, {
-		onError: (e) => {
-			console.log('error', e);
-		}
-	});
-	let loading = false;
 </script>
 
-<Card>
-	<form class="contents" method="post">
+<Card class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
+	<Form.Root
+		class="contents"
+		method="post"
+		form={data.form}
+		schema={loginUserSchema}
+		let:config
+		let:message
+	>
 		<CardHeader class="space-y-1">
-			<CardTitle class="text-2xl">Log in to Margins</CardTitle>
+			<CardTitle class="text-2xl font-semibold tracking-tight"
+				>Log in to Margins</CardTitle
+			>
 			<CardDescription>Enter your email and password below.</CardDescription>
 		</CardHeader>
 		<CardContent class="grid gap-4">
-			<div class="grid gap-2">
-				<Label for="email">Email</Label>
-				<Input
-					id="email"
-					type="email"
-					name="email"
-					placeholder=""
-					autocomplete="email"
-					required
-					bind:value={$form.email}
-					{...$constraints.email}
-				/>
-			</div>
-			<div class="grid gap-2">
-				<Label for="password">Password</Label>
-				<Input
-					id="password"
-					name="password"
-					required
-					placeholder=""
-					type="password"
-					autocomplete="current-password"
-					class="focus:ring-2"
-					bind:value={$form.password}
-					{...$constraints.password}
-				/>
-			</div>
+			<Form.Message
+				message={message ?? $page.url.searchParams.get('message')}
+			/>
+			<Form.Field {config} name="email">
+				<Form.Item>
+					<Form.Label>Email</Form.Label>
+					<Form.Input autocomplete="off" />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
+			<Form.Field {config} name="password">
+				<Form.Item>
+					<Form.Label>Password</Form.Label>
+					<Form.Input type="password" autocomplete="current-password" />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
 		</CardContent>
 		<CardFooter>
-			<Button class="w-full">Login</Button>
+			<Form.Button variant="default" class="w-full">Login</Form.Button>
 		</CardFooter>
-	</form>
+	</Form.Root>
 </Card>
 
-<div>
+<div class="animate-in fade-in-0">
 	Don't have an account? <a class="font-bold" href="/signup">Sign up</a>
 </div>

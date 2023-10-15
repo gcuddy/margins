@@ -1,18 +1,23 @@
 <script lang="ts">
-	import { cn } from "$lib/utils";
-	import { getContext } from "svelte";
-	import type { FormFieldCtx } from ".";
-	let className: string | undefined | null = undefined;
-	export { className as class };
+	import { cn } from '$lib/utils';
+	import type { Message } from '$lib/types/forms';
+	// let className: string | undefined | null = undefined;
+	// export { className as class };
 
-	const { errors, formMessageId } = getContext<FormFieldCtx>("FormField");
+	export let message: Message | string | undefined | null = undefined;
 </script>
 
-{#if $errors}
-	<p
-		class={cn("text-[0.8rem] font-medium text-destructive", className)}
-		id={formMessageId}
+{#if message}
+	<div
+		class={cn(
+			'border p-4 rounded-lg shadow ',
+			message && typeof message === 'object' && message?.status === 'error'
+				? 'bg-destructive text-destructive-foreground'
+				: 'bg-secondary text-secondary-foreground',
+		)}
 	>
-		{$errors}
-	</p>
+		<p class={cn('text-[0.8rem] font-medium')}>
+			{typeof message === 'object' ? message.text : message}
+		</p>
+	</div>
 {/if}

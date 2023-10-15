@@ -151,7 +151,7 @@
 					size="sm"
 					variant="secondary">Cancel</Button
 				>
-				<Button disabled={!tainted} size="sm" on:click={save}>Save</Button>
+				<Button disabled={!tainted} size="sm" class="disabled:saturate-0" on:click={save}>Save</Button>
 			</div>
 		</div>
 	</div>

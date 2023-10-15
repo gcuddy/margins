@@ -141,7 +141,7 @@
 		"sveltekit-superforms": "^1.8.0",
 		"tailwind-gradient-mask-image": "^1.0.0",
 		"tailwind-scrollbar-hide": "^1.1.7",
-		"tailwindcss": "^0.0.0-insiders.4f404ff",
+		"tailwindcss": "0.0.0-insiders.44fb67b",
 		"tailwindcss-animate": "^1.0.6",
 		"tmdb-ts": "^1.4.0",
 		"trpc-sveltekit": "^3.5.16",
