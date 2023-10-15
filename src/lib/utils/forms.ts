@@ -1,4 +1,5 @@
-import { type ActionResult, fail, type RequestEvent } from '@sveltejs/kit';
+import { applyAction, deserialize } from '$app/forms';
+import { fail, type RequestEvent } from '@sveltejs/kit';
 import type { Session } from 'lucia';
 import type { z } from 'zod';
 
@@ -14,23 +15,38 @@ export const post = async <
 			data.append(key, value.toString());
 		}
 	});
+	const actionUrl = new URL(action, location.origin);
 	const response = await fetch(action, {
 		body: data,
 		headers: {
+			accept: 'application/json',
 			'x-sveltekit-action': 'true',
 		},
+		cache: 'no-store',
 		method: 'POST',
 	});
 	if (!response.ok) {
 		throw new Error(response.statusText);
 	}
-	const result = (await response.json()) as ActionResult;
+	const result = deserialize(await response.text());
 	if (result.type === 'error') {
+		// TODO: do we want to throw here?
 		throw new Error(result.error);
 	} else {
+		// invalidate?
+		// this is taken from https://github.com/sveltejs/kit/blob/master/packages/kit/src/runtime/app/forms.js#L206
+		if (
+			location.origin + location.pathname ===
+				actionUrl.pathname + actionUrl.pathname ||
+			result.type === 'redirect'
+		) {
+			applyAction(result);
+		}
 		return result;
 	}
 };
+
+export { post as postForm };
 
 export function validate_form<
 	TSchema extends z.ZodTypeAny,

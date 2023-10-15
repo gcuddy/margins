@@ -14,13 +14,16 @@ export const load: PageServerLoad = async (event) => {
 	console.log(`login page load`);
 	const session = await locals.auth.validate();
 	if (session) {
+		// The user is already logged in
 		const redirectTo = event.url.searchParams.get('redirectTo');
 		if (redirectTo) {
 			console.log({ redirectTo });
-			throw redirect(302, `/${redirectTo.slice(1)}`);
-		} else {
-			throw redirect(302, `/tests/library/backlog`);
+			// ensure that the redirect is not to the login page
+			if (redirectTo !== '/login') {
+				throw redirect(302, `/${redirectTo.slice(1)}`);
+			}
 		}
+		throw redirect(302, `/tests/library/backlog`);
 	}
 	const form = await superValidate<typeof loginUserSchema, Message>(
 		event,
