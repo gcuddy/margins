@@ -100,7 +100,7 @@
                         <MobileNav />
 					</div>
 					<main
-						class={cn(
+                    class={cn(
 							'flex h-full w-full flex-1 flex-col',
 							$page.url.pathname.startsWith('/home') &&
 								'overflow-x-hidden',

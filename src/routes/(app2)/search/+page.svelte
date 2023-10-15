@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import ItemArtwork from '$lib/components/ItemArtwork.svelte';
 	import Annotation from '$lib/components/notebook/Annotation.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
+	import * as Tabs from '$components/ui/tabs';
 	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
 	import { H1 } from '$lib/components/ui/typography';
@@ -13,35 +14,43 @@
 	import { superForm } from 'sveltekit-superforms/client';
 	export let data;
 	const prefix = $page.url.pathname;
+
+	import { MagnifyingGlass } from 'radix-icons-svelte';
+	import { Loader2 } from 'lucide-svelte';
+
 	const tabs = [
 		{
-			name: 'My stuff',
-			href: 'my'
+			name: 'Library',
+			href: 'my',
 		},
 		{
 			name: 'Notebook',
-			href: 'notes'
+			href: 'notes',
 		},
 		{
 			name: 'Movies + TV',
-			href: 'movies'
+			href: 'movies',
 		},
 		{
 			name: 'Books',
-			href: 'books'
+			href: 'books',
 		},
 		{
 			name: 'Podcasts',
-			href: 'podcasts'
+			href: 'podcasts',
 		},
 		{
 			name: 'Music',
-			href: 'music'
-		}
+			href: 'music',
+		},
 	];
 	let q = data.q ?? '';
 	// $: q = $page.url.searchParams.get("q") ?? "";
 	$: tab = $page.url.searchParams.get('type');
+
+	import Header from '$components/ui/Header.svelte';
+	import { derived } from 'svelte/store';
+	import { goto } from '$app/navigation';
 
 	const setType = (type: string) => {
 		const Url = $page.url;
@@ -50,32 +59,62 @@
 		return Url.toString();
 	};
 	let loading = false;
+
+	// /search..
+	const path = $page.url.pathname;
+
+	const searching = derived(navigating, ($navigating) => {
+		return (
+			$navigating?.to?.url.pathname === path &&
+			$navigating.to?.url.searchParams.has('q')
+		);
+	});
 </script>
 
-<H1>Search</H1>
+<Header>
+	<form data-sveltekit-keepfocus class="flex grow relative">
+		<input type="hidden" name="type" value={tab} />
+		<Label for="search" class="sr-only">Search</Label>
+		<span class="absolute left-2 top-1/2 -translate-y-1/2">
+			<svelte:component
+				this={$searching ? Loader2 : MagnifyingGlass}
+				class="h-4 w-4 text-muted-foreground shrink-0 {$searching
+					? 'animate-spin'
+					: ''}"
+			/>
+		</span>
+		<Input
+			autofocus
+			class="pl-8 bg-card text-card-foreground"
+			bind:value={q}
+			id="search"
+			name="q"
+			placeholder="search"
+		/>
+	</form>
+</Header>
 
-<form data-sveltekit-keepfocus class="my-4">
-	<input type="hidden" name="type" value={tab} />
-	<Label for="search" class="sr-only">Search</Label>
-	<div class="flex items-center">
-		<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
-		<Input autofocus class="" bind:value={q} id="search" name="q" placeholder="search" />
-	</div>
-</form>
-<div>
-	<div class={tabList}>
-		<!--  -->
-		{#each tabs as { name, href }}
-			{@const selected = tab === href}
-			<a href="?type={href}{q ? '&q=' + q : ''}" class={tabTrigger({ selected })}>
-				{name}
-			</a>
-		{/each}
+<div class="pl-6 border-b py-3 pr-9 overflow-hidden">
+	<div class="overflow-auto">
+		<Tabs.Root
+			value={tab ?? undefined}
+			onValueChange={(value) => {
+				goto(`?type=${value}${q ? '&q=' + q : ''}`);
+			}}
+		>
+			<Tabs.List>
+				{#each tabs as { name, href }}
+					<Tabs.Trigger value={href}>
+						{name}
+					</Tabs.Trigger>
+				{/each}
+			</Tabs.List>
+		</Tabs.Root>
 	</div>
 </div>
 
 <div
-	class=" mt-4 grid grid-cols-2 gap-x-1 gap-y-4 px-2 pb-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+	class=" mt-4 grid grid-cols-2 gap-6 px-2 pb-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
 >
 	{#key data.results}
 		{#if data.notes}
@@ -84,7 +123,7 @@
 			{/each}
 		{:else}
 			{#each data.results || [] as result}
-				<ItemArtwork {q} item={result} class="w-32" />
+				<ItemArtwork showType={tab === "my"} {q} item={result} class="w-full" />
 			{/each}
 		{/if}
 	{/key}
