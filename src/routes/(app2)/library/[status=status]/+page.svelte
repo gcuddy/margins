@@ -432,7 +432,7 @@
 	{/each} -->
 {/if}
 
-<div class="fixed bottom-16 z-40 justify-center flex left-0 right-0">
+<div class="fixed bottom-16 z-40 justify-center flex left-0 right-0 sm:hidden">
 	<div class="p-6 bg-background">
 		{#if $checkedEntryIds.length}
 			<BulkActions styled={false} length={$checkedEntryIds.length}>
@@ -457,6 +457,24 @@
 		{/if}
 	</div>
 </div>
+
+<BulkActions class="max-sm:hidden" length={$checkedEntryIds.length}>
+    {#each statuses as status}
+        {#if $checkedEntries.every((entry) => entry.status !== status)}
+            <Button
+                on:click={() => {
+                    $updateBookmarkMutation.mutate({
+                        data: {
+                            status,
+                        },
+                        entryId: $checkedEntryIds,
+                    });
+                    multi.helpers.deselectAll();
+                }}>Move to {status}</Button
+            >
+        {/if}
+    {/each}
+</BulkActions>
 
 <!-- <EntryList
 	loading={$query.isLoading}

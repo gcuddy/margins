@@ -281,13 +281,9 @@
 <svelte:window on:keydown={handle_keydown} />
 <!--  -->
 <Filter.Root let:hasFilters let:reset>
-	<Header
-		class=" "
-	>
+	<Header class=" ">
 		<!-- class="flex flex-1 items-center justify-start gap-x-4" -->
-		<div
-			class="flex items-center gap-3 flex-1 min-w-0"
-		>
+		<div class="flex items-center gap-3 flex-1 min-w-0">
 			<slot name="title">
 				<h1 class="font-bold text-base">Library</h1>
 			</slot>
@@ -332,7 +328,7 @@
 				<Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
 			{/if}
 			<ViewPreferences bind:viewPreferences id={viewPreferencesId} />
-			<div class="hidden md:block">
+			<div class="">
 				<DropdownMenu
 					positioning={{
 						placement: 'bottom',
@@ -340,8 +336,8 @@
 				>
 					<DropdownMenuTrigger asChild let:builder>
 						<Button builders={[builder]} variant="outline" size="sm">
-							<ArrowDownUpIcon class="h-4 w-4 lg:mr-2" />
-							<span class="hidden lg:inline">Sort</span>
+							<ArrowDownUpIcon class="h-4 w-4 mr-2" />
+							<span class="">Sort</span>
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent>
@@ -373,7 +369,7 @@
 			</div>
 			<form
 				bind:this={form}
-				class="group shrink hidden md:flex relative"
+				class="group shrink hidden lg:flex relative"
 				data-sveltekit-keepfocus
 				data-sveltekit-replacestate
 			>
@@ -386,9 +382,9 @@
 					name="search"
 					class="shrink w-fit"
 				/>
-				<Kbd
-					class="absolute bottom-0 right-1.5 top-0 my-auto group-focus-within:hidden"
-					>/</Kbd
+				<kbd
+					class="absolute bottom-0 border-0 text-xs flex flex-col justify-center items-center text-muted-foreground right-1.5 top-0 my-auto group-focus-within:hidden"
+					>/</kbd
 				>
 				{#if is_searching}
 					<div

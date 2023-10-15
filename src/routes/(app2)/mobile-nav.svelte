@@ -2,16 +2,27 @@
 	import { page } from '$app/stores';
 	import { cn } from '$lib';
 	import { createDialog, melt } from '@melt-ui/svelte';
-	import { Library, Menu, Rss, Pin } from 'lucide-svelte';
+	import {
+		Library,
+		Menu,
+		Rss,
+		Pin,
+		Plus,
+		ChevronDownIcon,
+        Link2,
+
+	} from 'lucide-svelte';
 
 	import { writable } from 'svelte/store';
 	import { fade, fly } from 'svelte/transition';
 
 	import * as Sheet from '$components/ui/sheet';
+    import * as DropdownMenu from '$components/ui/dropdown-menu';
 
-	import { nav as mainnav } from './Nav.svelte';
+	import { nav as mainnav, showAddUrlModalStore } from './Nav.svelte';
 	import { Button } from '$components/ui/button';
 	import { tick } from 'svelte';
+	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
 
 	const nav = [
 		{
@@ -35,6 +46,35 @@
 	<div
 		class="items-center gap-10 justify-center h-16 py-2 px-6 flex w-full bg-background/95 background-blur-sm border-t"
 	>
+    <DropdownMenu.Root>
+        <DropdownMenu.Trigger class="flex flex-col items-center shrink-0">
+            <div class="flex items-center relative">
+                <Plus class="w-6 h-6" />
+                <ChevronDownIcon class="absolute -right-2 w-3 h-3" />
+            </div>
+            <span class="text-xs">Add</span>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content transition={fly} transitionConfig={{
+            y: 10,
+            duration: 300,
+
+        }} class="w-[200px]">
+            <DropdownMenu.Group>
+                <DropdownMenu.Item class="" on:click={() => {
+                    showAddUrlModalStore.set(true);
+                }}>
+                    <Link2 class="w-5 h-5 mr-2" />
+                    Add URL
+                </DropdownMenu.Item>
+                <DropdownMenu.Item class="" on:click={() => {
+                    showAddSubscriptionModal.set(true);
+                }}>
+                    <Rss class="w-5 h-5 mr-2" />
+                    Add Subscription
+                </DropdownMenu.Item>
+            </DropdownMenu.Group>
+        </DropdownMenu.Content>
+    </DropdownMenu.Root>
 		{#each nav as item}
 			<a href={item.href} class="flex flex-col items-center shrink-0">
 				<svelte:component

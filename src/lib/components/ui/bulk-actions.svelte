@@ -11,12 +11,15 @@
 
 	export let length = 0;
     export let styled = true;
+
+    let className: string | null | undefined = undefined
+    export { className as class };
 </script>
 
 {#if length}
 	<div
 		style:--left="{$navWidth}px"
-		class={cn(styled && "fixed bottom-5 left-[--left] right-0 pointer-events-none z-10 flex justify-center")}
+		class={cn(styled && "fixed bottom-5 left-[--left] right-0 pointer-events-none z-10 flex justify-center", className)}
 	>
 		<!--  -->
 		<div

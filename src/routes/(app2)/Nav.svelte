@@ -6,6 +6,8 @@
 		label: string;
 	};
 
+    export const showAddUrlModalStore = writable(false);
+
 	export const nav: Array<Nav> = [
 		{
 			active: (url) => url.startsWith('/home'),
@@ -155,7 +157,7 @@
 	const mobileNavWidth = getContext('mobileNavWidth') as Writable<number>;
 	$: mobileNavWidth.set(borderBoxSize?.[0]?.inlineSize ?? 81);
 
-	export let showAddUrlModal = writable(false);
+	export let showAddUrlModal = showAddUrlModalStore;
 	const gardenEnabled = persisted('gardenEnabled', false);
 </script>
 
