@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { useQueryClient } from '@tanstack/svelte-query';
-	import { FolderSync, LogOut, Palette, User, Workflow } from 'lucide-svelte';
+	import { LogOut, Palette, User, Workflow } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
+
+	export let data;
 
 	type Nav = {
 		href: string;
@@ -14,7 +16,7 @@
 			{
 				href: '/tests/settings/profile',
 				icon: User,
-				name: 'Profile',
+				name: data.user.username ?? 'Profile',
 			},
 			{
 				href: '/tests/settings/appearance',
@@ -26,11 +28,11 @@
 				icon: Workflow,
 				name: 'Integrations',
 			},
-			{
-				href: '/tests/settings/vault',
-				icon: FolderSync,
-				name: 'External notes',
-			},
+			// {
+			// 	href: '/tests/settings/vault',
+			// 	icon: FolderSync,
+			// 	name: 'External notes',
+			// },
 		],
 	];
 

@@ -11,8 +11,11 @@
 	import { loginUserSchema } from '../schema';
 	import { page } from '$app/stores';
 	import { Loader2 } from 'lucide-svelte';
+    import { getFlash } from 'sveltekit-flash-message';
 
 	export let data;
+
+    const flash = getFlash(page);
 </script>
 
 <Card class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
@@ -33,7 +36,7 @@
 		</CardHeader>
 		<CardContent class="grid gap-4">
 			<Form.Message
-				message={message ?? $page.url.searchParams.get('message')}
+				message={message ?? $flash ?? $page.url.searchParams.get('message')}
 			/>
 			<Form.Field {config} name="email">
 				<Form.Item>

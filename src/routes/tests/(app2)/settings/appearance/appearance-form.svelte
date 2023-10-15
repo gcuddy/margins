@@ -18,7 +18,7 @@
 	{form}
 	schema={appearanceFormSchema}
 	let:config
-	debug
+	debug={false}
 	options={{
 		onSubmit({ formData }) {
 			const theme = formData.get('theme');

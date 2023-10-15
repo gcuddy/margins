@@ -21,16 +21,25 @@
 			Back to {root ? 'library' : 'settings'}
 		</Button>
 	</div>
-	<Card class="mt-4">
-		<CardHeader>
-			{#if $page.url.pathname === '/tests/settings'}
-				<H1>Settings</H1>
-			{:else}
-				<H1>{$page.data.title}</H1>
-			{/if}
-		</CardHeader>
-		<CardContent>
-			<slot />
-		</CardContent>
-	</Card>
+	<!-- <Card class="mt-4"> -->
+		<!-- <CardHeader> -->
+			<div class="max-w-prose mx-auto space-y-4">
+                <div class="flex flex-col gap-1">
+                    {#if $page.url.pathname === '/tests/settings'}
+                        <h1 class="text-3xl md:text-4xl tracking-tight font-bold">Settings</h1>
+                    {:else}
+                        <h1 class="text-3xl md:text-4xl tracking-tight font-bold">{$page.data.title}</h1>
+                    {/if}
+                    {#if $page.data.description}
+                        <p class="text-muted-foreground text-lg">
+                            {$page.data.description}
+                        </p>
+                    {/if}
+                </div>
+                        <!-- </CardHeader> -->
+                        <!-- <CardContent> -->
+                <slot />
+            </div>
+		<!-- </CardContent> -->
+	<!-- </Card> -->
 </div>

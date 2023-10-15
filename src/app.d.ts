@@ -49,6 +49,8 @@ declare global {
 			saveToLibraryForm?: import('sveltekit-superforms').SuperValidated<
 				import('$lib/schemas/inputs/entry.schema').SaveToLibrarySchema
 			>;
+
+			flash?: import('$lib/types/forms').Message;
 		}
 	}
 }

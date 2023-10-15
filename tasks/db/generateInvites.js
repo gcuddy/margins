@@ -1,38 +1,34 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import 'dotenv/config';
+import { connect } from '@planetscale/database';
+import { nanoid } from 'nanoid';
+
+const config = {
+	host: 'aws.connect.psdb.cloud',
+	password: process.env.DATABASE_PASSWORD,
+	username: process.env.DATABASE_USERNAME,
+};
+
+const conn = connect(config);
 
 async function main() {
 	// todo: limit invite codes
-	const users = await prisma.user.findMany({
-		include: {
-			invitationCodes: {
-				where: {
-					used: false,
-				},
-			},
-		},
-	});
-	// this an extremely slow way to do it, but it works for now
-	for (const user of users) {
-		const unusedCodes = user.invitationCodes.length;
-		const codesToGive = Math.max(0, 3 - unusedCodes);
-		const promises = [];
-		for (let i = 0; i < codesToGive; i++) {
-			promises.push(
-				prisma.invitationCode.create({
-					data: {
-						owner: {
-							connect: {
-								id: user.id,
-							},
-						},
-					},
-				})
-			);
-		}
-		const codes = await prisma.$transaction(promises);
-		console.log(`Created ${codes.length} invitation codes for user ${user.username}`);
-	}
+	// find users with less than 3 unused codes
+
+	const results = await conn.execute(
+		`INSERT INTO InvitationCode (ownerId, code)
+    SELECT u.id, uuid()
+    FROM auth_user AS u
+    INNER JOIN (
+        SELECT ownerId, COUNT(code) AS unused_codes
+        FROM InvitationCode
+        WHERE used = 0
+        GROUP BY ownerId
+        HAVING unused_codes < 3
+    ) AS ic ON ic.ownerId = u.id
+    WHERE (ic.unused_codes < 3 OR ic.unused_codes IS NULL) AND u.id IS NOT NULL;`,
+	);
+
+	console.log(results);
 }
 
 main();
