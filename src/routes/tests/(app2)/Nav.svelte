@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { createAvatar, melt } from '@melt-ui/svelte';
-	import { createQuery, useIsMutating, useIsFetching } from '@tanstack/svelte-query';
+	import {
+		createQuery,
+		useIsMutating,
+		useIsFetching,
+		useQueryClient,
+	} from '@tanstack/svelte-query';
 	import {
 		BookMarked,
 		Box,
@@ -49,6 +54,7 @@
 	import type { LayoutData } from './$types';
 	import { useMenuBar } from './MainNav.svelte';
 	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
+	import { post } from '$lib/utils/forms';
 
 	let pinsComponent: Pins;
 
@@ -59,9 +65,11 @@
 		label: string;
 	};
 
+    const queryClient = useQueryClient();
+
 	const isRestoring = getContext('isRestoring') as Writable<boolean>;
 	const isMutating = useIsMutating();
-    const isFetching = useIsFetching();
+	const isFetching = useIsFetching();
 
 	const nav: Array<Nav> = [
 		{
@@ -163,7 +171,9 @@
 			? 'opacity-100'
 			: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
 	>
-		<div class="px-4 py-2 h-[--nav-height] flex items-center shrink-0 relative">
+		<div
+			class="px-4 py-2 h-[--nav-height] max-lg:justify-center flex items-center shrink-0 relative"
+		>
 			<!-- <span class="flex text-muted-foreground items-center"><FlowerIcon class="h-6 w-6 mr-1" /> <span class="text-sm font-medium">Margins</span> </span> -->
 			{#if $page.data.user_data?.username}
 				<DropdownMenu>
@@ -200,8 +210,11 @@
 							<a class="contents" href="/tests/settings">Settings</a>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem on:click={() => goto('/tests/logout')}>
-							<a class="contents" href="/tests/logout">Logout</a>
+						<DropdownMenuItem on:click={() => {
+                            queryClient.clear();
+                            post('/s?/logout')
+                        }}>
+							Logout
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
@@ -224,7 +237,7 @@
 						showAddUrlModal.set(true);
 					}}
 					variant="outline"
-                    size="sm"
+					size="sm"
 					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
 				>
 					<PlusCircle class="square-5 lg:square-4 shrink-0" />
@@ -250,9 +263,11 @@
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-56">
-						<DropdownMenuItem on:click={() => {
-                            $showAddSubscriptionModal = true;
-                        }}>
+						<DropdownMenuItem
+							on:click={() => {
+								$showAddSubscriptionModal = true;
+							}}
+						>
 							<RssIcon class="h-4 w-4 mr-2" />
 							<span>Add Subscription</span>
 						</DropdownMenuItem>
@@ -357,13 +372,11 @@
 
 <Dialog.Root bind:open={$showAddSubscriptionModal}>
 	<Dialog.Content>
-        <Dialog.Header>
-            <Dialog.Title>
-                Add Feed
-            </Dialog.Title>
-        </Dialog.Header>
+		<Dialog.Header>
+			<Dialog.Title>Add Feed</Dialog.Title>
+		</Dialog.Header>
 		<SubscriptionEntry
-            form={$page.form}
+			form={$page.form}
 			searchForm={$page.data.feedSearchForm}
 		/>
 	</Dialog.Content>

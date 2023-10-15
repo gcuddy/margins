@@ -55,7 +55,7 @@ export const actions: Actions = {
 			// we know if this transaction fails, it's an error with username/email duplicate... right?
 			await db.transaction().execute(async (trx) => {
 				// we handle creation ourselves instead of with lucia provided auth...
-				await trx
+				const user = await trx
 					.insertInto('auth_user')
 					.values({
 						email,
@@ -65,7 +65,9 @@ export const actions: Actions = {
 					})
 					.execute();
 
-				await trx
+				console.log({ user });
+
+				const key = await trx
 					.insertInto('auth_key')
 					.values({
 						id: createKeyId('email', email),
@@ -73,6 +75,8 @@ export const actions: Actions = {
 						hashed_password: await generateLuciaPasswordHash(password),
 					})
 					.execute();
+
+				console.log({ key });
 
 				return await trx
 					.updateTable('InvitationCode')
@@ -91,8 +95,6 @@ export const actions: Actions = {
 			locals.auth.setSession(session);
 
 			// we got here! let's redirect now
-
-			throw redirect(303, '/tests/library/backlog');
 		} catch (e) {
 			console.log({ e });
 			// There was an error creating the user — almost definitely a duplicate email/username
@@ -108,5 +110,6 @@ export const actions: Actions = {
 				},
 			);
 		}
+		throw redirect(303, '/tests/library/backlog');
 	},
 };

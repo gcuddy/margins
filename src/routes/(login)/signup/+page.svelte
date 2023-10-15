@@ -62,7 +62,7 @@
 		<Card.Footer>
 			<Form.Button disabled={submitting} class="w-full"
 				>Sign up {#if submitting}
-					<Loader2 class="h-4 w-4 animate-spin" />
+					<Loader2 class="h-4 w-4 animate-spin ml-2" />
 				{/if}</Form.Button
 			>
 		</Card.Footer>

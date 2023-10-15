@@ -10,6 +10,7 @@
 	} from '$components/ui/card';
 	import { loginUserSchema } from '../schema';
 	import { page } from '$app/stores';
+	import { Loader2 } from 'lucide-svelte';
 
 	export let data;
 </script>
@@ -22,6 +23,7 @@
 		schema={loginUserSchema}
 		let:config
 		let:message
+		let:submitting
 	>
 		<CardHeader class="space-y-1">
 			<CardTitle class="text-2xl font-semibold tracking-tight"
@@ -49,7 +51,11 @@
 			</Form.Field>
 		</CardContent>
 		<CardFooter>
-			<Form.Button variant="default" class="w-full">Login</Form.Button>
+			<Form.Button disabled={submitting} variant="default" class="w-full"
+				>Login {#if submitting}
+					<Loader2 class="h-4 w-4 animate-spin ml-2" />
+				{/if}</Form.Button
+			>
 		</CardFooter>
 	</Form.Root>
 </Card>
