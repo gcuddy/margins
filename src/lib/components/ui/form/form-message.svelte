@@ -10,7 +10,7 @@
 {#if message}
 	<div
 		class={cn(
-			'border p-4 rounded-lg shadow ',
+			'border p-4 rounded-lg',
 			message && typeof message === 'object' && message?.status === 'error'
 				? 'bg-destructive text-destructive-foreground'
 				: 'bg-secondary text-secondary-foreground',
