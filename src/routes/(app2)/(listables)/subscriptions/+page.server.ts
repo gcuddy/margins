@@ -4,6 +4,11 @@ import { superValidate } from 'sveltekit-superforms/server';
 import { feedSearchFormSchema } from '$components/subscriptions/subscription-entry.schema';
 import { subscriptionCreate } from '$lib/db/queries/subscriptions';
 import { findFeed } from '$lib/feeds/parser';
+import type { Config } from '@sveltejs/adapter-vercel';
+
+export const config: Config = {
+	runtime: 'nodejs18.x',
+};
 
 export const actions = {
 	add: async (event) => {
@@ -51,10 +56,10 @@ export const actions = {
 		if (!form.valid) {
 			return fail(400, { form });
 		}
-        console.log('[subscriptions > search] form.data.url', form.data.url);
-				const feeds = await findFeed(form.data.url);
+		console.log('[subscriptions > search] form.data.url', form.data.url);
+		const feeds = await findFeed(form.data.url);
 
-				console.log('[subscriptions > search] feeds', feeds);
+		console.log('[subscriptions > search] feeds', feeds);
 
 		return {
 			feeds,
