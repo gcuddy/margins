@@ -9,6 +9,7 @@
 	const {
 		ids,
 		measurements: { listHeight },
+        options: { animateHeight: _animateHeight, fixedHeight },
 	} = ctx.get();
 
 	type $$Props = DivProps & {
@@ -19,7 +20,7 @@
 	export { className as class };
 	export let unstyled = false;
 
-	export let animateHeight = true;
+	export let animateHeight = _animateHeight;
 
 	/** Read Only */
 	export let el: HTMLElement | null = null;
@@ -42,7 +43,7 @@
 	id={ids.menu}
 	class={cn(
 		!unstyled &&
-			'max-h-[300px] overflow-y-auto border-t overflow-x-hidden overscroll-contain',
+			`${fixedHeight ? 'h-96' : 'max-h-[300px]'} overflow-y-auto border-t overflow-x-hidden overscroll-contain`,
 		// animateHeight &&
 		// 	'h-[min(300px,var(--height))] max-h-[400px] transition-[height] ease-in-out duration-100',
 		// className,

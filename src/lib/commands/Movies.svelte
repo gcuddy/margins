@@ -7,6 +7,7 @@
 		commandCtx,
 		CommandGroup,
 		CommandItem,
+		CommandEmpty,
 	} from '$components/ui/command2';
 	import { Muted } from '$lib/components/ui/typography';
 	import type { QueryOutput } from '$lib/queries/query';
@@ -14,6 +15,7 @@
 	import { getYear } from '$lib/utils/date';
 	import debounce from 'just-debounce-it';
 	import { effect } from '$lib/helpers';
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
 
 	const {
 		// options: { multiple },
@@ -54,6 +56,14 @@
 <CommandGroup>
 	{#if $query.isLoading}
 		Loading...
+	{:else if $inputValue.length < 2 && !$query.data}
+		<div class="flex p-8 w-full h-full flex-col items-center gap-4 justify-center">
+            <EntryIcon type="movie" />
+			<div class="flex flex-col justify-center items-center gap-1">
+                <span class="font-semibold leading-none tracking-tight">Search Movies & TV Shows</span>
+                            <span class="text-sm text-muted-foreground">Just start typing…</span>
+            </div>
+		</div>
 	{:else if $query.data && $inputValue}
 		{#each $query.data as movie (movie.id)}
 			<CommandItem

@@ -27,6 +27,7 @@
 	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
 	import Separator from '$components/ui/Separator.svelte';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import { commanderState } from './Commander.svelte';
 
 	const nav = [
 		{
@@ -93,7 +94,19 @@
 							<div class="py-5">
 								<Separator />
 							</div>
-							<MobileLink bind:open={isAddSheetOpen} href="/search?type=movie">
+                            <!-- href="/search?type=movie" -->
+							<MobileLink
+								bind:open={isAddSheetOpen}
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-movies'],
+										allowPages: false,
+										placeholder: 'Search for a movie or TV show',
+                                        isOpen: true
+									}));
+								}}
+							>
 								<EntryIcon type="movie" class="w-5 h-5 mr-2" />
 								Movie or TV Show
 							</MobileLink>

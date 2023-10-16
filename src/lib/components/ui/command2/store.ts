@@ -40,6 +40,9 @@ export type CommandProps<T> = {
 	 * Filter function that takes in a string and inputValue and shuold return a number. If the number is greater than 0, the item will be included in the filtered list.
 	 */
 	filterFunction?: (arg: { input: string; itemValue: T }) => number;
+	animateHeight?: boolean;
+	fixedHeight?: boolean;
+
 	/**
 	 * @experimental
 	 * If provided, the combobox will be populated with these items initially.
@@ -696,8 +699,10 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			tweenedHeight,
 		},
 		options: {
+			animateHeight: props?.animateHeight ?? false,
 			comparisonFunction,
 			filterFunction,
+			fixedHeight: props?.fixedHeight ?? false,
 			multiple: props?.multiple ?? false,
 		},
 		state: {

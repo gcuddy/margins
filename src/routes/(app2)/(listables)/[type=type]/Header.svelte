@@ -198,6 +198,7 @@
 								</div>
 								{#if $page.data.entry}
 									<MobileLink
+                                        bind:open={optionsOpen}
 										class="group"
 										on:click={() => {
 											// todo: make this a form
@@ -221,7 +222,7 @@
 										/>
 										<span class="">{$pin ? 'Remove pin' : 'Pin'}</span>
 									</MobileLink>
-									<MobileLink href="{make_link($page.data.entry)}/activity">
+									<MobileLink bind:open={optionsOpen} href="{make_link($page.data.entry)}/activity">
 										<ActivityLog class="h-4 w-4" />
 										<span>Show activity log</span>
 									</MobileLink>

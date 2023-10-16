@@ -5,6 +5,7 @@
 		placeholder: string;
 		search: string;
 		shouldFilter: boolean;
+        allowPages?: boolean;
 	};
 
 	export function useCommanderContext() {
@@ -22,6 +23,7 @@
 		placeholder: 'Type a command or search...',
 		search: '',
 		shouldFilter: true,
+        allowPages: true,
 	});
 	export { state as commanderState };
 </script>
@@ -91,6 +93,7 @@
 		transitionPage();
 	}
 	function back() {
+        if ($state.allowPages === false) return;
 		$state.pages = $state.pages.slice(0, -1);
 		transitionPage();
 		if ($state.pages.length === 0) {
@@ -98,11 +101,16 @@
 		}
 	}
 
-	$: if (!$state.isOpen) {
-		setTimeout(() => {
-			$state.pages = [];
-			inputValue.set('');
-		}, 250);
+    $: console.log({pages: $state.pages})
+
+	$: if (!$state.isOpen && ($inputValue || $state.allowPages || $state.pages.length)) {
+        console.log('resetting')
+        $state.pages = [];
+        inputValue.set('');
+        $state.allowPages = true;
+		// setTimeout(() => {
+        //     console.log('resetting in timeout')
+		// }, 200);
 	}
 
 	export const open = () => {

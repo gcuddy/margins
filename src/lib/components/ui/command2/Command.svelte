@@ -31,6 +31,7 @@
 	);
 	export let commandPages: $$Props['commandPages'] = undefined;
     export let filterFunction: $$Props['filterFunction'] = undefined;
+    export let fixedHeight: $$Props["fixedHeight"] = false;
 
 	type T = $$Generic;
 
@@ -43,6 +44,7 @@
 		container,
 		defaultShouldFilter,
         filterFunction,
+        fixedHeight,
 		initialData,
 		initialSelectedValue:
 			value && multiple && Array.isArray(value)
@@ -80,6 +82,8 @@
 		playBounce: bounce,
 		shouldFilterStore: localShouldFilter,
 	});
+
+    export let animateHeight = false;
 </script>
 
 {#if asChild}
@@ -91,8 +95,9 @@
 		bind:this={$container}
 		class={cn(
 			!unstyled &&
-				'flex h-[--height] w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground will-change-transform trasnform-[0]',
+				'flex w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground will-change-transform trasnform-[0]',
 			bounce && 'transition-transform',
+            animateHeight && 'h-[--height]',
 			className,
 		)}
 	>
