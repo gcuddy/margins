@@ -2,7 +2,7 @@ import { DocumentType } from '$lib/types/enums';
 import type { Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 import { XMLParser } from 'fast-xml-parser';
-import parse from 'node-html-parser';
+import { parse } from 'node-html-parser';
 import { z } from 'zod';
 
 import { db } from '$lib/db';

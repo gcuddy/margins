@@ -1,6 +1,6 @@
 import type { Config } from '@sveltejs/adapter-vercel';
 import { json } from '@sveltejs/kit';
-import parse from 'node-html-parser';
+import { parse } from 'node-html-parser';
 
 import { db } from '$lib/db';
 import { entrySelect, type ListEntry } from '$lib/db/selects';

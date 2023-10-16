@@ -5,7 +5,7 @@
 // for now let's just write out the basics.
 import { Prisma } from "@prisma/client";
 import { XMLParser } from "fast-xml-parser";
-import parse from "node-html-parser";
+import { parse } from 'node-html-parser';
 
 import { db } from "$lib/db";
 import { parseEntry } from "$lib/feeds/parser";

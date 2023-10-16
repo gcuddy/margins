@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { YOUTUBE_KEY } from '$env/static/private';
 import { Parser, type Metadata } from '$lib/web-parser';
 
-import parse from 'node-html-parser';
+import { parse } from 'node-html-parser';
 import { uploadFile } from './backend/s3.server';
 import dayjs from './dayjs';
 import { books } from './features/books/googlebooks.server';
