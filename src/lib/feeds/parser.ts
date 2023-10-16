@@ -70,105 +70,109 @@ export async function findFeed(feedUrl: string): Promise<{
 		}
 		const body = await response.text();
 		const contentType = response.headers.get('content-type');
-		if (
-			(contentType && isXml(contentType)) ||
-			body.trim().startsWith('<?xml')
-		) {
-			// We're in XML land
-			const parsed = parser.parse(body);
-			const data = parsed.rss?.channel || parsed.feed;
-			const title = getText(data?.title);
-			const image = data?.image?.url || data?.icon;
-			return {
-				favicon:
-					image ||
-					`https://icon.horse/icon/${getHostname(
-						data.link || data.url || feedUrl,
-					)}`,
-				feeds: [
-					{
-						title,
-						url: feedUrl,
-					},
-				],
-				input: feedUrl,
-			};
-		} else if (contentType && isJson(contentType)) {
-			try {
-				console.log({ body });
-				const parsed = JSON.parse(body);
-				assertsJsonFeed(parsed);
-				const { icon, title } = parsed;
-				const location = response.headers.get('location');
-				return {
-					favicon: icon || `https://icon.horse/icon/?uri=${feedUrl}`,
-					feeds: [
-						{
-							title,
-							// We use url instead of parsed.feed_url, because sometimes people don't update their feed_url...
-							// In practice, if we got the data from this url, it means it's the right url
-							// We use response.url since we want to use the final url (after redirects)
-							url: response.url,
-							type: 'json',
-						},
-					],
-					input: feedUrl,
-				};
-			} catch {
-				console.error('failed parsing JSON Feed');
-				return {
-					feeds: [],
-					input: feedUrl,
-				};
-			}
-		} else {
-			// The URL was not XML or JSON — so let's try to find the feed now
-			const root = parse(body);
-			const links = root
-				.querySelectorAll(linkSelectors)
-				.map((l) => l.attributes.href)
-				.filter(Boolean);
-			if (!links.length) {
-				// try /feed as a last ditch effort
-				if (!feedUrl.endsWith('/feed')) {
-					// const newUrlToTry = new URL('/feed', feedUrl);
-					// return findFeed(newUrlToTry.href);
-				} else {
+        console.log({ body, contentType });
+				if (
+					(contentType && isXml(contentType)) ||
+					body.trim().startsWith('<?xml')
+				) {
+					// We're in XML land
+					console.log('xml');
+					const parsed = parser.parse(body);
+					const data = parsed.rss?.channel || parsed.feed;
+					const title = getText(data?.title);
+					const image = data?.image?.url || data?.icon;
 					return {
-						feeds: [],
+						favicon:
+							image ||
+							`https://icon.horse/icon/${getHostname(
+								data.link || data.url || feedUrl,
+							)}`,
+						feeds: [
+							{
+								title,
+								url: feedUrl,
+							},
+						],
+						input: feedUrl,
+					};
+				} else if (contentType && isJson(contentType)) {
+					try {
+						console.log({ body });
+						const parsed = JSON.parse(body);
+						assertsJsonFeed(parsed);
+						const { icon, title } = parsed;
+						const location = response.headers.get('location');
+						return {
+							favicon: icon || `https://icon.horse/icon/?uri=${feedUrl}`,
+							feeds: [
+								{
+									title,
+									// We use url instead of parsed.feed_url, because sometimes people don't update their feed_url...
+									// In practice, if we got the data from this url, it means it's the right url
+									// We use response.url since we want to use the final url (after redirects)
+									url: response.url,
+									type: 'json',
+								},
+							],
+							input: feedUrl,
+						};
+					} catch {
+						console.error('failed parsing JSON Feed');
+						return {
+							feeds: [],
+							input: feedUrl,
+						};
+					}
+				} else {
+					// The URL was not XML or JSON — so let's try to find the feed now
+					console.log('html - try parsing to find feed');
+					const root = parse(body);
+					console.log('got root', root);
+					const links = root
+						.querySelectorAll(linkSelectors)
+						.map((l) => l.attributes.href)
+						.filter(Boolean);
+					if (!links.length) {
+						// try /feed as a last ditch effort
+						if (!feedUrl.endsWith('/feed')) {
+							// const newUrlToTry = new URL('/feed', feedUrl);
+							// return findFeed(newUrlToTry.href);
+						} else {
+							return {
+								feeds: [],
+								input: feedUrl,
+							};
+						}
+					}
+					// for (const link of links) {
+					// 	const resolved = resolveUrl(url.toString(), link);
+					// 	console.log(`trying to fetch ${resolved}`);
+					// 	console.log(await findFeed(resolveUrl(url.toString(), link)));
+					// }
+					console.log(`Found ${links.length} links to check!`);
+					console.time('feedCrawl');
+					const allFeeds = await Promise.all(
+						links.map(async (link) => {
+							return findFeed(resolveUrl(feedUrl, link));
+						}),
+					);
+					console.timeEnd('feedCrawl');
+					console.log({ allFeeds });
+					const favicon = allFeeds.find((f) => {
+						if (!f.favicon) {
+							return false;
+						}
+						if (f.favicon.startsWith('https://icon.horse')) {
+							return false;
+						}
+						return true;
+					})?.favicon;
+					return {
+						favicon,
+						feeds: allFeeds.flatMap((f) => f.feeds),
 						input: feedUrl,
 					};
 				}
-			}
-			// for (const link of links) {
-			// 	const resolved = resolveUrl(url.toString(), link);
-			// 	console.log(`trying to fetch ${resolved}`);
-			// 	console.log(await findFeed(resolveUrl(url.toString(), link)));
-			// }
-			console.log(`Found ${links.length} links to check!`);
-			console.time('feedCrawl');
-			const allFeeds = await Promise.all(
-				links.map(async (link) => {
-					return findFeed(resolveUrl(feedUrl, link));
-				}),
-			);
-			console.timeEnd('feedCrawl');
-			console.log({ allFeeds });
-			const favicon = allFeeds.find((f) => {
-				if (!f.favicon) {
-					return false;
-				}
-				if (f.favicon.startsWith('https://icon.horse')) {
-					return false;
-				}
-				return true;
-			})?.favicon;
-			return {
-				favicon,
-				feeds: allFeeds.flatMap((f) => f.feeds),
-				input: feedUrl,
-			};
-		}
 	} catch (error) {
 		console.error(error);
 		return {

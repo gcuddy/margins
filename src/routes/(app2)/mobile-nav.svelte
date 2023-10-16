@@ -85,7 +85,7 @@
 							<MobileLink
 								bind:open={isAddSheetOpen}
 								on:click={() => {
-									showAddUrlModalStore.set(true);
+									showAddSubscriptionModal.set(true);
 								}}
 							>
 								<Rss class="w-5 h-5 mr-2" />

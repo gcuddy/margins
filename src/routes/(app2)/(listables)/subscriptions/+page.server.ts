@@ -51,7 +51,10 @@ export const actions = {
 		if (!form.valid) {
 			return fail(400, { form });
 		}
-		const feeds = await findFeed(form.data.url);
+        console.log('[subscriptions > search] form.data.url', form.data.url);
+				const feeds = await findFeed(form.data.url);
+
+				console.log('[subscriptions > search] feeds', feeds);
 
 		return {
 			feeds,
