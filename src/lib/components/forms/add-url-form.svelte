@@ -3,7 +3,7 @@
 	import Input from '$components/ui/input/input.svelte';
 	import Dialog from '$components/ui/dialog2/Dialog.svelte';
 	import { enhance } from '$app/forms';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import { toast } from 'svelte-sonner';
 	import { createEventDispatcher } from 'svelte';
 	import { useQueryClient } from '@tanstack/svelte-query';

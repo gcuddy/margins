@@ -4,7 +4,7 @@
 	import { scale } from 'svelte/transition';
 
 	import { page } from '$app/stores';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import { mutation } from '$lib/queries/query';
 

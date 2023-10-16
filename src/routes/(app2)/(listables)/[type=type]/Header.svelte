@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { isHTMLInputElement } from '@melt-ui/svelte/internal/helpers';
-	import { createQuery } from '@tanstack/svelte-query';
-	import { PinIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import {
+		MoreHorizontal,
+		PinIcon,
+		ZoomInIcon,
+		ZoomOutIcon,
+	} from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { derived, type Writable } from 'svelte/store';
-
+	import * as Sheet from '$components/ui/sheet';
 	import { page } from '$app/stores';
 	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
 	import { getPdfStateContext } from '$components/pdf-viewer/utils';
@@ -17,11 +22,24 @@
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils/tailwind';
 
+	import { Progress } from '$components/ui/progress';
+	import { Label } from '$components/ui/label';
+
 	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
 	import EntryOperations from './[id]/EntryOperations.svelte';
 	import { getArticleContext, getEntryContext } from './ctx';
-	import { ActivityLog } from 'radix-icons-svelte';
+	import {
+		ActivityLog,
+		MixerHorizontal,
+		ChevronRight,
+        DotsHorizontal
+	} from 'radix-icons-svelte';
 	import { make_link } from '$lib/utils/entries';
+	import MobileLink from '../../mobile-link.svelte';
+	import { fly } from 'svelte/transition';
+	import TransitionContainer from '$components/transition-container.svelte';
+	import ArticleAppearanceOptionsContent from './[id]/article-appearance-options-content.svelte';
+	import { entryCommands } from '$components/entries/operations';
 
 	const { scrollingDown } = getEntryContext();
 
@@ -70,6 +88,12 @@
 		e.target.blur();
 	}
 
+	let optionsPages: Array<string> = [];
+	$: optionPage = optionsPages[optionsPages.length - 1];
+    let optionsOpen = false;
+
+    const queryClient = useQueryClient();
+
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
 
@@ -89,7 +113,7 @@
 	style:--left={$inArticle ? 0 : `${$mainNavWidth}px`}
 	style:--mobile-left={$inArticle ? 0 : `${$mobileNavWidth}px`}
 	class={cn(
-		'fixed flex items-center justify-between z-50 left-0 sm:left-[--mobile-left] lg:left-[--left] top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform w-full sm:w-[calc(100%-var(--mobile-nav-width))]',
+		'fixed flex items-center justify-between z-30 left-0 sm:left-[--mobile-left] lg:left-[--left] top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform w-full sm:w-[calc(100%-var(--mobile-nav-width))]',
 		$scrollingDown && '-translate-y-full',
 		$rightSidebar
 			? 'pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
@@ -136,9 +160,150 @@
 		<div class="center flex-1">
 			<!--  -->
 		</div>
-		<div class="right flex gap-x-4 items-center">
+		<div class="flex md:hidden">
+			<Sheet.Root
+                bind:open={optionsOpen}
+				onOpenChange={() => {
+					optionsPages = [];
+				}}
+			>
+				<Sheet.Trigger asChild let:builder>
+					<Button variant="ghost" builders={[builder]}>
+						<MoreHorizontal class="h-4 w-4" />
+					</Button>
+				</Sheet.Trigger>
+				<Sheet.ContentBottom>
+					<TransitionContainer>
+						{#if !optionPage}
+							<div
+								transition:fly={{
+									x: '-100%',
+								}}
+							>
+								<div class="flex flex-col space-y-1.5 pb-6">
+									<span class="font-semibold leading-none tracking-tight">
+										Options
+									</span>
+									{#if $page.data.entry?.title}
+										<span class="text-sm text-muted-foreground">
+											{$page.data.entry?.title}
+										</span>
+									{/if}
+									<!-- {#if $page.data.entry?.type === 'article'}
+                                <span class="text-sm text-muted-foreground">
+                                    <Label for="progress">Progress: {Math.ceil($progress * 100)}%</Label>
+                                                            <Progress id="progress" max={100} value={Math.ceil($progress * 100)} />
+                                </span>
+                            {/if} -->
+								</div>
+								{#if $page.data.entry}
+									<MobileLink
+										class="group"
+										on:click={() => {
+											// todo: make this a form
+											if ($pin) {
+												$deletePin.mutate({
+													id: $pin.id,
+												});
+											} else {
+												$createPin.mutate({
+													entryId: $page.data.entry?.id,
+													sortOrder: $topSortOrder - 1,
+												});
+											}
+										}}
+									>
+										<PinIcon
+											class={cn(
+												'h-4 w-4 transition-transform group-hover:rotate-6',
+												$pin && 'fill-accent-foreground',
+											)}
+										/>
+										<span class="">{$pin ? 'Remove pin' : 'Pin'}</span>
+									</MobileLink>
+									<MobileLink href="{make_link($page.data.entry)}/activity">
+										<ActivityLog class="h-4 w-4" />
+										<span>Show activity log</span>
+									</MobileLink>
+								{/if}
+								{#if $page.data.entry?.type === 'article'}
+									<MobileLink
+										on:click={() => {
+											optionsPages = [...optionsPages, 'appearance_options'];
+										}}
+									>
+										<MixerHorizontal class="h-4 w-4" />
+										<span class="grow text-left">Appearance options</span>
+										<ChevronRight class="h-4 w-4 text-muted-foreground" />
+									</MobileLink>
+								{/if}
+								{#if $page.data.entry}
+									<!-- <EntryOperations
+										entry={$page.data.entry}
+										data={$page.data.annotationForm}
+									/> -->
+                                    <MobileLink
+										on:click={() => {
+											optionsPages = [...optionsPages, 'entry_operations'];
+										}}
+									>
+										<DotsHorizontal class="h-4 w-4" />
+										<span class="grow text-left">Actions</span>
+										<ChevronRight class="h-4 w-4 text-muted-foreground" />
+									</MobileLink>
+								{/if}
+							</div>
+						{:else if optionPage === 'appearance_options'}
+							<div
+								transition:fly={{
+									x: '100%',
+								}}
+							>
+								<div class="flex flex-col space-y-1.5 pb-6">
+									<span class="font-semibold leading-none tracking-tight">
+										Appearance Options
+									</span>
+								</div>
+                                <ArticleAppearanceOptionsContent />
+							</div>
+						{:else if optionPage === 'entry_operations'}
+							<div
+								transition:fly={{
+									x: '100%',
+								}}
+							>
+								<div class="flex flex-col space-y-1.5 pb-6">
+									<span class="font-semibold leading-none tracking-tight">
+										Actions
+									</span>
+								</div>
+                                <div class="flex flex-col">
+                                    {#each entryCommands(queryClient) as command}
+                                        <MobileLink
+                                            bind:open={optionsOpen}
+                                            on:click={() => {
+                                                command.action?.($page.data.entry);
+                                            }}
+                                        >
+                                            <svelte:component this={command.icon} class="mr-2"></svelte:component>
+                                            <span>{command.text}</span>
+                                        </MobileLink>
+                                    {/each}
+                                </div>
+							</div>
+
+						{/if}
+					</TransitionContainer>
+				</Sheet.ContentBottom>
+			</Sheet.Root>
+		</div>
+		<div class="right hidden md:flex gap-x-4 items-center">
 			{#if $page.data.entry}
-				<Button href="{make_link($page.data.entry)}/activity" variant="ghost" size="icon">
+				<Button
+					href="{make_link($page.data.entry)}/activity"
+					variant="ghost"
+					size="icon"
+				>
 					<ActivityLog />
 				</Button>
 				<Button
@@ -184,4 +349,4 @@
 </div>
 <!-- Floating Sidebar button (can't put in right because want it to show ) -->
 
-<EntrySidebarButton open={rightSidebar} class="hidden md:flex" />
+<EntrySidebarButton open={rightSidebar} class="hidden lg:flex" />

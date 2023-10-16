@@ -18,7 +18,7 @@
 	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
 	import { TagColorPopover } from '$components/tags/tag-color';
 	import * as AlertDialog from '$components/ui/alert-dialog';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import * as Dialog from '$components/ui/dialog';
 	import * as Dropdown from '$components/ui/dropdown-menu';
 	import Header from '$components/ui/Header.svelte';

@@ -5,10 +5,12 @@ import Subscriptions from './Subscriptions.svelte';
 import Tags from './Tags.svelte';
 import Authors from './Authors.svelte';
 import Rating from './rating.svelte';
+import Collections from './Collections.svelte';
 
 export {
 	Authors,
 	Books,
+    Collections,
 	JumpToEntry as Entries,
 	Movies,
 	Rating,

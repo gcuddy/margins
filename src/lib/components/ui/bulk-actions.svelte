@@ -3,7 +3,7 @@
 	import { type Writable, writable } from 'svelte/store';
 	import { fly } from 'svelte/transition';
 
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import { cn } from '$lib/utils';
 
 	const navWidth =

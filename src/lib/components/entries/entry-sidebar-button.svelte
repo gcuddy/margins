@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import { cn } from '$lib/utils/tailwind';
 	import { InfoIcon } from 'lucide-svelte';
 	import { getContext } from 'svelte';

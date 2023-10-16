@@ -303,8 +303,8 @@ dependencies:
     specifier: ^0.5.0
     version: 0.5.0(svelte@4.2.1)
   svelte-sonner:
-    specifier: ^0.1.4
-    version: 0.1.4(svelte@4.2.1)
+    specifier: ^0.3.0
+    version: 0.3.0(svelte@4.2.1)
   svelte-tiptap:
     specifier: latest
     version: 1.1.2(@tiptap/core@2.2.0-rc.4)(@tiptap/extension-bubble-menu@2.2.0-rc.4)(@tiptap/extension-floating-menu@2.2.0-rc.4)(@tiptap/pm@2.2.0-rc.4)(svelte@4.2.1)
@@ -14157,10 +14157,10 @@ packages:
       tslib: 2.6.2
     dev: true
 
-  /svelte-sonner@0.1.4(svelte@4.2.1):
-    resolution: {integrity: sha512-3aJmd4xiJsUcs0qGj+PvQ0YlHiQJnaqM2sUQ9CCgQ3plyGqzlxOwu+Svf1y8nk7yIPijMRO8jjekVfqGnbUa4Q==}
+  /svelte-sonner@0.3.0(svelte@4.2.1):
+    resolution: {integrity: sha512-AbRxxqQJb0cc2wEbluc+HVbHukYcnXUZtfSCAcxCHjV3JxB7qrBK4s4XUDSBsVT4Lboqk/0Qv7THIghkEl665A==}
     peerDependencies:
-      svelte: ^4.0.0
+      svelte: '>=3 <5'
     dependencies:
       svelte: 4.2.1
     dev: false

@@ -81,7 +81,8 @@
 					<MainNav />
 				</header> -->
 				{/if}
-				<div class={cn('sm:grid grid-cols-[auto,1fr,auto] grow')}>
+                <!-- when small, make bottom padding space for mobile nav -->
+				<div class={cn('sm:grid grid-cols-[auto,1fr,auto] grow max-sm:pb-16')}>
 					<!-- w-[200px] -->
 					<div>
 						<aside

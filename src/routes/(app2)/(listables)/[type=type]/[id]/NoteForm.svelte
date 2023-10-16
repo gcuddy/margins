@@ -3,7 +3,7 @@
 	import type { ComponentProps } from 'svelte';
 
     import AnnotationForm from '$components/AnnotationForm.svelte';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
     import {
 		Dialog,
 		DialogContent,

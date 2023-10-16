@@ -400,7 +400,7 @@ export const s_add_to_collection = z
 		annotationId: z.string().or(z.string().array()).optional(),
 		collectionId: z.number().int(),
 		entryId: z.number().int().or(z.number().int().array()).optional(),
-		width: collectionItemWidthSchema.nullable(),
+		width: collectionItemWidthSchema.nullish(),
 	})
 	.refine(
 		(data) => data.entryId ?? data.annotationId,

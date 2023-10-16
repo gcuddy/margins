@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '$components/ui/card';
 	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
 	import type { AnnotationWithEntry } from '$lib/db/selects';

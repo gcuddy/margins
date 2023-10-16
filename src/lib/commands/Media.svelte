@@ -8,7 +8,6 @@
 	import { useState } from '$lib/components/ui/cmdk/Command.Root.svelte';
 	import { CommandGroup, CommandItem } from '$lib/components/ui/command';
 	import { Muted, Small } from '$lib/components/ui/typography';
-	import { q, type QueryOutput } from '$lib/queries/query';
 	import { getYear } from '$lib/utils/date';
 	import { getId, getType } from '$lib/utils/entries';
 	import type { KeysThatBeginWith } from '$lib/utils/type-utils';

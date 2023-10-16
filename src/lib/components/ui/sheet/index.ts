@@ -8,6 +8,7 @@ import Header from "./sheet-header.svelte";
 import Footer from "./sheet-footer.svelte";
 import Title from "./sheet-title.svelte";
 import Description from "./sheet-description.svelte";
+import ContentBottom from './bottom-sheet.svelte';
 
 const Root = SheetPrimitive.Root;
 const Close = SheetPrimitive.Close;
@@ -24,6 +25,7 @@ export {
 	Footer,
 	Title,
 	Description,
+	ContentBottom,
 	//
 	Root as Sheet,
 	Close as SheetClose,
@@ -34,7 +36,8 @@ export {
 	Header as SheetHeader,
 	Footer as SheetFooter,
 	Title as SheetTitle,
-	Description as SheetDescription
+	Description as SheetDescription,
+	ContentBottom as SheetContentBottom,
 };
 
 export const sheetVariants = tv({

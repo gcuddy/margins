@@ -12,6 +12,12 @@ const fonts = ['sans', 'newsreader', 'crimson'] as const;
 type Font = (typeof fonts)[number];
 const font: Font = fonts[0];
 
+const fontClasses: Record<Font, string> = {
+	sans: 'font-sans',
+	newsreader: 'font-newsreader',
+	crimson: 'font-crimson',
+};
+
 const fontSize = 16;
 const lineHeight = 1.75;
 
@@ -36,6 +42,7 @@ type AppearanceContext = Writable<AppearanceOpts> & {
 	consts: {
 		align: typeof align;
 		fonts: typeof fonts;
+		fontClasses: typeof fontClasses;
 	};
 };
 
@@ -47,6 +54,7 @@ function createAppearanceOptions(): AppearanceContext {
 		consts: {
 			align,
 			fonts,
+			fontClasses,
 		},
 	};
 }

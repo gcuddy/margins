@@ -18,7 +18,7 @@
 		open = false;
 		dispatch('click');
 	}}
-	class={cn('flex w-full items-center justify-start space-x-2 py-6', className)}
+	class={cn('flex w-full items-center justify-start space-x-4 py-6', className)}
 	variant={'ghost'}
     {href}
 >

@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	export function commanderStore() {
+	export function createCommanderStore() {
 		const store = writable<{
 			open: boolean;
 			shouldFilter: boolean;
@@ -141,12 +141,14 @@
 		};
 	}
 
-	export const getCommanderContext = (): ReturnType<typeof commanderStore> => {
+    export const commanderStore = createCommanderStore();
+
+	export const getCommanderContext = (): typeof commanderStore => {
 		const context = getContext('cmdk_commander');
 		if (!context) {
 			throw new Error('Commander context not found');
 		}
-		return context as ReturnType<typeof commanderStore>;
+		return context as typeof commanderStore;
 	};
 </script>
 
@@ -163,7 +165,6 @@
 
 	import { invalidate } from '$app/navigation';
 	import { page as page_store } from '$app/stores';
-	import Scroller from '$lib/components/Scroller.svelte';
 	import {
 		CommandDialog,
 		CommandEmpty,
@@ -171,7 +172,7 @@
 		CommandInput,
 		CommandItem,
 		CommandList
-	} from '$lib/components/ui/command';
+	} from '$lib/components/ui/command2';
 	import { cmd_open } from '$lib/components/ui/command/stores';
 	import { mutation } from '$lib/queries/query';
 	import { update_entry } from '$lib/state/entries';
@@ -183,54 +184,47 @@
 
 	export let placeholder = 'Type a command or search...';
 
-	const store = commanderStore();
-	setContext('cmdk_commander', store);
+	setContext('cmdk_commander', commanderStore);
 	$: page = $pages[$pages.length - 1];
 	$: page, search.set('');
-	$: if (!$store.open) {
+	$: if (!$commanderStore.open) {
 		$pages = [];
 		search.set('');
-		$store.shouldFilter = false;
+		$commanderStore.shouldFilter = false;
 	}
 
-	store.subscribe((store) => {
-		console.log(`Setting cmd_open to ${store.open}`);
-		cmd_open.set(store.open);
+	commanderStore.subscribe((commanderStore) => {
+		console.log(`Setting cmd_open to ${commanderStore.open}`);
+		cmd_open.set(commanderStore.open);
 	});
 
 	export const open = () => {
-		$store.open = true;
+		$commanderStore.open = true;
 	};
+
 </script>
 
 <slot />
 
 <!-- class="rounded-lg border border-gray-100  shadow-md  dark:border-gray-800" -->
+<!-- shouldFilter={commanderStore.shouldFilter} -->
 <CommandDialog
-	shouldFilter={$store.shouldFilter}
-	isOpen={$store.open}
-	onKeydown={(e) => {
-		console.log('custom', e.key, $search);
-		if (e.key === 'Escape' || (e.key === 'Backspace' && !$search)) {
-			e.preventDefault();
-			$pages = $pages.slice(0, -1);
-		}
-	}}
+	bind:open={$commanderStore.open}
 >
-	<CommandInput bind:value={$search} placeholder={$store.placeholder} />
+	<CommandInput bind:value={$search} placeholder={$commanderStore.placeholder} />
 	<CommandList class="scrollbar-hide">
 		<!-- <CommandEmpty>No results found.</CommandEmpty> -->
-		{#if $store.component}
-			<svelte:component this={$store.component} {...$store.props} />
-		{:else if $store.items}
-			{#each $store.items as item}
+		{#if $commanderStore.component}
+			<svelte:component this={$commanderStore.component} {...$commanderStore.props} />
+		{:else if $commanderStore.items}
+			{#each $commanderStore.items as item}
 				{#if Array.isArray(item)}{/if}
 				<CommandGroup>
 					<CommandItem
 						onSelect={() => {
-							$store.onSelect?.(item);
-							store.close();
-						}}>{@html $store.render ? $store.render(item) : item}</CommandItem
+							$commanderStore.onSelect?.(item);
+							commanderStore.close();
+						}}>{@html $commanderStore.render ? $commanderStore.render(item) : item}</CommandItem
 					>
 				</CommandGroup>
 			{/each}

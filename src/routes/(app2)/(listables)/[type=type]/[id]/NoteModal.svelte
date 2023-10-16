@@ -4,7 +4,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { page } from '$app/stores';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import {
 		Dialog,
 		DialogContent,

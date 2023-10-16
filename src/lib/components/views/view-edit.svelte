@@ -35,7 +35,11 @@
     // so instead we'll use onmount and goto
     onMount(() => {
         if (filterData) {
-            goto($page.url.origin + $page.url.pathname + defaultStringifySearch(filterData))
+            goto($page.url.origin + $page.url.pathname + defaultStringifySearch(filterData), {
+                invalidateAll: false,
+                keepFocus: true,
+                replaceState: true,
+            })
         }
     })
 

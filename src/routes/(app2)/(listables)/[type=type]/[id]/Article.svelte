@@ -455,11 +455,14 @@
 						...old,
 						entry: {
 							...old.entry,
-							interactions: [makeInteraction({
-								...(old.entry.interactions?.[0] ?? []),
-								id,
-								progress: lastSavedScrollProgress,
-							}), ...(old.entry.interactions ?? []).slice(1)],
+							interactions: [
+								makeInteraction({
+									...(old.entry.interactions?.[0] ?? []),
+									id,
+									progress: lastSavedScrollProgress,
+								}),
+								...(old.entry.interactions ?? []).slice(1),
+							],
 						},
 					};
 				});
@@ -483,11 +486,14 @@
 							...old,
 							entry: {
 								...old.entry,
-								interaction:  [makeInteraction({
-								...(old.entry.interactions?.[0] ?? []),
-								id,
-								progress: lastSavedScrollProgress,
-							}), ...(old.entry.interactions ?? []).slice(1)],
+								interaction: [
+									makeInteraction({
+										...(old.entry.interactions?.[0] ?? []),
+										id,
+										progress: lastSavedScrollProgress,
+									}),
+									...(old.entry.interactions ?? []).slice(1),
+								],
 							},
 						};
 					});
@@ -981,7 +987,6 @@
 	}}
 />
 
-
 <div
 	class="prose prose-stone dark:prose-invert mx-auto prose-pre:text-balance prose-a:transition-colors"
 >
@@ -1046,7 +1051,7 @@
 			{@html data.entry?.html}
 		</div>
 	</div>
-	{#if data.entry?.bookmark?.status !== 'Archive'}
+	{#if data.entry?.bookmark?.status && data.entry?.bookmark?.status !== 'Archive'}
 		<form
 			class="mb-9 flex justify-center"
 			action="?/updateBookmark"

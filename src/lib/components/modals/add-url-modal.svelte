@@ -4,7 +4,7 @@
 	import Dialog from '$components/ui/dialog2/Dialog.svelte';
 	import { writable } from 'svelte/store';
 	import { enhance } from '$app/forms';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import AddUrlForm from '$components/forms/add-url-form.svelte';
 
 	export let open = writable(false);

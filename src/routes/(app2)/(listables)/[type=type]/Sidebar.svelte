@@ -33,7 +33,7 @@
 	<div
 		bind:this={container}
 		transition:fly={{ duration: 300, opacity: 1, x: $width_store }}
-		class="fixed hidden md:block right-0 top-0 h-screen transition-transform duration-300 md:w-[--right-sidebar-width] border-l bg-background"
+		class="fixed hidden lg:block right-0 top-0 h-screen transition-transform duration-300 md:w-[--right-sidebar-width] border-l bg-background"
 	>
 		<EntrySidebar />
 

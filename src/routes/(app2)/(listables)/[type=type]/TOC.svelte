@@ -1,15 +1,19 @@
 <script lang="ts">
 	import { createTableOfContents } from '@melt-ui/svelte';
 
-	const { activeHeadingIdxs, headingsTree, item } = createTableOfContents({
+	const {
+		elements: { item },
+		states: { activeHeadingIdxs, headingsTree },
+	} = createTableOfContents({
 		selector: '#article',
 	});
 
 	import Tree from './TOCTree.svelte';
 </script>
 
-<nav>
-	{#key $headingsTree}
+<div class="space-y-2">
+	<p class="font-semibold leading-none tracking-tight">On This Page</p>
+	<nav>
 		<Tree tree={$headingsTree} activeHeadingIdxs={$activeHeadingIdxs} {item} />
-	{/key}
-</nav>
+	</nav>
+</div>

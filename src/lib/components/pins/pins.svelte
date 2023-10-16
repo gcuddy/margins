@@ -9,7 +9,7 @@
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import { Icon } from '$components/icon-picker';
 	import { TagColorPill } from '$components/tags/tag-color';
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import { nanoid } from '$lib/nanoid';
 	import {
 		initCreatePinMutation,

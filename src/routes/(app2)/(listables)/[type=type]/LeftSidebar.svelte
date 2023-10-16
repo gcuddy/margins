@@ -16,13 +16,14 @@
 	import { goto, preloadData } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { currentEntryList } from '$components/entries/store';
-	import Button from '$components/ui/Button.svelte';
+	import { Button, type ButtonProps } from '$components/ui/button';
 	import { make_portal } from '$lib/actions/utils';
 	import { make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
 
 	import { backContext } from './[id]/store';
 	import { getEntryContext } from './ctx';
+	import * as Sheet from '$components/ui/sheet';
 	import Toc from './TOC.svelte';
 
 	$: entryId = $page.data.entry?.id;
@@ -55,6 +56,30 @@
 	const mainNavWidth: Writable<number> = getContext('mainNavWidth');
 	const mobileNavWidth: Writable<number> = getContext('mobileNavWidth');
 	let showLeftSidebar = false;
+
+	$: nextLinkProps = (
+		next_link
+			? {
+					href: next_link,
+					// disabled: undefined
+			  }
+			: {
+					// href: undefined,
+					disabled: true,
+			  }
+	) satisfies ButtonProps;
+
+	$: prevLinkProps = (
+		prev_link
+			? {
+					href: prev_link,
+					// disabled: undefined
+			  }
+			: {
+					// href: undefined,
+					disabled: true,
+			  }
+	) satisfies ButtonProps;
 </script>
 
 <nav
@@ -62,7 +87,7 @@
 	style:--left={$inArticle ? 0 : `${$mainNavWidth}px`}
 	style:--mobile-left={$inArticle ? 0 : `${$mobileNavWidth}px`}
 	class={cn(
-		'h-[--nav-height] left-0 sm:left-[--mobile-left] lg:[--left] flex items-center transition-transform transform fixed  top-0 z-[51] pl-4 w-full',
+		'h-[--nav-height] left-0 sm:left-[--mobile-left] lg:[--left] flex items-center transition-transform transform fixed  top-0 z-40 pl-4 w-full',
 		!show && 'w-min max-w-min border-b',
 		$scrollingDown && '-translate-y-full',
 		// $rightSidebar && 'opacity-0'
@@ -71,60 +96,77 @@
 	<Button variant="ghost" href={$backContext}>
 		<ArrowLeft />
 	</Button>
-	{#if $page.data.type === 'article'}
-		<Button variant="ghost" on:click={() => {
-            showLeftSidebar = !showLeftSidebar;
-        }}>
-			<svelte:component
-				this={showLeftSidebar ? PanelLeftCloseIcon : PanelLeftOpenIcon}
-                class="h-5 w-5"
-			/>
-		</Button>
+	{#if $page.data.type === 'article' || $page.data.type === 'pdf'}
+		<!-- TODO -->
+		<Sheet.Root bind:open={showLeftSidebar}>
+			<Sheet.Trigger asChild let:builder>
+				<Button on:click={(e) => {
+                    if (showLeftSidebar) {
+                        // the default is for melt-ui to open on click - but we want to close
+                        e.preventDefault();
+                    }
+                }} builders={[builder]} variant="ghost">
+					<svelte:component
+						this={showLeftSidebar ? PanelLeftCloseIcon : PanelLeftOpenIcon}
+						class="h-5 w-5"
+					/>
+				</Button>
+			</Sheet.Trigger>
+			<Sheet.Content side="left" class="w-4/5 sm:w-3/4">
+				{#if $page.data.type === 'article'}
+					<!-- <aside
+                    class="fixed w-72 left-0 top-0 bottom-0 pt-20"
+                    data-left-sidebar
+					> -->
+					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<!-- 4 rem (todo: use constants.ts) -->
+					<div
+						class="mt-16 text-sm"
+						on:click={() => {
+							console.log('click');
+							showLeftSidebar = false;
+						}}
+					>
+						{#key $page.url.pathname}
+							<Toc />
+						{/key}
+					</div>
+					<!-- </aside> -->
+				{/if}
+			</Sheet.Content>
+		</Sheet.Root>
 	{/if}
 	{#if currentIndex > -1 && $currentEntryList.length}
-		<Button
-			on:mouseover={() => {
-				if (prev_link) {
-					preloadData(prev_link);
-				}
-			}}
-			on:click={() => {
-				if (prev_link) {
-					goto(prev_link);
-				}
-			}}
-			disabled={!prev_link}
-			variant="ghost"
-		>
-			<ChevronUp />
-		</Button>
-		<Button
-			on:mouseover={() => {
-				if (next_link) {
-					preloadData(next_link);
-				}
-			}}
-			on:click={() => {
-				if (next_link) {
-					goto(next_link);
-				}
-			}}
-			disabled={!next_link}
-			variant="ghost"
-		>
-			<ChevronDown />
-		</Button>
-		<div class="flex shrink-0">
-			<span class="text-xs font-normal text-left tabular-nums"
-				>{currentIndex + 1}
-				<span class="text-muted-foreground">/ {$currentEntryList.length}</span
-				></span
-			>
+		<div class="flex items-center">
+			<!--  -->
+			<div class="flex items-center max-sm:hidden">
+                <Button {...prevLinkProps} variant="ghost">
+                    <ChevronUp />
+                </Button>
+                <Button {...nextLinkProps} variant="ghost">
+                    <ChevronDown />
+                </Button>
+            </div>
+			<div class="flex shrink-0">
+				<span class="text-xs font-normal text-left tabular-nums"
+					>{currentIndex + 1}
+					<span class="text-muted-foreground">/ {$currentEntryList.length}</span
+					></span
+				>
+			</div>
 		</div>
 	{/if}
 </nav>
-{#if $page.data.type === 'article' && showLeftSidebar}
-	<aside class="fixed w-72 left-0 top-0 bottom-0 pt-20" data-left-sidebar>
-		<Toc />
-	</aside>
+
+{#if currentIndex > -1 && $currentEntryList.length}
+	<div class="flex justify-center items-center sm:hidden fixed bottom-0 h-14 w-full bg-background/95 z-10">
+		<!--  -->
+		<Button {...prevLinkProps} class="grow" variant="ghost">
+			<ChevronUp />
+		</Button>
+		<Button {...nextLinkProps} class="grow" variant="ghost">
+			<ChevronDown />
+		</Button>
+	</div>
 {/if}

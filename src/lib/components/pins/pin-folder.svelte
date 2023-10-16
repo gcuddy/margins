@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Button from '$components/ui/Button.svelte';
+	import { Button }  from '$components/ui/button';
 	import type { Pin } from '$lib/queries/server';
 	import { Folder, FolderOpen, MoreHorizontal, FolderEdit, FolderX } from 'lucide-svelte';
 	import Pins from './pins.svelte';
