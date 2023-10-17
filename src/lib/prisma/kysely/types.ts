@@ -720,6 +720,16 @@ export type TagOnEntry = {
 export type Task = {
 	id: Generated<number>;
 };
+export type Unread = {
+	id: Generated<number>;
+	userId: string;
+	feedId: number | null;
+	entryId: number;
+	published: Timestamp;
+	entryCreatedAt: Timestamp;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+};
 export type UserEntry = {
 	id: Generated<number>;
 };
@@ -789,6 +799,7 @@ export type DB = {
 	Taggings: Tagging;
 	TagOnEntry: TagOnEntry;
 	Task: Task;
+	Unread: Unread;
 	UserEntry: UserEntry;
 	ViewPreferences: ViewPreferences;
 };

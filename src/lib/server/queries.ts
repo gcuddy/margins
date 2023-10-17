@@ -116,6 +116,8 @@ export async function get_library({
 			join.onRef('b.entryId', '=', 'e.id').on('b.userId', '=', userId),
 		)
 		.leftJoin('Feed as f', 'f.id', 'e.feedId')
+		// .leftJoin('Unread', 'e.id', 'Unread.entryId')
+		// .leftJoin("")
 		// .leftJoin('EntryInteraction as i', (j) =>
 		// 	j.onRef('i.entryId', '=', 'e.id').on('i.userId', '=', userId),
 		// )
@@ -156,6 +158,11 @@ export async function get_library({
 			'b.bookmarked_at',
 			'b.id as bookmark_id',
 		])
+		.select((eb) =>
+			eb
+				.exists(sql`(select 1 from Unread where Unread.entryId = e.id)`)
+				.as('unread'),
+		)
 		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
 		.distinct()
 		.select((eb) => [

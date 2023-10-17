@@ -52,7 +52,7 @@
 	class={cn(
 		'w-full justify-start font-normal group',
 		renaming && 'focus-within:ring-1 ring-ring ring-inset hover:bg-inherit',
-		size !== 'sm' && 'text-base'
+		// size !== 'sm' && 'text-base'
 	)}
 >
 	{#if open && !renaming}

@@ -802,7 +802,10 @@ export const queries = {
 			return await db
 				.selectFrom('Subscription as s')
 				.innerJoin('Feed as f', 'f.id', 's.feedId')
-				.where('userId', '=', ctx.userId)
+				.leftJoin('Unread as u', (join) =>
+					join.onRef('u.feedId', '=', 'f.id').on('u.userId', '=', ctx.userId),
+				)
+				.where('s.userId', '=', ctx.userId)
 				.select([
 					'f.id',
 					// TODO: because of legacy doing this, but not great
@@ -818,6 +821,7 @@ export const queries = {
 					'f.link',
 					'f.guid',
 				])
+				.select((eb) => eb.fn.count('u.entryId').as('unreadCount'))
 				// .select([
 				// 	's.id',
 				// 	's.title',
@@ -827,6 +831,18 @@ export const queries = {
 				// 	'f.imageUrl',
 				// 	'f.link',
 				// ])
+				.groupBy([
+					'f.id',
+					's.id',
+					's.title',
+					'f.lastParsed',
+					'f.podcastIndexId',
+					's.updatedAt',
+					'f.feedUrl',
+					'f.imageUrl',
+					'f.link',
+					'f.guid',
+				])
 				.orderBy('s.title asc')
 				.execute();
 		},

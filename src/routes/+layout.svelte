@@ -2,15 +2,43 @@
 	import '../app.postcss';
 	import '$lib/styles/font.css';
 
-	import { Toaster } from 'svelte-sonner';
+	import { Toaster,toast } from 'svelte-sonner';
+    import { page } from '$app/stores';
+	import { getFlash } from 'sveltekit-flash-message/client';
+	import { onDestroy } from 'svelte';
 	// import { pwaInfo } from 'virtual:pwa-info';
 
 	// fix bigint issue
 	//  this is to fix an issue with BigInt and Kysely
-	// prettier-ignore
+	// prettier-ignore'
+    // @ts-expect-error
 	BigInt.prototype.toJSON = function() {
 		return this.toString();
 	};
+
+    const flash = getFlash(page);
+
+    const unsubscribeFlash = flash.subscribe($flash => {
+        if (!$flash) return;
+
+        toast[$flash.status]($flash.text)
+        // fancy way of doing:
+        // if ($flash.status === "success") {
+        //     toast.success($flash.text)
+        // } else if ($flash.status === "error") {
+        //     toast.error($flash.text)
+        // } else if ($flash.status === "warning") {
+        //     toast.warning($flash.text)
+        // } else {
+        //     toast.info($flash.text)
+        // }
+
+        flash.set(undefined);
+    })
+
+    onDestroy(() => {
+        unsubscribeFlash();
+    })
 
 	// onMount(async () => {
 	// 	if (pwaInfo) {

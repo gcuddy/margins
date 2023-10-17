@@ -400,7 +400,7 @@
 							{#if viewPreferences.status && entry.status}
 								<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
 							{/if}
-							{#if viewPreferences.seen && !entry.seen}
+							{#if viewPreferences.seen && entry.unread}
 								<div class="h-3 w-3 rounded-full bg-primary"></div>
 							{/if}
 							<div
@@ -413,9 +413,10 @@
 									clearTimeout(mousemove_timeout);
 								}}
 								data-id={entry.id}
+								style:view-transition-name="title-{entry.id}"
 								class="truncate font-semibold hover:underline focus:outline-none"
 							>
-								{title}
+								{@html title}
 							</div>
 
 							<div class="hidden gap-x-2 sm:flex">

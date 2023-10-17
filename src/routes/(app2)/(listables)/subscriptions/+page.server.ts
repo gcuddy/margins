@@ -5,6 +5,8 @@ import { feedSearchFormSchema } from '$components/subscriptions/subscription-ent
 import { subscriptionCreate } from '$lib/db/queries/subscriptions';
 import { findFeed } from '$lib/feeds/parser';
 import type { Config } from '@sveltejs/adapter-vercel';
+import { redirect } from 'sveltekit-flash-message/server';
+import { createMessage } from '$lib/types/forms';
 
 // export const config: Config = {
 // 	runtime: 'nodejs18.x',
@@ -39,12 +41,25 @@ export const actions = {
 			}
 		});
 
-		await subscriptionCreate({
+		console.log('[subscriptions > add] dataArray', dataArray);
+
+		const { ids } = await subscriptionCreate({
 			ctx: {
 				userId: session.user.userId,
 			},
 			input: dataArray,
 		});
+
+		if (ids[0]) {
+			throw redirect(
+				`/subscription/${ids[0]}`,
+				createMessage({
+					status: 'success',
+					text: 'Subscription added successfully',
+				}),
+				event,
+			);
+		}
 
 		// return {
 		// 	feeds,

@@ -27,7 +27,7 @@
 		}
 	>;
 
-	export let size: 'default' | 'sm' | 'lg' = 'sm';
+	export let size: 'default' | 'sm' | 'lg' = 'default';
 	export let type: string | undefined = undefined;
 
 	const queryClient = useQueryClient();
@@ -223,7 +223,7 @@
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
 					class={cn(
 						'w-full justify-start font-normal',
-						size !== 'sm' && 'text-base',
+						// size !== 'sm' && 'text-base',
 					)}
 					{href}
 					on:click={(e) => {
@@ -260,7 +260,7 @@
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
 					class={cn(
 						'w-full justify-start font-normal group',
-						size !== 'sm' && 'text-base',
+						// size !== 'sm' && 'text-base',
 					)}
 					{href}
 					on:click={(e) => {
@@ -297,7 +297,7 @@
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
 					class={cn(
 						'w-full justify-start font-normal group',
-						size !== 'sm' && 'text-base',
+						// size !== 'sm' && 'text-base',
 					)}
 					{href}
 					on:click={(e) => {
@@ -337,7 +337,7 @@
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
 					class={cn(
 						'w-full justify-start font-normal group',
-						size !== 'sm' && 'text-base',
+						// size !== 'sm' && 'text-base',
 					)}
 					{href}
 					on:click={(e) => {
@@ -382,7 +382,7 @@
 					variant={$page.url.pathname === href ? 'secondary' : 'ghost'}
 					class={cn(
 						'w-full justify-start font-normal group',
-						size !== 'sm' && 'text-base',
+						// size !== 'sm' && 'text-base',
 					)}
 					{href}
 					on:click={(e) => {

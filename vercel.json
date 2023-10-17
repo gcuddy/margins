@@ -1,7 +1,7 @@
 {
 	"crons": [
 		{
-			"path": "/api/cron/queueFeeds?key=xxItiwHxkYOfv5GW%2FBzyCc80EnpFu1ByZCmNe4UkSaw%3D",
+			"path": "/api/cron/feeds",
 			"schedule": "0 * * * *"
 		}
 	]

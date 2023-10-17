@@ -243,7 +243,6 @@
 						showAddUrlModal.set(true);
 					}}
 					variant="outline"
-					size="sm"
 					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
 				>
 					<PlusCircle class="square-5 lg:square-4 shrink-0" />
@@ -320,7 +319,6 @@
 				{/if}
 				<Button
 					href="/pins"
-					size="sm"
 					class="flex w-full items-center justify-center lg:justify-start lg:hidden"
 					variant="ghost"
 				>
@@ -383,6 +381,7 @@
 			<Dialog.Title>Add Feed</Dialog.Title>
 		</Dialog.Header>
 		<SubscriptionEntry
+            bind:open={$showAddSubscriptionModal}
 			form={$page.form}
 			searchForm={$page.data.feedSearchForm}
 		/>

@@ -16,12 +16,17 @@
 		type FeedSearchFormSchema,
 		feedSearchFormSchema,
 	} from './subscription-entry.schema';
-	import { ChevronLeft, ArrowRight } from 'radix-icons-svelte';
+	import { ChevronLeft, ArrowRight, Plus } from 'radix-icons-svelte';
 	import { Loader2 } from 'lucide-svelte';
+	import { applyAction, enhance } from '$app/forms';
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import { queryFactory } from '$lib/queries/querykeys';
 
 	export let searchForm: SuperValidated<FeedSearchFormSchema>;
 
 	export let form: ActionData;
+
+    export let open = false;
 
 	// TODO: version of formsnap where you don't have to pass schema in just to get type...
 
@@ -41,6 +46,9 @@
 		form = undefined;
 		showFeeds = false;
 	});
+
+	let addingFeed = false;
+	const queryClient = useQueryClient();
 </script>
 
 {#if showFeeds && form && 'feeds' in form && form?.feeds && form.feeds?.feeds.length}
@@ -65,6 +73,18 @@
 		action="/subscriptions?/add"
 		method="post"
 		class="flex flex-col gap-y-4 px-3 min-w-0"
+		use:enhance={() => {
+			addingFeed = true;
+			return ({ update, result }) => {
+				addingFeed = false;
+                open = false;
+				// redirect
+				applyAction(result);
+
+				queryClient.invalidateQueries(queryFactory.subscriptions.all());
+				// update();
+			};
+		}}
 	>
 		<fieldset class="space-y-4 min-w-0">
 			<legend><Muted>Feeds</Muted></legend>
@@ -90,6 +110,7 @@
 								: 'col-start-1'} col-end-13 grow"
 						>
 							<Input
+								required
 								{id}
 								autofocus={index === 0 ? true : undefined}
 								value={feed.title}
@@ -109,7 +130,13 @@
 		<div
 			class="flex justify-end border-t border-gray-500 pt-4 dark:border-gray-700"
 		>
-			<Button type="submit">Save</Button>
+			<Button disabled={addingFeed} type="submit"
+				>Save {#if addingFeed}
+					<Loader2 class="animate-spin ml-2 h-4 w-4" />
+				{:else}
+					<Plus class="ml-2 h-4 w-4" />
+				{/if}</Button
+			>
 		</div>
 	</form>
 {:else}
@@ -133,7 +160,7 @@
 		<div
 			class="flex justify-end sm:flex-row sm:justify-end sm:space-x-2 flex-col-reverse"
 		>
-        <!-- {submitting} -->
+			<!-- {submitting} -->
 			<Form.Button disabled={submitting}
 				>Find feed{#if submitting}
 					<Loader2 class="animate-spin ml-2 h-4 w-4" />
