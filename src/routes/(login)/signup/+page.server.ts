@@ -10,6 +10,8 @@ import { generateLuciaPasswordHash, generateRandomString } from 'lucia/utils';
 import { trytm } from '$lib/utils';
 import { createKeyId } from 'lucia';
 import type { Message } from '$lib/types/forms';
+import { generateEmailVerificationToken } from '$lib/auth/token';
+import { sendEmailVerificationLink } from '$lib/auth/verification';
 
 export async function load() {
 	const form = await superValidate<typeof createUserSchema, Message>(
@@ -92,6 +94,9 @@ export const actions: Actions = {
 				userId,
 				attributes: {},
 			});
+			const token = await generateEmailVerificationToken(userId);
+			await sendEmailVerificationLink(email, token);
+
 			locals.auth.setSession(session);
 
 			// we got here! let's redirect now

@@ -33,7 +33,8 @@ export const auth = lucia({
 			userId: userData.id,
 			// default_state_id: userData.default_state_id,
 			// home_items: userData.home_items as string[],
-			avatar: userData.avatar
+			avatar: userData.avatar,
+			emailVerified: Boolean(userData.email_verified),
 		};
 	},
 	experimental: {
