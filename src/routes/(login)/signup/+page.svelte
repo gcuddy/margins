@@ -12,6 +12,9 @@
 
 <Card.Root class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
 	<Form.Root
+        options={{
+            validationMethod: "submit-only"
+        }}
 		class="contents"
 		method="post"
 		form={data.form}
@@ -19,6 +22,7 @@
 		let:config
 		let:submitting
         let:message
+        debug
 	>
 		<Card.Header>
 			<Card.Title class="text-2xl font-semibold tracking-tight"

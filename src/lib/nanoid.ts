@@ -12,3 +12,8 @@ export const extendedNanoid = customAlphabet(
 	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_',
 	24,
 );
+
+const shortNanoId = customAlphabet(alphabet, 8);
+export function generateInviteCode() {
+	return shortNanoId();
+}

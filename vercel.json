@@ -11,6 +11,10 @@
 		{
 			"path": "/api/cron/purge/user-entry",
 			"schedule": "0 3 * * *"
+		},
+		{
+			"path": "/api/cron/auth/invite-codes",
+			"schedule": "0 0 * * 0"
 		}
 	]
 }

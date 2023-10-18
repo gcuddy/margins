@@ -12,11 +12,28 @@ import { createKeyId } from 'lucia';
 import type { Message } from '$lib/types/forms';
 import { generateEmailVerificationToken } from '$lib/auth/token';
 import { sendEmailVerificationLink } from '$lib/auth/verification';
+import type { SuperValidated } from 'sveltekit-superforms';
 
-export async function load() {
-	const form = await superValidate<typeof createUserSchema, Message>(
-		createUserSchema,
-	);
+export async function load({ url }) {
+	const inviteCode = url.searchParams.get('inviteCode');
+	// const form = await superValidate<typeof createUserSchema, Message>(
+	// 	url,
+	// 	createUserSchema,
+	// );
+
+	// Make our own to allow for invite code to be passed in
+	const form: SuperValidated<typeof createUserSchema, Message> = {
+		valid: true,
+		posted: false,
+		data: {
+			inviteCode: inviteCode || '',
+			email: '',
+			password: '',
+			username: '',
+		},
+		errors: {},
+		constraints: {},
+	};
 
 	return {
 		form,

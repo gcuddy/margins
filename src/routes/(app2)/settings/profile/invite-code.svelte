@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { Button } from '$components/ui/button';
 	import { Input } from '$components/ui/input';
 
@@ -9,20 +10,22 @@
 
 	let copied = false;
 	let confetti = false;
+
+    $: url = `${$page.url.origin}/i/${code}`
 </script>
 
 <div class="flex gap-4 items-center">
 	<Input
 		class="w-full select-all {copied ? 'bg-primary text-primary-foreground' : ''}"
 		type="text"
-		value={code}
+		value={url}
 		readonly
 	/>
 	<Button
 		on:click={() => {
 			console.log('copying');
-			navigator.clipboard.writeText(code);
-            toast.success('Copied invitation code to clipboard');
+			navigator.clipboard.writeText(url);
+            toast.success('Copied invitation link to clipboard! Go ahead and share it with a friend.');
 			copied = true;
 			confetti = true;
 			setTimeout(() => {

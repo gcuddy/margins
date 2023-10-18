@@ -10,6 +10,7 @@ export async function load({ locals }) {
 	const invites = await db
 		.selectFrom('InvitationCode')
 		.where('ownerId', '=', session.user.userId)
+		.where('used', '=', 0)
 		.selectAll()
 		.execute();
 
