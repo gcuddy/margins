@@ -25,7 +25,9 @@
 		on:click={() => {
 			console.log('copying');
 			navigator.clipboard.writeText(url);
-            toast.success('Copied invitation link to clipboard! Go ahead and share it with a friend.');
+            toast.success('Copied invitation link to clipboard! Go ahead and share it with a friend.', {
+                description: 'Go ahead and share it with a friend.'
+            });
 			copied = true;
 			confetti = true;
 			setTimeout(() => {

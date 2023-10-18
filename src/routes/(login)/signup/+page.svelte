@@ -12,17 +12,13 @@
 
 <Card.Root class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
 	<Form.Root
-        options={{
-            validationMethod: "submit-only"
-        }}
 		class="contents"
 		method="post"
 		form={data.form}
 		schema={createUserSchema}
 		let:config
 		let:submitting
-        let:message
-        debug
+		let:message
 	>
 		<Card.Header>
 			<Card.Title class="text-2xl font-semibold tracking-tight"
@@ -31,7 +27,7 @@
 			<Card.Description>Enter your details below.</Card.Description>
 		</Card.Header>
 		<Card.Content class="grid gap-4">
-            <Form.Message
+			<Form.Message
 				message={message ?? $page.url.searchParams.get('message')}
 			/>
 			<Form.Field {config} name="email">

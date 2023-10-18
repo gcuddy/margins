@@ -82,8 +82,8 @@
 		</Card.Description>
 	</Card.Header>
 	<Card.Content class="space-y-4">
-		<span>You have {data.invites.length} invitation codes left.
-		Give this code to a friend to share Margins with them:</span>
+		<span>You have {data.invites.length} invitation code{data.invites.length > 1 ? 's' : ''} left.
+		Share this link with a friend to share Margins with them:</span>
 
 		{#if data.invites.length > 0}
 			<Collapsible.Root class="space-y-2">

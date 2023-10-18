@@ -47,7 +47,7 @@
 			</Form.Field>
 			<Form.Field {config} name="password">
 				<Form.Item>
-					<Form.Label>Password</Form.Label>
+					<div class="flex items-center justify-between "><Form.Label>Password</Form.Label><a class="text-xs text-muted-foreground hover:underline" href="/password-reset">Forgot password?</a></div>
 					<Form.Input type="password" autocomplete="current-password" />
 					<Form.Validation />
 				</Form.Item>

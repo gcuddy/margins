@@ -67,6 +67,8 @@
 </script>
 
 <script lang="ts">
+    import { clear } from 'idb-keyval';
+
 	import { createAvatar, melt } from '@melt-ui/svelte';
 	import {
 		createQuery,
@@ -217,6 +219,8 @@
 						<DropdownMenuItem
 							on:click={() => {
 								queryClient.clear();
+                                // clear idb-keyval too, because this ^^ doesn't seem to clear it
+                                clear()
 								post('/s?/logout');
 							}}
 						>

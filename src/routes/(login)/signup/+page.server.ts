@@ -1,39 +1,38 @@
-import { type Actions, fail, redirect } from '@sveltejs/kit';
-import { z } from 'zod';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
 
-import { auth } from '$lib/server/lucia';
-import { createDefaultStates } from '$lib/user';
-import { message, setError, superValidate } from 'sveltekit-superforms/server';
-import { createUserSchema, loginUserSchema } from '../schema';
-import { db } from '$lib/db';
-import { generateLuciaPasswordHash, generateRandomString } from 'lucia/utils';
-import { trytm } from '$lib/utils';
-import { createKeyId } from 'lucia';
-import type { Message } from '$lib/types/forms';
 import { generateEmailVerificationToken } from '$lib/auth/token';
 import { sendEmailVerificationLink } from '$lib/auth/verification';
-import type { SuperValidated } from 'sveltekit-superforms';
+import { db } from '$lib/db';
+import { auth } from '$lib/server/lucia';
+import type { Message } from '$lib/types/forms';
+import { createKeyId } from 'lucia';
+import { generateLuciaPasswordHash, generateRandomString } from 'lucia/utils';
+import { message, setError, superValidate } from 'sveltekit-superforms/server';
+import { createUserSchema } from '../schema';
 
 export async function load({ url }) {
 	const inviteCode = url.searchParams.get('inviteCode');
-	// const form = await superValidate<typeof createUserSchema, Message>(
-	// 	url,
-	// 	createUserSchema,
-	// );
+	const form = await superValidate<typeof createUserSchema, Message>(
+		url,
+		createUserSchema,
+		{
+			errors: false,
+		},
+	);
 
 	// Make our own to allow for invite code to be passed in
-	const form: SuperValidated<typeof createUserSchema, Message> = {
-		valid: true,
-		posted: false,
-		data: {
-			inviteCode: inviteCode || '',
-			email: '',
-			password: '',
-			username: '',
-		},
-		errors: {},
-		constraints: {},
-	};
+	// const form: SuperValidated<typeof createUserSchema, Message> = {
+	// 	valid: true,
+	// 	posted: false,
+	// 	data: {
+	// 		inviteCode: inviteCode || '',
+	// 		email: '',
+	// 		password: '',
+	// 		username: '',
+	// 	},
+	// 	errors: {},
+	// 	constraints: {},
+	// };
 
 	return {
 		form,

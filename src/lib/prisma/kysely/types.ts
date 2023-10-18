@@ -608,6 +608,11 @@ export type Log = {
 	season: number | null;
 	startingPage: number | null;
 };
+export type PasswordResetToken = {
+	id: string;
+	expires: number;
+	user_id: string;
+};
 export type Person = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
@@ -799,6 +804,7 @@ export type DB = {
 	Integration: Integration;
 	InvitationCode: InvitationCode;
 	Log: Log;
+	password_reset_token: PasswordResetToken;
 	Person: Person;
 	person_to_entry: person_to_entry;
 	Relation: Relation;
