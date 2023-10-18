@@ -147,7 +147,7 @@ export async function updateBookmark(
 		const { entryId } = variables;
 		const entryIds = Array.isArray(entryId) ? entryId : [entryId];
 		let sortOrder: number | undefined = undefined;
-		if (data.bookmarked) {
+		if (data.bookmarked_at) {
 			// if setting to bookmarked, then get sort for adding to bookmarks
 			sortOrder = await getFirstBookmarkSort(userId, data.status);
 		}

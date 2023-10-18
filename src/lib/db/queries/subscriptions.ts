@@ -13,6 +13,7 @@ import { XMLParser } from 'fast-xml-parser';
 import type { FeedAddFormSchema } from '$components/subscriptions/subscription-entry.schema';
 import { isJsonFeed } from '$lib/helpers/feeds';
 import { stripTags } from '$lib/utils/sanitize';
+import { generatePublicId } from '$lib/nanoid';
 export const youtubeRegex =
 	/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)(?<id>[^"&?/\s]{11})/;
 const xmlParser = new XMLParser({
@@ -133,6 +134,7 @@ function parseJsonFeedItems(
 			feedId,
 			guid: item.id,
 			html: item.content_html,
+			public_id: generatePublicId(),
 			published: new Date(item.date_published),
 			text: item.content_text || stripTags(item.content_html),
 			title: item.title,
@@ -195,6 +197,7 @@ function parseAtomFeedItems(
 					? `<i>Link: <a href='${alternateLink}'>${alternateLink}</a>
             ${content}`
 					: content,
+			public_id: generatePublicId(),
 			published: published ? new Date(published) : null,
 			summary: stripTags(getText(entry.summary)).slice(0, 255),
 			text: stripTags(content),
@@ -290,13 +293,16 @@ function parseRssFeedItems(
 			html,
 			image: item.image?.url,
 			podcastIndexId: null,
+			public_id: generatePublicId(),
 			published: item.pubDate
 				? new Date(item.pubDate)
 				: item.isoDate
 				? new Date(item.isoDate)
 				: null,
-			summary: stripTags(item.description.slice(0, 255)),
-			text: stripTags(html),
+			summary: item.description
+				? stripTags(item.description?.slice(0, 255))
+				: null,
+			text: item.description ? stripTags(html) : null,
 			title: item.title,
 			type: 'article',
 			updatedAt: new Date(),
@@ -444,10 +450,10 @@ export async function subscription({
 	// TODO: this should get moved to qstash messaging and use redis
 	// TODO: Stream this!
 	if (needsRefetching && feed.podcastIndexId) {
-		await updatePodcastFeed(feed);
+		// await updatePodcastFeed(feed);
 	} else if (needsRefetching && feed.feedUrl) {
 		// get feed items
-		await updateFeed(feed);
+		// await updateFeed(feed);
 		// const res = await fetch(feed.feedUrl);
 		// const { data, type } = await getFeedData(res);
 		// const items = await getLatestFeedItems(
@@ -482,7 +488,6 @@ export async function subscription({
 		// 				uri: values(ref('uri')),
 		// 			}))
 		// 			.execute();
-
 		// 		return await trx
 		// 			.updateTable('Feed')
 		// 			.set({ lastParsed: new Date() })
@@ -690,6 +695,7 @@ export async function getPodcastFeedInsertable(feed: {
 		// guid: feed.guid,
 		image: episode.image || episode.feedImage,
 		podcastIndexId: episode.id,
+		public_id: generatePublicId(),
 		published: new Date(episode.datePublished * 1000),
 		summary: stripTags(episode.description.slice(0, 200)),
 		text: episode.description,

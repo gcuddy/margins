@@ -241,6 +241,30 @@ export const mutations = {
 		fn: importMovies,
 		schema: importMoviesInput,
 	}),
+	markAllAsRead: query({
+		fn: async ({ ctx, input }) => {
+			await db
+				.insertInto('UserEntry')
+				.columns(['entryId', 'seen', 'userId'])
+				.expression((eb) =>
+					eb
+						.selectFrom('Entry')
+						.where('feedId', '=', input.feedId)
+						.select((eb) => [
+							'Entry.id',
+							sql`now()`.as('seen'),
+							eb.val(ctx.userId).as('userId'),
+						]),
+				)
+				.onDuplicateKeyUpdate({
+					seen: sql`now()`,
+				})
+				.execute();
+		},
+		schema: z.object({
+			feedId: z.number(),
+		}),
+	}),
 	removeFromCollection: query({
 		fn: async ({ ctx: { userId }, input }) => {
 			const query = db
@@ -404,6 +428,27 @@ export const mutations = {
 			ids: z.array(z.number().int()),
 			sort_order: z.number().int().optional(),
 			status: z.nativeEnum(Status),
+		}),
+	}),
+	userEntryInsert: query({
+		fn: async ({ ctx, input }) => {
+			const { entryId, seen } = input;
+			const { userId } = ctx;
+			await db
+				.insertInto('UserEntry')
+				.values({
+					entryId,
+					seen,
+					userId,
+				})
+				.onDuplicateKeyUpdate({
+					seen,
+				})
+				.execute();
+		},
+		schema: z.object({
+			entryId: z.number(),
+			seen: z.coerce.date().nullish(),
 		}),
 	}),
 	viewUpsert: query({
@@ -799,13 +844,32 @@ export const queries = {
 	}),
 	list_subscriptions: query({
 		fn: async ({ ctx }) => {
-			return await db
+			const subscriptions = await db
 				.selectFrom('Subscription as s')
 				.innerJoin('Feed as f', 'f.id', 's.feedId')
-				.leftJoin('Unread as u', (join) =>
-					join.onRef('u.feedId', '=', 'f.id').on('u.userId', '=', ctx.userId),
-				)
+				// .leftJoin('Unread as u', (join) =>
+				// 	join.onRef('u.feedId', '=', 'f.id').on('u.userId', '=', ctx.userId),
+				// )
 				.where('s.userId', '=', ctx.userId)
+				.select((eb) =>
+					eb
+						.selectFrom('Entry as e')
+						.select((eb) => eb.fn.countAll().as('unreadCount'))
+						.whereRef('e.feedId', '=', 'f.id')
+						.where((eb) =>
+							eb.not(
+								eb.exists(
+									eb
+										.selectFrom('UserEntry as ue')
+										.select(sql.lit(1).as('one'))
+										.where('ue.userId', '=', ctx.userId)
+										.whereRef('ue.entryId', '=', 'e.id')
+										.where('ue.seen', 'is not', null),
+								),
+							),
+						)
+						.as('unreadCount'),
+				)
 				.select([
 					'f.id',
 					// TODO: because of legacy doing this, but not great
@@ -821,7 +885,7 @@ export const queries = {
 					'f.link',
 					'f.guid',
 				])
-				.select((eb) => eb.fn.count('u.entryId').as('unreadCount'))
+				// .select((eb) => eb.fn.count('ue.entryId').as('unreadCount'))
 				// .select([
 				// 	's.id',
 				// 	's.title',
@@ -831,20 +895,11 @@ export const queries = {
 				// 	'f.imageUrl',
 				// 	'f.link',
 				// ])
-				.groupBy([
-					'f.id',
-					's.id',
-					's.title',
-					'f.lastParsed',
-					'f.podcastIndexId',
-					's.updatedAt',
-					'f.feedUrl',
-					'f.imageUrl',
-					'f.link',
-					'f.guid',
-				])
+				// .groupBy(['s.id'])
 				.orderBy('s.title asc')
 				.execute();
+			console.dir(subscriptions, { depth: null });
+			return subscriptions;
 		},
 	}),
 	movieCollection: query({

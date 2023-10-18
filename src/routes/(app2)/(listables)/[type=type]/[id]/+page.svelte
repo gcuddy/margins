@@ -37,39 +37,41 @@
 	$: ({ type, queryKey } = data);
 
 	$: query = createQuery({
-        ...queryFactory.entries.detail({
-            type,
-            id: data.id
-        }),
-        initialData: data.queryData
-    });
+		...queryFactory.entries.detail({
+			type,
+			id: data.id,
+		}),
+		initialData: data.queryData,
+	});
 
 	// Mark as seen mutation
 
 	const queryClient = useQueryClient();
 
 	const markAsSeenMutation = createMutation({
-		mutationFn: (input: MutationInput<'updateBookmark'>) =>
-			mutate('updateBookmark', input),
+		mutationFn: (input: MutationInput<'userEntryInsert'>) =>
+			mutate('userEntryInsert', input),
 		onMutate(variables) {
 			const {
-				data: { seen_at },
+				seen,
 			} = variables;
-			if (!seen_at || !('id' in variables && variables.id)) return;
+			if (seen === undefined) return;
 			// edit entries->list and entries-> details with this data
 			setGetLibraryData(queryClient, (entry) => {
-				if (entry.bookmark_id === variables.id) {
+				if (entry.id === variables.entryId) {
 					return {
 						...entry,
-						seen: new Date(seen_at),
+						seen,
 					};
 				}
 				return entry;
 			});
 		},
+		onSuccess: () => {
+			queryClient.invalidateQueries(queryFactory.entries.list());
+			queryClient.invalidateQueries(queryFactory.subscriptions.all());
+		},
 	});
-
-
 
 	const saveInteractionMutation = createMutation({
 		mutationFn: (data: MutationInput<'saveInteraction'>) => {
@@ -121,16 +123,13 @@
 		// push to recents
 		// save interaction
 		const entryId = data.entry?.id;
-		const interactionId = data.entry?.interaction?.id;
 		const bookmarkId = data.entry?.bookmark?.id;
-		if (bookmarkId) {
+		if (entryId) {
 			// if (!data.entry?.) {
 			// mark as seen
 			$markAsSeenMutation.mutate({
-				id: bookmarkId,
-				data: {
-					seen_at: new Date(),
-				},
+				entryId,
+                seen: new Date()
 			});
 			// data.entry.seen = true;
 			// }
@@ -193,7 +192,7 @@
 		'grow transition-[width] duration-300',
 		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)] sm:px-6 px-4', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
 		$rightSidebar
-			? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]'
+			? 'w-full lg:w-[calc(100%-(var(--right-sidebar-width)))]'
 			: 'w-full', // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
 
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'

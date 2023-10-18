@@ -136,6 +136,7 @@ const baseFilterLibrarySchema = z
 			max: z.number().int().positive().optional(),
 			min: z.number().int().positive().optional(),
 		}),
+		seen: z.coerce.boolean().optional().or(dateComparatorSchema),
 		status: z
 			.nativeEnum(Status)
 			.or(createArrayComparatorSchema(z.nativeEnum(Status)))
@@ -195,7 +196,10 @@ export const get_library_schema = z
 		grouping: z.enum(['none', 'type', 'tag', 'domain']).optional(),
 
 		/** Whether or not to use user's library. */
-		library: z.boolean().default(true),
+		library: z
+			.boolean()
+			.default(true)
+			.or(z.enum(['library', 'subscriptions', 'all'])),
 
 		// TODO: allow custom states
 		search: z.string().optional(),

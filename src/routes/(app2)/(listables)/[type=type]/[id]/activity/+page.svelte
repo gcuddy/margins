@@ -16,7 +16,7 @@
 		$page.data.type !== 'pdf' &&
 			'mt-[calc(var(--nav-height)+24px)] sm:px-6 px-4', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
 		$rightSidebar
-			? 'w-full md:w-[calc(100%-(var(--right-sidebar-width)))]'
+			? 'w-full lg:w-[calc(100%-(var(--right-sidebar-width)))]'
 			: 'w-full', // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
 
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'

@@ -116,6 +116,7 @@ export async function get_library({
 			join.onRef('b.entryId', '=', 'e.id').on('b.userId', '=', userId),
 		)
 		.leftJoin('Feed as f', 'f.id', 'e.feedId')
+		// this should only return at maximum 1 (ONE) row
 		// .leftJoin('Unread', 'e.id', 'Unread.entryId')
 		// .leftJoin("")
 		// .leftJoin('EntryInteraction as i', (j) =>
@@ -153,17 +154,31 @@ export async function get_library({
 			// 'i.finished',
 			// 'i.currentPage',
 			// 'i.seen',
-			'b.seen_at as seen',
 			'b.rating',
 			'b.bookmarked_at',
 			'b.id as bookmark_id',
 		])
+		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
 		.select((eb) =>
 			eb
-				.exists(sql`(select 1 from Unread where Unread.entryId = e.id)`)
-				.as('unread'),
+				.exists(
+					eb
+						.selectFrom('UserEntry')
+                        .select(sql.lit(1).as('one'))
+						.where('UserEntry.userId', '=', userId)
+						.whereRef('UserEntry.entryId', '=', 'e.id')
+						.where('UserEntry.seen', 'is not', null),
+				)
+				.as('seen'),
 		)
-		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
+		// .select((eb) =>
+		// 	eb
+		// 		.selectFrom('UserEntry as ue')
+		// 		.select('ue.seen')
+		// 		.whereRef('ue.entryId', '=', 'e.id')
+		// 		.where('ue.userId', '=', userId)
+		// 		.as('seen'),
+		// )
 		.distinct()
 		.select((eb) => [
 			jsonArrayFrom(
@@ -257,12 +272,23 @@ export async function get_library({
 		query = query.where('b.status', '=', status);
 	}
 
-	if (library) {
+	if (
+		library === true ||
+		(typeof library === 'string' && library === 'library')
+	) {
 		// TODO: b.bookmarked should be a date!
 		query = query
 			.where('b.userId', '=', userId)
 			.where('b.bookmarked_at', 'is not', null);
+	} else if (typeof library === 'string' && library === 'subscriptions') {
+		query = query
+			// .innerJoin('Feed as f', 'f.id', 'e.feedId')
+			.innerJoin('Subscription as s', (join) =>
+				join.onRef('s.feedId', '=', 'f.id').on('s.userId', '=', userId),
+			);
+		// .where('s.userId', '=', userId);
 	}
+	// TODO: else ensure permissions
 
 	// check for grouping. if that's there, we need to sort by that first, then by the sort
 	if (grouping) {
@@ -448,7 +474,7 @@ export async function get_library({
 			type,
 			..._rest
 		} = filter;
-
+		console.log({ filter });
 		query = query.where((_eb) => {
 			console.time('buildFilters');
 			function buildFilters(eb: typeof _eb, filter: FilterLibrarySchema) {
@@ -457,7 +483,7 @@ export async function get_library({
 				const exprs = objectEntries(filter)
 					.map(([key, value]) => {
 						// Skip if value is not truthy
-						if (!value) {
+						if (value === undefined) {
 							return;
 						}
 						// handle recursion
@@ -637,6 +663,26 @@ export async function get_library({
 							return generateComparatorClause(eb, 'b.rating', value);
 						} else if (key === 'any') {
 							// Do nothing (see below)
+						} else if (key === 'seen') {
+							console.log({ key, value });
+							// then filter on seen
+							// TODO: is this the best way to do this?
+							if (!value) {
+								// return eb('ue.seen', 'is', null);
+								// return eb.not(
+								// 	eb.exists(
+								// 		eb
+								// 			.selectFrom('UserEntry as ue')
+								// 			.select(sql.lit(1).as('one'))
+								// 			.where('ue.userId', '=', userId)
+								// 			.whereRef('ue.entryId', '=', 'e.id')
+								// 			.where('ue.seen', 'is not', null),
+								// 	),
+								// );
+							} else {
+								value satisfies never;
+							}
+							// TODO: implement rest
 						} else {
 							key satisfies never;
 						}

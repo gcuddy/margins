@@ -351,6 +351,7 @@ export type Entry = {
 	type: Generated<DocumentType>;
 	updatedAt: Timestamp;
 	id: Generated<number>;
+	public_id: string | null;
 	uri: string | null;
 	html: string | null;
 	text: string | null;
@@ -732,6 +733,9 @@ export type Unread = {
 };
 export type UserEntry = {
 	id: Generated<number>;
+	userId: string;
+	entryId: number;
+	seen: Timestamp | null;
 };
 export type UserFollows = {
 	A: string;

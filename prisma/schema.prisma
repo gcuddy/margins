@@ -330,7 +330,10 @@ model Entry {
     title                String?                         @db.VarChar(2083)
     type                 DocumentType                    @default(article)
     updatedAt            DateTime                        @updatedAt
+    // TODO: convert to bigint
     id                   Int                             @id @default(autoincrement())
+    // For now, let's use varchar(12). We might need to increase it if id rate increases, see https://zelark.github.io/nano-id-cc/
+    publicId             String?                         @unique @map("public_id") @db.VarChar(12)
     uri                  String?                         @unique @db.VarChar(500)
     html                 String?                         @db.LongText
     text                 String?                         @db.LongText
@@ -395,13 +398,18 @@ model Entry {
     owned_by             AuthUser?                       @relation(fields: [owned_by_id], references: [id])
     EntryHistory         EntryHistory[]
     Unread               Unread[]
+    UserEntry            UserEntry[]
 
     @@unique([uri, id])
     @@index([feedId])
-    @@index([id, published, createdAt])
+    // i don't know if this does anything
+    @@index([published, id, createdAt])
     @@index([published])
+    @@index([publicId])
     @@index([owned_by_id])
     @@index([title(length: 255)])
+    // we use this frequently for example to sort latest
+    @@index([published(sort: Desc), id(sort: Asc)])
     @@fulltext([text, title, author])
     @@fulltext([title, author])
     @@fulltext([text])
@@ -856,6 +864,7 @@ model AuthUser {
     attachments        Attachment[]
     ViewPreferences    ViewPreferences[]
     unreads            Unread[]
+    UserEntry          UserEntry[]
 
     @@map("auth_user")
 }
@@ -926,9 +935,23 @@ model Favorite {
     @@index([parentId])
 }
 
+// Unlike interactions, which describes a many-to-one relationship (a user can have many interactions on one entry), a user only has one userEntry per entry, so it can be used to track info like read status, etc.
 model UserEntry {
     id         Int          @id @default(autoincrement())
+    userId     String
+    entryId    Int
+    user       AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    entry      Entry        @relation(fields: [entryId], references: [id])
     Stylesheet Stylesheet[]
+
+    // metadata
+    seen DateTime? @db.Timestamp(0)
+
+    @@unique([userId, entryId])
+    @@index([userId])
+    @@index([entryId])
+    @@index([seen])
+    @@index([userId, entryId, seen])
 }
 
 model Stylesheet {

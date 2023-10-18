@@ -314,8 +314,9 @@
 											}}
 											alt=""
 											class={clsx(
-												'relative h-full w-full rounded-md object-cover border',
+												'relative h-full w-full rounded-md object-cover',
 												checked && 'invisible',
+                                                entry.type === "movie" && 'border'
 											)}
 										/>
 									{:else}
@@ -400,7 +401,7 @@
 							{#if viewPreferences.status && entry.status}
 								<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
 							{/if}
-							{#if viewPreferences.seen && entry.unread}
+							{#if viewPreferences.seen && !entry.seen}
 								<div class="h-3 w-3 rounded-full bg-primary"></div>
 							{/if}
 							<div

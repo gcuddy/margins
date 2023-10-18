@@ -38,7 +38,7 @@
 			/>
 			<div class="flex flex-col gap-2">
 				<Muted>Podcast</Muted>
-				<H1>{episode.title}</H1>
+				<h1 class="font-bold text-3xl md:text-4xl">{episode.title}</h1>
 				<Lead>
 					<a href="/show/p{episode.feedId}">{episode.feedTitle}</a>
 					<!-- {#if director}

@@ -8,9 +8,17 @@ import {
 	getFeedInsertable,
 	getPodcastFeedInsertable,
 } from '$lib/db/queries/subscriptions';
-import type { Entry } from '$lib/prisma/kysely/types';
+import type { Entry, Unread } from '$lib/prisma/kysely/types';
+import type { Config } from '@sveltejs/adapter-vercel';
 import { error, json } from '@sveltejs/kit';
 import { Insertable, sql } from 'kysely';
+
+// since this is long running, we need to increase the timeout and make it run on node
+// hopefully it finishes in 300 seconds!
+export const config: Config = {
+	maxDuration: 300,
+	runtime: 'nodejs18.x',
+};
 
 export async function GET({ request }) {
 	if (!dev) {

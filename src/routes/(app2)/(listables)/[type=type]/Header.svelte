@@ -100,7 +100,7 @@
 {#if $scrollingDown}
 	<div
 		class="fixed flex items-center justify-between left-0 top-0 h-[--nav-height] bg-transparent {$rightSidebar
-			? 'w-full md:w-[calc(100%-var(--right-sidebar-width))]'
+			? 'w-full lg:w-[calc(100%-var(--right-sidebar-width))]'
 			: 'w-full'}"
 		aria-hidden="true"
 		on:mouseenter={() => ($scrollingDown = false)}
@@ -116,7 +116,7 @@
 		'fixed flex items-center justify-between z-30 left-0 sm:left-[--mobile-left] lg:left-[--left] top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform w-full sm:w-[calc(100%-var(--mobile-nav-width))]',
 		$scrollingDown && '-translate-y-full',
 		$rightSidebar
-			? 'pr-14 md:pr-0 md:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
+			? 'pr-14 md:pr-0 lg:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
 			: 'pr-14', // pr-14 because button is w-10 r-4
 	)}
 >

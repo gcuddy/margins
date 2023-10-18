@@ -108,7 +108,7 @@
                 }} builders={[builder]} variant="ghost">
 					<svelte:component
 						this={showLeftSidebar ? PanelLeftCloseIcon : PanelLeftOpenIcon}
-						class="h-5 w-5"
+						class="h-4 w-4 stroke-[1.5]"
 					/>
 				</Button>
 			</Sheet.Trigger>

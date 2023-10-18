@@ -7,6 +7,7 @@
 		type InfiniteData,
 	} from '@tanstack/svelte-query';
 	import { CircleIcon, CopyIcon, MoreHorizontalIcon } from 'lucide-svelte';
+    import { CheckCircled, ClipboardCopy, Pencil1  } from "radix-icons-svelte"
 	import { derived } from 'svelte/store';
 
 	import { page } from '$app/stores';
@@ -60,6 +61,20 @@
 			},
 		})),
 	);
+
+    const markAllAsRead = createMutation({
+        mutationFn: async () => mutate('markAllAsRead', {
+            feedId: +data.id,
+        }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["subscriptions"]
+            });
+            queryClient.invalidateQueries({
+                queryKey: ['entries', 'list'],
+            });
+        }
+    })
 
 	const saveInteractionMutation = createMutation({
 		mutationFn: async (data: MutationInput<'saveInteraction'>) =>
@@ -144,26 +159,27 @@
 		{/if}
 	</span>
 	<svelte:fragment slot="buttons">
-		<DropdownMenu.Root>
+		<DropdownMenu.Root positioning={{placement: "bottom-end"}}>
 			<DropdownMenu.Trigger asChild let:builder>
 				<Button variant="ghost" builders={[builder]} size="icon">
 					<MoreHorizontalIcon class="w-4 h-4" />
 				</Button>
 			</DropdownMenu.Trigger>
-			<DropdownMenu.Content>
-				<DropdownMenu.Item>Rename</DropdownMenu.Item>
+			<DropdownMenu.Content class="w-[200px]">
+				<DropdownMenu.Item><Pencil1 class="h-4 w-4 mr-2" />Rename</DropdownMenu.Item>
 				{#if $query.data?.feed.feedUrl}
-					{@const feedUrl = $query.data?.feed.feedUrl}
-					<DropdownMenu.Item
-						on:click={() => {
-							navigator.clipboard.writeText(feedUrl);
-						}}
+                {@const feedUrl = $query.data?.feed.feedUrl}
+                <DropdownMenu.Item
+                on:click={() => {
+                    navigator.clipboard.writeText(feedUrl);
+                }}
 					>
-						<CopyIcon class="w-4 h-4 mr-2" />
-						Copy feed url</DropdownMenu.Item
+                    <ClipboardCopy class="w-4 h-4 mr-2" />
+                    Copy feed url</DropdownMenu.Item
 					>
-				{/if}
-			</DropdownMenu.Content>
+                    {/if}
+                    <DropdownMenu.Item on:click={$markAllAsRead.mutate}><CheckCircled class="w-4 h-4 mr-2" />Mark all as read</DropdownMenu.Item>
+                </DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</svelte:fragment>
 </LibraryHeader>

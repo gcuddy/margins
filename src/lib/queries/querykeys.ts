@@ -272,7 +272,7 @@ export const queryFactory = {
 		detail: (input: QueryInput<'subscription'>) => ({
 			queryFn: ({ meta }: QueryFnParams) =>
 				qquery(meta?.init, 'subscription', input),
-			queryKey: ['subscription', input.feedId],
+			queryKey: ['subscriptions', input.feedId],
 		}),
 	},
 	tags: {

@@ -243,6 +243,7 @@
 						showAddUrlModal.set(true);
 					}}
 					variant="outline"
+                    size="sm"
 					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
 				>
 					<PlusCircle class="square-5 lg:square-4 shrink-0" />
@@ -260,7 +261,7 @@
 						<button
 							class={cn(
 								buttonVariants({ size: 'sm', variant: 'outline' }),
-								'px-2 shadow-none rounded-l-none border-l-0 hidden lg:flex',
+								'px-2 rounded-l-none border-l-0 hidden lg:flex',
 							)}
 							use:melt={builder}
 						>
