@@ -40,7 +40,7 @@ export const actions = {
 			}
 			const token = await generatePasswordResetToken(storedUser.id);
 			console.log({ token });
-			await sendPasswordResetLink(form.data.email, token);
+			await sendPasswordResetLink(form.data.email, token, url);
 			return message(form, {
 				status: 'success',
 				text: 'Your password reset link has been sent to your email',

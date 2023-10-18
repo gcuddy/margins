@@ -111,7 +111,7 @@ export const actions: Actions = {
 				attributes: {},
 			});
 			const token = await generateEmailVerificationToken(userId);
-			await sendEmailVerificationLink(email, token);
+			await sendEmailVerificationLink(email, token, event.url);
 
 			locals.auth.setSession(session);
 

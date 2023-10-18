@@ -4,9 +4,10 @@ import { resend, sendEmail } from '$lib/email';
 export const sendEmailVerificationLink = async (
 	email: string,
 	token: string,
+    _url: URL
 ) => {
 	// TODO: replace this with real link
-	const url = `http://localhost:5173/email-verification/${token}`;
+	const url = `${_url.origin}/email-verification/${token}`;
 	await resend.emails.send({
 		from: 'Margins <onboarding@info.margins.gg>',
 		to: email,
@@ -15,8 +16,8 @@ export const sendEmailVerificationLink = async (
 	});
 };
 
-export const sendPasswordResetLink = async (email: string, token: string) => {
-	const url = `http://localhost:5173/password-reset/${token}`;
+export const sendPasswordResetLink = async (email: string, token: string, _url: URL) => {
+	const url = `${_url.origin}/password-reset/${token}`;
 	// await resend.emails.send(
 	// 	{
 	// 		from: 'Margins <onboarding@info.margins.gg>',
