@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	import { onDestroy, tick } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import { derived, writable } from 'svelte/store';
 
 	type Audio = {
@@ -24,17 +24,16 @@
 		progress: number;
 	};
 
-
 	type Store = {
 		audio: Audio | null;
-        events?: Events;
+		events?: Events;
 		height: number;
 		state: State;
 	};
 
-    type Events = {
-        onProgressUpdate?: (progress: number) => void;
-    }
+	type Events = {
+		onProgressUpdate?: (progress: number) => void;
+	};
 
 	const default_state: Store = {
 		audio: null,
@@ -77,7 +76,7 @@
 					return {
 						...store,
 						audio,
-                        events,
+						events,
 						state: {
 							...store.state,
 							loaded: false,
@@ -151,8 +150,9 @@
 		PlayIcon,
 		SkipBackIcon,
 		SkipForwardIcon,
-		XIcon
+		XIcon,
 	} from 'lucide-svelte';
+	import { Play, Pause, TrackPrevious, TrackNext } from 'radix-icons-svelte';
 	import { fly } from 'svelte/transition';
 
 	import { create_mutation } from '$lib/state/query-state';
@@ -162,6 +162,8 @@
 
 	import { Button } from './ui/button';
 	import Slider from './ui/Slider.svelte';
+	import { tweened } from 'svelte/motion';
+	import { sleep } from '$lib/utils';
 
 	const timestamp = derived(audioPlayer, ($audioPlayer) =>
 		$audioPlayer.state.currentTime
@@ -184,19 +186,22 @@
 
 	// const { debounce: debounced_save, cancel } = debounce(5000);
 
-    const progress = derived([timestamp, audioPlayer], ([$timestamp, $audioPlayer]) => {
-        if (!$audioPlayer.audio?.entry_id) {
-            return;
-        }
-        if ($audioPlayer.state.duration === 0) {
-            return;
-        }
-        return $timestamp / $audioPlayer.state.duration;
-    });
+	const progress = derived(
+		[timestamp, audioPlayer],
+		([$timestamp, $audioPlayer]) => {
+			if (!$audioPlayer.audio?.entry_id) {
+				return;
+			}
+			if ($audioPlayer.state.duration === 0) {
+				return;
+			}
+			return $timestamp / $audioPlayer.state.duration;
+		},
+	);
 
-    $: if ($progress !== undefined && $audioPlayer.events?.onProgressUpdate) {
-        $audioPlayer.events.onProgressUpdate($progress);
-    }
+	$: if ($progress !== undefined && $audioPlayer.events?.onProgressUpdate) {
+		$audioPlayer.events.onProgressUpdate($progress);
+	}
 
 	const save = throttle(
 		() => {
@@ -254,9 +259,75 @@
 	let borderBoxSize: Array<{ blockSize: number; inlineSize: number }>;
 
 	$: $audioPlayer.height = borderBoxSize?.[0]?.blockSize ?? 0;
+
+	let title_el: HTMLElement;
+
+	const titleTranslateX = tweened(0);
+	let titleScrollWidth = 0;
+	let titleClientWidth = 0;
+	$: isTitleTruncated = titleScrollWidth > titleClientWidth;
+
+	// $: if (isTitleTruncated) {
+	// 	console.log('isTitleTruncated', { titleScrollWidth, titleClientWidth });
+	// 	titleTranslateX.set(-1 * (titleScrollWidth - titleClientWidth + 24), {
+	// 		duration: 10000,
+	// 		easing: (t) => t,
+	// 		delay: 1000,
+	// 	}).then(() => {
+	//         titleTranslateX.set(0, {
+	//             duration: 0,
+	//         });
+	//     });
+	// } else {
+	// 	titleTranslateX.set(0, {
+	// 		duration: 0,
+	// 	});
+	// }
+
+	$: if (title_el) {
+		handle_resize();
+	}
+
+	let isTitleTweening = false;
+
+	async function scrollTitle() {
+		isTitleTweening = true;
+		await titleTranslateX.set(-1 * (titleScrollWidth - titleClientWidth + 24), {
+			duration: 10000,
+			easing: (t) => t,
+			delay: 1000,
+		});
+		await sleep(1000);
+		await titleTranslateX.set(0, {
+			duration: 10000,
+			easing: (t) => t,
+			delay: 1000,
+		});
+		isTitleTweening = false;
+	}
+
+	function handle_resize() {
+		console.log('resize', { title_el });
+		if (title_el) {
+			titleScrollWidth = title_el.scrollWidth;
+			titleClientWidth = title_el.clientWidth;
+			console.log({ titleScrollWidth, titleClientWidth });
+			let isTitleTruncated = titleScrollWidth > titleClientWidth;
+			if (isTitleTruncated) {
+				scrollTitle();
+			} else {
+				titleTranslateX.set(0, {
+					duration: 0,
+				});
+			}
+		}
+	}
+
+	onMount(handle_resize);
 </script>
 
 <svelte:window
+	on:resize={handle_resize}
 	on:keydown={(e) => {
 		if (!$audioPlayer.audio?.src) {
 			return;
@@ -295,7 +366,7 @@
 					<XIcon class="h-3 w-3" />
 				</Button>
 			</div>
-			<div class="grid grid-cols-10 w-full">
+			<div class="grid grid-cols-10 gap-4 w-full">
 				<div class="flex gap-3 pt-2 col-span-3">
 					<img
 						class="aspect-square w-14 h-14 object-cover shrink-0 gap-1 rounded-md"
@@ -303,13 +374,23 @@
 						src={$audioPlayer.audio.image}
 					/>
 					<div class="flex min-w-0 flex-col">
-						<svelte:element
-							this={$audioPlayer.audio.slug ? 'a' : 'span'}
+						<a
+							on:mouseover={() => {
+								if (!isTitleTweening) {
+									scrollTitle();
+								}
+							}}
+							bind:this={title_el}
 							href={$audioPlayer.audio.slug}
-							class="truncate text-sm/4 font-medium"
+							class="overflow-hidden text-sm/4 font-medium whitespace-nowrap relative after:w-1/4 after:absolute after:right-0 after:h-full after:bg-gradient-to-r after:from-transparent after:to-background after:top-0"
 						>
-							{$audioPlayer.audio.title}
-						</svelte:element>
+							<div
+								style:--trans-x="{$titleTranslateX}px"
+								class="flex pr-2 pl-1 whitespace-nowrap w-fit translate-x-[--trans-x]"
+							>
+								<span>{$audioPlayer.audio.title}</span>
+							</div>
+						</a>
 						<span class="text-sm/4 text-muted-foreground">
 							{$audioPlayer.audio.artist}
 						</span>
@@ -324,13 +405,13 @@
 								size="sm"
 								on:click={() => ($audioPlayer.state.currentTime -= 30)}
 							>
-								<SkipBackIcon />
+								<TrackPrevious class="h-5 w-5" />
 							</Button>
 							<Button variant="ghost" size="sm" on:click={audioPlayer.toggle}>
 								{#if $audioPlayer.state.paused}
-									<PlayIcon />
+									<Play class="h-5 w-5" />
 								{:else}
-									<PauseIcon />
+									<Pause class="h-5 w-5" />
 								{/if}
 							</Button>
 							<Button
@@ -338,7 +419,7 @@
 								size="sm"
 								on:click={() => ($audioPlayer.state.currentTime += 30)}
 							>
-								<SkipForwardIcon />
+								<TrackNext class="h-5 w-5" />
 							</Button>
 						</div>
 						<!-- <div class="col-span-1 flex justify-end">
