@@ -820,51 +820,62 @@ model AuthKey {
     @@map("auth_key")
 }
 
+model EmailVerificationToken {
+    id      String   @id @unique
+    expires BigInt
+    user_id String
+    user    AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+    @@index([user_id])
+}
+
 model AuthUser {
-    id                 String             @id @unique @default(cuid())
-    createdAt          DateTime           @default(now())
-    updatedAt          DateTime           @updatedAt
-    email              String             @unique
-    username           String             @unique @default("")
-    default_state_id   Int?               @unique
-    default_archive_id Int?
-    home_items         Json?
-    avatar             String?
-    auth_session       AuthSession[]
-    auth_key           AuthKey[]
-    followedBy         AuthUser[]         @relation("UserFollows")
-    following          AuthUser[]         @relation("UserFollows")
-    interactions       Interaction[]
-    favorites          Favorite[]
-    articles           Article[]
-    collections        Collection[]
-    annotations        Annotation[]
-    subscriptions      Subscription[]
-    documentData       EntryData[]
-    stylesheets        Stylesheet[]
-    states             State[]            @relation("user")
-    default_state      State?             @relation("default_state", fields: [default_state_id], references: [id])
-    taggings           Tagging[]
-    tags               Tag[]
-    bookmarks          Bookmark[]
-    EntryTag           EntryTag[]
-    context            Context[]
-    context_nodes      ContextNode[]
-    color_descriptions ColorDescription[]
-    invitationCodes    InvitationCode[]   @relation("owner")
-    invitationCode     InvitationCode?    @relation("user")
-    views              SmartList[]
-    integrations       Integration[]
-    Log                Log[]
-    relations          Relation[]
-    AuthorizationKey   AuthorizationKey?
-    TagOnEntry         TagOnEntry[]
-    entry_history      EntryHistory[]
-    custom_entries     Entry[]
-    attachments        Attachment[]
-    ViewPreferences    ViewPreferences[]
-    unreads            Unread[]
-    UserEntry          UserEntry[]
+    id                     String                   @id @unique @default(cuid())
+    createdAt              DateTime                 @default(now())
+    updatedAt              DateTime                 @updatedAt
+    email                  String                   @unique
+    email_verified         Boolean?
+    username               String                   @unique @default("")
+    default_state_id       Int?                     @unique
+    default_archive_id     Int?
+    home_items             Json?
+    avatar                 String?
+    auth_session           AuthSession[]
+    auth_key               AuthKey[]
+    followedBy             AuthUser[]               @relation("UserFollows")
+    following              AuthUser[]               @relation("UserFollows")
+    interactions           Interaction[]
+    favorites              Favorite[]
+    articles               Article[]
+    collections            Collection[]
+    annotations            Annotation[]
+    subscriptions          Subscription[]
+    documentData           EntryData[]
+    stylesheets            Stylesheet[]
+    states                 State[]                  @relation("user")
+    default_state          State?                   @relation("default_state", fields: [default_state_id], references: [id])
+    taggings               Tagging[]
+    tags                   Tag[]
+    bookmarks              Bookmark[]
+    EntryTag               EntryTag[]
+    context                Context[]
+    context_nodes          ContextNode[]
+    color_descriptions     ColorDescription[]
+    invitationCodes        InvitationCode[]         @relation("owner")
+    invitationCode         InvitationCode?          @relation("user")
+    views                  SmartList[]
+    integrations           Integration[]
+    Log                    Log[]
+    relations              Relation[]
+    AuthorizationKey       AuthorizationKey?
+    TagOnEntry             TagOnEntry[]
+    entry_history          EntryHistory[]
+    custom_entries         Entry[]
+    attachments            Attachment[]
+    ViewPreferences        ViewPreferences[]
+    unreads                Unread[]
+    UserEntry              UserEntry[]
+    EmailVerificationToken EmailVerificationToken[]
 
     @@map("auth_user")
 }

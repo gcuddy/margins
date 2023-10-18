@@ -63,6 +63,7 @@ declare global {
 			username: string;
 			email: string;
 			avatar?: string | null;
+			email_verified?: boolean;
 		};
 		type DatabaseSessionAttributes = object;
 	}

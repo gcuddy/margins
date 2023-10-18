@@ -239,6 +239,7 @@ export type AuthUser = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	email: string;
+	email_verified: number | null;
 	username: Generated<string>;
 	default_state_id: number | null;
 	default_archive_id: number | null;
@@ -342,6 +343,11 @@ export type ContextNode = {
 	description: string | null;
 	userId: string;
 	refers_to: string | null;
+};
+export type EmailVerificationToken = {
+	id: string;
+	expires: number;
+	user_id: string;
 };
 export type Entry = {
 	createdAt: Generated<Timestamp>;
@@ -780,6 +786,7 @@ export type DB = {
 	ColorDescription: ColorDescription;
 	Context: Context;
 	ContextNode: ContextNode;
+	EmailVerificationToken: EmailVerificationToken;
 	Entry: Entry;
 	EntryData: EntryData;
 	EntryHistory: EntryHistory;
