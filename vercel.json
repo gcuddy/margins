@@ -5,11 +5,11 @@
 			"schedule": "0 * * * *"
 		},
 		{
-			"path": "api/cron/purge/feeds",
+			"path": "/api/cron/purge/feeds",
 			"schedule": "0 2 * * *"
 		},
 		{
-			"path": "api/cron/purge/user-entry",
+			"path": "/api/cron/purge/user-entry",
 			"schedule": "0 3 * * *"
 		}
 	]

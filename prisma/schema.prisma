@@ -829,6 +829,16 @@ model EmailVerificationToken {
     @@index([user_id])
 }
 
+model PasswordResetToken {
+    id      String   @id @unique
+    expires BigInt
+    user_id String
+    user    AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+    @@index([user_id])
+    @@map("password_reset_token")
+}
+
 model AuthUser {
     id                     String                   @id @unique @default(cuid())
     createdAt              DateTime                 @default(now())
@@ -876,6 +886,7 @@ model AuthUser {
     unreads                Unread[]
     UserEntry              UserEntry[]
     EmailVerificationToken EmailVerificationToken[]
+    PasswordResetToken     PasswordResetToken[]
 
     @@map("auth_user")
 }
