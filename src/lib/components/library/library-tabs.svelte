@@ -12,16 +12,19 @@
 	import { cn } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
+	import { statusesWithIcons } from '$lib/status';
 
 	const prefix = '';
 	const tabs = [
-		{ href: '/library/backlog', name: 'Backlog' },
-		{ href: '/library/now', name: 'Now' },
-		{ href: '/library/archive', name: 'Archive' },
+		{ href: '/library/backlog', name: 'Backlog', icon: statusesWithIcons["Backlog"] },
+		{ href: '/library/now', name: 'Now', icon: statusesWithIcons["Now"] },
+		{ href: '/library/archive', name: 'Archive', icon: statusesWithIcons["Archive"] },
 	] as const;
 
     $: defaultValue = tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
     console.log({defaultValue})
+
+    export let showIcons = false;
 
 	const archiving_entries: Array<EntryInList> = [];
 
@@ -84,7 +87,11 @@
 >
 	<Tabs.List>
 		{#each tabs as tab}
-			<Tabs.Trigger value={tab.name}>{tab.name}</Tabs.Trigger>
+			<Tabs.Trigger value={tab.name}>
+                {#if showIcons}
+                <svelte:component this={tab.icon} class="h-4 w-4 mr-2" />
+                {/if}
+                {tab.name}</Tabs.Trigger>
 		{/each}
 	</Tabs.List>
 </Tabs.Root>

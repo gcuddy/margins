@@ -22,6 +22,7 @@
 	import AlertDialogHelper from '$components/helpers/AlertDialogHelper.svelte';
 	import alertDialogStore from '$lib/stores/alert-dialog';
 	import MobileNav from './mobile-nav.svelte';
+	import { inArticle } from '$lib/stores/entry';
 
 	$: console.log({ $navigating, $page });
 
@@ -59,7 +60,6 @@
 
 	// queryclient
 
-	const inArticle = writable(false);
 	setContext('inArticle', inArticle);
 	$: $inArticle =
 		$page.url.pathname.startsWith('/article') ||

@@ -57,6 +57,10 @@
 			clear: () => {
 				set(default_state);
 			},
+			// to be compatible with youtubeplayer
+			getCurrentTime: () => {
+				return audio_el.currentTime;
+			},
 			load: (audio: Audio, progress?: number | null, events?: Events) => {
 				let play = false;
 				update((store) => {
@@ -161,9 +165,11 @@
 	import { cn } from '$lib/utils/tailwind';
 
 	import { Button } from './ui/button';
-	import Slider from './ui/Slider.svelte';
+	// import Slider from './ui/Slider.svelte';
+	import { Slider } from '$components/ui/slider';
 	import { tweened } from 'svelte/motion';
 	import { sleep } from '$lib/utils';
+	import { inArticle } from '$lib/stores/entry';
 
 	const timestamp = derived(audioPlayer, ($audioPlayer) =>
 		$audioPlayer.state.currentTime
@@ -261,6 +267,11 @@
 	$: $audioPlayer.height = borderBoxSize?.[0]?.blockSize ?? 0;
 
 	let title_el: HTMLElement;
+    let mobile_title_el: HTMLElement;
+    let mobile_title_description: HTMLElement;
+
+    let mobileTitleScrollWidth = 0;
+    let mobileTitleClientWidth = 0;
 
 	const titleTranslateX = tweened(0);
 	let titleScrollWidth = 0;
@@ -290,9 +301,9 @@
 
 	let isTitleTweening = false;
 
-	async function scrollTitle() {
+	async function scrollTitle(distance: number) {
 		isTitleTweening = true;
-		await titleTranslateX.set(-1 * (titleScrollWidth - titleClientWidth + 24), {
+		await titleTranslateX.set(distance, {
 			duration: 10000,
 			easing: (t) => t,
 			delay: 1000,
@@ -308,19 +319,30 @@
 
 	function handle_resize() {
 		console.log('resize', { title_el });
-		if (title_el) {
+		if (title_el && getComputedStyle(title_el).display !== 'none') {
 			titleScrollWidth = title_el.scrollWidth;
 			titleClientWidth = title_el.clientWidth;
 			console.log({ titleScrollWidth, titleClientWidth });
 			let isTitleTruncated = titleScrollWidth > titleClientWidth;
 			if (isTitleTruncated) {
-				scrollTitle();
+				scrollTitle(-1 * (titleScrollWidth - titleClientWidth + 24));
 			} else {
 				titleTranslateX.set(0, {
 					duration: 0,
 				});
 			}
-		}
+		} else if (mobile_title_el && getComputedStyle(mobile_title_el).display !== 'none') {
+            mobileTitleScrollWidth = mobile_title_el.scrollWidth;
+            mobileTitleClientWidth = mobile_title_el.clientWidth;
+            let isTitleTruncated = mobileTitleScrollWidth > mobileTitleClientWidth;
+            if (isTitleTruncated) {
+                scrollTitle(-1 * (mobileTitleScrollWidth - mobileTitleClientWidth + 24));
+            } else {
+                titleTranslateX.set(0, {
+                    duration: 0,
+                });
+            }
+        }
 	}
 
 	onMount(handle_resize);
@@ -333,7 +355,8 @@
 			return;
 		}
 
-		if (e.target instanceof HTMLInputElement) {
+		// only continue if there is no active element or the active element is the body
+		if (document.activeElement && document.activeElement !== document.body) {
 			return;
 		}
 		if (e.key === ' ') {
@@ -352,11 +375,14 @@
 }			bind:playbackRate={$audioPlayer.state.playbackRate} -->
 	<div
 		transition:fly={{ duration: 100, y: 100 }}
-		class="fixed bottom-0 left-0 right-0 w-full border-t"
+		class={cn(
+			'fixed sm:bottom-0 left-0 right-0 w-full border-t',
+			$inArticle ? 'bottom-0' : 'bottom-16 ',
+		)}
 		bind:borderBoxSize
 	>
 		<div class={cn('relative flex gap-y-4 bg-popover p-4', className)}>
-			<div class="absolute right-0 top-0">
+			<div class="hidden sm:block absolute right-0 top-0">
 				<Button
 					size="sm"
 					variant="ghost"
@@ -366,7 +392,7 @@
 					<XIcon class="h-3 w-3" />
 				</Button>
 			</div>
-			<div class="grid grid-cols-10 gap-4 w-full">
+			<div class="hidden sm:grid grid-cols-10 gap-4 w-full">
 				<div class="flex gap-3 pt-2 col-span-3">
 					<img
 						class="aspect-square w-14 h-14 object-cover shrink-0 gap-1 rounded-md"
@@ -380,6 +406,7 @@
 									scrollTitle();
 								}
 							}}
+                            on:focus={() => {}}
 							bind:this={title_el}
 							href={$audioPlayer.audio.slug}
 							class="overflow-hidden text-sm/4 font-medium whitespace-nowrap relative after:w-1/4 after:absolute after:right-0 after:h-full after:bg-gradient-to-r after:from-transparent after:to-background after:top-0"
@@ -396,7 +423,7 @@
 						</span>
 					</div>
 				</div>
-				<div class="flex flex-col gap-1 col-span-4">
+				<div class="flex flex-col gap-2 col-span-4">
 					<div class="grid grid-cols-6 items-center">
 						<div />
 						<div class="col-span-4 col-start-2 flex justify-center">
@@ -452,14 +479,34 @@
                             </DropdownMenu>
                         </div> -->
 					</div>
-					<div class="flex flex-col">
+					<div class="flex gap-2">
+						<span class="text-xs/none tabular-nums text-muted-foreground"
+							>{formatTimeDuration($timestamp, 'seconds')}</span
+						>
 						<Slider
+							class="grow"
+							min={0}
+							max={$audioPlayer.state.duration}
+							value={[$audioPlayer.state.currentTime]}
+							onValueChange={(val) => {
+								if (val && val[0] !== undefined) {
+									$audioPlayer.state.currentTime = val[0];
+								}
+							}}
+						/>
+						<span class="text-xs/none tabular-nums text-muted-foreground"
+							>{formatTimeDuration(
+								$audioPlayer.state.duration,
+								'seconds',
+							)}</span
+						>
+						<!-- <Slider
 							--thumb="12px"
 							min={0}
 							max={$audioPlayer.state.duration}
 							bind:value={$audioPlayer.state.currentTime}
-						/>
-						<div class="mt-1 flex justify-between">
+						/> -->
+						<!-- <div class="mt-1 flex justify-between">
 							<span class="text-xs/none tabular-nums text-muted-foreground"
 								>{formatTimeDuration($timestamp, 'seconds')}</span
 							>
@@ -469,20 +516,51 @@
 									'seconds',
 								)}</span
 							>
-						</div>
+						</div> -->
 					</div>
 				</div>
 				<!-- Controls -->
 				<div class="flex col-span-3 justify-end">
-					<Button size="icon" variant="ghost">
+					<!-- <Button size="icon" variant="ghost">
 						<MessageSquare />
 					</Button>
 					<Button size="icon" variant="ghost">
 						<ListOrderedIcon />
-					</Button>
+					</Button> -->
 					<!-- ENtry Operations -->
 					<!-- <EntryOperations /> -->
 				</div>
+			</div>
+			<div class="flex h-14 p-1 items-center gap-2 sm:hidden">
+				<img
+					class="aspect-square h-full w-auto object-cover shrink-0 gap-1 rounded-md"
+					alt=""
+					src={$audioPlayer.audio.image}
+				/>
+				<div class="col-span-8">
+					<div class="flex flex-col text-xs">
+						<a href={$audioPlayer.audio.slug} bind:this={mobile_title_el} class="font-medium overflow-hidden whitespace-nowrap">
+                            <div
+								style:--trans-x="{$titleTranslateX}px"
+								class="flex whitespace-nowrap w-fit translate-x-[--trans-x]"
+							>
+								<span>{$audioPlayer.audio.title}</span>
+							</div>
+						</a>
+                        <span bind:this={mobile_title_description} class="text-muted-foreground">
+                            {$audioPlayer.audio.artist}
+                        </span>
+					</div>
+				</div>
+                <div class="">
+                    <Button variant="ghost" size="icon" on:click={audioPlayer.toggle}>
+                        {#if $audioPlayer.state.paused}
+                            <Play class="h-6 w-6" />
+                        {:else}
+                            <Pause class="h-6 w-6" />
+                        {/if}
+                    </Button>
+                </div>
 			</div>
 		</div>
 	</div>

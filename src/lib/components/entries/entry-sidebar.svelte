@@ -99,6 +99,7 @@
 	import { flip } from 'svelte/animate';
 	import { filterLibrary } from '$lib/schemas/library';
 	import SimilarEntries from './similar-entries.svelte';
+	import AddInlineAnnotation from '$components/annotations/add-inline-annotation.svelte';
 
 	// const render = persisted('sidebar', false);
 
@@ -584,7 +585,10 @@
 					</Collapsible.Trigger>
 					<Collapsible.Content class="flex flex-col gap-4">
 						{#each pageNotes ?? [] as note (note.id)}
-							<div animate:flip={{duration: 200}} transition:slide={{ duration: 150 }}>
+							<div
+								animate:flip={{ duration: 200 }}
+								transition:slide={{ duration: 150 }}
+							>
 								<AnnotationCard annotation={note} />
 							</div>
 							<!-- <Editor
@@ -713,7 +717,10 @@
 							{#each $query.data.entry.annotations
 								.filter((a) => a.type !== 'note' && (!!a.body || !!a.target || !!a.contentData))
 								.sort((a, b) => (a.start ?? 0) - (b.start ?? 0)) as annotation (annotation.id)}
-								<div animate:flip={{duration: 200}} transition:slide={{ duration: 150 }}>
+								<div
+									animate:flip={{ duration: 200 }}
+									transition:slide={{ duration: 150 }}
+								>
 									<AnnotationCard {annotation} />
 								</div>
 								<!-- <Annotation
@@ -726,16 +733,29 @@
 						{/if}
 						{#if isAddingAnnotation}
 							<div transition:fly={{ duration: 200, y: 10 }}>
-								<AnnotationForm
+								<AddInlineAnnotation
+									media={isMediaType($page.params.type) && $page.params.id
+										? makeMediaSchema($page.params.id, $page.params.type)
+										: undefined}
+									entryId={$query.data?.entry?.id}
+									on:cancel={() => {
+										isAddingAnnotation = false;
+									}}
+                                    on:save={() => {
+                                        isAddingAnnotation = false;
+                                    }}
+								/>
+								<!-- <AnnotationForm
 									autofocus
 									on:cancel={() => {
 										isAddingAnnotation = false;
 									}}
 								>
 									<svelte:fragment slot="header">
-										{#if $player?.type === 'youtube'}
+										{#if $player}
 											{@const player = $player.player}
-											{#await player.getCurrentTime()}
+                                            {@const time = player.getCurrentTime()}
+											{#await time}
 												...
 											{:then timestamp}
 												<TimestampInput
@@ -750,17 +770,16 @@
 													showReset={false}
 												>
 													<button
-														on:click={() => {
-															player.getCurrentTime().then((time) => {
-																updateDuration(
-																	formatDuration(
-																		Math.floor(time),
-																		's',
-																		true,
-																		':',
-																	),
-																);
-															});
+														on:click={async () => {
+															const time = await player.getCurrentTime();
+															updateDuration(
+																formatDuration(
+																	Math.floor(time),
+																	's',
+																	true,
+																	':',
+																),
+															);
 														}}
 													>
 														{#if currentTimestamp}
@@ -788,7 +807,7 @@
 											{/await}
 										{/if}
 									</svelte:fragment>
-								</AnnotationForm>
+								</AnnotationForm> -->
 							</div>
 						{:else}
 							<div in:fade={{ delay: 250 }} class="flex justify-center">

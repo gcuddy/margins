@@ -13,7 +13,7 @@
 		Settings,
 	} from 'lucide-svelte';
 
-	import { writable } from 'svelte/store';
+	import { Writable, writable } from 'svelte/store';
 	import { fade, fly } from 'svelte/transition';
 
 	import MobileLink from './mobile-link.svelte';

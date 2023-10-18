@@ -168,6 +168,20 @@ export const formatDuration = (
 };
 type SortOrder = 'asc' | 'desc';
 
+
+// reverse of formatDuration
+export const durationToSeconds = (duration: string) => {
+    // ensure format is hh:mm:ss, adding zeroes and : if necessary
+    // if only one : is present, assume mm:ss
+    if (duration.split(':').length === 2) {
+        duration = `00:${duration}`;
+    }
+
+    const [hours, minutes, seconds] = duration.split(':').map(Number);
+    //@ts-expect-error
+    return hours * 60 * 60 + minutes * 60 + seconds;
+}
+
 export function sortByDate<T>(
 	arr: Array<T>,
 	dateKey: keyof T extends string | number | Date ? keyof T : never,

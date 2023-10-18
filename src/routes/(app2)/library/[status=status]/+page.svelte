@@ -50,6 +50,7 @@
 	import type { Snapshot } from './$types.js';
 	import LibraryTabs from '$components/library/library-tabs.svelte';
 	import Header from '$components/ui/Header.svelte';
+	import { audioPlayer } from '$components/AudioPlayer.svelte';
 
 	export let data;
 
@@ -432,8 +433,13 @@
 	{/each} -->
 {/if}
 
-<div class="fixed bottom-16 z-40 justify-center flex left-0 right-0 sm:hidden">
-	<div class="p-6 bg-background">
+<div
+	class={cn(
+		'fixed z-40 justify-center flex left-0 right-0 sm:hidden',
+		$audioPlayer?.audio?.src ? 'bottom-40' : 'bottom-20',
+	)}
+>
+	<div class="">
 		{#if $checkedEntryIds.length}
 			<BulkActions styled={false} length={$checkedEntryIds.length}>
 				{#each statuses as status}
@@ -453,27 +459,27 @@
 				{/each}
 			</BulkActions>
 		{:else}
-			<LibraryTabs />
+			<LibraryTabs showIcons />
 		{/if}
 	</div>
 </div>
 
 <BulkActions class="max-sm:hidden" length={$checkedEntryIds.length}>
-    {#each statuses as status}
-        {#if $checkedEntries.every((entry) => entry.status !== status)}
-            <Button
-                on:click={() => {
-                    $updateBookmarkMutation.mutate({
-                        data: {
-                            status,
-                        },
-                        entryId: $checkedEntryIds,
-                    });
-                    multi.helpers.deselectAll();
-                }}>Move to {status}</Button
-            >
-        {/if}
-    {/each}
+	{#each statuses as status}
+		{#if $checkedEntries.every((entry) => entry.status !== status)}
+			<Button
+				on:click={() => {
+					$updateBookmarkMutation.mutate({
+						data: {
+							status,
+						},
+						entryId: $checkedEntryIds,
+					});
+					multi.helpers.deselectAll();
+				}}>Move to {status}</Button
+			>
+		{/if}
+	{/each}
 </BulkActions>
 
 <!-- <EntryList

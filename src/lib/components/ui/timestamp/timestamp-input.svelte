@@ -4,6 +4,7 @@
 	import { Crosshair, RotateCcw } from 'lucide-svelte';
 	import Part from './timestamp-input-part.svelte';
 	import { badgeVariants } from '../badge';
+	import { createEventDispatcher } from 'svelte';
 
 	const originalDuration = duration;
 
@@ -12,6 +13,14 @@
 	$: durationParts = duration.split(':');
 
 	$: newDuration = durationParts.join(':');
+
+    const dispatch = createEventDispatcher<{
+        update: {
+            duration: string;
+        }
+    }>();
+
+    $: dispatch('update', { duration: newDuration });
 
 	export function updateDuration(newDuration: string) {
 		duration = newDuration;

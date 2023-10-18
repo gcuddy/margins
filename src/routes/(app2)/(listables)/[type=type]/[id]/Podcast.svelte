@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import AddInlineAnnotation from '$components/annotations/add-inline-annotation.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import smoothload from '$lib/actions/smoothload';
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
-	import Button, { buttonVariants } from '$lib/components/ui/Button.svelte';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { Dialog, DialogContent } from '$lib/components/ui/dialog';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
 	import { isUpcoming } from '$lib/utils/date';
+	import { isMediaType, makeMediaSchema } from '$lib/utils/entries';
 
 	import type { PageData } from './$types';
 	import BookmarkForm from './BookmarkForm.svelte';
@@ -16,6 +18,8 @@
 	export let data: PageData & {
 		podcast: NonNullable<Podcast>;
 	};
+
+    import { Play, Pause, Pencil2, Stop } from 'radix-icons-svelte';
 
 	let noting = false;
 
@@ -53,43 +57,70 @@
 								audioPlayer.toggle();
 								return;
 							}
-							audioPlayer.load({
-								src: episode.enclosureUrl,
-								title: episode.title,
-								artist: episode.feedTitle,
-								image: data.podcast.episode.image || data.podcast.episode.feedImage,
-								entry_id: data.entry?.id,
-								interaction_id: data.entry?.interaction?.id,
-								slug: $page.url.pathname,
-							}, data.entry?.interaction?.progress);
-						}}>
-						{#if !loaded || (loaded && $audioPlayer.state.paused)}
+							audioPlayer.load(
+								{
+									src: episode.enclosureUrl,
+									title: episode.title,
+									artist: episode.feedTitle,
+									image:
+										data.podcast.episode.image ||
+										data.podcast.episode.feedImage,
+									entry_id: data.entry?.id,
+									interaction_id: data.entry?.interaction?.id,
+									slug: $page.url.pathname,
+								},
+								data.entry?.interaction?.progress,
+							);
+						}}
+					>
+                        {@const play = !loaded || (loaded && $audioPlayer.state.paused)}
+                        <svelte:component this={play ? Play : Pause} class="h-4 w-4 mr-2" />
+						{#if play}
 							Play
 						{:else}
-								Pause
+							Pause
 						{/if}
-						</Button
-					>
+					</Button>
+                    {#if loaded}
+                    <Button size="icon" variant="outline" on:click={audioPlayer.clear}>
+                        <Stop />
+                    </Button>
+                    {/if}
+                    <Button size="icon" variant="outline" on:click={() => (noting = !noting)}>
+                        <Pencil2 class="h-4 w-4" />
+                    </Button>
+                    <!-- TODO: show save to ilbrary / status etc -->
 					<div class="flex items-center gap-2">
-						<BookmarkForm data={data.bookmarkForm} />
+						<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 						{#if data.entry}
-							<EntryOperations data={data.annotationForm} entry={data.entry} />
+							<!-- <EntryOperations data={data.annotationForm} entry={data.entry} /> -->
 						{/if}
 					</div>
 				</div>
 			</div>
 		</div>
-		<button on:click={() => noting = !noting}>annotate</button>
 		{#if noting}
-			<Editor id={data.entry?.id} on:save={(e) => {
+			<AddInlineAnnotation
+				on:cancel={() => {
+					noting = false;
+				}}
+                on:save={() => {
+                    noting = false;
+                }}
+                media={isMediaType($page.params.type) && $page.params.id
+                    ? makeMediaSchema($page.params.type === 'podcast' ? $page.params.id.slice(1) : $page.params.id, $page.params.type)
+                    : undefined}
+                entryId={data?.entry?.id}
+			/>
+			<!-- <Editor id={data.entry?.id} on:save={(e) => {
 				console.log({e})
-			}} />
+			}} /> -->
 		{:else}
-		<div class="prose prose-stone space-y-4 dark:prose-invert">
-			<div>
-				{@html data.podcast.episode.description}
+			<div class="prose prose-stone space-y-4 dark:prose-invert">
+				<div>
+					{@html data.podcast.episode.description}
+				</div>
 			</div>
-		</div>
 		{/if}
 	</div>
 {/if}

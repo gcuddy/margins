@@ -18,6 +18,7 @@
 
 	export let type: UpsertAnnotationInput['type'] = 'note';
 	export let media: UpsertAnnotationInput['media'] = undefined;
+    export let target: UpsertAnnotationInput['target'] = undefined;
 
 
 	const dispatch = createEventDispatcher();
@@ -56,6 +57,7 @@
 			contentData: content,
 			media,
 			type,
+            target
 		});
 	}
 
