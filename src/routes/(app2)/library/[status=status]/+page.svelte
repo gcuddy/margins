@@ -299,7 +299,7 @@
 >
 	<svelte:fragment slot="buttons">
 		<div class="hidden sm:flex">
-			<LibraryTabs />
+			<LibraryTabs showIcons />
 		</div>
 	</svelte:fragment>
 </LibraryHeader>

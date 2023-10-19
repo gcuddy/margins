@@ -37,6 +37,7 @@ import type { Actions } from './$types';
 import { getIdKeyName, isMediaType, makeMediaSchema } from '$lib/utils/entries';
 import { interactionLogInputSchema } from '$components/entries/interaction-form/schema';
 import { saveToLibrarySchema } from '$lib/schemas/inputs/entry.schema';
+import { statusUpdateSchema } from '$components/status/schema';
 
 export async function load(event) {
 	const { locals, params } = event;
@@ -746,6 +747,35 @@ export const actions: Actions = {
 			status: 'success',
 			text: status ? `Status updated to ${status}` : undefined,
 		});
+	},
+	updateStatus: async (event) => {
+		const session = await event.locals.auth.validate();
+		const form = await superValidate(event, statusUpdateSchema);
+		if (!session) {
+			return fail(401, { form });
+		}
+		if (!form.valid) {
+			return fail(400, { form });
+		}
+		const { status } = form.data;
+		let entryId: number;
+		if (isMediaType(event.params.type)) {
+			const { id } = await createEntry(
+				makeMediaSchema(event.params.id, event.params.type),
+				true,
+			);
+			entryId = id;
+		} else {
+			entryId = Number(event.params.id);
+		}
+		await db
+			.updateTable('Bookmark')
+			.where('entryId', '=', entryId)
+			.where('userId', '=', session.user.userId)
+			.set({
+				status,
+			})
+			.execute();
 	},
 	update_relation: validate_form(relationSchema, async ({ data }) => {
 		await update_relation(data);

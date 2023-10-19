@@ -20,7 +20,7 @@
 	import * as Collapsible from '$components/ui/collapsible';
 	import * as Tabs from '$components/ui/tabs';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-    import * as Select from '$components/ui/select';
+	import * as Select from '$components/ui/select';
 	import { Circle, PlusCircled } from 'radix-icons-svelte';
 
 	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
@@ -33,6 +33,7 @@
 	import { enhance } from '$app/forms';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
+	CalendarPlusIcon,
 		ExternalLinkIcon,
 		EyeIcon,
 		ListPlus,
@@ -41,7 +42,7 @@
 	} from 'lucide-svelte';
 	import { mutate, qquery } from '$lib/queries/query';
 	import { toast } from 'svelte-sonner';
-	import { styleToString } from '$lib/helpers';
+	import { objectEntries, styleToString } from '$lib/helpers';
 	import type { FastAverageColorResult } from 'fast-average-color';
 	import { derived } from 'svelte/store';
 	import { onNavigate } from '$app/navigation';
@@ -57,7 +58,8 @@
 	import LogInteractionForm from '$components/entries/interaction-form/log-interaction-form.svelte';
 	import LogInteractionDialog from '$components/entries/interaction-form/log-interaction-dialog.svelte';
 	import StatusIcon from '$components/entries/StatusIcon.svelte';
-	import { statuses } from '$lib/status';
+	import { getStatusIcon, statuses, statusesToDisplay } from '$lib/status';
+	import StatusSelect from '$components/status/status-select.svelte';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;
@@ -114,13 +116,13 @@
 		queryKey: ['relatedFilms', data.movie.belongs_to_collection?.id],
 	});
 
-	$: ({
+	const {
 		elements: { image, fallback },
 		options,
 		states: { loadingStatus },
 	} = createAvatar({
 		src: `https://image.tmdb.org/t/p/w342/${data.movie.poster_path}`,
-	}));
+	});
 
 	let posterTooltips: Record<number, boolean> = {};
 
@@ -176,23 +178,30 @@
 				style:view-transition-name="artwork-{data.movie.id}"
 			>
 				<!-- style:--tw-shadow-color={$colorHex} -->
+				<!-- use:melt={$image} -->
 				<img
+					src="https://image.tmdb.org/t/p/w342{data.movie.poster_path}"
+                    width={342}
+                    height={513}
+					class="aspect-auto rounded-[inherit] border shrink-0"
+					alt="Movie poster for {data.movie.title}"
+				/>
+				<!-- <img
 					use:melt={$image}
 					class="aspect-auto w-[inherit] rounded-[inherit] border shrink-0"
 					alt="Movie poster for {data.movie.title}"
-				/>
-				<div
+				/> -->
+				<!-- <div
 					class={cn(
 						'w-[200px] h-[300px] bg-muted flex items-center justify-center text-muted-foreground',
 						$loadingStatus === 'loading' && 'animate-pulse',
 					)}
 					use:melt={$fallback}
 				>
-					<!--  -->
 					{#if $loadingStatus === 'error'}
 						{data.movie.title}
 					{/if}
-				</div>
+				</div> -->
 			</div>
 			<!-- <img
                 src="https://image.tmdb.org/t/p/w500/{data.movie.poster_path}"
@@ -200,53 +209,54 @@
                 class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]"
                 use:smoothload
             /> -->
+
 			<div class="flex flex-col gap-8 justify-between rounded p-1">
 				<div class="flex flex-col gap-2">
-                    <a
-                        href="/library/all{defaultStringifySearch(
-                            filterLibrary({
-                                type: 'movie',
-                            }),
-                        )}"><Muted class="text-foreground">Movie</Muted></a
-                    >
-                    <div class="flex items-baseline gap-x-2">
-                        <H1 class=" text-foreground">{data.movie.title}</H1>
-                        <a
-                            href="/library/all{defaultStringifySearch(
-                                filterLibrary({
-                                    published: {
-                                        // get first day of year
-                                        gte: new Date(
-                                            new Date(data.movie.release_date).getFullYear(),
-                                            0,
-                                            1,
-                                        ),
-                                        // get last day of year
-                                        lte: new Date(
-                                            new Date(data.movie.release_date).getFullYear(),
-                                            11,
-                                            31,
-                                        ),
-                                    },
-                                }),
-                            )}"
-                            class="text-muted-foreground underline underline-offset-2 decoration-border hover:text-primary"
-                        >
-                            {new Date(data.movie.release_date).getFullYear()}
-                        </a>
-                    </div>
-                    {#if data.movie.original_title !== data.movie.title}
-                        <Muted class="text-foreground">'{data.movie.original_title}'</Muted>
-                    {/if}
-                    <span class="text-muted-foreground">
-                        Directed by {#if director}
-                            <a
-                                class="underline underline-offset-2 decoration-border hover:text-primary"
-                                href="/people/t{director.id}">{director.name}</a
-                            >
-                        {/if}
-                    </span>
-                </div>
+					<a
+						href="/library/all{defaultStringifySearch(
+							filterLibrary({
+								type: 'movie',
+							}),
+						)}"><Muted class="text-foreground">Movie</Muted></a
+					>
+					<div class="flex items-baseline gap-x-2">
+						<H1 class=" text-foreground">{data.movie.title}</H1>
+						<a
+							href="/library/all{defaultStringifySearch(
+								filterLibrary({
+									published: {
+										// get first day of year
+										gte: new Date(
+											new Date(data.movie.release_date).getFullYear(),
+											0,
+											1,
+										),
+										// get last day of year
+										lte: new Date(
+											new Date(data.movie.release_date).getFullYear(),
+											11,
+											31,
+										),
+									},
+								}),
+							)}"
+							class="text-muted-foreground underline underline-offset-2 decoration-border hover:text-primary"
+						>
+							{new Date(data.movie.release_date).getFullYear()}
+						</a>
+					</div>
+					{#if data.movie.original_title !== data.movie.title}
+						<Muted class="text-foreground">'{data.movie.original_title}'</Muted>
+					{/if}
+					<span class="text-muted-foreground">
+						Directed by {#if director}
+							<a
+								class="underline underline-offset-2 decoration-border hover:text-primary"
+								href="/people/t{director.id}">{director.name}</a
+							>
+						{/if}
+					</span>
+				</div>
 				<!-- <Lead class="text-base  text-foreground">
 					Screenplay:
 					{#each writers as writer}
@@ -254,73 +264,52 @@
 					{/each}
 				</Lead> -->
 				<div class="flex flex-col gap-4">
-                    {#key data.movie.id}
-                        <StarRatingForm
-                            entryId={data.entry?.id}
-                            rating={data.entry?.bookmark?.rating ?? 0}
-                        />
-                    {/key}
-                    <div class="flex items-center gap-2">
-                        <!-- <BookmarkForm data={data.bookmarkForm} /> -->
-                        <!-- <pre>{JSON.stringify(data.entry?.interaction, null, 2)}</pre> -->
-                        {#if !data.entry?.bookmark?.status}
-                            <Button
-                                on:click={async () => {
-                                    try {
-                                        await mutate('save_to_library', {
-                                            entryId: data.entry?.id,
-                                            status: 'Backlog',
-                                            tmdbId: data.movie.id,
-                                            type: 'movie',
-                                        });
-                                        toast.success('Saved movie to Backlog');
-                                    } catch (error) {
-                                        if (error instanceof Error) {
-                                            toast.error(error.message);
-                                        }
-                                    } finally {
-                                        queryClient.invalidateQueries({
-                                            queryKey: ['entries'],
-                                        });
-                                    }
-                                }}
-                                variant="default"
-                            >
-                                <StatusIcon status="Backlog" class="w-4 h-4 mr-2" />
-                                To Watch</Button
-                            >
-                        {:else}
-                                            <Select.Root selected={{
-                                                value: data.entry.bookmark?.status,
-                                                label: data.entry.bookmark?.status,
-                                            }}>
-                                                <Select.Trigger class="w-auto">
-                                                    <Select.Value placeholder="Status" asChild let:label>
-                                                        <span class="flex items-center gap-2 pr-2">
-                                                            <!-- @ts-expect-error -->
-                                                            <StatusIcon status={label} class="w-4 h-4" />
-                                                            {label}
-                                                        </span>
-                                                    </Select.Value>
-                                                </Select.Trigger>
-                                                <Select.Content>
-                                                    <Select.Group>
-                                                        <Select.Label>Status</Select.Label>
-                                                        {#each statuses as status}
-                                                            <Select.Item value={status} label={status}>
-                                                                <StatusIcon status={status} class="w-4 h-4 mr-2" />
-                                                                {status}
-                                                            </Select.Item>
-                                                        {/each}
-                                                    </Select.Group>
-                                                </Select.Content>
-                                            </Select.Root>
-                            <!-- <Button variant="outline">
+					{#key data.movie.id}
+						<StarRatingForm
+							entryId={data.entry?.id}
+							rating={data.entry?.bookmark?.rating ?? 0}
+						/>
+					{/key}
+					<div class="flex items-center gap-2">
+						<!-- <BookmarkForm data={data.bookmarkForm} /> -->
+						<!-- <pre>{JSON.stringify(data.entry?.interaction, null, 2)}</pre> -->
+						{#if !data.entry?.bookmark?.status}
+							<Button
+								on:click={async () => {
+									try {
+										await mutate('save_to_library', {
+											entryId: data.entry?.id,
+											status: 'Backlog',
+											tmdbId: data.movie.id,
+											type: 'movie',
+										});
+										toast.success('Saved movie to Backlog');
+									} catch (error) {
+										if (error instanceof Error) {
+											toast.error(error.message);
+										}
+									} finally {
+										queryClient.invalidateQueries({
+											queryKey: ['entries'],
+										});
+									}
+								}}
+								variant="default"
+							>
+								<StatusIcon status="Backlog" class="w-4 h-4 mr-2" />
+								To Watch</Button
+							>
+						{:else if data.entry?.bookmark?.status}
+							<StatusSelect
+								entryId={data.entry.id}
+								status={data.entry.bookmark?.status}
+							/>
+							<!-- <Button variant="outline">
                                 <StatusIcon status="Backlog" class="w-4 h-4 mr-2 shrink-0" />
                                 In {data.entry.bookmark?.status}</Button
                             > -->
-                        {/if}
-                        <!-- <form
+						{/if}
+						<!-- <form
                             method="post"
                             action="?/markFinished"
                             use:enhance={() => {
@@ -341,43 +330,43 @@
                                 Watch</Button
                             >
                         </form> -->
-                        <!-- <Button
+						<!-- <Button
                                 variant="secondary"
                             >
                                 <ListPlus class="w-4 h-4 mr-2" />
                                 Add to collection...</Button
                             > -->
-                        {#if data.entry}
-                            <!-- <EntryOperations data={data.annotationForm} entry={data.entry} /> -->
-                        {/if}
-                        {#if $page.data.logInteractionForm}
-                            <LogInteractionDialog
-                                entry={{
-                                    title: data.movie.title,
-                                    type: 'movie',
-                                    published: new Date(data.movie.release_date),
-                                    image: `https://image.tmdb.org/t/p/w500/${data.movie.poster_path}`,
-                                    tmdbId: data.movie.id,
-                                }}
-                                entryId={data.entry?.id}
-                                form={$page.data.logInteractionForm}
-                            >
-                                <svelte:fragment slot="trigger" let:builder>
-                                    <Button
-                                        builders={[builder]}
-                                        variant="outline"
-                                        name="finished"
-                                        value={new Date().toISOString()}
-                                    >
-                                        <!-- <EyeIcon class="w-4 h-4 mr-2" /> -->
-                                        <PlusCircled class="w-4 h-4 mr-2" />
-                                        Log</Button
-                                    >
-                                </svelte:fragment>
-                            </LogInteractionDialog>
-                        {/if}
-                    </div>
-                </div>
+						{#if data.entry}
+							<!-- <EntryOperations data={data.annotationForm} entry={data.entry} /> -->
+						{/if}
+						{#if $page.data.logInteractionForm}
+							<LogInteractionDialog
+								entry={{
+									title: data.movie.title,
+									type: 'movie',
+									published: new Date(data.movie.release_date),
+									image: `https://image.tmdb.org/t/p/w500/${data.movie.poster_path}`,
+									tmdbId: data.movie.id,
+								}}
+								entryId={data.entry?.id}
+								form={$page.data.logInteractionForm}
+							>
+								<svelte:fragment slot="trigger" let:builder>
+									<Button
+										builders={[builder]}
+										variant="outline"
+										name="finished"
+										value={new Date().toISOString()}
+									>
+										<!-- <EyeIcon class="w-4 h-4 mr-2" /> -->
+										<CalendarPlusIcon class="w-4 h-4 mr-2 stroke-[1.5]" />
+										Log</Button
+									>
+								</svelte:fragment>
+							</LogInteractionDialog>
+						{/if}
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="prose prose-stone space-y-4 dark:prose-invert mt-6">

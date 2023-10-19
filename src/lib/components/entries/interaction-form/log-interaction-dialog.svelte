@@ -3,6 +3,7 @@
 	import * as Dialog from '$lib/components/ui/alert-dialog';
 	import type { ComponentProps, ComponentType } from 'svelte';
 	import LogInteractionForm from './log-interaction-form.svelte';
+	import { CalendarPlusIcon } from 'lucide-svelte';
 
 	type $$Props = ComponentProps<LogInteractionForm> & {
 		open?: boolean;
@@ -14,7 +15,7 @@
 	export let form: $$Props['form'];
 	export let showTrigger = true;
 
-    export let icon: $$Props["icon"] = undefined;
+    export let icon: $$Props["icon"] = CalendarPlusIcon;
 </script>
 
 <!-- TODO: allow close on escape if not tainted -->
@@ -23,7 +24,7 @@
 		<Dialog.Trigger asChild let:builder>
 			<slot name="trigger" {builder}>
 				<Button builders={[builder]} variant="outline">
-                    <svelte:component this={icon} class="w-4 h-4 mr-2" />
+                    <svelte:component this={icon} class="w-4 h-4 mr-2 stroke-[1.5]" />
                     Log</Button>
 			</slot>
 		</Dialog.Trigger>

@@ -985,12 +985,70 @@ export async function save_to_library({
  * @param input Media ID Input
  * @returns New Entry
  */
-export async function createEntry(input: z.input<typeof entryIdAndTypeSchema>) {
+export async function createEntry(
+	input: z.input<typeof entryIdAndTypeSchema>,
+	checkFirst = false,
+) {
 	// then we need to create the entry
 	let insertable: Insertable<Entry> = {
 		updatedAt: new Date(),
 		// ...data
 	};
+
+	if (checkFirst) {
+		switch (input.type) {
+			case 'tv':
+			case 'movie': {
+				const existing = await db
+					.selectFrom('Entry')
+					.where('tmdbId', '=', input.tmdbId)
+					.select('id')
+					.executeTakeFirst();
+				if (existing) {
+					return existing;
+				}
+				break;
+			}
+            case 'book': {
+                const existing = await db
+                    .selectFrom('Entry')
+                    .where('googleBooksId', '=', input.googleBooksId)
+                    .select('id')
+                    .executeTakeFirst();
+                if (existing) {
+                    return existing;
+                }
+                break;
+            }
+            case 'podcast': {
+                const existing = await db
+                    .selectFrom('Entry')
+                    .where('podcastIndexId', '=', input.podcastIndexId)
+                    .select('id')
+                    .executeTakeFirst();
+                if (existing) {
+                    return existing;
+                }
+                break;
+            }
+            case 'album': {
+                const existing = await db
+                    .selectFrom('Entry')
+                    .where('spotifyId', '=', input.spotifyId)
+                    .select('id')
+                    .executeTakeFirst();
+                if (existing) {
+                    return existing;
+                }
+                break;
+            }
+            default: {
+                return {
+                    id: input.entryId
+                }
+            }
+		}
+	}
 
 	const { type } = input;
 

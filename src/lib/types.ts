@@ -52,7 +52,9 @@ export const number_operand_lookup = {
 export const statusLookup = {
 	backlog: 'Backlog',
 	now: 'Now',
-	archive: 'Archive'
+	archive: 'Archive',
+	finished: 'Archive',
+	later: 'Backlog',
 } as const;
 
 export type StoredComponent<T extends SvelteComponent> = {

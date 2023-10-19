@@ -16,15 +16,24 @@
 
 	const prefix = '';
 	const tabs = [
-		{ href: '/library/backlog', name: 'Backlog', icon: statusesWithIcons["Backlog"] },
-		{ href: '/library/now', name: 'Now', icon: statusesWithIcons["Now"] },
-		{ href: '/library/archive', name: 'Archive', icon: statusesWithIcons["Archive"] },
+		{
+			href: '/library/later',
+			name: 'Later',
+			icon: statusesWithIcons['Backlog'],
+		},
+		{ href: '/library/now', name: 'Now', icon: statusesWithIcons['Now'] },
+		{
+			href: '/library/finished',
+			name: 'Finished',
+			icon: statusesWithIcons['Archive'],
+		},
 	] as const;
 
-    $: defaultValue = tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
-    console.log({defaultValue})
+	$: defaultValue =
+		tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
+	console.log({ defaultValue });
 
-    export let showIcons = false;
+	export let showIcons = false;
 
 	const archiving_entries: Array<EntryInList> = [];
 
@@ -72,26 +81,27 @@
 </Tabs> -->
 
 <Tabs.Root
-    value={defaultValue}
+	value={defaultValue}
 	onValueChange={(val) => {
-        console.log('value change')
+		console.log('value change');
 		const tab = tabs.find((t) => t.name === val);
 		if (tab && browser) {
 			goto(prefix + tab.href, {
-                keepFocus: true,
-                invalidateAll: false,
-                noScroll: true
-            });
+				keepFocus: true,
+				invalidateAll: false,
+				noScroll: true,
+			});
 		}
 	}}
 >
 	<Tabs.List>
 		{#each tabs as tab}
 			<Tabs.Trigger value={tab.name}>
-                {#if showIcons}
-                <svelte:component this={tab.icon} class="h-4 w-4 mr-2" />
-                {/if}
-                {tab.name}</Tabs.Trigger>
+				{#if showIcons}
+					<svelte:component this={tab.icon} class="h-4 w-4 stroke-[1.5] mr-2" />
+				{/if}
+				{tab.name}</Tabs.Trigger
+			>
 		{/each}
 	</Tabs.List>
 </Tabs.Root>
