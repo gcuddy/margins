@@ -88,7 +88,7 @@
 
 {#if $form.ids.length}
 	<div
-		class={cn(/*popoverVariants()*/, 'fixed bottom-14 left-0 right-0 mx-auto w-max')}
+		class={cn(/*popoverVariants(),*/ 'fixed bottom-14 left-0 right-0 mx-auto w-max')}
 		transition:fly={{ y: 30 }}
 	>
 		<div class="flex flex-col gap-4">
