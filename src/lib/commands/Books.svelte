@@ -4,11 +4,19 @@
 	import { derived, writable } from 'svelte/store';
 
 	import { goto, preloadData } from '$app/navigation';
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
+
 	import {
 		commandCtx,
 		CommandGroup,
 		CommandItem,
+		CommandEmpty,
+		CommandLoading,
 	} from '$components/ui/command2';
+	import { commandItemVariants } from '$components/ui/command2/style';
+
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { effect } from '$lib/helpers';
@@ -32,9 +40,9 @@
 		})),
 	);
 
-    $: $loading = $inputValue ?  $query.isPending || $query.isFetching : false;
+	$: $loading = $inputValue ? $query.isPending || $query.isFetching : false;
 
-    // $: console.log({$query})
+	// $: console.log({$query})
 
 	shouldFilter.set(false);
 
@@ -62,47 +70,84 @@
 <!-- <CommandLoading>Loading...</CommandLoading> -->
 
 <CommandGroup>
-	{#if $inputValue}
-		{#if $query.isPending}
-			Loading...
-		{:else if $query.data}
-			{#each $query.data.slice(0, 10) as book (book.id)}
-				<CommandItem
-					onSelect={() => {
-						onSelect(book);
-					}}
+	{#if $query.isLoading}
+		<CommandLoading>
+			<div class={commandItemVariants()}>
+				<Skeleton class="h-10 w-10 mr-4 rounded-md" />
+				<div class="flex flex-col grow gap-1">
+					<Skeleton class="h-3 w-full rounded-md" />
+					<Skeleton class="h-3 w-3/4 rounded-md" />
+				</div>
+			</div>
+			<div class={commandItemVariants()}>
+				<Skeleton class="h-10 w-10 mr-4 rounded-md" />
+				<div class="flex flex-col grow gap-1">
+					<Skeleton class="h-3 w-full rounded-md" />
+					<Skeleton class="h-3 w-3/4 rounded-md" />
+				</div>
+			</div>
+			<div class={commandItemVariants()}>
+				<Skeleton class="h-10 w-10 mr-4 rounded-md" />
+				<div class="flex flex-col grow gap-1">
+					<Skeleton class="h-3 w-full rounded-md" />
+					<Skeleton class="h-3 w-3/4 rounded-md" />
+				</div>
+			</div>
+		</CommandLoading>
+	{:else if $inputValue.length < 2}
+		<div
+			class="flex p-8 w-full h-full flex-col items-center gap-4 justify-center"
+		>
+			<EntryIcon type="book" />
+			<div class="flex flex-col justify-center items-center gap-1">
+				<span class="font-semibold leading-none tracking-tight"
+					>Search Books</span
 				>
-					<!-- <TagColorPill class="mr-4 h-2.5 w-2.5" color={tag.color} /> -->
-					<img
-						alt=""
-						src={book.volumeInfo?.imageLinks?.thumbnail}
-						class="mr-4 h-8 w-8 rounded object-cover"
-					/>
-					<div class="grow inline-flex gap-2 items-center">
-						<span class="shrink-0">{book.volumeInfo?.title}</span>
-						<div class="truncate shrink">
-							{#if book.volumeInfo?.authors}
-								<span class="text-muted-foreground">
-									{book.volumeInfo?.authors.join(', ')}
-								</span>
-							{/if}
-							<!-- Year -->
-							{#if book.volumeInfo?.publishedDate}
-								<span class="text-muted-foreground">
-									({book.volumeInfo?.publishedDate.slice(0, 4)})
-									<!-- ({new Date(book.volumeInfo?.publishedDate).getYear()}) -->
-								</span>
-							{/if}
-							<!-- Publisher -->
+				<span class="text-sm text-muted-foreground">Just start typing…</span>
+			</div>
+		</div>
+	{:else if $query.data}
+		{#each $query.data.slice(0, 10) as book (book.id)}
+			<CommandItem
+				onSelect={() => {
+					onSelect(book);
+				}}
+			>
+				<!-- <TagColorPill class="mr-4 h-2.5 w-2.5" color={tag.color} /> -->
+                {#if book.volumeInfo?.imageLinks?.thumbnail}
+				<img
+					alt=""
+					src={book.volumeInfo?.imageLinks?.thumbnail}
+					class="mr-4 h-10 w-8 rounded object-cover"
+				/>
+                {:else}
+                <div class="mr-4 h-10 w-8 rounded bg-gray-200"></div>
+
+                {/if}
+				<div class="grow flex flex-col gap-1 break-words overflow-hidden">
+					<span class="shrink-0 line-clamp-2">{book.volumeInfo?.title}</span>
+					<div class="truncate shrink flex gap-1 line-clamp-2">
+						{#if book.volumeInfo?.authors}
 							<span class="text-muted-foreground">
-								{book.volumeInfo?.publisher}
+								{book.volumeInfo?.authors.join(', ')}
 							</span>
-						</div>
+						{/if}
+						<!-- Year -->
+						{#if book.volumeInfo?.publishedDate}
+							<span class="text-muted-foreground">
+								({book.volumeInfo?.publishedDate.slice(0, 4)})
+								<!-- ({new Date(book.volumeInfo?.publishedDate).getYear()}) -->
+							</span>
+						{/if}
+						<!-- Publisher -->
+						<span class="text-muted-foreground">
+							{book.volumeInfo?.publisher}
+						</span>
 					</div>
-				</CommandItem>
-			{:else}
-				No results found.
-			{/each}
-		{/if}
+				</div>
+			</CommandItem>
+		{:else}
+			<CommandEmpty show>No results found.</CommandEmpty>
+		{/each}
 	{/if}
 </CommandGroup>

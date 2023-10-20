@@ -6,13 +6,15 @@ import Tags from './Tags.svelte';
 import Authors from './Authors.svelte';
 import Rating from './rating.svelte';
 import Collections from './Collections.svelte';
+import Music from './Music.svelte';
 
 export {
 	Authors,
 	Books,
-    Collections,
+	Collections,
 	JumpToEntry as Entries,
 	Movies,
+	Music,
 	Rating,
 	Subscriptions,
 	Tags,

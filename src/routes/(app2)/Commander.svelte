@@ -42,11 +42,10 @@
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
-	import { Books, Movies, Subscriptions, Tags } from '$lib/commands';
+	import { Books, Music, Movies, Subscriptions, Tags } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import Media from '$lib/commands/Media.svelte';
 	import Query from '$lib/commands/Query.svelte';
 	import { cmd_open } from '$lib/components/ui/command/stores';
 	import {
@@ -328,8 +327,8 @@
 					onSelect={() => {
 						// goto(`/search`);
 						// isOpen = false;
-						$state.pages = [...$state.pages, 'search-music'];
-						$state.shouldFilter = false;
+                        addPage('search-music')
+                        $state.placeholder = "Search music..."
 					}}
 				>
 					<Search class="mr-2 h-4 w-4" />
@@ -409,19 +408,7 @@
 			<Books bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'search-music'}
-			<Query
-				opts={{
-					...queryKeys.search.music($spage, $state.search),
-					enabled: !!$state.search,
-				}}
-				value={(item) => item.name}
-				display={(item) => item.name}
-				image={(item) => item.images[0].url}
-				onSelect={(item) => {
-					$state.isOpen = false;
-					goto(`/album/${item.id}`);
-				}}
-			/>
+        <Music bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'open-tag'}
 			<Tags preload bind:isOpen={$state.isOpen} />

@@ -8,7 +8,8 @@
 		CommandGroup,
 		CommandItem,
 		commandCtx,
-        CommandLoading
+        CommandLoading,
+        CommandEmpty
 	} from '$components/ui/command2';
 	import { Muted } from '$lib/components/ui/typography';
 	import { effect } from '$lib/helpers';
@@ -16,13 +17,13 @@
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { getYear } from '$lib/utils/date';
 	import debounce from 'just-debounce-it';
-	import { Tv2, User2 } from 'lucide-svelte';
+	import { User2 } from 'lucide-svelte';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import { commandItemVariants } from '$components/ui/command2/style';
 
 	const {
 		// options: { multiple },
-		state: { inputValue, shouldFilter },
+		state: { inputValue, shouldFilter, loading },
 	} = commandCtx.get();
 
 	const debouncedInputValue = writable($inputValue);
@@ -32,6 +33,9 @@
 	}, 200);
 
 	effect(inputValue, ($inputValue) => debouncedFn($inputValue));
+
+    $: $loading = $inputValue ? $query.isPending || $query.isFetching : false;
+
 
 	const query = createQuery(
 		derived(debouncedInputValue, ($value) => ({
@@ -61,25 +65,25 @@
 </script>
 
 <CommandGroup>
-	{#if  $query.isLoading}
+	{#if  $query.isLoading || ($query.isFetching && !$query.data && $inputValue.length > 1)}
 		<CommandLoading>
 
                 <div class={commandItemVariants()}>
-                    <Skeleton class="h-10 w-10 mr-4 rounded-md" />
+                    <Skeleton class="h-10 w-8 mr-4 rounded-md" />
                     <div class="flex flex-col grow gap-1">
                         <Skeleton class="h-3 w-full rounded-md" />
                         <Skeleton class="h-3 w-3/4 rounded-md" />
                     </div>
                 </div>
                 <div class={commandItemVariants()}>
-                    <Skeleton class="h-10 w-10 mr-4 rounded-md" />
+                    <Skeleton class="h-10 w-8 mr-4 rounded-md" />
                     <div class="flex flex-col grow gap-1">
                         <Skeleton class="h-3 w-full rounded-md" />
                         <Skeleton class="h-3 w-3/4 rounded-md" />
                     </div>
                 </div>
                 <div class={commandItemVariants()}>
-                    <Skeleton class="h-10 w-10 mr-4 rounded-md" />
+                    <Skeleton class="h-10 w-8 mr-4 rounded-md" />
                     <div class="flex flex-col grow gap-1">
                         <Skeleton class="h-3 w-full rounded-md" />
                         <Skeleton class="h-3 w-3/4 rounded-md" />
@@ -87,7 +91,7 @@
                 </div>
 
         </CommandLoading>
-	{:else if $inputValue.length < 2 && !$query.data}
+	{:else if $inputValue.length < 2}
 		<div
 			class="flex p-8 w-full h-full flex-col items-center gap-4 justify-center"
 		>
@@ -111,7 +115,7 @@
 				>
 					<img
 						src="https://image.tmdb.org/t/p/w92/{movie.poster_path}"
-						class="mr-4 aspect-square h-10 w-10 shrink-0 rounded-md object-cover"
+						class="mr-4 aspect-square h-10 w-8 shrink-0 rounded-md object-cover"
 						alt=""
 					/>
 					<div class="flex flex-col">
@@ -131,7 +135,7 @@
 				>
 					<img
 						src="https://image.tmdb.org/t/p/w92/{tv.poster_path}"
-						class="mr-4 aspect-square h-10 w-10 shrink-0 rounded-md object-cover"
+						class="mr-4 aspect-square h-10 w-8 shrink-0 rounded-md object-cover"
 						alt=""
 					/>
 					<div class="flex flex-col">
@@ -152,12 +156,12 @@
 					{#if person.profile_path}
 						<img
 							src="https://image.tmdb.org/t/p/w185/{person.profile_path}"
-							class="mr-4 aspect-square h-10 w-10 shrink-0 rounded-md object-cover"
+							class="mr-4 aspect-square h-10 w-8 shrink-0 rounded-md object-cover"
 							alt=""
 						/>
 					{:else}
 						<div
-							class="mr-4 aspect-square h-10 w-10 shrink-0 rounded-md object-cover bg-gray-500 flex items-center justify-center"
+							class="mr-4 aspect-square h-10 w-8 shrink-0 rounded-md object-cover bg-gray-500 flex items-center justify-center"
 						>
 							<User2 class="h-6 w-6 text-gray-100" />
 						</div>
@@ -171,7 +175,7 @@
 				</CommandItem>
 			{/if}
 		{:else}
-			No results found.
+        <CommandEmpty show>No results found.</CommandEmpty>
 		{/each}
 	{/if}
 </CommandGroup>
