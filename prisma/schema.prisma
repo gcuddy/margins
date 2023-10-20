@@ -265,6 +265,8 @@ model Annotation {
     @@index([userId])
     @@index([parentId])
     @@index([bookmarkId])
+    // We order by this frequently:
+    @@index([start, createdAt])
     @@fulltext([title, body, exact])
 }
 
