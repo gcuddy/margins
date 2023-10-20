@@ -10,7 +10,7 @@
 		DropdownMenuContent,
 		DropdownMenuItem
 	} from '$lib/components/ui/dropdown-menu';
-	import { popoverVariants } from '$lib/components/ui/popover';
+	// import { popoverVariants } from '$lib/components/ui/popover';
 	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
 	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
@@ -88,7 +88,7 @@
 
 {#if $form.ids.length}
 	<div
-		class={cn(popoverVariants(), 'fixed bottom-14 left-0 right-0 mx-auto w-max')}
+		class={cn(/*popoverVariants()*/, 'fixed bottom-14 left-0 right-0 mx-auto w-max')}
 		transition:fly={{ y: 30 }}
 	>
 		<div class="flex flex-col gap-4">

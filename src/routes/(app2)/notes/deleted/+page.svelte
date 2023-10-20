@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { popoverVariants } from '$lib/components/ui/popover';
+	// import { popoverVariants } from '$lib/components/ui/popover';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
 	import { cn } from '$lib/utils/tailwind.js';
 	import { RefreshCw, Trash2Icon } from 'lucide-svelte';
@@ -38,7 +38,7 @@
 
 {#if $form.ids.length}
 	<div
-		class={cn(popoverVariants(), 'fixed bottom-14 left-0 right-0 mx-auto w-max')}
+		class={cn(/*popoverVariants()*/, 'fixed bottom-14 left-0 right-0 mx-auto w-max')}
 		transition:fly={{ y: 30 }}
 	>
 		<form use:enhance method="post" class="flex flex-col gap-4">
