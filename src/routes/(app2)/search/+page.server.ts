@@ -13,6 +13,7 @@ import { redis } from '$lib/redis';
 import { getId } from '$lib/utils/entries';
 
 import type { PageServerLoad } from './$types';
+import { searchNotes } from '$lib/db/queries/note';
 
 type GoodObject = {
 	id: string | number;
@@ -254,14 +255,7 @@ export const load = (async (e) => {
 		// look for entries with this title
 
 		console.time('note search');
-		const notes = await db
-			.selectFrom('Annotation as a')
-			.leftJoin('Entry as e', 'a.entryId', 'e.id')
-			.where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${q})`)
-			.select(annotations.notebook_select)
-			.limit(10)
-			.orderBy('a.createdAt', 'desc')
-			.execute();
+		const notes = searchNotes(q, session.user.userId);
 
 		console.timeEnd('note search');
 

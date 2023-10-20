@@ -50,7 +50,8 @@ export function getType(type: Entry['type']) {
 	return type;
 }
 
-export function make_link(entry: SlimmerEntry, subpath = '') {
+export function make_link(entry?: SlimmerEntry | null, subpath = '') {
+	if (!entry) return '';
 	return `${prefix}/${getType(entry.type)}/${getId(entry)}${
 		subpath ? `#${subpath}` : ''
 	}`;

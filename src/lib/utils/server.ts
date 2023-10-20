@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { parse } from 'devalue';
+import type { User } from 'lucia';
 import { z } from 'zod';
 
 export async function queryctx<T extends z.ZodTypeAny>(
@@ -19,6 +20,7 @@ export async function queryctx<T extends z.ZodTypeAny>(
 ): Promise<{
 	ctx: {
 		userId: string;
+		user: User;
 	};
 	input: z.infer<T>;
 }>;
@@ -30,11 +32,13 @@ export async function queryctx<T extends z.ZodTypeAny>(
 	ctx: {
 		event: RequestEvent;
 		userId: string;
+		user: User;
 	};
 	input: z.infer<T>;
 }> {
 	const { url, locals } = req;
 	let userId = url.searchParams.get('userId');
+	let user: User | null = null;
 	const schema =
 		typeof schemaOrAuthed === 'boolean' ? undefined : schemaOrAuthed;
 	const _authed = typeof schemaOrAuthed === 'boolean' ? schemaOrAuthed : authed;
@@ -46,12 +50,14 @@ export async function queryctx<T extends z.ZodTypeAny>(
 			throw error(401);
 		}
 		userId = session.user.userId;
+		user = session.user;
 	}
 	if (!schema) {
 		return {
 			ctx: {
 				event: req,
 				userId: userId!,
+				user: user!,
 			},
 			input: null,
 		};
@@ -64,6 +70,7 @@ export async function queryctx<T extends z.ZodTypeAny>(
 			ctx: {
 				event: req,
 				userId: userId!,
+				user: user!,
 			},
 			input: null,
 		};
@@ -81,6 +88,7 @@ export async function queryctx<T extends z.ZodTypeAny>(
 		ctx: {
 			event: req,
 			userId: userId!,
+			user: user!,
 		},
 		input: parsed.data as z.infer<T>,
 	};

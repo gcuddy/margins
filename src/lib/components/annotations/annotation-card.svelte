@@ -14,7 +14,7 @@
 		Trash,
 	} from 'radix-icons-svelte';
 	import { tick } from 'svelte';
-    import * as Popover from "$components/ui/popover"
+	import * as Popover from '$components/ui/popover';
 	// import { render_html } from '$components/ui/editor/utils';
 	import { sleep } from '@melt-ui/svelte/internal/helpers';
 	import { page } from '$app/stores';
@@ -36,6 +36,8 @@
 	import { Badge } from '$components/ui/badge';
 	import { slide } from 'svelte/transition';
 	import { melt } from '@melt-ui/svelte';
+	import type { SetOptional } from 'type-fest';
+	import { cn } from '$lib/utils';
 
 	let editor: Editor;
 	let tainted = false;
@@ -43,7 +45,11 @@
 	// TODO: combine with other versions of this component that exist lol
 
 	// TODO: should we use this type or not?
-	export let annotation: EntryAnnotation;
+	export let annotation: SetOptional<EntryAnnotation, 'username' | 'tags'>;
+    export let hrefPrefix = '';
+
+	let className: string | null | undefined = undefined;
+	export { className as class };
 
 	const queryClient = useQueryClient();
 
@@ -58,29 +64,33 @@
 		invalidateEntries: true,
 	});
 
-    $: console.log({annotation})
+	$: console.log({ annotation });
 
-    $: if (annotation.contentData && editor) {
-        console.log('setting content to contentData', annotation.contentData)
-        editor.setContent(annotation.contentData)
-    }
+	$: if (annotation.contentData && editor) {
+		console.log('setting content to contentData', annotation.contentData);
+		editor.setContent(annotation.contentData);
+	}
 
-    let menuOpen = false;
+	let menuOpen = false;
 </script>
 
 <!-- Compare with Card component, AnnotationForm component - it's pretty similar, but some subtle differences. But should we instead use that as our base? -->
 
 <div
-	class="min-w-[300px] m-0 flex-1 relative max-w-full border rounded-md bg-card shadow-sm transition group {pendingDelete
-		? 'animate-pulse'
-		: ''}}"
+	class={cn(
+		`min-w-[300px] m-0 flex-1 relative max-w-full border rounded-md bg-card shadow-sm transition group`,
+        pendingDelete && 'animate-pulse',
+		className,
+	)}
 >
 	<div
 		class="w-full relative shadow-none flex flex-col gap-1.5 py-3 px-4 h-full"
 	>
 		<div class="flex shrink-0 h-7 justify-between">
 			<div class="flex text-xs gap-2">
-				<span class="font-medium">{annotation.username}</span>
+				{#if annotation.username}
+					<span class="font-medium">{annotation.username}</span>
+				{/if}
 				<time class="text-muted-foreground">
 					{ago(new Date(normalizeTimezone(annotation.createdAt)), $now)}
 				</time>
@@ -88,7 +98,7 @@
 			{#if !isEditing}
 				<div class="flex">
 					<DropdownMenu.Root
-                        bind:open={menuOpen}
+						bind:open={menuOpen}
 						positioning={{
 							placement: 'bottom-end',
 						}}
@@ -126,14 +136,19 @@
 								>
 									<ClipboardCopy class="h-4 w-4 mr-2" /> Copy link to annotation
 								</DropdownMenu.Item>
-								<DropdownMenu.Sub>
-									<DropdownMenu.SubTrigger>
-										<TagIcon class="h-4 w-4 mr-2" /> Add tag
-									</DropdownMenu.SubTrigger>
-									<DropdownMenu.SubContent class="p-0">
-										<TagsCommand bind:open={menuOpen} annotationId={annotation.id} />
-									</DropdownMenu.SubContent>
-								</DropdownMenu.Sub>
+								{#if annotation.tags}
+									<DropdownMenu.Sub>
+										<DropdownMenu.SubTrigger>
+											<TagIcon class="h-4 w-4 mr-2" /> Add tag
+										</DropdownMenu.SubTrigger>
+										<DropdownMenu.SubContent class="p-0">
+											<TagsCommand
+												bind:open={menuOpen}
+												annotationId={annotation.id}
+											/>
+										</DropdownMenu.SubContent>
+									</DropdownMenu.Sub>
+								{/if}
 							</DropdownMenu.Group>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Group>
@@ -193,7 +208,7 @@
 				'FragmentSelector',
 			)}
 			{#if selector}
-				<a on:click href="#annotation-{annotation.id}">
+				<a on:click href="{hrefPrefix}#annotation-{annotation.id}">
 					<Clamp
 						on:click={(e) => {
 							e.preventDefault();
@@ -223,21 +238,21 @@
 		<div>
 			{#if isEditing}
 				<!-- bind:this={editor} -->
-                <!-- This is inefficient - would love to be more selective -->
-                {#key annotation.contentData}
-				<Editor
-					bind:this={editor}
-					bind:tainted
-					alwaysEditable
-					autofocus
-					options={{
-						autofocus: 'end',
-					}}
-					class="border-0 p-0 min-h-min"
-					focusRing={false}
-					content={annotation.contentData}
-				/>
-                {/key}
+				<!-- This is inefficient - would love to be more selective -->
+				{#key annotation.contentData}
+					<Editor
+						bind:this={editor}
+						bind:tainted
+						alwaysEditable
+						autofocus
+						options={{
+							autofocus: 'end',
+						}}
+						class="border-0 p-0 min-h-min"
+						focusRing={false}
+						content={annotation.contentData}
+					/>
+				{/key}
 				<!--  -->
 				<!-- alwaysEditable
 					readonly={!isEditing} -->
@@ -247,7 +262,7 @@
 					{@html render_html(annotation.contentData)}
 				</div> -->
 				<Editor
-                    hideIfEmpty
+					hideIfEmpty
 					readonly
 					bind:this={editor}
 					class="border-0 p-0 min-h-min"
@@ -301,24 +316,31 @@
 				</Button>
 			</div>
 		{/if}
-        {#if annotation.tags}
-        <Popover.Root>
-            <Popover.Trigger asChild let:builder>
-                <div use:melt={builder} class="flex items-center gap-1" transition:slide={{duration: 150}}>
-                    {#each annotation.tags as tag (annotation.id) }
-                        <Badge variant="secondary" class="mr-1">
-                            {tag.name}
-                        </Badge>
-                    {/each}
-                </div>
-            </Popover.Trigger>
-            <Popover.Content class="p-0">
-                <TagsCommand selectedTags={annotation.tags} annotationId={annotation.id} />
-            </Popover.Content>
-        </Popover.Root>
-        {/if}
+		{#if annotation.tags}
+			<Popover.Root>
+				<Popover.Trigger asChild let:builder>
+					<div
+						use:melt={builder}
+						class="flex items-center gap-1"
+						transition:slide={{ duration: 150 }}
+					>
+						{#each annotation.tags as tag (annotation.id)}
+							<Badge variant="secondary" class="mr-1">
+								{tag.name}
+							</Badge>
+						{/each}
+					</div>
+				</Popover.Trigger>
+				<Popover.Content class="p-0">
+					<TagsCommand
+						selectedTags={annotation.tags}
+						annotationId={annotation.id}
+					/>
+				</Popover.Content>
+			</Popover.Root>
+		{/if}
 	</div>
-    <!-- {JSON.stringify(annotation)} -->
+	<!-- {JSON.stringify(annotation)} -->
 	<!-- <button on:click={() => (isEditing = !isEditing)}> done </button> -->
 	<!-- TODO: reply -->
 </div>

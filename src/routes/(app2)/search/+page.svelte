@@ -51,6 +51,8 @@
 	import Header from '$components/ui/Header.svelte';
 	import { derived } from 'svelte/store';
 	import { goto } from '$app/navigation';
+	import AnnotationCard from '$components/annotations/annotation-card.svelte';
+	import { make_link } from '$lib/utils/entries';
 
 	const setType = (type: string) => {
 		const Url = $page.url;
@@ -119,7 +121,8 @@
 	{#key data.results}
 		{#if data.notes}
 			{#each data.notes || [] as note}
-				<Annotation class="col-span-2" annotation={note} />
+                <AnnotationCard hrefPrefix={make_link(note.entry)} class="min-w-full" annotation={note} />
+				<!-- <Annotation class="col-span-2" annotation={note} /> -->
 			{/each}
 		{:else}
 			{#each data.results || [] as result}

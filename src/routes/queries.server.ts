@@ -101,6 +101,9 @@ import { customViewCreate } from '$lib/db/queries/custom-view';
 import { jsonSchema } from '$lib/schemas/types';
 import type { Replace } from 'type-fest';
 import { replace } from '$lib/helpers/string';
+import type { TargetSchema } from '$lib/annotation';
+import type { JSONContent } from '@tiptap/core';
+import { searchNotes } from '$lib/db/queries/note';
 
 type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -1107,15 +1110,7 @@ export const queries = {
 	searchNotes: query({
 		// TODO: this is a bit of a mess
 		fn: async ({ ctx, input }) => {
-			const notes = await db
-				.selectFrom('Annotation as a')
-				.where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${input.q})`)
-				.select(annotations.select)
-				.select((eb) => [withEntry(eb)])
-				.where('a.userId', '=', ctx.userId)
-				.limit(10)
-				.orderBy('a.createdAt', 'desc')
-				.execute();
+			const notes = await searchNotes(input.q, ctx.userId);
 			return notes;
 		},
 		schema: qSchema,

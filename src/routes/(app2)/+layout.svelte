@@ -24,6 +24,7 @@
 	import MobileNav from './mobile-nav.svelte';
 	import { inArticle } from '$lib/stores/entry';
 	import PreloadingIndicator from '$components/PreloadingIndicator.svelte';
+	import { mainClassStore } from '$lib/stores/main';
 
 	$: console.log({ $navigating, $page });
 
@@ -110,6 +111,7 @@
 							$page.url.pathname.startsWith('/home') && 'overflow-x-hidden',
 							'relative',
 							'col-start-2',
+                            $mainClassStore
 							// 'px-4 py-6 lg:px-8'
 							// is_article ? ' col-span-5' : 'lg:col-span-4',
 							// is_settings && 'border-none lg:col-span-3',
