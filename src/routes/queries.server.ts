@@ -99,6 +99,8 @@ import { fetchList, inputSchema } from './(app2)/library/fetch.server';
 import { type Condition, View } from './(app2)/views/new/View';
 import { customViewCreate } from '$lib/db/queries/custom-view';
 import { jsonSchema } from '$lib/schemas/types';
+import type { Replace } from 'type-fest';
+import { replace } from '$lib/helpers/string';
 
 type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -601,6 +603,81 @@ export const queries = {
 		schema: entry_by_id_schema,
 	}),
 
+	entryAnnotations: query({
+		fn: async ({ ctx, input }) => {
+			return await db
+				.selectFrom('Annotation as a')
+				.innerJoin('Entry as e', 'e.id', 'a.entryId')
+				.where('e.id', '=', input.id)
+				.where('a.userId', '=', ctx.userId)
+				// TODO: select only the fields we need
+				.selectAll('a')
+				.execute();
+		},
+		schema: z.object({
+			id: z.number(),
+		}),
+	}),
+
+	entryRelations: query({
+		fn: async ({ ctx, input }) => {
+			const relations = await db
+				.selectFrom('Relation as r')
+				.where((eb) =>
+					eb.or([
+						eb('r.entryId', '=', input.id),
+						eb('r.relatedEntryId', '=', input.id),
+					]),
+				)
+				.where('r.userId', '=', ctx.userId)
+				.leftJoin('Entry as e1', (join) =>
+					join
+						.onRef('r.relatedEntryId', '=', 'e1.id')
+						.on('r.entryId', '=', input.id),
+				)
+				.leftJoin('Entry as e2', (join) =>
+					join
+						.onRef('r.entryId', '=', 'e2.id')
+						.on('r.relatedEntryId', '=', input.id),
+				)
+				.select([
+					'r.id as relation_id',
+					'r.type as relation_type',
+					'r.entryId',
+					'r.relatedEntryId',
+					'e1.title as entryTitle',
+					'e2.title as relatedEntryTitle',
+				])
+				// Ridiculous type magic here:
+				.select(({ eb, fn: { coalesce } }) =>
+					entrySelect.map((s) => {
+						const col = s.replace('e.', '') as Replace<typeof s, 'e.', ''>;
+						return coalesce(`e1.${col}`, `e2.${col}`).as(
+							replace(s, 'e.', 'entry_'),
+						);
+						// return coalesce(`e1.${col}`, `e2.${col}`).as(
+						// 	`entry_${s}` as Replace<typeof s, 'e.', 'entry_'>,
+						// );
+					}),
+				)
+				.select((eb) =>
+					eb
+						.case()
+						.when('r.entryId', '=', input.id)
+						.then('outbound')
+						.when('r.relatedEntryId', '=', input.id)
+						.then('inbound')
+						.end()
+						.as('direction'),
+				)
+				.execute();
+			return relations;
+		},
+		schema: z.object({
+			id: z.number(),
+		}),
+	}),
+
 	fetch_list: query({
 		fn: async ({ ctx, input }) => {
 			return fetchList({
@@ -1008,6 +1085,14 @@ export const queries = {
 		fn: async ({ input }) => {
 			// TODO Caching
 			const { results } = await tmdb.movie.search(input.q);
+			return results;
+		},
+		schema: qSchema,
+	}),
+	searchMoviesMulti: query({
+		fn: async ({ input }) => {
+			// TODO Caching
+			const { results } = await tmdb.search(input.q);
 			return results;
 		},
 		schema: qSchema,

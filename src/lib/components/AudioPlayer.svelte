@@ -1,3 +1,4 @@
+
 <script lang="ts" context="module">
 	import { onDestroy, onMount, tick } from 'svelte';
 	import { derived, writable } from 'svelte/store';
@@ -399,7 +400,7 @@
 						alt=""
 						src={$audioPlayer.audio.image}
 					/>
-					<div class="flex min-w-0 flex-col">
+					<div class="flex min-w-0 flex-col grow">
 						<a
 							on:mouseover={() => {
 								if (!isTitleTweening) {

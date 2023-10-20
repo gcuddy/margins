@@ -161,6 +161,10 @@ model Bookmark {
     @@index([userId, stateId])
     @@index([interactionId, stateId, uri])
     @@index([author])
+    @@index([status])
+    @@index([bookmarked_at])
+    // used for get_library query
+    @@index([userId, status, bookmarked_at])
 }
 
 model Task {

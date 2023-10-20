@@ -15,7 +15,7 @@
 
 {#if visible}
 	<div class="progress-container">
-		<div class="progress bg-accent" style="width: {p * 100}%" />
+		<div class="progress bg-primary" style="width: {p * 100}%" />
 	</div>
 {/if}
 
@@ -25,7 +25,7 @@
 
 <style lang="postcss">
 	.progress-container {
-		position: absolute;
+		position: fixed;
 		top: 0;
 		left: 0;
 		width: 100%;
@@ -43,7 +43,7 @@
 	}
 
 	.fade {
-		@apply bg-base/30;
+		@apply bg-background/30;
 		position: fixed;
 		width: 100%;
 		height: 100%;

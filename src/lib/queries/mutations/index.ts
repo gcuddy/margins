@@ -19,7 +19,7 @@ import {
 	type MutationInput,
 	type QueryOutput,
 } from '../query';
-import type { QueryFactory } from '../querykeys';
+import { getQueryContext, queryFactory, type QueryFactory } from '../querykeys';
 import type { Note, NotesResponse } from '../server';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
@@ -42,7 +42,7 @@ const ctxEntries = ['count', 'authors', 'all'] satisfies Array<
 type CtxEntry = (typeof ctxEntries)[number];
 
 export const invalidateEntries = (queryClient: QueryClient, all = false) => {
-	queryClient.invalidateQueries({
+	return queryClient.invalidateQueries({
 		// queryKey: ["entries"],
 		predicate(query) {
 			if (all) {
@@ -83,7 +83,13 @@ export function setGetLibraryData(
 	mapFn: (entry: LibraryEntry) => LibraryEntry,
 ) {
 	queryClient.setQueriesData<InfiniteData<LibraryResponse>>(
-		{ queryKey: ['entries', 'list'] },
+		{
+			queryKey: ['entries', 'list'],
+			predicate: (query) => {
+				// check to make sure querykey[3] is object
+				return !query.queryKey[3] || typeof query.queryKey[3] === 'object';
+			},
+		},
 		(old) => {
 			if (!old) return old;
 
@@ -203,6 +209,8 @@ export function createSetTagsMutation(opts?: {
 	showToast?: boolean;
 }) {
 	const queryClient = useQueryClient();
+	const { getData } = getQueryContext(queryClient);
+
 	return createMutation({
 		mutationFn: (input: MutationInput<'set_tags_on_entry'>) => {
 			return mutation(get(page), 'set_tags_on_entry', input);
@@ -254,15 +262,19 @@ export function createSetTagsMutation(opts?: {
 				},
 			);
 		},
-		onSuccess() {
+		onSuccess(_, { tags }) {
+			const shouldInvalidateTags = tags?.some((tag) => !tag.id);
+			if (shouldInvalidateTags) {
+				queryClient.invalidateQueries({ queryKey: ['tags'] });
+			}
 			queryClient.invalidateQueries({
-				// queryKey: ["entries"],
-				predicate(query) {
-					return (
-						query.queryKey?.[0] === 'entries' &&
-						!ctxEntries.includes(query.queryKey[1] as CtxEntry)
-					);
-				},
+				queryKey: ['entries', 'list'],
+				// predicate(query) {
+				// 	return (
+				// 		query.queryKey?.[0] === 'entries' &&
+				// 		!ctxEntries.includes(query.queryKey[1] as CtxEntry)
+				// 	);
+				// },
 			});
 			if (opts?.showToast) {
 				toast.success('Tags updated');

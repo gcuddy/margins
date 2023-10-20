@@ -26,7 +26,7 @@ type InfiniteQueryFnParams = {
 
 type SimplifiedQuery<TData> = {
 	queryFn: (params: QueryFnParams) => Promise<TData>;
-	queryKey: Array<string>;
+	queryKey: ReadonlyArray<string>;
 };
 
 export function getQueryContext(queryClient: QueryClient) {
@@ -87,6 +87,12 @@ export const queryFactory = {
 				qquery(meta?.init, 'getAllEntries', {}),
 			queryKey: ['entries', 'all'] as const,
 			staleTime: Number.POSITIVE_INFINITY,
+		}),
+
+		annotations: (input: QueryInput<'entryAnnotations'>) => ({
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'entryAnnotations', input),
+			queryKey: ['entries', 'list', 'annotations', input] as const,
 		}),
 
 		authors: () => ({
@@ -150,6 +156,11 @@ export const queryFactory = {
 			placeholderData: keepPreviousData,
 
 			// staleTime: 1000 * 5, // 5 seconds
+		}),
+		relations: (input: QueryInput<'entryRelations'>) => ({
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'entryRelations', input),
+			queryKey: ['entries', 'list', 'relations', { input }] as const,
 		}),
 		search: (input: QueryInput<'search_titles'>) => ({
 			queryFn: ({ meta }: QueryFnParams) =>
@@ -247,6 +258,8 @@ export const queryFactory = {
 			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'pins', {}),
 
 			queryKey: ['pins', 'list'] as const,
+
+			staleTime: Number.POSITIVE_INFINITY,
 		}),
 	},
 	search: {
@@ -261,6 +274,12 @@ export const queryFactory = {
 			queryFn: ({ meta }: QueryFnParams) =>
 				qquery(meta?.init, 'searchMovies', input),
 			queryKey: ['search', 'movies', { input }] as const,
+		}),
+		moviesMulti: (input: QueryInput<'searchMoviesMulti'>) => ({
+			placeholderData: keepPreviousData,
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'searchMoviesMulti', input),
+			queryKey: ['search', 'moviesMulti', { input }] as const,
 		}),
 	},
 	subscriptions: {

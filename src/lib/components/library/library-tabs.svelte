@@ -9,10 +9,10 @@
 	import type { EntryInList } from '$lib/db/selects';
 	import * as Tabs from '$components/ui/tabs';
 	import { receive, send } from '$lib/transitions';
-	import { cn } from '$lib/utils';
+	import { capitalize, cn } from '$lib/utils';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { statusesWithIcons } from '$lib/status';
+	import { isStatus, statusesToDisplay, statusesWithIcons } from '$lib/status';
 
 	const prefix = '';
 	const tabs = [
@@ -29,8 +29,14 @@
 		},
 	] as const;
 
-	$: defaultValue =
-		tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
+
+
+	// $: defaultValue =
+	// 	tabs.find((t) => $page.url.pathname.includes(t.href))?.name ?? 'Backlog';
+
+    $: normalizedStatus = capitalize($page.params.status ?? 'later');
+
+    $: defaultValue = $page.params.status && isStatus(normalizedStatus) ? statusesToDisplay[normalizedStatus] : normalizedStatus  ?? 'Later';
 	console.log({ defaultValue });
 
 	export let showIcons = false;

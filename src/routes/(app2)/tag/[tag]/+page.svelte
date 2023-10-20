@@ -9,7 +9,7 @@
 	import { derived } from 'svelte/store';
 	import { toast } from 'svelte-sonner';
 
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
@@ -36,6 +36,7 @@
 	import type { UpdateTagInput } from '$lib/queries/server';
 
 	import { tagEntries, tagNotes } from './queries';
+	import { invalidateEntries } from '$lib/queries/mutations';
 
 	export let data;
 
@@ -259,10 +260,12 @@
 			action="?/delete"
 			use:enhance={() => {
 				return async ({ result, update }) => {
-					await update();
-					if (result.type === 'success' || result.type === 'redirect') {
-						toast.success('Tag deleted');
-					}
+					await applyAction(result);
+                    // invalidate tags list, and entries
+                    queryClient.invalidateQueries({
+                        queryKey: ['tags']
+                    });
+                   invalidateEntries(queryClient);
 				};
 			}}
 		>

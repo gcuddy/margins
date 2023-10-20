@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import AddInlineAnnotation from '$components/annotations/add-inline-annotation.svelte';
+	import SaveToLibraryButton from '$components/entries/save-to-library-button.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
+	import LibraryForm from '$components/ui/library/library-form.svelte';
 	import smoothload from '$lib/actions/smoothload';
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
@@ -19,7 +21,7 @@
 		podcast: NonNullable<Podcast>;
 	};
 
-    import { Play, Pause, Pencil2, Stop } from 'radix-icons-svelte';
+	import { Play, Pause, Pencil2, Stop } from 'radix-icons-svelte';
 
 	let noting = false;
 
@@ -73,23 +75,37 @@
 							);
 						}}
 					>
-                        {@const play = !loaded || (loaded && $audioPlayer.state.paused)}
-                        <svelte:component this={play ? Play : Pause} class="h-4 w-4 mr-2" />
+						{@const play = !loaded || (loaded && $audioPlayer.state.paused)}
+						<svelte:component this={play ? Play : Pause} class="h-4 w-4 mr-2" />
 						{#if play}
 							Play
 						{:else}
 							Pause
 						{/if}
 					</Button>
-                    {#if loaded}
-                    <Button size="icon" variant="outline" on:click={audioPlayer.clear}>
-                        <Stop />
-                    </Button>
-                    {/if}
-                    <Button size="icon" variant="outline" on:click={() => (noting = !noting)}>
-                        <Pencil2 class="h-4 w-4" />
-                    </Button>
-                    <!-- TODO: show save to ilbrary / status etc -->
+					{#if (!data.entry?.bookmark?.status || !data.entry?.bookmark?.bookmarked_at) && $page.data.saveToLibraryForm}
+						<SaveToLibraryButton form={$page.data.saveToLibraryForm} />
+					{:else}
+						<LibraryForm
+							entryId={data.entry?.id}
+                            type={data.entry?.type}
+							status={data.entry?.bookmark?.status}
+                            variant="secondary"
+						/>
+					{/if}
+					{#if loaded}
+						<Button size="icon" variant="secondary" on:click={audioPlayer.clear}>
+							<Stop />
+						</Button>
+					{/if}
+					<Button
+						size="icon"
+						variant="secondary"
+						on:click={() => (noting = !noting)}
+					>
+						<Pencil2 class="h-4 w-4" />
+					</Button>
+					<!-- TODO: show save to ilbrary / status etc -->
 					<div class="flex items-center gap-2">
 						<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 						{#if data.entry}
@@ -104,13 +120,18 @@
 				on:cancel={() => {
 					noting = false;
 				}}
-                on:save={() => {
-                    noting = false;
-                }}
-                media={isMediaType($page.params.type) && $page.params.id
-                    ? makeMediaSchema($page.params.type === 'podcast' ? $page.params.id.slice(1) : $page.params.id, $page.params.type)
-                    : undefined}
-                entryId={data?.entry?.id}
+				on:save={() => {
+					noting = false;
+				}}
+				media={isMediaType($page.params.type) && $page.params.id
+					? makeMediaSchema(
+							$page.params.type === 'podcast'
+								? $page.params.id.slice(1)
+								: $page.params.id,
+							$page.params.type,
+					  )
+					: undefined}
+				entryId={data?.entry?.id}
 			/>
 			<!-- <Editor id={data.entry?.id} on:save={(e) => {
 				console.log({e})

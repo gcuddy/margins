@@ -60,6 +60,8 @@
 	import StatusIcon from '$components/entries/StatusIcon.svelte';
 	import { getStatusIcon, statuses, statusesToDisplay } from '$lib/status';
 	import StatusSelect from '$components/status/status-select.svelte';
+	import SaveToLibraryButton from '$components/entries/save-to-library-button.svelte';
+	import LibraryForm from '$components/ui/library/library-form.svelte';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;
@@ -274,7 +276,8 @@
 						<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 						<!-- <pre>{JSON.stringify(data.entry?.interaction, null, 2)}</pre> -->
 						{#if !data.entry?.bookmark?.status}
-							<Button
+                            <SaveToLibraryButton />
+							<!-- <Button
 								on:click={async () => {
 									try {
 										await mutate('save_to_library', {
@@ -298,12 +301,13 @@
 							>
 								<StatusIcon status="Backlog" class="w-4 h-4 mr-2" />
 								To Watch</Button
-							>
+							> -->
 						{:else if data.entry?.bookmark?.status}
-							<StatusSelect
+							<!-- <StatusSelect
 								entryId={data.entry.id}
 								status={data.entry.bookmark?.status}
-							/>
+							/> -->
+                            <LibraryForm status={data.entry.bookmark?.status} variant="outline" type={data.entry.type} entryId={data.entry.id} />
 							<!-- <Button variant="outline">
                                 <StatusIcon status="Backlog" class="w-4 h-4 mr-2 shrink-0" />
                                 In {data.entry.bookmark?.status}</Button

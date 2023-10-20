@@ -116,16 +116,6 @@ export async function get_library({
 			join.onRef('b.entryId', '=', 'e.id').on('b.userId', '=', userId),
 		)
 		.leftJoin('Feed as f', 'f.id', 'e.feedId')
-		// this should only return at maximum 1 (ONE) row
-		// .leftJoin('Unread', 'e.id', 'Unread.entryId')
-		// .leftJoin("")
-		// .leftJoin('EntryInteraction as i', (j) =>
-		// 	j.onRef('i.entryId', '=', 'e.id').on('i.userId', '=', userId),
-		// )
-		// .leftJoin('TagOnEntry as toe', (j) =>
-		// 	j.onRef('toe.entryId', '=', 'e.id').on('toe.userId', '=', userId),
-		// )
-		// .leftJoin('Tag as t', 't.id', 'toe.tagId')
 		.select([
 			'e.id',
 			'e.type',
@@ -164,48 +154,21 @@ export async function get_library({
 				.exists(
 					eb
 						.selectFrom('UserEntry')
-                        .select(sql.lit(1).as('one'))
+						.select(sql.lit(1).as('one'))
 						.where('UserEntry.userId', '=', userId)
 						.whereRef('UserEntry.entryId', '=', 'e.id')
 						.where('UserEntry.seen', 'is not', null),
 				)
 				.as('seen'),
 		)
-		// .select((eb) =>
-		// 	eb
-		// 		.selectFrom('UserEntry as ue')
-		// 		.select('ue.seen')
-		// 		.whereRef('ue.entryId', '=', 'e.id')
-		// 		.where('ue.userId', '=', userId)
-		// 		.as('seen'),
-		// )
 		.distinct()
 		.select((eb) => [
-			jsonArrayFrom(
-				eb
-					.selectFrom('Annotation')
-					.innerJoin('auth_user', 'auth_user.id', 'Annotation.userId')
-					.select([
-						'Annotation.id',
-						'Annotation.contentData',
-						'Annotation.start',
-						'Annotation.body',
-						'Annotation.target',
-						'Annotation.entryId',
-						'auth_user.username',
-						'Annotation.title',
-						'Annotation.createdAt',
-						'Annotation.exact',
-					])
-					// .select((eb) => eb.fn.countAll('Annotation').as('num_annotations'))
-					// .select(eb.fn.count("Annotation.id").as("count")
-					.whereRef('Annotation.entryId', '=', 'e.id')
-					.where('Annotation.userId', '=', userId)
-					.orderBy('Annotation.start', 'asc')
-					.orderBy('Annotation.createdAt', 'asc')
-					// TODO: add count column to get all
-					.limit(10),
-			).as('annotations'),
+			eb
+				.selectFrom('Annotation')
+				.whereRef('Annotation.entryId', '=', 'e.id')
+				.where('Annotation.userId', '=', userId)
+				.select((eb) => eb.fn.countAll().as('annotation_num'))
+				.as('num_annotations'),
 			jsonArrayFrom(
 				eb
 					.selectFrom('EntryInteraction as i')
@@ -232,40 +195,17 @@ export async function get_library({
 					)
 					.whereRef('ci.entryId', '=', 'e.id'),
 			).as('collections'),
-			jsonArrayFrom(
-				eb
-					.selectFrom('Relation as r')
-					.whereRef('r.entryId', '=', 'e.id')
-					.select(['r.id', 'r.type', 'r.entryId', 'r.relatedEntryId'])
-					.select((eb) =>
-						jsonObjectFrom(
-							eb
-								.selectFrom('Entry as e')
-								.whereRef('e.id', '=', 'r.relatedEntryId')
-								.select(entrySelect),
-						).as('entry'),
-					)
-					.unionAll(
-						eb
-							.selectFrom('Relation as r')
-							.select(['r.id', 'r.type', 'r.entryId', 'r.relatedEntryId'])
-							.select((eb) =>
-								jsonObjectFrom(
-									eb
-										.selectFrom('Entry as e')
-										.whereRef('e.id', '=', 'r.entryId')
-										.select(entrySelect),
-								).as('entry'),
-							)
-							.whereRef('r.relatedEntryId', '=', 'e.id'),
-					),
-			).as('relations'),
 			eb
-				.selectFrom('Annotation')
-				.whereRef('Annotation.entryId', '=', 'e.id')
-				.where('Annotation.userId', '=', userId)
-				.select((eb) => eb.fn.count('Annotation.id').as('n'))
-				.as('num_annotations'),
+				.selectFrom('Relation')
+				.where('Relation.userId', '=', userId)
+				.where((eb) =>
+					eb.or([
+						eb('Relation.entryId', '=', eb.ref('e.id')),
+						eb('Relation.relatedEntryId', '=', eb.ref('e.id')),
+					]),
+				)
+				.select((eb) => eb.fn.countAll().as('r_count'))
+				.as('num_relations'),
 		])
 		.limit(take + 1);
 	if (status) {

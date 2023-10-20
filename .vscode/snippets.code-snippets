@@ -37,6 +37,6 @@
 		"scope": "svelte",
 		"prefix": "s-query",
 		// I want it to look liks this {#if $query.data}(TAB){:else if $query.isError}(TAB){:else}(TAB){/if} where $query is also a placeholder that changes in the two places
-		"body": ["{#if $1.data}", "\t$3", "{:else if $1.isError}", "\t$4", "{:else}", "\t$5", "{/if}"]
+		"body": ["{#if $1.isPending}", "\tLoading...$3", "{:else if $1.error}", "\tAn error has occured: {$1.error.message}$4", "{:else}", "\t$5", "{/if}"]
 	}
 }

@@ -1,11 +1,10 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms/server';
 
 import { db } from '$lib/db';
-import type { EntryInList } from '$lib/db/selects';
 import { nanoid } from '$lib/nanoid';
-import { get_notes_for_tag, updateTagSchema } from '$lib/queries/server';
 import { bulkEntriesSchema } from '$lib/schemas';
+import { redirect } from 'sveltekit-flash-message/server';
 
 export async function load({ fetch, locals, params, url }) {
 	const session = await locals.auth.validate();
@@ -44,7 +43,14 @@ export const actions = {
 			.where('name', '=', event.params.tag)
 			.where('userId', '=', userId)
 			.execute();
-		throw redirect(301, '/library/backlog');
+		throw redirect(
+			'/library/backlog',
+			{
+				status: 'info',
+				text: `Deleted tag ${event.params.tag}`,
+			},
+			event,
+		);
 		// TODO: add message
 	},
 	pin: async ({ locals, request }) => {

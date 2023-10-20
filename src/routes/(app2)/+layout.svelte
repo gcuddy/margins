@@ -23,6 +23,7 @@
 	import alertDialogStore from '$lib/stores/alert-dialog';
 	import MobileNav from './mobile-nav.svelte';
 	import { inArticle } from '$lib/stores/entry';
+	import PreloadingIndicator from '$components/PreloadingIndicator.svelte';
 
 	$: console.log({ $navigating, $page });
 
@@ -75,13 +76,16 @@
 		<Dialog />
 		<DialogStore />
 		<GenericCommander>
-			<div class="flex h-full grow flex-col" style:--nav-height="4rem">
+			<div class="flex h-full grow flex-col relative" style:--nav-height="4rem">
+				{#if $navigating}
+					<PreloadingIndicator />
+				{/if}
 				{#if !$is_entry}
 					<!-- <header class="container sticky top-0 z-40">
 					<MainNav />
 				</header> -->
 				{/if}
-                <!-- when small, make bottom padding space for mobile nav -->
+				<!-- when small, make bottom padding space for mobile nav -->
 				<div class={cn('sm:grid grid-cols-[auto,1fr,auto] grow max-sm:pb-16')}>
 					<!-- w-[200px] -->
 					<div>
@@ -98,13 +102,12 @@
 								<Nav bind:width={$navWidth} user_data={data.user_data} />
 							{/if}
 						</aside>
-                        <MobileNav />
+						<MobileNav />
 					</div>
 					<main
-                    class={cn(
+						class={cn(
 							'flex h-full w-full flex-1 flex-col',
-							$page.url.pathname.startsWith('/home') &&
-								'overflow-x-hidden',
+							$page.url.pathname.startsWith('/home') && 'overflow-x-hidden',
 							'relative',
 							'col-start-2',
 							// 'px-4 py-6 lg:px-8'

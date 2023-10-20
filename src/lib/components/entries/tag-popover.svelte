@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 	import { PlusIcon } from 'lucide-svelte';
-	import { writable } from 'svelte/store';
+	import { writable, derived } from 'svelte/store';
 
 	import Cluster from '$components/helpers/Cluster.svelte';
-	import { Badge, badgeVariants } from '$components/ui/badge';
+	import { Badge } from '$components/ui/badge';
 	import { Button } from '$components/ui/button';
 	import Checkbox from '$components/ui/Checkbox.svelte';
 	import {
@@ -24,11 +24,17 @@
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { cn } from '$lib/utils';
 	import { TagColorPill } from '$components/tags/tag-color';
+	import { commandItemVariants } from '$components/ui/command2/style';
+	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 
-	const query = createQuery({
-		...queryFactory.tags.list(),
-		// enabled: false,
-	});
+	let open = writable(false);
+
+	const query = createQuery(
+		derived(open, ($open) => ({
+			...queryFactory.tags.list(),
+			enabled: $open,
+		})),
+	);
 
 	const mutation = createSetTagsMutation();
 
@@ -42,15 +48,13 @@
 		})),
 	);
 
-    $: if (selectedTags !== undefined) {
-        selectedTagsStore.set(
-            selectedTags.map((t) => ({
-                value: t,
-            })),
-        );
-    }
-
-
+	$: if (selectedTags !== undefined) {
+		selectedTagsStore.set(
+			selectedTags.map((t) => ({
+				value: t,
+			})),
+		);
+	}
 
 	function sortFunction(
 		a: (typeof selectedTags)[0],
@@ -71,12 +75,17 @@
 
 	let sortedTags = [...($query.data ?? [])].sort(sortFunction);
 
-	$: if (!open) {
+	$: if (!$open) {
 		sortedTags = [...($query.data ?? [])].sort(sortFunction);
 	}
 
-	let open = false;
 	let wrapper: HTMLElement;
+
+	const loading = writable(false);
+
+	$: $loading = $query.isLoading;
+
+	$: console.log({ $loading });
 </script>
 
 <div bind:this={wrapper}>
@@ -89,7 +98,7 @@
 		{/each}
 
 		<Popover
-			bind:open
+			bind:open={$open}
 			portal={wrapper}
 			positioning={{
 				overlap: true,
@@ -103,12 +112,13 @@
 			</PopoverTrigger>
 			<PopoverContent class="p-0">
 				<Command
+					{loading}
 					onClose={() => {
 						$mutation.mutate({
 							entries: entryId,
 							tags: $selectedTagsStore.map((t) => t.value),
 						});
-						open = false;
+						$open = false;
 					}}
 					type={selectedTags[0]}
 					selectedValue={selectedTagsStore}
@@ -120,11 +130,18 @@
 				>
 					<!--  -->
 					<CommandInput placeholder="Add tag" />
-					<CommandList animateHeight={false}>
-						<CommandGroup>
-							{#if $query.isLoading}
-								<CommandLoading>Loading...</CommandLoading>
-							{:else if $query.isSuccess}
+					{#if $query.isSuccess}
+						<CommandList animateHeight={false}>
+							<CommandGroup>
+								<!-- <CommandLoading>
+                                    <div class="flex flex-col gap-2">
+                                        <Skeleton class="h-6 p-1" />
+                                        <Skeleton class="h-6 p-1" />
+                                        <Skeleton class="h-6 p-1" />
+                                        <Skeleton class="h-6 p-1" />
+                                        <Skeleton class="h-6 p-1" />
+                                    </div>
+                                </CommandLoading> -->
 								{#each sortedTags as tag}
 									<CommandItem class="group" value={tag} let:isSelected>
 										<Checkbox
@@ -148,10 +165,10 @@
 										</span>
 									</CommandItem>
 								{/if}
-							{/if}
-							<!--  -->
-						</CommandGroup>
-					</CommandList>
+								<!--  -->
+							</CommandGroup>
+						</CommandList>
+					{/if}
 				</Command>
 			</PopoverContent>
 		</Popover>

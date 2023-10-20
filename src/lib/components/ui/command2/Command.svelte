@@ -32,6 +32,7 @@
 	export let commandPages: $$Props['commandPages'] = undefined;
     export let filterFunction: $$Props['filterFunction'] = undefined;
     export let fixedHeight: $$Props["fixedHeight"] = false;
+    export let loading: $$Props["loading"] = writable(false);
 
 	type T = $$Generic;
 
@@ -53,6 +54,7 @@
 				? [value]
 				: undefined,
 		inputValue,
+        loading,
 		multiple,
 		onClose,
 		selectedValue: _selectedValue,
