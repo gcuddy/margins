@@ -5,13 +5,14 @@
 	import { Note } from '$lib/components/notes';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 	import { derived } from 'svelte/store';
+	import AnnotationDetail from './annotation-detail.svelte';
 
 	export let data;
 
 	$: query = createQuery(
 		queryFactory.notes.detail({
-			id: data.id
-		})
+			id: data.id,
+		}),
 	);
 </script>
 
@@ -21,6 +22,15 @@
 	<Skeleton class="h-full" />
 {:else if $query.isSuccess}
 	{#key data.id}
-		<Note {...$query.data} color={$query.data.color ?? ''} icon={$query.data.icon ?? ''} />
+		{#if $query.data.entry}
+			<!-- entry note -->
+			<AnnotationDetail note={$query.data} />
+		{:else}
+			<Note
+				{...$query.data}
+				color={$query.data.color ?? ''}
+				icon={$query.data.icon ?? ''}
+			/>
+		{/if}
 	{/key}
 {/if}

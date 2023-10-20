@@ -1473,6 +1473,7 @@ export async function notes({ ctx, input }: GetCtx<typeof notesInputSchema>) {
 		.select(annotations.select)
 		.$narrowType<{
 			contentData: JSONContent;
+			target: TargetSchema;
 		}>()
 		.select(withEntry)
 		.select((eb) => noteTags(eb))
@@ -1578,6 +1579,7 @@ export async function note({
 		.select(annotations.select)
 		.$narrowType<{
 			contentData: JSONContent;
+			target: TargetSchema;
 		}>()
 		.select(withEntry)
 		.select((eb) => noteTags(eb))

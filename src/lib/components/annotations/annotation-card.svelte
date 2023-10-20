@@ -13,7 +13,7 @@
 		Pencil1,
 		Trash,
 	} from 'radix-icons-svelte';
-	import { tick } from 'svelte';
+	import { type ComponentProps, tick } from 'svelte';
 	import * as Popover from '$components/ui/popover';
 	// import { render_html } from '$components/ui/editor/utils';
 	import { sleep } from '@melt-ui/svelte/internal/helpers';
@@ -38,6 +38,8 @@
 	import { melt } from '@melt-ui/svelte';
 	import type { SetOptional } from 'type-fest';
 	import { cn } from '$lib/utils';
+	import SlimEntry from '$components/entries/slim-entry.svelte';
+	import { make_link } from '$lib/utils/entries';
 
 	let editor: Editor;
 	let tainted = false;
@@ -46,7 +48,8 @@
 
 	// TODO: should we use this type or not?
 	export let annotation: SetOptional<EntryAnnotation, 'username' | 'tags'>;
-    export let hrefPrefix = '';
+	export let entry: ComponentProps<SlimEntry>['entry'] | undefined = undefined;
+	export let hrefPrefix = '';
 
 	let className: string | null | undefined = undefined;
 	export { className as class };
@@ -79,13 +82,24 @@
 <div
 	class={cn(
 		`min-w-[300px] m-0 flex-1 relative max-w-full border rounded-md bg-card shadow-sm transition group`,
-        pendingDelete && 'animate-pulse',
+		pendingDelete && 'animate-pulse',
 		className,
 	)}
 >
 	<div
 		class="w-full relative shadow-none flex flex-col gap-1.5 py-3 px-4 h-full"
 	>
+		{#if entry}
+			<!-- <SlimEntry {entry} link /> -->
+			<div class="flex gap-1 items-center">
+				<!-- {#if entry.image}
+            <img class="h-8 w-8 rounded-full" src={entry.image} />
+        {/if} -->
+				<a href={make_link(entry)} class="line-clamp-2 font-medium"
+					>{entry.title}</a
+				>
+			</div>
+		{/if}
 		<div class="flex shrink-0 h-7 justify-between">
 			<div class="flex text-xs gap-2">
 				{#if annotation.username}

@@ -163,6 +163,9 @@ export const annotations = {
 		'a.contentData',
 		'a.icon',
 		'a.color',
+		'a.parentId',
+		'a.entryId',
+		'a.start',
 	] as const,
 	with: {
 		references: (eb: AliasedAEb) => {

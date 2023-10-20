@@ -14,7 +14,18 @@ export function generateSearchNotePhrase(term: string, alias = 'Annotation') {
 export async function searchNotes(q: string, userId: string) {
 	return await db
 		.selectFrom('Annotation as a')
-		.where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${q})`)
+		// .where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${q})`)
+		// pray for us
+
+		.where((eb) =>
+			eb.or([
+				sql`MATCH(a.title,a.body,a.exact) AGAINST (${q})`,
+				sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(a.contentData, '$**.text'))) LIKE '%${sql.raw(
+					q,
+				)}%'`,
+			]),
+		)
+
 		.select([
 			'a.id',
 			'a.contentData',

@@ -121,7 +121,7 @@
 	{#key data.results}
 		{#if data.notes}
 			{#each data.notes || [] as note}
-                <AnnotationCard hrefPrefix={make_link(note.entry)} class="min-w-full" annotation={note} />
+                <AnnotationCard entry={note.entry ? note.entry : undefined} hrefPrefix={make_link(note.entry)} class="min-w-full" annotation={note} />
 				<!-- <Annotation class="col-span-2" annotation={note} /> -->
 			{/each}
 		{:else}
