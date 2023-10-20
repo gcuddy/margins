@@ -4,19 +4,21 @@
 	import type { DivProps } from './types';
 
 	const {
-		state: { filtered, inputValue }
+		state: { filtered, inputValue },
 	} = ctx.get();
 
 	$: render = $inputValue && $filtered.count === 0;
 
-	type $$Props = DivProps;
+	type $$Props = DivProps & { show?: boolean};
+
+    export let show = false;
 
 	let className: $$Props['class'] = undefined;
 	export { className as class };
 	export let unstyled = false;
 </script>
 
-{#if render}
+{#if show || render}
 	<div
 		data-command-empty
 		role="presentation"

@@ -43,7 +43,7 @@ type CtxEntry = (typeof ctxEntries)[number];
 
 export const invalidateEntries = (queryClient: QueryClient, all = false) => {
 	return queryClient.invalidateQueries({
-		// queryKey: ["entries"],
+		queryKey: ['entries'],
 		predicate(query) {
 			if (all) {
 				return query.queryKey[0] === 'entries';

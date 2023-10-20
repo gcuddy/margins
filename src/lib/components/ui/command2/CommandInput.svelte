@@ -18,8 +18,8 @@
 	type $$Props = InputProps;
 
 	let inputEl: HTMLInputElement;
-	const className: $$Props['class'] = undefined;
-	export let unstyled = false;
+	export let className: $$Props['class'] = undefined;
+	// export let unstyled = false;
 	export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
 
 	export const focus = () => {
@@ -106,10 +106,9 @@
 		// Pressing `esc` should close the menu.
 		if (e.key === kbd.TAB || e.key === kbd.ESCAPE) {
 			actions.closeMenu();
-            setTimeout(() => {
-                actions.reset();
-
-            }, 250);
+			setTimeout(() => {
+				actions.reset();
+			}, 250);
 			// tick().then(() => {
 			// });
 			return;
@@ -227,11 +226,11 @@
 	class="flex items-center px-3"
 	data-command-input-wrapper
 >
-    {#if $loading}
-        <Loader2 class="mr-2 h-4 w-4 shrink-0 opacity-50 animate-spin" />
-    {:else}
-	<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
-    {/if}
+	{#if $loading}
+		<Loader2 class="mr-2 h-4 w-4 shrink-0 opacity-50 animate-spin" />
+	{:else}
+		<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
+	{/if}
 	<input
 		data-command-input
 		aria-activedescendant={$activeElement?.id}
@@ -241,8 +240,7 @@
 		aria-labelledby={ids.label}
 		autocomplete="off"
 		class={cn(
-			!unstyled &&
-				'flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+			'flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
 			className,
 		)}
 		id={ids.input}

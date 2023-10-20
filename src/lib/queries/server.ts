@@ -41,6 +41,7 @@ import { collectionItemWidthSchema } from '$lib/schemas/inputs/collection.schema
 import { findHighestQualityBookCover } from '$lib/api/book-cover';
 import { findNodes } from '$components/ui/editor/utils';
 import { entryNodeSchema } from '$components/ui/editor/extensions/schemas';
+import dayjs from 'dayjs';
 
 type Ctx = {
 	ctx: {
@@ -1009,44 +1010,44 @@ export async function createEntry(
 				}
 				break;
 			}
-            case 'book': {
-                const existing = await db
-                    .selectFrom('Entry')
-                    .where('googleBooksId', '=', input.googleBooksId)
-                    .select('id')
-                    .executeTakeFirst();
-                if (existing) {
-                    return existing;
-                }
-                break;
-            }
-            case 'podcast': {
-                const existing = await db
-                    .selectFrom('Entry')
-                    .where('podcastIndexId', '=', input.podcastIndexId)
-                    .select('id')
-                    .executeTakeFirst();
-                if (existing) {
-                    return existing;
-                }
-                break;
-            }
-            case 'album': {
-                const existing = await db
-                    .selectFrom('Entry')
-                    .where('spotifyId', '=', input.spotifyId)
-                    .select('id')
-                    .executeTakeFirst();
-                if (existing) {
-                    return existing;
-                }
-                break;
-            }
-            default: {
-                return {
-                    id: input.entryId
-                }
-            }
+			case 'book': {
+				const existing = await db
+					.selectFrom('Entry')
+					.where('googleBooksId', '=', input.googleBooksId)
+					.select('id')
+					.executeTakeFirst();
+				if (existing) {
+					return existing;
+				}
+				break;
+			}
+			case 'podcast': {
+				const existing = await db
+					.selectFrom('Entry')
+					.where('podcastIndexId', '=', input.podcastIndexId)
+					.select('id')
+					.executeTakeFirst();
+				if (existing) {
+					return existing;
+				}
+				break;
+			}
+			case 'album': {
+				const existing = await db
+					.selectFrom('Entry')
+					.where('spotifyId', '=', input.spotifyId)
+					.select('id')
+					.executeTakeFirst();
+				if (existing) {
+					return existing;
+				}
+				break;
+			}
+			default: {
+				return {
+					id: input.entryId,
+				};
+			}
 		}
 	}
 
@@ -1061,7 +1062,9 @@ export async function createEntry(
 					...insertable,
 					author: tv.created_by.map((val) => val.name).join(', '),
 					image: tmdb.media(tv.poster_path),
-					published: tv.first_air_date,
+					published: tv.first_air_date
+						? dayjs(tv.first_air_date).toDate()
+						: undefined,
 					text: tv.overview,
 					title: tv.name,
 					tmdbId: tv.id,
@@ -1075,7 +1078,9 @@ export async function createEntry(
 					author: movie.credits.crew.find((c) => c.job === 'Director')?.name,
 					html: movie.overview,
 					image: tmdb.media(movie.poster_path),
-					published: movie.release_date,
+					published: movie.release_date
+						? dayjs(movie.release_date).toDate()
+						: undefined,
 					title: movie.title,
 					tmdbId: movie.id,
 					type: 'movie',
@@ -1106,7 +1111,10 @@ export async function createEntry(
 				html: book.volumeInfo.description,
 				image,
 				pageCount: book.volumeInfo.pageCount,
-				published: book.volumeInfo.publishedDate,
+				// on server, we'll use very lightweight dayjs to reduce headaches here - for instance, if the publishedDate is just the year e.g. "1984", js by default thinks it's 1983. PITA
+				published: book.volumeInfo.publishedDate
+					? dayjs(book.volumeInfo.publishedDate).toDate()
+					: undefined,
 				publisher: book.volumeInfo.publisher,
 				title: book.volumeInfo.title,
 				type: 'book',
@@ -1140,7 +1148,9 @@ export async function createEntry(
 				...insertable,
 				author: album.artists.map((a) => a.name).join(', '),
 				image: album.images[0]?.url,
-				published: new Date(album.release_date),
+				published: album.release_date
+					? dayjs(album.release_date).toDate()
+					: undefined,
 				spotifyId: album.id,
 				title: album.name,
 				type: 'album',
