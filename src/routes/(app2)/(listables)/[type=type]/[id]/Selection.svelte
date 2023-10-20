@@ -77,7 +77,9 @@
 							<Button
                                 id="highlight-button"
 								builders={[builder]}
-								on:pointerdown={() => {
+								on:click={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
 									dispatch('highlight');
 								}}
 								type="submit"
@@ -98,7 +100,9 @@
 							<Button
                                 id="annotate-button"
 								builders={[builder]}
-								on:pointerdown={() => {
+								on:click={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
 									dispatch('annotate');
 								}}
 								variant="ghost"
