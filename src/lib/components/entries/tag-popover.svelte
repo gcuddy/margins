@@ -27,7 +27,7 @@
 	import { commandItemVariants } from '$components/ui/command2/style';
 	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
 
-	let open = writable(false);
+	const open = writable(false);
 
 	const query = createQuery(
 		derived(open, ($open) => ({
@@ -35,6 +35,8 @@
 			enabled: $open,
 		})),
 	);
+
+    $: console.log({$query})
 
 	const mutation = createSetTagsMutation();
 
@@ -73,11 +75,11 @@
 		}
 	}
 
-	let sortedTags = [...($query.data ?? [])].sort(sortFunction);
+	$: sortedTags = [...($query.data ?? [])].sort(sortFunction);
 
-	$: if (!$open) {
-		sortedTags = [...($query.data ?? [])].sort(sortFunction);
-	}
+	// $: if (!$open) {
+	// 	sortedTags = [...($query.data ?? [])].sort(sortFunction);
+	// }
 
 	let wrapper: HTMLElement;
 
