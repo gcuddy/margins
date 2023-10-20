@@ -35,12 +35,17 @@
 {#if form}
 	<Form.Root
 		options={{
-			onUpdated(input) {
+			onUpdate(input) {
 				console.log('onUpdated', input, 'invalidating');
-				invalidate('entry');
-				invalidateEntries(queryClient);
+				// invalidate('entry');
+				// invalidateEntries(queryClient);
 			},
-			resetForm: false,
+            onResult({result}) {
+                if (result.type === 'success') {
+                    console.log('invalidating')
+                    invalidateEntries(queryClient);
+                }
+            },
 		}}
 		{form}
 		action="/{form.data.type}/{form.data.entryId}?/saveToLibrary"
