@@ -36,7 +36,7 @@
 	export let isOpen = false;
 
 	export let onSelect: (entry: ListEntry) => void = (entry) => {
-        console.log('onSelect', entry)
+		console.log('onSelect', entry);
 		void goto(`/${entry.type}/${getId(entry)}`);
 		isOpen = false;
 	};
@@ -46,14 +46,14 @@
 
 	const dispatch = createEventDispatcher();
 
-    // sort Recents to top
+	// sort Recents to top
 
 	const entries = derived(
 		[entriesQuery, inputValue, recents],
 		([$entriesQuery, $value, $recents]) => {
 			const entries = $entriesQuery.data ?? [];
 			if (!$value) {
-                // Show recents...
+				// Show recents...
 				return $recents.entries;
 			}
 
@@ -68,14 +68,14 @@
 
 			const filtered = sorted.filter((entry) => entry.score > 0);
 
-            // ensure no duplicate ids
-            const ids = new Set();
-            const deduped = filtered.filter((entry) => {
-                if (ids.has(entry.id)) return false;
-                ids.add(entry.id);
-                return true;
-            });
-            return deduped;
+			// ensure no duplicate ids
+			const ids = new Set();
+			const deduped = filtered.filter((entry) => {
+				if (ids.has(entry.id)) return false;
+				ids.add(entry.id);
+				return true;
+			});
+			return deduped;
 		},
 	);
 
@@ -116,7 +116,9 @@
 						<Muted class="text-xs">{entry.author}</Muted>
 					</div>
 					<div class="flex flex-col text-right">
-						<span class="text-xs text-muted-foreground">{entry.status}</span>
+						{#if entry.status}
+							<span class="text-xs text-muted-foreground">{entry.status}</span>
+						{/if}
 						{#if entry.progress}
 							<span class="text-xs tabular-nums text-muted-foreground"
 								>{Math.round(entry.progress * 100)}%</span
