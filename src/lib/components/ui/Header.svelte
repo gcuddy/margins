@@ -28,7 +28,7 @@
 	{/if}
 	{#if title || $$slots.title}
 		<slot name="title">
-			<h1 class="font-bold">
+			<h1 class="font-bold text-base">
 			<!-- <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight"> -->
 				{title}
 			</h1>

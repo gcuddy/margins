@@ -329,3 +329,25 @@ export function findClosestImage<
 export async function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Get text surrounding the match and highlight it
+ */
+export function highlightSearchTerm(text: string | null, searchTerm: string, portion = false) {
+    const regex = new RegExp(searchTerm, 'gi');
+	if (!text) return '';
+	if (!portion) {
+		return text.replace(regex, `<mark>$&</mark>`);
+	}
+	const match = regex.exec(text);
+	if (!match) return '';
+	const start = Math.max(0, match.index - 20);
+	const end = Math.min(text.length, match.index + searchTerm.length + 20);
+	return (
+		'...' +
+		text.slice(start, match.index) +
+		`<mark>${match[0]}</mark>` +
+		text.slice(match.index + searchTerm.length, end) +
+		'...'
+	);
+}

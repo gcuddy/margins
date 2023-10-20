@@ -1,17 +1,31 @@
 <script lang="ts">
-	import { createVirtualizer,createWindowVirtualizer } from '@tanstack/svelte-virtual';
+	import {
+		createVirtualizer,
+		createWindowVirtualizer,
+	} from '@tanstack/svelte-virtual';
 	import commandScore from 'command-score';
 	import {
 		ArchiveIcon,
 		ChevronDownIcon,
 		ChevronUpIcon,
 		CommandIcon,
+		Loader,
 		PinIcon,
-		SearchIcon
+		SearchIcon,
 	} from 'lucide-svelte';
 	import { createEventDispatcher, tick } from 'svelte';
-	import { derived, type Readable,type Writable } from 'svelte/store';
-	import { createRender,createTable, Render, Subscribe } from 'svelte-headless-table';
+	import {
+		derived,
+		writable,
+		type Readable,
+		type Writable,
+	} from 'svelte/store';
+	import {
+		createRender,
+		createTable,
+		Render,
+		Subscribe,
+	} from 'svelte-headless-table';
 	import {
 		addColumnOrder,
 		addGroupBy,
@@ -19,7 +33,8 @@
 		addPagination,
 		addSelectedRows,
 		addSortBy,
-		addTableFilter	} from 'svelte-headless-table/plugins';
+		addTableFilter,
+	} from 'svelte-headless-table/plugins';
 
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -27,7 +42,7 @@
 	import { IconPicker } from '$components/icon-picker';
 	import Link from '$components/Link.svelte';
 	import { TagColorPill } from '$components/tags/tag-color';
-	import { Badge } from '$components/ui/badge'
+	import { Badge } from '$components/ui/badge';
 	import { Button } from '$components/ui/button';
 	import { Input } from '$components/ui/input';
 	import { cn } from '$lib';
@@ -35,7 +50,7 @@
 	import {
 		initCreatePinMutation,
 		initDeletePinMutation,
-		updateAnnotationMutation
+		updateAnnotationMutation,
 	} from '$lib/queries/mutations/index';
 	import type { Note, NotesInput } from '$lib/queries/server';
 	import { make_link } from '$lib/utils/entries';
@@ -43,6 +58,11 @@
 	import type { Snapshot } from '../../../$types';
 	import BulkActions from '$components/ui/bulk-actions.svelte';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
+	import { Blockquote } from '$components/ui/typography';
+	import { highlightSearchTerm } from '$lib/utils';
+	import SimpleClamp from '$components/simple-clamp.svelte';
+	import Html from '$components/ui/data-table/html.svelte';
+	import { render_html } from '$components/ui/editor/utils';
 	export let notes: Readable<Array<Note>>;
 
 	export let input: Writable<NotesInput>;
@@ -55,20 +75,22 @@
 	};
 	export let onSort: ((sort: Sort) => void) | undefined = undefined;
 
+	export let search = writable('');
+
 	const mutation = updateAnnotationMutation();
 
 	const createPinMutation = initCreatePinMutation({
-		invalidate: [['notes']]
+		invalidate: [['notes']],
 	});
 	const deletePinMutation = initDeletePinMutation({
-		invalidate: [['notes']]
+		invalidate: [['notes']],
 	});
 
 	const pinMutating = derived(
 		[createPinMutation, deletePinMutation],
 		([$createPin, $deletePin]) => {
 			return $createPin.isPending || $deletePin.isPending;
-		}
+		},
 	);
 
 	const table = createTable(notes, {
@@ -76,7 +98,7 @@
 			fn: ({ filterValue, value }) => {
 				const score = commandScore(value, filterValue);
 				return score > 0.05;
-			}
+			},
 		}),
 		group: addGroupBy(),
 		select: addSelectedRows(),
@@ -85,10 +107,10 @@
 			initialSortKeys: [
 				{
 					id: 'createdAt',
-					order: 'desc'
-				}
-			]
-		})
+					order: 'desc',
+				},
+			],
+		}),
 	});
 
 	const columns = table.createColumns([
@@ -98,76 +120,104 @@
 				const { getRowState } = pluginStates.select;
 				const { isSelected } = getRowState(row);
 				return createRender(DataTableCheckbox, {
-					checked: isSelected
+					checked: isSelected,
 				});
 			},
 			header: (_, { pluginStates }) => {
 				const { allRowsSelected } = pluginStates.select;
 				return createRender(DataTableCheckbox, {
-					checked: allRowsSelected
+					checked: allRowsSelected,
 				});
 			},
 			plugins: {
 				filter: {
-					exclude: true
+					exclude: true,
 				},
 				sort: {
-					disable: true
-				}
-			}
+					disable: true,
+				},
+			},
 		}),
 		table.column({
 			accessor: 'entry',
 			cell: ({ row }) => {
 				if (row.isData()) {
-                    if (row.original.entry?.title) {
-                        return createRender(Link, {
-                            href: make_link(row.original.entry),
-                            text: row.original.entry.title
-                        })
-                    }
+					if (row.original.entry?.title) {
+						return createRender(Link, {
+							class: 'font-medium',
+							href: make_link(row.original.entry),
+							text: row.original.entry.title,
+						});
+					}
 					return row.original.entry?.title ?? 'No entry';
 				}
 				return 'No entry';
 			},
-			header: 'Entry'
+			header: 'Title',
 		}),
 		table.column({
 			accessor: 'exact',
-			header: 'Quote'
+			header: 'Quote',
+		}),
+		table.column({
+			accessor: (item) => {
+				return item.body ?? item.contentData;
+			},
+			cell: ({ value }) => {
+				if (typeof value === 'string') {
+					return value;
+				} else {
+					try {
+						const render = createRender(Html, {
+							clamp: {
+								clamp: 4,
+							},
+							html: render_html(value),
+						});
+						return render;
+					} catch (e) {
+						console.log(e);
+						return '';
+					}
+				}
+			},
+			header: 'Note',
 		}),
 		table.column({
 			accessor: 'updatedAt',
 			header: 'Updated',
 			plugins: {
 				filter: {
-					exclude: true
-				}
-			}
+					exclude: true,
+				},
+			},
 		}),
 		table.column({
 			accessor: 'createdAt',
 			header: 'Created',
 			plugins: {
 				filter: {
-					exclude: true
-				}
-			}
-		})
+					exclude: true,
+				},
+			},
+		}),
 	]);
 
 	const { headerRows, pluginStates, rows, tableAttrs, tableBodyAttrs } =
 		table.createViewModel(columns);
 
 	const { preSortedRows, sortKeys } = pluginStates.sort;
-	const { allRowsSelected, getRowState, selectedDataIds, someRowsSelected } = pluginStates.select;
+	const { allRowsSelected, getRowState, selectedDataIds, someRowsSelected } =
+		pluginStates.select;
 	const { filterValue } = pluginStates.filter;
 
 	const selectedData = derived([selectedDataIds, rows], ([ids, rows]) => {
 		const relevantRows = rows.filter((row) => ids[row.id]);
 		return relevantRows
 			.map((row) => {
-				if (row.isData()) {return row.original;}
+				if (row.isData()) {
+					return row.original;
+				}
 			})
 			.filter(Boolean);
 	});
@@ -177,8 +227,12 @@
 		// If all selected data.pin is falsy, return false
 		// If some selected data.pin is truthy, return "indeterminate"
 		const pins = $selectedData.map((data) => data.pin);
-		if (pins.every(Boolean)) {return true;}
-		if (pins.every((pin) => !pin)) {return false;}
+		if (pins.every(Boolean)) {
+			return true;
+		}
+		if (pins.every((pin) => !pin)) {
+			return false;
+		}
 		return 'indeterminate' as const;
 	});
 
@@ -193,19 +247,19 @@
 		},
 		onSelect(item) {
 			selectedDataIds.toggle(item);
-		}
+		},
 	});
 
 	export const snapshot: Snapshot = {
 		capture: () => ({
 			_filterValue: $filterValue,
-			highlighted: $state.highlighted
+			highlighted: $state.highlighted,
 		}),
 		restore: ({ _filterValue, highlighted }) => {
 			console.log(`restoring`, { _filterValue, highlighted });
 			multi.helpers.setHighlighted(highlighted);
 			$filterValue = _filterValue;
-		}
+		},
 	};
 
 	type EphemeralState = {
@@ -217,13 +271,15 @@
 	beforeNavigate(() => {
 		const data: EphemeralState = {
 			_filterValue: $filterValue,
-			highlighted: $state.highlighted
+			highlighted: $state.highlighted,
 		};
 		sessionStorage.setItem($page.url.toString(), JSON.stringify(data));
 	});
 	afterNavigate(() => {
 		const data = sessionStorage.getItem($page.url.toString());
-		if (!data) {return;}
+		if (!data) {
+			return;
+		}
 		const parsed = JSON.parse(data) as EphemeralState;
 		if (parsed) {
 			multi.helpers.setHighlighted(parsed.highlighted);
@@ -237,13 +293,17 @@
 		count: $rows.length,
 		estimateSize: () => 60,
 		getItemKey: (index) => $rows[index]?.id ?? index,
-		overscan: 20
+		overscan: 20,
 	});
 
 	export const measure = () => $virtualizer?.measure();
 
+	$: if ($notes) {
+		$virtualizer?.measure();
+	}
+
 	$: $virtualizer.setOptions({
-		count: $rows.length
+		count: $rows.length,
 		// getScrollElement: () => tbody ?? null
 	});
 
@@ -260,7 +320,7 @@
 	});
 
 	const {
-		stores: { state }
+		stores: { state },
 	} = multi;
 
 	$: console.log({ $state });
@@ -311,12 +371,14 @@
 	}}
 />
 
+<!-- TODO: fix this ! it's broken right now! -->
+<!-- TODO: move to pagination instead of infinite scroll (i think) -->
 <div class="mb-4 flex items-center gap-4">
 	<div class="relative">
 		<Input
 			bind:el={inputEl}
 			class="max-w-sm text-sm pl-7"
-			placeholder="Filter..."
+			placeholder="Filter annotations..."
 			type="text"
 			on:focus={() => {
 				multi.helpers.setHighlighted(null);
@@ -330,117 +392,159 @@
 					e.stopPropagation();
 				}
 			}}
-			bind:value={$filterValue}
+			bind:value={$search}
 		/>
-		<SearchIcon
-			class="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50 peer-focus:opacity-100 transition-opacity"
-		/>
+		<div
+			class="absolute left-2 top-1/2 -translate-y-1/2 opacity-50 peer-focus:opacity-100 transition-opacity"
+		>
+			<svelte:component
+				this={loading ? Loader : SearchIcon}
+				class="h-4 w-4 stroke-[1.5] {loading ? 'animate-spin' : ''}"
+			/>
+		</div>
 	</div>
 </div>
-<Table.Root {...$tableAttrs}>
-	<Table.Header>
-		{#each $headerRows as headerRow (headerRow.id)}
-			<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
-				<Table.Row {...rowAttrs}>
-					{#each headerRow.cells as cell (cell.id)}
-						<Subscribe cellAttrs={cell.attrs()} let:cellAttrs props={cell.props()} let:props>
-							<Table.Head {...cellAttrs} class={cn('[&:has([role=checkbox])]:pl-3')}>
-								{@const isSorted = $sortKeys.some((sortKey) => sortKey.id === cell.id)}
-								<button
-									data-sorted={isSorted}
-									class="flex items-center gap-1 data-[sorted=true]:text-foreground"
-									on:click={(e) => {
-										props.sort.toggle(e);
-										$virtualizer.measure();
-										props.sort.order;
-										onSort?.({
-											dir: props.sort.order,
-											orderBy:
-												cell.id === 'title'
-													? 'name'
-													: cell.id === 'createdAt'
-													? 'createdAt'
-													: cell.id === 'updatedAt'
-													? 'updatedAt'
-													: undefined
-										});
-									}}
+<div class="rounded-md border">
+	<Table.Root {...$tableAttrs}>
+		<Table.Header>
+			{#each $headerRows as headerRow (headerRow.id)}
+				<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
+					<Table.Row {...rowAttrs}>
+						{#each headerRow.cells as cell (cell.id)}
+							<Subscribe
+								cellAttrs={cell.attrs()}
+								let:cellAttrs
+								props={cell.props()}
+								let:props
+							>
+								<Table.Head
+									{...cellAttrs}
+									class={cn('[&:has([role=checkbox])]:pl-3')}
 								>
-									<Render of={cell.render()} />
-									{#if props.sort.order === 'asc'}
-										<ChevronUpIcon class="h-4 w-4" />
-									{:else if props.sort.order === 'desc'}
-										<ChevronDownIcon class="h-4 w-4" />
-									{/if}
-								</button>
-							</Table.Head>
-						</Subscribe>
-					{/each}
-				</Table.Row>
-			</Subscribe>
-		{/each}
-	</Table.Header>
-	<Table.Body bind:el={tbody} {...$tableBodyAttrs}>
-		{#if $paddingTop}
-			<tr>
-				<td style:height="{$paddingTop}px" />
-			</tr>
-		{/if}
-		{#each $virtualizer.getVirtualItems() as item (item.key)}
-			{@const row = getRow(item.index)}
-			<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-				{@const highlighted = $state.highlighted === row.id}
-				<Table.Row
-					on:mouseover={multi.events.mouseover}
-					{...rowAttrs}
-					data-id={row.id}
-					data-state={$selectedDataIds[row.id] && 'selected'}
-					data-highlighted={highlighted}
-					class="duration-100 data-[state=selected]:data-[highlighted=true]:bg-accent data-[highlighted=true]:ring-1 ring-inset"
-				>
-					{#each row.cells as cell (cell.id)}
-						<Subscribe attrs={cell.attrs()} let:attrs>
-							<Table.Cell {...attrs} class="[&:has([role=checkbox])]:pl-3">
-								{#if cell.id === 'title' && row.isData()}
-									{@const color = row.original.color ?? '#000'}
-									{@const icon = row.original.icon ?? 'File'}
-									<div class="flex items-center gap-x-1">
-										<IconPicker
-											variant="ghost"
-											class="h-auto w-auto grow-0 shrink-0 basis-auto p-1.5"
-											iconClass="h-4 w-4"
-											activeColor={color}
-											activeIcon={icon}
-										/>
-										<a href="/note/{row.original.id}">
-											<Render of={cell.render()} />
-										</a>
-										<div class="pl-2">
-											{#each row.original.tags as tag (tag.id)}
-												<Badge variant="secondary" as="a" href="/tag/{tag.name}">
-													<TagColorPill class="h-2 w-2 mr-1.5" color={tag.color} />
-													{tag.name}
-												</Badge>
-											{/each}
+									{@const isSorted = $sortKeys.some(
+										(sortKey) => sortKey.id === cell.id,
+									)}
+									<button
+										data-sorted={isSorted}
+										class="flex items-center gap-1 data-[sorted=true]:text-foreground"
+										on:click={(e) => {
+											props.sort.toggle(e);
+											$virtualizer.measure();
+											props.sort.order;
+											onSort?.({
+												dir: props.sort.order,
+												orderBy:
+													cell.id === 'title'
+														? 'name'
+														: cell.id === 'createdAt'
+														? 'createdAt'
+														: cell.id === 'updatedAt'
+														? 'updatedAt'
+														: undefined,
+											});
+										}}
+									>
+										<Render of={cell.render()} />
+										{#if props.sort.order === 'asc'}
+											<ChevronUpIcon class="h-4 w-4" />
+										{:else if props.sort.order === 'desc'}
+											<ChevronDownIcon class="h-4 w-4" />
+										{/if}
+									</button>
+								</Table.Head>
+							</Subscribe>
+						{/each}
+					</Table.Row>
+				</Subscribe>
+			{/each}
+		</Table.Header>
+		<Table.Body bind:el={tbody} {...$tableBodyAttrs}>
+			{#if $paddingTop}
+				<tr>
+					<td style:height="{$paddingTop}px" />
+				</tr>
+			{/if}
+			{#each $virtualizer.getVirtualItems() as item (item.key)}
+				{@const row = getRow(item.index)}
+				<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
+					{@const highlighted = $state.highlighted === row.id}
+					<Table.Row
+						on:mouseover={multi.events.mouseover}
+						{...rowAttrs}
+						data-id={row.id}
+						data-state={$selectedDataIds[row.id] && 'selected'}
+						data-highlighted={highlighted}
+						class="duration-100 data-[state=selected]:data-[highlighted=true]:bg-accent data-[highlighted=true]:ring-1 ring-inset"
+					>
+						{#each row.cells as cell (cell.id)}
+							<Subscribe attrs={cell.attrs()} let:attrs>
+								<Table.Cell {...attrs} class="[&:has([role=checkbox])]:pl-3">
+									{#if cell.id === 'title' && row.isData()}
+										{@const color = row.original.color ?? '#000'}
+										{@const icon = row.original.icon ?? 'File'}
+										<div class="flex items-center gap-x-1">
+											<IconPicker
+												variant="ghost"
+												class="h-auto w-auto grow-0 shrink-0 basis-auto p-1.5"
+												iconClass="h-4 w-4"
+												activeColor={color}
+												activeIcon={icon}
+											/>
+											<a href="/note/{row.original.id}">
+												<Render of={cell.render()} />
+											</a>
+											<div class="pl-2">
+												{#each row.original.tags as tag (tag.id)}
+													<Badge
+														variant="secondary"
+														as="a"
+														href="/tag/{tag.name}"
+													>
+														<TagColorPill
+															class="h-2 w-2 mr-1.5"
+															color={tag.color}
+														/>
+														{tag.name}
+													</Badge>
+												{/each}
+											</div>
+											<!-- {row.original.} -->
 										</div>
-										<!-- {row.original.} -->
-									</div>
-								{:else}
-									<Render of={cell.render()} />
-								{/if}
-							</Table.Cell>
-						</Subscribe>
-					{/each}
-				</Table.Row>
-			</Subscribe>
-		{/each}
-		{#if $paddingBottom}
-			<tr>
-				<td style:height="{$paddingBottom}px" />
-			</tr>
-		{/if}
-	</Table.Body>
-</Table.Root>
+									{:else if cell.id === 'exact' && row.isData()}
+										{@const entry = row.original.entry}
+										<svelte:element
+											this={entry ? 'a' : 'span'}
+											href={entry && row.original.type === 'annotation'
+												? make_link(entry) + `#annotation-${row.original.id}`
+												: undefined}
+										>
+											<SimpleClamp clamp={4} fromClass="from-background">
+												<Blockquote class="mt-0 text-sm text-muted-foreground">
+													{@html highlightSearchTerm(
+														row.original.exact,
+														$search,
+													)}
+												</Blockquote>
+											</SimpleClamp>
+										</svelte:element>
+										<!-- {@html highlightSearchTerm(row.original.exact, $search)} -->
+									{:else}
+										<Render of={cell.render()} />
+									{/if}
+								</Table.Cell>
+							</Subscribe>
+						{/each}
+					</Table.Row>
+				</Subscribe>
+			{/each}
+			{#if $paddingBottom}
+				<tr>
+					<td style:height="{$paddingBottom}px" />
+				</tr>
+			{/if}
+		</Table.Body>
+	</Table.Root>
+</div>
 
 <BulkActions length={Object.keys($selectedDataIds).length}>
 	<Button
@@ -460,7 +564,7 @@
 				.filter(Boolean);
 			$mutation.mutate({
 				deleted: new Date(),
-				id: ids
+				id: ids,
 			});
 			selectedDataIds.clear();
 		}}
@@ -476,13 +580,13 @@
 					// TODO: delete
 					$deletePinMutation.mutate({
 						// ideally data.pin.id should be inferred as nonnullable here
-						id: $selectedData.map((data) => data.pin?.id ?? '')
+						id: $selectedData.map((data) => data.pin?.id ?? ''),
 					});
 				} else {
 					$createPinMutation.mutate(
 						$selectedData.map((data) => ({
-							annotationId: data.id
-						}))
+							annotationId: data.id,
+						})),
 					);
 				}
 				selectedDataIds.clear();

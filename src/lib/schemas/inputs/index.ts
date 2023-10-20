@@ -41,11 +41,15 @@ export const collectionsInputSchema = z.object({
 const baseNoteFilterSchema = z
 	.object({
 		/**
-		 * The content to search on — must extract and use with JSON Functions (see searchNotes)
+		 * The contentData to search on — must extract and use with JSON Functions (see searchNotes)
+		 * TODO: should this search title,body,exact too?
 		 */
 		content: z.string(),
 
 		id: uidComparatorSchema,
+
+		// quote to search on...
+		// quote: z.string(),
 
 		title: stringComparatorSchema,
 		type: z.nativeEnum(AnnotationType),

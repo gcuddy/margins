@@ -8,9 +8,11 @@
 	export let href: $$Props['href'] = '';
 
     export let text = '';
+    let className: string | null | undefined = undefined
+    export { className as class };
 </script>
 
-<a {href}>
+<a {href} class={className}>
 	<slot>
         {text}
     </slot>

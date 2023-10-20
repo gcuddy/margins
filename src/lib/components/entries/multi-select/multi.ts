@@ -21,14 +21,14 @@ type AdditionalProps<T extends string | number> = {
 	allowedSelector?: string;
 	// The attribute to use to find elements in the DOM. Default to data-id.
 	attribute?: string;
-    onEnter?: (item: T) => void;
+	onEnter?: (item: T) => void;
 
-    /**
-     * Allows you to overwrite the default toggleSelection function.
-     * @param item - The item to toggle selection on.
-     * @param update - The default update function that will update the state.
-     */
-    onSelect?: (item: T, update: () => void) => void;
+	/**
+	 * Allows you to overwrite the default toggleSelection function.
+	 * @param item - The item to toggle selection on.
+	 * @param update - The default update function that will update the state.
+	 */
+	onSelect?: (item: T, update: () => void) => void;
 };
 
 // TODO data-id needs to be set on elements - can I do that in here?
@@ -40,8 +40,8 @@ export function create_multi<T extends string | number>({
 	items,
 	onEnter,
 	onSelect,
-    pivot,
-    selected
+	pivot,
+	selected,
 }: RequireAtLeastOne<Partial<State<T>>, 'items'> & AdditionalProps<T>) {
 	let root: HTMLElement | null = null;
 	const selectedStore = selected ?? writable([]);
@@ -49,7 +49,7 @@ export function create_multi<T extends string | number>({
 		highlighted: highlighted ?? null,
 		items,
 		pivot: pivot ?? null,
-		selected: selectedStore
+		selected: selectedStore,
 	});
 
 	const attribute_name = attribute ?? 'data-id';
@@ -67,23 +67,25 @@ export function create_multi<T extends string | number>({
 			return {
 				...$state,
 				highlighted: item,
-				pivot: item
+				pivot: item,
 			};
 		});
 	}
 
 	function setHighlighted(item: T | null, scrollIntoView = true) {
-        if (item) {
-            const next_el = (root ?? document)?.querySelector(`[data-id="${item}"]`);
-            if (next_el instanceof HTMLElement ) {
-                if (scrollIntoView) {next_el.scrollIntoView({ block: 'nearest' });}
-                next_el.focus();
-            }
-        }
+		if (item) {
+			const next_el = (root ?? document)?.querySelector(`[data-id="${item}"]`);
+			if (next_el instanceof HTMLElement) {
+				if (scrollIntoView) {
+					next_el.scrollIntoView({ block: 'nearest' });
+				}
+				next_el.focus();
+			}
+		}
 		state.update(($state) => {
 			return {
 				...$state,
-				highlighted: item
+				highlighted: item,
 			};
 		});
 	}
@@ -119,7 +121,7 @@ export function create_multi<T extends string | number>({
 			return {
 				...$state,
 				highlighted: item,
-				pivot: item
+				pivot: item,
 			};
 		});
 	}
@@ -156,13 +158,16 @@ export function create_multi<T extends string | number>({
 			return {
 				...$state,
 				highlighted: item,
-				pivot: item
+				pivot: item,
 			};
 		});
 	}
 
 	function checkIfKeyboardEventsAllowed() {
 		console.log('checking if keyboard events allowed');
+		if (document.activeElement?.matches('input, textarea, select')) {
+			return false;
+		}
 		const bodyCheck = document.activeElement !== document.body;
 		console.log({ attribute_name });
 		const attrCheck = !document.activeElement?.closest(`[${attribute_name}]`);
@@ -174,9 +179,9 @@ export function create_multi<T extends string | number>({
 		if (document.activeElement?.closest(`[${attribute_name}]`)) {
 			return true;
 		}
-        if (allowedSelector && document.activeElement?.matches(allowedSelector)) {
-            return true;
-        }
+		if (allowedSelector && document.activeElement?.matches(allowedSelector)) {
+			return true;
+		}
 		// if (
 		// 	document.activeElement !== document.body &&
 		// 	!document.activeElement?.closest(`[${attribute_name}]`)
@@ -302,7 +307,9 @@ export function create_multi<T extends string | number>({
 				}
 				if (event.key === 'Escape') {
 					const dialogs_present = get(dialogs).length > 0;
-					if (dialogs_present) {return;}
+					if (dialogs_present) {
+						return;
+					}
 					event.preventDefault();
 					deselectAll();
 				}

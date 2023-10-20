@@ -1517,12 +1517,21 @@ export async function notes({ ctx, input }: GetCtx<typeof notesInputSchema>) {
 		const { content, ...restFilter } = filter;
 		query = query.where((eb) => applyFilter(eb, restFilter));
 		if (content) {
-			query = query.where('a.contentData', 'is not', null);
-			query = query.where(
-				sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(a.contentData, '$**.text'))) LIKE '%${sql.raw(
-					content,
-				)}%'`,
+			// TODO: make this run faster
+			query = query.where((eb) =>
+				eb.or([
+					sql`MATCH(a.title,a.body,a.exact) AGAINST (${content})`,
+					sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(a.contentData, '$**.text'))) LIKE '%${sql.raw(
+						content,
+					)}%'`,
+				]),
 			);
+			// query = query.where('a.contentData', 'is not', null);
+			// query = query.where(
+			// 	sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(a.contentData, '$**.text'))) LIKE '%${sql.raw(
+			// 		content,
+			// 	)}%'`,
+			// );
 			// OR - title, body, exact?
 		}
 	}

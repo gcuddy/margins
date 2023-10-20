@@ -14,6 +14,8 @@
 	import { PlusIcon } from 'lucide-svelte';
 	import Intersector from '$components/Intersector.svelte';
 	import type { NotesInput } from '$lib/queries/server';
+	import debounce from 'just-debounce-it';
+	import { effect } from '$lib/helpers';
 
 	let table: Table;
 	let notesTable: NotesTable;
@@ -25,14 +27,33 @@
 
 	const value = writable<'notes' | 'annotations'>('notes');
 
+    const search = writable('');
+
+    const debouncedSearch = writable($search);
+
+	const debouncedFn = debounce((val: string) => {
+		debouncedSearch.set(val);
+	}, 200);
+
+	effect(search, ($search) => {
+        if ($search) {
+            debouncedFn($search)
+        } else {
+            debouncedSearch.set('')
+        }
+    });
+
 	const notesQuery = createInfiniteQuery(
-		derived([input, value], ([$input, $value]) => ({
+		derived([input, value, debouncedSearch], ([$input, $value, $debouncedSearch]) => ({
 			...queryFactory.notes.list(
 				{
 					filter: {
 						type: $value === 'notes' ? 'document' : undefined,
+                        content: $debouncedSearch? $debouncedSearch : undefined,
 						or: $value === 'annotations' ? [{ type: 'annotation' }, { type: 'note' }] : undefined
-					}
+					},
+                    dir: 'desc',
+                    orderBy: 'createdAt',
 					// ...$input
 				},
 				queryClient
@@ -58,8 +79,27 @@
 	);
 </script>
 
+
+<Tabs.Root
+    bind:value={$value}
+    onValueChange={(val) => {
+        if (val === 'annotations') {
+            notesTable?.measure();
+        } else {
+            table?.measure();
+        }
+    }}
+>
 <Header>
-	<h2 class="text-xl font-bold tracking-tight">Annotations</h2>
+    <div class="flex items-center gap-3 flex-1 min-w-0">
+        <slot name="title">
+            <h1 class="font-bold text-base">Notebook</h1>
+        </slot>
+        <Tabs.List>
+            <Tabs.Trigger value="notes">Notes</Tabs.Trigger>
+            <Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
+        </Tabs.List>
+    </div>
 	<svelte:fragment slot="end">
 		<Button href="/notes/new" size="sm" variant="outline">
 			<PlusIcon class="w-4 h-4 mr-2" />
@@ -67,21 +107,11 @@
 		</Button>
 	</svelte:fragment>
 </Header>
-
-<Tabs.Root
-	bind:value={$value}
-	onValueChange={(val) => {
-		if (val === 'annotations') {
-			notesTable?.measure();
-		} else {
-			table?.measure();
-		}
-	}}
->
-	<Tabs.List>
-		<Tabs.Trigger value="notes">Notes</Tabs.Trigger>
-		<Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
-	</Tabs.List>
+<div class="p-6 flex-1 flex flex-col space-y-8">
+    <!-- <div>
+        <h2 class="text-2xl font-bold tracking-tight">Notes</h2>
+        <p class="text-muted-foreground"><span class="text-bold">Notes</span> is a place to write and connect notes.</p>
+    </div> -->
 	<Tabs.Content value="notes">
 		{#if $notesQuery.isPending}
 			loading..
@@ -119,7 +149,7 @@
 		<!-- {#each data.notes.notes as annotation (annotation.id)}
 			<Annotation {annotation} />
 		{/each} -->
-		<NotesTable bind:this={notesTable} {input} notes={notesStore} />
+		<NotesTable loading={$notesQuery.isFetching && $search ? true : false} {search} bind:this={notesTable} {input} notes={notesStore} />
 		<Intersector
 			cb={() => {
 				console.log('end intersecting');
@@ -130,4 +160,5 @@
 			}}
 		/>
 	</Tabs.Content>
+</div>
 </Tabs.Root>

@@ -285,7 +285,7 @@
 			if (firstRow?.id === $state.highlighted) {
 				// put focus on input element
 				inputEl?.focus();
-				inputEl.setSelectionRange(1000, 1000);
+				inputEl?.setSelectionRange(1000, 1000);
 				tick().then(() => {});
 				multi.helpers.setHighlighted(null);
 				return;
@@ -296,11 +296,11 @@
 />
 
 <div class="mb-4 flex items-center gap-4">
-	<div class="relative">
+	<div class="relative flex ">
 		<Input
 			bind:el={inputEl}
 			class="max-w-sm text-sm pl-7"
-			placeholder="Filter..."
+			placeholder="Filter notes..."
 			type="text"
 			on:focus={() => {
 				multi.helpers.setHighlighted(null);
@@ -321,6 +321,7 @@
 		/>
 	</div>
 </div>
+<div class="rounded-md border">
 <Table.Root {...$tableAttrs}>
 	<Table.Header>
 		{#each $headerRows as headerRow (headerRow.id)}
@@ -397,7 +398,11 @@
 											activeIcon={icon}
 										/>
 										<a href="/note/{row.original.id}">
+                                            {#if !row.original.title}
+                                                Untitled note
+                                            {:else}
 											<Render of={cell.render()} />
+                                        {/if}
 										</a>
 										<div class="pl-2">
 											{#each row.original.tags as tag (tag.id)}
@@ -425,6 +430,7 @@
 		{/if}
 	</Table.Body>
 </Table.Root>
+</div>
 
 <BulkActions length={Object.keys($selectedDataIds).length}>
 	<Button

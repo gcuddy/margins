@@ -204,8 +204,11 @@ export function extractDataFromContentData(contentData: JSONContent) {
 }
 
 export function isBlankJsonContent(content: JSONContent) {
-	console.log('testing isblankjsoncontent', content, startingContentData);
-	if (content.content?.length === 0) {
+	// console.log('testing isblankjsoncontent', content, startingContentData);
+	if (!content) {
+		return true;
+	}
+	if (content?.content?.length === 0) {
 		return true;
 	}
 	if (dequal(content, startingContentData)) {
