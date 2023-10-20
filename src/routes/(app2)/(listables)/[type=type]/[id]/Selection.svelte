@@ -77,7 +77,7 @@
 							<Button
                                 id="highlight-button"
 								builders={[builder]}
-								on:click={() => {
+								on:pointerdown={() => {
 									dispatch('highlight');
 								}}
 								type="submit"
@@ -98,7 +98,7 @@
 							<Button
                                 id="annotate-button"
 								builders={[builder]}
-								on:click={() => {
+								on:pointerdown={() => {
 									dispatch('annotate');
 								}}
 								variant="ghost"
