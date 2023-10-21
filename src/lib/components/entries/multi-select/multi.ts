@@ -307,7 +307,16 @@ export function create_multi<T extends string | number>({
 				}
 				if (event.key === 'Escape') {
 					const dialogs_present = get(dialogs).length > 0;
+
 					if (dialogs_present) {
+						return;
+					}
+
+					const dialogEls = document.querySelectorAll(
+						'[role="dialog"][data-state="open"]',
+					);
+					// console.log({ dialogEls });
+					if (dialogEls.length > 0) {
 						return;
 					}
 					event.preventDefault();

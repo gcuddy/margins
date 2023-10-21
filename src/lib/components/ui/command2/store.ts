@@ -61,6 +61,10 @@ export type CommandProps<T> = {
 		activeElement: HTMLElement | null,
 		inputValue: string,
 	) => void;
+	/**
+	 * Called when the user presses a key while the input is focused. Preventing default will prevent the default behavior of the component for that key.
+	 */
+	onKeydown?: (event: KeyboardEvent) => void;
 	onSelect?: (value: T) => void;
 	open?: Writable<boolean>;
 	/**
@@ -457,6 +461,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		// 	callback();
 		// }
 
+		// todo: don't close under certain circumstances
+
 		item.dispatchEvent(new Event(SELECT_EVENT_NAME));
 	}
 
@@ -704,6 +710,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			filterFunction,
 			fixedHeight: props?.fixedHeight ?? false,
 			multiple: props?.multiple ?? false,
+			onKeydown: writable(props?.onKeydown),
 		},
 		state: {
 			activeElement,

@@ -12,6 +12,7 @@
 		PopoverContent,
 		PopoverTrigger,
 	} from '$components/ui/popover';
+    import PopoverDialog from '$components/popover-dialog.svelte';
 	import {
 		Command,
 		CommandGroup,
@@ -112,7 +113,7 @@
 			<PopoverTrigger asChild let:builder>
 				<Button builders={[builder]} variant="ghost">+ Tag</Button>
 			</PopoverTrigger>
-			<PopoverContent class="p-0">
+			<PopoverDialog bind:open={$open} class="p-0">
 				<Command
 					{loading}
 					onClose={() => {
@@ -172,7 +173,7 @@
 						</CommandList>
 					{/if}
 				</Command>
-			</PopoverContent>
+			</PopoverDialog>
 		</Popover>
 	</Cluster>
 </div>

@@ -146,7 +146,7 @@
 							</Select.Content>
 						</Select.Root>
 					</div>
-					<Separator orientation={$mq.sm ? 'vertical' : 'horizontal'} class="sm:h-7 h-px" />
+					<Separator orientation={$mq.sm ? 'vertical' : 'horizontal'} class="sm:h-7 max-sm:hidden h-px" />
 					<div class="flex gap-1 items-center">
 						If <Select.Root
 							selected={{

@@ -10,7 +10,7 @@
 
 </script>
 
-<CommandItem class="pl-8" {...$$restProps} let:isSelected>
+<CommandItem data-command-radio-item class="pl-8" {...$$restProps} let:isSelected>
     <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
 		{#if isSelected}
 			<Circle class="h-2 w-2 fill-current" />

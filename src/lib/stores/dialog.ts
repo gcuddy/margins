@@ -1,9 +1,13 @@
+import type { AlertDialogProps } from 'bits-ui/dist/bits/alert-dialog';
+import type { ComponentProps, ComponentType, SvelteComponent } from 'svelte';
 import { writable } from 'svelte/store';
 
 type Dialog = {
 	open: boolean;
 	title?: string;
 	description?: string;
+	component?: ComponentType;
+	props?: unknown;
 };
 
 type AlertDialog<TData extends {}, TValue = string> = TData &
@@ -11,6 +15,7 @@ type AlertDialog<TData extends {}, TValue = string> = TData &
 		action?: (value?: TValue) => void;
 		cancel?: () => void;
 		value?: TValue;
+		options?: Omit<AlertDialogProps, 'open'>;
 	};
 
 /**
@@ -28,7 +33,12 @@ export function createAlertDialogStore<TData extends {}>(
 				open: false,
 			} as AlertDialog<TData>);
 		},
-		open: (data: Omit<AlertDialog<TData>, 'open'>) => {
+		open: <TComponent extends SvelteComponent>(
+			data: Omit<AlertDialog<TData>, 'open'> & {
+				component?: ComponentType<TComponent>;
+				props?: ComponentProps<TComponent>;
+			},
+		) => {
 			store.set({
 				...data,
 				open: true,

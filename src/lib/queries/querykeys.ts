@@ -311,7 +311,7 @@ export const queryFactory = {
 			placeholderData: keepPreviousData,
 			queryFn: ({ meta }: QueryFnParams) => qquery(meta?.init, 'tags', {}),
 			queryKey: ['tags', 'list'] as const,
-			staleTime: Number.POSITIVE_INFINITY,
+			staleTime: 1000 * 60 * 60,
 		}),
 	},
 	viewPreferences: {

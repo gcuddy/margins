@@ -53,6 +53,7 @@
 		createChangeSearch,
 		defaultParseSearch,
 	} from '$lib/utils/search-params';
+	import { check_inside_input } from '$lib/utils';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -127,6 +128,9 @@
 	};
 
 	function handle_keydown(e: KeyboardEvent) {
+        if (check_inside_input(e.target)) {
+            return
+        }
 		if (e.key === '/') {
 			e.preventDefault();
 			filter.focus();

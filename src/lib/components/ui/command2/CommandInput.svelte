@@ -34,6 +34,8 @@
 		state: { activeElement, inputValue, loading, open, selectedValue },
 	} = ctx.get();
 
+    $: onKeydownOption = options.onKeydown;
+
 	function handleClick(e: MouseEvent) {
 		if ($open) {
 			return;
@@ -47,6 +49,7 @@
 		e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement },
 	) {
 		onKeydown?.(e);
+        $onKeydownOption?.(e);
 		if (e.defaultPrevented) {
 			return;
 		}

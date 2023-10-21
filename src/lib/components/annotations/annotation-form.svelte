@@ -2,10 +2,14 @@
 	import { Button } from '$components/ui/button';
 	import * as Dialog from '$components/ui/dialog';
 	import Editor from '$components/ui/editor/Editor.svelte';
-	import { updateAnnotationMutation } from '$lib/queries/mutations';
-	import { type MutationInput, mutate } from '$lib/queries/query';
+	import { cn } from '$lib';
+	import {
+		invalidateEntries,
+		updateAnnotationMutation,
+	} from '$lib/queries/mutations';
+	import { mutate } from '$lib/queries/query';
 	import type { UpsertAnnotationInput } from '$lib/queries/server';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import type { JSONContent } from '@tiptap/core';
 	import { createEventDispatcher } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -14,20 +18,26 @@
 	// export let showMaximize = true;
 
 	export let annotationId: string | undefined = undefined;
-	export let entryId: number | undefined = undefined;
+	export let entryId: number | number[] | undefined = undefined;
 
 	export let type: UpsertAnnotationInput['type'] = 'note';
 	export let media: UpsertAnnotationInput['media'] = undefined;
-    export let target: UpsertAnnotationInput['target'] = undefined;
+	export let target: UpsertAnnotationInput['target'] = undefined;
 
+	export let onSave:
+		| (({ content }: { content: JSONContent }) => void)
+		| undefined = undefined;
+	export let onCancel: (({ content }: { content: JSONContent }) => void) | undefined = undefined;
+	let className: string | null | undefined = undefined;
+	export { className as class };
 
 	const dispatch = createEventDispatcher();
 	const queryClient = useQueryClient();
 	const mutation = updateAnnotationMutation({
-        onSuccess: () => {
-            dispatch('save', { content })
-        }
-    })
+		onSuccess: () => {
+			_save();
+		},
+	});
 	// const mutation = createMutation({
 	// 	mutationFn: (input: MutationInput<'save_note'>) =>
 	// 		mutate('save_note', input),
@@ -44,21 +54,45 @@
 
 	function cancel() {
 		dispatch('cancel');
+		onCancel?.({ content });
+	}
+
+	function _save() {
+		dispatch('save', { content });
+		onSave?.({ content });
 	}
 
 	function save() {
-        if (editor.isEmpty()) {
-            toast('No content to save');
-            return;
-        }
-		$mutation.mutate({
-			id: annotationId,
-			entryId: entryId,
-			contentData: content,
-			media,
-			type,
-            target
-		});
+		if (editor.isEmpty()) {
+			toast('No content to save');
+			return;
+		}
+		if (Array.isArray(entryId)) {
+			mutate('bulkNoteInsert', {
+				entryIds: entryId,
+				contentData: content,
+			})
+				.catch((e) => {
+					console.error(e);
+					toast.error('Error saving note');
+				})
+				.then(() => {
+					_save();
+					invalidateEntries(queryClient);
+					queryClient.invalidateQueries({
+						queryKey: ['notes'],
+					});
+				});
+		} else {
+			$mutation.mutate({
+				id: annotationId,
+				entryId: entryId,
+				contentData: content,
+				media,
+				type,
+				target,
+			});
+		}
 	}
 
 	// function maximize() {
@@ -67,13 +101,16 @@
 	// }
 
 	let content: JSONContent;
-    let editor: Editor;
+	let editor: Editor;
 
 	let isDialogOpen = false;
 </script>
 
 <div
-	class="border flex flex-col gap-2 relative rounded-md py-3 px-4 bg-card focus-within:shadow-md border-input shadow-sm transition"
+	class={cn(
+		'border flex flex-col gap-2 relative rounded-md py-3 px-4 bg-card focus-within:shadow-md border-input shadow-sm transition',
+		className,
+	)}
 >
 	<!-- Header -->
 	<!-- TODO -->
@@ -91,7 +128,7 @@
 
 	<!-- store data in entryId -->
 	<Editor
-        bind:this={editor}
+		bind:this={editor}
 		onUpdate={(e) => {
 			content = e.editor.getJSON();
 		}}
@@ -102,7 +139,12 @@
 	<!-- Footer -->
 	<div class="flex justify-end gap-2">
 		<Button variant="ghost" size="sm" on:click={cancel}>Cancel</Button>
-		<Button variant="secondary" size="sm" class="dark:border-stone-200" on:click={save}>Save</Button>
+		<Button
+			variant="secondary"
+			size="sm"
+			class="dark:border-stone-200"
+			on:click={save}>Save</Button
+		>
 	</div>
 </div>
 

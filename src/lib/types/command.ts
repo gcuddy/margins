@@ -19,5 +19,7 @@ type CommandWithItems<TFilter = unknown> = {
 	items: Command<TFilter>[];
 };
 
+type CommandWithComponent = {};
+
 export type Command<TFilter = unknown> = BaseCommand<TFilter> &
 	(CommandWithAction<TFilter> | CommandWithItems<TFilter>);

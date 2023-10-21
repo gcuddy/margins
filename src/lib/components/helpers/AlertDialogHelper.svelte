@@ -8,30 +8,44 @@
 	$: console.log({ $store });
 </script>
 
-<AlertDialog.Root bind:open={$store.open}>
+<AlertDialog.Root bind:open={$store.open} {...($store.options)} onOpenChange={(val) => {
+    if (!val) {
+        store.reset();
+    }
+}}>
 	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>{$store.title}</AlertDialog.Title>
-			{#if $store.description}
-				<AlertDialog.Description>{$store.description}</AlertDialog.Description>
-			{/if}
-		</AlertDialog.Header>
-		<form class="contents" on:submit|preventDefault>
-			{#if $store.value}
-				<Input bind:value={$store.value} />
-			{/if}
-			<AlertDialog.Footer>
-				<AlertDialog.Cancel on:click={() => {
-                    $store.cancel?.();
-                }}>Cancel</AlertDialog.Cancel>
-				<AlertDialog.Action
-					type="submit"
-					on:click={({ detail }) => {
-						console.log({ $store });
-						$store.action?.($store.value);
-					}}>Continue</AlertDialog.Action
-				>
-			</AlertDialog.Footer>
-		</form>
+		{#if $store.title || $store.description}
+			<AlertDialog.Header>
+				<AlertDialog.Title>{$store.title}</AlertDialog.Title>
+				{#if $store.description}
+					<AlertDialog.Description>{$store.description}</AlertDialog.Description
+					>
+				{/if}
+			</AlertDialog.Header>
+		{/if}
+		{#if $store.component}
+			{@const props = typeof $store.props === 'object' ? $store.props : {}}
+			<svelte:component this={$store.component} {...props} />
+		{:else}
+			<form class="contents" on:submit|preventDefault>
+				{#if $store.value}
+					<Input bind:value={$store.value} />
+				{/if}
+				<AlertDialog.Footer>
+					<AlertDialog.Cancel
+						on:click={() => {
+							$store.cancel?.();
+						}}>Cancel</AlertDialog.Cancel
+					>
+					<AlertDialog.Action
+						type="submit"
+						on:click={({ detail }) => {
+							console.log({ $store });
+							$store.action?.($store.value);
+						}}>Continue</AlertDialog.Action
+					>
+				</AlertDialog.Footer>
+			</form>
+		{/if}
 	</AlertDialog.Content>
 </AlertDialog.Root>

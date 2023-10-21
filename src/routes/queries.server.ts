@@ -1,6 +1,6 @@
 import { Status, ViewType } from '$lib/types/enums';
 import type { RequestEvent } from '@sveltejs/kit';
-import { sql } from 'kysely';
+import { Insertable, sql } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/mysql';
 import { z } from 'zod';
 
@@ -107,6 +107,7 @@ import { replace } from '$lib/helpers/string';
 import type { TargetSchema } from '$lib/annotation';
 import type { JSONContent } from '@tiptap/core';
 import { searchNotes } from '$lib/db/queries/note';
+import type { TagOnEntry } from '$lib/prisma/kysely/types';
 
 type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -161,6 +162,56 @@ export const mutations = {
 	bookmarkCreate: query({
 		fn: bookmarkCreate,
 		schema: bookmarkCreateInput,
+	}),
+	bulkNoteInsert: query({
+		schema: z.object({
+			contentData: jsonSchema,
+			entryIds: z.number().array(),
+		}),
+		fn: async ({ ctx, input }) => {
+			await db
+				.insertInto('Annotation')
+				.values(
+					input.entryIds.map((entryId) => ({
+						contentData: json(input.contentData),
+						entryId,
+						id: nanoid(),
+						userId: ctx.userId,
+						updatedAt: new Date(),
+					})),
+				)
+				.execute();
+		},
+	}),
+	bulkTagInsert: query({
+		schema: z.object({
+			entryIds: z.number().array(),
+			tagIds: z.number().array(),
+			tagIdsToRemove: z.number().array().optional(),
+		}),
+		fn: async ({ ctx, input }) => {
+			// Simply insert all tags and ignore duplicates
+			const insertables: Insertable<TagOnEntry>[] = [];
+			for (const entryId of input.entryIds) {
+				for (const tagId of input.tagIds) {
+					insertables.push({
+						entryId,
+						tagId,
+						userId: ctx.userId,
+					});
+				}
+			}
+			await db.insertInto('TagOnEntry').values(insertables).ignore().execute();
+
+			if (input.tagIdsToRemove) {
+				await db
+					.deleteFrom('TagOnEntry')
+					.where('entryId', 'in', input.entryIds)
+					.where('tagId', 'in', input.tagIdsToRemove)
+					.where('userId', '=', ctx.userId)
+					.execute();
+			}
+		},
 	}),
 	collectionUpdate: query({
 		fn: collectionUpdate,

@@ -350,7 +350,7 @@
 										</Tooltip.Root> -->
 							{/if}
 							<div
-								class="absolute inset-0 z-[2] h-full w-full overflow-hidden rounded-md"
+								class="absolute inset-0 h-full w-full overflow-hidden rounded-md"
 							>
 								<!-- ring-primary if in library, ring-ring otherwise -->
 								<input
@@ -416,7 +416,7 @@
 									</div>
 								</HoverCard.Trigger>
 								<HoverCard.Content>
-                                    <div class="flex flex-col gap-2 bg-card text-card-foreground">
+                                    <div class="flex flex-col gap-2">
                                         <span class="font-semibold tracking-tight">Annotations</span>
                                         <EntryItemAnnotations enabled={annotationsOpen} entryId={entry.id}  />
                                     </div>

@@ -1,6 +1,7 @@
 export * from './annotation';
 export * from './array';
 export * from './callbacks';
+export * from './dom';;
 export * from './interaction';
 export * from './is';
 export * from './list';

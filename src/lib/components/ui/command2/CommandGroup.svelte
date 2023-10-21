@@ -19,7 +19,7 @@
 	export { className as class };
 	export let unstyled = false;
 
-	let containerEl: HTMLDivElement;
+	export let containerEl: HTMLDivElement | undefined = undefined;
 
 	// set groupId in context for children
 	setContext('command_groupId', id);

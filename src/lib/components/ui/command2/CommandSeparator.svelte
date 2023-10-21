@@ -25,7 +25,7 @@
 {#if render || alwaysRender}
 	<div data-command-separator role="separator" class={
         cn(
-            !unstyled && "-mx-1 h-px bg-border",
+            !unstyled && "-mx-1 h-px bg-border mb-1",
             className
         )
     } {...$$restProps} />

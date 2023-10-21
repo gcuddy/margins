@@ -35,6 +35,7 @@
 
 	import { setBackContext } from '../../../routes/(app2)/(listables)/[type=type]/[id]/store';
 	import { currentEntryList } from './store';
+	import { entryState } from '$lib/stores/entry-state';
 
 	export let opts: Readable<QueryInput<'get_library'>>;
 
@@ -74,6 +75,8 @@
 				}) ?? []
 		);
 	});
+
+    $: entryState.init($entries)
 
 
 	$: currentEntryList.set($entries);

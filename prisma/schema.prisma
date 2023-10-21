@@ -94,12 +94,10 @@ model Unread {
     entryCreatedAt DateTime @db.Timestamp(0)
     createdAt      DateTime @default(now())
     updatedAt      DateTime @updatedAt
+    user           AuthUser @relation(fields: [userId], references: [id])
+    entry          Entry    @relation(fields: [entryId], references: [id])
+    feed           Feed?    @relation(fields: [feedId], references: [id])
 
-    user  AuthUser @relation(fields: [userId], references: [id])
-    entry Entry    @relation(fields: [entryId], references: [id])
-    feed  Feed?    @relation(fields: [feedId], references: [id])
-
-    // @@index()
     @@index([userId])
     @@index([feedId])
     @@index([entryId])
@@ -132,12 +130,12 @@ model Bookmark {
     sort_order       Int               @default(0)
     /// The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
     review_timestamp Int?
-    bookmarked_at    DateTime?         @default(now()) @db.Timestamp(0)
     title            String?
     author           String?
     pdf_url          String?           @db.VarChar(2083)
     rating           Int?              @db.TinyInt
     seen_at          DateTime?         @db.Timestamp(0)
+    bookmarked_at    DateTime?         @default(now()) @db.Timestamp(0)
     entry            Entry?            @relation(fields: [entryId], references: [id])
     user             AuthUser          @relation(fields: [userId], references: [id])
     state            State?            @relation(fields: [stateId], references: [id])
@@ -163,7 +161,6 @@ model Bookmark {
     @@index([author])
     @@index([status])
     @@index([bookmarked_at])
-    // used for get_library query
     @@index([userId, status, bookmarked_at])
 }
 
@@ -265,7 +262,6 @@ model Annotation {
     @@index([userId])
     @@index([parentId])
     @@index([bookmarkId])
-    // We order by this frequently:
     @@index([start, createdAt])
     @@fulltext([title, body, exact])
 }
@@ -336,10 +332,7 @@ model Entry {
     title                String?                         @db.VarChar(2083)
     type                 DocumentType                    @default(article)
     updatedAt            DateTime                        @updatedAt
-    // TODO: convert to bigint
     id                   Int                             @id @default(autoincrement())
-    // For now, let's use varchar(12). We might need to increase it if id rate increases, see https://zelark.github.io/nano-id-cc/
-    publicId             String?                         @unique @map("public_id") @db.VarChar(12)
     uri                  String?                         @unique @db.VarChar(500)
     html                 String?                         @db.LongText
     text                 String?                         @db.LongText
@@ -384,6 +377,7 @@ model Entry {
     pdf_fingerprint      String?                         @unique
     estimatedReadingTime Int?
     book_genre           BookGenre?
+    publicId             String?                         @unique @map("public_id") @db.VarChar(12)
     data                 EntryData[]
     person               person_to_entry[]
     feed                 Feed?                           @relation(fields: [feedId], references: [id])
@@ -407,15 +401,14 @@ model Entry {
     UserEntry            UserEntry[]
 
     @@unique([uri, id])
+    @@unique([guid, feedId], map: "guid_feedId_unique")
     @@index([feedId])
-    // i don't know if this does anything
     @@index([published, id, createdAt])
     @@index([published])
     @@index([publicId])
     @@index([owned_by_id])
     @@index([title(length: 255)])
-    // we use this frequently for example to sort latest
-    @@index([published(sort: Desc), id(sort: Asc)])
+    @@index([published(sort: Desc), id])
     @@fulltext([text, title, author])
     @@fulltext([title, author])
     @@fulltext([text])
@@ -696,14 +689,12 @@ model Interaction {
     seen             Boolean?  @default(false)
     finished         DateTime? @db.Timestamp(0)
     started          DateTime? @db.Timestamp(0)
-    // Whether or not this interaction is a revisit. E.g. a re-read, a re-watch, etc.
     revisit          Boolean?  @default(false)
     private          Boolean   @default(true)
     entry            Entry     @relation(fields: [entryId], references: [id])
     user             AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
     bookmark         Bookmark?
 
-    // @@unique([userId, entryId])
     @@index([entryId])
     @@index([userId])
     @@map("EntryInteraction")
@@ -850,12 +841,12 @@ model AuthUser {
     createdAt              DateTime                 @default(now())
     updatedAt              DateTime                 @updatedAt
     email                  String                   @unique
-    email_verified         Boolean?
     username               String                   @unique @default("")
     default_state_id       Int?                     @unique
     default_archive_id     Int?
     home_items             Json?
     avatar                 String?
+    email_verified         Boolean?
     auth_session           AuthSession[]
     auth_key               AuthKey[]
     followedBy             AuthUser[]               @relation("UserFollows")
@@ -963,17 +954,14 @@ model Favorite {
     @@index([parentId])
 }
 
-// Unlike interactions, which describes a many-to-one relationship (a user can have many interactions on one entry), a user only has one userEntry per entry, so it can be used to track info like read status, etc.
 model UserEntry {
     id         Int          @id @default(autoincrement())
-    userId     String
     entryId    Int
+    userId     String
+    seen       DateTime?    @db.Timestamp(0)
     user       AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
     entry      Entry        @relation(fields: [entryId], references: [id])
     Stylesheet Stylesheet[]
-
-    // metadata
-    seen DateTime? @db.Timestamp(0)
 
     @@unique([userId, entryId])
     @@index([userId])

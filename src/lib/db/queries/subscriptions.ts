@@ -284,18 +284,26 @@ function parseRssFeedItems(
 
 	console.log('new items to map over:', items.length);
 
+	const isFeedPodcast = !!rss['xmlns:itunes'];
+
 	return items.map((item: any) => {
 		const html = item['content:encoded'] || item.description;
+		const image = item.image?.url || item['itunes:image']?.href;
+
+		const podcast =
+			isFeedPodcast &&
+			(item.enclosure?.type?.includes('audio') ||
+				Object.keys(item).some((k) => k.startsWith('itunes:')));
 		return {
 			author: getText(item['dc:creator'], item.author, item['itunes:author']),
 			duration: null,
-			enclosureLength: null,
-			enclosureType: null,
+			enclosureLength: item.enclosure?.length,
+			enclosureType: item.enclosure?.type,
 			enclosureUrl: item.enclosure?.url,
 			feedId,
 			guid: getText(item.guid),
 			html,
-			image: item.image?.url,
+			image,
 			podcastIndexId: null,
 			public_id: generatePublicId(),
 			published: item.pubDate
@@ -304,11 +312,11 @@ function parseRssFeedItems(
 				? new Date(item.isoDate)
 				: null,
 			summary: item.description
-				? stripTags(item.description?.slice(0, 255))
+				? stripTags(item.description?.slice(0, 500))
 				: null,
 			text: item.description ? stripTags(html) : null,
 			title: item.title,
-			type: 'article',
+			type: podcast ? 'podcast' : 'article',
 			updatedAt: new Date(),
 			uri: item.link || item.enclosure?.url,
 			youtubeId: item['yt:videoId'],
@@ -318,11 +326,14 @@ function parseRssFeedItems(
 }
 
 function parseRssFeedInfo(rss: any, feedUrl?: string) {
+	const podcast =
+		rss['xmlns:itunes'] === 'http://www.itunes.com/dtds/podcast-1.0.dtd';
 	return {
 		description: rss.channel.description,
 		feedUrl: feedUrl ?? rss.channel.link,
 		guid: rss.channel.link,
 		imageUrl: rss.channel.image?.url,
+		podcast: Number(podcast),
 		title: rss.channel.title,
 		updatedAt: new Date(),
 	} satisfies Insertable<Feed>;

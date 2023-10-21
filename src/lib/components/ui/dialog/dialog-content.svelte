@@ -12,10 +12,11 @@
 		duration: 200
 	};
 	export { className as class };
+    export let overlayClass = '';
 </script>
 
 <Dialog.Portal>
-	<Dialog.Overlay />
+	<Dialog.Overlay class={overlayClass} />
 	<DialogPrimitive.Content
 		{transition}
 		{transitionConfig}

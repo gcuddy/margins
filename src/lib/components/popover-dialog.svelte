@@ -15,8 +15,8 @@
 	<PopoverContent class={className}>
 		<slot />
 	</PopoverContent>
-{:else}
-	<CommandDialog bind:open>
+    {:else}
+	<CommandDialog forceTop bind:open>
 		<slot />
 	</CommandDialog>
 {/if}

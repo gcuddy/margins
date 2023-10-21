@@ -86,6 +86,7 @@
 	}
 
 	function handleClick(e: Event) {
+        console.log({e})
 		// If the item is disabled, `preventDefault` to stop the input losing focus.
 		if (isElementDisabled(node)) {
 			e.preventDefault();
@@ -113,6 +114,8 @@
 
 
 	let hidden = false;
+
+    // $: console.log({hidden, $inputValue, value, filterFunction, comparisonFunction, $shouldFilter})
 	$: if ($shouldFilter === false) {
 		hidden = false;
 	} else if (!$inputValue) {

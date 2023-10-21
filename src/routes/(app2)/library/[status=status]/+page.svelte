@@ -51,6 +51,7 @@
 	import LibraryTabs from '$components/library/library-tabs.svelte';
 	import Header from '$components/ui/Header.svelte';
 	import { audioPlayer } from '$components/AudioPlayer.svelte';
+	import { entryState } from '$lib/stores/entry-state';
 
 	export let data;
 
@@ -155,6 +156,8 @@
 				}) ?? []
 		);
 	});
+
+    $: entryState.init($entries)
 
 	let groupedEntries: GroupedArrayWithHeadings<
 		LibraryResponse['entries'][0],

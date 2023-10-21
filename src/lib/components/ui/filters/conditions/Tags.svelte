@@ -7,6 +7,7 @@
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { badgeVariants } from '$components/ui/badge';
 	import { Checkbox } from '$components/ui/checkbox';
+    import PopoverDialog from '$components/popover-dialog.svelte';
 	import {
 		Popover,
 		PopoverContent,
@@ -181,7 +182,7 @@
 					<!--  -->
 				</div>
 			</PopoverTrigger>
-			<PopoverContent class="w-[200px] p-0">
+			<PopoverDialog bind:open={popoverOpen} class="w-[200px] p-0">
 				<Command
 					onClose={() => {
 						popoverOpen = false;
@@ -207,7 +208,7 @@
 						</CommandGroup>
 					</CommandList>
 				</Command>
-			</PopoverContent>
+			</PopoverDialog>
 		</Popover>
 
 		<!-- TODO: combobox here -->

@@ -10,6 +10,7 @@
 		PopoverContent,
 		PopoverTrigger,
 	} from '$components/ui/popover';
+    import PopoverDialog from '$components/popover-dialog.svelte';
 	import { mutation, type MutationInput } from '$lib/queries/query';
 	import type { SaveToLibrarySchema } from '$lib/queries/server';
 	import {
@@ -136,7 +137,7 @@
 				{/if}
 			</Button>
 		</PopoverTrigger>
-		<PopoverContent class="w-[200px] p-0">
+		<PopoverDialog bind:open={$open} class="w-[200px] p-0">
 			<Command.Root onClose={() => open.set(false)} bind:value={status}>
 				<Command.Input autofocus placeholder="Status…"></Command.Input>
 				<Command.Group>
@@ -158,6 +159,6 @@
 					</Command.List>
 				</Command.Group>
 			</Command.Root>
-		</PopoverContent>
+		</PopoverDialog>
 	</Popover>
 </div>
