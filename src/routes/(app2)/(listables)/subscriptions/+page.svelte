@@ -8,6 +8,8 @@
 	import { getHostname } from '$lib/utils';
 	import { Badge } from '$components/ui/badge';
 
+    import { PodcastIcon } from "lucide-svelte";
+
 	export let data;
 	const query = createQuery(queryFactory.subscriptions.all());
 </script>
@@ -37,6 +39,12 @@
 						class="aspect-square h-8 rounded-md object-cover"
 						alt=""
 					/>
+                    {#if subscription.podcast}
+                        <div>
+                            <PodcastIcon class="h-4 w-4 text-muted-foreground" />
+                            <span class="sr-only">Podcast</span>
+                        </div>
+                    {/if}
 					<a href="/subscription/{subscription.feedId}">{subscription.title}</a>
 				</div>
 				<div>

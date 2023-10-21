@@ -962,6 +962,7 @@ export const queries = {
 					's.id as subscriptionId',
 					'f.lastParsed',
 					'f.podcastIndexId',
+					'f.podcast',
 					// 'f.podcast',
 					's.updatedAt',
 					'f.feedUrl',

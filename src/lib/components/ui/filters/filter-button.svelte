@@ -35,6 +35,7 @@
 	import { objectEntries } from '$lib/helpers';
 	import { Authors, Rating, Subscriptions } from '$lib/commands';
 	import { colors } from '$components/tags/tag-color';
+	import PopoverDialog from '$components/popover-dialog.svelte';
 
 	const filterPageData = createPageData([
 		{
@@ -157,7 +158,8 @@
 			<span class="lg:inline hidden">Filter</span>
 		</slot>
 	</Popover.Trigger>
-	<Popover.Content class="w-[200px] p-0">
+    <PopoverDialog class="w-[200px] p-0" bind:open>
+	<!-- <Popover.Content class="w-[200px] p-0"> -->
 		<Command
 			pages={filterPageData}
 			let:pages
@@ -370,5 +372,6 @@
 				</CommandGroup>
 			</CommandList>
 		</Command>
-	</Popover.Content>
+	</PopoverDialog>
+	<!-- </Popover.Content> -->
 </Popover.Root>

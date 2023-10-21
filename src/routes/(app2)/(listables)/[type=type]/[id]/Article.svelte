@@ -1105,9 +1105,9 @@
 	</div>
 {/if}
 
-{#if $scroll < lastSavedScrollProgress}
+<!-- {#if $scroll < lastSavedScrollProgress}
 	<div class="fixed bottom-0 right-0">scroll to latest position</div>
-{/if}
+{/if} -->
 
 <style lang="postcss">
 	div :global(p) {

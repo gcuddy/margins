@@ -42,7 +42,7 @@ export default readable<Record<keyof typeof queries, boolean>>({}, (set) => {
 		for (q in queries) {
 			mqls[q] = window.matchMedia(queries[q]);
 			// mqls[q].addListener(onChange);
-			mqls[q].addEventListener("change", onChange)
+			mqls[q]?.addEventListener('change', onChange);
 		}
 
 		onChange();
@@ -50,7 +50,7 @@ export default readable<Record<keyof typeof queries, boolean>>({}, (set) => {
 
 	return () => {
 		for (const q in mqls) {
-			mqls[q].removeEventListener("change", onChange);
+			mqls[q]?.removeEventListener('change', onChange);
 		}
 	};
 });

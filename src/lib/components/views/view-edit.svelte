@@ -10,6 +10,7 @@
 		parseFilterFromSearchParams,
 	} from '$lib/schemas/library';
 	import { page } from '$app/stores';
+    import mq from '$lib/stores/mq'
 
 	import * as Select from '$components/ui/select';
 
@@ -29,19 +30,24 @@
 	//     goto($page.url.origin + $page.url.pathname + defaultStringifySearch(filterData))
 	// }
 
-    // This is one solution, which would be good, but current setup that makes search params source of truth makes this finicky
+	// This is one solution, which would be good, but current setup that makes search params source of truth makes this finicky
 	// let ctx = Filter.ctx.set({ initialValue: filterData });
 	let ctx = Filter.ctx.set();
-    // so instead we'll use onmount and goto
-    onMount(() => {
-        if (filterData) {
-            goto($page.url.origin + $page.url.pathname + defaultStringifySearch(filterData), {
-                invalidateAll: false,
-                keepFocus: true,
-                replaceState: true,
-            })
-        }
-    })
+	// so instead we'll use onmount and goto
+	onMount(() => {
+		if (filterData) {
+			goto(
+				$page.url.origin +
+					$page.url.pathname +
+					defaultStringifySearch(filterData),
+				{
+					invalidateAll: false,
+					keepFocus: true,
+					replaceState: true,
+				},
+			);
+		}
+	});
 
 	import { Layers } from 'radix-icons-svelte';
 	import { toast } from 'svelte-sonner';
@@ -97,17 +103,17 @@
 	<div
 		class="shadow w-full border rounded-lg overflow-hidden sticky top-0 flex flex-col"
 	>
-		<div class="px-6 pt-4">
+		<div class="px-4 sm:px-6 pt-4">
 			<input
 				bind:value={name}
 				type="text"
-				class="grow w-full placeholder:text-muted-foreground font-medium"
+				class="grow w-full placeholder:text-muted-foreground font-medium bg-transparent"
 				placeholder={'Untitled new view'}
 			/>
 		</div>
 		<Filter.Root context={ctx}>
-			<div class="flex justify-between items-center px-6 pt-4 pb-2">
-				<div class="flex gap-x-4 items-center">
+			<div class="flex justify-between items-start sm:items-center px-4 sm:px-6 pt-4 pb-2">
+				<div class="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 sm:items-center">
 					<div class="flex flex-col gap-1">
 						<!-- <Label for="scope">Scope</Label> -->
 						<Select.Root
@@ -140,45 +146,47 @@
 							</Select.Content>
 						</Select.Root>
 					</div>
-					<Separator orientation="vertical" class="h-7" />
-					If <Select.Root
-						selected={{
-							label: $entryQueryOpts?.filter?.any ? 'Any' : 'All',
-							value: $entryQueryOpts?.filter?.any ? true : false,
-						}}
-						positioning={{
-							placement: 'bottom-start',
-							strategy: 'fixed',
-						}}
-						onSelectedChange={(val) => {
-							if (val?.value) {
-								navigateSearch((data) => ({
-									...data,
-									any: true,
-								}));
-							} else {
-								navigateSearch((data) => {
-									const { any, ...rest } = data;
-									return rest;
-								});
-							}
-						}}
-					>
-						<Select.Trigger class="w-fit">
-							<Select.Value />
-						</Select.Trigger>
-						<Select.Content class="w-fit">
-							<Select.Group>
-								<Select.Item value={false} label="All">All</Select.Item>
-								<Select.Item value={true} label="Any">Any</Select.Item>
-							</Select.Group>
-						</Select.Content>
-					</Select.Root>
-					of the following are true
+					<Separator orientation={$mq.sm ? 'vertical' : 'horizontal'} class="sm:h-7 h-px" />
+					<div class="flex gap-1 items-center">
+						If <Select.Root
+							selected={{
+								label: $entryQueryOpts?.filter?.any ? 'Any' : 'All',
+								value: $entryQueryOpts?.filter?.any ? true : false,
+							}}
+							positioning={{
+								placement: 'bottom-start',
+								strategy: 'fixed',
+							}}
+							onSelectedChange={(val) => {
+								if (val?.value) {
+									navigateSearch((data) => ({
+										...data,
+										any: true,
+									}));
+								} else {
+									navigateSearch((data) => {
+										const { any, ...rest } = data;
+										return rest;
+									});
+								}
+							}}
+						>
+							<Select.Trigger class="w-fit">
+								<Select.Value />
+							</Select.Trigger>
+							<Select.Content class="w-fit">
+								<Select.Group>
+									<Select.Item value={false} label="All">All</Select.Item>
+									<Select.Item value={true} label="Any">Any</Select.Item>
+								</Select.Group>
+							</Select.Content>
+						</Select.Root>
+						<span>of the following are true</span>
+					</div>
 				</div>
 				<div>
 					<Button
-                        disabled={!$hasFilters}
+						disabled={!$hasFilters}
 						on:click={async () => {
 							const filterData = parseFilterFromSearchParams($page.url.search);
 							if (filterData) {
@@ -206,8 +214,8 @@
 						variant="default"
 						size="sm"
 					>
-						<Layers class="mr-1" />
-						Save view
+						<Layers class="sm:mr-1" />
+						<span class="hidden sm:inline">Save view</span>
 					</Button>
 				</div>
 			</div>

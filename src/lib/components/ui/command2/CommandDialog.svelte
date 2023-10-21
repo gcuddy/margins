@@ -33,7 +33,7 @@
     export let fixedHeight = true;
 </script>
 
-<Dialog bind:open >
+<Dialog bind:open>
 	<DialogContent
 		style="--tw-scale-x: {$scale}; --tw-scale-y: {$scale};"
 		class={cn(

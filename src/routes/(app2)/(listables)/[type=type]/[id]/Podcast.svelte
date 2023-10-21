@@ -41,7 +41,7 @@
 				alt=""
 				class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]"
 				use:smoothload
-                style:view-transition-name="podcast-artwork-{episode.feedId}"
+				style:view-transition-name="podcast-artwork-{episode.feedId}"
 			/>
 			<div class="flex flex-col gap-2">
 				<Muted>Podcast</Muted>
@@ -84,18 +84,19 @@
 							Pause
 						{/if}
 					</Button>
-					{#if (!data.entry?.bookmark?.status || !data.entry?.bookmark?.bookmarked_at) && $page.data.saveToLibraryForm}
-						<SaveToLibraryButton form={$page.data.saveToLibraryForm} />
-					{:else}
-						<LibraryForm
-							entryId={data.entry?.id}
-                            type={data.entry?.type}
-							status={data.entry?.bookmark?.status}
-                            variant="secondary"
-						/>
-					{/if}
+					<LibraryForm
+						entryId={data.entry?.id}
+						type={'podcast'}
+						status={data.entry?.bookmark?.status}
+						podcastIndexId={episode?.id}
+						variant="secondary"
+					/>
 					{#if loaded}
-						<Button size="icon" variant="secondary" on:click={audioPlayer.clear}>
+						<Button
+							size="icon"
+							variant="secondary"
+							on:click={audioPlayer.clear}
+						>
 							<Stop />
 						</Button>
 					{/if}

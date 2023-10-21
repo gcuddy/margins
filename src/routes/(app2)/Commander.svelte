@@ -178,7 +178,7 @@
 					: $checkedEntryIds}
 				<CommandGroup heading="Actions">
 					<CommandItem
-						onSelect={() => {
+						onSeleect={() => {
 							addPage('action:tag-item');
 						}}
 					>

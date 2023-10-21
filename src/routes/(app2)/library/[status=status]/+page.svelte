@@ -445,6 +445,8 @@
 				{#each statuses as status}
 					{#if $checkedEntries.every((entry) => entry.status !== status)}
 						<Button
+                            variant="outline"
+                            size="sm"
 							on:click={() => {
 								$updateBookmarkMutation.mutate({
 									data: {
@@ -468,6 +470,8 @@
 	{#each statuses as status}
 		{#if $checkedEntries.every((entry) => entry.status !== status)}
 			<Button
+                variant="outline"
+                size="sm"
 				on:click={() => {
 					$updateBookmarkMutation.mutate({
 						data: {
