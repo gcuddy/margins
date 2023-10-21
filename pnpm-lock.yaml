@@ -53,6 +53,9 @@ dependencies:
   '@skeletonlabs/skeleton':
     specifier: ^1.12.0
     version: 1.12.0(svelte@4.2.2)
+  '@tailwindcss/container-queries':
+    specifier: ^0.1.1
+    version: 0.1.1(tailwindcss@0.0.0-insiders.44fb67b)
   '@tanstack/query-async-storage-persister':
     specifier: ^5.0.0
     version: 5.0.0
@@ -4651,6 +4654,14 @@ packages:
       vitefu: 0.2.5(vite@4.5.0)
     transitivePeerDependencies:
       - supports-color
+
+  /@tailwindcss/container-queries@0.1.1(tailwindcss@0.0.0-insiders.44fb67b):
+    resolution: {integrity: sha512-p18dswChx6WnTSaJCSGx6lTmrGzNNvm2FtXmiO6AuA1V4U5REyoqwmT6kgAsIMdjo07QdAfYXHJ4hnMtfHzWgA==}
+    peerDependencies:
+      tailwindcss: '>=3.2.0'
+    dependencies:
+      tailwindcss: 0.0.0-insiders.44fb67b(ts-node@10.9.1)
+    dev: false
 
   /@tailwindcss/forms@0.5.6(tailwindcss@0.0.0-insiders.44fb67b):
     resolution: {integrity: sha512-Fw+2BJ0tmAwK/w01tEFL5TiaJBX1NLT1/YbWgvm7ws3Qcn11kiXxzNTEQDMs5V3mQemhB56l3u0i9dwdzSQldA==}

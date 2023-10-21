@@ -23,7 +23,7 @@
 	{#if showTrigger || $$slots.trigger}
 		<Dialog.Trigger asChild let:builder>
 			<slot name="trigger" {builder}>
-				<Button builders={[builder]} variant="outline">
+				<Button builders={[builder]} variant="secondary">
                     <svelte:component this={icon} class="w-4 h-4 mr-2 stroke-[1.5]" />
                     Log</Button>
 			</slot>

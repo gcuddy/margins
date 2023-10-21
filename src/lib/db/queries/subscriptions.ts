@@ -312,7 +312,7 @@ function parseRssFeedItems(
 				? new Date(item.isoDate)
 				: null,
 			summary: item.description
-				? stripTags(item.description?.slice(0, 500))
+				? stripTags(item.description?.slice(0, 255))
 				: null,
 			text: item.description ? stripTags(html) : null,
 			title: item.title,
@@ -764,7 +764,7 @@ export async function getPodcastFeedInsertable(feed: {
 		podcastIndexId: episode.id,
 		public_id: generatePublicId(),
 		published: new Date(episode.datePublished * 1000),
-		summary: stripTags(episode.description.slice(0, 200)),
+		summary: stripTags(episode.description.slice(0, 255)),
 		text: episode.description,
 		title: episode.title,
 		type: 'podcast',

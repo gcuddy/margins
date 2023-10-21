@@ -35,7 +35,7 @@
         DotsHorizontal
 	} from 'radix-icons-svelte';
 	import { make_link } from '$lib/utils/entries';
-	import MobileLink from '../../mobile-link.svelte';
+	import MobileLink from '$components/nav/mobile-link.svelte';
 	import { fly } from 'svelte/transition';
 	import TransitionContainer from '$components/transition-container.svelte';
 	import ArticleAppearanceOptionsContent from './[id]/article-appearance-options-content.svelte';

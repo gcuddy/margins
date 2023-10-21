@@ -1034,7 +1034,7 @@ export const queries = {
 				// .groupBy(['s.id'])
 				.orderBy('s.title asc')
 				.execute();
-			console.dir(subscriptions, { depth: null });
+			// console.dir(subscriptions, { depth: null });
 			return subscriptions;
 		},
 	}),
