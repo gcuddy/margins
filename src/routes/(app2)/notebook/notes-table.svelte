@@ -635,7 +635,7 @@
 					<td style:height="{$paddingTop}px" />
 				</tr>
 			{/if}
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid sm:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {#if initialLoading}
                 {#each new Array(10) as _}
                     <Skeleton class="h-32" />
@@ -644,7 +644,7 @@
                 {#each $virtualizer.getVirtualItems() as item (item.key)}
                     {@const note = $notes[item.index]}
                     {#if note}
-                        <AnnotationCard entry={note.entry ? note.entry : undefined} autofocus={false} annotation={note} />
+                        <AnnotationCard class="min-w-[auto]" entry={note.entry ? note.entry : undefined} autofocus={false} annotation={note} />
                     {/if}
                 {/each}
                 {/if}
