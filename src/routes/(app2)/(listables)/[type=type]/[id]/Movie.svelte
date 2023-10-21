@@ -33,7 +33,7 @@
 	import { enhance } from '$app/forms';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
-	CalendarPlusIcon,
+		CalendarPlusIcon,
 		ExternalLinkIcon,
 		EyeIcon,
 		ListPlus,
@@ -63,6 +63,8 @@
 	import SaveToLibraryButton from '$components/entries/save-to-library-button.svelte';
 	import LibraryForm from '$components/ui/library/library-form.svelte';
 	import { entryTypeIcon } from '$components/entries/icons';
+	import { EntryMediaHeader } from '$components/entries';
+	import Year from '$components/entries/bits/year.svelte';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;
@@ -151,136 +153,52 @@
 </script>
 
 <div class="pb-8">
-	<div class="flex select-text flex-col gap-4">
-		<div
-			class={cn(
-				'flex gap-6 max-sm:flex-col sm:items-center relative rounded-md overflow-hidden',
-				// backdropIsDark && 'dark',
-			)}
-		>
-			<!-- style:--backdropColor={$colorHex} -->
-			<!-- style={styleToString({
-            'background-image':`url(https://image.tmdb.org/t/p/original/${data.movie.images.backdrops[0].file_path})`,
-            'background-repeat': 'no-repeat',
-            'background-size': 'cover',
-        })} -->
-			<!-- {#if backdrop && $colorQuery.isSuccess} -->
-			<!-- <img
-					alt=""
-					src={backdrop}
-					class="absolute inset-0 opacity-75 blur-sm z-[-1] rounded-md max-h-[300px] w-full object-cover animate-in fade-in-0"
-					in:fade
-					on:load={() => {
-						backdropLoaded = true;
-					}}
-				/>
-				<div class="absolute inset-0 z-[-1] rounded-full" /> -->
-			<!-- {/if} -->
-			<div
-				class="aspect-auto rounded-md shadow-background shrink-0 sm:w-[150px] md:w-[200px]"
-				style:view-transition-name="artwork-{data.movie.id}"
+	<EntryMediaHeader
+		viewTransitionName="artwork-movie-{data.movie.id}"
+		title={data.movie.title}
+		type={'movie'}
+		image="https://image.tmdb.org/t/p/w342{data.movie.poster_path}"
+	>
+		{#if data.movie.original_title !== data.movie.title}
+			<Muted slot="metaTop" class="text-foreground"
+				>'{data.movie.original_title}'</Muted
 			>
-				<!-- style:--tw-shadow-color={$colorHex} -->
-				<!-- use:melt={$image} -->
-				<img
-					src="https://image.tmdb.org/t/p/w342{data.movie.poster_path}"
-                    width={342}
-                    height={513}
-					class="aspect-auto rounded-[inherit] border shrink-0"
-					alt="Movie poster for {data.movie.title}"
-				/>
-				<!-- <img
-					use:melt={$image}
-					class="aspect-auto w-[inherit] rounded-[inherit] border shrink-0"
-					alt="Movie poster for {data.movie.title}"
-				/> -->
-				<!-- <div
-					class={cn(
-						'w-[200px] h-[300px] bg-muted flex items-center justify-center text-muted-foreground',
-						$loadingStatus === 'loading' && 'animate-pulse',
-					)}
-					use:melt={$fallback}
+		{/if}
+		<svelte:fragment slot="meta">
+			{#if director}
+				Directed by
+				<a
+					class="underline underline-offset-2 decoration-border hover:text-primary"
+					href="/people/t{director.id}">{director.name}</a
 				>
-					{#if $loadingStatus === 'error'}
-						{data.movie.title}
-					{/if}
-				</div> -->
+				· <Year date={data.movie.release_date} />
+			{/if}
+		</svelte:fragment>
+
+		<svelte:fragment slot="actions">
+			<div class="grow basis-full flex supports-cq:@md:justify-start supports-ncq:md:justify-start justify-center">
+				{#key data.movie.id}
+					<StarRatingForm
+						entryId={data.entry?.id}
+						rating={data.entry?.bookmark?.rating ?? 0}
+					/>
+				{/key}
 			</div>
-			<!-- <img
-                src="https://image.tmdb.org/t/p/w500/{data.movie.poster_path}"
-                alt=""
-                class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]"
-                use:smoothload
-            /> -->
+			<div class="flex items-center gap-2">
+				<!-- <BookmarkForm data={data.bookmarkForm} /> -->
+				<!-- <pre>{JSON.stringify(data.entry?.interaction, null, 2)}</pre> -->
+				{#if !data.entry?.bookmark?.status}
+					<!-- <SaveToLibraryButton icon={entryTypeIcon["movie"]} /> -->
+					<LibraryForm
+						unsavedStyle="arrow"
+						status={data.entry?.bookmark?.status ?? undefined}
+						variant="secondary"
+						type="movie"
+						entryId={data.entry?.id}
+						tmdbId={data.movie.id}
+					/>
 
-			<div class="flex flex-col gap-8 justify-between rounded p-1">
-				<div class="flex flex-col gap-2">
-					<a
-						href="/library/all{defaultStringifySearch(
-							filterLibrary({
-								type: 'movie',
-							}),
-						)}"><Muted class="text-foreground">Movie</Muted></a
-					>
-					<div class="flex items-baseline gap-x-2">
-						<H1 class=" text-foreground">{data.movie.title}</H1>
-						<a
-							href="/library/all{defaultStringifySearch(
-								filterLibrary({
-									published: {
-										// get first day of year
-										gte: new Date(
-											new Date(data.movie.release_date).getFullYear(),
-											0,
-											1,
-										),
-										// get last day of year
-										lte: new Date(
-											new Date(data.movie.release_date).getFullYear(),
-											11,
-											31,
-										),
-									},
-								}),
-							)}"
-							class="text-muted-foreground underline underline-offset-2 decoration-border hover:text-primary"
-						>
-							{new Date(data.movie.release_date).getFullYear()}
-						</a>
-					</div>
-					{#if data.movie.original_title !== data.movie.title}
-						<Muted class="text-foreground">'{data.movie.original_title}'</Muted>
-					{/if}
-					<span class="text-muted-foreground">
-						Directed by {#if director}
-							<a
-								class="underline underline-offset-2 decoration-border hover:text-primary"
-								href="/people/t{director.id}">{director.name}</a
-							>
-						{/if}
-					</span>
-				</div>
-				<!-- <Lead class="text-base  text-foreground">
-					Screenplay:
-					{#each writers as writer}
-						<a href="/people/t{writer.id}">{writer.name}</a>{' '}
-					{/each}
-				</Lead> -->
-				<div class="flex flex-col gap-4">
-					{#key data.movie.id}
-						<StarRatingForm
-							entryId={data.entry?.id}
-							rating={data.entry?.bookmark?.rating ?? 0}
-						/>
-					{/key}
-					<div class="flex items-center gap-2">
-						<!-- <BookmarkForm data={data.bookmarkForm} /> -->
-						<!-- <pre>{JSON.stringify(data.entry?.interaction, null, 2)}</pre> -->
-						{#if !data.entry?.bookmark?.status}
-                            <!-- <SaveToLibraryButton icon={entryTypeIcon["movie"]} /> -->
-                            <LibraryForm unsavedStyle="arrow" status={data.entry?.bookmark?.status ?? undefined} variant="outline" type="movie" entryId={data.entry?.id} tmdbId={data.movie.id} />
-
-							<!-- <Button
+					<!-- <Button
 								on:click={async () => {
 									try {
 										await mutate('save_to_library', {
@@ -305,18 +223,23 @@
 								<StatusIcon status="Backlog" class="w-4 h-4 mr-2" />
 								To Watch</Button
 							> -->
-						{:else if data.entry?.bookmark?.status}
-							<!-- <StatusSelect
+				{:else if data.entry?.bookmark?.status}
+					<!-- <StatusSelect
 								entryId={data.entry.id}
 								status={data.entry.bookmark?.status}
 							/> -->
-                            <LibraryForm status={data.entry.bookmark?.status} variant="outline" type={data.entry.type} entryId={data.entry.id} />
-							<!-- <Button variant="outline">
+					<LibraryForm
+						status={data.entry.bookmark?.status}
+						variant="secondary"
+						type={data.entry.type}
+						entryId={data.entry.id}
+					/>
+					<!-- <Button variant="outline">
                                 <StatusIcon status="Backlog" class="w-4 h-4 mr-2 shrink-0" />
                                 In {data.entry.bookmark?.status}</Button
                             > -->
-						{/if}
-						<!-- <form
+				{/if}
+				<!-- <form
                             method="post"
                             action="?/markFinished"
                             use:enhance={() => {
@@ -337,45 +260,45 @@
                                 Watch</Button
                             >
                         </form> -->
-						<!-- <Button
+				<!-- <Button
                                 variant="secondary"
                             >
                                 <ListPlus class="w-4 h-4 mr-2" />
                                 Add to collection...</Button
                             > -->
-						{#if data.entry}
-							<!-- <EntryOperations data={data.annotationForm} entry={data.entry} /> -->
-						{/if}
-						{#if $page.data.logInteractionForm}
-							<LogInteractionDialog
-								entry={{
-									title: data.movie.title,
-									type: 'movie',
-									published: new Date(data.movie.release_date),
-									image: `https://image.tmdb.org/t/p/w500/${data.movie.poster_path}`,
-									tmdbId: data.movie.id,
-								}}
-								entryId={data.entry?.id}
-								form={$page.data.logInteractionForm}
+				{#if data.entry}
+					<!-- <EntryOperations data={data.annotationForm} entry={data.entry} /> -->
+				{/if}
+				{#if $page.data.logInteractionForm}
+					<LogInteractionDialog
+						entry={{
+							title: data.movie.title,
+							type: 'movie',
+							published: new Date(data.movie.release_date),
+							image: `https://image.tmdb.org/t/p/w500/${data.movie.poster_path}`,
+							tmdbId: data.movie.id,
+						}}
+						entryId={data.entry?.id}
+						form={$page.data.logInteractionForm}
+					>
+						<svelte:fragment slot="trigger" let:builder>
+							<Button
+								builders={[builder]}
+								variant="secondary"
+								name="finished"
+								value={new Date().toISOString()}
 							>
-								<svelte:fragment slot="trigger" let:builder>
-									<Button
-										builders={[builder]}
-										variant="outline"
-										name="finished"
-										value={new Date().toISOString()}
-									>
-										<!-- <EyeIcon class="w-4 h-4 mr-2" /> -->
-										<CalendarPlusIcon class="w-4 h-4 mr-2 stroke-[1.5]" />
-										Log</Button
-									>
-								</svelte:fragment>
-							</LogInteractionDialog>
-						{/if}
-					</div>
-				</div>
+								<!-- <EyeIcon class="w-4 h-4 mr-2" /> -->
+								<CalendarPlusIcon class="w-4 h-4 mr-2 stroke-[1.5]" />
+								Log</Button
+							>
+						</svelte:fragment>
+					</LogInteractionDialog>
+				{/if}
 			</div>
-		</div>
+		</svelte:fragment>
+	</EntryMediaHeader>
+	<div class="flex select-text flex-col gap-4 mt-8">
 		<div class="prose prose-stone space-y-4 dark:prose-invert mt-6">
 			{#if data.movie.tagline}
 				<Lead>

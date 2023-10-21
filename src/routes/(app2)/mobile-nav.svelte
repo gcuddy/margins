@@ -16,7 +16,7 @@
 	import { type Writable, writable } from 'svelte/store';
 	import { fade, fly } from 'svelte/transition';
 
-	import MobileLink from './mobile-link.svelte';
+	import MobileLink from '$components/nav/mobile-link.svelte';
 
 	import * as Sheet from '$components/ui/sheet';
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
@@ -28,6 +28,7 @@
 	import Separator from '$components/ui/Separator.svelte';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import { commanderState } from './Commander.svelte';
+	import MobileAddMenu from '$components/nav/mobile-add-menu.svelte';
 
 	const nav = [
 		{
@@ -63,101 +64,7 @@
 					</div>
 					<span class="text-xs">Add</span>
 				</Sheet.Trigger>
-				<Sheet.Content
-					side="bottom"
-					class="safe-area h-2/3 rounded-t-xl overflow-y-auto"
-				>
-					<div class="space-y-4">
-						<span
-							class="font-semibold leading-none tracking-tight text-muted-foreground"
-							>Add New Item…</span
-						>
-						<div class="flex flex-col">
-							<MobileLink
-								bind:open={isAddSheetOpen}
-								on:click={() => {
-									showAddUrlModalStore.set(true);
-								}}
-							>
-								<Link2 class="w-5 h-5 mr-2" />
-								URL
-							</MobileLink>
-							<MobileLink
-								bind:open={isAddSheetOpen}
-								on:click={() => {
-									showAddSubscriptionModal.set(true);
-								}}
-							>
-								<Rss class="w-5 h-5 mr-2" />
-								Subscription
-							</MobileLink>
-							<div class="py-5">
-								<Separator />
-							</div>
-							<!-- href="/search?type=movie" -->
-							<MobileLink
-								bind:open={isAddSheetOpen}
-								on:click={() => {
-									commanderState.update((s) => ({
-										...s,
-										pages: ['search-movies'],
-										allowPages: false,
-										placeholder: 'Search for a movie or TV show',
-										isOpen: true,
-									}));
-								}}
-							>
-								<EntryIcon type="movie" class="w-5 h-5 mr-2" />
-								Movie or TV Show
-							</MobileLink>
-							<MobileLink
-								bind:open={isAddSheetOpen}
-								on:click={() => {
-									commanderState.update((s) => ({
-										...s,
-										pages: ['search-books'],
-										allowPages: false,
-										placeholder: 'Search for a book',
-										isOpen: true,
-									}));
-								}}
-							>
-								<EntryIcon type="book" class="w-5 h-5 mr-2" />
-								Book
-							</MobileLink>
-							<MobileLink
-								bind:open={isAddSheetOpen}
-								on:click={() => {
-									commanderState.update((s) => ({
-										...s,
-										pages: ['search-podcasts'],
-										allowPages: false,
-										placeholder: 'Search for a podcast',
-										isOpen: true,
-									}));
-								}}
-							>
-								<EntryIcon type="podcast" class="w-5 h-5 mr-2" />
-								Podcast
-							</MobileLink>
-							<MobileLink
-								bind:open={isAddSheetOpen}
-								on:click={() => {
-									commanderState.update((s) => ({
-										...s,
-										pages: ['search-music'],
-										allowPages: false,
-										placeholder: 'Search for a music album',
-										isOpen: true,
-									}));
-								}}
-							>
-								<EntryIcon type="album" class="w-5 h-5 mr-2" />
-								Album
-							</MobileLink>
-						</div>
-					</div>
-				</Sheet.Content>
+				<MobileAddMenu bind:open={isAddSheetOpen} />
 			</Sheet.Root>
 			<!-- <DropdownMenu.Root>
         <DropdownMenu.Trigger class="flex flex-col items-center shrink-0">

@@ -141,6 +141,10 @@ const config = {
 				'3xl': '1600px',
 			},
 		},
+		supports: {
+			cq: 'container-type: inline-size',
+			ncq: 'not(container-type: inline-size)',	  
+		}
 	},
 	// ?
 	plugins: [
@@ -150,6 +154,7 @@ const config = {
 		require('tailwind-scrollbar')({ nocompatible: true }),
 		require('tailwind-scrollbar-hide'),
 		require('tailwindcss-animate'),
+		require('@tailwindcss/container-queries'),
 		// custom modifiers
 		plugin(({ addVariant, matchUtilities, theme }) => {
 			addVariant('transparency', ['[data-transparency="true"] &']);

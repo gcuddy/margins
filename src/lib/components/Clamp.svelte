@@ -59,6 +59,7 @@
 	export { className as class };
 
 	export let as = 'div';
+	// TODO: dialog option
 </script>
 
 <!-- style:max-height="{height}px" -->

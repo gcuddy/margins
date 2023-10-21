@@ -48,6 +48,8 @@
 
 	export let unsavedStyle: 'popover' | 'arrow' = 'popover';
 
+	export let bodyPortal = false;
+
 	const open = writable(false);
 
 	const queryClient = useQueryClient();
@@ -104,7 +106,7 @@
 		<Separator orientation="vertical" class="h-9" />
 	{/if}
 	<Popover
-		portal={wrapper}
+		portal={bodyPortal ? 'body' : wrapper}
 		bind:open={$open}
 		positioning={{
 			overlap: true,
@@ -139,7 +141,7 @@
 		</PopoverTrigger>
 		<PopoverDialog bind:open={$open} class="w-[200px] p-0">
 			<Command.Root onClose={() => open.set(false)} bind:value={status}>
-				<Command.Input autofocus placeholder="Status…"></Command.Input>
+			<Command.Input autofocus placeholder="Status…"></Command.Input>
 				<Command.Group>
 					<Command.List>
 						{#each objectEntries(statusesToDisplay) as [value, label]}

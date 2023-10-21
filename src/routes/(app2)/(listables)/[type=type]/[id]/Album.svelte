@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-	CheckIcon,
+		CheckIcon,
 		Disc3Icon,
 		DiscIcon,
 		ExternalLinkIcon,
@@ -31,11 +31,13 @@
 	import InteractionsTable from '$components/entries/interactions/interactions-table.svelte';
 	import SaveToLibraryButton from '$components/entries/save-to-library-button.svelte';
 	import { page } from '$app/stores';
+	import { EntryMediaHeader } from '$components/entries';
+	import LibraryForm from '$components/ui/library/library-form.svelte';
 	export let data: PageData & {
 		album: NonNullable<Album>;
 	};
 
-    $: tab = $page.url.searchParams.get('tab') ?? 'info';
+	$: tab = $page.url.searchParams.get('tab') ?? 'info';
 
 	$: console.log({ data });
 
@@ -45,93 +47,68 @@
 </script>
 
 <div class="flex select-text flex-col gap-4">
-	<div class="flex gap-6 max-sm:flex-col sm:items-center">
-		{#if img}
-			<img
-				style="view-transition-name:album-artwork-{album.id}"
-				src={img.url}
-				alt=""
-				class="aspect-auto shadow-lg sm:w-[150px] md:w-[200px]"
-				use:smoothload
-			/>
-		{:else}
-			<!-- TODO -->
-		{/if}
-		<div class="flex flex-col justify-between gap-4">
-			<div class="flex flex-col gap-2">
-				<div class="flex flex-col">
-					<Muted>Album</Muted>
-					<H1>{album.name}</H1>
-				</div>
-				<Lead>
-					{#if album.artists.length}
-						<span class="space-x-1">
-							{#each album.artists as artist, i}
-								{#if i !== 0}<span class="text-muted-foreground"> • </span>{/if}
-								<a href={artist.uri}> {artist.name}</a>
-							{/each}
-						</span>
-					{/if} — {new Date(album.release_date).getFullYear()}
-				</Lead>
-			</div>
-			<!-- <Muted>
-				<a target="_blank" href={album.external_urls.spotify}
-					>Spotify
-					<ExternalLinkIcon class="ml-1 inline-block h-4 w-4" />
-				</a>
-			</Muted> -->
-			<div class="flex flex-col gap-4">
-				<div class="flex items-center gap-2">
-					<!-- <Button on:click={() => {
-                                        isLogInteractionDialogOpen = true;
-                                    }}>
-                                        Log
-                                    </Button> -->
-					<LogInteractionDialog
-						icon={Disc3Icon}
-						entry={{
-                            published: new Date(album.release_date),
-                            title: album.name,
-                            type: 'album',
-                            image: img?.url,
-                            spotifyId: album.id,
-                        }}
-                        entryId={data.entry?.id}
-						form={data.logInteractionForm}
+	<EntryMediaHeader title={album.name} type="album">
+		<svelte:fragment slot="artwork">
+			<div
+				class="aspect-auto rounded-md shadow-lg w-56 @lg:self-start supports-ncq:md:self-start"
+			>
+				{#if img}
+					<img
+						style="view-transition-name:album-artwork-{album.id}"
+						src={img.url}
+						alt=""
+						class="w-full h-full"
+						use:smoothload
 					/>
+				{/if}
+			</div>
+		</svelte:fragment>
+		<Lead slot="meta">
+			{#if album.artists.length}
+				<span class="space-x-1">
+					{#each album.artists as artist, i}
+						{#if i !== 0}<span class="text-muted-foreground"> • </span>{/if}
+						<a href={artist.uri}> {artist.name}</a>
+					{/each}
+				</span>
+			{/if} · {new Date(album.release_date).getFullYear()}
+		</Lead>
+		<svelte:fragment slot="actions">
+			<div class="basis-full">
+				<StarRatingForm
+					rating={data.entry?.bookmark?.rating ?? 0}
+					entryId={data.entry?.id}
+				/>
+			</div>
+			<LibraryForm
+					bodyPortal
+					unsavedStyle="arrow"
+					status={data.entry?.bookmark?.status ?? undefined}
+					variant="secondary"
+					type="album"
+					entryId={data.entry?.id}
+					spotifyId={album.id ?? undefined}
+				/>
 
-					<div class="flex">
-						{#if data.saveToLibraryForm}
-							{@const toDelete = !!data.entry?.bookmark?.bookmarked_at ?? !!data.entry?.bookmark?.status}
-							<SaveToLibraryButton
-								form={data.saveToLibraryForm}
-								bookmark={data.entry?.bookmark}
-								variant="outline"
-								icon={toDelete ? CheckIcon : DiscIcon}
-							>
-								{#if toDelete}
-									In Library
-								{:else}
-									To Listen
-								{/if}
-							</SaveToLibraryButton>
-						{/if}
-					</div>
-				</div>
-				<div class="flex items-center gap-2">
-					<StarRatingForm
-						rating={data.entry?.bookmark?.rating ?? 0}
+
+				{#if $page.data.logInteractionForm}
+					<LogInteractionDialog
+						entry={{
+							title: album.name,
+							type: 'album',
+							published: new Date(album.release_date),
+							image: img?.url,
+							spotifyId: album.id,
+						}}
 						entryId={data.entry?.id}
-					/>
-					<!-- <BookmarkForm data={data.bookmarkForm} /> -->
-					{#if data.entry}
-						<EntryOperations data={data.annotationForm} entry={data.entry} />
-					{/if}
-				</div>
-			</div>
-		</div>
-	</div>
-	<Tabs.Root value={tab}>
+						form={$page.data.logInteractionForm}
+					></LogInteractionDialog>
+				{/if}
+
+		</svelte:fragment>
+	</EntryMediaHeader>
+	
+	<Tabs.Root value={tab} class="mt-8">
 		<Tabs.List>
 			<Tabs.Trigger value="info">Info</Tabs.Trigger>
 			<Tabs.Trigger disabled={!data.entry?.interactions} value="activity"

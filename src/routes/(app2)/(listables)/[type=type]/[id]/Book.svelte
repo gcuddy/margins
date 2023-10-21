@@ -10,7 +10,7 @@
 		ExternalLink,
 	} from 'lucide-svelte';
 	import { derived, writable } from 'svelte/store';
-
+	import { page } from '$app/stores';
 	import Clamp from '$components/Clamp.svelte';
 	import { Button } from '$components/ui/button';
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
@@ -32,6 +32,9 @@
 	import EntryOperations from './EntryOperations.svelte';
 	import { sortByDate } from '$lib/utils/date';
 	import UpdateProgressButton from '$components/books/buttons/update-progress-button.svelte';
+	import { EntryMediaHeader } from '$components/entries';
+	import LibraryForm from '$components/ui/library/library-form.svelte';
+	import LogInteractionDialog from '$components/entries/interaction-form/log-interaction-dialog.svelte';
 
 	let editor: Editor;
 
@@ -182,43 +185,51 @@
 
 <div class="">
 	<div class="flex select-text flex-col gap-4">
-		<div class="flex items-center gap-6">
-			<!-- src="https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg?default=false" -->
-			<!-- style:--tw-shadow-color= -->
+		<EntryMediaHeader title={book.volumeInfo?.title ?? ''} {author} type="book">
 			<div
-				class="aspect-auto max-w-[200px] shadow-lg relative"
-				style:view-transition-name="artwork-{book.id}"
+				slot="artwork"
+				class="aspect-auto shrink w-56 @lg:self-start supports-ncq:md:self-start shadow-lg relative"
+				style:view-transition-name="artwork-book-{book.id}"
 			>
 				<img
-					in:receive={{
-						key: `book-${book.id}-image`,
-					}}
-					out:send={{
-						key: `book-${book.id}-image`,
-					}}
-					use:melt={$image}
-					class="aspect-auto max-w-[200px] shadow-xl"
-					on:error={(e) => {
-						console.log(e);
-					}}
+					class="aspect-auto w-full h-full"
 					src={book.image}
+					width={224}
 					alt=""
 				/>
 				<div class="absolute inset-0 book-cover-overlay"></div>
-				<div
-					class={cn(
-						'w-[128px] h-[196px] bg-muted flex items-center justify-center text-muted-foreground',
-						$loadingStatus === 'loading' && 'animate-pulse',
-					)}
-					use:melt={$fallback}
-				>
-					<!--  -->
-					{#if $loadingStatus === 'error'}
-						{book?.volumeInfo?.title}
-					{/if}
-				</div>
 			</div>
-			<div class="flex flex-col gap-2">
+			<div slot="metaTop">
+				<Lead>{book.volumeInfo?.subtitle}</Lead>
+			</div>
+			<svelte:fragment slot="actions">
+				<LibraryForm
+					bodyPortal
+					unsavedStyle="arrow"
+					status={data.entry?.bookmark?.status ?? undefined}
+					variant="secondary"
+					type="book"
+					entryId={data.entry?.id}
+					googleBooksId={book.id ?? undefined}
+				/>
+				{#if $page.data.logInteractionForm}
+					<LogInteractionDialog
+						entry={{
+							title: book.volumeInfo?.title ?? '',
+							type: 'book',
+							published: new Date(book.volumeInfo?.publishedDate ?? ''),
+							image: book.image,
+							googleBooksId: book.id,
+						}}
+						entryId={data.entry?.id}
+						form={$page.data.logInteractionForm}
+					></LogInteractionDialog>
+				{/if}
+			</svelte:fragment>
+		</EntryMediaHeader>
+
+		<!-- TODO: pull from here -->
+		<!-- <div class="flex flex-col gap-2">
 				<Muted>Book</Muted>
 				<H1 class="font-serif drop-shadow-sm">{book.volumeInfo?.title}</H1>
 				{#if book.volumeInfo?.subtitle}
@@ -245,11 +256,8 @@
 				</div>
 				<div class="flex items-center gap-2">
 					{#if !!pdf}
-						<!-- content here -->
-						<Button as="a" href="/pdf/{pdf.related_entry.id}">Read</Button
-						>
+						<Button as="a" href="/pdf/{pdf.related_entry.id}">Read</Button>
 					{/if}
-					<!-- <BookmarkForm data={data.bookmarkForm} /> -->
 					<div class="flex items-center">
 						{#if mostRecentUnfinishedInteraction}
 							<Button
@@ -284,21 +292,6 @@
 								Want to read
 							</Button>
 						{/if}
-						<!-- <Button
-							size="sm"
-							variant="default"
-							class="rounded-r-none border-r-0"
-						>
-							{#if !data.entry?.bookmark}
-								<BookPlusIcon class="mr-2 h-4 w-4" />
-								Want to read
-							{:else if !data.entry.interaction}
-								<BookOpenIcon class="mr-2 h-4 w-4" />
-								Update Progress
-							{:else}
-								{data.entry.interaction}
-							{/if}
-						</Button> -->
 						<Separator orientation="vertical" />
 						<DropdownMenu.Root>
 							<DropdownMenu.Trigger let:builder asChild>
@@ -327,11 +320,9 @@
 						<EntryOperations data={data.annotationForm} entry={data.entry} />
 					{/if}
 				</div>
-			</div>
-		</div>
+			</div> -->
 
-		<div class="prose prose-stone mt-6 dark:prose-invert">
-			<!-- this is the js-free version, but how's the a11y? -->
+		<div class="prose prose-stone mt-6 dark:prose-invert z-0">
 			<div class="not-prose">
 				<h2 class="text-xl font-bold tracking-tight font-serif my-2">
 					Publisher description

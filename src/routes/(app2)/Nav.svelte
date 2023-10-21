@@ -6,7 +6,9 @@
 		label: string;
 	};
 
-    export const showAddUrlModalStore = writable(false);
+	import { Sheet } from '$components/ui/sheet';
+
+	export const showAddUrlModalStore = writable(false);
 
 	export const nav: Array<Nav> = [
 		{
@@ -67,7 +69,7 @@
 </script>
 
 <script lang="ts">
-    import { clear } from 'idb-keyval';
+	import { clear } from 'idb-keyval';
 
 	import { createAvatar, melt } from '@melt-ui/svelte';
 	import {
@@ -107,6 +109,8 @@
 	import * as Dialog from '$components/ui/dialog';
 	import {
 		DropdownMenu,
+		DropdownMenuGroup,
+		DropdownMenuLabel,
 		DropdownMenuContent,
 		DropdownMenuItem,
 		DropdownMenuSeparator,
@@ -125,6 +129,9 @@
 	import { useMenuBar } from './MainNav.svelte';
 	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
 	import { post } from '$lib/utils/forms';
+	import MobileAddMenu from '$components/nav/mobile-add-menu.svelte';
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import { commanderState } from './Commander.svelte';
 
 	let pinsComponent: Pins;
 
@@ -161,6 +168,8 @@
 
 	export let showAddUrlModal = showAddUrlModalStore;
 	const gardenEnabled = persisted('gardenEnabled', false);
+
+	let mobileNavMenu = false;
 </script>
 
 {#if !$inArticle}
@@ -219,8 +228,8 @@
 						<DropdownMenuItem
 							on:click={() => {
 								queryClient.clear();
-                                // clear idb-keyval too, because this ^^ doesn't seem to clear it
-                                clear()
+								// clear idb-keyval too, because this ^^ doesn't seem to clear it
+								clear();
 								post('/s?/logout');
 							}}
 						>
@@ -244,10 +253,14 @@
 				<Button
 					on:click={() => {
 						// open modal
-						showAddUrlModal.set(true);
+						if ($mq.max_lg) {
+							mobileNavMenu = true;
+						} else {
+							showAddUrlModal.set(true);
+						}
 					}}
 					variant="outline"
-                    size="sm"
+					size="sm"
 					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
 				>
 					<PlusCircle class="square-5 lg:square-4 shrink-0" />
@@ -274,14 +287,76 @@
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent class="w-56">
-						<DropdownMenuItem
-							on:click={() => {
-								$showAddSubscriptionModal = true;
-							}}
-						>
-							<RssIcon class="h-4 w-4 mr-2" />
-							<span>Add Subscription</span>
-						</DropdownMenuItem>
+						<DropdownMenuLabel>Add new…</DropdownMenuLabel>
+						<DropdownMenuGroup>
+							<DropdownMenuItem
+								on:click={() => {
+									$showAddSubscriptionModal = true;
+								}}
+							>
+								<RssIcon class="h-4 w-4 mr-2" />
+								<span>Subscription</span>
+							</DropdownMenuItem>
+						</DropdownMenuGroup>
+						<DropdownMenuSeparator />
+						<DropdownMenuGroup>
+							<DropdownMenuItem
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-movies'],
+										allowPages: false,
+										placeholder: 'Search for a movie or TV show',
+										isOpen: true,
+									}));
+								}}
+							>
+								<EntryIcon type="movie" class="w-4 h-4 mr-2" />
+								Movie or TV Show
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-books'],
+										allowPages: false,
+										placeholder: 'Search for a book',
+										isOpen: true,
+									}));
+								}}
+							>
+								<EntryIcon type="book" class="w-4 h-4 mr-2" />
+								Book
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-podcasts'],
+										allowPages: false,
+										placeholder: 'Search for a podcast',
+										isOpen: true,
+									}));
+								}}
+							>
+								<EntryIcon type="podcast" class="w-4 h-4 mr-2" />
+								Podcast
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-music'],
+										allowPages: false,
+										placeholder: 'Search for a music album',
+										isOpen: true,
+									}));
+								}}
+							>
+								<EntryIcon type="album" class="w-4 h-4 mr-2" />
+								Album
+							</DropdownMenuItem>
+						</DropdownMenuGroup>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
@@ -386,9 +461,13 @@
 			<Dialog.Title>Add Feed</Dialog.Title>
 		</Dialog.Header>
 		<SubscriptionEntry
-            bind:open={$showAddSubscriptionModal}
+			bind:open={$showAddSubscriptionModal}
 			form={$page.form}
 			searchForm={$page.data.feedSearchForm}
 		/>
 	</Dialog.Content>
 </Dialog.Root>
+
+<Sheet bind:open={mobileNavMenu}>
+	<MobileAddMenu bind:open={mobileNavMenu} />
+</Sheet>
