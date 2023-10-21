@@ -1,0 +1,42 @@
+{
+	// Place your margins workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders.
+	// Placeholders with the same ids are connected.
+	// Example:
+	// "Print to console": {
+	// 	"scope": "javascript,typescript",
+	// 	"prefix": "log",
+	// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+	// "Import PageData type from ./types": {
+	// 	"scope": "typescript",
+	// 	"prefix": ".pd",
+	// 	"body": [
+	// 		"import type { PageData } from './$types'"
+	// 	],
+	// 	"description": "Import PageData type from ./types"
+	// },
+	"Script lang='ts'": {
+		"scope": "svelte",
+		"prefix": "s-script",
+		"body": ["<script lang='ts'>", "$0", "</script>"]
+	},
+	"export className as class": {
+		"scope": "svelte,typescript",
+		"prefix": "classname",
+		"body": ["let className: string | null | undefined = undefined", "export { className as class };"]
+	},
+	"Query Data, Loading, Error": {
+		"scope": "svelte",
+		"prefix": "s-query",
+		// I want it to look liks this {#if $query.data}(TAB){:else if $query.isError}(TAB){:else}(TAB){/if} where $query is also a placeholder that changes in the two places
+		"body": ["{#if $1.isPending}", "\tLoading...$3", "{:else if $1.error}", "\tAn error has occured: {$1.error.message}$4", "{:else}", "\t$5", "{/if}"]
+	}
+}

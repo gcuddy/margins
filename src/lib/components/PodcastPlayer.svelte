@@ -115,7 +115,7 @@
 	import Icon from "./helpers/Icon.svelte";
 	import Progress from "./helpers/Progress.svelte";
 	import { createMutation, createQuery } from "@tanstack/svelte-query";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
+
 	import { page } from "$app/stores";
 	import { draggable } from "@neodrag/svelte";
 	import { modals } from "$lib/stores/modals";
@@ -185,7 +185,7 @@
 		});
 	}
 
-	const client = trpcWithQuery($page);
+	const client = trpc($page);
 	const utils = client.createContext();
 	const updateInteraction = client.podcasts.updateEpisodeInteraction.createMutation({
 		onSuccess: (interaction) => {

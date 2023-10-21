@@ -1,4 +1,19 @@
-import { customAlphabet } from 'nanoid'
-export const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 12)
+import { customAlphabet } from 'nanoid';
+const alphabet =
+	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+export const nanoid = customAlphabet(alphabet, 12);
 
-export const extendedNanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_', 24)
+// alias for nanoid
+export function generatePublicId() {
+	return nanoid();
+}
+
+export const extendedNanoid = customAlphabet(
+	'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_',
+	24,
+);
+
+const shortNanoId = customAlphabet(alphabet, 8);
+export function generateInviteCode() {
+	return shortNanoId();
+}

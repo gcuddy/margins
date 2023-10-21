@@ -22,7 +22,7 @@
 		/>
 	</div>
 
-<style>
+<style lang="postcss">
 	inner {
 		clip-path: polygon(0% 0%, var(--progress-amount) 0%, var(--progress-amount) 100%, 0% 100%);
 		transition: clip-path 0.25s ease-in-out;

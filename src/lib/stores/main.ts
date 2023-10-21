@@ -1,6 +1,7 @@
 import { derived, writable } from "svelte/store";
 
 import { browser } from "$app/environment";
+import { beforeNavigate } from '$app/navigation';
 
 export const mainEl = writable<HTMLElement>();
 
@@ -55,17 +56,17 @@ export const mainElScroll = derived(
 			}
 		};
 
-		if (browser) $mainEl?.addEventListener("scroll", onScroll);
+		if (browser) $mainEl?.addEventListener('scroll', onScroll);
 
 		return () => {
-			if (browser) $mainEl?.removeEventListener("scroll", onScroll);
+			if (browser) $mainEl?.removeEventListener('scroll', onScroll);
 		};
 	},
 	{
 		y: 0,
 		offset: 0,
 		down: false,
-	}
+	},
 );
 
 // export const mainElDown = derived(
@@ -79,3 +80,15 @@ export const mainElScroll = derived(
 // 	},
 // 	false
 // );
+
+function initMainClassStore() {
+	const store = writable('');
+
+	// beforeNavigate(() => {
+	// 	store.set('');
+	// });
+
+	return store;
+}
+
+export const mainClassStore = initMainClassStore();

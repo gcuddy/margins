@@ -3,10 +3,10 @@
 	import { page } from "$app/stores";
 	import RichAnnotationInput from "$lib/components/annotations/RichAnnotationInput.svelte";
 	import Button from "$lib/components/Button.svelte";
-	import Youtube from "$lib/components/Youtube.svelte";
+	// import Youtube from "$lib/components/Youtube.svelte";
 	import dayjs from "$lib/dayjs";
 	import { getContainerRefContext } from "$lib/features/entries/context";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
 	import { createMutation, useQueryClient } from "@tanstack/svelte-query";
 	import debounce from "lodash/debounce";
 	import { nanoid } from "$lib/nanoid";
@@ -91,11 +91,11 @@
 		const state = await player.getPlayerState();
 		console.log({ state });
 		if (state !== -1) {
-            console.log('seeking')
-            if (state === 5) {
-                await player.playVideo();
-                await player.seekTo(num, true);
-            }
+			console.log("seeking");
+			if (state === 5) {
+				await player.playVideo();
+				await player.seekTo(num, true);
+			}
 		}
 		// const time = await player.getCurrentTime();
 		// player.seekTo(time + num, true);
@@ -131,12 +131,12 @@
 	}}>seek to t</button
 > -->
 <div use:autoAnimate>
-{#if youtubeId}
-	<!-- {playing} -->
-	<!-- {$currentTime} -->
-	<div class="flex aspect-video">
-		<!-- TODO: vide osize -->
-		<Youtube
+	{#if youtubeId}
+		<!-- {playing} -->
+		<!-- {$currentTime} -->
+		<div class="flex aspect-video">
+			<!-- TODO: vide osize -->
+			<!-- <Youtube
 			on:stateChange={(e) => {
 				console.log({ e });
 				if (e.detail.data === 1) {
@@ -151,73 +151,76 @@
 			{height}
 			videoId={youtubeId}
 			bind:player
-		/>
-	</div>
-	<!-- <button
+		/> -->
+		</div>
+		<!-- <button
 		on:click={async () => {
 			if (!player) return;
 			timestamp = await player.getCurrentTime();
 		}}>get timestamp</button
 	> -->
-	<!-- REVIEW: design -->
-	{#if player}
-		<div class="my-2 flex justify-end">
-			<Button
-				on:click={async () => {
-					if (!player) return;
-					timestamp = await player?.getCurrentTime();
-					annotating = !annotating;
-				}}
-				variant="ghost">Annotate</Button
-			>
-		</div>
-	{/if}
-	<!-- {timestamp} -->
-	{#if annotating}
-    <!-- in:fly={{
+		<!-- REVIEW: design -->
+		{#if player}
+			<div class="my-2 flex justify-end">
+				<Button
+					on:click={async () => {
+						if (!player) return;
+						timestamp = await player?.getCurrentTime();
+						annotating = !annotating;
+					}}
+					variant="ghost">Annotate</Button
+				>
+			</div>
+		{/if}
+		<!-- {timestamp} -->
+		{#if annotating}
+			<!-- in:fly|global={{
 				y: -10,
 				opacity: 0.75,
 			}} -->
-		<div
-		>
-			<!-- TODO: save as snapshot -->
-			<RichAnnotationInput autofocus={true}>
-				<div slot="bottom" let:contentData class="flex w-full justify-between px-4 pb-2 text-muted">
-					<!-- format as mm:ss -->
-					<button
-						class="text-sm tabular-nums"
-						on:click={async () => {
-							// re-fetch timestamp
-							if (!player) return;
-							timestamp = await player?.getCurrentTime();
-						}}>{dayjs.duration(timestamp, "s").format("mm:ss")}</button
+			<div>
+				<!-- TODO: save as snapshot -->
+				<RichAnnotationInput autofocus={true}>
+					<div
+						slot="bottom"
+						let:contentData
+						class="flex w-full justify-between px-4 pb-2 text-muted"
 					>
-					<Button
-						variant="ghost"
-						on:click={() => {
-							// TODO: maybe this should be a form instead for progressive enhancement
-							$createAnnotation.mutate({
-								id: nanoid(),
-								entryId: entry.id,
-								contentData,
-								target: {
-									source: entry.uri + `?t=${timestamp}` || "",
-									selector: {
-										type: "FragmentSelector",
-										value: `t=${timestamp}`,
+						<!-- format as mm:ss -->
+						<button
+							class="text-sm tabular-nums"
+							on:click={async () => {
+								// re-fetch timestamp
+								if (!player) return;
+								timestamp = await player?.getCurrentTime();
+							}}>{dayjs.duration(timestamp, "s").format("mm:ss")}</button
+						>
+						<Button
+							variant="ghost"
+							on:click={() => {
+								// TODO: maybe this should be a form instead for progressive enhancement
+								$createAnnotation.mutate({
+									id: nanoid(),
+									entryId: entry.id,
+									contentData,
+									target: {
+										source: entry.uri + `?t=${timestamp}` || "",
+										selector: {
+											type: "FragmentSelector",
+											value: `t=${timestamp}`,
+										},
 									},
-								},
-							});
-							annotating = false;
-						}}>Save</Button
-					>
-					<!-- {dayjs.duration($currentTime, "s").format("mm:ss")} -->
-				</div>
-			</RichAnnotationInput>
+								});
+								annotating = false;
+							}}>Save</Button
+						>
+						<!-- {dayjs.duration($currentTime, "s").format("mm:ss")} -->
+					</div>
+				</RichAnnotationInput>
+			</div>
+		{/if}
+		<div class="prose whitespace-pre-line">
+			{entry.text}
 		</div>
 	{/if}
-    <div class="prose whitespace-pre-line">
-        {entry.text}
-    </div>
-{/if}
 </div>

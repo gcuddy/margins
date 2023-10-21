@@ -5,7 +5,7 @@
 
 <!-- TODO: a11y -->
 
-<div role="menubar" class={className} out:fade={{ duration: 200 }}>
+<div role="menubar" class={className} out:fade|global={{ duration: 200 }}>
 	<!-- maybe extract this menubar component out -->
 	<slot />
 </div>

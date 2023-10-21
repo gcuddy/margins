@@ -333,7 +333,7 @@
 	<slot name="footer" />
 </div>
 
-<style>
+<style lang="postcss">
 	.virtual-list-wrapper {
 		overflow: auto;
 		will-change: transform;

@@ -1,16 +1,11 @@
 <script lang="ts">
-	import { classNames } from "$lib/utils/tailwind";
-	let c = "";
+	import { cn } from '$lib/utils/tailwind';
+	let c = '';
 	export { c as class };
-    $: classes = classNames(c);
+
+	export let as = 'div';
 </script>
 
-<ul class="cluster {classes}">
+<svelte:element this={as} class={cn('flex flex-wrap items-center justify-start', c)}>
 	<slot />
-</ul>
-
-<style lang="postcss">
-	.cluster {
-		@apply flex flex-wrap items-center justify-start;
-	}
-</style>
+</svelte:element>

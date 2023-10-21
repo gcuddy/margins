@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { Annotation, Color } from "@prisma/client";
-	import { Popover, PopoverButton, PopoverPanel } from "@rgossiaux/svelte-headlessui";
-
+	import type { Annotation, Color } from "@prisma/client";
+	import {
+		Popover,
+		PopoverButton,
+		PopoverPanel,
+	} from "@rgossiaux/svelte-headlessui";
 	import { createEventDispatcher } from "svelte";
 	import { createPopperActions } from "svelte-popperjs";
-	import { z } from "zod";
 	import ColorCombobox from "./ColorCombobox.svelte";
 	import ColorSwatch from "./ColorSwatch.svelte";
 	import Icon from "./helpers/Icon.svelte";
@@ -20,9 +22,19 @@
 	$: console.log({ annotation });
 
 	const [ref, content] = createPopperActions();
+
+	function handleSelect(e: CustomEvent) {
+		const color = e.detail.id as Color;
+		if (color) {
+			annotation.color = color;
+			dispatch("color", color);
+		}
+	}
 </script>
 
-<div class="grid grid-cols-12 gap-1 border-gray-100 p-1 shadow-lg dark:border-gray-50 dark:text-white">
+<div
+	class="grid grid-cols-12 gap-1 border-gray-100 p-1 shadow-lg dark:border-gray-50 dark:text-white"
+>
 	<!-- currently using pointerdown so we can beat the selection being cleared -->
 	{#if annotation?.body || annotation.contentData}
 		<button
@@ -51,7 +63,9 @@
 		><Icon name="trash" />
 		{#if labels}<span class="text-xs">delete</span>{/if}</button
 	>
-	<div class="col-span-1 h-full w-[1px] place-self-center bg-black/10 dark:bg-white" />
+	<div
+		class="col-span-1 h-full w-[1px] place-self-center bg-black/10 dark:bg-white"
+	/>
 	<Popover
 		let:close
 		class="group col-span-3 flex  shrink-0 items-center  justify-center rounded-md p-1 transition hover:bg-black/5 dark:hover:bg-white/20"
@@ -68,12 +82,8 @@
 		<PopoverPanel use={[content]}>
 			<ColorCombobox
 				on:select={(e) => {
-					const color = z.nativeEnum(Color).safeParse(e.detail.id);
-					if (color.success) {
-						annotation.color = color.data;
-						close(null);
-						dispatch("color", color.data);
-					}
+					handleSelect(e);
+					close(null);
 				}}
 			/>
 		</PopoverPanel>

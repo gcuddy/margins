@@ -1,12 +1,18 @@
 <script lang="ts">
 	import { fadeScale } from "$lib/transitions";
 
-	import { Dialog, DialogOverlay, DialogTitle } from "@rgossiaux/svelte-headlessui";
+	import {
+		Dialog,
+		DialogOverlay,
+		DialogTitle,
+	} from "@rgossiaux/svelte-headlessui";
 	import { fade } from "svelte/transition";
 	// import DialogOverlay from './helpers/dialog/DialogOverlay.svelte';
 	export let open = false;
 	$: initialFocus =
-		(container && (container.querySelector("[data-initial-focus]") as HTMLElement)) || undefined;
+		(container &&
+			(container.querySelector("[data-initial-focus]") as HTMLElement)) ||
+		undefined;
 	let container: HTMLElement;
 	let className = "";
 	export { className as class };

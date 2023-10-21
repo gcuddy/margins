@@ -59,12 +59,12 @@
 /> -->
 
 {#if open}
-	<!-- 		in:inProp={inParams}
-		out:out={outParams}
+	<!-- 		in:inProp|global={inParams}
+		out:out|global={outParams}
  -->
 	<!-- scrollLock is causing problems; temporarily turningn it off -->
 	<div
-		transition:fadeScale={{
+		transition:fadeScale|global={{
 			duration: 150,
 			baseScale: 0.95,
 		}}

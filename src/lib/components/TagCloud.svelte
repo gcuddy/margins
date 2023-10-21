@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Tag as ITag } from '@prisma/client';
-	import Tag, { type TagVariant } from './Tags/Tag.svelte';
+	import Tag, { type TagVariant } from './tags/Tag.svelte';
 	export let tags: {
         id?: number;
         name: string;

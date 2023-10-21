@@ -3,14 +3,19 @@
 	import { invalidate, invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import type parse from "$lib/parse";
+	import toast from "svelte-french-toast";
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
+
 	import type { Location } from "$lib/types/schemas/Locations";
 	import { getUser } from "@lucia-auth/sveltekit/client";
 	import type { State } from "@prisma/client";
-	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
+	import {
+		createMutation,
+		createQuery,
+		useQueryClient,
+	} from "@tanstack/svelte-query";
 	import { fade } from "svelte/transition";
 	import MiniSwitch from "./atoms/MiniSwitch.svelte";
 	import Button from "./Button.svelte";
@@ -21,12 +26,14 @@
 	import LocationListbox from "./LocationListbox.svelte";
 	import StateCombobox from "./StateCombobox.svelte";
 	import TagEntry from "./TagEntry.svelte";
-	import TypeListbox from "./ui/TypeListbox.svelte";
+	import TypeListbox from "./TypeListbox.svelte";
 
 	export let url = "";
 	export let location: Location = "inbox";
 	export let stateId: number = $page.data.user?.default_state_id as number;
-	export let state: State = $page.data.user?.states?.find((s) => s.id === stateId) as State;
+	export let state: State = $page.data.user?.states?.find(
+		(s) => s.id === stateId
+	) as State;
 	export const test = "hello";
 	$: console.log({ location });
 
@@ -46,10 +53,16 @@
 
 	let articleToAdd: RouterOutputs["public"]["parse"] | null = null;
 
+	async function parse() {
+		return await fetch(`/api/parse/${encodeURIComponent(url)}`, {
+            method: "GET",
+        }).then((res) => res.json());
+	}
+
 	$: query = createQuery({
 		queryKey: ["parse", url],
-		queryFn: async () => trpc($page).public.parse.query({url}),
-        retry: false,
+		queryFn: parse,
+		retry: false,
 		enabled: false,
 		staleTime: 1000 * 60,
 		refetchOnWindowFocus: false,
@@ -60,28 +73,28 @@
 
 	// TODO: screenshot if bookmark (see /add/page.server.ts)
 	const queryClient = useQueryClient();
-    const client = trpcWithQuery($page)
-    const utils = client.createContext();
+	const client = trpc($page);
+	const utils = client.createContext();
 	const addMutation = client.bookmarks.add.createMutation({
-        onMutate: (data) => {
-            // TODO: optimistic update
-            if (data?.stateId) {
-                // place it in respective state query, if that exists
+		onMutate: (data) => {
+			// TODO: optimistic update
+			if (data?.stateId) {
+				// place it in respective state query, if that exists
+			}
+		},
+		onSuccess: (data) => {
+			// Invalidte all queries? queryClient.invalidateQueries()
+			toast.success("Added bookmark!");
+			utils.entries.invalidate();
+		},
+	});
 
-            }
-        },
-        onSuccess: (data) => {
-            // Invalidte all queries? queryClient.invalidateQueries()
-            utils.entries.invalidate();
-        }
-    });
-
-    createMutation({
+	createMutation({
 		mutationFn: () =>
 			trpc($page).bookmarks.add.mutate({
 				// TODO: fix types mismatch
 				article: articleToAdd,
-                url: articleToAdd?.uri || articleToAdd?.url || url
+				url: articleToAdd?.uri || articleToAdd?.url || url,
 			}),
 		// TODO: come up with something a bit more sophisticated
 		onSuccess: (data) => {
@@ -110,16 +123,16 @@
 		// 	id: 'add-url',
 		// });
 		// Prevent form submission, we're going to do it ourselves with the cached data
-        console.log({articleToAdd})
+		console.log({ articleToAdd });
 		if (articleToAdd) {
-            cancel();
+			cancel();
 			// TODO: Optimistic update
 			console.log({ article: articleToAdd, url });
 			$addMutation.mutate({
-                article: articleToAdd,
-                url: articleToAdd?.uri || url,
-                originalUrl: url,
-            });
+				article: articleToAdd,
+				url: articleToAdd?.uri || url,
+				originalUrl: url,
+			});
 			// TODO: invalidation
 			modals.close({
 				id: "add-url",
@@ -172,7 +185,7 @@
 				/> -->
 				{#if $query.isInitialLoading || $query.isSuccess}
 					<div
-						in:fade
+						in:fade|global
 						class="flex h-6 flex-1 items-center gap-2 truncate rounded px-2 text-sm dark:bg-gray-600 dark:text-gray-300"
 					>
 						{#if $query.isInitialLoading}
@@ -192,7 +205,11 @@
 						variant="naked"
 						tooltip={{
 							text: "Expand",
-						}}><Icon name="arrowsPointingOutMini" className="h-4 w-4 fill-gray-500" /></Button
+						}}
+						><Icon
+							name="arrowsPointingOutMini"
+							className="h-4 w-4 fill-gray-500"
+						/></Button
 					>
 					<Button
 						variant="naked"
@@ -204,7 +221,8 @@
 						tooltip={{
 							text: "Dismiss",
 							kbd: "Escape",
-						}}><Icon name="xMarkMini" className="h-4 w-4 fill-gray-500" /></Button
+						}}
+						><Icon name="xMarkMini" className="h-4 w-4 fill-gray-500" /></Button
 					>
 				</div>
 			{/if}
@@ -250,7 +268,13 @@
 				{/if}
 			</div> -->
 		</div>
-		<GenericTextarea bind:el={textarea} name="note" placeholder="Add note…" rows={1} variant="naked" />
+		<GenericTextarea
+			bind:el={textarea}
+			name="note"
+			placeholder="Add note…"
+			rows={1}
+			variant="naked"
+		/>
 		<div class="flex items-center">
 			<TagEntry className="grow" allTags={$page.data.allTags} />
 		</div>
@@ -274,10 +298,18 @@
 					labelOnRight
 					name="readLater"
 				/>
-				<Button type="submit" size="lg" disabled={loading} className="place-self-end space-x-2">
+				<Button
+					type="submit"
+					size="lg"
+					disabled={loading}
+					className="place-self-end space-x-2"
+				>
 					{#if !loading}<span>Save article</span>
 					{:else}
-						<Icon name="loading" className="h-5 w-5 animate-spin text-current" />
+						<Icon
+							name="loading"
+							className="h-5 w-5 animate-spin text-current"
+						/>
 					{/if}
 				</Button>
 			</div>

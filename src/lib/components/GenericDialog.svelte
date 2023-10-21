@@ -1,21 +1,18 @@
 <script lang="ts">
 	import {
 		Dialog,
+		DialogDescription,
 		DialogOverlay,
 		DialogTitle,
-		DialogDescription,
 		Transition,
 		TransitionChild,
 	} from "@rgossiaux/svelte-headlessui";
-	import { createEventDispatcher } from "svelte";
-	import Button from "./Button.svelte";
 	export let isOpen = true;
 	let className = "";
 	export { className as class };
 	export let done_button = true;
 	let confirm_button: HTMLElement | null = null;
 	$: console.log({ confirm_button });
-	const dispatch = createEventDispatcher();
 </script>
 
 <Transition bind:show={isOpen} on:afterEnter on:afterLeave>
@@ -29,9 +26,13 @@
 				leaveFrom="opacity-100"
 				leaveTo="opacity-0"
 			>
-				<DialogOverlay class="fixed inset-0 bg-base/25" />
+				<DialogOverlay
+					class="fixed inset-0 bg-base/50 backdrop-blur-sm transition-all"
+				/>
 			</TransitionChild>
-			<div class="flex min-h-full items-end justify-center sm:items-center sm:p-4">
+			<div
+				class="flex min-h-full items-end justify-center sm:items-center sm:p-4"
+			>
 				<TransitionChild
 					enter="ease-out duration-200"
 					enterFrom="opacity-0 scale-95"
@@ -46,7 +47,8 @@
 						{#if done_button || $$slots.title}
 							<div class="grid grid-cols-3">
 								{#if $$slots.title}
-									<DialogTitle class="col-span-1 col-start-2 place-self-center text-content font-medium"
+									<DialogTitle
+										class="col-span-1 col-start-2 place-self-center font-medium text-content"
 										><slot name="title" /></DialogTitle
 									>
 								{/if}
@@ -59,10 +61,12 @@
 							</div>
 						{/if}
 						{#if $$slots.description}
-							<DialogDescription class="text-current"><slot name="description" /></DialogDescription>
+							<DialogDescription class="text-current"
+								><slot name="description" /></DialogDescription
+							>
 						{/if}
 						<slot />
-						<slot name="bottom"></slot>
+						<slot name="bottom" />
 					</div>
 				</TransitionChild>
 			</div>

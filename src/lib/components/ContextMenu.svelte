@@ -80,7 +80,7 @@
 		{/if}
 		<Portal>
 			{#if open}
-				<div class="relative z-50" out:fade={{ duration: 150 }} use:popperContent>
+				<div class="relative z-50" out:fade|global={{ duration: 150 }} use:popperContent>
 					<!-- <TransitionChild
 						enter="transition duration-100 ease-out"
 						enterFrom="transform scale-95 opacity-0"

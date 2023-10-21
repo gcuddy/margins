@@ -1,65 +1,68 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { navigating } from '$app/stores';
-	import Muted from '$lib/components/atoms/Muted.svelte';
-	import Button from '$lib/components/Button.svelte';
-	import GenericInput from '$lib/components/GenericInput.svelte';
-	import Icon from '$lib/components/helpers/Icon.svelte';
-	export let form: { message?: string };
-	let loading = false;
+	import * as Form from '$components/ui/form';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardFooter,
+		CardHeader,
+		CardTitle,
+	} from '$components/ui/card';
+	import { loginUserSchema } from '../schema';
+	import { page } from '$app/stores';
+	import { Loader2 } from 'lucide-svelte';
+    import { getFlash } from 'sveltekit-flash-message';
+
+	export let data;
+
+    const flash = getFlash(page);
 </script>
 
-<h2 class="text-2xl font-bold">Log in to Margins</h2>
-<div class="rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">
-	<form
-		use:enhance={() => {
-			loading = true;
-			return async ({ result, update }) => {
-				await update({
-					reset: false,
-				});
-				loading = false;
-			};
-		}}
-		class="flex max-w-xs flex-col space-y-6"
+<Card class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
+	<Form.Root
+		class="contents"
 		method="post"
+		form={data.form}
+		schema={loginUserSchema}
+		let:config
+		let:message
+		let:submitting
 	>
-		<div>
-			<!-- TODO: allow email OR username -->
-			<label for="email"><Muted>Email</Muted> </label>
-			<GenericInput
-				id="email"
-				name="email"
-				placeholder=""
-				class="focus:ring-2"
-				autocomplete="email"
-				required
-				type="email"
+		<CardHeader class="space-y-1">
+			<CardTitle class="text-2xl font-semibold tracking-tight"
+				>Log in to Margins</CardTitle
+			>
+			<CardDescription>Enter your email and password below.</CardDescription>
+		</CardHeader>
+		<CardContent class="grid gap-4">
+			<Form.Message
+				message={message ?? $flash ?? $page.url.searchParams.get('message')}
 			/>
-		</div>
-		<div>
-			<label for="password"><Muted>Password</Muted></label>
-			<GenericInput
-				id="password"
-				name="password"
-				required
-				placeholder=""
-				type="password"
-				autocomplete="current-password"
-				class="focus:ring-2"
-			/>
-		</div>
-		<Button type="submit" className="text-base">
-			{#if loading || $navigating}
-				<Icon name="loading" className="h-5 w-5 animate-spin text-white" />
-			{:else}
-				Login
-			{/if}
-		</Button>
-		<p class="text-center font-medium text-red-400">{form?.message || ''}</p>
-	</form>
-</div>
+			<Form.Field {config} name="email">
+				<Form.Item>
+					<Form.Label>Email</Form.Label>
+					<Form.Input autocomplete="off" />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
+			<Form.Field {config} name="password">
+				<Form.Item>
+					<div class="flex items-center justify-between "><Form.Label>Password</Form.Label><a class="text-xs text-muted-foreground hover:underline" href="/password-reset">Forgot password?</a></div>
+					<Form.Input type="password" autocomplete="current-password" />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
+		</CardContent>
+		<CardFooter>
+			<Form.Button disabled={submitting} variant="default" class="w-full"
+				>Login {#if submitting}
+					<Loader2 class="h-4 w-4 animate-spin ml-2" />
+				{/if}</Form.Button
+			>
+		</CardFooter>
+	</Form.Root>
+</Card>
 
-<div>
+<div class="animate-in fade-in-0">
 	Don't have an account? <a class="font-bold" href="/signup">Sign up</a>
 </div>

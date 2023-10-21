@@ -421,7 +421,7 @@
 <script lang="ts">
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import type { IconName } from "$lib/icons";
-	import { DocumentType, Location, Prisma } from "@prisma/client";
+	import { DocumentType, Prisma } from "@prisma/client";
 	import { ComponentProps, getContext, SvelteComponent } from "svelte";
 	import { writable } from "svelte/store";
 	import type { Entries } from "type-fest";
@@ -431,7 +431,7 @@
 	// $: selected_values = selectedCondition?.values?.(selected_input?.value) || [];
 	// $: selected_values.map;
 
-	import { trpc } from "$lib/trpc/client";
+
 	import type { Placement } from "@popperjs/core";
 	import type { Page } from "@sveltejs/kit";
 	import { createQuery } from "@tanstack/svelte-query";

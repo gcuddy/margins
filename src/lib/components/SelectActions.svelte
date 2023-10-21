@@ -20,11 +20,11 @@
 
 {#if selected_items.length}
 	<div
-		in:gentleFly|local={{
+		in:gentleFly={{
 			duration: 400,
 			easing: backOut,
 		}}
-		out:gentleFly|local={{
+		out:gentleFly={{
 			duration: 400,
 			easing: backIn,
 		}}

@@ -1,4 +1,4 @@
-import { trpc } from "$lib/trpc/client";
+
 import type { TRPCClientInit } from "trpc-sveltekit";
 
 export const listSubscriptionsQuery = (e?: TRPCClientInit) => ({

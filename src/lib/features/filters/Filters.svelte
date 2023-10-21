@@ -41,7 +41,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 
-	import { trpc } from "$lib/trpc/client";
+
 	import type { Prisma } from "@prisma/client";
 	import { createQuery, CreateQueryResult, QueryFunctionContext } from "@tanstack/svelte-query";
     import debounce from "lodash.debounce"

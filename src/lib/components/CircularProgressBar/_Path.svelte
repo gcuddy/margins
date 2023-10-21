@@ -43,7 +43,7 @@
 	fill-opacity="0"
 />
 
-<style>
+<style lang="postcss">
 	.CircularProgressbar-path {
 		stroke: gray;
 		stroke-linecap: butt;

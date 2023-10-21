@@ -2,7 +2,7 @@ import type { CreateQueryOptions } from "@tanstack/svelte-query";
 import debounce from "lodash.debounce"
 import type { TRPCClientInit } from "trpc-sveltekit";
 
-import { trpc } from "$lib/trpc/client";
+
 
 export const queryKeys = {
 	book: ["book"] as const,

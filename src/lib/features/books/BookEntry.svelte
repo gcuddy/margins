@@ -9,31 +9,40 @@
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
 	import dayjs from "$lib/dayjs";
 	import { stripGoogleBookCurl } from "$lib/features/books/utils";
-	import { trpc, trpcWithQuery } from "$lib/trpc/client";
-	import type { RouterInputs, RouterOutputs } from "$lib/trpc/router";
-	import { createMutation, createQuery, useQueryClient } from "@tanstack/svelte-query";
+
+
+	import {
+		createMutation,
+		createQuery,
+		useQueryClient,
+	} from "@tanstack/svelte-query";
 	import { nanoid } from "nanoid";
 	import { annotationQueryKeys } from "../annotations/queries";
 	import BookEntryLayout from "./BookEntryLayout.svelte";
 
 	export let bookId: string;
-	export let placeholderData: RouterOutputs["books"]["public"]["byId"] | undefined = undefined;
+	export let placeholderData:
+		| RouterOutputs["books"]["public"]["byId"]
+		| undefined = undefined;
 	export let entry: RouterOutputs["entries"]["load"] | undefined = undefined;
 
-    export let title = "";
+	export let title = "";
 
+	// $: todayLog = entry?.log.find((log) => dayjs(log.date).isSame(dayjs(), "day"));
 
-	$: todayLog = entry?.log.find((log) => dayjs(log.date).isSame(dayjs(), "day"));
-
-    const client = trpcWithQuery($page);
-    const utils = client.createContext();
+	const client = trpc($page);
+	const utils = client.createContext();
 	$: query = client.books.public.byId.createQuery(bookId, {
 		staleTime: 5 * 1000 * 60,
 		// placeholderData,
 		onSuccess: (book) => console.log({ book }),
 	});
 
-    $: title = entry?.title || $query.data?.volumeInfo?.title || placeholderData?.volumeInfo?.title || "";
+	$: title =
+		entry?.title ||
+		$query.data?.volumeInfo?.title ||
+		placeholderData?.volumeInfo?.title ||
+		"";
 
 	// $: query = createQuery({
 	// 	queryKey: ["books", "detail", bookId],
@@ -46,7 +55,9 @@
 	const queryClient = useQueryClient();
 	const saveNoteMutation = createMutation({
 		// TODO: persist offline
-		mutationFn: (note: RouterInputs["annotations"]["create"] & { id: string }) =>
+		mutationFn: (
+			note: RouterInputs["annotations"]["create"] & { id: string }
+		) =>
 			trpc($page).annotations.create.mutate({
 				entryId: entry?.id,
 				...note,
@@ -62,11 +73,17 @@
 			return { previousNote, note };
 		},
 		onError: (err, newNote, context) => {
-			queryClient.setQueryData(["annotations", context?.note.id], context?.previousNote);
+			queryClient.setQueryData(
+				["annotations", context?.note.id],
+				context?.previousNote
+			);
 		},
 		// Always refetch after error or success:
 		onSettled: (note) => {
-			if (note) queryClient.invalidateQueries({ queryKey: annotationQueryKeys.annotation(note.id) });
+			if (note)
+				queryClient.invalidateQueries({
+					queryKey: annotationQueryKeys.annotation(note.id),
+				});
 		},
 	});
 	// const entry = createQuery(entryDetailsQuery({ }))
@@ -76,13 +93,21 @@
 	let busy = false;
 
 	$: isbn =
-		$query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier ??
-		$query.data?.volumeInfo?.industryIdentifiers?.find((i) => i.type === "ISBN_10")?.identifier;
-	$: googleBooksimage =
-		$query.data?.volumeInfo?.imageLinks?.thumbnail || $query.data?.volumeInfo?.imageLinks?.smallThumbnail;
-	$: openLibraryImage = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : "";
+		$query.data?.volumeInfo?.industryIdentifiers?.find(
+			(i) => i.type === "ISBN_13"
+		)?.identifier ??
+		$query.data?.volumeInfo?.industryIdentifiers?.find(
+			(i) => i.type === "ISBN_10"
+		)?.identifier;
+	$: googleBooksimage = stripGoogleBookCurl(
+		$query.data?.volumeInfo?.imageLinks?.thumbnail ||
+			$query.data?.volumeInfo?.imageLinks?.smallThumbnail
+	);
+	$: openLibraryImage = isbn
+		? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`
+		: "";
 
-    $: bookmarked = !!entry?.bookmark;
+	$: bookmarked = !!entry?.bookmark_at;
 
 	$: image = openLibraryImage || googleBooksimage;
 
@@ -102,22 +127,41 @@
 		imageLinks.smallThumbnail;
 </script>
 
-<div class="container select-text mx-auto flex h-full flex-col space-y-8 divide-y p-6 dark:divide-gray-700" style:--book-shadow-color={$query.data?.color}>
+<div
+	class="container mx-auto flex h-full select-text flex-col space-y-8 divide-y p-6 dark:divide-gray-700"
+	style:--book-shadow-color={$query.data?.color}
+>
 	{#if entry}
-    <!-- {JSON.stringify(entry)} -->
-    {@const isbn = entry.uri?.replace("isbn:", "")}
-    <BookEntryLayout {bookId} image={entry.image} fallbackImage={googleBooksimage} title={entry.title || ""} {isbn} description={entry.html} author={entry.author || ""} language={entry.language} subtitle={entry.summary} genres={entry.genres} publisher={entry.publisher} pageCount={entry.pageCount}  published={entry.published} {bookmarked}  >
-        <svelte:fragment slot="underImage">
-            {#if $page.route.id?.includes("entry") && $page.params.id}
-					{#if !todayLog}
+		<!-- {JSON.stringify(entry)} -->
+		{@const isbn = entry.uri?.replace("isbn:", "")}
+		<BookEntryLayout
+			{bookId}
+			image={entry.image}
+			fallbackImage={googleBooksimage}
+			title={entry.title || ""}
+			{isbn}
+			description={entry.html}
+			author={entry.author || ""}
+			language={entry.language}
+			subtitle={entry.summary}
+			genres={entry.genres}
+			publisher={entry.publisher}
+			pageCount={entry.pageCount}
+			published={entry.published}
+			{bookmarked}
+		>
+			<svelte:fragment slot="underImage">
+				{#if $page.route.id?.includes("entry") && $page.params.id}
+					{#if !true}
 						<form
 							use:enhance={() => {
-                                return () => {
-                                    utils.entries.invalidate()
-                                }
-                            }}
+								return () => {
+									utils.entries.invalidate();
+								};
+							}}
 							method="post"
-							action="/u:{$page.data.user?.username}/entry/{$page.params.id}?/log"
+							action="/u:{$page.data.user?.username}/entry/{$page.params
+								.id}?/log"
 						>
 							<Button type="submit" className="flex gap-1">
 								<Icon name="lightningBoltSolid" />
@@ -128,10 +172,9 @@
 						Logged today
 					{/if}
 				{/if}
-        </svelte:fragment>
-    </BookEntryLayout>
-
-    {:else if $query.isLoading}
+			</svelte:fragment>
+		</BookEntryLayout>
+	{:else if $query.isLoading}
 		loading...
 	{:else if $query.isError}
 		Error
@@ -140,13 +183,39 @@
 		{@const isbn =
 			book.industryIdentifiers?.find((i) => i.type === "ISBN_13")?.identifier ??
 			book.industryIdentifiers?.find((i) => i.type === "ISBN_10")?.identifier}
-		{@const bookmark = $page.data.user?.bookmarks?.find((bookmark) => bookmark.entry?.uri === isbn)}
-        {@const {title, subtitle, authors, publisher, language, pageCount, description, publishedDate} = book}
+		{@const bookmark = $page.data.user?.bookmarks?.find(
+			(bookmark) => bookmark.entry?.uri === isbn
+		)}
+		{@const {
+			title,
+			subtitle,
+			authors,
+			publisher,
+			language,
+			pageCount,
+			description,
+			publishedDate,
+		} = book}
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
 		<!-- {@const image = stripGoogleBookCurl(book.imageLinks?.thumbnail || book.imageLinks?.smallThumbnail)} -->
-       <BookEntryLayout {bookmarked} {bookId} {image} fallbackImage={googleBooksimage} genres={book.categories?.[0]?.split(" /")[0]} {title} {publisher} {isbn} {language} {pageCount} {subtitle} {description} author={authors?.join(", ")} published={publishedDate}  >
-        <svelte:fragment slot="underImage">
-            <!-- {#if $page.route.id?.includes("entry") && $page.params.id}
+		<BookEntryLayout
+			{bookmarked}
+			{bookId}
+			{image}
+			fallbackImage={googleBooksimage}
+			genres={book.categories?.[0]?.split(" /")[0]}
+			{title}
+			{publisher}
+			{isbn}
+			{language}
+			{pageCount}
+			{subtitle}
+			{description}
+			author={authors?.join(", ")}
+			published={publishedDate}
+		>
+			<svelte:fragment slot="underImage">
+				<!-- {#if $page.route.id?.includes("entry") && $page.params.id}
 					{#if !todayLog}
 						<form
 							use:enhance={() => {
@@ -166,9 +235,8 @@
 						Logged today
 					{/if}
 				{/if} -->
-        </svelte:fragment>
-       </BookEntryLayout>
-
+			</svelte:fragment>
+		</BookEntryLayout>
 	{/if}
 	{#if entry?.annotations}
 		<div class="grow pt-6">
@@ -205,9 +273,17 @@
 				class="text-sm"
 			>
 				<svelte:fragment slot="buttons">
-					<Button type="submit" disabled={busy} variant="ghost" size="sm" className="text-sm"
+					<Button
+						type="submit"
+						disabled={busy}
+						variant="ghost"
+						size="sm"
+						className="text-sm"
 						>{#if busy}
-							<Icon name="loading" className="animate-spin h-4 w-4 text-current" />
+							<Icon
+								name="loading"
+								className="animate-spin h-4 w-4 text-current"
+							/>
 						{:else}
 							Save
 						{/if}

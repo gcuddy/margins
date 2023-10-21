@@ -1,4 +1,30 @@
 {
-	"useTabs": true,
-	"printWidth": 110
+    "useTabs": true,
+	"singleQuote": true,
+	"trailingComma": "all",
+	"printWidth": 80,
+    "semi": true,
+    "pluginSearchDirs": ["."],
+	"plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": {
+				"parser": "svelte"
+			}
+		},
+		{
+			"files": "*.md",
+			"options": {
+				"parser": "markdown",
+				"printWidth": 100,
+				"proseWrap": "always",
+				"tabWidth": 2,
+				"useTabs": true,
+				"semi": false,
+				"trailingComma": "none",
+				"bracketSameLine": true
+			}
+		}
+	]
 }

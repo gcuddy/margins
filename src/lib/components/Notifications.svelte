@@ -48,7 +48,9 @@
 				{/if}
 				<div class="space-y-1">
 					{#if title}
-						<span class="text-sm font-medium text-gray-800 dark:text-gray-200">{title}</span>
+						<span class="text-sm font-medium text-gray-800 dark:text-gray-200"
+							>{title}</span
+						>
 					{/if}
 					{#if typeof message === "string"}
 						<div>{@html message}</div>
@@ -62,7 +64,10 @@
 					{/if}
 				</div>
 			</div>
-			<button class="absolute top-1 right-1 cursor-default" on:click={() => notifications.remove(id)}>
+			<button
+				class="absolute right-1 top-1 cursor-default"
+				on:click={() => notifications.remove(id)}
+			>
 				<Icon name="xSolid" className="h-4 w-4 fill-current" />
 			</button>
 		</div>

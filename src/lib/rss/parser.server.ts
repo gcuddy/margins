@@ -10,8 +10,33 @@ import { parse } from 'node-html-parser';
 import { z } from 'zod';
 
 import { db } from '$lib/db';
+import normalizeUrl from 'normalize-url';
 
-import { isJson, isXml, linkSelectors, resolveUrl } from './utils';
+const xmlMimeTypes = ['application/rss+xml', 'application/atom+xml', 'text/xml', 'application/xml'];
+export const isXml = (type: string) => xmlMimeTypes.some((t) => type.trim().includes(t));
+
+
+const jsonMimeTypes = ['application/feed+json', 'application/json'];
+export const isJson = (type: string) => jsonMimeTypes.some((t) => type.trim().includes(t));
+const linkTypes = [
+	'application/rss+xml',
+	'application/atom+xml',
+	'application/feed+json',
+	'application/json',
+];
+export const linkSelectors = linkTypes
+	.map((lt) => `link[rel="alternate"][type="${lt}"]`)
+	.join(', ');
+
+function isRelativeUrl(str: string) {
+	return !/^https?:\/\//i.test(str);
+}
+export function resolveUrl(origin: string, url: string) {
+	if (isRelativeUrl(url)) {
+		return new URL(url, normalizeUrl(origin)).href;
+	}
+	return url;
+}
 
 const parser = new XMLParser({
 	ignoreAttributes: false,

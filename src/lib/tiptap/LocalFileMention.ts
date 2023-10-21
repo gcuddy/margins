@@ -14,73 +14,73 @@ export type MentionOptions = {
 }
 
 export const suggestion: Omit<SuggestionOptions<any>, "editor"> = {
-        items: async ({ query }) => {
-            const localNames = get(localFileNames)
-            const filtered = localNames.filter((name) => name.includes(query)).slice(0, 20);
-            return filtered.map((name) => {
-                return {
-                    id: name,
-                    label: name,
-                };
-            });
-        },
-        char: "[[",
-        decorationTag: "span",
-        render: () => {
-            let component: MentionList;
-            //store.dispatch("onKeydown");
-            // REVIEW: this is a hack-y way to get the keyboard event to the child component
-            // TODO: support selectItem
-
-            const state = createMentionListState();
-
-            let command: (props: any) => void;
+    items: async ({ query }) => {
+        const localNames = get(localFileNames)
+        const filtered = localNames.filter((name) => name.includes(query)).slice(0, 20);
+        return filtered.map((name) => {
             return {
-                onStart: (props) => {
-                    console.log({ props });
-                    state.setItems(props.items);
-                    state.setProps(props);
-                    command = props.command;
-                    component = new MentionList({
-                        target: document.body,
-                        props: {
-                            ...props,
-                            state,
-                        },
-                    });
-                },
-                onKeyDown: ({ event }) => {
-                    console.log(event);
-                    if (event.key === "ArrowUp") {
-                        state.up();
-                        return true;
-                    }
-                    if (event.key === "ArrowDown") {
-                        state.down();
-                        return true;
-                    }
-                    if (event.key === "Enter") {
-                        // state.select();
-                        // get(state).props.command
-                        state.selectItem();
-                        return true;
-                        // TODO: how to get it to replace the text?
-                        // command({id:});
-                    }
-                    if (event.key === "Escape") {
-                        // hide
-                    }
-                    // TODO: if event.key === "Enter" then selectItem
-                    return false;
-                },
-                onUpdate: (props) => {
-                    state.setItems(props.items);
-                    state.setProps(props);
-                    component.$set(props);
-                },
-                onExit: () => component.$destroy(),
+                id: name,
+                label: name,
             };
-        },
+        });
+    },
+    char: "[[",
+    decorationTag: "span",
+    render: () => {
+        let component: MentionList;
+        //store.dispatch("onKeydown");
+        // REVIEW: this is a hack-y way to get the keyboard event to the child component
+        // TODO: support selectItem
+
+        const state = createMentionListState();
+
+        let command: (props: any) => void;
+        return {
+            onStart: (props) => {
+                console.log({ props });
+                state.setItems(props.items);
+                state.setProps(props);
+                command = props.command;
+                component = new MentionList({
+                    target: document.body,
+                    props: {
+                        ...props,
+                        state,
+                    },
+                });
+            },
+            onKeyDown: ({ event }) => {
+                console.log(event);
+                if (event.key === "ArrowUp") {
+                    state.up();
+                    return true;
+                }
+                if (event.key === "ArrowDown") {
+                    state.down();
+                    return true;
+                }
+                if (event.key === "Enter") {
+                    // state.select();
+                    // get(state).props.command
+                    state.selectItem();
+                    return true;
+                    // TODO: how to get it to replace the text?
+                    // command({id:});
+                }
+                if (event.key === "Escape") {
+                    // hide
+                }
+                // TODO: if event.key === "Enter" then selectItem
+                return false;
+            },
+            onUpdate: (props) => {
+                state.setItems(props.items);
+                state.setProps(props);
+                component.$set(props);
+            },
+            onExit: () => component.$destroy(),
+        };
+    },
 }
 export const MentionPluginKey = new PluginKey('localFileMention')
 

@@ -89,7 +89,7 @@
 	{/if}
 </div>
 
-<style>
+<style lang="postcss">
 	.row {
 		position: relative;
 	}

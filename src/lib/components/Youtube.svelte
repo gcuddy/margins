@@ -10,16 +10,16 @@
 		PLAYING: 1,
 		PAUSED: 2,
 		BUFFERING: 3,
-		CUED: 5,
+		CUED: 5
 	};
 </script>
 
 <script lang="ts">
-	import { onMount } from "svelte";
-	import { createEventDispatcher } from "svelte";
-	import { onDestroy } from "svelte";
-	import YoutubePlayer from "youtube-player";
-	import type { YouTubePlayer } from "youtube-player/dist/types";
+	import { onMount } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
+	import { onDestroy } from 'svelte';
+	import YoutubePlayer from 'youtube-player';
+	import type { YouTubePlayer } from 'youtube-player/dist/types';
 	type Options = Parameters<typeof YoutubePlayer>[1];
 	export { className as class }; // HTML class names for container element (optional)
 	export let id: string | undefined = undefined; // HTML element ID for player (optional)
@@ -28,7 +28,7 @@
 
 	export let width = 640;
 	export let height = 360;
-	let className = ""; // HTML class names for container element
+	let className = ''; // HTML class names for container element
 	let playerElem: HTMLElement; // player DOM element reference
 
 	// read-only binding
@@ -38,20 +38,24 @@
 	onDestroy(() => player?.destroy());
 	// Update videoId and load new video if URL changes
 	// $: play(videoId);
-	function createPlayer() {
-		player = YoutubePlayer(playerElem, options);
+	async function createPlayer() {
+		console.log('creating player')
+		player = await YoutubePlayer(playerElem, options);
+		console.log({ player });
+		await player.playVideo();
 		// Register event handlers
-		player.on("ready", onPlayerReady);
-		player.on("error", onPlayerError);
-		player.on("stateChange", onPlayerStateChange);
-		player.on("playbackRateChange", onPlayerPlaybackRateChange);
-		player.on("playbackQualityChange", onPlayerPlaybackQualityChange);
+		player.on('ready', (e) => console.log('eeee ready'));
+		player.on('error', onPlayerError);
+		player.on('stateChange', onPlayerStateChange);
+		player.on('playbackRateChange', onPlayerPlaybackRateChange);
+		player.on('playbackQualityChange', onPlayerPlaybackQualityChange);
 		// Tear down player when done
 	}
 	function play(videoId: string) {
 		// this is needed because the loadVideoById function always starts playing,
 		// even if you have set autoplay to 1 whereas the cueVideoById function
 		// never starts autoplaying
+		console.log({ player, videoId });
 		if (player && videoId) {
 			if (options && options.playerVars && options.playerVars.autoplay === 1) {
 				player.loadVideoById(videoId);
@@ -71,7 +75,9 @@
 	 *   @param {Object} target - player object
 	 */
 	function onPlayerReady(event: CustomEvent) {
-		dispatch("ready", event);
+		console.log('ready');
+		dispatch('ready', event);
+		options?.events?.ready?.(event);
 		// Start playing
 		play(videoId);
 	}
@@ -83,7 +89,7 @@
 	 *   @param {Object} target - player object
 	 */
 	function onPlayerError(event: CustomEvent) {
-		dispatch("error", event);
+		dispatch('error', event);
 	}
 	/**
 	 * https://developers.google.com/youtube/iframe_api_reference#onStateChange
@@ -92,17 +98,20 @@
 	 *   @param {Integer} data  - status change type
 	 *   @param {Object} target - actual YT player
 	 */
-	function onPlayerStateChange(event: CustomEvent) {
-		dispatch("stateChange", event);
+	function onPlayerStateChange(event: CustomEvent & { data: number }) {
+		console.log('state change', event);
+		dispatch('stateChange', event);
+		options?.events?.stateChange?.(event);
+
 		switch (event.data) {
 			case PlayerState.ENDED:
-				dispatch("end", event);
+				dispatch('end', event);
 				break;
 			case PlayerState.PLAYING:
-				dispatch("play", event);
+				dispatch('play', event);
 				break;
 			case PlayerState.PAUSED:
-				dispatch("pause", event);
+				dispatch('pause', event);
 				break;
 			default:
 		}
@@ -115,7 +124,7 @@
 	 *   @param {Object} target - actual YT player
 	 */
 	function onPlayerPlaybackRateChange(event: CustomEvent) {
-		dispatch("playbackRateChange", event);
+		dispatch('playbackRateChange', event);
 	}
 	/**
 	 * https://developers.google.com/youtube/iframe_api_reference#onPlaybackQualityChange
@@ -125,13 +134,24 @@
 	 *   @param {Object} target - actual YT player
 	 */
 	function onPlayerPlaybackQualityChange(event: CustomEvent) {
-		dispatch("playbackQualityChange", event);
+		dispatch('playbackQualityChange', event);
 	}
 </script>
 
-	<!-- <div {id} bind:this={playerElem} /> -->
-    <!-- iframe height 100% vs auto? -->
-	<iframe
+<!-- <div {id} bind:this={playerElem} /> -->
+<!-- iframe height 100% vs auto? -->
+<!-- class="aspect-video overflow-hidden rounded-xl ring-1 ring-border" -->
+<!-- <iframe
+	title="YouTube video player"
+	class="absolute inset-0"
+	{id}
+	width="100%"
+	height="100%"
+	frameborder="0"
+	src="https://www.youtube.com/embed/{videoId}?enablejsapi=1?autoplay=1"
+/> -->
+
+<iframe
 		bind:this={playerElem}
         class="aspect-video rounded-xl ring-1 ring-border overflow-hidden"
 		title="YouTube video player"
@@ -141,3 +161,6 @@
 		src="https://www.youtube.com/embed/{videoId}?enablejsapi=1"
 		frameborder="0"
 	/>
+<!-- src="https://www.youtube.com/embed/{videoId}?enablejsapi=1?autoplay=1" -->
+<!-- 	src="https://www.youtube-nocookie.com/embed/{videoId}?amp=&autoplay=1&rel=0&showinfo=0"
+ -->

@@ -4,7 +4,7 @@
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import dayjs from "$lib/dayjs";
-	import { trpc } from "$lib/trpc/client";
+
 	import { createQuery } from "@tanstack/svelte-query";
 	import type { Movie } from "tmdb-ts";
 

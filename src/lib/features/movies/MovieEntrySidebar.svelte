@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import Muted from "$lib/components/atoms/Muted.svelte";
-	import { trpc } from "$lib/trpc/client";
+
 	import { createQuery } from "@tanstack/svelte-query";
 	import { makeLogo } from "./tmdb";
 

@@ -1,7 +1,7 @@
 import type { CreateQueryOptions } from "@tanstack/svelte-query";
 import type { TRPCClientInit } from "trpc-sveltekit";
 
-import { trpc } from "$lib/trpc/client";
+
 
 const queryKeys = () => ({
     list: ["collections"] as const,

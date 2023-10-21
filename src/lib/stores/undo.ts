@@ -52,6 +52,9 @@ export function createStack<T>(current: T) {
 			if (index < stack.length) index += 1;
 			return update();
 		},
-		subscribe: state.subscribe
+		subscribe: state.subscribe,
+        // avoid these
+        set: state.set,
+        update: state.update
 	};
 }

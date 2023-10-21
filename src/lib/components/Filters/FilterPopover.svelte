@@ -79,7 +79,7 @@
 
 	{#if open}
 		<!-- todo: make this fly instead -->
-		<div transition:fade={{ duration: 75 }} use:popperContent class="z-20">
+		<div transition:fade|global={{ duration: 75 }} use:popperContent class="z-20">
 			<PopoverPanel static>
 				<Filters
 					bind:openDialog={modal}

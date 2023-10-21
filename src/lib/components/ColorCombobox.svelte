@@ -1,11 +1,13 @@
 <script lang="ts">
 	import GenericCombobox from "./GenericCombobox.svelte";
-	import { Color } from "@prisma/client";
 	import { page } from "$app/stores";
 	import ColorListItem from "./Color/ColorListItem.svelte";
-	const getName = (c: Color) => color_descriptions?.find(({ color }) => color === c)?.description || c;
+	import type { Color } from "$lib/features/colors";
+	import { colors as Colors } from "$lib/features/colors";
 	$: color_descriptions = $page.data.user?.color_descriptions;
-	$: colors = Object.values(Color).map((c) => ({ name: getName(c), id: c }));
+	const getName = (c: Color) =>
+		color_descriptions?.find(({ color }) => color === c)?.description || c;
+	$: colors = Colors.map((c) => ({ name: getName(c), id: c }));
 	$: console.log({ colors });
 	export let selected: Color = "Yellow";
 	let selectedValue = [{ name: getName(selected), id: selected }];

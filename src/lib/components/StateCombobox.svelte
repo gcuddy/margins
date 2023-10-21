@@ -1,24 +1,25 @@
 <script lang="ts">
-	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import SmallPlus from "$lib/components/atoms/SmallPlus.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import mq from "$lib/stores/mq";
-	import { syncStore } from "$lib/stores/sync";
 	import type { Tooltip } from "$lib/stores/Tooltips";
-	import { trpc } from "$lib/trpc/client";
 	import { LOCATION_TO_ICON_SOLID } from "$lib/types/schemas/Locations";
 	import type { State } from "@prisma/client";
-	import { Popover, PopoverButton, PopoverPanel } from "@rgossiaux/svelte-headlessui";
+	import {
+		Popover,
+		PopoverButton,
+		PopoverPanel,
+	} from "@rgossiaux/svelte-headlessui";
 	import { createPopperActions } from "svelte-popperjs";
-	import GenericCombobox from "./GenericCombobox.svelte";
-	import { match, P } from "ts-pattern";
-	import HiddenInput from "./atoms/HiddenInput.svelte";
 	import { tweened } from "svelte/motion";
+	import GenericCombobox from "./GenericCombobox.svelte";
 
-	export let state = $page.data.user?.states?.find((s) => s.id === $page.data.user?.default_state_id);
+	export let state = $page.data.user?.states?.find(
+		(s) => s.id === $page.data.user?.default_state_id
+	);
 	export let unsaved = false;
-    export let buttonWrapper: HTMLDivElement | undefined = undefined;
+	export let buttonWrapper: HTMLDivElement | undefined = undefined;
 	$: console.log({ state, $page });
 	$: name = state?.name;
 	$: location = state?.type;
@@ -64,10 +65,10 @@
 	<div bind:this={buttonWrapper} class="button-wrapper">
 		<PopoverButton
 			class="relative flex cursor-default items-center gap-1 rounded py-1 px-2 text-left transition focus-visible:bg-gray-200 focus-visible:ring-2 hover:bg-gray-200   dark:focus-visible:bg-gray-700 dark:focus-visible:ring-offset-stone-900 dark:hover:bg-gray-700"
-            on:click={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }}
+			on:click={(e) => {
+				e.preventDefault();
+				e.stopPropagation();
+			}}
 			use={[popperRef]}
 		>
 			{#if unsaved}
@@ -98,7 +99,7 @@
 			placeholder="Change status…"
 			selectedValue={[state]}
 			onSelect={async (e) => {
-                console.log({e})
+				console.log({ e });
 				state = e;
 				// close
 				close(null);
@@ -116,7 +117,9 @@
 					name={LOCATION_TO_ICON_SOLID[value.type]}
 				/>
 
-				<span class="grow {active ? 'text-bright' : 'text-muted/80'}">{value.name}</span>
+				<span class="grow {active ? 'text-bright' : 'text-muted/80'}"
+					>{value.name}</span
+				>
 				{#if selected}
 					<Icon name="checkMini" className="h-4 w-4 fill-gray-400" />
 				{/if}

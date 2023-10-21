@@ -6,7 +6,6 @@
 	import { Focus, focusIn } from "$lib/utils/focus-management";
 	import { onDestroy } from "svelte";
 	export let value: string | JSONContent = "";
-	export let el: HTMLElement | undefined = undefined;
 	import { draggable } from "@neodrag/svelte";
 	import { spring } from "svelte/motion";
 	import type { Tag } from "@prisma/client";
@@ -14,7 +13,9 @@
 	import type { JSONContent } from "@tiptap/core";
 	import { fadeScale } from "$lib/transitions";
 	import { backInOut } from "svelte/easing";
-	import { clamp } from "lodash";
+
+
+	let el: HTMLElement;
 	const dispatch = createEventDispatcher<{
 		save: {
 			value: string | JSONContent;
@@ -58,7 +59,8 @@
 	let x: number = Math.max(
 		Math.min(
 			initialRect.x - (container ? container.offsetWidth : 280) * 1.5,
-			el.closest("prose")?.clientWidth || 600 - (container ? container.offsetWidth : 280)
+			el.closest("prose")?.clientWidth ||
+				600 - (container ? container.offsetWidth : 280)
 		),
 		0
 	);
@@ -139,8 +141,8 @@
 			rotation.set(-2, { soft: true });
 		}
 	}}
-	in:fly={{ y: 10 }}
-	out:fadeScale={{
+	in:fly|global={{ y: 10 }}
+	out:fadeScale|global={{
 		easing: saving ? backInOut : undefined,
 		duration: 400,
 		baseScale: 0.9,
@@ -171,10 +173,13 @@
 	<!-- style:--rotation="{$rotation}deg" -->
 	<!--  -->
 	<!-- TODO: form? -->
-	<div style:--scale={$scale} class="annotatation-container !cursor-grab shadow-xl transition-opacity">
+	<div
+		style:--scale={$scale}
+		class="annotatation-container !cursor-grab shadow-xl transition-opacity"
+	>
 		{#if rich}
 			<RichAnnotationInput
-            class="w-[min(95vw,25rem)]"
+				class="w-[min(95vw,25rem)]"
 				autofocus
 				bind:tags
 				config={{
@@ -213,7 +218,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	:global(.neodrag-dragging) div {
 		opacity: 0.95;
 		cursor: grabbing !important;

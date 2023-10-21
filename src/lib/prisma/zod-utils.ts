@@ -3,7 +3,6 @@ import { z } from "zod";
 import { TargetSchema } from "$lib/annotation";
 import { chosenIcon } from "$lib/types/icon";
 import { recipeSchema } from "$lib/web-parser/recipe";
-import { EntryCreateInputSchema } from "./zod-prisma";
 export { ViewOptionsSchema } from "$lib/types/schemas/View";
 
 export { chosenIcon, recipeSchema, TargetSchema };

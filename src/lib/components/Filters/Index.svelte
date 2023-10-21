@@ -126,7 +126,7 @@
 	import type { IconName } from "$lib/icons";
 	import { searchObjectKeys } from "$lib/stores/filter";
 	import { disableGlobalKeyboardShortcuts } from "$lib/stores/keyboard";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
 	import { isEntry } from "$lib/utils";
 	import type { PickByValue } from "$lib/utils/type-utils";
 	import type { Annotation, Entry, Prisma } from "@prisma/client";

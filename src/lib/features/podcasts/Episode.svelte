@@ -10,7 +10,7 @@
 	import { podcastPlayer } from "$lib/components/PodcastPlayer.svelte";
 	import dayjs from "$lib/dayjs";
 	import { modals } from "$lib/stores/modals";
-	import { trpc } from "$lib/trpc/client";
+
 	import { formatDate, formatDuration } from "$lib/utils/dates";
 	import { DocumentType, Entry } from "@prisma/client";
 	import { createQuery } from "@tanstack/svelte-query";

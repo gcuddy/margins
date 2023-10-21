@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import { createFilterStores, StringKeys } from "$lib/stores/filter";
-	import { serialize } from "superjson";
-	import { createEventDispatcher, onDestroy, onMount, setContext } from "svelte";
+	import {
+		createEventDispatcher,
+		onDestroy,
+		onMount,
+		setContext,
+	} from "svelte";
 	import type { ChildOption } from "./SimpleFilter.svelte";
 
 	type T = $$Generic<Record<PropertKey, any>>;
@@ -16,7 +20,10 @@
 	console.log({ filterMap });
 	const savedFilters = $filterMap?.get($page.route.id || "");
 	console.log({ savedFilters });
-	let stores = createFilterStores({ data: values, filters: savedFilters }, ...searchKeys);
+	let stores = createFilterStores(
+		{ data: values, filters: savedFilters },
+		...searchKeys
+	);
 	// $: console.log({ stores });
 	const dispatch = createEventDispatcher<{
 		filter: typeof values;
@@ -73,7 +80,14 @@
 <!-- Parent Component: puts stores in context and allows other child components to grab onto them -->
 <!-- Actually, let's use slot props instead. Exposes a bunch of slots. -->
 <!-- expects FilterDisplay -->
-<slot {items} filteredItems={$filteredItems} {any} {filters} _filters={$filters} {searchTerm} />
+<slot
+	{items}
+	filteredItems={$filteredItems}
+	{any}
+	{filters}
+	_filters={$filters}
+	{searchTerm}
+/>
 <!-- <FilterDisplay
 	bind:filters={chosenFilters}
 	options={[

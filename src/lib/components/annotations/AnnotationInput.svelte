@@ -139,7 +139,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	:global(.neodrag-dragging) textarea {
 		cursor: grabbing !important;
 	}

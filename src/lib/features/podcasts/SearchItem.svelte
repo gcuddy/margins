@@ -4,10 +4,13 @@
 	import Muted from "$lib/components/atoms/Muted.svelte";
 	import Icon from "$lib/components/helpers/Icon.svelte";
 	import { notifications } from "$lib/stores/notifications";
-	import type { RouterOutputs } from "$lib/trpc/router";
-	import { podcastSearchQuery, queryKeys } from "$lib/features/podcasts/queries";
+
+	import {
+		podcastSearchQuery,
+		queryKeys,
+	} from "$lib/features/podcasts/queries";
 	import ImageLoader from "$lib/components/ui/images/ImageLoader.svelte";
-	import ImageSkeleton from "$lib/components/layout/Skeletons/ImageSkeleton.svelte";
+	import ImageSkeleton from "$lib/components/ui/skeleton/ImageSkeleton.svelte";
 
 	type Feed = RouterOutputs["podcasts"]["public"]["search"]["feeds"][number];
 	export let feed: Feed;
@@ -21,7 +24,9 @@
 	$: feed = value || feed;
 
 	let subscribed: boolean;
-	$: subscribed = !!$page.data.user?.subscriptions?.some((s) => s.feed?.podcastIndexId === feed.id);
+	$: subscribed = !!$page.data.user?.subscriptions?.some(
+		(s) => s.feed?.podcastIndexId === feed.id
+	);
 
 	let img_error = false;
 	let subscribing = false;
@@ -81,13 +86,21 @@
 			<input type="hidden" name="podcastIndexId" value={feed.id} />
 			<button type="submit" class="group ml-auto cursor-default">
 				{#if subscribed}
-					<Icon name="checkCircle2" className="h-6 w-6 stroke-gray-100 fill-green-500" />
+					<Icon
+						name="checkCircle2"
+						className="h-6 w-6 stroke-gray-100 fill-green-500"
+					/>
 				{:else if subscribing}
-					<Icon name="loading" className="h-6 w-6 animate-spin stroke-gray-500 " />
+					<Icon
+						name="loading"
+						className="h-6 w-6 animate-spin stroke-gray-500 "
+					/>
 				{:else if !subscribed}
 					<Icon
 						name="plusCircle2"
-						className="h-6 w-6 {active ? 'stroke-white' : 'stroke-gray-600'} group-hover:fill-gray-200"
+						className="h-6 w-6 {active
+							? 'stroke-white'
+							: 'stroke-gray-600'} group-hover:fill-gray-200"
 					/>
 				{/if}
 			</button>

@@ -1,8 +1,8 @@
 import { getContext } from "svelte";
 
-import type { trpcWithQuery } from "$lib/trpc/client";
+
 import type { CreateMutationOptions } from "@tanstack/svelte-query";
-import type { RouterOutputs } from "$lib/trpc/router";
+
 
 export const UpdateBookmarkMutationKey = 'UpdateBookmarkMutation';
 
@@ -11,7 +11,7 @@ export function useUpdateBookmark() {
     if (!mutation) {
         throw new Error('No UpdateBookmarkMutation context found');
     }
-    return mutation as ReturnType<ReturnType<typeof trpcWithQuery>["bookmarks"]["update"]["createMutation"]>;
+    return mutation as ReturnType<ReturnType<typeof trpc>["bookmarks"]["update"]["createMutation"]>;
 }
 
 export const CreateBookmarkMutationKey = 'CreateBookmarkMutation';
@@ -21,7 +21,7 @@ export function useCreateBookmark() {
     if (!mutation) {
         throw new Error('No CreateBookmarkMutation context found');
     }
-    return mutation as ReturnType<ReturnType<typeof trpcWithQuery>["bookmarks"]["create"]["createMutation"]>;
+    return mutation as ReturnType<ReturnType<typeof trpc>["bookmarks"]["create"]["createMutation"]>;
 }
 
 // const createBookmarkMutation = () => ({

@@ -2,18 +2,22 @@ import { browser } from "$app/environment";
 
 // Map for localStorage keys
 export const LOCALSTORAGE_KEYS = {
-	accessToken: "spotify_access_token",
-	refreshToken: "spotify_refresh_token",
-	expireTime: "spotify_token_expire_time",
-	timestamp: "spotify_token_timestamp",
+	accessToken: 'spotify_access_token',
+	expireTime: 'spotify_token_expire_time',
+	refreshToken: 'spotify_refresh_token',
+	timestamp: 'spotify_token_timestamp',
 };
 
 // Map to retrieve localStorage values
 export const LOCALSTORAGE_VALUES = {
-	accessToken: browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.accessToken),
-	refreshToken: browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.refreshToken),
-	expireTime: browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.expireTime),
-	timestamp: browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.timestamp),
+	accessToken:
+		browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.accessToken),
+	expireTime:
+		browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.expireTime),
+	refreshToken:
+		browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.refreshToken),
+	timestamp:
+		browser && window.localStorage.getItem(LOCALSTORAGE_KEYS.timestamp),
 };
 
 /**
@@ -22,7 +26,7 @@ export const LOCALSTORAGE_VALUES = {
  * @returns {boolean} Whether or not the access token in localStorage has expired
  */
 const hasTokenExpired = () => {
-	const { accessToken, timestamp, expireTime } = LOCALSTORAGE_VALUES;
+	const { accessToken, expireTime, timestamp } = LOCALSTORAGE_VALUES;
 	if (!accessToken || !timestamp) {
 		return false;
 	}
@@ -37,20 +41,20 @@ const hasTokenExpired = () => {
  */
 const refreshToken = async () => {
 	try {
-		console.log("trying refresh");
+		console.log('trying refresh');
 		// // Logout if there's no refresh token stored or we've managed to get into a reload infinite loop
 		if (
 			!LOCALSTORAGE_VALUES.refreshToken ||
-			LOCALSTORAGE_VALUES.refreshToken === "undefined" ||
+			LOCALSTORAGE_VALUES.refreshToken === 'undefined' ||
 			Date.now() - Number(LOCALSTORAGE_VALUES.timestamp) / 1000 < 1000
 		) {
-			console.error("No refresh token available");
+			console.error('No refresh token available');
 			logout();
 		}
 
 		// // Use `/refresh_token` endpoint from our Node app
 		const data = await fetch(
-			`/api/spotify/refresh_token?refresh_token=${LOCALSTORAGE_VALUES.refreshToken}`
+			`/api/spotify/refresh_token?refresh_token=${LOCALSTORAGE_VALUES.refreshToken}`,
 		).then((res) => res.json());
 		console.log({ data });
 
@@ -60,8 +64,8 @@ const refreshToken = async () => {
 
 		// // Reload the page for localStorage updates to be reflected
 		// window.location.reload();
-	} catch (e) {
-		console.error(e);
+	} catch (error) {
+		console.error(error);
 	}
 };
 
@@ -78,23 +82,32 @@ export const logout = () => {
 	window.location = window.location.origin;
 };
 export const getAccessToken = () => {
-	if (!browser) return false;
+	if (!browser) {
+		return false;
+	}
 	const queryString = window.location.search;
 	const urlParams = new URLSearchParams(queryString);
 	const queryParams = {
-		[LOCALSTORAGE_KEYS.accessToken]: urlParams.get("access_token"),
-		[LOCALSTORAGE_KEYS.refreshToken]: urlParams.get("refresh_token"),
-		[LOCALSTORAGE_KEYS.expireTime]: urlParams.get("expires_in"),
+		[LOCALSTORAGE_KEYS.accessToken]: urlParams.get('access_token'),
+		[LOCALSTORAGE_KEYS.refreshToken]: urlParams.get('refresh_token'),
+		[LOCALSTORAGE_KEYS.expireTime]: urlParams.get('expires_in'),
 	};
-	const hasError = urlParams.get("error");
+	const hasError = urlParams.get('error');
 
 	// If there's an error OR the token in localStorage has expired, refresh the token
-	if (hasError || hasTokenExpired() || LOCALSTORAGE_VALUES.accessToken === "undefined") {
+	if (
+		hasError ||
+		hasTokenExpired() ||
+		LOCALSTORAGE_VALUES.accessToken === 'undefined'
+	) {
 		refreshToken();
 	}
 
 	// If there is a valid access token in localStorage, use that
-	if (LOCALSTORAGE_VALUES.accessToken && LOCALSTORAGE_VALUES.accessToken !== "undefined") {
+	if (
+		LOCALSTORAGE_VALUES.accessToken &&
+		LOCALSTORAGE_VALUES.accessToken !== 'undefined'
+	) {
 		return LOCALSTORAGE_VALUES.accessToken;
 	}
 
@@ -115,13 +128,13 @@ export const getAccessToken = () => {
 };
 
 export class Spotify {
-	headers: RequestInit["headers"];
-	baseUrl: string = "https://api.spotify.com/v1";
+	headers: RequestInit['headers'];
+	baseUrl: string = 'https://api.spotify.com/v1';
 	constructor(private accessToken: string) {
 		this.accessToken = accessToken;
 		this.headers = {
 			Authorization: `Bearer ${accessToken}`,
-			"Content-Type": "application/json",
+			'Content-Type': 'application/json',
 		};
 	}
 
@@ -134,9 +147,9 @@ export class Spotify {
 			const response = await fetch(`${this.baseUrl}${path}`, {
 				headers: this.headers,
 			});
-			return await response.json();
-		} catch (e) {
-			console.error(e);
+			return (await response.json()) as T;
+		} catch (error) {
+			console.error(error);
 		}
 	}
 }

@@ -13,14 +13,15 @@ export const saveAnnotationSchema = z.object({
     body: z.string(),
     id: z.string(),
     entryId: z.number(),
-    private: z.boolean(),
+    // Transform to tinyint(1) to make mysql happy
+    private: z.boolean().transform(p => +p),
     color: z.nativeEnum(Color),
     type: z.nativeEnum(AnnotationType).default("annotation"),
     contentData: z.object({}).passthrough(),
     title: z.string(),
     collectionId: z.number(),
     chosenIcon: chosenIcon,
-   tags: z.array(z.object({
+    tags: z.array(z.object({
         id: z.number().optional(),
         name: z.string()
     }))

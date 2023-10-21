@@ -1,37 +1,76 @@
-import { PrismaClient } from '@prisma/client';
+/* eslint-disable no-console */
+import { Kysely, sql, type RawBuilder, Expression } from 'kysely';
+import { PlanetScaleDialect } from 'kysely-planetscale';
 
-import { annotationsMiddleware } from './prisma/middleware';
+import { DATABASE_PASSWORD, DATABASE_USERNAME } from '$env/static/private';
+
+import { dev } from '$app/environment';
+import type { DB } from './prisma/kysely/types';
+
+export const config = {
+	host: 'aws.connect.psdb.cloud',
+	password: DATABASE_PASSWORD,
+	username: DATABASE_USERNAME,
+};
 
 declare global {
 	// allow global `var` declarations
 	// eslint-disable-next-line no-var
-	var db: PrismaClient | undefined;
+	var db: Kysely<DB> | undefined;
 }
 
-const globalForPrisma = global as unknown as { db: PrismaClient };
+const globalForKyseley = global as unknown as { db: Kysely<DB> };
 
 export const db =
-	globalForPrisma.db ||
-	new PrismaClient({
-		log: [
-			'info',
-			'warn',
-			'error',
-		],
+	globalForKyseley.db ||
+	new Kysely<DB>({
+		dialect: new PlanetScaleDialect({
+			...config,
+			useSharedConnection: true,
+		}),
+		log: (event) => {
+			if (!dev) {
+				return;
+			}
+			if (event.level === 'query') {
+				console.log(event.query.sql);
+				console.log(event.query.parameters);
+			}
+		},
 	});
 
-db.$use(async (params, next) => {
-	const before = Date.now();
+export function json<T>(obj: T): RawBuilder<T> {
+	return sql`${JSON.stringify(obj)}`;
+}
 
-	const result = await next(params);
+export function values<T>(expr: Expression<T>) {
+	return sql<T>`VALUES(${expr})`;
+}
 
-	const after = Date.now();
+// export const db =
+// 	globalForPrisma.db ||
+// 	new PrismaClient({
+// 		log: [
+// 			'info',
+// 			'warn',
+// 			'error',
+// 		],
+// 	});
 
-	console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
+// db.$use(async (params, next) => {
+// 	const before = Date.now();
 
-	return result;
-});
+// 	const result = await next(params);
 
-annotationsMiddleware(db);
+// 	const after = Date.now();
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.db = db;
+// 	console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
+
+// 	return result;
+// });
+
+// annotationsMiddleware(db);
+
+if (process.env.NODE_ENV !== 'production') {
+	globalForKyseley.db = db;
+}

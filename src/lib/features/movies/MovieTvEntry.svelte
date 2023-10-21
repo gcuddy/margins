@@ -4,8 +4,8 @@
 	import Button from "$lib/components/Button.svelte";
 	import dayjs from "$lib/dayjs";
 	import { configuration } from "$lib/features/movies/tmdb";
-	import { trpc } from "$lib/trpc/client";
-	import type { RouterOutputs } from "$lib/trpc/router";
+
+
 	import { createQuery } from "@tanstack/svelte-query";
 	import { movieDetailQuery, tvDetailQuery } from "./queries";
 
@@ -194,7 +194,7 @@
 	<p>Error...</p>
 {/if}
 
-<style>
+<style lang="postcss">
 	/* .meta::before {
 		content: "";
 		position: absolute;

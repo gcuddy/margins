@@ -1,11 +1,14 @@
 // This is all picked from apache-annotator
 
 import { textQuoteSelectorMatcher as abstractTextQuoteSelectorMatcher } from './abstract/match-text-quote';
+import { textPositionSelectorMatcher as abstractTextPositionSelectorMatcher } from './abstract/match-text-position';
 import { describeTextQuote as abstractDescribeTextQuote } from './abstract/text-quote';
+import { describeTextPosition as abstractDescribeTextPosition } from './abstract/text-position';
+
 import { EmptyScopeError, TextNodeChunker } from './chunk';
 import { isTextNode } from './highlighter';
 import { buildSelectorFromImage } from './img';
-import type { DescribeTextQuoteOptions, Matcher, RangeSelector, TextQuoteSelector } from './types';
+import type { DescribeTextQuoteOptions, Matcher, RangeSelector, TextPositionSelector, TextQuoteSelector } from './types';
 import { ownerDocument, toRange } from './utils';
 
 /**
@@ -232,6 +235,7 @@ export function createTextQuoteSelectorMatcher(
 
 	return async function* matchAll(scope) {
 		let textChunks;
+        console.log({scope})
 		try {
 			textChunks = new TextNodeChunker(scope);
 		} catch (err) {
@@ -244,4 +248,98 @@ export function createTextQuoteSelectorMatcher(
 			yield textChunks.chunkRangeToRange(abstractMatch);
 		}
 	};
+}
+
+
+/**
+ * Find the range of text corresponding to the given {@link
+* TextPositionSelector}.
+*
+* The start and end positions are measured relative to the first text character
+* in the given scope.
+*
+* The function is curried, taking first the selector and then the scope.
+*
+* Its end result is an (async) generator producing a single {@link https://developer.mozilla.org/en-US/docs/Web/API/Range
+* | Range} to represent the match (unlike e.g. a {@link TextQuoteSelector}, a
+* TextPositionSelector cannot have multiple matches).
+*
+* @example
+* ```
+* const selector = { type: 'TextPositionSelector', start: 702, end: 736 };
+* const scope = document.body;
+* const matches = textQuoteSelectorMatcher(selector)(scope);
+* const match = (await matches.next()).value;
+* // ⇒ Range { startContainer: #text, startOffset: 64, endContainer: #text,
+* //   endOffset: 98, … }
+* ```
+*
+* @param selector - The {@link TextPositionSelector} to be anchored.
+* @returns A {@link Matcher} function that applies `selector` within a given
+* `scope`.
+*
+* @public
+*/
+export function createTextPositionSelectorMatcher(
+	selector: TextPositionSelector,
+): Matcher<Node | Range, Range> {
+	const abstractMatcher = abstractTextPositionSelectorMatcher(selector);
+
+	return async function* matchAll(scope) {
+		const textChunks = new TextNodeChunker(scope);
+
+		const matches = abstractMatcher(textChunks);
+
+		for await (const abstractMatch of matches) {
+			yield textChunks.chunkRangeToRange(abstractMatch);
+		}
+	};
+}
+
+
+/**
+ * Returns a {@link TextPositionSelector} that points at the target text within
+ * the given scope.
+ *
+ * When no scope is given, the position is described relative to the document
+ * as a whole. Note this means all the characters in all Text nodes are counted
+ * to determine the target’s position, including those in the `<head>` and
+ * whitespace, hence even a minor modification could make the selector point to
+ * a different text than its original target.
+ *
+ * @example
+ * ```
+ * const target = window.getSelection().getRangeAt(0);
+ * const selector = await describeTextPosition(target);
+ * console.log(selector);
+ * // {
+ * //   type: 'TextPositionSelector',
+ * //   start: 702,
+ * //   end: 736
+ * // }
+ * ```
+ *
+ * @param range - The {@link https://developer.mozilla.org/en-US/docs/Web/API/Range
+* | Range} whose text content will be described.
+* @param scope - A Node or Range that serves as the ‘document’ for purposes of
+* finding occurrences and determining prefix and suffix. Defaults to the full
+* Document that contains `range`.
+* @returns The selector describing `range` within `scope`.
+*
+* @public
+*/
+export function describeTextPosition(
+	range: Range,
+	scope?: Node | Range,
+): TextPositionSelector {
+	scope = toRange(scope ?? ownerDocument(range));
+
+	const textChunks = new TextNodeChunker(scope);
+	if (textChunks.currentChunk === null)
+		throw new RangeError('Scope does not contain any Text nodes.');
+
+	return abstractDescribeTextPosition(
+		textChunks.rangeToChunkRange(range),
+		textChunks,
+	);
 }

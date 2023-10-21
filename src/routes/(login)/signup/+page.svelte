@@ -1,70 +1,74 @@
 <script lang="ts">
-	import { enhance, applyAction } from "$app/forms";
-	import Muted from "$lib/components/atoms/Muted.svelte";
-	import Button from "$lib/components/Button.svelte";
-	import GenericInput from "$lib/components/GenericInput.svelte";
-	import Icon from "$lib/components/helpers/Icon.svelte";
-	import type { ActionData } from "./$types";
+	import type { ActionData } from './$types';
 	export let form: ActionData;
+	export let data;
 
-	let loading = false;
+	import * as Card from '$components/ui/card';
+	import * as Form from '$components/ui/form';
+	import { createUserSchema } from '../schema';
+	import { Loader2 } from 'lucide-svelte';
+	import { page } from '$app/stores';
 </script>
 
-<!-- TODO: turn this into component -->
-<h2 class="text-2xl font-bold">Let's create an account for Margins</h2>
-<div class="w-full rounded-lg bg-white p-10 shadow ring-1 ring-black/25 dark:bg-black">
-	<form
-		class="flex max-w-xs flex-col space-y-6"
-		use:enhance={() => {
-			loading = true;
-			return async ({ result, update }) => {
-				update({
-					reset: false,
-				});
-				loading = false;
-			};
-		}}
+<Card.Root class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
+	<Form.Root
+		class="contents"
 		method="post"
+		form={data.form}
+		schema={createUserSchema}
+		let:config
+		let:submitting
+		let:message
 	>
-		<div>
-			<label for="email"><Muted>Email</Muted></label>
-			<GenericInput id="email" type="email" name="email" placeholder="" class="focus:ring-2" required />
-			{#if form?.errors?.email}
-				<p class="text-red-400">{form?.errors?.email}</p>
-			{/if}
-		</div>
-		<div>
-			<label for="username"><Muted>Username</Muted></label>
-			<GenericInput id="username" type="text" name="username" placeholder="" class="focus:ring-2" required />
-			{#if form?.errors?.username}
-				<p class="text-red-400">{form?.errors?.username}</p>
-			{/if}
-		</div>
-		<div>
-			<label for="password"><Muted>Password</Muted></label>
-			<GenericInput
-				id="password"
-				name="password"
-				placeholder=""
-				type="password"
-				required
-				class="focus:ring-2"
+		<Card.Header>
+			<Card.Title class="text-2xl font-semibold tracking-tight"
+				>Create an account for Margins</Card.Title
+			>
+			<Card.Description>Enter your details below.</Card.Description>
+		</Card.Header>
+		<Card.Content class="grid gap-4">
+			<Form.Message
+				message={message ?? $page.url.searchParams.get('message')}
 			/>
-			{#if form?.errors?.password}
-				<p class="text-red-400">{form?.errors?.password}</p>
-			{/if}
-		</div>
-		<Button type="submit">
-			{#if loading}
-				<Icon name="loading" className="h-5 w-5 animate-spin text-white" />
-			{:else}
-				<span>Sign up</span>
-			{/if}
-		</Button>
-	</form>
-	<p class="text-center font-medium text-red-400">{form?.message || ""}</p>
-</div>
+			<Form.Field {config} name="email">
+				<Form.Item>
+					<Form.Label>Email</Form.Label>
+					<Form.Input type="email" />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
+			<Form.Field {config} name="username">
+				<Form.Item>
+					<Form.Label>Username</Form.Label>
+					<Form.Input />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
+			<Form.Field {config} name="password">
+				<Form.Item>
+					<Form.Label>Password</Form.Label>
+					<Form.Input type="password" />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
+			<Form.Field {config} name="inviteCode">
+				<Form.Item>
+					<Form.Label>Invite Code</Form.Label>
+					<Form.Input />
+					<Form.Validation />
+				</Form.Item>
+			</Form.Field>
+		</Card.Content>
+		<Card.Footer>
+			<Form.Button disabled={submitting} class="w-full"
+				>Sign up {#if submitting}
+					<Loader2 class="h-4 w-4 animate-spin ml-2" />
+				{/if}</Form.Button
+			>
+		</Card.Footer>
+	</Form.Root>
+</Card.Root>
+
 <div>
 	Already have an account? <a class="font-bold" href="/login">Sign in</a>
 </div>
-<!-- <a href="/login" class="link">Sign in</a> -->

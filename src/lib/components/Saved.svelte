@@ -102,7 +102,7 @@
 			? 'p-4'
 			: ''} w-full space-y-0 overflow-auto {viewOptions.view === 'grid'
 			? 'grid grid-cols-12 gap-4 container pb-10'
-			: ''}"		
+			: ''}"
 		on:consider={handleConsider}
 		on:finalize={handleFinalize}
 	>
@@ -352,7 +352,7 @@
 	</div>
 </KeyboardNav>
 
-<style>
+<style lang="postcss">
 	ul {
 		padding: 0;
 		width: 100%;

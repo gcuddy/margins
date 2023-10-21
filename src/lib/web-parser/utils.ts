@@ -1,5 +1,5 @@
 import { HTMLElement, parse } from 'node-html-parser';
-import { URL } from 'url';
+// import { URL } from 'url';
 
 export const absolutizeUrl = (url: string, baseUrl: string) => {
     try {

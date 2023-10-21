@@ -120,7 +120,7 @@
 	</svelte-virtual-list-contents>
 </svelte-virtual-list-viewport>
 
-<style>
+<style lang="postcss">
 	svelte-virtual-list-viewport {
 		position: relative;
 		overflow-y: auto;

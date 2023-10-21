@@ -1,33 +1,88 @@
 import { type Actions, fail, redirect } from '@sveltejs/kit';
+import { message, setError, superValidate } from 'sveltekit-superforms/server';
+import { z } from 'zod';
 
 import { auth } from '$lib/server/lucia';
 
 import type { PageServerLoad } from './$types';
+import { LuciaError } from 'lucia';
+import { loginUserSchema } from '../schema';
+import type { Message } from '$lib/types';
 
-export const actions: Actions = {
-	default: async ({ request, locals }) => {
-		const form = await request.formData();
-		const email = form.get('email');
-		const password = form.get('password');
-		// check for empty
-		if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
-			return fail(400, {
-				message: 'Invalid input',
-			});
+export const load: PageServerLoad = async (event) => {
+	const { locals } = event;
+	console.log(`login page load`);
+	const session = await locals.auth.validate();
+	if (session) {
+		// The user is already logged in
+		const redirectTo = event.url.searchParams.get('redirectTo');
+		if (redirectTo) {
+			console.log({ redirectTo });
+			// ensure that the redirect is not to the login page
+			if (redirectTo !== '/login') {
+				throw redirect(302, `/${redirectTo.slice(1)}`);
+			}
 		}
+		throw redirect(302, `/library/backlog`);
+	}
+	const form = await superValidate<typeof loginUserSchema, Message>(
+		event,
+		loginUserSchema,
+	);
+	return { form };
+};
+
+export const actions = {
+	default: async (event) => {
+		const { locals } = event;
+		const form = await superValidate<typeof loginUserSchema, Message>(
+			event,
+			loginUserSchema,
+		);
+		if (!form.valid) {
+			return fail(400, { form });
+		}
+		const { email, password } = form.data;
 		try {
 			const key = await auth.useKey('email', email, password);
-			const session = await auth.createSession(key.userId);
-           console.log({session})
-			locals.setSession(session);
+			const session = await auth.createSession({
+				userId: key.userId,
+				attributes: {},
+			});
+			console.log({ session });
+			locals.auth.setSession(session);
+			const redirectTo = event.url.searchParams.get('redirectTo');
+			if (redirectTo) {
+				console.log({ redirectTo });
+				throw redirect(302, `/${redirectTo.slice(1)}`);
+			}
+			return {
+				form,
+			};
 		} catch (e) {
-            console.error(e);
-			return fail(400, { message: 'Incorrect email or password' });
+			console.error(e);
+			if (
+				e instanceof LuciaError &&
+				(e.message === 'AUTH_INVALID_KEY_ID' ||
+					e.message === 'AUTH_INVALID_PASSWORD')
+			) {
+				// const message = e.message;
+				// form.message = 'Error authenticating';
+				console.log({ e });
+
+				return message(
+					form,
+					{
+						status: 'error',
+						text: 'Incorrect email or password',
+					},
+					{
+						status: 400,
+					},
+				);
+			}
+			return fail(500, { form });
+			// return fail(400, { message: 'Incorrect email or password' });
 		}
 	},
-};
-
-export const load: PageServerLoad = async ({ locals }) => {
-	const session = await locals.validate();
-	if (session) throw redirect(302, '/');
-};
+} satisfies Actions;
