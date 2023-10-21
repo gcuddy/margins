@@ -1,65 +1,66 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
+	import debounce from 'just-debounce-it';
 	import { derived, writable } from 'svelte/store';
 
 	import { goto } from '$app/navigation';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
+
 	import {
+		commandCtx,
 		CommandGroup,
 		CommandItem,
-		commandCtx,
-		CommandLoading,
 		CommandEmpty,
+		CommandLoading,
 	} from '$components/ui/command2';
-	import { Muted } from '$lib/components/ui/typography';
-	import { effect } from '$lib/helpers';
+	import { commandItemVariants } from '$components/ui/command2/style';
+
+	import { Skeleton } from '$components/ui/skeleton';
+
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { getYear } from '$lib/utils/date';
-	import debounce from 'just-debounce-it';
-	import { Skeleton } from '$components/ui/skeleton';
-	import { commandItemVariants } from '$components/ui/command2/style';
-	import { findClosestImage } from '$lib/utils';
+	import { effect } from '$lib/helpers';
 
 	const {
-		// options: { multiple },
-		state: { inputValue, shouldFilter, loading },
+		state: {  inputValue, loading, shouldFilter },
 	} = commandCtx.get();
 
 	const debouncedInputValue = writable($inputValue);
 
 	const debouncedFn = debounce((val: string) => {
 		debouncedInputValue.set(val);
-	}, 200);
+	}, 400);
 
 	effect(inputValue, ($inputValue) => debouncedFn($inputValue));
-
-    $: $loading = $inputValue ? $query.isPending || $query.isFetching : false;
-
-
+	// TODO: debouncing
 	const query = createQuery(
-		derived(debouncedInputValue, ($value) => ({
-			...queryFactory.search.music({
-				q: $value,
-			}),
+		derived([debouncedInputValue], ([$value]) => ({
+			...queryFactory.search.podcasts({ q: $value }),
 			enabled: $value.length > 1,
 		})),
 	);
 
-	export let isOpen = false;
+	$: $loading = $inputValue ? $query.isPending || $query.isFetching : false;
+
+	// $: console.log({$query})
 
 	shouldFilter.set(false);
 
-	export let onSelect: (media: QueryOutput<'searchMusic'>[number]) => void = (
-		media,
+	export let isOpen = false;
+
+	export let onSelect: (podcast: QueryOutput<'searchPodcasts'>[number]) => void = (
+		podcast,
 	) => {
-		goto(`/album/${media.id}`);
+		void goto(`/show/p${podcast.id}`);
 		isOpen = false;
 	};
+
 </script>
 
+<!-- <CommandLoading>Loading...</CommandLoading> -->
+
 <CommandGroup>
-	{#if $query.isLoading || ($inputValue.length > 1 && !$query.data && !$query.error)}
+	{#if $query.isLoading}
 		<CommandLoading>
 			<div class={commandItemVariants()}>
 				<Skeleton class="h-10 w-10 mr-4 rounded-md" />
@@ -83,41 +84,45 @@
 				</div>
 			</div>
 		</CommandLoading>
-	{:else if $inputValue.length < 2 && !$query.data}
+	{:else if $inputValue.length < 2}
 		<div
 			class="flex p-8 w-full h-full flex-col items-center gap-4 justify-center"
 		>
-			<EntryIcon type="album" />
+			<EntryIcon type="podcast" />
 			<div class="flex flex-col justify-center items-center gap-1">
 				<span class="font-semibold leading-none tracking-tight"
-					>Search for Music Albums</span
+					>Search Podcasts</span
 				>
 				<span class="text-sm text-muted-foreground">Just start typing…</span>
 			</div>
 		</div>
-	{:else if $query.data && $inputValue}
-		{#each $query.data as album (album.id)}
-			{@const img = findClosestImage(album.images, 100)}
+	{:else if $query.data}
+		{#each $query.data.slice(0, 25) as podcast (podcast.id)}
 			<CommandItem
-				value={album.name}
 				onSelect={() => {
-					onSelect(album);
+					onSelect(podcast);
 				}}
 			>
-            {#if img}
+				<!-- <TagColorPill class="mr-4 h-2.5 w-2.5" color={tag.color} /> -->
+                {#if podcast.artwork}
 				<img
-					src="{img.url}"
-					class="mr-4 aspect-square h-10 w-10 shrink-0 rounded-md object-cover"
 					alt=""
+					src={podcast.artwork}
+					class="mr-4 h-10 w-10 rounded object-cover"
 				/>
                 {:else}
-                <div class="mr-4 aspect-square h-10 w-10 shrink-0 rounded-md bg-gray-200"></div>
+                <div class="mr-4 h-10 w-10 rounded bg-gray-200"></div>
+
                 {/if}
-				<div class="flex flex-col">
-					<span class="line-clamp-2 text-sm font-medium leading-tight"
-						>{album.name}</span
-					>
-					<Muted class="text-xs">{getYear(album.release_date)}</Muted>
+				<div class="grow flex flex-col gap-1 break-words overflow-hidden">
+					<span class="shrink-0 line-clamp-2">{podcast.title}</span>
+					<div class="truncate shrink flex gap-1 line-clamp-2">
+						{#if podcast.author}
+							<span class="text-muted-foreground">
+								{podcast.author}
+							</span>
+						{/if}
+					</div>
 				</div>
 			</CommandItem>
 		{:else}

@@ -10,7 +10,7 @@
 
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import {
 		mutate,
 		type MutationInput,

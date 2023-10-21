@@ -51,7 +51,7 @@
 	import Clamp from '$components/Clamp.svelte';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { filterLibrary } from '$lib/schemas/library';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import MovieCarousel from '$components/movies/movie-carousel.svelte';
 	import StarRating from '$components/ui/star-rating/star-rating.svelte';
 	import StarRatingForm from '$components/ui/star-rating/star-rating-form.svelte';

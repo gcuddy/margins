@@ -1,5 +1,5 @@
 <script lang='ts'>
-	import Skeleton from "$components/ui/skeleton/Skeleton.svelte";
+	import Skeleton from "$components/ui/skeleton/skeleton.svelte";
 
 
 </script>

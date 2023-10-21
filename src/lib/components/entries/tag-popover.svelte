@@ -25,7 +25,7 @@
 	import { cn } from '$lib/utils';
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { commandItemVariants } from '$components/ui/command2/style';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 
 	const open = writable(false);
 

@@ -7,6 +7,7 @@ import { findFeed } from '$lib/feeds/parser';
 import type { Config } from '@sveltejs/adapter-vercel';
 import { redirect } from 'sveltekit-flash-message/server';
 import { createMessage } from '$lib/types/forms';
+import { db } from '$lib/db';
 
 // export const config: Config = {
 // 	runtime: 'nodejs18.x',
@@ -20,16 +21,41 @@ export const actions = {
 		}
 		const formData = await event.request.formData();
 
-		const dataArray: Array<{ title: string; url: string }> = [];
+		// check for subscriptionId + 'delete' - if so, then delete it
+		const subscriptionId = formData.has('subscriptionId')
+			? Number(formData.get('subscriptionId'))
+			: undefined;
+
+		if (subscriptionId && formData.has('delete')) {
+			await db
+				.deleteFrom('Subscription')
+				.where('id', '=', subscriptionId)
+				.where('userId', '=', session.user.userId)
+				.execute();
+			throw redirect(
+				'/subscriptions',
+				{
+					status: 'success',
+					text: 'Unsubscribed successfully',
+				},
+				event,
+			);
+		}
+
+		const dataArray: Array<{
+			title: string;
+			url: string;
+			podcastIndexId?: number;
+		}> = [];
 
 		formData.forEach((value, key) => {
-			const match = key.match(/(\d+)-(title|url)/);
+			const match = key.match(/(\d+)-(title|url|podcastIndexId)/);
 			if (match && match[1]) {
 				const index = Number.parseInt(match[1], 10);
 				const type = match[2];
 
 				if (!dataArray[index]) {
-					dataArray[index] = { title: '', url: '' };
+					dataArray[index] = { title: '', url: '', podcastIndexId: undefined };
 				}
 
 				//@ts-expect-error - this is fine

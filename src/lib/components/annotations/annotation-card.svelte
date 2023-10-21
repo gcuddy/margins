@@ -50,6 +50,7 @@
 	export let annotation: SetOptional<EntryAnnotation, 'username' | 'tags'>;
 	export let entry: ComponentProps<SlimEntry>['entry'] | undefined = undefined;
 	export let hrefPrefix = '';
+    export let autofocus = true;
 
 	let className: string | null | undefined = undefined;
 	export { className as class };
@@ -258,9 +259,9 @@
 						bind:this={editor}
 						bind:tainted
 						alwaysEditable
-						autofocus
+						{autofocus}
 						options={{
-							autofocus: 'end',
+							autofocus: autofocus ?  'end' : false,
 						}}
 						class="border-0 p-0 min-h-min"
 						focusRing={false}
@@ -280,6 +281,9 @@
 					readonly
 					bind:this={editor}
 					class="border-0 p-0 min-h-min"
+                    options={{
+                        autofocus: false
+                    }}
 					focusRing={false}
 					content={annotation.contentData}
 				/>

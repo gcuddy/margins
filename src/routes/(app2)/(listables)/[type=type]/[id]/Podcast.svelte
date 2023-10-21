@@ -41,6 +41,7 @@
 				alt=""
 				class="aspect-auto rounded-md shadow-lg sm:w-[150px] md:w-[200px]"
 				use:smoothload
+                style:view-transition-name="podcast-artwork-{episode.feedId}"
 			/>
 			<div class="flex flex-col gap-2">
 				<Muted>Podcast</Muted>

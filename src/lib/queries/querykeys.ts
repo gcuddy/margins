@@ -287,6 +287,12 @@ export const queryFactory = {
 				qquery(meta?.init, 'searchMusic', input),
 			queryKey: ['search', 'music', { input }] as const,
 		}),
+		podcasts: (input: QueryInput<'searchPodcasts'>) => ({
+			placeholderData: keepPreviousData,
+			queryFn: ({ meta }: QueryFnParams) =>
+				qquery(meta?.init, 'searchPodcasts', input),
+			queryKey: ['search', 'podcasts', { input }] as const,
+		}),
 	},
 	subscriptions: {
 		all: () => ({

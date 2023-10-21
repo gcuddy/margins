@@ -16,7 +16,7 @@
 	import { toast } from 'svelte-sonner';
 
 	import { page } from '$app/stores';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import trackScroll from '$lib/actions/trackScroll';
 	import type { TargetSchema } from '$lib/annotation';
 	import {

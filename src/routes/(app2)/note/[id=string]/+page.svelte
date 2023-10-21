@@ -3,7 +3,7 @@
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { Note } from '$lib/components/notes';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { derived } from 'svelte/store';
 	import AnnotationDetail from './annotation-detail.svelte';
 

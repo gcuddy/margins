@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createAvatar, melt } from '@melt-ui/svelte';
 
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { H1, Lead,Muted } from '$components/ui/typography';
 	import { getYear } from '$lib/utils/date';
 

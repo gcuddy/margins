@@ -15,7 +15,7 @@
 	} from '$components/ui/command2';
 	import { commandItemVariants } from '$components/ui/command2/style';
 
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';

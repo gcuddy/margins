@@ -4,6 +4,7 @@
 		createWindowVirtualizer,
 	} from '@tanstack/svelte-virtual';
 	import commandScore from 'command-score';
+	import * as Tabs from '$components/ui/tabs';
 	import {
 		ArchiveIcon,
 		ChevronDownIcon,
@@ -14,6 +15,8 @@
 		SearchIcon,
 	} from 'lucide-svelte';
 	import { createEventDispatcher, tick } from 'svelte';
+    import { Skeleton } from '$components/ui/skeleton';
+	import { Table as TableIcon, Grid } from 'radix-icons-svelte';
 	import {
 		derived,
 		writable,
@@ -63,11 +66,14 @@
 	import SimpleClamp from '$components/simple-clamp.svelte';
 	import Html from '$components/ui/data-table/html.svelte';
 	import { render_html } from '$components/ui/editor/utils';
+	import AnnotationCard from '$components/annotations/annotation-card.svelte';
+	import { persisted } from 'svelte-local-storage-store';
 	export let notes: Readable<Array<Note>>;
 
 	export let input: Writable<NotesInput>;
 
 	export let loading = false;
+    export let initialLoading = false;
 
 	type Sort = {
 		dir: NotesInput['dir'];
@@ -222,6 +228,8 @@
 			.filter(Boolean);
 	});
 
+    const tabValue = persisted('annotations-table-tab', 'table');
+
 	const allSelectedPinned = derived(selectedData, ($selectedData) => {
 		// If all selected data.pin is truthy, return true
 		// If all selected data.pin is falsy, return false
@@ -370,234 +378,284 @@
 		multi.events.keydown(e);
 	}}
 />
-
-<!-- TODO: fix this ! it's broken right now! -->
-<!-- TODO: move to pagination instead of infinite scroll (i think) -->
-<div class="mb-4 flex items-center gap-4">
-	<div class="relative">
-		<Input
-			bind:el={inputEl}
-			class="max-w-sm text-sm pl-7"
-			placeholder="Filter annotations..."
-			type="text"
-			on:focus={() => {
-				multi.helpers.setHighlighted(null);
-			}}
-			on:keydown={(e) => {
-				if (e.key === 'ArrowDown') {
-					if (e.target instanceof HTMLInputElement) {
-						e.target.blur();
+<Tabs.Root bind:value={$tabValue}>
+	<div class="mb-4 flex items-center justify-between gap-4">
+		<div class="relative">
+			<Input
+				bind:el={inputEl}
+				class="max-w-sm text-sm pl-7"
+				placeholder="Filter annotations..."
+				type="text"
+				on:focus={() => {
+					multi.helpers.setHighlighted(null);
+				}}
+				on:keydown={(e) => {
+					if (e.key === 'ArrowDown') {
+						if (e.target instanceof HTMLInputElement) {
+							e.target.blur();
+						}
+					} else if (e.key === 'ArrowUp') {
+						e.stopPropagation();
 					}
-				} else if (e.key === 'ArrowUp') {
-					e.stopPropagation();
-				}
-			}}
-			bind:value={$search}
-		/>
-		<div
-			class="absolute left-2 top-1/2 -translate-y-1/2 opacity-50 peer-focus:opacity-100 transition-opacity"
-		>
-			<svelte:component
-				this={loading ? Loader : SearchIcon}
-				class="h-4 w-4 stroke-[1.5] {loading ? 'animate-spin' : ''}"
+				}}
+				bind:value={$search}
 			/>
+			<div
+				class="absolute left-2 top-1/2 -translate-y-1/2 opacity-50 peer-focus:opacity-100 transition-opacity"
+			>
+				<svelte:component
+					this={loading ? Loader : SearchIcon}
+					class="h-4 w-4 stroke-[1.5] {loading ? 'animate-spin' : ''}"
+				/>
+			</div>
 		</div>
+		<Tabs.List>
+			<Tabs.Trigger value="table">
+				<TableIcon class="h-5 w-5" />
+				<span class="sr-only">Table</span></Tabs.Trigger
+			>
+			<Tabs.Trigger value="cards">
+				<Grid class="h-5 w-5" />
+				<span class="sr-only">Cards</span></Tabs.Trigger
+			>
+		</Tabs.List>
 	</div>
-</div>
-<div class="rounded-md border">
-	<Table.Root {...$tableAttrs}>
-		<Table.Header>
-			{#each $headerRows as headerRow (headerRow.id)}
-				<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
-					<Table.Row {...rowAttrs}>
-						{#each headerRow.cells as cell (cell.id)}
-							<Subscribe
-								cellAttrs={cell.attrs()}
-								let:cellAttrs
-								props={cell.props()}
-								let:props
-							>
-								<Table.Head
-									{...cellAttrs}
-									class={cn('[&:has([role=checkbox])]:pl-3')}
-								>
-									{@const isSorted = $sortKeys.some(
-										(sortKey) => sortKey.id === cell.id,
-									)}
-									<button
-										data-sorted={isSorted}
-										class="flex items-center gap-1 data-[sorted=true]:text-foreground"
-										on:click={(e) => {
-											props.sort.toggle(e);
-											$virtualizer.measure();
-											props.sort.order;
-											onSort?.({
-												dir: props.sort.order,
-												orderBy:
-													cell.id === 'title'
-														? 'name'
-														: cell.id === 'createdAt'
-														? 'createdAt'
-														: cell.id === 'updatedAt'
-														? 'updatedAt'
-														: undefined,
-											});
-										}}
+	<Tabs.Content value="table">
+		<!-- TODO: fix this ! it's broken right now! -->
+		<!-- TODO: move to pagination instead of infinite scroll (i think) -->
+
+		<div class="rounded-md border">
+			<Table.Root {...$tableAttrs}>
+				<Table.Header>
+					{#each $headerRows as headerRow (headerRow.id)}
+						<Subscribe rowAttrs={headerRow.attrs()} let:rowAttrs>
+							<Table.Row {...rowAttrs}>
+								{#each headerRow.cells as cell (cell.id)}
+									<Subscribe
+										cellAttrs={cell.attrs()}
+										let:cellAttrs
+										props={cell.props()}
+										let:props
 									>
-										<Render of={cell.render()} />
-										{#if props.sort.order === 'asc'}
-											<ChevronUpIcon class="h-4 w-4" />
-										{:else if props.sort.order === 'desc'}
-											<ChevronDownIcon class="h-4 w-4" />
-										{/if}
-									</button>
-								</Table.Head>
-							</Subscribe>
-						{/each}
-					</Table.Row>
-				</Subscribe>
-			{/each}
-		</Table.Header>
-		<Table.Body bind:el={tbody} {...$tableBodyAttrs}>
+										<Table.Head
+											{...cellAttrs}
+											class={cn('[&:has([role=checkbox])]:pl-3')}
+										>
+											{@const isSorted = $sortKeys.some(
+												(sortKey) => sortKey.id === cell.id,
+											)}
+											<button
+												data-sorted={isSorted}
+												class="flex items-center gap-1 data-[sorted=true]:text-foreground"
+												on:click={(e) => {
+													props.sort.toggle(e);
+													$virtualizer.measure();
+													props.sort.order;
+													onSort?.({
+														dir: props.sort.order,
+														orderBy:
+															cell.id === 'title'
+																? 'name'
+																: cell.id === 'createdAt'
+																? 'createdAt'
+																: cell.id === 'updatedAt'
+																? 'updatedAt'
+																: undefined,
+													});
+												}}
+											>
+												<Render of={cell.render()} />
+												{#if props.sort.order === 'asc'}
+													<ChevronUpIcon class="h-4 w-4" />
+												{:else if props.sort.order === 'desc'}
+													<ChevronDownIcon class="h-4 w-4" />
+												{/if}
+											</button>
+										</Table.Head>
+									</Subscribe>
+								{/each}
+							</Table.Row>
+						</Subscribe>
+					{/each}
+				</Table.Header>
+				<Table.Body bind:el={tbody} {...$tableBodyAttrs}>
+					{#if $paddingTop}
+						<tr>
+							<td style:height="{$paddingTop}px" />
+						</tr>
+					{/if}
+					{#each $virtualizer.getVirtualItems() as item (item.key)}
+						{@const row = getRow(item.index)}
+						<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
+							{@const highlighted = $state.highlighted === row.id}
+							<Table.Row
+								on:mouseover={multi.events.mouseover}
+								{...rowAttrs}
+								data-id={row.id}
+								data-state={$selectedDataIds[row.id] && 'selected'}
+								data-highlighted={highlighted}
+								class="duration-100 data-[state=selected]:data-[highlighted=true]:bg-accent data-[highlighted=true]:ring-1 ring-inset"
+							>
+								{#each row.cells as cell (cell.id)}
+									<Subscribe attrs={cell.attrs()} let:attrs>
+										<Table.Cell
+											{...attrs}
+											class="[&:has([role=checkbox])]:pl-3"
+										>
+											{#if cell.id === 'title' && row.isData()}
+												{@const color = row.original.color ?? '#000'}
+												{@const icon = row.original.icon ?? 'File'}
+												<div class="flex items-center gap-x-1">
+													<IconPicker
+														variant="ghost"
+														class="h-auto w-auto grow-0 shrink-0 basis-auto p-1.5"
+														iconClass="h-4 w-4"
+														activeColor={color}
+														activeIcon={icon}
+													/>
+													<a href="/note/{row.original.id}">
+														<Render of={cell.render()} />
+													</a>
+													<div class="pl-2">
+														{#each row.original.tags as tag (tag.id)}
+															<Badge
+																variant="secondary"
+																as="a"
+																href="/tag/{tag.name}"
+															>
+																<TagColorPill
+																	class="h-2 w-2 mr-1.5"
+																	color={tag.color}
+																/>
+																{tag.name}
+															</Badge>
+														{/each}
+													</div>
+													<!-- {row.original.} -->
+												</div>
+											{:else if cell.id === 'exact' && row.isData()}
+												{@const entry = row.original.entry}
+												<svelte:element
+													this={entry ? 'a' : 'span'}
+													href={entry && row.original.type === 'annotation'
+														? make_link(entry) +
+														  `#annotation-${row.original.id}`
+														: undefined}
+												>
+													<SimpleClamp clamp={4} fromClass="from-background">
+														<Blockquote
+															class="mt-0 text-sm text-muted-foreground"
+														>
+															{@html highlightSearchTerm(
+																row.original.exact,
+																$search,
+															)}
+														</Blockquote>
+													</SimpleClamp>
+												</svelte:element>
+												<!-- {@html highlightSearchTerm(row.original.exact, $search)} -->
+											{:else}
+												<Render of={cell.render()} />
+											{/if}
+										</Table.Cell>
+									</Subscribe>
+								{/each}
+							</Table.Row>
+						</Subscribe>
+					{/each}
+					{#if $paddingBottom}
+						<tr>
+							<td style:height="{$paddingBottom}px" />
+						</tr>
+					{/if}
+				</Table.Body>
+			</Table.Root>
+		</div>
+
+		<BulkActions length={Object.keys($selectedDataIds).length}>
+			<Button
+				variant="secondary"
+				size="sm"
+				on:click={() => {
+					// TODO: confirm
+					console.log({ $rows, $selectedDataIds });
+					const rowsToUpdate = $rows.filter((row) => $selectedDataIds[row.id]);
+					console.log({ rowsToUpdate });
+					const ids = rowsToUpdate
+						.map((row) => {
+							if (row.isData()) {
+								return row.original.id;
+							}
+						})
+						.filter(Boolean);
+					$mutation.mutate({
+						deleted: new Date(),
+						id: ids,
+					});
+					selectedDataIds.clear();
+				}}
+			>
+				<ArchiveIcon class="h-4 w-4 mr-2 text-muted-foreground" /> Archive</Button
+			>
+			{#if $allSelectedPinned !== 'indeterminate' && !$pinMutating}
+				<Button
+					variant="secondary"
+					size="sm"
+					on:click={() => {
+						if ($allSelectedPinned) {
+							// TODO: delete
+							$deletePinMutation.mutate({
+								// ideally data.pin.id should be inferred as nonnullable here
+								id: $selectedData.map((data) => data.pin?.id ?? ''),
+							});
+						} else {
+							$createPinMutation.mutate(
+								$selectedData.map((data) => ({
+									annotationId: data.id,
+								})),
+							);
+						}
+						selectedDataIds.clear();
+					}}
+				>
+					<PinIcon class="h-4 w-4 mr-2 text-muted-foreground" />
+					{$allSelectedPinned ? 'Remove from Pins' : 'Pin'}
+				</Button>
+			{/if}
+			<Button variant="secondary" size="sm">
+				<CommandIcon class="h-4 w-4 mr-2 text-muted-foreground" />
+				More...</Button
+			>
+		</BulkActions>
+	</Tabs.Content>
+	<Tabs.Content value="cards">
+		{#if $tabValue === 'cards'}
 			{#if $paddingTop}
 				<tr>
 					<td style:height="{$paddingTop}px" />
 				</tr>
 			{/if}
-			{#each $virtualizer.getVirtualItems() as item (item.key)}
-				{@const row = getRow(item.index)}
-				<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-					{@const highlighted = $state.highlighted === row.id}
-					<Table.Row
-						on:mouseover={multi.events.mouseover}
-						{...rowAttrs}
-						data-id={row.id}
-						data-state={$selectedDataIds[row.id] && 'selected'}
-						data-highlighted={highlighted}
-						class="duration-100 data-[state=selected]:data-[highlighted=true]:bg-accent data-[highlighted=true]:ring-1 ring-inset"
-					>
-						{#each row.cells as cell (cell.id)}
-							<Subscribe attrs={cell.attrs()} let:attrs>
-								<Table.Cell {...attrs} class="[&:has([role=checkbox])]:pl-3">
-									{#if cell.id === 'title' && row.isData()}
-										{@const color = row.original.color ?? '#000'}
-										{@const icon = row.original.icon ?? 'File'}
-										<div class="flex items-center gap-x-1">
-											<IconPicker
-												variant="ghost"
-												class="h-auto w-auto grow-0 shrink-0 basis-auto p-1.5"
-												iconClass="h-4 w-4"
-												activeColor={color}
-												activeIcon={icon}
-											/>
-											<a href="/note/{row.original.id}">
-												<Render of={cell.render()} />
-											</a>
-											<div class="pl-2">
-												{#each row.original.tags as tag (tag.id)}
-													<Badge
-														variant="secondary"
-														as="a"
-														href="/tag/{tag.name}"
-													>
-														<TagColorPill
-															class="h-2 w-2 mr-1.5"
-															color={tag.color}
-														/>
-														{tag.name}
-													</Badge>
-												{/each}
-											</div>
-											<!-- {row.original.} -->
-										</div>
-									{:else if cell.id === 'exact' && row.isData()}
-										{@const entry = row.original.entry}
-										<svelte:element
-											this={entry ? 'a' : 'span'}
-											href={entry && row.original.type === 'annotation'
-												? make_link(entry) + `#annotation-${row.original.id}`
-												: undefined}
-										>
-											<SimpleClamp clamp={4} fromClass="from-background">
-												<Blockquote class="mt-0 text-sm text-muted-foreground">
-													{@html highlightSearchTerm(
-														row.original.exact,
-														$search,
-													)}
-												</Blockquote>
-											</SimpleClamp>
-										</svelte:element>
-										<!-- {@html highlightSearchTerm(row.original.exact, $search)} -->
-									{:else}
-										<Render of={cell.render()} />
-									{/if}
-								</Table.Cell>
-							</Subscribe>
-						{/each}
-					</Table.Row>
-				</Subscribe>
-			{/each}
+			<div class="grid grid-cols-2 gap-4">
+                {#if initialLoading}
+                {#each new Array(10) as _}
+                    <Skeleton class="h-32" />
+                {/each}
+                {:else}
+                {#each $virtualizer.getVirtualItems() as item (item.key)}
+                    {@const note = $notes[item.index]}
+                    {#if note}
+                        <AnnotationCard entry={note.entry ? note.entry : undefined} autofocus={false} annotation={note} />
+                    {/if}
+                {/each}
+                {/if}
+            </div>
 			{#if $paddingBottom}
 				<tr>
 					<td style:height="{$paddingBottom}px" />
 				</tr>
 			{/if}
-		</Table.Body>
-	</Table.Root>
-</div>
-
-<BulkActions length={Object.keys($selectedDataIds).length}>
-	<Button
-		variant="secondary"
-		size="sm"
-		on:click={() => {
-			// TODO: confirm
-			console.log({ $rows, $selectedDataIds });
-			const rowsToUpdate = $rows.filter((row) => $selectedDataIds[row.id]);
-			console.log({ rowsToUpdate });
-			const ids = rowsToUpdate
-				.map((row) => {
-					if (row.isData()) {
-						return row.original.id;
-					}
-				})
-				.filter(Boolean);
-			$mutation.mutate({
-				deleted: new Date(),
-				id: ids,
-			});
-			selectedDataIds.clear();
-		}}
-	>
-		<ArchiveIcon class="h-4 w-4 mr-2 text-muted-foreground" /> Archive</Button
-	>
-	{#if $allSelectedPinned !== 'indeterminate' && !$pinMutating}
-		<Button
-			variant="secondary"
-			size="sm"
-			on:click={() => {
-				if ($allSelectedPinned) {
-					// TODO: delete
-					$deletePinMutation.mutate({
-						// ideally data.pin.id should be inferred as nonnullable here
-						id: $selectedData.map((data) => data.pin?.id ?? ''),
-					});
-				} else {
-					$createPinMutation.mutate(
-						$selectedData.map((data) => ({
-							annotationId: data.id,
-						})),
-					);
-				}
-				selectedDataIds.clear();
-			}}
-		>
-			<PinIcon class="h-4 w-4 mr-2 text-muted-foreground" />
-			{$allSelectedPinned ? 'Remove from Pins' : 'Pin'}
-		</Button>
-	{/if}
-	<Button variant="secondary" size="sm">
-		<CommandIcon class="h-4 w-4 mr-2 text-muted-foreground" />
-		More...</Button
-	>
-</BulkActions>
+		{/if}
+		<!-- {#each } -->
+		<!-- todo -->
+	</Tabs.Content>
+</Tabs.Root>

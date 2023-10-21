@@ -53,3 +53,5 @@ export function createAlertDialogStore<TData extends {}>(
 		},
 	};
 }
+
+export const dialogStore = createAlertDialogStore();

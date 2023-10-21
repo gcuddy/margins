@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { qquery } from '$lib/queries/query';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { findClosestImage } from '$lib/utils';

@@ -18,7 +18,7 @@
 	import { getYear } from '$lib/utils/date';
 	import debounce from 'just-debounce-it';
 	import { User2 } from 'lucide-svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { commandItemVariants } from '$components/ui/command2/style';
 
 	const {

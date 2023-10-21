@@ -3,7 +3,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import Header from '$components/ui/Header.svelte';
 	import Pins from '$components/pins/pins.svelte';
-	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { Button } from '$components/ui/button';
 	import { FolderPlusIcon } from 'lucide-svelte';
 

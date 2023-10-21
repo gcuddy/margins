@@ -32,7 +32,7 @@
 	import Input from '$components/ui/input/input.svelte';
 	import LibraryForm from '$components/ui/library/library-form.svelte';
 	import Separator from '$components/ui/Separator.svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import {
 		Tabs,
 		TabsContent,

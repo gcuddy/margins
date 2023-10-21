@@ -117,7 +117,7 @@
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import ColResizer from '$lib/components/ColResizer.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
-	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import mq from '$lib/stores/mq';
 

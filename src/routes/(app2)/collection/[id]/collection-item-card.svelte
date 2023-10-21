@@ -2,7 +2,7 @@
 	import Tweet from '$components/Tweet.svelte';
 	import * as Card from '$components/ui/card';
 	import { render_html } from '$components/ui/editor/utils';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import type { CollectionItemWidth } from '$lib/schemas/inputs/collection.schema';
 	import { make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';

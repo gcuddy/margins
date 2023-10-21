@@ -94,7 +94,7 @@
 							<div class="py-5">
 								<Separator />
 							</div>
-                            <!-- href="/search?type=movie" -->
+							<!-- href="/search?type=movie" -->
 							<MobileLink
 								bind:open={isAddSheetOpen}
 								on:click={() => {
@@ -103,25 +103,55 @@
 										pages: ['search-movies'],
 										allowPages: false,
 										placeholder: 'Search for a movie or TV show',
-                                        isOpen: true
+										isOpen: true,
 									}));
 								}}
 							>
 								<EntryIcon type="movie" class="w-5 h-5 mr-2" />
 								Movie or TV Show
 							</MobileLink>
-							<MobileLink bind:open={isAddSheetOpen} href="/search?type=books">
+							<MobileLink
+								bind:open={isAddSheetOpen}
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-books'],
+										allowPages: false,
+										placeholder: 'Search for a book',
+										isOpen: true,
+									}));
+								}}
+							>
 								<EntryIcon type="book" class="w-5 h-5 mr-2" />
 								Book
 							</MobileLink>
 							<MobileLink
 								bind:open={isAddSheetOpen}
-								href="/search?type=podcasts"
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-podcasts'],
+										allowPages: false,
+										placeholder: 'Search for a podcast',
+										isOpen: true,
+									}));
+								}}
 							>
 								<EntryIcon type="podcast" class="w-5 h-5 mr-2" />
 								Podcast
 							</MobileLink>
-							<MobileLink bind:open={isAddSheetOpen} href="/search?type=music">
+							<MobileLink
+								bind:open={isAddSheetOpen}
+								on:click={() => {
+									commanderState.update((s) => ({
+										...s,
+										pages: ['search-music'],
+										allowPages: false,
+										placeholder: 'Search for a music album',
+										isOpen: true,
+									}));
+								}}
+							>
 								<EntryIcon type="album" class="w-5 h-5 mr-2" />
 								Album
 							</MobileLink>

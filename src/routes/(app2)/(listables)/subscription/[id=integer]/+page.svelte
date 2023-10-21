@@ -16,7 +16,7 @@
 	import { Button } from '$components/ui/button';
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
 	import EntryItemSkeleton from '$lib/components/entries/EntryItemSkeleton.svelte';
-	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import {
 		mutate,
 		qquery,

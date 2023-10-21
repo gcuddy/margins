@@ -6,6 +6,8 @@ import { z } from 'zod';
 
 import { books } from '$lib/api/gbook';
 import spotify from '$lib/api/spotify';
+import pindex from '$lib/api/pindex';
+
 import { tmdb } from '$lib/api/tmdb';
 import type { Tweet } from '$lib/api/twitter';
 import { db, json } from '$lib/db';
@@ -21,6 +23,7 @@ import {
 } from '$lib/db/queries/interaction';
 import {
 	subscription,
+	subscriptionCreateMutation,
 	subscriptionInputSchema,
 } from '$lib/db/queries/subscriptions';
 import {
@@ -310,6 +313,7 @@ export const mutations = {
 		},
 		schema: tagsOnEntrySchema,
 	}),
+	subscriptionCreate: subscriptionCreateMutation,
 	updateBookmark: query({
 		fn: async ({ ctx, input }) =>
 			updateBookmark({
@@ -1081,6 +1085,13 @@ export const queries = {
 		fn: async ({ input }) => {
 			const { items } = await books.search(input.q);
 			return items ?? [];
+		},
+		schema: qSchema,
+	}),
+	searchPodcasts: query({
+		fn: async ({ input }) => {
+			const search = await pindex.search(input.q);
+			return search.feeds ?? [];
 		},
 		schema: qSchema,
 	}),

@@ -6,7 +6,7 @@
 	import { page } from '$app/stores';
 	import Button from '$components/ui/button/button.svelte';
 	import { Popover, PopoverContent, PopoverTrigger } from '$components/ui/popover';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import {
 		Command,
 		CommandEmpty,

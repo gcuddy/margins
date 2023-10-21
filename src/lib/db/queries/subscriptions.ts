@@ -10,10 +10,14 @@ import type { GetCtx } from '../types';
 import type { Insertable } from 'kysely';
 import type { Entry, Feed } from '$lib/prisma/kysely/types';
 import { XMLParser } from 'fast-xml-parser';
-import type { FeedAddFormSchema } from '$components/subscriptions/subscription-entry.schema';
+import {
+	type FeedAddFormSchema,
+	feedAddFormSchema,
+} from '$components/subscriptions/subscription-entry.schema';
 import { isJsonFeed } from '$lib/helpers/feeds';
 import { stripTags } from '$lib/utils/sanitize';
 import { generatePublicId } from '$lib/nanoid';
+import { query } from '$lib/server/utils';
 export const youtubeRegex =
 	/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)(?<id>[^"&?/\s]{11})/;
 const xmlParser = new XMLParser({
@@ -538,36 +542,88 @@ export async function subscriptionCreate({
 	console.log('[subscriptionCreate] input', input);
 	const feedIds: number[] = [];
 	for (const feed of input) {
-		const res = await fetch(feed.url);
-		const { data, type } = await getFeedData(res);
-		const feedInfo = await getFeedInfo(data, type, feed.url);
-		await db.insertInto('Feed').values(feedInfo).ignore().execute();
-		const _feed = await db
-			.selectFrom('Feed')
-			.where('feedUrl', '=', feedInfo.feedUrl)
-			.select('id')
-			.executeTakeFirstOrThrow();
+		// for now, use podcastindex to get feed info
+		// TODO: get this info ourselves
+		if (feed.podcastIndexId) {
+			const { feed: pfeed } = await pindex.podcastById(feed.podcastIndexId);
+			await db
+				.insertInto('Feed')
+				.values({
+					updatedAt: new Date(),
+					feedUrl: pfeed.url,
+					title: pfeed.title,
+					podcast: 1,
+					podcastIndexId: pfeed.id,
+					creator: pfeed.author,
+					imageUrl: pfeed.artwork,
+					description: pfeed.description,
+					itunesId: pfeed.itunesId,
+					link: pfeed.link,
+				})
+				.ignore()
+				.execute();
+			const _feed = await db
+				.selectFrom('Feed')
+				.where('podcastIndexId', '=', feed.podcastIndexId)
+				.select('id')
+				.executeTakeFirstOrThrow();
+			await db
+				.insertInto('Subscription')
+				.values({
+					feedId: _feed.id,
+					title: feed.title,
+					updatedAt: new Date(),
+					userId: ctx.userId,
+				})
+				.onDuplicateKeyUpdate({
+					title: feed.title,
+					updatedAt: new Date(),
+				})
+				.execute();
+			await updatePodcastFeed({
+				id: _feed.id,
+				podcastIndexId: feed.podcastIndexId,
+				lastParsed: null,
+			});
+			feedIds.push(_feed.id);
+			continue;
+		} else {
+			const res = await fetch(feed.url);
+			const { data, type } = await getFeedData(res);
+			const feedInfo = await getFeedInfo(data, type, feed.url);
+			await db.insertInto('Feed').values(feedInfo).ignore().execute();
+			const _feed = await db
+				.selectFrom('Feed')
+				.where('feedUrl', '=', feedInfo.feedUrl)
+				.select('id')
+				.executeTakeFirstOrThrow();
 
-		await db
-			.insertInto('Subscription')
-			.values({
-				feedId: _feed.id,
-				title: feed.title,
-				updatedAt: new Date(),
-				userId: ctx.userId,
-			})
-			.onDuplicateKeyUpdate({
-				title: feed.title,
-				updatedAt: new Date(),
-			})
-			.execute();
-		await updateLatestFeedItems(data, type, _feed.id);
-		feedIds.push(_feed.id);
+			await db
+				.insertInto('Subscription')
+				.values({
+					feedId: _feed.id,
+					title: feed.title,
+					updatedAt: new Date(),
+					userId: ctx.userId,
+				})
+				.onDuplicateKeyUpdate({
+					title: feed.title,
+					updatedAt: new Date(),
+				})
+				.execute();
+			await updateLatestFeedItems(data, type, _feed.id);
+			feedIds.push(_feed.id);
+		}
 	}
 	return {
 		ids: feedIds,
 	};
 }
+
+export const subscriptionCreateMutation = query({
+	fn: subscriptionCreate,
+	schema: feedAddFormSchema,
+});
 
 export async function updateFeed(feed: {
 	id: number;

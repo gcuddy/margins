@@ -16,7 +16,7 @@
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
 	import type Editor from '$components/ui/editor/Editor.svelte';
 	import Separator from '$components/ui/Separator.svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { H1, Lead, Muted } from '$lib/components/ui/typography';
 	import {
 		deDupeGoogleBooksList,

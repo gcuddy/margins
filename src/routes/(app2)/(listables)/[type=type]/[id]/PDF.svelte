@@ -38,7 +38,7 @@
 	import VirtualList from '$components/ui/internal/VirtualList.svelte';
 	import NativeSelect from '$components/ui/NativeSelect.svelte';
 	import { dialog_store } from '$components/ui/singletons/Dialog.svelte';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
 	import { clickOutside } from '$lib/actions/clickOutside';
 	import resize from '$lib/actions/resize';

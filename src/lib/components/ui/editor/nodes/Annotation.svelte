@@ -7,7 +7,7 @@
 	import { NodeViewWrapper } from 'svelte-tiptap';
 	import { create_query } from '$lib/state/query-state';
 	import { query } from '$lib/queries/query';
-	import Skeleton from '$components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 
 	export let node: NodeViewProps['node'];
 	// export let updateAttributes: NodeViewProps['updateAttributes'];

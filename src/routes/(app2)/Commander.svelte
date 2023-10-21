@@ -42,7 +42,7 @@
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
-	import { Books, Music, Movies, Subscriptions, Tags } from '$lib/commands';
+	import { Books, Music, Movies, Subscriptions, Tags, Podcasts } from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
@@ -334,6 +334,18 @@
 					<Search class="mr-2 h-4 w-4" />
 					<span>Search music</span>
 				</CommandItem>
+				<CommandItem
+					value="search podcasts"
+					onSelect={() => {
+						// goto(`/search`);
+						// isOpen = false;
+                        addPage('search-podcasts')
+                        $state.placeholder = "Search podcasts..."
+					}}
+				>
+					<Search class="mr-2 h-4 w-4" />
+					<span>Search podcasts</span>
+				</CommandItem>
 			</CommandGroup>
 			<CommandGroup heading="Settings">
 				<CommandItem
@@ -406,6 +418,9 @@
 		{/if}
 		{#if $page === 'search-books'}
 			<Books bind:isOpen={$state.isOpen} />
+		{/if}
+		{#if $page === 'search-podcasts'}
+			<Podcasts bind:isOpen={$state.isOpen} />
 		{/if}
 		{#if $page === 'search-music'}
         <Music bind:isOpen={$state.isOpen} />

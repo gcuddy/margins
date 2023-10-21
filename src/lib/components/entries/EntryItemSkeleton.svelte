@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Skeleton from '../ui/skeleton/Skeleton.svelte';
+	import Skeleton from '../ui/skeleton/skeleton.svelte';
 </script>
 
 <div class="flex grow items-center gap-x-4 px-2 py-4">

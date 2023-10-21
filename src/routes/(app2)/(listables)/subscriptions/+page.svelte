@@ -2,7 +2,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import rover from '$lib/actions/rover';
-	import Skeleton from '$lib/components/ui/skeleton/Skeleton.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import Separator from '$components/ui/Separator.svelte';
 	import { getHostname } from '$lib/utils';

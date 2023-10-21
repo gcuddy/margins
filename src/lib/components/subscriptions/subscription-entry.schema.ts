@@ -10,6 +10,7 @@ export const feedAddFormSchema = z
 	.object({
 		title: z.string(),
 		url: z.string(),
+		podcastIndexId: z.coerce.number().optional(),
 	})
 	.array();
 

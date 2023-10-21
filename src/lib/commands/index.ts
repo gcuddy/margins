@@ -7,7 +7,7 @@ import Authors from './Authors.svelte';
 import Rating from './rating.svelte';
 import Collections from './Collections.svelte';
 import Music from './Music.svelte';
-
+import Podcasts from './Podcasts.svelte';
 export {
 	Authors,
 	Books,
@@ -15,6 +15,7 @@ export {
 	JumpToEntry as Entries,
 	Movies,
 	Music,
+	Podcasts,
 	Rating,
 	Subscriptions,
 	Tags,

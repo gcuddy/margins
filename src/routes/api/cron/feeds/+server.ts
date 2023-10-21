@@ -14,9 +14,9 @@ import { error, json } from '@sveltejs/kit';
 import { Insertable, sql } from 'kysely';
 
 // since this is long running, we need to increase the timeout and make it run on node
-// hopefully it finishes in 300 seconds!
+// hopefully it finishes in 120 seconds!
 export const config: Config = {
-	maxDuration: 300,
+	maxDuration: 120,
 	runtime: 'nodejs18.x',
 };
 

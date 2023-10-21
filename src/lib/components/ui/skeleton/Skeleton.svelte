@@ -1,12 +1,14 @@
 <script lang="ts">
-	import { cn } from "$lib/utils/tailwind";
+	import { cn } from "$lib/utils";
 	import type { HTMLAttributes } from "svelte/elements";
-	let className: string | undefined | null = "";
+
+	type $$Props = HTMLAttributes<HTMLDivElement>;
+
+	let className: $$Props["class"] = undefined;
 	export { className as class };
-	interface $$Props extends HTMLAttributes<HTMLDivElement> {}
 </script>
 
 <div
-	class={cn("animate-pulse rounded-md bg-muted", className)}
+	class={cn("animate-pulse rounded-md bg-primary/10", className)}
 	{...$$restProps}
 />
