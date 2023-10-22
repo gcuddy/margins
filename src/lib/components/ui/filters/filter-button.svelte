@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Popover from '$components/ui/popover';
+    import * as Tooltip from '$components/ui/tooltip';
 	import { cn } from '$lib';
 	import {
 		BookIcon,
@@ -16,6 +17,7 @@
 		UserIcon,
 	} from 'lucide-svelte';
 	import { type ButtonProps, buttonVariants } from '../button';
+	import Kbd from '$components/ui/KBD.svelte';
 
 	import { page } from '$app/stores';
 	import { entryTypeIcon } from '$components/entries/icons';
@@ -32,7 +34,7 @@
 	import { createPageData } from '../command2/utils';
 	import { ctx } from './ctx';
 	import { statusesWithIcons } from '$lib/status';
-	import { objectEntries } from '$lib/helpers';
+	import { checkIfKeyboardEventsAllowed, objectEntries } from '$lib/helpers';
 	import { Authors, Rating, Subscriptions } from '$lib/commands';
 	import { colors } from '$components/tags/tag-color';
 	import PopoverDialog from '$components/popover-dialog.svelte';
@@ -139,12 +141,32 @@
 
 	const {
 		helpers: { filterChange, navigateSearch },
-		state: { dialogStore, open: openStore },
+		state: { dialogStore, filterStore, open: openStore },
 	} = ctx.get();
 
 	export let size: ButtonProps['size'] = 'sm';
 	export let variant: ButtonProps['variant'] = 'outline';
+
+    function handleKeydown(event: KeyboardEvent) {
+        if (event.code !== 'KeyF') return;
+        if (!checkIfKeyboardEventsAllowed()) {
+            return;
+        }
+        if (event.shiftKey && event.altKey) {
+            // clear filters
+            filterStore.reset();
+            event.preventDefault();
+            return
+        }
+        // no other modifier keys pressed
+        if (!event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
+            event.preventDefault();
+            open = true;
+        }
+    }
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 <Popover.Root
 	bind:open
@@ -152,12 +174,20 @@
 		placement: 'bottom-start',
 	}}
 >
-	<Popover.Trigger class={cn(buttonVariants({ variant, size }), className)}>
-		<slot>
-			<FilterIcon class="lg:mr-2 h-4 w-4" />
-			<span class="lg:inline hidden">Filter</span>
-		</slot>
-	</Popover.Trigger>
+    <Tooltip.Root>
+        <Tooltip.Trigger>
+            <Popover.Trigger class={cn(buttonVariants({ variant, size }), className)}>
+                <slot>
+                    <FilterIcon class="lg:mr-2 h-4 w-4" />
+                    <span class="lg:inline hidden">Filter</span>
+                </slot>
+            </Popover.Trigger>
+        </Tooltip.Trigger>
+        <Tooltip.Content class="gap-2 flex">
+            <span>Add filter</span>
+            <Kbd>F</Kbd>
+        </Tooltip.Content>
+    </Tooltip.Root>
     <PopoverDialog class="w-[200px] p-0" bind:open>
 	<!-- <Popover.Content class="w-[200px] p-0"> -->
 		<Command
