@@ -339,12 +339,12 @@
 				</span>
 				<ArticleAppearanceOptions />
 			{/if}
-			{#if $page.data.entry}
+			<!-- {#if $page.data.entry}
 				<EntryOperations
 					entry={$page.data.entry}
 					data={$page.data.annotationForm}
 				/>
-			{/if}
+			{/if} -->
 		</div>
 	</div>
 </div>

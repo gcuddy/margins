@@ -31,13 +31,14 @@
 		describeTextPosition,
 		describeTextQuote,
 	} from '$lib/annotator';
-	import { highlightText } from '$lib/annotator/highlighter';
+	import { highlightText, removeHighlight } from '$lib/annotator/highlighter';
 	import type { TextQuoteSelector } from '$lib/annotator/types';
 	import { Button } from '$lib/components/ui/button';
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import {
 		coalesceObjects,
 		isAnnotation,
+		isHTMLElement,
 		makeAnnotation,
 		makeInteraction,
 	} from '$lib/helpers';
@@ -810,6 +811,10 @@
 		],
 	});
 	let showEditMenu = false;
+
+
+    let _active_annotation_id: string | null = null;
+
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target;
 		if (!isAnnotation(target)) {
@@ -829,6 +834,7 @@
 			return;
 		}
 		activeAnnotationId.set(id);
+        _active_annotation_id = id;
 		console.log({ $activeAnnotationId });
 		editMenuRef(target);
 		annotationRef(target);
@@ -888,22 +894,40 @@
 				</Button>
 				<Button
 					on:click={() => {
-						if ($activeAnnotationId) {
-							activeAnnotation.remove();
+						if (articleWrapper && _active_annotation_id) {
+							// this is the scrappy way 'improper' way to do this, but it works for now
+                            // keeping track of them in state has been buggy otherwise
+                            const annotations = articleWrapper.querySelectorAll(`[data-annotation-id="${_active_annotation_id}"]`);
+                            for (const annotation of annotations) {
+                                if (isHTMLElement(annotation)){
+                                    console.log('removing highlight', annotation)
+                                    removeHighlight(annotation)
+                                }
+                            }
+                            // mutate data object - this ensures that the annotation is removed from the UI
+                            if (data.entry?.annotations) {
+                                data.entry.annotations = data.entry.annotations.filter((a) => a.id !== _active_annotation_id);
+                            }
+
 							$annotateMutation.mutate({
 								deleted: new Date(),
-								id: $activeAnnotationId,
-							});
-							toast('Deleted annotation', {
-								action: {
-									label: 'Undo',
-									onClick: annotations.restore,
-								},
-								duration: 7000,
-							});
+								id: _active_annotation_id,
+							}, {
+                                onSuccess() {
+                                    toast('Deleted annotation', {
+                                        // action: {
+                                        //     label: 'Undo',
+                                        //     onClick: annotations.restore,
+                                        // },
+                                        duration: 7000,
+                                    });
+                                }
+                            });
+                            _active_annotation_id = null;
+                            showEditMenu = false;
 						}
-						activeAnnotationId.set(null);
-						showEditMenu = false;
+						// activeAnnotationId.set(null);
+						// showEditMenu = false;
 					}}
 					class="flex h-auto flex-col space-y-1"
 					variant="ghost"

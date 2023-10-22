@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
-	import { onMount, tick } from 'svelte';
+	import { afterUpdate, onMount, tick } from 'svelte';
 	import { tweened } from 'svelte/motion';
 
 	export let clamp: 1 | 2 | 3 | 4 | 5 | 6 = 2;
@@ -14,7 +14,7 @@
 		duration: 200,
 	});
 
-    export let fromClass ="from-card";
+	export let fromClass = 'from-card';
 
 	onMount(async () => {
 		if (el) {
@@ -31,7 +31,7 @@
 
 	let actualMaxHeight = 100;
 
-	$: if (el) {
+	function calculate() {
 		is_clamped = el.scrollHeight > el.clientHeight;
 		lineHeight = parseInt(getComputedStyle(el).lineHeight);
 		actualMaxHeight = el.scrollHeight;
@@ -48,6 +48,14 @@
 		}
 		console.log(`is_clamped`, is_clamped);
 	}
+
+	$: if (el) {
+        calculate();
+	}
+
+    // afterUpdate(() => {
+    //     calculate();
+    // })
 
 	$: max_height = is_clamped
 		? `${lineHeight * clamp}px`
@@ -81,7 +89,7 @@
 			<button
 				class="clamp-toggle px-1 font-medium absolute bottom-0 right-0 w-36 bg-gradient-to-l {fromClass} text-right underline hover:text-primary"
 				on:click={() => (show_more = !show_more)}
-                on:click
+				on:click
 			>
 				{show_more ? 'Less' : 'More'}
 			</button>
