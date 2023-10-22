@@ -14,6 +14,7 @@
 	import type { QueryOutput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { icons } from '$components/icon-picker/data';
+	import Skeleton from '$components/ui/skeleton/skeleton.svelte';
 
 	const query = createInfiniteQuery(queryFactory.collections.list());
 
@@ -52,7 +53,16 @@
 </CommandFallback> -->
 <CommandGroup>
 	{#if $query.isPending}
-		<CommandLoading>Loading...</CommandLoading>
+		<CommandLoading class="flex grow flex-col gap-1">
+			<div class="flex flex-col gap-2 p-2">
+                {#each [1, 2, 3, 4, 5] as _}
+                    <div class="flex gap-2 items-center">
+                        <Skeleton class="w-5 h-5 shrink-0 rounded-full" />
+                        <Skeleton class="grow h-9" />
+                    </div>
+                {/each}
+            </div>
+		</CommandLoading>
 	{:else if $query.isSuccess}
 		{#each $collections.filter((c) => c.name
 				.toLowerCase()

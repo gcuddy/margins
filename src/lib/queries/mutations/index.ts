@@ -72,6 +72,9 @@ export const useStatusMutation = () => {
 		onSettled() {
 			invalidateEntries(queryClient);
 		},
+		onSuccess() {
+			toast.success('Status updated');
+		},
 		mutationKey: ['update_status'],
 	});
 };

@@ -3,6 +3,7 @@
 		CommandGroup,
 		CommandItem,
 		CommandSeparator,
+		ctx,
 	} from '$components/ui/command2';
 	import {
 		ArrowRightLeft,
@@ -12,6 +13,7 @@
 		ClipboardList,
 	} from 'lucide-svelte';
 	import {
+		Circle,
 		Group,
 		Half2,
 		CardStackPlus,
@@ -32,7 +34,9 @@
 	import { mutate } from '$lib/queries/query';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { invalidateEntries } from '$lib/queries/mutations';
-	import { StatusCommands } from '.';
+	import { StatusCommands, Entries, Collections } from '.';
+	import { toast } from 'svelte-sonner';
+	import { make_url } from '$lib/utils/entries';
 
 	export let entryIds: number[] = [];
 	export let open = false;
@@ -42,6 +46,10 @@
 	const pages = writable<string[]>([]);
 	const activePage = derived(pages, ($pages) => $pages[$pages.length - 1]);
 	const isHome = derived(activePage, ($activePage) => !$activePage);
+
+	const {
+		state: { placeholder },
+	} = ctx.get();
 
 	const dispatch = createEventDispatcher();
 
@@ -56,10 +64,18 @@
 
 	const queryClient = useQueryClient();
 
-	const addPage = (page: string) => {
+	const addPage = (page: string, _placeholder?: string) => {
 		$pages = [...$pages, page];
+		if (_placeholder) {
+			$placeholder = _placeholder;
+		}
 		dispatch('transition');
 	};
+
+    const close = () => {
+        open = false;
+        checkedEntryIds.clear();
+    }
 
 	export const back = () => {
 		pages.update(($pages) => {
@@ -122,20 +138,51 @@
 			<Half2 class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Change Status
 		</CommandItem>
+		<CommandItem
+			onSelect={() => {
+				checkedEntryIds.clear();
+				open = false;
+				mutate('markAllAsRead', {
+					entryIds,
+				}).then(() => {
+					invalidateEntries(queryClient);
+				});
+			}}
+		>
+			<Circle class="h-4 w-4 mr-2 stroke-[1.5]" />
+			Mark as read
+		</CommandItem>
+		<!-- <CommandItem
+			onSelect={() => {
+				// addPage('change-status');
+			}}
+		>
+			<Half2 class="h-4 w-4 mr-2 stroke-[1.5]" />
+			Mark as unread
+		</CommandItem> -->
 	</CommandGroup>
 	<CommandSeparator />
 	<CommandGroup>
 		{#if entryIds.length > 1}
-			<CommandItem>
+			<!-- TODO: not yet implemented -->
+			<!-- <CommandItem>
 				<Group class="h-4 w-4 mr-2 stroke-[1.5]" />
 				Group
-			</CommandItem>
+			</CommandItem> -->
 		{/if}
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				addPage('create-relation', 'Search for entry to create relation with');
+			}}
+		>
 			<ArrowRightLeft class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Create relation
 		</CommandItem>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				addPage('add-to-collection', 'Search for collection to add entries to');
+			}}
+		>
 			<CardStackPlus class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Add to Collection
 		</CommandItem>
@@ -143,11 +190,43 @@
 	<CommandSeparator />
 
 	<CommandGroup>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				const urls = $checkedEntryIds
+					.map((id) => {
+						const entry = $entryState[id];
+						return make_url(entry);
+					})
+					.filter(Boolean)
+					.join('\n');
+				navigator.clipboard.writeText(urls);
+                open = false;
+                toast.success('Copied entry URLs');
+			}}
+		>
 			<ClipboardCopy class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Copy entry URLs
 		</CommandItem>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				const md = $checkedEntryIds
+					.map((id) => {
+						const entry = $entryState[id];
+                        if (!entry) return;
+						const url = make_url(entry);
+                        if (url) {
+                            return `[${entry.title}](${url})`;
+                        }
+					})
+					.filter(Boolean)
+					.join('\n');
+
+                navigator.clipboard.writeText(md);
+                open = false;
+
+                toast.success('Copied entries as Markdown');
+			}}
+		>
 			<ClipboardList class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Copy entries as Markdown
 		</CommandItem>
@@ -211,6 +290,44 @@
 		}}
 	/>
 {/if}
+{#if $activePage === 'create-relation'}
+	<Entries
+		excludeIds={entryIds}
+		bind:isOpen={open}
+		onSelect={(e) => {
+			open = false;
+			mutate('addRelation', {
+				entryId: entryIds,
+				relatedEntryId: e.id,
+			}).then(() => {
+				toast.success('Created relation');
+				checkedEntryIds.clear();
+				invalidateEntries(queryClient);
+			});
+		}}
+	/>
+{/if}
+
+{#if $activePage === 'add-to-collection'}
+	<!-- TODO: create new collections -->
+	<Collections
+		onSelect={(c) => {
+			checkedEntryIds.clear();
+			open = false;
+			mutate('addToCollection', {
+				collectionId: c.id,
+				entryId: entryIds,
+			}).then(() => {
+				toast.success('Added to collection');
+				invalidateEntries(queryClient);
+				queryClient.invalidateQueries({
+					queryKey: ['collections'],
+				});
+			});
+		}}
+	/>
+{/if}
+
 <!-- x Add page note -->
 <!-- x Tag (change, set, remove?) -->
 <!-- x Delete -->

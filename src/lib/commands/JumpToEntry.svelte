@@ -35,6 +35,11 @@
 
 	export let isOpen = false;
 
+    /**
+     * Optional list of entry ids to exclude from the list
+    */
+    export let excludeIds: number[] = [];
+
 	export let onSelect: (entry: ListEntry) => void = (entry) => {
 		console.log('onSelect', entry);
 		void goto(`/${entry.type}/${getId(entry)}`);
@@ -46,6 +51,11 @@
 
 	const dispatch = createEventDispatcher();
 
+    const filterExcluded = (entry: { id: number; }) => {
+        if (excludeIds.includes(entry.id)) return false;
+        return true;
+    }
+
 	// sort Recents to top
 
 	const entries = derived(
@@ -54,7 +64,7 @@
 			const entries = $entriesQuery.data ?? [];
 			if (!$value) {
 				// Show recents...
-				return $recents.entries;
+				return $recents.entries.filter(filterExcluded);
 			}
 
 			const scored = entries.map((entry) => ({
@@ -75,7 +85,7 @@
 				ids.add(entry.id);
 				return true;
 			});
-			return deduped;
+			return deduped.filter(filterExcluded);
 		},
 	);
 

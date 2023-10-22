@@ -113,6 +113,8 @@ export function shouldFilterStore(defaultValue?: boolean) {
 export const SELECT_EVENT_NAME = 'command-item-select';
 
 export function createCommandStore<T>(props?: CommandProps<T>) {
+
+    console.log('got props', props);
 	const { open } = props ?? {};
 	const openStore = open ?? writable(false);
 	const activeElement = writable<HTMLElement | null>(null);
