@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { writable } from 'svelte/store';
+	import { type Writable, writable } from 'svelte/store';
 
 	import { cn } from '$lib/utils';
 
@@ -33,6 +33,7 @@
     export let filterFunction: $$Props['filterFunction'] = undefined;
     export let fixedHeight: $$Props["fixedHeight"] = false;
     export let loading: $$Props["loading"] = writable(false);
+    export let placeholder: Writable<string | undefined> | undefined = undefined;
 
 	type T = $$Generic;
 
@@ -57,6 +58,7 @@
         loading,
 		multiple,
 		onClose,
+        placeholder,
 		selectedValue: _selectedValue,
 		shouldFilter,
 		valueToString,

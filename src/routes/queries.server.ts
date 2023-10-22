@@ -132,20 +132,106 @@ export const query = <TSchema extends z.ZodTypeAny, TData>(
 export const mutations = {
 	addRelation: query({
 		fn: async ({ ctx, input }) => {
-			return await db
-				.insertInto('Relation')
-				.values({
-					entryId: input.entryId,
-					id: nanoid(),
-					relatedEntryId: input.relatedEntryId,
-					type: input.type,
-					updatedAt: new Date(),
-					userId: ctx.userId,
-				})
-				.execute();
+			const ids = Array.isArray(input.entryId)
+				? input.entryId
+				: [input.entryId];
+
+			await db.transaction().execute(async (trx) => {
+				// First select relations that already exist - we don't insert when there's a relation coming the other direction with the same type
+				const existingBiDirectionalRelations = await trx
+					.selectFrom('Relation')
+					.where((eb) =>
+						eb.or([
+							eb.and([
+								eb('entryId', 'in', ids),
+								eb('relatedEntryId', '=', input.relatedEntryId),
+							]),
+							eb.and([
+								eb('entryId', '=', input.relatedEntryId),
+								eb('relatedEntryId', 'in', ids),
+							]),
+						]),
+					)
+					.where('type', '=', input.type ?? 'Related')
+					.where('userId', '=', ctx.userId)
+					.select(['entryId', 'relatedEntryId', 'id'])
+					.execute();
+
+				// now filter out the ones that already exist
+
+				const existingBiDirectionalRelationsMap = new Map<
+					string,
+					{ entryId: number; relatedEntryId: number; id: string }
+				>();
+
+				for (const rel of existingBiDirectionalRelations) {
+					existingBiDirectionalRelationsMap.set(
+						`${rel.entryId}-${rel.relatedEntryId}`,
+						rel,
+					);
+				}
+
+				const insertables: Insertable<Relation>[] = [];
+
+				for (const entryId of ids) {
+					const key = `${entryId}-${input.relatedEntryId}`;
+					if (!existingBiDirectionalRelationsMap.has(key)) {
+						insertables.push({
+							entryId,
+							id: nanoid(),
+							relatedEntryId: input.relatedEntryId,
+							type: input.type,
+							updatedAt: new Date(),
+							userId: ctx.userId,
+						});
+					}
+				}
+
+				for (const entryId of ids) {
+					const key = `${input.relatedEntryId}-${entryId}`;
+					if (!existingBiDirectionalRelationsMap.has(key)) {
+						insertables.push({
+							entryId: input.relatedEntryId,
+							id: nanoid(),
+							relatedEntryId: entryId,
+							type: input.type,
+							updatedAt: new Date(),
+							userId: ctx.userId,
+						});
+					}
+				}
+
+				return await trx
+					.insertInto('Relation')
+					.values(insertables)
+					// just to be safe
+					.ignore()
+					.execute();
+			});
+
+			// now filter out the ones that already exist
+
+			// const res = await db
+			// 	.insertInto('Relation')
+			// 	.values(
+			// 		ids.map((entryId) => ({
+			// 			entryId,
+			// 			id: nanoid(),
+			// 			relatedEntryId: input.relatedEntryId,
+			// 			type: input.type,
+			// 			updatedAt: new Date(),
+			// 			userId: ctx.userId,
+			// 		})),
+			// 	)
+			// 	.ignore()
+			// 	.executeTakeFirst();
+
+			// return {
+			// 	numAffected: Number(res.numInsertedOrUpdatedRows),
+			// };
 		},
 		schema: z.object({
-			entryId: z.number().int(),
+			entryId: z.number().int().or(z.number().array()),
 			relatedEntryId: z.number().int(),
 			type: z.enum(['Related', 'SavedFrom']).default('Related').optional(),
 		}),
@@ -162,6 +248,21 @@ export const mutations = {
 	bookmarkCreate: query({
 		fn: bookmarkCreate,
 		schema: bookmarkCreateInput,
+	}),
+	bookmarkDelete: query({
+		schema: z.object({
+			// bookmarkIds: z.number().array(),
+			entryIds: z.number().array(),
+		}),
+		fn: async ({ ctx, input }) => {
+			// or should we perform soft delete? tbd
+			await db
+				.deleteFrom('Bookmark')
+				.where('userId', '=', ctx.userId)
+				.where('entryId', 'in', input.entryIds)
+				// .where("id", "in", input.bookmarkIds)
+				.execute();
+		},
 	}),
 	bulkNoteInsert: query({
 		schema: z.object({
@@ -302,27 +403,50 @@ export const mutations = {
 	}),
 	markAllAsRead: query({
 		fn: async ({ ctx, input }) => {
-			await db
-				.insertInto('UserEntry')
-				.columns(['entryId', 'seen', 'userId'])
-				.expression((eb) =>
-					eb
-						.selectFrom('Entry')
-						.where('feedId', '=', input.feedId)
-						.select((eb) => [
-							'Entry.id',
-							sql`now()`.as('seen'),
-							eb.val(ctx.userId).as('userId'),
-						]),
-				)
-				.onDuplicateKeyUpdate({
-					seen: sql`now()`,
-				})
-				.execute();
+			if ('feedId' in input) {
+				const ids = Array.isArray(input.feedId) ? input.feedId : [input.feedId];
+				await db
+					.insertInto('UserEntry')
+					.columns(['entryId', 'seen', 'userId'])
+					.expression((eb) =>
+						eb
+							.selectFrom('Entry')
+							.where('feedId', 'in', ids)
+							.select((eb) => [
+								'Entry.id',
+								sql`now()`.as('seen'),
+								eb.val(ctx.userId).as('userId'),
+							]),
+					)
+					.onDuplicateKeyUpdate({
+						seen: sql`now()`,
+					})
+					.execute();
+			} else {
+				await db
+					.insertInto('UserEntry')
+					.values(
+						input.entryIds.map((entryId) => ({
+							entryId,
+							seen: sql`now()`,
+							userId: ctx.userId,
+						})),
+					)
+					.onDuplicateKeyUpdate({
+						seen: sql`now()`,
+					})
+					.execute();
+			}
 		},
-		schema: z.object({
-			feedId: z.number(),
-		}),
+		schema: z
+			.object({
+				feedId: z.number().or(z.number().array()),
+			})
+			.or(
+				z.object({
+					entryIds: z.number().array(),
+				}),
+			),
 	}),
 	removeFromCollection: query({
 		fn: async ({ ctx: { userId }, input }) => {

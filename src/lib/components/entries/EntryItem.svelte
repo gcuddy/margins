@@ -261,7 +261,7 @@
 	data-sveltekit-preload-data="tap"
 	on:focus|once={() => {
 		// console.log('preloading')
-		preloadData(href);
+		// preloadData(href);
 	}}
 >
 	<div

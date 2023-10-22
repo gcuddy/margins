@@ -76,6 +76,7 @@
 	import { Badge } from '$components/ui/badge';
 	import { createSetTagsMutation } from '$lib/queries/mutations';
 	import { objectEntries } from '$lib/helpers';
+	import { checkedCommandBadgeDisplay } from '$lib/stores/entry-state';
 
 	const page = derived(state, ($state) => $state.pages.at(-1));
 	const pages = derived(state, ($state) => $state.pages);
@@ -140,10 +141,12 @@
 		cmd_open.set(state.isOpen);
 	});
 
+    const placeholder = writable('Type a command or search...')
+
 	$: if (!$page) {
 		$state.shouldFilter = true;
 		$shouldFilter = true;
-		$state.placeholder = 'Type a command or search...';
+		$placeholder = 'Type a command or search...';
 	}
 
 	$: console.log({ $shouldFilter });
@@ -179,13 +182,14 @@
 	bind:open={$state.isOpen}
 	{inputValue}
 	{container}
+    {placeholder}
 	commandPages={pages}
 >
-	<!-- {#if $checkedEntryIds.length}
-		<div class="text-xs text-muted-foreground px-3 pt-3">
-			<Badge class="text-xs" variant="secondary">{$checkedEntryIds.length} entries</Badge>
+	{#if $checkedEntryIds.length}
+		<div class="text-xs text-muted-foreground px-3 pt-3 min-w-0">
+			<Badge class="text-xs truncate" variant="secondary">{$checkedCommandBadgeDisplay}</Badge>
 		</div>
-	{/if} -->
+	{/if}
 	<CommandInput
 		onKeydown={(e) => {
 			if (e.key === 'Escape' || (e.key === 'Backspace' && !$inputValue)) {
@@ -193,7 +197,6 @@
 				back();
 			}
 		}}
-		placeholder={$state.placeholder}
 	/>
 	<CommandList class="scrollbar-hide">
 		{#if !$page}
@@ -254,7 +257,7 @@
 						value="open jump go to note annotation"
 						onSelect={() => {
 							addPage('open-note');
-							$state.placeholder = 'Open note...';
+							$placeholder = 'Open note...';
 						}}
 					>
 						<ArrowRight class="mr-2 h-4 w-4" />
@@ -264,7 +267,7 @@
 						value="open jump go to tag"
 						onSelect={() => {
 							addPage('open-tag');
-							$state.placeholder = 'Open tag...';
+							$placeholder = 'Open tag...';
 						}}
 					>
 						<ArrowRight class="mr-2 h-4 w-4" />
@@ -342,7 +345,7 @@
 							// goto(`/search`);
 							// isOpen = false;
 							addPage('search-movies');
-							$state.placeholder = 'Open tag...';
+							$placeholder = 'Open tag...';
 						}}
 					>
 						<Search class="mr-2 h-4 w-4" />
@@ -352,7 +355,7 @@
 						value="search books"
 						onSelect={() => {
 							addPage('search-books');
-							$state.placeholder = 'Search books...';
+							$placeholder = 'Search books...';
 						}}
 					>
 						<Search class="mr-2 h-4 w-4" />
@@ -364,7 +367,7 @@
 							// goto(`/search`);
 							// isOpen = false;
 							addPage('search-music');
-							$state.placeholder = 'Search music...';
+							$placeholder = 'Search music...';
 						}}
 					>
 						<Search class="mr-2 h-4 w-4" />
@@ -376,7 +379,7 @@
 							// goto(`/search`);
 							// isOpen = false;
 							addPage('search-podcasts');
-							$state.placeholder = 'Search podcasts...';
+							$placeholder = 'Search podcasts...';
 						}}
 					>
 						<Search class="mr-2 h-4 w-4" />
@@ -387,7 +390,7 @@
 					<CommandItem
 						onSelect={() => {
 							addPage('theme');
-							$state.placeholder = 'Change theme...';
+							$placeholder = 'Change theme...';
 						}}
 					>
 						<Cog class="mr-2 h-4 w-4" />

@@ -8,11 +8,15 @@
 	$: console.log({ $store });
 </script>
 
-<AlertDialog.Root bind:open={$store.open} {...($store.options)} onOpenChange={(val) => {
-    if (!val) {
-        store.reset();
-    }
-}}>
+<AlertDialog.Root
+	bind:open={$store.open}
+	{...$store.options}
+	onOpenChange={(val) => {
+		if (!val) {
+			store.reset();
+		}
+	}}
+>
 	<AlertDialog.Content>
 		{#if $store.title || $store.description}
 			<AlertDialog.Header>
@@ -34,12 +38,25 @@
 				<AlertDialog.Footer>
 					<AlertDialog.Cancel
 						on:click={() => {
+							console.log('clicked cancel');
 							$store.cancel?.();
 						}}>Cancel</AlertDialog.Cancel
 					>
+					<!-- type="submit" -->
 					<AlertDialog.Action
-						type="submit"
+						on:keydown={({ detail }) => {
+                            // crazy wrong types here, ignore this
+                            //@ts-ignore
+                            const event = detail.originalEvent
+							console.log('keydown action', event);
+							// for some rason we have to do this this way...
+							if (event.key === 'Enter') {
+								console.log('enter pressed');
+								$store.action?.($store.value);
+							}
+						}}
 						on:click={({ detail }) => {
+							console.log('clicked action');
 							console.log({ $store });
 							$store.action?.($store.value);
 						}}>Continue</AlertDialog.Action

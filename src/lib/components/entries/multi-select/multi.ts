@@ -209,6 +209,7 @@ export function create_multi<T extends string | number>({
 			},
 			keydown: (event: KeyboardEvent) => {
 				// todo
+				// return;
 				console.log({ event });
 				if (event.key === 'ArrowUp' || event.key === 'k') {
 					// check if any modifier keys are pressed

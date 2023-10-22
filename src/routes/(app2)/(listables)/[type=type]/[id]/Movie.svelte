@@ -176,7 +176,7 @@
 		</svelte:fragment>
 
 		<svelte:fragment slot="actions">
-			<div class="grow basis-full flex supports-cq:@md:justify-start supports-ncq:md:justify-start justify-center">
+			<div class="grow basis-full flex supports-cq:@lg:justify-start supports-ncq:md:justify-start justify-center">
 				{#key data.movie.id}
 					<StarRatingForm
 						entryId={data.entry?.id}

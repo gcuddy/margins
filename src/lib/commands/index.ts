@@ -9,6 +9,7 @@ import Collections from './Collections.svelte';
 import Music from './Music.svelte';
 import Podcasts from './Podcasts.svelte';
 import EntryCommands from './entry-commands.svelte';
+import Status from './Status.svelte';
 export {
 	Authors,
 	Books,
@@ -19,6 +20,7 @@ export {
 	Music,
 	Podcasts,
 	Rating,
+	Status as StatusCommands,
 	Subscriptions,
 	Tags,
 };

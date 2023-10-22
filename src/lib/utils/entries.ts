@@ -57,6 +57,27 @@ export function make_link(entry?: SlimmerEntry | null, subpath = '') {
 	}`;
 }
 
+export function make_url(entry?: SlimEntry & { uri?: string | null }) {
+	if (!entry) return null;
+	if (entry.uri?.startsWith('http')) {
+		return entry.uri;
+	}
+	if ((entry.type === 'movie' || entry.type === 'tv') && entry.tmdbId) {
+		return `https://www.themoviedb.org/${entry.type}/${entry.tmdbId}`;
+	}
+	if (entry.type === 'book' && entry.googleBooksId) {
+		return `https://books.google.com/books?id=${entry.googleBooksId}`;
+	}
+	if (entry.type === 'album' && entry.spotifyId) {
+		return `https://open.spotify.com/album/${entry.spotifyId}`;
+	}
+	if (entry.type === 'podcast' && entry.podcastIndexId) {
+		return `https://podcastindex.org/podcast/${entry.podcastIndexId}`;
+	}
+
+	return null;
+}
+
 function get_domain(url: string) {
 	const domain = url.replace(/https?:\/\//, '').split('/')[0];
 	return domain;

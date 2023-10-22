@@ -178,7 +178,7 @@
                     Copy feed url</DropdownMenu.Item
 					>
                     {/if}
-                    <DropdownMenu.Item on:click={$markAllAsRead.mutate}><CheckCircled class="w-4 h-4 mr-2" />Mark all as read</DropdownMenu.Item>
+                    <DropdownMenu.Item on:click={() => $markAllAsRead.mutate()}><CheckCircled class="w-4 h-4 mr-2" />Mark all as read</DropdownMenu.Item>
                 </DropdownMenu.Content>
 		</DropdownMenu.Root>
 	</svelte:fragment>

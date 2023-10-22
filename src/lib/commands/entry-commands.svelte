@@ -3,6 +3,7 @@
 		CommandGroup,
 		CommandItem,
 		CommandSeparator,
+		ctx,
 	} from '$components/ui/command2';
 	import {
 		ArrowRightLeft,
@@ -12,6 +13,7 @@
 		ClipboardList,
 	} from 'lucide-svelte';
 	import {
+		Circle,
 		Group,
 		Half2,
 		CardStackPlus,
@@ -21,13 +23,20 @@
 	import Tags from './Tags.svelte';
 	import alertDialogStore from '$lib/stores/alert-dialog';
 	import AnnotationForm from '$components/annotations/annotation-form.svelte';
-	import { checkedEntries } from '$components/entries/multi-select';
+	import {
+		checkedEntries,
+		checkedEntryIds,
+	} from '$components/entries/multi-select';
 	import { createEventDispatcher } from 'svelte';
+	import { statusesToDisplay, statusesWithIcons } from '$lib/status';
 	import { objectEntries } from '$lib/helpers';
 	import { checkedTagsState, entryState } from '$lib/stores/entry-state';
 	import { mutate } from '$lib/queries/query';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { invalidateEntries } from '$lib/queries/mutations';
+	import { StatusCommands, Entries, Collections } from '.';
+	import { toast } from 'svelte-sonner';
+	import { make_url } from '$lib/utils/entries';
 
 	export let entryIds: number[] = [];
 	export let open = false;
@@ -38,6 +47,10 @@
 	const activePage = derived(pages, ($pages) => $pages[$pages.length - 1]);
 	const isHome = derived(activePage, ($activePage) => !$activePage);
 
+	const {
+		state: { placeholder },
+	} = ctx.get();
+
 	const dispatch = createEventDispatcher();
 
 	$: if ($activePage !== undefined) {
@@ -47,14 +60,22 @@
 		inPage = false;
 	}
 
-    $: console.log({$shouldFilter});
+	$: console.log({ $shouldFilter });
 
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-	const addPage = (page: string) => {
-		$pages = [...$pages, 'set-tags'];
+	const addPage = (page: string, _placeholder?: string) => {
+		$pages = [...$pages, page];
+		if (_placeholder) {
+			$placeholder = _placeholder;
+		}
 		dispatch('transition');
 	};
+
+    const close = () => {
+        open = false;
+        checkedEntryIds.clear();
+    }
 
 	export const back = () => {
 		pages.update(($pages) => {
@@ -90,15 +111,16 @@
 					title: 'Add page note',
 					component: AnnotationForm,
 					props: {
-						class: 'p-0 bg-transparent border-0',
+						class:
+							'p-0 bg-transparent border-0 shadow-none focus-within:shadow-none',
 						entryId: entryIds,
 						onCancel: () => {
 							alertDialogStore.close();
-							checkedEntries.clear();
+							checkedEntryIds.clear();
 						},
 						onSave: () => {
 							alertDialogStore.close();
-							checkedEntries.clear();
+							checkedEntryIds.clear();
 						},
 						type: 'note',
 					},
@@ -108,24 +130,59 @@
 			<PenSquare class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Add Page Note
 		</CommandItem>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				addPage('change-status');
+			}}
+		>
 			<Half2 class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Change Status
 		</CommandItem>
+		<CommandItem
+			onSelect={() => {
+				checkedEntryIds.clear();
+				open = false;
+				mutate('markAllAsRead', {
+					entryIds,
+				}).then(() => {
+					invalidateEntries(queryClient);
+				});
+			}}
+		>
+			<Circle class="h-4 w-4 mr-2 stroke-[1.5]" />
+			Mark as read
+		</CommandItem>
+		<!-- <CommandItem
+			onSelect={() => {
+				// addPage('change-status');
+			}}
+		>
+			<Half2 class="h-4 w-4 mr-2 stroke-[1.5]" />
+			Mark as unread
+		</CommandItem> -->
 	</CommandGroup>
 	<CommandSeparator />
 	<CommandGroup>
 		{#if entryIds.length > 1}
-			<CommandItem>
+			<!-- TODO: not yet implemented -->
+			<!-- <CommandItem>
 				<Group class="h-4 w-4 mr-2 stroke-[1.5]" />
 				Group
-			</CommandItem>
+			</CommandItem> -->
 		{/if}
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				addPage('create-relation', 'Search for entry to create relation with');
+			}}
+		>
 			<ArrowRightLeft class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Create relation
 		</CommandItem>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				addPage('add-to-collection', 'Search for collection to add entries to');
+			}}
+		>
 			<CardStackPlus class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Add to Collection
 		</CommandItem>
@@ -133,11 +190,43 @@
 	<CommandSeparator />
 
 	<CommandGroup>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				const urls = $checkedEntryIds
+					.map((id) => {
+						const entry = $entryState[id];
+						return make_url(entry);
+					})
+					.filter(Boolean)
+					.join('\n');
+				navigator.clipboard.writeText(urls);
+                open = false;
+                toast.success('Copied entry URLs');
+			}}
+		>
 			<ClipboardCopy class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Copy entry URLs
 		</CommandItem>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				const md = $checkedEntryIds
+					.map((id) => {
+						const entry = $entryState[id];
+                        if (!entry) return;
+						const url = make_url(entry);
+                        if (url) {
+                            return `[${entry.title}](${url})`;
+                        }
+					})
+					.filter(Boolean)
+					.join('\n');
+
+                navigator.clipboard.writeText(md);
+                open = false;
+
+                toast.success('Copied entries as Markdown');
+			}}
+		>
 			<ClipboardList class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Copy entries as Markdown
 		</CommandItem>
@@ -145,7 +234,24 @@
 	<CommandSeparator />
 
 	<CommandGroup>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				open = false;
+				alertDialogStore.open({
+					title: 'Delete entries',
+					description: 'Are you sure you want to delete these entries?',
+					action: () => {
+						console.log('running action');
+						mutate('bookmarkDelete', {
+							entryIds,
+						}).then(() => {
+							checkedEntryIds.clear();
+							invalidateEntries(queryClient);
+						});
+					},
+				});
+			}}
+		>
 			<TrashIcon class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Delete
 		</CommandItem>
@@ -154,31 +260,81 @@
 {/if}
 {#if $activePage === 'set-tags'}
 	<Tags
-        bind:isOpen={open}
+		bind:isOpen={open}
 		onSelect={(_, selected) => {
-            console.log({selected, _})
-            mutate('bulkTagInsert', {
-                entryIds,
-                tagIds: selected,
-            }).then(() => {
-                invalidateEntries(queryClient);
-                queryClient.invalidateQueries({
-                    queryKey: ['tags'],
-                })
-            })
-        }}
+			console.log({ selected, _ });
+			mutate('bulkTagInsert', {
+				entryIds,
+				tagIds: selected,
+			}).then(() => {
+				invalidateEntries(queryClient);
+				queryClient.invalidateQueries({
+					queryKey: ['tags'],
+				});
+			});
+		}}
 		multiple
 		selected={$checkedTagsState.checkedTags}
 		indeterminate={$checkedTagsState.indeterminateTags}
 	/>
 {/if}
+
+{#if $activePage === 'change-status'}
+	<StatusCommands
+		{entryIds}
+		onSelect={() => {
+			console.log('onselect');
+			checkedEntryIds.clear();
+			open = false;
+			console.log('clearing checked entries');
+		}}
+	/>
+{/if}
+{#if $activePage === 'create-relation'}
+	<Entries
+		excludeIds={entryIds}
+		bind:isOpen={open}
+		onSelect={(e) => {
+			open = false;
+			mutate('addRelation', {
+				entryId: entryIds,
+				relatedEntryId: e.id,
+			}).then(() => {
+				toast.success('Created relation');
+				checkedEntryIds.clear();
+				invalidateEntries(queryClient);
+			});
+		}}
+	/>
+{/if}
+
+{#if $activePage === 'add-to-collection'}
+	<!-- TODO: create new collections -->
+	<Collections
+		onSelect={(c) => {
+			checkedEntryIds.clear();
+			open = false;
+			mutate('addToCollection', {
+				collectionId: c.id,
+				entryId: entryIds,
+			}).then(() => {
+				toast.success('Added to collection');
+				invalidateEntries(queryClient);
+				queryClient.invalidateQueries({
+					queryKey: ['collections'],
+				});
+			});
+		}}
+	/>
+{/if}
+
 <!-- x Add page note -->
 <!-- x Tag (change, set, remove?) -->
 <!-- x Delete -->
 <!-- x Change status -->
 <!-- x (Multi) group -->
 <!-- x Create relation -->
-<!-- x Add to collectionn -->
+<!-- x Add to collection -->
 <!-- Download notes -->
 <!-- Copy URLs -->
 <!-- Copy URLs as Markdown -->

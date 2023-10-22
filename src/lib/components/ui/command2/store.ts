@@ -67,6 +67,8 @@ export type CommandProps<T> = {
 	onKeydown?: (event: KeyboardEvent) => void;
 	onSelect?: (value: T) => void;
 	open?: Writable<boolean>;
+
+	placeholder?: Writable<string | undefined>;
 	/**
 	 * The selected value(s) of the combobox. Can be anything.
 	 */
@@ -111,6 +113,8 @@ export function shouldFilterStore(defaultValue?: boolean) {
 export const SELECT_EVENT_NAME = 'command-item-select';
 
 export function createCommandStore<T>(props?: CommandProps<T>) {
+
+    console.log('got props', props);
 	const { open } = props ?? {};
 	const openStore = open ?? writable(false);
 	const activeElement = writable<HTMLElement | null>(null);
@@ -720,6 +724,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			inputValue,
 			loading: props?.loading ?? writable(false),
 			open: openStore,
+			placeholder: props?.placeholder ?? writable(undefined),
 			selectedIds,
 			selectedValue,
 			shouldFilter,
