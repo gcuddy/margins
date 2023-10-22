@@ -402,10 +402,9 @@
 				{/if}
 			</div>
 		{:else}
-			{#if $query.data.pages.length === 0}
+			{#if $entries.length === 0}
 				<div class="py-16 text-center text-sm bg-background">
-					No entries found
-
+					No entries yet!
 					<!-- <pre>{JSON.stringify($query, null, 2)}</pre> -->
 				</div>
 			{/if}
@@ -435,7 +434,8 @@
 	</div>
 	<!-- {#each $query.data?.pages.flatMap((p) => p.entries) ?? [] as entry}
 	{/each} -->
-{/if}
+
+    {/if}
 
 <div
 	class={cn(
