@@ -67,6 +67,8 @@ export type CommandProps<T> = {
 	onKeydown?: (event: KeyboardEvent) => void;
 	onSelect?: (value: T) => void;
 	open?: Writable<boolean>;
+
+	placeholder?: Writable<string | undefined>;
 	/**
 	 * The selected value(s) of the combobox. Can be anything.
 	 */
@@ -720,6 +722,7 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			inputValue,
 			loading: props?.loading ?? writable(false),
 			open: openStore,
+			placeholder: props?.placeholder ?? writable(undefined),
 			selectedIds,
 			selectedValue,
 			shouldFilter,

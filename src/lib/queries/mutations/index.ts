@@ -4,6 +4,7 @@ import {
 	type QueryClient,
 	type QueryKey,
 	useQueryClient,
+	QueryFilters,
 } from '@tanstack/svelte-query';
 import { get } from 'svelte/store';
 import { toast } from 'svelte-sonner';
@@ -21,14 +22,57 @@ import {
 } from '../query';
 import { getQueryContext, queryFactory, type QueryFactory } from '../querykeys';
 import type { Note, NotesResponse } from '../server';
+import { entryState } from '$lib/stores/entry-state';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
-const mutateStatus = (queryClient: QueryClient) => {
-	createMutation({
+export const useStatusMutation = () => {
+	const queryClient = useQueryClient();
+	const ctx = getQueryContext(queryClient);
+	return createMutation({
 		mutationFn: (input: MutationInput<'update_status'>) =>
-			mutation({}, 'update_status', input),
-		onMutate(variables) {},
+			mutate('update_status', input),
+
+		// onMutate({ ids, status }) {
+		// 	// this is legit easier, sorry haters
+		// 	entryState.update((state) => {
+		// 		for (const id of ids) {
+		// 			state[id] = {
+		// 				...state[id],
+		// 				status,
+		// 			};
+		// 		}
+		// 		return state;
+		// 	});
+		// },
+		onMutate: async ({ ids, status }) => {
+			const { previous, reset } = await optimisticUpdateLibrary(
+				queryClient,
+				(entry) => {
+					if (ids.includes(entry.id)) {
+						return {
+							...entry,
+							status,
+						};
+					}
+					return entry;
+				},
+			);
+			console.log({ previous, reset });
+			return {
+				previous,
+				reset,
+			};
+		},
+		onError(err, variables, context) {
+			if (context) {
+				context.reset();
+			}
+		},
+		onSettled() {
+			// invalidateEntries(queryClient);
+		},
+		mutationKey: ['update_status'],
 	});
 };
 
@@ -78,6 +122,53 @@ export function createTagMutation() {
 	});
 }
 
+const libraryQueryFilter: QueryFilters = {
+	queryKey: ['entries', 'list'],
+	predicate: (query) => {
+		// check to make sure querykey[3] is object
+		return !query.queryKey[3] || typeof query.queryKey[3] === 'object';
+	},
+};
+
+/**
+ * Helper function to cancel outgoing entries queries, snapshot data, set new data, and return snapshot
+ * @param queryClient
+ */
+export async function optimisticUpdateLibrary(
+	queryClient: QueryClient,
+	mapFn: (entry: LibraryEntry) => LibraryEntry,
+) {
+	await queryClient.cancelQueries({
+		queryKey: ['entries'],
+	});
+
+	const previous =
+		queryClient.getQueriesData<InfiniteData<LibraryResponse>>(
+			libraryQueryFilter,
+		);
+
+	const setDataData = previous.flatMap(([key, data]) => data);
+
+	console.log({ previous, setDataData });
+	setGetLibraryData(queryClient, mapFn);
+
+	const reset = () => {
+		previous.forEach(([key, data]) => {
+			queryClient.setQueryData(key, data);
+		});
+	};
+
+	return {
+		previous,
+		reset,
+	};
+}
+
+/**
+ * Simple function to get the entries-> list data (not ctx relations) so that it can be used for snapshots etc
+ */
+export function getLibraryData(queryClient: QueryClient) {}
+
 export function setGetLibraryData(
 	queryClient: QueryClient,
 	mapFn: (entry: LibraryEntry) => LibraryEntry,
@@ -104,6 +195,8 @@ export function setGetLibraryData(
 					};
 				}),
 			};
+
+			console.log({ newData });
 
 			return newData;
 		},

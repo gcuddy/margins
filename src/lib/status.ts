@@ -3,13 +3,15 @@ import {
 	CheckCircle2Icon,
 	CircleDashedIcon,
 	CircleIcon,
+	Hourglass,
+	Sparkles,
 	Star,
 } from 'lucide-svelte';
 import type { ComponentType } from 'svelte';
 
 export const statusesWithIcons = {
-	Backlog: Archive,
-	Now: Star,
+	Backlog: Hourglass,
+	Now: Sparkles,
 	Archive: CheckCircle2Icon,
 } as const;
 
@@ -43,7 +45,7 @@ export function getStatusIcon(status: string, display = false) {
 
 export const statuses = Object.keys(
 	statusesWithIcons,
-) as (keyof typeof statusesWithIcons)[];
+) as Array<keyof typeof statusesWithIcons>;
 
 export const displayStatuses = Object.values(statusesToDisplay);
 
@@ -52,6 +54,6 @@ export type DisplayStatus = (typeof displayStatuses)[number];
 export type Status = keyof typeof statusesWithIcons;
 
 export function isStatus(s: unknown): s is Status {
-	if (typeof s !== 'string') return false;
+	if (typeof s !== 'string') {return false;}
 	return statuses.includes(s as Status);
 }

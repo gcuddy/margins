@@ -1,5 +1,6 @@
 import { checkedEntryIds } from '$components/entries/multi-select';
 import type { LibraryEntry } from '$lib/server/queries';
+import type { Status } from '$lib/status';
 import { derived, writable } from 'svelte/store';
 
 // forgive me for mixing this with tanstack/query, tkdodo
@@ -8,6 +9,7 @@ const createEntryState = () => {
 	const store = writable(
 		{} as {
 			[id: string]: {
+				status: Status | null;
 				tags?: {
 					id: number;
 					name: string;
@@ -32,8 +34,21 @@ const createEntryState = () => {
 	function update_entry(entry: LibraryEntry) {
 		store.update((lookup) => {
 			lookup[entry.id] = {
+				status: entry.status,
 				tags: entry.tags,
 			};
+			return lookup;
+		});
+	}
+	function update_entries(entry: LibraryEntry[]) {
+		store.update((lookup) => {
+			for (const entry of entries) {
+				if (!entry) continue;
+				lookup[entry.id] = {
+					status: entry.status,
+					tags: entry.tags,
+				};
+			}
 			return lookup;
 		});
 	}

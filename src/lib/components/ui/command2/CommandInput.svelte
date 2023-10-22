@@ -31,7 +31,7 @@
 		ids,
 		measurements: { inputHeight },
 		options,
-		state: { activeElement, inputValue, loading, open, selectedValue },
+		state: { activeElement, inputValue, loading, open, placeholder, selectedValue },
 	} = ctx.get();
 
     $: onKeydownOption = options.onKeydown;
@@ -249,6 +249,7 @@
 		id={ids.input}
 		role="combobox"
 		type="text"
+        placeholder={$placeholder ?? $$props.placeholder}
 		{...$$restProps}
 		bind:this={inputEl}
 		bind:value={$inputValue}

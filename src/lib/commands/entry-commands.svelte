@@ -21,13 +21,15 @@
 	import Tags from './Tags.svelte';
 	import alertDialogStore from '$lib/stores/alert-dialog';
 	import AnnotationForm from '$components/annotations/annotation-form.svelte';
-	import { checkedEntries } from '$components/entries/multi-select';
+	import { checkedEntries, checkedEntryIds } from '$components/entries/multi-select';
 	import { createEventDispatcher } from 'svelte';
+	import { statusesToDisplay, statusesWithIcons } from '$lib/status';
 	import { objectEntries } from '$lib/helpers';
 	import { checkedTagsState, entryState } from '$lib/stores/entry-state';
 	import { mutate } from '$lib/queries/query';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { invalidateEntries } from '$lib/queries/mutations';
+	import { StatusCommands } from '.';
 
 	export let entryIds: number[] = [];
 	export let open = false;
@@ -47,12 +49,12 @@
 		inPage = false;
 	}
 
-    $: console.log({$shouldFilter});
+	$: console.log({ $shouldFilter });
 
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
 	const addPage = (page: string) => {
-		$pages = [...$pages, 'set-tags'];
+		$pages = [...$pages, page];
 		dispatch('transition');
 	};
 
@@ -90,7 +92,8 @@
 					title: 'Add page note',
 					component: AnnotationForm,
 					props: {
-						class: 'p-0 bg-transparent border-0',
+						class:
+							'p-0 bg-transparent border-0 shadow-none focus-within:shadow-none',
 						entryId: entryIds,
 						onCancel: () => {
 							alertDialogStore.close();
@@ -108,7 +111,11 @@
 			<PenSquare class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Add Page Note
 		</CommandItem>
-		<CommandItem>
+		<CommandItem
+			onSelect={() => {
+				addPage('change-status');
+			}}
+		>
 			<Half2 class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Change Status
 		</CommandItem>
@@ -154,22 +161,34 @@
 {/if}
 {#if $activePage === 'set-tags'}
 	<Tags
-        bind:isOpen={open}
+		bind:isOpen={open}
 		onSelect={(_, selected) => {
-            console.log({selected, _})
-            mutate('bulkTagInsert', {
-                entryIds,
-                tagIds: selected,
-            }).then(() => {
-                invalidateEntries(queryClient);
-                queryClient.invalidateQueries({
-                    queryKey: ['tags'],
-                })
-            })
-        }}
+			console.log({ selected, _ });
+			mutate('bulkTagInsert', {
+				entryIds,
+				tagIds: selected,
+			}).then(() => {
+				invalidateEntries(queryClient);
+				queryClient.invalidateQueries({
+					queryKey: ['tags'],
+				});
+			});
+		}}
 		multiple
 		selected={$checkedTagsState.checkedTags}
 		indeterminate={$checkedTagsState.indeterminateTags}
+	/>
+{/if}
+
+{#if $activePage === 'change-status'}
+	<StatusCommands
+		{entryIds}
+		onSelect={() => {
+            console.log('onselect')
+			checkedEntryIds.clear();
+			open = false;
+            console.log('clearing checked entries')
+		}}
 	/>
 {/if}
 <!-- x Add page note -->
@@ -178,7 +197,7 @@
 <!-- x Change status -->
 <!-- x (Multi) group -->
 <!-- x Create relation -->
-<!-- x Add to collectionn -->
+<!-- x Add to collection -->
 <!-- Download notes -->
 <!-- Copy URLs -->
 <!-- Copy URLs as Markdown -->
