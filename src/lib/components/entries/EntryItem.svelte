@@ -3,51 +3,43 @@
 	import { useQueryClient, type InfiniteData } from '@tanstack/svelte-query';
 	import { cva, type VariantProps } from 'class-variance-authority';
 	import clsx from 'clsx';
-	import {
-		ArrowLeftRightIcon,
-		CheckCircle2,
-		FileTextIcon,
-		PencilIcon,
-		PlayIcon
-	} from 'lucide-svelte';
+	import { ArrowLeftRightIcon, CheckCircle2, PencilIcon } from 'lucide-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
-	import { goto, preloadData } from '$app/navigation';
+	import { Play } from 'radix-icons-svelte';
+
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { audioPlayer } from '$components/AudioPlayer.svelte';
-	import Clamp from '$components/Clamp.svelte';
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { Button } from '$components/ui/button';
 	import * as Command from '$components/ui/command2';
-	import { render_html } from '$components/ui/editor/utils';
 	import * as Popover from '$components/ui/popover';
 	import Separator from '$components/ui/Separator.svelte';
 	import * as Tooltip from '$components/ui/tooltip';
 	import { defaultViewPreferences } from '$components/view-preferences';
 	import { Progress } from '$lib/components/ui/progress';
 	import type { ListEntry } from '$lib/db/selects';
-	import { relations_icons } from '$lib/features/relations/icons';
 	import { isBrowser } from '$lib/helpers';
 	import { mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
-	import { type Status } from '$lib/status';
+	import type { Status } from '$lib/status';
 	import { getHostname, normalizeCamelCase } from '$lib/utils';
-	import { getTargetSelector } from '$lib/utils/annotations';
-	import { ago, formatDate, formatDuration, now } from '$lib/utils/date';
-	import { get_image, getId, getType, make_link } from '$lib/utils/entries';
+	import { formatDate, formatDuration, sortByDate } from '$lib/utils/date';
+	import { getId, getType, make_link } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
 
 	import { Badge } from '$components/ui/badge';
 	import StarRating from '$components/ui/star-rating/star-rating.svelte';
+	import { writable } from 'svelte/store';
+	import { scale } from 'svelte/transition';
 	import * as HoverCard from '../ui/hover-card';
 	import ImageSkeleton from '../ui/skeleton/ImageSkeleton.svelte';
 	import { Muted } from '../ui/typography';
-	import StatusIcon from './StatusIcon.svelte';
-	import { scale } from 'svelte/transition';
-	import EntryItemRelations from './entry-item-relations.svelte';
-	import { writable } from 'svelte/store';
 	import EntryItemAnnotations from './entry-item-annotations.svelte';
+	import EntryItemRelations from './entry-item-relations.svelte';
+	import StatusIcon from './StatusIcon.svelte';
 
 	const queryClient = useQueryClient();
 
@@ -245,10 +237,17 @@
 		document?.body?.classList.remove('overflow-hidden');
 	}
 
-	let mousemove_timeout: ReturnType<typeof setTimeout>;
+	// let mousemove_timeout: ReturnType<typeof setTimeout>;
 
-    let relationsOpen = writable(false);
-    let annotationsOpen = writable(false);
+	let relationsOpen = writable(false);
+	let annotationsOpen = writable(false);
+
+	$: sortedInteractions = sortByDate(entry.interactions, 'finished', 'asc');
+	$: finished = sortedInteractions.some((i) => i.finished);
+	$: lastUnfinishedInteraction = sortedInteractions.findLast(
+		(i) => !i.finished,
+	);
+	$: progress = lastUnfinishedInteraction?.progress ?? 0;
 </script>
 
 <svelte:document />
@@ -306,20 +305,20 @@
 							{:else}
 								<ImageSkeleton class="relative h-16 w-16 object-cover" />
 							{/if}
-							{#if viewPreferences.progress && entry.progress}
-								{#if entry.progress === 1 || entry.finished}
+							{#if viewPreferences.progress && entry.interactions}
+								{#if finished}
 									<div class="absolute -bottom-1 -right-1">
 										<CheckCircle2
 											class="h-5 w-5 fill-primary text-primary-foreground"
 										/>
 									</div>
-								{:else}
+								{:else if lastUnfinishedInteraction}
 									<div
 										class="absolute rounded-md w-full h-full inset-0 overflow-hidden"
 									>
 										<Progress
 											class="absolute rounded-none bottom-0 w-full h-2 bg-secondary/90"
-											value={entry.progress}
+											value={lastUnfinishedInteraction.progress ?? 0}
 											max={1}
 										/>
 									</div>
@@ -371,8 +370,8 @@
 					</Tooltip.Trigger>
 					<Tooltip.Content>
 						<p>
-							Progress: {entry.progress
-								? `${Math.round(entry.progress * 100)}%`
+							Progress: {progress
+								? `${Math.round(progress * 100)}%`
 								: 'Unstarted'}
 						</p>
 					</Tooltip.Content>
@@ -382,27 +381,60 @@
 			<div class="flex flex-col min-w-0 gap-0.5">
 				<!-- <Muted class="text-xs">{entry.type}</Muted> -->
 				<div class="flex items-center gap-x-2 min-w-0">
-					{#if viewPreferences.status && entry.status}
-						<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
-					{/if}
 					{#if viewPreferences.seen && !entry.seen}
 						<div class="h-3 w-3 rounded-full bg-primary"></div>
 					{/if}
-					<div
-						on:mousemove={() => {
+					{#if viewPreferences.status && entry.status}
+						<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
+					{/if}
+
+					<!-- on:mousemove={() => {
 							mousemove_timeout = setTimeout(() => {
 								preloadData(href);
 							}, 40);
 						}}
 						on:mouseleave={() => {
 							clearTimeout(mousemove_timeout);
-						}}
+						}} -->
+					<div
 						data-id={entry.id}
 						style:view-transition-name="title-{entry.id}"
 						class="truncate font-semibold hover:underline focus:outline-none"
 					>
 						{@html title}
 					</div>
+					{#if entry.type === 'podcast'}
+						<div class="flex">
+							<Button
+								size="icon"
+								variant="ghost"
+								class="h-7 w-7"
+								on:click={(e) => {
+									e.stopPropagation();
+									e.preventDefault();
+									audioPlayer.load(
+										{
+											artist: entry.author ?? entry.feed_title ?? '',
+											entry_id: entry.id,
+											image: entry.image ?? '',
+											interaction_id: lastUnfinishedInteraction?.id,
+                                            slug: make_link(entry),
+											src: entry.uri ?? '',
+											title: entry.title ?? '',
+										},
+										progress,
+										{
+											onProgressUpdate(_progress) {
+												progress = _progress;
+											},
+										},
+									);
+								}}
+							>
+								<Play class=" w-4 h-4" />
+							</Button>
+						</div>
+					{/if}
 
 					<div class="hidden gap-x-2 sm:flex">
 						{#if viewPreferences.annotations && Number(data.num_annotations)}
@@ -416,10 +448,14 @@
 									</div>
 								</HoverCard.Trigger>
 								<HoverCard.Content>
-                                    <div class="flex flex-col gap-2">
-                                        <span class="font-semibold tracking-tight">Annotations</span>
-                                        <EntryItemAnnotations enabled={annotationsOpen} entryId={entry.id}  />
-                                    </div>
+									<div class="flex flex-col gap-2">
+										<span class="font-semibold tracking-tight">Annotations</span
+										>
+										<EntryItemAnnotations
+											enabled={annotationsOpen}
+											entryId={entry.id}
+										/>
+									</div>
 								</HoverCard.Content>
 							</HoverCard.Root>
 						{/if}
@@ -472,35 +508,34 @@
 					</div>
 					<!-- <div class="py-px"></div> -->
 				{/if}
-				{#if entry.type === 'podcast'}
+				{#if false}
 					<!-- Play Buttn -->
 					<div class="flex">
 						<Button
 							size="icon"
-							class="h-8 w-8 rounded-full"
-							variant="outline"
+							variant="ghost"
 							on:click={(e) => {
 								e.stopPropagation();
 								e.preventDefault();
 								audioPlayer.load(
 									{
-										artist: entry.author,
+										artist: entry.author ?? '',
 										entry_id: entry.id,
-										image: entry.image,
-										interaction_id: entry.interaction?.id,
-										src: entry.uri,
-										title: entry.title,
+										image: entry.image ?? '',
+										interaction_id: lastUnfinishedInteraction?.id,
+										src: entry.uri ?? '',
+										title: entry.title ?? '',
 									},
-									entry.progress,
+									progress,
 									{
 										onProgressUpdate(progress) {
-											entry.progress = progress;
+											progress = progress;
 										},
 									},
 								);
 							}}
 						>
-							<PlayIcon class="fill-accent text-accent-foreground w-6 h-6" />
+							<Play class=" w-4 h-4" />
 						</Button>
 					</div>
 				{:else}
@@ -527,14 +562,22 @@
 
 							<Muted class="text-xs truncate">{author}</Muted>
 						{/if}
-						{#if viewPreferences.time && entry.estimatedReadingTime}
+						{#if viewPreferences.progress && progress}
 							{#if (viewPreferences.url && entry.uri && entry.uri?.startsWith('http')) || (viewPreferences.author && author)}
 								<span class="text-muted-foreground text-xs">·</span>
 							{/if}
+							<span class="text-xs text-primary"
+								>{Math.round(progress * 100)}%</span
+							>
+						{/if}
+						{#if viewPreferences.time && entry.estimatedReadingTime}
+							{#if (viewPreferences.url && entry.uri && entry.uri?.startsWith('http')) || (viewPreferences.author && author) || (viewPreferences.progress && progress)}
+								<span class="text-muted-foreground text-xs">·</span>
+							{/if}
 							<span class="text-muted-foreground text-xs tabular-nums">
-								{#if entry.progress}
+								{#if progress}
 									{formatDuration(
-										entry.estimatedReadingTime * (1 - entry.progress),
+										entry.estimatedReadingTime * (1 - progress),
 										'm',
 									)} left
 								{:else}
@@ -561,8 +604,13 @@
 			<div class="ml-auto hidden shrink-0 items-center gap-x-2 sm:flex">
 				{#if data.tags && viewPreferences.tags}
 					{#if data.tags.length > 1}
-						<!-- eslint-disable-next-line svelte/valid-compile -->
-						<div on:click|stopPropagation|preventDefault class="md:hidden" transition:scale>
+						<div
+							role="generic"
+							on:keydown={() => {}}
+							on:click|stopPropagation|preventDefault
+							class="md:hidden"
+							transition:scale
+						>
 							<Popover.Root
 								positioning={{
 									placement: 'bottom-start',
@@ -638,7 +686,10 @@
 						<HoverCard.Content>
 							<div class="flex flex-col gap-2 bg-card text-card-foreground">
 								<span class="font-semibold tracking-tight">Relations</span>
-								<EntryItemRelations enabled={relationsOpen} entryId={entry.id} />
+								<EntryItemRelations
+									enabled={relationsOpen}
+									entryId={entry.id}
+								/>
 							</div>
 						</HoverCard.Content>
 					</HoverCard.Root>

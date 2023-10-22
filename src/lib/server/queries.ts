@@ -147,6 +147,7 @@ export async function get_library({
 			'b.rating',
 			'b.bookmarked_at',
 			'b.id as bookmark_id',
+			'f.title as feed_title',
 		])
 		.select(({ fn }) => fn.coalesce('e.image', 'f.imageUrl').as('image'))
 		.select((eb) =>
@@ -172,7 +173,13 @@ export async function get_library({
 			jsonArrayFrom(
 				eb
 					.selectFrom('EntryInteraction as i')
-					.select(['i.progress'])
+					.select([
+						'i.progress',
+						'i.finished',
+						'i.currentPage',
+						'i.seen',
+						'i.id',
+					])
 					.whereRef('i.entryId', '=', 'e.id')
 					.where('i.userId', '=', userId),
 			).as('interactions'),

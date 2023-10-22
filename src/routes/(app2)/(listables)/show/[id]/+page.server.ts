@@ -1,25 +1,31 @@
 import pindex from '$lib/api/pindex';
 import { db } from '$lib/db';
-export const load = async ({ params, depends }) => {
+export const load = async ({ params, depends, locals }) => {
 	const { id } = params;
 	if (id.startsWith('p')) {
 		// then it's a podcastindex id
 		const pid = +id.slice(1);
-		const podcast = await pindex.podcastById(pid).then((p) => p.feed);
+		const [podcast, session] = await Promise.all([
+			pindex.podcastById(pid).then((p) => p.feed),
+			locals.auth.validate(),
+		]);
 
-        depends('podcast');
+		depends('podcast');
 
-		const subscription = db
-			.selectFrom('Subscription')
-			.innerJoin('Feed', 'Feed.id', 'Subscription.feedId')
-			.where((eb) =>
-				eb.or([
-					eb('podcastIndexId', '=', pid),
-					eb('Feed.feedUrl', '=', podcast.url),
-				]),
-			)
-			.selectAll('Subscription')
-			.executeTakeFirst();
+		const subscription = session
+			? db
+					.selectFrom('Subscription')
+					.innerJoin('Feed', 'Feed.id', 'Subscription.feedId')
+					.where((eb) =>
+						eb.or([
+							eb('podcastIndexId', '=', pid),
+							eb('Feed.feedUrl', '=', podcast.url),
+						]),
+					)
+					.where('Subscription.userId', '=', session.user.userId)
+					.selectAll('Subscription')
+					.executeTakeFirst()
+			: null;
 		return {
 			// episodes:
 			lazy: {

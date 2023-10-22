@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
+	import * as Tooltip from '$components/ui/tooltip';
 	import {
 		ArrowDownUpIcon,
 		BookIcon,
@@ -54,6 +55,7 @@
 		defaultParseSearch,
 	} from '$lib/utils/search-params';
 	import { check_inside_input } from '$lib/utils';
+	import { checkIfKeyboardEventsAllowed } from '$lib/helpers';
 
 	let filter: Input;
 	let form: HTMLFormElement;
@@ -128,9 +130,12 @@
 	};
 
 	function handle_keydown(e: KeyboardEvent) {
-        if (check_inside_input(e.target)) {
-            return
+        if (!checkIfKeyboardEventsAllowed(e.target as Element)) {
+            return;
         }
+		if (check_inside_input(e.target)) {
+			return;
+		}
 		if (e.key === '/') {
 			e.preventDefault();
 			filter.focus();
@@ -299,15 +304,24 @@
 				</noscript>
 
 				{#if hasFilters}
-					<Button
-						on:click={reset}
-						size="sm"
-						class="border-dashed"
-						variant="outline"
-					>
-						<span class="lg:inline hidden">Clear filters</span>
-						<XIcon class="lg:ml-2 h-4 w-4" />
-					</Button>
+					<Tooltip.Root>
+						<Tooltip.Trigger asChild let:builder>
+							<Button
+								on:click={reset}
+								builders={[builder]}
+								size="sm"
+								class="border-dashed"
+								variant="outline"
+							>
+								<span class="lg:inline hidden">Clear filters</span>
+								<XIcon class="lg:ml-2 h-4 w-4" />
+							</Button>
+						</Tooltip.Trigger>
+						<Tooltip.Content class="flex gap-2">
+							<span>Clear filters</span>
+							<span><Kbd>⌥</Kbd><Kbd>⇧</Kbd><Kbd>F</Kbd></span>
+						</Tooltip.Content>
+					</Tooltip.Root>
 				{:else}
 					<Filter.Button>
 						<FilterIcon class="lg:mr-2 h-4 w-4" />

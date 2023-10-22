@@ -32,6 +32,9 @@ export function set(opts?: { initialValue?: FilterLibrarySchema }) {
 			container: writable<HTMLElement | null>(null),
 		},
 		helpers: {
+			clear: () => {
+				navigateSearch({});
+			},
 			filterChange: createChangeSearch<FilterLibrarySchema>(),
 			navigateSearch,
 		},
