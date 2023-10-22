@@ -8,7 +8,7 @@
 		createWindowVirtualizer,
 		defaultRangeExtractor,
 	} from '@tanstack/svelte-virtual';
-	import { Loader2Icon } from 'lucide-svelte';
+	import { CommandIcon, Loader2Icon } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import { derived, writable } from 'svelte/store';
@@ -39,7 +39,7 @@
 		type LibrarySortType,
 	} from '$lib/schemas/library';
 	import type { LibraryResponse } from '$lib/server/queries';
-	import { statuses } from '$lib/status';
+	import { statuses, statusesToDisplay, statusesWithIcons } from '$lib/status';
 	import { cn } from '$lib/utils';
 	import {
 		defaultParseSearch,
@@ -52,6 +52,7 @@
 	import Header from '$components/ui/Header.svelte';
 	import { audioPlayer } from '$components/AudioPlayer.svelte';
 	import { entryState } from '$lib/stores/entry-state';
+	import { commanderState } from '../../Commander.svelte';
 
 	export let data;
 
@@ -141,8 +142,6 @@
 		),
 	);
 
-
-
 	const entries = derived(query, ($query) => {
 		return (
 			$query.data?.pages
@@ -159,7 +158,7 @@
 		);
 	});
 
-    $: entryState.init($entries)
+	$: entryState.init($entries);
 
 	let groupedEntries: GroupedArrayWithHeadings<
 		LibraryResponse['entries'][0],
@@ -450,8 +449,8 @@
 				{#each statuses as status}
 					{#if $checkedEntries.every((entry) => entry.status !== status)}
 						<Button
-                            variant="outline"
-                            size="sm"
+							variant="outline"
+							size="sm"
 							on:click={() => {
 								$updateBookmarkMutation.mutate({
 									data: {
@@ -460,7 +459,13 @@
 									entryId: $checkedEntryIds,
 								});
 								multi.helpers.deselectAll();
-							}}>Move to {status}</Button
+							}}
+						>
+							<svelte:component
+								this={statusesWithIcons[status]}
+								class="h-4 w-4 mr-2"
+							/>
+							Move to {statusesToDisplay[status]}</Button
 						>
 					{/if}
 				{/each}
@@ -475,8 +480,8 @@
 	{#each statuses as status}
 		{#if $checkedEntries.every((entry) => entry.status !== status)}
 			<Button
-                variant="outline"
-                size="sm"
+				variant="outline"
+				size="sm"
 				on:click={() => {
 					$updateBookmarkMutation.mutate({
 						data: {
@@ -485,10 +490,20 @@
 						entryId: $checkedEntryIds,
 					});
 					multi.helpers.deselectAll();
-				}}>Move to {status}</Button
+				}}
+			>
+				<svelte:component
+					this={statusesWithIcons[status]}
+					class="h-4 w-4 mr-2"
+				/>
+				Move to {statusesToDisplay[status]}</Button
 			>
 		{/if}
 	{/each}
+    <Button variant="outline" size="sm" on:click={commanderState.openFresh}>
+        <CommandIcon class="h-4 w-4 mr-2" />
+        Command
+    </Button>
 </BulkActions>
 
 <!-- <EntryList

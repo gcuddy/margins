@@ -17,14 +17,31 @@
 	}
 
 	// bad idea?
-	const state = writable<State>({
-		isOpen: false,
-		pages: [],
-		placeholder: 'Type a command or search...',
-		search: '',
-		shouldFilter: true,
-		allowPages: true,
-	});
+    const createState = () => {
+        const state = writable<State>({
+            isOpen: false,
+            pages: [],
+            placeholder: 'Type a command or search...',
+            search: '',
+            shouldFilter: true,
+            allowPages: true,
+        });
+
+        return {
+            ...state,
+            openFresh: () => {
+               state.set({
+                    isOpen: true,
+                    pages: [],
+                    placeholder: 'Type a command or search...',
+                    search: '',
+                    shouldFilter: true,
+                    allowPages: true,
+                })
+            },
+        }
+    }
+    const state = createState();
 	export { state as commanderState };
 </script>
 
