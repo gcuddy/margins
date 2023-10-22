@@ -84,7 +84,7 @@
 									dispatch('highlight');
 								}}
 								type="submit"
-								class="flex h-auto flex-col space-y-1"
+								class="flex h-auto flex-col space-y-1 cursor-pointer"
 								variant="ghost"
 							>
 								<Highlighter class="h-5 w-5" />
@@ -107,7 +107,7 @@
 									dispatch('annotate');
 								}}
 								variant="ghost"
-								class="flex h-auto flex-col space-y-1"
+								class="flex h-auto flex-col space-y-1 cursor-pointer"
 							>
 								<EditIcon class="h-5 w-5" />
 								<Muted class="text-xs sr-only">Annotate</Muted>

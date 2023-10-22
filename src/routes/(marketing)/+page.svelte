@@ -16,7 +16,7 @@
 	} from 'lucide-svelte';
 </script>
 
-<section class="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
+<section class="space-y-6 pb-16 pt-6 md:pt-10 lg:py-32">
 	<div
 		class="container flex max-w-[64rem] flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-top-4 duration-1000"
 	>
