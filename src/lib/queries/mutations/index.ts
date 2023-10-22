@@ -70,7 +70,7 @@ export const useStatusMutation = () => {
 			}
 		},
 		onSettled() {
-			// invalidateEntries(queryClient);
+			invalidateEntries(queryClient);
 		},
 		mutationKey: ['update_status'],
 	});

@@ -163,6 +163,21 @@ export const mutations = {
 		fn: bookmarkCreate,
 		schema: bookmarkCreateInput,
 	}),
+	bookmarkDelete: query({
+		schema: z.object({
+			// bookmarkIds: z.number().array(),
+			entryIds: z.number().array(),
+		}),
+		fn: async ({ ctx, input }) => {
+			// or should we perform soft delete? tbd
+			await db
+				.deleteFrom('Bookmark')
+				.where('userId', '=', ctx.userId)
+				.where('entryId', 'in', input.entryIds)
+				// .where("id", "in", input.bookmarkIds)
+				.execute();
+		},
+	}),
 	bulkNoteInsert: query({
 		schema: z.object({
 			contentData: jsonSchema,

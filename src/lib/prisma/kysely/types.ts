@@ -239,12 +239,12 @@ export type AuthUser = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	email: string;
-	email_verified: number | null;
 	username: Generated<string>;
 	default_state_id: number | null;
 	default_archive_id: number | null;
 	home_items: unknown | null;
 	avatar: string | null;
+	email_verified: number | null;
 };
 export type Bookmark = {
 	id: Generated<number>;
@@ -277,12 +277,12 @@ export type Bookmark = {
 	 * The timestamp that this content should be next seen, ala SRS. It can be user-set or via algorithm. Different than due, similar to snooze.
 	 */
 	review_timestamp: number | null;
-	bookmarked_at: Generated<Timestamp | null>;
 	title: string | null;
 	author: string | null;
 	pdf_url: string | null;
 	rating: number | null;
 	seen_at: Timestamp | null;
+	bookmarked_at: Generated<Timestamp | null>;
 };
 export type Collection = {
 	id: Generated<number>;
@@ -357,7 +357,6 @@ export type Entry = {
 	type: Generated<DocumentType>;
 	updatedAt: Timestamp;
 	id: Generated<number>;
-	public_id: string | null;
 	uri: string | null;
 	html: string | null;
 	text: string | null;
@@ -418,6 +417,7 @@ export type Entry = {
 	pdf_fingerprint: string | null;
 	estimatedReadingTime: number | null;
 	book_genre: BookGenre | null;
+	public_id: string | null;
 };
 export type EntryData = {
 	id: Generated<number>;
@@ -744,8 +744,8 @@ export type Unread = {
 };
 export type UserEntry = {
 	id: Generated<number>;
-	userId: string;
 	entryId: number;
+	userId: string;
 	seen: Timestamp | null;
 };
 export type UserFollows = {

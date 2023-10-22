@@ -97,11 +97,11 @@
 						entryId: entryIds,
 						onCancel: () => {
 							alertDialogStore.close();
-							checkedEntries.clear();
+							checkedEntryIds.clear();
 						},
 						onSave: () => {
 							alertDialogStore.close();
-							checkedEntries.clear();
+							checkedEntryIds.clear();
 						},
 						type: 'note',
 					},
@@ -152,7 +152,21 @@
 	<CommandSeparator />
 
 	<CommandGroup>
-		<CommandItem>
+		<CommandItem onSelect={() => {
+            open = false;
+            alertDialogStore.open({
+                title: 'Delete entries',
+                description: 'Are you sure you want to delete these entries?',
+                action: () => {
+                    checkedEntryIds.clear();
+                    mutate('bookmarkDelete', {
+                        entryIds,
+                    }).then(() => {
+                        invalidateEntries(queryClient);
+                    });
+                },
+            })
+        }}>
 			<TrashIcon class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Delete
 		</CommandItem>

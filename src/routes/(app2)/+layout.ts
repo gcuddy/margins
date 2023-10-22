@@ -49,7 +49,7 @@ export async function load({ data }) {
 					: undefined,
 				// staleTime: 1000 * 60 * 60, // 1 hour,
 				// Moving this default to 10 seconds for now, till we fix up all invalidation bugs
-				staleTime: 1000 * 30, // 10 seconds,
+				staleTime: 1000 * 30, // 30 seconds,
 			},
 		},
 	});
