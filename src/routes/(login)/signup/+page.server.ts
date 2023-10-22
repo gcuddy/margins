@@ -56,16 +56,17 @@ export const actions: Actions = {
 			// TODO: Oauth
 
 			// validate invite code
-			const code = await db
-				.selectFrom('InvitationCode')
-				.where('used', '=', 0)
-				.where('code', '=', inviteCode)
-				.select(['code'])
-				.executeTakeFirst();
+			// TEMPORARILY TURNING THIS OFF FOR TESTING
+			// const code = await db
+			// 	.selectFrom('InvitationCode')
+			// 	.where('used', '=', 0)
+			// 	.where('code', '=', inviteCode)
+			// 	.select(['code'])
+			// 	.executeTakeFirst();
 
-			if (!code) {
-				return setError(form, 'inviteCode', 'Invalid invite code');
-			}
+			// if (!code) {
+			// 	return setError(form, 'inviteCode', 'Invalid invite code');
+			// }
 
 			// TODO: oauth
 

@@ -29,9 +29,11 @@ export const createUserSchema = z.object({
 			message: 'Username must be at most 20 characters',
 		}),
 	// FOR NOW, required
-	inviteCode: z.string({
-		required_error: 'Invite code is required',
-	}),
+	inviteCode: z
+		.string({
+			required_error: 'Invite code is required',
+		})
+		.optional(),
 });
 
 export const loginUserSchema = createUserSchema.omit({

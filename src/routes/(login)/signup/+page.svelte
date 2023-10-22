@@ -53,7 +53,7 @@
 			</Form.Field>
 			<Form.Field {config} name="inviteCode">
 				<Form.Item>
-					<Form.Label>Invite Code</Form.Label>
+					<Form.Label>Invite Code (if you have one)</Form.Label>
 					<Form.Input />
 					<Form.Validation />
 				</Form.Item>
