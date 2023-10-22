@@ -50,18 +50,19 @@
 		if (
 			e.target instanceof HTMLElement &&
 			e.target.closest('[data-annotation-popover]')
-		) {
-			return;
-		}
-		mouseDown.set(true);
-	}}
+            ) {
+                return;
+            }
+            mouseDown.set(true);
+        }}
 	on:mouseup={() => {
-		mouseDown.set(false);
+        mouseDown.set(false);
 	}}
 />
 
 {#if $show}
-	<div data-annotation-popover use:popperContent use:usePortal>
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<div data-annotation-popover use:popperContent use:usePortal on:pointerdown|stopPropagation on:mousedown|stopPropagation>
 		<div
 			class="z-50 w-auto select-none rounded-md border bg-popover p-1 shadow-md outline-none"
 			in:scale={{

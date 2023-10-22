@@ -21,7 +21,10 @@
 	import Tags from './Tags.svelte';
 	import alertDialogStore from '$lib/stores/alert-dialog';
 	import AnnotationForm from '$components/annotations/annotation-form.svelte';
-	import { checkedEntries, checkedEntryIds } from '$components/entries/multi-select';
+	import {
+		checkedEntries,
+		checkedEntryIds,
+	} from '$components/entries/multi-select';
 	import { createEventDispatcher } from 'svelte';
 	import { statusesToDisplay, statusesWithIcons } from '$lib/status';
 	import { objectEntries } from '$lib/helpers';
@@ -152,21 +155,24 @@
 	<CommandSeparator />
 
 	<CommandGroup>
-		<CommandItem onSelect={() => {
-            open = false;
-            alertDialogStore.open({
-                title: 'Delete entries',
-                description: 'Are you sure you want to delete these entries?',
-                action: () => {
-                    checkedEntryIds.clear();
-                    mutate('bookmarkDelete', {
-                        entryIds,
-                    }).then(() => {
-                        invalidateEntries(queryClient);
-                    });
-                },
-            })
-        }}>
+		<CommandItem
+			onSelect={() => {
+				open = false;
+				alertDialogStore.open({
+					title: 'Delete entries',
+					description: 'Are you sure you want to delete these entries?',
+					action: () => {
+						console.log('running action');
+						mutate('bookmarkDelete', {
+							entryIds,
+						}).then(() => {
+							checkedEntryIds.clear();
+							invalidateEntries(queryClient);
+						});
+					},
+				});
+			}}
+		>
 			<TrashIcon class="h-4 w-4 mr-2 stroke-[1.5]" />
 			Delete
 		</CommandItem>
@@ -198,10 +204,10 @@
 	<StatusCommands
 		{entryIds}
 		onSelect={() => {
-            console.log('onselect')
+			console.log('onselect');
 			checkedEntryIds.clear();
 			open = false;
-            console.log('clearing checked entries')
+			console.log('clearing checked entries');
 		}}
 	/>
 {/if}
