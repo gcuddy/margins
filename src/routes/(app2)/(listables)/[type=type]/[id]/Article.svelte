@@ -4,6 +4,7 @@
 		usePortal,
 	} from '@melt-ui/svelte/internal/actions';
 	import { draggable } from '@neodrag/svelte';
+	import * as Dialog from '$components/ui/dialog';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
 	import throttle from 'just-throttle';
@@ -53,7 +54,7 @@
 	import { createAnnotationStore } from '$lib/stores/annotations';
 	import mq from '$lib/stores/mq';
 	import type { Type } from '$lib/types';
-	import { getHostname } from '$lib/utils';
+	import { flyAndScale, getHostname } from '$lib/utils';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { numberOrString } from '$lib/utils/misc';
 	import { cn } from '$lib/utils/tailwind';
@@ -781,24 +782,8 @@
 	}
 
 	let showImageMenu = false;
+    let _activeImageUrl: string | null = null;
 	let imagePortal: HTMLElement | undefined = undefined;
-	function handleMouseMove(e: MouseEvent) {
-		if (
-			e.target instanceof HTMLImageElement ||
-			(e.target instanceof Element && e.target.closest('[data-image-menu]'))
-		) {
-			// TODO
-			showImageMenu = true;
-			const container = e.target.parentElement;
-			if (container) {
-				imagePortal = container;
-				container.style.position = 'relative';
-			}
-		} else {
-			showImageMenu = false;
-			imagePortal = undefined;
-		}
-	}
 
 	const [editMenuRef, editMenuContent] = createPopperActions({
 		modifiers: [
@@ -812,14 +797,24 @@
 	});
 	let showEditMenu = false;
 
-
-    let _active_annotation_id: string | null = null;
+	let _active_annotation_id: string | null = null;
 
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target;
 		if (!isAnnotation(target)) {
 			activeAnnotationId.set(null);
 			showEditMenu = false;
+
+			// let's see if it's an image, if so show dialog to save it
+			if (target instanceof HTMLImageElement) {
+				showImageMenu = true;
+                _activeImageUrl = target.src;
+				e.preventDefault();
+			} else {
+				showImageMenu = false;
+                _activeImageUrl = null;
+			}
+
 			return;
 		}
 		const annotationEl = target.closest('[data-annotation-id]');
@@ -834,7 +829,7 @@
 			return;
 		}
 		activeAnnotationId.set(id);
-        _active_annotation_id = id;
+		_active_annotation_id = id;
 		console.log({ $activeAnnotationId });
 		editMenuRef(target);
 		annotationRef(target);
@@ -896,35 +891,42 @@
 					on:click={() => {
 						if (articleWrapper && _active_annotation_id) {
 							// this is the scrappy way 'improper' way to do this, but it works for now
-                            // keeping track of them in state has been buggy otherwise
-                            const annotations = articleWrapper.querySelectorAll(`[data-annotation-id="${_active_annotation_id}"]`);
-                            for (const annotation of annotations) {
-                                if (isHTMLElement(annotation)){
-                                    console.log('removing highlight', annotation)
-                                    removeHighlight(annotation)
-                                }
-                            }
-                            // mutate data object - this ensures that the annotation is removed from the UI
-                            if (data.entry?.annotations) {
-                                data.entry.annotations = data.entry.annotations.filter((a) => a.id !== _active_annotation_id);
-                            }
+							// keeping track of them in state has been buggy otherwise
+							const annotations = articleWrapper.querySelectorAll(
+								`[data-annotation-id="${_active_annotation_id}"]`,
+							);
+							for (const annotation of annotations) {
+								if (isHTMLElement(annotation)) {
+									console.log('removing highlight', annotation);
+									removeHighlight(annotation);
+								}
+							}
+							// mutate data object - this ensures that the annotation is removed from the UI
+							if (data.entry?.annotations) {
+								data.entry.annotations = data.entry.annotations.filter(
+									(a) => a.id !== _active_annotation_id,
+								);
+							}
 
-							$annotateMutation.mutate({
-								deleted: new Date(),
-								id: _active_annotation_id,
-							}, {
-                                onSuccess() {
-                                    toast('Deleted annotation', {
-                                        // action: {
-                                        //     label: 'Undo',
-                                        //     onClick: annotations.restore,
-                                        // },
-                                        duration: 7000,
-                                    });
-                                }
-                            });
-                            _active_annotation_id = null;
-                            showEditMenu = false;
+							$annotateMutation.mutate(
+								{
+									deleted: new Date(),
+									id: _active_annotation_id,
+								},
+								{
+									onSuccess() {
+										toast('Deleted annotation', {
+											// action: {
+											//     label: 'Undo',
+											//     onClick: annotations.restore,
+											// },
+											duration: 7000,
+										});
+									},
+								},
+							);
+							_active_annotation_id = null;
+							showEditMenu = false;
 						}
 						// activeAnnotationId.set(null);
 						// showEditMenu = false;
@@ -1054,7 +1056,6 @@
 		id="article"
 		class="select-text"
 		on:pointerdown={handlePointerDown}
-		on:mousemove={handleMouseMove}
 		use:drag_context={{
 			'context/id': data.entry?.id.toString() ?? '',
 			'context/url': data.entry?.uri ?? '',
@@ -1119,15 +1120,16 @@
 	{/if}
 </div>
 
-{#if showImageMenu}
-	<div
-		data-image-menu
-		class="absolute top-0 right-0"
-		use:usePortal={imagePortal}
-	>
-		<Button>Image Menu</Button>
-	</div>
-{/if}
+<!-- Image Dialog -->
+<Dialog.Root bind:open={showImageMenu}>
+	<Dialog.Content>
+        <div class="flex">
+            <img src={_activeImageUrl} class="w-32 h-32 object-cover rounded mr-4" alt="" />
+        </div>
+        <Button variant="ghost">Save Image</Button>
+        <Button variant="ghost">Open Image</Button>
+    </Dialog.Content>
+</Dialog.Root>
 
 <!-- {#if $scroll < lastSavedScrollProgress}
 	<div class="fixed bottom-0 right-0">scroll to latest position</div>
