@@ -8,7 +8,13 @@
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import debounce from 'just-debounce-it';
 	import throttle from 'just-throttle';
-	import { EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
+	import { finder } from '@medv/finder';
+	import {
+		EditIcon,
+		EraserIcon,
+		ExternalLink,
+		Highlighter,
+	} from 'lucide-svelte';
 	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
 	import { derived, type Writable, writable } from 'svelte/store';
 	import { scale } from 'svelte/transition';
@@ -28,16 +34,18 @@
 	import focusTrap from '$lib/actions/focus-trap';
 	import type { TargetSchema } from '$lib/annotation';
 	import {
+	createCssSelectorMatcher,
 		createTextQuoteSelectorMatcher,
 		describeTextPosition,
 		describeTextQuote,
 	} from '$lib/annotator';
 	import { highlightText, removeHighlight } from '$lib/annotator/highlighter';
-	import type { TextQuoteSelector } from '$lib/annotator/types';
+	import type { CssSelector, TextQuoteSelector } from '$lib/annotator/types';
 	import { Button } from '$lib/components/ui/button';
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import {
 		coalesceObjects,
+		getHTMLOfSelection,
 		isAnnotation,
 		isHTMLElement,
 		makeAnnotation,
@@ -361,6 +369,9 @@
 			id: `annotation-${id}`,
 			...attrs,
 		});
+        const html  = getHTMLOfSelection();
+
+        console.log({html});
 		return {
 			els,
 			exact,
@@ -369,6 +380,19 @@
 			start,
 		};
 	};
+
+	async function highlightCssSelector(selector: CssSelector) {
+        const matches = createCssSelectorMatcher(selector)(articleWrapper!);
+
+        const matchList = [];
+        for await (const match of matches) {
+            matchList.push(match);
+        }
+
+        console.log({ matchList });
+
+        return matchList.map((match) => highlightText(match, 'mark'));
+    }
 
 	async function highlightSelectorTarget(
 		textQuoteSelector: TextQuoteSelector,
@@ -782,7 +806,8 @@
 	}
 
 	let showImageMenu = false;
-    let _activeImageUrl: string | null = null;
+	let _activeImageUrl: string | null = null;
+	let _activeImageElement: HTMLImageElement | null = null;
 	let imagePortal: HTMLElement | undefined = undefined;
 
 	const [editMenuRef, editMenuContent] = createPopperActions({
@@ -808,11 +833,12 @@
 			// let's see if it's an image, if so show dialog to save it
 			if (target instanceof HTMLImageElement) {
 				showImageMenu = true;
-                _activeImageUrl = target.src;
+				_activeImageUrl = target.src;
+				_activeImageElement = target;
 				e.preventDefault();
 			} else {
 				showImageMenu = false;
-                _activeImageUrl = null;
+				_activeImageUrl = null;
 			}
 
 			return;
@@ -1123,12 +1149,62 @@
 <!-- Image Dialog -->
 <Dialog.Root bind:open={showImageMenu}>
 	<Dialog.Content>
-        <div class="flex">
-            <img src={_activeImageUrl} class="w-32 h-32 object-cover rounded mr-4" alt="" />
-        </div>
-        <Button variant="ghost">Save Image</Button>
-        <Button variant="ghost">Open Image</Button>
-    </Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Image</Dialog.Title>
+			<Dialog.Description>What do you want to do?</Dialog.Description>
+		</Dialog.Header>
+		<div class="flex justify-center">
+			<img
+				src={_activeImageUrl}
+				class="w-32 h-32 object-cover rounded mr-4"
+				alt=""
+			/>
+		</div>
+		<div class="flex flex-col sm:grid grid-cols-3">
+			<Button
+				on:click={() => {
+					if (_activeImageElement) {
+						let range = document.createRange();
+						console.log('imagel', _activeImageElement);
+						range.selectNode(_activeImageElement);
+
+						const p = describeTextPosition(range);
+						const css = finder(_activeImageElement, {
+							root: articleWrapper,
+						});
+
+						console.log({ p, css });
+
+                        highlightCssSelector({
+                            type: "CssSelector",
+                            value: css
+                        })
+					}
+				}}
+				class="max-sm:py-6"
+				variant="ghost"
+			>
+				<Highlighter class="h-5 w-5 shrink-0 mr-2" />
+				Highlight Image</Button
+			>
+			<Button class="max-sm:py-6" variant="ghost">
+				<EditIcon class="h-5 w-5 shrink-0 mr-2" />
+				Annotate Image</Button
+			>
+			<Button
+				class="max-sm:py-6"
+				variant="ghost"
+				on:click={() => {
+					showImageMenu = false;
+					open(_activeImageUrl, '_blank');
+					_activeImageUrl = null;
+				}}
+			>
+				<ExternalLink class="h-5 w-5 shrink-0 mr-2" />
+				Open Image</Button
+			>
+		</div>
+	</Dialog.Content>
 </Dialog.Root>
 
 <!-- {#if $scroll < lastSavedScrollProgress}
@@ -1143,4 +1219,8 @@
 	.prose :global(mark[data-annotation-id]) {
 		@apply cursor-pointer;
 	}
+
+    #article :global(mark > img) {
+        @apply ring-8 ring-yellow-400/50 rounded;
+    }
 </style>

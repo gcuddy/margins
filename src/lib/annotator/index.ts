@@ -1,4 +1,5 @@
-// This is all picked from apache-annotator
+// This is all picked from apache-annotator - https://github.com/apache/incubator-annotator
+// Copied directly from there with very slight modifications, all credit to them.
 
 import { textQuoteSelectorMatcher as abstractTextQuoteSelectorMatcher } from './abstract/match-text-quote';
 import { textPositionSelectorMatcher as abstractTextPositionSelectorMatcher } from './abstract/match-text-position';
@@ -8,7 +9,14 @@ import { describeTextPosition as abstractDescribeTextPosition } from './abstract
 import { EmptyScopeError, TextNodeChunker } from './chunk';
 import { isTextNode } from './highlighter';
 import { buildSelectorFromImage } from './img';
-import type { DescribeTextQuoteOptions, Matcher, RangeSelector, TextPositionSelector, TextQuoteSelector } from './types';
+import type {
+	CssSelector,
+	DescribeTextQuoteOptions,
+	Matcher,
+	RangeSelector,
+	TextPositionSelector,
+	TextQuoteSelector,
+} from './types';
 import { ownerDocument, toRange } from './utils';
 
 /**
@@ -48,7 +56,7 @@ import { ownerDocument, toRange } from './utils';
 export async function describeTextQuote(
 	range: Range,
 	scope?: Node | Range,
-	options: DescribeTextQuoteOptions = {}
+	options: DescribeTextQuoteOptions = {},
 ): Promise<TextQuoteSelector> {
 	const scopeAsRange = toRange(scope ?? ownerDocument(range));
 
@@ -57,7 +65,7 @@ export async function describeTextQuote(
 	return await abstractDescribeTextQuote(
 		chunker.rangeToChunkRange(range),
 		() => new TextNodeChunker(scopeAsRange),
-		options
+		options,
 	);
 }
 
@@ -80,12 +88,17 @@ export async function describeSelection(range: Range, scope: Element) {
 			NodeFilter.SHOW_ELEMENT,
 			{
 				acceptNode: (node) =>
-					range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
-			}
+					range.intersectsNode(node)
+						? NodeFilter.FILTER_ACCEPT
+						: NodeFilter.FILTER_REJECT,
+			},
 		);
 		console.log(walker.currentNode);
 		const nodes: Node[] = [];
-		while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
+		while (
+			walker.nextNode() &&
+			range.comparePoint(walker.currentNode, 0) !== 1
+		) {
 			console.log(walker.currentNode);
 			if ((walker.currentNode as Element).tagName === 'IMG') {
 				// todo: or others
@@ -229,13 +242,13 @@ export async function describeRange(range: Range, scope?: Element) {
  * @public
  */
 export function createTextQuoteSelectorMatcher(
-	selector: TextQuoteSelector
+	selector: TextQuoteSelector,
 ): Matcher<Node | Range, Range> {
 	const abstractMatcher = abstractTextQuoteSelectorMatcher(selector);
 
 	return async function* matchAll(scope) {
 		let textChunks;
-        console.log({scope})
+		console.log({ scope });
 		try {
 			textChunks = new TextNodeChunker(scope);
 		} catch (err) {
@@ -250,36 +263,35 @@ export function createTextQuoteSelectorMatcher(
 	};
 }
 
-
 /**
  * Find the range of text corresponding to the given {@link
-* TextPositionSelector}.
-*
-* The start and end positions are measured relative to the first text character
-* in the given scope.
-*
-* The function is curried, taking first the selector and then the scope.
-*
-* Its end result is an (async) generator producing a single {@link https://developer.mozilla.org/en-US/docs/Web/API/Range
-* | Range} to represent the match (unlike e.g. a {@link TextQuoteSelector}, a
-* TextPositionSelector cannot have multiple matches).
-*
-* @example
-* ```
-* const selector = { type: 'TextPositionSelector', start: 702, end: 736 };
-* const scope = document.body;
-* const matches = textQuoteSelectorMatcher(selector)(scope);
-* const match = (await matches.next()).value;
-* // ⇒ Range { startContainer: #text, startOffset: 64, endContainer: #text,
-* //   endOffset: 98, … }
-* ```
-*
-* @param selector - The {@link TextPositionSelector} to be anchored.
-* @returns A {@link Matcher} function that applies `selector` within a given
-* `scope`.
-*
-* @public
-*/
+ * TextPositionSelector}.
+ *
+ * The start and end positions are measured relative to the first text character
+ * in the given scope.
+ *
+ * The function is curried, taking first the selector and then the scope.
+ *
+ * Its end result is an (async) generator producing a single {@link https://developer.mozilla.org/en-US/docs/Web/API/Range
+ * | Range} to represent the match (unlike e.g. a {@link TextQuoteSelector}, a
+ * TextPositionSelector cannot have multiple matches).
+ *
+ * @example
+ * ```
+ * const selector = { type: 'TextPositionSelector', start: 702, end: 736 };
+ * const scope = document.body;
+ * const matches = textQuoteSelectorMatcher(selector)(scope);
+ * const match = (await matches.next()).value;
+ * // ⇒ Range { startContainer: #text, startOffset: 64, endContainer: #text,
+ * //   endOffset: 98, … }
+ * ```
+ *
+ * @param selector - The {@link TextPositionSelector} to be anchored.
+ * @returns A {@link Matcher} function that applies `selector` within a given
+ * `scope`.
+ *
+ * @public
+ */
 export function createTextPositionSelectorMatcher(
 	selector: TextPositionSelector,
 ): Matcher<Node | Range, Range> {
@@ -296,6 +308,25 @@ export function createTextPositionSelectorMatcher(
 	};
 }
 
+export function createCssSelectorMatcher(
+	selector: CssSelector,
+): Matcher<Node | Range, Element> {
+	return async function* matchAll(scope) {
+		scope = toRange(scope);
+		const document = ownerDocument(scope);
+		for (const element of document.querySelectorAll(selector.value)) {
+			const range = document.createRange();
+			range.selectNode(element);
+
+			if (
+				scope.isPointInRange(range.startContainer, range.startOffset) &&
+				scope.isPointInRange(range.endContainer, range.endOffset)
+			) {
+				yield element;
+			}
+		}
+	};
+}
 
 /**
  * Returns a {@link TextPositionSelector} that points at the target text within
@@ -320,14 +351,14 @@ export function createTextPositionSelectorMatcher(
  * ```
  *
  * @param range - The {@link https://developer.mozilla.org/en-US/docs/Web/API/Range
-* | Range} whose text content will be described.
-* @param scope - A Node or Range that serves as the ‘document’ for purposes of
-* finding occurrences and determining prefix and suffix. Defaults to the full
-* Document that contains `range`.
-* @returns The selector describing `range` within `scope`.
-*
-* @public
-*/
+ * | Range} whose text content will be described.
+ * @param scope - A Node or Range that serves as the ‘document’ for purposes of
+ * finding occurrences and determining prefix and suffix. Defaults to the full
+ * Document that contains `range`.
+ * @returns The selector describing `range` within `scope`.
+ *
+ * @public
+ */
 export function describeTextPosition(
 	range: Range,
 	scope?: Node | Range,

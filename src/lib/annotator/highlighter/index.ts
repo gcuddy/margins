@@ -56,7 +56,7 @@ export function highlightText(
 				first: boolean;
 		  }
 	> = {},
-	annotation?: HTMLElement
+	annotation?: HTMLElement,
 ): {
 	highlightElements: HTMLElement[];
 	removeHighlights: () => void;
@@ -64,20 +64,36 @@ export function highlightText(
 	// First put all nodes in an array (splits start and end nodes if needed)
 	const nodes = textNodesInRange(toRange(target));
 	// get non-text-nodes in range
-	const nontextnodes = nonTextNodesInRange(toRange(target));
-	console.log({ target, nontextnodes });
+	const nonTextNodes = nonTextNodesInRange(toRange(target)) ?? [];
+	// console.log({ target, nontextnodes });
 	// Highlight each node
 	const highlightElements: HTMLElement[] = [];
 	let nodeIndex = 0;
 	for (const node of nodes) {
-		const highlightElement = wrapNodeInHighlight(node, tagName, attributes, nodeIndex);
+		const highlightElement = wrapNodeInHighlight(
+			node,
+			tagName,
+			attributes,
+			nodeIndex,
+		);
+		highlightElements.push(highlightElement);
+		nodeIndex++;
+	}
+	for (const node of nonTextNodes) {
+		const highlightElement = wrapNodeInHighlight(
+			node,
+			tagName,
+			attributes,
+			nodeIndex,
+		);
 		highlightElements.push(highlightElement);
 		nodeIndex++;
 	}
 
 	// If it's an annotation, append a little annotation el after the last highlight element
 	if (annotation) {
-		const lastHighlightElement = highlightElements[highlightElements.length - 1];
+		const lastHighlightElement =
+			highlightElements[highlightElements.length - 1];
 		lastHighlightElement.after(annotation);
 	}
 
@@ -106,22 +122,26 @@ function textNodesInRange(range: Range): Text[] {
 		}
 		range.setStart(createdNode, 0);
 	}
-	if (isTextNode(range.endContainer) && range.endOffset < range.endContainer.length) {
+	if (
+		isTextNode(range.endContainer) &&
+		range.endOffset < range.endContainer.length
+	) {
 		range.endContainer.splitText(range.endOffset);
 	}
 
 	// Collect the text nodes.
 	const walker = ownerDocument(range).createTreeWalker(
 		range.commonAncestorContainer,
-		NodeFilter.SHOW_ALL,
+		NodeFilter.SHOW_TEXT,
 		{
 			acceptNode: (node) =>
-				range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
-		}
+				range.intersectsNode(node)
+					? NodeFilter.FILTER_ACCEPT
+					: NodeFilter.FILTER_REJECT,
+		},
 	);
 	walker.currentNode = range.startContainer;
 
-	console.log({ currentNode: walker.currentNode });
 	// // Optimise by skipping nodes that are explicitly outside the range.
 	// const NodeTypesWithCharacterOffset = [
 	//  Node.TEXT_NODE,
@@ -138,23 +158,14 @@ function textNodesInRange(range: Range): Text[] {
 
 	const nodes: Text[] = [];
 	if (isTextNode(walker.currentNode)) nodes.push(walker.currentNode);
-	while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
-		console.log({ currentNode: walker.currentNode });
-		if (isTextNode(walker.currentNode) && walker.currentNode.textContent?.trim()) {
-			nodes.push(walker.currentNode);
-		} else if (
-			walker.currentNode.nodeType === 1 &&
-			(walker.currentNode as Element).querySelector('img')
-		) {
-			nodes.push(walker.currentNode as Text);
-		}
-	}
+	while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1)
+		nodes.push(walker.currentNode as Text);
 	return nodes;
 }
 
 // Replace [node] with <tagName ...attributes>[node]</tagName>
 function wrapNodeInHighlight(
-	node: ChildNode,
+	node: Node,
 	tagName: string,
 	attributes: Record<
 		string,
@@ -164,7 +175,7 @@ function wrapNodeInHighlight(
 				first: boolean;
 		  }
 	>,
-	index: number
+	index: number,
 ): HTMLElement {
 	const document = node.ownerDocument as Document;
 	const highlightElement = document.createElement(tagName);
@@ -209,28 +220,37 @@ export function isTextNode(node: Node): node is Text {
 	return node.nodeType === Node.TEXT_NODE;
 }
 
+export function isImgNode(node: Node): node is HTMLImageElement {
+	return node.nodeType === Node.ELEMENT_NODE && node.nodeName === 'IMG';
+}
+
 const nonTextNodesInRange = (range: Range) => {
 	console.log(range, isTextNode(range.startContainer));
-	if (isTextNode(range.startContainer)) {
-		// todo
-	} else {
-		const start = range.startContainer.childNodes[range.startOffset];
-		// todo: if istextnode endcontainer
-		const end = range.endContainer.childNodes[range.endOffset];
-		const walker = ownerDocument(range).createTreeWalker(
-			range.commonAncestorContainer,
-			NodeFilter.SHOW_ELEMENT,
-			{
-				acceptNode: (node) =>
-					range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT,
-			}
-		);
-		walker.currentNode = range.startContainer;
-		const nodes: Node[] = [];
-		if (!isTextNode(walker.currentNode)) nodes.push(walker.currentNode);
-		while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
+	// const start = range.startContainer.childNodes[range.startOffset];
+	// // todo: if istextnode endcontainer
+	// const end = range.endContainer.childNodes[range.endOffset];
+	const walker = ownerDocument(range).createTreeWalker(
+		range.commonAncestorContainer,
+		NodeFilter.SHOW_ELEMENT,
+		{
+			acceptNode: (node) =>
+				range.intersectsNode(node)
+					? NodeFilter.FILTER_ACCEPT
+					: NodeFilter.FILTER_REJECT,
+		},
+	);
+	walker.currentNode = range.startContainer;
+	const nodes: Node[] = [];
+	if (isImgNode(walker.currentNode)) nodes.push(walker.currentNode);
+
+	// TODO: just use img by checking if nodName === 'IMG'
+	while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
+		if (isImgNode(walker.currentNode)) {
+			console.log('img', walker.currentNode);
 			nodes.push(walker.currentNode);
-			console.log(walker.currentNode);
 		}
+		// console.log(walker.currentNode);
 	}
+	console.log('nontextnodes', nodes);
+	return nodes;
 };

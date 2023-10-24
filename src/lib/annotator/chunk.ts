@@ -12,12 +12,6 @@ export class EmptyScopeError extends TypeError {
 	}
 }
 
-export class OutOfScopeError extends TypeError {
-	constructor(message?: string) {
-		super(message || 'Cannot convert node to chunk, as it falls outside of chunker’s scope.');
-	}
-}
-
 export class TextNodeChunker implements Chunker<PartialTextNode> {
 	private scope: Range;
 	private iter: NodeIterator;
@@ -32,10 +26,10 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 	}
 
 	nodeToChunk(node: Text): PartialTextNode {
-		if (!this.scope.intersectsNode(node)) throw new OutOfScopeError();
-
-		const startOffset = node === this.scope.startContainer ? this.scope.startOffset : 0;
-		const endOffset = node === this.scope.endContainer ? this.scope.endOffset : node.length;
+		const startOffset =
+			node === this.scope.startContainer ? this.scope.startOffset : 0;
+		const endOffset =
+			node === this.scope.endContainer ? this.scope.endOffset : node.length;
 
 		return {
 			node,
@@ -78,9 +72,12 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 		// might start within a text node.
 		range.setStart(
 			chunkRange.startChunk.node,
-			chunkRange.startIndex + chunkRange.startChunk.startOffset
+			chunkRange.startIndex + chunkRange.startChunk.startOffset,
 		);
-		range.setEnd(chunkRange.endChunk.node, chunkRange.endIndex + chunkRange.endChunk.startOffset);
+		range.setEnd(
+			chunkRange.endChunk.node,
+			chunkRange.endIndex + chunkRange.endChunk.startOffset,
+		);
 		return range;
 	}
 
@@ -88,7 +85,7 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 	 * @param scope A Range that overlaps with at least one text node.
 	 */
 	constructor(scope: Node | Range) {
-        console.log({scope})
+		console.log({ scope });
 		this.scope = toRange(scope);
 		this.iter = ownerDocument(scope).createNodeIterator(
 			this.scope.commonAncestorContainer,
@@ -99,7 +96,7 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 						? NodeFilter.FILTER_ACCEPT
 						: NodeFilter.FILTER_REJECT;
 				},
-			}
+			},
 		);
 
 		// Move the iterator to after the start (= root) node.
@@ -129,7 +126,8 @@ export class TextNodeChunker implements Chunker<PartialTextNode> {
 	precedesCurrentChunk(chunk: PartialTextNode): boolean {
 		if (this.currentChunk === null) return false;
 		return !!(
-			this.currentChunk.node.compareDocumentPosition(chunk.node) & Node.DOCUMENT_POSITION_PRECEDING
+			this.currentChunk.node.compareDocumentPosition(chunk.node) &
+			Node.DOCUMENT_POSITION_PRECEDING
 		);
 	}
 }

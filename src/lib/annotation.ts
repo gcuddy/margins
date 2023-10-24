@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import type { TextPositionSelector as ITextPositionSelector } from './annotator/types';
+import type {
+	CssSelector,
+	TextPositionSelector as ITextPositionSelector,
+} from './annotator/types';
 import { jsonSchema } from './schemas/types';
 
 export const AnnotationType = {
@@ -11,6 +14,11 @@ export const AnnotationType = {
 	qa: 'qa',
 } as const;
 
+export const CssSelectorSchema: z.ZodType<CssSelector> = z.object({
+	type: z.literal('CssSelector'),
+	value: z.string(),
+});
+
 const TimestampSelectorSchema = z.object({
 	// source: z.string()   ,
 	// selector: z.object({
@@ -19,7 +27,7 @@ const TimestampSelectorSchema = z.object({
 		.literal('http://www.w3.org/TR/media-frags/')
 		.default('http://www.w3.org/TR/media-frags/'),
 	/**  e.g. "t=10,20" */
-	value: z.string()
+	value: z.string(),
 	// }),
 	// html: z.string().optional(),
 });
@@ -28,25 +36,25 @@ export const TextQuoteSelectorSchema = z.object({
 	type: z.literal('TextQuoteSelector'),
 	exact: z.string(),
 	prefix: z.string().optional(),
-	suffix: z.string().optional()
+	suffix: z.string().optional(),
 });
 
 export const XPathSelectorSchema = z.object({
 	type: z.literal('XPathSelector'),
-	value: z.string()
+	value: z.string(),
 });
 
 const TextPositionSelector: z.ZodType<ITextPositionSelector> = z.object({
 	type: z.literal('TextPositionSelector'),
 	start: z.number(),
-	end: z.number()
+	end: z.number(),
 });
 
 // TODO: this is not really complete but it works for now
 export const RangeSelectorSchema = z.object({
 	type: z.literal('RangeSelector'),
 	startSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema]),
-	endSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema])
+	endSelector: z.union([TextQuoteSelectorSchema, XPathSelectorSchema]),
 });
 
 // This is our own extension
@@ -54,7 +62,7 @@ export const BookSelectorSchema = z.object({
 	type: z.literal('BookSelector'),
 	// Value is optional - we could just be noting the page num, and the body contains our annotation
 	value: z.string().optional(),
-	pageNumber: z.number()
+	pageNumber: z.number(),
 });
 
 export const SelectorSchema = z.union([
@@ -63,17 +71,18 @@ export const SelectorSchema = z.union([
 	RangeSelectorSchema,
 	TimestampSelectorSchema,
 	BookSelectorSchema,
-	TextPositionSelector
+	TextPositionSelector,
+	CssSelectorSchema,
 ]);
 export type Selector = z.infer<typeof SelectorSchema>;
 
 export const TargetSchema = z.object({
 	source: z.string(),
-	selector: SelectorSchema.or(z.tuple([TextQuoteSelectorSchema, TextPositionSelector])).or(
-		z.tuple([TextQuoteSelectorSchema, BookSelectorSchema])
-	),
+	selector: SelectorSchema.or(
+		z.tuple([TextQuoteSelectorSchema, TextPositionSelector]),
+	).or(z.tuple([TextQuoteSelectorSchema, BookSelectorSchema])),
 	html: z.string().optional(),
-	page_num: z.number().optional()
+	page_num: z.number().optional(),
 });
 
 export type TargetSchema = z.infer<typeof TargetSchema>;
