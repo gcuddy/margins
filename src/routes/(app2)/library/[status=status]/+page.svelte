@@ -125,6 +125,7 @@
 		);
 	});
 
+    $: console.log({$entries})
 	$: entryState.init($entries);
 
 	let groupedEntries: GroupedArrayWithHeadings<

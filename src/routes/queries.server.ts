@@ -302,9 +302,15 @@ export const mutations = {
 					});
 				}
 			}
-			await db.insertInto('TagOnEntry').values(insertables).ignore().execute();
+            if (insertables.length) {
+							await db
+								.insertInto('TagOnEntry')
+								.values(insertables)
+								.ignore()
+								.execute();
+						}
 
-			if (input.tagIdsToRemove) {
+			if (input.tagIdsToRemove?.length) {
 				await db
 					.deleteFrom('TagOnEntry')
 					.where('entryId', 'in', input.entryIds)

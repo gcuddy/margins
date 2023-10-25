@@ -261,11 +261,15 @@
 {#if $activePage === 'set-tags'}
 	<Tags
 		bind:isOpen={open}
-		onSelect={(_, selected) => {
-			console.log({ selected, _ });
+		onSelect={(_, selected, indeterminate, removed) => {
+			// console.log({ selected, _ });
+            // TODO: optimistic update
+            // console.log({selected, indeterminate, removed})
+            open = false;
 			mutate('bulkTagInsert', {
 				entryIds,
 				tagIds: selected,
+                tagIdsToRemove: removed,
 			}).then(() => {
 				invalidateEntries(queryClient);
 				queryClient.invalidateQueries({
