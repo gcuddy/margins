@@ -2,43 +2,46 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import commandScore from 'command-score';
 	import debounce from 'just-debounce-it';
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { derived } from 'svelte/store';
 
 	import { goto, preloadData } from '$app/navigation';
 	import EntryIcon from '$components/entries/EntryIcon.svelte';
 	import {
-		commandCtx,
 		CommandGroup,
 		CommandItem,
+		commandCtx,
 	} from '$components/ui/command2';
 	import { Muted } from '$lib/components/ui/typography';
 	import type { ListEntry } from '$lib/db/selects';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { getId, make_link } from '$lib/utils/entries';
 	import { recents } from '$lib/stores/recents';
+	import { getId } from '$lib/utils/entries';
 
 	const entriesQuery = createQuery(queryFactory.entries.all());
 
 	const {
-		options: { multiple },
 		state: {
-			activeOptionProps,
-			activeValue,
 			inputValue,
-			selectedValue,
 			shouldFilter,
 		},
 	} = commandCtx.get<ListEntry>();
 
-	shouldFilter.set(false);
+	let previousShouldFilterValue = $shouldFilter;
+
+	onMount(() => {
+		shouldFilter.set(false);
+		return () => {
+			shouldFilter.set(previousShouldFilterValue);
+		};
+	});
 
 	export let isOpen = false;
 
-    /**
-     * Optional list of entry ids to exclude from the list
-    */
-    export let excludeIds: number[] = [];
+	/**
+	 * Optional list of entry ids to exclude from the list
+	 */
+	export let excludeIds: number[] = [];
 
 	export let onSelect: (entry: ListEntry) => void = (entry) => {
 		console.log('onSelect', entry);
@@ -51,10 +54,10 @@
 
 	const dispatch = createEventDispatcher();
 
-    const filterExcluded = (entry: { id: number; }) => {
-        if (excludeIds.includes(entry.id)) return false;
-        return true;
-    }
+	const filterExcluded = (entry: { id: number }) => {
+		if (excludeIds.includes(entry.id)) return false;
+		return true;
+	};
 
 	// sort Recents to top
 
