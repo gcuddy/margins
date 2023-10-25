@@ -222,7 +222,7 @@
 				annotation.target,
 				'FragmentSelector',
 			)}
-			{#if selector}
+			{#if annotation.html || selector}
 				<a on:click href="{hrefPrefix}#annotation-{annotation.id}">
 					<Clamp
 						on:click={(e) => {
@@ -234,7 +234,7 @@
 						as="blockquote"
 						clamp={4}
 					>
-						{@html selector.exact}
+						{@html annotation.html || selector.exact}
 					</Clamp>
 				</a>
 			{:else if fragment_selector}

@@ -356,12 +356,29 @@
 
 	function findStartOfRange(range: Range) {
 		let startNode = range.startContainer;
-		console.log('findstartofrange', range, startNode);
 		if (isTextNode(startNode) && range.startOffset === startNode.length) {
 			startNode =
 				startNode.nextSibling ?? startNode.parentNode?.nextSibling ?? startNode;
 		}
 		return startNode;
+	}
+
+	function findEndOfRange(range: Range) {
+		let endNode = range.endContainer;
+		if (isTextNode(endNode) && range.endOffset === 0) {
+			endNode =
+				endNode.previousSibling ??
+				endNode.parentNode?.previousSibling ??
+				endNode;
+		}
+		return endNode;
+	}
+
+	function isNodeImage(node: Node): boolean {
+		const text = node.textContent?.trim() ?? '';
+		return isHTMLElement(node)
+			? !text && (node.querySelector('img') || node.matches('img'))
+			: false;
 	}
 
 	function createFragment(
@@ -560,7 +577,7 @@
 		| {
 				els: Awaited<ReturnType<typeof highlightSelectorTarget>>;
 				exact: string;
-                html: string;
+				html: string;
 				id: string;
 				selector: TargetSchema['selector'];
 				start: number;
@@ -579,41 +596,47 @@
 		// const rangeSelector = await makeRangeSelector(range);
 		const textPositionSelector = describeTextPosition(range, articleWrapper);
 
-        // Test if selection starts with image. If so, subtract 1 from start. If selection ends with image, add 1 to end.
-        // This is a hacky way to get images to highlight. It's not the *most* exhaustive (and maybe we should save imageEls another way as an alternative to the limited web annotation data model), but it works for now.
-        // maybe save something like image_els: and then their css selector
-		createRangeSelector({
-            ...textPositionSelector,
-            start: textPositionSelector.start - 1,
-        });
-		return;
-		// if (rangeSelector) {
-		// 	// cancel everything else;
-		// 	// createRangeSelector(rangeSelector);
-		//     // try to highlight
+		// Test if selection starts with image. If so, subtract 1 from start. If selection ends with image, add 1 to end.
+		// This is a hacky way to get images to highlight. It's not the *most* exhaustive (and maybe we should save imageEls another way as an alternative to the limited web annotation data model), but it works for now.
+		// maybe save something like image_els: and then their css selector
+        // After much futzing around with range selectors and refinement, this seems to somehow be the most reliable way.
+        // Since we save both the textQuote and textPosition, we could also cross-compare to make sure we're in the same place to be robust when re-hydrating.
+		const startNode = findStartOfRange(range);
+		const endNode = findEndOfRange(range);
+		console.log({ startNode, endNode });
 
-		// 	return;
-		// }
-
-		console.log({ html });
-		const text_position_selector = describeTextPosition(range, articleWrapper);
-		const { start } = text_position_selector;
-		const text_quote_selector = await describeTextQuote(range, articleWrapper);
-		const { exact } = text_quote_selector;
 		const id = $activeAnnotationId ?? nanoid();
-		const els = await highlightSelectorTarget(text_quote_selector, {
-			'data-annotation-id': id,
-			'data-has-body': 'false',
-			id: `annotation-${id}`,
-			...attrs,
-		});
+		const els = await createRangeSelector(
+			{
+				...textPositionSelector,
+				start: isNodeImage(startNode)
+					? textPositionSelector.start - 1
+					: textPositionSelector.start,
+				end: isNodeImage(endNode)
+					? textPositionSelector.end + 1
+					: textPositionSelector.end,
+			},
+			{
+				'data-annotation-id': id,
+				'data-has-body': 'false',
+				id: `annotation-${id}`,
+				...attrs,
+			},
+		);
+		const textQuoteSelector = await describeTextQuote(range, articleWrapper);
+		const { start } = textPositionSelector;
+		const { exact } = textQuoteSelector;
+
 		return {
 			els,
 			exact,
+            html,
 			id,
-			selector: [text_quote_selector, text_position_selector],
+            // TODO: add in cssSelector describing image elements in more detail
+			selector: [textQuoteSelector, textPositionSelector],
 			start,
 		};
+
 	};
 
 	async function highlightCssSelector(selector: CssSelector) {
@@ -629,8 +652,7 @@
 		return matchList.map((match) => highlightText(match, 'mark'));
 	}
 
-
-    // @ts-expect-error
+	// @ts-expect-error
 	const createMatcher = makeRefinable(
 		(
 			selector:
@@ -639,7 +661,7 @@
 				| TextPositionSelector
 				| CssSelector,
 		) => {
-            //@ts-expect-error
+			//@ts-expect-error
 			const innerCreateMatcher = {
 				CssSelector: createCssSelectorMatcher,
 				TextQuoteSelector: createTextQuoteSelectorMatcher,
@@ -657,7 +679,7 @@
 
 	async function createRangeSelector(
 		selector: RangeSelector | TextPositionSelector,
-        attrs?: Record<string, string>,
+		attrs?: Record<string, string>,
 	) {
 		console.log({ selector });
 		const matchAll = createMatcher(selector);
@@ -670,7 +692,7 @@
 			ranges.push(range);
 		}
 
-        return ranges.map(range => highlightText(range, 'mark', attrs));
+		return ranges.map((range) => highlightText(range, 'mark', attrs));
 	}
 
 	async function highlightSelectorTarget(
@@ -841,17 +863,23 @@
 			const target = annotation.target!;
 			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
 			if (!el) {
-				const selector = getTargetSelector(
+				let selector: TextQuoteSelector | TextPositionSelector | undefined = getTargetSelector(
 					annotation.target,
 					'TextQuoteSelector',
 				);
+                if (!selector?.exact?.trim()) {
+                    selector = getTargetSelector(
+                        annotation.target,
+                        "TextPositionSelector"
+                    )
+                }
 				if (selector) {
 					console.log('ensurehighlights - annotation', { annotation });
 					const body =
 						!!annotation.body ||
 						!isBlankJsonContent(coalesceObjects(annotation.contentData) ?? {});
 					console.log('ensurehighligts, body', body);
-					const els = await highlightSelectorTarget(selector, {
+					const els = await createRangeSelector(selector, {
 						'data-annotation-id': id,
 						'data-has-body': body ? 'true' : 'false',
 						id: `annotation-${annotation.id}`,
@@ -1071,6 +1099,7 @@
 			$annotateMutation.mutateAsync({
 				contentData,
 				entryId: data.entry.id,
+                html: $activeAnnotation.html,
 				id,
 				target: $activeAnnotation.target,
 				type: 'annotation',
@@ -1263,6 +1292,7 @@
 			return;
 		}
 		$annotateMutation.mutate({
+            html: info.html,
 			id,
 			target: {
 				selector: info.selector,
@@ -1283,13 +1313,14 @@
 		const highlight_info = await highlight();
 		clearSelection();
 		if (highlight_info) {
-			const { els, id, selector } = highlight_info;
+			const { els, id, selector, html } = highlight_info;
 			const el = els[0]?.highlightElements[0];
 			if (el) {
 				annotationRef(el);
 			}
 			annotations.addTemp(id, {
 				els,
+                html,
 				id,
 				target: {
 					selector,

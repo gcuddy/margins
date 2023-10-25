@@ -161,6 +161,7 @@ export const annotations = {
 		'a.updatedAt',
 		'a.createdAt',
 		'a.contentData',
+		'a.html',
 		'a.icon',
 		'a.color',
 		'a.parentId',

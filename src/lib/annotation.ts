@@ -100,6 +100,7 @@ export const annotationSchema = z.object({
 	color: z.string().nullish(), // Hex code for the color of the annotation
 	icon: z.string().nullish(), // Emoji as :emoji: or icon name with CamelCase (first letter capitalized)
 	deleted: z.coerce.date().nullish(),
+	html: z.string().nullish(),
 	// tags: z.string().array(),
 	// entry: z
 	//     .object({
