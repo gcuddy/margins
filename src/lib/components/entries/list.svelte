@@ -284,8 +284,6 @@
 		{:else}
 			<div class="py-16 text-center text-sm bg-background">
 				No entries found
-
-				<!-- <pre>{JSON.stringify($query, null, 2)}</pre> -->
 			</div>
 		{/each}
 		{#if $query.isFetchingNextPage}
@@ -295,24 +293,7 @@
 				<Loader2Icon class="h-4 w-4 animate-spin text-muted-foreground" />
 			</div>
 		{/if}
-		<!-- <Intersector
-			cb={() => {
-				console.log(`Intersect`, { $query });
-				$query.hasNextPage && !$query.isFetchingNextPage && $query.fetchNextPage();
-			}}
-		/> -->
-		<!-- <EntryList {entries} /> -->
-		<!-- <Scroller items={$query.data?.pages.flatMap((p) => p.entries) ?? []}  key={"id"}>
-        <svelte:fragment slot="item" let:item={entry}>
-        <EntryItem {entry} />
-            <div>
-                {entry.title}
-            </div>
-        </svelte:fragment>
-    </Scroller> -->
 	</div>
-	<!-- {#each $query.data?.pages.flatMap((p) => p.entries) ?? [] as entry}
-	{/each} -->
 {/if}
 
 <BulkActions length={$checkedEntryIds.length}>
