@@ -168,7 +168,7 @@
 							? 'indeterminate'
 							: false}
 						class={cn(
-							'mr-4 opacity-0 duration-75 transition-opacity group-data-[highlighted]:opacity-100',
+							'mr-4 opacity-0 group-data-[highlighted]:opacity-100',
 							(selected.includes(tag.id) || indeterminate.includes(tag.id)) &&
 								'opacity-100',
 						)}
