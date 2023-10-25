@@ -11,7 +11,7 @@
 	import { derived, type Readable } from 'svelte/store';
 
 	import { browser } from '$app/environment';
-	import { beforeNavigate, onNavigate } from '$app/navigation';
+	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
 	import { entryTypeIcon } from '$components/entries/icons';
@@ -30,12 +30,12 @@
 	import type { QueryInput } from '$lib/queries/query';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import type { LibraryResponse } from '$lib/server/queries';
-	import { type Status, statuses } from '$lib/status';
+	import { statuses, type Status } from '$lib/status';
 	import { cn } from '$lib/utils';
 
+	import { entryState } from '$lib/stores/entry-state';
 	import { setBackContext } from '../../../routes/(app2)/(listables)/[type=type]/[id]/store';
 	import { currentEntryList } from './store';
-	import { entryState } from '$lib/stores/entry-state';
 
 	export let opts: Readable<QueryInput<'get_library'>>;
 
@@ -76,9 +76,8 @@
 		);
 	});
 
+    // global state
     $: entryState.init($entries)
-
-
 	$: currentEntryList.set($entries);
 
 	let groupedEntries: GroupedArrayWithHeadings<
@@ -114,10 +113,6 @@
 		})
 		.filter((index) => index !== undefined) as Array<number>;
 
-	// <!-- probably not smart -->
-	$: if ($query.data) {
-		// init_entries($query.data.pages.flatMap((page) => page.entries));
-	}
 
 	const virtualizer = createWindowVirtualizer({
 		count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
@@ -151,24 +146,12 @@
 	});
 
 	effect(entries, ($entries) => {
-        console.log(`effect`, $entries)
         const count = $groupingEnabled ? groupedEntries.length : $entries?.length || 0;
-        console.log({count})
 		$virtualizer.setOptions({
 			count,
 		});
         $virtualizer?.measure();
 	});
-
-	// $: $virtualizer.setOptions({
-	// 	count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
-	// });
-
-	$: console.log({ $virtualizer });
-
-	$: {
-		$virtualizer?.measure();
-	}
 
 	$: {
 		const lastItem = $virtualizer.getVirtualItems().at(-1);
@@ -181,11 +164,6 @@
 			$query.fetchNextPage();
 		}
 	}
-
-	const items = derived(virtualizer, ($virtualizer) =>
-		$virtualizer.getVirtualItems(),
-	);
-	$: console.log({ $items });
 
 	const multi = create_multi({
 		items: $entries?.map((e) => e.id) || [],
