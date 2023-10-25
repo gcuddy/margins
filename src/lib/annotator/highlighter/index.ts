@@ -61,11 +61,12 @@ export function highlightText(
 	highlightElements: HTMLElement[];
 	removeHighlights: () => void;
 } {
+	console.log('[highlightText] target', target);
 	// First put all nodes in an array (splits start and end nodes if needed)
 	const nodes = textNodesInRange(toRange(target));
 	// get non-text-nodes in range
 	const nonTextNodes = nonTextNodesInRange(toRange(target)) ?? [];
-	// console.log({ target, nontextnodes });
+	console.log({ textNode: nodes, nonTextNodes, target });
 	// Highlight each node
 	const highlightElements: HTMLElement[] = [];
 	let nodeIndex = 0;
@@ -229,6 +230,23 @@ const nonTextNodesInRange = (range: Range) => {
 	// const start = range.startContainer.childNodes[range.startOffset];
 	// // todo: if istextnode endcontainer
 	// const end = range.endContainer.childNodes[range.endOffset];
+
+	if (isImgNode(range.startContainer) && range.startOffset > 0) {
+		const endOffset = range.endOffset; // (this may get lost when the splitting the node)
+		const createdNode = range.startContainer.splitText(range.startOffset);
+		if (range.endContainer === range.startContainer) {
+			// If the end was in the same container, it will now be in the newly created node.
+			range.setEnd(createdNode, endOffset - range.startOffset);
+		}
+		range.setStart(createdNode, 0);
+	}
+	if (
+		isImgNode(range.endContainer) &&
+		range.endOffset < range.endContainer.length
+	) {
+		range.endContainer.splitText(range.endOffset);
+	}
+
 	const walker = ownerDocument(range).createTreeWalker(
 		range.commonAncestorContainer,
 		NodeFilter.SHOW_ELEMENT,
@@ -241,16 +259,18 @@ const nonTextNodesInRange = (range: Range) => {
 	);
 	walker.currentNode = range.startContainer;
 	const nodes: Node[] = [];
+	// console.log('walker', walker.currentNode);
 	if (isImgNode(walker.currentNode)) nodes.push(walker.currentNode);
 
 	// TODO: just use img by checking if nodName === 'IMG'
 	while (walker.nextNode() && range.comparePoint(walker.currentNode, 0) !== 1) {
+		// console.log('walker', walker.currentNode);
 		if (isImgNode(walker.currentNode)) {
-			console.log('img', walker.currentNode);
+			// console.log('img', walker.currentNode);
 			nodes.push(walker.currentNode);
 		}
 		// console.log(walker.currentNode);
 	}
-	console.log('nontextnodes', nodes);
+	// console.log('nontextnodes', nodes);
 	return nodes;
 };

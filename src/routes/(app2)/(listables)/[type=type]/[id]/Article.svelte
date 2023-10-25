@@ -9,6 +9,8 @@
 	import debounce from 'just-debounce-it';
 	import throttle from 'just-throttle';
 	import { finder } from '@medv/finder';
+	import DOMPurify from 'dompurify';
+
 	import {
 		EditIcon,
 		EraserIcon,
@@ -34,13 +36,24 @@
 	import focusTrap from '$lib/actions/focus-trap';
 	import type { TargetSchema } from '$lib/annotation';
 	import {
-	createCssSelectorMatcher,
+		createCssSelectorMatcher,
+		createTextPositionSelectorMatcher,
 		createTextQuoteSelectorMatcher,
+		describeSelection,
 		describeTextPosition,
 		describeTextQuote,
 	} from '$lib/annotator';
-	import { highlightText, removeHighlight } from '$lib/annotator/highlighter';
-	import type { CssSelector, TextQuoteSelector } from '$lib/annotator/types';
+	import {
+		highlightText,
+		isTextNode,
+		removeHighlight,
+	} from '$lib/annotator/highlighter';
+	import type {
+		CssSelector,
+		RangeSelector,
+		TextPositionSelector,
+		TextQuoteSelector,
+	} from '$lib/annotator/types';
 	import { Button } from '$lib/components/ui/button';
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import {
@@ -83,6 +96,9 @@
 	import type { JSONContent } from '@tiptap/core';
 	import { startingContentData } from '$components/ui/editor/constants';
 	import { isBlankJsonContent } from '$components/ui/editor/utils';
+	import { ownerDocument } from '$lib/annotator/utils';
+	import { makeCreateRangeSelectorMatcher } from '$lib/annotator/range';
+	import { makeRefinable } from '$lib/annotator/refinable';
 
 	const {
 		activeAnnotation,
@@ -338,6 +354,205 @@
 
 	let articleWrapper: HTMLElement | undefined = undefined;
 
+	function findStartOfRange(range: Range) {
+		let startNode = range.startContainer;
+		console.log('findstartofrange', range, startNode);
+		if (isTextNode(startNode) && range.startOffset === startNode.length) {
+			startNode =
+				startNode.nextSibling ?? startNode.parentNode?.nextSibling ?? startNode;
+		}
+		return startNode;
+	}
+
+	function createFragment(
+		startingEl: HTMLElement,
+		endingEl: HTMLElement,
+	): HTMLElement | null {
+		if (!startingEl || !endingEl) return null;
+
+		const fragment = document.createElement('div');
+		let currentEl = startingEl;
+
+		while (currentEl && currentEl !== endingEl.nextSibling) {
+			fragment.appendChild(currentEl.cloneNode(true));
+			currentEl = currentEl.nextSibling as HTMLElement;
+		}
+
+		return fragment;
+	}
+
+	async function makeRangeSelector(
+		range: Range,
+	): Promise<RangeSelector | null> {
+		// check if start container contains no text, in which case it's probably an image. use a css selector, and go to end to make range. if end has no text, use css selector again. otherwise use text quote.
+		console.log('makerangeselector', range);
+		const startContainer = range.startContainer;
+		const endContainer = range.endContainer;
+		let startNode = findStartOfRange(range);
+
+		console.log({
+			startNode,
+			endContainer,
+		});
+
+		if (!isHTMLElement(startNode) && !isHTMLElement(endContainer)) {
+			console.log(
+				'Not making range selector because start and end are not HTMLElements',
+			);
+			return null;
+		}
+
+		let startSelector: CssSelector | undefined = undefined;
+		let endSelector: CssSelector | undefined = undefined;
+
+		const startText = startNode.textContent?.trim() ?? '';
+		const endText = endContainer.textContent?.trim() ?? '';
+
+		let startingEl = startNode;
+		while (startingEl.parentElement !== range.commonAncestorContainer) {
+			startingEl = startingEl.parentElement!;
+		}
+		let endingEl = range.endContainer;
+		while (endingEl.parentElement !== range.commonAncestorContainer) {
+			endingEl = endingEl.parentElement!;
+		}
+		console.log({ startingEl, endingEl });
+		const fragment = createFragment(startingEl, endingEl);
+		console.log({ fragment });
+
+		// make temporary container to hold all elements in range
+		// const fragment = ownerDocument(range).createDocumentFragment();
+		// let el = startingEl;
+		// while (el !== endingEl) {
+		//     console.log({ el })
+		//     fragment.appendChild(el);
+		//     el = el.nextElementSibling!;
+		// }
+
+		// console.log({fragment})
+
+		// // get all elements in between, and then put them all into a temporary fragment div
+		// // const fragment = ownerDocument(range).createDocumentFragment();
+		// // let el = startingEl;
+		// // while (el !== endingEl) {
+		// // 	fragment.appendChild(el);
+		// // 	el = el.nextElementSibling!;
+		// // }
+		// // fragment.appendChild(el);
+
+		// console.log({ fragment });
+		// check if start has no text and contains (or is) an image
+		if (
+			isHTMLElement(startNode) &&
+			!startText &&
+			(startNode.querySelector('img') || startNode.matches('img'))
+		) {
+			console.log('Start container contains an image');
+			const selector = finder(startNode);
+			startSelector = {
+				type: 'CssSelector',
+				value: selector,
+			};
+			console.log({ startSelector });
+		} else {
+			// find parent element
+			const parentElement = startNode.parentElement!.nextElementSibling!;
+			startSelector = {
+				type: 'CssSelector',
+				value: finder(parentElement),
+				refinedBy: {
+					type: 'TextPositionSelector',
+					start: range.startOffset,
+					end: range.endOffset,
+				},
+			};
+		}
+
+		// check if end has no text and contains (or is) an image
+		if (
+			isHTMLElement(endContainer) &&
+			!endText &&
+			(endContainer.querySelector('img') || endContainer.matches('img'))
+		) {
+			console.log('End container contains an image');
+			const selector = finder(endContainer);
+			endSelector = {
+				type: 'CssSelector',
+				value: selector,
+			};
+			console.log({ endSelector });
+		} else {
+			// Range selector incudes everything up to end container, so we need to select next node,
+			// and then determine selection from there
+
+			// TODO: more safe null checks
+			let p = endContainer.parentElement!;
+			console.log({ p });
+			let i = 0;
+			while (!p.nextElementSibling) {
+				p = p.parentElement!;
+				i++;
+				// loop guard
+				if (i > 20) {
+					throw new Error('Could not find next element sibling');
+				}
+			}
+
+			const el = p.nextElementSibling!;
+
+			console.log({ p, el });
+
+			// now get text quote *within* p;
+			const textQuoteSelector = await describeTextQuote(range, p);
+			console.log({ textQuoteSelector });
+
+			const selector = finder(el);
+			// Now text quote  with new parent element
+			endSelector = {
+				type: 'CssSelector',
+				value: selector,
+				// refinedBy: textQuoteSelector,
+			};
+			// console.log('End container does not contain an image');
+			// const newRange = new Range();
+			// newRange.setStart(endContainer, 0);
+			// newRange.setEnd(endContainer, range.endOffset);
+			// endSelector = await describeTextQuote(newRange, articleWrapper);
+		}
+
+		const newRange = new Range();
+		newRange.selectNode(fragment!);
+
+		const textPositionSelector = describeTextPosition(range, fragment);
+
+		range.toString;
+		// textPositionSelector.start = range.startOffset;
+		console.log({ textPositionSelector });
+
+		// this is probably a bad idea no? We want to get the range to "include" the image...
+		return {
+			type: 'RangeSelector',
+			startSelector: startSelector!,
+			endSelector: endSelector!,
+			// refinedBy: textPositionSelector
+		};
+
+		// console.log({
+		//     startText,
+		//     endText
+		// })
+
+		// if (startText.length === 0) {
+		//     const startSelector = finder(startContainer);
+		//     console.log({ startSelector });
+		// }
+
+		// if (endText.length === 0) {
+		//     const endSelector = finder(endContainer);
+		//     console.log({ endSelector });
+		// }
+	}
+
 	const clearSelection = () => window.getSelection()?.removeAllRanges();
 	const highlight = async (
 		attrs?: Record<string, string>,
@@ -345,6 +560,7 @@
 		| {
 				els: Awaited<ReturnType<typeof highlightSelectorTarget>>;
 				exact: string;
+                html: string;
 				id: string;
 				selector: TargetSchema['selector'];
 				start: number;
@@ -358,6 +574,28 @@
 		if (!articleWrapper) {
 			return;
 		}
+		const html = DOMPurify.sanitize(getHTMLOfSelection());
+
+		// const rangeSelector = await makeRangeSelector(range);
+		const textPositionSelector = describeTextPosition(range, articleWrapper);
+
+        // Test if selection starts with image. If so, subtract 1 from start. If selection ends with image, add 1 to end.
+        // This is a hacky way to get images to highlight. It's not the *most* exhaustive (and maybe we should save imageEls another way as an alternative to the limited web annotation data model), but it works for now.
+        // maybe save something like image_els: and then their css selector
+		createRangeSelector({
+            ...textPositionSelector,
+            start: textPositionSelector.start - 1,
+        });
+		return;
+		// if (rangeSelector) {
+		// 	// cancel everything else;
+		// 	// createRangeSelector(rangeSelector);
+		//     // try to highlight
+
+		// 	return;
+		// }
+
+		console.log({ html });
 		const text_position_selector = describeTextPosition(range, articleWrapper);
 		const { start } = text_position_selector;
 		const text_quote_selector = await describeTextQuote(range, articleWrapper);
@@ -369,9 +607,6 @@
 			id: `annotation-${id}`,
 			...attrs,
 		});
-        const html  = getHTMLOfSelection();
-
-        console.log({html});
 		return {
 			els,
 			exact,
@@ -382,17 +617,61 @@
 	};
 
 	async function highlightCssSelector(selector: CssSelector) {
-        const matches = createCssSelectorMatcher(selector)(articleWrapper!);
+		const matches = createCssSelectorMatcher(selector)(articleWrapper!);
 
-        const matchList = [];
-        for await (const match of matches) {
-            matchList.push(match);
-        }
+		const matchList = [];
+		for await (const match of matches) {
+			matchList.push(match);
+		}
 
-        console.log({ matchList });
+		console.log({ matchList });
 
-        return matchList.map((match) => highlightText(match, 'mark'));
-    }
+		return matchList.map((match) => highlightText(match, 'mark'));
+	}
+
+
+    // @ts-expect-error
+	const createMatcher = makeRefinable(
+		(
+			selector:
+				| TextQuoteSelector
+				| RangeSelector
+				| TextPositionSelector
+				| CssSelector,
+		) => {
+            //@ts-expect-error
+			const innerCreateMatcher = {
+				CssSelector: createCssSelectorMatcher,
+				TextQuoteSelector: createTextQuoteSelectorMatcher,
+				TextPositionSelector: createTextPositionSelectorMatcher,
+				RangeSelector: makeCreateRangeSelectorMatcher(createMatcher),
+			}[selector.type];
+
+			if (!innerCreateMatcher) {
+				throw new Error(`Unsupported selector type: ${selector.type}`);
+			}
+
+			return innerCreateMatcher(selector);
+		},
+	);
+
+	async function createRangeSelector(
+		selector: RangeSelector | TextPositionSelector,
+        attrs?: Record<string, string>,
+	) {
+		console.log({ selector });
+		const matchAll = createMatcher(selector);
+
+		const ranges = [];
+
+		// First collect all matches, and only then highlight them; to avoid
+		// modifying the DOM while the matcher is running.
+		for await (const range of matchAll(articleWrapper)) {
+			ranges.push(range);
+		}
+
+        return ranges.map(range => highlightText(range, 'mark', attrs));
+	}
 
 	async function highlightSelectorTarget(
 		textQuoteSelector: TextQuoteSelector,
@@ -1175,10 +1454,10 @@
 
 						console.log({ p, css });
 
-                        highlightCssSelector({
-                            type: "CssSelector",
-                            value: css
-                        })
+						highlightCssSelector({
+							type: 'CssSelector',
+							value: css,
+						});
 					}
 				}}
 				class="max-sm:py-6"
@@ -1220,7 +1499,7 @@
 		@apply cursor-pointer;
 	}
 
-    #article :global(mark > img) {
-        @apply ring-8 ring-yellow-400/50 rounded;
-    }
+	#article :global(mark > img) {
+		@apply rounded ring-8 ring-yellow-400/50;
+	}
 </style>
