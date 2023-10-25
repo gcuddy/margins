@@ -80,12 +80,10 @@
 		mutationFn: async (data: MutationInput<'saveInteraction'>) =>
 			mutate('saveInteraction', data),
 		onMutate(variables) {
-			// TODO: try to set query data
 			queryClient.setQueriesData<InfiniteData<QueryOutput<'get_library'>>>(
 				{
 					queryKey: ['entries', 'list'],
 				},
-				//@ts-expect-error - interactionData uses booleans instead of numbers
 				(old) => {
 					if (!old) {
 						return old;

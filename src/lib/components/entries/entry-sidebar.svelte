@@ -359,11 +359,7 @@
 								class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
 								variant="ghost"
 								size="sm"
-								on:click={() => {
-									changeSearch($page.url, {
-										author,
-									});
-								}}
+                                href="/library/all?author={encodeURIComponent(author)}"
 							>
 								<ChevronRightIcon class="h-3 w-3" />
 							</Button>
