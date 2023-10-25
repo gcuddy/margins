@@ -232,7 +232,7 @@ model Annotation {
     /// chosenIcon used for documents only?
     /// @zod.custom.use(chosenIcon)
     chosenIcon       Json?
-    html             String?
+    html             String?                         @db.MediumText
     /// Auto-generated from the target
     quote            String?
     exact            String?                         @db.MediumText

@@ -26,3 +26,11 @@ export function checkIfKeyboardEventsAllowed(el = document.activeElement) {
 
 	return true;
 }
+
+
+export function getHTMLOfSelection() {
+	const range = window.getSelection()?.getRangeAt(0);
+	const container = document.createElement('div');
+	container.appendChild(range?.cloneContents() ?? document.createTextNode(''));
+	return container.innerHTML;
+}

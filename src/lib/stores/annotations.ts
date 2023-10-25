@@ -21,6 +21,7 @@ type AnnotationInfo = {
 		removeHighlights: () => void;
 	}>;
 	id: string;
+	html?: string | null;
 	target: TargetSchema;
 	temporary?: boolean;
 	// TODO: add more info here

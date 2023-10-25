@@ -185,6 +185,9 @@ dependencies:
   dequal:
     specifier: ^2.0.3
     version: 2.0.3
+  dompurify:
+    specifier: ^3.0.6
+    version: 3.0.6
   drizzle-orm:
     specifier: ^0.27.2
     version: 0.27.2(@planetscale/database@1.11.0)(kysely@0.26.3)(mysql2@3.6.2)
@@ -430,6 +433,9 @@ devDependencies:
   '@types/color':
     specifier: ^3.0.5
     version: 3.0.5
+  '@types/dompurify':
+    specifier: ^3.0.4
+    version: 3.0.4
   '@types/lodash':
     specifier: ^4.14.200
     version: 4.14.200
@@ -502,9 +508,6 @@ devDependencies:
   devalue:
     specifier: ^4.3.2
     version: 4.3.2
-  dompurify:
-    specifier: ^3.0.6
-    version: 3.0.6
   dotenv:
     specifier: ^16.3.1
     version: 16.3.1
@@ -5351,6 +5354,12 @@ packages:
       '@types/ms': 0.7.33
     dev: false
 
+  /@types/dompurify@3.0.4:
+    resolution: {integrity: sha512-1Jk8S/IRzNSbwQRbuGuLFHviwxQ8pX81ZEW3INY9432Cwb4VedkBYan8gSIXVLOLHBtimOmUTEYphjRVmo+30g==}
+    dependencies:
+      '@types/trusted-types': 2.0.5
+    dev: true
+
   /@types/estree@0.0.39:
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
 
@@ -7680,7 +7689,7 @@ packages:
 
   /dompurify@3.0.6:
     resolution: {integrity: sha512-ilkD8YEnnGh1zJ240uJsW7AzE+2qpbOUYjacomn3AvJ6J4JhKGSZ2nh4wUIXPZrEPppaCLx5jFe8T89Rk8tQ7w==}
-    dev: true
+    dev: false
 
   /domutils@3.1.0:
     resolution: {integrity: sha512-H78uMmQtI2AhgDJjWeQmHwJJ2bLPD3GMmO7Zja/ZZh84wkm+4ut+IUnUdRa8uCGX88DiVx1j6FRe1XfxEgjEZA==}

@@ -1,18 +1,26 @@
 <script lang="ts">
+	import * as Dialog from '$components/ui/dialog';
+	import { finder } from '@medv/finder';
 	import {
 		useEscapeKeydown,
 		usePortal,
 	} from '@melt-ui/svelte/internal/actions';
-	import { draggable } from '@neodrag/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import DOMPurify from 'dompurify';
 	import debounce from 'just-debounce-it';
 	import throttle from 'just-throttle';
-	import { EditIcon, EraserIcon, Highlighter } from 'lucide-svelte';
+
+	import {
+		EditIcon,
+		EraserIcon,
+		ExternalLink,
+		Highlighter,
+	} from 'lucide-svelte';
 	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
-	import { derived, type Writable, writable } from 'svelte/store';
-	import { scale } from 'svelte/transition';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { toast } from 'svelte-sonner';
+	import { derived, writable, type Writable } from 'svelte/store';
+	import { scale } from 'svelte/transition';
 
 	import EditAnnotationInline from '$components/annotations/edit-annotation-inline.svelte';
 
@@ -20,23 +28,32 @@
 	import { enhance } from '$app/forms';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import Editor from '$components/ui/editor/Editor.svelte';
-	import Kbd from '$components/ui/KBD.svelte';
-	import * as Tooltip from '$components/ui/tooltip';
 	import drag_context from '$lib/actions/drag-context';
 	import focusTrap from '$lib/actions/focus-trap';
 	import type { TargetSchema } from '$lib/annotation';
 	import {
+		createCssSelectorMatcher,
+		createTextPositionSelectorMatcher,
 		createTextQuoteSelectorMatcher,
 		describeTextPosition,
-		describeTextQuote,
+		describeTextQuote
 	} from '$lib/annotator';
-	import { highlightText, removeHighlight } from '$lib/annotator/highlighter';
-	import type { TextQuoteSelector } from '$lib/annotator/types';
+	import {
+		highlightText,
+		isTextNode,
+		removeHighlight,
+	} from '$lib/annotator/highlighter';
+	import type {
+		CssSelector,
+		RangeSelector,
+		TextPositionSelector,
+		TextQuoteSelector,
+	} from '$lib/annotator/types';
 	import { Button } from '$lib/components/ui/button';
 	import { Lead, Muted } from '$lib/components/ui/typography';
 	import {
 		coalesceObjects,
+		getHTMLOfSelection,
 		isAnnotation,
 		isHTMLElement,
 		makeAnnotation,
@@ -58,6 +75,13 @@
 	import { numberOrString } from '$lib/utils/misc';
 	import { cn } from '$lib/utils/tailwind';
 
+	import { currentEntryList } from '$components/entries/store';
+	import { isBlankJsonContent } from '$components/ui/editor/utils';
+	import { makeCreateRangeSelectorMatcher } from '$lib/annotator/range';
+	import { makeRefinable } from '$lib/annotator/refinable';
+	import { make_link } from '$lib/utils/entries';
+	import type { JSONContent } from '@tiptap/core';
+	import type { RequireAtLeastOne } from 'type-fest';
 	import type { MenuBar } from '../../../MainNav.svelte';
 	import {
 		getAppearanceContext,
@@ -66,14 +90,8 @@
 	} from '../ctx';
 	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
-	import type { RequireAtLeastOne } from 'type-fest';
-	import { currentEntryList } from '$components/entries/store';
-	import { make_link } from '$lib/utils/entries';
-	import Selection from './Selection.svelte';
 	import type { entryDetailsQuery } from './query';
-	import type { JSONContent } from '@tiptap/core';
-	import { startingContentData } from '$components/ui/editor/constants';
-	import { isBlankJsonContent } from '$components/ui/editor/utils';
+	import SSelection from './Selection.svelte';
 
 	const {
 		activeAnnotation,
@@ -238,28 +256,6 @@
 
 	const selection = writable<Selection | null>(null);
 
-	const showAnnotationTooltip = derived(selection, ($selection) => {
-		if (!$selection?.rangeCount || $selection.isCollapsed) {
-			return false;
-		}
-		const range = $selection.getRangeAt(0);
-		const parent = range.commonAncestorContainer.parentElement;
-		if (!parent) {
-			return false;
-		}
-		if (!parent.closest('#article')) {
-			return false;
-		}
-		if (
-			range.startContainer.parentElement?.closest('[data-annotation-id]') ??
-			range.endContainer.parentElement?.closest('[data-annotation-id]')
-		) {
-			return false;
-		}
-		const text = range.toString();
-		return text.length > 0;
-	});
-
 	const virtualEl = derived(selection, ($selection) => {
 		if (!$selection?.rangeCount || $selection.isCollapsed) {
 			return {
@@ -290,7 +286,7 @@
 		requestAnimationFrame(setSelectionFn);
 	}
 
-	const [popperRef, popperContent] = createPopperActions({
+	const [popperRef] = createPopperActions({
 		modifiers: [
 			{
 				name: 'offset',
@@ -329,6 +325,33 @@
 
 	let articleWrapper: HTMLElement | undefined = undefined;
 
+	function findStartOfRange(range: Range) {
+		let startNode = range.startContainer;
+		if (isTextNode(startNode) && range.startOffset === startNode.length) {
+			startNode =
+				startNode.nextSibling ?? startNode.parentNode?.nextSibling ?? startNode;
+		}
+		return startNode;
+	}
+
+	function findEndOfRange(range: Range) {
+		let endNode = range.endContainer;
+		if (isTextNode(endNode) && range.endOffset === 0) {
+			endNode =
+				endNode.previousSibling ??
+				endNode.parentNode?.previousSibling ??
+				endNode;
+		}
+		return endNode;
+	}
+
+	function isNodeImage(node: Node): boolean {
+		const text = node.textContent?.trim() ?? '';
+		return isHTMLElement(node)
+			? !text && !!(node.querySelector('img') || node.matches('img'))
+			: false;
+	}
+
 	const clearSelection = () => window.getSelection()?.removeAllRanges();
 	const highlight = async (
 		attrs?: Record<string, string>,
@@ -336,6 +359,7 @@
 		| {
 				els: Awaited<ReturnType<typeof highlightSelectorTarget>>;
 				exact: string;
+				html: string;
 				id: string;
 				selector: TargetSchema['selector'];
 				start: number;
@@ -349,25 +373,95 @@
 		if (!articleWrapper) {
 			return;
 		}
-		const text_position_selector = describeTextPosition(range, articleWrapper);
-		const { start } = text_position_selector;
-		const text_quote_selector = await describeTextQuote(range, articleWrapper);
-		const { exact } = text_quote_selector;
+		const html = DOMPurify.sanitize(getHTMLOfSelection());
+
+		// const rangeSelector = await makeRangeSelector(range);
+		const textPositionSelector = describeTextPosition(range, articleWrapper);
+
+		// Test if selection starts with image. If so, subtract 1 from start. If selection ends with image, add 1 to end.
+		// This is a hacky way to get images to highlight. It's not the *most* exhaustive (and maybe we should save imageEls another way as an alternative to the limited web annotation data model), but it works for now.
+		// maybe save something like image_els: and then their css selector
+		// After much futzing around with range selectors and refinement, this seems to somehow be the most reliable way.
+		// Since we save both the textQuote and textPosition, we could also cross-compare to make sure we're in the same place to be robust when re-hydrating.
+		const startNode = findStartOfRange(range);
+		const endNode = findEndOfRange(range);
+		console.log({ startNode, endNode });
+
 		const id = $activeAnnotationId ?? nanoid();
-		const els = await highlightSelectorTarget(text_quote_selector, {
-			'data-annotation-id': id,
-			'data-has-body': 'false',
-			id: `annotation-${id}`,
-			...attrs,
-		});
+		const els = await highlightSelector(
+			{
+				...textPositionSelector,
+				start: isNodeImage(startNode)
+					? textPositionSelector.start - 1
+					: textPositionSelector.start,
+				end: isNodeImage(endNode)
+					? textPositionSelector.end + 1
+					: textPositionSelector.end,
+			},
+			{
+				'data-annotation-id': id,
+				'data-has-body': 'false',
+				id: `annotation-${id}`,
+				...attrs,
+			},
+		);
+		const textQuoteSelector = await describeTextQuote(range, articleWrapper);
+		const { start } = textPositionSelector;
+		const { exact } = textQuoteSelector;
+
 		return {
 			els,
 			exact,
+			html,
 			id,
-			selector: [text_quote_selector, text_position_selector],
+			// TODO: add in cssSelector describing image elements in more detail
+			selector: [textQuoteSelector, textPositionSelector],
 			start,
 		};
 	};
+
+	// @ts-expect-error
+	const createMatcher = makeRefinable(
+		(
+			selector:
+				| TextQuoteSelector
+				| RangeSelector
+				| TextPositionSelector
+				| CssSelector,
+		) => {
+			//@ts-expect-error
+			const innerCreateMatcher = {
+				CssSelector: createCssSelectorMatcher,
+				TextQuoteSelector: createTextQuoteSelectorMatcher,
+				TextPositionSelector: createTextPositionSelectorMatcher,
+				RangeSelector: makeCreateRangeSelectorMatcher(createMatcher),
+			}[selector.type];
+
+			if (!innerCreateMatcher) {
+				throw new Error(`Unsupported selector type: ${selector.type}`);
+			}
+
+			return innerCreateMatcher(selector);
+		},
+	);
+
+	async function highlightSelector(
+		selector: RangeSelector | TextPositionSelector | CssSelector | TextQuoteSelector,
+		attrs?: Record<string, string>,
+	) {
+		console.log({ selector });
+		const matchAll = createMatcher(selector);
+
+		const ranges = [];
+
+		// First collect all matches, and only then highlight them; to avoid
+		// modifying the DOM while the matcher is running.
+		for await (const range of matchAll(articleWrapper)) {
+			ranges.push(range);
+		}
+
+		return ranges.map((range) => highlightText(range, 'mark', attrs));
+	}
 
 	async function highlightSelectorTarget(
 		textQuoteSelector: TextQuoteSelector,
@@ -537,17 +631,29 @@
 			const target = annotation.target!;
 			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
 			if (!el) {
-				const selector = getTargetSelector(
-					annotation.target,
-					'TextQuoteSelector',
-				);
+				let selector: TextQuoteSelector | TextPositionSelector | CssSelector | undefined =
+					getTargetSelector(annotation.target, 'TextQuoteSelector');
+				if (!selector?.exact?.trim()) {
+					selector = getTargetSelector(
+						annotation.target,
+						'TextPositionSelector',
+					);
+
+                    // TODO: this nesting is ridiculous lol
+                    if (!selector) {
+                        selector = getTargetSelector(
+                            annotation.target,
+                            "CssSelector"
+                        )
+                    }
+				}
 				if (selector) {
 					console.log('ensurehighlights - annotation', { annotation });
 					const body =
 						!!annotation.body ||
 						!isBlankJsonContent(coalesceObjects(annotation.contentData) ?? {});
 					console.log('ensurehighligts, body', body);
-					const els = await highlightSelectorTarget(selector, {
+					const els = await highlightSelector(selector, {
 						'data-annotation-id': id,
 						'data-has-body': body ? 'true' : 'false',
 						id: `annotation-${annotation.id}`,
@@ -734,8 +840,6 @@
 		uscroll();
 	});
 
-	let activeEditor: Editor | null = null;
-
 	function handleSaveAnnotation(contentData: JSONContent) {
 		if (!data.entry?.id) {
 			return;
@@ -767,6 +871,7 @@
 			$annotateMutation.mutateAsync({
 				contentData,
 				entryId: data.entry.id,
+				html: $activeAnnotation.html,
 				id,
 				target: $activeAnnotation.target,
 				type: 'annotation',
@@ -781,24 +886,8 @@
 	}
 
 	let showImageMenu = false;
-	let imagePortal: HTMLElement | undefined = undefined;
-	function handleMouseMove(e: MouseEvent) {
-		if (
-			e.target instanceof HTMLImageElement ||
-			(e.target instanceof Element && e.target.closest('[data-image-menu]'))
-		) {
-			// TODO
-			showImageMenu = true;
-			const container = e.target.parentElement;
-			if (container) {
-				imagePortal = container;
-				container.style.position = 'relative';
-			}
-		} else {
-			showImageMenu = false;
-			imagePortal = undefined;
-		}
-	}
+	let _activeImageUrl: string | null = null;
+	let _activeImageElement: HTMLImageElement | null = null;
 
 	const [editMenuRef, editMenuContent] = createPopperActions({
 		modifiers: [
@@ -812,14 +901,25 @@
 	});
 	let showEditMenu = false;
 
-
-    let _active_annotation_id: string | null = null;
+	let _active_annotation_id: string | null = null;
 
 	function handlePointerDown(e: PointerEvent) {
 		const target = e.target;
 		if (!isAnnotation(target)) {
 			activeAnnotationId.set(null);
 			showEditMenu = false;
+
+			// let's see if it's an image, if so show dialog to save it
+			if (target instanceof HTMLImageElement) {
+				showImageMenu = true;
+				_activeImageUrl = target.src;
+				_activeImageElement = target;
+				e.preventDefault();
+			} else {
+				showImageMenu = false;
+				_activeImageUrl = null;
+			}
+
 			return;
 		}
 		const annotationEl = target.closest('[data-annotation-id]');
@@ -834,7 +934,7 @@
 			return;
 		}
 		activeAnnotationId.set(id);
-        _active_annotation_id = id;
+		_active_annotation_id = id;
 		console.log({ $activeAnnotationId });
 		editMenuRef(target);
 		annotationRef(target);
@@ -843,15 +943,6 @@
 	}
 
 	let annotationEditMenuEl: HTMLElement;
-
-	const shouldShowAnnotationTooltip = derived(
-		[showAnnotationTooltip, scrolling],
-		([$showAnnotationTooltip, $scrolling]) => {
-			return $showAnnotationTooltip && !$scrolling && data.entry;
-		},
-	);
-
-	let editorEl: HTMLElement | undefined = undefined;
 </script>
 
 {#if showEditMenu}
@@ -896,35 +987,42 @@
 					on:click={() => {
 						if (articleWrapper && _active_annotation_id) {
 							// this is the scrappy way 'improper' way to do this, but it works for now
-                            // keeping track of them in state has been buggy otherwise
-                            const annotations = articleWrapper.querySelectorAll(`[data-annotation-id="${_active_annotation_id}"]`);
-                            for (const annotation of annotations) {
-                                if (isHTMLElement(annotation)){
-                                    console.log('removing highlight', annotation)
-                                    removeHighlight(annotation)
-                                }
-                            }
-                            // mutate data object - this ensures that the annotation is removed from the UI
-                            if (data.entry?.annotations) {
-                                data.entry.annotations = data.entry.annotations.filter((a) => a.id !== _active_annotation_id);
-                            }
+							// keeping track of them in state has been buggy otherwise
+							const annotations = articleWrapper.querySelectorAll(
+								`[data-annotation-id="${_active_annotation_id}"]`,
+							);
+							for (const annotation of annotations) {
+								if (isHTMLElement(annotation)) {
+									console.log('removing highlight', annotation);
+									removeHighlight(annotation);
+								}
+							}
+							// mutate data object - this ensures that the annotation is removed from the UI
+							if (data.entry?.annotations) {
+								data.entry.annotations = data.entry.annotations.filter(
+									(a) => a.id !== _active_annotation_id,
+								);
+							}
 
-							$annotateMutation.mutate({
-								deleted: new Date(),
-								id: _active_annotation_id,
-							}, {
-                                onSuccess() {
-                                    toast('Deleted annotation', {
-                                        // action: {
-                                        //     label: 'Undo',
-                                        //     onClick: annotations.restore,
-                                        // },
-                                        duration: 7000,
-                                    });
-                                }
-                            });
-                            _active_annotation_id = null;
-                            showEditMenu = false;
+							$annotateMutation.mutate(
+								{
+									deleted: new Date(),
+									id: _active_annotation_id,
+								},
+								{
+									onSuccess() {
+										toast('Deleted annotation', {
+											// action: {
+											//     label: 'Undo',
+											//     onClick: annotations.restore,
+											// },
+											duration: 7000,
+										});
+									},
+								},
+							);
+							_active_annotation_id = null;
+							showEditMenu = false;
 						}
 						// activeAnnotationId.set(null);
 						// showEditMenu = false;
@@ -940,7 +1038,7 @@
 	</div>
 {/if}
 
-<Selection
+<SSelection
 	on:highlight={async (e) => {
 		if (!$selection) {
 			clearSelection();
@@ -956,6 +1054,7 @@
 			return;
 		}
 		$annotateMutation.mutate({
+			html: info.html,
 			id,
 			target: {
 				selector: info.selector,
@@ -976,13 +1075,14 @@
 		const highlight_info = await highlight();
 		clearSelection();
 		if (highlight_info) {
-			const { els, id, selector } = highlight_info;
+			const { els, id, selector, html } = highlight_info;
 			const el = els[0]?.highlightElements[0];
 			if (el) {
 				annotationRef(el);
 			}
 			annotations.addTemp(id, {
 				els,
+				html,
 				id,
 				target: {
 					selector,
@@ -1054,7 +1154,6 @@
 		id="article"
 		class="select-text"
 		on:pointerdown={handlePointerDown}
-		on:mousemove={handleMouseMove}
 		use:drag_context={{
 			'context/id': data.entry?.id.toString() ?? '',
 			'context/url': data.entry?.uri ?? '',
@@ -1085,6 +1184,7 @@
 					...data,
 					entry: {
 						...data.entry,
+                        //@ts-expect-error
 						bookmark: {
 							...data.entry?.bookmark,
 							status: 'Archive',
@@ -1111,23 +1211,104 @@
 			<Button
 				variant="outline"
 				size="lg"
-				on:mouseover={() => {
-					preloadData(next_link);
-				}}>Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button
+                >Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button
 			>
 		</form>
 	{/if}
 </div>
 
-{#if showImageMenu}
-	<div
-		data-image-menu
-		class="absolute top-0 right-0"
-		use:usePortal={imagePortal}
-	>
-		<Button>Image Menu</Button>
-	</div>
-{/if}
+<!-- Image Dialog -->
+<Dialog.Root bind:open={showImageMenu}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Image</Dialog.Title>
+			<Dialog.Description>What do you want to do?</Dialog.Description>
+		</Dialog.Header>
+		<div class="flex justify-center">
+			<img
+				src={_activeImageUrl}
+				class="w-32 h-32 object-cover rounded mr-4"
+				alt=""
+			/>
+		</div>
+		<div class="flex flex-col sm:grid grid-cols-3">
+			<Button
+				on:click={async () => {
+					if (_activeImageElement) {
+						const id = nanoid();
+
+						const css = finder(_activeImageElement, {
+							root: articleWrapper,
+						});
+
+						const html = DOMPurify.sanitize(_activeImageElement.outerHTML);
+
+						const els = await highlightSelector(
+							{
+								type: 'CssSelector',
+								value: css,
+							},
+							{
+								'data-annotation-id': id,
+								id: `annotation-${id}`,
+							},
+						);
+
+						$annotateMutation.mutate({
+							html,
+							id,
+							target: {
+								selector: {
+									type: 'CssSelector',
+									value: css,
+								},
+								source: '',
+							},
+						});
+						annotations.add(id, {
+							els,
+							html,
+							id,
+							target: {
+								selector: {
+									type: 'CssSelector',
+									value: css,
+								},
+								source: '',
+							},
+						});
+						clearSelection();
+                        showImageMenu = false;
+					}
+				}}
+				class="max-sm:py-6"
+				variant="ghost"
+			>
+				<Highlighter class="h-5 w-5 shrink-0 mr-2" />
+				Highlight Image</Button
+			>
+			<!-- TODO -->
+			<!-- <Button class="max-sm:py-6" variant="ghost">
+				<EditIcon class="h-5 w-5 shrink-0 mr-2" />
+				Annotate Image</Button
+			> -->
+			<Button
+				class="max-sm:py-6"
+				variant="ghost"
+				on:click={() => {
+					showImageMenu = false;
+					if (_activeImageUrl) {
+						open(_activeImageUrl, '_blank');
+						_activeImageUrl = null;
+					}
+				}}
+			>
+				<ExternalLink class="h-5 w-5 shrink-0 mr-2" />
+				Open Image</Button
+			>
+		</div>
+	</Dialog.Content>
+</Dialog.Root>
 
 <!-- {#if $scroll < lastSavedScrollProgress}
 	<div class="fixed bottom-0 right-0">scroll to latest position</div>
@@ -1140,5 +1321,9 @@
 
 	.prose :global(mark[data-annotation-id]) {
 		@apply cursor-pointer;
+	}
+
+	#article :global(mark > img) {
+		@apply rounded ring-8 ring-yellow-400/50;
 	}
 </style>

@@ -657,6 +657,7 @@ export async function entry_by_id({
 							'Annotation.exact',
 							'Annotation.type',
 							'Annotation.parentId',
+							'Annotation.html',
 						])
 						.select((eb) =>
 							jsonArrayFrom(
