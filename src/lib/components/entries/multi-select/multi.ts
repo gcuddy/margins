@@ -1,6 +1,8 @@
 import { get, type Writable, writable } from 'svelte/store';
 import type { RequireAtLeastOne } from 'type-fest';
 
+import { checkIfKeyboardEventsAllowed as global_checkIfKeyboardEventsAllowed } from '$lib/helpers';
+
 import { dialogs } from '$components/ui/dialog2/store';
 
 type State<T extends string | number> = {
@@ -164,31 +166,14 @@ export function create_multi<T extends string | number>({
 	}
 
 	function checkIfKeyboardEventsAllowed() {
-		console.log('checking if keyboard events allowed');
-		if (document.activeElement?.matches('input, textarea, select')) {
-			return false;
-		}
-		const bodyCheck = document.activeElement !== document.body;
-		console.log({ attribute_name });
-		const attrCheck = !document.activeElement?.closest(`[${attribute_name}]`);
-		// const allowedCheck = !document.activeElement?.matches(allowed);
-		console.log({ attrCheck, bodyCheck });
-		if (document.activeElement === document.body) {
-			return true;
-		}
 		if (document.activeElement?.closest(`[${attribute_name}]`)) {
 			return true;
 		}
 		if (allowedSelector && document.activeElement?.matches(allowedSelector)) {
 			return true;
 		}
-		// if (
-		// 	document.activeElement !== document.body &&
-		// 	!document.activeElement?.closest(`[${attribute_name}]`)
-		// ) {
-		// 	return false;
-		// }
-		return false;
+		const global_check = global_checkIfKeyboardEventsAllowed();
+		return global_check;
 	}
 
 	return {
@@ -210,7 +195,13 @@ export function create_multi<T extends string | number>({
 			keydown: (event: KeyboardEvent) => {
 				// todo
 				// return;
-				console.log({ event });
+				if (modifier_keys_pressed(event)) {
+					return;
+				}
+				// check to make sure activelemeent is body or [data-id] inside root
+				if (!checkIfKeyboardEventsAllowed()) {
+					return;
+				}
 				if (event.key === 'ArrowUp' || event.key === 'k') {
 					// check if any modifier keys are pressed
 					if (modifier_keys_pressed(event)) {

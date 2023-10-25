@@ -125,6 +125,7 @@
 		);
 	});
 
+    $: console.log({$entries})
 	$: entryState.init($entries);
 
 	let groupedEntries: GroupedArrayWithHeadings<
@@ -412,7 +413,7 @@
 	<div class="">
 		{#if $checkedEntryIds.length}
 			<BulkActions styled={false} length={$checkedEntryIds.length}>
-				{#each statuses as status}
+				{#each statuses.slice(0,1) as status}
 					{#if $checkedEntries.every((entry) => entry.status !== status)}
 						<Button
 							variant="outline"
@@ -435,6 +436,10 @@
 						>
 					{/if}
 				{/each}
+                <Button variant="outline" size="sm" on:click={commanderState.openFresh}>
+                    <CommandIcon class="h-4 w-4 mr-2" />
+                    Command
+                </Button>
 			</BulkActions>
 		{:else}
 			<LibraryTabs showIcons />

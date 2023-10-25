@@ -26,9 +26,9 @@ const createEntryState = () => {
 		store.update((lookup) => {
 			for (const entry of entries) {
 				if (!entry) continue;
-				if (!lookup[entry.id]) {
-					lookup[entry.id] = entry;
-				}
+				// if (!lookup[entry.id]) {
+				lookup[entry.id] = entry;
+				// }
 			}
 
 			return lookup;

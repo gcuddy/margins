@@ -24,7 +24,7 @@
 		<!--  -->
 		<div
 			in:fly|global={{ duration: 300, y: 20 }}
-			class="bg-popover text-popover-foreground border p-4 shadow-md rounded-sm pointer-events-auto gap-4 flex justify-center items-center"
+			class="bg-popover text-popover-foreground border p-4 shadow-md rounded-sm pointer-events-auto gap-4 flex flex-col sm:flex-row justify-center items-center"
 		>
 			<span class="text-muted-foreground text-xs">
 				<span class="tabular-nums">{length}</span> selected
