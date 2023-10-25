@@ -215,19 +215,6 @@
 			return $entries.filter((entry) => $checkedEntryIds.includes(entry.id));
 		},
 	);
-
-	onNavigate((navigation) => {
-		if (!document.startViewTransition) {
-			return;
-		}
-
-		return new Promise((resolve) => {
-			document.startViewTransition(async () => {
-				resolve();
-				await navigation.complete;
-			});
-		});
-	});
 </script>
 
 <svelte:window on:keydown={multi.events.keydown} />
