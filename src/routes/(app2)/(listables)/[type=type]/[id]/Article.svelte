@@ -599,8 +599,8 @@
 		// Test if selection starts with image. If so, subtract 1 from start. If selection ends with image, add 1 to end.
 		// This is a hacky way to get images to highlight. It's not the *most* exhaustive (and maybe we should save imageEls another way as an alternative to the limited web annotation data model), but it works for now.
 		// maybe save something like image_els: and then their css selector
-        // After much futzing around with range selectors and refinement, this seems to somehow be the most reliable way.
-        // Since we save both the textQuote and textPosition, we could also cross-compare to make sure we're in the same place to be robust when re-hydrating.
+		// After much futzing around with range selectors and refinement, this seems to somehow be the most reliable way.
+		// Since we save both the textQuote and textPosition, we could also cross-compare to make sure we're in the same place to be robust when re-hydrating.
 		const startNode = findStartOfRange(range);
 		const endNode = findEndOfRange(range);
 		console.log({ startNode, endNode });
@@ -630,13 +630,12 @@
 		return {
 			els,
 			exact,
-            html,
+			html,
 			id,
-            // TODO: add in cssSelector describing image elements in more detail
+			// TODO: add in cssSelector describing image elements in more detail
 			selector: [textQuoteSelector, textPositionSelector],
 			start,
 		};
-
 	};
 
 	async function highlightCssSelector(selector: CssSelector) {
@@ -678,7 +677,7 @@
 	);
 
 	async function createRangeSelector(
-		selector: RangeSelector | TextPositionSelector,
+		selector: RangeSelector | TextPositionSelector | CssSelector,
 		attrs?: Record<string, string>,
 	) {
 		console.log({ selector });
@@ -863,16 +862,22 @@
 			const target = annotation.target!;
 			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
 			if (!el) {
-				let selector: TextQuoteSelector | TextPositionSelector | undefined = getTargetSelector(
-					annotation.target,
-					'TextQuoteSelector',
-				);
-                if (!selector?.exact?.trim()) {
-                    selector = getTargetSelector(
-                        annotation.target,
-                        "TextPositionSelector"
-                    )
-                }
+				let selector: TextQuoteSelector | TextPositionSelector | undefined =
+					getTargetSelector(annotation.target, 'TextQuoteSelector');
+				if (!selector?.exact?.trim()) {
+					selector = getTargetSelector(
+						annotation.target,
+						'TextPositionSelector',
+					);
+
+                    // TODO: this nesting is ridiculous lol
+                    if (!selector) {
+                        selector = getTargetSelector(
+                            annotation.target,
+                            "CssSelector"
+                        )
+                    }
+				}
 				if (selector) {
 					console.log('ensurehighlights - annotation', { annotation });
 					const body =
@@ -1099,7 +1104,7 @@
 			$annotateMutation.mutateAsync({
 				contentData,
 				entryId: data.entry.id,
-                html: $activeAnnotation.html,
+				html: $activeAnnotation.html,
 				id,
 				target: $activeAnnotation.target,
 				type: 'annotation',
@@ -1292,7 +1297,7 @@
 			return;
 		}
 		$annotateMutation.mutate({
-            html: info.html,
+			html: info.html,
 			id,
 			target: {
 				selector: info.selector,
@@ -1320,7 +1325,7 @@
 			}
 			annotations.addTemp(id, {
 				els,
-                html,
+				html,
 				id,
 				target: {
 					selector,
@@ -1472,23 +1477,52 @@
 		</div>
 		<div class="flex flex-col sm:grid grid-cols-3">
 			<Button
-				on:click={() => {
+				on:click={async () => {
 					if (_activeImageElement) {
-						let range = document.createRange();
-						console.log('imagel', _activeImageElement);
-						range.selectNode(_activeImageElement);
+						const id = nanoid();
 
-						const p = describeTextPosition(range);
 						const css = finder(_activeImageElement, {
 							root: articleWrapper,
 						});
 
-						console.log({ p, css });
+						const html = DOMPurify.sanitize(_activeImageElement.outerHTML);
 
-						highlightCssSelector({
-							type: 'CssSelector',
-							value: css,
+						const els = await createRangeSelector(
+							{
+								type: 'CssSelector',
+								value: css,
+							},
+							{
+								'data-annotation-id': id,
+								id: `annotation-${id}`,
+							},
+						);
+
+						$annotateMutation.mutate({
+							html,
+							id,
+							target: {
+								selector: {
+									type: 'CssSelector',
+									value: css,
+								},
+								source: '',
+							},
 						});
+						annotations.add(id, {
+							els,
+							html,
+							id,
+							target: {
+								selector: {
+									type: 'CssSelector',
+									value: css,
+								},
+								source: '',
+							},
+						});
+						clearSelection();
+                        showImageMenu = false;
 					}
 				}}
 				class="max-sm:py-6"
@@ -1497,17 +1531,20 @@
 				<Highlighter class="h-5 w-5 shrink-0 mr-2" />
 				Highlight Image</Button
 			>
-			<Button class="max-sm:py-6" variant="ghost">
+			<!-- TODO -->
+			<!-- <Button class="max-sm:py-6" variant="ghost">
 				<EditIcon class="h-5 w-5 shrink-0 mr-2" />
 				Annotate Image</Button
-			>
+			> -->
 			<Button
 				class="max-sm:py-6"
 				variant="ghost"
 				on:click={() => {
 					showImageMenu = false;
-					open(_activeImageUrl, '_blank');
-					_activeImageUrl = null;
+					if (_activeImageUrl) {
+						open(_activeImageUrl, '_blank');
+						_activeImageUrl = null;
+					}
 				}}
 			>
 				<ExternalLink class="h-5 w-5 shrink-0 mr-2" />
