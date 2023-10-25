@@ -1,2 +1,0 @@
-[install.scopes]
-"@tiptap-pro" = { token = "$TIPTAP_TOKEN", url = "https://registry.tiptap.dev/" }
