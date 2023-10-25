@@ -1141,7 +1141,7 @@
 		{#if author}
 			<a
 				class="text-sm font-medium uppercase tracking-wider"
-				href="/people/{encodeURIComponent(author)}">{author}</a
+				href="/library/all?author={encodeURIComponent(author)}">{author}</a
 			>
 		{/if}
 		<!-- <BookmarkForm data={data.bookmarkForm} /> -->
