@@ -2,10 +2,6 @@
 	import { buttonVariants } from '$components/ui/button';
 	import { cn } from '$lib';
 	import {
-		H2,
-		Lead
-	} from '$lib/components/ui/typography';
-	import {
 		Armchair,
 		ChevronRight,
 		Edit3,
