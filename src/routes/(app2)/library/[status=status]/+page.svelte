@@ -33,8 +33,9 @@
 	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import {
-		type FilterLibrarySchema,
 		filterLibrarySchema,
+		parseFilterFromSearchParams,
+		type FilterLibrarySchema,
 		type LibraryGroupType,
 		type LibrarySortType,
 	} from '$lib/schemas/library';
@@ -42,17 +43,17 @@
 	import { statuses, statusesToDisplay, statusesWithIcons } from '$lib/status';
 	import { cn } from '$lib/utils';
 	import {
+		changeSearch,
 		defaultParseSearch,
 		defaultStringifySearch,
 	} from '$lib/utils/search-params';
 
-	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
-	import type { Snapshot } from './$types.js';
-	import LibraryTabs from '$components/library/library-tabs.svelte';
-	import Header from '$components/ui/Header.svelte';
 	import { audioPlayer } from '$components/AudioPlayer.svelte';
+	import LibraryTabs from '$components/library/library-tabs.svelte';
 	import { entryState } from '$lib/stores/entry-state';
+	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import { commanderState } from '../../Commander.svelte';
+	import type { Snapshot } from './$types.js';
 
 	export let data;
 
@@ -64,39 +65,25 @@
 		($grouping) => $grouping && $grouping !== 'none',
 	);
 
+	// Update URL param to reflect sort
 	$: if (browser && $sort && $sort !== 'manual') {
-		const url = $page.url;
-		url.searchParams.set('sort', $sort);
-		goto(url, {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true,
-		});
-	} else if (browser) {
-		const url = $page.url;
-		url.searchParams.delete('sort');
-		goto(url, {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true,
-		});
+		changeSearch($page.url, (data) => ({
+			...data,
+			sort: $sort,
+		}));
+	} else if (browser && $page.url.searchParams.has('sort')) {
+		changeSearch($page.url, (data) => ({
+			...data,
+			sort: undefined,
+		}));
 	}
 
 	const updateBookmarkMutation = initUpdateBookmarkMutation();
 
-	function parseFilterFromSearchParams(): FilterLibrarySchema | undefined {
-		const rawObj = defaultParseSearch($page.url.search);
-		console.log({ rawObj });
-		const parsed = filterLibrarySchema.safeParse(rawObj);
-		console.log({ parsed });
-		if (parsed.success) {
-			return parsed.data;
-		}
-	}
-
-	const filter = derived(page, ($page) => parseFilterFromSearchParams());
-
 	const queryClient = useQueryClient();
+	const filter = derived(page, ($page) =>
+		parseFilterFromSearchParams($page.url.search),
+	);
 
 	const query = createInfiniteQuery(
 		derived(
@@ -117,26 +104,6 @@
 						queryClient,
 					),
 					placeholderData: keepPreviousData,
-					// placeholderData: (data: InfiniteData<LibraryResponse> | undefined) => {
-					// 	console.log(`placeholder`, { data });
-					// 	if (search && data) {
-					// 		// perform search
-					// 		const searchRegex = new RegExp(search, 'i');
-					// 		return {
-					// 			...data,
-					// 			pages: data.pages.map((page) => ({
-					// 				...page,
-					// 				entries: page.entries.filter((entry) => {
-					// 					const title = entry.title;
-					// 					const author = entry.bookmark_author ?? entry.author;
-					// 					if (!title && !author) return false;
-					// 					return searchRegex.test(`${title} ${author}`);
-					// 				})
-					// 			}))
-					// 		};
-					// 	}
-					// 	return data;
-					// }
 				};
 			},
 		),
@@ -434,8 +401,7 @@
 	</div>
 	<!-- {#each $query.data?.pages.flatMap((p) => p.entries) ?? [] as entry}
 	{/each} -->
-
-    {/if}
+{/if}
 
 <div
 	class={cn(
@@ -500,10 +466,10 @@
 			>
 		{/if}
 	{/each}
-    <Button variant="outline" size="sm" on:click={commanderState.openFresh}>
-        <CommandIcon class="h-4 w-4 mr-2" />
-        Command
-    </Button>
+	<Button variant="outline" size="sm" on:click={commanderState.openFresh}>
+		<CommandIcon class="h-4 w-4 mr-2" />
+		Command
+	</Button>
 </BulkActions>
 
 <!-- <EntryList
