@@ -303,7 +303,7 @@
 							<span>Go to {status}</span>
 						</CommandItem>
 					{/each}
-					<CommandItem
+					<!-- <CommandItem
 						value="go to home"
 						onSelect={() => {
 							goto(`/home`);
@@ -312,7 +312,7 @@
 					>
 						<ArrowRight class="mr-2 h-4 w-4" />
 						<span>Go to home</span>
-					</CommandItem>
+					</CommandItem> -->
 					<CommandItem
 						value="go to advanced search"
 						onSelect={() => {

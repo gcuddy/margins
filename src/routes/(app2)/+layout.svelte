@@ -108,7 +108,7 @@
 					<main
 						class={cn(
 							'flex h-full w-full flex-1 flex-col',
-							$page.url.pathname.startsWith('/home') && 'overflow-x-hidden',
+							// $page.url.pathname.startsWith('/home') && 'overflow-x-hidden',
 							'relative',
 							'col-start-2',
                             $mainClassStore
