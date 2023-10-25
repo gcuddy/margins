@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
-	import Clamp from '$components/Clamp.svelte';
 	import Header from '$components/ui/Header.svelte';
-	import smoothload from '$lib/actions/smoothload';
+	import { Skeleton } from '$components/ui/skeleton';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Separator from '$lib/components/ui/Separator.svelte';
-	import { Skeleton } from '$components/ui/skeleton';
-	import { H1, H2, Lead, Muted } from '$lib/components/ui/typography';
+	import { H2 } from '$lib/components/ui/typography';
 	import { formatDate } from '$lib/utils/date';
 	import { Loader } from 'lucide-svelte';
 	export let data;
 
-	import { CheckCircled, PlusCircled } from 'radix-icons-svelte';
 	import { EntryMediaHeader } from '$components/entries';
+	import { CheckCircled, PlusCircled } from 'radix-icons-svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
+
+    const queryClient = useQueryClient();
 
 	let submitting = false;
 </script>
@@ -46,6 +47,9 @@
 							submitting = false;
 							if (result.type === 'success' || result.type === 'redirect') {
 								invalidate('podcast');
+                                queryClient.invalidateQueries({
+                                    queryKey: ["subscriptions"]
+                                })
 							}
 						};
 					}}
@@ -81,7 +85,7 @@
 			{/if}
 		</svelte:fragment>
 	</EntryMediaHeader>
-	
+
 	<div class="max-w-prose space-y-4 mt-8">
 		{#if data.lazy?.episodes}
 			<H2>Episodes</H2>
