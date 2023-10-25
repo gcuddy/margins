@@ -1,15 +1,14 @@
 <script lang="ts">
+	import * as Dialog from '$components/ui/dialog';
+	import { finder } from '@medv/finder';
 	import {
 		useEscapeKeydown,
 		usePortal,
 	} from '@melt-ui/svelte/internal/actions';
-	import { draggable } from '@neodrag/svelte';
-	import * as Dialog from '$components/ui/dialog';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import DOMPurify from 'dompurify';
 	import debounce from 'just-debounce-it';
 	import throttle from 'just-throttle';
-	import { finder } from '@medv/finder';
-	import DOMPurify from 'dompurify';
 
 	import {
 		EditIcon,
@@ -18,10 +17,10 @@
 		Highlighter,
 	} from 'lucide-svelte';
 	import { afterUpdate, getContext, onDestroy, onMount, tick } from 'svelte';
-	import { derived, type Writable, writable } from 'svelte/store';
-	import { scale } from 'svelte/transition';
 	import { createPopperActions } from 'svelte-popperjs';
 	import { toast } from 'svelte-sonner';
+	import { derived, writable, type Writable } from 'svelte/store';
+	import { scale } from 'svelte/transition';
 
 	import EditAnnotationInline from '$components/annotations/edit-annotation-inline.svelte';
 
@@ -29,9 +28,6 @@
 	import { enhance } from '$app/forms';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import Editor from '$components/ui/editor/Editor.svelte';
-	import Kbd from '$components/ui/KBD.svelte';
-	import * as Tooltip from '$components/ui/tooltip';
 	import drag_context from '$lib/actions/drag-context';
 	import focusTrap from '$lib/actions/focus-trap';
 	import type { TargetSchema } from '$lib/annotation';
@@ -39,9 +35,8 @@
 		createCssSelectorMatcher,
 		createTextPositionSelectorMatcher,
 		createTextQuoteSelectorMatcher,
-		describeSelection,
 		describeTextPosition,
-		describeTextQuote,
+		describeTextQuote
 	} from '$lib/annotator';
 	import {
 		highlightText,
@@ -75,11 +70,18 @@
 	import { createAnnotationStore } from '$lib/stores/annotations';
 	import mq from '$lib/stores/mq';
 	import type { Type } from '$lib/types';
-	import { flyAndScale, getHostname } from '$lib/utils';
+	import { getHostname } from '$lib/utils';
 	import { getTargetSelector } from '$lib/utils/annotations';
 	import { numberOrString } from '$lib/utils/misc';
 	import { cn } from '$lib/utils/tailwind';
 
+	import { currentEntryList } from '$components/entries/store';
+	import { isBlankJsonContent } from '$components/ui/editor/utils';
+	import { makeCreateRangeSelectorMatcher } from '$lib/annotator/range';
+	import { makeRefinable } from '$lib/annotator/refinable';
+	import { make_link } from '$lib/utils/entries';
+	import type { JSONContent } from '@tiptap/core';
+	import type { RequireAtLeastOne } from 'type-fest';
 	import type { MenuBar } from '../../../MainNav.svelte';
 	import {
 		getAppearanceContext,
@@ -88,17 +90,8 @@
 	} from '../ctx';
 	import type { PageData } from './$types';
 	import Attachments from './Attachments.svelte';
-	import type { RequireAtLeastOne } from 'type-fest';
-	import { currentEntryList } from '$components/entries/store';
-	import { make_link } from '$lib/utils/entries';
-	import Selection from './Selection.svelte';
 	import type { entryDetailsQuery } from './query';
-	import type { JSONContent } from '@tiptap/core';
-	import { startingContentData } from '$components/ui/editor/constants';
-	import { isBlankJsonContent } from '$components/ui/editor/utils';
-	import { ownerDocument } from '$lib/annotator/utils';
-	import { makeCreateRangeSelectorMatcher } from '$lib/annotator/range';
-	import { makeRefinable } from '$lib/annotator/refinable';
+	import SSelection from './Selection.svelte';
 
 	const {
 		activeAnnotation,
@@ -263,28 +256,6 @@
 
 	const selection = writable<Selection | null>(null);
 
-	const showAnnotationTooltip = derived(selection, ($selection) => {
-		if (!$selection?.rangeCount || $selection.isCollapsed) {
-			return false;
-		}
-		const range = $selection.getRangeAt(0);
-		const parent = range.commonAncestorContainer.parentElement;
-		if (!parent) {
-			return false;
-		}
-		if (!parent.closest('#article')) {
-			return false;
-		}
-		if (
-			range.startContainer.parentElement?.closest('[data-annotation-id]') ??
-			range.endContainer.parentElement?.closest('[data-annotation-id]')
-		) {
-			return false;
-		}
-		const text = range.toString();
-		return text.length > 0;
-	});
-
 	const virtualEl = derived(selection, ($selection) => {
 		if (!$selection?.rangeCount || $selection.isCollapsed) {
 			return {
@@ -315,7 +286,7 @@
 		requestAnimationFrame(setSelectionFn);
 	}
 
-	const [popperRef, popperContent] = createPopperActions({
+	const [popperRef] = createPopperActions({
 		modifiers: [
 			{
 				name: 'offset',
@@ -377,197 +348,8 @@
 	function isNodeImage(node: Node): boolean {
 		const text = node.textContent?.trim() ?? '';
 		return isHTMLElement(node)
-			? !text && (node.querySelector('img') || node.matches('img'))
+			? !text && !!(node.querySelector('img') || node.matches('img'))
 			: false;
-	}
-
-	function createFragment(
-		startingEl: HTMLElement,
-		endingEl: HTMLElement,
-	): HTMLElement | null {
-		if (!startingEl || !endingEl) return null;
-
-		const fragment = document.createElement('div');
-		let currentEl = startingEl;
-
-		while (currentEl && currentEl !== endingEl.nextSibling) {
-			fragment.appendChild(currentEl.cloneNode(true));
-			currentEl = currentEl.nextSibling as HTMLElement;
-		}
-
-		return fragment;
-	}
-
-	async function makeRangeSelector(
-		range: Range,
-	): Promise<RangeSelector | null> {
-		// check if start container contains no text, in which case it's probably an image. use a css selector, and go to end to make range. if end has no text, use css selector again. otherwise use text quote.
-		console.log('makerangeselector', range);
-		const startContainer = range.startContainer;
-		const endContainer = range.endContainer;
-		let startNode = findStartOfRange(range);
-
-		console.log({
-			startNode,
-			endContainer,
-		});
-
-		if (!isHTMLElement(startNode) && !isHTMLElement(endContainer)) {
-			console.log(
-				'Not making range selector because start and end are not HTMLElements',
-			);
-			return null;
-		}
-
-		let startSelector: CssSelector | undefined = undefined;
-		let endSelector: CssSelector | undefined = undefined;
-
-		const startText = startNode.textContent?.trim() ?? '';
-		const endText = endContainer.textContent?.trim() ?? '';
-
-		let startingEl = startNode;
-		while (startingEl.parentElement !== range.commonAncestorContainer) {
-			startingEl = startingEl.parentElement!;
-		}
-		let endingEl = range.endContainer;
-		while (endingEl.parentElement !== range.commonAncestorContainer) {
-			endingEl = endingEl.parentElement!;
-		}
-		console.log({ startingEl, endingEl });
-		const fragment = createFragment(startingEl, endingEl);
-		console.log({ fragment });
-
-		// make temporary container to hold all elements in range
-		// const fragment = ownerDocument(range).createDocumentFragment();
-		// let el = startingEl;
-		// while (el !== endingEl) {
-		//     console.log({ el })
-		//     fragment.appendChild(el);
-		//     el = el.nextElementSibling!;
-		// }
-
-		// console.log({fragment})
-
-		// // get all elements in between, and then put them all into a temporary fragment div
-		// // const fragment = ownerDocument(range).createDocumentFragment();
-		// // let el = startingEl;
-		// // while (el !== endingEl) {
-		// // 	fragment.appendChild(el);
-		// // 	el = el.nextElementSibling!;
-		// // }
-		// // fragment.appendChild(el);
-
-		// console.log({ fragment });
-		// check if start has no text and contains (or is) an image
-		if (
-			isHTMLElement(startNode) &&
-			!startText &&
-			(startNode.querySelector('img') || startNode.matches('img'))
-		) {
-			console.log('Start container contains an image');
-			const selector = finder(startNode);
-			startSelector = {
-				type: 'CssSelector',
-				value: selector,
-			};
-			console.log({ startSelector });
-		} else {
-			// find parent element
-			const parentElement = startNode.parentElement!.nextElementSibling!;
-			startSelector = {
-				type: 'CssSelector',
-				value: finder(parentElement),
-				refinedBy: {
-					type: 'TextPositionSelector',
-					start: range.startOffset,
-					end: range.endOffset,
-				},
-			};
-		}
-
-		// check if end has no text and contains (or is) an image
-		if (
-			isHTMLElement(endContainer) &&
-			!endText &&
-			(endContainer.querySelector('img') || endContainer.matches('img'))
-		) {
-			console.log('End container contains an image');
-			const selector = finder(endContainer);
-			endSelector = {
-				type: 'CssSelector',
-				value: selector,
-			};
-			console.log({ endSelector });
-		} else {
-			// Range selector incudes everything up to end container, so we need to select next node,
-			// and then determine selection from there
-
-			// TODO: more safe null checks
-			let p = endContainer.parentElement!;
-			console.log({ p });
-			let i = 0;
-			while (!p.nextElementSibling) {
-				p = p.parentElement!;
-				i++;
-				// loop guard
-				if (i > 20) {
-					throw new Error('Could not find next element sibling');
-				}
-			}
-
-			const el = p.nextElementSibling!;
-
-			console.log({ p, el });
-
-			// now get text quote *within* p;
-			const textQuoteSelector = await describeTextQuote(range, p);
-			console.log({ textQuoteSelector });
-
-			const selector = finder(el);
-			// Now text quote  with new parent element
-			endSelector = {
-				type: 'CssSelector',
-				value: selector,
-				// refinedBy: textQuoteSelector,
-			};
-			// console.log('End container does not contain an image');
-			// const newRange = new Range();
-			// newRange.setStart(endContainer, 0);
-			// newRange.setEnd(endContainer, range.endOffset);
-			// endSelector = await describeTextQuote(newRange, articleWrapper);
-		}
-
-		const newRange = new Range();
-		newRange.selectNode(fragment!);
-
-		const textPositionSelector = describeTextPosition(range, fragment);
-
-		range.toString;
-		// textPositionSelector.start = range.startOffset;
-		console.log({ textPositionSelector });
-
-		// this is probably a bad idea no? We want to get the range to "include" the image...
-		return {
-			type: 'RangeSelector',
-			startSelector: startSelector!,
-			endSelector: endSelector!,
-			// refinedBy: textPositionSelector
-		};
-
-		// console.log({
-		//     startText,
-		//     endText
-		// })
-
-		// if (startText.length === 0) {
-		//     const startSelector = finder(startContainer);
-		//     console.log({ startSelector });
-		// }
-
-		// if (endText.length === 0) {
-		//     const endSelector = finder(endContainer);
-		//     console.log({ endSelector });
-		// }
 	}
 
 	const clearSelection = () => window.getSelection()?.removeAllRanges();
@@ -606,7 +388,7 @@
 		console.log({ startNode, endNode });
 
 		const id = $activeAnnotationId ?? nanoid();
-		const els = await createRangeSelector(
+		const els = await highlightSelector(
 			{
 				...textPositionSelector,
 				start: isNodeImage(startNode)
@@ -638,19 +420,6 @@
 		};
 	};
 
-	async function highlightCssSelector(selector: CssSelector) {
-		const matches = createCssSelectorMatcher(selector)(articleWrapper!);
-
-		const matchList = [];
-		for await (const match of matches) {
-			matchList.push(match);
-		}
-
-		console.log({ matchList });
-
-		return matchList.map((match) => highlightText(match, 'mark'));
-	}
-
 	// @ts-expect-error
 	const createMatcher = makeRefinable(
 		(
@@ -676,8 +445,8 @@
 		},
 	);
 
-	async function createRangeSelector(
-		selector: RangeSelector | TextPositionSelector | CssSelector,
+	async function highlightSelector(
+		selector: RangeSelector | TextPositionSelector | CssSelector | TextQuoteSelector,
 		attrs?: Record<string, string>,
 	) {
 		console.log({ selector });
@@ -862,7 +631,7 @@
 			const target = annotation.target!;
 			const el = articleWrapper?.querySelector(`[data-annotation-id="${id}"]`);
 			if (!el) {
-				let selector: TextQuoteSelector | TextPositionSelector | undefined =
+				let selector: TextQuoteSelector | TextPositionSelector | CssSelector | undefined =
 					getTargetSelector(annotation.target, 'TextQuoteSelector');
 				if (!selector?.exact?.trim()) {
 					selector = getTargetSelector(
@@ -884,7 +653,7 @@
 						!!annotation.body ||
 						!isBlankJsonContent(coalesceObjects(annotation.contentData) ?? {});
 					console.log('ensurehighligts, body', body);
-					const els = await createRangeSelector(selector, {
+					const els = await highlightSelector(selector, {
 						'data-annotation-id': id,
 						'data-has-body': body ? 'true' : 'false',
 						id: `annotation-${annotation.id}`,
@@ -1071,8 +840,6 @@
 		uscroll();
 	});
 
-	let activeEditor: Editor | null = null;
-
 	function handleSaveAnnotation(contentData: JSONContent) {
 		if (!data.entry?.id) {
 			return;
@@ -1121,7 +888,6 @@
 	let showImageMenu = false;
 	let _activeImageUrl: string | null = null;
 	let _activeImageElement: HTMLImageElement | null = null;
-	let imagePortal: HTMLElement | undefined = undefined;
 
 	const [editMenuRef, editMenuContent] = createPopperActions({
 		modifiers: [
@@ -1177,15 +943,6 @@
 	}
 
 	let annotationEditMenuEl: HTMLElement;
-
-	const shouldShowAnnotationTooltip = derived(
-		[showAnnotationTooltip, scrolling],
-		([$showAnnotationTooltip, $scrolling]) => {
-			return $showAnnotationTooltip && !$scrolling && data.entry;
-		},
-	);
-
-	let editorEl: HTMLElement | undefined = undefined;
 </script>
 
 {#if showEditMenu}
@@ -1281,7 +1038,7 @@
 	</div>
 {/if}
 
-<Selection
+<SSelection
 	on:highlight={async (e) => {
 		if (!$selection) {
 			clearSelection();
@@ -1427,6 +1184,7 @@
 					...data,
 					entry: {
 						...data.entry,
+                        //@ts-expect-error
 						bookmark: {
 							...data.entry?.bookmark,
 							status: 'Archive',
@@ -1453,9 +1211,7 @@
 			<Button
 				variant="outline"
 				size="lg"
-				on:mouseover={() => {
-					preloadData(next_link);
-				}}>Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button
+                >Archive{currentIndex > -1 && next_link ? ' and next' : ''}</Button
 			>
 		</form>
 	{/if}
@@ -1487,7 +1243,7 @@
 
 						const html = DOMPurify.sanitize(_activeImageElement.outerHTML);
 
-						const els = await createRangeSelector(
+						const els = await highlightSelector(
 							{
 								type: 'CssSelector',
 								value: css,
