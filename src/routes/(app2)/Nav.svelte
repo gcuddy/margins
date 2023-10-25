@@ -11,12 +11,12 @@
 	export const showAddUrlModalStore = writable(false);
 
 	export const nav: Array<Nav> = [
-		{
-			active: (url) => url.startsWith('/home'),
-			href: '/home',
-			icon: Home,
-			label: 'Home',
-		},
+		// {
+		// 	active: (url) => url.startsWith('/home'),
+		// 	href: '/home',
+		// 	icon: Home,
+		// 	label: 'Home',
+		// },
 		{
 			active: (url) => url.startsWith('/library'),
 			href: '/library/backlog',
@@ -85,7 +85,7 @@
 		ChevronDownIcon,
 		FolderPlus,
 		FolderSync,
-		Home,
+		// Home,
 		Layers,
 		Library,
 		Loader,
