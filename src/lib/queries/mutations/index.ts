@@ -150,9 +150,6 @@ export async function optimisticUpdateLibrary(
 			libraryQueryFilter,
 		);
 
-	const setDataData = previous.flatMap(([key, data]) => data);
-
-	console.log({ previous, setDataData });
 	setGetLibraryData(queryClient, mapFn);
 
 	const reset = () => {

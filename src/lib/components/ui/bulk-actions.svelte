@@ -19,7 +19,7 @@
 {#if length}
 	<div
 		style:--left="{$navWidth}px"
-		class={cn(styled && "fixed bottom-5 left-[--left] right-0 pointer-events-none z-10 flex justify-center", className)}
+		class={cn(styled && "fixed bottom-5 left-0 lg:left-[--left] right-0 pointer-events-none z-10 flex justify-center", className)}
 	>
 		<!--  -->
 		<div
