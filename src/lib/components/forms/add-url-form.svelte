@@ -16,12 +16,17 @@
 	const queryClient = useQueryClient();
 
     let pending = false;
+    let value = '';
 </script>
 
 <form
 	action="/s?/addUrl"
 	method="post"
-	use:enhance={({}) => {
+	use:enhance={({cancel}) => {
+        if (!value) {
+            // TODO: feedback
+            cancel();
+        }
         pending = true;
 		addUrlPromise = new Promise((resolve) => {
 			resolveAddUrlPromise = resolve;
@@ -49,7 +54,7 @@
 	<div class="grid gap-4 py-4">
 		<div class="grid gap-2">
 			<Label for="url">URL</Label>
-			<Input name="url" id="url" placeholder="https://example.com/article" />
+			<Input bind:value required name="url" id="url" placeholder="https://example.com/article" />
 		</div>
 	</div>
 	<slot {pending} name="footer">

@@ -22,7 +22,7 @@
 	import { Progress } from '$lib/components/ui/progress';
 	import type { ListEntry } from '$lib/db/selects';
 	import { isBrowser } from '$lib/helpers';
-	import { mutation } from '$lib/queries/query';
+	import { mutate, mutation } from '$lib/queries/query';
 	import type { LibraryEntry, LibraryResponse } from '$lib/server/queries';
 	import type { Status } from '$lib/status';
 	import { getHostname, normalizeCamelCase } from '$lib/utils';
@@ -40,6 +40,7 @@
 	import EntryItemAnnotations from './entry-item-annotations.svelte';
 	import EntryItemRelations from './entry-item-relations.svelte';
 	import StatusIcon from './StatusIcon.svelte';
+	import { optimisticUpdateLibrary } from '$lib/queries/mutations';
 
 	const queryClient = useQueryClient();
 
@@ -84,7 +85,8 @@
 
 	export let checked = false;
 
-	$: href = `/${getType(entry.type)}/${getId(entry)}`;
+	$: isBookmark = entry.type === 'bookmark';
+	$: href = isBookmark ? entry.uri : `/${getType(entry.type)}/${getId(entry)}`;
 
 	// $: tag_ids = entry.tags.map((t) => t.id) || [];
 
@@ -255,6 +257,26 @@
 <a
 	bind:this={anchor_el}
 	{href}
+	target={isBookmark ? '_blank' : undefined}
+	rel={isBookmark ? 'noopener noreferrer' : undefined}
+	on:click={async () => {
+		if (isBookmark) {
+			// mutate locally
+			entry.seen = true;
+			const { reset } = await optimisticUpdateLibrary(queryClient, (_entry) => {
+				if (entry.id !== _entry.id) return _entry;
+				return {
+					..._entry,
+					seen: 1,
+				};
+			});
+			mutate('userEntryInsert', {
+				entryId: entry.id,
+				seen: new Date(),
+			}).catch(reset);
+			// TODO: mark as seen
+		}
+	}}
 	{...$$restProps}
 	class="data-[state=open]:bg-accent flex flex-col h-full cursor-default data-[active=true]:bg-muted/25 group/container focus-visible:outline-none"
 	data-sveltekit-preload-data="tap"
@@ -276,7 +298,7 @@
 					<Tooltip.Trigger asChild let:builder>
 						<div
 							use:melt={builder}
-							class="group/select relative h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
+							class="group/select relative h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-md object-cover ring-offset-background group-focus-within:ring-2 group-focus-within:ring-ring group-focus-within:ring-offset-2"
 						>
 							{#if entry.image || entry.uri}
 								{@const src = entry.image?.startsWith('/')
@@ -380,9 +402,9 @@
 
 			<div class="flex flex-col min-w-0 gap-0.5">
 				<!-- <Muted class="text-xs">{entry.type}</Muted> -->
-				<div class="flex items-center gap-x-2 min-w-0">
+				<div class="flex items-center gap-x-1.5 min-w-0">
 					{#if viewPreferences.seen && !entry.seen}
-						<div class="h-3 w-3 rounded-full bg-primary"></div>
+						<div class="h-2.5 w-2.5 rounded-full bg-primary shrink-0"></div>
 					{/if}
 					{#if viewPreferences.status && entry.status}
 						<StatusIcon class="h-3.5 w-3.5" status={entry.status} />
@@ -418,7 +440,7 @@
 											entry_id: entry.id,
 											image: entry.image ?? '',
 											interaction_id: lastUnfinishedInteraction?.id,
-                                            slug: make_link(entry),
+											slug: make_link(entry),
 											src: entry.uri ?? '',
 											title: entry.title ?? '',
 										},
@@ -545,17 +567,19 @@
 							{#if entry.uri?.startsWith('http')}
 								{@const hostname = getHostname(entry.uri)}
 								<div class="flex items-center gap-1 truncate">
-									<img
-										src="https://icons.duckduckgo.com/ip3/{hostname}.ico"
-										class="w-3 h-3 rounded"
-										alt=""
-									/>
+									{#if !isBookmark}
+										<img
+											src="https://icons.duckduckgo.com/ip3/{hostname}.ico"
+											class="w-3 h-3 rounded"
+											alt=""
+										/>
+									{/if}
 									<Muted class="text-xs truncate"
 										>{hostname.replace('www.', '')}</Muted
 									>
 								</div>{/if}
 						{/if}
-						{#if viewPreferences.author && author}
+						{#if !isBookmark && viewPreferences.author && author}
 							{#if viewPreferences.url && entry.uri && entry.uri?.startsWith('http')}
 								<span class="text-muted-foreground text-xs">·</span>
 							{/if}
@@ -570,7 +594,7 @@
 								>{Math.round(progress * 100)}%</span
 							>
 						{/if}
-						{#if viewPreferences.time && entry.estimatedReadingTime}
+						{#if !isBookmark && viewPreferences.time && entry.estimatedReadingTime}
 							{#if (viewPreferences.url && entry.uri && entry.uri?.startsWith('http')) || (viewPreferences.author && author) || (viewPreferences.progress && progress)}
 								<span class="text-muted-foreground text-xs">·</span>
 							{/if}
