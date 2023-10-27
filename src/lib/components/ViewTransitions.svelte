@@ -7,6 +7,10 @@
 			return;
 		}
 
+        // TODO: better view transitions
+        // for now...
+        return;
+
 		return new Promise((resolve) => {
 			//@ts-expect-error - types not up to date
 			document.startViewTransition(async () => {

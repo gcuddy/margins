@@ -168,8 +168,8 @@
 		}
 	}
 
-	[data-theme='light'],
-	[data-theme='system'] {
+	:not([data-sonner-toaster])[data-theme='light'],
+	:not([data-sonner-toaster])[data-theme='system'] {
 		--background: 0 0% 100%;
 		--foreground: 20 14.3% 4.1%;
 		--card: 0 0% 100%;
@@ -195,7 +195,7 @@
 		--radius: 0.6rem;
 	}
 
-	[data-theme='dark'] {
+	:not([data-sonner-toaster])[data-theme='dark'] {
 		--background: 20 14.3% 4.1%;
 		--foreground: 60 9.1% 97.8%;
 		--card: 30 8% 10%;
@@ -229,7 +229,7 @@
 		--ring: 24 5.7% 82.9%;
 	}
 
-	[data-theme='solarized-light'] {
+	:not([data-sonner-toaster])[data-theme='solarized-light'] {
 		--background: 44 87% 94%;
 		--foreground: 192 81% 14%;
 
@@ -278,13 +278,13 @@
 			--flexoki-accent: var(--flexoki-cyan-400);
 		}
 
-		[data-theme='flexoki'] {
+		:not([data-sonner-toaster])[data-theme='flexoki'] {
 			.prose {
 				@apply prose-invert;
 			}
 		}
 		:root:not([data-theme]),
-		[data-theme='system'] {
+		:not([data-sonner-toaster])[data-theme='system'] {
 			color-scheme: dark;
 			--background: 20 14.3% 4.1%;
 			--foreground: 60 9.1% 97.8%;
@@ -336,7 +336,7 @@
 	}
 
 	/* REVIEW: is the best way to define themes? Can we do it in a js file, and use rgb etc? */
-	[data-theme='synthwave'] .app {
+	:not([data-sonner-toaster])[data-theme='synthwave'] .app {
 		color-scheme: dark;
 		/* pull from x? */
 		/* --primary: 231 121 193; */
@@ -402,7 +402,7 @@
 		/* --secondary: theme() */
 	}
 
-	[data-theme='synthwave'] {
+	:not([data-sonner-toaster])[data-theme='synthwave'] {
 		--background: 250 20% 17%;
 		--foreground: 220 30% 95%;
 		--card: 250 100% 8%;
@@ -425,7 +425,7 @@
 		--radius: 0.5rem;
 	}
 
-	[data-theme='flexoki'] {
+	:not([data-sonner-toaster])[data-theme='flexoki'] {
 		--background: var(--flexoki-bg);
 		--foreground: var(--flexoki-tx);
 		--card: var(--flexoki-bg);
@@ -448,7 +448,7 @@
 		--radius: 0.5rem;
 	}
 
-	[data-theme='dark'] .app {
+	:not([data-sonner-toaster])[data-theme='dark'] .app {
 		color-scheme: dark;
 		--gray-700: 30deg 6% 25%;
 		--color-base: 24deg 10% 10%;
@@ -592,6 +592,10 @@
 		@apply scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border scrollbar-thumb-rounded-lg hover:scrollbar-thumb-muted;
 	}
 
+    li.toast[data-sonner-toast] {
+        @apply !bg-background;
+    }
+
 	ol[data-sonner-toaster] li.toast[data-sonner-toast] {
 		/* @apply pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-border p-6 pr-8 shadow-lg; */
 		/* @apply max-h-screen p-4 md:max-w-[420px] */
@@ -607,8 +611,14 @@
 			border: 1px solid hsl(var(--border) / 1);
 		}
 
+        [data-icon] {
+            @apply text-foreground/50;
+        }
+
 		[data-close-button] {
-			/* @apply absolute right-2 top-2 rounded-md p-1 text-foreground/50 hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2; */
+            left: unset;
+            transform: unset;
+			@apply right-2 top-2 bg-transparent border-0 text-foreground/50 hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2;
 		}
 	}
 

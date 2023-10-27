@@ -2,43 +2,44 @@
 	import '../app.postcss';
 	import '$lib/styles/font.css';
 
-	import { Toaster,toast } from 'svelte-sonner';
-    import { page } from '$app/stores';
+	import { Toaster, toast } from 'svelte-sonner';
+	import { page } from '$app/stores';
 	import { getFlash } from 'sveltekit-flash-message/client';
 	import { onDestroy } from 'svelte';
+	import { styleToString } from '$lib/helpers';
 	// import { pwaInfo } from 'virtual:pwa-info';
 
 	// fix bigint issue
 	//  this is to fix an issue with BigInt and Kysely
 	// prettier-ignore'
-    // @ts-expect-error
-	BigInt.prototype.toJSON = function() {
+	// @ts-expect-error
+	BigInt.prototype.toJSON = function () {
 		return this.toString();
 	};
 
-    const flash = getFlash(page);
+	const flash = getFlash(page);
 
-    const unsubscribeFlash = flash.subscribe($flash => {
-        if (!$flash) return;
+	const unsubscribeFlash = flash.subscribe(($flash) => {
+		if (!$flash) return;
 
-        toast[$flash.status]($flash.text)
-        // fancy way of doing:
-        // if ($flash.status === "success") {
-        //     toast.success($flash.text)
-        // } else if ($flash.status === "error") {
-        //     toast.error($flash.text)
-        // } else if ($flash.status === "warning") {
-        //     toast.warning($flash.text)
-        // } else {
-        //     toast.info($flash.text)
-        // }
+		toast[$flash.status]($flash.text);
+		// fancy way of doing:
+		// if ($flash.status === "success") {
+		//     toast.success($flash.text)
+		// } else if ($flash.status === "error") {
+		//     toast.error($flash.text)
+		// } else if ($flash.status === "warning") {
+		//     toast.warning($flash.text)
+		// } else {
+		//     toast.info($flash.text)
+		// }
 
-        flash.set(undefined);
-    })
+		flash.set(undefined);
+	});
 
-    onDestroy(() => {
-        unsubscribeFlash();
-    })
+	onDestroy(() => {
+		unsubscribeFlash();
+	});
 
 	// onMount(async () => {
 	// 	if (pwaInfo) {
@@ -74,10 +75,24 @@
 
 <slot />
 
+<div class="rounded-md border shadow-lg"></div>
 <Toaster
-	richColors
 	closeButton
+    theme:
 	toastOptions={{
-		class: 'toast',
+		class: 'toast group shadow-lg transition-all ',
+		style: styleToString({
+			// position: 'relative',
+			// 'pointer-events': 'auto',
+			// display: 'flex',
+			// width: '100%',
+			// 'align-items': 'center',
+			// 'justify-content': 'space-between',
+			// gap: '1rem',
+			// overflow: 'hidden',
+			// 'border-radius': `calc(var(--radius) - 2px)`,
+			// 'border-width': '1px',
+			// padding: '1.5rem 2rem 1.5rem 1.5rem',
+		}),
 	}}
 />

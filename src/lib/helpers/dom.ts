@@ -27,10 +27,27 @@ export function checkIfKeyboardEventsAllowed(el = document.activeElement) {
 	return true;
 }
 
-
 export function getHTMLOfSelection() {
 	const range = window.getSelection()?.getRangeAt(0);
 	const container = document.createElement('div');
 	container.appendChild(range?.cloneContents() ?? document.createTextNode(''));
 	return container.innerHTML;
+}
+
+function isMac() {
+	if ('userAgentData' in navigator) {
+		return (navigator.userAgentData as any).platform
+			?.toUpperCase()
+			.includes('MAC');
+	} else {
+		return navigator.platform?.toUpperCase().includes('MAC');
+	}
+}
+
+export function cmdOrCtrl(event: KeyboardEvent) {
+	if (isMac()) {
+		return event.metaKey;
+	} else {
+		return event.ctrlKey;
+	}
 }
