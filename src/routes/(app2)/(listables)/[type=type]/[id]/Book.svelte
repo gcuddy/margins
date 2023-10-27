@@ -188,7 +188,7 @@
 		<EntryMediaHeader title={book.volumeInfo?.title ?? ''} {author} type="book">
 			<div
 				slot="artwork"
-				class="aspect-auto shrink w-56 @lg:self-start supports-ncq:md:self-start shadow-lg relative"
+				class="aspect-auto shrink w-44 @lg:self-start supports-ncq:md:self-start shadow-lg relative"
 				style:view-transition-name="artwork-book-{book.id}"
 			>
 				<img

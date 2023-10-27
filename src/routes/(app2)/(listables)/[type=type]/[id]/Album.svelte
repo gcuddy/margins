@@ -50,7 +50,7 @@
 	<EntryMediaHeader title={album.name} type="album">
 		<svelte:fragment slot="artwork">
 			<div
-				class="aspect-auto rounded-md shadow-lg w-56 @lg:self-start supports-ncq:md:self-start"
+				class="aspect-auto rounded-md shadow-lg w-44 @lg:self-start supports-ncq:md:self-start"
 			>
 				{#if img}
 					<img
@@ -107,7 +107,7 @@
 
 		</svelte:fragment>
 	</EntryMediaHeader>
-	
+
 	<Tabs.Root value={tab} class="mt-8">
 		<Tabs.List>
 			<Tabs.Trigger value="info">Info</Tabs.Trigger>

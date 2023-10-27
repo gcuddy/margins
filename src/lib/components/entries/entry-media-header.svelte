@@ -19,7 +19,7 @@
 		class="flex gap-6 flex-col supports-ncq:md:flex-row supports-cq:@lg:flex-row items-center"
 	>
 		<slot name="artwork">
-			<div class="aspect-auto rounded-md shadow-lg w-64 @lg:self-start supports-ncq:md:self-start">
+			<div class="aspect-auto rounded-md shadow-lg w-44 @lg:self-start supports-ncq:md:self-start">
 				{#if image}
 					<img
 						src={image}
