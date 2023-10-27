@@ -13,6 +13,7 @@ export const themes = {
 	Dark: 'dark',
 	Light: 'light',
 	'System (ALPHA)': 'system',
+	Gray: 'gray',
 	'Synthwave (ALPHA)': 'synthwave',
 	// Solarized: 'solarized',
 	'Flexoki (ALPHA)': 'flexoki',
