@@ -116,6 +116,14 @@ export async function bookmarkCreate({
 			.execute();
 	});
 
+	// return entry we inserted
+
+	return await db
+		.selectFrom('Entry as e')
+		.select(entrySelect)
+		.where('id', '=', entryId)
+		.executeTakeFirst();
+
 	// TODO: Return payload
 }
 

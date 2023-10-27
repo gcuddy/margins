@@ -344,6 +344,7 @@ export default async function (
 		const generateScreenshot = true;
 		if (!isArticle) {
 			// then it's a bookmark... right?
+			// TODO: just scrape simple details
 			const { url: goodbye, ...p } = await parser.parse();
 			// get screenshot and upload to s3
 			// can we get access to svelte fetch here?

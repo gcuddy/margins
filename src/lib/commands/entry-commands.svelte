@@ -140,11 +140,13 @@
 		</CommandItem>
 		<CommandItem
 			onSelect={() => {
+                const length = entryIds.length;
 				checkedEntryIds.clear();
 				open = false;
 				mutate('markAllAsRead', {
 					entryIds,
 				}).then(() => {
+                    toast.success(`Marked ${length} entries as read`);
 					invalidateEntries(queryClient);
 				});
 			}}

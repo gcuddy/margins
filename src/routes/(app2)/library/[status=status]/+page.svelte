@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		createInfiniteQuery,
+		createMutation,
 		keepPreviousData,
 		useQueryClient,
 	} from '@tanstack/svelte-query';
@@ -9,7 +10,7 @@
 		defaultRangeExtractor,
 	} from '@tanstack/svelte-virtual';
 	import { CommandIcon, Loader2Icon } from 'lucide-svelte';
-	import type { ComponentType } from 'svelte';
+	import { tick, type ComponentType } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import { derived, writable } from 'svelte/store';
 
@@ -28,9 +29,14 @@
 	import {
 		convertToGroupedArrayWithHeadings,
 		groupBy,
+		isHTMLElement,
 		type GroupedArrayWithHeadings,
+		effect,
 	} from '$lib/helpers';
-	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
+	import {
+		initUpdateBookmarkMutation,
+		invalidateEntries,
+	} from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import {
 		filterLibrarySchema,
@@ -41,10 +47,9 @@
 	} from '$lib/schemas/library';
 	import type { LibraryResponse } from '$lib/server/queries';
 	import { statuses, statusesToDisplay, statusesWithIcons } from '$lib/status';
-	import { cn } from '$lib/utils';
+	import { cn, isValidUrl } from '$lib/utils';
 	import {
 		changeSearch,
-		defaultParseSearch,
 		defaultStringifySearch,
 	} from '$lib/utils/search-params';
 
@@ -54,6 +59,10 @@
 	import { setBackContext } from '../../(listables)/[type=type]/[id]/store';
 	import { commanderState } from '../../Commander.svelte';
 	import type { Snapshot } from './$types.js';
+	import { type MutationInput, mutate } from '$lib/queries/query';
+	import { toast } from 'svelte-sonner';
+	import Skeleton from '$components/ui/skeleton/skeleton.svelte';
+	import type { ListEntry } from '$lib/db/selects';
 
 	export let data;
 
@@ -125,8 +134,22 @@
 		);
 	});
 
-    $: console.log({$entries})
+	$: console.log({ $entries });
 	$: entryState.init($entries);
+
+	let temp_entry: ListEntry | undefined = undefined;
+
+	const bookmarkCreateMutation = createMutation({
+		mutationFn: (input: MutationInput<'bookmarkCreate'>) =>
+			mutate('bookmarkCreate', input),
+		onMutate(variables) {},
+		async onSuccess(data) {
+			temp_entry = data;
+			await invalidateEntries(queryClient, true);
+			temp_entry = undefined;
+			// invalidate('collection');
+		},
+	});
 
 	let groupedEntries: GroupedArrayWithHeadings<
 		LibraryResponse['entries'][0],
@@ -175,8 +198,17 @@
 			}
 			return 96;
 		},
-		getItemKey: (index) =>
-			$groupingEnabled ? groupedEntries[index]!.id : $entries[index]!.id,
+		getItemKey: (index) => {
+			if ($bookmarkCreateMutation.isPending || temp_entry) {
+				if (index === 0) {
+					return 'new';
+				}
+				return $groupingEnabled
+					? groupedEntries[index - 1]!.id
+					: $entries[index - 1]!.id;
+			}
+			return $groupingEnabled ? groupedEntries[index]!.id : $entries[index]!.id;
+		},
 		overscan: 7,
 		rangeExtractor: (range) => {
 			if (!$groupingEnabled || !headerIndexes.length) {
@@ -197,9 +229,33 @@
 		},
 	});
 
-	$: $virtualizer.setOptions({
-		count: $groupingEnabled ? groupedEntries.length : $entries?.length || 0,
+	const virtualizerCount = derived(
+		[groupingEnabled, entries, bookmarkCreateMutation],
+		([$groupingEnabled, $entries, $bookmarkCreateMutation]) => {
+			const actualLength = $groupingEnabled
+				? groupedEntries.length
+				: $entries?.length || 0;
+			if ($bookmarkCreateMutation.isPending || temp_entry) {
+				return actualLength + 1;
+			} else {
+				return actualLength;
+			}
+		},
+	);
+
+	effect(virtualizerCount, ($virtualizerCount) => {
+		$virtualizer?.setOptions({
+			count: $virtualizerCount,
+		});
+		$virtualizer?.measure();
 	});
+	// $: $virtualizer.setOptions({
+	// 	count: $virtualizerCount,
+	// });
+
+	$: console.log({ $virtualizerCount });
+	$: console.log({ $bookmarkCreateMutation });
+	$: console.log({ $virtualizer });
 
 	$: {
 		// when entries changes...
@@ -256,6 +312,32 @@
 </script>
 
 <svelte:window on:keydown={multi.events.keydown} />
+
+<svelte:document
+	on:paste={async (e) => {
+		const a = document.activeElement;
+		if (isHTMLElement(a) && a?.matches('input, textarea, [contenteditable]')) {
+			return;
+		}
+		// REVIEW: is this how I want to go about this? or should it be scoped more somehow?
+		e.preventDefault();
+		const paste = e.clipboardData?.getData('text');
+		if (paste && isValidUrl(paste)) {
+			toast.promise(
+				$bookmarkCreateMutation.mutateAsync({
+					status: data.Status,
+					url: paste,
+				}),
+				{
+					error: 'Failed to add link',
+					loading: 'Adding link…',
+					success: 'Link added',
+				},
+			);
+		}
+		// TODO: interactive toast with setting option for allowing paste or disabling paste
+	}}
+/>
 
 <LibraryHeader
 	loading={$query.isLoading}
@@ -328,13 +410,17 @@
 		use:multi.elements.root
 	>
 		{#each $virtualizer.getVirtualItems() as row (row.key)}
+			{@const index =
+				$bookmarkCreateMutation.isPending || temp_entry
+					? row.index - 1
+					: row.index}
 			{@const entry = $groupingEnabled
-				? groupedEntries[row.index]
-				: $entries[row.index]}
-			<div
-				animate:flip={{
+				? groupedEntries[index]
+				: $entries[index]}
+			<!-- animate:flip={{
 					duration: 200,
-				}}
+				}} -->
+			<div
 				class={cn(isActiveHeader(row.index) && 'bg-background z-[1]')}
 				style:position={isActiveHeader(row.index) ? 'sticky' : 'absolute'}
 				style:left="0"
@@ -345,7 +431,13 @@
 					? undefined
 					: `translateY(${row.start}px)`}
 			>
-				{#if entry && 'isHeading' in entry && entry.isHeading}
+				{#if ($bookmarkCreateMutation.isPending || temp_entry) && row.index === 0}
+					<EntryItemSkeleton
+						title={temp_entry?.title}
+						image={temp_entry?.image}
+						seen={false}
+					/>
+				{:else if entry && 'isHeading' in entry && entry.isHeading}
 					<!-- then we have a heading -->
 					<div
 						class="h-full w-full flex items-center px-6 bg-secondary/75 gap-x-4"
@@ -413,7 +505,7 @@
 	<div class="">
 		{#if $checkedEntryIds.length}
 			<BulkActions styled={false} length={$checkedEntryIds.length}>
-				{#each statuses.slice(0,1) as status}
+				{#each statuses.slice(0, 1) as status}
 					{#if $checkedEntries.every((entry) => entry.status !== status)}
 						<Button
 							variant="outline"
@@ -436,10 +528,10 @@
 						>
 					{/if}
 				{/each}
-                <Button variant="outline" size="sm" on:click={commanderState.openFresh}>
-                    <CommandIcon class="h-4 w-4 mr-2" />
-                    Command
-                </Button>
+				<Button variant="outline" size="sm" on:click={commanderState.openFresh}>
+					<CommandIcon class="h-4 w-4 mr-2" />
+					Command
+				</Button>
 			</BulkActions>
 		{:else}
 			<LibraryTabs showIcons />

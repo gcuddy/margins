@@ -49,7 +49,10 @@ export function getQueryContext(queryClient: QueryClient) {
 	};
 }
 
-function addAuthorsToQueryClient(queryClient: QueryClient, _authors: string[]) {
+export function addAuthorsToQueryClient(
+	queryClient: QueryClient,
+	_authors: string[],
+) {
 	const authors = queryClient.getQueryData<QueryOutput<'get_authors'>>([
 		'entries',
 		'authors',
@@ -63,6 +66,25 @@ function addAuthorsToQueryClient(queryClient: QueryClient, _authors: string[]) {
 			}
 		}
 		queryClient.setQueryData(['entries', 'authors'], authors);
+	}
+}
+
+export function addEntriesToAllEntries(
+	queryClient: QueryClient,
+	entries: Array<QueryOutput<'getAllEntries'>[0]>,
+) {
+	const allEntries = queryClient.getQueryData<QueryOutput<'getAllEntries'>>([
+		'entries',
+		'all',
+	]);
+
+	if (allEntries) {
+		for (const entry of entries) {
+			if (!allEntries.find((e) => e.id === entry.id)) {
+				allEntries.push(entry);
+			}
+		}
+		queryClient.setQueryData(['entries', 'all'], allEntries);
 	}
 }
 
