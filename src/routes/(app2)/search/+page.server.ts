@@ -14,6 +14,7 @@ import { getId } from '$lib/utils/entries';
 
 import type { PageServerLoad } from './$types';
 import { searchNotes } from '$lib/db/queries/note';
+import { loginRedirect } from '$lib/utils/redirects';
 
 type GoodObject = {
 	id: string | number;
@@ -90,7 +91,7 @@ export const load = (async (e) => {
 	const type = e.url.searchParams.get('type');
 
 	const session = await e.locals.auth.validate();
-	if (!session) throw error(401, 'Unauthorized');
+	if (!session) throw loginRedirect(e);
 	if (!type) {
 		throw redirect(307, `${e.url.pathname}?type=my`);
 	}

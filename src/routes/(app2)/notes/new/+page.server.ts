@@ -6,8 +6,11 @@ import { db } from '$lib/db';
 import { nanoid } from '$lib/nanoid';
 import { note_schema } from '../schema';
 import { redirect } from '@sveltejs/kit';
+import { loginRedirect } from '$lib/utils/redirects';
 
-export async function load() {
+export async function load(e) {
+	const session = await e.locals.auth.validate();
+	if (!session) throw loginRedirect(e);
 	const form = superValidate(note_schema);
 	return {
 		form,

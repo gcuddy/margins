@@ -12,4 +12,5 @@ export async function load(event) {
 	return {
 		user: session.user,
 	};
+
 }

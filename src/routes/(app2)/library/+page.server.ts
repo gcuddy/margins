@@ -1,12 +1,14 @@
 import { bulkEntriesSchema, validateAuthedForm } from '$lib/schemas';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
 import { db } from '$lib/db';
-import type { Actions } from './$types';
 import { getFirstBookmarkSort } from '$lib/db/selects';
-export const load = () => {
-	throw redirect(302, '/library/now');
+import { loginRedirect } from '$lib/utils/redirects';
+import type { Actions } from './$types';
+export const load = async (e) => {
+	const session = await e.locals.auth.validate();
+	if (!session) throw loginRedirect(e);
 };
 
 // entryids

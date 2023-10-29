@@ -10,11 +10,13 @@ import {
 	withEntry,
 } from '$lib/db/selects';
 import { jsonObjectFrom } from 'kysely/helpers/mysql';
+import { loginRedirect } from '$lib/utils/redirects';
 
-export const load = (async ({ locals, params }) => {
+export const load = (async (event) => {
+	const { locals, params } = event;
 	const session = await locals.auth.validate();
 	// TODO: check if public
-	if (!session) throw error(401);
+	if (!session) throw loginRedirect(event);
 	const { id } = params;
 	const note = await db
 		.selectFrom('Annotation as a')

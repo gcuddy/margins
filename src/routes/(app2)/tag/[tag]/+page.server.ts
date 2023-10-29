@@ -1,17 +1,19 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms/server';
 
 import { db } from '$lib/db';
 import { nanoid } from '$lib/nanoid';
 import { bulkEntriesSchema } from '$lib/schemas';
+import { loginRedirect } from '$lib/utils/redirects';
 import { redirect } from 'sveltekit-flash-message/server';
 
-export async function load({ fetch, locals, params, url }) {
+export async function load(event) {
+	const { locals, params } = event;
 	const session = await locals.auth.validate();
 	const { tag } = params;
 
 	if (!session) {
-		throw error(401, 'Unauthorized');
+		throw loginRedirect(event);
 	}
 
 	const tagDetails = db

@@ -7,8 +7,11 @@ import { z } from 'zod';
 
 import type { Actions } from './$types';
 import { importMovies } from '$lib/db/queries/integration';
+import { loginRedirect } from '$lib/utils/redirects';
 
-export const load = () => {
+export const load = async (event) => {
+	const session = await event.locals.auth.validate();
+	if (!session) throw loginRedirect(event);
 	return {
 		title: 'Letterboxd',
 	};

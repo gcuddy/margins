@@ -1,6 +1,7 @@
 import { db } from "$lib/db"
 import { nanoid } from "$lib/nanoid";
 import { validateAuthedForm } from "$lib/schemas";
+import { loginRedirect } from '$lib/utils/redirects';
 import { error } from "@sveltejs/kit";
 import { superValidate } from "sveltekit-superforms/server";
 import { z } from "zod";
@@ -13,23 +14,25 @@ const addToCollection = bulk_actions.extend({
     collectionId: z.number().int()
 })
 
-export async function load({ locals }) {
-    // get annotations
-    const session = await locals.auth.validate();
-    if (!session) throw error(401);
-    const notes = await db.selectFrom("Annotation")
-        .selectAll()
-        .where("userId", "=", session.user.userId)
-        .where("type", "=", "document")
-        .where("deleted", "is", null)
-        .orderBy("createdAt", "desc")
-        .limit(10)
-        .execute();
+export async function load(event) {
+	const { locals } = event;
+	// get annotations
+	const session = await locals.auth.validate();
+	if (!session) throw loginRedirect(event);
+	const notes = await db
+		.selectFrom('Annotation')
+		.selectAll()
+		.where('userId', '=', session.user.userId)
+		.where('type', '=', 'document')
+		.where('deleted', 'is', null)
+		.orderBy('createdAt', 'desc')
+		.limit(10)
+		.execute();
 
-    return {
-        notes,
-        bulkForm: superValidate(bulk_actions)
-    }
+	return {
+		notes,
+		bulkForm: superValidate(bulk_actions),
+	};
 }
 
 export const actions = {
