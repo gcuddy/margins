@@ -5,22 +5,24 @@ import { jsonArrayFrom } from 'kysely/helpers/mysql';
 import { z } from 'zod';
 
 import { books } from '$lib/api/gbook';
-import spotify from '$lib/api/spotify';
 import pindex from '$lib/api/pindex';
+import spotify from '$lib/api/spotify';
 
 import { tmdb } from '$lib/api/tmdb';
 import type { Tweet } from '$lib/api/twitter';
 import { db, json } from '$lib/db';
 import {
-	collections,
 	collectionUpdate,
 	collectionUpdateSchema,
+	collections,
 } from '$lib/db/queries/collections';
+import { customViewCreate } from '$lib/db/queries/custom-view';
 import { importMovies, importMoviesInput } from '$lib/db/queries/integration';
 import {
 	saveInteraction,
 	saveInteractionSchema,
 } from '$lib/db/queries/interaction';
+import { searchNotes } from '$lib/db/queries/note';
 import {
 	subscription,
 	subscriptionCreateMutation,
@@ -34,22 +36,24 @@ import {
 	viewPreferencesUpdateInput,
 } from '$lib/db/queries/view-preferences';
 import {
-	annotations,
 	annotationWithEntry,
+	annotations,
 	entrySelect,
 	feed,
 	getFirstBookmarkSort,
 	withEntry,
 } from '$lib/db/selects';
+import { replace } from '$lib/helpers/string';
 import { nanoid } from '$lib/nanoid';
+import type { Relation, TagOnEntry } from '$lib/prisma/kysely/types';
 import { attachmentCreate } from '$lib/queries/attachment';
 import { bookmarkCreate } from '$lib/queries/bookmark';
 import {
 	add_to_collection,
 	convertTo,
 	convertToSchema,
-	count_library,
 	countLibrarySchema,
+	count_library,
 	createEntry,
 	createFavorite,
 	createFavoriteSchema,
@@ -58,17 +62,17 @@ import {
 	deleteAnnotation,
 	entry_by_id,
 	entry_by_id_schema,
-	get_authors,
-	get_notes_for_tag,
 	getNotebook,
 	getNotebookSchema,
+	get_authors,
+	get_notes_for_tag,
 	note,
 	notes,
 	notesInputSchema,
 	pins,
 	s_add_to_collection,
-	save_to_library,
 	saveToLibrarySchema,
+	save_to_library,
 	set_tags_on_entry,
 	tagsOnEntrySchema,
 	updateBookmark,
@@ -85,7 +89,7 @@ import { collectionsInputSchema } from '$lib/schemas/inputs';
 import { attachmentCreateInput } from '$lib/schemas/inputs/attachment.schema';
 import { bookmarkCreateInput } from '$lib/schemas/inputs/bookmark.schema';
 import { collectionItemUpdateInputSchema } from '$lib/schemas/inputs/collection.schema';
-import { booleanNumberSchema } from '$lib/schemas/inputs/helpers';
+import { jsonSchema } from '$lib/schemas/types';
 import {
 	get_entry_details,
 	get_library,
@@ -93,14 +97,7 @@ import {
 } from '$lib/server/queries';
 import { twitter } from '$lib/twitter';
 import { typeSchema } from '$lib/types';
-import { customViewCreate } from '$lib/db/queries/custom-view';
-import { jsonSchema } from '$lib/schemas/types';
 import type { Replace } from 'type-fest';
-import { replace } from '$lib/helpers/string';
-import type { TargetSchema } from '$lib/annotation';
-import type { JSONContent } from '@tiptap/core';
-import { searchNotes } from '$lib/db/queries/note';
-import type { TagOnEntry } from '$lib/prisma/kysely/types';
 
 type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE

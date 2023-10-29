@@ -5,7 +5,6 @@ import type {
 	Kysely,
 	RawBuilder,
 	ReferenceExpression,
-	SelectArg,
 	SelectExpression,
 	Transaction,
 } from 'kysely';
@@ -94,27 +93,6 @@ export const entry = {
 	] as const,
 };
 
-function selectEntryAnnotations(): SelectArg<
-	DB,
-	'Annotation' | 'auth_user',
-	SelectExpression<DB, 'Annotation' | 'auth_user'>
-> {
-	return [
-		'Annotation.id',
-		'Annotation.contentData',
-		'Annotation.start',
-		'Annotation.body',
-		'Annotation.target',
-		'Annotation.entryId',
-		'auth_user.username',
-		'Annotation.title',
-		'Annotation.createdAt',
-		'Annotation.exact',
-		'Annotation.type',
-		'Annotation.parentId',
-	];
-}
-
 function entryAnnotations(eb: ExpressionBuilder<DB, 'Entry'>) {
 	return eb
 		.selectFrom('Annotation')
@@ -189,7 +167,7 @@ export const annotations = {
 		username: <T extends string>(eb: AliasedAEb, as: T) =>
 			jsonObjectFrom(
 				eb
-					.selectFrom('user as u')
+					.selectFrom('auth_user as u')
 					.select('username')
 					.whereRef('a.userId', '=', 'u.id'),
 			).as(as),

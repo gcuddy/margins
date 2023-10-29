@@ -1,16 +1,14 @@
 <script lang="ts">
-	import type { ActionData } from './$types';
-	export let form: ActionData;
 	export let data;
 
+	import { page } from '$app/stores';
 	import * as Card from '$components/ui/card';
 	import * as Form from '$components/ui/form';
-	import { createUserSchema } from '../schema';
 	import { Loader2 } from 'lucide-svelte';
-	import { page } from '$app/stores';
+	import { createUserSchema } from '../schema';
 </script>
 
-<Card.Root class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
+<Card.Root class="duration-500 animate-in fade-in-5 slide-in-from-top-8">
 	<Form.Root
 		class="contents"
 		method="post"
@@ -62,7 +60,7 @@
 		<Card.Footer>
 			<Form.Button disabled={submitting} class="w-full"
 				>Sign up {#if submitting}
-					<Loader2 class="h-4 w-4 animate-spin ml-2" />
+					<Loader2 class="ml-2 h-4 w-4 animate-spin" />
 				{/if}</Form.Button
 			>
 		</Card.Footer>

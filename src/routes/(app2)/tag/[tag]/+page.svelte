@@ -7,18 +7,16 @@
 	} from '@tanstack/svelte-query';
 	import { MoreHorizontal, PlusCircle } from 'lucide-svelte';
 	import { derived } from 'svelte/store';
-	import { toast } from 'svelte-sonner';
 
 	import { applyAction, enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import EntryItem from '$components/entries/EntryItem.svelte';
 	import EntryItemSkeleton from '$components/entries/EntryItemSkeleton.svelte';
-	import Annotation from '$components/notebook/Annotation.svelte';
 	import AnnotationSkeleton from '$components/notebook/AnnotationSkeleton.svelte';
 	import { TagColorPopover } from '$components/tags/tag-color';
 	import * as AlertDialog from '$components/ui/alert-dialog';
-	import { Button }  from '$components/ui/button';
+	import { Button } from '$components/ui/button';
 	import * as Dialog from '$components/ui/dialog';
 	import * as Dropdown from '$components/ui/dropdown-menu';
 	import Header from '$components/ui/Header.svelte';
@@ -35,8 +33,9 @@
 	import { mutation } from '$lib/queries/query';
 	import type { UpdateTagInput } from '$lib/queries/server';
 
-	import { tagEntries, tagNotes } from './queries';
+	import AnnotationCard from '$components/annotations/annotation-card.svelte';
 	import { invalidateEntries } from '$lib/queries/mutations';
+	import { tagNotes } from './queries';
 
 	export let data;
 
@@ -151,7 +150,7 @@
 	</div>
 </Header>
 <Tabs>
-	<Header class="h-auto static py-2">
+	<Header class="static h-auto py-2">
 		<TabsList>
 			<TabsTrigger class="gap-1.5" value="entries"
 				><span>Entries</span>
@@ -182,7 +181,8 @@
 			<AnnotationSkeleton />
 		{:else if $notesQuery.isSuccess}
 			{#each $notesQuery.data as note}
-				<Annotation annotation={note} />
+				<AnnotationCard annotation={note} />
+				<!-- <Annotation annotation={note} /> -->
 			{:else}
 				<div class="p-10 flex items-center justify-center flex-col gap-4">
 					<span>No notes for this tag.</span>
@@ -261,11 +261,11 @@
 			use:enhance={() => {
 				return async ({ result, update }) => {
 					await applyAction(result);
-                    // invalidate tags list, and entries
-                    queryClient.invalidateQueries({
-                        queryKey: ['tags']
-                    });
-                   invalidateEntries(queryClient);
+					// invalidate tags list, and entries
+					queryClient.invalidateQueries({
+						queryKey: ['tags'],
+					});
+					invalidateEntries(queryClient);
 				};
 			}}
 		>

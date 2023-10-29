@@ -3,9 +3,10 @@
 	import type { EntryAnnotation } from '$lib/queries/server';
 	import { ago, formatDuration, normalizeTimezone, now } from '$lib/utils/date';
 
-	import * as DropdownMenu from '$components/ui/dropdown-menu';
 	import { Button } from '$components/ui/button';
-	// import { MoreHorizontalIcon } from 'lucide-svelte';
+	import * as DropdownMenu from '$components/ui/dropdown-menu';
+// import { MoreHorizontalIcon } from 'lucide-svelte';
+	import * as Popover from '$components/ui/popover';
 	import {
 		ArrowRight,
 		ClipboardCopy,
@@ -13,33 +14,32 @@
 		Pencil1,
 		Trash,
 	} from 'radix-icons-svelte';
-	import { type ComponentProps, tick } from 'svelte';
-	import * as Popover from '$components/ui/popover';
-	// import { render_html } from '$components/ui/editor/utils';
-	import { sleep } from '@melt-ui/svelte/internal/helpers';
-	import { page } from '$app/stores';
+	import { tick, type ComponentProps } from 'svelte';
+// import { render_html } from '$components/ui/editor/utils';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { sleep } from '@melt-ui/svelte/internal/helpers';
 	import { dequal } from 'dequal';
-	// import { createAlertDialogStore } from '$lib/stores/dialog';
-	import alertDialogStore from '$lib/stores/alert-dialog';
+// import { createAlertDialogStore } from '$lib/stores/dialog';
+	import { invalidate } from '$app/navigation';
+	import Clamp from '$components/Clamp.svelte';
+	import type SlimEntry from '$components/entries/slim-entry.svelte';
+	import { TagsCommand } from '$components/tags/tag-command';
+	import { Badge } from '$components/ui/badge';
 	import {
 		invalidateEntries,
 		updateAnnotationMutation,
 	} from '$lib/queries/mutations';
 	import { mutate } from '$lib/queries/query';
-	import { invalidate } from '$app/navigation';
+	import alertDialogStore from '$lib/stores/alert-dialog';
+	import { cn } from '$lib/utils';
+	import { getTargetSelector } from '$lib/utils/annotations';
+	import { make_link } from '$lib/utils/entries';
+	import { melt } from '@melt-ui/svelte';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { TagIcon } from 'lucide-svelte';
-	import { TagsCommand } from '$components/tags/tag-command';
-	import { getTargetSelector } from '$lib/utils/annotations';
-	import Clamp from '$components/Clamp.svelte';
-	import { Badge } from '$components/ui/badge';
 	import { slide } from 'svelte/transition';
-	import { melt } from '@melt-ui/svelte';
 	import type { SetOptional } from 'type-fest';
-	import { cn } from '$lib/utils';
-	import SlimEntry from '$components/entries/slim-entry.svelte';
-	import { make_link } from '$lib/utils/entries';
 
 	let editor: Editor;
 	let tainted = false;
@@ -234,7 +234,7 @@
 						as="blockquote"
 						clamp={4}
 					>
-						{@html annotation.html || selector.exact}
+						{@html annotation.html || selector?.exact}
 					</Clamp>
 				</a>
 			{:else if fragment_selector}

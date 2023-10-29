@@ -4,12 +4,10 @@
 	import { toast } from 'svelte-sonner';
 
 	import Editor from '$components/ui/editor/Editor.svelte';
-	import { render_html } from '$components/ui/editor/utils';
 	import type { TargetSchema } from '$lib/annotation';
-	// import Avatar from '$components/ui/avatar/avatar.svelte';
-	import { H1, Muted, Small } from '$lib/components/ui/typography';
-	import type { AnnotationNotebook, AnnotationWithEntry } from '$lib/db/selects';
-	import { getHostname } from '$lib/utils';
+// import Avatar from '$components/ui/avatar/avatar.svelte';
+	import { Muted, Small } from '$lib/components/ui/typography';
+	import type { AnnotationWithEntry } from '$lib/db/selects';
 	import { generateTextFragmentLink, getTargetSelector } from '$lib/utils/annotations';
 	import { getId, getType } from '$lib/utils/entries';
 	import { cn } from '$lib/utils/tailwind';
