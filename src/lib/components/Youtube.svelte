@@ -15,9 +15,9 @@
 </script>
 
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { createEventDispatcher } from 'svelte';
-	import { onDestroy } from 'svelte';
+	import { cn } from '$lib/utils';
+
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import YoutubePlayer from 'youtube-player';
 	import type { YouTubePlayer } from 'youtube-player/dist/types';
 	type Options = Parameters<typeof YoutubePlayer>[1];
@@ -26,8 +26,6 @@
 	export let videoId: string; // Youtube video ID (required)
 	export let options: Options = undefined; // YouTube player options (optional)
 
-	export let width = 640;
-	export let height = 360;
 	let className = ''; // HTML class names for container element
 	let playerElem: HTMLElement; // player DOM element reference
 
@@ -44,7 +42,7 @@
 		console.log({ player });
 		await player.playVideo();
 		// Register event handlers
-		player.on('ready', (e) => console.log('eeee ready'));
+		player.on('ready', onPlayerReady);
 		player.on('error', onPlayerError);
 		player.on('stateChange', onPlayerStateChange);
 		player.on('playbackRateChange', onPlayerPlaybackRateChange);
@@ -153,7 +151,7 @@
 
 <iframe
 		bind:this={playerElem}
-        class="aspect-video rounded-xl ring-1 ring-border overflow-hidden"
+        class={cn("aspect-video ring-1 ring-border overflow-hidden", className)}
 		title="YouTube video player"
 		{id}
 		width="100%"
