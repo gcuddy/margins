@@ -2,7 +2,6 @@ import { error, json } from '@sveltejs/kit';
 
 import { SPOTIFY_CLIENT_SECRET } from '$env/static/private';
 import { PUBLIC_SPOTIFY_CLIENT_ID } from '$env/static/public';
-import { spotify } from '$lib/features/services/spotify';
 
 import type { RequestHandler } from './$types';
 

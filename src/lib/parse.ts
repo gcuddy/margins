@@ -9,7 +9,7 @@ import { parse } from 'node-html-parser';
 import { uploadFile } from './backend/s3.server';
 import dayjs from './dayjs';
 import { books } from './features/books/googlebooks.server';
-import { spotify } from './features/services/spotify';
+import spotify from './api/spotify';
 import { twitter } from './twitter';
 import type { Tweet } from './api/twitter';
 import { isbn_regex } from './schemas';
@@ -243,19 +243,17 @@ export default async function (
 		const id = split.at(-1);
 		const type = split.at(-2) || '';
 		if (/(track)/.test(type) && id) {
-			const res = await spotify.getTrack(id);
-			console.log(`spotify`, { res });
-			if (res.body) {
+			const track = await spotify.track(id);
+			if (track) {
 				return {
-					title: res.body.name,
+					title: track.name,
 					type: 'audio',
-					author: res.body.artists.map((a) => a.name).join(', '),
-					summary: res.body.album.name,
-					image: res.body.album.images[0]?.url,
-					original: res.body as any,
-					uri: res.body.uri,
-					duration: res.body.duration_ms,
-					published: res.body.album.release_date,
+					author: track.artists.map((a) => a.name).join(', '),
+					summary: track.album.name,
+					image: track.album.images[0]?.url,
+					uri: track.external_urls.spotify,
+					duration: track.duration_ms,
+					published: track.album.release_date,
 				};
 			}
 		}
@@ -266,7 +264,9 @@ export default async function (
 		console.log({ response });
 		if (response.headers.get('content-type')?.includes('text/html')) {
 			htmlToParse = await response.text();
-		} else if (response.headers.get('content-type')?.includes('application/pdf')) {
+		} else if (
+			response.headers.get('content-type')?.includes('application/pdf')
+		) {
 			// Upload File
 			const arrayBuffer = await response.arrayBuffer();
 

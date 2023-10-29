@@ -1,8 +1,4 @@
 <script>
-	import { page } from '$app/stores';
-	import { Button } from '$lib/components/ui/button';
-	import Label from '$lib/components/ui/Label.svelte';
-	import RadioGroupItem from '$lib/components/ui/radio-group/RadioGroupItem.svelte';
 	import AppearanceForm from './appearance-form.svelte';
 
 	export let data;
