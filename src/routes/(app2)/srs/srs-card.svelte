@@ -1,13 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button }  from '$components/ui/button';
-	import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '$components/ui/card';
+	import { Button } from '$components/ui/button';
 	import OptionsMenu from '$components/ui/dropdown-menu/OptionsMenu.svelte';
 	import type { AnnotationWithEntry } from '$lib/db/selects';
 	import { md } from '$lib/markdown';
 	import { formatDate } from '$lib/utils/date';
 	import { make_link } from '$lib/utils/entries';
-	import { assert } from '$lib/utils/type-utils';
 
 	export const [send, receive] = crossfade({
 		// delay: 500,
@@ -40,7 +38,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { quintOut } from 'svelte/easing';
-	import { crossfade, fade, fly, scale } from 'svelte/transition';
+	import { crossfade, fly } from 'svelte/transition';
 
 	export let note: Pick<Annotation, 'body' | 'id' | 'response' | 'due_timestamp' |'last_reviewed_at' | 'interval_ms' | 'parentId'> & AnnotationWithEntry;
 
@@ -149,6 +147,7 @@
 					pending = false;
 					dispatch('done', { type: remembered ? 'Remembered' : 'Forgotten' });
                     if (result.type === 'success') {
+                        //@ts-ignore
                         toast.success(`Scheduled flash card for ${formatDate(result.data.new_due_timestamp_ms)}`)
                     }
 				};
@@ -179,7 +178,6 @@
 			{#if note.entry}
             <!-- note.parentId ? `/notes/${note.parentId}` :  -->
 				<Button
-					as="a"
 					href={make_link(note.entry, `annotation-${note.parentId ? note.parentId : note.id}`)}
 					on:click={() => {
 						console.log({ note });
@@ -197,7 +195,7 @@
         <p>Due: {note.due_timestamp} </p>
         <p>Last Reviewed: {note.last_reviewed_at} </p>
         {#if note.interval_ms}
-        <p>Interval: {note.interval_ms / 60 / 60 / 60 / 24} days </p>
+        <p>Interval: {Number(note.interval_ms) / 60 / 60 / 60 / 24} days </p>
         {/if}
         <p>Entry </p>
     {/if}

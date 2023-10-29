@@ -374,7 +374,7 @@ export async function upsertAnnotation({
 				.insertInto('annotation_tag')
 				.values(
 					ids.flatMap((id) =>
-						tags.map((tag) => ({
+						tags!.map((tag) => ({
 							annotationId: id,
 							tagId: tag,
 						})),
@@ -595,6 +595,10 @@ export async function get_notes_for_tag({
 			join.onRef('t.id', '=', 'at.tagId').on('t.name', '=', name),
 		)
 		.select(annotations.select)
+		.$narrowType<{
+			target: TargetSchema | null;
+			contentData: JSONContent | null;
+		}>()
 		.select('t.id as tag_id')
 		.where('a.userId', '=', userId)
 		.where('deleted', 'is', null)
@@ -1307,6 +1311,7 @@ export async function convertTo({
 
 	if (type === 'book') {
 		// find book stuff
+		//@ts-expect-error - TODO: fix this
 		newEntry = await createEntry(input);
 	}
 
