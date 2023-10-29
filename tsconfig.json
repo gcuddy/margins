@@ -11,10 +11,7 @@
 		"sourceMap": true,
 		"strict": true,
 		"preserveValueImports": false,
-		"types": [
-			"@types/wicg-file-system-access",
-            "vite-plugin-pwa/info"
-		],
+		"types": ["@types/wicg-file-system-access"],
         "noUnusedLocals": true
 	}
 }
