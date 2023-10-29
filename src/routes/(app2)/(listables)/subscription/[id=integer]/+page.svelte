@@ -48,7 +48,7 @@
 				feedId: +data.id,
 			}),
 		onSuccess: () => {
-            toast.info('Marked all as read')
+			toast.info('Marked all as read');
 			queryClient.invalidateQueries({
 				queryKey: ['subscriptions'],
 			});
@@ -164,7 +164,7 @@
 					<DropdownMenu.Item
 						on:click={() => {
 							navigator.clipboard.writeText(feedUrl);
-                            toast.info('Copied feed url to clipboard')
+							toast.info('Copied feed url to clipboard');
 						}}
 					>
 						<ClipboardCopy class="mr-2 h-4 w-4" />
@@ -244,9 +244,11 @@
 			<Dialog.Title>Rename feed</Dialog.Title>
 			<Dialog.Description>Enter a new name for the feed</Dialog.Description>
 		</Dialog.Header>
-		<SubscriptionEdit
-			subscription={$query.data.feed}
-			bind:open={isEditFeedModalOpen}
-		/>
+		{#if $query.data}
+			<SubscriptionEdit
+				subscription={$query.data.feed}
+				bind:open={isEditFeedModalOpen}
+			/>
+		{/if}
 	</Dialog.Content>
 </Dialog.Root>
