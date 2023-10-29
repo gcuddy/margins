@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Bookmark, Entry } from "@prisma/client";
 	import { CheckCircle2, Circle, HelpCircle } from "lucide-svelte";
-	import toast from "svelte-french-toast";
+	import { toast } from "svelte-sonner";
 	import type { SuperValidated } from "sveltekit-superforms";
 	import { superForm } from "sveltekit-superforms/client";
 

@@ -2,6 +2,8 @@ import { SPOTIFY_CLIENT_SECRET } from '$env/static/private';
 import { PUBLIC_SPOTIFY_CLIENT_ID } from '$env/static/public';
 import { redis } from '$lib/redis';
 
+// Types taken from https://github.com/spotify/spotify-web-api-ts-sdk
+
 type SpotifyTokenResponse = {
 	access_token: string;
 	expires_in: number;
@@ -39,75 +41,73 @@ type ImageObject = {
 // https://github.com/spotify/spotify-web-api-ts-sdk/blob/main/src/types.ts
 
 export interface Copyright {
-    text: string
-    type: string
+	text: string;
+	type: string;
 }
 
 export interface ExternalIds {
-    upc: string
+	upc: string;
 }
 
 export interface ExternalUrls {
-    spotify: string
+	spotify: string;
 }
 
 export interface Image {
-    url: string;
-    height: number;
-    width: number;
+	url: string;
+	height: number;
+	width: number;
 }
 
 export interface Restrictions {
-    reason: string
+	reason: string;
 }
 
-
 export interface SimplifiedArtist {
-    external_urls: ExternalUrls
-    href: string
-    id: string
-    name: string
-    type: string
-    uri: string
+	external_urls: ExternalUrls;
+	href: string;
+	id: string;
+	name: string;
+	type: string;
+	uri: string;
 }
 
 export interface Followers {
-    href: string | null
-    total: number
+	href: string | null;
+	total: number;
 }
 
 export interface Artist extends SimplifiedArtist {
-    followers: Followers
-    genres: string[]
-    images: Image[]
-    popularity: number
+	followers: Followers;
+	genres: string[];
+	images: Image[];
+	popularity: number;
 }
 
 interface AlbumBase {
-    album_type: string
-    available_markets: string[]
-    copyrights: Copyright[]
-    external_ids: ExternalIds
-    external_urls: ExternalUrls
-    genres: string[]
-    href: string
-    id: string
-    images: Image[]
-    label: string
-    name: string
-    popularity: number
-    release_date: string
-    release_date_precision: string
-    restrictions?: Restrictions
-    total_tracks: number
-    type: string
-    uri: string
+	album_type: string;
+	available_markets: string[];
+	copyrights: Copyright[];
+	external_ids: ExternalIds;
+	external_urls: ExternalUrls;
+	genres: string[];
+	href: string;
+	id: string;
+	images: Image[];
+	label: string;
+	name: string;
+	popularity: number;
+	release_date: string;
+	release_date_precision: string;
+	restrictions?: Restrictions;
+	total_tracks: number;
+	type: string;
+	uri: string;
 }
 
-
 export interface SimplifiedAlbum extends AlbumBase {
-    album_group: string
-    artists: SimplifiedArtist[]
+	album_group: string;
+	artists: SimplifiedArtist[];
 }
 
 type AlbumObject = {
@@ -181,6 +181,16 @@ export interface SimplifiedTrack {
 	is_playable?: boolean;
 	linked_from?: LinkedFrom;
 	restrictions?: Restrictions;
+}
+
+export interface Track extends SimplifiedTrack {
+	album: SimplifiedAlbum;
+	external_ids: ExternalIds;
+	popularity: number;
+}
+
+export interface Tracks {
+	tracks: Track[];
 }
 
 type AlbumSearchResponse = {
@@ -299,6 +309,27 @@ const spotify = {
 		});
 		console.timeEnd('spotify-search');
 		return data as AlbumSearchResponse;
+	},
+	track: async (id: string) => {
+		const cached = await redis.get(`spotify-track:${id}`);
+		if (cached) {
+			return cached as Track;
+		}
+		const token = await getSpotifyToken();
+		const response = await fetch(`https://api.spotify.com/v1/tracks/${id}`, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		});
+		if (!response.ok) {
+			console.log({ response });
+			throw new Error('Failed to get spotify track');
+		}
+		const data = await response.json();
+		await redis.set(`spotify-track:${id}`, data, {
+			ex: 60 * 60 * 24,
+		});
+		return data as Track;
 	},
 };
 

@@ -59,18 +59,6 @@
 				return 'Saved link';
 			},
 		});
-		// invalidateAll();
-		// toast.success(`'Saved link');
-		// const article = await trpc($page).public.parse.query({url});
-		// const bookmark = await trpc($page).bookmarks.add.mutate({
-		// 	article,
-		// 	url,
-		// 	context,
-		// });
-		// notifications.notify({
-		// 	type: 'success',
-		// 	title: 'Saved link',
-		// });
 	}
 </script>
 

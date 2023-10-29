@@ -1,4 +1,16 @@
 <script lang="ts">
+	import { page } from '$app/stores';
+	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
+	import { getPdfStateContext } from '$components/pdf-viewer/utils';
+	import { Button } from '$components/ui/button';
+	import Input from '$components/ui/input/input.svelte';
+	import * as Sheet from '$components/ui/sheet';
+	import {
+		initCreatePinMutation,
+		initDeletePinMutation,
+	} from '$lib/queries/mutations';
+	import { queryFactory } from '$lib/queries/querykeys';
+	import { cn } from '$lib/utils/tailwind';
 	import { isHTMLInputElement } from '@melt-ui/svelte/internal/helpers';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
@@ -9,37 +21,22 @@
 	} from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { derived, type Writable } from 'svelte/store';
-	import * as Sheet from '$components/ui/sheet';
-	import { page } from '$app/stores';
-	import EntrySidebarButton from '$components/entries/entry-sidebar-button.svelte';
-	import { getPdfStateContext } from '$components/pdf-viewer/utils';
-	import { Button } from '$components/ui/button';
-	import Input from '$components/ui/input/input.svelte';
-	import {
-		initCreatePinMutation,
-		initDeletePinMutation,
-	} from '$lib/queries/mutations';
-	import { queryFactory } from '$lib/queries/querykeys';
-	import { cn } from '$lib/utils/tailwind';
 
-	import { Progress } from '$components/ui/progress';
-	import { Label } from '$components/ui/label';
 
-	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
-	import EntryOperations from './[id]/EntryOperations.svelte';
-	import { getArticleContext, getEntryContext } from './ctx';
+	import { entryCommands } from '$components/entries/operations';
+	import MobileLink from '$components/nav/mobile-link.svelte';
+	import TransitionContainer from '$components/transition-container.svelte';
+	import { make_link } from '$lib/utils/entries';
 	import {
 		ActivityLog,
-		MixerHorizontal,
 		ChevronRight,
-        DotsHorizontal
+		DotsHorizontal,
+		MixerHorizontal
 	} from 'radix-icons-svelte';
-	import { make_link } from '$lib/utils/entries';
-	import MobileLink from '$components/nav/mobile-link.svelte';
 	import { fly } from 'svelte/transition';
-	import TransitionContainer from '$components/transition-container.svelte';
 	import ArticleAppearanceOptionsContent from './[id]/article-appearance-options-content.svelte';
-	import { entryCommands } from '$components/entries/operations';
+	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
+	import { getArticleContext, getEntryContext } from './ctx';
 
 	const { scrollingDown } = getEntryContext();
 

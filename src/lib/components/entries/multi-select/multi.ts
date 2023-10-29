@@ -3,7 +3,6 @@ import type { RequireAtLeastOne } from 'type-fest';
 
 import { checkIfKeyboardEventsAllowed as global_checkIfKeyboardEventsAllowed } from '$lib/helpers';
 
-import { dialogs } from '$components/ui/dialog2/store';
 
 type State<T extends string | number> = {
 	highlighted: T | null;
@@ -298,12 +297,6 @@ export function create_multi<T extends string | number>({
 					onEnter?.(get(state).highlighted!);
 				}
 				if (event.key === 'Escape') {
-					const dialogs_present = get(dialogs).length > 0;
-
-					if (dialogs_present) {
-						return;
-					}
-
 					const dialogEls = document.querySelectorAll(
 						'[role="dialog"][data-state="open"]',
 					);

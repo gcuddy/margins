@@ -41,7 +41,7 @@ export async function load(event) {
 
 			return { entries };
 		} else if (scope === 'movies' || scope === 'tv') {
-			const returnedMovies = await tmdb.search(scope, q);
+			const returnedMovies = await tmdb.search(q);
 			event.setHeaders({
 				'cache-control': 'public, max-age=3600',
 			});
