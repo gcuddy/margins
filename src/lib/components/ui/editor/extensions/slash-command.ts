@@ -25,7 +25,6 @@ import { handleImageUplaod } from '../utils';
 import { get } from 'svelte/store';
 import { page } from '$app/stores';
 import player from '$lib/stores/player';
-import { dialog_store } from '$components/ui/dialog2/DialogStore.svelte';
 import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
 import { buttonVariants } from '$components/ui/Button.svelte';
 import { nanoid } from '$lib/nanoid';
@@ -190,49 +189,51 @@ const getSuggestionItems = (props: { query: string }) => {
 			command: ({ editor, range }: CommandProps) => {
 				editor.chain().focus().deleteRange(range).run();
 				const entry_id =
-					$page.data?.entry?.id || $page.data?.note?.entry?.id || $page.data?.note?.id;
+					$page.data?.entry?.id ||
+					$page.data?.note?.entry?.id ||
+					$page.data?.note?.id;
 				const id = nanoid();
-                console.log({id, entry_id})
-				dialog_store.open({
-					title: 'Create a new SRS card',
-					content: {
-						component: PromptInput,
-						props: {
-							showButton: false,
-							id,
-							entry_id
-						}
-					},
-					footer: [
-						{
-                            as: "button",
-							text: 'Create',
-							class: buttonVariants(),
-							onclick: () => {
-                                console.log({editor});
-								editor
-									.chain()
-									.focus()
-									.insertContent(
-										// range,
-										[
-											{
-												type: 'srs',
-												attrs: {
-													id,
-													active: true
-												}
-											}
-										]
-										// {
-										// 	updateSelection: true
-										// }
-									)
-									.run();
-							}
-						}
-					]
-				});
+				console.log({ id, entry_id });
+				// dialog_store.open({
+				// 	title: 'Create a new SRS card',
+				// 	content: {
+				// 		component: PromptInput,
+				// 		props: {
+				// 			showButton: false,
+				// 			id,
+				// 			entry_id
+				// 		}
+				// 	},
+				// 	footer: [
+				// 		{
+				//             as: "button",
+				// 			text: 'Create',
+				// 			class: buttonVariants(),
+				// 			onclick: () => {
+				//                 console.log({editor});
+				// 				editor
+				// 					.chain()
+				// 					.focus()
+				// 					.insertContent(
+				// 						// range,
+				// 						[
+				// 							{
+				// 								type: 'srs',
+				// 								attrs: {
+				// 									id,
+				// 									active: true
+				// 								}
+				// 							}
+				// 						]
+				// 						// {
+				// 						// 	updateSelection: true
+				// 						// }
+				// 					)
+				// 					.run();
+				// 			}
+				// 		}
+				// 	]
+				// });
 			}
 		}
 	];

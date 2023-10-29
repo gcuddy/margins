@@ -74,14 +74,13 @@
 	import { createAvatar, melt } from '@melt-ui/svelte';
 	import {
 		createQuery,
-		useIsMutating,
 		useIsFetching,
+		useIsMutating,
 		useQueryClient,
 	} from '@tanstack/svelte-query';
 	import {
 		BookMarked,
 		Box,
-		BrainCircuit,
 		ChevronDownIcon,
 		FolderPlus,
 		FolderSync,
@@ -93,45 +92,44 @@
 		PlusCircle,
 		Rss,
 		RssIcon,
-		SearchIcon,
-		TreePine,
+		SearchIcon
 	} from 'lucide-svelte';
-	import { type ComponentType, getContext } from 'svelte';
-	import { type Writable, writable } from 'svelte/store';
-	import { fade } from 'svelte/transition';
+	import { getContext, type ComponentType } from 'svelte';
 	import { persisted } from 'svelte-local-storage-store';
+	import { writable, type Writable } from 'svelte/store';
+	import { fade } from 'svelte/transition';
 
 	import { goto } from '$app/navigation';
-	import { navigating, page } from '$app/stores';
-	import AddUrlModal from '$components/modals/add-url-modal.svelte';
+	import { page } from '$app/stores';
+	import AddUrlModal from '$components/add-url/add-url-modal.svelte';
 	import Pins from '$components/pins/pins.svelte';
 	import SubscriptionEntry from '$components/subscriptions/subscription-entry.svelte';
+	import Separator from '$components/ui/Separator.svelte';
 	import * as Dialog from '$components/ui/dialog';
 	import {
 		DropdownMenu,
-		DropdownMenuGroup,
-		DropdownMenuLabel,
 		DropdownMenuContent,
+		DropdownMenuGroup,
 		DropdownMenuItem,
+		DropdownMenuLabel,
 		DropdownMenuSeparator,
 		DropdownMenuTrigger,
 	} from '$components/ui/dropdown-menu';
-	import Separator from '$components/ui/Separator.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { cn } from '$lib';
 	import { audioPlayer } from '$lib/components/AudioPlayer.svelte';
 	import ColResizer from '$lib/components/ColResizer.svelte';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
-	import { Skeleton } from '$components/ui/skeleton';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import mq from '$lib/stores/mq';
 
-	import type { LayoutData } from './$types';
-	import { useMenuBar } from './MainNav.svelte';
+	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import MobileAddMenu from '$components/nav/mobile-add-menu.svelte';
 	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
 	import { post } from '$lib/utils/forms';
-	import MobileAddMenu from '$components/nav/mobile-add-menu.svelte';
-	import EntryIcon from '$components/entries/EntryIcon.svelte';
+	import type { LayoutData } from './$types';
 	import { commanderState } from './Commander.svelte';
+	import { useMenuBar } from './MainNav.svelte';
 
 	let pinsComponent: Pins;
 

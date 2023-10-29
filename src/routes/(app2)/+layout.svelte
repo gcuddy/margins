@@ -8,7 +8,6 @@
 	import { navigating, page } from '$app/stores';
 	import GenericCommander from '$lib/commands/GenericCommander.svelte';
 	import DropBox from '$lib/components/DragHelper/DropBox.svelte';
-	import DialogStore from '$lib/components/ui/dialog2/DialogStore.svelte';
 	import Dialog from '$lib/components/ui/singletons/Dialog.svelte';
 	import { cn } from '$lib/utils/tailwind';
 	import AudioPlayer, { audioPlayer } from '$lib/components/AudioPlayer.svelte';
@@ -75,7 +74,6 @@
 			<svelte:component this={commander} />
 		{/if}
 		<Dialog />
-		<DialogStore />
 		<GenericCommander>
 			<div class="flex h-full grow flex-col relative" style:--nav-height="4rem">
 				{#if $navigating}
