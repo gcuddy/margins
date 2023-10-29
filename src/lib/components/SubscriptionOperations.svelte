@@ -25,7 +25,7 @@
 
 	import { page } from "$app/stores";
 	import { invalidateAll } from "$app/navigation";
-	import toast from "svelte-french-toast";
+	import { toast } from "svelte-sonner";
 	let c = "";
 	export { c as class };
 	type SubscriptionProps = RouterOutputs["subscriptions"]["list"][number];

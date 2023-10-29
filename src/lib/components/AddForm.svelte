@@ -3,7 +3,7 @@
 	import { invalidate, invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import type parse from "$lib/parse";
-	import toast from "svelte-french-toast";
+	import { toast } from "svelte-sonner";
 	import { modals } from "$lib/stores/modals";
 	import { notifications } from "$lib/stores/notifications";
 

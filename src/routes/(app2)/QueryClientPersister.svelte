@@ -1,15 +1,10 @@
 <script lang="ts">
-	import { get as getItem, set as setItem, del as removeItem } from 'idb-keyval';
-	import { onDestroy, onMount, setContext } from 'svelte';
 	import type { QueryClient } from '@tanstack/query-core';
 	import { setQueryClientContext } from '@tanstack/svelte-query';
-	import { persistQueryClient } from '@tanstack/query-persist-client-core';
-	import type { PersistedClient, Persister } from '@tanstack/query-persist-client-core';
-	import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+	import { onMount, setContext } from 'svelte';
 
 	import { writable } from 'svelte/store';
-	import { dev } from '$app/environment';
-	export let client: QueryClient;
+		export let client: QueryClient;
 
 	const restoring = writable(false);
 	setContext('isRestoring', restoring);

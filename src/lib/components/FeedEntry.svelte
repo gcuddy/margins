@@ -14,7 +14,7 @@
 	import Label from "$lib/components/ui/Label.svelte";
 	import { Muted } from "$lib/components/ui/typography";
 	import Switch from "$lib/components/ui/Switch.svelte";
-	import toast from "svelte-french-toast";
+	import { toast } from "svelte-sonner";
 	import { goto } from "$app/navigation";
 	import { Loader2 } from "lucide-svelte";
 

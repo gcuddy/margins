@@ -1,7 +1,7 @@
-<script lang='ts'>
-	import toast_, { type ToastOptions } from 'svelte-french-toast';
+<script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 
-	export let toast: ToastOptions;
+	const dispatch = createEventDispatcher();
 
 	// Use this component in your app:
 	// toast(RichContent)
@@ -9,5 +9,9 @@
 
 <span>
 	Custom and <b>bold</b>
-	<button on:click={() => { toast_.dismiss(toast.id); }}>Dismiss</button>
+	<button
+		on:click={() => {
+			dispatch('removeToast');
+		}}>Dismiss</button
+	>
 </span>

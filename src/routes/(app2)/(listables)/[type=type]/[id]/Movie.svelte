@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { createAvatar, melt } from '@melt-ui/svelte';
+	import { createAvatar } from '@melt-ui/svelte';
 
-	import smoothload from '$lib/actions/smoothload';
-	import type { List } from '$lib/api/tmdb';
-	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import { Badge } from '$components/ui/badge';
+	import type { List } from '$lib/api/tmdb';
 	import { Button } from '$lib/components/ui/button';
 	import ISO6391 from 'iso-639-1';
-	import { iso31661 } from 'iso-3166';
 
+	import * as Card from '$components/ui/card';
+	import * as Collapsible from '$components/ui/collapsible';
+	import * as Tabs from '$components/ui/tabs';
 	import {
 		Dialog,
 		DialogContent,
@@ -16,55 +16,26 @@
 		DialogTitle,
 		DialogTrigger,
 	} from '$lib/components/ui/dialog';
-	import * as Card from '$components/ui/card';
-	import * as Collapsible from '$components/ui/collapsible';
-	import * as Tabs from '$components/ui/tabs';
-	import * as Tooltip from '$lib/components/ui/tooltip';
-	import * as Select from '$components/ui/select';
-	import { Circle, PlusCircled } from 'radix-icons-svelte';
 
-	import { H1, H3, Lead, Muted } from '$lib/components/ui/typography';
+	import { Lead, Muted } from '$lib/components/ui/typography';
 	import type { FullEntryDetail } from '$lib/queries/server';
-	import { cn } from '$lib/utils';
-	import { formatDate, isUpcoming, sortByDate } from '$lib/utils/date';
+	import { isUpcoming } from '$lib/utils/date';
 
-	import BookmarkForm from './BookmarkForm.svelte';
-	import EntryOperations from './EntryOperations.svelte';
-	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
+	import { EntryMediaHeader } from '$components/entries';
+	import Year from '$components/entries/bits/year.svelte';
+	import LogInteractionDialog from '$components/entries/interaction-form/log-interaction-dialog.svelte';
+	import MovieCarousel from '$components/movies/movie-carousel.svelte';
+	import LibraryForm from '$components/ui/library/library-form.svelte';
+	import { Skeleton } from '$components/ui/skeleton';
+	import StarRatingForm from '$components/ui/star-rating/star-rating-form.svelte';
+	import { qquery } from '$lib/queries/query';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
 		CalendarPlusIcon,
 		ExternalLinkIcon,
-		EyeIcon,
-		ListPlus,
-		PlusCircle,
-		YoutubeIcon,
+		YoutubeIcon
 	} from 'lucide-svelte';
-	import { mutate, qquery } from '$lib/queries/query';
-	import { toast } from 'svelte-sonner';
-	import { objectEntries, styleToString } from '$lib/helpers';
-	import type { FastAverageColorResult } from 'fast-average-color';
-	import { derived } from 'svelte/store';
-	import { onNavigate } from '$app/navigation';
-	import { fade } from 'svelte/transition';
-	import { navigating, page } from '$app/stores';
-	import Clamp from '$components/Clamp.svelte';
-	import { defaultStringifySearch } from '$lib/utils/search-params';
-	import { filterLibrary } from '$lib/schemas/library';
-	import { Skeleton } from '$components/ui/skeleton';
-	import MovieCarousel from '$components/movies/movie-carousel.svelte';
-	import StarRating from '$components/ui/star-rating/star-rating.svelte';
-	import StarRatingForm from '$components/ui/star-rating/star-rating-form.svelte';
-	import LogInteractionForm from '$components/entries/interaction-form/log-interaction-form.svelte';
-	import LogInteractionDialog from '$components/entries/interaction-form/log-interaction-dialog.svelte';
-	import StatusIcon from '$components/entries/StatusIcon.svelte';
-	import { getStatusIcon, statuses, statusesToDisplay } from '$lib/status';
-	import StatusSelect from '$components/status/status-select.svelte';
-	import SaveToLibraryButton from '$components/entries/save-to-library-button.svelte';
-	import LibraryForm from '$components/ui/library/library-form.svelte';
-	import { entryTypeIcon } from '$components/entries/icons';
-	import { EntryMediaHeader } from '$components/entries';
-	import Year from '$components/entries/bits/year.svelte';
 
 	export let data: FullEntryDetail & {
 		movie: NonNullable<FullEntryDetail['movie']>;

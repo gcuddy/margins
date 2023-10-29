@@ -13,7 +13,7 @@
 	import { cn } from "$lib/utils/tailwind";
 	import type { Entry } from "@prisma/client";
 	import { ListPlus, MoreVertical, RefreshCwIcon, Tag } from "lucide-svelte";
-	import toast from "svelte-french-toast";
+	import { toast } from "svelte-sonner";
 	let c = "";
 	export { c as class };
 	type EntryProps = Pick<Entry, "id">;
