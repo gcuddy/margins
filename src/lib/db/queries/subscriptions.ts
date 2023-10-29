@@ -438,14 +438,17 @@ export async function subscription({
 		.innerJoin('Subscription as s', (join) =>
 			join.onRef('f.id', '=', 's.feedId').on('s.userId', '=', ctx.userId),
 		)
-        .select((eb) => [
-            jsonArrayFrom(
-                eb.selectFrom("SubscriptionTag as st")
-                    .whereRef("st.subscriptionId", "=", "s.id")
-                    .innerJoin("Tag as t", (join) => join.onRef("t.id", "=", "st.tagId").on("t.userId", "=", ctx.userId))
-                    .select(['t.id', 't.name', 't.color'])
-            ).as("tags")
-        ])
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom('SubscriptionTag as st')
+					.whereRef('st.subscriptionId', '=', 's.id')
+					.innerJoin('Tag as t', (join) =>
+						join.onRef('t.id', '=', 'st.tagId').on('t.userId', '=', ctx.userId),
+					)
+					.select(['t.id', 't.name', 't.color']),
+			).as('tags'),
+		])
 		.select([
 			'f.id',
 			'f.id as feedId',
@@ -555,6 +558,8 @@ export async function subscription({
 	// TODO: schedule a job to parse this feed
 }
 
+export type Subscription = Awaited<ReturnType<typeof subscription>>['feed'];
+
 export async function subscriptionCreate({
 	ctx,
 	input,
@@ -641,40 +646,56 @@ export async function subscriptionCreate({
 	};
 }
 
-export async function subscriptionUpdate({ctx, input}: GetCtx<typeof subscriptionUpdateInput>) {
-    const { data, id } = input
-    const { userId } = ctx;
+export async function subscriptionUpdate({
+	ctx,
+	input,
+}: GetCtx<typeof subscriptionUpdateInput>) {
+	const { data, id } = input;
+	const { userId } = ctx;
 
-    const { title, tagIds } = data;
-    if (title) {
-        await db.updateTable("Subscription")
-            .set({ title })
-            .where("id", "=", id)
-            .where("userId", "=", userId)
-            .execute();
-    }
-    if (tagIds) {
-        await db.transaction().execute(async (trx) => {
-            await trx.deleteFrom("SubscriptionTag")
-                .innerJoin("Subscription", (join) => join.onRef("Subscription.id", "=", "SubscriptionTag.subscriptionId").on("Subscription.userId", "=", userId))
-                .where("subscriptionId", "=", id)
-                .execute();
-            return await trx.insertInto("SubscriptionTag")
-                .values(tagIds.map(tagId => ({ tagId, subscriptionId: id })))
-                .execute();
-        })
-    }
-    return {
-        success: true
-    }
+	const { title, tagIds } = data;
+	if (title) {
+		await db
+			.updateTable('Subscription')
+			.set({ title })
+			.where('id', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+	}
+	if (tagIds) {
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.deleteFrom('SubscriptionTag')
+				.where((eb) =>
+					eb(
+						'subscriptionId',
+						'in',
+						eb
+							.selectFrom('Subscription as s')
+							.where('s.id', '=', id)
+							.where('s.userId', '=', userId)
+							.select('id'),
+					),
+				)
+				.execute();
+			if (!tagIds.length) {
+				return;
+			}
+			return await trx
+				.insertInto('SubscriptionTag')
+				.values(tagIds.map((tagId) => ({ tagId, subscriptionId: id })))
+				.execute();
+		});
+	}
+	return {
+		success: true,
+	};
 }
 
 export const subscriptionUpdateMutation = query({
-    fn: subscriptionUpdate,
-    schema: subscriptionUpdateInput
-})
-
-
+	fn: subscriptionUpdate,
+	schema: subscriptionUpdateInput,
+});
 
 export const subscriptionCreateMutation = query({
 	fn: subscriptionCreate,

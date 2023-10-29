@@ -1153,6 +1153,19 @@ export const queries = {
 					'f.link',
 					'f.guid',
 				])
+				.select((eb) => [
+					jsonArrayFrom(
+						eb
+							.selectFrom('SubscriptionTag as st')
+							.whereRef('st.subscriptionId', '=', 's.id')
+							.innerJoin('Tag as t', (join) =>
+								join
+									.onRef('t.id', '=', 'st.tagId')
+									.on('t.userId', '=', ctx.userId),
+							)
+							.select(['t.id', 't.name', 't.color']),
+					).as('tags'),
+				])
 				// .select((eb) => eb.fn.count('ue.entryId').as('unreadCount'))
 				// .select([
 				// 	's.id',
