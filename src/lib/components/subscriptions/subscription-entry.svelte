@@ -22,7 +22,15 @@
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { queryFactory } from '$lib/queries/querykeys';
 
-	export let searchForm: SuperValidated<FeedSearchFormSchema>;
+	export let searchForm: SuperValidated<FeedSearchFormSchema> = {
+        constraints: {},
+        errors: {},
+        posted: false,
+        valid: true,
+        data: {
+            url: '',
+        },
+    }
 
 	export let form: ActionData;
 

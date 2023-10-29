@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type ComponentProps, createEventDispatcher, onMount, onDestroy } from 'svelte';
+	import { type ComponentProps, createEventDispatcher, onMount } from 'svelte';
 	import { writable } from 'svelte/store';
 
 	import * as Command from '$components/ui/command2';
@@ -35,7 +35,10 @@
 	const entryMutation = createSetTagsMutation();
 	const annotationMutation = updateAnnotationMutation();
 	const tagMutation = createTagMutation();
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+        close: void;
+        select: { tag: Tag; selectedTags: Array<Tag> };
+    }>();
 
 	let commandInput: Command.Input;
 
@@ -43,6 +46,8 @@
 		selectedTags = selectedTags.some((t) => t.id === tag.id)
 			? selectedTags.filter((t) => t.id !== tag.id)
 			: [...selectedTags, tag];
+
+        dispatch('select', { tag, selectedTags })
 	}
 
 	// $: if (selectedTags !== undefined) {
@@ -50,8 +55,6 @@
 	// }
 
     $: console.log({$selectedTagsStore});
-
-    let mutating = false;
 
 	onMount(() => {
 		if (autofocus) {

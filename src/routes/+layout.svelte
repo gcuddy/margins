@@ -78,7 +78,6 @@
 <div class="rounded-md border shadow-lg"></div>
 <Toaster
 	closeButton
-    theme:
 	toastOptions={{
 		class: 'toast group shadow-lg transition-all ',
 		style: styleToString({

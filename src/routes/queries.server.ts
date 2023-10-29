@@ -25,6 +25,7 @@ import {
 	subscription,
 	subscriptionCreateMutation,
 	subscriptionInputSchema,
+	subscriptionUpdateMutation,
 } from '$lib/db/queries/subscriptions';
 import {
 	viewPreferencesCreate,
@@ -302,13 +303,13 @@ export const mutations = {
 					});
 				}
 			}
-            if (insertables.length) {
-							await db
-								.insertInto('TagOnEntry')
-								.values(insertables)
-								.ignore()
-								.execute();
-						}
+			if (insertables.length) {
+				await db
+					.insertInto('TagOnEntry')
+					.values(insertables)
+					.ignore()
+					.execute();
+			}
 
 			if (input.tagIdsToRemove?.length) {
 				await db
@@ -495,6 +496,7 @@ export const mutations = {
 		schema: tagsOnEntrySchema,
 	}),
 	subscriptionCreate: subscriptionCreateMutation,
+	subscriptionUpdate: subscriptionUpdateMutation,
 	updateBookmark: query({
 		fn: async ({ ctx, input }) =>
 			updateBookmark({
@@ -1150,6 +1152,19 @@ export const queries = {
 					'f.imageUrl',
 					'f.link',
 					'f.guid',
+				])
+				.select((eb) => [
+					jsonArrayFrom(
+						eb
+							.selectFrom('SubscriptionTag as st')
+							.whereRef('st.subscriptionId', '=', 's.id')
+							.innerJoin('Tag as t', (join) =>
+								join
+									.onRef('t.id', '=', 'st.tagId')
+									.on('t.userId', '=', ctx.userId),
+							)
+							.select(['t.id', 't.name', 't.color']),
+					).as('tags'),
 				])
 				// .select((eb) => eb.fn.count('ue.entryId').as('unreadCount'))
 				// .select([

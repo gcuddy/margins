@@ -322,10 +322,26 @@ export const queryFactory = {
 				qquery(meta?.init, 'list_subscriptions', {}),
 			queryKey: ['subscriptions'],
 		}),
-		detail: (input: QueryInput<'subscription'>) => ({
+		detail: (input: QueryInput<'subscription'>, queryClient?: QueryClient) => ({
 			queryFn: ({ meta }: QueryFnParams) =>
 				qquery(meta?.init, 'subscription', input),
 			queryKey: ['subscriptions', input.feedId],
+			placeholderData: () => {
+				if (!queryClient) return undefined;
+				const utils = getQueryContext(queryClient);
+				const subscriptions = utils.getData(queryFactory.subscriptions.all());
+				if (subscriptions) {
+					const subscription = subscriptions.find((d) => d.feedId === +data.id);
+					console.log({ subscription });
+					if (subscription) {
+						return {
+							feed: subscription,
+						};
+					}
+					// return subscription;
+				}
+				return undefined;
+			},
 		}),
 	},
 	tags: {

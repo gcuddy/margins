@@ -18,6 +18,8 @@ import { isJsonFeed } from '$lib/helpers/feeds';
 import { stripTags } from '$lib/utils/sanitize';
 import { generatePublicId } from '$lib/nanoid';
 import { query } from '$lib/server/utils';
+import { jsonArrayFrom } from 'kysely/helpers/mysql';
+import { subscriptionUpdateInput } from '$lib/schemas/inputs/subscriptions.schema';
 export const youtubeRegex =
 	/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)(?<id>[^"&?/\s]{11})/;
 const xmlParser = new XMLParser({
@@ -436,6 +438,17 @@ export async function subscription({
 		.innerJoin('Subscription as s', (join) =>
 			join.onRef('f.id', '=', 's.feedId').on('s.userId', '=', ctx.userId),
 		)
+		.select((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom('SubscriptionTag as st')
+					.whereRef('st.subscriptionId', '=', 's.id')
+					.innerJoin('Tag as t', (join) =>
+						join.onRef('t.id', '=', 'st.tagId').on('t.userId', '=', ctx.userId),
+					)
+					.select(['t.id', 't.name', 't.color']),
+			).as('tags'),
+		])
 		.select([
 			'f.id',
 			'f.id as feedId',
@@ -545,6 +558,8 @@ export async function subscription({
 	// TODO: schedule a job to parse this feed
 }
 
+export type Subscription = Awaited<ReturnType<typeof subscription>>['feed'];
+
 export async function subscriptionCreate({
 	ctx,
 	input,
@@ -630,6 +645,57 @@ export async function subscriptionCreate({
 		ids: feedIds,
 	};
 }
+
+export async function subscriptionUpdate({
+	ctx,
+	input,
+}: GetCtx<typeof subscriptionUpdateInput>) {
+	const { data, id } = input;
+	const { userId } = ctx;
+
+	const { title, tagIds } = data;
+	if (title) {
+		await db
+			.updateTable('Subscription')
+			.set({ title })
+			.where('id', '=', id)
+			.where('userId', '=', userId)
+			.execute();
+	}
+	if (tagIds) {
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.deleteFrom('SubscriptionTag')
+				.where((eb) =>
+					eb(
+						'subscriptionId',
+						'in',
+						eb
+							.selectFrom('Subscription as s')
+							.where('s.id', '=', id)
+							.where('s.userId', '=', userId)
+							.select('id'),
+					),
+				)
+				.execute();
+			if (!tagIds.length) {
+				return;
+			}
+			return await trx
+				.insertInto('SubscriptionTag')
+				.values(tagIds.map((tagId) => ({ tagId, subscriptionId: id })))
+				.execute();
+		});
+	}
+	return {
+		success: true,
+	};
+}
+
+export const subscriptionUpdateMutation = query({
+	fn: subscriptionUpdate,
+	schema: subscriptionUpdateInput,
+});
 
 export const subscriptionCreateMutation = query({
 	fn: subscriptionCreate,
