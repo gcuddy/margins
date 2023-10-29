@@ -8,7 +8,8 @@
 	export { className as class };
 </script>
 
+<!-- bg-primary/10 -->
 <div
-	class={cn("animate-pulse rounded-md bg-primary/10", className)}
+	class={cn("animate-pulse rounded-md bg-muted", className)}
 	{...$$restProps}
 />

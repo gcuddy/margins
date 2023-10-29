@@ -9,7 +9,7 @@
 	import { CircleIcon, CopyIcon, MoreHorizontalIcon } from 'lucide-svelte';
     import { CheckCircled, ClipboardCopy, Pencil1  } from "radix-icons-svelte"
 	import { derived } from 'svelte/store';
-
+    import * as Dialog from "$components/ui/dialog";
 	import { page } from '$app/stores';
 	import List from '$components/entries/list.svelte';
 	import LibraryHeader from '$components/library/library-header.svelte';
@@ -31,6 +31,13 @@
 	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import type { Snapshot } from './$types';
+	import alertDialogStore from '$lib/stores/alert-dialog';
+	import { Input } from '$components/ui/input';
+	import { TagsCommandPopover } from '$components/tags/tag-command';
+	import { melt } from '@melt-ui/svelte';
+	import { Badge } from '$components/ui/badge';
+	import { TagColorPill } from '$components/tags/tag-color';
+	import SubscriptionEdit from './subscription-edit.svelte';
 
 	export let data;
 
@@ -142,6 +149,8 @@
 		capture: () => active_id,
 		restore: (id: number) => (active_id = id),
 	};
+
+    let isEditFeedModalOpen = false;
 </script>
 
 <LibraryHeader
@@ -164,7 +173,9 @@
 				</Button>
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Content class="w-[200px]">
-				<DropdownMenu.Item><Pencil1 class="h-4 w-4 mr-2" />Rename</DropdownMenu.Item>
+				<DropdownMenu.Item on:click={() => {
+                    isEditFeedModalOpen = true;
+                }}><Pencil1 class="h-4 w-4 mr-2" />Edit</DropdownMenu.Item>
 				{#if $query.data?.feed.feedUrl}
                 {@const feedUrl = $query.data?.feed.feedUrl}
                 <DropdownMenu.Item
@@ -239,4 +250,32 @@
 		{/each} -->
 	<!-- {JSON.stringify($query.data)} -->
 	<!-- <EntryList bind:active_id bulkForm={data.bulkForm} entries={$query.data.entries} /> -->
+{/if}
+
+{#if $query.data}
+
+<Dialog.Root bind:open={isEditFeedModalOpen}>
+    <Dialog.Content class="sm:max-w-[425px]">
+        <Dialog.Header>
+            <Dialog.Title>Rename feed</Dialog.Title>
+            <Dialog.Description>Enter a new name for the feed</Dialog.Description>
+        </Dialog.Header>
+       <SubscriptionEdit on:cancel={() => {
+              isEditFeedModalOpen = false;
+       }} form={{
+        data: {
+            id: $query.data?.feed.id,
+            data: {
+                title: $query.data?.feed.title,
+                tagIds: $query.data?.feed.tags.map(tag => tag.id)
+            }
+        },
+        errors: {},
+        constraints: {},
+        posted: false,
+        valid: true
+       }} />
+    </Dialog.Content>
+</Dialog.Root>
+
 {/if}

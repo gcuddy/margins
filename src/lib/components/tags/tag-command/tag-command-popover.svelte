@@ -24,6 +24,6 @@
 		<slot {builder}>tags</slot>
 	</Popover.Trigger>
 	<Popover.Content class="p-0 w-fit">
-		<TagsCommand bind:open bind:selectedTags />
+		<TagsCommand on:select bind:open bind:selectedTags />
 	</Popover.Content>
 </Popover.Root>

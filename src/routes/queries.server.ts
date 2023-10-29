@@ -25,6 +25,7 @@ import {
 	subscription,
 	subscriptionCreateMutation,
 	subscriptionInputSchema,
+	subscriptionUpdateMutation,
 } from '$lib/db/queries/subscriptions';
 import {
 	viewPreferencesCreate,
@@ -302,13 +303,13 @@ export const mutations = {
 					});
 				}
 			}
-            if (insertables.length) {
-							await db
-								.insertInto('TagOnEntry')
-								.values(insertables)
-								.ignore()
-								.execute();
-						}
+			if (insertables.length) {
+				await db
+					.insertInto('TagOnEntry')
+					.values(insertables)
+					.ignore()
+					.execute();
+			}
 
 			if (input.tagIdsToRemove?.length) {
 				await db
@@ -495,6 +496,7 @@ export const mutations = {
 		schema: tagsOnEntrySchema,
 	}),
 	subscriptionCreate: subscriptionCreateMutation,
+	subscriptionUpdate: subscriptionUpdateMutation,
 	updateBookmark: query({
 		fn: async ({ ctx, input }) =>
 			updateBookmark({

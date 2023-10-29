@@ -652,20 +652,33 @@ model Feed {
 }
 
 model Subscription {
-    id            Int      @id @default(autoincrement())
-    feedId        Int
-    userId        String
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
-    title         String
-    download_full Boolean  @default(false)
-    feed          Feed     @relation(fields: [feedId], references: [id])
-    user          AuthUser @relation(fields: [userId], references: [id])
-    tags          Tag[]
+    id              Int               @id @default(autoincrement())
+    feedId          Int
+    userId          String
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @updatedAt
+    title           String
+    download_full   Boolean           @default(false)
+    feed            Feed              @relation(fields: [feedId], references: [id])
+    user            AuthUser          @relation(fields: [userId], references: [id])
+    tags            Tag[]
+    SubscriptionTag SubscriptionTag[]
 
     @@unique([userId, feedId])
     @@index([userId])
     @@index([feedId])
+}
+
+model SubscriptionTag {
+    // do we need userId here?
+    tagId          Int
+    subscriptionId Int
+    tag            Tag          @relation(fields: [tagId], references: [id])
+    subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+
+    @@id([tagId, subscriptionId])
+    @@index([tagId])
+    @@index([subscriptionId])
 }
 
 model Interaction {
@@ -722,22 +735,23 @@ model Log {
 }
 
 model Tag {
-    id             Int              @id @default(autoincrement())
-    name           String
-    createdAt      DateTime         @default(now())
-    updatedAt      DateTime         @default(now()) @updatedAt
-    viewOptions    Json?
-    userId         String
-    color          String           @default("#000000") @db.VarChar(9)
-    favorite       Favorite?
-    user           AuthUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
-    taggings       Tagging[]
-    entryTags      EntryTag[]
-    entries        Entry[]
-    annotations    Annotation[]
-    subscriptions  Subscription[]
-    TagOnEntry     TagOnEntry[]
-    annotation_tag annotation_tag[]
+    id              Int               @id @default(autoincrement())
+    name            String
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @default(now()) @updatedAt
+    viewOptions     Json?
+    userId          String
+    color           String            @default("#000000") @db.VarChar(9)
+    favorite        Favorite?
+    user            AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    taggings        Tagging[]
+    entryTags       EntryTag[]
+    entries         Entry[]
+    annotations     Annotation[]
+    subscriptions   Subscription[]
+    TagOnEntry      TagOnEntry[]
+    annotation_tag  annotation_tag[]
+    SubscriptionTag SubscriptionTag[]
 
     @@unique([name, userId])
     @@index([userId])

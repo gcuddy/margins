@@ -699,6 +699,10 @@ export type Subscription = {
 	title: string;
 	download_full: Generated<number>;
 };
+export type SubscriptionTag = {
+	tagId: number;
+	subscriptionId: number;
+};
 export type SubscriptionToTag = {
 	A: number;
 	B: number;
@@ -812,6 +816,7 @@ export type DB = {
 	State: State;
 	Stylesheet: Stylesheet;
 	Subscription: Subscription;
+	SubscriptionTag: SubscriptionTag;
 	Tag: Tag;
 	Taggings: Tagging;
 	TagOnEntry: TagOnEntry;
