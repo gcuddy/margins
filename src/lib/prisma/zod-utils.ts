@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-import { TargetSchema } from "$lib/annotation";
-import { chosenIcon } from "$lib/types/icon";
+import { TargetSchema } from '$lib/annotation';
 import { recipeSchema } from "$lib/web-parser/recipe";
 export { ViewOptionsSchema } from "$lib/types/schemas/View";
 
