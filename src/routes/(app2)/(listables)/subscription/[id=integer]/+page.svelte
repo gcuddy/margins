@@ -134,6 +134,7 @@
 	<title>{$query.data?.feed.title} - Margins</title>
 </svelte:head>
 
+{#key $query}
 <LibraryHeader
 	saveViewUrl="/views/explore/all{defaultStringifySearch(
 		$entryQueryOpts.filter,
@@ -178,7 +179,7 @@
 		</DropdownMenu.Root>
 	</svelte:fragment>
 </LibraryHeader>
-
+{/key}
 {#if $query.isLoading}
 	<div class="flex flex-col">
 		<EntryItemSkeleton />
