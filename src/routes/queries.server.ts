@@ -99,7 +99,6 @@ import {
 	inputSchema as rssInputSchema,
 } from './(app2)/(listables)/subscriptions/latest/fetch.server';
 import { fetchList, inputSchema } from './(app2)/library/fetch.server';
-import { type Condition, View } from './(app2)/views/new/View';
 import { customViewCreate } from '$lib/db/queries/custom-view';
 import { jsonSchema } from '$lib/schemas/types';
 import type { Replace } from 'type-fest';
@@ -302,13 +301,13 @@ export const mutations = {
 					});
 				}
 			}
-            if (insertables.length) {
-							await db
-								.insertInto('TagOnEntry')
-								.values(insertables)
-								.ignore()
-								.execute();
-						}
+			if (insertables.length) {
+				await db
+					.insertInto('TagOnEntry')
+					.values(insertables)
+					.ignore()
+					.execute();
+			}
 
 			if (input.tagIdsToRemove?.length) {
 				await db
@@ -1406,19 +1405,6 @@ export const queries = {
 		},
 		schema: z.object({
 			viewType: z.nativeEnum(ViewType),
-		}),
-	}),
-	view_entries: query({
-		fn: async ({ ctx, input }) => {
-			return await View.preview(
-				input.conditions as Array<Condition>,
-				ctx.userId,
-				input.cursor,
-			);
-		},
-		schema: z.object({
-			conditions: z.any().array(),
-			cursor: z.coerce.date().nullish(),
 		}),
 	}),
 } as const;

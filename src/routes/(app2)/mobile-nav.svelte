@@ -1,34 +1,25 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { cn } from '$lib';
-	import { createDialog, melt } from '@melt-ui/svelte';
 	import {
+		ChevronDownIcon,
 		Library,
 		Menu,
-		Rss,
 		Pin,
 		Plus,
-		ChevronDownIcon,
-		Link2,
-		Settings,
+		Rss,
+		Settings
 	} from 'lucide-svelte';
 
-	import { type Writable, writable } from 'svelte/store';
-	import { fade, fly } from 'svelte/transition';
+	import { type Writable } from 'svelte/store';
 
-	import MobileLink from '$components/nav/mobile-link.svelte';
 
 	import * as Sheet from '$components/ui/sheet';
-	import * as DropdownMenu from '$components/ui/dropdown-menu';
 
-	import { nav as mainnav, showAddUrlModalStore } from './Nav.svelte';
-	import { Button } from '$components/ui/button';
-	import { getContext, tick } from 'svelte';
-	import { showAddSubscriptionModal } from '$lib/stores/subscriptions';
-	import Separator from '$components/ui/Separator.svelte';
-	import EntryIcon from '$components/entries/EntryIcon.svelte';
-	import { commanderState } from './Commander.svelte';
 	import MobileAddMenu from '$components/nav/mobile-add-menu.svelte';
+	import { Button } from '$components/ui/button';
+	import { getContext } from 'svelte';
+	import { nav as mainnav } from './Nav.svelte';
 
 	const nav = [
 		{
