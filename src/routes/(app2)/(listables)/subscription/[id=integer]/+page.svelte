@@ -33,6 +33,7 @@
 	import type { Snapshot } from './$types';
 	import SubscriptionEdit from './subscription-edit.svelte';
 	import { subscriptionOptions } from '$lib/queries/options/subscriptions';
+	import { toast } from 'svelte-sonner';
 
 	export let data;
 
@@ -47,6 +48,7 @@
 				feedId: +data.id,
 			}),
 		onSuccess: () => {
+            toast.info('Marked all as read')
 			queryClient.invalidateQueries({
 				queryKey: ['subscriptions'],
 			});
@@ -162,6 +164,7 @@
 					<DropdownMenu.Item
 						on:click={() => {
 							navigator.clipboard.writeText(feedUrl);
+                            toast.info('Copied feed url to clipboard')
 						}}
 					>
 						<ClipboardCopy class="mr-2 h-4 w-4" />
