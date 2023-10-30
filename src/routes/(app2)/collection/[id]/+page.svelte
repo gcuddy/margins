@@ -69,6 +69,7 @@
 		collectionItemWidthIcons,
 		collectionItemWidths,
 	} from '$lib/schemas/inputs/collection.schema';
+	import UnauthedHeader from '$components/unauthed-header.svelte';
 
 	export let data;
 
@@ -506,6 +507,17 @@
 			<PinButton {pin_id} />
 		</svelte:fragment>
 	</Header>
+{:else}
+	<UnauthedHeader
+		path={[
+			{
+				name: data.collection.username,
+			},
+			{
+				name: data.collection.name,
+			},
+		]}
+	/>
 {/if}
 
 {#if data.collection.deleted}

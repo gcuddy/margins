@@ -25,6 +25,7 @@ export const load = (async (event) => {
 	const collection = await db
 		.selectFrom('Collection as c')
 		.leftJoin('Favorite as p', 'p.collectionId', 'c.id')
+		.innerJoin('auth_user as u', 'u.id', 'c.userId')
 		.select([
 			'c.id',
 			'c.name',
@@ -36,6 +37,7 @@ export const load = (async (event) => {
 			'c.deleted',
 			'c.defaultItemWidth',
 			'c.userId',
+			'u.username',
 		])
 		.$narrowType<{
 			defaultItemWidth: CollectionItemWidth | null;
