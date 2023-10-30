@@ -6,11 +6,12 @@ import { db } from '$lib/db';
 import { nameSchema, validateAuthedForm } from '$lib/schemas';
 
 import type { PageServerLoad } from './$types';
+import { loginRedirect } from '$lib/utils/redirects';
 
-export const load = (async ({ locals }) => {
-	const session = await locals.auth.validate();
+export const load = (async (event) => {
+	const session = await event.locals.auth.validate();
 	if (!session) {
-		throw error(401);
+		throw loginRedirect(event);
 	}
 	// console.time("collections")
 	const collections = await db

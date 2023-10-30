@@ -170,7 +170,7 @@
 	let mobileNavMenu = false;
 </script>
 
-{#if !$inArticle}
+{#if !$inArticle && user_data}
 	<div
 		style:--mobile-nav-width="{$mobileNavWidth}px"
 		style:--width="{width}px"

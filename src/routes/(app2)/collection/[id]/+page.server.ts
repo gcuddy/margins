@@ -11,18 +11,16 @@ import { validateAuthedForm } from '$lib/schemas';
 
 import type { Actions, PageServerLoad } from './$types';
 import type { CollectionItemWidth } from '$lib/schemas/inputs/collection.schema';
+import { loginRedirect } from '$lib/utils/redirects';
 
 const collectionSchema = z.object({
 	description: z.string().nullish(),
 	name: z.string(),
 });
 
-export const load = (async ({ depends, locals, params }) => {
+export const load = (async (event) => {
+	const { depends, locals, params } = event;
 	const session = await locals.auth.validate();
-	if (!session) {
-		throw error(401);
-	}
-	const { user } = session;
 	depends('collection');
 	const collection = await db
 		.selectFrom('Collection as c')
@@ -37,6 +35,7 @@ export const load = (async ({ depends, locals, params }) => {
 			'c.private',
 			'c.deleted',
 			'c.defaultItemWidth',
+			'c.userId',
 		])
 		.$narrowType<{
 			defaultItemWidth: CollectionItemWidth | null;
@@ -92,10 +91,10 @@ export const load = (async ({ depends, locals, params }) => {
 						// collectionItem.withAnnotation(eb).as("annotation")
 					])
 					.whereRef('ci.collectionId', '=', 'c.id')
-					.where(({ cmpr, or }) =>
+					.where(({ or, eb }) =>
 						or([
-							cmpr('ci.entryId', 'is not', null),
-							cmpr('ci.annotationId', 'is not', null),
+							eb('ci.entryId', 'is not', null),
+							eb('ci.annotationId', 'is not', null),
 							// cmpr('ci.type', '=', 'Section')
 						]),
 					)
@@ -103,13 +102,22 @@ export const load = (async ({ depends, locals, params }) => {
 					.orderBy('ci.createdAt'),
 			).as('items'),
 		])
-		.where('c.userId', '=', user.userId)
 		.where('c.id', '=', +params.id)
 		.executeTakeFirstOrThrow();
+
+	if (collection.private) {
+		// check if user is allowed to view
+		if (!session || session.user.userId !== collection.userId) {
+			throw loginRedirect(event);
+		}
+	}
+
 	// Todo: make nested json objects type nullable
 	return {
+		admin: session?.user.userId === collection.userId,
 		collection,
 		form: superValidate(collection, collectionSchema),
+		session,
 	};
 }) satisfies PageServerLoad;
 
