@@ -17,8 +17,9 @@
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { recents } from '$lib/stores/recents';
 	import { getId } from '$lib/utils/entries';
+	import { page } from '$app/stores';
 
-	const entriesQuery = createQuery(queryFactory.entries.all());
+	const entriesQuery = createQuery(derived(page, $page => ({...queryFactory.entries.all(), enabled: !!$page.data.user_data})));
 
 	const {
 		state: {

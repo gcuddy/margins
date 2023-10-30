@@ -92,11 +92,11 @@
 		PlusCircle,
 		Rss,
 		RssIcon,
-		SearchIcon
+		SearchIcon,
 	} from 'lucide-svelte';
 	import { getContext, type ComponentType } from 'svelte';
 	import { persisted } from 'svelte-local-storage-store';
-	import { writable, type Writable } from 'svelte/store';
+	import { derived, writable, type Writable } from 'svelte/store';
 	import { fade } from 'svelte/transition';
 
 	import { goto } from '$app/navigation';
@@ -139,7 +139,12 @@
 	const isMutating = useIsMutating();
 	const isFetching = useIsFetching();
 
-	const pinsQuery = createQuery(queryFactory.pins.list());
+	const pinsQuery = createQuery(
+		derived(page, ($page) => ({
+			...queryFactory.pins.list(),
+			enabled: !!$page.data.user_data,
+		})),
+	);
 
 	const inArticle = getContext('inArticle') as Writable<boolean>;
 
@@ -180,12 +185,12 @@
 		bind:borderBoxSize
 		style:--width="{width}px"
 		style:padding-bottom="{$audioPlayer.height}px"
-		class="flex flex-col gap-2 overflow-y-auto overscroll-contain fixed top-0 left-0 bottom-0 grow h-full border-r lg:w-[--width] {$menu_bar.show
+		class="fixed bottom-0 left-0 top-0 flex h-full grow flex-col gap-2 overflow-y-auto overscroll-contain border-r lg:w-[--width] {$menu_bar.show
 			? 'opacity-100'
 			: 'opacity-0'} transition-opacity duration-500 focus-within:opacity-100 hover:opacity-100"
 	>
 		<div
-			class="px-4 py-2 h-[--nav-height] max-lg:justify-center flex items-center shrink-0 relative"
+			class="relative flex h-[--nav-height] shrink-0 items-center px-4 py-2 max-lg:justify-center"
 		>
 			<!-- <span class="flex text-muted-foreground items-center"><FlowerIcon class="h-6 w-6 mr-1" /> <span class="text-sm font-medium">Margins</span> </span> -->
 			{#if $page.data.user_data?.username}
@@ -195,10 +200,10 @@
 							use:melt={builder}
 							href="/settings"
 							on:click|preventDefault
-							class="flex items-center gap-x-2 w-fit data-[state=open]:bg-accent p-2 rounded"
+							class="flex w-fit items-center gap-x-2 rounded p-2 data-[state=open]:bg-accent"
 						>
 							<span
-								class="relative flex lg:square-5 square-8 shrink-0 overflow-hidden rounded-full"
+								class="relative flex shrink-0 overflow-hidden rounded-full square-8 lg:square-5"
 							>
 								<img
 									src={$page.data.user_data.avatar}
@@ -213,7 +218,7 @@
 									{$page.data.user_data.username[0]?.toUpperCase()}
 								</span>
 							</span>
-							<span class="text-sm font-medium hidden lg:inline"
+							<span class="hidden text-sm font-medium lg:inline"
 								>{$page.data.user_data.username}</span
 							>
 						</a>
@@ -239,14 +244,14 @@
 			{#if $isRestoring || $isMutating}
 				<span
 					transition:fade={{ duration: 75 }}
-					class="absolute my-auto right-4 hidden lg:flex"
+					class="absolute right-4 my-auto hidden lg:flex"
 				>
 					<Loader class="h-4 w-4 animate-spin text-muted-foreground" />
 				</span>
 			{/if}
 		</div>
 		<div class="px-4">
-			<div class="flex items-center flex-1">
+			<div class="flex flex-1 items-center">
 				<!-- TODO: on small sizes, these should switch — the button should trigger the dropdown -->
 				<Button
 					on:click={() => {
@@ -259,14 +264,14 @@
 					}}
 					variant="outline"
 					size="sm"
-					class="w-full justify-center lg:justify-start gap-x-2 lg:rounded-r-none lg:border-r-0"
+					class="w-full justify-center gap-x-2 lg:justify-start lg:rounded-r-none lg:border-r-0"
 				>
-					<PlusCircle class="square-5 lg:square-4 shrink-0" />
+					<PlusCircle class="shrink-0 square-5 lg:square-4" />
 					<span class="hidden lg:inline">Add</span>
 					<!-- TODO: create dropdown menu for type, and add Modal -->
 				</Button>
 				<!-- h-8 is same height as buttons -->
-				<Separator class="h-8 hidden lg:flex" orientation="vertical" />
+				<Separator class="hidden h-8 lg:flex" orientation="vertical" />
 				<DropdownMenu
 					positioning={{
 						placement: 'bottom-end',
@@ -276,7 +281,7 @@
 						<button
 							class={cn(
 								buttonVariants({ size: 'sm', variant: 'outline' }),
-								'px-2 rounded-l-none border-l-0 hidden lg:flex',
+								'hidden rounded-l-none border-l-0 px-2 lg:flex',
 							)}
 							use:melt={builder}
 						>
@@ -292,7 +297,7 @@
 									$showAddSubscriptionModal = true;
 								}}
 							>
-								<RssIcon class="h-4 w-4 mr-2" />
+								<RssIcon class="mr-2 h-4 w-4" />
 								<span>Subscription</span>
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
@@ -309,7 +314,7 @@
 									}));
 								}}
 							>
-								<EntryIcon type="movie" class="w-4 h-4 mr-2" />
+								<EntryIcon type="movie" class="mr-2 h-4 w-4" />
 								Movie or TV Show
 							</DropdownMenuItem>
 							<DropdownMenuItem
@@ -323,7 +328,7 @@
 									}));
 								}}
 							>
-								<EntryIcon type="book" class="w-4 h-4 mr-2" />
+								<EntryIcon type="book" class="mr-2 h-4 w-4" />
 								Book
 							</DropdownMenuItem>
 							<DropdownMenuItem
@@ -337,7 +342,7 @@
 									}));
 								}}
 							>
-								<EntryIcon type="podcast" class="w-4 h-4 mr-2" />
+								<EntryIcon type="podcast" class="mr-2 h-4 w-4" />
 								Podcast
 							</DropdownMenuItem>
 							<DropdownMenuItem
@@ -351,7 +356,7 @@
 									}));
 								}}
 							>
-								<EntryIcon type="album" class="w-4 h-4 mr-2" />
+								<EntryIcon type="album" class="mr-2 h-4 w-4" />
 								Album
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
@@ -362,14 +367,14 @@
 		<!-- TODO: Add Button here -->
 		<div class="px-4 py-2">
 			<div
-				class="space-y-2 lg:space-y-1 transition-opacity {$inArticle
+				class="space-y-2 transition-opacity lg:space-y-1 {$inArticle
 					? 'focus-within:opacity-100 hover:opacity-100 max-2xl:opacity-20'
 					: ''}"
 			>
 				{#each nav as nav_item}
 					<Button
 						href={nav_item.href}
-						class="flex w-full items-center justify-center lg:justify-start space-x-2"
+						class="flex w-full items-center justify-center space-x-2 lg:justify-start"
 						variant={nav_item.active($page.url.pathname)
 							? 'secondary'
 							: 'ghost'}
@@ -388,7 +393,7 @@
 					<Button
 						href="/external"
 						size="sm"
-						class="flex w-full hidden items-center justify-center lg:justify-start space-x-2"
+						class="flex hidden w-full items-center justify-center space-x-2 lg:justify-start"
 						variant="ghost"
 					>
 						<FolderSync class="h-5 w-5" />
@@ -397,7 +402,7 @@
 				{/if}
 				<Button
 					href="/pins"
-					class="flex w-full items-center justify-center lg:justify-start lg:hidden"
+					class="flex w-full items-center justify-center lg:hidden lg:justify-start"
 					variant="ghost"
 				>
 					<PinIcon class="h-6 w-6" />
@@ -406,16 +411,16 @@
 		</div>
 		{#if user_data}
 			<div class="hidden px-4 py-2 {$inArticle ? '2xl:inline' : 'lg:inline'}">
-				<div class="flex group items-center">
+				<div class="group flex items-center">
 					<h2 class="mb-2 px-2 text-lg font-semibold tracking-tight">
 						<a href="/pins">Pins</a>
 					</h2>
 					<button
 						on:click={pinsComponent.addFolder}
-						class="ml-auto rounded p-2 group/icon hover:bg-accent hover:text-accent-foreground"
+						class="group/icon ml-auto rounded p-2 hover:bg-accent hover:text-accent-foreground"
 					>
 						<FolderPlus
-							class="h-4 w-4 opacity-0 group-hover:opacity-70 group-hover/icon:opacity-100 transition-opacity"
+							class="h-4 w-4 opacity-0 transition-opacity group-hover/icon:opacity-100 group-hover:opacity-70"
 						/>
 					</button>
 				</div>
@@ -435,7 +440,7 @@
 			bind:width
 			min={220}
 			max={330}
-			class="absolute inset-y-0 w-2 cursor-col-resize z-[97] -right-[3px]"
+			class="absolute inset-y-0 -right-[3px] z-[97] w-2 cursor-col-resize"
 		/>
 	</nav>
 	<button />

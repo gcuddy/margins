@@ -9,9 +9,11 @@
 		  }
 		| string
 	> = [];
+    let className: string | null | undefined = undefined
+    export { className as class };
 </script>
 
-<Header>
+<Header class={className}>
 	<div class="flex min-w-0 flex-1 items-center gap-1.5">
 		<a
 			href="/"

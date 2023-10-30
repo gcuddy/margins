@@ -30,6 +30,7 @@
 		initUpdateBookmarkMutation,
 		setGetLibraryData,
 	} from '$lib/queries/mutations';
+	import UnauthedHeader from '$components/unauthed-header.svelte';
 	// import Mentions from './Mentions.svelte';
 
 	export let data: PageData;
@@ -52,9 +53,7 @@
 		mutationFn: (input: MutationInput<'userEntryInsert'>) =>
 			mutate('userEntryInsert', input),
 		onMutate(variables) {
-			const {
-				seen,
-			} = variables;
+			const { seen } = variables;
 			if (seen === undefined) return;
 			// edit entries->list and entries-> details with this data
 			setGetLibraryData(queryClient, (entry) => {
@@ -124,12 +123,12 @@
 		// save interaction
 		const entryId = data.entry?.id;
 		const bookmarkId = data.entry?.bookmark?.id;
-		if (entryId) {
+		if (entryId && data.session) {
 			// if (!data.entry?.) {
 			// mark as seen
 			$markAsSeenMutation.mutate({
 				entryId,
-                seen: new Date()
+				seen: new Date(),
 			});
 			// data.entry.seen = true;
 			// }
@@ -179,27 +178,44 @@
 		data,
 		$query,
 	});
+
+	$: title = derived(query, ($query) => {
+		return (
+			$query.data?.entry?.title ||
+			$query.data?.book?.volumeInfo?.title ||
+			$query.data?.movie?.title ||
+			$query.data?.tv?.name ||
+			$query.data?.podcast?.episode.title ||
+			$query.data?.album?.name ||
+			data.entry?.title ||
+			''
+		);
+	});
 </script>
 
 <svelte:head>
 	<title>
-		{$query.data?.entry?.title} | {$query.data?.entry?.type}
+		{$title || "Margins"}
 	</title>
 </svelte:head>
 
+{#if !data.session}
+	<UnauthedHeader class="fixed" path={[type, $title || data.entry?.title || '']} />
+{/if}
+
 <div
 	class={cn(
-		'grow transition-[width] duration-300',
-		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)] sm:px-6 px-4', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
-		$rightSidebar
+		'max-w-3xl grow transition-[width] duration-300',
+		type !== 'pdf' && 'mt-[calc(var(--nav-height)+24px)] px-4 sm:px-6', // margin top is nav height + 24px (to account for header) (pdf handles this itself)
+		$rightSidebar && data.session
 			? 'w-full lg:w-[calc(100%-(var(--right-sidebar-width)))]'
 			: 'w-full', // width is 100% - right sidebar width + 64px (to account for padding) if showing, otherwise just 100%
-
+		!data.session && 'w-fit',
 		// current_list && 'rounded-lg border bg-card text-card-foreground shadow-lg h-full  grow'
 	)}
 >
 	{#if $query.isPlaceholderData || $query.isLoading}
-		<Skeleton class="w-full h-[300px]" />
+		<Skeleton class="h-[300px] w-full" />
 	{:else if $query.data}
 		{#if type === 'article'}
 			<svelte:component

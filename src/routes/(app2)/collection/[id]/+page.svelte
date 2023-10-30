@@ -70,6 +70,7 @@
 		collectionItemWidths,
 	} from '$lib/schemas/inputs/collection.schema';
 	import UnauthedHeader from '$components/unauthed-header.svelte';
+	import { pageTitle } from '$lib/stores/page-title';
 
 	export let data;
 
@@ -262,6 +263,8 @@
 	}
 
 	let isDeleteAlertOpen = false;
+
+    $: pageTitle.set(`${data.collection.name} - Margins`)
 </script>
 
 {#if data.session}
@@ -711,7 +714,12 @@
 					{#if item.type === 'Section'}
 						Section
 					{/if}
-					<CollectionItem class={fontClass} {item} />
+					<CollectionItem
+						loggedIn={!!data.session}
+						admin={data.admin}
+						class={fontClass}
+						{item}
+					/>
 				{/if}
 			</div>
 		{:else}
