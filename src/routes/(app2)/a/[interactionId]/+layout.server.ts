@@ -1,5 +1,6 @@
 import { db } from '$lib/db';
 import { entrySelect } from '$lib/db/selects';
+import { loginRedirect } from '$lib/utils/redirects';
 import { error, redirect } from '@sveltejs/kit';
 import { jsonObjectFrom } from 'kysely/helpers/mysql';
 
@@ -42,7 +43,7 @@ export async function load(event) {
 		const session = await event.locals.auth.validate();
 		if (!session || session.user.userId !== interaction.user_id) {
 			// throw forbidden error
-			throw error(403, 'Forbidden');
+			throw loginRedirect(event);
 		}
 	}
 

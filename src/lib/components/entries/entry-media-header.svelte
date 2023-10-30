@@ -4,6 +4,8 @@
 	import type { Type } from '$lib/types';
 	import { defaultStringifySearch } from '$lib/utils/search-params';
 
+    import { page } from '$app/stores';
+
 	export let title: string;
 	export let author: string | undefined = undefined;
 	export let description: string | undefined = undefined;
@@ -16,10 +18,12 @@
 
 <div class="@container">
 	<div
-		class="flex gap-6 flex-col supports-ncq:md:flex-row supports-cq:@lg:flex-row items-center"
+		class="flex flex-col items-center gap-6 supports-cq:@lg:flex-row supports-ncq:md:flex-row"
 	>
 		<slot name="artwork">
-			<div class="aspect-auto rounded-md shadow-lg w-44 @lg:self-start supports-ncq:md:self-start">
+			<div
+				class="aspect-auto w-44 rounded-md shadow-lg @lg:self-start supports-ncq:md:self-start"
+			>
 				{#if image}
 					<img
 						src={image}
@@ -27,7 +31,7 @@
 						width={256}
 						height={imageHeight}
 						alt=""
-						class="rounded-[inherit] w-full h-full"
+						class="h-full w-full rounded-[inherit]"
 					/>
 				{/if}
 			</div>
@@ -54,7 +58,7 @@
 				>
 					<span>{type}</span>
 				</a>
-				<h1 class="text-3xl @lg:text-4xl font-bold tracking-tight">
+				<h1 class="text-3xl font-bold tracking-tight @lg:text-4xl">
 					<slot name="title">
 						{title}
 					</slot>
@@ -69,15 +73,18 @@
 				{/if}
 				<slot name="metaBottom" />
 			</div>
-			<div
-				class="flex items-center flex-wrap gap-4 justify-center mt-4 supports-cq:@lg:justify-start supports-ncq:md:justify-start supports-cq:@lg:gap-2.5 supports-ncq:md:gap-2.5 supports-cq:@lg:mt-8 supports-ncq:md:mt-8 supports-cq:@lg:order-4 supports-ncq:md:order-4"
-			>
-				<!-- TODO: make into form -->
-				<slot name="actions" />
-			</div>
+            <!-- only display actions if there is a user -->
+			{#if $page.data.user_data}
+				<div
+					class="mt-4 flex flex-wrap items-center justify-center gap-4 supports-cq:@lg:order-4 supports-cq:@lg:mt-8 supports-cq:@lg:justify-start supports-cq:@lg:gap-2.5 supports-ncq:md:order-4 supports-ncq:md:mt-8 supports-ncq:md:justify-start supports-ncq:md:gap-2.5"
+				>
+					<!-- TODO: make into form -->
+					<slot name="actions" />
+				</div>
+			{/if}
 			{#if description}
 				<div
-					class="text-sm text-muted-foreground mt-4 supports-cq:@lg:order-3 supports-ncq:md:order-3 max-w-md"
+					class="mt-4 max-w-md text-sm text-muted-foreground supports-cq:@lg:order-3 supports-ncq:md:order-3"
 				>
 					<Clamp clamp={3} class="relative">
 						{@html description}

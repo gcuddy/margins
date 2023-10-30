@@ -8,10 +8,19 @@ import type { Config } from '@sveltejs/adapter-vercel';
 import { redirect } from 'sveltekit-flash-message/server';
 import { createMessage } from '$lib/types/forms';
 import { db } from '$lib/db';
+import { loginRedirect } from '$lib/utils/redirects';
 
 // export const config: Config = {
 // 	runtime: 'nodejs18.x',
 // };
+
+export async function load(event) {
+	const session = await event.locals.auth.validate();
+
+	if (!session) {
+		throw loginRedirect(event);
+	}
+}
 
 export const actions = {
 	add: async (event) => {

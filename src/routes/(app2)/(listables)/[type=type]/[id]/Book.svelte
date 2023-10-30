@@ -188,19 +188,21 @@
 		<EntryMediaHeader title={book.volumeInfo?.title ?? ''} {author} type="book">
 			<div
 				slot="artwork"
-				class="aspect-auto shrink w-44 @lg:self-start supports-ncq:md:self-start shadow-lg relative"
+				class="relative aspect-auto w-44 shrink shadow-lg @lg:self-start supports-ncq:md:self-start"
 				style:view-transition-name="artwork-book-{book.id}"
 			>
 				<img
-					class="aspect-auto w-full h-full"
+					class="aspect-auto h-full w-full"
 					src={book.image}
 					width={224}
 					alt=""
 				/>
-				<div class="absolute inset-0 book-cover-overlay"></div>
+				<div class="book-cover-overlay absolute inset-0"></div>
 			</div>
 			<div slot="metaTop">
-				<Lead>{book.volumeInfo?.subtitle}</Lead>
+				{#if book.volumeInfo?.subtitle}
+					<Lead>{book.volumeInfo?.subtitle}</Lead>
+				{/if}
 			</div>
 			<svelte:fragment slot="actions">
 				<LibraryForm
@@ -322,9 +324,9 @@
 				</div>
 			</div> -->
 
-		<div class="prose prose-stone mt-6 dark:prose-invert z-0">
+		<div class="prose prose-stone z-0 mt-6 dark:prose-invert">
 			<div class="not-prose">
-				<h2 class="text-xl font-bold tracking-tight font-serif my-2">
+				<h2 class="my-2 font-serif text-xl font-bold tracking-tight">
 					Publisher description
 				</h2>
 			</div>
@@ -358,10 +360,10 @@
                 {/if} -->
 		</div>
 		{#if book.volumeInfo}
-			<dl class="flex divide-x overflow-auto mt-6">
-				<div class="flex flex-col gap-1 items-center pr-6">
+			<dl class="mt-6 flex divide-x overflow-auto">
+				<div class="flex flex-col items-center gap-1 pr-6">
 					<dt
-						class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+						class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
 					>
 						Genre
 					</dt>
@@ -371,54 +373,54 @@
 						{:else}
 							<svelte:component this={categoryIcon} class="h-5 w-5" />
 						{/if}
-						<span class="text-sm font-medium text-center">{category}</span>
+						<span class="text-center text-sm font-medium">{category}</span>
 					</dd>
 				</div>
-				<div class="flex flex-col gap-1 items-center px-6">
+				<div class="flex flex-col items-center gap-1 px-6">
 					<dt
-						class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+						class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
 					>
 						Published
 					</dt>
 					<dd class="flex flex-col items-center">
-						<span class="font-bold font-serif">{year}</span>
+						<span class="font-serif font-bold">{year}</span>
 					</dd>
 				</div>
 				{#if pageCount}
-					<div class="flex flex-col gap-1 items-center px-6">
+					<div class="flex flex-col items-center gap-1 px-6">
 						<dt
-							class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+							class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
 						>
 							Length
 						</dt>
 						<dd class="flex flex-col items-center">
-							<span class="font-bold font-serif">{pageCount}</span><span
-								class="text-sm font-medium text-center">pages</span
+							<span class="font-serif font-bold">{pageCount}</span><span
+								class="text-center text-sm font-medium">pages</span
 							>
 						</dd>
 					</div>
 				{/if}
-				<div class="flex flex-col gap-1 items-center px-6">
+				<div class="flex flex-col items-center gap-1 px-6">
 					<dt
-						class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+						class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
 					>
 						Publisher
 					</dt>
 					<dd class="flex flex-col items-center">
-						<span class="font-bold font-serif text-center">
+						<span class="text-center font-serif font-bold">
 							{book.volumeInfo?.publisher}
 						</span>
 					</dd>
 				</div>
 				{#if book.volumeInfo.language}
-					<div class="flex flex-col gap-1 items-center px-6">
+					<div class="flex flex-col items-center gap-1 px-6">
 						<dt
-							class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+							class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
 						>
 							Language
 						</dt>
 						<dd class="flex flex-col items-center">
-							<span class="font-bold font-serif uppercase">
+							<span class="font-serif font-bold uppercase">
 								{book.volumeInfo?.language}
 							</span>
 							<span class="text-sm font-medium">
@@ -428,9 +430,9 @@
 					</div>
 				{/if}
 				{#if isbn}
-					<div class="flex flex-col gap-1 items-center px-6">
+					<div class="flex flex-col items-center gap-1 px-6">
 						<dt
-							class="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+							class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
 						>
 							ISBN
 						</dt>
@@ -443,22 +445,22 @@
 				{/if}
 			</dl>
 		{/if}
-		<div class="flex flex-col max-w-prose">
-			<h2 class="text-lg font-bold tracking-tight font-serif my-2">
+		<div class="flex flex-col">
+			<h2 class="my-2 font-serif text-lg font-bold tracking-tight">
 				More Books by {firstAuthor}
 			</h2>
 			{#if $otherBooksByAuthorQuery.data}
 				{@const books = $otherBooksByAuthorQuery.data ?? []}
-				<div class="flex gap-6 overflow-auto py-6 snap-x snap-mandatory">
+				<div class="flex snap-x snap-mandatory gap-6 overflow-auto py-6">
 					{#each deDupeGoogleBooksList(books.filter((b) => b.volumeInfo && b.id !== book.id && b.volumeInfo.authors?.join('') === firstAuthor && b.volumeInfo.title !== book.volumeInfo.title)).slice(0, 20) as otherBook}
 						{#if otherBook.volumeInfo}
 							<a
 								href="/book/{otherBook.id}"
-								class="flex flex-col min-w-0 w-20 gap-2 shrink-0 snap-start"
+								class="flex w-20 min-w-0 shrink-0 snap-start flex-col gap-2"
 							>
 								{#if otherBook.volumeInfo.imageLinks}
 									<div
-										class="relative w-20 h-[121px] shadow-lg"
+										class="relative h-[121px] w-20 shadow-lg"
 										style:view-transition-name="artwork-{otherBook.id}"
 									>
 										<img
@@ -472,21 +474,21 @@
 												...otherBook,
 												volumeInfo: otherBook.volumeInfo,
 											})}
-											class="absolute w-20 h-[121px] object-cover"
+											class="absolute h-[121px] w-20 object-cover"
 											alt=""
 										/>
-										<div class="absolute inset-0 book-cover-overlay"></div>
+										<div class="book-cover-overlay absolute inset-0"></div>
 									</div>
 								{:else}
 									<div
-										class="relative w-full h-[121px] bg-gray-200 flex flex-col items-center justify-center"
+										class="relative flex h-[121px] w-full flex-col items-center justify-center bg-gray-200"
 									>
-										<span class="text-gray-400 text-sm text-center font-bold"
+										<span class="text-center text-sm font-bold text-gray-400"
 											>No Image Available</span
 										>
 									</div>
 								{/if}
-								<div class="min-w-0 flex flex-col">
+								<div class="flex min-w-0 flex-col">
 									<span class="truncate text-sm font-semibold"
 										>{otherBook.volumeInfo.title}</span
 									>
@@ -504,7 +506,7 @@
 			{:else}
 				<div class="flex gap-6">
 					{#each Array.from({ length: 8 }) as _}
-						<Skeleton class="w-20 h-32" />
+						<Skeleton class="h-32 w-20" />
 					{/each}
 				</div>
 			{/if}

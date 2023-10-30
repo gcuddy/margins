@@ -1,19 +1,23 @@
 import { db } from '$lib/db';
 import { withEntry } from '$lib/db/selects';
-import { nanoid } from '$lib/nanoid';
+import { loginRedirect } from '$lib/utils/redirects';
 import { fail } from '@sveltejs/kit';
 
-export async function load({ params }) {
+export async function load(event) {
+	const { params, locals } = event;
+	const session = await locals.auth.validate();
+	if (!session) throw loginRedirect(event);
 	const { id } = params;
 	const note = await db
 		.selectFrom('Annotation as a')
 		.where('id', '=', id)
+		.where('userId', '=', session.user.userId)
 		.selectAll()
 		.select((eb) => withEntry(eb))
 		.executeTakeFirstOrThrow();
 
 	return {
-		note
+		note,
 	};
 }
 

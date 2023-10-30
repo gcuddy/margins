@@ -23,6 +23,7 @@ export const GET: RequestHandler = async (event) => {
 	console.log(`running sq ${sq}`, new Date());
 	const params = await queryctx(event, query.schema, query.authorized);
 	console.time(`[sq - fn] ${sq}`);
+	//@ts-expect-error - TODO this is some bug with the type system we currently have
 	const result = await query.fn(params);
 	console.timeEnd(`[sq - fn] ${sq}`);
 	if (query.headers) {

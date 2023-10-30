@@ -29,6 +29,9 @@
 	let className: string | undefined = undefined;
 	export { className as class };
 
+	export let loggedIn = false;
+	export let admin = false;
+
 	const bookmarkCreateMutation = initBookmarkCreateMutation();
 
 	const removeFromCollectionMutation = createMutation({
@@ -52,7 +55,10 @@
 			}),
 	});
 
-	const entriesQuery = createQuery(queryFactory.entries.all());
+	const entriesQuery = createQuery({
+		...queryFactory.entries.all(),
+		enabled: loggedIn,
+	});
 
 	const inLibrary = derived(entriesQuery, ($entriesQuery) => {
 		if (!$entriesQuery.data) {
@@ -62,77 +68,83 @@
 		return $entriesQuery.data.some((entry) => entry.id === item.entry?.id);
 	});
 
-
-
 	let customizeDialogOpen = false;
 
 	let width = (item.width as CollectionItemWidth) ?? 'default';
 	// let style = 'default';
 </script>
 
-<CollectionItemCard class={cn(
-    "hover:ring-2",
-    $inLibrary ? 'ring-blue-400 hover:ring' : 'ring-ring',
-    className
-)} bind:width {item}>
-	<DropdownMenu.Root>
-		<DropdownMenu.Trigger asChild let:builder>
-			<Button
-				builders={[builder]}
-				size="icon"
-				variant="secondary"
-				class="absolute opacity-0 group-hover:opacity-100  transition-opacity duration-100 data-[state=open]:opacity-100 right-2 bottom-2 px-2 h-8 w-8"
-			>
-				<MoreHorizontalIcon class="h-4 w-4" />
-				<span class="sr-only">Menu</span>
-			</Button>
-		</DropdownMenu.Trigger>
-		<DropdownMenu.Content class="w-56">
-			<DropdownMenu.Group>
-				<DropdownMenu.Item
-					on:click={() => {
-						customizeDialogOpen = true;
-					}}
+<CollectionItemCard
+	class={cn(
+		'hover:ring-2',
+		$inLibrary ? 'ring-blue-400 hover:ring' : 'ring-ring',
+		className,
+	)}
+	bind:width
+	{item}
+>
+	{#if loggedIn}
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger asChild let:builder>
+				<Button
+					builders={[builder]}
+					size="icon"
+					variant="secondary"
+					class="absolute bottom-2 right-2  h-8 w-8 px-2 opacity-0 transition-opacity duration-100 group-hover:opacity-100 data-[state=open]:opacity-100"
 				>
-					<PaintbrushIcon class="h-4 w-4 mr-2" />
-					Customize style
-				</DropdownMenu.Item>
-				{#if item.entry?.id || item.annotation?.id}
-					{@const entryId = item.entry?.id}
-					{@const annotationId = item.annotation?.id}
-					<DropdownMenu.Item
-						on:click={() => {
-							$removeFromCollectionMutation.mutate({
-								annotationId,
-								entryId,
-							});
-						}}
-					>
-						<XCircleIcon class="h-4 w-4 mr-2" />
-						Remove from collection
-					</DropdownMenu.Item>
-				{/if}
-			</DropdownMenu.Group>
-			{#if !$inLibrary}
-				<DropdownMenu.Separator />
-				<DropdownMenu.Group>
-					{#if !$inLibrary && item.entry?.id}
-						{@const entryId = item.entry?.id}
+					<MoreHorizontalIcon class="h-4 w-4" />
+					<span class="sr-only">Menu</span>
+				</Button>
+			</DropdownMenu.Trigger>
+			<DropdownMenu.Content class="w-56">
+				{#if admin}
+					<DropdownMenu.Group>
 						<DropdownMenu.Item
 							on:click={() => {
-								$bookmarkCreateMutation.mutate({
-									entryId,
-								});
+								customizeDialogOpen = true;
 							}}
 						>
-							<PlusCircle class="h-4 w-4 mr-2" />
-							Save to library
+							<PaintbrushIcon class="mr-2 h-4 w-4" />
+							Customize style
 						</DropdownMenu.Item>
-					{/if}
-				</DropdownMenu.Group>
-			{/if}
-		</DropdownMenu.Content>
-	</DropdownMenu.Root>
+						{#if item.entry?.id || item.annotation?.id}
+							{@const entryId = item.entry?.id}
+							{@const annotationId = item.annotation?.id}
+							<DropdownMenu.Item
+								on:click={() => {
+									$removeFromCollectionMutation.mutate({
+										annotationId,
+										entryId,
+									});
+								}}
+							>
+								<XCircleIcon class="mr-2 h-4 w-4" />
+								Remove from collection
+							</DropdownMenu.Item>
+						{/if}
+					</DropdownMenu.Group>
+				{/if}
+				{#if !$inLibrary}
+					<DropdownMenu.Separator />
+					<DropdownMenu.Group>
+						{#if !$inLibrary && item.entry?.id}
+							{@const entryId = item.entry?.id}
+							<DropdownMenu.Item
+								on:click={() => {
+									$bookmarkCreateMutation.mutate({
+										entryId,
+									});
+								}}
+							>
+								<PlusCircle class="mr-2 h-4 w-4" />
+								Save to library
+							</DropdownMenu.Item>
+						{/if}
+					</DropdownMenu.Group>
+				{/if}
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
+	{/if}
 </CollectionItemCard>
 
 <Dialog.Root

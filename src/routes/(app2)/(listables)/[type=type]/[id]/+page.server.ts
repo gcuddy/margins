@@ -42,9 +42,9 @@ import { statusUpdateSchema } from '$components/status/schema';
 export async function load(event) {
 	const { locals, params } = event;
 	const session = await locals.auth.validate();
-	if (!session) {
-		throw redirect(302, '/login');
-	}
+	// if (!session) {
+	// 	throw redirect(302, '/login');
+	// }
 	const { id, type: _type } = params;
 	const type = _type as Type;
 	const entry = {

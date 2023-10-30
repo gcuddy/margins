@@ -5,12 +5,13 @@ import { ListEntry, entrySelect } from '$lib/db/selects';
 import { sql } from 'kysely';
 import { books } from '$lib/api/gbook';
 import { tmdb } from '$lib/api/tmdb';
+import { loginRedirect } from '$lib/utils/redirects';
 
 export async function load(event) {
 	const session = await event.locals.auth.validate();
 
 	if (!session) {
-		throw redirect(303, '/login');
+		throw loginRedirect(event);
 	}
 
 	if (event.url.searchParams.has('q')) {

@@ -99,9 +99,9 @@ import { twitter } from '$lib/twitter';
 import { typeSchema } from '$lib/types';
 import type { Replace } from 'type-fest';
 
-type Query<TSchema extends z.ZodTypeAny, TData> = {
+export type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
-	authorized?: boolean;
+	authorized?: boolean | 'optional';
 	fn: (args: {
 		ctx: {
 			event: RequestEvent;
@@ -777,6 +777,7 @@ export const queries = {
 	}),
 
 	entry_by_id: query({
+		authorized: 'optional',
 		fn: entry_by_id,
 		schema: entry_by_id_schema,
 	}),
@@ -1237,9 +1238,13 @@ export const queries = {
 		staleTime: 1000,
 	}),
 	searchBooks: query({
+		authorized: false,
 		fn: async ({ input }) => {
 			const { items } = await books.search(input.q);
 			return items ?? [];
+		},
+		headers: {
+			'cache-control': 's-maxage=1, stale-while-revalidate=86400',
 		},
 		schema: qSchema,
 	}),

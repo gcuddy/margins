@@ -1,13 +1,13 @@
-import type { PageServerLoad } from './$types';
 import { db } from '$lib/db';
 import type { FilterLibrarySchema } from '$lib/schemas/library';
-import { error, redirect } from '@sveltejs/kit';
-import { defaultStringifySearch } from '$lib/utils/search-params';
+import { loginRedirect } from '$lib/utils/redirects';
+import type { PageServerLoad } from './$types';
 
-export const load = (async ({ locals, params, parent }) => {
+export const load = (async (event) => {
+	const { locals, params } = event;
 	const session = await locals.auth.validate();
 
-	if (!session) throw error(401, 'Not logged in');
+	if (!session) throw loginRedirect(event);
 
 	// TODO put in function (copied from parent route)
 	const view = await db

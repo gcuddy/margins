@@ -4,9 +4,11 @@ import { parse } from 'devalue';
 import type { User } from 'lucia';
 import { z } from 'zod';
 
+type Auth = boolean | 'optional';
+
 export async function queryctx<T extends z.ZodTypeAny>(
 	req: RequestEvent,
-	authed?: boolean,
+	authed?: Auth,
 ): Promise<{
 	ctx: {
 		userId: string;
@@ -16,7 +18,7 @@ export async function queryctx<T extends z.ZodTypeAny>(
 export async function queryctx<T extends z.ZodTypeAny>(
 	req: RequestEvent,
 	schema?: T,
-	authed?: boolean,
+	authed?: Auth,
 ): Promise<{
 	ctx: {
 		userId: string;
@@ -26,8 +28,8 @@ export async function queryctx<T extends z.ZodTypeAny>(
 }>;
 export async function queryctx<T extends z.ZodTypeAny>(
 	req: RequestEvent,
-	schemaOrAuthed?: T | boolean,
-	authed?: boolean,
+	schemaOrAuthed?: T | Auth,
+	authed?: Auth,
 ): Promise<{
 	ctx: {
 		event: RequestEvent;
@@ -40,17 +42,21 @@ export async function queryctx<T extends z.ZodTypeAny>(
 	let userId = url.searchParams.get('userId');
 	let user: User | null = null;
 	const schema =
-		typeof schemaOrAuthed === 'boolean' ? undefined : schemaOrAuthed;
+		typeof schemaOrAuthed === 'boolean' ||
+		(typeof schemaOrAuthed === 'string' && schemaOrAuthed === 'optional')
+			? undefined
+			: schemaOrAuthed;
 	const _authed = typeof schemaOrAuthed === 'boolean' ? schemaOrAuthed : authed;
 	if (!userId && _authed !== false) {
 		console.time(`[auth] validating session`);
 		const session = await locals.auth.validate();
 		console.timeEnd(`[auth] validating session`);
-		if (!session) {
+		if (!session && _authed !== 'optional') {
 			throw error(401);
+		} else if (session) {
+			userId = session.user.userId;
+			user = session.user;
 		}
-		userId = session.user.userId;
-		user = session.user;
 	}
 	if (!schema) {
 		return {

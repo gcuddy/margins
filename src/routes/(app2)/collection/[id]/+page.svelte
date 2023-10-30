@@ -3,7 +3,7 @@
 	import {
 		ArchiveRestore,
 		BookMarked,
-        BookIcon,
+		BookIcon,
 		ChevronDown,
 		ChevronRightIcon,
 		FilmIcon,
@@ -26,7 +26,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { IconPicker } from '$components/icon-picker';
+	import { IconPicker, Icon } from '$components/icon-picker';
 	import * as AlertDialog from '$components/ui/alert-dialog';
 	import { Button } from '$components/ui/button';
 	import * as Command from '$components/ui/command2';
@@ -69,6 +69,8 @@
 		collectionItemWidthIcons,
 		collectionItemWidths,
 	} from '$lib/schemas/inputs/collection.schema';
+	import UnauthedHeader from '$components/unauthed-header.svelte';
+	import { pageTitle } from '$lib/stores/page-title';
 
 	export let data;
 
@@ -218,7 +220,7 @@
 					commander.close();
 					const entry = await query($page, 'findOrCreateEntry', {
 						id: a.id,
-                        type: "movie"
+						type: 'movie',
 					});
 					if (!entry) {
 						return;
@@ -240,12 +242,12 @@
 			props: {
 				onSelect: async (book) => {
 					commander.close();
-                    if (!book.id) {
-                        return;
-                    }
+					if (!book.id) {
+						return;
+					}
 					const entry = await query($page, 'findOrCreateEntry', {
-                        id: book.id,
-                        type: "book"
+						id: book.id,
+						type: 'book',
 					});
 					if (!entry) {
 						return;
@@ -261,248 +263,265 @@
 	}
 
 	let isDeleteAlertOpen = false;
+
+    $: pageTitle.set(`${data.collection.name} - Margins`)
 </script>
 
-<Header
-	class="relative"
-	style={data.collection.bgColor
-		? styleToString({
-				background: `hsl(${hslString} / 0.5)`,
-				'border-color': `hsl(${hslString} / 0.75)`,
-		  })
-		: undefined}
->
-	<svelte:fragment slot="start">
-		<span
-			class="sm:text-base text-sm flex items-center gap-2 font-medium tracking-tight truncate"
-			>Collections <ChevronRightIcon class="text-muted-foreground h-4 w-4" />
-			<span class="truncate">{data.collection.name}</span>
-			<div class="flex gap-0.5">
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild let:builder>
-						<Button
-							variant="ghost"
-							size="icon"
-							class="h-9 w-9 hover:bg-accent/90"
-							builders={[builder]}
-						>
-							<MoreHorizontalIcon class="h-4 w-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent class="w-52">
-						<DropdownMenuGroup>
-							<DropdownMenuSub>
-								<DropdownMenuSubTrigger>
-									<RulerIcon class="mr-2 h-4 w-4" />
-									Default item width
-								</DropdownMenuSubTrigger>
-								<DropdownMenuSubContent>
-									<DropdownMenuRadioGroup value={data.collection.defaultItemWidth ?? undefined}>
-										{#each collectionItemWidths as width}
-											<DropdownMenuRadioItem
-												value={width}
-												on:click={() => {
-													$collectionUpdateMutation.mutate({
-														defaultItemWidth: width,
-													});
-													data.collection.defaultItemWidth = width;
-												}}
-											>
-												<svelte:component
-													this={collectionItemWidthIcons[width]}
-													class="mr-2 h-4 w-4"
-												/>
-												{capitalize(width)}
-											</DropdownMenuRadioItem>
-										{/each}
-									</DropdownMenuRadioGroup>
-								</DropdownMenuSubContent>
-							</DropdownMenuSub>
-							<DropdownMenuItem
-								on:click={async () => {
-									await $collectionUpdateMutation.mutateAsync({
-										private: data.collection.private ? 0 : 1,
-									});
-									data.collection.private = data.collection.private ? 0 : 1;
-								}}
+{#if data.session}
+	<Header
+		class="relative"
+		style={data.collection.bgColor
+			? styleToString({
+					background: `hsl(${hslString} / 0.5)`,
+					'border-color': `hsl(${hslString} / 0.75)`,
+			  })
+			: undefined}
+	>
+		<svelte:fragment slot="start">
+			<span
+				class="flex items-center gap-2 truncate text-sm font-medium tracking-tight sm:text-base"
+				>Collections <ChevronRightIcon class="h-4 w-4 text-muted-foreground" />
+				<span class="truncate">{data.collection.name}</span>
+				<div class="flex gap-0.5">
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild let:builder>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="h-9 w-9 hover:bg-accent/90"
+								builders={[builder]}
 							>
-								<svelte:component
-									this={data.collection.private ? Globe2Icon : LockIcon}
-									class="mr-2 h-4 w-4"
-								/> Make collection {data.collection.private
-									? 'public'
-									: 'private'}</DropdownMenuItem
-							>
-							{#if !data.collection.private}
-								<DropdownMenuItem
-									on:click={() => {
-										// TODO: clear cruft
-										navigator.clipboard.writeText(
-											$page.url.origin + $page.url.pathname,
-										);
-										toast('Collection URL copied to clipboard', {
-											description:
-												'Anyone with the link can view this collection',
-										});
-									}}
-								>
-									<LinkIcon class="mr-2 h-4 w-4" />
-									Copy public link</DropdownMenuItem
-								>
-							{/if}
-						</DropdownMenuGroup>
-						<DropdownMenuSeparator />
-						<DropdownMenuGroup>
-							{#if data.collection.deleted}
+								<MoreHorizontalIcon class="h-4 w-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent class="w-52">
+							<DropdownMenuGroup>
+								<DropdownMenuSub>
+									<DropdownMenuSubTrigger>
+										<RulerIcon class="mr-2 h-4 w-4" />
+										Default item width
+									</DropdownMenuSubTrigger>
+									<DropdownMenuSubContent>
+										<DropdownMenuRadioGroup
+											value={data.collection.defaultItemWidth ?? undefined}
+										>
+											{#each collectionItemWidths as width}
+												<DropdownMenuRadioItem
+													value={width}
+													on:click={() => {
+														$collectionUpdateMutation.mutate({
+															defaultItemWidth: width,
+														});
+														data.collection.defaultItemWidth = width;
+													}}
+												>
+													<svelte:component
+														this={collectionItemWidthIcons[width]}
+														class="mr-2 h-4 w-4"
+													/>
+													{capitalize(width)}
+												</DropdownMenuRadioItem>
+											{/each}
+										</DropdownMenuRadioGroup>
+									</DropdownMenuSubContent>
+								</DropdownMenuSub>
 								<DropdownMenuItem
 									on:click={async () => {
-										$collectionUpdateMutation.mutate({
-											deleted: null,
+										await $collectionUpdateMutation.mutateAsync({
+											private: data.collection.private ? 0 : 1,
 										});
-										await invalidate('collection');
+										data.collection.private = data.collection.private ? 0 : 1;
 									}}
 								>
-									<ArchiveRestore class="mr-2 h-4 w-4" />
-									Restore</DropdownMenuItem
+									<svelte:component
+										this={data.collection.private ? Globe2Icon : LockIcon}
+										class="mr-2 h-4 w-4"
+									/> Make collection {data.collection.private
+										? 'public'
+										: 'private'}</DropdownMenuItem
 								>
-							{:else}
-								<DropdownMenuItem
-									on:click={() => {
-										isDeleteAlertOpen = true;
-									}}
-								>
-									<TrashIcon class="mr-2 h-4 w-4" />
-									Delete</DropdownMenuItem
-								>
-							{/if}
-						</DropdownMenuGroup>
-					</DropdownMenuContent>
-				</DropdownMenu>
-				<Popover.Root
-					onOpenChange={(open) => {
-						if (open === false) {
-							// if closing, then save
-							if (
-								data.collection.bgColor === lastSavedBgColor &&
-								font === lastSavedFont
-							) {
-								return;
+								{#if !data.collection.private}
+									<DropdownMenuItem
+										on:click={() => {
+											// TODO: clear cruft
+											navigator.clipboard.writeText(
+												$page.url.origin + $page.url.pathname,
+											);
+											toast('Collection URL copied to clipboard', {
+												description:
+													'Anyone with the link can view this collection',
+											});
+										}}
+									>
+										<LinkIcon class="mr-2 h-4 w-4" />
+										Copy public link</DropdownMenuItem
+									>
+								{/if}
+							</DropdownMenuGroup>
+							<DropdownMenuSeparator />
+							<DropdownMenuGroup>
+								{#if data.collection.deleted}
+									<DropdownMenuItem
+										on:click={async () => {
+											$collectionUpdateMutation.mutate({
+												deleted: null,
+											});
+											await invalidate('collection');
+										}}
+									>
+										<ArchiveRestore class="mr-2 h-4 w-4" />
+										Restore</DropdownMenuItem
+									>
+								{:else}
+									<DropdownMenuItem
+										on:click={() => {
+											isDeleteAlertOpen = true;
+										}}
+									>
+										<TrashIcon class="mr-2 h-4 w-4" />
+										Delete</DropdownMenuItem
+									>
+								{/if}
+							</DropdownMenuGroup>
+						</DropdownMenuContent>
+					</DropdownMenu>
+					<Popover.Root
+						onOpenChange={(open) => {
+							if (open === false) {
+								// if closing, then save
+								if (
+									data.collection.bgColor === lastSavedBgColor &&
+									font === lastSavedFont
+								) {
+									return;
+								}
+								$collectionUpdateMutation.mutate({
+									bgColor: data.collection.bgColor,
+									font: font?.value,
+								});
+								lastSavedBgColor = data.collection.bgColor;
+								lastSavedFont = font;
+								if (font?.value) {
+									data.collection.font = font?.value;
+								}
 							}
-							$collectionUpdateMutation.mutate({
-								bgColor: data.collection.bgColor,
-								font: font?.value,
-							});
-							lastSavedBgColor = data.collection.bgColor;
-							lastSavedFont = font;
-							if (font?.value) {
-								data.collection.font = font?.value;
-							}
-						}
-					}}
-				>
-					<Popover.Trigger let:builder asChild>
-						<Button
-							builders={[builder]}
-							variant="ghost"
-							size="icon"
-							class="h-9 w-9 hover:bg-accent/90"
-						>
-							<PaletteIcon class="h-4 w-4" />
-							<span class="sr-only">Customize</span>
-						</Button>
-					</Popover.Trigger>
-					<Popover.Content>
-						<div class="flex flex-col gap-4">
-							<div class="flex items-center justify-between">
-								<Label for="collection-bg-color">Background color</Label>
-								<div class="flex gap-0.5 items-center">
-									{#if data.collection.bgColor}
-										<Button
-											on:click={() => {
-												data.collection.bgColor = null;
-											}}
-											variant="ghost"
-											size="icon"
-											class="h-6 w-6"
-										>
-											<XIcon class="h-3 w-3" />
-										</Button>
-									{/if}
-									<input
-										bind:value={data.collection.bgColor}
-										id="collection-bg-color"
-										class=""
-										type="color"
-									/>
+						}}
+					>
+						<Popover.Trigger let:builder asChild>
+							<Button
+								builders={[builder]}
+								variant="ghost"
+								size="icon"
+								class="h-9 w-9 hover:bg-accent/90"
+							>
+								<PaletteIcon class="h-4 w-4" />
+								<span class="sr-only">Customize</span>
+							</Button>
+						</Popover.Trigger>
+						<Popover.Content>
+							<div class="flex flex-col gap-4">
+								<div class="flex items-center justify-between">
+									<Label for="collection-bg-color">Background color</Label>
+									<div class="flex items-center gap-0.5">
+										{#if data.collection.bgColor}
+											<Button
+												on:click={() => {
+													data.collection.bgColor = null;
+												}}
+												variant="ghost"
+												size="icon"
+												class="h-6 w-6"
+											>
+												<XIcon class="h-3 w-3" />
+											</Button>
+										{/if}
+										<input
+											bind:value={data.collection.bgColor}
+											id="collection-bg-color"
+											class=""
+											type="color"
+										/>
+									</div>
+								</div>
+								<div class="flex items-center justify-between">
+									<Label for="collection-font">Font</Label>
+									<!--  -->
+									<Select.Root bind:selected={font}>
+										<Select.Trigger class="w-[180px]">
+											<Select.Value
+												class={fontClass}
+												placeholder="Select a  font"
+											/>
+										</Select.Trigger>
+										<Select.Content>
+											<Select.Item value="sans" class="font-sans text-xl"
+												>Sans</Select.Item
+											>
+											<Select.Item value="serif" class="font-serif text-xl"
+												>Serif</Select.Item
+											>
+											<Select.Item value="mono" class="font-mono text-xl"
+												>Mono</Select.Item
+											>
+											<!-- TODO: slab serif, heavy sans (or allow customizing font weight, font tracking) -->
+										</Select.Content>
+									</Select.Root>
 								</div>
 							</div>
-							<div class="flex items-center justify-between">
-								<Label for="collection-font">Font</Label>
-								<!--  -->
-								<Select.Root bind:selected={font}>
-									<Select.Trigger class="w-[180px]">
-										<Select.Value
-											class={fontClass}
-											placeholder="Select a  font"
-										/>
-									</Select.Trigger>
-									<Select.Content>
-										<Select.Item value="sans" class="font-sans text-xl"
-											>Sans</Select.Item
-										>
-										<Select.Item value="serif" class="font-serif text-xl"
-											>Serif</Select.Item
-										>
-										<Select.Item value="mono" class="font-mono text-xl"
-											>Mono</Select.Item
-										>
-										<!-- TODO: slab serif, heavy sans (or allow customizing font weight, font tracking) -->
-									</Select.Content>
-								</Select.Root>
-							</div>
-						</div>
-					</Popover.Content>
-				</Popover.Root>
-			</div>
-		</span></svelte:fragment
-	>
-	<svelte:fragment slot="end">
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild let:builder>
-				<Button
-					builders={[builder]}
-					variant="outline"
-					size="sm"
-					class="px-2 bg-background/75 flex gap-2"
-				>
-					<Plus class="h-4 w-4" />
-					<span class="max-sm:hidden">Add to collection</span>
-					<ChevronDown class="h-4 w-4 text-secondary-foreground" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent class="w-[200px]">
-				<DropdownMenuGroup>
-					<DropdownMenuItem on:click={addEntry}>
-						<Library class="mr-2 h-4 w-4" /> Library
-					</DropdownMenuItem>
-					<DropdownMenuItem on:click={addNote}>
-						<BookMarked class="mr-2 h-4 w-4" /> Note
-					</DropdownMenuItem>
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem on:click={addMovie}>
-						<FilmIcon class="mr-2 h-4 w-4" /> Movie
-					</DropdownMenuItem>
-					<DropdownMenuItem on:click={addBook}>
-						<BookIcon class="mr-2 h-4 w-4" /> Book
-					</DropdownMenuItem>
-				</DropdownMenuGroup>
-			</DropdownMenuContent>
-		</DropdownMenu>
-		<PinButton {pin_id} />
-	</svelte:fragment>
-</Header>
+						</Popover.Content>
+					</Popover.Root>
+				</div>
+			</span></svelte:fragment
+		>
+		<svelte:fragment slot="end">
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild let:builder>
+					<Button
+						builders={[builder]}
+						variant="outline"
+						size="sm"
+						class="flex gap-2 bg-background/75 px-2"
+					>
+						<Plus class="h-4 w-4" />
+						<span class="max-sm:hidden">Add to collection</span>
+						<ChevronDown class="h-4 w-4 text-secondary-foreground" />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent class="w-[200px]">
+					<DropdownMenuGroup>
+						<DropdownMenuItem on:click={addEntry}>
+							<Library class="mr-2 h-4 w-4" /> Library
+						</DropdownMenuItem>
+						<DropdownMenuItem on:click={addNote}>
+							<BookMarked class="mr-2 h-4 w-4" /> Note
+						</DropdownMenuItem>
+					</DropdownMenuGroup>
+					<DropdownMenuSeparator />
+					<DropdownMenuGroup>
+						<DropdownMenuItem on:click={addMovie}>
+							<FilmIcon class="mr-2 h-4 w-4" /> Movie
+						</DropdownMenuItem>
+						<DropdownMenuItem on:click={addBook}>
+							<BookIcon class="mr-2 h-4 w-4" /> Book
+						</DropdownMenuItem>
+					</DropdownMenuGroup>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<PinButton {pin_id} />
+		</svelte:fragment>
+	</Header>
+{:else}
+	<UnauthedHeader
+		path={[
+			{
+				name: data.collection.username,
+			},
+			{
+				name: data.collection.name,
+			},
+		]}
+	/>
+{/if}
 
 {#if data.collection.deleted}
 	<Header>
@@ -545,26 +564,34 @@
 		'background-color':
 			'hsl(var(--bg-color, var(--background)) / var(--tw-bg-opacity))',
 	})}
-	class="grow h-full"
+	class="h-full grow"
 >
-	<div class="flex gap-2 flex-col max-w-prose mx-auto w-full px-2 md:px-0">
-		<div class="flex pt-3 flex-col">
-			<IconPicker
-				class="bg-background/50"
-				bind:activeIcon={data.collection.icon}
-				bind:activeColor={data.collection.color}
-				on:select={({ detail }) => {
-					const { color, icon } = detail;
-					$collectionUpdateMutation.mutate({
-						color,
-						icon,
-					});
-				}}
-			/>
+	<div class="mx-auto flex w-full max-w-prose flex-col gap-2 px-2 md:px-0">
+		<div class="flex flex-col pt-3">
+			{#if data.admin}
+				<IconPicker
+					class="bg-background/50"
+					bind:activeIcon={data.collection.icon}
+					bind:activeColor={data.collection.color}
+					on:select={({ detail }) => {
+						const { color, icon } = detail;
+						$collectionUpdateMutation.mutate({
+							color,
+							icon,
+						});
+					}}
+				/>
+			{:else}
+				<Icon class="h-8 w-8" {...data.collection} />
+			{/if}
 			<!-- TODO: get accessible color combo and tweak till it is using colord -->
 			<textarea
+				readonly={!data.admin}
 				bind:value={data.collection.name}
 				on:blur={() => {
+					if (!data.admin) {
+						return;
+					}
 					if (data.collection.name === lastSavedTitle) {
 						return;
 					}
@@ -576,17 +603,21 @@
 				placeholder="Untitled note"
 				use:autosize
 				rows={1}
-				class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent focus:outline-none py-3 placeholder:text-muted-foreground/75 text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl {fontClass}"
+				class="h-auto w-full resize-none appearance-none overflow-hidden bg-transparent py-3 text-3xl font-extrabold tracking-tight placeholder:text-muted-foreground/75 focus:outline-none md:text-4xl lg:text-5xl {fontClass}"
 			/>
 		</div>
 		<!-- TODO: should we render markdown here? -->
 		<textarea
-			class="placeholder:text-muted-foreground/75 bg-transparent transition text-muted-foreground focus-visible:text-foreground w-full h-auto resize-none apearance-none focus:outline-none {fontClass}"
+			readonly={!data.admin}
+			class="apearance-none h-auto w-full resize-none bg-transparent text-muted-foreground transition placeholder:text-muted-foreground/75 focus:outline-none focus-visible:text-foreground {fontClass}"
 			placeholder="Notes"
 			rows={1}
 			use:autosize
 			bind:value={data.collection.description}
 			on:blur={() => {
+				if (!data.admin) {
+					return;
+				}
 				if (data.collection.description === lastSavedDescription) {
 					return;
 				}
@@ -605,7 +636,7 @@
 	<!-- {JSON.stringify(data.collection.items)} -->
 	<!-- grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(250px,100%),1fr))] -->
 	<div
-		class="mt-8 flex flex-wrap gap-4 container mx-auto px-2 sm:px-4 items-end justify-start md:justify-center"
+		class="container mx-auto mt-8 flex flex-wrap items-end justify-start gap-4 px-2 sm:px-4 md:justify-center"
 		use:dndzone={{
 			dragDisabled: !data.collection.items.length,
 			flipDurationMs: 200,
@@ -674,7 +705,7 @@
 	>
 		{#each data.collection.items as item (item.id)}
 			<div
-				class="flex flex-col items-center justify-center shrink"
+				class="flex shrink flex-col items-center justify-center"
 				animate:flip={{ duration: 200 }}
 			>
 				{#if 'pending' in item && item.pending}
@@ -683,7 +714,12 @@
 					{#if item.type === 'Section'}
 						Section
 					{/if}
-					<CollectionItem class={fontClass} {item} />
+					<CollectionItem
+						loggedIn={!!data.session}
+						admin={data.admin}
+						class={fontClass}
+						{item}
+					/>
 				{/if}
 			</div>
 		{:else}

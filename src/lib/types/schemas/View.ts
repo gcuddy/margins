@@ -1,8 +1,7 @@
-import { getContext } from "svelte";
-import { writable } from "svelte/store";
-import { z } from "zod";
-
-import type { EntryInList } from "$lib/prisma/selects/entry";
+import type { LibraryEntry } from '$lib/server/queries';
+import { getContext } from 'svelte';
+import { writable } from 'svelte/store';
+import { z } from 'zod';
 
 interface BaseViewOptions {
 	sort: string;
@@ -12,8 +11,17 @@ interface BaseViewOptions {
 }
 
 export const ViewOptionsSchema = z.object({
-	view: z.enum(["list", "grid", "slim", "kanban"]),
-	sort: z.enum(["title", "date", "due", "author", "published", "updated", "created", "manual"]),
+	view: z.enum(['list', 'grid', 'slim', 'kanban']),
+	sort: z.enum([
+		'title',
+		'date',
+		'due',
+		'author',
+		'published',
+		'updated',
+		'created',
+		'manual',
+	]),
 	properties: z
 		.object({
 			author: z.boolean(),
@@ -42,8 +50,8 @@ export const ViewOptionsSchema = z.object({
 export type ViewOptions = z.infer<typeof ViewOptionsSchema>;
 
 export const defaultViewOptions: ViewOptions = {
-	view: "list",
-	sort: "created",
+	view: 'list',
+	sort: 'created',
 	properties: {
 		author: true,
 		site: true,
@@ -60,52 +68,67 @@ export const defaultViewOptions: ViewOptions = {
 	},
 };
 
-function compareTwoMaybeDates(a: Date | null | undefined, b: Date | null | undefined) {
-    if (a && b) {
-        return a > b ? -1 : 1;
-    } else if (a) {
-        return -1;
-    } else if (b) {
-        return 1;
-    } else {
-        return 0;
-    }
+function compareTwoMaybeDates(
+	a: Date | null | undefined,
+	b: Date | null | undefined,
+) {
+	if (a && b) {
+		return a > b ? -1 : 1;
+	} else if (a) {
+		return -1;
+	} else if (b) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 function compareTwoMaybeStrings(a: string | null, b: string | null) {
-    if (a && b) {
-        return a.localeCompare(b);
-    } else if (a) {
-        return -1;
-    } else if (b) {
-        return 1;
-    } else {
-        return 0;
-    }
+	if (a && b) {
+		return a.localeCompare(b);
+	} else if (a) {
+		return -1;
+	} else if (b) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
-
-export function sortEntries(entries: EntryInList[], sort: ViewOptions["sort"]) {
-    switch (sort) {
-        case "title":
-            return entries.sort((a, b) => a.title ? a.title.localeCompare(b.title || '') : -1);
-        case "date":
-            return entries.sort((a, b) => compareTwoMaybeDates(a.published, b.published));
-        case "author":
-            return entries.sort((a, b) => compareTwoMaybeStrings(a.author, b.author));
-        case "created":
-            return entries.sort((a, b) => compareTwoMaybeDates(a.bookmarks?.[0]?.createdAt, b.bookmarks?.[0]?.createdAt));
-        case "published":
-            return entries.sort((a, b) => compareTwoMaybeDates(a.published, b.published));
-        case "updated":
-            return entries.sort((a, b) => compareTwoMaybeDates(a.updatedAt, b.updatedAt));
-        case "due":
-            return entries.sort((a, b) => compareTwoMaybeDates(a.bookmarks?.[0]?.dueDate, b.bookmarks?.[0]?.dueDate));
-        case "manual":
-            return entries
-        default:
-            return entries;
-    }
+export function sortEntries(
+	entries: LibraryEntry[],
+	sort: ViewOptions['sort'],
+) {
+	switch (sort) {
+		case 'title':
+			return entries.sort((a, b) =>
+				a.title ? a.title.localeCompare(b.title || '') : -1,
+			);
+		case 'date':
+			return entries.sort((a, b) =>
+				compareTwoMaybeDates(a.published, b.published),
+			);
+		case 'author':
+			return entries.sort((a, b) => compareTwoMaybeStrings(a.author, b.author));
+		case 'created':
+			return entries.sort((a, b) =>
+				compareTwoMaybeDates(a.bookmarked_at, b.bookmarked_at),
+			);
+		case 'published':
+			return entries.sort((a, b) =>
+				compareTwoMaybeDates(a.published, b.published),
+			);
+		case 'updated':
+			return entries.sort((a, b) =>
+				compareTwoMaybeDates(a.updatedAt, b.updatedAt),
+			);
+		// case "due":
+		//     return entries.sort((a, b) => compareTwoMaybeDates(a.bookmarks?.[0]?.dueDate, b.bookmarks?.[0]?.dueDate));
+		case 'manual':
+			return entries;
+		default:
+			return entries;
+	}
 }
 
 export function createCustomizeViewStore(options = defaultViewOptions) {
@@ -120,15 +143,15 @@ export function createCustomizeViewStore(options = defaultViewOptions) {
 	};
 }
 
-export const ViewOptionsContextKey = "viewOptions";
+export const ViewOptionsContextKey = 'viewOptions';
 
 function useViewOptions() {
-    const options = getContext(ViewOptionsContextKey);
-    if (!options) {
-        console.error("ViewOptionsContextKey not found");
-        return null;
-    }
-    return options as ReturnType<typeof createCustomizeViewStore>;
+	const options = getContext(ViewOptionsContextKey);
+	if (!options) {
+		console.error('ViewOptionsContextKey not found');
+		return null;
+	}
+	return options as ReturnType<typeof createCustomizeViewStore>;
 }
 
 // export type ViewOptions = typeof viewOptions;

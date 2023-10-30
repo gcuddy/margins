@@ -1,25 +1,7 @@
-import { createCachedValue } from '$lib/cache';
+import { feedSearchFormSchema } from '$components/subscriptions/subscription-entry.schema';
 import { db } from '$lib/db';
-import { jsonObjectFrom } from 'kysely/helpers/mysql';
-import type { LayoutServerLoad } from './$types';
-import { urlSchema } from '$lib/schemas';
 import { superValidate } from 'sveltekit-superforms/server';
-import {
-	feedAddFormSchema,
-	feedSearchFormSchema,
-} from '$components/subscriptions/subscription-entry.schema';
-
-function getTags(userId: string) {
-	console.time('getTags');
-	const tags = db
-		.selectFrom('Tag')
-		.select(['id', 'name'])
-		.where('userId', '=', userId)
-		.orderBy('name', 'asc')
-		.execute();
-	console.timeEnd('getTags');
-	return tags;
-}
+import type { LayoutServerLoad } from './$types';
 
 export const load = (async (event) => {
 	console.log('(app2) layout.server.ts load');

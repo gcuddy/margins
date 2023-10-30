@@ -70,7 +70,7 @@
 <QueryClientPersister client={data.queryClient} let:isRestoring>
 	<ViewTransitions>
 		<ClipboardHandler />
-		{#if commander}
+		{#if !!data.user_data && commander}
 			<svelte:component this={commander} />
 		{/if}
 		<Dialog />

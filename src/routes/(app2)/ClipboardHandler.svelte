@@ -6,11 +6,12 @@
 	import { initBookmarkCreateMutation } from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { getHostname, isValidUrl } from '$lib/utils';
+	import { page } from '$app/stores';
 
 	// TODO: list entries query to check if url there
 
 	const bookmarkCreateMutation = initBookmarkCreateMutation();
-	const entriesQuery = createQuery(queryFactory.entries.all());
+	const entriesQuery = createQuery(derived(page, $page => ({...queryFactory.entries.all(), enabled: !!$page.data.user_data})));
 
 	const entryUrls = derived(
 		entriesQuery,

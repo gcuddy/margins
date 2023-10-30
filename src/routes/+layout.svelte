@@ -7,6 +7,7 @@
 	import { getFlash } from 'sveltekit-flash-message/client';
 	import { onDestroy } from 'svelte';
 	import { styleToString } from '$lib/helpers';
+	import { pageTitle } from '$lib/stores/page-title';
 	// import { pwaInfo } from 'virtual:pwa-info';
 
 	// fix bigint issue
@@ -69,8 +70,7 @@
 </script>
 
 <svelte:head>
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-	<title>Margins</title>
+	<title>{$pageTitle}</title>
 </svelte:head>
 
 <slot />
