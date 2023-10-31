@@ -1577,10 +1577,10 @@ export type Note = Notes[number];
 export async function note({
 	ctx,
 	input,
-}: GetCtx<typeof idSchema>): Promise<Note> {
+}: GetCtx<typeof idSchema>): Promise<Note | null> {
 	const { id } = input;
 
-	const query = db
+	const query = await db
 		.selectFrom('Annotation as a')
 		.select(annotations.select)
 		.$narrowType<{
@@ -1592,9 +1592,9 @@ export async function note({
 		.select((eb) => notePin(eb))
 		.where('a.id', '=', id)
 		.where('a.userId', '=', ctx.userId)
-		.executeTakeFirstOrThrow();
+		.executeTakeFirst();
 
-	return query;
+	return query ?? null;
 }
 
 const _createFavoriteSchema = z

@@ -53,6 +53,7 @@
 		Search,
 		Settings,
 		TagIcon,
+        StickyNote
 	} from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { derived, type Writable, writable } from 'svelte/store';
@@ -403,6 +404,15 @@
 						<span>Search podcasts</span>
 					</CommandItem>
 				</CommandGroup>
+                <CommandGroup heading="Create">
+                    <CommandItem onSelect={() => {
+                        goto(`/notes/new`);
+                        $state.isOpen = false;
+                    }}>
+                        <StickyNote class="mr-2 h-4 w-4" />
+                        Create note
+                    </CommandItem>
+                </CommandGroup>
 				<CommandGroup heading="Settings">
 					<CommandItem
 						onSelect={() => {

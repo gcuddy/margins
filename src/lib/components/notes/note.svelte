@@ -16,17 +16,26 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import type { JSONContent } from '@tiptap/core';
 	import { dequal as deepEqual } from 'dequal';
-	import { onMount, tick } from 'svelte';
-
+	import { createEventDispatcher, onMount, tick } from 'svelte';
+    const dispatch = createEventDispatcher<{
+        save: { id: string },
+        titlechange: { title: string  }
+    }>();
 	export let id = nanoid();
 	$: mutation = updateAnnotationMutation({
 		input: { id, type: 'document' },
 		showToast: true,
+        onSuccess() {
+            dispatch('save', { id });
+        }
 	});
 
 	let hasBeenUpdate = false;
 
 	export let title: string | null | undefined = '';
+    $: if (title !== undefined && title !== null) {
+        dispatch('titlechange', { title })
+    }
 	let lastSavedTitle = title;
 	export let contentData: JSONContent | undefined = {
 		type: 'doc',

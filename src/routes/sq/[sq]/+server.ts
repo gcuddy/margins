@@ -1,11 +1,12 @@
 // RSS Router
 
-import { error, json } from '@sveltejs/kit';
+import { error, text, json } from '@sveltejs/kit';
 
 import { mutationctx, queryctx } from '$lib/utils/server';
 
 import { mutations, queries } from '../../queries.server';
 import type { RequestHandler } from './$types';
+import { stringify } from 'devalue';
 
 // Generalize this
 
@@ -32,7 +33,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 	// console.dir({ result }, { depth: null });
 	console.timeEnd(`[sq] ${sq}`);
-	return json(result);
+	return text(stringify(result));
 };
 
 export const POST: RequestHandler = async (event) => {

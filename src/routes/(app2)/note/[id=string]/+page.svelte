@@ -21,11 +21,15 @@
 
 	export let data;
 
+	let title = '';
+
 	$: query = createQuery(
 		queryFactory.notes.detail({
 			id: data.id,
 		}),
 	);
+	$: title = $query.data?.title || '';
+	$: console.log({ $query });
 	$: pin = $pins.data?.find((p) => p.note?.id === $query.data?.id);
 </script>
 
@@ -38,7 +42,11 @@
 			}}
 			path={[
 				{
-					name: $query.data?.title ?? $query.data?.entry?.title ?? 'New note',
+					name:
+						title ||
+						$query.data?.title ||
+						$query.data?.entry?.title ||
+						'New note',
 					loading: $query.isPending,
 				},
 			]}
@@ -70,20 +78,24 @@
 	</div>
 </Header>
 {#if $query.isPending}
-	<div class="flex flex-col h-full px-2 py-9">
-        <Skeleton class="h-full max-w-4xl  self-center w-full" />
-    </div>
+	<div class="flex h-full flex-col px-2 py-9">
+		<Skeleton class="h-full w-full  max-w-4xl self-center" />
+	</div>
 	<!-- <Skeleton class="h-full" /> -->
 {:else if $query.isSuccess}
 	{#key data.id}
-		{#if $query.data.entry}
+		{#if $query.data?.entry}
 			<!-- entry note -->
 			<AnnotationDetail note={$query.data} />
 		{:else}
 			<Note
+				autofocus={!$query.data}
+				on:titlechange={(e) => {
+					title = e.detail.title;
+				}}
 				{...$query.data}
-				color={$query.data.color ?? ''}
-				icon={$query.data.icon ?? ''}
+				color={$query.data?.color ?? ''}
+				icon={$query.data?.icon ?? ''}
 			/>
 		{/if}
 	{/key}
