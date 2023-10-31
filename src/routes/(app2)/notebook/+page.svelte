@@ -101,9 +101,9 @@
 	}}
 >
 	<Header>
-		<div class="flex items-center gap-3 flex-1 min-w-0">
+		<div class="flex min-w-0 flex-1 items-center gap-3">
 			<slot name="title">
-				<h1 class="font-bold text-base">Notebook</h1>
+				<h1 class="text-base font-bold">Notebook</h1>
 			</slot>
 			<Tabs.List>
 				<Tabs.Trigger value="notes">Notes</Tabs.Trigger>
@@ -112,12 +112,12 @@
 		</div>
 		<svelte:fragment slot="end">
 			<Button href="/notes/new" size="sm" variant="outline">
-				<PlusIcon class="w-4 h-4 mr-2" />
+				<PlusIcon class="mr-2 h-4 w-4" />
 				New Note
 			</Button>
 		</svelte:fragment>
 	</Header>
-	<div class="p-6 flex-1 flex flex-col space-y-8">
+	<div class="flex flex-1 flex-col space-y-8 p-6">
 		<!-- <div>
         <h2 class="text-2xl font-bold tracking-tight">Notes</h2>
         <p class="text-muted-foreground"><span class="text-bold">Notes</span> is a place to write and connect notes.</p>
@@ -159,23 +159,25 @@
 			<!-- {#each data.notes.notes as annotation (annotation.id)}
 			<Annotation {annotation} />
 		{/each} -->
-			<NotesTable
-				loading={$notesQuery.isFetching && $search ? true : false}
-                initialLoading={$notesQuery.isPending}
-				{search}
-				bind:this={notesTable}
-				{input}
-				notes={notesStore}
-			/>
-			<Intersector
-				cb={() => {
-					console.log('end intersecting');
-					if ($notesQuery.hasNextPage && !$notesQuery.isFetchingNextPage) {
-						console.log('fetching next page');
-						$notesQuery.fetchNextPage();
-					}
-				}}
-			/>
+			{#if $value === 'annotations'}
+				<NotesTable
+					loading={$notesQuery.isFetching && $search ? true : false}
+					initialLoading={$notesQuery.isPending}
+					{search}
+					bind:this={notesTable}
+					{input}
+					notes={notesStore}
+				/>
+				<Intersector
+					cb={() => {
+						console.log('end intersecting');
+						if ($notesQuery.hasNextPage && !$notesQuery.isFetchingNextPage) {
+							console.log('fetching next page');
+							$notesQuery.fetchNextPage();
+						}
+					}}
+				/>
+			{/if}
 		</Tabs.Content>
 	</div>
 </Tabs.Root>

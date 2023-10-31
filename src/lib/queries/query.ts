@@ -5,7 +5,7 @@ import type {
 	CreateQueryOptions,
 	DefaultError,
 } from '@tanstack/svelte-query';
-import { stringify } from 'devalue';
+import { parse, stringify } from 'devalue';
 import type { Session, User } from 'lucia';
 import { derived, type Readable, writable } from 'svelte/store';
 import { get } from 'svelte/store';
@@ -307,7 +307,7 @@ export async function query<T extends keyof Queries>(
 		console.log(response.status);
 		throw new Error(response.statusText);
 	}
-	const final = (await response.json()) as Awaited<Data>;
+	const final = parse(await response.text()) as Awaited<Data>;
 	if (options?.cache) {
 		query_store_cache_lookup.set(url, final);
 	}
