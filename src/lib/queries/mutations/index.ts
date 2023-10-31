@@ -21,8 +21,9 @@ import {
 	type QueryOutput,
 } from '../query';
 import { getQueryContext, queryFactory, type QueryFactory } from '../querykeys';
-import type { Note, NotesResponse } from '../server';
+import type { Note, NotesResponse, Pins } from '../server';
 import { entryState } from '$lib/stores/entry-state';
+import { pinsOptions } from '../pins';
 
 type UpdateData = Partial<LibraryResponse['entries'][number]>;
 
@@ -283,6 +284,28 @@ export function updateAnnotationMutation<
 			if (opts?.showToast) {
 				toast.success('Note updated');
 			}
+			// update pins with new note data
+			queryClient.setQueryData(
+				pinsOptions.queryKey!,
+				(old: Pins | undefined) => {
+					if (!old) return old;
+					if (typeof mergedVariables.id !== 'string') return;
+					const { id } = mergedVariables;
+					return (old as Pins).map((pin) => {
+						if (pin.note?.id === id) {
+							return {
+								...pin,
+								note: {
+									...pin.note,
+									...mergedVariables,
+									id,
+								},
+							};
+						}
+						return pin;
+					});
+				},
+			);
 			// only invalidate entries if we have an entryId
 			if (
 				('entryId' in mergedVariables && mergedVariables?.entryId) ||

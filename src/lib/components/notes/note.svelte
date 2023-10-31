@@ -4,26 +4,19 @@
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { TagsCommandPopover } from '$components/tags/tag-command';
 	import { Badge } from '$components/ui/badge';
-	import Header from '$components/ui/Header.svelte';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import autosize from '$lib/actions/autosize';
 	import { nanoid } from '$lib/nanoid';
+	import {
+		updateAnnotationMutation
+	} from '$lib/queries/mutations/index';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { ago, formatDate, now } from '$lib/utils/date';
 	import { melt } from '@melt-ui/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
 	import type { JSONContent } from '@tiptap/core';
+	import { dequal as deepEqual } from 'dequal';
 	import { onMount, tick } from 'svelte';
-	import {
-		initCreatePinMutation,
-		initDeletePinMutation,
-		updateAnnotationMutation,
-	} from '$lib/queries/mutations/index';
-	import { deepEqual } from '$lib/helpers';
-	import Breadcrumbs from '$components/breadcrumbs.svelte';
-	import { Button } from '$components/ui/button';
-	import { PinIcon } from 'lucide-svelte';
-	import { cn } from '$lib/utils';
 
 	export let id = nanoid();
 	$: mutation = updateAnnotationMutation({
@@ -60,12 +53,7 @@
 	export let createdAt = new Date();
 	export let updatedAt: Date | string | undefined = undefined;
 
-	const pins = createQuery(queryFactory.pins.list());
 	const tagsQuery = createQuery(queryFactory.tags.list());
-
-	$: pin = $pins.data?.find((p) => p.note?.id === id);
-	const createPin = initCreatePinMutation();
-	const removePin = initDeletePinMutation();
 
 	export let tagIds =
 		$page.url.searchParams
@@ -90,38 +78,7 @@
 	});
 </script>
 
-<Header>
-	<div class="flex items-center gap-3">
-		<Breadcrumbs
-			root={{
-				name: 'notes',
-				href: '/notebook',
-			}}
-			path={[{ name: title || 'New note' }]}
-		/>
-		<Button
-			variant="ghost"
-			size="icon"
-			on:click={() => {
-				// TODO: Pick up here
-				if (pin) {
-					$removePin.mutate({
-						id: pin.id,
-					});
-				} else {
-					$createPin.mutate({
-						annotationId: id,
-					});
-				}
-			}}
-		>
-			<PinIcon
-				class={cn('h-4 w-4 text-muted-foreground', pin && 'text-red-400 fill-red-400')}
-			/>
-			<span class="sr-only">Pin note</span>
-		</Button>
-	</div>
-</Header>
+
 <div class="flex grow">
 	<div
 		class="relative mx-auto flex w-full max-w-4xl shrink-0 flex-col items-stretch justify-stretch px-2 py-9"
