@@ -3,24 +3,25 @@
 	import { IconPicker } from '$components/icon-picker';
 	import { TagColorPill } from '$components/tags/tag-color';
 	import { TagsCommandPopover } from '$components/tags/tag-command';
-	import { Badge } from '$components/ui/badge'
-	import Header from '$components/ui/Header.svelte';
+	import { Badge } from '$components/ui/badge';
 	import Editor from '$components/ui/editor/Editor.svelte';
 	import autosize from '$lib/actions/autosize';
 	import { nanoid } from '$lib/nanoid';
+	import {
+		updateAnnotationMutation
+	} from '$lib/queries/mutations/index';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { ago, formatDate, now } from '$lib/utils/date';
 	import { melt } from '@melt-ui/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
 	import type { JSONContent } from '@tiptap/core';
+	import { dequal as deepEqual } from 'dequal';
 	import { onMount, tick } from 'svelte';
-	import { updateAnnotationMutation } from '$lib/queries/mutations/index';
-	import { deepEqual } from '$lib/helpers';
 
 	export let id = nanoid();
 	$: mutation = updateAnnotationMutation({
 		input: { id, type: 'document' },
-		showToast: true
+		showToast: true,
 	});
 
 	let hasBeenUpdate = false;
@@ -31,9 +32,9 @@
 		type: 'doc',
 		content: [
 			{
-				type: 'paragraph'
-			}
-		]
+				type: 'paragraph',
+			},
+		],
 	};
 	export let autofocus = false;
 
@@ -62,7 +63,9 @@
 			.filter(Boolean) ?? [];
 
 	export let tags =
-		tagIds.map((tag) => $tagsQuery.data?.find((t) => t.id === tag)).filter(Boolean) ?? [];
+		tagIds
+			.map((tag) => $tagsQuery.data?.find((t) => t.id === tag))
+			.filter(Boolean) ?? [];
 
 	let lastSavedTags = [...tags];
 
@@ -75,12 +78,12 @@
 	});
 </script>
 
-<Header>Notes -> {title || 'Untitled note'}</Header>
+
 <div class="flex grow">
 	<div
-		class="flex flex-col relative shrink-0 max-w-4xl mx-auto justify-stretch items-stretch w-full px-2 py-9"
+		class="relative mx-auto flex w-full max-w-4xl shrink-0 flex-col items-stretch justify-stretch px-2 py-9"
 	>
-		<div class="flex flex-col grow-0 px-3">
+		<div class="flex grow-0 flex-col px-3">
 			<!-- <Textarea
 				name="title"
 				rows={1}
@@ -92,7 +95,7 @@
 					const { icon, color } = detail;
 					$mutation.mutate({
 						icon,
-						color
+						color,
 					});
 				}}
 				bind:activeColor={color}
@@ -104,17 +107,19 @@
 				on:blur={() => {
 					if (title === lastSavedTitle) return;
 					$mutation.mutate({
-						title
+						title,
 					});
 					lastSavedTitle = title;
 				}}
 				placeholder="Untitled note"
 				use:autosize
 				rows={1}
-				class="w-full h-auto resize-none appearance-none overflow-hidden bg-transparent text-5xl font-bold focus:outline-none py-3 placeholder:text-muted-foreground/50"
+				class="h-auto w-full resize-none appearance-none overflow-hidden bg-transparent py-3 text-5xl font-bold placeholder:text-muted-foreground/50 focus:outline-none"
 			/>
 			<!-- should I do a fancy tool bar component here with that melt-ui component? https://www.melt-ui.com/docs/builders/toolbar -->
-			<div class="pt-3 pb-6 flex flex-wrap items-center gap-1.5 text-muted-foreground text-sm">
+			<div
+				class="flex flex-wrap items-center gap-1.5 pb-6 pt-3 text-sm text-muted-foreground"
+			>
 				<span>
 					Created on {formatDate(createdAt)} by {user}
 				</span>
@@ -129,16 +134,20 @@
 						onOpenChange={() => {
 							if (deepEqual(tags, lastSavedTags)) return;
 							$mutation.mutate({
-								tags: tags.map((t) => t.id)
+								tags: tags.map((t) => t.id),
 							});
 							lastSavedTags = [...tags];
 						}}
 					>
-						<div class="flex gap-1 flex-wrap" use:melt={builder}>
+						<div class="flex flex-wrap gap-1" use:melt={builder}>
 							{#each tags as tag}
 								<!-- as="a" href="/tag/{tag.name}" to decide: should tehse be links or trigger popover? -->
 								<Badge>
-									<TagColorPill invertDefault class="h-2 w-2 mr-1.5" color={tag.color} />
+									<TagColorPill
+										invertDefault
+										class="mr-1.5 h-2 w-2"
+										color={tag.color}
+									/>
 									{tag.name}
 								</Badge>
 							{:else}
@@ -168,17 +177,18 @@
 				console.timeEnd('deepEqual');
 				if (equal) return;
 				$mutation.mutate({
-					contentData
+					contentData,
 				});
 			}}
-			class="grow sm:min-h-[50vh]"
+			class="grow border-0 sm:min-h-[50vh]"
 			content={contentData}
+			focusRing={false}
 			extensions={{
 				placeholder: {
 					showOnlyWhenEditable: false,
-					nonFocusedPlaceholder: 'Type note here...'
+					nonFocusedPlaceholder: 'Type note here...',
 					// placeholder: 'Type note here...'
-				}
+				},
 			}}
 		/>
 	</div>
