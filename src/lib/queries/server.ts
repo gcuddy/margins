@@ -1629,9 +1629,20 @@ export async function createFavorite({
 	input,
 }: GetCtx<typeof createFavoriteSchema>) {
 	const { userId } = ctx;
+
+	// Get sort order, to use unless otherwise specified
+	const minSortOrder = await db
+		.selectFrom('Favorite')
+		.where('userId', '=', userId)
+		.select((eb) => eb.fn.min('sortOrder').as('sortOrder'))
+		.executeTakeFirst();
+
+	const sortOrder = minSortOrder?.sortOrder ?? 0;
+
 	const dataToInsert = (Array.isArray(input) ? input : [input]).map((item) => {
 		const id = item.id ?? nanoid();
 		return {
+			sortOrder,
 			...item,
 			id,
 			type: item.folderName ? 'FOLDER' : 'FAVORITE',
