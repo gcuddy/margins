@@ -16,7 +16,12 @@ type CommandWithAction<TFilter = unknown> = {
 
 type CommandWithItems<TFilter = unknown> = {
 	action?: never;
-	items: Command<TFilter>[];
+	items: Commands;
+};
+
+type Commands<TFilter = unknown> = {
+	heading?: string;
+	commands: Command<TFilter>[];
 };
 
 type CommandWithComponent = {};

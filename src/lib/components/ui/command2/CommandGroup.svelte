@@ -53,7 +53,7 @@
 	{#if heading || $$slots.heading}
 		<div data-command-group-heading aria-hidden id={headingId}>
 			{#if heading}
-				{heading}
+				<span class="line-clamp-2">{heading}</span>
 			{:else}
 				<slot name="heading" />
 			{/if}

@@ -8,8 +8,8 @@
 		CommandGroup,
 		CommandItem,
 		commandCtx,
-        CommandLoading,
-        CommandEmpty
+		CommandLoading,
+		CommandEmpty,
 	} from '$components/ui/command2';
 	import { Muted } from '$lib/components/ui/typography';
 	import { effect } from '$lib/helpers';
@@ -20,6 +20,8 @@
 	import { User2 } from 'lucide-svelte';
 	import { Skeleton } from '$components/ui/skeleton';
 	import { commandItemVariants } from '$components/ui/command2/style';
+	import type { Command } from '$lib/types/command';
+	import { entryTypeIcon } from '$components/entries/icons';
 
 	const {
 		// options: { multiple },
@@ -34,8 +36,9 @@
 
 	effect(inputValue, ($inputValue) => debouncedFn($inputValue));
 
-    $: $loading = $inputValue ? $query.isPending || $query.isFetching : false;
+	$: $loading = $inputValue ? $query.isPending || $query.isFetching : false;
 
+	export let actions: Array<Array<Command>> = [];
 
 	const query = createQuery(
 		derived(debouncedInputValue, ($value) => ({
@@ -65,38 +68,36 @@
 </script>
 
 <CommandGroup>
-	{#if  $query.isLoading || ($query.isFetching && !$query.data && $inputValue.length > 1)}
+	{#if $query.isLoading || ($query.isFetching && !$query.data && $inputValue.length > 1)}
 		<CommandLoading>
-
-                <div class={commandItemVariants()}>
-                    <Skeleton class="h-10 w-8 mr-4 rounded-md" />
-                    <div class="flex flex-col grow gap-1">
-                        <Skeleton class="h-3 w-full rounded-md" />
-                        <Skeleton class="h-3 w-3/4 rounded-md" />
-                    </div>
-                </div>
-                <div class={commandItemVariants()}>
-                    <Skeleton class="h-10 w-8 mr-4 rounded-md" />
-                    <div class="flex flex-col grow gap-1">
-                        <Skeleton class="h-3 w-full rounded-md" />
-                        <Skeleton class="h-3 w-3/4 rounded-md" />
-                    </div>
-                </div>
-                <div class={commandItemVariants()}>
-                    <Skeleton class="h-10 w-8 mr-4 rounded-md" />
-                    <div class="flex flex-col grow gap-1">
-                        <Skeleton class="h-3 w-full rounded-md" />
-                        <Skeleton class="h-3 w-3/4 rounded-md" />
-                    </div>
-                </div>
-
-        </CommandLoading>
+			<div class={commandItemVariants()}>
+				<Skeleton class="mr-4 h-10 w-8 rounded-md" />
+				<div class="flex grow flex-col gap-1">
+					<Skeleton class="h-3 w-full rounded-md" />
+					<Skeleton class="h-3 w-3/4 rounded-md" />
+				</div>
+			</div>
+			<div class={commandItemVariants()}>
+				<Skeleton class="mr-4 h-10 w-8 rounded-md" />
+				<div class="flex grow flex-col gap-1">
+					<Skeleton class="h-3 w-full rounded-md" />
+					<Skeleton class="h-3 w-3/4 rounded-md" />
+				</div>
+			</div>
+			<div class={commandItemVariants()}>
+				<Skeleton class="mr-4 h-10 w-8 rounded-md" />
+				<div class="flex grow flex-col gap-1">
+					<Skeleton class="h-3 w-full rounded-md" />
+					<Skeleton class="h-3 w-3/4 rounded-md" />
+				</div>
+			</div>
+		</CommandLoading>
 	{:else if $inputValue.length < 2}
 		<div
-			class="flex p-8 w-full h-full flex-col items-center gap-4 justify-center"
+			class="flex h-full w-full flex-col items-center justify-center gap-4 p-8"
 		>
 			<EntryIcon type="movie" />
-			<div class="flex flex-col justify-center items-center gap-1">
+			<div class="flex flex-col items-center justify-center gap-1">
 				<span class="font-semibold leading-none tracking-tight"
 					>Search Movies & TV Shows</span
 				>
@@ -108,6 +109,18 @@
 			{#if media.media_type === 'movie'}
 				{@const movie = media}
 				<CommandItem
+					id="tmdb-movie-{movie.id}"
+					actions={[
+						[
+							{
+								text: 'Open movie',
+								icon: entryTypeIcon['movie'],
+								action: () => {
+									goto(`/movie/${movie.id}`);
+								},
+							},
+						],
+					]}
 					value={movie.title}
 					onSelect={() => {
 						onSelect(movie);
@@ -161,7 +174,7 @@
 						/>
 					{:else}
 						<div
-							class="mr-4 aspect-square h-10 w-8 shrink-0 rounded-md object-cover bg-gray-500 flex items-center justify-center"
+							class="mr-4 flex aspect-square h-10 w-8 shrink-0 items-center justify-center rounded-md bg-gray-500 object-cover"
 						>
 							<User2 class="h-6 w-6 text-gray-100" />
 						</div>
@@ -175,7 +188,7 @@
 				</CommandItem>
 			{/if}
 		{:else}
-        <CommandEmpty show>No results found.</CommandEmpty>
+			<CommandEmpty show>No results found.</CommandEmpty>
 		{/each}
 	{/if}
 </CommandGroup>

@@ -21,6 +21,7 @@ import {
 	isHTMLElement,
 	toString,
 } from '$lib/helpers';
+import type { Command } from '$lib/types/command';
 
 export type CommandProps<T> = {
 	/**
@@ -113,8 +114,7 @@ export function shouldFilterStore(defaultValue?: boolean) {
 export const SELECT_EVENT_NAME = 'command-item-select';
 
 export function createCommandStore<T>(props?: CommandProps<T>) {
-
-    console.log('got props', props);
+	console.log('got props', props);
 	const { open } = props ?? {};
 	const openStore = open ?? writable(false);
 	const activeElement = writable<HTMLElement | null>(null);
@@ -134,6 +134,16 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		}
 		return getOptionProps($el);
 	});
+
+	const activeId = derived(activeElement, ($el) => $el?.dataset?.id ?? null);
+
+	const activeActions = derived(activeId, ($id) => {
+		if (!$id) {
+			return [];
+		}
+		return getActionsForItem($id) ?? [];
+	});
+
 	const inputValue = props?.inputValue ?? writable('');
 	const selectedValue =
 		props?.selectedValue ?? writable<Array<ComboboxOption<T>>>([]);
@@ -470,6 +480,18 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 		item.dispatchEvent(new Event(SELECT_EVENT_NAME));
 	}
 
+	const actionsMap = new Map<string, Array<Array<Command>>>();
+
+	function registerActions(id: string, actions: Array<Array<Command>>) {
+		actionsMap.set(id, actions);
+		return () => {
+			actionsMap.delete(id);
+		};
+	}
+	function getActionsForItem(item: string) {
+		return actionsMap.get(item);
+	}
+
 	function registerItem(id: string | Array<string>, groupId?: string) {
 		console.log(`Registering item`, { groupId, id });
 
@@ -682,6 +704,8 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 				const $selectedValue = get(selectedValue);
 				return $selectedValue.some((v) => comparisonFunction(v.value, value));
 			},
+			getActionsForItem,
+			registerActions,
 			registerCallback,
 			registerGroup,
 			registerItem,
@@ -717,7 +741,9 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			onKeydown: writable(props?.onKeydown),
 		},
 		state: {
+			activeActions,
 			activeElement,
+			activeId,
 			activeOptionProps,
 			activeValue,
 			filtered: writable({}),

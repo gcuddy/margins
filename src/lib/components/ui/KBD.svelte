@@ -21,7 +21,7 @@
 
 <kbd
 	class={cn(
-        "ml-auto text-xs tracking-widest border text-muted-foreground shadow-sm p-0.5 rounded min-w-[17px] capitalize align-baseline text-center",
+        "ml-auto bg-secondary text-xs tracking-widest text-secondary-foreground/75 shadow-sm px-1 rounded h-5 w-5 capitalize flex items-center justify-center",
         className
     )}
 >

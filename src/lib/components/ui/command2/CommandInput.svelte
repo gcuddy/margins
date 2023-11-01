@@ -15,12 +15,17 @@
 	import { INTERACTION_KEYS, kbd } from './store';
 	import type { InputProps } from './types';
 
-	type $$Props = InputProps;
+	type $$Props = InputProps & {
+		onKeydown?: ((e: KeyboardEvent) => void) | undefined;
+		showIcon?: boolean;
+        inputEl?: HTMLInputElement;
+	};
 
-	let inputEl: HTMLInputElement;
+	export let inputEl: HTMLInputElement | undefined = undefined;
 	export let className: $$Props['class'] = undefined;
 	// export let unstyled = false;
-	export let onKeydown: ((e: KeyboardEvent) => void) | undefined = undefined;
+	export let onKeydown: $$Props['onKeydown'] = undefined;
+	export let showIcon = true;
 
 	export const focus = () => {
 		inputEl?.focus();
@@ -31,10 +36,17 @@
 		ids,
 		measurements: { inputHeight },
 		options,
-		state: { activeElement, inputValue, loading, open, placeholder, selectedValue },
+		state: {
+			activeElement,
+			inputValue,
+			loading,
+			open,
+			placeholder,
+			selectedValue,
+		},
 	} = ctx.get();
 
-    $: onKeydownOption = options.onKeydown;
+	$: onKeydownOption = options.onKeydown;
 
 	function handleClick(e: MouseEvent) {
 		if ($open) {
@@ -49,7 +61,7 @@
 		e: KeyboardEvent & { currentTarget: EventTarget & HTMLInputElement },
 	) {
 		onKeydown?.(e);
-        $onKeydownOption?.(e);
+		$onKeydownOption?.(e);
 		if (e.defaultPrevented) {
 			return;
 		}
@@ -229,10 +241,12 @@
 	class="flex items-center px-3"
 	data-command-input-wrapper
 >
-	{#if $loading}
-		<Loader2 class="mr-2 h-4 w-4 shrink-0 opacity-50 animate-spin" />
-	{:else}
-		<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
+	{#if showIcon}
+		{#if $loading}
+			<Loader2 class="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
+		{:else}
+			<Search class="mr-2 h-4 w-4 shrink-0 opacity-50" />
+		{/if}
 	{/if}
 	<input
 		data-command-input
@@ -249,7 +263,7 @@
 		id={ids.input}
 		role="combobox"
 		type="text"
-        placeholder={$placeholder ?? $$props.placeholder}
+		placeholder={$placeholder ?? $$props.placeholder}
 		{...$$restProps}
 		bind:this={inputEl}
 		bind:value={$inputValue}

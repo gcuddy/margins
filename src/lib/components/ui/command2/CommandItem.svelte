@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { Command } from '$lib/types/command';
+
 	import { commandItemVariants } from './style';
 
 	import {
@@ -17,6 +19,7 @@
 	type T = $$Generic;
 
 	type $$Props = HTMLAttributes<HTMLDivElement> & {
+		actions?: Array<Array<Command<T>>>;
 		cancelClose?: string | HTMLElement | Array<HTMLElement>;
 		containsPages?: boolean;
 		disabled?: boolean;
@@ -24,10 +27,15 @@
 		id?: string;
 		label?: string;
 		onSelect?: (value: T | undefined) => void;
-        selected?: boolean;
+		selected?: boolean;
+		title?: string;
 		unstyled?: boolean;
 		value?: T;
 	};
+
+	let _actions: $$Props['actions'] = [];
+
+	export { _actions as actions };
 
 	export let disabled = false;
 	export let onSelect = (value: T | undefined) => {};
@@ -40,6 +48,7 @@
 	export let valueToString: $$Props['valueToString'] = undefined;
 	export let label = '';
 	export let value: T | undefined = undefined;
+	export let title: $$Props['title'] = undefined;
 
 	$: if (!label && node) {
 		label = node.textContent?.trim() || '';
@@ -54,7 +63,7 @@
 
 	const {
 		actions,
-		helpers,
+		helpers: { registerActions },
 		options: { filterFunction, comparisonFunction },
 		state: {
 			activeElement,
@@ -86,7 +95,7 @@
 	}
 
 	function handleClick(e: Event) {
-        console.log({e})
+		console.log({ e });
 		// If the item is disabled, `preventDefault` to stop the input losing focus.
 		if (isElementDisabled(node)) {
 			e.preventDefault();
@@ -112,10 +121,9 @@
 		actions.closeMenu();
 	}
 
-
 	let hidden = false;
 
-    // $: console.log({hidden, $inputValue, value, filterFunction, comparisonFunction, $shouldFilter})
+	// $: console.log({hidden, $inputValue, value, filterFunction, comparisonFunction, $shouldFilter})
 	$: if ($shouldFilter === false) {
 		hidden = false;
 	} else if (!$inputValue) {
@@ -129,11 +137,11 @@
 	}
 
 	// false : !$inputValue ? false : !$filtered.ids.includes(id);
-    export let selected: boolean | undefined = undefined;
+	export let selected: boolean | undefined = undefined;
 	$: _selected = $selectedValue.some((sv) => {
-        return comparisonFunction(sv.value, value)
-    });
-    $: computedSelected = selected !== undefined ? selected : _selected;
+		return comparisonFunction(sv.value, value);
+	});
+	$: computedSelected = selected !== undefined ? selected : _selected;
 
 	function registerEvent(node: HTMLElement) {
 		node.addEventListener(SELECT_EVENT_NAME, () => {
@@ -148,21 +156,23 @@
 			},
 		};
 	}
+
+	onMount(() => {
+		const unmount = registerActions(id, (_actions as any) ?? []);
+		return unmount;
+	});
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
-	class={cn(
-		!unstyled &&
-			commandItemVariants(),
-		className,
-		hidden && 'hidden',
-	)}
+	class={cn(!unstyled && commandItemVariants(), className, hidden && 'hidden')}
 	bind:this={node}
 	{id}
 	use:registerEvent
 	data-value={JSON.stringify(value)}
+	data-title={title}
 	data-label={label}
+	data-id={id}
 	data-disabled={disabled ? '' : undefined}
 	aria-disabled={disabled ? true : undefined}
 	aria-selected={computedSelected}

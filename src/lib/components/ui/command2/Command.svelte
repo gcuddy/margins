@@ -38,8 +38,9 @@
 	type T = $$Generic;
 
 	const {
+        actions,
 		measurements: { tweenedHeight },
-		state: { filtered, selectedValue, shouldFilter: localShouldFilter },
+		state: { activeElement, filtered, selectedValue, shouldFilter: localShouldFilter },
 	} = ctx.set<T>({
 		commandPages,
 		comparisonFunction,
@@ -106,6 +107,7 @@
 		)}
 	>
 		<slot
+            selectActiveItem={() => $activeElement && actions.selectItem($activeElement)}
 			createPageItems={pageStore.helpers.createItems}
 			filtered={$filtered}
 			page={$pageStore}
