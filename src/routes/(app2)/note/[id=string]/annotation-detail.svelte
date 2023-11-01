@@ -7,10 +7,6 @@
 	export let note: Note;
 </script>
 
-<Header>
-	Notes -> {note?.entry?.title}
-</Header>
-
 <div class="flex grow">
 	<div
 		class="flex flex-col gap-4 relative shrink-0 max-w-4xl mx-auto justify-stretch items-stretch w-full px-2 py-9"

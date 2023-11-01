@@ -30,7 +30,7 @@
 	);
 	$: title = $query.data?.title || '';
 	$: console.log({ $query });
-	$: pin = $pins.data?.find((p) => p.note?.id === $query.data?.id);
+	$: pin = $pins.data?.find((p) => p.note?.id === data.id);
 </script>
 
 <Header>
