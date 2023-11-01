@@ -17,31 +17,31 @@
 	}
 
 	// bad idea?
-    const createState = () => {
-        const state = writable<State>({
-            isOpen: false,
-            pages: [],
-            placeholder: 'Type a command or search...',
-            search: '',
-            shouldFilter: true,
-            allowPages: true,
-        });
+	const createState = () => {
+		const state = writable<State>({
+			isOpen: false,
+			pages: [],
+			placeholder: 'Type a command or search...',
+			search: '',
+			shouldFilter: true,
+			allowPages: true,
+		});
 
-        return {
-            ...state,
-            openFresh: () => {
-               state.set({
-                    isOpen: true,
-                    pages: [],
-                    placeholder: 'Type a command or search...',
-                    search: '',
-                    shouldFilter: true,
-                    allowPages: true,
-                })
-            },
-        }
-    }
-    const state = createState();
+		return {
+			...state,
+			openFresh: () => {
+				state.set({
+					isOpen: true,
+					pages: [],
+					placeholder: 'Type a command or search...',
+					search: '',
+					shouldFilter: true,
+					allowPages: true,
+				});
+			},
+		};
+	};
+	const state = createState();
 	export { state as commanderState };
 </script>
 
@@ -53,7 +53,7 @@
 		Search,
 		Settings,
 		TagIcon,
-        StickyNote
+		StickyNote,
 	} from 'lucide-svelte';
 	import { getContext } from 'svelte';
 	import { derived, type Writable, writable } from 'svelte/store';
@@ -123,11 +123,11 @@
 		transitionPage();
 	}
 	function back() {
-        if (inEntryCommands) {
-            entryCommands.back();
-            transitionPage();
-            return;
-        }
+		if (inEntryCommands) {
+			entryCommands.back();
+			transitionPage();
+			return;
+		}
 		if ($state.allowPages === false) return;
 		$state.pages = $state.pages.slice(0, -1);
 		transitionPage();
@@ -159,7 +159,7 @@
 		cmd_open.set(state.isOpen);
 	});
 
-    const placeholder = writable('Type a command or search...')
+	const placeholder = writable('Type a command or search...');
 
 	$: if (!$page) {
 		$state.shouldFilter = true;
@@ -176,9 +176,9 @@
 
 	let hideDefault = false;
 
-    let inEntryCommands = false;
-    $: console.log({inEntryCommands})
-    let entryCommands: EntryCommands;
+	let inEntryCommands = false;
+	$: console.log({ inEntryCommands });
+	let entryCommands: EntryCommands;
 </script>
 
 <svelte:window
@@ -200,12 +200,14 @@
 	bind:open={$state.isOpen}
 	{inputValue}
 	{container}
-    {placeholder}
+	{placeholder}
 	commandPages={pages}
 >
 	{#if $checkedEntryIds.length}
-		<div class="text-xs text-muted-foreground px-3 pt-3 min-w-0">
-			<Badge class="text-xs truncate" variant="secondary">{$checkedCommandBadgeDisplay}</Badge>
+		<div class="min-w-0 px-3 pt-3 text-xs text-muted-foreground">
+			<Badge class="truncate text-xs" variant="secondary"
+				>{$checkedCommandBadgeDisplay}</Badge
+			>
 		</div>
 	{/if}
 	<CommandInput
@@ -225,10 +227,10 @@
 					: $checkedEntryIds}
 
 				<EntryCommands
-                    {shouldFilter}
-                    on:transition={transitionPage}
-                    bind:this={entryCommands}
-                    bind:inPage={inEntryCommands}
+					{shouldFilter}
+					on:transition={transitionPage}
+					bind:this={entryCommands}
+					bind:inPage={inEntryCommands}
 					bind:open={$state.isOpen}
 					entryIds={ids}
 				/>
@@ -244,6 +246,17 @@
 				</CommandGroup> -->
 			{/if}
 			{#if !inEntryCommands}
+				<CommandGroup heading="Create">
+					<CommandItem
+						onSelect={() => {
+							goto(`/notes/new`);
+							$state.isOpen = false;
+						}}
+					>
+						<StickyNote class="mr-2 h-4 w-4" />
+						Create note
+					</CommandItem>
+				</CommandGroup>
 				<CommandGroup heading="Navigation">
 					<CommandItem
 						onSelect={() => {
@@ -404,15 +417,6 @@
 						<span>Search podcasts</span>
 					</CommandItem>
 				</CommandGroup>
-                <CommandGroup heading="Create">
-                    <CommandItem onSelect={() => {
-                        goto(`/notes/new`);
-                        $state.isOpen = false;
-                    }}>
-                        <StickyNote class="mr-2 h-4 w-4" />
-                        Create note
-                    </CommandItem>
-                </CommandGroup>
 				<CommandGroup heading="Settings">
 					<CommandItem
 						onSelect={() => {
