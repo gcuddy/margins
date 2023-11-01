@@ -15,6 +15,8 @@ const config = {
 		alias: {
 			$components: 'src/lib/components',
 			'$components/*': 'src/lib/components/*',
+			$routes: 'src/routes',
+			'$routes/*': 'src/routes/*',
 		},
 		serviceWorker: {
 			register: false,

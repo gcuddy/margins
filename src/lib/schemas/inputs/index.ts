@@ -8,6 +8,10 @@ import {
 	uidComparatorSchema,
 } from './comparators';
 
+export const qSchema = z.object({
+	q: z.string(),
+});
+
 //should keys correspond to column names?
 const baseCollectionFilterSchema = z
 	.object({

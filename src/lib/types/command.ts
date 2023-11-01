@@ -10,7 +10,7 @@ type BaseCommand<TFilter = unknown> = {
 };
 
 type CommandWithAction<TFilter = unknown> = {
-	action: (data?: TFilter) => void;
+	action: (data?: TFilter) => void | (() => void);
 	items?: never;
 };
 

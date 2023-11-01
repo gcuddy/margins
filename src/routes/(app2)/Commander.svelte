@@ -98,6 +98,8 @@
 	import { Button } from '$components/ui/button';
 	import Kbd from '$components/ui/KBD.svelte';
 	import SubCommand from '$components/sub-command.svelte';
+	import { queryFactory } from '$lib/queries/querykeys';
+	import { createQuery } from '@tanstack/svelte-query';
 
 	const page = derived(state, ($state) => $state.pages.at(-1));
 	const pages = derived(state, ($state) => $state.pages);
@@ -185,6 +187,14 @@
 
 	let subCommandOpen = false;
 	let inputEl: HTMLInputElement;
+
+	/** Fallback Searches */
+	const fallbackQuery = createQuery(
+		derived(inputValue, ($value) => ({
+			...queryFactory.search.all({ q: $value }),
+			enabled: $value.length > 2 && !inEntryCommands,
+		})),
+	);
 </script>
 
 <svelte:window
@@ -213,9 +223,9 @@
 >
 	{#if $checkedEntryIds.length}
 		<div class="min-w-0 px-3 pt-3 text-xs text-muted-foreground">
-			<Badge class="truncate text-xs" variant="secondary"
-				>{$checkedCommandBadgeDisplay}</Badge
-			>
+			<Badge class="max-w-[85%]" variant="secondary">
+				<span class="truncate">{$checkedCommandBadgeDisplay}</span>
+			</Badge>
 		</div>
 	{/if}
 	<CommandInput
@@ -447,6 +457,22 @@
 						<span>Settings</span>
 						<CommandShortcut>⌘S</CommandShortcut>
 					</CommandItem>
+				</CommandGroup>
+				<CommandGroup heading='Search for "{$inputValue}"'>
+					{#if $fallbackQuery.isPending}
+						loading...
+					{:else if $fallbackQuery.data}
+						{#each $fallbackQuery.data as data}
+							<CommandItem>
+								{#if data.type === 'entry'}
+									entry - <span>{data.data.title}</span>
+								{:else}
+                                note -
+									<span>{data.data.title}</span>
+								{/if}
+							</CommandItem>
+						{/each}
+					{/if}
 				</CommandGroup>
 			{/if}
 		{/if}

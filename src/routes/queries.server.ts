@@ -98,6 +98,7 @@ import {
 import { twitter } from '$lib/twitter';
 import { typeSchema } from '$lib/types';
 import type { Replace } from 'type-fest';
+import { searchAll } from '$lib/db/queries/search';
 
 export type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -1237,6 +1238,7 @@ export const queries = {
 		schema: qSchema,
 		staleTime: 1000,
 	}),
+	searchAll,
 	searchBooks: query({
 		authorized: false,
 		fn: async ({ input }) => {

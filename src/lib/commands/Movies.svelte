@@ -22,6 +22,7 @@
 	import { commandItemVariants } from '$components/ui/command2/style';
 	import type { Command } from '$lib/types/command';
 	import { entryTypeIcon } from '$components/entries/icons';
+	import { createCopyCommands } from './sub/sub-commands';
 
 	const {
 		// options: { multiple },
@@ -119,7 +120,22 @@
 									goto(`/movie/${movie.id}`);
 								},
 							},
+							{
+								text: 'Open movie in TMDB',
+								icon: entryTypeIcon['movie'],
+								action: () => {
+									window.open(
+										`https://www.themoviedb.org/movie/${movie.id}`,
+										'_blank',
+									);
+								},
+							},
 						],
+						createCopyCommands({
+							name: movie.title,
+							externalUrl: `https://www.themoviedb.org/movie/${movie.id}`,
+							_name: 'title',
+						}),
 					]}
 					value={movie.title}
 					onSelect={() => {
@@ -165,6 +181,32 @@
 					onSelect={() => {
 						onSelect(person);
 					}}
+					actions={[
+						[
+							{
+								text: "Go to person's page",
+								icon: User2,
+								action: () => {
+									goto(`/people/t${person.id}`);
+								},
+							},
+							{
+								text: 'Open in TMDB',
+								icon: entryTypeIcon['movie'],
+								action: () => {
+									window.open(
+										`https://www.themoviedb.org/person/${person.id}`,
+										'_blank',
+									);
+								},
+							},
+						],
+						// copy commands
+						createCopyCommands({
+							name: person.name,
+							externalUrl: `https://www.themoviedb.org/person/${person.id}`,
+						}),
+					]}
 				>
 					{#if person.profile_path}
 						<img

@@ -357,7 +357,7 @@
 									}}
 									alt=""
 									class={clsx(
-										'relative h-full w-full rounded-md object-cover transition saturate-[.75] group-data-[active=true]/container:saturate-100 group-hover/select:saturate-100',
+										'relative h-full w-full rounded-md object-cover transition group-hover/select:saturate-100',
 										checked && 'invisible',
 										entry.type === 'movie' && 'border',
 									)}

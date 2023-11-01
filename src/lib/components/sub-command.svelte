@@ -81,10 +81,14 @@
 									label={action.text}
 									title={action.text}
 									onSelect={() => {
-										action.action?.();
-										open = false;
-										// TODO: allow maybe returning something in action to cause panel to not close?
-										dispatch('close');
+										const returnFn = action.action?.();
+                                        if (returnFn && typeof returnFn === "function") {
+                                            returnFn();
+                                        } else {
+                                            open = false;
+                                            // TODO: allow maybe returning something in action to cause panel to not close?
+                                            dispatch('close');
+                                        }
 									}}
 								>
 									<svelte:component this={action.icon} class="mr-2 h-4 w-4" />

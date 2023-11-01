@@ -47,7 +47,7 @@
             forceTop && 'z-[9999]'
 		)}
 	>
-    <div {inert} class={inert ? 'pointer-events-none' : ''}>
+    <div {inert} class={cn("min-w-0", inert ? 'pointer-events-none' : '')}>
 		<Command
             {defaultShouldFilter}
             {shouldFilter}
