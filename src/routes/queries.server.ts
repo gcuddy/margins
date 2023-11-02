@@ -99,6 +99,8 @@ import { twitter } from '$lib/twitter';
 import { typeSchema } from '$lib/types';
 import type { Replace } from 'type-fest';
 import { searchAll } from '$lib/db/queries/search';
+import type { TargetSchema } from '$lib/annotation';
+import type { JSONContent } from '@tiptap/core';
 
 export type Query<TSchema extends z.ZodTypeAny, TData> = {
 	// defaults to TRUE
@@ -792,6 +794,10 @@ export const queries = {
 				.where('a.userId', '=', ctx.userId)
 				// TODO: select only the fields we need
 				.selectAll('a')
+                .$narrowType<{
+                    target: TargetSchema | null;
+                    contentData: JSONContent | null;
+                }>()
 				.execute();
 		},
 		schema: z.object({

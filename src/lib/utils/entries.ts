@@ -57,7 +57,9 @@ export function make_link(entry?: SlimmerEntry | null, subpath = '') {
 	}`;
 }
 
-export function make_url(entry?: SlimEntry & { uri?: string | null }) {
+export function make_url(
+	entry?: Omit<SlimEntry, 'published'> & { uri?: string | null },
+) {
 	if (!entry) return null;
 	if (entry.uri?.startsWith('http')) {
 		return entry.uri;

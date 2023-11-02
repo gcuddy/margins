@@ -1,7 +1,14 @@
 <script lang="ts" context="module">
 	type State = {
 		isOpen: boolean;
-		pages: Array<string>;
+		pages: Array<
+			| string
+			| ComponentType
+			| {
+					component: ComponentType<SvelteComponent>;
+					props?: ComponentProps<SvelteComponent>;
+			  }
+		>;
 		placeholder: string;
 		search: string;
 		shouldFilter: boolean;
@@ -39,10 +46,44 @@
 					allowPages: true,
 				});
 			},
+			addPage: <TComponent extends SvelteComponent>(
+				page:
+					| string
+					| ComponentType
+					| {
+							component: ComponentType<TComponent>;
+							props?: ComponentProps<TComponent>;
+					  },
+				opts?: Partial<State>,
+			) => {
+				if (typeof page === 'string') {
+					state.update((s) => ({
+						...s,
+						...opts,
+						pages: [...s.pages, page],
+					}));
+				} else {
+					state.update((s) => ({
+						...s,
+						pages: [...s.pages, page],
+					}));
+				}
+				transitionPage();
+			},
 		};
 	};
 	const state = createState();
 	export { state as commanderState };
+
+	let commandDialog: CommandDialog<unknown, any>;
+	const inputValue = writable('');
+
+	function transitionPage() {
+		commandDialog.playBounce();
+		inputValue.set('');
+	}
+
+
 </script>
 
 <script lang="ts">
@@ -52,27 +93,37 @@
 		CreditCard,
 		Search,
 		Settings,
-		TagIcon,
 		StickyNote,
 	} from 'lucide-svelte';
-	import { getContext } from 'svelte';
-	import { derived, type Writable, writable } from 'svelte/store';
+	import {
+		type ComponentProps,
+		type ComponentType,
+		type SvelteComponent,
+		getContext,
+	} from 'svelte';
+	import { derived, writable, type Writable } from 'svelte/store';
 
 	import { goto } from '$app/navigation';
 	import { page as spage } from '$app/stores';
+	import { checkedEntryIds } from '$components/entries/multi-select';
+	import SubCommand from '$components/sub-command.svelte';
+	import Kbd from '$components/ui/KBD.svelte';
+	import { Badge } from '$components/ui/badge';
+	import { Button } from '$components/ui/button';
 	import {
 		Books,
-		Music,
+		EntryCommands,
 		Movies,
+		Music,
+		Podcasts,
 		Subscriptions,
 		Tags,
-		Podcasts,
-		EntryCommands,
 	} from '$lib/commands';
 	import Annotations from '$lib/commands/Annotations.svelte';
 	import Collections from '$lib/commands/Collections.svelte';
 	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import Query from '$lib/commands/Query.svelte';
+	import EntryCommandItem from '$lib/commands/items/entry-command-item.svelte';
+	import NoteCommandItem from '$lib/commands/items/note-command-item.svelte';
 	import { cmd_open } from '$lib/components/ui/command/stores';
 	import {
 		CommandDialog,
@@ -84,31 +135,16 @@
 		CommandSeparator,
 		CommandShortcut,
 	} from '$lib/components/ui/command2';
-	import {
-		darkThemes,
-		themes,
-		updateTheme,
-	} from '$lib/features/settings/themes';
-	import { queryKeys } from '$lib/queries/keys';
-	import { checkedEntryIds } from '$components/entries/multi-select';
-	import { Badge } from '$components/ui/badge';
-	import { createSetTagsMutation } from '$lib/queries/mutations';
+	import { themes, updateTheme } from '$lib/features/settings/themes';
 	import { objectEntries } from '$lib/helpers';
-	import { checkedCommandBadgeDisplay } from '$lib/stores/entry-state';
-	import { Button } from '$components/ui/button';
-	import Kbd from '$components/ui/KBD.svelte';
-	import SubCommand from '$components/sub-command.svelte';
+	import { createSetTagsMutation } from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { createQuery } from '@tanstack/svelte-query';
+	import { checkedCommandBadgeDisplay } from '$lib/stores/entry-state';
 	import type { Commands } from '$lib/types/command';
-	import EntryCommandItem from '$lib/commands/items/entry-command-item.svelte';
-	import NoteCommandItem from '$lib/commands/items/note-command-item.svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
 	const page = derived(state, ($state) => $state.pages.at(-1));
 	const pages = derived(state, ($state) => $state.pages);
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let commandDialog: CommandDialog<unknown, any>;
 
 	// $: {
 	// 	// Whenever a page changes...
@@ -119,17 +155,13 @@
 	// 	}
 	// }
 
-	const shouldFilter = writable(true);
-
-	function transitionPage() {
-		commandDialog.playBounce();
-		inputValue.set('');
-	}
-
-	function addPage(page: string) {
+    function addPage(page: string) {
 		$state.pages = [...$state.pages, page];
 		transitionPage();
 	}
+
+	const shouldFilter = writable(true);
+
 	function back() {
 		if (inEntryCommands) {
 			entryCommands.back();
@@ -175,9 +207,10 @@
 		$placeholder = 'Type a command or search...';
 	}
 
+    $: console.log({$page})
+
 	$: console.log({ $shouldFilter });
 
-	const inputValue = writable('');
 	const container = writable<HTMLElement | null>(null);
 
 	const setTagsMutation = createSetTagsMutation();
@@ -488,6 +521,13 @@
 					</CommandGroup>
 				{/if}
 			{/if}
+		{:else if typeof $page !== 'string'}
+        {#if typeof $page === 'object' && 'component' in $page}
+        {JSON.stringify($page)}
+				<!-- <svelte:component this={$page.component} {...$page.props} bind:open={$state.isOpen} /> -->
+			{:else}
+				<!-- <svelte:component this={$page} bind:open={$state.isOpen} /> -->
+			{/if}
 		{/if}
 		{#if $page === 'theme'}
 			<CommandGroup>
@@ -563,6 +603,9 @@
 				bind:isOpen={$state.isOpen}
 			/>
 		{/if}
+
+		<!-- this should be ELSE if -->
+		{#if typeof $page === 'object'}{/if}
 	</CommandList>
 	<div
 		data-command-footer

@@ -14,7 +14,7 @@
 	} = Command.ctx.get();
 
 	function handleKeydown(e: KeyboardEvent) {
-        if (!_actions.length) return;
+		if (!_actions.length) return;
 		if (e.key === 'k' && e.metaKey) {
 			e.preventDefault();
 			open = !open;
@@ -26,6 +26,8 @@
 	export let actions: Array<Array<CommandType>> | undefined = undefined;
 
 	const dispatch = createEventDispatcher();
+
+	$: console.log({ $activeActions });
 
 	$: _actions = actions ?? $activeActions;
 </script>
@@ -82,13 +84,13 @@
 									title={action.text}
 									onSelect={() => {
 										const returnFn = action.action?.();
-                                        if (returnFn && typeof returnFn === "function") {
-                                            returnFn();
-                                        } else {
-                                            open = false;
-                                            // TODO: allow maybe returning something in action to cause panel to not close?
-                                            dispatch('close');
-                                        }
+										open = false;
+										// if (returnFn && typeof returnFn === "function") {
+										//     returnFn();
+										// } else {
+										//     // TODO: allow maybe returning something in action to cause panel to not close?
+										//     dispatch('close');
+										// }
 									}}
 								>
 									<svelte:component this={action.icon} class="mr-2 h-4 w-4" />

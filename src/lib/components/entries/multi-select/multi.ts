@@ -3,7 +3,6 @@ import type { RequireAtLeastOne } from 'type-fest';
 
 import { checkIfKeyboardEventsAllowed as global_checkIfKeyboardEventsAllowed } from '$lib/helpers';
 
-
 type State<T extends string | number> = {
 	highlighted: T | null;
 	items: Array<T>;
@@ -198,7 +197,9 @@ export function create_multi<T extends string | number>({
 					return;
 				}
 				// check to make sure activelemeent is body or [data-id] inside root
-				if (!checkIfKeyboardEventsAllowed()) {
+				const allowed = checkIfKeyboardEventsAllowed();
+				console.log({ allowed });
+				if (!allowed) {
 					return;
 				}
 				if (event.key === 'ArrowUp' || event.key === 'k') {
@@ -210,6 +211,7 @@ export function create_multi<T extends string | number>({
 					if (!checkIfKeyboardEventsAllowed()) {
 						return;
 					}
+					console.log('arrow up / k ');
 					// selectAdjacent();
 					event.preventDefault();
 					state.update(($state) => {

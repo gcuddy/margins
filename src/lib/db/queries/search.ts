@@ -36,6 +36,14 @@ export async function searchEntryTitles({
 			'e.uri',
 			'e.wordCount',
 		])
+		.select((eb) =>
+			eb
+				.selectFrom('Annotation')
+				.whereRef('Annotation.entryId', '=', 'e.id')
+				.where('Annotation.userId', '=', ctx.userId)
+				.select((eb) => eb.fn.countAll().as('annotation_num'))
+				.as('num_annotations'),
+		)
 		.select(
 			sql`match(e.title) against (${match_q} in boolean mode)`.as('score'),
 		)

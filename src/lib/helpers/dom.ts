@@ -4,6 +4,7 @@ export function getElementIndex(element: HTMLElement) {
 
 export function checkIfKeyboardEventsAllowed(el = document.activeElement) {
 	console.log('checking if keyboard events allowed');
+    console.log(el);
 	if (el?.matches('input, textarea, select, [contenteditable]')) {
 		return false;
 	}

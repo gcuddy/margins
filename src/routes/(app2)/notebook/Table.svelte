@@ -163,7 +163,7 @@
 	});
 
 	const multi = create_multi({
-		allowedSelector: 'input',
+		// allowedSelector: 'input',
 		items: $notes.map((note) => note.id),
 		onEnter(item) {
 			const row = $rows.find((row) => row.id === item);
