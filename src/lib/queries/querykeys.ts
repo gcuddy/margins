@@ -290,6 +290,7 @@ export const queryFactory = {
 			queryFn: ({ meta }: QueryFnParams) =>
 				qquery(meta?.init, 'searchAll', input),
 			queryKey: ['search', 'all', { input }] as const,
+			staleTime: 1000 * 60 * 60,
 		}),
 		books: (input: QueryInput<'searchBooks'>) => ({
 			placeholderData: keepPreviousData,

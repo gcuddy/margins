@@ -19,7 +19,7 @@ type CommandWithItems<TFilter = unknown> = {
 	items: Commands;
 };
 
-type Commands<TFilter = unknown> = {
+export type Commands<TFilter = unknown> = {
 	heading?: string;
 	commands: Command<TFilter>[];
 };

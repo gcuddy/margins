@@ -11,7 +11,7 @@ export function generateSearchNotePhrase(term: string, alias = 'Annotation') {
 	)}.contentData, '$**.text'))) LIKE '%${sql.raw(term)}%'`;
 }
 
-export async function searchNotes(q: string, userId: string) {
+export async function searchNotes(q: string, userId: string, limit = 50) {
 	return await db
 		.selectFrom('Annotation as a')
 		// .where(sql`MATCH(a.title,a.body,a.exact) AGAINST (${q})`)
@@ -20,6 +20,7 @@ export async function searchNotes(q: string, userId: string) {
 		.where((eb) =>
 			eb.or([
 				sql`MATCH(a.title,a.body,a.exact) AGAINST (${q})`,
+				// don't look at this, horrible!!
 				sql`LOWER(JSON_UNQUOTE(JSON_EXTRACT(a.contentData, '$**.text'))) LIKE '%${sql.raw(
 					q,
 				)}%'`,
@@ -38,6 +39,8 @@ export async function searchNotes(q: string, userId: string) {
 			'a.exact',
 			'a.type',
 			'a.parentId',
+			'a.icon',
+			'a.color',
 		])
 		.select((eb) => [withEntry(eb)])
 		.where('a.userId', '=', userId)
@@ -47,7 +50,9 @@ export async function searchNotes(q: string, userId: string) {
 			contentData: JSONContent | null;
 			target: TargetSchema | null;
 		}>()
-		.limit(50)
+		.limit(limit)
 		.orderBy('a.createdAt', 'desc')
 		.execute();
 }
+
+export type SearchNoteResult = Awaited<ReturnType<typeof searchNotes>>[number];

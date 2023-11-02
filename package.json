@@ -25,7 +25,7 @@
 		"seed": "ts-node prisma/seed.ts"
 	},
 	"devDependencies": {
-		"@aws-sdk/client-s3": "^3.440.0",
+		"@aws-sdk/client-s3": "^3.441.0",
 		"@faker-js/faker": "^8.2.0",
 		"@formkit/auto-animate": "1.0.0-pre-alpha.3",
 		"@googleapis/books": "^1.0.5",
@@ -161,8 +161,8 @@
 		"@traptitech/markdown-it-katex": "^3.6.0",
 		"@types/css": "^0.0.33",
 		"@types/markdown-it": "^12.2.3",
-		"@unpic/svelte": "^0.0.28",
-		"@upstash/qstash": "^2.1.8",
+		"@unpic/svelte": "^0.0.35",
+		"@upstash/qstash": "^2.1.9",
 		"arktype": "1.0.14-alpha",
 		"bits-ui": "^0.9.0",
 		"class-variance-authority": "^0.6.1",
@@ -200,7 +200,7 @@
 		"tailwind-scrollbar": "^3.0.5",
 		"tailwind-variants": "^0.1.18",
 		"tippy.js": "^6.3.7",
-		"tiptap-markdown": "latest",
+		"tiptap-markdown": "0.8.2",
 		"youtube-player": "^5.6.0",
 		"zod-prisma-types": "^2.8.1"
 	},

@@ -8,13 +8,13 @@ import { formatDate } from './date';
 const prefix = ``;
 
 export type SlimEntry = {
-	googleBooksId?: string | null;
 	id?: number;
 	image?: string | null;
-	podcastIndexId?: number | null;
 	published: Date | null;
-	spotifyId?: string | null;
 	title: string | null;
+	googleBooksId?: string | null;
+	podcastIndexId?: number | null;
+	spotifyId?: string | null;
 	tmdbId?: number | null;
 	type: DocumentType;
 };

@@ -5,20 +5,22 @@ import { sql } from 'kysely';
 import { query } from '$lib/db/types';
 import { searchNotes } from './note';
 import commandScore from 'command-score';
+import { z } from 'zod';
+
+const searchEntryTitlesInput = qSchema.extend({
+	limit: z.number().optional(),
+});
 
 export async function searchEntryTitles({
 	ctx,
 	input,
-}: GetCtx<typeof qSchema>) {
+}: GetCtx<typeof searchEntryTitlesInput>) {
 	const match_q = `${input.q}*`;
 	const like_q = `%${input.q}%`;
 	return await db
 		.selectFrom('Entry as e')
 		.innerJoin('Bookmark as b', (join) =>
 			join.onRef('e.id', '=', 'b.entryId').on('b.userId', '=', ctx.userId),
-		)
-		.where(
-			sql`MATCH(e.title,e.author) AGAINST (${match_q} IN BOOLEAN MODE) and (e.title like ${like_q} or e.author like ${like_q})`,
 		)
 		.select([
 			'e.id',
@@ -34,22 +36,40 @@ export async function searchEntryTitles({
 			'e.uri',
 			'e.wordCount',
 		])
-		.limit(25)
+		.select(
+			sql`match(e.title) against (${match_q} in boolean mode)`.as('score'),
+		)
+		.select(
+			sql`match(e.author) against (${match_q} in boolean mode)`.as(
+				'author_score',
+			),
+		)
+		.where(
+			sql`MATCH(e.title,e.author) AGAINST (${match_q} IN BOOLEAN MODE) and (e.title like ${like_q} or e.author like ${like_q})`,
+		)
+		.orderBy(sql`(score*3) + author_score desc`)
+		.limit(input.limit ?? 25)
 		// .orderBy("createdAt", "desc")
 		.execute();
 }
 
 export const searchTitlesQuery = query({
 	fn: searchEntryTitles,
-	schema: qSchema,
+	schema: searchEntryTitlesInput,
 });
 
 export const searchAll = query({
 	fn: async ({ ctx, input }) => {
 		// should think about constructing something that weighs titles more
 		const [entries, notes] = await Promise.all([
-			searchEntryTitles({ ctx, input }),
-			searchNotes(input.q, ctx.userId),
+			searchEntryTitles({
+				ctx,
+				input: {
+					q: input.q,
+					limit: 10,
+				},
+			}),
+			searchNotes(input.q, ctx.userId, 10),
 		]);
 		// TODO: scoring...
 

@@ -411,6 +411,8 @@ model Entry {
     @@index([published(sort: Desc), id])
     @@fulltext([text, title, author])
     @@fulltext([title, author])
+    @@fulltext([title], map: "title_fulltext")
+    @@fulltext([author])
     @@fulltext([text])
 }
 

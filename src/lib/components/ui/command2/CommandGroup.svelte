@@ -25,9 +25,11 @@
 	setContext('command_groupId', id);
 
     let hidden = false;
+    export let alwaysShow = false;
 
-    $: if ($inputValue && $shouldFilter !== false) {
+    $: if ($inputValue && $shouldFilter !== false && alwaysShow !== true) {
         // eslint-disable-next-line unicorn/prefer-top-level-await
+        console.log({alwaysShow})
         tick().then(() => {
             const options = getOptions(containerEl);
             const allHidden = options.every((option) => option.hidden);

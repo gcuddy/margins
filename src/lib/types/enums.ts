@@ -22,6 +22,7 @@ export const DocumentType = {
 } as const;
 
 export type DocumentType = (typeof DocumentType)[keyof typeof DocumentType];
+export type EntryType = DocumentType;
 
 export const Status = {
 	Backlog: 'Backlog',

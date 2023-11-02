@@ -100,6 +100,9 @@
 	import SubCommand from '$components/sub-command.svelte';
 	import { queryFactory } from '$lib/queries/querykeys';
 	import { createQuery } from '@tanstack/svelte-query';
+	import type { Commands } from '$lib/types/command';
+	import EntryCommandItem from '$lib/commands/items/entry-command-item.svelte';
+	import NoteCommandItem from '$lib/commands/items/note-command-item.svelte';
 
 	const page = derived(state, ($state) => $state.pages.at(-1));
 	const pages = derived(state, ($state) => $state.pages);
@@ -187,6 +190,8 @@
 
 	let subCommandOpen = false;
 	let inputEl: HTMLInputElement;
+
+	const defaultCommands: Array<Commands> = [];
 
 	/** Fallback Searches */
 	const fallbackQuery = createQuery(
@@ -458,22 +463,30 @@
 						<CommandShortcut>⌘S</CommandShortcut>
 					</CommandItem>
 				</CommandGroup>
-				<CommandGroup heading='Search for "{$inputValue}"'>
-					{#if $fallbackQuery.isPending}
-						loading...
-					{:else if $fallbackQuery.data}
-						{#each $fallbackQuery.data as data}
-							<CommandItem>
+				{#if $inputValue.length > 2}
+					<CommandGroup alwaysShow heading={`Search for "${$inputValue}"`}>
+						{#if $fallbackQuery.isPending}
+							loading...
+						{:else if $fallbackQuery.data}
+							{#each $fallbackQuery.data as data}
+								<!-- Give it inputValue to ensure it shows up (in future, do better!) -->
 								{#if data.type === 'entry'}
-									entry - <span>{data.data.title}</span>
+									<EntryCommandItem
+										value={$inputValue}
+										bind:open={$state.isOpen}
+										entry={data.data}
+									/>
 								{:else}
-                                note -
-									<span>{data.data.title}</span>
+									<NoteCommandItem
+										note={data.data}
+										value={$inputValue}
+										bind:open={$state.isOpen}
+									/>
 								{/if}
-							</CommandItem>
-						{/each}
-					{/if}
-				</CommandGroup>
+							{:else}{/each}
+						{/if}
+					</CommandGroup>
+				{/if}
 			{/if}
 		{/if}
 		{#if $page === 'theme'}
