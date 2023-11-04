@@ -8,6 +8,8 @@
 	export let entryId: number;
 	export let enabled = writable(true);
 
+    export let open = true;
+
 	const entryIdStore = writable(entryId);
 
 	$: entryIdStore.set(entryId);
@@ -32,14 +34,14 @@
 	{#if notes.length}
 		<CommandGroup heading="Notes">
 			{#each notes as note}
-				<NoteCommandItem {note} showEntry={false} />
+				<NoteCommandItem bind:open {note} showEntry={false} />
 			{/each}
 		</CommandGroup>
 	{/if}
 	{#if annotations.length}
 		<CommandGroup heading="Annotations">
 			{#each annotations as note}
-				<NoteCommandItem {note} showEntry={false} />
+				<NoteCommandItem bind:open {note} showEntry={false} />
 			{/each}
 		</CommandGroup>
 	{/if}

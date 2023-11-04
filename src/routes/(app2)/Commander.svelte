@@ -82,8 +82,6 @@
 		commandDialog.playBounce();
 		inputValue.set('');
 	}
-
-
 </script>
 
 <script lang="ts">
@@ -155,7 +153,7 @@
 	// 	}
 	// }
 
-    function addPage(page: string) {
+	function addPage(page: string) {
 		$state.pages = [...$state.pages, page];
 		transitionPage();
 	}
@@ -207,7 +205,7 @@
 		$placeholder = 'Type a command or search...';
 	}
 
-    $: console.log({$page})
+	$: console.log({ $page });
 
 	$: console.log({ $shouldFilter });
 
@@ -426,7 +424,7 @@
 						}}
 					>
 						<Search class="mr-2 h-4 w-4" />
-						<span>Search movies and TV</span>
+						<span>Search moves and TV</span>
 					</CommandItem>
 					<CommandItem
 						value="search books"
@@ -522,9 +520,9 @@
 				{/if}
 			{/if}
 		{:else if typeof $page !== 'string'}
-        {#if typeof $page === 'object' && 'component' in $page}
-        {JSON.stringify($page)}
-				<!-- <svelte:component this={$page.component} {...$page.props} bind:open={$state.isOpen} /> -->
+			{#if typeof $page === 'object' && 'component' in $page}
+				<!-- {JSON.stringify($page)} -->
+				<svelte:component this={$page.component} {...$page.props} bind:open={$state.isOpen} />
 			{:else}
 				<!-- <svelte:component this={$page} bind:open={$state.isOpen} /> -->
 			{/if}
