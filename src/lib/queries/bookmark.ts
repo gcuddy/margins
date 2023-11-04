@@ -1,13 +1,13 @@
 import {
-	type CompiledQuery,
-	type Insertable,
-	type InsertResult,
-	type Kysely,
 	sql,
+	type CompiledQuery,
+	type InsertResult,
+	type Insertable,
+	type Kysely,
 	type Transaction,
 } from 'kysely';
 
-import { db, json } from '$lib/db';
+import { db, values } from '$lib/db';
 import { entrySelect } from '$lib/db/selects';
 import type { GetCtx } from '$lib/db/types';
 import { nanoid } from '$lib/nanoid';
@@ -68,6 +68,7 @@ export async function bookmarkCreate({
 
 			entryId = Number(insertId);
 		} else if (existingEntry) {
+			// Entry already exists - bump it to the top of the list, and return that info
 			entryId = existingEntry.id;
 		}
 	}
@@ -165,16 +166,23 @@ export function createCompiledInsertBookmarkQuery(
 		keyof DB['Bookmark']
 	>;
 
-	return _db
-		.insertInto('Bookmark')
-		.columns([...columns, 'sort_order'])
-		.expression((eb) =>
-			eb
-				.selectFrom('Bookmark')
-				.select(({ ref }) => [
-					...columns.map((c) => sql`${_insertable[c]}`.as(c)),
-					sql`min(${ref('sort_order')}) - 100`.as('sort_order'),
-				]),
-		)
-		.compile();
+	return (
+		_db
+			.insertInto('Bookmark')
+			.columns([...columns, 'sort_order'])
+			.expression((eb) =>
+				eb
+					.selectFrom('Bookmark')
+					.select(({ ref }) => [
+						...columns.map((c) => sql`${_insertable[c]}`.as(c)),
+						sql`min(${ref('sort_order')}) - 100`.as('sort_order'),
+					]),
+			)
+			// Bump to top
+			// TODO: should this be an option?
+			.onDuplicateKeyUpdate(({ ref }) => ({
+				sort_order: values(ref('sort_order')),
+			}))
+			.compile()
+	);
 }
