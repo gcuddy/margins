@@ -23,6 +23,7 @@ export async function bookmarkCreate({
 	input,
 }: GetCtx<typeof bookmarkCreateInput>) {
 	const {
+		//@ts-expect-error - need to fix this
 		event: { fetch },
 		userId,
 	} = ctx;
@@ -37,7 +38,7 @@ export async function bookmarkCreate({
 	if (!entryId && url) {
 		const existingEntry = await db
 			.selectFrom('Entry as e')
-			.select(entrySelect)
+			.select('id')
 			.where('uri', '=', url)
 			.executeTakeFirst();
 
@@ -56,7 +57,7 @@ export async function bookmarkCreate({
 				.values({
 					updatedAt: new Date(),
 					...rest,
-					original: rest.original ? json(rest.original) : null,
+					// original: rest.original ? json(rest.original) : null,
 					podcastIndexId: rest.podcastIndexId
 						? Number(rest.podcastIndexId)
 						: null,
@@ -66,6 +67,8 @@ export async function bookmarkCreate({
 				.executeTakeFirst();
 
 			entryId = Number(insertId);
+		} else if (existingEntry) {
+			entryId = existingEntry.id;
 		}
 	}
 
