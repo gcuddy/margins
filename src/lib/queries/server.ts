@@ -725,21 +725,21 @@ export async function entry_by_id({
 						.where('r.userId', '=', userId),
 				).as('relations'),
 				// todo: compare these?
-				jsonArrayFrom(
-					eb
-						.selectFrom('Relation as r')
-						.select(['r.type', 'r.id'])
-						.select((eb) =>
-							jsonObjectFrom(
-								eb
-									.selectFrom('Entry as e')
-									.whereRef('e.id', '=', 'r.entryId')
-									.select(entrySelect),
-							).as('related_entry'),
-						)
-						.whereRef('r.relatedEntryId', '=', 'Entry.id')
-						.where('r.userId', '=', userId),
-				).as('back_relations'),
+				// jsonArrayFrom(
+				// 	eb
+				// 		.selectFrom('Relation as r')
+				// 		.select(['r.type', 'r.id'])
+				// 		.select((eb) =>
+				// 			jsonObjectFrom(
+				// 				eb
+				// 					.selectFrom('Entry as e')
+				// 					.whereRef('e.id', '=', 'r.entryId')
+				// 					.select(entrySelect),
+				// 			).as('related_entry'),
+				// 		)
+				// 		.whereRef('r.relatedEntryId', '=', 'Entry.id')
+				// 		.where('r.userId', '=', userId),
+				// ).as('back_relations'),
 				jsonArrayFrom(
 					eb
 						.selectFrom('TagOnEntry as toe')

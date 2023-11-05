@@ -48,7 +48,7 @@
 	import { isBrowser } from '$lib/helpers';
 	import {
 		addToCollectionMutation,
-        removeFromCollectionMutation,
+		removeFromCollectionMutation,
 		initUpdateBookmarkMutation,
 	} from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
@@ -83,7 +83,7 @@
 
 	const updateBookmark = initUpdateBookmarkMutation();
 	const addToCollection = addToCollectionMutation();
-    const removeFromCollection = removeFromCollectionMutation();
+	const removeFromCollection = removeFromCollectionMutation();
 
 	function handleTitleBlur(e: FocusEvent) {
 		const target = e.target as HTMLTextAreaElement;
@@ -479,9 +479,7 @@
                     entry={$page.data.entry}
                     /> -->
 						<Cluster>
-							{@const relations = $query.data?.entry?.relations?.concat(
-								$query.data.entry.back_relations ?? [],
-							)}
+							{@const relations = $query.data?.entry?.relations ?? []}
 							{#each relations ?? [] as relation}
 								{#if relation.related_entry}
 									<Relation
@@ -520,13 +518,13 @@
 
 									<button
 										on:click|stopPropagation|preventDefault={() => {
-                                            // TODO: alert or offer undo
-                                            $removeFromCollection.mutate({
-                                                collectionId: collection.id,
-                                                entryId: $query.data?.entry?.id
-                                            })
-                                        }}
-										class="ml-2 text-muted-foreground hover:bg-background p-1 rounded"
+											// TODO: alert or offer undo
+											$removeFromCollection.mutate({
+												collectionId: collection.id,
+												entryId: $query.data?.entry?.id,
+											});
+										}}
+										class="ml-2 rounded p-1 text-muted-foreground hover:bg-background"
 									>
 										<Cross2 />
 									</button>
