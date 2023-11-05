@@ -28,10 +28,20 @@ export const entryCommands = (
 					onSelect(chosen_entry) {
 						// console.log({ entry });
 						commanderStore.close();
-						mutate('addRelation', {
-							entryId: entry.id,
-							relatedEntryId: chosen_entry.id,
-						});
+						toast.promise(
+							mutate('addRelation', {
+								entryId: entry.id,
+								relatedEntryId: chosen_entry.id,
+							}),
+							{
+								loading: 'Adding relation...',
+								success: () => {
+									invalidateEntries(queryClient);
+									return 'Added relation';
+								},
+								error: 'Failed to add relation',
+							},
+						);
 					},
 				},
 				shouldFilter: false,
@@ -59,6 +69,9 @@ export const entryCommands = (
 								loading: 'Adding to collection...',
 								success: () => {
 									invalidateEntries(queryClient);
+									queryClient.invalidateQueries({
+										queryKey: ['collections'],
+									});
 									return 'Added to collection';
 								},
 								error: 'Failed to add to collection',

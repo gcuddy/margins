@@ -415,7 +415,7 @@ export async function add_to_collection(
 ) {
 	const { width } = input;
 	if (Array.isArray(input.annotationId)) {
-		return await db
+		await db
 			.insertInto('CollectionItems')
 			.values(
 				input.annotationId.map((id) => ({
@@ -428,7 +428,7 @@ export async function add_to_collection(
 			)
 			.execute();
 	} else if (Array.isArray(input.entryId)) {
-		return await db
+		await db
 			.insertInto('CollectionItems')
 			.values(
 				input.entryId.map((id) => ({
@@ -442,7 +442,7 @@ export async function add_to_collection(
 			.ignore()
 			.execute();
 	} else {
-		return await db
+		await db
 			.insertInto('CollectionItems')
 			.values({
 				annotationId: input.annotationId,
