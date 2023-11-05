@@ -29,7 +29,6 @@
 			component: ComponentType<Component>;
 			props?: ComponentProps<Component>;
 		}) {
-			console.log('OPENN');
 			store.set({
 				open: true,
 				placeholder,
@@ -155,25 +154,25 @@
 <script lang="ts">
 	import type { Page } from '@sveltejs/kit';
 	import {
-		type ComponentProps,
-		type ComponentType,
 		getContext,
 		setContext,
-		type SvelteComponent	} from 'svelte';
-	import { writable } from 'svelte/store';
+		type ComponentProps,
+		type ComponentType,
+		type SvelteComponent
+	} from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { writable } from 'svelte/store';
 
 	import { invalidate } from '$app/navigation';
 	import { page as page_store } from '$app/stores';
+	import { cmd_open } from '$lib/components/ui/command/stores';
 	import {
 		CommandDialog,
-		CommandEmpty,
 		CommandGroup,
 		CommandInput,
 		CommandItem,
 		CommandList
 	} from '$lib/components/ui/command2';
-	import { cmd_open } from '$lib/components/ui/command/stores';
 	import { mutation } from '$lib/queries/query';
 	import { update_entry } from '$lib/state/entries';
 
@@ -194,7 +193,6 @@
 	}
 
 	commanderStore.subscribe((commanderStore) => {
-		console.log(`Setting cmd_open to ${commanderStore.open}`);
 		cmd_open.set(commanderStore.open);
 	});
 

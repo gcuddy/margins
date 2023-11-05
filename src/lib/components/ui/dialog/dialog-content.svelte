@@ -4,7 +4,9 @@
 	import { cn, flyAndScale } from "$lib/utils";
 	import { X } from "lucide-svelte";
 
-	type $$Props = DialogPrimitive.ContentProps;
+	type $$Props = DialogPrimitive.ContentProps & {
+        overlayClass?: string;
+    }
 
 	let className: $$Props["class"] = undefined;
 	export let transition: $$Props["transition"] = flyAndScale;

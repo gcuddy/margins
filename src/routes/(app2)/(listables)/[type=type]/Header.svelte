@@ -22,7 +22,6 @@
 	import { getContext } from 'svelte';
 	import { derived, type Writable } from 'svelte/store';
 
-
 	import { entryCommands } from '$components/entries/operations';
 	import MobileLink from '$components/nav/mobile-link.svelte';
 	import TransitionContainer from '$components/transition-container.svelte';
@@ -31,12 +30,13 @@
 		ActivityLog,
 		ChevronRight,
 		DotsHorizontal,
-		MixerHorizontal
+		MixerHorizontal,
 	} from 'radix-icons-svelte';
 	import { fly } from 'svelte/transition';
 	import ArticleAppearanceOptionsContent from './[id]/article-appearance-options-content.svelte';
 	import ArticleAppearanceOptions from './[id]/article-appearance-options.svelte';
 	import { getArticleContext, getEntryContext } from './ctx';
+	import EntryOperationsMenu from '$components/entries/entry-operations-menu.svelte';
 
 	const { scrollingDown } = getEntryContext();
 
@@ -87,16 +87,16 @@
 
 	let optionsPages: Array<string> = [];
 	$: optionPage = optionsPages[optionsPages.length - 1];
-    let optionsOpen = false;
+	let optionsOpen = false;
 
-    const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
 	// TODO: await tick after navigating before listening to scrollingDown
 </script>
 
 {#if $scrollingDown}
 	<div
-		class="fixed flex items-center justify-between left-0 top-0 h-[--nav-height] bg-transparent {$rightSidebar
+		class="fixed left-0 top-0 flex h-[--nav-height] items-center justify-between bg-transparent {$rightSidebar
 			? 'w-full lg:w-[calc(100%-var(--right-sidebar-width))]'
 			: 'w-full'}"
 		aria-hidden="true"
@@ -110,14 +110,14 @@
 	style:--left={$inArticle ? 0 : `${$mainNavWidth}px`}
 	style:--mobile-left={$inArticle ? 0 : `${$mobileNavWidth}px`}
 	class={cn(
-		'fixed flex items-center justify-between z-30 left-0 sm:left-[--mobile-left] lg:left-[--left] top-0 h-[--nav-height] border-b bg-background transition-transform duration-200 ease-in-out transform w-full sm:w-[calc(100%-var(--mobile-nav-width))]',
+		'fixed left-0 top-0 z-30 flex h-[--nav-height] w-full transform items-center justify-between border-b bg-background transition-transform duration-200 ease-in-out sm:left-[--mobile-left] sm:w-[calc(100%-var(--mobile-nav-width))] lg:left-[--left]',
 		$scrollingDown && '-translate-y-full',
 		$rightSidebar
 			? 'pr-14 md:pr-0 lg:w-[calc(100%-var(--right-sidebar-width)-var(--main-nav-width))]'
 			: 'pr-14', // pr-14 because button is w-10 r-4
 	)}
 >
-	<div class="flex items-start justify-start w-full relative px-4">
+	<div class="relative flex w-full items-start justify-start px-4">
 		<div class="left flex" style:padding-left="{$navWidth}px">
 			{#if $page.data.entry?.type === 'pdf'}
 				<Button variant="ghost" size="icon" on:click={pdf_state.zoomIn}>
@@ -128,7 +128,7 @@
 				</Button>
 				<Input
 					type="number"
-					class="w-min appearance-none text-xs tabular-nums m-0"
+					class="m-0 w-min appearance-none text-xs tabular-nums"
 					on:change={handlePageInputChange}
 					value={$pdf_state.pageNumber}
 				/>
@@ -159,7 +159,7 @@
 		</div>
 		<div class="flex md:hidden">
 			<Sheet.Root
-                bind:open={optionsOpen}
+				bind:open={optionsOpen}
 				onOpenChange={() => {
 					optionsPages = [];
 				}}
@@ -195,7 +195,7 @@
 								</div>
 								{#if $page.data.entry}
 									<MobileLink
-                                        bind:open={optionsOpen}
+										bind:open={optionsOpen}
 										class="group"
 										on:click={() => {
 											// todo: make this a form
@@ -219,7 +219,10 @@
 										/>
 										<span class="">{$pin ? 'Remove pin' : 'Pin'}</span>
 									</MobileLink>
-									<MobileLink bind:open={optionsOpen} href="{make_link($page.data.entry)}/activity">
+									<MobileLink
+										bind:open={optionsOpen}
+										href="{make_link($page.data.entry)}/activity"
+									>
 										<ActivityLog class="h-4 w-4" />
 										<span>Show activity log</span>
 									</MobileLink>
@@ -240,7 +243,7 @@
 										entry={$page.data.entry}
 										data={$page.data.annotationForm}
 									/> -->
-                                    <MobileLink
+									<MobileLink
 										on:click={() => {
 											optionsPages = [...optionsPages, 'entry_operations'];
 										}}
@@ -262,7 +265,7 @@
 										Appearance Options
 									</span>
 								</div>
-                                <ArticleAppearanceOptionsContent />
+								<ArticleAppearanceOptionsContent />
 							</div>
 						{:else if optionPage === 'entry_operations'}
 							<div
@@ -275,35 +278,38 @@
 										Actions
 									</span>
 								</div>
-                                <div class="flex flex-col">
-                                    {#each entryCommands(queryClient) as command}
-                                        <MobileLink
-                                            bind:open={optionsOpen}
-                                            on:click={() => {
-                                                command.action?.($page.data.entry);
-                                            }}
-                                        >
-                                            <svelte:component this={command.icon} class="mr-2"></svelte:component>
-                                            <span>{command.text}</span>
-                                        </MobileLink>
-                                    {/each}
-                                </div>
+								<div class="flex flex-col">
+									{#each entryCommands(queryClient) as command}
+										<MobileLink
+											bind:open={optionsOpen}
+											on:click={() => {
+												command.action?.($page.data.entry);
+											}}
+										>
+											<svelte:component this={command.icon} class="mr-2"
+											></svelte:component>
+											<span>{command.text}</span>
+										</MobileLink>
+									{/each}
+								</div>
 							</div>
-
 						{/if}
 					</TransitionContainer>
 				</Sheet.ContentBottom>
 			</Sheet.Root>
 		</div>
-		<div class="right hidden md:flex gap-x-4 items-center">
+		<div class="right hidden items-center gap-x-4 md:flex">
 			{#if $page.data.entry}
-				<Button
-					href="{make_link($page.data.entry)}/activity"
-					variant="ghost"
-					size="icon"
-				>
-					<ActivityLog />
-				</Button>
+				{#if $page.data.entry?.type !== 'article'}
+					<Button
+						href="{make_link($page.data.entry)}/activity"
+						variant="ghost"
+						size="icon"
+					>
+						<ActivityLog />
+					</Button>
+				{/if}
+                <EntryOperationsMenu entry={$page.data.entry} />
 				<Button
 					variant="ghost"
 					class="group"
