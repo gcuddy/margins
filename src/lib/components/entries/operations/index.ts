@@ -9,7 +9,7 @@ import { toast } from 'svelte-sonner';
 import { invalidateEntries } from '$lib/queries/mutations';
 import { invalidate } from '$app/navigation';
 
-type Entry = Pick<
+export type Entry = Pick<
 	LibraryEntry,
 	'id' | 'type' | 'googleBooksId' | 'spotifyId' | 'tmdbId' | 'podcastIndexId'
 >;

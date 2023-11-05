@@ -738,3 +738,37 @@ const createAnnotateMutation = () => {
 	});
 	return annotateMutation;
 };
+
+export function addToCollectionMutation() {
+	const queryClient = useQueryClient();
+
+	const mutation = createMutation({
+		mutationFn: (input: MutationInput<'addToCollection'>) =>
+			mutate('addToCollection', input),
+		onSuccess: () => {
+			invalidateEntries(queryClient);
+			queryClient.invalidateQueries({
+				queryKey: ['collections'],
+			});
+		},
+	});
+
+	return mutation;
+}
+
+export function removeFromCollectionMutation() {
+	const queryClient = useQueryClient();
+
+	const mutation = createMutation({
+		mutationFn: (input: MutationInput<'removeFromCollection'>) =>
+			mutate('removeFromCollection', input),
+		onSuccess: () => {
+			invalidateEntries(queryClient);
+			queryClient.invalidateQueries({
+				queryKey: ['collections'],
+			});
+		},
+	});
+
+	return mutation;
+}

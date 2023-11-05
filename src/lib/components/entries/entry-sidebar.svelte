@@ -1,37 +1,28 @@
 <script lang="ts">
+	import { afterNavigate } from '$app/navigation';
+	import { page } from '$app/stores';
+	import AddAnnotationModal from '$components/annotations/add-annotation-input/add-annotation-modal.svelte';
+	import { audioPlayer } from '$components/AudioPlayer.svelte';
+	import * as Collapsible from '$components/ui/collapsible';
 	import { TableOfContents } from '@skeletonlabs/skeleton';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
 		ChevronRightIcon,
-		CrosshairIcon,
 		FileDown,
 		FileText,
 		Link2,
 		MoreHorizontalIcon,
 		PlusIcon,
 		RotateCcwIcon,
-		XIcon,
 	} from 'lucide-svelte';
-	import { nanoid } from 'nanoid';
-	import { derived, writable } from 'svelte/store';
 	import { persisted } from 'svelte-local-storage-store';
-	import * as Collapsible from '$components/ui/collapsible';
-	import { afterNavigate, goto } from '$app/navigation';
-	import { page } from '$app/stores';
-	import AddAnnotationModal from '$components/annotations/add-annotation-input/add-annotation-modal.svelte';
-	import Annotation from '$components/annotations/Annotation.svelte';
-	import { audioPlayer } from '$components/AudioPlayer.svelte';
+	import { derived, writable } from 'svelte/store';
 	// import TagPopover from '$lib/components/TagPopover.svelte';
 	import TagPopover from '$components/entries/tag-popover.svelte';
-	import * as Dialog from '$components/ui/dialog';
-	import Editor, { type SaveStatus } from '$components/ui/editor/Editor.svelte';
-	import {
-		extractDataFromContentData,
-		isJSONContent,
-	} from '$components/ui/editor/utils';
+	import { Badge } from '$components/ui/badge';
+	import { type SaveStatus } from '$components/ui/editor/Editor.svelte';
 	import Input from '$components/ui/input/input.svelte';
 	import LibraryForm from '$components/ui/library/library-form.svelte';
-	import Separator from '$components/ui/Separator.svelte';
 	import { Skeleton } from '$components/ui/skeleton';
 	import {
 		Tabs,
@@ -43,7 +34,6 @@
 	import Cluster from '$lib/components/helpers/Cluster.svelte';
 	import Relation from '$lib/components/Relation.svelte';
 	import StatusPopover from '$lib/components/StatusPopoverForm.svelte';
-	import { Badge } from '$components/ui/badge';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { CardContent, CardHeader } from '$lib/components/ui/card';
 	import {
@@ -56,56 +46,44 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { Muted } from '$lib/components/ui/typography';
 	import { isBrowser } from '$lib/helpers';
-	import { initUpdateBookmarkMutation } from '$lib/queries/mutations';
-	import { mutation } from '$lib/queries/query';
+	import {
+		addToCollectionMutation,
+		removeFromCollectionMutation,
+		initUpdateBookmarkMutation,
+	} from '$lib/queries/mutations';
 	import { queryFactory } from '$lib/queries/querykeys';
-	import { update_entry } from '$lib/state/entries';
 	import type { Type } from '$lib/types';
 	import { getHostname } from '$lib/utils';
 	import { triggerDownload } from '$lib/utils/annotations';
-	import {
-		ago,
-		formatDate,
-		formatDuration,
-		normalizeTimezone,
-		now,
-	} from '$lib/utils/date';
+	import { ago, now } from '$lib/utils/date';
 	import { numberOrString } from '$lib/utils/misc';
-	import {
-		changeSearch,
-		defaultStringifySearch,
-	} from '$lib/utils/search-params';
+	import { defaultStringifySearch } from '$lib/utils/search-params';
 	import { cn } from '$lib/utils/tailwind';
 
 	import EntryAuthorInput from './entry-author-input.svelte';
 	import EntryIcon from './EntryIcon.svelte';
 	// import History from './history.svelte';
-	import { saveUrl } from './utils';
-	import { fade, fly, scale, slide } from 'svelte/transition';
-	import { fadeScale, gentleFly } from '$lib/transitions';
-	import OtherAlbumsList from '$components/music/other-albums-list.svelte';
-	import { Icon } from '$components/icon-picker';
-	import AnnotationForm from '$components/annotations/annotation-form.svelte';
-	import {
-		getIdKeyName,
-		isMediaType,
-		makeMediaSchema,
-	} from '$lib/utils/entries';
-	import player from '$lib/stores/player';
-	import { TimestampInput } from '$components/ui/timestamp';
-	import { iframeNode } from '$components/ui/editor/nodes/iframes';
-	import AnnotationCard from '$components/annotations/annotation-card.svelte';
-	import { CaretRight } from 'radix-icons-svelte';
-	import { flip } from 'svelte/animate';
-	import { filterLibrary } from '$lib/schemas/library';
-	import SimilarEntries from './similar-entries.svelte';
 	import AddInlineAnnotation from '$components/annotations/add-inline-annotation.svelte';
+	import AnnotationCard from '$components/annotations/annotation-card.svelte';
+	import AnnotationForm from '$components/annotations/annotation-form.svelte';
+	import { Icon } from '$components/icon-picker';
+	import OtherAlbumsList from '$components/music/other-albums-list.svelte';
+	import { Collections } from '$lib/commands';
+	import { commanderStore } from '$lib/commands/GenericCommander.svelte';
+	import { isMediaType, makeMediaSchema } from '$lib/utils/entries';
+	import { CaretRight, Cross2 } from 'radix-icons-svelte';
+	import { flip } from 'svelte/animate';
+	import { fade, fly, slide } from 'svelte/transition';
+	import SimilarEntries from './similar-entries.svelte';
+	import { saveUrl } from './utils';
 
 	// const render = persisted('sidebar', false);
 
 	const entriesQuery = createQuery(queryFactory.entries.all());
 
 	const updateBookmark = initUpdateBookmarkMutation();
+	const addToCollection = addToCollectionMutation();
+	const removeFromCollection = removeFromCollectionMutation();
 
 	function handleTitleBlur(e: FocusEvent) {
 		const target = e.target as HTMLTextAreaElement;
@@ -259,12 +237,12 @@
 <aside
 	id="entry-sidebar"
 	style:--audio-player-height="{$audioPlayer.height}px"
-	class="flex flex-col h-full md:h-[calc(100%-var(--audio-player-height))] overflow-x-hidden overflow-y-auto overscroll-y-contain"
+	class="flex h-full flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain md:h-[calc(100%-var(--audio-player-height))]"
 >
 	<!-- 2.5rem is size of sidebar toggle -->
 	<Tabs bind:value={$currentTab}>
 		<div
-			class="flex px-6 w-[calc(100%-2.5rem)] items-center justify-start h-[--nav-height] min-h-[--nav-height] sticky top-0 bg-background"
+			class="sticky top-0 flex h-[--nav-height] min-h-[--nav-height] w-[calc(100%-2.5rem)] items-center justify-start bg-background px-6"
 		>
 			<TabsList class="grow">
 				<TabsTrigger class="grow" value="details">Details</TabsTrigger>
@@ -287,7 +265,7 @@
 							on:blur={handleTitleBlur}
 							rows={1}
 							use:autosize
-							class="text-lg h-auto font-semibold leading-tight tracking-tight w-full resize-none bg-transparent focus:outline-none"
+							class="h-auto w-full resize-none bg-transparent text-lg font-semibold leading-tight tracking-tight focus:outline-none"
 							value={$derivedTitle}
 						></textarea>
 						{#if $hasCustomTitle}
@@ -356,10 +334,10 @@
 
 						{#if author}
 							<Button
-								class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
+								class="opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100"
 								variant="ghost"
 								size="sm"
-                                href="/library/all?author={encodeURIComponent(author)}"
+								href="/library/all?author={encodeURIComponent(author)}"
 							>
 								<ChevronRightIcon class="h-3 w-3" />
 							</Button>
@@ -397,7 +375,7 @@
 								},
 							})}"
 							variant="ghost"
-							class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity p-2"
+							class="p-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100"
 							size="sm"
 						>
 							<ChevronRightIcon class="h-3 w-3" />
@@ -424,7 +402,7 @@
 							><a href="/domain/{domain}">{domain}</a></Muted
 						>
 						<Button
-							class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
+							class="opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100"
 							href="/library/all?domain={domain}"
 							variant="ghost"
 							size="sm"
@@ -461,7 +439,7 @@
 						/>
 						{#if status}
 							<Button
-								class="group-hover:opacity-100 group-focus:opacity-100 opacity-0 transition-opacity"
+								class="opacity-0 transition-opacity group-hover:opacity-100 group-focus:opacity-100"
 								href="/library/{status.toLowerCase()}"
 								variant="ghost"
 								size="sm"
@@ -493,64 +471,92 @@
                     <Muted>Snooze</Muted>
                     <input type="date" name="" id="" />
                 </div> -->
-				<div class="sidebar-row">
-					<Muted>Relations</Muted>
-					<!-- <StatusPopover
+				{#if $query.data?.entry?.relations?.length}
+					<div class="sidebar-row">
+						<Muted>Relations</Muted>
+						<!-- <StatusPopover
                     data={$page.data.updateBookmarkForm}
                     entry={$page.data.entry}
                     /> -->
-					<Cluster>
-						{@const relations = $query.data?.entry?.relations?.concat(
-							$query.data.entry.back_relations ?? [],
-						)}
-						{#each relations ?? [] as relation}
-							{#if relation.related_entry}
-								<Relation
-									id={relation.id}
-									type={relation.type}
-									entry={relation.related_entry}
-								/>
-							{/if}
-						{/each}
-					</Cluster>
-				</div>
-				<div class="flex flex-row items-center space-x-4">
-					<Muted class="shrink-0">Collections</Muted>
-					<!-- <StatusPopover
+						<Cluster>
+							{@const relations = $query.data?.entry?.relations ?? []}
+							{#each relations ?? [] as relation}
+								{#if relation.related_entry}
+									<Relation
+										id={relation.id}
+										type={relation.type}
+										entry={relation.related_entry}
+									/>
+								{/if}
+							{/each}
+						</Cluster>
+					</div>
+				{/if}
+				<!-- Only show if collections exist. To add to a collection, you can use the entryoperations menu or Command bar. -->
+
+				{#if $query.data?.entry?.collections?.length}
+					<div class="flex flex-row items-center space-x-4">
+						<Muted class="shrink-0">Collections</Muted>
+						<!-- <StatusPopover
                     data={$page.data.updateBookmarkForm}
                     entry={$page.data.entry}
                     /> -->
-					<Cluster>
-						{#each $query.data?.entry?.collections ?? [] as collection}
-							<Badge
-								variant="secondary"
-								as="a"
-								class="line-clamp-2 rounded"
-								href="/collection/{collection.id}"
+						<Cluster class="gap-1">
+							{#each $query.data?.entry?.collections ?? [] as collection}
+								<Badge
+									variant="secondary"
+									as="a"
+									class="line-clamp-2 rounded"
+									href="/collection/{collection.id}"
+								>
+									<Icon
+										class="mr-2 h-4 w-4"
+										color={collection.color}
+										icon={collection.icon}
+									/>
+									{collection.name}
+
+									<button
+										on:click|stopPropagation|preventDefault={() => {
+											// TODO: alert or offer undo
+											$removeFromCollection.mutate({
+												collectionId: collection.id,
+												entryId: $query.data?.entry?.id,
+											});
+										}}
+										class="ml-2 rounded p-1 text-muted-foreground hover:bg-background"
+									>
+										<Cross2 />
+									</button>
+								</Badge>
+							{/each}
+							<Button
+								class="h-8 text-xs [&>svg]:text-muted-foreground"
+								on:click={() => {
+									commanderStore.open({
+										component: Collections,
+										props: {
+											onSelect(collection) {
+												$addToCollection.mutate({
+													collectionId: collection.id,
+													entryId: $query.data?.entry?.id,
+												});
+												commanderStore.close();
+											},
+										},
+									});
+								}}
+								variant="ghost"
+								size="sm"
 							>
-								<Icon
-									class="mr-2 h-4 w-4"
-									color={collection.color}
-									icon={collection.icon}
-								/>
-								{collection.name}</Badge
-							>
-						{/each}
-						<Button
-							class="h-8 text-xs [&>svg]:text-muted-foreground"
-							on:click={() => {
-								// TODO
-							}}
-							variant="ghost"
-							size="sm"
-						>
-							<PlusIcon class="mr-2 h-4 w-4" />
-							{#if !$query.data?.entry?.collections?.length}
-								Add to collection
-							{/if}
-						</Button>
-					</Cluster>
-				</div>
+								<PlusIcon class="h-4 w-4" />
+								{#if !$query.data?.entry?.collections?.length}
+									<span class="ml-2">Add to collection</span>
+								{/if}
+							</Button>
+						</Cluster>
+					</div>
+				{/if}
 				<!-- now a  -->
 				<!-- {#if $query.data?.entry?.history}
 					<Separator />
@@ -564,17 +570,17 @@
 			{@const pageNotes = $query.data?.entry?.annotations?.filter(
 				(a) => a.type === 'note',
 			)}
-			<div class="p-6 flex flex-col gap-4">
+			<div class="flex flex-col gap-4 p-6">
 				<Collapsible.Root
 					bind:open={isPageNotesPanelOpen}
-					class="space-y-2 flex flex-col"
+					class="flex flex-col space-y-2"
 				>
 					<Collapsible.Trigger asChild let:builder>
 						<div>
 							<Button builders={[builder]} variant="ghost">
-								<span class="font-medium text-base">Page Notes</span>
+								<span class="text-base font-medium">Page Notes</span>
 								<CaretRight
-									class="h-4 w-4 ml-2 {isPageNotesPanelOpen ? 'rotate-90' : ''}"
+									class="ml-2 h-4 w-4 {isPageNotesPanelOpen ? 'rotate-90' : ''}"
 								/>
 							</Button>
 						</div>
@@ -672,9 +678,9 @@
 						<Collapsible.Trigger asChild let:builder>
 							<div>
 								<Button builders={[builder]} variant="ghost">
-									<span class="font-medium text-base">Annotations</span>
+									<span class="text-base font-medium">Annotations</span>
 									<CaretRight
-										class="h-4 w-4 ml-2 {isAnnotationsPanelOpen
+										class="ml-2 h-4 w-4 {isAnnotationsPanelOpen
 											? 'rotate-90'
 											: ''}"
 									/>
@@ -737,9 +743,9 @@
 									on:cancel={() => {
 										isAddingAnnotation = false;
 									}}
-                                    on:save={() => {
-                                        isAddingAnnotation = false;
-                                    }}
+									on:save={() => {
+										isAddingAnnotation = false;
+									}}
 								/>
 								<!-- <AnnotationForm
 									autofocus
@@ -846,12 +852,12 @@
 		<TabsContent value="links">
 			<!-- other entries -->
 			{#if $query.data?.entry?.type && similarEntriesTypes.includes($query.data?.entry?.type)}
-				<Collapsible.Root open class="px-6 space-y-4">
+				<Collapsible.Root open class="space-y-4 px-6">
 					<Collapsible.Trigger asChild let:builder>
 						<Button variant="ghost" builders={[builder]} class="group">
-							<span class="font-medium text-base">Similar entries</span>
+							<span class="text-base font-medium">Similar entries</span>
 							<CaretRight
-								class="h-4 w-4 ml-2 group-data-[state=open]:rotate-90"
+								class="ml-2 h-4 w-4 group-data-[state=open]:rotate-90"
 							/>
 						</Button>
 					</Collapsible.Trigger>
@@ -869,7 +875,7 @@
 			<!-- <Collapsible.Root>
                 <Collapsible.Trigger></Collapsible.Trigger>
             </Collapsible.Root> -->
-			<ul class="px-6 flex flex-col gap-y-3 text-sm">
+			<ul class="flex flex-col gap-y-3 px-6 text-sm">
 				{#if $query.data?.entry?.type === 'article'}
 					<Input bind:value={linkFilterValue} />
 					{#each $links.filter((link) => {
@@ -903,27 +909,27 @@
 										disabled={!!entry || linksFetching[link.href]}
 										variant="ghost"
 										size="sm"
-										class="flex items-center relative w-6 shrink-0 justify-center mr-2 group"
+										class="group relative mr-2 flex w-6 shrink-0 items-center justify-center"
 									>
 										{#if !entry}
 											<PlusIcon
-												class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-0 group-hover:opacity-100"
+												class="absolute inset-0 mx-auto my-auto h-3 w-3 shrink-0 opacity-0 group-hover:opacity-100"
 											/>
 										{/if}
 										{#if entry}
 											<EntryIcon
 												class={cn(
-													'h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100',
+													'absolute inset-0 mx-auto my-auto h-3 w-3 shrink-0 opacity-100',
 												)}
 												type={entry.type}
 											/>
 										{:else if link.href.endsWith('pdf')}
 											<FileText
-												class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
+												class="absolute inset-0 mx-auto my-auto h-3 w-3 shrink-0 opacity-100 group-hover:opacity-0"
 											/>
 										{:else}
 											<Link2
-												class="h-3 w-3 absolute inset-0 mx-auto my-auto shrink-0 opacity-100 group-hover:opacity-0"
+												class="absolute inset-0 mx-auto my-auto h-3 w-3 shrink-0 opacity-100 group-hover:opacity-0"
 											/>
 										{/if}
 									</Button>
@@ -940,7 +946,7 @@
 								</Tooltip.Content>
 							</Tooltip.Root>
 
-							<div class="flex flex-col min-w-0">
+							<div class="flex min-w-0 flex-col">
 								<button
 									on:click|preventDefault|stopPropagation={() => {
 										const el = document.querySelector(`a[href="${link.href}"]`);
@@ -960,7 +966,7 @@
 											}, 1000);
 										}
 									}}
-									class="basis-1/2 truncate cursor-pointer text-left"
+									class="basis-1/2 cursor-pointer truncate text-left"
 								>
 									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 									{@html link.html}</button

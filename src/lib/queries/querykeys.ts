@@ -142,6 +142,8 @@ export const queryFactory = {
 				return entry;
 			},
 			queryKey: ['entries', 'detail', { input }] as const,
+			// low staleTime to try to remove bugs for now
+			staleTime: 1000,
 		}),
 		// list
 		list: (input?: QueryInput<'get_library'>, queryClient?: QueryClient) => ({

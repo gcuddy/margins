@@ -446,6 +446,7 @@ export const mutations = {
 	}),
 	removeFromCollection: query({
 		fn: async ({ ctx: { userId }, input }) => {
+			//    TODO: either soft delete or return item for easy undo
 			const query = db
 				.deleteFrom('CollectionItems')
 				.where('collectionId', '=', input.collectionId);
