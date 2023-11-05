@@ -772,3 +772,18 @@ export function removeFromCollectionMutation() {
 
 	return mutation;
 }
+
+
+export function addToRelationMutation(queryClient?: QueryClient) {
+	if (!queryClient) queryClient = useQueryClient();
+
+	const mutation = createMutation({
+		mutationFn: (input: MutationInput<'addRelation'>) =>
+			mutate('addRelation', input),
+		onSuccess: () => {
+			invalidateEntries(queryClient);
+		},
+	});
+
+	return mutation;
+}
