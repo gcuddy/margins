@@ -234,8 +234,8 @@ dependencies:
     specifier: ^6.3.7
     version: 6.3.7
   tiptap-markdown:
-    specifier: latest
-    version: 0.8.3(@tiptap/core@2.2.0-rc.4)
+    specifier: 0.8.2
+    version: 0.8.2(@tiptap/core@2.2.0-rc.4)
   youtube-player:
     specifier: ^5.6.0
     version: 5.6.0
@@ -9633,8 +9633,8 @@ packages:
       '@popperjs/core': 2.11.8
     dev: false
 
-  /tiptap-markdown@0.8.3(@tiptap/core@2.2.0-rc.4):
-    resolution: {integrity: sha512-RULu1OXFTHdTJCHwdUOvDk0nDoH8YdgXulR0f+8XBd/x+SuT+EafdQuEKz2ggFlW1Mvl5niKGT5lAHTeXYFmaw==}
+  /tiptap-markdown@0.8.2(@tiptap/core@2.2.0-rc.4):
+    resolution: {integrity: sha512-RyfpnH475+FYVh1fCiWF9+wBvA8T6X3PqxZR1MApEewxkoQ5kREQFiVwjZiez9qUQk/Bxu3RerFSJot65V6cbQ==}
     peerDependencies:
       '@tiptap/core': ^2.0.3
     dependencies:
