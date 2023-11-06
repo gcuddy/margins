@@ -8,6 +8,7 @@
 	import Skeleton from './ui/skeleton/skeleton.svelte';
 	import { Badge } from './ui/badge';
 	import StatusIcon from './entries/StatusIcon.svelte';
+	import { make_link_from_full_entry } from '$lib/utils/entries';
 
 	export let id: number;
 	export let type: Type;
@@ -55,7 +56,7 @@
 	<Skeleton class="h-6 w-2/3" />
 	<Skeleton class="mt-4 h-16 w-full" />
 {:else if $q.isSuccess}
-	<a href='/{type}/{id}' class="max-h-64 overflow-y-auto">
+	<a href={make_link_from_full_entry($q.data)} class="max-h-64 overflow-y-auto">
 		<div class="hover-entry">
 			<div class="flex flex-col gap-2">
 				<!-- Type -->
@@ -74,11 +75,11 @@
 							>{$q.data.entry?.subscription?.title}</span
 						>
 					</div>
-				{:else}
+				{:else if $author}
 					<span class="text-sm text-muted-foreground">{$author}</span>
 				{/if}
 				<!-- TODO: description here -->
-				<div class="flex">
+				<div class="flex gap-2 flex-wrap">
 					<span class="text-sm">
 						<Badge variant="secondary">
                             {@const status = $q.data.entry?.bookmark?.status}
