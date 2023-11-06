@@ -13,6 +13,8 @@ export const types = [
 	'album',
 	'pdf',
 	'board_game',
+	'bookmark',
+	'game',
 ] as const;
 
 export type Type = (typeof types)[number];

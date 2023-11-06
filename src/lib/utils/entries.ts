@@ -2,8 +2,10 @@ import type { DocumentType, Entry } from '@prisma/client';
 
 import { S3_BUCKET_PREFIX } from '$lib/constants';
 import type { EntryInList } from '$lib/db/selects';
-import type { MediaIdSchema } from '$lib/queries/server';
+import type { FullEntryDetail, MediaIdSchema } from '$lib/queries/server';
 import { formatDate } from './date';
+import type { Type } from '$lib/types';
+import type { LibraryResponse } from '$lib/server/queries';
 
 const prefix = ``;
 
@@ -43,11 +45,39 @@ export function getId(entry: SlimmerEntry): string | number {
 	throw new Error(`Cannot get id for entry ${entry}`);
 }
 
-export function getType(type: Entry['type']) {
-	if (type === 'rss') {
+export function getType(type: Entry['type']): Type {
+	if (
+		type === 'rss' ||
+		type === 'epub' ||
+		type === 'image' ||
+		type === 'audio' ||
+		type === 'playlist' ||
+		type === 'song' ||
+		type === 'recipe'
+	) {
 		return 'article';
 	}
 	return type;
+}
+
+export function make_link_from_full_entry(entry: FullEntryDetail) {
+	console.log(entry);
+	if (entry.album || entry.entry?.spotifyId) {
+		return `/album/${entry.album?.id ?? entry.entry?.spotifyId}`;
+	}
+	if (entry.book || entry.entry?.googleBooksId) {
+		return `/book/${entry.book?.id ?? entry.entry?.googleBooksId}`;
+	}
+	if (entry.movie || entry.entry?.tmdbId) {
+		return `/movie/${entry.movie?.id ?? entry.entry?.tmdbId}`;
+	}
+	if (entry.podcast || entry.entry?.podcastIndexId) {
+		return `/podcast/p${entry.podcast?.id ?? entry.entry?.podcastIndexId}`;
+	}
+	if (entry.entry) {
+		return `/article/${entry.entry.id}`;
+	}
+	// TODO: handle all cases
 }
 
 export function make_link(entry?: SlimmerEntry | null, subpath = '') {
