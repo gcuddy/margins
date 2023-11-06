@@ -114,6 +114,6 @@
 		</div>
 	</HoverCard.Trigger>
 	<HoverCard.Content>
-		<HoverEntry id={entry.id} type={$page.data.type} />
+		<HoverEntry id={entry.id} type={getType(entry.type)} />
 	</HoverCard.Content>
 </HoverCard.Root>

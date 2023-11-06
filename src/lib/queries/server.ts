@@ -624,26 +624,38 @@ export async function entry_by_id({
 
 	let query = db
 		.selectFrom('Entry')
+		.leftJoin('Feed as f', 'f.id', 'Entry.feedId')
 		.select([
-			'id',
-			'title',
-			'html',
-			'text',
-			'author',
-			'uri',
-			'type',
-			'image',
-			'wordCount',
-			'summary',
-			'published',
-			'podcastIndexId',
-			'googleBooksId',
-			'tmdbId',
-			'spotifyId',
-			'youtubeId',
+			'Entry.id',
+            'Entry.title',
+			'Entry.html',
+			'Entry.text',
+			'Entry.author',
+			'Entry.uri',
+			'Entry.type',
+			'Entry.image',
+			'Entry.wordCount',
+			'Entry.summary',
+			'Entry.published',
+			'Entry.podcastIndexId',
+			'Entry.googleBooksId',
+			'Entry.tmdbId',
+			'Entry.spotifyId',
+			'Entry.youtubeId',
+			'Entry.feedId',
+			'f.title as feedTitle',
+			'f.imageUrl as feedImage',
 		])
+		// .select(['f.id as feedId', 'f.title as feedTitle', 'f.url as feedUrl'])
 		.$if(!!userId, (q) =>
 			q.select((eb) => [
+				jsonObjectFrom(
+					eb
+						.selectFrom('Subscription as s')
+						.select(['s.title', 's.id'])
+						.where('s.userId', '=', userId)
+						.whereRef('s.feedId', '=', 'Entry.feedId'),
+				).as('subscription'),
 				jsonArrayFrom(
 					eb
 						.selectFrom('Annotation')

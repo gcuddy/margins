@@ -4,6 +4,7 @@ import { S3_BUCKET_PREFIX } from '$lib/constants';
 import type { EntryInList } from '$lib/db/selects';
 import type { MediaIdSchema } from '$lib/queries/server';
 import { formatDate } from './date';
+import type { Type } from '$lib/types';
 
 const prefix = ``;
 
@@ -43,8 +44,16 @@ export function getId(entry: SlimmerEntry): string | number {
 	throw new Error(`Cannot get id for entry ${entry}`);
 }
 
-export function getType(type: Entry['type']) {
-	if (type === 'rss') {
+export function getType(type: Entry['type']): Type {
+	if (
+		type === 'rss' ||
+		type === 'epub' ||
+		type === 'image' ||
+		type === 'audio' ||
+		type === 'playlist' ||
+		type === 'song' ||
+		type === 'recipe'
+	) {
 		return 'article';
 	}
 	return type;
