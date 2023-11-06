@@ -638,7 +638,7 @@
 	<div
 		class="container mx-auto mt-8 flex flex-wrap items-end justify-start gap-4 px-2 sm:px-4 md:justify-center"
 		use:dndzone={{
-			dragDisabled: !data.collection.items.length,
+			dragDisabled: !data.collection.items.length || !data.admin,
 			flipDurationMs: 200,
 			items: data.collection.items,
 			morphDisabled: true,
