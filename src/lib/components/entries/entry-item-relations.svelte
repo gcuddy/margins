@@ -22,7 +22,7 @@
 		})),
 	);
 
-	// because svelte doesn't allow generics, and because i can't figure out objectmap type magic
+	// because svelte doesn't allow passing in generics, and because i can't figure out objectmap type magic
 	const makeEntry = (data: any) => data as ListEntry;
 </script>
 

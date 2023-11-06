@@ -835,9 +835,6 @@ export const queries = {
 						return coalesce(`e1.${col}`, `e2.${col}`).as(
 							replace(s, 'e.', 'entry_'),
 						);
-						// return coalesce(`e1.${col}`, `e2.${col}`).as(
-						// 	`entry_${s}` as Replace<typeof s, 'e.', 'entry_'>,
-						// );
 					}),
 				)
 				.select((eb) =>
