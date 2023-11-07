@@ -22,6 +22,7 @@
 	import { effect } from '$lib/helpers';
 
 	const {
+        helpers: { changeShouldFilter },
 		state: { activeValue, inputValue, loading, shouldFilter },
 	} = commandCtx.get();
 
@@ -44,7 +45,7 @@
 
 	// $: console.log({$query})
 
-	shouldFilter.set(false);
+	changeShouldFilter(false);
 
 	export let isOpen = false;
 

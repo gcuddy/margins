@@ -60,6 +60,7 @@
 		inPage = false;
 	}
 
+
 	$: console.log({ $shouldFilter });
 
 	const queryClient = useQueryClient();
@@ -75,6 +76,7 @@
     const close = () => {
         open = false;
         checkedEntryIds.clear();
+        inPage = false;
     }
 
 	export const back = () => {
@@ -106,7 +108,7 @@
 		</CommandItem>
 		<CommandItem
 			onSelect={() => {
-				open = false;
+				close();
 				alertDialogStore.open({
 					title: 'Add page note',
 					component: AnnotationForm,
@@ -142,7 +144,7 @@
 			onSelect={() => {
                 const length = entryIds.length;
 				checkedEntryIds.clear();
-				open = false;
+				close();
 				mutate('markAllAsRead', {
 					entryIds,
 				}).then(() => {
@@ -202,7 +204,7 @@
 					.filter(Boolean)
 					.join('\n');
 				navigator.clipboard.writeText(urls);
-                open = false;
+                close();
                 toast.success('Copied entry URLs');
 			}}
 		>
@@ -224,7 +226,7 @@
 					.join('\n');
 
                 navigator.clipboard.writeText(md);
-                open = false;
+                close();
 
                 toast.success('Copied entries as Markdown');
 			}}
@@ -238,7 +240,7 @@
 	<CommandGroup>
 		<CommandItem
 			onSelect={() => {
-				open = false;
+				close();
 				alertDialogStore.open({
 					title: 'Delete entries',
 					description: 'Are you sure you want to delete these entries?',
@@ -267,7 +269,7 @@
 			// console.log({ selected, _ });
             // TODO: optimistic update
             // console.log({selected, indeterminate, removed})
-            open = false;
+            close();
 			mutate('bulkTagInsert', {
 				entryIds,
 				tagIds: selected,
@@ -291,7 +293,7 @@
 		onSelect={() => {
 			console.log('onselect');
 			checkedEntryIds.clear();
-			open = false;
+			close();
 			console.log('clearing checked entries');
 		}}
 	/>
@@ -301,7 +303,7 @@
 		excludeIds={entryIds}
 		bind:isOpen={open}
 		onSelect={(e) => {
-			open = false;
+			close();
 			mutate('addRelation', {
 				entryId: entryIds,
 				relatedEntryId: e.id,
@@ -319,7 +321,7 @@
 	<Collections
 		onSelect={(c) => {
 			checkedEntryIds.clear();
-			open = false;
+			close();
 			mutate('addToCollection', {
 				collectionId: c.id,
 				entryId: entryIds,

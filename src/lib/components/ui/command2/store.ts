@@ -112,9 +112,23 @@ export function shouldFilterStore(defaultValue?: boolean) {
 
 export const SELECT_EVENT_NAME = 'command-item-select';
 
-export function createCommandStore<T>(props?: CommandProps<T>) {
 
-    console.log('got props', props);
+/**
+ * Handles setting should filter and resetting it on componnent deletion. Should be used at component render.
+ */
+function changeShouldFilterHelper(shouldFilterStore: Writable<boolean> ) {
+
+    return (value: boolean) => {
+        let previousValue = get(shouldFilterStore);
+
+        onMount(() => {
+            shouldFilterStore.set
+        })
+    }
+}
+
+export function createCommandStore<T>(props?: CommandProps<T>) {
+	console.log('got props', props);
 	const { open } = props ?? {};
 	const openStore = open ?? writable(false);
 	const activeElement = writable<HTMLElement | null>(null);
@@ -677,6 +691,19 @@ export function createCommandStore<T>(props?: CommandProps<T>) {
 			container,
 		},
 		helpers: {
+			/**
+			 * NOTE: Must be called at component render (uses onMount/onDestroy).
+			 * @param value New value for shouldFilter
+			 */
+			changeShouldFilter: (value: boolean) => {
+				let previousFilter = get(shouldFilter);
+				onMount(() => {
+					shouldFilter.set(value);
+					return () => {
+						shouldFilter.set(previousFilter);
+					};
+				});
+			},
 			isValueSelected: (value: T) => {
 				// TODO: should we pass in id instead here? But we keep track of selectedValue by value, not id
 				const $selectedValue = get(selectedValue);
