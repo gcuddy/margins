@@ -20,10 +20,11 @@
 
 	const {
 		// options: { multiple },
+        helpers: { changeShouldFilter },
 		state: { inputValue, shouldFilter },
 	} = commandCtx.get();
 
-	shouldFilter.set(false);
+	changeShouldFilter(false);
 
 	const query = createQuery(
 		derived(inputValue, ($value) => ({
