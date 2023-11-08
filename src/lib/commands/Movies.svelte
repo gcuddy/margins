@@ -23,6 +23,7 @@
 
 	const {
 		// options: { multiple },
+        helpers: { changeShouldFilter },
 		state: { inputValue, shouldFilter, loading },
 	} = commandCtx.get();
 
@@ -48,7 +49,7 @@
 
 	export let isOpen = false;
 
-	shouldFilter.set(false);
+	changeShouldFilter(false);
 
 	export let onSelect: (
 		media: QueryOutput<'searchMoviesMulti'>[number],

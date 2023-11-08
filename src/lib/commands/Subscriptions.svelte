@@ -21,13 +21,14 @@
 	type Subscription = QueryOutput<'list_subscriptions'>[number];
 
 	const {
+        helpers: { changeShouldFilter },
 		options: { multiple },
 		state: { activeValue, inputValue, shouldFilter, selectedValue },
 	} = commandCtx.get<Subscription>();
 
 	$: console.log({ $selectedValue });
 
-	shouldFilter.set(false);
+	changeShouldFilter(false);
 
 	export let isOpen = false;
 

@@ -21,17 +21,23 @@
 	const query = createQuery(queryFactory.tags.list());
 
 	const {
+		helpers: { changeShouldFilter },
 		options: { onKeydown },
 		state: { inputValue, shouldFilter, activeValue, activeElement },
 	} = commandCtx.get();
 
-	shouldFilter.set(false);
+	changeShouldFilter(false);
 
 	export let isOpen = false;
 
 	type Tag = QueryOutput<'tags'>[number];
 
-	export let onSelect: (tag: Tag | undefined, selected: number[], indeterminate: number[], removed: number[]) => void = (tag) => {
+	export let onSelect: (
+		tag: Tag | undefined,
+		selected: number[],
+		indeterminate: number[],
+		removed: number[],
+	) => void = (tag) => {
 		if (tag) void goto(`/tag/${tag.name}`);
 		isOpen = false;
 	};
@@ -43,9 +49,9 @@
 
 	export let selected: number[] = [];
 	export let indeterminate: number[] = [];
-    export let removed: number[] = [];
+	export let removed: number[] = [];
 
-    let lastUtilizedSpaceIndex = -1;
+	let lastUtilizedSpaceIndex = -1;
 
 	onKeydown.set((e) => {
 		if (!$activeElement) return;
@@ -60,20 +66,20 @@
 			if (!tag) return;
 			if (selected.includes(tag.id)) {
 				selected = selected.filter((id) => id !== tag.id);
-                removed = Array.from(new Set([...removed, tag.id]));
+				removed = Array.from(new Set([...removed, tag.id]));
 			} else {
 				selected = [...selected, tag.id];
 			}
-            lastUtilizedSpaceIndex = activeIdx;
+			lastUtilizedSpaceIndex = activeIdx;
 		}
-        if (e.key === "Enter") {
-            // check if we just used space to select a tag, if so close the menu but don't toggle selection
-            if (lastUtilizedSpaceIndex === activeIdx) {
-                e.preventDefault();
-                onSelect($tags[activeIdx], selected, indeterminate, removed);
-                isOpen = false;
-            }
-        }
+		if (e.key === 'Enter') {
+			// check if we just used space to select a tag, if so close the menu but don't toggle selection
+			if (lastUtilizedSpaceIndex === activeIdx) {
+				e.preventDefault();
+				onSelect($tags[activeIdx], selected, indeterminate, removed);
+				isOpen = false;
+			}
+		}
 	});
 
 	onDestroy(() => {
@@ -136,14 +142,14 @@
 			<CommandItem
 				onSelect={() => {
 					dispatch('select', tag);
-                    if (multiple) {
-                        if (selected.includes(tag.id)) {
-                            selected = selected.filter((id) => id !== tag.id);
-                            removed = Array.from(new Set([...removed, tag.id]));
-                        } else {
-                            selected = [...selected, tag.id];
-                        }
-                    }
+					if (multiple) {
+						if (selected.includes(tag.id)) {
+							selected = selected.filter((id) => id !== tag.id);
+							removed = Array.from(new Set([...removed, tag.id]));
+						} else {
+							selected = [...selected, tag.id];
+						}
+					}
 					onSelect(tag, selected, indeterminate, removed);
 				}}
 				selected={selected.includes(tag.id)}
@@ -157,7 +163,7 @@
 							e.stopImmediatePropagation();
 							if (selected.includes(tag.id)) {
 								selected = selected.filter((id) => id !== tag.id);
-                                removed = Array.from(new Set([...removed, tag.id]));
+								removed = Array.from(new Set([...removed, tag.id]));
 							} else {
 								selected = [...selected, tag.id];
 							}

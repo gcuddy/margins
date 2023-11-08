@@ -15,10 +15,11 @@
 	const query = createQuery(queryFactory.entries.authors());
 
 	const {
+        helpers: { changeShouldFilter },
 		state: { inputValue, shouldFilter },
 	} = commandCtx.get();
 
-	shouldFilter.set(false);
+	changeShouldFilter(false);
 
 	export let isOpen = false;
 
