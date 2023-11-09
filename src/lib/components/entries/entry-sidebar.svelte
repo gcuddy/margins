@@ -536,6 +536,7 @@
 									commanderStore.open({
 										component: Collections,
 										props: {
+                                            create_fallback: true,
 											onSelect(collection) {
 												$addToCollection.mutate({
 													collectionId: collection.id,

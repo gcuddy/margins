@@ -82,7 +82,7 @@
             toast.error("Error creating collection")
         }
 	};
-	$: if (onFallback) {
+	$: if ($$props.onFallback) {
 		create_fallback = true;
 	}
 
