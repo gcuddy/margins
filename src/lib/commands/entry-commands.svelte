@@ -60,7 +60,6 @@
 		inPage = false;
 	}
 
-
 	$: console.log({ $shouldFilter });
 
 	const queryClient = useQueryClient();
@@ -73,11 +72,11 @@
 		dispatch('transition');
 	};
 
-    const close = () => {
-        open = false;
-        checkedEntryIds.clear();
-        inPage = false;
-    }
+	const close = () => {
+		open = false;
+		checkedEntryIds.clear();
+		inPage = false;
+	};
 
 	export const back = () => {
 		pages.update(($pages) => {
@@ -103,7 +102,7 @@
 				addPage('set-tags');
 			}}
 		>
-			<TagIcon class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<TagIcon class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Set tags
 		</CommandItem>
 		<CommandItem
@@ -129,7 +128,7 @@
 				});
 			}}
 		>
-			<PenSquare class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<PenSquare class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Add Page Note
 		</CommandItem>
 		<CommandItem
@@ -137,23 +136,23 @@
 				addPage('change-status');
 			}}
 		>
-			<Half2 class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<Half2 class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Change Status
 		</CommandItem>
 		<CommandItem
 			onSelect={() => {
-                const length = entryIds.length;
+				const length = entryIds.length;
 				checkedEntryIds.clear();
 				close();
 				mutate('markAllAsRead', {
 					entryIds,
 				}).then(() => {
-                    toast.success(`Marked ${length} entries as read`);
+					toast.success(`Marked ${length} entries as read`);
 					invalidateEntries(queryClient);
 				});
 			}}
 		>
-			<Circle class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<Circle class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Mark as read
 		</CommandItem>
 		<!-- <CommandItem
@@ -179,7 +178,7 @@
 				addPage('create-relation', 'Search for entry to create relation with');
 			}}
 		>
-			<ArrowRightLeft class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<ArrowRightLeft class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Create relation
 		</CommandItem>
 		<CommandItem
@@ -187,7 +186,7 @@
 				addPage('add-to-collection', 'Search for collection to add entries to');
 			}}
 		>
-			<CardStackPlus class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<CardStackPlus class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Add to Collection
 		</CommandItem>
 	</CommandGroup>
@@ -204,11 +203,11 @@
 					.filter(Boolean)
 					.join('\n');
 				navigator.clipboard.writeText(urls);
-                close();
-                toast.success('Copied entry URLs');
+				close();
+				toast.success('Copied entry URLs');
 			}}
 		>
-			<ClipboardCopy class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<ClipboardCopy class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Copy entry URLs
 		</CommandItem>
 		<CommandItem
@@ -216,22 +215,22 @@
 				const md = $checkedEntryIds
 					.map((id) => {
 						const entry = $entryState[id];
-                        if (!entry) return;
+						if (!entry) return;
 						const url = make_url(entry);
-                        if (url) {
-                            return `[${entry.title}](${url})`;
-                        }
+						if (url) {
+							return `[${entry.title}](${url})`;
+						}
 					})
 					.filter(Boolean)
 					.join('\n');
 
-                navigator.clipboard.writeText(md);
-                close();
+				navigator.clipboard.writeText(md);
+				close();
 
-                toast.success('Copied entries as Markdown');
+				toast.success('Copied entries as Markdown');
 			}}
 		>
-			<ClipboardList class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<ClipboardList class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Copy entries as Markdown
 		</CommandItem>
 	</CommandGroup>
@@ -256,7 +255,7 @@
 				});
 			}}
 		>
-			<TrashIcon class="h-4 w-4 mr-2 stroke-[1.5]" />
+			<TrashIcon class="mr-2 h-4 w-4 stroke-[1.5]" />
 			Delete
 		</CommandItem>
 	</CommandGroup>
@@ -267,13 +266,13 @@
 		bind:isOpen={open}
 		onSelect={(_, selected, indeterminate, removed) => {
 			// console.log({ selected, _ });
-            // TODO: optimistic update
-            // console.log({selected, indeterminate, removed})
-            close();
+			// TODO: optimistic update
+			// console.log({selected, indeterminate, removed})
+			close();
 			mutate('bulkTagInsert', {
 				entryIds,
 				tagIds: selected,
-                tagIdsToRemove: removed,
+				tagIdsToRemove: removed,
 			}).then(() => {
 				invalidateEntries(queryClient);
 				queryClient.invalidateQueries({
@@ -319,6 +318,11 @@
 {#if $activePage === 'add-to-collection'}
 	<!-- TODO: create new collections -->
 	<Collections
+		create_fallback
+		items={{
+			entryId: entryIds,
+		}}
+		on:create={close}
 		onSelect={(c) => {
 			checkedEntryIds.clear();
 			close();

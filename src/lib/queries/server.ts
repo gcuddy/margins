@@ -396,17 +396,17 @@ const noteUpdateInput = z.object({
 
 const noteUpdateInputSchema = noteUpdateInput.or(z.array(noteUpdateInput));
 
-export const s_add_to_collection = z
-	.object({
-		annotationId: z.string().or(z.string().array()).optional(),
-		collectionId: z.number().int(),
-		entryId: z.number().int().or(z.number().int().array()).optional(),
-		width: collectionItemWidthSchema.nullish(),
-	})
-	.refine(
-		(data) => data.entryId ?? data.annotationId,
-		'Must provide either entryId or annotationId',
-	);
+export const baseAddToCollectionInput = z.object({
+	annotationId: z.string().or(z.string().array()).optional(),
+	collectionId: z.number().int(),
+	entryId: z.number().int().or(z.number().int().array()).optional(),
+	width: collectionItemWidthSchema.nullish(),
+});
+
+export const s_add_to_collection = baseAddToCollectionInput.refine(
+	(data) => data.entryId ?? data.annotationId,
+	'Must provide either entryId or annotationId',
+);
 
 export async function add_to_collection(
 	input: z.infer<typeof s_add_to_collection> & {
@@ -627,7 +627,7 @@ export async function entry_by_id({
 		.leftJoin('Feed as f', 'f.id', 'Entry.feedId')
 		.select([
 			'Entry.id',
-            'Entry.title',
+			'Entry.title',
 			'Entry.html',
 			'Entry.text',
 			'Entry.author',

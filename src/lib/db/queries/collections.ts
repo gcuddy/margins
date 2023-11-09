@@ -6,6 +6,13 @@ import type { collectionsInputSchema } from '$lib/schemas/inputs';
 import type { GetCtx } from '../types';
 import { applyFilter } from '../utils/comparators';
 import { collectionItemWidthSchema } from '$lib/schemas/inputs/collection.schema';
+import { nameSchema } from '$lib/schemas';
+import { query } from '$lib/server/utils';
+import {
+	add_to_collection,
+	baseAddToCollectionInput,
+	s_add_to_collection,
+} from '$lib/queries/server';
 
 // TODO figure out if schemas should be colocated or in their own folder
 
@@ -85,3 +92,47 @@ export async function collectionUpdate({
 		.set(input.data)
 		.execute();
 }
+
+const collectionCreateInput = z.object({
+	name: z.string(),
+	items: baseAddToCollectionInput
+		.omit({
+			collectionId: true,
+			width: true,
+		})
+		.optional(),
+});
+
+export type CollectionCreateInput = z.infer<typeof collectionCreateInput>;
+
+export async function collectionCreate({
+	ctx,
+	input,
+}: GetCtx<typeof collectionCreateInput>) {
+	const { name, items } = input;
+
+	// todo: wrap in transaction?
+	const collection = await db
+		.insertInto('Collection')
+		.values({ name, updatedAt: new Date(), userId: ctx.userId })
+		.executeTakeFirst();
+	const id = Number(collection.insertId);
+
+	if (items) {
+		// then add items
+		await add_to_collection({
+			collectionId: id,
+			...items,
+			userId: ctx.userId,
+		});
+	}
+
+	return {
+		id,
+	};
+}
+
+export const collectionCreateMutation = query({
+	schema: collectionCreateInput,
+	fn: collectionCreate,
+});

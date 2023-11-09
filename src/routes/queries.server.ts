@@ -12,6 +12,7 @@ import { tmdb } from '$lib/api/tmdb';
 import type { Tweet } from '$lib/api/twitter';
 import { db, json } from '$lib/db';
 import {
+	collectionCreateMutation,
 	collectionUpdate,
 	collectionUpdateSchema,
 	collections,
@@ -310,6 +311,7 @@ export const mutations = {
 			}
 		},
 	}),
+	collectionCreate: collectionCreateMutation,
 	collectionUpdate: query({
 		fn: collectionUpdate,
 		schema: collectionUpdateSchema,
