@@ -7,6 +7,7 @@ import { nameSchema, validateAuthedForm } from '$lib/schemas';
 
 import type { PageServerLoad } from './$types';
 import { loginRedirect } from '$lib/utils/redirects';
+import { collectionCreate } from '$lib/db/queries/collections';
 
 export const load = (async (event) => {
 	const session = await event.locals.auth.validate();
@@ -43,11 +44,10 @@ export const actions = {
 	default: validateAuthedForm(nameSchema, async ({ form, session }) => {
 		const { name } = form.data;
 
-		const collection = await db
-			.insertInto('Collection')
-			.values({ name, updatedAt: new Date(), userId: session.user.userId })
-			.executeTakeFirst();
-		const id = Number(collection.insertId);
+		const { id } = await collectionCreate({
+			ctx: { userId: session.user.userId },
+			input: { name },
+		});
 
 		if (id && Number.isInteger(id)) {
 			throw redirect(303, `/collection/${id}`);
