@@ -537,6 +537,12 @@
 										component: Collections,
 										props: {
                                             create_fallback: true,
+                                            items: {
+                                                entryId: $query.data?.entry?.id,
+                                            },
+                                            onCreate: () => {
+                                                commanderStore.close();
+                                            },
 											onSelect(collection) {
 												$addToCollection.mutate({
 													collectionId: collection.id,

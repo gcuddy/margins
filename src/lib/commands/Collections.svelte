@@ -54,11 +54,13 @@
 	export let onSelect = (
 		collection: QueryOutput<'collections'>['collections'][number],
 	) => {};
+    export let onCreate = (value: string) => {}
 	export let create_fallback = false;
 	export let onFallback: ((value: string) => void) | undefined = async (value) => {
 		// console.log('create collection')
         try {
             dispatch('create', value);
+            onCreate(value);
             const { id } = await mutate('collectionCreate', {
                 items,
                 name: value,
@@ -68,7 +70,7 @@
                 queryKey: ["collections"]
             })
 
-            toast.success("Collection create", {
+            toast.success("Collection created", {
                 description: value,
                 action: {
                     label: "View collection",
