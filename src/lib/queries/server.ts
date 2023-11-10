@@ -27,6 +27,7 @@ import {
 	annotations,
 	entrySelect,
 	getFirstBookmarkSort,
+	ListEntry,
 	withEntry,
 } from '$lib/db/selects';
 import { applyFilter } from '$lib/db/utils/comparators';
@@ -42,6 +43,7 @@ import { findHighestQualityBookCover } from '$lib/api/book-cover';
 import { findNodes } from '$components/ui/editor/utils';
 import { entryNodeSchema } from '$components/ui/editor/extensions/schemas';
 import dayjs from 'dayjs';
+import { replace } from '$lib/helpers';
 
 type Ctx = {
 	ctx: {
@@ -706,35 +708,71 @@ export async function entry_by_id({
 				).as('collections'),
 				// jsonArrayFrom(
 				// 	eb
-				// 		.selectFrom('EntryHistory as h')
-				// 		.innerJoin('auth_user as hu', 'hu.id', 'h.userId')
-				// 		.select([
-				// 			'h.id',
-				// 			'h.createdAt',
-				// 			'h.toStatus',
-				// 			'h.finished',
-				// 			'h.userId',
-				// 			'hu.username',
-				// 			'hu.avatar',
-				// 		])
-				// 		.orderBy('h.createdAt', 'asc')
-				// 		.whereRef('h.entryId', '=', 'Entry.id')
-				// 		.where('h.userId', '=', userId),
-				// ).as('history'),
+				// 		.selectFrom('Relation as r')
+				// 		.select(['r.type', 'r.id'])
+				// 		.select((eb) =>
+				// 			jsonObjectFrom(
+				// 				eb
+				// 					.selectFrom('Entry as e')
+				// 					.whereRef('e.id', '=', 'r.relatedEntryId')
+				// 					.select(entrySelect),
+				// 			).as('related_entry'),
+				// 		)
+				// 		.whereRef('r.entryId', '=', 'Entry.id')
+				// 		.where('r.userId', '=', userId),
+				// ).as('relations'),
 				jsonArrayFrom(
 					eb
 						.selectFrom('Relation as r')
-						.select(['r.type', 'r.id'])
+						.where((eb) =>
+							eb.or([
+								eb('r.entryId', '=', eb.ref('Entry.id')),
+								eb('r.relatedEntryId', '=', eb.ref('Entry.id')),
+							]),
+						)
+						.where('r.userId', '=', userId)
+						.leftJoin('Entry as e1', (join) =>
+							join
+								.onRef('r.relatedEntryId', '=', 'e1.id')
+								.on('r.entryId', '=', eb.ref('Entry.id')),
+						)
+						.leftJoin('Entry as e2', (join) =>
+							join
+								.onRef('r.entryId', '=', 'e2.id')
+								.on('r.relatedEntryId', '=', eb.ref('Entry.id')),
+						)
+						.select(['r.type', 'r.id', 'e1.title as entryTitle'])
+
+						// Some more ridiculous type magic here:
 						.select((eb) =>
 							jsonObjectFrom(
-								eb
-									.selectFrom('Entry as e')
-									.whereRef('e.id', '=', 'r.relatedEntryId')
-									.select(entrySelect),
-							).as('related_entry'),
+								eb.selectNoFrom(
+									entrySelect.map((s) =>
+										eb.fn
+											.coalesce(
+												replace(s, 'e.', 'e1.'),
+												replace(s, 'e.', 'e2.'),
+											)
+											.as(replace(s, 'e.', '')),
+									),
+									// [eb.fn.coalesce('e1.title', 'e2.title').as('title')],
+								),
+							).as('entry'),
 						)
-						.whereRef('r.entryId', '=', 'Entry.id')
-						.where('r.userId', '=', userId),
+						.select((eb) =>
+							eb
+								.case()
+								.when('r.entryId', '=', eb.ref('Entry.id'))
+								.then('outbound')
+								.when('r.relatedEntryId', '=', eb.ref('Entry.id'))
+								.then('inbound')
+								.end()
+								.as('direction'),
+						)
+						.$narrowType<{
+							entry: ListEntry;
+							direction: 'inbound' | 'outbound';
+						}>(),
 				).as('relations'),
 				// todo: compare these?
 				// jsonArrayFrom(

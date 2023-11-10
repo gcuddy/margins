@@ -481,11 +481,12 @@
 						<Cluster>
 							{@const relations = $query.data?.entry?.relations ?? []}
 							{#each relations ?? [] as relation}
-								{#if relation.related_entry}
+								{#if relation.entry}
 									<Relation
 										id={relation.id}
 										type={relation.type}
-										entry={relation.related_entry}
+										entry={relation.entry}
+                                        direction={relation.direction}
 									/>
 								{/if}
 							{/each}

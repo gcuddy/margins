@@ -11,3 +11,4 @@ export * from './primitive';
 export * from './scroll';
 export * from './store';
 export * from './style';
+export * from './string';
