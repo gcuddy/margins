@@ -244,6 +244,7 @@ model Annotation {
     srs_created_at   DateTime?
     response         String?                         @db.MediumText
     icon             String?
+    hypothesis_id    String?
     highlight_color  Color                           @default(Yellow)
     entry            Entry?                          @relation(fields: [entryId], references: [id])
     parent           Annotation?                     @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
