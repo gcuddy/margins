@@ -8,6 +8,7 @@
 	import { onDestroy } from 'svelte';
 	import { styleToString } from '$lib/helpers';
 	import { pageTitle } from '$lib/stores/page-title';
+	import type { Message } from '$lib/types';
 	// import { pwaInfo } from 'virtual:pwa-info';
 
 	// fix bigint issue
@@ -21,6 +22,7 @@
 	const flash = getFlash(page);
 
 	const unsubscribeFlash = flash.subscribe(($flash) => {
+		console.log({ $flash });
 		if (!$flash) return;
 
 		toast[$flash.status]($flash.text);
@@ -37,9 +39,24 @@
 
 		flash.set(undefined);
 	});
+	const unsusbcribePageForm = page.subscribe((page) => {
+		if (page.form && 'form' in page.form) {
+			if (
+				'message' in page.form.form &&
+				page.form.form.message &&
+				'status' in page.form.form.message &&
+				'text' in page.form.form.message
+			) {
+				const message = page.form.form.message as Message;
+				toast[message.status](message.text);
+			}
+		}
+		// pageTitle.set(page.title);
+	});
 
 	onDestroy(() => {
 		unsubscribeFlash();
+		unsusbcribePageForm();
 	});
 
 	// onMount(async () => {
@@ -78,7 +95,6 @@
 <div class="rounded-md border shadow-lg"></div>
 <Toaster
 	closeButton
-    theme:
 	toastOptions={{
 		class: 'toast group shadow-lg transition-all ',
 		style: styleToString({
