@@ -61,7 +61,7 @@ export async function importHypothesisAnnotations() {
 		integrations.map(async (integration) => {
 			// integration.
 			const h = new HypothesisApi(integration.accessToken);
-			const annotations = await h.getAnnotations(10);
+			const annotations = await h.getAnnotations(200);
 			// TODO: tags
 			// TODO: use uri to find entry. If it exists, add entryId to annotation. If not, parse it.
 			return await Promise.all(
