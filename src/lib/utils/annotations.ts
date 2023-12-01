@@ -51,6 +51,7 @@ export function getTargetSelector<TType extends Selector['type']>(
 	type: TType,
 ): Extract<Selector, { type: TType }> | undefined {
 	const target = _target as TargetSchema;
+    console.log({ target });
 	if (!target) return;
 	if (Array.isArray(target.selector)) {
 		if (type === 'TextQuoteSelector') {
@@ -62,7 +63,7 @@ export function getTargetSelector<TType extends Selector['type']>(
 			| Extract<Selector, { type: TType }>
 			| undefined;
 	}
-	if (target.selector.type === type) {
+	if (target.selector?.type === type) {
 		return target.selector as Extract<Selector, { type: TType }>;
 	}
 }

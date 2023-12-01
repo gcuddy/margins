@@ -151,6 +151,7 @@ export type Annotation = {
 	srs_created_at: Timestamp | null;
 	response: string | null;
 	icon: string | null;
+	hypothesis_id: string | null;
 	highlight_color: Generated<Color>;
 };
 export type annotation_ref = {
@@ -245,6 +246,7 @@ export type AuthUser = {
 	home_items: unknown | null;
 	avatar: string | null;
 	email_verified: number | null;
+	hypothseis_api_key: string | null;
 };
 export type Bookmark = {
 	id: Generated<number>;
@@ -559,6 +561,9 @@ export type Integration = {
 	expiresIn: number | null;
 	timestamp: Timestamp | null;
 	username: string | null;
+	lastSyncDate: Timestamp | null;
+	enabled: Generated<number>;
+	settings: unknown | null;
 };
 export type Interaction = {
 	id: Generated<number>;

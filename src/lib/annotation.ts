@@ -80,7 +80,9 @@ export const TargetSchema = z.object({
 	source: z.string(),
 	selector: SelectorSchema.or(
 		z.tuple([TextQuoteSelectorSchema, TextPositionSelector]),
-	).or(z.tuple([TextQuoteSelectorSchema, BookSelectorSchema])),
+	)
+		.or(z.tuple([TextQuoteSelectorSchema, BookSelectorSchema]))
+		.or(z.array(SelectorSchema)),
 	html: z.string().optional(),
 	page_num: z.number().optional(),
 });

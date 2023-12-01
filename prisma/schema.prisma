@@ -244,6 +244,7 @@ model Annotation {
     srs_created_at   DateTime?
     response         String?                         @db.MediumText
     icon             String?
+    hypothesis_id    String?                         @unique
     highlight_color  Color                           @default(Yellow)
     entry            Entry?                          @relation(fields: [entryId], references: [id])
     parent           Annotation?                     @relation("references", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -847,6 +848,8 @@ model AuthUser {
     home_items             Json?
     avatar                 String?
     email_verified         Boolean?
+    // should this not be stored in this way?
+    hypothseis_api_key     String?
     auth_session           AuthSession[]
     auth_key               AuthKey[]
     followedBy             AuthUser[]               @relation("UserFollows")
@@ -983,6 +986,7 @@ model Stylesheet {
     @@index([userId])
 }
 
+// Letterboxd, Spotify, Hypothes.is (TODO: create zod schemas for these)
 model Integration {
     id           Int       @id @default(autoincrement())
     createdAt    DateTime  @default(now())
@@ -995,6 +999,11 @@ model Integration {
     timestamp    DateTime?
     username     String?
     user         AuthUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    lastSyncDate DateTime?
+    enabled      Boolean   @default(true)
+
+    // custom settings - see individual implementations
+    settings Json?
 
     @@unique([userId, serviceName])
     @@index([userId])
