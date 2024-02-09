@@ -14,45 +14,59 @@
 
 <section class="space-y-6 pb-16 pt-6 md:pt-10 lg:py-32">
 	<div
-		class="container flex max-w-[64rem] flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-top-4 duration-1000"
+		class="container flex max-w-[64rem] flex-col items-center gap-4 text-center duration-1000 animate-in fade-in slide-in-from-top-4"
 	>
 		<!-- Link here to announcing open beta -->
 		<h1
-			class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter font-bold"
+			class=" inline-block max-w-[20ch] text-balance bg-gradient-to-br from-white via-amber-50/90 to-amber-100/75 bg-clip-text py-4 font-sans text-[clamp(48px,5vw,96px)] font-semibold leading-[95%] tracking-tight text-transparent"
 		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
 			Margins is the app for saving, consuming, and annotating
+			<!-- TODO: this anything should be replaced with a dynamic "articles", "books", "pdfs", etc -->
 			<em>anything</em>.
 		</h1>
 		<p
-			class="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8"
+			class=" mb-[1vw] leading-none tracking-normal text-white/80 sm:leading-8 md:text-[clamp(20px,1.5vw,26px)]"
 		>
-			A powerful research app for slightly insane infovores.
+			A powerful, friendly research app.
 		</p>
-        <div class="space-x-4">
-            <a href="/signup" class={cn(buttonVariants({ size: 'lg' }))}>
-                Get Margins <ChevronRight class="w-4 h-4 ml-1" />
-            </a>
-        </div>
+		<div class="space-x-4">
+			<a
+				href="/signup"
+				class={cn(
+					buttonVariants({ size: 'lg' }),
+					'h-12 bg-amber-50 text-base font-medium transition hover:scale-105 hover:bg-amber-100',
+				)}
+			>
+				Get Margins <ChevronRight class="ml-1 h-4 w-4" />
+			</a>
+		</div>
 	</div>
 	<!-- TODO: join waitlist -->
 </section>
-<section class="container space-y-6 bg-trasparent py-8 dark:bg-transparent md:py-12 lg:py-24">
-    <div class="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-        <h2 class="tracking-tight font-semibold text-3xl leading-[1.1] sm:text-3xl md:text-6xl">Features</h2>
-        <p class="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-           An app designed for infovores, researchers, and anyone who wants to save, organize, and annotate anything.
-        </p>
-    </div>
+<section
+	class="bg-trasparent container space-y-6 py-8 dark:bg-transparent md:py-12 lg:py-24"
+>
+	<div
+		class="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center"
+	>
+		<h2
+			class="text-3xl font-semibold leading-[1.1] tracking-tight sm:text-3xl md:text-6xl"
+		>
+			Features
+		</h2>
+		<p
+			class="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7"
+		>
+			An app designed for infovores, researchers, and anyone who wants to save,
+			organize, and annotate anything.
+		</p>
+	</div>
 	<ul
 		class="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3"
 	>
-		<li
-			class="relative overflow-hidden rounded-lg border bg-background p-2"
-		>
-			<div
-				class="flex h-[180px] flex-col justify-between rounded-md p-6"
-			>
+		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Glasses class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="font-bold">Read Later</h3>
@@ -62,12 +76,8 @@
 				</div>
 			</div>
 		</li>
-		<li
-			class="relative overflow-hidden rounded-lg border bg-background p-2"
-		>
-			<div
-				class="flex h-[180px] flex-col justify-between rounded-md p-6"
-			>
+		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Rss class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="font-bold">Subscriptions</h3>
@@ -77,12 +87,8 @@
 				</div>
 			</div>
 		</li>
-        <li
-			class="relative overflow-hidden rounded-lg border bg-background p-2"
-		>
-			<div
-				class="flex h-[180px] flex-col justify-between rounded-md p-6"
-			>
+		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Edit3 class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="font-bold">Annotate</h3>
@@ -92,12 +98,8 @@
 				</div>
 			</div>
 		</li>
-        <li
-			class="relative overflow-hidden rounded-lg border bg-background p-2"
-		>
-			<div
-				class="flex h-[180px] flex-col justify-between rounded-md p-6"
-			>
+		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Layers class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="font-bold">Organize</h3>
@@ -107,12 +109,8 @@
 				</div>
 			</div>
 		</li>
-        <li
-			class="relative overflow-hidden rounded-lg border bg-background p-2"
-		>
-			<div
-				class="flex h-[180px] flex-col justify-between rounded-md p-6"
-			>
+		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Armchair class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="font-bold">Any Media</h3>
@@ -122,12 +120,8 @@
 				</div>
 			</div>
 		</li>
-        <li
-			class="relative overflow-hidden rounded-lg border bg-background p-2"
-		>
-			<div
-				class="flex h-[180px] flex-col justify-between rounded-md p-6"
-			>
+		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Zap class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="font-bold">Integrate</h3>
