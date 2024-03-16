@@ -1,12 +1,11 @@
 <script>
-	import { Button } from '$lib/components/ui/button';
 	import '$lib/styles/warbler.css';
 	import './roslindale.css';
+
+	import { Button } from '$lib/components/ui/button';
 </script>
 
-<div
-	class="flex min-h-screen select-text flex-col bg-gradient-to-b from-amber-900 to-amber-950 text-white"
->
+<div class="flex min-h-screen select-text flex-col">
 	<header class="container z-40">
 		<nav class=" mx-auto flex items-center justify-between space-x-4 p-4">
 			<span class="logo text-4xl font-bold">Margins</span>

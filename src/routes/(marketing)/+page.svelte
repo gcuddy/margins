@@ -1,6 +1,4 @@
 <script>
-	import { buttonVariants } from '$components/ui/button';
-	import { cn } from '$lib';
 	import {
 		Armchair,
 		ChevronRight,
@@ -10,7 +8,16 @@
 		Rss,
 		Zap,
 	} from 'lucide-svelte';
+	import { buttonVariants } from '$components/ui/button';
+	import { cn } from '$lib';
+	import Anything from './anything.svelte';
 </script>
+
+<svelte:head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" >
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+</svelte:head>
 
 <section class="space-y-6 pb-16 pt-6 md:pt-10 lg:py-32">
 	<div
@@ -18,15 +25,19 @@
 	>
 		<!-- Link here to announcing open beta -->
 		<h1
-			class=" inline-block max-w-[20ch] text-balance bg-gradient-to-br from-white via-amber-50/90 to-amber-100/75 bg-clip-text py-4 font-sans text-[clamp(48px,5vw,96px)] font-semibold leading-[95%] tracking-tight text-transparent"
+			class="header inline-block max-w-[20ch] text-balance py-4 font-sans text-[clamp(48px,5vw,140px)] font-normal leading-[95%]"
 		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
-			Margins is the app for saving, consuming, and annotating
+			<span
+				class="relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded before:bg-amber-100"
+				>Margins
+			</span>is the app for saving, consuming, and annotating
 			<!-- TODO: this anything should be replaced with a dynamic "articles", "books", "pdfs", etc -->
-			<em>anything</em>.
+      <Anything />
+			<!-- <em>anything</em>. -->
 		</h1>
 		<p
-			class=" mb-[1vw] leading-none tracking-normal text-white/80 sm:leading-8 md:text-[clamp(20px,1.5vw,26px)]"
+			class=" mb-[1vw] leading-none tracking-normal sm:leading-8 md:text-[clamp(20px,1.5vw,26px)]"
 		>
 			A powerful, friendly research app.
 		</p>
@@ -55,22 +66,22 @@
 		>
 			Features
 		</h2>
-		<p
-			class="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7"
-		>
-			An app designed for infovores, researchers, and anyone who wants to save,
-			organize, and annotate anything.
+		<p class="max-w-[45ch] text-xl leading-normal text-white/75 sm:leading-7">
+			An app designed for infovores, researchers, and anyone who wants to save
+			and organize content.
 		</p>
 	</div>
 	<ul
 		class="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3"
 	>
-		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+		<li
+			class="relative overflow-hidden rounded-lg bg-amber-50/75 p-2 text-amber-950 shadow"
+		>
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Glasses class="h-12 w-12 shrink-0" />
 				<div class="space-y-2">
 					<h3 class="font-bold">Read Later</h3>
-					<span class="text-sm text-muted-foreground"
+					<span class="text-sm text-black/75"
 						>Articles, PDFs, videos, websites, documents and more.</span
 					>
 				</div>
@@ -133,3 +144,9 @@
 		</li>
 	</ul>
 </section>
+
+<style>
+  .header {
+    font-family: "Instrument Serif";
+  }
+</style>
