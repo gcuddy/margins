@@ -5,10 +5,10 @@
 	const words = [
 		'articles',
 		'books',
-		'pdfs',
+		'PDFs',
 		'bookmarks',
 		'podcasts',
-		'rss',
+		'RSS',
 		'anything.',
 	];
 

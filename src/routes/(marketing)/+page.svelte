@@ -8,31 +8,36 @@
 		Rss,
 		Zap,
 	} from 'lucide-svelte';
+
 	import { buttonVariants } from '$components/ui/button';
 	import { cn } from '$lib';
+
 	import Anything from './anything.svelte';
 </script>
 
 <svelte:head>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" >
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
+		rel="stylesheet"
+	/>
 </svelte:head>
 
-<section class="space-y-6 pb-16 pt-6 md:pt-10 lg:py-32">
+<section class="space-y-6 pb-16 lg:py-16">
 	<div
 		class="container flex max-w-[64rem] flex-col items-center gap-4 text-center duration-1000 animate-in fade-in slide-in-from-top-4"
 	>
 		<!-- Link here to announcing open beta -->
 		<h1
-			class="header inline-block max-w-[20ch] text-balance py-4 font-sans text-[clamp(48px,5vw,140px)] font-normal leading-[95%]"
+			class="header inline-block max-w-[20ch] text-balance py-4 font-sans text-[clamp(48px,7vw,140px)] font-normal leading-[95%]"
 		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
 			<span
-				class="relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded before:bg-amber-100"
+				class="relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded before:bg-primary/40 before:text-primary-foreground"
 				>Margins
 			</span>is the app for saving, consuming, and annotating
-      <Anything />
+			<Anything />
 		</h1>
 		<p
 			class=" mb-[1vw] leading-none tracking-normal sm:leading-8 md:text-[clamp(20px,1.5vw,26px)]"
@@ -51,7 +56,6 @@
 			</a>
 		</div>
 	</div>
-	<!-- TODO: join waitlist -->
 </section>
 <section
 	class="bg-trasparent container space-y-6 py-8 dark:bg-transparent md:py-12 lg:py-24"
@@ -144,7 +148,7 @@
 </section>
 
 <style>
-  .header {
-    font-family: "Instrument Serif";
-  }
+	.header {
+		font-family: 'Instrument Serif';
+	}
 </style>
