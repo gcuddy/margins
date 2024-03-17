@@ -32,9 +32,7 @@
 				class="relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded before:bg-amber-100"
 				>Margins
 			</span>is the app for saving, consuming, and annotating
-			<!-- TODO: this anything should be replaced with a dynamic "articles", "books", "pdfs", etc -->
       <Anything />
-			<!-- <em>anything</em>. -->
 		</h1>
 		<p
 			class=" mb-[1vw] leading-none tracking-normal sm:leading-8 md:text-[clamp(20px,1.5vw,26px)]"
