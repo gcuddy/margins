@@ -1,11 +1,13 @@
 <script lang="ts">
 	export let data;
 
+	import { Loader } from 'lucide-svelte';
+
+	import { page } from '$app/stores';
 	import * as Card from '$components/ui/card';
 	import * as Form from '$components/ui/form';
+
 	import { emailSchema } from './schema';
-	import { Loader } from 'lucide-svelte';
-	import { page } from '$app/stores';
 </script>
 
 <Form.Root
