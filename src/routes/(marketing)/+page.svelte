@@ -15,6 +15,7 @@
 	import Anything from './anything.svelte';
 </script>
 
+<!-- TODO: replace with fontsource -->
 <svelte:head>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" />
@@ -48,8 +49,8 @@
 			<a
 				href="/signup"
 				class={cn(
-					buttonVariants({ size: 'lg' }),
-					'h-12 bg-amber-50 text-base font-medium transition hover:scale-105 hover:bg-amber-100',
+					buttonVariants({ size: 'lg', variant: 'secondary' }),
+					'hover:text-primary-on-foreground h-12 rounded-full text-base font-medium transition hover:scale-105 hover:bg-primary',
 				)}
 			>
 				Get Margins <ChevronRight class="ml-1 h-4 w-4" />
