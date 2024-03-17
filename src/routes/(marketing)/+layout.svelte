@@ -37,7 +37,7 @@
 			</ul>
 		</nav>
 	</header>
-	<main class="flex-1">
+	<main class="flex-1 px-2">
 		<slot />
 	</main>
 </div>
