@@ -50,7 +50,7 @@
 				href="/signup"
 				class={cn(
 					buttonVariants({ size: 'lg', variant: 'secondary' }),
-					'hover:text-primary-on-foreground h-12 rounded-full text-base font-medium transition hover:scale-105 hover:bg-primary',
+					'h-12 rounded-full text-base font-medium transition hover:scale-105',
 				)}
 			>
 				Get Margins <ChevronRight class="ml-1 h-4 w-4" />
@@ -59,43 +59,43 @@
 	</div>
 </section>
 <section
-	class="bg-trasparent container space-y-6 py-8 dark:bg-transparent md:py-12 lg:py-24"
+	class="bg-trasparent container mt-[2vh] space-y-6 py-16 dark:bg-transparent md:py-12 lg:py-24"
 >
 	<div
 		class="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center"
 	>
 		<h2
-			class="text-3xl font-semibold leading-[1.1] tracking-tight sm:text-3xl md:text-6xl"
+			class="header text-3xl font-normal leading-[1.1] sm:text-3xl md:text-6xl"
 		>
 			Features
 		</h2>
-		<p class="max-w-[45ch] text-xl leading-normal text-white/75 sm:leading-7">
+		<p
+			class="max-w-[45ch] text-xl leading-normal text-muted-foreground sm:leading-7"
+		>
 			An app designed for infovores, researchers, and anyone who wants to save
 			and organize content.
 		</p>
 	</div>
 	<ul
-		class="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3"
+		class="mx-auto grid justify-center gap-4 px-2 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3"
 	>
-		<li
-			class="relative overflow-hidden rounded-lg bg-amber-50/75 p-2 text-amber-950 shadow"
-		>
+		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
-				<Glasses class="h-12 w-12 shrink-0" />
+				<Glasses class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
-					<h3 class="font-bold">Read Later</h3>
-					<span class="text-sm text-black/75"
-						>Articles, PDFs, videos, websites, documents and more.</span
+					<h3 class="font-semibold">Read Later</h3>
+					<span class="text-sm font-semibold text-muted-foreground"
+						>Articles, videos, websites, documents and more.</span
 					>
 				</div>
 			</div>
 		</li>
 		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
-				<Rss class="h-12 w-12 shrink-0" />
+				<Rss class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
-					<h3 class="font-bold">Subscriptions</h3>
-					<span class="text-sm text-muted-foreground"
+					<h3 class="font-semibold">Subscriptions</h3>
+					<span class="text-sm font-semibold text-muted-foreground"
 						>Podcasts, RSS, emails, and anything you can throw at it.</span
 					>
 				</div>
@@ -103,10 +103,10 @@
 		</li>
 		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
-				<Edit3 class="h-12 w-12 shrink-0" />
+				<Edit3 class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
-					<h3 class="font-bold">Annotate</h3>
-					<span class="text-sm text-muted-foreground"
+					<h3 class="font-semibold">Annotate</h3>
+					<span class="text-sm font-semibold text-muted-foreground"
 						>Highlight, annotate, and share documents.</span
 					>
 				</div>
@@ -114,10 +114,10 @@
 		</li>
 		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
-				<Layers class="h-12 w-12 shrink-0" />
+				<Layers class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
-					<h3 class="font-bold">Organize</h3>
-					<span class="text-sm text-muted-foreground"
+					<h3 class="font-semibold">Organize</h3>
+					<span class="text-sm font-semibold text-muted-foreground"
 						>Organize bookmarks into easily shareable collections and views.</span
 					>
 				</div>
@@ -125,10 +125,10 @@
 		</li>
 		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
-				<Armchair class="h-12 w-12 shrink-0" />
+				<Armchair class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
-					<h3 class="font-bold">Any Media</h3>
-					<span class="text-sm text-muted-foreground"
+					<h3 class="font-semibold">Any Media</h3>
+					<span class="text-sm font-semibold text-muted-foreground"
 						>Track books, movies, TV, games, and more.</span
 					>
 				</div>
@@ -136,10 +136,10 @@
 		</li>
 		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
-				<Zap class="h-12 w-12 shrink-0" />
+				<Zap class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
-					<h3 class="font-bold">Integrate</h3>
-					<span class="text-sm text-muted-foreground"
+					<h3 class="font-semibold">Integrate</h3>
+					<span class="text-sm font-semibold text-muted-foreground"
 						>Integrate, export and share your notes.</span
 					>
 				</div>
@@ -150,6 +150,6 @@
 
 <style>
 	.header {
-		font-family: 'Instrument Serif';
+		font-family: 'Instrument Serif', serif;
 	}
 </style>

@@ -21,7 +21,9 @@
 			<Card.Title class="text-2xl font-semibold tracking-tight"
 				>Reset your password</Card.Title
 			>
-			<Card.Description>Enter your email below to reset your password.</Card.Description>
+			<Card.Description
+				>Enter your email below to reset your password.</Card.Description
+			>
 		</Card.Header>
 		<Card.Content class="grid gap-4">
 			<Form.Message
@@ -36,9 +38,12 @@
 			</Form.Field>
 		</Card.Content>
 		<Card.Footer>
-			<Form.Button disabled={submitting} class="w-full"
+			<Form.Button
+				disabled={submitting}
+				class="w-full bg-foreground text-background hover:bg-foreground"
+				variant="secondary"
 				>Send reset link {#if submitting}
-					<Loader class="h-4 w-4 animate-spin ml-2" />
+					<Loader class="ml-2 h-4 w-4 animate-spin" />
 				{/if}</Form.Button
 			>
 		</Card.Footer>

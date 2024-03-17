@@ -1,10 +1,12 @@
 <script lang="ts">
 	export let data;
 
+	import { Loader2 } from 'lucide-svelte';
+
 	import { page } from '$app/stores';
 	import * as Card from '$components/ui/card';
 	import * as Form from '$components/ui/form';
-	import { Loader2 } from 'lucide-svelte';
+
 	import { createUserSchema } from '../schema';
 </script>
 
@@ -49,16 +51,19 @@
 					<Form.Validation />
 				</Form.Item>
 			</Form.Field>
-			<Form.Field {config} name="inviteCode">
-				<Form.Item>
-					<Form.Label>Invite Code (if you have one)</Form.Label>
-					<Form.Input />
-					<Form.Validation />
-				</Form.Item>
-			</Form.Field>
+			<!-- <Form.Field {config} name="inviteCode"> -->
+			<!-- 	<Form.Item> -->
+			<!-- 		<Form.Label>Invite Code (if you have one)</Form.Label> -->
+			<!-- 		<Form.Input /> -->
+			<!-- 		<Form.Validation /> -->
+			<!-- 	</Form.Item> -->
+			<!-- </Form.Field> -->
 		</Card.Content>
 		<Card.Footer>
-			<Form.Button disabled={submitting} class="w-full"
+			<Form.Button
+				variant="secondary"
+				disabled={submitting}
+				class="w-full bg-foreground text-background hover:bg-foreground"
 				>Sign up {#if submitting}
 					<Loader2 class="ml-2 h-4 w-4 animate-spin" />
 				{/if}</Form.Button
