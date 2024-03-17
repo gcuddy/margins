@@ -14,15 +14,14 @@
 					<Button
 						variant="ghost"
 						href="/login"
-						class="font-semibold uppercase hover:bg-white/25 hover:text-white"
-						>Login</Button
+						class="font-semibold hover:bg-transparent">Login</Button
 					>
 				</li>
 				<li>
 					<Button
 						variant="secondary"
 						href="/signup"
-						class="font-semibold uppercase">Sign up</Button
+						class="rounded-full font-semibold">Sign up</Button
 					>
 				</li>
 				<!-- <li>

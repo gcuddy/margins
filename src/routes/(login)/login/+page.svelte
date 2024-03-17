@@ -1,5 +1,8 @@
 <script lang="ts">
-	import * as Form from '$components/ui/form';
+	import { Loader2 } from 'lucide-svelte';
+	import { getFlash } from 'sveltekit-flash-message';
+
+	import { page } from '$app/stores';
 	import {
 		Card,
 		CardContent,
@@ -8,17 +11,16 @@
 		CardHeader,
 		CardTitle,
 	} from '$components/ui/card';
+	import * as Form from '$components/ui/form';
+
 	import { loginUserSchema } from '../schema';
-	import { page } from '$app/stores';
-	import { Loader2 } from 'lucide-svelte';
-    import { getFlash } from 'sveltekit-flash-message';
 
 	export let data;
 
-    const flash = getFlash(page);
+	const flash = getFlash(page);
 </script>
 
-<Card class="animate-in fade-in-5 duration-500 slide-in-from-top-8">
+<Card class="duration-500 animate-in fade-in-5 slide-in-from-top-8">
 	<Form.Root
 		class="contents"
 		method="post"
@@ -47,16 +49,24 @@
 			</Form.Field>
 			<Form.Field {config} name="password">
 				<Form.Item>
-					<div class="flex items-center justify-between "><Form.Label>Password</Form.Label><a class="text-xs text-muted-foreground hover:underline" href="/password-reset">Forgot password?</a></div>
+					<div class="flex items-center justify-between">
+						<Form.Label>Password</Form.Label><a
+							class="text-xs text-muted-foreground hover:underline"
+							href="/password-reset">Forgot password?</a
+						>
+					</div>
 					<Form.Input type="password" autocomplete="current-password" />
 					<Form.Validation />
 				</Form.Item>
 			</Form.Field>
 		</CardContent>
 		<CardFooter>
-			<Form.Button disabled={submitting} variant="default" class="w-full"
+			<Form.Button
+				disabled={submitting}
+				variant="secondary"
+				class="w-full bg-foreground text-background hover:bg-foreground"
 				>Login {#if submitting}
-					<Loader2 class="h-4 w-4 animate-spin ml-2" />
+					<Loader2 class="ml-2 h-4 w-4 animate-spin" />
 				{/if}</Form.Button
 			>
 		</CardFooter>
