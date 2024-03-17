@@ -13,3 +13,4 @@ node_modules
 .npmrc
 yarn.lock
 tracing_output/
+.logbook
