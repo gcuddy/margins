@@ -3,6 +3,7 @@
 		Armchair,
 		ChevronRight,
 		Edit3,
+		Github,
 		Glasses,
 		Layers,
 		Rss,
@@ -31,7 +32,7 @@
 	>
 		<!-- Link here to announcing open beta -->
 		<h1
-			class="header inline-block max-w-[20ch] text-balance py-4 font-sans text-[clamp(48px,7vw,140px)] font-normal leading-[95%]"
+			class="header inline-block max-w-[20ch] text-balance py-4 font-sans text-[clamp(48px,7vw,140px)] font-normal leading-none"
 		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
 			<span
@@ -58,9 +59,12 @@
 		</div>
 	</div>
 </section>
-<section
-	class="bg-trasparent container mt-[2vh] space-y-6 py-16 dark:bg-transparent md:py-12 lg:py-24"
->
+<div class="relative h-[9vh]">
+	<div
+		class="absolute left-1/2 -z-10 h-full w-px border-l border-dashed border-foreground/50"
+	/>
+</div>
+<section class="bg-trasparent container space-y-6 py-16 dark:bg-transparent">
 	<div
 		class="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center"
 	>
@@ -146,6 +150,21 @@
 			</div>
 		</li>
 	</ul>
+</section>
+<section class="bg-trasparent container space-y-6 py-16 dark:bg-transparent">
+	<div
+		class="mx-auto flex max-w-[58rem] items-center justify-between space-y-4"
+	>
+		<div />
+		<div class="flex items-center justify-end gap-2 text-muted-foreground">
+			<span
+				>Built by <a class="underline" href="https://guscuddy.com">Gus</a> in Brooklyn.</span
+			>
+			<a href="https://github.com/gcuddy/margins">
+				<Github class="h-5 w-5 stroke-2" />
+			</a>
+		</div>
+	</div>
 </section>
 
 <style>
