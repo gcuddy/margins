@@ -80,7 +80,7 @@ module.exports = {
 		'import/no-namespace': 0,
 		'import/no-unresolved': 0,
 		'import/order': 0,
-		'no-console': 1,
+		'no-console': 0,
 		'no-const-assign': 2,
 		'no-extra-parens': [2, 'functions'],
 		'no-irregular-whitespace': 2,
@@ -174,6 +174,7 @@ module.exports = {
 				// these cause issues with svelte rn
 				'@typescript-eslint/no-unsafe-assignment': 0,
 				'@typescript-eslint/no-unsafe-call': 0,
+				'no-console': 1,
 				'no-undef': 0,
 			},
 		},
