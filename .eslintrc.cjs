@@ -15,16 +15,7 @@ module.exports = {
 		// 'prettier',
 	],
 	parser: '@typescript-eslint/parser',
-	plugins: [
-		'@typescript-eslint',
-		'import',
-		'simple-import-sort',
-		// 'unused-imports',
-		'sort-destructure-keys',
-		'sort-keys-fix',
-		'typescript-sort-keys',
-		'unicorn',
-	],
+	plugins: ['@typescript-eslint', 'import', 'unicorn'],
 	rules: {
 		'@typescript-eslint/array-type': [
 			'error',
@@ -104,11 +95,6 @@ module.exports = {
 		'prefer-arrow-callback': [2, { allowNamedFunctions: true }],
 		'prefer-const': 2,
 		'prefer-template': 'error',
-		'simple-import-sort/exports': 1,
-		'simple-import-sort/imports': 1,
-		'sort-imports': 0,
-		'sort-destructure-keys/sort-destructure-keys': 2,
-		'sort-keys-fix/sort-keys-fix': 0,
 		'space-before-blocks': 2,
 		'space-before-function-paren': [
 			2,
@@ -121,8 +107,6 @@ module.exports = {
 		'svelte/no-trailing-spaces': 'error',
 		'svelte/no-useless-mustaches': 'error',
 		'svelte/prefer-style-directive': 'error',
-		'typescript-sort-keys/interface': 0,
-		'typescript-sort-keys/string-enum': 0,
 		'unicorn/better-regex': 2,
 		'unicorn/catch-error-name': 2,
 		'unicorn/consistent-function-scoping': 2,
