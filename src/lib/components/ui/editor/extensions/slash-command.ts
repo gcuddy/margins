@@ -1,44 +1,43 @@
-import { type Editor, type Range, Extension } from '@tiptap/core';
+import { type Editor, Extension, type Range } from '@tiptap/core';
 import Suggestion, { type SuggestionProps } from '@tiptap/suggestion';
-import tippy from 'tippy.js';
-
-import SlashCommand__SvelteComponent_ from './SlashCommand.svelte';
-
 import {
+	CheckSquare,
+	ClockIcon,
+	Code,
 	Heading1,
 	Heading2,
 	Heading3,
+	Image as ImageIcon,
 	List,
 	ListOrdered,
 	MessageSquarePlus,
+	SparklesIcon,
 	Text,
 	TextQuote,
-	Image as ImageIcon,
-	Code,
-	CheckSquare,
-	ClockIcon,
-	SparklesIcon
 } from 'lucide-svelte';
 import type { ComponentType } from 'svelte';
-import { createPopperActions } from 'svelte-popperjs';
-import { handleImageUplaod } from '../utils';
 import { get } from 'svelte/store';
+import { createPopperActions } from 'svelte-popperjs';
+import tippy from 'tippy.js';
+
 import { page } from '$app/stores';
-import player from '$lib/stores/player';
-import PromptInput from '$components/ui/srs-card/PromptInput.svelte';
 import { buttonVariants } from '$components/ui/Button.svelte';
 import { nanoid } from '$lib/nanoid';
+import player from '$lib/stores/player';
 
-interface CommandItemProps {
+import { handleImageUplaod } from '../utils';
+import SlashCommand__SvelteComponent_ from './SlashCommand.svelte';
+
+type CommandItemProps = {
 	title: string;
 	description: string;
 	icon: ComponentType;
-}
+};
 
-interface CommandProps {
+type CommandProps = {
 	editor: Editor;
 	range: Range;
-}
+};
 
 const Command = Extension.create({
 	name: 'slash-command',
@@ -46,44 +45,58 @@ const Command = Extension.create({
 		return {
 			suggestion: {
 				char: '/',
-				command: ({ editor, range, props }: { editor: Editor; range: Range; props: any }) => {
-					props.command({ editor, range });
-				}
-			}
-		};
-	},
-	addProseMirrorPlugins() {
-		return [
-			Suggestion({
-				editor: this.editor,
-				...this.options.suggestion
-			})
-		];
-	}
-});
+	import {
+		ArrowRight,
+		Cog,
+		CreditCard,
+		Search,
+		Settings,
+		StickyNote,
+		TagIcon,
+	} from 'lucide-svelte';
+	import { getContext } from 'svelte';
+	import { derived, type Writable, writable } from 'svelte/store';
 
-const getSuggestionItems = (props: { query: string }) => {
-	const { query } = props;
-	console.log({ props });
-
-	const $page = get(page);
-	const $player = get(player);
-
-	console.log({ pagedata: $page.data });
-	// Are we currently in a video?
-	const video = $page.data?.entry?.type === 'video' && !!$page.data.entry?.youtubeId;
-
-	const audio = $player?.type === 'audio';
-
-	const items = [
-		{
-			title: 'Text',
-			description: 'Just start typing with plain text.',
-			searchTerms: ['p', 'paragraph'],
-			icon: Text,
-			command: ({ editor, range }: CommandProps) => {
-				editor.chain().focus().deleteRange(range).toggleNode('paragraph', 'paragraph').run();
-			}
+	import { goto } from '$app/navigation';
+	import { page as spage } from '$app/stores';
+	import { checkedEntryIds } from '$components/entries/multi-select';
+	import { Badge } from '$components/ui/badge';
+	import {
+		Books,
+		EntryCommands,
+		Movies,
+		Music,
+		Podcasts,
+		Subscriptions,
+		Tags,
+	} from '$lib/commands';
+	import Annotations from '$lib/commands/Annotations.svelte';
+	import Collections from '$lib/commands/Collections.svelte';
+	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
+	import Query from '$lib/commands/Query.svelte';
+	import { cmd_open } from '$lib/components/ui/command/stores';
+	import {
+		CommandDialog,
+		CommandEmpty,
+		CommandGroup,
+		CommandInput,
+		CommandItem,
+		CommandList,
+		CommandSeparator,
+		CommandShortcut,
+	} from '$lib/components/ui/command2';
+	import {
+		darkThemes,
+		themes,
+		updateTheme,
+	} from '$lib/features/settings/themes';
+	import { objectEntries } from '$lib/helpers';
+	import { queryKeys } from '$lib/queries/keys';
+	import { createSetTagsMutation } from '$lib/queries/mutations';
+	import { checkedCommandBadgeDisplay } from '$lib/stores/entry-state';
+					.toggleNode('paragraph', 'paragraph')
+					.run();
+			},
 		},
 		{
 			title: 'To-do List',
@@ -92,7 +105,7 @@ const getSuggestionItems = (props: { query: string }) => {
 			icon: CheckSquare,
 			command: ({ editor, range }: CommandProps) => {
 				editor.chain().focus().deleteRange(range).toggleTaskList().run();
-			}
+			},
 		},
 		{
 			title: 'Heading 1',
@@ -100,8 +113,13 @@ const getSuggestionItems = (props: { query: string }) => {
 			searchTerms: ['title', 'big', 'large', 'h1'],
 			icon: Heading1,
 			command: ({ editor, range }: CommandProps) => {
-				editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run();
-			}
+				editor
+					.chain()
+					.focus()
+					.deleteRange(range)
+					.setNode('heading', { level: 1 })
+					.run();
+			},
 		},
 		{
 			title: 'Heading 2',
@@ -109,8 +127,13 @@ const getSuggestionItems = (props: { query: string }) => {
 			searchTerms: ['subtitle', 'medium', 'h2'],
 			icon: Heading2,
 			command: ({ editor, range }: CommandProps) => {
-				editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run();
-			}
+				editor{return;}
+					.chain()
+					.focus()
+					.deleteRange(range)
+					.setNode('heading', { level: 2 })
+					.run();
+			},
 		},
 		{
 			title: 'Heading 3',
@@ -118,8 +141,13 @@ const getSuggestionItems = (props: { query: string }) => {
 			searchTerms: ['subtitle', 'small', 'h3'],
 			icon: Heading3,
 			command: ({ editor, range }: CommandProps) => {
-				editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run();
-			}
+				editor
+					.chain()
+					.focus()
+					.deleteRange(range)
+					.setNode('heading', { level: 3 })
+					.run();
+			},
 		},
 		{
 			title: 'Bullet List',
@@ -128,7 +156,7 @@ const getSuggestionItems = (props: { query: string }) => {
 			icon: List,
 			command: ({ editor, range }: CommandProps) => {
 				editor.chain().focus().deleteRange(range).toggleBulletList().run();
-			}
+			},
 		},
 		{
 			title: 'Numbered List',
@@ -137,7 +165,7 @@ const getSuggestionItems = (props: { query: string }) => {
 			icon: ListOrdered,
 			command: ({ editor, range }: CommandProps) => {
 				editor.chain().focus().deleteRange(range).toggleOrderedList().run();
-			}
+			},
 		},
 		{
 			title: 'Quote',
@@ -145,13 +173,13 @@ const getSuggestionItems = (props: { query: string }) => {
 			searchTerms: ['blockquote'],
 			icon: TextQuote,
 			command: ({ editor, range }: CommandProps) =>
-				editor
+	const hideDefault = false;
 					.chain()
 					.focus()
 					.deleteRange(range)
 					.toggleNode('paragraph', 'paragraph')
 					.toggleBlockquote()
-					.run()
+					.run(),
 		},
 		{
 			title: 'Code',
@@ -159,7 +187,7 @@ const getSuggestionItems = (props: { query: string }) => {
 			searchTerms: ['codeblock'],
 			icon: Code,
 			command: ({ editor, range }: CommandProps) =>
-				editor.chain().focus().deleteRange(range).toggleCodeBlock().run()
+				editor.chain().focus().deleteRange(range).toggleCodeBlock().run(),
 		},
 		{
 			title: 'Image',
@@ -179,63 +207,8 @@ const getSuggestionItems = (props: { query: string }) => {
 					}
 				};
 				input.click();
-			}
+			},
 		},
-		{
-			title: 'SRS Card',
-			description: 'Create a new SRS card.',
-			searchTerms: ['srs', 'card', 'flashcard'],
-			icon: SparklesIcon,
-			command: ({ editor, range }: CommandProps) => {
-				editor.chain().focus().deleteRange(range).run();
-				const entry_id =
-					$page.data?.entry?.id ||
-					$page.data?.note?.entry?.id ||
-					$page.data?.note?.id;
-				const id = nanoid();
-				console.log({ id, entry_id });
-				// dialog_store.open({
-				// 	title: 'Create a new SRS card',
-				// 	content: {
-				// 		component: PromptInput,
-				// 		props: {
-				// 			showButton: false,
-				// 			id,
-				// 			entry_id
-				// 		}
-				// 	},
-				// 	footer: [
-				// 		{
-				//             as: "button",
-				// 			text: 'Create',
-				// 			class: buttonVariants(),
-				// 			onclick: () => {
-				//                 console.log({editor});
-				// 				editor
-				// 					.chain()
-				// 					.focus()
-				// 					.insertContent(
-				// 						// range,
-				// 						[
-				// 							{
-				// 								type: 'srs',
-				// 								attrs: {
-				// 									id,
-				// 									active: true
-				// 								}
-				// 							}
-				// 						]
-				// 						// {
-				// 						// 	updateSelection: true
-				// 						// }
-				// 					)
-				// 					.run();
-				// 			}
-				// 		}
-				// 	]
-				// });
-			}
-		}
 	];
 
 	if (video) {
@@ -249,7 +222,9 @@ const getSuggestionItems = (props: { query: string }) => {
 				const $player = get(player);
 				if ($player && $player.type === 'youtube') {
 					console.log('hello');
-					const time = Math.floor(Number(await $player.player.getCurrentTime()));
+					const time = Math.floor(
+						Number(await $player.player.getCurrentTime()),
+					);
 					editor
 						.chain()
 						.focus()
@@ -268,13 +243,13 @@ const getSuggestionItems = (props: { query: string }) => {
 									timestamp: time,
 									entry_id: $page.data.entry?.id,
 									youtube_id: $page.data.entry?.youtubeId,
-									title: $page.data.entry?.title
-								}
-							}
+									title: $page.data.entry?.title,
+								},
+							},
 						])
 						.run();
 				}
-			}
+			},
 		});
 	}
 
@@ -297,12 +272,12 @@ const getSuggestionItems = (props: { query: string }) => {
 								timestamp: time,
 								entry_id: $audioPlayer.audio?.entry_id,
 								title: $audioPlayer.audio?.title,
-								image: $audioPlayer.audio?.image
-							}
-						}
+								image: $audioPlayer.audio?.image,
+							},
+						},
 					])
 					.run();
-			}
+			},
 		});
 	}
 
@@ -312,7 +287,8 @@ const getSuggestionItems = (props: { query: string }) => {
 			return (
 				item.title.toLowerCase().includes(search) ||
 				item.description.toLowerCase().includes(search) ||
-				(item.searchTerms && item.searchTerms.some((term: string) => term.includes(search)))
+				(item.searchTerms &&
+					item.searchTerms.some((term: string) => term.includes(search)))
 			);
 		}
 		return true;
@@ -345,7 +321,7 @@ const renderItems = () => {
 			context.set('content_action', content);
 			component = new SlashCommand__SvelteComponent_({
 				target: document.body,
-				props
+				props,
 			});
 		},
 		onUpdate: (props: { editor: Editor; clientRect: DOMRect }) => {
@@ -353,7 +329,7 @@ const renderItems = () => {
 
 			popup &&
 				popup[0].setProps({
-					getReferenceClientRect: props.clientRect
+					getReferenceClientRect: props.clientRect,
 				});
 		},
 		onKeyDown: (props: { event: KeyboardEvent }) => {
@@ -368,7 +344,7 @@ const renderItems = () => {
 		onExit: () => {
 			popup?.[0].destroy();
 			component?.$destroy();
-		}
+		},
 	};
 };
 
@@ -377,8 +353,8 @@ function CreateSlashCommand(context: any) {}
 const SlashCommand = Command.configure({
 	suggestion: {
 		items: getSuggestionItems,
-		render: renderItems
-	}
+		render: renderItems,
+	},
 });
 
 export default SlashCommand;

@@ -32,7 +32,6 @@
 		type TiptapExtensionProps,
 	} from './extensions';
 	import { TiptapEditorProps } from './props';
-	import { save_srs_nodes } from './utils';
 	import { dequal } from 'dequal';
 
 	export let id: string | number | undefined = undefined;
@@ -187,17 +186,17 @@
 			// TODO
 			$save_status = 'Unsaved';
 			console.log('updating', { e });
-            // TODO: performance issue?
-            // check equality of json
-            if (dequal(originalContent, e.editor.getJSON())) {
-                console.log('content is equal')
-                $save_status = 'Saved';
-                tainted = false;
-            } else {
-                console.log('content is not equal')
-                $save_status = 'Unsaved';
-                tainted = true;
-            }
+			// TODO: performance issue?
+			// check equality of json
+			if (dequal(originalContent, e.editor.getJSON())) {
+				console.log('content is equal');
+				$save_status = 'Saved';
+				tainted = false;
+			} else {
+				console.log('content is not equal');
+				$save_status = 'Unsaved';
+				tainted = true;
+			}
 			// const selection = e.editor.state.selection;
 			onUpdate?.(e);
 			// debounced_update(e);
@@ -209,7 +208,6 @@
 				console.log('setting editable to false');
 				e.editor.setEditable(false);
 			}
-			save_srs_nodes(e.editor.getJSON());
 			if (id) {
 				idb.set(
 					`note_markdown:${id}`,
@@ -302,7 +300,7 @@
 		class={cn(
 			// ' w-full max-w-screen-lg sm:mb-[calc(2    0vh)] sm:rounded-lg p-6 ',
 			'relative ',
-			/* shadcn textarea */ 'min-h-[64px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background ring-ring ring-offset-2',
+			/* shadcn textarea */ 'min-h-[64px] w-full cursor-text rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-ring ring-offset-2 ring-offset-background focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
 			focusRing && 'focus-within:ring-2',
 			(($editor.isFocused && $editor.isEditable) || bubbleMenuFocused) &&
 				focusRing &&
@@ -321,7 +319,7 @@
 					badgeVariants({
 						variant: 'secondary',
 					}),
-					'absolute right-2 top-2 mb-5 text-muted-foreground bg-secondary/60 font-normal',
+					'absolute right-2 top-2 mb-5 bg-secondary/60 font-normal text-muted-foreground',
 				)}
 			>
 				{showSaveStatus === 'auto' ? 'Changes saved' : $save_status}

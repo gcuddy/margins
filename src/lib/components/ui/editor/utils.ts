@@ -12,7 +12,7 @@ import slugify from 'slugify';
 export const handleImageUplaod = (
 	file: File,
 	view: EditorView,
-	event: ClipboardEvent | DragEvent | Event
+	event: ClipboardEvent | DragEvent | Event,
 ) => {
 	const supported_types = ['image/', '/pdf'];
 
@@ -32,9 +32,9 @@ export const handleImageUplaod = (
 				method: 'POST',
 				headers: {
 					'content-type': file?.type || 'application/octet-stream',
-					filename: slugify(file.name) || 'image.png'
+					filename: slugify(file.name) || 'image.png',
 				},
-				body: file
+				body: file,
 			}).then(async (res) => {
 				console.log({ res });
 				if (res.status === 200) {
@@ -56,9 +56,9 @@ export const handleImageUplaod = (
 						return view.dispatch(
 							view.state.tr.replaceSelectionWith(
 								view.state.schema.nodes.iframe.create({
-									src: url
-								})
-							)
+									src: url,
+								}),
+							),
 						);
 					}
 				} else {
@@ -71,8 +71,8 @@ export const handleImageUplaod = (
 				error: (e) => {
 					console.log(e);
 					return e.message;
-				}
-			}
+				},
+			},
 		);
 	}
 	const insertImage = (url: string) => {
@@ -83,9 +83,9 @@ export const handleImageUplaod = (
 					view.state.schema.nodes.image.create({
 						src: url,
 						alt: file.name,
-						title: file.name
-					})
-				)
+						title: file.name,
+					}),
+				),
 			);
 
 			// for drag and drop events
@@ -93,12 +93,12 @@ export const handleImageUplaod = (
 			const { schema } = view.state;
 			const coordinates = view.posAtCoords({
 				left: event.clientX,
-				top: event.clientY
+				top: event.clientY,
 			});
 			const node = schema.nodes.image.create({
 				src: url,
 				alt: file.name,
-				title: file.name
+				title: file.name,
 			}); // creates the image element
 			const transaction = view.state.tr.insert(coordinates?.pos || 0, node); // places it in the correct position
 			return view.dispatch(transaction);
@@ -110,9 +110,9 @@ export const handleImageUplaod = (
 					view.state.schema.nodes.image.create({
 						src: url,
 						alt: file.name,
-						title: file.name
-					})
-				)
+						title: file.name,
+					}),
+				),
 			);
 		}
 	};
@@ -122,18 +122,18 @@ export const getPrevText = (
 	editor: Editor,
 	{
 		chars,
-		offset = 0
+		offset = 0,
 	}: {
 		chars: number;
 		offset?: number;
-	}
+	},
 ) => {
 	// for now, we're using textBetween for now until we can figure out a way to stream markdown text
 	// with proper formatting: https://github.com/steven-tey/novel/discussions/7
 	return editor.state.doc.textBetween(
 		Math.max(0, editor.state.selection.from - chars),
 		editor.state.selection.from - offset,
-		'\n'
+		'\n',
 	);
 	// complete(editor.storage.markdown.getMarkdown());
 };
@@ -167,20 +167,6 @@ export function findNodes<TType = JSONContent>(doc: JSONContent, type: string) {
 	}
 	find(doc);
 	return nodes as TType[];
-}
-
-export function save_srs_nodes(doc: JSONContent) {
-	const nodes = findNodes(doc, 'srs') as {
-		type: 'srs';
-		attr: {
-			// can I get this type from the schema?
-			entry_id?: null | number;
-			id: null | string;
-			prompt: string | null;
-			response: string | null;
-		};
-	}[];
-	console.log({ nodes });
 }
 
 export function isJSONContent(content: unknown): content is JSONContent {

@@ -338,16 +338,6 @@
 						<span>Go to advanced Search</span>
 					</CommandItem>
 					<CommandItem
-						value="go to srs flash cards memory palace"
-						onSelect={() => {
-							goto(`/srs`);
-							$state.isOpen = false;
-						}}
-					>
-						<ArrowRight class="mr-2 h-4 w-4" />
-						<span>Go to SRS</span>
-					</CommandItem>
-					<CommandItem
 						value="go to notes notebook"
 						onSelect={() => {
 							goto(`/notebook`);

@@ -23,17 +23,22 @@ import { SvelteCounterExtension } from '../nodes/link';
 import { iframeNode } from '../nodes/iframes';
 import AnnotationCommand from './annotations';
 import { AnnotationExtension } from '../nodes/annotation';
-import { SRSNode, TimestampNode } from '../nodes';
+import { TimestampNode } from '../nodes';
 import Flashcard from '../nodes/flashcard';
 import Tag from './tags';
 
 export type TiptapExtensionProps = {
-	placeholder?: string | (Partial<PlaceholderOptions> & {
-        nonFocusedPlaceholder?: string;
-    });
+	placeholder?:
+		| string
+		| (Partial<PlaceholderOptions> & {
+				nonFocusedPlaceholder?: string;
+		  });
 };
 
-export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, context?: any) => {
+export const generate_tiptap_extensions = (
+	props: TiptapExtensionProps = {},
+	context?: any,
+) => {
 	// TODO: get context (as passed in), then pass in to things like SlashCommands
 	const TiptapExtensions = [
 		StarterKit.configure({
@@ -166,7 +171,6 @@ export const generate_tiptap_extensions = (props: TiptapExtensionProps = {}, con
 		iframeNode,
 		Youtube,
 		TimestampNode,
-		SRSNode,
 		Mathematics,
 		Flashcard,
 		Tag,
