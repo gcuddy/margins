@@ -18,8 +18,7 @@
 		"story:dev": "histoire dev",
 		"story:build": "histoire build",
 		"story:preview": "histoire preview",
-		"tailwind:generate": "node ./scripts/post-build.js",
-		"commit": "cz"
+		"tailwind:generate": "node ./scripts/post-build.js"
 	},
 	"prisma": {
 		"seed": "ts-node prisma/seed.ts"
@@ -48,6 +47,7 @@
 		"@types/dompurify": "^3.0.4",
 		"@types/lodash": "^4.14.200",
 		"@types/lodash.debounce": "^4.0.8",
+		"@types/spotify-api": "^0.0.25",
 		"@types/uuid": "^9.0.6",
 		"@types/wicg-file-system-access": "^2020.9.8",
 		"@types/youtube-player": "^5.5.9",
@@ -138,7 +138,6 @@
 		"@tanstack/query-persist-client-core": "^5.7.2",
 		"@tanstack/svelte-query": "^5.7.2",
 		"@tanstack/svelte-query-devtools": "^5.7.2",
-		"@tiptap-pro/extension-mathematics": "latest",
 		"@tiptap/core": "next",
 		"@tiptap/extension-bubble-menu": "next",
 		"@tiptap/extension-color": "next",
@@ -201,9 +200,6 @@
 		"tailwind-variants": "^0.1.18",
 		"tippy.js": "^6.3.7",
 		"tiptap-markdown": "0.8.2",
-		"youtube-player": "^5.6.0",
-	},
-	"overrides": {
-		"canvas": "../_EXCLUDED_"
+		"youtube-player": "^5.6.0"
 	}
 }
