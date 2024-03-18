@@ -68,7 +68,6 @@ module.exports = {
 				allowSingleLine: true,
 			},
 		],
-		curly: 2,
 		'eol-last': 2,
 		// `import/default` and `import/namespace` are slow.
 		'import/default': 0,
@@ -94,7 +93,6 @@ module.exports = {
 		'object-shorthand': 2,
 		'prefer-arrow-callback': [2, { allowNamedFunctions: true }],
 		'prefer-const': 2,
-		'prefer-template': 'error',
 		'space-before-blocks': 2,
 		'space-before-function-paren': [
 			2,
@@ -128,7 +126,6 @@ module.exports = {
 		'unicorn/prefer-set-size': 2,
 		'unicorn/prefer-string-replace-all': 2,
 		'unicorn/prefer-string-slice': 2,
-		'unicorn/prefer-ternary': 2,
 		'unicorn/prefer-top-level-await': 2,
 		'unicorn/text-encoding-identifier-case': 2,
 

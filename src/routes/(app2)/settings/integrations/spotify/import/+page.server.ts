@@ -2,6 +2,9 @@ import { error } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
 import { Spotify } from '$lib/features/services/spotify-user';
+import type { PageServerLoad } from './$types';
+
+import 'spotify-api';
 
 function hasTokenExpired({
 	expiresIn,
@@ -18,7 +21,7 @@ function hasTokenExpired({
 	return msElapsed / 1000 > expiresIn;
 }
 
-export async function load({ fetch, locals }) {
+export const load = (async ({ fetch, locals }) => {
 	// integrations
 	const session = await locals.auth.validate();
 	if (!session) {
@@ -97,4 +100,4 @@ export async function load({ fetch, locals }) {
 		existingAlbums,
 		title: 'Spotify Import',
 	};
-}
+}) satisfies PageServerLoad;

@@ -1,19 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { navigating, page } from '$app/stores';
 	import ItemArtwork from '$lib/components/ItemArtwork.svelte';
-	import Annotation from '$lib/components/notebook/Annotation.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import Label from '$lib/components/ui/Label.svelte';
 	import * as Tabs from '$components/ui/tabs';
-	import { tabList } from '$lib/components/ui/tabs/TabsList.svelte';
-	import { tabTrigger } from '$lib/components/ui/tabs/TabsTrigger.svelte';
-	import { H1 } from '$lib/components/ui/typography';
-	import { cn } from '$lib/utils/tailwind';
-	import { Search } from 'lucide-svelte';
-	import { superForm } from 'sveltekit-superforms/client';
 	export let data;
-	const prefix = $page.url.pathname;
 
 	import { MagnifyingGlass } from 'radix-icons-svelte';
 	import { Loader2 } from 'lucide-svelte';
@@ -54,14 +45,6 @@
 	import AnnotationCard from '$components/annotations/annotation-card.svelte';
 	import { make_link } from '$lib/utils/entries';
 
-	const setType = (type: string) => {
-		const Url = $page.url;
-		Url.searchParams.set('type', type);
-		if (q) Url.searchParams.set('q', q);
-		return Url.toString();
-	};
-	let loading = false;
-
 	// /search..
 	const path = $page.url.pathname;
 
@@ -74,20 +57,20 @@
 </script>
 
 <Header>
-	<form data-sveltekit-keepfocus class="flex grow relative">
+	<form data-sveltekit-keepfocus class="relative flex grow">
 		<input type="hidden" name="type" value={tab} />
 		<Label for="search" class="sr-only">Search</Label>
 		<span class="absolute left-2 top-1/2 -translate-y-1/2">
 			<svelte:component
 				this={$searching ? Loader2 : MagnifyingGlass}
-				class="h-4 w-4 text-muted-foreground shrink-0 {$searching
+				class="h-4 w-4 shrink-0 text-muted-foreground {$searching
 					? 'animate-spin'
 					: ''}"
 			/>
 		</span>
 		<Input
 			autofocus
-			class="pl-8 bg-card text-card-foreground"
+			class="bg-card pl-8 text-card-foreground"
 			bind:value={q}
 			id="search"
 			name="q"
@@ -96,12 +79,12 @@
 	</form>
 </Header>
 
-<div class="pl-6 border-b py-3 pr-9 overflow-hidden">
+<div class="overflow-hidden border-b py-3 pl-6 pr-9">
 	<div class="overflow-auto">
 		<Tabs.Root
 			value={tab ?? undefined}
 			onValueChange={(value) => {
-				goto(`?type=${value}${q ? '&q=' + q : ''}`);
+				goto(`?type=${value}${q ? `&q=${q}` : ''}`);
 			}}
 		>
 			<Tabs.List>
@@ -121,12 +104,17 @@
 	{#key data.results}
 		{#if data.notes}
 			{#each data.notes || [] as note}
-                <AnnotationCard entry={note.entry ? note.entry : undefined} hrefPrefix={make_link(note.entry)} class="min-w-full" annotation={note} />
+				<AnnotationCard
+					entry={note.entry ? note.entry : undefined}
+					hrefPrefix={make_link(note.entry)}
+					class="min-w-full"
+					annotation={note}
+				/>
 				<!-- <Annotation class="col-span-2" annotation={note} /> -->
 			{/each}
 		{:else}
 			{#each data.results || [] as result}
-				<ItemArtwork showType={tab === "my"} {q} item={result} class="w-full" />
+				<ItemArtwork showType={tab === 'my'} {q} item={result} class="w-full" />
 			{/each}
 		{/if}
 	{/key}

@@ -5,7 +5,7 @@
 
 	import { Button } from '$components/ui/button';
 	import * as DropdownMenu from '$components/ui/dropdown-menu';
-// import { MoreHorizontalIcon } from 'lucide-svelte';
+	// import { MoreHorizontalIcon } from 'lucide-svelte';
 	import * as Popover from '$components/ui/popover';
 	import {
 		ArrowRight,
@@ -15,13 +15,10 @@
 		Trash,
 	} from 'radix-icons-svelte';
 	import { tick, type ComponentProps } from 'svelte';
-// import { render_html } from '$components/ui/editor/utils';
-	import { goto } from '$app/navigation';
+	import { invalidate, goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { sleep } from '@melt-ui/svelte/internal/helpers';
 	import { dequal } from 'dequal';
-// import { createAlertDialogStore } from '$lib/stores/dialog';
-	import { invalidate } from '$app/navigation';
 	import Clamp from '$components/Clamp.svelte';
 	import type SlimEntry from '$components/entries/slim-entry.svelte';
 	import { TagsCommand } from '$components/tags/tag-command';
@@ -47,10 +44,13 @@
 	// TODO: combine with other versions of this component that exist lol
 
 	// TODO: should we use this type or not?
-	export let annotation: SetOptional<EntryAnnotation, 'username' | 'tags'>;
+	export let annotation: SetOptional<
+		EntryAnnotation,
+		'username' | 'tags' | 'html'
+	>;
 	export let entry: ComponentProps<SlimEntry>['entry'] | undefined = undefined;
 	export let hrefPrefix = '';
-    export let autofocus = true;
+	export let autofocus = true;
 
 	let className: string | null | undefined = undefined;
 	export { className as class };
@@ -68,10 +68,7 @@
 		invalidateEntries: true,
 	});
 
-	$: console.log({ annotation });
-
 	$: if (annotation.contentData && editor) {
-		console.log('setting content to contentData', annotation.contentData);
 		editor.setContent(annotation.contentData);
 	}
 
@@ -82,17 +79,17 @@
 
 <div
 	class={cn(
-		`min-w-[300px] m-0 flex-1 relative max-w-full border rounded-md bg-card shadow-sm transition group`,
+		`group relative m-0 min-w-[300px] max-w-full flex-1 rounded-md border bg-card shadow-sm transition`,
 		pendingDelete && 'animate-pulse',
 		className,
 	)}
 >
 	<div
-		class="w-full relative shadow-none flex flex-col gap-1.5 py-3 px-4 h-full"
+		class="relative flex h-full w-full flex-col gap-1.5 px-4 py-3 shadow-none"
 	>
 		{#if entry}
 			<!-- <SlimEntry {entry} link /> -->
-			<div class="flex gap-1 items-center">
+			<div class="flex items-center gap-1">
 				<!-- {#if entry.image}
             <img class="h-8 w-8 rounded-full" src={entry.image} />
         {/if} -->
@@ -101,8 +98,8 @@
 				>
 			</div>
 		{/if}
-		<div class="flex shrink-0 h-7 justify-between">
-			<div class="flex text-xs gap-2">
+		<div class="flex h-7 shrink-0 justify-between">
+			<div class="flex gap-2 text-xs">
 				{#if annotation.username}
 					<span class="font-medium">{annotation.username}</span>
 				{/if}
@@ -123,7 +120,7 @@
 								builders={[builder]}
 								variant="ghost"
 								size="icon"
-								class="h-7 w-7 rounded-sm opacity-0 group-hover:opacity-100  data-[state=open]:opacity-100 transition-opacity group-focus-within:opacity-100"
+								class="h-7 w-7 rounded-sm opacity-0 transition-opacity  group-focus-within:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
 							>
 								<DotsHorizontal class="h-4 w-4" />
 							</Button>
@@ -139,7 +136,7 @@
 										});
 									}}
 								>
-									<Pencil1 class="h-4 w-4 mr-2" /> Edit
+									<Pencil1 class="mr-2 h-4 w-4" /> Edit
 								</DropdownMenu.Item>
 								<DropdownMenu.Item
 									on:click={async () => {
@@ -149,12 +146,12 @@
 										);
 									}}
 								>
-									<ClipboardCopy class="h-4 w-4 mr-2" /> Copy link to annotation
+									<ClipboardCopy class="mr-2 h-4 w-4" /> Copy link to annotation
 								</DropdownMenu.Item>
 								{#if annotation.tags}
 									<DropdownMenu.Sub>
 										<DropdownMenu.SubTrigger>
-											<TagIcon class="h-4 w-4 mr-2" /> Add tag
+											<TagIcon class="mr-2 h-4 w-4" /> Add tag
 										</DropdownMenu.SubTrigger>
 										<DropdownMenu.SubContent class="p-0">
 											<TagsCommand
@@ -173,7 +170,7 @@
 										goto(`${$page.url.origin}/note/${annotation.id}`);
 									}}
 								>
-									<ArrowRight class="h-4 w-4 mr-2" /> Go to annotation
+									<ArrowRight class="mr-2 h-4 w-4" /> Go to annotation
 								</DropdownMenu.Item>
 								<!-- TODO -->
 								<!-- <DropdownMenu.Item
@@ -204,7 +201,7 @@
 										});
 									}}
 								>
-									<Trash class="h-4 w-4 mr-2" />
+									<Trash class="mr-2 h-4 w-4" />
 									Delete
 								</DropdownMenu.Item>
 							</DropdownMenu.Group>
@@ -222,7 +219,7 @@
 				annotation.target,
 				'FragmentSelector',
 			)}
-			{#if annotation.html || selector}
+			{#if ('html' in annotation && annotation.html) || selector}
 				<a on:click href="{hrefPrefix}#annotation-{annotation.id}">
 					<Clamp
 						on:click={(e) => {
@@ -230,7 +227,7 @@
 							// e.stopPropagation();
 							// e.stopImmediatePropagation();
 						}}
-						class="border-l-2 pl-6 italic text-sm hover:border-l-primary"
+						class="border-l-2 pl-6 text-sm italic hover:border-l-primary"
 						as="blockquote"
 						clamp={4}
 					>
@@ -261,9 +258,9 @@
 						alwaysEditable
 						{autofocus}
 						options={{
-							autofocus: autofocus ?  'end' : false,
+							autofocus: autofocus ? 'end' : false,
 						}}
-						class="border-0 p-0 min-h-min"
+						class="min-h-min border-0 p-0"
 						focusRing={false}
 						content={annotation.contentData}
 					/>
@@ -280,10 +277,10 @@
 					hideIfEmpty
 					readonly
 					bind:this={editor}
-					class="border-0 p-0 min-h-min"
-                    options={{
-                        autofocus: false
-                    }}
+					class="min-h-min border-0 p-0"
+					options={{
+						autofocus: false,
+					}}
 					focusRing={false}
 					content={annotation.contentData}
 				/>
@@ -294,8 +291,6 @@
 				<Button
 					on:click={() => {
 						const contentData = editor.getJSON();
-						console.log({ contentData });
-						console.log({ tainted });
 
 						if (!tainted || dequal(contentData, annotation.contentData)) {
 							isEditing = false;
@@ -319,7 +314,6 @@
 				<Button
 					on:click={() => {
 						const contentData = editor.getJSON();
-						console.log({ tainted });
 						if (!tainted || dequal(contentData, annotation.contentData)) {
 							isEditing = false;
 							return;

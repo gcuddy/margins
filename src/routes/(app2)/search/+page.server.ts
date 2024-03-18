@@ -1,5 +1,5 @@
 import type { books_v1 } from '@googleapis/books';
-import { error, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { sql } from 'kysely';
 import type { Movie, Person, Search, TV } from 'tmdb-ts';
 
@@ -8,7 +8,6 @@ import { books, getGbookImage } from '$lib/api/gbook';
 import pindex from '$lib/api/pindex';
 import spotify from '$lib/api/spotify';
 import { db } from '$lib/db';
-import { annotations } from '$lib/db/selects';
 import { redis } from '$lib/redis';
 import { getId } from '$lib/utils/entries';
 
@@ -37,7 +36,6 @@ type PersonPlusType = Person & {
 	media_type: 'person';
 };
 type MultiSearch = Search<MoviePlusType | TvPlusType | PersonPlusType>;
-const googleBooksApi = 'https://www.googleapis.com/books/v1/volumes';
 
 function adaptTmdb(tmdb: MoviePlusType | TvPlusType): GoodObject {
 	if (tmdb.media_type === 'movie') {
@@ -191,6 +189,7 @@ export const load = (async (e) => {
 		/**
 		 * Get text surrounding the match and highlight it
 		 */
+		// eslint-disable-next-line no-inner-declarations, svelte/no-inner-declarations
 		function highlightText(text: string | null, portion = false) {
 			if (!text) return '';
 			if (!portion) {
@@ -208,7 +207,6 @@ export const load = (async (e) => {
 				'...'
 			);
 		}
-
 		console.time('entry search');
 		const entries = await db
 			.selectFrom('Entry')

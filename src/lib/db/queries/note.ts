@@ -38,6 +38,7 @@ export async function searchNotes(q: string, userId: string) {
 			'a.exact',
 			'a.type',
 			'a.parentId',
+			'a.html',
 		])
 		.select((eb) => [withEntry(eb)])
 		.where('a.userId', '=', userId)

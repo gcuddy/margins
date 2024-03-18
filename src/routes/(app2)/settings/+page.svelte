@@ -3,7 +3,7 @@
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { LogOut, Palette, User, Workflow } from 'lucide-svelte';
 	import type { ComponentType } from 'svelte';
-    import { clear } from 'idb-keyval';
+	import { clear } from 'idb-keyval';
 
 	export let data;
 
@@ -61,10 +61,8 @@
 		use:enhance={async () => {
 			// clear queryclient as well
 			// TODO: couldn't a user just disable js and then the queryclient wouldn't be cleared?
-			console.log('clearing queryclient');
 			queryClient.clear();
-            clear();
-			console.log({ queryClient });
+			clear();
 			return ({ update }) => {
 				update();
 			};

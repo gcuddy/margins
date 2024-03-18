@@ -18,12 +18,7 @@
 	const columns = table.createColumns([
 		table.column({
 			accessor: 'id',
-			cell: ({ row }) => {
-                if (row.isData()) {
-
-                }
-            },
-            header: 'ID'
+			header: 'ID',
 		}),
 		table.column({
 			accessor: 'name',
