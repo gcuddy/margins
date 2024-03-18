@@ -202,7 +202,6 @@
 		"tippy.js": "^6.3.7",
 		"tiptap-markdown": "0.8.2",
 		"youtube-player": "^5.6.0",
-		"zod-prisma-types": "^2.8.1"
 	},
 	"overrides": {
 		"canvas": "../_EXCLUDED_"
