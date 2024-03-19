@@ -10,29 +10,17 @@ import {
 	Image as ImageIcon,
 	List,
 	ListOrdered,
-	MessageSquarePlus,
-	SparklesIcon,
 	Text,
 	TextQuote,
 } from 'lucide-svelte';
-import type { ComponentType } from 'svelte';
 import { get } from 'svelte/store';
 import { createPopperActions } from 'svelte-popperjs';
-import tippy from 'tippy.js';
 
 import { page } from '$app/stores';
-import { buttonVariants } from '$components/ui/Button.svelte';
-import { nanoid } from '$lib/nanoid';
 import player from '$lib/stores/player';
 
 import { handleImageUplaod } from '../utils';
 import SlashCommand__SvelteComponent_ from './SlashCommand.svelte';
-
-type CommandItemProps = {
-	title: string;
-	description: string;
-	icon: ComponentType;
-};
 
 type CommandProps = {
 	editor: Editor;
@@ -45,55 +33,54 @@ const Command = Extension.create({
 		return {
 			suggestion: {
 				char: '/',
-	import {
-		ArrowRight,
-		Cog,
-		CreditCard,
-		Search,
-		Settings,
-		StickyNote,
-		TagIcon,
-	} from 'lucide-svelte';
-	import { getContext } from 'svelte';
-	import { derived, type Writable, writable } from 'svelte/store';
+				command: ({
+					editor,
+					range,
+					props,
+				}: {
+					editor: Editor;
+					range: Range;
+					props: any;
+				}) => {
+					props.command({ editor, range });
+				},
+			},
+		};
+	},
+	addProseMirrorPlugins() {
+		return [
+			Suggestion({
+				editor: this.editor,
+				...this.options.suggestion,
+			}),
+		];
+	},
+});
+const getSuggestionItems = (props: { query: string }) => {
+	const { query } = props;
+	console.log({ props });
 
-	import { goto } from '$app/navigation';
-	import { page as spage } from '$app/stores';
-	import { checkedEntryIds } from '$components/entries/multi-select';
-	import { Badge } from '$components/ui/badge';
-	import {
-		Books,
-		EntryCommands,
-		Movies,
-		Music,
-		Podcasts,
-		Subscriptions,
-		Tags,
-	} from '$lib/commands';
-	import Annotations from '$lib/commands/Annotations.svelte';
-	import Collections from '$lib/commands/Collections.svelte';
-	import JumpToEntry from '$lib/commands/JumpToEntry.svelte';
-	import Query from '$lib/commands/Query.svelte';
-	import { cmd_open } from '$lib/components/ui/command/stores';
-	import {
-		CommandDialog,
-		CommandEmpty,
-		CommandGroup,
-		CommandInput,
-		CommandItem,
-		CommandList,
-		CommandSeparator,
-		CommandShortcut,
-	} from '$lib/components/ui/command2';
-	import {
-		darkThemes,
-		themes,
-		updateTheme,
-	} from '$lib/features/settings/themes';
-	import { objectEntries } from '$lib/helpers';
-	import { queryKeys } from '$lib/queries/keys';
-	import { createSetTagsMutation } from '$lib/queries/mutations';
-	import { checkedCommandBadgeDisplay } from '$lib/stores/entry-state';
+	const $page = get(page);
+	const $player = get(player);
+
+	console.log({ pagedata: $page.data });
+	// Are we currently in a video?
+	const video =
+		$page.data?.entry?.type === 'video' && !!$page.data.entry?.youtubeId;
+
+	const audio = $player?.type === 'audio';
+
+	const items = [
+		{
+			title: 'Text',
+			description: 'Just start typing with plain text.',
+			searchTerms: ['p', 'paragraph'],
+			icon: Text,
+			command: ({ editor, range }: CommandProps) => {
+				editor
+					.chain()
+					.focus()
+					.deleteRange(range)
 					.toggleNode('paragraph', 'paragraph')
 					.run();
 			},
@@ -127,7 +114,7 @@ const Command = Extension.create({
 			searchTerms: ['subtitle', 'medium', 'h2'],
 			icon: Heading2,
 			command: ({ editor, range }: CommandProps) => {
-				editor{return;}
+				editor
 					.chain()
 					.focus()
 					.deleteRange(range)
@@ -173,7 +160,7 @@ const Command = Extension.create({
 			searchTerms: ['blockquote'],
 			icon: TextQuote,
 			command: ({ editor, range }: CommandProps) =>
-	const hideDefault = false;
+				editor
 					.chain()
 					.focus()
 					.deleteRange(range)
@@ -347,8 +334,6 @@ const renderItems = () => {
 		},
 	};
 };
-
-function CreateSlashCommand(context: any) {}
 
 const SlashCommand = Command.configure({
 	suggestion: {
