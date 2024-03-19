@@ -1,9 +1,9 @@
 .ProseMirror .is-editor-empty:first-child::before {
-    @apply text-muted-foreground;
-    content: attr(data-placeholder);
-    float: left;
-    pointer-events: none;
-    height: 0;
+	@apply text-muted-foreground;
+	content: attr(data-placeholder);
+	float: left;
+	pointer-events: none;
+	height: 0;
 }
 
 /* .ProseMirror.ProseMirror-focused .is-empty::before {
@@ -16,123 +16,101 @@
 } */
 
 .ProseMirror iframe {
-    min-height: 600px;
-    transition: filter 0.1s ease-in-out;
+	min-height: 600px;
+	transition: filter 0.1s ease-in-out;
 
-    &:hover {
-        cursor: pointer;
-        filter: brightness(90%);
-    }
+	&:hover {
+		cursor: pointer;
+		filter: brightness(90%);
+	}
 }
 
 .ProseMirror-selectednode iframe {
-    outline: 3px solid #5abbf7;
-    filter: brightness(90%);
+	outline: 3px solid #5abbf7;
+	filter: brightness(90%);
 }
 
 div[data-youtube-video] {
-    cursor: move;
-    padding-right: 24px;
+	cursor: move;
+	padding-right: 24px;
 }
 
 /* Custom image styles */
 
 .ProseMirror-focused img {
-    transition: filter 0.1s ease-in-out;
+	transition: filter 0.1s ease-in-out;
 
-    &:hover {
-        cursor: pointer;
-        filter: brightness(90%);
-    }
+	&:hover {
+		cursor: pointer;
+		filter: brightness(90%);
+	}
 
-    &.ProseMirror-selectednode {
-        outline: 3px solid #5abbf7;
-        filter: brightness(90%);
-    }
+	&.ProseMirror-selectednode {
+		outline: 3px solid #5abbf7;
+		filter: brightness(90%);
+	}
 }
 
 /* Custom TODO list checkboxes – shoutout to this awesome tutorial: https://moderncss.dev/pure-css-custom-checkbox-style/ */
 
 ul[data-type='taskList'] li > label {
-    margin-right: 0.2rem;
-    user-select: none;
+	margin-right: 0.2rem;
+	user-select: none;
 }
 
 @media screen and (max-width: 768px) {
-    ul[data-type='taskList'] li > label {
-        margin-right: 0.5rem;
-    }
+	ul[data-type='taskList'] li > label {
+		margin-right: 0.5rem;
+	}
 }
 
 ul[data-type='taskList'] li > label input[type='checkbox'] {
-    -webkit-appearance: none;
-    appearance: none;
-    background-color: #fff;
-    margin: 0;
-    cursor: pointer;
-    width: 1.2em;
-    height: 1.2em;
-    position: relative;
-    top: 5px;
-    border: 2px solid black;
-    margin-right: 0.3rem;
-    display: grid;
-    place-content: center;
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: #fff;
+	margin: 0;
+	cursor: pointer;
+	width: 1.2em;
+	height: 1.2em;
+	position: relative;
+	top: 5px;
+	border: 2px solid black;
+	margin-right: 0.3rem;
+	display: grid;
+	place-content: center;
 
-    &:hover {
-        background-color: #f8f9fa;
-    }
+	&:hover {
+		background-color: #f8f9fa;
+	}
 
-    &:active {
-        background-color: #e9ecef;
-    }
+	&:active {
+		background-color: #e9ecef;
+	}
 
-    &::before {
-        content: '';
-        width: 0.65em;
-        height: 0.65em;
-        transform: scale(0);
-        transition: 120ms transform ease-in-out;
-        box-shadow: inset 1em 1em;
-        transform-origin: center;
-        clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-    }
+	&::before {
+		content: '';
+		width: 0.65em;
+		height: 0.65em;
+		transform: scale(0);
+		transition: 120ms transform ease-in-out;
+		box-shadow: inset 1em 1em;
+		transform-origin: center;
+		clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+	}
 
-    &:checked::before {
-        transform: scale(1);
-    }
+	&:checked::before {
+		transform: scale(1);
+	}
 }
 
 ul[data-type='taskList'] li[data-checked='true'] > div > p {
-    color: #a8a29e;
-    text-decoration: line-through;
-    text-decoration-thickness: 2px;
+	color: #a8a29e;
+	text-decoration: line-through;
+	text-decoration-thickness: 2px;
 }
 
 /* Overwrite tippy-box original max-width */
 
 .tippy-box {
-    max-width: 400px !important;
-}
-.Tiptap-mathematics-editor {
-    background: #202020;
-    color: #fff;
-    font-family: monospace;
-    padding: 0.2rem 0.5rem;
-}
-
-.Tiptap-mathematics-render {
-    cursor: pointer;
-    padding: 0 0.25rem;
-    transition: background 0.2s;
-
-    &:hover {
-        background: #eee;
-    }
-}
-
-.Tiptap-mathematics-editor,
-.Tiptap-mathematics-render {
-    border-radius: 0.25rem;
-    display: inline-block;
+	max-width: 400px !important;
 }
