@@ -15,7 +15,7 @@
 		SearchIcon,
 	} from 'lucide-svelte';
 	import { createEventDispatcher, tick } from 'svelte';
-    import { Skeleton } from '$components/ui/skeleton';
+	import { Skeleton } from '$components/ui/skeleton';
 	import { Table as TableIcon, Grid } from 'radix-icons-svelte';
 	import {
 		derived,
@@ -73,7 +73,7 @@
 	export let input: Writable<NotesInput>;
 
 	export let loading = false;
-    export let initialLoading = false;
+	export let initialLoading = false;
 
 	type Sort = {
 		dir: NotesInput['dir'];
@@ -228,7 +228,7 @@
 			.filter(Boolean);
 	});
 
-    const tabValue = persisted('annotations-table-tab', 'table');
+	const tabValue = persisted('annotations-table-tab', 'table');
 
 	const allSelectedPinned = derived(selectedData, ($selectedData) => {
 		// If all selected data.pin is truthy, return true
@@ -383,7 +383,7 @@
 		<div class="relative">
 			<Input
 				bind:el={inputEl}
-				class="max-w-sm text-sm pl-7"
+				class="max-w-sm pl-7 text-sm"
 				placeholder="Filter annotations..."
 				type="text"
 				on:focus={() => {
@@ -401,7 +401,7 @@
 				bind:value={$search}
 			/>
 			<div
-				class="absolute left-2 top-1/2 -translate-y-1/2 opacity-50 peer-focus:opacity-100 transition-opacity"
+				class="absolute left-2 top-1/2 -translate-y-1/2 opacity-50 transition-opacity peer-focus:opacity-100"
 			>
 				<svelte:component
 					this={loading ? Loader : SearchIcon}
@@ -457,10 +457,10 @@
 															cell.id === 'title'
 																? 'name'
 																: cell.id === 'createdAt'
-																? 'createdAt'
-																: cell.id === 'updatedAt'
-																? 'updatedAt'
-																: undefined,
+																	? 'createdAt'
+																	: cell.id === 'updatedAt'
+																		? 'updatedAt'
+																		: undefined,
 													});
 												}}
 											>
@@ -494,7 +494,7 @@
 								data-id={row.id}
 								data-state={$selectedDataIds[row.id] && 'selected'}
 								data-highlighted={highlighted}
-								class="duration-100 data-[state=selected]:data-[highlighted=true]:bg-accent data-[highlighted=true]:ring-1 ring-inset"
+								class="ring-inset duration-100 data-[state=selected]:data-[highlighted=true]:bg-accent data-[highlighted=true]:ring-1"
 							>
 								{#each row.cells as cell (cell.id)}
 									<Subscribe attrs={cell.attrs()} let:attrs>
@@ -508,7 +508,7 @@
 												<div class="flex items-center gap-x-1">
 													<IconPicker
 														variant="ghost"
-														class="h-auto w-auto grow-0 shrink-0 basis-auto p-1.5"
+														class="h-auto w-auto shrink-0 grow-0 basis-auto p-1.5"
 														iconClass="h-4 w-4"
 														activeColor={color}
 														activeIcon={icon}
@@ -524,7 +524,7 @@
 																href="/tag/{tag.name}"
 															>
 																<TagColorPill
-																	class="h-2 w-2 mr-1.5"
+																	class="mr-1.5 h-2 w-2"
 																	color={tag.color}
 																/>
 																{tag.name}
@@ -539,7 +539,7 @@
 													this={entry ? 'a' : 'span'}
 													href={entry && row.original.type === 'annotation'
 														? make_link(entry) +
-														  `#annotation-${row.original.id}`
+															`#annotation-${row.original.id}`
 														: undefined}
 												>
 													<SimpleClamp clamp={4} fromClass="from-background">
@@ -595,7 +595,7 @@
 					selectedDataIds.clear();
 				}}
 			>
-				<ArchiveIcon class="h-4 w-4 mr-2 text-muted-foreground" /> Archive</Button
+				<ArchiveIcon class="mr-2 h-4 w-4 text-muted-foreground" /> Archive</Button
 			>
 			{#if $allSelectedPinned !== 'indeterminate' && !$pinMutating}
 				<Button
@@ -618,12 +618,12 @@
 						selectedDataIds.clear();
 					}}
 				>
-					<PinIcon class="h-4 w-4 mr-2 text-muted-foreground" />
+					<PinIcon class="mr-2 h-4 w-4 text-muted-foreground" />
 					{$allSelectedPinned ? 'Remove from Pins' : 'Pin'}
 				</Button>
 			{/if}
 			<Button variant="secondary" size="sm">
-				<CommandIcon class="h-4 w-4 mr-2 text-muted-foreground" />
+				<CommandIcon class="mr-2 h-4 w-4 text-muted-foreground" />
 				More...</Button
 			>
 		</BulkActions>
@@ -635,20 +635,25 @@
 					<td style:height="{$paddingTop}px" />
 				</tr>
 			{/if}
-			<div class="grid sm:grid-cols-2 2xl:grid-cols-3 gap-4">
-                {#if initialLoading}
-                {#each new Array(10) as _}
-                    <Skeleton class="h-32" />
-                {/each}
-                {:else}
-                {#each $virtualizer.getVirtualItems() as item (item.key)}
-                    {@const note = $notes[item.index]}
-                    {#if note}
-                        <AnnotationCard class="min-w-[auto]" entry={note.entry ? note.entry : undefined} autofocus={false} annotation={note} />
-                    {/if}
-                {/each}
-                {/if}
-            </div>
+			<div class="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+				{#if initialLoading}
+					{#each new Array(10) as _}
+						<Skeleton class="h-32" />
+					{/each}
+				{:else}
+					{#each $virtualizer.getVirtualItems() as item (item.key)}
+						{@const note = $notes[item.index]}
+						{#if note}
+							<AnnotationCard
+								class="min-w-[auto]"
+								entry={note.entry ? note.entry : undefined}
+								autofocus={false}
+								annotation={note}
+							/>
+						{/if}
+					{/each}
+				{/if}
+			</div>
 			{#if $paddingBottom}
 				<tr>
 					<td style:height="{$paddingBottom}px" />

@@ -1,9 +1,11 @@
-import { tmdb } from "$lib/api/tmdb";
+import { tmdb } from '$lib/api/tmdb';
+import type { PageServerLoad } from './$types';
 
-export async function load({ params }) {
-    const { id } = params;
-    console.log({ id })
-    return {
-        person: tmdb.person.details(+id)
-    }
-}
+export const load = (async ({ params }) => {
+	const { id } = params;
+	console.log({ id });
+	return {
+		person: tmdb.person.details(+id),
+	};
+}) satisfies PageServerLoad;
+
