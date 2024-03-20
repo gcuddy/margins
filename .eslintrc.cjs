@@ -17,12 +17,12 @@ module.exports = {
 	parser: '@typescript-eslint/parser',
 	plugins: ['@typescript-eslint', 'import', 'unicorn'],
 	rules: {
-		'@typescript-eslint/array-type': [
-			'error',
-			{
-				default: 'generic',
-			},
-		],
+		// '@typescript-eslint/array-type': [
+		// 	'error',
+		// 	{
+		// 		default: 'generic',
+		// 	},
+		// ],
 		'@typescript-eslint/ban-ts-comment': [
 			'error',
 			{
@@ -92,7 +92,7 @@ module.exports = {
 		'object-curly-spacing': 0,
 		'object-shorthand': 2,
 		'prefer-arrow-callback': [2, { allowNamedFunctions: true }],
-		'prefer-const': 2,
+		'prefer-const': 0,
 		'space-before-blocks': 2,
 		'space-before-function-paren': [
 			2,
@@ -106,7 +106,7 @@ module.exports = {
 		'svelte/no-useless-mustaches': 'error',
 		'svelte/prefer-style-directive': 'error',
 		'unicorn/better-regex': 2,
-		'unicorn/catch-error-name': 2,
+		'unicorn/catch-error-name': 0,
 		'unicorn/consistent-function-scoping': 2,
 		'unicorn/no-abusive-eslint-disable': 2,
 		'unicorn/no-hex-escape': 2,
@@ -118,7 +118,7 @@ module.exports = {
 		'unicorn/prefer-array-index-of': 2,
 		'unicorn/prefer-array-some': 2,
 		'unicorn/prefer-at': 2,
-		'unicorn/prefer-dom-node-append': 2,
+		'unicorn/prefer-dom-node-append': 0,
 		'unicorn/prefer-native-coercion-functions': 2,
 		'unicorn/prefer-node-protocol': 2,
 		'unicorn/prefer-number-properties': 2,
