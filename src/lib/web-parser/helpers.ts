@@ -1,5 +1,5 @@
-import type { HTMLElement } from "node-html-parser";
-import type { JsonPrimitive } from "type-fest";
+import type { HTMLElement } from 'node-html-parser';
+import type { JsonPrimitive } from 'type-fest';
 
 export const not = (el: HTMLElement | HTMLElement[], selector: string) => {
 	if (Array.isArray(el)) {
@@ -28,8 +28,10 @@ export const isJsonArray = (input: any): boolean => {
  * If the string is actually a stringified object/array, this will return the object/array. Otherwise the original input string.
  * @param input test string
  */
-export const clarifyStringOrObject = (input: JsonPrimitive): any | JsonPrimitive => {
-	if (typeof input !== "string") return input;
+export const clarifyStringOrObject = (
+	input: JsonPrimitive,
+): any | JsonPrimitive => {
+	if (typeof input !== 'string') return input;
 	try {
 		const obj = JSON.parse(input);
 		return obj;

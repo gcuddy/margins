@@ -1,23 +1,23 @@
-import type { DocumentType } from "@prisma/client";
-import { z, ZodTypeAny } from "zod";
+import type { DocumentType } from '.';
+import { z, type ZodTypeAny } from 'zod';
 
-import { clarifyStringOrObject } from "./helpers";
+import { clarifyStringOrObject } from './helpers';
 
 const schemaRegex = /https?:\/\/schema\.org\/?/;
 const baseSchema = z.object({
-	"@context": z.string().regex(schemaRegex),
+	'@context': z.string().regex(schemaRegex),
 });
 
 export const imageObjectSchema = z
 	.object({
-		"@type": z.literal("ImageObject"),
+		'@type': z.literal('ImageObject'),
 		url: z.string(),
 		height: z.number(),
 		width: z.number(),
 	})
 	.partial()
 	.required({
-		"@type": true,
+		'@type': true,
 	});
 
 export const imageSchema = z
@@ -26,10 +26,13 @@ export const imageSchema = z
 	.or(z.array(z.string()))
 	.or(z.array(imageObjectSchema));
 
-export const personSchema = z.object({ "@type": z.literal("Person"), name: z.string() });
+export const personSchema = z.object({
+	'@type': z.literal('Person'),
+	name: z.string(),
+});
 
 const durationSchema = z.object({
-	"@type": z.literal("Duration"),
+	'@type': z.literal('Duration'),
 	maxValue: z.string(),
 	minValue: z.string(),
 });
@@ -37,7 +40,7 @@ const durationSchema = z.object({
 const howToSteps = z.array(
 	z
 		.object({
-			"@type": z.literal("HowToStep"),
+			'@type': z.literal('HowToStep'),
 			text: z.string(),
 			name: z.string(),
 			url: z.string(),
@@ -45,14 +48,14 @@ const howToSteps = z.array(
 		})
 		.partial()
 		.required({
-			"@type": true,
+			'@type': true,
 			text: true,
-		})
+		}),
 );
 
 const howToSections = z
 	.object({
-		"@type": z.literal("HowToSection"),
+		'@type': z.literal('HowToSection'),
 		itemListElement: howToSteps,
 		name: z.string().optional(),
 	})
@@ -74,16 +77,19 @@ const extendedSchema = z
 		recipeYield: stringish,
 		recipeCategory: z.string().or(z.array(z.string())),
 		recipeCuisine: z.string().or(z.array(z.string())),
-		nutrition: z.object({ "@type": z.string(), calories: z.string().or(z.number()) }),
+		nutrition: z.object({
+			'@type': z.string(),
+			calories: z.string().or(z.number()),
+		}),
 		recipeIngredient: z.array(z.string()),
 		recipeInstructions: howToSections.or(howToSteps),
 		aggregateRating: z.object({
-			"@type": z.string(),
+			'@type': z.string(),
 			ratingValue: z.string().or(z.number()),
 			ratingCount: z.string().or(z.number()),
 		}),
 		video: z.object({
-			"@type": z.string(),
+			'@type': z.string(),
 			name: z.string(),
 			description: z.string(),
 			thumbnailUrl: z.string().or(z.array(z.string())),
@@ -92,8 +98,8 @@ const extendedSchema = z
 			uploadDate: z.string(),
 			duration: z.string(),
 			interactionStatistic: z.object({
-				"@type": z.string(),
-				interactionType: z.object({ "@type": z.string() }),
+				'@type': z.string(),
+				interactionType: z.object({ '@type': z.string() }),
 				userInteractionCount: z.number(),
 			}),
 			expires: z.string(),
@@ -106,17 +112,21 @@ const extendedSchema = z
 	});
 
 const recipeBaseSchema = z.object({
-	"@context": z.string().regex(schemaRegex),
-	"@type": z
-		.literal("Recipe")
-		.or(z.array(z.string()).refine((types) => types.some((type) => type === "Recipe"))),
+	'@context': z.string().regex(schemaRegex),
+	'@type': z
+		.literal('Recipe')
+		.or(
+			z
+				.array(z.string())
+				.refine((types) => types.some((type) => type === 'Recipe')),
+		),
 });
 export const recipeSchema = recipeBaseSchema.and(extendedSchema);
 
 export type Recipe = z.infer<typeof recipeSchema>;
 
 export const bookSchema = baseSchema.extend({
-	"@type": z.literal("Book"),
+	'@type': z.literal('Book'),
 	name: z.string(),
 	image: imageSchema,
 	author: personSchema.array(),
@@ -131,11 +141,11 @@ export const bookSchema = baseSchema.extend({
 const l = {
 	Book: {
 		schema: bookSchema,
-		type: "book",
+		type: 'book',
 	},
 	Recipe: {
 		schema: recipeSchema,
-		type: "article",
+		type: 'article',
 	},
 } as const satisfies Record<
 	string,
@@ -150,15 +160,15 @@ export const schemaOrgSchemas = z.union([bookSchema, recipeSchema]);
 const lookupFn = () => new Map(Object.entries(l));
 export const lookup = lookupFn();
 
-type Schema = z.infer<(typeof l)[keyof typeof l]["schema"]>;
+type Schema = z.infer<(typeof l)[keyof typeof l]['schema']>;
 
 // type Book = z.infer<typeof bookSchema>;
 
 export const getSchemas = (jsons: any[]) => {
 	return jsons
 		.map((json) => {
-			const obj = clarifyStringOrObject(json?.["@type"]);
-			if (typeof obj === "string") {
+			const obj = clarifyStringOrObject(json?.['@type']);
+			if (typeof obj === 'string') {
 				const record = lookup.get(obj);
 				console.log({ record });
 				if (record) {
@@ -174,7 +184,9 @@ export const getSchemas = (jsons: any[]) => {
 				}
 			}
 			if (Array.isArray(obj)) {
-				const record = lookup.get(obj.find((t) => lookup.has(t)));
+				const record = lookup.get(
+					obj.find((t) => lookup.has(t as string)) as string,
+				);
 				if (record) {
 					const { schema, type } = record;
 					try {
