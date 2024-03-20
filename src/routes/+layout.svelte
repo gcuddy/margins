@@ -10,10 +10,7 @@
 	import { pageTitle } from '$lib/stores/page-title';
 	// import { pwaInfo } from 'virtual:pwa-info';
 
-	// fix bigint issue
-	//  this is to fix an issue with BigInt and Kysely
-	// prettier-ignore'
-	// @ts-expect-error
+	// @ts-expect-error this is to fix an issue with BiggInt and Kysely
 	BigInt.prototype.toJSON = function () {
 		return this.toString();
 	};
@@ -78,7 +75,6 @@
 <div class="rounded-md border shadow-lg"></div>
 <Toaster
 	closeButton
-    theme:
 	toastOptions={{
 		class: 'toast group shadow-lg transition-all ',
 		style: styleToString({

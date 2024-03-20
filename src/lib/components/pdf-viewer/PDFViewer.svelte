@@ -466,7 +466,7 @@
 				'PdfViewer sizing only works when it is positioned (not static).',
 			);
 		}
-		const init_promise = import('pdfjs-dist/web/pdf_viewer.js').then(
+		const init_promise = import('pdfjs-dist/web/pdf_viewer.mjs').then(
 			(pdfjs_viewer) => {
 				const event_bus = new pdfjs_viewer.EventBus();
 				$pdf_state.event_bus = event_bus;
@@ -603,9 +603,9 @@
 
 {#if loading}
 	<div
-		class="absolute h-full w-full z-10 px-6 py-[calc(var(--nav-height)+1rem)]"
+		class="absolute z-10 h-full w-full px-6 py-[calc(var(--nav-height)+1rem)]"
 	>
-		<Skeleton class="p-4 h-full w-full" />
+		<Skeleton class="h-full w-full p-4" />
 	</div>
 {/if}
 <div
@@ -614,7 +614,7 @@
 	bind:this={component_container}
 	data-dark-mode-invert={$opts.darkModeInvert}
 >
-	<div id="viewer-parent" class="w-full h-full">
+	<div id="viewer-parent" class="h-full w-full">
 		{#if password_error}
 			<div class="spdfinner pt-[80px]">
 				{JSON.stringify(_error)}
