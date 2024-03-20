@@ -1,22 +1,24 @@
 import { tick } from 'svelte';
 
-export function make_portal<TParams = undefined>(selector: ((obj: TParams) => string) | string) {
-
+export function make_portal<TParams = undefined>(
+	selector: ((obj: TParams) => string) | string,
+) {
 	const action = (
 		el: HTMLElement,
-        ...args: (TParams extends undefined ? [undefined?] : [TParams])
+		...args: TParams extends undefined ? [undefined?] : [TParams]
 	) => {
 		let targetEl: HTMLElement | null = null;
 
-        const params = args[0];
-        if (typeof selector !== 'string' && !params) {
-            throw new Error('Selector is a function, but no params were provided');
-        }
+		const params = args[0];
+		if (typeof selector !== 'string' && !params) {
+			throw new Error('Selector is a function, but no params were provided');
+		}
 
 		async function update() {
-            let _selector = typeof selector === 'string' ? selector : selector(params!);
+			let _selector =
+				typeof selector === 'string' ? selector : selector(params!);
 			targetEl = document.querySelector(_selector) as HTMLElement;
-            console.log({_selector, targetEl})
+			console.log({ _selector, targetEl });
 			if (!targetEl) {
 				// Try with a tick first
 				await tick();
@@ -39,7 +41,7 @@ export function make_portal<TParams = undefined>(selector: ((obj: TParams) => st
 
 		return {
 			update,
-			destroy
+			destroy,
 		};
 	};
 	return action;

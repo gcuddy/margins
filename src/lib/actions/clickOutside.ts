@@ -1,5 +1,3 @@
-import type { Action } from './types';
-
 /** Dispatch event on click outside of node */
 export function clickOutside(
 	node: HTMLElement,
@@ -8,8 +6,8 @@ export function clickOutside(
 		| {
 				cb: () => void;
 				useOnChildrenInstead?: boolean;
-		  }
-): ReturnType<Action> {
+		  },
+) {
 	const handleClick = (event: MouseEvent) => {
 		if (typeof cb !== 'function' && cb.useOnChildrenInstead) {
 			const children = node.children;
@@ -17,12 +15,20 @@ export function clickOutside(
 			// or this might not work at all...?
 			for (let i = 0; i < children.length; i++) {
 				const child = children[i];
-				if (child && !child.contains(event.target as Node) && !event.defaultPrevented) {
+				if (
+					child &&
+					!child.contains(event.target as Node) &&
+					!event.defaultPrevented
+				) {
 					cb.cb();
 				}
 			}
 		} else {
-			if (node && !node.contains(event.target as Node) && !event.defaultPrevented) {
+			if (
+				node &&
+				!node.contains(event.target as Node) &&
+				!event.defaultPrevented
+			) {
 				typeof cb === 'function' ? cb() : cb.cb();
 			}
 		}
@@ -33,6 +39,6 @@ export function clickOutside(
 	return {
 		destroy() {
 			document.removeEventListener('click', handleClick, true);
-		}
+		},
 	};
 }

@@ -1,38 +1,39 @@
 export default function smoothload(node: HTMLImageElement) {
-    function load() {
-        if (node.naturalWidth) return; // already loaded
+	function load() {
+		if (node.naturalWidth) return; // already loaded
 
-        node.style.opacity = '0';
-        node.style.transition = 'opacity 0.4s';
+		node.style.opacity = '0';
+		node.style.transition = 'opacity 0.4s';
 
-        node.addEventListener(
-            'load',
-            () => {
-                node.style.opacity = '1';
-            },
-            {
-                once: true
-            }
-        );
-    }
+		node.addEventListener(
+			'load',
+			() => {
+				node.style.opacity = '1';
+			},
+			{
+				once: true,
+			},
+		);
+	}
 
-    const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            if (mutation.attributeName === 'src') {
-                load();
-            }
-        }
-    });
+	const observer = new MutationObserver((mutations) => {
+		for (const mutation of mutations) {
+			if (mutation.attributeName === 'src') {
+				load();
+			}
+		}
+	});
 
-    observer.observe(node, {
-        attributes: true
-    });
+	observer.observe(node, {
+		attributes: true,
+	});
 
-    load();
+	load();
 
-    return {
-        destroy() {
-            observer.disconnect();
-        }
-    };
+	return {
+		destroy() {
+			observer.disconnect();
+		},
+	};
 }
+

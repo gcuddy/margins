@@ -7,7 +7,7 @@ const trackScroll = (
 		scrollingDown?: Writable<boolean>;
 		scroll?: Writable<number>;
 		scrolling?: Writable<boolean>;
-	}
+	},
 ) => {
 	const scrollingDown = stores?.scrollingDown || writable(false);
 	const scroll = stores?.scroll || writable(0);
@@ -33,7 +33,7 @@ const trackScroll = (
 		scrolling.set(false);
 	}, 100);
 
-	function handleScroll(e: Event) {
+	function handleScroll() {
 		scrolling.set(true);
 		requestAnimationFrame(setScrollOffset);
 		debouncedScroll();
@@ -44,7 +44,7 @@ const trackScroll = (
 	return {
 		destroy() {
 			node.removeEventListener('scroll', handleScroll);
-		}
+		},
 	};
 };
 

@@ -1,9 +1,4 @@
-import {
-	type ActivateOptions,
-	createFocusTrap,
-	type DeactivateOptions,
-	type Options as FocusTrapOptions,
-} from 'focus-trap';
+import { createFocusTrap, type Options as FocusTrapOptions } from 'focus-trap';
 
 export type FocusTrapConfig = FocusTrapOptions & {
 	/**

@@ -85,7 +85,7 @@ module.exports = {
 		'no-irregular-whitespace': 2,
 		'no-mixed-spaces-and-tabs': 0,
 		'no-throw-literal': 0,
-		'no-unused-expressions': 2,
+		'no-unused-expressions': 0,
 		'no-unused-labels': 2,
 		'no-unused-vars': 0,
 		'no-var': 2,
