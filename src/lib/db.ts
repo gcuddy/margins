@@ -1,5 +1,4 @@
-/* eslint-disable no-console */
-import { Kysely, sql, type RawBuilder, Expression } from 'kysely';
+import { Kysely, sql, type RawBuilder, type Expression } from 'kysely';
 import { PlanetScaleDialect } from 'kysely-planetscale';
 
 import { DATABASE_PASSWORD, DATABASE_USERNAME } from '$env/static/private';
@@ -46,30 +45,6 @@ export function json<T>(obj: T): RawBuilder<T> {
 export function values<T>(expr: Expression<T>) {
 	return sql<T>`VALUES(${expr})`;
 }
-
-// export const db =
-// 	globalForPrisma.db ||
-// 	new PrismaClient({
-// 		log: [
-// 			'info',
-// 			'warn',
-// 			'error',
-// 		],
-// 	});
-
-// db.$use(async (params, next) => {
-// 	const before = Date.now();
-
-// 	const result = await next(params);
-
-// 	const after = Date.now();
-
-// 	console.log(`Query ${params.model}.${params.action} took ${after - before}ms`);
-
-// 	return result;
-// });
-
-// annotationsMiddleware(db);
 
 if (process.env.NODE_ENV !== 'production') {
 	globalForKyseley.db = db;

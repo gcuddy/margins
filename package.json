@@ -76,6 +76,7 @@
     "html-entities": "^2.4.0",
     "idb": "^7.1.1",
     "ioredis": "^5.3.2",
+    "knip": "^5.1.4",
     "lodash": "^4.17.21",
     "lodash.camelcase": "^4.3.0",
     "lodash.debounce": "^4.0.8",
