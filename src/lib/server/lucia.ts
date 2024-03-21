@@ -1,31 +1,34 @@
-import { lucia } from 'lucia';
+import { Lucia, TimeSpan } from 'lucia';
 // import "lucia-auth/polyfill/node";
-import { planetscale } from '@lucia-auth/adapter-mysql';
-import { upstash } from '@lucia-auth/adapter-session-redis';
+import { PlanetScaleAdapter } from '@lucia-auth/adapter-mysql';
 
 import { dev } from '$app/environment';
-import { sveltekit } from 'lucia/middleware';
 
 // import { db } from '$lib/db';
 // import kysely from "$lib/auth/kysley-pscale-adapter";
-import { connect } from '@planetscale/database';
-import { db, config } from '$lib/db';
-import { redis } from '$lib/redis';
+import { Client } from '@planetscale/database';
+import { config } from '$lib/db';
+import type { AuthUser } from '$lib/prisma/kysely/types';
 
-const connection = connect(config);
+const client = new Client(config);
 
-export const auth = lucia({
-	// TODO: type error here?
-	adapter: planetscale(connection, {
-		user: 'auth_user',
-		key: 'auth_key',
-		session: 'auth_session'
-	}),
-	env: dev ? 'DEV' : 'PROD',
-	middleware: sveltekit(),
+const adapter = new PlanetScaleAdapter(client, {
+	user: 'user',
+	session: 'user_session',
+});
+
+export const auth = new Lucia(adapter, {
 	// sessionCookie: {
 	//     expires: false
 	// },
+	sessionCookie: {
+		name: 'session',
+		expires: false, // session cookies have very long lifespan (2 years)
+		attributes: {
+			secure: dev ? false : true,
+		},
+	},
+	sessionExpiresIn: new TimeSpan(30, 'd'), // no more active/idle
 	getUserAttributes: (userData) => {
 		return {
 			email: userData.email,
@@ -37,10 +40,12 @@ export const auth = lucia({
 			emailVerified: Boolean(userData.email_verified),
 		};
 	},
-	experimental: {
-		debugMode: true
-	}
-
-	// TODO: sessioncookie, etc
 });
-export type Auth = typeof auth;
+
+declare module 'lucia' {
+	interface Register {
+		Lucia: typeof auth;
+		// DatabaseSessionAttributes: DatabaseSessionAttributes;
+		DatabaseUserAttributes: AuthUser;
+	}
+}

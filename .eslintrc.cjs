@@ -30,7 +30,6 @@ module.exports = {
 			},
 		],
 		'@typescript-eslint/ban-types': 'error',
-		'@typescript-eslint/consistent-type-definitions': ['error', 'type'],
 		'@typescript-eslint/consistent-type-imports': [
 			'error',
 			{ fixStyle: 'inline-type-imports' },
