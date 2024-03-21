@@ -30,7 +30,7 @@ export const GET: RequestHandler = async () => {
         }
     } catch (e) {
         console.error(e);
-        throw error(500,)
+        error(500,);
     }
 
 

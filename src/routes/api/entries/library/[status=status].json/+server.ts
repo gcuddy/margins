@@ -9,7 +9,7 @@ function is_type(type: string): type is Type {
 export async function GET({ params, locals, url }) {
     const session = await locals.auth.validate();
     if (!session) {
-        throw error(401, "Unauthorized");
+        error(401, "Unauthorized");
     }
 
     const userId = session.user.userId;

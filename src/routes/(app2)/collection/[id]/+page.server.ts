@@ -156,7 +156,7 @@ export const actions: Actions = {
 			.where('id', '=', +params.id)
 			.where('userId', '=', session.user.userId)
 			.execute();
-		throw redirect(303, `/collections`);
+		redirect(303, `/collections`);
 	},
 	edit: validateAuthedForm(
 		collectionSchema,

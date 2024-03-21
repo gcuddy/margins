@@ -33,6 +33,6 @@ export const POST: RequestHandler = async ({ url }) => {
         }
     } catch (e) {
         console.error(e);
-        throw error(500,)
+        error(500,);
     }
 };

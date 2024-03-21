@@ -10,7 +10,6 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"preserveValueImports": false,
 		"types": ["@types/wicg-file-system-access"],
 		"noUnusedLocals": true
 	}

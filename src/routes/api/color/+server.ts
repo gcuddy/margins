@@ -23,7 +23,7 @@ export const GET: RequestHandler = async ({
 	const uri = url.searchParams.get('uri') as string;
 
 	if (!uri) {
-		throw error(400, 'Missing uri');
+		error(400, 'Missing uri');
 	}
 
 	const key = `color:${uri}`;

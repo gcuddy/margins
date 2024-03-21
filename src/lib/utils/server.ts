@@ -52,7 +52,7 @@ export async function queryctx<T extends z.ZodTypeAny>(
 		const session = await locals.auth.validate();
 		console.timeEnd(`[auth] validating session`);
 		if (!session && _authed !== 'optional') {
-			throw error(401);
+			error(401);
 		} else if (session) {
 			userId = session.user.userId;
 			user = session.user;
@@ -88,7 +88,7 @@ export async function queryctx<T extends z.ZodTypeAny>(
 	// console.log({ parsed })
 	if (!parsed.success) {
 		console.log(`Error parsing data:`, data);
-		throw error(400, "Data doesn't match schema");
+		error(400, "Data doesn't match schema");
 	}
 	return {
 		ctx: {
@@ -124,11 +124,11 @@ export async function mutationctx<TSchema extends z.ZodTypeAny>(
 		try {
 			const session = await locals.auth.validate();
 			if (!session) {
-				throw error(401);
+				error(401);
 			}
 			userId = session.user.userId;
 		} catch (e) {
-			throw error(401);
+			error(401);
 		}
 	}
 	if (!schema) {
@@ -155,7 +155,7 @@ export async function mutationctx<TSchema extends z.ZodTypeAny>(
 	if (!parsed.success) {
 		console.log(`Error parsing data:`, data);
 		console.dir({ error: parsed.error }, { depth: null });
-		throw error(400, "Data doesn't match schema");
+		error(400, "Data doesn't match schema");
 	}
 	return {
 		ctx: {

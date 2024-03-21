@@ -12,7 +12,7 @@ export const GET: RequestHandler = async (e) => {
 	);
 	const refresh_token = e.url.searchParams.get('refresh_token');
 	if (!refresh_token) {
-		throw error(400, 'No refresh token provided');
+		error(400, 'No refresh token provided');
 	}
 	const api = new URL('https://accounts.spotify.com/api/token');
 	// api.searchParams.set("grant_type", "refresh_token");
@@ -39,5 +39,5 @@ export const GET: RequestHandler = async (e) => {
 		return json(await res.json());
 	}
 	console.log(res.body);
-	throw error(res.status, res.statusText);
+	error(res.status, res.statusText);
 };

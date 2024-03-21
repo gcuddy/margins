@@ -7,7 +7,7 @@ import { error, json } from "@sveltejs/kit";
 
 export async function GET({ locals, params, url }) {
     const session = await locals.auth.validate();
-    if (!session) throw error(401, "Unauthorized");
+    if (!session) error(401, "Unauthorized");
 
     const cursor = url.searchParams.get("cursor") || undefined;
 

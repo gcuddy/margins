@@ -33,6 +33,6 @@ export const GET: RequestHandler = async ({ params, setHeaders }) => {
         return json(parsed);
     } catch (e) {
         console.error(e)
-        throw error(500)
+        error(500);
     }
 };

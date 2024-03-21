@@ -29,8 +29,9 @@
 		"@melt-ui/pp": "^0.1.2",
 		"@playwright/test": "^1.39.0",
 		"@popperjs/core": "^2.11.8",
-		"@sveltejs/adapter-vercel": "^3.0.3",
+		"@sveltejs/adapter-vercel": "^4.0.0",
 		"@sveltejs/kit": "^2.5.4",
+		"@sveltejs/vite-plugin-svelte": "^3.0.0",
 		"@tailwindcss/typography": "0.0.0-insiders.fda8ce5",
 		"@tanstack/svelte-virtual": "3.0.0-beta.65",
 		"@total-typescript/ts-reset": "^0.4.2",
@@ -85,7 +86,6 @@
 	"dependencies": {
 		"@melt-ui/svelte": "latest",
 		"@prisma/client": "^5.11.0",
-		"@sveltejs/vite-plugin-svelte": "^3.0.2",
 		"@tailwindcss/container-queries": "^0.1.1",
 		"@tanstack/query-persist-client-core": "^5.7.2",
 		"@tanstack/svelte-query": "^5.7.2",
@@ -113,3 +113,4 @@
 		"youtube-player": "^5.6.0"
 	}
 }
+

@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const data = await request.json();
     const parsed = schema.safeParse(data);
     if (!parsed.success) {
-        throw error(400, 'Invalid request body');
+        error(400, 'Invalid request body');
     }
     const { urls, id } = parsed.data;
     const keys = await Promise.all(urls.map(async ({ url, key }) => {
@@ -41,11 +41,11 @@ export const POST: RequestHandler = async ({ request }) => {
         .where("id", "=", id)
         .executeTakeFirst();
     if (!entry) {
-        throw error(404, 'Entry not found');
+        error(404, 'Entry not found');
     }
     const { html } = entry;
     if (!html) {
-        throw error(404, 'Entry has no html');
+        error(404, 'Entry has no html');
     }
     const newHtml = keysToUpdate.reduce((html, { oldKey, newKey }) => {
         return html.replace(oldKey, newKey);

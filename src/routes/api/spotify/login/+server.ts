@@ -36,5 +36,5 @@ export const GET: RequestHandler = async ({ cookies }) => {
 	url.searchParams.set('response_type', 'code');
 	url.searchParams.set('redirect_uri', PUBLIC_SPOTIFY_REDIRECT_URI);
 	url.searchParams.set('scope', scope);
-	throw redirect(307, url.toString());
+	redirect(307, url.toString());
 };

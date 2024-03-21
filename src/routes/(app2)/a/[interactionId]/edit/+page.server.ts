@@ -10,6 +10,6 @@ export const actions = {
 			.where('id', '=', +interactionId)
 			.execute();
 
-		throw redirect(303, `/library/backlog`);
+		redirect(303, `/library/backlog`);
 	},
 };

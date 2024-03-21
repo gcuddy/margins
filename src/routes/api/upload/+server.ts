@@ -19,16 +19,16 @@ export const config: Config = {
 export const POST: RequestHandler = async ({ locals, request, url }) => {
 	const session = await locals.auth.validate();
 	if (!session) {
-		throw error(401, {
-			message: 'Not logged in',
-		});
+		error(401, {
+        			message: 'Not logged in',
+        		});
 	}
 
 	const file = request.body;
 	if (!file) {
-		throw error(500, {
-			message: 'No body',
-		});
+		error(500, {
+        			message: 'No body',
+        		});
 	}
 
 	const file_name = request.headers.get('filename') || nanoid();

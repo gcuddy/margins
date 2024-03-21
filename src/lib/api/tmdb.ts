@@ -150,7 +150,7 @@ export const tmdb = {
 		const response = await fetch(url);
 
 		if (!response.ok) {
-			throw error(response.status);
+			error(response.status);
 		}
 
 		return (await response.json()) as DetailedCollection;
@@ -173,7 +173,7 @@ export const tmdb = {
 			const response = await fetch(url);
 
 			if (!response.ok) {
-				throw error(response.status);
+				error(response.status);
 			}
 
 			const data = (await response.json()) as MovieDetails;
@@ -200,7 +200,7 @@ export const tmdb = {
 			const response = await fetch(url);
 
 			if (!response.ok) {
-				throw error(response.status);
+				error(response.status);
 			}
 
 			const data = (await response.json()) as Search<Movie>;
@@ -221,7 +221,7 @@ export const tmdb = {
 			const response = await fetch(url);
 
 			if (!response.ok) {
-				throw error(response.status);
+				error(response.status);
 			}
 
 			const data = (await response.json()) as Person & {
@@ -252,7 +252,7 @@ export const tmdb = {
 			const response = await fetch(url);
 
 			if (!response.ok) {
-				throw error(response.status);
+				error(response.status);
 			}
 
 			const data = (await response.json()) as Search<Person>;
@@ -273,7 +273,7 @@ export const tmdb = {
 		);
 
 		if (!response.ok) {
-			throw error(response.status);
+			error(response.status);
 		}
 
 		const multi = (await response.json()) as MultiSearch;
@@ -294,7 +294,7 @@ export const tmdb = {
 			const response = await fetch(url);
 
 			if (!response.ok) {
-				throw error(response.status);
+				error(response.status);
 			}
 
 			const data = (await response.json()) as TVDetails;
@@ -318,7 +318,7 @@ export const tmdb = {
 			const response = await fetch(url);
 
 			if (!response.ok) {
-				throw error(response.status);
+				error(response.status);
 			}
 
 			const data = (await response.json()) as Season;
@@ -371,7 +371,7 @@ export async function getMovieDetailsFromApi(id: number) {
 	}
 	console.log('Bad status from API', movieResponse.status);
 	console.timeEnd('getMovieDetailsFromApi');
-	throw error(500, 'unable to retrieve movie details from API');
+	error(500, 'unable to retrieve movie details from API');
 }
 
 async function getMovieDetails(id: number) {

@@ -132,6 +132,6 @@ export const actions: Actions = {
 				},
 			);
 		}
-		throw redirect(303, '/library/backlog');
+		redirect(303, '/library/backlog');
 	},
 };

@@ -32,6 +32,6 @@ export const GET: RequestHandler = async () => {
         return json({ message: "ok" })
     } catch (e) {
         console.error(e);
-        throw error(500)
+        error(500);
     }
 };

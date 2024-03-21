@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ fetch, locals, request, url }) => {
 
 	const session = await locals.auth.validate();
 	if (!session) {
-		throw error(401, 'Unauthorized');
+		error(401, 'Unauthorized');
 	}
 
 	const res = await fetch(api, {
@@ -60,7 +60,7 @@ export const GET: RequestHandler = async ({ fetch, locals, request, url }) => {
 			})
 			.executeTakeFirst();
 
-		throw redirect(307, u);
+		redirect(307, u);
 		return json(data);
 		// const { refresh_token, accses_token } = await res.json();
 		// const session = await locals.validateUser();
@@ -86,7 +86,7 @@ export const GET: RequestHandler = async ({ fetch, locals, request, url }) => {
 		// return json(await user.json());
 		// return json(await res.json());
 	} else {
-		throw error(400, res.status.toString());
+		error(400, res.status.toString());
 	}
 	// return text("Callback");
 };

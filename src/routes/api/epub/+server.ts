@@ -16,9 +16,9 @@ export const config: Config = {
 export async function POST({ request }) {
 	const file = request.body;
 	if (!file) {
-		throw error(500, {
-			message: 'no body'
-		});
+		error(500, {
+        			message: 'no body'
+        		});
 	}
 
 	const array_buffer = await request.arrayBuffer();
@@ -45,7 +45,7 @@ export async function POST({ request }) {
 	const container_xml = await container_file?.async('string');
 
 	if (!container_xml) {
-		throw error(500, 'Missing container.xml');
+		error(500, 'Missing container.xml');
 	}
 
 	console.log({ container_xml });
@@ -62,7 +62,7 @@ export async function POST({ request }) {
     console.log({rootFileXml})
 
     if (!rootFileXml) {
-        throw error(500, 'Missing root file');
+        error(500, 'Missing root file');
     }
 
     const rootFileParsed = parser.parse(rootFileXml);

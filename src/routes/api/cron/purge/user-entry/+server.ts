@@ -13,7 +13,7 @@ export async function GET({ request }) {
 		const authHeader = request.headers.get('authorization');
 
 		if (authHeader !== `Bearer ${CRON_SECRET}`) {
-			throw error(401, 'Unauthorized');
+			error(401, 'Unauthorized');
 		}
 	}
 

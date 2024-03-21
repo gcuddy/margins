@@ -8,7 +8,7 @@ export async function load(event) {
 	const session = await event.locals.auth.validate();
 
 	if (!session) {
-		throw redirect(303, `/${event.params.type}/${event.params.id}/`);
+		redirect(303, `/${event.params.type}/${event.params.id}/`);
 	}
 
 	const { type, id } = event.params;

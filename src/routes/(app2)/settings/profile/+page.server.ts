@@ -5,7 +5,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/db';
 export async function load({ locals }) {
 	const session = await locals.auth.validate();
-	if (!session) throw redirect(302, '/login');
+	if (!session) redirect(302, '/login');
 
 	const invites = await db
 		.selectFrom('InvitationCode')

@@ -14,10 +14,10 @@ export const GET: RequestHandler = async (event) => {
 	const sq = event.params.sq;
 	// fn should be key of queries
 	if (!sq) {
-		throw error(400, 'sq is required');
+		error(400, 'sq is required');
 	}
 	if (!(sq in queries)) {
-		throw error(400, 'sq is not valid');
+		error(400, 'sq is not valid');
 	}
 	const query = queries[sq as keyof typeof queries];
 	console.time(`[sq] ${sq}`);
@@ -40,10 +40,10 @@ export const POST: RequestHandler = async (event) => {
 	const sq = event.params.sq;
 	// fn should be key of queries
 	if (!sq) {
-		throw error(400, 'sq is required');
+		error(400, 'sq is required');
 	}
 	if (!(sq in mutations)) {
-		throw error(400, 'sq is not valid');
+		error(400, 'sq is not valid');
 	}
 	const mutation = mutations[sq as keyof typeof mutations];
 	const params = await mutationctx(event, mutation.schema);

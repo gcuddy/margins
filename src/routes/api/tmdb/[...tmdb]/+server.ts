@@ -16,7 +16,7 @@ export async function GET({ params, setHeaders, url }) {
 	);
 
 	if (!response.ok) {
-		throw error(response.status);
+		error(response.status);
 	}
 
 	setHeaders({

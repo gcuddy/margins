@@ -10,14 +10,14 @@ const interactionSchema = z.object({
 export async function POST({ locals, request, params }) {
 
     const session = await locals.auth.validate();
-    if (!session) throw error(401);
+    if (!session) error(401);
 
     const raw = await request.json();
 
     const parsed = interactionSchema.safeParse(raw)
 
     if (!parsed.success) {
-        throw error(400, JSON.stringify(parsed.error));
+        error(400, JSON.stringify(parsed.error));
     }
 
     const { data } = parsed;

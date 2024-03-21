@@ -152,7 +152,7 @@ export const actions: Actions = {
 		if (!session) return fail(401);
 		await auth.invalidateSession(session.sessionId); // invalidate session
 		event.locals.auth.setSession(null); // remove cookie
-		throw redirect(302, '/login'); // redirect to login page
+		redirect(302, '/login'); // redirect to login page
 	},
 	// This action is called when the user clicks the theme button
 	setTheme: async ({ url, cookies, request }) => {
@@ -177,7 +177,7 @@ export const actions: Actions = {
 			});
 		}
 		if (redirectTo) {
-			throw redirect(303, redirectTo ?? '/');
+			redirect(303, redirectTo ?? '/');
 		}
 	},
 };

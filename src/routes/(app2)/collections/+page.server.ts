@@ -50,7 +50,7 @@ export const actions = {
 		});
 
 		if (id && Number.isInteger(id)) {
-			throw redirect(303, `/collection/${id}`);
+			redirect(303, `/collection/${id}`);
 		}
 		return {
 			form,
