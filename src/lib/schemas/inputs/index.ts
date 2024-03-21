@@ -1,4 +1,4 @@
-import { AnnotationType } from '$lib/types/enums';
+import { AnnotationType } from '$lib/prisma/kysely/enums';
 import { z } from 'zod';
 
 import {

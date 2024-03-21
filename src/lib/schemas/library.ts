@@ -1,4 +1,4 @@
-import { DocumentType, Status } from '$lib/types/enums';
+import { DocumentType, Status } from '$lib/prisma/kysely/enums';
 import { z } from 'zod';
 
 import { typeSchema } from '$lib/types';

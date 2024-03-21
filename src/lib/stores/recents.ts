@@ -1,23 +1,18 @@
 import type { EntryInList } from '$lib/db/selects';
-import { localStorageStore } from '@skeletonlabs/skeleton';
+import { persisted } from 'svelte-local-storage-store';
 
 // should make search a set but also make it serializable
-interface Recents {
+type Recents = {
 	search: string[];
 	// store just a subset of article Type
 	entries: EntryInList[];
-}
-
-
+};
 
 function createRecentsStore() {
-	const { subscribe, set, update } = localStorageStore<Recents>(
-		"recents_store",
-		{
-			search: [],
-			entries: [],
-		}
-	);
+	const { subscribe, set, update } = persisted<Recents>('recents_store', {
+		search: [],
+		entries: [],
+	});
 	function add_search(search: string) {
 		update((recents) => {
 			if (!search.trim()) return recents;
@@ -43,9 +38,39 @@ function createRecentsStore() {
 			const existing = recents.entries.find((a) => a.id === entry.id);
 			if (!existing) {
 				// destructure everything in case we got passed extra fields
-				const { id, title, author, googleBooksId, image, podcastIndexId, published, spotifyId, tmdbId, type, uri, wordCount, progress, sort_order, } = entry;
+				const {
+					id,
+					title,
+					author,
+					googleBooksId,
+					image,
+					podcastIndexId,
+					published,
+					spotifyId,
+					tmdbId,
+					type,
+					uri,
+					wordCount,
+					progress,
+					sort_order,
+				} = entry;
 				// add to top
-				recents.entries.unshift({ id, title, author, googleBooksId, image, podcastIndexId, published, spotifyId, tmdbId, type, uri, wordCount, progress, sort_order, });
+				recents.entries.unshift({
+					id,
+					title,
+					author,
+					googleBooksId,
+					image,
+					podcastIndexId,
+					published,
+					spotifyId,
+					tmdbId,
+					type,
+					uri,
+					wordCount,
+					progress,
+					sort_order,
+				});
 				if (recents.entries.length > 8) {
 					// slice to 8
 					recents.entries = recents.entries.slice(0, 8);
@@ -69,3 +94,4 @@ function createRecentsStore() {
 }
 
 export const recents = createRecentsStore();
+

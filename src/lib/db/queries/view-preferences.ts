@@ -1,4 +1,4 @@
-import { ViewType } from '$lib/types/enums';
+import { ViewType } from '$lib/prisma/kysely/enums';
 import type { ViewPreferences } from '@prisma/client';
 import { z } from 'zod';
 

@@ -1,5 +1,5 @@
 import { objectKeys } from '$lib/helpers';
-import { EntryFilterType } from '$lib/types/enums';
+import { EntryFilterType } from '$lib/prisma/kysely/enums';
 import type { ParamMatcher } from '@sveltejs/kit';
 
 const scopes = objectKeys(EntryFilterType).map(

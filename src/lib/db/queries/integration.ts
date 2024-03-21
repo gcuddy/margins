@@ -1,4 +1,4 @@
-import { Status } from '$lib/types/enums';
+import { Status } from '$lib/prisma/kysely/enums';
 import { z } from 'zod';
 
 import { type MovieDetails, tmdb } from '$lib/api/tmdb';

@@ -2,7 +2,7 @@
 
 import type { GetLibrarySchema } from '$lib/schemas/library';
 import type { LibraryEntry } from '$lib/server/queries';
-import { Status } from '$lib/types/enums';
+import { Status } from '$lib/prisma/kysely/enums';
 import type { Entry } from '@prisma/client';
 import { z } from 'zod';
 import {

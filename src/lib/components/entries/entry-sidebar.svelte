@@ -4,7 +4,6 @@
 	import AddAnnotationModal from '$components/annotations/add-annotation-input/add-annotation-modal.svelte';
 	import { audioPlayer } from '$components/AudioPlayer.svelte';
 	import * as Collapsible from '$components/ui/collapsible';
-	import { TableOfContents } from '@skeletonlabs/skeleton';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import {
 		ChevronRightIcon,
@@ -111,7 +110,7 @@
 				? queryFactory.entries.detail({
 						id: numberOrString($page.params.id),
 						type: $page.params.type as Type,
-				  })
+					})
 				: {}),
 			// enabled: !!$page.data.entry?.id,
 			// REVIEW: when using derived, it doesn't correctly infer type of select (so we have to type it manually)
@@ -458,15 +457,6 @@
 						/>
 					</div>
 				{/if}
-				{#if $page.data.type === 'entry'}
-					{#key $query.data?.entry?.id}
-						<TableOfContents
-							active="font-bold"
-							scrollParent="html"
-							target="#article"
-						/>
-					{/key}
-				{/if}
 				<!-- <div class="sidebar-row">
                     <Muted>Snooze</Muted>
                     <input type="date" name="" id="" />
@@ -536,13 +526,13 @@
 									commanderStore.open({
 										component: Collections,
 										props: {
-                                            create_fallback: true,
-                                            items: {
-                                                entryId: $query.data?.entry?.id,
-                                            },
-                                            onCreate: () => {
-                                                commanderStore.close();
-                                            },
+											create_fallback: true,
+											items: {
+												entryId: $query.data?.entry?.id,
+											},
+											onCreate: () => {
+												commanderStore.close();
+											},
 											onSelect(collection) {
 												$addToCollection.mutate({
 													collectionId: collection.id,

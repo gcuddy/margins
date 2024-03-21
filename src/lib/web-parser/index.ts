@@ -3,16 +3,36 @@
 import { HTMLElement, parse } from 'node-html-parser';
 import { z } from 'zod';
 
+import { fixLazyLoadedImages } from './clean';
+import {
+	CLEAN_CONDITIONALLY_TAGS,
+	DIV_TO_P_BLOCK_TAGS,
+	IS_IMAGE,
+	IS_LINK,
+	IS_SRCSET,
+	KEEP_SELECTORS,
+	STRIP_OUTPUT_TAGS,
+} from './constants';
 // import { IS_IMAGE, IS_LINK, IS_SRCSET } from './constants';
 import * as CustomExtractors from './extractors';
 import { clarifyStringOrObject } from './helpers';
-import { cleanUpNaughtyUrl } from './images';
+import { cleanUpNaughtyUrl, fixImages } from './images';
 import { isProbablyReaderable } from './readable';
 import { type Recipe, recipeSchema } from './recipe';
 import { getSchemas } from './schemaOrg';
-import { absolutizeUrl, absolutizeUrls, isSingleImage } from './utils';
+import {
+	absolutizeSet,
+	absolutizeUrl,
+	absolutizeUrls,
+	isSingleImage,
+	normalizeSpaces,
+	printRawHTMLTag,
+	scoreCommas,
+} from './utils';
 import { findAuthor } from './utils/fallback-author';
-import { upsertImageUrl } from '$lib/backend/s3.server';
+import { DocumentType } from '$lib/types/enums';
+import { cleanAttributes } from './dom';
+// import { upsertImageUrl } from '$lib/backend/s3.server';
 
 // TODO: ability to add/modify this list
 // TODO: add "boost" to certain tags via a map
@@ -69,6 +89,7 @@ export const NEGATIVE_SCORE_HINTS = [
 	'footer',
 	//   "footnote", <- not sure about this one
 	'graf',
+
 	'head',
 	'info',
 	'infotext', // newscientist.com copyright
@@ -187,9 +208,6 @@ export const _EntryModel = z.object({
 	feedId: z.number().int().nullish(),
 });
 
-export const DocumentType = z.enum(['article', 'book']);
-export type DocumentType = z.infer<typeof DocumentType>;
-
 export const Metadata = _EntryModel
 	.extend({
 		title: z.string(),
@@ -201,7 +219,7 @@ export const Metadata = _EntryModel
 		published: z.string().or(z.date()),
 		siteName: z.string(),
 		// TODO: we're just using this subset rn
-		type: DocumentType,
+		type: z.nativeEnum(DocumentType),
 		recipe: recipeSchema,
 	})
 	.partial()
@@ -684,24 +702,24 @@ export class Parser {
 		console.log('removed scripts');
 		this.prepDocument();
 		console.log('prepped document');
-		const content = this.grabArticle();
+		// const content = this.grabArticle();
 
-		if (content) {
-			// Now apply our own transformations with node-html-parser... kind of ugly
-			const root = content;
-			['href', 'src'].forEach((a) => absolutizeUrls(root, this.baseUrl, a));
-			// remove srcset
-			root
-				.querySelectorAll('[srcset]')
-				.forEach((el) => el.removeAttribute('srcset'));
-			// go thru srcs, get images, and upload to s3
-			// TODO: upsert by noting if src is already s3 url (somehow...)
-		}
+		// if (content) {
+		// 	// Now apply our own transformations with node-html-parser... kind of ugly
+		// 	const root = content;
+		// 	['href', 'src'].forEach((a) => absolutizeUrls(root, this.baseUrl, a));
+		// 	// remove srcset
+		// 	root
+		// 		.querySelectorAll('[srcset]')
+		// 		.forEach((el) => el.removeAttribute('srcset'));
+		// 	// go thru srcs, get images, and upload to s3
+		// 	// TODO: upsert by noting if src is already s3 url (somehow...)
+		// }
 		console.timeEnd('readability');
 		console.timeEnd('parse');
 		let html = '';
 		let text = '';
-		// const content = this.getContent();
+		const content = this.getContent();
 		text = content.innerText;
 		html = content.innerHTML;
 		// this.metadata.extended = {
@@ -738,9 +756,9 @@ export class Parser {
 			this.metadata.image = absolutizeUrl(this.metadata.image, this.baseUrl);
 			// clean up bad url
 			this.metadata.image = cleanUpNaughtyUrl(this.metadata.image);
-			const img = await upsertImageUrl(this.metadata.image);
-			console.log({ img });
-			this.metadata.image = img;
+			// const img = await upsertImageUrl(this.metadata.image);
+			// console.log({ img });
+			// this.metadata.image = img;
 		}
 		console.log({ metadata: this.metadata });
 		console.timeEnd('parse');
@@ -883,7 +901,8 @@ export class Parser {
 	}
 
 	// a re-write of getcontent to more thoroughly follow readability algorithm
-	private grabArticle(opts?: {
+	// @ts-expect-error a rewrite that is unsued, should be deleted
+	private _grabArticle(opts?: {
 		stripUnlikelyCandidates?: boolean;
 		shouldRemoveTitleHeader?: boolean;
 	}) {
@@ -1052,6 +1071,7 @@ export class Parser {
 		 **/
 		const candidates: Array<HTMLElement> = [];
 		elementsToScore.forEach((elementToScore) => {
+			console.log('parentnode', elementToScore.parentNode);
 			if (!elementToScore.parentNode || !elementToScore.parentNode.tagName) {
 				return;
 			}
@@ -1087,6 +1107,7 @@ export class Parser {
 					return;
 				}
 				if (!this.nodeScoreMap.has(ancestor)) {
+					console.log({ ancestor });
 					this.initializeNode(ancestor);
 					candidates.push(ancestor);
 				}
@@ -1138,7 +1159,9 @@ export class Parser {
 		// If we still have no top candidate, just use the body as a last resort.
 		if (topCandidate === null) {
 			topCandidate = this.root.querySelector('body');
-			this.initializeNode(topCandidate as HTMLElement);
+			console.log('no top candidate');
+			console.log({ topCandidate });
+			this.initializeNode(topCandidate ?? this.root);
 			// neededToCreateTopCandidate = tru
 		} else if (topCandidate) {
 			// Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
@@ -1765,62 +1788,64 @@ export class Parser {
 		return this.textSimilarity(this.metadata.title, heading) > 0.75;
 	}
 
-	// private getContent() {
-	// 	console.log('*** Starting to Get Content ***');
-	// 	let topNode: HTMLElement | undefined;
-	// 	if (this.extractor.content) {
-	// 		const selectors = Array.isArray(this.extractor.content)
-	// 			? this.extractor.content
-	// 			: this.extractor.content.selectors;
-	// 		topNode = this.extractContentFromSelectors(this.root, selectors);
-	// 		// clean
-	// 		if ('clean' in this.extractor.content) {
-	// 			this.extractor.content.clean.forEach((cleaner) => {
-	// 				topNode?.querySelectorAll(cleaner).forEach((el) => el.remove());
-	// 			});
-	// 		}
-	//
-	// 		// get content this way
-	// 		// return content
-	// 	}
-	// 	if (!topNode) {
-	// 		const nodesToScore = this.getNodesToScore();
-	// 		this.scoreNodes(nodesToScore);
-	// 		topNode = this.getTopCandidate();
-	// 	}
-	// 	if (!topNode) {
-	// 		// if STILL no top node, then we've got a problem
-	// 		throw new Error('No top candidate');
-	// 	}
-	// 	console.log({ topNode: topNode.innerHTML });
-	// 	// now clean up node
-	// 	return this.cleanContent(topNode);
-	// }
+	private getContent() {
+		console.log('*** Starting to Get Content ***');
+		let topNode: HTMLElement | undefined;
+		if (this.extractor.content) {
+			const selectors = Array.isArray(this.extractor.content)
+				? this.extractor.content
+				: this.extractor.content.selectors;
+			topNode = this.extractContentFromSelectors(this.root, selectors);
+			// clean
+			if ('clean' in this.extractor.content) {
+				this.extractor.content.clean.forEach((cleaner) => {
+					topNode?.querySelectorAll(cleaner).forEach((el) => el.remove());
+				});
+			}
 
-	// private getLinks(root: HTMLElement) {
-	// 	const links = root.querySelectorAll('a');
-	// 	// Check if URL has same origin, and check if url is to a whitelisted site (like unsplash.com)
-	// 	const linksToReturn = links
-	// 		.map((link) => {
-	// 			const href = new URL(link.getAttribute('href') || '', this.baseUrl);
-	// 			const base = new URL(this.baseUrl);
-	// 			if (!link.getAttribute('href') || !link.innerText) return null;
-	// 			if (link.getAttribute('href') === '#') return null;
-	// 			if (link.getAttribute('href') === '') return null;
-	// 			if (link.getAttribute('href') === '/') return null;
-	// 			if (link.getAttribute('href')?.startsWith('javascript:void(0)'))
-	// 				return null;
-	// 			if (href.hostname + href.pathname === base.hostname + base.pathname)
-	// 				return null;
-	// 			if (href.hostname === 'unsplash.com') return null;
-	// 			return {
-	// 				href: link.getAttribute('href'),
-	// 				text: link.innerText.trim(),
-	// 			};
-	// 		})
-	// 		.filter(Boolean) as Array<{ href: string; text: string }>;
-	// 	return linksToReturn;
-	// }
+			// get content this way
+			// return content
+		}
+		if (!topNode) {
+			const nodesToScore = this.getNodesToScore();
+			this.scoreNodes(nodesToScore);
+			topNode = this.getTopCandidate();
+		}
+		if (!topNode) {
+			// if STILL no top node, then we've got a problem
+			throw new Error('No top candidate');
+		}
+		console.log({ topNode: topNode.innerHTML });
+		// now clean up node
+		return this.cleanContent(topNode);
+	}
+
+	// @ts-expect-error - unused for now
+	private _getLinks(root: HTMLElement) {
+		const links = root.querySelectorAll('a');
+		// Check if URL has same origin, and check if url is to a whitelisted site (like unsplash.com)
+		const linksToReturn = links
+			.map((link) => {
+				const href = new URL(link.getAttribute('href') || '', this.baseUrl);
+				const base = new URL(this.baseUrl);
+				if (!link.getAttribute('href') || !link.innerText) return null;
+				if (link.getAttribute('href') === '#') return null;
+				if (link.getAttribute('href') === '') return null;
+				if (link.getAttribute('href') === '/') return null;
+				if (link.getAttribute('href')?.startsWith('javascript:void(0)'))
+					return null;
+				if (href.hostname + href.pathname === base.hostname + base.pathname)
+					return null;
+				if (href.hostname === 'unsplash.com') return null;
+				return {
+					href: link.getAttribute('href'),
+					text: link.innerText.trim(),
+				};
+			})
+			.filter(Boolean) as Array<{ href: string; text: string }>;
+		return linksToReturn;
+	}
+
 	private getNodeAncestors(node: HTMLElement, maxDepth = 0) {
 		let i = 0;
 		const ancestors: Array<HTMLElement> = [];
@@ -1831,77 +1856,78 @@ export class Parser {
 		}
 		return ancestors;
 	}
-	// private scoreNodes(nodes: Array<HTMLElement>) {
-	// 	console.log('*** Starting to Score Nodes ***');
-	// 	console.log(
-	// 		`We have ${nodes.length} nodes to score! Here's a look at them:`,
-	// 		JSON.stringify(
-	// 			nodes.map((node) => printRawHTMLTag(node)),
-	// 			null,
-	// 			2,
-	// 		),
-	// 	);
-	// 	const candidates = [];
-	// 	for (const node of nodes) {
-	// 		const parent = node.parentNode;
-	// 		console.log({ parent });
-	// 		if (!parent) continue;
-	// 		//   skip if no parent or text is less than 25
-	// 		const text = node.innerText;
-	// 		if (text.length < 25) continue;
-	// 		const ancestors = this.getNodeAncestors(node, 5);
-	// 		console.log({ ancestors });
-	// 		if (ancestors.length === 0) {
-	// 			continue;
-	// 		}
-	// 		let score = 0;
-	// 		score += 1; // starting at 1 as a base
-	// 		score += text.split(',').length; // add points for commas
-	// 		score += Math.min(Math.floor(text.length / 100), 3); // For every 100 characters in this paragraph, add another point. Up to 3 points.
-	//
-	// 		ancestors.forEach((ancestor) => {
-	// 			if (!ancestor.tagName || !ancestor.parentNode) return;
-	// 			if (!this.nodeScoreMap.has(ancestor)) {
-	// 				this.initializeNode(ancestor);
-	// 				candidates.push(ancestor);
-	// 			}
-	//
-	// 			// Node score divider:
-	// 			// - parent:             1 (no division)
-	// 			// - grandparent:        2
-	// 			// - great grandparent+: ancestor level * 3
-	// 			//     if (level === 0)
-	// 			//         var scoreDivider = 1;
-	// 			//     else if (level === 1)
-	// 			//         scoreDivider = 2;
-	// 			//     else
-	// 			//         scoreDivider = level * 3;
-	// 			//     ancestor.readability.contentScore += contentScore / scoreDivider;
-	// 		});
-	//
-	// 		const grandparent = parent?.parentNode;
-	// 		//   initialize parent & grandparent nodes if they're not in our map
-	// 		if (!this.nodeScoreMap.has(parent)) {
-	// 			this.initializeNode(parent);
-	// 		}
-	// 		if (grandparent && !this.nodeScoreMap.has(grandparent)) {
-	// 			this.initializeNode(grandparent);
-	// 		}
-	// 		// TODO: 20220322191700 this is where i left off
-	// 		// now score the paragraph itself (which we're in)
-	// 		// should this be a separate function?
-	//
-	// 		// add points for commas (idk, everyone seems to do this, seems arbitrary)
-	//
-	// 		// add another point (up to 3 points) for every 50 chars in the paragraph (readability does 100 chars, but i like mercury-parser doing 50)
-	//
-	// 		// arbitrarily adding 2/3 to parent and 1/3 to grandparent
-	// 		// readability adds full to parent and 1/2 to grandparent
-	// 		// mercury-parser add .25 to parent and 0 to grandparent...
-	// 		this.updateScore(parent, score * (2 / 3));
-	// 		if (grandparent) this.updateScore(grandparent, score * (1 / 3));
-	// 	}
-	// }
+	private scoreNodes(nodes: Array<HTMLElement>) {
+		console.log('*** Starting to Score Nodes ***');
+		console.log(
+			`We have ${nodes.length} nodes to score! Here's a look at them:`,
+			JSON.stringify(
+				nodes.map((node) => printRawHTMLTag(node)),
+				null,
+				2,
+			),
+		);
+		const candidates = [];
+		for (const node of nodes) {
+			const parent = node.parentNode;
+			console.log({ parent });
+			if (!parent) continue;
+			//   skip if no parent or text is less than 25
+			const text = node.innerText;
+			if (text.length < 25) continue;
+			const ancestors = this.getNodeAncestors(node, 5);
+			console.log({ ancestors });
+			if (ancestors.length === 0) {
+				continue;
+			}
+			let score = 0;
+			score += 1; // starting at 1 as a base
+			score += text.split(',').length; // add points for commas
+			score += Math.min(Math.floor(text.length / 100), 3); // For every 100 characters in this paragraph, add another point. Up to 3 points.
+
+			ancestors.forEach((ancestor) => {
+				if (!ancestor.tagName || !ancestor.parentNode) return;
+				if (!this.nodeScoreMap.has(ancestor)) {
+					this.initializeNode(ancestor);
+					candidates.push(ancestor);
+				}
+
+				// Node score divider:
+				// - parent:             1 (no division)
+				// - grandparent:        2
+				// - great grandparent+: ancestor level * 3
+				//     if (level === 0)
+				//         var scoreDivider = 1;
+				//     else if (level === 1)
+				//         scoreDivider = 2;
+				//     else
+				//         scoreDivider = level * 3;
+				//     ancestor.readability.contentScore += contentScore / scoreDivider;
+			});
+
+			const grandparent = parent?.parentNode;
+			//   initialize parent & grandparent nodes if they're not in our map
+			if (!this.nodeScoreMap.has(parent)) {
+				this.initializeNode(parent);
+			}
+			if (grandparent && !this.nodeScoreMap.has(grandparent)) {
+				this.initializeNode(grandparent);
+			}
+			// TODO: 20220322191700 this is where i left off
+			// now score the paragraph itself (which we're in)
+			// should this be a separate function?
+
+			// add points for commas (idk, everyone seems to do this, seems arbitrary)
+
+			// add another point (up to 3 points) for every 50 chars in the paragraph (readability does 100 chars, but i like mercury-parser doing 50)
+
+			// arbitrarily adding 2/3 to parent and 1/3 to grandparent
+			// readability adds full to parent and 1/2 to grandparent
+			// mercury-parser add .25 to parent and 0 to grandparent...
+			this.updateScore(parent, score * (2 / 3));
+			if (grandparent) this.updateScore(grandparent, score * (1 / 3));
+		}
+	}
+
 	private getLinkDensity(container: HTMLElement) {
 		const textLength = this.getInnerText(container).length;
 		if (textLength === 0) return 0;
@@ -1915,166 +1941,168 @@ export class Parser {
 		return linkLength / textLength;
 	}
 
-	// private compareScores(a: HTMLElement | number, b: HTMLElement | number) {
-	// 	if (!a && a !== 0) return false;
-	// 	if (!b && b !== 0) return true;
-	// 	const a_score = typeof a === 'number' ? a : this.nodeScoreMap.get(a);
-	// 	const b_score = typeof b === 'number' ? b : this.nodeScoreMap.get(b);
-	// 	if (a_score && b_score) {
-	// 		return a_score >= b_score;
-	// 	} else if (a_score && !b_score) {
-	// 		return true;
-	// 	}
-	// 	return false;
-	// }
+	private compareScores(a: HTMLElement | number, b: HTMLElement | number) {
+		if (!a && a !== 0) return false;
+		if (!b && b !== 0) return true;
+		const a_score = typeof a === 'number' ? a : this.nodeScoreMap.get(a);
+		const b_score = typeof b === 'number' ? b : this.nodeScoreMap.get(b);
+		if (a_score && b_score) {
+			return a_score >= b_score;
+		} else if (a_score && !b_score) {
+			return true;
+		}
+		return false;
+	}
 
-	// private getTopCandidate() {
-	// 	// update scores with link density - can we do that before?
-	// 	console.log('*** 🥁 Starting to Get Top Candidate 🥁 ***');
-	// 	console.log(
-	// 		`First, a look at our scorecard: ${JSON.stringify(
-	// 			Array.from(this.nodeScoreMap.entries()).map(([el, score]) => ({
-	// 				el: printRawHTMLTag(el),
-	// 				score,
-	// 			})),
-	// 		)}`,
-	// 	);
-	// 	let topCandidate: HTMLElement | undefined = undefined;
-	// 	for (const [el] of this.nodeScoreMap) {
-	// 		this.updateScore(el, (score) => score * (1 - this.getLinkDensity(el)));
-	// 		if (!topCandidate || this.compareScores(el, topCandidate)) {
-	// 			topCandidate = el;
-	// 		}
-	// 	}
-	// 	if (!topCandidate) {
-	// 		const body = this.root.querySelector('body');
-	// 		if (body) {
-	// 			topCandidate = body;
-	// 		} else {
-	// 			// set to whole html, but this is only if there's no body tag - unlikely
-	// 			topCandidate = this.root.querySelector('html') as HTMLElement;
-	// 		}
-	// 	}
-	// 	// console.log({ topCandidate });
-	// 	// console.log(JSON.stringify(this.nodeScoreMap.entries(), null, 2));
-	// 	// now merge all its siblings to create our article, before processing
-	// 	// console.log({ topCandidateSibling: topCandidate?.previousElementSibling });
-	// 	topCandidate = this.mergeSiblings(topCandidate);
-	//
-	// 	// look in arc90 preparticle and mercury-parser cleaners/content
-	// 	// TODO: next page link?
-	//
-	// 	// we should also run a check to see if the top candidate is usable
-	//
-	// 	// we also need to get the proper metadata
-	// 	return topCandidate;
-	// }
+	private getTopCandidate() {
+		// update scores with link density - can we do that before?
+		console.log('*** 🥁 Starting to Get Top Candidate 🥁 ***');
+		console.log(
+			`First, a look at our scorecard: ${JSON.stringify(
+				Array.from(this.nodeScoreMap.entries()).map(([el, score]) => ({
+					el: printRawHTMLTag(el),
+					score,
+				})),
+			)}`,
+		);
+		let topCandidate: HTMLElement | undefined = undefined;
+		for (const [el] of this.nodeScoreMap) {
+			this.updateScore(el, (score) => score * (1 - this.getLinkDensity(el)));
+			if (!topCandidate || this.compareScores(el, topCandidate)) {
+				topCandidate = el;
+			}
+		}
+		if (!topCandidate) {
+			const body = this.root.querySelector('body');
+			if (body) {
+				topCandidate = body;
+			} else {
+				// set to whole html, but this is only if there's no body tag - unlikely
+				topCandidate = this.root.querySelector('html') as HTMLElement;
+			}
+		}
+		// console.log({ topCandidate });
+		// console.log(JSON.stringify(this.nodeScoreMap.entries(), null, 2));
+		// now merge all its siblings to create our article, before processing
+		// console.log({ topCandidateSibling: topCandidate?.previousElementSibling });
+		topCandidate = this.mergeSiblings(topCandidate);
 
-	// private mergeSiblings(topCandidate: HTMLElement) {
-	// 	console.log('*** Starting to Merge Siblings ***');
-	// 	console.log(
-	// 		`Ok, so here's what our topCandidate looks like so far:`,
-	// 		topCandidate.innerHTML,
-	// 	);
-	//
-	// 	const topCandidateScore = this.nodeScoreMap.get(topCandidate);
-	// 	if (!topCandidateScore) {
-	// 		throw Error('Error getting top candidate score');
-	// 	}
-	// 	// mercury-parser uses .25, arc90 uses .2,
-	// 	const siblingScoreThreshold = Math.max(10, topCandidateScore * 0.2);
-	// 	const wrapper = parse('<div></div>');
-	// 	const siblingNodes = topCandidate.parentNode.childNodes;
-	// 	console.log({ siblingNodes });
-	// 	// loop thru all siblings
-	// 	// add ones that score high enough to a wrapper div that will hold our content
-	// 	let index = 0;
-	// 	for (const siblingNode of siblingNodes) {
-	// 		index++; // <- this is a ONE-BASED index, not zero-based (matches with length)
-	// 		// taken from mercury parser
-	// 		let siblingCandidate: HTMLElement | undefined = undefined;
-	// 		if (siblingNode.nodeType === 1) {
-	// 			siblingCandidate = siblingNode as HTMLElement;
-	// 		}
-	// 		if (!siblingCandidate) continue;
-	// 		if (NON_TOP_CANDIDATE_TAGS_RE.test(siblingCandidate.tagName)) continue;
-	// 		const siblingScore = this.nodeScoreMap.get(siblingCandidate);
-	// 		if (!siblingScore) continue;
-	// 		//   if it's actually the top candidate, then append to our wrapper
-	// 		// console.log('mergesiblings', { siblingCandidate, topCandidate });
-	// 		if (siblingCandidate === topCandidate) {
-	// 			wrapper.appendChild(siblingCandidate);
-	// 			continue;
-	// 		}
-	// 		// score the siblingCandidate now
-	// 		let contentBonus = 0;
-	//
-	// 		// give a bonus if sibling nodes and top candidates have the example same classname
-	// 		if (
-	// 			siblingCandidate.classList.toString() ===
-	// 			topCandidate.classList.toString()
-	// 		) {
-	// 			contentBonus += topCandidateScore * 0.2;
-	// 		}
-	// 		// now let's test link density
-	// 		const linkDensity = this.getLinkDensity(siblingCandidate);
-	// 		// give it a small bonus if it has a low link density, give it a penalty if it's highger
-	// 		if (linkDensity < 0.05) {
-	// 			contentBonus += 20;
-	// 		} else if (linkDensity >= 0.5) {
-	// 			contentBonus -= 20;
-	// 		}
-	// 		const newScore = siblingScore + contentBonus;
-	// 		// console.log(
-	// 		// 	`Looking at sibling ${siblingCandidate.tagName}.${siblingCandidate.classNames} with score ${siblingScore}`
-	// 		// );
-	// 		if (newScore >= siblingScoreThreshold) {
-	// 			wrapper.appendChild(siblingCandidate);
-	// 			// console.log(`Added`);
-	// 			continue;
-	// 		}
-	// 		// let's do further inspecting if it's a P
-	// 		if (siblingCandidate.tagName === 'P') {
-	// 			const siblingContent = siblingCandidate.innerText;
-	// 			const siblingContentLength = siblingContent.length;
-	// 			if (siblingContentLength > 80 && linkDensity < 0.25) {
-	// 				wrapper.appendChild(siblingCandidate);
-	// 				// console.log(`Added`);
-	// 				continue;
-	// 			}
-	// 			if (
-	// 				siblingContentLength <= 80 &&
-	// 				linkDensity === 0 &&
-	// 				hasSentencend(siblingContent)
-	// 			) {
-	// 				wrapper.appendChild(siblingCandidate);
-	// 				// console.log(`Added`);
-	// 				continue;
-	// 			}
-	// 		}
-	// 		// make sure div.footnotes gets added
-	// 		if (siblingNodes.length - index <= 2) {
-	// 			// it's in the last couple of nodes
-	// 			if (
-	// 				FOOTNOTE_HINT_RE.test(siblingCandidate.classList.toString()) ||
-	// 				FOOTNOTE_HINT_RE.test(siblingCandidate.id)
-	// 			) {
-	// 				wrapper.appendChild(siblingCandidate);
-	// 				// console.log(`Added`);
-	// 				continue;
-	// 			}
-	// 		}
-	// 	}
-	// 	console.log(
-	// 		`Ok, so here's what our topCandidate looks like after merging siblings:`,
-	// 		wrapper.innerHTML,
-	// 	);
-	// 	// todo: arc90 turns nodes into divs if they're not divs or ps
-	// 	// https://github.com/masukomi/arc90-readability/blob/aca36d14c6a4096d0dcaea94539d4576a485abff/js/readability.js#L930
-	// 	return wrapper;
-	// }
+		// look in arc90 preparticle and mercury-parser cleaners/content
+		// TODO: next page link?
+
+		// we should also run a check to see if the top candidate is usable
+
+		// we also need to get the proper metadata
+		return topCandidate;
+	}
+
+	private mergeSiblings(topCandidate: HTMLElement) {
+		console.log('*** Starting to Merge Siblings ***');
+		console.log(
+			`Ok, so here's what our topCandidate looks like so far:`,
+			topCandidate.innerHTML,
+		);
+
+		const topCandidateScore = this.nodeScoreMap.get(topCandidate);
+		if (!topCandidateScore) {
+			throw Error('Error getting top candidate score');
+		}
+		// mercury-parser uses .25, arc90 uses .2,
+		const siblingScoreThreshold = Math.max(10, topCandidateScore * 0.2);
+		const wrapper = parse('<div></div>');
+		const siblingNodes = topCandidate.parentNode.childNodes;
+		console.log({ siblingNodes });
+		// loop thru all siblings
+		// add ones that score high enough to a wrapper div that will hold our content
+		let index = 0;
+		for (const siblingNode of siblingNodes) {
+			index++; // <- this is a ONE-BASED index, not zero-based (matches with length)
+			// taken from mercury parser
+			let siblingCandidate: HTMLElement | undefined = undefined;
+			if (siblingNode.nodeType === 1) {
+				siblingCandidate = siblingNode as HTMLElement;
+			}
+			if (!siblingCandidate) continue;
+			if (NON_TOP_CANDIDATE_TAGS_RE.test(siblingCandidate.tagName)) continue;
+			const siblingScore = this.nodeScoreMap.get(siblingCandidate);
+			if (!siblingScore) continue;
+			//   if it's actually the top candidate, then append to our wrapper
+			// console.log('mergesiblings', { siblingCandidate, topCandidate });
+			if (siblingCandidate === topCandidate) {
+				wrapper.appendChild(siblingCandidate);
+				continue;
+			}
+			// score the siblingCandidate now
+			let contentBonus = 0;
+
+			// give a bonus if sibling nodes and top candidates have the example same classname
+			if (
+				siblingCandidate.classList.toString() ===
+				topCandidate.classList.toString()
+			) {
+				contentBonus += topCandidateScore * 0.2;
+			}
+			// now let's test link density
+			const linkDensity = this.getLinkDensity(siblingCandidate);
+			// give it a small bonus if it has a low link density, give it a penalty if it's highger
+			if (linkDensity < 0.05) {
+				contentBonus += 20;
+			} else if (linkDensity >= 0.5) {
+				contentBonus -= 20;
+			}
+			const newScore = siblingScore + contentBonus;
+			// console.log(
+			// 	`Looking at sibling ${siblingCandidate.tagName}.${siblingCandidate.classNames} with score ${siblingScore}`
+			// );
+			if (newScore >= siblingScoreThreshold) {
+				wrapper.appendChild(siblingCandidate);
+				// console.log(`Added`);
+				continue;
+			}
+			// let's do further inspecting if it's a P
+			if (siblingCandidate.tagName === 'P') {
+				const siblingContent = siblingCandidate.innerText;
+				const siblingContentLength = siblingContent.length;
+				if (siblingContentLength > 80 && linkDensity < 0.25) {
+					wrapper.appendChild(siblingCandidate);
+					// console.log(`Added`);
+					continue;
+				}
+				if (
+					siblingContentLength <= 80 &&
+					linkDensity === 0 &&
+					hasSentencend(siblingContent)
+				) {
+					wrapper.appendChild(siblingCandidate);
+					// console.log(`Added`);
+					continue;
+				}
+			}
+			// make sure div.footnotes gets added
+			if (siblingNodes.length - index <= 2) {
+				// it's in the last couple of nodes
+				if (
+					FOOTNOTE_HINT_RE.test(siblingCandidate.classList.toString()) ||
+					FOOTNOTE_HINT_RE.test(siblingCandidate.id)
+				) {
+					wrapper.appendChild(siblingCandidate);
+					// console.log(`Added`);
+					continue;
+				}
+			}
+		}
+		console.log(
+			`Ok, so here's what our topCandidate looks like after merging siblings:`,
+			wrapper.innerHTML,
+		);
+		// todo: arc90 turns nodes into divs if they're not divs or ps
+		// https://github.com/masukomi/arc90-readability/blob/aca36d14c6a4096d0dcaea94539d4576a485abff/js/readability.js#L930
+		return wrapper;
+	}
 
 	private initializeNode(node: HTMLElement) {
+		console.log('-- initializing node --');
+		console.log({ node });
 		// console.log('-- initializing node --');
 		this.nodeScoreMap.set(node, 0);
 		// Modifiying this slightly from arc90 to get with the times (stolen from Mercury-Parser's constants)
@@ -2150,19 +2178,19 @@ export class Parser {
 		// console.log(`Updated score for ${node.tagName} to ${this.nodeScoreMap.get(node)}`);
 	}
 
-	// private getNodesToScore() {
-	// 	const nodesToScore = this.root.querySelectorAll('p, pre, td');
-	// 	const divsToParagraphs = this.root
-	// 		.querySelectorAll('div')
-	// 		.filter((e) => e.querySelectorAll(DIV_TO_P_BLOCK_TAGS).length === 0);
-	// 	console.log({ divsToParagraphs });
-	// 	divsToParagraphs.forEach((e) =>
-	// 		e.replaceWith(this.changeElementTag(e, 'p')),
-	// 	);
-	// 	nodesToScore.push(...divsToParagraphs);
-	// 	console.log({ nodesToScore });
-	// 	return nodesToScore;
-	// }
+	private getNodesToScore() {
+		const nodesToScore = this.root.querySelectorAll('p, pre, td');
+		const divsToParagraphs = this.root
+			.querySelectorAll('div')
+			.filter((e) => e.querySelectorAll(DIV_TO_P_BLOCK_TAGS).length === 0);
+		console.log({ divsToParagraphs });
+		divsToParagraphs.forEach((e) =>
+			e.replaceWith(this.changeElementTag(e, 'p')),
+		);
+		nodesToScore.push(...divsToParagraphs);
+		console.log({ nodesToScore });
+		return nodesToScore;
+	}
 
 	private changeElementTag(element: HTMLElement, tagName: string) {
 		// TODO: keep attributes
@@ -2342,115 +2370,115 @@ export class Parser {
 		return '';
 	}
 
-	// private cleanContent(node: HTMLElement) {
-	// 	// convert top level html or body tag to div
-	// 	if (node.tagName === 'HTML' || node.tagName === 'BODY') {
-	// 		node.replaceWith(this.changeElementTag(node, 'div'));
-	// 	}
-	// 	node = fixLazyLoadedImages(node);
-	// 	console.log(`node after fixLazyLoadedImages: ${node.outerHTML}`);
-	// 	['href', 'src'].forEach((a) => absolutizeUrls(node, this.baseUrl, a));
-	// 	absolutizeSet(node, this.baseUrl);
-	// 	// did that work?
-	// 	// console.log(node.querySelectorAll('a[href]'));
-	// 	STRIP_OUTPUT_TAGS.forEach((tag) => {
-	// 		const elements = node.querySelectorAll(tag);
-	// 		console.log('elements to strip', elements);
-	// 		elements.forEach((e) => {
-	// 			const matches = e.parentNode.querySelectorAll(
-	// 				KEEP_SELECTORS.join(', '),
-	// 			);
-	// 			if (!matches.some((match) => match === e)) {
-	// 				console.log('stripping', e);
-	// 				e.remove();
-	// 			}
-	// 		});
-	// 	});
-	// 	const hOnes = node.querySelectorAll('h1');
-	// 	if (hOnes.length < 3) {
-	// 		hOnes.forEach((e) => e.remove());
-	// 	} else {
-	// 		hOnes.forEach((e) => {
-	// 			e.replaceWith(this.changeElementTag(e, 'h2'));
-	// 		});
-	// 	}
-	// 	const otherHeaders = node.querySelectorAll('h2, h3, h4, h5, h6');
-	// 	otherHeaders.forEach((header) => {
-	// 		if (normalizeSpaces(header.innerText) === this.metadata.title) {
-	// 			header.remove();
-	// 		}
-	// 		if (this.getWeight(header) < 0) {
-	// 			// header.remove();
-	// 		}
-	// 	});
-	// 	console.log(`node after otherheaders: ${node.outerHTML}`);
-	//
-	// 	const tagsToClean = node.querySelectorAll(CLEAN_CONDITIONALLY_TAGS);
-	// 	tagsToClean.forEach((tag) => {
-	// 		// if it's a form, drop it
-	// 		if (tag.tagName === 'FORM') {
-	// 			tag.remove();
-	// 			return;
-	// 		}
-	// 		//todo: keep class
-	// 		const weight = this.getWeight(tag);
-	// 		if (weight < 0) {
-	// 			tag.remove();
-	// 		} else {
-	// 			const tagContent = normalizeSpaces(tag.innerText);
-	// 			if (scoreCommas(tagContent) < 10) {
-	// 				const pCount = tag.querySelectorAll('p').length;
-	// 				const inputCount = tag.querySelectorAll('input').length;
-	// 				if (inputCount > pCount / 3) {
-	// 					tag.remove();
-	// 					return;
-	// 				}
-	// 				const imgCount = tag.querySelectorAll('img').length;
-	// 				if (tagContent.length < 25 && imgCount === 0) {
-	// 					tag.remove();
-	// 					return;
-	// 				}
-	// 				const density = this.getLinkDensity(tag);
-	// 				if (weight < 25 && density > 0.2 && tagContent.length > 75) {
-	// 					tag.remove();
-	// 					return;
-	// 				}
-	// 				if (weight >= 25 && density > 0.5) {
-	// 					// this one i'm unsure of
-	// 				}
-	// 				const scriptCount = tag.querySelectorAll('script').length;
-	// 				if (scriptCount > 0 && tagContent.length < 150) {
-	// 					tag.remove();
-	// 					return;
-	// 				}
-	// 			}
-	// 		}
-	// 	});
-	//
-	// 	console.log(`node after tagsToClean: ${node.outerHTML}`);
-	//
-	// 	// clean up lazy loaded images
-	// 	node = this.convertLazyLoadedImages(node);
-	//
-	// 	console.log(`node after convertLazyLoadedImages: ${node.outerHTML}`);
-	//
-	// 	// fix images with bad urls
-	// 	node = fixImages(node);
-	//
-	// 	console.log(`node after fixImages: ${node.outerHTML}`);
-	//
-	// 	// TODO: upload images to s3
-	//
-	// 	// todo: remove empty paragraphs, and remove unneccessary attributes
-	//
-	// 	/** Remove Attributes */
-	// 	node = cleanAttributes(node);
-	//
-	// 	console.log(`node after cleanAttributes: ${node.outerHTML}`);
-	//
-	// 	// also check arc90 for what they do
-	// 	return node;
-	// }
+	private cleanContent(node: HTMLElement) {
+		// convert top level html or body tag to div
+		if (node.tagName === 'HTML' || node.tagName === 'BODY') {
+			node.replaceWith(this.changeElementTag(node, 'div'));
+		}
+		node = fixLazyLoadedImages(node);
+		console.log(`node after fixLazyLoadedImages: ${node.outerHTML}`);
+		['href', 'src'].forEach((a) => absolutizeUrls(node, this.baseUrl, a));
+		absolutizeSet(node, this.baseUrl);
+		// did that work?
+		// console.log(node.querySelectorAll('a[href]'));
+		STRIP_OUTPUT_TAGS.forEach((tag) => {
+			const elements = node.querySelectorAll(tag);
+			console.log('elements to strip', elements);
+			elements.forEach((e) => {
+				const matches = e.parentNode.querySelectorAll(
+					KEEP_SELECTORS.join(', '),
+				);
+				if (!matches.some((match) => match === e)) {
+					console.log('stripping', e);
+					e.remove();
+				}
+			});
+		});
+		const hOnes = node.querySelectorAll('h1');
+		if (hOnes.length < 3) {
+			hOnes.forEach((e) => e.remove());
+		} else {
+			hOnes.forEach((e) => {
+				e.replaceWith(this.changeElementTag(e, 'h2'));
+			});
+		}
+		const otherHeaders = node.querySelectorAll('h2, h3, h4, h5, h6');
+		otherHeaders.forEach((header) => {
+			if (normalizeSpaces(header.innerText) === this.metadata.title) {
+				header.remove();
+			}
+			if (this.getWeight(header) < 0) {
+				// header.remove();
+			}
+		});
+		console.log(`node after otherheaders: ${node.outerHTML}`);
+
+		const tagsToClean = node.querySelectorAll(CLEAN_CONDITIONALLY_TAGS);
+		tagsToClean.forEach((tag) => {
+			// if it's a form, drop it
+			if (tag.tagName === 'FORM') {
+				tag.remove();
+				return;
+			}
+			//todo: keep class
+			const weight = this.getWeight(tag);
+			if (weight < 0) {
+				tag.remove();
+			} else {
+				const tagContent = normalizeSpaces(tag.innerText);
+				if (scoreCommas(tagContent) < 10) {
+					const pCount = tag.querySelectorAll('p').length;
+					const inputCount = tag.querySelectorAll('input').length;
+					if (inputCount > pCount / 3) {
+						tag.remove();
+						return;
+					}
+					const imgCount = tag.querySelectorAll('img').length;
+					if (tagContent.length < 25 && imgCount === 0) {
+						tag.remove();
+						return;
+					}
+					const density = this.getLinkDensity(tag);
+					if (weight < 25 && density > 0.2 && tagContent.length > 75) {
+						tag.remove();
+						return;
+					}
+					if (weight >= 25 && density > 0.5) {
+						// this one i'm unsure of
+					}
+					const scriptCount = tag.querySelectorAll('script').length;
+					if (scriptCount > 0 && tagContent.length < 150) {
+						tag.remove();
+						return;
+					}
+				}
+			}
+		});
+
+		console.log(`node after tagsToClean: ${node.outerHTML}`);
+
+		// clean up lazy loaded images
+		node = this.convertLazyLoadedImages(node);
+
+		console.log(`node after convertLazyLoadedImages: ${node.outerHTML}`);
+
+		// fix images with bad urls
+		node = fixImages(node);
+
+		console.log(`node after fixImages: ${node.outerHTML}`);
+
+		// TODO: upload images to s3
+
+		// todo: remove empty paragraphs, and remove unneccessary attributes
+
+		/** Remove Attributes */
+		node = cleanAttributes(node);
+
+		console.log(`node after cleanAttributes: ${node.outerHTML}`);
+
+		// also check arc90 for what they do
+		return node;
+	}
 
 	private extractFromSelectors(
 		root: HTMLElement,
@@ -2510,27 +2538,27 @@ export class Parser {
 		}
 	}
 
-	// private extractContentFromSelectors(
-	// 	root: HTMLElement,
-	// 	selectors: Array<string>,
-	// ) {
-	// 	console.log(`here's the root:`, root.innerHTML);
-	// 	console.log(
-	// 		`Attempting to extract **content** from selectors, because these were provided:`,
-	// 		selectors,
-	// 	);
-	// 	for (const selector of selectors) {
-	// 		console.log(`trying this selector:`, selector);
-	// 		const element = root.querySelector(selector);
-	// 		if (!element) continue;
-	// 		console.log(
-	// 			`Woohoo! Nice! We've got a match for your selector: ${selector}.`,
-	// 			element,
-	// 		);
-	// 		console.log(element.innerHTML);
-	// 		return element;
-	// 	}
-	// }
+	private extractContentFromSelectors(
+		root: HTMLElement,
+		selectors: Array<string>,
+	) {
+		console.log(`here's the root:`, root.innerHTML);
+		console.log(
+			`Attempting to extract **content** from selectors, because these were provided:`,
+			selectors,
+		);
+		for (const selector of selectors) {
+			console.log(`trying this selector:`, selector);
+			const element = root.querySelector(selector);
+			if (!element) continue;
+			console.log(
+				`Woohoo! Nice! We've got a match for your selector: ${selector}.`,
+				element,
+			);
+			console.log(element.innerHTML);
+			return element;
+		}
+	}
 
 	/* convert images and figures that have properties like data-src into images that can be loaded without JS */
 	private fixLazyImages(node: HTMLElement) {
@@ -2606,45 +2634,46 @@ export class Parser {
 		}
 	}
 
-	// private convertLazyLoadedImages(node: HTMLElement) {
-	// 	// credit https://github.com/postlight/mercury-parser/blob/HEAD/src/resource/utils/dom/convert-lazy-loaded-images.js
-	// 	const imgs = node.querySelectorAll('img');
-	// 	for (const img of imgs) {
-	// 		const attrs = img.attributes;
-	// 		for (const attr in attrs) {
-	// 			const value = attrs[attr];
-	// 			if (!value) continue;
-	// 			if (attr !== 'srcset' && IS_LINK.test(value) && IS_SRCSET.test(value)) {
-	// 				img.setAttribute('srcset', value);
-	// 			} else if (
-	// 				attr !== 'src' &&
-	// 				attr !== 'srcset' &&
-	// 				IS_LINK.test(value) &&
-	// 				IS_IMAGE.test(value)
-	// 			) {
-	// 				img.setAttribute('src', value);
-	// 			} else if (
-	// 				attr === 'data-src' &&
-	// 				IS_LINK.test(value) &&
-	// 				IS_IMAGE.test(value) &&
-	// 				!IS_LINK.test(attrs.src) &&
-	// 				!IS_IMAGE.test(attrs.src)
-	// 			) {
-	// 				// then set that as src?
-	// 				img.setAttribute('src', value);
-	// 			}
-	// 		}
-	// 	}
-	//
-	// 	// convert amp-img to img tag
-	// 	const ampImgs = node.querySelectorAll('amp-img');
-	// 	for (const ampImg of ampImgs) {
-	// 		console.log('ampImg', ampImg);
-	// 		ampImg.replaceWith(`<img src="${ampImg.getAttribute('src')}">`);
-	// 	}
-	//
-	// 	return node;
-	// }
+	private convertLazyLoadedImages(node: HTMLElement) {
+		// credit https://github.com/postlight/mercury-parser/blob/HEAD/src/resource/utils/dom/convert-lazy-loaded-images.js
+		const imgs = node.querySelectorAll('img');
+		for (const img of imgs) {
+			const attrs = img.attributes;
+			for (const attr in attrs) {
+				const value = attrs[attr];
+				if (!value) continue;
+				if (attr !== 'srcset' && IS_LINK.test(value) && IS_SRCSET.test(value)) {
+					img.setAttribute('srcset', value);
+				} else if (
+					attr !== 'src' &&
+					attr !== 'srcset' &&
+					IS_LINK.test(value) &&
+					IS_IMAGE.test(value)
+				) {
+					img.setAttribute('src', value);
+				} else if (
+					attr === 'data-src' &&
+					IS_LINK.test(value) &&
+					IS_IMAGE.test(value) &&
+					attrs.src &&
+					!IS_LINK.test(attrs.src) &&
+					!IS_IMAGE.test(attrs.src)
+				) {
+					// then set that as src?
+					img.setAttribute('src', value);
+				}
+			}
+		}
+
+		// convert amp-img to img tag
+		const ampImgs = node.querySelectorAll('amp-img');
+		for (const ampImg of ampImgs) {
+			console.log('ampImg', ampImg);
+			ampImg.replaceWith(`<img src="${ampImg.getAttribute('src')}">`);
+		}
+
+		return node;
+	}
 
 	/**
 	 * Find all <noscript> that are located after <img> nodes, and which contain only one

@@ -1,4 +1,4 @@
-import { Status, ViewType } from '$lib/types/enums';
+import { Status, ViewType } from '$lib/prisma/kysely/enums';
 import type { RequestEvent } from '@sveltejs/kit';
 import { Insertable, sql } from 'kysely';
 import { jsonArrayFrom } from 'kysely/helpers/mysql';

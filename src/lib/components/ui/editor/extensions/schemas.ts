@@ -1,4 +1,4 @@
-import { DocumentType } from '$lib/types/enums';
+import { DocumentType } from '$lib/prisma/kysely/enums';
 import { z } from 'zod';
 
 export const entryNodeSchema = z.object({

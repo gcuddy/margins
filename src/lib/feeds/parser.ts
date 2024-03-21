@@ -1,4 +1,4 @@
-import { DocumentType } from '$lib/types/enums';
+import { DocumentType } from '$lib/prisma/kysely/enums';
 import type { Prisma } from '@prisma/client';
 import dayjs from 'dayjs';
 import { XMLParser } from 'fast-xml-parser';
