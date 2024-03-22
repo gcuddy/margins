@@ -37,13 +37,6 @@
 					<Form.Validation />
 				</Form.Item>
 			</Form.Field>
-			<Form.Field {config} name="username">
-				<Form.Item>
-					<Form.Label>Username</Form.Label>
-					<Form.Input />
-					<Form.Validation />
-				</Form.Item>
-			</Form.Field>
 			<Form.Field {config} name="password">
 				<Form.Item>
 					<Form.Label>Password</Form.Label>
