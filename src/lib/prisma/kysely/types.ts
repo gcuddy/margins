@@ -636,7 +636,7 @@ export type User = {
     createdAt: Generated<Timestamp>;
     updatedAt: Timestamp;
     email: string;
-    username: Generated<string>;
+    username: string | null;
     default_state_id: number | null;
     default_archive_id: number | null;
     home_items: unknown | null;

@@ -847,7 +847,7 @@ model User {
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
   email                  String                   @unique
-  username               String                   @unique @default("")
+  username               String?                  @unique
   default_state_id       Int?                     @unique
   default_archive_id     Int?
   home_items             Json?
