@@ -804,14 +804,23 @@ model SmartList {
   @@index([userId])
 }
 
-model AuthKey {
+model Password {
   id              String  @id @unique
   hashed_password String?
   user_id         String
-  auth_user       User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
-  @@map("auth_key")
+  @@map("password")
+}
+
+model OAuthAccount {
+  provider_id      String @db.VarChar(255)
+  provider_user_id String @db.VarChar(255)
+  user_id          String @db.VarChar(255)
+
+  @@id([provider_id, provider_user_id])
+  @@index([user_id])
+  @@map("oauth_account")
 }
 
 model EmailVerificationToken {
@@ -845,7 +854,6 @@ model User {
   avatar                 String?
   email_verified         Boolean?
   auth_session           Session[]
-  auth_key               AuthKey[]
   followedBy             User[]                   @relation("UserFollows")
   following              User[]                   @relation("UserFollows")
   interactions           Interaction[]
@@ -871,7 +879,6 @@ model User {
   integrations           Integration[]
   Log                    Log[]
   relations              Relation[]
-  AuthorizationKey       AuthorizationKey?
   TagOnEntry             TagOnEntry[]
   entry_history          EntryHistory[]
   custom_entries         Entry[]
@@ -883,14 +890,6 @@ model User {
   PasswordResetToken     PasswordResetToken[]
 
   @@map("user")
-}
-
-model AuthorizationKey {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
 
 model Session {

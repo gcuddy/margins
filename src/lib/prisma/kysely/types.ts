@@ -120,15 +120,6 @@ export type Attachment = {
     bookmarkId: number | null;
     title: string;
 };
-export type AuthKey = {
-    id: string;
-    hashed_password: string | null;
-    user_id: string;
-};
-export type AuthorizationKey = {
-    id: string;
-    userId: string;
-};
 export type Bookmark = {
     id: Generated<number>;
     createdAt: Generated<Timestamp>;
@@ -491,6 +482,16 @@ export type Log = {
     season: number | null;
     startingPage: number | null;
 };
+export type OAuthAccount = {
+    provider_id: string;
+    provider_user_id: string;
+    user_id: string;
+};
+export type Password = {
+    id: string;
+    hashed_password: string | null;
+    user_id: string;
+};
 export type PasswordResetToken = {
     id: string;
     expires: number;
@@ -681,8 +682,6 @@ export type DB = {
     annotation_to_entry_reference: annotation_to_entry_reference;
     Article: Article;
     Attachment: Attachment;
-    auth_key: AuthKey;
-    AuthorizationKey: AuthorizationKey;
     Bookmark: Bookmark;
     Collection: Collection;
     CollectionItems: CollectionItems;
@@ -702,6 +701,8 @@ export type DB = {
     Integration: Integration;
     InvitationCode: InvitationCode;
     Log: Log;
+    oauth_account: OAuthAccount;
+    password: Password;
     password_reset_token: PasswordResetToken;
     Person: Person;
     person_to_entry: person_to_entry;
