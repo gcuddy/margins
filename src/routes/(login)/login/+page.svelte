@@ -1,8 +1,5 @@
 <script lang="ts">
 	import { Loader2 } from 'lucide-svelte';
-	import { getFlash } from 'sveltekit-flash-message';
-
-	import { page } from '$app/stores';
 	import {
 		Card,
 		CardContent,
@@ -14,22 +11,22 @@
 	import * as Form from '$components/ui/form';
 
 	import { loginUserSchema } from '../schema';
+	import type { PageData } from './$types';
+	import { superForm } from 'sveltekit-superforms';
+	import { zodClient } from 'sveltekit-superforms/adapters';
+	import { Input } from '$components/ui/input';
 
-	export let data;
+	export let data: PageData;
 
-	const flash = getFlash(page);
+	const form = superForm(data.form, {
+		validators: zodClient(loginUserSchema),
+	});
+
+	const { form: formData, enhance, submitting } = form;
 </script>
 
 <Card class="duration-500 animate-in fade-in-5 slide-in-from-top-8">
-	<Form.Root
-		class="contents"
-		method="post"
-		form={data.form}
-		schema={loginUserSchema}
-		let:config
-		let:message
-		let:submitting
-	>
+	<form class="contents" use:enhance method="post">
 		<CardHeader class="space-y-1">
 			<CardTitle class="text-2xl font-semibold tracking-tight"
 				>Log in to Margins</CardTitle
@@ -37,40 +34,42 @@
 			<CardDescription>Enter your email and password below.</CardDescription>
 		</CardHeader>
 		<CardContent class="grid gap-4">
-			<Form.Message
-				message={message ?? $flash ?? $page.url.searchParams.get('message')}
-			/>
-			<Form.Field {config} name="email">
-				<Form.Item>
+			<Form.Field {form} name="email">
+				<Form.Control let:attrs>
 					<Form.Label>Email</Form.Label>
-					<Form.Input autocomplete="off" />
-					<Form.Validation />
-				</Form.Item>
+					<Input autocomplete="off" {...attrs} bind:value={$formData.email} />
+					<Form.FieldErrors />
+				</Form.Control>
 			</Form.Field>
-			<Form.Field {config} name="password">
-				<Form.Item>
+			<Form.Field {form} name="password">
+				<Form.Control let:attrs>
 					<div class="flex items-center justify-between">
 						<Form.Label>Password</Form.Label><a
 							class="text-xs text-muted-foreground hover:underline"
 							href="/password-reset">Forgot password?</a
 						>
 					</div>
-					<Form.Input type="password" autocomplete="current-password" />
-					<Form.Validation />
-				</Form.Item>
+					<Input
+						{...attrs}
+						bind:value={$formData.password}
+						type="password"
+						autocomplete="current-password"
+					/>
+					<Form.FieldErrors />
+				</Form.Control>
 			</Form.Field>
 		</CardContent>
 		<CardFooter>
 			<Form.Button
-				disabled={submitting}
+				disabled={$submitting}
 				variant="secondary"
 				class="w-full bg-foreground text-background hover:bg-foreground"
-				>Login {#if submitting}
+				>Login {#if $submitting}
 					<Loader2 class="ml-2 h-4 w-4 animate-spin" />
 				{/if}</Form.Button
 			>
 		</CardFooter>
-	</Form.Root>
+	</form>
 </Card>
 
 <div class="animate-in fade-in-0">

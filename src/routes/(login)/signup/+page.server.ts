@@ -4,22 +4,18 @@ import { generateEmailVerificationToken } from '$lib/auth/token';
 import { sendEmailVerificationLink } from '$lib/auth/verification';
 import { db } from '$lib/db';
 import { auth } from '$lib/server/lucia';
-import type { Message } from '$lib/types/forms';
 import { generateId } from 'lucia';
 import { Argon2id } from 'oslo/password';
 import { message, superValidate } from 'sveltekit-superforms/server';
 import { createUserSchema } from '../schema';
 import type { PageServerLoad } from './$types';
 import { nanoid } from 'nanoid';
+import { zod } from 'sveltekit-superforms/adapters';
 
-export const load = (async ({ url }) => {
-	const form = await superValidate<typeof createUserSchema, Message>(
-		url,
-		createUserSchema,
-		{
-			errors: false,
-		},
-	);
+export const load = (async () => {
+	const form = await superValidate(zod(createUserSchema), {
+		errors: false,
+	});
 
 	return {
 		form,
@@ -28,10 +24,8 @@ export const load = (async ({ url }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
-		const form = await superValidate<typeof createUserSchema, Message>(
-			event,
-			createUserSchema,
-		);
+		const form = await superValidate(event, zod(createUserSchema));
+
 		if (!form.valid) {
 			return fail(400, { form });
 		}

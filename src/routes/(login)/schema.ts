@@ -18,25 +18,29 @@ export const createUserSchema = z.object({
 		.max(40, {
 			message: 'Password must be at most 40 characters',
 		}),
-	username: z
-		.string({
-			required_error: 'Username is required',
-		})
-		.min(3, {
-			message: 'Username must be at least 3 characters',
-		})
-		.max(20, {
-			message: 'Username must be at most 20 characters',
-		}),
-	// FOR NOW, required
-	inviteCode: z
-		.string({
-			required_error: 'Invite code is required',
-		})
-		.optional(),
+	// username: z
+	// 	.string({
+	// 		required_error: 'Username is required',
+	// 	})
+	// 	.min(3, {
+	// 		message: 'Username must be at least 3 characters',
+	// 	})
+	// 	.max(20, {
+	// 		message: 'Username must be at most 20 characters',
+	// 	}),
+	// // FOR NOW, required
+	// inviteCode: z
+	// 	.string({
+	// 		required_error: 'Invite code is required',
+	// 	})
+	// 	.optional(),
 });
 
+export type CreateUserSchema = typeof createUserSchema;
+
 export const loginUserSchema = createUserSchema.omit({
-	username: true,
-	inviteCode: true,
+	// username: true,
+	// inviteCode: true,
 });
+
+export type LoginUserSchema = typeof loginUserSchema;

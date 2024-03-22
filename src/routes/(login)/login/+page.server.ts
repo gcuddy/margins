@@ -7,9 +7,9 @@ import { auth } from '$lib/server/lucia';
 
 import type { PageServerLoad } from './$types';
 import { loginUserSchema } from '../schema';
-import type { Message } from '$lib/types';
 import { Argon2id } from 'oslo/password';
 import { db } from '$lib/db';
+import { zod } from 'sveltekit-superforms/adapters';
 
 export const load: PageServerLoad = async (event) => {
 	const { locals } = event;
@@ -26,20 +26,14 @@ export const load: PageServerLoad = async (event) => {
 		redirect(302, `/library/backlog`);
 	}
 
-	const form = await superValidate<typeof loginUserSchema, Message>(
-		event,
-		loginUserSchema,
-	);
+	const form = await superValidate(event, zod(loginUserSchema));
 
 	return { form };
 };
 
 export const actions = {
 	default: async (event) => {
-		const form = await superValidate<typeof loginUserSchema, Message>(
-			event,
-			loginUserSchema,
-		);
+		const form = await superValidate(event, zod(loginUserSchema));
 		if (!form.valid) {
 			return fail(400, { form });
 		}
