@@ -489,7 +489,7 @@ export type OAuthAccount = {
 };
 export type Password = {
     id: string;
-    hashed_password: string | null;
+    hashed_password: string;
     user_id: string;
 };
 export type PasswordResetToken = {

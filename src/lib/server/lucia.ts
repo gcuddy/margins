@@ -8,7 +8,7 @@ import { dev } from '$app/environment';
 // import kysely from "$lib/auth/kysley-pscale-adapter";
 import { Client } from '@planetscale/database';
 import { config } from '$lib/db';
-import type { AuthUser } from '$lib/prisma/kysely/types';
+import type { User } from '$lib/prisma/kysely/types';
 
 const client = new Client(config);
 
@@ -46,6 +46,6 @@ declare module 'lucia' {
 	interface Register {
 		Lucia: typeof auth;
 		// DatabaseSessionAttributes: DatabaseSessionAttributes;
-		DatabaseUserAttributes: AuthUser;
+		DatabaseUserAttributes: User;
 	}
 }

@@ -1,6 +1,7 @@
 import { validateEmailVerificationToken } from '$lib/auth/token';
 import { auth } from '$lib/server/lucia';
 
+// TODO: fix all this
 export async function GET(event) {
 	console.log('email-verification/[token]/+server.ts', event.params.token);
 	try {

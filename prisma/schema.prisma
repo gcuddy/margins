@@ -806,7 +806,7 @@ model SmartList {
 
 model Password {
   id              String  @id @unique
-  hashed_password String?
+  hashed_password String
   user_id         String
 
   @@index([user_id])
