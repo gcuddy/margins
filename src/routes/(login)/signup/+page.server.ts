@@ -5,13 +5,14 @@ import { sendEmailVerificationLink } from '$lib/auth/verification';
 import { db } from '$lib/db';
 import { auth } from '$lib/server/lucia';
 import type { Message } from '$lib/types/forms';
-import { createKeyId } from 'lucia';
-import { generateLuciaPasswordHash, generateRandomString } from 'lucia/utils';
-import { message, setError, superValidate } from 'sveltekit-superforms/server';
+import { generateId } from 'lucia';
+import { Argon2id } from 'oslo/password';
+import { message, superValidate } from 'sveltekit-superforms/server';
 import { createUserSchema } from '../schema';
+import type { PageServerLoad } from './$types';
+import { nanoid } from 'nanoid';
 
-export async function load({ url }) {
-	const inviteCode = url.searchParams.get('inviteCode');
+export const load = (async ({ url }) => {
 	const form = await superValidate<typeof createUserSchema, Message>(
 		url,
 		createUserSchema,
@@ -20,28 +21,13 @@ export async function load({ url }) {
 		},
 	);
 
-	// Make our own to allow for invite code to be passed in
-	// const form: SuperValidated<typeof createUserSchema, Message> = {
-	// 	valid: true,
-	// 	posted: false,
-	// 	data: {
-	// 		inviteCode: inviteCode || '',
-	// 		email: '',
-	// 		password: '',
-	// 		username: '',
-	// 	},
-	// 	errors: {},
-	// 	constraints: {},
-	// };
-
 	return {
 		form,
 	};
-}
+}) satisfies PageServerLoad;
 
 export const actions: Actions = {
 	default: async (event) => {
-		const { request, locals } = event;
 		const form = await superValidate<typeof createUserSchema, Message>(
 			event,
 			createUserSchema,
@@ -52,11 +38,8 @@ export const actions: Actions = {
 		try {
 			// Create a new user by using email
 
-			const { email, password, username, inviteCode } = form.data;
-			// TODO: Oauth
-
+			const { email, password } = form.data;
 			// validate invite code
-			// TEMPORARILY TURNING THIS OFF FOR TESTING
 			// const code = await db
 			// 	.selectFrom('InvitationCode')
 			// 	.where('used', '=', 0)
@@ -70,62 +53,54 @@ export const actions: Actions = {
 
 			// TODO: oauth
 
-			const userId = generateRandomString(15);
-			// we know if this transaction fails, it's an error with username/email duplicate... right?
+			const userId = generateId(15);
+			const hashed_password = await new Argon2id().hash(password);
+
 			await db.transaction().execute(async (trx) => {
-				// we handle creation ourselves instead of with lucia provided auth...
-				const user = await trx
-					.insertInto('auth_user')
+				await trx
+					.insertInto('user')
 					.values({
 						email,
 						id: userId,
 						updatedAt: new Date(),
-						username,
 					})
 					.execute();
 
-				console.log({ user });
-
-				const key = await trx
-					.insertInto('auth_key')
+				await trx
+					.insertInto('password')
 					.values({
-						id: createKeyId('email', email),
+						id: nanoid(),
 						user_id: userId,
-						hashed_password: await generateLuciaPasswordHash(password),
+						hashed_password,
 					})
 					.execute();
 
-				console.log({ key });
-
-				return await trx
-					.updateTable('InvitationCode')
-					.set({
-						used: 1,
-						usedById: userId,
-					})
-					.where('code', '=', inviteCode)
-					.execute();
+				// return await trx
+				// 	.updateTable('InvitationCode')
+				// 	.set({
+				// 		used: 1,
+				// 		usedById: userId,
+				// 	})
+				// 	.where('code', '=', inviteCode)
+				// 	.execute();
 			});
 
-			const session = await auth.createSession({
-				userId,
-				attributes: {},
+			const session = await auth.createSession(userId, {});
+			const sessionCookie = auth.createSessionCookie(session.id);
+			event.cookies.set(sessionCookie.name, sessionCookie.value, {
+				path: '.',
+				...sessionCookie.attributes,
 			});
+
 			const token = await generateEmailVerificationToken(userId);
 			await sendEmailVerificationLink(email, token, event.url);
-
-			locals.auth.setSession(session);
-
-			// we got here! let's redirect now
 		} catch (e) {
 			console.log({ e });
-			// There was an error creating the user — almost definitely a duplicate email/username
-			// TODO: we should check to make sure it was actually duplicate
 			return message(
 				form,
 				{
 					status: 'error',
-					text: 'Email or username is already in use.',
+					text: 'Email is already in use.',
 				},
 				{
 					status: 400,
