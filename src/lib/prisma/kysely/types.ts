@@ -129,24 +129,6 @@ export type AuthorizationKey = {
     id: string;
     userId: string;
 };
-export type AuthSession = {
-    id: string;
-    user_id: string;
-    idle_expires: number;
-    active_expires: Generated<number>;
-};
-export type AuthUser = {
-    id: string;
-    createdAt: Generated<Timestamp>;
-    updatedAt: Timestamp;
-    email: string;
-    username: Generated<string>;
-    default_state_id: number | null;
-    default_archive_id: number | null;
-    home_items: unknown | null;
-    avatar: string | null;
-    email_verified: number | null;
-};
 export type Bookmark = {
     id: Generated<number>;
     createdAt: Generated<Timestamp>;
@@ -541,6 +523,11 @@ export type Relation = {
     entryId: number;
     relatedEntryId: number;
 };
+export type Session = {
+    id: string;
+    user_id: string;
+    expires_at: Timestamp;
+};
 export type SmartList = {
     id: Generated<number>;
     name: string;
@@ -643,6 +630,18 @@ export type Unread = {
     createdAt: Generated<Timestamp>;
     updatedAt: Timestamp;
 };
+export type User = {
+    id: string;
+    createdAt: Generated<Timestamp>;
+    updatedAt: Timestamp;
+    email: string;
+    username: Generated<string>;
+    default_state_id: number | null;
+    default_archive_id: number | null;
+    home_items: unknown | null;
+    avatar: string | null;
+    email_verified: number | null;
+};
 export type UserEntry = {
     id: Generated<number>;
     entryId: number;
@@ -683,8 +682,6 @@ export type DB = {
     Article: Article;
     Attachment: Attachment;
     auth_key: AuthKey;
-    auth_session: AuthSession;
-    auth_user: AuthUser;
     AuthorizationKey: AuthorizationKey;
     Bookmark: Bookmark;
     Collection: Collection;
@@ -718,6 +715,8 @@ export type DB = {
     TagOnEntry: TagOnEntry;
     Task: Task;
     Unread: Unread;
+    user: User;
+    user_session: Session;
     UserEntry: UserEntry;
     ViewPreferences: ViewPreferences;
 };
