@@ -12,31 +12,21 @@ export const config = {
 	username: DATABASE_USERNAME,
 };
 
-declare global {
-	// allow global `var` declarations
-	// eslint-disable-next-line no-var
-	var db: Kysely<DB> | undefined;
-}
-
-const globalForKyseley = global as unknown as { db: Kysely<DB> };
-
-export const db =
-	globalForKyseley.db ||
-	new Kysely<DB>({
-		dialect: new PlanetScaleDialect({
-			...config,
-			useSharedConnection: true,
-		}),
-		log: (event) => {
-			if (!dev) {
-				return;
-			}
-			if (event.level === 'query') {
-				console.log(event.query.sql);
-				console.log(event.query.parameters);
-			}
-		},
-	});
+export const db = new Kysely<DB>({
+	dialect: new PlanetScaleDialect({
+		...config,
+		useSharedConnection: true,
+	}),
+	log: (event) => {
+		if (!dev) {
+			return;
+		}
+		if (event.level === 'query') {
+			console.log(event.query.sql);
+			console.log(event.query.parameters);
+		}
+	},
+});
 
 export function json<T>(obj: T): RawBuilder<T> {
 	return sql`${JSON.stringify(obj)}`;
@@ -44,8 +34,4 @@ export function json<T>(obj: T): RawBuilder<T> {
 
 export function values<T>(expr: Expression<T>) {
 	return sql<T>`VALUES(${expr})`;
-}
-
-if (process.env.NODE_ENV !== 'production') {
-	globalForKyseley.db = db;
 }
