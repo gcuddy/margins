@@ -7,7 +7,7 @@ import { getFirstBookmarkSort } from '$lib/db/selects';
 import { loginRedirect } from '$lib/utils/redirects';
 import type { Actions } from './$types';
 export const load = async (e) => {
-	const session = await e.locals.auth.validate();
+	const session = await e.locals.session;
 	if (!session) throw loginRedirect(e);
 };
 
@@ -20,7 +20,7 @@ export const actions: Actions = {
 		console.log(e);
 	}),
 	update_status: async ({ locals, request, url }) => {
-		const sesh = await locals.auth.validate();
+		const sesh = locals.session;
 		if (!sesh) return fail(401);
 		// get ids
 		const data = await request.formData();

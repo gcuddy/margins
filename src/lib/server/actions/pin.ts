@@ -5,7 +5,7 @@ import { type Action, fail, type RequestEvent } from "@sveltejs/kit";
 import type { RequireAtLeastOne } from "type-fest";
 
 const pin = async ({ locals, request }: RequestEvent, insert: RequireAtLeastOne<Pick<Favorite, 'smartListId' | 'collectionId' | 'tagId'>>) => {
-    const session = await locals.auth.validate();
+    const session = locals.session;
     if (!session) return fail(401);
 
     const data = await request.formData();

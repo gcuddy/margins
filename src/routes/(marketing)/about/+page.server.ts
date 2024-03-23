@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	console.log(`marketing page load`);
-	// const session = await locals.auth.validate();
+	// const session = locals.session;
 	// if (session) {
 	//     throw redirect(302, '/library/now')
 	// }

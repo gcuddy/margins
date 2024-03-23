@@ -10,7 +10,7 @@ import { importMovies } from '$lib/db/queries/integration';
 import { loginRedirect } from '$lib/utils/redirects';
 
 export const load = async (event) => {
-	const session = await event.locals.auth.validate();
+	const session = event.locals.session;
 	if (!session) throw loginRedirect(event);
 	return {
 		title: 'Letterboxd',
@@ -93,7 +93,7 @@ export const actions: Actions = {
 	async saveMovies(event) {
 		const { request, locals } = event;
 		// TODO: find movies in tmdb by title and year, see if we can save them
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401, {
 				message: 'Unauthorized',

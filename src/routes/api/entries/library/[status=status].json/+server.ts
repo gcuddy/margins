@@ -7,7 +7,7 @@ function is_type(type: string): type is Type {
 }
 
 export async function GET({ params, locals, url }) {
-    const session = await locals.auth.validate();
+    const session = locals.session;
     if (!session) {
         error(401, "Unauthorized");
     }

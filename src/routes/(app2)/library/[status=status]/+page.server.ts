@@ -8,7 +8,7 @@ import type { PageServerLoad } from './$types';
 
 export const load = (async (event) => {
 	const { fetch, locals, url } = event;
-	// const session = await locals.auth.validate();
+	// const session = locals.session;
 	// if (!session) {
 	//     throw redirect(302, handleLoginRedirect(event));
 	// }
@@ -22,7 +22,7 @@ export const load = (async (event) => {
 	//     // this shouldn't be the case given our param checker, bt just in case
 	//     throw redirect(302, "/library/now");
 	// }
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	if (!session) {
 		redirect(302, handleLoginRedirect(event));
 		error(401, 'Unauthorized');

@@ -19,7 +19,7 @@ export async function upload_file_from_form({ request, locals, session: sesh }: 
     }
 }, params?: Omit<Parameters<typeof uploadFile>[0], "Body" | "Key">) {
 
-    const session = sesh ?? (await locals.auth.validate());
+    const session = sesh ?? (locals.session);
     if (!session) {
         throw new Error("Not logged in")
     }

@@ -41,7 +41,7 @@ import { statusUpdateSchema } from '$components/status/schema';
 
 export async function load(event) {
 	const { locals, params } = event;
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	// if (!session) {
 	// 	throw redirect(302, '/login');
 	// }
@@ -61,7 +61,7 @@ export async function load(event) {
 
 export const actions: Actions = {
 	annotate: async ({ locals, params, request }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -75,7 +75,7 @@ export const actions: Actions = {
 		return message(annotationForm, 'Annotation saved');
 	},
 	bookmark: async ({ locals, params, request }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -213,7 +213,7 @@ export const actions: Actions = {
 	createTag: async ({ locals, params, request, url }) => {
 		console.log({ request, search: url.search, url });
 
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -243,7 +243,7 @@ export const actions: Actions = {
 		}
 	},
 	deleteAnnotation: async ({ locals, params, request }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -281,7 +281,7 @@ export const actions: Actions = {
 	logInteraction: async (event) => {
 		const formData = await event.request.formData();
 		const form = await superValidate(formData, interactionLogInputSchema);
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!form.valid) {
 			return fail(400, { form });
 		}
@@ -338,7 +338,7 @@ export const actions: Actions = {
 	markAsCurrentlyReading: async (event) => {
 		const formData = await event.request.formData();
 		const form = await superValidate(formData, interactionLogInputSchema);
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -393,7 +393,7 @@ export const actions: Actions = {
 	 * Marks entry as finished and moves bookmark to "Archive".
 	 */
 	markFinished: async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -449,7 +449,7 @@ export const actions: Actions = {
 			.execute();
 	},
 	rate: async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -497,7 +497,7 @@ export const actions: Actions = {
 		return { created };
 	},
 	relation: async ({ locals, params, request }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -540,7 +540,7 @@ export const actions: Actions = {
 	},
 
 	saveInteraction: async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -557,7 +557,7 @@ export const actions: Actions = {
 		});
 	},
 	saveToLibrary: async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		const formData = await event.request.formData();
 		const form = await superValidate(formData, saveToLibrarySchema);
 		console.dir({ form }, { depth: null });
@@ -603,7 +603,7 @@ export const actions: Actions = {
 		return { form };
 	},
 	tag: async ({ locals, params, request }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -721,7 +721,7 @@ export const actions: Actions = {
 	},
 	updateBookmark: async (e) => {
 		const { locals, params, request } = e;
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -749,7 +749,7 @@ export const actions: Actions = {
 		});
 	},
 	updateStatus: async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		const form = await superValidate(event, statusUpdateSchema);
 		if (!session) {
 			return fail(401, { form });

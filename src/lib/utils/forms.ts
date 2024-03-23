@@ -62,7 +62,7 @@ export function validate_form<
 ): (event: TRequestEvent) => Promise<unknown> {
 	//
 	return async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) {
 			return fail(401);
 		}

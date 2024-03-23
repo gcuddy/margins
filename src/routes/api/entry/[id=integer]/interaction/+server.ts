@@ -9,7 +9,7 @@ const interactionSchema = z.object({
 
 export async function POST({ locals, request, params }) {
 
-    const session = await locals.auth.validate();
+    const session = locals.session;
     if (!session) error(401);
 
     const raw = await request.json();

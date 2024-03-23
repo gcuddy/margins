@@ -4,7 +4,7 @@ import { auth } from '$lib/server/lucia';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/db';
 export async function load({ locals }) {
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	if (!session) redirect(302, '/login');
 
 	const invites = await db
@@ -24,7 +24,7 @@ export async function load({ locals }) {
 
 export const actions = {
 	default: async ({ request, locals }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}

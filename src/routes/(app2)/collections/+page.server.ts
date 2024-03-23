@@ -10,7 +10,7 @@ import { loginRedirect } from '$lib/utils/redirects';
 import { collectionCreate } from '$lib/db/queries/collections';
 
 export const load = (async (event) => {
-	const session = await event.locals.auth.validate();
+	const session = event.locals.session;
 	if (!session) {
 		throw loginRedirect(event);
 	}

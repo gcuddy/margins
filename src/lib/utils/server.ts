@@ -49,13 +49,12 @@ export async function queryctx<T extends z.ZodTypeAny>(
 	const _authed = typeof schemaOrAuthed === 'boolean' ? schemaOrAuthed : authed;
 	if (!userId && _authed !== false) {
 		console.time(`[auth] validating session`);
-		const session = await locals.auth.validate();
 		console.timeEnd(`[auth] validating session`);
-		if (!session && _authed !== 'optional') {
+		if (!locals.user && _authed !== 'optional') {
 			error(401);
-		} else if (session) {
-			userId = session.user.userId;
-			user = session.user;
+		} else if (locals.user) {
+			userId = locals.user.userId;
+			user = locals.user;
 		}
 	}
 	if (!schema) {
@@ -122,12 +121,12 @@ export async function mutationctx<TSchema extends z.ZodTypeAny>(
 	const { input } = data;
 	if (!userId) {
 		try {
-			const session = await locals.auth.validate();
+			const session = locals.session;
 			if (!session) {
 				error(401);
 			}
-			userId = session.user.userId;
-		} catch (e) {
+			userId = session.userId;
+		} catch {
 			error(401);
 		}
 	}

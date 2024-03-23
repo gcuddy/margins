@@ -5,7 +5,7 @@ import { jsonObjectFrom } from 'kysely/helpers/mysql';
 import { entrySelect } from '$lib/db/selects';
 export async function load(event) {
 	// TODO: should this show all activity for all users, or just the current user?
-	const session = await event.locals.auth.validate();
+	const session = event.locals.session;
 
 	if (!session) {
 		redirect(303, `/${event.params.type}/${event.params.id}/`);

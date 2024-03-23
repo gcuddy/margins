@@ -9,7 +9,7 @@ import { superValidate } from 'sveltekit-superforms/server';
 
 export const load = async (event) => {
 	const { locals, params } = event;
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	if (!session) throw loginRedirect(event);
 	const view = await db
 		.selectFrom('SmartList as v')

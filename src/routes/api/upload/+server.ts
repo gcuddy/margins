@@ -17,7 +17,7 @@ export const config: Config = {
 };
 
 export const POST: RequestHandler = async ({ locals, request, url }) => {
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	if (!session) {
 		error(401, {
         			message: 'Not logged in',

@@ -7,7 +7,7 @@ export const load = async ({ params, depends, locals }) => {
 		const pid = +id.slice(1);
 		const [podcast, session] = await Promise.all([
 			pindex.podcastById(pid).then((p) => p.feed),
-			locals.auth.validate(),
+			locals.session,
 		]);
 
 		depends('podcast');

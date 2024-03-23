@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({ fetch, locals, request, url }) => {
 	}
 	api.searchParams.set('redirect_uri', PUBLIC_SPOTIFY_REDIRECT_URI);
 
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	if (!session) {
 		error(401, 'Unauthorized');
 	}

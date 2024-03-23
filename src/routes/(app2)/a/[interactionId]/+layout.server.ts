@@ -40,7 +40,7 @@ export async function load(event) {
 		.executeTakeFirstOrThrow();
 
 	if (interaction.private) {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session || session.user.userId !== interaction.user_id) {
 			// throw forbidden error
 			throw loginRedirect(event);

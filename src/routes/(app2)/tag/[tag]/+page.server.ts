@@ -9,7 +9,7 @@ import { redirect } from 'sveltekit-flash-message/server';
 
 export async function load(event) {
 	const { locals, params } = event;
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	const { tag } = params;
 
 	if (!session) {
@@ -35,7 +35,7 @@ export async function load(event) {
 export const actions = {
 	delete: async (event) => {
 		// delete tag...
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -56,7 +56,7 @@ export const actions = {
 		// TODO: add message
 	},
 	pin: async ({ locals, request }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}

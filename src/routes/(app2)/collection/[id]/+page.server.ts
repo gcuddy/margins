@@ -20,7 +20,7 @@ const collectionSchema = z.object({
 
 export const load = (async (event) => {
 	const { depends, locals, params } = event;
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	depends('collection');
 	const collection = await db
 		.selectFrom('Collection as c')
@@ -126,7 +126,7 @@ export const load = (async (event) => {
 export const actions: Actions = {
 	add_section: async ({ locals, params }) => {
 		// todo
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -143,7 +143,7 @@ export const actions: Actions = {
 			.execute();
 	},
 	delete: async ({ locals, params }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}
@@ -175,7 +175,7 @@ export const actions: Actions = {
 		},
 	),
 	pin: async ({ locals, params, request }) => {
-		const session = await locals.auth.validate();
+		const session = locals.session;
 		if (!session) {
 			return fail(401);
 		}

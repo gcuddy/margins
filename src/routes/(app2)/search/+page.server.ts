@@ -88,7 +88,7 @@ export const load = (async (e) => {
 	console.log({ e });
 	const type = e.url.searchParams.get('type');
 
-	const session = await e.locals.auth.validate();
+	const session = await e.locals.session;
 	if (!session) throw loginRedirect(e);
 	if (!type) {
 		redirect(307, `${e.url.pathname}?type=my`);

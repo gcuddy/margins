@@ -24,11 +24,12 @@ const query_store_cache_lookup = new Map<string, any>();
 
 type QueryKeys = keyof Queries;
 
-export type QueryInput<TKey extends QueryKeys> = Parameters<
-	Queries[TKey]['fn']
->[0]['input'] extends IsAny<Parameters<Queries[TKey]['fn']>[0]['input']>
-	? undefined
-	: Parameters<Queries[TKey]['fn']>[0]['input'];
+export type QueryInput<TKey extends QueryKeys> =
+	Parameters<Queries[TKey]['fn']>[0]['input'] extends IsAny<
+		Parameters<Queries[TKey]['fn']>[0]['input']
+	>
+		? undefined
+		: Parameters<Queries[TKey]['fn']>[0]['input'];
 export type QueryOutput<TKey extends QueryKeys> = Awaited<
 	ReturnType<Queries[TKey]['fn']>
 >;
@@ -195,11 +196,12 @@ export function createQueryOption<
 	};
 }
 
-type Params<T extends keyof Queries> = Parameters<
-	Queries[T]['fn']
->[0]['input'] extends IsAny<Parameters<Queries[T]['fn']>[0]['input']>
-	? undefined
-	: Parameters<Queries[T]['fn']>[0]['input'];
+type Params<T extends keyof Queries> =
+	Parameters<Queries[T]['fn']>[0]['input'] extends IsAny<
+		Parameters<Queries[T]['fn']>[0]['input']
+	>
+		? undefined
+		: Parameters<Queries[T]['fn']>[0]['input'];
 
 export function queryOpts<T extends keyof Queries>(
 	init: QueryInit,

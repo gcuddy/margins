@@ -148,7 +148,7 @@ export const actions: Actions = {
 		},
 	),
 	logout: async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) return fail(401);
 		await auth.invalidateSession(session.sessionId); // invalidate session
 		event.locals.auth.setSession(null); // remove cookie

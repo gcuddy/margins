@@ -11,7 +11,7 @@ import { nanoid } from 'nanoid';
 import type { Actions } from './$types';
 
 export async function load(e) {
-	const session = await e.locals.auth.validate();
+	const session = await e.locals.session;
 	if (!session) throw loginRedirect(e);
 
 	return {
@@ -44,7 +44,7 @@ export const actions: Actions = {
 		};
 	},
 	add_file: async (event) => {
-		const session = await event.locals.auth.validate();
+		const session = event.locals.session;
 		if (!session) {
 			return fail(401, {
 				message: 'Not logged in',

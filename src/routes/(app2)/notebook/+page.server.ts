@@ -7,7 +7,7 @@ import { loginRedirect } from '$lib/utils/redirects';
 
 export const load = (async (event) => {
 	const { locals } = event;
-	const session = await locals.auth.validate();
+	const session = locals.session;
 	if (!session) throw loginRedirect(event);
 
 	return {
