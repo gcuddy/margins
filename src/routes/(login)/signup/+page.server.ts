@@ -57,6 +57,7 @@ export const actions: Actions = {
 						email,
 						id: userId,
 						updatedAt: new Date(),
+						email_verified: 0,
 					})
 					.execute();
 
@@ -79,15 +80,16 @@ export const actions: Actions = {
 				// 	.execute();
 			});
 
+			// Should this happen in transaction?
+			const token = await generateEmailVerificationToken(userId, email);
+			await sendEmailVerificationLink(email, token);
+
 			const session = await auth.createSession(userId, {});
 			const sessionCookie = auth.createSessionCookie(session.id);
 			event.cookies.set(sessionCookie.name, sessionCookie.value, {
 				path: '.',
 				...sessionCookie.attributes,
 			});
-
-			const token = await generateEmailVerificationToken(userId);
-			await sendEmailVerificationLink(email, token, event.url);
 		} catch (e) {
 			console.log({ e });
 			return message(

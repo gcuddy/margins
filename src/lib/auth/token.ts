@@ -1,34 +1,31 @@
 // token.ts
-import { generateRandomString, isWithinExpiration } from 'lucia/utils';
 import { db } from '$lib/db';
+import { TimeSpan, createDate } from 'oslo';
+import { generateRandomString, alphabet } from 'oslo/crypto';
+
+// TODO: add rate limiting via upstash rate limit
 
 const EXPIRES_IN = 1000 * 60 * 60 * 2; // 2 hours
 
-export const generateEmailVerificationToken = async (userId: string) => {
-	const storedUserTokens = await db
-		.selectFrom('EmailVerificationToken')
+export let generateEmailVerificationToken = async (
+	userId: string,
+	email: string,
+): Promise<string> => {
+	await db
+		.deleteFrom('EmailVerificationToken')
 		.where('user_id', '=', userId)
-		.selectAll()
 		.execute();
-	if (storedUserTokens.length > 0) {
-		const reusableStoredToken = storedUserTokens.find((token) => {
-			// check if expiration is within 1 hour
-			// and reuse the token if true
-			return isWithinExpiration(Number(token.expires) - EXPIRES_IN / 2);
-		});
-		if (reusableStoredToken) return reusableStoredToken.id;
-	}
-	const token = generateRandomString(63);
+	const code = generateRandomString(8, alphabet('0-9'));
 	await db
 		.insertInto('EmailVerificationToken')
 		.values({
-			id: token,
-			expires: new Date().getTime() + EXPIRES_IN,
 			user_id: userId,
+			email,
+			code,
+			expires: createDate(new TimeSpan(15, 'm')), // 15 minutes
 		})
 		.execute();
-
-	return token;
+	return code;
 };
 
 export const validateEmailVerificationToken = async (token: string) => {

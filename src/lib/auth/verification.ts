@@ -1,17 +1,15 @@
-import { resend, sendEmail } from '$lib/email';
+import { resend } from '$lib/email';
 
 export const sendEmailVerificationLink = async (
 	email: string,
 	token: string,
-	_url: URL,
 ) => {
-	// TODO: replace this with real link
-	const url = `${_url.origin}/email-verification/${token}`;
+	// TODO: add url based on env
 	await resend.emails.send({
 		from: 'Margins <onboarding@info.margins.gg>',
 		to: email,
 		subject: 'Verify your email',
-		html: `<p>Click <a href="${url}">here</a> to verify your email for Margins.</p>`,
+		html: `<p>Your email verfication token is: <code>${token}</code>. Click <a href="">here</a> to verify your email.</p>`,
 	});
 };
 
@@ -22,7 +20,7 @@ export const sendPasswordResetLink = async (
 ) => {
 	const url = `${_url.origin}/password-reset/${token}`;
 
-	return await sendEmail({
+	return await resend.emails.send({
 		from: 'Margins <onboarding@info.margins.gg>',
 		to: email,
 		subject: 'Reset your password',

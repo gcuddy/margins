@@ -219,8 +219,10 @@ export type ContextNode = {
     refers_to: string | null;
 };
 export type EmailVerificationToken = {
-    id: string;
-    expires: number;
+    id: Generated<number>;
+    code: string;
+    email: string;
+    expires: Timestamp;
     user_id: string;
 };
 export type Entry = {

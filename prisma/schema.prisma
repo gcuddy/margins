@@ -805,7 +805,7 @@ model SmartList {
 }
 
 model Password {
-  id              String  @id @unique
+  id              String  @id
   hashed_password String
   user_id         String
 
@@ -824,8 +824,10 @@ model OAuthAccount {
 }
 
 model EmailVerificationToken {
-  id      String @id @unique
-  expires BigInt
+  id      Int    @id @default(autoincrement())
+  code    String
+  email   String
+  expires DateTime
   user_id String
   user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
