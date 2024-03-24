@@ -1,0 +1,16 @@
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+.vercel
+/test-results/
+/playwright-report/
+/playwright/.cache/
+.npmrc
+yarn.lock
+tracing_output/
+.logbook
