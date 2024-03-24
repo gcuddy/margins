@@ -17,8 +17,10 @@
 		"lint:report": "eslint . --format json --output-file ../../lint-results/ui.json"
 	},
 	"dependencies": {
+		"@margins/lib": "*",
 		"@melt-ui/svelte": "^0.76.2",
-		"bits-ui": "^0.20.0"
+		"bits-ui": "^0.20.0",
+		"tailwind-variants": "^0.2.1"
 	},
 	"devDependencies": {
 		"@margins/config": "workspace:*",
