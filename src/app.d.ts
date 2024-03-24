@@ -4,6 +4,10 @@
 
 declare global {
 	namespace App {
+		namespace Superforms {
+			type Message = import('$lib/types/forms').Message;
+		}
+
 		interface Locals {
 			user: import('lucia').User | null;
 			session: import('lucia').Session | null;
@@ -53,20 +57,6 @@ declare global {
 
 			flash?: import('$lib/types/forms').Message;
 		}
-	}
-}
-
-/// <reference types="lucia" />
-declare global {
-	namespace Lucia {
-		type Auth = import('$lib/server/lucia').Auth;
-		type DatabaseUserAttributes = {
-			username: string;
-			email: string;
-			avatar?: string | null;
-			email_verified?: boolean;
-		};
-		type DatabaseSessionAttributes = object;
 	}
 }
 

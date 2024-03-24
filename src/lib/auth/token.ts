@@ -2,6 +2,7 @@
 import { db } from '$lib/db';
 import { TimeSpan, createDate } from 'oslo';
 import { generateRandomString, alphabet } from 'oslo/crypto';
+import { VERIFICATION_CODE_LENGTH } from './constants';
 
 // TODO: add rate limiting via upstash rate limit
 
@@ -15,7 +16,7 @@ export let generateEmailVerificationToken = async (
 		.deleteFrom('EmailVerificationToken')
 		.where('user_id', '=', userId)
 		.execute();
-	const code = generateRandomString(8, alphabet('0-9'));
+	const code = generateRandomString(VERIFICATION_CODE_LENGTH, alphabet('0-9'));
 	await db
 		.insertInto('EmailVerificationToken')
 		.values({

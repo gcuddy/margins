@@ -4,34 +4,57 @@ import { db } from '$lib/db';
 import type { User } from 'lucia';
 import { isWithinExpirationDate } from 'oslo';
 import { auth } from '$lib/server/lucia';
+import { message, superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
+import { tokenSchema } from './schema';
+import { generateEmailVerificationToken } from '$lib/auth/token';
+import { sendEmailVerificationLink } from '$lib/auth/verification';
 
-export const load = (async ({ locals }) => {
+export const load = (async (event) => {
+	const { locals } = event;
 	if (!locals.user) {
 		redirect(302, '/login');
 	}
 	if (locals.user.emailVerified) {
 		redirect(302, '/profile');
 	}
+
+	const form = await superValidate(event, zod(tokenSchema));
+
+	return {
+		form,
+	};
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
-	default: async ({ locals, request, cookies }) => {
+	verify: async (event) => {
+		const { locals, cookies } = event;
 		if (!locals.user) {
-			return fail(400);
+			return fail(401);
 		}
 
-		const formData = await request.formData();
-
-		const code = formData.get('code');
-
-		if (typeof code !== 'string') {
-			return fail(400);
+		const form = await superValidate(event, zod(tokenSchema));
+		if (!form.valid) {
+			return fail(400, { form });
 		}
+		const { code } = form.data;
 
-		const validCode = await verifyEmailCode({ code, user: locals.user });
+		const validCode = await verifyEmailCode({
+			code: code.join(''),
+			user: locals.user,
+		});
 
 		if (!validCode) {
-			return fail(400);
+			return message(
+				form,
+				{
+					text: 'Invalid code',
+					status: 'error',
+				},
+				{
+					status: 403,
+				},
+			);
 		}
 
 		await auth.invalidateUserSessions(locals.user.id);
@@ -52,6 +75,26 @@ export const actions: Actions = {
 		});
 
 		redirect(302, '/profile');
+	},
+	request: async (event) => {
+		// TODO: rate limit
+		if (!event.locals.user) {
+			return fail(401);
+		}
+
+		if (event.locals.user.emailVerified) {
+			return fail(403);
+		}
+
+		const token = await generateEmailVerificationToken(
+			event.locals.user.id,
+			event.locals.user.email,
+		);
+		console.log({ token });
+		await sendEmailVerificationLink(event.locals.user.email, token);
+		return {
+			message: 'Email verification link sent. Check your email.',
+		};
 	},
 };
 
