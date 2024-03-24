@@ -1,0 +1,40 @@
+{
+	"name": "@margins/config",
+	"sideEffects": false,
+	"private": true,
+	"version": "0.0.0",
+	"license": "MIT",
+	"files": [
+		"eslint-preset.js",
+		"prettier-preset.js"
+	],
+	"dependencies": {
+		"@todesktop/tailwind-variants": "^1.0.0",
+		"eslint-config-next": "^13.2.1",
+		"eslint-config-prettier": "^8.6.0",
+		"eslint-config-turbo": "^0.0.7",
+		"eslint-plugin-playwright": "^0.12.0",
+		"eslint-plugin-prettier": "^4.2.1"
+	},
+	"devDependencies": {
+		"@savvywombat/tailwindcss-grid-areas": "^3.0.0",
+		"@tailwindcss/forms": "^0.5.2",
+		"@tailwindcss/line-clamp": "^0.4.0",
+		"@tailwindcss/typography": "^0.5.4",
+		"@tailwindcss/container-queries": "^0.1.1",
+		"@typescript-eslint/eslint-plugin": "^6.9.1",
+		"@typescript-eslint/parser": "^6.9.1",
+		"eslint": "^8.53.0",
+		"eslint-plugin-import": "^2.29.0",
+		"eslint-plugin-svelte": "^2.34.1",
+		"eslint-plugin-unicorn": "^48.0.1",
+		"prettier": "^3.0.3",
+		"prettier-plugin-svelte": "latest",
+		"prettier-plugin-tailwindcss": "latest",
+		"tailwind-gradient-mask-image": "^1.1.0",
+		"tailwind-scrollbar-hide": "^1.1.7",
+		"tailwindcss": "0.0.0-insiders.44fb67b",
+		"tailwindcss-animate": "^1.0.7",
+		"typescript": "^5.2.2"
+	}
+}
