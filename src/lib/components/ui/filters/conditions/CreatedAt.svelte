@@ -7,7 +7,7 @@
 	import { Select, SelectContent, SelectGroup, SelectItem } from '$components/ui/select';
 	import type { CreatedAtFilter } from '$lib/schemas/library';
 	import { formatDate } from '$lib/utils/date';
-	import { Select as SelectPrimitive } from '@huntabyte/primitives';
+	import { Select as SelectPrimitive } from 'bits-ui';
 	import  { Badge, badgeVariants } from '$components/ui/badge';
 
 	export let filter: CreatedAtFilter;

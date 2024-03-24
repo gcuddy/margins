@@ -7,7 +7,7 @@ import { auth } from '$lib/server/lucia';
 import { message, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { tokenSchema } from './schema';
-import { generateEmailVerificationToken } from '$lib/auth/token';
+import { generateEmailVerificationToken } from '$lib/auth/token.server';
 import { sendEmailVerificationLink } from '$lib/auth/verification';
 
 export const load = (async (event) => {

@@ -3,7 +3,7 @@ import { emailSchema } from './schema';
 import { fail } from '@sveltejs/kit';
 
 import { db } from '$lib/db';
-import { generatePasswordResetToken } from '$lib/auth/token';
+import { generatePasswordResetToken } from '$lib/auth/token.server';
 import { sendPasswordResetLink } from '$lib/auth/verification';
 import type { Message } from '$lib/types/forms';
 
@@ -45,7 +45,7 @@ export const actions = {
 				status: 'success',
 				text: 'Your password reset link has been sent to your email',
 			});
-		} catch (e) {
+		} catch {
 			return message(
 				form,
 				{

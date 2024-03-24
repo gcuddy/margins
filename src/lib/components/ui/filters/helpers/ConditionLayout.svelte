@@ -7,7 +7,7 @@
 	export let name: string;
 	const container = getContext('filterContainer') as Writable<HTMLDivElement | null>;
 	import { Select, SelectContent, SelectGroup, SelectItem } from '$components/ui/select';
-	import { Select as SelectPrimitive } from '@huntabyte/primitives';
+	import { Select as SelectPrimitive } from 'bits-ui';
 	import { melt } from '@melt-ui/svelte';
 
 	export let choices: {

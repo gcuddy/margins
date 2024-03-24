@@ -95,3 +95,8 @@ export const ViewType = {
     CustomView: "CustomView"
 } as const;
 export type ViewType = (typeof ViewType)[keyof typeof ViewType];
+export const FeatureType = {
+    RELEASE: "RELEASE",
+    EXPERIMENT: "EXPERIMENT"
+} as const;
+export type FeatureType = (typeof FeatureType)[keyof typeof FeatureType];

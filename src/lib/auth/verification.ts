@@ -4,6 +4,12 @@ export const sendEmailVerificationLink = async (
 	email: string,
 	token: string,
 ) => {
+	if (!process.env.EMAIL_VERIFICATION) {
+		console.warn(
+			'EMAIL_VERIFICATION is not set, skipping email verification link',
+		);
+		return;
+	}
 	// TODO: add url based on env
 	await resend.emails.send({
 		from: 'Margins <onboarding@info.margins.gg>',

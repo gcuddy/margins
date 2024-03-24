@@ -1,6 +1,3 @@
-import { queryKeys } from '$lib/queries/keys';
-import { loadQuery } from '$lib/queries/utils';
-import { createQuery } from '@tanstack/svelte-query';
 import type { PageLoad } from './$types';
 
 export const load = (async (e) => {

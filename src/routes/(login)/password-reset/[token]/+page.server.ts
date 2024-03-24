@@ -1,7 +1,7 @@
 import {
 	isValidPasswordResetToken,
 	validatePasswordResetToken,
-} from '$lib/auth/token';
+} from '$lib/auth/token.server';
 import { Message, createMessage } from '$lib/types/forms';
 import { redirect } from 'sveltekit-flash-message/server';
 import { message, superValidate } from 'sveltekit-superforms/server';

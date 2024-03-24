@@ -1,4 +1,5 @@
-import vercel from '@sveltejs/adapter-vercel';
+// import vercel from '@sveltejs/adapter-vercel';
+import adapter from '@sveltejs/adapter-auto';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { preprocessMeltUI } from '@melt-ui/pp';
 import sequence from 'svelte-sequential-preprocessor';
@@ -9,11 +10,11 @@ const config = {
 	// for more information about preprocessors
 	preprocess: sequence([vitePreprocess(), preprocessMeltUI()]),
 	kit: {
-		adapter: vercel({
-			runtime: 'edge',
+		adapter: adapter({
+			// runtime: 'edge',
 		}),
 		alias: {
-			$components: 'src/lib/components',
+			$components: 'src/lib/compo',
 			'$components/*': 'src/lib/components/*',
 		},
 		serviceWorker: {

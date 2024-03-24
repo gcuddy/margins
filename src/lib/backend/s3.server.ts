@@ -7,6 +7,8 @@ import {
 	S3Client,
 } from '@aws-sdk/client-s3';
 
+// TODO: move to cloudflare workers and do this from there
+
 export const s3 = new S3Client({
 	endpoint: `https://${CLOUDFLARE_ID}.r2.cloudflarestorage.com`,
 	region: 'auto',

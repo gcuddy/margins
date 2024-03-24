@@ -1,15 +1,15 @@
 import { Kysely, sql, type RawBuilder, type Expression } from 'kysely';
 import { PlanetScaleDialect } from 'kysely-planetscale';
 
-import { DATABASE_PASSWORD, DATABASE_USERNAME } from '$env/static/private';
-
-import { dev } from '$app/environment';
+// // import { DATABASE_PASSWORD, DATABASE_USERNAME } from '$env/static/private';
+//
+// import { dev } from '$app/environment';
 import type { DB } from './prisma/kysely/types';
 
 export const config = {
 	host: 'aws.connect.psdb.cloud',
-	password: DATABASE_PASSWORD,
-	username: DATABASE_USERNAME,
+	password: process.env.DATABASE_PASSWORD,
+	username: process.env.DATABASE_USERNAME,
 };
 
 export const db = new Kysely<DB>({
@@ -18,7 +18,7 @@ export const db = new Kysely<DB>({
 		useSharedConnection: true,
 	}),
 	log: (event) => {
-		if (!dev) {
+		if (process.env.NODE_ENV !== 'development') {
 			return;
 		}
 		if (event.level === 'query') {

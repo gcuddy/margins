@@ -4,7 +4,7 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   : ColumnType<T, T | undefined, T>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-import type { EntryFilterType, BookGenre, Status, Color, RelationType, AnnotationType, DocumentType, CollectionItemType, FavoriteType, Entry_location, State_type, ViewType } from "./enums";
+import type { EntryFilterType, BookGenre, Status, Color, RelationType, AnnotationType, DocumentType, CollectionItemType, FavoriteType, Entry_location, State_type, ViewType, FeatureType } from "./enums";
 
 export type Annotation = {
     id: string;
@@ -380,6 +380,17 @@ export type Favorite = {
     type: Generated<FavoriteType>;
     collectionId: number | null;
 };
+export type Feature = {
+    slug: string;
+    enabled: Generated<number>;
+    description: string | null;
+    type: Generated<FeatureType | null>;
+    stale: Generated<number | null>;
+    lastUsedAt: Timestamp | null;
+    createdAt: Generated<Timestamp | null>;
+    updatedAt: Generated<Timestamp | null>;
+    updatedBy: number | null;
+};
 export type Feed = {
     id: Generated<number>;
     feedUrl: string | null;
@@ -698,6 +709,7 @@ export type DB = {
     EntryMedia: EntryMedia;
     EntryTag: EntryTag;
     Favorite: Favorite;
+    Feature: Feature;
     Feed: Feed;
     Image: Image;
     Integration: Integration;

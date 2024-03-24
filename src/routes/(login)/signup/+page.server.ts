@@ -1,6 +1,6 @@
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 
-import { generateEmailVerificationToken } from '$lib/auth/token';
+import { generateEmailVerificationToken } from '$lib/auth/token.server';
 import { sendEmailVerificationLink } from '$lib/auth/verification';
 import { db } from '$lib/db';
 import { auth } from '$lib/server/lucia';

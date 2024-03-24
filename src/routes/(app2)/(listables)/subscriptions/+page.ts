@@ -1,9 +1,4 @@
-import { createQuery } from '@tanstack/svelte-query';
-
-import { queryKeys } from '$lib/queries/keys';
-import { query } from '$lib/queries/query';
 import { queryFactory } from '$lib/queries/querykeys';
-import { loadQuery } from '$lib/queries/utils';
 
 import type { PageLoad } from './$types';
 

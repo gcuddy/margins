@@ -89,7 +89,6 @@
 		themes,
 		updateTheme,
 	} from '$lib/features/settings/themes';
-	import { queryKeys } from '$lib/queries/keys';
 	import { checkedEntryIds } from '$components/entries/multi-select';
 	import { Badge } from '$components/ui/badge';
 	import { createSetTagsMutation } from '$lib/queries/mutations';

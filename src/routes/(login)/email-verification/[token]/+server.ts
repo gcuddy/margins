@@ -1,4 +1,4 @@
-import { validateEmailVerificationToken } from '$lib/auth/token';
+import { validateEmailVerificationToken } from '$lib/auth/token.server';
 import { auth } from '$lib/server/lucia';
 
 // TODO: fix all this

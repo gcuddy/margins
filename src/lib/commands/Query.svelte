@@ -3,18 +3,12 @@
 		createQuery,
 		type CreateQueryOptions,
 		type QueryKey,
-		useQueryClient	} from '@tanstack/svelte-query';
-	import { Box } from 'lucide-svelte';
+		useQueryClient,
+	} from '@tanstack/svelte-query';
 	import { type ComponentType, createEventDispatcher } from 'svelte';
-	import { writable } from 'svelte/store';
-
-	import { page } from '$app/stores';
 	import CommandLoading from '$lib/components/ui/cmdk/Command.Loading.svelte';
 	import { CommandEmpty, CommandGroup } from '$lib/components/ui/command';
 	import CommandItem from '$lib/components/ui/command/CommandItem.svelte';
-	import type { FieldPath } from '$lib/queries/keys';
-	import type { QueryOutput } from '$lib/queries/query';
-
 	const queryClient = useQueryClient();
 
 	type TOutput = $$Generic<Array<Object>>;

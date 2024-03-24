@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
-	import type { OnChangeFn } from '@huntabyte/primitives/dist/internal';
 
 	import { badgeVariants } from '$components/ui/badge';
 	import {
@@ -11,7 +10,7 @@
 		SelectValue,
 	} from '$components/ui/select';
 	import { cn } from '$lib/utils';
-	import { Select as SelectPrimitive } from '@huntabyte/primitives';
+	import { Select as SelectPrimitive } from 'bits-ui';
 	import { type SelectOption, melt } from '@melt-ui/svelte';
 	import { ctx } from '../ctx';
 
@@ -23,6 +22,7 @@
 	export let selected: SelectOption<T> | undefined = undefined;
 
 	export let choices: Array<SelectOption<T> & { icon?: ComponentType }> = [];
+	type OnChangeFn<T> = (val: T) => void;
 
 	export let onSelectedChange: OnChangeFn<SelectOption<T>> | undefined =
 		undefined;
@@ -46,7 +46,7 @@
 				badgeVariants({
 					variant: 'outline',
 				}),
-				'rounded-none cursor-default hocus:bg-secondary focus:ring-0',
+				'cursor-default rounded-none focus:ring-0 hocus:bg-secondary',
 			)}
 		>
 			<slot>
@@ -60,7 +60,7 @@
 			{#each choices as { value, label, icon }}
 				<SelectItem {label} {value}>
 					{#if icon}
-						<svelte:component this={icon} class="h-4 w-4 mr-2" />
+						<svelte:component this={icon} class="mr-2 h-4 w-4" />
 					{/if}
 					{label}</SelectItem
 				>
