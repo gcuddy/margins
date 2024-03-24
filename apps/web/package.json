@@ -86,7 +86,7 @@
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.540.0",
 		"@lucia-auth/adapter-mysql": "^3.0.2",
-		"@melt-ui/svelte": "latest",
+		"@melt-ui/svelte": "^0.76.2",
 		"@neodrag/svelte": "^2.0.3",
 		"@planetscale/database": "^1.16.0",
 		"@prisma/client": "^5.11.0",
