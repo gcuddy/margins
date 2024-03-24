@@ -1,0 +1,23 @@
+{
+	"name": "@margins/lib",
+	"private": true,
+	"sideEffects": false,
+	"version": "0.0.0",
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"license": "MIT",
+	"scripts": {
+		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+		"lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+		"lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
+	},
+	"dependencies": {
+		"@margins/config": "workspace:*",
+		"clsx": "^2.1.0",
+		"tailwind-merge": "^1.13.2"
+	},
+	"devDependencies": {
+		"@margins/tsconfig": "workspace:*",
+		"typescript": "^5.2.2"
+	}
+}
