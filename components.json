@@ -8,6 +8,6 @@
 	},
 	"aliases": {
 		"components": "$lib/components",
-		"utils": "$lib/utils"
+		"utils": "@margins/lib"
 	}
 }
