@@ -14,6 +14,9 @@ const config: StorybookConfig = {
 		'../src/**/*.mdx',
 		'../src/**/*.stories.@(js|jsx|mjs|ts|tsx|svelte)',
 		'../../../packages/ui/components/**/*.stories.@(js|jsx|ts|tsx|svelte)',
+		'../../../packages/ui/components/**/*.stories.@(js|jsx|ts|tsx|svelte)',
+		'../../../packages/ui/components/**/*.stories.mdx', // legacy SB6 stories
+		'../../../packages/ui/**/*.docs.mdx',
 	],
 	addons: [
 		getAbsolutePath('@storybook/addon-links'),
@@ -21,6 +24,7 @@ const config: StorybookConfig = {
 		getAbsolutePath('@chromatic-com/storybook'),
 		getAbsolutePath('@storybook/addon-interactions'),
 		getAbsolutePath('@storybook/addon-themes'),
+		'@storybook/addon-docs',
 		'@storybook/addon-svelte-csf',
 	],
 	framework: {
