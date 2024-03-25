@@ -1,6 +1,7 @@
 <script lang="ts" context="module">
 	import { Button, type Props } from '.';
 	import type { Meta } from '@storybook/svelte';
+
 	export const meta: Meta = {
 		title: 'Button',
 		component: Button,
@@ -13,6 +14,14 @@
 			variant: {
 				control: 'inline-radio',
 				options: ['default', 'outline', 'secondary', 'ghost', 'link'],
+			},
+		},
+		parameters: {
+			docs: {
+				description: {
+					component:
+						'Buttons are controls that let users click or tap on elements. They are used to perform actions, such as submitting a form, opening a dialog, or playing a video. They can also be used to navigate between pages.',
+				},
 			},
 		},
 	};
@@ -40,9 +49,20 @@
 	</Button>
 </Template>
 
-<Story name="Default" args={defaultProps} />
-<Story name="Outline" args={outlineProps} />
+<Story
+	name="Primary"
+	parameters={{
+		docs: {
+			description: {
+				story:
+					' In general, there should only be one Primary button per app context.',
+			},
+		},
+	}}
+	args={defaultProps}
+/>
 <Story name="Secondary" args={secondaryProps} />
+<Story name="Outline" args={outlineProps} />
 <Story name="Ghost" args={ghostProps} />
 <Story name="Link" args={linkProps} />
 
