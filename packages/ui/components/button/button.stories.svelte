@@ -79,3 +79,9 @@
 		Login with Email Button</Button
 	>
 </Story>
+
+<Story name="Icon">
+	<Button size="icon" variant="secondary">
+		<Mail class="h-4 w-4" /></Button
+	>
+</Story>
