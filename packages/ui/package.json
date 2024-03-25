@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "type-check": "tsc --pretty --noEmit",
     "type-check:ci": "tsc-absolute --pretty --noEmit",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint:fix": "eslint . --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/ui.json"
   },
@@ -30,6 +31,7 @@
     "@margins/config": "workspace:*",
     "@margins/tsconfig": "workspace:*",
     "@melt-ui/pp": "^0.1.2",
+    "@testing-library/svelte": "^4.1.0",
     "typescript": "^5.2.2"
   }
 }
