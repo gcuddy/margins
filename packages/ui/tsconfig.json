@@ -5,14 +5,20 @@
 		"checkJs": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"moduleResolution": "node",
+		"jsx": "react",
 		"resolveJsonModule": true,
 		"noUncheckedIndexedAccess": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
-		"strict": true,
-		"noUnusedLocals": true
+		"strict": true
 	},
-	"include": ["test-setup.ts"],
+	"include": [
+		"test-setup.ts",
+		"../../apps/web/next-env.d.ts",
+		"../types/*.d.ts",
+		"../types/next-auth.d.ts",
+		"**/*.ts",
+		"**/*.tsx"
+	],
 	"exclude": ["dist", "build", "node_modules"]
 }

@@ -6,7 +6,9 @@
     "apps/*",
     "packages/*"
   ],
-  "scripts": {},
+  "scripts": {
+    "test": "vitest run"
+  },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
     "happy-dom": "^14.3.6",
