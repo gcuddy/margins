@@ -21,11 +21,15 @@
 	{...$$restProps}
 >
 	{#if withDot}
-		<Dot class={cn('h-3 w-3 stroke-[3px]', iconClass)} />
+		<Dot
+			data-testid="badge-dot"
+			class={cn('h-3 w-3 stroke-[3px]', iconClass)}
+		/>
 	{/if}
 	{#if startIcon}
 		<svelte:component
 			this={startIcon}
+			data-testid="badge-icon"
 			class={cn('h-3 w-3 stroke-[3px]', iconClass)}
 		/>
 	{/if}
