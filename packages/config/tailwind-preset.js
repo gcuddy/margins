@@ -4,7 +4,13 @@ const plugin = require('tailwindcss/plugin');
 
 /** @type {import('tailwindcss').Config} */
 const config = {
-	content: ['./src/**/*.{html,js,svelte,ts}'],
+	content: [
+		'./src/**/*.{html,js,svelte,ts}',
+		'./pages/**/*.{html,js,svelte,ts}',
+		'./modules/**/*.{html,js,svelte,ts}',
+		'./components/**/*.{html,js,svelte,ts}',
+		'../../packages/ui/**/*.{html,js,svelte,ts}',
+	],
 	darkMode: 'class',
 	theme: {
 		container: {
