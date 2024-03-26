@@ -23,7 +23,7 @@
 			},
 		},
 		tags: ['autodocs'],
-		title: 'Button',
+		title: 'UI/Button',
 	};
 </script>
 
@@ -84,10 +84,14 @@
 	>
 </Story>
 
-<Story name="Icon" args={{
-    size: "icon",
-    variant: "secondary"
-}} let:args>
+<Story
+	name="Icon"
+	args={{
+		size: 'icon',
+		variant: 'secondary',
+	}}
+	let:args
+>
 	<Button {...args}>
 		<SquarePen class="h-4 w-4" /></Button
 	>

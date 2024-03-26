@@ -10,10 +10,12 @@ import Header from './dialog-header.svelte';
 import Overlay from './dialog-overlay.svelte';
 import Content from './dialog-content.svelte';
 import Description from './dialog-description.svelte';
+import Close from './dialog-close.svelte';
 
 export {
 	Root,
 	Title,
+	Close,
 	Portal,
 	Footer,
 	Header,
@@ -31,4 +33,5 @@ export {
 	Overlay as DialogOverlay,
 	Content as DialogContent,
 	Description as DialogDescription,
+	Close as DialogClose,
 };

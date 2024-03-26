@@ -7,6 +7,7 @@ import Plus from 'lucide-svelte/icons/plus';
 const meta = {
 	component: Badge,
 	tags: ['autodocs'],
+	title: 'UI/Badge',
 } satisfies Meta<typeof Badge>;
 
 export default meta;

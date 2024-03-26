@@ -12,7 +12,7 @@
 			},
 		},
 		tags: ['autodocs'],
-		title: 'Card',
+		title: 'UI/Card',
 	};
 </script>
 
@@ -20,7 +20,7 @@
 	import { Story, Template } from '@storybook/addon-svelte-csf';
 	import CardContent from './card-content.svelte';
 
-let defaultProps = {
+	let defaultProps = {
 		description: 'Description',
 		title: 'Title',
 	};

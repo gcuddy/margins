@@ -9,6 +9,7 @@
 </script>
 
 <DialogPrimitive.Title
+	data-testid="dialog-title"
 	class={cn('text-lg font-semibold leading-none tracking-tight', className)}
 	{...$$restProps}
 >
