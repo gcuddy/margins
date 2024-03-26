@@ -29,7 +29,14 @@
 
 <script lang="ts">
 	import { Story, Template } from '@storybook/addon-svelte-csf';
-	import { Loader, Mail } from 'lucide-svelte';
+
+	// @ts-expect-error
+	import Loader from 'lucide-svelte/icons/loader';
+	// @ts-expect-error
+	import Mail from 'lucide-svelte/icons/mail';
+	// @ts-expect-error
+	import SquarePen from 'lucide-svelte/icons/square-pen';
+
 	let count = 0;
 	function handleClick() {
 		count += 1;
@@ -80,8 +87,11 @@
 	>
 </Story>
 
-<Story name="Icon">
-	<Button size="icon" variant="secondary">
-		<Mail class="h-4 w-4" /></Button
+<Story name="Icon" args={{
+    size: "icon",
+    variant: "secondary"
+}} let:args>
+	<Button {...args}>
+		<SquarePen class="h-4 w-4" /></Button
 	>
 </Story>

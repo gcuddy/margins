@@ -7,6 +7,7 @@ import Plus from 'lucide-svelte/icons/plus';
 
 const meta = {
 	component: Badge,
+	tags: ['autodocs'],
 } satisfies Meta<typeof Badge>;
 
 export default meta;
@@ -17,24 +18,29 @@ export const Primary: Story = {
 	name: 'Default',
 	args: {
 		label: 'Test Badge',
-		withDot: false,
+	},
+	argTypes: {
+		variant: {
+			options: ['default', 'outline', 'secondary', 'destructive'],
+			control: { type: 'select' },
+		},
 	},
 };
 
 export const WithIcon: Story = {
 	render: () => ({
 		Component: Badge,
+		props: {
+			startIcon: Plus,
+		},
 	}),
-	args: {
-		startIcon: Plus,
-	},
 };
 
 export const WithDot: Story = {
 	render: () => ({
 		Component: Badge,
+		props: {
+			withDot: true,
+		},
 	}),
-	args: {
-		withDot: true,
-	},
 };
