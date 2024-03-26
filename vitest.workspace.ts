@@ -13,6 +13,11 @@ export default defineWorkspace([
 			include: ['packages/ui/components/**/*.{test,spec}.[jt]s?(x)'],
 			environment: 'happy-dom',
 			setupFiles: ['packages/ui/test-setup.ts'],
+			server: {
+				deps: {
+					inline: ['bits-ui'],
+				},
+			},
 		},
 	},
 ]);
