@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/svelte';
 
 import Badge from './badge.test.svelte';
 
-// @ts-expect-error - todo fix lucide-svelte types
 import Star from 'lucide-svelte/icons/star';
 
 describe('Badge Component', () => {

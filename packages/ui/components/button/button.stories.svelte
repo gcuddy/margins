@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	import { Button, type Props } from '.';
+	import { Button, type Props } from './index.js';
 	import type { Meta } from '@storybook/svelte';
 
 	export const meta: Meta = {
@@ -30,11 +30,8 @@
 <script lang="ts">
 	import { Story, Template } from '@storybook/addon-svelte-csf';
 
-	// @ts-expect-error
 	import Loader from 'lucide-svelte/icons/loader';
-	// @ts-expect-error
 	import Mail from 'lucide-svelte/icons/mail';
-	// @ts-expect-error
 	import SquarePen from 'lucide-svelte/icons/square-pen';
 
 	let count = 0;

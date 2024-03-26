@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/svelte';
 
 import Badge from './badge.test.svelte';
 
-// @ts-expect-error
 import Plus from 'lucide-svelte/icons/plus';
 
 const meta = {

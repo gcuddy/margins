@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Badge } from "."
+    import { Badge } from "./index.js"
     import type { ComponentProps } from "svelte";
     type $$Props = ComponentProps<Badge> & {
         label?: string | undefined;

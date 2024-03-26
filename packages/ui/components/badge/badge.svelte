@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { cn } from '@margins/lib';
-	import { badgeVariants, type Variant } from '.';
+	import { badgeVariants, type Variant } from './index.js';
 	import type { ComponentType } from 'svelte';
 
-	// @ts-expect-error - imports not working right now, have to figure out why
 	import Dot from 'lucide-svelte/icons/dot';
 	let className: string | undefined | null = undefined;
 	export let href: string | undefined = undefined;

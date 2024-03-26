@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	import { Card, CardFooter } from '.';
+	import { Card, CardFooter } from './index.js';
 	import type { Meta } from '@storybook/svelte';
 
 	export const meta: Meta = {
