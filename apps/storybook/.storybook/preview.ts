@@ -1,6 +1,6 @@
 import type { Preview } from '@storybook/svelte';
 import { withThemeByDataAttribute } from '@storybook/addon-themes';
-import '../../web/src/app.postcss';
+import '@margins/ui/styles/style.css';
 
 const preview: Preview = {
 	parameters: {

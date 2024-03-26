@@ -5,7 +5,9 @@
 	"version": "0.0.0",
 	"main": "./index.ts",
 	"exports": {
-		".": "./index.ts"
+		".": "./index.ts",
+		"./styles/colors.css": "./styles/colors.css",
+		"./styles/style.css": "./styles/style.css"
 	},
 	"types": "./index.ts",
 	"type": "module",
