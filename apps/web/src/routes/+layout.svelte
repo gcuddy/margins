@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../app.postcss';
+	import '@margins/ui/styles/style.css';
 	import '$lib/styles/font.css';
 
 	import { Toaster, toast } from 'svelte-sonner';
@@ -11,7 +11,7 @@
 	// import { pwaInfo } from 'virtual:pwa-info';
 
 	// @ts-expect-error this is to fix an issue with BiggInt and Kysely
-	BigInt.prototype.toJSON = function () {
+	BigInt.prototype.toJSON = function() {
 		return this.toString();
 	};
 

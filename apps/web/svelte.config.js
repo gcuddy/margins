@@ -14,7 +14,6 @@ const config = {
 			// runtime: 'edge',
 		}),
 		alias: {
-			$components: 'src/lib/compo',
 			'$components/*': 'src/lib/components/*',
 		},
 		serviceWorker: {
