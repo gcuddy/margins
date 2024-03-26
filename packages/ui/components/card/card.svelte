@@ -6,8 +6,8 @@
 	import CardDescription from './card-description.svelte';
 
 	type $$Props = HTMLAttributes<HTMLDivElement> & {
-		title?: string;
 		description?: string;
+		title?: string;
 	};
 
 	let className: $$Props['class'] = undefined;

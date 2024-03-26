@@ -14,16 +14,16 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
-	name: 'Default',
+	argTypes: {
+		variant: {
+			control: { type: 'select' },
+			options: ['default', 'outline', 'secondary', 'destructive'],
+		},
+	},
 	args: {
 		label: 'Test Badge',
 	},
-	argTypes: {
-		variant: {
-			options: ['default', 'outline', 'secondary', 'destructive'],
-			control: { type: 'select' },
-		},
-	},
+	name: 'Default',
 };
 
 export const WithIcon: Story = {

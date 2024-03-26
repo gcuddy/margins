@@ -12,8 +12,8 @@ describe('Badge Component', () => {
 	});
 	test('href should render link', () => {
 		render(Badge, {
-			label,
 			href: 'https://www.google.com',
+			label,
 		});
 		const badge = screen.getByText(label);
 		expect(badge.tagName).toBe('A');

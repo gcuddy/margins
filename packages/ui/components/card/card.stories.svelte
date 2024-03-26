@@ -3,9 +3,7 @@
 	import type { Meta } from '@storybook/svelte';
 
 	export const meta: Meta = {
-		title: 'Card',
 		component: Card,
-		tags: ['autodocs'],
 		parameters: {
 			docs: {
 				description: {
@@ -13,17 +11,18 @@
 				},
 			},
 		},
+		tags: ['autodocs'],
+		title: 'Card',
 	};
 </script>
 
 <script lang="ts">
 	import { Story, Template } from '@storybook/addon-svelte-csf';
 	import CardContent from './card-content.svelte';
-	import Button from '../button/button.svelte';
 
-	let defaultProps = {
-		title: 'Title',
+let defaultProps = {
 		description: 'Description',
+		title: 'Title',
 	};
 </script>
 

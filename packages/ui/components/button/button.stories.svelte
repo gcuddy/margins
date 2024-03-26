@@ -3,9 +3,6 @@
 	import type { Meta } from '@storybook/svelte';
 
 	export const meta: Meta = {
-		title: 'Button',
-		component: Button,
-		tags: ['autodocs'],
 		argTypes: {
 			size: {
 				control: 'inline-radio',
@@ -16,6 +13,7 @@
 				options: ['default', 'outline', 'secondary', 'ghost', 'link'],
 			},
 		},
+		component: Button,
 		parameters: {
 			docs: {
 				description: {
@@ -24,6 +22,8 @@
 				},
 			},
 		},
+		tags: ['autodocs'],
+		title: 'Button',
 	};
 </script>
 
