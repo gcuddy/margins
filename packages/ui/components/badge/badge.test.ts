@@ -1,4 +1,3 @@
-import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 
 import Badge from './badge.test.svelte';
