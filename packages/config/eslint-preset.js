@@ -1,4 +1,5 @@
 /** @type {import("eslint").Linter.Config} */
+// eslint-disable-next-line no-undef
 module.exports = {
 	extends: [
 		'eslint:recommended',
@@ -8,6 +9,70 @@ module.exports = {
 		'plugin:import/typescript',
 		'plugin:svelte/recommended',
 	],
+	overrides: [
+		{
+			files: ['*.svelte'],
+			parser: 'svelte-eslint-parser',
+			parserOptions: {
+				parser: '@typescript-eslint/parser',
+			},
+			rules: {
+				// these cause issues with svelte rn
+				'@typescript-eslint/no-unsafe-assignment': 0,
+				'@typescript-eslint/no-unsafe-call': 0,
+				'no-console': 1,
+				'no-undef': 0,
+			},
+		},
+		{
+			extends: ['plugin:@typescript-eslint/recommended'],
+			files: ['*.ts', '*.tsx'],
+			overrides: [
+				{
+					files: ['**/e2e/**/*.{tsx,ts}'],
+					rules: {
+						'@typescript-eslint/no-unused-vars': 'off',
+						'no-undef': 'off',
+					},
+				},
+			],
+			parser: '@typescript-eslint/parser',
+			plugins: ['@typescript-eslint'],
+			rules: {
+				'@typescript-eslint/consistent-type-imports': [
+					'error',
+					{
+						disallowTypeAnnotations: false,
+
+						// TODO: enable this once prettier supports it
+						// fixStyle: "inline-type-imports",
+						fixStyle: 'separate-type-imports',
+						prefer: 'type-imports',
+					},
+				],
+			},
+		},
+		{
+			extends: ['plugin:playwright/recommended'],
+			files: ['**/e2e/**/*.{js,jsx}'],
+			rules: {
+				'@typescript-eslint/no-unused-vars': 'off',
+				'no-undef': 'off',
+			},
+		},
+		{
+			extends: ['plugin:vitest/recommended'],
+			files: ['**/*.{test,spec}.[jt]s?(x)'],
+			plugins: ['vitest'],
+		},
+	],
+	parser: '@typescript-eslint/parser',
+	parserOptions: {
+		extraFileExtensions: ['.svelte'],
+		project: ['./apps/*/tsconfig.json', './packages/*/tsconfig.json'],
+		// eslint-disable-next-line no-undef
+		tsconfigRootDir: __dirname, // This is a required setting in `@typescript-eslint/parser` v4.24.0.
+	},
 	plugins: [
 		'@typescript-eslint',
 		'import',
@@ -17,12 +82,6 @@ module.exports = {
 		'unicorn',
 		'unused-imports',
 	],
-	parserOptions: {
-		tsconfigRootDir: __dirname,
-		project: ['./apps/*/tsconfig.json', './packages/*/tsconfig.json'],
-		extraFileExtensions: ['.svelte'], // This is a required setting in `@typescript-eslint/parser` v4.24.0.
-	},
-	parser: '@typescript-eslint/parser',
 	rules: {
 		'@typescript-eslint/ban-ts-comment': [
 			'error',
@@ -38,6 +97,8 @@ module.exports = {
 		'@typescript-eslint/no-dynamic-delete': 0,
 		// For our purposes, don't mind this.
 		'@typescript-eslint/no-explicit-any': 0,
+
+		'@typescript-eslint/no-floating-promises': 0,
 		// '@typescript-eslint/naming-convention': [
 		// 	'error',
 		// 	{
@@ -51,7 +112,6 @@ module.exports = {
 		// ],
 		// these 2 rules cause huge performance issues for us rn
 		'@typescript-eslint/no-misused-promises': 0,
-		'@typescript-eslint/no-floating-promises': 0,
 		// ^^
 		'@typescript-eslint/no-namespace': 0,
 		'@typescript-eslint/no-non-null-assertion': 0,
@@ -95,8 +155,6 @@ module.exports = {
 		'prefer-const': 0,
 		'sort-destructure-keys/sort-destructure-keys': 2,
 		'sort-keys-fix/sort-keys-fix': 2,
-		'typescript-sort-keys/interface': 2,
-		'typescript-sort-keys/string-enum': 2,
 		'space-before-blocks': 2,
 		'space-before-function-paren': [
 			2,
@@ -109,6 +167,8 @@ module.exports = {
 		'svelte/no-trailing-spaces': 'error',
 		'svelte/no-useless-mustaches': 'error',
 		'svelte/prefer-style-directive': 'error',
+		'typescript-sort-keys/interface': 2,
+		'typescript-sort-keys/string-enum': 2,
 		'unicorn/better-regex': 2,
 		'unicorn/catch-error-name': 0,
 		'unicorn/consistent-function-scoping': 2,
@@ -134,62 +194,6 @@ module.exports = {
 		'unicorn/text-encoding-identifier-case': 2,
 		'unused-imports/no-unused-imports': 2,
 	},
-	overrides: [
-		{
-			files: ['*.svelte'],
-			parser: 'svelte-eslint-parser',
-			parserOptions: {
-				parser: '@typescript-eslint/parser',
-			},
-			rules: {
-				// these cause issues with svelte rn
-				'@typescript-eslint/no-unsafe-assignment': 0,
-				'@typescript-eslint/no-unsafe-call': 0,
-				'no-console': 1,
-				'no-undef': 0,
-			},
-		},
-		{
-			files: ['*.ts', '*.tsx'],
-			extends: ['plugin:@typescript-eslint/recommended'],
-			plugins: ['@typescript-eslint'],
-			parser: '@typescript-eslint/parser',
-			rules: {
-				'@typescript-eslint/consistent-type-imports': [
-					'error',
-					{
-						prefer: 'type-imports',
-						// TODO: enable this once prettier supports it
-						// fixStyle: "inline-type-imports",
-						fixStyle: 'separate-type-imports',
-						disallowTypeAnnotations: false,
-					},
-				],
-			},
-			overrides: [
-				{
-					files: ['**/e2e/**/*.{tsx,ts}'],
-					rules: {
-						'@typescript-eslint/no-unused-vars': 'off',
-						'no-undef': 'off',
-					},
-				},
-			],
-		},
-		{
-			files: ['**/e2e/**/*.{js,jsx}'],
-			extends: ['plugin:playwright/recommended'],
-			rules: {
-				'@typescript-eslint/no-unused-vars': 'off',
-				'no-undef': 'off',
-			},
-		},
-		{
-			files: ['**/*.{test,spec}.[jt]s?(x)'],
-			plugins: ['vitest'],
-			extends: ['plugin:vitest/recommended'],
-		},
-	],
 	settings: {
 		'import/parsers': {
 			'@typescript-eslint/parser': ['.ts', '.tsx'],

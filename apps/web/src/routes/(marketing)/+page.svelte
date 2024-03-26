@@ -1,17 +1,14 @@
 <script>
-	import {
-		Armchair,
-		ChevronRight,
-		Edit3,
-		Github,
-		Glasses,
-		Layers,
-		Rss,
-		Zap,
-	} from 'lucide-svelte';
+	import Armchair from 'lucide-svelte/icons/armchair';
+	import ChevronRight from 'lucide-svelte/icons/chevron-right';
+	import Edit3 from 'lucide-svelte/icons/pen-line';
+	import Github from 'lucide-svelte/icons/github';
+	import Glasses from 'lucide-svelte/icons/glasses';
+	import Layers from 'lucide-svelte/icons/layers';
+	import Rss from 'lucide-svelte/icons/rss';
+	import Zap from 'lucide-svelte/icons/zap';
 
-	import { buttonVariants } from '$components/ui/button';
-	import { cn } from '$lib';
+	import { Button } from '@margins/ui';
 
 	import Anything from './anything.svelte';
 </script>
@@ -28,7 +25,7 @@
 
 <section class="space-y-6 pb-16 lg:py-16">
 	<div
-		class="container flex max-w-[64rem] flex-col items-center gap-4 text-center duration-1000 animate-in fade-in slide-in-from-top-4"
+		class="animate-in fade-in slide-in-from-top-4 container flex max-w-[64rem] flex-col items-center gap-4 text-center duration-1000"
 	>
 		<!-- Link here to announcing open beta -->
 		<h1
@@ -36,7 +33,7 @@
 		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
 			<span
-				class="relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded before:bg-primary/30 before:text-primary-foreground"
+				class="before:bg-primary/30 before:text-primary-foreground relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded"
 				>Margins
 			</span>is the app for saving, consuming, and annotating
 			<Anything />
@@ -47,21 +44,15 @@
 			A powerful, friendly research app.
 		</p>
 		<div class="space-x-4">
-			<a
-				href="/signup"
-				class={cn(
-					buttonVariants({ size: 'lg', variant: 'secondary' }),
-					'h-12 rounded-full text-base font-medium transition hover:scale-105',
-				)}
-			>
+			<Button href="/signup" size="xl" class="rounded-full">
 				Get Margins <ChevronRight class="ml-1 h-4 w-4" />
-			</a>
+			</Button>
 		</div>
 	</div>
 </section>
 <div class="relative h-[9vh]">
 	<div
-		class="absolute left-1/2 -z-10 h-full w-px border-l border-dashed border-foreground/50"
+		class="border-foreground/50 absolute left-1/2 -z-10 h-full w-px border-l border-dashed"
 	/>
 </div>
 <section class="bg-trasparent container space-y-6 py-16 dark:bg-transparent">
@@ -74,7 +65,7 @@
 			Features
 		</h2>
 		<p
-			class="max-w-[45ch] text-xl leading-normal text-muted-foreground sm:leading-7"
+			class="text-muted-foreground max-w-[45ch] text-xl leading-normal sm:leading-7"
 		>
 			An app designed for infovores, researchers, and anyone who wants to save
 			and organize content.
@@ -83,67 +74,67 @@
 	<ul
 		class="mx-auto grid justify-center gap-4 px-2 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3"
 	>
-		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+		<li class="bg-background relative overflow-hidden rounded-lg border p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Glasses class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
 					<h3 class="font-semibold">Read Later</h3>
-					<span class="text-sm font-semibold text-muted-foreground"
+					<span class="text-muted-foreground text-sm font-semibold"
 						>Articles, videos, websites, documents and more.</span
 					>
 				</div>
 			</div>
 		</li>
-		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+		<li class="bg-background relative overflow-hidden rounded-lg border p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Rss class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
 					<h3 class="font-semibold">Subscriptions</h3>
-					<span class="text-sm font-semibold text-muted-foreground"
+					<span class="text-muted-foreground text-sm font-semibold"
 						>Podcasts, RSS, emails, and anything you can throw at it.</span
 					>
 				</div>
 			</div>
 		</li>
-		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+		<li class="bg-background relative overflow-hidden rounded-lg border p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Edit3 class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
 					<h3 class="font-semibold">Annotate</h3>
-					<span class="text-sm font-semibold text-muted-foreground"
+					<span class="text-muted-foreground text-sm font-semibold"
 						>Highlight, annotate, and share documents.</span
 					>
 				</div>
 			</div>
 		</li>
-		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+		<li class="bg-background relative overflow-hidden rounded-lg border p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Layers class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
 					<h3 class="font-semibold">Organize</h3>
-					<span class="text-sm font-semibold text-muted-foreground"
+					<span class="text-muted-foreground text-sm font-semibold"
 						>Organize bookmarks into easily shareable collections and views.</span
 					>
 				</div>
 			</div>
 		</li>
-		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+		<li class="bg-background relative overflow-hidden rounded-lg border p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Armchair class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
 					<h3 class="font-semibold">Any Media</h3>
-					<span class="text-sm font-semibold text-muted-foreground"
+					<span class="text-muted-foreground text-sm font-semibold"
 						>Track books, movies, TV, games, and more.</span
 					>
 				</div>
 			</div>
 		</li>
-		<li class="relative overflow-hidden rounded-lg border bg-background p-2">
+		<li class="bg-background relative overflow-hidden rounded-lg border p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
 				<Zap class="h-12 w-12 shrink-0 stroke-1" />
 				<div class="space-y-2">
 					<h3 class="font-semibold">Integrate</h3>
-					<span class="text-sm font-semibold text-muted-foreground"
+					<span class="text-muted-foreground text-sm font-semibold"
 						>Integrate, export and share your notes.</span
 					>
 				</div>
@@ -156,7 +147,7 @@
 		class="mx-auto flex max-w-[58rem] items-center justify-between space-y-4"
 	>
 		<div />
-		<div class="flex items-center justify-end gap-2 text-muted-foreground">
+		<div class="text-muted-foreground flex items-center justify-end gap-2">
 			<span
 				>Built by <a class="underline" href="https://guscuddy.com">Gus</a> in Brooklyn.</span
 			>

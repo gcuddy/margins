@@ -14,10 +14,11 @@ const buttonVariants = tv({
 			icon: 'h-9 w-9 rounded-[10px]',
 			lg: 'h-10 rounded-md px-8',
 			sm: 'h-8 rounded-md px-3 text-xs',
+			xl: 'h-12 rounded-md px-8 text-base',
 		},
 		variant: {
 			default:
-				'bg-primary text-primary-foreground shadow hover:bg-primary-hover',
+				'bg-primary text-primary-foreground shadow-subtle hover:bg-primary-hover',
 			destructive:
 				'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
 			ghost: 'hover:bg-accent hover:text-accent-foreground',
