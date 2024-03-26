@@ -1,5 +1,2 @@
 export { cn } from './classnames';
-
-export function greeting() {
-	return 'Hello World';
-}
+export { flyAndScale } from './transitions';
