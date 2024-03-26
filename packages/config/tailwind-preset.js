@@ -11,7 +11,7 @@ const config = {
 		'./components/**/*.{html,js,svelte,ts}',
 		'../../packages/ui/**/*.{html,js,svelte,ts}',
 	],
-	darkMode: 'class',
+	darkMode: ['selector', '[data-mode="dark"]', '[data-theme="dark"]'],
 	theme: {
 		container: {
 			center: true,
@@ -58,6 +58,7 @@ const config = {
 				primary: {
 					DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
 					foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
+					hover: 'hsl(var(--primary-hover) / <alpha-value>)',
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
