@@ -5,8 +5,7 @@
 	const words = [
 		'articles',
 		'books',
-		// TODO: disabling this till we actually get it working lol...
-		// 'PDFs',
+		'PDFs',
 		'bookmarks',
 		'podcasts',
 		'RSS',

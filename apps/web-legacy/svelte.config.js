@@ -13,7 +13,19 @@ const config = {
 		adapter: adapter({
 			// runtime: 'edge',
 		}),
+		alias: {
+			'$components/*': 'src/lib/components/*',
+		},
+		serviceWorker: {
+			register: false,
+		},
 	},
 	compilerOptions: {},
+	shadcn: {
+		componentPath: './src/lib/components/ui',
+	},
+	vitePlugin: {
+		inspector: true,
+	},
 };
 export default config;

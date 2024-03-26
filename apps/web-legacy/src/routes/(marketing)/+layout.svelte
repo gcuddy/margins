@@ -1,5 +1,7 @@
 <script>
-	import { Button } from '@margins/ui';
+	import '$lib/styles/warbler.css';
+
+	import { Button } from '$lib/components/ui/button';
 </script>
 
 <div class="flex min-h-screen select-text flex-col">
@@ -17,7 +19,7 @@
 				</li>
 				<li>
 					<Button
-						variant="default"
+						variant="secondary"
 						href="/signup"
 						class="rounded-full font-semibold">Sign up</Button
 					>
