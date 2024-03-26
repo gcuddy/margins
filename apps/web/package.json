@@ -78,6 +78,7 @@
 	"type": "module",
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.540.0",
+		"@fontsource/instrument-serif": "^5.0.19",
 		"@lucia-auth/adapter-mysql": "^3.0.2",
 		"@margins/lib": "workspace:*",
 		"@margins/ui": "workspace:*",

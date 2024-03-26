@@ -1,4 +1,5 @@
 <script>
+	import '@fontsource/instrument-serif';
 	import { Button } from '@margins/ui';
 </script>
 

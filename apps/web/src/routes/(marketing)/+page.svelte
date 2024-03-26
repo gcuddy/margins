@@ -13,14 +13,8 @@
 	import Anything from './anything.svelte';
 </script>
 
-<!-- TODO: replace with fontsource -->
 <svelte:head>
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"
-		rel="stylesheet"
-	/>
+	<title>Margins — Organize and annotate anything</title>
 </svelte:head>
 
 <section class="space-y-6 pb-16 lg:py-16">
