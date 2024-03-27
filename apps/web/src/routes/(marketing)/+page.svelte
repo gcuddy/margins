@@ -17,7 +17,7 @@
 	<title>Margins — Organize and annotate anything</title>
 </svelte:head>
 
-<section class="space-y-6 pb-16 lg:py-16">
+<section class="space-y-6 py-16">
 	<div
 		class="animate-in fade-in slide-in-from-top-4 container flex max-w-5xl flex-col items-center gap-4 text-center duration-1000"
 	>

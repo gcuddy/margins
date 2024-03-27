@@ -1,18 +1,17 @@
 <script>
 	import '@fontsource/instrument-serif';
 	import { Button, Logo } from '@margins/ui';
+	import Header from './header.svelte';
 </script>
 
 <div class="flex min-h-screen select-text flex-col">
-	<header
-		class="bg-glass/[.01] border-glass/10 fixed left-0 right-0 top-0 z-40 h-16 border-b backdrop-blur-md"
-	>
+	<Header>
 		<div class="mx-auto h-full w-full max-w-5xl">
 			<nav class="flex h-full w-full items-center justify-between space-x-4">
 				<!-- <span class="logo text-4xl font-bold">Margins</span> -->
 				<div class="flex items-center gap-2">
-					<Logo class="h-4 w-4" />
-					Margins
+					<Logo class="h-[18px] w-[18px]" />
+					<h3 class="text-base font-semibold tracking-tight">Margins</h3>
 				</div>
 				<ul class="flex h-full items-center justify-end space-x-4">
 					<li>
@@ -42,8 +41,14 @@
 				</ul>
 			</nav>
 		</div>
-	</header>
-	<main class="flex-1 px-2">
+	</Header>
+	<main class="flex-1 px-2 pt-[--header-height]">
 		<slot />
 	</main>
 </div>
+
+<style>
+	:root {
+		--header-height: 64px;
+	}
+</style>
