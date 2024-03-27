@@ -3,4 +3,6 @@
 	$: console.log({ data });
 </script>
 
-<ul class="bg-red-400 text-lg"></ul>
+<h1>Blog</h1>
+
+{JSON.stringify(data)}

@@ -19,7 +19,7 @@
 
 <section class="space-y-6 pb-16 lg:py-16">
 	<div
-		class="animate-in fade-in slide-in-from-top-4 container flex max-w-[64rem] flex-col items-center gap-4 text-center duration-1000"
+		class="animate-in fade-in slide-in-from-top-4 container flex max-w-5xl flex-col items-center gap-4 text-center duration-1000"
 	>
 		<!-- Link here to announcing open beta -->
 		<Badge variant="glass" class="h-7 rounded-full"
@@ -69,7 +69,7 @@
 		</p>
 	</div>
 	<ul
-		class="mx-auto grid justify-center gap-4 px-2 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3"
+		class="mx-auto grid justify-center gap-4 px-2 sm:grid-cols-2 md:max-w-5xl md:grid-cols-3"
 	>
 		<li class="bg-background relative overflow-hidden rounded-lg border p-2">
 			<div class="flex h-[180px] flex-col justify-between rounded-md p-6">
