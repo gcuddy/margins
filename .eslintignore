@@ -13,5 +13,8 @@ pnpm-lock.yaml
 package-lock.json
 yarn.lock
 
+# tailwind preset (for now)
+packages/config/tailwind-preset.js
+
 # Generated files
 /src/lib/prisma/kysely/types.ts

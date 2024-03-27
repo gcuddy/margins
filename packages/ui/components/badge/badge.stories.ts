@@ -18,7 +18,7 @@ export const Primary: Story = {
 	argTypes: {
 		variant: {
 			control: { type: 'select' },
-			options: ['default', 'outline', 'secondary', 'destructive'],
+			options: ['default', 'outline', 'secondary', 'destructive', 'glass'],
 		},
 	},
 	args: {

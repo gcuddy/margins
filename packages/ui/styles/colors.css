@@ -2,6 +2,8 @@
 	--background: 0 0% 100%;
 	--foreground: 20 14.3% 4.1%;
 
+	--glass: 0 0% 0%;
+
 	--card: 0 0% 100%;
 	--card-foreground: 20 14.3% 4.1%;
 
@@ -43,6 +45,8 @@
 
 	--background: 30 17% 6%;
 	--foreground: 60 9.1% 97.8%;
+
+	--glass: 0 0% 100%;
 
 	--card: 30 8% 10%;
 	--card-foreground: 0 0% 95%;

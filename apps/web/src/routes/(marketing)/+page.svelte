@@ -8,7 +8,7 @@
 	import Rss from 'lucide-svelte/icons/rss';
 	import Zap from 'lucide-svelte/icons/zap';
 
-	import { Button } from '@margins/ui';
+	import { Badge, Button } from '@margins/ui';
 
 	import Anything from './anything.svelte';
 </script>
@@ -22,6 +22,9 @@
 		class="animate-in fade-in slide-in-from-top-4 container flex max-w-[64rem] flex-col items-center gap-4 text-center duration-1000"
 	>
 		<!-- Link here to announcing open beta -->
+		<Badge variant="glass" class="h-7 rounded-full"
+			>Margins Alpha v0.1 <ChevronRight class="h-3 w-3" /></Badge
+		>
 		<h1
 			class="header inline-block max-w-[20ch] text-balance py-4 font-sans text-[clamp(48px,7vw,140px)] font-normal leading-none"
 		>

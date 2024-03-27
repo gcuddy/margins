@@ -9,7 +9,7 @@ const config = {
 		'./pages/**/*.{html,js,svelte,ts}',
 		'./modules/**/*.{html,js,svelte,ts}',
 		'./components/**/*.{html,js,svelte,ts}',
-		'../../packages/ui/**/*.{html,js,svelte,ts}',
+		'../../packages/ui/**/*.{html,js,svelte,ts,jsx,tsx}',
 	],
 	darkMode: ['selector', '[data-mode="dark"]', '[data-theme="dark"]'],
 
@@ -105,6 +105,7 @@ const config = {
 					foreground: 'hsl(var(--destructive-foreground) / <alpha-value>)',
 				},
 				foreground: 'hsl(var(--foreground) / <alpha-value>)',
+				glass: 'hsl(var(--glass) / <alpha-value>)',
 				highlight: {
 					pink: '#ff00b8',
 					yellow: '#ffd700',
