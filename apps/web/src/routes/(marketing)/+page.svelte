@@ -22,7 +22,10 @@
 		class="animate-in fade-in slide-in-from-top-4 container flex max-w-5xl flex-col items-center gap-4 text-center duration-1000"
 	>
 		<!-- Link here to announcing open beta -->
-		<Badge variant="glass" class="h-7 rounded-full"
+		<Badge
+			variant="glass"
+			href="/blog/2024-03-26-margins-alpha-01"
+			class="h-7 rounded-full"
 			>Margins Alpha v0.1 <ChevronRight class="h-3 w-3" /></Badge
 		>
 		<h1

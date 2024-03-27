@@ -6,4 +6,6 @@ authorURL: https://guscuddy.com
 published: true
 ---
 
-We' re excited to announce the first alpha release of Margins!
+We're excited to announce the first alpha release of Margins!
+
+Margins is a new kind of note-taking app that helps you focus on what matters most. It's designed to be simple, fast, and easy to use.

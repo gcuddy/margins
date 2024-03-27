@@ -80,6 +80,7 @@
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.540.0",
 		"@fontsource/instrument-serif": "^5.0.19",
+		"@internationalized/date": "^3.5.2",
 		"@lucia-auth/adapter-mysql": "^3.0.2",
 		"@margins/lib": "workspace:*",
 		"@margins/ui": "workspace:*",
@@ -129,6 +130,7 @@
 		"kysely": "^0.27.2",
 		"kysely-planetscale": "^1.4.0",
 		"lucia": "^3.1.1",
+		"lucide-svelte": "^0.363.0",
 		"magic-string": "^0.30.5",
 		"mode-watcher": "^0.3.0",
 		"oslo": "^1.1.3",
