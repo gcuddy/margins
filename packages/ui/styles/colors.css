@@ -33,7 +33,8 @@
 
 	--input: 20 5.9% 90%;
 
-	--ring: 20 14.3% 4.1%;
+	/* --ring: 20 14.3% 4.1%; */
+	--ring: var(--primary);
 
 	--radius: 0.5rem;
 }

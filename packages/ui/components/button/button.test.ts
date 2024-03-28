@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/svelte';
 
-import Button from './button.svelte';
+import { Button } from './index.js';
 
 describe('Tests for Button Component', () => {
 	const label = 'Button';
