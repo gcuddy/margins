@@ -21,7 +21,7 @@
 	title="Log in to Margins"
 	description="Enter your email and password below."
 >
-	<form class="contents" use:enhance method="post">
+	<form data-testid="login-form" class="contents" use:enhance method="post">
 		<Card.Content class="grid gap-4">
 			<Form.Field {form} name="email">
 				<Form.Control let:attrs>
@@ -63,6 +63,7 @@
 	<hr class="border-subtle mx-auto mb-8 mt-2 w-[calc(100%-1.5rem)]" />
 	<div class="px-6 pb-6">
 		<Button
+			data-testid="google"
 			variant="outline"
 			href="/login/google"
 			class="flex w-full items-center gap-2"

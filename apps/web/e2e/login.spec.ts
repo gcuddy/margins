@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { test } from './test';
 
 test.describe.configure({ mode: 'parallel' });
@@ -17,6 +18,12 @@ test.describe('Signup flow', async () => {
 			// const shellLocator = page.locator(`[data-testid=dashboard-shell]`);
 			await page.waitForURL('/library/backlog');
 			// await expect(shellLocator).toBeVisible();
+		});
+
+		await test.step('Log out', async () => {
+			const signOutBtn = page.getByTestId('logout-btn');
+			await signOutBtn.click();
+			await expect(page.getByTestId('login-form')).toBeVisible();
 		});
 	});
 });

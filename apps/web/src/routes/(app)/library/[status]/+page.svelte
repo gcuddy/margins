@@ -6,5 +6,5 @@
 email: {data.user.email}
 
 <form method="post" use:enhance>
-	<button>Sign out</button>
+	<button data-testid="logout-btn">Sign out</button>
 </form>
