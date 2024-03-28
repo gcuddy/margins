@@ -18,10 +18,5 @@ test.describe('Signup flow', async () => {
 			await page.waitForURL('/library/backlog');
 			// await expect(shellLocator).toBeVisible();
 		});
-
-		test.fixme('Logout', async ({ page }) => {
-			await page.click('[data-testid=logout-button]');
-			await page.waitForURL('/login');
-		});
 	});
 });
