@@ -17,7 +17,7 @@
 </script>
 
 <Card.Root
-	class="animate-in fade-in-5 slide-in-from-top-8 duration-500"
+	class="animate-in fade-in-5 slide-in-from-top-8 w-80 duration-500"
 	title="Log in to Margins"
 	description="Enter your email and password below."
 >

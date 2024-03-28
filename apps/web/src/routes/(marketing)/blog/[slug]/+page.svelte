@@ -2,7 +2,7 @@
 	export let data;
 </script>
 
-<div class="prose mx-auto">
+<div class="prose dark:prose-invert mx-auto">
 	<div class="pt-4 sm:pt-8">
 		<h1
 			class="text-balance text-3xl font-semibold tracking-tighter sm:text-5xl"

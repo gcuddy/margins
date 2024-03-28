@@ -1,3 +1,16 @@
+<script lang="ts">
+	import { Button } from '@margins/ui';
+	import XIcon from 'lucide-svelte/icons/x';
+</script>
+
+<Button
+	href="/"
+	variant="outline"
+	size="icon"
+	class="fadeIn fixed left-8 top-8 rounded-full duration-1000"
+>
+	<XIcon class="text-muted-foreground h-4 w-4" />
+</Button>
 <div class="flex min-h-screen flex-col items-center justify-center">
 	<div
 		class="animate-fast-fly-in flex flex-col items-center justify-center space-y-4"
@@ -26,6 +39,7 @@
 				</svg>
 			</div>
 		</div>
+
 		<slot />
 	</div>
 </div>

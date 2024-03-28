@@ -18,7 +18,7 @@
 </script>
 
 <Card.Root
-	class="animate-in fade-in-5 slide-in-from-top-8 duration-500"
+	class="animate-in fade-in-5 slide-in-from-top-8 w-80 duration-500"
 	title="Create an account for Margins"
 	description="Enter your details below."
 >
