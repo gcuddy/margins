@@ -12,13 +12,13 @@
 	}
 </script>
 
-<header>
+<header class="fadeInDown">
 	<div class="">
 		<h1 class="text-2xl font-bold tracking-tight">Blog</h1>
 	</div>
 </header>
 
-<div class="pt-8">
+<div class="fadeInDown animation-delay-1 pt-8">
 	<ul data-testid="blog-posts">
 		{#each data.posts as post}
 			<li class="">

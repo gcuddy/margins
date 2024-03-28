@@ -17,7 +17,7 @@
 </script>
 
 <Card.Root
-	class="animate-in fade-in-5 slide-in-from-top-8 w-80 duration-500"
+	class=" fadeInDown w-80"
 	title="Log in to Margins"
 	description="Enter your email and password below."
 >
@@ -34,6 +34,7 @@
 				<Form.Control let:attrs>
 					<div class="flex items-center justify-between">
 						<Form.Label>Password</Form.Label><a
+							tabindex="-1"
 							class="text-muted-foreground text-xs hover:underline"
 							href="/password-reset">Forgot password?</a
 						>
@@ -61,6 +62,6 @@
 	</form>
 </Card.Root>
 
-<div class="animate-in fade-in-0">
+<div class="fadeIn animation-delay-2 text-muted-foreground">
 	Don't have an account? <a class="font-bold" href="/signup">Sign up</a>
 </div>

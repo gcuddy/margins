@@ -18,7 +18,7 @@
 </script>
 
 <Card.Root
-	class="animate-in fade-in-5 slide-in-from-top-8 w-80 duration-500"
+	class="fadeInDown w-80"
 	title="Create an account for Margins"
 	description="Enter your details below."
 >
@@ -62,6 +62,6 @@
 	</form>
 </Card.Root>
 
-<div>
+<div class="fadeIn animation-delay-2 text-muted-foreground">
 	Already have an account? <a class="font-bold" href="/login">Sign in</a>
 </div>

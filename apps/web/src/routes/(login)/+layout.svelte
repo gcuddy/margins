@@ -7,7 +7,7 @@
 	href="/"
 	variant="outline"
 	size="icon"
-	class="fadeIn fixed left-8 top-8 rounded-full duration-1000"
+	class="fadeIn animation-delay-1 fixed left-8 top-8 rounded-full duration-1000"
 >
 	<XIcon class="text-muted-foreground h-4 w-4" />
 </Button>
