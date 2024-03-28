@@ -1,14 +1,16 @@
-import { Lucia, TimeSpan } from 'lucia';
-import { PlanetScaleAdapter } from '@lucia-auth/adapter-mysql';
-
 import dotenv from 'dotenv';
 dotenv.config({
 	path: '../../.env',
 });
 
+import { Lucia, TimeSpan } from 'lucia';
+import { PlanetScaleAdapter } from '@lucia-auth/adapter-mysql';
+
 import { Client } from '@planetscale/database';
 import { config } from '@margins/db';
 import type { User } from '@margins/db/kysely/types';
+
+export * as oauth from './oauth';
 
 const client = new Client(config);
 
@@ -29,11 +31,11 @@ export const auth = new Lucia(adapter, {
 	},
 	sessionCookie: {
 		// session cookies have very long lifespan (2 years)
-attributes: {
+		attributes: {
 			secure: process.env.NODE_ENV === 'development' ? false : true,
 		},
 
-expires: false,
+		expires: false,
 		name: 'session',
 	},
 	sessionExpiresIn: new TimeSpan(30, 'd'),

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Loader2 } from 'lucide-svelte';
 
-	import { Card, Form, Input } from '@margins/ui';
+	import { Button, Card, Form, Google, Input } from '@margins/ui';
 	import { superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 
@@ -60,6 +60,29 @@
 			>
 		</Card.Footer>
 	</form>
+
+	<!-- Social links: Card footer footer -->
+	<div class="p-6">
+		<div class="relative flex items-center">
+			<div class="border-subtle flex-grow border-t" />
+			<span
+				class="text-subtle leadning-none mx-2 flex-shrink text-sm font-normal"
+			>
+				Or continue with
+			</span>
+			<div class="border-subtle flex-grow border-t" />
+		</div>
+	</div>
+	<div class="px-6 pb-6">
+		<Button
+			variant="outline"
+			href="/login/google"
+			class="flex w-full items-center gap-2"
+		>
+			<Google class="h-3 w-3 saturate-0" />
+			Google
+		</Button>
+	</div>
 </Card.Root>
 
 <div class="fadeIn animation-delay-2 text-muted-foreground">

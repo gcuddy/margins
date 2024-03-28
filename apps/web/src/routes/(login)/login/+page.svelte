@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Loader2 } from 'lucide-svelte';
-	import { Card, Form, Input } from '@margins/ui';
+	import { Button, Card, Form, Google, Input } from '@margins/ui';
 
 	import { loginUserSchema } from '../schema';
 	import type { PageData } from './$types';
@@ -60,6 +60,17 @@
 			>
 		</Card.Footer>
 	</form>
+	<hr class="border-subtle mx-auto mb-8 mt-2 w-[calc(100%-1.5rem)]" />
+	<div class="px-6 pb-6">
+		<Button
+			variant="outline"
+			href="/login/google"
+			class="flex w-full items-center gap-2"
+		>
+			<Google class="h-3 w-3 saturate-0" />
+			Sign in with Google
+		</Button>
+	</div>
 </Card.Root>
 
 <div class="fadeIn animation-delay-2 text-muted-foreground">

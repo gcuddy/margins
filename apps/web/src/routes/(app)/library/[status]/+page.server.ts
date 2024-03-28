@@ -9,6 +9,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		redirect(307, '/login');
 	}
 	// ...
+
+	return {
+		user: locals.user,
+	};
 };
 
 export const actions: Actions = {

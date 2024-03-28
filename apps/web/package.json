@@ -116,6 +116,7 @@
 		"@tiptap/suggestion": "^2.2.4",
 		"@upstash/qstash": "^2.1.9",
 		"@upstash/redis": "^1.28.4",
+		"arctic": "^1.4.0",
 		"autosize": "^6.0.1",
 		"bits-ui": "^0.20.0",
 		"class-variance-authority": "^0.7.0",
