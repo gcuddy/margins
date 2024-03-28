@@ -82,6 +82,7 @@
 		"@fontsource/instrument-serif": "^5.0.19",
 		"@internationalized/date": "^3.5.2",
 		"@lucia-auth/adapter-mysql": "^3.0.2",
+		"@margins/db": "workspace:*",
 		"@margins/lib": "workspace:*",
 		"@margins/ui": "workspace:*",
 		"@melt-ui/svelte": "^0.76.2",

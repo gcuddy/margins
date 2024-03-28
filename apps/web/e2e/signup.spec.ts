@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from './test';
-import { db } from '../src/lib/db';
+import { db } from '@margins/db';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -8,17 +8,14 @@ test.describe('Signup flow', async () => {
 	test.afterEach(async ({ users }) => {
 		await users.deleteAll();
 	});
-	// test('Username is taken', async ({ page, users }) => {
-	// 	await test.step('signup', async () => {
-	// 		const user = await users.create({
-	// 			username: 'gus',
-	// 		});
-	//
-	//
-	//
-	// 		// TODO: ... write rest of test, depends on alert
-	// 	});
-	// });
+	test.fixme('Username is taken', async ({ page, users }) => {
+		await test.step('signup', async () => {
+			// const user = await users.create({
+			// 	username: 'gus',
+			// });
+			// TODO: ... write rest of test, depends on alert
+		});
+	});
 	test('Signup with valid email and password', async ({ page, users }) => {
 		const userToCreate = users.buildForSignup({
 			email: `rickjones${Math.random()}-${Date.now()}@margins.gg`,
@@ -34,7 +31,7 @@ test.describe('Signup flow', async () => {
 		await button.click();
 		await button.waitFor({ state: 'detached' });
 		await page.waitForLoadState('networkidle');
-		await page.screenshot({ path: 'screenshot.png' });
+		await page.screenshot({ path: 'tests-results/screenshot.png' });
 		const newUser = await users.set(userToCreate.email);
 		expect(newUser.id).not.toBeNull();
 
