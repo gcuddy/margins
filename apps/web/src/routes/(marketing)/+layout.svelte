@@ -1,7 +1,8 @@
 <script lang="ts">
 	import '@fontsource/instrument-serif';
-	import { Button, Logo } from '@margins/ui';
+	import { Button, Github, Logo } from '@margins/ui';
 	import Header from './header.svelte';
+	import ThemeToggle from './theme-toggle.svelte';
 
 	const navItems: {
 		href: string;
@@ -48,6 +49,28 @@
 			<slot />
 		</div>
 	</main>
+	<footer class="bg-trasparent space-y-6 py-16 dark:bg-transparent">
+		<div
+			class="mx-auto flex max-w-5xl items-center justify-between space-y-4 px-3 sm:px-6"
+		>
+			<div class="text-muted-foreground flex items-center justify-end gap-2">
+				<span
+					>Built by <a class="underline" href="https://guscuddy.com">Gus</a> in Brooklyn.</span
+				>
+			</div>
+			<div class="text-muted-foreground flex items-center justify-end gap-2">
+				<ThemeToggle />
+				<a
+					class="hover:text-foreground transition"
+					href="https://github.com/gcuddy/margins"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<Github class="h-5 w-5" />
+				</a>
+			</div>
+		</div>
+	</footer>
 </div>
 
 <style>

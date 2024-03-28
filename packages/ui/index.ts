@@ -6,3 +6,4 @@ export * as Form from './components/form/index.js';
 export { Label } from './components/label/index.js';
 
 export { default as Logo } from './components/logo/logo.svelte';
+export * from './components/icons/index.js';

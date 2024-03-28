@@ -8,4 +8,9 @@ published: true
 
 We're excited to announce the first alpha release of Margins!
 
-Margins is a new kind of note-taking app that helps you focus on what matters most. It's designed to be simple, fast, and easy to use.
+Margins is a new kind of read-later note-taknig app that helps you keep track of all the information in your life. It's designed to be simple, fast, powerful, and friendly.
+
+## Features
+
+- **Library**: Keep all your notes in one place.
+- **Subscriptions**: Follow your favorite authors and publications.

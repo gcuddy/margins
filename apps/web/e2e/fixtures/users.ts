@@ -1,7 +1,7 @@
 import type { Page, WorkerInfo } from '@playwright/test';
 import type { User } from '@margins/db/kysely/types';
 import { db } from '@margins/db';
-import type { Insertable, type Selectable } from 'kysely';
+import type { Insertable, Selectable } from 'kysely';
 import { generateId } from 'lucia';
 import { Argon2id } from 'oslo/password';
 
@@ -39,7 +39,6 @@ export const createUsersFixture = (page: Page, workerInfo: WorkerInfo) => {
 			const user = createUser(workerInfo, opts);
 			const userId = generateId(15);
 			const pass = opts?.password ?? user.username!;
-			console.log('hashing password', pass);
 			const hashed_password = await hashPassword(pass);
 			await db.transaction().execute(async (trx) => {
 				await db
@@ -50,8 +49,6 @@ export const createUsersFixture = (page: Page, workerInfo: WorkerInfo) => {
 						updatedAt: new Date(),
 					})
 					.execute();
-
-				console.log('inserting password', hashed_password, userId, pass);
 
 				return await db
 					.insertInto('password')
@@ -80,7 +77,6 @@ export const createUsersFixture = (page: Page, workerInfo: WorkerInfo) => {
 			return userFixture;
 		},
 		deleteAll: async () => {
-			console.log('deleting all test users');
 			const ids = store.users.map((u) => u.id);
 			await db.deleteFrom('user').where('id', 'in', ids).execute();
 			await db.deleteFrom('password').where('user_id', 'in', ids).execute();
@@ -134,7 +130,6 @@ export const createUserFixture = (
 		page,
 		user,
 	};
-	console.log(`creatuserfixture`, user);
 	return {
 		...user,
 		delete: async () =>
@@ -156,7 +151,6 @@ export async function login(
 		.fill(user.email ?? `${user.username}@example.com`);
 	await page.getByLabel('Password').click();
 	const pass = user.password ?? user.username!;
-	console.log({ pass });
 	await page.getByLabel('Password').fill(pass);
 	await page.getByRole('button', { name: 'Login' }).click();
 

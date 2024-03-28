@@ -19,7 +19,7 @@
 </header>
 
 <div class="pt-8">
-	<ul>
+	<ul data-testid="blog-posts">
 		{#each data.posts as post}
 			<li class="">
 				<a

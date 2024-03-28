@@ -2,7 +2,6 @@
 	import Armchair from 'lucide-svelte/icons/armchair';
 	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 	import Edit3 from 'lucide-svelte/icons/pen-line';
-	import Github from 'lucide-svelte/icons/github';
 	import Glasses from 'lucide-svelte/icons/glasses';
 	import Layers from 'lucide-svelte/icons/layers';
 	import Rss from 'lucide-svelte/icons/rss';
@@ -141,21 +140,6 @@
 			</div>
 		</li>
 	</ul>
-</section>
-<section class="bg-trasparent container space-y-6 py-16 dark:bg-transparent">
-	<div
-		class="mx-auto flex max-w-[58rem] items-center justify-between space-y-4"
-	>
-		<div />
-		<div class="text-muted-foreground flex items-center justify-end gap-2">
-			<span
-				>Built by <a class="underline" href="https://guscuddy.com">Gus</a> in Brooklyn.</span
-			>
-			<a href="https://github.com/gcuddy/margins">
-				<Github class="h-5 w-5 stroke-2" />
-			</a>
-		</div>
-	</div>
 </section>
 
 <style>
