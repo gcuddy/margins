@@ -552,6 +552,32 @@ export type Relation = {
 	entryId: number;
 	relatedEntryId: number;
 };
+export type ReplicacheClient = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	deletedAt: Timestamp | null;
+	clientGroupId: string;
+	clientVersion: number;
+	lastMutationId: number;
+};
+export type ReplicacheClientGroup = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	deletedAt: Timestamp | null;
+	cvrVersion: number;
+	clientVersion: number;
+};
+export type ReplicacheCVR = {
+	id: number;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	deletedAt: Timestamp | null;
+	data: unknown;
+	clientGroupID: string;
+	clientVersion: number;
+};
 export type Session = {
 	id: string;
 	user_id: string;
@@ -661,6 +687,7 @@ export type Unread = {
 };
 export type User = {
 	id: string;
+	workspaceID: string | null;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	email: string;
@@ -694,6 +721,13 @@ export type ViewPreferences = {
 	collectionId: number | null;
 	customViewId: number | null;
 	preferences: unknown | null;
+};
+export type Workspace = {
+	id: string;
+	createdAt: Generated<Timestamp>;
+	updatedAt: Timestamp;
+	deletedAt: Timestamp | null;
+	slug: string;
 };
 export type DB = {
 	_AnnotationToTag: AnnotationToTag;
@@ -736,6 +770,9 @@ export type DB = {
 	Person: Person;
 	person_to_entry: person_to_entry;
 	Relation: Relation;
+	replicache_client_group: ReplicacheClientGroup;
+	replicache_cvr: ReplicacheCVR;
+	ReplicacheClient: ReplicacheClient;
 	SmartList: SmartList;
 	State: State;
 	Stylesheet: Stylesheet;
@@ -749,4 +786,5 @@ export type DB = {
 	user_session: Session;
 	UserEntry: UserEntry;
 	ViewPreferences: ViewPreferences;
+	Workspace: Workspace;
 };

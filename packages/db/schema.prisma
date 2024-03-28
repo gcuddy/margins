@@ -16,6 +16,64 @@ datasource db {
   relationMode = "prisma"
 }
 
+model Workspace {
+    id String @id @db.Char(24)
+    createdAt DateTime @default(now())
+    updatedAt DateTime
+    deletedAt DateTime?
+
+    slug String @unique @db.VarChar(255)
+}
+
+model ReplicacheClientGroup {
+    id        String @id @db.Char(36)
+    createdAt DateTime @default(now())
+    updatedAt DateTime
+    deletedAt DateTime?
+
+    cvrVersion Int
+    clientVersion Int
+
+    clients ReplicacheClient[]
+
+    // TODO: actor model?
+
+    @@map("replicache_client_group")
+}
+
+model ReplicacheClient {
+    id        String @id @db.Char(36)
+    createdAt DateTime @default(now())
+    updatedAt DateTime
+    deletedAt DateTime?
+
+    clientGroup ReplicacheClientGroup @relation(fields: [clientGroupId], references: [id])
+    clientGroupId String
+    clientVersion Int
+    lastMutationId BigInt
+
+    @@index([clientGroupId])
+}
+
+
+
+model ReplicacheCVR {
+    id Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime
+    deletedAt DateTime?
+
+    // TODO: type this
+    data Json
+    clientGroupID String @db.Char(36)
+    clientVersion Int
+
+    @@map("replicache_cvr")
+    @@id([clientGroupID, id])
+}
+
+
+
 model InvitationCode {
   code     String  @id @default(cuid())
   used     Boolean @default(false)
@@ -846,6 +904,8 @@ model PasswordResetToken {
 
 model User {
   id                     String                   @id @unique @default(cuid())
+//   TODO: enforce not null once all users have one
+  workspaceID           String? @db.Char(24)
   createdAt              DateTime                 @default(now())
   updatedAt              DateTime                 @updatedAt
   email                  String                   @unique
@@ -855,6 +915,7 @@ model User {
   home_items             Json?
   avatar                 String?
   email_verified         Boolean?
+
   auth_session           Session[]
   followedBy             User[]                   @relation("UserFollows")
   following              User[]                   @relation("UserFollows")
