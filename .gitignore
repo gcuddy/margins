@@ -14,3 +14,5 @@ node_modules
 yarn.lock
 tracing_output/
 .logbook
+tests-results/
+screenshots/

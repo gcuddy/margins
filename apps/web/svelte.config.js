@@ -23,6 +23,10 @@ const config = {
 		adapter: adapter({
 			// runtime: 'edge',
 		}),
+
+		env: {
+			dir: '../..',
+		},
 	},
 	compilerOptions: {},
 };

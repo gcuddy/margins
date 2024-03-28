@@ -1,0 +1,20 @@
+{
+	"name": "@margins/email",
+	"private": true,
+	"sideEffects": false,
+	"version": "0.0.0",
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"license": "MIT",
+	"scripts": {
+		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+		"lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+		"lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+		"postinstall": "prisma generate"
+	},
+	"dependencies": {
+		"dotenv": "^16.4.5",
+		"resend": "^3.2.0"
+	},
+	"devDependencies": {}
+}
