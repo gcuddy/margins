@@ -48,7 +48,7 @@
 	</div>
 	<main
 		class={cn(
-			'flex h-full w-full flex-1 flex-col',
+			'flex h-full w-full flex-1 flex-col border-l',
 			'relative',
 			'col-start-2',
 			// $mainClassStore,
