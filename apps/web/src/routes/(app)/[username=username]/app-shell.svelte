@@ -1,4 +1,5 @@
 <script lang="ts">
+	import './app.css';
 	import { page } from '$app/stores';
 	import { cn } from '@margins/lib';
 	import Nav from './nav.svelte';

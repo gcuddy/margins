@@ -2,7 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import { createReplicache, setReplicache } from './replicache';
 
-export let workspaceID: string;
+	export let workspaceID: string;
 	export let token: string;
 
 	// this could also happen in load function?

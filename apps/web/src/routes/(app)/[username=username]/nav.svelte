@@ -1,13 +1,75 @@
+<script lang="ts" context="module">
+	import Library from 'lucide-svelte/icons/library';
+	import Rss from 'lucide-svelte/icons/rss';
+	import Box from 'lucide-svelte/icons/box';
+	import BookMarked from 'lucide-svelte/icons/book-marked';
+	import Layers from 'lucide-svelte/icons/layers';
+	type Nav = {
+		active: (url: string) => boolean;
+		href: (username: string) => string;
+		icon: ComponentType;
+		label: string;
+	};
+	export const navItems: Array<Nav> = [
+		// {
+		// 	active: (url) => url.startsWith('/home'),
+		// 	href: '/home',
+		// 	icon: Home,
+		// 	label: 'Home',
+		// },
+		{
+			active: (url) => url.startsWith('/library'),
+			href: (username: string) => `/u:${username}/backlog`,
+			icon: Library,
+			label: 'Library',
+		},
+		{
+			active: (url) => url.startsWith('/subscriptions'),
+			href: (username: string) => `/u:${username}/subscriptions`,
+			icon: Rss,
+			label: 'Subscriptions',
+		},
+		{
+			active: (path) => path === '/collections',
+			href: (username: string) => `/u:${username}/collections`,
+			icon: Box,
+			label: 'Collections',
+		},
+		// {
+		// 	active: (url) => url.startsWith('/notes'),
+		// 	href: '/notes',
+		// 	icon: TreePine,
+		// 	label: 'Evergreens',
+		// },
+		{
+			active: (url) => url.startsWith('/notebook'),
+			href: (username: string) => `/u:${username}/notebook`,
+			icon: BookMarked,
+			label: 'Notebook',
+		},
+		{
+			active: (url) => url === '/views',
+			href: (username: string) => `/u:${username}/views`,
+			icon: Layers,
+			label: 'Views',
+		},
+	];
+</script>
+
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import ColResizer from '$lib/client/components/col-resizer.svelte';
 	import { Avatar, Button, Dropdown } from '@margins/ui';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 	import Search from 'lucide-svelte/icons/search';
+	import type { ComponentType } from 'svelte';
+	import { cn } from '@margins/lib';
 	export let width: number;
 </script>
 
 <nav class="relative flex h-full flex-col">
+	<!-- Username + Avatar + Search -->
 	<div class="px-3.5 pt-2">
 		<div class="flex h-10 w-full items-center justify-between">
 			<span class="flex">
@@ -32,18 +94,55 @@
 							y: -4,
 						}}
 					>
-						<Dropdown.Item>Profile</Dropdown.Item>
-						<Dropdown.Item>Settings</Dropdown.Item>
-						<Dropdown.Item>Logout</Dropdown.Item>
+						<!-- <Dropdown.Item>Profile</Dropdown.Item>
+						<Dropdown.Item>Settings</Dropdown.Item> -->
+						<Dropdown.Item on:click={() => goto('/logout')}
+							>Logout</Dropdown.Item
+						>
 					</Dropdown.Content>
 				</Dropdown.Root>
 			</span>
 
-			<Button variant="ghost" size="icon">
+			<Button
+				href="/u:{$page.data.user?.username}/search"
+				variant="ghost"
+				size="icon"
+			>
 				<Search class="text-muted-foreground h-4 w-4" />
 			</Button>
 		</div>
 	</div>
+
+	<!-- Navigation -->
+	<div class="mb-1 mt-3 grow space-y-2 overflow-y-auto rounded px-3">
+		<div class="pb-2">
+			{#each navItems as { active, href, icon, label }}
+				{@const isActive = active($page.url.pathname)}
+				<Button
+					variant="ghost"
+					class={cn(
+						'group w-full justify-start rounded text-left text-[13px] font-medium',
+						isActive && 'bg-accent text-accent-foreground',
+					)}
+					size="sm"
+					href={href($page.data.user?.username ?? '')}
+				>
+					<svelte:component
+						this={icon}
+						class={cn(
+							'text-muted-foreground/80 group-hover:text-accent-foreground mr-2.5 h-4 w-4',
+							isActive && 'text-accent-foreground',
+						)}
+					/>
+					{label}
+				</Button>
+			{/each}
+		</div>
+		<div class="pb-2">
+			<span class="text-muted-foreground pl-3 text-sm font-medium"> Pins </span>
+		</div>
+	</div>
+
 	<ColResizer
 		min={220}
 		max={330}
