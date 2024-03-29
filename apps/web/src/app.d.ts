@@ -15,6 +15,8 @@ declare global {
 		interface PageData {
 			description?: string;
 			title?: string;
+
+			user?: import('lucia').User;
 		}
 	}
 }
