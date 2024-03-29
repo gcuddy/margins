@@ -10,25 +10,14 @@ import { loginUserSchema } from '../schema';
 import { Argon2id } from 'oslo/password';
 import { db } from '@margins/db';
 import { zod } from 'sveltekit-superforms/adapters';
+import { redirectToUser } from '$lib/server/utils';
 
 export const load: PageServerLoad = async (event) => {
 	const { locals } = event;
 	console.log('login load');
 	if (locals.user) {
-		redirect(302, '/library/backlog');
+		redirect(302, redirectToUser(locals.user));
 	}
-	// if (locals.user) {
-	// 	// The user is already logged in
-	// 	const redirectTo = event.url.searchParams.get('redirectTo');
-	// 	if (redirectTo) {
-	// 		// ensure that the redirect is not to the login page
-	// 		if (redirectTo !== '/login') {
-	// 			redirect(302, `/${redirectTo.slice(1)}`);
-	// 		}
-	// 	}
-	// 	// TODO: better redirect
-	// 	redirect(302, `/library/backlog`);
-	// }
 
 	const form = await superValidate(event, zod(loginUserSchema));
 
@@ -46,7 +35,12 @@ export const actions = {
 		const user = await db
 			.selectFrom('user')
 			.innerJoin('password', 'user.id', 'password.user_id')
-			.select(['user.id', 'user.email', 'password.hashed_password'])
+			.select([
+				'user.id',
+				'user.email',
+				'user.username',
+				'password.hashed_password',
+			])
 			.where('email', '=', email.toLowerCase())
 			.executeTakeFirst();
 
@@ -54,13 +48,13 @@ export const actions = {
 			return fail(400, { form, message: 'Incorrect email or password' });
 		}
 
-		console.log({ password, user });
+		// console.log({ password, user });
 
 		const validPassword = await new Argon2id().verify(
 			user.hashed_password,
 			password,
 		);
-		console.log({ validPassword });
+		// console.log({ validPassword });
 
 		if (!validPassword) {
 			// TODO: message
@@ -77,10 +71,10 @@ export const actions = {
 			...sessionCookie.attributes,
 		});
 
-		console.log({
-			session,
-			sessionCookie,
-		});
-		return redirect(302, `/library/backlog`);
+		// console.log({
+		// 	session,
+		// 	sessionCookie,
+		// });
+		return redirect(302, redirectToUser(user));
 	},
 } satisfies Actions;

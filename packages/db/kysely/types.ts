@@ -770,9 +770,9 @@ export type DB = {
 	Person: Person;
 	person_to_entry: person_to_entry;
 	Relation: Relation;
+	replicache_client: ReplicacheClient;
 	replicache_client_group: ReplicacheClientGroup;
 	replicache_cvr: ReplicacheCVR;
-	ReplicacheClient: ReplicacheClient;
 	SmartList: SmartList;
 	State: State;
 	Stylesheet: Stylesheet;

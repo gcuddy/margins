@@ -53,6 +53,7 @@ model ReplicacheClient {
     lastMutationId BigInt
 
     @@index([clientGroupId])
+    @@map("replicache_client")
 }
 
 

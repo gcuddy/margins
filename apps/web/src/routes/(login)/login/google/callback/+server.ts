@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '@margins/db';
 import { auth } from '@margins/auth';
 import { generateId } from 'lucia';
+import { redirectToUser } from '$lib/server/utils';
 
 const googleUserSchema = z.object({
 	email: z.string(),
@@ -80,7 +81,10 @@ export async function GET(event) {
 			});
 		}
 
+		let username: string | null = null;
+
 		if (existingUser) {
+			username = existingUser.username;
 			// User exists, add oauth connection
 			await db
 				.insertInto('oauth_account')
@@ -133,7 +137,7 @@ export async function GET(event) {
 
 		return new Response(null, {
 			headers: {
-				location: '/library/backlog',
+				location: redirectToUser({ username }),
 			},
 			status: 302,
 		});

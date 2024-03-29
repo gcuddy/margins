@@ -106,6 +106,6 @@ export const actions: Actions = {
 				},
 			);
 		}
-		return redirect(303, '/library/backlog');
+		return redirect(303, '/username');
 	},
 };
