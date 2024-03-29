@@ -11,12 +11,6 @@
 		label: string;
 	};
 	export const navItems: Array<Nav> = [
-		// {
-		// 	active: (url) => url.startsWith('/home'),
-		// 	href: '/home',
-		// 	icon: Home,
-		// 	label: 'Home',
-		// },
 		{
 			active: (url) => url.startsWith('/library'),
 			href: (username: string) => `/u:${username}/backlog`,
@@ -35,12 +29,6 @@
 			icon: Box,
 			label: 'Collections',
 		},
-		// {
-		// 	active: (url) => url.startsWith('/notes'),
-		// 	href: '/notes',
-		// 	icon: TreePine,
-		// 	label: 'Evergreens',
-		// },
 		{
 			active: (url) => url.startsWith('/notebook'),
 			href: (username: string) => `/u:${username}/notebook`,
@@ -60,7 +48,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import ColResizer from '$lib/client/components/col-resizer.svelte';
-	import { Avatar, Button, Dropdown } from '@margins/ui';
+	import { Avatar, Button, Dropdown, Separator } from '@margins/ui';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 	import Search from 'lucide-svelte/icons/search';
 	import type { ComponentType } from 'svelte';
@@ -70,7 +58,7 @@
 
 <nav class="relative flex h-full flex-col">
 	<!-- Username + Avatar + Search -->
-	<div class="px-3.5 pt-2">
+	<div class="px-3 pt-2">
 		<div class="flex h-10 w-full items-center justify-between">
 			<span class="flex">
 				<Dropdown.Root>
@@ -90,8 +78,8 @@
 						transitionConfig={{
 							duration: 75,
 							start: 0.97,
-							x: -4,
-							y: -4,
+							x: 0,
+							y: -1,
 						}}
 					>
 						<!-- <Dropdown.Item>Profile</Dropdown.Item>
@@ -110,6 +98,13 @@
 			>
 				<Search class="text-muted-foreground h-4 w-4" />
 			</Button>
+		</div>
+	</div>
+
+	<div class="my-2 px-3">
+		<div class="flex flex-1 items-center">
+			<Button variant="outline" size="sm">Add URL</Button>
+			<Separator class="hidden h-8 lg:flex" orientation="vertical" />
 		</div>
 	</div>
 

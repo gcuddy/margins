@@ -9,3 +9,4 @@ export { default as Logo } from './components/logo/logo.svelte';
 export * as Avatar from './components/avatar/index.js';
 export * from './components/icons/index.js';
 export * as Dropdown from './components/dropdown/index.js';
+export * from './components/separator/index.js';
