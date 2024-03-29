@@ -12,31 +12,31 @@
 	};
 	export const navItems: Array<Nav> = [
 		{
-			active: (url) => url.startsWith('/library'),
+			active: (path) => path.endsWith('/backlog'),
 			href: (username: string) => `/u:${username}/backlog`,
 			icon: Library,
 			label: 'Library',
 		},
 		{
-			active: (url) => url.startsWith('/subscriptions'),
+			active: (url) => url.endsWith('/subscriptions'),
 			href: (username: string) => `/u:${username}/subscriptions`,
 			icon: Rss,
 			label: 'Subscriptions',
 		},
 		{
-			active: (path) => path === '/collections',
+			active: (path) => path.endsWith('/collections'),
 			href: (username: string) => `/u:${username}/collections`,
 			icon: Box,
 			label: 'Collections',
 		},
 		{
-			active: (url) => url.startsWith('/notebook'),
+			active: (url) => url.endsWith('/notebook'),
 			href: (username: string) => `/u:${username}/notebook`,
 			icon: BookMarked,
 			label: 'Notebook',
 		},
 		{
-			active: (url) => url === '/views',
+			active: (url) => url.endsWith('/views'),
 			href: (username: string) => `/u:${username}/views`,
 			icon: Layers,
 			label: 'Views',
@@ -116,7 +116,7 @@
 				<Button
 					variant="ghost"
 					class={cn(
-						'group w-full justify-start rounded text-left text-[13px] font-medium',
+						'group my-px w-full justify-start rounded text-left text-[13px] font-medium',
 						isActive && 'bg-accent text-accent-foreground',
 					)}
 					size="sm"

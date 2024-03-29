@@ -27,6 +27,7 @@
 		"@storybook/blocks": "^8.0.4",
 		"autoprefixer": "^10.4.19",
 		"bits-ui": "^0.20.0",
+		"cmdk-sv": "^0.0.17",
 		"lucide-svelte": "^0.363.0",
 		"postcss": "^8.4.38",
 		"react": "^18.2.0",
