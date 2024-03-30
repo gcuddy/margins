@@ -7,12 +7,15 @@ import {
 	type Expression,
 	type SqlBool,
 	type SelectQueryBuilder,
+	type AliasedRawBuilder,
 } from 'kysely';
+import { jsonObjectFrom } from 'kysely/helpers/mysql';
 import type {
 	PullRequestV1,
 	PullResponseOKV1,
 	PatchOperation,
 } from 'replicache';
+
 import { groupBy, mapValues, pipe, toPairs } from 'remeda';
 
 const TABLES = ['Bookmark', 'Annotation'] satisfies (keyof DB)[];
@@ -126,7 +129,9 @@ export async function POST({ locals, request }) {
 						// TODO: entry could be string or number, whoops
 						ref('id').as('id'),
 						ref('updatedAt').as('updatedAt'),
-						fn<string>('concat_ws', [val('/'), val(name), 'id']).as('key'),
+						fn<string>('concat_ws', [val('/'), val(''), val(name), 'id']).as(
+							'key',
+						),
 						// sql
 						// 	.join(
 						// 		sql`concat_ws(`,
@@ -183,6 +188,25 @@ export async function POST({ locals, request }) {
 		console.log('toDel', cvr.data);
 
 		// new data
+		const tableSelects = {
+			Bookmark: (eb) =>
+				jsonObjectFrom(
+					eb
+						.selectFrom('Entry')
+						.select([
+							'Entry.id',
+							'Entry.html',
+							'Entry.author',
+							'Entry.uri',
+							'Entry.title',
+						])
+						.whereRef('Bookmark.id', '=', 'Entry.id'),
+				).as('entry'),
+		} satisfies {
+			[key in (typeof TABLES)[number]]?: (
+				eb: ExpressionBuilder<DB, key>,
+			) => AliasedRawBuilder<any, any>;
+		};
 		for (const [name, items] of Object.entries(toPut)) {
 			const ids = items.map((item) => item.id);
 
@@ -192,7 +216,14 @@ export async function POST({ locals, request }) {
 			const table = TABLES.find((t) => t === name);
 			if (!table) continue;
 
-			let query = await tx.selectFrom(table).selectAll().where('id', 'in', ids);
+			let query = tx.selectFrom(table).selectAll().where('id', 'in', ids);
+
+			if (table in tableSelects) {
+				query = query.select(tableSelects[table as keyof typeof tableSelects]!);
+			}
+			// .select(eb => {
+			//     return
+			// })
 
 			if (actor === 'user') {
 				// TODO: and userId in table...

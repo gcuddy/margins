@@ -19,6 +19,11 @@
 		rep.close();
 	});
 
+	rep.subscribe(
+		async (tx) => await tx.scan().entries().toArray(),
+		(d) => console.log(d),
+	);
+
 	// const init = createGet(
 	// 	() => '/init',
 	// 	() => rep,

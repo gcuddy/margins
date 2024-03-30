@@ -4,6 +4,6 @@ import { Store } from '../replicache/svelte-store.js';
 
 export const LibraryStore = new Store()
 	.$type<Selectable<Bookmark>>()
-	.scan('list', () => ['Bookmark'])
+	.scan('all', () => ['Bookmark'])
 	.get((id: string) => ['Bookmark', id])
 	.build();

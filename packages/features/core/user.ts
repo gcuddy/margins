@@ -1,4 +1,4 @@
-import type { User } from '@margins/db/kysely/types';
+import type { User } from 'lucia';
 import { Context } from '@margins/lib/server';
 
 const UserContext = Context.create<User>('user');

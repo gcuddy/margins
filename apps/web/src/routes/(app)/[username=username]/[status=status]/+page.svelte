@@ -6,7 +6,7 @@
 	export let data;
 
 	const rep = getReplicache();
-	const bookmarks = LibraryStore.list.watch(
+	const bookmarks = LibraryStore.all.watch(
 		() => rep,
 		() => [],
 	)();
@@ -19,6 +19,7 @@
 		navigator.clipboard.readText().then((text) => {
 			console.log(text);
 			rep.mutate.bookmark_create({
+				status: 'Backlog',
 				uri: text,
 			});
 		});

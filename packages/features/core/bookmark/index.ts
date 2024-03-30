@@ -23,6 +23,7 @@ export const create = zod(
 				id: true,
 			}),
 			relatedEntryId: EntryModel.shape.id,
+			status: BookmarkModel.shape.status.default('Backlog'),
 		})
 		.partial()
 		.required({
@@ -36,8 +37,12 @@ export const create = zod(
 			// TODO: handle this case with ISBN, etc.
 			throw new Error('Invalid URL');
 		}
+		console.log({ uri });
+
+		// TODO: abstract this into its own entry handler
 
 		if (!entryId && uri) {
+			// TODO: cache lookup for given uri -> entry id (since given uri might resolve differently than final uri)
 			const existingEntry = await db
 				.selectFrom('Entry as e')
 				.select('id')
@@ -46,18 +51,29 @@ export const create = zod(
 
 			if (!existingEntry && uri) {
 				// TODO: cache check
-				const article = await parseUrlToEntry(uri);
+				try {
+					const article = await parseUrlToEntry(uri);
+					console.log({ article });
 
-				const { insertId } = await db
-					.insertInto('Entry')
-					.values({
-						updatedAt: new Date(),
-						...article,
-					})
-					.ignore()
-					.executeTakeFirst();
+					const { insertId } = await db
+						.insertInto('Entry')
+						.values({
+							updatedAt: new Date(),
+							...article,
+						})
+						.ignore()
+						.executeTakeFirst();
 
-				entryId = Number(insertId);
+					const newEntry = await db
+						.selectFrom('Entry')
+						.select(['id'])
+						.where('uri', '=', article.uri as string)
+						.executeTakeFirst();
+
+					entryId = Number(newEntry?.id);
+				} catch (e) {
+					console.error(e);
+				}
 			} else if (existingEntry) {
 				// Entry already exists - bump it to the top of the list, and return that info
 				entryId = existingEntry.id;
@@ -69,12 +85,15 @@ export const create = zod(
 		}
 
 		const user = useUser();
+		console.log({ user });
 
 		await db.transaction().execute(async (trx) => {
 			if (!entryId) {
 				throw new Error('entryId is undefined');
 			}
 			const _entryId = entryId;
+
+			console.log({ collection, relatedEntryId, status });
 
 			if (status) {
 				const q = createCompiledInsertBookmarkQuery(trx, {

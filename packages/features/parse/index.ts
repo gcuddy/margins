@@ -8,6 +8,7 @@ type EntryInput = Omit<Insertable<Entry>, 'updatedAt'>;
 export async function parseUrlToEntry(url: string): Promise<EntryInput> {
 	const parser = new Parser(url);
 	const { type: _, ...parsed } = await parser.parse();
+	console.log({ parsed });
 
 	const entry = {
 		...parsed,

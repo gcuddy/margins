@@ -47,7 +47,7 @@ export function createCompiledInsertBookmarkQuery(
 					.selectFrom('Bookmark')
 					.select(({ ref }) => [
 						...columns.map((c) => sql`${_insertable[c]}`.as(c)),
-						sql`min(${ref('sort_order')}) - 100`.as('sort_order'),
+						sql`coalesce(min(${ref('sort_order')}), 0) - 100`.as('sort_order'),
 					]),
 			)
 			// Bump to top
