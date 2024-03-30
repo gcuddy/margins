@@ -1,4 +1,4 @@
-import { isValidUrl } from '@margins/lib';
+import { createId, isValidUrl } from '@margins/lib';
 import { zod } from '../utils/zod.js';
 import { db } from '@margins/db';
 import {
@@ -14,6 +14,7 @@ import { nanoid } from 'nanoid';
 export const create = zod(
 	BookmarkModel.pick({
 		entryId: true,
+		id: true,
 		status: true,
 		uri: true,
 	})
@@ -96,7 +97,7 @@ export const create = zod(
 			if (status) {
 				const q = createCompiledInsertBookmarkQuery(trx, {
 					entryId: _entryId,
-					id: nanoid(),
+					id: input.id ?? createId(),
 					status,
 					updatedAt: new Date(),
 					userId: user.id,

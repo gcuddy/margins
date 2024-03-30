@@ -27,11 +27,9 @@ export async function parseUrlToEntry(url: string): Promise<EntryInput> {
 	const { url: _, ...parsed } = await parseArticle({ url });
 	// const parsed = {};
 
-	const entry: EntryInput = {
+	return {
 		...parsed,
 		type: 'article',
 		uri: url,
 	};
-
-	return entry;
 }

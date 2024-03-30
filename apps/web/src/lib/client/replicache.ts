@@ -3,12 +3,27 @@ import replicacheStatus from './stores/replicache-status';
 import { getContext, setContext } from 'svelte';
 import { Client } from '@margins/features';
 import type { ServerType } from '@margins/features/replicache/server';
+import { LibraryStore } from '@margins/features/data';
 
 const s = Symbol('replicache');
 
 const mutators = new Client<ServerType>()
 	.mutation('bookmark_create', async (tx, input) => {
+		// TODO: should we first fetch articleInfo?
+		// TODO: toast
+		// TODO: if no internet connection, don't put (but queue for later)
 		console.log('bookmark_create', input);
+		if (navigator.onLine) {
+			await LibraryStore.put(tx, [input.id!], {
+				id: input.id!,
+				...input,
+				author: '[no author]',
+				title: '[no title]',
+				uri: input.uri,
+			});
+		} else {
+			// toast...
+		}
 	})
 	.build();
 

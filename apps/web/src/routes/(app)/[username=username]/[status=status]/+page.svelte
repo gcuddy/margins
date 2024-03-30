@@ -3,6 +3,8 @@
 	import Inbox from 'lucide-svelte/icons/inbox';
 	import { LibraryStore } from '@margins/features/data';
 	import { getReplicache } from '$lib/client/replicache';
+	import { createId } from '@margins/lib';
+	import { page } from '$app/stores';
 	export let data;
 
 	const rep = getReplicache();
@@ -18,8 +20,8 @@
 <svelte:window
 	on:paste={() => {
 		navigator.clipboard.readText().then((text) => {
-			console.log(text);
 			rep.mutate.bookmark_create({
+				id: createId(),
 				status: 'Backlog',
 				uri: text,
 			});
@@ -30,7 +32,16 @@
 	count: {JSON.stringify($bookmarks.length)}
 	<ul>
 		{#each $bookmarks as bookmark}
-			<li>{bookmark.title ?? bookmark.entry?.title ?? bookmark.id}</li>
+			<li>
+				<!-- TODO: figure out if we should link to bookmark id or entry id...
+                    bookmark id makes sense her ebut then entry id more generic so makes sense also
+                -->
+				<a href="/u:{$page.data.user?.username}/read/{bookmark.id}">
+					{bookmark.title ?? bookmark.entry?.title ?? bookmark.id}
+					author: {bookmark.entry?.author}
+					{bookmark.id}</a
+				>
+			</li>
 		{/each}
 	</ul>
 </ShellContent>

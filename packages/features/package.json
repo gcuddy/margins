@@ -38,6 +38,11 @@
 		"./parse": {
 			"import": "./parse/index.ts",
 			"types": "./parse/index.ts"
+		},
+		"./entries": {
+			"import": "./entries/index.ts",
+			"types": "./entries/index.ts",
+			"svelte": "./entries/index.ts"
 		}
 	},
 	"license": "MIT",

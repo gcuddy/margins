@@ -24,6 +24,7 @@
 	"dependencies": {
 		"@margins/config": "workspace:*",
 		"clsx": "^2.1.0",
+		"nanoid": "^5.0.6",
 		"tailwind-merge": "^1.13.2"
 	},
 	"devDependencies": {

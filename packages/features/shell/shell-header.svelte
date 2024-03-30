@@ -6,7 +6,7 @@
 </script>
 
 <header
-	class="flex min-h-14 max-w-[100vw] shrink-0 items-center justify-between gap-3 border-b-[0.5px] pl-6 pr-8"
+	class="flex min-h-10 max-w-[100vw] shrink-0 items-center justify-between gap-3 border-b-[0.5px] pl-6 pr-8"
 >
 	{#if title}
 		<div class="flex items-center">

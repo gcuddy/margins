@@ -1,4 +1,7 @@
-export function getJsonLd(doc: HTMLElement) {
+import { ArticleSchema } from '../schemas/schemaorg.js';
+import type { HTMLElement } from 'node-html-parser';
+
+export function getSchemaOrgArticle(doc: HTMLElement) {
 	const jsonLd = doc.querySelectorAll('script[type="application/ld+json"]');
 	if (!jsonLd) {
 		return;
@@ -8,9 +11,19 @@ export function getJsonLd(doc: HTMLElement) {
 		return;
 	}
 	const articleJson = json.find((json: any) =>
-		new RegExp(['Article', 'Blog', 'NewsArticle'].join('|')).test(
+		new RegExp(['Blog', 'NewsArticle', 'Article'].join('|')).test(
 			json['@type'],
 		),
 	);
-	return articleJson;
+	const article = ArticleSchema.safeParse(articleJson);
+
+	if (!article.success) {
+		return;
+	}
+
+	if (article.data.wordcount) {
+		article.data.wordCount = article.data.wordcount;
+	}
+
+	return article.data;
 }
