@@ -1855,15 +1855,15 @@ export class Parser {
 		return ancestors;
 	}
 	private scoreNodes(nodes: Array<HTMLElement>) {
-		console.log('*** Starting to Score Nodes ***');
-		console.log(
-			`We have ${nodes.length} nodes to score! Here's a look at them:`,
-			JSON.stringify(
-				nodes.map((node) => printRawHTMLTag(node)),
-				null,
-				2,
-			),
-		);
+		// console.log('*** Starting to Score Nodes ***');
+		// console.log(
+		// 	`We have ${nodes.length} nodes to score! Here's a look at them:`,
+		// 	JSON.stringify(
+		// 		nodes.map((node) => printRawHTMLTag(node)),
+		// 		null,
+		// 		2,
+		// 	),
+		// );
 		const candidates = [];
 		for (const node of nodes) {
 			const parent = node.parentNode;
@@ -2099,8 +2099,8 @@ export class Parser {
 	}
 
 	private initializeNode(node: HTMLElement) {
-		console.log('-- initializing node --');
-		console.log({ node });
+		// console.log('-- initializing node --');
+		// console.log({ node });
 		// console.log('-- initializing node --');
 		this.nodeScoreMap.set(node, 0);
 		// Modifiying this slightly from arc90 to get with the times (stolen from Mercury-Parser's constants)
@@ -2181,12 +2181,10 @@ export class Parser {
 		const divsToParagraphs = this.root
 			.querySelectorAll('div')
 			.filter((e) => e.querySelectorAll(DIV_TO_P_BLOCK_TAGS).length === 0);
-		console.log({ divsToParagraphs });
 		divsToParagraphs.forEach((e) =>
 			e.replaceWith(this.changeElementTag(e, 'p')),
 		);
 		nodesToScore.push(...divsToParagraphs);
-		console.log({ nodesToScore });
 		return nodesToScore;
 	}
 
