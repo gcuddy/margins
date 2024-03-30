@@ -4,6 +4,26 @@
 	"sideEffects": false,
 	"version": "0.0.0",
 	"main": "./index.ts",
+	"exports": {
+		".": {
+			"import": "./index.ts",
+			"require": "./index.ts",
+			"types": "./index.ts",
+			"svelte": "./index.ts",
+			"default": "./index.ts",
+			"node": "./index.ts"
+		},
+		"./zod": {
+			"import": "./zod/index.ts",
+			"require": "./zod/index.ts",
+			"types": "./zod/index.ts",
+			"svelte": "./zod/index.ts",
+			"default": "./zod/index.ts",
+			"node": "./zod/index.ts"
+		},
+		"./kysely/types": "./kysely/types.ts",
+		"./kysely/enums": "./kysely/enums.ts"
+	},
 	"types": "./index.ts",
 	"license": "MIT",
 	"scripts": {
@@ -23,9 +43,5 @@
 		"prisma-kysely": "^1.8.0",
 		"zod-prisma": "^0.5.4"
 	},
-	"files": [
-		"zod",
-		"kysely"
-	],
 	"type": "module"
 }

@@ -6,7 +6,7 @@ import {
 	type Kysely,
 	type Transaction,
 } from 'kysely';
-import type { DB, Bookmark } from '@margins/db/kysely/types.js';
+import type { DB, Bookmark } from '@margins/db/kysely/types';
 import { db, values } from '@margins/db';
 
 export function createCompiledInsertBookmarkQuery(

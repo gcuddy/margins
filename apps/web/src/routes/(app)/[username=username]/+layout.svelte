@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import ReplicacheProvider from '$lib/client/replicache-provider.svelte';
-	import { AppShell } from '@margins/features/shell/index';
+	import { AppShell } from '@margins/features/shell';
 	export let data;
 </script>
 

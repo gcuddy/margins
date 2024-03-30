@@ -3,7 +3,7 @@ import { resend } from '@margins/email';
 import { db } from '@margins/db';
 import { TimeSpan, createDate } from 'oslo';
 import { generateRandomString, alphabet } from 'oslo/crypto';
-import { VERIFICATION_CODE_LENGTH } from './constants';
+import { VERIFICATION_CODE_LENGTH } from './constants.js';
 
 // TODO: add rate limiting via upstash rate limit
 

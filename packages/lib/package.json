@@ -5,6 +5,16 @@
 	"version": "0.0.0",
 	"main": "./index.ts",
 	"types": "./index.ts",
+	"exports": {
+		".": {
+			"import": "./index.ts",
+			"svelte": "./index.ts",
+			"types": "./index.ts"
+		},
+		"./server": {
+			"import": "./server/index.ts"
+		}
+	},
 	"license": "MIT",
 	"scripts": {
 		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",
@@ -19,5 +29,6 @@
 	"devDependencies": {
 		"@margins/tsconfig": "workspace:*",
 		"typescript": "^5.2.2"
-	}
+	},
+	"type": "module"
 }

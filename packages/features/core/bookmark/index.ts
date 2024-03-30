@@ -2,10 +2,15 @@ import { isValidUrl } from '@margins/lib';
 import { zod } from '../utils/zod.js';
 import {
 	db,
+	// BookmarkModel,
+	// CollectionItemsModel,
+	// EntryModel,
+} from '@margins/db';
+import {
 	BookmarkModel,
 	CollectionItemsModel,
 	EntryModel,
-} from '@margins/db';
+} from '@margins/db/zod';
 import { parseUrlToEntry } from '../../index.js';
 import { createCompiledInsertBookmarkQuery } from './queries.js';
 import { useUser } from '../user.js';

@@ -2,6 +2,7 @@
 	// "extends": "@margins/tsconfig/base.json",
 	"compilerOptions": {
 		"allowJs": true,
+		"baseUrl": ".",
 		"checkJs": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,

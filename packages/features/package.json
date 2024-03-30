@@ -5,6 +5,37 @@
 	"version": "0.0.0",
 	"main": "./index.ts",
 	"types": "./index.ts",
+	"exports": {
+		".": {
+			"import": "./index.ts",
+			"require": "./index.ts",
+			"types": "./index.ts",
+			"svelte": "./index.ts"
+		},
+		"./shell": {
+			"import": "./shell/index.ts",
+			"svelte": "./shell/index.ts",
+			"types": "./shell/index.ts"
+		},
+		"./data": {
+			"import": "./data/index.ts",
+			"svelte": "./data/index.ts",
+			"types": "./data/index.ts"
+		},
+		"./core": {
+			"import": "./core/index.ts",
+			"svelte": "./core/index.ts",
+			"types": "./core/index.ts"
+		},
+		"./replicache": {
+			"import": "./replicache/index.ts",
+			"svelte": "./replicache/index.ts",
+			"types": "./replicache/index.ts"
+		},
+		"./replicache/server": {
+			"import": "./replicache/server.ts"
+		}
+	},
 	"license": "MIT",
 	"scripts": {
 		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",

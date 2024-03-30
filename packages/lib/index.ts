@@ -1,4 +1,4 @@
-export { cn } from './classnames';
-export { flyAndScale } from './transitions';
-export * from './text';
-export * from './utils';
+export { cn } from './classnames.js';
+export { flyAndScale } from './transitions.js';
+export * from './text.js';
+export * from './utils.js';

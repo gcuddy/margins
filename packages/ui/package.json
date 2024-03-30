@@ -5,7 +5,11 @@
 	"version": "0.0.0",
 	"main": "./index.ts",
 	"exports": {
-		".": "./index.ts",
+		".": {
+			"import": "./index.ts",
+			"svelte": "./index.ts",
+			"types": "./index.ts"
+		},
 		"./styles/colors.css": "./styles/colors.css",
 		"./styles/style.css": "./styles/style.css"
 	},
@@ -20,6 +24,7 @@
 		"lint:fix": "eslint . --fix",
 		"lint:report": "eslint . --format json --output-file ../../lint-results/ui.json"
 	},
+	"svelte": "./index.ts",
 	"dependencies": {
 		"@margins/lib": "*",
 		"@melt-ui/svelte": "^0.76.2",

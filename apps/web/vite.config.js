@@ -4,6 +4,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 const config = {
 	envDir: '../..',
 	plugins: [sveltekit()],
+	resolve: {
+		preserveSymLinks: true,
+	},
 	server: {
 		fs: {
 			allow: ['..'],

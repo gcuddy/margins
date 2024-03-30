@@ -1,5 +1,5 @@
 import { db } from '@margins/db';
-import { withUser } from '@margins/features/core/user';
+import { withUser } from '@margins/features/core';
 import { server } from '@margins/features/replicache/server';
 import type { PushRequestV1 } from 'replicache';
 

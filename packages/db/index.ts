@@ -1,13 +1,17 @@
 import { Kysely, sql, type RawBuilder, type Expression } from 'kysely';
 import { PlanetScaleDialect } from 'kysely-planetscale';
-import 'dotenv/config';
-export * from './zod/index.js';
+// import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({
+	path: '../../.env',
+});
+// export * from './zod/index.js';
 // For development
 
-import type { DB } from './kysely/types';
+import type { DB } from './kysely/types.js';
 
 export const config = {
-	host: process.env.DATABASE_HOST as string,
+	host: (process.env.DATABASE_HOST as string) ?? 'aws.connect.psdb.cloud',
 	password: process.env.DATABASE_PASSWORD as string,
 	username: process.env.DATABASE_USERNAME as string,
 };

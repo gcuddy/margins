@@ -13,5 +13,6 @@
 		"strictNullChecks": true,
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext"
-	}
+	},
+	"include": ["**/*.ts"]
 }

@@ -1,4 +1,4 @@
-import type { Bookmark } from '@margins/db/kysely/types.js';
+import type { Bookmark } from '@margins/db/kysely/types';
 import type { Selectable } from 'kysely';
 import { Store } from '../replicache/svelte-store.js';
 

@@ -10,7 +10,7 @@ import { Client } from '@planetscale/database';
 import { config } from '@margins/db';
 import type { User } from '@margins/db/kysely/types';
 
-export * as oauth from './oauth';
+export * as oauth from './oauth.js';
 
 const client = new Client(config);
 
