@@ -128,7 +128,7 @@ export async function POST({ locals, request }) {
 						sql<string>`${name}`.as('name'),
 						// TODO: entry could be string or number, whoops
 						ref('id').as('id'),
-						ref('updatedAt').as('updatedAt'),
+						ref('updatedAt').as('version'),
 						fn<string>('concat_ws', [val('/'), val(''), val(name), 'id']).as(
 							'key',
 						),
@@ -189,7 +189,7 @@ export async function POST({ locals, request }) {
 
 		// new data
 		const tableSelects = {
-			Bookmark: (eb) =>
+			Bookmark: (eb) => [
 				jsonObjectFrom(
 					eb
 						.selectFrom('Entry')
@@ -202,10 +202,11 @@ export async function POST({ locals, request }) {
 						])
 						.whereRef('Bookmark.id', '=', 'Entry.id'),
 				).as('entry'),
+			],
 		} satisfies {
 			[key in (typeof TABLES)[number]]?: (
 				eb: ExpressionBuilder<DB, key>,
-			) => AliasedRawBuilder<any, any>;
+			) => AliasedRawBuilder<any, any>[];
 		};
 		for (const [name, items] of Object.entries(toPut)) {
 			const ids = items.map((item) => item.id);
@@ -216,10 +217,14 @@ export async function POST({ locals, request }) {
 			const table = TABLES.find((t) => t === name);
 			if (!table) continue;
 
-			let query = tx.selectFrom(table).selectAll().where('id', 'in', ids);
+			let query = tx.selectFrom(table).where('id', 'in', ids);
 
 			if (table in tableSelects) {
-				query = query.select(tableSelects[table as keyof typeof tableSelects]!);
+				query = query
+					.select(tableSelects[table as keyof typeof tableSelects]!)
+					.selectAll(table);
+			} else {
+				query = query.selectAll();
 			}
 			// .select(eb => {
 			//     return
@@ -232,7 +237,7 @@ export async function POST({ locals, request }) {
 			const rows = await query.execute();
 
 			for (const row of rows) {
-				const key = keys[row.id];
+				const key = keys[(row as any).id];
 				if (!key) continue;
 				patch.push({
 					key,

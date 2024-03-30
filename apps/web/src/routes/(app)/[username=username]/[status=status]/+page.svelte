@@ -10,6 +10,7 @@
 		() => rep,
 		() => [],
 	)();
+	$: console.log({ $bookmarks });
 </script>
 
 <ShellHeader title={data.status} icon={Inbox}></ShellHeader>
@@ -26,5 +27,10 @@
 	}}
 />
 <ShellContent>
-	{JSON.stringify($bookmarks)}
+	count: {JSON.stringify($bookmarks.length)}
+	<ul>
+		{#each $bookmarks as bookmark}
+			<li>{bookmark.id}</li>
+		{/each}
+	</ul>
 </ShellContent>

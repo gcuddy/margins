@@ -1,11 +1,6 @@
 import { isValidUrl } from '@margins/lib';
 import { zod } from '../utils/zod.js';
-import {
-	db,
-	// BookmarkModel,
-	// CollectionItemsModel,
-	// EntryModel,
-} from '@margins/db';
+import { db } from '@margins/db';
 import {
 	BookmarkModel,
 	CollectionItemsModel,
