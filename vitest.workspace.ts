@@ -20,4 +20,18 @@ export default defineWorkspace([
 			},
 		},
 	},
+	{
+		test: {
+			globals: true,
+			name: '@margins/parser',
+			include: ['packages/parser/lib/**/*.{test,spec}.[jt]s?(x)'],
+			environment: 'happy-dom',
+			// setupFiles: ['packages/ui/test-setup.ts'],
+			// server: {
+			// 	deps: {
+			// 		inline: ['bits-ui'],
+			// 	},
+			// },
+		},
+	},
 ]);

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { createReplicache, setReplicache } from './replicache';
+	import { createGet } from '@margins/features';
 
 	export let workspaceID: string;
 	export let token: string;
@@ -24,15 +25,17 @@
 		(d) => console.log(d),
 	);
 
-	// const init = createGet(
-	// 	() => '/init',
-	// 	() => rep,
-	// )();
+	const init = createGet(
+		() => '/init',
+		() => rep,
+	)();
+
+	$: console.log({ $init });
 </script>
 
 <svelte:window on:focus={() => rep.pull} />
 
-{#if rep}
+{#if rep && $init}
 	<slot />
 {:else}
 	Loading...

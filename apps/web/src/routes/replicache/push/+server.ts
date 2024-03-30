@@ -14,6 +14,8 @@ export async function POST({ locals, request }) {
 
 	const body = (await request.json()) as PushRequestV1;
 
+	console.dir({ body }, { depth: null });
+
 	const actor = 'user';
 
 	console.log({ user });

@@ -34,6 +34,10 @@
 		},
 		"./replicache/server": {
 			"import": "./replicache/server.ts"
+		},
+		"./parse": {
+			"import": "./parse/index.ts",
+			"types": "./parse/index.ts"
 		}
 	},
 	"license": "MIT",

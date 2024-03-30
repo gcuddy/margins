@@ -54,29 +54,17 @@ export const create = zod(
 				// TODO: cache check
 				try {
 					const article = await parseUrlToEntry(uri);
-					console.log({ article });
+					entryId = nanoid();
 
-					const { insertId } = await db
+					await db
 						.insertInto('Entry')
 						.values({
-							id: nanoid(),
+							id: entryId,
 							updatedAt: new Date(),
 							...article,
 						})
 						.ignore()
 						.executeTakeFirst();
-
-					console.log({ insertId });
-
-					const newEntry = await db
-						.selectFrom('Entry')
-						.select(['id'])
-						.where('uri', '=', article.uri as string)
-						.executeTakeFirst();
-
-					console.log({ newEntry });
-
-					entryId = Number(insertId ?? newEntry?.id);
 				} catch (e) {
 					console.error(e);
 				}

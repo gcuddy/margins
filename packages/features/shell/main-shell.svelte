@@ -3,7 +3,7 @@
 </script>
 
 <main
-	class="bg-background-elevation shadow-subtle relative mb-2 mr-2 mt-2 flex flex-auto grow flex-col place-items-stretch overflow-auto rounded border-[0.5px]"
+	class="bg-background-elevation relative mb-2 mr-2 mt-2 flex flex-auto grow flex-col place-items-stretch overflow-auto rounded border-[0.5px] shadow"
 >
 	{#if $$slots.header}
 		<ShellHeader>

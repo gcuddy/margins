@@ -1,37 +1,37 @@
 // TODO: copy over logic from old parse.ts, which includes parsing spotify, youtube, books, etc.
 import type { Entry } from '@margins/db/kysely/types';
-// import { Parser } from '@margins/parser';
+import { parseArticle } from '@margins/parser';
 import type { Insertable } from 'kysely';
 
 type EntryInput = Omit<Insertable<Entry>, 'updatedAt' | 'id'>;
 
-class Parser {
-	url: string;
+// class Parser {
+// 	url: string;
 
-	constructor(url: string) {
-		this.url = url;
-	}
+// 	constructor(url: string) {
+// 		this.url = url;
+// 	}
 
-	async parse() {
-		const parsed = {
-			title: 'title',
-			type: 'article',
-			uri: this.url,
-		};
+// 	async parse() {
+// 		const parsed = {
+// 			title: 'title',
+// 			type: 'article',
+// 			uri: this.url,
+// 		};
 
-		return parsed;
-	}
-}
+// 		return parsed;
+// 	}
+// }
 
 export async function parseUrlToEntry(url: string): Promise<EntryInput> {
-	const parser = new Parser(url);
-	const { type: _, ...parsed } = await parser.parse();
-	console.log({ parsed });
+	const { url: _, ...parsed } = await parseArticle({ url });
+	// const parsed = {};
 
-	const entry = {
+	const entry: EntryInput = {
 		...parsed,
 		type: 'article',
-	} satisfies EntryInput;
+		uri: url,
+	};
 
 	return entry;
 }
