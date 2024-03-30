@@ -2,10 +2,15 @@ import { Replicache } from 'replicache';
 import replicacheStatus from './stores/replicache-status';
 import { getContext, setContext } from 'svelte';
 import { Client } from '@margins/features';
+import type { ServerType } from '@margins/features/replicache/server';
 
 const s = Symbol('replicache');
 
-const mutators = new Client().build();
+const mutators = new Client<ServerType>()
+	.mutation('bookmark_create', async (tx, input) => {
+		console.log('bookmark_create', input);
+	})
+	.build();
 
 export function createReplicache({
 	token,

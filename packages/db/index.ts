@@ -1,11 +1,8 @@
 import { Kysely, sql, type RawBuilder, type Expression } from 'kysely';
 import { PlanetScaleDialect } from 'kysely-planetscale';
-import dotenv from 'dotenv';
-
+import 'dotenv/config';
+export * from './zod/index.js';
 // For development
-dotenv.config({
-	path: '../../.env',
-});
 
 import type { DB } from './kysely/types';
 

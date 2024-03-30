@@ -12,13 +12,22 @@
 		"lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
 	},
 	"dependencies": {
-		"@margins/config": "workspace:*",
+		"@margins/db": "workspace:*",
+		"@margins/lib": "workspace:*",
+		"@margins/parser": "workspace:*",
+		"@margins/ui": "workspace:*",
 		"clsx": "^2.1.0",
+		"command-score": "^0.1.2",
+		"kysely": "^0.27.2",
+		"nanoid": "^4.0.2",
 		"replicache": "^14.2.2",
-		"tailwind-merge": "^1.13.2"
+		"tailwind-merge": "^1.13.2",
+		"svelte": "^4.2.2"
 	},
 	"devDependencies": {
+		"@margins/config": "workspace:*",
 		"@margins/tsconfig": "workspace:*",
 		"typescript": "^5.2.2"
-	}
+	},
+	"type": "module"
 }

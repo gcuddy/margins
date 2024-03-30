@@ -1,12 +1,10 @@
 <script lang="ts">
-	import './app.css';
-	import { page } from '$app/stores';
-	import { cn } from '@margins/lib';
 	import Nav from './nav.svelte';
 
-	// import 'katex/dist/katex.min.css';
 	import { setContext } from 'svelte';
 	import { writable } from 'svelte/store';
+	import MainShell from './main-shell.svelte';
+	export let showSidebar = true;
 
 	// export let data;
 
@@ -37,9 +35,7 @@
 >
 	<!-- w-[200px] -->
 	<div>
-		{#if $page.url.pathname.startsWith('/settings')}
-			<!-- todo -->
-		{:else}
+		{#if showSidebar}
 			<div style:width="{$navWidth}px" />
 			<div class="fixed bottom-0 left-0 top-0 z-40" style:width="{$navWidth}px">
 				<Nav bind:width={$navWidth} />
@@ -47,15 +43,19 @@
 		{/if}
 		<!-- <MobileNav /> -->
 	</div>
-	<main
-		class={cn(
-			'flex h-full w-full flex-1 flex-col border-l',
-			'relative',
-			'col-start-2',
-			// $mainClassStore,
-		)}
-	>
-		<!-- style:padding-bottom="{$audioPlayer.height}px" -->
-		<slot />
-	</main>
+	<!-- style:padding-bottom="{$audioPlayer.height}px" -->
+	<div class="flex min-w-0 flex-1 flex-col">
+		<MainShell>
+			<slot />
+		</MainShell>
+	</div>
 </div>
+
+<style>
+	:global(body) {
+		position: fixed;
+		overflow: hidden;
+		width: 100%;
+		height: 100%;
+	}
+</style>

@@ -1,0 +1,29 @@
+<script lang="ts">
+	import { ShellHeader, ShellContent } from '@margins/features/shell';
+	import Inbox from 'lucide-svelte/icons/inbox';
+	import { LibraryStore } from '@margins/features/data';
+	import { getReplicache } from '$lib/client/replicache';
+	export let data;
+
+	const rep = getReplicache();
+	const bookmarks = LibraryStore.list.watch(
+		() => rep,
+		() => [],
+	)();
+</script>
+
+<ShellHeader title={data.status} icon={Inbox}></ShellHeader>
+
+<svelte:window
+	on:paste={() => {
+		navigator.clipboard.readText().then((text) => {
+			console.log(text);
+			rep.mutate.bookmark_create({
+				uri: text,
+			});
+		});
+	}}
+/>
+<ShellContent>
+	{JSON.stringify($bookmarks)}
+</ShellContent>

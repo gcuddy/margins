@@ -20,6 +20,12 @@
 		"@prisma/client": "^5.11.0",
 		"kysely": "^0.27.2",
 		"kysely-planetscale": "^1.4.0",
-		"prisma-kysely": "^1.8.0"
-	}
+		"prisma-kysely": "^1.8.0",
+		"zod-prisma": "^0.5.4"
+	},
+	"files": [
+		"zod",
+		"kysely"
+	],
+	"type": "module"
 }

@@ -1,2 +1,2 @@
-export * from './framework';
-export * from './svelte-store';
+export * from './framework.js';
+export * from './svelte-store.js';

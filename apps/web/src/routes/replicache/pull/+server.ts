@@ -95,7 +95,7 @@ export async function POST({ locals, request }) {
 			});
 		}
 
-		const results: [string, { id: string; key: string, version: string; }[]][] =
+		const results: [string, { id: string; key: string; version: string }[]][] =
 			[];
 
 		// if "user" (which in this case yes it is)

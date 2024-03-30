@@ -2,6 +2,7 @@
 	import Library from 'lucide-svelte/icons/library';
 	import Rss from 'lucide-svelte/icons/rss';
 	import Box from 'lucide-svelte/icons/box';
+	import PlusCircle from 'lucide-svelte/icons/circle-plus';
 	import BookMarked from 'lucide-svelte/icons/book-marked';
 	import Layers from 'lucide-svelte/icons/layers';
 	type Nav = {
@@ -47,12 +48,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import ColResizer from '$lib/client/components/col-resizer.svelte';
+	import ColResizer from './col-resizer.svelte';
 	import { Avatar, Button, Dropdown, Separator } from '@margins/ui';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 	import Search from 'lucide-svelte/icons/search';
 	import type { ComponentType } from 'svelte';
 	import { cn } from '@margins/lib';
+	import AddCombobox from './add-combobox.svelte';
 	export let width: number;
 </script>
 
@@ -102,9 +104,18 @@
 	</div>
 
 	<div class="my-2 px-3">
-		<div class="flex flex-1 items-center">
-			<Button variant="outline" size="sm">Add URL</Button>
-			<Separator class="hidden h-8 lg:flex" orientation="vertical" />
+		<div class="flex w-full flex-1 items-center">
+			<Button
+				class="grow justify-start rounded-r-none border-r-0"
+				variant="outline"
+				size="sm"
+			>
+				<PlusCircle class="text-muted-foreground mr-2 h-4 w-4" />
+				Add URL</Button
+			>
+			<Separator class="h-8 lg:flex" orientation="vertical" />
+			<!-- <Button variant="outline" size="sm"><ChevronDown /></Button> -->
+			<AddCombobox />
 		</div>
 	</div>
 

@@ -28,9 +28,6 @@ export type Annotation = {
 	body: string | null;
 	type: Generated<AnnotationType>;
 	private: Generated<number>;
-	/**
-	 * @zod.custom.use(TargetSchema)
-	 */
 	target: unknown | null;
 	entryId: number | null;
 	parentId: string | null;
@@ -50,7 +47,6 @@ export type Annotation = {
 	title: string | null;
 	/**
 	 * chosenIcon used for documents only?
-	 * @zod.custom.use(chosenIcon)
 	 */
 	chosenIcon: unknown | null;
 	html: string | null;
@@ -264,9 +260,6 @@ export type Entry = {
 	 * Original represents original data (html, title) in case we've re-download and/or changes...?
 	 */
 	original: unknown | null;
-	/**
-	 * @zod.custom.use(recipeSchema)
-	 */
 	recipe: unknown | null;
 	podcastIndexId: number | null;
 	/**
@@ -281,9 +274,6 @@ export type Entry = {
 	 * The TMDB id, if it's a movie or TV show.
 	 */
 	tmdbId: number | null;
-	/**
-	 * @zod.custom.use(schemaOrgSchemas)
-	 */
 	schemaOrg: unknown | null;
 	/**
 	 * Tmdb data - could also store this in "original"?
@@ -589,9 +579,6 @@ export type SmartList = {
 	filter: unknown | null;
 	viewOptions: unknown | null;
 	conditions: unknown | null;
-	/**
-	 * @zod.custom.use(chosenIcon)
-	 */
 	icon: unknown | null;
 	createdAt: Generated<Timestamp>;
 	description: string | null;

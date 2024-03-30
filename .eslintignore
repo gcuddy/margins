@@ -19,3 +19,4 @@ packages/config/tailwind-preset.js
 # Generated files
 packages/db/kysely/types.ts
 packages/db/kysely/enums.ts
+packages/db/zod/*.ts

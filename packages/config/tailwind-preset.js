@@ -10,6 +10,7 @@ const config = {
 		'./modules/**/*.{html,js,svelte,ts}',
 		'./components/**/*.{html,js,svelte,ts}',
 		'../../packages/ui/**/*.{html,js,svelte,ts,jsx,tsx}',
+		'../../packages/features/**/*.{js,ts,jsx,tsx,html,svelte}',
 	],
 	darkMode: ['selector', '[data-mode="dark"]', '[data-theme="dark"]'],
 
@@ -94,7 +95,10 @@ const config = {
 					DEFAULT: 'hsl(var(--attention) / <alpha-value>)',
 					foreground: 'hsl(var(--attention-foreground) / <alpha-value>)',
 				},
-				background: 'hsl(var(--background) / <alpha-value>)',
+				background: {
+					DEFAULT: 'hsl(var(--background) / <alpha-value>)',
+					elevation: 'hsl(var(--background-elevation) / <alpha-value>)',
+				},
 				border: 'hsl(var(--border) / <alpha-value>)',
 				card: {
 					DEFAULT: 'hsl(var(--card) / <alpha-value>)',

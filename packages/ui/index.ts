@@ -10,3 +10,5 @@ export * as Avatar from './components/avatar/index.js';
 export * from './components/icons/index.js';
 export * as Dropdown from './components/dropdown/index.js';
 export * from './components/separator/index.js';
+export * as Command from './components/command/index.js';
+export * as Popover from './components/popover/index.js';
