@@ -66,11 +66,11 @@ export async function POST({ locals, request }) {
 
 				try {
 					await server.execute(name, args);
+					console.log(`Mutation ${mutation.id} processed successfully.`);
 				} catch (e) {
 					console.error(e);
+					console.log(`Mutation ${mutation.id} failed.`);
 				}
-
-				console.log(`Mutation ${mutation.id} processed successfully.`);
 
 				await trx
 					.insertInto('replicache_client_group')

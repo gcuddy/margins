@@ -200,7 +200,7 @@ export async function POST({ locals, request }) {
 							'Entry.uri',
 							'Entry.title',
 						])
-						.whereRef('Bookmark.id', '=', 'Entry.id'),
+						.whereRef('Bookmark.entryId', '=', 'Entry.id'),
 				).as('entry'),
 			],
 		} satisfies {

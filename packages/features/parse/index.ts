@@ -3,7 +3,7 @@ import type { Entry } from '@margins/db/kysely/types';
 // import { Parser } from '@margins/parser';
 import type { Insertable } from 'kysely';
 
-type EntryInput = Omit<Insertable<Entry>, 'updatedAt'>;
+type EntryInput = Omit<Insertable<Entry>, 'updatedAt' | 'id'>;
 
 class Parser {
 	url: string;
@@ -16,7 +16,7 @@ class Parser {
 		const parsed = {
 			title: 'title',
 			type: 'article',
-			url: this.url,
+			uri: this.url,
 		};
 
 		return parsed;

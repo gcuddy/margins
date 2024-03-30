@@ -30,7 +30,7 @@
 	count: {JSON.stringify($bookmarks.length)}
 	<ul>
 		{#each $bookmarks as bookmark}
-			<li>{bookmark.id}</li>
+			<li>{bookmark.title ?? bookmark.entry.title}</li>
 		{/each}
 	</ul>
 </ShellContent>

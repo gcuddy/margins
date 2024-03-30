@@ -37,7 +37,7 @@ export const create = zod(
 			// TODO: handle this case with ISBN, etc.
 			throw new Error('Invalid URL');
 		}
-		console.log({ uri });
+		console.log({ entryId, uri });
 
 		// TODO: abstract this into its own entry handler
 
@@ -49,6 +49,7 @@ export const create = zod(
 				.where('uri', '=', uri)
 				.executeTakeFirst();
 
+			console.log({ existingEntry });
 			if (!existingEntry && uri) {
 				// TODO: cache check
 				try {
@@ -58,11 +59,14 @@ export const create = zod(
 					const { insertId } = await db
 						.insertInto('Entry')
 						.values({
+							id: nanoid(),
 							updatedAt: new Date(),
 							...article,
 						})
 						.ignore()
 						.executeTakeFirst();
+
+					console.log({ insertId });
 
 					const newEntry = await db
 						.selectFrom('Entry')
@@ -70,7 +74,9 @@ export const create = zod(
 						.where('uri', '=', article.uri as string)
 						.executeTakeFirst();
 
-					entryId = Number(newEntry?.id);
+					console.log({ newEntry });
+
+					entryId = Number(insertId ?? newEntry?.id);
 				} catch (e) {
 					console.error(e);
 				}
@@ -79,6 +85,10 @@ export const create = zod(
 				entryId = existingEntry.id;
 			}
 		}
+
+		console.log({
+			entryId,
+		});
 
 		if (!entryId) {
 			throw new Error('Could not create or retrieve entry');
@@ -98,6 +108,7 @@ export const create = zod(
 			if (status) {
 				const q = createCompiledInsertBookmarkQuery(trx, {
 					entryId: _entryId,
+					id: nanoid(),
 					status,
 					updatedAt: new Date(),
 					userId: user.id,
