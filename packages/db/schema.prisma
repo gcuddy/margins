@@ -128,8 +128,8 @@ model EntryHistory {
     toTitle              String?   @db.VarChar(2083)
     toAuthor             String?
     userId               String?
-    entryId              Int
-    bookmarkId           Int?
+    entryId              String
+    bookmarkId           String?
     addedTagIds          Json?
     removedTagIds        Json?
     addedCollectionIds   Json?
@@ -147,7 +147,7 @@ model Unread {
     id             Int      @id @default(autoincrement())
     userId         String
     feedId         Int?
-    entryId        Int
+    entryId        String
     published      DateTime @db.Timestamp(0)
     entryCreatedAt DateTime @db.Timestamp(0)
     createdAt      DateTime @default(now())
@@ -162,11 +162,11 @@ model Unread {
 }
 
 model Bookmark {
-    id               Int               @id @default(autoincrement())
+    id               String            @id @default(cuid())
     createdAt        DateTime          @default(now())
     updatedAt        DateTime          @updatedAt
     uri              String?
-    entryId          Int?
+    entryId          String?
     userId           String
     sortOrder        Int?              @default(0)
     data             Json?
@@ -234,7 +234,7 @@ model Attachment {
     size       Int?
     type       String?
     userId     String
-    bookmarkId Int?
+    bookmarkId String?
     title      String
     user       User      @relation(fields: [userId], references: [id])
     bookmark   Bookmark? @relation(fields: [bookmarkId], references: [id])
@@ -252,8 +252,8 @@ model Relation {
     /// The type of the relation
     type           RelationType @default(Related)
     userId         String
-    entryId        Int
-    relatedEntryId Int
+    entryId        String
+    relatedEntryId String
     user           User         @relation(fields: [userId], references: [id])
     entry          Entry        @relation("originatingEntryRelation", fields: [entryId], references: [id], onDelete: Cascade)
     relatedEntry   Entry        @relation("destinationEntryRelation", fields: [relatedEntryId], references: [id], onDelete: Cascade)
@@ -273,13 +273,13 @@ model Annotation {
     type             AnnotationType                  @default(annotation)
     private          Boolean                         @default(true)
     target           Json?
-    entryId          Int?
+    entryId          String?
     parentId         String?
     /// The "soft delete" time. Deletions are cleared after 30 days.
     deleted          DateTime?
     userId           String                          @default("")
     sortOrder        Float                           @default(0)
-    bookmarkId       Int?
+    bookmarkId       String?
     editedAt         DateTime?
     color            String?                         @db.VarChar(9)
     contentData      Json?
@@ -335,7 +335,7 @@ model annotation_ref {
 model annotation_to_entry_reference {
     createdAt    DateTime   @default(now())
     updatedAt    DateTime   @default(now()) @updatedAt
-    entryId      Int
+    entryId      String
     annotationId String
     Annotation   Annotation @relation(fields: [annotationId], references: [id])
     Entry        Entry      @relation(fields: [entryId], references: [id])
@@ -369,7 +369,7 @@ model person_to_entry {
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now()) @updatedAt
     personId  Int
-    entryId   Int
+    entryId   String
     role      String
     Entry     Entry    @relation(fields: [entryId], references: [id])
     Person    Person   @relation(fields: [personId], references: [id])
@@ -386,7 +386,7 @@ model Entry {
     title                String?                         @db.VarChar(2083)
     type                 DocumentType                    @default(article)
     updatedAt            DateTime                        @updatedAt
-    id                   Int                             @id @default(autoincrement())
+    id                   String                          @id @default(cuid())
     uri                  String?                         @unique @db.VarChar(500)
     html                 String?                         @db.LongText
     text                 String?                         @db.LongText
@@ -480,7 +480,7 @@ model annotation_tag {
 model TagOnEntry {
     id      Int    @id @default(autoincrement())
     tagId   Int
-    entryId Int
+    entryId String
     userId  String
     tag     Tag    @relation(fields: [tagId], references: [id])
     entry   Entry  @relation(fields: [entryId], references: [id])
@@ -506,7 +506,7 @@ model EntryData {
     updatedAt DateTime     @updatedAt
     userId    String
     data      Json?
-    entryId   Int          @unique
+    entryId   String       @unique
     custom    Json?
     media     EntryMedia[]
     entry     Entry        @relation(fields: [entryId], references: [id])
@@ -525,7 +525,7 @@ model EntryMedia {
     type           String?
     title          String?
     documentDataId Int
-    entryId        Int?
+    entryId        String?
     DocumentData   EntryData @relation(fields: [documentDataId], references: [id])
     Entry          Entry?    @relation(fields: [entryId], references: [id])
 
@@ -590,7 +590,7 @@ model Context {
     url         String?
     description String?
     createdAt   DateTime @default(now())
-    entryId     Int?
+    entryId     String?
     feedId      Int?
     userId      String
     user        User     @relation(fields: [userId], references: [id])
@@ -643,8 +643,8 @@ model CollectionItems {
     createdAt    DateTime           @default(now())
     updatedAt    DateTime           @updatedAt
     annotationId String?            @unique
-    bookmarkId   Int?
-    entryId      Int?
+    bookmarkId   String?
+    entryId      String?
     note         String?
     parentId     String?
     type         CollectionItemType @default(Entry)
@@ -729,7 +729,7 @@ model Interaction {
     last_viewed      DateTime  @default(now())
     last_annotated   DateTime  @default(now())
     last_interaction DateTime  @default(now())
-    entryId          Int
+    entryId          String
     /// The current page, if it's a book
     currentPage      Int?
     epsiodes_watched Json?
@@ -755,7 +755,7 @@ model Log {
     id           Int      @id @default(autoincrement())
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
-    entryId      Int
+    entryId      String
     note         String?
     userId       String
     date         DateTime
@@ -800,7 +800,7 @@ model EntryTag {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     tagId     Int
-    entryId   Int
+    entryId   String
     userId    String
     tag       Tag      @relation(fields: [tagId], references: [id])
     entry     Entry    @relation(fields: [entryId], references: [id])
@@ -817,7 +817,7 @@ model Tagging {
     tagId      Int
     userId     String
     feedId     Int?
-    bookmarkId Int?
+    bookmarkId String?
     tag        Tag       @relation(fields: [tagId], references: [id])
     user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     feed       Feed?     @relation(fields: [feedId], references: [id])
@@ -920,7 +920,7 @@ model User {
     annotations            Annotation[]
     subscriptions          Subscription[]
     documentData           EntryData[]
-    stylesheets            Stylesheet[]
+    // stylesheets            Stylesheet[]
     states                 State[]                  @relation("user")
     default_state          State?                   @relation("default_state", fields: [default_state_id], references: [id])
     taggings               Tagging[]
@@ -968,8 +968,8 @@ model Favorite {
     tagId        Int?         @unique
     smartListId  Int?
     annotationId String?      @unique
-    bookmarkId   Int?         @unique
-    entryId      Int?
+    bookmarkId   String?      @unique
+    entryId      String?
     feedId       Int?
     sortOrder    Float?       @default(0)
     /// The name of the folder. Only applies to favorites of type folder.
@@ -1007,32 +1007,18 @@ model Favorite {
 }
 
 model UserEntry {
-    id         Int          @id @default(autoincrement())
-    entryId    Int
-    userId     String
-    seen       DateTime?    @db.Timestamp(0)
-    user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-    entry      Entry        @relation(fields: [entryId], references: [id])
-    Stylesheet Stylesheet[]
+    id      Int       @id @default(autoincrement())
+    entryId String
+    userId  String
+    seen    DateTime? @db.Timestamp(0)
+    user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    entry   Entry     @relation(fields: [entryId], references: [id])
 
     @@unique([userId, entryId])
     @@index([userId])
     @@index([entryId])
     @@index([seen])
     @@index([userId, entryId, seen])
-}
-
-model Stylesheet {
-    id          Int        @id @default(autoincrement())
-    domain      String
-    css         String     @db.MediumText
-    userEntryId Int?
-    userId      String
-    entry       UserEntry? @relation(fields: [userEntryId], references: [id])
-    user        User       @relation(fields: [userId], references: [id])
-
-    @@index([userEntryId])
-    @@index([userId])
 }
 
 model Integration {

@@ -1,6 +1,6 @@
-import * as z from 'zod';
+import * as z from "zod"
 
 export const annotation_refModel = z.object({
-	referencerId: z.string(),
-	referencingId: z.string(),
-});
+  referencerId: z.string(),
+  referencingId: z.string(),
+})

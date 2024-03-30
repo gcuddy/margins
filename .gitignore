@@ -16,3 +16,6 @@ tracing_output/
 .logbook
 tests-results/
 screenshots/
+
+
+packages/db/zod/*.ts

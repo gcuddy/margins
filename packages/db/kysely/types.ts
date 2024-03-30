@@ -29,7 +29,7 @@ export type Annotation = {
 	type: Generated<AnnotationType>;
 	private: Generated<number>;
 	target: unknown | null;
-	entryId: number | null;
+	entryId: string | null;
 	parentId: string | null;
 	/**
 	 * The "soft delete" time. Deletions are cleared after 30 days.
@@ -37,7 +37,7 @@ export type Annotation = {
 	deleted: Timestamp | null;
 	userId: Generated<string>;
 	sortOrder: Generated<number>;
-	bookmarkId: number | null;
+	bookmarkId: string | null;
 	editedAt: Timestamp | null;
 	color: string | null;
 	contentData: unknown | null;
@@ -76,7 +76,7 @@ export type annotation_tag = {
 export type annotation_to_entry_reference = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Generated<Timestamp>;
-	entryId: number;
+	entryId: string;
 	annotationId: string;
 };
 export type AnnotationToTag = {
@@ -128,15 +128,15 @@ export type Attachment = {
 	size: number | null;
 	type: string | null;
 	userId: string;
-	bookmarkId: number | null;
+	bookmarkId: string | null;
 	title: string;
 };
 export type Bookmark = {
-	id: Generated<number>;
+	id: string;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	uri: string | null;
-	entryId: number | null;
+	entryId: string | null;
 	userId: string;
 	sortOrder: Generated<number | null>;
 	data: unknown | null;
@@ -193,8 +193,8 @@ export type CollectionItems = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	annotationId: string | null;
-	bookmarkId: number | null;
-	entryId: number | null;
+	bookmarkId: string | null;
+	entryId: string | null;
 	note: string | null;
 	parentId: string | null;
 	type: Generated<CollectionItemType>;
@@ -214,7 +214,7 @@ export type Context = {
 	url: string | null;
 	description: string | null;
 	createdAt: Generated<Timestamp>;
-	entryId: number | null;
+	entryId: string | null;
 	feedId: number | null;
 	userId: string;
 };
@@ -243,7 +243,7 @@ export type Entry = {
 	title: string | null;
 	type: Generated<DocumentType>;
 	updatedAt: Timestamp;
-	id: Generated<number>;
+	id: string;
 	uri: string | null;
 	html: string | null;
 	text: string | null;
@@ -313,7 +313,7 @@ export type EntryData = {
 	updatedAt: Timestamp;
 	userId: string;
 	data: unknown | null;
-	entryId: number;
+	entryId: string;
 	custom: unknown | null;
 };
 export type EntryHistory = {
@@ -332,8 +332,8 @@ export type EntryHistory = {
 	toTitle: string | null;
 	toAuthor: string | null;
 	userId: string | null;
-	entryId: number;
-	bookmarkId: number | null;
+	entryId: string;
+	bookmarkId: string | null;
 	addedTagIds: unknown | null;
 	removedTagIds: unknown | null;
 	addedCollectionIds: unknown | null;
@@ -347,13 +347,13 @@ export type EntryMedia = {
 	type: string | null;
 	title: string | null;
 	documentDataId: number;
-	entryId: number | null;
+	entryId: string | null;
 };
 export type EntryTag = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 	tagId: number;
-	entryId: number;
+	entryId: string;
 	userId: string;
 };
 export type EntryToTag = {
@@ -361,7 +361,7 @@ export type EntryToTag = {
 	B: number;
 };
 export type EntryToTag = {
-	A: number;
+	A: string;
 	B: number;
 };
 export type Favorite = {
@@ -373,8 +373,8 @@ export type Favorite = {
 	tagId: number | null;
 	smartListId: number | null;
 	annotationId: string | null;
-	bookmarkId: number | null;
-	entryId: number | null;
+	bookmarkId: string | null;
+	entryId: string | null;
 	feedId: number | null;
 	sortOrder: Generated<number | null>;
 	/**
@@ -462,7 +462,7 @@ export type Interaction = {
 	last_viewed: Generated<Timestamp>;
 	last_annotated: Generated<Timestamp>;
 	last_interaction: Generated<Timestamp>;
-	entryId: number;
+	entryId: string;
 	/**
 	 * The current page, if it's a book
 	 */
@@ -490,7 +490,7 @@ export type Log = {
 	id: Generated<number>;
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
-	entryId: number;
+	entryId: string;
 	note: string | null;
 	userId: string;
 	date: Timestamp;
@@ -527,7 +527,7 @@ export type person_to_entry = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Generated<Timestamp>;
 	personId: number;
-	entryId: number;
+	entryId: string;
 	role: string;
 };
 export type Relation = {
@@ -539,8 +539,8 @@ export type Relation = {
 	 */
 	type: Generated<RelationType>;
 	userId: string;
-	entryId: number;
-	relatedEntryId: number;
+	entryId: string;
+	relatedEntryId: string;
 };
 export type ReplicacheClient = {
 	id: string;
@@ -613,13 +613,6 @@ export type State = {
 	createdAt: Generated<Timestamp>;
 	updatedAt: Timestamp;
 };
-export type Stylesheet = {
-	id: Generated<number>;
-	domain: string;
-	css: string;
-	userEntryId: number | null;
-	userId: string;
-};
 export type Subscription = {
 	id: Generated<number>;
 	feedId: number;
@@ -651,12 +644,12 @@ export type Tagging = {
 	tagId: number;
 	userId: string;
 	feedId: number | null;
-	bookmarkId: number | null;
+	bookmarkId: string | null;
 };
 export type TagOnEntry = {
 	id: Generated<number>;
 	tagId: number;
-	entryId: number;
+	entryId: string;
 	userId: string;
 };
 export type Task = {
@@ -666,7 +659,7 @@ export type Unread = {
 	id: Generated<number>;
 	userId: string;
 	feedId: number | null;
-	entryId: number;
+	entryId: string;
 	published: Timestamp;
 	entryCreatedAt: Timestamp;
 	createdAt: Generated<Timestamp>;
@@ -687,7 +680,7 @@ export type User = {
 };
 export type UserEntry = {
 	id: Generated<number>;
-	entryId: number;
+	entryId: string;
 	userId: string;
 	seen: Timestamp | null;
 };
@@ -762,7 +755,6 @@ export type DB = {
 	replicache_cvr: ReplicacheCVR;
 	SmartList: SmartList;
 	State: State;
-	Stylesheet: Stylesheet;
 	Subscription: Subscription;
 	Tag: Tag;
 	Taggings: Tagging;

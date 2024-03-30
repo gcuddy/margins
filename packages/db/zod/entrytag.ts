@@ -1,9 +1,9 @@
-import * as z from 'zod';
+import * as z from "zod"
 
 export const EntryTagModel = z.object({
-	createdAt: z.date(),
-	updatedAt: z.date(),
-	tagId: z.number().int(),
-	entryId: z.number().int(),
-	userId: z.string(),
-});
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  tagId: z.number().int(),
+  entryId: z.string(),
+  userId: z.string(),
+})

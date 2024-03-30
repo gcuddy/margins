@@ -1,6 +1,6 @@
-import * as z from 'zod';
+import * as z from "zod"
 
 export const SubscriptionToTagModel = z.object({
-	A: z.number().int(),
-	B: z.number().int(),
-});
+  A: z.number().int(),
+  B: z.number().int(),
+})
