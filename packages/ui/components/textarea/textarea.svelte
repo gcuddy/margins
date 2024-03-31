@@ -21,18 +21,26 @@
 
 	$: if (!focused) {
 		height.set(48);
+		initialAnimationDone = false;
 	}
 
-	$: height.set(28 + 24 + (borderBoxSize[0]?.blockSize ?? 24), {
-		duration: 0,
-	});
+	let initialAnimationDone = false;
+
+	$: if (focused && initialAnimationDone)
+		height.set(6 + 28 + 24 + (borderBoxSize[0]?.blockSize ?? 24), {
+			duration: 0,
+		});
 </script>
 
 <div
 	data-focused={focused}
 	style:height="{$height}px"
 	on:focusin={() => {
-		height.set(28 + 24 + (borderBoxSize[0]?.blockSize ?? 24));
+		console.log(borderBoxSize[0]);
+		height.set(6 + 28 + 24 + (borderBoxSize[0]?.blockSize ?? 24));
+		setTimeout(() => {
+			initialAnimationDone = true;
+		}, 125);
 		focused = true;
 	}}
 	on:focusout={() => {
@@ -58,7 +66,9 @@
 	/>
 	{#if focused}
 		<div
-			transition:fly
+			in:fly={{
+				delay: 125,
+			}}
 			class="flex h-7 justify-end opacity-0 transition group-focus-within:opacity-100"
 		>
 			<Button
