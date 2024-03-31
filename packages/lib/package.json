@@ -23,12 +23,14 @@
 	},
 	"dependencies": {
 		"@margins/config": "workspace:*",
+		"autosize": "^6.0.1",
 		"clsx": "^2.1.0",
 		"nanoid": "^5.0.6",
 		"tailwind-merge": "^1.13.2"
 	},
 	"devDependencies": {
 		"@margins/tsconfig": "workspace:*",
+		"@types/autosize": "^4.0.3",
 		"typescript": "^5.2.2"
 	},
 	"type": "module"

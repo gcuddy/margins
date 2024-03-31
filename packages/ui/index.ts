@@ -15,3 +15,4 @@ export * as Popover from './components/popover/index.js';
 export * as Breadcrumb from './components/breadcrumb/index.js';
 export * from './components/typography/index.js';
 export * as Tabs from './components/tabs/index.js';
+export * from './components/textarea/index.js';

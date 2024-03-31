@@ -2,7 +2,7 @@
 	import { fly } from 'svelte/transition';
 	import { getEntryCtx } from './ctx.js';
 	import { tweened } from 'svelte/motion';
-	import { SmallPlus, Tabs } from '@margins/ui';
+	import { SmallPlus, Tabs, Textarea } from '@margins/ui';
 	import { type BookmarkWithEntry } from '../data/library.js';
 	const { inspectorWidth, isInspectorVisible } = getEntryCtx();
 	const DURATION = 125;
@@ -45,6 +45,12 @@
 						<SmallPlus>{bookmark.bookmarked_at}</SmallPlus>
 					</div>
 				</div>
+			</Tabs.Content>
+			<Tabs.Content value="notebook">
+				<Textarea
+					placeholder="Add a note…"
+					class="bg-background-elevation w-full"
+				/>
 			</Tabs.Content>
 		</Tabs.Root>
 	</div>
