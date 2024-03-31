@@ -5,12 +5,12 @@
 </script>
 
 <div class="overflow-auto">
-	<div class="prose mx-auto my-9">
+	<div class="prose dark:prose-invert prose-stone mx-auto my-9">
 		<h1 class="font-serif text-4xl font-semibold tracking-tight">
 			{bookmark.title ?? bookmark.entry?.title ?? '[no title]'}
 		</h1>
 
-		<div class="prose">
+		<div class="prose dark:prose-invert prose-stone">
 			{@html bookmark.entry?.html ?? '[no content]'}
 		</div>
 	</div>

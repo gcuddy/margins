@@ -18,6 +18,8 @@
 	export let direction: 'n' | 'e' | 's' | 'w' = 'e';
 
 	export let disabled = false;
+	export let onResize: ((cb: { width: number }) => void) | undefined =
+		undefined;
 
 	let container: HTMLElement;
 
@@ -52,6 +54,7 @@
 				break;
 			}
 		}
+		onResize?.({ width });
 		return;
 	}
 

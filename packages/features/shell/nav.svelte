@@ -52,10 +52,16 @@
 	import { Avatar, Button, Dropdown, Separator } from '@margins/ui';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 	import Search from 'lucide-svelte/icons/search';
-	import type { ComponentType } from 'svelte';
+	import type { ComponentProps, ComponentType } from 'svelte';
 	import { cn } from '@margins/lib';
 	import AddCombobox from './add-combobox.svelte';
-	export let width: number;
+	import PanelLeftClose from 'lucide-svelte/icons/panel-left-close';
+	import PanelLeftRight from 'lucide-svelte/icons/panel-right-close';
+
+	export let width = 240;
+	export let onResize: ComponentProps<ColResizer>['onResize'] = undefined;
+	export let onToggleSidebar: (open: boolean) => void = () => {};
+	export let isSidebarVisible = true;
 </script>
 
 <nav class="relative flex h-full flex-col">
@@ -148,11 +154,36 @@
 			<span class="text-muted-foreground pl-3 text-sm font-medium"> Pins </span>
 		</div>
 	</div>
+	<div class="fixed bottom-4 left-4">
+		<Button
+			class="group"
+			variant="ghost"
+			size="icon"
+			on:click={() => {
+				isSidebarVisible = !isSidebarVisible;
+				if (isSidebarVisible) {
+					onToggleSidebar(true);
+				} else {
+					onToggleSidebar(false);
+				}
+			}}
+		>
+			<svelte:component
+				this={isSidebarVisible ? PanelLeftClose : PanelLeftRight}
+				class={cn(
+					'text-muted-foreground h-4 w-4 transition',
+					!isSidebarVisible ? 'opacity-50 group-hover:opacity-100' : '',
+				)}
+			/>
+			<span class="sr-only">Toggle Sidebar</span>
+		</Button>
+	</div>
 
 	<ColResizer
 		min={220}
 		max={330}
 		class="before:bg-border absolute inset-y-0 -right-[3px] z-[97] w-2 cursor-col-resize before:absolute before:inset-y-0 before:left-1 before:z-[-1] before:w-0.5 before:opacity-0 before:transition hover:before:opacity-100 data-[is-dragging=true]:before:opacity-100"
+		{onResize}
 		bind:width
 	/>
 </nav>

@@ -4,30 +4,21 @@
 	import { setContext } from 'svelte';
 	import { writable } from 'svelte/store';
 	import MainShell from './main-shell.svelte';
+	import { tweened } from 'svelte/motion';
+	import { createCtx } from './ctx.js';
 	export let showSidebar = true;
 
-	// export let data;
+	const DURATION = 125;
 
-	// Right now this is hardcoded...
-
-	// const is_entry = writable(false);
-	// setContext('is_entry', is_entry);
-	// // // eslint-disable-next-line no-unused-expressions
-	// // $: $page.route.id?.startsWith(`/(app2)/(listables)/[type=type]/[id]`)
-	// // 	? is_entry.set(true)
-	// // 	: is_entry.set(false);
-
+	const navWidthSpacer = tweened(240, {
+		duration: DURATION,
+	});
 	const navWidth = writable(240);
-	// const mobileNavWidth = writable(81);
+	const navLeft = tweened(0, {
+		duration: DURATION,
+	});
 	setContext('mainNavWidth', navWidth);
-	// setContext('mobileNavWidth', mobileNavWidth);
-
-	// // queryclient
-
-	// setContext('inArticle', inArticle);
-	// $: $inArticle =
-	// 	$page.url.pathname.startsWith('/article') ||
-	// 	$page.url.pathname.startsWith('/pdf');
+	const { isSidebarVisible } = createCtx();
 </script>
 
 <div
@@ -36,9 +27,26 @@
 	<!-- w-[200px] -->
 	<div>
 		{#if showSidebar}
-			<div style:width="{$navWidth}px" />
-			<div class="fixed bottom-0 left-0 top-0 z-40" style:width="{$navWidth}px">
-				<Nav bind:width={$navWidth} />
+			<div style:width="{$navWidthSpacer}px" />
+			<div
+				class="fixed bottom-0 top-0 z-40"
+				style:left="{$navLeft}px"
+				style:width="{$navWidth}px"
+			>
+				<Nav
+					bind:isSidebarVisible={$isSidebarVisible}
+					onResize={({ width }) => {
+						navWidthSpacer.set(width, {
+							duration: 0,
+						});
+						navWidth.set(width);
+					}}
+					onToggleSidebar={(isSidebarVisible) => {
+						// This is set to the margin left if not visible, should share a variable
+						navWidthSpacer.set(isSidebarVisible ? $navWidth : 8);
+						navLeft.set(isSidebarVisible ? 0 : -$navWidth);
+					}}
+				/>
 			</div>
 		{/if}
 		<!-- <MobileNav /> -->
