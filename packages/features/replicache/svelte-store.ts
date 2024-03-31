@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/no-explicit-any: 0 */
 import type { ReadTransaction, Replicache, WriteTransaction } from 'replicache';
-import { get, writable, type Writable } from 'svelte/store';
+import { derived, get, writable, type Writable } from 'svelte/store';
 
 type PathResolver = (...args: any) => Array<string>;
 // inspired heavily from https://github.com/sst/console/blob/eabe19c08188d20ab0dadf4c8059250423034ac8/packages/web/workspace/src/data/store.ts
@@ -228,8 +228,10 @@ export function createScan<T>(
 
 		unsubscribe = rep.experimentalWatch(
 			(diffs) => {
+				console.log('diffs', diffs);
 				// fast set if we haven't seen diffs
 				if (!get(ready)) {
+					console.log('fast initial set');
 					const values: T[] = [];
 					for (const diff of diffs) {
 						if (diff.op === 'add') {
@@ -282,16 +284,21 @@ export function createScan<T>(
 			},
 		);
 
-		if (refine) {
-			data.update(refine);
-		}
+		const result = derived(data, ($data) => {
+			console.log('derived refine', refine);
+			console.log('derived', $data);
+			if (refine) {
+				return refine($data);
+			}
+			return $data;
+		});
 
 		return {
 			destroy: () => {
 				unsubscribe();
 			},
 			ready,
-			subscribe: data.subscribe,
+			subscribe: result.subscribe,
 		};
 	}
 

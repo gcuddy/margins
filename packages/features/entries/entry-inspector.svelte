@@ -23,7 +23,9 @@
 		() => rep,
 		() => [],
 		(annotations) =>
-			annotations.filter((a) => a.entryId === bookmark.entry?.id),
+			annotations.filter((a) => {
+				return a.entryId === bookmark.entry?.id;
+			}),
 	)();
 
 	$: console.log({ $annotations });
