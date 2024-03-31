@@ -98,6 +98,7 @@ const config = {
 				background: {
 					DEFAULT: 'hsl(var(--background) / <alpha-value>)',
 					elevation: 'hsl(var(--background-elevation) / <alpha-value>)',
+					elevation2: 'hsl(var(--background-elevation2) / <alpha-value>)',
 				},
 				border: 'hsl(var(--border) / <alpha-value>)',
 				card: {

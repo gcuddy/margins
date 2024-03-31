@@ -1,16 +1,18 @@
 import { getContext, setContext } from 'svelte';
-import type { Writable} from 'svelte/store';
-import { writable } from 'svelte/store';
+import { persisted } from 'svelte-persisted-store';
+import type { Writable } from 'svelte/store';
 
 const symbol = Symbol('entry');
 
 type Ctx = {
+	inspectorWidth: Writable<number>;
 	isInspectorVisible: Writable<boolean>;
 };
 
 export function createEntryCtx(): Ctx {
 	const ctx = {
-		isInspectorVisible: writable(false),
+		inspectorWidth: persisted('rightInspectorWidth', 300),
+		isInspectorVisible: persisted('rightInspectorVisible', false),
 	};
 
 	setContext(symbol, ctx);

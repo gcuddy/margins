@@ -30,9 +30,9 @@
 	</ShellHeader>
 	{#if $bookmark}
 		<ShellContent>
-			<div class="flex items-stretch">
+			<div class="flex grow items-stretch overflow-hidden">
 				<Article bookmark={$bookmark} />
-				<EntryInspector />
+				<EntryInspector bookmark={$bookmark} />
 			</div>
 		</ShellContent>
 	{/if}
