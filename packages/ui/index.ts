@@ -13,3 +13,4 @@ export * from './components/separator/index.js';
 export * as Command from './components/command/index.js';
 export * as Popover from './components/popover/index.js';
 export * as Breadcrumb from './components/breadcrumb/index.js';
+export * from './components/typography/index.js';

@@ -6,14 +6,16 @@
 
 	type $$Props = DialogPrimitive.ContentProps & {
 		showX?: boolean;
+		variant?: Dialog.DialogVariant;
 	};
 
 	let className: $$Props['class'] = undefined;
 	export let transition: $$Props['transition'] = flyAndScale;
 	export let transitionConfig: $$Props['transitionConfig'] = {
-		duration: 200,
+		duration: 150,
 	};
 	export let showX: $$Props['showX'] = true;
+	export let variant: $$Props['variant'] = 'fixed';
 	export { className as class };
 </script>
 
@@ -23,8 +25,10 @@
 		{transition}
 		{transitionConfig}
 		class={cn(
-			'bg-background fixed left-[50%] top-[50%] z-50 grid max-h-[95vh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-md border-[0.5px] p-8 shadow-xl',
-			className,
+			Dialog.dialogVariants({
+				className,
+				variant,
+			}),
 		)}
 		{...$$restProps}
 	>

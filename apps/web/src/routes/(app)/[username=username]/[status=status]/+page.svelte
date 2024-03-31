@@ -16,16 +16,18 @@
 		() => rep,
 		() => [],
 	)();
-	$: console.log({ $bookmarks });
 
 	const { entryContext } = getShellCtx();
 
-	$: $entryContext.breadcrumbs = [
-		{
-			href: $page.url.pathname,
-			text: data.status,
-		},
-	];
+	$: {
+		$entryContext.breadcrumbs = [
+			{
+				href: $page.url.pathname,
+				text: data.status,
+			},
+		];
+		$entryContext.currentList = $bookmarks;
+	}
 </script>
 
 <ShellHeader title={data.status} icon={Inbox}></ShellHeader>
