@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { ShellHeader, ShellContent } from '@margins/features/shell';
+	import {
+		ShellHeader,
+		ShellContent,
+		getShellCtx,
+	} from '@margins/features/shell';
 	import Inbox from 'lucide-svelte/icons/inbox';
 	import { LibraryStore } from '@margins/features/data';
 	import { getReplicache } from '$lib/client/replicache';
@@ -13,6 +17,15 @@
 		() => [],
 	)();
 	$: console.log({ $bookmarks });
+
+	const { entryContext } = getShellCtx();
+
+	$: $entryContext.breadcrumbs = [
+		{
+			href: $page.url.pathname,
+			text: data.status,
+		},
+	];
 </script>
 
 <ShellHeader title={data.status} icon={Inbox}></ShellHeader>

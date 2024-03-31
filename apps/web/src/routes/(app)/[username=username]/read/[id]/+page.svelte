@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { getReplicache } from '$lib/client/replicache';
 	import { LibraryStore } from '@margins/features/data';
-	import { ShellContent, ShellHeader } from '@margins/features/shell';
+	import {
+		ShellContent,
+		ShellHeader,
+		getShellCtx,
+	} from '@margins/features/shell';
 	import { Article } from '@margins/features/entries';
 	import { Breadcrumb } from '@margins/ui';
 	export let data;
@@ -11,6 +15,8 @@
 		() => rep,
 		() => [data.id],
 	)();
+
+	const { entryContext } = getShellCtx();
 
 	// TODO: if no bookmark, show 404
 </script>
@@ -22,10 +28,20 @@
 				<Breadcrumb.Link href="/">Home</Breadcrumb.Link>
 			</Breadcrumb.Item> -->
 			<!-- <Breadcrumb.Separator /> -->
-			<Breadcrumb.Item>
+			<!-- <Breadcrumb.Item>
 				<Breadcrumb.Link href="/">Library</Breadcrumb.Link>
-			</Breadcrumb.Item>
+			</Breadcrumb.Item> -->
 			<!-- TODO: make this component dumber -->
+			{#each $entryContext.breadcrumbs as breadcrumb, i}
+				<Breadcrumb.Item>
+					<Breadcrumb.Link href={breadcrumb.href}
+						>{breadcrumb.text}</Breadcrumb.Link
+					>
+				</Breadcrumb.Item>
+				{#if i !== $entryContext.breadcrumbs.length - 1}
+					<Breadcrumb.Separator />
+				{/if}
+			{/each}
 			{#if $bookmark}
 				<Breadcrumb.Separator />
 				<Breadcrumb.Item>
