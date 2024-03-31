@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '@fontsource/instrument-serif';
+	import '@fontsource/instrument-serif/400-italic.css';
 	import { Button, Github, Logo } from '@margins/ui';
 	import Header from './header.svelte';
 	import ThemeToggle from './theme-toggle.svelte';
