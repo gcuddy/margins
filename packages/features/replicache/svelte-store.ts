@@ -129,7 +129,7 @@ export class Store<
 						args: () => Parameters<Scanners[name]>,
 						refine?: Refiner,
 						// TODO think we need a writable store here
-					): (() => ReturnType<Refiner>) & {
+					): (() => Writable<ReturnType<Refiner>>) & {
 						ready: Writable<boolean>;
 					};
 				};

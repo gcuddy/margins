@@ -55,9 +55,10 @@ export async function POST({ locals, request }) {
 				}
 
 				if (mutation.id > nextMutationId) {
-					throw new Error(
+					console.error(
 						`Mutation ${mutation.id} is out of order. Expected ${nextMutationId}.`,
 					);
+					return;
 				}
 
 				const { args, name } = mutation;

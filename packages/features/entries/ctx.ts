@@ -5,12 +5,14 @@ import type { Writable } from 'svelte/store';
 const symbol = Symbol('entry');
 
 type Ctx = {
+	inspectorTab: Writable<string>;
 	inspectorWidth: Writable<number>;
 	isInspectorVisible: Writable<boolean>;
 };
 
 export function createEntryCtx(): Ctx {
-	const ctx = {
+	const ctx: Ctx = {
+		inspectorTab: persisted('rightInspectorTab', 'properties'),
 		inspectorWidth: persisted('rightInspectorWidth', 300),
 		isInspectorVisible: persisted('rightInspectorVisible', false),
 	};

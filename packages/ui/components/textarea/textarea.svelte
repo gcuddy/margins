@@ -5,11 +5,12 @@
 	export { className as class };
 	export let value = '';
 	export let placeholder = '';
+	export let onSave: (value: string) => void = () => {};
 </script>
 
 <div
 	class={cn(
-		'bg-background-elevation2 group m-0 rounded-lg px-4 py-3 transition',
+		'bg-background-elevation2 ring-glass/5 group m-0 rounded-lg px-4 py-3 ring-1 ring-inset transition',
 		className,
 	)}
 >
@@ -25,6 +26,7 @@
 	/>
 	<div class="flex justify-end">
 		<Button
+			on:click={() => onSave(value)}
 			size="sm"
 			class="h-auto px-2 py-1.5 brightness-50 transition group-focus-within:brightness-90"
 			>Save</Button

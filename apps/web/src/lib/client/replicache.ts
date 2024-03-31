@@ -1,11 +1,10 @@
 import { Replicache } from 'replicache';
 import replicacheStatus from './stores/replicache-status';
-import { getContext, setContext } from 'svelte';
 import { Client } from '@margins/features';
 import type { ServerType } from '@margins/features/replicache/server';
-import { LibraryStore } from '@margins/features/data';
+import { AnnotationStore, LibraryStore } from '@margins/features/data';
 
-const s = Symbol('replicache');
+export { getReplicache, setReplicache } from '@margins/features/replicache';
 
 const mutators = new Client<ServerType>()
 	.mutation('bookmark_create', async (tx, input) => {
@@ -24,6 +23,11 @@ const mutators = new Client<ServerType>()
 		} else {
 			// toast...
 		}
+	})
+	.mutation('annotation_create', async (tx, input) => {
+		await AnnotationStore.put(tx, [input.id!], {
+			...input,
+		});
 	})
 	.build();
 
@@ -62,31 +66,4 @@ export function createReplicache({
 	// }
 
 	return replicache;
-}
-
-export function updateReplicache(cb?: (replicache: ReplicacheType) => void) {
-	const rep = getReplicache();
-
-	if (cb) {
-		cb(rep);
-	}
-
-	rep.pull();
-}
-
-export type ReplicacheType = ReturnType<typeof createReplicache>;
-
-export function getReplicache() {
-	const replicache = getContext(s);
-
-	if (!replicache) {
-		throw new Error('Replicache not found');
-	}
-
-	// TODO actual typings lol
-	return replicache as ReplicacheType;
-}
-
-export function setReplicache(replicache: Replicache) {
-	setContext(s, replicache);
 }

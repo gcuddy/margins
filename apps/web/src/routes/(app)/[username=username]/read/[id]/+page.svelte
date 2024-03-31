@@ -11,7 +11,7 @@
 	export let data;
 
 	const rep = getReplicache();
-	const bookmark = LibraryStore.get.watch(
+	$: bookmark = LibraryStore.get.watch(
 		() => rep,
 		() => [data.id],
 	)();
