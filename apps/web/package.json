@@ -13,7 +13,6 @@
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --cache .",
 		"format": "prettier --write --plugin-search-dir=. .",
 		"add-extractor": "node tasks/add-extractor.js",
-		"postinstall": "prisma generate",
 		"seed": "ts-node prisma/seed.ts",
 		"tailwind:generate": "node ./scripts/post-build.js"
 	},

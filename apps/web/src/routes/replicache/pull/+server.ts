@@ -18,11 +18,54 @@ import type {
 
 import { groupBy, mapValues, pipe, toPairs } from 'remeda';
 
-const TABLES = ['Bookmark', 'Annotation'] satisfies (keyof DB)[];
-// type TableName = typeof TABLES[number];
+// TODO: figure out if we should select Entry as well
+const TABLES = [
+	'Bookmark',
+	'Annotation',
+	// 'Entry',
+	'Favorite',
+] satisfies (keyof DB)[];
+type TableName = (typeof TABLES)[number];
 // const TABLE_KEY = {} satisfies {
 //     [key in TableName]?: string[];
 // }
+const TABLE_KEY = {
+	// Bookmark: ({ case}) => case()
+	Favorite: (eb) =>
+		eb
+			.case()
+			.when('Favorite.entryId', 'is not', null)
+			.then(
+				eb.fn<string>('concat_ws', [
+					eb.val('/'),
+					eb.val(''),
+					eb.val('Pin'),
+					eb.val('Entry'),
+					eb.ref('entryId'),
+				]),
+			)
+			.when('Favorite.annotationId', 'is not', null)
+			.then(
+				eb.fn<string>('concat_ws', [
+					eb.val('/'),
+					eb.val(''),
+					eb.val('Pin'),
+					eb.val('Annotation'),
+					eb.ref('annotationId'),
+				]),
+			)
+			.else(
+				eb.fn<string>('concat_ws', [
+					eb.val('/'),
+					eb.val(''),
+					eb.val('Pin'),
+					eb.ref('id'),
+				]),
+			)
+			.end(),
+} satisfies {
+	[key in TableName]?: (eb: ExpressionBuilder<DB, key>) => Expression<string>;
+};
 
 export async function POST({ locals, request }) {
 	console.log('pull server');
@@ -111,27 +154,50 @@ export async function POST({ locals, request }) {
 
 			const tableFilters = {
 				Bookmark: ({ eb }) => eb('Bookmark.deleted', 'is', null),
+				// Entry: ({ eb }) => eb('', 'is', null),
 			} satisfies {
 				[key in (typeof TABLES)[number]]?: (args: {
 					eb: ExpressionBuilder<DB, key>;
 					ref: ReferenceExpression<DB, key>;
 				}) => Expression<SqlBool>;
 			};
+
+			db.selectFrom('Entry').innerJoin('Bookmark', (join) => join);
+
+			// const tableJoins = {
+			//     Entry: () => ["Bookmark", (join) => join.onRef("Bookmark")]
+			// } satisfies {
+			//     [key in TableName]?: <J extends keyof DB>() => [J, (eb: JoinBuilder<DB, key>) => void];
+			// }
 			let now = Date.now();
 			let combined:
 				| SelectQueryBuilder<DB, (typeof TABLES)[number], any>
 				| undefined = undefined;
 			for (const name of TABLES) {
-				let query = tx
-					.selectFrom(name)
-					.select(({ fn, ref, val }) => [
+				let query = tx.selectFrom(name);
+
+				// Hardcoding this in for now while I think of a more elegant way to do it
+				// if (name === 'Entry') {
+
+				// 	query = query.innerJoin('Bookmark', 'Entry.id', 'Bookmark.entryId');
+				// }
+
+				query = query
+					.select((eb) => [
 						sql<string>`${name}`.as('name'),
 						// TODO: entry could be string or number, whoops
-						ref('id').as('id'),
-						ref('updatedAt').as('version'),
-						fn<string>('concat_ws', [val('/'), val(''), val(name), 'id']).as(
-							'key',
-						),
+						sql.ref(`${name}.id`).as('id'),
+						sql.ref(`${name}.updatedAt`).as('version'),
+						name in TABLE_KEY
+							? TABLE_KEY[name as keyof typeof TABLE_KEY](eb).as('key')
+							: eb
+									.fn<string>('concat_ws', [
+										eb.val('/'),
+										eb.val(''),
+										eb.val(name),
+										sql.ref(`${name}.id`),
+									])
+									.as('key'),
 						// sql
 						// 	.join(
 						// 		sql`concat_ws(`,
@@ -149,6 +215,9 @@ export async function POST({ locals, request }) {
 						});
 					});
 				}
+				// if (name === "Entry") {
+				//     query = query.innerJoin()
+				// }
 				if (!combined) {
 					combined = query;
 				} else {
@@ -201,6 +270,16 @@ export async function POST({ locals, request }) {
 							'Entry.title',
 						])
 						.whereRef('Bookmark.entryId', '=', 'Entry.id'),
+				).as('entry'),
+			],
+			// TODO: should we do this here, or on the client? For instance by just getting all Entries as one query
+			// By putting it in here we essentially have multiple copies of the same data... potentially recipe for bugs
+			Favorite: (eb) => [
+				jsonObjectFrom(
+					eb
+						.selectFrom('Entry')
+						.select(['Entry.author', 'Entry.uri', 'Entry.title', 'Entry.type'])
+						.whereRef('Favorite.entryId', '=', 'Entry.id'),
 				).as('entry'),
 			],
 		} satisfies {

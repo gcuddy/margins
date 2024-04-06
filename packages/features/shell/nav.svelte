@@ -57,6 +57,7 @@
 	import AddCombobox from './add-combobox.svelte';
 	import PanelLeftClose from 'lucide-svelte/icons/panel-left-close';
 	import PanelLeftRight from 'lucide-svelte/icons/panel-right-close';
+	import SidebarPins from './sidebar-pins.svelte';
 
 	export let width = 240;
 	export let onResize: ComponentProps<ColResizer>['onResize'] = undefined;
@@ -152,6 +153,7 @@
 		</div>
 		<div class="pb-2">
 			<span class="text-muted-foreground pl-3 text-sm font-medium"> Pins </span>
+			<SidebarPins />
 		</div>
 	</div>
 	<div class="fixed bottom-4 left-4">

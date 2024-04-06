@@ -21,8 +21,9 @@
 
 <EntryProvider>
 	<ShellHeader>
-		{#if $bookmark}
+		{#if $bookmark && $bookmark.entry}
 			<EntryHeader
+				entry={$bookmark.entry}
 				id={$bookmark?.id}
 				title={$bookmark?.title ?? $bookmark?.entry?.title ?? '[no title]'}
 			/>

@@ -177,6 +177,7 @@ export function createGet<T>(p: () => string, replicache: () => Replicache) {
 						store.set(structuredClone(diff.newValue) as T);
 					}
 					if (diff.op === 'change') {
+						// TODO: fine grained reconcile for faster performance
 						store.update((state) => {
 							return {
 								...state,

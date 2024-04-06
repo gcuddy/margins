@@ -2,7 +2,12 @@ import { Replicache } from 'replicache';
 import replicacheStatus from './stores/replicache-status';
 import { Client } from '@margins/features';
 import type { ServerType } from '@margins/features/replicache/server';
-import { AnnotationStore, LibraryStore } from '@margins/features/data';
+import {
+	AnnotationStore,
+	LibraryStore,
+	PinStore,
+	type PinType,
+} from '@margins/features/data';
 
 export { getReplicache, setReplicache } from '@margins/features/replicache';
 
@@ -29,6 +34,18 @@ const mutators = new Client<ServerType>()
 			...input,
 		});
 	})
+	.mutation('pin_create', async (tx, input) => {
+		const id: [PinType, string] | undefined = input.entryId
+			? ['Entry', input.entryId]
+			: undefined;
+		if (!id) return;
+		await PinStore.put(tx, id, {
+			...input,
+		});
+	})
+	.mutation('pin_remove', async (tx, { id }) => {
+		await PinStore.remove(tx, id);
+	})
 	.build();
 
 export function createReplicache({
@@ -46,6 +63,7 @@ export function createReplicache({
 				jsonPointer: '/id',
 			},
 		},
+		// TODO: new license key and actually hide it lol
 		licenseKey: 'ld43a69e6baa14a1a85eb6bb09661739e',
 		mutators,
 		name: workspaceID,
