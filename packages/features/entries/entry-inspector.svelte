@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
 	import { getEntryCtx } from './ctx.js';
 	import { tweened } from 'svelte/motion';
 	import { SmallPlus, Tabs, Textarea } from '@margins/ui';
@@ -33,13 +32,7 @@
 
 {#if $isInspectorVisible}
 	<div
-		transition:fly={{
-			duration: 125,
-			opacity: 1,
-			x: '100%',
-		}}
 		style:width="{$inspectorWidth}px"
-		style:margin-left="{$marginLeft}px"
 		class="entry-inspector bg-background-elevation2 border-l px-6 py-3.5"
 	>
 		<Tabs.Root bind:value={$inspectorTab} class="space-y-6">
