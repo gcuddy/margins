@@ -12,7 +12,7 @@
 	let className: $$Props['class'] = undefined;
 	export let transition: $$Props['transition'] = flyAndScale;
 	export let transitionConfig: $$Props['transitionConfig'] = {
-		duration: 150,
+		duration: 75,
 	};
 	export let showX: $$Props['showX'] = true;
 	export let variant: $$Props['variant'] = 'fixed';
