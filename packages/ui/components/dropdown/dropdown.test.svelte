@@ -7,7 +7,7 @@
 	<DropdownMenu.Trigger asChild let:builder>
 		<Button builders={[builder]} variant="outline">Open</Button>
 	</DropdownMenu.Trigger>
-	<DropdownMenu.Content class="w-56">
+	<DropdownMenu.Content class="w-56" inTransition={undefined}>
 		<DropdownMenu.Label>My Account</DropdownMenu.Label>
 		<DropdownMenu.Separator />
 		<DropdownMenu.Group>
