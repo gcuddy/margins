@@ -9,7 +9,7 @@
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
 			e.preventDefault();
-			$mainCommandState.open = true;
+			$mainCommandState.open = !$mainCommandState.open;
 		}
 		if ($mainCommandState.open && e.key === 'Escape') {
 			e.preventDefault();

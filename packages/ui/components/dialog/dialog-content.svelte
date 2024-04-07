@@ -4,26 +4,29 @@
 	import { cn, flyAndScale } from '@margins/lib';
 	import X from 'lucide-svelte/icons/x';
 
-	type $$Props = DialogPrimitive.ContentProps & {
+	type $$Props = Omit<DialogPrimitive.ContentProps, 'transition'> & {
+		overlayVisible?: boolean;
 		showX?: boolean;
 		variant?: Dialog.DialogVariant;
 	};
 
 	let className: $$Props['class'] = undefined;
-	export let transition: $$Props['transition'] = flyAndScale;
+	// export let transition: $$Props['transition'] = flyAndScale;
 	export let transitionConfig: $$Props['transitionConfig'] = {
-		duration: 75,
+		duration: 100,
 	};
 	export let showX: $$Props['showX'] = true;
 	export let variant: $$Props['variant'] = 'fixed';
 	export { className as class };
+	export let overlayVisible: $$Props['overlayVisible'] = true;
 </script>
 
 <Dialog.Portal>
-	<Dialog.Overlay />
+	<Dialog.Overlay class={overlayVisible ? '' : 'bg-transparent'} />
 	<DialogPrimitive.Content
-		{transition}
-		{transitionConfig}
+		transition={undefined}
+		outTransition={flyAndScale}
+		outTransitionConfig={transitionConfig}
 		class={cn(
 			Dialog.dialogVariants({
 				className,

@@ -10,6 +10,9 @@
 	--popover: 0 0% 100%;
 	--popover-foreground: 20 14.3% 4.1%;
 
+    --background-elevation: 0 0% 100%;
+    --background-elevation2: var(--popover);
+
 	--primary: 43 86% 66%;
 	--primary-hover: 43 96% 66%;
 	--primary-foreground: 21 91% 14%;
