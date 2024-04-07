@@ -17,6 +17,7 @@ import type {
 } from 'replicache';
 
 import { groupBy, mapValues, pipe, toPairs } from 'remeda';
+import { Entry } from '@margins/features/core';
 
 // TODO: figure out if we should select Entry as well
 const TABLES = [
@@ -262,13 +263,7 @@ export async function POST({ locals, request }) {
 				jsonObjectFrom(
 					eb
 						.selectFrom('Entry')
-						.select([
-							'Entry.id',
-							'Entry.html',
-							'Entry.author',
-							'Entry.uri',
-							'Entry.title',
-						])
+						.select(Entry.select)
 						.whereRef('Bookmark.entryId', '=', 'Entry.id'),
 				).as('entry'),
 			],

@@ -19,6 +19,6 @@ export const ArticleSchema = z
 
 		wordCount: z.coerce.number().optional(),
 		// This is a common mistake in schema.org data
-wordcount: z.coerce.number().optional(),
+		wordcount: z.coerce.number().optional(),
 	})
 	.passthrough();

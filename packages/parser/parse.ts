@@ -14,7 +14,7 @@ type Article = {
 	html: string;
 	image: string;
 	published: Date;
-
+	summary: string;
 	text: string;
 	title: string;
 	url: string;
@@ -35,11 +35,14 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 			root.querySelector(articleSchema.hasPart.cssSelector)?.outerHTML || '';
 	}
 
+	console.log('articleSchema', articleSchema);
+
 	return {
 		author: articleSchema?.author || '',
 		html: returnHtml,
 		image: articleSchema?.image || '',
 		published: new Date(articleSchema?.datePublished || ''),
+		summary: articleSchema?.description || '',
 		text: '',
 		title: articleSchema?.headline || '',
 		url: articleSchema?.url || '',
