@@ -68,6 +68,7 @@
 		size="iconSmall"
 		variant="ghost"
 		class="text-muted-foreground hover:text-foreground stroke-[1.5]"
+		data-pinned={!!$pin}
 		on:click={() => {
 			if ($pin) {
 				rep.mutate.pin_remove({
@@ -82,7 +83,9 @@
 			}
 		}}
 	>
-		<Pin class="h-4 w-4 " />
+		<Pin
+			class="group-data-[pinned=true]:fill-primary group-data-[pinned=true]:text-primary h-4 w-4"
+		/>
 		<span class="sr-only">Pin</span>
 	</Button>
 </div>
