@@ -43,6 +43,11 @@
 			"import": "./entries/index.ts",
 			"types": "./entries/index.ts",
 			"svelte": "./entries/index.ts"
+		},
+		"./commands": {
+			"import": "./commands/index.ts",
+			"types": "./commands/index.ts",
+			"svelte": "./commands/index.ts"
 		}
 	},
 	"license": "MIT",
@@ -56,6 +61,7 @@
 		"@margins/lib": "workspace:*",
 		"@margins/parser": "workspace:*",
 		"@margins/ui": "workspace:*",
+		"@sveltejs/kit": "^2.5.4",
 		"clsx": "^2.1.0",
 		"command-score": "^0.1.2",
 		"kysely": "^0.27.2",

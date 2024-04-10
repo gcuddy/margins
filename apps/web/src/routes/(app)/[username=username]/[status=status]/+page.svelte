@@ -9,13 +9,20 @@
 	import { getReplicache } from '$lib/client/replicache';
 	import { createId } from '@margins/lib';
 	import { page } from '$app/stores';
+	import { derived } from 'svelte/store';
 	export let data;
 
 	const rep = getReplicache();
-	const bookmarks = LibraryStore.all.watch(
+	const allBookmarks = LibraryStore.all.watch(
 		() => rep,
 		() => [],
 	)();
+
+	$: bookmarks = derived(allBookmarks, ($allBookmarks) => {
+		return $allBookmarks.filter((b) => {
+			return b.status === data.status && b.entry;
+		});
+	});
 
 	const { entryContext } = getShellCtx();
 
@@ -59,7 +66,7 @@
 />
 <ShellContent>
 	<ul class="py-1">
-		{#each $bookmarks.filter((b) => b.entry) as bookmark}
+		{#each $bookmarks as bookmark}
 			<li>
 				<!-- TODO: figure out if we should link to bookmark id or entry id...
                     bookmark id makes sense her ebut then entry id more generic so makes sense also

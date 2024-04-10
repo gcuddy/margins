@@ -5,7 +5,7 @@ import Podcast from 'lucide-svelte/icons/podcast';
 import Film from 'lucide-svelte/icons/film';
 import URLIcon from 'lucide-svelte/icons/link';
 
-type Command = {
+export type Command = {
 	action: () => void | Promise<void>;
 	category?: string;
 	disabled?: boolean;

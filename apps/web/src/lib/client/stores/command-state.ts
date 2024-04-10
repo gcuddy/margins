@@ -5,6 +5,8 @@ function main_command_state() {
 		open: false,
 	});
 
+	// TODO: providers
+
 	return {
 		close: () => update((state) => ({ ...state, open: false })),
 		open: () => update((state) => ({ ...state, open: true })),

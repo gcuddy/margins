@@ -5,6 +5,7 @@
 	import Sun from 'lucide-svelte/icons/sun';
 	import Moon from 'lucide-svelte/icons/moon';
 	import { setMode } from 'mode-watcher';
+	import Navigation from './commands/navigation.commands.svelte';
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -49,6 +50,9 @@
 				<Laptop class="mr-2 h-4 w-4" />
 				System
 			</Command.Item> -->
+		</Command.Group>
+		<Command.Group heading="Navigation">
+			<Navigation />
 		</Command.Group>
 	</Command.List>
 </Command.Dialog>
