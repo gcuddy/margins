@@ -1,20 +1,101 @@
-import { writable } from 'svelte/store';
+import type { ComponentType } from 'svelte';
+import { derived, writable } from 'svelte/store';
+import LibraryCommands from '../commands/library.commands.svelte';
+
+type MenuState = {
+	content: ComponentType;
+	placeholder?: string;
+	// ...
+};
+
+class Commander<TState> {
+	private state = new Map<string, MenuState>();
+
+	public add<TName extends string>(key: TName, menu: MenuState) {
+		this.state.set(key as string, menu);
+		return this as Commander<TState & { [key in TName]: MenuState }>;
+	}
+
+	public get<TName extends string>(key: TName) {
+		return this.state.get(key as string) as MenuState;
+	}
+}
+
+type ExtractMenu<T> = T extends Commander<infer U> ? U : never;
+type CommandState = ExtractMenu<typeof commander>;
+type CommandStateKey = keyof CommandState;
+
+const commander = new Commander().add('library-items', {
+	content: LibraryCommands,
+	placeholder: 'Open item...',
+});
+
+type State = {
+	currentMenu: string | null;
+	input: string;
+	open: boolean;
+};
 
 function main_command_state() {
-	const { set, subscribe, update } = writable({
+	// TODO: is there a way to turn commander into effectively an enum/number comparison instead of the theoretically less efficient string comparison?
+	const state = writable<State>({
+		currentMenu: null,
+		input: '',
 		open: false,
 	});
 
-	// TODO: providers
+	const { set, subscribe, update } = state;
+
+	const menuStack: string[] = [];
+
+	const currentMenu = derived(state, ($state) => {
+		if (!$state.currentMenu) return null;
+		const menu = commander.get($state.currentMenu);
+		if (!menu) return null;
+		return menu;
+	});
+
+	const createPlaceholder = (placeholder: string) =>
+		derived(
+			[currentMenu],
+			([$currentMenu]) => $currentMenu?.placeholder ?? placeholder,
+		);
 
 	return {
-		close: () => update((state) => ({ ...state, open: false })),
-		open: () => update((state) => ({ ...state, open: true })),
-		run: (fn: () => void) => {
-			update((state) => ({ ...state, open: false }));
+		back: () => {
+			menuStack.pop();
+			update((state) => ({
+				...state,
+				currentMenu: menuStack.at(-1) ?? null,
+			}));
+		},
+		close: () =>
+			update((state) => ({ ...state, currentMenu: null, open: false })),
+		createPlaceholder,
+		currentMenu,
+		open: (menu: CommandStateKey | null = null) =>
+			update((state) => ({ ...state, currentMenu: menu, open: true })),
+		reset: () => {
+			menuStack.length = 0;
+			update((state) => ({
+				...state,
+				currentMenu: null,
+				input: '',
+			}));
+		},
+		run: (fn: () => void, keepOpen = false) => {
+			if (keepOpen !== true) update((state) => ({ ...state, open: false }));
 			fn();
 		},
 		set,
+		setMenu: (menu: CommandStateKey, resetInput = true) => {
+			menuStack.push(menu);
+			update((state) => ({
+				...state,
+				currentMenu: menu,
+				input: resetInput === false ? state.input : '',
+			}));
+		},
 		subscribe,
 		toggle: () => update((state) => ({ ...state, open: !state.open })),
 		update,

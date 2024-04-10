@@ -8,8 +8,8 @@
 
 <!-- TODO: essentially we're turning this into a spa, which might not be desirable... -->
 {#if browser}
-	<CommandMenu />
 	<ReplicacheProvider workspaceID={data.user.username} token={data.session?.id}>
+		<CommandMenu />
 		<AppShell>
 			<slot />
 		</AppShell>
