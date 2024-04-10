@@ -29,8 +29,6 @@
 		$entryContext.currentList = $bookmarks;
 	}
 
-	$: console.log({ $bookmarks });
-
 	function getDomain(url: string) {
 		const match = url.match(/:\/\/(www\d?\.)?(.[^/:]+)/i);
 		if (
@@ -60,8 +58,7 @@
 	}}
 />
 <ShellContent>
-	count: {JSON.stringify($bookmarks.length)}
-	<ul>
+	<ul class="py-1">
 		{#each $bookmarks.filter((b) => b.entry) as bookmark}
 			<li>
 				<!-- TODO: figure out if we should link to bookmark id or entry id...
@@ -69,10 +66,10 @@
                 -->
 				<a
 					href="/u:{$page.data.user?.username}/read/{bookmark.id}"
-					class="mx-3 block h-14"
+					class="mx-3 block h-14 cursor-default"
 				>
 					<!-- start of actual component -->
-					<div class="flex gap-3 rounded px-3">
+					<div class="flex items-center gap-3 rounded px-3">
 						<div>
 							<img
 								src={bookmark.entry?.image ??

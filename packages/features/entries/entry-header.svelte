@@ -22,7 +22,7 @@
 	const { isInspectorVisible } = getEntryCtx();
 	const rep = getReplicache();
 
-	const pin = PinStore.get.watch(
+	$: pin = PinStore.get.watch(
 		() => rep,
 		() => ['Entry', entry.id],
 	)();
@@ -56,7 +56,9 @@
 					<Breadcrumb.Separator />
 				{/if}
 			{/each}
-			<Breadcrumb.Separator />
+			{#if $entryContext.breadcrumbs.length > 0}
+				<Breadcrumb.Separator />
+			{/if}
 			<Breadcrumb.Item>
 				{title}
 			</Breadcrumb.Item>
