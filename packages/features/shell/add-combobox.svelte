@@ -35,9 +35,7 @@
 			builders={[builder]}
 			variant="outline"
 			size="sm"
-			role="combobox"
-			aria-expanded={open}
-			class="rounded-l-none border-l-0"
+			class="rounded-l-none border-l-0 px-2.5"
 		>
 			<ChevronDown class="h-4 w-4 shrink-0 opacity-50" />
 		</Button>
