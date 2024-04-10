@@ -16,10 +16,6 @@
 		.filter((command) => command.score > 0)
 		.sort((a, b) => b.score - a.score);
 
-	$: console.log({
-		filteredAndSortedCommands,
-	});
-
 	$: if (open) {
 		value = '';
 	}
@@ -46,18 +42,22 @@
 			<ChevronDown class="h-4 w-4 shrink-0 opacity-50" />
 		</Button>
 	</Popover.Trigger>
-	<Popover.Content class="w-[200px] p-0">
+	<Popover.Content side="bottom" align="start" class="w-[200px] p-0">
 		<Command.Root shouldFilter={false}>
 			<Command.Input bind:value placeholder="Add new…" />
 			<Command.Group>
 				{#each filteredAndSortedCommands as command}
 					<Command.Item
+						class="group"
 						onSelect={() => {
 							command.action();
 							open = false;
 						}}
 					>
-						<svelte:component this={command.icon} class="mr-2 h-4 w-4" />
+						<svelte:component
+							this={command.icon}
+							class="group-data-[selected=true]:text-accent-foreground text-muted-foreground/80 mr-2 h-4 w-4"
+						/>
 						{command.label}</Command.Item
 					>
 				{/each}
