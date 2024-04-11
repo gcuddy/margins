@@ -9,8 +9,10 @@
 	export let placeholder = '';
 	export let onSave: (value: string) => void = () => {};
 
+	const ANIMATION_DURATION = 75;
+
 	const height = tweened(48, {
-		duration: 125,
+		duration: ANIMATION_DURATION,
 	});
 
 	let focused = false;
@@ -40,7 +42,7 @@
 		height.set(6 + 28 + 24 + (borderBoxSize[0]?.blockSize ?? 24));
 		setTimeout(() => {
 			initialAnimationDone = true;
-		}, 125);
+		}, ANIMATION_DURATION);
 		focused = true;
 	}}
 	on:focusout={() => {
@@ -67,7 +69,7 @@
 	{#if focused}
 		<div
 			in:fly={{
-				delay: 125,
+				delay: ANIMATION_DURATION,
 			}}
 			class="flex h-7 justify-end opacity-0 transition group-focus-within:opacity-100"
 		>
