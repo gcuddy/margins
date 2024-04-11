@@ -36,7 +36,7 @@
 <Command.Item
 	onSelect={() => {
 		mainCommandState.setMenu('library-items', {
-			bounce: true,
+			// bounce: true,
 		});
 	}}
 >
