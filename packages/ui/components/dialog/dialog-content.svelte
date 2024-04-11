@@ -27,6 +27,10 @@
 	<DialogPrimitive.Content
 		bind:el
 		transition={undefined}
+		inTransition={flyAndScale}
+		inTransitionConfig={{
+			duration: 75,
+		}}
 		outTransition={flyAndScale}
 		outTransitionConfig={transitionConfig}
 		class={cn(
