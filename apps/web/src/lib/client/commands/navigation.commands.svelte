@@ -35,9 +35,9 @@
 <Command.Separator class="my-2" />
 <Command.Item
 	onSelect={() => {
-		// TODO: this
-		// console.log("open item")
-		mainCommandState.setMenu('library-items');
+		mainCommandState.setMenu('library-items', {
+			bounce: true,
+		});
 	}}
 >
 	<ArrowRight

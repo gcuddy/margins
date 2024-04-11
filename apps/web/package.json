@@ -118,7 +118,7 @@
 		"@upstash/redis": "^1.28.4",
 		"arctic": "^1.4.0",
 		"autosize": "^6.0.1",
-		"bits-ui": "^0.20.0",
+		"bits-ui": "^0.21.2",
 		"class-variance-authority": "^0.7.0",
 		"colord": "^2.9.3",
 		"dequal": "^2.0.3",

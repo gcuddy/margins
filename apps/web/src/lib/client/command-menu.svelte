@@ -27,7 +27,7 @@
 		};
 	});
 
-	const { createPlaceholder, currentMenu } = mainCommandState;
+	const { containerEl, createPlaceholder, currentMenu } = mainCommandState;
 
 	const placeholder = createPlaceholder('Type a command or search');
 
@@ -35,9 +35,11 @@
 	$: if (!$mainCommandState.open) {
 		setTimeout(mainCommandState.reset, 1);
 	}
+
+	$: console.log({ $containerEl });
 </script>
 
-<Command.Dialog bind:open={$mainCommandState.open}>
+<Command.Dialog bind:el={$containerEl} bind:open={$mainCommandState.open}>
 	<Command.Input
 		bind:value={$mainCommandState.input}
 		placeholder={$placeholder}

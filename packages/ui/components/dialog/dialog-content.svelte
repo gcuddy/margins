@@ -19,11 +19,13 @@
 	export let variant: $$Props['variant'] = 'fixed';
 	export { className as class };
 	export let overlayVisible: $$Props['overlayVisible'] = true;
+	export let el: $$Props['el'] = undefined;
 </script>
 
 <Dialog.Portal>
 	<Dialog.Overlay class={overlayVisible ? '' : 'bg-transparent'} />
 	<DialogPrimitive.Content
+		bind:el
 		transition={undefined}
 		outTransition={flyAndScale}
 		outTransitionConfig={transitionConfig}
@@ -32,6 +34,7 @@
 				className,
 				variant,
 			}),
+			'transition-transform',
 		)}
 		{...$$restProps}
 	>

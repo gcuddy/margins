@@ -1,5 +1,5 @@
 import type { ComponentType } from 'svelte';
-import { derived, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import LibraryCommands from '../commands/library.commands.svelte';
 
 type MenuState = {
@@ -7,6 +7,15 @@ type MenuState = {
 	placeholder?: string;
 	// ...
 };
+
+function bounce(container: HTMLElement) {
+	const transform = getComputedStyle(container).transform;
+	container.style.transform =
+		transform === 'none' ? 'scale(0.96)' : `${transform} scale(0.96)`;
+	setTimeout(() => {
+		container.style.transform = transform;
+	}, 75);
+}
 
 class Commander<TState> {
 	private state = new Map<string, MenuState>();
@@ -61,6 +70,8 @@ function main_command_state() {
 			([$currentMenu]) => $currentMenu?.placeholder ?? placeholder,
 		);
 
+	const containerEl = writable<HTMLDivElement | null>(null);
+
 	return {
 		back: () => {
 			menuStack.pop();
@@ -71,6 +82,7 @@ function main_command_state() {
 		},
 		close: () =>
 			update((state) => ({ ...state, currentMenu: null, open: false })),
+		containerEl,
 		createPlaceholder,
 		currentMenu,
 		open: (menu: CommandStateKey | null = null) =>
@@ -88,12 +100,28 @@ function main_command_state() {
 			fn();
 		},
 		set,
-		setMenu: (menu: CommandStateKey, resetInput = true) => {
+		setMenu: (
+			menu: CommandStateKey,
+			opts: {
+				bounce?: boolean;
+				resetInput?: boolean;
+			} = {
+				bounce: false,
+				resetInput: true,
+			},
+		) => {
 			menuStack.push(menu);
+			if (opts.bounce === true) {
+				const el = get(containerEl);
+				console.log({ el });
+				if (el) {
+					bounce(el);
+				}
+			}
 			update((state) => ({
 				...state,
 				currentMenu: menu,
-				input: resetInput === false ? state.input : '',
+				input: opts.resetInput === false ? state.input : '',
 			}));
 		},
 		subscribe,
