@@ -29,6 +29,11 @@ const mutators = new Client<ServerType>()
 			// toast...
 		}
 	})
+	.mutation('bookmark_update', async (tx, input) => {
+		await LibraryStore.put(tx, [input.id!], {
+			...input,
+		});
+	})
 	.mutation('annotation_create', async (tx, input) => {
 		await AnnotationStore.put(tx, [input.id!], {
 			...input,

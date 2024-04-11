@@ -18,7 +18,7 @@ export async function POST({ locals, request }) {
 
 	const actor = 'user';
 
-	console.log({ user });
+	console.log({ body, user });
 	withUser(user, async () => {
 		for (const mutation of body.mutations) {
 			await db.transaction().execute(async (trx) => {
@@ -88,6 +88,22 @@ export async function POST({ locals, request }) {
 						clientVersion: nextClientVersion,
 						cvrVersion: group.cvrVersion,
 						updatedAt: new Date(),
+					})
+					.execute();
+
+				await trx
+					.insertInto('replicache_client')
+					.values({
+						clientGroupId: group.id,
+						clientVersion: nextClientVersion,
+						id: mutation.clientID,
+						lastMutationId: nextMutationId,
+						updatedAt: new Date(),
+					})
+					.onDuplicateKeyUpdate({
+						clientGroupId: group.id,
+						clientVersion: nextClientVersion,
+						lastMutationId: nextMutationId,
 					})
 					.execute();
 			});

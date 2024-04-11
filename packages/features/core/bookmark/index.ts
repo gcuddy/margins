@@ -10,6 +10,7 @@ import { parseUrlToEntry } from '../../index.js';
 import { createCompiledInsertBookmarkQuery } from './queries.js';
 import { useUser } from '../user.js';
 import { nanoid } from 'nanoid';
+import { z } from 'zod';
 
 export const create = zod(
 	BookmarkModel.pick({
@@ -138,6 +139,37 @@ export const create = zod(
 			.selectFrom('Entry as e')
 			.selectAll()
 			.where('id', '=', entryId)
+			.executeTakeFirst();
+	},
+);
+
+// TODO: accept entry id?
+export const update = zod(
+	z.object({
+		id: z.string(),
+		input: BookmarkModel.pick({
+			status: true,
+		}),
+	}),
+	async (input) => {
+		const user = useUser();
+		const { id } = input;
+
+		await db
+			.updateTable('Bookmark')
+			.set({
+				...input,
+				updatedAt: new Date(),
+			})
+			.where('id', '=', id)
+			.where('userId', '=', user.id)
+			.execute();
+
+		return await db
+			.selectFrom('Bookmark as b')
+			.selectAll()
+			.where('id', '=', id)
+			.where('userId', '=', user.id)
 			.executeTakeFirst();
 	},
 );
