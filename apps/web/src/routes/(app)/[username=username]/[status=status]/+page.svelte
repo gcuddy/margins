@@ -20,7 +20,7 @@
 
 	$: bookmarks = derived(allBookmarks, ($allBookmarks) => {
 		return $allBookmarks.filter((b) => {
-			return b.status === data.status && b.entry;
+			return b.status === data.statusType && b.entry;
 		});
 	});
 

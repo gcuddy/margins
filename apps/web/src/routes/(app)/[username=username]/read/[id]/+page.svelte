@@ -8,6 +8,7 @@
 		EntryInspector,
 		EntryProvider,
 	} from '@margins/features/entries';
+	import { mainCommandState } from '$lib/client/stores/command-state';
 	export let data;
 
 	const rep = getReplicache();
@@ -15,6 +16,22 @@
 		() => rep,
 		() => [data.id],
 	)();
+
+	mainCommandState.register('entry', (filter) => {
+		return [
+			{
+				action: () => {
+					rep.mutate.bookmark_update({
+						id: data.id,
+						input: {
+							status: 'Archive',
+						},
+					});
+				},
+				label: 'Move to Archive',
+			},
+		];
+	});
 
 	// TODO: if no bookmark, show 404
 </script>

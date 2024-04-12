@@ -29,10 +29,11 @@ const mutators = new Client<ServerType>()
 			// toast...
 		}
 	})
-	.mutation('bookmark_update', async (tx, input) => {
-		await LibraryStore.put(tx, [input.id!], {
+	.mutation('bookmark_update', async (tx, { id, input }) => {
+		await LibraryStore.update(tx, id, (b) => ({
+			...b,
 			...input,
-		});
+		}));
 	})
 	.mutation('annotation_create', async (tx, input) => {
 		await AnnotationStore.put(tx, [input.id!], {
@@ -73,7 +74,7 @@ export function createReplicache({
 		mutators,
 		name: workspaceID,
 		// higher speed for testing
-		pullInterval: 1000 * 60,
+		// pullInterval: 1000 * 60,
 
 		// TODO: web socket
 		pullURL: '/replicache/pull',
@@ -83,10 +84,6 @@ export function createReplicache({
 	replicache.onSync = (s) => {
 		if (!s) replicacheStatus.markSynced(replicache.name);
 	};
-
-	// replicache.puller = async (req) => {
-
-	// }
 
 	return replicache;
 }

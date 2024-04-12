@@ -27,7 +27,8 @@
 		};
 	});
 
-	const { containerEl, createPlaceholder, currentMenu } = mainCommandState;
+	const { containerEl, createPlaceholder, currentMenu, registeredActions } =
+		mainCommandState;
 
 	const placeholder = createPlaceholder('Type a command or search');
 
@@ -47,6 +48,16 @@
 	<Command.List>
 		{#if !$currentMenu}
 			<Command.Empty>No results found.</Command.Empty>
+			{#if $registeredActions.length}
+				<!-- TODO: heading -->
+				<Command.Group>
+					{#each $registeredActions as action}
+						<Command.Item value={action.label} onSelect={action.action}>
+							{action.label}
+						</Command.Item>
+					{/each}
+				</Command.Group>
+			{/if}
 			<Command.Group heading="Theme">
 				<Command.Item
 					value="light"

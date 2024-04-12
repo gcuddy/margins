@@ -1,6 +1,7 @@
-import type { ComponentType } from 'svelte';
+import { onDestroy, type ComponentType } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
 import LibraryCommands from '../commands/library.commands.svelte';
+import type { Command } from '@margins/features/commands';
 
 type MenuState = {
 	content: ComponentType;
@@ -16,6 +17,9 @@ function bounce(container: HTMLElement) {
 		container.style.transform = transform;
 	}, 75);
 }
+
+// TODO: consider making Promise and using asyncDerived
+type ActionProvider = (filter: string, global: boolean) => Command[];
 
 class Commander<TState> {
 	private state = new Map<string, MenuState>();
@@ -53,6 +57,18 @@ function main_command_state() {
 		open: false,
 	});
 
+	// TODO: does this need to be a store?
+	const providers = writable(new Map<string, ActionProvider>());
+	const registeredActions = derived(
+		[providers, state],
+		([$providers, $state]) => {
+			if (!$state.open) return [];
+			const p = [...$providers.values()].reverse();
+			const actions = p.flatMap((provider) => provider($state.input, true));
+			return actions;
+		},
+	);
+
 	const { set, subscribe, update } = state;
 
 	const menuStack: string[] = [];
@@ -87,6 +103,19 @@ function main_command_state() {
 		currentMenu,
 		open: (menu: CommandStateKey | null = null) =>
 			update((state) => ({ ...state, currentMenu: menu, open: true })),
+		register: (key: string, provider: ActionProvider) => {
+			providers.update((providers) => {
+				providers.set(key, provider);
+				return providers;
+			});
+			onDestroy(() => {
+				providers.update((p) => {
+					p.delete(key);
+					return p;
+				});
+			});
+		},
+		registeredActions,
 		reset: () => {
 			menuStack.length = 0;
 			update((state) => ({

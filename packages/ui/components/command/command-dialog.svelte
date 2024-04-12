@@ -6,12 +6,12 @@
 
 	type $$Props = DialogPrimitive.Props &
 		CommandPrimitive.CommandProps & {
-			el?: HTMLDivElement;
+			el?: HTMLDivElement | null;
 		};
 
 	export let open: $$Props['open'] = false;
 	export let value: $$Props['value'] = undefined;
-	export let el: HTMLDivElement | undefined = undefined;
+	export let el: HTMLDivElement | undefined | null = undefined;
 </script>
 
 <Dialog.Root bind:open {...$$restProps}>

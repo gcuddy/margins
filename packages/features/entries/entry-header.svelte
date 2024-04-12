@@ -10,13 +10,12 @@
 	import { getShellCtx } from '../shell/ctx.js';
 	import { getReplicache } from '../index.js';
 	import { createId } from '@margins/lib';
-	import type { Selectable } from 'kysely';
-	import type { Entry } from '@margins/db/kysely/types';
 	import { PinStore } from '../data/pin.js';
+	import type { Entry } from '../core/index.js';
 
 	export let title: string;
 	export let id: string;
-	export let entry: Selectable<Entry>;
+	export let entry: Entry.Item;
 
 	const { entryContext } = getShellCtx();
 	const { isInspectorVisible } = getEntryCtx();
