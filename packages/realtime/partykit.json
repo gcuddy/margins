@@ -1,0 +1,6 @@
+{
+	"$schema": "https://www.partykit.io/schema.json",
+	"name": "margins-realtime",
+	"main": "src/server.ts",
+	"compatibilityDate": "2024-04-12"
+}
