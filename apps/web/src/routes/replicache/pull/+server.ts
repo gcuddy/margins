@@ -238,10 +238,13 @@ export async function POST({ locals, request }) {
 			console.log('combined', Date.now() - now);
 		}
 
+		console.log('results', JSON.stringify(results));
+
 		for (const [name, entries] of results) {
 			const arr = [];
 			for (const entry of entries) {
 				const version = new Date(entry.version).getTime();
+				console.log({ entry, version }, { cvr });
 				if (cvr.data[entry.key] !== version) {
 					arr.push(entry);
 				}
@@ -329,6 +332,11 @@ export async function POST({ locals, request }) {
 			});
 		}
 
+		// TODO: kysely incorrectly reports lastMutationId as a number, when it's actually a string (coerced from a Bigint)
+		// This is  planetscale js thing.
+		// It's a cause of bugs, and we should figure out a solution other than maybe wrapping it in Number each time
+		// Number is good up to 2^53, which is 9007199254740992, so we should be good for a while
+
 		const clients = await tx
 			.selectFrom('replicache_client')
 			.select(['id', 'lastMutationId', 'clientVersion'])
@@ -337,8 +345,10 @@ export async function POST({ locals, request }) {
 			.execute();
 
 		const lastMutationIDChanges = Object.fromEntries(
-			clients.map((c) => [c.id, c.lastMutationId] as const),
+			clients.map((c) => [c.id, Number(c.lastMutationId)] as const),
 		);
+
+		console.log('lastMutationIDChanges', JSON.stringify(lastMutationIDChanges));
 
 		if (patch.length > 0 || Object.keys(lastMutationIDChanges).length > 0) {
 			console.log('inserting', req.clientGroupID);
@@ -375,12 +385,24 @@ export async function POST({ locals, request }) {
 				.where('id', '<', nextCvr.version - 10)
 				.execute();
 
+			console.log('got here, returning', {
+				cookie: nextCvr.version,
+				lastMutationIDChanges,
+				patch,
+			});
+
 			return {
 				cookie: nextCvr.version,
 				lastMutationIDChanges,
 				patch,
 			} satisfies PullResponseOKV1;
 		}
+
+		console.log('got here, returning', {
+			cookie: req.cookie,
+			lastMutationIDChanges,
+			patch: [],
+		});
 
 		return {
 			cookie: req.cookie,

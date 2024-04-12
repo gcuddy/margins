@@ -45,7 +45,8 @@ export async function POST({ locals, request }) {
 				};
 
 				const nextClientVersion = group.clientVersion + 1;
-				const nextMutationId = client.lastMutationId + 1;
+				// for wrapping of number, see pull comment
+				const nextMutationId = Number(client.lastMutationId) + 1;
 
 				if (mutation.id < nextMutationId) {
 					console.log(
