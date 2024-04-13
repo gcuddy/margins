@@ -65,8 +65,8 @@
 			{/if}
 			{#if $registeredComponents.length}
 				<Command.Group>
-					{#each $registeredComponents as component}
-						<svelte:component this={component} />
+					{#each $registeredComponents as { component, props }}
+						<svelte:component this={component} {...props} />
 					{/each}
 				</Command.Group>
 			{/if}
@@ -94,7 +94,10 @@
 				<Navigation />
 			</Command.Group>
 		{:else}
-			<svelte:component this={$currentMenu.content} />
+			<svelte:component
+				this={$currentMenu.content}
+				{...$currentMenu.contentProps}
+			/>
 		{/if}
 	</Command.List>
 </Command.Dialog>

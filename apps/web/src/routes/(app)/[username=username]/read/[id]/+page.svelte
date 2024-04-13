@@ -9,6 +9,7 @@
 		EntryProvider,
 	} from '@margins/features/entries';
 	import { mainCommandState } from '$lib/client/stores/command-state';
+	import EntryCommands from './entry-commands.svelte';
 	export let data;
 
 	const rep = getReplicache();
@@ -17,20 +18,8 @@
 		() => [data.id],
 	)();
 
-	mainCommandState.register('entry', (filter) => {
-		return [
-			{
-				action: () => {
-					rep.mutate.bookmark_update({
-						id: data.id,
-						input: {
-							status: 'Archive',
-						},
-					});
-				},
-				label: 'Move to Archive',
-			},
-		];
+	mainCommandState.registerComponent('entry', EntryCommands, {
+		id: data.id,
 	});
 
 	// TODO: if no bookmark, show 404

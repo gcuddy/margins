@@ -5,11 +5,13 @@ import Podcast from 'lucide-svelte/icons/podcast';
 import Film from 'lucide-svelte/icons/film';
 import URLIcon from 'lucide-svelte/icons/link';
 
-export type Command = {
+export type Command<TId = string> = {
 	action: () => void | Promise<void>;
 	category?: string;
 	disabled?: boolean;
-	icon?: ComponentType;
+	icon: ComponentType;
+	/** An optional id, to identify it later. */
+	id?: TId;
 	keywords?: string;
 	label: string;
 };

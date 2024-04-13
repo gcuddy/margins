@@ -1,16 +1,12 @@
-import {
-	onDestroy} from 'svelte';
-import type {
-	SvelteComponent,
-	type ComponentProps,
-	type ComponentType,
-} from 'svelte';
+import { onDestroy } from 'svelte';
+import type { SvelteComponent, ComponentProps, ComponentType } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
 import LibraryCommands from '../commands/library.commands.svelte';
 import type { Command } from '@margins/features/commands';
 
-type MenuState = {
-	content: ComponentType;
+type MenuState<T extends SvelteComponent = SvelteComponent> = {
+	content: ComponentType<T>;
+	contentProps?: ComponentProps<T>;
 	placeholder?: string;
 	// ...
 };
@@ -37,6 +33,11 @@ class Commander<TState> {
 
 	public get<TName extends string>(key: TName) {
 		return this.state.get(key as string) as MenuState;
+	}
+
+	public remove<TName extends string>(key: string) {
+		this.state.delete(key);
+		return this as Commander<Omit<TState, TName>>;
 	}
 }
 
@@ -65,7 +66,15 @@ function main_command_state() {
 
 	// TODO: does this need to be a store?
 	const providers = writable(new Map<string, ActionProvider>());
-	const componentProviders = writable(new Map<string, ComponentType>());
+	const componentProviders = writable(
+		new Map<
+			string,
+			{
+				component: ComponentType;
+				props?: Record<string, unknown>;
+			}
+		>(),
+	);
 
 	const registeredActions = derived(
 		[providers, state],
@@ -103,6 +112,31 @@ function main_command_state() {
 
 	const containerEl = writable<HTMLDivElement | null>(null);
 
+	const setMenu = <TMenuKey extends string = CommandStateKey>(
+		menu: TMenuKey,
+		opts: {
+			bounce?: boolean;
+			resetInput?: boolean;
+		} = {
+			bounce: false,
+			resetInput: true,
+		},
+	) => {
+		menuStack.push(menu);
+		if (opts.bounce === true) {
+			const el = get(containerEl);
+			console.log({ el });
+			if (el) {
+				bounce(el);
+			}
+		}
+		update((state) => ({
+			...state,
+			currentMenu: menu,
+			input: opts.resetInput === false ? state.input : '',
+		}));
+	};
+
 	return {
 		back: () => {
 			menuStack.pop();
@@ -136,7 +170,10 @@ function main_command_state() {
 			props?: ComponentProps<TComponent>,
 		) => {
 			componentProviders.update((providers) => {
-				providers.set(key, component);
+				providers.set(key, {
+					component,
+					props,
+				});
 				return providers;
 			});
 			onDestroy(() => {
@@ -146,9 +183,27 @@ function main_command_state() {
 				});
 			});
 		},
-		registeredActions,
-		registeredComponents,
-		reset: () => {
+		/**
+		 * Register a menu for the command state. Gets removed on destroy. Returns a type-safe setMenu function.
+		 * @param key provider key
+		 * @param menu menu
+		 * @returns type-safe setMenu function
+		 */
+registerMenu: <TMenuKey extends string>(key: TMenuKey, menu: MenuState) => {
+			const c = commander.add(key, menu);
+			onDestroy(() => {
+				commander.remove(key);
+			});
+			type NewMenuState = keyof ExtractMenu<typeof c>;
+			return setMenu<NewMenuState>;
+		},
+
+registeredActions,
+
+registeredComponents,
+
+
+reset: () => {
 			menuStack.length = 0;
 			update((state) => ({
 				...state,
@@ -156,35 +211,21 @@ function main_command_state() {
 				input: '',
 			}));
 		},
-		run: (fn: () => void, keepOpen = false) => {
+
+/**
+		 * Convenience function to run an action and close the command state.
+		 * @param fn Action to run
+		 * @param keepOpen Whether to keep the command state open after running the action
+		 */
+run: (fn: () => void, keepOpen = false) => {
 			if (keepOpen !== true) update((state) => ({ ...state, open: false }));
 			fn();
 		},
-		set,
-		setMenu: (
-			menu: CommandStateKey,
-			opts: {
-				bounce?: boolean;
-				resetInput?: boolean;
-			} = {
-				bounce: false,
-				resetInput: true,
-			},
-		) => {
-			menuStack.push(menu);
-			if (opts.bounce === true) {
-				const el = get(containerEl);
-				console.log({ el });
-				if (el) {
-					bounce(el);
-				}
-			}
-			update((state) => ({
-				...state,
-				currentMenu: menu,
-				input: opts.resetInput === false ? state.input : '',
-			}));
-		},
+
+set,
+
+
+		setMenu,
 		subscribe,
 		toggle: () => update((state) => ({ ...state, open: !state.open })),
 		update,
