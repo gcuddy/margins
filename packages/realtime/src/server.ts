@@ -9,7 +9,6 @@ export default class Server implements Party.Server {
 	auth: Lucia;
 
 	constructor(readonly room: Party.Room) {
-		// TODO: config
 		const config: PlanetScaleConfig = {
 			host: room.env.DATABASE_HOST as string,
 			password: room.env.DATABASE_PASSWORD as string,
