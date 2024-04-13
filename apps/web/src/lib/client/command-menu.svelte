@@ -27,8 +27,13 @@
 		};
 	});
 
-	const { containerEl, createPlaceholder, currentMenu, registeredActions } =
-		mainCommandState;
+	const {
+		containerEl,
+		createPlaceholder,
+		currentMenu,
+		registeredActions,
+		registeredComponents,
+	} = mainCommandState;
 
 	const placeholder = createPlaceholder('Type a command or search');
 
@@ -55,6 +60,13 @@
 						<Command.Item value={action.label} onSelect={action.action}>
 							{action.label}
 						</Command.Item>
+					{/each}
+				</Command.Group>
+			{/if}
+			{#if $registeredComponents.length}
+				<Command.Group>
+					{#each $registeredComponents as component}
+						<svelte:component this={component} />
 					{/each}
 				</Command.Group>
 			{/if}

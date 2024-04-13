@@ -1,4 +1,10 @@
-import { onDestroy, type ComponentType } from 'svelte';
+import {
+	onDestroy} from 'svelte';
+import type {
+	SvelteComponent,
+	type ComponentProps,
+	type ComponentType,
+} from 'svelte';
 import { derived, get, writable } from 'svelte/store';
 import LibraryCommands from '../commands/library.commands.svelte';
 import type { Command } from '@margins/features/commands';
@@ -59,6 +65,8 @@ function main_command_state() {
 
 	// TODO: does this need to be a store?
 	const providers = writable(new Map<string, ActionProvider>());
+	const componentProviders = writable(new Map<string, ComponentType>());
+
 	const registeredActions = derived(
 		[providers, state],
 		([$providers, $state]) => {
@@ -66,6 +74,13 @@ function main_command_state() {
 			const p = [...$providers.values()].reverse();
 			const actions = p.flatMap((provider) => provider($state.input, true));
 			return actions;
+		},
+	);
+	const registeredComponents = derived(
+		[componentProviders, state],
+		([$providers, $state]) => {
+			if (!$state.open) return [];
+			return [...$providers.values()];
 		},
 	);
 
@@ -115,7 +130,24 @@ function main_command_state() {
 				});
 			});
 		},
+		registerComponent: <TComponent extends SvelteComponent>(
+			key: string,
+			component: ComponentType<TComponent>,
+			props?: ComponentProps<TComponent>,
+		) => {
+			componentProviders.update((providers) => {
+				providers.set(key, component);
+				return providers;
+			});
+			onDestroy(() => {
+				componentProviders.update((p) => {
+					p.delete(key);
+					return p;
+				});
+			});
+		},
 		registeredActions,
+		registeredComponents,
 		reset: () => {
 			menuStack.length = 0;
 			update((state) => ({
