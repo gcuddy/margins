@@ -8,3 +8,6 @@ export const server = new Server()
 	.expose('pin_remove', Pin.remove);
 
 export type ServerType = typeof server;
+
+export * from './pull.js';
+export * from './push.js';

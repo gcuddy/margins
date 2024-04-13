@@ -1,6 +1,6 @@
 import { Replicache } from 'replicache';
 import replicacheStatus from './stores/replicache-status';
-import { Client } from '@margins/features';
+import { Client } from '@margins/features/replicache';
 import type { ServerType } from '@margins/features/replicache/server';
 import {
 	AnnotationStore,
@@ -77,12 +77,56 @@ export function createReplicache({
 		// pullInterval: 1000 * 60,
 
 		// TODO: web socket
-		pullURL: '/replicache/pull',
-		pushURL: '/replicache/push',
+		pullURL: '/sync/pull',
+		pushURL: '/sync/push',
 	});
 
 	replicache.onSync = (s) => {
 		if (!s) replicacheStatus.markSynced(replicache.name);
+	};
+
+	replicache.puller = async (req) => {
+		const result = await fetch(replicache.pullURL, {
+			body: JSON.stringify(req),
+			headers: {
+				authorization: `Bearer ${token}`,
+				'content-type': 'application/json',
+				'x-margins-room': workspaceID,
+			},
+			method: 'POST',
+		});
+		console.log('puller', result);
+		const body =
+			result.status === 200 ? ((await result.json()) as any) : undefined;
+		console.log('body', body);
+		const res = {
+			httpRequestInfo: {
+				errorMessage: result.status === 200 ? '' : result.statusText,
+				httpStatusCode: result.status,
+			},
+			response: body,
+		};
+		console.log('res', res);
+		return res;
+	};
+
+	replicache.pusher = async (req) => {
+		const result = await fetch(replicache.pushURL, {
+			body: JSON.stringify(req),
+			headers: {
+				authorization: `Bearer ${token}`,
+				'content-type': 'application/json',
+				'x-margins-room': workspaceID,
+			},
+			method: 'POST',
+		});
+		console.log('pusher', result);
+		return {
+			httpRequestInfo: {
+				errorMessage: result.status === 200 ? '' : result.statusText,
+				httpStatusCode: result.status,
+			},
+		};
 	};
 
 	return replicache;

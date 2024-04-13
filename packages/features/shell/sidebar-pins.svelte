@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { PinStore } from '../data/pin.js';
-	import { getReplicache } from '../index.js';
+	import { getReplicache } from '../replicache/index.js';
 
 	const rep = getReplicache();
 

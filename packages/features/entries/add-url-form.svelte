@@ -1,13 +1,11 @@
 <script lang="ts">
 	export let action: string;
 	import { urlSchema } from './add-url.schema.js';
-	import {
-		superForm,
-	} from 'sveltekit-superforms';
+	import { superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { Form, Input } from '@margins/ui';
-	import { getReplicache } from '../index.js';
 	import { createId } from '@margins/lib';
+	import { getReplicache } from '../replicache/index.js';
 
 	export let onSuccess = () => {};
 	// export let data: SuperValidated<Infer<typeof urlSchema>>;

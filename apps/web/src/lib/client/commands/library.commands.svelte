@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getReplicache } from '@margins/features';
+	import { getReplicache } from '@margins/features/replicache';
 	import { LibraryStore, type BookmarkWithEntry } from '@margins/features/data';
 	import { derived } from 'svelte/store';
 	import { mainCommandState } from '../stores/command-state';

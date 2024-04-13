@@ -8,10 +8,10 @@
 	import { page } from '$app/stores';
 	import { getEntryCtx } from './ctx.js';
 	import { getShellCtx } from '../shell/ctx.js';
-	import { getReplicache } from '../index.js';
 	import { createId } from '@margins/lib';
 	import { PinStore } from '../data/pin.js';
 	import type { Entry } from '../core/index.js';
+	import { getReplicache } from '../replicache/index.js';
 
 	export let title: string;
 	export let id: string;

@@ -1,31 +1,38 @@
 import { createId, isValidUrl } from '@margins/lib';
 import { zod } from '../utils/zod.js';
-import {
-	BookmarkModel,
-	CollectionItemsModel,
-	EntryModel,
-} from '@margins/db/zod';
-import { parseUrlToEntry } from '../../index.js';
 import { createCompiledInsertBookmarkQuery } from './queries.js';
 import { useUser } from '../user.js';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { useTransaction } from '../utils/transaction.js';
+import type { Insertable } from 'kysely';
+import type { Bookmark } from '@margins/db/kysely/types';
+import { Status } from '@margins/db/kysely/enums';
+import { parseUrlToEntry } from '../../parse/index.js';
+
+export const Schema = z.object({
+	entryId: z.string(),
+	id: z.string(),
+	status: z.nativeEnum(Status),
+	updatedAt: z.coerce.date(),
+	uri: z.string(),
+	userId: z.string(),
+}) satisfies z.ZodType<Insertable<Bookmark>>;
 
 export const create = zod(
-	BookmarkModel.pick({
+	Schema.pick({
 		entryId: true,
 		id: true,
 		status: true,
 		uri: true,
 	})
 		.extend({
-			collection: CollectionItemsModel.pick({
-				collectionId: true,
-				id: true,
+			collection: z.object({
+				collectionId: z.number(),
+				id: z.string(),
 			}),
-			relatedEntryId: EntryModel.shape.id,
-			status: BookmarkModel.shape.status.default('Backlog'),
+			relatedEntryId: z.string(),
+			status: Schema.shape.status.default('Backlog'),
 		})
 		.partial()
 		.required({
@@ -148,7 +155,7 @@ export const create = zod(
 export const update = zod(
 	z.object({
 		id: z.string(),
-		input: BookmarkModel.pick({
+		input: Schema.pick({
 			status: true,
 		}),
 	}),

@@ -1,10 +1,14 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { createReplicache, setReplicache } from './replicache';
-	import { createGet } from '@margins/features';
+	import { createGet } from '@margins/features/replicache';
+	import { PARTYKIT_HOST } from '$lib/env';
+	import PartySocket from 'partysocket';
 
 	export let workspaceID: string;
 	export let token: string;
+
+	let conn: PartySocket | null = null;
 
 	// this could also happen in load function?
 	const rep = createReplicache({
@@ -14,23 +18,29 @@
 
 	setReplicache(rep);
 
-	// TODO: poke handler
-
-	onDestroy(() => {
-		rep.close();
+	onMount(() => {
+		conn = new PartySocket({
+			host: PARTYKIT_HOST,
+			room: workspaceID,
+		});
+		conn.addEventListener('message', (event) => {
+			if (event.data === 'poke') {
+				console.log('got poke, initiating pull');
+				if (!rep) return;
+				rep.pull();
+			}
+		});
 	});
 
-	rep.subscribe(
-		async (tx) => await tx.scan().entries().toArray(),
-		(d) => console.log(d),
-	);
+	onDestroy(() => {
+		conn?.close();
+		rep.close();
+	});
 
 	const init = createGet(
 		() => '/init',
 		() => rep,
 	)();
-
-	$: console.log({ $init });
 </script>
 
 <svelte:window on:focus={() => rep.pull} />

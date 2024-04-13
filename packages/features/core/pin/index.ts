@@ -1,11 +1,23 @@
-import { FavoriteModel } from '@margins/db/zod';
 import { zod } from '../utils/zod.js';
 import { useUser } from '../user.js';
 import { useTransaction } from '../utils/transaction.js';
+import { z } from 'zod';
+import type { Insertable } from 'kysely';
+import type { Favorite } from '@margins/db/kysely/types';
+import { FavoriteType } from '@margins/db/kysely/enums';
+
+export const Schema = z.object({
+	annotationId: z.string().optional(),
+	bookmarkId: z.string().optional(),
+	entryId: z.string().optional(),
+	id: z.string(),
+	type: z.nativeEnum(FavoriteType).default('FAVORITE'),
+	updatedAt: z.date(),
+	userId: z.string(),
+}) satisfies z.ZodType<Insertable<Favorite>>;
 
 export const create = zod(
-	FavoriteModel.omit({
-		createdAt: true,
+	Schema.omit({
 		updatedAt: true,
 		userId: true,
 	}),
@@ -24,7 +36,7 @@ export const create = zod(
 );
 
 export const remove = zod(
-	FavoriteModel.pick({
+	Schema.pick({
 		id: true,
 	}),
 	async (input) =>

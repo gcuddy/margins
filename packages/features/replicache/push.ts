@@ -4,7 +4,7 @@ import type { PushRequestV1 } from 'replicache';
 import { server } from './server.js';
 import { withUser } from '../core/user.js';
 
-export async function handlePull(db: DB, user: User, body: PushRequestV1) {
+export async function handlePush(db: DB, user: User, body: PushRequestV1) {
 	await withUser(user, async () => {
 		for (const mutation of body.mutations) {
 			await db.transaction().execute(async (trx) => {
