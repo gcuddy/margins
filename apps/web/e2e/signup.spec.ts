@@ -1,6 +1,5 @@
 import { expect } from '@playwright/test';
 import { test } from './test';
-import { db } from '@margins/db';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -16,7 +15,7 @@ test.describe('Signup flow', async () => {
 			// TODO: ... write rest of test, depends on alert
 		});
 	});
-	test('Signup with valid email and password', async ({ page, users }) => {
+	test('Signup with valid email and password', async ({ db, page, users }) => {
 		const userToCreate = users.buildForSignup({
 			email: `rickjones${Math.random()}-${Date.now()}@margins.gg`,
 			password: 'Password99!',

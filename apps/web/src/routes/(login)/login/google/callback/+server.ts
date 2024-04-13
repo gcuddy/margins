@@ -1,8 +1,6 @@
 import { OAuth2RequestError } from 'arctic';
 import { google } from '@margins/auth/oauth';
 import { z } from 'zod';
-import { db } from '@margins/db';
-import { auth } from '@margins/auth';
 import { generateId } from 'lucia';
 import { redirectToUser } from '$lib/server/utils';
 
@@ -17,6 +15,7 @@ const googleUserSchema = z.object({
 
 export async function GET(event) {
 	console.log('login/google/callback');
+	const { auth, db } = event.locals;
 	const code = event.url.searchParams.get('code');
 	const state = event.url.searchParams.get('state');
 

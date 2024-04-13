@@ -3,7 +3,6 @@ import { superValidate } from 'sveltekit-superforms/server';
 
 import type { PageServerLoad } from './$types';
 import { usernameSchema } from './schema';
-import { db } from '@margins/db';
 import { zod } from 'sveltekit-superforms/adapters';
 
 export const load: PageServerLoad = async (event) => {
@@ -23,7 +22,7 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions = {
 	default: async (event) => {
-		const user = event.locals.user;
+		const { db, user } = event.locals;
 		if (!user) {
 			return fail(401);
 		}

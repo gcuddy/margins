@@ -1,5 +1,4 @@
 // routes/+page.server.ts
-import { auth } from '@margins/auth';
 import { fail, redirect } from '@sveltejs/kit';
 
 import type { Actions, PageServerLoad } from './$types';
@@ -17,6 +16,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async (event) => {
+		const { auth } = event.locals;
 		if (!event.locals.session) {
 			return fail(401);
 		}

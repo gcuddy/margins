@@ -1,8 +1,7 @@
-import { db } from '@margins/db';
-import type { DB } from '@margins/db/kysely/types';
+import type { DB, KyselyDB } from '@margins/db';
 import type { InferResult, SelectExpression } from 'kysely';
 
-type EntryExpression = SelectExpression<DB, 'Entry'>;
+type EntryExpression = SelectExpression<KyselyDB, 'Entry'>;
 
 export const select = [
 	'Entry.id',
@@ -14,8 +13,11 @@ export const select = [
 	'Entry.summary',
 ] satisfies EntryExpression[];
 
+// NOTE: this just exists to infer the type. Do not call this function.
 function _$selectType() {
-	return db.selectFrom('Entry').select(select);
+	let db: DB;
+	const res = db!.selectFrom('Entry').select(select);
+	return res;
 }
 
 export type Item = InferResult<ReturnType<typeof _$selectType>>[number];

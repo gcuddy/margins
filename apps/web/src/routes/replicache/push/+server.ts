@@ -1,11 +1,10 @@
-import { db } from '@margins/db';
 import { withUser } from '@margins/features/core';
 import { server } from '@margins/features/replicache/server';
 import type { PushRequestV1 } from 'replicache';
 
 export async function POST({ locals, request }) {
 	console.log('push server');
-
+	const db = locals.db;
 	if (!locals.user) {
 		return Response.json({ error: 'Unauthorized' }, { status: 401 });
 	}
@@ -16,7 +15,7 @@ export async function POST({ locals, request }) {
 
 	console.dir({ body }, { depth: null });
 
-	const actor = 'user';
+	// const actor = 'user';
 
 	console.log({ body, user });
 	withUser(user, async () => {

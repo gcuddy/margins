@@ -1,7 +1,11 @@
-import type { DB } from '@margins/db/kysely/types';
-import { json, type db as $db } from '@margins/db';
+import type { DB, KyselyDB } from '@margins/db';
+import { json } from '@margins/db';
 import type { User } from 'lucia';
-import type { PullRequestV1, PullResponseOKV1, PatchOperation } from 'replicache';
+import type {
+	PullRequestV1,
+	PullResponseOKV1,
+	PatchOperation,
+} from 'replicache';
 import { jsonObjectFrom } from 'kysely/helpers/mysql';
 import { groupBy, mapValues, pipe, toPairs } from 'remeda';
 import { Entry } from '../core/index.js';
@@ -15,7 +19,11 @@ import {
 	type AliasedRawBuilder,
 } from 'kysely';
 
-const TABLES = ['Bookmark', 'Annotation', 'Favorite'] satisfies (keyof DB)[];
+const TABLES = [
+	'Bookmark',
+	'Annotation',
+	'Favorite',
+] satisfies (keyof KyselyDB)[];
 
 type TableName = (typeof TABLES)[number];
 
@@ -53,11 +61,13 @@ const TABLE_KEY = {
 			)
 			.end(),
 } satisfies {
-	[key in TableName]?: (eb: ExpressionBuilder<DB, key>) => Expression<string>;
+	[key in TableName]?: (
+		eb: ExpressionBuilder<KyselyDB, key>,
+	) => Expression<string>;
 };
 
 export async function handlePull(
-	db: typeof $db,
+	db: DB,
 	// TODO: actor? (in case of system etc)
 	user: User,
 	req: PullRequestV1,
@@ -135,8 +145,8 @@ export async function handlePull(
 			// Entry: ({ eb }) => eb('', 'is', null),
 		} satisfies {
 			[key in (typeof TABLES)[number]]?: (args: {
-				eb: ExpressionBuilder<DB, key>;
-				ref: ReferenceExpression<DB, key>;
+				eb: ExpressionBuilder<KyselyDB, key>;
+				ref: ReferenceExpression<KyselyDB, key>;
 			}) => Expression<SqlBool>;
 		};
 
@@ -145,11 +155,11 @@ export async function handlePull(
 		// const tableJoins = {
 		//     Entry: () => ["Bookmark", (join) => join.onRef("Bookmark")]
 		// } satisfies {
-		//     [key in TableName]?: <J extends keyof DB>() => [J, (eb: JoinBuilder<DB, key>) => void];
+		//     [key in TableName]?: <J extends keyof KyselyDB>() => [J, (eb: JoinBuilder<KyselyDB, key>) => void];
 		// }
 		let now = Date.now();
 		let combined:
-			| SelectQueryBuilder<DB, (typeof TABLES)[number], any>
+			| SelectQueryBuilder<KyselyDB, (typeof TABLES)[number], any>
 			| undefined = undefined;
 		for (const name of TABLES) {
 			let query = tx.selectFrom(name);
@@ -258,7 +268,7 @@ export async function handlePull(
 			],
 		} satisfies {
 			[key in (typeof TABLES)[number]]?: (
-				eb: ExpressionBuilder<DB, key>,
+				eb: ExpressionBuilder<KyselyDB, key>,
 			) => AliasedRawBuilder<any, any>[];
 		};
 		for (const [name, items] of Object.entries(toPut)) {

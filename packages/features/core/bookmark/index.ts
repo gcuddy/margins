@@ -1,6 +1,5 @@
 import { createId, isValidUrl } from '@margins/lib';
 import { zod } from '../utils/zod.js';
-import { db } from '@margins/db';
 import {
 	BookmarkModel,
 	CollectionItemsModel,
@@ -11,6 +10,7 @@ import { createCompiledInsertBookmarkQuery } from './queries.js';
 import { useUser } from '../user.js';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
+import { useTransaction } from '../utils/transaction.js';
 
 export const create = zod(
 	BookmarkModel.pick({
@@ -45,35 +45,37 @@ export const create = zod(
 
 		if (!entryId && uri) {
 			// TODO: cache lookup for given uri -> entry id (since given uri might resolve differently than final uri)
-			const existingEntry = await db
-				.selectFrom('Entry as e')
-				.select('id')
-				.where('uri', '=', uri)
-				.executeTakeFirst();
+			useTransaction(async (db) => {
+				const existingEntry = await db
+					.selectFrom('Entry as e')
+					.select('id')
+					.where('uri', '=', uri)
+					.executeTakeFirst();
 
-			console.log({ existingEntry });
-			if (!existingEntry && uri) {
-				// TODO: cache check
-				try {
-					const article = await parseUrlToEntry(uri);
-					entryId = nanoid();
+				console.log({ existingEntry });
+				if (!existingEntry && uri) {
+					// TODO: cache check
+					try {
+						const article = await parseUrlToEntry(uri);
+						entryId = nanoid();
 
-					await db
-						.insertInto('Entry')
-						.values({
-							id: entryId,
-							updatedAt: new Date(),
-							...article,
-						})
-						.ignore()
-						.executeTakeFirst();
-				} catch (e) {
-					console.error(e);
+						await db
+							.insertInto('Entry')
+							.values({
+								id: entryId,
+								updatedAt: new Date(),
+								...article,
+							})
+							.ignore()
+							.executeTakeFirst();
+					} catch (e) {
+						console.error(e);
+					}
+				} else if (existingEntry) {
+					// Entry already exists - bump it to the top of the list, and return that info
+					entryId = existingEntry.id;
 				}
-			} else if (existingEntry) {
-				// Entry already exists - bump it to the top of the list, and return that info
-				entryId = existingEntry.id;
-			}
+			});
 		}
 
 		console.log({
@@ -87,7 +89,7 @@ export const create = zod(
 		const user = useUser();
 		console.log({ user });
 
-		await db.transaction().execute(async (trx) => {
+		const res = await useTransaction(async (trx) => {
 			if (!entryId) {
 				throw new Error('entryId is undefined');
 			}
@@ -131,15 +133,14 @@ export const create = zod(
 					userId: user.id,
 				})
 				.execute();
+			return await trx
+				.selectFrom('Entry as e')
+				.selectAll()
+				.where('id', '=', entryId)
+				.executeTakeFirst();
 		});
 
-		// return entry we inserted
-
-		return await db
-			.selectFrom('Entry as e')
-			.selectAll()
-			.where('id', '=', entryId)
-			.executeTakeFirst();
+		return res;
 	},
 );
 
@@ -154,22 +155,23 @@ export const update = zod(
 	async (input) => {
 		const user = useUser();
 		const { id } = input;
+		return await useTransaction(async (db) => {
+			await db
+				.updateTable('Bookmark')
+				.set({
+					...input,
+					updatedAt: new Date(),
+				})
+				.where('id', '=', id)
+				.where('userId', '=', user.id)
+				.execute();
 
-		await db
-			.updateTable('Bookmark')
-			.set({
-				...input,
-				updatedAt: new Date(),
-			})
-			.where('id', '=', id)
-			.where('userId', '=', user.id)
-			.execute();
-
-		return await db
-			.selectFrom('Bookmark as b')
-			.selectAll()
-			.where('id', '=', id)
-			.where('userId', '=', user.id)
-			.executeTakeFirst();
+			return await db
+				.selectFrom('Bookmark as b')
+				.selectAll()
+				.where('id', '=', id)
+				.where('userId', '=', user.id)
+				.executeTakeFirst();
+		});
 	},
 );

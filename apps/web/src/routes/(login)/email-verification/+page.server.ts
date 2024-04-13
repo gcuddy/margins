@@ -1,14 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { db } from '@margins/db';
-import type { User } from 'lucia';
-import { isWithinExpirationDate } from 'oslo';
-import { auth } from '@margins/auth';
-import { message, superValidate } from 'sveltekit-superforms';
+// import type { User } from 'lucia';
+// import { isWithinExpirationDate } from 'oslo';
+import { superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { tokenSchema } from './schema';
-import { generateEmailVerificationToken } from '$lib/auth/token.server';
-import { sendEmailVerificationLink } from '$lib/auth/verification';
+// import { generateEmailVerificationToken } from '$lib/auth/token.server';
+// import { sendEmailVerificationLink } from '$lib/auth/verification';
 
 export const load = (async (event) => {
 	const { locals } = event;
@@ -37,18 +35,19 @@ export const actions: Actions = {
 			return fail(403);
 		}
 
-		const token = await generateEmailVerificationToken(
-			event.locals.user.id,
-			event.locals.user.email,
-		);
-		console.log({ token });
-		await sendEmailVerificationLink(event.locals.user.email, token);
+		// const token = await generateEmailVerificationToken(
+		// 	event.locals.user.id,
+		// 	event.locals.user.email,
+		// );
+		// console.log({ token });
+		// await sendEmailVerificationLink(event.locals.user.email, token);
 		return {
 			message: 'Email verification link sent. Check your email.',
 		};
 	},
 	verify: async (event) => {
 		const { cookies, locals } = event;
+		const { auth, db } = locals;
 		if (!locals.user) {
 			return fail(401);
 		}
@@ -57,25 +56,25 @@ export const actions: Actions = {
 		if (!form.valid) {
 			return fail(400, { form });
 		}
-		const { code } = form.data;
+		// const { code } = form.data;
 
-		const validCode = await verifyEmailCode({
-			code: code.join(''),
-			user: locals.user,
-		});
+		// const validCode = await verifyEmailCode({
+		// 	code: code.join(''),
+		// 	user: locals.user,
+		// });
 
-		if (!validCode) {
-			return message(
-				form,
-				{
-					status: 'error',
-					text: 'Invalid code',
-				},
-				{
-					status: 403,
-				},
-			);
-		}
+		// if (!validCode) {
+		// 	return message(
+		// 		form,
+		// 		{
+		// 			status: 'error',
+		// 			text: 'Invalid code',
+		// 		},
+		// 		{
+		// 			status: 403,
+		// 		},
+		// 	);
+		// }
 
 		await auth.invalidateUserSessions(locals.user.id);
 		await db
@@ -98,33 +97,33 @@ export const actions: Actions = {
 	},
 };
 
-async function verifyEmailCode({
-	code,
-	user,
-}: {
-	code: string;
-	user: User;
-}): Promise<boolean> {
-	return await db.transaction().execute(async (trx) => {
-		const databaseCode = await trx
-			.selectFrom('EmailVerificationToken')
-			.selectAll()
-			.where('user_id', '=', user.id)
-			.executeTakeFirst();
-		if (!databaseCode || databaseCode.code !== code) {
-			return false;
-		}
-		await db
-			.deleteFrom('EmailVerificationToken')
-			.where('id', '=', databaseCode.id)
-			.execute();
+// async function verifyEmailCode({
+// 	code,
+// 	user,
+// }: {
+// 	code: string;
+// 	user: User;
+// }): Promise<boolean> {
+// 	return await db.transaction().execute(async (trx) => {
+// 		const databaseCode = await trx
+// 			.selectFrom('EmailVerificationToken')
+// 			.selectAll()
+// 			.where('user_id', '=', user.id)
+// 			.executeTakeFirst();
+// 		if (!databaseCode || databaseCode.code !== code) {
+// 			return false;
+// 		}
+// 		await db
+// 			.deleteFrom('EmailVerificationToken')
+// 			.where('id', '=', databaseCode.id)
+// 			.execute();
 
-		if (!isWithinExpirationDate(databaseCode.expires)) {
-			return false;
-		}
-		if (databaseCode.email !== user.email) {
-			return false;
-		}
-		return true;
-	});
-}
+// 		if (!isWithinExpirationDate(databaseCode.expires)) {
+// 			return false;
+// 		}
+// 		if (databaseCode.email !== user.email) {
+// 			return false;
+// 		}
+// 		return true;
+// 	});
+// }

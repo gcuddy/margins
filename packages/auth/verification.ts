@@ -1,6 +1,6 @@
 import { resend } from '@margins/email';
 
-import { db } from '@margins/db';
+import { useTransaction } from '@margins/features/core';
 import { TimeSpan, createDate } from 'oslo';
 import { generateRandomString, alphabet } from 'oslo/crypto';
 import { VERIFICATION_CODE_LENGTH } from './constants.js';
@@ -11,21 +11,26 @@ export const generateEmailVerificationToken = async (
 	userId: string,
 	email: string,
 ): Promise<string> => {
-	await db
-		.deleteFrom('EmailVerificationToken')
-		.where('user_id', '=', userId)
-		.execute();
-	const code = generateRandomString(VERIFICATION_CODE_LENGTH, alphabet('0-9'));
-	await db
-		.insertInto('EmailVerificationToken')
-		.values({
-			code,
-			email,
-			expires: createDate(new TimeSpan(15, 'm')),
-			user_id: userId, // 15 minutes
-		})
-		.execute();
-	return code;
+	return useTransaction(async (db) => {
+		await db
+			.deleteFrom('EmailVerificationToken')
+			.where('user_id', '=', userId)
+			.execute();
+		const code = generateRandomString(
+			VERIFICATION_CODE_LENGTH,
+			alphabet('0-9'),
+		);
+		await db
+			.insertInto('EmailVerificationToken')
+			.values({
+				code,
+				email,
+				expires: createDate(new TimeSpan(15, 'm')),
+				user_id: userId, // 15 minutes
+			})
+			.execute();
+		return code;
+	});
 };
 
 // TODO: react emails

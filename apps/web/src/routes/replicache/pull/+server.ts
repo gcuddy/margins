@@ -1,4 +1,4 @@
-import { db, json } from '@margins/db';
+import { json } from '@margins/db';
 import type { DB } from '@margins/db/kysely/types';
 import {
 	sql,
@@ -69,6 +69,7 @@ const TABLE_KEY = {
 };
 
 export async function POST({ locals, request }) {
+	const db = locals.db;
 	console.log('pull server');
 
 	// const authorizationHeader = request.headers.get('Authorization');

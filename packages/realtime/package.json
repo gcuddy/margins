@@ -1,16 +1,17 @@
 {
 	"name": "@margins/realtime",
 	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"dev": "partykit dev --live",
-		"deploy": "partykit deploy"
-	},
 	"dependencies": {
-		"partysocket": "^1.0.1"
+		"@margins/auth": "workspace:*",
+		"@margins/db": "workspace:*"
 	},
 	"devDependencies": {
 		"partykit": "^0.0.100",
 		"typescript": "^5.4.2"
+	},
+	"private": true,
+	"scripts": {
+		"dev": "partykit dev --live",
+		"deploy": "partykit deploy"
 	}
 }

@@ -4,8 +4,6 @@ import {
 	generateEmailVerificationToken,
 	sendEmailVerificationLink,
 } from '@margins/auth/verification';
-import { db } from '@margins/db';
-import { auth } from '@margins/auth';
 import { generateId } from 'lucia';
 import { Argon2id } from 'oslo/password';
 import { message, superValidate } from 'sveltekit-superforms/server';
@@ -51,6 +49,7 @@ export const actions: Actions = {
 
 			const userId = generateId(15);
 			const hashed_password = await new Argon2id().hash(password);
+			const { auth, db } = event.locals;
 
 			await db.transaction().execute(async (trx) => {
 				await trx

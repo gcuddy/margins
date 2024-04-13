@@ -1,6 +1,6 @@
 import type { Page, WorkerInfo } from '@playwright/test';
 import type { User } from '@margins/db/kysely/types';
-import { db } from '@margins/db';
+import type { DB } from '@margins/db';
 import type { Insertable, Selectable } from 'kysely';
 import { generateId } from 'lucia';
 import { Argon2id } from 'oslo/password';
@@ -19,7 +19,11 @@ async function hashPassword(password: string) {
 	return hashed_password;
 }
 
-export const createUsersFixture = (page: Page, workerInfo: WorkerInfo) => {
+export const createUsersFixture = (
+	db: DB,
+	page: Page,
+	workerInfo: WorkerInfo,
+) => {
 	const store: {
 		users: UserFixture[];
 	} = {
@@ -67,6 +71,7 @@ export const createUsersFixture = (page: Page, workerInfo: WorkerInfo) => {
 				.executeTakeFirstOrThrow();
 
 			const userFixture = createUserFixture(
+				db,
 				{
 					...dbUser,
 					password: pass,
@@ -92,7 +97,7 @@ export const createUsersFixture = (page: Page, workerInfo: WorkerInfo) => {
 				.selectAll()
 				.where('email', '=', email)
 				.executeTakeFirstOrThrow();
-			const userFixture = createUserFixture(user, page);
+			const userFixture = createUserFixture(db, user, page);
 			store.users.push(userFixture);
 			return userFixture;
 		},
@@ -121,6 +126,7 @@ const createUser = (
 };
 
 export const createUserFixture = (
+	db: DB,
 	user: Selectable<User> & {
 		password?: string | null;
 	},

@@ -3,12 +3,9 @@ import { superValidate } from 'sveltekit-superforms/server';
 
 // TODO: old passwords need to be updated to use new hashing
 
-import { auth } from '@margins/auth';
-
 import type { PageServerLoad } from './$types';
 import { loginUserSchema } from '../schema';
 import { Argon2id } from 'oslo/password';
-import { db } from '@margins/db';
 import { zod } from 'sveltekit-superforms/adapters';
 import { redirectToUser } from '$lib/server/utils';
 
@@ -27,6 +24,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions = {
 	default: async (event) => {
 		console.log('login action');
+		const { auth, db } = event.locals;
 		const form = await superValidate(event, zod(loginUserSchema));
 		if (!form.valid) {
 			return fail(400, { form });

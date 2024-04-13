@@ -9,6 +9,8 @@ declare global {
 		}
 
 		interface Locals {
+			auth: import('lucia').Lucia;
+			db: import('@margins/db').DB;
 			session: import('lucia').Session | null;
 			user: import('lucia').User | null;
 		}
