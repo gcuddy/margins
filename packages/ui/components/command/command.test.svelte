@@ -14,32 +14,32 @@
 		<Command.Empty>No results found.</Command.Empty>
 		<Command.Group heading="Suggestions">
 			<Command.Item>
-				<Calendar class="mr-2 h-4 w-4" />
+				<Command.Icon icon={Calendar} />
 				<span>Calendar</span>
 			</Command.Item>
 			<Command.Item>
-				<Smile class="mr-2 h-4 w-4" />
+				<Command.Icon icon={Smile} />
 				<span>Search Emoji</span>
 			</Command.Item>
 			<Command.Item>
-				<Calculator class="mr-2 h-4 w-4" />
+				<Command.Icon icon={Calculator} />
 				<span>Calculator</span>
 			</Command.Item>
 		</Command.Group>
 		<Command.Separator />
 		<Command.Group heading="Settings">
 			<Command.Item>
-				<User class="mr-2 h-4 w-4" />
+				<Command.Icon icon={User} />
 				<span>Profile</span>
 				<Command.Shortcut>⌘P</Command.Shortcut>
 			</Command.Item>
 			<Command.Item>
-				<CreditCard class="mr-2 h-4 w-4" />
+				<Command.Icon icon={CreditCard} />
 				<span>Billing</span>
 				<Command.Shortcut>⌘B</Command.Shortcut>
 			</Command.Item>
 			<Command.Item>
-				<Settings class="mr-2 h-4 w-4" />
+				<Command.Icon icon={Settings} />
 				<span>Settings</span>
 				<Command.Shortcut>⌘S</Command.Shortcut>
 			</Command.Item>
