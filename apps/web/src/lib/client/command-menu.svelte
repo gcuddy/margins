@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { mainCommandState } from './stores/command-state';
 	import { Command } from '@margins/ui';
 	import Sun from 'lucide-svelte/icons/sun';
@@ -12,6 +12,9 @@
 		if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
 			e.preventDefault();
 			$mainCommandState.open = !$mainCommandState.open;
+			if ($mainCommandState.open) {
+				$mainCommandState.input = '';
+			}
 		}
 		if ($mainCommandState.open && e.key === 'Escape') {
 			e.preventDefault();
@@ -36,16 +39,21 @@
 	} = mainCommandState;
 
 	const placeholder = createPlaceholder('Type a command or search');
-
-	// hacky way to reset the command menu when the dialog closes
-	$: if (!$mainCommandState.open) {
-		setTimeout(mainCommandState.reset, 1);
-	}
-
-	$: console.log({ $containerEl });
 </script>
 
-<Command.Dialog bind:el={$containerEl} bind:open={$mainCommandState.open}>
+<Command.Dialog
+	bind:el={$containerEl}
+	bind:open={$mainCommandState.open}
+	onOpenChange={(open) => {
+		console.log('open', open);
+		if (!open) {
+			tick().then(() => {
+				console.log('resetting ');
+				mainCommandState.reset();
+			});
+		}
+	}}
+>
 	<Command.Input
 		bind:value={$mainCommandState.input}
 		placeholder={$placeholder}

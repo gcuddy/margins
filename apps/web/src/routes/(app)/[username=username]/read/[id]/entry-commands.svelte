@@ -9,12 +9,13 @@
 	import { derived } from 'svelte/store';
 	import commandScore from 'command-score';
 	import ChevronRight from 'lucide-svelte/icons/chevron-right';
+	import { onDestroy } from 'svelte';
 
 	const rep = getReplicache();
 
 	export let id: string;
 
-	const setMenu = mainCommandState.registerMenu('change-location', {
+	const { setMenu } = mainCommandState.registerMenu('change-location', {
 		content: LocationCommands,
 		contentProps: { id },
 		placeholder: 'Change location…',
@@ -44,11 +45,18 @@
 
 		return output.sort((a, b) => b.score - a.score);
 	});
+
+	onDestroy(() => {
+		console.log('<Entry-commands /> destroyed');
+		// removeMenu();
+	});
 </script>
 
 <Command.Item
 	onSelect={() => {
-		setMenu('change-location');
+		setMenu('change-location', {
+			bounce: true,
+		});
 	}}
 >
 	<Command.Icon icon={Inbox} />

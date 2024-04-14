@@ -14,7 +14,7 @@ type MenuState<T extends SvelteComponent = SvelteComponent> = {
 function bounce(container: HTMLElement) {
 	const transform = getComputedStyle(container).transform;
 	container.style.transform =
-		transform === 'none' ? 'scale(0.96)' : `${transform} scale(0.96)`;
+		transform === 'none' ? 'scale(0.98)' : `${transform} scale(0.98)`;
 	setTimeout(() => {
 		container.style.transform = transform;
 	}, 75);
@@ -98,6 +98,7 @@ function main_command_state() {
 	const menuStack: string[] = [];
 
 	const currentMenu = derived(state, ($state) => {
+		console.log('currentMenu', $state.currentMenu, commander);
 		if (!$state.currentMenu) return null;
 		const menu = commander.get($state.currentMenu);
 		if (!menu) return null;
@@ -189,21 +190,20 @@ function main_command_state() {
 		 * @param menu menu
 		 * @returns type-safe setMenu function
 		 */
-registerMenu: <TMenuKey extends string>(key: TMenuKey, menu: MenuState) => {
+		registerMenu: <TMenuKey extends string>(key: TMenuKey, menu: MenuState) => {
 			const c = commander.add(key, menu);
-			onDestroy(() => {
-				commander.remove(key);
-			});
 			type NewMenuState = keyof ExtractMenu<typeof c>;
-			return setMenu<NewMenuState>;
+			return {
+				removeMenu: () => commander.remove(key),
+				setMenu: setMenu<NewMenuState>,
+			};
 		},
 
-registeredActions,
+		registeredActions,
 
-registeredComponents,
+		registeredComponents,
 
-
-reset: () => {
+		reset: () => {
 			menuStack.length = 0;
 			update((state) => ({
 				...state,
@@ -212,18 +212,17 @@ reset: () => {
 			}));
 		},
 
-/**
+		/**
 		 * Convenience function to run an action and close the command state.
 		 * @param fn Action to run
 		 * @param keepOpen Whether to keep the command state open after running the action
 		 */
-run: (fn: () => void, keepOpen = false) => {
+		run: (fn: () => void, keepOpen = false) => {
 			if (keepOpen !== true) update((state) => ({ ...state, open: false }));
 			fn();
 		},
 
-set,
-
+		set,
 
 		setMenu,
 		subscribe,
