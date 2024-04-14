@@ -11,14 +11,17 @@
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
 			e.preventDefault();
-			$mainCommandState.open = !$mainCommandState.open;
 			if ($mainCommandState.open) {
-				$mainCommandState.input = '';
+				$mainCommandState.open = false;
+				mainCommandState.reset();
+			} else {
+				$mainCommandState.open = true;
 			}
 		}
 		if ($mainCommandState.open && e.key === 'Escape') {
 			e.preventDefault();
 			$mainCommandState.open = false;
+			mainCommandState.reset();
 		}
 	}
 

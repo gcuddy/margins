@@ -138,6 +138,16 @@ function main_command_state() {
 		}));
 	};
 
+	const reset = (resetOpen = false) => {
+		menuStack.length = 0;
+		update((state) => ({
+			...state,
+			currentMenu: null,
+			input: '',
+			open: resetOpen === true ? false : state.open,
+		}));
+	};
+
 	return {
 		back: () => {
 			menuStack.pop();
@@ -203,14 +213,7 @@ function main_command_state() {
 
 		registeredComponents,
 
-		reset: () => {
-			menuStack.length = 0;
-			update((state) => ({
-				...state,
-				currentMenu: null,
-				input: '',
-			}));
-		},
+		reset,
 
 		/**
 		 * Convenience function to run an action and close the command state.
@@ -218,7 +221,7 @@ function main_command_state() {
 		 * @param keepOpen Whether to keep the command state open after running the action
 		 */
 		run: (fn: () => void, keepOpen = false) => {
-			if (keepOpen !== true) update((state) => ({ ...state, open: false }));
+			if (keepOpen !== true) reset(true);
 			fn();
 		},
 
