@@ -1,4 +1,4 @@
-import { onDestroy } from 'svelte';
+import { onDestroy, tick } from 'svelte';
 import type { SvelteComponent, ComponentProps, ComponentType } from 'svelte';
 import { derived, get, writable } from 'svelte/store';
 import LibraryCommands from '../commands/library.commands.svelte';
@@ -140,12 +140,14 @@ function main_command_state() {
 
 	const reset = (resetOpen = false) => {
 		menuStack.length = 0;
-		update((state) => ({
-			...state,
-			currentMenu: null,
-			input: '',
-			open: resetOpen === true ? false : state.open,
-		}));
+		tick().then(() => {
+			update((state) => ({
+				...state,
+				currentMenu: null,
+				input: '',
+				open: resetOpen === true ? false : state.open,
+			}));
+		});
 	};
 
 	return {

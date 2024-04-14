@@ -24,7 +24,10 @@
 </script>
 
 {#each commands as command}
-	<Command.Item value={command.label} onSelect={command.action}>
+	<Command.Item
+		value={command.label}
+		onSelect={() => mainCommandState.run(command.action)}
+	>
 		<svelte:component
 			this={command.icon}
 			class="group-data-[selected=true]:text-accent-foreground text-muted-foreground/80 mr-2 h-4 w-4"

@@ -68,7 +68,10 @@
 				<!-- TODO: heading -->
 				<Command.Group>
 					{#each $registeredActions as action}
-						<Command.Item value={action.label} onSelect={action.action}>
+						<Command.Item
+							value={action.label}
+							onSelect={() => mainCommandState.run(action.action)}
+						>
 							{action.label}
 						</Command.Item>
 					{/each}
