@@ -56,7 +56,7 @@ model ReplicacheClient {
     clientGroup    ReplicacheClientGroup @relation(fields: [clientGroupId], references: [id])
     clientGroupId  String
     clientVersion  Int
-    lastMutationId BigInt
+    lastMutationId Int
 
     @@index([clientGroupId])
     @@map("replicache_client")

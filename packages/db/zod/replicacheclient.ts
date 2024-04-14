@@ -7,5 +7,5 @@ export const ReplicacheClientModel = z.object({
   deletedAt: z.date().nullish(),
   clientGroupId: z.string(),
   clientVersion: z.number().int(),
-  lastMutationId: z.bigint(),
+  lastMutationId: z.number().int(),
 })

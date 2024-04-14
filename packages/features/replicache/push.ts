@@ -22,7 +22,8 @@ export async function handlePush(db: DB, user: User, body: PushRequestV1) {
 				const client = (await trx
 					.selectFrom('replicache_client')
 					.select(['id', 'clientGroupId', 'lastMutationId', 'clientVersion'])
-					.where('clientGroupId', '=', body.clientGroupID)
+					.forUpdate()
+					.where('id', '=', mutation.clientID)
 					.executeTakeFirst()) ?? {
 					clientGroupId: body.clientGroupID,
 					clientVersion: 0,
@@ -32,7 +33,7 @@ export async function handlePush(db: DB, user: User, body: PushRequestV1) {
 
 				const nextClientVersion = group.clientVersion + 1;
 				// for wrapping of number, see pull comment
-				const nextMutationId = Number(client.lastMutationId) + 1;
+				const nextMutationId = client.lastMutationId + 1;
 
 				if (mutation.id < nextMutationId) {
 					console.log(
