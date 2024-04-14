@@ -224,13 +224,13 @@ export async function handlePull(
 		);
 		console.log('combined', Date.now() - now);
 
-		console.log('results', JSON.stringify(results));
+		// console.log('results', JSON.stringify(results));
 
 		for (const [name, entries] of results) {
 			const arr = [];
 			for (const entry of entries) {
 				const version = new Date(entry.version).getTime();
-				console.log({ entry, version }, { cvr });
+				// console.log({ entry, version }, { cvr });
 				if (cvr.data[entry.key] !== version) {
 					arr.push(entry);
 				}
@@ -345,9 +345,9 @@ export async function handlePull(
 				.where('id', '=', req.clientGroupID)
 				.execute();
 
-			console.log({
-				nextCvr,
-			});
+			// console.log({
+			// 	nextCvr,
+			// });
 
 			await tx
 				.insertInto('replicache_cvr')

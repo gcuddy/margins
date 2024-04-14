@@ -159,9 +159,8 @@ export const update = zod(
 			status: true,
 		}),
 	}),
-	async (input) => {
+	async ({ id, input }) => {
 		const user = useUser();
-		const { id } = input;
 		return await useTransaction(async (db) => {
 			await db
 				.updateTable('Bookmark')

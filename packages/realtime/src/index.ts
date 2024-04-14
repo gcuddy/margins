@@ -6,13 +6,17 @@ import type { Lucia } from 'lucia';
 import type * as Party from 'partykit/server';
 import { z } from 'zod';
 import type { PushRequestV1 } from 'replicache';
+import { withDB } from '@margins/features/core';
 
-const mutationSchema = z.object({
-	clientID: z.string(),
-	id: z.number(),
-	name: z.string(),
-	timestamp: z.number(),
-});
+const mutationSchema = z
+	.object({
+		args: z.any(),
+		clientID: z.string(),
+		id: z.number(),
+		name: z.string(),
+		timestamp: z.number(),
+	})
+	.passthrough();
 
 const pushRequestV0Schema = z.object({
 	pushVersion: z.literal(0),
@@ -122,7 +126,9 @@ export default class Server implements Party.Server {
 		if (req.method === 'POST') {
 			if (route === 'push') {
 				const body = pushRequestV1Schema.parse(await req.json());
-				await handlePush(this.db, user, body as PushRequestV1);
+				withDB(this.db, async () => {
+					await handlePush(this.db, user, body as PushRequestV1);
+				});
 				await this.sendPoke();
 				return Response.json({ ok: true });
 			} else if (route === 'pull') {
