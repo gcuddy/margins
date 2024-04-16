@@ -4,7 +4,6 @@ import Inbox from 'lucide-svelte/icons/inbox';
 import Star from 'lucide-svelte/icons/star';
 import CircleDashed from 'lucide-svelte/icons/circle-dashed';
 import type { ComponentType } from 'svelte';
-import { objectKeys } from '@margins/lib';
 
 export const locationToDisplay: Record<Status, string> = {
 	Archive: 'Done',
@@ -18,10 +17,10 @@ export const locationToIcon: Record<Status, ComponentType> = {
 	Now: Star,
 };
 
-export const locationCommands = objectKeys(locationToDisplay).map(
-	(location) => ({
-		icon: locationToIcon[location],
-		id: location,
-		label: locationToDisplay[location],
-	}),
-) satisfies Omit<Command, 'action'>[];
+export const locations: Status[] = ['Backlog', 'Now', 'Archive'] as const;
+
+export const locationCommands = locations.map((location) => ({
+	icon: locationToIcon[location],
+	id: location,
+	label: locationToDisplay[location],
+})) satisfies Omit<Command, 'action'>[];
