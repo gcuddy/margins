@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { SmallPlus } from '@margins/ui';
 	import { PinStore } from '../data/pin.js';
 	import { getReplicache } from '../replicache/index.js';
 
-	const rep = getReplicache();
+const rep = getReplicache();
 
 	const pins = PinStore.list.watch(
 		() => rep,
@@ -16,8 +17,11 @@
 	{#each $pins as pin}
 		<li>
 			{#if pin.entry}
+				<!-- TODO: link -->
 				<span>
-					{pin.entry.title}
+					<SmallPlus>
+						{pin.entry.title}
+					</SmallPlus>
 				</span>
 			{/if}
 		</li>

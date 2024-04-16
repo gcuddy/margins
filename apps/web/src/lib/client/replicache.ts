@@ -45,8 +45,14 @@ const mutators = new Client<ServerType>()
 			? ['Entry', input.entryId]
 			: undefined;
 		if (!id) return;
+		// TODO: this won't work because we're getting a bookmark by entryId. Figure out a fix.
+		const bookmark = input.entryId
+			? await LibraryStore.get(tx, input.entryId)
+			: undefined;
+		console.log({ bookmark });
 		await PinStore.put(tx, id, {
 			...input,
+			entry: bookmark?.entry,
 		});
 	})
 	.mutation('pin_remove', async (tx, { id }) => {
