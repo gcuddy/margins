@@ -89,14 +89,14 @@
 					value="light"
 					onSelect={() => mainCommandState.run(() => setMode('light'))}
 				>
-					<Sun class="mr-2 h-4 w-4" />
+					<Command.Icon icon={Sun} />
 					Light
 				</Command.Item>
 				<Command.Item
 					value="dark"
 					onSelect={() => mainCommandState.run(() => setMode('dark'))}
 				>
-					<Moon class="mr-2 h-4 w-4" />
+					<Command.Icon icon={Moon} />
 					Dark
 				</Command.Item>
 				<!-- <Command.Item value="system" onSelect={() => runCommand(() => resetMode())}>
