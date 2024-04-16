@@ -17,7 +17,7 @@
 		}),
 		NavigationCommand({
 			category: 'App',
-			path: `/u:${$page.data.user!.username}/done`,
+			path: `/u:${$page.data.user!.username}/archive`,
 			title: 'Go to Done',
 		}),
 	];

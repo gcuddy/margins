@@ -17,6 +17,12 @@ export const locationToIcon: Record<Status, ComponentType> = {
 	Now: Star,
 };
 
+export const locationToHrefs: Record<Status, string> = {
+	Archive: '/archive',
+	Backlog: '/backlog',
+	Now: '/now',
+};
+
 export const locations: Status[] = ['Backlog', 'Now', 'Archive'] as const;
 
 export const locationCommands = locations.map((location) => ({

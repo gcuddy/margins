@@ -1,9 +1,10 @@
+import type { Status } from '@margins/db/kysely/enums';
 import { capitalize } from '@margins/lib';
 
-function type(status: string) {
+function type(status: string): Status {
 	status = status.toLowerCase();
 
-	if (status === 'done') {
+	if (status === 'archive') {
 		return 'Archive';
 	} else if (status === 'now') {
 		return 'Now';

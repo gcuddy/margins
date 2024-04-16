@@ -4,12 +4,18 @@
 		ShellContent,
 		getShellCtx,
 	} from '@margins/features/shell';
-	import Inbox from 'lucide-svelte/icons/inbox';
 	import { LibraryStore } from '@margins/features/data';
 	import { getReplicache } from '$lib/client/replicache';
 	import { createId } from '@margins/lib';
 	import { page } from '$app/stores';
 	import { derived } from 'svelte/store';
+	import { Dropdown, SmallPlus } from '@margins/ui';
+	import {
+		locationToDisplay,
+		locationToHrefs,
+		locationToIcon,
+		locations,
+	} from '@margins/features/entries';
 	export let data;
 
 	const rep = getReplicache();
@@ -51,7 +57,29 @@
 	}
 </script>
 
-<ShellHeader title={data.status} icon={Inbox}></ShellHeader>
+<ShellHeader>
+	<Dropdown.Root>
+		<Dropdown.Trigger class={Dropdown.triggerVariants()}>
+			<svelte:component
+				this={locationToIcon[data.statusType]}
+				class="text-muted-foreground mr-1.5 h-4 w-4"
+			/>
+			<SmallPlus>
+				{data.status}
+			</SmallPlus>
+		</Dropdown.Trigger>
+		<Dropdown.Content align="start">
+			{#each locations as location}
+				<Dropdown.Item
+					href="/u:{$page.data.user?.username}{locationToHrefs[location]}"
+				>
+					<Dropdown.Icon icon={locationToIcon[location]} />
+					{locationToDisplay[location]}</Dropdown.Item
+				>
+			{/each}
+		</Dropdown.Content>
+	</Dropdown.Root>
+</ShellHeader>
 
 <svelte:window
 	on:paste={() => {

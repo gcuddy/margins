@@ -9,11 +9,18 @@ import RadioGroup from './dropdown-menu-radio-group.svelte';
 import SubContent from './dropdown-menu-sub-content.svelte';
 import SubTrigger from './dropdown-menu-sub-trigger.svelte';
 import CheckboxItem from './dropdown-menu-checkbox-item.svelte';
+import Icon from './dropdown-menu-icon.svelte';
+import { tv } from 'tailwind-variants';
 
 const Sub = DropdownMenuPrimitive.Sub;
 const Root = DropdownMenuPrimitive.Root;
 const Trigger = DropdownMenuPrimitive.Trigger;
 const Group = DropdownMenuPrimitive.Group;
+
+const triggerVariants = tv({
+	base: 'hover:bg-glass/5 data-[state=open]:bg-glass/5 flex cursor-default items-center gap-2 rounded-lg p-1.5',
+	defaultVariants: {},
+});
 
 export {
 	Sub,
@@ -30,6 +37,8 @@ export {
 	SubTrigger,
 	RadioGroup,
 	CheckboxItem,
+	Icon,
+	triggerVariants,
 	//
 	Root as DropdownMenu,
 	Sub as DropdownMenuSub,
@@ -45,4 +54,5 @@ export {
 	SubContent as DropdownMenuSubContent,
 	SubTrigger as DropdownMenuSubTrigger,
 	CheckboxItem as DropdownMenuCheckboxItem,
+	Icon as DropdownMenuIcon,
 };
