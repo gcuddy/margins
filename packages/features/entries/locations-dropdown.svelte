@@ -6,12 +6,13 @@
 		locationToHrefs,
 		locationToIcon,
 		locations,
-	} from './locations';
+	} from './locations.js';
 
-	import { page } from '$app/stores';
 	import { Dropdown, SmallPlus } from '@margins/ui';
+	import { page } from '$app/stores';
 
 	export let status: Status;
+	export let onSelect: ((status: Status) => void) | undefined = undefined;
 </script>
 
 <Dropdown.Root>
@@ -27,7 +28,10 @@
 	<Dropdown.Content align="start">
 		{#each locations as location}
 			<Dropdown.Item
-				href="/u:{$page.data.user?.username}{locationToHrefs[location]}"
+				on:click={onSelect ? () => onSelect?.(location) : undefined}
+				href={!onSelect
+					? `/u:${$page.data.user?.username}${locationToHrefs[location]}`
+					: undefined}
 			>
 				<Dropdown.Icon icon={locationToIcon[location]} />
 				{locationToDisplay[location]}</Dropdown.Item

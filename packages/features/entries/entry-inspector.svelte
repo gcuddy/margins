@@ -6,6 +6,7 @@
 	import { AnnotationStore } from '../data/annotation.js';
 	import { getReplicache } from '../replicache/index.js';
 	import { createId } from '@margins/lib';
+	import { LocationsDropdown } from './index.js';
 	const rep = getReplicache();
 	const { inspectorTab, inspectorWidth, isInspectorVisible } = getEntryCtx();
 	const DURATION = 125;
@@ -26,8 +27,6 @@
 				return a.entryId === bookmark.entry?.id;
 			}),
 	)();
-
-	$: console.log({ $annotations });
 </script>
 
 {#if $isInspectorVisible}
@@ -48,6 +47,20 @@
 			<Tabs.Content value="properties">
 				<div class="flex flex-col gap-2">
 					<SmallPlus mini muted>Properties</SmallPlus>
+					<div class="flex items-center gap-2">
+						<SmallPlus muted>Location</SmallPlus>
+						<LocationsDropdown
+							onSelect={(status) => {
+								rep.mutate.bookmark_update({
+									id: bookmark.id,
+									input: {
+										status,
+									},
+								});
+							}}
+							status={bookmark.status}
+						/>
+					</div>
 					<div>
 						<SmallPlus muted>Saved</SmallPlus>
 						<SmallPlus>{bookmark.bookmarked_at}</SmallPlus>
