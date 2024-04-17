@@ -7,6 +7,7 @@
 	import { getReplicache } from '../replicache/index.js';
 	import { createId } from '@margins/lib';
 	import { LocationsDropdown } from './index.js';
+	import SidebarAnnotation from './sidebar-annotation.svelte';
 	const rep = getReplicache();
 	const { inspectorTab, inspectorWidth, isInspectorVisible } = getEntryCtx();
 	const DURATION = 125;
@@ -32,7 +33,7 @@
 {#if $isInspectorVisible}
 	<div
 		style:width="{$inspectorWidth}px"
-		class="entry-inspector bg-background-elevation2 border-l px-6 py-3.5"
+		class="entry-inspector bg-background-elevation2 overflow-y-auto border-l px-6 py-3.5"
 	>
 		<Tabs.Root bind:value={$inspectorTab} class="space-y-6">
 			<Tabs.List class="h-auto w-full p-1">
@@ -79,11 +80,11 @@
 					placeholder="Add a note…"
 					class="bg-background-elevation w-full"
 				/>
-				{#each $annotations as annotation}
-					<div class="bg-background-elevation2 rounded-lg p-2">
-						<p>{annotation.body}</p>
-					</div>
-				{/each}
+				<div class="mt-4 flex flex-col gap-2">
+					{#each $annotations as annotation}
+						<SidebarAnnotation {annotation} />
+					{/each}
+				</div>
 			</Tabs.Content>
 		</Tabs.Root>
 	</div>
