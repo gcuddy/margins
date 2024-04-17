@@ -9,13 +9,7 @@
 	import { createId } from '@margins/lib';
 	import { page } from '$app/stores';
 	import { derived } from 'svelte/store';
-	import { Dropdown, SmallPlus } from '@margins/ui';
-	import {
-		locationToDisplay,
-		locationToHrefs,
-		locationToIcon,
-		locations,
-	} from '@margins/features/entries';
+	import { LocationsDropdown } from '@margins/features/entries';
 	export let data;
 
 	const rep = getReplicache();
@@ -58,27 +52,7 @@
 </script>
 
 <ShellHeader>
-	<Dropdown.Root>
-		<Dropdown.Trigger class={Dropdown.triggerVariants()}>
-			<svelte:component
-				this={locationToIcon[data.statusType]}
-				class="text-muted-foreground mr-1.5 h-4 w-4"
-			/>
-			<SmallPlus>
-				{data.status}
-			</SmallPlus>
-		</Dropdown.Trigger>
-		<Dropdown.Content align="start">
-			{#each locations as location}
-				<Dropdown.Item
-					href="/u:{$page.data.user?.username}{locationToHrefs[location]}"
-				>
-					<Dropdown.Icon icon={locationToIcon[location]} />
-					{locationToDisplay[location]}</Dropdown.Item
-				>
-			{/each}
-		</Dropdown.Content>
-	</Dropdown.Root>
+	<LocationsDropdown status={data.statusType} />
 </ShellHeader>
 
 <svelte:window
