@@ -1,8 +1,7 @@
 import MiniSearch from 'minisearch';
 import { derived, get, writable } from 'svelte/store';
 import type { Replicache } from 'replicache';
-import type { Entry } from '../core/index.js';
-import type { BookmarkWithEntry } from './library.js';
+import { type BookmarkWithEntry } from './library.js';
 
 export function createDerivedLibrarySearchStore(rep: Replicache) {
 	// TODO: use text field
@@ -11,22 +10,51 @@ export function createDerivedLibrarySearchStore(rep: Replicache) {
 		storeFields: ['title'],
 	});
 
-	const ready = writable(false);
+	// TODO: derive path automatially, or derive this from store
+	const { unsubscribe } = createSearchWatcher<
+		BookmarkWithEntry,
+		BookmarkWithEntry['entry']
+	>(rep, minisearch, '/Bookmark', (b) => b.entry);
 
-	// TODO: clean this up
+	const input = writable('');
+
+	const results = derived(input, ($input) => {
+		const results = minisearch.search($input, {
+			fuzzy: 0.2,
+		});
+
+		return results;
+	});
+
+	return {
+		input,
+		results,
+	};
+}
+
+function createSearchWatcher<
+	TInput,
+	TOutput extends {
+		id: string;
+	},
+>(
+	rep: Replicache,
+	minisearch: MiniSearch,
+	path: string,
+	resolver: (res: TInput) => TOutput,
+) {
+	const ready = writable(false);
 	const unsubscribe = rep.experimentalWatch(
 		(diffs) => {
 			console.log('watching');
 			if (!get(ready)) {
-				const docs: Entry.Item[] = [];
+				const docs: TOutput[] = [];
 				for (const diff of diffs) {
 					console.log('diffs');
 					if (diff.op === 'add') {
-						const entry = (
-							structuredClone(diff.newValue) as unknown as BookmarkWithEntry
-						).entry;
-						if (!entry) continue;
-						docs.push(entry);
+						const val = resolver(structuredClone(diff.newValue) as TInput);
+						if (!val) continue;
+						docs.push(val);
 					}
 				}
 				minisearch.addAllAsync(docs);
@@ -36,35 +64,25 @@ export function createDerivedLibrarySearchStore(rep: Replicache) {
 			for (const diff of diffs) {
 				console.log('diffs');
 				if (diff.op === 'add') {
-					minisearch.add(diff.newValue);
+					const val = resolver(structuredClone(diff.newValue) as TInput);
+					if (!val) continue;
+					minisearch.add(val);
 				} else if (diff.op === 'change') {
-					minisearch.replace(diff.newValue);
+					const val = resolver(structuredClone(diff.newValue) as TInput);
+					minisearch.replace(val);
 				} else if (diff.op === 'del') {
-					const entry = diff.oldValue as Entry.Item;
-					minisearch.discard(entry.id);
+					const val = resolver(structuredClone(diff.oldValue) as TInput);
+					minisearch.discard(val.id);
 				}
 			}
 		},
 		{
 			initialValuesInFirstDiff: true,
-			prefix: '/Bookmark',
+			prefix: path,
 		},
 	);
 
-	const input = writable('');
-
-	const results = derived(input, ($input) => {
-		console.log({ $input });
-		const results = minisearch.search($input, {
-			fuzzy: 0.2,
-		});
-		console.log({ results });
-
-		return results;
-	});
-
 	return {
-		input,
-		results,
+		unsubscribe,
 	};
 }
