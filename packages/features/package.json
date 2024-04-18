@@ -58,6 +58,7 @@
 		"command-score": "^0.1.2",
 		"kysely": "^0.27.2",
 		"lucide-svelte": "^0.363.0",
+		"minisearch": "^6.3.0",
 		"nanoid": "^4.0.2",
 		"remeda": "^1.56.0",
 		"replicache": "^14.2.2",
