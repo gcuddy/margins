@@ -25,7 +25,10 @@ export const ArticleSchema = z
 		datePublished: z.string().optional(),
 		description: z.string().optional(),
 		hasPart: WebPageElementSchema.optional(),
-		headline: z.string().optional(),
+		headline: z
+			.string()
+			.optional()
+			.transform((t) => t?.trim()),
 		image: z.string().or(ImageSchema).or(ImageSchema.array()).optional(),
 		name: z.string().optional(),
 		url: z.string().optional(),

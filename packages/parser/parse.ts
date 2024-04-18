@@ -33,10 +33,13 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 
 	const articleSchema = getSchemaOrgArticle(root);
 	let returnHtml = '';
+	let returnText = '';
 
 	if (articleSchema?.hasPart) {
-		returnHtml =
-			root.querySelector(articleSchema.hasPart.cssSelector)?.outerHTML || '';
+		const el = root.querySelector(articleSchema.hasPart.cssSelector);
+		console.log({ el });
+		returnHtml = el?.outerHTML || '';
+		returnText = el?.innerText || '';
 	}
 
 	return {
@@ -47,7 +50,7 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 		image: articleSchema ? getImageFromSchema(articleSchema)?.[0] ?? '' : '',
 		published: new Date(articleSchema?.datePublished || ''),
 		summary: articleSchema?.description || '',
-		text: '',
+		text: returnText,
 		title: articleSchema?.headline || '',
 		url: articleSchema?.url || '',
 		wordCount: articleSchema?.wordcount || 0,
