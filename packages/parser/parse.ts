@@ -1,6 +1,10 @@
 import { getHtml } from './lib/fetch-html.js';
 import { parse } from 'node-html-parser';
 import { getSchemaOrgArticle } from './lib/jsonld.js';
+import {
+	getAuthorFromSchema,
+	getImageFromSchema,
+} from './schemas/schemaorg.js';
 
 type ArticleProps = {
 	url: string;
@@ -35,12 +39,12 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 			root.querySelector(articleSchema.hasPart.cssSelector)?.outerHTML || '';
 	}
 
-	console.log('articleSchema', articleSchema);
-
 	return {
-		author: articleSchema?.author || '',
+		author: articleSchema
+			? getAuthorFromSchema(articleSchema)?.join(', ') ?? ''
+			: '',
 		html: returnHtml,
-		image: articleSchema?.image || '',
+		image: articleSchema ? getImageFromSchema(articleSchema)?.[0] ?? '' : '',
 		published: new Date(articleSchema?.datePublished || ''),
 		summary: articleSchema?.description || '',
 		text: '',

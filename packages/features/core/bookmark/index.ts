@@ -41,6 +41,7 @@ export const create = zod(
 	async (input) => {
 		const { collection, relatedEntryId, status, uri } = input;
 		let { entryId } = input;
+		console.log({ status });
 
 		if (uri && !isValidUrl(uri)) {
 			// TODO: handle this case with ISBN, etc.
@@ -52,7 +53,7 @@ export const create = zod(
 
 		if (!entryId && uri) {
 			// TODO: cache lookup for given uri -> entry id (since given uri might resolve differently than final uri)
-			useTransaction(async (db) => {
+			await useTransaction(async (db) => {
 				const existingEntry = await db
 					.selectFrom('Entry as e')
 					.select('id')
@@ -64,6 +65,7 @@ export const create = zod(
 					// TODO: cache check
 					try {
 						const article = await parseUrlToEntry(uri);
+						console.log({ article });
 						entryId = nanoid();
 
 						await db

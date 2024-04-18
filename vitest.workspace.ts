@@ -8,24 +8,24 @@ export default defineWorkspace([
 		//     conditions: mode === 'test' ? ['browser'] : [],
 		// },
 		test: {
-			globals: true,
-			name: '@margins/ui',
-			include: ['packages/ui/components/**/*.{test,spec}.[jt]s?(x)'],
 			environment: 'happy-dom',
-			setupFiles: ['packages/ui/test-setup.ts'],
+			globals: true,
+			include: ['packages/ui/components/**/*.{test,spec}.[jt]s?(x)'],
+			name: '@margins/ui',
 			server: {
 				deps: {
 					inline: ['bits-ui'],
 				},
 			},
+			setupFiles: ['packages/ui/test-setup.ts'],
 		},
 	},
 	{
 		test: {
-			globals: true,
-			name: '@margins/parser',
-			include: ['packages/parser/lib/**/*.{test,spec}.[jt]s?(x)'],
 			environment: 'happy-dom',
+			globals: true,
+			include: ['packages/parser/**/*.{test,spec}.[jt]s?(x)'],
+			name: '@margins/parser',
 			// setupFiles: ['packages/ui/test-setup.ts'],
 			// server: {
 			// 	deps: {

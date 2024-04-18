@@ -17,6 +17,8 @@ export function createCompiledInsertBookmarkQuery(
 		keyof DB['Bookmark']
 	>;
 
+	console.log('inserting bookmark');
+
 	return (
 		trx
 			.insertInto('Bookmark')

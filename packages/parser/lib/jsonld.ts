@@ -18,6 +18,7 @@ export function getSchemaOrgArticle(doc: HTMLElement) {
 	const article = ArticleSchema.safeParse(articleJson);
 
 	if (!article.success) {
+		console.log('No article schema', article.error.toString());
 		return;
 	}
 
