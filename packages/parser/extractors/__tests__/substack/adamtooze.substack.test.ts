@@ -6,6 +6,9 @@ describe('adamtooze.substack.com', () => {
 			url: 'https://adamtooze.substack.com/p/soft-slow-and-scarred-the-imfs-take',
 		});
 
+		// kind of an 'eh' way to make sure article is roughly right, though we should be more precise
+		expect(article.wordCount).toBeCloseTo(1222);
+
 		expect(article).toMatchObject({
 			author: 'Adam Tooze',
 			title:

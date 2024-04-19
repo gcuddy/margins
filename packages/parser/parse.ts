@@ -31,6 +31,8 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 	const parser = getParser();
 	const root = parser(html);
 
+	// TODO: check if there's a custom extractor, like substack.
+
 	const articleSchema = getSchemaOrgArticle(root);
 	let returnHtml = '';
 	let returnText = '';
@@ -53,8 +55,12 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 		text: returnText,
 		title: articleSchema?.headline || '',
 		url: articleSchema?.url || '',
-		wordCount: articleSchema?.wordcount || 0,
+		wordCount: articleSchema?.wordcount || countWords(returnText),
 	};
+}
+
+function countWords(str: string) {
+	return str.trim().split(/\s+/).length;
 }
 
 function getParser() {
