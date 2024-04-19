@@ -1,0 +1,27 @@
+{
+	"name": "chrome-extension",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "svelte-check --tsconfig ./tsconfig.json"
+	},
+	"devDependencies": {
+		"@crxjs/vite-plugin": "beta",
+		"@sveltejs/vite-plugin-svelte": "^3.0.2",
+		"@tsconfig/svelte": "^5.0.2",
+		"@types/chrome": "^0.0.266",
+		"autoprefixer": "^10.4.19",
+		"postcss": "^8.4.38",
+		"svelte": "^4.2.12",
+		"svelte-check": "^3.6.7",
+		"tailwindcss": "^3.4.3",
+		"tslib": "^2.6.2",
+		"typescript": "^5.2.2",
+		"vite": "^5.2.0"
+	},
+	"dependencies": {}
+}
