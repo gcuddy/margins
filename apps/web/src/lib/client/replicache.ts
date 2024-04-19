@@ -37,6 +37,7 @@ const mutators = new Client<ServerType>()
 	})
 	.mutation('annotation_create', async (tx, input) => {
 		await AnnotationStore.put(tx, [input.id!], {
+			createdAt: new Date(),
 			...input,
 		});
 	})
