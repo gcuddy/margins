@@ -14,14 +14,17 @@
 			return null;
 		}
 	}
+	export let user: { id: string; username: string };
 	export let bookmark: BookmarkWithEntry;
 	export let htmlTitle: string | undefined = undefined;
 	let className: string | undefined = undefined;
 	export { className as class };
-	console.log('entry-item', bookmark, htmlTitle);
 </script>
 
-<a href="/id" class={cn('mx-3 block h-14 cursor-default', className)}>
+<a
+	href="/u:{user.username}/read/{bookmark.id}"
+	class={cn('mx-3 block h-14 cursor-default', className)}
+>
 	<!-- start of actual component -->
 	<div class="flex items-center gap-3 rounded px-3">
 		<div>
@@ -40,11 +43,11 @@
 					{bookmark.entry?.title}
 				{/if}
 			</span>
-			{#if bookmark.entry?.summary}
-				<span class="text-sm">
-					{bookmark.entry?.summary}
-				</span>
-			{/if}
+			<!-- {#if bookmark.entry?.summary} -->
+			<!-- 	<span class="text-sm"> -->
+			<!-- 		{bookmark.entry?.summary} -->
+			<!-- 	</span> -->
+			<!-- {/if} -->
 			{#if bookmark.entry?.author}
 				<span class="text-muted-foreground text-sm">
 					{bookmark.entry?.author}

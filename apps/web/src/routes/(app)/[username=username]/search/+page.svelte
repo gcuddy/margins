@@ -7,6 +7,7 @@
 		createDerivedLibrarySearchStore,
 	} from '@margins/features/data';
 	import { derived } from 'svelte/store';
+	import { page } from '$app/stores';
 
 	// TODO: bind with url state
 	//
@@ -112,6 +113,7 @@
 		class={result.excerpt ? 'h-20 overflow-hidden' : undefined}
 		htmlTitle={result.entry?.title}
 		bookmark={result}
+		user={$page.data.user}
 	>
 		<div slot="bottom" class="text-sm">{@html result.excerpt}</div>
 	</EntryItem>

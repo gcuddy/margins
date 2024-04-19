@@ -9,7 +9,7 @@
 	import { createId } from '@margins/lib';
 	import { page } from '$app/stores';
 	import { derived } from 'svelte/store';
-	import { LocationsDropdown } from '@margins/features/entries';
+	import { EntryItem, LocationsDropdown } from '@margins/features/entries';
 	export let data;
 
 	const rep = getReplicache();
@@ -35,20 +35,6 @@
 		];
 		$entryContext.currentList = $bookmarks;
 	}
-
-	function getDomain(url: string) {
-		const match = url.match(/:\/\/(www\d?\.)?(.[^/:]+)/i);
-		if (
-			match != null &&
-			match.length > 2 &&
-			typeof match[2] === 'string' &&
-			match[2].length > 0
-		) {
-			return match[2];
-		} else {
-			return null;
-		}
-	}
 </script>
 
 <ShellHeader>
@@ -73,37 +59,7 @@
 				<!-- TODO: figure out if we should link to bookmark id or entry id...
                     bookmark id makes sense her ebut then entry id more generic so makes sense also
                 -->
-				<a
-					href="/u:{$page.data.user?.username}/read/{bookmark.id}"
-					class="mx-3 block h-14 cursor-default"
-				>
-					<!-- start of actual component -->
-					<div class="flex items-center gap-3 rounded px-3">
-						<div>
-							<img
-								src={bookmark.entry?.image ??
-									`https://icon.horse/icon/${getDomain(bookmark.entry?.uri ?? '') ?? 'margins'}`}
-								alt={bookmark.entry?.title}
-								class="h-6 w-6 rounded"
-							/>
-						</div>
-						<div class="flex flex-col">
-							<span class="text-sm">
-								{bookmark.entry?.title}
-							</span>
-							{#if bookmark.entry?.summary}
-								<span class="text-sm">
-									{bookmark.entry?.summary}
-								</span>
-							{/if}
-							{#if bookmark.entry?.author}
-								<span class="text-muted-foreground text-sm">
-									{bookmark.entry?.author}
-								</span>
-							{/if}
-						</div>
-					</div>
-				</a>
+				<EntryItem user={$page.data.user} {bookmark} />
 			</li>
 		{/each}
 	</ul>
