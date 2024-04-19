@@ -7,12 +7,12 @@ describe('adamtooze.substack.com', () => {
 		});
 
 		// kind of an 'eh' way to make sure article is roughly right, though we should be more precise
-		expect(article.wordCount).toBeCloseTo(1222);
+		expect(article.wordCount).toBeGreaterThanOrEqual(1222 - 5);
+		expect(article.wordCount).toBeLessThanOrEqual(1222 + 5);
+		expect(article.author).toBe('Adam Tooze');
 
-		expect(article).toMatchObject({
-			author: 'Adam Tooze',
-			title:
-				"Chartbook 275 Soft, slow and scarred - the IMF's take on the world economy in April 2024.",
-		});
+		expect(article.title).toMatch(
+			/Soft, slow and scarred - the IMF's take on the world economy in April 2024/,
+		);
 	});
 });

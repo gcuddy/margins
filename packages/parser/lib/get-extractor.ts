@@ -6,30 +6,33 @@ import type {
 } from '../extractors/types.js';
 
 export function lookupCustomExtractor(
-	...names: string[]
-): CustomExtractor | null {
-	for (const name of names) {
-		if (name in CustomExtractors) {
-			return CustomExtractors[name as keyof typeof CustomExtractors];
-		}
-	}
-	return null;
+	...domains: string[]
+): CustomExtractor | undefined {
+	const extractor = Object.values(CustomExtractors).find((extractor) => {
+		const extractorDomains = Array.isArray(extractor.domain)
+			? extractor.domain
+			: [extractor.domain];
+		return extractorDomains.some((domain) => domains.includes(domain));
+	});
+	return extractor;
 }
 
-export function getExtractors(url: string): TExtractor {
+export function getExtractor(url: string): TExtractor {
 	const parsedUrl = new URL(url);
 
 	const { hostname } = parsedUrl;
 
 	const baseDomain = hostname.split('.').slice(-2).join('.');
 
-	const wildCardSubDomain = `*${baseDomain}`;
+	const wildCardSubDomain = `*.${baseDomain}`;
 
 	const customExtractor = lookupCustomExtractor(
 		hostname,
 		wildCardSubDomain,
 		baseDomain,
 	);
+
+	console.log({ customExtractor });
 
 	const extractor: TExtractor = customExtractor
 		? {

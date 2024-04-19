@@ -5,6 +5,8 @@ import {
 	getAuthorFromSchema,
 	getImageFromSchema,
 } from './schemas/schemaorg.js';
+import { getExtractor } from './lib/get-extractor.js';
+import { getFirstMatchingElement } from './lib/utils.js';
 
 type ArticleProps = {
 	url: string;
@@ -32,19 +34,42 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 	const root = parser(html);
 
 	// TODO: check if there's a custom extractor, like substack.
+	const extractor = getExtractor(url);
+	console.log({ extractor });
+	let article: Article = {
+		author: '',
+		html: '',
+		image: '',
+		published: new Date(),
+		summary: '',
+		text: '',
+		title: '',
+		url: '',
+		wordCount: -1,
+	};
 
-	const articleSchema = getSchemaOrgArticle(root);
 	let returnHtml = '';
 	let returnText = '';
+	if (extractor.content) {
+		const selectors = Array.isArray(extractor.content)
+			? extractor.content
+			: extractor.content.selectors;
+		const el = getFirstMatchingElement(root, ...selectors);
+		if (el) {
+			returnHtml = el.outerHTML;
+			returnText = el.innerText;
+		}
+	}
 
-	if (articleSchema?.hasPart) {
+	const articleSchema = getSchemaOrgArticle(root);
+
+	if (!returnHtml && articleSchema?.hasPart) {
 		const el = root.querySelector(articleSchema.hasPart.cssSelector);
-		console.log({ el });
 		returnHtml = el?.outerHTML || '';
 		returnText = el?.innerText || '';
 	}
-
-	return {
+	article = {
+		...article,
 		author: articleSchema
 			? getAuthorFromSchema(articleSchema)?.join(', ') ?? ''
 			: '',
@@ -56,6 +81,13 @@ export async function parseArticle({ url }: ArticleProps): Promise<Article> {
 		title: articleSchema?.headline || '',
 		url: articleSchema?.url || '',
 		wordCount: articleSchema?.wordcount || countWords(returnText),
+	};
+
+	console.log(article);
+
+	return {
+		...article,
+		wordCount: article.wordCount || countWords(article.text),
 	};
 }
 
