@@ -4,11 +4,24 @@ import type { Replicache } from 'replicache';
 import { type BookmarkWithEntry } from './library.js';
 
 export function createDerivedLibrarySearchStore(rep: Replicache) {
-	// TODO: use text field
+	// TODO: serialize to indexedDB
 	const minisearch = new MiniSearch({
+		extractField: (doc, fieldName) => {
+			if (fieldName === 'html') {
+				const d = new DOMParser();
+				const html = `<html><body>${doc[fieldName]}</body></html`;
+				const parsed = d.parseFromString(html, 'text/html');
+				const body = parsed.querySelector('body');
+				const textContent = body!.textContent;
+				return textContent;
+			}
+
+			return MiniSearch.getDefault('extractField')(doc, fieldName);
+		},
 		fields: ['title', 'html', 'author'],
 		storeFields: ['title'],
 	});
+	console.log({ minisearch });
 
 	// TODO: derive path automatially, or derive this from store
 	const { unsubscribe } = createSearchWatcher<
