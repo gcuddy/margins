@@ -1,5 +1,5 @@
 {
-	"name": "chrome-extension",
+	"name": "@margins/chrome-extension",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
@@ -11,6 +11,7 @@
 	},
 	"devDependencies": {
 		"@crxjs/vite-plugin": "beta",
+		"@margins/ui": "workspace:*",
 		"@sveltejs/vite-plugin-svelte": "^3.0.2",
 		"@tsconfig/svelte": "^5.0.2",
 		"@types/chrome": "^0.0.266",

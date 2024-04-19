@@ -1,4 +1,4 @@
-import type { HTMLElement } from 'node-html-parser';
+import type { HTMLElement } from '../../dom-parser.js';
 
 const regexes = [
 	/(blog|website)\s+of\s+(.*)?$/,
