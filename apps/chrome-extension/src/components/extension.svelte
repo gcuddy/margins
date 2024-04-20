@@ -4,6 +4,7 @@
 	import { Button } from '@margins/ui';
 	import { onMount } from 'svelte';
 	import { chromeStorageKeys } from '../constants';
+	import QueryProvider from './query-provider.svelte';
 	export let sessionID = '';
 	export let userID = '';
 	const DEV = true;
@@ -23,17 +24,19 @@
 	});
 </script>
 
-<div class="flex min-w-[20rem] flex-col gap-4 bg-blue-50 p-4">
-	{#if sessionID && userID}
-		<App {userID} {sessionID} />
-	{:else}
-		<Button
-			on:click={async () => {
-				await chrome.runtime.sendMessage({
-					action: 'signIn',
-					payload: { url: loginURL },
-				});
-			}}>Log in to Margins</Button
-		>
-	{/if}
-</div>
+<QueryProvider>
+	<div class="flex min-w-[20rem] flex-col gap-4 bg-blue-50 p-4">
+		{#if sessionID && userID}
+			<App {userID} {sessionID} />
+		{:else}
+			<Button
+				on:click={async () => {
+					await chrome.runtime.sendMessage({
+						action: 'signIn',
+						payload: { url: loginURL },
+					});
+				}}>Log in to Margins</Button
+			>
+		{/if}
+	</div>
+</QueryProvider>
