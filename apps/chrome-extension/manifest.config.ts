@@ -14,6 +14,10 @@ export default defineManifest(async (env) => ({
 	action: {
 		default_popup: 'src/popup/index.html',
 	},
+	background: {
+		service_worker: 'src/background.ts',
+		type: 'module',
+	},
 	manifest_version: 3,
 	name: env.mode === 'staging' ? '[INTERNAL] Margins' : 'Margins',
 	permissions: ['storage', 'tabs'],

@@ -10,10 +10,15 @@ import { zod } from 'sveltekit-superforms/adapters';
 import { redirectToUser } from '$lib/server/utils';
 
 export const load: PageServerLoad = async (event) => {
-	const { locals } = event;
-	console.log('login load');
-	if (locals.user) {
-		redirect(302, redirectToUser(locals.user));
+	const { locals, url } = event;
+	const isChromeExt = url.searchParams.get('chrome_ext');
+	console.log('isChromeExt', isChromeExt);
+	if (locals.user && locals.session) {
+		if (isChromeExt) {
+			return redirect(302, `/login-success?sessionToken=${locals.session.id}`);
+		} else {
+			redirect(302, redirectToUser(locals.user));
+		}
 	}
 
 	const form = await superValidate(event, zod(loginUserSchema));
@@ -69,10 +74,10 @@ export const actions = {
 			...sessionCookie.attributes,
 		});
 
-		// console.log({
-		// 	session,
-		// 	sessionCookie,
-		// });
+		const isChromeExt = event.url.searchParams.get('chrome_ext');
+		if (isChromeExt) {
+			return redirect(302, `/login-success?sessionToken=${session.id}`);
+		}
 		return redirect(302, redirectToUser(user));
 	},
 } satisfies Actions;
