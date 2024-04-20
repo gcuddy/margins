@@ -73,6 +73,7 @@ export const create = zod(
 							.values({
 								id: entryId,
 								updatedAt: new Date(),
+								uri,
 								...article,
 							})
 							.ignore()
@@ -182,4 +183,15 @@ export const update = zod(
 				.executeTakeFirst();
 		});
 	},
+);
+
+export const fromUrl = zod(Schema.pick({ uri: true }), async ({ uri }) =>
+	useTransaction((tx) => {
+		return tx
+			.selectFrom('Bookmark')
+			.selectAll()
+			.innerJoin('Entry', 'Entry.id', 'Bookmark.entryId')
+			.where('Entry.uri', '=', uri)
+			.executeTakeFirst();
+	}),
 );

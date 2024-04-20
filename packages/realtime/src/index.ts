@@ -4,6 +4,7 @@ import {
 	handlePull,
 	handlePush,
 	server,
+	queries,
 } from '@margins/features/replicache/server';
 import type { Config as PlanetScaleConfig } from '@planetscale/database';
 import type { Lucia } from 'lucia';
@@ -126,6 +127,24 @@ export default class Server implements Party.Server {
 		}
 
 		console.log({ user });
+
+		if (req.method === 'GET') {
+			if (queries.has(route)) {
+				console.log('server has route');
+				// LOL
+				return await withDB(this.db, async () => {
+					return await withUser(user, async () => {
+						const res = await queries.execute(
+							route,
+							Object.fromEntries(url.searchParams),
+						);
+						console.log({ res });
+						return Response.json(res);
+					});
+				});
+			}
+			return new Response('ok');
+		}
 
 		if (req.method === 'POST') {
 			return await withDB(this.db, async () => {

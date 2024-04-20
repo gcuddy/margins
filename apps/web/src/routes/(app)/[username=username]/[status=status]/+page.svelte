@@ -53,7 +53,7 @@
 	}}
 />
 <ShellContent>
-	<ul class="py-1">
+	<ul class="overflow-y-auto py-1">
 		{#each $bookmarks as bookmark}
 			<li>
 				<!-- TODO: figure out if we should link to bookmark id or entry id...

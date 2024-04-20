@@ -3,16 +3,17 @@
 import type { z, ZodSchema } from 'zod';
 import type { WriteTransaction } from 'replicache';
 
-interface Mutation<Name extends string = string, Input = any> {
+interface Mutation<Name extends string = string, Input = any, Output = any> {
 	input: Input;
 	name: Name;
+	output: Output;
 }
 
 export class Server<Mutations> {
 	private mutations = new Map<
 		string,
 		{
-			fn: (input: any) => Promise<void>;
+			fn: (input: any) => Promise<any>;
 			input: ZodSchema;
 		}
 	>();
@@ -21,11 +22,12 @@ export class Server<Mutations> {
 		Name extends string,
 		Shape extends ZodSchema,
 		Args = z.infer<Shape>,
+		Output = any,
 	>(
 		name: Name,
 		shape: Shape,
-		fn: (input: z.infer<Shape>) => Promise<any>,
-	): Server<Mutations & { [key in Name]: Mutation<Name, Args> }> {
+		fn: (input: z.infer<Shape>) => Promise<Output>,
+	): Server<Mutations & { [key in Name]: Mutation<Name, Args, Output> }> {
 		this.mutations.set(name as string, {
 			fn: async (args) => {
 				const parsed = args;
@@ -40,12 +42,13 @@ export class Server<Mutations> {
 		Name extends string,
 		Shape extends ZodSchema,
 		Args = z.infer<Shape>,
+		Output = any,
 	>(
 		name: Name,
-		fn: ((input: z.infer<ZodSchema>) => Promise<any>) & {
+		fn: ((input: z.infer<ZodSchema>) => Promise<Output>) & {
 			schema: Shape;
 		},
-	): Server<Mutations & { [key in Name]: Mutation<Name, Args> }> {
+	): Server<Mutations & { [key in Name]: Mutation<Name, Args, Output> }> {
 		this.mutations.set(name as string, {
 			fn,
 			input: fn.schema,

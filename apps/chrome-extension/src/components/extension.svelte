@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { chromeStorageKeys } from '../constants';
 	import QueryProvider from './query-provider.svelte';
+	import RpcProvider from './rpc-provider.svelte';
 	export let sessionID = '';
 	export let userID = '';
 	const DEV = true;
@@ -27,7 +28,9 @@
 <QueryProvider>
 	<div class="flex min-w-[20rem] flex-col gap-4 bg-blue-50 p-4">
 		{#if sessionID && userID}
-			<App {userID} {sessionID} />
+			<RpcProvider {userID} {sessionID}>
+				<App {userID} {sessionID} />
+			</RpcProvider>
 		{:else}
 			<Button
 				on:click={async () => {

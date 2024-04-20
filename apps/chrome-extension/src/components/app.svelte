@@ -4,11 +4,11 @@
 	import { Button } from '@margins/ui';
 	import type { Document } from '@margins/parser';
 	import { parseArticle } from '@margins/parser/client';
-	import Spinner from 'lucide-svelte/icons/loader';
 	import type { ServerMutations } from '@margins/features/replicache/server';
 	import { getCurrentMetadata } from '../utils';
 	import RssButton from './rss-button.svelte';
 	import { state } from '../state';
+	import SaveButton from './save-button.svelte';
 
 	const API_URL = `http://127.0.0.1:1999/parties/main/${userID}`;
 
@@ -29,9 +29,9 @@
 		console.log({ response });
 	};
 
-	const parser = new DOMParser();
+	const domParser = new DOMParser();
 	const parse = (html: string) => {
-		const parse = parser.parseFromString(html, 'text/html');
+		const parse = domParser.parseFromString(html, 'text/html');
 
 		const querySelectorAll = (selector: string) => {
 			return Array.from(parse.querySelectorAll(selector));
@@ -46,18 +46,16 @@
 			querySelectorAll,
 		} as Document;
 	};
+	const parser = { parse };
 
 	async function save() {
 		await getCurrentMetadata(async (response) => {
 			const html = response.html;
 			const url = response.url;
-			const { url: _, ...article } = await parseArticle(
-				{ parse },
-				{
-					html,
-					url: url ?? '',
-				},
-			);
+			const { url: _, ...article } = await parseArticle(parser, {
+				html,
+				url: url ?? '',
+			});
 			await callApi('bookmark_create', {
 				entry: article,
 				status: 'Backlog',
@@ -80,7 +78,7 @@
 </script>
 
 {#if $state.page === null}
-	<Button
+	<!-- <Button
 		on:click={async () => {
 			saving = true;
 			await save();
@@ -91,11 +89,13 @@
 		{#if saving}
 			<Spinner size="24" />
 		{/if}
-	</Button>
+	</Button> -->
+
+	<SaveButton {parser} />
 
 	<Button>Annotate</Button>
 
-	<RssButton parser={{ parse }} />
+	<RssButton {parser} />
 {:else if $state.page === 'rss'}
 	{#each $state.feeds ?? [] as feed}
 		<div>{feed.name} - {feed.url}</div>
