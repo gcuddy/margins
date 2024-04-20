@@ -18,19 +18,19 @@
 	const sortedAndFilteredLibrary = derived(
 		[library, mainCommandState],
 		([$library, $mainCommandState]) => {
-			const arr: BookmarkWithEntry[] = [];
-			const idToScoreMap = new Map<string, number>();
-
 			if ($mainCommandState.input.length < 1) {
 				return $library.filter((b) => b.entry);
 			}
+
+			const arr: BookmarkWithEntry[] = [];
+			const idToScoreMap = new Map<string, number>();
 
 			for (const b of $library) {
 				const title = b.title ?? b.entry?.title;
 				if (title) {
 					const score = commandScore(title, $mainCommandState.input);
 					idToScoreMap.set(b.id, score);
-					arr.push(b);
+					if (score > 0) arr.push(b);
 				}
 			}
 

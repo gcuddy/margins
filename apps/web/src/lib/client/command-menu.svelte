@@ -42,9 +42,11 @@
 	} = mainCommandState;
 
 	const placeholder = createPlaceholder('Type a command or search');
+	$: console.log({ $currentMenu });
 </script>
 
 <Command.Dialog
+	shouldFilter={$currentMenu?.shouldFilter === false ? false : true}
 	bind:el={$containerEl}
 	bind:open={$mainCommandState.open}
 	onOpenChange={(open) => {

@@ -8,6 +8,7 @@ type MenuState<T extends SvelteComponent = SvelteComponent> = {
 	content: ComponentType<T>;
 	contentProps?: ComponentProps<T>;
 	placeholder?: string;
+	shouldFilter?: boolean;
 	// ...
 };
 
@@ -48,6 +49,7 @@ type CommandStateKey = keyof CommandState;
 const commander = new Commander().add('library-items', {
 	content: LibraryCommands,
 	placeholder: 'Open item...',
+	shouldFilter: false,
 });
 
 type State = {
