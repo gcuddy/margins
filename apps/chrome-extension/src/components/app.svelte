@@ -93,7 +93,17 @@
 
 	<SaveButton {parser} />
 
-	<Button>Annotate</Button>
+	<Button
+		on:click={async () => {
+			const tab = await chrome.tabs.query({
+				active: true,
+				currentWindow: true,
+			});
+			const tabId = tab[0].id;
+			if (!tabId) return;
+			chrome.tabs.sendMessage(tabId, { action: 'showAnnotate' });
+		}}>Annotate</Button
+	>
 
 	<RssButton {parser} />
 {:else if $state.page === 'rss'}

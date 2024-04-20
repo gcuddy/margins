@@ -22,3 +22,23 @@ export async function getCurrentMetadata(
 		},
 	);
 }
+
+export function getHighestZindex() {
+	const zIndexes = [];
+
+	for (const element of Array.from(document.querySelectorAll('*'))) {
+		const zIndex = window
+			.getComputedStyle(element, null)
+			.getPropertyValue('z-index');
+
+		if (zIndex !== null && zIndex !== 'auto') {
+			zIndexes.push(Number(zIndex));
+		}
+	}
+
+	if (zIndexes.length === 0) {
+		return 0;
+	}
+
+	return Math.max(...zIndexes);
+}
