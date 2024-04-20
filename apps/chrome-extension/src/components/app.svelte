@@ -6,6 +6,8 @@
 	import { parseArticle } from '@margins/parser/client';
 	import Spinner from 'lucide-svelte/icons/loader';
 	import type { ServerMutations } from '@margins/features/replicache/server';
+	import { getCurrentMetadata } from '../utils';
+	import RssButton from './rss-button.svelte';
 
 	const API_URL = `http://127.0.0.1:1999/parties/main/${userID}`;
 
@@ -45,38 +47,22 @@
 	};
 
 	async function save() {
-		chrome.tabs.query(
-			{
-				active: true,
-				currentWindow: true,
-			},
-			(tabs) => {
-				const tab = tabs[0];
-				if (!tab?.id || !tab.url) return;
-				chrome.tabs.sendMessage(
-					tab.id,
-					{ action: 'getHTML' },
-					async (response) => {
-						console.log({ response, url: tab.url });
-						const url = tab.url;
-						if (!url) return;
-						const html = response.html;
-						const { url: _, ...article } = await parseArticle(
-							{ parse },
-							{
-								html,
-								url: url ?? '',
-							},
-						);
-						await callApi('bookmark_create', {
-							entry: article,
-							status: 'Backlog',
-							uri: url,
-						});
-					},
-				);
-			},
-		);
+		await getCurrentMetadata(async (response) => {
+			const html = response.html;
+			const url = response.url;
+			const { url: _, ...article } = await parseArticle(
+				{ parse },
+				{
+					html,
+					url: url ?? '',
+				},
+			);
+			await callApi('bookmark_create', {
+				entry: article,
+				status: 'Backlog',
+				uri: url,
+			});
+		});
 		const screenshot = await chrome.tabs.captureVisibleTab();
 		console.log({ save });
 	}
@@ -106,3 +92,5 @@
 </Button>
 
 <Button>Annotate</Button>
+
+<RssButton parser={{ parse }} />

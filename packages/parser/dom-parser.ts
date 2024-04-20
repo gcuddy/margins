@@ -1,7 +1,8 @@
 /**
- * Simplified HTMLElement interface for our purposes.
+ * Simplified HTMLElement interface, allowing use of node-html-parser or the actual DOM.
  */
 export interface HTMLElement {
+	getAttribute: (name: string) => string | null | undefined;
 	innerHTML: string;
 	innerText?: string | null;
 	outerHTML: string;

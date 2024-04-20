@@ -1,0 +1,37 @@
+{
+	"name": "@margins/rss",
+	"private": true,
+	"sideEffects": false,
+	"version": "0.0.0",
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"license": "MIT",
+	"exports": {
+		"./finder": {
+			"import": "./src/finder/index.ts",
+			"require": "./src/finder/index.ts",
+			"svelte": "./src/finder/index.ts",
+			"types": "./src/finder/index.ts",
+			"default": "./src/finder/index.ts",
+			"node": "./src/finder/index.ts"
+		}
+	},
+	"scripts": {
+		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+		"lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+		"lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
+	},
+	"dependencies": {
+		"@margins/config": "workspace:*",
+		"node-html-parser": "^6.1.13",
+		"schema-dts": "^1.1.2",
+		"zod": "^3.22.4"
+	},
+	"devDependencies": {
+		"@margins/config": "workspace:*",
+		"@margins/tsconfig": "workspace:*",
+		"typescript": "^5.2.2",
+		"vitest": "^1.4.0"
+	},
+	"type": "module"
+}

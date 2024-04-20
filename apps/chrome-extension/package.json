@@ -13,6 +13,7 @@
 		"@crxjs/vite-plugin": "beta",
 		"@margins/features": "workspace:*",
 		"@margins/parser": "workspace:*",
+		"@margins/rss": "workspace:*",
 		"@margins/ui": "workspace:*",
 		"@sveltejs/vite-plugin-svelte": "^3.0.2",
 		"@tsconfig/svelte": "^5.0.2",
