@@ -1,4 +1,4 @@
-import { parseArticle } from '../../parse.js';
+import { parseArticle } from '../../index.js';
 
 describe('nytimes fetching + parsing tests', () => {
 	test('https://www.nytimes.com/2024/04/17/world/middleeast/iran-israel-attack.html', async () => {

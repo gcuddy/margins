@@ -59,9 +59,13 @@ export class Server<Mutations> {
 		if (!mut) throw new Error(`Mutation "${name}" not found`);
 		return mut.fn(args);
 	}
+
+	public has(name: string) {
+		return this.mutations.has(name);
+	}
 }
 
-type ExtractMutations<S extends Server<any>> =
+export type ExtractMutations<S extends Server<any>> =
 	S extends Server<infer M> ? M : never;
 
 export class Client<

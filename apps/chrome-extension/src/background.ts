@@ -39,6 +39,7 @@ const setTokens = async (
 			console.log('got it');
 			const params = new URL(url.href).searchParams;
 			const accessToken = params.get('sessionToken');
+			const userID = params.get('userID');
 			console.log({ accessToken });
 
 			if (accessToken) {
@@ -49,6 +50,7 @@ const setTokens = async (
 
 				// store session_id
 				await chrome.storage.sync.set({
+					[chromeStorageKeys.userID]: userID,
 					[chromeStorageKeys.sessionID]: accessToken,
 				});
 

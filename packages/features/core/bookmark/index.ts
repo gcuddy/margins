@@ -9,6 +9,7 @@ import type { Insertable } from 'kysely';
 import type { Bookmark } from '@margins/db/kysely/types';
 import { Status } from '@margins/db/kysely/enums';
 import { parseUrlToEntry } from '../../parse/index.js';
+import { ArticleSchema } from '@margins/parser';
 
 export const Schema = z.object({
 	entryId: z.string(),
@@ -30,6 +31,9 @@ export const create = zod(
 			collection: z.object({
 				collectionId: z.number(),
 				id: z.string(),
+			}),
+			entry: ArticleSchema.omit({
+				url: true,
 			}),
 			relatedEntryId: z.string(),
 			status: Schema.shape.status.default('Backlog'),
@@ -60,14 +64,10 @@ export const create = zod(
 					.where('uri', '=', uri)
 					.executeTakeFirst();
 
-				console.log({ existingEntry });
 				if (!existingEntry && uri) {
-					// TODO: cache check
 					try {
-						const article = await parseUrlToEntry(uri);
-						console.log({ article });
+						const article = input.entry ?? (await parseUrlToEntry(uri));
 						entryId = nanoid();
-
 						await db
 							.insertInto('Entry')
 							.values({

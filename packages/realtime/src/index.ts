@@ -1,12 +1,16 @@
 import { createAuth } from '@margins/auth';
 import { createDb, type DB } from '@margins/db';
-import { handlePull, handlePush } from '@margins/features/replicache/server';
+import {
+	handlePull,
+	handlePush,
+	server,
+} from '@margins/features/replicache/server';
 import type { Config as PlanetScaleConfig } from '@planetscale/database';
 import type { Lucia } from 'lucia';
 import type * as Party from 'partykit/server';
 import { z } from 'zod';
 import type { PushRequestV1 } from 'replicache';
-import { withDB } from '@margins/features/core';
+import { withDB, withUser } from '@margins/features/core';
 
 const mutationSchema = z
 	.object({
@@ -124,19 +128,31 @@ export default class Server implements Party.Server {
 		console.log({ user });
 
 		if (req.method === 'POST') {
-			if (route === 'push') {
-				const body = pushRequestV1Schema.parse(await req.json());
-				withDB(this.db, async () => {
+			return await withDB(this.db, async () => {
+				if (route === 'push') {
+					const body = pushRequestV1Schema.parse(await req.json());
 					await handlePush(this.db, user, body as PushRequestV1);
-				});
-				await this.sendPoke();
-				return Response.json({ ok: true });
-			} else if (route === 'pull') {
-				const body = pullRequestV1.parse(await req.json());
-				const pull = await handlePull(this.db, user, body);
-				console.log('returning pull', pull);
-				return Response.json(pull);
-			}
+					await this.sendPoke();
+					return Response.json({ ok: true });
+				} else if (route === 'pull') {
+					const body = pullRequestV1.parse(await req.json());
+					const pull = await handlePull(this.db, user, body);
+					console.log('returning pull', pull);
+					return Response.json(pull);
+				} else {
+					console.log({ route });
+					// check if we're doing rpc of server?
+					if (server.has(route)) {
+						return await withUser(user, async () => {
+							console.log('server has route');
+							await server.execute(route, await req.json());
+							await this.sendPoke();
+							return Response.json({ ok: true });
+						});
+					}
+				}
+				return new Response('Not found', { status: 404 });
+			});
 		}
 
 		return new Response('Not found', { status: 404 });

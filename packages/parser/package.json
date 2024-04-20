@@ -13,6 +13,14 @@
 			"types": "./index.ts",
 			"default": "./index.ts",
 			"node": "./index.ts"
+		},
+		"./client": {
+			"import": "./client.ts",
+			"require": "./client.ts",
+			"svelte": "./client.ts",
+			"types": "./client.ts",
+			"default": "./client.ts",
+			"node": "./client.ts"
 		}
 	},
 	"license": "MIT",

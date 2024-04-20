@@ -50,6 +50,7 @@
 	},
 	"dependencies": {
 		"@margins/db": "workspace:*",
+		"@margins/features": "workspace:*",
 		"@margins/lib": "workspace:*",
 		"@margins/parser": "workspace:*",
 		"@margins/ui": "workspace:*",

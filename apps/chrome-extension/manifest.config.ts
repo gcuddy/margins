@@ -18,9 +18,15 @@ export default defineManifest(async (env) => ({
 		service_worker: 'src/background.ts',
 		type: 'module',
 	},
+	content_scripts: [
+		{
+			js: ['src/content.ts'],
+			matches: ['<all_urls>'],
+		},
+	],
 	manifest_version: 3,
 	name: env.mode === 'staging' ? '[INTERNAL] Margins' : 'Margins',
-	permissions: ['storage', 'tabs'],
+	permissions: ['activeTab', 'storage', 'tabs'],
 	// up to four numbers separated by dots
 	version: `${major}.${minor}.${patch}.${label}`,
 	// semver is OK in "version_name"

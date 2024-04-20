@@ -1,4 +1,4 @@
-import { Server } from './framework.js';
+import { Server, type ExtractMutations } from './framework.js';
 import { Annotation, Bookmark, Pin } from '../core/index.js';
 export const server = new Server()
 	.expose('bookmark_create', Bookmark.create)
@@ -8,6 +8,7 @@ export const server = new Server()
 	.expose('pin_remove', Pin.remove);
 
 export type ServerType = typeof server;
+export type ServerMutations = ExtractMutations<ServerType>;
 
 export * from './pull.js';
 export * from './push.js';

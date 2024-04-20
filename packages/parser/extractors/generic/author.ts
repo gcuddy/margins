@@ -22,7 +22,7 @@ const selectors = [
 export function findAuthor(root: HTMLElement) {
 	const els = root.querySelectorAll(selectors);
 	for (const el of els) {
-		const text = el.innerText;
+		const text = el.textContent;
 		if (!text) return;
 		for (const regex of regexes) {
 			const match = regex.exec(text);

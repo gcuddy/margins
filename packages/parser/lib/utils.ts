@@ -1,7 +1,7 @@
-import type { HTMLElement } from 'node-html-parser';
+import type { Document, HTMLElement } from '../dom-parser.js';
 
 export function getFirstMatchingElement(
-	doc: HTMLElement,
+	doc: Document,
 	...selectors: string[]
 ): HTMLElement | null {
 	for (const selector of selectors) {

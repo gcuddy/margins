@@ -1,4 +1,4 @@
-import { parseArticle } from '../../../parse.js';
+import { parseArticle } from '../../../index.js';
 
 describe('adamtooze.substack.com', () => {
 	test('https://adamtooze.substack.com/p/soft-slow-and-scarred-the-imfs-take', async () => {

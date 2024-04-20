@@ -5,21 +5,27 @@
 	import { onMount } from 'svelte';
 	import { chromeStorageKeys } from '../constants';
 	export let sessionID = '';
+	export let userID = '';
 	const DEV = true;
 	const loginURL = DEV
 		? 'http://localhost:5173/login-chrome'
 		: 'https://margins.gg/login-chrome';
 	onMount(() => {
-		chrome.storage.sync.get(chromeStorageKeys.sessionID).then((key) => {
-			const value = key[chromeStorageKeys.sessionID];
-			sessionID = value;
-		});
+		// TODO: on change of these
+		chrome.storage.sync
+			.get([chromeStorageKeys.sessionID, chromeStorageKeys.userID])
+			.then((key) => {
+				const value = key[chromeStorageKeys.sessionID];
+				sessionID = value;
+				const value2 = key[chromeStorageKeys.userID];
+				userID = value2;
+			});
 	});
 </script>
 
-<div class=" flex min-w-[20rem] flex-col gap-4 bg-blue-50 p-4">
-	{#if sessionID}
-		<App {sessionID} />
+<div class="flex min-w-[20rem] flex-col gap-4 bg-blue-50 p-4">
+	{#if sessionID && userID}
+		<App {userID} {sessionID} />
 	{:else}
 		<Button
 			on:click={async () => {
