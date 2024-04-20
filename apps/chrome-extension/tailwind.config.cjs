@@ -3,4 +3,5 @@ const base = require('@margins/config/tailwind-preset');
 export default {
 	...base,
 	content: [...base.content, './src/**/*.{html,js,svelte,ts}'],
+	darkMode: 'media',
 };

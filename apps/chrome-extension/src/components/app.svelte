@@ -8,6 +8,7 @@
 	import type { ServerMutations } from '@margins/features/replicache/server';
 	import { getCurrentMetadata } from '../utils';
 	import RssButton from './rss-button.svelte';
+	import { state } from '../state';
 
 	const API_URL = `http://127.0.0.1:1999/parties/main/${userID}`;
 
@@ -78,19 +79,25 @@
 	}
 </script>
 
-<Button
-	on:click={async () => {
-		saving = true;
-		await save();
-		await sendToApi();
-		saving = false;
-	}}
-	>Save
-	{#if saving}
-		<Spinner size="24" />
-	{/if}
-</Button>
+{#if $state.page === null}
+	<Button
+		on:click={async () => {
+			saving = true;
+			await save();
+			await sendToApi();
+			saving = false;
+		}}
+		>Save
+		{#if saving}
+			<Spinner size="24" />
+		{/if}
+	</Button>
 
-<Button>Annotate</Button>
+	<Button>Annotate</Button>
 
-<RssButton parser={{ parse }} />
+	<RssButton parser={{ parse }} />
+{:else if $state.page === 'rss'}
+	{#each $state.feeds ?? [] as feed}
+		<div>{feed.name} - {feed.url}</div>
+	{/each}
+{/if}

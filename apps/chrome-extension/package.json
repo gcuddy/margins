@@ -11,6 +11,7 @@
 	},
 	"devDependencies": {
 		"@crxjs/vite-plugin": "beta",
+		"@margins/config": "workspace:*",
 		"@margins/features": "workspace:*",
 		"@margins/parser": "workspace:*",
 		"@margins/rss": "workspace:*",

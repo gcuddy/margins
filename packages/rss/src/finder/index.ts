@@ -1,5 +1,5 @@
 import type { Document, HTMLElement, Parser } from '@margins/parser';
-import { getDomainName } from './utils';
+import { getDomainName } from './utils.js';
 export const RSS_MIME_TYPES = [
 	'application/rss+xml',
 	'application/atom+xml',
