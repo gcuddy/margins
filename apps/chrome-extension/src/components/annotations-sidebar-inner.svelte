@@ -2,14 +2,15 @@
 	import { Tabs, Textarea } from '@margins/ui';
 	import { getRPC } from './rpc-provider.svelte';
 	import {
-		createMutation,
-		createQuery,
 		useQueryClient,
 	} from '@tanstack/svelte-query';
 	import type { ServerMutations } from '@margins/features/replicache/server';
 	import { SidebarAnnotation } from '@margins/features/notebook';
 	import { createId } from '@margins/lib';
 	import { chromeStorageLocal } from 'svelte-chrome-storage/dist';
+	import { useCreateNoteMutation } from '../data/mutations';
+	import { useNotesQuery } from '../data/queries';
+	import { derived } from 'svelte/store';
 
 	const tabs = ['annotations', 'page-notes'] as const;
 	type Tab = (typeof tabs)[number];
@@ -20,24 +21,21 @@
 	const rpc = getRPC();
 	const queryClient = useQueryClient();
 
-	const notes = createQuery({
-		queryFn: () => rpc.query('annotations_fromEntryId', { id: entryID }),
-		queryKey: ['annotations', entryID],
+	const notes = useNotesQuery(entryID);
+
+	const annotations = derived(notes, ($notes) => {
+		return $notes.data?.filter((note) => note.type === 'annotation') ?? [];
+	});
+	const pageNotes = derived(notes, ($notes) => {
+		return $notes.data?.filter((note) => note.type === 'note') ?? [];
 	});
 
-	const createNoteMutation = createMutation({
-		mutationFn: (args: ServerMutations['annotation_create']['input']) =>
-			rpc.mutate('annotation_create', args),
-		onMutate: async (args) => {
-			// TODO: optimistic update
-		},
-		onSuccess: () => {
-			// weee
-			queryClient.invalidateQueries({
-				queryKey: ['annotations', entryID],
-			});
-		},
-	});
+	type CreateNoteInput = ServerMutations['annotation_create']['input'];
+	const createNoteMutation = useCreateNoteMutation(entryID);
+
+	export function createNote(args: CreateNoteInput) {
+		$createNoteMutation.mutate(args);
+	}
 
 	function handleHighlight() {
 		const hey = 'hello';
@@ -53,7 +51,11 @@
 			<Tabs.Trigger value="page-notes">Page Notes</Tabs.Trigger>
 		</Tabs.List>
 		<Tabs.Content value="annotations">
-			<button on:click={handleHighlight}> Highlight </button>
+			<div class="mt-4 flex flex-col gap-2">
+				{#each $annotations as annotation}
+					<SidebarAnnotation {annotation} />
+				{/each}
+			</div>
 		</Tabs.Content>
 		<Tabs.Content value="page-notes">
 			<Textarea
@@ -69,7 +71,7 @@
 			/>
 
 			<div class="mt-4 flex flex-col gap-2">
-				{#each $notes.data ?? [] as note}
+				{#each $pageNotes as note}
 					<SidebarAnnotation annotation={note} />
 				{/each}
 			</div>

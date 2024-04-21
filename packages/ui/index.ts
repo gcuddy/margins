@@ -1,4 +1,4 @@
-export { Button } from './components/button/index.js';
+export { Button, buttonVariants } from './components/button/index.js';
 export { Badge } from './components/badge/index.js';
 export * as Card from './components/card/index.js';
 export { Input } from './components/input/index.js';
@@ -17,3 +17,4 @@ export * as Dialog from './components/dialog/index.js';
 export * from './components/typography/index.js';
 export * as Tabs from './components/tabs/index.js';
 export * from './components/textarea/index.js';
+export * as Tooltip from './components/tooltip/index.js';

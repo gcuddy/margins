@@ -5,11 +5,45 @@
 		ClientRectObject,
 		VirtualElement,
 	} from 'svelte-floating-ui/core';
-	import { writable } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 	import { offset, flip, shift } from 'svelte-floating-ui/dom';
 	import AnnotationInlineMenu from './annotation-inline-menu.svelte';
+	import { useCreateNoteMutation } from '../data/mutations';
+	import {
+		describeTextQuote,
+	} from '@margins/annotator';
+	import { syncHighlights } from '@margins/annotator/dom';
+	import { createId } from '@margins/lib';
+	import { useNotesQuery } from '../data/queries';
+
+	export let entryID: string;
+
+	const createNoteMutation = useCreateNoteMutation(entryID);
+	const notesQuery = useNotesQuery(entryID);
+
+	const annotations = derived(notesQuery, ($notes) => {
+		return $notes.data?.filter((note) => note.type === 'annotation') ?? [];
+	});
+
+	$: syncHighlights(document.body, $annotations);
 
 	let show = false;
+
+	async function handleHighlight() {
+		const range = window.getSelection()?.getRangeAt(0);
+		if (!range) return;
+		const textQuote = await describeTextQuote(range);
+		// await highlightSelectorTarget(textQuote);
+
+		$createNoteMutation.mutate({
+			entryId: entryID,
+			id: createId(),
+			target: {
+				selector: textQuote,
+			},
+			type: 'annotation',
+		});
+	}
 
 	function handleSelect() {
 		const selection = window.getSelection();
@@ -74,6 +108,8 @@
 
 	floatingRef(virtualElement);
 
+	// handle annotations, probably not place to do it but hey.
+
 	onMount(() => {
 		document.addEventListener('selectionchange', handleSelect);
 
@@ -88,7 +124,7 @@
 		<div
 			class="bg-popover text-popover-foreground z-50 w-fit rounded-lg border shadow-md outline-none"
 		>
-			<AnnotationInlineMenu />
+			<AnnotationInlineMenu onHighlight={handleHighlight} />
 		</div>
 	</div>
 {/if}

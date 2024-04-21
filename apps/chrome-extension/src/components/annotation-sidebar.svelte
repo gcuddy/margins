@@ -31,7 +31,7 @@
 		<RpcProvider useBackground {userID} {sessionID}>
 			<EntryProvider let:entryID>
 				<!-- <AnnotationInlineMenu /> -->
-				<AnnotationMenu />
+				<AnnotationMenu {entryID} />
 				{#if mounted}
 					<div
 						transition:scale
