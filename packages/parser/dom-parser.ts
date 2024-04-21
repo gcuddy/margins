@@ -8,6 +8,7 @@ export interface HTMLElement {
 	outerHTML: string;
 	querySelector: (query: string) => HTMLElement | null;
 	querySelectorAll: (query: string) => HTMLElement[] | NodeListOf<Element>;
+	remove: () => void;
 	textContent: string | null;
 }
 

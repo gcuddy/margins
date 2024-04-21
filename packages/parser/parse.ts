@@ -8,6 +8,7 @@ import { getExtractor } from './lib/get-extractor.js';
 import { getFirstMatchingElement } from './lib/utils.js';
 import type { Parser } from './dom-parser.js';
 import type { Article } from './schemas/article.js';
+import { cleanBySelectors } from './lib/clean.js';
 
 export type ParseProps = {
 	html?: string;
@@ -47,6 +48,10 @@ export async function parseArticle(
 			: extractor.content.selectors;
 		const el = getFirstMatchingElement(root, ...selectors);
 		if (el) {
+			const cleaners = Array.isArray(extractor.content)
+				? []
+				: extractor.content.clean ?? [];
+			cleanBySelectors(el, cleaners);
 			returnHtml = el.outerHTML;
 			returnText = el.innerText ?? '';
 		}
