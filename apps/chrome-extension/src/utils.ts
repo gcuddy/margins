@@ -23,6 +23,24 @@ export async function getCurrentMetadata(
 	);
 }
 
+export async function awaitCurrentMetadata(): Promise<{
+	html: string;
+	url: string;
+}> {
+	console.log('awaitCurrentMetadata');
+	const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+	const tab = tabs[0];
+	if (!tab?.id || !tab.url) {
+		throw new Error('No active tab found');
+	}
+	const url = tab.url;
+	const { html } = await chrome.tabs.sendMessage(tab.id, { action: 'getHTML' });
+	return {
+		html,
+		url,
+	};
+}
+
 export function getHighestZindex() {
 	const zIndexes = [];
 

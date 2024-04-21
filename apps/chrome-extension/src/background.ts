@@ -1,6 +1,8 @@
+import { getCurrentMetadata } from './utils';
 import { chromeStorageKeys } from './constants';
 
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	console.log('background.ts: chrome.runtime.onMessage.addListener');
 	switch (request.action) {
 		case 'signIn': {
 			// remove any old listener if exists
@@ -11,6 +13,22 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 				chrome.tabs.onUpdated.addListener(setTokens);
 				sendResponse(request.action + ' executed');
 			});
+			break;
+		}
+		case 'getMetadata': {
+			getCurrentMetadata(sendResponse);
+			break;
+		}
+		case 'hello': {
+			console.log('hello from content script');
+			sendResponse('hello from background');
+			break;
+		}
+		case 'fetchData': {
+			fetch(request.payload.url, request.payload.options)
+				.then((response) => response.json()) // assuming the server response is JSON
+				.then((data) => sendResponse(data))
+				.catch((error) => sendResponse({ error: error.toString() }));
 			break;
 		}
 		default: {

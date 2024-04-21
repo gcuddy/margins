@@ -24,3 +24,20 @@ export const create = zod(Schema, async (input) => {
 			.executeTakeFirst();
 	});
 });
+
+export const fromEntryId = zod(
+	z.object({
+		// forUser: z.coerce.boolean().optional().default(true),
+		id: z.string(),
+	}),
+	async ({ id }) => {
+		return useTransaction(async (tx) => {
+			return tx
+				.selectFrom('Annotation')
+				.selectAll()
+				.where('entryId', '=', id)
+				.where('userId', '=', useUser().id)
+				.execute();
+		});
+	},
+);

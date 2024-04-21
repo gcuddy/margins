@@ -2,13 +2,13 @@
 	export let sessionID: string;
 	export let userID: string;
 	import { Button } from '@margins/ui';
-	import type { Document } from '@margins/parser';
 	import { parseArticle } from '@margins/parser/client';
 	import type { ServerMutations } from '@margins/features/replicache/server';
 	import { getCurrentMetadata } from '../utils';
 	import RssButton from './rss-button.svelte';
 	import { state } from '../state';
 	import SaveButton from './save-button.svelte';
+	import { parser } from '../parser';
 
 	const API_URL = `http://127.0.0.1:1999/parties/main/${userID}`;
 
@@ -29,25 +29,6 @@
 		console.log({ response });
 	};
 
-	const domParser = new DOMParser();
-	const parse = (html: string) => {
-		const parse = domParser.parseFromString(html, 'text/html');
-
-		const querySelectorAll = (selector: string) => {
-			return Array.from(parse.querySelectorAll(selector));
-		};
-
-		const querySelector = (selector: string) => {
-			return parse.querySelector(selector);
-		};
-
-		return {
-			querySelector,
-			querySelectorAll,
-		} as Document;
-	};
-	const parser = { parse };
-
 	async function save() {
 		await getCurrentMetadata(async (response) => {
 			const html = response.html;
@@ -65,15 +46,14 @@
 		const screenshot = await chrome.tabs.captureVisibleTab();
 		console.log({ save });
 	}
-	async function sendToApi() {
-		// const response = await fetch('https://margins.gg/api/annotate', {
-		//     method: 'POST',
-		//     headers: {
-		//         'Content-Type': 'application/json',
-		//     },
-		//     body: JSON.stringify({ sessionID }),
-		// });
-		// console.log({ response });
+	async function handleAnnotation() {
+		const tab = await chrome.tabs.query({
+			active: true,
+			currentWindow: true,
+		});
+		const tabId = tab[0].id;
+		if (!tabId) return;
+		chrome.tabs.sendMessage(tabId, { action: 'showAnnotate' });
 	}
 </script>
 
@@ -93,17 +73,7 @@
 
 	<SaveButton {parser} />
 
-	<Button
-		on:click={async () => {
-			const tab = await chrome.tabs.query({
-				active: true,
-				currentWindow: true,
-			});
-			const tabId = tab[0].id;
-			if (!tabId) return;
-			chrome.tabs.sendMessage(tabId, { action: 'showAnnotate' });
-		}}>Annotate</Button
-	>
+	<Button on:click={handleAnnotation}>Annotate</Button>
 
 	<RssButton {parser} />
 {:else if $state.page === 'rss'}

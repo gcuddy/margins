@@ -23,6 +23,13 @@
 				userID = value2;
 			});
 	});
+
+	async function handleSignIn() {
+		await chrome.runtime.sendMessage({
+			action: 'signIn',
+			payload: { url: loginURL },
+		});
+	}
 </script>
 
 <QueryProvider>
@@ -32,14 +39,7 @@
 				<App {userID} {sessionID} />
 			</RpcProvider>
 		{:else}
-			<Button
-				on:click={async () => {
-					await chrome.runtime.sendMessage({
-						action: 'signIn',
-						payload: { url: loginURL },
-					});
-				}}>Log in to Margins</Button
-			>
+			<Button on:click={handleSignIn}>Log in to Margins</Button>
 		{/if}
 	</div>
 </QueryProvider>

@@ -163,10 +163,10 @@ export default class Server implements Party.Server {
 					// check if we're doing rpc of server?
 					if (server.has(route)) {
 						return await withUser(user, async () => {
-							console.log('server has route');
-							await server.execute(route, await req.json());
+							console.log('server has route', route);
+							const res = await server.execute(route, await req.json());
 							await this.sendPoke();
-							return Response.json({ ok: true });
+							return Response.json(res ? res : { ok: true });
 						});
 					}
 				}

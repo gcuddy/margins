@@ -13,6 +13,7 @@
 		"@crxjs/vite-plugin": "beta",
 		"@margins/config": "workspace:*",
 		"@margins/features": "workspace:*",
+		"@margins/lib": "workspace:*",
 		"@margins/parser": "workspace:*",
 		"@margins/rss": "workspace:*",
 		"@margins/ui": "workspace:*",

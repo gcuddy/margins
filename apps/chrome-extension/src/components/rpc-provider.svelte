@@ -24,30 +24,56 @@
 <script lang="ts">
 	export let userID: string;
 	export let sessionID: string;
+	export let useBackground = false;
+
 	const API_URL = `http://127.0.0.1:1999/parties/main/${userID}`;
+
+	async function _fetch(url: string, options: RequestInit) {
+		if (useBackground) {
+			return new Promise((resolve, reject) => {
+				chrome.runtime.sendMessage(
+					{
+						action: 'fetchData',
+						payload: {
+							options,
+							url,
+						},
+					},
+					(response) => {
+						console.log({ response });
+						if (response.error) {
+							reject(response);
+						} else {
+							resolve(response);
+						}
+					},
+				);
+			});
+		} else {
+			return fetch(url, options).then((res) => res.json());
+		}
+	}
+
 	async function query<TQuery extends keyof Queries>(
 		query: TQuery,
 		args: Queries[TQuery]['input'],
 	) {
-		console.log({ API_URL, args, query });
-		console.log({ fetch });
 		const searchParams = new URLSearchParams(args).toString();
-		const response = await fetch(`${API_URL}/${query}?${searchParams}`, {
+		const json = await _fetch(`${API_URL}/${query}?${searchParams}`, {
 			headers: {
 				Authorization: 'Bearer ' + sessionID,
 				'Content-Type': 'application/json',
 			},
 		});
-		console.log({ response });
-		const json = (await response.json()) as Queries[TQuery]['output'];
-		return json;
+		console.log('[rpc-provider.svelte] query', { args, json, query });
+		return json as Queries[TQuery]['output'];
 	}
 
 	async function mutate<TMutation extends keyof ServerMutations>(
 		mutation: TMutation,
 		args: ServerMutations[TMutation]['input'],
 	) {
-		const response = await fetch(`${API_URL}/${mutation}`, {
+		const json = await _fetch(`${API_URL}/${mutation}`, {
 			body: JSON.stringify(args),
 			headers: {
 				Authorization: 'Bearer ' + sessionID,
@@ -55,13 +81,8 @@
 			},
 			method: 'POST',
 		});
-		console.log({ response });
-		try {
-			const json = await response.json();
-			return json as ServerMutations[TMutation]['output'];
-		} catch {
-			// silent
-		}
+		console.log('[rpc-provider.svelte] mutate', { args, json, mutation });
+		return json as ServerMutations[TMutation]['output'];
 	}
 	const rpc: RPC = {
 		mutate,
