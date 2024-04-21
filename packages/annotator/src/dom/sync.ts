@@ -4,6 +4,7 @@ import {
 	createTextQuoteSelectorMatcher,
 	highlightText,
 } from '../annotator/index.js';
+
 /**
  * Synchronize the highlights with the DOM.
  */
@@ -12,16 +13,22 @@ export async function syncHighlights(
 	_annotations: Annotation.Item[],
 ) {
 	console.log('syncHighlights');
-	const annotations = _annotations.filter((a) => a.target);
+	const annotations = _annotations.filter(
+		(a) => !!a.target,
+	) as Annotation.Item[];
+	console.log({ annotations });
 	const existingIds = annotations.map((a) => a.id);
 	console.log('existingIds', existingIds);
 
-	const annotationsInDom = Array.from(
-		rootEl.querySelectorAll(
-			existingIds.map((id) => `[data-margins-annotation-id="${id}"]`).join(','),
-		),
-	);
-
+	const annotationsInDom = existingIds.length
+		? Array.from(
+				rootEl.querySelectorAll(
+					existingIds
+						.map((id) => `[data-margins-annotation-id="${id}"]`)
+						.join(','),
+				),
+			)
+		: [];
 	// TODO: ^^ above might not scale well, consider caching lookups with a map, or something like this:
 	// const annotationsInDom = existingIds.reduce((acc, id) => {
 	//     const element = rootEl.querySelector(`[data-margins-annotation-id="${id}"]`);
@@ -51,9 +58,9 @@ export async function syncHighlights(
 	console.log('annotationsToAdd', annotationsToAdd);
 
 	for (const annotation of annotationsToAdd) {
-		const selectors = Array.isArray(annotation.target.selector)
-			? annotation.target.selector
-			: [annotation.target.selector];
+		const selectors = Array.isArray(annotation.target!.selector)
+			? annotation.target!.selector
+			: [annotation.target!.selector];
 		const TextQuoteSelector = selectors.find(
 			(s) => s.type === 'TextQuoteSelector',
 		) as TextQuoteSelector | undefined;

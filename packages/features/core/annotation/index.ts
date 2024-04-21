@@ -13,7 +13,7 @@ function $selectAnnotation(db: DB) {
 		.selectFrom('Annotation')
 		.selectAll()
 		.$narrowType<{
-			target: TargetSchema;
+			target: TargetSchema | null;
 		}>()
 		.compile();
 }
@@ -57,7 +57,7 @@ export const fromEntryId = zod(
 				.selectFrom('Annotation')
 				.selectAll()
 				.$narrowType<{
-					target: TargetSchema;
+					target: TargetSchema | null;
 				}>()
 				.where('entryId', '=', id)
 				.where('userId', '=', useUser().id)

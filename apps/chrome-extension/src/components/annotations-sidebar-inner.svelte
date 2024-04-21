@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { Tabs, Textarea } from '@margins/ui';
 	import { getRPC } from './rpc-provider.svelte';
-	import {
-		useQueryClient,
-	} from '@tanstack/svelte-query';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import type { ServerMutations } from '@margins/features/replicache/server';
 	import { SidebarAnnotation } from '@margins/features/notebook';
 	import { createId } from '@margins/lib';
@@ -64,6 +62,7 @@
 						body: value,
 						entryId: entryID,
 						id: createId(),
+						type: 'note',
 					});
 				}}
 				placeholder="Add a note…"

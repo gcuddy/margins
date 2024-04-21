@@ -9,9 +9,7 @@
 	import { offset, flip, shift } from 'svelte-floating-ui/dom';
 	import AnnotationInlineMenu from './annotation-inline-menu.svelte';
 	import { useCreateNoteMutation } from '../data/mutations';
-	import {
-		describeTextQuote,
-	} from '@margins/annotator';
+	import { describeTextQuote } from '@margins/annotator';
 	import { syncHighlights } from '@margins/annotator/dom';
 	import { createId } from '@margins/lib';
 	import { useNotesQuery } from '../data/queries';
@@ -128,3 +126,9 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	:global(mark[data-margins-annotation-id]) {
+		background-color: rgb(346, 469, 160);
+	}
+</style>
