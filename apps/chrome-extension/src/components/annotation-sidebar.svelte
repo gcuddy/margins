@@ -12,14 +12,12 @@
 	import RpcProvider from './rpc-provider.svelte';
 	import EntryProvider from './entry-provider.svelte';
 	import AnnotationsSidebarInner from './annotations-sidebar-inner.svelte';
+	import AnnotationMenu from './annotation-menu.svelte';
 	export let zIndex = 1000;
 	export let userID: string;
 	export let sessionID: string;
 
-	console.log('hello');
-
 	let el = writable();
-	$: console.log({ $el });
 	let show = false;
 	let mounted = false;
 
@@ -32,6 +30,8 @@
 	<QueryProvider>
 		<RpcProvider useBackground {userID} {sessionID}>
 			<EntryProvider let:entryID>
+				<!-- <AnnotationInlineMenu /> -->
+				<AnnotationMenu />
 				{#if mounted}
 					<div
 						transition:scale

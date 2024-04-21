@@ -16,8 +16,6 @@
 	const tabsValue = chromeStorageLocal<Tab>('notebook-tabsValue');
 	if (!$tabsValue) $tabsValue = 'annotations';
 
-	$: console.log({ $tabsValue });
-
 	export let entryID: string;
 	const rpc = getRPC();
 	const queryClient = useQueryClient();
@@ -40,6 +38,11 @@
 			});
 		},
 	});
+
+	function handleHighlight() {
+		const hey = 'hello';
+		const selection = window.getSelection();
+	}
 </script>
 
 <!-- TODO: insert ignore into entry with entry stuff -->
@@ -49,7 +52,9 @@
 			<Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
 			<Tabs.Trigger value="page-notes">Page Notes</Tabs.Trigger>
 		</Tabs.List>
-		<Tabs.Content value="annotations"></Tabs.Content>
+		<Tabs.Content value="annotations">
+			<button on:click={handleHighlight}> Highlight </button>
+		</Tabs.Content>
 		<Tabs.Content value="page-notes">
 			<Textarea
 				onSave={async (value) => {
