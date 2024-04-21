@@ -36,6 +36,11 @@
 			"types": "./entries/index.ts",
 			"svelte": "./entries/index.ts"
 		},
+		"./notebook": {
+			"import": "./notebook/index.ts",
+			"types": "./notebook/index.ts",
+			"svelte": "./notebook/index.ts"
+		},
 		"./commands": {
 			"import": "./commands/index.ts",
 			"types": "./commands/index.ts",

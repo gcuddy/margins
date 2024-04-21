@@ -7,7 +7,7 @@
 	import { getReplicache } from '../replicache/index.js';
 	import { createId } from '@margins/lib';
 	import { LocationsDropdown } from './index.js';
-	import SidebarAnnotation from './sidebar-annotation.svelte';
+	import SidebarAnnotation from '../notebook/sidebar-annotation.svelte';
 	const rep = getReplicache();
 	const { inspectorTab, inspectorWidth, isInspectorVisible } = getEntryCtx();
 	const DURATION = 125;

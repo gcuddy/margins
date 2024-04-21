@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Textarea } from '@margins/ui';
+	import { Tabs, Textarea } from '@margins/ui';
 	import { getRPC } from './rpc-provider.svelte';
 	import {
 		createMutation,
@@ -7,7 +7,17 @@
 		useQueryClient,
 	} from '@tanstack/svelte-query';
 	import type { ServerMutations } from '@margins/features/replicache/server';
+	import { SidebarAnnotation } from '@margins/features/notebook';
 	import { createId } from '@margins/lib';
+	import { chromeStorageLocal } from 'svelte-chrome-storage/dist';
+
+	const tabs = ['annotations', 'page-notes'] as const;
+	type Tab = (typeof tabs)[number];
+	const tabsValue = chromeStorageLocal<Tab>('notebook-tabsValue');
+	if (!$tabsValue) $tabsValue = 'annotations';
+
+	$: console.log({ $tabsValue });
+
 	export let entryID: string;
 	const rpc = getRPC();
 	const queryClient = useQueryClient();
@@ -33,21 +43,31 @@
 </script>
 
 <!-- TODO: insert ignore into entry with entry stuff -->
+{#if $tabsValue}
+	<Tabs.Root bind:value={$tabsValue}>
+		<Tabs.List>
+			<Tabs.Trigger value="annotations">Annotations</Tabs.Trigger>
+			<Tabs.Trigger value="page-notes">Page Notes</Tabs.Trigger>
+		</Tabs.List>
+		<Tabs.Content value="annotations"></Tabs.Content>
+		<Tabs.Content value="page-notes">
+			<Textarea
+				onSave={async (value) => {
+					$createNoteMutation.mutate({
+						body: value,
+						entryId: entryID,
+						id: createId(),
+					});
+				}}
+				placeholder="Add a note…"
+				class="bg-background-elevation w-full"
+			/>
 
-<Textarea
-	onSave={async (value) => {
-		$createNoteMutation.mutate({
-			body: value,
-			entryId: entryID,
-			id: createId(),
-		});
-	}}
-	placeholder="Add a note…"
-	class="bg-background-elevation w-full"
-/>
-hello
-{JSON.stringify(entryID)}
-
-{#each $notes.data ?? [] as note}
-	<div>{note.body}</div>
-{/each}
+			<div class="mt-4 flex flex-col gap-2">
+				{#each $notes.data ?? [] as note}
+					<SidebarAnnotation annotation={note} />
+				{/each}
+			</div>
+		</Tabs.Content>
+	</Tabs.Root>
+{/if}
