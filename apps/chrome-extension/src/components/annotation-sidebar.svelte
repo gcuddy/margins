@@ -3,7 +3,7 @@
 
 <script lang="ts">
 	import '@margins/ui/styles/style.css';
-	import { Button, Logo } from '@margins/ui';
+	import { Button, Logo, Textarea } from '@margins/ui';
 	import { writable } from 'svelte/store';
 	import { scale } from 'svelte/transition';
 	import { onMount } from 'svelte';
@@ -44,10 +44,12 @@
 {#if show}
 	<div
 		data-margins-sidebar
-		style:z-index={zIndex}
+		style:z-index={zIndex - 1}
+		class="entry-inspector bg-background-elevation2 overflow-y-auto border-l px-6 py-3.5"
 		bind:this={$el}
-		class=""
-	></div>
+	>
+		<Textarea placeholder="Add a note…" />
+	</div>
 {/if}
 
 <style>
@@ -60,6 +62,5 @@
 		top: 0;
 		bottom: 0;
 		width: 20rem;
-		background-color: red;
 	}
 </style>
