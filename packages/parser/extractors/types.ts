@@ -31,6 +31,7 @@ export type Extractor = {
 	duration?: Meta;
 	enclosureUrl?: Meta;
 	excerpt: Meta;
+	extractorName: string;
 	lead_image_url: Meta;
 	siteName: Meta;
 	title: Meta;
@@ -40,5 +41,7 @@ export type Extractor = {
 };
 
 export type CustomExtractor = Partial<Extractor> & {
+	/** If selector is found, will use this extractor. Run after domain. */
+	detectBySelector?: Array<string>;
 	domain: string | Array<string>;
 };

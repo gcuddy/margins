@@ -48,6 +48,7 @@ export const Extractor: ExtractorType = {
 			],
 		},
 	],
+	extractorName: 'GenericExtractor',
 	lead_image_url: [
 		{
 			meta: [

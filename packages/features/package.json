@@ -37,9 +37,9 @@
 			"svelte": "./entries/index.ts"
 		},
 		"./entries/annotation": {
-			"import": "./entries/index.ts",
-			"types": "./entries/index.ts",
-			"svelte": "./entries/index.ts"
+			"import": "./entries/annotation/index.ts",
+			"types": "./entries/annotation/index.ts",
+			"svelte": "./entries/annotation/index.ts"
 		},
 		"./notebook": {
 			"import": "./notebook/index.ts",

@@ -5,5 +5,7 @@ export const SubstackParser = {
 		clean: ['.image-link-expand', '.subscribe-widget'],
 		selectors: ['.available-content'],
 	},
+	detectBySelector: ['link[href="https://substackcdn.com"]'],
 	domain: '*.substack.com',
+	extractorName: 'SubstackParser',
 } satisfies CustomExtractor;

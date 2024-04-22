@@ -30,7 +30,6 @@
 	<QueryProvider>
 		<RpcProvider useBackground {userID} {sessionID}>
 			<EntryProvider let:entryID>
-				<!-- <AnnotationInlineMenu /> -->
 				<AnnotationMenu {entryID} />
 				{#if mounted}
 					<div

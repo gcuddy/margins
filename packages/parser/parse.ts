@@ -26,7 +26,7 @@ export async function parseArticle(
 	const root = parser.parse(html);
 
 	// TODO: check if there's a custom extractor, like substack.
-	const extractor = getExtractor(url);
+	const extractor = getExtractor(url, root);
 	console.log({ extractor });
 	let article: Article = {
 		author: '',
