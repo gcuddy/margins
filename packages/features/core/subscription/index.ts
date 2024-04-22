@@ -23,6 +23,7 @@ export const create = zod(Schema, async (input) =>
 
 		const subscription = await tx
 			.selectFrom('Subscription')
+			.selectAll()
 			.where('id', '=', feed.id)
 			.where('userId', '=', useUser().id)
 			.executeTakeFirst();
@@ -31,15 +32,26 @@ export const create = zod(Schema, async (input) =>
 	}),
 );
 
-export const fromUrl = zod(Schema.pick({ url: true }), async (input) =>
-	useTransaction(async (tx) => {
-		const subscription = await tx
-			.selectFrom('Subscription')
-			.innerJoin('Feed', 'Subscription.feedId', 'Feed.id')
-			.where('Feed.feedUrl', '=', input.url)
-			.where('Subscription.userId', '=', useUser().id)
-			.executeTakeFirst();
-
-		return subscription;
+/**
+ * Get subscription by url
+ * If given an array, it will return the first matching subscription
+ * (This is useful for checking through multiple feed urls on a website in one trip)
+ */
+export const fromUrl = zod(
+	z.object({
+		url: Schema.shape.url.or(z.array(Schema.shape.url)),
 	}),
+	async (input) =>
+		useTransaction(async (tx) => {
+			const urls = Array.isArray(input.url) ? input.url : [input.url];
+			const subscription = await tx
+				.selectFrom('Subscription')
+				.selectAll()
+				.innerJoin('Feed', 'Subscription.feedId', 'Feed.id')
+				.where('Feed.feedUrl', 'in', urls)
+				.where('Subscription.userId', '=', useUser().id)
+				.executeTakeFirst();
+
+			return subscription;
+		}),
 );

@@ -1,51 +1,25 @@
 <script lang="ts">
-	export let sessionID: string;
 	export let userID: string;
 	import { Button } from '@margins/ui';
-	import { parseArticle } from '@margins/parser/client';
 	import type { ServerMutations } from '@margins/features/replicache/server';
-	import { getCurrentMetadata } from '../utils';
 	import RssButton from './rss-button.svelte';
 	import { state } from '../state';
 	import SaveButton from './save-button.svelte';
 	import { parser } from '../parser';
+	import { FeedInput } from '@margins/features/rss';
+	import { createMutation } from '@tanstack/svelte-query';
+	import { getRPC } from './rpc-provider.svelte';
 
 	const API_URL = `http://127.0.0.1:1999/parties/main/${userID}`;
 
-	let saving = false;
+	const rpc = getRPC();
 
-	const callApi = async <TMutation extends keyof ServerMutations>(
-		mutation: TMutation,
-		args: ServerMutations[TMutation]['input'],
-	) => {
-		const response = await fetch(`${API_URL}/${mutation}`, {
-			body: JSON.stringify(args),
-			headers: {
-				Authorization: 'Bearer ' + sessionID,
-				'Content-Type': 'application/json',
-			},
-			method: 'POST',
-		});
-		console.log({ response });
-	};
+	type SubscriptionArgs = ServerMutations['subscription_create']['input'];
+	const createSubscriptionMutation = createMutation({
+		mutationFn: (args: SubscriptionArgs) =>
+			rpc.mutate('subscription_create', args),
+	});
 
-	async function save() {
-		await getCurrentMetadata(async (response) => {
-			const html = response.html;
-			const url = response.url;
-			const { url: _, ...article } = await parseArticle(parser, {
-				html,
-				url: url ?? '',
-			});
-			await callApi('bookmark_create', {
-				entry: article,
-				status: 'Backlog',
-				uri: url,
-			});
-		});
-		const screenshot = await chrome.tabs.captureVisibleTab();
-		console.log({ save });
-	}
 	async function handleAnnotation() {
 		const tab = await chrome.tabs.query({
 			active: true,
@@ -77,7 +51,15 @@
 
 	<RssButton {parser} />
 {:else if $state.page === 'rss'}
-	{#each $state.feeds ?? [] as feed}
-		<div>{feed.name} - {feed.url}</div>
-	{/each}
+	<FeedInput
+		onSubmit={(feeds) => {
+			feeds.map((feed) => {
+				$createSubscriptionMutation.mutate({
+					title: feed.name ?? feed.url,
+					url: feed.url,
+				});
+			});
+		}}
+		feeds={$state.feeds}
+	/>
 {/if}

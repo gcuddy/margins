@@ -14,6 +14,11 @@
 			"svelte": "./data/index.ts",
 			"types": "./data/index.ts"
 		},
+		"./rss": {
+			"import": "./rss/index.ts",
+			"svelte": "./rss/index.ts",
+			"types": "./rss/index.ts"
+		},
 		"./core": {
 			"import": "./core/index.ts",
 			"svelte": "./core/index.ts",

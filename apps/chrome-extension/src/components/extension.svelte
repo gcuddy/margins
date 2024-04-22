@@ -33,7 +33,7 @@
 </script>
 
 <QueryProvider>
-	<div class="flex min-w-[20rem] flex-col gap-4 bg-blue-50 p-4">
+	<div class="flex min-w-[20rem] flex-col gap-4 p-4">
 		{#if sessionID && userID}
 			<RpcProvider {userID} {sessionID}>
 				<App {userID} {sessionID} />
