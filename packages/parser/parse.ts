@@ -9,6 +9,7 @@ import { getFirstMatchingElement } from './lib/utils.js';
 import type { Parser } from './dom-parser.js';
 import type { Article } from './schemas/article.js';
 import { cleanBySelectors } from './lib/clean.js';
+import { extractAuthor } from './extractors/generic/author/index.js';
 
 export type ParseProps = {
 	html?: string;
@@ -78,6 +79,10 @@ export async function parseArticle(
 		url: articleSchema?.url || '',
 		wordCount: articleSchema?.wordcount || countWords(returnText),
 	};
+
+	if (!article.author) {
+		article.author = extractAuthor(root as HTMLElement) ?? '';
+	}
 
 	console.log(article);
 

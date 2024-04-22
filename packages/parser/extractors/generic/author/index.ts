@@ -1,4 +1,6 @@
 import type { HTMLElement } from '../../../dom-parser.js';
+import { extractFromMeta } from '../../../lib/dom.js';
+import { AUTHOR_META_TAGS } from './constants.js';
 
 const regexes = [
 	/(blog|website)\s+of\s+(.*)?$/,
@@ -33,4 +35,6 @@ export function findAuthor(root: HTMLElement) {
 	}
 }
 
-export function extract() {}
+export function extractAuthor(el: HTMLElement) {
+	return extractFromMeta(el, AUTHOR_META_TAGS);
+}
