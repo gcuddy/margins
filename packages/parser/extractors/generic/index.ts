@@ -1,5 +1,5 @@
 import type { Extractor as ExtractorType } from '../types.js';
-import { findAuthor } from './author.js';
+import { findAuthor } from './author/index.js';
 import type { HTMLElement } from 'node-html-parser';
 
 export const Extractor: ExtractorType = {

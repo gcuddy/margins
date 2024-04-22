@@ -1,4 +1,4 @@
-import type { HTMLElement } from '../../dom-parser.js';
+import type { HTMLElement } from '../../../dom-parser.js';
 
 const regexes = [
 	/(blog|website)\s+of\s+(.*)?$/,
@@ -32,3 +32,5 @@ export function findAuthor(root: HTMLElement) {
 		}
 	}
 }
+
+export function extract() {}
