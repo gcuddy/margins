@@ -3,31 +3,23 @@
 	import { tweened } from 'svelte/motion';
 	import { SmallPlus, Tabs, Textarea } from '@margins/ui';
 	import { type BookmarkWithEntry } from '../data/library.js';
-	import { AnnotationStore } from '../data/annotation.js';
 	import { getReplicache } from '../replicache/index.js';
 	import { createId } from '@margins/lib';
 	import { LocationsDropdown } from './index.js';
 	import SidebarAnnotation from '../notebook/sidebar-annotation.svelte';
+	import type { Annotation } from '../core/index.js';
 	const rep = getReplicache();
 	const { inspectorTab, inspectorWidth, isInspectorVisible } = getEntryCtx();
 	const DURATION = 125;
 
 	export let bookmark: BookmarkWithEntry;
+	export let annotations: Annotation.Item[];
 
 	const marginLeft = tweened(0, {
 		duration: DURATION,
 	});
 
 	$: marginLeft.set($isInspectorVisible ? 0 : -$inspectorWidth);
-
-	const annotations = AnnotationStore.list.watch(
-		() => rep,
-		() => [],
-		(annotations) =>
-			annotations.filter((a) => {
-				return a.entryId === bookmark.entry?.id;
-			}),
-	)();
 </script>
 
 {#if $isInspectorVisible}
@@ -81,7 +73,7 @@
 					class="bg-background-elevation w-full"
 				/>
 				<div class="mt-4 flex flex-col gap-2">
-					{#each $annotations as annotation}
+					{#each annotations as annotation}
 						<SidebarAnnotation {annotation} />
 					{/each}
 				</div>

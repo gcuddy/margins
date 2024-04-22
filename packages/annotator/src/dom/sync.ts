@@ -12,6 +12,10 @@ export async function syncHighlights(
 	rootEl: HTMLElement,
 	_annotations: Annotation.Item[],
 ) {
+	if (!rootEl) {
+		console.error('rootEl is not defined');
+		return;
+	}
 	console.log('syncHighlights');
 	const annotations = _annotations.filter(
 		(a) => !!a.target,
@@ -64,6 +68,7 @@ export async function syncHighlights(
 		const TextQuoteSelector = selectors.find(
 			(s) => s.type === 'TextQuoteSelector',
 		) as TextQuoteSelector | undefined;
+		console.log({ TextQuoteSelector });
 		// TODO: other selectors
 		if (!TextQuoteSelector) continue;
 		await highlightSelectorTarget(TextQuoteSelector, rootEl, {
@@ -78,9 +83,12 @@ export async function highlightSelectorTarget(
 	attributes: Record<string, string> = {},
 ) {
 	const matches = createTextQuoteSelectorMatcher(textQuoteSelector)(rootEl);
+	console.log({ matches });
 
 	const matchList = [];
 	for await (const match of matches) matchList.push(match);
+
+	console.log({ matchList });
 
 	for (const match of matchList) highlightText(match, 'mark', attributes);
 }

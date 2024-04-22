@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getReplicache } from '$lib/client/replicache';
-	import { LibraryStore } from '@margins/features/data';
+	import { LibraryStore , AnnotationStore } from '@margins/features/data';
 	import { ShellContent, ShellHeader } from '@margins/features/shell';
 	import {
 		Article,
@@ -10,7 +10,7 @@
 	} from '@margins/features/entries';
 	import { mainCommandState } from '$lib/client/stores/command-state';
 	import EntryCommands from './entry-commands.svelte';
-	export let data;
+		export let data;
 
 	const rep = getReplicache();
 	$: bookmark = LibraryStore.get.watch(
@@ -22,6 +22,15 @@
 		id: data.id,
 	});
 
+	$: annotations = AnnotationStore.list.watch(
+		() => rep,
+		() => [],
+		(annotations) =>
+			annotations.filter((a) => {
+				return a.entryId === $bookmark?.entry?.id;
+			}),
+	)();
+	$: console.log({ $annotations, $bookmark });
 	// TODO: if no bookmark, show 404
 </script>
 
@@ -38,8 +47,8 @@
 	{#if $bookmark}
 		<ShellContent>
 			<div class="flex grow items-stretch overflow-hidden">
-				<Article bookmark={$bookmark} />
-				<EntryInspector bookmark={$bookmark} />
+				<Article annotations={$annotations} bookmark={$bookmark} />
+				<EntryInspector annotations={$annotations} bookmark={$bookmark} />
 			</div>
 		</ShellContent>
 	{/if}
