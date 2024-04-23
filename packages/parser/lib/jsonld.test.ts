@@ -1,5 +1,5 @@
 import { parse } from 'node-html-parser';
-import { getSchemaOrgArticle } from './jsonld.js';
+import { getSchemaOrgData } from './jsonld.js';
 
 const html = `
 <!DOCTYPE html>
@@ -50,7 +50,7 @@ const html = `
 describe('jsonld', () => {
 	const doc = parse(html);
 	test('should parse jsonld schema.org article', () => {
-		const article = getSchemaOrgArticle(doc);
+		const article = getSchemaOrgData(doc);
 
 		expect(article).toMatchObject({
 			'@context': 'https://schema.org',
@@ -71,7 +71,7 @@ const nytimesHtml = `
 describe('nytimes-jsonld', () => {
 	const doc = parse(nytimesHtml);
 	test('should parse jsonld schema.org article for nytimes', () => {
-		const article = getSchemaOrgArticle(doc);
+		const article = getSchemaOrgData(doc);
 		expect(article).toMatchObject({
 			'@context': 'https://schema.org',
 			'@type': 'NewsArticle',

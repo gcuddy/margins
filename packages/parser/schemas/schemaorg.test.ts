@@ -156,5 +156,21 @@ describe('Schema.org @graph', () => {
 				image.url ===
 					'https://noemamag.imgix.net/2024/04/noema_pillar_growth_004.jpg?fm=pjpg&ixlib=php-3.3.1&s=0f85f0ffb51e8b43eef46161b6dbefea',
 		).toBeTruthy();
+
+		console.log(parsedWebpage);
+
+		expect(parsedWebpage.datePublished.toISOString()).toBe(
+			'2024-04-16T17:00:45.000Z',
+		);
+
+		expect(parsedWebpage).toMatchObject({
+			description:
+				'The internet has become an extractive and fragile monoculture. But we can revitalize it using lessons learned by ecologists.',
+			image: {
+				url: 'https://noemamag.imgix.net/2024/04/noema_pillar_growth_004.jpg?fm=pjpg&ixlib=php-3.3.1&s=0f85f0ffb51e8b43eef46161b6dbefea',
+			},
+			name: 'We Need To Rewild The Internet',
+			url: 'https://www.noemamag.com/we-need-to-rewild-the-internet/',
+		});
 	});
 });

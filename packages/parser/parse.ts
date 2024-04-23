@@ -1,8 +1,9 @@
 import { getHtml } from './lib/fetch-html.js';
-import { getSchemaOrgArticle } from './lib/jsonld.js';
+import { getSchemaOrgData } from './lib/jsonld.js';
 import {
 	getAuthorFromSchema,
 	getImageFromSchema,
+	isArticle,
 } from './schemas/schemaorg.js';
 import { getExtractor } from './lib/get-extractor.js';
 import { getFirstMatchingElement } from './lib/utils.js';
@@ -34,7 +35,6 @@ export async function parseArticle(
 		author: '',
 		html: '',
 		image: '',
-		published: new Date(),
 		summary: '',
 		text: '',
 		title: '',
@@ -59,7 +59,10 @@ export async function parseArticle(
 		}
 	}
 
-	const articleSchema = getSchemaOrgArticle(root);
+	const schemaData = getSchemaOrgData(root);
+
+	const articleSchema =
+		schemaData && isArticle(schemaData) ? schemaData : undefined;
 
 	if (!returnHtml && articleSchema?.hasPart) {
 		const el = root.querySelector(articleSchema.hasPart.cssSelector);
@@ -68,16 +71,14 @@ export async function parseArticle(
 	}
 	article = {
 		...article,
-		author: articleSchema
-			? getAuthorFromSchema(articleSchema)?.join(', ') ?? ''
-			: '',
+		author: schemaData ? getAuthorFromSchema(schemaData)?.join(', ') ?? '' : '',
 		html: returnHtml,
-		image: articleSchema ? getImageFromSchema(articleSchema)?.[0] ?? '' : '',
-		published: new Date(articleSchema?.datePublished || ''),
-		summary: articleSchema?.description || '',
+		image: schemaData ? getImageFromSchema(schemaData)?.[0] ?? '' : '',
+		published: schemaData?.datePublished,
+		summary: schemaData?.description || '',
 		text: returnText,
-		title: articleSchema?.headline || '',
-		url: articleSchema?.url || '',
+		title: articleSchema?.headline ?? schemaData?.name ?? '',
+		url: schemaData?.url || '',
 		wordCount: articleSchema?.wordcount || countWords(returnText),
 	};
 

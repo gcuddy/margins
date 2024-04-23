@@ -23,8 +23,10 @@ describe('generic extractor tests', () => {
 		const url = `https://www.noemamag.com/we-need-to-rewild-the-internet/`;
 		const article = await parseArticle({ url });
 
-		const title = 'We need to rewild the Internet';
+		const title = 'We Need To Rewild The Internet';
 		expect(article.title).toBe(title);
 		expect(article.image).toContain('noema_pillar_growth_004.jpg');
+
+		//TODO: test content
 	});
 });

@@ -4,7 +4,7 @@ export type Article = {
 	author: string;
 	html: string;
 	image: string;
-	published: Date;
+	published?: Date;
 	summary: string;
 	text: string;
 	title: string;

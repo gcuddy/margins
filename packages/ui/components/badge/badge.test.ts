@@ -18,13 +18,15 @@ describe('Badge Component', () => {
 		const badge = screen.getByText(label);
 		expect(badge.tagName).toBe('A');
 	});
-	test("Should render WithDot if the prop is true and shouldn't render if is false", () => {
+	test("Should render WithDot if the prop is true and shouldn't render if is false", async () => {
 		const { rerender } = render(Badge, {
 			withDot: true,
 		});
 		expect(screen.getByTestId('badge-dot')).toBeInTheDocument();
 
-		rerender({});
+		await rerender({
+			withDot: false,
+		});
 
 		expect(screen.queryByTestId('badge-dot')).not.toBeInTheDocument();
 	});
