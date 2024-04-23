@@ -10,6 +10,7 @@ import type { Parser } from './dom-parser.js';
 import type { Article } from './schemas/article.js';
 import { cleanBySelectors } from './lib/clean.js';
 import { extractAuthor } from './extractors/generic/author/index.js';
+import { extractTitle } from './extractors/generic/title/index.js';
 
 export type ParseProps = {
 	html?: string;
@@ -82,6 +83,10 @@ export async function parseArticle(
 
 	if (!article.author) {
 		article.author = extractAuthor(root as HTMLElement) ?? '';
+	}
+
+	if (!article.title) {
+		article.title = extractTitle(root as HTMLElement) ?? '';
 	}
 
 	console.log(article);

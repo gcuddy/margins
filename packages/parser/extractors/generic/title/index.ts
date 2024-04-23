@@ -2,6 +2,9 @@
 // a list of objects, because we could then rank them better. For example,
 // .hentry .entry-title is far better suited than <meta title>.
 
+import type { HTMLElement } from '../../../dom-parser.js';
+import { extractFromMeta } from '../../../lib/dom.js';
+
 // An ordered list of meta tag names that denote likely article titles. All
 // attributes should be lowercase for faster case-insensitive matching. From
 // most distinct to least distinct.
@@ -11,6 +14,7 @@ export const STRONG_TITLE_META_TAGS = [
 	'rbtitle',
 	'headline',
 	'title',
+	'twitter:title',
 ];
 
 // og:title is weak because it typically contains context that we don't like,
@@ -51,6 +55,9 @@ export const WEAK_TITLE_SELECTORS = [
 	'title',
 ];
 
-export function extractTitle() {
-	const title = '';
+export function extractTitle(el: HTMLElement) {
+	let title = '';
+	title = extractFromMeta(el, STRONG_TITLE_META_TAGS) ?? '';
+	// TODO: use other selectors
+	return title;
 }
