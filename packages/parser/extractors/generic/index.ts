@@ -17,6 +17,11 @@ export const Extractor: ExtractorType = {
 		},
 		(el: HTMLElement) => findAuthor(el) || '',
 	],
+	content: {
+		// classic wordpress style situation
+		clean: ['.eos-subscribe-push'],
+		selectors: ['.entry-content', '.article-content'],
+	},
 	date_published: [
 		{ meta: ['article:published_time', 'date', 'dc:date', 'dcterm:date'] },
 		['time[itemprop="datePublished"]', 'datetime'],

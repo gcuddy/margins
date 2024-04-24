@@ -27,6 +27,6 @@ describe('generic extractor tests', () => {
 		expect(article.title).toBe(title);
 		expect(article.image).toContain('noema_pillar_growth_004.jpg');
 
-		//TODO: test content
+		//TODO: test content - this should test generid hnews style stuff, with .entry-content being the giveaway
 	});
 });
