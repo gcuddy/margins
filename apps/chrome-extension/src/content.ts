@@ -1,6 +1,8 @@
 import { getHighestZindex } from './utils';
 import AnnotationSidebar from './components/annotation-sidebar.svelte';
+import Inspector from './components/inspector.svelte';
 import { chromeStorageKeys } from './constants';
+
 async function handleGetHTML(sendResponse: (response: any) => void) {
 	const html = document.documentElement.outerHTML;
 	sendResponse({ html });
@@ -30,6 +32,29 @@ async function handleShowAnnotate(sendResponse: (response: any) => void) {
 	});
 }
 
+async function handleShowInspector(sendResponse: (response: any) => void) {
+	const sRoot = document.createElement('div');
+	const shadowRoot = sRoot.attachShadow({ mode: 'open' });
+	if (sRoot.shadowRoot) {
+		sRoot.shadowRoot.innerHTML = `<style>:host {all: initial;}</style>`;
+	}
+	document.body.appendChild(sRoot);
+
+	const {
+		[chromeStorageKeys.userID]: userID,
+		[chromeStorageKeys.sessionID]: sessionID,
+	} = await chrome.storage.sync.get([
+		chromeStorageKeys.userID,
+		chromeStorageKeys.sessionID,
+	]);
+
+	const zIndex = getHighestZindex() + 1;
+	const sidebar = new Inspector({
+		props: { sessionID, userID, zIndex },
+		target: shadowRoot,
+	});
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === 'getHTML') {
 		handleGetHTML(sendResponse);
@@ -37,6 +62,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// sendResponse({ html });
 	} else if (request.action === 'showAnnotate') {
 		handleShowAnnotate(sendResponse);
+	} else if (request.action === 'showInspector') {
+		handleShowInspector(sendResponse);
 	}
 
 	return true;

@@ -3,6 +3,7 @@
 	import { Button } from '@margins/ui';
 	import type { ServerMutations } from '@margins/features/replicache/server';
 	import RssButton from './rss-button.svelte';
+	import Inspector from './inspector-button.svelte';
 	import { state } from '../state';
 	import SaveButton from './save-button.svelte';
 	import { parser } from '../parser';
@@ -50,6 +51,9 @@
 	<Button on:click={handleAnnotation}>Annotate</Button>
 
 	<RssButton {parser} />
+
+	<!-- TODO: remove this lol -->
+	<Inspector />
 {:else if $state.page === 'rss'}
 	<FeedInput
 		onSubmit={(feeds) => {
