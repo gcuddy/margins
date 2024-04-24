@@ -7,7 +7,8 @@
 	export let trackMouseMove = false;
 
 	// TODO: a mode that only defaults to just block-level eleements (like Arc behavior)
-	// export let blockMode = false;
+	export let blockMode = true;
+	export let dragToSelect = false;
 
 	let lastEl: Element | null = null;
 
@@ -37,6 +38,20 @@
 		return el;
 	}
 
+	function findNearestBlockLevelElement(el: Element | null) {
+		let curEl = el;
+		while (curEl) {
+			const display = getComputedStyle(curEl).display;
+			if (display.includes('inline') && blockMode) {
+				const parent = curEl.parentElement;
+				curEl = parent;
+			} else {
+				break;
+			}
+		}
+		return curEl;
+	}
+
 	function disableTrackMouseMove() {
 		if (lastEl) {
 			lastEl.removeAttribute('data-margins-inspector-selected');
@@ -47,6 +62,7 @@
 	}
 
 	function handlePointerdown(e: PointerEvent) {
+		if (dragToSelect) return;
 		dragging = true;
 		disableTrackMouseMove();
 		startingX = e.x;
@@ -59,11 +75,13 @@
 	}
 
 	function handlePointerup(e: PointerEvent) {
+		if (dragToSelect) return;
 		dragging = false;
 		tick().then(() => {
-			captureScreenshot(computedStartingX, computedStartingY, width, height);
+			captureScreenshot();
 		});
 	}
+
 	function downloadImage(dataUrl: string) {
 		const a = document.createElement('a');
 		a.href = dataUrl;
@@ -73,15 +91,39 @@
 		document.body.removeChild(a);
 	}
 
-	async function captureScreenshot(
-		x: number,
-		y: number,
-		width: number,
-		height: number,
-	) {
+	async function captureScreenshot() {
+		if (!lastEl) return;
 		const screenshot = await chrome.runtime.sendMessage({
 			action: 'captureVisibleTab',
 		});
+
+		const image = new Image();
+		image.src = screenshot;
+		const { height, left, top, width } = lastEl.getBoundingClientRect();
+		image.onload = () => {
+			const canvas = document.createElement('canvas');
+			const scale = window.devicePixelRatio;
+
+			canvas.width = width * scale;
+			canvas.height = height * scale;
+			const ctx = canvas.getContext('2d');
+
+			ctx!.drawImage(
+				image,
+				left * scale,
+				top * scale,
+				width * scale,
+				height * scale,
+				0,
+				0,
+				width * scale,
+				height * scale,
+			);
+
+			const croppedImage = canvas.toDataURL();
+			downloadImage(croppedImage);
+			//Do stuff with your cropped image
+		};
 		// console.log({ height, screenshot, width, x, y });
 		// return;
 		// const img = new Image();
@@ -136,6 +178,9 @@
 <svelte:document
 	on:pointerdown={handlePointerdown}
 	on:pointerup={handlePointerup}
+	on:click={(e) => {
+		captureScreenshot();
+	}}
 	on:mousemove={(e) => {
 		if (dragging) {
 			handleMouseMove(e);
@@ -147,7 +192,8 @@
 					lastEl.style.removeProperty('--margins-inspector-position');
 			}
 			const el = document.elementFromPoint(e.x, e.y);
-			lastEl = normalizeElement(el);
+			// lastEl = normalizeElement(el);
+			lastEl = findNearestBlockLevelElement(el);
 			if (!lastEl) return;
 			const position = getComputedStyle(lastEl).position;
 			if (lastEl instanceof HTMLElement && position === 'static') {
@@ -191,7 +237,11 @@
 		position: absolute;
 		height: 100%;
 		width: 100%;
-		box-shadow: inset 0 0 0 calc(2px + 1px) rgb(120 113 108);
+		box-shadow: inset 0 0 0 calc(2px + 1px) hsl(43 86% 66%);
 		inset: 0;
+	}
+
+	:global(img[data-margins-inspector-selected]) {
+		box-shadow: 0 0 0 calc(3px + 1px) hsl(43 86% 66%);
 	}
 </style>

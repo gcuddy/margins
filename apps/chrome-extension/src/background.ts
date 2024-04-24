@@ -34,11 +34,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case 'captureVisibleTab': {
 			const tab = chrome.tabs
 				.query({ active: true, currentWindow: true })
-				.then((tab) => {
-					if (tab) {
-						chrome.tabs.captureVisibleTab().then((dataUrl) => {
-							sendResponse(dataUrl);
-						});
+				.then((tabs) => {
+					const tab = tabs[0];
+					if (tab?.id) {
+						chrome.tabs
+							.captureVisibleTab(tab.windowId, {
+								format: 'png',
+								quality: 100,
+							})
+							.then((dataUrl) => {
+								sendResponse(dataUrl);
+							});
 					}
 				});
 			break;
