@@ -50,7 +50,7 @@ async function handleShowInspector(sendResponse: (response: any) => void) {
 
 	const zIndex = getHighestZindex() + 1;
 	const sidebar = new Inspector({
-		props: { sessionID, userID, zIndex },
+		props: { sessionID, trackMouseMove: true, userID, zIndex },
 		target: shadowRoot,
 	});
 }
