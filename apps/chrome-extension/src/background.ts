@@ -31,6 +31,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				.catch((error) => sendResponse({ error: error.toString() }));
 			break;
 		}
+		case 'captureVisibleTab': {
+			const tab = chrome.tabs
+				.query({ active: true, currentWindow: true })
+				.then((tab) => {
+					if (tab) {
+						chrome.tabs.captureVisibleTab().then((dataUrl) => {
+							sendResponse(dataUrl);
+						});
+					}
+				});
+			break;
+		}
 		default: {
 			break;
 		}

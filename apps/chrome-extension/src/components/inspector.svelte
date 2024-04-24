@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Button } from '@margins/ui';
 	import ShadowDomWrapper from './shadow-dom-wrapper.svelte';
+	import { tick } from 'svelte';
+
 	export let zIndex = 9999;
 	export let trackMouseMove = false;
 
@@ -9,7 +11,16 @@
 
 	let lastEl: Element | null = null;
 
-	// TODO: drag to select a box and get element
+	//  Drag state variables
+	let dragging = false;
+	let x = 0;
+	let y = 0;
+	let startingX = 0;
+	let startingY = 0;
+	$: width = Math.abs(x - startingX);
+	$: height = Math.abs(y - startingY);
+	$: computedStartingX = x - startingX > 0 ? startingX : x;
+	$: computedStartingY = y - startingY > 0 ? startingY : y;
 
 	function handleClick() {
 		trackMouseMove = !trackMouseMove;
@@ -25,10 +36,110 @@
 		}
 		return el;
 	}
+
+	function disableTrackMouseMove() {
+		if (lastEl) {
+			lastEl.removeAttribute('data-margins-inspector-selected');
+			if (lastEl instanceof HTMLElement)
+				lastEl.style.removeProperty('--margins-inspector-position');
+		}
+		trackMouseMove = false;
+	}
+
+	function handlePointerdown(e: PointerEvent) {
+		dragging = true;
+		disableTrackMouseMove();
+		startingX = e.x;
+		startingY = e.y;
+	}
+
+	function handleMouseMove(e: MouseEvent) {
+		x = e.x;
+		y = e.y;
+	}
+
+	function handlePointerup(e: PointerEvent) {
+		dragging = false;
+		tick().then(() => {
+			captureScreenshot(computedStartingX, computedStartingY, width, height);
+		});
+	}
+	function downloadImage(dataUrl: string) {
+		const a = document.createElement('a');
+		a.href = dataUrl;
+		a.download = 'screenshot.png';
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	}
+
+	async function captureScreenshot(
+		x: number,
+		y: number,
+		width: number,
+		height: number,
+	) {
+		const screenshot = await chrome.runtime.sendMessage({
+			action: 'captureVisibleTab',
+		});
+		// console.log({ height, screenshot, width, x, y });
+		// return;
+		// const img = new Image();
+		// img.onload = function () {
+		// 	const canvas = document.createElement('canvas');
+		// 	const ctx = canvas.getContext('2d');
+		// 	canvas.width = width;
+		// 	canvas.height = height;
+		// 	ctx?.drawImage(img, x, y, width, height, 0, 0, width, height);
+		//
+		// 	const croppedDataUrl = canvas.toDataURL('image/png');
+		// 	downloadImage(croppedDataUrl);
+		// };
+		// img.src = screenshot;
+
+		// const element = document.body;
+		// const canvas = await html2canvas(element, {
+		//      onclone
+		//   });
+		// console.log({ canvas });
+		//
+		// const croppedCanvas = document.createElement('canvas');
+		// const ctx = croppedCanvas.getContext('2d');
+		// croppedCanvas.width = width;
+		// croppedCanvas.height = height;
+		//
+		// const $x = window.scrollX + computedStartingX;
+		// const $y = window.scrollY + computedStartingY;
+		//
+		// ctx?.drawImage(canvas, $x, $y, width, height, 0, 0, width, height);
+		// document.body.appendChild(croppedCanvas);
+		//
+		// // const imageUrl = croppedCanvas.toDataURL();
+		// const link = document.createElement('a');
+		// link.setAttribute('download', 'screenshot.png');
+		// link.setAttribute(
+		// 	'href',
+		// 	croppedCanvas
+		// 		.toDataURL('image/png')
+		// 		.replace('image/png', 'image/octet-stream'),
+		// );
+		// link.click();
+
+		// const replacedImageUrl = imageUrl.replace(
+		// 	'image/png',
+		// 	'image/octet-stream',
+		// );
+		// window.location.href = replacedImageUrl;
+	}
 </script>
 
 <svelte:document
+	on:pointerdown={handlePointerdown}
+	on:pointerup={handlePointerup}
 	on:mousemove={(e) => {
+		if (dragging) {
+			handleMouseMove(e);
+		}
 		if (trackMouseMove) {
 			if (lastEl) {
 				lastEl.removeAttribute('data-margins-inspector-selected');
@@ -51,6 +162,20 @@
 	<div style:z-index={zIndex} class="fixed bottom-4 right-4 bg-white p-4">
 		<Button on:click={handleClick}>Click me to start inspecting</Button>
 	</div>
+	{#if dragging}
+		<svg style:z-index={zIndex} class="fixed inset-0 h-full w-full">
+			<rect
+				stroke="transparent"
+				stroke-width="1"
+				fill="green"
+				fill-opacity="0.05"
+				x={computedStartingX}
+				y={computedStartingY}
+				{width}
+				{height}
+			/>
+		</svg>
+	{/if}
 </ShadowDomWrapper>
 
 <style>
