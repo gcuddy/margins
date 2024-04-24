@@ -10,14 +10,8 @@
 		const tabId = tab[0].id;
 		if (!tabId) return;
 		chrome.tabs.sendMessage(tabId, { action: 'showInspector' });
+		window.close();
 	}
 </script>
 
-<svelte:document
-	on:mousemove={(e) => {
-		if (trackMouseMove) {
-			console.log(e.x, e.y);
-		}
-	}}
-/>
 <Button on:click={handleClick}>inspect</Button>

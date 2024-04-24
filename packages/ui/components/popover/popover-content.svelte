@@ -2,6 +2,7 @@
 	import { Popover as PopoverPrimitive } from 'bits-ui';
 	import { cn } from '@margins/lib';
 	import { fade } from 'svelte/transition';
+	import { popoverVariants } from './index.js';
 
 	type $$Props = Omit<PopoverPrimitive.ContentProps, 'transition'>;
 
@@ -24,10 +25,7 @@
 	{align}
 	{sideOffset}
 	{...$$restProps}
-	class={cn(
-		'bg-popover text-popover-foreground z-50 w-72 rounded-lg border p-4 shadow-md outline-none',
-		className,
-	)}
+	class={cn(popoverVariants({}), className)}
 >
 	<slot />
 </PopoverPrimitive.Content>
