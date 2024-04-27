@@ -2,6 +2,7 @@ import { Command as CommandPrimitive } from 'cmdk-sv';
 
 import Root from './command.svelte';
 import Dialog from './command-dialog.svelte';
+import PopoverContents from './command-popover-contents.svelte';
 import Empty from './command-empty.svelte';
 import Group from './command-group.svelte';
 import Item from './command-item.svelte';
@@ -25,6 +26,7 @@ export {
 	Shortcut,
 	Loading,
 	Icon,
+	PopoverContents,
 	//
 	Root as Command,
 	Dialog as CommandDialog,

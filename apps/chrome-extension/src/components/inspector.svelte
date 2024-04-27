@@ -1,24 +1,30 @@
 <script lang="ts">
 	import ShadowDomWrapper from './shadow-dom-wrapper.svelte';
 	import { tick } from 'svelte';
-	import { Popover } from '@margins/ui';
+	import { Command, Popover } from '@margins/ui';
 	import { getCssSelector } from 'css-selector-generator';
-	import { cn } from '@margins/lib';
+	import { cn, sleep } from '@margins/lib';
 	import { fade } from 'svelte/transition';
+	import { createFloatingActions } from 'svelte-floating-ui';
+	import { offset, flip, shift } from 'svelte-floating-ui/dom';
+	import ClipboardCopy from 'lucide-svelte/icons/clipboard-copy';
+	import Save from 'lucide-svelte/icons/save';
+	import ListPlus from 'lucide-svelte/icons/list-plus';
 
 	export let zIndex = 9999;
-	export let trackMouseMove = false;
+	export let trackMouseMove = true;
 
 	// TODO: a mode that only defaults to just block-level eleements (like Arc behavior)
 	export let blockMode = true;
 	export let dragToSelect = true;
+	export let isEnabled = true;
 
 	let lastEl: HTMLElement | null = null;
 	let rect: SVGRectElement | null = null;
 
 	//  Drag state variables
 	//
-	// 0 for not dragging, 1 for dragging, 2 for captured
+	// 0 for not dragging, 1 for dragging, 2 for captured, 3 for capturing
 	let dragState = 0;
 	// $: console.log({ dragState });
 	let x = 0;
@@ -30,11 +36,25 @@
 	$: computedStartingX = x - startingX > 0 ? startingX : x;
 	$: computedStartingY = y - startingY > 0 ? startingY : y;
 
+	$: if (dragState === 2) {
+		isEnabled = false;
+	} else {
+		isEnabled = true;
+	}
+
+	const [floatingRef, floatingContent] = createFloatingActions({
+		autoUpdate: true,
+		middleware: [offset(6), flip(), shift()],
+		placement: 'right',
+		strategy: 'fixed',
+	});
+
 	function resetDragPos() {
 		x = 0;
 		y = 0;
 		startingX = 0;
 		startingY = 0;
+		maybeDragging = false;
 	}
 
 	function handleClick() {
@@ -96,42 +116,68 @@
 		setDragCss(false);
 	}
 
+	let maybeDragging = false;
+
 	function handlePointerdown(e: PointerEvent) {
+		if (!isEnabled) return;
 		if (!dragToSelect) return;
-		dragState = 1;
-		// console.log('pointer down');
-		disableTrackMouseMove();
 		startingX = e.x;
 		startingY = e.y;
+		maybeDragging = true;
+		disableTrackMouseMove();
+		console.log({ maybeDragging });
+		// tick().then(() => {
+		// 	setTimeout(() => {
+		// 		console.log('timeout', { ticking });
+		// 		if (ticking) return;
+		// 		dragState = 1;
+		// 		// console.log('pointer down');
+		// 		disableTrackMouseMove();
+		// 	}, 50);
+		// });
 	}
 
 	function handleMouseMove(e: MouseEvent) {
+		console.log('mouse move');
+		if (!isEnabled) return;
 		x = e.x;
 		y = e.y;
+		console.log('mouse move', maybeDragging);
+		if (maybeDragging) {
+			tick().then(() => {
+				dragState = 1;
+				disableTrackMouseMove();
+			});
+		}
 	}
 	let ticking = false;
 
 	function handlePointerup(e: PointerEvent) {
+		if (!isEnabled) return;
 		// console.log('pointer up', { dragToSelect });
+		if (dragState === 0) return;
 		ticking = true;
 		if (!dragToSelect) return;
 		if (rect) {
 			const { height, left, top, width } = rect.getBoundingClientRect();
-			// console.log({
-			// 	height,
-			// 	left,
-			// 	top,
-			// 	width,
-			// });
+			// NOTE: we set to 3 to indicate capturing state - this will make the rect disappear
+			dragState = 3;
+			resetDragPos();
 			tick().then(async () => {
-				dragState = 2;
+				await sleep(25);
 				await captureScreenshot({
 					height,
 					width,
 					x: left,
 					y: top,
 				});
-				// resetDragPos();
+				imageRect = {
+					height,
+					width,
+					x: left,
+					y: top,
+				};
+				dragState = 2;
 				ticking = false;
 			});
 		}
@@ -145,6 +191,14 @@
 		a.click();
 		document.body.removeChild(a);
 	}
+
+	let dataImageUrl: string | null = null;
+	let imageRect: {
+		height: number;
+		width: number;
+		x: number;
+		y: number;
+	} | null = null;
 
 	async function captureScreenshot({
 		height,
@@ -188,6 +242,7 @@
 			);
 
 			const croppedImage = canvas.toDataURL();
+			dataImageUrl = croppedImage;
 			console.log({ croppedImage });
 		};
 		console.log({ image });
@@ -198,10 +253,16 @@
 	on:pointerdown={handlePointerdown}
 	on:pointerup={handlePointerup}
 	on:click={(e) => {
+		console.log('got click');
+		if (!isEnabled) return;
+		console.log('is enabled');
 		if (!lastEl) return;
-		if (dragState === 0) return;
+		console.log('last el');
+		if (dragState === 1) return;
+		console.log('drag state ok');
 		if (ticking) return;
-		// console.log('got click');
+		ticking = true;
+		console.log('got click');
 		e.preventDefault();
 		e.stopImmediatePropagation();
 		const sel = getCssSelector(lastEl);
@@ -212,11 +273,19 @@
 			x: left,
 			y: top,
 		});
+		console.log('set screenshot');
+		imageRect = {
+			height,
+			width,
+			x: left,
+			y: top,
+		};
+		console.log('set imageRect');
+		dragState = 2;
+		ticking = false;
 	}}
 	on:mousemove={(e) => {
-		if (dragState === 1) {
-			handleMouseMove(e);
-		}
+		handleMouseMove(e);
 		if (trackMouseMove) {
 			if (lastEl) {
 				lastEl.removeAttribute('data-margins-inspector-selected');
@@ -238,7 +307,7 @@
 />
 
 <ShadowDomWrapper>
-	{#if dragState === 0}
+	{#if isEnabled && dragState === 0}
 		<div
 			transition:fade={{ duration: 150 }}
 			style:z-index={zIndex}
@@ -252,7 +321,7 @@
 			</span>
 		</div>
 	{/if}
-	{#if dragState === 1 || dragState === 2}
+	{#if dragState === 1}
 		<svg style:z-index={zIndex} class="fixed inset-0 h-full w-full">
 			<rect
 				bind:this={rect}
@@ -266,6 +335,54 @@
 				{height}
 			/>
 		</svg>
+	{/if}
+	{#if dragState === 2 && dataImageUrl && imageRect}
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
+		<div
+			class="fixed inset-0 h-full w-full bg-black/20"
+			on:click|self={() => {
+				dragState = 0;
+			}}
+			style:z-index={zIndex}
+		>
+			{#if dataImageUrl && imageRect}
+				<div
+					use:floatingRef
+					style:height="{imageRect.height}px"
+					style:width="{imageRect.width}px"
+					class="absolute overflow-hidden rounded bg-white ring-2 ring-lime-400"
+					style:left="{imageRect.x}px"
+					style:top="{imageRect.y}px"
+				>
+					<img src={dataImageUrl} alt="" />
+				</div>
+				<div class={cn(Popover.popoverVariants(), 'p-0')} use:floatingContent>
+					<Command.PopoverContents
+						autofocus
+						commands={[
+							{
+								action: () => {
+									alert('Save to library');
+								},
+								icon: Save,
+								label: 'Save To Library',
+							},
+							{
+								action: () => {},
+								icon: ClipboardCopy,
+								label: 'Copy',
+							},
+							{
+								action: () => {},
+								icon: ListPlus,
+								label: 'Add to Collection...',
+							},
+						]}
+					/>
+				</div>
+			{/if}
+		</div>
 	{/if}
 </ShadowDomWrapper>
 
