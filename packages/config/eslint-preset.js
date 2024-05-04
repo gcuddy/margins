@@ -160,10 +160,7 @@ module.exports = {
 		'sort-destructure-keys/sort-destructure-keys': 2,
 		'sort-keys-fix/sort-keys-fix': 2,
 		'space-before-blocks': 2,
-		'space-before-function-paren': [
-			2,
-			{ anonymous: 'never', asyncArrow: 'always', named: 'never' },
-		],
+		'space-before-function-paren': 0,
 		'svelte/no-at-html-tags': 0,
 		'svelte/no-immutable-reactive-statements': 'error',
 		'svelte/no-reactive-literals': 'error',

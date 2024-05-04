@@ -30,7 +30,6 @@
 		"lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
 	},
 	"dependencies": {
-		"@margins/config": "workspace:*",
 		"@margins/lib": "workspace:*",
 		"node-html-parser": "^6.1.13",
 		"schema-dts": "^1.1.2",
@@ -39,6 +38,10 @@
 	"devDependencies": {
 		"@margins/config": "workspace:*",
 		"@margins/tsconfig": "workspace:*",
+		"@types/bun": "^1.1.1",
+		"@types/inquirer": "^9.0.7",
+		"inquirer": "^9.2.20",
+		"ora": "^8.0.1",
 		"typescript": "^5.2.2",
 		"vitest": "^1.4.0"
 	},
