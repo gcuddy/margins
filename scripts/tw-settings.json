@@ -1,9 +1,0 @@
-{
-	"prettier.documentSelectors": [
-		"**/*.svelte"
-	],
-	"tailwindCSS.classAttributes": [
-		"class",
-		"header"
-	]
-}

@@ -13,8 +13,7 @@
 		"lint": "prettier --check --plugin-search-dir=. . && eslint --cache .",
 		"format": "prettier --write --plugin-search-dir=. .",
 		"add-extractor": "node tasks/add-extractor.js",
-		"seed": "ts-node prisma/seed.ts",
-		"tailwind:generate": "node ./scripts/post-build.js"
+		"seed": "ts-node prisma/seed.ts"
 	},
 	"prisma": {
 		"seed": "ts-node prisma/seed.ts"
