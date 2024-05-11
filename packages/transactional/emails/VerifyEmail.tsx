@@ -1,6 +1,6 @@
 import { Button, Container, Html, Tailwind } from '@react-email/components';
 import * as React from 'react';
-import config from '@margins/config/tailwind-preset';
+// import config from '@margins/config/tailwind-preset';
 
 export const VerificationEmail = ({
 	code = '123456',
@@ -13,12 +13,7 @@ export const VerificationEmail = ({
 }) => {
 	return (
 		<Html className="bg-stone-900">
-			<Tailwind
-				// TODO: generate this config better with colors
-				config={{
-					...config,
-				}}
-			>
+			<Tailwind>
 				<Container className="0 flex h-screen w-full flex-col items-center space-y-8">
 					<div className="flex w-full grow items-center justify-center gap-x-2">
 						<svg
@@ -61,7 +56,7 @@ export const VerificationEmail = ({
 					</div>
 					<div className="mt-4 flex w-full justify-center">
 						<Button
-							className="rounded bg-black p-3 font-sans text-sm font-medium text-white shadow"
+							className="w-full grow rounded bg-black p-3 text-center font-sans text-sm font-medium text-white shadow"
 							href={verificationUrl}
 						>
 							Tap to verify
