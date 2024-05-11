@@ -1,0 +1,18 @@
+{
+	"name": "@margins/transactional",
+	"private": true,
+	"sideEffects": false,
+	"version": "0.0.0",
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"license": "MIT",
+	"scripts": {
+		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+		"lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix"
+	},
+	"dependencies": {
+		"dotenv": "^16.4.5",
+		"resend": "^3.2.0"
+	},
+	"devDependencies": {}
+}

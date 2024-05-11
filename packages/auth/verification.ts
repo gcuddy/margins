@@ -1,4 +1,4 @@
-import { resend } from '@margins/email';
+import { resend } from '@margins/transactional';
 
 import { useTransaction } from '@margins/features/core';
 import { TimeSpan, createDate } from 'oslo';

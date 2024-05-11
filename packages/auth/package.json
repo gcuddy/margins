@@ -22,7 +22,7 @@
 	"dependencies": {
 		"@lucia-auth/adapter-mysql": "^3.0.2",
 		"@margins/db": "workspace:*",
-		"@margins/email": "workspace:*",
+		"@margins/transactional": "workspace:*",
 		"@margins/features": "workspace:*",
 		"@planetscale/database": "^1.16.0",
 		"arctic": "^1.4.0",
