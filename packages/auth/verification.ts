@@ -4,6 +4,7 @@ import { useTransaction } from '@margins/features/core';
 import { TimeSpan, createDate } from 'oslo';
 import { generateRandomString, alphabet } from 'oslo/crypto';
 import { VERIFICATION_CODE_LENGTH } from './constants.js';
+import VerificationEmail from '@margins/transactional/emails/VerifyEmail.js';
 
 // TODO: add rate limiting via upstash rate limit
 
@@ -48,7 +49,12 @@ export const sendEmailVerificationLink = async (
 	// TODO: add url based on env
 	await resend.emails.send({
 		from: 'Margins <onboarding@info.margins.gg>',
-		html: `<p>Your email verfication token is: <code>${token}</code>. Click <a href="">here</a> to verify your email.</p>`,
+		// html: `<p>Your email verfication token is: <code>${token}</code>. Click <a href="">here</a> to verify your email.</p>`,
+		react: VerificationEmail({
+			code: token,
+			name: 'there',
+			verificationUrl: 'http://localhost:5173/email-verification/' + token,
+		}),
 		subject: 'Verify your email',
 		to: email,
 	});
