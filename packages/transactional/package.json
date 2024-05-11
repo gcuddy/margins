@@ -7,12 +7,19 @@
 	"types": "./index.ts",
 	"license": "MIT",
 	"scripts": {
+		"dev": "email dev",
 		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",
 		"lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix"
 	},
 	"dependencies": {
+		"@margins/config": "workspace:*",
+		"@margins/ui": "workspace:*",
+		"@react-email/components": "0.0.17",
 		"dotenv": "^16.4.5",
-		"resend": "^3.2.0"
+		"react": "^18.3.1",
+		"react-email": "2.1.2",
+		"resend": "^3.2.0",
+		"tailwind-variants": "^0.2.1"
 	},
 	"devDependencies": {}
 }
