@@ -64,6 +64,7 @@ declare global {
 			email: string;
 			avatar?: string | null;
 			email_verified?: boolean;
+			hypothseis_api_key?: string;
 		};
 		type DatabaseSessionAttributes = object;
 	}
