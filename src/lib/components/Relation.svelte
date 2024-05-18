@@ -3,6 +3,7 @@
 	import {
 		ArrowLeft,
 		ArrowLeftRight,
+		ArrowRight,
 		ArrowRightLeft,
 		GroupIcon,
 		MoreHorizontalIcon,
@@ -11,19 +12,18 @@
 	import type { ComponentType } from 'svelte';
 
 	import { invalidate } from '$app/navigation';
-	import { page } from '$app/stores';
 	import type { ListEntry } from '$lib/db/selects';
 	import { getId, getType } from '$lib/utils/entries';
 	import { post } from '$lib/utils/forms';
 
+	import { Badge } from '$components/ui/badge';
+	import { melt } from '@melt-ui/svelte';
 	import HoverEntry from './HoverEntry.svelte';
-	import { Badge } from '$components/ui/badge'
 	import Button from './ui/Button.svelte';
+	import NativeSelect from './ui/NativeSelect.svelte';
 	import OptionsMenu from './ui/dropdown-menu/OptionsMenu.svelte';
 	import * as HoverCard from './ui/hover-card';
-	import NativeSelect from './ui/NativeSelect.svelte';
 	import { dialog_store } from './ui/singletons/Dialog.svelte';
-	import { melt } from '@melt-ui/svelte';
 
 	const icons: Record<Relation['type'], ComponentType> = {
 		Grouped: GroupIcon,
@@ -31,8 +31,19 @@
 		SavedFrom: ArrowLeft,
 	};
 
+    function getIcon(): ComponentType {
+        if (type === "SavedFrom" && direction === "inbound") {
+            return ArrowLeft;
+        } else if (type === "SavedFrom" && direction === "outbound") {
+            return ArrowRight;
+        } else {
+            return icons[type];
+        }
+    }
+
 	export let type: Relation['type'];
 	export let id: Relation['id'];
+    export let direction: "outbound" | "inbound" = "outbound";
 	export let entry: ListEntry;
 	const original_type = type;
 
@@ -47,7 +58,7 @@
 	<HoverCard.Trigger asChild let:builder>
 		<div use:melt={builder}>
 			<Badge variant="outline" class="min-w-0 max-w-[200px] xl:max-w-[224px]">
-				<svelte:component this={icons[type]} class="mr-2 h-4 w-4 shrink-0" />
+				<svelte:component this={getIcon()} class="mr-2 h-4 w-4 shrink-0" />
 				<a href="/{getType(entry.type)}/{getId(entry)}" class="truncate"
 					>{entry.title}</a
 				>
