@@ -11,6 +11,7 @@ import { createUserSchema } from '../schema';
 import type { PageServerLoad } from './$types';
 import { nanoid } from 'nanoid';
 import { zod } from 'sveltekit-superforms/adapters';
+import { withDB } from '@margins/features/core';
 
 export const load = (async () => {
 	const form = await superValidate(zod(createUserSchema), {
@@ -51,46 +52,47 @@ export const actions: Actions = {
 			const hashed_password = await new Argon2id().hash(password);
 			const { auth, db } = event.locals;
 
-			await db.transaction().execute(async (trx) => {
-				await trx
-					.insertInto('user')
-					.values({
-						email,
-						email_verified: 0,
-						id: userId,
-						updatedAt: new Date(),
-					})
-					.execute();
+			await withDB(db, async () => {
+				await db.transaction().execute(async (trx) => {
+					await trx
+						.insertInto('user')
+						.values({
+							email,
+							email_verified: 0,
+							id: userId,
+							updatedAt: new Date(),
+						})
+						.execute();
 
-				await trx
-					.insertInto('password')
-					.values({
-						hashed_password,
-						id: nanoid(),
-						user_id: userId,
-					})
-					.execute();
+					await trx
+						.insertInto('password')
+						.values({
+							hashed_password,
+							id: nanoid(),
+							user_id: userId,
+						})
+						.execute();
 
-				// return await trx
-				// 	.updateTable('InvitationCode')
-				// 	.set({
-				// 		used: 1,
-				// 		usedById: userId,
-				// 	})
-				// 	.where('code', '=', inviteCode)
-				// 	.execute();
-			});
+					// return await trx
+					// 	.updateTable('InvitationCode')
+					// 	.set({
+					// 		used: 1,
+					// 		usedById: userId,
+					// 	})
+					// 	.where('code', '=', inviteCode)
+					// 	.execute();
+				});
+				// Should this happen in transaction?
+				const token = await generateEmailVerificationToken(userId, email);
+				await sendEmailVerificationLink(email, token);
 
-			// Should this happen in transaction?
-			const token = await generateEmailVerificationToken(userId, email);
-			await sendEmailVerificationLink(email, token);
-
-			const session = await auth.createSession(userId, {});
-			const sessionCookie = auth.createSessionCookie(session.id);
-			console.log({ session, sessionCookie });
-			event.cookies.set(sessionCookie.name, sessionCookie.value, {
-				path: '.',
-				...sessionCookie.attributes,
+				const session = await auth.createSession(userId, {});
+				const sessionCookie = auth.createSessionCookie(session.id);
+				console.log({ session, sessionCookie });
+				event.cookies.set(sessionCookie.name, sessionCookie.value, {
+					path: '.',
+					...sessionCookie.attributes,
+				});
 			});
 		} catch (e) {
 			console.log({ e });

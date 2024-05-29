@@ -1,4 +1,10 @@
-import { Button, Container, Html, Tailwind } from '@react-email/components';
+import {
+	Button,
+	Container,
+	Html,
+	// Img,
+	Tailwind,
+} from '@react-email/components';
 import * as React from 'react';
 // import config from '@margins/config/tailwind-preset';
 
@@ -16,7 +22,9 @@ export const VerificationEmail = ({
 			<Tailwind>
 				<Container className="0 flex h-screen w-full flex-col items-center space-y-8">
 					<div className="flex w-full grow items-center justify-center gap-x-2">
-						<svg
+						{/* <Img src= */}
+						{/* TODO: */}
+						{/* <svg
 							className="h-6 w-6"
 							viewBox="0 0 500 500"
 							fill="none"
@@ -42,7 +50,7 @@ export const VerificationEmail = ({
 								d="M326 134.5C326 120.141 337.641 108.5 352 108.5V108.5C366.359 108.5 378 120.141 378 134.5V391.5H326V134.5Z"
 								fill="white"
 							/>
-						</svg>
+						</svg> */}
 						<span className="font-sans font-semibold tracking-tighter text-black">
 							Margins
 						</span>
@@ -67,7 +75,7 @@ export const VerificationEmail = ({
 					</div>
 					<div className="my-8 h-px bg-gray-400"></div>
 					<p className="font-sans text-xs text-gray-400">
-						If you were not expecting this email, please ignore this email.
+						If you were not expecting this email, you can safelly ignore it.
 					</p>
 				</Container>
 			</Tailwind>
