@@ -1,4 +1,5 @@
 import { tv } from 'tailwind-variants';
+import { colorVariant } from '../variants/color.variants.js';
 
 export const baseButton = tv({
 	base: 'm-base-button inline-flex shrink-0 select-none items-center justify-center text-center align-top not-italic',
@@ -8,9 +9,7 @@ export const baseButton = tv({
 			soft: 'm-variant-soft',
 			solid: 'm-variant-solid',
 		},
-		color: {
-			gray: '',
-		},
+		color: colorVariant,
 		size: {
 			sm: 'm-size-sm',
 			md: 'm-size-md',

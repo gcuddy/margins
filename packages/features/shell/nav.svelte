@@ -46,7 +46,13 @@
 	import { page } from '$app/stores';
 	import ColResizer from './col-resizer.svelte';
 	import AddURLDialog from '../entries/add-url-dialog.svelte';
-	import { Avatar, Button, Dropdown, Separator } from '@margins/ui';
+	import {
+		Avatar,
+		Button,
+		Dropdown,
+		Separator,
+		buttonVariants,
+	} from '@margins/ui';
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 	import Search from 'lucide-svelte/icons/search';
 	import type { ComponentProps, ComponentType } from 'svelte';
@@ -69,16 +75,16 @@
 			<span class="flex">
 				<Dropdown.Root>
 					<Dropdown.Trigger
-						class="hover:bg-glass/5 data-[state=open]:bg-glass/5 flex items-center gap-2 rounded-lg p-1.5"
+						class={buttonVariants({ color: 'gray', variant: 'ghost' })}
 					>
-						<Avatar.Root class="h-6 w-6">
+						<Avatar.Root class="h-5 w-5">
 							<Avatar.Image src={$page.data.user?.avatar} alt="avatar" />
 							<Avatar.Fallback class="text-xs">
 								{$page.data.user?.username?.[0]?.toUpperCase()}
 							</Avatar.Fallback>
 						</Avatar.Root>
 						<span class="text-sm font-medium">{$page.data.user?.username}</span>
-						<ChevronDown class="text-muted-foreground h-4 w-4" />
+						<Dropdown.TriggerIcon />
 					</Dropdown.Trigger>
 					<Dropdown.Content
 						transitionConfig={{

@@ -13,6 +13,7 @@ import CheckboxItem from './dropdown-menu-checkbox-item.svelte';
 import Icon from './dropdown-menu-icon.svelte';
 import { tv } from 'tailwind-variants';
 import { baseMenu } from '../base-menu.js';
+import { colorVariant } from '../../variants/color.variants.js';
 
 const Sub = DropdownMenuPrimitive.Sub;
 const Root = DropdownMenuPrimitive.Root;
@@ -26,23 +27,16 @@ const triggerVariants = tv({
 
 export const dropdownContent = tv({
 	extend: baseMenu,
-	base: ['group/dropdown z-50 min-w-[8rem] rounded-lg focus:outline-none'],
-	variants: {
-		size: {
-			sm: 'p-1',
-			md: 'p-2',
-			lg: 'p-3',
-		},
-	},
+	base: [
+		'm-BaseMenuContent m-PopperContent m-BaseMenuViewport group/dropdown z-50 min-w-[8rem] rounded-lg focus:outline-none',
+	],
 	defaultVariants: {
 		size: 'md',
 	},
 });
 
 export const dropdownItem = tv({
-	base: [
-		'group/dropdown-item relative flex cursor-default select-none items-center rounded-sm px-2 text-sm outline-none data-[disabled]:pointer-events-none data-[highlighted]:text-white data-[disabled]:opacity-50 group-data-[size=md]/dropdown:h-8 group-data-[size=md]/dropdown:px-3',
-	],
+	base: ['m-BaseMenuItem'],
 	variants: {
 		inset: {
 			true: 'pl-8',

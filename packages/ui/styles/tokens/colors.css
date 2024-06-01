@@ -83,3 +83,37 @@
 
 	--ring: 24 5.7% 82.9%;
 }
+
+:where([data-accent-color='gray'], .m-accent-gray) {
+	--accent-1: var(--gray-1);
+	--accent-2: var(--gray-2);
+	--accent-3: var(--gray-3);
+	--accent-4: var(--gray-4);
+	--accent-5: var(--gray-5);
+	--accent-6: var(--gray-6);
+	--accent-7: var(--gray-7);
+	--accent-8: var(--gray-8);
+	--accent-9: var(--gray-9);
+	--accent-10: var(--gray-10);
+	--accent-11: var(--gray-11);
+	--accent-12: var(--gray-12);
+  
+	--accent-a1: var(--gray-a1);
+	--accent-a2: var(--gray-a2);
+	--accent-a3: var(--gray-a3);
+	--accent-a4: var(--gray-a4);
+	--accent-a5: var(--gray-a5);
+	--accent-a6: var(--gray-a6);
+	--accent-a7: var(--gray-a7);
+	--accent-a8: var(--gray-a8);
+	--accent-a9: var(--gray-a9);
+	--accent-a10: var(--gray-a10);
+	--accent-a11: var(--gray-a11);
+	--accent-a12: var(--gray-a12);
+  
+	--accent-contrast: var(--gray-contrast);
+	--accent-surface: var(--gray-surface);
+	--accent-indicator: var(--gray-indicator);
+	--accent-track: var(--gray-track);
+  }
+  

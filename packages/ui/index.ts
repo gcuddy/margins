@@ -1,4 +1,8 @@
-export { Button, buttonVariants } from './components/button/index.js';
+export {
+	Button,
+	buttonVariants,
+	type ButtonProps,
+} from './components/button/index.js';
 export { Badge } from './components/badge/index.js';
 export * as Card from './components/card/index.js';
 export { Input } from './components/input/index.js';

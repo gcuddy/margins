@@ -13,7 +13,7 @@
 	let className: $$Props['class'] = undefined;
 	// export let transition: $$Props['transition'] = flyAndScale;
 	export let transitionConfig: $$Props['transitionConfig'] = {
-		duration: 100,
+		duration: 160,
 	};
 	export let showX: $$Props['showX'] = true;
 	export let variant: $$Props['variant'] = 'fixed';
@@ -26,13 +26,11 @@
 	<Dialog.Overlay class={overlayVisible ? '' : 'bg-transparent'} />
 	<DialogPrimitive.Content
 		bind:el
-		transition={undefined}
-		inTransition={flyAndScale}
-		inTransitionConfig={{
-			duration: 75,
+		transition={flyAndScale}
+		transitionConfig={{
+			duration: 150,
+			y: 5,
 		}}
-		outTransition={flyAndScale}
-		outTransitionConfig={transitionConfig}
 		class={cn(
 			Dialog.dialogVariants({
 				className,

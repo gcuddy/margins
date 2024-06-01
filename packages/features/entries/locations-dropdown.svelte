@@ -8,24 +8,29 @@
 		locations,
 	} from './locations.js';
 
-	import { Dropdown, SmallPlus, buttonVariants } from '@margins/ui';
+	import {
+		type ButtonProps,
+		Dropdown,
+		SmallPlus,
+		buttonVariants,
+	} from '@margins/ui';
 	import { page } from '$app/stores';
 
 	export let status: Status;
 	export let onSelect: ((status: Status) => void) | undefined = undefined;
+	export let variant: ButtonProps['variant'] = 'soft';
+	export let color: ButtonProps['color'] = 'gold';
 </script>
 
 <Dropdown.Root>
-	<Dropdown.Trigger class={buttonVariants({ variant: 'soft' })}>
-		<svelte:component
-			this={locationToIcon[status]}
-		/>
+	<Dropdown.Trigger class={buttonVariants({ color, variant })}>
+		<svelte:component this={locationToIcon[status]} />
 		<SmallPlus>
 			{status}
 		</SmallPlus>
 		<Dropdown.TriggerIcon />
 	</Dropdown.Trigger>
-	<Dropdown.Content align="start">
+	<Dropdown.Content {color} align="start">
 		{#each locations as location}
 			<Dropdown.Item
 				on:click={onSelect ? () => onSelect?.(location) : undefined}
