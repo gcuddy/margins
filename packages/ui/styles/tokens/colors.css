@@ -1,3 +1,5 @@
+@import './radix-colors.css';
+
 :root {
 	--background: 0 0% 100%;
 	--foreground: 20 14.3% 4.1%;
@@ -10,8 +12,8 @@
 	--popover: 0 0% 100%;
 	--popover-foreground: 20 14.3% 4.1%;
 
-    --background-elevation: 0 0% 100%;
-    --background-elevation2: var(--popover);
+	--background-elevation: 0 0% 100%;
+	--background-elevation2: var(--popover);
 
 	--primary: 43 86% 66%;
 	--primary-hover: 43 96% 66%;
@@ -48,10 +50,9 @@
 	--attention-foreground: 49 89% 89%;
 
 	--background: 30 17% 6%;
-    --background-elevation: 30 17% 7%;
-    --background-elevation2: 30 17% 8%;
+	--background-elevation: 30 17% 7%;
+	--background-elevation2: 30 17% 8%;
 	--foreground: 60 9.1% 97.8%;
-
 
 	--glass: 0 0% 100%;
 

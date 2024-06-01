@@ -1,4 +1,5 @@
-@import './colors.css';
+@import './tokens/base.css';
+@import '../components/index.css';
 
 @tailwind base;
 @tailwind components;
@@ -7,10 +8,11 @@
 
 @layer base {
 	* {
-		@apply border-border;
+		/* TODO: make this more specific */
+		@apply border-gold-6 dark:border-golddark-6;
 	}
 	body {
-		@apply bg-background text-foreground;
+		@apply bg-sand-1 dark:bg-sanddark-1 text-sand-12 dark:text-sanddark-12;
 		font-feature-settings:
 			'rlig' 1,
 			'calt' 1;
@@ -38,7 +40,7 @@
 		}
 	}
 
-    /* camel case to differentiate from tailwind animate plugin */
+	/* camel case to differentiate from tailwind animate plugin */
 	.fadeInDown {
 		animation: fadeInDown 1s forwards;
 		opacity: 0;

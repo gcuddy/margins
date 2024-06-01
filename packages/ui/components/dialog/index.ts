@@ -1,7 +1,12 @@
 import { Dialog as DialogPrimitive } from 'bits-ui';
 
 export const dialogVariants = tv({
-	base: 'bg-background-elevation2 fixed left-1/2 z-50 grid max-h-[95vh] w-full max-w-lg translate-x-[-50%] gap-4 rounded-md border p-8 shadow-xl',
+	base: [
+		panel({
+			shadow: '6',
+		}),
+		'fixed left-1/2 z-50 grid max-h-[95vh] w-full max-w-lg translate-x-[-50%] gap-4 rounded-md  p-8',
+	],
 	defaultVariants: {
 		variant: 'fixed',
 	},
@@ -28,6 +33,7 @@ import Description from './dialog-description.svelte';
 import Close from './dialog-close.svelte';
 import type { VariantProps } from 'tailwind-variants';
 import { tv } from 'tailwind-variants';
+import { panel } from '../../styles/tailwind.js';
 
 export {
 	Root,

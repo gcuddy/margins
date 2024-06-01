@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Command as CommandPrimitive } from 'cmdk-sv';
 	import { cn } from '@margins/lib';
+	import { panel } from '../../styles/tailwind.js';
+	import { baseMenu } from '../base-menu.js';
 
 	type $$Props = CommandPrimitive.CommandProps;
 
@@ -12,7 +14,8 @@
 
 <CommandPrimitive.Root
 	class={cn(
-		'bg-background-elevation2 text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md',
+		baseMenu(),
+		'flex h-full w-full flex-col overflow-hidden rounded-md',
 		className,
 	)}
 	bind:value

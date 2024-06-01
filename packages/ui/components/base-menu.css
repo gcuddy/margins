@@ -1,0 +1,12 @@
+.base-menu:where(.variant-soft) {
+	& :where([data-melt-dropdown-menu-subtrigger][data-state='open']) {
+		background-color: var(--accent-a3);
+	}
+	&
+		:where(
+			[role='menuitem'][data-highlighted],
+			[role='option'][aria-selected='true']
+		) {
+		background-color: var(--accent-a4);
+	}
+}

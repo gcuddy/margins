@@ -1,7 +1,14 @@
 <script lang="ts">
+	import '@fontsource-variable/crimson-pro';
 	import { page } from '$app/stores';
 	import '@margins/ui/styles/style.css';
 	import { ModeWatcher } from 'mode-watcher';
+	import { setContext } from 'svelte';
+
+	const iconCtx = {
+		size: '15',
+	};
+	setContext('iconCtx', iconCtx);
 </script>
 
 <ModeWatcher />

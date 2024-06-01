@@ -23,20 +23,22 @@
 
 <a
 	href="/u:{user.username}/read/{bookmark.id}"
-	class={cn('mx-3 block h-14 cursor-default', className)}
+	class={cn('hover:bg-sandA-2 block h-14 cursor-default', className)}
 >
 	<!-- start of actual component -->
-	<div class="flex items-center gap-3 rounded px-3">
+	<div class="flex h-full items-center gap-3 px-4">
 		<div>
 			<img
 				src={bookmark.entry?.image ??
 					`https://icon.horse/icon/${getDomain(bookmark.entry?.uri ?? '') ?? 'margins'}`}
 				alt={bookmark.entry?.title}
-				class="h-6 w-6 rounded"
+				style:height="48px"
+				style:width="48px"
+				class="rounded object-cover"
 			/>
 		</div>
 		<div class="flex flex-col">
-			<span class="text-sm">
+			<span class="truncate text-sm">
 				{#if htmlTitle}
 					{@html htmlTitle}
 				{:else}
@@ -49,7 +51,7 @@
 			<!-- 	</span> -->
 			<!-- {/if} -->
 			{#if bookmark.entry?.author}
-				<span class="text-muted-foreground text-sm">
+				<span class="text-grayA-11 truncate text-xs">
 					{bookmark.entry?.author}
 				</span>
 			{/if}

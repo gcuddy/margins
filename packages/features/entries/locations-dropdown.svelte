@@ -8,7 +8,7 @@
 		locations,
 	} from './locations.js';
 
-	import { Dropdown, SmallPlus } from '@margins/ui';
+	import { Dropdown, SmallPlus, buttonVariants } from '@margins/ui';
 	import { page } from '$app/stores';
 
 	export let status: Status;
@@ -16,14 +16,14 @@
 </script>
 
 <Dropdown.Root>
-	<Dropdown.Trigger class={Dropdown.triggerVariants()}>
+	<Dropdown.Trigger class={buttonVariants({ variant: 'soft' })}>
 		<svelte:component
 			this={locationToIcon[status]}
-			class="text-muted-foreground mr-1.5 h-4 w-4"
 		/>
 		<SmallPlus>
 			{status}
 		</SmallPlus>
+		<Dropdown.TriggerIcon />
 	</Dropdown.Trigger>
 	<Dropdown.Content align="start">
 		{#each locations as location}

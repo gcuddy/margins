@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 	import { fade } from 'svelte/transition';
-	import { cn } from '@margins/lib';
+	import { dropdownContent } from './index.js';
+	import type { VariantProps } from 'tailwind-variants';
 
-	type $$Props = Omit<DropdownMenuPrimitive.ContentProps, 'transition'>;
+	type $$Props = Omit<DropdownMenuPrimitive.ContentProps, 'transition'> &
+		VariantProps<typeof dropdownContent>;
 
 	let className: $$Props['class'] = undefined;
 	export let sideOffset: $$Props['sideOffset'] = 4;
@@ -11,6 +13,7 @@
 	export let transitionConfig: $$Props['transitionConfig'] = {
 		duration: 75,
 	};
+	export let size: $$Props['size'] = 'md';
 	export { className as class };
 </script>
 
@@ -18,10 +21,8 @@
 	outTransition={fade}
 	outTransitionConfig={transitionConfig}
 	{sideOffset}
-	class={cn(
-		'bg-popover text-popover-foreground z-50 min-w-[8rem] rounded-lg border p-1 shadow-md focus:outline-none',
-		className,
-	)}
+	data-size={size}
+	class={dropdownContent({ className, size })}
 	{...$$restProps}
 	on:keydown
 >

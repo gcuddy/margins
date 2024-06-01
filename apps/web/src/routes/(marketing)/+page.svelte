@@ -28,18 +28,18 @@
 		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
 			<span
-				class="before:bg-primary/30 before:text-primary-foreground relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded"
+				class="before:bg-amberA-3 before:text-primary-foreground relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded"
 				>Margins
 			</span>is the app for saving, consuming, and annotating
 			<Anything />
 		</h1>
 		<p
-			class=" mb-[1vw] leading-none tracking-normal sm:leading-8 md:text-[clamp(20px,1.5vw,26px)]"
+			class="mb-[1vw] leading-none tracking-normal sm:leading-8 md:text-[clamp(20px,1.5vw,26px)]"
 		>
 			A powerful, friendly research app.
 		</p>
 		<div class="space-x-4">
-			<Button href="/signup" size="xl" class="rounded-full">
+			<Button variant="classic" href="/signup" size="xl" class="rounded-full">
 				Get Margins <ChevronRight class="ml-1 h-4 w-4" />
 			</Button>
 		</div>

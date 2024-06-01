@@ -3,7 +3,7 @@
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 	import ChevronUp from 'lucide-svelte/icons/chevron-up';
 	import PanelRight from 'lucide-svelte/icons/panel-right';
-	import Pin from 'lucide-svelte/icons/pin';
+	import { DrawingPin, DrawingPinFilled } from 'svelte-radix';
 	import { derived } from 'svelte/store';
 	import { page } from '$app/stores';
 	import { getEntryCtx } from './ctx.js';
@@ -64,8 +64,9 @@
 		</Breadcrumb.List>
 	</Breadcrumb.Root>
 	<Button
-		size="iconSmall"
+		size="icon"
 		variant="ghost"
+		color="gray"
 		class="text-muted-foreground hover:text-foreground stroke-[1.5]"
 		data-pinned={!!$pin}
 		on:click={() => {
@@ -82,9 +83,11 @@
 			}
 		}}
 	>
-		<Pin
-			class="group-data-[pinned=true]:fill-primary group-data-[pinned=true]:text-primary h-4 w-4"
-		/>
+		{#if $pin}
+			<DrawingPinFilled class="h-4 w-4" />
+		{:else}
+			<DrawingPin class="h-4 w-4" />
+		{/if}
 		<span class="sr-only">Pin</span>
 	</Button>
 </div>

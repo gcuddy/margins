@@ -1,9 +1,6 @@
 <script lang="ts" context="module">
-	import Library from 'lucide-svelte/icons/library';
-	import Rss from 'lucide-svelte/icons/rss';
-	import Box from 'lucide-svelte/icons/box';
-	import BookMarked from 'lucide-svelte/icons/book-marked';
-	import Layers from 'lucide-svelte/icons/layers';
+	import { CardStack, Dashboard, Globe, Pencil2, Stack } from 'svelte-radix';
+
 	type Nav = {
 		active: (url: string) => boolean;
 		href: (username: string) => string;
@@ -14,31 +11,31 @@
 		{
 			active: (path) => path.endsWith('/backlog'),
 			href: (username: string) => `/u:${username}/backlog`,
-			icon: Library,
+			icon: Dashboard,
 			label: 'Library',
 		},
 		{
 			active: (url) => url.endsWith('/subscriptions'),
 			href: (username: string) => `/u:${username}/subscriptions`,
-			icon: Rss,
+			icon: Globe,
 			label: 'Subscriptions',
 		},
 		{
 			active: (path) => path.endsWith('/collections'),
 			href: (username: string) => `/u:${username}/collections`,
-			icon: Box,
+			icon: CardStack,
 			label: 'Collections',
 		},
 		{
 			active: (url) => url.endsWith('/notebook'),
 			href: (username: string) => `/u:${username}/notebook`,
-			icon: BookMarked,
+			icon: Pencil2,
 			label: 'Notebook',
 		},
 		{
 			active: (url) => url.endsWith('/views'),
 			href: (username: string) => `/u:${username}/views`,
-			icon: Layers,
+			icon: Stack,
 			label: 'Views',
 		},
 	];
@@ -127,13 +124,11 @@
 		<div class="pb-2">
 			{#each navItems as { active, href, icon, label }}
 				{@const isActive = active($page.url.pathname)}
-				<Button
-					variant="ghost"
+				<a
 					class={cn(
-						'group my-px w-full justify-start rounded text-left text-[13px] font-medium',
-						isActive && 'bg-accent text-accent-foreground',
+						'hover:bg-sandA-3 group my-px flex w-full items-center justify-start rounded px-3 py-2 text-left text-sm font-medium',
+						isActive && 'bg-sandA-4 hover:bg-sandA-4 text-accent-foreground',
 					)}
-					size="sm"
 					href={href($page.data.user?.username ?? '')}
 				>
 					<svelte:component
@@ -144,7 +139,7 @@
 						)}
 					/>
 					{label}
-				</Button>
+				</a>
 			{/each}
 		</div>
 		<div class="pb-2">

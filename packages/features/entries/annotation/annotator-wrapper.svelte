@@ -14,6 +14,8 @@
 	import { syncHighlights } from '@margins/annotator/dom';
 	import type { Annotation } from '../../core/index.js';
 	import AnnotationInlineMenu from './annotation-inline-menu.svelte';
+	import { cn } from '@margins/lib';
+	import { Popover } from '@margins/ui';
 
 	export let annotations: Annotation.Item[];
 	export let onHighlight: (textQuote: TextQuoteSelector) => void;
@@ -136,7 +138,10 @@
 	{#if show}
 		<div id="floating-content" use:floatingContent>
 			<div
-				class="bg-popover text-popover-foreground z-50 w-fit rounded-lg border shadow-md outline-none"
+				class={cn(
+					Popover.popoverVariants(),
+					'z-50 w-fit rounded-lg p-0 outline-none',
+				)}
 			>
 				<AnnotationInlineMenu onHighlight={handleHighlight} />
 			</div>

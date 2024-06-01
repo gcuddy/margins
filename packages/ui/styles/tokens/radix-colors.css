@@ -1,0 +1,116 @@
+@import '@radix-ui/colors/sand';
+@import '@radix-ui/colors/sand-alpha';
+@import '@radix-ui/colors/sand-dark';
+@import '@radix-ui/colors/sand-dark-alpha';
+
+@import '@radix-ui/colors/gold';
+@import '@radix-ui/colors/gold-alpha';
+@import '@radix-ui/colors/gold-dark';
+@import '@radix-ui/colors/gold-dark-alpha';
+
+@import '@radix-ui/colors/white-alpha';
+@import '@radix-ui/colors/black-alpha';
+
+@import '@radix-ui/colors/amber';
+@import '@radix-ui/colors/amber-alpha';
+@import '@radix-ui/colors/amber-dark';
+@import '@radix-ui/colors/amber-dark-alpha';
+
+:root {
+	--gold-contrast: white;
+	--sand-contrast: white;
+	--accent-1: var(--gold-1);
+	--accent-2: var(--gold-2);
+	--accent-3: var(--gold-3);
+	--accent-4: var(--gold-4);
+	--accent-5: var(--gold-5);
+	--accent-6: var(--gold-6);
+	--accent-7: var(--gold-7);
+	--accent-8: var(--gold-8);
+	--accent-9: var(--gold-9);
+	--accent-10: var(--gold-10);
+	--accent-11: var(--gold-11);
+	--accent-12: var(--gold-12);
+
+	--accent-a1: var(--gold-a1);
+	--accent-a2: var(--gold-a2);
+	--accent-a3: var(--gold-a3);
+	--accent-a4: var(--gold-a4);
+	--accent-a5: var(--gold-a5);
+	--accent-a6: var(--gold-a6);
+	--accent-a7: var(--gold-a7);
+	--accent-a8: var(--gold-a8);
+	--accent-a9: var(--gold-a9);
+	--accent-a10: var(--gold-a10);
+	--accent-a11: var(--gold-a11);
+	--accent-a12: var(--gold-a12);
+
+	--accent-contrast: var(--gold-contrast);
+	--accent-surface: var(--gold-surface);
+	--accent-indicator: var(--gold-indicator);
+	--accent-track: var(--gold-track);
+
+	--gray-1: var(--sand-1);
+	--gray-2: var(--sand-2);
+	--gray-3: var(--sand-3);
+	--gray-4: var(--sand-4);
+	--gray-5: var(--sand-5);
+	--gray-6: var(--sand-6);
+	--gray-7: var(--sand-7);
+	--gray-8: var(--sand-8);
+	--gray-9: var(--sand-9);
+	--gray-10: var(--sand-10);
+	--gray-11: var(--sand-11);
+	--gray-12: var(--sand-12);
+
+	--gray-a1: var(--sand-a1);
+	--gray-a2: var(--sand-a2);
+	--gray-a3: var(--sand-a3);
+	--gray-a4: var(--sand-a4);
+	--gray-a5: var(--sand-a5);
+	--gray-a6: var(--sand-a6);
+	--gray-a7: var(--sand-a7);
+	--gray-a8: var(--sand-a8);
+	--gray-a9: var(--sand-a9);
+	--gray-a10: var(--sand-a10);
+	--gray-a11: var(--sand-a11);
+	--gray-a12: var(--sand-a12);
+
+	--gray-contrast: var(--sand-contrast);
+	--gray-surface: var(--sand-surface);
+	--gray-indicator: var(--sand-indicator);
+	--gray-track: var(--sand-track);
+}
+
+:root,
+.light,
+.light-theme {
+	--gold-surface: #f9f8efcc;
+	--gold-indicator: var(--gold-9);
+	--gold-track: var(--gold-9);
+	--sand-surface: #ffffffcc;
+	--sand-indicator: var(--sand-9);
+	--sand-track: var(--sand-9);
+	@supports (color: color(display-p3 1 1 1)) {
+		@media (color-gamut: p3) {
+			--gold-surface: color(display-p3 0.9765 0.9725 0.9412 / 0.8);
+			--sand-surface: color(display-p3 1 1 1 / 0.8);
+		}
+	}
+}
+
+.dark,
+.dark-theme {
+	--gold-surface: #25231d80;
+	--gold-indicator: var(--gold-9);
+	--gold-track: var(--gold-9);
+	--sand-surface: #21212080;
+	--sand-indicator: var(--sand-9);
+	--sand-track: var(--sand-9);
+	@supports (color: color(display-p3 1 1 1)) {
+		@media (color-gamut: p3) {
+			--gold-surface: color(display-p3 0.1412 0.1333 0.1098 / 0.5);
+			--sand-surface: color(display-p3 0.1255 0.1255 0.1255 / 0.5);
+		}
+	}
+}

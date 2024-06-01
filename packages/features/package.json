@@ -1,95 +1,96 @@
 {
-	"name": "@margins/features",
-	"private": true,
-	"sideEffects": false,
-	"version": "0.0.0",
-	"exports": {
-		"./shell": {
-			"import": "./shell/index.ts",
-			"svelte": "./shell/index.ts",
-			"types": "./shell/index.ts"
-		},
-		"./data": {
-			"import": "./data/index.ts",
-			"svelte": "./data/index.ts",
-			"types": "./data/index.ts"
-		},
-		"./rss": {
-			"import": "./rss/index.ts",
-			"svelte": "./rss/index.ts",
-			"types": "./rss/index.ts"
-		},
-		"./core": {
-			"import": "./core/index.ts",
-			"svelte": "./core/index.ts",
-			"types": "./core/index.ts"
-		},
-		"./replicache": {
-			"import": "./replicache/index.ts",
-			"svelte": "./replicache/index.ts",
-			"types": "./replicache/index.ts"
-		},
-		"./replicache/server": {
-			"import": "./replicache/server.ts"
-		},
-		"./parse": {
-			"import": "./parse/index.ts",
-			"types": "./parse/index.ts"
-		},
-		"./entries": {
-			"import": "./entries/index.ts",
-			"types": "./entries/index.ts",
-			"svelte": "./entries/index.ts"
-		},
-		"./entries/annotation": {
-			"import": "./entries/annotation/index.ts",
-			"types": "./entries/annotation/index.ts",
-			"svelte": "./entries/annotation/index.ts"
-		},
-		"./notebook": {
-			"import": "./notebook/index.ts",
-			"types": "./notebook/index.ts",
-			"svelte": "./notebook/index.ts"
-		},
-		"./commands": {
-			"import": "./commands/index.ts",
-			"types": "./commands/index.ts",
-			"svelte": "./commands/index.ts"
-		}
-	},
-	"license": "MIT",
-	"scripts": {
-		"lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-		"lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
-		"lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
-	},
-	"dependencies": {
-		"@floating-ui/core": "^1.6.0",
-		"@margins/annotator": "workspace:*",
-		"@margins/db": "workspace:*",
-		"@margins/features": "workspace:*",
-		"@margins/lib": "workspace:*",
-		"@margins/parser": "workspace:*",
-		"@margins/ui": "workspace:*",
-		"@sveltejs/kit": "^2.5.4",
-		"clsx": "^2.1.0",
-		"command-score": "^0.1.2",
-		"kysely": "^0.27.2",
-		"lucide-svelte": "^0.363.0",
-		"minisearch": "^6.3.0",
-		"nanoid": "^4.0.2",
-		"remeda": "^1.56.0",
-		"replicache": "^14.2.2",
-		"svelte": "^4.2.2",
-		"svelte-floating-ui": "^1.5.8",
-		"svelte-persisted-store": "^0.9.1",
-		"tailwind-merge": "^1.13.2",
-		"zod": "^3.22.4"
-	},
-	"devDependencies": {
-		"@margins/config": "workspace:*",
-		"@margins/tsconfig": "workspace:*",
-		"typescript": "^5.2.2"
-	},
-	"type": "module"
+  "name": "@margins/features",
+  "private": true,
+  "sideEffects": false,
+  "version": "0.0.0",
+  "exports": {
+    "./shell": {
+      "import": "./shell/index.ts",
+      "svelte": "./shell/index.ts",
+      "types": "./shell/index.ts"
+    },
+    "./data": {
+      "import": "./data/index.ts",
+      "svelte": "./data/index.ts",
+      "types": "./data/index.ts"
+    },
+    "./rss": {
+      "import": "./rss/index.ts",
+      "svelte": "./rss/index.ts",
+      "types": "./rss/index.ts"
+    },
+    "./core": {
+      "import": "./core/index.ts",
+      "svelte": "./core/index.ts",
+      "types": "./core/index.ts"
+    },
+    "./replicache": {
+      "import": "./replicache/index.ts",
+      "svelte": "./replicache/index.ts",
+      "types": "./replicache/index.ts"
+    },
+    "./replicache/server": {
+      "import": "./replicache/server.ts"
+    },
+    "./parse": {
+      "import": "./parse/index.ts",
+      "types": "./parse/index.ts"
+    },
+    "./entries": {
+      "import": "./entries/index.ts",
+      "types": "./entries/index.ts",
+      "svelte": "./entries/index.ts"
+    },
+    "./entries/annotation": {
+      "import": "./entries/annotation/index.ts",
+      "types": "./entries/annotation/index.ts",
+      "svelte": "./entries/annotation/index.ts"
+    },
+    "./notebook": {
+      "import": "./notebook/index.ts",
+      "types": "./notebook/index.ts",
+      "svelte": "./notebook/index.ts"
+    },
+    "./commands": {
+      "import": "./commands/index.ts",
+      "types": "./commands/index.ts",
+      "svelte": "./commands/index.ts"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
+    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
+  },
+  "dependencies": {
+    "@floating-ui/core": "^1.6.0",
+    "@margins/annotator": "workspace:*",
+    "@margins/db": "workspace:*",
+    "@margins/features": "workspace:*",
+    "@margins/lib": "workspace:*",
+    "@margins/parser": "workspace:*",
+    "@margins/ui": "workspace:*",
+    "@sveltejs/kit": "^2.5.4",
+    "clsx": "^2.1.0",
+    "command-score": "^0.1.2",
+    "kysely": "^0.27.2",
+    "lucide-svelte": "^0.363.0",
+    "minisearch": "^6.3.0",
+    "nanoid": "^4.0.2",
+    "remeda": "^1.56.0",
+    "replicache": "^14.2.2",
+    "svelte": "^4.2.2",
+    "svelte-floating-ui": "^1.5.8",
+    "svelte-persisted-store": "^0.9.1",
+    "svelte-radix": "^1.1.0",
+    "tailwind-merge": "^1.13.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@margins/config": "workspace:*",
+    "@margins/tsconfig": "workspace:*",
+    "typescript": "^5.2.2"
+  },
+  "type": "module"
 }

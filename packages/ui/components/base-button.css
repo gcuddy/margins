@@ -1,0 +1,101 @@
+/* soft / ghost */
+
+.m-base-button:where(.m-variant-soft, .m-variant-ghost) {
+	color: var(--accent-a11);
+
+	&:where(.m-high-contrast) {
+		color: var(--accent-12);
+	}
+
+	&:where([data-disabled]) {
+		color: var(--gray-a8);
+		background-color: var(--gray-a3);
+	}
+}
+
+.m-base-button:where(.m-variant-soft) {
+	background-color: var(--accent-a3);
+
+	&:where(:focus-visible) {
+		outline: 2px solid var(--accent-8);
+		outline-offset: -1px;
+	}
+	@media (hover: hover) {
+		&:where(:hover) {
+			background-color: var(--accent-a4);
+		}
+	}
+	&:where([data-state='open']) {
+		background-color: var(--accent-a4);
+	}
+	&:where(:active:not([data-state='open'])) {
+		background-color: var(--accent-a5);
+	}
+	&:where([data-disabled]) {
+		color: var(--gray-a8);
+		background-color: var(--gray-a3);
+	}
+}
+
+.m-base-button:where(.m-variant-ghost) {
+	@media (hover: hover) {
+		&:where(:hover) {
+			background-color: var(--accent-a3);
+		}
+	}
+	&:where(:focus-visible) {
+		outline: 2px solid var(--focus-8);
+		outline-offset: -1px;
+	}
+	&:where([data-state='open']) {
+		background-color: var(--accent-a3);
+	}
+	&:where(:active:not([data-state='open'])) {
+		background-color: var(--accent-a4);
+	}
+	&:where([data-disabled]) {
+		color: var(--gray-a8);
+		background-color: transparent;
+	}
+}
+
+.m-base-button {
+	&:where(.m-size-sm, [data-size='sm']) {
+		--base-button-classic-active-padding-top: 1px;
+		--base-button-height: var(--space-5);
+		border-radius: max(var(--radius-1), var(--radius-full));
+	}
+	&:where(.m-size-md, [data-size='md']) {
+		--base-button-classic-active-padding-top: 2px;
+		--base-button-height: var(--space-6);
+		border-radius: max(var(--radius-2), var(--radius-full));
+	}
+	&:where(.m-size-lg, [data-size='lg']) {
+		--base-button-classic-active-padding-top: 2px;
+		--base-button-height: var(--space-7);
+		border-radius: max(var(--radius-3), var(--radius-full));
+	}
+	&:where(.m-size-xl, [data-size='xl']) {
+		--base-button-classic-active-padding-top: 2px;
+		--base-button-height: var(--space-8);
+		border-radius: max(var(--radius-4), var(--radius-full));
+	}
+}
+
+/***************************************************************************************************
+ *                                                                                                 *
+ * SIZES                                                                                           *
+ *                                                                                                 *
+ ***************************************************************************************************/
+
+.m-base-button {
+	&:where(:not(.m-variant-ghost)) {
+		height: var(--base-button-height);
+	}
+	&:where(.m-variant-ghost) {
+		box-sizing: content-box;
+
+		/* Make sure that the height is not stretched in a Flex/Grid layout */
+		height: fit-content;
+	}
+}
