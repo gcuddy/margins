@@ -20,19 +20,17 @@
  *                                                                                                 *
  ***************************************************************************************************/
 
-@breakpoints {
-	.m-HoverCardContent {
-		&:where(.m-size-sm) {
-			--hover-card-content-padding: var(--space-3);
-			border-radius: var(--radius-4);
-		}
-		&:where(.m-size-md) {
-			--hover-card-content-padding: var(--space-4);
-			border-radius: var(--radius-4);
-		}
-		&:where(.m-size-lg) {
-			--hover-card-content-padding: var(--space-5);
-			border-radius: var(--radius-5);
-		}
+.m-HoverCardContent {
+	&:where(.m-size-sm) {
+		--hover-card-content-padding: var(--space-3);
+		border-radius: var(--radius-4);
+	}
+	&:where(.m-size-md) {
+		--hover-card-content-padding: var(--space-4);
+		border-radius: var(--radius-4);
+	}
+	&:where(.m-size-lg) {
+		--hover-card-content-padding: var(--space-5);
+		border-radius: var(--radius-5);
 	}
 }

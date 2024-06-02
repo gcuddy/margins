@@ -23,3 +23,4 @@ export * as Tabs from './components/tabs/index.js';
 export * from './components/textarea/index.js';
 export * as Tooltip from './components/tooltip/index.js';
 export * from './components/checkbox/index.js';
+export * as HoverCard from './components/hover-card/index.js';

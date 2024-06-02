@@ -1,8 +1,12 @@
 <script lang="ts">
+	import './hover-card.css';
 	import { LinkPreview as HoverCardPrimitive } from 'bits-ui';
 	import { flyAndScale } from '@margins/lib';
 	import { hoverCardContent } from './index.js';
-	import { applyWidth, type WidthProps } from 'variants/width.variants.js';
+	import {
+		applyWidth,
+		type WidthProps,
+	} from '../../variants/width.variants.js';
 
 	type $$Props = HoverCardPrimitive.ContentProps & WidthProps;
 
