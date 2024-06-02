@@ -46,6 +46,7 @@
 	import { page } from '$app/stores';
 	import ColResizer from './col-resizer.svelte';
 	import AddURLDialog from '../entries/add-url-dialog.svelte';
+	import NavItem from './nav-item.svelte';
 	import {
 		Avatar,
 		Button,
@@ -130,22 +131,9 @@
 		<div class="pb-2">
 			{#each navItems as { active, href, icon, label }}
 				{@const isActive = active($page.url.pathname)}
-				<a
-					class={cn(
-						'hover:bg-sandA-3 group my-px flex w-full items-center justify-start rounded px-3 py-2 text-left text-sm font-medium',
-						isActive && 'bg-sandA-4 hover:bg-sandA-4 text-accent-foreground',
-					)}
-					href={href($page.data.user?.username ?? '')}
-				>
-					<svelte:component
-						this={icon}
-						class={cn(
-							'text-muted-foreground/80 group-hover:text-accent-foreground mr-2.5 h-4 w-4',
-							isActive && 'text-accent-foreground',
-						)}
-					/>
+				<NavItem {icon} {isActive} href={href($page.data.user?.username ?? '')}>
 					{label}
-				</a>
+				</NavItem>
 			{/each}
 		</div>
 		<div class="pb-2">
