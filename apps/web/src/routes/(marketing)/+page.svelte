@@ -28,7 +28,7 @@
 		>
 			<!-- <h1 class="max-w-3xl text-center text-7xl font-extrabold text-amber-900"></h1> -->
 			<span
-				class="before:bg-amberA-3 before:text-primary-foreground relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded"
+				class="before:bg-accentA-5 before:text-accent-contrast relative font-bold before:absolute before:-left-1 before:-top-px before:-z-10 before:h-full before:w-full before:rotate-1 before:rounded"
 				>Margins
 			</span>is the app for saving, consuming, and annotating
 			<Anything />

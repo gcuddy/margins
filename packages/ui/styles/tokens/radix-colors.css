@@ -16,9 +16,151 @@
 @import '@radix-ui/colors/amber-dark';
 @import '@radix-ui/colors/amber-dark-alpha';
 
+/* * * * * * * * * * * * * * * * * * * */
+/*                                     */
+/*           Semantic colors           */
+/*                                     */
+/* * * * * * * * * * * * * * * * * * * */
+
+:where(.margins-base) {
+	--color-background: white;
+	--color-overlay: var(--black-a6);
+	--color-panel-solid: white;
+	--color-panel-translucent: rgba(255, 255, 255, 0.7);
+	--color-surface: rgba(255, 255, 255, 0.85);
+}
+:is(.dark, .dark-theme),
+:is(.dark, .dark-theme) :where(.margins-base:not(.light, .light-theme)) {
+	--color-background: var(--gray-1);
+	--color-overlay: var(--black-a8);
+	--color-panel-solid: var(--gray-2);
+	--color-panel-translucent: var(--gray-a2);
+	--color-surface: rgba(0, 0, 0, 0.25);
+}
+
+/* * * * * * * * * * * * * * * * * * * */
+/*                                     */
+/*            Transparency             */
+/*                                     */
+/* * * * * * * * * * * * * * * * * * * */
+
+/* Because Chrome is buggy with box-shadow transitions from "transparent" keyword and/or RGB color into P3 colors. */
+/* Note: using `:where` here to guarantee that the P3 color will take over regardless of the output rule order. */
+:where(.margins-base) {
+	--color-transparent: rgb(0 0 0 / 0);
+}
+@supports (color: color(display-p3 1 1 1)) {
+	@media (color-gamut: p3) {
+		.margins-base {
+			--color-transparent: color(display-p3 0 0 0 / 0);
+		}
+	}
+}
+
+/* * * * * * * * * * * * * * * * * * * */
+/*                                     */
+/*            Color scheme             */
+/*                                     */
+/* * * * * * * * * * * * * * * * * * * */
+
+/*
+ * Make sure that forced light/dark appearance also sets corresponding browser colors,
+ * like input autofill color and body scrollbar
+ */
+.margins-base:where(.light, .light-theme) {
+	&,
+	:root:where(:has(&[data-is-root-theme='true'])) {
+		color-scheme: light;
+	}
+}
+.margins-base:where(.dark, .dark-theme) {
+	&,
+	:root:where(:has(&[data-is-root-theme='true'])) {
+		color-scheme: dark;
+	}
+}
+
+/* * * * * * * * * * * * * * * * * * * */
+/*                                     */
+/*   Focus, selection, and autofill    */
+/*                                     */
+/* * * * * * * * * * * * * * * * * * * */
+
+.margins-base,
+[data-accent-color]:where(
+		:not([data-accent-color=''], [data-accent-color='gray'])
+	) {
+	--focus-1: var(--accent-1);
+	--focus-2: var(--accent-2);
+	--focus-3: var(--accent-3);
+	--focus-4: var(--accent-4);
+	--focus-5: var(--accent-5);
+	--focus-6: var(--accent-6);
+	--focus-7: var(--accent-7);
+	--focus-8: var(--accent-8);
+	--focus-9: var(--accent-9);
+	--focus-10: var(--accent-10);
+	--focus-11: var(--accent-11);
+	--focus-12: var(--accent-12);
+
+	--focus-a1: var(--accent-a1);
+	--focus-a2: var(--accent-a2);
+	--focus-a3: var(--accent-a3);
+	--focus-a4: var(--accent-a4);
+	--focus-a5: var(--accent-a5);
+	--focus-a6: var(--accent-a6);
+	--focus-a7: var(--accent-a7);
+	--focus-a8: var(--accent-a8);
+	--focus-a9: var(--accent-a9);
+	--focus-a10: var(--accent-a10);
+	--focus-a11: var(--accent-a11);
+	--focus-a12: var(--accent-a12);
+}
+
+.margins-base ::selection {
+	background-color: var(--focus-a5);
+}
+
+/* * * * * * * * * * * * * * * * * * * */
+/*                                     */
+/*         Background and text         */
+/*                                     */
+/* * * * * * * * * * * * * * * * * * * */
+
+.margins-base {
+	color: var(--gray-12);
+	&:where([data-has-background='true']) {
+		background-color: var(--color-background);
+	}
+}
+
+/* * * * * * * * * * * * * * * * * * * */
+/*                                     */
+/*          Panel background           */
+/*                                     */
+/* * * * * * * * * * * * * * * * * * * */
+
+.margins-base {
+	&:where([data-panel-background='solid']) {
+		--color-panel: var(--color-panel-solid);
+		--backdrop-filter-panel: none;
+	}
+	&:where([data-panel-background='translucent']) {
+		--color-panel: var(--color-panel-translucent);
+		--backdrop-filter-panel: blur(64px);
+	}
+}
+
+/* * * * * * * * * * * * * * * * * * * */
+/*                                     */
+/*         Accent & Gray color         */
+/*                                     */
+/* * * * * * * * * * * * * * * * * * * */
+
 :root {
 	--gold-contrast: white;
 	--sand-contrast: white;
+	--amber-contrast: #21201c; /* light mode sand 12 */
 	--accent-1: var(--gold-1);
 	--accent-2: var(--gold-2);
 	--accent-3: var(--gold-3);
@@ -82,6 +224,39 @@
 	--gray-track: var(--sand-track);
 }
 
+[data-accent-color='amber'] {
+	--accent-1: var(--amber-1);
+	--accent-2: var(--amber-2);
+	--accent-3: var(--amber-3);
+	--accent-4: var(--amber-4);
+	--accent-5: var(--amber-5);
+	--accent-6: var(--amber-6);
+	--accent-7: var(--amber-7);
+	--accent-8: var(--amber-8);
+	--accent-9: var(--amber-9);
+	--accent-10: var(--amber-10);
+	--accent-11: var(--amber-11);
+	--accent-12: var(--amber-12);
+
+	--accent-a1: var(--amber-a1);
+	--accent-a2: var(--amber-a2);
+	--accent-a3: var(--amber-a3);
+	--accent-a4: var(--amber-a4);
+	--accent-a5: var(--amber-a5);
+	--accent-a6: var(--amber-a6);
+	--accent-a7: var(--amber-a7);
+	--accent-a8: var(--amber-a8);
+	--accent-a9: var(--amber-a9);
+	--accent-a10: var(--amber-a10);
+	--accent-a11: var(--amber-a11);
+	--accent-a12: var(--amber-a12);
+
+	--accent-contrast: var(--amber-contrast);
+	--accent-surface: var(--amber-surface);
+	--accent-indicator: var(--amber-indicator);
+	--accent-track: var(--amber-track);
+}
+
 :root,
 .light,
 .light-theme {
@@ -91,10 +266,15 @@
 	--sand-surface: #ffffffcc;
 	--sand-indicator: var(--sand-9);
 	--sand-track: var(--sand-9);
+	--amber-surface: #fefae4cc;
+	--amber-indicator: var(--amber-9);
+	--amber-track: var(--amber-9);
+
 	@supports (color: color(display-p3 1 1 1)) {
 		@media (color-gamut: p3) {
 			--gold-surface: color(display-p3 0.9765 0.9725 0.9412 / 0.8);
 			--sand-surface: color(display-p3 1 1 1 / 0.8);
+			--amber-surface: color(display-p3 0.9922 0.9843 0.902 / 0.8);
 		}
 	}
 }
@@ -107,10 +287,19 @@
 	--sand-surface: #21212080;
 	--sand-indicator: var(--sand-9);
 	--sand-track: var(--sand-9);
+	--amber-surface: #271f1380;
+	--amber-indicator: var(--amber-9);
+	--amber-track: var(--amber-9);
+
 	@supports (color: color(display-p3 1 1 1)) {
 		@media (color-gamut: p3) {
 			--gold-surface: color(display-p3 0.1412 0.1333 0.1098 / 0.5);
 			--sand-surface: color(display-p3 0.1255 0.1255 0.1255 / 0.5);
+			--amber-surface: color(display-p3 0.1412 0.1176 0.0784 / 0.5);
 		}
+	}
+
+	@supports (color: color-mix(in oklab, white, black)) {
+		--amber-track: color-mix(in oklab, var(--amber-8), var(--amber-9) 75%);
 	}
 }
