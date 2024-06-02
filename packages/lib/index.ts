@@ -6,3 +6,4 @@ export * from './id.js';
 export * from './actions/index.js';
 export * from './object.js';
 export * from './date.js';
+export * from './style.js';

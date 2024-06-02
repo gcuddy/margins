@@ -1,0 +1,38 @@
+.m-HoverCardContent {
+	background-color: var(--color-panel-solid);
+	box-shadow: var(--shadow-4);
+	overflow: auto;
+	position: relative;
+
+	--inset-padding-top: var(--hover-card-content-padding);
+	--inset-padding-right: var(--hover-card-content-padding);
+	--inset-padding-bottom: var(--hover-card-content-padding);
+	--inset-padding-left: var(--hover-card-content-padding);
+	padding: var(--hover-card-content-padding);
+	box-sizing: border-box;
+
+	/* transform-origin: var(--radix-hover-card-content-transform-origin); */
+}
+
+/***************************************************************************************************
+ *                                                                                                 *
+ * SIZES                                                                                           *
+ *                                                                                                 *
+ ***************************************************************************************************/
+
+@breakpoints {
+	.m-HoverCardContent {
+		&:where(.m-size-sm) {
+			--hover-card-content-padding: var(--space-3);
+			border-radius: var(--radius-4);
+		}
+		&:where(.m-size-md) {
+			--hover-card-content-padding: var(--space-4);
+			border-radius: var(--radius-4);
+		}
+		&:where(.m-size-lg) {
+			--hover-card-content-padding: var(--space-5);
+			border-radius: var(--radius-5);
+		}
+	}
+}
