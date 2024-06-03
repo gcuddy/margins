@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createId } from '@margins/lib';
+	import { createId, flyAndScale } from '@margins/lib';
 	import type { Annotation } from '../core/index.js';
 
 	// TODO: really we just need an entry here, not a bookmark
@@ -11,13 +11,58 @@
 	import { onMount } from 'svelte';
 	import { createFloatingActions } from 'svelte-floating-ui';
 	import { hoverCardContent } from '../../ui/components/hover-card/index.js';
+	import { offset, shift, flip, limitShift, size } from '@floating-ui/dom';
 
 	export let bookmark: BookmarkWithEntry;
 	export let annotations: Annotation.Item[];
 
 	const rep = getReplicache();
 
-	const [ref, content] = createFloatingActions();
+	const detectOverflowOptions = {
+		padding: 10,
+		boundary: [],
+		// with `strategy: 'fixed'`, this is the only way to get it to respect boundaries
+		altBoundary: false,
+	};
+
+	let closeTimer = 0;
+	let openTimer = 0;
+
+	const handleOpen = () => {
+		console.log('handle open');
+		clearTimeout(closeTimer);
+		openTimer = window.setTimeout(() => {
+			isHoverCardOpen = true;
+		}, 500);
+	};
+
+	const handleClose = () => {
+		console.log('handle close');
+		clearTimeout(openTimer);
+		// TODO: hasSelection or pointerDown cancel
+		closeTimer = window.setTimeout(() => {
+			isHoverCardOpen = false;
+		}, 300);
+	};
+
+	const [ref, content] = createFloatingActions({
+		strategy: 'fixed',
+		placement: 'bottom-start',
+		middleware: [
+			offset({
+				mainAxis: 8,
+				alignmentAxis: 0,
+			}),
+			shift({
+				mainAxis: true,
+				crossAxis: false,
+				limiter: limitShift(),
+				...detectOverflowOptions,
+			}),
+			flip({ ...detectOverflowOptions }),
+			size({ ...detectOverflowOptions }),
+		],
+	});
 
 	function handleHighlight(textQuote: TextQuoteSelector) {
 		rep.mutate.annotation_create({
@@ -37,7 +82,7 @@
 	function hoverCardListener(el: HTMLElement) {
 		const listener = (event: MouseEvent) => {
 			if (event.target && event.target instanceof HTMLAnchorElement) {
-				isHoverCardOpen = true;
+				handleOpen();
 				hoverCardEl = event.target;
 				ref(event.target);
 				console.log('Hovered over a link:', event.target.href);
@@ -47,7 +92,7 @@
 		};
 
 		const mouseout = (event: MouseEvent) => {
-			isHoverCardOpen = false;
+			handleClose();
 		};
 
 		el.addEventListener('mouseover', listener);
@@ -79,7 +124,9 @@
 				{@html bookmark.entry?.html ?? '[no content]'}
 				<!-- TODO: a11y for hover card (need our own custom implementation) -->
 				{#if isHoverCardOpen}
-					<div use:content class={hoverCardContent({})}>testing testing</div>
+					<div transition:flyAndScale use:content class={hoverCardContent({})}>
+						testing testing
+					</div>
 				{/if}
 			</div>
 		</AnnotatorWrapper>

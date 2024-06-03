@@ -65,6 +65,7 @@
   },
   "dependencies": {
     "@floating-ui/core": "^1.6.0",
+    "@floating-ui/dom": "^1.6.5",
     "@margins/annotator": "workspace:*",
     "@margins/db": "workspace:*",
     "@margins/features": "workspace:*",
