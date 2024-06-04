@@ -29,18 +29,20 @@
 	let openTimer = 0;
 
 	const handleOpen = () => {
-		console.log('handle open');
+		console.log('handle open, clearing close timer', closeTimer);
 		clearTimeout(closeTimer);
 		openTimer = window.setTimeout(() => {
 			isHoverCardOpen = true;
+			console.log('open', openTimer);
 		}, 500);
 	};
 
 	const handleClose = () => {
-		console.log('handle close');
+		console.log('handle close, clearing open timer', openTimer);
 		clearTimeout(openTimer);
 		// TODO: hasSelection or pointerDown cancel
 		closeTimer = window.setTimeout(() => {
+			console.log('closing', closeTimer);
 			isHoverCardOpen = false;
 		}, 300);
 	};
@@ -76,6 +78,7 @@
 	}
 
 	let isHoverCardOpen = false;
+	let hoverLink: string | null = null;
 	let hoverCardEl: HTMLElement | undefined;
 	$: console.log({ isHoverCardOpen });
 
@@ -84,6 +87,7 @@
 			if (event.target && event.target instanceof HTMLAnchorElement) {
 				handleOpen();
 				hoverCardEl = event.target;
+				hoverLink = event.target.href;
 				ref(event.target);
 				console.log('Hovered over a link:', event.target.href);
 
@@ -125,7 +129,7 @@
 				<!-- TODO: a11y for hover card (need our own custom implementation) -->
 				{#if isHoverCardOpen}
 					<div transition:flyAndScale use:content class={hoverCardContent({})}>
-						testing testing
+						{hoverLink}
 					</div>
 				{/if}
 			</div>
