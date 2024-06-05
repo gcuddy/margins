@@ -4,9 +4,14 @@ import Root from './button.svelte';
 import { baseButton } from '../base-button.js';
 
 const buttonVariants = tv({
-	extend: baseButton,
-	base: 'm-Button',
-});
+  extend: baseButton,
+  base: "m-Button",
+  defaultVariants: {
+    size: "md",
+    variant: "solid",
+    loading: false,
+  },
+})
 
 type Variant = VariantProps<typeof buttonVariants>['variant'];
 type Size = VariantProps<typeof buttonVariants>['size'];

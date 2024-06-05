@@ -27,3 +27,12 @@ export class GetLink extends S.TaggedRequest<GetLink>()(
     url: pipe(S.String, S.brand("URL")),
   },
 ) {}
+
+export class SaveLink extends S.TaggedRequest<SaveLink>()(
+  "SaveLink",
+  S.Any,
+  S.String,
+  {
+    url: pipe(S.String, S.brand("URL")),
+  },
+) {}

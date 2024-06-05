@@ -2,13 +2,11 @@ import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import * as Http from "@effect/platform/HttpServer"
 import { Router, Rpc } from "@effect/rpc"
 import { HttpRouter } from "@effect/rpc-http"
-import { Console, Effect, Layer, flow, pipe } from "effect"
-import { GetLink, URL } from "./schema.js"
+import { Console, Effect, Layer, flow } from "effect"
+import { GetLink, SaveLink } from "./schema.js"
 import { Parser, parse } from "./parse.js"
 import * as p from "node-html-parser"
-import type * as Middleware from "@effect/platform/Http/Middleware"
-import * as ServerRequest from "@effect/platform/Http/ServerRequest"
-import { Middlewares } from "effect-http"
+import type { Middlewares } from "effect-http"
 
 // Implement the RPC server router
 const router = Router.make(
@@ -29,6 +27,12 @@ const router = Router.make(
       console.log("getting link", url)
       const data = yield* parse(url)
       return data
+    }),
+  ),
+  Rpc.effect(SaveLink, ({ url }) =>
+    Effect.gen(function* () {
+      const dat = yield* parse(url)
+      return "ok"
     }),
   ),
 )

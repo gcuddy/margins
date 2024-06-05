@@ -83,6 +83,10 @@
   let hoverCardEl: HTMLElement | undefined
   $: console.log({ isHoverCardOpen })
 
+  function hoverCard(el: HTMLElement) {
+    console.log("hover card content", el)
+  }
+
   function hoverCardListener(el: HTMLElement) {
     const listener = (event: MouseEvent) => {
       if (event.target && event.target instanceof HTMLAnchorElement) {
@@ -129,7 +133,9 @@
         {@html bookmark.entry?.html ?? "[no content]"}
         <!-- TODO: a11y for hover card (need our own custom implementation) -->
         {#if isHoverCardOpen}
-          <div transition:flyAndScale use:content class={hoverCardContent({})}>
+          <div transition:flyAndScale use:content use:hoverCard on:mouseover={() => {
+			clearTimeout(closeTimer)
+		  }} class={hoverCardContent({className: "not-prose font-sans max-w-sm"})}>
             {#if hoverLink}
               <HoverCardInner link={hoverLink} />
             {/if}

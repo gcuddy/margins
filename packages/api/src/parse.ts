@@ -17,6 +17,7 @@ export class GetHTMLError {
 type Element = {
   querySelector: (selector: string) => Element | null
   innerText?: string
+  getAttribute: (name: string) => string | undefined
 }
 
 export class Parser extends Context.Tag("api/Parser")<
@@ -33,16 +34,24 @@ const get_html = (url: URL) =>
 const parse = (url: URL) =>
   Effect.gen(function* () {
     const html = yield* get_html(url)
+    yield* Console.log("html", html)
     const { parse } = yield* Parser
-    const parsed = parse(html)
-    yield* Console.log("what is going on")
+    const document = parse(html)
+    // yield * Console.log("what is going on", document)
     // should queryselector stuff be some sort of context or effect
     const title =
-      parsed.querySelector("meta[property='og:title']")?.innerText ?? "no title"
-    const image = parsed.querySelector("meta[property='og:image']")?.innerText
-    const description = parsed.querySelector(
-      "meta[name='description']",
-    )?.innerText
+      document
+        .querySelector("meta[property='og:title']")
+        ?.getAttribute("content") ?? "no title"
+    const image = document
+      .querySelector("meta[property='og:image']")
+      ?.getAttribute("content")
+    const description = document
+      .querySelector("meta[name='description']")
+      ?.getAttribute("content")
+
+    yield* Console.log("title", title)
+
     return { title, image, description, url } as const
   })
 
