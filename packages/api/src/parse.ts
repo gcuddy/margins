@@ -1,4 +1,4 @@
-import { Effect, Context } from "effect"
+import { Effect, Context, Console } from "effect"
 import * as Http from "@effect/platform/HttpClient"
 import type { URL } from "./schema"
 
@@ -35,6 +35,7 @@ const parse = (url: URL) =>
     const html = yield* get_html(url)
     const { parse } = yield* Parser
     const parsed = parse(html)
+    yield* Console.log("what is going on")
     // should queryselector stuff be some sort of context or effect
     const title =
       parsed.querySelector("meta[property='og:title']")?.innerText ?? "no title"

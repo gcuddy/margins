@@ -1,13 +1,18 @@
 import * as S from "@effect/schema/Schema"
-import { pipe } from "effect"
+import { Brand, pipe } from "effect"
 
-export const URL = pipe(S.String, S.brand("URL"))
-export type URL = S.Schema.Type<typeof URL>
+// export const URL = pipe(S.String, S.brand("URL"))
+export type URL = string & Brand.Brand<"URL">
+
+export const URL = Brand.refined<URL>(
+  s => /^https?:\/\//i.test(s),
+  s => Brand.error(`Expected ${s} to be a url`), // Error message if the value is not an integer
+)
 
 // export class BaseLink extends S.Class
 
 export const BaseLink = S.Struct({
-  url: URL,
+  url: pipe(S.String, S.brand("URL")),
   title: S.String,
   image: S.optional(S.String),
   description: S.optional(S.String),
@@ -19,6 +24,6 @@ export class GetLink extends S.TaggedRequest<GetLink>()(
   S.Any,
   BaseLink,
   {
-    url: URL,
+    url: pipe(S.String, S.brand("URL")),
   },
 ) {}

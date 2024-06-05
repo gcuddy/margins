@@ -6,7 +6,7 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "license": "MIT",
-  "dependencies": { "@effect/platform": "^0.55.5", "@effect/platform-bun": "^0.36.3", "@effect/rpc": "^0.30.38", "@effect/rpc-http": "^0.28.38", "@effect/schema": "^0.67.16", "effect": "^3.2.7", "node-html-parser": "^6.1.13" },
+  "dependencies": { "@effect/platform": "^0.55.5", "@effect/platform-bun": "^0.36.3", "@effect/rpc": "^0.30.38", "@effect/rpc-http": "^0.28.38", "@effect/schema": "^0.67.16", "effect": "^3.2.7", "effect-http": "^0.67.2", "node-html-parser": "^6.1.13" },
   "devDependencies": {},
   "type": "module"
 }
