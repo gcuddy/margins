@@ -1,6 +1,7 @@
 import { Effect, Context, Console } from "effect"
 import * as Http from "@effect/platform/HttpClient"
 import type { URL } from "./schema"
+import { parseArticle } from "@margins/parser"
 
 export class GetHTMLError {
   readonly _tag = "GetHTMLError"
@@ -42,7 +43,9 @@ const parse = (url: URL) =>
     const title =
       document
         .querySelector("meta[property='og:title']")
-        ?.getAttribute("content") ?? "no title"
+        ?.getAttribute("content") ??
+      document.querySelector("title")?.innerText ??
+      "no title"
     const image = document
       .querySelector("meta[property='og:image']")
       ?.getAttribute("content")
@@ -51,6 +54,17 @@ const parse = (url: URL) =>
       ?.getAttribute("content")
 
     yield* Console.log("title", title)
+
+    const article =
+      yield *
+      Effect.tryPromise({
+        try: () =>
+          parseArticle({
+            url,
+            html,
+          }),
+        catch: e => Effect.fail(e),
+      })
 
     return { title, image, description, url } as const
   })

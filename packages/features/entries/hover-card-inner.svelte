@@ -5,7 +5,7 @@
   import { client } from "../rpc/rpc-client.js"
   import { Effect } from "effect"
 
-  const x = Effect.runPromise(
+  $: getLink = Effect.runPromise(
     client(
       new GetLink({
         url: URL(link),
@@ -16,20 +16,20 @@
   )
 </script>
 
-{#await x}
+{#await getLink}
   Loading...
-{:then x}
+{:then link}
   <Inset className="not-prose pb-[--inset-padding-bottom] relative">
     <img
       class="bg-gray-5 block h-48 w-full object-cover"
-      src={x.image}
+      src={link.image}
       alt=""
     />
   </Inset>
   <div class="flex flex-col gap-2">
-    <span class="line-clamp-2 text-base font-bold leading-none">{x.title}</span>
+    <span class="line-clamp-2 text-base font-bold leading-none">{link.title}</span>
     <span class="text-grayA-11 line-clamp-2 text-sm leading-tight"
-      >{x.description}</span
+      >{link.description}</span
     >
     <Button size="lg" class="w-full" variant="soft">Save</Button>
   </div>

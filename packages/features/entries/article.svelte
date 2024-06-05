@@ -8,7 +8,7 @@
   import { AnnotatorWrapper } from "./annotation/index.js"
   import type { TextQuoteSelector } from "@margins/annotator"
   import { HoverCard } from "@margins/ui"
-  import { onMount } from "svelte"
+  import { onMount, tick } from "svelte"
   import { createFloatingActions } from "svelte-floating-ui"
   import { hoverCardContent } from "../../ui/components/hover-card/index.js"
   import { offset, shift, flip, limitShift, size } from "@floating-ui/dom"
@@ -26,26 +26,34 @@
     altBoundary: false,
   }
 
-  let closeTimer = 0
-  let openTimer = 0
+  let timeout: number | null = null
+  let isPointerDownOnContent = false
+  let hasSelection = false
+  let containSelection = false
+  let pointerInsideContent = false
 
   const handleOpen = () => {
-    console.log("handle open, clearing close timer", closeTimer)
-    clearTimeout(closeTimer)
-    openTimer = window.setTimeout(() => {
+    console.log("handle open, clearing close timer", timeout)
+    if (timeout) {
+      window.clearTimeout(timeout)
+      timeout = null
+    }
+    timeout = window.setTimeout(() => {
       isHoverCardOpen = true
-      console.log("open", openTimer)
     }, 500)
   }
 
   const handleClose = () => {
-    console.log("handle close, clearing open timer", openTimer)
-    clearTimeout(openTimer)
-    // TODO: hasSelection or pointerDown cancel
-    closeTimer = window.setTimeout(() => {
-      console.log("closing", closeTimer)
-      isHoverCardOpen = false
-    }, 300)
+    if (timeout) {
+      window.clearTimeout(timeout)
+      timeout = null
+    }
+    if (!isPointerDownOnContent && !hasSelection) {
+      timeout = window.setTimeout(() => {
+        console.log("close", timeout)
+        isHoverCardOpen = false
+      }, 300)
+    }
   }
 
   const [ref, content] = createFloatingActions({
@@ -84,12 +92,52 @@
   $: console.log({ isHoverCardOpen })
 
   function hoverCard(el: HTMLElement) {
-    console.log("hover card content", el)
+    const handlePointerDown = (e: PointerEvent) => {
+      const currentTarget = e.currentTarget
+      const target = e.target
+      if (
+        !(currentTarget instanceof HTMLElement) ||
+        !(target instanceof HTMLElement)
+      ) {
+        return
+      }
+
+      if (currentTarget.contains(target)) {
+        containSelection = true
+      }
+
+      hasSelection = false
+      isPointerDownOnContent = true
+    }
+
+    const handlePointerEnter = (e: PointerEvent) => {
+      console.log("pointer enter", e)
+      pointerInsideContent = true
+      handleOpen()
+    }
+
+    const handlePointerLeave = (e: PointerEvent) => {
+      pointerInsideContent = false
+      handleClose()
+    }
+
+    el.addEventListener("pointerdown", handlePointerDown)
+    el.addEventListener("pointerenter", handlePointerEnter)
+    el.addEventListener("pointerleave", handlePointerLeave)
+
+    return {
+      destroy() {
+        el.removeEventListener("pointerdown", handlePointerDown)
+        el.removeEventListener("pointerenter", handlePointerEnter)
+        el.removeEventListener("pointerleave", handlePointerLeave)
+      },
+    }
   }
 
   function hoverCardListener(el: HTMLElement) {
     const listener = (event: MouseEvent) => {
       if (event.target && event.target instanceof HTMLAnchorElement) {
+        console.log("hover card listener", event.target.href)
         handleOpen()
         hoverCardEl = event.target
         hoverLink = event.target.href
@@ -101,7 +149,9 @@
     }
 
     const mouseout = (event: MouseEvent) => {
-      handleClose()
+		if (!pointerInsideContent) {
+			handleClose()
+		}
     }
 
     el.addEventListener("mouseover", listener)
@@ -115,6 +165,8 @@
     }
   }
 </script>
+
+<svelte:document on:pointerup={() => (isPointerDownOnContent = false)} />
 
 <div class="grow overflow-auto">
   <div class="prose dark:prose-invert prose-gold mx-auto my-9">
@@ -133,9 +185,14 @@
         {@html bookmark.entry?.html ?? "[no content]"}
         <!-- TODO: a11y for hover card (need our own custom implementation) -->
         {#if isHoverCardOpen}
-          <div transition:flyAndScale use:content use:hoverCard on:mouseover={() => {
-			clearTimeout(closeTimer)
-		  }} class={hoverCardContent({className: "not-prose font-sans max-w-sm"})}>
+          <div
+            transition:flyAndScale
+            use:content
+            use:hoverCard
+            class={hoverCardContent({
+              className: "not-prose max-w-sm font-sans",
+            })}
+          >
             {#if hoverLink}
               <HoverCardInner link={hoverLink} />
             {/if}

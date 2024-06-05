@@ -16,6 +16,11 @@ export const BaseLink = S.Struct({
   title: S.String,
   image: S.optional(S.String),
   description: S.optional(S.String),
+  author: S.optional(S.String),
+  markdown: S.optional(S.String),
+  html: S.optional(S.String),
+  published: S.optional(S.Date),
+  wordCount: S.optional(S.Number),
 })
 
 export class GetLink extends S.TaggedRequest<GetLink>()(
