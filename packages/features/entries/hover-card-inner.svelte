@@ -10,14 +10,20 @@
       new GetLink({
         url: URL(link),
       }),
-    ).pipe(
-      Effect.withRequestCaching(true),
-    ),
+    ).pipe(Effect.withRequestCaching(true)),
   )
 </script>
 
 {#await getLink}
-  Loading...
+  <Inset
+    className="animate-pulse not-prose pb-[--inset-padding-bottom] relative w-[384px]"
+  >
+    <div class="bg-gray-5 block h-48 w-full object-cover" />
+  </Inset>
+  <div class="flex flex-col gap-2">
+    <span class="animate-skeleton rounded-md h-10 w-full"></span>
+    <span class="animate-skeleton rounded-md h-8 w-2/3"></span>
+  </div>
 {:then link}
   <Inset className="not-prose pb-[--inset-padding-bottom] relative">
     <img
@@ -27,7 +33,9 @@
     />
   </Inset>
   <div class="flex flex-col gap-2">
-    <span class="line-clamp-2 text-base font-bold leading-none">{link.title}</span>
+    <span class="line-clamp-2 text-base font-bold leading-none"
+      >{link.title}</span
+    >
     <span class="text-grayA-11 line-clamp-2 text-sm leading-tight"
       >{link.description}</span
     >
