@@ -11,7 +11,12 @@
   //     }),
   //   ),
   // )
+
+  // these both work
   const a = fetch("http://localhost:3000/hello").then(res => res.text())
+  const x = fetch("http://localhost:3000/rpc", {
+    method: "POST",
+  }).then(res => res.text())
 </script>
 
 <div class="flex flex-col gap-2">
@@ -19,6 +24,6 @@
     {link}
   </a>
   <slot />
-  <!-- {#await x then x} {JSON.stringify(x)} {/await} -->
+  {#await x then x} {JSON.stringify(x)} {/await}
   {#await a then x} {JSON.stringify(x)} {/await}
 </div>
