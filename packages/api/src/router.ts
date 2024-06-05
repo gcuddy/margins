@@ -83,9 +83,15 @@ export const cors = (_options?: Partial<Middlewares.CorsOptions>) => {
 }
 const HttpLive = Http.router.empty.pipe(
   //   Http.headers.set("Access-Control-Allow-Origin", "*"),
-  //   Http.router.post("/rpc", HttpRouter.toHttpApp(router)),
-
-  Http.router.post("/rpc", Http.response.text("ok")),
+  Http.router.options(
+    "/rpc",
+    Http.response.empty({
+      status: 204,
+      headers: Http.headers.fromInput(corsHeaders),
+    }),
+  ),
+  Http.router.post("/rpc", HttpRouter.toHttpApp(router)),
+  //   Http.router.post("/rpc", Http.response.text("ok")),
   Http.router.get("/", Http.response.text("Hello World!")),
   Http.router.get(
     "/hello",
@@ -96,7 +102,7 @@ const HttpLive = Http.router.empty.pipe(
     }),
   ),
   Http.router.use(cors()),
-  //   Effect.catchTag("RouteNotFound", _ => Http.response.text("Not found")),
+  Effect.catchTag("RouteNotFound", _ => Http.response.text("Not found")),
   //   Http.server.serve(Middlewares.cors()),
   Http.server.serve(
     // flow(),
