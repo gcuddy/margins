@@ -1,8 +1,8 @@
 <script lang="ts">
   import "./inset.css"
-  import { insetVariants, type VariantProps } from "./index.js"
-  export let side: VariantProps["side"] = "top"
-  export let clip: VariantProps["clip"] = "padding-box"
+  import { insetVariants, type InsetProps } from "./index.js"
+  export let side: InsetProps["side"] = "top"
+  export let clip: InsetProps["clip"] = "padding-box"
   export let className: string | null | undefined = undefined
 </script>
 

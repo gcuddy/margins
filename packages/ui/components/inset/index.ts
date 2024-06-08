@@ -1,4 +1,4 @@
-import { VariantProps, tv } from "tailwind-variants"
+import { type VariantProps, tv } from "tailwind-variants"
 import Inset from "./inset.svelte"
 
 export const insetVariants = tv({
