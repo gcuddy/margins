@@ -10,7 +10,12 @@
       new GetLink({
         url: URL(link),
       }),
-    ).pipe(Effect.withRequestCaching(true)),
+    ).pipe(
+      Effect.withRequestCaching(true),
+      Effect.tapError(e => {
+        return Effect.logError(e)
+      }),
+    ),
   )
 </script>
 
@@ -21,8 +26,8 @@
     <div class="bg-gray-5 block h-48 w-full object-cover" />
   </Inset>
   <div class="flex flex-col gap-2">
-    <span class="animate-skeleton rounded-md h-10 w-full"></span>
-    <span class="animate-skeleton rounded-md h-8 w-2/3"></span>
+    <span class="animate-skeleton h-10 w-full rounded-md"></span>
+    <span class="animate-skeleton h-8 w-2/3 rounded-md"></span>
   </div>
 {:then link}
   <Inset className="not-prose pb-[--inset-padding-bottom] relative">

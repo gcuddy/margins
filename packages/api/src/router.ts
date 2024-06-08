@@ -3,7 +3,7 @@ import * as Http from "@effect/platform/HttpServer"
 import { Router, Rpc } from "@effect/rpc"
 import { HttpRouter } from "@effect/rpc-http"
 import { Console, Effect, Layer, flow } from "effect"
-import { GetLink, SaveLink } from "./schema.js"
+import { GetLink, LinkError, SaveLink } from "./schema.js"
 import { Parser, parse } from "./parse.js"
 import * as p from "node-html-parser"
 import type { Middlewares } from "effect-http"
@@ -17,23 +17,23 @@ const router = Router.make(
   //     }),
   //   ),
   Rpc.effect(GetLink, ({ url }) =>
-    //   Effect.succeed({
-    //     title: "test",
-    //     image: "https://example.com/image.png",
-    //     description: "test",
-    //     url: URL(url),
-    //   }),
     Effect.gen(function* () {
-      console.log("getting link", url)
       const data = yield* parse(url)
       return data
-    }),
+    }).pipe(
+      // Effect.catchAll(_ => new LinkError({ message: "Error parsing link" })),
+      Effect.mapError(_ => {
+        return new LinkError({ message: "Error parsing link" })
+      }),
+    ),
   ),
   Rpc.effect(SaveLink, ({ url }) =>
     Effect.gen(function* () {
-      const dat = yield* parse(url)
+      yield* parse(url)
       return "ok"
-    }),
+    }).pipe(
+      Effect.mapError(_ => new LinkError({ message: "Error parsing link" })),
+    ),
   ),
 )
 

@@ -11,6 +11,10 @@ export const URL = Brand.refined<URL>(
 
 // export class BaseLink extends S.Class
 
+export class LinkError extends S.TaggedError<LinkError>()("LinkError", {
+  message: S.String,
+}) {}
+
 export const BaseLink = S.Struct({
   url: pipe(S.String, S.brand("URL")),
   title: S.String,
@@ -26,7 +30,7 @@ export const BaseLink = S.Struct({
 export class GetLink extends S.TaggedRequest<GetLink>()(
   "GetLink",
   //   TODO
-  S.Any,
+  LinkError,
   BaseLink,
   {
     url: pipe(S.String, S.brand("URL")),
@@ -35,7 +39,7 @@ export class GetLink extends S.TaggedRequest<GetLink>()(
 
 export class SaveLink extends S.TaggedRequest<SaveLink>()(
   "SaveLink",
-  S.Any,
+  LinkError,
   S.String,
   {
     url: pipe(S.String, S.brand("URL")),

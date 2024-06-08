@@ -32,6 +32,10 @@ export class Parser extends Context.Tag("api/Parser")<
 const get_html = (url: URL) =>
   Http.request.get(url).pipe(Http.client.fetchOk, Http.response.text)
 
+class ParseError {
+  readonly _tag = "ParseError"
+}
+
 const parse = (url: URL) =>
   Effect.gen(function* () {
     const html = yield* get_html(url)
@@ -55,16 +59,14 @@ const parse = (url: URL) =>
 
     yield* Console.log("title", title)
 
-    const article =
-      yield *
-      Effect.tryPromise({
-        try: () =>
-          parseArticle({
-            url,
-            html,
-          }),
-        catch: e => Effect.fail(e),
-      })
+    const article = yield* Effect.tryPromise({
+      try: () =>
+        parseArticle({
+          url,
+          html,
+        }),
+      catch: () => new ParseError(),
+    })
 
     return { title, image, description, url } as const
   })
