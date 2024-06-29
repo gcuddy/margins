@@ -1,12 +1,12 @@
-import { colorVariant } from '../variants/color.variants.js';
-import { panel } from '../styles/tailwind.js';
-import { tv } from 'tailwind-variants';
-import { createSizeVariant } from '../variants/size.variants.js';
+import { colorVariant } from "../variants/color.variants.js"
+import { panel } from "../styles/tailwind.js"
+import { tv } from "tailwind-variants"
+import { createSizeVariant } from "../variants/size.variants.js"
 
 export const baseMenu = tv({
   // TODO: solid
+  extend: panel,
   base: [
-    panel(),
     "m-BaseMenuContent base-menu box-border flex flex-col overflow-hidden",
   ],
   variants: {
@@ -19,5 +19,7 @@ export const baseMenu = tv({
   defaultVariants: {
     variant: "soft",
     size: "md",
+    color: "gray",
+    background: "solid",
   },
 })
