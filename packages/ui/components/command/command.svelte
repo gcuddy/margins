@@ -14,7 +14,9 @@
 
 <CommandPrimitive.Root
 	class={cn(
-		baseMenu(),
+		baseMenu({
+			size: "lg"
+		}),
 		'flex h-full w-full flex-col overflow-hidden rounded-md',
 		className,
 	)}

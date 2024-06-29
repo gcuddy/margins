@@ -38,8 +38,8 @@
 		>
 			A powerful, friendly research app.
 		</p>
-		<div class="space-x-4">
-			<Button variant="classic" href="/signup" size="xl" class="rounded-full">
+		<div class="marketing-button-container space-x-4">
+			<Button variant="classic" href="/signup" size="xl" class="rounded-full marketing-button">
 				Get Margins <ChevronRight class="ml-1 h-4 w-4" />
 			</Button>
 		</div>
@@ -141,5 +141,14 @@
 <style>
 	.header {
 		font-family: 'Instrument Serif', serif;
+	}
+
+	.marketing-button-container :global(.marketing-button) {
+		box-shadow: -15px 0 30px -10px var(--amber-a7),0 0 30px -10px var(--grass-a7),15px 0 30px -10px var(--orange-a7),0 0 0 1px var(--grass-a4);
+		transition: box-shadow .15s,transform .15s;
+
+		&:hover {
+			box-shadow: -15px 0 30px -10px var(--amber-a8),0 0 30px -10px var(--grass-a8),15px 0 30px -10px var(--orange-a8),0 0 0 1px var(--grass-a4);
+		}
 	}
 </style>

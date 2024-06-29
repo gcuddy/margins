@@ -142,4 +142,38 @@
 			--base-menu-item-padding-left: var(--space-5);
 		}
 	}
+
+	&:where(.m-size-lg) {
+		--base-menu-content-padding: var(--space-3);
+		--base-menu-item-padding-left: var(--space-4);
+		--base-menu-item-padding-right: var(--space-4);
+		--base-menu-item-height: var(--space-7);
+		border-radius: var(--radius-5);
+
+		& :where(.m-BaseMenuItem) {
+			font-size: var(--font-size-2);
+			line-height: var(--line-height-2);
+			letter-spacing: var(--letter-spacing-2);
+			border-radius: var(--radius-2);
+		}
+
+		& :where(.m-BaseMenuLabel) {
+			font-size: var(--font-size-2);
+			line-height: var(--line-height-2);
+			letter-spacing: var(--letter-spacing-2);
+		}
+
+		& :where(.m-BaseMenuItemIndicatorIcon, .m-BaseMenuSubTriggerIcon) {
+			width: calc(12px * var(--scaling));
+			height: calc(12px * var(--scaling));
+		}
+
+		/* reset with :not:has so we still suppom browsers without :has */
+		&:where(:not(:has(.m-BaseMenuCheckboxItem, .m-BaseMenuRadioItem))) {
+			--base-menu-item-padding-left: var(--space-4);
+		}
+		&:where(:has(.m-BaseMenuCheckboxItem, .m-BaseMenuRadioItem)) {
+			--base-menu-item-padding-left: var(--space-6);
+		}
+	}
 }

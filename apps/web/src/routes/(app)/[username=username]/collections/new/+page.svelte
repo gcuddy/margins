@@ -1,0 +1,1 @@
+TODO: here you will be able to select many entries, and get a nice animation as you add them to collections

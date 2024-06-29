@@ -4,17 +4,20 @@ import { tv } from 'tailwind-variants';
 import { createSizeVariant } from '../variants/size.variants.js';
 
 export const baseMenu = tv({
-	// TODO: solid
-	base: [panel(), 'base-menu box-border flex flex-col overflow-hidden'],
-	variants: {
-		color: colorVariant,
-		size: createSizeVariant(['sm', 'md']),
-		variant: {
-			soft: 'm-variant-soft',
-		},
-	},
-	defaultVariants: {
-		variant: 'soft',
-		size: 'md',
-	},
-});
+  // TODO: solid
+  base: [
+    panel(),
+    "m-BaseMenuContent base-menu box-border flex flex-col overflow-hidden",
+  ],
+  variants: {
+    color: colorVariant,
+    size: createSizeVariant(["sm", "md", "lg"]),
+    variant: {
+      soft: "m-variant-soft",
+    },
+  },
+  defaultVariants: {
+    variant: "soft",
+    size: "md",
+  },
+})

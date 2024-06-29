@@ -1,9 +1,17 @@
 <script lang="ts">
   import { Button, Inset } from "@margins/ui"
-  import { GetLink, URL } from "../../api/src/schema.js"
+  import { GetLink, SaveLink, URL } from "../../api/src/schema.js"
   export let link: string
   import { client } from "../rpc/rpc-client.js"
   import { Effect } from "effect"
+
+  $: saveLink = client(
+    new SaveLink({
+      url: URL(link),
+    }),
+  )
+
+  $: console.log({ saveLink })
 
   $: getLink = Effect.runPromise(
     client(
@@ -44,6 +52,12 @@
     <span class="text-grayA-11 line-clamp-2 text-sm leading-tight"
       >{link.description}</span
     >
-    <Button size="lg" class="w-full" variant="soft">Save</Button>
+    <Button
+      size="lg"
+      class="w-full"
+      variant="soft"
+      on:click={() => Effect.runPromise(saveLink)}
+      >Save</Button
+    >
   </div>
 {/await}

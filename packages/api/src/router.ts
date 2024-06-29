@@ -29,7 +29,9 @@ const router = Router.make(
   ),
   Rpc.effect(SaveLink, ({ url }) =>
     Effect.gen(function* () {
-      yield* parse(url)
+      console.log("saving link")
+      yield * parse(url)
+      // TODO: actor that saves it in db now
       return "ok"
     }).pipe(
       Effect.mapError(_ => new LinkError({ message: "Error parsing link" })),
