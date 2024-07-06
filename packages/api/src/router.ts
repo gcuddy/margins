@@ -1,12 +1,20 @@
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
-import * as Http from "@effect/platform/HttpServer"
+import {
+  Headers,
+  HttpMiddleware,
+  HttpServerRequest,
+  HttpServerResponse,
+  HttpRouter,
+  HttpServer,
+} from "@effect/platform"
 import { Router, Rpc } from "@effect/rpc"
-import { HttpRouter } from "@effect/rpc-http"
+import { HttpRouter as RpcHttpRouter } from "@effect/rpc-http"
 import { Console, Effect, Layer, flow } from "effect"
-import { GetLink, LinkError, SaveLink } from "./schema.js"
+import { GetLink, LinkError, SaveLink, SearchBooks } from "./schema.js"
 import { Parser, parse } from "./parse.js"
 import * as p from "node-html-parser"
 import type { Middlewares } from "effect-http"
+import { searchBooks } from "./integrations/openlibrary.js"
 
 // Implement the RPC server router
 const router = Router.make(
@@ -30,18 +38,35 @@ const router = Router.make(
   Rpc.effect(SaveLink, ({ url }) =>
     Effect.gen(function* () {
       console.log("saving link")
-      yield * parse(url)
+      yield* parse(url)
       // TODO: actor that saves it in db now
       return "ok"
     }).pipe(
       Effect.mapError(_ => new LinkError({ message: "Error parsing link" })),
     ),
   ),
+  Rpc.effect(SearchBooks, ({ query }) =>
+    Effect.gen(function* () {
+      console.log("searching books", query)
+      const data = yield* searchBooks(query)
+      yield* Console.log("data", data)
+      return data
+    }).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.mapError(_ => {
+        if (_._tag === "ParseError") {
+          return "Error parsing body"
+        } else {
+          return "Error searching books"
+        }
+      }),
+    ),
+  ),
 )
 
 export type APIRouter = typeof router
 const port = 3000
-const ServerLive = BunHttpServer.server.layer({ port, development: true })
+const ServerLive = BunHttpServer.layer({ port, development: true })
 
 const ParserLive = Layer.succeed(
   Parser,
@@ -56,68 +81,55 @@ const corsHeaders = {
   //   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
 export const cors = (_options?: Partial<Middlewares.CorsOptions>) => {
-  return Http.middleware.make(app =>
+  return HttpMiddleware.make(app =>
     Effect.gen(function* (_) {
-      const request = yield* _(Http.request.ServerRequest)
-
-      //   const origin = request.headers["origin"]
-      //   const accessControlRequestHeaders =
-      //     request.headers["access-control-request-headers"]
-
-      yield* Console.log("request", { request })
+      const request = yield* _(HttpServerRequest.HttpServerRequest)
 
       if (request.method === "OPTIONS") {
-        yield* Console.log("OPTIONS")
-        //   corsHeaders = { ...corsHeaders,
-        //     ...allowMethods,
-        //     ...allowHeaders(accessControlRequestHeaders),
-        //     ...maxAge,
-        //   }
-
-        return Http.response.empty({
+        return HttpServerResponse.empty({
           status: 204,
-          headers: Http.headers.fromInput(corsHeaders),
+          headers: Headers.fromInput(corsHeaders),
         })
       }
 
       const response = yield* _(app)
 
       yield* Console.log("response", { response })
-      return response.pipe(Http.response.setHeaders(corsHeaders))
+      return response.pipe(HttpServerResponse.setHeaders(corsHeaders))
     }),
   )
 }
-const HttpLive = Http.router.empty.pipe(
+const HttpLive = HttpRouter.empty.pipe(
   //   Http.headers.set("Access-Control-Allow-Origin", "*"),
-  Http.router.options(
+  HttpRouter.options(
     "/rpc",
-    Http.response.empty({
+    HttpServerResponse.empty({
       status: 204,
-      headers: Http.headers.fromInput(corsHeaders),
+      headers: Headers.fromInput(corsHeaders),
     }),
   ),
-  Http.router.post("/rpc", HttpRouter.toHttpApp(router)),
-  //   Http.router.post("/rpc", Http.response.text("ok")),
-  Http.router.get("/", Http.response.text("Hello World!")),
-  Http.router.get(
+  HttpRouter.post("/rpc", RpcHttpRouter.toHttpApp(router)),
+  //   HttpRouter.post("/rpc", Http.response.text("ok")),
+  HttpRouter.get("/", HttpServerResponse.text("Hello World!")),
+  HttpRouter.get(
     "/hello",
     Effect.gen(function* () {
       yield* Console.log("hello")
-      Http.response.setHeader("hi", "there")
-      return yield* Http.response.text("Hello World!")
+      HttpServerResponse.setHeader("hi", "there")
+      return yield* HttpServerResponse.text("Hello World!")
     }),
   ),
-  Http.router.use(cors()),
-  Effect.catchTag("RouteNotFound", _ => Http.response.text("Not found")),
+  HttpRouter.use(cors()),
+  // Effect.catchTag("", _ => HttpServerResponse.text("Not found")),
   //   Http.server.serve(Middlewares.cors()),
-  Http.server.serve(
+  HttpServer.serve(
     // flow(),
     //   Http.middleware.logger,
     //   Middlewares.cors({
     //     allowedOrigins: ["http://localhost:5173"],
     //   }),
     flow(
-      Http.middleware.logger,
+      HttpMiddleware.logger,
       //   cors(),
       //   cors(),
       //   Middlewares.cors({

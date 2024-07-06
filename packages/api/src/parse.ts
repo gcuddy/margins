@@ -1,6 +1,10 @@
 import { Effect, Context, Console } from "effect"
-import * as Http from "@effect/platform/HttpClient"
-import type { URL } from "./schema"
+import {
+  HttpClient,
+  HttpClientRequest,
+  HttpClientResponse,
+} from "@effect/platform"
+import type { URL } from "./schema.js"
 import { parseArticle } from "@margins/parser"
 
 export class GetHTMLError {
@@ -30,7 +34,7 @@ export class Parser extends Context.Tag("api/Parser")<
 
 // TODO: fetch layer?
 const get_html = (url: URL) =>
-  Http.request.get(url).pipe(Http.client.fetchOk, Http.response.text)
+  HttpClientRequest.get(url).pipe(HttpClient.fetchOk, HttpClientResponse.text)
 
 class ParseError {
   readonly _tag = "ParseError"
