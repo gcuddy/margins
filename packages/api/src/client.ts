@@ -1,6 +1,7 @@
-import { SearchBooks } from "./schema.js"
+import { GetOpenLibraryAuthor } from "./schema.js"
 import { client } from "../../features/rpc/rpc-client.js"
 import { Effect, Console } from "effect"
+import { OpenLibraryKey } from "./integrations/openlibrary.js"
 export let link: string
 
 // const a = client(
@@ -10,8 +11,8 @@ export let link: string
 // ).pipe(Effect.tap(Console.log), Effect.runFork)
 
 client(
-  new SearchBooks({
-    query: "The Great Gatsby",
+  new GetOpenLibraryAuthor({
+    key: OpenLibraryKey("OL5358901A"),
   }),
 ).pipe(
   Effect.tap(Console.log),

@@ -55,6 +55,11 @@
       "import": "./commands/index.ts",
       "types": "./commands/index.ts",
       "svelte": "./commands/index.ts"
+    },
+    "./rpc": {
+      "import": "./rpc/index.ts",
+      "types": "./rpc/index.ts",
+      "svelte": "./rpc/index.ts"
     }
   },
   "license": "MIT",

@@ -1,4 +1,4 @@
-import { Effect } from "effect"
+import { Brand, Effect } from "effect"
 import {
   HttpClient,
   HttpClientRequest,
@@ -50,6 +50,132 @@ export const OpenLibrarySearchResult = Schema.Struct({
   docs: Schema.Array(SearchDoc),
 })
 
+const KeySchema = Schema.Struct({
+  key: Schema.String,
+})
+
+const TextValueSchema = Schema.transform(
+  Schema.Struct({
+    type: Schema.Literal("/type/text"),
+    value: Schema.String,
+  }),
+  Schema.String,
+  {
+    strict: true,
+    decode: ({ value }) => value,
+    encode: value => ({
+      type: "/type/text" as const,
+      value,
+    }),
+  },
+)
+
+export const OpenLibraryWork = Schema.partial(
+  Schema.Struct({
+    title: Schema.String,
+    key: Schema.String,
+    authors: Schema.Array(
+      Schema.Struct({
+        author: KeySchema,
+        type: KeySchema,
+      }),
+    ),
+    type: KeySchema,
+    description: Schema.String,
+    covers: Schema.Array(Schema.Number),
+    subject_places: Schema.Array(Schema.String),
+    subject_times: Schema.Array(Schema.String),
+    location: Schema.String,
+  }),
+)
+
+export const OpenLibraryEdition = Schema.partial(
+  Schema.Struct({
+    description: TextValueSchema,
+    notes: TextValueSchema,
+    identifiers: Schema.Struct({
+      goodreads: Schema.NullishOr(Schema.Array(Schema.String)),
+      librarything: Schema.NullishOr(Schema.Array(Schema.String)),
+      amazon: Schema.NullishOr(Schema.Array(Schema.String)),
+    }),
+    title: Schema.String,
+    authors: Schema.Array(KeySchema),
+    publish_date: Schema.String,
+    publishers: Schema.Array(Schema.String),
+    series: Schema.Array(Schema.String),
+    pagination: Schema.String,
+    publish_places: Schema.Array(Schema.String),
+    contributions: Schema.Array(Schema.String),
+    genres: Schema.Array(Schema.String),
+    source_records: Schema.Array(Schema.String),
+    work_titles: Schema.Array(Schema.String),
+    languages: Schema.Array(KeySchema),
+    subjects: Schema.Array(Schema.String),
+    publish_country: Schema.String,
+    by_statement: Schema.String,
+    type: KeySchema,
+    covers: Schema.Array(Schema.Number),
+    ocaid: Schema.String,
+    isbn_10: Schema.Array(Schema.String),
+    local_id: Schema.Array(Schema.String),
+    key: Schema.String,
+    number_of_pages: Schema.Number,
+    weight: Schema.String,
+    physical_format: Schema.String,
+    isbn_13: Schema.Array(Schema.String),
+    physical_dimension: Schema.String,
+    edition_name: Schema.String,
+  }),
+)
+
+export const OpenLibraryEditionsResponse = Schema.Struct({
+  links: Schema.Struct({
+    self: Schema.String,
+    work: Schema.String,
+    next: Schema.optional(Schema.String),
+    prev: Schema.optional(Schema.String),
+  }),
+  size: Schema.Number,
+  entries: Schema.Array(OpenLibraryEdition),
+})
+
+export const OpenLibraryAuthor = Schema.partial(
+  Schema.Struct({
+    name: Schema.String,
+    title: Schema.String,
+    links: Schema.Array(
+      Schema.Struct({
+        title: Schema.String,
+        url: Schema.String,
+        type: Schema.Struct({
+          key: Schema.Literal("/type/link"),
+        }),
+      }),
+    ),
+    bio: Schema.Union(Schema.String, TextValueSchema),
+    alternate_names: Schema.Array(Schema.String),
+    photos: Schema.Array(Schema.Number),
+    wikipedia: Schema.String,
+    personal_name: Schema.String,
+    entity_type: Schema.String,
+    birth_date: Schema.String,
+    source_records: Schema.Array(Schema.String),
+    key: Schema.String,
+    fuller_name: Schema.String,
+    remote_ids: Schema.partial(
+      Schema.Struct({
+        viaf: Schema.String,
+        goodreads: Schema.String,
+        storygraph: Schema.String,
+        isni: Schema.String,
+        librarything: Schema.String,
+        amazon: Schema.String,
+        wikidata: Schema.String,
+      }),
+    ),
+  }),
+)
+
 export class SearchBooksError {
   readonly _tag = "SearchBooksError"
 }
@@ -61,11 +187,43 @@ export const searchBooks = (q: string) =>
     Effect.scoped,
   )
 
-export const searchBooks2 = (query: string) =>
-  Effect.tryPromise({
-    try: () =>
-      fetch(`https://openlibrary.org/search.json?q=${query}`).then(res =>
-        res.json(),
-      ),
-    catch: () => new SearchBooksError(),
-  })
+export type OpenLibraryKey = string & Brand.Brand<"OpenLibraryKey">
+
+export const OpenLibraryKey = Brand.refined<OpenLibraryKey>(
+  s => /^ol/i.test(s), // Predicate that the value must satisfy
+  s => Brand.error(`Expected ${s} to be a OpenLibraryKey`), // Error message if the value is not an integer
+)
+
+export const getWork = (key: OpenLibraryKey) =>
+  HttpClientRequest.get(`https://openlibrary.org/works/${key}.json`).pipe(
+    HttpClient.fetchOk,
+    Effect.andThen(HttpClientResponse.schemaBodyJson(OpenLibraryWork)),
+    Effect.scoped,
+  )
+
+export const getEditionsForWork = (key: OpenLibraryKey) =>
+  HttpClientRequest.get(
+    `https://openlibrary.org/works/${key}/editions.json`,
+  ).pipe(
+    HttpClient.fetchOk,
+    Effect.andThen(
+      HttpClientResponse.schemaBodyJson(OpenLibraryEditionsResponse),
+    ),
+    Effect.scoped,
+  )
+
+export const getAuthor = (key: OpenLibraryKey) =>
+  HttpClientRequest.get(`https://openlibrary.org/authors/${key}.json`).pipe(
+    HttpClient.fetchOk,
+    Effect.andThen(HttpClientResponse.schemaBodyJson(OpenLibraryAuthor)),
+    Effect.scoped,
+  )
+
+// export const searchBooks2 = (query: string) =>
+//   Effect.tryPromise({
+//     try: () =>
+//       fetch(`https://openlibrary.org/search.json?q=${query}`).then(res =>
+//         res.json(),
+//       ),
+//     catch: () => new SearchBooksError(),
+//   })

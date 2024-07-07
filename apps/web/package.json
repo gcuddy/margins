@@ -82,6 +82,7 @@
     "@effect/rpc-http": "^0.29.20",
     "@fontsource-variable/crimson-pro": "^5.0.19",
     "@fontsource/instrument-serif": "^5.0.20",
+    "@formkit/auto-animate": "^0.8.2",
     "@internationalized/date": "^3.5.4",
     "@lucia-auth/adapter-mysql": "^3.0.2",
     "@margins/auth": "workspace:*",

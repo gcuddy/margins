@@ -10,11 +10,19 @@ import {
 import { Router, Rpc } from "@effect/rpc"
 import { HttpRouter as RpcHttpRouter } from "@effect/rpc-http"
 import { Console, Effect, Layer, flow } from "effect"
-import { GetLink, LinkError, SaveLink, SearchBooks } from "./schema.js"
+import {
+  GetLink,
+  GetOpenLibraryAuthor,
+  GetOpenLibraryBook,
+  GetOpenLibraryBookEditions,
+  LinkError,
+  SaveLink,
+  SearchBooks,
+} from "./schema.js"
 import { Parser, parse } from "./parse.js"
 import * as p from "node-html-parser"
 import type { Middlewares } from "effect-http"
-import { searchBooks } from "./integrations/openlibrary.js"
+import * as OpenLibrary from "./integrations/openlibrary.js"
 
 // Implement the RPC server router
 const router = Router.make(
@@ -48,7 +56,7 @@ const router = Router.make(
   Rpc.effect(SearchBooks, ({ query }) =>
     Effect.gen(function* () {
       console.log("searching books", query)
-      const data = yield* searchBooks(query)
+      const data = yield* OpenLibrary.searchBooks(query)
       yield* Console.log("data", data)
       return data
     }).pipe(
@@ -60,6 +68,24 @@ const router = Router.make(
           return "Error searching books"
         }
       }),
+    ),
+  ),
+  Rpc.effect(GetOpenLibraryBook, ({ key }) =>
+    OpenLibrary.getWork(key).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.mapError(_ => "Error getting book"),
+    ),
+  ),
+  Rpc.effect(GetOpenLibraryAuthor, ({ key }) =>
+    OpenLibrary.getAuthor(key).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.mapError(_ => "Error getting author"),
+    ),
+  ),
+  Rpc.effect(GetOpenLibraryBookEditions, ({ key }) =>
+    OpenLibrary.getEditionsForWork(key).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.mapError(_ => "Error getting book editions"),
     ),
   ),
 )

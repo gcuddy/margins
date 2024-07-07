@@ -1,26 +1,26 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
-import plugin from 'tailwindcss/plugin';
-import type { Config } from 'tailwindcss';
+import defaultTheme from "tailwindcss/defaultTheme"
+import plugin from "tailwindcss/plugin"
+import type { Config } from "tailwindcss"
 
-import tailwindcssRadixColors from 'tailwindcss-radix-colors';
+import tailwindcssRadixColors from "tailwindcss-radix-colors"
 
 // Plugins
-import typography from '@tailwindcss/typography';
-import gradientMaskImage from 'tailwind-gradient-mask-image';
-import scrollbar from 'tailwind-scrollbar';
-import scrollbarHide from 'tailwind-scrollbar-hide';
-import animate from 'tailwindcss-animate';
-import containerQueries from '@tailwindcss/container-queries';
+import typography from "@tailwindcss/typography"
+import gradientMaskImage from "tailwind-gradient-mask-image"
+import scrollbar from "tailwind-scrollbar"
+import scrollbarHide from "tailwind-scrollbar-hide"
+import animate from "tailwindcss-animate"
+import containerQueries from "@tailwindcss/container-queries"
 
-import { sandA, sandDarkA, blackA } from '@radix-ui/colors';
+import { sandA, sandDarkA, blackA } from "@radix-ui/colors"
 
 const shadows = {
-	5: `0 0 0 1px ${sandA.sandA3},0 12px 60px ${blackA.blackA3},0 12px 32px -16px ${sandA.sandA5}`,
-	'5-dark': `0 0 0 1px ${sandDarkA.sandA6},0 12px 60px ${blackA.blackA5},0 12px 32px -16px ${blackA.blackA7}`,
-	6: `0 0 0 1px ${sandA.sandA3},0 12px 60px ${blackA.blackA3},0 16px 64px ${sandA.sandA2},0 16px 36px -20px ${sandA.sandA7}`,
-	'6-dark': `0 0 0 1px ${sandDarkA.sandA6},0 12px 60px ${blackA.blackA4},0 16px 64px ${blackA.blackA6},0 16px 36px -20px ${blackA.blackA11}`,
-};
-console.log({ shadows });
+  5: `0 0 0 1px ${sandA.sandA3},0 12px 60px ${blackA.blackA3},0 12px 32px -16px ${sandA.sandA5}`,
+  "5-dark": `0 0 0 1px ${sandDarkA.sandA6},0 12px 60px ${blackA.blackA5},0 12px 32px -16px ${blackA.blackA7}`,
+  6: `0 0 0 1px ${sandA.sandA3},0 12px 60px ${blackA.blackA3},0 16px 64px ${sandA.sandA2},0 16px 36px -20px ${sandA.sandA7}`,
+  "6-dark": `0 0 0 1px ${sandDarkA.sandA6},0 12px 60px ${blackA.blackA4},0 16px 64px ${blackA.blackA6},0 16px 36px -20px ${blackA.blackA11}`,
+}
+console.log({ shadows })
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -393,6 +393,11 @@ const config = {
           },
         },
       },
+
+      maxWidth: {
+        "prose-long": "76ch",
+      },
+
       screens: {
         "3xl": "1600px",
       },
@@ -416,4 +421,4 @@ const config = {
   },
 } satisfies Config
 
-export default config;
+export default config

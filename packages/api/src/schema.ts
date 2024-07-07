@@ -1,6 +1,11 @@
 import * as S from "@effect/schema/Schema"
 import { Brand, pipe } from "effect"
-import { OpenLibrarySearchResult } from "./integrations/openlibrary.js"
+import {
+  OpenLibraryAuthor,
+  OpenLibraryEditionsResponse,
+  OpenLibrarySearchResult,
+  OpenLibraryWork,
+} from "./integrations/openlibrary.js"
 
 // export const URL = pipe(S.String, S.brand("URL"))
 export type URL = string & Brand.Brand<"URL">
@@ -44,6 +49,33 @@ export class SaveLink extends S.TaggedRequest<SaveLink>()(
   S.String,
   {
     url: pipe(S.String, S.brand("URL")),
+  },
+) {}
+
+export class GetOpenLibraryBook extends S.TaggedRequest<GetOpenLibraryBook>()(
+  "GetOpenLibraryBook",
+  S.String,
+  OpenLibraryWork,
+  {
+    key: pipe(S.String, S.brand("OpenLibraryKey")),
+  },
+) {}
+
+export class GetOpenLibraryBookEditions extends S.TaggedRequest<GetOpenLibraryBookEditions>()(
+  "GetOpenLibraryBookEditions",
+  S.String,
+  OpenLibraryEditionsResponse,
+  {
+    key: pipe(S.String, S.brand("OpenLibraryKey")),
+  },
+) {}
+
+export class GetOpenLibraryAuthor extends S.TaggedRequest<GetOpenLibraryAuthor>()(
+  "GetOpenLibraryAuthor",
+  S.String,
+  OpenLibraryAuthor,
+  {
+    key: pipe(S.String, S.brand("OpenLibraryKey")),
   },
 ) {}
 
