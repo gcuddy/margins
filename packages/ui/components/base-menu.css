@@ -76,6 +76,16 @@
 	}
 }
 
+.m-BaseMenuItemIndicator {
+	position: absolute;
+	left: 0;
+	width: var(--base-menu-item-padding-left);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+  }
+
+
 .m-BaseMenuContent {
 	&:where(.m-size-sm) {
 		--base-menu-content-padding: var(--space-1);

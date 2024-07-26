@@ -13,7 +13,7 @@
 	export let sideOffset: $$Props['sideOffset'] = 4;
 	// export let transition: $$Props['transition'] = flyAndScale;
 	export let transitionConfig: $$Props['transitionConfig'] = {
-		duration: 160,
+		duration: 125,
 	};
 	export let size: $$Props['size'] = 'md';
 	export let color: $$Props['color'] = 'gold';

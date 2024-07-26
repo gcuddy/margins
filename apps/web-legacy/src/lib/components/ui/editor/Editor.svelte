@@ -25,7 +25,7 @@
 	import { mutation, type MutationInput } from '$lib/queries/query';
 	import { cn } from '$lib/utils/tailwind';
 
-	import { badgeVariants } from '../badge';
+	// import { badgeVariants } from '../badge';
 	import BubbleMenu from './BubbleMenu.svelte';
 	import {
 		generate_tiptap_extensions,
@@ -316,9 +316,9 @@
 			<div
 				transition:fade={{ duration: 150 }}
 				class={cn(
-					badgeVariants({
-						variant: 'secondary',
-					}),
+					// badgeVariants({
+					// 	variant: 'secondary',
+					// }),
 					'absolute right-2 top-2 mb-5 bg-secondary/60 font-normal text-muted-foreground',
 				)}
 			>

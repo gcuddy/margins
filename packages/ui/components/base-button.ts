@@ -7,7 +7,7 @@ import {
 } from "../variants/variant.variants.js"
 
 export const baseButton = tv({
-  base: "m-BaseButton inline-flex shrink-0 select-none items-center justify-center text-center align-top not-italic",
+  base: "m-BaseButton inline-flex shrink-0 cursor-default select-none items-center justify-center text-center align-top not-italic",
   variants: {
     variant: createVariantVariants(variants),
     color: colorVariant,

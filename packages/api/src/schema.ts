@@ -6,6 +6,7 @@ import {
   OpenLibrarySearchResult,
   OpenLibraryWork,
 } from "./integrations/openlibrary.js"
+import * as ITunes from "./integrations/itunes.js"
 
 // export const URL = pipe(S.String, S.brand("URL"))
 export type URL = string & Brand.Brand<"URL">
@@ -67,6 +68,7 @@ export class GetOpenLibraryBookEditions extends S.TaggedRequest<GetOpenLibraryBo
   OpenLibraryEditionsResponse,
   {
     key: pipe(S.String, S.brand("OpenLibraryKey")),
+    offset: S.optional(S.Number),
   },
 ) {}
 
@@ -79,11 +81,22 @@ export class GetOpenLibraryAuthor extends S.TaggedRequest<GetOpenLibraryAuthor>(
   },
 ) {}
 
-export class SearchBooks extends S.TaggedRequest<SearchBooks>()(
-  "SearchBooks",
+export class SearchOpenLibrary extends S.TaggedRequest<SearchOpenLibrary>()(
+  "SearchOpenLibrary",
   S.String,
   OpenLibrarySearchResult,
   {
     query: S.String,
+  },
+) {}
+
+export class SearchItunes extends S.TaggedRequest<SearchItunes>()(
+  "SearchItunes",
+  S.String,
+  ITunes.SearchResponse,
+  {
+    term: S.String,
+    country: S.optional(S.String),
+    media: S.optional(ITunes.Media),
   },
 ) {}

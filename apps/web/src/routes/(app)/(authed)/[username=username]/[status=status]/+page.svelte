@@ -38,7 +38,7 @@
 </script>
 
 <ShellHeader>
-	<LocationsDropdown status={data.statusType} variant="ghost" color="gray" />
+	<LocationsDropdown showAll status={data.statusType} variant="ghost" color="gray" />
 </ShellHeader>
 
 <svelte:window

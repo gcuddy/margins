@@ -17,12 +17,14 @@ import {
   GetOpenLibraryBookEditions,
   LinkError,
   SaveLink,
-  SearchBooks,
+  SearchItunes,
+  SearchOpenLibrary,
 } from "./schema.js"
 import { Parser, parse } from "./parse.js"
 import * as p from "node-html-parser"
 import type { Middlewares } from "effect-http"
 import * as OpenLibrary from "./integrations/openlibrary.js"
+import * as Itunes from "./integrations/itunes.js"
 
 // Implement the RPC server router
 const router = Router.make(
@@ -53,7 +55,7 @@ const router = Router.make(
       Effect.mapError(_ => new LinkError({ message: "Error parsing link" })),
     ),
   ),
-  Rpc.effect(SearchBooks, ({ query }) =>
+  Rpc.effect(SearchOpenLibrary, ({ query }) =>
     Effect.gen(function* () {
       console.log("searching books", query)
       const data = yield* OpenLibrary.searchBooks(query)
@@ -82,10 +84,22 @@ const router = Router.make(
       Effect.mapError(_ => "Error getting author"),
     ),
   ),
-  Rpc.effect(GetOpenLibraryBookEditions, ({ key }) =>
-    OpenLibrary.getEditionsForWork(key).pipe(
+  Rpc.effect(GetOpenLibraryBookEditions, ({ key, offset }) =>
+    OpenLibrary.getEditionsForWork(key, offset).pipe(
       Effect.tapErrorCause(Effect.logError),
       Effect.mapError(_ => "Error getting book editions"),
+    ),
+  ),
+  Rpc.effect(SearchItunes, params =>
+    Itunes.search(params).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.mapError(_ => "Error searching itunes"),
+    ),
+  ),
+  Rpc.effect(Itunes.Lookup, p =>
+    Itunes.lookup(p).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.mapError(_ => "Error looking up itunes"),
     ),
   ),
 )

@@ -9,7 +9,7 @@
 @layer base {
 	* {
 		/* TODO: make this more specific */
-		@apply border-gold-6 dark:border-golddark-6;
+		@apply border-grayA-5;
 	}
 	body {
 		@apply bg-sand-1 dark:bg-sanddark-1 text-sand-12 dark:text-sanddark-12;

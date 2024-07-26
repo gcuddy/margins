@@ -6,6 +6,8 @@
   import { setContext } from "svelte"
   import { browser } from "$app/environment"
   import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query"
+  import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools'
+
 
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -32,4 +34,5 @@
 </svelte:head>
 <QueryClientProvider client={queryClient}>
   <slot />
+  <SvelteQueryDevtools />
 </QueryClientProvider>

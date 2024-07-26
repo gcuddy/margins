@@ -26,14 +26,19 @@ const triggerVariants = tv({
 });
 
 export const dropdownContent = tv({
-	extend: baseMenu,
-	base: [
-		'm-BaseMenuContent m-PopperContent m-BaseMenuViewport group/dropdown z-50 min-w-[8rem] rounded-lg focus:outline-none',
-	],
-	defaultVariants: {
-		size: 'md',
-	},
-});
+  extend: baseMenu,
+  base: [
+    "m-BaseMenuContent m-BaseMenuViewport group/dropdown z-50 min-w-48 rounded-lg focus:outline-none",
+  ],
+  variants: {
+    animate: {
+      true: "m-PopperContent",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+})
 
 export const dropdownItem = tv({
 	base: ['m-BaseMenuItem'],

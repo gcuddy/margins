@@ -54,26 +54,30 @@ const KeySchema = Schema.Struct({
   key: Schema.String,
 })
 
-const TextValueSchema = Schema.transform(
-  Schema.Struct({
-    type: Schema.Literal("/type/text"),
-    value: Schema.String,
-  }),
+const TextValueSchema = Schema.Union(
   Schema.String,
-  {
-    strict: true,
-    decode: ({ value }) => value,
-    encode: value => ({
-      type: "/type/text" as const,
-      value,
+  Schema.transform(
+    Schema.Struct({
+      type: Schema.Literal("/type/text"),
+      value: Schema.String,
     }),
-  },
+    Schema.String,
+    {
+      strict: true,
+      decode: ({ value }) => value,
+      encode: value => ({
+        type: "/type/text" as const,
+        value,
+      }),
+    },
+  ),
 )
 
 export const OpenLibraryWork = Schema.partial(
   Schema.Struct({
     title: Schema.String,
     key: Schema.String,
+    first_publish_date: Schema.String,
     authors: Schema.Array(
       Schema.Struct({
         author: KeySchema,
@@ -81,7 +85,7 @@ export const OpenLibraryWork = Schema.partial(
       }),
     ),
     type: KeySchema,
-    description: Schema.String,
+    description: TextValueSchema,
     covers: Schema.Array(Schema.Number),
     subject_places: Schema.Array(Schema.String),
     subject_times: Schema.Array(Schema.String),
@@ -136,7 +140,7 @@ export const OpenLibraryEditionsResponse = Schema.Struct({
     prev: Schema.optional(Schema.String),
   }),
   size: Schema.Number,
-  entries: Schema.Array(OpenLibraryEdition),
+  entries: Schema.mutable(Schema.Array(OpenLibraryEdition)),
 })
 
 export const OpenLibraryAuthor = Schema.partial(
@@ -152,7 +156,7 @@ export const OpenLibraryAuthor = Schema.partial(
         }),
       }),
     ),
-    bio: Schema.Union(Schema.String, TextValueSchema),
+    bio: TextValueSchema,
     alternate_names: Schema.Array(Schema.String),
     photos: Schema.Array(Schema.Number),
     wikipedia: Schema.String,
@@ -181,7 +185,9 @@ export class SearchBooksError {
 }
 
 export const searchBooks = (q: string) =>
-  HttpClientRequest.get(`https://openlibrary.org/search.json?q=${q}`).pipe(
+  HttpClientRequest.get(
+    `https://openlibrary.org/search.json?q=${q}&lang=en&sort=editions`,
+  ).pipe(
     HttpClient.fetchOk,
     Effect.andThen(HttpClientResponse.schemaBodyJson(OpenLibrarySearchResult)),
     Effect.scoped,
@@ -201,14 +207,15 @@ export const getWork = (key: OpenLibraryKey) =>
     Effect.scoped,
   )
 
-export const getEditionsForWork = (key: OpenLibraryKey) =>
+export const getEditionsForWork = (key: OpenLibraryKey, offset?: number) =>
   HttpClientRequest.get(
-    `https://openlibrary.org/works/${key}/editions.json`,
+    `https://openlibrary.org/works/${key}/editions.json${offset ? `?offset=${offset}` : ""}`,
   ).pipe(
     HttpClient.fetchOk,
     Effect.andThen(
       HttpClientResponse.schemaBodyJson(OpenLibraryEditionsResponse),
     ),
+    Effect.withRequestCaching(true),
     Effect.scoped,
   )
 

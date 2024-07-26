@@ -11,17 +11,12 @@
 	export let transitionConfig: $$Props['transitionConfig'] = {
 		duration: 100,
 	};
-	export let align: $$Props['align'] = 'center';
-	export let sideOffset: $$Props['sideOffset'] = 4;
+	export let align: $$Props['align'] = 'start';
+	export let sideOffset: $$Props['sideOffset'] = 8;
 	export { className as class };
 </script>
 
 <PopoverPrimitive.Content
-	outTransition={fade}
-	outTransitionConfig={{
-		...transitionConfig,
-		duration: 100,
-	}}
 	{align}
 	{sideOffset}
 	{...$$restProps}

@@ -7,9 +7,9 @@ const Trigger = PopoverPrimitive.Trigger;
 const Close = PopoverPrimitive.Close;
 
 const popoverVariants = tv({
-	extend: panel,
-	base: 'relative z-50 w-72 overflow-auto rounded-lg p-4 outline-none',
-});
+  extend: panel,
+  base: "m-PopperContent relative z-50 overflow-auto rounded-lg p-4 outline-none",
+})
 
 export {
 	Root,

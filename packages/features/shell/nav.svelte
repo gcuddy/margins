@@ -6,13 +6,21 @@
     href: (username: string) => string
     icon: ComponentType
     label: string
+    children?: Array<Nav>
   }
   export const navItems: Array<Nav> = [
     {
-      active: path => path.endsWith("/backlog"),
+      active: path => path.endsWith("/all"),
       href: (username: string) => `/u:${username}/backlog`,
       icon: Dashboard,
       label: "Library",
+      children: locations.map(location => ({
+        active: url => url.endsWith(locationToHrefs[location]),
+        href: (username: string) =>
+          `/u:${username}${locationToHrefs[location]}`,
+        icon: locationToIcon[location],
+        label: locationToDisplay[location],
+      })),
     },
     {
       active: url => url.endsWith("/subscriptions"),
@@ -61,6 +69,7 @@
   import PanelLeftClose from "lucide-svelte/icons/panel-left-close"
   import PanelLeftRight from "lucide-svelte/icons/panel-right-close"
   import SidebarPins from "./sidebar-pins.svelte"
+  import { locations, locationToDisplay, locationToHrefs, locationToIcon } from "../entries/locations.js"
 
   export let width = 240
   export let onResize: ComponentProps<ColResizer>["onResize"] = undefined
@@ -128,11 +137,20 @@
   <!-- Navigation -->
   <div class="mb-1 mt-3 grow space-y-2 overflow-y-auto rounded px-3">
     <div class="pb-2">
-      {#each navItems as { active, href, icon, label }}
+      {#each navItems as { active, href, icon, label, children }}
         {@const isActive = active($page.url.pathname)}
-        <NavItem {icon} {isActive} href={href($page.data.user?.username ?? "")}>
+        <NavItem
           {label}
-        </NavItem>
+          {icon}
+          {isActive}
+          children={children?.map(c => ({
+            icon: c.icon,
+            label: c.label,
+            href: c.href($page.data.user?.username ?? ""),
+            isActive: c.active($page.url.pathname),
+          }))}
+          href={href($page.data.user?.username ?? "")}
+        />
       {/each}
     </div>
     <div class="pb-2">

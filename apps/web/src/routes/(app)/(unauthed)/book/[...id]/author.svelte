@@ -42,6 +42,6 @@
   {:else if isError}
     <p>Error: {error?.message}</p>
   {:else if author}
-    <span class="text-grayA-11 text-sm font-medium">{author.name}</span>
+    <a href="/book{author.key}" class="text-grayA-11 text-sm font-medium">{author.name}</a>
   {/if}
 </div>
