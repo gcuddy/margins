@@ -19,3 +19,4 @@ screenshots/
 
 
 packages/db/zod/*.ts
+db_dump.sql

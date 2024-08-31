@@ -8,13 +8,11 @@
   export let className = ""
   export let size: SegmentedControlProps["size"] = "md"
   export let variant: SegmentedControlProps["variant"] = "surface"
-  $: console.log({ value }) 
 </script>
 
 <ToggleGroup.Root
   {value}
   onValueChange={v => {
-    console.log({ v })
     if (v) {
       value = v
     } else {
