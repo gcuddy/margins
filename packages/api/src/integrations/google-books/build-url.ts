@@ -24,5 +24,7 @@ export class BuildGoogleBooksUrl extends Context.Tag("BuildGoogleBooksUrl")<
   BuildGoogleBooksUrl,
   Effect.Effect.Success<typeof make>
 >() {
-  static readonly Live = Layer.effect(this, make)
+  static readonly Live = Layer.effect(this, make).pipe(
+    Layer.provide(GoogleBooksApiUrl.Live),
+  )
 }

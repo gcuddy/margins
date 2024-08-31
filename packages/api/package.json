@@ -6,12 +6,15 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "license": "MIT",
+  "scripts": {
+    "test": "vitest"
+  },
   "dependencies": {
     "@effect/platform": "^0.58.20",
     "@effect/platform-bun": "^0.38.19",
     "@effect/rpc": "^0.31.20",
     "@effect/rpc-http": "^0.29.20",
-    "@effect/schema": "^0.68.17",
+    "@effect/schema": "^0.72.0",
     "effect": "^3.4.7",
     "effect-http": "^0.71.2",
     "node-html-parser": "^6.1.13"
