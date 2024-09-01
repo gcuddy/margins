@@ -1,13 +1,17 @@
 import { HttpClient, HttpClientRequest } from "@effect/platform"
-import { Resolver } from "@effect/rpc"
-import { HttpResolver } from "@effect/rpc-http"
-import type { APIRouter } from "@margins/api/src/router.js"
+import { RpcResolver } from "@effect/rpc"
+import { HttpRpcResolver } from "@effect/rpc-http"
+import type { AppRouter } from "@margins/api/src/router2.js"
+import { Effect } from "effect"
+import { RpcConfigLayer } from "./rpc-config.js"
 
-// Create the client
-export const client = HttpResolver.make<APIRouter>(
-  HttpClient.fetchOk.pipe(
-    HttpClient.mapRequest(
-      HttpClientRequest.prependUrl("http://localhost:3000/rpc"),
+export const makeClient = Effect.gen(function* () {
+  const { url } = yield* RpcConfigLayer
+  return RpcResolver.toClient(
+    HttpRpcResolver.make<AppRouter>(
+      HttpClient.fetchOk.pipe(
+        HttpClient.mapRequest(HttpClientRequest.prependUrl(url)),
+      ),
     ),
-  ),
-).pipe(Resolver.toClient)
+  )
+})

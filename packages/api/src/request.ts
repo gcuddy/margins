@@ -2,7 +2,7 @@ import { Schema } from "@effect/schema"
 import {
   GoogleBookVolume,
   GoogleBookVolumes,
-} from "./integrations/google-books/schema"
+} from "./integrations/google-books/schema.js"
 
 export class GoogleBooksSearch extends Schema.TaggedRequest<GoogleBooksSearch>()(
   "GoogleBooksSearch",

@@ -32,6 +32,9 @@ export const appRouter = RpcRouter.make(
   ),
 )
 
+export type AppRouter = typeof appRouter
+
+
 export const handler = pipe(
   appRouter,
   HttpRpcRouter.toHttpApp,
