@@ -13,7 +13,7 @@
     queryFn: () =>
       Effect.runPromise(
         client(new GoogleBooksSearch({ query: data.q ?? "" })).pipe(
-          Effect.withRequestBatching(false),
+          Effect.withRequestBatching(true),
           Effect.tapErrorCause(error =>
             Effect.logError("rpc request error", error),
           ),
@@ -38,54 +38,43 @@
   {#if query.isLoading}
     Loading...
   {:else if query.data}
-    {#each query.data.items ?? [] as result}
-      <div>
-        <a href={result.volumeInfo.infoLink} rel="noreferrer">
-          {result.volumeInfo.title}
-        </a>
-      </div>
-    {/each}
-    <!-- <div>
-      {#each results.results as result}
-        <a
-          href="/book/it/{result.trackId}"
-          target="_blank"
-          rel="noreferrer"
-          class="mb-4 flex items-center"
-        >
-          <img
-            src={result.artworkUrl100}
-            alt={result.trackName}
-            class="mr-4 h-24 w-16"
-          />
-          <div>
-            <h3 class="font-serif font-bold">{result.trackName}</h3>
-            <p>By {result.artistName}</p>
-            <p>{result.formattedPrice}</p>
-          </div>
-        </a>
-      {/each}
-    </div> -->
-
-    <!-- {#each results.docs as result}
-          <a href="/book{result.key}" class="mb-4 flex items-center">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {#each query.data.items ?? [] as result}
+        <div class="flex items-start space-x-4 p-4 border rounded-lg shadow-sm">
+          <div class="relative">
             <img
-              src={result.cover_i
-                ? `https://covers.openlibrary.org/b/id/${result.cover_i}-M.jpg`
-                : ""}
-              alt={result.title}
-              class="mr-4 h-24 w-16"
+              src={result.volumeInfo.imageLinks?.thumbnail?.replace('&edge=curl', '') ?? '/placeholder-book.png'}
+              alt={result.volumeInfo.title}
+              class="relative w-24 h-36 object-cover rounded-lg border shadow z-[1]"
             />
-            <div>
-              <h3 class="font-serif font-bold">{result.title}</h3>
-              <p>
-                {result.author_name
-                  ? `By ${result.author_name.join(", ")}`
-                  : ""}
-              </p>
-              <p>{result.first_publish_year}</p>
-            </div>
-          </a>
-        {/each} -->
+            <img
+              src={result.volumeInfo.imageLinks?.thumbnail?.replace('&edge=curl', '') ?? '/placeholder-book.png'}
+              alt={result.volumeInfo.title}
+              class="absolute w-24 h-36 object-cover -bottom-1 left-2 opacity-50 blur-md z-0"
+            />
+          </div>
+          <div>
+            <h3 class="font-serif font-bold text-lg">
+              <a href={`/book/gb_${result.id}`}>
+                {result.volumeInfo.title}
+              </a>
+            </h3>
+            <p class="text-sm text-gray-600">
+              {#if result.volumeInfo.authors}
+                By {result.volumeInfo.authors.join(', ')}
+              {/if}
+            </p>
+            <p class="text-sm text-gray-500">
+              {result.volumeInfo.publishedDate ? new Date(result.volumeInfo.publishedDate).getFullYear() : 'N/A'}
+            </p>
+            <p class="text-sm text-gray-500">
+              ISBN: {result.volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_13')?.identifier 
+                     ?? result.volumeInfo.industryIdentifiers?.find(id => id.type === 'ISBN_10')?.identifier 
+                     ?? 'N/A'}
+            </p>
+          </div>
+        </div>
+      {/each}
+    </div>
   {/if}
 </div>

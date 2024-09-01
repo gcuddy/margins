@@ -120,14 +120,13 @@ export class AccessInfo extends S.Class<AccessInfo>("AccessInfo")({
   quoteSharingAllowed: S.optional(S.Union(S.Boolean, S.Null)),
 }) {}
 
-export class GoogleBookVolume extends S.Class<GoogleBookVolume>(
-  "GoogleBookVolume",
-)({
+export class GoogleBookVolume extends S.Class<GoogleBookVolume>("GoogleBookVolume")({
   kind: S.optional(S.Union(S.Null, S.String)),
   id: S.optional(S.Union(S.Null, S.String)),
   etag: S.optional(S.Union(S.Null, S.String)),
   selfLink: S.optional(S.Union(S.Null, S.String)),
-  volumeInfo: S.optional(S.Union(VolumeInfo, S.Null)),
+  // TODO: make nullish?
+  volumeInfo: VolumeInfo,
   layerInfo: S.optional(S.Union(LayerInfo, S.Null)),
   saleInfo: S.optional(S.Union(SaleInfo, S.Null)),
   accessInfo: S.optional(S.Union(AccessInfo, S.Null)),

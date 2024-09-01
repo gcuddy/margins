@@ -6,15 +6,17 @@ const make = Effect.gen(function* () {
   const apiKey = yield* Config.redacted("GOOGLE_BOOKS_API_KEY")
 
   const url = new URL(googleBooksApiUrl)
-  url.searchParams.set("key", Redacted.value(apiKey))
 
   const buildSearchUrl = (query: string) => {
     url.searchParams.set("q", query)
+    url.searchParams.set("key", Redacted.value(apiKey))
     return url.toString()
   }
 
   const buildGetUrl = (volumeId: string) => {
-    return `${url.toString()}/${volumeId}`
+    const url = new URL(`${googleBooksApiUrl}/${volumeId}`)
+    url.searchParams.set("key", Redacted.value(apiKey))
+    return url.toString()
   }
 
   return { buildSearchUrl, buildGetUrl } as const
