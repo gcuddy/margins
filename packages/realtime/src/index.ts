@@ -6,6 +6,7 @@ import {
   server,
   queries,
 } from "@margins/features/replicache/server"
+import { ConfigProvider, Effect, Layer } from "effect"
 import type { Config as PlanetScaleConfig } from "@planetscale/database"
 import type { Lucia } from "lucia"
 import type * as Party from "partykit/server"
@@ -60,6 +61,8 @@ export default class Server implements Party.Server {
   auth: Lucia
 
   constructor(readonly room: Party.Room) {
+    console.log("room", room)
+    console.log("env", room.env)
     const config: PlanetScaleConfig = {
       // Hacky way to get around cloudflare not supporting cache rn,
       // see https://github.com/cloudflare/workerd/issues/698
@@ -151,7 +154,28 @@ export default class Server implements Party.Server {
       return await withDB(this.db, async () => {
         if (route === "rpc") {
           // TODO: fix this
-          return RPCRouter.handler(req as unknown as Request)
+          console.log("got rpc")
+          const data = await req.json()
+          console.log({ data })
+          const configMap = ConfigProvider.fromMap(
+            new Map(
+              Object.entries(this.room.env).map(([k, v]) => [k, String(v)]),
+            ),
+          )
+          const layerConfigProvider = Layer.setConfigProvider(configMap)
+
+          const res = await Effect.runPromise(
+            RPCRouter.handler(data).pipe(
+              Effect.provide(RPCRouter.MainLayer),
+              Effect.provide(layerConfigProvider),
+            ),
+          )
+          console.log("res", JSON.stringify(res))
+          return Response.json(res)
+
+          // return Response.json({ res })
+
+          // return RPCRouter.handler(req as unknown as Request)
         }
         if (route === "push") {
           const body = pushRequestV1Schema.parse(await req.json())

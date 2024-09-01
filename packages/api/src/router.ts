@@ -14,7 +14,7 @@ import {
 import * as OpenLibrary from "./integrations/openlibrary.js"
 import * as Itunes from "./integrations/itunes.js"
 
-const MainLayer = Layer.mergeAll(GoogleBooksApi.Live)
+export const MainLayer = Layer.mergeAll(GoogleBooksApi.Live)
 
 // const RpcRuntime = ManagedRuntime.make(MainLayer)
 
@@ -83,7 +83,9 @@ export const appRouter = RpcRouter.make(
 
 export type AppRouter = typeof appRouter
 
-export const handler = pipe(
+export const handler = RpcRouter.toHandlerNoStream(appRouter)
+
+export const webHandler = pipe(
   appRouter,
   HttpRpcRouter.toHttpApp,
   Effect.provide(MainLayer),

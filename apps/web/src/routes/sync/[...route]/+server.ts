@@ -10,31 +10,41 @@ export async function GET({ fetch, url }) {
 	});
 }
 
-export async function POST({ fetch, params, request, url }) {
-	const data = await request.json();
+export async function POST({ fetch, params, locals, request, url }) {
+  const data = await request.json()
 
-	const auth = request.headers.get('Authorization') || '';
-	const roomId = request.headers.get('x-margins-room') || '';
-	console.log({ auth, roomId });
+  let auth = request.headers.get("Authorization") || ""
+  let roomId = request.headers.get("x-margins-room") || ""
 
-	if (!roomId) {
-		return new Response('No room ID', { status: 400 });
-	}
+  if (!auth && locals.session) {
+    auth = `Bearer ${locals.session.id}`
+  }
+  if (!roomId && locals.user) {
+    roomId = locals.user.id
+  }
 
-	// TODO: parties routes...
-	const res = await fetch(
-		`${PARTYKIT_URL}/parties/main/${roomId}/${params.route}`,
-		{
-			body: JSON.stringify(data),
-			headers: {
-				Authorization: auth,
-				'Content-Type': 'application/json',
-			},
-			method: 'POST',
-		},
-	);
+  console.log(url, { auth, roomId })
 
-	console.log({ res });
+  if (!roomId) {
+    return new Response("No room ID", { status: 400 })
+  }
 
-	return Response.json(await res.json());
+  // TODO: parties routes...
+  const res = await fetch(
+    `${PARTYKIT_URL}/parties/main/${roomId}/${params.route}`,
+    {
+      body: JSON.stringify(data),
+      headers: {
+        Authorization: auth,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    },
+  )
+
+  console.log({ res })
+  const returnedData = await res.json()
+  console.dir("returned data", data)
+
+  return Response.json(returnedData)
 }

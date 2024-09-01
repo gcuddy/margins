@@ -5,6 +5,7 @@
   import { client } from "$lib/client/rpc-client.js"
   import { createQuery, keepPreviousData } from "@tanstack/svelte-query"
   import { writable, derived } from "svelte/store"
+  import { GoogleBooksSearch } from "@margins/api/src/request.js"
   export let data
   const value = writable("")
 
@@ -25,13 +26,22 @@
     derived(value, $q => ({
       queryKey: ["bookSearch", $q],
       queryFn: () =>
-        Effect.runPromise(client(new SearchOpenLibrary({ query: $q }))),
+        Effect.runPromise(
+          client(new GoogleBooksSearch({ query: $q })).pipe(
+            Effect.withRequestBatching(false),
+            Effect.tapErrorCause(error =>
+              Effect.logError("rpc request error", error),
+            ),
+          ),
+        ),
       placeholderData: keepPreviousData,
       enabled: !!$q,
+      retry: false,
     })),
   )
 
-  $: ({ isLoading, data: results } = $query)
+  $: ({ isLoading, isError, data: results } = $query)
+  $: console.log({ $query })
 </script>
 
 <div class="p-4">
@@ -64,8 +74,9 @@
         </a>
       {/each}
     </div> -->
+    {JSON.stringify(results)}
 
-    {#each results.docs as result}
+    <!-- {#each results.docs as result}
           <a href="/book{result.key}" class="mb-4 flex items-center">
             <img
               src={result.cover_i
@@ -84,6 +95,6 @@
               <p>{result.first_publish_year}</p>
             </div>
           </a>
-        {/each}
+        {/each} -->
   {/if}
 </div>
