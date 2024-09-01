@@ -12,7 +12,7 @@ import type * as Party from "partykit/server"
 import { z } from "zod"
 import type { PushRequestV1 } from "replicache"
 import { withDB, withUser } from "@margins/features/core"
-import * as RPCRouter from "../../api/src/router2.js"
+import * as RPCRouter from "@margins/api/src/router.js"
 
 const mutationSchema = z
   .object({

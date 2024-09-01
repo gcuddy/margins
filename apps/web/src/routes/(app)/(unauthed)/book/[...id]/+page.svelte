@@ -3,7 +3,7 @@
   import { GetOpenLibraryBook } from "@margins/api/src/schema.js"
   import autoAnimate from "@formkit/auto-animate"
 
-  import { client } from "@margins/features/rpc"
+  import { client } from "$lib/client/rpc-client.js"
   import { Button, Command, Popover } from "@margins/ui"
   import { createQuery } from "@tanstack/svelte-query"
   import { Effect } from "effect"

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type OpenLibraryKey } from "@margins/api/src/integrations/openlibrary"
   import { GetOpenLibraryBookEditions } from "@margins/api/src/schema"
-  import { client } from "@margins/features/rpc"
+  import { client } from "$lib/client/rpc-client.js"
   import { createQuery } from "@tanstack/svelte-query"
   import { Effect } from "effect"
   import { derived, writable } from "svelte/store"

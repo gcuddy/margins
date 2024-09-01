@@ -2,7 +2,7 @@
   import { SearchItunes, SearchOpenLibrary } from "@margins/api/src/schema"
   import { Button, Input } from "@margins/ui"
   import { Effect } from "effect"
-  import { client } from "@margins/features/rpc"
+  import { client } from "$lib/client/rpc-client.js"
   import { createQuery, keepPreviousData } from "@tanstack/svelte-query"
   import { writable, derived } from "svelte/store"
   export let data

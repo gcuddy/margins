@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Lookup } from "@margins/api/src/integrations/itunes.js"
-  import { client } from "@margins/features/rpc"
+  import { client } from "$lib/client/rpc-client.js"
   import { createQuery } from "@tanstack/svelte-query"
   import { Effect } from "effect"
   import { derived, writable } from "svelte/store"

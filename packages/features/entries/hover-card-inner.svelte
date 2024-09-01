@@ -2,32 +2,32 @@
   import { Button, Inset } from "@margins/ui"
   import { GetLink, SaveLink, URL } from "../../api/src/schema.js"
   export let link: string
-  import { client } from "../rpc/rpc-client.js"
-  import { Effect } from "effect"
+  // import { client } from "../../../apps/web/src/lib/client/rpc-client.js"
+  // import { Effect } from "effect"
 
-  $: saveLink = client(
-    new SaveLink({
-      url: URL(link),
-    }),
-  )
+  // $: saveLink = client(
+  //   new SaveLink({
+  //     url: URL(link),
+  //   }),
+  // )
 
-  $: console.log({ saveLink })
+  // $: console.log({ saveLink })
 
-  $: getLink = Effect.runPromise(
-    client(
-      new GetLink({
-        url: URL(link),
-      }),
-    ).pipe(
-      Effect.withRequestCaching(true),
-      Effect.tapError(e => {
-        return Effect.logError(e)
-      }),
-    ),
-  )
+  // $: getLink = Effect.runPromise(
+  //   client(
+  //     new GetLink({
+  //       url: URL(link),
+  //     }),
+  //   ).pipe(
+  //     Effect.withRequestCaching(true),
+  //     Effect.tapError(e => {
+  //       return Effect.logError(e)
+  //     }),
+  //   ),
+  // )
 </script>
 
-{#await getLink}
+<!-- {#await getLink}
   <Inset
     className="animate-pulse not-prose pb-[--inset-padding-bottom] relative w-[384px]"
   >
@@ -60,4 +60,4 @@
       >Save</Button
     >
   </div>
-{/await}
+{/await} -->
