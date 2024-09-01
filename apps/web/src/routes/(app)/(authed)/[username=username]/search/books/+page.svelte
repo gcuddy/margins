@@ -1,47 +1,34 @@
 <script lang="ts">
-  import { SearchItunes, SearchOpenLibrary } from "@margins/api/src/schema"
+  // import { SearchItunes, SearchOpenLibrary } from "@margins/api/src/schema"
   import { Button, Input } from "@margins/ui"
   import { Effect } from "effect"
   import { client } from "$lib/client/rpc-client.js"
   import { createQuery, keepPreviousData } from "@tanstack/svelte-query"
-  import { writable, derived } from "svelte/store"
   import { GoogleBooksSearch } from "@margins/api/src/request.js"
-  export let data
-  const value = writable("")
 
-  $: value.set(data.q ?? "")
+  const { data } = $props()
 
-  // const query = createQuery(
-  //   derived(value, $q => ({
-  //     queryKey: ["itunesBookSearch", $q],
-  //     queryFn: () =>
-  //       Effect.runPromise(
-  //         client(new SearchItunes({ term: $q, media: "ebook" })),
-  //       ),
-  //     placeholderData: keepPreviousData,
-  //     enabled: !!$q,
-  //   })),
-  // )
-  const query = createQuery(
-    derived(value, $q => ({
-      queryKey: ["bookSearch", $q],
-      queryFn: () =>
-        Effect.runPromise(
-          client(new GoogleBooksSearch({ query: $q })).pipe(
-            Effect.withRequestBatching(false),
-            Effect.tapErrorCause(error =>
-              Effect.logError("rpc request error", error),
-            ),
+  const query = createQuery(() => ({
+    queryKey: ["bookSearch", data.q],
+    queryFn: () =>
+      Effect.runPromise(
+        client(new GoogleBooksSearch({ query: data.q ?? "" })).pipe(
+          Effect.withRequestBatching(false),
+          Effect.tapErrorCause(error =>
+            Effect.logError("rpc request error", error),
           ),
         ),
-      placeholderData: keepPreviousData,
-      enabled: !!$q,
-      retry: false,
-    })),
-  )
+      ),
+    placeholderData: keepPreviousData,
+    enabled: !!data.q,
+    retry: false,
+  }))
 
-  $: ({ isLoading, isError, data: results } = $query)
-  $: console.log({ $query })
+  // $effect(() => {
+  //   console.log({ query })
+  // })
+
+  const { isLoading, data: results } = query
 </script>
 
 <div class="p-4">
@@ -53,6 +40,13 @@
   {#if isLoading}
     Loading...
   {:else if results}
+    {#each results.items ?? [] as result}
+      <div>
+        <a href={result.volumeInfo.infoLink} rel="noreferrer">
+          {result.volumeInfo.title}
+        </a>
+      </div>
+    {/each}
     <!-- <div>
       {#each results.results as result}
         <a
@@ -74,7 +68,6 @@
         </a>
       {/each}
     </div> -->
-    {JSON.stringify(results)}
 
     <!-- {#each results.docs as result}
           <a href="/book{result.key}" class="mb-4 flex items-center">
