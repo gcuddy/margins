@@ -82,11 +82,11 @@ export const lookup = (params: { id: number }) =>
     Effect.scoped,
   )
 
-export class Lookup extends Schema.TaggedRequest<Lookup>()(
-  "iTunesLookup",
-  Schema.String,
-  Item,
-  {
+export class Lookup extends Schema.TaggedRequest<Lookup>()("iTunesLookup", {
+  failure: Schema.String,
+  success: Item,
+
+  payload: {
     id: Schema.Number,
   },
-) {}
+}) {}

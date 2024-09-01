@@ -1,5 +1,5 @@
 import { Config, Context, Effect, Layer, Redacted } from "effect"
-import { GoogleBooksApiUrl } from "./google-books-api-url"
+import { GoogleBooksApiUrl } from "./google-books-api-url.js"
 
 const make = Effect.gen(function* () {
   const googleBooksApiUrl = yield* GoogleBooksApiUrl

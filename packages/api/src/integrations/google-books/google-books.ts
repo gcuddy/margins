@@ -1,11 +1,11 @@
 import { Context, Effect, Layer } from "effect"
-import { BuildGoogleBooksUrl } from "./build-url"
+import { BuildGoogleBooksUrl } from "./build-url.js"
 import {
   HttpClient,
   HttpClientRequest,
   HttpClientResponse,
 } from "@effect/platform"
-import { GoogleBookVolume, GoogleBookVolumes } from "./schema"
+import { GoogleBookVolume, GoogleBookVolumes } from "./schema.js"
 
 const make = Effect.gen(function* () {
   const buildGoogleBooksUrl = yield* BuildGoogleBooksUrl
