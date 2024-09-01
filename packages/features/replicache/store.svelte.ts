@@ -129,7 +129,8 @@ export class Store<
             rep: () => Replicache,
             args: () => Parameters<Scanners[name]>,
             refine?: Refiner,
-          ): (() => ReturnType<Refiner>) & {
+          ): {
+            data: ReturnType<Refiner>
             ready: boolean
           }
         }
@@ -200,17 +201,26 @@ export function createGet<T>(p: () => string, replicache: () => Replicache) {
     )
   })
 
-  const result = $derived(() => data.value)
-  Object.defineProperty(result, "ready", { get: () => ready })
-
   onDestroy(() => {
     if (unsubscribe) unsubscribe()
   })
 
-  return result as {
-    (): T | undefined
-    ready: boolean
-  }
+  return {
+    get data() {
+      return data.value
+    },
+    get ready() {
+      return ready
+    },
+  } as
+    | {
+        data: undefined
+        ready: false
+      }
+    | {
+        data: T
+        ready: true
+      }
 }
 
 export function createScan<T>(
@@ -231,14 +241,15 @@ export function createScan<T>(
     const path = p()
     const rep = replicache()
 
-    ready = false
-    data = []
+    // ready = false
+    // data = []
 
     unsubscribe = rep.experimentalWatch(
       diffs => {
         console.log("diffs", diffs)
         // fast set if we haven't seen diffs
         if (!ready) {
+          console.log("if - not ready yet")
           const values: T[] = []
           for (const diff of diffs) {
             if (diff.op === "add") {
@@ -251,6 +262,7 @@ export function createScan<T>(
           ready = true
           data = values
         } else {
+          console.log("else - updating")
           for (const diff of diffs) {
             if (diff.op === "add") {
               const index = data.push(structuredClone(diff.newValue) as T)
@@ -287,15 +299,24 @@ export function createScan<T>(
     )
   })
 
-  const result = $derived(() => (refine ? refine(data) : data))
-  Object.defineProperty(result, "ready", { get: () => ready })
-
   onDestroy(() => {
     if (unsubscribe) unsubscribe()
   })
 
-  return result as {
-    (): T[]
-    ready: boolean
-  }
+  return {
+    get data() {
+      return refine ? refine(data) : data
+    },
+    get ready() {
+      return ready
+    },
+  } as
+    | {
+        data: undefined
+        ready: false
+      }
+    | {
+        data: T[]
+        ready: true
+      }
 }

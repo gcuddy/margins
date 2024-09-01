@@ -1,14 +1,14 @@
-import type { Bookmark } from '@margins/db/kysely/types';
-import type { Selectable } from 'kysely';
-import { Store } from '../replicache/svelte-store.js';
-import type { Entry } from '../core/index.js';
+import type { Bookmark } from "@margins/db/kysely/types"
+import type { Selectable } from "kysely"
+import { Store } from "../replicache/store.svelte.js"
+import type { Entry } from "../core/index.js"
 
 export type BookmarkWithEntry = Selectable<Bookmark> & {
-	entry: Entry.Item;
-};
+  entry: Entry.Item
+}
 
 export const LibraryStore = new Store()
-	.$type<BookmarkWithEntry>()
-	.scan('all', () => ['Bookmark'])
-	.get((id: string) => ['Bookmark', id])
-	.build();
+  .$type<BookmarkWithEntry>()
+  .scan("all", () => ["Bookmark"])
+  .get((id: string) => ["Bookmark", id])
+  .build()
