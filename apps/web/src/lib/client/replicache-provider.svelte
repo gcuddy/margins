@@ -1,52 +1,52 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { createReplicache, setReplicache } from './replicache';
-	import { createGet } from '@margins/features/replicache';
-	import { PARTYKIT_HOST } from '$lib/env';
-	import PartySocket from 'partysocket';
+  import { onDestroy, onMount } from "svelte"
+  import { createReplicache, setReplicache } from "./replicache"
+  import { createGet } from "@margins/features/replicache"
+  import { PARTYKIT_HOST } from "$lib/env"
+  import PartySocket from "partysocket"
 
-	export let workspaceID: string;
-	export let token: string;
+  export let workspaceID: string
+  export let token: string
 
-	let conn: PartySocket | null = null;
+  let conn: PartySocket | null = null
 
-	// this could also happen in load function?
-	const rep = createReplicache({
-		token,
-		workspaceID,
-	});
+  // this could also happen in load function?
+  const rep = createReplicache({
+    token,
+    workspaceID,
+  })
 
-	setReplicache(rep);
+  setReplicache(rep)
 
-	onMount(() => {
-		conn = new PartySocket({
-			host: PARTYKIT_HOST,
-			room: workspaceID,
-		});
-		conn.addEventListener('message', (event) => {
-			if (event.data === 'poke') {
-				console.log('got poke, initiating pull');
-				if (!rep) return;
-				rep.pull();
-			}
-		});
-	});
+  onMount(() => {
+    conn = new PartySocket({
+      host: PARTYKIT_HOST,
+      room: workspaceID,
+    })
+    conn.addEventListener("message", event => {
+      if (event.data === "poke") {
+        console.log("got poke, initiating pull")
+        if (!rep) return
+        rep.pull()
+      }
+    })
+  })
 
-	onDestroy(() => {
-		conn?.close();
-		rep.close();
-	});
+  onDestroy(() => {
+    conn?.close()
+    rep.close()
+  })
 
-	const init = createGet(
-		() => '/init',
-		() => rep,
-	)();
+  const init = createGet(
+    () => "/init",
+    () => rep,
+  )()
 </script>
 
 <svelte:window on:focus={() => rep.pull} />
 
 {#if rep && $init}
-	<slot />
+  <slot />
 {:else}
-	Loading...
+  <div class="grid h-screen w-screen place-items-center">Loading...</div>
 {/if}

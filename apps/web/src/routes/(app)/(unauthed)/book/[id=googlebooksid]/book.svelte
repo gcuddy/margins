@@ -41,9 +41,9 @@
   const bestImage = getBestImage(book.volumeInfo.imageLinks)
 </script>
 
-<div class="mx-auto flex max-w-lg flex-col gap-6">
-  <div class="flex gap-8">
-    <div class="relative">
+<div class="mx-auto flex max-w-xl flex-col gap-6">
+  <div class="flex gap-8 items-center">
+    <div class="relative shrink-0 h-fit">
       <img
         src={bestImage}
         alt={book.volumeInfo.title}
@@ -55,7 +55,7 @@
         class="absolute -bottom-2.5 left-5 z-0 h-56 w-36 object-cover opacity-50 blur-md dark:opacity-10 dark:blur-xl"
       />
     </div>
-    <div class="flex flex-col gap-3 py-4">
+    <div class="flex flex-col gap-2">
       <span class="text-2xl font-bold tracking-tight">
         {book.volumeInfo.title}
       </span>
@@ -66,41 +66,57 @@
       {/if}
 
       <div class="text-grayA-11 flex items-center gap-2">
-        {#if book.volumeInfo.publishedDate}
+        <!-- {#if book.volumeInfo.publishedDate}
           <span class="">
             {new Date(book.volumeInfo.publishedDate).getFullYear()}
           </span>
-        {/if}
+        {/if} -->
         {#if book.volumeInfo.authors}
           <span class="">
             {book.volumeInfo.authors.join(", ")}
           </span>
         {/if}
       </div>
-      <div class="text-grayA-11 flex flex-col gap-4">
-        {#if book.volumeInfo.industryIdentifiers}
-          <span class="">
-            ISBN: {book.volumeInfo.industryIdentifiers?.find(
-              id => id.type === "ISBN_13",
-            )?.identifier ??
-              book.volumeInfo.industryIdentifiers?.find(
-                id => id.type === "ISBN_10",
-              )?.identifier ??
-              "N/A"}
-          </span>
-        {/if}
-        {#if book.volumeInfo.pageCount}
-          <span class="">
-            {book.volumeInfo.pageCount} pages
-          </span>
+      <dl class="rt-DataListRoot rt-r-orientation-horizontal rt-r-size-2 rt-Text mt-2">
+        {#if book.volumeInfo.publishedDate}
+          <div class="rt-DataListItem">
+            <dt class="rt-DataListLabel">Published</dt>
+            <dd class="rt-DataListValue">
+              {new Date(book.volumeInfo.publishedDate).getFullYear()}
+            </dd>
+          </div>
         {/if}
         {#if book.volumeInfo.publisher}
-          <span class="">
-            Publisher:
-            {book.volumeInfo.publisher}
-          </span>
+          <div class="rt-DataListItem">
+            <dt class="rt-DataListLabel">Publisher</dt>
+            <dd class="rt-DataListValue">
+              {book.volumeInfo.publisher}
+            </dd>
+          </div>
         {/if}
-      </div>
+        {#if book.volumeInfo.pageCount}
+          <div class="rt-DataListItem">
+            <dt class="rt-DataListLabel">Pages</dt>
+            <dd class="rt-DataListValue">
+              {book.volumeInfo.pageCount}
+            </dd>
+          </div>
+        {/if}
+        {#if book.volumeInfo.industryIdentifiers}
+          <div class="rt-DataListItem">
+            <dt class="rt-DataListLabel">ISBN</dt>
+            <dd class="rt-DataListValue">
+              {book.volumeInfo.industryIdentifiers?.find(
+                id => id.type === "ISBN_13",
+              )?.identifier ??
+                book.volumeInfo.industryIdentifiers?.find(
+                  id => id.type === "ISBN_10",
+                )?.identifier ??
+                "N/A"}
+            </dd>
+          </div>
+        {/if}
+      </dl>
     </div>
   </div>
   <div>

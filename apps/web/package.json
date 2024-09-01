@@ -21,6 +21,7 @@
   "devDependencies": {
     "@melt-ui/pp": "^0.3.2",
     "@playwright/test": "^1.46.1",
+    "@rocicorp/rails": "^0.11.1",
     "@sveltejs/adapter-vercel": "^5.4.3",
     "@sveltejs/kit": "^2.5.25",
     "@sveltejs/vite-plugin-svelte": "^4.0.0-next.6",
