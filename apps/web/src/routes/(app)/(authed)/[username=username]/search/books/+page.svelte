@@ -27,8 +27,6 @@
   // $effect(() => {
   //   console.log({ query })
   // })
-
-  const { isLoading, data: results } = query
 </script>
 
 <div class="p-4">
@@ -37,10 +35,10 @@
     <!-- Clicking this should trigger a search in openlibrary -->
     <Button type="submit">Search</Button>
   </form>
-  {#if isLoading}
+  {#if query.isLoading}
     Loading...
-  {:else if results}
-    {#each results.items ?? [] as result}
+  {:else if query.data}
+    {#each query.data.items ?? [] as result}
       <div>
         <a href={result.volumeInfo.infoLink} rel="noreferrer">
           {result.volumeInfo.title}
