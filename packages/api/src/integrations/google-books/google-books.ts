@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Metric } from "effect"
 import { BuildGoogleBooksUrl } from "./build-url.js"
 import {
   HttpClient,
@@ -16,6 +16,7 @@ const make = Effect.gen(function* () {
       HttpClient.fetchOk,
       Effect.andThen(HttpClientResponse.schemaBodyJson(GoogleBookVolume)),
       Effect.scoped,
+      Effect.withSpan("google-books-api-get"),
     )
   }
 
@@ -25,6 +26,14 @@ const make = Effect.gen(function* () {
       HttpClient.fetchOk,
       Effect.andThen(HttpClientResponse.schemaBodyJson(GoogleBookVolumes)),
       Effect.scoped,
+      Metric.trackAll(
+        Metric.counter("google-books-api_calls", {
+          bigint: true,
+          incremental: true,
+        }),
+        1n,
+      ),
+      Effect.withSpan("google-books-api-search"),
     )
   }
 
