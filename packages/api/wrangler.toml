@@ -1,4 +1,4 @@
-name = "my-partyserver-app"
+name = "margins-partyserver"
 main = "src/server/index.ts"
 compatibility_date = "2024-09-02"
 
@@ -6,9 +6,9 @@ compatibility_date = "2024-09-02"
 GOOGLE_API_URL = "https://www.googleapis.com"
 
 [[durable_objects.bindings]]
-name = "MyServer"
-class_name = "MyServer"
+name = "MarginsServer"
+class_name = "MarginsServer"
 
 [[migrations]]
 tag = "v1" # Should be unique for each entry
-new_classes = ["MyServer"]
+new_classes = ["MarginsServer"]

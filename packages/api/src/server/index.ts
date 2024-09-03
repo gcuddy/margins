@@ -13,12 +13,12 @@ type Env = {
   DATABASE_HOST: string
   DATABASE_PASSWORD: string
   DATABASE_USERNAME: string
-  MyServer: DurableObjectNamespace<MyServer>
+  MarginsServer: DurableObjectNamespace<MarginsServer>
   GOOGLE_BOOKS_API_KEY: string
 }
 
 // Define your Server - should I have sep servers for Sync etc? Or one for everything?
-export class MyServer extends Server<Env> {
+export class MarginsServer extends Server<Env> {
   onConnect(connection: Connection) {
     console.log("Connected", connection.id, "to server", this.name)
   }
@@ -37,7 +37,7 @@ export class MyServer extends Server<Env> {
     console.log("onRequest", request)
     const ConfigLive = pipe(
       this.env,
-      ({ MyServer, ...rest }) => rest,
+      ({ MarginsServer, ...rest }) => rest,
       Record.toEntries,
       env => new Map(env),
       ConfigProvider.fromMap,
@@ -59,9 +59,9 @@ export class MyServer extends Server<Env> {
 export default {
   async fetch(request: Request, env: Env) {
     console.log("fetch", request)
-    return await (
-      await getServerByName(env.MyServer, "MyServer")
-    ).fetch(request)
+    return (await getServerByName(env.MarginsServer, "MarginsServer")).fetch(
+      request,
+    )
     return (
       (await routePartykitRequest(request, env)) ||
       new Response("Not Found", { status: 404 })
