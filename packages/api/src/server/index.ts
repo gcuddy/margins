@@ -4,10 +4,10 @@ import {
   Server,
   type Connection,
 } from "partyserver"
-import { makeServerRuntime, ServerRuntime } from "./main"
+import { makeServerRuntime } from "./main"
 import { router } from "./router"
 import { HttpApp } from "@effect/platform"
-import { ConfigProvider, Effect, Layer, pipe, Record } from "effect"
+import { ConfigProvider, pipe, Record } from "effect"
 
 type Env = {
   DATABASE_HOST: string
