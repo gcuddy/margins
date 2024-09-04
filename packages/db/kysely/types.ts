@@ -550,12 +550,14 @@ export type ReplicacheClient = {
   clientGroupId: string
   clientVersion: number
   lastMutationId: number
+  lastModified: Timestamp
 }
 export type ReplicacheClientGroup = {
   id: string
   createdAt: Generated<Timestamp>
   updatedAt: Timestamp
   deletedAt: Timestamp | null
+  userId: string
   cvrVersion: number
   clientVersion: number
 }

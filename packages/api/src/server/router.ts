@@ -20,4 +20,4 @@ export const router = HttpRouter.empty
     HttpRouter.use(flow(HttpMiddleware.cors(), HttpMiddleware.logger)),
   )
   //  TODO: Can I use a runtime to avoid this?
-  .pipe(Effect.tapErrorCause(e => Effect.logError(e)))
+  .pipe(Effect.tapErrorCause(Effect.logError))

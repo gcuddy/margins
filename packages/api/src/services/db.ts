@@ -1,8 +1,6 @@
 import * as SqlKysely from "@effect/sql-kysely/Kysely"
 import { PlanetScaleDialect } from "kysely-planetscale"
 
-
-
 import {
   Config,
   ConfigProvider,
@@ -30,15 +28,16 @@ const make = Effect.gen(function* () {
       password: Redacted.value(password),
     }),
   })
-}).pipe(
-  Effect.withConfigProvider(
-    // TODO: probably don't want to use fromEnv - instead
-    ConfigProvider.fromEnv().pipe(
-      ConfigProvider.nested("database"),
-      ConfigProvider.constantCase,
-    ),
-  ),
-)
+})
+// .pipe(
+//   Effect.withConfigProvider(
+//     // TODO: probably don't want to use fromEnv - instead
+//     ConfigProvider.fromEnv().pipe(
+//       ConfigProvider.nested("database"),
+//       ConfigProvider.constantCase,
+//     ),
+//   ),
+// )
 
 export class DB extends Context.Tag("@margins/KyselyDB")<
   DB,

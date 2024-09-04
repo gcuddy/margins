@@ -7,7 +7,7 @@ import {
 import { makeServerRuntime } from "./main"
 import { router } from "./router"
 import { HttpApp } from "@effect/platform"
-import { ConfigProvider, pipe, Record } from "effect"
+import { ConfigProvider, Effect, pipe, Record } from "effect"
 
 type Env = {
   DATABASE_HOST: string
@@ -17,8 +17,22 @@ type Env = {
   GOOGLE_BOOKS_API_KEY: string
 }
 
+const makeConfig = (env: Env) => {
+  return pipe(
+    env,
+    ({ MarginsServer, ...rest }) => rest,
+    Record.toEntries,
+    env => new Map(env),
+    ConfigProvider.fromMap,
+  )
+}
+
 // Define your Server - should I have sep servers for Sync etc? Or one for everything?
 export class MarginsServer extends Server<Env> {
+  private runtime?: Awaited<
+    ReturnType<ReturnType<typeof makeServerRuntime>["runtime"]>
+  >
+
   onConnect(connection: Connection) {
     console.log("Connected", connection.id, "to server", this.name)
   }
@@ -29,30 +43,25 @@ export class MarginsServer extends Server<Env> {
     this.broadcast(message, [connection.id])
   }
 
-  onStart() {
-    console.log("onStart", this.env)
+  async onStart() {
+    await this.makeRuntime()
+  }
+
+  async makeRuntime() {
+    const Runtime = makeConfig(this.env).pipe(makeServerRuntime)
+    this.runtime = await Runtime.runtime()
   }
 
   async onRequest(request: Request): Promise<Response> {
-    console.log("onRequest", request)
-    const ConfigLive = pipe(
-      this.env,
-      ({ MarginsServer, ...rest }) => rest,
-      Record.toEntries,
-      env => new Map(env),
-      ConfigProvider.fromMap,
-    )
-    const t0 = Date.now()
-    // console.log("makeServerRuntime", t0)
-    // TODO: maybe we should do this onStart and store it in class stateful instead of creating it every time?
-    const runtime = await makeServerRuntime(ConfigLive).runtime()
-    console.log("makeServerRuntime", Date.now() - t0)
-    console.log("got to after runtime")
-    // TODO: refactor this to be elsewhere?
-    console.log({ ConfigLive })
-    // return new Response("Hello, world!")
-    return pipe(router, HttpApp.toWebHandlerRuntime(runtime))(request)
-    // return handler(request)
+    // IDK about this pattern!
+    if (!this.runtime) {
+      await this.makeRuntime()
+    }
+    return pipe(
+      router,
+      Effect.tapErrorCause(Effect.logError),
+      HttpApp.toWebHandlerRuntime(this.runtime!),
+    )(request)
   }
 }
 

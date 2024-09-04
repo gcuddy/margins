@@ -37,7 +37,10 @@ model ReplicacheClientGroup {
     updatedAt DateTime
     deletedAt DateTime?
 
-    cvrVersion    Int
+    userId     String
+    cvrVersion Int
+
+    // @deprecated
     clientVersion Int
 
     clients ReplicacheClient[]
@@ -57,6 +60,7 @@ model ReplicacheClient {
     clientGroupId  String
     clientVersion  Int
     lastMutationId Int
+    lastModified   DateTime
 
     @@index([clientGroupId])
     @@map("replicache_client")
