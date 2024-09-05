@@ -7,7 +7,7 @@ import {
 import { makeServerRuntime } from "./main"
 import { router } from "./router"
 import { HttpApp } from "@effect/platform"
-import { ConfigProvider, Effect, pipe, Record } from "effect"
+import { ConfigProvider, pipe, Record } from "effect"
 
 type Env = {
   DATABASE_HOST: string
@@ -59,8 +59,9 @@ export class MarginsServer extends Server<Env> {
     }
     return pipe(
       router,
-      Effect.tapErrorCause(Effect.logError),
-      HttpApp.toWebHandlerRuntime(this.runtime!),
+      HttpApp.toWebHandler,
+      // Effect.tapErrorCause(Effect.logError),
+      // HttpApp.toWebHandlerRuntime(this.runtime!),
     )(request)
   }
 }
@@ -68,6 +69,7 @@ export class MarginsServer extends Server<Env> {
 export default {
   async fetch(request: Request, env: Env) {
     console.log("fetch", request)
+    // TODO: poke backend (layer), figuring out how to get
     return (await getServerByName(env.MarginsServer, "MarginsServer")).fetch(
       request,
     )

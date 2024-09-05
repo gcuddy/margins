@@ -1,8 +1,6 @@
-import { Array, Context, Effect, Match, Option } from "effect"
-import { DB } from "./db"
+import { Array, Context, Effect, Layer, Option } from "effect"
+import { DB, DBError } from "./db"
 import { Schema } from "@effect/schema"
-import type { Transaction } from "kysely"
-import type { KyselyDB } from "@margins/db"
 import { DatabaseTransactional } from "./db-transaction"
 
 export class Mutation extends Schema.Class<Mutation>("Mutation")({
@@ -52,12 +50,31 @@ export class PullResponse extends Schema.Class<PullResponse>("PullResponse")({
   patch: Schema.Array(patchOperation),
 }) {}
 
+export class UserData extends Context.Tag("core/userData")<
+  UserData,
+  {
+    userID: string
+  }
+>() {}
+
 const make = Effect.gen(function* () {
   const db = yield* DB
+  const { userID } = yield* UserData
   // const transaction = yield* DatabaseTransactional
   // TODO from here - use transaction
 
-  const push = (pushRequest: PushRequest) => {}
+  const push = (pushRequest: PushRequest) => {
+    // TODO: poke backend (layer)
+    return Effect.forEach(
+      pushRequest.mutations,
+      mutation =>
+        processMutation(userID, pushRequest.clientGroupID, mutation, false),
+      // TODO: catch errors and return them
+      // TODO: retry logic
+    ).pipe(
+      Effect.catchTag("SqlError", () => new DBError({ cause: "SqlError" })),
+    )
+  }
 
   return {
     push,
@@ -214,7 +231,9 @@ const putClient = (client: ClientRecord) =>
 export class Replicache extends Context.Tag("core/replicache")<
   Replicache,
   Effect.Effect.Success<typeof make>
->() {}
+>() {
+  static readonly Live = Layer.scoped(this, make)
+}
 
 class ClientGroupRecord extends Schema.Class<ClientGroupRecord>(
   "ClientGroupRecord",
@@ -232,4 +251,11 @@ class ClientRecord extends Schema.Class<ClientRecord>("ClientRecord")({
 
 export class ReplicacheClientGroup extends Context.Tag(
   "core/replicacheClientGroup",
-)<ReplicacheClientGroup>() {}
+)<
+  ReplicacheClientGroup,
+  {
+    userID: string
+    clientGroupID: string
+    cvrVersion: number
+  }
+>() {}

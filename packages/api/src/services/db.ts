@@ -3,13 +3,13 @@ import { PlanetScaleDialect } from "kysely-planetscale"
 
 import {
   Config,
-  ConfigProvider,
   Context,
   Effect,
   Layer,
   Redacted,
 } from "effect"
 import type { KyselyDB as Database } from "@margins/db"
+import { Schema } from "@effect/schema"
 
 const make = Effect.gen(function* () {
   const host = yield* Config.redacted("host")
@@ -45,3 +45,5 @@ export class DB extends Context.Tag("@margins/KyselyDB")<
 >() {
   static readonly Live = Layer.effect(this, make)
 }
+
+export class DBError extends Schema.TaggedError<DBError>()("DBError", {}) {}
