@@ -70,6 +70,9 @@ export default {
   async fetch(request: Request, env: Env) {
     console.log("fetch", request)
     // TODO: poke backend (layer), figuring out how to get
+    // Todo: server should be either user, workspace, session, or shared list. need to figure out how...
+    // partysocket should pass room, which should go to here - session.id, user.id, or whatever it needs to be...
+    // is it possible to do multiple though? so session.id server talks to list.id server...
     return (await getServerByName(env.MarginsServer, "MarginsServer")).fetch(
       request,
     )

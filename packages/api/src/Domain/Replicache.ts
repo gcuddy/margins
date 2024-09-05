@@ -1,0 +1,84 @@
+import { Model } from "@effect/sql"
+import { Schema } from "@effect/schema"
+import { UserId } from "./User"
+
+export const ReplicacheClientGroupId = Schema.String.pipe(
+  Schema.brand("ReplicacheClientGroupId"),
+)
+export type ReplicacheClientGroupId = typeof ReplicacheClientGroupId.Type
+
+export class ReplicacheClientGroup extends Model.Class<ReplicacheClientGroup>(
+  "ReplicacheClientGroup",
+)({
+  id: Model.Generated(ReplicacheClientGroupId),
+  cvrVersion: Schema.Number,
+  userID: UserId,
+  createdAt: Model.DateTimeInsert,
+  updatedAt: Model.DateTimeUpdate,
+}) {}
+
+export const ReplicacheClientId = Schema.String.pipe(
+  Schema.brand("ReplicacheClientId"),
+)
+export type ReplicacheClientId = typeof ReplicacheClientId.Type
+
+export class ReplicacheClient extends Model.Class<ReplicacheClient>(
+  "ReplicacheClient",
+)({
+  id: Model.Generated(ReplicacheClientId),
+  clientGroupID: ReplicacheClientGroupId,
+  lastMutationID: Schema.Number,
+  createdAt: Model.DateTimeInsert,
+  updatedAt: Model.DateTimeUpdate,
+}) {}
+
+export class Mutation extends Schema.Class<Mutation>("Mutation")({
+  id: Schema.Number,
+  clientID: ReplicacheClientId,
+  name: Schema.String,
+  args: Schema.Any,
+}) {}
+
+export class PushRequest extends Schema.Class<PushRequest>("PushRequest")({
+  clientGroupID: ReplicacheClientGroupId,
+  mutations: Schema.Array(Mutation),
+}) {}
+
+export class Cookie extends Schema.Class<Cookie>("Cookie")({
+  order: Schema.Number,
+  cvrID: Schema.String,
+}) {}
+
+export class PullRequest extends Schema.Class<PullRequest>("PullRequest")({
+  clientGroupID: ReplicacheClientGroupId,
+  cookie: Schema.NullishOr(Cookie),
+}) {}
+
+export const patchOperation = Schema.Union(
+  Schema.Struct({
+    op: Schema.Literal("put"),
+    key: Schema.String,
+    value: Schema.Unknown,
+  }),
+  Schema.Struct({
+    op: Schema.Literal("del"),
+    key: Schema.String,
+  }),
+  Schema.Struct({
+    op: Schema.Literal("clear"),
+  }),
+)
+
+export class PullResponse extends Schema.Class<PullResponse>("PullResponse")({
+  cookie: Cookie,
+  lastMutationIDChanges: Schema.Record({
+    key: Schema.String,
+    value: Schema.Number,
+  }),
+  patch: Schema.Array(patchOperation),
+}) {}
+
+export class FutureMutationError extends Schema.TaggedError<FutureMutationError>()(
+  "FutureMutationError",
+  {},
+) {}

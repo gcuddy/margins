@@ -10,6 +10,7 @@
     "verbatimModuleSyntax": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "module": "preserve",
     "noEmit": true,
     "lib": ["es2022"],
