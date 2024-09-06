@@ -7,7 +7,7 @@ import {
 import { makeServerRuntime } from "./main"
 import { router } from "./router"
 import { HttpApp } from "@effect/platform"
-import { ConfigProvider, pipe, Record } from "effect"
+import { ConfigProvider, Effect, pipe, Record } from "effect"
 
 type Env = {
   DATABASE_HOST: string
@@ -35,10 +35,14 @@ export class MarginsServer extends Server<Env> {
 
   onConnect(connection: Connection) {
     console.log("Connected", connection.id, "to server", this.name)
+    const a = this.getConnections()
   }
 
   onMessage(connection: Connection, message: string) {
     console.log("Message from", connection.id, ":", message)
+    const x = getServerByName(this.env.MarginsServer, "MarginsServer").then(
+      server => server.broadcast(message, [connection.id]),
+    )
     // Send the message to every other connection
     this.broadcast(message, [connection.id])
   }
@@ -59,10 +63,17 @@ export class MarginsServer extends Server<Env> {
     }
     return pipe(
       router,
-      HttpApp.toWebHandler,
-      // Effect.tapErrorCause(Effect.logError),
-      // HttpApp.toWebHandlerRuntime(this.runtime!),
+      Effect.tapErrorCause(Effect.logError),
+      HttpApp.toWebHandlerRuntime(this.runtime!),
     )(request)
+
+    router
+    // return pipe(
+    //   router,
+    //   // HttpApp.toWebHandler,
+    //   Effect.tapErrorCause(Effect.logError),
+    //   HttpApp.toWebHandlerRuntime(this.runtime!),
+    // )(request)
   }
 }
 

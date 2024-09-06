@@ -55,7 +55,9 @@ export class UserData extends Context.Tag("core/userData")<
   {
     userID: string
   }
->() {}
+>() {
+  static readonly Live = Layer.succeed(this, { userID: "1" })
+}
 
 const make = Effect.gen(function* () {
   const db = yield* DB

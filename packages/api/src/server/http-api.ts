@@ -3,16 +3,32 @@ import {
   HttpApiBuilder,
   HttpApiEndpoint,
   HttpApiGroup,
+  HttpApiSecurity,
+  HttpApiSwagger,
   HttpApp,
+  HttpPlatform,
+  HttpRouter,
+  HttpServerResponse,
 } from "@effect/platform"
 import { Schema } from "@effect/schema"
+import { Lucia, type Adapter } from "lucia"
 import {
   AuthorizationError,
   PushRequest,
   Replicache,
+  UserData,
 } from "../services/Replicache"
-import { DateTime, Effect, Layer, pipe } from "effect"
-import { DBError } from "../services/db"
+import {
+  Context,
+  DateTime,
+  Effect,
+  Layer,
+  ManagedRuntime,
+  Option,
+  pipe,
+  Redacted,
+} from "effect"
+import { DB, DBError } from "../services/db"
 import { DatabaseTransactional } from "../services/db-transaction"
 import { router } from "./router"
 
@@ -96,20 +112,85 @@ export const SyncApiLive = HttpApiBuilder.group(Api, "sync", handlers =>
 ).pipe(
   Layer.provide(Replicache.Live),
   Layer.provide(DatabaseTransactional.Live),
+  Layer.provide(DB.Live),
+  Layer.provide(UserData.Live),
 )
 
-const MyApiLive = HttpApiBuilder.api(Api).pipe(Layer.provide(SyncApiLive))
+const ApiLive = HttpApiBuilder.api(Api).pipe(Layer.provide(SyncApiLive))
+const EnvLiveSwagger = HttpApiSwagger.layer()
 
-const app = HttpApiBuilder.httpApp.pipe(Effect.provide(MyApiLive))
+// const HttpPlatformLive = Layer.effect(HttpPlatform.HttpPlatform)
 
-const a = app.pipe(
-  Effect.andThen(e => HttpApp.toWebHandler(e)),
-  Effect.provideService(HttpApiBuilder.Router, router),
+const EnvLive = Layer.mergeAll(ApiLive, HttpApiBuilder.Router.Live)
+
+const runtime = ManagedRuntime.make(EnvLive)
+
+// const handlerPromise = Effect.gen(function*() {
+//   const app = yield* HttpApiBuilder.httpApp
+//   return HttpApp.toWebHandler(app)
+// }).pipe(runtime.runPromise)
+
+const HttpPlatformLive = HttpPlatform.make({
+  fileResponse() {
+    return HttpServerResponse.empty()
+  },
+  fileWebResponse(...args) {
+    console.log("fileWebResponse", args)
+    return HttpServerResponse.empty()
+  },
+})
+
+// runtime.runSync(handler)
+
+const app = HttpApiBuilder.httpApp.pipe(Effect.provide(ApiLive))
+
+const x = HttpApiBuilder.serve()
+// const b = HttpApiSwagger.layer()
+// const a = app.pipe(
+//   Effect.andThen(e => HttpApp.toWebHandler(e)),
+//   Effect.provideService(HttpApiBuilder.Router, router),
+// )
+
+// Effect.runPromise(a)
+
+// pipe(app, HttpApp.toWebHandler)
+
+class CurrentUser extends Context.Tag("CurrentUser")<CurrentUser, User>() {}
+
+declare const adapter: Adapter
+
+export const lucia = new Lucia(adapter, {
+  sessionCookie: {
+    attributes: {
+      // set to `true` when using HTTPS
+      secure: process.env.NODE_ENV === "production",
+    },
+  },
+})
+
+class LuciaLayer extends Context.Tag("Lucia")<LuciaLayer, Lucia>() {}
+
+const b = HttpApiSecurity.bearer
+const m = HttpApiBuilder.middlewareSecurity(b, CurrentUser, token =>
+  // TODO: here we would use Lucia to get user from token (Validate) https://lucia-auth.com/guides/validate-bearer-tokens
+  // TODO: want this to be Effect<CurrentUser, AuthorizationError>
+  Effect.gen(function* () {
+    const lucia = yield* LuciaLayer
+    const user = Option.fromNullable(
+      lucia.readBearerToken(Redacted.value(token)),
+    )
+    // or Option.fromNullable
+    if (!user) {
+      yield* new AuthorizationError("No user found")
+    }
+    Effect.orDie
+    return {
+      createdAt: DateTime.unsafeNow(),
+      id: 1,
+      name: "",
+    }
+  }),
 )
-
-Effect.runPromise(a)
-
-pipe(app, HttpApp.toWebHandler)
 
 // const b = app.pipe(
 //   Effect.flatMap(e => HttpApp.toWebHandler(e))
