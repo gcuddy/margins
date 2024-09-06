@@ -8,12 +8,14 @@ import { makeServerRuntime } from "./main"
 import { router } from "./router"
 import { HttpApp } from "@effect/platform"
 import { ConfigProvider, Effect, pipe, Record } from "effect"
+import { CurrentUser } from "../Domain/User"
+import { DurableObjectAdapter } from "../adapters/lucia-do"
 
 type Env = {
+  MarginsServer: DurableObjectNamespace<MarginsServer>
   DATABASE_HOST: string
   DATABASE_PASSWORD: string
   DATABASE_USERNAME: string
-  MarginsServer: DurableObjectNamespace<MarginsServer>
   GOOGLE_BOOKS_API_KEY: string
 }
 
@@ -29,9 +31,12 @@ const makeConfig = (env: Env) => {
 
 // Define your Server - should I have sep servers for Sync etc? Or one for everything?
 export class MarginsServer extends Server<Env> {
-  private runtime?: Awaited<
-    ReturnType<ReturnType<typeof makeServerRuntime>["runtime"]>
-  >
+  private ServerRuntime: ReturnType<typeof makeServerRuntime>
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env)
+    this.ServerRuntime = pipe(makeConfig(env), makeServerRuntime)
+  }
 
   onConnect(connection: Connection) {
     console.log("Connected", connection.id, "to server", this.name)
@@ -53,18 +58,18 @@ export class MarginsServer extends Server<Env> {
 
   async makeRuntime() {
     const Runtime = makeConfig(this.env).pipe(makeServerRuntime)
-    this.runtime = await Runtime.runtime()
+    // this.runtime = await Runtime.runtime()
   }
 
   async onRequest(request: Request): Promise<Response> {
-    // IDK about this pattern!
-    if (!this.runtime) {
-      await this.makeRuntime()
-    }
+    const runtime = await this.ServerRuntime.runtime()
+    const luciaAdapter = new DurableObjectAdapter(this.ctx)
     return pipe(
       router,
+      // TODO: get current user from session
+      Effect.provide(CurrentUser.Test),
       Effect.tapErrorCause(Effect.logError),
-      HttpApp.toWebHandlerRuntime(this.runtime!),
+      HttpApp.toWebHandlerRuntime(runtime),
     )(request)
 
     router

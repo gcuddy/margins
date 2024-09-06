@@ -1,5 +1,6 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
+import { Context, DateTime, Layer } from "effect"
 // import { Context } from "effect"
 
 export const UserId = Schema.Number.pipe(Schema.brand("UserId"))
@@ -12,3 +13,17 @@ export class User extends Model.Class<User>("User")({
   createdAt: Model.DateTimeInsert,
   updatedAt: Model.DateTimeUpdate,
 }) {}
+
+export class CurrentUser extends Context.Tag("Domain/User/CurrentUser")<
+  CurrentUser,
+  User
+>() {
+  static readonly Test = Layer.succeed(
+    this,
+    User.make({
+      createdAt: DateTime.unsafeNow(),
+      updatedAt: DateTime.unsafeNow(),
+      id: UserId.make(1),
+    }),
+  )
+}

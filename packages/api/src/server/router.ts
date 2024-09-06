@@ -13,7 +13,7 @@ import { sync } from "./sync"
 export const router = HttpRouter.empty.pipe(
   HttpRouter.get("/", HttpServerResponse.text("content 1")),
   HttpRouter.get("/foo", HttpServerResponse.text("content 2")),
-  // HttpRouter.mount("/sync", sync),
+  HttpRouter.mount("/sync", sync),
   HttpRouter.post("/rpc", HttpRpcRouterNoStream.toHttpApp(appRouter)),
   HttpRouter.options("*", HttpServerResponse.empty()),
   HttpRouter.use(flow(HttpMiddleware.cors(), HttpMiddleware.logger)),

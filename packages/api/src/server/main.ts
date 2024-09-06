@@ -1,5 +1,6 @@
 import { type ConfigProvider, Layer, ManagedRuntime } from "effect"
 import { GoogleBooksApi } from "../integrations/google-books/google-books"
+import { Replicache } from "../Replicache"
 // import { ConfigProviderLayer } from "./config"
 
 const MainLayer = Layer.mergeAll(GoogleBooksApi.Live)

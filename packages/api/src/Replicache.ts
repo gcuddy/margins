@@ -1,19 +1,18 @@
 import { Array, Context, Effect, Layer, Option, pipe } from "effect"
-import { DB, DBError } from "./db"
 import { Schema } from "@effect/schema"
-import { DatabaseTransactional } from "./db-transaction"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import type { UserId } from "./Domain/User.js"
+import type { ReplicacheClientId } from "./Domain/Replicache.js"
 import {
   ReplicacheClient,
   ReplicacheClientGroup,
-  ReplicacheClientId,
   type Mutation,
   type PushRequest,
   type ReplicacheClientGroupId,
 } from "./Domain/Replicache.js"
 import { ReplicacheClientGroupRepo } from "./Replicache/ClientGroupRepo"
 import { ReplicacheClientRepo } from "./Replicache/ClientRepo"
+import { SqlLive } from "./Sql.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -205,99 +204,15 @@ export class FutureMutationError extends Schema.TaggedError<FutureMutationError>
   {},
 ) {}
 
-// TODO: branded types via Schema
-// TODO: move these to domain repository (ReplicacheClientGroup, ReplicacheClient)
-const getClientGroup = (clientGroupID: string, userID: UserId) =>
-  Effect.gen(function* () {
-    const transaction = yield* DatabaseTransactional
-    const clientGroupRows = yield* transaction
-      .selectFrom("replicache_client_group")
-      .select(["userId", "cvrVersion"])
-      .where("id", "=", clientGroupID)
-
-    const head = Array.head(clientGroupRows)
-
-    if (Option.isSome(head) && head.value.userId !== userID) {
-      yield* new AuthorizationError("User ID mismatch")
-    }
-
-    return {
-      id: clientGroupID,
-      userID,
-      cvrVersion: Option.isSome(head) ? head.value.cvrVersion : 0,
-    }
-  })
-
-const putClientGroup = (clientGroup: ClientGroupRecord) =>
-  Effect.gen(function* () {
-    const transaction = yield* DatabaseTransactional
-    yield* transaction
-      .insertInto("replicache_client_group")
-      .values({
-        id: clientGroup.id,
-        userId: clientGroup.userID,
-        cvrVersion: clientGroup.cvrVersion,
-        // TODO: lastModified?
-        updatedAt: new Date(),
-        // TODO: DEPRECATED
-        clientVersion: 0,
-      })
-      .onDuplicateKeyUpdate({
-        userId: clientGroup.userID,
-        cvrVersion: clientGroup.cvrVersion,
-        updatedAt: new Date(),
-      })
-  })
-
-const getClient = (clientID: string, clientGroupID: string) =>
-  Effect.gen(function* () {
-    const transaction = yield* DatabaseTransactional
-    const clientRows = yield* transaction
-      .selectFrom("replicache_client")
-      .select(["clientGroupId", "lastMutationId"])
-      .where("id", "=", clientID)
-
-    const head = Array.head(clientRows)
-
-    if (Option.isSome(head) && head.value.clientGroupId !== clientGroupID) {
-      yield* new AuthorizationError("Client does not belong to client group")
-    }
-
-    return {
-      id: clientID,
-      clientGroupID,
-      lastMutationID: Option.isSome(head) ? head.value.lastMutationId : 0,
-    }
-  })
-
-// TODO: decide between lastModified and updatedAt
-const putClient = (client: ClientRecord) =>
-  Effect.gen(function* () {
-    const transaction = yield* DatabaseTransactional
-    yield* transaction
-      .insertInto("replicache_client")
-      .values({
-        id: client.id,
-        clientGroupId: client.clientGroupID,
-        lastMutationId: client.lastMutationID,
-        lastModified: new Date(),
-        updatedAt: new Date(),
-
-        // TODO: DEPRECATED
-        clientVersion: 0,
-      })
-      .onDuplicateKeyUpdate({
-        lastMutationId: client.lastMutationID,
-        lastModified: new Date(),
-        updatedAt: new Date(),
-      })
-  })
-
 export class Replicache extends Context.Tag("core/replicache")<
   Replicache,
   Effect.Effect.Success<typeof make>
 >() {
-  static readonly Live = Layer.scoped(this, make)
+  static readonly Live = Layer.scoped(this, make).pipe(
+    Layer.provide(SqlLive),
+    Layer.provide(ReplicacheClientGroupRepo.Live),
+    Layer.provide(ReplicacheClientRepo.Live),
+  )
 }
 
 class ClientGroupRecord extends Schema.Class<ClientGroupRecord>(
