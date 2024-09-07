@@ -3,7 +3,7 @@ import { Model } from "@effect/sql"
 import { Context, DateTime, Layer } from "effect"
 // import { Context } from "effect"
 
-export const UserId = Schema.Number.pipe(Schema.brand("UserId"))
+export const UserId = Schema.String.pipe(Schema.brand("UserId"))
 export type UserId = typeof UserId.Type
 export class User extends Model.Class<User>("User")({
   id: Model.Generated(UserId),
@@ -23,7 +23,14 @@ export class CurrentUser extends Context.Tag("Domain/User/CurrentUser")<
     User.make({
       createdAt: DateTime.unsafeNow(),
       updatedAt: DateTime.unsafeNow(),
-      id: UserId.make(1),
+      id: UserId.make("1"),
     }),
   )
 }
+
+export class UserNotFound extends Schema.TaggedError<UserNotFound>()(
+  "UserNotFound",
+  {
+    id: UserId,
+  },
+) {}

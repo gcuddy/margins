@@ -36,9 +36,9 @@ export interface PlanetscaleClient extends Client.SqlClient {
 }
 
 export interface PlanetscaleClientConfig {
-  readonly host?: string | undefined
-  readonly username?: string | undefined
-  readonly password?: Redacted.Redacted | undefined
+  readonly host: string
+  readonly username: string
+  readonly password: Redacted.Redacted
 
   readonly prepareCacheSize?: number | undefined
   readonly prepareCacheTTL?: Duration.DurationInput | undefined
@@ -85,11 +85,13 @@ export const make = (options: PlanetscaleClientConfig) =>
     // eslint-disable-next-line require-yield
     const makeConnection = Effect.gen(function* () {
       const client = new PClient({
+        fetch: (url, init) => {
+          if (init) delete init["cache"]
+          return fetch(url, init)
+        },
         host: options.host,
         username: options.username,
-        password: options.password
-          ? Redacted.value(options.password)
-          : undefined,
+        password: Redacted.value(options.password),
       })
       client.connection()
       //   const prepareCache = yield* Cache.make({
