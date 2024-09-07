@@ -61,9 +61,12 @@ export class MarginsServer extends Server<Env> {
     // this.runtime = await Runtime.runtime()
   }
 
+  async onBeforeRequest() {}
+
   async onRequest(request: Request): Promise<Response> {
     const runtime = await this.ServerRuntime.runtime()
-    const luciaAdapter = new DurableObjectAdapter(this.ctx)
+    // const luciaAdapter = new DurableObjectAdapter(this.ctx)
+    // TODO: Lucia and get current user and authenticate
     return pipe(
       router,
       // TODO: get current user from session
@@ -85,6 +88,7 @@ export class MarginsServer extends Server<Env> {
 export default {
   async fetch(request: Request, env: Env) {
     console.log("fetch", request)
+    // TODO: auth layer here
     // TODO: poke backend (layer), figuring out how to get
     // Todo: server should be either user, workspace, session, or shared list. need to figure out how...
     // partysocket should pass room, which should go to here - session.id, user.id, or whatever it needs to be...

@@ -7,6 +7,9 @@ import type {
   RegisteredDatabaseUserAttributes,
   UserId,
 } from "lucia"
+import { PlanetScaleAdapter } from "@lucia-auth/adapter-mysql"
+import type { Connection } from "@planetscale/database"
+import { Option } from "effect"
 
 class Session extends Schema.Class<Session>("adapters/Lucia/Session")({
   id: Schema.String,
@@ -14,10 +17,20 @@ class Session extends Schema.Class<Session>("adapters/Lucia/Session")({
   expiresAt: Schema.Number,
 }) {}
 
-export class DurableObjectAdapter implements Adapter {
-  private readonly schema = Schema.decodeUnknownSync(Session)
+// Each durable object is a user? I think a user. We can also spin up per session, or per workspace, or per list.
 
-  constructor(private readonly ctx: DurableObjectState) {}
+// TODO: extend MySqlAdapter, overwrite
+// TODO: allow other Adapters beside PlanetScaleAdapter
+export class DurableObjectAdapter extends PlanetScaleAdapter {
+  private readonly schema = Schema.decodeUnknownOption(Session)
+
+  constructor(
+    private readonly ctx: DurableObjectState,
+    connection: ConstructorParameters<typeof PlanetScaleAdapter>[0],
+    tableNames: ConstructorParameters<typeof PlanetScaleAdapter>[1],
+  ) {
+    super(connection, tableNames)
+  }
 
   //   TODO: should we get the server here with getServerByName?
 
@@ -29,12 +42,26 @@ export class DurableObjectAdapter implements Adapter {
     await this.ctx.storage.delete(`user:${userId}`)
   }
 
-  private async getSession(sessionId: string): Promise<DatabaseSession | null> {
-    // TODO: effect schema
+  public async updateSessionExpiration(
+    sessionId: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    // TODO: alarm?
+    // Transaction?
+    const session = await this.getSession_(sessionId)
+    if (!session) return
+    await this.ctx.storage.put<Session>(`session:${sessionId}`, {
+      ...session,
+      expiresAt: expiresAt.getTime(),
+    })
+  }
+
+  public async getSession_(sessionId: string): Promise<Session | null> {
     const result = await this.ctx.storage.get(`session:${sessionId}`)
-    const a = this.schema(result)
-    if (!result) return null
-    return result as DatabaseSession
+    return Option.match(this.schema(result), {
+      onNone: () => null,
+      onSome: session => session,
+    })
   }
 
   //   getSessionAndUser(
