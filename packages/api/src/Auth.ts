@@ -53,7 +53,9 @@ export class LuciaLayer extends Context.Tag("Auth/Lucia")<
   LuciaLayer,
   Effect.Effect.Success<typeof make>
 >() {
-  static readonly Live = Layer.effect(this, make)
+  static readonly Live = Layer.effect(this, make).pipe(
+    Layer.provide(LuciaAdapterLayer.Live),
+  )
 }
 
 export class AuthorizationError extends Schema.TaggedError<AuthorizationError>()(

@@ -34,7 +34,9 @@ export class MarginsServer extends Server<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
-    this.ServerRuntime = pipe(makeConfig(env), makeServerRuntime)
+    this.ServerRuntime = pipe(makeConfig(env), config =>
+      makeServerRuntime(config, ctx),
+    )
   }
 
   onConnect(connection: Connection) {
@@ -49,15 +51,6 @@ export class MarginsServer extends Server<Env> {
     )
     // Send the message to every other connection
     this.broadcast(message, [connection.id])
-  }
-
-  async onStart() {
-    await this.makeRuntime()
-  }
-
-  async makeRuntime() {
-    const Runtime = makeConfig(this.env).pipe(makeServerRuntime)
-    // this.runtime = await Runtime.runtime()
   }
 
   async onBeforeRequest() {}

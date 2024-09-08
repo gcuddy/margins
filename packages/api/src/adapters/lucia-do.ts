@@ -275,7 +275,10 @@ export class LuciaAdapterLayer extends Effect.Tag("adapters/lucia")<
   LuciaAdapterLayer,
   Effect.Effect.Success<typeof make>
 >() {
-  static Live = Layer.effect(this, make)
+  static Live = Layer.effect(this, make).pipe(
+    Layer.provide(SqlLive),
+    Layer.provide(UserRepo.Live),
+  )
 }
 
 //   getSessionAndUser(
