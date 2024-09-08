@@ -9,7 +9,6 @@ import { router } from "./router"
 import { HttpApp } from "@effect/platform"
 import { ConfigProvider, Effect, pipe, Record } from "effect"
 import { CurrentUser } from "../Domain/User"
-import { DurableObjectAdapter } from "../adapters/lucia-do"
 
 type Env = {
   MarginsServer: DurableObjectNamespace<MarginsServer>

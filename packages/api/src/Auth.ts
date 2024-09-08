@@ -2,6 +2,7 @@ import { Context, Effect, Layer, Runtime } from "effect"
 import { LuciaAdapterLayer } from "./adapters/lucia-do"
 import { Lucia } from "lucia"
 import { UserId } from "./Domain/User"
+import { Schema } from "@effect/schema"
 
 const make = Effect.gen(function* () {
   const adapter = yield* LuciaAdapterLayer
@@ -54,3 +55,8 @@ export class LuciaLayer extends Context.Tag("Auth/Lucia")<
 >() {
   static readonly Live = Layer.effect(this, make)
 }
+
+export class AuthorizationError extends Schema.TaggedError<AuthorizationError>()(
+  "AuthorizationError",
+  {},
+) {}
