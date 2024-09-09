@@ -7,17 +7,29 @@ import { LuciaAdapterLayer } from "../adapters/lucia-do"
 import { KeyValueStore } from "@effect/platform"
 import { DurableObjectStateLayer } from "../DurableObject"
 // import { ConfigProviderLayer } from "./config"
+
+// TODO: move this, but also probably just use durableObjectStateLayer for everything instead of extra stringifying??
 const KeyValueStoreLive = Layer.effect(
   KeyValueStore.KeyValueStore,
   Effect.gen(function* () {
     const state = yield* DurableObjectStateLayer
     // TODO
-    return KeyValueStore.makeStringOnly({
+    return KeyValueStore.make({
       clear: Effect.promise(() => state.storage.deleteAll()),
-      get: key => Effect.succeed(Option.some("")),
-      remove: key => Effect.void,
-      set: (key, value) => Effect.void,
-      size: Effect.succeed(0),
+      // eslint-disable-next-line require-yield
+      get: key =>
+        Effect.gen(function* () {
+          const value = yield* Effect.promise(() =>
+            state.storage.get<string>(key),
+          )
+          return Option.fromNullable(value)
+        }),
+      remove: key => Effect.promise(() => state.storage.delete(key)),
+      set: (key, value) => Effect.promise(() => state.storage.put(key, value)),
+      // TODO: this is not really performant, should be avoided
+      size: Effect.promise(() => state.storage.list().then(list => list.size)),
+      getUint8Array: key => Effect.dieMessage("Uint8Array not implemented"),
+      modifyUint8Array: key => Effect.dieMessage("Uint8Array not implemented"),
     })
   }),
 )

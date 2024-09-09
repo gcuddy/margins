@@ -19,13 +19,23 @@ export const router = HttpRouter.empty
     HttpRouter.get("/foo", HttpServerResponse.text("content 2")),
     HttpRouter.mount("/sync", sync),
     HttpRouter.post("/rpc", HttpRpcRouterNoStream.toHttpApp(appRouter)),
+    HttpRouter.get(
+      "/create-session",
+      Effect.gen(function* () {
+        const lucia = yield* LuciaLayer
+        const session = yield* Effect.tryPromise(() =>
+          lucia.createSession("n0za7qlnp1rca3s", {}),
+        )
+        return yield* HttpServerResponse.json({ session })
+      }),
+    ),
     HttpRouter.options("*", HttpServerResponse.empty()),
     HttpRouter.use(flow(HttpMiddleware.cors(), HttpMiddleware.logger)),
   )
   .pipe(
     Effect.catchTags({
-      AuthorizationError: () =>
-        HttpServerResponse.text("Unauthorized", { status: 401 }),
+      // AuthorizationError: () =>
+      //   HttpServerResponse.text("Unauthorized", { status: 401 }),
     }),
     Effect.catchAllCause(cause =>
       HttpServerResponse.text(cause.toString(), { status: 500 }),

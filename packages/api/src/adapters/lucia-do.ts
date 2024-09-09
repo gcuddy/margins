@@ -1,28 +1,20 @@
 import { Schema } from "@effect/schema"
-import {
-  type Adapter,
-  type DatabaseSession,
-  type RegisteredDatabaseSessionAttributes,
-  type DatabaseUser,
-  type RegisteredDatabaseUserAttributes,
-  Lucia,
-} from "lucia"
-import { PlanetScaleAdapter } from "@lucia-auth/adapter-mysql"
-import type { Connection, Client } from "@planetscale/database"
-import { Array, Context, Effect, Layer, Option, pipe } from "effect"
+import { Effect, Layer, Option, pipe } from "effect"
 import { SqlLive } from "../Sql"
-import { SqlClient, SqlSchema } from "@effect/sql"
 import { User, UserId, UserNotFound } from "../Domain/User"
 import { KeyValueStore } from "@effect/platform"
 import { UserRepo } from "../Users/Repo"
 import { DurableObjectStateLayer } from "../DurableObject"
+import { Email } from "../Domain/Email"
 
 // Lucia compatible session, need to work on encoding/decoding
 // Probably a way to use Schema Transformations to do this
+
+// We store things in durable object as this shape
 class Session extends Schema.Class<Session>("adapters/Lucia/Session")({
   id: Schema.String,
   userId: UserId,
-  expiresAt: Schema.Number,
+  expiresAt: Schema.Union(Schema.DateFromNumber, Schema.DateFromString),
   //
   // fresh: Schema.Boolean,
 }) {}
@@ -45,10 +37,7 @@ const LuciaUser = Schema.Struct({
   id: Schema.String,
   createdAt: Schema.Date,
   updatedAt: Schema.Date,
-  attributes: Schema.Record({
-    key: Schema.String,
-    value: Schema.Unknown,
-  }),
+  attributes: User.pipe(Schema.omit("createdAt", "id", "updatedAt")),
 })
 
 const transformUser = Schema.transform(LuciaUser, User, {
@@ -58,6 +47,7 @@ const transformUser = Schema.transform(LuciaUser, User, {
       createdAt: user.createdAt.toString(),
       updatedAt: user.updatedAt.toString(),
       id: user.id,
+      email: user.attributes.email,
     }
   },
   encode: user => {
@@ -66,7 +56,9 @@ const transformUser = Schema.transform(LuciaUser, User, {
       id,
       createdAt: new Date(createdAt),
       updatedAt: new Date(updatedAt),
-      attributes,
+      attributes: {
+        email: Email.make(attributes.email),
+      },
     }
   },
 })
@@ -74,6 +66,8 @@ const transformUser = Schema.transform(LuciaUser, User, {
 const encodeLuciaUser = Schema.encode(transformUser, {
   onExcessProperty: "ignore",
 })
+
+// Our "A" type is our internal session type. Our "I" type is the lucia session type.
 
 const transformSession = Schema.transform(Session, LuciaSession, {
   strict: true,
@@ -88,14 +82,16 @@ const transformSession = Schema.transform(Session, LuciaSession, {
   encode: luciaSession => {
     return {
       id: luciaSession.id,
-      expiresAt: new Date(luciaSession.expiresAt).getTime(),
+      expiresAt: new Date(luciaSession.expiresAt),
       userId: UserId.make(luciaSession.userId),
     }
   },
 })
 
-const encodeLuciaSession = Schema.decode(transformSession)
-const encodeLuciaSessionUnknown = Schema.decodeUnknown(transformSession)
+const encodeLuciaSession = Schema.decode(transformSession, { errors: "all" })
+const encodeLuciaSessionUnknown = Schema.decodeUnknown(transformSession, {
+  errors: "all",
+})
 
 export class SessionNotFound extends Schema.TaggedError<SessionNotFound>()(
   "SessionNotFound",
@@ -199,10 +195,14 @@ const make = Effect.gen(function* () {
         return yield* new SessionNotFound({ id: sessionId })
       }
       const user = yield* userRepo.findById(session.value.userId)
+      // TODO: actually, we can just get the userId from the durable object, no?
       if (Option.isNone(user)) {
         return yield* new UserNotFound({ id: session.value.userId })
       }
-      const luciaSession = yield* encodeLuciaSession(session.value)
+      const luciaSession = yield* encodeLuciaSession({
+        ...session.value,
+        expiresAt: new Date(session.value.expiresAt).toISOString(),
+      })
       const luciaUser = yield* encodeLuciaUser(user.value)
       return [luciaSession, luciaUser] as const
     })
@@ -222,7 +222,7 @@ const make = Effect.gen(function* () {
 
       yield* store.set(sessionId, {
         ...session.value,
-        expiresAt: expiresAt.getTime(),
+        expiresAt,
       })
     })
 
@@ -251,7 +251,7 @@ const make = Effect.gen(function* () {
         Effect.forEach(([id, session]) =>
           Effect.gen(function* () {
             const sessionParsed = Schema.decodeUnknownSync(Session)(session)
-            if (sessionParsed.expiresAt < Date.now()) {
+            if (sessionParsed.expiresAt.getTime() < Date.now()) {
               yield* store.remove(id)
             }
           }),

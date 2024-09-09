@@ -16,12 +16,13 @@ import { AuthorizationError, LuciaLayer } from "../Auth"
 const authMiddleWare = (name: string) =>
   HttpMiddleware.make(app =>
     Effect.gen(function* () {
-      console.log(name) // Log the middleware name when a route is accessed
-      const { Authorization } = yield* HttpServerRequest.schemaHeaders(
+      const req = yield* HttpServerRequest.HttpServerRequest
+      const { authorization } = yield* HttpServerRequest.schemaHeaders(
         Schema.Struct({
-          Authorization: Schema.String,
+          authorization: Schema.String,
         }),
       ).pipe(
+        Effect.tapErrorCause(e => Effect.logError("Parse Error", e)),
         Effect.catchTag(
           "ParseError",
           () => new AuthorizationError("Incorrect Authorization Header"),
@@ -30,13 +31,17 @@ const authMiddleWare = (name: string) =>
       const lucia = yield* LuciaLayer
       // const authorizationHeader =  req.headers
       const sessionId = Option.fromNullable(
-        lucia.readBearerToken(Authorization),
+        lucia.readBearerToken(authorization),
       )
       if (Option.isNone(sessionId)) {
         // 401 and authorization error
         // or session not found?
         return yield* new AuthorizationError("No Session Found")
       }
+      // TODO: should make validateSession return effects/options automatically
+      const { user, session } = yield* Effect.tryPromise(() =>
+        lucia.validateSession(sessionId.value),
+      )
       return yield* app // Continue with the original application flow
     }).pipe(
       Effect.tapErrorCause(e => Effect.logError("auth middleware error", e)),

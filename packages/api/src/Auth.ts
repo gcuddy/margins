@@ -20,11 +20,9 @@ const make = Effect.gen(function* () {
       },
       async getSessionAndUser(sessionId) {
         const [session, user] = await runPromise(
-          adapter.getSessionAndUser(sessionId).pipe(
-            Effect.catchTags({
-              // TODO: catch tags
-            }),
-          ),
+          adapter
+            .getSessionAndUser(sessionId)
+            .pipe(Effect.tapErrorCause(Effect.logError)),
         )
         return [session, user]
       },

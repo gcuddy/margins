@@ -10,7 +10,7 @@
     "test": "vitest",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit --watch"
   },
   "dependencies": {
     "@effect/platform": "^0.63.0",

@@ -64,6 +64,7 @@ export class MarginsServer extends Server<Env> {
       // TODO: get current user from session
       Effect.provide(CurrentUser.Test),
       Effect.tapErrorCause(Effect.logError),
+      Effect.withLogSpan("MarginsServer.onRequest"),
       HttpApp.toWebHandlerRuntime(runtime),
     )(request)
 
@@ -79,7 +80,6 @@ export class MarginsServer extends Server<Env> {
 
 export default {
   async fetch(request: Request, env: Env) {
-    console.log("fetch", request)
     // TODO: auth layer here
     // TODO: poke backend (layer), figuring out how to get
     // Todo: server should be either user, workspace, session, or shared list. need to figure out how...
