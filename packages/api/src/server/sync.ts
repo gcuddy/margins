@@ -5,11 +5,11 @@ import {
   HttpServerResponse,
 } from "@effect/platform"
 import { Effect, Layer, Option } from "effect"
-import { Replicache } from "../Replicache"
+import { Replicache } from "../Replicache.js"
 import { Schema } from "@effect/schema"
-import { PushRequest } from "../Domain/Replicache"
-import { CurrentUser } from "../Domain/User"
-import { AuthorizationError, LuciaLayer } from "../Auth"
+import { PushRequest } from "../Domain/Replicache.js"
+import { CurrentUser } from "../Domain/User.js"
+import { AuthorizationError, LuciaLayer } from "../Auth.js"
 // import { Replicache } from "../services/Replicache"
 // Middleware constructor that logs the name of the middleware
 

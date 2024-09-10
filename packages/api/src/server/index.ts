@@ -4,11 +4,11 @@ import {
   Server,
   type Connection,
 } from "partyserver"
-import { makeServerRuntime } from "./main"
-import { router } from "./router"
+import { makeServerRuntime } from "./main.js"
+import { router } from "./router.js"
 import { HttpApp } from "@effect/platform"
 import { ConfigProvider, Effect, pipe, Record } from "effect"
-import { CurrentUser } from "../Domain/User"
+import { CurrentUser } from "../Domain/User.js"
 
 type Env = {
   MarginsServer: DurableObjectNamespace<MarginsServer>

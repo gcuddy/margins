@@ -1,6 +1,6 @@
 import { Context, Data, Effect, type Exit, Layer, pipe } from "effect"
 import type { Transaction } from "kysely"
-import { DB } from "./db"
+import { DB } from "./db.js"
 import type { KyselyDB } from "@margins/db"
 
 // const LibsqlClientLive = Layer.scoped(

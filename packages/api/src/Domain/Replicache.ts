@@ -1,6 +1,6 @@
 import { Model } from "@effect/sql"
 import { Schema } from "@effect/schema"
-import { UserId } from "./User"
+import { UserId } from "./User.js"
 
 export const ReplicacheClientGroupId = Schema.String.pipe(
   Schema.brand("ReplicacheClientGroupId"),

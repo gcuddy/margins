@@ -1,11 +1,11 @@
 import type { ConfigProvider } from "effect"
 import { Effect, Layer, ManagedRuntime, Option } from "effect"
-import { GoogleBooksApi } from "../integrations/google-books/google-books"
-import { Replicache } from "../Replicache"
-import { LuciaLayer } from "../Auth"
-import { LuciaAdapterLayer } from "../adapters/lucia-do"
+import { GoogleBooksApi } from "../integrations/google-books/google-books.js"
+import { Replicache } from "../Replicache.js"
+import { LuciaLayer } from "../Auth.js"
+import { LuciaAdapterLayer } from "../adapters/lucia-do.js"
 import { KeyValueStore } from "@effect/platform"
-import { DurableObjectStateLayer } from "../DurableObject"
+import { DurableObjectStateLayer } from "../DurableObject.js"
 // import { ConfigProviderLayer } from "./config"
 
 // TODO: move this, but also probably just use durableObjectStateLayer for everything instead of extra stringifying??

@@ -17,7 +17,7 @@ import {
   PushRequest,
   Replicache,
   UserData,
-} from "../services/Replicache"
+} from "../services/Replicache.js"
 import {
   Context,
   DateTime,
@@ -28,9 +28,9 @@ import {
   pipe,
   Redacted,
 } from "effect"
-import { DB, DBError } from "../services/db"
-import { DatabaseTransactional } from "../services/db-transaction"
-import { router } from "./router"
+import { DB, DBError } from "../services/db.js"
+import { DatabaseTransactional } from "../services/db-transaction.js"
+import { router } from "./router.js"
 
 // Our domain "User" Schema
 class User extends Schema.Class<User>("User")({

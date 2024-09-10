@@ -1,7 +1,7 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
 import { Context, DateTime, Layer } from "effect"
-import { Email } from "./Email"
+import { Email } from "./Email.js"
 // import { Context } from "effect"
 
 export const UserId = Schema.String.pipe(Schema.brand("UserId"))

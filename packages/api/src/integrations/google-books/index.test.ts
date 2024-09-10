@@ -1,8 +1,8 @@
 import { Effect } from "effect"
 import { expect, it } from "vitest"
 
-import { program } from "."
-import { GoogleBooksApi } from "./google-books"
+import { program } from "./index.js"
+import { GoogleBooksApi } from "./google-books.js"
 
 const mainTest = program.pipe(Effect.provide(GoogleBooksApi.Live))
 

@@ -1,7 +1,7 @@
 import { Array, Context, Effect, Layer, Option } from "effect"
-import { DB, DBError } from "./db"
+import { DB, DBError } from "./db.js"
 import { Schema } from "@effect/schema"
-import { DatabaseTransactional } from "./db-transaction"
+import { DatabaseTransactional } from "./db-transaction.js"
 
 export class Mutation extends Schema.Class<Mutation>("Mutation")({
   id: Schema.Number,

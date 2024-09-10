@@ -10,8 +10,8 @@ import {
   type PushRequest,
   type ReplicacheClientGroupId,
 } from "./Domain/Replicache.js"
-import { ReplicacheClientGroupRepo } from "./Replicache/ClientGroupRepo"
-import { ReplicacheClientRepo } from "./Replicache/ClientRepo"
+import { ReplicacheClientGroupRepo } from "./Replicache/ClientGroupRepo.js"
+import { ReplicacheClientRepo } from "./Replicache/ClientRepo.js"
 import { SqlLive } from "./Sql.js"
 
 const make = Effect.gen(function* () {

@@ -1,7 +1,7 @@
 import { Model } from "@effect/sql"
 import { Context, Effect, Layer } from "effect"
 import { User } from "../Domain/User.js"
-import { SqlLive } from "../Sql"
+import { SqlLive } from "../Sql.js"
 
 export const make = Effect.gen(function* () {
   const repo = yield* Model.makeRepository(User, {

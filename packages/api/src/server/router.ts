@@ -4,11 +4,11 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from "@effect/platform"
-import { appRouter } from "../router"
+import { appRouter } from "../router.js"
 import { Effect, flow, Option, Redacted } from "effect"
 import { HttpRpcRouterNoStream } from "@effect/rpc-http"
-import { sync } from "./sync"
-import { AuthorizationError, LuciaLayer } from "../Auth"
+import { sync } from "./sync.js"
+import { AuthorizationError, LuciaLayer } from "../Auth.js"
 import { Schema } from "@effect/schema"
 // import { ServerRuntime } from "./main"y
 
