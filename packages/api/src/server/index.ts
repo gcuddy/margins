@@ -9,6 +9,7 @@ import { router } from "./router.js"
 import { HttpApp } from "@effect/platform"
 import { ConfigProvider, Effect, pipe, Record } from "effect"
 import { CurrentUser } from "../Domain/User.js"
+import { TracingLive } from "../Tracing.js"
 
 type Env = {
   MarginsServer: DurableObjectNamespace<MarginsServer>
@@ -63,6 +64,8 @@ export class MarginsServer extends Server<Env> {
       router,
       // TODO: get current user from session
       Effect.provide(CurrentUser.Test),
+      // TODO: tracing live
+      // Effect.provide(TracingLive),
       Effect.tapErrorCause(Effect.logError),
       Effect.withLogSpan("MarginsServer.onRequest"),
       HttpApp.toWebHandlerRuntime(runtime),

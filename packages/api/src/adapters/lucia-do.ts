@@ -3,9 +3,9 @@ import { Effect, Layer, Option, pipe } from "effect"
 import { SqlLive } from "../Sql.js"
 import { User, UserId, UserNotFound } from "../Domain/User.js"
 import { KeyValueStore } from "@effect/platform"
-import { UserRepo } from "../Users/Repo"
-import { DurableObjectStateLayer } from "../DurableObject"
-import { Email } from "../Domain/Email"
+import { UserRepo } from "../Users/Repo.js"
+import { DurableObjectStateLayer } from "../DurableObject.js"
+import { Email } from "../Domain/Email.js"
 
 // Lucia compatible session, need to work on encoding/decoding
 // Probably a way to use Schema Transformations to do this

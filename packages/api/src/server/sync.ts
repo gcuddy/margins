@@ -7,7 +7,7 @@ import {
 import { Effect, Layer, Option } from "effect"
 import { Replicache } from "../Replicache.js"
 import { Schema } from "@effect/schema"
-import { PushRequest } from "../Domain/Replicache.js"
+import { PullRequest, PullResponse, PushRequest } from "../Domain/Replicache.js"
 import { CurrentUser } from "../Domain/User.js"
 import { AuthorizationError, LuciaLayer } from "../Auth.js"
 // import { Replicache } from "../services/Replicache"
@@ -56,14 +56,11 @@ export const sync = HttpRouter.empty.pipe(
   HttpRouter.post(
     "/push",
     Effect.gen(function* () {
-      // Is there a more elegant way to do this?
-      const request = yield* HttpServerRequest.HttpServerRequest
-      const body = yield* request.json
-      const pushRequest = yield* Schema.decodeUnknown(PushRequest)(body)
-      const user = yield* CurrentUser
-
+      const pushRequest = yield* HttpServerRequest.schemaBodyJson(PushRequest)
       const replicache = yield* Replicache
-      yield* replicache.push(user.id, pushRequest)
+
+      yield* replicache.push(pushRequest)
+
       return yield* HttpServerResponse.json({})
     }).pipe(
       Effect.tapErrorCause(Effect.logError),
@@ -73,7 +70,18 @@ export const sync = HttpRouter.empty.pipe(
       // Effect.catchAllCause(_ => Effect.succeed(HttpServerResponse.text("Error")))
     ),
   ),
-  HttpRouter.post("/pull", HttpServerResponse.text("About birds")),
+  HttpRouter.post(
+    "/pull",
+    Effect.gen(function* () {
+      const pullRequest = yield* HttpServerRequest.schemaBodyJson(PullRequest)
+      const replicache = yield* Replicache
+
+      const pr = replicache.pull(pullRequest)
+
+      const a = HttpServerResponse.schemaJson(PullResponse)
+      return HttpServerResponse.text("About birds")
+    }),
+  ),
   HttpRouter.use(authMiddleWare("auth")),
   // Effect.provide(Replicache.Live),
 )

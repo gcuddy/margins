@@ -1,29 +1,29 @@
 import { Array, Context, Effect, Layer, Option, pipe } from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
-import type { UserId } from "./Domain/User.js"
+import { CurrentUser, type UserId } from "./Domain/User.js"
 import type { ReplicacheClientId } from "./Domain/Replicache.js"
 import {
   ReplicacheClient,
   ReplicacheClientGroup,
   type Mutation,
   type PushRequest,
+  type PullRequest,
   type ReplicacheClientGroupId,
 } from "./Domain/Replicache.js"
 import { ReplicacheClientGroupRepo } from "./Replicache/ClientGroupRepo.js"
 import { ReplicacheClientRepo } from "./Replicache/ClientRepo.js"
 import { SqlLive } from "./Sql.js"
+import { server } from "./Replicache/mutations2.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
   const clientGroupRepo = yield* ReplicacheClientGroupRepo
   const clientRepo = yield* ReplicacheClientRepo
+  const { id: userID } = yield* CurrentUser
 
   // TODO: should these be here? or in the repo?
-  const getClientGroup = (
-    clientGroupID: ReplicacheClientGroupId,
-    userID: UserId,
-  ) =>
+  const getClientGroup = (clientGroupID: ReplicacheClientGroupId) =>
     pipe(
       clientGroupRepo.findById(clientGroupID),
       Effect.flatMap(
@@ -107,7 +107,6 @@ const make = Effect.gen(function* () {
     )
 
   const processMutation = (
-    userID: UserId,
     clientGroupID: ReplicacheClientGroupId,
     mutation: Mutation,
     // 1: `let errorMode = false`. In JS, we implement this step naturally
@@ -116,7 +115,7 @@ const make = Effect.gen(function* () {
     errorMode: boolean,
   ) =>
     Effect.gen(function* () {
-      const clientGroup = yield* getClientGroup(clientGroupID, userID)
+      const clientGroup = yield* getClientGroup(clientGroupID)
       const baseClient = yield* getClient(mutation.clientID, clientGroupID)
 
       // TODO: pick up here 2024-09-05
@@ -141,6 +140,7 @@ const make = Effect.gen(function* () {
 
       if (!errorMode) {
         // try mutate
+        yield* server.execute(mutation.name, mutation.args)
       }
       // TODO: built in retry logic for Effect?
 
@@ -159,22 +159,17 @@ const make = Effect.gen(function* () {
       // console.log time
 
       // return affected (keep track - some sort of repository layer that gets yielded isnide and noted? userIds, workspaceIds, sharedLists, etc.)
-    }).pipe(sql.withTransaction)
+    }).pipe(Effect.tapErrorCause(Effect.logError), sql.withTransaction)
 
-  const push = (userId: UserId, pushRequest: PushRequest) => {
+  const push = (pushRequest: PushRequest) => {
     // TODO: poke backend (layer)
     return Effect.forEach(
       pushRequest.mutations,
       mutation =>
-        processMutation(
-          userId,
-          pushRequest.clientGroupID,
-          mutation,
-          false,
-        ).pipe(
+        processMutation(pushRequest.clientGroupID, mutation, false).pipe(
           // Probably not the best way to do this
           Effect.tapError(_ =>
-            processMutation(userId, pushRequest.clientGroupID, mutation, true),
+            processMutation(pushRequest.clientGroupID, mutation, true),
           ),
           Effect.withSpan("Replicache.processMutation", {
             attributes: { mutation },
@@ -189,8 +184,13 @@ const make = Effect.gen(function* () {
     )
   }
 
+  const pull = (pullRequest: PullRequest) => {
+    // TODO: implement pull
+  }
+
   return {
     push,
+    pull,
   } as const
 })
 
