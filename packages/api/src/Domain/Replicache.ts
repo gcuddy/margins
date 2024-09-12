@@ -32,6 +32,31 @@ export class ReplicacheClient extends Model.Class<ReplicacheClient>(
   updatedAt: Model.DateTimeUpdate,
 }) {}
 
+// CVR
+export const ClientViewRecordId = Schema.String.pipe(
+  Schema.brand("ClientViewRecordId"),
+)
+export type ClientViewRecordId = typeof ClientViewRecordId.Type
+
+export const ClientViewEntries = Schema.Record({
+  key: Schema.String,
+  value: Schema.Number,
+})
+
+export const ClientViewRecord = Schema.Record({
+  key: Schema.String,
+  value: ClientViewEntries,
+})
+
+// export class ClientViewRecord extends Schema.Class<ClientViewRecord>(
+//   "ClientViewRecord",
+// )({
+//   id: Model.Generated(ClientViewRecordId),
+//   cvrID: Schema.String,
+//   createdAt: Model.DateTimeInsert,
+//   updatedAt: Model.DateTimeUpdate,
+// }) {}
+
 export class Mutation extends Schema.Class<Mutation>("Mutation")({
   id: Schema.Number,
   clientID: ReplicacheClientId,
@@ -46,7 +71,7 @@ export class PushRequest extends Schema.Class<PushRequest>("PushRequest")({
 
 export class Cookie extends Schema.Class<Cookie>("Cookie")({
   order: Schema.Number,
-  cvrID: Schema.String,
+  cvrID: ClientViewRecordId,
 }) {}
 
 export class PullRequest extends Schema.Class<PullRequest>("PullRequest")({

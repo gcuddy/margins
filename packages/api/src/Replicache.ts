@@ -15,11 +15,13 @@ import { ReplicacheClientGroupRepo } from "./Replicache/ClientGroupRepo.js"
 import { ReplicacheClientRepo } from "./Replicache/ClientRepo.js"
 import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations2.js"
+import { CVRCache } from "./Replicache/ClientViewRecord.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
   const clientGroupRepo = yield* ReplicacheClientGroupRepo
   const clientRepo = yield* ReplicacheClientRepo
+  const cvrCache = yield* CVRCache
   const { id: userID } = yield* CurrentUser
 
   // TODO: should these be here? or in the repo?
@@ -184,9 +186,25 @@ const make = Effect.gen(function* () {
     )
   }
 
-  const pull = (pullRequest: PullRequest) => {
-    // TODO: implement pull
-  }
+  const pull = (pullRequest: PullRequest) =>
+    Effect.gen(function* () {
+      // TODO: implement pull
+      const { clientGroupID } = pullRequest
+
+      const prevCvr = yield* pipe(
+        Option.fromNullable(pullRequest.cookie),
+        Option.match({
+          onSome: cookie => cvrCache.get(cookie.cvrID),
+          onNone: () => Effect.succeedNone,
+        }),
+      )
+
+      // TODO
+      const baseCVR = Option.match(prevCvr, {
+        onSome: cvr => cvr,
+        onNone: () => CVR.empty,
+      })
+    })
 
   return {
     push,

@@ -93,7 +93,7 @@ module.exports = {
         "ts-expect-error": "allow-with-description",
       },
     ],
-    "@typescript-eslint/ban-types": "error",
+    // "@typescript-eslint/ban-types": "error",
     "@typescript-eslint/consistent-type-imports": [
       "error",
       { fixStyle: "inline-type-imports" },
