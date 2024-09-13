@@ -240,6 +240,7 @@ const make = Effect.gen(function* () {
             concurrency: "unbounded",
           },
         )
+        console.log({ entryMeta, clientMeta })
 
         // 6: Read all domain data, just ids and versions
         // const entryIds = entryMeta.map(e => e.id)
