@@ -8,7 +8,7 @@ import { policy } from "../Domain/Actor"
 const make = Effect.gen(function* () {
   const canRead = (toRead: ReplicacheClientGroup) =>
     policy("ClientGroup", "read", actor =>
-      Effect.succeed(actor.id === toRead.userID),
+      Effect.succeed(actor.id === toRead.userId),
     )
 
   return {

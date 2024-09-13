@@ -40,9 +40,6 @@ model ReplicacheClientGroup {
     userId     String
     cvrVersion Int
 
-    // @deprecated
-    clientVersion Int
-
     clients ReplicacheClient[]
 
     // TODO: actor model?

@@ -11,11 +11,11 @@ export type ReplicacheClientGroupId = typeof ReplicacheClientGroupId.Type
 export class ReplicacheClientGroup extends Model.Class<ReplicacheClientGroup>(
   "ReplicacheClientGroup",
 )({
-  id: Model.Generated(ReplicacheClientGroupId),
+  id: Model.GeneratedByApp(ReplicacheClientGroupId),
   cvrVersion: Schema.Number,
-  userID: UserId,
-  createdAt: Model.DateTimeInsert,
-  updatedAt: Model.DateTimeUpdate,
+  userId: UserId,
+  createdAt: Model.DateTimeInsertFromDate,
+  updatedAt: Model.DateTimeInsertFromDate,
 }) {}
 
 export const ReplicacheClientId = Schema.String.pipe(

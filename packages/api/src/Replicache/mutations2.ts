@@ -2,10 +2,8 @@
 
 import type { WriteTransaction } from "replicache"
 import { Schema } from "@effect/schema"
-import type { Record } from "effect"
 import { Effect } from "effect"
-import type { ParseError } from "@effect/schema/ParseResult"
-import { LuciaLayer } from "../Auth"
+import { ParseError } from "@effect/schema/ParseResult"
 
 interface Mutation<Name extends string = string, Input = any, Output = any> {
   input: Input
@@ -37,29 +35,29 @@ export class Server<Mutations extends Record<string, Mutation>> {
     }
   >()
 
-  public mutation<
-    Name extends string,
-    Shape extends Schema.Schema.Any,
-    Args = Schema.Schema.Type<Shape>,
-    Output = void,
-  >(
-    name: Name,
-    shape: Shape,
-    fn: (input: Args) => Promise<Output>,
-  ): Server<Mutations & { [key in Name]: Mutation<Name, Args, Output> }> {
-    this.mutations.set(name as string, {
-      fn: args =>
-        Effect.gen(function* () {
-          const parsed = yield* Schema.decodeUnknown(shape)(args)
-          return yield* Effect.tryPromise({
-            try: () => fn(parsed),
-            catch: () => new MutationError({ mutation: name, args }),
-          })
-        }),
-      input: shape,
-    })
-    return this
-  }
+  // public mutation<
+  //   Name extends string,
+  //   Shape extends Schema.Schema.Any,
+  //   Args = Schema.Schema.Type<Shape>,
+  //   Output = void,
+  // >(
+  //   name: Name,
+  //   shape: Shape,
+  //   fn: (input: Args) => Promise<Output>,
+  // ): Server<Mutations & { [key in Name]: Mutation<Name, Args, Output> }> {
+  //   this.mutations.set(name as string, {
+  //     fn: args =>
+  //       Effect.gen(function* () {
+  //         const parsed = yield* Schema.decodeUnknown(shape)(args)
+  //         return yield* Effect.tryPromise({
+  //           try: () => fn(parsed),
+  //           catch: () => new MutationError({ mutation: name, args }),
+  //         })
+  //       }),
+  //     input: shape,
+  //   })
+  //   return this
+  // }
 
   //   TODO: Collect A, E, R for make
   public expose<
@@ -71,7 +69,12 @@ export class Server<Mutations extends Record<string, Mutation>> {
     Requirements = never,
   >(
     name: Name,
-    mutation: MutationEffect<Shape, Output, Error, Requirements>,
+    mutation: MutationEffect<
+      Schema.Schema.AnyNoContext,
+      Output,
+      Error,
+      Requirements
+    >,
   ): Server<
     Mutations & {
       [key in Name]: Effect.Effect<
@@ -85,15 +88,15 @@ export class Server<Mutations extends Record<string, Mutation>> {
       fn: args =>
         Effect.gen(function* () {
           const parsed = Schema.decodeUnknownOption(mutation.schema)(args)
-          //   return yield* mutation
-          //     .handler(parsed)
-          //     .pipe(
-          //       Effect.mapError(e =>
-          //         e instanceof ParseError
-          //           ? e
-          //           : new MutationError({ mutation: name, args }),
-          //       ),
-          //     )
+          return yield* mutation
+            .handler(parsed)
+            .pipe(
+              Effect.mapError(e =>
+                e instanceof ParseError
+                  ? e
+                  : new MutationError({ mutation: name, args }),
+              ),
+            )
         }),
       input: mutation.schema,
     })
@@ -111,30 +114,30 @@ export class Server<Mutations extends Record<string, Mutation>> {
 
   //   TODO: not really how you do it in effect, but it's ok
   //   Extract Errors and Requirements
-  public makeEffect() {
-    // return Effect.gen(function* () {
-    //   return yield* Record.fromEntries(this.mutations.entries())
-    // })
-    const map = this.mutations
-    return Effect.gen(function* () {
-      const call = (name: string, args: unknown) =>
-        Effect.gen(function* () {
-          const mut = map.get(name as string)
-          if (!mut) return yield* new MutationNotFoundError({ mutation: name })
-          const parsed = yield* Schema.decodeUnknown(mut.input)(args)
-          type X = Mutations["name"]["output"]
-          return yield* mut?.fn(args)
-        })
-      return {
-        call,
-      } as const
-    })
-    // return Object.fromEntries(this.mutations.entries()) as any
-    // return Record.fromEntries(this.mutations.entries())
-    // return Effect.gen(function* () {
-    //   return yield* this.mutations.map(({ fn }) => fn)
-    // })
-  }
+  // public makeEffect() {
+  //   // return Effect.gen(function* () {
+  //   //   return yield* Record.fromEntries(this.mutations.entries())
+  //   // })
+  //   const map = this.mutations
+  //   return Effect.gen(function* () {
+  //     const call = (name: string, args: unknown) =>
+  //       Effect.gen(function* () {
+  //         const mut = map.get(name as string)
+  //         if (!mut) return yield* new MutationNotFoundError({ mutation: name })
+  //         const parsed = yield* Schema.decodeUnknown(mut.input)(args)
+  //         type X = Mutations["name"]["output"]
+  //         return yield* mut?.fn(args)
+  //       })
+  //     return {
+  //       call,
+  //     } as const
+  //   })
+  //   // return Object.fromEntries(this.mutations.entries()) as any
+  //   // return Record.fromEntries(this.mutations.entries())
+  //   // return Effect.gen(function* () {
+  //   //   return yield* this.mutations.map(({ fn }) => fn)
+  //   // })
+  // }
 
   public has(name: string) {
     return this.mutations.has(name)
@@ -174,14 +177,18 @@ export class Client<
 const MutationTypeId: unique symbol = Symbol.for("Replicache/Mutation")
 type MutationTypeId = typeof MutationTypeId
 
-interface Proto<S extends Schema.Schema.Any> {
+interface Proto<S extends Schema.Schema.AnyNoContext> {
   readonly [MutationTypeId]: MutationTypeId
   readonly _tag: string
   readonly schema: S
 }
 
-interface MutationEffect<S extends Schema.Schema.Any, A, E = never, R = never>
-  extends Proto<S> {
+interface MutationEffect<
+  S extends Schema.Schema.AnyNoContext,
+  A,
+  E = never,
+  R = never,
+> extends Proto<S> {
   readonly _tag: "Replicache"
   readonly handler: (
     request: Schema.Schema.Type<S>,
@@ -190,13 +197,18 @@ interface MutationEffect<S extends Schema.Schema.Any, A, E = never, R = never>
 
 // not in love with this — check other mutaitons.ts for a more interesting effecty way
 // backend schema thingy
-function schema<Schema extends Schema.Schema.Any, A, E = never, R = never>(
+function schema<
+  Schema extends Schema.Schema.AnyNoContext,
+  A,
+  E = never,
+  R = never,
+>(
   schema: Schema,
   //   TODO: extract requirements here and up in class / make it a `make` effect layer`
   handler: (
     input: Schema.Schema.Type<Schema>,
   ) => Effect.Effect<A, E | ParseError, never>,
-): MutationEffect<Schema, A, E, R> {
+): MutationEffect<Schema.Schema.AnyNoContext, A, E, R> {
   return {
     handler,
     schema,
@@ -223,7 +235,7 @@ export const server = new Server()
     schema(Schema.Number, input => Effect.succeed(input)),
   )
 
-const d = server.makeEffect()
+// const d = server.makeEffect()
 
 // d.Go
 
@@ -235,9 +247,6 @@ type ServerType = typeof server
 
 // type Req = Effect.Effect.Context<>
 
-const client = new Client<ServerType>().mutation("Go", async (tx, input) => {
-  return
-})
 // type Server = typeof server
 
 // TODO: is there a way to just use RPC Router? Or use Tagged Requests? i.e. pass them in and go from there?

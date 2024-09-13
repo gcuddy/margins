@@ -1,13 +1,4 @@
-import {
-  Chunk,
-  Context,
-  Effect,
-  HashSet,
-  Layer,
-  Option,
-  pipe,
-  Record,
-} from "effect"
+import { Chunk, Effect, HashSet, Layer, Option, pipe, Record } from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { CurrentUser } from "./Domain/User.js"
@@ -39,7 +30,7 @@ const make = Effect.gen(function* () {
   const clientGroupRepo = yield* ReplicacheClientGroupRepo
   const clientRepo = yield* ReplicacheClientRepo
   const cvrCache = yield* CVRCache
-  const { id: userID } = yield* CurrentUser
+  const { id: userId } = yield* CurrentUser
   const entriesRepo = yield* EntriesRepo
 
   // TODO: should these be here? or in the repo?
@@ -52,15 +43,15 @@ const make = Effect.gen(function* () {
           onNone: () =>
             Effect.succeed({
               id: clientGroupID,
-              userID,
+              userId,
               cvrVersion: 0,
             }),
           onSome: clientGroup =>
-            clientGroup.userID === userID
+            clientGroup.userId === userId
               ? Effect.succeed(clientGroup)
               : Effect.fail(
                   new Unauthorized({
-                    actorId: userID,
+                    actorId: userId,
                     entity: "ReplicacheClientGroup",
                     action: "read",
                   }),
@@ -69,7 +60,7 @@ const make = Effect.gen(function* () {
       ),
       // Effect.orDie
       Effect.withSpan("Replicache.getClientGroup", {
-        attributes: { userID, clientGroupID },
+        attributes: { userId, clientGroupID },
       }),
     )
 
@@ -92,7 +83,7 @@ const make = Effect.gen(function* () {
               ? Effect.succeed(client)
               : Effect.fail(
                   new Unauthorized({
-                    actorId: userID,
+                    actorId: userId,
                     entity: "ReplicacheClient",
                     action: "read",
                   }),
@@ -112,7 +103,7 @@ const make = Effect.gen(function* () {
         Request: ReplicacheClientGroup.insert,
         execute: clientGroup =>
           // NOTE: MySql doesn't support RETURNING
-          sql`insert into replicache_client_group ${sql.insert(clientGroup).returning("*")} on duplicate key update userId = ${clientGroup.userID}, cvrVersion = ${clientGroup.cvrVersion}, updatedAt = now()`,
+          sql`insert into replicache_client_group ${sql.insert(clientGroup)} on duplicate key update userId = ${clientGroup.userId}, cvrVersion = ${clientGroup.cvrVersion}, updatedAt = now()`,
       })
       return yield* insert(clientGroup)
     }).pipe(
@@ -126,7 +117,7 @@ const make = Effect.gen(function* () {
       const upsert = SqlSchema.void({
         Request: ReplicacheClient.update,
         execute: client =>
-          sql`insert into replicache_client ${sql.insert(client).returning("*")} on duplicate key update lastMutationId = ${client.lastMutationID}, lastModified = now(), updatedAt = now()`,
+          sql`insert into replicache_client ${sql.insert(client)} on duplicate key update lastMutationId = ${client.lastMutationID}, lastModified = now(), updatedAt = now()`,
       })
       return yield* upsert(client)
     }).pipe(
@@ -241,7 +232,7 @@ const make = Effect.gen(function* () {
         // TODO: more stuff here
         const [entryMeta, clientMeta] = yield* Effect.all(
           [
-            entriesRepo.searchForUserId(userID),
+            entriesRepo.searchForUserId(userId),
             // 7: Read all clients in CG
             clientRepo.searchForClientGroup(clientGroupID),
           ],

@@ -16,7 +16,6 @@ import { AuthorizationError, LuciaLayer } from "../Auth.js"
 const authMiddleWare = (name: string) =>
   HttpMiddleware.make(app =>
     Effect.gen(function* () {
-      const req = yield* HttpServerRequest.HttpServerRequest
       const { authorization } = yield* HttpServerRequest.schemaHeaders(
         Schema.Struct({
           authorization: Schema.String,
@@ -28,11 +27,14 @@ const authMiddleWare = (name: string) =>
           () => new AuthorizationError("Incorrect Authorization Header"),
         ),
       )
+
       const lucia = yield* LuciaLayer
+      console.log("lucia", lucia)
       // const authorizationHeader =  req.headers
       const sessionId = Option.fromNullable(
         lucia.readBearerToken(authorization),
       )
+      console.log("sessionId", sessionId)
       if (Option.isNone(sessionId)) {
         // 401 and authorization error
         // or session not found?
@@ -42,6 +44,8 @@ const authMiddleWare = (name: string) =>
       const { user, session } = yield* Effect.tryPromise(() =>
         lucia.validateSession(sessionId.value),
       )
+      console.log("user", user)
+      console.log("session", session)
       return yield* app // Continue with the original application flow
     }).pipe(
       Effect.tapErrorCause(e => Effect.logError("auth middleware error", e)),
@@ -75,12 +79,32 @@ export const sync = HttpRouter.empty.pipe(
     Effect.gen(function* () {
       const pullRequest = yield* HttpServerRequest.schemaBodyJson(PullRequest)
       const replicache = yield* Replicache
+      console.log("pullRequest", pullRequest)
+      console.log("replicache", replicache)
 
-      const pr = replicache.pull(pullRequest)
+      const pr = yield* replicache.pull(pullRequest)
 
       const a = HttpServerResponse.schemaJson(PullResponse)
       return HttpServerResponse.text("About birds")
-    }),
+    }).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.catchTags({
+        ParseError: e => {
+          console.log("ParseError", e)
+          return HttpServerResponse.empty().pipe(
+            HttpServerResponse.setStatus(400),
+          )
+        },
+        RequestError: e => {
+          return HttpServerResponse.empty().pipe(
+            HttpServerResponse.setStatus(400),
+          )
+        },
+      }),
+      // Effect.catchAllCause(_ =>
+      //   HttpServerResponse.empty().pipe(HttpServerResponse.setStatus(500)),
+      // ),
+    ),
   ),
   HttpRouter.use(authMiddleWare("auth")),
   // Effect.provide(Replicache.Live),

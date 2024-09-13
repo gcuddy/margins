@@ -559,7 +559,6 @@ export type ReplicacheClientGroup = {
   deletedAt: Timestamp | null
   userId: string
   cvrVersion: number
-  clientVersion: number
 }
 export type ReplicacheCVR = {
   id: number
