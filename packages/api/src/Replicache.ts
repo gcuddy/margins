@@ -31,7 +31,7 @@ import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations2.js"
 import { CVRCache } from "./Replicache/ClientViewRecord.js"
 import { EntriesRepo } from "./Entries/Repo.js"
-import type { EntryId } from "./Domain/Entry.js"
+import { EntryId } from "./Domain/Entry.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -224,7 +224,7 @@ const make = Effect.gen(function* () {
 
       // now do all this with a transaction
 
-      Effect.gen(function* () {
+      return yield* Effect.gen(function* () {
         const baseClientGroup = yield* getClientGroup(clientGroupID)
 
         // Get relevant data
@@ -319,7 +319,53 @@ const make = Effect.gen(function* () {
         // const [entries] = yield* Effect.all([
         //   entriesRepo.getForIds((diff.entries?.puts ?? []) as EntryId[]),
         // ])
-        // if ()
+        // TODO: clean up this
+        const entryIdsSchema = Schema.NonEmptyArray(EntryId)
+        const decode = Schema.decodeUnknownOption(entryIdsSchema)
+        const entries = yield* decode(diff.entries?.puts).pipe(
+          Option.match({
+            onSome: ids => entriesRepo.getForIds(ids),
+            onNone: () => Effect.succeed([]),
+          }),
+          // Option.getOrElse(() => []),
+        )
+
+        // 12: changed clients - no need to re-read clients from database,
+        // we already have their versions.
+        const clients = ClientViewEntries.make({})
+        for (const clientID of diff.client?.puts ?? []) {
+          if (nextCVR.client) {
+            Record.set(clients, clientID, Record.get(nextCVR.client, clientID))
+          }
+        }
+        console.log({ clients })
+
+        // 13: newCVRVersion
+        const baseCVRVersion = pullRequest.cookie?.order ?? 0
+        const nextCVRVersion =
+          Math.max(baseCVRVersion, baseClientGroup.cvrVersion) + 1
+
+        // 14: Write ClientGroupRecord
+        const nextClientGroupRecord = {
+          ...baseClientGroup,
+          cvrVersion: nextCVRVersion,
+        }
+        console.log({ nextClientGroupRecord })
+        yield* putClientGroup(
+          ReplicacheClientGroup.insert.make(nextClientGroupRecord),
+        )
+
+        return {
+          entities: {
+            entries: {
+              dels: diff.entries?.dels,
+              puts: entries,
+            },
+          },
+          clients,
+          nextCVR,
+          nextCVRVersion,
+        } as const
         // console.log({ diff })
       }).pipe(sql.withTransaction)
     })

@@ -28,7 +28,7 @@ export const make = Effect.gen(function* () {
 
   const getForIds = SqlSchema.findAll({
     Request: Schema.NonEmptyArray(EntryId),
-    Result: Schema.Array(Entry),
+    Result: Entry,
     execute: ids => sql`select * from Entry where ${sql.in("id", ids)}`,
   })
 
