@@ -1,12 +1,7 @@
 // CVR, CVREntires, CVRCache etc (cvr cache maybe uses key value store)
 
-import { Context, Effect } from "effect"
-import {
-  DurableObjectStorageLayer,
-  makeSchemaStore,
-  makeStorageLayer,
-  StorageLayer,
-} from "../DurableObject"
+import { Context, Effect, Layer } from "effect"
+import { makeSchemaStore, StorageLayer } from "../DurableObject"
 import type { ClientViewRecordId } from "../Domain/Replicache"
 import { ClientViewRecord } from "../Domain/Replicache"
 
@@ -32,4 +27,6 @@ const make = Effect.gen(function* () {
 export class CVRCache extends Context.Tag("Replicache/CVRCache")<
   CVRCache,
   Effect.Effect.Success<typeof make>
->() {}
+>() {
+  static Live = Layer.effect(CVRCache, make)
+}

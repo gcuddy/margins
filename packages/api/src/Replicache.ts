@@ -398,7 +398,7 @@ export class FutureMutationError extends Schema.TaggedError<FutureMutationError>
   }
 }
 
-export class Replicache extends Context.Tag("Replicache")<
+export class Replicache extends Effect.Tag("Replicache")<
   Replicache,
   Effect.Effect.Success<typeof make>
 >() {
@@ -406,5 +406,6 @@ export class Replicache extends Context.Tag("Replicache")<
     Layer.provide(SqlLive),
     Layer.provide(ReplicacheClientGroupRepo.Live),
     Layer.provide(ReplicacheClientRepo.Live),
+    Layer.provide(EntriesRepo.Live),
   )
 }

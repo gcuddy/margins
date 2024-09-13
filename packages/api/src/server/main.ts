@@ -5,7 +5,13 @@ import { Replicache } from "../Replicache.js"
 import { LuciaLayer } from "../Auth.js"
 import { LuciaAdapterLayer } from "../adapters/lucia-do.js"
 import { KeyValueStore } from "@effect/platform"
-import { DurableObjectStateLayer } from "../DurableObject.js"
+import {
+  DurableObjectStateLayer,
+  DurableObjectStorageLayer,
+  StorageLayer,
+} from "../DurableObject.js"
+import { CVRCache } from "../Replicache/ClientViewRecord.js"
+import { CurrentUser } from "../Domain/User.js"
 // import { ConfigProviderLayer } from "./config"
 
 // TODO: move this, but also probably just use durableObjectStateLayer for everything instead of extra stringifying??
@@ -40,6 +46,7 @@ const MainLayer = Layer.mergeAll(
   LuciaLayer.Live,
 ).pipe(
   Layer.provide(KeyValueStoreLive),
+  Layer.provide(CVRCache.Live),
   // Layer.provide(DurableObjectStateLayer.Live({} as any)),
 )
 
@@ -51,7 +58,11 @@ export const makeServerRuntime = (
   state: DurableObjectState,
 ) =>
   ManagedRuntime.make(
-    Layer.provide(MainLayer, Layer.setConfigProvider(config)).pipe(
-      Layer.provide(DurableObjectStateLayer.Live(state)),
-    ),
+    Layer.provide(MainLayer, Layer.setConfigProvider(config))
+      .pipe(
+        Layer.provide(DurableObjectStateLayer.Live(state)),
+        Layer.provide(StorageLayer.Live),
+      )
+      .pipe(Layer.provide(DurableObjectStorageLayer.Live(state.storage)))
+      .pipe(Layer.provide(CurrentUser.Test)),
   )

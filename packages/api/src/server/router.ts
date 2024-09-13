@@ -33,10 +33,6 @@ export const router = HttpRouter.empty
     HttpRouter.use(flow(HttpMiddleware.cors(), HttpMiddleware.logger)),
   )
   .pipe(
-    Effect.catchTags({
-      // AuthorizationError: () =>
-      //   HttpServerResponse.text("Unauthorized", { status: 401 }),
-    }),
     Effect.catchAllCause(cause =>
       HttpServerResponse.text(cause.toString(), { status: 500 }),
     ),

@@ -34,6 +34,7 @@ const acquire = Effect.gen(function* () {
   const db = yield* DB
 
   return yield* Effect.async<DBTX>(resume => {
+    // @ts-expect-error depends on tsconfig settings
     const txSuspend = Promise.withResolvers()
     const operation = db
       .transaction()

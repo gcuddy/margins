@@ -63,7 +63,6 @@ export class MarginsServer extends Server<Env> {
     return pipe(
       router,
       // TODO: get current user from session
-      Effect.provide(CurrentUser.Test),
       // TODO: tracing live
       // Effect.provide(TracingLive),
       Effect.tapErrorCause(Effect.logError),

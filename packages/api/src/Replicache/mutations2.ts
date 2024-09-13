@@ -4,7 +4,7 @@ import type { WriteTransaction } from "replicache"
 import { Schema } from "@effect/schema"
 import type { Record } from "effect"
 import { Effect } from "effect"
-import { ParseError } from "@effect/schema/ParseResult"
+import type { ParseError } from "@effect/schema/ParseResult"
 import { LuciaLayer } from "../Auth"
 
 interface Mutation<Name extends string = string, Input = any, Output = any> {
@@ -32,9 +32,7 @@ export class Server<Mutations extends Record<string, Mutation>> {
   private mutations = new Map<
     string,
     {
-      fn: (
-        input: any,
-      ) => Effect.Effect<any, MutationError | ParseError, unknown>
+      fn: (input: any) => Effect.Effect<any, MutationError | ParseError, never>
       input: Schema.Schema.Any
     }
   >()
@@ -86,23 +84,23 @@ export class Server<Mutations extends Record<string, Mutation>> {
     this.mutations.set(name as string, {
       fn: args =>
         Effect.gen(function* () {
-          const parsed = yield* Schema.decodeUnknown(mutation.schema)(args)
-          return yield* mutation
-            .handler(parsed)
-            .pipe(
-              Effect.mapError(e =>
-                e instanceof ParseError
-                  ? e
-                  : new MutationError({ mutation: name, args }),
-              ),
-            )
+          const parsed = Schema.decodeUnknownOption(mutation.schema)(args)
+          //   return yield* mutation
+          //     .handler(parsed)
+          //     .pipe(
+          //       Effect.mapError(e =>
+          //         e instanceof ParseError
+          //           ? e
+          //           : new MutationError({ mutation: name, args }),
+          //       ),
+          //     )
         }),
       input: mutation.schema,
     })
     return this
   }
 
-  public execute(name: string, args: unknown) {
+  public execute(name: string, args: any) {
     const mut = this.mutations.get(name as string)
     return Effect.gen(function* () {
       yield* Effect.log("execute", name, args)
@@ -187,7 +185,7 @@ interface MutationEffect<S extends Schema.Schema.Any, A, E = never, R = never>
   readonly _tag: "Replicache"
   readonly handler: (
     request: Schema.Schema.Type<S>,
-  ) => Effect.Effect<A, E | ParseError, R>
+  ) => Effect.Effect<A, E | ParseError, never>
 }
 
 // not in love with this — check other mutaitons.ts for a more interesting effecty way
@@ -197,7 +195,7 @@ function schema<Schema extends Schema.Schema.Any, A, E = never, R = never>(
   //   TODO: extract requirements here and up in class / make it a `make` effect layer`
   handler: (
     input: Schema.Schema.Type<Schema>,
-  ) => Effect.Effect<A, E | ParseError, R>,
+  ) => Effect.Effect<A, E | ParseError, never>,
 ): MutationEffect<Schema, A, E, R> {
   return {
     handler,
@@ -210,7 +208,6 @@ function schema<Schema extends Schema.Schema.Any, A, E = never, R = never>(
 const Go = schema(Schema.String, input =>
   Effect.gen(function* () {
     // yield* Effect.fail('uh oh')
-    const auth = yield* LuciaLayer
   }),
 )
 
