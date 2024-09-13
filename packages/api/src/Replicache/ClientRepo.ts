@@ -7,11 +7,10 @@ import {
   SearchResult,
 } from "../Domain/Replicache.js"
 import { SqlLive } from "../Sql.js"
-import { Schema } from "@effect/schema"
 
 export const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
-  const repo = Model.makeRepository(ReplicacheClient, {
+  const repo = yield* Model.makeRepository(ReplicacheClient, {
     tableName: "replicache_client",
     spanPrefix: "ReplicacheClientRepo",
     idColumn: "id",
@@ -28,7 +27,7 @@ export const make = Effect.gen(function* () {
   return {
     ...repo,
     searchForClientGroup,
-  }
+  } as const
 })
 export class ReplicacheClientRepo extends Context.Tag("Replicache/ClientRepo")<
   ReplicacheClientRepo,

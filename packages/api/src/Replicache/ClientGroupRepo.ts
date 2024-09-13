@@ -1,13 +1,17 @@
 import { Model } from "@effect/sql"
-import type { Effect } from "effect"
-import { Cache, Context, Layer } from "effect"
+import { Cache, Context, Effect, Layer, Option, pipe } from "effect"
+import type { ReplicacheClientGroupId } from "../Domain/Replicache.js"
 import { ReplicacheClientGroup } from "../Domain/Replicache.js"
 import { SqlLive } from "../Sql.js"
 
-export const make = Model.makeRepository(ReplicacheClientGroup, {
-  tableName: "replicache_client_group",
-  spanPrefix: "ReplicacheClientGroupRepo",
-  idColumn: "id",
+export const make = Effect.gen(function* () {
+  const repo = yield* Model.makeRepository(ReplicacheClientGroup, {
+    tableName: "replicache_client_group",
+    spanPrefix: "ReplicacheClientGroupRepo",
+    idColumn: "id",
+  })
+
+  return { ...repo } as const
 })
 export class ReplicacheClientGroupRepo extends Context.Tag(
   "Replicache/ClientGroupRepo",

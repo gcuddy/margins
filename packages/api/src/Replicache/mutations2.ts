@@ -1,11 +1,10 @@
 // taken largely from https://github.dev/sst/console/blob/dev/packages/functions/src/replicache/pull1.ts
 
-import type { z, ZodSchema } from "zod"
 import type { WriteTransaction } from "replicache"
 import { Schema } from "@effect/schema"
-import type { Record } from "effect";
+import type { Record } from "effect"
 import { Effect } from "effect"
-import type { ParseError } from "@effect/schema/ParseResult"
+import { ParseError } from "@effect/schema/ParseResult"
 import { LuciaLayer } from "../Auth"
 
 interface Mutation<Name extends string = string, Input = any, Output = any> {
@@ -18,6 +17,7 @@ export class MutationError extends Schema.TaggedError<MutationError>()(
   "MutationError",
   {
     mutation: Schema.String,
+    args: Schema.Any,
   },
 ) {}
 
@@ -55,7 +55,7 @@ export class Server<Mutations extends Record<string, Mutation>> {
           const parsed = yield* Schema.decodeUnknown(shape)(args)
           return yield* Effect.tryPromise({
             try: () => fn(parsed),
-            catch: () => new MutationError({ mutation: name }),
+            catch: () => new MutationError({ mutation: name, args }),
           })
         }),
       input: shape,
@@ -69,7 +69,7 @@ export class Server<Mutations extends Record<string, Mutation>> {
     Shape extends Schema.Schema.Any,
     Args = Schema.Schema.Type<Shape>,
     Output = any,
-    Error = never,
+    Error = MutationError,
     Requirements = never,
   >(
     name: Name,
@@ -87,12 +87,16 @@ export class Server<Mutations extends Record<string, Mutation>> {
       fn: args =>
         Effect.gen(function* () {
           const parsed = yield* Schema.decodeUnknown(mutation.schema)(args)
-          return yield* mutation.handler(parsed)
-          //   return yield* Effect.tryPromise({
-          //     try: () => fn(parsed),
-          //     catch: () => new MutationError({ mutation: name }),
-          //   })
-        }) as any,
+          return yield* mutation
+            .handler(parsed)
+            .pipe(
+              Effect.mapError(e =>
+                e instanceof ParseError
+                  ? e
+                  : new MutationError({ mutation: name, args }),
+              ),
+            )
+        }),
       input: mutation.schema,
     })
     return this
@@ -209,6 +213,8 @@ const Go = schema(Schema.String, input =>
     const auth = yield* LuciaLayer
   }),
 )
+
+// I just wonder if there's a way to make this more effecty
 export const server = new Server()
   .expose(
     "Go",

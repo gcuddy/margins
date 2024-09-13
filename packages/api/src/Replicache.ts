@@ -1,5 +1,4 @@
 import {
-  Array,
   Chunk,
   Context,
   Effect,
@@ -11,12 +10,12 @@ import {
 } from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
-import { CurrentUser, type UserId } from "./Domain/User.js"
+import { CurrentUser } from "./Domain/User.js"
 import type { ReplicacheClientId } from "./Domain/Replicache.js"
 import {
+  Mutation,
   ReplicacheClient,
   ReplicacheClientGroup,
-  type Mutation,
   type PushRequest,
   type PullRequest,
   type ReplicacheClientGroupId,
@@ -31,7 +30,9 @@ import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations2.js"
 import { CVRCache } from "./Replicache/ClientViewRecord.js"
 import { EntriesRepo } from "./Entries/Repo.js"
+import type { Entry } from "./Domain/Entry.js"
 import { EntryId } from "./Domain/Entry.js"
+import { Unauthorized } from "./Domain/Actor.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -45,6 +46,7 @@ const make = Effect.gen(function* () {
   const getClientGroup = (clientGroupID: ReplicacheClientGroupId) =>
     pipe(
       clientGroupRepo.findById(clientGroupID),
+      // TODO: use policy can read?
       Effect.flatMap(
         Option.match({
           onNone: () =>
@@ -56,7 +58,13 @@ const make = Effect.gen(function* () {
           onSome: clientGroup =>
             clientGroup.userID === userID
               ? Effect.succeed(clientGroup)
-              : Effect.fail(new AuthorizationError("User ID mismatch")),
+              : Effect.fail(
+                  new Unauthorized({
+                    actorId: userID,
+                    entity: "ReplicacheClientGroup",
+                    action: "read",
+                  }),
+                ),
         }),
       ),
       // Effect.orDie
@@ -83,9 +91,11 @@ const make = Effect.gen(function* () {
             client.clientGroupID === clientGroupID
               ? Effect.succeed(client)
               : Effect.fail(
-                  new AuthorizationError(
-                    "Client does not belong to client group",
-                  ),
+                  new Unauthorized({
+                    actorId: userID,
+                    entity: "ReplicacheClient",
+                    action: "read",
+                  }),
                 ),
         }),
       ),
@@ -151,9 +161,7 @@ const make = Effect.gen(function* () {
 
       // 9: Rollback and error if from future.
       if (mutation.id > nextMutationID) {
-        yield* new FutureMutationError(
-          `Mutation ${mutation.id} is from the future - aborting`,
-        )
+        yield* new FutureMutationError({ mutation })
       }
       // TODO: spans and timing
 
@@ -253,8 +261,10 @@ const make = Effect.gen(function* () {
         const encode = Schema.encode(SearchResultsFromClientViewEntries)
 
         // 8: Build nextCVR
+        // TODO: have Specific type for ClientViewRecord with keys?
         const nextCVR = ClientViewRecord.make({
           entries: yield* encode(entryMeta),
+          client: yield* encode(clientMeta),
         })
 
         console.log({ nextCVR })
@@ -325,7 +335,8 @@ const make = Effect.gen(function* () {
         const entries = yield* decode(diff.entries?.puts).pipe(
           Option.match({
             onSome: ids => entriesRepo.getForIds(ids),
-            onNone: () => Effect.succeed([]),
+            // hmmm
+            onNone: () => Effect.succeed([] as readonly Entry[]),
           }),
           // Option.getOrElse(() => []),
         )
@@ -376,17 +387,18 @@ const make = Effect.gen(function* () {
   } as const
 })
 
-export class AuthorizationError extends Schema.TaggedError<AuthorizationError>()(
-  "AuthorizationError",
-  {},
-) {}
-
 export class FutureMutationError extends Schema.TaggedError<FutureMutationError>()(
   "FutureMutationError",
-  {},
-) {}
+  {
+    mutation: Mutation,
+  },
+) {
+  get message() {
+    return `Mutation ${this.mutation.id} is from the future - aborting`
+  }
+}
 
-export class Replicache extends Context.Tag("core/replicache")<
+export class Replicache extends Context.Tag("Replicache")<
   Replicache,
   Effect.Effect.Success<typeof make>
 >() {
@@ -396,28 +408,3 @@ export class Replicache extends Context.Tag("core/replicache")<
     Layer.provide(ReplicacheClientRepo.Live),
   )
 }
-
-class ClientGroupRecord extends Schema.Class<ClientGroupRecord>(
-  "ClientGroupRecord",
-)({
-  id: Schema.String,
-  cvrVersion: Schema.Number,
-  userID: Schema.String,
-}) {}
-
-class ClientRecord extends Schema.Class<ClientRecord>("ClientRecord")({
-  id: Schema.String,
-  clientGroupID: Schema.String,
-  lastMutationID: Schema.Number,
-}) {}
-
-// export class ReplicacheClientGroup extends Context.Tag(
-//   "core/replicacheClientGroup",
-// )<
-//   ReplicacheClientGroup,
-//   {
-//     userID: string
-//     clientGroupID: string
-//     cvrVersion: number
-//   }
-// >() {}
