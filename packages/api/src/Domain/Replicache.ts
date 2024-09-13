@@ -1,6 +1,7 @@
 import { Model } from "@effect/sql"
 import { Schema } from "@effect/schema"
 import { UserId } from "./User.js"
+import { pipe, Record } from "effect"
 
 export const ReplicacheClientGroupId = Schema.String.pipe(
   Schema.brand("ReplicacheClientGroupId"),
@@ -46,6 +47,37 @@ export const ClientViewEntries = Schema.Record({
 export const ClientViewRecord = Schema.Record({
   key: Schema.String,
   value: ClientViewEntries,
+})
+
+export class SearchResult extends Schema.Class<SearchResult>("SearchResult")({
+  id: Schema.String,
+  rowversion: Schema.Number,
+}) {}
+
+export const SearchResultsFromClientViewEntries = Schema.transform(
+  ClientViewEntries,
+  Schema.Array(SearchResult),
+  {
+    strict: true,
+    // Maybe there's a better way without double loop?
+    decode: entries =>
+      pipe(Record.toEntries(entries), a =>
+        a.map(([id, rowversion]) => ({ id, rowversion })),
+      ),
+    encode: result =>
+      pipe(
+        result.map(({ id, rowversion }) => [id, rowversion] as const),
+        Record.fromEntries,
+      ),
+  },
+)
+
+export const ClientViewRecordDiff = Schema.Record({
+  key: Schema.String,
+  value: Schema.Struct({
+    puts: Schema.Array(Schema.String),
+    dels: Schema.Array(Schema.String),
+  }),
 })
 
 // export class ClientViewRecord extends Schema.Class<ClientViewRecord>(

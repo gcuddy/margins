@@ -1,4 +1,14 @@
-import { Array, Context, Effect, Layer, Option, pipe } from "effect"
+import {
+  Array,
+  Chunk,
+  Context,
+  Effect,
+  HashSet,
+  Layer,
+  Option,
+  pipe,
+  Record,
+} from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { CurrentUser, type UserId } from "./Domain/User.js"
@@ -10,12 +20,18 @@ import {
   type PushRequest,
   type PullRequest,
   type ReplicacheClientGroupId,
+  ClientViewRecord,
+  SearchResultsFromClientViewEntries,
+  ClientViewRecordDiff,
+  ClientViewEntries,
 } from "./Domain/Replicache.js"
 import { ReplicacheClientGroupRepo } from "./Replicache/ClientGroupRepo.js"
 import { ReplicacheClientRepo } from "./Replicache/ClientRepo.js"
 import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations2.js"
 import { CVRCache } from "./Replicache/ClientViewRecord.js"
+import { EntriesRepo } from "./Entries/Repo.js"
+import type { EntryId } from "./Domain/Entry.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -23,6 +39,7 @@ const make = Effect.gen(function* () {
   const clientRepo = yield* ReplicacheClientRepo
   const cvrCache = yield* CVRCache
   const { id: userID } = yield* CurrentUser
+  const entriesRepo = yield* EntriesRepo
 
   // TODO: should these be here? or in the repo?
   const getClientGroup = (clientGroupID: ReplicacheClientGroupId) =>
@@ -202,8 +219,109 @@ const make = Effect.gen(function* () {
       // TODO
       const baseCVR = Option.match(prevCvr, {
         onSome: cvr => cvr,
-        onNone: () => CVR.empty,
+        onNone: () => ClientViewRecord.make({}),
       })
+
+      // now do all this with a transaction
+
+      Effect.gen(function* () {
+        const baseClientGroup = yield* getClientGroup(clientGroupID)
+
+        // Get relevant data
+
+        // 6. Read all id/version pairs from the database that should be in the client view.
+        // TODO: more stuff here
+        const [entryMeta, clientMeta] = yield* Effect.all(
+          [
+            entriesRepo.searchForUserId(userID),
+            // 7: Read all clients in CG
+            clientRepo.searchForClientGroup(clientGroupID),
+          ],
+          {
+            concurrency: "unbounded",
+          },
+        )
+
+        // 6: Read all domain data, just ids and versions
+        // const entryIds = entryMeta.map(e => e.id)
+        // const [todoMeta, shareMeta] = await Promise.all([
+        //   searchTodos(executor, { listIDs }),
+        //   searchShares(executor, { listIDs }),
+        // ])
+        // console.log({ todoMeta, shareMeta })
+
+        const encode = Schema.encode(SearchResultsFromClientViewEntries)
+
+        // 8: Build nextCVR
+        const nextCVR = ClientViewRecord.make({
+          entries: yield* encode(entryMeta),
+        })
+
+        console.log({ nextCVR })
+
+        // 9: calculate diffs
+        // const diff = diffCVR(baseCVR, nextCVR)
+        // should this fn be elsewhere? ah well
+        const diff = yield* Effect.gen(function* () {
+          // Diff baseCvr with nextCvr
+          // TODO: make pipe-y
+
+          // First we'll do it the non efffect y way
+          const r = ClientViewRecordDiff.make({})
+          const chunk = Chunk.appendAll(
+            Chunk.fromIterable(Record.keys(baseCVR)),
+            Chunk.fromIterable(Record.keys(nextCVR)),
+          )
+          HashSet.fromIterable(chunk).pipe(
+            HashSet.forEach(name => {
+              const prevEntries = Record.get(baseCVR, name).pipe(
+                Option.getOrElse(() => ClientViewEntries.make({})),
+              )
+              const nextEntries = Record.get(nextCVR, name).pipe(
+                Option.getOrElse(() => ClientViewEntries.make({})),
+              )
+
+              Record.set(r, name, {
+                puts: Record.keys(nextEntries).filter(
+                  id =>
+                    !Record.has(prevEntries, id) ||
+                    Option.all([
+                      Record.get(prevEntries, id),
+                      Record.get(nextEntries, id),
+                    ]).pipe(
+                      Option.match({
+                        onSome: ([prev, next]) => prev < next,
+                        onNone: () => false,
+                      }),
+                    ),
+                ),
+                dels: Record.keys(prevEntries).filter(
+                  id => !Record.has(nextEntries, id),
+                ),
+              })
+            }),
+          )
+          return r
+        })
+
+        // 10: If diff is empty, return no-op PR
+        if (
+          Option.isSome(prevCvr) &&
+          Record.values(diff).every(
+            e => e.puts.length === 0 && e.dels.length === 0,
+          )
+        ) {
+          // TODO
+          return null
+        }
+
+        // 11 get entities TODO here
+        // const [entries] = yield* Effect.all([
+        //   entriesRepo.getForIds((diff.entries?.puts ?? []) as EntryId[]),
+        // ])
+        // if ()
+        // console.log({ diff })
+      }).pipe(sql.withTransaction)
     })
 
   return {
