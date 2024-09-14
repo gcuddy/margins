@@ -177,7 +177,7 @@ const putClientGroup = (clientGroup: ClientGroupRecord) =>
         // TODO: lastModified?
         updatedAt: new Date(),
         // TODO: DEPRECATED
-        clientVersion: 0,
+        // clientVersion: 0,
       })
       .onDuplicateKeyUpdate({
         userId: clientGroup.userID,

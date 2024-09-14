@@ -40,6 +40,16 @@ export const ClientViewRecordId = Schema.String.pipe(
 )
 export type ClientViewRecordId = typeof ClientViewRecordId.Type
 
+export class NumberFromDateString extends Schema.transform(
+  Schema.String,
+  Schema.Number,
+  {
+    strict: true,
+    decode: d => new Date(d).getTime(),
+    encode: n => new Date(n).toISOString(),
+  },
+) {}
+
 export const ClientViewEntries = Schema.Record({
   key: Schema.String,
   value: Schema.Number,
@@ -50,9 +60,11 @@ export const ClientViewRecord = Schema.Record({
   value: ClientViewEntries,
 })
 
+export type ClientViewRecord = typeof ClientViewRecord.Type
+
 export class SearchResult extends Schema.Class<SearchResult>("SearchResult")({
   id: Schema.String,
-  rowversion: Schema.Number,
+  rowversion: DateTimeString,
 }) {}
 
 export const SearchResultsFromClientViewEntries = Schema.transform(
@@ -63,23 +75,32 @@ export const SearchResultsFromClientViewEntries = Schema.transform(
     // Maybe there's a better way without double loop?
     decode: entries =>
       pipe(Record.toEntries(entries), a =>
-        a.map(([id, rowversion]) => ({ id, rowversion })),
+        a.map(([id, rowversion]) => ({
+          id,
+          rowversion: new Date(rowversion).toISOString(),
+        })),
       ),
-    encode: result =>
-      pipe(
-        result.map(({ id, rowversion }) => [id, rowversion] as const),
+    encode: result => {
+      console.log({ result })
+      return pipe(
+        result.map(
+          ({ id, rowversion }) => [id, new Date(rowversion).getTime()] as const,
+        ),
         Record.fromEntries,
-      ),
+      )
+    },
   },
 )
 
 export const ClientViewRecordDiff = Schema.Record({
   key: Schema.String,
   value: Schema.Struct({
-    puts: Schema.Array(Schema.String),
-    dels: Schema.Array(Schema.String),
+    puts: Schema.Array(Schema.String.pipe(Schema.mutable)).pipe(Schema.mutable),
+    dels: Schema.Array(Schema.String.pipe(Schema.mutable)).pipe(Schema.mutable),
   }),
-})
+}).pipe(Schema.mutable)
+
+export type ClientViewRecordDiff = typeof ClientViewRecordDiff.Type
 
 // export class ClientViewRecord extends Schema.Class<ClientViewRecord>(
 //   "ClientViewRecord",

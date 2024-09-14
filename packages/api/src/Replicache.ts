@@ -12,8 +12,8 @@ import {
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { CurrentUser } from "./Domain/User.js"
-import type { ReplicacheClientId ,
-  PatchOperation} from "./Domain/Replicache.js"
+import type { ReplicacheClientId, PatchOperation ,
+  ClientViewRecordDiff} from "./Domain/Replicache.js"
 import {
   Mutation,
   ReplicacheClient,
@@ -23,7 +23,6 @@ import {
   type ReplicacheClientGroupId,
   ClientViewRecord,
   SearchResultsFromClientViewEntries,
-  ClientViewRecordDiff,
   ClientViewEntries,
   Cookie,
   ClientViewRecordId,
@@ -55,12 +54,15 @@ const make = Effect.gen(function* () {
       // TODO: use policy can read?
       Effect.flatMap(
         Option.match({
+          // TODO:!!!
           onNone: () =>
-            Effect.succeed({
-              id: clientGroupID,
-              userId,
-              cvrVersion: 0,
-            }),
+            Effect.succeed(
+              ReplicacheClientGroup.insert.make({
+                cvrVersion: 0,
+                userId,
+                id: clientGroupID,
+              }),
+            ),
           onSome: clientGroup =>
             clientGroup.userId === userId
               ? Effect.succeed(clientGroup)
@@ -226,7 +228,7 @@ const make = Effect.gen(function* () {
         Option.fromNullable(pullRequest.cookie),
         Option.match({
           onSome: cookie => cvrCache.get(cookie.cvrID),
-          onNone: () => Effect.succeedNone,
+          onNone: () => Effect.succeed(Option.none<ClientViewRecord>()),
         }),
       )
 
@@ -240,7 +242,10 @@ const make = Effect.gen(function* () {
 
       // TODO: more effect-y!
       const data = yield* Effect.gen(function* () {
+        console.log({ clientGroupID, userId })
         const baseClientGroup = yield* getClientGroup(clientGroupID)
+
+        console.log({ baseClientGroup })
 
         // Get relevant data
 
@@ -263,7 +268,8 @@ const make = Effect.gen(function* () {
         //   searchTodos(executor, { listIDs }),
         //   searchShares(executor, { listIDs }),
         // ])
-        // console.log({ todoMeta, shareMeta })
+        // console.log({ todoMetsa, shareMeta })
+        console.log({ entryMeta, clientMeta })
 
         const encode = Schema.encode(SearchResultsFromClientViewEntries)
 
@@ -284,7 +290,7 @@ const make = Effect.gen(function* () {
           // TODO: make pipe-y
 
           // First we'll do it the non efffect y way
-          const r = ClientViewRecordDiff.make({})
+          const r: ClientViewRecordDiff = {}
           const chunk = Chunk.appendAll(
             Chunk.fromIterable(Record.keys(baseCVR)),
             Chunk.fromIterable(Record.keys(nextCVR)),
@@ -298,28 +304,41 @@ const make = Effect.gen(function* () {
                 Option.getOrElse(() => ClientViewEntries.make({})),
               )
 
-              Record.set(r, name, {
-                puts: Record.keys(nextEntries).filter(
-                  id =>
-                    !Record.has(prevEntries, id) ||
-                    Option.all([
-                      Record.get(prevEntries, id),
-                      Record.get(nextEntries, id),
-                    ]).pipe(
-                      Option.match({
-                        onSome: ([prev, next]) => prev < next,
-                        onNone: () => false,
-                      }),
-                    ),
-                ),
+              console.log({ name, prevEntries, nextEntries })
+              const puts = Record.keys(nextEntries).filter(id => {
+                const test =
+                  !Record.has(prevEntries, id) ||
+                  Option.all([
+                    Record.get(prevEntries, id),
+                    Record.get(nextEntries, id),
+                  ]).pipe(
+                    Option.match({
+                      onSome: ([prev, next]) => prev < next,
+                      onNone: () => false,
+                    }),
+                  )
+                console.log({ id, test })
+                return test
+              })
+
+              console.log({ puts })
+              const val = {
+                puts,
                 dels: Record.keys(prevEntries).filter(
                   id => !Record.has(nextEntries, id),
                 ),
-              })
+              }
+
+              console.log(`setting ${name} to`, val)
+
+              r[name] = val
+              console.log({ r })
             }),
           )
           return r
         })
+
+        console.log({ diff })
 
         // 10: If diff is empty, return no-op PR
         if (
@@ -405,11 +424,13 @@ const make = Effect.gen(function* () {
       // TODO: effect-ify
       // 18(i): build patch
       const patch: PatchOperation[] = []
-      if (prevCvr === undefined) {
+      if (Option.isNone(prevCvr)) {
         patch.push({ op: "clear" })
       }
 
-      for (const [name, { puts, dels }] of Object.entries(entities)) {
+      console.log({ entities })
+
+      for (const [name, { puts, dels }] of Record.toEntries(entities)) {
         for (const id of dels ?? []) {
           patch.push({ op: "del", key: `${name}/${id}` })
         }
@@ -461,6 +482,7 @@ export class Replicache extends Effect.Tag("Replicache")<
 >() {
   static readonly Live = Layer.scoped(this, make).pipe(
     Layer.provide(SqlLive),
+    Layer.provide(CVRCache.Live),
     Layer.provide(ReplicacheClientGroupRepo.Live),
     Layer.provide(ReplicacheClientRepo.Live),
     Layer.provide(EntriesRepo.Live),

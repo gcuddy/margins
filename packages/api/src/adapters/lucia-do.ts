@@ -1,5 +1,5 @@
 import { Schema } from "@effect/schema"
-import { Effect, Layer, Option, pipe } from "effect"
+import { DateTime, Effect, Layer, Option, pipe } from "effect"
 import { SqlLive } from "../Sql.js"
 import { User, UserId, UserNotFound } from "../Domain/User.js"
 import { KeyValueStore } from "@effect/platform"
@@ -37,12 +37,13 @@ const LuciaUser = Schema.Struct({
   id: Schema.String,
   createdAt: Schema.Date,
   updatedAt: Schema.Date,
-  attributes: User.pipe(Schema.omit("createdAt", "id", "updatedAt")),
+  attributes: User.pipe(Schema.omit("id")),
 })
 
 const transformUser = Schema.transform(LuciaUser, User, {
   strict: true,
   decode: user => {
+    console.log("decode", user)
     return {
       createdAt: user.createdAt.toString(),
       updatedAt: user.updatedAt.toString(),
@@ -51,6 +52,7 @@ const transformUser = Schema.transform(LuciaUser, User, {
     }
   },
   encode: user => {
+    console.log("encode", user)
     const { id, createdAt, updatedAt, ...attributes } = user
     return {
       id,
@@ -58,13 +60,15 @@ const transformUser = Schema.transform(LuciaUser, User, {
       updatedAt: new Date(updatedAt),
       attributes: {
         email: Email.make(attributes.email),
+        createdAt: DateTime.unsafeMake(createdAt),
+        updatedAt: DateTime.unsafeMake(updatedAt),
       },
     }
   },
 })
 
 const encodeLuciaUser = Schema.encode(transformUser, {
-  onExcessProperty: "ignore",
+  onExcessProperty: "preserve",
 })
 
 // Our "A" type is our internal session type. Our "I" type is the lucia session type.
@@ -204,6 +208,8 @@ const make = Effect.gen(function* () {
         expiresAt: new Date(session.value.expiresAt).toISOString(),
       })
       const luciaUser = yield* encodeLuciaUser(user.value)
+      console.log("luciaSession", luciaSession)
+      console.log("luciaUser", luciaUser)
       return [luciaSession, luciaUser] as const
     })
 

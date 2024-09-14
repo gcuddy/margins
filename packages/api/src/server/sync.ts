@@ -4,12 +4,13 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from "@effect/platform"
-import { Effect, Layer, Option } from "effect"
+import { DateTime, Effect, Layer, Option } from "effect"
 import { Replicache } from "../Replicache.js"
 import { Schema } from "@effect/schema"
 import { PullRequest, PullResponse, PushRequest } from "../Domain/Replicache.js"
-import { CurrentUser } from "../Domain/User.js"
+import { CurrentUser, User, UserId } from "../Domain/User.js"
 import { AuthorizationError, LuciaLayer } from "../Auth.js"
+import { Email } from "../Domain/Email.js"
 // import { Replicache } from "../services/Replicache"
 // Middleware constructor that logs the name of the middleware
 
@@ -29,23 +30,15 @@ const authMiddleWare = (name: string) =>
       )
 
       const lucia = yield* LuciaLayer
-      console.log("lucia", lucia)
       // const authorizationHeader =  req.headers
       const sessionId = Option.fromNullable(
         lucia.readBearerToken(authorization),
       )
-      console.log("sessionId", sessionId)
       if (Option.isNone(sessionId)) {
         // 401 and authorization error
         // or session not found?
         return yield* new AuthorizationError("No Session Found")
       }
-      // TODO: should make validateSession return effects/options automatically
-      const { user, session } = yield* Effect.tryPromise(() =>
-        lucia.validateSession(sessionId.value),
-      )
-      console.log("user", user)
-      console.log("session", session)
       return yield* app // Continue with the original application flow
     }).pipe(
       Effect.tapErrorCause(e => Effect.logError("auth middleware error", e)),
@@ -71,6 +64,7 @@ export const sync = HttpRouter.empty.pipe(
       Effect.catchAllCause(_ =>
         HttpServerResponse.empty().pipe(HttpServerResponse.setStatus(500)),
       ),
+      Effect.provide(Replicache.Live),
       // Effect.catchAllCause(_ => Effect.succeed(HttpServerResponse.text("Error")))
     ),
   ),
@@ -99,14 +93,70 @@ export const sync = HttpRouter.empty.pipe(
           )
         },
       }),
+      Effect.provide(Replicache.Live),
       // Effect.catchAllCause(_ =>
       //   HttpServerResponse.empty().pipe(HttpServerResponse.setStatus(500)),
       // ),
     ),
   ),
   HttpRouter.use(authMiddleWare("auth")),
+  HttpRouter.provideServiceEffect(
+    CurrentUser,
+    Effect.gen(function* () {
+      const { authorization } = yield* HttpServerRequest.schemaHeaders(
+        Schema.Struct({
+          authorization: Schema.String,
+        }),
+      ).pipe(
+        Effect.tapErrorCause(e => Effect.logError("Parse Error", e)),
+        Effect.catchTag(
+          "ParseError",
+          () => new AuthorizationError("Incorrect Authorization Header"),
+        ),
+      )
+      const lucia = yield* LuciaLayer
+      console.log("lucia", lucia)
+      // const authorizationHeader =  req.headers
+      const sessionId = Option.fromNullable(
+        lucia.readBearerToken(authorization),
+      )
+      console.log("sessionId", sessionId)
+      if (Option.isNone(sessionId)) {
+        // 401 and authorization error
+        // or session not found?
+        return yield* new AuthorizationError("No Session Found")
+      }
+      // TODO: should make validateSession return effects/options automatically
+      const { user, session } = yield* Effect.tryPromise(() =>
+        lucia.validateSession(sessionId.value),
+      )
+      if (user === null || session === null) {
+        return yield* new AuthorizationError("No Session Found")
+      }
+      return User.make({
+        createdAt: DateTime.unsafeMake(user.createdAt),
+        updatedAt: DateTime.unsafeMake(user.updatedAt),
+        email: Email.make(user.email),
+        id: UserId.make(user.id),
+      })
+    }).pipe(Effect.tapErrorCause(Effect.logError)),
+  ),
+  // HttpRouter.use(
+  //   Effect.provideServiceEffect(
+  //     CurrentUser,
+  //     Effect.succeed(
+  //       User.make({
+  //         createdAt: DateTime.unsafeNow(),
+  //         updatedAt: DateTime.unsafeNow(),
+  //         email: Email.make("test@test.com"),
+  //         id: UserId.make("1"),
+  //       }),
+  //     ),
+  //   ),
+  // ),
   // Effect.provide(Replicache.Live),
 )
+// .pipe(Effect.provide(Replicache.Live))
 // .pipe(Layer.provide(Replicache.Live))
 
 // SyncApiLive.pipe(

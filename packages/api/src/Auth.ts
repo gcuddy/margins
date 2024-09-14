@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Runtime } from "effect"
 import { LuciaAdapterLayer } from "./adapters/lucia-do.js"
 import { Lucia } from "lucia"
-import { UserId } from "./Domain/User.js"
+import { User, UserId } from "./Domain/User.js"
 import { Schema } from "@effect/schema"
 
 const make = Effect.gen(function* () {
@@ -41,6 +41,12 @@ const make = Effect.gen(function* () {
     },
     {
       // TODO: options
+      getUserAttributes: attributes => {
+        console.log("attributes", attributes)
+        return {
+          ...attributes,
+        }
+      },
     },
   )
 
@@ -60,3 +66,16 @@ export class AuthorizationError extends Schema.TaggedError<AuthorizationError>()
   "AuthorizationError",
   {},
 ) {}
+
+declare module "lucia" {
+  interface Register {
+    Lucia: Effect.Effect.Success<typeof make>
+    DatabaseUserAttributes: DatabaseUserAttributes
+  }
+}
+
+interface DatabaseUserAttributes {
+  email: string
+  createdAt: string
+  updatedAt: string
+}

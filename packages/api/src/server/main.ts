@@ -42,11 +42,13 @@ const KeyValueStoreLive = Layer.effect(
 // TODO: some of these layers should maybe be provided closer to handlers
 const MainLayer = Layer.mergeAll(
   GoogleBooksApi.Live,
-  Replicache.Live,
   LuciaLayer.Live,
+  StorageLayer.Live,
 ).pipe(
   Layer.provide(KeyValueStoreLive),
   Layer.provide(CVRCache.Live),
+  // Providing it twice works, wtf?
+  Layer.provide(StorageLayer.Live),
   // Layer.provide(DurableObjectStateLayer.Live({} as any)),
 )
 
@@ -59,10 +61,6 @@ export const makeServerRuntime = (
 ) =>
   ManagedRuntime.make(
     Layer.provide(MainLayer, Layer.setConfigProvider(config))
-      .pipe(
-        Layer.provide(DurableObjectStateLayer.Live(state)),
-        Layer.provide(StorageLayer.Live),
-      )
-      .pipe(Layer.provide(DurableObjectStorageLayer.Live(state.storage)))
-      .pipe(Layer.provide(CurrentUser.Test)),
+      .pipe(Layer.provide(DurableObjectStateLayer.Live(state)))
+      .pipe(Layer.provide(DurableObjectStorageLayer.Live(state.storage))),
   )

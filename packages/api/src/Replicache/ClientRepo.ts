@@ -21,7 +21,7 @@ export const make = Effect.gen(function* () {
     Result: SearchResult,
     // Result: ReplicacheClient.pipe(Schema.pick("id", "lastMutationID")),
     execute: clientGroupId =>
-      sql`select id, lastMutationId as rowversion from replicache_client where clientGroupID = ${clientGroupId}`,
+      sql`select id, updatedAt as rowversion from replicache_client where clientGroupID = ${clientGroupId}`,
   })
 
   return {
