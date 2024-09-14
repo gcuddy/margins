@@ -112,7 +112,7 @@ export class PullRequest extends Schema.Class<PullRequest>("PullRequest")({
   cookie: Schema.NullishOr(Cookie),
 }) {}
 
-export const patchOperation = Schema.Union(
+export const PatchOperation = Schema.Union(
   Schema.Struct({
     op: Schema.Literal("put"),
     key: Schema.String,
@@ -126,14 +126,15 @@ export const patchOperation = Schema.Union(
     op: Schema.Literal("clear"),
   }),
 )
+export type PatchOperation = typeof PatchOperation.Type
 
 export class PullResponse extends Schema.Class<PullResponse>("PullResponse")({
-  cookie: Cookie,
+  cookie: Schema.NullishOr(Cookie),
   lastMutationIDChanges: Schema.Record({
     key: Schema.String,
     value: Schema.Number,
   }),
-  patch: Schema.Array(patchOperation),
+  patch: Schema.Array(PatchOperation),
 }) {}
 
 export class FutureMutationError extends Schema.TaggedError<FutureMutationError>()(

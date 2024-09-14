@@ -1,4 +1,4 @@
-import { Config, ConfigProvider } from "effect"
+import { Config, ConfigProvider, Logger } from "effect"
 import * as PlanetscaleClient from "./adapters/planetscale.js"
 
 // TODO: fancy nested config thing

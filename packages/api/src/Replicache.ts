@@ -1,8 +1,19 @@
-import { Chunk, Effect, HashSet, Layer, Option, pipe, Record } from "effect"
+import {
+  Chunk,
+  Effect,
+  HashSet,
+  Layer,
+  Logger,
+  LogLevel,
+  Option,
+  pipe,
+  Record,
+} from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { CurrentUser } from "./Domain/User.js"
-import type { ReplicacheClientId } from "./Domain/Replicache.js"
+import type { ReplicacheClientId ,
+  PatchOperation} from "./Domain/Replicache.js"
 import {
   Mutation,
   ReplicacheClient,
@@ -14,6 +25,8 @@ import {
   SearchResultsFromClientViewEntries,
   ClientViewRecordDiff,
   ClientViewEntries,
+  Cookie,
+  ClientViewRecordId,
 } from "./Domain/Replicache.js"
 import { ReplicacheClientGroupRepo } from "./Replicache/ClientGroupRepo.js"
 import { ReplicacheClientRepo } from "./Replicache/ClientRepo.js"
@@ -24,6 +37,7 @@ import { EntriesRepo } from "./Entries/Repo.js"
 import type { Entry } from "./Domain/Entry.js"
 import { EntryId } from "./Domain/Entry.js"
 import { Unauthorized } from "./Domain/Actor.js"
+import { Nanoid } from "./Nanoid.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -32,6 +46,7 @@ const make = Effect.gen(function* () {
   const cvrCache = yield* CVRCache
   const { id: userId } = yield* CurrentUser
   const entriesRepo = yield* EntriesRepo
+  const nanoid = yield* Nanoid
 
   // TODO: should these be here? or in the repo?
   const getClientGroup = (clientGroupID: ReplicacheClientGroupId) =>
@@ -223,7 +238,8 @@ const make = Effect.gen(function* () {
 
       // now do all this with a transaction
 
-      return yield* Effect.gen(function* () {
+      // TODO: more effect-y!
+      const data = yield* Effect.gen(function* () {
         const baseClientGroup = yield* getClientGroup(clientGroupID)
 
         // Get relevant data
@@ -239,7 +255,7 @@ const make = Effect.gen(function* () {
           {
             concurrency: "unbounded",
           },
-        )
+        ).pipe(Logger.withMinimumLogLevel(LogLevel.Debug))
 
         // 6: Read all domain data, just ids and versions
         // const entryIds = entryMeta.map(e => e.id)
@@ -370,6 +386,56 @@ const make = Effect.gen(function* () {
         } as const
         // console.log({ diff })
       }).pipe(sql.withTransaction)
+
+      // 10: If diff is empty, return no-op PR
+      if (data === null) {
+        return {
+          cookie: pullRequest.cookie,
+          lastMutationIDChanges: {},
+          patch: [],
+        }
+      }
+
+      const { entities, clients, nextCVR, nextCVRVersion } = data
+
+      // 16-17: store cvr
+      const cvrID = yield* nanoid.generate
+      cvrCache.set(cvrID, nextCVR)
+
+      // TODO: effect-ify
+      // 18(i): build patch
+      const patch: PatchOperation[] = []
+      if (prevCvr === undefined) {
+        patch.push({ op: "clear" })
+      }
+
+      for (const [name, { puts, dels }] of Object.entries(entities)) {
+        for (const id of dels ?? []) {
+          patch.push({ op: "del", key: `${name}/${id}` })
+        }
+        for (const entity of puts ?? []) {
+          patch.push({
+            op: "put",
+            key: `${name}/${entity.id}`,
+            value: entity,
+          })
+        }
+      }
+
+      // 18(ii): construct cookie
+      const cookie = Cookie.make({
+        order: nextCVRVersion,
+        cvrID: ClientViewRecordId.make(cvrID),
+      })
+
+      // 17(iii): lastMutationIDChanges
+      const lastMutationIDChanges = clients
+
+      return {
+        cookie,
+        lastMutationIDChanges,
+        patch,
+      }
     })
 
   return {
@@ -398,5 +464,6 @@ export class Replicache extends Effect.Tag("Replicache")<
     Layer.provide(ReplicacheClientGroupRepo.Live),
     Layer.provide(ReplicacheClientRepo.Live),
     Layer.provide(EntriesRepo.Live),
+    Layer.provide(Nanoid.Live),
   )
 }

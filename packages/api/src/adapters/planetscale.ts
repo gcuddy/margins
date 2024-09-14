@@ -112,8 +112,11 @@ export const make = (options: PlanetscaleClientConfig) =>
         as: "array" | "object" = "object",
       ) =>
         Effect.gen(function* () {
+          yield* Effect.logDebug(sql, params)
           const result = yield* Effect.tryPromise({
-            try: () => client.execute(sql, params as any, { as: as as any }),
+            try: () => {
+              return client.execute(sql, params as any, { as: as as any })
+            },
             catch: cause =>
               new SqlError({ cause, message: `Failed to execute statement` }),
           })

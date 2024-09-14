@@ -83,9 +83,7 @@ export const sync = HttpRouter.empty.pipe(
       console.log("replicache", replicache)
 
       const pr = yield* replicache.pull(pullRequest)
-
-      const a = HttpServerResponse.schemaJson(PullResponse)
-      return HttpServerResponse.text("About birds")
+      return yield* HttpServerResponse.schemaJson(PullResponse)(pr)
     }).pipe(
       Effect.tapErrorCause(Effect.logError),
       Effect.catchTags({

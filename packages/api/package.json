@@ -31,6 +31,7 @@
     "effect": "^3.7.0",
     "effect-http": "^0.78.0",
     "lucia": "^3.2.0",
+    "nanoid": "^5.0.7",
     "node-html-parser": "^6.1.13",
     "partyserver": "^0.0.52"
   },

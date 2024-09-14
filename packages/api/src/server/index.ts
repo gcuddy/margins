@@ -7,7 +7,7 @@ import {
 import { makeServerRuntime } from "./main.js"
 import { router } from "./router.js"
 import { HttpApp } from "@effect/platform"
-import { ConfigProvider, Effect, pipe, Record } from "effect"
+import { ConfigProvider, Effect, Logger, LogLevel, pipe, Record } from "effect"
 import { CurrentUser } from "../Domain/User.js"
 import { TracingLive } from "../Tracing.js"
 
@@ -65,6 +65,7 @@ export class MarginsServer extends Server<Env> {
       // TODO: get current user from session
       // TODO: tracing live
       // Effect.provide(TracingLive),
+      Logger.withMinimumLogLevel(LogLevel.Debug),
       Effect.tapErrorCause(Effect.logError),
       Effect.withLogSpan("MarginsServer.onRequest"),
       HttpApp.toWebHandlerRuntime(runtime),

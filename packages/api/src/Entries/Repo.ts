@@ -1,5 +1,5 @@
 import { Model, SqlClient, SqlResolver, SqlSchema } from "@effect/sql"
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Logger, LogLevel } from "effect"
 import { Entry, EntryId } from "../Domain/Entry"
 import { SqlLive } from "../Sql"
 import { UserId } from "../Domain/User"
