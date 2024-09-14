@@ -7,9 +7,8 @@ const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
 
   const create = Effect.gen(function* () {
-    const entry = yield* repo.insert({
-      title: "New Entry",
-      content: "New Entry Content",
-    })
+    // const entry = yield* repo.insert({
+    //   title: "New Entry",
+    // })
   })
 })

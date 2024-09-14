@@ -2,6 +2,7 @@ import { Model } from "@effect/sql"
 import { Schema } from "@effect/schema"
 import { UserId } from "./User.js"
 import { pipe, Record } from "effect"
+import { DateTimeString } from "./DateTime.js"
 
 export const ReplicacheClientGroupId = Schema.String.pipe(
   Schema.brand("ReplicacheClientGroupId"),
@@ -14,8 +15,8 @@ export class ReplicacheClientGroup extends Model.Class<ReplicacheClientGroup>(
   id: Model.GeneratedByApp(ReplicacheClientGroupId),
   cvrVersion: Schema.Number,
   userId: UserId,
-  createdAt: Model.DateTimeInsertFromDate,
-  updatedAt: Model.DateTimeInsertFromDate,
+  createdAt: Model.Generated(DateTimeString),
+  updatedAt: DateTimeString,
 }) {}
 
 export const ReplicacheClientId = Schema.String.pipe(
