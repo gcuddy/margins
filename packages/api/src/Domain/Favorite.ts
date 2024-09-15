@@ -10,7 +10,7 @@ export class Favorite extends Model.Class<Favorite>("Favorite")({
   createdAt: Model.Generated(DateTimeString),
   updatedAt: Model.GeneratedByApp(DateTimeString),
   userId: Model.Field(Schema.String),
-  deleted: Schema.NullishOr(DateTimeStringWithoutDefault),
+  deleted: Model.FieldOption(DateTimeStringWithoutDefault),
   tagId: Model.FieldOption(Schema.Number),
   smartListId: Model.FieldOption(Schema.Number),
   annotationId: Model.FieldOption(Schema.String),

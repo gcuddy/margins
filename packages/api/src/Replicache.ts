@@ -373,31 +373,6 @@ const make = Effect.gen(function* () {
         //   entriesRepo.getForIds((diff.entries?.puts ?? []) as EntryId[]),
         // ])
 
-        const entryIdsSchema = Schema.NonEmptyArray(EntryId)
-        const decode = Schema.decodeUnknownOption(entryIdsSchema)
-        const entries = yield* decode(diff.entries?.puts)
-          .pipe(
-            Option.match({
-              onSome: ids => entriesRepo.getForIds(ids),
-              // hmmm
-              onNone: () => Effect.succeed([] as readonly Entry[]),
-            }),
-            // Option.getOrElse(() => []),
-          )
-          .pipe(Effect.withLogSpan("Replicache.pull.entries"))
-
-        const annotationIdsSchema = Schema.NonEmptyArray(AnnotationId)
-        const decodeAnnotationIds =
-          Schema.decodeUnknownOption(annotationIdsSchema)
-        const annotations = yield* decodeAnnotationIds(diff.annotations?.puts)
-          .pipe(
-            Option.match({
-              onSome: ids => annotationsRepo.getForIds(ids),
-              onNone: () => Effect.succeed([] as readonly Annotation[]),
-            }),
-          )
-          .pipe(Effect.withLogSpan("Replicache.pull.annotations"))
-
         // 12: changed clients - no need to re-read clients from database,
         // we already have their versions.
         const clients = ClientViewEntries.make({})
@@ -407,6 +382,17 @@ const make = Effect.gen(function* () {
           }
         }
         console.log({ clients })
+
+        const [entries, annotations, favorites] = yield* Effect.all(
+          [
+            entriesRepo.getForUnknownIds(diff.entries?.puts),
+            annotationsRepo.getForUnknownIds(diff.annotations?.puts),
+            favoritesRepo.getForUnknownIds(diff.favorites?.puts),
+          ],
+          {
+            concurrency: "unbounded",
+          },
+        )
 
         // 13: newCVRVersion
         const baseCVRVersion = pullRequest.cookie?.order ?? 0
@@ -423,6 +409,7 @@ const make = Effect.gen(function* () {
           ReplicacheClientGroup.insert.make(nextClientGroupRecord),
         ).pipe(Effect.withLogSpan("Replicache.pull.putClientGroup"))
 
+        // TODO: make this automatic
         return {
           entities: {
             entries: {
@@ -432,6 +419,10 @@ const make = Effect.gen(function* () {
             annotations: {
               dels: diff.annotations?.dels,
               puts: annotations,
+            },
+            favorites: {
+              dels: diff.favorites?.dels,
+              puts: favorites,
             },
           },
           clients,
@@ -522,6 +513,7 @@ export class Replicache extends Effect.Tag("Replicache")<
     Layer.provide(ReplicacheClientRepo.Live),
     Layer.provide(EntriesRepo.Live),
     Layer.provide(AnnotationsRepo.Live),
+    Layer.provide(FavoritesRepo.Live),
     Layer.provide(Nanoid.Live),
   )
 }
