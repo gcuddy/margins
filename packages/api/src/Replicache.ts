@@ -12,8 +12,11 @@ import {
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { CurrentUser } from "./Domain/User.js"
-import type { ReplicacheClientId, PatchOperation ,
-  ClientViewRecordDiff} from "./Domain/Replicache.js"
+import type {
+  ReplicacheClientId,
+  PatchOperation,
+  ClientViewRecordDiff,
+} from "./Domain/Replicache.js"
 import {
   Mutation,
   ReplicacheClient,
@@ -37,6 +40,9 @@ import type { Entry } from "./Domain/Entry.js"
 import { EntryId } from "./Domain/Entry.js"
 import { Unauthorized } from "./Domain/Actor.js"
 import { Nanoid } from "./Nanoid.js"
+import { AnnotationsRepo } from "./Annotations/Repo.js"
+import type { Annotation} from "./Domain/Annotation.js";
+import { AnnotationId } from "./Domain/Annotation.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -45,6 +51,7 @@ const make = Effect.gen(function* () {
   const cvrCache = yield* CVRCache
   const { id: userId } = yield* CurrentUser
   const entriesRepo = yield* EntriesRepo
+  const annotationsRepo = yield* AnnotationsRepo
   const nanoid = yield* Nanoid
 
   // TODO: should these be here? or in the repo?
@@ -251,16 +258,17 @@ const make = Effect.gen(function* () {
 
         // 6. Read all id/version pairs from the database that should be in the client view.
         // TODO: more stuff here
-        const [entryMeta, clientMeta] = yield* Effect.all(
+        const [entryMeta, annotationMeta, clientMeta] = yield* Effect.all(
           [
             entriesRepo.searchForUserId(userId),
+            annotationsRepo.searchForUserId(userId),
             // 7: Read all clients in CG
             clientRepo.searchForClientGroup(clientGroupID),
           ],
           {
             concurrency: "unbounded",
           },
-        ).pipe(Logger.withMinimumLogLevel(LogLevel.Debug))
+        )
 
         // 6: Read all domain data, just ids and versions
         // const entryIds = entryMeta.map(e => e.id)
@@ -277,6 +285,7 @@ const make = Effect.gen(function* () {
         // TODO: have Specific type for ClientViewRecord with keys?
         const nextCVR = ClientViewRecord.make({
           entries: yield* encode(entryMeta),
+          annotations: yield* encode(annotationMeta),
           client: yield* encode(clientMeta),
         })
 
@@ -367,6 +376,18 @@ const make = Effect.gen(function* () {
           // Option.getOrElse(() => []),
         )
 
+        const annotationIdsSchema = Schema.NonEmptyArray(AnnotationId)
+        const decodeAnnotationIds =
+          Schema.decodeUnknownOption(annotationIdsSchema)
+        const annotations = yield* decodeAnnotationIds(
+          diff.annotations?.puts,
+        ).pipe(
+          Option.match({
+            onSome: ids => annotationsRepo.getForIds(ids),
+            onNone: () => Effect.succeed([] as readonly Annotation[]),
+          }),
+        )
+
         // 12: changed clients - no need to re-read clients from database,
         // we already have their versions.
         const clients = ClientViewEntries.make({})
@@ -397,6 +418,10 @@ const make = Effect.gen(function* () {
             entries: {
               dels: diff.entries?.dels,
               puts: entries,
+            },
+            annotations: {
+              dels: diff.annotations?.dels,
+              puts: annotations,
             },
           },
           clients,
@@ -486,6 +511,7 @@ export class Replicache extends Effect.Tag("Replicache")<
     Layer.provide(ReplicacheClientGroupRepo.Live),
     Layer.provide(ReplicacheClientRepo.Live),
     Layer.provide(EntriesRepo.Live),
+    Layer.provide(AnnotationsRepo.Live),
     Layer.provide(Nanoid.Live),
   )
 }
