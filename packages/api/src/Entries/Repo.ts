@@ -32,10 +32,26 @@ export const make = Effect.gen(function* () {
     execute: ids => sql`select * from Entry where ${sql.in("id", ids)}`,
   })
 
+  const getForUnknownIds = (ids?: string[]) =>
+    Effect.gen(function* () {
+      const nonEmptyArray = Schema.NonEmptyArray(EntryId)
+      const decode = Schema.decodeUnknownOption(nonEmptyArray)
+      const _ids = yield* decode(ids)
+      const entries = yield* getForIds(_ids)
+      return entries
+    }).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.withLogSpan("EntriesRepo.getForUnknownIds"),
+      Effect.catchTag("ParseError", () =>
+        Effect.succeed([] as readonly Entry[]),
+      ),
+    )
+
   return {
     ...repo,
     searchForUserId,
     getForIds,
+    getForUnknownIds,
   } as const
 })
 

@@ -30,10 +30,27 @@ export const make = Effect.gen(function* () {
     execute: ids => sql`select * from Favorite where ${sql.in("id", ids)}`,
   })
 
+  //   TODO: create a generic one for all repos
+  const getForUnknownIds = (ids?: string[]) =>
+    Effect.gen(function* () {
+      const nonEmptyArray = Schema.NonEmptyArray(FavoriteId)
+      const decode = Schema.decodeUnknownOption(nonEmptyArray)
+      const _ids = yield* decode(ids)
+      const favorites = yield* getForIds(_ids)
+      return favorites
+    }).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.withLogSpan("FavoritesRepo.getForUnknownIds"),
+      Effect.catchTag("ParseError", () =>
+        Effect.succeed([] as readonly Favorite[]),
+      ),
+    )
+
   return {
     ...repo,
     searchForUserId,
     getForIds,
+    getForUnknownIds,
   } as const
 })
 

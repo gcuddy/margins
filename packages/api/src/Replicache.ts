@@ -288,13 +288,13 @@ const make = Effect.gen(function* () {
         const encode = Schema.encode(SearchResultsFromClientViewEntries)
 
         // 8: Build nextCVR
-        // TODO: have Specific type for ClientViewRecord with keys?
-        const nextCVR = ClientViewRecord.make({
+        // TODO: have generic type for ClientViewRecord with keys?
+        const nextCVR = {
           entries: yield* encode(entryMeta),
           annotations: yield* encode(annotationMeta),
           favorites: yield* encode(favoritesMeta),
           client: yield* encode(clientMeta),
-        })
+        } satisfies ClientViewRecord
 
         console.log({ nextCVR })
 
@@ -317,9 +317,10 @@ const make = Effect.gen(function* () {
               const prevEntries = Record.get(baseCVR, name).pipe(
                 Option.getOrElse(() => ClientViewEntries.make({})),
               )
-              const nextEntries = Record.get(nextCVR, name).pipe(
-                Option.getOrElse(() => ClientViewEntries.make({})),
-              )
+              const nextEntries = Record.get(
+                nextCVR,
+                name as keyof typeof nextCVR,
+              ).pipe(Option.getOrElse(() => ClientViewEntries.make({})))
 
               console.log({ name, prevEntries, nextEntries })
               const puts = Record.keys(nextEntries).filter(id => {
@@ -371,7 +372,6 @@ const make = Effect.gen(function* () {
         // const [entries] = yield* Effect.all([
         //   entriesRepo.getForIds((diff.entries?.puts ?? []) as EntryId[]),
         // ])
-        // TODO: clean up this - make much more generic
 
         const entryIdsSchema = Schema.NonEmptyArray(EntryId)
         const decode = Schema.decodeUnknownOption(entryIdsSchema)
