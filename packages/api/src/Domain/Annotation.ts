@@ -1,6 +1,6 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
-import { DateTimeString } from "./DateTime"
+import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime"
 
 export class TextQuoteSelector extends Schema.Class<TextQuoteSelector>(
   "TextQuoteSelector",
@@ -81,10 +81,36 @@ export type AnnotationId = typeof AnnotationId.Type
 export class Annotation extends Model.Class<Annotation>("Annotation")({
   id: Model.GeneratedByApp(AnnotationId),
   createdAt: Model.Generated(DateTimeString),
-  updatedAt: Model.DateTimeUpdate,
-  type: Model.Field(Schema.Literal("note", "annotation", "reply")),
+  updatedAt: DateTimeString,
   body: Model.FieldOption(Schema.String),
-
-  //   could use parseJson, but our driver already casts it with JSON.parse. But worth thinking about.
+  type: Model.Field(
+    Schema.Literal("note", "annotation", "reply", "bookmark", "document", "qa"),
+  ),
+  private: Model.Field(Schema.Boolean),
   target: Model.FieldOption(Target),
+  entryId: Model.FieldOption(Schema.String),
+  parentId: Model.FieldOption(Schema.String),
+  deleted: Schema.NullishOr(DateTimeStringWithoutDefault),
+  userId: Model.Field(Schema.String),
+  sortOrder: Model.Field(Schema.Number),
+  bookmarkId: Model.FieldOption(Schema.String),
+  editedAt: Schema.NullishOr(DateTimeStringWithoutDefault),
+  color: Model.FieldOption(Schema.String),
+  contentData: Model.FieldOption(Schema.Unknown),
+  title: Model.FieldOption(Schema.String),
+  chosenIcon: Model.FieldOption(Schema.Unknown),
+  html: Model.FieldOption(Schema.String),
+  quote: Model.FieldOption(Schema.String),
+  exact: Model.FieldOption(Schema.String),
+  start: Model.FieldOption(Schema.Number),
+  due_timestamp: Schema.NullishOr(DateTimeStringWithoutDefault),
+  interval_ms: Model.FieldOption(Schema.BigInt),
+  last_reviewed_at: Schema.NullishOr(DateTimeStringWithoutDefault),
+  srs: Model.Field(Schema.Boolean),
+  srs_created_at: Schema.NullishOr(DateTimeStringWithoutDefault),
+  response: Model.FieldOption(Schema.String),
+  icon: Model.FieldOption(Schema.String),
+  highlight_color: Model.Field(
+    Schema.Literal("Yellow", "Blue", "Green", "Pink", "Purple"),
+  ),
 }) {}
