@@ -28,12 +28,28 @@ export const make = Effect.gen(function* () {
     execute: ids => sql`select * from Annotation where ${sql.in("id", ids)}`,
   })
 
+  const getForUnknownIds = (ids?: string[]) =>
+    Effect.gen(function* () {
+      const nonEmptyArray = Schema.NonEmptyArray(AnnotationId)
+      const decode = Schema.decodeUnknownOption(nonEmptyArray)
+      const _ids = yield* decode(ids)
+      const annotations = yield* getForIds(_ids)
+      return annotations
+    }).pipe(
+      Effect.tapErrorCause(Effect.logError),
+      Effect.withLogSpan("AnnotationsRepo.getForUnknownIds"),
+      Effect.catchTag("ParseError", () =>
+        Effect.succeed([] as readonly Annotation[]),
+      ),
+    )
+
   //   TODO: policies to confirm
 
   return {
     ...repo,
     searchForUserId,
     getForIds,
+    getForUnknownIds,
   } as const
 })
 

@@ -1,4 +1,5 @@
 import {
+  Array,
   Chunk,
   Effect,
   HashSet,
@@ -43,6 +44,8 @@ import { Nanoid } from "./Nanoid.js"
 import { AnnotationsRepo } from "./Annotations/Repo.js"
 import type { Annotation } from "./Domain/Annotation.js"
 import { AnnotationId } from "./Domain/Annotation.js"
+import { FavoritesRepo } from "./Favorites/Repo.js"
+import { FavoriteId } from "./Domain/Favorite.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -52,6 +55,7 @@ const make = Effect.gen(function* () {
   const { id: userId } = yield* CurrentUser
   const entriesRepo = yield* EntriesRepo
   const annotationsRepo = yield* AnnotationsRepo
+  const favoritesRepo = yield* FavoritesRepo
   const nanoid = yield* Nanoid
 
   // TODO: should these be here? or in the repo?
@@ -258,17 +262,19 @@ const make = Effect.gen(function* () {
 
         // 6. Read all id/version pairs from the database that should be in the client view.
         // TODO: more stuff here
-        const [entryMeta, annotationMeta, clientMeta] = yield* Effect.all(
-          [
-            entriesRepo.searchForUserId(userId),
-            annotationsRepo.searchForUserId(userId),
-            // 7: Read all clients in CG
-            clientRepo.searchForClientGroup(clientGroupID),
-          ],
-          {
-            concurrency: "unbounded",
-          },
-        ).pipe(Effect.withLogSpan("Replicache.pull.search"))
+        const [entryMeta, annotationMeta, favoritesMeta, clientMeta] =
+          yield* Effect.all(
+            [
+              entriesRepo.searchForUserId(userId),
+              annotationsRepo.searchForUserId(userId),
+              favoritesRepo.searchForUserId(userId),
+              // 7: Read all clients in CG
+              clientRepo.searchForClientGroup(clientGroupID),
+            ],
+            {
+              concurrency: "unbounded",
+            },
+          ).pipe(Effect.withLogSpan("Replicache.pull.search"))
 
         // 6: Read all domain data, just ids and versions
         // const entryIds = entryMeta.map(e => e.id)
@@ -277,7 +283,7 @@ const make = Effect.gen(function* () {
         //   searchShares(executor, { listIDs }),
         // ])
         // console.log({ todoMetsa, shareMeta })
-        console.log({ entryMeta, clientMeta })
+        console.log({ entryMeta, annotationMeta, favoritesMeta, clientMeta })
 
         const encode = Schema.encode(SearchResultsFromClientViewEntries)
 
@@ -286,6 +292,7 @@ const make = Effect.gen(function* () {
         const nextCVR = ClientViewRecord.make({
           entries: yield* encode(entryMeta),
           annotations: yield* encode(annotationMeta),
+          favorites: yield* encode(favoritesMeta),
           client: yield* encode(clientMeta),
         })
 
@@ -294,6 +301,7 @@ const make = Effect.gen(function* () {
         // 9: calculate diffs
         // const diff = diffCVR(baseCVR, nextCVR)
         // should this fn be elsewhere? ah well
+        console.time("Replicache.pull.diff")
         const diff = yield* Effect.gen(function* () {
           // Diff baseCvr with nextCvr
           // TODO: make pipe-y
@@ -338,8 +346,6 @@ const make = Effect.gen(function* () {
                 ),
               }
 
-              console.log(`setting ${name} to`, val)
-
               r[name] = val
               console.log({ r })
             }),
@@ -347,6 +353,7 @@ const make = Effect.gen(function* () {
           return r
         }).pipe(Effect.withLogSpan("Replicache.pull.diff"))
 
+        console.timeEnd("Replicache.pull.diff")
         console.log({ diff })
 
         // 10: If diff is empty, return no-op PR
@@ -364,7 +371,8 @@ const make = Effect.gen(function* () {
         // const [entries] = yield* Effect.all([
         //   entriesRepo.getForIds((diff.entries?.puts ?? []) as EntryId[]),
         // ])
-        // TODO: clean up this
+        // TODO: clean up this - make much more generic
+
         const entryIdsSchema = Schema.NonEmptyArray(EntryId)
         const decode = Schema.decodeUnknownOption(entryIdsSchema)
         const entries = yield* decode(diff.entries?.puts)
