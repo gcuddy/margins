@@ -46,6 +46,7 @@ import type { Annotation } from "./Domain/Annotation.js"
 import { AnnotationId } from "./Domain/Annotation.js"
 import { FavoritesRepo } from "./Favorites/Repo.js"
 import { FavoriteId } from "./Domain/Favorite.js"
+import { BookmarksRepo } from "./Bookmarks/Repo.js"
 
 const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient
@@ -56,6 +57,7 @@ const make = Effect.gen(function* () {
   const entriesRepo = yield* EntriesRepo
   const annotationsRepo = yield* AnnotationsRepo
   const favoritesRepo = yield* FavoritesRepo
+  const bookmarksRepo = yield* BookmarksRepo
   const nanoid = yield* Nanoid
 
   // TODO: should these be here? or in the repo?
@@ -262,19 +264,25 @@ const make = Effect.gen(function* () {
 
         // 6. Read all id/version pairs from the database that should be in the client view.
         // TODO: more stuff here
-        const [entryMeta, annotationMeta, favoritesMeta, clientMeta] =
-          yield* Effect.all(
-            [
-              entriesRepo.searchForUserId(userId),
-              annotationsRepo.searchForUserId(userId),
-              favoritesRepo.searchForUserId(userId),
-              // 7: Read all clients in CG
-              clientRepo.searchForClientGroup(clientGroupID),
-            ],
-            {
-              concurrency: "unbounded",
-            },
-          ).pipe(Effect.withLogSpan("Replicache.pull.search"))
+        const [
+          entryMeta,
+          annotationMeta,
+          favoritesMeta,
+          bookmarksMeta,
+          clientMeta,
+        ] = yield* Effect.all(
+          [
+            entriesRepo.searchForUserId(userId),
+            annotationsRepo.searchForUserId(userId),
+            favoritesRepo.searchForUserId(userId),
+            bookmarksRepo.searchForUserId(userId),
+            // 7: Read all clients in CG
+            clientRepo.searchForClientGroup(clientGroupID),
+          ],
+          {
+            concurrency: "unbounded",
+          },
+        ).pipe(Effect.withLogSpan("Replicache.pull.search"))
 
         // 6: Read all domain data, just ids and versions
         // const entryIds = entryMeta.map(e => e.id)
@@ -283,7 +291,13 @@ const make = Effect.gen(function* () {
         //   searchShares(executor, { listIDs }),
         // ])
         // console.log({ todoMetsa, shareMeta })
-        console.log({ entryMeta, annotationMeta, favoritesMeta, clientMeta })
+        console.log({
+          entryMeta,
+          annotationMeta,
+          favoritesMeta,
+          bookmarksMeta,
+          clientMeta,
+        })
 
         const encode = Schema.encode(SearchResultsFromClientViewEntries)
 
@@ -291,6 +305,7 @@ const make = Effect.gen(function* () {
         // TODO: have generic type for ClientViewRecord with keys?
         const nextCVR = {
           entries: yield* encode(entryMeta),
+          bookmarks: yield* encode(bookmarksMeta),
           annotations: yield* encode(annotationMeta),
           favorites: yield* encode(favoritesMeta),
           client: yield* encode(clientMeta),
@@ -383,9 +398,10 @@ const make = Effect.gen(function* () {
         }
         console.log({ clients })
 
-        const [entries, annotations, favorites] = yield* Effect.all(
+        const [entries, bookmarks, annotations, favorites] = yield* Effect.all(
           [
             entriesRepo.getForUnknownIds(diff.entries?.puts),
+            bookmarksRepo.getForUnknownIds(diff.bookmarks?.puts),
             annotationsRepo.getForUnknownIds(diff.annotations?.puts),
             favoritesRepo.getForUnknownIds(diff.favorites?.puts),
           ],
@@ -415,6 +431,10 @@ const make = Effect.gen(function* () {
             entries: {
               dels: diff.entries?.dels,
               puts: entries,
+            },
+            bookmarks: {
+              dels: diff.bookmarks?.dels,
+              puts: bookmarks,
             },
             annotations: {
               dels: diff.annotations?.dels,
@@ -514,6 +534,7 @@ export class Replicache extends Effect.Tag("Replicache")<
     Layer.provide(EntriesRepo.Live),
     Layer.provide(AnnotationsRepo.Live),
     Layer.provide(FavoritesRepo.Live),
+    Layer.provide(BookmarksRepo.Live),
     Layer.provide(Nanoid.Live),
   )
 }
