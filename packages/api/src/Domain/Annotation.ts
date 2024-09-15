@@ -12,21 +12,21 @@ export class TextQuoteSelector extends Schema.Class<TextQuoteSelector>(
 }) {}
 
 export class CssSelector extends Schema.Class<CssSelector>("CssSelector")({
-  type: Schema.Literal("CssSelector"),
+  type: Schema.tag("CssSelector"),
   value: Schema.String,
 }) {}
 
 export class TimestampSelector extends Schema.Class<TimestampSelector>(
   "TimestampSelector",
 )({
-  type: Schema.Literal("FragmentSelector"),
+  type: Schema.tag("FragmentSelector"),
   conformsTo: Schema.Literal("http://www.w3.org/TR/media-frags/"),
   value: Schema.String,
 }) {}
 
 export class XPathSelector extends Schema.Class<XPathSelector>("XPathSelector")(
   {
-    type: Schema.Literal("XPathSelector"),
+    type: Schema.tag("XPathSelector"),
     value: Schema.String,
   },
 ) {}
@@ -34,21 +34,21 @@ export class XPathSelector extends Schema.Class<XPathSelector>("XPathSelector")(
 export class TextPositionSelector extends Schema.Class<TextPositionSelector>(
   "TextPositionSelector",
 )({
-  type: Schema.Literal("TextPositionSelector"),
+  type: Schema.tag("TextPositionSelector"),
   start: Schema.Number,
   end: Schema.Number,
 }) {}
 
 export class RangeSelector extends Schema.Class<RangeSelector>("RangeSelector")(
   {
-    type: Schema.Literal("RangeSelector"),
+    type: Schema.tag("RangeSelector"),
     startSelector: Schema.Union(TextQuoteSelector, XPathSelector),
     endSelector: Schema.Union(TextQuoteSelector, XPathSelector),
   },
 ) {}
 
 export class BookSelector extends Schema.Class<BookSelector>("BookSelector")({
-  type: Schema.Literal("BookSelector"),
+  type: Schema.tag("BookSelector"),
   value: Schema.NullishOr(Schema.String),
   pageNumber: Schema.Number,
 }) {}
@@ -64,7 +64,7 @@ export const Selector = Schema.Union(
 )
 
 // TODO: other selectors
-export class Target extends Schema.Class<Target>("Annotation?Target")({
+export class Target extends Schema.Class<Target>("Annotation/Target")({
   source: Schema.NullishOr(Schema.String),
   selector: Schema.Union(
     Selector,
