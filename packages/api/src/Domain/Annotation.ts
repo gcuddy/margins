@@ -11,10 +11,66 @@ export class TextQuoteSelector extends Schema.Class<TextQuoteSelector>(
   type: Schema.Literal("TextQuoteSelector"),
 }) {}
 
+export class CssSelector extends Schema.Class<CssSelector>("CssSelector")({
+  type: Schema.Literal("CssSelector"),
+  value: Schema.String,
+}) {}
+
+export class TimestampSelector extends Schema.Class<TimestampSelector>(
+  "TimestampSelector",
+)({
+  type: Schema.Literal("FragmentSelector"),
+  conformsTo: Schema.Literal("http://www.w3.org/TR/media-frags/"),
+  value: Schema.String,
+}) {}
+
+export class XPathSelector extends Schema.Class<XPathSelector>("XPathSelector")(
+  {
+    type: Schema.Literal("XPathSelector"),
+    value: Schema.String,
+  },
+) {}
+
+export class TextPositionSelector extends Schema.Class<TextPositionSelector>(
+  "TextPositionSelector",
+)({
+  type: Schema.Literal("TextPositionSelector"),
+  start: Schema.Number,
+  end: Schema.Number,
+}) {}
+
+export class RangeSelector extends Schema.Class<RangeSelector>("RangeSelector")(
+  {
+    type: Schema.Literal("RangeSelector"),
+    startSelector: Schema.Union(TextQuoteSelector, XPathSelector),
+    endSelector: Schema.Union(TextQuoteSelector, XPathSelector),
+  },
+) {}
+
+export class BookSelector extends Schema.Class<BookSelector>("BookSelector")({
+  type: Schema.Literal("BookSelector"),
+  value: Schema.NullishOr(Schema.String),
+  pageNumber: Schema.Number,
+}) {}
+
+export const Selector = Schema.Union(
+  TextQuoteSelector,
+  CssSelector,
+  TimestampSelector,
+  XPathSelector,
+  TextPositionSelector,
+  RangeSelector,
+  BookSelector,
+)
+
 // TODO: other selectors
 export class Target extends Schema.Class<Target>("Annotation?Target")({
   source: Schema.NullishOr(Schema.String),
-  selector: Schema.Union(TextQuoteSelector),
+  selector: Schema.Union(
+    Selector,
+    Schema.Tuple(TextQuoteSelector, TextPositionSelector),
+    Schema.Tuple(TextQuoteSelector, BookSelector),
+  ),
   html: Schema.NullishOr(Schema.String),
   page_num: Schema.NullishOr(Schema.Number),
 }) {}

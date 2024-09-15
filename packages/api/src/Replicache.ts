@@ -41,7 +41,7 @@ import { EntryId } from "./Domain/Entry.js"
 import { Unauthorized } from "./Domain/Actor.js"
 import { Nanoid } from "./Nanoid.js"
 import { AnnotationsRepo } from "./Annotations/Repo.js"
-import type { Annotation} from "./Domain/Annotation.js";
+import type { Annotation } from "./Domain/Annotation.js"
 import { AnnotationId } from "./Domain/Annotation.js"
 
 const make = Effect.gen(function* () {
@@ -268,7 +268,7 @@ const make = Effect.gen(function* () {
           {
             concurrency: "unbounded",
           },
-        )
+        ).pipe(Effect.withLogSpan("Replicache.pull.search"))
 
         // 6: Read all domain data, just ids and versions
         // const entryIds = entryMeta.map(e => e.id)
@@ -345,7 +345,7 @@ const make = Effect.gen(function* () {
             }),
           )
           return r
-        })
+        }).pipe(Effect.withLogSpan("Replicache.pull.diff"))
 
         console.log({ diff })
 
@@ -367,26 +367,28 @@ const make = Effect.gen(function* () {
         // TODO: clean up this
         const entryIdsSchema = Schema.NonEmptyArray(EntryId)
         const decode = Schema.decodeUnknownOption(entryIdsSchema)
-        const entries = yield* decode(diff.entries?.puts).pipe(
-          Option.match({
-            onSome: ids => entriesRepo.getForIds(ids),
-            // hmmm
-            onNone: () => Effect.succeed([] as readonly Entry[]),
-          }),
-          // Option.getOrElse(() => []),
-        )
+        const entries = yield* decode(diff.entries?.puts)
+          .pipe(
+            Option.match({
+              onSome: ids => entriesRepo.getForIds(ids),
+              // hmmm
+              onNone: () => Effect.succeed([] as readonly Entry[]),
+            }),
+            // Option.getOrElse(() => []),
+          )
+          .pipe(Effect.withLogSpan("Replicache.pull.entries"))
 
         const annotationIdsSchema = Schema.NonEmptyArray(AnnotationId)
         const decodeAnnotationIds =
           Schema.decodeUnknownOption(annotationIdsSchema)
-        const annotations = yield* decodeAnnotationIds(
-          diff.annotations?.puts,
-        ).pipe(
-          Option.match({
-            onSome: ids => annotationsRepo.getForIds(ids),
-            onNone: () => Effect.succeed([] as readonly Annotation[]),
-          }),
-        )
+        const annotations = yield* decodeAnnotationIds(diff.annotations?.puts)
+          .pipe(
+            Option.match({
+              onSome: ids => annotationsRepo.getForIds(ids),
+              onNone: () => Effect.succeed([] as readonly Annotation[]),
+            }),
+          )
+          .pipe(Effect.withLogSpan("Replicache.pull.annotations"))
 
         // 12: changed clients - no need to re-read clients from database,
         // we already have their versions.
@@ -411,7 +413,7 @@ const make = Effect.gen(function* () {
         console.log({ nextClientGroupRecord })
         yield* putClientGroup(
           ReplicacheClientGroup.insert.make(nextClientGroupRecord),
-        )
+        ).pipe(Effect.withLogSpan("Replicache.pull.putClientGroup"))
 
         return {
           entities: {
@@ -482,7 +484,7 @@ const make = Effect.gen(function* () {
         lastMutationIDChanges,
         patch,
       }
-    })
+    }).pipe(Effect.withLogSpan("Replicache.pull"))
 
   return {
     push,
