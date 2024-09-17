@@ -28,7 +28,7 @@
     "@opentelemetry/sdk-trace-base": "^1.26.0",
     "@opentelemetry/sdk-trace-node": "^1.26.0",
     "@opentelemetry/sdk-trace-web": "^1.26.0",
-    "effect": "^3.7.0",
+    "effect": "^3.7.3",
     "effect-http": "^0.78.0",
     "lucia": "^3.2.0",
     "nanoid": "^5.0.7",

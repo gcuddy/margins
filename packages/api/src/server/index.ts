@@ -6,7 +6,7 @@ import {
 } from "partyserver"
 import { makeServerRuntime } from "./main.js"
 import { router } from "./router.js"
-import { HttpApp } from "@effect/platform"
+import { HttpApp, HttpServerResponse } from "@effect/platform"
 import { ConfigProvider, Effect, Logger, LogLevel, pipe, Record } from "effect"
 import { CurrentUser } from "../Domain/User.js"
 import { TracingLive } from "../Tracing.js"
@@ -60,7 +60,7 @@ export class MarginsServer extends Server<Env> {
     const runtime = await this.ServerRuntime.runtime()
     // const luciaAdapter = new DurableObjectAdapter(this.ctx)
     // TODO: Lucia and get current user and authenticate
-    return pipe(
+    return await pipe(
       router,
       // TODO: get current user from session
       // TODO: tracing live
@@ -68,6 +68,15 @@ export class MarginsServer extends Server<Env> {
       Logger.withMinimumLogLevel(LogLevel.Debug),
       Effect.tapErrorCause(Effect.logError),
       Effect.withLogSpan("MarginsServer.onRequest"),
+      // returning responses here causes workerd error?
+      // Effect.catchTags({
+      //   AuthorizationError: () => {
+      //     console.log("AuthorizationError")
+      //     return HttpServerResponse.text("Unauthorized").pipe(
+      //       HttpServerResponse.setStatus(200),
+      //     )
+      //   },
+      // }),
       HttpApp.toWebHandlerRuntime(runtime),
     )(request)
 

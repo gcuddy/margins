@@ -16,7 +16,7 @@ tracing_output/
 .logbook
 tests-results/
 screenshots/
-
+.svelte-kit
 
 packages/db/zod/*.ts
 db_dump.sql

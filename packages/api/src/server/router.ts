@@ -32,10 +32,6 @@ export const router = HttpRouter.empty
     HttpRouter.options("*", HttpServerResponse.empty()),
     HttpRouter.use(flow(HttpMiddleware.cors(), HttpMiddleware.logger)),
   )
-  .pipe(
-    Effect.catchAllCause(cause =>
-      HttpServerResponse.text(cause.toString(), { status: 500 }),
-    ),
-  )
+  .pipe(Effect.tapErrorCause(e => Effect.logError("Router error", e)))
 //  TODO: Can I use a runtime to avoid this?
 // .pipe(Effect.tapErrorCause(Effect.logError))

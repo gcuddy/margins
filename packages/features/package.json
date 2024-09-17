@@ -84,7 +84,7 @@
     "@sveltejs/kit": "^2.5.25",
     "clsx": "^2.1.1",
     "command-score": "^0.1.2",
-    "effect": "^3.7.0",
+    "effect": "^3.7.3",
     "kysely": "^0.27.4",
     "lucide-svelte": "^0.437.0",
     "minisearch": "^7.1.0",

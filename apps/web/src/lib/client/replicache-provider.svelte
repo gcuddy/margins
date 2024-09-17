@@ -3,7 +3,7 @@
   import { createReplicache, setReplicache } from "./replicache"
   import { createGet } from "@margins/features/replicache"
   import { PARTYKIT_HOST } from "$lib/env"
-  import PartySocket from "partysocket"
+  import type PartySocket from "partysocket"
 
   export let workspaceID: string
   export let token: string
@@ -19,17 +19,17 @@
   setReplicache(rep)
 
   onMount(() => {
-    conn = new PartySocket({
-      host: PARTYKIT_HOST,
-      room: workspaceID,
-    })
-    conn.addEventListener("message", event => {
-      if (event.data === "poke") {
-        console.log("got poke, initiating pull")
-        if (!rep) return
-        rep.pull()
-      }
-    })
+    // conn = new PartySocket({
+    //   host: PARTYKIT_HOST,
+    //   room: workspaceID,
+    // })
+    // conn.addEventListener("message", event => {
+    //   if (event.data === "poke") {
+    //     console.log("got poke, initiating pull")
+    //     if (!rep) return
+    //     rep.pull()
+    //   }
+    // })
   })
 
   onDestroy(() => {
