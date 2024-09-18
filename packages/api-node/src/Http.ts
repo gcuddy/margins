@@ -1,9 +1,18 @@
-import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
+import {
+  HttpApiBuilder,
+  HttpApiSwagger,
+  HttpMiddleware,
+  HttpRouter,
+  HttpServer,
+  HttpServerResponse,
+} from "@effect/platform"
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
 import { router } from "./server/router.js"
 import { createServer } from "node:http"
 import { Effect, Layer } from "effect"
 import { LuciaLayer } from "./Auth.js"
+import { Api } from "./Api.js"
+import { HttpUsersLive } from "./Users/Http.js"
 
 export const app = router.pipe(
   HttpServer.serve(),
@@ -11,6 +20,16 @@ export const app = router.pipe(
   Layer.provide(LuciaLayer.Live),
 )
 
-export const HttpLive = NodeHttpServer.layer(createServer, {
-  port: 3000,
-})
+const ApiLive = HttpApiBuilder.api(Api).pipe(Layer.provide(HttpUsersLive))
+
+export const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
+  Layer.provide(HttpApiSwagger.layer()),
+  Layer.provide(HttpApiBuilder.middlewareCors()),
+  Layer.provide(ApiLive),
+  HttpServer.withLogAddress,
+  Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+)
+
+// export const ServerLive = NodeHttpServer.layer(createServer, {
+//   port: 3000,
+// })

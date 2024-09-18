@@ -1,39 +1,47 @@
-import * as NodeSdk from "@effect/opentelemetry/WebSdk"
-// @ts-expect-error - this is an error for me for some reason
-import { OTLPExporter } from "@microlabs/otel-cf-workers"
-// import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http"
+import * as NodeSdk from "@effect/opentelemetry/NodeSdk"
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http"
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base"
-import { Config, Effect, Layer, type Option, Redacted, Secret } from "effect"
-
-// const GrafanaConfig = Config.all({
-//   url: Config.string("OTLP_URL"),
-//   auth: Config.option(Config.redacted("OTLP_AUTH")),
-// })
+import { Config, Effect, Layer, Redacted } from "effect"
 
 export const TracingLive = Layer.unwrapEffect(
   Effect.gen(function* () {
-    // const { url, auth } = yield* GrafanaConfig
-    // const headers = yield* makeHeaders(auth)
-    const traceExporter = new OTLPExporter({
-      url: "http://localhost:4318/v1/traces",
-      // headers,
-    })
+    const apiKey = yield* Config.option(Config.redacted("HONEYCOMB_API_KEY"))
+    const dataset = yield* Config.withDefault(
+      Config.string("HONEYCOMB_DATASET"),
+      "stremio-effect",
+    )
+    if (apiKey._tag === "None") {
+      const endpoint = yield* Config.option(
+        Config.string("OTEL_EXPORTER_OTLP_ENDPOINT"),
+      )
+      if (endpoint._tag === "None") {
+        return Layer.empty
+      }
+      return NodeSdk.layer(() => ({
+        resource: {
+          serviceName: dataset,
+        },
+        spanProcessor: new BatchSpanProcessor(
+          new OTLPTraceExporter({ url: `${endpoint.value}/v1/traces` }),
+        ),
+      }))
+    }
+
+    const headers = {
+      "X-Honeycomb-Team": Redacted.value(apiKey.value),
+      "X-Honeycomb-Dataset": dataset,
+    }
 
     return NodeSdk.layer(() => ({
       resource: {
-        serviceName: "margins.app",
+        serviceName: dataset,
       },
-      // spanProcessor: new BatchSpanProcessor(traceExporter),
-      spanProcessor: new BatchSpanProcessor(traceExporter),
+      spanProcessor: new BatchSpanProcessor(
+        new OTLPTraceExporter({
+          url: "https://api.honeycomb.io/v1/traces",
+          headers,
+        }),
+      ),
     }))
   }),
 )
-
-function makeHeaders(auth: Option.Option<Redacted.Redacted>) {
-  return auth.pipe(
-    Effect.map(a => ({
-      Authorization: Redacted.value(a),
-    })),
-    Effect.orElseSucceed(() => ({})),
-  )
-}
