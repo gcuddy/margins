@@ -5,7 +5,7 @@ RUN corepack pnpm install --frozen-lockfile
 
 FROM node:22-alpine AS builder
 WORKDIR /app
-CCOPY ../../ .
+COPY ../../ .
 COPY --from=deps /app/node_modules ./node_modules
 RUN corepack pnpm build 
 RUN corepack pnpm prune --prod
