@@ -26,7 +26,7 @@
 	},
 	"svelte": "./index.ts",
 	"dependencies": {
-		"@margins/lib": "*",
+		"@margins/lib": "workspace:*",
 		"@melt-ui/svelte": "^0.76.2",
 		"@storybook/addon-svelte-csf": "^4.1.2",
 		"@storybook/blocks": "^8.0.4",
