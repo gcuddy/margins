@@ -50,16 +50,17 @@ import { FavoriteId } from "./Domain/Favorite.js"
 import { BookmarksRepo } from "./Bookmarks/Repo.js"
 
 const make = Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient
-  const clientGroupRepo = yield* ReplicacheClientGroupRepo
-  const clientRepo = yield* ReplicacheClientRepo
-  const cvrCache = yield* CVRCache
-  const { id: userId } = yield* CurrentUser
-  const entriesRepo = yield* EntriesRepo
-  const annotationsRepo = yield* AnnotationsRepo
-  const favoritesRepo = yield* FavoritesRepo
-  const bookmarksRepo = yield* BookmarksRepo
-  const nanoid = yield* Nanoid
+  const sql = yield * SqlClient.SqlClient
+  const clientGroupRepo = yield * ReplicacheClientGroupRepo
+  const clientRepo = yield * ReplicacheClientRepo
+  // TODO: make this a Cache
+  const cvrCache = yield * CVRCache
+  const { id: userId } = yield * CurrentUser
+  const entriesRepo = yield * EntriesRepo
+  const annotationsRepo = yield * AnnotationsRepo
+  const favoritesRepo = yield * FavoritesRepo
+  const bookmarksRepo = yield * BookmarksRepo
+  const nanoid = yield * Nanoid
 
   // TODO: should these be here? or in the repo?
   const getClientGroup = (clientGroupID: ReplicacheClientGroupId) =>

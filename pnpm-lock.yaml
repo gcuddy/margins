@@ -105,7 +105,7 @@ importers:
         version: 4.2.19
       svelte-check:
         specifier: ^3.6.7
-        version: 3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(svelte@4.2.19)
+        version: 3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(svelte@4.2.19)
       svelte-floating-ui:
         specifier: ^1.5.8
         version: 1.5.9
@@ -153,7 +153,7 @@ importers:
         version: 8.3.1(storybook@8.3.1)(svelte@4.2.19)
       '@storybook/sveltekit':
         specifier: ^8.0.4
-        version: 8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)
+        version: 8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)
       '@storybook/test':
         specifier: ^8.0.4
         version: 8.3.1(storybook@8.3.1)
@@ -177,7 +177,7 @@ importers:
         version: 8.4.47
       postcss-load-config:
         specifier: ^5.0.2
-        version: 5.1.0(jiti@1.21.6)(postcss@8.4.47)
+        version: 5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -189,7 +189,7 @@ importers:
         version: 4.2.19
       svelte-check:
         specifier: ^3.6.0
-        version: 3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(svelte@4.2.19)
+        version: 3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(svelte@4.2.19)
       tailwindcss:
         specifier: ^3.3.6
         version: 3.4.12(ts-node@10.9.2(@swc/core@1.3.101(@swc/helpers@0.5.13))(@types/node@22.5.5)(typescript@5.6.2))
@@ -926,7 +926,7 @@ importers:
         version: 4.2.19
       svelte-check:
         specifier: ^3.5.2
-        version: 3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(svelte@4.2.19)
+        version: 3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(svelte@4.2.19)
       svelte-confetti:
         specifier: ^1.3.1
         version: 1.4.0(svelte@4.2.19)
@@ -1029,7 +1029,7 @@ importers:
     dependencies:
       '@effect/experimental':
         specifier: ^0.26.2
-        version: 0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0)
+        version: 0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0)
       '@effect/opentelemetry':
         specifier: ^0.37.1
         version: 0.37.1(@opentelemetry/api@1.9.0)(@opentelemetry/resources@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@1.25.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-node@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-web@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.27.0)(effect@3.8.1)
@@ -1050,13 +1050,13 @@ importers:
         version: 0.73.1(effect@3.8.1)
       '@effect/sql':
         specifier: ^0.12.2
-        version: 0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+        version: 0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
       '@effect/sql-kysely':
         specifier: ^0.7.2
-        version: 0.7.2(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)(kysely@0.27.4)
+        version: 0.7.2(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)(kysely@0.27.4)
       '@effect/sql-mysql2':
         specifier: ^0.12.2
-        version: 0.12.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)
+        version: 0.12.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)
       '@lucia-auth/adapter-mysql':
         specifier: ^3.0.2
         version: 3.0.2(@planetscale/database@1.19.0)(lucia@3.2.0)(mysql2@3.11.3)
@@ -1103,6 +1103,85 @@ importers:
       wrangler:
         specifier: ^3.78.4
         version: 3.78.4(@cloudflare/workers-types@4.20240909.0)
+
+  packages/api-node:
+    dependencies:
+      '@effect/experimental':
+        specifier: ^0.26.2
+        version: 0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0)
+      '@effect/opentelemetry':
+        specifier: ^0.37.1
+        version: 0.37.1(@opentelemetry/api@1.9.0)(@opentelemetry/resources@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@1.25.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-node@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-web@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.27.0)(effect@3.8.1)
+      '@effect/platform':
+        specifier: ^0.65.2
+        version: 0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      '@effect/platform-bun':
+        specifier: ^0.45.2
+        version: 0.45.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)
+      '@effect/platform-node':
+        specifier: ^0.60.2
+        version: 0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)
+      '@effect/rpc':
+        specifier: ^0.39.2
+        version: 0.39.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      '@effect/rpc-http':
+        specifier: ^0.37.2
+        version: 0.37.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      '@effect/schema':
+        specifier: ^0.73.1
+        version: 0.73.1(effect@3.8.1)
+      '@effect/sql':
+        specifier: ^0.12.2
+        version: 0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      '@effect/sql-kysely':
+        specifier: ^0.7.2
+        version: 0.7.2(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)(kysely@0.27.4)
+      '@effect/sql-mysql2':
+        specifier: ^0.12.2
+        version: 0.12.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)
+      '@lucia-auth/adapter-mysql':
+        specifier: ^3.0.2
+        version: 3.0.2(@planetscale/database@1.19.0)(lucia@3.2.0)(mysql2@3.11.3)
+      '@microlabs/otel-cf-workers':
+        specifier: ^1.0.0-rc.47
+        version: 1.0.0-rc.47(@opentelemetry/api@1.9.0)
+      '@opentelemetry/api':
+        specifier: ^1.9.0
+        version: 1.9.0
+      '@opentelemetry/sdk-trace-base':
+        specifier: ^1.26.0
+        version: 1.26.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-node':
+        specifier: ^1.26.0
+        version: 1.26.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-web':
+        specifier: ^1.26.0
+        version: 1.26.0(@opentelemetry/api@1.9.0)
+      '@planetscale/database':
+        specifier: ^1.19.0
+        version: 1.19.0
+      effect:
+        specifier: ^3.8.1
+        version: 3.8.1
+      effect-http:
+        specifier: ^0.79.0
+        version: 0.79.0(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      lucia:
+        specifier: ^3.2.0
+        version: 3.2.0
+      nanoid:
+        specifier: ^5.0.7
+        version: 5.0.7
+      node-html-parser:
+        specifier: ^6.1.13
+        version: 6.1.13
+      tsx:
+        specifier: ^4.19.1
+        version: 4.19.1
+    devDependencies:
+      typescript:
+        specifier: ^5.6.2
+        version: 5.6.2
 
   packages/auth:
     dependencies:
@@ -1437,7 +1516,7 @@ importers:
     dependencies:
       '@margins/api':
         specifier: workspace:*
-        version: link:../api
+        version: link:../api-node
       '@margins/auth':
         specifier: workspace:*
         version: link:../auth
@@ -2003,6 +2082,12 @@ packages:
 
   '@effect/platform-node-shared@0.15.2':
     resolution: {integrity: sha512-KysEuyLeuTz65abP1xAKAaIjWAQVdLVxsWKXqKFEMSCasTy2fsfTRs0aS/PqzQp8x5p6eNRz5qG5dGSB24MirA==}
+    peerDependencies:
+      '@effect/platform': ^0.65.2
+      effect: ^3.8.1
+
+  '@effect/platform-node@0.60.2':
+    resolution: {integrity: sha512-PK+6aQJbfFPsjoLA32eh5omnPjZ6c2d7BbjSmkHMHgWX+lIxw6v+Auac2K38E7ccHPhCWuYbJmF5rG2FOefEhg==}
     peerDependencies:
       '@effect/platform': ^0.65.2
       effect: ^3.8.1
@@ -4908,6 +4993,7 @@ packages:
 
   '@tanstack/svelte-query-devtools@5.56.2':
     resolution: {integrity: sha512-pOwte+zzK9c17uyI5ab7MHM/OFT1GvrF9UKpw9Nsl7LTqJx3FpCATc9LQWzpIyr6Bj1mqJqxgCkJ0vlrwKfgHg==}
+    version: 5.56.2
     peerDependencies:
       '@tanstack/svelte-query': ^5.56.2
       svelte: ^3.54.0 || ^4.0.0 || ^5.0.0-next.0
@@ -7382,6 +7468,9 @@ packages:
     resolution: {integrity: sha512-g0QYk1dZBxGwk+Ngc+ltRH2IBp2f7zBkBMBJZCDerh6EhlhSR6+9irMCuT/09zD6qkarHUSn529sK/yL4S27mg==}
     engines: {node: '>= 0.4'}
 
+  get-tsconfig@4.8.1:
+    resolution: {integrity: sha512-k9PN+cFBmaLWtVz29SkUoqU5O0slLuHJXt/2P+tMVFT+phsSGXGkp9t3rQIqdz0e+06EHNGs3oM6ZX1s2zHxRg==}
+
   github-slugger@2.0.0:
     resolution: {integrity: sha512-IaOQ9puYtjrkq7Y0Ygl9KDZnrf/aiUJYUpVf89y8kyaxbRG7Y1SrX/jaumrv81vc61+kiMempujsM3Yw7w5qcw==}
 
@@ -9368,6 +9457,9 @@ packages:
     resolution: {integrity: sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==}
     engines: {node: '>=8'}
 
+  resolve-pkg-maps@1.0.0:
+    resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
+
   resolve.exports@2.0.2:
     resolution: {integrity: sha512-X2UW6Nw3n/aMgDVy+0rSqgHlv39WZAlZrXCdnbyEiKm17DSqHX4MmQMaST3FbeWR5FTuRcUwYAziZajji0Y7mg==}
     engines: {node: '>=10'}
@@ -10313,6 +10405,11 @@ packages:
     engines: {node: '>= 6'}
     peerDependencies:
       typescript: '>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta'
+
+  tsx@4.19.1:
+    resolution: {integrity: sha512-0flMz1lh74BR4wOvBjuh9olbnwqCPc35OOlfyzHba0Dc+QNUeWX/Gq2YTbnwcWPO3BMd8fkzRVrHcsR+a7z7rA==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
 
   tween-functions@1.2.0:
     resolution: {integrity: sha512-PZBtLYcCLtEcjL14Fzb1gSxPBeL7nWvGhO5ZFPGqziCcr8uvHp0NDmdjBchp6KHL+tExcg0m3NISmKxhU394dA==}
@@ -11602,13 +11699,14 @@ snapshots:
     dependencies:
       effect: 3.8.1
 
-  '@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0)':
+  '@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0)':
     dependencies:
       '@effect/platform': 0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
       '@effect/schema': 0.73.1(effect@3.8.1)
       effect: 3.8.1
       msgpackr: 1.11.0
     optionalDependencies:
+      '@effect/platform-node': 0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)
       ws: 8.18.0
 
   '@effect/opentelemetry@0.37.1(@opentelemetry/api@1.9.0)(@opentelemetry/resources@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@1.25.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-node@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-web@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.27.0)(effect@3.8.1)':
@@ -11636,6 +11734,18 @@ snapshots:
       effect: 3.8.1
       multipasta: 0.2.5
 
+  '@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)':
+    dependencies:
+      '@effect/platform': 0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      '@effect/platform-node-shared': 0.15.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)
+      effect: 3.8.1
+      mime: 3.0.0
+      undici: 6.19.8
+      ws: 8.18.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)':
     dependencies:
       '@effect/schema': 0.73.1(effect@3.8.1)
@@ -11661,24 +11771,24 @@ snapshots:
       effect: 3.8.1
       fast-check: 3.22.0
 
-  '@effect/sql-kysely@0.7.2(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)(kysely@0.27.4)':
+  '@effect/sql-kysely@0.7.2(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)(kysely@0.27.4)':
     dependencies:
-      '@effect/sql': 0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      '@effect/sql': 0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
       '@opentelemetry/semantic-conventions': 1.27.0
       effect: 3.8.1
       kysely: 0.27.4
 
-  '@effect/sql-mysql2@0.12.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)':
+  '@effect/sql-mysql2@0.12.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1)':
     dependencies:
       '@effect/platform': 0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
-      '@effect/sql': 0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
+      '@effect/sql': 0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
       '@opentelemetry/semantic-conventions': 1.27.0
       effect: 3.8.1
       mysql2: 3.11.3
 
-  '@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)':
+  '@effect/sql@0.12.2(@effect/experimental@0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)':
     dependencies:
-      '@effect/experimental': 0.26.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0)
+      '@effect/experimental': 0.26.2(@effect/platform-node@0.60.2(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(effect@3.8.1))(@effect/platform@0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1))(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)(ws@8.18.0)
       '@effect/platform': 0.65.2(@effect/schema@0.73.1(effect@3.8.1))(effect@3.8.1)
       '@effect/schema': 0.73.1(effect@3.8.1)
       '@opentelemetry/semantic-conventions': 1.27.0
@@ -14162,7 +14272,7 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       storybook: 8.3.1
 
-  '@storybook/svelte-vite@8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)':
+  '@storybook/svelte-vite@8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)':
     dependencies:
       '@storybook/builder-vite': 8.3.1(storybook@8.3.1)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)
       '@storybook/svelte': 8.3.1(storybook@8.3.1)(svelte@4.2.19)
@@ -14170,7 +14280,7 @@ snapshots:
       magic-string: 0.30.11
       storybook: 8.3.1
       svelte: 4.2.19
-      svelte-preprocess: 5.1.4(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(svelte@4.2.19)(typescript@5.6.2)
+      svelte-preprocess: 5.1.4(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(svelte@4.2.19)(typescript@5.6.2)
       sveltedoc-parser: 4.2.1
       ts-dedent: 2.2.0
       vite: 5.4.6(@types/node@22.5.5)(terser@5.33.0)
@@ -14220,12 +14330,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/sveltekit@8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)':
+  '@storybook/sveltekit@8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)':
     dependencies:
       '@storybook/addon-actions': 8.3.1(storybook@8.3.1)
       '@storybook/builder-vite': 8.3.1(storybook@8.3.1)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)
       '@storybook/svelte': 8.3.1(storybook@8.3.1)(svelte@4.2.19)
-      '@storybook/svelte-vite': 8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)
+      '@storybook/svelte-vite': 8.3.1(@babel/core@7.25.2)(@sveltejs/vite-plugin-svelte@3.1.2(svelte@4.2.19)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(storybook@8.3.1)(svelte@4.2.19)(typescript@5.6.2)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))(webpack-sources@3.2.3)
       storybook: 8.3.1
       svelte: 4.2.19
       vite: 5.4.6(@types/node@22.5.5)(terser@5.33.0)
@@ -17701,6 +17811,10 @@ snapshots:
       es-errors: 1.3.0
       get-intrinsic: 1.2.4
 
+  get-tsconfig@4.8.1:
+    dependencies:
+      resolve-pkg-maps: 1.0.0
+
   github-slugger@2.0.0: {}
 
   glob-parent@5.1.2:
@@ -19224,13 +19338,14 @@ snapshots:
       postcss: 8.4.47
       ts-node: 10.9.2(@swc/core@1.3.101(@swc/helpers@0.5.13))(@types/node@22.5.5)(typescript@5.6.2)
 
-  postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47):
+  postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1):
     dependencies:
       lilconfig: 3.1.2
       yaml: 2.5.1
     optionalDependencies:
       jiti: 1.21.6
       postcss: 8.4.47
+      tsx: 4.19.1
 
   postcss-nested@6.2.0(postcss@8.4.47):
     dependencies:
@@ -19770,6 +19885,8 @@ snapshots:
 
   resolve-from@5.0.0: {}
 
+  resolve-pkg-maps@1.0.0: {}
+
   resolve.exports@2.0.2: {}
 
   resolve@1.22.4:
@@ -20299,14 +20416,14 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(svelte@4.2.19):
+  svelte-check@3.8.6(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(svelte@4.2.19):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
       chokidar: 3.6.0
       picocolors: 1.1.0
       sade: 1.8.1
       svelte: 4.2.19
-      svelte-preprocess: 5.1.4(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(svelte@4.2.19)(typescript@5.6.2)
+      svelte-preprocess: 5.1.4(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(svelte@4.2.19)(typescript@5.6.2)
       typescript: 5.6.2
     transitivePeerDependencies:
       - '@babel/core'
@@ -20442,7 +20559,7 @@ snapshots:
 
   svelte-portal@2.2.1: {}
 
-  svelte-preprocess@5.1.4(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47))(postcss@8.4.47)(svelte@4.2.19)(typescript@5.6.2):
+  svelte-preprocess@5.1.4(@babel/core@7.25.2)(postcss-load-config@5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1))(postcss@8.4.47)(svelte@4.2.19)(typescript@5.6.2):
     dependencies:
       '@types/pug': 2.0.10
       detect-indent: 6.1.0
@@ -20453,7 +20570,7 @@ snapshots:
     optionalDependencies:
       '@babel/core': 7.25.2
       postcss: 8.4.47
-      postcss-load-config: 5.1.0(jiti@1.21.6)(postcss@8.4.47)
+      postcss-load-config: 5.1.0(jiti@1.21.6)(postcss@8.4.47)(tsx@4.19.1)
       typescript: 5.6.2
 
   svelte-radix@1.1.1(svelte@5.0.0-next.250):
@@ -20920,6 +21037,13 @@ snapshots:
     dependencies:
       tslib: 1.14.1
       typescript: 5.6.2
+
+  tsx@4.19.1:
+    dependencies:
+      esbuild: 0.23.1
+      get-tsconfig: 4.8.1
+    optionalDependencies:
+      fsevents: 2.3.3
 
   tween-functions@1.2.0: {}
 

@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "test": "vitest",
-    "dev": "wrangler dev",
+    "dev": "tsx --env-file=.env --watch src/main.ts",
     "deploy": "wrangler deploy",
     "check": "tsc --noEmit"
   },
@@ -17,6 +17,7 @@
     "@effect/opentelemetry": "^0.37.1",
     "@effect/platform": "^0.65.2",
     "@effect/platform-bun": "^0.45.2",
+    "@effect/platform-node": "^0.60.2",
     "@effect/rpc": "^0.39.2",
     "@effect/rpc-http": "^0.37.2",
     "@effect/schema": "^0.73.1",
@@ -29,11 +30,13 @@
     "@opentelemetry/sdk-trace-base": "^1.26.0",
     "@opentelemetry/sdk-trace-node": "^1.26.0",
     "@opentelemetry/sdk-trace-web": "^1.26.0",
+    "@planetscale/database": "^1.19.0",
     "effect": "^3.8.1",
     "effect-http": "^0.79.0",
     "lucia": "^3.2.0",
     "nanoid": "^5.0.7",
-    "node-html-parser": "^6.1.13"
+    "node-html-parser": "^6.1.13",
+    "tsx": "^4.19.1"
   },
   "devDependencies": {
     "typescript": "^5.6.2"

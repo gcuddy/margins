@@ -1,54 +1,39 @@
-import { Context, Effect, Layer, Runtime } from "effect"
+import { Config, Context, Effect, Layer, Redacted, Runtime } from "effect"
 import { LuciaAdapterLayer } from "./adapters/lucia-do.js"
 import { Lucia } from "lucia"
 import { User, UserId } from "./Domain/User.js"
 import { Schema } from "@effect/schema"
+import { PlanetScaleAdapter } from "@lucia-auth/adapter-mysql"
+import { Client } from "@planetscale/database"
 
 const make = Effect.gen(function* () {
-  const adapter = yield* LuciaAdapterLayer
-  const runtime = yield* Effect.runtime()
-  const runPromise = Runtime.runPromise(runtime)
+  const { host, username, password } = yield* Config.all({
+    host: Config.string("DATABASE_HOST"),
+    username: Config.string("DATABASE_USERNAME"),
+    password: Config.redacted("DATABASE_PASSWORD"),
+  }).pipe(Config.unwrap)
 
-  const lucia = new Lucia(
-    {
-      deleteExpiredSessions: () => runPromise(adapter.deleteExpiredSessions()),
-      deleteSession(sessionId) {
-        return runPromise(adapter.deleteSession(sessionId))
-      },
-      deleteUserSessions(userId) {
-        return runPromise(adapter.deleteUserSessions(UserId.make(userId)))
-      },
-      async getSessionAndUser(sessionId) {
-        const [session, user] = await runPromise(
-          adapter
-            .getSessionAndUser(sessionId)
-            .pipe(Effect.tapErrorCause(Effect.logError)),
-        )
-        return [session, user]
-      },
-      async getUserSessions(userId) {
-        const sessions = await runPromise(
-          adapter.getUserSessions(UserId.make(userId)),
-        )
-        return [...sessions]
-      },
-      setSession(session) {
-        return runPromise(adapter.setSession(session as any))
-      },
-      updateSessionExpiration(sessionId, expiresAt) {
-        return runPromise(adapter.updateSessionExpiration(sessionId, expiresAt))
-      },
+  // TODO: share this
+  const client = new Client({
+    host,
+    username,
+    password: Redacted.value(password),
+  })
+
+  const adapter = new PlanetScaleAdapter(client, {
+    user: "user",
+    session: "user_session",
+  })
+
+  const lucia = new Lucia(adapter, {
+    // TODO: options
+    getUserAttributes: attributes => {
+      console.log("attributes", attributes)
+      return {
+        ...attributes,
+      }
     },
-    {
-      // TODO: options
-      getUserAttributes: attributes => {
-        console.log("attributes", attributes)
-        return {
-          ...attributes,
-        }
-      },
-    },
-  )
+  })
 
   return lucia
 })
