@@ -1,0 +1,42 @@
+{
+  "name": "@margins/api",
+  "private": true,
+  "sideEffects": false,
+  "version": "0.0.0",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/experimental": "^0.26.2",
+    "@effect/opentelemetry": "^0.37.1",
+    "@effect/platform": "^0.65.2",
+    "@effect/platform-bun": "^0.45.2",
+    "@effect/rpc": "^0.39.2",
+    "@effect/rpc-http": "^0.37.2",
+    "@effect/schema": "^0.73.1",
+    "@effect/sql": "^0.12.2",
+    "@effect/sql-kysely": "^0.7.2",
+    "@effect/sql-mysql2": "^0.12.2",
+    "@lucia-auth/adapter-mysql": "^3.0.2",
+    "@microlabs/otel-cf-workers": "^1.0.0-rc.47",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-trace-base": "^1.26.0",
+    "@opentelemetry/sdk-trace-node": "^1.26.0",
+    "@opentelemetry/sdk-trace-web": "^1.26.0",
+    "effect": "^3.8.1",
+    "effect-http": "^0.79.0",
+    "lucia": "^3.2.0",
+    "nanoid": "^5.0.7",
+    "node-html-parser": "^6.1.13"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  },
+  "type": "module"
+}
