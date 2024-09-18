@@ -1,5 +1,5 @@
 import { Rpc, RpcRouter } from "@effect/rpc"
-import { EntryCreate } from "./mutations"
+import { EntryCreate } from "./mutations.js"
 import { Effect } from "effect"
 
 const server = RpcRouter.make(

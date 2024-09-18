@@ -65,18 +65,22 @@ export class MarginsServer extends Server<Env> {
       // TODO: get current user from session
       // TODO: tracing live
       // Effect.provide(TracingLive),
-      Logger.withMinimumLogLevel(LogLevel.Debug),
+      Logger.withMinimumLogLevel(LogLevel.Info),
       Effect.tapErrorCause(Effect.logError),
       Effect.withLogSpan("MarginsServer.onRequest"),
       // returning responses here causes workerd error?
-      // Effect.catchTags({
-      //   AuthorizationError: () => {
-      //     console.log("AuthorizationError")
-      //     return HttpServerResponse.text("Unauthorized").pipe(
-      //       HttpServerResponse.setStatus(200),
-      //     )
-      //   },
-      // }),
+      Effect.catchTags({
+        AuthorizationError: () => {
+          console.log("AuthorizationError")
+          return HttpServerResponse.text("Unauthorized").pipe(
+            HttpServerResponse.setStatus(200),
+          )
+        },
+      }),
+      Effect.catchAllDefect(defect => {
+        console.error("Defect", defect)
+        return Effect.die(defect)
+      }),
       HttpApp.toWebHandlerRuntime(runtime),
     )(request)
 

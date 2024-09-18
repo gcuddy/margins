@@ -1,6 +1,7 @@
 import {
   Array,
   Chunk,
+  Context,
   Effect,
   HashSet,
   Layer,
@@ -234,24 +235,33 @@ const make = Effect.gen(function* () {
 
   const pull = (pullRequest: PullRequest) =>
     Effect.gen(function* () {
-      // TODO: implement pull
+      // // TODO: implement pull
       const { clientGroupID } = pullRequest
 
-      const prevCvr = yield* pipe(
-        Option.fromNullable(pullRequest.cookie),
+      // const prevCvr = yield* pipe(
+      //   Option.fromNullable(pullRequest.cookie),
+      //   Option.match({
+      //     onSome: cookie => cvrCache.get(cookie.cvrID),
+      //     onNone: () => Option.none<ClientViewRecord>(),
+      //   }),
+      const prevCvr = yield* pullRequest.cookie.pipe(
         Option.match({
-          onSome: cookie => cvrCache.get(cookie.cvrID),
-          onNone: () => Effect.succeed(Option.none<ClientViewRecord>()),
+          onSome: cookie => {
+            return cvrCache.get(cookie.cvrID)
+          },
+          onNone: () => {
+            return Effect.succeed(Option.none<ClientViewRecord>())
+          },
         }),
       )
 
-      // TODO
+      // // TODO
       const baseCVR = Option.match(prevCvr, {
         onSome: cvr => cvr,
         onNone: () => ClientViewRecord.make({}),
       })
 
-      // now do all this with a transaction
+      // // now do all this with a transaction
 
       // TODO: more effect-y!
       const data = yield* Effect.gen(function* () {
@@ -411,7 +421,10 @@ const make = Effect.gen(function* () {
         )
 
         // 13: newCVRVersion
-        const baseCVRVersion = pullRequest.cookie?.order ?? 0
+        const baseCVRVersion = Option.match(pullRequest.cookie, {
+          onSome: cookie => cookie.order,
+          onNone: () => 0,
+        })
         const nextCVRVersion =
           Math.max(baseCVRVersion, baseClientGroup.cvrVersion) + 1
 
@@ -455,7 +468,7 @@ const make = Effect.gen(function* () {
       // 10: If diff is empty, return no-op PR
       if (data === null) {
         return {
-          cookie: pullRequest.cookie,
+          cookie: pullRequest.cookie.pipe(Option.getOrNull),
           lastMutationIDChanges: {},
           patch: [],
         }
@@ -465,7 +478,7 @@ const make = Effect.gen(function* () {
 
       // 16-17: store cvr
       const cvrID = yield* nanoid.generate
-      cvrCache.set(cvrID, nextCVR)
+      yield* cvrCache.set(ClientViewRecordId.make(cvrID), nextCVR)
 
       // TODO: effect-ify
       // 18(i): build patch

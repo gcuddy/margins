@@ -1,23 +1,23 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
+    "composite": true,
+    "incremental": true,
+    "outDir": "dist",
+    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "target": "es2022",
-    "allowJs": true,
-    // "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "allowSyntheticDefaultImports": true,
     "exactOptionalPropertyTypes": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "noEmit": true,
-    "lib": ["es2022"],
-    // "rootDir": "src",
+    "noErrorTruncation": true,
+    "lib": ["ESNext", "DOM"],
+    "sourceMap": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "target": "ESNext",
+    "plugins": [{ "name": "@effect/language-service" }],
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"]
 }
+  

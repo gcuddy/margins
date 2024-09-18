@@ -1,10 +1,10 @@
 import { Model, SqlClient, SqlSchema } from "@effect/sql"
 import { Context, Effect, Layer } from "effect"
-import { SqlLive } from "../Sql"
-import { UserId } from "../Domain/User"
+import { SqlLive } from "../Sql.js"
+import { UserId } from "../Domain/User.js"
 import { Schema } from "@effect/schema"
-import { SearchResult } from "../Domain/Replicache"
-import { Favorite, FavoriteId } from "../Domain/Favorite"
+import { SearchResult } from "../Domain/Replicache.js"
+import { Favorite, FavoriteId } from "../Domain/Favorite.js"
 
 export const make = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient

@@ -130,7 +130,7 @@ export class Cookie extends Schema.Class<Cookie>("Cookie")({
 
 export class PullRequest extends Schema.Class<PullRequest>("PullRequest")({
   clientGroupID: ReplicacheClientGroupId,
-  cookie: Schema.NullishOr(Cookie),
+  cookie: Schema.OptionFromNullishOr(Cookie, null),
 }) {}
 
 export const PatchOperation = Schema.Union(

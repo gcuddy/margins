@@ -167,13 +167,15 @@ export const sync = HttpRouter.empty.pipe(
   HttpRouter.post(
     "/pull",
     Effect.gen(function* () {
-      const pullRequest = yield* HttpServerRequest.schemaBodyJson(PullRequest)
-      const replicache = yield* Replicache
-      console.log("pullRequest", pullRequest)
-      console.log("replicache", replicache)
+      // return yield* HttpServerResponse.text("Hello")
+      const pullRequest = yield * HttpServerRequest.schemaBodyJson(PullRequest)
+      const replicache = yield * Replicache
+      // console.log("pullRequest", pullRequest)
+      // console.log("replicache", replicache)
 
-      const pr = yield* replicache.pull(pullRequest)
-      return yield* HttpServerResponse.schemaJson(PullResponse)(pr)
+      const pr = yield * replicache.pull(pullRequest)
+      // const pr = {} as any
+      return yield * HttpServerResponse.schemaJson(PullResponse)(pr)
     }).pipe(
       Effect.tapErrorCause(Effect.logError),
       // Effect.catchTags({

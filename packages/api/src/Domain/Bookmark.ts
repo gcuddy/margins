@@ -1,6 +1,6 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
-import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime"
+import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime.js"
 
 export const BookmarkId = Schema.String.pipe(Schema.brand("BookmarkId"))
 export type BookmarkId = typeof BookmarkId.Type

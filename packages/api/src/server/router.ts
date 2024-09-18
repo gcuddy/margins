@@ -18,7 +18,7 @@ export const router = HttpRouter.empty
     HttpRouter.get("/", HttpServerResponse.text("content 1")),
     HttpRouter.get("/foo", HttpServerResponse.text("content 2")),
     HttpRouter.mount("/sync", sync),
-    HttpRouter.post("/rpc", HttpRpcRouterNoStream.toHttpApp(appRouter)),
+    // HttpRouter.post("/rpc", HttpRpcRouterNoStream.toHttpApp(appRouter)),
     HttpRouter.get(
       "/create-session",
       Effect.gen(function* () {

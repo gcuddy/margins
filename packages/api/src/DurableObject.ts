@@ -14,7 +14,7 @@ export class DurableObjectStorageLayer extends Context.Tag(
   static Live = (storage: DurableObjectStorage) => Layer.succeed(this, storage)
 }
 
-class DurableObjectError extends Data.TaggedError("DurableObjectError")<{
+export class DurableObjectError extends Data.TaggedError("DurableObjectError")<{
   action: string
 }> {}
 
@@ -66,7 +66,7 @@ export const makeStorageLayer = Effect.gen(function* () {
   } as const
 })
 
-export class StorageLayer extends Context.Tag("core/Storage")<
+export class StorageLayer extends Effect.Tag("core/Storage")<
   StorageLayer,
   Effect.Effect.Success<typeof makeStorageLayer>
 >() {

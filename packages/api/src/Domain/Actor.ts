@@ -1,6 +1,6 @@
 import { Schema } from "@effect/schema"
-import type { User } from "./User"
-import { CurrentUser, UserId } from "./User"
+import type { User } from "./User.js"
+import { CurrentUser, UserId } from "./User.js"
 import { HttpApiSchema } from "@effect/platform"
 import { Effect } from "effect"
 

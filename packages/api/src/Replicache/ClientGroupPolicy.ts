@@ -2,8 +2,8 @@ import { Effect, Layer } from "effect"
 import type {
   ReplicacheClientGroup,
   ReplicacheClientGroupId,
-} from "../Domain/Replicache"
-import { policy } from "../Domain/Actor"
+} from "../Domain/Replicache.js"
+import { policy } from "../Domain/Actor.js"
 
 const make = Effect.gen(function* () {
   const canRead = (toRead: ReplicacheClientGroup) =>

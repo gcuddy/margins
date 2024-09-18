@@ -1,5 +1,5 @@
 import { Effect } from "effect"
-import { EntriesRepo } from "./Entries/Repo"
+import { EntriesRepo } from "./Entries/Repo.js"
 import { SqlClient } from "@effect/sql"
 
 const make = Effect.gen(function* () {

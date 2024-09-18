@@ -1,6 +1,6 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
-import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime"
+import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime.js"
 
 export class TextQuoteSelector extends Schema.Class<TextQuoteSelector>(
   "TextQuoteSelector",
@@ -114,3 +114,4 @@ export class Annotation extends Model.Class<Annotation>("Annotation")({
     Schema.Literal("Yellow", "Blue", "Green", "Pink", "Purple"),
   ),
 }) {}
+

@@ -1,9 +1,12 @@
 // CVR, CVREntires, CVRCache etc (cvr cache maybe uses key value store)
 
+import type { Option } from "effect"
 import { Context, Effect, Layer } from "effect"
-import { makeSchemaStore, StorageLayer } from "../DurableObject"
-import type { ClientViewRecordId } from "../Domain/Replicache"
-import { ClientViewRecord } from "../Domain/Replicache"
+import type { DurableObjectError } from "../DurableObject.js"
+import { makeSchemaStore, StorageLayer } from "../DurableObject.js"
+import type { ClientViewRecordId } from "../Domain/Replicache.js"
+import { ClientViewRecord } from "../Domain/Replicache.js"
+import type { ParseError } from "@effect/schema/ParseResult"
 
 // TODO: expand these with schema, brands, classes, layers, etc.
 
@@ -21,12 +24,28 @@ const make = Effect.gen(function* () {
   const get = (cvrID: ClientViewRecordId) => store.get(cvrID)
   const set = (cvrID: string, cvr: CVR) => store.set(cvrID, cvr)
 
-  return { get, set } as const
+  // return {}
+  return {
+    get,
+    set,
+  } as const
 })
 
-export class CVRCache extends Context.Tag("Replicache/CVRCache")<
+export class CVRCache extends Effect.Tag("Replicache/CVRCache")<
   CVRCache,
-  Effect.Effect.Success<typeof make>
+  {
+    get: (
+      cvrID: ClientViewRecordId,
+    ) => Effect.Effect<
+      Option.Option<ClientViewRecord>,
+      DurableObjectError | ParseError,
+      never
+    >
+    set: (
+      cvrID: ClientViewRecordId,
+      cvr: CVR,
+    ) => Effect.Effect<void, DurableObjectError | ParseError, never>
+  }
 >() {
-  static Live = Layer.effect(CVRCache, make)
+  static Live = Layer.effect(this, make)
 }
