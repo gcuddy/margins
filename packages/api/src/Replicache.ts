@@ -1,16 +1,4 @@
-import {
-  Array,
-  Chunk,
-  Context,
-  Effect,
-  HashSet,
-  Layer,
-  Logger,
-  LogLevel,
-  Option,
-  pipe,
-  Record,
-} from "effect"
+import { Chunk, Effect, HashSet, Layer, Option, pipe, Record } from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { CurrentUser } from "./Domain/User.js"
@@ -38,15 +26,10 @@ import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations2.js"
 import { CVRCache } from "./Replicache/ClientViewRecord.js"
 import { EntriesRepo } from "./Entries/Repo.js"
-import type { Entry } from "./Domain/Entry.js"
-import { EntryId } from "./Domain/Entry.js"
 import { Unauthorized } from "./Domain/Actor.js"
 import { Nanoid } from "./Nanoid.js"
 import { AnnotationsRepo } from "./Annotations/Repo.js"
-import type { Annotation } from "./Domain/Annotation.js"
-import { AnnotationId } from "./Domain/Annotation.js"
 import { FavoritesRepo } from "./Favorites/Repo.js"
-import { FavoriteId } from "./Domain/Favorite.js"
 import { BookmarksRepo } from "./Bookmarks/Repo.js"
 
 const make = Effect.gen(function* () {
