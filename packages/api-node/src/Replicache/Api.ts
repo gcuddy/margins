@@ -5,7 +5,6 @@ import { PullRequest, PullResponse } from "../Domain/Replicache.js"
 import { Unauthorized } from "../Domain/Actor.js"
 
 export class ReplicacheApi extends HttpApiGroup.make("replicache").pipe(
-  HttpApiGroup.prefix("/sync"),
   HttpApiGroup.add(
     HttpApiEndpoint.post("pull", "/pull").pipe(
       HttpApiEndpoint.setPayload(PullRequest),
@@ -14,5 +13,6 @@ export class ReplicacheApi extends HttpApiGroup.make("replicache").pipe(
     ),
   ),
   HttpApiGroup.addError(Unauthorized),
+  HttpApiGroup.prefix("/sync"),
   //   TODO: authentication
 ) {}
