@@ -5,15 +5,15 @@
 	import type { ServerMutations } from '@margins/features/replicache/server';
 	import { SidebarAnnotation } from '@margins/features/notebook';
 	import { createId } from '@margins/lib';
-	import { chromeStorageLocal } from 'svelte-chrome-storage/dist';
+	// import { chromeStorageLocal } from 'svelte-chrome-storage/dist';
 	import { useCreateNoteMutation } from '../data/mutations';
 	import { useNotesQuery } from '../data/queries';
-	import { derived } from 'svelte/store';
+	import { derived, writable } from 'svelte/store';
 
 	const tabs = ['annotations', 'page-notes'] as const;
 	type Tab = (typeof tabs)[number];
-	const tabsValue = chromeStorageLocal<Tab>('notebook-tabsValue');
-	if (!$tabsValue) $tabsValue = 'annotations';
+	const tabsValue = writable<Tab>('annotations');
+	// if (!$tabsValue) $tabsValue = 'annotations';
 
 	export let entryID: string;
 	const rpc = getRPC();

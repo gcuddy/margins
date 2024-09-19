@@ -51,9 +51,6 @@ importers:
       html2canvas:
         specifier: ^1.4.1
         version: 1.4.1
-      svelte-chrome-storage:
-        specifier: ^0.1.8
-        version: 0.1.8
     devDependencies:
       '@crxjs/vite-plugin':
         specifier: beta
@@ -992,6 +989,10 @@ importers:
         version: 3.23.8
 
   apps/web2:
+    dependencies:
+      replicache:
+        specifier: ^15.0.1
+        version: 15.0.1
     devDependencies:
       '@playwright/test':
         specifier: ^1.28.1
@@ -4754,9 +4755,6 @@ packages:
 
   '@types/bun@1.1.9':
     resolution: {integrity: sha512-SXJRejXpmAc3qxyN/YS4/JGWEzLf4dDBa5fLtRDipQXHqNccuMU4EUYCooXNTsylG0DmwFQsGgEDHxZF+3DqRw==}
-
-  '@types/chrome@0.0.193':
-    resolution: {integrity: sha512-R8C84oqvk8A8C8G1viBd8qLpDr86Y/jwD+KLgzUekbIT9RGds6a9GnlQyg8P7ltnGogTMHkiEQK0ZlcrvTeo3Q==}
 
   '@types/chrome@0.0.271':
     resolution: {integrity: sha512-K0qgXvkwA5ic+/eygF1xiypHEvCoBgH5lwrhg3yva2mqJuCWyYm0vpZQ22GksAxgGfo0PWev9Zx3plp2clMlwg==}
@@ -9057,10 +9055,6 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
 
-  svelte-chrome-storage@0.1.8:
-    resolution: {integrity: sha512-nECnJW+Os2Dpd9IVBtZQpUcHO+jZwpDb+VrewypcXhJE3BxDS97Vb2bDRyrVtv6DOhwiR5dOV7yW0t9scvNIFw==}
-    engines: {node: 16.14.0}
-
   svelte-confetti@2.1.2:
     resolution: {integrity: sha512-2hZUSmogOkeoKJEuUL75tAmyQQ8J9FEcNq19yzDpL4njBOEpl+cFA97sX9i6okBIhTccsRV1M9FZOkEyTZAMnQ==}
     peerDependencies:
@@ -9194,10 +9188,6 @@ packages:
     resolution: {integrity: sha512-w4LR6/bYZEuCs7SGr+M54oipk/UQKtiMadyOhW0PTwAtJ/Ai12QS77sLngEcfBx2q4H8ZBQucc9ktSA5sUGZWw==}
     peerDependencies:
       svelte: ^3.2.1 || ^4.0.0-next.1 || ^5.0.0-next.94
-
-  svelte@3.59.2:
-    resolution: {integrity: sha512-vzSyuGr3eEoAtT/A6bmajosJZIUWySzY2CzB3w2pgPvnkUjGqlDnsNnA0PMO+mMAhuyMul6C2uuZzY6ELSkzyA==}
-    engines: {node: '>= 8'}
 
   svelte@4.2.19:
     resolution: {integrity: sha512-IY1rnGr6izd10B0A8LqsBfmlT5OILVuZ7XsI0vdGPEvuonFV7NYEUK4dAkm9Zg2q0Um92kYjTpS1CAP3Nh/KWw==}
@@ -13582,11 +13572,6 @@ snapshots:
   '@types/bun@1.1.9':
     dependencies:
       bun-types: 1.1.27
-
-  '@types/chrome@0.0.193':
-    dependencies:
-      '@types/filesystem': 0.0.36
-      '@types/har-format': 1.2.15
 
   '@types/chrome@0.0.271':
     dependencies:
@@ -18450,11 +18435,6 @@ snapshots:
     transitivePeerDependencies:
       - picomatch
 
-  svelte-chrome-storage@0.1.8:
-    dependencies:
-      '@types/chrome': 0.0.193
-      svelte: 3.59.2
-
   svelte-confetti@2.1.2(svelte@4.2.19):
     dependencies:
       svelte: 4.2.19
@@ -18638,8 +18618,6 @@ snapshots:
   svelte-writable-derived@3.1.1(svelte@5.0.0-next.252):
     dependencies:
       svelte: 5.0.0-next.252
-
-  svelte@3.59.2: {}
 
   svelte@4.2.19:
     dependencies:

@@ -2,6 +2,7 @@ import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
 import { Redacted } from "effect"
 import { DateTimeString } from "./DateTime.js"
+import { UserId } from "./User.js"
 
 export const SessionIdString = Schema.String.pipe(Schema.brand("SessionId"))
 // actually not sure this needs to be redacted.
@@ -16,8 +17,8 @@ export const sessionIdFromRedacted = (token: Redacted.Redacted): SessionId =>
 
 export class Session extends Model.Class<Session>("Session")({
   id: Model.GeneratedByApp(SessionId),
-  user_id: Model.Field(SessionId),
-  expires_at: Model.DateTimeFromDate,
+  user_id: UserId,
+  expires_at: Model.GeneratedByApp(DateTimeString),
 }) {}
 
 export class SessionWithMetadata extends Model.Class<SessionWithMetadata>(

@@ -3,6 +3,7 @@ import { Model } from "@effect/sql"
 import { Context, DateTime, Layer } from "effect"
 import { Email } from "./Email.js"
 import { DateTimeString } from "./DateTime.js"
+import { SessionId } from "./Session.js"
 // import { Context } from "effect"
 
 export const UserId = Schema.String.pipe(Schema.brand("UserId"))
@@ -32,6 +33,13 @@ export class CurrentUser extends Context.Tag("Domain/User/CurrentUser")<
     }),
   )
 }
+export class UserWithSensitive extends Model.Class<UserWithSensitive>(
+  "UserWithSensitive",
+)({
+  ...Model.fields(User),
+  sessionId: SessionId,
+}) {}
+
 
 export class UserNotFound extends Schema.TaggedError<UserNotFound>()(
   "UserNotFound",
