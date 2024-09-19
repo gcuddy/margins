@@ -13,6 +13,7 @@ import { Effect, Layer } from "effect"
 import { LuciaLayer } from "./Auth.js"
 import { Api } from "./Api.js"
 import { HttpUsersLive } from "./Users/Http.js"
+import { HttpReplicacheLive } from "./Replicache/Http.js"
 
 export const app = router.pipe(
   HttpServer.serve(),
@@ -20,7 +21,10 @@ export const app = router.pipe(
   Layer.provide(LuciaLayer.Live),
 )
 
-const ApiLive = HttpApiBuilder.api(Api).pipe(Layer.provide(HttpUsersLive))
+const ApiLive = HttpApiBuilder.api(Api).pipe(
+  Layer.provide(HttpUsersLive),
+  Layer.provide(HttpReplicacheLive),
+)
 
 export const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(HttpApiSwagger.layer()),

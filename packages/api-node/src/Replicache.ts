@@ -1,19 +1,7 @@
-import {
-  Array,
-  Chunk,
-  Context,
-  Effect,
-  HashSet,
-  Layer,
-  Logger,
-  LogLevel,
-  Option,
-  pipe,
-  Record,
-} from "effect"
+import { Chunk, Effect, HashSet, Layer, Option, pipe, Record } from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
-import { CurrentUser } from "./Domain/User.js"
+import { UserId } from "./Domain/User.js"
 import type {
   ReplicacheClientId,
   PatchOperation,
@@ -38,32 +26,29 @@ import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations2.js"
 import { CVRCache } from "./Replicache/ClientViewRecord.js"
 import { EntriesRepo } from "./Entries/Repo.js"
-import type { Entry } from "./Domain/Entry.js"
-import { EntryId } from "./Domain/Entry.js"
 import { Unauthorized } from "./Domain/Actor.js"
 import { Nanoid } from "./Nanoid.js"
 import { AnnotationsRepo } from "./Annotations/Repo.js"
-import type { Annotation } from "./Domain/Annotation.js"
-import { AnnotationId } from "./Domain/Annotation.js"
 import { FavoritesRepo } from "./Favorites/Repo.js"
-import { FavoriteId } from "./Domain/Favorite.js"
 import { BookmarksRepo } from "./Bookmarks/Repo.js"
 
 const make = Effect.gen(function* () {
-  const sql = yield * SqlClient.SqlClient
-  const clientGroupRepo = yield * ReplicacheClientGroupRepo
-  const clientRepo = yield * ReplicacheClientRepo
+  const sql = yield* SqlClient.SqlClient
+  const clientGroupRepo = yield* ReplicacheClientGroupRepo
+  const clientRepo = yield* ReplicacheClientRepo
   // TODO: make this a Cache
-  const cvrCache = yield * CVRCache
-  const { id: userId } = yield * CurrentUser
-  const entriesRepo = yield * EntriesRepo
-  const annotationsRepo = yield * AnnotationsRepo
-  const favoritesRepo = yield * FavoritesRepo
-  const bookmarksRepo = yield * BookmarksRepo
-  const nanoid = yield * Nanoid
+  const cvrCache = yield* CVRCache
+  const entriesRepo = yield* EntriesRepo
+  const annotationsRepo = yield* AnnotationsRepo
+  const favoritesRepo = yield* FavoritesRepo
+  const bookmarksRepo = yield* BookmarksRepo
+  const nanoid = yield* Nanoid
 
   // TODO: should these be here? or in the repo?
-  const getClientGroup = (clientGroupID: ReplicacheClientGroupId) =>
+  const getClientGroup = (
+    userId: UserId,
+    clientGroupID: ReplicacheClientGroupId,
+  ) =>
     pipe(
       clientGroupRepo.findById(clientGroupID),
       // TODO: use policy can read?
@@ -97,6 +82,7 @@ const make = Effect.gen(function* () {
     )
 
   const getClient = (
+    userId: UserId,
     clientID: ReplicacheClientId,
     clientGroupID: ReplicacheClientGroupId,
   ) =>
@@ -159,6 +145,7 @@ const make = Effect.gen(function* () {
     )
 
   const processMutation = (
+    userId: UserId,
     clientGroupID: ReplicacheClientGroupId,
     mutation: Mutation,
     // 1: `let errorMode = false`. In JS, we implement this step naturally
@@ -167,8 +154,12 @@ const make = Effect.gen(function* () {
     errorMode: boolean,
   ) =>
     Effect.gen(function* () {
-      const clientGroup = yield* getClientGroup(clientGroupID)
-      const baseClient = yield* getClient(mutation.clientID, clientGroupID)
+      const clientGroup = yield* getClientGroup(userId, clientGroupID)
+      const baseClient = yield* getClient(
+        userId,
+        mutation.clientID,
+        clientGroupID,
+      )
 
       // TODO: pick up here 2024-09-05
 
@@ -211,15 +202,20 @@ const make = Effect.gen(function* () {
       // return affected (keep track - some sort of repository layer that gets yielded isnide and noted? userIds, workspaceIds, sharedLists, etc.)
     }).pipe(Effect.tapErrorCause(Effect.logError), sql.withTransaction)
 
-  const push = (pushRequest: PushRequest) => {
+  const push = (userId: UserId, pushRequest: PushRequest) => {
     // TODO: poke backend (layer)
     return Effect.forEach(
       pushRequest.mutations,
       mutation =>
-        processMutation(pushRequest.clientGroupID, mutation, false).pipe(
+        processMutation(
+          userId,
+          pushRequest.clientGroupID,
+          mutation,
+          false,
+        ).pipe(
           // Probably not the best way to do this
           Effect.tapError(_ =>
-            processMutation(pushRequest.clientGroupID, mutation, true),
+            processMutation(userId, pushRequest.clientGroupID, mutation, true),
           ),
           Effect.withSpan("Replicache.processMutation", {
             attributes: { mutation },
@@ -234,7 +230,7 @@ const make = Effect.gen(function* () {
     )
   }
 
-  const pull = (pullRequest: PullRequest) =>
+  const pull = (userId: UserId, pullRequest: PullRequest) =>
     Effect.gen(function* () {
       // // TODO: implement pull
       const { clientGroupID } = pullRequest
@@ -267,7 +263,7 @@ const make = Effect.gen(function* () {
       // TODO: more effect-y!
       const data = yield* Effect.gen(function* () {
         console.log({ clientGroupID, userId })
-        const baseClientGroup = yield* getClientGroup(clientGroupID)
+        const baseClientGroup = yield* getClientGroup(userId, clientGroupID)
 
         console.log({ baseClientGroup })
 

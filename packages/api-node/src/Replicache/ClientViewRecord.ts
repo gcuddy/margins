@@ -7,6 +7,7 @@ import { makeSchemaStore, StorageLayer } from "../DurableObject.js"
 import type { ClientViewRecordId } from "../Domain/Replicache.js"
 import { ClientViewRecord } from "../Domain/Replicache.js"
 import type { ParseError } from "@effect/schema/ParseResult"
+import { KeyValueStore } from "@effect/platform"
 
 // TODO: expand these with schema, brands, classes, layers, etc.
 
@@ -17,8 +18,8 @@ export type CVR = Record<string, CVREntries>
 // For now just accept a KeyValueStore to use...
 
 const make = Effect.gen(function* () {
-  const storage = yield* StorageLayer
-  const store = makeSchemaStore(storage, ClientViewRecord)
+  const storage = yield * KeyValueStore.KeyValueStore
+  const store = storage.forSchema(ClientViewRecord)
   //   Needs to be called in correct DO
 
   const get = (cvrID: ClientViewRecordId) => store.get(cvrID)
@@ -33,19 +34,10 @@ const make = Effect.gen(function* () {
 
 export class CVRCache extends Effect.Tag("Replicache/CVRCache")<
   CVRCache,
-  {
-    get: (
-      cvrID: ClientViewRecordId,
-    ) => Effect.Effect<
-      Option.Option<ClientViewRecord>,
-      DurableObjectError | ParseError,
-      never
-    >
-    set: (
-      cvrID: ClientViewRecordId,
-      cvr: CVR,
-    ) => Effect.Effect<void, DurableObjectError | ParseError, never>
-  }
+  Effect.Effect.Success<typeof make>
 >() {
-  static Live = Layer.effect(this, make)
+  static Live = Layer.effect(this, make).pipe(
+    //  eventually maybe make this storage?
+    Layer.provide(KeyValueStore.layerMemory),
+  )
 }
