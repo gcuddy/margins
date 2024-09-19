@@ -97,6 +97,7 @@
     "@planetscale/database": "^1.19.0",
     "@prisma/client": "^5.19.1",
     "@sveltejs/adapter-auto": "^3.2.5",
+    "@sveltejs/adapter-node": "^5.2.3",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tanstack/query-persist-client-core": "^5.56.2",
     "@tanstack/svelte-query": "https://pkg.pr.new/@tanstack/svelte-query@59098d7",

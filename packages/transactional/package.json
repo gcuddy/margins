@@ -14,12 +14,11 @@
 	"dependencies": {
 		"@margins/config": "workspace:*",
 		"@margins/ui": "workspace:*",
-		"@react-email/components": "0.0.17",
+		"@react-email/components": "0.0.25",
 		"dotenv": "^16.4.5",
 		"react": "^18.3.1",
-		"react-email": "2.1.2",
-		"resend": "^3.2.0",
+		"react-email": "3.0.1",
+		"resend": "^4.0.0",
 		"tailwind-variants": "^0.2.1"
-	},
-	"devDependencies": {}
+	}
 }

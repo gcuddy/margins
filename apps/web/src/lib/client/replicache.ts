@@ -83,9 +83,11 @@ export function createReplicache({
     // higher speed for testing
     // pullInterval: 1000 * 60,
 
+    pullURL: "http://0.0.0.0:3000/sync/pull",
+    pushURL: "http://0.0.0.0:3000/sync/push",
     // TODO: web socket
-    pullURL: "http://localhost:8787/sync/pull",
-    pushURL: "http://localhost:8787/sync/push",
+    // pullURL: "http://localhost:8787/sync/pull",
+    // pushURL: "http://localhost:8787/sync/push",
     // pullURL: '/sync/pull',
     // pushURL: '/sync/push',
   })

@@ -25,8 +25,8 @@
 		"@margins/config": "workspace:*",
 		"autosize": "^6.0.1",
 		"clsx": "^2.1.0",
-		"nanoid": "^5.0.6",
-		"tailwind-merge": "^1.13.2"
+		"nanoid": "^5.0.7",
+		"tailwind-merge": "^2.5.2"
 	},
 	"devDependencies": {
 		"@margins/tsconfig": "workspace:*",

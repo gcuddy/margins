@@ -7,11 +7,11 @@
     "@margins/db": "workspace:*",
     "@margins/features": "workspace:*",
     "effect": "^3.7.3",
-    "replicache": "^14.2.2",
+    "replicache": "^15.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "partykit": "^0.0.100",
+    "partykit": "^0.0.110",
     "typescript": "^5.4.2"
   },
   "private": true,

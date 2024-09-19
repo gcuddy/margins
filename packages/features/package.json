@@ -94,8 +94,10 @@
     "solid-js": "^1.8.22",
     "svelte": "^5.0.0-next.242",
     "svelte-floating-ui": "^1.5.9",
+    "svelte-local-storage-store": "^0.6.4",
     "svelte-persisted-store": "^0.11.0",
     "svelte-radix": "^1.1.1",
+    "sveltekit-superforms": "^2.19.0",
     "tailwind-merge": "^2.5.2",
     "zod": "^3.23.8"
   },
