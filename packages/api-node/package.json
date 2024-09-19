@@ -6,11 +6,13 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "license": "MIT",
+  "packageManager": "pnpm@9.10.0",
   "scripts": {
     "test": "vitest",
     "dev": "tsx --env-file=.env --watch src/main.ts",
     "deploy": "wrangler deploy",
-    "check": "tsc -b tsconfig.json"
+    "check": "tsc -b tsconfig.json",
+    "start": "NODE_ENV=production tsx --env-file=.env src/main.ts"
   },
   "dependencies": {
     "@effect/experimental": "^0.26.2",
