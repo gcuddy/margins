@@ -2,24 +2,14 @@ import {
   HttpApiBuilder,
   HttpApiSwagger,
   HttpMiddleware,
-  HttpRouter,
   HttpServer,
-  HttpServerResponse,
 } from "@effect/platform"
-import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
-import { router } from "./server/router.js"
+import { NodeHttpServer } from "@effect/platform-node"
 import { createServer } from "node:http"
-import { Effect, Layer } from "effect"
-import { LuciaLayer } from "./Auth.js"
+import { Layer } from "effect"
 import { Api } from "./Api.js"
 import { HttpUsersLive } from "./Users/Http.js"
 import { HttpReplicacheLive } from "./Replicache/Http.js"
-
-export const app = router.pipe(
-  HttpServer.serve(),
-  HttpServer.withLogAddress,
-  Layer.provide(LuciaLayer.Live),
-)
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide(HttpUsersLive),

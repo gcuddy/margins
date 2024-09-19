@@ -1,4 +1,5 @@
 .DS_Store
+dist/
 node_modules
 /build
 /.svelte-kit
@@ -23,3 +24,4 @@ db_dump.sql
 
 .dev.vars
 .wrangler
+packages/api-node/dist/tsconfig.tsbuildinfo

@@ -7,6 +7,7 @@ import { DateTimeString } from "./DateTime.js"
 
 export const UserId = Schema.String.pipe(Schema.brand("UserId"))
 export type UserId = typeof UserId.Type
+
 export class User extends Model.Class<User>("User")({
   id: Model.Generated(UserId),
   email: Email,

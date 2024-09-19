@@ -1,122 +1,252 @@
-import * as S from "@effect/schema/Schema"
+// taken largely from https://github.dev/sst/console/blob/dev/packages/functions/src/replicache/pull1.ts
+
+import type { WriteTransaction } from "replicache"
+import { Schema } from "@effect/schema"
 import { Effect } from "effect"
-import type * as EffectRequest from "effect/Request"
-import type { Pipeable } from "effect"
-import type { Serializable } from "@effect/schema"
+import { ParseError } from "@effect/schema/ParseResult"
 
-export class EntryCreate extends S.TaggedRequest<EntryCreate>()("EntryCreate", {
-  failure: S.String,
-  success: S.Void,
-  payload: {
-    url: S.String,
+interface Mutation<Name extends string = string, Input = any, Output = any> {
+  input: Input
+  name: Name
+  output: Output
+}
+
+export class MutationError extends Schema.TaggedError<MutationError>()(
+  "MutationError",
+  {
+    mutation: Schema.String,
+    args: Schema.Any,
   },
-}) {}
+) {}
 
-const x = new EntryCreate({ url: "" })
+export class MutationNotFoundError extends Schema.TaggedError<MutationNotFoundError>()(
+  "MutationNotFoundError",
+  {
+    mutation: Schema.String,
+  },
+) {}
 
-const a = EntryCreate.make({ url: "" })
+export class Server<Mutations extends Record<string, Mutation>> {
+  private mutations = new Map<
+    string,
+    {
+      fn: (input: any) => Effect.Effect<any, MutationError | ParseError, never>
+      input: Schema.Schema.Any
+    }
+  >()
 
-type A<Req extends S.TaggedRequest.All> = Req
+  // public mutation<
+  //   Name extends string,
+  //   Shape extends Schema.Schema.Any,
+  //   Args = Schema.Schema.Type<Shape>,
+  //   Output = void,
+  // >(
+  //   name: Name,
+  //   shape: Shape,
+  //   fn: (input: Args) => Promise<Output>,
+  // ): Server<Mutations & { [key in Name]: Mutation<Name, Args, Output> }> {
+  //   this.mutations.set(name as string, {
+  //     fn: args =>
+  //       Effect.gen(function* () {
+  //         const parsed = yield* Schema.decodeUnknown(shape)(args)
+  //         return yield* Effect.tryPromise({
+  //           try: () => fn(parsed),
+  //           catch: () => new MutationError({ mutation: name, args }),
+  //         })
+  //       }),
+  //     input: shape,
+  //   })
+  //   return this
+  // }
 
-type B = A<EntryCreate>
+  //   TODO: Collect A, E, R for make
+  public expose<
+    Name extends string,
+    Shape extends Schema.Schema.Any,
+    Args = Schema.Schema.Type<Shape>,
+    Output = any,
+    Error = MutationError,
+    Requirements = never,
+  >(
+    name: Name,
+    mutation: MutationEffect<
+      Schema.Schema.AnyNoContext,
+      Output,
+      Error,
+      Requirements
+    >,
+  ): Server<
+    Mutations & {
+      [key in Name]: Effect.Effect<
+        Output,
+        Error extends never ? ParseError : Error | ParseError,
+        Requirements
+      >
+    }
+  > {
+    this.mutations.set(name as string, {
+      fn: args =>
+        Effect.gen(function* () {
+          const parsed = Schema.decodeUnknownOption(mutation.schema)(args)
+          return yield* mutation
+            .handler(parsed)
+            .pipe(
+              Effect.mapError(e =>
+                e instanceof ParseError
+                  ? e
+                  : new MutationError({ mutation: name, args }),
+              ),
+            )
+        }),
+      input: mutation.schema,
+    })
+    return this
+  }
 
-const e = <Req extends S.TaggedRequest.All, R>(
-  schema: S.Schema<Req, any, unknown>,
-) => ({ schema })
+  public execute(name: string, args: any) {
+    const mut = this.mutations.get(name as string)
+    return Effect.gen(function* () {
+      yield* Effect.log("execute", name, args)
+      if (!mut) return yield* new MutationNotFoundError({ mutation: name })
+      return yield* mut.fn(args)
+    })
+  }
 
-const c = e(EntryCreate)
+  //   TODO: not really how you do it in effect, but it's ok
+  //   Extract Errors and Requirements
+  // public makeEffect() {
+  //   // return Effect.gen(function* () {
+  //   //   return yield* Record.fromEntries(this.mutations.entries())
+  //   // })
+  //   const map = this.mutations
+  //   return Effect.gen(function* () {
+  //     const call = (name: string, args: unknown) =>
+  //       Effect.gen(function* () {
+  //         const mut = map.get(name as string)
+  //         if (!mut) return yield* new MutationNotFoundError({ mutation: name })
+  //         const parsed = yield* Schema.decodeUnknown(mut.input)(args)
+  //         type X = Mutations["name"]["output"]
+  //         return yield* mut?.fn(args)
+  //       })
+  //     return {
+  //       call,
+  //     } as const
+  //   })
+  //   // return Object.fromEntries(this.mutations.entries()) as any
+  //   // return Record.fromEntries(this.mutations.entries())
+  //   // return Effect.gen(function* () {
+  //   //   return yield* this.mutations.map(({ fn }) => fn)
+  //   // })
+  // }
 
-type D = EntryCreate["_tag"]
-
-export const makeReplicacheServer = <Req extends S.TaggedRequest.All, R>(
-  schema: S.Schema<Req, any, unknown>,
-) => ({ schema })
-
-interface Proto<Req extends S.TaggedRequest.All> {
-  readonly [TypeId]: TypeId
-  readonly _tag: string
-  readonly schema: S.Schema<Req, any, unknown>
-}
-
-interface RepMEffect<Req extends S.TaggedRequest.All, R> extends Proto<Req> {
-  // readonly make: (req: Req) => Effect.Effect<R, never, never>;
-  // readonly _tag: "Replicache"
-  readonly handler: (
-    request: Req,
-  ) => Effect.Effect<
-    EffectRequest.Request.Success<Req>,
-    EffectRequest.Request.Error<Req>,
-    R
-  >
-}
-
-type Test = RepMEffect<EntryCreate, void>
-
-export type Request<A extends RepMEffect<any, any>> = S.Schema.Type<A["schema"]>
-
-const TypeId: unique symbol = Symbol.for("RepMEffect")
-type TypeId = typeof TypeId
-
-// const effect = RepMEffect.make(EntryCreate)
-const effect = <Req extends S.TaggedRequest.All, R>(
-  schema: S.Schema<Req, any, unknown>,
-  handler: (
-    request: Req,
-  ) => Effect.Effect<
-    EffectRequest.Request.Success<Req>,
-    EffectRequest.Request.Error<Req>,
-    R
-  >,
-): RepMEffect<Req, R> => ({
-  [TypeId]: TypeId,
-  _tag: "Replicache",
-  schema,
-  handler,
-})
-
-const ServerTypeId: unique symbol = Symbol.for("ReplicacheServer")
-type ServerTypeId = typeof ServerTypeId
-
-interface RServer<Reqs extends S.TaggedRequest.All, R> {
-  readonly [ServerTypeId]: ServerTypeId
-  readonly mutations: ReadonlySet<RepMEffect<Reqs, R>>
-}
-
-export type Context<A extends RepMEffect<any, any>> =
-  A extends RepMEffect<infer Req, infer R>
-    ? R | Serializable.SerializableWithResult.Context<Req>
-    : never
-
-const make = <EffectMutations extends ReadonlyArray<RepMEffect<any, any>>>(
-  ...mutations: EffectMutations
-): RServer<
-  Request<Extract<EffectMutations[number], { readonly [TypeId]: TypeId }>>,
-  Context<Extract<EffectMutations[number], { readonly [TypeId]: TypeId }>>
-> => {
-  type M = Request<
-    Extract<EffectMutations[number], { readonly [TypeId]: TypeId }>
-  >
-  const set = new Set<RepMEffect<any, any>>(mutations)
-  return {
-    [ServerTypeId]: ServerTypeId,
-    mutations: set,
+  public has(name: string) {
+    return this.mutations.has(name)
   }
 }
 
-const server = make(effect(EntryCreate, req => Effect.succeed(req)))
+export type ExtractMutations<S extends Server<any>> =
+  S extends Server<infer M> ? M : never
 
-type Server = typeof server
+export class Client<
+  S extends Server<any>,
+  Mutations extends Record<string, Mutation> = ExtractMutations<S>,
+> {
+  private mutations = new Map<string, (...input: any) => Promise<void>>()
 
-type ServerMutations = ReturnType<Server["mutations"]["values"]>
+  public mutation<Name extends keyof Mutations>(
+    name: Name,
+    fn: (
+      tx: WriteTransaction,
+      input: Mutations[Name]["input"],
+    ) => Promise<void>,
+  ) {
+    this.mutations.set(name as string, fn)
+    return this
+  }
 
-const makeClient = <Server extends RServer<any, any>>(server: Server) => {
-  const mutations = server.mutations.forEach(mutation => {
-    mutation.schema.Encoded
-  })
+  public build(): {
+    [key in keyof Mutations]: (
+      ctx: WriteTransaction,
+      args: Mutations[key]["input"],
+    ) => Promise<void>
+  } {
+    return Object.fromEntries(this.mutations.entries()) as any
+  }
 }
 
-// make(EntryCreate)
-// desired api like RPC:
-// R.make(EntryCreate, () => Effect)
-// Extract type
-// then on client Client.make<Type>(... tx write transaction, arg with arg shape). I think this probably shouldn't be Effect-ful, maybe so, but replicache obviously isn't. Maybe would need another wrapper around it.
+const MutationTypeId: unique symbol = Symbol.for("Replicache/Mutation")
+type MutationTypeId = typeof MutationTypeId
+
+interface Proto<S extends Schema.Schema.AnyNoContext> {
+  readonly [MutationTypeId]: MutationTypeId
+  readonly _tag: string
+  readonly schema: S
+}
+
+interface MutationEffect<
+  S extends Schema.Schema.AnyNoContext,
+  A,
+  E = never,
+  R = never,
+> extends Proto<S> {
+  readonly _tag: "Replicache"
+  readonly handler: (
+    request: Schema.Schema.Type<S>,
+  ) => Effect.Effect<A, E | ParseError, never>
+}
+
+// not in love with this — check other mutaitons.ts for a more interesting effecty way
+// backend schema thingy
+function schema<
+  Schema extends Schema.Schema.AnyNoContext,
+  A,
+  E = never,
+  R = never,
+>(
+  schema: Schema,
+  //   TODO: extract requirements here and up in class / make it a `make` effect layer`
+  handler: (
+    input: Schema.Schema.Type<Schema>,
+  ) => Effect.Effect<A, E | ParseError, never>,
+): MutationEffect<Schema.Schema.AnyNoContext, A, E, R> {
+  return {
+    handler,
+    schema,
+    _tag: "Replicache",
+    [MutationTypeId]: MutationTypeId,
+  }
+}
+
+const Go = schema(Schema.String, input =>
+  Effect.gen(function* () {
+    // yield* Effect.fail('uh oh')
+  }),
+)
+
+// I just wonder if there's a way to make this more effecty
+export const server = new Server()
+  .expose(
+    "Go",
+    Go,
+    //   schema(Schema.String, input => Effect.succeed(input)),
+  )
+  .expose(
+    "Hello",
+    schema(Schema.Number, input => Effect.succeed(input)),
+  )
+
+// const d = server.makeEffect()
+
+// d.Go
+
+// server.make``
+
+// what I really want this to be is yield* ReplicacheServer and then can use it with requirements
+
+type ServerType = typeof server
+
+// type Req = Effect.Effect.Context<>
+
+// type Server = typeof server
+
+// TODO: is there a way to just use RPC Router? Or use Tagged Requests? i.e. pass them in and go from there?

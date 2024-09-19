@@ -1,12 +1,8 @@
 // CVR, CVREntires, CVRCache etc (cvr cache maybe uses key value store)
 
-import type { Option } from "effect"
-import { Context, Effect, Layer } from "effect"
-import type { DurableObjectError } from "../DurableObject.js"
-import { makeSchemaStore, StorageLayer } from "../DurableObject.js"
+import { Effect, Layer } from "effect"
 import type { ClientViewRecordId } from "../Domain/Replicache.js"
 import { ClientViewRecord } from "../Domain/Replicache.js"
-import type { ParseError } from "@effect/schema/ParseResult"
 import { KeyValueStore } from "@effect/platform"
 
 // TODO: expand these with schema, brands, classes, layers, etc.
