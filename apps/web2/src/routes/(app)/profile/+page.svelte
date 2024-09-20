@@ -19,7 +19,7 @@
 	$effect(() => {
 		const a = rep.subscribe(
 			async (tx) => {
-				const entries = await tx.scan({ prefix: 'entries/' }).entries().toArray();
+				const entries = await tx.scan().entries().toArray();
 				console.log({ entries });
 				return entries;
 			},
