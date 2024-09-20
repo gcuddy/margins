@@ -15,8 +15,8 @@ export class ReplicacheClientGroup extends Model.Class<ReplicacheClientGroup>(
   id: Model.GeneratedByApp(ReplicacheClientGroupId),
   cvrVersion: Schema.Number,
   userId: UserId,
-  createdAt: Model.DateTimeInsert,
-  updatedAt: Model.DateTimeUpdate,
+  createdAt: Model.DateTimeFromDateWithNow,
+  updatedAt: Model.DateTimeFromDateWithNow,
 }) {}
 
 export const ReplicacheClientId = Schema.String.pipe(
@@ -30,8 +30,8 @@ export class ReplicacheClient extends Model.Class<ReplicacheClient>(
   id: Model.Generated(ReplicacheClientId),
   clientGroupID: ReplicacheClientGroupId,
   lastMutationID: Schema.Number,
-  createdAt: Model.DateTimeInsert,
-  updatedAt: Model.DateTimeUpdate,
+  createdAt: Model.DateTimeFromDateWithNow,
+  updatedAt: Model.DateTimeFromDateWithNow,
 }) {}
 
 // CVR

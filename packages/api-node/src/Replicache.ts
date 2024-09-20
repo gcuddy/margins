@@ -42,22 +42,16 @@ import { FavoritesRepo } from "./Favorites/Repo.js"
 import { BookmarksRepo } from "./Bookmarks/Repo.js"
 
 const make = Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient
-  const clientGroupRepo = yield* ReplicacheClientGroupRepo
-  const clientRepo = yield* ReplicacheClientRepo
+  const sql = yield * SqlClient.SqlClient
+  const clientGroupRepo = yield * ReplicacheClientGroupRepo
+  const clientRepo = yield * ReplicacheClientRepo
   // TODO: make this a Cache
-  const cvrCache = yield* CVRCache
-  const entriesRepo = yield* EntriesRepo
-  const annotationsRepo = yield* AnnotationsRepo
-  const favoritesRepo = yield* FavoritesRepo
-  const bookmarksRepo = yield* BookmarksRepo
-  const nanoid = yield* Nanoid
-
-  ReplicacheClientGroup.insert.make({
-    cvrVersion: 0,
-    userId: UserId.make("1"),
-    id: ReplicacheClientGroupId.make("1"),
-  })
+  const cvrCache = yield * CVRCache
+  const entriesRepo = yield * EntriesRepo
+  const annotationsRepo = yield * AnnotationsRepo
+  const favoritesRepo = yield * FavoritesRepo
+  const bookmarksRepo = yield * BookmarksRepo
+  const nanoid = yield * Nanoid
 
   // TODO: should these be here? or in the repo?
   const getClientGroup = (
@@ -86,8 +80,6 @@ const make = Effect.gen(function* () {
                   cvrVersion: 0,
                   userId,
                   id: clientGroupID,
-                  createdAt: now,
-                  updatedAt: now,
                 }),
               ),
             ),
@@ -235,22 +227,21 @@ const make = Effect.gen(function* () {
         lastMutationID: nextMutationID,
       })
 
-      yield *
-        Effect.all(
-          [
-            putClientGroup(
-              ReplicacheClientGroup.insert.make({
-                cvrVersion: clientGroup.cvrVersion,
-                userId: clientGroup.userId,
-                id: clientGroup.id,
-              }),
-            ),
-            putClient(nextClient),
-          ],
-          {
-            concurrency: "unbounded",
-          },
-        )
+      yield* Effect.all(
+        [
+          putClientGroup(
+            ReplicacheClientGroup.insert.make({
+              cvrVersion: clientGroup.cvrVersion,
+              userId: clientGroup.userId,
+              id: clientGroup.id,
+            }),
+          ),
+          putClient(nextClient),
+        ],
+        {
+          concurrency: "unbounded",
+        },
+      )
 
       // console.log time
 
@@ -481,14 +472,13 @@ const make = Effect.gen(function* () {
           Math.max(baseCVRVersion, baseClientGroup.cvrVersion) + 1
 
         // 14: Write ClientGroupRecord
-        yield *
-          putClientGroup(
-            ReplicacheClientGroup.insert.make({
-              cvrVersion: nextCVRVersion,
-              userId: userId,
-              id: baseClientGroup.id,
-            }),
-          ).pipe(Effect.withLogSpan("Replicache.pull.putClientGroup"))
+        yield* putClientGroup(
+          ReplicacheClientGroup.insert.make({
+            cvrVersion: nextCVRVersion,
+            userId: userId,
+            id: baseClientGroup.id,
+          }),
+        ).pipe(Effect.withLogSpan("Replicache.pull.putClientGroup"))
 
         // TODO: make this automatic
         return {
