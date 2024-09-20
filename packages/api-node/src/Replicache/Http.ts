@@ -5,26 +5,26 @@ import { Users } from "../Users.js"
 import { CurrentUser, UserNotFound } from "../Domain/User.js"
 import { PullResponse } from "../Domain/Replicache.js"
 import { Replicache } from "../Replicache.js"
+import { ClientGroupPolicy } from "./ClientGroupPolicy.js"
 
 export const HttpReplicacheLive = HttpApiBuilder.group(
   Api,
   "replicache",
   handlers =>
     Effect.gen(function* () {
-      const user = yield* Users
-      const x = handlers.pipe(
+      const user = yield * Users
+      const replicache = yield * Replicache
+
+      return handlers.pipe(
         HttpApiBuilder.handle("pull", ({ payload }) =>
-          Effect.gen(function* () {
-            const replicache = yield* Replicache
-            const currentUser = yield* CurrentUser
-            const pr = yield* replicache
-              .pull(currentUser.id, payload)
-              .pipe(Effect.orDie)
-            return PullResponse.make(pr)
-          }),
+          CurrentUser.pipe(
+            Effect.flatMap(user => replicache.pull(user.id, payload)),
+            Effect.andThen(pr => PullResponse.make(pr)),
+            Effect.tapErrorCause(Effect.logError),
+            Effect.orDie,
+          ),
         ),
         user.httpSecurity,
       )
-      return x
     }),
 ).pipe(Layer.provide(Users.Live), Layer.provide(Replicache.Live))

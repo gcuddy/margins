@@ -7,10 +7,10 @@ export type FavoriteId = typeof FavoriteId.Type
 
 export class Favorite extends Model.Class<Favorite>("Favorite")({
   id: Model.GeneratedByApp(FavoriteId),
-  createdAt: Model.Generated(DateTimeString),
-  updatedAt: Model.GeneratedByApp(DateTimeString),
+  createdAt: Model.DateTimeFromDate,
+  updatedAt: Model.DateTimeFromDate,
   userId: Model.Field(Schema.String),
-  deleted: Model.FieldOption(DateTimeStringWithoutDefault),
+  deleted: Model.FieldOption(Model.DateTimeFromDate),
   tagId: Model.FieldOption(Schema.Number),
   smartListId: Model.FieldOption(Schema.Number),
   annotationId: Model.FieldOption(Schema.String),

@@ -8,7 +8,8 @@
 		pullURL: 'http://0.0.0.0:3000/sync/pull',
 		pushURL: 'http://0.0.0.0:3000/sync/push',
 
-        auth: 'Bearer igem6vuap5rokewxe3vlrrefgzd22lawf73p2pcv'
+        auth: 'Bearer mnywTdF8-3wdpuCz4lj-ZFiY6',
+		logLevel: 'debug'
 	});
     rep.getAuth = () => {
         console.log('get auth')

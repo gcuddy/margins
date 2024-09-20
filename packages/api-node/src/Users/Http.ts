@@ -13,6 +13,7 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
 
     return handlers.pipe(
       HttpApiBuilder.handle("getUser", ({ path }) => {
+        console.log({ path })
         const a = pipe(
           users.findUserById(path.id),
           Effect.flatMap(

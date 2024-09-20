@@ -51,7 +51,7 @@ const make = Effect.gen(function* () {
 
   const createSession = (userId: UserId) =>
     pipe(
-      nanoid.generateWithSize(25).pipe(Effect.map(sessionIdFromString)),
+      nanoid.generateWithSize(40).pipe(Effect.map(sessionIdFromString)),
       Effect.tap(sessionId => Effect.log("sessionId", { sessionId, userId })),
       Effect.flatMap(sessionId =>
         // sheesh - should rewrite with do simulation or effect.gen
@@ -81,17 +81,16 @@ const make = Effect.gen(function* () {
     CurrentUser,
     token =>
       Effect.gen(function* () {
-        console.log("token", Redacted.value(token))
         const sessionId = sessionIdFromRedacted(token)
-        const [user, session] = yield* Effect.zip(
-          userRepo.findBySessionId(sessionId),
-          userRepo.findSessionById(sessionId),
-          {
-            concurrent: true,
-          },
-        )
-        console.log("session", session)
-        console.log("user", user)
+        const [user, session] =
+          yield *
+          Effect.zip(
+            userRepo.findBySessionId(sessionId),
+            userRepo.findSessionById(sessionId),
+            {
+              concurrent: true,
+            },
+          )
         // TODO: refactor into pipe and remove repetitive code
         if (Option.isNone(session)) {
           return yield* new Unauthorized({
@@ -100,18 +99,19 @@ const make = Effect.gen(function* () {
             action: "read",
           })
         }
-        if (Option.isNone(user) || DateTime.isPast(session.value.expires_at)) {
-          console.log("deleting session")
-          yield* sessionRepo.delete(session.value.id)
-          return yield* new Unauthorized({
-            actorId: UserId.make("-1"),
-            entity: "User",
-            action: "read",
-          })
+        const isPast = yield * DateTime.isPast(session.value.expires_at)
+        if (Option.isNone(user) || isPast) {
+          yield * sessionRepo.delete(session.value.id)
+          return (
+            yield *
+            new Unauthorized({
+              actorId: UserId.make("-1"),
+              entity: "User",
+              action: "read",
+            })
+          )
         }
-        console.log("sessionExpiresAt", session.value.expires_at)
         const sessionExpiresIn = Duration.days(30)
-        console.log("sessionExpiresIn", sessionExpiresIn)
         const activePeriodExpirationDate = session.value.expires_at.pipe(
           DateTime.subtractDuration(
             sessionExpiresIn.pipe(Duration.unsafeDivide(2)),
@@ -140,7 +140,6 @@ const make = Effect.gen(function* () {
               Effect.succeed(SessionWithMetadata.make(session.value)),
           },
         )
-        console.log("new session", _newSession)
         return user.value
       }).pipe(Effect.withSpan("Users.httpSecurity")),
 

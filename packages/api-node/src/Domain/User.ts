@@ -15,8 +15,18 @@ export class User extends Model.Class<User>("User")({
   // accountId: Model.GeneratedByApp(AccountId),
   // email: Email,
   // accessToken: Model.Sensitive(AccessToken),
-  createdAt: Model.DateTimeInsert,
-  updatedAt: Model.DateTimeUpdate,
+  createdAt: Model.DateTimeFromDate.annotations({
+    jsonSchema: {
+      type: "string",
+      format: "date-time",
+    },
+  }),
+  updatedAt: Model.DateTimeFromDate.annotations({
+    jsonSchema: {
+      type: "string",
+      format: "date-time",
+    },
+  }),
 }) {}
 
 export class CurrentUser extends Context.Tag("Domain/User/CurrentUser")<
@@ -39,7 +49,6 @@ export class UserWithSensitive extends Model.Class<UserWithSensitive>(
   ...Model.fields(User),
   sessionId: SessionId,
 }) {}
-
 
 export class UserNotFound extends Schema.TaggedError<UserNotFound>()(
   "UserNotFound",

@@ -15,8 +15,8 @@ export class ReplicacheClientGroup extends Model.Class<ReplicacheClientGroup>(
   id: Model.GeneratedByApp(ReplicacheClientGroupId),
   cvrVersion: Schema.Number,
   userId: UserId,
-  createdAt: Model.Generated(DateTimeString),
-  updatedAt: DateTimeString,
+  createdAt: Model.DateTimeInsert,
+  updatedAt: Model.DateTimeUpdate,
 }) {}
 
 export const ReplicacheClientId = Schema.String.pipe(
@@ -64,7 +64,7 @@ export type ClientViewRecord = typeof ClientViewRecord.Type
 
 export class SearchResult extends Schema.Class<SearchResult>("SearchResult")({
   id: Schema.String,
-  rowversion: DateTimeString,
+  rowversion: Model.DateTimeFromDate,
 }) {}
 
 export const SearchResultsFromClientViewEntries = Schema.transform(
@@ -77,7 +77,7 @@ export const SearchResultsFromClientViewEntries = Schema.transform(
       pipe(Record.toEntries(entries), a =>
         a.map(([id, rowversion]) => ({
           id,
-          rowversion: new Date(rowversion).toISOString(),
+          rowversion: new Date(rowversion),
         })),
       ),
     encode: result => {

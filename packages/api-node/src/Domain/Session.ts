@@ -20,7 +20,12 @@ export {
 export class Session extends Model.Class<Session>("Session")({
   id: Model.GeneratedByApp(SessionId),
   user_id: UserId,
-  expires_at: Model.GeneratedByApp(DateTimeString),
+  expires_at: Model.DateTimeFromDate.annotations({
+    jsonSchema: {
+      type: "string",
+      format: "date-time",
+    },
+  }),
 }) {}
 
 export class SessionWithMetadata extends Model.Class<SessionWithMetadata>(

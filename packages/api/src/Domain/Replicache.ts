@@ -15,8 +15,8 @@ export class ReplicacheClientGroup extends Model.Class<ReplicacheClientGroup>(
   id: Model.GeneratedByApp(ReplicacheClientGroupId),
   cvrVersion: Schema.Number,
   userId: UserId,
-  createdAt: Model.Generated(DateTimeString),
-  updatedAt: DateTimeString,
+  createdAt: Model.DateTimeFromDate,
+  updatedAt: Model.DateTimeFromDate,
 }) {}
 
 export const ReplicacheClientId = Schema.String.pipe(

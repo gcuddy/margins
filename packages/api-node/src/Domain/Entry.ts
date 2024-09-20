@@ -8,8 +8,8 @@ export type EntryId = typeof EntryId.Type
 // TODO: One data field that contains all relevant data for each type, rather than a million fields
 export class Entry extends Model.Class<Entry>("Entry")({
   id: Model.GeneratedByApp(EntryId),
-  createdAt: Model.Generated(DateTimeString),
-  updatedAt: Model.GeneratedByApp(DateTimeString),
+  createdAt: Model.DateTimeFromDate,
+  updatedAt: Model.DateTimeFromDate,
 
   author: Model.FieldOption(Schema.String),
   title: Model.FieldOption(Schema.String),
@@ -45,8 +45,8 @@ export class Entry extends Model.Class<Entry>("Entry")({
   siteName: Model.FieldOption(Schema.String),
   summary: Model.FieldOption(Schema.String),
   media: Model.FieldOption(Schema.Unknown),
-  published: Model.FieldOption(DateTimeStringWithoutDefault),
-  updated: Model.FieldOption(DateTimeStringWithoutDefault),
+  published: Model.FieldOption(Model.DateTimeFromDate),
+  updated: Model.FieldOption(Model.DateTimeFromDate),
   feedId: Model.FieldOption(Schema.Number),
   original: Model.FieldOption(Schema.Unknown),
   recipe: Model.FieldOption(Schema.Unknown),

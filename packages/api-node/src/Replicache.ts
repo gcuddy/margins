@@ -1,4 +1,13 @@
-import { Chunk, Effect, HashSet, Layer, Option, pipe, Record } from "effect"
+import {
+  Chunk,
+  DateTime,
+  Effect,
+  HashSet,
+  Layer,
+  Option,
+  pipe,
+  Record,
+} from "effect"
 import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { UserId } from "./Domain/User.js"
@@ -11,9 +20,9 @@ import {
   Mutation,
   ReplicacheClient,
   ReplicacheClientGroup,
+  ReplicacheClientGroupId,
   type PushRequest,
   type PullRequest,
-  type ReplicacheClientGroupId,
   ClientViewRecord,
   SearchResultsFromClientViewEntries,
   ClientViewEntries,
@@ -26,7 +35,7 @@ import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations.js"
 import { CVRCache } from "./Replicache/ClientViewRecord.js"
 import { EntriesRepo } from "./Entries/Repo.js"
-import { Unauthorized } from "./Domain/Actor.js"
+import { policyRequire, Unauthorized } from "./Domain/Actor.js"
 import { Nanoid } from "./Nanoid.js"
 import { AnnotationsRepo } from "./Annotations/Repo.js"
 import { FavoritesRepo } from "./Favorites/Repo.js"
@@ -44,6 +53,12 @@ const make = Effect.gen(function* () {
   const bookmarksRepo = yield* BookmarksRepo
   const nanoid = yield* Nanoid
 
+  ReplicacheClientGroup.insert.make({
+    cvrVersion: 0,
+    userId: UserId.make("1"),
+    id: ReplicacheClientGroupId.make("1"),
+  })
+
   // TODO: should these be here? or in the repo?
   const getClientGroup = (
     userId: UserId,
@@ -51,18 +66,9 @@ const make = Effect.gen(function* () {
   ) =>
     pipe(
       clientGroupRepo.findById(clientGroupID),
-      // TODO: use policy can read?
       Effect.flatMap(
         Option.match({
-          // TODO:!!!
-          onNone: () =>
-            Effect.succeed(
-              ReplicacheClientGroup.insert.make({
-                cvrVersion: 0,
-                userId,
-                id: clientGroupID,
-              }),
-            ),
+          // In future, we should figure out how to use policy here
           onSome: clientGroup =>
             clientGroup.userId === userId
               ? Effect.succeed(clientGroup)
@@ -73,8 +79,45 @@ const make = Effect.gen(function* () {
                     action: "read",
                   }),
                 ),
+          onNone: () =>
+            DateTime.now.pipe(
+              Effect.map(now =>
+                ReplicacheClientGroup.make({
+                  cvrVersion: 0,
+                  userId,
+                  id: clientGroupID,
+                  createdAt: now,
+                  updatedAt: now,
+                }),
+              ),
+            ),
         }),
       ),
+      // TODO: use policy can read? But then need to get group from above...
+      // policyRequire("ClientGroup", "read"),
+      // Effect
+      //   .flatMap
+      // Option.match({
+      //   // TODO:!!!
+      //   onNone: () =>
+      //     Effect.succeed(
+      //       ReplicacheClientGroup.insert.make({
+      //         cvrVersion: 0,
+      //         userId,
+      //         id: clientGroupID,
+      //       }),
+      //     ),
+      //   onSome: clientGroup =>
+      //     clientGroup.userId === userId
+      //       ? Effect.succeed(clientGroup)
+      //       : Effect.fail(
+      //           new Unauthorized({
+      //             actorId: userId,
+      //             entity: "ReplicacheClientGroup",
+      //             action: "read",
+      //           }),
+      //         ),
+      // }),
       // Effect.orDie
       Effect.withSpan("Replicache.getClientGroup", {
         attributes: { userId, clientGroupID },
@@ -192,10 +235,22 @@ const make = Effect.gen(function* () {
         lastMutationID: nextMutationID,
       })
 
-      yield* Effect.all([
-        putClientGroup(ReplicacheClientGroup.insert.make(clientGroup)),
-        putClient(nextClient),
-      ])
+      yield *
+        Effect.all(
+          [
+            putClientGroup(
+              ReplicacheClientGroup.insert.make({
+                cvrVersion: clientGroup.cvrVersion,
+                userId: clientGroup.userId,
+                id: clientGroup.id,
+              }),
+            ),
+            putClient(nextClient),
+          ],
+          {
+            concurrency: "unbounded",
+          },
+        )
 
       // console.log time
 
@@ -426,14 +481,14 @@ const make = Effect.gen(function* () {
           Math.max(baseCVRVersion, baseClientGroup.cvrVersion) + 1
 
         // 14: Write ClientGroupRecord
-        const nextClientGroupRecord = {
-          ...baseClientGroup,
-          cvrVersion: nextCVRVersion,
-        }
-        console.log({ nextClientGroupRecord })
-        yield* putClientGroup(
-          ReplicacheClientGroup.insert.make(nextClientGroupRecord),
-        ).pipe(Effect.withLogSpan("Replicache.pull.putClientGroup"))
+        yield *
+          putClientGroup(
+            ReplicacheClientGroup.insert.make({
+              cvrVersion: nextCVRVersion,
+              userId: userId,
+              id: baseClientGroup.id,
+            }),
+          ).pipe(Effect.withLogSpan("Replicache.pull.putClientGroup"))
 
         // TODO: make this automatic
         return {
