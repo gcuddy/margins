@@ -81,10 +81,11 @@ export const useRx = <R, W>(rx: Rx.Writable<R, W>) => {
 export const useRxValue = <A>(rx: Rx.Rx<A>): Readonly<A> => {
 	const registry = getRegistry();
 	let value = $state<A>(registry.get(rx));
-	const cancel = registry.subscribe(rx, (nextValue) => {
-		value = nextValue;
-	});
-	onDestroy(cancel);
+	$effect(() =>
+		registry.subscribe(rx, (nextValue) => {
+			value = nextValue;
+		})
+	);
 	return value as Readonly<A>;
 };
 
