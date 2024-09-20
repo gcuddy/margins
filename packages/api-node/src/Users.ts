@@ -33,6 +33,7 @@ const make = Effect.gen(function* () {
   const findUserById = (id: UserId) =>
     pipe(
       userRepo.findById(id),
+      Effect.tap(user => Effect.log("user", user)),
       Effect.withSpan("Accounts.findUserById", {
         attributes: { id },
       }),
@@ -51,15 +52,20 @@ const make = Effect.gen(function* () {
   const createSession = (userId: UserId) =>
     pipe(
       nanoid.generateWithSize(25).pipe(Effect.map(sessionIdFromString)),
+      Effect.tap(sessionId => Effect.log("sessionId", { sessionId, userId })),
       Effect.flatMap(sessionId =>
         // sheesh - should rewrite with do simulation or effect.gen
         Effect.flatMap(
-          DateTime.now.pipe(
-            Effect.map(now =>
-              // 30 days from now - should be configurable
-              now.pipe(DateTime.addDuration(Duration.days(30))),
+          DateTime.now
+            .pipe(
+              Effect.map(now =>
+                // 30 days from now - should be configurable
+                now.pipe(DateTime.addDuration(Duration.days(30))),
+              ),
+            )
+            .pipe(
+              Effect.tap(expires_at => Effect.log("expires_at", expires_at)),
             ),
-          ),
           expires_at =>
             sessionRepo.insert({
               id: sessionId,
@@ -126,6 +132,7 @@ const make = Effect.gen(function* () {
                 yield* sessionRepo.updateVoid({
                   id: newSession.id,
                   expires_at: newSession.expires_at,
+                  user_id: newSession.user_id,
                 })
                 return newSession
               }),

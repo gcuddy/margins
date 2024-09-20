@@ -3,14 +3,17 @@ import { Api } from "../Api.js"
 import { Effect, Layer, Option, pipe } from "effect"
 import { Users } from "../Users.js"
 import { UserNotFound, UserWithSensitive } from "../Domain/User.js"
+import { policyUse, withSystemActor } from "../Domain/Actor.js"
+import { UsersPolicy } from "./Policy.js"
 
 export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
   Effect.gen(function* () {
     const users = yield* Users
+    const policy = yield * UsersPolicy
 
     return handlers.pipe(
       HttpApiBuilder.handle("getUser", ({ path }) => {
-        return pipe(
+        const a = pipe(
           users.findUserById(path.id),
           Effect.flatMap(
             Option.match({
@@ -18,12 +21,16 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
               onNone: () => new UserNotFound({ id: path.id }),
             }),
           ),
+          policyUse(policy.canRead(path.id)),
         )
+        return a
       }),
-      HttpApiBuilder.handle("authenticate", ({ payload }) =>
-        pipe(
+      users.httpSecurity,
+      HttpApiBuilder.handle("authenticate", ({ payload }) => {
+        const a = pipe(
           // TODO: authenticate with oauth/password
           users.findUserById(payload.userId),
+          withSystemActor,
           Effect.flatMap(
             Option.match({
               onNone: () => new UserNotFound({ id: payload.userId }),
@@ -40,8 +47,9 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
               sessionId: session.id,
             })
           }),
-        ),
-      ),
+        )
+        return a
+      }),
     )
   }),
-).pipe(Layer.provide(Users.Live))
+).pipe(Layer.provide(Users.Live), Layer.provide(UsersPolicy.Live))

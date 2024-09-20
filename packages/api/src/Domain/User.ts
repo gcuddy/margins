@@ -13,8 +13,8 @@ export class User extends Model.Class<User>("User")({
   // accountId: Model.GeneratedByApp(AccountId),
   // email: Email,
   // accessToken: Model.Sensitive(AccessToken),
-  createdAt: DateTimeString,
-  updatedAt: DateTimeString,
+  createdAt: Model.DateTimeInsert,
+  updatedAt: Model.DateTimeUpdate,
 }) {}
 
 export class CurrentUser extends Context.Tag("Domain/User/CurrentUser")<

@@ -7,9 +7,11 @@ export const DateTimeStringWithoutDefault = Schema.transform(
   {
     strict: true,
     decode: str => {
+      console.log("str", str)
       return DateTime.unsafeMake(str.replace(" ", "T") + "Z")
     },
     encode: dt => {
+      console.log("dt", dt)
       return DateTime.formatIso(dt).replace("T", " ").replace("Z", "")
     },
   },

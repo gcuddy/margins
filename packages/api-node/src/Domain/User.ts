@@ -3,7 +3,7 @@ import { Model } from "@effect/sql"
 import { Context, DateTime, Layer } from "effect"
 import { Email } from "./Email.js"
 import { DateTimeString } from "./DateTime.js"
-import { SessionId } from "./Session.js"
+import { SessionId } from "./SessionId.js"
 // import { Context } from "effect"
 
 export const UserId = Schema.String.pipe(Schema.brand("UserId"))
@@ -15,8 +15,8 @@ export class User extends Model.Class<User>("User")({
   // accountId: Model.GeneratedByApp(AccountId),
   // email: Email,
   // accessToken: Model.Sensitive(AccessToken),
-  createdAt: DateTimeString,
-  updatedAt: DateTimeString,
+  createdAt: Model.DateTimeInsert,
+  updatedAt: Model.DateTimeUpdate,
 }) {}
 
 export class CurrentUser extends Context.Tag("Domain/User/CurrentUser")<
