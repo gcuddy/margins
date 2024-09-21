@@ -19,7 +19,11 @@ export const HttpReplicacheLive = HttpApiBuilder.group(
         HttpApiBuilder.handle("pull", ({ payload }) =>
           CurrentUser.pipe(
             Effect.flatMap(user => replicache.pull(user.id, payload)),
-            Effect.andThen(pr => PullResponse.make(pr)),
+            Effect.andThen(pr =>
+              Effect.succeed(PullResponse.make(pr)).pipe(
+                Effect.withLogSpan("PullResponse.make"),
+              ),
+            ),
             Effect.tapErrorCause(Effect.logError),
             Effect.orDie,
           ),

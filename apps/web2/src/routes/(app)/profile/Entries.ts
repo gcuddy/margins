@@ -18,9 +18,7 @@ export class E extends Schema.Class<E>('E')({
 }
 
 const make = Effect.gen(function* () {
-	const repo = yield* makeReplicacheRepository(Entry.json, {
-		prefix: 'entries'
-	});
+	const repo = yield * makeReplicacheRepository(Entry);
 
 	// Desired output { watch, scan, get } etc and can build that here as effects. From Replicache. Helper to make it a store like Model.makeRepository.
 

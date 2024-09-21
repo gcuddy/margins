@@ -17,6 +17,7 @@ export const TracingLive = Layer.unwrapEffect(
       if (endpoint._tag === "None") {
         return Layer.empty
       }
+      console.log("Setting up tracing with endpoint", endpoint.value)
       return NodeSdk.layer(() => ({
         resource: {
           serviceName: dataset,

@@ -1,6 +1,10 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
-import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime.js"
+import {
+  DateTimeFromDate,
+  DateTimeString,
+  DateTimeStringWithoutDefault,
+} from "./DateTime.js"
 
 export class TextQuoteSelector extends Schema.Class<TextQuoteSelector>(
   "TextQuoteSelector",
@@ -80,8 +84,8 @@ export type AnnotationId = typeof AnnotationId.Type
 
 export class Annotation extends Model.Class<Annotation>("Annotation")({
   id: Model.GeneratedByApp(AnnotationId),
-  createdAt: Model.DateTimeFromDate,
-  updatedAt: Model.DateTimeFromDate,
+  createdAt: DateTimeFromDate,
+  updatedAt: DateTimeFromDate,
   body: Model.FieldOption(Schema.String),
   type: Model.Field(
     Schema.Literal("note", "annotation", "reply", "bookmark", "document", "qa"),
@@ -90,11 +94,11 @@ export class Annotation extends Model.Class<Annotation>("Annotation")({
   target: Model.FieldOption(Target),
   entryId: Model.FieldOption(Schema.String),
   parentId: Model.FieldOption(Schema.String),
-  deleted: Model.FieldOption(Model.DateTimeFromDate),
+  deleted: Model.FieldOption(DateTimeFromDate),
   userId: Model.Field(Schema.String),
   sortOrder: Model.Field(Schema.Number),
   bookmarkId: Model.FieldOption(Schema.String),
-  editedAt: Model.FieldOption(Model.DateTimeFromDate),
+  editedAt: Model.FieldOption(DateTimeFromDate),
   color: Model.FieldOption(Schema.String),
   contentData: Model.FieldOption(Schema.Unknown),
   title: Model.FieldOption(Schema.String),
@@ -103,15 +107,17 @@ export class Annotation extends Model.Class<Annotation>("Annotation")({
   quote: Model.FieldOption(Schema.String),
   exact: Model.FieldOption(Schema.String),
   start: Model.FieldOption(Schema.Number),
-  due_timestamp: Model.FieldOption(Model.DateTimeFromDate),
+  due_timestamp: Model.FieldOption(DateTimeFromDate),
   interval_ms: Model.FieldOption(Schema.BigInt),
-  last_reviewed_at: Model.FieldOption(Model.DateTimeFromDate),
+  last_reviewed_at: Model.FieldOption(DateTimeFromDate),
   srs: Model.Field(Schema.Boolean),
-  srs_created_at: Model.FieldOption(Model.DateTimeFromDate),
+  srs_created_at: Model.FieldOption(DateTimeFromDate),
   response: Model.FieldOption(Schema.String),
   icon: Model.FieldOption(Schema.String),
   highlight_color: Model.Field(
     Schema.Literal("Yellow", "Blue", "Green", "Pink", "Purple"),
   ),
-}) {}
+}) {
+  static readonly key = "annotations"
+}
 

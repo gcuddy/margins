@@ -1,16 +1,16 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
-import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime.js"
+import { DateTimeFromDate } from "./DateTime.js"
 
 export const FavoriteId = Schema.String.pipe(Schema.brand("FavoriteId"))
 export type FavoriteId = typeof FavoriteId.Type
 
 export class Favorite extends Model.Class<Favorite>("Favorite")({
   id: Model.GeneratedByApp(FavoriteId),
-  createdAt: Model.DateTimeFromDate,
-  updatedAt: Model.DateTimeFromDate,
+  createdAt: DateTimeFromDate,
+  updatedAt: DateTimeFromDate,
   userId: Model.Field(Schema.String),
-  deleted: Model.FieldOption(Model.DateTimeFromDate),
+  deleted: Model.FieldOption(DateTimeFromDate),
   tagId: Model.FieldOption(Schema.Number),
   smartListId: Model.FieldOption(Schema.Number),
   annotationId: Model.FieldOption(Schema.String),
@@ -22,4 +22,12 @@ export class Favorite extends Model.Class<Favorite>("Favorite")({
   parentId: Model.FieldOption(Schema.String),
   type: Model.Field(Schema.Literal("FOLDER", "FAVORITE")),
   collectionId: Model.FieldOption(Schema.Number),
-}) {}
+}) {
+  static readonly key: "favorites" = "favorites"
+}
+
+const s = <K extends string, S extends Schema.Schema.AnyNoContext & { key: K }>(
+  m: S,
+) => m.key
+
+const x = s(Favorite)

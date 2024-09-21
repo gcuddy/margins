@@ -20,18 +20,18 @@
 	// }
 
 	const entries = useRxValue(Entries.effect);
-	const subscriptionRef = useRxValue(Entries.subscriptionRef);
 	// TODO: how to make waiting work...
 	console.log('waiting', entries.waiting);
 	console.log({ entries });
-	console.log({ subscriptionRef });
 </script>
 
 {#if entries._tag === 'Success'}
 	{entries.value.data?.length} entries
 	{#each entries.value.data ?? [] as entry}
 		<p>
-			{Option.filter(entry.title, (s) => s.length > 0).pipe(Option.getOrElse(() => 'no title'))}
+			{entry.title.pipe(
+				Option.getOrElse(() => 'no title')
+			)}
 		</p>
 	{/each}
 {/if}

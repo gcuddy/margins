@@ -3,6 +3,11 @@ import { Schema } from "@effect/schema"
 import { UserId } from "./User.js"
 import { pipe, Record } from "effect"
 import { DateTimeString } from "./DateTime.js"
+import { Entry } from "./Entry.js"
+import { Bookmark } from "./Bookmark.js"
+import { Annotation } from "./Annotation.js"
+import { Favorite } from "./Favorite.js"
+import { scheduleAddDelay } from "effect/Micro"
 
 export const ReplicacheClientGroupId = Schema.String.pipe(
   Schema.brand("ReplicacheClientGroupId"),
@@ -141,16 +146,37 @@ export class PullRequest extends Schema.Class<PullRequest>("PullRequest")({
   }),
 }) {}
 
+export const createPatchOperation = <
+  K extends string,
+  M extends Model.AnyNoContext & { key: K },
+>(
+  model: M,
+) => {
+  const key = Schema.TemplateLiteral(
+    Schema.Literal(model.key),
+    Schema.Literal("/"),
+    Schema.String,
+  )
+  return Schema.Union(
+    Schema.Struct({
+      op: Schema.Literal("put"),
+      key,
+      value: model.json,
+    }),
+    Schema.Struct({
+      op: Schema.Literal("del"),
+      key,
+    }),
+  )
+}
+
+class P extends Schema.Union() {}
+
 export const PatchOperation = Schema.Union(
-  Schema.Struct({
-    op: Schema.Literal("put"),
-    key: Schema.String,
-    value: Schema.Unknown,
-  }),
-  Schema.Struct({
-    op: Schema.Literal("del"),
-    key: Schema.String,
-  }),
+  createPatchOperation(Entry),
+  createPatchOperation(Bookmark),
+  createPatchOperation(Annotation),
+  createPatchOperation(Favorite),
   Schema.Struct({
     op: Schema.Literal("clear"),
   }),

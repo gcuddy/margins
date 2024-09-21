@@ -1,6 +1,6 @@
 import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
-import { DateTimeString, DateTimeStringWithoutDefault } from "./DateTime.js"
+import { DateTimeFromDate } from "./DateTime.js"
 
 export const BookmarkId = Schema.String.pipe(Schema.brand("BookmarkId"))
 export type BookmarkId = typeof BookmarkId.Type
@@ -8,8 +8,8 @@ export type BookmarkId = typeof BookmarkId.Type
 // TODO: One data field that contains all relevant data for each type, rather than a million fields
 export class Bookmark extends Model.Class<Bookmark>("Bookmark")({
   id: Model.GeneratedByApp(BookmarkId),
-  createdAt: Model.DateTimeFromDate,
-  updatedAt: Model.DateTimeFromDate,
+  createdAt: DateTimeFromDate,
+  updatedAt: DateTimeFromDate,
   uri: Model.FieldOption(Schema.String),
   entryId: Model.FieldOption(Schema.String),
   userId: Model.Field(Schema.String),
@@ -19,14 +19,14 @@ export class Bookmark extends Model.Class<Bookmark>("Bookmark")({
   private: Model.Field(Schema.Boolean),
   interactionId: Model.FieldOption(Schema.Number),
   favoriteId: Model.FieldOption(Schema.Number),
-  deleted: Model.FieldOption(Model.DateTimeFromDate),
+  deleted: Model.FieldOption(DateTimeFromDate),
   is_read: Model.Field(Schema.Boolean),
   progress: Model.Field(Schema.Number),
   context: Model.FieldOption(Schema.Unknown),
   screenshot: Model.FieldOption(Schema.String),
   source: Model.FieldOption(Schema.String),
-  dueDate: Model.FieldOption(Model.DateTimeFromDate),
-  snoozedUntil: Model.FieldOption(Model.DateTimeFromDate),
+  dueDate: Model.FieldOption(DateTimeFromDate),
+  snoozedUntil: Model.FieldOption(DateTimeFromDate),
   originalUrl: Model.FieldOption(Schema.String),
   status: Model.FieldOption(Schema.Literal("Backlog", "Now", "Archive")),
   sort_order: Model.Field(Schema.Number),
@@ -35,6 +35,8 @@ export class Bookmark extends Model.Class<Bookmark>("Bookmark")({
   author: Model.FieldOption(Schema.String),
   pdf_url: Model.FieldOption(Schema.String),
   rating: Model.FieldOption(Schema.Number),
-  seen_at: Model.FieldOption(Model.DateTimeFromDate),
-  bookmarked_at: Model.FieldOption(Model.DateTimeFromDate),
-}) {}
+  seen_at: Model.FieldOption(DateTimeFromDate),
+  bookmarked_at: Model.FieldOption(DateTimeFromDate),
+}) {
+  static readonly key = "bookmarks"
+}

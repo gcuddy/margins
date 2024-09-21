@@ -30,10 +30,10 @@ import { reconcile, unwrap } from 'solid-js/store';
 // 	never,
 // 	never
 // >
-export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
+export const makeReplicacheRepository = <S extends Model.AnyNoContext & { key: string }>(
 	model: S,
-	options: {
-		prefix: string;
+	options?: {
+		prefix?: string;
 		indexName?: string;
 	}
 ) =>
@@ -41,7 +41,7 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 		const replicache = yield * Replicache;
 		// const array = Schema.Array(model);
 		// const decode = Schema.decodeUnknownSync(array);
-		const decodeItem = Schema.encodeUnknownSync(model);
+		const decodeItem = Schema.decodeUnknownEither(model);
 
 		// TODO: make this use Effect.Stream
 		// TODO: maybe refine should be called on each? also maybe schema.array instead of call on eacH?
@@ -49,90 +49,95 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 			Effect.gen(function* () {
 				let data = $state<S['Type'][]>([]);
 				let ready = $state(false);
-
+				yield * Effect.log(`Scanning ${model.key}`);
 				// hash maps?
 				const keyToIndex = new Map<string, number>();
 				const indexToKey = new Map<number, string>();
 
-				$effect(() => {
-					return replicache.experimentalWatch(
-						(diffs) => {
-							// fast initial diff if we haven't seen diffs
-							if (!ready) {
-								const values: S['Type'][] = [];
-								for (const diff of diffs) {
-									if (diff.op === 'add') {
-										// const value = decode(diff.newValue);
-										// TODO: properly decode
-										const value = Either.right(diff.newValue);
-										if (Either.isRight(value)) {
-											console.log('decoding', value);
-											// const decoded = decodeItem(value.right);
-											// console.log({ decoded });
-											const index = values.push(value.right);
-											keyToIndex.set(diff.key, index - 1);
-											indexToKey.set(index - 1, diff.key);
-										} else {
-											// TODO: send to open telemetry / sentry
-											console.error(value);
-										}
-									}
-								}
-								ready = true;
-								data = values;
-							} else {
-								for (const diff of diffs) {
-									if (diff.op === 'add') {
-										// const value = decode(diff.newValue);
-										// TODO: properly decode
-										const value = Either.right(diff.newValue);
-										Either.match(value, {
-											onRight: (value) => {
-												const index = data.push(value);
-												keyToIndex.set(diff.key, index - 1);
-												indexToKey.set(index - 1, diff.key);
-											},
-											onLeft: (error) => {
-												console.error('parse error', error);
-												// TODO: handle error
+				yield *
+					Effect.sync(() => {
+						$effect(() =>
+							replicache.experimentalWatch(
+								(diffs) => {
+									// fast initial diff if we haven't seen diffs
+									if (!ready) {
+										const values: S['Type'][] = [];
+										for (const diff of diffs) {
+											if (diff.op === 'add') {
+												// const value = decode(diff.newValue);
+												// TODO: properly decode
+												const value = decodeItem(diff.newValue);
+												if (Either.isRight(value)) {
+													const index = values.push(value.right);
+													keyToIndex.set(diff.key, index - 1);
+													indexToKey.set(index - 1, diff.key);
+												} else {
+													// TODO: send to open telemetry / sentry
+													console.error(value);
+												}
 											}
-										});
-									} else if (diff.op === 'change') {
-										const index = keyToIndex.get(diff.key);
-										// const value = decode(diff.newValue);
-										// TODO: properly decode
-										const value = Either.right(diff.newValue);
-										if (Either.isRight(value)) {
-											// data[keyToIndex.get(diff.key)!] = value.right;
-											// TODO: don't use solidjs?
-											data[index!] = reconcile(value.right)(unwrap(data[index!]));
-										} else {
-											console.error('parse error', value);
 										}
-									} else if (diff.op === 'del') {
-										const toRemove = keyToIndex.get(diff.key)!;
-										const last = data.at(-1);
-										const lastKey = indexToKey.get(data.length - 1)!;
+										ready = true;
+										console.log('ready', ready);
+										console.log('setting data', values);
+										data = values;
+									} else {
+										for (const diff of diffs) {
+											if (diff.op === 'add') {
+												// const value = decode(diff.newValue);
+												// TODO: properly decode
+												const value = decodeItem(diff.newValue);
+												Either.match(value, {
+													onRight: (value) => {
+														const index = data.push(value);
+														keyToIndex.set(diff.key, index - 1);
+														indexToKey.set(index - 1, diff.key);
+													},
+													onLeft: (error) => {
+														console.error('parse error', error);
+														// TODO: handle error
+													}
+												});
+											} else if (diff.op === 'change') {
+												const index = keyToIndex.get(diff.key);
+												// const value = decode(diff.newValue);
+												// TODO: properly decode
+												const value = decodeItem(diff.newValue);
+												if (Either.isRight(value)) {
+													// data[keyToIndex.get(diff.key)!] = value.right;
+													// TODO: don't use solidjs?
+													data[index!] = reconcile(value.right)(unwrap(data[index!]));
+												} else {
+													console.error('parse error', value);
+												}
+											} else if (diff.op === 'del') {
+												const toRemove = keyToIndex.get(diff.key)!;
+												const last = data.at(-1);
+												const lastKey = indexToKey.get(data.length - 1)!;
 
-										data[toRemove] = last;
-										keyToIndex.delete(diff.key);
-										indexToKey.delete(toRemove);
+												data[toRemove] = last;
+												keyToIndex.delete(diff.key);
+												indexToKey.delete(toRemove);
 
-										keyToIndex.set(lastKey, toRemove);
-										indexToKey.set(toRemove, lastKey);
-										indexToKey.delete(data.length - 1);
+												keyToIndex.set(lastKey, toRemove);
+												indexToKey.set(toRemove, lastKey);
+												indexToKey.delete(data.length - 1);
 
-										data.pop();
+												data.pop();
+											}
+										}
 									}
+								},
+								{
+									prefix: model.key,
+									indexName: options?.indexName,
+									initialValuesInFirstDiff: true
 								}
-							}
-						},
-						{
-							prefix: options.prefix,
-							initialValuesInFirstDiff: true
-						}
-					);
-				});
+							)
+						);
+					});
+
+				yield * Effect.log(`Scanning ${model.key} complete`);
 				return {
 					get data() {
 						return refine ? refine(data) : data;
@@ -140,16 +145,24 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 					get ready() {
 						return ready;
 					}
-				} as
-					| {
-							data: undefined;
-							ready: false;
-					  }
-					| {
-							data: S['Type'][];
-							ready: true;
-					  };
-			}).pipe(Effect.withLogSpan('replicache-scan'), Effect.catchAllCause(Effect.logError));
+				};
+				// return {
+				// 	get data() {
+				// 		return refine ? refine(data) : data;
+				// 	},
+				// 	get ready() {
+				// 		return ready;
+				// 	}
+				// } as
+				// 	| {
+				// 			data: undefined;
+				// 			ready: false;
+				// 	  }
+				// 	| {
+				// 			data: S['Type'][];
+				// 			ready: true;
+				// 	  };
+			}).pipe(Effect.withLogSpan('replicache-scan'));
 
 		const streamSubscriptionRef = () =>
 			Effect.gen(function* () {
