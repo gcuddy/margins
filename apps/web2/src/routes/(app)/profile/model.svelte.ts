@@ -1,6 +1,6 @@
 /* eslint-disable require-yield */
 import { Replicache } from './Replicache';
-import { Effect, Either } from 'effect';
+import { Chunk, Effect, Either, Stream, SubscriptionRef } from 'effect';
 import { Schema } from '@effect/schema';
 import { Model } from '@effect/sql';
 import { reconcile, unwrap } from 'solid-js/store';
@@ -38,7 +38,10 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 	}
 ) =>
 	Effect.gen(function* () {
-		const replicache = yield* Replicache;
+		const replicache = yield * Replicache;
+		// const array = Schema.Array(model);
+		// const decode = Schema.decodeUnknownSync(array);
+		const decodeItem = Schema.encodeUnknownSync(model);
 
 		// TODO: make this use Effect.Stream
 		// TODO: maybe refine should be called on each? also maybe schema.array instead of call on eacH?
@@ -75,6 +78,9 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 										// TODO: properly decode
 										const value = Either.right(diff.newValue);
 										if (Either.isRight(value)) {
+											console.log('decoding', value);
+											const decoded = decodeItem(value.right);
+											console.log({ decoded });
 											const index = values.push(value.right);
 											keyToIndex.set(diff.key, index - 1);
 											indexToKey.set(index - 1, diff.key);
@@ -193,10 +199,42 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 				// );
 
 				// return data;
-			});
+			}).pipe(Effect.withLogSpan('replicache-scan'), Effect.catchAllCause(Effect.logError));
 
+		const streamSubscriptionRef = () =>
+			Effect.gen(function* () {
+				const ref = yield* SubscriptionRef.make<S['Type'][]>([]);
+
+				Stream.runDrain;
+
+				$effect(() => {
+					let unsubscribe: (() => void) | undefined = undefined;
+
+					unsubscribe = replicache.experimentalWatch((diffs) => {
+						SubscriptionRef.update(ref, (data) => {
+							for (const diff of diffs) {
+								if (diff.op === 'add') {
+									data.push(diff.newValue);
+								}
+							}
+							return data;
+						});
+					});
+
+					// Stream.async((emit) => {
+					// 	unsubscribe = replicache.experimentalWatch((diffs) => {
+					// 		emit(Effect.succeed(Chunk.of(diffs)));
+					// 	});
+					// });
+
+					return unsubscribe;
+				});
+
+				return ref;
+			});
 		return {
-			scan
+			scan,
+			streamSubscriptionRef
 			// stream
 		} as const;
 	});

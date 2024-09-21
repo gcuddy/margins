@@ -3,6 +3,7 @@
 	import { Replicache } from 'replicache';
 	import { useRx, useRxValue } from './rx.svelte';
 	import * as Entries from './Entries';
+	import { Option } from 'effect';
 	let userId = 'n0za7qlnp1rca3s';
 	// let rep = new Replicache({
 	// 	name: userId,
@@ -19,12 +20,18 @@
 	// }
 
 	const entries = useRxValue(Entries.effect);
+	const subscriptionRef = useRxValue(Entries.subscriptionRef);
 	// TODO: how to make waiting work...
-	console.log('waiting', entries.waiting)
+	console.log('waiting', entries.waiting);
 	console.log({ entries });
+	console.log({ subscriptionRef });
 </script>
 
 {#if entries._tag === 'Success'}
-	{JSON.stringify(entries)}
-	{entries.value}
+	{entries.value.data?.length} entries
+	{#each entries.value.data ?? [] as entry}
+		<p>
+			{Option.filter(entry.title, (s) => s.length > 0).pipe(Option.getOrElse(() => 'no title'))}
+		</p>
+	{/each}
 {/if}

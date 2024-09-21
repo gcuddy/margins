@@ -1,9 +1,15 @@
 import * as Schema from "@effect/schema/Schema"
+import { Model } from "@effect/sql"
 import * as DateTime from "effect/DateTime"
 
 export const DateTimeStringWithoutDefault = Schema.transform(
   Schema.String,
-  Schema.DateTimeUtcFromSelf,
+  Schema.Union(
+    Schema.DateTimeUtcFromSelf,
+    Schema.DateTimeUtc,
+    Schema.DateFromString,
+    Model.DateTimeFromDate,
+  ),
   {
     strict: true,
     decode: str => {
@@ -12,7 +18,10 @@ export const DateTimeStringWithoutDefault = Schema.transform(
     },
     encode: dt => {
       console.log("dt", dt)
-      return DateTime.formatIso(dt).replace("T", " ").replace("Z", "")
+      if (DateTime.isDateTime(dt)) {
+        return DateTime.formatIso(dt).replace("T", " ").replace("Z", "")
+      }
+      return new Date(dt).toISOString().replace("T", " ").replace("Z", "")
     },
   },
 )

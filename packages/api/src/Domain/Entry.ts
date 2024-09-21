@@ -10,7 +10,6 @@ export class Entry extends Model.Class<Entry>("Entry")({
   id: Model.GeneratedByApp(EntryId),
   createdAt: Model.Generated(DateTimeString),
   updatedAt: Model.GeneratedByApp(DateTimeString),
-
   author: Model.FieldOption(Schema.String),
   title: Model.FieldOption(Schema.String),
   type: Model.Field(

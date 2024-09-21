@@ -34,9 +34,8 @@ export const registryKey = Registry.TypeId;
  * @since 1.0.0
  * @category registry
  */
-export const defaultRegistry: Registry.Registry = globalValue(
-	'@effect-rx/rx-vue/defaultRegistry',
-	() => Registry.make()
+export const defaultRegistry: Registry.Registry = globalValue('@effect-rx/rx-svelte/defaultRegistry', () =>
+	Registry.make()
 );
 
 /**
