@@ -20,7 +20,7 @@
 
 	const entries = useRxValue(Entries.effect);
 	// TODO: how to make waiting work...
-	entries.waiting;
+	console.log('waiting', entries.waiting)
 	console.log({ entries });
 </script>
 

@@ -30,7 +30,7 @@ import { reconcile, unwrap } from 'solid-js/store';
 // 	never,
 // 	never
 // >
-export const makeReplicacheRepository = <S extends Model.Any>(
+export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 	model: S,
 	options: {
 		prefix: string;
@@ -38,7 +38,7 @@ export const makeReplicacheRepository = <S extends Model.Any>(
 	}
 ) =>
 	Effect.gen(function* () {
-		const replicache = yield * Replicache;
+		const replicache = yield* Replicache;
 
 		// TODO: make this use Effect.Stream
 		// TODO: maybe refine should be called on each? also maybe schema.array instead of call on eacH?
@@ -46,7 +46,7 @@ export const makeReplicacheRepository = <S extends Model.Any>(
 			Effect.gen(function* () {
 				// let data = $state<T[]>([]);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const decode = Schema.decodeUnknownEither(model as any);
+				// const decode = Schema.decodeUnknownEither(model as any);
 				// TODO: how to derive prefix type from Model maybe?
 				// TODO: use experimentalWatch for better performance
 				// see my existing code
@@ -75,7 +75,7 @@ export const makeReplicacheRepository = <S extends Model.Any>(
 										// TODO: properly decode
 										const value = Either.right(diff.newValue);
 										if (Either.isRight(value)) {
-											const index = values.push(value);
+											const index = values.push(value.right);
 											keyToIndex.set(diff.key, index - 1);
 											indexToKey.set(index - 1, diff.key);
 										} else {
@@ -111,7 +111,7 @@ export const makeReplicacheRepository = <S extends Model.Any>(
 										if (Either.isRight(value)) {
 											// data[keyToIndex.get(diff.key)!] = value.right;
 											// TODO: don't use solidjs?
-											data[index!] = reconcile(value)(unwrap(data[index!]));
+											data[index!] = reconcile(value.right)(unwrap(data[index!]));
 										} else {
 											console.error('parse error', value);
 										}

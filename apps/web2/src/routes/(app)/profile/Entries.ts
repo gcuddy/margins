@@ -6,10 +6,21 @@ import { Entry } from '../../../../../../packages/api-node/src/Domain/Entry';
 import { Rx } from '@effect-rx/rx';
 import { Replicache } from './Replicache';
 import * as R from 'replicache';
+import { Schema } from '@effect/schema';
+
+export class E extends Schema.Class<E>('E')({
+	id: Schema.Number,
+	title: Schema.String,
+	completed: Schema.Boolean
+}) {
+	static readonly array = Schema.Array(E);
+	static readonly chunk = Schema.Chunk(E);
+}
+
 const make = Effect.gen(function* () {
 	const repo =
 		yield *
-		makeReplicacheRepository(Entry, {
+		makeReplicacheRepository(E, {
 			prefix: 'entries'
 		});
 
