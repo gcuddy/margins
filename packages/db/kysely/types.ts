@@ -299,6 +299,8 @@ export type Entry = {
   estimatedReadingTime: number | null
   book_genre: BookGenre | null
   public_id: string | null
+  user_id: string | null
+  parent_id: string | null
 }
 export type EntryData = {
   id: Generated<number>

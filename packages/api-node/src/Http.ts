@@ -3,22 +3,19 @@ import {
   HttpApiSwagger,
   HttpMiddleware,
   HttpServer,
-  Etag,
 } from "@effect/platform"
-import {
-  NodeContext,
-  NodeHttpPlatform,
-  NodeHttpServer,
-} from "@effect/platform-node"
+import { NodeHttpServer } from "@effect/platform-node"
 import { createServer } from "node:http"
-import { Effect, Layer, Logger, LogLevel } from "effect"
+import { Layer } from "effect"
 import { Api } from "./Api.js"
 import { HttpUsersLive } from "./Users/Http.js"
 import { HttpReplicacheLive } from "./Replicache/Http.js"
+import { HttpEntriesLive } from "./Entries/Http.js"
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide(HttpUsersLive),
   Layer.provide(HttpReplicacheLive),
+  Layer.provide(HttpEntriesLive),
 )
 HttpApiBuilder.httpApp
 export const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(

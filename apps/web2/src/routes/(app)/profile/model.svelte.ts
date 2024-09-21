@@ -47,18 +47,6 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 		// TODO: maybe refine should be called on each? also maybe schema.array instead of call on eacH?
 		const scan = (refine?: (values: S['Type'][]) => S['Type'][]) =>
 			Effect.gen(function* () {
-				// let data = $state<T[]>([]);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				// const decode = Schema.decodeUnknownEither(model as any);
-				// TODO: how to derive prefix type from Model maybe?
-				// TODO: use experimentalWatch for better performance
-				// see my existing code
-				// replicache.subscribe()
-				// Maybe there's a way to do this too...
-				// const actions = $state(Data.taggedEnum<DataState<S['Type'][], ParseError>>());
-				// const data = $state<S['Type'][]>([]);
-				// for now we'll adapt what we had
-
 				let data = $state<S['Type'][]>([]);
 				let ready = $state(false);
 
@@ -79,8 +67,8 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 										const value = Either.right(diff.newValue);
 										if (Either.isRight(value)) {
 											console.log('decoding', value);
-											const decoded = decodeItem(value.right);
-											console.log({ decoded });
+											// const decoded = decodeItem(value.right);
+											// console.log({ decoded });
 											const index = values.push(value.right);
 											keyToIndex.set(diff.key, index - 1);
 											indexToKey.set(index - 1, diff.key);
@@ -138,8 +126,6 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 									}
 								}
 							}
-							// const chunk = Chunk.fromIterable(diffs);
-							// return Effect.succeed(chunk);
 						},
 						{
 							prefix: options.prefix,
@@ -163,49 +149,13 @@ export const makeReplicacheRepository = <S extends Schema.Schema.AnyNoContext>(
 							data: S['Type'][];
 							ready: true;
 					  };
-				// TODO: there's definitely a way to do this with RX / Streams / SubscriptionRefs fun.
-				// const s = Stream.async((emit) => {
-				// 	replicache.experimentalWatch(
-				// 		(diffs) => {
-				// 			const chunk = Chunk.fromIterable(diffs);
-				// 			return emit(Effect.succeed(chunk));
-				// 		},
-				// 		{
-				// 			prefix: options.prefix,
-				// 			initialValuesInFirstDiff: true
-				// 		}
-				// 		// {
-				// 		// 	indexName: 'test'
-				// 		// }
-				// 	);
-				// });
-				// return s;
-
-				// const a = replicache.subscribe(
-				// 	async (tx) => {
-				// 		const x = Stream.fromAsyncIterable(
-				// 			tx.scan(),
-				// 			(e) => new ReplicacheScanError({ message: String(e) })
-				// 		);
-				//         return x;
-				// 		const entries = await tx.scan().entries().toArray();
-				// 		console.log({ entries });
-				// 		return entries;
-				// 	},
-				// 	(items) => {
-				// 		console.log({ items });
-				//         return items
-				// 	}
-				// );
-
-				// return data;
 			}).pipe(Effect.withLogSpan('replicache-scan'), Effect.catchAllCause(Effect.logError));
 
 		const streamSubscriptionRef = () =>
 			Effect.gen(function* () {
 				const ref = yield* SubscriptionRef.make<S['Type'][]>([]);
 
-				Stream.runDrain;
+				// Stream.runDrain;
 
 				$effect(() => {
 					let unsubscribe: (() => void) | undefined = undefined;

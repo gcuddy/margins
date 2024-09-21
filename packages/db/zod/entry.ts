@@ -70,4 +70,6 @@ export const EntryModel = z.object({
   estimatedReadingTime: z.number().int().nullish(),
   book_genre: z.nativeEnum(BookGenre).nullish(),
   publicId: z.string().nullish(),
+  user_id: z.string().nullish(),
+  parent_id: z.string().nullish(),
 })

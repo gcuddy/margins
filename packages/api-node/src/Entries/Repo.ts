@@ -1,5 +1,5 @@
 import { Model, SqlClient, SqlResolver, SqlSchema } from "@effect/sql"
-import { Context, Effect, Layer, Logger, LogLevel } from "effect"
+import { Cache, Context, Effect, Layer, Logger, LogLevel } from "effect"
 import { Entry, EntryId } from "../Domain/Entry.js"
 import { SqlLive } from "../Sql.js"
 import { UserId } from "../Domain/User.js"
@@ -14,7 +14,14 @@ export const make = Effect.gen(function* () {
     spanPrefix: "EntriesRepo",
     idColumn: "id",
   })
-  //   TODO: better name
+
+  const findById = yield* Cache.make({
+    lookup: repo.findById,
+    capacity: 1024,
+    timeToLive: 30_000,
+  })
+
+  //   TODO: better name and move to src/Entries
   const searchForUserId = SqlSchema.findAll({
     Request: UserId,
     // Result: Entry.pipe(Schema.pick("id", "updatedAt")),
@@ -49,6 +56,9 @@ export const make = Effect.gen(function* () {
 
   return {
     ...repo,
+    findById(id: EntryId) {
+      return findById.get(id)
+    },
     searchForUserId,
     getForIds,
     getForUnknownIds,

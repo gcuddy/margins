@@ -452,6 +452,8 @@ model Entry {
     EntryHistory         EntryHistory[]
     Unread               Unread[]
     UserEntry            UserEntry[]
+    user_id              String? // potential user id if a user owns this entry
+    parent_id            String? // potential parent id if this is a child entry 
 
     @@unique([uri, id])
     @@unique([guid, feedId], map: "guid_feedId_unique")
@@ -459,6 +461,8 @@ model Entry {
     @@index([published, id, createdAt])
     @@index([published])
     @@index([publicId])
+    @@index([user_id])
+    @@index([parent_id])
     @@index([owned_by_id])
     @@index([title(length: 255)])
     @@index([published(sort: Desc), id])
