@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^3.1.2
-        version: 3.1.2(svelte@5.0.0-next.257)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))
+        version: 3.1.2(svelte@5.0.0-next.257)(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0))
       eslint:
         specifier: ^9.10.0
         version: 9.11.0(jiti@1.21.6)
@@ -996,6 +996,12 @@ importers:
       '@effect/experimental':
         specifier: ^0.26.6
         version: 0.26.6(@effect/platform-node@0.60.5(@effect/platform@0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3))(effect@3.8.3))(@effect/platform@0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3))(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3)(ws@8.18.0)
+      '@effect/platform':
+        specifier: ^0.65.5
+        version: 0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3)
+      '@effect/platform-browser':
+        specifier: ^0.44.5
+        version: 0.44.5(@effect/platform@0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3))(effect@3.8.3)
       '@effect/schema':
         specifier: ^0.73.4
         version: 0.73.4(effect@3.8.3)
@@ -1008,6 +1014,9 @@ importers:
       effect:
         specifier: ^3.8.3
         version: 3.8.3
+      flexsearch:
+        specifier: ^0.7.43
+        version: 0.7.43
       replicache:
         specifier: ^15.0.1
         version: 15.0.1
@@ -2192,6 +2201,12 @@ packages:
         optional: true
       '@opentelemetry/sdk-trace-web':
         optional: true
+
+  '@effect/platform-browser@0.44.5':
+    resolution: {integrity: sha512-zt5armDm/SMdGdsu82MMpywVEXoRfiNchLJlMysnfRmzX2a3XsIYP4cVgPWyt1DBvl2ulU/WxumZ4frPXyhWQQ==}
+    peerDependencies:
+      '@effect/platform': ^0.65.5
+      effect: ^3.8.3
 
   '@effect/platform-bun@0.45.5':
     resolution: {integrity: sha512-l86n+ry9WAvSPr5dAcrLnKGd0zhs8Jvgd3NGsHOfTfPbs+a3fh4VCR78O7dD2k64izc4O6tTOB9P3UlrDregxA==}
@@ -6619,6 +6634,9 @@ packages:
   flatted@3.3.1:
     resolution: {integrity: sha512-X8cqMLLie7KsNUDSdzeN8FYK9rEt4Dt67OsG/DNGnYTSDBG4uFAJFBnUeiV+zCVAvwFy56IjM9sH51jVaEhNxw==}
 
+  flexsearch@0.7.43:
+    resolution: {integrity: sha512-c5o/+Um8aqCSOXGcZoqZOm+NqtVwNsvVpWv6lfmSclU954O3wvQKxxK8zj74fPaSJbXpSLTs4PRhh+wnoCXnKg==}
+
   focus-trap@7.6.0:
     resolution: {integrity: sha512-1td0l3pMkWJLFipobUcGaf+5DTY4PLDDrcqoSaKP8ediO/CoWCCYk/fT/Y2A4e6TNB+Sh6clRJCjOPPnKoNHnQ==}
 
@@ -10789,6 +10807,12 @@ snapshots:
       '@opentelemetry/sdk-trace-node': 1.26.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-web': 1.26.0(@opentelemetry/api@1.9.0)
 
+  '@effect/platform-browser@0.44.5(@effect/platform@0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3))(effect@3.8.3)':
+    dependencies:
+      '@effect/platform': 0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3)
+      effect: 3.8.3
+      multipasta: 0.2.5
+
   '@effect/platform-bun@0.45.5(@effect/platform@0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3))(effect@3.8.3)':
     dependencies:
       '@effect/platform': 0.65.5(@effect/schema@0.73.4(effect@3.8.3))(effect@3.8.3)
@@ -13147,12 +13171,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte-inspector@2.1.0(@sveltejs/vite-plugin-svelte@3.1.2(svelte@5.0.0-next.257)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(svelte@5.0.0-next.257)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))':
+  '@sveltejs/vite-plugin-svelte-inspector@2.1.0(@sveltejs/vite-plugin-svelte@3.1.2(svelte@5.0.0-next.257)(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0)))(svelte@5.0.0-next.257)(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 3.1.2(svelte@5.0.0-next.257)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))
+      '@sveltejs/vite-plugin-svelte': 3.1.2(svelte@5.0.0-next.257)(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0))
       debug: 4.3.7
       svelte: 5.0.0-next.257
-      vite: 5.4.6(@types/node@22.5.5)(terser@5.33.0)
+      vite: 5.4.7(@types/node@22.5.5)(terser@5.33.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -13211,17 +13235,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte@3.1.2(svelte@5.0.0-next.257)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))':
+  '@sveltejs/vite-plugin-svelte@3.1.2(svelte@5.0.0-next.257)(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 2.1.0(@sveltejs/vite-plugin-svelte@3.1.2(svelte@5.0.0-next.257)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)))(svelte@5.0.0-next.257)(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))
+      '@sveltejs/vite-plugin-svelte-inspector': 2.1.0(@sveltejs/vite-plugin-svelte@3.1.2(svelte@5.0.0-next.257)(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0)))(svelte@5.0.0-next.257)(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0))
       debug: 4.3.7
       deepmerge: 4.3.1
       kleur: 4.1.5
       magic-string: 0.30.11
       svelte: 5.0.0-next.257
       svelte-hmr: 0.16.0(svelte@5.0.0-next.257)
-      vite: 5.4.6(@types/node@22.5.5)(terser@5.33.0)
-      vitefu: 0.2.5(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0))
+      vite: 5.4.7(@types/node@22.5.5)(terser@5.33.0)
+      vitefu: 0.2.5(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -15957,6 +15981,8 @@ snapshots:
       keyv: 4.5.4
 
   flatted@3.3.1: {}
+
+  flexsearch@0.7.43: {}
 
   focus-trap@7.6.0:
     dependencies:
@@ -19444,10 +19470,6 @@ snapshots:
       '@types/node': 22.5.5
       fsevents: 2.3.3
       terser: 5.33.0
-
-  vitefu@0.2.5(vite@5.4.6(@types/node@22.5.5)(terser@5.33.0)):
-    optionalDependencies:
-      vite: 5.4.6(@types/node@22.5.5)(terser@5.33.0)
 
   vitefu@0.2.5(vite@5.4.7(@types/node@22.5.5)(terser@5.33.0)):
     optionalDependencies:

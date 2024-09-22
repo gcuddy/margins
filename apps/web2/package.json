@@ -37,10 +37,13 @@
 	"dependencies": {
 		"@effect-rx/rx": "^0.34.0",
 		"@effect/experimental": "^0.26.6",
+		"@effect/platform": "^0.65.5",
+		"@effect/platform-browser": "^0.44.5",
 		"@effect/schema": "^0.73.4",
 		"@effect/sql": "^0.12.6",
 		"@margins/api2": "workspace:^",
 		"effect": "^3.8.3",
+		"flexsearch": "^0.7.43",
 		"replicache": "^15.0.1",
 		"solid-js": "^1.8.22"
 	}

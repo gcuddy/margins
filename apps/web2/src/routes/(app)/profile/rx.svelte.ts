@@ -34,8 +34,9 @@ export const registryKey = Registry.TypeId;
  * @since 1.0.0
  * @category registry
  */
-export const defaultRegistry: Registry.Registry = globalValue('@effect-rx/rx-svelte/defaultRegistry', () =>
-	Registry.make()
+export const defaultRegistry: Registry.Registry = globalValue(
+	'@effect-rx/rx-svelte/defaultRegistry',
+	() => Registry.make()
 );
 
 /**
@@ -62,15 +63,23 @@ export const useRx = <R, W>(rx: Rx.Writable<R, W>) => {
 	const registry = getRegistry();
 	let value = $state<R>(registry.get(rx));
 
-	const cancel = registry.subscribe(rx, (nextValue) => {
-		value = nextValue;
-	});
-
-	onDestroy(cancel);
+	$effect(() =>
+		registry.subscribe(rx, (nextValue) => {
+			console.log('setting state to', nextValue);
+			value = nextValue;
+		})
+	);
 
 	const set = (_: W) => registry.set(rx, _);
 
-	return [value, set] as const;
+	return {
+		get value() {
+			return value;
+		},
+		get set() {
+			return set;
+		}
+	};
 };
 
 /**
@@ -94,8 +103,7 @@ export const useRxValue = <A>(rx: Rx.Rx<A>): Readonly<A> => {
  */
 export const useRxSet = <R, W>(rx: Rx.Writable<R, W>): ((_: W) => void) => {
 	const registry = getRegistry();
-	const cancel = registry.mount(rx);
-	onDestroy(cancel);
+	$effect(() => registry.mount(rx));
 	return (_) => registry.set(rx, _);
 };
 
