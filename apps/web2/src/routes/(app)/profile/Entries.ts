@@ -50,6 +50,9 @@ export const entriesRuntime = Rx.runtime(Entries.Live);
 // entriesRuntime.rx()
 
 export const effect = entriesRuntime.rx(Entries.scan());
+
+// TODO:  EntryInd
+export const get = (id: string) => entriesRuntime.rx(Entries.get(id));
 export const subscriptionRef = entriesRuntime
 	.subscriptionRef(Entries.streamSubscriptionRef())
 	.pipe(Rx.keepAlive);

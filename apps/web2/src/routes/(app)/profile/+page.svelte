@@ -28,10 +28,10 @@
 {#if entries._tag === 'Success'}
 	{entries.value.data?.length} entries
 	{#each entries.value.data ?? [] as entry}
-		<p>
+		<a href={`/${entry.id}`}>
 			{entry.title.pipe(
 				Option.getOrElse(() => 'no title')
 			)}
-		</p>
+		</a>
 	{/each}
 {/if}
