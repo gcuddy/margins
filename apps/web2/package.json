@@ -39,7 +39,7 @@
 		"@effect/experimental": "^0.26.6",
 		"@effect/schema": "^0.73.4",
 		"@effect/sql": "^0.12.6",
-		"@margins/api2": "workspace:*",
+		"@margins/api2": "workspace:^",
 		"effect": "^3.8.3",
 		"replicache": "^15.0.1",
 		"solid-js": "^1.8.22"

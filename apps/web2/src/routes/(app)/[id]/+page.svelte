@@ -1,16 +1,18 @@
 <script lang="ts">
+	import { Option } from 'effect';
 	import * as Entries from '../profile/Entries';
 	import { useRxValue } from '../profile/rx.svelte';
+	import Entry from './Entry.svelte';
+	import NoEntryFound from './NoEntryFound.svelte';
 
 	let { data } = $props();
-
-
-    
-    $effect(() => {
-        console.log('id', data.id)
-    })
-
 	const entry = useRxValue(Entries.get(data.id));
-	console.log({ entry });
 </script>
-{JSON.stringify(entry)}
+
+{#if entry._tag === 'Success' && entry.value.ready}
+	{#if Option.isSome(entry.value.data)}
+		<Entry entry={entry.value.data.value} />
+	{:else}
+		<NoEntryFound />
+	{/if}
+{/if}

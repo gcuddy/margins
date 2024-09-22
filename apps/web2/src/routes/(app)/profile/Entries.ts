@@ -2,11 +2,12 @@ import { Effect, Layer } from 'effect';
 import { makeReplicacheRepository } from './model.svelte';
 // import { Entries as E } from "@margins/api2"
 // TODO: actually use pnpm workspace / proper export lol
-import { Entry } from '../../../../../../packages/api-node/src/Domain/Entry';
 import { Rx } from '@effect-rx/rx';
 import { Replicache } from './Replicache';
 import * as R from 'replicache';
 import { Schema } from '@effect/schema';
+
+import { Entry } from '@margins/api2/src/Domain/Entry';
 
 export class E extends Schema.Class<E>('E')({
 	id: Schema.Number,
