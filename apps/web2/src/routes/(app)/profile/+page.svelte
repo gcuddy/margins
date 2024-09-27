@@ -25,6 +25,8 @@
 	console.log({ entries });
 </script>
 
+<a href="/search">search</a>
+
 {#if entries._tag === 'Success'}
 	{entries.value.data?.length} entries
 	{#each entries.value.data ?? [] as entry}
