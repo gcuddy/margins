@@ -2,6 +2,7 @@
 	import { getIdRx } from '$lib/worker/client';
 	import type { Entry } from '@margins/api2/src/Domain/Entry';
 	import { useRx, useRxSet, useRxValue } from '../profile/rx.svelte';
+	import * as Entries from '../profile/Entries';
 
 	let search = $state('');
 
@@ -11,17 +12,32 @@
 	//     }
 	// })
 	const getSearch = useRxSet(getIdRx);
-    let value: readonly string[] = $state([]);
+	const entries = useRxValue(Entries.effect);
+	console.log({ entries });
+	let value: readonly string[] = $state([]);
+	const res = useRxValue(getIdRx);
+	const results = $derived.by(() => {
+		getSearch;
+		res;
+		console.log("deriving")
+		if (res._tag === 'Success' && entries._tag === 'Success' && entries.value.ready) {
+			// lol there's gotta be a better way...
+			return res.value
+				.map((id) => entries.value.data.find((entry) => entry.id === id))
+				.filter(Boolean);
+		}
+		return [];
+	});
 	$effect(() => {
-        console.log('search', search)
-        // For some reason, have to do this. should figure it out...
-        const res = useRxValue(getIdRx)
-        if (res._tag === 'Success') {
-            value = res.value
-        }
-        console.log('inside component', useRxValue(getIdRx))
-        // TODO NEXT: use replicache to get entries
-    })
+		console.log('search', search);
+		// For some reason, have to do this. should figure it out...
+		const res = useRxValue(getIdRx);
+		if (res._tag === 'Success') {
+			value = res.value;
+		}
+		console.log('inside component', useRxValue(getIdRx));
+		// TODO NEXT: use replicache to get entries
+	});
 </script>
 
 <input type="text" placeholder="Search" bind:value={search} />
@@ -30,4 +46,4 @@
 
 <button onclick={() => getSearch(search)}> search </button>
 
-{JSON.stringify(value)}
+{JSON.stringify(entries)}
