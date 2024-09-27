@@ -2,6 +2,7 @@ import * as Registry from '@effect-rx/rx/Registry';
 import type * as Rx from '@effect-rx/rx/Rx';
 import type * as RxRef from '@effect-rx/rx/RxRef';
 import { globalValue } from 'effect/GlobalValue';
+import { reconcile, unwrap } from 'solid-js/store';
 import { getContext, onDestroy, setContext } from 'svelte';
 /**
  * @since 1.0.0
@@ -86,15 +87,19 @@ export const useRx = <R, W>(rx: Rx.Writable<R, W>) => {
  * @since 1.0.0
  * @category composables
  */
-export const useRxValue = <A>(rx: Rx.Rx<A>): Readonly<A> => {
+export const useRxValue = <A>(rx: Rx.Rx<A>): Readonly<{ value: A }> => {
 	const registry = getRegistry();
-	let value = $state<A>(registry.get(rx));
+	// TODO: make fine-grained?
+	const value = $state<{ value: A }>({
+		value: registry.get(rx)
+	});
 	$effect(() =>
 		registry.subscribe(rx, (nextValue) => {
-			value = nextValue;
+			console.log('setting state to', nextValue);
+			value.value = reconcile(nextValue)(unwrap(value.value));
 		})
 	);
-	return value as Readonly<A>;
+	return value as Readonly<{ value: A }>;
 };
 
 /**

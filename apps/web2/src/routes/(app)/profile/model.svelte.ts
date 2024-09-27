@@ -4,6 +4,7 @@ import { Chunk, Effect, Either, Option, Stream, SubscriptionRef } from 'effect';
 import { Schema } from '@effect/schema';
 import { Model } from '@effect/sql';
 import { reconcile, unwrap } from 'solid-js/store';
+import * as R from 'replicache';
 // import type { ParseError } from '@effect/schema/ParseResult';
 // import { Rx } from '@effect-rx/rx';
 
@@ -38,11 +39,11 @@ export const makeReplicacheRepository = <S extends Model.AnyNoContext & { key: s
 	}
 ) =>
 	Effect.gen(function* () {
-		const replicache = yield* Replicache;
+		const replicache = yield * Replicache;
 		// const array = Schema.Array(model);
 		// const decode = Schema.decodeUnknownSync(array);
 		const decodeItem = Schema.decodeUnknownEither(model);
-
+		const encodeItem = Schema.encodeSync(model);
 		// TODO: make this use Effect.Stream
 		// TODO: maybe refine should be called on each? also maybe schema.array instead of call on eacH?
 		const scan = (refine?: (values: S['Type'][]) => S['Type'][]) =>
@@ -222,6 +223,13 @@ export const makeReplicacheRepository = <S extends Model.AnyNoContext & { key: s
 					}
 				};
 			});
+
+		// or could we somehow grab context? how to make this effect-y?
+		const put = async (tx: R.WriteTransaction, id: string, value: S['Type']) => {
+			const key = `${model.key}/${id}`;
+			const encoded = Schema.encodeSync(model)(value);
+			await tx.set(key, encoded);
+		};
 
 		const streamSubscriptionRef = () =>
 			Effect.gen(function* () {
