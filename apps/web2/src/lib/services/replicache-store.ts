@@ -6,10 +6,7 @@ import {
 	Effect,
 	HashMap,
 	Layer,
-	MutableHashMap,
 	Option,
-	pipe,
-	Sink,
 	Stream,
 	SubscriptionRef
 } from 'effect';
@@ -18,17 +15,13 @@ import * as R from 'replicache';
 import { Rx } from '@effect-rx/rx';
 import type { Model } from '@effect/sql';
 import { Schema } from '@effect/schema';
-import { unwrap } from 'effect/Config';
-import { reconcile } from 'solid-js/store';
 
 export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: S) =>
 	Effect.gen(function* () {
-		const replicache = yield* Replicache;
+		// const replicache = yield * Replicache;
 		const rep = yield* ReplicacheStream;
 
 		const decode = Schema.decodeUnknownOption(model);
-
-		const ref = yield* SubscriptionRef.make(Array.empty<S['Type']>());
 
 		// Maybe make this mutable?
 		const keyToIndex = HashMap.empty<string, number>();
@@ -37,70 +30,82 @@ export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: 
 		const stream = rep.content;
 		// TODO: what's the effect-y way to do this
 		// TODO: can we make it not be svelte-y, but effect-y?
-		const scan = () =>
-			Effect.gen(function* () {
-				const data = $state(Array.empty<S['Type']>());
+		const scan = Effect.gen(function* () {
+			// const data = $state(Array.empty<S['Type']>());
 
-				console.log('scanning');
+			console.log('scanning');
 
-				stream.pipe(
-					Stream.runForEach((diff) =>
-						Effect.gen(function* () {
-							// Make this more effect-y
-							if (diff.op === 'add') {
-								console.log('adding', diff);
-								const value = decode(diff.newValue);
-								console.log('adding', value);
-								Option.match(value, {
-									onSome: (value) => {
-										const index = data.push(value);
+			const ref = yield* SubscriptionRef.make(Array.empty<S['Type']>());
+			// TODO: use rx or something?
+			console.log('here is my ref', { ref });
+			yield* stream.pipe(
+				Stream.runForEach((diff) =>
+					Effect.gen(function* () {
+						yield* Effect.log('investigating diff inside stream');
+						// Make this more effect-y
+						if (diff.op === 'add') {
+							const value = decode(diff.newValue);
+							yield* Effect.log('add op', diff.key);
+							yield* Option.match(value, {
+								onSome: (value) =>
+									Effect.gen(function* () {
+										const a = yield* SubscriptionRef.updateAndGet(ref, (data) =>
+											Array.append(data, value)
+										);
+										const index = a.length;
 										HashMap.set(keyToIndex, diff.key, index - 1);
 										HashMap.set(indexToKey, index - 1, diff.key);
-									},
-									onNone: () => Console.error(value)
-								});
-							} else if (diff.op === 'change') {
-								const index = HashMap.get(keyToIndex, diff.key);
-								Option.all([index, decode(diff.newValue)]).pipe(
-									Option.match({
-										onSome: ([index, value]) => {
-											data[index] = reconcile(value)(unwrap(data[index]));
-										},
-										onNone: () => {}
-									})
-								);
-							} else if (diff.op === 'del') {
-								const toRemove = HashMap.get(keyToIndex, diff.key);
-								const last = Array.tail(data);
-								const lastKey = HashMap.get(indexToKey, data.length - 1);
-								Option.match(Option.all([toRemove, last, lastKey]), {
-									onNone: () => Console.warn('Got a del with no index'),
-									onSome: ([toRemove, last, lastKey]) => {
-										data[toRemove] = last;
+									}),
+								onNone: () => Console.error(value)
+							});
+							console.log({ ref });
+						} else if (diff.op === 'change') {
+							const index = HashMap.get(keyToIndex, diff.key);
+							yield* Option.all([index, decode(diff.newValue)]).pipe(
+								Option.match({
+									onSome: ([index, value]) =>
+										SubscriptionRef.update(ref, (data) => Array.replace(data, index, value)),
+									onNone: () => Effect.void
+								})
+							);
+						} else if (diff.op === 'del') {
+							const toRemove = HashMap.get(keyToIndex, diff.key);
+							yield* Option.match(Option.all([toRemove]), {
+								onNone: () => Console.warn('Got a del with no index'),
+								onSome: ([toRemove]) =>
+									Effect.gen(function* () {
+										const data = yield* SubscriptionRef.updateAndGet(ref, (data) =>
+											Array.remove(data, toRemove)
+										);
 										HashMap.remove(keyToIndex, diff.key);
 										HashMap.remove(indexToKey, toRemove);
-
-										HashMap.set(keyToIndex, lastKey, toRemove);
-										HashMap.set(indexToKey, toRemove, lastKey);
+										const lastKey = HashMap.get(indexToKey, data.length - 1);
+										Option.match(lastKey, {
+											onNone: () => {},
+											onSome: (lastKey) => {
+												HashMap.set(keyToIndex, lastKey, toRemove);
+												HashMap.set(indexToKey, toRemove, lastKey);
+											}
+										});
 										HashMap.remove(indexToKey, data.length - 1);
+									})
+							});
 
-										data.pop();
-									}
-								});
+							// TODO
+						}
+					})
+				)
+				// Stream.run(
+				//     Sink.forEach(diff => {
+				//         console.log({diff})
+				//         return Effect.void
+				//     })
+				// )
+			);
 
-								// TODO
-							}
-						})
-					)
-					// Stream.run(
-					//     Sink.forEach(diff => {
-					//         console.log({diff})
-					//         return Effect.void
-					//     })
-					// )
-				);
-				return data;
-			});
+			console.log({ ref });
+			return ref;
+		});
 
 		// const stream = rep.contentFn(model.key);
 		// const stream2 = rep.contentFn2(model.key);
@@ -172,8 +177,8 @@ const make = Effect.gen(function* () {
 				emit.chunk(chunk);
 			},
 			{
-				initialValuesInFirstDiff: true,
-				prefix: 'entries'
+				initialValuesInFirstDiff: true
+				// prefix: ''
 			}
 		);
 		return Effect.sync(() => unsubscribe());

@@ -62,6 +62,7 @@ export const setRegistry = (registry: Registry.Registry) => {
  */
 export const useRx = <R, W>(rx: Rx.Writable<R, W>) => {
 	const registry = getRegistry();
+	console.log({ rx });
 	let value = $state<R>(registry.get(rx));
 
 	$effect(() =>
