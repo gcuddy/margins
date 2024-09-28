@@ -42,3 +42,13 @@ export const DateTime = Schema.OptionFromNullishOr(
     optional: true,
   },
 })
+
+export const Boolean = Schema.OptionFromNullishOr(
+  Schema.Boolean,
+  undefined,
+).annotations({
+  jsonSchema: {
+    type: ["boolean"],
+    optional: true,
+  },
+})
