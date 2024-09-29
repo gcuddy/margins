@@ -2,41 +2,62 @@
 //
 //
 
-import type { Schema } from '@effect/schema';
-import { Effect, Record, Ref } from 'effect';
+import { Schema } from '@effect/schema';
+import type { SchemaClass } from '@effect/schema/Schema';
+import { Console, Effect, Equal, Option, Record, Ref } from 'effect';
+import { reconcile, unwrap } from 'solid-js/store';
 
-export class Store<Schema extends Schema.Schema<{ id: string }, any, never>> {
+export class Store<
+	A extends { id: string },
+	I extends readonly any[],
+	Schema extends Schema.Schema<A, I, never>
+> {
 	public readonly id: string;
-	schema: Schema;
-	atoms = $state(Record.empty<string, Schema['Type']>());
+	schema: SchemaClass<A, I, never>;
+	private atoms = $state(Record.empty<string, A>());
 	arr = $derived(Record.values(this.atoms));
-	ref = $state(Ref.make(Record.empty<string, Schema['Type']>()));
+	ref = $state(Ref.make(Record.empty<string, A>()));
+	decode: (u: unknown) => Option.Option<A>;
+	encode: (a: A) => Option.Option<I>;
 
 	// TODO: ref?
 
 	constructor(schema: Schema) {
 		this.id = Math.random().toString();
-		this.schema = schema;
+		const dataSchema = Schema.Data(schema);
+		this.schema = dataSchema;
+		this.decode = Schema.decodeUnknownOption(dataSchema);
+		this.encode = Schema.encodeOption(dataSchema);
 	}
 
 	put(records: Schema['Type'][]) {
 		const atoms = this.atoms;
-		console.log('appending', records, 'to', $state.snapshot(atoms));
-		return Effect.forEach(
-			records,
-			(record) =>
-				Effect.gen(function* () {
-					const has = Record.has(atoms, record.id);
-					console.log({ has });
-					if (has) {
-						// TODO: throw error?
+		const decode = this.decode;
+		// const encode = this.encode;
+		return Effect.forEach(records, (record) =>
+			Effect.gen(function* () {
+				const validated = decode(record);
+				yield* Console.log({ record, validated });
+				if (Option.isNone(validated)) {
+					yield* Effect.logError('Error validating record.', record);
+					return;
+				}
+				const existing = Record.get(atoms, record.id);
+				// check if these are equals
+				Option.match(existing, {
+					onSome: (recordAtom) => {
+						if (Equal.equals(recordAtom, validated.value)) {
+							return;
+						}
+						// TODO: can we do this ourselves with equals?
+						const updatedValue = reconcile(validated.value)(unwrap(recordAtom));
+						atoms[record.id] = updatedValue;
+					},
+					onNone: () => {
+						atoms[record.id] = record;
 					}
-					atoms[record.id] = record;
-					// Record.set(atoms, record.id, record);
-				}),
-			{
-				batching: true
-			}
+				});
+			})
 		);
 	}
 
@@ -48,11 +69,6 @@ export class Store<Schema extends Schema.Schema<{ id: string }, any, never>> {
 				delete atoms[id];
 			})
 		);
-	}
-
-	toArray() {
-		const r = $derived.by(() => Record.values(this.atoms));
-		return r;
 	}
 }
 

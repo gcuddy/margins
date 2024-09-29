@@ -5,9 +5,10 @@ import { Annotation } from '@margins/api2/src/Domain/Annotation';
 import { Rx } from '@effect-rx/rx';
 // import { makeReplicacheRepository } from '../../routes/(app)/profile/model.svelte';
 import { Replicache } from '../../routes/(app)/profile/Replicache';
+import { Entry } from '@margins/api2/src/Domain/Entry';
 
 const make = Effect.gen(function* () {
-	const repo = yield* makeRepo(Annotation);
+	const repo = yield* makeRepo(Entry);
 
 	return {
 		...repo
@@ -29,9 +30,11 @@ export const annotationsEffect = annotationsRuntime.rx(Annotations.scan);
 
 export const subscription2 = annotationsRuntime.pull(Stream.unwrap(Annotations.scan));
 export const annotationsFindContent3 = annotationsRuntime.rx(Annotations.findContent3());
-export const annotationsFindContent4 = annotationsRuntime.pull(
-	Annotations.findContent3().pipe(Effect.provide(Annotations.Live))
-);
+export const annotationsFindContent4 = annotationsRuntime.rx(Annotations.findContent4());
+
+// export const annotationsFindContent4 = annotationsRuntime.pull(
+// 	Annotations.findContent3().pipe(Effect.provide(Annotations.Live))
+// );
 // export const annotationsFindContent3 = annotationsRuntime.pull(
 // 	Stream.unwrap(Annotations.findContent3())
 // );

@@ -31,6 +31,72 @@ export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: 
 
 		const stream = rep.content;
 
+		const findContent4 = () =>
+			Effect.gen(function* () {
+				const store = new Store(model);
+
+				yield* Stream.async<R.ExperimentalNoIndexDiff>((emit) => {
+					const unsubscribe = replicache.experimentalWatch(
+						(diffs) => {
+							emit(Effect.succeed(Chunk.make(diffs)));
+							console.log({ diffs, key: model.key });
+						},
+						{
+							initialValuesInFirstDiff: true,
+							prefix: model.key
+						}
+					);
+					// console.log({ unsubscribe });
+					return Effect.sync(() => {
+						console.log('unsubscribing from store', model.key);
+						unsubscribe();
+					});
+				})
+					.pipe(
+						Stream.runForEach((diffs) =>
+							Effect.gen(function* () {
+								yield* Effect.log('got diff', diffs);
+								const { add = [], change = [], del = [] } = Array.groupBy(diffs, (diff) => diff.op);
+								console.log({ add, change, del });
+								const valuesToPut = Chunk.unsafeFromArray(add).pipe(
+									Chunk.appendAll(Chunk.unsafeFromArray(change)),
+									Chunk.toArray
+								);
+								const keysToRemove = del.map((diff) => diff.key);
+								console.log({ valuesToPut, keysToRemove });
+								// TODO: maybe need to look at key vs id
+								yield* Effect.zip(store.put(valuesToPut), store.remove(keysToRemove));
+							})
+						)
+						// Effect.forever,
+						// Effect.interrupt,
+						// Effect.forkScoped
+						// Stream.runForEachChunk(chunk =>
+						// {
+						//     chunk
+						//   })
+						// TODO: try yet another version that does the grouping below with the stream in chunks
+						// Stream.runForEach((diff) =>
+						// 	Effect.gen(function* () {
+						// 		yield* Effect.log('Processing', diff);
+						//
+						// 		const { add, change, del } = Array.groupBy(diffs, (diff) => diff.op);
+						// 		const valuesToPut = Chunk.unsafeFromArray(add).pipe(
+						// 			Chunk.appendAll(Chunk.unsafeFromArray(change)),
+						// 			Chunk.toArray
+						// 		);
+						// 		const keysToRemove = del.map((diff) => diff.key);
+						// 		// TODO: yield this, so it needs to not be inside this callback function
+						// 		Effect.zip(store.put(valuesToPut), store.remove(keysToRemove));
+						// 	})
+						// )
+					)
+					.pipe(Effect.forkScoped);
+				// const x = yield* Effect.forkScoped(stream);
+				console.log('returning store', { store });
+				console.log({ stream });
+				return store;
+			});
 		const findContent3 = (prefix?: string) =>
 			Effect.gen(function* () {
 				const store = new Store(model);
@@ -264,7 +330,8 @@ export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: 
 			stream,
 			scan,
 			put,
-			findContent3
+			findContent3,
+			findContent4
 		} as const;
 
 		// return { content, contentFn } as const;

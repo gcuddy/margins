@@ -4,8 +4,8 @@
 		annotationsEffect,
 		subscription,
 		subscription2,
-		annotationsFindContent3
-		// annotationsFindContent4
+		annotationsFindContent3,
+		annotationsFindContent4
 	} from '$lib/services/Annotations';
 	import { stream, streamFn } from '$lib/services/replicache-store';
 	import { useRx, useRxSet, useRxValue } from '../profile/rx.svelte';
@@ -16,7 +16,7 @@
 	// const entries = useRxValue(annotationsEffect);
 	// const subscriptionValue = useRx(subscription);
 	// const subscriptionValue2 = useRx(subscription2);
-	const storeValue = useRxValue(annotationsFindContent3);
+	const storeValue = useRxValue(annotationsFindContent4);
 	$inspect(storeValue).with(console.trace);
 	$effect(() => {
 		console.log($state.snapshot(storeValue));
