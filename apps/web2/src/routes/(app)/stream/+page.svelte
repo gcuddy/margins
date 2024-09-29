@@ -48,14 +48,17 @@
 	// });
 </script>
 
-{JSON.stringify(storeValue._tag === 'Success' && storeValue.value.arr)}
+<!-- {JSON.stringify(storeValue._tag === 'Success' && storeValue.value.arr)} -->
+
+{#if storeValue._tag === 'Success'}
+	{#each storeValue.value.arr as arr (arr.id)}
+		<div>
+			{arr.id} - {arr.title}
+		</div>
+	{/each}
+{/if}
 
 <!-- {#if value.value._tag === 'Success'} -->
 <!-- {value.value.value.items.map((item) => JSON.stringify(item))} -->
 <!-- {value.value.value.items.map((item) => JSON.stringify(item))} -->
 <!-- {/if} -->
-
-<form>
-	<input type="text" />
-	<button>add</button>
-</form>

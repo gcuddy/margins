@@ -3,13 +3,14 @@
 //
 
 import type { Schema } from '@effect/schema';
-import { Effect, Record } from 'effect';
+import { Effect, Record, Ref } from 'effect';
 
 export class Store<Schema extends Schema.Schema<{ id: string }, any, never>> {
 	public readonly id: string;
 	schema: Schema;
 	atoms = $state(Record.empty<string, Schema['Type']>());
-	arr = $derived.by(() => Object.values(this.atoms));
+	arr = $derived(Record.values(this.atoms));
+	ref = $state(Ref.make(Record.empty<string, Schema['Type']>()));
 
 	// TODO: ref?
 
