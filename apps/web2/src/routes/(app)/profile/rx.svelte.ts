@@ -88,19 +88,20 @@ export const useRx = <R, W>(rx: Rx.Writable<R, W>) => {
  * @since 1.0.0
  * @category composables
  */
-export const useRxValue = <A>(rx: Rx.Rx<A>): Readonly<{ value: A }> => {
+export const useRxValue = <A>(rx: Rx.Rx<A>): Readonly<A> => {
 	const registry = getRegistry();
 	// TODO: make fine-grained?
-	const value = $state<{ value: A }>({
-		value: registry.get(rx)
-	});
+	// const value = $state<{ value: A }>({
+	// 	value: registry.get(rx)
+	// });
+	let value = $state(registry.get(rx));
 	$effect(() =>
 		registry.subscribe(rx, (nextValue) => {
 			console.log('setting state to', nextValue);
-			value.value = reconcile(nextValue)(unwrap(value.value));
+			value = reconcile(nextValue)(unwrap(value));
 		})
 	);
-	return value as Readonly<{ value: A }>;
+	return value;
 };
 
 /**

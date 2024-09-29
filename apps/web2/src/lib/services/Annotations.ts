@@ -28,6 +28,13 @@ export const annotations = annotationsRuntime.pull(Stream.unwrap(Annotations.str
 export const annotationsEffect = annotationsRuntime.rx(Annotations.scan);
 
 export const subscription2 = annotationsRuntime.pull(Stream.unwrap(Annotations.scan));
+export const annotationsFindContent3 = annotationsRuntime.rx(Annotations.findContent3());
+export const annotationsFindContent4 = annotationsRuntime.pull(
+	Annotations.findContent3().pipe(Effect.provide(Annotations.Live))
+);
+// export const annotationsFindContent3 = annotationsRuntime.pull(
+// 	Stream.unwrap(Annotations.findContent3())
+// );
 
 export const subscription = annotationsRuntime.subscriptionRef(
 	Annotations.scan.pipe(Effect.provide(Annotations.Live))

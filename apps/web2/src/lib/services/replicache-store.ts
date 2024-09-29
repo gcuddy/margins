@@ -6,6 +6,7 @@ import {
 	Effect,
 	HashMap,
 	Layer,
+	MutableHashMap,
 	Option,
 	Stream,
 	SubscriptionRef
@@ -15,10 +16,11 @@ import * as R from 'replicache';
 import { Rx } from '@effect-rx/rx';
 import type { Model } from '@effect/sql';
 import { Schema } from '@effect/schema';
+import { Store } from '$lib/store.svelte';
 
 export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: S) =>
 	Effect.gen(function* () {
-		// const replicache = yield * Replicache;
+		const replicache = yield* Replicache;
 		const rep = yield* ReplicacheStream;
 
 		const decode = Schema.decodeUnknownOption(model);
@@ -28,6 +30,107 @@ export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: 
 		const indexToKey = HashMap.empty<number, string>();
 
 		const stream = rep.content;
+
+		const findContent3 = (prefix?: string) =>
+			Effect.gen(function* () {
+				const store = new Store(model);
+
+				const stream = Stream.async<R.ExperimentalDiffOperation<string>>((emit) => {
+					const unsubscribe = replicache.experimentalWatch(
+						(diffs) => emit.chunk(Chunk.unsafeFromArray(diffs)),
+						{
+							initialValuesInFirstDiff: true,
+							prefix
+						}
+					);
+					// console.log({ unsubscribe });
+					return Effect.sync(() => unsubscribe());
+				}).pipe(
+					Stream.runForEach((diff) =>
+						Effect.gen(function* () {
+							// yield* Effect.log('Processing', diff);
+							if (diff.op === 'del') {
+								// TODO: actually take in the key here, use that in tuple
+								yield* store.remove([diff.key]);
+							} else {
+								yield* store.put([diff.newValue]);
+							}
+						})
+					)
+					// Effect.forever,
+					// Effect.interrupt,
+					// Effect.forkScoped
+					// Stream.runForEachChunk(chunk =>
+					// {
+					//     chunk
+					//   })
+					// TODO: try yet another version that does the grouping below with the stream in chunks
+					// Stream.runForEach((diff) =>
+					// 	Effect.gen(function* () {
+					// 		yield* Effect.log('Processing', diff);
+					//
+					// 		const { add, change, del } = Array.groupBy(diffs, (diff) => diff.op);
+					// 		const valuesToPut = Chunk.unsafeFromArray(add).pipe(
+					// 			Chunk.appendAll(Chunk.unsafeFromArray(change)),
+					// 			Chunk.toArray
+					// 		);
+					// 		const keysToRemove = del.map((diff) => diff.key);
+					// 		// TODO: yield this, so it needs to not be inside this callback function
+					// 		Effect.zip(store.put(valuesToPut), store.remove(keysToRemove));
+					// 	})
+					// )
+				);
+				const x = yield* Effect.forkScoped(stream);
+				console.log('returning store', { store });
+				console.log({ stream });
+				return store;
+			});
+
+		const findContent2 = (prefix?: string) =>
+			Effect.gen(function* () {
+				const store = new Store(model);
+				const unsubscribe = replicache.experimentalWatch((diffs) => {
+					const { add, change, del } = Array.groupBy(diffs, (diff) => diff.op);
+					const valuesToPut = Chunk.unsafeFromArray(add).pipe(
+						Chunk.appendAll(Chunk.unsafeFromArray(change)),
+						Chunk.toArray
+					);
+					const keysToRemove = del.map((diff) => diff.key);
+					// TODO: yield this, so it needs to not be inside this callback function
+					Effect.zip(store.put(valuesToPut), store.remove(keysToRemove));
+				});
+			});
+		const findContent = (prefix?: string) =>
+			Effect.gen(function* () {
+				const keyToIndex = MutableHashMap.empty<string, number>();
+				const indexToKey = MutableHashMap.empty<number, string>();
+
+				return Stream.async<S['Type']>((emit) => {
+					const unsubscribe = replicache.experimentalWatch(
+						(diffs) => {
+							// TODO: use effect loop
+							for (const diff of diffs) {
+								if (diff.op === 'add') {
+									const value = decode(diff.newValue);
+									Option.match(value, {
+										onSome: () => {},
+										onNone: () => console.warn('error parsing value', value)
+									});
+								}
+							}
+							const chunk = Chunk.fromIterable(diffs);
+							console.log('making an iterable chunk');
+							emit.chunk(chunk);
+						},
+						{
+							initialValuesInFirstDiff: true,
+							prefix
+						}
+					);
+					return Effect.sync(() => unsubscribe());
+				});
+			});
+
 		// TODO: what's the effect-y way to do this
 		// TODO: can we make it not be svelte-y, but effect-y?
 		const scan = Effect.gen(function* () {
@@ -160,7 +263,8 @@ export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: 
 		return {
 			stream,
 			scan,
-			put
+			put,
+			findContent3
 		} as const;
 
 		// return { content, contentFn } as const;
