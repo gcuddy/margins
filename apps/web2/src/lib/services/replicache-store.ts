@@ -33,7 +33,7 @@ export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: 
 
 		const findContent4 = () =>
 			Effect.gen(function* () {
-				const store = new Store(model);
+				const store = new Store<Schema.Schema.Type<S>, Schema.Schema.Encoded<S>>(model);
 
 				yield* Stream.async<R.ExperimentalNoIndexDiff>((emit) => {
 					const unsubscribe = replicache.experimentalWatch(
@@ -60,7 +60,10 @@ export const makeRepo = <S extends Model.AnyNoContext & { key: string }>(model: 
 								console.log({ add, change, del });
 								const valuesToPut = Chunk.unsafeFromArray(add).pipe(
 									Chunk.appendAll(Chunk.unsafeFromArray(change)),
-									Chunk.toArray
+									Chunk.filter((c) => c.op === 'add' || c.op === 'change'),
+									// TODO: filter map?
+									Chunk.toArray,
+									Array.map((diff) => diff.newValue)
 								);
 								const keysToRemove = del.map((diff) => diff.key);
 								console.log({ valuesToPut, keysToRemove });

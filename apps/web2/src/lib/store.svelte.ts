@@ -3,61 +3,60 @@
 //
 
 import { Schema } from '@effect/schema';
+import type { ParseError } from '@effect/schema/ParseResult';
 import type { SchemaClass } from '@effect/schema/Schema';
 import { Console, Effect, Equal, Option, Record, Ref } from 'effect';
 import { reconcile, unwrap } from 'solid-js/store';
 
-export class Store<
-	A extends { id: string },
-	I extends readonly any[],
-	Schema extends Schema.Schema<A, I, never>
-> {
+export class Store<A extends { id: string }, I> {
 	public readonly id: string;
-	schema: SchemaClass<A, I, never>;
+	// dataSchema: SchemaClass<A, I, never>;
+	schema: Schema.Schema<A, I, never>;
 	private atoms = $state(Record.empty<string, A>());
 	arr = $derived(Record.values(this.atoms));
 	ref = $state(Ref.make(Record.empty<string, A>()));
 	decode: (u: unknown) => Option.Option<A>;
 	encode: (a: A) => Option.Option<I>;
+	d: (u: unknown) => Effect.Effect<A, ParseError, never>;
 
 	// TODO: ref?
 
-	constructor(schema: Schema) {
+	constructor(schema: Schema.Schema<A, I, never>) {
 		this.id = Math.random().toString();
-		const dataSchema = Schema.Data(schema);
-		this.schema = dataSchema;
-		this.decode = Schema.decodeUnknownOption(dataSchema);
-		this.encode = Schema.encodeOption(dataSchema);
+		// TODO: this would work for equals.equals but results in errors
+		// const dataSchema = Schema.Data(schema);
+		this.schema = schema;
+		// this.dataSchema = dataSchema;
+		this.decode = Schema.decodeUnknownOption(schema);
+		this.d = Schema.decodeUnknown(schema);
+		this.encode = Schema.encodeOption(schema);
 	}
 
-	put(records: Schema['Type'][]) {
+	put(records: unknown[]) {
 		const atoms = this.atoms;
-		const decode = this.decode;
+		const decode = this.d;
 		// const encode = this.encode;
 		return Effect.forEach(records, (record) =>
 			Effect.gen(function* () {
-				const validated = decode(record);
+				console.log('validating', record);
+				const validated = yield* decode(record);
 				yield* Console.log({ record, validated });
-				if (Option.isNone(validated)) {
-					yield* Effect.logError('Error validating record.', record);
-					return;
-				}
-				const existing = Record.get(atoms, record.id);
+				const existing = Record.get(atoms, validated.id);
 				// check if these are equals
 				Option.match(existing, {
 					onSome: (recordAtom) => {
-						if (Equal.equals(recordAtom, validated.value)) {
+						if (Equal.equals(recordAtom, validated)) {
 							return;
 						}
 						// TODO: can we do this ourselves with equals?
-						const updatedValue = reconcile(validated.value)(unwrap(recordAtom));
-						atoms[record.id] = updatedValue;
+						const updatedValue = reconcile(validated)(unwrap(recordAtom));
+						atoms[validated.id] = updatedValue;
 					},
 					onNone: () => {
-						atoms[record.id] = record;
+						atoms[validated.id] = validated;
 					}
 				});
-			})
+			}).pipe(Effect.catchTag('ParseError', Effect.logError))
 		);
 	}
 

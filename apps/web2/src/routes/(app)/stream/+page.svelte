@@ -8,6 +8,7 @@
 		annotationsFindContent4
 	} from '$lib/services/Annotations';
 	import { stream, streamFn } from '$lib/services/replicache-store';
+	import { Option } from 'effect';
 	import { useRx, useRxSet, useRxValue } from '../profile/rx.svelte';
 	import Suspense from './suspense.svelte';
 
@@ -53,7 +54,7 @@
 {#if storeValue._tag === 'Success'}
 	{#each storeValue.value.arr as arr (arr.id)}
 		<div>
-			{arr.id} - {arr.title}
+			{arr.id} - {arr.title.pipe(Option.getOrElse(() => '(no title)'))}
 		</div>
 	{/each}
 {/if}

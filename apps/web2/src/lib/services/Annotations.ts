@@ -6,6 +6,7 @@ import { Rx } from '@effect-rx/rx';
 // import { makeReplicacheRepository } from '../../routes/(app)/profile/model.svelte';
 import { Replicache } from '../../routes/(app)/profile/Replicache';
 import { Entry } from '@margins/api2/src/Domain/Entry';
+import { Store } from '$lib/store.svelte';
 
 const make = Effect.gen(function* () {
 	const repo = yield* makeRepo(Entry);
