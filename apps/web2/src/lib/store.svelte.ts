@@ -12,8 +12,17 @@ export class Store<A extends { id: string }, I> {
 	public readonly id: string;
 	// dataSchema: SchemaClass<A, I, never>;
 	schema: Schema.Schema<A, I, never>;
-	private atoms = $state(Record.empty<string, A>());
+	atoms = $state(Record.empty<string, A>());
 	arr = $derived(Record.values(this.atoms));
+	get = (id: A['id']) => {
+		console.log('begin get');
+		console.log({ id });
+		console.log('atoms', $state.snapshot(this.atoms));
+		const item = $derived(Record.get(this.atoms, id));
+
+		$inspect({ item });
+		return item;
+	};
 	ref = $state(Ref.make(Record.empty<string, A>()));
 	decode: (u: unknown) => Option.Option<A>;
 	encode: (a: A) => Option.Option<I>;
@@ -56,7 +65,9 @@ export class Store<A extends { id: string }, I> {
 						atoms[validated.id] = validated;
 					}
 				});
-			}).pipe(Effect.catchTag('ParseError', Effect.logError))
+				console.log('finished put');
+				console.log($state.snapshot(atoms));
+			}).pipe(Effect.catchTag('ParseError', Effect.logError), Effect.withLogSpan('Store.put'))
 		);
 	}
 
