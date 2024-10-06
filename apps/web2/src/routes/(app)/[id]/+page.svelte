@@ -27,11 +27,3 @@
 		</Option>
 	{/snippet}
 </Suspense>
-
-<!-- {#if entry._tag === 'Success' && entry.value} -->
-<!-- 	{#if Option.isSome(entry.value.data)} -->
-<!-- 		<Entry entry={entry.value.data.value} /> -->
-<!-- 	{:else} -->
-<!-- 		<NoEntryFound /> -->
-<!-- 	{/if} -->
-<!-- {/if} -->

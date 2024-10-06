@@ -68,7 +68,6 @@ export const makeRepo = <S extends Model.AnyNoContext & { readonly key: string }
 				const singleStream = yield* Stream.async<R.ExperimentalDiffOperation<string>>((emit) => {
 					const unsubscribe = replicache.experimentalWatch(
 						(diffs) => {
-							console.log('diff in get', { diffs });
 							emit.chunk(Chunk.unsafeFromArray(diffs));
 						},
 						{
