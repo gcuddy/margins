@@ -45,9 +45,12 @@
 		"@effect/schema": "^0.74.1",
 		"@effect/sql": "^0.14.0",
 		"@margins/api2": "workspace:^",
+		"clsx": "^2.1.1",
 		"effect": "^3.8.4",
 		"flexsearch": "^0.7.43",
 		"replicache": "^15.0.1",
-		"solid-js": "^1.9.1"
+		"solid-js": "^1.9.1",
+		"tailwind-merge": "^2.5.2",
+		"tailwind-variants": "^0.2.1"
 	}
 }

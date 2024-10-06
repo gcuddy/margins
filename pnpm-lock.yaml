@@ -1011,6 +1011,9 @@ importers:
       '@margins/api2':
         specifier: workspace:^
         version: link:../../packages/api-node
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       effect:
         specifier: ^3.8.4
         version: 3.8.4
@@ -1023,6 +1026,12 @@ importers:
       solid-js:
         specifier: ^1.9.1
         version: 1.9.1
+      tailwind-merge:
+        specifier: ^2.5.2
+        version: 2.5.2
+      tailwind-variants:
+        specifier: ^0.2.1
+        version: 0.2.1(tailwindcss@3.4.13(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.13))(@types/node@22.7.4)(typescript@5.6.2)))
     devDependencies:
       '@playwright/test':
         specifier: ^1.47.2
