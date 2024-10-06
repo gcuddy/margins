@@ -1,4 +1,4 @@
-import { makeRepo } from '$lib/services/replicache-store';
+import { makeRepo } from '$lib/services/replicache-store.svelte';
 import { Effect, Layer, Stream } from 'effect';
 
 import { Annotation } from '@margins/api2/src/Domain/Annotation';

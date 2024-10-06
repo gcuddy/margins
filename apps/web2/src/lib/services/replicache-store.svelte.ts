@@ -1,11 +1,11 @@
-import { Array, Chunk, Console, Effect, Stream, String } from 'effect';
+import { Array, Chunk, Console, Effect, flow, Option, pipe, Sink, Stream, String } from 'effect';
 import * as R from 'replicache';
 import type { Model } from '@effect/sql';
 import { Schema } from '@effect/schema';
 import { Store } from '$lib/store.svelte';
 import { Replicache } from './Replicache';
 
-export const createStream = (prefix: string) =>
+export const createStream = (prefix: string, initial = true) =>
 	Replicache.pipe(
 		Effect.andThen((replicache) =>
 			Stream.async<R.ExperimentalNoIndexDiff>((emit) => {
@@ -14,7 +14,7 @@ export const createStream = (prefix: string) =>
 						emit(Effect.succeed(Chunk.make(diffs)));
 					},
 					{
-						initialValuesInFirstDiff: true,
+						initialValuesInFirstDiff: initial,
 						prefix
 					}
 				);
@@ -30,6 +30,7 @@ export const createStream = (prefix: string) =>
 export const makeRepo = <S extends Model.AnyNoContext & { readonly key: string }>(model: S) =>
 	Effect.gen(function* () {
 		const store = new Store<Schema.Schema.Type<S>, Schema.Schema.Encoded<S>>(model);
+		const replicache = yield* Replicache;
 
 		const stream = () =>
 			Effect.gen(function* () {
@@ -60,35 +61,70 @@ export const makeRepo = <S extends Model.AnyNoContext & { readonly key: string }
 		const get = (id: string) =>
 			Effect.gen(function* () {
 				const key = `${model.key}/${id}`;
-				const stream = yield* createStream(key);
+				const stream = yield* createStream(key, false);
 				console.log({ key, stream });
 
-				const a = stream.pipe(Stream.take(1), Stream.runCollect);
-
-				// TODO: abstract out duped code
-				yield* stream
-					.pipe(
-						Stream.runForEach((diffs) =>
-							Effect.gen(function* () {
-								yield* Effect.log(diffs);
-								const { add = [], change = [], del = [] } = Array.groupBy(diffs, (diff) => diff.op);
-								const valuesToPut = Chunk.unsafeFromArray(add).pipe(
-									Chunk.appendAll(Chunk.unsafeFromArray(change)),
-									Chunk.filter((c) => c.op === 'add' || c.op === 'change'),
-									// TODO: filter map?
-									Chunk.toArray,
-									Array.map((diff) => diff.newValue)
-								);
-								const keysToRemove = del.map((diff) => diff.key);
-								// TODO: maybe need to look at key vs id
-								yield* Effect.zip(store.put(valuesToPut), store.remove(keysToRemove));
+				console.log('begin stream');
+				const singleStream = yield* Stream.async<R.ExperimentalDiffOperation<string>>((emit) => {
+					const unsubscribe = replicache.experimentalWatch(
+						(diffs) => {
+							console.log('diff in get', { diffs });
+							emit.chunk(Chunk.unsafeFromArray(diffs));
+						},
+						{
+							initialValuesInFirstDiff: true,
+							prefix: key
+						}
+					);
+					return Effect.sync(() => {
+						unsubscribe();
+					}).pipe(
+						Effect.tap(Effect.log('Unsubscribing from replicache.experimentalWatch for', key))
+					);
+				}).pipe(
+					Stream.run(Sink.head()),
+					Effect.andThen(
+						flow(
+							Option.filter((d) => d.op === 'add'),
+							Option.match({
+								onSome: (diff) =>
+									Effect.gen(function* () {
+										yield* store.put([diff.newValue]);
+									}),
+								onNone: () => {
+									console.log('on None');
+								}
 							})
 						)
-					)
-					.pipe(Effect.forkScoped);
+					),
+					Effect.forkScoped
+				);
+
+				console.log('end stream', { singleStream });
+
+				// TODO: abstract out duped code
+				// yield* stream
+				// 	.pipe(
+				// 		Stream.runForEach((diffs) =>
+				// 			Effect.gen(function* () {
+				// 				yield* Effect.log(diffs);
+				// 				const { add = [], change = [], del = [] } = Array.groupBy(diffs, (diff) => diff.op);
+				// 				const valuesToPut = Chunk.unsafeFromArray(add).pipe(
+				// 					Chunk.appendAll(Chunk.unsafeFromArray(change)),
+				// 					Chunk.filter((c) => c.op === 'add' || c.op === 'change'),
+				// 					// TODO: filter map?
+				// 					Chunk.toArray,
+				// 					Array.map((diff) => diff.newValue)
+				// 				);
+				// 				const keysToRemove = del.map((diff) => diff.key);
+				// 				// TODO: maybe need to look at key vs id
+				// 				yield* Effect.zip(store.put(valuesToPut), store.remove(keysToRemove));
+				// 			})
+				// 		)
+				// 	)
+				// 	.pipe(Effect.forkScoped);
 
 				const item = store.get(id);
-
 				return store;
 			}).pipe(Effect.tapErrorCause(Effect.logError));
 
@@ -98,7 +134,22 @@ export const makeRepo = <S extends Model.AnyNoContext & { readonly key: string }
 				const stream = yield* createStream(key);
 				console.log({ key, stream });
 
-				const a = stream.pipe(Stream.take(1), Stream.runCollect);
+				const singleStream = Stream.async<R.ExperimentalNoIndexDiff>((emit) => {
+					const unsubscribe = replicache.experimentalWatch(
+						(diffs) => {
+							emit(Effect.succeed(Chunk.make(diffs)));
+						},
+						{
+							initialValuesInFirstDiff: true,
+							prefix
+						}
+					);
+					return Effect.sync(() => {
+						unsubscribe();
+					}).pipe(
+						Effect.tap(Effect.log('Unsubscribing from replicache.experimentalWatch for', prefix))
+					);
+				});
 
 				// TODO: abstract out duped code
 				yield* stream

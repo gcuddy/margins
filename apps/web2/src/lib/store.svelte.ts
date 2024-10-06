@@ -8,19 +8,41 @@ import type { SchemaClass } from '@effect/schema/Schema';
 import { Console, Effect, Equal, Option, Record, Ref } from 'effect';
 import { reconcile, unwrap } from 'solid-js/store';
 
+export class Atom<A> {
+	public readonly id: string;
+	value: A;
+
+	constructor(value: A) {
+		this.id = Math.random().toString();
+		const v = $state(value);
+		this.value = v;
+	}
+
+	set(value: A) {
+		this.value = value;
+	}
+
+	update(value: A) {
+		const updatedValue = reconcile(value)(unwrap(this.value));
+		this.value = updatedValue;
+	}
+}
+
 export class Store<A extends { id: string }, I> {
 	public readonly id: string;
 	// dataSchema: SchemaClass<A, I, never>;
 	schema: Schema.Schema<A, I, never>;
-	atoms = $state(Record.empty<string, A>());
-	arr = $derived(Record.values(this.atoms));
+	atoms = $state(Record.empty<string, Atom<A>>());
+	arr = $derived(Record.values(this.atoms).map((atom) => atom.value));
+	get_unsafe = (id: A['id']) => {
+		const x = $derived(this.atoms[id]);
+		return x;
+	};
 	get = (id: A['id']) => {
 		console.log('begin get');
 		console.log({ id });
 		console.log('atoms', $state.snapshot(this.atoms));
 		const item = $derived(Record.get(this.atoms, id));
-
-		$inspect({ item });
 		return item;
 	};
 	ref = $state(Ref.make(Record.empty<string, A>()));
@@ -42,6 +64,7 @@ export class Store<A extends { id: string }, I> {
 	}
 
 	put(records: unknown[]) {
+		console.log('got put', records);
 		const atoms = this.atoms;
 		const decode = this.d;
 		// const encode = this.encode;
@@ -57,12 +80,13 @@ export class Store<A extends { id: string }, I> {
 						if (Equal.equals(recordAtom, validated)) {
 							return;
 						}
+						recordAtom.update(validated);
 						// TODO: can we do this ourselves with equals?
-						const updatedValue = reconcile(validated)(unwrap(recordAtom));
-						atoms[validated.id] = updatedValue;
+						// const updatedValue = reconcile(validated)(unwrap(recordAtom));
+						// atoms[validated.id] = updatedValue;
 					},
 					onNone: () => {
-						atoms[validated.id] = validated;
+						atoms[validated.id] = new Atom(validated);
 					}
 				});
 				console.log('finished put');

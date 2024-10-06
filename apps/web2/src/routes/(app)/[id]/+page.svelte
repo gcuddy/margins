@@ -1,26 +1,32 @@
 <script lang="ts">
-	import { Option } from 'effect';
 	import * as Entries from '$lib/services/Entries';
 	import { useRxValue } from '../profile/rx.svelte';
 	import Entry from './Entry.svelte';
 	import NoEntryFound from './NoEntryFound.svelte';
+	import Suspense from '../stream/suspense.svelte';
+	import { Option as O } from 'effect';
+	import Option from '../stream/option.svelte';
 
 	let { data } = $props();
 	const entry = useRxValue(Entries.get(data.id));
-
-	const x = $derived(data.id.toUpperCase());
-
-	$effect(() => {
-		console.log({ data });
-		console.log({ entry });
-		console.log({ x });
-	});
 </script>
 
-{JSON.stringify(entry)}
-{#if entry._tag === 'Success'}
-	{entry.value.get(data.id)}
-{/if}
+<Suspense rx={Entries.get(data.id)}>
+	{#snippet fallback()}
+		Loading...
+	{/snippet}
+	{#snippet children({ value })}
+		<Option option={value.get(data.id).pipe(O.map((a) => a.value))}>
+			{#snippet some(entry)}
+				<Entry {entry} />
+			{/snippet}
+			<!-- todo: check if scan is done before showing this -->
+			{#snippet none()}
+				<NoEntryFound />
+			{/snippet}
+		</Option>
+	{/snippet}
+</Suspense>
 
 <!-- {#if entry._tag === 'Success' && entry.value} -->
 <!-- 	{#if Option.isSome(entry.value.data)} -->

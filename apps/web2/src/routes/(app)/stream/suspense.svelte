@@ -14,10 +14,11 @@
 		fallback?: Snippet;
 	} = $props();
 	const result = useRxValue(rx);
+	$inspect(result);
 </script>
 
 {#if result._tag === 'Success'}
 	{@render children(result)}
-{:else if fallback}
+{:else if result._tag === 'Initial' && fallback}
 	{@render fallback()}
 {/if}
