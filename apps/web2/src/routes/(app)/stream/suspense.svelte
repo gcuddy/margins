@@ -5,21 +5,19 @@
 
 	let {
 		rx,
-		options,
-		children
+		children,
+		fallback
 	}: {
 		rx: Rx.Rx<Result.Result<A, E>>;
 		options?: { readonly suspendOnWaiting?: boolean };
 		children: Snippet<[Result.Success<A, E>]>;
+		fallback?: Snippet;
 	} = $props();
-
 	const result = useRxValue(rx);
-
-	// TODO: handle errors
-	const tag = $derived(result._tag);
-
 </script>
 
 {#if result._tag === 'Success'}
 	{@render children(result)}
+{:else if fallback}
+	{@render fallback()}
 {/if}
