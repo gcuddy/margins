@@ -4,4 +4,3 @@
 	const { entry }: { entry: Entry } = $props();
 </script>
 
-{JSON.stringify(entry)}
