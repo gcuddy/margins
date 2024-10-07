@@ -7,7 +7,10 @@ export default {
 				default: [
 					'InterVar',
 					"-apple-system, BlinkMacSystemFont, 'Segoe UI (Custom)', Roboto, 'Helvetica Neue', 'Open Sans (Custom)', system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'"
-				]
+				],
+				code: "'Menlo', 'Consolas (Custom)', 'Bitstream Vera Sans Mono', monospace, 'Apple Color Emoji', 'Segoe UI Emoji'",
+				emphasis: "'Times New Roman', 'Times', serif",
+				quote: "'Times New Roman', 'Times', serif"
 			},
 			fontSize: {
 				1: ['12px', { lineHeight: '16px', letterSpacing: '0.0025em' }],
