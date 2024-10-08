@@ -1023,12 +1023,21 @@ importers:
       flexsearch:
         specifier: ^0.7.43
         version: 0.7.43
+      lucide-svelte:
+        specifier: ^0.441.0
+        version: 0.441.0(svelte@5.0.0-next.252)
+      paneforge:
+        specifier: ^0.0.6
+        version: 0.0.6(svelte@5.0.0-next.252)
       replicache:
         specifier: ^15.0.1
         version: 15.0.1
       solid-js:
         specifier: ^1.9.1
         version: 1.9.1
+      svelte-radix:
+        specifier: ^1.1.1
+        version: 1.1.1(svelte@5.0.0-next.252)
       tailwind-merge:
         specifier: ^2.5.2
         version: 2.5.2
@@ -8260,6 +8269,11 @@ packages:
 
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
+
+  paneforge@0.0.6:
+    resolution: {integrity: sha512-jYeN/wdREihja5c6nK3S5jritDQ+EbCqC5NrDo97qCZzZ9GkmEcN5C0ZCjF4nmhBwkDKr6tLIgz4QUKWxLXjAw==}
+    peerDependencies:
+      svelte: ^4.0.0 || ^5.0.0-next.1
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -17307,6 +17321,10 @@ snapshots:
     dependencies:
       svelte: 5.0.0-next.250
 
+  lucide-svelte@0.441.0(svelte@5.0.0-next.252):
+    dependencies:
+      svelte: 5.0.0-next.252
+
   lucide-svelte@0.441.0(svelte@5.0.0-next.262):
     dependencies:
       svelte: 5.0.0-next.262
@@ -17842,6 +17860,11 @@ snapshots:
   package-json-from-dist@1.0.0: {}
 
   pako@1.0.11: {}
+
+  paneforge@0.0.6(svelte@5.0.0-next.252):
+    dependencies:
+      nanoid: 5.0.7
+      svelte: 5.0.0-next.252
 
   parent-module@1.0.1:
     dependencies:
@@ -19161,6 +19184,10 @@ snapshots:
   svelte-radix@1.1.1(svelte@5.0.0-next.250):
     dependencies:
       svelte: 5.0.0-next.250
+
+  svelte-radix@1.1.1(svelte@5.0.0-next.252):
+    dependencies:
+      svelte: 5.0.0-next.252
 
   svelte-radix@1.1.1(svelte@5.0.0-next.262):
     dependencies:

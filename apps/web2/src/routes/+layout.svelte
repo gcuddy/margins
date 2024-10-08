@@ -7,12 +7,22 @@
 <div
 	data-gray-color="sand"
 	data-has-background="true"
-	class="dark radix-themes text-3 font-default font-normal"
+	data-accent-color="orange"
+	class="dark radix-themes text-3 font-default font-normal h-screen w-screen flex flex-col"
 >
 	{@render children()}
 </div>
 
 <style>
+	:global(html, body) {
+		width: 100%;
+		height: 100%;
+		margin: 0px;
+		padding: 0px;
+		position: fixed;
+		overflow: hidden;
+	}
+
 	div {
 		overflow-wrap: break-word;
 		text-size-adjust: none;
@@ -78,7 +88,7 @@
 			color-scheme: light;
 		}
 	}
-	.div:where(.dark, .dark-theme) {
+	.div:where(.dark) {
 		:global(&),
 		:global(:root:where(:has(&[data-is-root-theme='true']))) {
 			color-scheme: dark;

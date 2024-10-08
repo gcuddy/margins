@@ -2,3 +2,17 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 @import './lib/styles/color.css';
+
+.lucide {
+    width: 15px;
+    height: 15px;
+	stroke-width: 1;
+}
+
+.lucide * {
+	vector-effect: non-scaling-stroke;
+}
+
+* {
+    border-color: var(--gray-a5);
+}
