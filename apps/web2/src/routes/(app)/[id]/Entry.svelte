@@ -60,51 +60,63 @@
 		collapsedSize={0}
 		bind:pane={inspectorPane}
 	>
-		<aside class="w-full h-full px-4 py-5">
-			<DataList.Root orientation="vertical" size="2">
-				<DataList.Item>
-					<DataList.Label>Title</DataList.Label>
-					<DataList.Value>{@render title()}</DataList.Value>
-				</DataList.Item>
-				<DataList.Item>
-					<DataList.Label>Author</DataList.Label>
-					<DataList.Value>
-						{entry.author.pipe(O.getOrElse(() => '(unknown)'))}
-					</DataList.Value>
-				</DataList.Item>
-				<DataList.Item>
-					<DataList.Label>Image</DataList.Label>
-					<DataList.Value>
-						<Option option={entry.image}>
-							{#snippet some(image)}
-								<img src={image} alt="" />
-							{/snippet}
-							{#snippet none()}
-								(no image)
-							{/snippet}
-						</Option>
-					</DataList.Value>
-				</DataList.Item>
-				<DataList.Item>
-					<DataList.Label>Description</DataList.Label>
-					<DataList.Value>
-						{entry.summary.pipe(O.getOrElse(() => '(no description)'))}
-					</DataList.Value>
-				</DataList.Item>
-				<DataList.Item>
-					<DataList.Label>Published</DataList.Label>
-					<DataList.Value>
-						<Option option={entry.published}>
-							{#snippet some(published)}
-								{published.pipe(DateTime.formatLocal)}
-							{/snippet}
-							{#snippet none()}
-								(unknown)
-							{/snippet}
-						</Option>
-					</DataList.Value>
-				</DataList.Item>
-			</DataList.Root>
+		<aside class="w-full h-full flex flex-col">
+			<div class="flex items-center h-12 border-b shrink-0 px-4 py-2">
+				<Text size="1">inspector / annotations / headings</Text>
+			</div>
+			<div class="overflow-y-auto relative grow px-4 py-4">
+				<DataList.Root orientation="vertical" size="2">
+					<DataList.Item>
+						<DataList.Label>Title</DataList.Label>
+						<DataList.Value>{@render title()}</DataList.Value>
+					</DataList.Item>
+					<DataList.Item>
+						<DataList.Label>Author</DataList.Label>
+						<DataList.Value>
+							{entry.author.pipe(O.getOrElse(() => '(unknown)'))}
+						</DataList.Value>
+					</DataList.Item>
+					<DataList.Item>
+						<DataList.Label>Image</DataList.Label>
+						<DataList.Value>
+							<Option option={entry.image}>
+								{#snippet some(image)}
+									<img src={image} alt="" />
+								{/snippet}
+								{#snippet none()}
+									(no image)
+								{/snippet}
+							</Option>
+						</DataList.Value>
+					</DataList.Item>
+					<DataList.Item>
+						<DataList.Label>Type</DataList.Label>
+						<DataList.Value>
+							<!-- TODO!  -->
+							{entry.type ?? 'Article'}
+						</DataList.Value>
+					</DataList.Item>
+					<DataList.Item>
+						<DataList.Label>Description</DataList.Label>
+						<DataList.Value>
+							{entry.summary.pipe(O.getOrElse(() => '(no description)'))}
+						</DataList.Value>
+					</DataList.Item>
+					<DataList.Item>
+						<DataList.Label>Published</DataList.Label>
+						<DataList.Value>
+							<Option option={entry.published}>
+								{#snippet some(published)}
+									{published.pipe(DateTime.formatLocal)}
+								{/snippet}
+								{#snippet none()}
+									(unknown)
+								{/snippet}
+							</Option>
+						</DataList.Value>
+					</DataList.Item>
+				</DataList.Root>
+			</div>
 		</aside>
 	</Pane>
 </ResizablePaneGroup>
