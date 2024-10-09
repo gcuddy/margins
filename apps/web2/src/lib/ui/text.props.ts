@@ -1,16 +1,18 @@
-import { Record } from 'effect';
+import { highContrastVariant } from '$lib/props/high-contrast.prop';
 import type { Snippet } from 'svelte';
-import { tv } from 'tailwind-variants';
+import { tv, type VariantProps } from 'tailwind-variants';
 
-const as = ['span', 'div', 'label', 'p'] as const;
-const sizes = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
+export const as = ['span', 'div', 'label', 'p'] as const;
 
 export type Props = {
 	as?: (typeof as)[number];
-	children: Snippet;
-	size?: (typeof sizes)[number];
 	color?: AccentColor;
-	highContrast?: boolean;
+	children?: Snippet;
+} & VariantProps<typeof text>;
+
+export type AttributeProps = {
+	className: string;
+	'data-accent-color'?: AccentColor;
 };
 
 export const text = tv({
@@ -26,6 +28,7 @@ export const text = tv({
 			'7': 'text-7',
 			'8': 'text-8',
 			'9': 'text-9'
-		}
+		},
+		...highContrastVariant
 	}
 });

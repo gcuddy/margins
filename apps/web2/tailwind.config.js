@@ -1,3 +1,5 @@
+const plugin = require('tailwindcss/plugin');
+
 /**
  * Given a radix color, generates tailwind colors for css variables.
  * @template {string} T
@@ -58,6 +60,7 @@ export default {
 				2: '8px',
 				3: '12px',
 				4: '16px',
+				4.5: '20px',
 				5: '24px',
 				6: '32px',
 				7: '40px',
@@ -109,5 +112,11 @@ export default {
 			})
 		}
 	},
-	plugins: [require('@tailwindcss/typography')]
+	plugins: [
+		require('@tailwindcss/typography'),
+		plugin(function ({ addVariant }) {
+			addVariant('high-contrast', '&:where(.high-contrast)');
+			addVariant('accent-color', '&:where([data-accent-color])');
+		})
+	]
 };
