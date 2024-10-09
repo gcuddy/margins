@@ -6,12 +6,12 @@
 
 	interface Props extends DataListProps, HTMLAttributes<HTMLDListElement> {}
 
-	let { children, orientation, size, trim, class: className }: Props = $props();
+	let { children, orientation, size = '2', trim, class: className }: Props = $props();
 
 	setContext("DataList.Root.Orientation", orientation)
 </script>
 
-<Text>
+<Text size={size}>
 	{#snippet child({ props })}
 		<dl {...props} class={dataListRoot({ className: [props.className, className], orientation, size, trim })}>
 			{@render children?.()}

@@ -16,7 +16,7 @@ export type AttributeProps = {
 };
 
 export const text = tv({
-	base: [''],
+	base: ['rt-Text'],
 	variants: {
 		size: {
 			'1': 'text-1',

@@ -3,12 +3,13 @@
 	import { Pane, type PaneAPI } from 'paneforge';
 	import Text from '$lib/ui/text.svelte';
 	import type { Entry } from '@margins/api2/src/Domain/Entry';
-	import { Option as O } from 'effect';
+	import { Option as O, DateTime } from 'effect';
 	import Option from '../stream/option.svelte';
 	import { Heart } from 'svelte-radix';
 	import IconButton from '$lib/ui/icon-button.svelte';
 	import ResizablePaneGroup from '$lib/ui/resizable-pane-group.svelte';
 	import ResizableHandle from '$lib/ui/resizable-handle.svelte';
+	import * as DataList from '$lib/ui/data-list';
 
 	const { entry }: { entry: Entry } = $props();
 
@@ -59,8 +60,51 @@
 		collapsedSize={0}
 		bind:pane={inspectorPane}
 	>
-		<aside class="w-full h-full">
-			Title {@render title()}
+		<aside class="w-full h-full px-4 py-5">
+			<DataList.Root orientation="vertical" size="2">
+				<DataList.Item>
+					<DataList.Label>Title</DataList.Label>
+					<DataList.Value>{@render title()}</DataList.Value>
+				</DataList.Item>
+				<DataList.Item>
+					<DataList.Label>Author</DataList.Label>
+					<DataList.Value>
+						{entry.author.pipe(O.getOrElse(() => '(unknown)'))}
+					</DataList.Value>
+				</DataList.Item>
+				<DataList.Item>
+					<DataList.Label>Image</DataList.Label>
+					<DataList.Value>
+						<Option option={entry.image}>
+							{#snippet some(image)}
+								<img src={image} alt="" />
+							{/snippet}
+							{#snippet none()}
+								(no image)
+							{/snippet}
+						</Option>
+					</DataList.Value>
+				</DataList.Item>
+				<DataList.Item>
+					<DataList.Label>Description</DataList.Label>
+					<DataList.Value>
+						{entry.summary.pipe(O.getOrElse(() => '(no description)'))}
+					</DataList.Value>
+				</DataList.Item>
+				<DataList.Item>
+					<DataList.Label>Published</DataList.Label>
+					<DataList.Value>
+						<Option option={entry.published}>
+							{#snippet some(published)}
+								{published.pipe(DateTime.formatLocal)}
+							{/snippet}
+							{#snippet none()}
+								(unknown)
+							{/snippet}
+						</Option>
+					</DataList.Value>
+				</DataList.Item>
+			</DataList.Root>
 		</aside>
 	</Pane>
 </ResizablePaneGroup>

@@ -32,6 +32,10 @@ export const dataListRoot = tv({
 				'[--leading-trim-end:var(--data-list-leading-trim-end)]'
 			]
 		}
+	},
+	defaultVariants: {
+		orientation: 'horizontal',
+		size: '2'
 	}
 });
 
@@ -55,7 +59,7 @@ export const dataListLabel = tv({
 		}
 	},
 	defaultVariants: {
-		orientation: 'vertical'
+		orientation: 'horizontal'
 	}
 });
 
@@ -133,7 +137,7 @@ export const dataListItem = tv({
 		}
 	},
 	defaultVariants: {
-		orientation: 'vertical'
+		orientation: 'horizontal'
 	}
 });
 
