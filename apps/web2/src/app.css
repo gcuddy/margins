@@ -4,8 +4,8 @@
 @import './lib/styles/color.css';
 
 .lucide {
-    width: 15px;
-    height: 15px;
+	width: 15px;
+	height: 15px;
 	stroke-width: 1;
 }
 
@@ -14,5 +14,13 @@
 }
 
 * {
-    border-color: var(--gray-a5);
+	border-color: var(--gray-a5);
+}
+
+div[data-accent-color] {
+	--link-text-decoration-color: var(--accent-a6);
+
+	@supports (color: color-mix(in oklab, white, black)) {
+		--link-text-decoration-color: color-mix(in oklab, var(--accent-a6), var(--gray-a6));
+	}
 }

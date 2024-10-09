@@ -26,10 +26,10 @@ export const baseButton = tv({
 			]
 		},
 		size: {
-			'1': 'rounded-1 [--base-button-height:theme(spacing.6)]',
-			'2': 'rounded-2 [--base-button-height:theme(spacing.8)]',
-			'3': 'rounded-3 [--base-button-height:theme(spacing.10)]',
-			'4': 'rounded-4 [--base-button-height:theme(spacing.12)]'
+			'1': 'rounded-1 [--base-button-height:theme(spacing.5)]',
+			'2': 'rounded-2 [--base-button-height:theme(spacing.6)]',
+			'3': 'rounded-3 [--base-button-height:theme(spacing.7)]',
+			'4': 'rounded-4 [--base-button-height:theme(spacing.8)]'
 		}
 	}
 });

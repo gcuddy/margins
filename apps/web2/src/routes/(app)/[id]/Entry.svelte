@@ -10,20 +10,20 @@
 	const { entry }: { entry: Entry } = $props();
 </script>
 
-<div>
+<div class="py-2 border-b h-12 px-4">
 	<IconButton>
 		<Heart size={20} />
 	</IconButton>
 </div>
-<div class="overflow-auto mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20">
-	<article class="max-w-prose space-y-12">
+<div class="overflow-auto">
+	<article class="max-w-prose space-y-12 mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20">
 		<header class="flex flex-col justify-center">
 			<Heading size="7" class="text-center max-w-prose text-pretty">
 				{entry.title.pipe(O.getOrElse(() => '(no title)'))}
 			</Heading>
 		</header>
 
-		<section class="max-w-prose mx-auto">
+		<section class="max-w-prose mx-auto prose prose-gray">
 			<Option option={entry.html}>
 				{#snippet some(html)}
 					{@html html}

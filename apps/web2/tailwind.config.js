@@ -52,8 +52,62 @@ export default {
 				gray: makeRadixColors('gray'),
 				focus: makeRadixColors('focus'),
 				accent: makeRadixColors('accent')
-			}
+			},
+			spacing: {
+				1: '4px',
+				2: '8px',
+				3: '12px',
+				4: '16px',
+				5: '24px',
+				6: '32px',
+				7: '40px',
+				8: '48px',
+				9: '64px'
+			},
+			// TODO: css styilng of links
+			typography: () => ({
+				DEFAULT: {
+					css: {
+						a: {
+							color: 'var(--tw-prose-links)',
+							textDecorationLine: 'none',
+							textDecorationStyle: 'solid',
+							fontWeight: '400',
+							textDecorationThickness: 'min(2px, max(1px, 0.05em))',
+							textUnderlineOffset: 'calc(0.025em + 2px)',
+							textDecorationColor: 'var(--tw-prose-link-decoration-color)',
+							'&:hover': {
+								textDecorationLine: 'underline'
+							}
+							// idk how to do mixin?
+						}
+					}
+				},
+				gray: {
+					css: {
+						'--tw-prose-body': 'var(--gray-12)',
+						'--tw-prose-headings': 'var(--gray-12)',
+						'--tw-prose-lead': 'var(--gray-11)',
+						'--tw-prose-links': 'var(--accent-a11)',
+						'--tw-prose-link-decoration-color': 'var(--link-text-decoration-color)',
+						'--tw-prose-bold': 'var(--gray-12)',
+						'--tw-prose-counters': 'var(--gray-10)',
+						'--tw-prose-bullets': 'var(--gray-a6)',
+						'--tw-prose-hr': 'var(--gray-a6)',
+						'--tw-prose-quotes': 'var(--gray-12)',
+						'--tw-prose-quote-borders': 'var(--accent-a6)',
+						'--tw-prose-captions': 'var(--gray-11)',
+						'--tw-prose-kbd': 'var(--gray-12)',
+						'--tw-prose-kbd-shadows': 'var(--gray-12)',
+						'--tw-prose-code': 'var(--accent-a11)',
+						'--tw-prose-pre-code': 'var(--accent-a11)',
+						'--tw-prose-pre-bg': 'var(--accent-a3)',
+						'--tw-prose-th-borders': 'var(--gray-a6)',
+						'--tw-prose-td-borders': 'var(--gray-a6)'
+					}
+				}
+			})
 		}
 	},
-	plugins: []
+	plugins: [require('@tailwindcss/typography')]
 };
