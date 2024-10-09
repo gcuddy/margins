@@ -12,7 +12,7 @@
 
 <div>
 	<IconButton>
-		<Heart size={15} />
+		<Heart size={20} />
 	</IconButton>
 </div>
 <div class="overflow-auto mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20">
