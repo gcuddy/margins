@@ -10,10 +10,12 @@
 	import ResizablePaneGroup from '$lib/ui/resizable-pane-group.svelte';
 	import ResizableHandle from '$lib/ui/resizable-handle.svelte';
 	import * as DataList from '$lib/ui/data-list';
+	import PanelRight from 'lucide-svelte/icons/panel-right';
 
 	const { entry }: { entry: Entry } = $props();
 
-	let inspectorPane = $state() as PaneAPI;
+	let inspectorPane = $state<PaneAPI>();
+	let inspectorIsCollapsed = $state(false);
 </script>
 
 {#snippet title()}
@@ -23,10 +25,21 @@
 <ResizablePaneGroup direction="horizontal">
 	<Pane defaultSize={80}>
 		<div class="flex flex-col h-full grow relative min-w-0">
-			<div class="py-2 border-b h-12 px-4 shrink-0">
+			<div class="py-2 justify-between flex items-center border-b h-12 px-4 shrink-0">
 				<IconButton>
 					<Heart size={20} />
 				</IconButton>
+				{#if inspectorIsCollapsed}
+					<IconButton
+						variant="ghost"
+						color="gray"
+						onclick={() => {
+							inspectorPane?.expand();
+						}}
+					>
+						<PanelRight />
+					</IconButton>
+				{/if}
 			</div>
 			<div class="overflow-y-auto relative grow">
 				<article class="max-w-prose space-y-12 mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20">
@@ -59,6 +72,8 @@
 		collapsible
 		collapsedSize={0}
 		bind:pane={inspectorPane}
+		onCollapse={() => (inspectorIsCollapsed = true)}
+		onExpand={() => (inspectorIsCollapsed = false)}
 	>
 		<aside class="w-full h-full flex flex-col">
 			<div class="flex items-center h-12 border-b shrink-0 px-4 py-2">
