@@ -13,7 +13,7 @@
 
 <Text size={size}>
 	{#snippet child({ props })}
-		<dl {...props} class={dataListRoot({ className: [props.className, className], orientation, size, trim })}>
+		<dl {...props} class={dataListRoot({ className: [props.class, className], orientation, size, trim })}>
 			{@render children?.()}
 		</dl>
 	{/snippet}

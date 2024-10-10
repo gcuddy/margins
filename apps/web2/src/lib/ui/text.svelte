@@ -19,7 +19,7 @@
 </script>
 
 {#if child}
-	{@render child({ props: { className, 'data-accent-color': color } })}
+	{@render child({ props: { class: className, 'data-accent-color': color } })}
 {:else}
 	<svelte:element this={as} class={className} data-accent-color={color}>
 		{@render children?.()}

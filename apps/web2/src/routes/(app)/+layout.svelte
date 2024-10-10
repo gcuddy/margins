@@ -6,6 +6,7 @@
 	import PanelLeft from 'lucide-svelte/icons/panel-left';
 	import IconButton from '$lib/ui/icon-button.svelte';
 	import { fly } from 'svelte/transition';
+	import Nav from './nav.svelte';
 
 	let { children }: { children: Snippet } = $props();
 	let paneOne = $state() as PaneAPI;
@@ -23,9 +24,7 @@
 		onCollapse={() => (sidebarCollapsed = true)}
 		onExpand={() => (sidebarCollapsed = false)}
 	>
-		<nav>
-			<a href="/stream">Library</a>
-		</nav>
+	<Nav />
 	</Pane>
 	{#if sidebarCollapsed}
 		<div class="h-full w-2"></div>

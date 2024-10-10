@@ -11,7 +11,7 @@ export type Props = {
 } & VariantProps<typeof text>;
 
 export type AttributeProps = {
-	className: string;
+	class: string;
 	'data-accent-color'?: AccentColor;
 };
 
