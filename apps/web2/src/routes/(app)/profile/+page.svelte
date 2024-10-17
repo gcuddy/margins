@@ -1,4 +1,3 @@
-<!-- plan: let's get it working, then add effect rx + replicache and eventaully xstate -->
 <script lang="ts">
 	import { Replicache } from 'replicache';
 	import { useRx, useRxValue } from './rx.svelte';
@@ -31,9 +30,7 @@
 	{entries.value.data?.length} entries
 	{#each entries.value.data ?? [] as entry}
 		<a href={`/${entry.id}`}>
-			{entry.title.pipe(
-				Option.getOrElse(() => 'no title')
-			)}
+			{entry.title.pipe(Option.getOrElse(() => 'no title'))}
 		</a>
 	{/each}
 {/if}
