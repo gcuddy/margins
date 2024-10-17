@@ -64,11 +64,10 @@ module.exports = {
         "no-undef": "off",
       },
     },
-    {
-      extends: ["plugin:vitest/recommended"],
-      files: ["**/*.{test,spec}.[jt]s?(x)"],
-      plugins: ["vitest"],
-    },
+    //   extends: ["plugin:vitest/recommended"],
+    //   files: ["**/*.{test,spec}.[jt]s?(x)"],
+    //   plugins: ["vitest"],
+    // },
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
