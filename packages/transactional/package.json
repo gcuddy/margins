@@ -20,5 +20,8 @@
 		"react-email": "3.0.1",
 		"resend": "^4.0.0",
 		"tailwind-variants": "^0.2.1"
+	},
+	"devDependencies": {
+		"eslint": "~8.57.1"
 	}
 }

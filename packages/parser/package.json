@@ -40,6 +40,7 @@
 		"@margins/tsconfig": "workspace:*",
 		"@types/bun": "^1.1.1",
 		"@types/inquirer": "^9.0.7",
+		"eslint": "~8.57.1",
 		"inquirer": "^11.0.2",
 		"ora": "^8.0.1",
 		"typescript": "^5.2.2",

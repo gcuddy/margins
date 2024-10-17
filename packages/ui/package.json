@@ -52,6 +52,7 @@
 		"@melt-ui/pp": "^0.3.2",
 		"@testing-library/jest-dom": "^6.4.2",
 		"@testing-library/svelte": "^5.2.1",
+		"eslint": "~8.57.1",
 		"svelte": "^5.0.0-next.242",
 		"typescript": "^5.2.2"
 	}

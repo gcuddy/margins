@@ -38,6 +38,7 @@
 	},
 	"devDependencies": {
 		"@prisma/client": "^5.11.0",
+		"eslint": "~8.57.1",
 		"kysely": "^0.27.2",
 		"kysely-planetscale": "^1.4.0",
 		"prisma-kysely": "^1.8.0",

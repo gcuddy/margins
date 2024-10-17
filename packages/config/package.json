@@ -21,7 +21,7 @@
     "@tailwindcss/typography": "^0.5.15",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
     "@typescript-eslint/parser": "^8.6.0",
-    "eslint": "^9.10.0",
+    "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-playwright": "^1.5.4",
     "eslint-plugin-sort-destructure-keys": "^2.0.0",

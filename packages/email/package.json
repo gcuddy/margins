@@ -14,5 +14,8 @@
 	"dependencies": {
 		"dotenv": "^16.4.5",
 		"resend": "^4.0.0"
+	},
+	"devDependencies": {
+		"eslint": "~8.57.1"
 	}
 }

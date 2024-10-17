@@ -30,6 +30,7 @@
 	"devDependencies": {
 		"@margins/config": "workspace:*",
 		"@margins/tsconfig": "workspace:*",
+		"eslint": "~8.57.1",
 		"typescript": "^5.2.2",
 		"vitest": "^2.1.1"
 	},
