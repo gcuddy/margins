@@ -1,0 +1,183 @@
+.rt-TextFieldRoot {
+
+  @supports selector(:has(*)) {
+    &:where(:has(.rt-TextFieldInput:focus)) {
+      outline: 2px solid var(--text-field-focus-color);
+      outline-offset: -1px;
+    }
+  }
+
+  @supports not selector(:has(*)) {
+    &:where(:focus-within) {
+      outline: 2px solid var(--text-field-focus-color);
+      outline-offset: -1px;
+    }
+  }
+
+  &::selection {
+    background-color: var(--text-field-selection-color);
+  }
+}
+
+.rt-TextFieldInput {
+  /*
+   * Flex layout edge case: when the parent container of TextFieldRoot
+   * is smaller than the intrinsic width of TextFieldInput with all the slots,
+   * this actually causes the input to shrink the available width.
+   */
+  width: 100%;
+
+  /* Fix date inputs alignment in Chrome and Safari */
+  display: flex;
+  align-items: center;
+
+  /* Inherit alignment from root in case it's overriden */
+  text-align: inherit;
+
+  /*
+   * Hide type="number" input stepper because it's small, ugly, hard to use, and if
+   * needed, a nicer one can be easily implemented with own buttons in the Slot part.
+   */
+  &:where([type='number']) {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  &::-webkit-inner-spin-button {
+    appearance: none;
+  }
+
+  /* Remove the native cancel button */
+  &::-webkit-search-cancel-button {
+    appearance: none;
+  }
+
+  &::selection {
+    background-color: var(--text-field-selection-color);
+  }
+
+  /*
+   * Style the date inputs:
+   * https://codepen.io/andresdamelio/pen/KKbvdYb
+   */
+
+  /* Chrome’s calendar and time icons */
+  &::-webkit-calendar-picker-indicator {
+    box-sizing: content-box;
+    width: var(--text-field-native-icon-size);
+    height: var(--text-field-native-icon-size);
+    padding: var(--space-1);
+    margin-left: 0;
+    margin-right: calc(var(--space-1) * -1);
+    border-radius: calc(var(--text-field-border-radius) - 2px);
+  }
+
+  /* Chrome’s calendar icon */
+  &:where(:not([type='time']))::-webkit-calendar-picker-indicator {
+    margin-left: var(--space-1);
+  }
+
+  &::-webkit-calendar-picker-indicator:where(:hover) {
+    background-color: var(--gray-a3);
+  }
+
+  &::-webkit-calendar-picker-indicator:where(:focus-visible) {
+    outline: 2px solid var(--text-field-focus-color);
+  }
+
+  /* Remove focus ring from date fields and use the selection color */
+  &::-webkit-datetime-edit-ampm-field,
+  &::-webkit-datetime-edit-day-field,
+  &::-webkit-datetime-edit-hour-field,
+  &::-webkit-datetime-edit-millisecond-field,
+  &::-webkit-datetime-edit-minute-field,
+  &::-webkit-datetime-edit-month-field,
+  &::-webkit-datetime-edit-second-field,
+  &::-webkit-datetime-edit-week-field,
+  &::-webkit-datetime-edit-year-field {
+    &:where(:focus) {
+      background-color: var(--text-field-selection-color);
+      color: inherit;
+      outline: none;
+    }
+  }
+
+  @supports selector(:has(*)) {
+    &:where(:autofill, [data-com-onepassword-filled]) {
+      /* Reliably removes native autofill colors */
+      background-clip: text;
+      -webkit-text-fill-color: var(--gray-12);
+    }
+  }
+}
+
+.rt-TextFieldSlot {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  cursor: text;
+
+  /* A slot that is not a right-side slot goes on the left */
+  &:where(:not([data-side='right'])) {
+    order: -1;
+    margin-left: calc(var(--text-field-border-width) * -1);
+    margin-right: 0;
+  }
+
+  &:where([data-side='right']),
+  /*
+   * A slot followed by a left-side slot that is not a left-side slot itself goes on the right.
+   * In simple terms, this makes it so that two slots without an explicit side work automatically.
+   */
+  :where(&:not([data-side='right']))~&:where(:not([data-side='left'])) {
+    order: 0;
+    margin-left: 0;
+    margin-right: calc(var(--text-field-border-width) * -1);
+  }
+}
+
+/***************************************************************************************************
+ *                                                                                                 *
+ * SIZES                                                                                           *
+ *                                                                                                 *
+ ***************************************************************************************************/
+
+.rt-TextFieldRoot {
+  box-sizing: border-box;
+  height: var(--text-field-height);
+  padding: var(--text-field-border-width);
+  border-radius: var(--text-field-border-radius);
+}
+
+.rt-TextFieldInput {
+  /* Clip text to the border radius of the Root */
+  border-radius: calc(var(--text-field-border-radius) - var(--text-field-border-width));
+
+  /* Equivalent to padding-left, but doesn't cut off long values when cursor is at the end. */
+  text-indent: var(--text-field-padding);
+
+  &:where([type='date'], [type='datetime-local'], [type='time'], [type='week'], [type='month']) {
+    /* Safari is buggy with text-indent for these input types */
+    text-indent: 0;
+    padding-left: var(--text-field-padding);
+    padding-right: var(--text-field-padding);
+  }
+
+  /* Remove border-radius and text-indent/padding on the left if there’s a left-side slot */
+  &:where(:has(~ .rt-TextFieldSlot:not([data-side='right']))) {
+    text-indent: 0;
+    padding-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  /* Remove border-radius and padding on the right if there’s a right-side slot */
+  /* prettier-ignore */
+  &:where(:has(~ .rt-TextFieldSlot[data-side='right'],
+      ~ .rt-TextFieldSlot:not([data-side='right']) ~ .rt-TextFieldSlot:not([data-side='left']))) {
+    padding-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
