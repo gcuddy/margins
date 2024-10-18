@@ -146,7 +146,7 @@ export class GoogleBooksSearchError extends S.TaggedError<GoogleBooksSearchError
 export class GoogleBooksSearch extends S.TaggedRequest<GoogleBooksSearch>()(
   "GoogleBooksSearch",
   {
-    failure: GoogleBooksSearchError,
+    failure: S.Never,
     success: GoogleBookVolumes,
     payload: {
       query: S.String,

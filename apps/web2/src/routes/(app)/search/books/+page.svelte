@@ -1,6 +1,7 @@
 <script>
 	import { MagnifyingGlass } from 'svelte-radix';
 	import { Debounced } from 'runed';
+	import GoogleBooksSearch from './google-books-search.svelte';
 
 	let search = $state('');
 	const debounced = new Debounced(() => search, 500);
@@ -16,6 +17,7 @@
 		/>
 	</div>
 	<div>
-		{debounced.current}
+		<!-- {debounced.current} -->
+		 <GoogleBooksSearch query={debounced.current} />
 	</div>
 </div>
