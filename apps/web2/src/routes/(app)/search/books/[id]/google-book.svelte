@@ -10,6 +10,7 @@
 		GoogleBookVolume
 	} from '@margins/api2/src/Rpc/Integrations/GoogleBooks/schema';
 	import { Effect } from 'effect';
+	import { receive, send } from '../../../../../lib/transition';
 
 	let { id }: { id: string } = $props();
 	console.log('id', id);
@@ -21,7 +22,7 @@
 				new GoogleBooksGet({
 					id
 				})
-			).pipe(Effect.tapErrorCause(Effect.logError));
+			).pipe(Effect.tapErrorCause(Effect.logError), Effect.withRequestCaching(true));
 			return volumes;
 		});
 
@@ -34,8 +35,13 @@
 	{#if book.volumeInfo}
 		<div class="overflow-auto flex flex-col px-4 py-2 select-text">
 			<div class="flex justify-center gap-4">
-				<img src={book.volumeInfo.imageLinks?.thumbnail} alt={book.volumeInfo.title} />
-				<div class="flex flex-col gap-2">
+				<img
+					src={book.volumeInfo.imageLinks?.thumbnail}
+					alt={book.volumeInfo.title}
+					in:send={{ key: `image-${book.id}` }}
+					out:receive={{ key: `image-${book.id}` }}
+				/>
+				<div class="flex flex-col gap-2" in:send={{ key: 'title' }} out:receive={{ key: 'title' }}>
 					<Heading>{book.volumeInfo.title}</Heading>
 					<Text>{book.volumeInfo.authors?.join(', ')}</Text>
 				</div>

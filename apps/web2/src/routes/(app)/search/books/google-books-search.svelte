@@ -7,6 +7,7 @@
 		GoogleBookVolume
 	} from '@margins/api2/src/Rpc/Integrations/GoogleBooks/schema';
 	import { Effect } from 'effect';
+	import { receive, send } from '../../../../lib/transition';
 
 	let { query }: { query: string } = $props();
 
@@ -18,7 +19,7 @@
 				new GoogleBooksSearch({
 					query
 				})
-			).pipe(Effect.tapErrorCause(Effect.logError));
+			).pipe(Effect.tapErrorCause(Effect.logError), Effect.withRequestCaching(true));
 			console.log({ volumes });
 			return volumes;
 		});
@@ -30,10 +31,19 @@
 	<EntryListItem
 		href={`/search/books/${item.id}`}
 		class="py-2 px-4"
-		image={item.volumeInfo.imageLinks?.thumbnail ?? ''}
 		title={item.volumeInfo.title ?? ''}
 		author={item.volumeInfo.authors?.join(', ') ?? ''}
-	/>
+	>
+		{#snippet image()}
+			<img
+				class="w-8 h-9 object-cover rounded-1"
+				in:send={{ key: `image-${item.id}` }}
+				out:receive={{ key: `image-${item.id}` }}
+				src={item.volumeInfo.imageLinks?.thumbnail}
+				alt={item.volumeInfo.title}
+			/>
+		{/snippet}
+	</EntryListItem>
 {/snippet}
 
 {#await promise}
