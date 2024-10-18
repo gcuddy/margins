@@ -3,13 +3,9 @@
 	import Text from '$lib/ui/text.svelte';
 	import { MagnifyingGlass, Plus, Archive } from 'svelte-radix';
 	import { tv } from 'tailwind-variants';
-	import type { Component, SvelteComponent } from 'svelte';
 
 	const item = tv({
-		base: [
-            'group/item flex items-center gap-2',
-            'hover:bg-gray-3 px-2 py-2 rounded-2',
-        ]
+		base: ['group/item flex items-center gap-2', 'hover:bg-gray-3 px-2 py-2 rounded-2']
 	});
 </script>
 
@@ -29,7 +25,12 @@
 		<span class="shrink truncate">User / workspace here</span>
 		<div class="flex items-center gap-2">
 			<IconButton size="1" variant="ghost">
-				<MagnifyingGlass class="size-4" />
+				{#snippet child({ props })}
+					<a href="/search/books" {...props}>
+						<MagnifyingGlass class="size-4" />
+						<span class="sr-only">Search</span>
+					</a>
+				{/snippet}
 			</IconButton>
 			<IconButton size="1">
 				<Plus class="size-4" />
