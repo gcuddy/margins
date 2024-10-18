@@ -29,6 +29,9 @@ export const text = tv({
 			'8': 'text-8',
 			'9': 'text-9'
 		},
+		truncate: {
+			true: 'truncate'
+		},
 		...highContrastVariant
 	}
 });

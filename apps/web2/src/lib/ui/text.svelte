@@ -9,19 +9,22 @@
 		size,
 		color,
 		highContrast,
-		child
+		child,
+		truncate
 	}: Props & {
 		child?: Snippet<[{ props: AttributeProps }]>;
 	} = $props();
 
-	const className = $derived(text({ size, highContrast }));
-	$inspect({ className });
+	const attributes = $derived({
+		class: text({ size, highContrast, truncate }),
+		'data-accent-color': color
+	});
 </script>
 
 {#if child}
-	{@render child({ props: { class: className, 'data-accent-color': color } })}
+	{@render child({ props: attributes })}
 {:else}
-	<svelte:element this={as} class={className} data-accent-color={color}>
+	<svelte:element this={as} {...attributes}>
 		{@render children?.()}
 	</svelte:element>
 {/if}
