@@ -7,8 +7,8 @@
 	const debounced = new Debounced(() => search, 500);
 </script>
 
-<div class="px-4 divide-y flex flex-col h-full">
-	<div class="flex gap-2 items-center py-3">
+<div class=" divide-y flex flex-col h-full">
+	<div class="px-4 flex gap-2 items-center py-3">
 		<MagnifyingGlass class="size-5" />
 		<input
 			type="text"

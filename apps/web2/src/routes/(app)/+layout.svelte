@@ -13,7 +13,7 @@
 	let sidebarCollapsed = $state(false);
 </script>
 
-<div class="contents" id="app-root">
+<div class="contents select-none" id="app-root">
 	<ResizablePaneGroup direction="horizontal">
 		<Pane
 			defaultSize={20}
@@ -57,7 +57,6 @@
 
 <style>
 	#app-root {
-		user-select: none;
 		user-drag: none;
 		app-region: no-drag;
 	}

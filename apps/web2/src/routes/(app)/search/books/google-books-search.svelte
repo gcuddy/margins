@@ -28,7 +28,8 @@
 
 {#snippet item(item: GoogleBookVolume)}
 	<EntryListItem
-		class="py-2"
+		href={`/search/books/${item.id}`}
+		class="py-2 px-4"
 		image={item.volumeInfo.imageLinks?.thumbnail ?? ''}
 		title={item.volumeInfo.title ?? ''}
 		author={item.volumeInfo.authors?.join(', ') ?? ''}

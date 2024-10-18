@@ -6,16 +6,17 @@
 		image: string;
 		title: string;
 		author: string;
+        href?: string;
 		class?: string;
 	};
 
-	let { image, title, author, class: className }: Props = $props();
+	let { image, title, author, class: className, href }: Props = $props();
 	const root = tv({
-		base: 'flex gap-3 items-center'
+		base: 'flex gap-3 items-center hover:backdrop-brightness-105'
 	});
 </script>
 
-<div class={root({ class: className })}>
+<svelte:element this={href ? 'a' : 'div'} {href} class={root({ class: className })}>
 	{#if image}
 		<img src={image} class="w-8 h-9 object-cover rounded-1" alt={title} />
 	{:else}
@@ -30,4 +31,4 @@
 			{author}
 		</Text>
 	</div>
-</div>
+</svelte:element>
