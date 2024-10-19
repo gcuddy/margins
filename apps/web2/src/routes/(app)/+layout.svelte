@@ -33,7 +33,7 @@
 		<ResizableHandle class="translate-x-px w-0.5 my-2 bg-transparent" />
 		<Pane defaultSize={80} class="flex flex-col min-w-0">
 			<main
-				class="my-2 mr-2 flex flex-col flex-auto overflow-hidden items-stretch rounded-2 relative border bg-gray-2a"
+				class="my-2 mr-2 flex flex-col flex-auto overflow-hidden items-stretch rounded-2 relative border bg-gray-1 dark:bg-gray-2a"
 			>
 				{#if sidebarCollapsed}
 					<div in:fly={{ x: -16, duration: 300, delay: 100 }} class="absolute bottom-4 left-4 z-10">

@@ -8,7 +8,7 @@
 	data-gray-color="sand"
 	data-has-background="true"
 	data-accent-color="orange"
-	class="dark radix-themes text-3 font-default font-normal h-screen w-screen flex flex-col"
+	class="radix-themes text-3 font-default font-normal h-screen w-screen flex flex-col"
 >
 	{@render children()}
 </div>
@@ -37,7 +37,7 @@
 	/* * * * * * * * * * * * * * * * * * * */
 
 	:where(div) {
-		--color-background: white;
+		--color-background: var(--gray-2);
 		--color-overlay: var(--black-a6);
 		--color-panel-solid: white;
 		--color-panel-translucent: rgba(255, 255, 255, 0.7);

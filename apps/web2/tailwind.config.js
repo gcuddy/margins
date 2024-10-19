@@ -12,7 +12,7 @@ function makeRadixColors(color) {
     output[`${i}`] = `var(--${color}-${i})`;
     output[`${i}a`] = `var(--${color}-a${i})`;
   }
-  console.log('radix output', output);
+  output.contrast = `var(--${color}-contrast)`;
   return output;
 }
 

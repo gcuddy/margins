@@ -1,4 +1,4 @@
-import { Array, Chunk, Console, Effect, flow, Option, pipe, Sink, Stream, String } from 'effect';
+import { Array, Chunk, Effect, flow, Option, Sink, Stream } from 'effect';
 import * as R from 'replicache';
 import type { Model } from '@effect/sql';
 import { Schema } from '@effect/schema';
@@ -183,4 +183,4 @@ export const makeRepo = <S extends Model.AnyNoContext & { readonly key: string }
 		} as const;
 
 		// return { content, contentFn } as const;
-	}).pipe(Effect.provide(Replicache.Live));
+	}).pipe(Effect.provide(Replicache.Default));

@@ -3,7 +3,7 @@ import { makeReplicacheRepository } from './model.svelte';
 // import { Entries as E } from "@margins/api2"
 // TODO: actually use pnpm workspace / proper export lol
 import { Rx } from '@effect-rx/rx';
-import { Replicache } from './Replicache';
+import { Replicache } from '$lib/services/Replicache';
 import { Schema } from '@effect/schema';
 
 import { Entry } from '@margins/api2/src/Domain/Entry';
@@ -28,7 +28,7 @@ const make = Effect.gen(function* () {
 });
 
 export class Entries extends Effect.Tag('Entries')<Entries, Effect.Effect.Success<typeof make>>() {
-	static Live = Layer.effect(Entries, make).pipe(Layer.provide(Replicache.Live));
+	static Live = Layer.effect(Entries, make).pipe(Layer.provide(Replicache.Default));
 }
 
 export const entriesRuntime = Rx.runtime(Entries.Live);

@@ -1,5 +1,6 @@
 import { highContrastVariant } from '$lib/props/high-contrast.prop';
 import type { Snippet } from 'svelte';
+import type { HTMLAttributes } from 'svelte/elements';
 import { tv, type VariantProps } from 'tailwind-variants';
 
 export const as = ['span', 'div', 'label', 'p'] as const;
@@ -8,7 +9,8 @@ export type Props = {
 	as?: (typeof as)[number];
 	color?: AccentColor;
 	children?: Snippet;
-} & VariantProps<typeof text>;
+} & VariantProps<typeof text> &
+	HTMLAttributes<HTMLSpanElement>;
 
 export type AttributeProps = {
 	class: string;

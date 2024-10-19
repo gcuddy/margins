@@ -5,7 +5,7 @@
 	import type { Entry } from '@margins/api2/src/Domain/Entry';
 	import { Option as O, DateTime } from 'effect';
 	import Option from '../stream/option.svelte';
-	import { Heart } from 'svelte-radix';
+	import { DrawingPin } from 'svelte-radix';
 	import IconButton from '$lib/ui/icon-button.svelte';
 	import ResizablePaneGroup from '$lib/ui/resizable-pane-group.svelte';
 	import ResizableHandle from '$lib/ui/resizable-handle.svelte';
@@ -26,8 +26,8 @@
 	<Pane defaultSize={80}>
 		<div class="flex flex-col h-full grow relative min-w-0">
 			<div class="py-2 justify-between flex items-center border-b h-12 px-4 shrink-0">
-				<IconButton>
-					<Heart size={20} />
+				<IconButton variant="ghost">
+					<DrawingPin size={20} />
 				</IconButton>
 				{#if inspectorIsCollapsed}
 					<IconButton
@@ -42,7 +42,7 @@
 				{/if}
 			</div>
 			<div class="overflow-y-auto relative grow">
-				<article class="max-w-prose space-y-12 mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20">
+				<article class="max-w-prose space-y-12 mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20 select-text">
 					<header class="flex flex-col justify-center">
 						<Heading size="7" class="text-center max-w-prose text-pretty">
 							{@render title()}
