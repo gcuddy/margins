@@ -15,7 +15,7 @@
 
 	let { image, imageSrc, title, author, class: className, href }: Props = $props();
 	const root = tv({
-		base: 'flex gap-3 items-center hover:backdrop-brightness-105'
+		base: 'flex gap-3 items-center hover:backdrop-brightness-[.98] dark:hover:backdrop-brightness-110'
 	});
 </script>
 

@@ -9,7 +9,9 @@
 <div class="divide-y flex flex-col h-full">
 	<form class="px-4 flex gap-2 items-center py-3">
 		<MagnifyingGlass class="size-5" />
+		<!-- svelte-ignore a11y_autofocus -->
 		<input
+			autofocus
 			type="text"
 			name="q"
 			class="text-6 bg-transparent outline-none text-gray-12 w-full py-2"

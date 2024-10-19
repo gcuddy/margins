@@ -27,7 +27,7 @@
 				<!-- TODO: figure out why in/out not working -->
 				<div class="flex m-4 relative justify-center">
 					<img
-						class="w-[100px] h-auto rounded-2"
+						class="max-w-[100px] h-auto rounded-2 object-cover"
 						src={book.volumeInfo.imageLinks?.thumbnail}
 						alt={book.volumeInfo.title}
 						in:send={{ key: `image-${book.id}` }}
