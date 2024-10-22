@@ -8,7 +8,7 @@
 	data-gray-color="sand"
 	data-has-background="true"
 	data-accent-color="orange"
-	class="radix-themes text-3 font-default font-normal h-screen w-screen flex flex-col"
+	class="dark radix-themes text-3 font-default font-normal h-screen w-screen flex flex-col"
 >
 	{@render children()}
 </div>

@@ -1,44 +1,49 @@
-/* eslint-disable require-yield */
 import * as Runner from '@effect/platform/WorkerRunner';
 import * as BrowserRunner from '@effect/platform-browser/BrowserWorkerRunner';
-import { Requests } from './schema';
+import { Requests, SearchError } from './schema';
 import { Console, Effect, Layer, Option, pipe } from 'effect';
-import FlexSearch from 'flexsearch';
-// import { Replicache } from 'replicache';
 import { Schema } from '@effect/schema';
 import { Entry } from '@margins/api2/src/Domain/Entry';
-import { Replicache } from '../../routes/(app)/profile/Replicache';
-
-// const index = new FlexSearch.Index({ tokenize: 'forward' });
-// // const replicache = new Replicache({
-// // 	name: 'n0za7qlnp1rca3s',
-// // 	licenseKey: 'ld43a69e6baa14a1a85eb6bb09661739e'
-// // });
+import { Replicache } from '$lib/services/Replicache';
+import { create, insert, remove, search, update } from '@orama/orama';
 
 const decode = Schema.decodeUnknownEither(Entry);
 
 const makeSearchIndex = Effect.gen(function* () {
 	const replicache = yield* Replicache;
-	const index = new FlexSearch.Index({ tokenize: 'forward' });
+	const db = create({
+		schema: {
+			// for now, let's do this...
+			title: 'string',
+			author: 'string',
+			text: 'string'
+		}
+	});
 
 	const u = replicache.experimentalWatch(
 		(diffs) => {
 			for (const diff of diffs) {
-				if (diff.op === 'add') {
+				if (diff.op === 'add' || diff.op === 'change') {
 					const decoded = decode(diff.newValue);
 					if (decoded._tag === 'Right') {
-						let search = '';
-						if (Option.isSome(decoded.right.title)) {
-							search = decoded.right.title.value;
+						if (diff.op === 'add') {
+							insert(db, {
+								id: diff.key,
+								author: decoded.right.author.pipe(Option.getOrUndefined),
+								text: decoded.right.text.pipe(Option.getOrUndefined),
+								title: decoded.right.title.pipe(Option.getOrUndefined)
+							});
+						} else {
+							update(db, diff.key, {
+								id: diff.key,
+								author: decoded.right.author.pipe(Option.getOrUndefined),
+								text: decoded.right.text.pipe(Option.getOrUndefined),
+								title: decoded.right.title.pipe(Option.getOrUndefined)
+							});
 						}
-						if (Option.isSome(decoded.right.author)) {
-							search += ' ' + decoded.right.author.value;
-						}
-						if (Option.isSome(decoded.right.text)) {
-							search += ' ' + decoded.right.text.value;
-						}
-						index.add(diff.key, search);
 					}
+				} else {
+					remove(db, diff.key);
 				}
 			}
 		},
@@ -48,22 +53,21 @@ const makeSearchIndex = Effect.gen(function* () {
 		}
 	);
 
-	yield* Effect.addFinalizer((exit) => {
-		return pipe(
-			Effect.sync(() => u()),
-			Effect.tap(() => Console.log('running rep finalizer for initialmessage', exit))
-		);
-	});
+	yield *
+		Effect.addFinalizer((exit) => {
+			return pipe(
+				Effect.sync(() => u()),
+				Effect.tap(() => Console.log('running rep finalizer for initialmessage', exit))
+			);
+		});
 
-	return { index } as const;
+	return { db } as const;
 });
 
-export class SearchIndex extends Effect.Tag('SearchIndex')<
-	SearchIndex,
-	Effect.Effect.Success<typeof makeSearchIndex>
->() {
-	static Live = Layer.scoped(SearchIndex, makeSearchIndex).pipe(Layer.provide(Replicache.Live));
-}
+export class SearchIndex extends Effect.Service<SearchIndex>()('SearchIndex', {
+	scoped: makeSearchIndex,
+	dependencies: [Replicache.Default]
+}) {}
 
 // todo: finalizers etc
 
@@ -74,47 +78,27 @@ Runner.layerSerialized(Requests, {
 	Search: ({ q }) =>
 		Effect.gen(function* () {
 			yield* Effect.log('SEARCHING FROM A WORKER!');
-			const { index } = yield * SearchIndex;
-			console.log({ index });
-			const x = index.search(q) as string[];
-			return x;
+			const { db } = yield* SearchIndex;
+			console.log({ db });
+			const results = yield* Effect.tryPromise({
+				try: async () => {
+					const searchResult = await search(db, { term: q });
+					return searchResult;
+				},
+				catch: () => new SearchError()
+			});
+			console.log({ results });
+			return results.hits.map((hit) => hit.id);
 		}),
 	InitialMessage: () =>
 		Effect.gen(function* () {
 			console.log('Hello from worker');
-			const { index } = yield * SearchIndex;
-			console.log({ index });
-
-			// const u = replicache.experimentalWatch(
-			// 	(diffs) => {
-			// 		for (const diff of diffs) {
-			// 			if (diff.op === 'add') {
-			// 				const decoded = decode(diff.newValue);
-			// 				if (decoded._tag === 'Right') {
-			// 					if (Option.isSome(decoded.right.title)) {
-			// 						index.add(diff.key, decoded.right.title.value);
-			// 					}
-			// 				}
-			// 			}
-			// 		}
-			// 	},
-			// 	{
-			// 		prefix: 'entries',
-			// 		initialValuesInFirstDiff: true
-			// 	}
-			// );
-
-			// yield *
-			// 	Effect.addFinalizer((exit) => {
-			// 		return pipe(
-			// 			Effect.sync(() => u()),
-			// 			Effect.tap(() => Console.log('running rep finalizer for initialmessage', exit))
-			// 		);
-			// 	});
+			const { db } = yield* SearchIndex;
+			console.log({ db });
 		})
 }).pipe(
 	Layer.provide(BrowserRunner.layer),
-	Layer.provide(SearchIndex.Live),
+	Layer.provide(SearchIndex.Default),
 	Layer.launch,
 	Effect.runPromise
 );

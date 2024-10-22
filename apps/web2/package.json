@@ -49,6 +49,7 @@
 		"@effect/schema": "^0.75.5",
 		"@effect/sql": "^0.16.6",
 		"@margins/api2": "workspace:^",
+		"@orama/orama": "^3.0.1",
 		"@radix-ui/colors": "^3.0.0",
 		"clsx": "^2.1.1",
 		"effect": "^3.9.2",
