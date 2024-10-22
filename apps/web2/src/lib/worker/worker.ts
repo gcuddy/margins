@@ -5,7 +5,11 @@ import { Console, Effect, Layer, Option, pipe } from 'effect';
 import { Schema } from '@effect/schema';
 import { Entry } from '@margins/api2/src/Domain/Entry';
 import { Replicache } from '$lib/services/Replicache';
-import { create, insert, remove, search, update } from '@orama/orama';
+import { create, insert, remove, update, search } from '@orama/orama';
+import {
+	// searchWithHighlight,
+	afterInsert as highlightAfterInsert
+} from '@orama/plugin-match-highlight';
 
 const decode = Schema.decodeUnknownEither(Entry);
 
@@ -16,8 +20,16 @@ const makeSearchIndex = Effect.gen(function* () {
 			// for now, let's do this...
 			title: 'string',
 			author: 'string',
-			text: 'string'
-		}
+			text: 'string',
+			image: 'string'
+		},
+		plugins: [
+			// {
+			// 	// name: 'highlight'
+			// 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// 	// afterInsert: highlightAfterInsert as any
+			// }
+		]
 	});
 
 	const u = replicache.experimentalWatch(
@@ -28,22 +40,29 @@ const makeSearchIndex = Effect.gen(function* () {
 					if (decoded._tag === 'Right') {
 						if (diff.op === 'add') {
 							insert(db, {
-								id: diff.key,
+								id: decoded.right.id,
 								author: decoded.right.author.pipe(Option.getOrUndefined),
 								text: decoded.right.text.pipe(Option.getOrUndefined),
-								title: decoded.right.title.pipe(Option.getOrUndefined)
+								title: decoded.right.title.pipe(Option.getOrUndefined),
+								image: decoded.right.image.pipe(Option.getOrUndefined)
 							});
 						} else {
 							update(db, diff.key, {
-								id: diff.key,
+								id: decoded.right.id,
 								author: decoded.right.author.pipe(Option.getOrUndefined),
 								text: decoded.right.text.pipe(Option.getOrUndefined),
-								title: decoded.right.title.pipe(Option.getOrUndefined)
+								title: decoded.right.title.pipe(Option.getOrUndefined),
+								image: decoded.right.image.pipe(Option.getOrUndefined)
 							});
 						}
 					}
 				} else {
-					remove(db, diff.key);
+					const decoded = decode(diff.oldValue);
+					if (decoded._tag === 'Right') {
+						remove(db, decoded.right.id);
+					} else {
+						remove(db, diff.key);
+					}
 				}
 			}
 		},
@@ -53,13 +72,12 @@ const makeSearchIndex = Effect.gen(function* () {
 		}
 	);
 
-	yield *
-		Effect.addFinalizer((exit) => {
-			return pipe(
-				Effect.sync(() => u()),
-				Effect.tap(() => Console.log('running rep finalizer for initialmessage', exit))
-			);
-		});
+	yield* Effect.addFinalizer((exit) => {
+		return pipe(
+			Effect.sync(() => u()),
+			Effect.tap(() => Console.log('running rep finalizer for initialmessage', exit))
+		);
+	});
 
 	return { db } as const;
 });
@@ -82,13 +100,21 @@ Runner.layerSerialized(Requests, {
 			console.log({ db });
 			const results = yield* Effect.tryPromise({
 				try: async () => {
-					const searchResult = await search(db, { term: q });
+					const searchResult = await search(db, {
+						term: q,
+						properties: ['author', 'title', 'text'],
+						boost: {
+							author: 2,
+							title: 3
+						},
+						tolerance: 1
+					});
 					return searchResult;
 				},
 				catch: () => new SearchError()
 			});
 			console.log({ results });
-			return results.hits.map((hit) => hit.id);
+			return results;
 		}),
 	InitialMessage: () =>
 		Effect.gen(function* () {

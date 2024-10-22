@@ -4,6 +4,7 @@
 	import { Effect } from 'effect';
 	import { Search } from '$lib/worker/schema';
 	import { runtime } from '$lib/runtime';
+	import EntryListItem from '$lib/components/entry-list-item.svelte';
 	// import * as Entries from '../profile/Entries';
 
 	let search = $state('');
@@ -77,7 +78,17 @@
 {#await promise}
 	loading...
 {:then results}
-	{JSON.stringify(results)}
+	{results.count} results
+	<div class="flex flex-col">
+		{#each results.hits as hit (hit.id)}
+			<EntryListItem
+				title={hit.document.title ?? ''}
+				author={hit.document.author ?? ''}
+				imageSrc={hit.document.image ?? ''}
+				href={`/${hit.id}`}
+			/>
+		{/each}
+	</div>
 {:catch error}
 	{JSON.stringify(error)}
 {/await}

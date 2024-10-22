@@ -1,6 +1,6 @@
 import * as Worker from '@effect/platform/Worker';
 import * as BrowserWorker from '@effect/platform-browser/BrowserWorker';
-import { Context, Effect, Layer } from 'effect';
+import { Effect } from 'effect';
 import SearchWorker from './worker?worker';
 import { InitialMessage, Search, type Requests } from '$lib/worker/schema';
 import { Rx } from '@effect-rx/rx';

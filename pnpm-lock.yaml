@@ -1029,6 +1029,9 @@ importers:
       '@orama/orama':
         specifier: ^3.0.1
         version: 3.0.1
+      '@orama/plugin-match-highlight':
+        specifier: ^3.0.0
+        version: 3.0.0
       '@radix-ui/colors':
         specifier: ^3.0.0
         version: 3.0.0
@@ -3703,9 +3706,17 @@ packages:
     resolution: {integrity: sha512-sAay1RrB+ONOem0OZanAR1ZI/k7yDpnOQSQmTMuGImUQb2y8EbSaCJ94FQluM74xoU03vlb2d2U90hZluL6nQg==}
     engines: {node: '>=14'}
 
+  '@orama/orama@3.0.0':
+    resolution: {integrity: sha512-hLTNuFFd41u3oQeF5BoAPFn3iMtRcOOswBS2/p/rARrGtwx8BHEl2RkSju6DFONv9dCEt9EWkmNxhtgzAxNNWg==}
+    engines: {node: '>= 16.0.0'}
+
   '@orama/orama@3.0.1':
     resolution: {integrity: sha512-18hl0MiCLmumODHjrLzSdTb1Ny3Dh8tn44jwgx0LksCdvVAsr3jQvfr+hwrE7bVkap0wPELb/dnuJjvupKxheQ==}
     engines: {node: '>= 16.0.0'}
+
+  '@orama/plugin-match-highlight@3.0.0':
+    resolution: {integrity: sha512-WnKJ9eLb/NSzg6mxx3JA29if2cK9QV+WqEQXNengb/6vbllFgRFJHo394xJ1bpP3GyqLrVXtBx+QWMPxKQxqCg==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@oslojs/asn1@1.0.0':
     resolution: {integrity: sha512-zw/wn0sj0j0QKbIXfIlnEcTviaCzYOY3V5rAyjR6YtOByFtJiT574+8p9Wlach0lZH9fddD4yb9laEAIl4vXQA==}
@@ -12485,7 +12496,13 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.27.0': {}
 
+  '@orama/orama@3.0.0': {}
+
   '@orama/orama@3.0.1': {}
+
+  '@orama/plugin-match-highlight@3.0.0':
+    dependencies:
+      '@orama/orama': 3.0.0
 
   '@oslojs/asn1@1.0.0':
     dependencies:

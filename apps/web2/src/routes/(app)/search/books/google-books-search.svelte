@@ -54,7 +54,7 @@
 	{:else}
 		<div class="flex flex-col -mt-2">
 			{#each volumes.items as i}
-				{@render item(i)}
+		{@render item(i)}
 			{/each}
 		</div>
 	{/if}
