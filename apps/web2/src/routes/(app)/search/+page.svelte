@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { getIdRx } from '$lib/worker/client';
-	import type { Entry } from '@margins/api2/src/Domain/Entry';
+	import { getIdRx, Pool } from '$lib/worker/client';
 	import { useRx, useRxSet, useRxValue } from '../profile/rx.svelte';
+	import { Effect } from 'effect';
+	import { Search } from '$lib/worker/schema';
+	import { runtime } from '$lib/runtime';
 	// import * as Entries from '../profile/Entries';
 
 	let search = $state('');
@@ -12,27 +14,48 @@
 	// //         getSearch(search)
 	// //     }
 	// // })
-	// const getSearch = useRxSet(getIdRx);
-	const { value, set } = $derived(useRx(getIdRx));
-	const results = $derived(set(search));
-	$effect(() => {
-		console.log({ results });
-		console.log({ value });
-		console.log({ set });
-	});
-	// const entries = useRxValue(Entries.effect);
-	// console.log({ entries });
-	// let value: readonly string[] = $state([]);
-	// const res = useRxValue(getIdRx);
-	// const results = $derived.by(() => {
-	// 	getSearch;
-	// 	res;
-	// 	console.log("deriving")
-	// 	if (res._tag === 'Success' && entries._tag === 'Success' && entries.value.ready) {
-	// 		// lol there's gotta be a better way...
-	// 		return res.value
-	// 			.map((id) => entries.value.data.find((entry) => entry.id === id))
-	// 			.filter(Boolean);
+
+	const getSearch = useRxSet(getIdRx);
+	const { value, set } = useRx(getIdRx);
+
+	const searchEffect = (q: string) =>
+		Pool.pipe(Effect.flatMap((pool) => pool.executeEffect(new Search({ q }))));
+
+	const promise = $derived(runtime.runPromise(searchEffect(search)));
+	// $inspect(promise);
+
+	// // const
+	// // const results = useRxSet(getIdRx);
+	// $effect(() => {
+	// 	getSearch(search);
+	// });
+	// // $effect(() => {
+	// // 	set(search);
+	// // });
+	// $inspect(value);
+	// $effect(() => {
+	// 	console.log('SEARCH PAGE');
+	// 	const v = value();
+	// 	console.log({ v });
+	// });
+	// // $effect(() => {
+	// // 	console.log({ results });
+	// // 	console.log({ value });
+	// // 	console.log({ set });
+	// // });
+	// // const entries = useRxValue(Entries.effect);
+	// // console.log({ entries });
+	// // let value: readonly string[] = $state([]);
+	// // const res = useRxValue(getIdRx);
+	// // const results = $derived.by(() => {
+	// // 	getSearch;
+	// // 	res;
+	// // 	console.log("deriving")
+	// // 	if (res._tag === 'Success' && entries._tag === 'Success' && entries.value.ready) {
+	// // 		// lol there's gotta be a better way...
+	// // 		return res.value
+	// // 			.map((id) => entries.value.data.find((entry) => entry.id === id))
+	// // 			.filter(Boolean);
 	// 	}
 	// 	return [];
 	// });
@@ -51,8 +74,15 @@
 <input type="text" placeholder="Search" bind:value={search} />
 
 {search}
+{#await promise}
+	loading...
+{:then results}
+	{JSON.stringify(results)}
+{:catch error}
+	{JSON.stringify(error)}
+{/await}
 
-{results ? JSON.stringify(results) : 'no results'}
+<!-- {results ? JSON.stringify(results) : 'no results'} -->
 
 <!-- <button onclick={() => getSearch(search)}> search </button>
 

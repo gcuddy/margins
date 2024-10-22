@@ -1,3 +1,4 @@
+import { Atom } from '$lib/store.svelte';
 import * as Registry from '@effect-rx/rx/Registry';
 import type * as Rx from '@effect-rx/rx/Rx';
 import type * as RxRef from '@effect-rx/rx/RxRef';
@@ -63,20 +64,24 @@ export const setRegistry = (registry: Registry.Registry) => {
 export const useRx = <R, W>(rx: Rx.Writable<R, W>) => {
 	const registry = getRegistry();
 	console.log({ rx });
-	let value = $state<R>(registry.get(rx));
+	const got = registry.get(rx);
+	console.log({ got });
+	const atom = new Atom(got);
+	// const value = $state<Atom<R>>(atom);
 
-	$effect(() =>
+	$effect.pre(() =>
 		registry.subscribe(rx, (nextValue) => {
-			console.log('setting state to', nextValue);
-			value = nextValue;
+			console.log('updating atom', { nextValue, atom });
+			atom.update(nextValue);
 		})
 	);
 
 	const set = (_: W) => registry.set(rx, _);
 
 	return {
-		get value() {
-			return value;
+		value() {
+			console.log('getting value', { atom });
+			return atom.value;
 		},
 		get set() {
 			return set;
