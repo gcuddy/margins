@@ -1026,6 +1026,9 @@ importers:
       '@margins/api2':
         specifier: workspace:^
         version: link:../../packages/api-node
+      '@orama/highlight':
+        specifier: ^0.1.6
+        version: 0.1.6
       '@orama/orama':
         specifier: ^3.0.1
         version: 3.0.1
@@ -3705,6 +3708,13 @@ packages:
   '@opentelemetry/semantic-conventions@1.27.0':
     resolution: {integrity: sha512-sAay1RrB+ONOem0OZanAR1ZI/k7yDpnOQSQmTMuGImUQb2y8EbSaCJ94FQluM74xoU03vlb2d2U90hZluL6nQg==}
     engines: {node: '>=14'}
+
+  '@orama/highlight@0.1.6':
+    resolution: {integrity: sha512-6Va8paStIoVy5algYDQu1hU0NUCkcrBx7FSt+0Lllp4d2VA1aVi6ACQ7xoINYls8sDZqg6vXf2lj4YDlVamBtw==}
+
+  '@orama/orama@2.1.1':
+    resolution: {integrity: sha512-euTV/2kya290SNkl5m8e/H1na8iDygk74nNtl4E0YZNyYIrEMwE1JwamoroMKGZw2Uz+in/8gH3m1+2YfP0j1w==}
+    engines: {node: '>= 16.0.0'}
 
   '@orama/orama@3.0.0':
     resolution: {integrity: sha512-hLTNuFFd41u3oQeF5BoAPFn3iMtRcOOswBS2/p/rARrGtwx8BHEl2RkSju6DFONv9dCEt9EWkmNxhtgzAxNNWg==}
@@ -12495,6 +12505,12 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.27.0
 
   '@opentelemetry/semantic-conventions@1.27.0': {}
+
+  '@orama/highlight@0.1.6':
+    dependencies:
+      '@orama/orama': 2.1.1
+
+  '@orama/orama@2.1.1': {}
 
   '@orama/orama@3.0.0': {}
 

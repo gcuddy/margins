@@ -6,10 +6,7 @@ import { Schema } from '@effect/schema';
 import { Entry } from '@margins/api2/src/Domain/Entry';
 import { Replicache } from '$lib/services/Replicache';
 import { create, insert, remove, update, search } from '@orama/orama';
-import {
-	// searchWithHighlight,
-	afterInsert as highlightAfterInsert
-} from '@orama/plugin-match-highlight';
+// import { Highlight } from '@orama/highlight';
 
 const decode = Schema.decodeUnknownEither(Entry);
 
@@ -22,14 +19,7 @@ const makeSearchIndex = Effect.gen(function* () {
 			author: 'string',
 			text: 'string',
 			image: 'string'
-		},
-		plugins: [
-			// {
-			// 	// name: 'highlight'
-			// 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			// 	// afterInsert: highlightAfterInsert as any
-			// }
-		]
+		}
 	});
 
 	const u = replicache.experimentalWatch(
@@ -97,23 +87,33 @@ Runner.layerSerialized(Requests, {
 		Effect.gen(function* () {
 			yield* Effect.log('SEARCHING FROM A WORKER!');
 			const { db } = yield* SearchIndex;
-			console.log({ db });
-			const results = yield* Effect.tryPromise({
-				try: async () => {
-					const searchResult = await search(db, {
-						term: q,
-						properties: ['author', 'title', 'text'],
-						boost: {
-							author: 2,
-							title: 3
-						},
-						tolerance: 1
-					});
-					return searchResult;
-				},
-				catch: () => new SearchError()
-			});
-			console.log({ results });
+			if (q.trim().length === 0) {
+				return {
+					count: 0,
+					hits: [],
+					elapsed: {
+						formatted: '0.00ms',
+						raw: 0
+					}
+				};
+			}
+			const results =
+				yield *
+				Effect.tryPromise({
+					try: async () => {
+						const searchResult = await search(db, {
+							term: q,
+							properties: ['author', 'title', 'text'],
+							boost: {
+								author: 2,
+								title: 3
+							},
+							threshold: 0.5
+						});
+						return searchResult;
+					},
+					catch: () => new SearchError()
+				});
 			return results;
 		}),
 	InitialMessage: () =>

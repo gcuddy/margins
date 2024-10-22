@@ -6,6 +6,7 @@
 	import { runtime } from '$lib/runtime';
 	import EntryListItem from '$lib/components/entry-list-item.svelte';
 	// import * as Entries from '../profile/Entries';
+	import { Highlight } from '@orama/highlight';
 
 	let search = $state('');
 	console.log({ getIdRx });
@@ -21,6 +22,11 @@
 
 	const searchEffect = (q: string) =>
 		Pool.pipe(Effect.flatMap((pool) => pool.executeEffect(new Search({ q }))));
+
+	const highlighter = new Highlight({
+		HTMLTag: 'span',
+		CSSClass: 'entry-list-item-highlight'
+	});
 
 	const promise = $derived(runtime.runPromise(searchEffect(search)));
 	// $inspect(promise);
@@ -86,7 +92,23 @@
 				author={hit.document.author ?? ''}
 				imageSrc={hit.document.image ?? ''}
 				href={`/${hit.id}`}
-			/>
+			>
+				{#snippet titleSnippet()}
+					{@const highlighted = highlighter.highlight(hit.document.title ?? '', search)}
+					{@html highlighted.HTML}
+				{/snippet}
+				{#snippet authorSnippet()}
+					{@const highlighted = highlighter.highlight(hit.document.author ?? '', search)}
+					{@html highlighted.HTML}
+				{/snippet}
+
+				{#snippet bodySnippet()}
+					{@const highlighted = highlighter.highlight(hit.document.text ?? '', search)}
+					{#if highlighted.positions.length}
+						{@html highlighted.trim(100)}
+					{/if}
+				{/snippet}
+			</EntryListItem>
 		{/each}
 	</div>
 {:catch error}

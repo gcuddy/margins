@@ -49,6 +49,7 @@
 		"@effect/schema": "^0.75.5",
 		"@effect/sql": "^0.16.6",
 		"@margins/api2": "workspace:^",
+		"@orama/highlight": "^0.1.6",
 		"@orama/orama": "^3.0.1",
 		"@orama/plugin-match-highlight": "^3.0.0",
 		"@radix-ui/colors": "^3.0.0",
