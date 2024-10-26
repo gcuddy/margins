@@ -131,6 +131,7 @@ export default {
 	},
 	plugins: [
 		require('@tailwindcss/typography'),
+		require('tailwindcss-motion'),
 		plugin(function ({ addVariant }) {
 			addVariant('high-contrast', '&:where(.high-contrast)');
 			addVariant('accent-color', '&:where([data-accent-color])');
