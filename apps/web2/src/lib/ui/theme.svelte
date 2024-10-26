@@ -59,7 +59,7 @@
 
 	:where(div) {
 		--color-background: var(--gray-2);
-		--color-overlay: var(--black-a6);
+		--color-overlay: var(--black-a2);
 		--color-panel-solid: white;
 		--color-panel-translucent: rgba(255, 255, 255, 0.7);
 		--color-surface: rgba(255, 255, 255, 0.85);

@@ -5,6 +5,7 @@
 	import type { ComponentProps } from 'svelte';
 
 	let { children, class: classNameProp, ...props }: ComponentProps<Dialog.Content> = $props();
+	
 </script>
 
 <Dialog.Portal>
@@ -13,7 +14,7 @@
 			{$inspect({ className })}
 			<Dialog.Overlay class={baseDialogOverlay({ className })} {...rest}>
 				<div class="flex overflow-auto absolute inset-0 radix-themes">
-					<div class="grow m-auto pt-6 pb-[max(theme(spacing.6),6hv)] px-4">
+					<div class="grow m-auto pt-6 pb-[max(theme(spacing.6),6vh)] px-4">
 						<Dialog.Content class={baseDialogContent({ className: classNameProp })} {...props}
 							>{@render children?.()}</Dialog.Content
 						>
