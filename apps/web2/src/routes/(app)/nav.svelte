@@ -1,6 +1,8 @@
 <script lang="ts">
-	import IconButton from '$lib/ui/icon-button.svelte';
+	import DialogContent from '$lib/ui/dialog/dialog-content.svelte';
+import IconButton from '$lib/ui/icon-button.svelte';
 	import Text from '$lib/ui/text.svelte';
+	import { Dialog } from 'bits-ui';
 	import { MagnifyingGlass, Plus, Archive } from 'svelte-radix';
 	import { tv } from 'tailwind-variants';
 
@@ -32,9 +34,18 @@
 					</a>
 				{/snippet}
 			</IconButton>
-			<IconButton size="1">
-				<Plus class="size-4" />
-			</IconButton>
+			<Dialog.Root>
+				<Dialog.Trigger>
+					{#snippet child({ props })}
+						<IconButton size="1" {...props}>
+							<Plus class="size-4" />
+						</IconButton>
+					{/snippet}
+				</Dialog.Trigger>
+				<DialogContent>
+					<Text size="2">Create new</Text>
+				</DialogContent>
+			</Dialog.Root>
 		</div>
 	</div>
 	<div class="flex flex-col mt-2 pl-2 pr-4">
