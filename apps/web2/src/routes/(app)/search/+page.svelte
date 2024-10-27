@@ -80,7 +80,6 @@
 
 <input type="text" placeholder="Search" bind:value={search} />
 
-{search}
 {#await promise}
 	loading...
 {:then results}

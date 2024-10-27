@@ -2,6 +2,7 @@
 	import type { AccentColor } from '$lib/props/color.prop';
 	import { ThemeContext } from '$lib/ui/theme-ctx.svelte';
 	import type { Snippet } from 'svelte';
+	import { tv } from 'tailwind-variants';
 
 	let {
 		children,
@@ -25,6 +26,10 @@
 
 	const hasBackground = $derived(hasBackgroundProp === undefined ? isRoot : hasBackgroundProp);
 
+	const themeCls = tv({
+		base: ['radix-themes break-words [text-size-adjust:none] antialiased']
+	});
+
 	const attributes = $derived({
 		'data-accent-color': context.accentColor,
 		'data-gray-color': 'sand',
@@ -33,18 +38,16 @@
 	});
 </script>
 
-<div class="contents">
-	{#if child}
-		{@render child({ props: attributes })}
-	{:else}
-		<div {...attributes}>
-			{@render children?.()}
-		</div>
-	{/if}
-</div>
+{#if child}
+	{@render child({ props: attributes })}
+{:else}
+	<div {...attributes}>
+		{@render children?.()}
+	</div>
+{/if}
 
-<style>
-	div {
+<style global>
+	.radix-themes {
 		overflow-wrap: break-word;
 		text-size-adjust: none;
 		-webkit-font-smoothing: antialiased;
@@ -57,16 +60,18 @@
 	/*                                     */
 	/* * * * * * * * * * * * * * * * * * * */
 
-	:where(div) {
+	:global(:where(.radix-themes)) {
 		--color-background: var(--gray-2);
 		--color-overlay: var(--black-a2);
 		--color-panel-solid: white;
 		--color-panel-translucent: rgba(255, 255, 255, 0.7);
 		--color-surface: rgba(255, 255, 255, 0.85);
 	}
-	div.dark,
-	:global(:is(.dark, .dark-theme)),
-	:global(:is(.dark, .dark-theme)) :where(div:not(.light, .light-theme)) {
+	:global(
+			.radix-themes.dark,
+			:global(:is(.dark, .dark-theme)),
+			:global(:is(.dark, .dark-theme)) :where(div:not(.light, .light-theme))
+		) {
 		--color-background: var(--gray-1);
 		--color-overlay: var(--black-a8);
 		--color-panel-solid: var(--gray-2);
@@ -82,12 +87,12 @@
 
 	/* Because Chrome is buggy with box-shadow transitions from "transparent" keyword and/or RGB color into P3 colors. */
 	/* Note: using `:where` here to guarantee that the P3 color will take over regardless of the output rule order. */
-	:where(div) {
+	:where(.radix-themes) {
 		--color-transparent: rgb(0 0 0 / 0);
 	}
 	@supports (color: color(display-p3 1 1 1)) {
 		@media (color-gamut: p3) {
-			div {
+			.radix-themes {
 				--color-transparent: color(display-p3 0 0 0 / 0);
 			}
 		}
@@ -103,13 +108,13 @@
  * Make sure that forced light/dark appearance also sets corresponding browser colors,
  * like input autofill color and body scrollbar
  */
-	.div:where(.light, .light-theme) {
+	.radix-themes:where(.light, .light-theme) {
 		:global(&),
 		:global(:root:where(:has(&[data-is-root-theme='true']))) {
 			color-scheme: light;
 		}
 	}
-	.div:where(.dark) {
+	.radix-themes:where(.dark) {
 		:global(&),
 		:global(:root:where(:has(&[data-is-root-theme='true']))) {
 			color-scheme: dark;
