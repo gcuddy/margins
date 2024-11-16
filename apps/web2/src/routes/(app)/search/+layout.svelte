@@ -1,4 +1,6 @@
 <script lang="ts">
+	import SegmentedControlItem from '$lib/ui/segmented-control/segmented-control-item.svelte';
+	import SegmentedControlRoot from '$lib/ui/segmented-control/segmented-control-root.svelte';
 	import { MagnifyingGlass } from 'svelte-radix';
 	let { children, data } = $props();
 </script>
@@ -16,10 +18,14 @@
 				value={data.q}
 			/>
 		</form>
-		<div class="flex">
+		<SegmentedControlRoot>
+			<SegmentedControlItem value="your-stuff">Your Stuff</SegmentedControlItem>
+			<SegmentedControlItem value="books">Books</SegmentedControlItem>
+		</SegmentedControlRoot>
+		<!-- <div class="flex">
 			<a href="/search">your stuff</a>
 			<a href="/search/books">Books</a>
-		</div>
+		</div> -->
 		<div class="overflow-y-auto py-2">
 			{@render children()}
 		</div>

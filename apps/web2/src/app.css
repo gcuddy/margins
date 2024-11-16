@@ -3,6 +3,7 @@
 @import 'tailwindcss/utilities';
 @import './lib/styles/color.css';
 @import './lib/styles/shadow.css';
+@import './lib/ui/reset.css'
 
 .lucide {
 	width: 15px;

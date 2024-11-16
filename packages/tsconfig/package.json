@@ -8,6 +8,6 @@
 		"base.json"
 	],
 	"devDependencies": {
-		"eslint": "~8.57.1"
+		"eslint": "~9.14.0"
 	}
 }

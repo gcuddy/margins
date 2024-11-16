@@ -11,6 +11,7 @@
 	import ResizableHandle from '$lib/ui/resizable-handle.svelte';
 	import * as DataList from '$lib/ui/data-list';
 	import PanelRight from 'lucide-svelte/icons/panel-right';
+	import { fly } from 'svelte/transition';
 
 	const { entry }: { entry: Entry } = $props();
 
@@ -30,19 +31,23 @@
 					<DrawingPin size={20} />
 				</IconButton>
 				{#if inspectorIsCollapsed}
-					<IconButton
-						variant="ghost"
-						color="gray"
-						onclick={() => {
-							inspectorPane?.expand();
-						}}
-					>
-						<PanelRight />
-					</IconButton>
+					<div in:fly={{ x: 10, duration: 200 }} >
+						<IconButton
+							variant="ghost"
+							color="gray"
+							onclick={() => {
+								inspectorPane?.expand();
+							}}
+						>
+							<PanelRight class="size-4" />
+						</IconButton>
+					</div>
 				{/if}
 			</div>
 			<div class="overflow-y-auto relative grow">
-				<article class="max-w-prose space-y-12 mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20 select-text">
+				<article
+					class="max-w-prose space-y-12 mx-auto md:px-9 sm:px-7 xs:px-6 px-5 py-20 select-text"
+				>
 					<header class="flex flex-col justify-center">
 						<Heading size="7" class="text-center max-w-prose text-pretty">
 							{@render title()}
