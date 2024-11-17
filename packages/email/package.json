@@ -16,6 +16,6 @@
 		"resend": "4.0.1-alpha.0"
 	},
 	"devDependencies": {
-		"eslint": "~9.15.0"
+		"eslint": "^8.57.0"
 	}
 }
