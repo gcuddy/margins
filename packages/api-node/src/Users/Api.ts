@@ -9,22 +9,18 @@ import {
 import { security } from "../Api/Security.js"
 import { Unauthorized } from "../Domain/Actor.js"
 
-export class UsersApi extends HttpApiGroup.make("users").pipe(
-  HttpApiGroup.add(
-    HttpApiEndpoint.get("getUser", "/users/:id").pipe(
-      HttpApiEndpoint.setPath(Schema.Struct({ id: UserId })),
-      HttpApiEndpoint.setSuccess(User.json),
-      HttpApiEndpoint.addError(UserNotFound),
-    ),
-  ),
-  HttpApiGroup.annotateEndpoints(OpenApi.Security, security),
-  HttpApiGroup.addError(Unauthorized),
-  HttpApiGroup.add(
-    HttpApiEndpoint.post("authenticate", "/users/authenticate").pipe(
-      HttpApiEndpoint.setPayload(Schema.Struct({ userId: UserId })),
-      HttpApiEndpoint.setSuccess(UserWithSensitive.json),
-      HttpApiEndpoint.addError(UserNotFound),
-    ),
-  ),
-  //   TODO: authentication
-) {}
+export class UsersApi extends HttpApiGroup.make("users")
+  .add(
+    HttpApiEndpoint.get("getUser", "/:id")
+      .setPath(Schema.Struct({ id: UserId }))
+      .addSuccess(User.json)
+      .addError(UserNotFound),
+  )
+  // .annotateEndpoints(OpenApi.Security, security)
+  // .addError(Unauthorized)
+  .add(
+    HttpApiEndpoint.post("authenticate", "/authenticate")
+      .setPayload(Schema.Struct({ userId: UserId }))
+      .addSuccess(UserWithSensitive.json)
+      .addError(UserNotFound),
+  ).prefix('/users') { }

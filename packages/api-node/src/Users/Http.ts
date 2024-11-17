@@ -11,9 +11,8 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
     const users = yield* Users
     const policy = yield * UsersPolicy
 
-    return handlers.pipe(
-      HttpApiBuilder.handle("getUser", ({ path }) => {
-        console.log({ path })
+    return handlers
+      .handle("getUser", ({ path }) => {
         const a = pipe(
           users.findUserById(path.id),
           Effect.flatMap(
@@ -22,12 +21,11 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
               onNone: () => new UserNotFound({ id: path.id }),
             }),
           ),
-          policyUse(policy.canRead(path.id)),
+          // policyUse(policy.canRead(path.id)),
         )
         return a
-      }),
-      users.httpSecurity,
-      HttpApiBuilder.handle("authenticate", ({ payload }) => {
+      })
+      .handle("authenticate", ({ payload }) => {
         const a = pipe(
           // TODO: authenticate with oauth/password
           users.findUserById(payload.userId),
@@ -50,7 +48,6 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
           }),
         )
         return a
-      }),
-    )
+      })
   }),
 ).pipe(Layer.provide(Users.Live), Layer.provide(UsersPolicy.Live))
