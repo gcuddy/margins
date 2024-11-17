@@ -1,18 +1,17 @@
 import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform"
-import { Schema } from "effect"
-import { User, UserId, UserNotFound } from "../Domain/User.js"
-import { PullRequest, PullResponse } from "../Domain/Replicache.js"
-import { Unauthorized } from "../Domain/Actor.js"
+import { PullRequest, PullResponse, PushRequest } from "../Domain/Replicache.js"
+import { Authentication } from "../Users/Api.js"
 
-export class ReplicacheApi extends HttpApiGroup.make("replicache").pipe(
-  HttpApiGroup.add(
-    HttpApiEndpoint.post("pull", "/pull").pipe(
-      HttpApiEndpoint.setPayload(PullRequest),
-      HttpApiEndpoint.setSuccess(PullResponse),
-      HttpApiEndpoint.addError(Unauthorized),
-    ),
-  ),
-  HttpApiGroup.addError(Unauthorized),
-  HttpApiGroup.prefix("/sync"),
-  //   TODO: authentication
-) {}
+export class ReplicacheApi extends HttpApiGroup.make("replicache")
+  .add(
+    HttpApiEndpoint.post("pull", "/pull")
+      .setPayload(PullRequest)
+      .addSuccess(PullResponse)
+  )
+  .add(
+    HttpApiEndpoint.post('push', '/push')
+      .setPayload(PushRequest)
+  )
+  .middleware(Authentication)
+  .prefix("/sync") { }
+//   TODO: authentication
