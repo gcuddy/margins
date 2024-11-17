@@ -1,9 +1,8 @@
 import { Model, SqlClient, SqlResolver, SqlSchema } from "@effect/sql"
-import { Context, Effect, Layer, Logger, LogLevel } from "effect"
+import { Context, Effect, Layer, Logger, LogLevel, Schema } from "effect"
 import { Bookmark, BookmarkId } from "../Domain/Bookmark.js"
 import { SqlLive } from "../Sql.js"
 import { UserId } from "../Domain/User.js"
-import { Schema } from "@effect/schema"
 import { SearchResult } from "../Domain/Replicache.js"
 
 export const make = Effect.gen(function* () {

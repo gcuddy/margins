@@ -1,13 +1,11 @@
 import { Model } from "@effect/sql"
-import { Schema } from "@effect/schema"
 import { UserId } from "./User.js"
-import { pipe, Record } from "effect"
+import { pipe, Record, Schema } from "effect"
 import { DateTimeString } from "./DateTime.js"
 import { Entry } from "./Entry.js"
 import { Bookmark } from "./Bookmark.js"
 import { Annotation } from "./Annotation.js"
 import { Favorite } from "./Favorite.js"
-import { scheduleAddDelay } from "effect/Micro"
 
 export const ReplicacheClientGroupId = Schema.String.pipe(
   Schema.brand("ReplicacheClientGroupId"),

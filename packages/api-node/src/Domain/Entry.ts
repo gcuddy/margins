@@ -1,4 +1,3 @@
-import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
 import {
   DateTimeFromDate,
@@ -8,7 +7,7 @@ import {
 import { HttpApiSchema } from "@effect/platform"
 import { UserId } from "./User.js"
 import * as FieldOption from "./FieldOption.js"
-import { Option } from "effect"
+import { Schema } from "effect"
 
 export const EntryId = Schema.String.pipe(Schema.brand("EntryId"))
 export type EntryId = typeof EntryId.Type

@@ -1,7 +1,5 @@
-import * as Schema from "@effect/schema/Schema"
+import { Schema, DateTime } from "effect"
 import { Model } from "@effect/sql"
-import * as DateTime from "effect/DateTime"
-
 
 export const DateTimeFromString = Schema.transform(
   Schema.String,

@@ -1,4 +1,4 @@
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { Model } from "@effect/sql"
 import {
   DateTimeFromDate,
@@ -124,4 +124,3 @@ export class Annotation extends Model.Class<Annotation>("Annotation")({
 }) {
   static readonly key = "annotations"
 }
-

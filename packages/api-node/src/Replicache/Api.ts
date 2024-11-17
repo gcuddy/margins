@@ -1,5 +1,5 @@
 import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { User, UserId, UserNotFound } from "../Domain/User.js"
 import { PullRequest, PullResponse } from "../Domain/Replicache.js"
 import { Unauthorized } from "../Domain/Actor.js"

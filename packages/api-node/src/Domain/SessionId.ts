@@ -1,5 +1,4 @@
-import { Schema } from "@effect/schema"
-import { Redacted } from "effect"
+import { Redacted, Schema } from "effect"
 
 export const SessionIdString = Schema.String.pipe(Schema.brand("SessionId"))
 // actually not sure this needs to be redacted.

@@ -1,5 +1,5 @@
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "@effect/platform"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import {
   User,
   UserId,

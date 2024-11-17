@@ -1,9 +1,8 @@
 import { Model, SqlClient, SqlSchema } from "@effect/sql"
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Schema } from "effect"
 import { Annotation, AnnotationId } from "../Domain/Annotation.js"
 import { SearchResult } from "../Domain/Replicache.js"
 import { UserId } from "../Domain/User.js"
-import { Schema } from "@effect/schema"
 import { EntryId } from "../Domain/Entry.js"
 import { SqlLive } from "../Sql.js"
 

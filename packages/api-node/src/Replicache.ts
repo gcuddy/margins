@@ -7,8 +7,8 @@ import {
   Option,
   pipe,
   Record,
+  Schema,
 } from "effect"
-import { Schema } from "@effect/schema"
 import { SqlClient, SqlSchema } from "@effect/sql"
 import { UserId } from "./Domain/User.js"
 import type {

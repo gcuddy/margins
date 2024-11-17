@@ -1,6 +1,5 @@
-import { Schema } from "@effect/schema"
 import { Model } from "@effect/sql"
-import { Context, DateTime, Layer } from "effect"
+import { Context, DateTime, Layer, Schema } from "effect"
 import { Email } from "./Email.js"
 import { DateTimeString } from "./DateTime.js"
 import { SessionId } from "./SessionId.js"

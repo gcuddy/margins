@@ -1,8 +1,7 @@
-import { Schema } from "@effect/schema"
 import type { User } from "./User.js"
 import { CurrentUser, UserId } from "./User.js"
 import { HttpApiSchema } from "@effect/platform"
-import { Effect } from "effect"
+import { Effect, Schema } from "effect"
 
 export class Unauthorized extends Schema.TaggedError<Unauthorized>()(
   "Unauthorized",

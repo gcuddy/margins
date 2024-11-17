@@ -1,25 +1,25 @@
-import * as S from "@effect/schema/Schema"
+import { Schema as S } from "effect"
 
 // generated from https://app.quicktype.io/ json response from google books api
 
 export class ReadingModes extends S.Class<ReadingModes>("ReadingModes")({
   text: S.optional(S.Union(S.Boolean, S.Null)),
   image: S.optional(S.Union(S.Boolean, S.Null)),
-}) { }
+}) {}
 
 export class PanelizationSummary extends S.Class<PanelizationSummary>(
   "PanelizationSummary",
 )({
   containsEpubBubbles: S.optional(S.Union(S.Boolean, S.Null)),
   containsImageBubbles: S.optional(S.Union(S.Boolean, S.Null)),
-}) { }
+}) {}
 
 export class IndustryIdentifier extends S.Class<IndustryIdentifier>(
   "IndustryIdentifier",
 )({
   type: S.optional(S.Union(S.Null, S.String)),
   identifier: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class ImageLinks extends S.Class<ImageLinks>("ImageLinks")({
   smallThumbnail: S.optional(S.Union(S.Null, S.String)),
@@ -27,11 +27,11 @@ export class ImageLinks extends S.Class<ImageLinks>("ImageLinks")({
   small: S.optional(S.Union(S.Null, S.String)),
   medium: S.optional(S.Union(S.Null, S.String)),
   large: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class Dimensions extends S.Class<Dimensions>("Dimensions")({
   height: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class VolumeInfo extends S.Class<VolumeInfo>("VolumeInfo")({
   title: S.optional(S.Union(S.Null, S.String)),
@@ -58,26 +58,26 @@ export class VolumeInfo extends S.Class<VolumeInfo>("VolumeInfo")({
   previewLink: S.optional(S.Union(S.Null, S.String)),
   infoLink: S.optional(S.Union(S.Null, S.String)),
   canonicalVolumeLink: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class OfferListPrice extends S.Class<OfferListPrice>("OfferListPrice")({
   amountInMicros: S.optional(S.Union(S.Number, S.Null)),
   currencyCode: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class Offer extends S.Class<Offer>("Offer")({
   finskyOfferType: S.optional(S.Union(S.Number, S.Null)),
   listPrice: S.optional(S.Union(OfferListPrice, S.Null)),
   retailPrice: S.optional(S.Union(OfferListPrice, S.Null)),
   giftable: S.optional(S.Union(S.Boolean, S.Null)),
-}) { }
+}) {}
 
 export class SaleInfoListPrice extends S.Class<SaleInfoListPrice>(
   "SaleInfoListPrice",
 )({
   amount: S.optional(S.Union(S.Number, S.Null)),
   currencyCode: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class SaleInfo extends S.Class<SaleInfo>("SaleInfo")({
   country: S.optional(S.Union(S.Null, S.String)),
@@ -87,25 +87,25 @@ export class SaleInfo extends S.Class<SaleInfo>("SaleInfo")({
   retailPrice: S.optional(S.Union(SaleInfoListPrice, S.Null)),
   buyLink: S.optional(S.Union(S.Null, S.String)),
   offers: S.optional(S.Union(S.Array(Offer), S.Null)),
-}) { }
+}) {}
 
 export class Layer extends S.Class<Layer>("Layer")({
   layerId: S.optional(S.Union(S.Null, S.String)),
   volumeAnnotationsVersion: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class LayerInfo extends S.Class<LayerInfo>("LayerInfo")({
   layers: S.optional(S.Union(S.Array(Layer), S.Null)),
-}) { }
+}) {}
 
 export class Pdf extends S.Class<Pdf>("Pdf")({
   isAvailable: S.optional(S.Union(S.Boolean, S.Null)),
-}) { }
+}) {}
 
 export class Epub extends S.Class<Epub>("Epub")({
   isAvailable: S.optional(S.Union(S.Boolean, S.Null)),
   acsTokenLink: S.optional(S.Union(S.Null, S.String)),
-}) { }
+}) {}
 
 export class AccessInfo extends S.Class<AccessInfo>("AccessInfo")({
   country: S.optional(S.Union(S.Null, S.String)),
@@ -118,9 +118,11 @@ export class AccessInfo extends S.Class<AccessInfo>("AccessInfo")({
   webReaderLink: S.optional(S.Union(S.Null, S.String)),
   accessViewStatus: S.optional(S.Union(S.Null, S.String)),
   quoteSharingAllowed: S.optional(S.Union(S.Boolean, S.Null)),
-}) { }
+}) {}
 
-export class GoogleBookVolume extends S.Class<GoogleBookVolume>("GoogleBookVolume")({
+export class GoogleBookVolume extends S.Class<GoogleBookVolume>(
+  "GoogleBookVolume",
+)({
   kind: S.optional(S.Union(S.Null, S.String)),
   id: S.optional(S.Union(S.Null, S.String)),
   etag: S.optional(S.Union(S.Null, S.String)),
@@ -129,7 +131,7 @@ export class GoogleBookVolume extends S.Class<GoogleBookVolume>("GoogleBookVolum
   layerInfo: S.optional(S.Union(LayerInfo, S.Null)),
   saleInfo: S.optional(S.Union(SaleInfo, S.Null)),
   accessInfo: S.optional(S.Union(AccessInfo, S.Null)),
-}) { }
+}) {}
 
 export class GoogleBookVolumes extends S.Class<GoogleBookVolumes>(
   "GoogleBookVolumes",
@@ -137,11 +139,12 @@ export class GoogleBookVolumes extends S.Class<GoogleBookVolumes>(
   kind: S.NullishOr(S.String),
   totalItems: S.NullishOr(S.Number),
   items: S.UndefinedOr(S.Array(GoogleBookVolume)),
-}) { }
+}) {}
 
-
-export class GoogleBooksSearchError extends S.TaggedError<GoogleBooksSearchError>()('GoogleBooksSearchError', {}) { }
-
+export class GoogleBooksSearchError extends S.TaggedError<GoogleBooksSearchError>()(
+  "GoogleBooksSearchError",
+  {},
+) {}
 
 export class GoogleBooksSearch extends S.TaggedRequest<GoogleBooksSearch>()(
   "GoogleBooksSearch",
@@ -152,9 +155,12 @@ export class GoogleBooksSearch extends S.TaggedRequest<GoogleBooksSearch>()(
       query: S.String,
     },
   },
-) { }
+) {}
 
-export class GoogleBooksGetError extends S.TaggedError<GoogleBooksGetError>()('GoogleBooksGetError', {}) { }
+export class GoogleBooksGetError extends S.TaggedError<GoogleBooksGetError>()(
+  "GoogleBooksGetError",
+  {},
+) {}
 
 export class GoogleBooksGet extends S.TaggedRequest<GoogleBooksGet>()(
   "GoogleBooksGet",
@@ -165,4 +171,4 @@ export class GoogleBooksGet extends S.TaggedRequest<GoogleBooksGet>()(
       id: S.String,
     },
   },
-) { }
+) {}

@@ -1,4 +1,4 @@
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { Model } from "@effect/sql"
 import { DateTimeFromDate } from "./DateTime.js"
 

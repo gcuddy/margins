@@ -1,5 +1,5 @@
 import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "@effect/platform"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { Entry, EntryId, EntryNotFound } from "../Domain/Entry.js"
 import { Unauthorized } from "../Domain/Actor.js"
 import { security } from "../Api/Security.js"

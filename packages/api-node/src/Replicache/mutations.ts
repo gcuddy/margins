@@ -1,7 +1,7 @@
 // taken largely from https://github.dev/sst/console/blob/dev/packages/functions/src/replicache/pull1.ts
 
 import type { WriteTransaction } from "replicache"
-import { Schema } from "@effect/schema"
+import { Schema } from "effect"
 import { Effect } from "effect"
 import { ParseError } from "@effect/schema/ParseResult"
 
