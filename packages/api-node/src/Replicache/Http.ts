@@ -29,6 +29,13 @@ export const HttpReplicacheLive = HttpApiBuilder.group(
             Effect.orDie,
           ),
         )
+        .handle("push", ({ payload }) =>
+          CurrentUser.pipe(
+            Effect.flatMap(user => replicache.push(user.id, payload)),
+            Effect.tapErrorCause(Effect.logError),
+            Effect.orDie,
+          ),
+        )
 
       return h;
     }),

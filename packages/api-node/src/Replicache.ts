@@ -279,7 +279,6 @@ const make = Effect.gen(function* () {
 
   const pull = (userId: UserId, pullRequest: PullRequest) =>
     Effect.gen(function* () {
-      // // TODO: implement pull
       const { clientGroupID } = pullRequest
 
       // const prevCvr = yield* pipe(
