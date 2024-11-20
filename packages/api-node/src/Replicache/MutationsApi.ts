@@ -1,43 +1,24 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-// TODO: make this like HTTPAPi. You define the shape, then implement type-safe server and client.
-//
 
-import { HttpApiGroup } from "@effect/platform";
 import { Effect, Schema } from "effect";
 import { Record } from "effect";
-import { Replicache } from "replicache";
-
-// ReplicacheApi.empty.add(group)
-//
-// //ReplicacheApiGroup.make(identifier).add(
-// name, schema? (or should this be .addSchema?)
-// )
-//
-
-// then http:
-// ReplicacheMutationServerBuilder.group(Api, identifier, handlers.handle(..., effect))
-// and on Client:
-// ReplciacheMutationClientBuilder.group(Api, ...)
-// something like this?
-//
-//
 
 export const TypeId: unique symbol = Symbol.for("@margins/replicache/Api")
 export type TypeId = typeof TypeId
 
-type Mutation = {
-  name: string;
-}
-
-interface Group<Id extends string, Mutations extends Mutation = never> {
-  readonly identifier: Id
-  add<A extends Mutation>(mutation: A): Group<Id, A | Mutations>
-}
+// type Mutation = {
+//   name: string;
+// }
+//
+// interface Group<Id extends string, Mutations extends Mutation = never> {
+//   readonly identifier: Id
+//   add<A extends Mutation>(mutation: A): Group<Id, A | Mutations>
+// }
 
 
 const Proto = {
   [TypeId]: TypeId,
-  add(this: ReplicacheApi<any>, group: Group<string>) {
+  add(this: ReplicacheApi<any>, group: ReplicacheApiGroup<string>) {
     return makeProto({
       groups: Record.set(this.groups, group.identifier, group)
     })
@@ -53,7 +34,7 @@ type ReplicacheGroupAny = {
   identifier: string;
 }
 
-interface ReplicacheApi<Groups extends { identifier: string } = never> {
+interface ReplicacheApi<Groups extends ReplicacheGroupAny = never> {
   new(_: never): {}
   readonly groups: Record.ReadonlyRecord<string, Groups>
   add<A extends ReplicacheGroupAny>(group: A): ReplicacheApi<Groups | A>
@@ -66,7 +47,6 @@ const makeProto = <Groups extends ReplicacheGroupAny>(options: {
   Object.setPrototypeOf(ReplicacheApi(), Proto)
   ReplicacheApi.groups = options.groups
   return ReplicacheApi as any
-
 }
 interface ReplicacheApiGroup<Id extends string, Mutations extends ReplicacheApiMutation<string> = never> {
   new(_: never): {}
@@ -104,7 +84,7 @@ const ReplicacheApiGroupProto = {
   }
 }
 
-const makeReplicacheGroupProto = <Id extends string, Mutations extends { name: string }>(options: { readonly identifier: Id, readonly mutations: Record.ReadonlyRecord<string, Mutations> }) => {
+const makeReplicacheGroupProto = <Id extends string, Mutations extends ReplicacheApiMutation<string>>(options: { readonly identifier: Id, readonly mutations: Record.ReadonlyRecord<string, Mutations> }) => {
   function ReplicacheApiGroup() { }
   Object.setPrototypeOf(ReplicacheApiGroup(), ReplicacheApiGroupProto)
   return Object.assign(ReplicacheApiGroup, options) as any
@@ -149,7 +129,6 @@ const ReplicacheMutationServerBuilder = <Groups extends ReplicacheApiGroup<strin
 
 
 class MarginsReplicacheApi extends replicacheApiMakeEmpty.add(E) { }
-
 
 ReplicacheMutationServerBuilder(MarginsReplicacheApi, "tesg")
 // ^ should error
