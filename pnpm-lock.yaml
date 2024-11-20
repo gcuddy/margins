@@ -57,7 +57,7 @@ importers:
     devDependencies:
       '@crxjs/vite-plugin':
         specifier: beta
-        version: 2.0.0-beta.26
+        version: 2.0.0-beta.28
       '@floating-ui/core':
         specifier: ^1.6.0
         version: 1.6.8
@@ -568,7 +568,7 @@ importers:
         version: 3.2.8(prettier@3.3.3)(svelte@5.2.1)
       prettier-plugin-tailwindcss:
         specifier: latest
-        version: 0.6.8(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3)
+        version: 0.6.9(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3)
       prisma:
         specifier: ^5.22.0
         version: 5.22.0
@@ -929,7 +929,7 @@ importers:
         version: 3.2.8(prettier@3.3.3)(svelte@5.2.1)
       prettier-plugin-tailwindcss:
         specifier: latest
-        version: 0.6.8(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3)
+        version: 0.6.9(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3)
       prisma:
         specifier: ^5.22.0
         version: 5.22.0
@@ -1305,6 +1305,9 @@ importers:
       '@effect/sql-mysql2':
         specifier: ^0.21.8
         version: 0.21.8(@effect/platform@0.69.24(effect@3.10.15))(@effect/sql@0.20.8(@effect/experimental@0.32.8(@effect/platform-node@0.64.26(@effect/platform@0.69.24(effect@3.10.15))(effect@3.10.15))(@effect/platform@0.69.24(effect@3.10.15))(effect@3.10.15)(ws@8.18.0))(@effect/platform@0.69.24(effect@3.10.15))(effect@3.10.15))(effect@3.10.15)
+      '@effect/vitest':
+        specifier: ^0.13.15
+        version: 0.13.15(effect@3.10.15)(vitest@2.1.5(@types/node@22.9.0)(happy-dom@15.11.6)(terser@5.36.0))
       '@lucia-auth/adapter-mysql':
         specifier: ^3.0.2
         version: 3.0.2(@planetscale/database@1.19.0)(lucia@3.2.2)(mysql2@3.11.4)
@@ -1466,7 +1469,7 @@ importers:
         version: 3.2.8(prettier@3.3.3)(svelte@5.2.1)
       prettier-plugin-tailwindcss:
         specifier: latest
-        version: 0.6.8(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3)
+        version: 0.6.9(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3)
       tailwind-gradient-mask-image:
         specifier: ^1.1.0
         version: 1.2.0
@@ -2274,8 +2277,8 @@ packages:
   '@cloudflare/workers-types@4.20241112.0':
     resolution: {integrity: sha512-Q4p9bAWZrX14bSCKY9to19xl0KMU7nsO5sJ2cTVspHoypsjPUMeQCsjHjmsO2C4Myo8/LPeDvmqFmkyNAPPYZw==}
 
-  '@crxjs/vite-plugin@2.0.0-beta.26':
-    resolution: {integrity: sha512-fZiSeOB4LOwq3cLIwHJnJ4x/duBU/Gkn3JKF7b7mZIRAXtu1waorJ6QaH7qoZPcN5LzyA3J+/t3Kuwa/oo8XNg==}
+  '@crxjs/vite-plugin@2.0.0-beta.28':
+    resolution: {integrity: sha512-JUoB1431PvruQqVpxvJ5j6qh0NNx5sXafAXo+VltORtJQrS6wprI5QK4k6PLKV+WacsFuPLveM2ydBCEopU49w==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2392,6 +2395,12 @@ packages:
       '@effect/experimental': ^0.32.8
       '@effect/platform': ^0.69.24
       effect: ^3.10.15
+
+  '@effect/vitest@0.13.15':
+    resolution: {integrity: sha512-vcXv8RscguOHh/IaZk5wnATPqfNu7my9NcDb80uBdwbuaLhkoogMZ+N6Q2+298MWiGs/5l/Ho6bmukexx2IvKQ==}
+    peerDependencies:
+      effect: ^3.10.15
+      vitest: ^2.0.5
 
   '@emnapi/core@0.45.0':
     resolution: {integrity: sha512-DPWjcUDQkCeEM4VnljEOEcXdAD7pp8zSZsgOujk/LGIwCXWbXJngin+MO4zbH429lzeC3WbYLGjE2MaUOwzpyw==}
@@ -6229,10 +6238,6 @@ packages:
   config-chain@1.1.13:
     resolution: {integrity: sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ==}
 
-  connect-injector@0.4.4:
-    resolution: {integrity: sha512-hdBG8nXop42y2gWCqOV8y1O3uVk4cIU+SoxLCPyCUKRImyPiScoNiSulpHjoktRU1BdI0UzoUdxUa87thrcmHw==}
-    engines: {node: '>= 0.8.0'}
-
   console-control-strings@1.1.0:
     resolution: {integrity: sha512-ty/fTekppD2fIwRvnZAVdeOiGd1c7YXEixbgJTNzqcxJWKQnjJ/V1bNEEE6hygpM3WjwHFUVK6HTjWSzV4a8sQ==}
 
@@ -6348,14 +6353,6 @@ packages:
   debounce@2.0.0:
     resolution: {integrity: sha512-xRetU6gL1VJbs85Mc4FoEGSjQxzpdxRyFhe3lmWFyy2EzydIcD4xzUvRJMD+NPDfMwKNhxa3PvsIOU32luIWeA==}
     engines: {node: '>=18'}
-
-  debug@2.6.9:
-    resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
 
   debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
@@ -7905,10 +7902,6 @@ packages:
   magic-string@0.25.9:
     resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
 
-  magic-string@0.26.7:
-    resolution: {integrity: sha512-hX9XH3ziStPoPhJxLq1syWuZMxbDvGNbVchfrdCtanC7D13888bMFow61x8axrx+GfHLtVeAx2kxL7tTGRl+Ow==}
-    engines: {node: '>=12'}
-
   magic-string@0.30.11:
     resolution: {integrity: sha512-+Wri9p0QHMy+545hKww7YAu5NyzF8iomPL/RQazugQ9+Ez4Ic3mERMd8ZTX5rfK944j+560ZJi8iAwgak1Ac7A==}
 
@@ -8093,9 +8086,6 @@ packages:
   mrmime@2.0.0:
     resolution: {integrity: sha512-eu38+hdgojoyq63s+yTpN4XMBdt5l8HhMhc4VKLO9KM5caLIBvUm4thi7fFaxyTmCKeNnXZ5pAlBwCUnhA09uw==}
     engines: {node: '>=10'}
-
-  ms@2.0.0:
-    resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
 
   ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
@@ -8691,8 +8681,8 @@ packages:
       prettier: ^3.0.0
       svelte: ^3.2.0 || ^4.0.0-next.0 || ^5.0.0-next.0
 
-  prettier-plugin-tailwindcss@0.6.8:
-    resolution: {integrity: sha512-dGu3kdm7SXPkiW4nzeWKCl3uoImdd5CTZEJGxyypEPL37Wj0HT2pLqjrvSei1nTeuQfO4PUfjeW5cTUNRLZ4sA==}
+  prettier-plugin-tailwindcss@0.6.9:
+    resolution: {integrity: sha512-r0i3uhaZAXYP0At5xGfJH876W3HHGHDp+LCRUJrs57PBeQ6mYHMwr25KH8NPX44F2yGTvdnH7OqCshlQx183Eg==}
     engines: {node: '>=14.21.3'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': '*'
@@ -8880,14 +8870,6 @@ packages:
 
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
-
-  q@1.5.1:
-    resolution: {integrity: sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==}
-    engines: {node: '>=0.6.0', teleport: '>=0.2.0'}
-    deprecated: |-
-      You or someone you depend on is using Q, the JavaScript Promise library that gave JavaScript developers strong feelings about promises. They can almost certainly migrate to the native JavaScript promise now. Thank you literally everyone for joining me in this bet against the odds. Be excellent to each other.
-
-      (For a CapTP with native promises, see @endo/eventual-send and @endo/captp)
 
   qs@6.13.0:
     resolution: {integrity: sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==}
@@ -9081,8 +9063,8 @@ packages:
   rollup-pluginutils@2.8.2:
     resolution: {integrity: sha512-EEp9NhnUkwY8aif6bxgovPHMoMoNr2FulJziTndpt5H9RdwC47GSGuII9XxpSdzVGM0GWrNPHV6ie1LTNJPaLQ==}
 
-  rollup@2.78.1:
-    resolution: {integrity: sha512-VeeCgtGi4P+o9hIg+xz4qQpRl6R401LWEXBmxYKOV4zlF82lyhgh2hTZnheFUbANE8l2A41F458iwj2vEYaXJg==}
+  rollup@2.79.2:
+    resolution: {integrity: sha512-fS6iqSPZDs3dr/y7Od6y5nha8dW1YnbgtsyotCVvoFGKbERG++CVRFv1meyGDE1SNItQA8BrnCw7ScdAhRJ3XQ==}
     engines: {node: '>=10.0.0'}
     hasBin: true
 
@@ -9349,10 +9331,6 @@ packages:
     peerDependenciesMeta:
       prettier:
         optional: true
-
-  stream-buffers@0.2.6:
-    resolution: {integrity: sha512-ZRpmWyuCdg0TtNKk8bEqvm13oQvXMmzXDsfD4cBgcx5LouborvU5pm3JMkdTP3HcszyUI08AM1dHMXA5r2g6Sg==}
-    engines: {node: '>= 0.3.0'}
 
   streamsearch@1.1.0:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
@@ -9960,9 +9938,6 @@ packages:
     resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
     engines: {node: '>=14.17'}
     hasBin: true
-
-  uberproto@1.2.0:
-    resolution: {integrity: sha512-pGtPAQmLwh+R9w81WVHzui1FfedpQWQpiaIIfPCwhtsBez4q6DYbJFfyXPVHPUTNFnedAvNEnkoFiLuhXIR94w==}
 
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
@@ -11122,23 +11097,22 @@ snapshots:
 
   '@cloudflare/workers-types@4.20241112.0': {}
 
-  '@crxjs/vite-plugin@2.0.0-beta.26':
+  '@crxjs/vite-plugin@2.0.0-beta.28':
     dependencies:
       '@rollup/pluginutils': 4.2.1
       '@webcomponents/custom-elements': 1.6.0
       acorn-walk: 8.3.4
       cheerio: 1.0.0
-      connect-injector: 0.4.4
       convert-source-map: 1.9.0
       debug: 4.3.7
       es-module-lexer: 0.10.5
       fast-glob: 3.3.2
       fs-extra: 10.1.0
       jsesc: 3.0.2
-      magic-string: 0.26.7
+      magic-string: 0.30.12
       picocolors: 1.1.0
       react-refresh: 0.13.0
-      rollup: 2.78.1
+      rollup: 2.79.2
       rxjs: 7.5.7
     transitivePeerDependencies:
       - supports-color
@@ -11246,6 +11220,11 @@ snapshots:
       '@effect/platform': 0.69.24(effect@3.10.15)
       '@opentelemetry/semantic-conventions': 1.27.0
       effect: 3.10.15
+
+  '@effect/vitest@0.13.15(effect@3.10.15)(vitest@2.1.5(@types/node@22.9.0)(happy-dom@15.11.6)(terser@5.36.0))':
+    dependencies:
+      effect: 3.10.15
+      vitest: 2.1.5(@types/node@22.9.0)(happy-dom@15.11.6)(terser@5.36.0)
 
   '@emnapi/core@0.45.0':
     dependencies:
@@ -15116,15 +15095,6 @@ snapshots:
       ini: 1.3.8
       proto-list: 1.2.4
 
-  connect-injector@0.4.4:
-    dependencies:
-      debug: 2.6.9
-      q: 1.5.1
-      stream-buffers: 0.2.6
-      uberproto: 1.2.0
-    transitivePeerDependencies:
-      - supports-color
-
   console-control-strings@1.1.0: {}
 
   convert-source-map@1.9.0: {}
@@ -15233,10 +15203,6 @@ snapshots:
   dayjs@1.11.13: {}
 
   debounce@2.0.0: {}
-
-  debug@2.6.9:
-    dependencies:
-      ms: 2.0.0
 
   debug@3.2.7:
     dependencies:
@@ -17036,10 +17002,6 @@ snapshots:
     dependencies:
       sourcemap-codec: 1.4.8
 
-  magic-string@0.26.7:
-    dependencies:
-      sourcemap-codec: 1.4.8
-
   magic-string@0.30.11:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -17226,8 +17188,6 @@ snapshots:
   mri@1.2.0: {}
 
   mrmime@2.0.0: {}
-
-  ms@2.0.0: {}
 
   ms@2.1.2: {}
 
@@ -17818,7 +17778,7 @@ snapshots:
       prettier: 3.3.3
       svelte: 5.2.1
 
-  prettier-plugin-tailwindcss@0.6.8(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3):
+  prettier-plugin-tailwindcss@0.6.9(prettier-plugin-svelte@3.2.8(prettier@3.3.3)(svelte@5.2.1))(prettier@3.3.3):
     dependencies:
       prettier: 3.3.3
     optionalDependencies:
@@ -18013,8 +17973,6 @@ snapshots:
   punycode@2.3.1: {}
 
   pure-rand@6.1.0: {}
-
-  q@1.5.1: {}
 
   qs@6.13.0:
     dependencies:
@@ -18243,7 +18201,7 @@ snapshots:
     dependencies:
       estree-walker: 0.6.1
 
-  rollup@2.78.1:
+  rollup@2.79.2:
     optionalDependencies:
       fsevents: 2.3.3
 
@@ -18576,8 +18534,6 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
-
-  stream-buffers@0.2.6: {}
 
   streamsearch@1.1.0: {}
 
@@ -19238,8 +19194,6 @@ snapshots:
       - typescript
 
   typescript@5.6.3: {}
-
-  uberproto@1.2.0: {}
 
   uc.micro@2.1.0: {}
 

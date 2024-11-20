@@ -9,3 +9,6 @@ export class Api extends HttpApi.empty
   .add(EntriesApi)
   .add(ReplicacheApi)
   .annotate(OpenApi.Title, "Margins API") { }
+
+
+export class Api2 extends HttpApi.empty {}
