@@ -10,7 +10,7 @@ export class UsersRepo extends Effect.Service<UsersRepo>()(
     effect: Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient
       const repo = yield* Model.makeRepository(User, {
-        tableName: "users",
+        tableName: "user",
         spanPrefix: "UsersRepo",
         idColumn: "id",
       })

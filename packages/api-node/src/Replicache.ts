@@ -3,7 +3,6 @@ import {
   DateTime,
   Effect,
   HashSet,
-  Layer,
   Option,
   pipe,
   Record,
@@ -36,7 +35,7 @@ import { SqlLive } from "./Sql.js"
 import { server } from "./Replicache/mutations.js"
 import { CVRCache } from "./Replicache/ClientViewRecord.js"
 import { EntriesRepo } from "./Entries/Repo.js"
-import { policyRequire, Unauthorized } from "./Domain/Actor.js"
+import { Unauthorized } from "./Domain/Actor.js"
 import { Nanoid } from "./Nanoid.js"
 import { AnnotationsRepo } from "./Annotations/Repo.js"
 import { FavoritesRepo } from "./Favorites/Repo.js"
@@ -119,21 +118,21 @@ const make = Effect.gen(function* () {
 
   const getClient = (
     userId: UserId,
-    clientID: ReplicacheClientId,
-    clientGroupID: ReplicacheClientGroupId,
+    clientId: ReplicacheClientId,
+    clientGroupId: ReplicacheClientGroupId,
   ) =>
     pipe(
-      clientRepo.findById(clientID),
+      clientRepo.findById(clientId),
       Effect.flatMap(
         Option.match({
           onNone: () =>
             Effect.succeed({
-              id: clientID,
-              clientGroupID,
-              lastMutationID: 0,
+              id: clientId,
+              clientGroupId,
+              lastMutationId: 0,
             }),
           onSome: client =>
-            client.clientGroupID === clientGroupID
+            client.clientGroupId === clientGroupId
               ? Effect.succeed(client)
               : Effect.fail(
                 new Unauthorized({
@@ -145,7 +144,7 @@ const make = Effect.gen(function* () {
         }),
       ),
       Effect.withSpan("Replicache.getClient", {
-        attributes: { clientID, clientGroupID },
+        attributes: { clientId, clientGroupId },
       }),
     )
   const putClientGroup = (
@@ -171,7 +170,7 @@ const make = Effect.gen(function* () {
       const upsert = SqlSchema.void({
         Request: ReplicacheClient.update,
         execute: client =>
-          sql`insert into replicache_client ${sql.insert(client)} on duplicate key update lastMutationId = ${client.lastMutationID}, lastModified = now(), updatedAt = now()`,
+          sql`insert into replicache_client ${sql.insert(client)} on duplicate key update lastMutationId = ${client.lastMutationId}, lastModified = now(), updatedAt = now()`,
       })
       return yield* upsert(client)
     }).pipe(
@@ -182,7 +181,7 @@ const make = Effect.gen(function* () {
 
   const processMutation = (
     userId: UserId,
-    clientGroupID: ReplicacheClientGroupId,
+    clientGroupId: ReplicacheClientGroupId,
     mutation: Mutation,
     // 1: `let errorMode = false`. In JS, we implement this step naturally
     // as a param. In case of failure, caller will call us again with `true`.
@@ -190,16 +189,16 @@ const make = Effect.gen(function* () {
     errorMode: boolean,
   ) =>
     Effect.gen(function* () {
-      const clientGroup = yield* getClientGroup(userId, clientGroupID)
+      const clientGroup = yield* getClientGroup(userId, clientGroupId)
       const baseClient = yield* getClient(
         userId,
         mutation.clientID,
-        clientGroupID,
+        clientGroupId,
       )
 
       // TODO: pick up here 2024-09-05
 
-      const nextMutationID = baseClient.lastMutationID + 1
+      const nextMutationID = baseClient.lastMutationId + 1
 
       // 8: rollback and skip if already processed.
       if (mutation.id < nextMutationID) {
@@ -224,8 +223,8 @@ const make = Effect.gen(function* () {
       // 11-12: put client and client group
       const nextClient = ReplicacheClient.update.make({
         id: mutation.clientID,
-        clientGroupID,
-        lastMutationID: nextMutationID,
+        clientGroupId,
+        lastMutationId: nextMutationID,
       })
 
       yield* Effect.all(

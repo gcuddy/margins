@@ -1,6 +1,6 @@
 import { HttpApiBuilder } from "@effect/platform"
 import { Api } from "../Api.js"
-import { DateTime, Duration, Effect, Layer, Option, pipe } from "effect"
+import { DateTime, Duration, Effect, Layer, Option, pipe, Redacted } from "effect"
 import { Users } from "../Users.js"
 import { UserId, UserNotFound, UserWithSensitive } from "../Domain/User.js"
 import { policyUse, Unauthorized, withSystemActor } from "../Domain/Actor.js"
@@ -21,6 +21,8 @@ export const AuthenticationLive = Layer.effect(
       bearer: token =>
         Effect.gen(function* () {
           const sessionId = sessionIdFromRedacted(token)
+          const x = Redacted.value(sessionId)
+          console.log({ x })
           const [user, session] =
             yield*
             Effect.zip(

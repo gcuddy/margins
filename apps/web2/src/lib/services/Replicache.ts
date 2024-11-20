@@ -3,22 +3,21 @@ import { Context, Effect, Layer } from 'effect';
 import * as R from 'replicache';
 
 const make = Effect.gen(function* () {
-	// TODO: make this a config
-	// config licene,pull,push,bearer,mutators
-	const replicache = new R.Replicache({
-		name: 'n0za7qlnp1rca3s',
-		licenseKey: 'ld43a69e6baa14a1a85eb6bb09661739e',
-		pullURL: 'http://0.0.0.0:3030/sync/pull',
-		pushURL: 'http://0.0.0.0:3030/sync/push',
+  // TODO: make this a config
+  // config licene,pull,push,bearer,mutators
+  const replicache = new R.Replicache({
+    name: 'n0za7qlnp1rca3s',
+    licenseKey: 'ld43a69e6baa14a1a85eb6bb09661739e',
+    pullURL: 'http://0.0.0.0:3030/sync/pull',
+    pushURL: 'http://0.0.0.0:3030/sync/push',
+    auth: 'Bearer 2_cpfJdsOyuERRfWmOUcZybdGUyKTUIkQmgdDkF8',
+    // logLevel: 'debug',
+    mutators: {
+      a: (tx: R.WriteTransaction, input: { text: string }) => { }
+    }
+  });
 
-		auth: 'Bearer mnywTdF8-3wdpuCz4lj-ZFiY6',
-		// logLevel: 'debug',
-		mutators: {
-			a: (tx: R.WriteTransaction, input: { text: string }) => {}
-		}
-	});
-
-	return replicache;
+  return replicache;
 });
 
 // TODO: mutators
@@ -31,22 +30,22 @@ const make = Effect.gen(function* () {
 // }
 
 export class Replicache extends Effect.Service<Replicache>()('Replicache', {
-	sync: () => {
-		const replicache = new R.Replicache({
-			name: 'n0za7qlnp1rca3s',
-			licenseKey: 'ld43a69e6baa14a1a85eb6bb09661739e',
-			pullURL: 'http://0.0.0.0:3030/sync/pull',
-			pushURL: 'http://0.0.0.0:3030/sync/push',
+  sync: () => {
+    const replicache = new R.Replicache({
+      name: 'n0za7qlnp1rca3s',
+      licenseKey: 'ld43a69e6baa14a1a85eb6bb09661739e',
+      pullURL: 'http://0.0.0.0:3030/sync/pull',
+      pushURL: 'http://0.0.0.0:3030/sync/push',
 
-			auth: 'Bearer mnywTdF8-3wdpuCz4lj-ZFiY6',
-			// logLevel: 'debug',
-			mutators: {
-				saveBook: (tx: R.WriteTransaction, input: { book: string }) => {
-					console.log({ input });
-				}
-			}
-		});
+      auth: 'Bearer 2_cpfJdsOyuERRfWmOUcZybdGUyKTUIkQmgdDkF8',
+      // logLevel: 'debug',
+      mutators: {
+        saveBook: (tx: R.WriteTransaction, input: { book: string }) => {
+          console.log({ input });
+        }
+      }
+    });
 
-		return replicache;
-	}
-}) {}
+    return replicache;
+  }
+}) { }

@@ -43,8 +43,18 @@ export const DateTime = Schema.OptionFromNullishOr(
   },
 })
 
-export const Boolean = Schema.OptionFromNullishOr(
+export const BooleanFromNumber = Schema.transform(
+  Schema.Number,
   Schema.Boolean,
+  {
+    strict: true,
+    encode: bool => bool ? 1 : 0,
+    decode: num => num === 0 ? false : true
+  }
+)
+
+export const Boolean = Schema.OptionFromNullishOr(
+  BooleanFromNumber,
   undefined,
 ).annotations({
   jsonSchema: {

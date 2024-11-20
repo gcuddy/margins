@@ -20,7 +20,7 @@ export class ReplicacheClientGroup extends Model.Class<ReplicacheClientGroup>(
   userId: UserId,
   createdAt: Model.DateTimeFromDateWithNow,
   updatedAt: Model.DateTimeFromDateWithNow,
-}) {}
+}) { }
 
 export const ReplicacheClientId = Schema.String.pipe(
   Schema.brand("ReplicacheClientId"),
@@ -31,11 +31,11 @@ export class ReplicacheClient extends Model.Class<ReplicacheClient>(
   "ReplicacheClient",
 )({
   id: Model.Generated(ReplicacheClientId),
-  clientGroupID: ReplicacheClientGroupId,
-  lastMutationID: Schema.Number,
+  clientGroupId: ReplicacheClientGroupId,
+  lastMutationId: Schema.Number,
   createdAt: Model.DateTimeFromDateWithNow,
   updatedAt: Model.DateTimeFromDateWithNow,
-}) {}
+}) { }
 
 // CVR
 export const ClientViewRecordId = Schema.String.pipe(
@@ -51,7 +51,7 @@ export class NumberFromDateString extends Schema.transform(
     decode: d => new Date(d).getTime(),
     encode: n => new Date(n).toISOString(),
   },
-) {}
+) { }
 
 export const ClientViewEntries = Schema.Record({
   key: Schema.String,
@@ -68,7 +68,7 @@ export type ClientViewRecord = typeof ClientViewRecord.Type
 export class SearchResult extends Schema.Class<SearchResult>("SearchResult")({
   id: Schema.String,
   rowversion: Model.DateTimeFromDate,
-}) {}
+}) { }
 
 export const SearchResultsFromClientViewEntries = Schema.transform(
   ClientViewEntries,
@@ -119,17 +119,17 @@ export class Mutation extends Schema.Class<Mutation>("Mutation")({
   clientID: ReplicacheClientId,
   name: Schema.String,
   args: Schema.Any,
-}) {}
+}) { }
 
 export class PushRequest extends Schema.Class<PushRequest>("PushRequest")({
   clientGroupID: ReplicacheClientGroupId,
   mutations: Schema.Array(Mutation),
-}) {}
+}) { }
 
 export class Cookie extends Schema.Class<Cookie>("Cookie")({
   order: Schema.Number,
   cvrID: ClientViewRecordId,
-}) {}
+}) { }
 
 export class PullRequest extends Schema.Class<PullRequest>("PullRequest")({
   clientGroupID: ReplicacheClientGroupId,
@@ -142,7 +142,7 @@ export class PullRequest extends Schema.Class<PullRequest>("PullRequest")({
       },
     },
   }),
-}) {}
+}) { }
 
 export const createPatchOperation = <
   K extends string,
@@ -168,7 +168,7 @@ export const createPatchOperation = <
   )
 }
 
-class P extends Schema.Union() {}
+class P extends Schema.Union() { }
 
 export const PatchOperation = Schema.Union(
   createPatchOperation(Entry),
@@ -188,9 +188,9 @@ export class PullResponse extends Schema.Class<PullResponse>("PullResponse")({
     value: Schema.Number,
   }),
   patch: Schema.Array(PatchOperation),
-}) {}
+}) { }
 
 export class FutureMutationError extends Schema.TaggedError<FutureMutationError>()(
   "FutureMutationError",
   {},
-) {}
+) { }

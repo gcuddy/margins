@@ -40,6 +40,7 @@ export const make = Effect.gen(function* () {
 
   const getForUnknownIds = (ids?: string[]) =>
     Effect.gen(function* () {
+      console.log({ ids })
       const nonEmptyArray = Schema.NonEmptyArray(EntryId)
       const decode = Schema.decodeUnknownOption(nonEmptyArray)
       const _ids = yield* decode(ids)
@@ -49,6 +50,9 @@ export const make = Effect.gen(function* () {
       Effect.tapErrorCause(Effect.logError),
       Effect.withLogSpan("EntriesRepo.getForUnknownIds"),
       Effect.catchTag("ParseError", () =>
+        Effect.succeed([] as readonly Entry[]),
+      ),
+      Effect.catchTag("NoSuchElementException", () =>
         Effect.succeed([] as readonly Entry[]),
       ),
     )
