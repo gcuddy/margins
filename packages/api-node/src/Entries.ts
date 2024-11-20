@@ -1,15 +1,14 @@
 import { Effect, Layer, Option, pipe } from "effect"
 import { EntriesRepo } from "./Entries/Repo.js"
 import { SqlClient } from "@effect/sql"
-import { Entry, EntryId, EntryNotFound } from "./Domain/Entry.js"
+import type { Entry, EntryId } from "./Domain/Entry.js";
+import { EntryNotFound } from "./Domain/Entry.js"
 import { policyRequire } from "./Domain/Actor.js"
 import { SqlLive } from "./Sql.js"
 
 const make = Effect.gen(function* () {
-  const repo = yield * EntriesRepo
-  const sql = yield * SqlClient.SqlClient
-
-  // TODO: move non-db level stuff to here
+  const repo = yield* EntriesRepo
+  const sql = yield* SqlClient.SqlClient
 
   const findEntryById = (id: EntryId) =>
     pipe(
@@ -44,13 +43,8 @@ const make = Effect.gen(function* () {
   } as const
 })
 
-export class Entries extends Effect.Tag("Entries")<
-  Entries,
-  Effect.Effect.Success<typeof make>
->() {
-  static layer = Layer.effect(Entries, make)
-  static Live = this.layer.pipe(
-    Layer.provide(EntriesRepo.Live),
-    Layer.provide(SqlLive),
-  )
-}
+export class Entries extends Effect.Service<Entries>()("Entries", {
+  effect: make,
+  dependencies: [EntriesRepo.Default, SqlLive]
+}) { }
+

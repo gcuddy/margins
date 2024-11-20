@@ -13,11 +13,14 @@ import { HttpReplicacheLive } from "./Replicache/Http.js"
 import { HttpEntriesLive } from "./Entries/Http.js"
 import { httpRouter } from "./Rpc/Router.js"
 
-const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide(HttpUsersLive),
-  Layer.provide(HttpReplicacheLive),
-  Layer.provide(HttpEntriesLive),
-)
+const ApiLive = Layer.provide(HttpApiBuilder.api(Api), [
+  HttpUsersLive,
+  HttpEntriesLive,
+  HttpReplicacheLive
+  // Layer.provide(HttpReplicacheLive),
+])
+
+
 
 const RpcRouterLive = HttpApiBuilder.Router.use(
   router => router.concat(httpRouter)

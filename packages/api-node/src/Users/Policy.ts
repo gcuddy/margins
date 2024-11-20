@@ -1,5 +1,5 @@
 import { Effect, Layer } from "effect"
-import { UserId } from "../Domain/User.js"
+import type { UserId } from "../Domain/User.js"
 import { policy } from "../Domain/Actor.js"
 
 const make = Effect.gen(function* () {
@@ -17,9 +17,7 @@ const make = Effect.gen(function* () {
   return { canUpdate, canRead, canReadSensitive } as const
 })
 
-export class UsersPolicy extends Effect.Tag("Users/Policy")<
-  UsersPolicy,
-  Effect.Effect.Success<typeof make>
->() {
-  static Live = Layer.effect(UsersPolicy, make)
-}
+export class UsersPolicy extends Effect.Service<UsersPolicy>()("Users/Policy", {
+  effect: make
+}) { }
+

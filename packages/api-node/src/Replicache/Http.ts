@@ -6,17 +6,18 @@ import { CurrentUser, UserNotFound } from "../Domain/User.js"
 import { PullResponse } from "../Domain/Replicache.js"
 import { Replicache } from "../Replicache.js"
 import { ClientGroupPolicy } from "./ClientGroupPolicy.js"
+import { AuthenticationLive } from "../Users/Http.js"
 
 export const HttpReplicacheLive = HttpApiBuilder.group(
   Api,
   "replicache",
   handlers =>
     Effect.gen(function* () {
-      const user = yield * Users
-      const replicache = yield * Replicache
+      const user = yield* Users
+      const replicache = yield* Replicache
 
-      return handlers.pipe(
-        HttpApiBuilder.handle("pull", ({ payload }) =>
+      const h = handlers
+        .handle("pull", ({ payload }) =>
           CurrentUser.pipe(
             Effect.flatMap(user => replicache.pull(user.id, payload)),
             Effect.andThen(pr =>
@@ -27,8 +28,14 @@ export const HttpReplicacheLive = HttpApiBuilder.group(
             Effect.tapErrorCause(Effect.logError),
             Effect.orDie,
           ),
-        ),
-        user.httpSecurity,
-      )
+        )
+
+      return h;
     }),
-).pipe(Layer.provide(Users.Live), Layer.provide(Replicache.Live))
+).pipe(
+  Layer.provide([
+    AuthenticationLive,
+    Users.Default,
+    Replicache.Default
+  ])
+)

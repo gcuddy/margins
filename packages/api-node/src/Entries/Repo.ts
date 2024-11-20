@@ -1,5 +1,5 @@
-import { Model, SqlClient, SqlResolver, SqlSchema } from "@effect/sql"
-import { Cache, Context, Effect, Layer, Logger, LogLevel, Schema } from "effect"
+import { Model, SqlClient, SqlSchema } from "@effect/sql"
+import { Cache, Effect, Schema } from "effect"
 import { Entry, EntryId } from "../Domain/Entry.js"
 import { SqlLive } from "../Sql.js"
 import { UserId } from "../Domain/User.js"
@@ -64,9 +64,8 @@ export const make = Effect.gen(function* () {
   } as const
 })
 
-export class EntriesRepo extends Context.Tag("Entries/Repo")<
-  EntriesRepo,
-  Effect.Effect.Success<typeof make>
->() {
-  static Live = Layer.effect(EntriesRepo, make).pipe(Layer.provide(SqlLive))
-}
+
+export class EntriesRepo extends Effect.Service<EntriesRepo>()("Entries/Repo", {
+  effect: make,
+  dependencies: [SqlLive]
+}) { }

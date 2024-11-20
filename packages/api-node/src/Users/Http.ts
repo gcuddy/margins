@@ -84,7 +84,10 @@ export const AuthenticationLive = Layer.effect(
     })
 
   }),
-).pipe(Layer.provide(UsersRepo.Default))
+).pipe(Layer.provide([
+  UsersRepo.Default,
+  SessionRepo.Live
+]))
 
 export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
   Effect.gen(function* () {
@@ -128,4 +131,6 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
         )
       )
   }),
-).pipe(Layer.provide(Users.Live), Layer.provide(UsersPolicy.Live))
+).pipe(
+  Layer.provide([Users.Default, UsersPolicy.Default, AuthenticationLive])
+)

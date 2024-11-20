@@ -3,7 +3,6 @@ import {
   DateTime,
   Duration,
   Effect,
-  Layer,
   pipe,
 } from "effect"
 import { UsersRepo } from "./Users/Repo.js"
@@ -81,24 +80,7 @@ const make = Effect.gen(function* () {
   } as const
 })
 
-// or rename accounts?
-export class Users extends Effect.Tag("Users")<
-  Users,
-  Effect.Effect.Success<typeof make>
->() {
-  static layer = Layer.effect(Users, make)
-
-  static Live = this.layer.pipe(
-    Layer.provide(SqlLive),
-    // Layer.provide(AccountsRepo.Live),
-    Layer.provide(UsersRepo.Default),
-    Layer.provide(SessionRepo.Live),
-    Layer.provide(Nanoid.Live),
-    // Layer.provide(Uuid.Live),
-  )
-
-  //   static Test = this.layer.pipe(
-  //     Layer.provideMerge(SqlTest),
-  //     Layer.provideMerge(Uuid.Test),
-  //   )
-}
+export class Users extends Effect.Service<Users>()("Users", {
+  effect: make,
+  dependencies: [UsersRepo.Default, SqlLive, Nanoid.Live, SessionRepo.Live]
+}) { }

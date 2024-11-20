@@ -6,6 +6,6 @@ import { EntriesApi } from "./Entries/Api.js"
 
 export class Api extends HttpApi.empty
   .add(UsersApi)
-  .add(ReplicacheApi)
   .add(EntriesApi)
-  .annotate(OpenApi.Title, "Margins API") {}
+  .add(ReplicacheApi)
+  .annotate(OpenApi.Title, "Margins API") { }

@@ -10,17 +10,18 @@ import {
   Schema,
 } from "effect"
 import { SqlClient, SqlSchema } from "@effect/sql"
-import { UserId } from "./Domain/User.js"
+import type { UserId } from "./Domain/User.js"
 import type {
   ReplicacheClientId,
   PatchOperation,
   ClientViewRecordDiff,
+
+  ReplicacheClientGroupId
 } from "./Domain/Replicache.js"
 import {
   Mutation,
   ReplicacheClient,
   ReplicacheClientGroup,
-  ReplicacheClientGroupId,
   type PushRequest,
   type PullRequest,
   ClientViewRecord,
@@ -42,16 +43,16 @@ import { FavoritesRepo } from "./Favorites/Repo.js"
 import { BookmarksRepo } from "./Bookmarks/Repo.js"
 
 const make = Effect.gen(function* () {
-  const sql = yield * SqlClient.SqlClient
-  const clientGroupRepo = yield * ReplicacheClientGroupRepo
-  const clientRepo = yield * ReplicacheClientRepo
+  const sql = yield* SqlClient.SqlClient
+  const clientGroupRepo = yield* ReplicacheClientGroupRepo
+  const clientRepo = yield* ReplicacheClientRepo
   // TODO: make this a Cache
-  const cvrCache = yield * CVRCache
-  const entriesRepo = yield * EntriesRepo
-  const annotationsRepo = yield * AnnotationsRepo
-  const favoritesRepo = yield * FavoritesRepo
-  const bookmarksRepo = yield * BookmarksRepo
-  const nanoid = yield * Nanoid
+  const cvrCache = yield* CVRCache
+  const entriesRepo = yield* EntriesRepo
+  const annotationsRepo = yield* AnnotationsRepo
+  const favoritesRepo = yield* FavoritesRepo
+  const bookmarksRepo = yield* BookmarksRepo
+  const nanoid = yield* Nanoid
 
   // TODO: should these be here? or in the repo?
   const getClientGroup = (
@@ -67,12 +68,12 @@ const make = Effect.gen(function* () {
             clientGroup.userId === userId
               ? Effect.succeed(clientGroup)
               : Effect.fail(
-                  new Unauthorized({
-                    actorId: userId,
-                    entity: "ReplicacheClientGroup",
-                    action: "read",
-                  }),
-                ),
+                new Unauthorized({
+                  actorId: userId,
+                  entity: "ReplicacheClientGroup",
+                  action: "read",
+                }),
+              ),
           onNone: () =>
             DateTime.now.pipe(
               Effect.map(now =>
@@ -135,12 +136,12 @@ const make = Effect.gen(function* () {
             client.clientGroupID === clientGroupID
               ? Effect.succeed(client)
               : Effect.fail(
-                  new Unauthorized({
-                    actorId: userId,
-                    entity: "ReplicacheClient",
-                    action: "read",
-                  }),
-                ),
+                new Unauthorized({
+                  actorId: userId,
+                  entity: "ReplicacheClient",
+                  action: "read",
+                }),
+              ),
         }),
       ),
       Effect.withSpan("Replicache.getClient", {
@@ -475,7 +476,7 @@ const make = Effect.gen(function* () {
         yield* putClientGroup(
           ReplicacheClientGroup.insert.make({
             cvrVersion: nextCVRVersion,
-            userId: userId,
+            userId,
             id: baseClientGroup.id,
           }),
         ).pipe(Effect.withLogSpan("Replicache.pull.putClientGroup"))
@@ -577,19 +578,18 @@ export class FutureMutationError extends Schema.TaggedError<FutureMutationError>
   }
 }
 
-export class Replicache extends Effect.Tag("Replicache")<
-  Replicache,
-  Effect.Effect.Success<typeof make>
->() {
-  static readonly Live = Layer.scoped(this, make).pipe(
-    Layer.provide(SqlLive),
-    Layer.provide(CVRCache.Live),
-    Layer.provide(ReplicacheClientGroupRepo.Live),
-    Layer.provide(ReplicacheClientRepo.Live),
-    Layer.provide(EntriesRepo.Live),
-    Layer.provide(AnnotationsRepo.Live),
-    Layer.provide(FavoritesRepo.Live),
-    Layer.provide(BookmarksRepo.Live),
-    Layer.provide(Nanoid.Live),
-  )
+export class Replicache extends Effect.Service<Replicache>()("Replicache", {
+  scoped: make,
+  dependencies: [
+    SqlLive,
+    CVRCache.Live,
+    ReplicacheClientGroupRepo.Live,
+    ReplicacheClientRepo.Live,
+    EntriesRepo.Default,
+    AnnotationsRepo.Live,
+    FavoritesRepo.Live,
+    BookmarksRepo.Live,
+    Nanoid.Live
+  ]
+}) {
 }

@@ -8,10 +8,10 @@ export class ReplicacheApi extends HttpApiGroup.make("replicache")
       .setPayload(PullRequest)
       .addSuccess(PullResponse)
   )
-  .add(
-    HttpApiEndpoint.post('push', '/push')
-      .setPayload(PushRequest)
-  )
+  // .add(
+  //   HttpApiEndpoint.post('push', '/push')
+  //     .setPayload(PushRequest)
+  // )
   .middleware(Authentication)
   .prefix("/sync") { }
 //   TODO: authentication
