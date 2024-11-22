@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import type { Pipeable, Schema } from "effect"
+import type { Effect } from "effect/Effect"
+import { Success } from "effect/Exit"
 import { pipeArguments } from "effect/Pipeable"
+import type * as Types from "effect/Types"
 
 export const TypeId: unique symbol = Symbol.for(
   "@effect/replicache/ApiMutation",
@@ -11,8 +15,8 @@ export const TypeId: unique symbol = Symbol.for(
 export type TypeId = typeof TypeId
 
 export interface ReplicacheApiMutation<
-  out Name extends string,
-  out S extends Schema.Schema.Any,
+  Name extends string,
+  S extends Schema.Schema.Any,
 > extends Pipeable.Pipeable {
   readonly [TypeId]: TypeId
   readonly name: Name
@@ -27,7 +31,47 @@ export declare namespace ReplicacheApiMutation {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   export interface AnyWithProps
-    extends ReplicacheApiMutation<string, Schema.Schema.Any> {}
+    extends ReplicacheApiMutation<string, Schema.Schema.Any> { }
+
+  /**
+   * @since 1.0.0
+   * @category models
+   */
+  export type Handler<Mutation extends Any, E, R> = (
+    request: Mutation,
+  ) => Effect<void, E, R>
+
+  export type Name<Mutation> =
+    Mutation extends ReplicacheApiMutation<infer Name, infer _S> ? Name : never
+
+  /**
+   * @since 1.0.0
+   * @category models
+   */
+  export type WithName<Endpoints extends Any, Name extends string> = Extract<
+    Endpoints,
+    { readonly name: Name }
+  >
+
+  /**
+   * @since 1.0.0
+   * @category models
+   */
+  export type ExcludeName<Endpoints extends Any, Name extends string> = Exclude<
+    Endpoints,
+    { readonly name: Name }
+  >
+
+  /**
+   * @since 1.0.0
+   * @category models
+   */
+  export type HandlerWithName<
+    Endpoints extends Any,
+    Name extends string,
+    E,
+    R,
+  > = Handler<WithName<Endpoints, Name>, E, R>
 }
 
 const Proto = {
@@ -49,4 +93,4 @@ export const make = <
 >(
   name: Name,
   schema: S,
-): ReplicacheApiMutation.AnyWithProps => makeProto({ name, schema })
+): ReplicacheApiMutation<Name, S> => makeProto({ name, schema })

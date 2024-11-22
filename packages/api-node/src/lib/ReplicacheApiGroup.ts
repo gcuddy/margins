@@ -1,7 +1,8 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-namespace */
-import { pipeArguments, type Pipeable, Record } from "effect"
+import { type Pipeable, Record } from "effect"
 import type * as ReplicacheApiMutation from "./ReplicacheApiMutation.js"
+import { pipeArguments } from "effect/Pipeable"
 
 export const TypeId: unique symbol = Symbol.for("@margins/replicache/ApiGroup")
 
@@ -43,6 +44,19 @@ export declare namespace ReplicacheApiGroup {
     string,
     ReplicacheApiMutation.ReplicacheApiMutation.AnyWithProps
   >
+
+  export type WithName<Group, Name extends string> = Extract<
+    Group,
+    { readonly identifier: Name }
+  >
+
+  export type Name<Group> =
+    Group extends ReplicacheApiGroup<infer _Id, infer _Mutations> ? _Id : never
+
+  export type Mutations<Group> =
+    Group extends ReplicacheApiGroup<infer _Id, infer _Mutations>
+      ? _Mutations
+      : never
 }
 
 const Proto = {
