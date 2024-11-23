@@ -46,7 +46,6 @@ describe("ReplicacheApiBuilder", () => {
 
       const g = ReplicacheApiBuilder.group(Api, "testGroup", {} as any)
 
-      // TODO: get types working with Requirements and Errors
       const group = ReplicacheApiBuilder.group(Api, "testGroup", handlers =>
         Effect.gen(function* () {
           const h = handlers

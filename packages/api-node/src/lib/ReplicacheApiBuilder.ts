@@ -149,7 +149,7 @@ export const group = <
     >,
   ) => Handlers.ValidateReturn<Return>,
 ): Layer.Layer<
-  ReplicacheApiGroup.ReplicacheApiGroup<Name>,
+  ReplicacheApiGroup.ApiGroup<Name>,
   Handlers.Error<Return>,
   Handlers.Context<Return>
   | ReplicacheApiGroup.ReplicacheApiGroup.ContextWithName<Group, Name>
