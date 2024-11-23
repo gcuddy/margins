@@ -1,21 +1,31 @@
 import { HttpApiBuilder } from "@effect/platform"
 import { Api } from "../Api.js"
-import { DateTime, Duration, Effect, Layer, Option, pipe, Redacted } from "effect"
+import {
+  DateTime,
+  Duration,
+  Effect,
+  Layer,
+  Option,
+  pipe,
+  Redacted,
+} from "effect"
 import { Users } from "../Users.js"
 import { UserId, UserNotFound, UserWithSensitive } from "../Domain/User.js"
 import { policyUse, Unauthorized, withSystemActor } from "../Domain/Actor.js"
 import { UsersPolicy } from "./Policy.js"
 import { Authentication } from "./Api.js"
 import { UsersRepo } from "./Repo.js"
-import { sessionIdFromRedacted, SessionWithMetadata } from "../Domain/Session.js"
+import {
+  sessionIdFromRedacted,
+  SessionWithMetadata,
+} from "../Domain/Session.js"
 import { SessionRepo } from "./SessionRepo.js"
 
 export const AuthenticationLive = Layer.effect(
   Authentication,
   Effect.gen(function* () {
     const userRepo = yield* UsersRepo
-    const sessionRepo = yield* SessionRepo;
-
+    const sessionRepo = yield * SessionRepo
 
     return Authentication.of({
       bearer: token =>
@@ -24,7 +34,7 @@ export const AuthenticationLive = Layer.effect(
           const x = Redacted.value(sessionId)
           console.log({ x })
           const [user, session] =
-            yield*
+            yield *
             Effect.zip(
               userRepo.findBySessionId(sessionId),
               userRepo.findSessionById(sessionId),
@@ -44,7 +54,7 @@ export const AuthenticationLive = Layer.effect(
           if (Option.isNone(user) || isPast) {
             yield* sessionRepo.delete(session.value.id)
             return (
-              yield*
+              yield *
               new Unauthorized({
                 actorId: UserId.make("-1"),
                 entity: "User",
@@ -82,21 +92,17 @@ export const AuthenticationLive = Layer.effect(
             },
           )
           return user.value
-        }).pipe(Effect.withSpan("Users.httpSecurity"))
+        }).pipe(Effect.withSpan("Users.httpSecurity")),
     })
-
   }),
-).pipe(Layer.provide([
-  UsersRepo.Default,
-  SessionRepo.Live
-]))
+).pipe(Layer.provide([UsersRepo.Default, SessionRepo.Live]))
 
 export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
   Effect.gen(function* () {
     const users = yield* Users
     const policy = yield* UsersPolicy
 
-    return handlers
+    const h = handlers
       .handle("getUser", ({ path }) =>
         pipe(
           users.findUserById(path.id),
@@ -107,7 +113,7 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
             }),
           ),
           policyUse(policy.canRead(path.id)),
-        )
+        ),
       )
       .handle("authenticate", ({ payload }) =>
         pipe(
@@ -130,9 +136,9 @@ export const HttpUsersLive = HttpApiBuilder.group(Api, "users", handlers =>
               sessionId: session.id,
             })
           }),
-        )
+        ),
       )
+
+    return h
   }),
-).pipe(
-  Layer.provide([Users.Default, UsersPolicy.Default, AuthenticationLive])
-)
+).pipe(Layer.provide([Users.Default, UsersPolicy.Default, AuthenticationLive]))

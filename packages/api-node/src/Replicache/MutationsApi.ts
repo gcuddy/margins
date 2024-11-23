@@ -130,5 +130,5 @@ const ReplicacheMutationServerBuilder = <Groups extends ReplicacheApiGroup<strin
 
 class MarginsReplicacheApi extends replicacheApiMakeEmpty.add(E) { }
 
-ReplicacheMutationServerBuilder(MarginsReplicacheApi, "tesg")
+// ReplicacheMutationServerBuilder(MarginsReplicacheApi, "tesg")
 // ^ should error

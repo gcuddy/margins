@@ -1,8 +1,10 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-namespace */
+import type { Schema } from "effect"
 import { type Pipeable, Record } from "effect"
 import type * as ReplicacheApiMutation from "./ReplicacheApiMutation.js"
 import { pipeArguments } from "effect/Pipeable"
+import type { ReplicacheApiError } from "./ReplicacheApiError.js"
 
 export const TypeId: unique symbol = Symbol.for("@margins/replicache/ApiGroup")
 
@@ -15,18 +17,21 @@ export type TypeId = typeof TypeId
 export interface ReplicacheApiGroup<
   out Id extends string,
   Mutations extends ReplicacheApiMutation.ReplicacheApiMutation.Any = never,
+  in out Error = ReplicacheApiError,
+  out R = never,
 > extends Pipeable.Pipeable {
   new (_: never): object
   readonly [TypeId]: TypeId
   readonly identifier: Id
   readonly mutations: Record.ReadonlyRecord<string, Mutations>
+  readonly errorSchema: Schema.Schema<Error, unknown, R>
 
   /**
    * Adds a mutation
    * */
   add<A extends ReplicacheApiMutation.ReplicacheApiMutation.Any>(
     mutation: A,
-  ): ReplicacheApiGroup<Id, Mutations | A>
+  ): ReplicacheApiGroup<Id, Mutations | A, Error, R>
 }
 
 export interface ApiGroup<Name extends string> {
@@ -51,12 +56,48 @@ export declare namespace ReplicacheApiGroup {
   >
 
   export type Name<Group> =
-    Group extends ReplicacheApiGroup<infer _Id, infer _Mutations> ? _Id : never
+    Group extends ReplicacheApiGroup<infer _Id, infer _Mutations, infer _Error, infer _R> ? _Id : never
+
+  export type Context<Group> =
+    Group extends ReplicacheApiGroup<infer _Id, infer _Mutations, infer _Error, infer _R>
+      ? _R
+      : never
 
   export type Mutations<Group> =
-    Group extends ReplicacheApiGroup<infer _Id, infer _Mutations>
+    Group extends ReplicacheApiGroup<infer _Id, infer _Mutations, infer _Error, infer _R>
       ? _Mutations
       : never
+
+  export type ToService<A> =
+    A extends ReplicacheApiGroup<
+      infer Name,
+      infer _Mutations,
+      infer _Error,
+      infer _R
+    >
+      ? ApiGroup<Name>
+      : never
+
+  export type ErrorContext<Group> =
+    Group extends ReplicacheApiGroup<
+      infer _Name,
+      infer _Mutations,
+      infer _Error,
+      infer _R
+    >
+      ? ReplicacheApiMutation.ReplicacheApiMutation.ErrorContext<_Mutations>
+      : never
+
+  export type ContextWithName<Group, Name extends string> = Context<
+    WithName<Group, Name>
+  >
+
+  // export type Context<Group> = Group extends
+  // ReplicacheApiGroup<infer _Name, infer _Mutations>
+
+  // export type ContextWithName<Group extends Any, Name extends string> = Context<
+  //   WithName<Group, Name>
+  // >
 }
 
 const Proto = {

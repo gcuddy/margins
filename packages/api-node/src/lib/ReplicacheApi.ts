@@ -2,7 +2,7 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
-import { Effect, Schema, Record } from "effect"
+import { Effect, Schema, Record, Context } from "effect"
 
 import type * as ReplicacheApiGroup from "./ReplicacheApiGroup.js"
 import { pipeArguments, type Pipeable } from "effect/Pipeable"
@@ -13,6 +13,10 @@ export type TypeId = typeof TypeId
 
 export interface ReplicacheApi<
   out Groups extends ReplicacheApiGroup.ReplicacheApiGroup.Any = never,
+  // Errors
+  in out E = never,
+  // Requirements
+  out R = never,
 > extends Pipeable {
   new (_: never): {}
   readonly [TypeId]: TypeId
@@ -23,8 +27,16 @@ export interface ReplicacheApi<
    */
   add<A extends ReplicacheApiGroup.ReplicacheApiGroup.Any>(
     group: A,
-  ): ReplicacheApi<Groups | A>
+  ): ReplicacheApi<Groups | A, E, R>
 }
+
+export class Api extends Context.Tag("@margins/replicache/Api")<
+  Api,
+  {
+    readonly api: ReplicacheApi<ReplicacheApiGroup.ReplicacheApiGroup.AnyWithProps>
+    readonly context: Context.Context<never>
+  }
+>() {}
 
 export declare namespace ReplicacheApi {
   /**

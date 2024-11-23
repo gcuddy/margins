@@ -12,6 +12,7 @@
     "dev": "tsx --env-file=.env --watch src/main.ts",
     "deploy": "wrangler deploy",
     "check": "tsc -b tsconfig.json",
+    "check:watch": "tsc -b tsconfig.json --watch",
     "start": "NODE_ENV=production tsx src/main.ts"
   },
   "dependencies": {

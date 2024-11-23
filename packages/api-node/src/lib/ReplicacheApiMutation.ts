@@ -4,7 +4,6 @@
 
 import type { Pipeable, Schema } from "effect"
 import type { Effect } from "effect/Effect"
-import { Success } from "effect/Exit"
 import { pipeArguments } from "effect/Pipeable"
 import type * as Types from "effect/Types"
 
@@ -17,6 +16,9 @@ export type TypeId = typeof TypeId
 export interface ReplicacheApiMutation<
   Name extends string,
   S extends Schema.Schema.Any,
+  in out Error = never,
+  out R = never,
+  out RE = never,
 > extends Pipeable.Pipeable {
   readonly [TypeId]: TypeId
   readonly name: Name
@@ -31,14 +33,19 @@ export declare namespace ReplicacheApiMutation {
 
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   export interface AnyWithProps
-    extends ReplicacheApiMutation<string, Schema.Schema.Any> { }
+    extends ReplicacheApiMutation<string, Schema.Schema.Any> {}
+
+  export type Request<Mutation extends Any> =
+    Mutation extends ReplicacheApiMutation<infer _Name, infer _Schema>
+      ? Schema.Schema.Type<_Schema>
+      : {}
 
   /**
    * @since 1.0.0
    * @category models
    */
   export type Handler<Mutation extends Any, E, R> = (
-    request: Mutation,
+    request: Types.Simplify<Request<Mutation>>,
   ) => Effect<void, E, R>
 
   export type Name<Mutation> =
@@ -57,8 +64,8 @@ export declare namespace ReplicacheApiMutation {
    * @since 1.0.0
    * @category models
    */
-  export type ExcludeName<Endpoints extends Any, Name extends string> = Exclude<
-    Endpoints,
+  export type ExcludeName<Mutations extends Any, Name extends string> = Exclude<
+    Mutations,
     { readonly name: Name }
   >
 
@@ -72,6 +79,17 @@ export declare namespace ReplicacheApiMutation {
     E,
     R,
   > = Handler<WithName<Endpoints, Name>, E, R>
+
+  export type ErrorContext<Mutation> =
+    Mutation extends ReplicacheApiMutation<
+      infer _Name,
+      infer _Schema,
+      infer _Error,
+      infer _R,
+      infer _RE
+    >
+      ? _RE
+      : never
 }
 
 const Proto = {
